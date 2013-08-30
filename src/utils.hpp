@@ -113,7 +113,7 @@ typedef struct {
 
 /** used instead of realloc.
     Makes sure that resizing to zero FREEs pointer */
-MDINLINE void *prealloc(void *old, int size) {
+inline void *prealloc(void *old, int size) {
   void *p;
   if (size <= 0) {
     free(old);
@@ -129,7 +129,7 @@ MDINLINE void *prealloc(void *old, int size) {
 
 /** used instead of malloc.
     Makes sure that a zero size allocation returns a NULL pointer */
-MDINLINE void *pmalloc(int size)
+inline void *pmalloc(int size)
 {
   void *p;
   if (size <= 0) {
@@ -170,7 +170,7 @@ MDINLINE void *pmalloc(int size)
 /*@{*/
 
 /** Initialize an \ref IntList.  */
-MDINLINE void init_intlist(IntList *il)
+inline void init_intlist(IntList *il)
 {
   il->n   = 0;
   il->max = 0;
@@ -180,14 +180,14 @@ extern int this_node;
 
 /** Allocate an \ref IntList of size size. If you need an \ref IntList
     with variable size better use \ref realloc_intlist */
-MDINLINE void alloc_intlist(IntList *il, int size)
+inline void alloc_intlist(IntList *il, int size)
 {
   il->max = size;
   il->e = (int *) malloc(sizeof(int)*il->max);
 }
 
 /** Reallocate an \ref IntList */
-MDINLINE void realloc_intlist(IntList *il, int size)
+inline void realloc_intlist(IntList *il, int size)
 {
   if(size != il->max) {
     il->max = size;
@@ -196,14 +196,14 @@ MDINLINE void realloc_intlist(IntList *il, int size)
 }
 
 /** Allocate an \ref IntList, but only to multiples of grain. */
-MDINLINE void alloc_grained_intlist(IntList *il, int size, int grain)
+inline void alloc_grained_intlist(IntList *il, int size, int grain)
 {
   il->max = grain*((size + grain - 1)/grain);
   il->e = (int *) malloc(sizeof(int)*il->max);
 }
 
 /** Reallocate an \ref IntList, but only to multiples of grain. */
-MDINLINE void realloc_grained_intlist(IntList *il, int size, int grain)
+inline void realloc_grained_intlist(IntList *il, int size, int grain)
 {
   if(size >= il->max)
     il->max = grain*((size + grain - 1)/grain);
@@ -216,7 +216,7 @@ MDINLINE void realloc_grained_intlist(IntList *il, int size, int grain)
 }
 
 /** Check wether an \ref IntList contains the value c */
-MDINLINE int intlist_contains(IntList *il, int c)
+inline int intlist_contains(IntList *il, int c)
 {
   int i;
   for (i = 0; i < il->n; i++)
@@ -225,7 +225,7 @@ MDINLINE int intlist_contains(IntList *il, int c)
 }
 
 /** Initialize an \ref DoubleList.  */
-MDINLINE void init_doublelist(DoubleList *il)
+inline void init_doublelist(DoubleList *il)
 {
   il->n   = 0;
   il->max = 0;
@@ -234,14 +234,14 @@ MDINLINE void init_doublelist(DoubleList *il)
 
 /** Allocate an \ref DoubleList of size size. If you need an \ref DoubleList
     with variable size better use \ref realloc_doublelist */
-MDINLINE void alloc_doublelist(DoubleList *dl, int size)
+inline void alloc_doublelist(DoubleList *dl, int size)
 {
   dl->max = size;
   dl->e = (double *) malloc(sizeof(double)*dl->max);
 }
 
 /** Reallocate an \ref DoubleList */
-MDINLINE void realloc_doublelist(DoubleList *dl, int size)
+inline void realloc_doublelist(DoubleList *dl, int size)
 {
   if(size != dl->max) {
     dl->max = size;
@@ -250,14 +250,14 @@ MDINLINE void realloc_doublelist(DoubleList *dl, int size)
 }
 
 /** Allocate an \ref DoubleList, but only to multiples of grain. */
-MDINLINE void alloc_grained_doublelist(DoubleList *dl, int size, int grain)
+inline void alloc_grained_doublelist(DoubleList *dl, int size, int grain)
 {
   dl->max = grain*((size + grain - 1)/grain);
   dl->e = (double *) malloc(sizeof(double)*dl->max);
 }
 
 /** Reallocate an \ref DoubleList, but only to multiples of grain. */
-MDINLINE void realloc_grained_doublelist(DoubleList *dl, int size, int grain)
+inline void realloc_grained_doublelist(DoubleList *dl, int size, int grain)
 {
   if(size >= dl->max)
     dl->max = grain*((size + grain - 1)/grain);
@@ -277,22 +277,22 @@ MDINLINE void realloc_grained_doublelist(DoubleList *dl, int size, int grain)
 /*@{*/
 
 /** Calculates the maximum of 'double'-typed a and b, returning 'double'. */
-MDINLINE double dmax(double a, double b) { return (a>b) ? a : b; }
+inline double dmax(double a, double b) { return (a>b) ? a : b; }
 
 /** Calculates the minimum of 'double'-typed a and b, returning 'double'. */
-MDINLINE double dmin(double a, double b) { return (a<b) ? a : b; }
+inline double dmin(double a, double b) { return (a<b) ? a : b; }
 
 /** Calculates the maximum of 'int'-typed a and b, returning 'int'. */
-MDINLINE int imax(int a, int b) { return (a>b) ? a : b; }
+inline int imax(int a, int b) { return (a>b) ? a : b; }
 
 /** Calculates the minimum of 'int'-typed a and b, returning 'int'. */
-MDINLINE int imin(int a, int b) { return (a<b) ? a : b; }
+inline int imin(int a, int b) { return (a<b) ? a : b; }
 
 /** Calculates the remainder of a division */
-MDINLINE double drem_down(double a, double b) { return a - floor(a/b)*b; }
+inline double drem_down(double a, double b) { return a - floor(a/b)*b; }
 
 /** vector difference */
-MDINLINE void vector_subt(double res[3], double a[3], double b[3])
+inline void vector_subt(double res[3], double a[3], double b[3])
 {
   int i;
   for (i=0;i<3;i++)
@@ -304,7 +304,7 @@ MDINLINE void vector_subt(double res[3], double a[3], double b[3])
     \param data   the integer array 
     \param size   size of the array
  */
-MDINLINE void sort_int_array(int *data, int size)
+inline void sort_int_array(int *data, int size)
 {
   int i,j,tmp;
   for(i=0;i<size-1;i++)
@@ -316,7 +316,7 @@ MDINLINE void sort_int_array(int *data, int size)
 }
 
 /** permute an interger array field of size size about permute positions. */
-MDINLINE void permute_ifield(int *field, int size, int permute)
+inline void permute_ifield(int *field, int size, int permute)
 {
   int i,tmp;
 
@@ -331,15 +331,15 @@ MDINLINE void permute_ifield(int *field, int size, int permute)
 }
 
 /** Mathematically rounds 'double'-typed x, returning 'double'. */
-MDINLINE double dround(double x) { return floor(x+0.5); }
+inline double dround(double x) { return floor(x+0.5); }
 
 /** Calculates the SQuaRe of 'double' x, returning 'double'. */
-MDINLINE double SQR(double x) { return x*x; }
+inline double SQR(double x) { return x*x; }
 
 /** approximates \f$ \exp(d^2) \mathrm{erfc}(d)\f$ by applying a formula from:
     Abramowitz/Stegun: Handbook of Mathematical Functions, Dover
     (9. ed.), chapter 7 */
-MDINLINE double AS_erfc_part(double d)
+inline double AS_erfc_part(double d)
 {
 #define AS_a1  0.254829592
 #define AS_a2 -0.284496736
@@ -366,7 +366,7 @@ MDINLINE double AS_erfc_part(double d)
  * also save time, since it reduces the number of function calls to
  * sin().  
 */
-MDINLINE double sinc(double d)
+inline double sinc(double d)
 {
 #define epsi 0.1
 
@@ -386,7 +386,7 @@ MDINLINE double sinc(double d)
 }
 
 /** factorizes small numbers up to a maximum of max factors. */
-MDINLINE int calc_factors(int n, int *factors, int max)
+inline int calc_factors(int n, int *factors, int max)
 {
   int f=2,i=0;
   while(n>1) {
@@ -413,7 +413,7 @@ MDINLINE int calc_factors(int n, int *factors, int max)
 /*@{*/
 
 /** Subtracts vector v2 from vector v1 and stores resuld in vector dv */
-MDINLINE void vecsub(double v1[3], double v2[3], double dv[3])
+inline void vecsub(double v1[3], double v2[3], double dv[3])
 {
   dv[0] = v1[0] - v2[0];
   dv[1] = v1[1] - v2[1];
@@ -422,7 +422,7 @@ MDINLINE void vecsub(double v1[3], double v2[3], double dv[3])
 
 
 /** calculates the length of a vector */
-MDINLINE double normr(double v[3]) {
+inline double normr(double v[3]) {
   double d2 = 0.0;
   int i;
   for(i=0;i<3;i++)
@@ -432,7 +432,7 @@ MDINLINE double normr(double v[3]) {
 }
 
 /** calculates the squared length of a vector */
-MDINLINE double sqrlen(double v[3]) {
+inline double sqrlen(double v[3]) {
   double d2 = 0.0;
   int i;
   for(i=0;i<3;i++)
@@ -441,7 +441,7 @@ MDINLINE double sqrlen(double v[3]) {
 }
 
 /** calculates unit vector */
-MDINLINE void unit_vector(double v[3],double y[3]) {
+inline void unit_vector(double v[3],double y[3]) {
   double d = 0.0;
   int i;
   d=sqrt( sqrlen(v) );
@@ -453,7 +453,7 @@ MDINLINE void unit_vector(double v[3],double y[3]) {
 }
 
 /** calculates the scalar product of two vectors a nd b */
-MDINLINE double scalar(double a[3], double b[3]) {
+inline double scalar(double a[3], double b[3]) {
   double d2 = 0.0;
   int i;
   for(i=0;i<3;i++)
@@ -462,7 +462,7 @@ MDINLINE double scalar(double a[3], double b[3]) {
 }
 
 /** calculates the vector product c of two vectors a and b */
-MDINLINE void vector_product(double a[3], double b[3], double c[3]) {
+inline void vector_product(double a[3], double b[3], double c[3]) {
   c[0]=a[1]*b[2]-a[2]*b[1];
   c[1]=a[2]*b[0]-a[0]*b[2];
   c[2]=a[0]*b[1]-a[1]*b[0];
@@ -470,7 +470,7 @@ MDINLINE void vector_product(double a[3], double b[3], double c[3]) {
 }
  
 /** rotates vector around axis by alpha */
-MDINLINE void vec_rotate(double *axis, double alpha, double *vector, double *result){
+inline void vec_rotate(double *axis, double alpha, double *vector, double *result){
   double sina,cosa,absa,a[3];
   sina=sin(alpha);
   cosa=cos(alpha);
@@ -488,7 +488,7 @@ MDINLINE void vec_rotate(double *axis, double alpha, double *vector, double *res
 }
 
 /** Calc eigevalues of a 3x3 matrix stored in q as a 9x1 array*/
-MDINLINE int calc_eigenvalues_3x3(double *q,  double *eva) {
+inline int calc_eigenvalues_3x3(double *q,  double *eva) {
   double q11,q22,q33,q12,q13,q23;
   double a,b,c;
   double QQ,R,R2,QQ3;
@@ -548,7 +548,7 @@ MDINLINE int calc_eigenvalues_3x3(double *q,  double *eva) {
 
 /** Calc eigevectors of a 3x3 matrix stored in a as a 9x1 array*/
 /** Given an eigenvalue (eva) returns the corresponding eigenvector (eve)*/
-MDINLINE int calc_eigenvector_3x3(double *a,double eva,double *eve) {
+inline int calc_eigenvector_3x3(double *a,double eva,double *eve) {
   int i,j,ind1,ind2,ind3,row1,row2;
   double A_x1[3][3],coeff1,coeff2,norm;
 
@@ -624,7 +624,7 @@ MDINLINE int calc_eigenvector_3x3(double *a,double eva,double *eve) {
  *  @param n     Dimension of the matrix (Input) 
  *  @param perms Records row permutations effected by pivoting (Output)
  */
-MDINLINE int lu_decompose_matrix(double **A, int n, int *perms) {
+inline int lu_decompose_matrix(double **A, int n, int *perms) {
   int i, j, k, ip;
   double max, sum, tmp;
 
@@ -718,7 +718,7 @@ MDINLINE int lu_decompose_matrix(double **A, int n, int *perms) {
  *  @param b     Right-hand side of equation system (Input).
  *               Is destroyed and contains the solution x afterwards (Output).
  */
-MDINLINE void lu_solve_system(double **A, int n, int *perms, double *b) {
+inline void lu_solve_system(double **A, int n, int *perms, double *b) {
   int i, j;
   double sum;
 
@@ -759,7 +759,7 @@ MDINLINE void lu_solve_system(double **A, int n, int *perms, double *b) {
  * @param c       z position 
  * @param adim    dimensions of the underlying grid  
  */
-MDINLINE int get_linear_index(int a, int b, int c, int adim[3])
+inline int get_linear_index(int a, int b, int c, int adim[3])
 {
   return (a + adim[0]*(b + adim[1]*c));   
 }
@@ -773,7 +773,7 @@ MDINLINE int get_linear_index(int a, int b, int c, int adim[3])
  * @param c       z position (return value) 
  * @param adim    dimensions of the underlying grid  
  */
-MDINLINE void get_grid_pos(int i, int *a, int *b, int *c, int adim[3])
+inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3])
 {
   *a = i % adim[0];
   i /= adim[0];
@@ -786,7 +786,7 @@ MDINLINE void get_grid_pos(int i, int *a, int *b, int *c, int adim[3])
  * @param grid    pointer to grid.
  * @param dim  dimension of the grid.
 */
-MDINLINE int malloc_3d_grid(double ****grid, int dim[3])
+inline int malloc_3d_grid(double ****grid, int dim[3])
 {
   int i,j;
   *grid = (double***)malloc(sizeof(double **)*dim[0]);
@@ -811,7 +811,7 @@ MDINLINE int malloc_3d_grid(double ****grid, int dim[3])
  *  @param num     number of element to print.
 
 */
-MDINLINE void print_block(double *data, int start[3], int size[3], int dim[3], int element, int num)
+inline void print_block(double *data, int start[3], int size[3], int dim[3], int element, int num)
 {
   int i0,i1,i2,b=1;
   int divide=0,block1=0,start1;
@@ -855,7 +855,7 @@ MDINLINE void print_block(double *data, int start[3], int size[3], int dim[3], i
  *  \param pos1 Position one.
  *  \param pos2 Position two.
 */
-MDINLINE double distance(double pos1[3], double pos2[3])
+inline double distance(double pos1[3], double pos2[3])
 {
   return sqrt( SQR(pos1[0]-pos2[0]) + SQR(pos1[1]-pos2[1]) + SQR(pos1[2]-pos2[2]) );
 }
@@ -864,7 +864,7 @@ MDINLINE double distance(double pos1[3], double pos2[3])
  *  \param pos1 Position one.
  *  \param pos2 Position two.
 */
-MDINLINE double distance2(double pos1[3], double pos2[3])
+inline double distance2(double pos1[3], double pos2[3])
 {
   return SQR(pos1[0]-pos2[0]) + SQR(pos1[1]-pos2[1]) + SQR(pos1[2]-pos2[2]);
 }
@@ -876,7 +876,7 @@ MDINLINE double distance2(double pos1[3], double pos2[3])
  *  \param vec  vecotr pos1-pos2.
  *  \return distance squared
 */
-MDINLINE double distance2vec(double pos1[3], double pos2[3], double vec[3])
+inline double distance2vec(double pos1[3], double pos2[3], double vec[3])
 {
   vec[0] = pos1[0]-pos2[0];
   vec[1] = pos1[1]-pos2[1];
@@ -891,7 +891,7 @@ MDINLINE double distance2vec(double pos1[3], double pos2[3], double vec[3])
  *  \param image_box2 simulation box index of particle two .
  *  \param box_l      size of simulation box.
 */
-MDINLINE double unfolded_distance(double pos1[3], int image_box1[3], 
+inline double unfolded_distance(double pos1[3], int image_box1[3], 
 				  double pos2[3], int image_box2[3], double box_l[3])
 {
   int i;
@@ -915,7 +915,7 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
 
 /** extend a string with another one. Like strcat, just automatically
     increases the string space */
-MDINLINE char *strcat_alloc(char *left, const char *right)
+inline char *strcat_alloc(char *left, const char *right)
 {
   if (!left) {
     char *res = (char *)malloc(strlen(right) + 1);
@@ -938,7 +938,7 @@ MDINLINE char *strcat_alloc(char *left, const char *right)
 
 /** Computes the area of triangle between vectors P1 and P2, 
  *  by computing the crossproduct P1 x P2 and taking the half of its norm */
-MDINLINE double area_triangle_new(double *P1, double *P2) {
+inline double area_triangle_new(double *P1, double *P2) {
  double area;
  double normal[3], n; //auxiliary variables
  vector_product(P1,P2,normal); 
@@ -949,7 +949,7 @@ MDINLINE double area_triangle_new(double *P1, double *P2) {
 
 /** Computes the area of triangle between vectors P1,P2,P3, 
  *  by computing the crossproduct P1P2 x P1P3 and taking the half of its norm */
-MDINLINE double area_triangle(double *P1, double *P2, double *P3) {
+inline double area_triangle(double *P1, double *P2, double *P3) {
 	double area;
 	double u[3],v[3],normal[3], n; //auxiliary variables
 	u[0] = P2[0] - P1[0]; // u = P1P2
@@ -965,7 +965,7 @@ MDINLINE double area_triangle(double *P1, double *P2, double *P3) {
 }
 
 /** Computes the normal vector to the plane given by points P1P2P3 */
-MDINLINE void get_n_triangle(double* p1, double* p2, double* p3, double* n){
+inline void get_n_triangle(double* p1, double* p2, double* p3, double* n){
 	n[0]=(p2[1]-p1[1])*(p3[2]-p1[2])-(p2[2]-p1[2])*(p3[1]-p1[1]);
 	n[1]=(p2[2]-p1[2])*(p3[0]-p1[0])-(p2[0]-p1[0])*(p3[2]-p1[2]);
 	n[2]=(p2[0]-p1[0])*(p3[1]-p1[1])-(p2[1]-p1[1])*(p3[0]-p1[0]);
@@ -987,7 +987,7 @@ MDINLINE void get_n_triangle(double* p1, double* p2, double* p3, double* n){
  *  "part p2 bond xxxx p1 p3 p4", we correctly input the particle id's.
  *  So if you have the access to the order of particles, you are safe to call this
  *  function with exactly this order. Otherwise you need to check the orientations. */
-MDINLINE double angle_btw_triangles(double *P1, double *P2, double *P3, double *P4) {
+inline double angle_btw_triangles(double *P1, double *P2, double *P3, double *P4) {
 	double phi;
 	double u[3],v[3],normal1[3],normal2[3]; //auxiliary variables
 	u[0] = P1[0] - P2[0]; // u = P2P1

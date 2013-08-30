@@ -62,7 +62,7 @@ double adress_wf_vector(double x[3]);
     @param p input particle
     @return weight of the particle
 */
-MDINLINE double adress_wf_particle(Particle *p){
+inline double adress_wf_particle(Particle *p){
   if (p==NULL) return 0.0;
   if (ifParticleIsVirtual(p)){
     return p->p.adress_weight;
@@ -76,7 +76,7 @@ MDINLINE double adress_wf_particle(Particle *p){
 */
 void adress_update_weights();
 
-MDINLINE double adress_non_bonded_force_weight(Particle *p1,Particle *p2){
+inline double adress_non_bonded_force_weight(Particle *p1,Particle *p2){
   double adress_weight_1,adress_weight_2,force_weight;
   int virtual_1,virtual_2;
   
@@ -112,7 +112,7 @@ MDINLINE double adress_non_bonded_force_weight(Particle *p1,Particle *p2){
   return force_weight;
 }
 
-MDINLINE double adress_bonded_force_weight(Particle *p1,Particle *p2){
+inline double adress_bonded_force_weight(Particle *p1,Particle *p2){
    double weight=1.0;
   if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity )
     weight=1.0;
@@ -135,7 +135,7 @@ MDINLINE double adress_bonded_force_weight(Particle *p1,Particle *p2){
   return weight;
 }
 
-MDINLINE double adress_angle_force_weight(Particle *p1, Particle *p2, Particle *p3){
+inline double adress_angle_force_weight(Particle *p1, Particle *p2, Particle *p3){
   double weight=1.0;
   if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity &&(get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p3))->p.identity )
     weight=1.0;
@@ -161,7 +161,7 @@ MDINLINE double adress_angle_force_weight(Particle *p1, Particle *p2, Particle *
   return weight;
 }
 
-MDINLINE double adress_dihedral_force_weight(Particle *p1, Particle *p2, Particle *p3, Particle *p4){
+inline double adress_dihedral_force_weight(Particle *p1, Particle *p2, Particle *p3, Particle *p4){
   double weight=1.0;
   if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity &&(get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p3))->p.identity && (get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p4))->p.identity)
     weight=1.0;
@@ -197,7 +197,7 @@ MDINLINE double adress_dihedral_force_weight(Particle *p1, Particle *p2, Particl
     and for interface pressure correction as well-
 */
 
-MDINLINE void adress_interpolation( IA_parameters *ia_params,
+inline void adress_interpolation( IA_parameters *ia_params,
 				    double d[3], double dist, double force[3], int index){
   int tablepos, table_start,j;
   int inter_index = index*ia_params->ADRESS_TAB_npoints;
@@ -242,7 +242,7 @@ MDINLINE void adress_interpolation( IA_parameters *ia_params,
   
 }
 
-MDINLINE double correction_function(double x){
+inline double correction_function(double x){
   /* correction function goes between zero and one */
   double ic_s;
   ic_s = 4.0*(sqrt(x)-0.5)*(sqrt(x)-0.5);
@@ -253,7 +253,7 @@ MDINLINE double correction_function(double x){
 int adress_tab_set_params(int part_type_a, int part_type_b, char* filename);
 
 /** Adds force in an Adress way. Also useful for virial calculations */
-MDINLINE void add_adress_tab_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_adress_tab_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 					double d[3], double dist, double force[3])
 {
   int j;
@@ -325,7 +325,7 @@ MDINLINE void add_adress_tab_pair_force(Particle *p1, Particle *p2, IA_parameter
 
 /* #ifdef THERMODYNAMIC_FORCE */
 
-MDINLINE double inverse_weight(double w){
+inline double inverse_weight(double w){
   if(adress_vars[0] == 2) {
     return 2/M_PI*asin(sqrt(w));
   } else {
@@ -335,7 +335,7 @@ MDINLINE double inverse_weight(double w){
   return 0;
 }
 
-MDINLINE double adress_dw_dir(double pos[3], double dir[3]){
+inline double adress_dw_dir(double pos[3], double dir[3]){
   int topo=(int)adress_vars[0];
   double dist, mod=0;
   int i, dim;
@@ -390,7 +390,7 @@ MDINLINE double adress_dw_dir(double pos[3], double dir[3]){
 ///
 int tf_set_params(int part_type, double prefactor, char * filename);
 
-MDINLINE double tf_profile(double x_com, int type, TF_parameters * tf_params){
+inline double tf_profile(double x_com, int type, TF_parameters * tf_params){
   double phi, dindex, force, pol;
   int tablepos, table_start;
   //double maxval = tf_params->TF_TAB_maxval;
@@ -414,7 +414,7 @@ MDINLINE double tf_profile(double x_com, int type, TF_parameters * tf_params){
   return force;
 }
 
-MDINLINE void add_thermodynamic_force(Particle * p){
+inline void add_thermodynamic_force(Particle * p){
   TF_parameters *tf_params = get_tf_param(p->p.type);
   double pref   = tf_params->TF_prefactor;
   if (pref !=0){

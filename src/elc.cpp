@@ -203,42 +203,42 @@ static void prepare_scy_cache()
 /* data distribution */
 /*****************************************************************/
 
-MDINLINE void clear_vec(double *pdc, int size)
+inline void clear_vec(double *pdc, int size)
 {
   int i;
   for (i = 0; i < size; i++)
     pdc[i] = 0;
 }
 
-MDINLINE void copy_vec(double *pdc_d, double *pdc_s, int size)
+inline void copy_vec(double *pdc_d, double *pdc_s, int size)
 {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s[i];
 }
 
-MDINLINE void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size)
+inline void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size)
 {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
-MDINLINE void addscale_vec(double *pdc_d, double scale, double *pdc_s1, double *pdc_s2, int size)
+inline void addscale_vec(double *pdc_d, double scale, double *pdc_s1, double *pdc_s2, int size)
 {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = scale*pdc_s1[i] + pdc_s2[i];
 }
 
-MDINLINE void scale_vec(double scale, double *pdc, int size)
+inline void scale_vec(double scale, double *pdc, int size)
 {
   int i;
   for (i = 0; i < size; i++)
     pdc[i] *= scale;
 }
 
-MDINLINE double *block(double *p, int index, int size)
+inline double *block(double *p, int index, int size)
 {
   return &p[index*size];
 }
@@ -475,7 +475,7 @@ static double dipole_energy()
 
 /*****************************************************************/
 
-MDINLINE double image_sum_b(double q, double z) 
+inline double image_sum_b(double q, double z) 
 {
   double shift = 0.5*box_l[2];
   double fac=elc_params.di_mid_top*elc_params.di_mid_bot;
@@ -484,7 +484,7 @@ MDINLINE double image_sum_b(double q, double z)
   return image_sum;
 }
 
-MDINLINE double image_sum_t(double q, double z) 
+inline double image_sum_t(double q, double z) 
 {
   double shift = 0.5*box_l[2];
   double fac=elc_params.di_mid_top*elc_params.di_mid_bot;

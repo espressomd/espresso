@@ -340,7 +340,7 @@ static void prepare_scy_cache()
 /* vector operations */
 
 /** pdc = 0 */
-MDINLINE void clear_vec(double *pdc, int size)
+inline void clear_vec(double *pdc, int size)
 {
   int i;
   for (i = 0; i < size; i++)
@@ -348,7 +348,7 @@ MDINLINE void clear_vec(double *pdc, int size)
 }
 
 /** pdc_d = pdc_s */
-MDINLINE void copy_vec(double *pdc_d, double *pdc_s, int size)
+inline void copy_vec(double *pdc_d, double *pdc_s, int size)
 {
   int i;
   for (i = 0; i < size; i++)
@@ -356,7 +356,7 @@ MDINLINE void copy_vec(double *pdc_d, double *pdc_s, int size)
 }
 
 /** pdc_d = pdc_s1 + pdc_s2 */
-MDINLINE void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size)
+inline void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size)
 {
   int i;
   for (i = 0; i < size; i++)
@@ -364,7 +364,7 @@ MDINLINE void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size)
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
-MDINLINE void addscale_vec(double *pdc_d, double scale, double *pdc_s1, double *pdc_s2, int size)
+inline void addscale_vec(double *pdc_d, double scale, double *pdc_s1, double *pdc_s2, int size)
 {
   int i;
   for (i = 0; i < size; i++)
@@ -372,7 +372,7 @@ MDINLINE void addscale_vec(double *pdc_d, double scale, double *pdc_s1, double *
 }
 
 /** pdc_d = scale*pdc */
-MDINLINE void scale_vec(double scale, double *pdc, int size)
+inline void scale_vec(double scale, double *pdc, int size)
 {
   int i;
   for (i = 0; i < size; i++)
@@ -384,17 +384,17 @@ MDINLINE void scale_vec(double scale, double *pdc, int size)
    e_size is the size of only the top or bottom half, i.e. half of size.
 */
 
-MDINLINE double *block(double *p, int index, int size)
+inline double *block(double *p, int index, int size)
 {
   return &p[index*size];
 }
 
-MDINLINE double *blwentry(double *p, int index, int e_size)
+inline double *blwentry(double *p, int index, int e_size)
 {
   return &p[2*index*e_size];
 }
 
-MDINLINE double *abventry(double *p, int index, int e_size)
+inline double *abventry(double *p, int index, int e_size)
 {
   return &p[(2*index + 1)*e_size];
 }
@@ -1680,7 +1680,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
     force[i] += pref*F[i];
 }
 
-MDINLINE double calc_mmm2d_copy_pair_energy(double d[3])
+inline double calc_mmm2d_copy_pair_energy(double d[3])
 {
   double eng;
   double z2     = d[2]*d[2];

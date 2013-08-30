@@ -40,7 +40,7 @@ int gay_berne_set_params(int part_type_a, int part_type_b,
 			 double k1, double k2,
 			 double mu, double nu);
 
-MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3], double torque1[3], double torque2[3])
 
 {
@@ -146,7 +146,7 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
     }
 }
 
-MDINLINE double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 			       double d[3], double dist)
 {
   if (!CUTOFF_CHECK(dist < ia_params->GB_cut))   

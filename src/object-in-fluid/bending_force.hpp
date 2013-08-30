@@ -41,7 +41,7 @@ int bending_force_set_params(int bond_type, double phi0, double kb);
     (p1 += force1; p2 += 0.5*force1+0.5*force2; p3 += 0.5*force1+0.5*force2; p4 += force2;
     @return 0
 */
-MDINLINE int calc_bending_force(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
+inline int calc_bending_force(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
 				 Bonded_ia_parameters *iaparams, double force1[3],
 				 double force2[2])// first-fold-then-the-same approach
 {		

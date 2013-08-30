@@ -203,14 +203,14 @@ void cells_re_init(int new_cs);
 void realloc_cells(int size);
 
 /** Initialize a list of cell pointers */
-MDINLINE void init_cellplist(CellPList *cpl) {
+inline void init_cellplist(CellPList *cpl) {
   cpl->n    = 0;
   cpl->max  = 0;
   cpl->cell = NULL;
 }
 
 /** Reallocate a list of cell pointers */
-MDINLINE void realloc_cellplist(CellPList *cpl, int size)
+inline void realloc_cellplist(CellPList *cpl, int size)
 {
   if(size != cpl->max) {
     cpl->max = size;

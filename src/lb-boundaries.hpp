@@ -107,7 +107,7 @@ void lb_init_boundaries();
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
-MDINLINE void lb_bounce_back() {
+inline void lb_bounce_back() {
 
 #ifdef D3Q19
 #ifndef PULL

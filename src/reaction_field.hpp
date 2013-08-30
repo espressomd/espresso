@@ -59,7 +59,7 @@ extern Reaction_field_params rf_params;
 ///
 int rf_set_params(double kappa,double epsilon1,double epsilon2, double r_cut);
 
-MDINLINE void add_rf_coulomb_pair_force_no_cutoff(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
+inline void add_rf_coulomb_pair_force_no_cutoff(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
    int j;
    double fac;
@@ -81,7 +81,7 @@ MDINLINE void add_rf_coulomb_pair_force_no_cutoff(Particle *p1, Particle *p2, do
     @param dist      Distance between p1 and p2.
     @param force     returns the force on particle 1.
 */
-MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
+inline void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
    if (dist < rf_params.r_cut)
    {
@@ -89,7 +89,7 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
    }
 }
 
-MDINLINE double rf_coulomb_pair_energy_no_cutoff(Particle *p1, Particle *p2, double dist)
+inline double rf_coulomb_pair_energy_no_cutoff(Particle *p1, Particle *p2, double dist)
 {
    double  fac;
    fac = 1.0 / dist  -  (rf_params.B*dist*dist) / (2*rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
@@ -99,7 +99,7 @@ MDINLINE double rf_coulomb_pair_energy_no_cutoff(Particle *p1, Particle *p2, dou
    return fac;
 }
 
-MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
+inline double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
   if (dist < rf_params.r_cut)
   {
@@ -114,7 +114,7 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 ///
 int interrf_set_params(int part_type_a, int part_type_b,int rf_on);
 
-MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
 #ifdef ONEPART_DEBUG
@@ -128,7 +128,7 @@ MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *
   ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
 }
 
-MDINLINE double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia_params, double dist)
+inline double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia_params, double dist)
 {
   double val;
   if ((ia_params->rf_on==1) && CUTOFF_CHECK(dist < rf_params.r_cut)) {

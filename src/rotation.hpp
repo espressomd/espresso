@@ -56,7 +56,7 @@ void convert_torques_body_to_space(Particle *p, double torque[3]);
     the body-fixed frames */  
 void define_rotation_matrix(Particle *p, double A[9]);
 
-MDINLINE void convert_quat_to_quatu(double quat[4], double quatu[3])
+inline void convert_quat_to_quatu(double quat[4], double quatu[3])
 {
   /* director */
   quatu[0] = 2*(quat[1]*quat[3] + quat[0]*quat[2]);
@@ -75,7 +75,7 @@ int convert_quatu_to_quat(double d[3], double quat[4]);
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
-MDINLINE int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
+inline int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
 {
   double dm;
   // Calculate magnitude of dipole moment
@@ -87,7 +87,7 @@ MDINLINE int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
 }
 
 /** convert quaternion director to the dipole moment */
-MDINLINE void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
+inline void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
 {
   /* dipole moment */
   dip[0] = quatu[0]*dipm;

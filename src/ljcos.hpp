@@ -37,7 +37,7 @@ int lj_cos_set_params(int part_type_a, int part_type_b,
 		      double eps, double sig, double cut,
 		      double offset);
 
-MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				   double d[3], double dist, double force[3])
 {
   int j;
@@ -85,7 +85,7 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 }
 
 
-MDINLINE double ljcos_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double ljcos_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
   double r_off, frac2, frac6;

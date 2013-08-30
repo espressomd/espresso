@@ -976,7 +976,7 @@ void tf_tables_init();
 void copy_ia_params(IA_parameters *dst, IA_parameters *src);
 
 /** get interaction parameters between particle sorts i and j */
-MDINLINE IA_parameters *get_ia_param(int i, int j) {
+inline IA_parameters *get_ia_param(int i, int j) {
   extern IA_parameters *ia_params;
   extern int n_particle_types;
   return &ia_params[i*n_particle_types + j];
@@ -988,7 +988,7 @@ MDINLINE IA_parameters *get_ia_param(int i, int j) {
 IA_parameters *get_ia_param_safe(int i, int j);
 
 #ifdef ADRESS 
-MDINLINE TF_parameters *get_tf_param(int i) {
+inline TF_parameters *get_tf_param(int i) {
   extern TF_parameters *tf_params;
   return &tf_params[i];
 }
@@ -1031,13 +1031,13 @@ void recalc_coulomb_prefactor();
 int check_obs_calc_initialized();
 
 /**  check if a non bonded interaction is defined */
-MDINLINE int checkIfInteraction(IA_parameters *data) {
+inline int checkIfInteraction(IA_parameters *data) {
   return data->particlesInteract;
 }
 
 /** check if the types of particles i and j have any non bonded
     interaction defined. */
-MDINLINE int checkIfParticlesInteract(int i, int j) {
+inline int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 

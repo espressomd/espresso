@@ -331,7 +331,7 @@ double min_distance2(double pos1[3], double pos2[3]);
  *  \param pos1  Position one.
  *  \param pos2  Position two.
  */
-MDINLINE double min_distance(double pos1[3], double pos2[3]) {
+inline double min_distance(double pos1[3], double pos2[3]) {
   return sqrt(min_distance2(pos1, pos2));
 }
 
@@ -375,12 +375,12 @@ void predict_momentum_particles(double *result);
 */
 void momentum_calc(double *momentum);
 
-MDINLINE double *obsstat_bonded(Observable_stat *stat, int j)
+inline double *obsstat_bonded(Observable_stat *stat, int j)
 {
   return stat->bonded + stat->chunk_size*j;
 }
 
-MDINLINE double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2)
+inline double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2)
 {
   int tmp;
   if (p1 > p2) {
@@ -391,7 +391,7 @@ MDINLINE double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2)
   return stat->non_bonded + stat->chunk_size*(((2 * n_particle_types - 1 - p1) * p1) / 2  +  p2);
 }
 
-MDINLINE double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1, int p2)
+inline double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1, int p2)
 {
 /*  return stat->non_bonded_intra + stat->chunk_size*1; */
   int tmp;
@@ -403,7 +403,7 @@ MDINLINE double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p
   return stat->non_bonded_intra + stat->chunk_size_nb*(((2 * n_particle_types - 1 - p1) * p1) / 2  +  p2);
 }
 
-MDINLINE double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1, int p2)
+inline double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1, int p2)
 {
 /*  return stat->non_bonded_inter + stat->chunk_size*1; */
   int tmp;

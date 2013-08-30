@@ -756,7 +756,7 @@ void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
 /** Determines if the non bonded interactions between p1 and p2 should be calculated */
-MDINLINE int do_nonbonded(Particle *p1, Particle *p2)
+inline int do_nonbonded(Particle *p1, Particle *p2)
 {
   int i, i2;
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is

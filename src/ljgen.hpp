@@ -48,7 +48,7 @@ int ljgen_set_params(int part_type_a, int part_type_b,
          );
 
 /** Calculate lennard Jones force between particle p1 and p2 */
-MDINLINE void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				   double d[3], double dist, double force[3])
 {
   if (CUTOFF_CHECK(dist < ia_params->LJGEN_cut+ia_params->LJGEN_offset)) {
@@ -117,7 +117,7 @@ MDINLINE void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 } 
 
 /** calculate Lennard jones energy between particle p1 and p2. */
-MDINLINE double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
   double r_off, frac;

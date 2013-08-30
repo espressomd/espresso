@@ -61,7 +61,7 @@ int update_mol_pos_cfg();
 
 
 // Checks, if a particle is virtual
-MDINLINE int ifParticleIsVirtual(Particle *p){
+inline int ifParticleIsVirtual(Particle *p){
    if (p->p.isVirtual == 0) {
       return 0;
    }

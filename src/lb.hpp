@@ -273,7 +273,7 @@ void calc_particle_lattice_ia();
  * position is not within the local lattice. */
 int lb_lbfluid_get_interpolated_velocity(double* p, double* v); 
 
-MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi); 
+inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi); 
 
 
 /** Calculation of hydrodynamic modes.
@@ -288,7 +288,7 @@ void lb_calc_modes(index_t index, double *mode);
  * @param index the local lattice site (Input).
  * @param rho   local fluid density
  */
-MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
+inline void lb_calc_local_rho(index_t index, double *rho) {
 
 #ifndef D3Q19
 #error Only D3Q19 is implemened!
@@ -323,7 +323,7 @@ MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
  * @param index The local lattice site (Input).
  * @param j local fluid speed
  */
-MDINLINE void lb_calc_local_j(index_t index, double *j) {
+inline void lb_calc_local_j(index_t index, double *j) {
 
 #ifndef D3Q19
 #error Only D3Q19 is implemened!
@@ -358,7 +358,7 @@ MDINLINE void lb_calc_local_j(index_t index, double *j) {
  * @param index The local lattice site (Input).
  * @param pi local fluid pressure
  */
-MDINLINE void lb_calc_local_pi(index_t index, double *pi) {
+inline void lb_calc_local_pi(index_t index, double *pi) {
 
   double rho;
   double j[3];
@@ -381,7 +381,7 @@ MDINLINE void lb_calc_local_pi(index_t index, double *pi) {
  * @param j       local fluid speed
  * @param pi      local fluid pressure
  */
-MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi) {
+inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi) {
   
   if (!(lattice_switch & LATTICE_LB)) {
     ERROR_SPRINTF(runtime_error(128), 
@@ -459,7 +459,7 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
 }
 
 #ifdef LB_BOUNDARIES
-MDINLINE void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
+inline void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
   
   if (!(lattice_switch & LATTICE_LB)) {
     ERROR_SPRINTF(runtime_error(128), 
@@ -477,14 +477,14 @@ MDINLINE void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
  * @param index The local lattice site (Input).
  * @param pop fluid population
  */
-MDINLINE void lb_get_populations(index_t index, double* pop) {
+inline void lb_get_populations(index_t index, double* pop) {
   int i=0;
   for (i=0; i<19; i++) {
     pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho[0];
   }
 }
 
-MDINLINE void lb_set_populations(index_t index, double* pop) {
+inline void lb_set_populations(index_t index, double* pop) {
   int i=0;
   for (i=0; i<19; i++) {
     lbfluid[0][i][index]=pop[i]-lbmodel.coeff[i][0]*lbpar.rho[0];

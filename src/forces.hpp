@@ -122,7 +122,7 @@ void init_forces_ghosts();
 void check_forces();
 
 
-MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
+inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
 					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
 {
 #ifdef NO_INTRA_NB
@@ -199,7 +199,7 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
 #endif
 }
 
-MDINLINE void calc_non_bonded_pair_force(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
+inline void calc_non_bonded_pair_force(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
 #ifdef MOL_CUT
    //You may want to put a correction factor and correction term for smoothing function else then theta
    if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
@@ -209,7 +209,7 @@ MDINLINE void calc_non_bonded_pair_force(Particle *p1,Particle *p2,IA_parameters
    }
 }
 
-MDINLINE void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+inline void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
    IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
    double t1[3],t2[3];
 #ifdef ADRESS
@@ -225,7 +225,7 @@ MDINLINE void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double
 #endif
 }
 
-MDINLINE void calc_non_bonded_pair_force_from_partcfg(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
+inline void calc_non_bonded_pair_force_from_partcfg(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
 #ifdef MOL_CUT
    //You may want to put a correction factor and correction term for smoothing function else then theta
    if (checkIfParticlesInteractViaMolCut_partcfg(p1,p2,ia_params)==1)
@@ -235,7 +235,7 @@ MDINLINE void calc_non_bonded_pair_force_from_partcfg(Particle *p1,Particle *p2,
    }
 }
 
-MDINLINE void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+inline void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
    IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
    double t1[3],t2[3];
    calc_non_bonded_pair_force_from_partcfg(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
@@ -247,7 +247,7 @@ MDINLINE void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Partic
     @param d         vector between p1 and p2. 
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
-MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2, 
+inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, 
 					double d[3], double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
@@ -408,7 +408,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 /** Calculate bonded forces for one particle.
     @param p1 particle for which to calculate forces
 */
-MDINLINE void add_bonded_force(Particle *p1)
+inline void add_bonded_force(Particle *p1)
 {
   double dx[3]     = { 0., 0., 0. };
   double force[3]  = { 0., 0., 0. };
@@ -714,7 +714,7 @@ switch (type) {
 }  
 
 /** add force to another. This is used when collecting ghost forces. */
-MDINLINE void add_force(ParticleForce *F_to, ParticleForce *F_add)
+inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
 {
   int i;
   for (i = 0; i < 3; i++)
@@ -725,7 +725,7 @@ MDINLINE void add_force(ParticleForce *F_to, ParticleForce *F_add)
 #endif
 }
 
-MDINLINE void check_particle_force(Particle *part)
+inline void check_particle_force(Particle *part)
 {
   
   int i;

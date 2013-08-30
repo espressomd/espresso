@@ -35,7 +35,7 @@
 int stretching_force_set_params(int bond_type, double r0, double ks);
 
 
-MDINLINE double KS(double lambda){ // Defined by (19) from Dupin2007
+inline double KS(double lambda){ // Defined by (19) from Dupin2007
 	double res;
 	res = (pow(lambda,0.5) + pow(lambda,-2.5))/(lambda + pow(lambda,-3.));
 	return res;
@@ -50,7 +50,7 @@ MDINLINE double KS(double lambda){ // Defined by (19) from Dupin2007
  @param force     returns force of particle 1
  @return true if the bond is broken
  */
-MDINLINE int calc_stretching_force_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
+inline int calc_stretching_force_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
 {
   int i;
   double fac, dr, len2, len;

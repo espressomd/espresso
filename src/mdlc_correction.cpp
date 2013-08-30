@@ -69,7 +69,7 @@ void calc_mu_max() {
 
 /* ******************************************************************* */
 
-MDINLINE double g1_DLC_dip(double g,double x) {
+inline double g1_DLC_dip(double g,double x) {
   double a,c,cc2,x3;
   c=g/x;
   cc2=c*c;
@@ -80,7 +80,7 @@ MDINLINE double g1_DLC_dip(double g,double x) {
 /* ******************************************************************* */
 
 
-MDINLINE double g2_DLC_dip(double g,double x) {
+inline double g2_DLC_dip(double g,double x) {
   double a,x2;
   x2=x*x;
   a=g*g/x+2.0*g/x2+2.0/(x2*x); 

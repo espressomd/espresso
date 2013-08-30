@@ -101,7 +101,7 @@ void thermo_cool_down();
 /** add velocity-dependend noise and friction for NpT-sims to the particle's velocity 
     @param dt_vj  j-component of the velocity scaled by time_step dt 
     @return       j-component of the noise added to the velocity, also scaled by dt (contained in prefactors) */
-MDINLINE double friction_therm0_nptiso(double dt_vj) {
+inline double friction_therm0_nptiso(double dt_vj) {
   extern double nptiso_pref1, nptiso_pref2;
   if(thermo_switch & THERMO_NPT_ISO)   
     return ( nptiso_pref1*dt_vj + nptiso_pref2*(d_random()-0.5) );
@@ -109,7 +109,7 @@ MDINLINE double friction_therm0_nptiso(double dt_vj) {
 }
 
 /** add p_diff-dependend noise and friction for NpT-sims to \ref nptiso_struct::p_diff */
-MDINLINE double friction_thermV_nptiso(double p_diff) {
+inline double friction_thermV_nptiso(double p_diff) {
   extern double nptiso_pref3, nptiso_pref4;
   if(thermo_switch & THERMO_NPT_ISO)   
     return ( nptiso_pref3*p_diff + nptiso_pref4*(d_random()-0.5) );
@@ -120,7 +120,7 @@ MDINLINE double friction_thermV_nptiso(double p_diff) {
 /** overwrite the forces of a particle with
     the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
 */
-MDINLINE void friction_thermo_langevin(Particle *p)
+inline void friction_thermo_langevin(Particle *p)
 {
   extern double langevin_pref1, langevin_pref2;
 #ifdef LANGEVIN_PER_PARTICLE
@@ -198,7 +198,7 @@ MDINLINE void friction_thermo_langevin(Particle *p)
 /** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
     The same friction coefficient \f$\gamma\f$ is used as that for translation.
 */
-MDINLINE void friction_thermo_langevin_rotation(Particle *p)
+inline void friction_thermo_langevin_rotation(Particle *p)
 {
   extern double langevin_pref2;
 

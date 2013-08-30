@@ -209,7 +209,7 @@ void p3m_shrink_wrap_charge_grid(int n_charges);
 
 /** Calculate real space contribution of coulomb pair forces.
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
-MDINLINE double p3m_add_pair_force(double chgfac, double *d,double dist2,double dist,double force[3])
+inline double p3m_add_pair_force(double chgfac, double *d,double dist2,double dist,double force[3])
 {
   int j;
   double fac1,fac2, adist, erfc_part_ri;
@@ -251,7 +251,7 @@ int p3m_set_ninterpol(int n);
 
 
 /** Calculate real space contribution of coulomb pair energy. */
-MDINLINE double p3m_pair_energy(double chgfac, double *d,double dist2,double dist)
+inline double p3m_pair_energy(double chgfac, double *d,double dist2,double dist)
 {
   double adist, erfc_part_ri;
 

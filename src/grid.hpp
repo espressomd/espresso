@@ -107,7 +107,7 @@ int node_grid_is_set();
  * \param node   rank of the node you want to know the position for.
  * \param pos    position of the node in node grid.        
 */
-MDINLINE void map_node_array(int node, int pos[3])
+inline void map_node_array(int node, int pos[3])
 {
   MPI_Cart_coords(comm_cart, node, 3, pos);
 }
@@ -117,7 +117,7 @@ MDINLINE void map_node_array(int node, int pos[3])
  * \return      rank of the node at position pos.
  * \param pos   position of the node in node grid.        
 */
-MDINLINE int map_array_node(int pos[3])
+inline int map_array_node(int pos[3])
 {
   int rank;
   MPI_Cart_rank(comm_cart, pos, &rank);
@@ -173,7 +173,7 @@ void rescale_boxl(int dir, double d_new);
     @param b the vector to subtract
     @param res where to store the result
 */
-MDINLINE void get_mi_vector(double res[3], double a[3], double b[3])
+inline void get_mi_vector(double res[3], double a[3], double b[3])
 {
   int i;
 
@@ -194,7 +194,7 @@ MDINLINE void get_mi_vector(double res[3], double a[3], double b[3])
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-MDINLINE void fold_coordinate(double pos[3], int image_box[3], int dir)
+inline void fold_coordinate(double pos[3], int image_box[3], int dir)
 {
   int tmp;
 #ifdef PARTIAL_PERIODIC
@@ -220,7 +220,7 @@ MDINLINE void fold_coordinate(double pos[3], int image_box[3], int dir)
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-MDINLINE void fold_position(double pos[3],int image_box[3])
+inline void fold_position(double pos[3],int image_box[3])
 {
   int i;
   for(i=0;i<3;i++)
@@ -234,7 +234,7 @@ MDINLINE void fold_position(double pos[3],int image_box[3])
     Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
     afterwards.
 */
-MDINLINE void unfold_position(double pos[3],int image_box[3])
+inline void unfold_position(double pos[3],int image_box[3])
 {
   int i;
   for(i=0;i<3;i++) {

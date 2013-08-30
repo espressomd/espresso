@@ -1972,7 +1972,7 @@ void lb_calc_modes(index_t index, double *mode) {
 }
 
 /** Streaming and calculation of modes (pull scheme) */
-MDINLINE void lb_pull_calc_modes(index_t index, double *mode) {
+inline void lb_pull_calc_modes(index_t index, double *mode) {
 
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
@@ -2060,7 +2060,7 @@ MDINLINE void lb_pull_calc_modes(index_t index, double *mode) {
 #endif
 }
 
-MDINLINE void lb_relax_modes(index_t index, double *mode) {
+inline void lb_relax_modes(index_t index, double *mode) {
 
   double rho, j[3], pi_eq[6];
 
@@ -2117,7 +2117,7 @@ MDINLINE void lb_relax_modes(index_t index, double *mode) {
 
 }
 
-MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
+inline void lb_thermalize_modes(index_t index, double *mode) {
     double fluct[6];
 #ifdef GAUSSRANDOM
     double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho[0]*agrid*agrid*agrid));
@@ -2173,7 +2173,7 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
 #endif
 }
 
-MDINLINE void lb_apply_forces(index_t index, double* mode) {
+inline void lb_apply_forces(index_t index, double* mode) {
 
   double rho, *f, u[3], C[6];
   
@@ -2225,7 +2225,7 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
 
 }
 
-MDINLINE void lb_calc_n_from_modes(index_t index, double *mode) {
+inline void lb_calc_n_from_modes(index_t index, double *mode) {
 
   int i;
   double *w = lbmodel.w;
@@ -2290,7 +2290,7 @@ MDINLINE void lb_calc_n_from_modes(index_t index, double *mode) {
 
 }
 
-MDINLINE void lb_calc_n_from_modes_push(index_t index, double *m) {
+inline void lb_calc_n_from_modes_push(index_t index, double *m) {
     int i;
 
 #ifdef D3Q19
@@ -2385,7 +2385,7 @@ MDINLINE void lb_calc_n_from_modes_push(index_t index, double *m) {
 }
 
 /* Collisions and streaming (push scheme) */
-MDINLINE void lb_collide_stream() {
+inline void lb_collide_stream() {
     index_t index;
     int x, y, z;
     double modes[19];
@@ -2467,7 +2467,7 @@ MDINLINE void lb_collide_stream() {
 }
 
 /** Streaming and collisions (pull scheme) */
-MDINLINE void lb_stream_collide() {
+inline void lb_stream_collide() {
     index_t index;
     int x, y, z;
     double modes[19];
@@ -2567,7 +2567,7 @@ void lattice_boltzmann_update() {
  * @param p          The coupled particle (Input).
  * @param force      Coupling force between particle and fluid (Output).
  */
-MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
+inline void lb_viscous_coupling(Particle *p, double force[3]) {
   int x,y,z;
   index_t node_index[8];
   double delta[6];

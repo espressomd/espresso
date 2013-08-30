@@ -42,7 +42,7 @@ int ljcos2_set_params(int part_type_a, int part_type_b,
 		      double w);
 
 /** Calculate lj-cos2 force between particle p1 and p2 */
-MDINLINE void add_ljcos2_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_ljcos2_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
   int j;
@@ -97,7 +97,7 @@ MDINLINE void add_ljcos2_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 }
 
 /** calculate lj-cos2 energy between particle p1 and p2. */
-MDINLINE double ljcos2_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double ljcos2_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
   double r_off, frac2, frac6;

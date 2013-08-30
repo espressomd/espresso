@@ -45,7 +45,7 @@ int harmonic_set_params(int bond_type, double k, double r,double r_cut);
     @param force     returns force of particle 1
     @return 0.
 */
-MDINLINE int calc_harmonic_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
+inline int calc_harmonic_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
 {
   int i;
   double fac;
@@ -78,7 +78,7 @@ MDINLINE int calc_harmonic_pair_force(Particle *p1, Particle *p2, Bonded_ia_para
   return 0;
 }
 
-MDINLINE int harmonic_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
+inline int harmonic_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
 {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);

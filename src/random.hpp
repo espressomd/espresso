@@ -78,7 +78,7 @@ long   print_random_seed(void);
 RandomStatus  print_random_stat(void);
 
 /** classical RAN1 random number generator */
-MDINLINE long l_random(void)
+inline long l_random(void)
 {
   /* 
    *    N O T E   T H A T   T H E R E   A R E   N O   S A F E T Y   C H E C K S  !!!
@@ -96,7 +96,7 @@ MDINLINE long l_random(void)
 }
 
 /** same as l_random, but for integer */
-MDINLINE int i_random(int maxint)
+inline int i_random(int maxint)
 {
   /* delivers an integer between 0 and maxint-1 */
   int temp;
@@ -107,7 +107,7 @@ MDINLINE int i_random(int maxint)
 
 /*----------------------------------------------------------------------*/
 
-MDINLINE double d_random(void)
+inline double d_random(void)
 {
   /* delivers a uniform double between 0 and 1 */
   double temp;
@@ -126,7 +126,7 @@ MDINLINE double d_random(void)
  * @return Gaussian random number.
  *
  */
-MDINLINE double gaussian_random(void) {
+inline double gaussian_random(void) {
   double x1, x2, r2, fac;
   static int calc_new = 1;
   static double save;

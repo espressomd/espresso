@@ -47,7 +47,7 @@ int volume_force_set_params(int bond_type, double V0, double kv);
  *  !!! loop over particles from domain_decomposition !!!
  */  
 
-MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-same approach
+inline void calc_volume(double *volume, int molType){ //first-fold-then-the-same approach
 	double partVol=0.,A,norm[3],dn,hz;
 	
 	/** loop over particles */
@@ -124,7 +124,7 @@ MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-sa
 	MPI_Allreduce(&partVol, volume, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 }
 
-MDINLINE void add_volume_force(double volume, int molType){  //first-fold-then-the-same approach
+inline void add_volume_force(double volume, int molType){  //first-fold-then-the-same approach
 	double A,norm[3],dn; //partVol=0.
 
 	double vv, force[3];

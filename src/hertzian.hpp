@@ -39,7 +39,7 @@ int hertzian_set_params(int part_type_a, int part_type_b,
 			double eps, double sig);
 
 /** Calculate Hertzian force between particle p1 and p2 */
-MDINLINE void add_hertzian_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_hertzian_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				      double d[3], double dist, double dist2, double force[3])
 {
   double fac;
@@ -54,7 +54,7 @@ MDINLINE void add_hertzian_pair_force(Particle *p1, Particle *p2, IA_parameters 
 }
 
 /** calculate Lennard jones energy between particle p1 and p2. */
-MDINLINE double hertzian_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double hertzian_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				     double d[3], double dist, double dist2)
 {
   if (CUTOFF_CHECK(dist < ia_params->Hertzian_sig)) {

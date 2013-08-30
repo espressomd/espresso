@@ -42,19 +42,19 @@ int buckingham_set_params(int part_type_a, int part_type_b,
 void calc_buck_cap_radii();
 
 /**Resultant Force due to a buckingham potential between two particles at interatomic separation r greater than or equal to discont*/
-MDINLINE double buck_force_r(double A, double B, double C, double D, double r )
+inline double buck_force_r(double A, double B, double C, double D, double r )
 {
    return (A*B*exp(-B*r) - 6.0*C/pow(r, 7) - 4.0*D/pow(r, 5));
 }
 /**Potential Energy due to a buckingham potential between two particles at interatomic separation r greater than or equal to discont*/
-MDINLINE double buck_energy_r(double A, double B, double C, double D, double shift, double r )
+inline double buck_energy_r(double A, double B, double C, double D, double shift, double r )
 {
    return (A*exp(-B*r) - C/pow(r, 6) - D/pow(r, 4) + shift);
 }
 
 /** Calculate Buckingham force between particle p1 and p2 and add
     it to their force. */
-MDINLINE void add_buck_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_buck_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
                                   double d[3], double dist, double force[3])
 {
   int j;
@@ -110,7 +110,7 @@ MDINLINE void add_buck_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_
 }
 
 /** calculate Buckingham energy between particle p1 and p2. */
-MDINLINE double buck_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double buck_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
 

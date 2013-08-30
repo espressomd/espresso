@@ -44,7 +44,7 @@ int area_force_local_set_params(int bond_type, double A0_l, double ka_l);
     @param force3 returns force of particle 3
     @return 0
 */
-MDINLINE int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
+inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 			      Bonded_ia_parameters *iaparams, double force1[3], double force2[3], double force3[3]) //first-fold-then-the-same approach
 {
 	int k;	
@@ -94,7 +94,7 @@ MDINLINE int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 }
 
 
-MDINLINE int calc_area_force_local_complicated(Particle *p1, Particle *p2, Particle *p3,
+inline int calc_area_force_local_complicated(Particle *p1, Particle *p2, Particle *p3,
          Bonded_ia_parameters *iaparams, double force1[3], double force2[3], double force3[3]) // more complicated approach
 {
  int k; 

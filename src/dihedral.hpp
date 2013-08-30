@@ -42,7 +42,7 @@ Vectors a, b and c are the bond vectors between consequtive particles.
 If the a,b or b,c are parallel the dihedral angle is not defined in which
 case the routine returns phi=-1. Calling functions should check for that
 (Written by: Arijit Maitra) */
-MDINLINE void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Particle *p4, 
+inline void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Particle *p4, 
 				  double a[3], double b[3], double c[3], 
 				  double aXb[3], double *l_aXb, double bXc[3], double *l_bXc, 
 				  double *cosphi, double *phi)
@@ -83,7 +83,7 @@ MDINLINE void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Part
     Written by Arijit Maitra, adapted to new force interface by Hanjo,
     more general new dihedral form by Ana.
 */
-MDINLINE int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
+inline int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
 				 Bonded_ia_parameters *iaparams, double force2[3],
 				 double force1[2], double force3[2])
 {
@@ -155,7 +155,7 @@ MDINLINE int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Parti
 
 /** calculate dihedral energy between particles p1, p2 p3 and p4 
     Written by Arijit Maitra, adapted to new force interface by Hanjo */
-MDINLINE int dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Particle *p4,
+inline int dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Particle *p4,
 			     Bonded_ia_parameters *iaparams, double *_energy) 
 {
   /* vectors for dihedral calculations. */

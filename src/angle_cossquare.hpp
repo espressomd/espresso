@@ -52,7 +52,7 @@ int angle_cossquare_set_params(int bond_type, double bend, double phi0);
     @param force2 returns force of particle 2
     @return 0
 */
-MDINLINE int calc_angle_cossquare_force(Particle *p_mid, Particle *p_left, Particle *p_right,
+inline int calc_angle_cossquare_force(Particle *p_mid, Particle *p_left, Particle *p_right,
 			      Bonded_ia_parameters *iaparams, double force1[3], double force2[3])
 {
   double cosine, vec1[3], vec2[3], d1i, d2i, dist2,  fac, f1=0.0, f2=0.0;
@@ -87,7 +87,7 @@ MDINLINE int calc_angle_cossquare_force(Particle *p_mid, Particle *p_left, Parti
 
 /* The force on each particle due to a three-body bonded potential
    is computed. */
-MDINLINE void calc_angle_cossquare_3body_forces(Particle *p_mid, Particle *p_left,
+inline void calc_angle_cossquare_3body_forces(Particle *p_mid, Particle *p_left,
               Particle *p_right, Bonded_ia_parameters *iaparams,
               double force1[3], double force2[3], double force3[3]) {
 
@@ -156,7 +156,7 @@ MDINLINE void calc_angle_cossquare_3body_forces(Particle *p_mid, Particle *p_lef
     @param _energy   return energy pointer.
     @return 0.
 */
-MDINLINE int angle_cossquare_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
+inline int angle_cossquare_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
 			     Bonded_ia_parameters *iaparams, double *_energy)
 {
   double cosine, vec1[3], vec2[3],  d1i, d2i, dist2;

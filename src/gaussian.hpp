@@ -38,7 +38,7 @@ int gaussian_set_params(int part_type_a, int part_type_b,
 			double eps, double sig, double cut);
 
 /** Calculate Gaussian force between particle p1 and p2 */
-MDINLINE void add_gaussian_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist, double dist2, double force[3])
+inline void add_gaussian_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist, double dist2, double force[3])
 {
   double fac;
   int j;
@@ -52,7 +52,7 @@ MDINLINE void add_gaussian_pair_force(Particle *p1, Particle *p2, IA_parameters 
 }
 
 /** calculate Lennard jones energy between particle p1 and p2. */
-MDINLINE double gaussian_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist, double dist2)
+inline double gaussian_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist, double dist2)
 {
   if (CUTOFF_CHECK(dist < ia_params->Gaussian_cut)) {
     return ia_params->Gaussian_eps *

@@ -58,10 +58,10 @@ int iccp3m_initialized = 0;
  * excluding forces other than the electrostatic ones */
 void init_forces_iccp3m();
 void calc_long_range_forces_iccp3m();
-MDINLINE void add_pair_iccp3m(PairList *pl, Particle *p1, Particle *p2);
+inline void add_pair_iccp3m(PairList *pl, Particle *p1, Particle *p2);
 void resize_verlet_list_iccp3m(PairList *pl);
-MDINLINE void init_local_particle_force_iccp3m(Particle *part);
-MDINLINE void init_ghost_force_iccp3m(Particle *part);
+inline void init_local_particle_force_iccp3m(Particle *part);
+inline void init_ghost_force_iccp3m(Particle *part);
 extern void on_particle_change();
 
 Cell *local_icc;
@@ -600,7 +600,7 @@ void calc_long_range_forces_iccp3m()
  *  \param p2 Pointer to paricle two.
  *  \param pl Pointer to the verlet pair list.
  */
-MDINLINE void add_pair_iccp3m(PairList *pl, Particle *p1, Particle *p2)
+inline void add_pair_iccp3m(PairList *pl, Particle *p1, Particle *p2)
 {
   /* check size of verlet List */
   if(pl->n+1 >= pl->max) {
@@ -626,7 +626,7 @@ void resize_verlet_list_iccp3m(PairList *pl)
 }
 
 /** initialize the forces for a real particle */
-MDINLINE void init_local_particle_force_iccp3m(Particle *part)
+inline void init_local_particle_force_iccp3m(Particle *part)
 {
     part->f.f[0] = 0.0; /* no need to friction_thermo_langevin function */
     part->f.f[1] = 0.0;
@@ -641,7 +641,7 @@ MDINLINE void init_local_particle_force_iccp3m(Particle *part)
 }
 
 /** initialize the forces for a ghost particle */
-MDINLINE void init_ghost_force_iccp3m(Particle *part)
+inline void init_ghost_force_iccp3m(Particle *part)
 {
   part->f.f[0] = 0.0;
   part->f.f[1] = 0.0;

@@ -135,7 +135,7 @@ void nemd_store_velocity_profile();
 
 /** Store the x-componenet of the velocity of particle part into the
     nemd data structure \ref nemddata. */
-MDINLINE void nemd_get_velocity(Particle part) 
+inline void nemd_get_velocity(Particle part) 
 {
   int  slab_num, i;
   Slab *slab;
@@ -209,7 +209,7 @@ MDINLINE void nemd_get_velocity(Particle part)
   }
 }
 
-MDINLINE void nemd_add_velocity (Particle *part) {
+inline void nemd_add_velocity (Particle *part) {
   if( !(nemd_method == NEMD_METHOD_SHEARRATE) ) {
     return;
   } else {

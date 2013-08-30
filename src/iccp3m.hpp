@@ -143,7 +143,7 @@ int iccp3m_sanity_check();
 
 /** Variant of add_non_bonded_pair_force where only coulomb 
  *  contributions are calculated   */
-MDINLINE void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2, 
+inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2, 
 					double d[3], double dist, double dist2)
 {
   /* IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);*/

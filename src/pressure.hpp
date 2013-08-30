@@ -70,7 +70,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     @param d         vector between p1 and p2.
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
-MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
+inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 					  double dist, double dist2)
 {
   int p1molid, p2molid, k, l;
@@ -153,7 +153,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #endif /*ifdef DIPOLES */
 }
 
-MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, int *i, double dx[3], double force[3]) {
+inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, int *i, double dx[3], double force[3]) {
 #ifdef TABULATED
   char* errtxt;
 #endif
@@ -253,7 +253,7 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
 
 /* calc_three_body_bonded_forces is called by add_three_body_bonded_stress. This
    routine is only entered for angular potentials. */
-MDINLINE void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle *p3,
+inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle *p3,
               Bonded_ia_parameters *iaparams, double force1[3], double force2[3], double force3[3]) {
 
 #ifdef TABULATED
@@ -309,7 +309,7 @@ MDINLINE void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle
     So here we do some tricks to get the value out without changing the forces.
     @param p1 particle for which to calculate virials
 */
-MDINLINE void add_bonded_virials(Particle *p1)
+inline void add_bonded_virials(Particle *p1)
 {
   double dx[3], force[3] = {0,0,0};
   char *errtxt;
@@ -353,7 +353,7 @@ MDINLINE void add_bonded_virials(Particle *p1)
     for the contribution of the entire interaction - this is the coding
     not the physics.
 */
-MDINLINE void add_three_body_bonded_stress(Particle *p1) {
+inline void add_three_body_bonded_stress(Particle *p1) {
   double dx12[3]; // espresso notation
   double dx21[3];
   double dx31[3];
@@ -506,7 +506,7 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
 		  (hence it only works with domain decomposition); naturally it
 		  therefore doesn't make sense to use it without NpT.
 */
-MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
+inline void add_kinetic_virials(Particle *p1,int v_comp)
 {
   int k, l;
   /* kinetic energy */

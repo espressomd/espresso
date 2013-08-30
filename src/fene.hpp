@@ -45,7 +45,7 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
     @param force     returns force of particle 1
     @return true if the bond is broken
 */
-MDINLINE int calc_fene_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
+inline int calc_fene_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
 {
   int i;
   double fac, dr, len2, len;
@@ -80,7 +80,7 @@ MDINLINE int calc_fene_pair_force(Particle *p1, Particle *p2, Bonded_ia_paramete
   return 0;
 }
 
-MDINLINE int fene_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
+inline int fene_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
 {
   double energy, dr;
 

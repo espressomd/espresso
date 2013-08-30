@@ -156,7 +156,7 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
 
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
-MDINLINE double dp3m_add_pair_force(Particle *p1, Particle *p2,
+inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
 					   double *d,double dist2,double dist,double force[3])
 {
   int j;
@@ -232,7 +232,7 @@ MDINLINE double dp3m_add_pair_force(Particle *p1, Particle *p2,
 }
 
 /** Calculate real space contribution of dipolar pair energy. */
-MDINLINE double dp3m_pair_energy(Particle *p1, Particle *p2,
+inline double dp3m_pair_energy(Particle *p1, Particle *p2,
 					double *d,double dist2,double dist)
 {
   double /* fac1,*/ adist, erfc_part_ri, coeff, exp_adist2, dist2i;

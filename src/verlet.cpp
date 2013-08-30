@@ -55,7 +55,7 @@
  *  \param p2 Pointer to particle two.
  *  \param pl Pointer to the verlet pair list.
  */
-MDINLINE void add_pair(PairList *pl, Particle *p1, Particle *p2)
+inline void add_pair(PairList *pl, Particle *p1, Particle *p2)
 {
   /* check size of verlet List */
   if(pl->n+1 >= pl->max) {

@@ -100,7 +100,7 @@ void energy_calc(double *result);
     @param dist2     distance squared between p1 and p2.
     @return the short ranged interaction energy between the two particles
 */
-MDINLINE double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
+inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 					    IA_parameters *ia_params,
 					    double d[3], double dist, double dist2)
 {
@@ -203,7 +203,7 @@ MDINLINE double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
     @param d         vector between p1 and p2. 
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
-MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
+inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 					 double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
@@ -274,7 +274,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 /** Calculate bonded energies for one particle.
     @param p1 particle for which to calculate energies
 */
-MDINLINE void add_bonded_energy(Particle *p1)
+inline void add_bonded_energy(Particle *p1)
 {
   char *errtxt;
   Particle *p2, *p3 = NULL, *p4 = NULL;
@@ -454,7 +454,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
 /** Calculate kinetic energies for one particle.
     @param p1 particle for which to calculate energies
 */
-MDINLINE void add_kinetic_energy(Particle *p1)
+inline void add_kinetic_energy(Particle *p1)
 {
 #ifdef VIRTUAL_SITES
   if (ifParticleIsVirtual(p1)) return;

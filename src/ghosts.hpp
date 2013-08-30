@@ -197,7 +197,7 @@ void invalidate_ghosts();
 
 /* TODO: This function is not used anywhere. To be removed?  */
 #ifdef GHOST_FLAG
-MDINLINE int ifParticleIsGhost(Particle *p){
+inline int ifParticleIsGhost(Particle *p){
    return p->l.ghost;
 }
 #endif

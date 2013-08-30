@@ -42,7 +42,7 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
 				      double cap_radius, double min);
 
 /** Calculate lennard Jones force between particle p1 and p2 */
-MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
   int j;
@@ -94,7 +94,7 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 }
 
 /** calculate Lennard jones energy between particle p1 and p2. */
-MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
   double r_off, frac2, frac6;

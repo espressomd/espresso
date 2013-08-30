@@ -247,7 +247,7 @@ void calc_long_range_forces()
 /************************************************************/
 
 /** initialize the forces for a real particle */
-MDINLINE void init_local_particle_force(Particle *part)
+inline void init_local_particle_force(Particle *part)
 {
 #ifdef ADRESS
   double new_weight;
@@ -357,7 +357,7 @@ MDINLINE void init_local_particle_force(Particle *part)
 }
 
 /** initialize the forces for a ghost particle */
-MDINLINE void init_ghost_force(Particle *part)
+inline void init_ghost_force(Particle *part)
 {
 #ifdef ADRESS
   if (ifParticleIsVirtual(part)) {

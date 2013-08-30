@@ -45,7 +45,7 @@ int area_force_global_set_params(int bond_type, double A0_g, double ka_g);
  *  !!! loop over particles from domain_decomposition !!!
  */  
 
-MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the-same approach
+inline void calc_area_global(double *area, int molType){ //first-fold-then-the-same approach
 	double partArea=0.,norm[3];
 
 	/** loop over particles */
@@ -125,7 +125,7 @@ MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the
 }
 
 
-MDINLINE void add_area_global_force(double area, int molType){  //first-fold-then-the-same approach
+inline void add_area_global_force(double area, int molType){  //first-fold-then-the-same approach
 	double aa, force1[3], force2[3], force3[3], rh[3], hn, h[3];
 	int k;
 	

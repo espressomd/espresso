@@ -121,7 +121,7 @@ void init_lattice(Lattice *lattice, double agrid, double tau);
  * \param  grid     local coordinates of the lattice site (Output)
  * \return         index of the node for the lattice site
  */
-MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
+inline int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
   
   /* determine coordinates in node_grid */
   grid[0] = (int)floor(ind[0]*lattice->agrid*box_l_i[0]*node_grid[0]);
@@ -151,7 +151,7 @@ MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
  * \param  grid    local coordinates of the lattice site (Output)
  * \return         index of the node for the lattice site
  */
-MDINLINE int map_lattice_to_position(Lattice *lattice, int *ind, int *grid) {
+inline int map_lattice_to_position(Lattice *lattice, int *ind, int *grid) {
   return 0;
 }
 
@@ -171,7 +171,7 @@ MDINLINE int map_lattice_to_position(Lattice *lattice, int *ind, int *grid) {
  * \param delta      distance fraction of pos from the surrounding
  *                   elementary cell, 6 directions (Output)
  */
-MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], index_t node_index[8], double delta[6]) {
+inline void map_position_to_lattice(Lattice *lattice, const double pos[3], index_t node_index[8], double delta[6]) {
 
   int dir,ind[3] ;
   double lpos, rel;
@@ -232,7 +232,7 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
  * \param tmp_agrid  lattice mesh distance
  */
 
-MDINLINE void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
+inline void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
 //not sure why I don't have access to agrid here so I make a temp var and pass it to this function
   int i;
   double rel[3];

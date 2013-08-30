@@ -40,20 +40,20 @@ int soft_sphere_set_params(int part_type_a, int part_type_b,
 
 /** Resultant Force due to a soft-sphere potential between two
     particles at interatomic separation r */
-MDINLINE double soft_force_r(double a, double n, double r )
+inline double soft_force_r(double a, double n, double r )
 {
   return (a*n/pow(r, n+1));
 }
 
 /** Potential Energy due to a soft-sphere potential between two
     particles at interatomic separation r */
-MDINLINE double soft_energy_r(double a, double n, double r )
+inline double soft_energy_r(double a, double n, double r )
 {
   return (a/pow(r, n));
 }
 
 /** Calculate soft-sphere potential force between particle p1 and p2 */
-MDINLINE void add_soft_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_soft_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
   int j;
@@ -78,7 +78,7 @@ MDINLINE void add_soft_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_
 }
 
 /** calculate soft-sphere energy between particle p1 and p2. */
-MDINLINE double soft_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double soft_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
   double r_off;

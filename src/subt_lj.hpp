@@ -42,7 +42,7 @@ int subt_lj_set_params(int bond_type, double k, double r);
     @param force     force on particles
     @return true if bond is broken
 */
-MDINLINE int calc_subt_lj_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
+inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
 {
   int i;
   double fac_lj=0.0;
@@ -81,7 +81,7 @@ MDINLINE int calc_subt_lj_pair_force(Particle *p1, Particle *p2, Bonded_ia_param
   return 0;
 }
 
-MDINLINE int subt_lj_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
+inline int subt_lj_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
 {
   double energy=0.0;
   IA_parameters *ia_params;

@@ -32,7 +32,7 @@
 typedef DoubleList Polynom;
 
 /** evaluate the polynomial interpreted as a Taylor series via the Horner scheme */
-MDINLINE double evaluateAsTaylorSeriesAt(Polynom *series, double x)
+inline double evaluateAsTaylorSeriesAt(Polynom *series, double x)
 {
   int cnt   = series->n - 1;
   double *c = series->e;
@@ -44,7 +44,7 @@ MDINLINE double evaluateAsTaylorSeriesAt(Polynom *series, double x)
 
 /** evaluate the polynomial interpreted as a Chebychev series. Requires a series with at least
     three coefficients, i.e. no linear approximations! */
-MDINLINE double evaluateAsChebychevSeriesAt(Polynom *series, double x)
+inline double evaluateAsChebychevSeriesAt(Polynom *series, double x)
 {
   int j;
   double *c = series->e;

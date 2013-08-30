@@ -43,7 +43,7 @@ int morse_set_params(int part_type_a, int part_type_b,
 void calc_morse_cap_radii();
 
 /** Calculate Morse force between particle p1 and p2 */
-MDINLINE void add_morse_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_morse_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				   double d[3], double dist, double force[3])
 {
   double add1, add2, fac=0.0;
@@ -98,7 +98,7 @@ MDINLINE void add_morse_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 }
 
 /** calculate Morse energy between particle p1 and p2. */
-MDINLINE double morse_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double morse_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
 

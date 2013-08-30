@@ -41,7 +41,7 @@ int smooth_step_set_params(int part_type_a, int part_type_b,
 			   double cut);
 
 /** Calculate smooth step force between particle p1 and p2 */
-MDINLINE void add_SmSt_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_SmSt_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				  double d[3], double dist,double dist2, double force[3])
 {
   if (!CUTOFF_CHECK(dist < ia_params->SmSt_cut))
@@ -59,7 +59,7 @@ MDINLINE void add_SmSt_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_
 }
 
 /** calculate smooth step potential energy between particle p1 and p2. */
-MDINLINE double SmSt_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double SmSt_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				 double d[3], double dist,double dist2)
 {
   if (!CUTOFF_CHECK(dist < ia_params->SmSt_cut))

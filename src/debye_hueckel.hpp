@@ -53,7 +53,7 @@ int dh_set_params(double kappa, double r_cut);
     @param dist      Distance between p1 and p2.
     @param force     returns the force on particle 1.
 */
-MDINLINE void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
+inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
   int j;
   double kappa_dist, fac;
@@ -76,7 +76,7 @@ MDINLINE void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 }
 
-MDINLINE double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
+inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
   if(dist < dh_params.r_cut) {
     if(dh_params.kappa > 0.0)

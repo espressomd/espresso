@@ -50,7 +50,7 @@ int overlapped_bonded_set_params(int bond_type, int overlap_type,
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.h).
 */
-MDINLINE int calc_overlap_bond_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3]) 
+inline int calc_overlap_bond_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3]) 
 {
   int i;
   double fac;
@@ -94,7 +94,7 @@ MDINLINE int calc_overlap_bond_force(Particle *p1, Particle *p2, Bonded_ia_param
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.h).
 */
-MDINLINE int overlap_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy) 
+inline int overlap_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy) 
 {
 
   int ig;
@@ -127,7 +127,7 @@ MDINLINE int overlap_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameter
     @return 0
     Needs feature OVERLAPPED compiled in (see \ref config.h). 
 */
-MDINLINE int calc_overlap_angle_force(Particle *p_mid, Particle *p_left, 
+inline int calc_overlap_angle_force(Particle *p_mid, Particle *p_left, 
 				  Particle *p_right, Bonded_ia_parameters *iaparams,
 				  double force1[3], double force2[3])
 {
@@ -189,7 +189,7 @@ MDINLINE int calc_overlap_angle_force(Particle *p_mid, Particle *p_left,
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.h). 
 */
-MDINLINE int overlap_angle_energy(Particle *p_mid, Particle *p_left, 
+inline int overlap_angle_energy(Particle *p_mid, Particle *p_left, 
 			      Particle *p_right, Bonded_ia_parameters *iaparams,
 			      double *_energy)
 {
@@ -241,7 +241,7 @@ MDINLINE int overlap_angle_energy(Particle *p_mid, Particle *p_left,
     @return 0
     Needs feature OVERLAPPED compiled in (see \ref config.h). 
 */
-MDINLINE int calc_overlap_dihedral_force(Particle *p2, Particle *p1,
+inline int calc_overlap_dihedral_force(Particle *p2, Particle *p1,
 					 Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
 					 double force2[3], double force1[3], double force3[3])
 {
@@ -312,7 +312,7 @@ MDINLINE int calc_overlap_dihedral_force(Particle *p2, Particle *p1,
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.h). 
 */
-MDINLINE int overlap_dihedral_energy(Particle *p2, Particle *p1, 
+inline int overlap_dihedral_energy(Particle *p2, Particle *p1, 
 				 Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
 				 double *_energy)
 {

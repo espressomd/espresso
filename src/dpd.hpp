@@ -64,7 +64,7 @@ void dpd_cool_down();
 
 /** Calculate Random Force and Friction Force acting between particle
     p1 and p2 and add them to their forces. */
-MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
+inline void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
 {
   extern double dpd_gamma,dpd_pref1, dpd_pref2,dpd_r_cut,dpd_r_cut_inv;
   extern int dpd_wf;
@@ -195,7 +195,7 @@ int inter_dpd_set_params(int part_type_a, int part_type_b,
 void inter_dpd_init();
 void inter_dpd_update_params(double pref2_scale);
 
-MDINLINE void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double dist2)
 {
   int j;
@@ -303,7 +303,7 @@ MDINLINE void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters
 }
 
 /* TODO: This function is not used anywhere. To be removed?  */
-MDINLINE double inter_dpd_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double inter_dpd_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
    return 0;

@@ -63,15 +63,6 @@ AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
      fake implementation for only one processor is used. @<:@guess@:>@])
 ],,[with_mpi=guess])
 
-AX_PROG_CXX_MPI([test x"$with_mpi" != xno],,[
-  if test xyes = x"$with_mpi"; then
-    AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
-  else
-    AC_MSG_WARN([No MPI compiler found, will use fake implementation!])
-    use_mpi_fake="yes"
-  fi
-])
-
 # we use C++ as main code language
 AC_LANG([C++])
 AX_PROG_CXX_MPI([test x"$with_mpi" != xno],,[
@@ -148,29 +139,6 @@ if test "${CXXFLAGS+set}" != set; then
     AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
   ])
 fi
-
-##################################
-# test inlining
-AS_IF([test .$enable_debug = .yes || test .$enable_profiling = .yes], [
-  mdinline=static
-],[
-  AC_MSG_CHECKING([how to inline functions])
-  for mdinline in "static inline" "inline static" "inline" "static"; do
-    AC_COMPILE_IFELSE([
-      AC_LANG_PROGRAM([
-/**** This HAS to be at the beginning of the line for some compilers ****/
-#define MDINLINE $mdinline
-MDINLINE void test() {}],[test();])
-    ],[works=yes],[works=no])
-    if test .$works = .yes; then break; fi
-  done
-  if test .$works = .no; then
-    AC_MSG_RESULT([???])
-    AC_MSG_ERROR([your compiler does not even support "static"])
-  fi
-    AC_MSG_RESULT([$mdinline])
-])
-AC_DEFINE_UNQUOTED(MDINLINE,$mdinline,[How to inline functions])
 
 ##################################
 # miscellaneous

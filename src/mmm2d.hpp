@@ -73,12 +73,12 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double
 double MMM2D_add_far(int f, int e);
 
 /** the actual long range force calculation */
-MDINLINE void MMM2D_add_far_force() {
+inline void MMM2D_add_far_force() {
   MMM2D_add_far(1,0);
 }
 
 /** the actual long range energy calculation */
-MDINLINE double MMM2D_far_energy() {
+inline double MMM2D_far_energy() {
   return MMM2D_add_far(0,1);
 }
 

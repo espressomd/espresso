@@ -40,20 +40,20 @@ int hat_set_params(int part_type_a, int part_type_b,
 
 /** Resultant Force due to an hat potential between two
     particles at interatomic separation dist */
-MDINLINE double hat_force_r(double Fmax, double r, double dist )
+inline double hat_force_r(double Fmax, double r, double dist )
 {
   return dist < r ? Fmax * (1 - dist/r) : 0.0;
 }
 
 /** Potential Energy due to an hat potential between two
     particles at interatomic separation dist */
-MDINLINE double hat_energy_r(double Fmax, double r, double dist )
+inline double hat_energy_r(double Fmax, double r, double dist )
 {
   return dist < r ? Fmax * (dist-r) * ( (dist+r) / (2.0*r) - 1.0 ) : 0.0;
 }
 
 /** Calculate hat potential force between particle p1 and p2 */
-MDINLINE void add_hat_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_hat_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
   int j;
@@ -76,7 +76,7 @@ MDINLINE void add_hat_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_p
 }
 
 /** calculate hat energy between particle p1 and p2. */
-MDINLINE double hat_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline double hat_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
   if(CUTOFF_CHECK(dist < ia_params->HAT_r)) {   
