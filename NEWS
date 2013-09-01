@@ -37,12 +37,6 @@ New user-visible features
 * Added new feature ROTATION_PER_PARTICLE that allows to choose
   whether a particle has rotational degrees of freedom or not.
 
-* The functions for galilei transformations have been overhauled and
-  renamed. The old functions are deprecated.
-
-* DPD (as thermostat) now works without any other interaction, so a pure
-  DPD fluid is possible.
-
 User-visible changes
 --------------------
 
@@ -60,6 +54,12 @@ User-visible changes
 
 * By default, CUDA is now automatically detected and activated when it
   is there and usable.
+
+* The functions for galilei transformations have been overhauled and
+  renamed. The old functions are deprecated.
+
+* DPD (as thermostat) now works without any other interaction, so a pure
+  DPD fluid is possible.
 
 ESPResSo 3.1.2
 ==============
