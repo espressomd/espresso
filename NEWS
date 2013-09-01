@@ -2,6 +2,33 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 3.3
+============
+
+New user-visible features
+-------------------------
+
+* Support of P3M on GPU.
+
+* Allow the p3m to dump the mesh in x, y, and z (before it only dumped
+the mesh in x). This allows for the dumping of the p3m in blockfile
+format in the case of non-cubic boxes. It will also now be possible to
+tune the settings of a non-cubic mesh.
+
+* Stomatocyte lb-boundary and constraint implemented.
+
+* MEMD electrostatics can now handle spatially varying dielectrc
+  constants.
+
+User-visible changes
+--------------------
+
+* Generic LJ can now turned into an soft potential.
+
+* Renamed torque to torque_{lab,body}, improved torque handling in
+  blockfiles.  Clearer distinction between the reference frames for
+  torque and angular momentum.
+
 ESPResSo 3.2
 ============
 
@@ -37,26 +64,6 @@ New user-visible features
 * Added new feature ROTATION_PER_PARTICLE that allows to choose
   whether a particle has rotational degrees of freedom or not.
 
-* The functions for galilei transformations have been overhauled and
-  renamed. The old functions are deprecated.
-
-* DPD (as thermostat) now works without any other interaction, so a pure
-  DPD fluid is possible.
-
-* Renamed torque to torque_{lab,body}, improved troque handling in blockfiles.
-  Clearer distinction between the reference frames for torque and angular momentum.
-
-* Support of P3M on GPU.
-
-* Allow the p3m to dump the mesh in x, y, and z (before it only dumped the mesh in x). This allows for the dumping of the p3m in blockfile format in 
-the case of non-cubic boxes. It will also now be possible to tune setting a non-cubic mesh.
-
-* Stomatocyte lb-boundary and constraint implemented.
-
-* Generic LJ can now turned into an soft potential.
-
-* Maggs electrostatics can now handel a spacialy varying epsilon.
-
 User-visible changes
 --------------------
 
@@ -74,6 +81,12 @@ User-visible changes
 
 * By default, CUDA is now automatically detected and activated when it
   is there and usable.
+
+* The functions for galilei transformations have been overhauled and
+  renamed. The old functions are deprecated.
+
+* DPD (as thermostat) now works without any other interaction, so a pure
+  DPD fluid is possible.
 
 ESPResSo 3.1.2
 ==============
