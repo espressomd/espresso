@@ -135,6 +135,7 @@ libEspresso_a_SOURCES += \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
 	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
+	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
 	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
 
 # Coulomb methods
@@ -244,6 +245,8 @@ libEspresso_a_SOURCES += \
 	tcl/object-in-fluid/bending_force_tcl.hpp \
 	tcl/object-in-fluid/stretching_force_tcl.cpp \
 	tcl/object-in-fluid/stretching_force_tcl.hpp \
+	tcl/object-in-fluid/stretchlin_force_tcl.cpp \
+	tcl/object-in-fluid/stretchlin_force_tcl.hpp \
 	tcl/object-in-fluid/volume_force_tcl.cpp \
 	tcl/object-in-fluid/volume_force_tcl.hpp
 

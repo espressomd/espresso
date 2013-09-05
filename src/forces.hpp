@@ -58,6 +58,7 @@
 #include "gb.hpp"
 #include "fene.hpp"
 #include "object-in-fluid/stretching_force.hpp"
+#include "object-in-fluid/stretchlin_force.hpp"
 #include "object-in-fluid/area_force_local.hpp"
 #include "object-in-fluid/area_force_global.hpp"
 #include "object-in-fluid/bending_force.hpp"
@@ -483,6 +484,9 @@ inline void add_bonded_force(Particle *p1)
       break;
     case BONDED_IA_STRETCHING_FORCE:
       bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);
+      break;
+    case BONDED_IA_STRETCHLIN_FORCE:
+      bond_broken = calc_stretchlin_force_pair_force(p1, p2, iaparams, dx, force);
       break;
     case BONDED_IA_AREA_FORCE_LOCAL:
       bond_broken = calc_area_force_local(p1, p2, p3, iaparams, force, force2, force3);

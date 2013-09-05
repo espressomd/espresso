@@ -16,16 +16,30 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _OBJECT_IN_FLUID_STRETCHING_FORCE_TCL_H
-#define _OBJECT_IN_FLUID_STRETCHING_FORCE_TCL_H
+/** \file stretchlin_force.c
+ *
+ *  Implementation of \ref stretchlin_force.h
+ */
 
-#include "tcl/parser.hpp"
-#include "interaction_data.hpp"
+#include "stretchlin_force.hpp"
+#include "communication.hpp"
 
-/************************************************************/
-/// parse parameters for the stretching_force potential
-int tclcommand_inter_parse_stretching_force(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-int tclprint_to_result_stretchingforceIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
+/// set the parameters for the stretchlin_force potential
+int stretchlin_force_set_params(int bond_type, double r0, double kslin)
+{
+  if(bond_type < 0)
+    return ES_ERROR;
 
-#endif
-//#endif
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.stretchlin_force.kslin = kslin;
+  bonded_ia_params[bond_type].p.stretchlin_force.r0 = r0;
+  
+  bonded_ia_params[bond_type].type = BONDED_IA_STRETCHLIN_FORCE;
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+  
+  return ES_OK;
+}

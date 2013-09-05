@@ -48,6 +48,7 @@
 #include "gb.hpp"
 #include "fene.hpp"
 #include "object-in-fluid/stretching_force.hpp"
+#include "object-in-fluid/stretchlin_force.hpp"
 #include "object-in-fluid/area_force_local.hpp"
 #include "object-in-fluid/area_force_global.hpp"
 #include "object-in-fluid/bending_force.hpp"

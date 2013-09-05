@@ -16,16 +16,16 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _OBJECT_IN_FLUID_STRETCHING_FORCE_TCL_H
-#define _OBJECT_IN_FLUID_STRETCHING_FORCE_TCL_H
+#ifndef _OBJECT_IN_FLUID_STRETCHLIN_FORCE_TCL_H
+#define _OBJECT_IN_FLUID_STRETCHLIN_FORCE_TCL_H
 
 #include "tcl/parser.hpp"
 #include "interaction_data.hpp"
 
 /************************************************************/
-/// parse parameters for the stretching_force potential
-int tclcommand_inter_parse_stretching_force(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-int tclprint_to_result_stretchingforceIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
+/// parse parameters for the stretchLIN_force potential
+int tclcommand_inter_parse_stretchlin_force(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+int tclprint_to_result_stretchlinforceIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
 
 #endif
 //#endif

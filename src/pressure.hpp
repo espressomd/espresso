@@ -413,6 +413,9 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     else if(type == BONDED_IA_STRETCHING_FORCE) {
       i = i + 2;
     }
+    else if(type == BONDED_IA_STRETCHLIN_FORCE) {
+      i = i + 2;
+    }
     else if(type == BONDED_IA_AREA_FORCE_LOCAL) {
       i = i + 3;
     }

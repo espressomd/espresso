@@ -768,6 +768,8 @@ const char *get_name_of_bonded_ia(int i) {
     return "BENDING_FORCE";
   case BONDED_IA_VOLUME_FORCE:
     return "VOLUME_FORCE";
+  case BONDED_IA_STRETCHLIN_FORCE:
+    return "STRETCHLIN_FORCE";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
 	    this_node, i);

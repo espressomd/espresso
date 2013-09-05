@@ -88,8 +88,8 @@
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
 #include "tcl/object-in-fluid/volume_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretching_force_tcl.hpp"
+#include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
-//
 
 int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 
@@ -300,6 +300,8 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
     return tclprint_to_result_feneIA(interp, params);
   case BONDED_IA_STRETCHING_FORCE:						
     return tclprint_to_result_stretchingforceIA(interp, params);
+  case BONDED_IA_STRETCHLIN_FORCE:						
+    return tclprint_to_result_stretchlinforceIA(interp, params);
   case BONDED_IA_AREA_FORCE_LOCAL:					
 	return tclprint_to_result_areaforcelocalIA(interp, params);
   case BONDED_IA_BENDING_FORCE:						
@@ -895,6 +897,7 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   
   REGISTER_BONDED("fene", tclcommand_inter_parse_fene);
   REGISTER_BONDED("stretching_force", tclcommand_inter_parse_stretching_force);
+  REGISTER_BONDED("stretchlin_force", tclcommand_inter_parse_stretchlin_force);
   REGISTER_BONDED("area_force_local", tclcommand_inter_parse_area_force_local);
   REGISTER_BONDED("bending_force", tclcommand_inter_parse_bending_force);
 #ifdef AREA_FORCE_GLOBAL
