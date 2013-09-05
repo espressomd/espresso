@@ -48,6 +48,7 @@
 #include "gb.h"
 #include "fene.h"
 #include "object-in-fluid/stretching_force.h"
+#include "object-in-fluid/stretchlin_force.h"
 #include "object-in-fluid/area_force_local.h"
 #include "object-in-fluid/area_force_global.h"
 #include "object-in-fluid/bending_force.h"
