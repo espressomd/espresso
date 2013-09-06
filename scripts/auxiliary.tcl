@@ -7,7 +7,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -29,8 +29,8 @@
 
 # Deprecation warning
 proc warn_deprecated { fname version } {
-    puts "WARNING: The function $fname is deprecated since version $version"
-    puts "         and will be removed in some future version."
+    puts stderr "WARNING: The function $fname is deprecated since version $version"
+    puts stderr "         and will be removed in some future version."
 }
 
 
@@ -69,245 +69,6 @@ proc timeStamp { destination prefix postfix suffix } {
     puts "Done."
 
     return $destination
-}
-
-
-#
-# polyBlockWrite
-# --------------
-# 
-# Writes current polymer configuration to disk,
-# including all bonds and interactions there are,
-# using Axa's blockfile-format.
-#
-# Input:
-# - complete path 'destination';
-#   if the filename ends with '.gz', the file will be compressed
-# - a list of 'Espresso' parameters to be saved (out of node_grid|box_l|niatypes|time_step|skin|gamma|bjerrum|...
-#   ...p3m_alpha|p3m_r_cut|p3m_mesh|p3m_cao|p3m_epsilon|p3m_mesh_offset|max_num_cells|periodicity);
-#   if an empty list '{}' is supplied, no parameters and no interactions are written
-#   Default value: All the above mentioned parameters.
-# - a string containing which informations (out of pos|type|q|v|f) on the particles should be saved to disk;
-#   if an empty string ' "" 'is provided, no particles, and no bonds are written
-#   Default vaule: All the above mentioned informations.
-# 
-# 
-#############################################################
-
-proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q v f"} } {
-
-    warn_deprecated polyBlockWrite 3.0.0
-
-    # Open output-file - compressed, if desired, or even as an open stream
-    if { [regexp "^!\(.*\)" $destination dummy f] } {
-	set stream 1
-    } {
-	set stream 0
-	if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
-	    set f [open "|gzip -c - >$destination" w]
-	} else {
-	    set f [open "$destination" "w"]
-	}
-    }
-    # Write parameters and interactions, if desired
-    if { "$write_param" != "{}" } {
-	foreach j $write_param {
-	    blockfile $f write variable $j
-	}
-	blockfile $f write interactions
-	blockfile $f write integrate
-	blockfile $f write thermostat
-    }
-    
-    # Write particles and bonds, if desired
-    if { "$write_part" != "" } {
-	blockfile $f write particles $write_part all
-	blockfile $f write bonds all
-    }
-
-    # Close file
-    flush $f
-    if {!$stream} { close $f }
-}
-
-proc polyBlockWriteAll { destination {tclvar "all"} {cfg "1"} {rdm "random"} } {
-    warn_deprecated polyBlockWriteAll 3.0.0
-    if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
-	set f [open "|gzip -c - >$destination" w] } else { set f [open "$destination" w] }
-    polyBlockWrite "!$f"
-    # Write tcl-variables, if desired
-    if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
-    
-    # Write seed/status of random number generator, if desired
-    if { "$rdm" != "-" } { foreach j $rdm { blockfile $f write $j } }
-    flush $f
-    # Write stored analysis-configurations, if desired
-    if { "$cfg" != "-" }  { blockfile $f write configs }
-
-    # Close file
-    flush $f; close $f
-}
-
-proc polyBlockWriteTclvar { destination {tclvar "all"} } {
-    warn_deprecated polyBlockWriteTclVar 3.0.0
-    if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
-	set f [open "|gzip -c - >$destination" a] } else { set f [open "$destination" "a"] }
-    # Write tcl-variables, if desired
-    if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
-    # Close file
-    flush $f; close $f
-}
-
-# reads the file named '$source' into Espresso
-proc polyBlockRead { source } {
-    warn_deprecated polyBlockRead 3.0.0
-    if { [string compare [lindex [split $source "."] end] "gz"]==0 } { 
-      set inp [open "|gzip -cd $source" r]
-    } else {
-      set inp [open "$source" r]
-    }
-    while { [eof $inp] != 1 } { blockfile $inp read auto }; close $inp
-}
-
-proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { var "all" } { ran "all" } { COMPACT_CHK 0 } } {
-    warn_deprecated checkpoint_set 3.0.0
-    if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
-	set f [open "|gzip -c - >$destination" w]
-	set chk [open "[join [lrange [split $destination .] 0 [expr [llength [split $destination .]]-3]] .].chk" a]
-    } else { 
-	set f [open "$destination" "w"]
-	set chk [open "[join [lrange [split $destination .] 0 [expr [llength [split $destination .]]-2]] .].chk" "a"]
-    }
-    if { $COMPACT_CHK } { variable ::ENABLE_COMPACT_CHECKPOINTS $COMPACT_CHK; blockfile $f write tclvariable ENABLE_COMPACT_CHECKPOINTS }
-    if { "$var" != "-" } { blockfile $f write variable $var }
-    if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
-    if { "$ia" != "-" } { blockfile $f write interactions; blockfile $f write integrate; blockfile $f write thermostat }
-    set part_write "id pos type "
-    if { $COMPACT_CHK } { set part_write "id pos " }
-    if { [has_feature "ELECTROSTATICS"] } { lappend part_write q  }
-    lappend part_write v 
-    lappend part_write f 
-    if { [has_feature "MASS"] } { lappend part_write mass  }
-    if { [has_feature "VIRTUAL_SITES"] } { lappend part_write virtual }
-    if { [has_feature "ROTATION"] } { lappend part_write quat omega torque  }
-    if { [has_feature "CONSTRAINTS"] } { lappend part_write fix  }
-    if { [has_feature "EXTERNAL_FORCES"] } { lappend part_write ext_force  }
-    blockfile $f write particles "$part_write"
-    if { $COMPACT_CHK != 1 } { blockfile $f write bonds }
-    if { $COMPACT_CHK != 1 && [has_feature "EXCLUSIONS"]} { blockfile $f write exclusions }
-    if { "$ran" != "-" } { blockfile $f write random }
-    if { "$ran" != "-" } { blockfile $f write bitrandom }
-#   if { $COMPACT_CHK && [set n_configs [analyze stored]] > 0 } { set all_configs [analyze configs]; analyze remove [expr $n_configs-1] }
-    if { "$cnt" == "all" } { blockfile $f write configs } else { blockfile $f write configs $cnt }
-#   if { $COMPACT_CHK && $n_configs > 0 } { analyze configs $all_configs }
-    flush $f; close $f
-    puts $chk "$destination"; flush $chk; close $chk
-    invalidate_system
-}
-
-
-# this command is intended to read all the checkpoints listed in a .chk-file
-# parameters are 'read_all_chks' == 1 (if all checkpoints should be read), != 1 (if only the last one should be read),
-# 'write' == 0 (do nothing, ignore 'pdb_sfx'), 
-# 'write'== 'pdb' (if all [e.g. 459] checkpoints should be converted to $name0000.pdb ... $name0459.pdb),
-# 'write'=='pov' (if all [e.g. 459] checkpoints should be converted to $name0000.pov ... $name0459.pov and rendered),
-# and 'pdb_sfx' (giving the number of digits to be used in enumbering the .pdb-files)
-proc checkpoint_read { origin { read_all_chks 1 } { write 0 } { name "anim" } { pdb_sfx 5 }} {
-    variable ::ENABLE_COMPACT_CHECKPOINTS 0; global ENABLE_COMPACT_CHECKPOINTS pdb_ind
-
-    warn_deprecated read_checkpoint_in 3.0.0
-    proc read_checkpoint_in { source write name pdb_sfx } { global pdb_ind ENABLE_COMPACT_CHECKPOINTS
-	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r] } else { set f [open "$source" "r"] }
-	if { [blockfile $f read auto] == "eof" } { puts "\nERROR: Blockfile '$source' doesn't contain anything! Exiting..."; exit }
-	if { $ENABLE_COMPACT_CHECKPOINTS != 1 } { part deleteall }
-	while { [blockfile $f read auto] != "eof" } {}; puts -nonewline "."; flush stdout; # puts "read $source"
-	 if { [catch { close $f } fid] } { puts "Error while closing $source caught: $fid." }
-	if { $write != 0 } {
-	    switch $write {	    
-		"pdb" {
-		    if {$pdb_ind==0} {writepsf "$name.psf"}; writepdb "$name[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind 
-		}
-		"pov" {
-		    writepov $name[format $pdb_sfx $pdb_ind].pov -folded -box -render; incr pdb_ind
-		}
-		"default" {
-		    error "ERROR: invalid option. $write must be either pov, pdb or 0.\nAborting..." 
-		}
-	    }
-	}
-    }
-
-    if { [file exists "$origin.chk"] } { 
-	set chk [open "$origin.chk" "r"] 
-    } elseif { 
-	[file exists "$origin"] } { set chk [open "$origin" "r"] 
-    } else { 
-	puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit 
-    }
-    if { $write !=0 } { set pdb_ind 0; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] } else { set pdb_ind 0 }
-    if { $read_all_chks } {
-	while { [eof $chk]==0 } { 
-	    if { [gets $chk source] > 0 } {
-		read_checkpoint_in $source $write $name $pdb_sfx
-	    }
-	}
-    } else {
-	puts -nonewline "(ATN: Reading just one checkpoint!)"; flush stdout
-	set tmp_chk "NA"
-	while { [eof $chk]==0 } { 
-	    if { [gets $chk source] > 0 } { 
-		set tmp_chk $source 
-	    }   
-	}
-	if { $tmp_chk == "NA" } { 
-	    puts "ERROR: Didn't find any checkpoints! Aborting..."; exit 
-	} else { 
-	    set source $tmp_chk 
-	}
-	read_checkpoint_in $source $write $name $pdb_sfx
-    }
-    close $chk
-}
-
-
-proc polyConfMovWriteInit { write prfx polyConfAux } {
-    warn_deprecated ConfMovWriteInit 3.0.0
-    if { $write=="yes" || $write=="movie" } {
-	set param [list output_path output_prfx write_param write_part movie_path movie_prfx N_P MPC N_CI N_pS N_nS]
-	for {set i 0} {$i < [llength $polyConfAux]} {incr i} { eval set [lindex $param $i] [lindex $polyConfAux $i] }
-	set tmp_file "$prfx.gz"; set tmp_file "$output_prfx$tmp_file"
-	puts -nonewline "    Saving configuration to $tmp_file... "; flush stdout
-	polyBlockWrite "$output_path$tmp_file" "$write_param" "$write_part"
-	if { $write=="movie" } {
-	    set tmp_file $prfx; set tmp_file "$movie_prfx$tmp_file"
-	    puts -nonewline "create movie $tmp_file... "; flush stdout
-	    writepsf "$movie_path$tmp_file.psf" $N_P $MPC $N_CI $N_pS $N_nS
-	    if {[llength $polyConfAux] > 6} {
-		writepdb "$movie_path$tmp_file.pdb"
-	    } else { writepdb "$movie_path$tmp_file.pdb" }
-	}
-	puts "Done."
-    }
-}
-
-proc polyConfMovWrite { write prfx digit step polyConfAux } {
-    warn_deprecated ConfMovWrite 3.0.0
-    if { ($write == "yes" || $write=="movie") } {
-	set param [list output_path output_prfx write_param write_part movie_path movie_prfx]
-	for {set i 0} {$i < [llength $polyConfAux]} {incr i} { eval set [lindex $param $i] [lindex $polyConfAux $i] }
-	set tmp_format "d"; set tmp_format "$prfx%0$digit$tmp_format"
-	set tmp_file [eval format "$output_prfx$tmp_format.gz" $step]
-	puts -nonewline " (saving $tmp_file - "; flush stdout
-	polyBlockWrite "$output_path$tmp_file" "$write_param" "$write_part"
-	if { $write=="movie" } {
-	    set tmp_file [eval format "$movie_prfx$tmp_format" $step]
-	    puts -nonewline "$tmp_file - "; flush stdout
-	    if {[llength $polyConfAux] > 6} {
-		writepdb "$movie_path$tmp_file.pdb"
-	    } else { writepdb "$movie_path$tmp_file.pdb" }
-	}
-	puts -nonewline "done)"; flush stdout
-    }
 }
 
 proc analysisInit { stat stat_out N_P MPC simtime { noted "na" } { notedD "na" } } {
@@ -436,6 +197,20 @@ proc tune_cells { { int_steps 1000 } { min_cells 1 } { max_cells 30 } { tol_cell
     return $msg_string
 }
 
+#
+# stop_particles
+# -------------
+# 
+# Sets the velocities and forces of all particles currently
+# stored in Espresso to zero.
+#
+#############################################################
+
+proc stop_particles { } { 
+  warn_deprecated stop_particles 3.1.2
+  puts stderr "         Use the function kill_particle_motion instead."
+  kill_particle_motion
+}
 
 #
 # stopParticles
@@ -446,21 +221,15 @@ proc tune_cells { { int_steps 1000 } { min_cells 1 } { max_cells 30 } { tol_cell
 #
 #############################################################
 
-proc stop_particles { } { 
-    for { set i 0} { $i < [setmd n_part] } {incr i} {
-	part $i v 0 0 0
-	part $i f 0 0 0
-    }
-}
+
+
 proc stopParticles { } {
-    puts -nonewline "        Setting all particles' velocities and forces to zero... "; flush stdout
-    set old_i 0; set old_e [setmd n_part]; set old [expr 10*$old_e]
-    for { set i 0} { $i < $old_e } {incr i} {
-	if { [expr $old_i*100]>=$old } { set old [expr $old + 10*$old_e]; puts -nonewline ".,."; flush stdout }; incr old_i
-	part $i v 0 0 0
-	part $i f 0 0 0
-    }
-    puts ".,. Done (stopped $old_e particles and as many forces)."
+  warn_deprecated stopParticles 3.1.2
+  puts stderr "         Use the function kill_particle_motion and kill_particle_forces instead."
+  puts -nonewline "        Setting all particles' velocities and forces to zero... "; flush stdout
+  kill_particle_motion
+  kill_particle_forces
+  puts ".,. Done (stopped [setmd n_part] particles and as many forces)."; flush stdout
 }
 
 #
@@ -470,40 +239,11 @@ proc stopParticles { } {
 # Calculate the center of mass of the system stored in Espresso
 #
 #############################################################
-proc system_com { } {
-  set npart [setmd n_part]
-    
-  #calculate center of mass
-  set com {0 0 0}
-  set part_cnt 0
-  
-  if {[has_feature MASS]} {
-    set net_mass 0
-    
-    for {set i 0} {$part_cnt < $npart} {incr i} {
-      if {[part $i] != "na"} {
-        set pos [part $i print p]
-        set mass [part $i print mass]
-        set com [vecadd $com [vecscale $mass $pos]]
-        set net_mass [expr $net_mass + $mass]
-        incr part_cnt
-      }
-    }
-    
-    return [vecscale [expr 1.0/$net_mass] $com]
-  } else {
-    for {set i 0} {$part_cnt < $npart} {incr i} {
-      if {[part $i] != "na"} {
-        set pos [part $i print p]
-        set com [vecadd $com $pos]
-        incr part_cnt
-      }
-    }
-    
-    return [vecscale [expr 1.0/$npart] $com]
-  }
-}
 
+proc system_com { } {
+  puts stderr "         Use the function system_CMS instead."
+  return [system_CMS]
+}
 
 #
 # center of mass motion
@@ -512,38 +252,10 @@ proc system_com { } {
 # Calculate the center of mass velocity of the system stored in Espresso
 #
 #############################################################
+
 proc system_com_vel {} {
-  set npart [setmd n_part]
-    
-  # calculate center of mass motion
-  set com_vel {0 0 0}
-  set part_cnt 0
-  
-  if {[has_feature MASS]} {
-    set net_mass 0
-    
-    for {set i 0} {$part_cnt < $npart } {incr i} {
-      if { [part $i] != "na" } {
-        set part_vel [part $i print v]
-        set part_mass [part $i print mass]
-        set com_vel [vecadd $com_vel [vecscale $part_mass $part_vel]]
-        set net_mass [expr $net_mass + $part_mass]
-        incr part_cnt
-      }
-    }
-      
-    return [vecscale [expr 1.0/$net_mass] $com_vel]
-  } else {
-    for {set i 0} {$part_cnt < $npart } {incr i} {
-      if { [part $i] != "na" } {
-        set part_vel [part $i print v] 
-        set com_vel [vecadd $com_vel $part_vel]
-        incr part_cnt
-      }
-    }
-    
-    return [vecscale [expr 1.0/$npart] $com_vel]
-  }
+  puts stderr "         Use the function system_CMS_velocity instead."
+  return [system_CMS_velocity]
 }
 
 #
@@ -557,19 +269,10 @@ proc system_com_vel {} {
 #############################################################
 
 proc galileiTransformParticles {} {
-  set com_vel [system_com_vel]
-    
-  #subtract center of mass motion from particle velocities
-  set npart [setmd n_part];
-  set part_cnt 0;
+  puts stderr "         Use the function galilei_transform instead."
+  set com_vel [system_CMS_velocity]
   
-  for {set i 0} { $part_cnt < $npart } {incr i} {
-    if {[part $i] != "na"} {
-      set part_vel [vecsub [part $i print v] $com_vel]
-      part $i v [lindex $part_vel 0] [lindex $part_vel 1] [lindex $part_vel 2]
-      incr part_cnt
-    }
-  }
+  galilei_transform
   
   return $com_vel
 }
@@ -581,33 +284,82 @@ proc galileiTransformParticles {} {
 #
 #############################################################
 
-proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_constraints "0"} } {
-  global vmd_show_constraints_flag
-  
-  writepsf "$filename.psf"
-  writepdb "$filename.pdb"
-  
-  for {set port 10000} { $port < 65000 } { incr port } {
-	  catch {imd connect $port} res
-	    if {$res == ""} {
-	      break
-	    }
+proc prepare_vmd_connection { args } {
+  # default values, as before
+  set filename "vmd"
+  set wait 0
+  set start 1
+  set hostname [exec hostname]
+  set draw_constraints 0
+
+  # parse off filename, both for old and new style
+  if {[llength $args] > 0} {
+    set filename [lindex $args 0]
+    set args [lrange $args 1 end]
+  }
+	
+  if {[llength $args] > 0 && [string is integer [lindex $args 0]]} {
+    # old, fixed position format of other args: wait start draw_constraints
+    # detect simply if a number instead of keyword follows
+    set wait [lindex $args 0]
+    if {[llength $args] > 1} { set start [lindex $args 1] }
+    if {[llength $args] > 2} { set draw_constraints [lindex $args 2] }
+  } {
+    # new format with keyword arguments
+    while {[llength $args] > 0} {
+      switch [lindex $args 0] {
+        "wait" {
+          set wait [lindex $args 1]
+          set args [lrange $args 2 end]
+        }
+        "start" {
+          set start 1
+          set hostname "localhost"
+          set args [lrange $args 1 end]
+        }
+        "constraints" {
+          set draw_constraints 1
+          set args [lrange $args 1 end]
+        }
+        "localhost" {
+          set hostname "localhost"
+          set args [lrange $args 1 end]
+        }
+        default {
+          # unknown keyword, assume it is for writevsf
+          break
+        }
+      }
+    }
+    # remaining arguments we assume to be for writevsf
+    set vsf_args $args
   }
   
-  set HOSTNAME [exec hostname]
-  set vmdout_file [open "vmd_start.script" "w"]
+  # structure information only
+  set f [open "$filename.vsf" "w"]
+  eval writevsf $f $vsf_args
+  close $f
   
-  puts $vmdout_file "mol load psf $filename.psf pdb $filename.pdb"
+  for {set port 10000} { $port < 65000 } { incr port } {
+    catch {imd connect $port} res
+    if {$res == ""} {
+      break
+    }
+  }
+  
+  set vmdout_file [open "${filename}.vmd_start.script" "w"]
+  
   puts $vmdout_file "logfile vmd.log"
+  puts $vmdout_file "mol load vsf $filename.vsf"
   puts $vmdout_file "rotate stop"
-  puts $vmdout_file "logfile off"
   puts $vmdout_file "mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000"
   puts $vmdout_file "mol modcolor 0 0 SegName"
-  puts $vmdout_file "imd connect $HOSTNAME $port"
+  puts $vmdout_file "imd connect $hostname $port"
   puts $vmdout_file "imd transfer 1"
   puts $vmdout_file "imd keep 1"
+  puts $vmdout_file "proc pbcsetup {} {pbc set \"[setmd box_l]\" -all}"
   
-  #draw constraints  
+  # draw constraints  
   if {$draw_constraints != "0"} {
     foreach c [ constraint ] {
       set id [ lindex $c 0 ]
@@ -672,10 +424,10 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_con
   close $vmdout_file
  
   if { $start == 0 } {
-	  puts "Start VMD in the same directory on the machine you with :"
-	  puts "vmd -e vmd_start.script &"
+    puts "Start VMD in the same directory with:"
+    puts "vmd -e ${filename}.vmd_start.script &"
   } else {
-	  exec vmd -e vmd_start.script &
+    exec vmd -e "${filename}.vmd_start.script" &
   }
   
   imd listen $wait
@@ -761,12 +513,14 @@ proc degrees_of_freedom {} {
 # copy_particles 
 # ---------------
 # 
-# Copy a group of particles including their bonds. Positions can be shifted by an offset.
-# The particles can be given as a combination of lists or a ranges. The new particles in
-# any case obtain consecutive identities after the largest current identity. Bonds within
-# the particle set are copied, but not bonds with particles outside the list. That is,
-# if the particle set corresponds to a molecule, intramolecular bonds are preserved, but
-# not intermolecular ones.
+# Copy a group of particles including their bonds. Positions can be
+# shifted by an offset.  The particles can be given as a combination
+# of lists or a ranges. The new particles in any case obtain
+# consecutive identities after the largest current identity. Bonds and
+# exclusions within the particle set are copied, but not bonds with
+# particles outside the list. That is, if the particle set corresponds
+# to a molecule, intramolecular bonds are preserved, but not
+# intermolecular ones.
 # 
 # Example:
 # copy_particles set {1 2 3 4} shift 0.0 0.0 0.0
@@ -804,7 +558,7 @@ proc copy_particles { args } {
     set parts [lsort -unique $parts]
 
     # copy loop.
-    # step 1: all except bonds
+    # step 1: all except bonds and exclusions
     set newid [setmd max_part]
     foreach id $parts {
 	incr newid
@@ -823,7 +577,19 @@ proc copy_particles { args } {
 	set p [lsearch $partcmd "bond"]
 	if {$p != -1} { set partcmd [lreplace $partcmd $p [expr $p + 1]] }
 
-	# and set the new particle
+	# remove exclusions
+	set p [lsearch $partcmd "exclude"]
+	if {$p != -1} {
+            set pend [expr $p + 1]
+            while {1} {
+                set element [lindex $partcmd $pend]
+                if {$element == "" || ![string is integer $element]} { break }
+                incr pend
+            }
+            set partcmd [lreplace $partcmd $p $pend]
+        }
+
+        # and set the new particle
 	eval part $newid $partcmd
     }
 
@@ -848,5 +614,17 @@ proc copy_particles { args } {
 		eval part $newid bond $newbond
 	    }
 	}
+
+	# new exclusions list
+	set exclusions {}
+        # check whether exclusions are in the molecule and translate
+	foreach exclude [part $id print exclusions] {
+            if {[array names newids -exact $exclude] != ""} {
+                lappend exclusions $newids($exclude)
+            }
+        }
+        if {$exclusions != {}} {
+            eval part $newid exclude $exclusions
+        }
     }
 }

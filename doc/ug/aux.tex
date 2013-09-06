@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2012 The ESPResSo project
+% Copyright (C) 2010,2012,2013 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -22,34 +22,6 @@
 
 \todo{Missing commands: 
   Probably all from \keyword{scripts/auxiliary.tcl}?}
-
-\section{Center of mass motion}
-\label{sec:centerofmassmotion}
-
-\subsection{\texttt{system_com}}
-\begin{essyntax}
-  system_com
-\end{essyntax}
-Returns the center of mass of the whole system.
-
-\subsection{\texttt{system_com_vel}}
-\begin{essyntax}
-  system_com_vel
-\end{essyntax}
-Returns the velocity of the center of mass of the whole system.
-
-\subsection{\texttt{galileiTransformParticles}}
-\begin{essyntax}
-  galileiTransformParticles
-\end{essyntax}
-Substracts the velocity of the center of mass of the whole system from every 
-particle's velocity, thereby performing a galilei transform into the reference 
-frame of the center of mass of the system.
-
-This is useful for example in combination with the DPD thermostat, since there,
- a drift in the velocity of the whole system leads to an offset in the reported 
- temperature.
-
 
 \section{Finding particles and bonds}
 

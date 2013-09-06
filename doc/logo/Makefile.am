@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2011 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -16,4 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-EXTRA_DIST = whitebg.png transparentbg.png powered_by.png
+EXTRA_DIST = \
+	logo.svg \
+	logo.pdf logo_500x500.png \
+	logo-small.svg \
+	logo-small.pdf logo_32x32.png logo_48x48.png logo_100x100.png \
+	logo-animated-100.gif logo-animated-200.gif logo-animated-500.gif 

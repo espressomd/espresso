@@ -1,4 +1,4 @@
-# Copyright 2010,2011,2012 The ESPResSo project
+# Copyright 2010,2011,2012,2013 The ESPResSo project
 # Copyright 1999-2009 Gentoo Foundation
 #
 # This file is part of ESPResSo.

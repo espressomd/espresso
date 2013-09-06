@@ -1,3 +1,4 @@
+# Copyright (C) 2013 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -35,6 +36,8 @@ def toCPPExpr(expr):
     expr = expr.replace('not', ' !')
     expr = re.sub('([A-Z0-9_]+)', 'defined(\\1)', expr)
     return expr
+
+    
 
 class defs:
     def __init__(self, filename):
@@ -128,5 +131,36 @@ class defs:
         self.derivations = derivations
         self.externals = externals
         self.notestfeatures = notestfeatures
+
+    def check_validity(self, activated):
+        """Check whether a set of features is valid.
+        Returns None if it is not and the set of features including implied features if it is.
+        """
+        newset = activated.copy()
+
+#        print "Verifying: " + str(activated) + "..."
+
+        # handle implications
+        for feature, implied in self.implications:
+#            print feature, ' -> ', implied
+            if feature in newset and not implied in newset:
+                newset.add(implied)
+#        print 'Implied set: ' + str(newset)
+
+        # handle requirements
+        featurevars=dict()
+        derived = map((lambda(x,y,z):x), self.derivations)
+        allfeatures = self.features.union(derived, self.externals)
+        for feature in allfeatures:
+            featurevars[feature] = feature in newset
+
+        for feature, expr, undef in self.requirements:
+#            print 'Requirement: ', feature, ' -> ', expr
+            if feature in newset:
+                if not eval(expr, featurevars):
+                    return None
+
+#        print 'Resulting set: ' + str(newset)
+        return newset
 
 # Test whether all implied features or features in an expression are defined

@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -94,11 +94,11 @@ constraint ext_magn_field 0 0 $external_H_z
 integrate 0
 
 
-puts "\n\n\nwrite forces and torques in force_torrque.dat ..." 
+puts "\n\n\nwrite forces and torques in force_torque.dat ..." 
 set force_torque_data [open "force_torque.dat" w]
 
 for {set i 0} {$i < $n_particle} {incr i} {
-    puts $force_torque_data "$i [part $i print force torque]"
+    puts $force_torque_data "$i [part $i print force torque_lab]"
 }
 
 close $force_torque_data

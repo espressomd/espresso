@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -49,7 +49,7 @@ if {[setmd max_range] < [setmd min_global_cut] + [setmd skin] - 0.001} {
 }
 puts "OK: max cut is [setmd max_range], should not be smaller than [setmd min_global_cut] + [setmd skin]"
 
-part 0 pos 5 5 5 omega 1 2 3
+part 0 pos 5 5 5 quat 1.0 0.0 0.0 0.0 omega_lab 1 2 3
 part 1 pos 5 5 6 virtual 1 vs_auto_relate_to 0 
 part 2 pos 5 5 4 virtual 1 vs_auto_relate_to 0 
 puts [part 1 print pos ]
@@ -65,7 +65,7 @@ if { ([part 1 print pos] != "5.0 5.0 6.0") || ([part 2 print pos] != "5.0 5.0 4.
 
 # Verify that velocity of virtual sites is omega_(central particle) times r
 set r [vecsub [part 1 print pos] [part 0 print pos]]
-set omega [part 0 print omega]
+set omega [part 0 print omega_lab]
 set v [veccross_product3d $omega $r]
 if {[veclen [vecsub $v [part 1 print v]]] >0.0001 } {
  error_exit "Error: Particle 1 velocity incorrect."
@@ -74,7 +74,7 @@ if {[veclen [vecsub $v [part 1 print v]]] >0.0001 } {
 }
 
 set r [vecsub [part 2 print pos] [part 0 print pos]]
-set omega [part 0 print omega]
+set omega [part 0 print omega_lab]
 set v [veccross_product3d $omega $r]
 if {[veclen [vecsub $v [part 2 print v]]] >0.0001 } {
  error_exit "Error: Particle 2 velocity incorrect. Is [part 2 print v], should be $v."
@@ -108,7 +108,7 @@ set f2 "4 5 6"
 part 1 ext 3 4 5
 part 2 ext 4 5 6
 integrate 0
-set t [part 0 print torque]
+set t [part 0 print torque_lab]
 set f [part 0 print f]
 if { [veclen [vecsub [vecadd $f1 $f2] $f]] >1E-4 } {
  error_exit "Error: Force on central particle should be [vecadd $f1 $f2] but is $f" 
@@ -175,14 +175,14 @@ for {set i 0} {$i<10000} {incr i } {
   set error 1
  }
   set r [vecsub [part 1 print pos] [part 0 print pos]]
-  set omega [part 0 print omega]
+  set omega [part 0 print omega_lab]
   
   if {abs([veclen $r]-0.2)  >1E-5} {
    error_exit "Distance between particle 0 and 1 incorrect."
   }
   
   set r [vecsub [part 2 print pos] [part 0 print pos]]
-  set omega [part 0 print omega]
+  set omega [part 0 print omega_lab]
   
   if {abs([veclen $r]-0.2)  >1E-5} {
    error_exit "Distance between particle 0 and 2 incorrect."
@@ -191,4 +191,4 @@ for {set i 0} {$i<10000} {incr i } {
 puts "OK: Handling of periodic boundaries"
 puts "OK: Velocities of outer particles add up to velocity of center of mass"
 
-exit  0
+exit 0

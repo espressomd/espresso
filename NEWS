@@ -2,23 +2,128 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 3.3
+============
+
+New user-visible features
+-------------------------
+
+* Support of P3M on GPU.
+
+* Allow the p3m to dump the mesh in x, y, and z (before it only dumped
+the mesh in x). This allows for the dumping of the p3m in blockfile
+format in the case of non-cubic boxes. It will also now be possible to
+tune the settings of a non-cubic mesh.
+
+* Stomatocyte lb-boundary and constraint implemented.
+
+* MEMD electrostatics can now handle spatially varying dielectrc
+  constants.
+
+User-visible changes
+--------------------
+
+* Generic LJ can now turned into an soft potential.
+
+* Renamed torque to torque_{lab,body}, improved torque handling in
+  blockfiles.  Clearer distinction between the reference frames for
+  torque and angular momentum.
+
 ESPResSo 3.2
 ============
 
 New user-visible features
 -------------------------
 
-* The feature HAT introduces a short-ranged nonbonded interaction
-  "hat", the classical conservative DPD interaction, a simple force
-  ramp.
+* Added a new immersed boundaries code that allows to simulate
+  extended, flexible objects in conjunction with the LB code.  This is
+  described in the UG in the new chapter "Object-in-fluid".
 
-* The feature REACTIONS and the command "reaction" model a simple
-  chemical reaction: when a particle of the reactant type comes into
-  the vincinity of a particle of the catalysator type, the reactant is
-  transformed into a particle of the product type.
+* The script tools/blockfile2vtf.tcl can be used to convert ESPResSo
+  blockfiles into VTF files.
 
-ESPResSo 3.1
-============
+* Two new short-ranged nonbonded potentials have been added:
+
+  * HAT: the classical conservative DPD interaction, a simple force
+    ramp.
+
+  * GAUSSIAN: A Gaussian potential.
+
+* The feature CATALYTIC_REACTIONS and the command "reaction" model a
+  simple chemical reaction: when a particle of the reactant type comes
+  into the vincinity of a particle of the catalysator type, the
+  reactant is transformed into a particle of the product type.
+
+* The feature GHMC implements a generalized hybrid Monte-Carlo
+  thermostat.
+
+* The feature GRANDCANONICAL provided functions to simplify grandcanonical
+  simulations in espresso. To that end it provides functions to find and
+  delete random particles of a certain type.
+
+* Added new feature ROTATION_PER_PARTICLE that allows to choose
+  whether a particle has rotational degrees of freedom or not.
+
+User-visible changes
+--------------------
+
+* Removed non-working tools and samples.
+
+* Bond angle potentials are now defined on the Tcl-level instead of on
+  the feature-level, i.e. to choose the type of the bond-angle
+  potential, you should use the corresponding Tcl command instead of a
+  feature. To allow for any bond angle potential, activate the feature
+  BOND_ANGLE.
+
+* We have removed the forcecaps for the different interaction
+  types. Instead, there is now a single global forcecap, plus it is
+  possible to define individual forcecaps on a particle pair level.
+
+* By default, CUDA is now automatically detected and activated when it
+  is there and usable.
+
+* The functions for galilei transformations have been overhauled and
+  renamed. The old functions are deprecated.
+
+* DPD (as thermostat) now works without any other interaction, so a pure
+  DPD fluid is possible.
+
+ESPResSo 3.1.2
+==============
+
+* Fixed bugs #38475, #37725, #36434.
+
+* Added workaround for bug in VTF reader plugin of VMD 1.9.1 that made
+  all particles look the same when ELECTROSTATICS is turned on.
+
+* Added Tcl-scripts of the tutorials to the distribution.
+
+* Added forgotten part of the UG on the correlators.
+
+* Removed buggy readline code tclline.tcl. Fixes #36432.
+
+* Removed Ewald code from ESPResSo that never worked and was never
+  documented.
+
+ESPResSo 3.1.1
+==============
+
+* The Espresso binary now outputs the header to STDERR instead of STDOUT.
+
+* Fixed bugs #36431, #37120, #37214, #37374, #37306, #35767.
+
+* Fixed generation of myconfig-sample.h.
+
+* Fixed AdResS example.
+
+* Added new logo.
+
+* The documentation sources are now left out of the distribution
+  package, only the PDF files are included. This fixes problems when
+  calling "make doc" in a distribution package (#35958).
+
+ESPResSo 3.1.0
+==============
 
 New user-visible features
 -------------------------
@@ -35,9 +140,11 @@ New user-visible features
 * The new feature COLLISION_DETECTION allows to dynamically add new
   bonds between colliding particles.
 
-* Added new constraint and LB boundary condition "rhomboid" that
-  allows to create arbitrary rhomboids. When combining several
-  rhomboids, almost any shape of a constraint is doable.
+* Added new feature LANGEVIN_PER_PARTICLE that allows to set the
+  Langevin parameters temperature and gamma per particle.
+
+
+* Added new constraint and LB boundary condition "rhomboid".
 
 * Lattice-Boltzmann:
 
@@ -289,7 +396,7 @@ Changes visible for developers
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010,2011,2012 The ESPResSo project
+Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

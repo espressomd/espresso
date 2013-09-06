@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %    Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -194,25 +194,60 @@ or picoseconds and energies are measured in $\mathrm{kJ/mol}$, \es
 does not do so.
 
 Instead, the length-, time- and energy scales can be freely chosen by
-the user.  A length of $1.0$ can mean a nanometer, an \AA ngstr\"om,
-or a kilometer - depending on the physical system, that the user has
-in mind when he writes his \es-script.  The user can choose the unit
-system that suits the system best.
+the user. Once these three scales are fixed, all remaining units are
+derived from these three basic choices.
 
-When creating particles that are intended to represent a specific type
+The probably most important choice is the length scale.
+A length of $1.0$ can mean a nanometer, an \AA ngstr\"om,
+or a kilometer - depending on the physical system, that the user has
+in mind when he writes his \es-script. When creating particles that are
+intended to represent a specific type
 of atoms, one will probably use a length scale of \AA ngstr\"om.  This
 would mean, that \eg the parameter $\sigma$ of the Lennard-Jones
 interaction between two atoms would be set to twice the van-der-Waals
 radius of the atom in \AA ngstr\"om.  Alternatively, one could set
 $\sigma$ to $2.0$ and measure all lengths in multiples of the
-van-der-Waals radius.
-
-The second choice to be made is the energy (and time-) scale.  One can
+van-der-Waals radius. When simulation colloidal particles,
+which are usually of micrometer size, one will choose their diameter
+(or radius) as basic length scale, which is much larger than the 
+\AA ngstr\"om scale used in atomistic simulations.
+ 
+The second choice to be made is the energy scale.  One can
 for example choose to set the Lennard-Jones parameter $\epsilon$ to
-the energy in $\frac{kJ}{\mathrm{mol}}$.  Then all energies will be
+the energy in $\mathrm{kJ/mol}$.  Then all energies will be
 measured in that unit.  Alternatively, one can choose to set it to
 $1.0$ and measure everything in multiples of the van-der-Waals binding
-energy.
+energy of the respective particles.
+
+The final choice is the time (or mass) scale. By default, \es{} uses a
+reduced mass of 1, so that the mass unit is simply the mass of all
+particles. Combined with the energy and length scale, this is sufficient
+to derive the resulting time scale:
+$$
+[\mathrm{time}] = [\mathrm{length}]\sqrt{\frac{[\mathrm{mass}]}{[\mathrm{energy}]}}.
+$$
+This means, that if you measure lengths in \AA ngstr\"om, energies
+in $k_B T$ at 300\,K and masses in 39.95u, then your time scale is
+$\AA \sqrt{39.95u / k_B T} = 0.40\,\mathrm{ps}$.
+
+On the other hand, if you want a particular time scale, then the mass
+scale can be derived from the time, energy and length scales as
+$$
+[\mathrm{mass}] = [\mathrm{energy}]\frac{[\mathrm{time}]^2}{[\mathrm{length}]^2}.
+$$
+By activating the feature MASSES, you can specify particle masses
+in the chosen unit system.
+
+A special note is due regarding the temperature, which is coupled to
+the energy scale by Boltzmann's constant. However, since \es{} does not
+enforce a particular unit system, we also don't know the numerical value
+of the Boltzmann constant in the current unit system. Therefore, when
+specifying the temperature of a thermostat, you actually do not define
+the temperature, but the value of the thermal energy $k_B T$ in the
+current unit system. For example, if you measure energy in units of
+$\mathrm{kJ/mol}$ and your real temperature should be 300\,K, then you need to
+set the thermostat's effective temperature to
+$k_B 300\, K \mathrm{mol / kJ} = 2.494$.
 
 As long as one remains within the same unit system throughout the
 whole \es-script, there should be no problems.

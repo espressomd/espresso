@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -15,8 +15,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-BASENAME=01-lennard_jones
 
+BASENAME=01-lennard_jones
+EXTRA_DIST=$(BASENAME).pdf \
+	scripts/blockfile_read.tcl \
+	scripts/lj_functions.tcl \
+	scripts/msd.tcl \
+	scripts/rdf.tcl \
+	scripts/vacf.tcl \
+	scripts/lj_tutorial.tcl \
+	solutions/blockfile_read.tcl \
+	solutions/lj_functions.tcl \
+	solutions/msd.tcl \
+	solutions/rdf.tcl \
+	solutions/vacf.tcl \
+	solutions/vacf_vec.tcl \
+	solutions/lj_tutorial.tcl
+
+if DEVEL_SRC
 tutorial_TEXFILES=$(BASENAME).tex
 
 tutorial_FIGURES = \
@@ -30,10 +46,6 @@ tutorial_FIGURES = \
 tutorial_FILES = \
 	$(tutorial_TEXFILES) \
 	$(tutorial_FIGURES)
-
-EXTRA_DIST = \
-	$(tutorial_FILES) \
-	$(BASENAME).pdf
 
 .PHONY: doc $(BASENAME).pdf
 
@@ -54,3 +66,4 @@ MOSTLYCLEANFILES = \
 	$(BASENAME).idx $(BASENAME).idx.bak $(BASENAME).ilg $(BASENAME).ind \
 	$(BASENAME).log $(BASENAME).out $(BASENAME).toc \
 	$(BASENAME).blg $(BASENAME).bbl
+endif

@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -20,33 +20,39 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Determine the version of ESPResSo at autoconf time
 m4_define([ESPRESSO_VERSION],[esyscmd([/bin/sh config/genversion.sh -rd])])
 
-# Initialise autoconf
+# Initialize autoconf
 AC_INIT([ESPResSo],[ESPRESSO_VERSION],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
 
-AC_CONFIG_SRCDIR([src/initialize.c])
+AC_CONFIG_SRCDIR([src/initialize.cpp])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_PREFIX_DEFAULT($HOME/Espresso)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-# Initialise automake
-AM_INIT_AUTOMAKE([1.10 gnu subdir-objects dist-xz])
+# Initialize automake
+AM_INIT_AUTOMAKE([1.11 gnu subdir-objects dist-xz])
 AM_MAINTAINER_MODE
 
 # silent rules, backwards compatiblity
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
-AM_SILENT_RULES
+
+# Are we in an unpacked dist or in the git repo?
+AC_MSG_CHECKING([whether we are using development sources])
+AS_IF([test -d $srcdir/.git], [devel_src=yes], [devel_src=no])
+AM_CONDITIONAL(DEVEL_SRC, [test ."$devel_src" = .yes])
+AC_MSG_RESULT($devel_src)
 
 cat <<EOF
 ****************************************************************
 *      Checking compiler characteristics and MPI support       *
 ****************************************************************
 EOF
+
 dnl overwrite _AC_PROC_CC_G to avoid check for -g and -O2 flags
-m4_define([_AC_PROG_CC_G],[])
+m4_define([_AC_PROG_CXX_G],[])
 
 #############
 #### MPI ####
@@ -54,14 +60,16 @@ m4_define([_AC_PROG_CC_G],[])
 # Check for --with-mpi
 AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
     [compile with MPI (parallelization) support. If none is found, the
-     fake implementation for only one processor is used. Default: auto])
-],,[with_mpi=auto])
+     fake implementation for only one processor is used. @<:@guess@:>@])
+],,[with_mpi=guess])
 
-AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
+# we use C++ as main code language
+AC_LANG([C++])
+AX_PROG_CXX_MPI([test x"$with_mpi" != xno],,[
   if test xyes = x"$with_mpi"; then
     AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
   else
-    AC_MSG_WARN([No MPI compiler found, will use fake implementation!])
+    AC_MSG_WARN([No MPI c++ compiler found, will use fake implementation!])
     use_mpi_fake="yes"
   fi
 ])
@@ -108,59 +116,33 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-# never overwrite users CFLAGS
-if test "${CFLAGS+set}" != set; then
+# never overwrite users CXXFLAGS
+if test "${CXXFLAGS+set}" != set; then
   # test for -O5
   AC_MSG_CHECKING([whether the compiler accepts -O5])
-  saved_CFLAGS=$CFLAGS
-  CFLAGS="-O5 $CFLAGS"
+  saved_CXXFLAGS=$CXXFLAGS
+  CXXFLAGS="-O5 $CXXFLAGS"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
     AC_MSG_RESULT(yes);try_add_flag_res=yes
   ],[
-    AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+    AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
   ])
   
   ##################################
   # test for -Wall
   AC_MSG_CHECKING([whether the compiler accepts -Wall])
-  saved_CFLAGS=$CFLAGS
-  CFLAGS="-Wall $CFLAGS"
+  saved_CXXFLAGS=$CXXFLAGS
+  CXXFLAGS="-Wall $CXXFLAGS"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
     AC_MSG_RESULT(yes);try_add_flag_res=yes
   ],[
-    AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+    AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
   ])
 fi
 
 ##################################
-# test inlining
-AS_IF([test .$enable_debug = .yes || test .$enable_profiling = .yes], [
-  mdinline=static
-],[
-  AC_MSG_CHECKING([how to inline functions])
-  for mdinline in "static inline" "inline static" "inline" "static"; do
-    AC_COMPILE_IFELSE([
-      AC_LANG_PROGRAM([
-/**** This HAS to be at the beginning of the line for some compilers ****/
-#define MDINLINE $mdinline
-MDINLINE void test() {}],[test();])
-    ],[works=yes],[works=no])
-    if test .$works = .yes; then break; fi
-  done
-  if test .$works = .no; then
-    AC_MSG_RESULT([???])
-    AC_MSG_ERROR([your compiler does not even support "static"])
-  fi
-    AC_MSG_RESULT([$mdinline])
-])
-AC_DEFINE_UNQUOTED(MDINLINE,$mdinline,[How to inline functions])
-
-##################################
 # miscellaneous
-AC_PROG_CC_STDC
-AM_PROG_CC_C_O
-AC_C_CONST
-AC_HEADER_TIME
+AC_PROG_CXX_C_O
 
 cat <<EOF
 ****************************************************************
@@ -321,7 +303,7 @@ if test .$with_tk != .no; then
 	saved_CPPFLAGS=$CPPFLAGS
 	saved_LDFLAGS=$LDFLAGS
 	saved_LIBS=$LIBS
-	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+	CPPFLAGS="$CPPFLAGS $X_CXXFLAGS"
 	LDFLAGS="$LDFLAGS $X_LIBS"
 	LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
 	AC_LINK_IFELSE([AC_LANG_CALL([],[XOpenDisplay])],[x11_works=yes],[x11_works=no])
@@ -376,7 +358,8 @@ fi
 # not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw],[specify whether or not to use FFTW3]),
+	AS_HELP_STRING([--with-fftw],
+                       [specify whether or not to use FFTW3 [guess]]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
 
@@ -400,62 +383,152 @@ AS_IF([test x$fftw_found = xyes],[
 ##################################
 # check for CUDA
 AC_MSG_CHECKING([whether to use CUDA])
+
 AC_ARG_WITH([cuda],
-	AS_HELP_STRING([--with-cuda=CUDAINSTALLDIR],[specify where CUDA is installed.
-		The cuda compiler can also be specified by setting the NVCC
-		environment variable. The CUDA library and header can be
-		manually specified by using CPPFLAGS, LDFLAGS and LIBS.]),
-	, with_cuda=no)
-AC_MSG_RESULT($with_cuda)
+	AS_HELP_STRING([--with-cuda@<:@=DIR@:>@], [specify
+	where CUDA is installed.  The cuda compiler can also be
+	specified by setting the NVCC environment variable. The CUDA
+	library and header can be manually specified by using
+	CPPFLAGS, LDFLAGS and LIBS. [guess]]), ,
+	with_cuda=guess) AC_MSG_RESULT($with_cuda)
 
-if test x$with_cuda != xno; then
-   # if installation dir is given, set the paths
-   if test x$with_cuda != xyes; then
-       if test x$NVCC = x; then
-	   NVCC=$with_cuda/bin/nvcc
-       fi
-       if test -d $with_cuda/lib64; then
-           LDFLAGS="$LDFLAGS -L$with_cuda/lib64"
-       else
-	   LDFLAGS="$LDFLAGS -L$with_cuda/lib"
-       fi
-       NVCCFLAGS="$NVCCFLAGS -I$with_cuda/include"
-   fi
+AS_IF([test x$with_cuda = xguess || test x$with_cuda = xyes],[
+   cuda_path=/usr/local/cuda
+],[test x$with_cuda != xno],[
+   cuda_path=$with_cuda
+   with_cuda=yes
+])
 
-   # NVCC
-   AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
-   AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
-   AC_PATH_PROG(NVCC, nvcc, no)
-   if test x$NVCC = xno; then
-       AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
-   fi
+cuda_ok=no
 
-   # runtime library
-   AC_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [AC_MSG_FAILURE([could not find cuda runtime library (cudart), specify location using LDFLAGS])])
+AS_IF([test x$with_cuda != xno],[
+    cuda_ok=yes
+    save_LIBS=$LIBS
+    save_LDFLAGS=$LDFLAGS
+    save_CXX=$CXX
+    save_CXXFLAGS=$CXXFLAGS
 
-   # NVCC compile check
-   AC_MSG_CHECKING([whether CUDA works])
-   # if no other compute capability is defined by the user, we need at least 1.1
-   case "$NVCCFLAGS" in
+    AS_IF([test x$NVCC = x],[
+        NVCC=$cuda_path/bin/nvcc
+    ])
+
+    AS_IF([test -d $cuda_path/lib64],[
+        LDFLAGS="$LDFLAGS -L$cuda_path/lib64"
+    ],[
+        LDFLAGS="$LDFLAGS -L$cuda_path/lib"
+    ])
+
+    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
+    AS_IF([test x"$use_mpi_fake" = xyes], [
+        NVCCFLAGS="$NVCCFLAGS -I./mpifake"
+    ],[
+        NVCCFLAGS="$NVCCFLAGS -I/usr/include/mpi"
+    ])
+    case $target in
+        x86_64-apple-darwin*)
+                NVCCFLAGS="$NVCCFLAGS -m64";;
+    esac
+    CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
+
+    # NVCC
+    AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
+    AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
+    AC_PATH_PROG(NVCC, nvcc, no)
+
+    AS_IF([test x$NVCC = xno],[
+        AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
+    ])
+
+    # libraries
+    AC_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda runtime library (cudart), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda runtime library (cudart). Some features will not be available!])
+        ])
+    ])
+
+    AC_CHECK_LIB(cufft, cufftPlan3d, [LIBS="$LIBS -lcufft"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda FFT library (cufft), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda FFT library (cufft). Some features will not be available!])
+        ])
+    ])
+
+    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
+        ])
+    ])
+
+    # NVCC compile check
+    AC_MSG_CHECKING([whether CUDA compiles])
+    
+    # if no other compute capability is defined by the user, we require at least 1.1
+    case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode  arch=compute_20,code=compute_20"
-   esac
-   # use nvcc
-   save_CC=$CC
-   save_CFLAGS=$CFLAGS
-   # autoconf currently doesn't allow to define new languages like cuda, so try to work around it
-   CC=$NVCC
-   CFLAGS="$NVCCFLAGS"
-   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-	#include <cuda.h>
-   ],[
-	cudaGetDevice(0);
-   ])], [AC_MSG_RESULT(yes)], [AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])])
-   CC=$save_CC
-   CFLAGS=$save_CFLAGS
-   AC_DEFINE(CUDA,[],[Whether CUDA is available])
-fi
-AM_CONDITIONAL(CUDA, [test x$with_cuda != xno])
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
+    esac
+    
+    # use nvcc
+    
+    # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
+    save_CXX=$CXX
+    save_CXXFLAGS=$CXXFLAGS
+    
+    CXX=$NVCC
+    CXXFLAGS="$NVCCFLAGS -x cu"
+    
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
+        AC_MSG_RESULT(yes)
+    ],[
+        cuda_ok=no
+        AC_MSG_RESULT(no)
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])
+        ],[
+            AC_MSG_WARN([cannot compile CUDA code. Some features will not be available!])
+        ])
+    ])
+
+    # NVCC compile check
+    AC_MSG_CHECKING([whether CUDA runs])
+    
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[int no; cudaGetDeviceCount(&no);])], [
+        AC_MSG_RESULT(yes)
+    ],[
+        cuda_ok=no
+        AC_MSG_RESULT(no)
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([cannot run CUDA code. Look at config.log for more details.])
+        ],[
+            AC_MSG_WARN([cannot run CUDA code. Some features will not be available!])
+        ])
+    ],[
+        AC_MSG_RESULT([unknown (cross-compiling)])
+    ])
+    
+    CXX=$save_CXX
+    CXXFLAGS=$save_CXXFLAGS
+    
+    AS_IF([test x$cuda_ok == xyes], [
+        AC_DEFINE(CUDA,[],[Whether CUDA is available])
+    ],[
+        LIBS=$save_LIBS
+        LDFLAGS=$save_LDFLAGS
+    ])
+])
+
+AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 
 cat <<EOF
 ****************************************************************
@@ -479,9 +552,10 @@ AC_MSG_RESULT($with_efence)
 ##################################
 # Handling the myconfig-header
 AC_ARG_WITH(myconfig, 
-  AS_HELP_STRING([--with-myconfig=FILE],[default name of the local config file [myconfig.h]]),
-[ test .$with_myconfig = .no && with_myconfig=myconfig.h ],
-[ with_myconfig=myconfig.h ])
+  AS_HELP_STRING([--with-myconfig=FILE],
+                 [default name of the local config file [FILE=myconfig.hpp]]),
+[ test .$with_myconfig = .no && with_myconfig=myconfig.hpp ],
+[ with_myconfig=myconfig.hpp ])
 AC_MSG_CHECKING([the name of the configuration header])
 myconfig=$with_myconfig
 AC_MSG_RESULT($myconfig)
@@ -509,11 +583,11 @@ cat <<EOF
 ****************************************************************
 EOF
 # Creating the output
-AC_CONFIG_HEADERS([src/acconfig.h])
+AC_CONFIG_HEADERS([src/acconfig.hpp])
 AC_CONFIG_FILES([
 	Makefile
 	config/Makefile
-	config/myconfig-sample-header.h
+	config/myconfig-sample-header.hpp
 	src/Makefile
 	tools/Makefile
 	scripts/Makefile 
@@ -534,6 +608,16 @@ AC_CONFIG_FILES([testsuite/runtest.sh],
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 
+AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/src/features.def $(top_srcdir)/config/gen_sampleconfig.py'])
+AC_CONFIG_COMMANDS([myconfig-sample.hpp],
+        [if test x"$PYTHON" != xno; then \
+            cat config/myconfig-sample-header.hpp > myconfig-sample.hpp; \
+            $PYTHON $srcdir/config/gen_sampleconfig.py $srcdir/src/features.def >> myconfig-sample.hpp;\
+        else echo "Python is not available, not (re)creating sample config."; \
+        fi
+        ], [PYTHON="$PYTHON"])
+
+
 AC_OUTPUT
 
 cat <<EOF
@@ -542,13 +626,14 @@ cat <<EOF
 ****************************************************************
 platform detected	= $target
 package version		= $PACKAGE_VERSION
+development sources     = $devel_src
 
 Compiler
 --------
-compiler		= $CC
+compiler		= $CXX
 linker			= $LD
-c compiler flags	= $CFLAGS
-c preprocessor flags	= $CPPFLAGS
+c++ compiler flags	= $CXXFLAGS
+c++ preprocessor flags	= $CPPFLAGS
 linker flags		= $LDFLAGS
 libraries		= $LIBS
 using debug flags	= $enable_debug
@@ -577,7 +662,7 @@ dot			= $DOT
 python			= $PYTHON
 EOF
 
-if test x$with_cuda != xno; then
+if test x$cuda_ok = xyes; then
 cat <<EOF
 CUDA compiler		= $NVCC
 CUDA flags		= $NVCCFLAGS
@@ -604,3 +689,4 @@ fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
 fi
+

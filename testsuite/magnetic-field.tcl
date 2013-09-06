@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012 The ESPResSo project
+# Copyright (C) 2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -40,7 +40,7 @@ if { abs($E+32.) > 1E-11 } {
 
 # Check torque
 integrate 0 
-set T [part 0 print torque]
+set T [part 0 print torque_lab]
 set expected [veccross_product3d {1 2 3} {4 5 6}]
 if { [veclen [vecsub $expected $T]] >1E-6 } {
  error  "Torque for dipole in magnetic field incorrect. Should be $expected but is $T"

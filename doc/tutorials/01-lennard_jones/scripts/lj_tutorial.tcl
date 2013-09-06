@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -111,7 +111,15 @@ for {set i 0} {$i < $n_part} {incr i} {
    set pos_z [expr rand()*$box_length]
    part $i pos $pos_x $pos_y $pos_z q 0.0 type 0
 }
-
+######################################################################################
+if { [file exists data/config.pdb]==0 } {
+    exec mkdir data
+    exec touch data/config.pdb
+    puts "Creating directory data and writing simulation data to data/config.pdb" 
+} else {
+    puts "Writing simlulation data to data/config.pdb" 
+}
+######################################################################################
 writepdb data/config.pdb
 
 # Interaction setup
@@ -134,7 +142,7 @@ puts "Stop if minimal distance is larger than $min_dist"
 
 # set LJ cap
 set cap 1.0
-inter ljforcecap $cap
+inter forcecap $cap
 
 # Warmup Integration Loop
 set i 0
@@ -151,11 +159,11 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 
 #   Increase LJ cap
     set cap [expr $cap+1.0]
-    inter ljforcecap $cap
+    inter forcecap $cap
     incr i
 }
 
-inter ljforcecap 0;
+inter forcecap 0
 
 # 
 puts "\n Warm up finished \n"
@@ -191,7 +199,7 @@ for {set i 0} { $i < $sampling_iterations } { incr i} {
      set potential [expr [lindex $energies 2 3]/$n_part]
      set kinetic_temperature [expr [lindex $energies 1 1]/(1.5*[setmd n_part])]
      set temperature $kinetic_temperature
-     puts $en "$i   $pressure  $kinetic  $potential  $temperature $otal"
+     puts $en "$i   $pressure  $kinetic  $potential  $temperature $total"
      lappend apressure $pressure
      lappend akinetic $kinetic
      lappend apotential $potential

@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -174,3 +174,4 @@ if { ![ veccompare [ observable $tclcommand print ] { 1 2 3 } ] } {
   error "tclcommand is not working"
 }
 
+exit 0

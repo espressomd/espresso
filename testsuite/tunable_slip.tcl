@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -31,6 +31,7 @@
 # of fluid flow", Europ. Phys. J. E 26, 115 (2008)          #
 #                                                           #
 #############################################################
+
 source "tests_common.tcl"
 
 require_feature "TUNABLE_SLIP"
@@ -137,7 +138,7 @@ set timestep                    0.01
 set int_steps                   100
 
 # Length of integration run
-set int_loops                   5
+set int_loops                   3
 
 # precision of data output
 set tcl_precision     6
@@ -159,7 +160,7 @@ set wall_right_id 2
 constraint plane cell -10.0 -10.0 0.0 type $wall_left_id
 constraint plane cell -10.0 -10.0 10.0 type $wall_right_id
 
-#DPD-Thermostat
+# DPD-Thermostat
 thermostat dpd $dpd_temperature $dpd_gamma $dpd_r_cut
 
 # Solvent particles
@@ -175,7 +176,7 @@ for {set i 0} { $i < $n_solvent} { incr i } {
     
     part $i pos $posx $posy $posz type $solvent_id v $vx $vy $vz ext_force $f_x $f_y $f_z
 }
-galileiTransformParticles
+galilei_transform
 
 # Interactions 
 inter $wall_right_id $solvent_id lennard-jones $lj_eps $lj_sig $lj_cut $lj_shift $lj_off 

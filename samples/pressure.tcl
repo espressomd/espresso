@@ -1,13 +1,10 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 #  Charged Ideal Gas                                        #
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -43,10 +40,9 @@ puts "Program Information: \n[code_info]\n"
 set name  "pressure"
 set ident "_s6"
 
-# Visualization?  File I/O?  Retune Electrostatics?
+# Visualization?  File I/O?
 set vmd_output  "no"
 set write_stuff "yes"
-set retune      "no"
 
 # System parameters
 #############################################################
@@ -117,13 +113,7 @@ puts "Done (found $total_charge as overall charge)."
 #############################################################
 
 puts "    Creating electrostatic interactions... "
-if { $retune=="yes" } {
-    puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy]"
-} else {
-    # inter coulomb 2.0 p3m 3.29062 64 6 0.973715 8.15277e-05
-    # inter coulomb 1.0 p3m 45.9159 32 3 0.0420705 8.64147e-05
-    inter coulomb 1 p3m 26.4304 32 4 0.0859363 9.39165e-05
-}
+puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy]"
 
 
 #############################################################
@@ -163,8 +153,16 @@ puts "periodicity   [setmd periodicity]"
 puts "transfer_rate [setmd transfer_rate]" 
 puts "verlet_reuse  [setmd verlet_reuse]" 
 
-# write parameter file
-if { $write_stuff=="yes" } { polyBlockWrite "$name$ident.set" {box_l time_step skin} "" }
+# write configurations file
+if { $write_stuff=="yes" } {
+    set trajectory [open "$name$ident.config" "w"]
+
+    blockfile $trajectory write variable {box_l time_step skin}
+    blockfile $trajectory write interactions
+    blockfile $trajectory write integrate
+    blockfile $trajectory write thermostat
+    flush $trajectory
+}
 
 
 puts "\nStart integration: run $int_n_times times $int_steps steps, averaging the pressure over the past $int_avg measurements"
@@ -177,11 +175,9 @@ for {set i 0} { $i < $int_n_times } { incr i} {
 
 #   derive observables
     puts -nonewline "    Run $i at time=[setmd time] "; flush stdout
-    set ener [analyze energy]
-    set pres [analyze pressure]
-    set temp [expr [lindex [lindex $ener 1] 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]
-    set ptot [expr [lindex [lindex $pres 0] 1]]
-    set p_c  [expr [lindex [lindex $pres 2] 1]]
+    set temp [expr [analyze energy kinetic]/(([degrees_of_freedom]/2.0)*[setmd n_part])]
+    set ptot [analyze pressure total]
+    set p_c  [analyze pressure coulomb]
     set p_DH [expr -$temp*pow($kappa,3)/(24*[PI])]
     puts -nonewline "T=$temp; p=$ptot, p_c=$p_c, p_DH=$p_DH "; flush stdout
 
@@ -196,14 +192,22 @@ for {set i 0} { $i < $int_n_times } { incr i} {
     puts -nonewline "(<p_c>=$tmp_pc, <p_DH>=$tmp_pDH => $tmp_err\% error) \r"; flush stdout
 
 #   write observables
-    if { $write_stuff=="yes" } { puts $obs_file "{ time [setmd time] } { pressure $ptot $p_c $p_DH $avg_n $tmp_pc $tmp_pDH $tmp_err } $ener $pres" }
+    if { $write_stuff=="yes" } { puts $obs_file "{ time [setmd time] } { pressure $ptot $p_c $p_DH $avg_n $tmp_pc $tmp_pDH $tmp_err }" }
 
 #   write intermediate configuration
-    if { $i%10==0 } { if { $write_stuff=="yes" } { polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type} }; incr j }
+    if { $i%10==0 } { if { $write_stuff=="yes" } {
+	blockfile $trajectory write particles
+	flush $trajectory
+    }
+    }
 }
 
 # write end configuration
-if { $write_stuff=="yes" } { polyBlockWrite "$name$ident.end" {time box_l} {id pos type} }
+if { $write_stuff=="yes" } {
+    blockfile $trajectory write particles
+    blockfile $trajectory write variable { time }
+    close $trajectory
+}
 
 close $obs_file
 

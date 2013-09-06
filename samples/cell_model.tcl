@@ -1,13 +1,10 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 #  Simulation in a spherical cell                           #
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -217,6 +214,14 @@ puts "    CI Setup:        Fraction $man_frac in cylinder with radius $man_rad a
 puts "    Particles:       Total: $n_part, Charged: $n_charges, Uncharged [expr $n_part-$n_charges]"
 puts "\nConstraints:\n[constraint]"
 
+# write configurations file
+set trajectory [open "$name$ident.config" "w"]
+
+blockfile $trajectory write variable {box_l time_step skin}
+blockfile $trajectory write interactions
+blockfile $trajectory write thermostat
+flush $trajectory
+
 #  VMD connection                                           #
 #############################################################
 if { $vmd_output=="yes" } {
@@ -231,16 +236,20 @@ puts "\nStart warmup integration: max $warm_n_times times $warm_steps steps"
 integrate 0
 set act_min_dist [analyze mindist]
 set cap 20  
-inter ljforcecap $cap
+inter forcecap $cap
 # fix backbone monomers
 for {set i 0} { $i < $warm_n_times  && $act_min_dist < $min_dist } { incr i} {
     puts -nonewline "Run $i at time=[setmd time] min_dist=$act_min_dist\r"
     flush stdout
     integrate $warm_steps
+
+    blockfile $trajectory write particles
+    flush $trajectory
+
     if { $vmd_output=="yes" } { imd positions }
     set act_min_dist [analyze mindist]
     set cap [expr $cap+10]
-    inter ljforcecap $cap  
+    inter forcecap $cap  
 }
 
 puts "Warmup done: Minimal distance [analyze mindist]"
@@ -252,7 +261,7 @@ for {set i 0} { $i < $n_mono } {incr i} { part $i fix }
 
 puts "\nStart Counterion Equilibration: $ci_n_times times $ci_steps steps"
 # remove LJ cap
-inter ljforcecap 0
+inter forcecap 0
 # Start Coulomb interaction
 inter coulomb $bjerrum dh 0.0 [expr 2.0*$sphere_rad]
 
@@ -262,7 +271,9 @@ for {set i 0} { $i < $ci_n_times  } { incr i} {
     puts -nonewline "Run $i at time=[setmd time]\r"
     flush stdout
     integrate $ci_steps
-    polyBlockWrite "$name$ident.[format %04d $i]" {time box_l} {id pos type}
+
+    blockfile $trajectory write particles
+    flush $trajectory
    
     if { $vmd_output=="yes" } { imd positions }
 }
@@ -283,6 +294,10 @@ for {set i 0} { $i < $int_n_times } { incr i} {
     puts -nonewline "Run $i at time=[setmd time], re = [analyze re]\r"
     flush stdout
     integrate $int_steps
+
+    blockfile $trajectory write particles
+    flush $trajectory
+
     if { $vmd_output=="yes" } { imd positions }
 }
 

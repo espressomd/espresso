@@ -21,9 +21,15 @@ tools/es_mpiexec
 
 # object files and executable
 *.o
+*.lo
 src/libEspresso.a
 Espresso
 Espresso.install
+
+# Espresso output
+*.end
+*.obs*
+*.chk
 
 # doxygen
 doc/dg/html/

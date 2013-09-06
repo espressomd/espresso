@@ -7,7 +7,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -105,7 +105,7 @@ setmd max_num_cells 2744
 
 # set LJ cap
 set cap 20
-inter ljforcecap $cap
+inter forcecap $cap
 
 # Warmup Integration Loop
 set i 0
@@ -118,12 +118,12 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 
 #   Increase LJ cap
     set cap [expr $cap+10]
-    inter ljforcecap $cap
+    inter forcecap $cap
     incr i
 }
 
 #############################################################
 #      Integration                                          #
 #############################################################
-inter ljforcecap 0
+inter forcecap 0
 integrate 400000

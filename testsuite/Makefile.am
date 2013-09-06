@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -21,6 +21,7 @@ SUBDIRS = configs .
 # alphabetically sorted list of test scripts
 tests = \
 	analysis.tcl \
+	angle.tcl \
 	collision-detection-centers.tcl \
 	collision-detection-poc.tcl \
 	comforce.tcl \
@@ -38,15 +39,23 @@ tests = \
 	exclusions.tcl \
 	fene.tcl \
 	gb.tcl \
+	ghmc.tcl \
 	harm.tcl \
 	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \
+	langevin.tcl \
 	layered.tcl \
 	lb.tcl \
-	lb_stokes_sphere.tcl \
+	lb_fluid_coupling.tcl \
+	lb_fluid_coupling_gpu.tcl \
 	lb_gpu.tcl \
+	lb_planar.tcl \
+	lb_planar_gpu.tcl \
+	lb_planar_embedded_particles_gpu.tcl \
+	lb_stokes_sphere.tcl \
+	lb_stokes_sphere_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
 	lj-generic.tcl \
@@ -60,15 +69,20 @@ tests = \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
+	object_in_fluid.tcl \
+	object_in_fluid_gpu.tcl \
 	observable.tcl \
 	p3m.tcl \
+	p3m_gpu.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
 	p3m_wall.tcl \
+	p3m_wall_gpu.tcl \
 	rotation.tcl \
+	rotation_per_particle.tcl \
+	sc_fluid_gpu.tcl \
 	tabulated.tcl \
-	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
 # please keep the alphabetic ordering of the above list!
@@ -84,7 +98,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	analysis_system.data.04.gz analysis_system.data.05.gz \
 	analysis_system.data.06.gz analysis_system.data.07.gz \
 	analysis_system.data.08.gz analysis_system.data.09.gz \
-	analysis_system.data.10.gz analysis_system.data.chk \
+	analysis_system.data.10.gz \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
         p3m_magnetostatics.data \
@@ -102,6 +116,10 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	thermostat.data thermostat_rot.data \
 	mass_system.data \
 	lb_system.data \
+	object_in_fluid_system-final.data \
+	object_in_fluid_system-init.data \
+        object_in_fluid_system-nodes.data \
+	object_in_fluid_system-triangles.data \
 	\
 	pe_micelle.tcl pe_micelle.data \
 	uwerr.tcl uwerr.data \

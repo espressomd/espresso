@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #    Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -60,8 +60,8 @@ if { [catch {
     part 1 dip 0 0 1 
     part 0  v  0 0 0
     part 1  v  0 0 0
-    part 0 torque 0 0 0
-    part 1 torque 0 0 0
+    part 0 torque_lab 0 0 0
+    part 1 torque_lab 0 0 0
 
     puts "Imposing magnetostatics (epsilon changed on purpose, disregard warning message about epsilon)"
 

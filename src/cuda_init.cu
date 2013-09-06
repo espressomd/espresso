@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -16,14 +16,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+
+
+#include "utils.hpp"
+#include "cuda_init.hpp"
+
+
+#ifdef CUDA
+
 #include <cuda.h>
-// CUDA code is always interpreted as C++, so we need the extern C interface
-extern "C" {
-
-#include "utils.h"
-#include "cuda_init.h"
-
-}
 
 /** \name minimally required compute capability. */
 /*@{*/
@@ -97,3 +98,5 @@ int cuda_get_device()
   else
     return dev;
 }
+
+#endif /* defined(CUDA) */

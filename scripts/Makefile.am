@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -19,6 +19,7 @@
 # All Tcl-scripts in the scripts-directory should be listed here
 
 # make a copy of all script files
+# PLEASE KEEP ALPHABETIC ORDER
 ESSCRIPTS = \
 	init.tcl \
 	ABHmath.tcl \
@@ -27,12 +28,14 @@ ESSCRIPTS = \
 	bundle.tcl \
 	countBonds.tcl \
 	dielectrics.tcl \
+	gibbs_ghmc.tcl \
+	parallel_tempering.tcl \
 	pdb.tcl \
 	polymer.tcl \
 	statistics.tcl \
 	vtf.tcl \
-	tclline.tcl \
-	parallel_tempering.tcl
+	vtk.tcl \
+	object_in_fluid.tcl
 
 EXTRA_DIST=$(ESSCRIPTS)
 

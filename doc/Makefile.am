@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011,2012 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -18,15 +18,24 @@
 #
 SUBDIRS = logo doxygen dg ug tutorials
 
+if DEVEL_SRC
+
 .PHONY: FORCE doc ug dg tutorials doxygen
 doc: ug dg tutorials doxygen
-dg: FORCE
+dg: latexit.sh FORCE
 	cd dg; $(MAKE) --print-directory $@
-doxygen: FORCE
-	cd doxygen; $(MAKE) --print-directory $@
 ug: latexit.sh FORCE
 	cd ug; $(MAKE) --print-directory $@
 tutorials: latexit.sh FORCE
 	cd tutorials; $(MAKE) --print-directory $@
-FORCE:
 
+else
+
+.PHONY: FORCE doc doxygen
+doc: doxygen
+
+endif
+
+doxygen: FORCE
+	cd doxygen; $(MAKE) --print-directory $@
+FORCE:
