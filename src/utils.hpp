@@ -288,6 +288,11 @@ inline int imax(int a, int b) { return (a>b) ? a : b; }
 /** Calculates the minimum of 'int'-typed a and b, returning 'int'. */
 inline int imin(int a, int b) { return (a<b) ? a : b; }
 
+/** Check if a value is NaN. isnan() is only available in C++11 and C99, but not in C++98. **/
+#ifndef isnan
+  #define isnan(a) (a != a)
+#endif
+
 /** Calculates the remainder of a division */
 inline double drem_down(double a, double b) { return a - floor(a/b)*b; }
 
