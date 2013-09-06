@@ -779,6 +779,16 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       con->c.pore.rad_right =  con->c.pore.rad_left; 
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "outer_radius", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore outer_radius <rad> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.outer_rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      con->c.pore.outer_rad_right =  con->c.pore.outer_rad_left; 
+      argc -= 2; argv += 2;
+    }
     else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
       if (argc < 1) {
 	Tcl_AppendResult(interp, "constraint pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
@@ -796,6 +806,17 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.rad_left)) == TCL_ERROR)
 	return (TCL_ERROR);
       if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.rad_right)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 3; argv += 3;
+    }
+    else if(!strncmp(argv[0], "outer_radii", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore outer_radii <rad_left> <rad_right> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.outer_rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.outer_rad_right)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 3; argv += 3;
     }
