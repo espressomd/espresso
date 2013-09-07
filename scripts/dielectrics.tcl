@@ -827,6 +827,77 @@ proc dielectric_slitpore { args } {
   }
   set box_l_x [ lindex [ setmd box_l ] 0 ]
 
+  set pi 3.1415
+  set x [ expr $box_l_x/2 - $res/2]
+  set c1x [ expr $box_l_x/2 - $pore_width/2 - $upper_smoothing_radius ]
+  set c2x [ expr $box_l_x/2 - $pore_width/2 + $lower_smoothing_radius ]
+  
+  set z [ expr $pore_mouth - $pore_length ]
+  set c2z [ expr $pore_mouth - $pore_length  + $lower_smoothing_radius ]
+  set c1z [ expr $pore_mouth -  $upper_smoothing_radius ]
+  
+  
+  
+  while { $x > $c2x } {
+  
+  
+  doit $x $z 0 1
+  doit [ expr $box_l_x - $x ] $z  0 1
+    set x [ expr $x - $res ]
+  }
+  
+  set a [ expr ($c2x-$x)/$lower_smoothing_radius ]
+  set x [ expr $c2x - sin($a)*$lower_smoothing_radius ]
+  set z [ expr $c2z - cos($a)*$lower_smoothing_radius ]
+  
+  while { $a < $pi/2 } {
+  
+  
+  doit $x $z [ expr sin($a) ] [ expr cos($a) ]
+  doit [ expr $box_l_x - $x ] $z [ expr -sin($a) ] [ expr cos($a) ]
+    set a [ expr $a + $res/$lower_smoothing_radius ] 
+    set x [ expr $c2x - sin($a) *$lower_smoothing_radius]
+    set z [ expr $c2z - cos($a) *$lower_smoothing_radius]
+  
+  }
+  
+  set x [ expr $box_l_x/2 - $pore_width/2 ]
+  set z [ expr $c2z + $lower_smoothing_radius*sin($a - $pi/2) ]
+  
+  while { $z < $c1z } {
+  
+    doit $x $z 1 0
+    doit [ expr $box_l_x - $x ] $z -1 0
+    set z [ expr $z + $res ] 
+  }
+  set a [ expr ($z - $c1z)/$upper_smoothing_radius ]
+  set x [ expr $c1x + cos($a)*$upper_smoothing_radius ]
+  set z [ expr $c1z + sin($a)*$upper_smoothing_radius ]
+  
+  while { $a < $pi/2 } {
+  doit $x $z [ expr cos($a) ] [ expr sin($a) ]  
+  doit [ expr $box_l_x - $x ] $z [ expr -cos($a) ] [ expr sin($a) ]  
+  
+    set a [ expr $a + $res/$upper_smoothing_radius ] 
+    set x [ expr $c1x + cos($a)*$upper_smoothing_radius ]
+    set z [ expr $c1z + sin($a)*$upper_smoothing_radius ]
+  }
+  set z $pore_mouth
+  while { $x > 0 } {
+  doit $x $z 0 1
+  doit [ expr $box_l_x - $x ] $z 0 1
+  
+    set x [ expr $x - $res ]
+  }
+  
+  set x [ expr $box_l_x/2 - $res/2]
+  set z [ expr $pore_mouth + $channel_width ]
+  while { $x > 0 } { 
+    doit $x $z 0 -1
+    doit [expr $box_l_x - $x ] $z 0 -1
+  
+    set x [ expr $x - $res ]
+  }
 }
 
 
@@ -848,4 +919,8 @@ proc dielectric { args } {
   if { [ lindex $args 0 ] == "pore" } { 
     return [ eval dielectric_pore $args1 ]
   }
+  if { [ lindex $args 0 ] == "slitpore" } { 
+    return [ eval dielectric_slitpore $args1 ]
+  }
+  error "unable to understand argument given to dielectric"
 }
