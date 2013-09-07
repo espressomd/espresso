@@ -415,10 +415,10 @@ int double_correlation_get_data( double_correlation* self ) {
   self->newest[0] = ( self->newest[0] + 1 ) % (self->tau_lin +1); 
   self->n_vals[0]++;
 
-  if ( (*self->A_obs->fun)(self->A_obs->args, self->A[0][self->newest[0]], self->dim_A) != 0 )
+  if ( observable_calculate(self->A_obs) != 0 )
     return 1;
   if (!self->autocorrelation)
-    if ( (*self->B_obs->fun)(self->B_obs->args, self->B[0][self->newest[0]], self->dim_B) != 0 )
+    if ( observable_calculate(self->B_obs) != 0 )
       return 2;
 
   // Now we update the cumulated averages and variances of A and B

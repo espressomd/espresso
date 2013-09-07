@@ -65,6 +65,7 @@
 #include "domain_decomposition.hpp"
 #include "p3m_gpu.hpp"
 #include "cuda_common.hpp"
+#include "external_potential.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -129,6 +130,7 @@ void on_program_start()
 #ifdef DP3M
   dp3m_pre_init();
 #endif
+  external_potential_pre_init();
 
 #ifdef LB_GPU
   if(this_node == 0){

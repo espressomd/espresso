@@ -83,6 +83,7 @@
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "collision.hpp" 
+#include "external_potential.hpp"
 /* end of force files */
 
 /** \name Exported Functions */

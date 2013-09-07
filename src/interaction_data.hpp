@@ -894,6 +894,11 @@ typedef struct {
   double pos[3];
 } Constraint_plane;
 
+typedef struct {
+  double omega;
+  double Prefactor;
+} SinusoidalField;
+
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */

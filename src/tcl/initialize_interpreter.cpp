@@ -53,6 +53,7 @@
 #include "thermostat_tcl.hpp"
 #include "virtual_sites_com_tcl.hpp"
 #include "ghmc_tcl.hpp"
+#include "external_potential_tcl.hpp"
 
 #ifdef TK
 #include <tk.hpp>
@@ -153,6 +154,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
   /* in constraint.c */
   REGISTER_COMMAND("constraint", tclcommand_constraint);
+  REGISTER_COMMAND("external_potential", tclcommand_external_potential);
   /* in uwerr.c */
   REGISTER_COMMAND("uwerr", tclcommand_uwerr);
   /* in nemd.c */

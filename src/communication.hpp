@@ -562,6 +562,12 @@ void mpi_galilei_transform();
  */
 void mpi_setup_reaction();
 
+void mpi_external_potential_broadcast(int number);
+void mpi_external_potential_broadcast_slave(int node, int number);
+void mpi_external_potential_tabulated_read_potential_file(int number);
+void mpi_external_potential_sum_energies(); 
+void mpi_external_potential_sum_energies_slave(); 
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event

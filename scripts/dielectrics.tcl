@@ -33,7 +33,7 @@ proc dielectric_wall { args } {
   set sigma 0
   set type 0 
   set eps 0.
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
     if { [ lindex $args $argno ] == "dist" } {
       incr argno
       set dist [ expr 1.0 * [ lindex $args $argno ] ]
@@ -157,7 +157,7 @@ proc dielectric_sphere { args } {
   set res 0
   set sigma 0
   set type 0 
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
     if { [ lindex $args $argno ] == "radius" } {
       incr argno
       set radius [ expr 1.* [ lindex $args $argno ] ]
@@ -264,7 +264,7 @@ proc dielectric_cylinder { args } {
   set direction 1
   set sigma 0
   set type 0
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
     if { [ lindex $args $argno ] == "center" } {
       incr argno
       set center_x [ lindex $args $argno ] 
@@ -507,7 +507,7 @@ proc dielectric_pore { args } {
   set box_l_z [ lindex [ setmd box_l ] 2 ]
   set max_radius [ expr sqrt($box_l_x*$box_l_x+ $box_l_y*$box_l_y + $box_l_z*$box_l_z) ]
 
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
     if { [ lindex $args $argno ] == "center" } {
       incr argno
       set center_x [ expr 1.0*[ lindex $args $argno ] ]
@@ -742,6 +742,93 @@ proc dielectric_pore { args } {
     lappend icc_epsilons $eps
     lappend icc_sigmas $sigma 
   }
+<<<<<<< HEAD
+=======
+}
+
+
+
+proc dielectric_slitpore { args } {
+  global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
+  if { ![ info exists n_induced_charges ] } {
+    set n_induced_charges 0 
+    set icc_areas [ list ]
+    set icc_normals [ list ] 
+    set icc_epsilons [ list ] 
+    set icc_sigmas [ list ]
+  }
+
+  set type 0
+  set eps 1.
+  set sigma 0.
+
+
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
+    if { [ lindex $args $argno ] == "pore_mouth" } {
+      incr argno
+      set pore_mouth [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "channel_width" } {
+      incr argno
+      set channel_width [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "pore_length" } {
+      incr argno
+      set pore_length [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "pore_width" } {
+      incr argno
+      set pore_width [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "upper_smoothing_radius" } {
+      incr argno
+      set upper_smoothing_radius [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "lower_smoothing_radius" } {
+      incr argno
+      set lower_smoothing_radius [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "res" } {
+      incr argno
+      set res [ expr 1.0* [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }    
+    if { [ lindex $args $argno ] == "eps" } {
+      incr argno
+      set eps [ expr 1.0*[ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "type" } {
+      incr argno
+      set type [ expr [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "sigma" } {
+      incr argno
+      set sigma [ expr 1.0* [ lindex $args $argno ]] 
+      incr argno
+      continue
+    }
+    puts "did not understand arg [ lindex args $argno ]"
+    error "did not understand arg [ lindex args $argno ]"
+  }
+  set box_l_x [ lindex [ setmd box_l ] 0 ]
+>>>>>>> supercaps
 
 }
 
