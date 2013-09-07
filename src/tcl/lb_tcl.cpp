@@ -357,8 +357,25 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
       	          Tcl_AppendResult(interp, "Unknown Error setting friction", (char *)NULL);
                         return TCL_ERROR;
               }
-        } 
-      }    
+        }
+        lb_lbfluid_set_couple_flag (LB_COUPLE_TWO_POINT); //Default to nearest neighbor coupling for MD particles
+      }
+      else if (ARG0_IS_S("couple") ) {
+        if ( argc < 1 ) { 
+          Tcl_AppendResult(interp, "couple requires an argument, either 2pt or 3pt", (char *)NULL);
+          return TCL_ERROR;
+        } else {
+          if ( ARG1_IS_S("2pt") || ARG1_IS_S("2PT") || ARG1_IS_S("2Pt") ) {
+            lb_lbfluid_set_couple_flag (LB_COUPLE_TWO_POINT);
+          } else if ( ARG1_IS_S("3pt") || ARG1_IS_S("3PT") || ARG1_IS_S("3Pt") ) {
+            lb_lbfluid_set_couple_flag (LB_COUPLE_THREE_POINT);
+          } else {
+            Tcl_AppendResult(interp, "Did not understand argument to couple, please send 2pt or 3pt.", (char *)NULL);
+            return TCL_ERROR;
+          }
+          argc-=2; argv+=2;
+        }
+      }
       else if (ARG0_IS_S("gamma_odd") ) {
         if ( argc < (LB_COMPONENTS+1) ){ 
 	        Tcl_AppendResult(interp, "gamma_odd requires arguments", (char *)NULL); // TODO: fix this and similar ones...

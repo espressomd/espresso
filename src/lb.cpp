@@ -40,6 +40,7 @@
 #include "lb-d3q19.hpp"
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
+#include "lbgpu.hpp"
 
 int lb_components = LB_COMPONENTS; // global variable holding the number of fluid components (see global.c)
 
@@ -309,6 +310,7 @@ int lb_lbfluid_set_gamma_even(double *p_gamma_even){//
   }
   return 0;
 }
+
 int lb_lbfluid_set_friction(double * p_friction){//
 
   
@@ -327,6 +329,26 @@ int lb_lbfluid_set_friction(double * p_friction){//
     mpi_bcast_lb_params(LBPAR_FRICTION);
 #endif
     }
+  }
+  return 0;
+}
+
+int lb_lbfluid_set_couple_flag(int couple_flag) { 
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    if ( couple_flag != LB_COUPLE_TWO_POINT && couple_flag != LB_COUPLE_THREE_POINT ) {
+      return -1;
+    }
+    lbpar_gpu.lb_couple_switch = couple_flag;
+#endif
+  } else {
+#ifdef LB
+     /* Only the two point nearest neighbor coupling is present in the case of the cpu, 
+        so just throw an error if something else is tried */
+     if ( couple_flag != LB_COUPLE_TWO_POINT ) {
+      return -1;
+    }   
+#endif
   }
   return 0;
 }

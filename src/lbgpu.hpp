@@ -39,6 +39,10 @@
 #define D3Q19
 #define LBQ 19
 
+#define LB_COUPLE_NULL        1
+#define LB_COUPLE_TWO_POINT   2
+#define LB_COUPLE_THREE_POINT 3
+
 /** \name Parameter fields for Lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
  * to determine what actions have to take place upon change
@@ -81,6 +85,10 @@ typedef struct {
    * lead to numerical artifacts with low order integrators */
   float friction[LB_COMPONENTS];
   /** amplitude of the fluctuations in the viscous coupling */
+  /** Switch indicating what type of coupling is used, can either
+  use nearest neighbors or next nearest neighbors. */
+  int lb_couple_switch;
+
   float lb_coupl_pref[LB_COMPONENTS];
   float lb_coupl_pref2[LB_COMPONENTS];
   float bulk_viscosity[LB_COMPONENTS];
@@ -119,7 +127,7 @@ typedef struct {
   float gamma_mobility[LB_COMPONENTS];
   float mobility[LB_COMPONENTS];
   float coupling[LB_COMPONENTS*LB_COMPONENTS];
-#endif // SHANCHEN  
+#endif // SHANCHEN 
 
 } LB_parameters_gpu;
 
@@ -198,7 +206,6 @@ extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 extern int n_lb_boundaries;
 
 
-
 /*@}*/
 
 /************************************************************/
@@ -233,7 +240,7 @@ void lb_reinit_fluid_gpu();
 
 /** (Re-)initializes the particle array*/
 void lb_realloc_particles_gpu();
-void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
+void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();

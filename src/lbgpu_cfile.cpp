@@ -88,6 +88,8 @@ LB_parameters_gpu lbpar_gpu = {
   SC0,
   // friction
   SC0,
+  // lb_couple_switch
+  LB_COUPLE_NULL,
   // lb_coupl_pref
   SC0,
   // lb_coupl_pref2
@@ -131,6 +133,7 @@ LB_parameters_gpu lbpar_gpu = {
   SC20
 #endif // SHANCHEN  
 };
+
 
 /** this is the array that stores the hydrodynamic fields for the output */
 LB_rho_v_pi_gpu *host_values = NULL;
@@ -195,9 +198,9 @@ void lattice_boltzmann_update_gpu() {
   }
 }
 
-
-
-/** (re-) allocation of the memory need for the particles (cpu part)*/
+/** (re-) allocation of the memory needed for the particles (cpu part)
+  * @param *lbpar_gpu Pointer to parameters to setup the lb field
+*/
 void lb_realloc_particles_gpu(){
 
   lbpar_gpu.number_of_particles = n_total_particles;
@@ -210,8 +213,9 @@ void lb_realloc_particles_gpu(){
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
 
-  lb_realloc_particle_GPU_leftovers(&lbpar_gpu);
+  lb_realloc_particles_GPU_leftovers(&lbpar_gpu);
 }
+
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
