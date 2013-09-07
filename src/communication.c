@@ -998,11 +998,15 @@ void mpi_send_rotation_slave(int pnode, int part)
 
 void mpi_observable_lb_radial_velocity_profile() 
 {
+#ifdef LB
   mpi_call(mpi_observable_lb_radial_velocity_profile_slave, 0, 0);
+#endif
 }
 void mpi_observable_lb_radial_velocity_profile_slave(int pnode, int part)
 {
+#ifdef LB
   mpi_observable_lb_radial_velocity_profile_slave_implementation(); 
+#endif
 }
 
 
