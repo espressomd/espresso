@@ -17,7 +17,6 @@
 #
 
 proc dielectric_wall { args } {
-  set p_no [ setmd n_part ]
   global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
   if { ![ info exists n_induced_charges ] } {
     set n_induced_charges 0 
@@ -124,8 +123,7 @@ proc dielectric_wall { args } {
       set posy [ expr $ny * $dist + $l1*$e_1_y + $l2*$e_2_y ]
       set posz [ expr $nz * $dist + $l1*$e_1_z + $l2*$e_2_z ]
       if { $posx >= 0 && $posx < $box_l_x &&  $posy >= 0 && $posy < $box_l_y &&  $posz >= 0 && $posz < $box_l_z } {
-        part $p_no pos $posx $posy $posz q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1 type $type
-        incr p_no
+        part $n_induced_charges pos $posx $posy $posz q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1 type $type
         incr n_induced_charges
         lappend icc_normals [ list $nx $ny $nz ] 
         incr counter
@@ -143,7 +141,6 @@ proc dielectric_wall { args } {
 
 
 proc dielectric_sphere { args } {
-  set p_no [ setmd n_part ]
   global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
   if { ![ info exists n_induced_charges ] } {
     set n_induced_charges 0 
@@ -225,8 +222,7 @@ proc dielectric_sphere { args } {
        set y [ expr  $radius*sin($phi)*sin($theta) ]
        set z [ expr  $radius*cos($theta) ]
        set phi [ expr $phi+$incr_phi ]
-       part $p_no pos [expr $cx+$x] [expr $cy+$y] [expr $cz+$z] q [ expr $sigma*$res*$res +0.0*([ t_random ]-0.5) ] type $type fix 1 1 1
-       incr p_no
+       part [ expr $n_induced_charges ] pos [expr $cx+$x] [expr $cy+$y] [expr $cz+$z] q [ expr $sigma*$res*$res +0.0*([ t_random ]-0.5) ] type $type fix 1 1 1
        incr n_induced_charges
        incr ic_counter
        lappend icc_normals [ list  [ expr $direction*$x/$radius ] [ expr $direction* $y/$radius ] [ expr $direction* $z/$radius ] ]
@@ -245,7 +241,6 @@ proc dielectric_sphere { args } {
 
 
 proc dielectric_cylinder { args } {
-  set p_no [ setmd n_part ]
   global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
   if { ![ info exists n_induced_charges ] } {
     set n_induced_charges 0 
@@ -398,13 +393,12 @@ proc dielectric_cylinder { args } {
       set x [ expr $circle_center_x + $radius*cos($phi)*$e_1_x + $radius*sin($phi)*$e_2_x ]
       set y [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set z [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
-      part $p_no pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] type $type fix 1 1 1
+      part [ expr $n_induced_charges ] pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] type $type fix 1 1 1
       set nx [ expr $direction*(cos($phi)*$e_1_x + sin($phi)*$e_2_x) ]
       set ny [ expr $direction*(cos($phi)*$e_1_y + sin($phi)*$e_2_y) ]
       set nz [ expr $direction*(cos($phi)*$e_1_z + sin($phi)*$e_2_z) ]
       lappend icc_normals [ list $nx $ny $nz ]
       incr particle_counter
-      incr p_no
       incr n_induced_charges
       set phi $phi+$incr_phi
     }
@@ -427,13 +421,12 @@ proc dielectric_cylinder { args } {
         set x [ expr $circle_center_x + $this_radius*cos($phi)*$e_1_x + $this_radius*sin($phi)*$e_2_x ]
         set y [ expr $circle_center_y + $this_radius*cos($phi)*$e_1_y + $this_radius*sin($phi)*$e_2_y ]
         set z [ expr $circle_center_z + $this_radius*cos($phi)*$e_1_z + $this_radius*sin($phi)*$e_2_z ]
-        part $p_no pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
+        part [ expr $n_induced_charges ] pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
         set nx [ expr -$direction*$axis_x  ]
         set ny [ expr -$direction*$axis_y  ]
         set nz [ expr -$direction*$axis_z  ]
         lappend icc_normals [ list $nx $ny $nz ] 
         incr particle_counter
-        incr p_no
         incr n_induced_charges
         set phi $phi+$incr_phi
       }
@@ -450,13 +443,12 @@ proc dielectric_cylinder { args } {
         set x [ expr $circle_center_x + $this_radius*cos($phi)*$e_1_x + $this_radius*sin($phi)*$e_2_x ]
         set y [ expr $circle_center_y + $this_radius*cos($phi)*$e_1_y + $this_radius*sin($phi)*$e_2_y ]
         set z [ expr $circle_center_z + $this_radius*cos($phi)*$e_1_z + $this_radius*sin($phi)*$e_2_z ]
-        part $p_no pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
+        part [ expr $n_induced_charges ] pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
         set nx [ expr +$direction*$axis_x  ]
         set ny [ expr +$direction*$axis_y  ]
         set nz [ expr +$direction*$axis_z  ]
         lappend icc_normals [ list $nx $ny $nz ] 
         incr particle_counter
-        incr p_no
         incr n_induced_charges
         set phi $phi+$incr_phi
       }
@@ -494,7 +486,6 @@ proc sqrt { a } {
 }
 
 proc dielectric_pore { args } { 
-  set p_no [ setmd n_part ]
   global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
   if { ![ info exists n_induced_charges ] } {
     set n_induced_charges 0 
@@ -508,7 +499,6 @@ proc dielectric_pore { args } {
   set r2 0.
   set length 0.
   set res 0.
-  set pore_res 0.
   set type 0
   set eps 0.
   set sigma 0.
@@ -552,7 +542,7 @@ proc dielectric_pore { args } {
       set r2 [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
       continue
-#    }
+    }
     if { [ lindex $args $argno ] == "length" } {
       incr argno
       set length [ expr 2.0*[ lindex $args $argno ] ]
@@ -562,12 +552,6 @@ proc dielectric_pore { args } {
     if { [ lindex $args $argno ] == "res" } {
       incr argno
       set res [ expr 1.0*[ lindex $args $argno ] ]
-      incr argno
-      continue
-    }
-    if { [ lindex $args $argno ] == "pore_res" } {
-      incr argno
-      set pore_res [ expr 1.0* [ lindex $args $argno ] ]
       incr argno
       continue
     }
@@ -590,9 +574,6 @@ proc dielectric_pore { args } {
       continue
     }
     error "did not understand arg [ lindex args $argno ]"
-  }
-  if { $pore_res == 0 } { 
-      set pore_res $res 
   }
   set pi 3.1415
   set particle_counter 0
@@ -664,25 +645,15 @@ proc dielectric_pore { args } {
   set z [ expr - $length ]
   while { $z < $length } {
     if { $z < $z_left } {
-<<<<<<< HEAD
-      set radius [ expr $c1_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c1_z)*($z-$c1_z) ) ] 
-      set delta_b [ expr 2*$pi*$pore_res/2/$pi/$smoothing_radius ]
-=======
       set radius [ expr $c1_r - [ sqrt [ expr  $smoothing_radius*$smoothing_radius - ($z-$c1_z)*($z-$c1_z) ] ] ] 
       set delta_b [ expr 2*$pi*$res/2/$pi/$smoothing_radius ]
->>>>>>> 03bea3cb0b37c415c4a2541a413e38e12b9d0610
       set sinb [ expr ($z - $c1_z)/$smoothing_radius ]
       set sinbnew [ expr $sinb*cos($delta_b) + [ sqrt [ expr 1-$sinb*$sinb ] ]*sin($delta_b) ]
       set incr_z [ expr $c1_z + $smoothing_radius * $sinbnew - $z ]
       set slope_norm [ expr tan(asin($sinb+1e-8)) ]
     } elseif  { $z > $z_right } {
-<<<<<<< HEAD
-      set radius [ expr $c2_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c2_z)*($z-$c2_z) ) ] 
-      set delta_b [ expr 2*$pi*$pore_res/2/$pi/$smoothing_radius ]
-=======
       set radius [ expr $c2_r - [ sqrt [ expr $smoothing_radius*$smoothing_radius - ($z-$c2_z)*($z-$c2_z) ] ] ] 
       set delta_b [ expr 2*$pi*$res/2/$pi/$smoothing_radius ]
->>>>>>> 03bea3cb0b37c415c4a2541a413e38e12b9d0610
       set sinb [ expr ($z - $c2_z)/$smoothing_radius ]
       set sinbnew [ expr $sinb*cos($delta_b) + [ sqrt [ expr 1-$sinb*$sinb ] ]*sin($delta_b) ]
       set incr_z [ expr $c2_z + $smoothing_radius * $sinbnew - $z ]
@@ -693,24 +664,23 @@ proc dielectric_pore { args } {
       }
     } else {
       set radius [ expr ($z-$c1_z)*$slope + $c1_r -$smoothing_radius/$cosa]  
-      set incr_z [expr $pore_res / sqrt(1+$slope*$slope) ]
+      set incr_z [expr $res / sqrt(1+$slope*$slope) ]
       set slope_norm $slope
     }
-    set n_circle [ expr round( 2*$pi*$radius/$pore_res) ]
+    set n_circle [ expr round( 2*$pi*$radius/$res) ]
     set incr_phi [ expr 2*$pi / $n_circle ]
     set phi 0
     for { set j 0 } { $j < $n_circle } { incr j} {
       set px [ expr $circle_center_x + $radius*cos($phi)*$e_1_x + $radius*sin($phi)*$e_2_x ]
       set py [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set pz [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
-      part $p_no pos $px $py $pz type $type q [ expr $sigma*$pore_res*$pore_res +0.1*([ t_random ]-0.5) ] fix 1 1 1
+      part [ expr $n_induced_charges ] pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
       set nx [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_x + sin($phi)*$e_2_x)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_x ]
       set ny [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_y + sin($phi)*$e_2_y)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_y ]
       set nz [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_z + sin($phi)*$e_2_z)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_z ]
       lappend icc_normals [ list $nx $ny $nz ]
       incr particle_counter
       incr n_induced_charges
-      incr p_no
       set phi $phi+$incr_phi
     }
     set incr_length_x [ expr $axis_x * $incr_z]
@@ -721,7 +691,6 @@ proc dielectric_pore { args } {
     set circle_center_z [ expr $circle_center_z + $incr_length_z ]
     set z [ expr $z + $incr_z ]
   }
-  set n_pore $particle_counter
   for { set radius [ expr $c1_r + $res ] } { $radius < $max_radius } { set radius [ expr $radius + $res ] } {
     set circle_center_x [ expr $center_x - $axis_x*$length ]
     set circle_center_y [ expr $center_y - $axis_y*$length ]
@@ -734,14 +703,13 @@ proc dielectric_pore { args } {
       set py [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set pz [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
       if { $px > 0 && $px < $box_l_x && $py > 0 && $py < $box_l_y &&$pz > 0 && $pz < $box_l_z } {  
-        part $p_no pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1 
+        part [ expr $n_induced_charges ] pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1 
         set nx [ expr -$axis_x ]
         set ny [ expr -$axis_y ]
         set nz [ expr -$axis_z ]
         lappend icc_normals [ list $nx $ny $nz ]
         incr particle_counter
         incr n_induced_charges
-        incr p_no
       } 
       set phi $phi+$incr_phi
     }
@@ -758,221 +726,24 @@ proc dielectric_pore { args } {
       set py [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set pz [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
       if { $px > 0 && $px < $box_l_x && $py > 0 && $py < $box_l_y && $pz > 0 && $pz < $box_l_z } {  
-        part $p_no pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
+        part [ expr $n_induced_charges ] pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
         set nx [ expr +$axis_x ]
         set ny [ expr +$axis_y ]
         set nz [ expr +$axis_z ]
         lappend icc_normals [ list $nx $ny $nz ]
         incr particle_counter
         incr n_induced_charges
-        incr p_no
       } 
       set phi [ expr $phi+$incr_phi ]
     }
   }
   for { set i 0 } { $i < $particle_counter } { incr i } {
-    if { $i < $n_pore } { 
-      lappend icc_areas [ expr $pore_res*$pore_res ]
-    } else {
-      lappend icc_areas [ expr $res*$res ]
-    }
-    lappend icc_epsilons $eps
-    lappend icc_sigmas $sigma 
-  }
-
-}
-
-proc doit { x z nx nz } {
-  set p_no [ setmd n_part ]
-  upvar res res
-  upvar eps eps
-  upvar sigma sigma
-  upvar type type
-  global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
-  if { ![ info exists n_induced_charges ] } {
-    set n_induced_charges 0 
-    set icc_areas [ list ]
-    set icc_normals [ list ] 
-    set icc_epsilons [ list ] 
-    set icc_sigmas [ list ]
-  }
-  set ly [ lindex [ setmd box_l ] 1 ]
-  set ny [ expr int(floor($ly/$res)) ]
-  set ry [ expr $ly/$ny ]
-  
-  for { set i 0 } { $i < $ny } { incr i } {
-    part $p_no pos $x [ expr $i * $ry ] $z fix 1 1 1 type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ]
-    incr n_induced_charges
-    incr p_no
-
-    lappend icc_normals [ list $nx 0 $nz ]
-
     lappend icc_areas [ expr $res*$res ]
     lappend icc_epsilons $eps
     lappend icc_sigmas $sigma 
   }
+
 }
-
-
-
-proc dielectric_slitpore { args } {
-  global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
-  if { ![ info exists n_induced_charges ] } {
-    set n_induced_charges 0 
-    set icc_areas [ list ]
-    set icc_normals [ list ] 
-    set icc_epsilons [ list ] 
-    set icc_sigmas [ list ]
-  }
-
-  set type 0
-  set eps 1.
-  set sigma 0.
-
-
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
-    if { [ lindex $args $argno ] == "pore_mouth" } {
-      incr argno
-      set pore_mouth [ expr 1.0 * [ lindex $args $argno ] ]
-      incr argno
-      continue
-    }
-    if { [ lindex $args $argno ] == "channel_width" } {
-      incr argno
-      set channel_width [ expr 1.0 * [ lindex $args $argno ] ]
-      incr argno
-      continue
-    }
-    if { [ lindex $args $argno ] == "pore_length" } {
-      incr argno
-      set pore_length [ expr 1.0 * [ lindex $args $argno ] ]
-      incr argno
-      continue
-    }
-    if { [ lindex $args $argno ] == "pore_width" } {
-      incr argno
-      set pore_width [ expr 1.0 * [ lindex $args $argno ] ]
-      incr argno
-      continue
-    }
-    if { [ lindex $args $argno ] == "upper_smoothing_radius" } {
-      incr argno
-      set upper_smoothing_radius [ expr 1.0 * [ lindex $args $argno ] ]
-      incr argno
-      continue
-    }
-    if { [ lindex $args $argno ] == "lower_smoothing_radius" } {
-      incr argno
-      set lower_smoothing_radius [ expr 1.0 * [ lindex $args $argno ] ]
-      incr argno
-      continue
-    }
-    if { [ lindex $args $argno ] == "res" } {
-      incr argno
-      set res [ expr 1.0* [ lindex $args $argno ] ]
-      incr argno
-      continue
-    }    
-    if { [ lindex $args $argno ] == "eps" } {
-      incr argno
-      set eps [ expr 1.0*[ lindex $args $argno ] ]
-      incr argno
-      continue
-    }
-    if { [ lindex $args $argno ] == "type" } {
-      incr argno
-      set type [ expr [ lindex $args $argno ] ]
-      incr argno
-      continue
-    }
-    if { [ lindex $args $argno ] == "sigma" } {
-      incr argno
-      set sigma [ expr 1.0* [ lindex $args $argno ]] 
-      incr argno
-      continue
-    }
-    puts "did not understand arg [ lindex args $argno ]"
-    error "did not understand arg [ lindex args $argno ]"
-  }
-  set box_l_x [ lindex [ setmd box_l ] 0 ]
-
-  set pi 3.1415
-  set x [ expr $box_l_x/2 - $res/2]
-  set c1x [ expr $box_l_x/2 - $pore_width/2 - $upper_smoothing_radius ]
-  set c2x [ expr $box_l_x/2 - $pore_width/2 + $lower_smoothing_radius ]
-  
-  set z [ expr $pore_mouth - $pore_length ]
-  set c2z [ expr $pore_mouth - $pore_length  + $lower_smoothing_radius ]
-  set c1z [ expr $pore_mouth -  $upper_smoothing_radius ]
-  
-  
-  
-  while { $x > $c2x } {
-  
-  
-  doit $x $z 0 1
-  doit [ expr $box_l_x - $x ] $z  0 1
-    set x [ expr $x - $res ]
-  }
-  
-  set a [ expr ($c2x-$x)/$lower_smoothing_radius ]
-  set x [ expr $c2x - sin($a)*$lower_smoothing_radius ]
-  set z [ expr $c2z - cos($a)*$lower_smoothing_radius ]
-  
-  while { $a < $pi/2 } {
-  
-  
-  doit $x $z [ expr sin($a) ] [ expr cos($a) ]
-  doit [ expr $box_l_x - $x ] $z [ expr -sin($a) ] [ expr cos($a) ]
-    set a [ expr $a + $res/$lower_smoothing_radius ] 
-    set x [ expr $c2x - sin($a) *$lower_smoothing_radius]
-    set z [ expr $c2z - cos($a) *$lower_smoothing_radius]
-  
-  }
-  
-  set x [ expr $box_l_x/2 - $pore_width/2 ]
-  set z [ expr $c2z + $lower_smoothing_radius*sin($a - $pi/2) ]
-  
-  while { $z < $c1z } {
-  
-    doit $x $z 1 0
-    doit [ expr $box_l_x - $x ] $z -1 0
-    set z [ expr $z + $res ] 
-  }
-  set a [ expr ($z - $c1z)/$upper_smoothing_radius ]
-  set x [ expr $c1x + cos($a)*$upper_smoothing_radius ]
-  set z [ expr $c1z + sin($a)*$upper_smoothing_radius ]
-  
-  while { $a < $pi/2 } {
-  doit $x $z [ expr cos($a) ] [ expr sin($a) ]  
-  doit [ expr $box_l_x - $x ] $z [ expr -cos($a) ] [ expr sin($a) ]  
-  
-    set a [ expr $a + $res/$upper_smoothing_radius ] 
-    set x [ expr $c1x + cos($a)*$upper_smoothing_radius ]
-    set z [ expr $c1z + sin($a)*$upper_smoothing_radius ]
-  }
-  set z $pore_mouth
-  while { $x > 0 } {
-  doit $x $z 0 1
-  doit [ expr $box_l_x - $x ] $z 0 1
-  
-    set x [ expr $x - $res ]
-  }
-  
-  set x [ expr $box_l_x/2 - $res/2]
-  set z [ expr $pore_mouth + $channel_width ]
-  while { $x > 0 } { 
-    doit $x $z 0 -1
-    doit [expr $box_l_x - $x ] $z 0 -1
-  
-    set x [ expr $x - $res ]
-  }
-}
-
-
-
-
-
 
 
 proc dielectric { args } {
@@ -993,8 +764,4 @@ proc dielectric { args } {
   if { [ lindex $args 0 ] == "pore" } { 
     return [ eval dielectric_pore $args1 ]
   }
-  if { [ lindex $args 0 ] == "slitpore" } { 
-    return [ eval dielectric_slitpore $args1 ]
-  }
-  error "unable to understand argument given to dielectric"
 }

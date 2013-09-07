@@ -741,6 +741,8 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
     con->c.pore.axis[2] = 0;
   con->c.pore.rad_left = 0;
   con->c.pore.rad_right = 0;
+  con->c.pore.outer_rad_left = 1e99;
+  con->c.pore.outer_rad_right = 1e99;
   con->c.pore.length = 0;
   con->c.pore.reflecting = 0;
   con->part_rep.p.type = -1;
