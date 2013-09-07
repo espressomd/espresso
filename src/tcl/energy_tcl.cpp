@@ -108,6 +108,7 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
     }
+    Tcl_AppendResult(interp, " }", (char *)NULL);
 #endif
 
 #ifdef DIPOLES
@@ -127,7 +128,6 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
  	    Tcl_PrintDouble(interp, external_potentials[i].energy, buffer);
 	    Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
     }
-    Tcl_AppendResult(interp, " }", (char *)NULL);
   }
 
 }

@@ -3,8 +3,8 @@
 
 
 #include <tcl.h>
-#include "parser.h"
-#include "external_potential.h"
+#include "parser.hpp"
+#include "external_potential.hpp"
 
 int tclcommand_external_potential(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);

@@ -1,6 +1,6 @@
 
 
-#include "external_potential_tcl.h"
+#include "external_potential_tcl.hpp"
 
 int tclcommand_external_potential_tabulated(Tcl_Interp* interp, int argc, char **argv, ExternalPotential* e);
 

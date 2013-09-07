@@ -62,6 +62,7 @@ int observable_calc_particle_velocities(observable* self) {
 }
 
 int observable_calc_particle_angular_momentum(observable* self) {
+  double* A = self->last_value;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) self->container;
@@ -264,11 +265,12 @@ int observable_calc_com_position(observable* self) {
 }
 
 
-int observable_com_force(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_com_force(observable* self) {
+  double* A = self->last_value;
   double f_com[3] = { 0. , 0., 0. } ;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
@@ -758,15 +760,15 @@ int observable_calc_structure_factor(observable* self) {
   
   sortPartCfg();
 
-    for(p=0; p<self->n; p++) {
+    for(int p=0; p<self->n; p++) {
        A[p]   = 0.0;
     }
 
     l=0;
     //printf("self->n: %d, dim_sf: %d\n",n_A, params.dim_sf); fflush(stdout);
-    for(i=-order; i<=order; i++) {
-      for(j=-order; j<=order; j++) {
-        for(k=-order; k<=order; k++) {
+    for(int i=-order; i<=order; i++) {
+      for(int j=-order; j<=order; j++) {
+        for(int k=-order; k<=order; k++) {
 	  n = i*i + j*j + k*k;
 	  if ((n<=order2) && (n>=1)) {
 	    C_sum = S_sum = 0.0;

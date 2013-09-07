@@ -249,7 +249,7 @@ int tclcommand_observable_tclcommand(Tcl_Interp* interp, int argc, char** argv, 
   obs->calculate=&observable_calc_tclcommand;
   obs->update=0;
   obs->n=n_A;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   obs->container=(void*) container;
           
   return TCL_OK;
@@ -264,7 +264,7 @@ int tclcommand_observable_particle_velocities(Tcl_Interp* interp, int argc, char
   obs->update=0;
   obs->container=ids;
   obs->n=3*ids->n;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
@@ -274,9 +274,11 @@ int tclcommand_observable_particle_angular_momentum(Tcl_Interp* interp, int argc
   int temp;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->fun=&observable_particle_angular_momentum;
-  obs->args=ids;
+  obs->calculate=&observable_calc_particle_angular_momentum;
+  obs->update=0;
+  obs->container=ids;
   obs->n=3*ids->n;
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
@@ -297,7 +299,7 @@ int tclcommand_observable_com_velocity(Tcl_Interp* interp, int argc, char** argv
       obs->update=0;
       obs->container=ids;
       obs->n=3*ids->n/blocksize;
-      obs->last_value=malloc(obs->n*sizeof(double));
+      obs->last_value=(double*)malloc(obs->n*sizeof(double));
       *change=3+temp;
       printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs->n);
       return TCL_OK;
@@ -310,7 +312,7 @@ int tclcommand_observable_com_velocity(Tcl_Interp* interp, int argc, char** argv
     obs->update=0;
     obs->container=ids;
     obs->n=3;
-    obs->last_value=malloc(obs->n*sizeof(double));
+    obs->last_value=(double*)malloc(obs->n*sizeof(double));
     *change=1+temp;
     return TCL_OK;
   }
@@ -332,7 +334,7 @@ int tclcommand_observable_com_position(Tcl_Interp* interp, int argc, char** argv
       obs->update=0;
       obs->container=ids;
       obs->n=3*ids->n/blocksize;
-      obs->last_value=malloc(obs->n*sizeof(double));
+      obs->last_value=(double*)malloc(obs->n*sizeof(double));
       *change=3+temp;
       printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs->n);
       return TCL_OK;
@@ -345,7 +347,7 @@ int tclcommand_observable_com_position(Tcl_Interp* interp, int argc, char** argv
     obs->update=0;
     obs->container=ids;
     obs->n=3;
-    obs->last_value=malloc(obs->n*sizeof(double));
+    obs->last_value=(double*)malloc(obs->n*sizeof(double));
     *change=1+temp;
     return TCL_OK;
   }
@@ -368,7 +370,7 @@ int tclcommand_observable_com_force(Tcl_Interp* interp, int argc, char** argv, i
       obs->update=0;
       obs->container=ids;
       obs->n=3*ids->n/blocksize;
-      obs->last_value=malloc(obs->n*sizeof(double));
+      obs->last_value=(double*)malloc(obs->n*sizeof(double));
       *change=3+temp;
       printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs->n);
       return TCL_OK;
@@ -381,7 +383,7 @@ int tclcommand_observable_com_force(Tcl_Interp* interp, int argc, char** argv, i
     obs->update=0;
     obs->container=ids;
     obs->n=3;
-    obs->last_value=malloc(obs->n*sizeof(double));
+    obs->last_value=(double*)malloc(obs->n*sizeof(double));
     *change=1+temp;
     return TCL_OK;
   }
@@ -396,7 +398,7 @@ int tclcommand_observable_particle_positions(Tcl_Interp* interp, int argc, char*
   obs->update=0;
   obs->container=(void*)ids;
   obs->n=3*ids->n;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
@@ -410,7 +412,7 @@ int tclcommand_observable_particle_forces(Tcl_Interp* interp, int argc, char** a
   obs->update=0;
   obs->container=(void*)ids;
   obs->n=3*ids->n;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
@@ -422,7 +424,7 @@ int tclcommand_observable_stress_tensor(Tcl_Interp* interp, int argc, char** arg
   obs->update=0;
   obs->container=(void*)NULL;
   obs->n=9;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1;
   return TCL_OK;
 }
@@ -433,7 +435,7 @@ int tclcommand_observable_stress_tensor_acf_obs(Tcl_Interp* interp, int argc, ch
   obs->update=0;
   obs->container=(void*)NULL;
   obs->n=6;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1;
   return TCL_OK;
 }
@@ -452,7 +454,7 @@ int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** a
   }
   obs->container=(void*)pdata;
   obs->n=pdata->xbins*pdata->ybins*pdata->zbins;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
@@ -469,7 +471,7 @@ int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char
     return TCL_ERROR;
   obs->container=(void*)pdata;
   obs->n=3*pdata->xbins*pdata->ybins*pdata->zbins;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #endif
@@ -489,7 +491,7 @@ int tclcommand_observable_radial_density_profile(Tcl_Interp* interp, int argc, c
   }
   obs->container=(void*)rpdata;
   obs->n=rpdata->rbins*rpdata->phibins*rpdata->zbins;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
@@ -507,7 +509,7 @@ int tclcommand_observable_radial_flux_density_profile(Tcl_Interp* interp, int ar
   }
   obs->container=(void*)rpdata;
   obs->n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
@@ -525,7 +527,7 @@ int tclcommand_observable_flux_density_profile(Tcl_Interp* interp, int argc, cha
   }
   obs->container=(void*)pdata;
   obs->n=3*pdata->xbins*pdata->ybins*pdata->zbins;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
@@ -542,7 +544,7 @@ int tclcommand_observable_lb_radial_velocity_profile(Tcl_Interp* interp, int arg
      return TCL_ERROR;
   obs->container=(void*)rpdata;
   obs->n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #endif
@@ -558,7 +560,7 @@ int tclcommand_observable_particle_currents(Tcl_Interp* interp, int argc, char**
     return TCL_ERROR;
   obs->container=(void*)ids;
   obs->n=3*ids->n;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else
@@ -578,7 +580,7 @@ int tclcommand_observable_currents(Tcl_Interp* interp, int argc, char** argv, in
     return TCL_ERROR;
   obs->container=(void*)ids;
   obs->n=3;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else
@@ -597,7 +599,7 @@ int tclcommand_observable_dipole_moment(Tcl_Interp* interp, int argc, char** arg
     return TCL_ERROR;
   obs->container=(void*)ids;
   obs->n=3;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else
@@ -776,7 +778,7 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
   iw_params_p->cutoff=cutoff;
   obs->container=(void*)iw_params_p;
   obs->n=ids1->n; // number of ids from the 1st argument
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   return TCL_OK;
 }
 
@@ -794,11 +796,11 @@ int tclcommand_observable_average(Tcl_Interp* interp, int argc, char** argv, int
     Tcl_AppendResult(interp, "The reference observable does not exist.", (char *)NULL);
     return TCL_ERROR;
   }
-  observable_average_container* container=malloc(sizeof(observable_average_container));
+  observable_average_container* container=(observable_average_container*)malloc(sizeof(observable_average_container));
   container->reference_observable = observables[reference_observable];
   container->n_sweeps = 0;
   obs->n = container->reference_observable->n;
-  obs->last_value=malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
   for (int i=0; i<obs->n; i++) 
     obs->last_value[i] = 0;
 
@@ -852,7 +854,7 @@ int tclcommand_observable_average(Tcl_Interp* interp, int argc, char** argv, int
 
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
-    observables[id]=malloc(sizeof(observable)); \
+    observables[id]=(s_observable*)malloc(sizeof(observable)); \
     observable_init(observables[id]); \
     if (parser(interp, argc-2, argv+2, &temp, observables[n_observables]) ==TCL_OK) { \
       n_observables++; \

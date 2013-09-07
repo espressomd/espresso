@@ -47,12 +47,15 @@ extern int n_observables;
 // flag if autoupdates are necessary.
 extern int observables_autoupdate;
 
+void autoupdate_observables(); 
+
+void observable_init(observable* self);
 int observable_calculate(observable* self);
 int observable_update(observable* self);
 
 /* Here we have the particular observables listed */
 int observable_calc_particle_velocities(observable* self_);
-int observable_calc_angular_momentum(observable* self_);
+int observable_calc_particle_angular_momentum(observable* self_);
 int observable_calc_com_velocity(observable* self); 
 int observable_calc_blocked_com_velocity(observable* self); 
 /** Obtain the particle positions.

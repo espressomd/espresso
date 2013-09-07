@@ -138,7 +138,6 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_recv_fluid_boundary_flag_slave) \
   CB(mpi_set_particle_temperature_slave) \
   CB(mpi_set_particle_gamma_slave) \
-<<<<<<< HEAD:src/communication.cpp
   CB(mpi_kill_particle_motion_slave) \
   CB(mpi_kill_particle_forces_slave) \
   CB(mpi_system_CMS_slave) \
@@ -146,12 +145,10 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_galilei_transform_slave) \
   CB(mpi_setup_reaction_slave) \
   CB(mpi_send_rotation_slave) \
-=======
   CB(mpi_external_potential_broadcast_slave) \
   CB(mpi_external_potential_tabulated_read_potential_file_slave) \
   CB(mpi_external_potential_sum_energies_slave) \
 
->>>>>>> supercaps:src/communication.c
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2974,10 +2971,10 @@ void mpi_external_potential_broadcast(int number) {
 void mpi_external_potential_broadcast_slave(int node, int number) {
   ExternalPotential E;
   MPI_Bcast(&E, sizeof(ExternalPotential), MPI_BYTE, 0, comm_cart);
-  ExternalPotential* new;
-  generate_external_potential(&new);
+  ExternalPotential* new_;
+  generate_external_potential(&new_);
   external_potentials[number] = E;
-  external_potentials[number].scale=malloc(external_potentials[number].n_particle_types);
+  external_potentials[number].scale=(double*) malloc(external_potentials[number].n_particle_types);
   MPI_Bcast(external_potentials[number].scale, external_potentials[number].n_particle_types, MPI_DOUBLE, 0, comm_cart);
 }
 
@@ -2992,11 +2989,11 @@ void mpi_external_potential_tabulated_read_potential_file_slave(int node, int nu
 
 void mpi_external_potential_sum_energies() {
   mpi_call(mpi_external_potential_sum_energies_slave, 0, 0);
-  double* energies = malloc(n_external_potentials);
+  double* energies = (double*) malloc(n_external_potentials);
   for (int i=0; i<n_external_potentials; i++) {
     energies[i]=external_potentials[i].energy;
   }
-  double* energies_sum =  malloc(n_external_potentials); 
+  double* energies_sum = (double*) malloc(n_external_potentials); 
   MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
   for (int i=0; i<n_external_potentials; i++) {
     external_potentials[i].energy=energies_sum[i];
@@ -3007,7 +3004,7 @@ void mpi_external_potential_sum_energies() {
 
 
 void mpi_external_potential_sum_energies_slave(int dummy1, int dummy2) {
-  double* energies = malloc(n_external_potentials);
+  double* energies = (double*)malloc(n_external_potentials);
   for (int i=0; i<n_external_potentials; i++) {
     energies[i]=external_potentials[i].energy;
   }

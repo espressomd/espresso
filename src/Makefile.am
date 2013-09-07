@@ -98,74 +98,6 @@ libEspresso_a_SOURCES = \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp
-=======
-	config-features.c \
-	adresso.c adresso.h \
-	cells.c cells.h \
-	collision.c collision.h \
-	communication.c communication.h \
-	comfixed.c comfixed.h \
-	comforce.h comforce.c \
-	config.h \
-	constraint.c constraint.h \
-	debug.c debug.h \
-	domain_decomposition.c domain_decomposition.h \
-	energy.c energy.h \
-	errorhandling.c	errorhandling.h \
-	debye_hueckel.h \
-	fft.c fft.h \
-	fft-common.c fft-common.h \
-	fft-dipolar.c fft-dipolar.h \
-	forces.c forces.h \
-	ghosts.c ghosts.h \
-	global.c global.h \
-	grid.c grid.h \
-	halo.c halo.h \
-	iccp3m.c iccp3m.h \
-	imd.c imd.h \
-	initialize.c initialize.h \
-	integrate.c integrate.h \
-	interaction_data.c interaction_data.h \
-	lattice.c lattice.h \
-	layered.c layered.h \
-	lb.c lb.h \
-	lb-boundaries.c lb-boundaries.h \
-	lb-d3q18.h lb-d3q19.h \
-	lbgpu_cfile.c \
-	metadynamics.c metadynamics.h \
-	modes.c	modes.h \
-	molforces.c molforces.h \
-	mol_cut.c mol_cut.h \
-	nemd.c nemd.h \
-	npt.h \
-	nsquare.c nsquare.h \
-	particle_data.c	particle_data.h \
-	polymer.c polymer.h \
-	polynom.h \
-	pressure.c pressure.h \
-	random.c random.h \
-	rattle.c rattle.h \
-	reaction.c reaction.h \
-	rotation.c rotation.h \
-	specfunc.c specfunc.h \
-	statistics.c statistics.h \
-	statistics_chain.c statistics_chain.h \
-	statistics_cluster.c statistics_cluster.h \
-	statistics_correlation.c statistics_correlation.h \
-	statistics_fluid.c statistics_fluid.h \
-	statistics_molecule.c statistics_molecule.h \
-	statistics_observable.c statistics_observable.h \
-	thermostat.c thermostat.h \
-	topology.c topology.h \
-	tuning.c tuning.h \
-	utils.h \
-	uwerr.c uwerr.h \
-	verlet.c verlet.h \
-	virtual_sites.c virtual_sites.h \
-	virtual_sites_com.c virtual_sites_com.h \
-	virtual_sites_relative.c virtual_sites_relative.h \
-	vmdsock.c vmdsock.h
->>>>>>> supercaps
 
 # nonbonded potentials and forces
 libEspresso_a_SOURCES += \
@@ -225,7 +157,6 @@ libEspresso_a_SOURCES += \
 if TCL
 
 libEspresso_a_SOURCES += \
-<<<<<<< HEAD
 	tcl/adresso_tcl.cpp tcl/adresso_tcl.hpp \
 	tcl/bin_tcl.cpp \
 	tcl/binary_file_tcl.cpp tcl/binary_file_tcl.hpp \
@@ -239,6 +170,7 @@ libEspresso_a_SOURCES += \
 	tcl/constraint_tcl.cpp tcl/constraint_tcl.hpp \
 	tcl/domain_decomposition_tcl.cpp tcl/domain_decomposition_tcl.hpp \
 	tcl/energy_tcl.cpp \
+	tcl/external_potential_tcl.cpp tcl/external_potential_tcl.hpp \
 	tcl/galilei_tcl.cpp tcl/galilei_tcl.hpp \
 	tcl/global_tcl.cpp tcl/global_tcl.hpp \
 	tcl/grid_tcl.cpp tcl/grid_tcl.hpp \
@@ -272,52 +204,6 @@ libEspresso_a_SOURCES += \
 	tcl/uwerr_tcl.cpp \
 	tcl/virtual_sites_com_tcl.cpp tcl/virtual_sites_com_tcl.hpp \
 	tcl/ghmc_tcl.cpp tcl/ghmc_tcl.hpp
-=======
-	tcl/adresso_tcl.c tcl/adresso_tcl.h \
-	tcl/bin_tcl.c \
-	tcl/binary_file_tcl.c tcl/binary_file_tcl.h \
-	tcl/blockfile_tcl.c \
-	tcl/cells_tcl.c \
-	tcl/channels_tcl.c \
-	tcl/collision_tcl.c \
-	tcl/comfixed_tcl.c tcl/comfixed_tcl.h \
-	tcl/comforce_tcl.c tcl/comforce_tcl.h \
-	tcl/config_tcl.c \
-	tcl/constraint_tcl.c tcl/constraint_tcl.h \
-	tcl/domain_decomposition_tcl.c tcl/domain_decomposition_tcl.h \
-	tcl/energy_tcl.c \
-	tcl/external_potential_tcl.c tcl/external_potential_tcl.h \
-	tcl/global_tcl.c tcl/global_tcl.h \
-	tcl/grid_tcl.c tcl/grid_tcl.h \
-	tcl/iccp3m_tcl.c tcl/iccp3m_tcl.h \
-	tcl/imd_tcl.c \
-	tcl/initialize_interpreter.c \
-	tcl/integrate_tcl.c tcl/integrate_tcl.h \
-	tcl/interaction_data_tcl.c tcl/interaction_data_tcl.h \
-	tcl/lb-boundaries_tcl.c \
-	tcl/lb_tcl.c tcl/lb_tcl.h \
-	tcl/metadynamics_tcl.c tcl/metadynamics_tcl.h \
-	tcl/nemd_tcl.c \
-	tcl/mol_cut_tcl.c tcl/mol_cut_tcl.h \
-	tcl/parser.c tcl/parser.h \
-	tcl/particle_data_tcl.c \
-	tcl/polymer_tcl.c tcl/polymer_tcl.h \
-	tcl/pressure_tcl.c tcl/pressure_tcl.h \
-	tcl/random_tcl.c tcl/random_tcl.h \
-	tcl/reaction_tcl.c tcl/reaction_tcl.h \
-	tcl/rattle_tcl.c tcl/rattle_tcl.h \
-	tcl/statistics_chain_tcl.c tcl/statistics_chain_tcl.h \
-	tcl/statistics_cluster_tcl.c tcl/statistics_cluster_tcl.h \
-	tcl/statistics_correlation_tcl.c tcl/statistics_correlation_tcl.h \
-	tcl/statistics_fluid_tcl.c tcl/statistics_fluid_tcl.h \
-	tcl/statistics_observable_tcl.c tcl/statistics_observable_tcl.h \
-	tcl/statistics_tcl.c tcl/statistics_tcl.h \
-	tcl/thermostat_tcl.c tcl/thermostat_tcl.h \
-	tcl/topology_tcl.c \
-	tcl/tuning_tcl.c \
-	tcl/uwerr_tcl.c \
-	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h
->>>>>>> supercaps
 
 # nonbonded potentials and forces
 libEspresso_a_SOURCES += \

@@ -742,8 +742,6 @@ proc dielectric_pore { args } {
     lappend icc_epsilons $eps
     lappend icc_sigmas $sigma 
   }
-<<<<<<< HEAD
-=======
 }
 
 
@@ -828,7 +826,6 @@ proc dielectric_slitpore { args } {
     error "did not understand arg [ lindex args $argno ]"
   }
   set box_l_x [ lindex [ setmd box_l ] 0 ]
->>>>>>> supercaps
 
 }
 
