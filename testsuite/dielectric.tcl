@@ -51,6 +51,14 @@ set r2 8.
 set rs 2.5
 set l 4.
 dielectric pore  center 10 10 10 axis 1 0 0 radii $r1 $r2 length $l res 1.9 smoothing_radius $rs eps 0.2
+set pore_mouth 10
+set d 1.
+set channel_width 4.
+set pore_width 3.
+set pore_length 4. 
+set upper_smoothing_radius 1.
+set lower_smoothing_radius 1. 
+dielectric slitpore pore_mouth [ expr $pore_mouth - $d ] channel_width [ expr $channel_width+2*$d] pore_width [ expr $pore_width + 2*$d] pore_length [ expr $pore_length + 0*$d ] upper_smoothing_radius [ expr $upper_smoothing_radius -$d ] lower_smoothing_radius [ expr $lower_smoothing_radius + $d ] res 0.5 eps 100
 
 constraint pore center 10 10 10 axis 1 0 0 radii [ expr $r1 + $dist ] [ expr $r2 + $dist ] length [ expr $l - $dist ] type 0 smoothing_radius [ expr $rs - $dist ]
 puts "Done. Now we have $n_induced_charges induced charges"

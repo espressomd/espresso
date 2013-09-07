@@ -744,6 +744,36 @@ proc dielectric_pore { args } {
   }
 }
 
+proc doit { x z nx nz } {
+  set p_no [ setmd n_part ]
+  upvar res res
+  upvar eps eps
+  upvar sigma sigma
+  upvar type type
+  global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
+  if { ![ info exists n_induced_charges ] } {
+    set n_induced_charges 0 
+    set icc_areas [ list ]
+    set icc_normals [ list ] 
+    set icc_epsilons [ list ] 
+    set icc_sigmas [ list ]
+  }
+  set ly [ lindex [ setmd box_l ] 1 ]
+  set ny [ expr int(floor($ly/$res)) ]
+  set ry [ expr $ly/$ny ]
+  
+  for { set i 0 } { $i < $ny } { incr i } {
+    part $p_no pos $x [ expr $i * $ry ] $z fix 1 1 1 type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ]
+    incr n_induced_charges
+    incr p_no
+
+    lappend icc_normals [ list $nx 0 $nz ]
+
+    lappend icc_areas [ expr $res*$res ]
+    lappend icc_epsilons $eps
+    lappend icc_sigmas $sigma 
+  }
+}
 
 
 proc dielectric_slitpore { args } {
