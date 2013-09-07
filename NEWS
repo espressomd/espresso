@@ -20,6 +20,10 @@ tune the settings of a non-cubic mesh.
 * MEMD electrostatics can now handle spatially varying dielectrc
   constants.
 
+* pore constraint / lbboundary can have a two outer radii now to create nozzles.
+
+* slitpore constraint and dielectric for IL based supercaps implemented.
+
 User-visible changes
 --------------------
 
