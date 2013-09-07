@@ -53,6 +53,7 @@ description of the method, please refer to the literature.
   \require{1 or 2 or 3}{\opt{bulk_visc  \var{bulk\_viscosity}}}
   \require{1 or 2 or 3}{\opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}}
   \require{1 or 2 or 3}{\opt{friction   \var{gamma} } }
+  \require{2}{\opt{couple   \var{2pt/3pt} } }
   \require{1 or 2 or 3}{\opt{gamma_odd  \var{gamma\_odd}}}
   \require{1 or 2 or 3}{\opt{gamma_even  \var{gamma\_even}}}
   \require{3}{\opt{mobility} \var{mobilities}  }
@@ -155,6 +156,8 @@ in a frictional force and a random force:
   \vec{F} = -\gamma \left(\vec{v}-\vec{u}\right) + \vec{F}_R.
 \end{equation*}
 The momentum acquired by the particles is then transferred back to the fluid using a linear interpolation scheme, to preserve total momentum.
+In the GPU implementation the force can be interpolated using a three point scheme which couples the particles to the nearest 27 LB nodes.
+This can be called using ``lbfluid \lit{couple} 3pt'' and is described in D\"{u}nweg and Ladd in equation 301\cite{duenweg08a}.
 The frictional force tends to decrease the relative velocity
 between the fluid and the particle whereas the random forces are chosen
 so large that the average kinetic energy per particle corresponds to

@@ -340,6 +340,10 @@ int lb_lbfluid_set_couple_flag(int couple_flag) {
       return -1;
     }
     lbpar_gpu.lb_couple_switch = couple_flag;
+/*    if (couple_flag == LB_COUPLE_TWO_POINT)
+      lbpar_gpu.lb_couple_switch = (lbpar_gpu.lb_couple_switch &~ LB_COUPLE_THREE_POINT) | LB_COUPLE_TWO_POINT;
+    if (couple_flag == LB_COUPLE_THREE_POINT)
+      lbpar_gpu.lb_couple_switch = (lbpar_gpu.lb_couple_switch &~ LB_COUPLE_TWO_POINT) | LB_COUPLE_THREE_POINT;*/
 #endif
   } else {
 #ifdef LB

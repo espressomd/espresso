@@ -68,6 +68,21 @@ if { $delta > 1e-4 } {
      error_exit "linear momentum not conserved"
 }
 
+#test momentum conservation for the three point coupling
+if { $components == 1 }  { 
+  lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep  friction 0.1 couple 3pt
+}
+
+part 0 pos [expr 0.5] [expr 0.5 ] [expr 0.5 ] v 1.0 0.0 0.0 
+thermostat lb 0.0
+set initial [expr [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] ] 
+integrate 500
+set delta [expr $initial - ( [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] ) ] 
+if { $delta > 1e-4 } {
+
+     error_exit "linear momentum not conserved for the 3 point coupling scheme"
+}
+
 
 if { $components == 1 }  { 
 lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0
@@ -99,6 +114,43 @@ if { $components == 1 }  {
 } else  { 
    set vel_works 0.0900439240
 }
+# check for the right terminal velocity
+set difference [expr ($vsum/$count - $vel_works)/$vel_works]
+puts -nonewline  "The velocity is [expr $vsum/$count] compared to the reference $vel_works : "
+if { $difference > 1e-3 } {
+  puts "FAILED"
+  error_exit "Particle terminal velocity is wrong: coupling might be broken."
+} else { 
+  puts "OK"
+}
+
+if { $components == 1 }  { 
+lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0 couple 3pt
+} 
+part 0 pos [expr 0.5*$length] [expr 0.5*$length] [expr 0.5*$length] v 0.0 0.0 0.0 f 0.0 0.0 0.0 ext_force $dragx $dragy $dragz 
+
+
+# get over the initial acceleration
+integrate 200
+
+# average terminal velocity to remove node dependence
+set vsum 0.0
+set count 0
+for { set i 0 } { $i < 100 } { incr i } {
+
+  integrate 5
+
+  set pv [part 0 print v]
+  set vel [expr sqrt([lindex $pv 0]*[lindex $pv 0] + [lindex $pv 1]*[lindex $pv 1] + [lindex $pv 2]*[lindex $pv 2]) ]
+  set vsum [expr $vsum + $vel]
+  incr count
+}
+
+#note that the linear interpolation in SC is different from LB, hence the different terminal velocity
+if { $components == 1 }  { 
+   set vel_works 0.1100128137
+}
+
 # check for the right terminal velocity
 set difference [expr ($vsum/$count - $vel_works)/$vel_works]
 puts -nonewline  "The velocity is [expr $vsum/$count] compared to the reference $vel_works : "

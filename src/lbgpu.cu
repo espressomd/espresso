@@ -94,11 +94,6 @@ static size_t size_of_extern_nodeforces;
 static __device__ __constant__ LB_parameters_gpu para;
 static const float c_sound_sq = 1.f/3.f;
 
-/**cuda streams for parallel computing on cpu and gpu */
-//extern cudaStream_t stream[1];
-
-//extern cudaError_t err;
-//extern cudaError_t _err;
 
 /*-------------------------------------------------------*/
 /*********************************************************/
@@ -943,18 +938,18 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
    }
  }
  /** see Duenweg and Ladd http://arxiv.org/abs/0803.2826 eqn. 301 */
- //the i index is left node, nearest node, right node
+ /** the i index is left node, nearest node, right node */
  for(int i=0; i<3; ++i){
-   //note the -0.5f is to account for the shift of the LB grid relative to the MD
+   /** note the -0.5f is to account for the shift of the LB grid relative to the MD */
    float scaledpos = particle_data[part_index].p[i]/para.agrid - 0.5f;
-   //the +0.5 is to turn the floorf into a round function
+   /** the +0.5 is to turn the floorf into a round function */
    my_center[i] = (int)(floorf(scaledpos+0.5f));
    scaledpos = scaledpos-my_center[i];
-   temp_delta[0+3*i] = ( 5 - 3*(scaledpos-1.f)
-                        -sqrt( -2 + 6*(scaledpos-1.f) - 3*pow(scaledpos-1.f,2) ) )/6.f;
-   temp_delta[1+3*i] = (1+sqrt(1-3*scaledpos*scaledpos))/3.f;
-   temp_delta[2+3*i] = ( 5 - 3*(scaledpos+1.f)
-                        -sqrt( -2 + 6*(scaledpos+1.f) - 3*pow(scaledpos+1.f,2) ) )/6.f;
+   temp_delta[0+3*i] = ( 5 - 3*abs(scaledpos-1.f)
+                        - sqrt( -2 + 6*abs(scaledpos-1.f) - 3*pow(scaledpos-1.f,2) ) )/6.f;
+   temp_delta[1+3*i] = ( 1 + sqrt( 1 - 3*pow(scaledpos,2) ) )/3.f;
+   temp_delta[2+3*i] = ( 5 - 3*abs(scaledpos+1.f)
+                        -sqrt( -2 + 6*abs(scaledpos+1.f) - 3*pow(scaledpos+1.f,2) ) )/6.f;
 
    
    /**TODO: add special case for boundaries? */
@@ -971,16 +966,15 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
  int x = my_center[0] + para.dim_x;
  int y = my_center[1] + para.dim_y;
  int z = my_center[2] + para.dim_z;
- //Here we collect the nodes for the three point coupling scheme (27 nodes in 3d) with the analogous numbering scheme of the two point coupling scheme
+ /** Here we collect the nodes for the three point coupling scheme (27 nodes in 3d) with the analogous numbering scheme of the two point coupling scheme */
  for (int i=-1; i<=1; i++) {
    for (int j=-1; j<=1; j++) {
      for (int k=-1; k<=1; k++) {
-       node_index [i+3*j+9*k+13]= (x+i)%para.dim_x + para.dim_x*((y+j)%para.dim_y) + para.dim_x*para.dim_y*((z+k)%para.dim_z);
+       node_index[i+3*j+9*k+13] = (x+i+para.dim_x)%para.dim_x + para.dim_x*((y+j+para.dim_y)%para.dim_y) + para.dim_x*para.dim_y*((z+k+para.dim_z)%para.dim_z);
      }
    }
  }
 
- 
  particle_force[part_index].f[0] = 0.f;
  particle_force[part_index].f[1] = 0.f;
  particle_force[part_index].f[2] = 0.f;
@@ -1130,7 +1124,6 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
 
 
  /* Viscous force */
-
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
   viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau)/rhotot;
   viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau)/rhotot;
@@ -1247,7 +1240,6 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
  float gradrho1, gradrho2, gradrho3;
  float Rho;
 #endif 
-printf ("in calc_viscous_force\n"); //TODO: delete
  #pragma unroll
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
    #pragma unroll
@@ -1446,7 +1438,6 @@ printf ("in calc_viscous_force\n"); //TODO: delete
 
 
  /* Viscous force */
-printf ("LB COMPONENTS %d \n", LB_COMPONENTS); //TODO: delete
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
   viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau)/rhotot;
   viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau)/rhotot;
@@ -1484,7 +1475,6 @@ printf ("LB COMPONENTS %d \n", LB_COMPONENTS); //TODO: delete
      particle_force[part_index].f[1] -= partgrad2[node+ii*8]/8.;
      particle_force[part_index].f[2] -= partgrad3[node+ii*8]/8.;
   }
-  printf ("couple force is %E %E %E\n",viscforce[0+ii*3],viscforce[1+ii*3],viscforce[2+ii*3]); //TODO: delete
   /* note that scforce is zero if SHANCHEN is not #defined */
   delta_j[0+3*ii] -= (scforce[0+ii*3]+viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
   delta_j[1+3*ii] -= (scforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
@@ -2115,7 +2105,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
 __global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
   
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
-  unsigned int node_index[8];
+  unsigned int node_index[27];
   float delta[27];
   float delta_j[3*LB_COMPONENTS]; 
   float partgrad1[8*LB_COMPONENTS]; 
@@ -2127,7 +2117,7 @@ __global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA
     rng_part.seed = part[part_index].seed;
     /**force acting on the particle. delta_j will be used later to compute the force that acts back onto the fluid. */
     calc_viscous_force_three_point_couple(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, part_index, &rng_part, delta_j, node_index,d_v);
-    calc_node_force_three_point_couple(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f); 
+    calc_node_force_three_point_couple(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f);
 
     /**force which acts back to the fluid node */
     part[part_index].seed = rng_part.seed;    
@@ -2470,10 +2460,11 @@ void lb_calc_particle_lattice_ia_gpu(){
     int blocks_per_grid_particles_y = 4;
     int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
     dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-    if ( lbpar_gpu.lb_couple_switch & LB_COUPLE_TWO_POINT) {
+
+    if ( lbpar_gpu.lb_couple_switch & LB_COUPLE_TWO_POINT ) {
       KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer(),device_rho_v));
     }
-    else { //only other option is the three point coupling scheme
+    else { /** only other option is the three point coupling scheme */
       KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer(),device_rho_v));
     }
   }
