@@ -26,6 +26,9 @@
 
 #include "iccp3m.hpp"
 #include "parser.hpp"
+#include <string>
+#include <sstream>
+#include <iostream>
 
 #ifdef ELECTROSTATICS
 enum { ICCP3M_AREA , ICCP3M_EPSILON, ICCP3M_NORMAL, ICCP3M_SIGMA, ICCP3M_EXTFIELD } ;
@@ -180,62 +183,33 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
 }
 
 int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
-  char *arg, *token;
+  char *token;
   int scan_succes;
-  arg=strdup(string);
   iccp3m_cfg.nvectorx = (double*) realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.n_ic));
   iccp3m_cfg.nvectory = (double*) realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.n_ic));
   iccp3m_cfg.nvectorz = (double*) realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.n_ic));
   const char opening_bracket[] = "{";
   const char closing_bracket[] = "}";
   const char space[] = " ";
-  
-  // Searching for first opening bracket
+
+  const char delimiters[]=" {}";
+
+  std::string arg(string);
+  size_t beginVector;
+  size_t endVector;
+  std::string sVector;
+  std::stringstream ssVector;
+
   for (int i = 0; i<n_ic; i++) {
-    if (i==0) {
-      token=strtok(arg, space);
-      token=strtok(NULL, space);
-      //token++;
-    } else {
-      token=strtok(NULL, space);
-    }
-    if (token==0) {
-      return TCL_ERROR;
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-    }
-    // convert to float
-    scan_succes = sscanf(token,"%lf",&(iccp3m_cfg.nvectorx[i]));
-    if (!scan_succes) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-      return TCL_ERROR;
-    } 
-    token=strtok(NULL, space);
-    if (token==0) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-      return TCL_ERROR;
-    }
-    // convert to float
-    scan_succes = sscanf(token,"%lf",&(iccp3m_cfg.nvectory[i]));
-    if (!scan_succes) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-      return TCL_ERROR;
-    } 
-    token=strtok(NULL, closing_bracket);
-    if (token==0) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-      return TCL_ERROR;
-    }
-    // convert to float
-    scan_succes = sscanf(token,"%lf",&(iccp3m_cfg.nvectorz[i]));
-    if (!scan_succes) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-      return TCL_ERROR;
-    } 
-
-    token=strtok(NULL, opening_bracket);
-
+    beginVector = arg.find_first_of("{");
+    endVector = arg.find_first_of("}");
+    sVector = arg.substr(beginVector+1, endVector-1);
+    ssVector.str(sVector);
+    ssVector >> iccp3m_cfg.nvectorx[i] >> iccp3m_cfg.nvectory[i] >> iccp3m_cfg.nvectorz[i];
+    arg.erase(0, endVector+1);
+    std::cout << sVector << std::endl;
   }
-  free(arg);
+
   return TCL_OK;
 }
   
