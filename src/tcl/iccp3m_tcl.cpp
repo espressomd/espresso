@@ -190,12 +190,12 @@ int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
   const char closing_bracket[] = "}";
   const char space[] = " ";
   
-
   // Searching for first opening bracket
   for (int i = 0; i<n_ic; i++) {
     if (i==0) {
       token=strtok(arg, space);
-      token++;
+      token=strtok(NULL, space);
+      //token++;
     } else {
       token=strtok(NULL, space);
     }
