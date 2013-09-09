@@ -790,12 +790,32 @@ int maggs_get_mesh_1D()
 double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon)
 {
     int node_index = maggs_get_linear_index(node_x, node_y, node_z, lparams.dim);
-    /* save and return old epsilon for information purposes */
-    double epsilon_before = lattice[node_index].permittivity[direction];
-    /* set relative epsilon */
-    lattice[node_index].permittivity[direction] = relative_epsilon;
+    int dim, on_this_node = 0;
+    double position;
+    double node[3] = {node_x, node_y, node_z};
+    
+    FOR3D(dim) {
+        position = (double)node[dim]/(double)lparams.dim[dim] * box_l[dim];
+        position = node[dim];
+        if ( position >= lparams.halo_left_down[dim] && position < lparams.halo_upper_right[dim] ) {
+            on_this_node = 0;
+            if (this_node)
+                fprintf(stderr, "EPSILON! %d\n", this_node);
+        } else {
+            on_this_node = 0;
+        }
+    }
+    
+    if (on_this_node) {
+        /* save and return old epsilon for information purposes */
+        double epsilon_before = lattice[node_index].permittivity[direction];
+        /* set relative epsilon */
+        lattice[node_index].permittivity[direction] = relative_epsilon;
 
-    return epsilon_before;
+        return epsilon_before;
+    } else {
+        return 0.0;
+    }
 }
 
 

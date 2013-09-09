@@ -1854,6 +1854,31 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 #endif
 }
 
+
+/****************** REQ_SET_PERM ************/
+
+void mpi_send_permittivity(int node, int index, double *permittivity) {
+#ifdef LB
+    if (node==this_node) {
+        maggs_set_permittivity(index, permittivity);
+    } else {
+        mpi_call(mpi_send_permittivity_slave, node, index);
+        MPI_Send(permittivity, 3, MPI_DOUBLE, node, SOME_TAG, comm_cart);
+    }
+#endif
+}
+
+void mpi_send_permittivity_slave(int node, int index) {
+#ifdef LB
+    if (node==this_node) {
+        double data[3];
+        MPI_Recv(data, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+        maggs_set_permittivity(index, data);
+    }
+#endif
+}
+
+
 /****************** REQ_SET_EXT ************/
 
 void mpi_send_ext_torque(int pnode, int part, int flag, int mask, double torque[3])
