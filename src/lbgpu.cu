@@ -1184,8 +1184,8 @@ __device__ void calc_node_force_three_point_couple(float *delta, float *delta_j,
     for (int j=-1; j<=1; j++) {
       for (int k=-1; k<=1; k++) {
         atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[i+3*j+9*k+13]]), (delta[i+3*j+9*k+13]*delta_j[0]));
-        atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[i+3*j+9*k+13]]), (delta[i+3*j+9*k+13]*delta_j[0]));
-        atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[i+3*j+9*k+13]]), (delta[i+3*j+9*k+13]*delta_j[0]));
+        atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[i+3*j+9*k+13]]), (delta[i+3*j+9*k+13]*delta_j[1]));
+        atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[i+3*j+9*k+13]]), (delta[i+3*j+9*k+13]*delta_j[2]));
       }
     }
   }
