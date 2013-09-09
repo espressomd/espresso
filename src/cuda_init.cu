@@ -18,13 +18,9 @@
 */
 
 
-// CUDA code is always interpreted as C++, so we need the extern C interface
-extern "C" {
+#include "utils.hpp"
+#include "cuda_init.hpp"
 
-#include "utils.h"
-#include "cuda_init.h"
-
-}
 
 #ifdef CUDA
 

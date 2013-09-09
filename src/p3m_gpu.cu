@@ -28,17 +28,10 @@
 #include <cuda.h>
 
 #include <cufft.h>
-#include "cuda_common.h"
-#include "config.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "p3m_gpu.h"
-#include "utils.h"
-#ifdef __cplusplus
-}
-#endif
+#include "cuda_common.hpp"
+#include "config.hpp"
+#include "p3m_gpu.hpp"
+#include "utils.hpp"
 
 #ifdef ELECTROSTATICS
 

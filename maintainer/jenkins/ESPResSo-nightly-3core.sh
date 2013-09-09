@@ -9,9 +9,7 @@ source maintainer/jenkins/common.sh
 
 bootstrap
 
-start "CONFIGURE"
-./configure --with-mpi CPU_COUNT="3"
-end "CONFIGURE"
+configure --with-mpi CPU_COUNT="3"
 
 # copy config file
 if [ "$myconfig" != default ]; then

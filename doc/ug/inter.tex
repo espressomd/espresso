@@ -898,6 +898,22 @@ part 43 bond 1 42
 \end{verbatim}
 are equivalent.
 
+\subsection{Linear stretching force}
+\index{linear stretching force|mainindex}
+\index{interactions!linear stretching force|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  stretchlin_force
+  \var{L^0_{AB}} \var{k_slin}
+\end{essyntax}
+This type of interaction is available for closed 3D immersed objects as well as 
+for 2D sheet flowing in the 3D flow. 
+
+This type of interaction is the linear equivalent of stretching_force. The expressions for the forces are 
+the same except $\kappa(\lambda_{AB}) = 1$. 
+
+
 \subsection{Bending force}
 \index{bending force|mainindex}
 \index{interactions!bending force|mainindex}

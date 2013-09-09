@@ -10,9 +10,7 @@ source maintainer/jenkins/common.sh
 bootstrap
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64
 
-start "CONFIGURE"
-./configure CPU_COUNT=4
-end "CONFIGURE"
+configure CPU_COUNT=4
 
 use_myconfig maxset
 
