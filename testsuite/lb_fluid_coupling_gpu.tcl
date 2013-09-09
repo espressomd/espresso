@@ -123,41 +123,42 @@ if { $difference > 1e-3 } {
 }
 
 if { $components == 1 }  { 
-lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0 couple 3pt
-} 
-#Note we don't reset the particle's velocity to maintain an overall net momentum of the system of zero
-part 0 pos [expr 0.5*$length] [expr 0.5*$length] [expr 0.5*$length] f 0.0 0.0 0.0 ext_force $dragx $dragy $dragz 
+  lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0 couple 3pt
+
+  #Note we don't reset the particle's velocity to maintain an overall net momentum of the system of zero
+  part 0 pos [expr 0.5*$length] [expr 0.5*$length] [expr 0.5*$length] f 0.0 0.0 0.0 ext_force $dragx $dragy $dragz 
 
 
-# get over the initial acceleration
-integrate 200
+  # get over the initial acceleration
+  integrate 200
 
-# average terminal velocity to remove node dependence
-set vsum 0.0
-set count 0
-for { set i 0 } { $i < 100 } { incr i } {
+  # average terminal velocity to remove node dependence
+  set vsum 0.0
+  set count 0
+  for { set i 0 } { $i < 100 } { incr i } {
 
-  integrate 5
+    integrate 5
 
-  set pv [part 0 print v]
-  set vel [expr sqrt([lindex $pv 0]*[lindex $pv 0] + [lindex $pv 1]*[lindex $pv 1] + [lindex $pv 2]*[lindex $pv 2]) ]
-  set vsum [expr $vsum + $vel]
-  incr count
-}
+    set pv [part 0 print v]
+    set vel [expr sqrt([lindex $pv 0]*[lindex $pv 0] + [lindex $pv 1]*[lindex $pv 1] + [lindex $pv 2]*[lindex $pv 2]) ]
+    set vsum [expr $vsum + $vel]
+    incr count
+  }
 
-#note that the linear interpolation in SC is different from LB, hence the different terminal velocity
-if { $components == 1 }  { 
-   set vel_works 0.1092247459
-}
+  #note that the linear interpolation in SC is different from LB, hence the different terminal velocity
+  if { $components == 1 }  { 
+    set vel_works 0.1092247459
+  }
 
-# check for the right terminal velocity
-set difference [expr abs($vsum/$count - $vel_works)/$vel_works]
-puts -nonewline  "The velocity is [expr $vsum/$count] compared to the reference $vel_works for the 3 point coupling scheme: "
-if { $difference > 1e-3 } {
-  puts "FAILED"
-  error_exit "Particle terminal velocity is wrong: 3 point coupling might be broken."
-} else { 
-  puts "OK"
+  # check for the right terminal velocity
+  set difference [expr abs($vsum/$count - $vel_works)/$vel_works]
+  puts -nonewline  "The velocity is [expr $vsum/$count] compared to the reference $vel_works for the 3 point coupling scheme: "
+  if { $difference > 1e-3 } {
+    puts "FAILED"
+    error_exit "Particle terminal velocity is wrong: 3 point coupling might be broken."
+  } else { 
+    puts "OK"
+  }
 }
 
 exit 0
