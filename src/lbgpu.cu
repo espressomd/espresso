@@ -941,15 +941,15 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
  /** the i index is left node, nearest node, right node */
  for(int i=0; i<3; ++i){
    /** note the -0.5f is to account for the shift of the LB grid relative to the MD */
-   float scaledpos = particle_data[part_index].p[i]/para.agrid - 0.5f;
+   float scaledpos = particle_data[part_index].p[i]/para.agrid-0.5f;
    /** the +0.5 is to turn the floorf into a round function */
    my_center[i] = (int)(floorf(scaledpos+0.5f));
-   scaledpos = scaledpos-my_center[i];
+   scaledpos = scaledpos-1.f*my_center[i];
    temp_delta[0+3*i] = ( 5 - 3*abs(scaledpos-1.f)
                         - sqrt( -2 + 6*abs(scaledpos-1.f) - 3*pow(scaledpos-1.f,2) ) )/6.f;
    temp_delta[1+3*i] = ( 1 + sqrt( 1 - 3*pow(scaledpos,2) ) )/3.f;
    temp_delta[2+3*i] = ( 5 - 3*abs(scaledpos+1.f)
-                        -sqrt( -2 + 6*abs(scaledpos+1.f) - 3*pow(scaledpos+1.f,2) ) )/6.f;
+                        - sqrt( -2 + 6*abs(scaledpos+1.f) - 3*pow(scaledpos+1.f,2) ) )/6.f;
 
    
    /**TODO: add special case for boundaries? */
@@ -1228,7 +1228,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
 */
 __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partgrad1, float * partgrad2, float * partgrad3, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
 	
- int my_left[3];
+ int left_node_index[3];
  float interpolated_u1, interpolated_u2, interpolated_u3;
  float interpolated_rho[LB_COMPONENTS];
  float temp_delta[6];
@@ -1259,12 +1259,12 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
  #pragma unroll
  for(int i=0; i<3; ++i){
    float scaledpos = particle_data[part_index].p[i]/para.agrid - 0.5f;
-   my_left[i] = (int)(floorf(scaledpos));
-   //printf("scaledpos %f \t myleft: %d \n", scaledpos, my_left[i]);
-   temp_delta[3+i] = scaledpos - my_left[i];
+   left_node_index[i] = (int)(floorf(scaledpos));
+   //printf("scaledpos %f \t myleft: %d \n", scaledpos, left_node_index[i]);
+   temp_delta[3+i] = scaledpos - left_node_index[i];
    temp_delta[i] = 1.f - temp_delta[3+i];
    /**further value used for interpolation of fluid velocity at part pos near boundaries */
-   temp_delta_half[3+i] = (scaledpos - my_left[i])*2.f;
+   temp_delta_half[3+i] = (scaledpos - left_node_index[i])*2.f;
    temp_delta_half[i] = 2.f - temp_delta_half[3+i];
  }
 
@@ -1278,9 +1278,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
  delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
 
  // modulo for negative numbers is strange at best, shift to make sure we are positive
- int x = my_left[0] + para.dim_x;
- int y = my_left[1] + para.dim_y;
- int z = my_left[2] + para.dim_z;
+ int x = left_node_index[0] + para.dim_x;
+ int y = left_node_index[1] + para.dim_y;
+ int z = left_node_index[2] + para.dim_z;
 
  node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
  node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
