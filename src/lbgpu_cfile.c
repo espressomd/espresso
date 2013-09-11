@@ -230,9 +230,9 @@ void lb_reinit_parameters_gpu() {
 
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
-    lbpar_gpu.dim_x = (unsigned int) floor(box_l[0] / lbpar_gpu.agrid); //TODO code duplication with lb.c start
-    lbpar_gpu.dim_y = (unsigned int) floor(box_l[1] / lbpar_gpu.agrid);
-    lbpar_gpu.dim_z = (unsigned int) floor(box_l[2] / lbpar_gpu.agrid);
+    lbpar_gpu.dim_x = (unsigned int) round(box_l[0] / lbpar_gpu.agrid); //TODO code duplication with lb.c start
+    lbpar_gpu.dim_y = (unsigned int) round(box_l[1] / lbpar_gpu.agrid);
+    lbpar_gpu.dim_z = (unsigned int) round(box_l[2] / lbpar_gpu.agrid);
     
     unsigned int tmp[3];
     
@@ -245,7 +245,7 @@ void lb_reinit_parameters_gpu() {
     
     for (dir=0;dir<3;dir++) {
     /* check if box_l is compatible with lattice spacing */
-      if (fabs(box_l[dir] - tmp[dir] * lbpar_gpu.agrid) > ROUND_ERROR_PREC) {
+      if (fabs(box_l[dir] - tmp[dir] * lbpar_gpu.agrid) > 1.0e-3) {
         char *errtxt = runtime_error(128);
         ERROR_SPRINTF(errtxt, "{097 Lattice spacing lbpar_gpu.agrid=%f is incompatible with box_l[%i]=%f} ", lbpar_gpu.agrid, dir, box_l[dir]);
       }
