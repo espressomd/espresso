@@ -895,7 +895,7 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
   int c[3];
   float v[3];
   float shift, weight, pop_to_bounce_back;
-  float boundary_force[3] = {0,0,0};
+  float boundary_force[3] = {0.0f,0.0f,0.0f};
   size_t to_index, to_index_x, to_index_y, to_index_z;
   int population, inverse;
   int boundary_index;
@@ -920,7 +920,7 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     /** store vd temporary in second lattice to avoid race conditions */
     // TODO: fix the multicomponent version (rho...)
 #define BOUNCEBACK  \
-  shift = para.agrid*para.agrid*para.agrid*para.agrid*para.rho[0]*2.*3.*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
+  shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[0]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
   pop_to_bounce_back = n_b.vd[population*para.number_of_nodes + index ]; \
   to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
   to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
@@ -928,9 +928,9 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
   to_index = to_index_x + para.dim_x*to_index_y + para.dim_x*para.dim_y*to_index_z; \
   if (n_b.boundary[to_index] == 0) \
   { \
-    boundary_force[0] += (2*pop_to_bounce_back+shift)*c[0]/para.tau/para.tau/para.agrid; \
-    boundary_force[1] += (2*pop_to_bounce_back+shift)*c[1]/para.tau/para.tau/para.agrid; \
-    boundary_force[2] += (2*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
+    boundary_force[0] += (2.0f*pop_to_bounce_back+shift)*c[0]/para.tau/para.tau/para.agrid; \
+    boundary_force[1] += (2.0f*pop_to_bounce_back+shift)*c[1]/para.tau/para.tau/para.agrid; \
+    boundary_force[2] += (2.0f*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
     n_b.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
   }
 
@@ -1287,7 +1287,8 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
                                        / para.agrid;
     }
   }
-  else {
+  else
+  {
     for(int ii = 0; ii < LB_COMPONENTS; ii++)
 	    d_p_v[print_index].rho[ii] = 0.0f;
      
@@ -3009,7 +3010,7 @@ void lb_integrate_GPU() {
     }
 #endif
     intflag = 1;
-  }    
+  }  
 }
 
 void lb_gpu_get_boundary_forces(double* forces) {
