@@ -22,10 +22,10 @@
 #define _FFT_COMMON_H
 
 #include <config.hpp>
-#include <fftw3.h>
 
 #if defined(P3M) || defined(DP3M)
 
+#include <fftw3.h>
 /************************************************
  * data types
  ************************************************/
