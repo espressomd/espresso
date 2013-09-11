@@ -297,6 +297,10 @@ __global__ void ek_pressure(
 
   if( index < ek_parameters_gpu.number_of_nodes )
   {  
+/*
+    // DOESN'T WORK: the LB is decoupled so it does not
+    // go to a stationary state, when the EK does.
+
     // Subtract the LB part of the pressure, since that 
     // is applied in the LBGPU already given by rho*cs^2.
     // In proper MD units this is rho/3 / (ts^2 * agr^3),
@@ -313,7 +317,9 @@ __global__ void ek_pressure(
                                              ek_parameters_gpu.time_step *
                                              powf(ek_parameters_gpu.agrid, 3)
                                            );
-
+*/
+    ek_parameters_gpu.pressure[ index ] = 0.0f;
+ 
     // Add the ideal-gas contribution f from the EK
     // species, which is given by n_i * k. In MD units
     // the proper expression is n_i * T / ag^2, where 
@@ -401,7 +407,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
 
     pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_D00_pressure] ]
                           - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_U00_pressure] ] )/
-                        ( 2.0f * ek_parameters_gpu.agrid);
+                        ( 2.0f * ek_parameters_gpu.agrid );
 
     pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
                          ek_parameters_gpu.time_step *
@@ -417,7 +423,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
 
     pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0D0_pressure] ]
                           - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0U0_pressure] ] )/
-                        ( 2.0f * ek_parameters_gpu.agrid);
+                        ( 2.0f * ek_parameters_gpu.agrid );
 
     pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
                          ek_parameters_gpu.time_step *
@@ -433,7 +439,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
 
     pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00D_pressure] ]
                           - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00U_pressure] ] )/
-                        ( 2.0f * ek_parameters_gpu.agrid);
+                        ( 2.0f * ek_parameters_gpu.agrid );
 
     pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
                          ek_parameters_gpu.time_step *
@@ -446,17 +452,57 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
     atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], pressure_gradient );
   }
 }
+
+__global__ void ek_accelerated_frame_transformation( LB_node_force_gpu node_f ) {
+                                       
+  unsigned int index = ek_getThreadIndex ();
+
+  if(index < ek_parameters_gpu.number_of_nodes)
+  {
+    //face in x
+
+    atomicadd( &node_f.force[index],
+               ek_accelerated_frame_boundary_force[0] *
+               (
+                 ek_parameters_gpu.agrid * powf(ek_parameters_gpu.time_step, 2) / 
+                 static_cast<float>( ek_parameters_gpu.dim_x * ek_parameters_gpu.dim_y * ek_parameters_gpu.dim_z )
+               )
+             );
+    
+    //face in y
+
+    atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index],
+               ek_accelerated_frame_boundary_force[1] *
+               (
+                 ek_parameters_gpu.agrid * powf(ek_parameters_gpu.time_step, 2) / 
+                 static_cast<float>( ek_parameters_gpu.dim_x * ek_parameters_gpu.dim_y * ek_parameters_gpu.dim_z )
+               )
+             );
+              
+    //face in z
+
+    atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index],
+               ek_accelerated_frame_boundary_force[2] *
+               (
+                 ek_parameters_gpu.agrid * powf(ek_parameters_gpu.time_step, 2) / 
+                 static_cast<float>( ek_parameters_gpu.dim_x * ek_parameters_gpu.dim_y * ek_parameters_gpu.dim_z )
+               ) 
+             );
+  }
+}
 #endif
 
 __global__ void ek_calculate_quantities( unsigned int species_index,
                                          LB_nodes_gpu lb_node,
                                          LB_node_force_gpu node_f,
-                                         LB_parameters_gpu *ek_lbparameters_gpu
+                                         LB_parameters_gpu *ek_lbparameters_gpu,
+                                         LB_rho_v_gpu *d_v
                                        ) {
                                        
   unsigned int index = ek_getThreadIndex ();
 
-  if(index < ek_parameters_gpu.number_of_nodes) {
+  if(index < ek_parameters_gpu.number_of_nodes)
+  {
   
     unsigned int coord[3];
     unsigned int neighborindex[9];
@@ -579,19 +625,16 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ek_parameters_gpu.time_step;
              
     atomicadd( &node_f.force[index],
-                ek_parameters_gpu.rho[species_index][index] *
-                (
-                  force / 2.0f +
-                  (
-                    + ek_parameters_gpu.ext_force[0][species_index]
-                    - ek_accelerated_frame_boundary_force[0] /
-                      ek_parameters_gpu.accelerated_frame_boundary_mass
-                  ) * (
-                    powf(ek_parameters_gpu.agrid, 1) *
-                    ek_parameters_gpu.time_step *
-                    ek_parameters_gpu.time_step
-                  )
-                )
+               ek_parameters_gpu.rho[species_index][index] *
+               (
+                 force / 2.0f +
+                 ek_parameters_gpu.ext_force[0][species_index] *
+                 (
+                   powf(ek_parameters_gpu.agrid, 1) *
+                   ek_parameters_gpu.time_step *
+                   ek_parameters_gpu.time_step
+                 )
+               )
              );
 
     atomicadd( &node_f.force[neighborindex[EK_LINK_U00]],
@@ -630,19 +673,16 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ek_parameters_gpu.time_step;
 
     atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index],
-                ek_parameters_gpu.rho[species_index][index] *
-                (
-                  force / 2.0f +
-                  (
-                    + ek_parameters_gpu.ext_force[1][species_index]
-                    - ek_accelerated_frame_boundary_force[1] / 
-                      ek_parameters_gpu.accelerated_frame_boundary_mass
-                  ) * (
-                    powf(ek_parameters_gpu.agrid, 1) *
-                    ek_parameters_gpu.time_step *
-                    ek_parameters_gpu.time_step
-                  )
-                )
+               ek_parameters_gpu.rho[species_index][index] *
+               (
+                 force / 2.0f +
+                 ek_parameters_gpu.ext_force[1][species_index] *
+                 (
+                   powf(ek_parameters_gpu.agrid, 1) *
+                   ek_parameters_gpu.time_step *
+                   ek_parameters_gpu.time_step
+                 )
+               )
              );
 
     atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0U0]],
@@ -682,19 +722,16 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ek_parameters_gpu.time_step;
 
     atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index],
-                ek_parameters_gpu.rho[species_index][index] *
-                (
-                  force / 2.0f +
-                  (
-                    + ek_parameters_gpu.ext_force[2][species_index]
-                    - ek_accelerated_frame_boundary_force[2] / 
-                      ek_parameters_gpu.accelerated_frame_boundary_mass
-                  ) * (
-                    powf(ek_parameters_gpu.agrid, 1) *
-                    ek_parameters_gpu.time_step *
-                    ek_parameters_gpu.time_step
-                  )
-                )
+               ek_parameters_gpu.rho[species_index][index] *
+               (
+                 force / 2.0f +
+                 ek_parameters_gpu.ext_force[2][species_index] *
+                 (
+                   powf(ek_parameters_gpu.agrid, 1) *
+                   ek_parameters_gpu.time_step *
+                   ek_parameters_gpu.time_step
+                 )
+               )
              );
 
     atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_00U]],
@@ -849,10 +886,6 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     /* advective contribution to flux */
 
     ek_displacement( dx, lb_node, index, ek_lbparameters_gpu );
-
-/*  dx[0] = 0.0f; // TODO remove (can be used to switch off advection)
-    dx[1] = 0.0f;
-    dx[2] = 0.0f; */
 
     di[0] = 1 - signbit(dx[0]);
     di[1] = 1 - signbit(dx[1]);
@@ -1287,34 +1320,6 @@ __global__ void ek_init_species_density_homogeneous() {
                                             ek_parameters_gpu.agrid *
                                             ek_parameters_gpu.agrid *
                                             ek_parameters_gpu.agrid;
-/*
-if ( i == 1 ) // TODO remove : USED FOR PRESSURE TESTS
-{
-
-  unsigned int coord[3];    
-  rhoindex_linear2cartesian( index, coord );
-
-  ek_parameters_gpu.rho[ i ][ index ] *= (48.f/43.f)*(1.0f - static_cast<float>(coord[2]+1)/48.f);
-
-  ek_parameters_gpu.rho[ i ][ index ] *= (24.f/21.f)*(1.0f - static_cast<float>(coord[2]+1)/24.f);
-
-  unsigned int coord[3];    
-  rhoindex_linear2cartesian( index, coord );
-
-  ek_parameters_gpu.rho[ i ][ index ] *= ( coord[2] < 6 ? 1.0 : 0.0);
-
-  unsigned int coord[3];    
-  rhoindex_linear2cartesian( index, coord );
-
-  ek_parameters_gpu.rho[ i ][ index ] += 0.05 *
-                                         ek_parameters_gpu.agrid *
-                                         ek_parameters_gpu.agrid *
-                                         ek_parameters_gpu.agrid *
-                                         sin( 2.0f*M_PI*( (static_cast<float>(coord[2])+0.5)/
-                                         (12.0f / ek_parameters_gpu.agrid) ) );
-
-} // TODO remove
-*/
     }
   }
 }
@@ -1534,6 +1539,7 @@ __global__ void ek_clear_node_force( LB_node_force_gpu node_f ) {
 
 #ifdef EK_REACTION
 __global__ void ek_reaction( ) {
+
   unsigned int index = ek_getThreadIndex();
   unsigned int coord[3];
 
@@ -1573,18 +1579,19 @@ __global__ void ek_reaction_tag( ) {
   unsigned int coord[3];
 
   float react_rad = ek_parameters_gpu.reaction_radius;
-  float bound_rad = 4.1f;
+  float bound_rad = 3.0f;
+  float offset = 4.0f;
   float total_rad = bound_rad + react_rad;
 
   rhoindex_linear2cartesian(index, coord);
 
   if ( index < ek_parameters_gpu.number_of_nodes )
   {
-    float node_radius2 = (coord[0] - ek_parameters_gpu.dim_x/2)*(coord[0] - ek_parameters_gpu.dim_x/2) +
-                         (coord[1] - ek_parameters_gpu.dim_y/2)*(coord[1] - ek_parameters_gpu.dim_y/2) +
-                         (coord[2] - ek_parameters_gpu.dim_z/2)*(coord[2] - ek_parameters_gpu.dim_z/2);
+    float node_radius2 = ((coord[0] + 0.5f) - ek_parameters_gpu.dim_x*0.5f)*((coord[0] + 0.5f) - ek_parameters_gpu.dim_x*0.5f) +
+                         ((coord[1] + 0.5f) - ek_parameters_gpu.dim_y*0.5f)*((coord[1] + 0.5f) - ek_parameters_gpu.dim_y*0.5f) +
+                         ((coord[2] + 0.5f) - ek_parameters_gpu.dim_z*0.5f - offset)*((coord[2] + 0.5f) - ek_parameters_gpu.dim_z*0.5f - offset);
 
-    if ( node_radius2 <= total_rad*total_rad && node_radius2 > bound_rad*bound_rad && (coord[0] > ek_parameters_gpu.dim_x/2) )
+    if ( node_radius2 <= total_rad*total_rad && node_radius2 > bound_rad*bound_rad ) // && ((coord[0] + 0.5f) > ek_parameters_gpu.dim_x*0.5f + offset) )
     {
       ek_parameters_gpu.node_is_catalyst[index] = 1;
     }
@@ -1603,24 +1610,20 @@ __global__ void ek_reaction_tag( ) {
 #endif
 
 __global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_boundary_force ) {
-  
+ 
   ek_accelerated_frame_boundary_force[0] = 0.0f;
   ek_accelerated_frame_boundary_force[1] = 0.0f;
-  ek_accelerated_frame_boundary_force[2] = 0.0f;
+  ek_accelerated_frame_boundary_force[2] = -7.426292f;
 
   if ( ek_parameters_gpu.accelerated_frame_enabled == 1 )
   {
     for ( int i = 0; i < n_lb_boundaries; i++)
     {
-      ek_accelerated_frame_boundary_force[0] -=  ek_lb_boundary_force[3*i + 0];
-      ek_accelerated_frame_boundary_force[1] -=  ek_lb_boundary_force[3*i + 1];
-      ek_accelerated_frame_boundary_force[2] -=  ek_lb_boundary_force[3*i + 2];
+      ek_accelerated_frame_boundary_force[0] +=  ek_lb_boundary_force[3*i + 0] / ek_parameters_gpu.accelerated_frame_boundary_mass;
+      ek_accelerated_frame_boundary_force[1] +=  ek_lb_boundary_force[3*i + 1] / ek_parameters_gpu.accelerated_frame_boundary_mass;
+      ek_accelerated_frame_boundary_force[2] +=  ek_lb_boundary_force[3*i + 2] / ek_parameters_gpu.accelerated_frame_boundary_mass;
     }
   }
-
-/*  printf("\nforce %f %f %f boundary %f %f %f\n",
-         ek_accelerated_frame_boundary_force[0], ek_accelerated_frame_boundary_force[1], ek_accelerated_frame_boundary_force[2],
-         ek_lb_boundary_force[0], ek_lb_boundary_force[1], ek_lb_boundary_force[2] ); // TODO remove */
 }
 
 #ifdef __cplusplus
@@ -1687,11 +1690,23 @@ void ek_integrate() {
     / (threads_per_block * blocks_per_grid_y );
   dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
 
+  /* Clears the force on the nodes and must be called before fluxes are calculated,
+     since in the reaction set up the previous-step LB force is added to the flux
+     (in ek_calculate_quantities / ek_displacement), which is copied in this routine;
+     it also needs to be called before ek_accelerated_frame_transformation */
+
+  KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
+
 #ifdef EK_REACTION
   /* Performs the catalytic reaction and sets the reservoir densities at 
      the boundary of the simulation box */
 
-  KERNELCALL( ek_reaction, dim_grid, threads_per_block, ());
+  if ( ek_parameters.reaction_species[0] != -1 &&
+       ek_parameters.reaction_species[1] != -1 &&
+       ek_parameters.reaction_species[2] != -1 )
+  {
+    KERNELCALL( ek_reaction, dim_grid, threads_per_block, ());
+  }
 
   /* Determines the excess pressure that follows from the creation of 
      species by the reaction */
@@ -1701,11 +1716,11 @@ void ek_integrate() {
                                                           ek_lb_device_values ) );
 #endif
 
-  /* Clears the force on the nodes and must be called before fluxes are calculated,
-     since in the reaction set up the previous-step LB force is added to the flux
-     (in ek_calculate_quanties / ek_displacement), which is copied in this routine */
 
-  KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
+  /* Transforms to an accelerated frame */
+
+  KERNELCALL( ek_accelerated_frame_transformation, dim_grid, threads_per_block, ( node_f ) );
+
   
   /* Integrate diffusion-advection */
   
@@ -1714,7 +1729,7 @@ void ek_integrate() {
   
     KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block, () );
     KERNELCALL( ek_calculate_quantities, dim_grid, threads_per_block,
-                ( i, *current_nodes, node_f, ek_lbparameters_gpu ) );
+                ( i, *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values ) );
               
 #ifdef EK_BOUNDARIES
     KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
@@ -2030,7 +2045,7 @@ SPACING %f %f %f\n\
 SCALARS velocity float 3\n\
 LOOKUP_TABLE default\n",
            lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
-           lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2,
+           lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid*0.5f,
            lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
            lbpar_gpu.number_of_nodes                                      );
 
@@ -2075,7 +2090,7 @@ POINT_DATA %u\n\
 SCALARS density_lb float 1\n\
 LOOKUP_TABLE default\n",
            lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
-           lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2,
+           lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid*0.5f,
            lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
            lbpar_gpu.number_of_nodes                                      );
 
@@ -2125,7 +2140,7 @@ SCALARS density_%d float 1\n\
 LOOKUP_TABLE default\n",
            species,
            ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
-           ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2,
+           ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
            ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
            ek_parameters.number_of_nodes,
            species                                                                    );
@@ -2210,7 +2225,7 @@ int ek_print_vtk_flux( int species, char* filename ) {
     
     KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block, () );
     KERNELCALL( ek_calculate_quantities, dim_grid, threads_per_block,
-                ( ek_parameters.species_index[ species ], *current_nodes, node_f, ek_lbparameters_gpu )    );
+                ( ek_parameters.species_index[ species ], *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values )    );
               
 #ifdef EK_BOUNDARIES
     KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
@@ -2239,7 +2254,7 @@ SCALARS flux_%d float 3\n\
 LOOKUP_TABLE default\n",
            species,
            ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
-           ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2,
+           ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
            ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
            ek_parameters.number_of_nodes,
            species                                                                    );
@@ -2365,7 +2380,7 @@ POINT_DATA %u\n\
 SCALARS potential float 1\n\
 LOOKUP_TABLE default\n",
           ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
-          ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2,
+          ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
           ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
           ek_parameters.number_of_nodes                                              );
 
@@ -2410,7 +2425,7 @@ POINT_DATA %u\n\
 SCALARS lbforce float 3\n\
 LOOKUP_TABLE default\n",
            ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
-           ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2,
+           ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
            ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
            ek_parameters.number_of_nodes                                              );
 
@@ -2457,7 +2472,7 @@ POINT_DATA %u\n\
 SCALARS pressure float 1\n\
 LOOKUP_TABLE default\n",
           ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
-          ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2,
+          ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
           ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
           ek_parameters.number_of_nodes                                              );
 
