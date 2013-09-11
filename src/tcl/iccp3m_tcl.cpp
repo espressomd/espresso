@@ -200,14 +200,24 @@ int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
   std::string sVector;
   std::stringstream ssVector;
 
+  double x,y,z;
   for (int i = 0; i<n_ic; i++) {
     beginVector = arg.find_first_of("{");
     endVector = arg.find_first_of("}");
-    sVector = arg.substr(beginVector+1, endVector-1);
+    sVector = arg.substr(beginVector+1, endVector-2);
+    sVector.append(" "); // I could not figure out why -2 and append " " but it works!
     ssVector.str(sVector);
-    ssVector >> iccp3m_cfg.nvectorx[i] >> iccp3m_cfg.nvectory[i] >> iccp3m_cfg.nvectorz[i];
+    ssVector >> x;
+    ssVector >> y;
+    ssVector >> z;
+    if (!ssVector.good()) {
+      Tcl_AppendResult(interp, "Could not understand ", ssVector.str().c_str(), (char *)NULL); 
+      return TCL_ERROR;
+    }
+    iccp3m_cfg.nvectorx[i] = x;
+    iccp3m_cfg.nvectory[i] = y;
+    iccp3m_cfg.nvectorz[i] = z;
     arg.erase(0, endVector+1);
-    std::cout << sVector << std::endl;
   }
 
   return TCL_OK;
