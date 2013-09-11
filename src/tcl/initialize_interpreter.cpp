@@ -56,7 +56,7 @@
 #include "external_potential_tcl.hpp"
 
 #ifdef TK
-#include <tk.hpp>
+#include <tk.h>
 #endif
 
 /****************************************
