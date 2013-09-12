@@ -55,7 +55,7 @@
 #include "ghmc_tcl.hpp"
 
 #ifdef TK
-#include <tk.hpp>
+#include <tk.h>
 #endif
 
 /****************************************
