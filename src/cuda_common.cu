@@ -18,16 +18,16 @@
 */
 
 
-#include "cuda_common.h" //I can't go in extern C
+#include "cuda_common.hpp" //I can't go in extern C
 
 
-#include "grid.h"
+#include "grid.hpp"
 extern "C" {
 
-#include "config.h"
-#include "random.h"
-#include "particle_data.h"
-#include "interaction_data.h"
+#include "config.hpp"
+#include "random.hpp"
+#include "particle_data.hpp"
+#include "interaction_data.hpp"
 
 
   

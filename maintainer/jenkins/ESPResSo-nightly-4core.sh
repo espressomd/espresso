@@ -7,8 +7,9 @@
 # without any warranty.
 source maintainer/jenkins/common.sh
 
-bootstrap
+cd $SOURCEDIR; bootstrap
 
+cd $BUILDDIR
 start "CONFIGURE"
 ./configure --with-mpi CPU_COUNT="4"
 end "CONFIGURE"
