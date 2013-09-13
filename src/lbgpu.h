@@ -119,6 +119,7 @@ typedef struct {
   float gamma_mobility[LB_COMPONENTS];
   float mobility[LB_COMPONENTS];
   float coupling[LB_COMPONENTS*LB_COMPONENTS];
+  int remove_momentum;
 #endif // SHANCHEN  
 
 } LB_parameters_gpu;
@@ -261,6 +262,7 @@ void lb_calc_particle_lattice_ia_gpu();
 
 void lb_calc_fluid_mass_GPU(double* mass);
 void lb_calc_fluid_momentum_GPU(double* host_mom);
+void lb_remove_fluid_momentum_GPU(void);
 void lb_calc_fluid_temperature_GPU(double* host_temp);
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag);
 void lb_get_boundary_flags_GPU(unsigned int* host_bound_array);

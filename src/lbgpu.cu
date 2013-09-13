@@ -372,14 +372,20 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gpu *rn){
   float Rho;
 #ifdef SHANCHEN
+  float Rho_tot=0.0,c;
+  #pragma unroll
+  for(int ii=0;ii<LB_COMPONENTS;++ii) { 
+      Rho_tot  += mode[0 + ii * LBQ]+ para.rho[ii]*para.agrid*para.agrid*para.agrid;
+  }
+  c = (mode[0 + 0 * LBQ]+ para.rho[0]*para.agrid*para.agrid*para.agrid ) / Rho_tot;
   random_wrapper(rn);
   for(int ii=0;ii<LB_COMPONENTS;++ii) { 
-      mode[1 + ii * LBQ] += sqrt((para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
-      mode[2 + ii * LBQ] += sqrt((para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[1];
-  }
-  random_wrapper(rn);
-  for(int ii=0;ii<LB_COMPONENTS;++ii)  
-      mode[3 + ii * LBQ] += sqrt((para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
+      mode[1 + ii * LBQ] +=  sqrt(c*(1-c)*Rho_tot*(para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
+      mode[2 + ii * LBQ] +=  sqrt(c*(1-c)*Rho_tot*(para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[1];
+  }                                      
+  random_wrapper(rn);                    
+  for(int ii=0;ii<LB_COMPONENTS;++ii)    
+      mode[3 + ii * LBQ] +=  sqrt(c*(1-c)*Rho_tot*(para.mu[ii]*(2.f/3.f)*(1.f-( para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
 #endif
   
   
@@ -1913,6 +1919,17 @@ __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_gpu
   }
 
 }
+__global__ void remove_momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_gpu node_f, float *sum) {
+
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+  if(index<para.number_of_nodes){
+    for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
+        node_f.force[(0+ii*3)*para.number_of_nodes + index]-=sum[0]/para.number_of_nodes;
+        node_f.force[(1+ii*3)*para.number_of_nodes + index]-=sum[1]/para.number_of_nodes;
+        node_f.force[(2+ii*3)*para.number_of_nodes + index]-=sum[2]/para.number_of_nodes;
+    }
+  }
+}
 
 /**print single node boundary flag
  * @param single_nodeindex		index of the node (Input)
@@ -2231,7 +2248,7 @@ void lb_calc_fluid_mass_GPU(double* mass){
   mass[0] = (double)(cpu_mass);
 }
 
-/** setup and call kernel to calculate the total momentum of the hole fluid
+/** setup and call kernel to calculate the total momentum of the whole fluid
  *  @param host_mom value of the momentum calcutated on the GPU
  */
 void lb_calc_fluid_momentum_GPU(double* host_mom){
@@ -2255,6 +2272,29 @@ void lb_calc_fluid_momentum_GPU(double* host_mom){
   host_mom[0] = (double)(host_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau);
   host_mom[1] = (double)(host_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau);
   host_mom[2] = (double)(host_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
+}
+
+/** setup and call kernel to remove the net momentum of the whole fluid
+ */
+void lb_remove_fluid_momentum_GPU(void){
+  float* tot_momentum;
+  float host_momentum[3] = { 0.f, 0.f, 0.f};
+  cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
+  cudaMemcpy(tot_momentum, host_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
+
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
+  KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, node_f, tot_momentum));
+  
+  cudaMemcpy(host_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
+
+  KERNELCALL(remove_momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, node_f, tot_momentum));
+  
+  cudaFree(tot_momentum);
 }
 
 

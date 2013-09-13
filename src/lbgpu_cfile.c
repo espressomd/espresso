@@ -68,7 +68,7 @@ LB_parameters_gpu lbpar_gpu = { .rho=SC0, .mu=SC0, .viscosity=SC0, .gamma_shear=
                                 .number_of_particles=0, .fluct=0, .calc_val=1, .external_force=0, .ext_force={0.0, 0.0, 0.0}, 
                                  .your_seed=12345, .reinit=0,
 #ifdef SHANCHEN
-                                .coupling=SC20, .gamma_mobility=SC1
+                                .coupling=SC20, .gamma_mobility=SC1, .remove_momentum=0
 #endif
 };
 
@@ -130,6 +130,7 @@ void lattice_boltzmann_update_gpu() {
 
     fluidstep=0; 
     lb_integrate_GPU();
+    if(lbpar_gpu.remove_momentum) lb_remove_fluid_momentum_GPU();
     LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
 
   }
@@ -205,8 +206,7 @@ void lb_reinit_parameters_gpu() {
   	LB_TRACE (fprintf(stderr, "fluct on \n"));
       /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
       /* Note that the modes are not normalized as in the paper here! */
-  
-      lbpar_gpu.mu[ii] = (float)temperature/c_sound_sq*lbpar_gpu.tau*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid); // TODO: check how to change mu
+      lbpar_gpu.mu[ii] = (float)temperature*lbpar_gpu.tau*lbpar_gpu.tau/c_sound_sq/(lbpar_gpu.agrid*lbpar_gpu.agrid); 
   
       /* lb_coupl_pref is stored in MD units (force)
        * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -235,7 +235,6 @@ void lb_reinit_parameters_gpu() {
 void lb_init_gpu() {
 
   LB_TRACE(printf("Begin initialzing fluid on GPU\n"));
-
   /** set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 

@@ -384,7 +384,21 @@ int lb_lbfluid_set_tau(double p_tau){
     }
   return 0;
 }
-
+#ifdef SHANCHEN
+int lb_lbfluid_set_remove_momentum(void){
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lbpar_gpu.remove_momentum = 1;
+    on_lb_params_change_gpu(0);
+#endif
+  } else {
+#ifdef LB
+     return -1;
+#endif
+    }
+  return 0;
+}
+#endif
 
 int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz) {
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -2703,7 +2717,7 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
         }
 #else 
         lb_calc_modes(index, modes);
-        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+        local_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
         local_j[0] = modes[1];
         local_j[1] = modes[2];
         local_j[2] = modes[3];

@@ -302,6 +302,14 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
                }
         }
       }
+      else if (ARG0_IS_S("remove_momentum")) {
+          if ( lb_lbfluid_set_remove_momentum() == 0 ) {
+            argc-=2; argv+=2;
+          } else {
+	          Tcl_AppendResult(interp, "Unknown Error setting remove_momentum", (char *)NULL);
+            return TCL_ERROR;
+          }
+      }
 #endif // SHANCHEN
       else if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
         if ( argc < LB_COMPONENTS + 1 ) {
