@@ -18,6 +18,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /* Minimal function that only contains the default scriptsdir. */
-char* get_default_scriptsdir() {
+const char* get_default_scriptsdir() {
   return ESPRESSO_SCRIPTS_DEFAULT ;
 }
