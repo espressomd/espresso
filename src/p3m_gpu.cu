@@ -38,7 +38,7 @@
 struct dummytypename {
   CUFFT_TYPE_COMPLEX *charge_mesh;
   CUFFT_TYPE_COMPLEX *force_mesh;
-  REAL_TYPE *G_hat, *G_hat_host;
+  REAL_TYPE *G_hat;
   cufftHandle fft_plan;
   int cao, mesh;
   REAL_TYPE alpha;
@@ -46,10 +46,31 @@ struct dummytypename {
   REAL_TYPE box;
 } p3m_gpu_data;
 
+static char p3m_gpu_data_initialized = 0;
 
 #define SQR(A) ((A)*(A))
 
-void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alpha, int mesh, int NX, int NY, int NZ,
+__host__ __device__ inline double csinc(double d)
+{
+#define epsi 0.1
+
+#define c2 -0.1666666666667e-0
+#define c4  0.8333333333333e-2
+#define c6 -0.1984126984127e-3
+#define c8  0.2755731922399e-5
+
+  double PId = PI*d, PId2;
+
+  if (fabs(d)>epsi)
+    return sin(PId)/PId;
+  else {
+    PId2 = SQR(PId);
+    return 1.0 + PId2*(c2+PId2*(c4+PId2*(c6+PId2*c8)));
+  }
+}
+
+
+__host__ __device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alpha, int mesh, int NX, int NY, int NZ,
                         REAL_TYPE *Zaehler, REAL_TYPE *Nenner ) {
     REAL_TYPE S1,S2,S3;
     REAL_TYPE fak1,fak2,zwi;
@@ -66,13 +87,13 @@ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alpha, int mesh
 
     for ( MX = -P3M_BRILLOUIN; MX <= P3M_BRILLOUIN; MX++ ) {
       NMX = ( ( NX > mesh/2 ) ? NX - mesh : NX ) + mesh*MX;
-      S1 = pow ( sinc(fak1*NMX ), 2*cao );
+      S1 = pow ( csinc(fak1*NMX ), 2*cao );
       for ( MY = -P3M_BRILLOUIN; MY <= P3M_BRILLOUIN; MY++ ) {
 	NMY = ( ( NY > mesh/2 ) ? NY - mesh : NY ) + mesh*MY;
-	S2   = S1*pow ( sinc (fak1*NMY ), 2*cao );
+	S2   = S1*pow ( csinc (fak1*NMY ), 2*cao );
 	for ( MZ = -P3M_BRILLOUIN; MZ <= P3M_BRILLOUIN; MZ++ ) {
 	  NMZ = ( ( NZ > mesh/2 ) ? NZ - mesh : NZ ) + mesh*MZ;
-	  S3   = S2*pow ( sinc( fak1*NMZ ), 2*cao );
+	  S3   = S2*pow ( csinc( fak1*NMZ ), 2*cao );
 
 	  NM2 = SQR ( NMX*Leni ) + SQR ( NMY*Leni ) + SQR ( NMZ*Leni );
 	  *Nenner += S3;
@@ -88,8 +109,18 @@ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alpha, int mesh
     }
 }
 
+__global__ void zero( int mesh, REAL_TYPE *p ) {
+    int    NX,NY,NZ;
+
+  NX= blockIdx.x;
+  NY= threadIdx.x;
+  NZ= threadIdx.y;
+    
+  p[NX*mesh*mesh + NY * mesh + NZ] = 0.0;
+}
+
 /* Calculate influence function */
-void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
+__global__ void calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 
   int    NX,NY,NZ;
   REAL_TYPE Dnx,Dny,Dnz;
@@ -98,28 +129,26 @@ void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REA
   int ind = 0;
   REAL_TYPE Leni = 1.0/box;
 
-  for ( NX=0; NX<mesh; NX++ ) {
-    for ( NY=0; NY<mesh; NY++ ) {
-      for ( NZ=0; NZ<mesh; NZ++ ) {
-	ind = NX*mesh*mesh + NY * mesh + NZ;
-	  
-	if ( ( NX==0 ) && ( NY==0 ) && ( NZ==0 ) )
-	  G_hat[ind]=0.0;
-	else if ( ( NX% ( mesh/2 ) == 0 ) && ( NY% ( mesh/2 ) == 0 ) && ( NZ% ( mesh/2 ) == 0 ) )
-	  G_hat[ind]=0.0;
-	else {
-	  Aliasing_sums_ik ( cao, box, alpha, mesh, NX, NY, NZ, Zaehler, &Nenner );
+  NX= blockIdx.x;
+  NY= threadIdx.x;
+  NZ= threadIdx.y;
+
+  ind = NX*mesh*mesh + NY * mesh + NZ;
+
+  if ( ( NX==0 ) && ( NY==0 ) && ( NZ==0 ) )
+    G_hat[ind]=0.0;
+  else if ( ( NX% ( mesh/2 ) == 0 ) && ( NY% ( mesh/2 ) == 0 ) && ( NZ% ( mesh/2 ) == 0 ) )
+    G_hat[ind]=0.0;
+  else {
+    Aliasing_sums_ik ( cao, box, alpha, mesh, NX, NY, NZ, Zaehler, &Nenner );
 		  
-	  Dnx = ( NX > mesh/2 ) ? NX - mesh : NX;
-	  Dny = ( NY > mesh/2 ) ? NY - mesh : NY;
-	  Dnz = ( NZ > mesh/2 ) ? NZ - mesh : NZ;
+    Dnx = ( NX > mesh/2 ) ? NX - mesh : NX;
+    Dny = ( NY > mesh/2 ) ? NY - mesh : NY;
+    Dnz = ( NZ > mesh/2 ) ? NZ - mesh : NZ;
 	    
-	  zwi  = Dnx*Zaehler[0]*Leni + Dny*Zaehler[1]*Leni + Dnz*Zaehler[2]*Leni;
-	  zwi /= ( ( SQR ( Dnx*Leni ) + SQR ( Dny*Leni ) + SQR ( Dnz*Leni ) ) * SQR ( Nenner ) );
-	  G_hat[ind] = 2.0 * zwi / PI;
-	}
-      }
-    }
+    zwi  = Dnx*Zaehler[0]*Leni + Dny*Zaehler[1]*Leni + Dnz*Zaehler[2]*Leni;
+    zwi /= ( ( SQR ( Dnx*Leni ) + SQR ( Dny*Leni ) + SQR ( Dnz*Leni ) ) * SQR ( Nenner ) );
+    G_hat[ind] = 2.0 * zwi / PI;
   }
 }
 
@@ -363,31 +392,65 @@ extern "C" {
 
   void p3m_gpu_init(int cao, int mesh, REAL_TYPE alpha, REAL_TYPE box) {
     gpu_init_particle_comm();
-    
+    int reinit_if = 0, mesh_changed = 0;
  
     if ( this_node == 0 ) {
       p3m_gpu_data.npart = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
-      p3m_gpu_data.alpha = alpha;
-      p3m_gpu_data.cao = cao;
-      p3m_gpu_data.mesh = mesh;
-      p3m_gpu_data.box = box;
+      
+      if((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
+	p3m_gpu_data.alpha = alpha;
+	reinit_if = 1;
+      }
+
+      if((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
+	p3m_gpu_data.cao = cao;
+	reinit_if = 1;
+      }
+	
+      if((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.mesh != mesh)) {
+	p3m_gpu_data.mesh = mesh;
+	mesh_changed = 1;
+	reinit_if = 1;
+      }
+
+      if((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box != box)) {
+	p3m_gpu_data.box = box;
+	reinit_if = 1;
+      }
+     
       int mesh3 = mesh*mesh*mesh;
 
-      cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
-      cudaMalloc((void **)&(p3m_gpu_data.force_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
-      cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(REAL_TYPE));
+      if((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
+	cudaFree(p3m_gpu_data.charge_mesh);
+	cudaFree(p3m_gpu_data.force_mesh);
+	cudaFree(p3m_gpu_data.G_hat);
 
-      p3m_gpu_data.G_hat_host = (REAL_TYPE *)malloc(mesh3*sizeof(REAL_TYPE));
+	cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
+	cudaMalloc((void **)&(p3m_gpu_data.force_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
+	cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(REAL_TYPE));
 
-      // Calculate influence function of host.
-      calculate_influence_function( cao, mesh, box, alpha, p3m_gpu_data.G_hat_host);
+	cufftDestroy(p3m_gpu_data.fft_plan);
+	cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
+      }
 
-      // Copy influence function to device.
-      cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);
+      if(p3m_gpu_data_initialized == 0) {
+	cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
+	cudaMalloc((void **)&(p3m_gpu_data.force_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
+	cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(REAL_TYPE));
 
-      cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
+	cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
+      }
+
+      if(reinit_if == 1) {
+	dim3 gridConv(mesh,1,1);
+	dim3 threadsConv(mesh,mesh,1);
+
+	calculate_influence_function<<<gridConv, threadsConv>>>( cao, mesh, box, alpha, p3m_gpu_data.G_hat);
+
+      }
+	p3m_gpu_data_initialized = 1;
+	}
     }
-  }
 
 void p3m_gpu_add_farfield_force() {
 
