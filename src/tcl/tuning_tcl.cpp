@@ -49,8 +49,8 @@ int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, c
     }
   }
 
-  t = time_force_calc(1);
-    printf("t = %lf, n = %d\n", t, n);
+  t = time_force_calc(n);
+
   sprintf(buffer, "%lf", t);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
