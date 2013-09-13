@@ -25,7 +25,7 @@
 #include "utils.hpp"
 #include <tcl.h>
 #ifdef TK
-#include <tk.hpp>
+#include <tk.h>
 #endif
 #include "initialize.hpp"
 #include "communication.hpp"

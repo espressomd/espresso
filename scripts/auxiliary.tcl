@@ -304,6 +304,7 @@ proc prepare_vmd_connection { args } {
     set wait [lindex $args 0]
     if {[llength $args] > 1} { set start [lindex $args 1] }
     if {[llength $args] > 2} { set draw_constraints [lindex $args 2] }
+    set vsf_args ""
   } {
     # new format with keyword arguments
     while {[llength $args] > 0} {
