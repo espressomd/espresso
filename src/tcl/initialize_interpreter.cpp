@@ -53,6 +53,7 @@
 #include "thermostat_tcl.hpp"
 #include "virtual_sites_com_tcl.hpp"
 #include "ghmc_tcl.hpp"
+#include "tuning.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -106,6 +107,9 @@ int tclcallback_timings(Tcl_Interp *interp, void *data);
 
 /// from \ref scriptsdir.c
 char *get_default_scriptsdir();
+
+/** Returns runtime of the integration loop in seconds. From tuning_tcl.cpp **/
+int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
 /****************************************
  * Registration functions
@@ -213,6 +217,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("system_CMS", tclcommand_system_CMS);
   REGISTER_COMMAND("system_CMS_velocity", tclcommand_system_CMS_velocity);
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
+  REGISTER_COMMAND("time_integration", tclcommand_time_integration);
 }
 
 static void register_global_variables(Tcl_Interp *interp)
