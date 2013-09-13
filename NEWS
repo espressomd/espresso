@@ -28,6 +28,8 @@ User-visible changes
 * Renamed torque to torque_{lab,body}, improved torque handling in
   blockfiles.  Clearer distinction between the reference frames for
   torque and angular momentum.
+* New command time_integration to get the runtime of the integration loop.
+
 
 ESPResSo 3.2
 ============
