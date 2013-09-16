@@ -34,3 +34,24 @@ int tclcallback_timings(Tcl_Interp *interp, void *data)
     timing_samples = *(int *)data;
   return TCL_OK;
 }
+
+int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, char *argv[]) {
+  char buffer[10+TCL_DOUBLE_SPACE];
+  double t;
+  int n = 1;
+  if(argc > 2) {
+    Tcl_AppendResult(interp, "time_integration expects zero or one argument.", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if(argc == 2) {
+    if(!(ARG1_IS_I(n) && (n > 1))) {
+      return TCL_ERROR;
+    }
+  }
+
+  t = time_force_calc(n);
+
+  sprintf(buffer, "%lf", t);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return TCL_OK;
+}

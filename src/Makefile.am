@@ -379,7 +379,7 @@ config-version.cpp: FORCE
 # Handling of the MPI fake implementation
 #################################################################
 if MPI_FAKE
-libEspresso_a_SOURCES += mpifake/mpi.hpp mpifake/mpi.cpp
+libEspresso_a_SOURCES += mpifake/mpi.h mpifake/mpi.cpp
 # mpifake should come before any system includes
 AM_CPPFLAGS = -I$(srcdir)/mpifake
 if TCL
