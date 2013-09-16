@@ -441,16 +441,16 @@ extern "C" {
 	cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
       }
 
-      if(reinit_if == 1) {
+      if((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) {
 	dim3 gridConv(mesh,1,1);
 	dim3 threadsConv(mesh,mesh,1);
 
 	calculate_influence_function<<<gridConv, threadsConv>>>( cao, mesh, box, alpha, p3m_gpu_data.G_hat);
 
       }
-	p3m_gpu_data_initialized = 1;
-	}
+      p3m_gpu_data_initialized = 1;
     }
+  }
 
 void p3m_gpu_add_farfield_force() {
 
@@ -470,7 +470,7 @@ void p3m_gpu_add_farfield_force() {
   if(p3m_gpu_data.npart == 0)
     return;
 
-  //printf("p3m params: mesh %d npart %d cao %d\n", mesh, p3m_gpu_data.npart, cao); //TODO delete
+  printf("p3m params: mesh %d npart %d cao %d\n", mesh, p3m_gpu_data.npart, cao); //TODO delete
 
   dim3 gridAssignment(p3m_gpu_data.npart,1,1);
   dim3 threadsAssignment(cao,cao,cao);
