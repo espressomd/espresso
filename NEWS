@@ -31,6 +31,11 @@ User-visible changes
   blockfiles.  Clearer distinction between the reference frames for
   torque and angular momentum.
 
+Changes visible for developers
+------------------------------
+
+* The code has been switched to using a C++ compiler.
+
 ESPResSo 3.2
 ============
 
