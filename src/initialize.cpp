@@ -64,7 +64,8 @@
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"
 #include "p3m_gpu.hpp"
-#include "cuda_common.hpp"
+#include "cuda_init.hpp"
+#include "cuda_interface.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;

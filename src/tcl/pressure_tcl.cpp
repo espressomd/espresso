@@ -185,7 +185,7 @@ static void tclcommand_analyze_print_pressure_all(Tcl_Interp *interp)
   }
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-    buffer[0]=NULL;
+    buffer[0] = 0;
     Tcl_AppendResult(interp, "{ vs_relative ", buffer, (char *)NULL);
     Tcl_PrintDouble(interp, total_pressure.vs_relative[0], buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -498,7 +498,7 @@ static void tclcommand_analyze_print_stress_tensor_all(Tcl_Interp *interp)
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-    buffer[0] =NULL;
+    buffer[0] = 0;
     Tcl_AppendResult(interp, "{ vs_relative ", buffer, (char *)NULL);
     for (j=0;j<9;j++) {
       sprintf(buffer, "%g", total_p_tensor.vs_relative[j]);

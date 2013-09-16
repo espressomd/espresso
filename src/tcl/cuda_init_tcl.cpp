@@ -30,7 +30,7 @@ static int list_gpus(Tcl_Interp *interp)
 {
   int deviceCount = cuda_get_n_gpus();
   if (deviceCount < 0) {
-    Tcl_AppendResult(interp, "cannot initialize CUDA", NULL);
+    Tcl_AppendResult(interp, "cannot initialize CUDA: ", cuda_error, (char *)NULL);
     return TCL_ERROR;
   }
 
