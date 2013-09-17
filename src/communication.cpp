@@ -62,6 +62,7 @@
 #include "mdlc_correction.hpp"
 #include "reaction.hpp"
 #include "galilei.hpp"
+#include "statistics_correlation.hpp"
 #include "cuda_interface.hpp"
 
 int this_node = -1;
@@ -1171,13 +1172,25 @@ void mpi_remove_particle_slave(int pnode, int part)
 /********************* REQ_INTEGRATE ********/
 int mpi_integrate(int n_steps)
 {
-  mpi_call(mpi_integrate_slave, -1, n_steps);
+  if (!correlations_autoupdate) {
+    mpi_call(mpi_integrate_slave, -1, n_steps);
+    integrate_vv(n_steps);
+    COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", \
+                       this_node, n_steps));
+    return check_runtime_errors();
+  } else {
+    for (int i=0; i<n_steps; i++) {
+      mpi_call(mpi_integrate_slave, -1, 1);
+      integrate_vv(1);
+      COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n",     \
+                         this_node, i));
+      if (check_runtime_errors())
+        return check_runtime_errors();
+      autoupdate_correlations();
+    }
+  }
 
-  integrate_vv(n_steps);
-
-  COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
-
-  return check_runtime_errors();
+  return 0;
 }
 
 void mpi_integrate_slave(int pnode, int task)
