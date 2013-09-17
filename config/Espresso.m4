@@ -29,7 +29,7 @@ AC_DEFUN([ES_ADDPATH_CHECK_LIB],[
 	AC_LINK_IFELSE([AC_LANG_CALL([],[$2])],[adp_found=yes],[])
 
 	if test .$adp_found = .no; then
-		for path in $5 /sw/lib /usr/lib64 /usr/local/lib64 /opt/lib64 /usr/lib /usr/local/lib /opt/lib; do
+		for path in $5 /usr/lib64 /usr/local/lib64 /opt/lib64 /sw/lib /opt/local/lib /usr/lib /usr/local/lib /opt/lib; do
 			LDFLAGS="$save_LDFLAGS -L$path"
 			AC_LINK_IFELSE([AC_LANG_CALL([],[$2])],[adp_found=yes],[])
 			if test .$adp_found = .yes; then break; fi

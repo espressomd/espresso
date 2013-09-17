@@ -23,14 +23,17 @@
  * Header file for \ref lbgpu.h.
  */
 
+#include "config.hpp"
+
+#ifdef LB_GPU
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
 
 #include "lbgpu.hpp"
-#include "config.hpp"
+#include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
 
-#ifdef LB_GPU
 #ifndef GAUSSRANDOM
 #define GAUSSRANDOM
 #endif
@@ -93,12 +96,6 @@ static size_t size_of_extern_nodeforces;
 /**parameters residing in constant memory */
 static __device__ __constant__ LB_parameters_gpu para;
 static const float c_sound_sq = 1.f/3.f;
-
-/**cuda streams for parallel computing on cpu and gpu */
-//extern cudaStream_t stream[1];
-
-//extern cudaError_t err;
-//extern cudaError_t _err;
 
 /*-------------------------------------------------------*/
 /*********************************************************/

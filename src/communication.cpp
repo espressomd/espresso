@@ -62,8 +62,8 @@
 #include "mdlc_correction.hpp"
 #include "reaction.hpp"
 #include "galilei.hpp"
-#include "cuda_common.hpp"
 #include "statistics_correlation.hpp"
+#include "cuda_interface.hpp"
 
 int this_node = -1;
 int n_nodes = -1;
