@@ -414,7 +414,11 @@ AS_IF([test x$with_cuda != xno],[
     AC_PATH_PROG(NVCC, nvcc, no, [$PATH:$cuda_path/bin])
 
     AS_IF([test x$NVCC = xno],[
-        AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
+        ],[
+            AC_MSG_WARN([could not find the CUDA compiler (nvcc). Some features will not be available!])
+        ])
     ])
 
     # MAC nvcc stays 32 bit, even if the rest is 64 bit
