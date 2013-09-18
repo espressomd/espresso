@@ -33,6 +33,8 @@
 #include "p3m_gpu.hpp"
 #include "utils.hpp"
 
+#include <iostream>
+
 #ifdef ELECTROSTATICS
 
 struct dummytypename {
@@ -109,16 +111,6 @@ __host__ __device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_
     }
 }
 
-__global__ void zero( int mesh, REAL_TYPE *p ) {
-    int    NX,NY,NZ;
-
-  NX= blockIdx.x;
-  NY= threadIdx.x;
-  NZ= threadIdx.y;
-    
-  p[NX*mesh*mesh + NY * mesh + NZ] = 0.0;
-}
-
 /* Calculate influence function */
 __global__ void calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 
@@ -130,7 +122,7 @@ __global__ void calculate_influence_function ( int cao, int mesh, REAL_TYPE box,
   REAL_TYPE Leni = 1.0/box;
 
   NX= blockIdx.x;
-  NY= threadIdx.x;
+  NY= blockIdx.y;
   NZ= threadIdx.y;
 
   ind = NX*mesh*mesh + NY * mesh + NZ;
@@ -442,8 +434,8 @@ extern "C" {
       }
 
       if((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) {
-	dim3 gridConv(mesh,1,1);
-	dim3 threadsConv(mesh,mesh,1);
+	dim3 gridConv(mesh,mesh,1);
+	dim3 threadsConv(mesh,1,1);
 
 	calculate_influence_function<<<gridConv, threadsConv>>>( cao, mesh, box, alpha, p3m_gpu_data.G_hat);
 
@@ -469,8 +461,6 @@ void p3m_gpu_add_farfield_force() {
 
   if(p3m_gpu_data.npart == 0)
     return;
-
-  printf("p3m params: mesh %d npart %d cao %d\n", mesh, p3m_gpu_data.npart, cao); //TODO delete
 
   dim3 gridAssignment(p3m_gpu_data.npart,1,1);
   dim3 threadsAssignment(cao,cao,cao);
