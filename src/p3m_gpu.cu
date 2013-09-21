@@ -72,7 +72,7 @@ __host__ __device__ inline double csinc(double d)
   }
 }
 
-void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alpha, int mesh, int NX, int NY, int NZ,
+__host__ __device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alpha, int mesh, int NX, int NY, int NZ,
                         REAL_TYPE *Zaehler, REAL_TYPE *Nenner ) {
     REAL_TYPE S1,S2,S3;
     REAL_TYPE fak1,fak2,zwi;
@@ -143,6 +143,41 @@ void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REA
 	}
       }
     }
+  }
+}
+
+__global__ void calculate_influence_function_device ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
+
+  int    NX,NY,NZ;
+  REAL_TYPE Dnx,Dny,Dnz;
+  REAL_TYPE Zaehler[3]={0.0,0.0,0.0},Nenner=0.0;
+  REAL_TYPE zwi;
+  int ind = 0;
+  REAL_TYPE Leni = 1.0/box;
+
+  NX = blockDim.x * blockIdx.x + threadIdx.x;
+  NY = threadIdx.y;
+  NZ = threadIdx.z;
+
+  if(NX >= mesh)
+    return;
+
+  ind = NX*mesh*mesh + NY * mesh + NZ;
+	  
+  if ( ( NX==0 ) && ( NY==0 ) && ( NZ==0 ) )
+    G_hat[ind]=0.0;
+  else if ( ( NX% ( mesh/2 ) == 0 ) && ( NY% ( mesh/2 ) == 0 ) && ( NZ% ( mesh/2 ) == 0 ) )
+    G_hat[ind]=0.0;
+  else {
+    Aliasing_sums_ik ( cao, box, alpha, mesh, NX, NY, NZ, Zaehler, &Nenner );
+		  
+    Dnx = ( NX > mesh/2 ) ? NX - mesh : NX;
+    Dny = ( NY > mesh/2 ) ? NY - mesh : NY;
+    Dnz = ( NZ > mesh/2 ) ? NZ - mesh : NZ;
+	    
+    zwi  = Dnx*Zaehler[0]*Leni + Dny*Zaehler[1]*Leni + Dnz*Zaehler[2]*Leni;
+    zwi /= ( ( SQR ( Dnx*Leni ) + SQR ( Dny*Leni ) + SQR ( Dnz*Leni ) ) * SQR ( Nenner ) );
+    G_hat[ind] = 2.0 * zwi / PI;
   }
 }
 
@@ -530,12 +565,19 @@ extern "C" {
       }
 
       if((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) {
-      // Calculate influence function of host.
-      calculate_influence_function( cao, mesh, box, alpha, p3m_gpu_data.G_hat_host);
+      // // Calculate influence function of host.
+      // calculate_influence_function( cao, mesh, box, alpha, p3m_gpu_data.G_hat_host);
 
-      // Copy influence function to device.
-      cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);
-
+      // // Copy influence function to device.
+      // cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);
+	dim3 grid(1,1,1);
+	dim3 block(1,1,1);
+        block.y = block.z = mesh;
+	block.x = 512 - mesh*mesh;
+	block.x -= block.x / 32;
+	grid.x = mesh / block.x + 1;
+	calculate_influence_function_device<<<grid,block>>>(cao, mesh, box, alpha, p3m_gpu_data.G_hat);
+	cudaThreadSynchronize();
       }
       p3m_gpu_data_initialized = 1;
     }
@@ -572,8 +614,6 @@ void p3m_gpu_add_farfield_force() {
   cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(CUFFT_TYPE_COMPLEX));
 
   KERNELCALL(assign_charges, gridAssignment, threadsAssignment, (lb_particle_gpu,p3m_gpu_data.charge_mesh,mesh,cao,pos_shift,hi));
-
-  cudaThreadSynchronize();
 
   if (CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.charge_mesh, p3m_gpu_data.charge_mesh, CUFFT_FORWARD) != CUFFT_SUCCESS){
     fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed\n");
