@@ -16,14 +16,28 @@ function end() {
     echo "END $1"
 }
 
+function bootstrap() {
+    cd $SRCDIR
+    start "BOOTSTRAP"
+    ./bootstrap.sh
+    end "BOOTSTRAP"
+    cd $BUILDDIR
+}
+
+function configure() {
+    start "CONFIGURE"
+    $SRCDIR/configure $@
+    end "CONFIGURE"
+}
+
 function use_myconfig() {
-    myconfig=testsuite/configs/myconfig-$1.h
+    myconfig=$SRCDIR/testsuite/configs/myconfig-$1.hpp
     if [ ! -e "$myconfig" ]; then
         echo "$myconfig does not exist!"
         exit 1
     fi
     echo "Using $myconfig."
-    cp $myconfig myconfig.h
+    cp $myconfig myconfig.hpp
 }
 
 function check() {
@@ -47,8 +61,3 @@ function dist() {
     end "DIST"
 }
 
-function bootstrap() {
-    start "BOOTSTRAP"
-    ./bootstrap.sh
-    end "BOOTSTRAP"
-}

@@ -76,7 +76,8 @@ if test "x$MYMPIEXEC" = "x"; then
     reason=170
 elif test -x "$MYMPIEXEC"; then
     mpiexec=$MYMPIEXEC
-elif test -x "$MPIEXEC"; then
+elif command -v "$MPIEXEC" >&/dev/null 2>&1; then
+# POSIX compatible check if a program exists, without knowing its path
     mpiexec=$MPIEXEC
 else
     mpiexec=
@@ -84,7 +85,7 @@ else
 fi
 
 # and execute, if possible
-if test -x "$mpiexec"; then
+if command -v "$mpiexec" >&/dev/null 2>&1; then
 
    exec $mpiexec "$@"
 

@@ -284,22 +284,70 @@ proc galileiTransformParticles {} {
 #
 #############################################################
 
-proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_constraints "0"} } {
-  global vmd_show_constraints_flag
+proc prepare_vmd_connection { args } {
+  # default values, as before
+  set filename "vmd"
+  set wait 0
+  set start 1
+  set hostname [exec hostname]
+  set draw_constraints 0
 
+  # parse off filename, both for old and new style
+  if {[llength $args] > 0} {
+    set filename [lindex $args 0]
+    set args [lrange $args 1 end]
+  }
+	
+  if {[llength $args] > 0 && [string is integer [lindex $args 0]]} {
+    # old, fixed position format of other args: wait start draw_constraints
+    # detect simply if a number instead of keyword follows
+    set wait [lindex $args 0]
+    if {[llength $args] > 1} { set start [lindex $args 1] }
+    if {[llength $args] > 2} { set draw_constraints [lindex $args 2] }
+    set vsf_args ""
+  } {
+    # new format with keyword arguments
+    while {[llength $args] > 0} {
+      switch [lindex $args 0] {
+        "wait" {
+          set wait [lindex $args 1]
+          set args [lrange $args 2 end]
+        }
+        "start" {
+          set start 1
+          set hostname "localhost"
+          set args [lrange $args 1 end]
+        }
+        "constraints" {
+          set draw_constraints 1
+          set args [lrange $args 1 end]
+        }
+        "localhost" {
+          set hostname "localhost"
+          set args [lrange $args 1 end]
+        }
+        default {
+          # unknown keyword, assume it is for writevsf
+          break
+        }
+      }
+    }
+    # remaining arguments we assume to be for writevsf
+    set vsf_args $args
+  }
+  
   # structure information only
   set f [open "$filename.vsf" "w"]
-  writevsf $f
+  eval writevsf $f $vsf_args
   close $f
   
   for {set port 10000} { $port < 65000 } { incr port } {
-	  catch {imd connect $port} res
-	    if {$res == ""} {
-	      break
-	    }
+    catch {imd connect $port} res
+    if {$res == ""} {
+      break
+    }
   }
   
-  set HOSTNAME [exec hostname]
   set vmdout_file [open "${filename}.vmd_start.script" "w"]
   
   puts $vmdout_file "logfile vmd.log"
@@ -307,12 +355,12 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_con
   puts $vmdout_file "rotate stop"
   puts $vmdout_file "mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000"
   puts $vmdout_file "mol modcolor 0 0 SegName"
-  puts $vmdout_file "imd connect $HOSTNAME $port"
+  puts $vmdout_file "imd connect $hostname $port"
   puts $vmdout_file "imd transfer 1"
   puts $vmdout_file "imd keep 1"
   puts $vmdout_file "proc pbcsetup {} {pbc set \"[setmd box_l]\" -all}"
   
-  #draw constraints  
+  # draw constraints  
   if {$draw_constraints != "0"} {
     foreach c [ constraint ] {
       set id [ lindex $c 0 ]
@@ -377,10 +425,10 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_con
   close $vmdout_file
  
   if { $start == 0 } {
-	  puts "Start VMD in the same directory on the machine you with :"
-	  puts "vmd -e ${filename}.vmd_start.script &"
+    puts "Start VMD in the same directory with:"
+    puts "vmd -e ${filename}.vmd_start.script &"
   } else {
-	  exec vmd -e "${filename}.vmd_start.script" &
+    exec vmd -e "${filename}.vmd_start.script" &
   }
   
   imd listen $wait
@@ -466,12 +514,14 @@ proc degrees_of_freedom {} {
 # copy_particles 
 # ---------------
 # 
-# Copy a group of particles including their bonds. Positions can be shifted by an offset.
-# The particles can be given as a combination of lists or a ranges. The new particles in
-# any case obtain consecutive identities after the largest current identity. Bonds within
-# the particle set are copied, but not bonds with particles outside the list. That is,
-# if the particle set corresponds to a molecule, intramolecular bonds are preserved, but
-# not intermolecular ones.
+# Copy a group of particles including their bonds. Positions can be
+# shifted by an offset.  The particles can be given as a combination
+# of lists or a ranges. The new particles in any case obtain
+# consecutive identities after the largest current identity. Bonds and
+# exclusions within the particle set are copied, but not bonds with
+# particles outside the list. That is, if the particle set corresponds
+# to a molecule, intramolecular bonds are preserved, but not
+# intermolecular ones.
 # 
 # Example:
 # copy_particles set {1 2 3 4} shift 0.0 0.0 0.0
@@ -509,7 +559,7 @@ proc copy_particles { args } {
     set parts [lsort -unique $parts]
 
     # copy loop.
-    # step 1: all except bonds
+    # step 1: all except bonds and exclusions
     set newid [setmd max_part]
     foreach id $parts {
 	incr newid
@@ -528,7 +578,19 @@ proc copy_particles { args } {
 	set p [lsearch $partcmd "bond"]
 	if {$p != -1} { set partcmd [lreplace $partcmd $p [expr $p + 1]] }
 
-	# and set the new particle
+	# remove exclusions
+	set p [lsearch $partcmd "exclude"]
+	if {$p != -1} {
+            set pend [expr $p + 1]
+            while {1} {
+                set element [lindex $partcmd $pend]
+                if {$element == "" || ![string is integer $element]} { break }
+                incr pend
+            }
+            set partcmd [lreplace $partcmd $p $pend]
+        }
+
+        # and set the new particle
 	eval part $newid $partcmd
     }
 
@@ -553,5 +615,17 @@ proc copy_particles { args } {
 		eval part $newid bond $newbond
 	    }
 	}
+
+	# new exclusions list
+	set exclusions {}
+        # check whether exclusions are in the molecule and translate
+	foreach exclude [part $id print exclusions] {
+            if {[array names newids -exact $exclude] != ""} {
+                lappend exclusions $newids($exclude)
+            }
+        }
+        if {$exclusions != {}} {
+            eval part $newid exclude $exclusions
+        }
     }
 }
