@@ -606,19 +606,19 @@ void p3m_gpu_add_farfield_force() {
   
   CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
 
-  assign_forces_3<<<gridAssignment, threadsAssignment, cao*cao*cao>>>(lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 0));
+  assign_forces_3<<<gridAssignment, threadsAssignment, cao*cao*cao>>>(lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 0);
 
   KERNELCALL(apply_diff_op<1>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
 
   CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
   
-  assign_forces_3<<<gridAssignment, threadsAssignment, cao*cao*cao>>>(lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 1));
+  assign_forces_3<<<gridAssignment, threadsAssignment, cao*cao*cao>>>(lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 1);
 
   KERNELCALL(apply_diff_op<2>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
 
   CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
   
-  assign_forces_3<<<gridAssignment, threadsAssignment, cao*cao*cao>>>(lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 2));
+  assign_forces_3<<<gridAssignment, threadsAssignment, cao*cao*cao>>>(lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 2);
 
   /** For timing purposes **/
 
