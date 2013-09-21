@@ -381,7 +381,10 @@ __global__ void assign_forces(const CUDA_particle_data * const pdata, CUFFT_TYPE
 __global__ void assign_forces_2(const CUDA_particle_data * const pdata, CUFFT_TYPE_COMPLEX *mesh, const int m_size, const int cao, const REAL_TYPE pos_shift, const
 				REAL_TYPE hi, CUDA_particle_force * lb_particle_force_gpu, REAL_TYPE prefactor, int dim, int n_part) {
   /** id of the particle **/
-  int id = threadIdx.x;
+  int id = blockIdx.x*blockDim.x + threadIdx.x;
+
+  if(id >= n_part)
+    return;
 
   /** position relative to the closest gird point **/
   REAL_TYPE m_pos[3];
@@ -559,32 +562,40 @@ void p3m_gpu_add_farfield_force() {
 
   /** For timing purposes **/
 
-  // dim3 gridAssignment2(1,1,1);
-  // dim3 threadsAssignment2(p3m_gpu_data.npart,1,1);
+  dim3 gridAssignment2(1,1,1);
+  dim3 threadsAssignment2(1,1,1);
+  if(p3m_gpu_data.npart <= 512) {
+    threadsAssignment2.x = p3m_gpu_data.npart;
+  } else {
+    if((p3m_gpu_data.npart % 512) == 0)
+      gridAssignment2.x = p3m_gpu_data.npart / 512;
+    else
+      gridAssignment2.x = p3m_gpu_data.npart / 512 + 1;
+  }
 
-  // KERNELCALL(apply_diff_op<0>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
+  KERNELCALL(apply_diff_op<0>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
   
-  // CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
+  CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
 
-  // KERNELCALL(assign_forces_2, gridAssignment2, threadsAssignment2, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 0, p3m_gpu_data.npart));
+  KERNELCALL(assign_forces_2, gridAssignment2, threadsAssignment2, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 0, p3m_gpu_data.npart));
 
-  // cudaThreadSynchronize();
+  cudaThreadSynchronize();
 
-  // KERNELCALL(apply_diff_op<1>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
+  KERNELCALL(apply_diff_op<1>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
 
-  // CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
+  CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
   
-  // KERNELCALL(assign_forces_2, gridAssignment2, threadsAssignment2, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 1, p3m_gpu_data.npart));
+  KERNELCALL(assign_forces_2, gridAssignment2, threadsAssignment2, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 1, p3m_gpu_data.npart));
 
-  // cudaThreadSynchronize();
+  cudaThreadSynchronize();
 
-  // KERNELCALL(apply_diff_op<2>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
+  KERNELCALL(apply_diff_op<2>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
 
-  // CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
+  CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
   
-  // KERNELCALL(assign_forces_2, gridAssignment2, threadsAssignment2, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 2, p3m_gpu_data.npart));
+  KERNELCALL(assign_forces_2, gridAssignment2, threadsAssignment2, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 2, p3m_gpu_data.npart));
 
-  // cudaThreadSynchronize();
+  cudaThreadSynchronize();
 
   /** End duplication **/
 
