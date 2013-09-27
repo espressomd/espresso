@@ -50,6 +50,7 @@ typedef struct {
   unsigned int number_of_species;
   unsigned int accelerated_frame_enabled;
   float accelerated_frame_boundary_mass;
+  float ext_acceleration_force[3];
   int reaction_species[3];
   float rho_reactant_reservoir;
   float rho_product0_reservoir;
@@ -151,7 +152,7 @@ int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
-int ek_set_accelerated_frame( int enabled, double boundary_mass );
+int ek_set_accelerated_frame( int enabled, double boundary_mass, double* ext_acceleration_force );
 
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);

@@ -37,7 +37,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "Usage of \"electrokinetics\":", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [viscosity #float] [friction #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                  [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                  [accelerated_frame <off|on> [boundary_mass #double]]", (char *)NULL);
+    Tcl_AppendResult(interp, "                  [accelerated_frame <off|on> [boundary_mass #double] [ext_acceleration_force #double #double #double]]", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|pressure|lbforce> vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics reaction [reactant_index #int] [product0_index #int] [product1_index #int] \
                                                 [reactant_resrv_density #float] [product0_resrv_density #float] \
@@ -559,16 +559,21 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         }
       }
       else if(ARG0_IS_S("accelerated_frame")) {
-        if( argc < 4 || ( !ARG_IS_S(1,"off") && !ARG_IS_S(1,"on") ) || !ARG_IS_S(2,"boundary_mass") || !ARG_IS_D(3,floatarg) ) {
+        if( argc < 8 || ( !ARG_IS_S(1,"off") && !ARG_IS_S(1,"on") ) ||
+            !ARG_IS_S(2,"boundary_mass") || !ARG_IS_D(3,floatarg) ||
+            !ARG_IS_S(4,"ext_acceleration_force") || !ARG_IS_D(5,vectarg[0]) ||
+            !ARG_IS_D(6,vectarg[1]) || !ARG_IS_D(7,vectarg[2]) ) 
+        {
           Tcl_AppendResult(interp, "electrokinetics accelerated_frame requires <off|on> as argument, \
-                                    followed by the keyword boundary_mass and a float\n", (char *)NULL);
+                                    followed by the keyword boundary_mass and a float, \
+                                    followed by the keyword ext_acceleration_force and three floats\n", (char *)NULL);
           return TCL_ERROR;
         }
         else if( ARG_IS_S(1,"on") ) 
         {
           if ( floatarg > 0.0 ) 
           {
-            ek_set_accelerated_frame( 1 , floatarg );
+            ek_set_accelerated_frame( 1 , floatarg, vectarg );
           }
           else
           {
@@ -578,11 +583,15 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         }
         else 
         {
-          ek_set_accelerated_frame( 0 , -1.0 );
+          vectarg[0] = 0.0;
+          vectarg[1] = 0.0;
+          vectarg[2] = 0.0;
+
+          ek_set_accelerated_frame( 0 , -1.0, vectarg );
         }
 
-        argc -= 4;
-        argv += 4;
+        argc -= 8;
+        argv += 8;
       }
       else if(ARG0_IS_S("reaction")) {
 #ifndef EK_REACTION

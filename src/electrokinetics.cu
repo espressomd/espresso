@@ -101,7 +101,8 @@ int ek_initialized = 0;
                                   -1.0, -1.0,  0.0,
                                    0.0,  0.0, -1.0,
                                   -1.0,    0,    0,
-                                  -1.0, {-1,-1,-1},
+                                  -1.0, {0.0, 0.0, 0.0},
+                                   {-1, -1, -1},
                                   -1.0, -1.0, -1.0,
                                   -1.0, -1.0, -1.0, 
                                   -1.0
@@ -275,11 +276,9 @@ __device__ void ek_displacement( float * dx,
           ( mode[ 15 ] - mode[ 16 ] ) -
           ( mode[ 17 ] - mode[ 18 ] );
 
-#ifdef EK_REACTION
   dx[0] += 0.5f * ek_parameters_gpu.lb_force_previous[ node_index ];
   dx[1] += 0.5f * ek_parameters_gpu.lb_force_previous[ ek_parameters_gpu.number_of_nodes + node_index ];
   dx[2] += 0.5f * ek_parameters_gpu.lb_force_previous[ 2 * ek_parameters_gpu.number_of_nodes + node_index ];
-#endif
 
   dx[0] *= 1.0f / rho;
   dx[1] *= 1.0f / rho;
@@ -453,7 +452,8 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
   }
 }
 
-__global__ void ek_accelerated_frame_transformation( LB_node_force_gpu node_f ) {
+__global__ void ek_accelerated_frame_transformation( LB_node_force_gpu node_f )
+{
                                        
   unsigned int index = ek_getThreadIndex ();
 
@@ -1521,14 +1521,12 @@ __global__ void ek_clear_node_force( LB_node_force_gpu node_f ) {
 
   if( index < ek_parameters_gpu.number_of_nodes ) {
 
-#ifdef EK_REACTION
     ek_parameters_gpu.lb_force_previous[ index ] = 
                            node_f.force[ index ];
     ek_parameters_gpu.lb_force_previous[ ek_parameters_gpu.number_of_nodes + index ] =
                            node_f.force[ ek_parameters_gpu.number_of_nodes + index ];
     ek_parameters_gpu.lb_force_previous[ 2 * ek_parameters_gpu.number_of_nodes + index ] = 
                            node_f.force[ 2 * ek_parameters_gpu.number_of_nodes + index ];
-#endif
 
     node_f.force[ index ]                                         = 0.0f;
     node_f.force[ ek_parameters_gpu.number_of_nodes + index ]     = 0.0f;
@@ -1609,20 +1607,75 @@ __global__ void ek_reaction_tag( ) {
 }
 #endif
 
-__global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_boundary_force ) {
- 
+__global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_boundary_force, LB_parameters_gpu *ek_lbparameters_gpu )
+{
+
+// TODO : REMOVE
+// float ext_force = -7.426292f;
+// float ext_force = 0.01f;
+
+  // Set force to zero
+
   ek_accelerated_frame_boundary_force[0] = 0.0f;
   ek_accelerated_frame_boundary_force[1] = 0.0f;
-  ek_accelerated_frame_boundary_force[2] = -7.426292f;
+  ek_accelerated_frame_boundary_force[2] = 0.0f;
+
+  // Add external force applied to the particle (boundary composite)
+
+  ek_accelerated_frame_boundary_force[0] += ek_parameters_gpu.ext_acceleration_force[0];
+  ek_accelerated_frame_boundary_force[1] += ek_parameters_gpu.ext_acceleration_force[1];
+  ek_accelerated_frame_boundary_force[2] += ek_parameters_gpu.ext_acceleration_force[2];
+
+// TODO : REMOVE
+printf("ext_force %f ", ek_accelerated_frame_boundary_force[2]);
 
   if ( ek_parameters_gpu.accelerated_frame_enabled == 1 )
   {
+
     for ( int i = 0; i < n_lb_boundaries; i++)
     {
-      ek_accelerated_frame_boundary_force[0] +=  ek_lb_boundary_force[3*i + 0] / ek_parameters_gpu.accelerated_frame_boundary_mass;
-      ek_accelerated_frame_boundary_force[1] +=  ek_lb_boundary_force[3*i + 1] / ek_parameters_gpu.accelerated_frame_boundary_mass;
-      ek_accelerated_frame_boundary_force[2] +=  ek_lb_boundary_force[3*i + 2] / ek_parameters_gpu.accelerated_frame_boundary_mass;
+// TODO : REMOVE
+printf("bndry_force %f ", -ek_lb_boundary_force[3*i + 2]);
+
+      // Sum over all the boundaries that make up the composite and
+      // and ad the friction force. The boundary force coming from 
+      // the LB has the incorrect sign, it is pointing in the direction
+      // of the fluid, not in the direction of the boundary, hence the minus.
+
+      ek_accelerated_frame_boundary_force[0] += -ek_lb_boundary_force[3*i + 0];
+      ek_accelerated_frame_boundary_force[1] += -ek_lb_boundary_force[3*i + 1];
+      ek_accelerated_frame_boundary_force[2] += -ek_lb_boundary_force[3*i + 2];
     }
+
+// TODO : REMOVE
+printf("ext_force+bndry_force %f ", ek_accelerated_frame_boundary_force[2]);
+
+    // EXPLANATION HERE for way to incorporate the boundary force and mass
+  
+    ek_accelerated_frame_boundary_force[0] *= - static_cast<float>( ek_parameters_gpu.dim_x * ek_parameters_gpu.dim_y * ek_parameters_gpu.dim_z )
+                                                * ek_lbparameters_gpu->rho[0] * powf(ek_lbparameters_gpu->agrid,3)
+                                                / ek_parameters_gpu.accelerated_frame_boundary_mass;
+    ek_accelerated_frame_boundary_force[1] *= - static_cast<float>( ek_parameters_gpu.dim_x * ek_parameters_gpu.dim_y * ek_parameters_gpu.dim_z )
+                                                * ek_lbparameters_gpu->rho[0] * powf(ek_lbparameters_gpu->agrid,3)
+                                                / ek_parameters_gpu.accelerated_frame_boundary_mass;
+    ek_accelerated_frame_boundary_force[2] *= - static_cast<float>( ek_parameters_gpu.dim_x * ek_parameters_gpu.dim_y * ek_parameters_gpu.dim_z )
+                                                * ek_lbparameters_gpu->rho[0] * powf(ek_lbparameters_gpu->agrid,3)
+                                                / ek_parameters_gpu.accelerated_frame_boundary_mass;
+
+// TODO : REMOVE
+printf("(ef+bf)*(mf/mp) %f ", ek_accelerated_frame_boundary_force[2]);
+
+    // In a finite system there is also a force acting on the fluid this
+    // force ensures that the there is no total force acting on the system.
+    // That is, for a moving particle there would otherwise be no 
+    // stationary state.
+
+    ek_accelerated_frame_boundary_force[0] -= ek_parameters_gpu.ext_acceleration_force[0];
+    ek_accelerated_frame_boundary_force[1] -= ek_parameters_gpu.ext_acceleration_force[1];
+    ek_accelerated_frame_boundary_force[2] -= ek_parameters_gpu.ext_acceleration_force[2];
+
+// TODO : REMOVE
+printf("(ef+bf)*(mf/mp) + ef %f ", ek_accelerated_frame_boundary_force[2]);
   }
 }
 
@@ -1690,6 +1743,8 @@ void ek_integrate() {
     / (threads_per_block * blocks_per_grid_y );
   dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
 
+
+
   /* Clears the force on the nodes and must be called before fluxes are calculated,
      since in the reaction set up the previous-step LB force is added to the flux
      (in ek_calculate_quantities / ek_displacement), which is copied in this routine;
@@ -1697,31 +1752,41 @@ void ek_integrate() {
 
   KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
 
-#ifdef EK_REACTION
-  /* Performs the catalytic reaction and sets the reservoir densities at 
-     the boundary of the simulation box */
 
+
+#ifdef EK_REACTION
   if ( ek_parameters.reaction_species[0] != -1 &&
        ek_parameters.reaction_species[1] != -1 &&
        ek_parameters.reaction_species[2] != -1 )
   {
+    /* Performs the catalytic reaction and sets the reservoir densities at 
+       the boundary of the simulation box */
+
     KERNELCALL( ek_reaction, dim_grid, threads_per_block, ());
+
+    /* Determines the excess pressure that follows from the creation of 
+       species by the reaction */
+
+    KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, 
+                                                            ek_lbparameters_gpu, 
+                                                            ek_lb_device_values ) );
   }
-
-  /* Determines the excess pressure that follows from the creation of 
-     species by the reaction */
-
-  KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, 
-                                                          ek_lbparameters_gpu, 
-                                                          ek_lb_device_values ) );
 #endif
 
 
-  /* Transforms to an accelerated frame */
 
-  KERNELCALL( ek_accelerated_frame_transformation, dim_grid, threads_per_block, ( node_f ) );
+  if ( ek_parameters.accelerated_frame_enabled == 1 )
+  {
+    /* Adds the force required to perform the accelerated frame tranformation,
+       must be done before the integration of the LB is called; force is 
+       technically from the previous step and is calculated in the kernel
+       ek_calculate_boundary_forces */
 
-  
+    KERNELCALL( ek_accelerated_frame_transformation, dim_grid, threads_per_block, ( node_f ) );
+  }
+
+
+
   /* Integrate diffusion-advection */
   
   for( int i = 0; i < ek_parameters.number_of_species; i++ )
@@ -1739,13 +1804,22 @@ void ek_integrate() {
     KERNELCALL( ek_propagate_densities, dim_grid, threads_per_block, ( i ) );
   }
 
-#ifdef EK_REACTION
-  /* Add pressure force to LB must be done outside of loop, otherwise
-     the force gets added several times */
 
-  KERNELCALL( ek_add_ideal_pressure_to_lb_force, dim_grid, threads_per_block,
-                ( *current_nodes, node_f, ek_lbparameters_gpu ) );
+
+#ifdef EK_REACTION
+  if ( ek_parameters.reaction_species[0] != -1 &&
+       ek_parameters.reaction_species[1] != -1 &&
+       ek_parameters.reaction_species[2] != -1 )
+  {
+    /* Add pressure force to LB must be done outside of loop,
+       otherwise the force gets added several times */
+
+    KERNELCALL( ek_add_ideal_pressure_to_lb_force, dim_grid, threads_per_block,
+                  ( *current_nodes, node_f, ek_lbparameters_gpu ) );
+  }
 #endif
+
+
 
   /* Integrate electrostatics */
   
@@ -1755,13 +1829,27 @@ void ek_integrate() {
   
   lb_integrate_GPU();
 
-  /* Calculate the total force on the boundaries for the accelerated
-     frame transformation */
 
-  ek_calculate_boundary_forces<<<1,1>>>( n_lb_boundaries, ek_lb_boundary_force );
+
+  if ( ek_parameters.accelerated_frame_enabled == 1 )
+  {
+    /* Calculate the total force on the boundaries for the accelerated frame transformation,
+       can only be done after the LB integration is called */
+
+    ek_calculate_boundary_forces<<<1,1>>>( n_lb_boundaries, ek_lb_boundary_force, ek_lbparameters_gpu );
+  }
+
+
   
   //TODO delete - needed for printfs
   cudaDeviceSynchronize();
+
+// TODO : REMOVE
+LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
+                                                        sizeof( LB_rho_v_pi_gpu ) );
+lb_get_values_GPU( host_values ); 
+printf( "ve %f\n", host_values[ 250 ].v[2] );
+free(host_values);	
 }
 
 
@@ -1880,12 +1968,12 @@ int ek_init() {
     lb_get_para_pointer( &ek_lbparameters_gpu );
     lb_set_ek_pointer( ek_parameters_gpu_pointer );
 
+    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.lb_force_previous,
+                             ek_parameters.number_of_nodes * 3 * sizeof( float ) ) );
+
 #ifdef EK_REACTION
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.pressure,
                              ek_parameters.number_of_nodes * sizeof( float ) ) );
-
-    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.lb_force_previous,
-                             ek_parameters.number_of_nodes * 3 * sizeof( float ) ) );
                              
     lb_get_device_values_pointer( &ek_lb_device_values );
 #endif
@@ -2753,11 +2841,29 @@ int ek_set_ext_force( int species,
   return 0;
 }
 
-int ek_set_accelerated_frame( int enabled, double boundary_mass ) {
+int ek_set_accelerated_frame( int enabled, double boundary_mass, double* ext_acceleration_force ) {
 
   ek_parameters.accelerated_frame_enabled = enabled;
   ek_parameters.accelerated_frame_boundary_mass = boundary_mass;
-
+/*
+  ek_parameters.ext_acceleration_force[0] = ext_acceleration_force[0]*powf(lbpar_gpu.agrid,4)
+                                                                     *lbpar_gpu.tau*lbpar_gpu.tau;
+  ek_parameters.ext_acceleration_force[1] = ext_acceleration_force[1]*powf(lbpar_gpu.agrid,4)
+                                                                     *lbpar_gpu.tau*lbpar_gpu.tau;
+  ek_parameters.ext_acceleration_force[2] = ext_acceleration_force[2]*powf(lbpar_gpu.agrid,4)
+                                                                     *lbpar_gpu.tau*lbpar_gpu.tau;
+*/
+/*
+  ek_parameters.ext_acceleration_force[0] = ext_acceleration_force[0]*powf(lbpar_gpu.agrid,1)
+                                                                     *lbpar_gpu.tau*lbpar_gpu.tau;
+  ek_parameters.ext_acceleration_force[1] = ext_acceleration_force[1]*powf(lbpar_gpu.agrid,1)
+                                                                     *lbpar_gpu.tau*lbpar_gpu.tau;
+  ek_parameters.ext_acceleration_force[2] = ext_acceleration_force[2]*powf(lbpar_gpu.agrid,1)
+                                                                     *lbpar_gpu.tau*lbpar_gpu.tau;
+*/
+  ek_parameters.ext_acceleration_force[0] = 0.0;
+  ek_parameters.ext_acceleration_force[1] = 0.0;
+  ek_parameters.ext_acceleration_force[2] = 1.0;
   return 0;
 }
 
