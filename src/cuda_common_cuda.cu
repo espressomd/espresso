@@ -20,7 +20,6 @@
 
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"
-#include "grid.hpp"
 #include "config.hpp"
 #include "random.hpp"
 #include "particle_data.hpp"
