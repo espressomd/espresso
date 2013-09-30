@@ -28,7 +28,7 @@ set box_lx  32.0
 set box_ly  32.0
 set box_lz  4.0
 set tstep 1.0
-setmd skin 0.2
+setmd skin 0.0
 setmd time_step $tstep
 setmd box_l  $box_lx $box_ly $box_lz
 setmd periodic 1 1 0
@@ -36,14 +36,18 @@ setmd periodic 1 1 0
 # SC fluid parameters
 set coupl 1.5  
 set max   5.3 
-set min   2.2
+set min   0.06
 set avg   1.0
 set visc 0.1
 set mob 1e-1
 
+#part 0 pos [expr 3. * $box_lx / 2. - 0.75 ] [expr $box_ly / 2.] [expr $box_lz / 2.]  fix  type 0 
+#part 1 pos [expr 3. * $box_lx / 2. + 0.75 ] [expr $box_ly / 2.] [expr $box_lz / 2.]  fix  type 0 
+part 0 pos [expr 1.122462048 + 0.1 ] [expr $box_ly / 2.] [expr $box_lz / 2.]  fix  type 0 
+part 1 pos [expr 0           ] [expr $box_ly / 2.] [expr $box_lz / 2.]  fix  type 0 
 if { [ catch {
 puts "initializing fluid"
-lbfluid gpu dens $avg $avg mobility $mob  visc $visc $visc  friction 1.0 1.0   agrid 1.0 tau 1.0  sc_coupling 0.0 $coupl 0.0 
+lbfluid gpu dens $avg $avg mobility $mob  visc $visc $visc  friction 1.0 1.0   agrid 1.0 tau 100.0  sc_coupling 0.0 $coupl 0.0 
 thermostat off 
 puts "creating fluid"
 for { set x  0  } { $x < $box_lx  } { incr x } { 
@@ -54,16 +58,14 @@ for { set x  0  } { $x < $box_lx  } { incr x } {
     }
 }
 puts "placing particle"
-inter 0 0 lennard-jones 1.0 1.0 2.0 
-inter 0 0 affinity  0.4 0.7
-part 0 pos 0. [expr $box_ly / 2.] [expr $box_lz / 2.]  fix  type 0 
-part 1 pos 8.5 [expr $box_ly / 2.] [expr $box_lz / 2.]  fix type 0 
+inter 0 0 lennard-jones 1.0 1.0 2.0
+inter 0 0 affinity  0.5 0.5
 puts "[inter]"
-puts "[part 0 print composition ] [part 1 print composition ]"
-integrate 0
-puts "[part 0 print composition ] [part 1 print composition ]"
 integrate 1 
-puts "[part 0 print composition ] [part 1 print composition ]"
+puts "[part 0 print composition ] [part 1 print composition ] [part 0 print f]"
+integrate 1 
+puts "[part 0 print composition ] [part 1 print composition ] [part 0 print f]"
+
 
 } res ] } { 
     error_exit $res

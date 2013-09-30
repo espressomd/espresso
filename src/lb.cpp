@@ -40,6 +40,7 @@
 #include "lb-d3q19.hpp"
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
+#include "cuda_interface.hpp"
 
 int lb_components = LB_COMPONENTS; // global variable holding the number of fluid components (see global.c)
 
@@ -1161,6 +1162,8 @@ int lb_lbnode_set_rho(int* ind, double *p_rho){
        host_rho[i]=(float)p_rho[i];
     }
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
+    lb_calc_particle_lattice_ia_gpu();
+    copy_forces_from_GPU();
 #endif
   } else {
 #ifdef LB
