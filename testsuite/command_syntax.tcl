@@ -19,6 +19,12 @@
 source "tests_common.tcl"
 
 setmd box_l 10.0 10.0 10.0
+setmd time_step 0.1
+setmd skin 0.1
+thermostat off
+
+time_integration 10
+time_integration
 
 if { [has_feature "LENNARD_JONES"]} {
     # test variants of using lennard-jones
@@ -30,6 +36,10 @@ if { [has_feature "LENNARD_JONES"]} {
 if { [has_feature "LENNARD_JONES"] && [has_feature "LJCOS"]} {
     # test using several interactions in one command
    inter 0 0 lennard-jones 1.0 1.0 1.12246 auto 0 0 0 lj-cos 1.0 1.0 2.0 0.0
+}
+
+if { [has_feature "DPD"] } {
+    thermostat dpd 1.0 1.0 1.0
 }
 
 exit 0

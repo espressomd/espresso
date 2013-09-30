@@ -107,10 +107,8 @@ Features can be activated in the configuration header
 \item \newfeature{LANGEVIN_PER_PARTICLE} Allows to define the temperature and
   friction coefficient for individual particles. See 
   \ref{ssec:particleproperties} for details.
-\item \newfeature{REACTIONS} Allows to define three particle types to be
-  reactant, catalyzer and product. The reaction reactant to product 
-  stochastically happens in a radius around the catalyzer, the back reaction
-  everywhere. See section \ref{sec:Reactions} for details.
+\item \newfeature{CATALYTIC_REACTIONS} Allows the user to define three particle types to be
+  reactant, catalyzer, and product. Reactants get converted into products in the vicinity of a catalyst according to a used-defined reaction rate constant. It is also possible to set up a chemical equilibrium reaction between the reactants and products, with another rate constant. See section \ref{sec:Reactions} for details.
 \item \newfeature{OVERLAPPED}
 \item \newfeature{COLLISION\_DETECTION} Allows particles to be bound oo collision. See section \ref{sec:collision}
 \item \newfeature{OLD\_RW\_VERSION} This switches back to the old,
@@ -139,6 +137,10 @@ integrator or thermostat:
 \item \newfeature{DPD\_MASS\_LIN} Enables masses in DPD using absolute
   mass units.
 \item \newfeature{LB} Enables the lattice-Boltzmann fluid code (see
+  section \vref{sec:lb}).
+\item \newfeature{LB_GPU} Enables the lattice-Boltzmann fluid code support for GPU (see
+  section \vref{sec:lb}).
+\item \newfeature{SHANCHEN} Enables the Shan Chen bicomponent fluid code on the GPU (see
   section \vref{sec:lb}).
 \item \newfeature{LB_ELECTROHYDRODYNAMICS} Enables the implicit
   calculation of electro-hydrodynamics for charged particles and salt

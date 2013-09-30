@@ -126,6 +126,10 @@ if { [catch {
     cellsystem domain_decomposition -no_verlet_list
     inter coulomb $bjerrum memd $f_mass $mesh
 
+	# check if permittivity of single nodes can be set
+	inter coulomb $bjerrum memd localeps node 1 1 1 dir X eps 80.0
+	inter coulomb $bjerrum memd localeps node 1 1 1 dir X eps 1.0
+
     set act_min_dist [analyze mindist]
 
     set i 0

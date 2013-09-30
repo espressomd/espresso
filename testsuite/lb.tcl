@@ -106,7 +106,7 @@ setmd periodic 1 1 1
 read_data "lb_system.data"
 thermostat langevin 1. 1.
 integrate 1000
-stop_particles
+kill_particle_motion
 thermostat off
 #part 0 pos 10 10 10
 # here you can create the necessary snapshot

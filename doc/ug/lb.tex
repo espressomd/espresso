@@ -47,17 +47,20 @@ description of the method, please refer to the literature.
   lbfluid
   \require{2}{\opt{gpu}}
   \require{1 or 2}{\opt{agrid  \var{agrid}}}
-  \require{1 or 2}{\opt{dens  \var{density}}}
-  \require{1 or 2}{\opt{visc  \var{viscosity}}}
+  \require{1 or 2 or 3}{\opt{dens  \var{density} }}
+  \require{1 or 2 or 3}{\opt{visc  \var{viscosity}}}
   \require{1 or 2}{\opt{tau  \var{lb\_timestep}}}
-  \require{1 or 2}{\opt{bulk_visc  \var{bulk\_viscosity}}}
-  \require{1 or 2}{\opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}}
-  \require{1 or 2}{\opt{friction   \var{gamma} } }
-  \require{1 or 2}{\opt{gamma_odd  \var{gamma\_odd}}}
-  \require{1 or 2}{\opt{gamma_even  \var{gamma\_even}}}
+  \require{1 or 2 or 3}{\opt{bulk_visc  \var{bulk\_viscosity}}}
+  \require{1 or 2 or 3}{\opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}}
+  \require{1 or 2 or 3}{\opt{friction   \var{gamma} } }
+  \require{1 or 2 or 3}{\opt{gamma_odd  \var{gamma\_odd}}}
+  \require{1 or 2 or 3}{\opt{gamma_even  \var{gamma\_even}}}
+  \require{3}{\opt{mobility} \var{mobilities}  }
+  \require{3}{\opt{sc\_coupling} \var{coupling\_constants}  }
   \begin{features}
   \required[1]{LB}
   \required[2]{LB_GPU}
+  \required[3]{SHANCHEN}
   \end{features}
 \end{essyntax}
 The \lit{lbfluid} command initializes the fluid with a given
@@ -106,6 +109,18 @@ set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau},
 \var{bulk\_viscosity}=0, \var{gamma\_odd}=0, \var{gamma\_even}=0,
 \var{ f_x} = \var{ f_y} = \var{ f_z} = 0.
 
+If the feature \lit{SHANCHEN} is activated, the Lattice Boltzmann
+code (so far GPU version only) is extended to a two-component
+Shan-Chen method.  The \lit{lbfluid} command requires in this case
+to supply two values, for the respective fluid components, to each
+of the options \lit{dens}, \lit{visc}, \lit{bulk_visc}, \lit{friction},
+\lit{gamma_odd} and \lit{gamma_even}, when they are used, otherwise
+they are set to the default values. The three elements of the
+coupling matrix can be supplied with the option \lit{sc_coupling},
+and the mobility coefficient can be
+specified with the option \lit{mobility}. By default no copuling is activated, and the relaxation parameter associated to the mobility is zero, corresponding to an infinite value for \lit{mobility}. Additional details are
+given in \ref{sec:shanchen} and \ref{sec:scmd-coupling}.
+
 \begin{essyntax}
   lbfluid print_interpolated_velocity \var{x} \var{y} \var{z}
 \end{essyntax}
@@ -126,36 +141,114 @@ on both the computer being used as well as the compiler.  This is currently  onl
 
 \section{LB as a thermostat}
 \begin{essyntax}
-  thermostat \require{1 or 2}{lb} \var{T}
+  thermostat \require{1 or 2 or 3}{lb} \var{T}
   \begin{features}
   \required[1]{LB}
   \required[2]{LB_GPU}
+  \required[3]{SHANCHEN}
   \end{features}
 \end{essyntax}
-The LBM implementation in \es uses Duenweg's point coupling method
+The LBM implementation in \es uses Ahlrichs and D\"unweg's point coupling method
 to couple MD particles the LB fluid. This coupling consists
 in a frictional force and a random force:
 \begin{equation*}
   \vec{F} = -\gamma \left(\vec{v}-\vec{u}\right) + \vec{F}_R.
 \end{equation*}
+The momentum acquired by the particles is then transferred back to the fluid using a linear interpolation scheme, to preserve total momentum.
 The frictional force tends to decrease the relative velocity
 between the fluid and the particle whereas the random forces are chosen
 so large that the average kinetic energy per particle corresponds to
 the given temperature, according to a fluctuation dissipation theorem.
-No other thermostatting mechanism is necessary then. Please any of these
-off before starting the LB thermostatting mechanism.
+No other thermostatting mechanism is necessary then. Please switch off any other thermostat 
+ before starting the LB thermostatting mechanism.
 
 The LBM implementation provides a fully thermalized LB fluid, \ie all
 nonconserved modes, including the pressure tensor, fluctuate correctly
 according to the given temperature and the relaxation parameters. All
 fluctuations can be switched off by setting the temperature to 0.
 
+Regarind the unit of the temperature, please refer to
+Section~\ref{sec:units}.
+
+\section{The Shan Chen bicomponent fluid\label{sec:shanchen}}
+The Lattice Boltzmann variant of Shan and Chan\cite{...} is widely
+used as it is simple and yet very effective in reproducing the most
+important traits of multicomponent or multiphase fluids. The version
+of the Shan-Chen method implemented in \es is an extension of the
+single-component, multi-relaxation times Lattice Boltzmann with
+fluctuations applied to all modes, that is already present in \es.
+The Shan-Chen fluid is set up using the \lit{lbfluid} command,
+supplying two  Besides the usual transport coefficients (shear and
+bulk viscosity, and relaxation constants for the ghost modes) it
+is possible to set a relaxation time also for the momentum modes,
+since they are not conserved quantities in the Shan-Chen method,
+by using the option \lit{mobility}. The mobility transport coefficient
+expresses the propensity of the two components to mutually diffuse,
+and, differently from other transport coefficients, only one value
+is needed, as it carachterizes the mixture as a whole. When thermal
+fluctuations are switched on, a random noise is added, in addition,
+also to the momentum modes. Differently from the other modes, a
+correlated noise is added to the momentum ones, in order to preserve
+the \emph{total} momentum. The coupling between the fluid components
+is realized by the force
+\begin{equation}
+ \vec{g}_{\zeta}(\vec{r}) =  - \rho_{\zeta}(\vec{r})
+ \sum_{\vec{r}'}\sum_{\zeta'}  g_{\zeta \zeta'} \rho_{\zeta'}
+ (\vec{r}') (\vec{r}'-\vec{r}),
+\end{equation} that acts on the component $\zeta$ at node position
+$\vec{r}$, and depends on the densities on the neighboring nodes
+located at $\vec{r}'$.  The width of the interfacial regions between
+two components, that can be obtained with the Shan-Chen method is
+usually 5-10 lattice units.  The coupling matrix $g_{\zeta \zeta'}$
+is in general symmetric, so in the present implementation only three
+real values need to be specified with the option \lit{sc_coupling}.
+The \lit{lbfluid} command sets the density of the two components
+to the values specified by the option \lit{dens}, and these can be
+modified with the \lit{lbnode} command. Note that the number of
+active fluid components can be accessed through the global variable
+\lit{lb_components}.
+
+
+\section{Coupling particle dynamics to the Shan-Chen fluid\label{sec:scmd-coupling}}
+The coupling of particle dynamics to the Shan-Chen fluid has been conceived as an extension
+of the Ahlrichs and D\"unweg's point coupling, with the force acting on a particle given by
+\begin{equation}
+  \vec{F} = -\frac{\sum_\zeta \gamma_\zeta \rho_\zeta(\vec{r})}{\sum_\zeta \rho_\zeta(\vec{r}_\zeta)} \left(\vec{v}-\vec{u}\right) + \vec{F}_R + \vec{F}^{ps},
+\end{equation}
+where $\zeta$ identifies the component,  $\rho_\zeta(\vec{r})$ is a linear interpolation of the component density on the nodes surrounding the particle,  $\gamma_\zeta$ is the component-dependent friction coefficient, $\vec{F}_R$ is the usual random force, and
+\begin{equation}
+\vec{F}^{\mathrm{ps}}= -  \sum_{\zeta} \kappa_{\zeta} \nabla \rho_{\zeta}(\vec{r}).
+\end{equation}
+This is an effective solvation force, that can drive the particle
+towards density maxima or minima of each component, depending on
+the sign of the constant $\kappa_\zeta$. Note that by setting the
+coupling constant  to the same negative value for both components
+will, in absence of other forces, push the particle to the interfacial region.
+
+In addition to the solvation force acting on particles, another one that acts on the fluid components is present,
+representing the solvation force of particles on the
+fluid.
+\begin{equation}
+  \vec{F}_{\zeta}^{\mathrm{fs}}(\vec{r}) = -\lambda_{\zeta} \rho_{\zeta}(\vec{r}) \sum_i \sum_{\vec{r}'} \Theta \left[\frac{(\vec{r}_i-\vec{r})}{|\vec{r}_i-\vec{r}|} \cdot \frac{(\vec{r}'-\vec{r})}{|\vec{r}'-\vec{r}|} \right] (\vec{r}'-\vec{r}),
+\end{equation}
+where $\Theta(x)=1$ if $0<x<1$, and 0 otherwise, the sum over
+lattice nodes is performed on the neighboring sites of $\vec{r}$ and the index $i$ runs over all particles. Note that a dependence on the particle index $i$ is assumed for $\kappa_\zeta$ and $\lambda_\zeta$.
+This force has the effect of raising or lowering (depending on the
+sign of the coupling constant $\lambda_\zeta$) the density in the
+eight nodes around a particle. 
+The particle property \lit{solvation} (Chap.~\ref{chap:part}) sets the coupling constants
+$\lambda_A$,$\kappa_A$,$\lambda_B$ and $\kappa_B$, where $A$ and
+$B$ denote the first and second fluid component, respectively.
+
+
 
 \section{Reading and setting single lattice nodes}
 \begin{essyntax}
   lbnode \var{x} \var{y} \var{z} \alt{print \asep set} \var{args}
   \begin{features}
-  \required{LB}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
+  \required[3]{SHANCHEN}
   \end{features}
 \end{essyntax}
 The \lit{lbnode} command allows to inspect (\lit{print}) and modify
@@ -164,14 +257,16 @@ direction starts with 0.  For both commands you have to specify what
 quantity should be printed
 or modified. Print allows the following arguments: \\
 \begin{tabular}{p{0.2\columnwidth}p{0.5\columnwidth}}
-  \lit{rho}\ & the density (scalar). \\
+  \lit{rho}\ & the density (one scalar$^{1,2}$ or two scalars$^3$). \\
   \lit{u} & the fluid velocity (three floats: $u_x$, $u_y$, $u_z$) \\
   \lit{pi} & the fluid velocity (six floats: $\Pi_{xx}$, $\Pi_{xy}$, $\Pi_{yy}$, $\Pi_{xz}$,  $\Pi_{yz}$,  $\Pi_{zz}$) \\
   \lit{pi_neq} & the nonequilbrium part of the pressure tensor, components as above. \\
   \lit{pop} & the 19 population (check the order from the source code please). \\
-  \lit{boundary} & the flag indicating whether the node is a fluid node ($\lit{boundary}=0$) or a boundary node ($\lit{boundary}\ne 0$). Does not support \lit{set}. Refer to the \lit{lbboundary} command for this functionality.
-\end{tabular} \\
-Example:
+  \lit{boundary} & the flag indicating whether the node is a fluid node ($\lit{boundary}=0$) or a boundary node ($\lit{boundary}\ne 0$). Does not support \lit{set}. Refer to the \lit{lbboundary} command for this functionality.\\
+$^1$\lit{LB} or \lit{LB_GPU}; $^2$\lit{SHANCHEN}
+\end{tabular}
+
+\noindent{}Example:
 The line
 \begin{tclcode}
 puts [ lbnode 0 0 0 print u ]
@@ -187,14 +282,15 @@ puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 \section{Visualization}
 \label{ssec:LBvisualization}
 \begin{essyntax}
-  lbfluid print \opt{vtk} \var{property} \var{filename}
+  lbfluid print \opt{vtk} \var{property} \var{filename} [\var{filename}]
 \end{essyntax}
 The print parameter of the \lit{lbfluid} command is a feature to simplify visualization. It allows for the export of the whole fluid field data into a 
 file with name \var{filename} at once. Currently supported values for the 
-parameter \var{property} are boundary and velocity. The additional option 
+parameter \var{property} are boundary and velocity when using \lit{LB} or \lit{LB_GPU} and density and velocity when using \lit{SHANCHEN}. The additional option 
 \lit{vtk} enables export in the vtk format which is readable by visualization software such as paraview\footnote{http://www.paraview.org/} or mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. Otherwise gnuplot readable data will be 
 exported. If you plan to use paraview for visualization, note that also the 
 particle positions can be exportet in the VTK format \ref{sec:writevtk}.
+If the \lit{SHANCHEN} bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
 
 \section{Setting up boundary conditions}
 \begin{essyntax}
@@ -232,9 +328,9 @@ Currently, only the so called ``link-bounce-back'' algorithm for wall
 nodes is available. This creates a boundary that is located
 approximately midway between the lattice nodes, so in the above
 example this corresponds indeed to a boundary at $x=1.5$. Note that
-the location of the boundary is unfortunately not independent of the
+the location of the boundary is unfortunately not entirely independent of the
 viscosity. This can \eg be seen when using the sample script
-\lit{poisseuille.tcl} with a high viscosity.
+\lit{poiseuille.tcl} with a high viscosity.
 
 The bounce back boundary conditions allow to set velocity at a boundary to a nonzero
 value. This allows to create shear flow and boundaries moving relative to 
@@ -280,6 +376,7 @@ Currently only a subset of the CPU commands are available for the GPU
 implementation.  For boundary conditions analogous to the CPU
 implementation, the feature \lit{LB_BOUNDARIES_GPU} has to be
 activated.
+
 
 \section{Electrohydrodynamics}
 

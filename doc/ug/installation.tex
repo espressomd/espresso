@@ -245,11 +245,20 @@ Espresso [\var{tcl\_script} [\var{args}]]
 \index{interactive mode} When \es{} is called without any arguments,
 it is started in the interactive mode, where new commands can be
 entered on the command line. When the name of a \textit{tcl\_script}
-is given, the script is executed. \textit{N\_processors} is the number
-of processors that are to be used. Any further arguments are passed to
-the script. Note that depending on your MPI installation, MPI jobs can
-only be run in the queueing system, so that \es will not run from
-the command line.
+is given, the script is executed. Any further arguments are passed to
+the script.
+
+If you want to run \es in parallel using MPI, the actual invocation
+depends on your MPI implementation. In many cases, \eg OpenMPI, the
+command will be
+\begin{code}
+mpiexec -n \var{n\_nodes} Espresso [\var{tcl\_script} [\var{args}]]
+\end{code}
+where \var{n\_nodes} denotes the number of MPI nodes to be used.
+However, note that depending on your MPI installation, MPI jobs can
+only be run in a queueing system, so that \es will not run from the
+command line. Also, older installations sometimes require ``-np''
+instead of ``-n'' or ``mpirun'' instead of ``mpiexec''. 
 
 
 \section{\texttt{myconfig.h}: Activating and deactivating features}

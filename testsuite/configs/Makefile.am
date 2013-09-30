@@ -16,17 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 MYCONFIGS = \
-	myconfig-empty.h \
-	myconfig-nofftw.h \
-	myconfig-compileonly.h \
+	myconfig-empty.hpp \
+	myconfig-nofftw.hpp \
+	myconfig-compileonly.hpp \
 	\
-	myconfig-maxset.h \
-	myconfig-restcompile1.h \
-	myconfig-restcompile2.h \
-	myconfig-LB.h \
-	myconfig-LBGPU.h \
-	myconfig-tunableslip.h \
-        myconfig-adress.h
+	myconfig-maxset.hpp \
+	myconfig-restcompile1.hpp \
+	myconfig-restcompile2.hpp \
+	myconfig-LB.hpp \
+	myconfig-LBGPU.hpp \
+	myconfig-LBGPU-SHANCHEN.hpp \
+	myconfig-tunableslip.hpp \
+        myconfig-adress.hpp
 
 EXTRA_DIST = $(MYCONFIGS) \
 	check_myconfig_complete.py

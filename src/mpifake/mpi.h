@@ -35,8 +35,8 @@
 
 void errexit();
 
-#ifndef MDINLINE
- #define MDINLINE static inline
+#ifndef inline
+ #define inline static inline
 #endif
 
 
@@ -101,6 +101,8 @@ int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
 
 #define MPI_REQUEST_NULL NULL
 
+#define MPI_ANY_SOURCE 0
+
 #define MPI_IN_PLACE (void*)0x1
 
 extern struct mpifake_dtype mpifake_dtype_int;
@@ -125,46 +127,46 @@ int MPI_Type_contiguous(int count, MPI_Datatype oldtype, MPI_Datatype *newtype);
 int MPI_Type_vector(int count, int length, int stride, MPI_Datatype oldtype, MPI_Datatype *newtype);
 int MPI_Type_hvector(int count, int length, int stride, MPI_Datatype oldtype, MPI_Datatype *newtype);
 
-MDINLINE int MPI_Init(int *a, char ***b) { return MPI_SUCCESS; }
-MDINLINE int MPI_Finalize(void) { return MPI_SUCCESS; }
-MDINLINE int MPI_Comm_size(MPI_Comm comm, int *psize) { *psize = 1; return MPI_SUCCESS; }
-MDINLINE int MPI_Comm_rank(MPI_Comm comm, int *rank) { *rank = 0; return MPI_SUCCESS; }
-MDINLINE int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) { *rank = 0; return MPI_SUCCESS; }
-MDINLINE int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords) { coords[0] = coords[1] = coords[2] = 0; return MPI_SUCCESS; }
-MDINLINE int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, \
+inline int MPI_Init(int *a, char ***b) { return MPI_SUCCESS; }
+inline int MPI_Finalize(void) { return MPI_SUCCESS; }
+inline int MPI_Comm_size(MPI_Comm comm, int *psize) { *psize = 1; return MPI_SUCCESS; }
+inline int MPI_Comm_rank(MPI_Comm comm, int *rank) { *rank = 0; return MPI_SUCCESS; }
+inline int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) { *rank = 0; return MPI_SUCCESS; }
+inline int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords) { coords[0] = coords[1] = coords[2] = 0; return MPI_SUCCESS; }
+inline int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, \
 			    int *rank_source, int *rank_dest){ *rank_source = *rank_dest = 0; return MPI_SUCCESS; }
-MDINLINE int MPI_Cart_create(MPI_Comm comm_old, int ndims, int *dims, int *periods, int reorder, MPI_Comm *comm_cart)
+inline int MPI_Cart_create(MPI_Comm comm_old, int ndims, int *dims, int *periods, int reorder, MPI_Comm *comm_cart)
 { *comm_cart = NULL; return MPI_SUCCESS; }
-MDINLINE int MPI_Dims_create(int nnodes, int ndims, int *dims){ dims[0] = dims[1] = dims[2] = 1; return MPI_SUCCESS; }
-MDINLINE int MPI_Comm_split(MPI_Comm comm, int colour, int key, MPI_Comm *newcomm) { return MPI_SUCCESS; }
-MDINLINE int MPI_Comm_free(MPI_Comm *comm) { return MPI_SUCCESS; }
-MDINLINE int MPI_Type_commit(MPI_Datatype *dtype) { return MPI_SUCCESS; }
-MDINLINE int MPI_Type_free(MPI_Datatype *dtype) { free(*dtype); *dtype = NULL; return MPI_SUCCESS; }
-MDINLINE int MPI_Type_extent(MPI_Datatype dtype, MPI_Aint *pextent) { *pextent = dtype->upper - dtype->lower; return MPI_SUCCESS; }
-MDINLINE int MPI_Barrier(MPI_Comm comm) { return MPI_SUCCESS; }
-MDINLINE int MPI_Waitall(int count, MPI_Request *reqs, MPI_Status *stats) { return MPI_SUCCESS; }
-MDINLINE int MPI_Wait(MPI_Request *reqs, MPI_Status *stats) { return MPI_SUCCESS; }
-MDINLINE int MPI_Errhandler_create(MPI_Handler_function *errfunc, MPI_Errhandler *errhdl) { return MPI_SUCCESS; }
-MDINLINE int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhdl) { return MPI_SUCCESS; }
-MDINLINE int MPI_Bcast(void *buff, int count, MPI_Datatype datatype, int root, MPI_Comm comm) { return MPI_SUCCESS; }
+inline int MPI_Dims_create(int nnodes, int ndims, int *dims){ dims[0] = dims[1] = dims[2] = 1; return MPI_SUCCESS; }
+inline int MPI_Comm_split(MPI_Comm comm, int colour, int key, MPI_Comm *newcomm) { return MPI_SUCCESS; }
+inline int MPI_Comm_free(MPI_Comm *comm) { return MPI_SUCCESS; }
+inline int MPI_Type_commit(MPI_Datatype *dtype) { return MPI_SUCCESS; }
+inline int MPI_Type_free(MPI_Datatype *dtype) { free(*dtype); *dtype = NULL; return MPI_SUCCESS; }
+inline int MPI_Type_extent(MPI_Datatype dtype, MPI_Aint *pextent) { *pextent = dtype->upper - dtype->lower; return MPI_SUCCESS; }
+inline int MPI_Barrier(MPI_Comm comm) { return MPI_SUCCESS; }
+inline int MPI_Waitall(int count, MPI_Request *reqs, MPI_Status *stats) { return MPI_SUCCESS; }
+inline int MPI_Wait(MPI_Request *reqs, MPI_Status *stats) { return MPI_SUCCESS; }
+inline int MPI_Errhandler_create(MPI_Handler_function *errfunc, MPI_Errhandler *errhdl) { return MPI_SUCCESS; }
+inline int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhdl) { return MPI_SUCCESS; }
+inline int MPI_Bcast(void *buff, int count, MPI_Datatype datatype, int root, MPI_Comm comm) { return MPI_SUCCESS; }
 
 #ifndef GNU_MPIFAKE_DEBUG
 
-MDINLINE int MPI_Recv(void *buf, int count, MPI_Datatype dtype, int src, int tag, MPI_Comm comm, MPI_Status *stat) {
+inline int MPI_Recv(void *buf, int count, MPI_Datatype dtype, int src, int tag, MPI_Comm comm, MPI_Status *stat) {
   fprintf(stderr, "MPI_Recv on a single node\n"); errexit(); return MPI_SUCCESS; }
-MDINLINE int MPI_Irecv(void *buf, int count, MPI_Datatype dtype, int src, int tag, MPI_Comm comm, MPI_Request *req) {
+inline int MPI_Irecv(void *buf, int count, MPI_Datatype dtype, int src, int tag, MPI_Comm comm, MPI_Request *req) {
   fprintf(stderr, "MPI_Recv on a single node\n"); errexit(); return MPI_SUCCESS; }
-MDINLINE int MPI_Send(void *buf, int count, MPI_Datatype dtype, int dst, int tag, MPI_Comm comm) {
+inline int MPI_Send(void *buf, int count, MPI_Datatype dtype, int dst, int tag, MPI_Comm comm) {
   fprintf(stderr, "MPI_Recv on a single node\n"); errexit(); return MPI_SUCCESS; }
-MDINLINE int MPI_Sendrecv(void *sbuf, int scount, MPI_Datatype stype, int dst, int stag, void *rbuf, int rcount, MPI_Datatype rtype, int src, int rtag, MPI_Comm comm, MPI_Status *stat) {
+inline int MPI_Sendrecv(void *sbuf, int scount, MPI_Datatype stype, int dst, int stag, void *rbuf, int rcount, MPI_Datatype rtype, int src, int rtag, MPI_Comm comm, MPI_Status *stat) {
   fprintf(stderr, "MPI_Sendrecv on a single node\n"); errexit(); return MPI_SUCCESS;
 }
-MDINLINE int MPI_Isend(void *buf, int count, MPI_Datatype dtype, int dst, int tag, MPI_Comm comm, MPI_Request *req) {
+inline int MPI_Isend(void *buf, int count, MPI_Datatype dtype, int dst, int tag, MPI_Comm comm, MPI_Request *req) {
   fprintf(stderr, "MPI_Recv on a single node\n"); errexit(); return MPI_SUCCESS; }
 
 #else
 
-MDINLINE int __MPI_ERR(char *func, char *file, int line) {
+inline int __MPI_ERR(char *func, char *file, int line) {
   fprintf(stderr, "%s on a single node at %s:%d\n", func, file, line);
   errexit(); return MPI_ERR_RANK;
 }
@@ -178,25 +180,25 @@ MDINLINE int __MPI_ERR(char *func, char *file, int line) {
 
 #endif
 
-MDINLINE int MPI_Gather(void *sbuf, int scount, MPI_Datatype sdtype,
+inline int MPI_Gather(void *sbuf, int scount, MPI_Datatype sdtype,
 			void *rbuf, int rcount, MPI_Datatype rdtype,
 			int root, MPI_Comm comm)
 { return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
-MDINLINE int MPI_Allgather(void *sbuf, int scount, MPI_Datatype sdtype,
+inline int MPI_Allgather(void *sbuf, int scount, MPI_Datatype sdtype,
 			   void *rbuf, int rcount, MPI_Datatype rdtype,
 			   MPI_Comm comm)
 { return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
-MDINLINE int MPI_Scatter(void *sbuf, int scount, MPI_Datatype sdtype,
+inline int MPI_Scatter(void *sbuf, int scount, MPI_Datatype sdtype,
 			 void *rbuf, int rcount, MPI_Datatype rdtype,
 			 int root, MPI_Comm comm)
 { return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
-MDINLINE int MPI_Op_create(MPI_User_function func, int commute, MPI_Op *pop) { *pop = func; return MPI_SUCCESS; }
-MDINLINE int MPI_Reduce(void *sbuf, void* rbuf, int count, MPI_Datatype dtype, MPI_Op op, int root, MPI_Comm comm)
+inline int MPI_Op_create(MPI_User_function func, int commute, MPI_Op *pop) { *pop = func; return MPI_SUCCESS; }
+inline int MPI_Reduce(void *sbuf, void* rbuf, int count, MPI_Datatype dtype, MPI_Op op, int root, MPI_Comm comm)
 { op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
-MDINLINE int MPI_Allreduce(void *sbuf, void *rbuf, int count, MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
+inline int MPI_Allreduce(void *sbuf, void *rbuf, int count, MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
 { if(sbuf == MPI_IN_PLACE)
     return MPI_SUCCESS; 
   op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
-MDINLINE int MPI_Error_string(int errcode, char *string, int *len) { *string = 0; *len = 0; return MPI_SUCCESS; }
+inline int MPI_Error_string(int errcode, char *string, int *len) { *string = 0; *len = 0; return MPI_SUCCESS; }
 
 #endif
