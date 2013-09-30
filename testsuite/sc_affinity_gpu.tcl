@@ -59,13 +59,14 @@ for { set x  0  } { $x < $box_lx  } { incr x } {
 }
 puts "placing particle"
 inter 0 0 lennard-jones 1.0 1.0 2.0
-inter 0 0 affinity  0.5 0.5
-puts "[inter]"
+inter 0 0 affinity  0.0 1.0
+#puts "[inter]"
 integrate 1 
 puts "[part 0 print composition ] [part 1 print composition ] [part 0 print f]"
-integrate 1 
-puts "[part 0 print composition ] [part 1 print composition ] [part 0 print f]"
-
+set force [lindex [part 0 print f] 0 ]
+if {  $force > -0.00095 } {
+	error_exit "force too large, affinity interaction might be broken"
+}
 
 } res ] } { 
     error_exit $res
