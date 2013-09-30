@@ -91,8 +91,8 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #error The implementation only works for D3Q19 so far!
 #endif
 
-#if (!defined(LB_FLATNOISE) && !defined(LB_GAUSSRANDOMCUT))
-#define LB_GAUSSRANDOM
+#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
+#define FLATNOISE
 #endif
 
 /** The underlying lattice structure */
@@ -2147,7 +2147,7 @@ inline void lb_relax_modes(index_t index, double *mode) {
 
 inline void lb_thermalize_modes(index_t index, double *mode) {
     double fluct[6];
-#ifdef LB_GAUSSRANDOM
+#ifdef GAUSSRANDOM
     double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho[0]*agrid*agrid*agrid));
 
     /* stress modes */
@@ -2171,7 +2171,7 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
     mode[18] += rootrho_gauss*lb_phi[18]*gaussian_random();
 #endif
 
-#elif defined (LB_GAUSSRANDOMCUT)
+#elif defined (GAUSSRANDOMCUT)
     double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho[0]*agrid*agrid*agrid));
 
     /* stress modes */
@@ -2195,7 +2195,7 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
     mode[18] += rootrho_gauss*lb_phi[18]*gaussian_random_cut();
 #endif
     
-#elif defined (LB_FLATNOISE)
+#elif defined (FLATNOISE)
     double rootrho = sqrt(fabs(12.0*(mode[0]+lbpar.rho[0]*agrid*agrid*agrid)));
 
     /* stress modes */
@@ -2220,7 +2220,7 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
 #endif
 #else
 #error No noise type defined for the CPU LB
-#endif //LB_GAUSSRANDOM
+#endif //GAUSSRANDOM
     
 #ifdef ADDITIONAL_CHECKS
     rancounter += 15;
@@ -2860,15 +2860,15 @@ void calc_particle_lattice_ia() {
       p = cell->part ;
       np = cell->n ;
       for (i=0;i<np;i++) {
-#ifdef LB_GAUSSRANDOM
+#ifdef GAUSSRANDOM
         p[i].lc.f_random[0] = lb_coupl_pref2*gaussian_random();
         p[i].lc.f_random[1] = lb_coupl_pref2*gaussian_random();
         p[i].lc.f_random[2] = lb_coupl_pref2*gaussian_random();
-#elif defined (LB_GAUSSRANDOMCUT)
+#elif defined (GAUSSRANDOMCUT)
         p[i].lc.f_random[0] = lb_coupl_pref2*gaussian_random_cut();
         p[i].lc.f_random[1] = lb_coupl_pref2*gaussian_random_cut();
         p[i].lc.f_random[2] = lb_coupl_pref2*gaussian_random_cut();
-#elif defined (LB_FLATNOISE)
+#elif defined (FLATNOISE)
         p[i].lc.f_random[0] = lb_coupl_pref*(d_random()-0.5);
         p[i].lc.f_random[1] = lb_coupl_pref*(d_random()-0.5);
         p[i].lc.f_random[2] = lb_coupl_pref*(d_random()-0.5);

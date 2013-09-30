@@ -564,7 +564,7 @@ int UWerr(Tcl_Interp * interp,
 {
   Tcl_CmdInfo cmdInfo;
   char* argv[2];
-  char* name = "UWerrInternalFunction";
+  char* name = strdup("UWerrInternalFunction");
   int res;
   
   argv[0] = name;
@@ -585,6 +585,7 @@ int UWerr(Tcl_Interp * interp,
 
   Tcl_DeleteCommand(interp, name);
   
+  free(argv[0]);
   free(argv[1]);
 
   return res;

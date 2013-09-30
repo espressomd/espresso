@@ -42,7 +42,7 @@ int MPI_Type_struct(int count, int *lengths, MPI_Aint *disps, MPI_Datatype *oldt
   int i;
   struct mpifake_dtype *ntype;
 
-  ntype = *newtype = malloc(sizeof(struct mpifake_dtype));
+  ntype = *newtype = static_cast<MPI_Datatype>(malloc(sizeof(struct mpifake_dtype)));
 
   ntype->format = LAM_DTSTRUCT;
 
@@ -54,7 +54,9 @@ int MPI_Type_struct(int count, int *lengths, MPI_Aint *disps, MPI_Datatype *oldt
   ntype->count = count;
 
   if (count > 0) {
-    ntype->dtypes = malloc(count * (sizeof(MPI_Datatype)+sizeof(int)+sizeof(int)));
+    ntype->dtypes = 
+      static_cast<mpifake_dtype**>
+      (malloc(count * (sizeof(MPI_Datatype)+sizeof(int)+sizeof(int))));
     ntype->disps = (int *)((char *)ntype->dtypes + count*sizeof(MPI_Datatype));
     ntype->lengths = (int *)((char *)ntype->disps + count*sizeof(int));
   } else {
@@ -79,7 +81,7 @@ int MPI_Type_contiguous(int count, MPI_Datatype oldtype, MPI_Datatype *newtype)
 {
   struct mpifake_dtype *ntype;
 
-  ntype = *newtype = malloc(sizeof(struct mpifake_dtype));
+  ntype = *newtype = static_cast<MPI_Datatype>(malloc(sizeof(struct mpifake_dtype)));
 
   ntype->format = LAM_DTCONTIG;
 
@@ -101,7 +103,7 @@ int MPI_Type_vector(int count, int length, int stride,
 {
   struct mpifake_dtype *ntype;
 
-  ntype = *newtype = malloc(sizeof(struct mpifake_dtype));
+  ntype = *newtype = static_cast<MPI_Datatype>(malloc(sizeof(struct mpifake_dtype)));
 
   ntype->format = LAM_DTVECTOR;
 
@@ -136,7 +138,7 @@ int MPI_Type_hvector(int count, int length, int stride,
 {
   struct mpifake_dtype *ntype;
 
-  ntype = *newtype = malloc(sizeof(struct mpifake_dtype));
+  ntype = *newtype = static_cast<MPI_Datatype>(malloc(sizeof(struct mpifake_dtype)));
 
   ntype->format = LAM_DTHVECTOR;
 
@@ -195,7 +197,10 @@ static void mpifake_dtblock(MPI_Datatype newtype, MPI_Datatype oldtype, int coun
 
 }
 
-static void mpifake_pack_hvector(void *dest, void *src, int num, MPI_Datatype dtype, int vflag) {
+static void mpifake_pack_hvector(void *_dest, void *_src, int num, MPI_Datatype dtype, int vflag) {
+
+  char* dest = static_cast<char*>(_dest);
+  char* src = static_cast<char*>(_src);
 
   MPI_Datatype subtype = dtype->dtype;
   char *s;
@@ -209,7 +214,7 @@ static void mpifake_pack_hvector(void *dest, void *src, int num, MPI_Datatype dt
     stride *= subtype->upper - subtype->lower;
   }
 
-  for (i=0; i<num; i++, src+=extent) {
+  for (i=0; i<num; i++, src += extent) {
     s = src;
     for (j=0; j<count; j++) {
       mpifake_pack(dest, s, dtype->length, dtype->dtype);
@@ -220,7 +225,7 @@ static void mpifake_pack_hvector(void *dest, void *src, int num, MPI_Datatype dt
 
 }
 
-static void mpifake_pack_struct(void *dest, void *src, int num, MPI_Datatype dtype) {
+static void mpifake_pack_struct(void *_dest, void *_src, int num, MPI_Datatype dtype) {
 
   char *s;
   int *len;
@@ -230,7 +235,10 @@ static void mpifake_pack_struct(void *dest, void *src, int num, MPI_Datatype dty
   int blksize;
   int i, j;
 
-  for (i=0; i<num; i++, src+=extent) {
+  char* dest = static_cast<char*>(_dest);
+  char* src = static_cast<char*>(_src);
+
+  for (i=0; i<num; i++, src += extent) {
     s = src;
     len = dtype->lengths;
     disp = dtype->disps;
@@ -273,10 +281,13 @@ static void mpifake_pack(void *dest, void *src, int count, MPI_Datatype dtype) {
 
 }   
 
-static int mpifake_unpack_hvector(void *dest, void *src, int num, MPI_Datatype dtype, int vflag) {
+static int mpifake_unpack_hvector(void *_dest, void *_src, int num, 
+                                  MPI_Datatype dtype, int vflag) {
 
   MPI_Datatype subtype = dtype->dtype;
   char *d;
+  char *src = static_cast<char*>(_src);
+  char *dest = static_cast<char*>(_dest);
   char *start = src;
   int count   = dtype->count;
   int stride  = dtype->stride;
@@ -289,7 +300,7 @@ static int mpifake_unpack_hvector(void *dest, void *src, int num, MPI_Datatype d
     stride *= subtype->upper - subtype->lower;
   }
 
-  for (i=0; i<num; i++, dest+=extent) {
+  for (i=0; i<num; i++, dest += extent) {
     d = dest;
     for (j=0; j<count; j++) {
       size = mpifake_unpack(d, src, dtype->length, subtype);
@@ -307,9 +318,11 @@ static int mpifake_unpack_hvector(void *dest, void *src, int num, MPI_Datatype d
   return (char *)src - start;
 }
 
-static int mpifake_unpack_struct(void *dest, void *src, int num, MPI_Datatype dtype) {
+static int mpifake_unpack_struct(void *_dest, void *_src, int num, MPI_Datatype dtype) {
 
   char *d;
+  char *src = static_cast<char*>(_src);
+  char *dest = static_cast<char*>(_dest);
   char *start = src;
   int *len;
   int *disp;
@@ -342,7 +355,9 @@ static int mpifake_unpack_struct(void *dest, void *src, int num, MPI_Datatype dt
   return (char *)src - start;
 }
 
-static int mpifake_unpack(void *dest, void *src, int count, MPI_Datatype dtype) {
+static int mpifake_unpack(void *_dest, void *_src, int count, MPI_Datatype dtype) {
+  char *src = static_cast<char*>(_src);
+  char *dest = static_cast<char*>(_dest);
   int size;
 
   switch (dtype->format) {
@@ -368,9 +383,11 @@ static int mpifake_unpack(void *dest, void *src, int count, MPI_Datatype dtype) 
 
 }
 
-static void mpifake_cpy_hvector(void *dest, void *src, int num, MPI_Datatype dtype, int vflag) {
+static void mpifake_cpy_hvector(void *_dest, void *_src, int num, MPI_Datatype dtype, int vflag) {
 
   int i, j;
+  char *src = static_cast<char*>(_src);
+  char *dest = static_cast<char*>(_dest);
   int extent, stride;
   MPI_Datatype subtype = dtype->dtype;
 
@@ -381,7 +398,7 @@ static void mpifake_cpy_hvector(void *dest, void *src, int num, MPI_Datatype dty
     stride *= subtype->upper - subtype->lower;
   }
 
-  for (i=0; i<num; i++, src+=extent, dest+=extent) {
+  for (i=0; i<num; i++, src += extent, dest += extent) {
     for (j=0; j<dtype->count; j++) {
       mpifake_copy(src+j*stride,dest+j*stride,&dtype->length,&subtype);
     }
@@ -389,8 +406,10 @@ static void mpifake_cpy_hvector(void *dest, void *src, int num, MPI_Datatype dty
 
 }
 
-static void mpifake_cpy_struct(void *dest, void *src, int count, MPI_Datatype dtype){
+static void mpifake_cpy_struct(void *_dest, void *_src, int count, MPI_Datatype dtype){
 
+  char *src = static_cast<char*>(_src);
+  char *dest = static_cast<char*>(_dest);
   int i, j;
   int extent, *len, *disp;
   MPI_Datatype *type;
@@ -438,9 +457,12 @@ void mpifake_copy(void *src, void *dest, int *count, MPI_Datatype *dtype) {
 
 }
 
-int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
-			 void *r, int rcount, MPI_Datatype rdtype)
+int mpifake_sendrecv(void *_s, int scount, MPI_Datatype sdtype,
+                     void *_r, int rcount, MPI_Datatype rdtype)
 {
+  char *s = static_cast<char*>(_s);
+  char *r = static_cast<char*>(_r);
+
   char *packbuf;
 
   if (sdtype == rdtype) {
@@ -451,7 +473,7 @@ int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
       mpifake_copy(s, r, &rcount, &rdtype);
     }
   } else {
-    packbuf = malloc(scount * sdtype->size);
+    packbuf = static_cast<char*>(malloc(scount * sdtype->size));
     mpifake_pack(packbuf, s, scount, sdtype);
     mpifake_unpack(r, packbuf, rcount, rdtype);
     free(packbuf);

@@ -168,7 +168,7 @@ inline double gaussian_random(void) {
 
 /** Generator for Gaussian random numbers. Uses the Box-Muller
  * transformation to generate two Gaussian random numbers from two
- * uniform random numbers. which generates numbers between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.721872436 resulting in 
+ * uniform random numbers. which generates numbers between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.118591404 resulting in 
  * an actual standard deviation of 1.
  *
  * @return Gaussian random number.
@@ -195,8 +195,8 @@ inline double gaussian_random_cut(void) {
 
     /* perform Box-Muller transformation */
     fac = sqrt(-2.0*log(r2)/r2);
-
-    /* save one number for later use */
+    /* This is a slight different version
+    // save one number for later use 
     save = x1*fac*1.042267973;
     if ( fabs(save) > 2*1.042267973 ) {
       if ( save > 0 ) save = 2*1.042267973;
@@ -204,11 +204,26 @@ inline double gaussian_random_cut(void) {
     }
     calc_new = 0;
 
-    /* return the second number */
+    // return the second number 
     curr = x2*fac*1.042267973;
     if ( fabs(curr) > 2*1.042267973) {
       if ( curr > 0 ) curr = 2*1.042267973;
       else curr = -2*1.042267973;
+    }
+    return curr;
+    */
+    
+    /* save one number for later use */
+    save = x1*fac*1.118591404;
+    if ( fabs(save) > 2*1.118591404 ) {
+      save = x1*2*1.118591404;
+    }
+    calc_new = 0;
+
+    /* return the second number */
+    curr = x2*fac*1.118591404;
+    if ( fabs(curr) > 2*1.118591404) {
+      save = x2*2*1.118591404;
     }
     return curr;
 

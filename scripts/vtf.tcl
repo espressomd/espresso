@@ -125,6 +125,10 @@ proc writevsf { file args } {
 	}
     }
 
+    # cleanup particle mapping
+    global vtf_pid
+    array unset vtf_pid
+
     set max_pid [setmd max_part]
 
     # compute the maximal type

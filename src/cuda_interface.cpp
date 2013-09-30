@@ -1,6 +1,6 @@
-#include "cells.hpp" //I can't go in extern C
-#include "communication.hpp" //I can't go in extern C
-#include "cuda_common.hpp" //I can't go in extern C
+#include "cells.hpp"
+#include "communication.hpp"
+#include "cuda_interface.hpp"
 
 #include "grid.hpp"
 #include "config.hpp"
@@ -10,17 +10,23 @@
 
 #ifdef CUDA
 
-  static void cuda_mpi_get_particles_slave();
-  static void cuda_mpi_send_forces_slave();
+/// MPI tag for cuda particle gathering
+#define REQ_CUDAGETPARTS  0xcc01
+/// MPI tag for cuda force gathering
+#define REQ_CUDAGETFORCES 0xcc02
 
-  void cuda_bcast_global_part_params() {
-    COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params\n", this_node));
-    mpi_bcast_cuda_global_part_vars();
-    COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params finished\n", this_node));
-  }
-  /*************** REQ_GETPARTS ************/
-  void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
-  {
+static void cuda_mpi_get_particles_slave();
+static void cuda_mpi_send_forces_slave();
+
+void cuda_bcast_global_part_params() {
+  COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params\n", this_node));
+  mpi_bcast_cuda_global_part_vars();
+  COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params finished\n", this_node));
+}
+
+/*************** REQ_GETPARTS ************/
+void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
+{
     int n_part;
     int g, pnode;
     Cell *cell;
@@ -89,7 +95,7 @@
             }  
           }
           else {
-            MPI_Recv(&particle_data_host[g], sizes[pnode]*sizeof(CUDA_particle_data), MPI_BYTE, pnode, REQ_GETPARTS,
+            MPI_Recv(&particle_data_host[g], sizes[pnode]*sizeof(CUDA_particle_data), MPI_BYTE, pnode, REQ_CUDAGETPARTS,
             comm_cart, &status);
             g += sizes[pnode];
           }
@@ -98,9 +104,9 @@
     }
     COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
     free(sizes);
-  }
+}
 
-  static void cuda_mpi_get_particles_slave(){
+static void cuda_mpi_get_particles_slave(){
    
     int n_part;
     int g;
@@ -164,12 +170,12 @@
         g+=npart;
       }
       /* and send it back to the master node */
-      MPI_Send(particle_data_host_sl, n_part*sizeof(CUDA_particle_data), MPI_BYTE, 0, REQ_GETPARTS, comm_cart);
+      MPI_Send(particle_data_host_sl, n_part*sizeof(CUDA_particle_data), MPI_BYTE, 0, REQ_CUDAGETPARTS, comm_cart);
       free(particle_data_host_sl);
     }  
-  }
+}
 
-  void cuda_mpi_send_forces(CUDA_particle_force *host_forces){
+void cuda_mpi_send_forces(CUDA_particle_force *host_forces){
   
     int n_part;
     int g, pnode;
@@ -206,7 +212,7 @@
           }
           else {
           /* and send it back to the slave node */
-          MPI_Send(&host_forces[g], sizes[pnode]*sizeof(CUDA_particle_force), MPI_BYTE, pnode, REQ_GETPARTS, comm_cart);      
+          MPI_Send(&host_forces[g], sizes[pnode]*sizeof(CUDA_particle_force), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);      
           g += sizes[pnode];
           }
         }
@@ -215,9 +221,9 @@
     COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
 
     free(sizes);
-  }
+}
 
-  static void cuda_mpi_send_forces_slave(){
+static void cuda_mpi_send_forces_slave(){
 
     int n_part;
     CUDA_particle_force *host_forces_sl;
@@ -235,7 +241,7 @@
       /* get (unsorted) particle informations as an array of type 'particle' */
       /* then get the particle information */
       host_forces_sl = (CUDA_particle_force *) malloc(n_part*sizeof(CUDA_particle_force));
-      MPI_Recv(host_forces_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_GETPARTS,
+      MPI_Recv(host_forces_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_CUDAGETFORCES,
       comm_cart, &status);
       for (c = 0; c < local_cells.n; c++) {
         int npart;  
@@ -250,7 +256,6 @@
       }
       free(host_forces_sl);
     } 
-  }
-  /*@}*/
+}
 
 #endif /* ifdef CUDA */

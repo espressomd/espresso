@@ -52,6 +52,7 @@
 #include "lbgpu.hpp"
 #include "iccp3m.hpp"
 #include "p3m_gpu.hpp"
+#include "cuda_interface.hpp"
 
 /************************************************************/
 /* local prototypes                                         */

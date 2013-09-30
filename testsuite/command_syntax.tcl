@@ -19,6 +19,12 @@
 source "tests_common.tcl"
 
 setmd box_l 10.0 10.0 10.0
+setmd time_step 0.1
+setmd skin 0.1
+thermostat off
+
+time_integration 10
+time_integration
 
 if { [has_feature "LENNARD_JONES"]} {
     # test variants of using lennard-jones

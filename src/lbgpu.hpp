@@ -28,7 +28,6 @@
 
 #include "utils.hpp"
 #include "config.hpp"
-#include "cuda_common.hpp"
 
 #ifdef LB_GPU
 

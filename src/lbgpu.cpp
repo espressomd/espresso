@@ -39,7 +39,7 @@
 #include "particle_data.hpp"
 #include "global.hpp"
 #include "lb-boundaries.hpp"
-#include "cuda_common.hpp"
+#include "cuda_interface.hpp"
 #ifdef LB_GPU
 
 

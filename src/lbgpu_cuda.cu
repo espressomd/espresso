@@ -23,17 +23,24 @@
  * Header file for \ref lbgpu.h.
  */
 
+#include "config.hpp"
+
+#ifdef LB_GPU
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
 
 #include "lbgpu.hpp"
-#include "config.hpp"
+#include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
+
 
 #ifdef LB_GPU
 
-#if (!defined(LB_FLATNOISE) && !defined(LB_GAUSSRANDOMCUT))
-#define LB_GAUSSRANDOM
+#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
+#define FLATNOISE
+#endif
+
 #endif
 
 int extended_values_flag=0; /* TODO: this has to be set to one by
@@ -95,7 +102,6 @@ static size_t size_of_extern_nodeforces;
 static __device__ __constant__ LB_parameters_gpu para;
 static const float c_sound_sq = 1.f/3.f;
 
-
 /*-------------------------------------------------------*/
 /*********************************************************/
 /** \name device functions called by kernel functions */
@@ -136,7 +142,7 @@ __device__ void random_01(LB_randomnr_gpu *rn){
 
 }
 
-/**randomgenerator which generates numbers between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.721872436 resulting in 
+/**randomgenerator which generates numbers between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.118591404 resulting in 
  * an actual standard deviation of 1.
  * @param *rn Pointer to randomnumber array of the local node or particle 
 */
@@ -154,7 +160,17 @@ __device__ void gaussian_random_cut(LB_randomnr_gpu *rn){
     r2 = x1*x1 + x2*x2;
   } while (r2 >= 1.f || r2 == 0.f);
 
-  /** perform Box-Muller transformation */
+  /** perform Box-Muller transformation and cutoff the ends and replace with flat noise */
+  fac = sqrtf(-2.f*__logf(r2)/r2)*1.118591404;
+  rn->randomnr[0] = x2*fac;
+  rn->randomnr[1] = x1*fac;
+  if ( fabs(rn->randomnr[0]) > 2*1.118591404) {
+    rn->randomnr[0] = x2*2*1.118591404;
+  }
+  if ( fabs(rn->randomnr[1]) > 2*1.118591404 ) {
+    rn->randomnr[0] = x1*2*1.118591404;
+  }
+  /* This is a slightly different version
   fac = sqrtf(-2.f*__logf(r2)/r2)*1.042267973;
   rn->randomnr[0] = x2*fac;
   rn->randomnr[1] = x1*fac;
@@ -166,6 +182,7 @@ __device__ void gaussian_random_cut(LB_randomnr_gpu *rn){
     if ( rn->randomnr[1] > 0 ) rn->randomnr[1] = 2*1.042267973;
     else rn->randomnr[1] = -2*1.042267973;
   }
+  */
 }
 
 /** gaussian random nummber generator for thermalisation
@@ -194,16 +211,16 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn){
 /* wrapper */
 __device__ void random_wrapper(LB_randomnr_gpu *rn) { 
 
-#if defined(LB_FLATNOISE)
+#if defined(FLATNOISE)
 #define sqrt12i 0.288675134594813f
   random_01(rn);
   rn->randomnr[0]-=0.5f;
   rn->randomnr[0]*=sqrt12i;
   rn->randomnr[1]-=0.5f;
   rn->randomnr[1]*=sqrt12i;
-#elif defined(LB_GAUSSRANDOMCUT)
+#elif defined(GAUSSRANDOMCUT)
   gaussian_random_cut(rn);
-#elif defined(LB_GAUSSRANDOM)
+#elif defined(GAUSSRANDOM)
   gaussian_random(rn);
 #else
 #error No noise type defined for the GPU LB
@@ -1073,19 +1090,19 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
 #endif
 
   /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-#ifdef LB_FLATNOISE
+#ifdef FLATNOISE
   random_01(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
   viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
   random_01(rn_part);
   viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-#elif defined(LB_GAUSSRANDOMCUT)
+#elif defined(GAUSSRANDOMCUT)
   gaussian_random_cut(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
   viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
   gaussian_random_cut(rn_part);
   viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-#elif defined(LB_GAUSSRANDOM)
+#elif defined(GAUSSRANDOM)
   gaussian_random(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
   viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
@@ -1393,19 +1410,19 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif
 
   /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-#ifdef LB_FLATNOISE
+#ifdef FLATNOISE
   random_01(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
   viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
   random_01(rn_part);
   viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-#elif defined(LB_GAUSSRANDOMCUT)
+#elif defined(GAUSSRANDOMCUT)
   gaussian_random_cut(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
   viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
   gaussian_random_cut(rn_part);
   viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
-#elif defined(LB_GAUSSRANDOM)
+#elif defined(GAUSSRANDOM)
   gaussian_random(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
   viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];

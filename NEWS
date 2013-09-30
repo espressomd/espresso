@@ -20,6 +20,8 @@ tune the settings of a non-cubic mesh.
 * MEMD electrostatics can now handle spatially varying dielectrc
   constants.
 
+* New command time_integration to get the runtime of the integration loop.
+
 User-visible changes
 --------------------
 
@@ -28,6 +30,11 @@ User-visible changes
 * Renamed torque to torque_{lab,body}, improved torque handling in
   blockfiles.  Clearer distinction between the reference frames for
   torque and angular momentum.
+
+Changes visible for developers
+------------------------------
+
+* The code has been switched to using a C++ compiler.
 
 ESPResSo 3.2
 ============

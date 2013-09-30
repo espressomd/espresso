@@ -50,6 +50,17 @@ can be added are:
 \item \texttt{-cubic_box} If this optional parameter is added, a cubic box is assumed.
 \end{itemize}
 
+\section{\texttt{time\_integration}: Runtime of the integration loop}
+\newescommand{time\_integration}
+
+\begin{essyntax}
+  \variant{1} time_integration
+  \variant{2} time_integration \var{steps}
+\end{essyntax}
+
+This command runs the integration as would the \texttt{integrate} command and
+returns the wall runtime in seconds.
+
 \section{\texttt{change_volume}: Changing the box volume}
 \newescommand[change-volume]{change_volume}
 
