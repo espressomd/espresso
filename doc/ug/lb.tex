@@ -171,11 +171,20 @@ Regarind the unit of the temperature, please refer to
 Section~\ref{sec:units}.
 
 \section{The Shan Chen bicomponent fluid\label{sec:shanchen}}
-The Lattice Boltzmann variant of Shan and Chan\cite{Shan08a} is widely
+\begin{citebox}
+  Please cite~\citewbibkey{sega13c} if you use the Shan Chen implementation described below.
+\end{citebox}
+
+
+The Lattice Boltzmann variant of Shan and Chan\cite{shan93a} is widely
 used as it is simple and yet very effective in reproducing the most
 important traits of multicomponent or multiphase fluids. The version
-of the Shan-Chen method implemented in \es is an extension to bi-component fluids of the multi-relaxation-times Lattice Boltzmann with
-fluctuations applied to all modes, that is already present in \es. It features, in addition, coupling with particles\cite{}
+of the Shan-Chen method implemented in \es is an extension to
+bi-component fluids of the multi-relaxation-times Lattice Boltzmann
+with fluctuations applied to all modes, that is already present in
+\es. It features, in addition, coupling with particles\cite{sega13c}
+and component-dependent particle interactions (see sections
+\ref{sec:scmd-coupling} and\ref{sec:scmd-affinity}).
 
 The Shan-Chen fluid is set up using the \lit{lbfluid} command,
 supplying two values (one per component) to the \lit{dens} option. Optionally, two values can be set for each of the usual transport coefficients  (shear and bulk viscosity), and for the ghost modes. It
@@ -261,8 +270,9 @@ eight nodes around a particle.
 The particle property \lit{solvation} (Chap.~\ref{chap:part}) sets the coupling constants
 $\lambda_A$,$\kappa_A$,$\lambda_B$ and $\kappa_B$, where $A$ and
 $B$ denote the first and second fluid component, respectively.
+A complete description of the copuling scheme can be found in \cite{sega13c}.
 
-\section{SC component-dependent forces between particles}
+\section{SC component-dependent interactions between particles\label{sec:scmd-affinity}}
 
 Often particle properties depend on the type of solvent in which
 they are. For example, a polymer chain swells in a good solvent,
@@ -313,6 +323,20 @@ Example:
 \begin{tclcode}
 puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 \end{tclcode}
+
+\section{Removing total fluid momentum}
+\label{sec:remove-momentum}
+\begin{essyntax}
+  lbfluid remove_momentum
+  \begin{features}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
+  \required[3]{SHANCHEN}
+  \end{features}
+\end{essyntax}
+
+In some cases, such as free energy profile calculations, it might be useful to prevent interface motion. This can be achieved using the command \lit{lbfluid remove_momentum}, that removes the total momentum of the fluid.
+
 
 \section{Visualization}
 \label{ssec:LBvisualization}
