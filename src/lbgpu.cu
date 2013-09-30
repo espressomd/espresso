@@ -31,8 +31,9 @@
 #include "config.hpp"
 
 #ifdef LB_GPU
-#ifndef GAUSSRANDOM
-#define GAUSSRANDOM
+
+#if (!defined(LB_FLATNOISE) && !defined(LB_GAUSSRANDOMCUT))
+#define LB_GAUSSRANDOM
 #endif
 
 int extended_values_flag=0; /* TODO: this has to be set to one by
@@ -135,6 +136,38 @@ __device__ void random_01(LB_randomnr_gpu *rn){
 
 }
 
+/**randomgenerator which generates numbers between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.721872436 resulting in 
+ * an actual standard deviation of 1.
+ * @param *rn Pointer to randomnumber array of the local node or particle 
+*/
+__device__ void gaussian_random_cut(LB_randomnr_gpu *rn){
+
+  float x1, x2;
+  float r2, fac;
+  /** On every second call two gaussian random numbers are calculated
+   via the Box-Muller transformation.*/
+  /** draw two uniform random numbers in the unit circle */
+  do {
+    random_01(rn);
+    x1 = 2.f*rn->randomnr[0]-1.f;
+    x2 = 2.f*rn->randomnr[1]-1.f;
+    r2 = x1*x1 + x2*x2;
+  } while (r2 >= 1.f || r2 == 0.f);
+
+  /** perform Box-Muller transformation */
+  fac = sqrtf(-2.f*__logf(r2)/r2)*1.042267973;
+  rn->randomnr[0] = x2*fac;
+  rn->randomnr[1] = x1*fac;
+  if ( fabs(rn->randomnr[0]) > 2*1.042267973) {
+    if ( rn->randomnr[0] > 0 ) rn->randomnr[0] = 2*1.042267973;
+    else rn->randomnr[0] = -2*1.042267973;
+  }
+  if ( fabs(rn->randomnr[1]) > 2*1.042267973 ) {
+    if ( rn->randomnr[1] > 0 ) rn->randomnr[1] = 2*1.042267973;
+    else rn->randomnr[1] = -2*1.042267973;
+  }
+}
+
 /** gaussian random nummber generator for thermalisation
  * @param *rn	Pointer to randomnumber array of the local node node or particle 
 */
@@ -161,16 +194,21 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn){
 /* wrapper */
 __device__ void random_wrapper(LB_randomnr_gpu *rn) { 
 
-#ifdef GAUSSRANDOM
-	gaussian_random(rn);	
-#else 
+#if defined(LB_FLATNOISE)
 #define sqrt12i 0.288675134594813f
-        random_01(rn);
-        rn->randomnr[0]-=0.5f;
-        rn->randomnr[0]*=sqrt12i;
-        rn->randomnr[1]-=0.5f;
-        rn->randomnr[1]*=sqrt12i;
-#endif   
+  random_01(rn);
+  rn->randomnr[0]-=0.5f;
+  rn->randomnr[0]*=sqrt12i;
+  rn->randomnr[1]-=0.5f;
+  rn->randomnr[1]*=sqrt12i;
+#elif defined(LB_GAUSSRANDOMCUT)
+  gaussian_random_cut(rn);
+#elif defined(LB_GAUSSRANDOM)
+  gaussian_random(rn);
+#else
+#error No noise type defined for the GPU LB
+#endif  
+  
 }
 
 
@@ -931,7 +969,7 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
     delta_j[jj+ii*3]  =0.f;
    }
    #pragma unroll
-   for(int jj=0; jj<8; ++jj){ 
+   for(int jj=0; jj<8; ++jj){ //NOTE this must change if Shan Chen is to be implemented for the three point coupling
     partgrad1[jj+ii*8]=0.f;
     partgrad2[jj+ii*8]=0.f;
     partgrad3[jj+ii*8]=0.f;
@@ -1003,107 +1041,6 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
  #pragma unroll
  printf (stderr, "Unfortunately the three point particle coupling is not currently compatible with the Shan-Chen implementation of the LB\n");
  exit(1);
- for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-  float solvation2 = particle_data[part_index].solvation[2*ii + 1];
-   
-  interpolated_rho[ii]  = 0.f;
-  gradrho1 = gradrho2 = gradrho3 = 0.f;
-  
- // TODO: should one introduce a density-dependent friction ?
-  calc_mode(mode, n_a, node_index[0],ii);
-  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;
-  interpolated_rho[ii] += delta[0] * Rho; 
-  partgrad1[ii*8 + 0] += Rho * solvation2;
-  partgrad2[ii*8 + 0] += Rho * solvation2;
-  partgrad3[ii*8 + 0] += Rho * solvation2;
-  gradrho1 -=(delta[0] + delta[1]) * Rho; 
-  gradrho2 -=(delta[0] + delta[2]) * Rho; 
-  gradrho3 -=(delta[0] + delta[4]) * Rho; 
-
-  calc_mode(mode, n_a, node_index[1],ii); 
-  Rho = mode[0] +  para.rho[ii]*para.agrid*para.agrid*para.agrid; 
-  interpolated_rho[ii] += delta[1] * Rho; 
-  partgrad1[ii*8 + 1] -= Rho * solvation2;
-  partgrad2[ii*8 + 1] += Rho * solvation2;
-  partgrad3[ii*8 + 1] += Rho * solvation2;
-  gradrho1 +=(delta[1] + delta[0]) * Rho; 
-  gradrho2 -=(delta[1] + delta[3]) * Rho; 
-  gradrho3 -=(delta[1] + delta[5]) * Rho; 
-  
-  calc_mode(mode, n_a, node_index[2],ii);
-  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;  
-  interpolated_rho[ii] += delta[2] * Rho; 
-  partgrad1[ii*8 + 2] += Rho * solvation2;
-  partgrad2[ii*8 + 2] -= Rho * solvation2;
-  partgrad3[ii*8 + 2] += Rho * solvation2;
-  gradrho1 -=(delta[2] + delta[3]) * Rho; 
-  gradrho2 +=(delta[2] + delta[0]) * Rho; 
-  gradrho3 -=(delta[2] + delta[6]) * Rho; 
-
-  calc_mode(mode, n_a, node_index[3],ii);
-  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;  
-  interpolated_rho[ii] += delta[3] * Rho; 
-  partgrad1[ii*8 + 3] -= Rho * solvation2;
-  partgrad2[ii*8 + 3] -= Rho * solvation2;
-  partgrad3[ii*8 + 3] += Rho * solvation2;
-  gradrho1 +=(delta[3] + delta[2]) * Rho; 
-  gradrho2 +=(delta[3] + delta[1]) * Rho; 
-  gradrho3 -=(delta[3] + delta[7]) * Rho; 
-
-  calc_mode(mode, n_a, node_index[4],ii);
-  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;  
-  interpolated_rho[ii] += delta[4] * Rho; 
-  partgrad1[ii*8 + 4] += Rho * solvation2;
-  partgrad2[ii*8 + 4] += Rho * solvation2;
-  partgrad3[ii*8 + 4] -= Rho * solvation2;
-  gradrho1 -=(delta[4] + delta[5]) * Rho; 
-  gradrho2 -=(delta[4] + delta[6]) * Rho; 
-  gradrho3 +=(delta[4] + delta[0]) * Rho; 
-
-  calc_mode(mode, n_a, node_index[5],ii);
-  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;  
-  interpolated_rho[ii] += delta[5] * Rho; 
-  partgrad1[ii*8 + 5] -= Rho * solvation2;
-  partgrad2[ii*8 + 5] += Rho * solvation2;
-  partgrad3[ii*8 + 5] -= Rho * solvation2;
-  gradrho1 +=(delta[5] + delta[4]) * Rho; 
-  gradrho2 -=(delta[5] + delta[7]) * Rho; 
-  gradrho3 +=(delta[5] + delta[1]) * Rho; 
-
-  calc_mode(mode, n_a, node_index[6],ii);
-  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;  
-  interpolated_rho[ii] += delta[6] * Rho; 
-  partgrad1[ii*8 + 6] += Rho * solvation2;
-  partgrad2[ii*8 + 6] -= Rho * solvation2;
-  partgrad3[ii*8 + 6] -= Rho * solvation2;
-  gradrho1 -=(delta[6] + delta[7]) * Rho; 
-  gradrho2 +=(delta[6] + delta[4]) * Rho; 
-  gradrho3 +=(delta[6] + delta[2]) * Rho; 
-
-  calc_mode(mode, n_a, node_index[7],ii);
-  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;  
-  interpolated_rho[ii] += delta[7] * Rho; 
-  partgrad1[ii*8 + 7] -= Rho * solvation2;
-  partgrad2[ii*8 + 7] -= Rho * solvation2;
-  partgrad3[ii*8 + 7] -= Rho * solvation2;
-  gradrho1 +=(delta[7] + delta[6]) * Rho; 
-  gradrho2 +=(delta[7] + delta[5]) * Rho; 
-  gradrho3 +=(delta[7] + delta[3]) * Rho; 
-
-  /* normalize the gradient to md units TODO: is that correct?*/
-  gradrho1 *= para.agrid; 
-  gradrho2 *= para.agrid; 
-  gradrho3 *= para.agrid; 
-
-  scforce[0+ii*3] += particle_data[part_index].solvation[2*ii] * gradrho1 ; 
-  scforce[1+ii*3] += particle_data[part_index].solvation[2*ii] * gradrho2 ;
-  scforce[2+ii*3] += particle_data[part_index].solvation[2*ii] * gradrho3 ;
-  /* scforce is used also later...*/
-  particle_force[part_index].f[0] += scforce[0+ii*3];
-  particle_force[part_index].f[1] += scforce[1+ii*3];
-  particle_force[part_index].f[2] += scforce[2+ii*3];
- }
-
 #else // SHANCHEN is not defined
  /* for LB we do not reweight the friction force */
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
@@ -1136,18 +1073,26 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
 #endif
 
   /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-#ifdef GAUSSRANDOM
+#ifdef LB_FLATNOISE
+  random_01(rn_part);
+  viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+  viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
+  random_01(rn_part);
+  viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+#elif defined(LB_GAUSSRANDOMCUT)
+  gaussian_random_cut(rn_part);
+  viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+  viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
+  gaussian_random_cut(rn_part);
+  viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+#elif defined(LB_GAUSSRANDOM)
   gaussian_random(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
   viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
   gaussian_random(rn_part);
   viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
 #else
-  random_01(rn_part);
-  viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-  viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
-  random_01(rn_part);
-  viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+#error No noise type defined for the GPU LB
 #endif    
   /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
   (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
@@ -1177,8 +1122,6 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
 */
 __device__ void calc_node_force_three_point_couple(float *delta, float *delta_j, float * partgrad1, float * partgrad2, float * partgrad3,  unsigned int *node_index, LB_node_force_gpu node_f){
 /* TODO: should the drag depend on the density?? */
-/* NOTE: partgrad is not zero only if SHANCHEN is defined. It is initialized in calc_node_force. Alternatively one could 
-         specialize this function to the single component LB */ 
 
   for (int i=-1; i<=1; i++) {
     for (int j=-1; j<=1; j++) {
@@ -1450,19 +1393,28 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif
 
   /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-#ifdef GAUSSRANDOM
+#ifdef LB_FLATNOISE
+  random_01(rn_part);
+  viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+  viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
+  random_01(rn_part);
+  viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+#elif defined(LB_GAUSSRANDOMCUT)
+  gaussian_random_cut(rn_part);
+  viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+  viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
+  gaussian_random_cut(rn_part);
+  viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+#elif defined(LB_GAUSSRANDOM)
   gaussian_random(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
   viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
   gaussian_random(rn_part);
   viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
 #else
-  random_01(rn_part);
-  viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-  viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
-  random_01(rn_part);
-  viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-#endif	  
+#error No noise type defined for the GPU LB
+#endif 
+
   /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
   (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 

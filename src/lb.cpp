@@ -90,9 +90,11 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #ifndef D3Q19
 #error The implementation only works for D3Q19 so far!
 #endif
-#ifndef GAUSSRANDOM
-#define GAUSSRANDOM
+
+#if (!defined(LB_FLATNOISE) && !defined(LB_GAUSSRANDOMCUT))
+#define LB_GAUSSRANDOM
 #endif
+
 /** The underlying lattice structure */
 Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, -1.0, -1.0, NULL, NULL };
 
@@ -2145,7 +2147,7 @@ inline void lb_relax_modes(index_t index, double *mode) {
 
 inline void lb_thermalize_modes(index_t index, double *mode) {
     double fluct[6];
-#ifdef GAUSSRANDOM
+#ifdef LB_GAUSSRANDOM
     double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho[0]*agrid*agrid*agrid));
 
     /* stress modes */
@@ -2169,7 +2171,31 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
     mode[18] += rootrho_gauss*lb_phi[18]*gaussian_random();
 #endif
 
-#else
+#elif defined (LB_GAUSSRANDOMCUT)
+    double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho[0]*agrid*agrid*agrid));
+
+    /* stress modes */
+    mode[4] += (fluct[0] = rootrho_gauss*lb_phi[4]*gaussian_random_cut());
+    mode[5] += (fluct[1] = rootrho_gauss*lb_phi[5]*gaussian_random_cut());
+    mode[6] += (fluct[2] = rootrho_gauss*lb_phi[6]*gaussian_random_cut());
+    mode[7] += (fluct[3] = rootrho_gauss*lb_phi[7]*gaussian_random_cut());
+    mode[8] += (fluct[4] = rootrho_gauss*lb_phi[8]*gaussian_random_cut());
+    mode[9] += (fluct[5] = rootrho_gauss*lb_phi[9]*gaussian_random_cut());
+    
+#ifndef OLD_FLUCT
+    /* ghost modes */
+    mode[10] += rootrho_gauss*lb_phi[10]*gaussian_random_cut();
+    mode[11] += rootrho_gauss*lb_phi[11]*gaussian_random_cut();
+    mode[12] += rootrho_gauss*lb_phi[12]*gaussian_random_cut();
+    mode[13] += rootrho_gauss*lb_phi[13]*gaussian_random_cut();
+    mode[14] += rootrho_gauss*lb_phi[14]*gaussian_random_cut();
+    mode[15] += rootrho_gauss*lb_phi[15]*gaussian_random_cut();
+    mode[16] += rootrho_gauss*lb_phi[16]*gaussian_random_cut();
+    mode[17] += rootrho_gauss*lb_phi[17]*gaussian_random_cut();
+    mode[18] += rootrho_gauss*lb_phi[18]*gaussian_random_cut();
+#endif
+    
+#elif defined (LB_FLATNOISE)
     double rootrho = sqrt(fabs(12.0*(mode[0]+lbpar.rho[0]*agrid*agrid*agrid)));
 
     /* stress modes */
@@ -2192,8 +2218,10 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
     mode[17] += rootrho*lb_phi[17]*(d_random()-0.5);
     mode[18] += rootrho*lb_phi[18]*(d_random()-0.5);
 #endif
-#endif//GAUSSRANDOM
-
+#else
+#error No noise type defined for the CPU LB
+#endif //LB_GAUSSRANDOM
+    
 #ifdef ADDITIONAL_CHECKS
     rancounter += 15;
 #endif
@@ -2832,14 +2860,20 @@ void calc_particle_lattice_ia() {
       p = cell->part ;
       np = cell->n ;
       for (i=0;i<np;i++) {
-#ifdef GAUSSRANDOM
+#ifdef LB_GAUSSRANDOM
         p[i].lc.f_random[0] = lb_coupl_pref2*gaussian_random();
         p[i].lc.f_random[1] = lb_coupl_pref2*gaussian_random();
         p[i].lc.f_random[2] = lb_coupl_pref2*gaussian_random();
-#else
+#elif defined (LB_GAUSSRANDOMCUT)
+        p[i].lc.f_random[0] = lb_coupl_pref2*gaussian_random_cut();
+        p[i].lc.f_random[1] = lb_coupl_pref2*gaussian_random_cut();
+        p[i].lc.f_random[2] = lb_coupl_pref2*gaussian_random_cut();
+#elif defined (LB_FLATNOISE)
         p[i].lc.f_random[0] = lb_coupl_pref*(d_random()-0.5);
         p[i].lc.f_random[1] = lb_coupl_pref*(d_random()-0.5);
         p[i].lc.f_random[2] = lb_coupl_pref*(d_random()-0.5);
+#else
+#error No noise type defined for the CPU LB
 #endif
 
 #ifdef ADDITIONAL_CHECKS
