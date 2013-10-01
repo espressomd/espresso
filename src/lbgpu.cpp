@@ -316,9 +316,9 @@ void lb_init_gpu() {
 
 int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
 {
-  if ( ind[0] < 0 || ind[0] >=  lbpar_gpu.dim_x ||
-       ind[1] < 0 || ind[1] >= lbpar_gpu.dim_y ||
-       ind[2] < 0 || ind[2] >= lbpar_gpu.dim_z )
+  if ( ind[0] < 0 || ind[0] >= int(lbpar_gpu.dim_x) ||
+       ind[1] < 0 || ind[1] >= int(lbpar_gpu.dim_y) ||
+       ind[2] < 0 || ind[2] >= int(lbpar_gpu.dim_z) )
     return ES_ERROR;
 
   unsigned int index =

@@ -216,14 +216,18 @@ __device__ void random_wrapper(LB_randomnr_gpu *rn) {
 #if defined(FLATNOISE)
 #define sqrt12i 0.288675134594813f
   random_01(rn);
+//  printf ("making flat noise %E %E\n", rn->randomnr[0],rn->randomnr[1]); //TODO DELETE OWEN
   rn->randomnr[0]-=0.5f;
   rn->randomnr[0]*=sqrt12i;
   rn->randomnr[1]-=0.5f;
   rn->randomnr[1]*=sqrt12i;
+//  printf ("made flat noise %E %E\n", rn->randomnr[0],rn->randomnr[1]); //TODO DELETE OWEN
 #elif defined(GAUSSRANDOMCUT)
   gaussian_random_cut(rn);
+//  printf ("making gauss cut noise\n"); //TODO DELETE OWEN
 #elif defined(GAUSSRANDOM)
   gaussian_random(rn);
+//  printf ("making gauss noise\n"); //TODO DELETE OWEN
 #else
 #error No noise type defined for the GPU LB
 #endif  
@@ -1100,10 +1104,10 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
   viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
 #elif defined(GAUSSRANDOMCUT)
   gaussian_random_cut(rn_part);
-  viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-  viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
+  viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+  viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
   gaussian_random_cut(rn_part);
-  viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+  viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
 #elif defined(GAUSSRANDOM)
   gaussian_random(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];

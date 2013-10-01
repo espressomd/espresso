@@ -127,9 +127,9 @@ inline double friction_thermV_nptiso(double p_diff) {
 #if defined (FLATNOISE)
     return ( nptiso_pref3*p_diff + nptiso_pref4*(d_random()-0.5) );
 #elif defined (GAUSSRANDOMCUT)
-    return ( nptiso_pref3*p_diff + nptiso_pref4*gaussian_random_cut );
+    return ( nptiso_pref3*p_diff + nptiso_pref4*gaussian_random_cut() );
 #elif defined (GAUSSRANDOM)
-    return ( nptiso_pref3*p_diff + nptiso_pref4*gaussian_random );
+    return ( nptiso_pref3*p_diff + nptiso_pref4*gaussian_random() );
 #else
 #error No Noise defined
 #endif

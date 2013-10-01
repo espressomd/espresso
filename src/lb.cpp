@@ -41,6 +41,7 @@
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
 #include "lbgpu.hpp"
+#include "config.hpp" //Note this is needed so that the file recompiles when myconfig.hpp is changed
 
 int lb_components = LB_COMPONENTS; // global variable holding the number of fluid components (see global.c)
 
@@ -547,7 +548,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
     int j;	
          /** print of the calculated phys values */
       fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
-        for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+        for(j=0; j<int(lbpar_gpu.number_of_nodes); ++j){
         /** print of the calculated phys values */
         fprintf(fp, "%d \n", bound_array[j]);
       }     
@@ -595,7 +596,7 @@ for(ii=0;ii<LB_COMPONENTS;++ii){
              lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, 
              lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, 
              lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
-     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+     for(j=0; j<int(lbpar_gpu.number_of_nodes); ++j){
          /** print the calculated phys values */
          fprintf(fp, "%f\n", host_values[j].rho[ii]);
      }
@@ -626,7 +627,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     lb_get_values_GPU(host_values);
 		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
     int j;	
-    for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+    for(j=0; j<int(lbpar_gpu.number_of_nodes); ++j){
       /** print of the calculated phys values */
       fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
     }
@@ -672,7 +673,7 @@ int lb_lbfluid_print_boundary(char* filename) {
 
     int xyz[3];
     int j;	
-    for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+    for(j=0; j<int(lbpar_gpu.number_of_nodes); ++j){
       xyz[0] = j%lbpar_gpu.dim_x;
       int k = j/lbpar_gpu.dim_x;
       xyz[1] = k%lbpar_gpu.dim_y;
@@ -720,7 +721,7 @@ int lb_lbfluid_print_velocity(char* filename) {
     lb_get_values_GPU(host_values);
     int xyz[3];
     int j;	
-    for(j=0; j<lbpar_gpu.number_of_nodes; ++j) {
+    for(j=0; j<int(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j%lbpar_gpu.dim_x;
       int k = j/lbpar_gpu.dim_x;
       xyz[1] = k%lbpar_gpu.dim_y;
@@ -770,16 +771,16 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
      unsigned int* host_checkpoint_boundary = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
      float* host_checkpoint_force = (float *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
      lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
-     for (int n=0; n<(19*lbpar_gpu.number_of_nodes); n++) {
+     for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
          fprintf(cpfile, "%.8f \n", host_checkpoint_vd[n]); 
      }
-     for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+     for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
          fprintf(cpfile, "%u \n", host_checkpoint_seed[n]); 
      }
-     for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+     for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
          fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]); 
      }
-     for (int n=0; n<(3*lbpar_gpu.number_of_nodes); n++) {
+     for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
          fprintf(cpfile, "%.8f \n", host_checkpoint_force[n]); 
      }
      fclose(cpfile);
@@ -844,16 +845,16 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
     float* host_checkpoint_force = (float *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
 
     if (!binary) {
-      for (int n=0; n<(19*lbpar_gpu.number_of_nodes); n++) {
+      for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
           fscanf(cpfile, "%f", &host_checkpoint_vd[n]); 
       }
-      for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+      for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
           fscanf(cpfile, "%u", &host_checkpoint_seed[n]); 
       }
-      for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+      for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
           fscanf(cpfile, "%u", &host_checkpoint_boundary[n]); 
       }
-      for (int n=0; n<(3*lbpar_gpu.number_of_nodes); n++) {
+      for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
          fscanf(cpfile, "%f", &host_checkpoint_force[n]); 
       }
      lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
@@ -1012,9 +1013,9 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 
 				if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-					if (tmpind[0] == lbpar_gpu.dim_x) tmpind[0] =0;
-					if (tmpind[1] == lbpar_gpu.dim_y) tmpind[1] =0;
-					if (tmpind[2] == lbpar_gpu.dim_z) tmpind[2] =0;
+					if (tmpind[0] == int(lbpar_gpu.dim_x)) tmpind[0] =0;
+					if (tmpind[1] == int(lbpar_gpu.dim_y)) tmpind[1] =0;
+					if (tmpind[2] == int(lbpar_gpu.dim_z)) tmpind[2] =0;
 #endif
 				} else {  
 #ifdef LB

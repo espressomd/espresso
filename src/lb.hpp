@@ -53,6 +53,11 @@ extern int lb_components ; // global variable holding the number of fluid compon
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
 
+/** Note these are usef for binary logic so should be powers of 2 */
+#define LB_COUPLE_NULL        1
+#define LB_COUPLE_TWO_POINT   2
+#define LB_COUPLE_THREE_POINT 4
+  
 /*@}*/
   /** Some general remarks:
    * This file implements the LB D3Q19 method to Espresso. The LB_Model
