@@ -12,8 +12,8 @@ start "CONFIGURE"
 end "CONFIGURE"
 
 # copy config file
-if [ "$myconfig" != default ]; then
-  use_config $myconfig
+if [ "$config" != default ]; then
+  use_config $config
 fi
 
 # create mympiexec.sh
