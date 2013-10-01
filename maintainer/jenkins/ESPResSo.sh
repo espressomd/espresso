@@ -7,8 +7,6 @@
 # without any warranty.
 source maintainer/jenkins/common.sh
 
-bootstrap
-
 start "CONFIGURE"
 ./configure CPU_COUNT=4
 end "CONFIGURE"
