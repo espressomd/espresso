@@ -40,10 +40,10 @@
  *  \todo The packing routines could be moved to utils.h when they are needed elsewhere.
  */
 
-#include <config.hpp>
-#include "fft-common.hpp"
-
+#include "config.hpp"
 #ifdef DP3M
+
+#include "fft-common.hpp"
 
 extern fft_data_struct dfft;
 

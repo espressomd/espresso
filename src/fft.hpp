@@ -40,10 +40,10 @@
  *  For more information about FFT usage, see \ref fft.c "fft.c".  
 */
 
-#include <config.hpp>
-#include "fft-common.hpp"
-
+#include "config.hpp"
 #ifdef P3M
+
+#include "fft-common.hpp"
 
 extern fft_data_struct fft;
 
