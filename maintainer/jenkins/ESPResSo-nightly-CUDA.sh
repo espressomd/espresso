@@ -24,3 +24,26 @@ end "BUILD"
 
 check
 
+use_myconfig LBGPU-GAUSS
+
+start "BUILD"
+make -j 4
+end "BUILD"
+
+check
+
+use_myconfig LBGPU-GAUSSCUT
+
+start "BUILD"
+make -j 4
+end "BUILD"
+
+check
+
+use_myconfig LBGPU-SHANCHEN
+
+start "BUILD"
+make -j 4
+end "BUILD"
+
+check

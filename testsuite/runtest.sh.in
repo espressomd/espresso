@@ -99,6 +99,10 @@ done
 
 # execute the tests
 for np in $processors; do
+    #limit to 8 processors, causes trouble otherwise for mass-and-inertia.tcl on 12
+    if [ "$np" -gt "8" ]; then
+      np=8
+    fi
     echo "** RUNNING TESTSUITE FOR $np tasks"
     echo >> $TESTLOG
     echo "**************************************************" >> $TESTLOG

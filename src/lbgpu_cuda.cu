@@ -214,20 +214,16 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn){
 __device__ void random_wrapper(LB_randomnr_gpu *rn) { 
 
 #if defined(FLATNOISE)
-#define sqrt12i 0.288675134594813f
+#define sqrt12 3.46410161514f
   random_01(rn);
-//  printf ("making flat noise %E %E\n", rn->randomnr[0],rn->randomnr[1]); //TODO DELETE OWEN
   rn->randomnr[0]-=0.5f;
-  rn->randomnr[0]*=sqrt12i;
+  rn->randomnr[0]*=sqrt12;
   rn->randomnr[1]-=0.5f;
-  rn->randomnr[1]*=sqrt12i;
-//  printf ("made flat noise %E %E\n", rn->randomnr[0],rn->randomnr[1]); //TODO DELETE OWEN
+  rn->randomnr[1]*=sqrt12;
 #elif defined(GAUSSRANDOMCUT)
   gaussian_random_cut(rn);
-//  printf ("making gauss cut noise\n"); //TODO DELETE OWEN
 #elif defined(GAUSSRANDOM)
   gaussian_random(rn);
-//  printf ("making gauss noise\n"); //TODO DELETE OWEN
 #else
 #error No noise type defined for the GPU LB
 #endif  
