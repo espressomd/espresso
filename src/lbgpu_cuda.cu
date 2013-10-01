@@ -161,16 +161,19 @@ __device__ void gaussian_random_cut(LB_randomnr_gpu *rn){
   } while (r2 >= 1.f || r2 == 0.f);
 
   /** perform Box-Muller transformation and cutoff the ends and replace with flat noise */
+  /*
   fac = sqrtf(-2.f*__logf(r2)/r2)*1.118591404;
   rn->randomnr[0] = x2*fac;
   rn->randomnr[1] = x1*fac;
+  random_01(rn);
   if ( fabs(rn->randomnr[0]) > 2*1.118591404) {
-    rn->randomnr[0] = x2*2*1.118591404;
+    rn->randomnr[0] = (2.f*rn->randomnr[0]-1.f)*2*1.118591404;
   }
   if ( fabs(rn->randomnr[1]) > 2*1.118591404 ) {
-    rn->randomnr[0] = x1*2*1.118591404;
+    rn->randomnr[0] = (2.f*rn->randomnr[1]-1.f)*2*1.118591404;
   }
-  /* This is a slightly different version
+  */
+  
   fac = sqrtf(-2.f*__logf(r2)/r2)*1.042267973;
   rn->randomnr[0] = x2*fac;
   rn->randomnr[1] = x1*fac;
@@ -182,7 +185,6 @@ __device__ void gaussian_random_cut(LB_randomnr_gpu *rn){
     if ( rn->randomnr[1] > 0 ) rn->randomnr[1] = 2*1.042267973;
     else rn->randomnr[1] = -2*1.042267973;
   }
-  */
 }
 
 /** gaussian random nummber generator for thermalisation

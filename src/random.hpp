@@ -195,7 +195,7 @@ inline double gaussian_random_cut(void) {
 
     /* perform Box-Muller transformation */
     fac = sqrt(-2.0*log(r2)/r2);
-    /* This is a slight different version
+
     // save one number for later use 
     save = x1*fac*1.042267973;
     if ( fabs(save) > 2*1.042267973 ) {
@@ -211,21 +211,22 @@ inline double gaussian_random_cut(void) {
       else curr = -2*1.042267973;
     }
     return curr;
-    */
     
     /* save one number for later use */
+    /*
     save = x1*fac*1.118591404;
     if ( fabs(save) > 2*1.118591404 ) {
-      save = x1*2*1.118591404;
+      save = (2.0*d_random()-1.0)*2*1.118591404;
     }
     calc_new = 0;
 
-    /* return the second number */
+    // return the second number 
     curr = x2*fac*1.118591404;
     if ( fabs(curr) > 2*1.118591404) {
-      save = x2*2*1.118591404;
+      curr = (2.0*d_random()-1.0)*2*1.118591404;
     }
     return curr;
+    */
 
   } else {
 
