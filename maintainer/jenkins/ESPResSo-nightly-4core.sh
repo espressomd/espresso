@@ -8,7 +8,7 @@
 source maintainer/jenkins/common.sh
 
 start "CONFIGURE"
-./configure --with-mpi CPU_COUNT="4"
+./configure --with-cuda --with-mpi CPU_COUNT="4"
 end "CONFIGURE"
 
 # copy config file
@@ -21,7 +21,7 @@ echo 'exec mpiexec --bind-to-core $@' > mympiexec.sh
 chmod +x mympiexec.sh
 
 start "BUILD"
-make
+make -j 4
 end "BUILD"
 
 check
