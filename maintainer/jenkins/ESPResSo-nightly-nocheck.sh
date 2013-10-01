@@ -13,7 +13,7 @@ start "CONFIGURE"
 ./configure
 end "CONFIGURE"
 
-use_myconfig compileonly
+use_config nocheck
 
 start "BUILD"
 make -j 4

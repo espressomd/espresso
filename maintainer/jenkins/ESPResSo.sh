@@ -13,7 +13,7 @@ start "CONFIGURE"
 ./configure CPU_COUNT=4
 end "CONFIGURE"
 
-use_myconfig maxset
+use_config default-maxset
 
 start "BUILD"
 make -j 4

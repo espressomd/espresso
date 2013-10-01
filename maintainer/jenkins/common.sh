@@ -16,8 +16,8 @@ function end() {
     echo "END $1"
 }
 
-function use_myconfig() {
-    myconfig=testsuite/configs/myconfig-$1.h
+function use_config() {
+    myconfig=maintainer/jenkins/configs/$1.h
     if [ ! -e "$myconfig" ]; then
         echo "$myconfig does not exist!"
         exit 1
