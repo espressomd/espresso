@@ -32,13 +32,13 @@ CUDA_HEADER=$srcdir/src/cuda.h
 if $with_cuda; then
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
     configure_params="--with-cuda $configure_params"
-    configure_vars="$configure_vars NVCC=/bin/false"
     if [ -e $CUDA_HEADER ]; then
         echo "Using CUDA => deleting mock $CUDA_HEADER..."
         rm $CUDA_HEADER
     fi
 else
     configure_params="--without-cuda $configure_params"
+    configure_vars="$configure_vars NVCC=/bin/false"
     echo "Not using CUDA => generating mock $CUDA_HEADER..."
     echo "#error ERROR: cuda is not really present but used somewhere." \
         > $CUDA_HEADER
