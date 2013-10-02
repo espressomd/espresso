@@ -8,6 +8,7 @@
 DIR=`dirname $0`
 source $DIR/common.sh
 
+start "BUILD"
 # DEFAULTS
 [ ! -v myconfig ] && myconfig="default"
 [ ! -v build_procs ] && build_procs=4
@@ -17,7 +18,6 @@ outp myconfig build_procs
 pushd $builddir
 
 # BUILD
-start "BUILD"
 
 if [ "$myconfig" = "default" ]; then
     echo "Using default myconfig."
@@ -37,6 +37,7 @@ fi
 
 make_params="-j $build_procs"
 cmd "make $make_params" || exit 1
-end "BUILD"
 
 popd
+end "BUILD"
+

@@ -54,16 +54,13 @@ if [ -v parallelism ]; then
         ("3core") 
             with_mpi=true 
             check_procs=3
-            break
             ;;
         ("4core")
             with_mpi=true
             check_procs=4
-            break
             ;;
         ("nompi")
             with_mpi=false
-            break
             ;;
     esac
 fi

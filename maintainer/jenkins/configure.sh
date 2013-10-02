@@ -8,6 +8,8 @@
 DIR=`dirname $0`
 source $DIR/common.sh
 
+start "CONFIGURE"
+
 # DEFAULTS
 [ ! -v configure_params ] && configure_params=""
 [ ! -v configure_vars ] && configure_vars=""
@@ -58,7 +60,6 @@ fi
 
 configure_vars="$configure_vars CPU_COUNT=\"$check_procs\""
 
-start "CONFIGURE"
 cmd "$srcdir/configure $configure_params" || exit 1
 end "CONFIGURE"
 

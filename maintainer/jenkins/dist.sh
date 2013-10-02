@@ -8,12 +8,12 @@
 DIR=`dirname $0`
 source $DIR/common.sh
 
-# change into build dir
+start "DIST"
+
 pushd $builddir
 
 # DIST
-start "DIST"
 cmd "make dist dist-xz"
-end "DIST"
 
 popd
+end "DIST"

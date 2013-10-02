@@ -8,9 +8,9 @@
 DIR=`dirname $0`
 source $DIR/common.sh
 
-pushd $srcdir
 start "BOOTSTRAP"
+pushd $srcdir
 ./bootstrap.sh
-end "BOOTSTRAP"
 popd
+end "BOOTSTRAP"
 

@@ -8,6 +8,7 @@
 DIR=`dirname $0`
 source $DIR/common.sh
 
+start "TEST"
 [ ! -v with_mpi ] && with_mpi="true"
 ! $with_mpi && check_procs="1"
 [ ! -v with_cuda ] && with_cuda="true"
@@ -20,10 +21,9 @@ $with_cuda && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
 # change into build dir
 pushd $builddir
 
-start "TEST"
 # something should be done after ||, otherwise Jenkins will mark
 # job as failed
 cmd "make check processors=\"$check_procs\" || CHECK_UNSTABLE=1"
-end "TEST"
 
 popd
+end "TEST"
