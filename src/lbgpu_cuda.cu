@@ -34,13 +34,8 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 
-
-#ifdef LB_GPU
-
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
-#endif
-
 #endif
 
 int extended_values_flag=0; /* TODO: this has to be set to one by
