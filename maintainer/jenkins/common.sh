@@ -23,12 +23,13 @@ function outp() {
     done
 }
 
+# DIR SETTINGS
 [ ! -v insource ] && insource="true"
 [ ! -v srcdir ] && srcdir=`pwd`
 if $insource; then
     builddir=$srcdir
-else
-    [ ! -v builddir ] && builddir="$srcdir/build"
+elif [ ! -v builddir ]; then
+    builddir=$srcdir/build
 fi
 
 outp srcdir builddir insource 
@@ -43,5 +44,27 @@ if ! $insource; then
         echo "Creating $builddir..."
         mkdir -p $builddir
     fi
+fi
+
+# PARALLELISM SETTINGS
+if [ -v parallelism ]; then
+    outp parallelism
+
+    case $parallelism in
+        ("3core") 
+            with_mpi=true 
+            check_procs=3
+            break
+            ;;
+        ("4core")
+            with_mpi=true
+            check_procs=4
+            break
+            ;;
+        ("nompi")
+            with_mpi=false
+            break
+            ;;
+    esac
 fi
 

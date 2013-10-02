@@ -1,4 +1,4 @@
-/* maximal set of features when not using FFTW */
+/* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
@@ -11,6 +11,11 @@
 #define COMFORCE
 #define COMFIXED
 #define MOLFORCES
+
+#ifdef FFTW
+#define MODES
+#endif
+
 #define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
@@ -26,8 +31,10 @@
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
+#ifdef CUDA
 #define LB_GPU
 #define LB_BOUNDARIES_GPU
+#endif
 
 #define AREA_FORCE_GLOBAL   
 #define VOLUME_FORCE   
