@@ -60,7 +60,7 @@ fi
 
 configure_vars="$configure_vars CPU_COUNT=\"$check_procs\""
 
-cmd "$srcdir/configure $configure_params" || exit 1
+cmd "$srcdir/configure $configure_params $configure_vars" || exit 1
 end "CONFIGURE"
 
 popd

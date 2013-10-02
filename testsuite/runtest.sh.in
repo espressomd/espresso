@@ -59,8 +59,6 @@ else
   processors="@CPU_COUNT@"
 fi
 
-echo "args: $@"
-echo "args: $*"
 echo "$0 started on "`date` > $TESTLOG
 echo "processors=$processors" >> $TESTLOG
 
