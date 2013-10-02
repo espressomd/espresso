@@ -76,7 +76,9 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
 {
   /* parameters needed for LJ */
   double eps, sig, cut, shift, offset, cap_radius, min;
+#ifdef SHANCHEN
   double *affinity=NULL;
+#endif
   int compute_auto_shift, change;
 
   /* get lennard-jones interaction type */

@@ -31,7 +31,7 @@
 #include "parser.hpp"
 
 #ifdef LB_GPU
-
+#ifdef SHANCHEN
 int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
@@ -45,7 +45,6 @@ int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j)
   }
   return TCL_OK;
 }
-
 
 int tclcommand_inter_parse_affinity(Tcl_Interp * interp,int part_type_a,int part_type_b, int argc, char ** argv)
 {
@@ -68,6 +67,7 @@ int tclcommand_inter_parse_affinity(Tcl_Interp * interp,int part_type_a,int part
   Tcl_AppendResult(interp, "Error setting affinity", (char *) NULL);
   return 3;
 }
+#endif
 
 static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
   double f[3];

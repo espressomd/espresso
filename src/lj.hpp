@@ -47,7 +47,7 @@ inline void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
 {
   int j;
   double r_off, frac2, frac6, fac=0.0 ;
-#ifdef LB_GPU
+#ifdef SHANCHEN
   double order;
   double SixtRootOfTwo=1.12246204830937;
 #endif 
@@ -60,7 +60,7 @@ inline void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
       frac2 = SQR(ia_params->LJ_sig/r_off);
       frac6 = frac2*frac2*frac2;
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / (r_off * dist);
-#ifdef LB_GPU
+#ifdef SHANCHEN
       if(ia_params->affinity_on==1){
          if(LB_COMPONENTS==2){
             if (dist > SixtRootOfTwo * ia_params->LJ_sig && 

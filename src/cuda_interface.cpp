@@ -172,7 +172,7 @@ static void cuda_mpi_get_particles_slave(){
       /* and send it back to the master node */
       MPI_Send(particle_data_host_sl, n_part*sizeof(CUDA_particle_data), MPI_BYTE, 0, REQ_CUDAGETPARTS, comm_cart);
       free(particle_data_host_sl);
-    }  
+    }
 }
 
   void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_composition){
@@ -234,7 +234,9 @@ static void cuda_mpi_send_forces_slave(){
 
     int n_part;
     CUDA_particle_force *host_forces_sl=NULL;
+#ifdef SHANCHEN
     CUDA_fluid_composition *host_composition_sl=NULL;
+#endif
     Cell *cell;
     int c, i;
     MPI_Status status;

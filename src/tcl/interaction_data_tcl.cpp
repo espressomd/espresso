@@ -505,7 +505,7 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 #ifdef TUNABLE_SLIP
   if (data->TUNABLE_SLIP_r_cut > 0.0) tclprint_to_result_tunable_slipIA(interp,i,j);
 #endif
-#ifdef LB_GPU
+#ifdef SHANCHEN
   if (data->affinity_on == 1 ) tclprint_to_result_affinityIA(interp,i,j);
 #endif
 

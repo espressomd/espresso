@@ -1162,8 +1162,10 @@ int lb_lbnode_set_rho(int* ind, double *p_rho){
        host_rho[i]=(float)p_rho[i];
     }
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
+#ifdef SHANCHEN
     lb_calc_particle_lattice_ia_gpu();
     copy_forces_from_GPU();
+#endif 
 #endif
   } else {
 #ifdef LB
