@@ -1,4 +1,4 @@
-#!/bin/bash --login
+#!/bin/bash --login 
 # Copyright (C) 2013 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
@@ -6,6 +6,14 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 DIR=`dirname $0`
-check_procs="4" \
-    $DIR/build.sh
+source $DIR/common.sh
 
+# change into build dir
+pushd $builddir
+
+# DIST
+start "DIST"
+cmd "make dist dist-xz"
+end "DIST"
+
+popd

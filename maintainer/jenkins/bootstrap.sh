@@ -1,20 +1,16 @@
-#!/bin/bash --login -e
+#!/bin/bash --login 
 # Copyright (C) 2013 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
-source maintainer/jenkins/common.sh
+DIR=`dirname $0`
+source $DIR/common.sh
 
-bootstrap
+pushd $srcdir
+start "BOOTSTRAP"
+./bootstrap.sh
+end "BOOTSTRAP"
+popd
 
-start "CONFIGURE"
-./configure
-end "CONFIGURE"
-
-use_config nocheck
-
-start "BUILD"
-make -j 4
-end "BUILD"

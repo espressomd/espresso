@@ -1,4 +1,4 @@
-#!/bin/bash --login
+#!/bin/bash --login 
 # Copyright (C) 2013 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
@@ -6,5 +6,17 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 DIR=`dirname $0`
-check_procs="3" \
-    $DIR/build.sh
+source $DIR/common.sh
+
+# DEFAULTS
+[ ! -v distcheck_flags ] && distcheck_flags=""
+outp distcheck_flags
+
+# change into build dir
+pushd $builddir
+
+start "DISTCHECK"
+cmd "make distcheck DISTCHECK_CONFIGURE_FLAGS=\"$distcheck_flags\""
+end "DISTCHECK"
+
+popd

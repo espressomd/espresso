@@ -1,4 +1,4 @@
-#!/bin/bash --login
+#!/bin/bash --login 
 # Copyright (C) 2013 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
@@ -6,5 +6,13 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 DIR=`dirname $0`
-run_bootstrap=true run_configure=false run_build=false run_check=false \
-    $DIR/build.sh
+source $DIR/common.sh
+
+# change into build dir
+pushd $builddir
+
+start "DOC"
+cmd "make doc"
+end "DOC"
+
+popd
