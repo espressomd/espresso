@@ -965,33 +965,21 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
  * @param *rn_part    Pointer to randomnumber array of the particle
  * @param node_index    node index around (8) particle (Output)
 */
-__device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *delta, float * partgrad1, float * partgrad2, float * partgrad3, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
+__device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
   
  int my_center[3];
  float interpolated_u1, interpolated_u2, interpolated_u3;
  float interpolated_rho[LB_COMPONENTS];
  float temp_delta[27];
  float viscforce[3*LB_COMPONENTS];
- float scforce[3*LB_COMPONENTS];
  float mode[19*LB_COMPONENTS];
-#ifdef SHANCHEN
- float gradrho1, gradrho2, gradrho3;
- float Rho;
-#endif 
 
  #pragma unroll
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
    #pragma unroll
    for(int jj=0; jj<3; ++jj){ 
-    scforce[jj+ii*3]  =0.f;
     viscforce[jj+ii*3]=0.f;
     delta_j[jj+ii*3]  =0.f;
-   }
-   #pragma unroll
-   for(int jj=0; jj<8; ++jj){ //NOTE this must change if Shan Chen is to be implemented for the three point coupling
-    partgrad1[jj+ii*8]=0.f;
-    partgrad2[jj+ii*8]=0.f;
-    partgrad3[jj+ii*8]=0.f;
    }
  }
  /** see Duenweg and Ladd http://arxiv.org/abs/0803.2826 eqn. 301 */
@@ -1045,19 +1033,12 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
     for(int ii=0;ii<LB_COMPONENTS;ii++){
       totmass+=mode[0]+para.rho[ii]*para.agrid*para.agrid*para.agrid;
     } 
-#ifndef SHANCHEN
     interpolated_u1 += (mode[1]/totmass)*delta[i];
     interpolated_u2 += (mode[2]/totmass)*delta[i];
     interpolated_u3 += (mode[3]/totmass)*delta[i];
-#else //SHANCHEN
-    interpolated_u1 += d_v[node_index[i]].v[0]/27.;  
-    interpolated_u2 += d_v[node_index[i]].v[1]/27.;
-    interpolated_u3 += d_v[node_index[i]].v[2]/27.;
-#endif
  }
 
 #ifdef SHANCHEN
- #pragma unroll
  printf (stderr, "Unfortunately the three point particle coupling is not currently compatible with the Shan-Chen implementation of the LB\n");
  exit(1);
 #else // SHANCHEN is not defined
@@ -1119,16 +1100,11 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
   particle_force[part_index].f[0] += viscforce[0+ii*3];
   particle_force[part_index].f[1] += viscforce[1+ii*3];
   particle_force[part_index].f[2] += viscforce[2+ii*3];
-  /* the average force from the particle to surrounding nodes is transmitted back to preserve momentum */
-  for(int node=0 ; node < 8 ; node++ ) { 
-     particle_force[part_index].f[0] -= partgrad1[node+ii*8]/8.;
-     particle_force[part_index].f[1] -= partgrad2[node+ii*8]/8.;
-     particle_force[part_index].f[2] -= partgrad3[node+ii*8]/8.;
-  }
+
   /* note that scforce is zero if SHANCHEN is not #defined */
-  delta_j[0+3*ii] -= (scforce[0+ii*3]+viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
-  delta_j[1+3*ii] -= (scforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
-  delta_j[2+3*ii] -= (scforce[2+ii*3]+viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;    
+  delta_j[0+3*ii] -= (viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
+  delta_j[1+3*ii] -= (viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
+  delta_j[2+3*ii] -= (viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;    
  }
 }
 
@@ -1139,7 +1115,7 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
  * @param node_index    node index around (8) particle (Input)
  * @param node_f        Pointer to the node force (Output).
 */
-__device__ void calc_node_force_three_point_couple(float *delta, float *delta_j, float * partgrad1, float * partgrad2, float * partgrad3,  unsigned int *node_index, LB_node_force_gpu node_f){
+__device__ void calc_node_force_three_point_couple(float *delta, float *delta_j, unsigned int *node_index, LB_node_force_gpu node_f){
 /* TODO: should the drag depend on the density?? */
 
   for (int i=-1; i<=1; i++) {
@@ -2079,16 +2055,13 @@ __global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA
   unsigned int node_index[27];
   float delta[27];
   float delta_j[3*LB_COMPONENTS]; 
-  float partgrad1[8*LB_COMPONENTS]; 
-  float partgrad2[8*LB_COMPONENTS]; 
-  float partgrad3[8*LB_COMPONENTS]; 
   LB_randomnr_gpu rng_part;
   if(part_index<para.number_of_particles){
 
     rng_part.seed = part[part_index].seed;
     /**force acting on the particle. delta_j will be used later to compute the force that acts back onto the fluid. */
-    calc_viscous_force_three_point_couple(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, part_index, &rng_part, delta_j, node_index,d_v);
-    calc_node_force_three_point_couple(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f);
+    calc_viscous_force_three_point_couple(n_a, delta, particle_data, particle_force, part_index, &rng_part, delta_j, node_index,d_v);
+    calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
 
     /**force which acts back to the fluid node */
     part[part_index].seed = rng_part.seed;    

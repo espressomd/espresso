@@ -40,8 +40,7 @@
 #include "lb-d3q19.hpp"
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
-#include "lbgpu.hpp"
-#include "config.hpp" //Note this is needed so that the file recompiles when myconfig.hpp is changed
+#include "config.hpp"
 
 int lb_components = LB_COMPONENTS; // global variable holding the number of fluid components (see global.c)
 
