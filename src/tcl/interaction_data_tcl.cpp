@@ -99,7 +99,7 @@ int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
 
 #ifdef ELECTROSTATICS
 
-#ifdef LB_GPU
+#ifdef SHANCHEN
 int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j);
 int tclcommand_inter_parse_affinity(Tcl_Interp * interp,int part_type_a,int part_type_b, int argc, char ** argv);
 #endif
@@ -831,10 +831,8 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("molcut", tclcommand_inter_parse_molcut);
 #endif
   
-#ifdef LB_GPU
 #ifdef SHANCHEN
     REGISTER_NONBONDED("affinity",tclcommand_inter_parse_affinity);
-#endif 
 #endif
  
 #ifdef ADRESS

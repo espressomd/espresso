@@ -1196,6 +1196,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   delta_j[1+3*ii] -= (scforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
   delta_j[2+3*ii] -= (scforce[2+ii*3]+viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;  	
  }
+#ifdef SHANCHEN
  for(int node=0 ; node < 8 ; node++ ) { 
     for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
 		partgrad1[node+ii*8]*=(para.time_step*para.tau/para.agrid);
@@ -1203,7 +1204,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 		partgrad3[node+ii*8]*=(para.time_step*para.tau/para.agrid);
     }
  }
- 
+#endif 
 }
 
 /**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
