@@ -474,6 +474,16 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ])
 
+    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
+        ])
+    ])
+
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
     
