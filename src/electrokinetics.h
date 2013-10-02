@@ -49,7 +49,9 @@ typedef struct {
   float bjerrumlength;
   unsigned int number_of_species;
   unsigned int accelerated_frame_enabled;
+  float accelerated_frame_boundary_mass_density;
   float accelerated_frame_boundary_mass;
+  float accelerated_frame_fluid_mass;
   float ext_acceleration_force[3];
   int reaction_species[3];
   float rho_reactant_reservoir;
@@ -133,6 +135,7 @@ extern int ek_initialized;
 void ek_integrate();
 void ek_print_parameters();
 void ek_print_lbpar();
+unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char* filename);
 int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
@@ -152,7 +155,7 @@ int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
-int ek_set_accelerated_frame( int enabled, double boundary_mass, double* ext_acceleration_force );
+int ek_set_accelerated_frame( int enabled, double boundary_mass_density, double* ext_acceleration_force );
 
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);

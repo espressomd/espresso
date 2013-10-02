@@ -317,8 +317,6 @@ int lbboundary_get_force(int no, double* f) {
 #if defined (LB_BOUNDARIES_GPU) && defined (LB_GPU)
     lb_gpu_get_boundary_forces(forces);
 
-// ***** I THINK BECAUSE OF THE WAY YOU DEFINE THE FORCES YOU WANT TO PRINT THE NEGATIVE
-
     f[0]=-forces[3*no+0];
     f[1]=-forces[3*no+1];
     f[2]=-forces[3*no+2];
