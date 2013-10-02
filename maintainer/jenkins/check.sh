@@ -21,9 +21,10 @@ $with_cuda && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
 # change into build dir
 pushd $builddir
 
+[ $check_procs != "1" ] &&  make_params="processors=\"$check_procs\""
 # something should be done after ||, otherwise Jenkins will mark
 # job as failed
-cmd "make check processors=\"$check_procs\" || CHECK_UNSTABLE=1"
+cmd "make check $make_params || CHECK_UNSTABLE=1"
 
 popd
 end "TEST"
