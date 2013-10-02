@@ -23,10 +23,13 @@ function outp() {
     done
 }
 
-[ ! -v insource ] && insource="false"
+[ ! -v insource ] && insource="true"
 [ ! -v srcdir ] && srcdir=`pwd`
-[ ! -v builddir ] && builddir="$srcdir/build"
-$insource && builddir=$srcdir
+if $insource; then
+    builddir=$srcdir
+else
+    [ ! -v builddir ] && builddir="$srcdir/build"
+fi
 
 outp srcdir builddir insource 
 

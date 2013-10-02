@@ -36,7 +36,7 @@ else
 fi
 
 make_params="-j $build_procs"
-cmd "make $make_params"
+cmd "make $make_params" || exit 1
 end "BUILD"
 
 popd
