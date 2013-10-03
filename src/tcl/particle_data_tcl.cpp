@@ -208,6 +208,16 @@ void tclcommand_part_print_solvation(Particle *part, char *buffer, Tcl_Interp *i
   }
 }
 
+
+void tclcommand_part_print_composition(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  int ii;
+  for(ii=0;ii<LB_COMPONENTS;++ii){
+     Tcl_PrintDouble(interp, part->r.composition[ii], buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+}
+
 #endif 
 
 void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
@@ -516,6 +526,9 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 #ifdef SHANCHEN
   Tcl_AppendResult(interp, " solvation ", (char *)NULL);
   tclcommand_part_print_solvation(&part, buffer, interp);
+
+  Tcl_AppendResult(interp, " composition ", (char *)NULL);
+  tclcommand_part_print_composition(&part, buffer, interp);
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -624,6 +637,9 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #ifdef SHANCHEN
     else if (ARG0_IS_S("solvation")) {
       tclcommand_part_print_solvation(&part, buffer, interp);
+    }
+    else if (ARG0_IS_S("composition")) {
+      tclcommand_part_print_composition(&part, buffer, interp);
     }
 #endif
 #ifdef ELECTROSTATICS
@@ -811,6 +827,8 @@ int tclcommand_part_parse_solvation(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_OK;
 }
+
+
 #endif
 
 

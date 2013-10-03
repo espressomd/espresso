@@ -115,7 +115,10 @@ void init_particle(Particle *part)
 #ifdef SHANCHEN
   int ii;
   for(ii=0;ii<2*LB_COMPONENTS;ii++){ 
-    part->p.solvation[ii]=0;
+    part->p.solvation[ii]=0.0;
+  }
+  for(ii=0;ii<LB_COMPONENTS;ii++){ 
+    part->r.composition[ii]=0.0;
   }
 #endif
 
@@ -624,6 +627,7 @@ int set_particle_solvation(int part, double * solvation)
   mpi_send_solvation(pnode, part, solvation);
   return ES_OK;
 }
+
 #endif
 
 
