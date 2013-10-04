@@ -222,10 +222,10 @@ void lb_reinit_fluid_gpu() {
 
   //lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
   lb_reinit_parameters_gpu();
-#ifdef SHANCHEN
-  lb_calc_particle_lattice_ia_gpu();
-  copy_forces_from_GPU();
-#endif 
+//#ifdef SHANCHEN
+//  lb_calc_particle_lattice_ia_gpu();
+//  copy_forces_from_GPU();
+//#endif 
   if(lbpar_gpu.number_of_nodes != 0){
     lb_reinit_GPU(&lbpar_gpu);
     lbpar_gpu.reinit = 1;
