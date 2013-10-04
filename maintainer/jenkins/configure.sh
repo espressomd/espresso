@@ -58,7 +58,7 @@ else
         > $FFTW_HEADER
 fi
 
-cmd "$srcdir/configure $configure_params $configure_vars" || exit 1
+cmd "$srcdir/configure $configure_params $configure_vars" || exit $?
 end "CONFIGURE"
 
 popd

@@ -24,7 +24,7 @@ pushd $builddir
 [ $check_procs != "1" ] &&  make_params="processors=\"$check_procs\""
 # something should be done after ||, otherwise Jenkins will mark
 # job as failed
-cmd "make check $make_params || CHECK_UNSTABLE=1"
+cmd "make check $make_params" || CHECK_UNSTABLE=1
 
 popd
 end "TEST"
