@@ -448,6 +448,16 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ], [$cuda_path/lib $cuda_path/lib64])
 
+    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
+        ])
+    ])
+
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
     
@@ -570,7 +580,6 @@ AC_CONFIG_FILES([
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
-	testsuite/configs/Makefile
 	doc/Makefile
 	doc/logo/Makefile
 	doc/ug/Makefile

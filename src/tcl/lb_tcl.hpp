@@ -39,4 +39,9 @@ int tclcommand_inter_parse_affinity(Tcl_Interp * interp, int part_type_a, int pa
 extern int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
 extern int affinity_set_params(int part_type_a, int part_type_b, double * affinity);
 
+#ifdef SHANCHEN
+int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j);
+#endif
+
+
 #endif /* LB_TCL_H */
