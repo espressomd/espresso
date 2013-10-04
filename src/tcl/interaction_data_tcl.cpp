@@ -39,12 +39,13 @@
 #include "tab.hpp"
 #include "buckingham.hpp"
 
-// nonbonded
+// Nonbonded
 #include "bmhtf-nacl_tcl.hpp"
 #include "buckingham_tcl.hpp"
 #include "gb_tcl.hpp"
 #include "gaussian_tcl.hpp"
 #include "hat_tcl.hpp"
+#include "lb_tcl.hpp"
 #include "lj_tcl.hpp"
 #include "ljangle_tcl.hpp"
 #include "ljcos_tcl.hpp"
@@ -91,19 +92,12 @@
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
 
-int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
-
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
 #endif
 
 #ifdef ELECTROSTATICS
-
-#ifdef SHANCHEN
-int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j);
-int tclcommand_inter_parse_affinity(Tcl_Interp * interp,int part_type_a,int part_type_b, int argc, char ** argv);
-#endif
-
+int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 
 /********************************************************************************/
 /*                                 electrostatics                               */
