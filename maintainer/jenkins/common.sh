@@ -1,9 +1,5 @@
-# Copyright (C) 2013 Olaf Lenz
-#
-# Copying and distribution of this file, with or without modification,
-# are permitted in any medium without royalty provided the copyright
-# notice and this notice are preserved.  This file is offered as-is,
-# without any warranty.
+#!/bin/bash
+
 if ((`ps -o nice= $$` < 5)); then 
     renice -n 5 $$
 fi
@@ -16,38 +12,56 @@ function end() {
     echo "END $1"
 }
 
-function use_config() {
-    myconfig=maintainer/jenkins/configs/$1.h
-    if [ ! -e "$myconfig" ]; then
-        echo "$myconfig does not exist!"
-        exit 1
+function cmd() {
+    echo ">$1"
+    eval $1
+}
+
+function outp() {
+    for p in $*; do
+        echo "  $p=${!p}"
+    done
+}
+
+# DIR SETTINGS
+[ ! -v insource ] && insource="true"
+[ ! -v srcdir ] && srcdir=`pwd`
+if $insource; then
+    builddir=$srcdir
+elif [ ! -v builddir ]; then
+    builddir=$srcdir/build
+fi
+
+outp srcdir builddir insource 
+
+if [ ! -e $srcdir/configure.ac ]; then
+    echo "Could not find configure.ac in $srcdir!"
+    exit 1
+fi
+
+if ! $insource; then
+    if [ ! -d $builddir ]; then
+        echo "Creating $builddir..."
+        mkdir -p $builddir
     fi
-    echo "Using $myconfig."
-    cp $myconfig myconfig.h
-}
+fi
 
-function check() {
-    start "TEST"
-    # something should be done after ||, otherwise Jenkins will mark
-    # job as failed
-    make check || CHECK_UNSTABLE=1
-    end "TEST"
-}
+# PARALLELISM SETTINGS
+if [ -v parallelism ]; then
+    outp parallelism
 
-function doc() {
-    start "DOC"
-    make doc
-    end "DOC"
-}
+    case $parallelism in
+        ("3core") 
+            with_mpi=true 
+            check_procs=3
+            ;;
+        ("4core")
+            with_mpi=true
+            check_procs=4
+            ;;
+        ("nompi")
+            with_mpi=false
+            ;;
+    esac
+fi
 
-function dist() {
-    start "DIST"
-    make dist dist-xz
-    end "DIST"
-}
-
-function bootstrap() {
-    start "BOOTSTRAP"
-    ./bootstrap.sh
-    end "BOOTSTRAP"
-}
