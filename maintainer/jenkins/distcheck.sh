@@ -16,7 +16,7 @@ outp distcheck_flags
 pushd $builddir
 
 start "DISTCHECK"
-cmd "make distcheck DISTCHECK_CONFIGURE_FLAGS=\"$distcheck_flags\""
+cmd "make distcheck DISTCHECK_CONFIGURE_FLAGS=\"$distcheck_flags\"" || exit $?
 end "DISTCHECK"
 
 popd

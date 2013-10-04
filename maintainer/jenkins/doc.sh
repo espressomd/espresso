@@ -12,7 +12,7 @@ source $DIR/common.sh
 pushd $builddir
 
 start "DOC"
-cmd "make doc"
+cmd "make doc" || exit $?
 end "DOC"
 
 popd

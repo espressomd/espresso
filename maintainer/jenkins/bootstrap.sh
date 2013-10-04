@@ -10,7 +10,7 @@ source $DIR/common.sh
 
 start "BOOTSTRAP"
 pushd $srcdir
-./bootstrap.sh
+./bootstrap.sh || exit $?
 popd
 end "BOOTSTRAP"
 

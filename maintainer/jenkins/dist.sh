@@ -13,7 +13,7 @@ start "DIST"
 pushd $builddir
 
 # DIST
-cmd "make dist dist-xz"
+cmd "make dist dist-xz" || exit $?
 
 popd
 end "DIST"
