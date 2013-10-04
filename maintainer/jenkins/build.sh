@@ -21,18 +21,18 @@ pushd $builddir
 
 if [ "$myconfig" = "default" ]; then
     echo "Using default myconfig."
-    if [ -e $builddir/myconfig.h ]; then
-        echo "Deleting $builddir/myconfig.h..."
-        rm $builddir/myconfig.h
+    if [ -e $builddir/myconfig.hpp ]; then
+        echo "Deleting $builddir/myconfig.hpp..."
+        rm $builddir/myconfig.hpp
     fi
 else
-    myconfig_file=$srcdir/maintainer/jenkins/configs/$myconfig.h
+    myconfig_file=$srcdir/maintainer/jenkins/configs/$myconfig.hpp
     if [ ! -e "$myconfig_file" ]; then
         echo "$myconfig_file does not exist!"
         exit 1
     fi
-    echo "Copying $myconfig.h to $builddir/myconfig.h..."
-    cp $myconfig_file $builddir/myconfig.h
+    echo "Copying $myconfig.hpp to $builddir/myconfig.hpp..."
+    cp $myconfig_file $builddir/myconfig.hpp
 fi
 
 make_params="-j $build_procs"
