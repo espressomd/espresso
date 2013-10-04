@@ -32,7 +32,11 @@ int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc,
 
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
+int tclcommand_inter_parse_affinity(Tcl_Interp * interp, int part_type_a, int part_type_b, int argc, char ** argv);
+
+
 /** lb boundary command. From \ref lb-boundaries_tcl.c */
 extern int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
+extern int affinity_set_params(int part_type_a, int part_type_b, double * affinity);
 
 #endif /* LB_TCL_H */

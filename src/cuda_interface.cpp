@@ -172,11 +172,10 @@ static void cuda_mpi_get_particles_slave(){
       /* and send it back to the master node */
       MPI_Send(particle_data_host_sl, n_part*sizeof(CUDA_particle_data), MPI_BYTE, 0, REQ_CUDAGETPARTS, comm_cart);
       free(particle_data_host_sl);
-    }  
+    }
 }
 
-void cuda_mpi_send_forces(CUDA_particle_force *host_forces){
-  
+  void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_composition){
     int n_part;
     int g, pnode;
     Cell *cell;
@@ -206,6 +205,11 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces){
                 cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
                 cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
                 cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
+#ifdef SHANCHEN
+                for (int ii=0;ii<LB_COMPONENTS;ii++) {
+                   cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
+                }
+#endif
               }
         g += npart;
             }
@@ -213,6 +217,9 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces){
           else {
           /* and send it back to the slave node */
           MPI_Send(&host_forces[g], sizes[pnode]*sizeof(CUDA_particle_force), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);      
+#ifdef SHANCHEN
+          MPI_Send(&host_composition[g], sizes[pnode]*sizeof(CUDA_fluid_composition), MPI_BYTE, pnode, REQ_CUDAGETPARTS, comm_cart);      
+#endif
           g += sizes[pnode];
           }
         }
@@ -226,7 +233,10 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces){
 static void cuda_mpi_send_forces_slave(){
 
     int n_part;
-    CUDA_particle_force *host_forces_sl;
+    CUDA_particle_force *host_forces_sl=NULL;
+#ifdef SHANCHEN
+    CUDA_fluid_composition *host_composition_sl=NULL;
+#endif
     Cell *cell;
     int c, i;
     MPI_Status status;
@@ -242,7 +252,12 @@ static void cuda_mpi_send_forces_slave(){
       /* then get the particle information */
       host_forces_sl = (CUDA_particle_force *) malloc(n_part*sizeof(CUDA_particle_force));
       MPI_Recv(host_forces_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_CUDAGETFORCES,
-      comm_cart, &status);
+        comm_cart, &status);
+#ifdef SHANCHEN
+      host_composition_sl = (CUDA_fluid_composition *) malloc(n_part*sizeof(CUDA_fluid_composition));
+      MPI_Recv(host_composition_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_CUDAGETPARTS,
+        comm_cart, &status);
+#endif
       for (c = 0; c < local_cells.n; c++) {
         int npart;  
         cell = local_cells.cell[c];
@@ -251,10 +266,18 @@ static void cuda_mpi_send_forces_slave(){
           cell->part[i].f.f[0] += (double)host_forces_sl[i+g].f[0];
           cell->part[i].f.f[1] += (double)host_forces_sl[i+g].f[1];
           cell->part[i].f.f[2] += (double)host_forces_sl[i+g].f[2];
+#ifdef SHANCHEN
+          for (int ii=0;ii<LB_COMPONENTS;ii++) {
+             cell->part[i].r.composition[ii] = (double)host_composition_sl[i+g].weight[ii];
+          }
+#endif
         }
         g += npart;
       }
       free(host_forces_sl);
+#ifdef SHANCHEN
+      free(host_composition_sl);
+#endif 
     } 
 }
 
