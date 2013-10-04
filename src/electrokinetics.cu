@@ -1596,46 +1596,50 @@ __global__ void ek_reaction_tag( ) {
 
 __global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_boundary_force, LB_parameters_gpu *ek_lbparameters_gpu )
 {
-
-  // The number of nodes belonging to the fluid
-
-  float number_of_fluid_nodes = ek_parameters_gpu.accelerated_frame_fluid_mass / 
-                                ek_lbparameters_gpu->rho[0] / 
-                                powf(ek_lbparameters_gpu->agrid,3);
-
-  // The correct external force 
-
-  double ext_acc_force[3];
-  ext_acc_force[0] = ek_parameters_gpu.ext_acceleration_force[0]*ek_parameters_gpu.accelerated_frame_fluid_mass;
-  ext_acc_force[1] = ek_parameters_gpu.ext_acceleration_force[1]*ek_parameters_gpu.accelerated_frame_fluid_mass;
-  ext_acc_force[2] = ek_parameters_gpu.ext_acceleration_force[2]*ek_parameters_gpu.accelerated_frame_fluid_mass;
-
   // Set force to zero
 
   ek_accelerated_frame_boundary_force[0] = 0.0f;
   ek_accelerated_frame_boundary_force[1] = 0.0f;
   ek_accelerated_frame_boundary_force[2] = 0.0f;
 
-  // Add external force applied to the particle (boundary composite)
+  if ( ek_parameters_gpu.accelerated_frame_enabled == 1 )
+  {
+    // The number of nodes belonging to the fluid
 
-  ek_accelerated_frame_boundary_force[0] += ext_acc_force[0];
-  ek_accelerated_frame_boundary_force[1] += ext_acc_force[1];
-  ek_accelerated_frame_boundary_force[2] += ext_acc_force[2];
+    float number_of_fluid_nodes = ek_parameters_gpu.accelerated_frame_fluid_mass / 
+                                  ek_lbparameters_gpu->rho[0] / 
+                                  powf(ek_lbparameters_gpu->agrid,3);
+
+    // Calculate the correct external force, on the Tcl level a volume density
+    // is specified, which only acts on the fluid nodes!
+
+    double ext_acc_force[3];
+    ext_acc_force[0] = ek_parameters_gpu.ext_acceleration_force[0] * number_of_fluid_nodes *  
+                       powf(ek_lbparameters_gpu->agrid,3);
+    ext_acc_force[1] = ek_parameters_gpu.ext_acceleration_force[1] * number_of_fluid_nodes *  
+                       powf(ek_lbparameters_gpu->agrid,3);
+    ext_acc_force[2] = ek_parameters_gpu.ext_acceleration_force[2] * number_of_fluid_nodes *  
+                       powf(ek_lbparameters_gpu->agrid,3);
+
+    // Add/Start with the external force applied to the particle, which is
+    // technically a boundary composite, this has a positive sign because it is
+    // applied to the particle
+
+    ek_accelerated_frame_boundary_force[0] += ext_acc_force[0];
+    ek_accelerated_frame_boundary_force[1] += ext_acc_force[1];
+    ek_accelerated_frame_boundary_force[2] += ext_acc_force[2];
 
 // TODO : REMOVE
 printf("ext_force %f ", ek_accelerated_frame_boundary_force[2]);
-
-  if ( ek_parameters_gpu.accelerated_frame_enabled == 1 )
-  {
 
     for ( int i = 0; i < n_lb_boundaries; i++)
     {
 // TODO : REMOVE
 printf("bndry_force %f ", -ek_lb_boundary_force[3*i + 2]);
 
-      // Sum over all the boundaries that make up the composite and
-      // and ad the friction force. The boundary force coming from 
-      // the LB has the incorrect sign, it is pointing in the direction
+      // Sum over all the boundaries that make up the composite and add the total
+      // friction force to the external force vector wise. The boundary force
+      // coming from the LB has the incorrect sign, it points in the direction
       // of the fluid, not in the direction of the boundary, hence the minus.
 
       ek_accelerated_frame_boundary_force[0] += -ek_lb_boundary_force[3*i + 0];
@@ -1646,7 +1650,10 @@ printf("bndry_force %f ", -ek_lb_boundary_force[3*i + 2]);
 // TODO : REMOVE
 printf("ext_force+bndry_force %f ", ek_accelerated_frame_boundary_force[2]);
 
-    // EXPLANATION HERE for way to incorporate the boundary force and mass
+    // Now calculate the acceleration on the particle by dividing the total force
+    // on the particle by the boundary mass. This acceleration is applied on the
+    // fluid in the transformation (with a minus sign) and must be multiplied 
+    // by the fluid mass to get the right force on the fluid
   
     ek_accelerated_frame_boundary_force[0] *= - (   ek_parameters_gpu.accelerated_frame_fluid_mass
                                                   / ek_parameters_gpu.accelerated_frame_boundary_mass );
@@ -1658,10 +1665,10 @@ printf("ext_force+bndry_force %f ", ek_accelerated_frame_boundary_force[2]);
 // TODO : REMOVE
 printf("(ef+bf)*(mf/mp) %f ", ek_accelerated_frame_boundary_force[2]);
 
-    // In a finite system there is also a force acting on the fluid this
-    // force ensures that the there is no total force acting on the system.
-    // That is, for a moving particle there would otherwise be no 
-    // stationary state.
+    // In a finite system there is also always the negative of the external force 
+    // on the particle acting on the fluid. This force ensures that the there is
+    // no total force acting on the system, hence momentum is conserved. That is,
+    // for a moving particle there would otherwise be no stationary state.
 
     ek_accelerated_frame_boundary_force[0] -= ext_acc_force[0];
     ek_accelerated_frame_boundary_force[1] -= ext_acc_force[1];
@@ -1673,8 +1680,6 @@ printf("(ef+bf)*(mf/mp) + ef %f ", ek_accelerated_frame_boundary_force[2]);
     // Do the unit conversion from LB units (boundary force) to units that 
     // can be added back into the LB fluid via the LB external force (MD units),
     // apparently this requires scaling by the fluid node number
-
-
 
     ek_accelerated_frame_boundary_force[0] *= ( ek_parameters_gpu.agrid * powf(ek_parameters_gpu.time_step, 2) / 
                                                 number_of_fluid_nodes );
