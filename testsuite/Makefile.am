@@ -77,6 +77,7 @@ tests = \
 	rotation_per_particle.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
+        uwerr.tcl \
 	virtual-sites.tcl
 # please keep the alphabetic ordering of the above list!
 
@@ -100,7 +101,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
-	gb_system.data \
+	gb_system.data uwerr.data \
 	tabulated_system.data lj1.tab lj2.tab lj3.tab \
 	fene_system.data.gz harm_system.data.gz \
 	intpbc_system.data.gz intppbc.tcl intppbc_system.data.gz \
@@ -114,9 +115,6 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	object_in_fluid_system-triangles.data \
 	\
 	pe_micelle.tcl pe_micelle.data \
-	uwerr.tcl uwerr.data \
-	\
-	gen_fene.tcl gen_harm.tcl \
 	\
 	maggs_correct_rdf.data
 
