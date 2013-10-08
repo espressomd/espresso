@@ -33,8 +33,6 @@ require_feature "ELECTROSTATICS"
 require_feature "CONSTRAINTS"
 require_feature "PARTIAL_PERIODIC"
 
-source ../../scripts/bundle.tcl
-
 global name level
 set name ""
 set level 0
@@ -78,6 +76,24 @@ pack .star.menu -expand 1 -fill both -in .star
 #############################################################
 #     Main Menu                                             #
 #############################################################
+
+proc bundle_counterion_setup { n_ci sphere_rad valency {center "0 0 0"} {type "1"} {start "0"} } {
+    set s_rad2 [expr $sphere_rad*$sphere_rad]
+
+    for {set i $start} { $i < [expr $n_ci+$start] } {incr i} {
+	set dist [expr $s_rad2 + 10.0]
+	while { $dist > [expr $s_rad2-(2.0*$sphere_rad-1.0)] } {
+	    set posx [expr 2*$sphere_rad*[t_random]-$sphere_rad]
+	    set posy [expr 2*$sphere_rad*[t_random]-$sphere_rad]
+	    set posz [expr 2*$sphere_rad*[t_random]-$sphere_rad]
+	    set dist [expr $posx*$posx + $posy*$posy + $posz*$posz]
+	}
+	set posx [expr $posx+[lindex $center 0] ]
+	set posy [expr $posy+[lindex $center 1] ]
+	set posz [expr $posz+[lindex $center 2] ] 
+	part $i pos $posx $posy $posz type $type q $valency
+    }
+}
 
 proc SetupStar  {} {
     global name level
