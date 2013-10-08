@@ -17,13 +17,22 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-#  
-set n_part 200; set density 0.7
+#
+
+# Set system parameters
+set n_part 200
+set density 0.7
 set box_l [expr pow($n_part/$density,1./3.)]
 
+# Select electrostatics method
+set method "p3m"
+#set method "memd"
+
+# Setup system geometry in Espresso
 setmd box_l $box_l $box_l $box_l
 setmd periodic 1 1 1
 
+# Place particles
 set q 1; set type 0
 for {set i 0} { $i < $n_part } {incr i} {
   set posx [expr $box_l*[t_random]]
@@ -33,16 +42,42 @@ for {set i 0} { $i < $n_part } {incr i} {
   part $i pos $posx $posy $posz q $q type $type
 }
 
+# Simulation parameters
 setmd time_step 0.01; setmd skin 0.3
+# Thermostat
 set temp 1; set gamma 1
 thermostat langevin $temp $gamma
 
+
+# Lennard-Jones interactions
 set sig 1.0; set cut [expr 1.12246*$sig]
 set eps 1.0; set shift [expr 0.25*$eps]
 inter 0 0 lennard-jones $eps $sig $cut $shift 0
 inter 1 0 lennard-jones $eps $sig $cut $shift 0
 inter 1 1 lennard-jones $eps $sig $cut $shift 0
-puts [inter coulomb 10.0 p3m tunev2 accuracy 1e-3 mesh 32]
+
+
+# Check if electrostatics method is clear...
+if { ![ info exists method ] } {
+	puts "Please select an electrostatics method in the script."
+	exit
+}
+
+# Distinguish between different methods
+if { $method == "p3m" } {
+	puts [inter coulomb 10.0 p3m tunev2 accuracy 1e-3 mesh 32]
+} elseif { $method == "memd" } {
+	# MEMD need no Verlet lists!
+	cellsystem domain_decomposition -no_verlet_list
+	set memd_mesh 12
+	set f_mass [expr 100.0*pow( ([setmd time_step]*$memd_mesh/$box_l) , 2.0 ) ]
+	puts "memd parameters: mesh=$memd_mesh, f_mass=$f_mass"
+	puts [inter coulomb 10.0 memd $f_mass $memd_mesh]
+} else {
+	puts "Electrostatics method must be one of 'memd' or 'p3m'."
+	exit
+}
+
 
 set p3m_params [inter coulomb]
 foreach f $p3m_params { eval inter $f }
