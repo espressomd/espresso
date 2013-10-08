@@ -31,6 +31,44 @@
 #include "parser.hpp"
 
 #ifdef LB_GPU
+#ifdef SHANCHEN
+int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+  IA_parameters *data = get_ia_param(i, j);
+
+  Tcl_PrintDouble(interp, data->affinity[0], buffer);
+  Tcl_AppendResult(interp, "affinity ", buffer, " ", (char *) NULL);
+  for(int ii=1;ii<LB_COMPONENTS;ii++){
+     Tcl_PrintDouble(interp, data->affinity[ii], buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
+  return TCL_OK;
+}
+
+int tclcommand_inter_parse_affinity(Tcl_Interp * interp,int part_type_a,int part_type_b, int argc, char ** argv)
+{
+  double affinity[LB_COMPONENTS];
+  if (argc != LB_COMPONENTS+1 ) {
+    Tcl_AppendResult(interp, "Not enough values for affinity",
+		     (char *) NULL);      
+    return 0;
+  }
+  for (int ii=0;ii<LB_COMPONENTS;ii++){ 
+    if ( ! ARG_IS_D(ii+1, (affinity[ii]) )) { 
+      Tcl_AppendResult(interp, "list of doubles expected for affinity", (char *) NULL);
+      return 0;
+    } 
+  }
+  if(affinity_set_params(part_type_a,part_type_b,affinity) == ES_ERROR) { 
+    Tcl_AppendResult(interp, "Error setting affinity, values must lie between 0 and 1", (char *) NULL);
+    return 0;
+  }
+  Tcl_AppendResult(interp, "Error setting affinity", (char *) NULL);
+  return 3;
+}
+#endif
+
 static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
   double f[3];
   
@@ -263,6 +301,14 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
                  return TCL_ERROR;
                }
         }
+      }
+      else if (ARG0_IS_S("remove_momentum")) {
+          if ( lb_lbfluid_set_remove_momentum() == 0 ) {
+            argc-=2; argv+=2;
+          } else {
+	          Tcl_AppendResult(interp, "Unknown Error setting remove_momentum", (char *)NULL);
+            return TCL_ERROR;
+          }
       }
 #endif // SHANCHEN
       else if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {

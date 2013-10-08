@@ -481,6 +481,11 @@ typedef struct {
   double REACTION_range;
 #endif
 
+#ifdef SHANCHEN
+  double affinity[LB_COMPONENTS];
+  int affinity_on;
+#endif
+
 } IA_parameters;
 
 /** thermodynamic force parameters */

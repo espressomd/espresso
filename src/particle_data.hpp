@@ -169,6 +169,10 @@ typedef struct {
   double p_old[3];
 #endif
 
+#ifdef SHANCHEN
+  double composition[LB_COMPONENTS];
+#endif
+
 } ParticlePosition;
 
 /** Force information on a particle. Forces of ghost particles are

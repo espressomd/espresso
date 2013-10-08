@@ -416,14 +416,20 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gpu *rn){
   float Rho;
 #ifdef SHANCHEN
+  float Rho_tot=0.0,c;
+  #pragma unroll
+  for(int ii=0;ii<LB_COMPONENTS;++ii) { 
+      Rho_tot  += mode[0 + ii * LBQ]+ para.rho[ii]*para.agrid*para.agrid*para.agrid;
+  }
+  c = (mode[0 + 0 * LBQ]+ para.rho[0]*para.agrid*para.agrid*para.agrid ) / Rho_tot;
   random_wrapper(rn);
   for(int ii=0;ii<LB_COMPONENTS;++ii) { 
-      mode[1 + ii * LBQ] += sqrt((para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
-      mode[2 + ii * LBQ] += sqrt((para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[1];
-  }
-  random_wrapper(rn);
-  for(int ii=0;ii<LB_COMPONENTS;++ii)  
-      mode[3 + ii * LBQ] += sqrt((para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
+      mode[1 + ii * LBQ] +=  sqrt(c*(1-c)*Rho_tot*(para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
+      mode[2 + ii * LBQ] +=  sqrt(c*(1-c)*Rho_tot*(para.mu[ii]*(2.f/3.f)*(1.f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[1];
+  }                                      
+  random_wrapper(rn);                    
+  for(int ii=0;ii<LB_COMPONENTS;++ii)    
+      mode[3 + ii * LBQ] +=  sqrt(c*(1-c)*Rho_tot*(para.mu[ii]*(2.f/3.f)*(1.f-( para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
 #endif
   
   
@@ -1155,11 +1161,12 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
  * @param *delta_j		Pointer for the weighting of particle momentum (Output)
  * @param *particle_data	Pointer to the particle position and velocity (Input)
  * @param *particle_force	Pointer to the particle force (Input)
+ * @param *fluid_composition    Pointer to the fluid composition (Input)
  * @param part_index		particle id / thread id (Input)
  * @param *rn_part		Pointer to randomnumber array of the particle
  * @param node_index		node index around (8) particle (Output)
 */
-__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partgrad1, float * partgrad2, float * partgrad3, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
+__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partgrad1, float * partgrad2, float * partgrad3, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, CUDA_fluid_composition * fluid_composition, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
 	
  int left_node_index[3];
  float interpolated_u1, interpolated_u2, interpolated_u3;
@@ -1337,7 +1344,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   gradrho2 +=(delta[7] + delta[5]) * Rho; 
   gradrho3 +=(delta[7] + delta[3]) * Rho; 
 
-  /* normalize the gradient to md units TODO: is that correct?*/
+  /* normalize the gradient to md units*/
   gradrho1 *= para.agrid; 
   gradrho2 *= para.agrid; 
   gradrho3 *= para.agrid; 
@@ -1349,6 +1356,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   particle_force[part_index].f[0] += scforce[0+ii*3];
   particle_force[part_index].f[1] += scforce[1+ii*3];
   particle_force[part_index].f[2] += scforce[2+ii*3];
+  fluid_composition[part_index].weight[ii] = interpolated_rho[ii];
  }
 
 #else // SHANCHEN is not defined
@@ -1422,6 +1430,15 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   delta_j[1+3*ii] -= (scforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
   delta_j[2+3*ii] -= (scforce[2+ii*3]+viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;  	
  }
+#ifdef SHANCHEN
+ for(int node=0 ; node < 8 ; node++ ) { 
+    for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
+		partgrad1[node+ii*8]*=(para.time_step*para.tau/para.agrid);
+		partgrad2[node+ii*8]*=(para.time_step*para.tau/para.agrid);
+		partgrad3[node+ii*8]*=(para.time_step*para.tau/para.agrid);
+    }
+ }
+#endif 
 }
 
 /**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
@@ -2015,7 +2032,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  * @param *part				Pointer to the rn array of the particles (Input)
  * @param node_f			Pointer to local node force (Input)
 */
-__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
+__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
 	
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[8];
@@ -2029,7 +2046,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
 
     rng_part.seed = part[part_index].seed;
     /**force acting on the particle. delta_j will be used later to compute the force that acts back onto the fluid. */
-    calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, part_index, &rng_part, delta_j, node_index,d_v);
+    calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index,d_v);
     calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f); 
 
     /**force which acts back to the fluid node */
@@ -2164,6 +2181,17 @@ __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_gpu
     atomicadd(&(sum[2]), j[2]); 
   }
 
+}
+__global__ void remove_momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_gpu node_f, float *sum) {
+
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+  if(index<para.number_of_nodes){
+    for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
+        node_f.force[(0+ii*3)*para.number_of_nodes + index]-=sum[0]/para.number_of_nodes;
+        node_f.force[(1+ii*3)*para.number_of_nodes + index]-=sum[1]/para.number_of_nodes;
+        node_f.force[(2+ii*3)*para.number_of_nodes + index]-=sum[2]/para.number_of_nodes;
+    }
+  }
 }
 
 /**print single node boundary flag
@@ -2400,12 +2428,16 @@ void lb_calc_particle_lattice_ia_gpu(){
     int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
     dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
+<<<<<<< HEAD
     if ( lbpar_gpu.lb_couple_switch & LB_COUPLE_TWO_POINT ) {
       KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer(),device_rho_v));
     }
     else { /** only other option is the three point coupling scheme */
       KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer(),device_rho_v));
     }
+=======
+    KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), gpu_get_fluid_composition_pointer() , node_f, gpu_get_particle_seed_pointer(),device_rho_v));
+>>>>>>> upstream/master
   }
 }
 
@@ -2487,7 +2519,7 @@ void lb_calc_fluid_mass_GPU(double* mass){
   mass[0] = (double)(cpu_mass);
 }
 
-/** setup and call kernel to calculate the total momentum of the hole fluid
+/** setup and call kernel to calculate the total momentum of the whole fluid
  *  @param host_mom value of the momentum calcutated on the GPU
  */
 void lb_calc_fluid_momentum_GPU(double* host_mom){
@@ -2511,6 +2543,29 @@ void lb_calc_fluid_momentum_GPU(double* host_mom){
   host_mom[0] = (double)(host_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau);
   host_mom[1] = (double)(host_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau);
   host_mom[2] = (double)(host_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
+}
+
+/** setup and call kernel to remove the net momentum of the whole fluid
+ */
+void lb_remove_fluid_momentum_GPU(void){
+  float* tot_momentum;
+  float host_momentum[3] = { 0.f, 0.f, 0.f};
+  cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
+  cudaMemcpy(tot_momentum, host_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
+
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
+  KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, node_f, tot_momentum));
+  
+  cudaMemcpy(host_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
+
+  KERNELCALL(remove_momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, node_f, tot_momentum));
+  
+  cudaFree(tot_momentum);
 }
 
 

@@ -511,6 +511,7 @@ int lb_lbfluid_set_couple_flag(int couple_flag);
 int lb_lbfluid_set_agrid(double p_agrid);
 int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
 int lb_lbfluid_set_tau(double p_tau);
+int lb_lbfluid_set_remove_momentum(void);
 #ifdef SHANCHEN
 int lb_lbfluid_set_shanchen_coupling(double * p_coupling);
 int lb_lbfluid_set_mobility(double * p_mobility);
