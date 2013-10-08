@@ -40,11 +40,9 @@
 #include "lb-d3q19.hpp"
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
-<<<<<<< HEAD
-#include "config.hpp"
-=======
+
 #include "cuda_interface.hpp"
->>>>>>> upstream/master
+
 
 int lb_components = LB_COMPONENTS; // global variable holding the number of fluid components (see global.c)
 
