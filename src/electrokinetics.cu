@@ -111,6 +111,7 @@ int ek_initialized = 0;
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
   static __device__ float ek_accelerated_frame_boundary_force [3] = { 0.0f, 0.0f, 0.0f };
+  static float* ek_accelerated_frame_boundary_velocity;
   EK_parameters *ek_parameters_gpu_pointer;
   LB_parameters_gpu *ek_lbparameters_gpu;
   CUDA_particle_data *particle_data_gpu;
@@ -1594,7 +1595,7 @@ __global__ void ek_reaction_tag( ) {
 #endif
 
 
-__global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_boundary_force, LB_parameters_gpu *ek_lbparameters_gpu )
+__global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_boundary_force, float* ek_accelerated_frame_boundary_velocity, LB_parameters_gpu *ek_lbparameters_gpu )
 {
   // Set force to zero
 
@@ -1630,12 +1631,12 @@ __global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_
     ek_accelerated_frame_boundary_force[2] += ext_acc_force[2];
 
 // TODO : REMOVE
-printf("ext_force %f ", ek_accelerated_frame_boundary_force[2]);
+// printf("ext_force %f ", ek_accelerated_frame_boundary_force[2]);
 
     for ( int i = 0; i < n_lb_boundaries; i++)
     {
 // TODO : REMOVE
-printf("bndry_force %f ", -ek_lb_boundary_force[3*i + 2]);
+// printf("bndry_force %f ", -ek_lb_boundary_force[3*i + 2]);
 
       // Sum over all the boundaries that make up the composite and add the total
       // friction force to the external force vector wise. The boundary force
@@ -1648,7 +1649,22 @@ printf("bndry_force %f ", -ek_lb_boundary_force[3*i + 2]);
     }
 
 // TODO : REMOVE
-printf("ext_force+bndry_force %f ", ek_accelerated_frame_boundary_force[2]);
+// printf("ext_force+bndry_force %f ", ek_accelerated_frame_boundary_force[2]);
+
+    // INTERMEZZO: Calculate the velocity of the frame, and thus obtain the 
+    // velocity of the boundary with respect to the center of mass of the system.
+    // In the finite box, the fluid's center of mass moves in the opposite
+    // direction.
+
+    ek_accelerated_frame_boundary_velocity[0] += ( ek_accelerated_frame_boundary_force[0] / 
+                                                   ek_parameters_gpu.accelerated_frame_boundary_mass *
+                                                   ek_parameters_gpu.time_step );
+    ek_accelerated_frame_boundary_velocity[1] += ( ek_accelerated_frame_boundary_force[1] / 
+                                                   ek_parameters_gpu.accelerated_frame_boundary_mass *
+                                                   ek_parameters_gpu.time_step );
+    ek_accelerated_frame_boundary_velocity[2] += ( ek_accelerated_frame_boundary_force[2] / 
+                                                   ek_parameters_gpu.accelerated_frame_boundary_mass *
+                                                   ek_parameters_gpu.time_step );
 
     // Now calculate the acceleration on the particle by dividing the total force
     // on the particle by the boundary mass. This acceleration is applied on the
@@ -1663,7 +1679,7 @@ printf("ext_force+bndry_force %f ", ek_accelerated_frame_boundary_force[2]);
                                                   / ek_parameters_gpu.accelerated_frame_boundary_mass );
 
 // TODO : REMOVE
-printf("(ef+bf)*(mf/mp) %f ", ek_accelerated_frame_boundary_force[2]);
+// printf("(ef+bf)*(mf/mp) %f ", ek_accelerated_frame_boundary_force[2]);
 
     // In a finite system there is also always the negative of the external force 
     // on the particle acting on the fluid. This force ensures that the there is
@@ -1675,7 +1691,7 @@ printf("(ef+bf)*(mf/mp) %f ", ek_accelerated_frame_boundary_force[2]);
     ek_accelerated_frame_boundary_force[2] -= ext_acc_force[2];
 
 // TODO : REMOVE
-printf("(ef+bf)*(mf/mp) + ef %f ", ek_accelerated_frame_boundary_force[2]);
+// printf("(ef+bf)*(mf/mp) + ef %f ", ek_accelerated_frame_boundary_force[2]);
 
     // Do the unit conversion from LB units (boundary force) to units that 
     // can be added back into the LB fluid via the LB external force (MD units),
@@ -1848,7 +1864,7 @@ void ek_integrate() {
     /* Calculate the total force on the boundaries for the accelerated frame transformation,
        can only be done after the LB integration is called */
 
-    ek_calculate_boundary_forces<<<1,1>>>( n_lb_boundaries, ek_lb_boundary_force, ek_lbparameters_gpu );
+    ek_calculate_boundary_forces<<<1,1>>>( n_lb_boundaries, ek_lb_boundary_force, ek_accelerated_frame_boundary_velocity, ek_lbparameters_gpu );
   }
 
 
@@ -1857,11 +1873,13 @@ void ek_integrate() {
   cudaDeviceSynchronize();
 
 // TODO : REMOVE
+/*
 LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
                                                         sizeof( LB_rho_v_pi_gpu ) );
 lb_get_values_GPU( host_values ); 
 printf( "ve %f\n", host_values[ 0 ].v[2] );
 free(host_values);	
+*/
 }
 
 
@@ -2074,7 +2092,6 @@ int ek_init() {
         return 1;
     }
     
-
     blocks_per_grid_x =
       ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x ) +
         threads_per_block * blocks_per_grid_y - 1
@@ -2085,6 +2102,14 @@ int ek_init() {
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.charge_potential,
                              sizeof( cufftComplex ) *
                              ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) ) );
+
+
+    cuda_safe_mem( cudaMalloc( (void**) &ek_accelerated_frame_boundary_velocity,
+                               3 * sizeof( float ) ) );
+
+    cuda_safe_mem( cudaMemset( ek_accelerated_frame_boundary_velocity,
+                               0,
+                               3 * sizeof( float ) ) );
 
     initialized = true;
   }
@@ -2249,9 +2274,11 @@ int ek_print_vtk_density( int species, char* filename ) {
   
   if( ek_parameters.species_index[ species ] != -1 ) {
   
-    cudaMemcpy( densities, ek_parameters.rho[ ek_parameters.species_index[ species ] ],
-                ek_parameters.number_of_nodes * sizeof( float ),
-                cudaMemcpyDeviceToHost                                                  );
+    cuda_safe_mem( cudaMemcpy( densities, 
+                               ek_parameters.rho[ ek_parameters.species_index[ species ] ],
+                               ek_parameters.number_of_nodes * sizeof( float ),
+                               cudaMemcpyDeviceToHost )
+                 );
   }
   else
     return 1;
@@ -2363,9 +2390,10 @@ int ek_print_vtk_flux( int species, char* filename ) {
                 ( ek_parameters.species_index[ species ], *current_nodes, node_f )                     );
 #endif
   
-    cudaMemcpy( fluxes, ek_parameters.j,
-                ek_parameters.number_of_nodes * 13*sizeof( float ),
-                cudaMemcpyDeviceToHost );
+    cuda_safe_mem( cudaMemcpy( fluxes, ek_parameters.j,
+                               ek_parameters.number_of_nodes * 13*sizeof( float ),
+                               cudaMemcpyDeviceToHost )
+                 );
   }
   else
     return 1;
@@ -2493,9 +2521,10 @@ int ek_print_vtk_potential( char* filename ) {
   	
   float* potential = (float*) malloc( ek_parameters.number_of_nodes * sizeof( cufftReal ) );
   
-  cudaMemcpy( potential, ek_parameters.charge_potential,
-              ek_parameters.number_of_nodes * sizeof( cufftReal ),
-              cudaMemcpyDeviceToHost                               );
+  cuda_safe_mem( cudaMemcpy( potential, ek_parameters.charge_potential,
+                             ek_parameters.number_of_nodes * sizeof( cufftReal ),
+                             cudaMemcpyDeviceToHost )                          
+               );
   
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
@@ -2538,9 +2567,10 @@ int ek_print_vtk_lbforce( char* filename ) {
   	
   float* lbforce = (float*) malloc( ek_parameters.number_of_nodes * 3 *sizeof( float ) );
   
-  cudaMemcpy( lbforce, node_f.force,
-              ek_parameters.number_of_nodes * 3 * sizeof( float ),
-              cudaMemcpyDeviceToHost                               );
+  cuda_safe_mem( cudaMemcpy( lbforce, node_f.force,
+                             ek_parameters.number_of_nodes * 3 * sizeof( float ),
+                             cudaMemcpyDeviceToHost )
+               );
   
   fprintf( fp, "\
 # vtk DataFile Version 2.0\n\
@@ -2585,9 +2615,10 @@ int ek_print_vtk_pressure( char* filename ) {
   	
   float* pressure = (float*) malloc( ek_parameters.number_of_nodes * sizeof( float ) );
   
-  cudaMemcpy( pressure, ek_parameters.pressure,
-              ek_parameters.number_of_nodes * sizeof( float ),
-              cudaMemcpyDeviceToHost                               );
+  cuda_safe_mem( cudaMemcpy( pressure, ek_parameters.pressure,
+                             ek_parameters.number_of_nodes * sizeof( float ),
+                             cudaMemcpyDeviceToHost )
+               );
   
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
@@ -2895,11 +2926,32 @@ int ek_set_accelerated_frame( int enabled, double boundary_mass_density, double*
   ek_parameters.accelerated_frame_enabled = enabled;
   ek_parameters.accelerated_frame_boundary_mass_density = boundary_mass_density;
 
-//*powf(lbpar_gpu.agrid,4)*lbpar_gpu.tau*lbpar_gpu.tau; // TODO REMOVE
-
   ek_parameters.ext_acceleration_force[0] = ext_acceleration_force[0];
   ek_parameters.ext_acceleration_force[1] = ext_acceleration_force[1];
   ek_parameters.ext_acceleration_force[2] = ext_acceleration_force[2];
+
+  return 0;
+#else 
+  printf("ERROR: Need boundaries (EK_BOUNDARIES) for the accelerated frame.\n");
+  return 1;
+#endif
+
+}
+
+int ek_accelerated_frame_print_boundary_velocity( double* accelerated_boundary_velocity ) {
+
+#ifdef EK_BOUNDARIES
+  float* temp_boundary_velocity = (float*) malloc( 3 * sizeof( float ) );
+
+  cuda_safe_mem( cudaMemcpy( temp_boundary_velocity, 
+                             ek_accelerated_frame_boundary_velocity,
+                             3 * sizeof( float ),
+                             cudaMemcpyDeviceToHost )
+               );
+
+  accelerated_boundary_velocity[0] = static_cast<double>(temp_boundary_velocity[0]);
+  accelerated_boundary_velocity[1] = static_cast<double>(temp_boundary_velocity[1]);
+  accelerated_boundary_velocity[2] = static_cast<double>(temp_boundary_velocity[2]);
 
   return 0;
 #else 

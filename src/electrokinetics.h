@@ -156,6 +156,7 @@ int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
 int ek_set_accelerated_frame( int enabled, double boundary_mass_density, double* ext_acceleration_force );
+int ek_accelerated_frame_print_boundary_velocity( double* accelerated_boundary_velocity );
 
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
