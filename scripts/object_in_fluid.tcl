@@ -183,16 +183,16 @@ proc area_triangle {a b c} {
 	upvar $b gb 
 	upvar $c gc 
 
-	set area 0;
+	set area 0
 	set n {0 0 0} 
 	
-	get_n_triangle ga gb gc n;
+	get_n_triangle ga gb gc n
 	set nx [lindex $n 0]
 	set ny [lindex $n 1]
 	set nz [lindex $n 2]
 
 	set area [expr 0.5*sqrt($nx*$nx + $ny*$ny + $nz*$nz)]
-	return $area;
+	return $area
 }
 
 proc angle_btw_triangles {P1 P2 P3 P4 phi} {
@@ -215,7 +215,7 @@ proc angle_btw_triangles {P1 P2 P3 P4 phi} {
 	set n2y [lindex $n2 1]
 	set n2z [lindex $n2 2]
 	
-	set tmp11 [expr $n1x*$n2x + $n1y*$n2y + $n1z*$n2z];
+	set tmp11 [expr $n1x*$n2x + $n1y*$n2y + $n1z*$n2z]
 	set tmp11 [expr $tmp11*abs($tmp11)]
 	set tmp22 [expr $n1x*$n1x + $n1y*$n1y + $n1z*$n1z]
 	set tmp33 [expr $n2x*$n2x + $n2y*$n2y + $n2z*$n2z]
@@ -417,6 +417,7 @@ proc oif_create_template { args } {
 #--------------------------------------------------------------------------------------------
 # set files for output check
 	if {$check_output == 1} {
+
 		set bondS "TMP/noGbondsStretching$template_id"
 		set bondB "TMP/noGbondsBending$template_id"
 		set bondAlocal "TMP/noGbondsAreaLocal$template_id"
@@ -442,9 +443,10 @@ proc oif_create_template { args } {
 	set file_data [read $fp]
 	close $fp
 	set data [split $file_data "\n"]
-	set mesh_nnodes 0;
 
 	# template must be stretched first
+	set mesh_nnodes 0
+
 	foreach line $data {
 		if { [llength $line] == 3 } {
 			set mesh_nodes($mesh_nnodes,0) [expr $stretch_X*[lindex $line 0]]
@@ -473,11 +475,13 @@ proc oif_create_template { args } {
 	set file_data [read $fp]
 	close $fp
 	set data [split $file_data "\n"]
-	set mesh_ntriangles 0;
+
+	set mesh_ntriangles 0
 	# setting the first triangle id for the currently created template
 	if {$template_id > 0 } { 
 		lappend oif_template_starting_triangles [llength $oif_template_triangles] 
 	} else { lappend oif_template_starting_triangles 0 }
+
 	foreach line $data {
 		if { [llength $line] == 3 } {
 			set mesh_triangles($mesh_ntriangles,0) [lindex $line 0]
@@ -504,6 +508,7 @@ proc oif_create_template { args } {
 
 #--------------------------------------------------------------------------------------------
 # creating the list of edges	
+
 	set mesh_nedges 0
 	
 	for {set i 0} {$i < $mesh_ntriangles} {incr i} {
