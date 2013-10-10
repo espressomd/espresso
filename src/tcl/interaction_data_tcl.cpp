@@ -39,12 +39,13 @@
 #include "tab.hpp"
 #include "buckingham.hpp"
 
-// nonbonded
+// Nonbonded
 #include "bmhtf-nacl_tcl.hpp"
 #include "buckingham_tcl.hpp"
 #include "gb_tcl.hpp"
 #include "gaussian_tcl.hpp"
 #include "hat_tcl.hpp"
+#include "lb_tcl.hpp"
 #include "lj_tcl.hpp"
 #include "ljangle_tcl.hpp"
 #include "ljcos_tcl.hpp"
@@ -91,13 +92,12 @@
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
 
-int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
-
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
 #endif
 
 #ifdef ELECTROSTATICS
+int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 
 /********************************************************************************/
 /*                                 electrostatics                               */
@@ -499,6 +499,9 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 #ifdef TUNABLE_SLIP
   if (data->TUNABLE_SLIP_r_cut > 0.0) tclprint_to_result_tunable_slipIA(interp,i,j);
 #endif
+#ifdef SHANCHEN
+  if (data->affinity_on == 1 ) tclprint_to_result_affinityIA(interp,i,j);
+#endif
 
   return (TCL_OK);
 }
@@ -821,7 +824,11 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef MOL_CUT
     REGISTER_NONBONDED("molcut", tclcommand_inter_parse_molcut);
 #endif
-    
+  
+#ifdef SHANCHEN
+    REGISTER_NONBONDED("affinity",tclcommand_inter_parse_affinity);
+#endif
+ 
 #ifdef ADRESS
 #ifdef INTERFACE_CORRECTION
     REGISTER_NONBONDED("adress_tab_ic", tclcommand_inter_parse_adress_tab);

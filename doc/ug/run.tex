@@ -44,14 +44,18 @@ set with the thermostat). For the NPT ensemble, the parameters that
 can be added are:
 
 \begin{itemize}
-\item \var{p_{ext}} The external pressure as float variable. This parameter is required.
-\item \var{piston} The mass of the applied piston as float variable. This parameter is required.
-\item \var{x\: y\: z} Three integers to set the box geometry for non-cubic boxes. This parameter is optional.
-\item \texttt{-cubic_box} If this optional parameter is added, a cubic box is assumed.
+\item \var{p_{ext}} The external pressure as float variable. This
+  parameter is required.
+\item \var{piston} The mass of the applied piston as float
+  variable. This parameter is required.
+\item \var{x}:\var{y}:\var{z} Three integers to set the box geometry for
+  non-cubic boxes. This parameter is optional.
+\item \texttt{-cubic_box} If this optional parameter is added, a cubic
+  box is assumed.
 \end{itemize}
 
-\section{\texttt{time\_integration}: Runtime of the integration loop}
-\newescommand{time\_integration}
+\section{\texttt{time_integration}: Runtime of the integration loop}
+\newescommand[time-integration]{time_integration}
 
 \begin{essyntax}
   \variant{1} time_integration

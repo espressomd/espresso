@@ -40,6 +40,7 @@
 #include "lb-d3q19.hpp"
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
+#include "cuda_interface.hpp"
 
 int lb_components = LB_COMPONENTS; // global variable holding the number of fluid components (see global.c)
 
@@ -205,7 +206,28 @@ int lb_lbfluid_set_mobility(double *p_mobility) {
   return 0;
 }
 
+#ifdef SHANCHEN
+int affinity_set_params(int part_type_a, int part_type_b, double * affinity)
+{
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
+  data->affinity_on=0;
+  if (!data) return ES_ERROR;
+  for(int ii=0;ii<LB_COMPONENTS;ii++) { 
+       if(affinity[ii]<0 || affinity[ii]>1) { return ES_ERROR; }
+       data->affinity[ii]= affinity[ii];
+       if (data->affinity[ii]>0) data->affinity_on=1;
+  }
+  
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+
+  return ES_OK;
+}
+
 #endif 
+
+#endif 
+
 
 int lb_lbfluid_set_density(double *p_dens) { //
   
@@ -386,7 +408,21 @@ int lb_lbfluid_set_tau(double p_tau){
     }
   return 0;
 }
-
+#ifdef SHANCHEN
+int lb_lbfluid_set_remove_momentum(void){
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lbpar_gpu.remove_momentum = 1;
+    on_lb_params_change_gpu(0);
+#endif
+  } else {
+#ifdef LB
+     return -1;
+#endif
+    }
+  return 0;
+}
+#endif
 
 int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz) {
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -1126,6 +1162,10 @@ int lb_lbnode_set_rho(int* ind, double *p_rho){
        host_rho[i]=(float)p_rho[i];
     }
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
+//#ifdef SHANCHEN
+//    lb_calc_particle_lattice_ia_gpu();
+//    copy_forces_from_GPU();
+//#endif 
 #endif
   } else {
 #ifdef LB

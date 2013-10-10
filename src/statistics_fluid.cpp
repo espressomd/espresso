@@ -34,8 +34,6 @@
 
 #ifdef LB
 
-//#include <fftw3.h>
-
 /** Caclulate mass of the LB fluid.
  * \param result Fluid mass
  */

@@ -25,7 +25,7 @@ tune the settings of a non-cubic mesh.
 User-visible changes
 --------------------
 
-* Generic LJ can now turned into an soft potential.
+* Generic LJ can now be turned into an soft potential.
 
 * Renamed torque to torque_{lab,body}, improved torque handling in
   blockfiles.  Clearer distinction between the reference frames for
@@ -149,7 +149,6 @@ New user-visible features
 
 * Added new feature LANGEVIN_PER_PARTICLE that allows to set the
   Langevin parameters temperature and gamma per particle.
-
 
 * Added new constraint and LB boundary condition "rhomboid".
 
