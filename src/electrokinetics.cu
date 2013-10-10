@@ -1595,7 +1595,10 @@ __global__ void ek_reaction_tag( ) {
 #endif
 
 
-__global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_boundary_force, float* ek_accelerated_frame_boundary_velocity, LB_parameters_gpu *ek_lbparameters_gpu )
+__global__ void ek_calculate_boundary_forces( int n_lb_boundaries, 
+                                              float* ek_lb_boundary_force, 
+                                              float* ek_accelerated_frame_boundary_velocity, 
+                                              LB_parameters_gpu *ek_lbparameters_gpu )
 {
   // Set force to zero
 
@@ -1631,12 +1634,12 @@ __global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_
     ek_accelerated_frame_boundary_force[2] += ext_acc_force[2];
 
 // TODO : REMOVE
-// printf("ext_force %f ", ek_accelerated_frame_boundary_force[2]);
+printf("ext_force %f ", ek_accelerated_frame_boundary_force[2]);
 
     for ( int i = 0; i < n_lb_boundaries; i++)
     {
 // TODO : REMOVE
-// printf("bndry_force %f ", -ek_lb_boundary_force[3*i + 2]);
+printf("bndry_force %f ", -ek_lb_boundary_force[3*i + 2]);
 
       // Sum over all the boundaries that make up the composite and add the total
       // friction force to the external force vector wise. The boundary force
@@ -1649,7 +1652,7 @@ __global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_
     }
 
 // TODO : REMOVE
-// printf("ext_force+bndry_force %f ", ek_accelerated_frame_boundary_force[2]);
+printf("ext_force+bndry_force %f ", ek_accelerated_frame_boundary_force[2]);
 
     // INTERMEZZO: Calculate the velocity of the frame, and thus obtain the 
     // velocity of the boundary with respect to the center of mass of the system.
@@ -1679,7 +1682,7 @@ __global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_
                                                   / ek_parameters_gpu.accelerated_frame_boundary_mass );
 
 // TODO : REMOVE
-// printf("(ef+bf)*(mf/mp) %f ", ek_accelerated_frame_boundary_force[2]);
+printf("(ef+bf)*(mf/mp) %f ", ek_accelerated_frame_boundary_force[2]);
 
     // In a finite system there is also always the negative of the external force 
     // on the particle acting on the fluid. This force ensures that the there is
@@ -1691,7 +1694,7 @@ __global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_
     ek_accelerated_frame_boundary_force[2] -= ext_acc_force[2];
 
 // TODO : REMOVE
-// printf("(ef+bf)*(mf/mp) + ef %f ", ek_accelerated_frame_boundary_force[2]);
+printf("(ef+bf)*(mf/mp) + ef %f ", ek_accelerated_frame_boundary_force[2]);
 
     // Do the unit conversion from LB units (boundary force) to units that 
     // can be added back into the LB fluid via the LB external force (MD units),
