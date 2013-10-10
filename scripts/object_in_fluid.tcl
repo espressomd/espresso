@@ -103,16 +103,16 @@ proc area_triangle {a b c} {
 	upvar $b gb 
 	upvar $c gc 
 
-	set area 0;
+	set area 0
 	set n {0 0 0} 
 	
-	get_n_triangle ga gb gc n;
+	get_n_triangle ga gb gc n
 	set nx [lindex $n 0]
 	set ny [lindex $n 1]
 	set nz [lindex $n 2]
 
 	set area [expr 0.5*sqrt($nx*$nx + $ny*$ny + $nz*$nz)]
-	return $area;
+	return $area
 }
 
 proc angle_btw_triangles {P1 P2 P3 P4 phi} {
@@ -135,7 +135,7 @@ proc angle_btw_triangles {P1 P2 P3 P4 phi} {
 	set n2y [lindex $n2 1]
 	set n2z [lindex $n2 2]
 	
-	set tmp11 [expr $n1x*$n2x + $n1y*$n2y + $n1z*$n2z];
+	set tmp11 [expr $n1x*$n2x + $n1y*$n2y + $n1z*$n2z]
 	set tmp11 [expr $tmp11*abs($tmp11)]
 	set tmp22 [expr $n1x*$n1x + $n1y*$n1y + $n1z*$n1z]
 	set tmp33 [expr $n2x*$n2x + $n2y*$n2y + $n2z*$n2z]
@@ -409,7 +409,7 @@ proc add_oif_object { args } {
 	}
 
 	if {$check_output == 1} {
-		set createPart TMP/noGcreatePart;
+		set createPart TMP/noGcreatePart
 		set bondS TMP/noGbondsStretching
 		set bondSLIN TMP/noGbondsStretchlin
 		set bondB TMP/noGbondsBending
@@ -449,7 +449,7 @@ proc add_oif_object { args } {
 	set file_data [read $fp]
 	close $fp
 	set data [split $file_data "\n"]
-	set mesh_nnodes 0;
+	set mesh_nnodes 0
 	foreach line $data {
 		if { [llength $line] == 3 } {
 			set mesh_nodes($mesh_nnodes,0) [lindex $line 0]
@@ -466,7 +466,7 @@ proc add_oif_object { args } {
 	close $fp
 
 	set data [split $file_data "\n"]
-	set mesh_ntriangles 0;
+	set mesh_ntriangles 0
 	foreach line $data {
 		if { [llength $line] == 3 } {
 			set mesh_triangles($mesh_ntriangles,0) [lindex $line 0]
@@ -495,12 +495,12 @@ proc add_oif_object { args } {
 
 
 # some variables for rotation
-	set ca [expr cos($rotate_X)];
-	set sa [expr sin($rotate_X)];
-	set cb [expr cos($rotate_Y)];
-	set sb [expr sin($rotate_Y)];
-	set cc [expr cos($rotate_Z)];
-	set sc [expr sin($rotate_Z)];
+	set ca [expr cos($rotate_X)]
+	set sa [expr sin($rotate_X)]
+	set cb [expr cos($rotate_Y)]
+	set sb [expr sin($rotate_Y)]
+	set cc [expr cos($rotate_Z)]
+	set sc [expr sin($rotate_Z)]
 	set rotation(0,0) [expr $cb*$cc]
 	set rotation(0,1) [expr $sa * $sb * $cc - $ca * $sc]
 	set rotation(0,2) [expr $sc * $sa + $cc * $sb * $ca]
@@ -517,9 +517,9 @@ proc add_oif_object { args } {
 		#set yy [discard_epsilon [expr $rotation(1,0)*$mesh_nodes($i,0) + $rotation(1,1)*$mesh_nodes($i,1) + $rotation(1,2)*$mesh_nodes($i,2)]]
 		#set zz [discard_epsilon [expr $rotation(2,0)*$mesh_nodes($i,0) + $rotation(2,1)*$mesh_nodes($i,1) + $rotation(2,2)*$mesh_nodes($i,2)]]
 
-		#set mesh_nodes($i,0) $xx;
-		#set mesh_nodes($i,1) $yy;
-		#set mesh_nodes($i,2) $zz;
+		#set mesh_nodes($i,0) $xx
+		#set mesh_nodes($i,1) $yy
+		#set mesh_nodes($i,2) $zz
 	#}
 
 	# rotation of nodes around X axis in YZ plane:
@@ -527,8 +527,8 @@ proc add_oif_object { args } {
 		set yy [discard_epsilon [expr $ca*$mesh_nodes($i,1) - $sa*$mesh_nodes($i,2)]]
 		set zz [discard_epsilon [expr $sa*$mesh_nodes($i,1) + $ca*$mesh_nodes($i,2)]]
 
-		set mesh_nodes($i,1) $yy;
-		set mesh_nodes($i,2) $zz;
+		set mesh_nodes($i,1) $yy
+		set mesh_nodes($i,2) $zz
 	}
 
 	# rotation of nodes around Y in ZX plane:
@@ -536,8 +536,8 @@ proc add_oif_object { args } {
 		set zz [discard_epsilon [expr $cb*$mesh_nodes($i,2) - $sb*$mesh_nodes($i,0)]]
 		set xx [discard_epsilon [expr $sb*$mesh_nodes($i,2) + $cb*$mesh_nodes($i,0)]]
 
-		set mesh_nodes($i,2) $zz;
-		set mesh_nodes($i,0) $xx;
+		set mesh_nodes($i,2) $zz
+		set mesh_nodes($i,0) $xx
 	}
 
 	# rotation of nodes around Z in XY plane:
@@ -545,8 +545,8 @@ proc add_oif_object { args } {
 		set xx [discard_epsilon [expr $cc*$mesh_nodes($i,0) - $sc*$mesh_nodes($i,1)]]
 		set yy [discard_epsilon [expr $sc*$mesh_nodes($i,0) + $cc*$mesh_nodes($i,1)]]
 
-		set mesh_nodes($i,0) $xx;
-		set mesh_nodes($i,1) $yy;
+		set mesh_nodes($i,0) $xx
+		set mesh_nodes($i,1) $yy
 	}
 
 	# setting the origin of the object-in-fluid:
