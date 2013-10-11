@@ -783,9 +783,9 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
         node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2]*force_factor;
       }
       else{
-      node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.f;
-      node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.f;
-      node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.f;
+        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.f;
+        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.f;
+        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.f;
       }
 #else
       /** reset force */
@@ -2061,7 +2061,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
  * @param *part       Pointer to the rn array of the particles (Input)
  * @param node_f      Pointer to local node force (Input)
 */
-__global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
+__global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force,                                             LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
   
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[27];
@@ -2432,7 +2432,7 @@ void lb_calc_particle_lattice_ia_gpu(){
       KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), gpu_get_fluid_composition_pointer() , node_f, gpu_get_particle_seed_pointer(),device_rho_v));
     }
     else { /** only other option is the three point coupling scheme */
-      KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), gpu_get_fluid_composition_pointer(), gpu_get_particle_seed_pointer(),device_rho_v));
+      KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer(),device_rho_v));
     }
   }
 }

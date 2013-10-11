@@ -127,12 +127,8 @@ typedef struct {
   float gamma_mobility[LB_COMPONENTS];
   float mobility[LB_COMPONENTS];
   float coupling[LB_COMPONENTS*LB_COMPONENTS];
-<<<<<<< HEAD
-#endif // SHANCHEN 
-=======
   int remove_momentum;
 #endif // SHANCHEN  
->>>>>>> upstream/master
 
 } LB_parameters_gpu;
 
