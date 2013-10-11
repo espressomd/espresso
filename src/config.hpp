@@ -32,8 +32,9 @@
 /* Include the defines created by configure. */
 #include <acconfig.hpp>
 
-/* Prevent C++ bindings in OpenMPI (there is a DataType called LB in there) */
+/* Prevent C++ bindings in MPI (there is a DataType called LB in there) */
 #define OMPI_SKIP_MPICXX
+#define MPICH_SKIP_MPICXX
 
 /* doxyconfig.h is used instead of myconfig when doxygen is run */
 /* doxyconfig.h defines all features so that all features are documented */
