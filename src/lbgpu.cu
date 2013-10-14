@@ -2432,7 +2432,7 @@ void lb_integrate_GPU(){
     }
 #endif
     intflag = 1;
-  }             
+  }
 }
 
 void lb_gpu_get_boundary_forces(double* forces) {
