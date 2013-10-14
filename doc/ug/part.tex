@@ -203,7 +203,7 @@ set first because of the spatial decomposition.
   part \var{pid} print
   \optlong{\alt{id \asep pos \asep type \asep folded_position \asep type \asep
       q \asep v \asep f \asep torque_body \asep torque_lab \asep fix \asep ext_force \asep ext_torque \asep bond \asep
-      \mbox{connections \opt{\var{range}}}}}\dots
+      \asep exclusions \mbox{connections \opt{\var{range}}}}}\dots
   \variant{2} part
 \end{essyntax}
 
@@ -900,7 +900,7 @@ perform the following steps in that order
   \end{essyntaxbox}
 \item Declare the list of molecules and the particles they consist of:
   \begin{essyntaxbox}
-    analyze set \{\var{molid} \{\var{list of particle ids ..}\} ...\}
+    eval analyze set \{\var{molid} \{\var{list of particle ids ..}\} ...\}
   \end{essyntaxbox}
   The lists of particles in a molecule comprise the non-virtual
   particles and the virtual site.

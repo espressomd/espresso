@@ -304,6 +304,7 @@ proc prepare_vmd_connection { args } {
     set wait [lindex $args 0]
     if {[llength $args] > 1} { set start [lindex $args 1] }
     if {[llength $args] > 2} { set draw_constraints [lindex $args 2] }
+    set vsf_args ""
   } {
     # new format with keyword arguments
     while {[llength $args] > 0} {
@@ -513,12 +514,14 @@ proc degrees_of_freedom {} {
 # copy_particles 
 # ---------------
 # 
-# Copy a group of particles including their bonds. Positions can be shifted by an offset.
-# The particles can be given as a combination of lists or a ranges. The new particles in
-# any case obtain consecutive identities after the largest current identity. Bonds within
-# the particle set are copied, but not bonds with particles outside the list. That is,
-# if the particle set corresponds to a molecule, intramolecular bonds are preserved, but
-# not intermolecular ones.
+# Copy a group of particles including their bonds. Positions can be
+# shifted by an offset.  The particles can be given as a combination
+# of lists or a ranges. The new particles in any case obtain
+# consecutive identities after the largest current identity. Bonds and
+# exclusions within the particle set are copied, but not bonds with
+# particles outside the list. That is, if the particle set corresponds
+# to a molecule, intramolecular bonds are preserved, but not
+# intermolecular ones.
 # 
 # Example:
 # copy_particles set {1 2 3 4} shift 0.0 0.0 0.0
@@ -556,7 +559,7 @@ proc copy_particles { args } {
     set parts [lsort -unique $parts]
 
     # copy loop.
-    # step 1: all except bonds
+    # step 1: all except bonds and exclusions
     set newid [setmd max_part]
     foreach id $parts {
 	incr newid
@@ -575,7 +578,19 @@ proc copy_particles { args } {
 	set p [lsearch $partcmd "bond"]
 	if {$p != -1} { set partcmd [lreplace $partcmd $p [expr $p + 1]] }
 
-	# and set the new particle
+	# remove exclusions
+	set p [lsearch $partcmd "exclude"]
+	if {$p != -1} {
+            set pend [expr $p + 1]
+            while {1} {
+                set element [lindex $partcmd $pend]
+                if {$element == "" || ![string is integer $element]} { break }
+                incr pend
+            }
+            set partcmd [lreplace $partcmd $p $pend]
+        }
+
+        # and set the new particle
 	eval part $newid $partcmd
     }
 
@@ -600,5 +615,17 @@ proc copy_particles { args } {
 		eval part $newid bond $newbond
 	    }
 	}
+
+	# new exclusions list
+	set exclusions {}
+        # check whether exclusions are in the molecule and translate
+	foreach exclude [part $id print exclusions] {
+            if {[array names newids -exact $exclude] != ""} {
+                lappend exclusions $newids($exclude)
+            }
+        }
+        if {$exclusions != {}} {
+            eval part $newid exclude $exclusions
+        }
     }
 }

@@ -39,7 +39,7 @@ set inputdir "input"
 # currently there are CELL and TETRA
 set type [lindex $argv 0]
 if {$type == ""} {
-    set type "TETRA"
+    set type "CELL"
 }
 set fileNodes  "$inputdir/${type}mesh-nodes.dat"
 set fileTriangles "$inputdir/${type}mesh-triangles.dat"
@@ -61,7 +61,8 @@ add_oif_object origin 10 10 10 nodesfile $fileNodes trianglesfile $fileTriangles
 # trianglesfile 	meshfile for triangles
 #
 # elastic parameters of the object:
-# ks	stretching of the cell
+# ks	hyperelastic stretching of the cell
+# kslin	linear stretching of the cell
 # kb	bending
 # kal	local area preservation
 # kag	global area preservation
