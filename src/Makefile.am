@@ -409,8 +409,6 @@ p3m_gpu.o: p3m_gpu.hpp myconfig-final.hpp
 
 if TCL
 
-Espresso_SOURCES += cuda_is_cpp.cpp
-Espresso_install_SOURCES += cuda_is_cpp.cpp
 CUDA_SOURCES += \
 	tcl/cuda_init_tcl.cpp
 

@@ -2404,7 +2404,7 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 
   size_of_extern_nodeforces = n_extern_nodeforces*sizeof(LB_extern_nodeforce_gpu);
   cuda_safe_mem(cudaMalloc((void**)&extern_nodeforces, size_of_extern_nodeforces));
-  cudaMemcpy(extern_nodeforces, host_extern_nodeforces, size_of_extern_nodeforces, cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMemcpy(extern_nodeforces, host_extern_nodeforces, size_of_extern_nodeforces, cudaMemcpyHostToDevice));
 
   if(lbpar_gpu->external_force == 0)cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
 
@@ -2449,7 +2449,7 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values){
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(get_mesoscopic_values_in_MD_units, dim_grid, threads_per_block, (nodes_a, print_rho_v_pi, device_rho_v ));
-  cudaMemcpy(host_values, print_rho_v_pi, size_of_rho_v_pi, cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(host_values, print_rho_v_pi, size_of_rho_v_pi, cudaMemcpyDeviceToHost));
 
 }
 
@@ -2468,7 +2468,7 @@ void lb_get_boundary_flags_GPU(unsigned int* host_bound_array){
 
   KERNELCALL(lb_get_boundaries, dim_grid, threads_per_block, (*current_nodes, device_bound_array));
 
-  cudaMemcpy(host_bound_array, device_bound_array, lbpar_gpu.number_of_nodes*sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(host_bound_array, device_bound_array, lbpar_gpu.number_of_nodes*sizeof(unsigned int), cudaMemcpyDeviceToHost));
 
   cudaFree(device_bound_array);
 
@@ -2486,7 +2486,7 @@ void lb_print_node_GPU(int single_nodeindex, LB_rho_v_pi_gpu *host_print_values)
 
   KERNELCALL(lb_print_node, dim_grid_print, threads_per_block_print, (single_nodeindex, device_print_values, *current_nodes, device_rho_v));
 
-  cudaMemcpy(host_print_values, device_print_values, sizeof(LB_rho_v_pi_gpu), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(host_print_values, device_print_values, sizeof(LB_rho_v_pi_gpu), cudaMemcpyDeviceToHost));
   cudaFree(device_print_values);
 
 }
@@ -2499,7 +2499,7 @@ void lb_calc_fluid_mass_GPU(double* mass){
   float* tot_mass;
   float cpu_mass =  0.f ;
   cuda_safe_mem(cudaMalloc((void**)&tot_mass, sizeof(float)));
-  cudaMemcpy(tot_mass, &cpu_mass, sizeof(float), cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMemcpy(tot_mass, &cpu_mass, sizeof(float), cudaMemcpyHostToDevice));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -2509,7 +2509,7 @@ void lb_calc_fluid_mass_GPU(double* mass){
 
   KERNELCALL(calc_mass, dim_grid, threads_per_block,(*current_nodes, tot_mass));
 
-  cudaMemcpy(&cpu_mass, tot_mass, sizeof(float), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(&cpu_mass, tot_mass, sizeof(float), cudaMemcpyDeviceToHost));
   
   cudaFree(tot_mass);
   mass[0] = (double)(cpu_mass);
@@ -2523,7 +2523,7 @@ void lb_calc_fluid_momentum_GPU(double* host_mom){
   float* tot_momentum;
   float host_momentum[3] = { 0.f, 0.f, 0.f};
   cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
-  cudaMemcpy(tot_momentum, host_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMemcpy(tot_momentum, host_momentum, 3*sizeof(float), cudaMemcpyHostToDevice));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -2533,7 +2533,7 @@ void lb_calc_fluid_momentum_GPU(double* host_mom){
 
   KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, node_f, tot_momentum));
   
-  cudaMemcpy(host_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(host_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost));
   
   cudaFree(tot_momentum);
   host_mom[0] = (double)(host_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau);
@@ -2547,7 +2547,7 @@ void lb_remove_fluid_momentum_GPU(void){
   float* tot_momentum;
   float host_momentum[3] = { 0.f, 0.f, 0.f};
   cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
-  cudaMemcpy(tot_momentum, host_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMemcpy(tot_momentum, host_momentum, 3*sizeof(float), cudaMemcpyHostToDevice));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -2557,7 +2557,7 @@ void lb_remove_fluid_momentum_GPU(void){
 
   KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, node_f, tot_momentum));
   
-  cudaMemcpy(host_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(host_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost));
 
   KERNELCALL(remove_momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, node_f, tot_momentum));
   
@@ -2573,7 +2573,7 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
   float host_jsquared = 0.f;
   float* device_jsquared;
   cuda_safe_mem(cudaMalloc((void**)&device_jsquared, sizeof(float)));
-  cudaMemcpy(device_jsquared, &host_jsquared, sizeof(float), cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMemcpy(device_jsquared, &host_jsquared, sizeof(float), cudaMemcpyHostToDevice));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -2583,7 +2583,7 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
 
   KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, device_jsquared));
 
-  cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float), cudaMemcpyDeviceToHost));
   // TODO: check that temperature calculation is properly implemented for shanchen
   *host_temp=0;
   #pragma unroll
@@ -2617,10 +2617,10 @@ void lb_calc_shanchen_GPU(){
 */
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force){
 
-  cudaMemcpy(host_checkpoint_vd, current_nodes->vd, lbpar_gpu.number_of_nodes * 19 * sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(host_checkpoint_seed, current_nodes->seed, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  cudaMemcpy(host_checkpoint_boundary, current_nodes->boundary, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  cudaMemcpy(host_checkpoint_force, node_f.force, lbpar_gpu.number_of_nodes * 3 * sizeof(float), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd, lbpar_gpu.number_of_nodes * 19 * sizeof(float), cudaMemcpyDeviceToHost));
+  cuda_safe_mem(cudaMemcpy(host_checkpoint_seed, current_nodes->seed, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyDeviceToHost));
+  cuda_safe_mem(cudaMemcpy(host_checkpoint_boundary, current_nodes->boundary, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyDeviceToHost));
+  cuda_safe_mem(cudaMemcpy(host_checkpoint_force, node_f.force, lbpar_gpu.number_of_nodes * 3 * sizeof(float), cudaMemcpyDeviceToHost));
 
 }
 /** setup and call kernel for setting macroscopic fluid values of all nodes
@@ -2628,11 +2628,11 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkp
 */
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force){
 
-  cudaMemcpy(current_nodes->vd, host_checkpoint_vd, lbpar_gpu.number_of_nodes * 19 * sizeof(float), cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMemcpy(current_nodes->vd, host_checkpoint_vd, lbpar_gpu.number_of_nodes * 19 * sizeof(float), cudaMemcpyHostToDevice));
   intflag = 1;
-  cudaMemcpy(current_nodes->seed, host_checkpoint_seed, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyHostToDevice);
-  cudaMemcpy(current_nodes->boundary, host_checkpoint_boundary, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyHostToDevice);
-  cudaMemcpy(node_f.force, host_checkpoint_force, lbpar_gpu.number_of_nodes * 3 * sizeof(float), cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMemcpy(current_nodes->seed, host_checkpoint_seed, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpy(current_nodes->boundary, host_checkpoint_boundary, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpy(node_f.force, host_checkpoint_force, lbpar_gpu.number_of_nodes * 3 * sizeof(float), cudaMemcpyHostToDevice));
 
 }
 
@@ -2652,7 +2652,7 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
 
   KERNELCALL(lb_get_boundary_flag, dim_grid_flag, threads_per_block_flag, (single_nodeindex, device_flag, *current_nodes));
 
-  cudaMemcpy(host_flag, device_flag, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(host_flag, device_flag, sizeof(unsigned int), cudaMemcpyDeviceToHost));
 
   cudaFree(device_flag);
 
@@ -2666,7 +2666,7 @@ void lb_set_node_rho_GPU(int single_nodeindex, float* host_rho){
    
   float* device_rho;
   cuda_safe_mem(cudaMalloc((void**)&device_rho, LB_COMPONENTS*sizeof(float)));	
-  cudaMemcpy(device_rho, host_rho, LB_COMPONENTS*sizeof(float), cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMemcpy(device_rho, host_rho, LB_COMPONENTS*sizeof(float), cudaMemcpyHostToDevice));
   int threads_per_block_flag = 1;
   int blocks_per_grid_flag_y = 1;
   int blocks_per_grid_flag_x = 1;
@@ -2684,7 +2684,7 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float* host_velocity){
    
   float* device_velocity;
   cuda_safe_mem(cudaMalloc((void**)&device_velocity, 3*sizeof(float)));	
-  cudaMemcpy(device_velocity, host_velocity, 3*sizeof(float), cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMemcpy(device_velocity, host_velocity, 3*sizeof(float), cudaMemcpyHostToDevice));
   int threads_per_block_flag = 1;
   int blocks_per_grid_flag_y = 1;
   int blocks_per_grid_flag_x = 1;
@@ -2714,7 +2714,7 @@ void lb_integrate_GPU(){
 
 #ifdef LB_BOUNDARIES_GPU
   if (n_lb_boundaries > 0) 
-    cuda_safe_mem(cudaMemset	(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
+    cuda_safe_mem(cudaMemset(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
 #endif
 
 
