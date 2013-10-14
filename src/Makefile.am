@@ -404,7 +404,7 @@ CUDA_SOURCES = \
 
 cuda_interface.o: cuda_interface.hpp myconfig-final.hpp
 cuda_init.o: cuda_init.hpp myconfig-final.hpp
-lbgpu.o: lbgpu.hpp myconfig-final.hpp
+lbgpu_cuda.o: lbgpu.hpp myconfig-final.hpp
 p3m_gpu.o: p3m_gpu.hpp myconfig-final.hpp
 
 if TCL

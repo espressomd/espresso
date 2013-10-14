@@ -186,6 +186,22 @@ electrostatics are handled (see also Section~\ref{sec:inter-electrostatics}).
 
 Variant \variant{3} sets up one of the thermostats described below.
 
+Note that their are three different types of noise which can be used in
+Espresso. The one used typically in simulations is flat noise with the
+correct variance and it is the default used in Espresso, though can be
+explicitly specified using the feature \feature{FLATNOISE}. You can also
+employ Gaussian noise which is, in some sense, more realistic. Notably
+Gaussian noise (activated using the feature \feature{GAUSSRANDOM}) does
+a superior job of reproducing higher order moments of the Maxwell-Boltzmann
+distribution. For typical generic
+coarse-grained polymers using FENE bonds the Gaussian noise tends to break
+the FENE bonds. We thus offer a third type of noise, activate using the
+feature \feature{GAUSSRANDOMCUT}, which produces Gaussian random numbers
+but takes anything which is two standard deviations ($2\sigma$) below or above zero
+and set it to $-2\sigma$ or $2\sigma$ respectively. In all three cases the 
+distribution is made such that the second moment of the distribution is
+the same and thus results in the same temperature.
+
 \subsection{Langevin thermostat}
 \begin{essyntax}
   thermostat langevin \var{temperature} \var{gamma}
