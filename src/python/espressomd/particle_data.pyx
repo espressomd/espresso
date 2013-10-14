@@ -293,21 +293,30 @@ cdef class ParticleHandle:
     property vs_relative:
       """virtual sites relative parameters"""
       def __set__(self,x):
-        if len(x) !=2:
-          raise ValueError("vs_relative needs two args")
+        if len(x) !=3:
+          raise ValueError("vs_relative needs six args")
         _relto=x[0] 
         _dist=x[1]
+        q=x[3]
+        checkTypeOrExcept(q, 4,float,"The relative orientation has to be specified as quaternion with 4 floats.")
+        cdef double _q[4]
+        for i in range(4):
+          _q[i]=q[i]
+        
+        
         if isinstance(_relto, int) and isinstance(_dist,float):  
-          if set_particle_vs_relative(self.id, _relto,_dist) == 1:
+          if set_particle_vs_relative(self.id, _relto,_dist,_q) == 1:
             raise Exception("set particle position first")
         else:
           raise ValueError("vs_relative takes one int and one float as parameters.")
+      
       def __get__(self):
         self.updateParticleData()
         cdef int* rel_to = NULL
         cdef double* dist = NULL
-        pointer_to_vs_relative(&(self.particleData),rel_to,dist)
-        return (rel_to[0],dist[0])
+        cdef double* q = NULL
+        pointer_to_vs_relative(&(self.particleData),rel_to,dist,q)
+        return (rel_to[0],dist[0],np.array((q[0],q[1],q[2],q[3])))
 
     # vs_auto_relate_to
     def vs_auto_relate_to(self,_relto):

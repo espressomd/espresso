@@ -135,7 +135,7 @@ cdef extern from "particle_data.hpp":
     void pointer_to_virtual(Particle* P, int*& res)
   
   IF VIRTUAL_SITES_RELATIVE == 1:
-    void pointer_to_vs_relative(Particle* P, int*& res1, double*& res2)
+    void pointer_to_vs_relative(Particle* P, int*& res1, double*& res2, double*& res3)
 
   IF ELECTROSTATICS == 1:
     void pointer_to_q(Particle* P, double*& res)
@@ -163,7 +163,7 @@ cdef extern from "particle_data.hpp":
 cdef extern from "virtual_sites_relative.hpp":
   IF VIRTUAL_SITES_RELATIVE == 1:
     int vs_relate_to(int part_num, int relate_to)
-    int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
+    int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double* vs_quat)
  
 cdef extern from "rotation.hpp":
   void convert_omega_body_to_space(Particle *p, double *omega)

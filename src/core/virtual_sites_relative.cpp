@@ -54,7 +54,7 @@ void update_mol_pos_particle(Particle *p)
  // of the real particle with the quaternion of the virtual particle, which 
  // specifies the relative orientation.
  double q[4];
- multiply_quaternions(p_real->r.quat,p->r.quat,q);
+ multiply_quaternions(p_real->r.quat,p->p.vs_relative_rel_orientation,q);
  // Calculate the director resulting from the quaternions
  double director[3];
  convert_quat_to_quatu(q,director);
@@ -113,7 +113,7 @@ void update_mol_vel_particle(Particle *p)
  // of the real particle with the quaternion of the virtual particle, which 
  // specifies the relative orientation.
  double q[4];
- multiply_quaternions(p_real->r.quat,p->r.quat,q);
+ multiply_quaternions(p_real->r.quat,p->p.vs_relative_rel_orientation,q);
  // Calculate the director resulting from the quaternions
  double director[3];
  convert_quat_to_quatu(q,director);
@@ -207,13 +207,6 @@ int vs_relate_to(int part_num, int relate_to)
     double d[3];
     get_mi_vector(d, p_current.r.p,p_relate_to.r.p);
     
-    // Set the particle id of the particle we want to relate to and the distnace
-    if (set_particle_vs_relative(part_num, relate_to, sqrt(sqrlen(d))) == ES_ERROR) {
-        ostringstream msg;
-        msg <<"setting the vs_relative attributes failed";
-        runtimeError(msg);
-      return ES_ERROR;
-    }
     
     
     // Check, if the distance between virtual and non-virtual particles is larger htan minimum global cutoff
@@ -280,14 +273,14 @@ int vs_relate_to(int part_num, int relate_to)
        fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n",
 	       i, qtemp[i], quat_director[i]);
 
-
-   // Save the quaternions in the particle
-   if (set_particle_quat(part_num, quat) == ES_ERROR) {
-       ostringstream msg;
-       msg <<"set particle position first";
-       runtimeError(msg);
-     return ES_ERROR;
-   }
+    // Set the particle id of the particle we want to relate to, the distnace
+    // and the relative orientation
+    if (set_particle_vs_relative(part_num, relate_to, l, quat) == ES_ERROR) {
+      ostringstream msg;
+      msg << "setting the vs_relative attributes failed";
+      runtimeError(msg);
+      return ES_ERROR;
+    }
    
    return ES_OK;
 }

@@ -31,6 +31,7 @@ require_feature "VIRTUAL_SITES_NO_VELOCITY" off
 require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
 require_feature "ELECTROSTATICS"
 require_feature "LENNARD_JONES"
+require_feature "ROTATIONAL_INERTIA"
 
 puts "---------------------------------------------------------------"
 puts "- Testcase virtual-sites.tcl running on 1 nodes"
@@ -192,4 +193,58 @@ for {set i 0} {$i<10000} {incr i } {
 puts "OK: Handling of periodic boundaries"
 puts "OK: Velocities of outer particles add up to velocity of center of mass"
 
-exit 0
+
+part delete
+part 0 pos 0 0 0
+part 1 pos 0 0 0 vs_auto_relate_to 0
+
+
+set kT 1.5
+set halfkT 0.75
+thermostat langevin $kT 1
+
+# no need to rebuild Verlet lists, avoid it
+setmd skin 1.0
+setmd time_step 0.01
+
+set n 500
+set mass 200
+set j1 300
+set j2 400
+set j3 500
+part 1 pos 0 0 0 rinertia $j1 $j2 $j3 mass $mass
+
+
+set ox2 0.
+set oy2 0.
+set oz2 0.
+
+
+set loops 3
+puts "Checking rotation of virtual sites..."
+integrate 300
+puts "Measuring..."
+
+for {set i 0} {$i <$loops} {incr i} {
+ integrate 100
+ puts "[part 0 print pos f]"
+ # Get kinetic energy in each degree of freedom 
+ set o [part 1 print omega_lab]
+ set ox2 [expr $ox2 +pow([lindex $o 0],2)]
+ set oy2 [expr $oy2 +pow([lindex $o 1],2)]
+ set oz2 [expr $oz2 +pow([lindex $o 2],2)]
+}
+
+set tolerance 0.1
+
+set Eox [expr 0.5 * $j1 *$ox2/$n/$loops]
+set Eoy [expr 0.5 * $j2 *$oy2/$n/$loops]
+set Eoz [expr 0.5 * $j3 *$oz2/$n/$loops]
+
+set do [expr 1./3. *($Eox +$Eoy +$Eoz)/$halfkT-1.]
+
+puts "1/2 kT = $halfkT"
+if { abs($do) > $tolerance } {
+ error "Relative deviation in rotational energy too large: $do"
+}
+

@@ -270,7 +270,7 @@ void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance);
+void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance, double* rel_ori);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.
