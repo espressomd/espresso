@@ -485,6 +485,31 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
       
       argc -= 2; argv += 2;
     }
+    else if(ARG_IS_S(0, "velocity")) {
+      if(argc < 4) {
+	      Tcl_AppendResult(interp, "lbboundary cylinder velocity <vx> <vy> <vz> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->velocity[0])) == TCL_ERROR ||
+      	 Tcl_GetDouble(interp, argv[2], &(lbb->velocity[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(lbb->velocity[2])) == TCL_ERROR)
+	      return (TCL_ERROR);
+
+      if (lattice_switch & LATTICE_LB_GPU) {	
+#ifdef LB_GPU
+        /* No velocity rescaling is required */
+#endif
+      } else {	
+#ifdef LB
+        lbb->velocity[0]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[1]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[2]*=lbpar.tau/lbpar.agrid;
+#endif
+			}
+      
+      argc -= 4; argv += 4;
+    }
     else
       break;
   }
