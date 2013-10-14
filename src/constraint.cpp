@@ -64,10 +64,6 @@ static double sign(double x) {
     return -1;
 }
 
-static double max(double x1, double x2) {
-  return x1>x2?x1:x2;
-}
-
 void calculate_wall_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_wall *c, double *dist, double *vec)
 {
   int i;
