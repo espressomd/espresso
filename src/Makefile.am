@@ -41,7 +41,7 @@ libEspresso_a_SOURCES = \
         debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	energy.cpp energy.hpp \
-	errorhandling.cpp	errorhandling.hpp \
+	errorhandling.cpp errorhandling.hpp \
 	fft.cpp fft.hpp \
 	fft-common.cpp fft-common.hpp \
 	fft-dipolar.cpp fft-dipolar.hpp \
@@ -64,7 +64,7 @@ libEspresso_a_SOURCES = \
 	lb-d3q18.hpp lb-d3q19.hpp \
 	lbgpu.cpp lbgpu.hpp\
 	metadynamics.cpp metadynamics.hpp \
-	modes.cpp	modes.hpp \
+	modes.cpp modes.hpp \
 	molforces.cpp molforces.hpp \
 	mol_cut.cpp mol_cut.hpp \
 	nemd.cpp nemd.hpp \
@@ -170,6 +170,7 @@ libEspresso_a_SOURCES += \
 	tcl/config_tcl.cpp \
 	tcl/constraint_tcl.cpp tcl/constraint_tcl.hpp \
 	tcl/domain_decomposition_tcl.cpp tcl/domain_decomposition_tcl.hpp \
+	tcl/electrokinetics_tcl.cpp tcl/electrokinetics_tcl.hpp \
 	tcl/energy_tcl.cpp \
 	tcl/galilei_tcl.cpp tcl/galilei_tcl.hpp \
 	tcl/global_tcl.cpp tcl/global_tcl.hpp \
@@ -399,13 +400,17 @@ SUFFIXES=.cu
 CUDA_SOURCES = \
 	cuda_init_cuda.cu \
 	cuda_common_cuda.cu \
+	electrokinetics.cu \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu
 
-cuda_interface.o: cuda_interface.hpp myconfig-final.hpp
-cuda_init.o: cuda_init.hpp myconfig-final.hpp
-lbgpu_cuda.o: lbgpu.hpp myconfig-final.hpp
-p3m_gpu.o: p3m_gpu.hpp myconfig-final.hpp
+cuda_interface.o: cuda_init.hpp cuda_interface.hpp cuda_utils.hpp myconfig-final.hpp
+cuda_init_cuda.o: cuda_init.hpp cuda_interface.hpp cuda_utils.hpp myconfig-final.hpp
+cuda_common_cuda.o: cuda_init.hpp cuda_interface.hpp cuda_utils.hpp myconfig-final.hpp
+electrokinetics.o: cuda_init.hpp cuda_interface.hpp cuda_utils.hpp electrokinetics.hpp myconfig-final.hpp
+lbgpu_cuda.o: cuda_init.hpp cuda_interface.hpp cuda_utils.hpp lbgpu.hpp myconfig-final.hpp
+p3m_gpu.o: cuda_init.hpp cuda_interface.hpp cuda_utils.hpp p3m_gpu.hpp myconfig-final.hpp
+
 
 if TCL
 

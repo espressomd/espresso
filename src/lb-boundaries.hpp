@@ -36,6 +36,7 @@
 
 #ifndef LB_BOUNDARIES_H
 #define LB_BOUNDARIES_H
+
 #include "utils.hpp"
 #include "halo.hpp"
 #include "constraint.hpp"
@@ -77,6 +78,9 @@ typedef struct {
   } c;
   double force[3];
   double velocity[3];
+#ifdef EK_BOUNDARIES
+  float charge_density;
+#endif
 } LB_Boundary;
 
 extern int n_lb_boundaries;
@@ -95,10 +99,8 @@ int lbboundary_get_force(int no, double* f);
 
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 
+
 #ifdef LB_BOUNDARIES
-
-void lb_init_boundaries();
-
 
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node
@@ -179,8 +181,6 @@ inline void lb_bounce_back() {
 #endif
 }
 
-
-
-#endif /* LB_BOUNDARIES */
+#endif /* LB_BOUNDARIES || LB_BOUNDARIES_GPU */
 
 #endif /* LB_BOUNDARIES_H */

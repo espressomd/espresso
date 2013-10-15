@@ -44,4 +44,6 @@ int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j);
 #endif
 
 
+extern int ek_initialized;
+
 #endif /* LB_TCL_H */

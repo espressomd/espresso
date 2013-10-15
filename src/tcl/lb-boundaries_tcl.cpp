@@ -219,14 +219,24 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 LB_Boundary *generate_lbboundary()
 {
   n_lb_boundaries++;
+
   lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+
   lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
+  
   lb_boundaries[n_lb_boundaries-1].velocity[0]=
   lb_boundaries[n_lb_boundaries-1].velocity[1]=
   lb_boundaries[n_lb_boundaries-1].velocity[2]=0;
+  
   lb_boundaries[n_lb_boundaries-1].force[0]=
   lb_boundaries[n_lb_boundaries-1].force[1]=
   lb_boundaries[n_lb_boundaries-1].force[2]=0;
+  
+#ifdef EK_BOUNDARIES
+  
+  lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
+  
+#endif
   
   return &lb_boundaries[n_lb_boundaries-1];
 }
@@ -960,6 +970,11 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
 {
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
   int status = TCL_ERROR, c_num;
+  
+  if ( lattice_switch == LATTICE_OFF ) {
+    fprintf (stderr ,"WARNING: Specifying boundaries before using lbfluid assumes a CPU implementation of the LB.\n");
+    fprintf (stderr ,"WARNING: This will lead to unexpected behavior if a GPU LB fluid is later used since the boundaries wont exist.\n");
+  }
 
   if (argc < 2)
     return tclcommand_lbboundary_print_all(interp);

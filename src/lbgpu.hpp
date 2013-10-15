@@ -28,6 +28,8 @@
 
 #include "utils.hpp"
 #include "config.hpp"
+#include "electrokinetics.hpp"
+
 
 #ifdef LB_GPU
 
@@ -138,6 +140,7 @@ typedef struct {
   /** density of the node */
   float rho[LB_COMPONENTS];
   /** veolcity of the node */
+
   float v[3];
 
 } LB_rho_v_gpu;
@@ -205,6 +208,9 @@ extern LB_rho_v_pi_gpu *host_values;
 extern int transfer_momentum_gpu;
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 extern int n_lb_boundaries;
+#ifdef ELECTROKINETICS
+extern LB_node_force_gpu node_f;
+#endif
 
 
 /*@}*/
@@ -215,9 +221,13 @@ extern int n_lb_boundaries;
 /*@{*/
 
 
+void lb_get_device_values_pointer(LB_rho_v_gpu** pointeradress);
+void lb_get_boundary_force_pointer(float** pointeradress);
 void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
-
+#ifdef ELECTROKINETICS
+void lb_set_ek_pointer(EK_parameters* pointeradress);
+#endif
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */

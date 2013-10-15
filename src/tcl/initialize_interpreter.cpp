@@ -22,6 +22,7 @@
 #include <cstring>
 #include <cstdio>
 
+
 #include "global.hpp"
 #include "adresso_tcl.hpp"
 #include "binary_file_tcl.hpp"
@@ -54,6 +55,8 @@
 #include "virtual_sites_com_tcl.hpp"
 #include "ghmc_tcl.hpp"
 #include "tuning.hpp"
+#include "electrokinetics_tcl.hpp"
+
 
 #ifdef TK
 #include <tk.h>
@@ -218,6 +221,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("system_CMS_velocity", tclcommand_system_CMS_velocity);
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
+  REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
 }
 
 static void register_global_variables(Tcl_Interp *interp)

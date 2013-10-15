@@ -50,7 +50,7 @@ set r1 5.
 set r2 8.
 set rs 2.5
 set l 4.
-dielectric pore  center 10 10 10 axis 1 0 0 radii $r1 $r2 length $l res 1.9 smoothing_radius $rs eps 0.2
+dielectric pore center 10 10 10 axis 1 0 0 radii $r1 $r2 length $l res 1.9 smoothing_radius $rs eps 0.2
 
 constraint pore center 10 10 10 axis 1 0 0 radii [ expr $r1 + $dist ] [ expr $r2 + $dist ] length [ expr $l - $dist ] type 0 smoothing_radius [ expr $rs - $dist ]
 puts "Done. Now we have $n_induced_charges induced charges"

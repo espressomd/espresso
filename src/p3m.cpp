@@ -1579,7 +1579,7 @@ int p3m_adaptive_tune(char **log) {
       tmp_mesh[2] = p3m.params.mesh[2];
     }
     
-    if(tmp_mesh[0] % 2)
+    if(tmp_mesh[0] % 2) //Make sure that the mesh is even in all directions
       tmp_mesh[0]++;
     if(tmp_mesh[1] % 2) 
       tmp_mesh[1]++;

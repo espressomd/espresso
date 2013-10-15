@@ -33,6 +33,7 @@
 #include "utils.hpp"
 #include "integrate.hpp"
 #include "reaction.hpp"
+#include "electrokinetics.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "communication.hpp"
@@ -356,15 +357,28 @@ void integrate_vv(int n_steps)
     recalc_forces = 0;
     
 #ifdef LB
-    if (lattice_switch & LATTICE_LB) lattice_boltzmann_update();
-    if (check_runtime_errors()) break;
+    if (lattice_switch & LATTICE_LB)
+      lattice_boltzmann_update();
+      
+    if (check_runtime_errors())
+      break;
 #endif
 
 #ifdef LB_GPU
     if(this_node == 0){
-      if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_update_gpu();
-    }
+#ifdef ELECTROKINETICS
+      if (ek_initialized) {
+        ek_integrate();
+      }
+      else {
 #endif
+        if (lattice_switch & LATTICE_LB_GPU)
+          lattice_boltzmann_update_gpu();
+#ifdef ELECTROKINETICS
+      }
+#endif
+    }
+#endif //LB_GPU
 
 #ifdef BOND_CONSTRAINT
     ghost_communicator(&cell_structure.update_ghost_pos_comm);

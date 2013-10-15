@@ -24,11 +24,13 @@
  * Header file for \ref lb-boundaries.h.
  *
  */
+
 #include "utils.hpp"
 #include "constraint.hpp"
 #include "lb-boundaries.hpp"
 #include "lbgpu.hpp"
 #include "lb.hpp"
+#include "electrokinetics.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
 
@@ -97,6 +99,33 @@ void lb_init_boundaries() {
     int *host_boundary_index_list= (int*)malloc(sizeof(int));
     size_t size_of_index;
     int boundary_number = -1; // the number the boundary will actually belong to.
+  
+#ifdef EK_BOUNDARIES
+    float *host_wallcharge_species_density = (float*) malloc(ek_parameters.number_of_nodes * sizeof(float));
+    float node_wallcharge;
+    int wallcharge_species = -1, charged_boundaries = 0;
+    int node_charged;
+    
+    for(n = 0; n < n_lb_boundaries; n++) {
+
+      if(lb_boundaries[n].charge_density != 0.0) {
+        charged_boundaries = 1;
+        break;
+      }
+    }
+      
+    for(n = 0; n < ek_parameters.number_of_species; n++)
+      if(ek_parameters.valency[n] != 0.0) {
+        wallcharge_species = n;
+        break;
+      }
+    
+    if(wallcharge_species == -1 && charged_boundaries) {
+      errtxt = runtime_error(9999); //TODO make right
+      ERROR_SPRINTF(errtxt, "{9999 no charged species available to create wall charge\n");
+    }
+#endif
+
 
     for(z=0; z<int(lbpar_gpu.dim_z); z++) {
       for(y=0; y<int(lbpar_gpu.dim_y); y++) {
@@ -104,10 +133,16 @@ void lb_init_boundaries() {
           pos[0] = (x+0.5)*lbpar_gpu.agrid;
           pos[1] = (y+0.5)*lbpar_gpu.agrid;
           pos[2] = (z+0.5)*lbpar_gpu.agrid;
-             
+        
           dist = 1e99;
+        
+#ifdef EK_BOUNDARIES
+          host_wallcharge_species_density[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] = 0.0f;
+          node_charged = 0;
+          node_wallcharge = 0.0f;
+#endif
 
-          for (n=0;n<n_lb_boundaries;n++) {
+          for (n=0; n < n_lb_boundaries; n++) {
             switch (lb_boundaries[n].type) {
               case LB_BOUNDARY_WAL:
                 calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist_tmp, dist_vec);
@@ -142,6 +177,13 @@ void lb_init_boundaries() {
               dist = dist_tmp;
               boundary_number = n;
             }
+          
+#ifdef EK_BOUNDARIES
+            if(dist_tmp <= 0 && lb_boundaries[n].charge_density != 0.0f) {
+              node_charged = 1;
+              node_wallcharge += lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
+            }
+#endif
           }
           
           if (dist <= 0 && boundary_number >= 0 && n_lb_boundaries > 0) {
@@ -153,6 +195,17 @@ void lb_init_boundaries() {
             number_of_boundnodes++;  
             // printf("boundindex %i: \n", number_of_boundnodes);  
           }
+        
+#ifdef EK_BOUNDARIES
+          if(wallcharge_species != -1) {
+            if(node_charged)
+              host_wallcharge_species_density[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] = node_wallcharge / ek_parameters.valency[wallcharge_species];
+            else if(dist <= 0)
+              host_wallcharge_species_density[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] = 0.0f;
+            else
+              host_wallcharge_species_density[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] = ek_parameters.density[wallcharge_species] * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
+          }
+#endif
         }
       }
     }
@@ -172,8 +225,15 @@ void lb_init_boundaries() {
     free(boundary_velocity);
     free(host_boundary_node_list);
     free(host_boundary_index_list);
+    
+#ifdef EK_BOUNDARIES
+    ek_init_species_density_wallcharge(host_wallcharge_species_density, wallcharge_species);
+    free(host_wallcharge_species_density);
 #endif
-  } else {
+
+#endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
+  }
+  else {
 #if defined (LB) && defined (LB_BOUNDARIES)   
     int node_domain_position[3], offset[3];
     int the_boundary=-1;
@@ -258,8 +318,6 @@ int lbboundary_get_force(int no, double* f) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined (LB_BOUNDARIES_GPU) && defined (LB_GPU)
     lb_gpu_get_boundary_forces(forces);
-
-// ***** I THINK BECAUSE OF THE WAY YOU DEFINE THE FORCES YOU WANT TO PRINT THE NEGATIVE
 
     f[0]=-forces[3*no+0];
     f[1]=-forces[3*no+1];
