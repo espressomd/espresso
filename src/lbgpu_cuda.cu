@@ -2244,7 +2244,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   }
 
 
-  /* TODO: this is a almost a copy copy of  device_rho_v thik about eliminating it, and maybe pi can be added to device_rho_v in this case*/
+  /* TODO: this is a almost a copy copy of  device_rho_v think about eliminating it, and maybe pi can be added to device_rho_v in this case*/
   free_and_realloc(print_rho_v_pi  , size_of_rho_v_pi);
   free_and_realloc(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
   free_and_realloc(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
@@ -2254,7 +2254,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   free_and_realloc(nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));
   free_and_realloc(nodes_b.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
   free_and_realloc(nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));
-
 
 
   /**write parameters in const memory*/
@@ -2269,7 +2268,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
-
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   cudaStreamCreate(&stream[0]);
@@ -2279,7 +2277,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   int blocks_per_grid_particles_y = 4;
   int blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-        
+
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
   #ifdef SHANCHEN
@@ -2287,10 +2285,8 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   /* We must add shan-chen forces, which are zero only if the densities are uniform*/
   #endif
 
-  /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
+  /** calc of velocitydensities from given parameters and initialize the Node_Force array with zero */
   KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, device_rho_v ,node_f, gpu_check));	
-  
-
   
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
@@ -2301,6 +2297,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   cuda_safe_mem(cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
 //fprintf(stderr, "initialization of lb gpu code %i\n", lbpar_gpu->number_of_nodes);
   cudaThreadSynchronize();
+
   if(!h_gpu_check[0]){
     fprintf(stderr, "initialization of lb gpu code failed! \n");
     errexit();	
