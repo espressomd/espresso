@@ -3293,7 +3293,7 @@ void lb_integrate_GPU() {
 
 #ifdef LB_BOUNDARIES_GPU
   if (n_lb_boundaries > 0) 
-    cuda_safe_mem(cudaMemset( LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
+    cuda_safe_mem(cudaMemset( lb_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
 #endif
 
   /**call of fluid step*/

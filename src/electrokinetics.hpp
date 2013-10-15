@@ -170,6 +170,6 @@ int ek_print_vtk_pressure(char* filename);
 
 
 
-#endif
+#endif /* CUDA */
 
 #endif /* ELECTROKINETICS_H */
