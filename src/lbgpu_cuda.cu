@@ -1330,13 +1330,13 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
       pi[4] += mode[9 + ii * LBQ]; // yz
       pi[3] += mode[8 + ii * LBQ]; // zx
 //
-/*
-      pi[0] += ( mode[0 + ii * LBQ] + mode[4 + ii * LBQ] + mode[5 + ii * LBQ] ) / 3.0;
-      pi[2] += ( 2*mode[0 + ii * LBQ] + 2*mode[4 + ii * LBQ] - mode[5 + ii * LBQ] + 3*mode[6 + ii * LBQ] ) / 6.;
-      pi[5] += ( 2*mode[0 + ii * LBQ] + 2*mode[4 + ii * LBQ] - mode[5 + ii * LBQ] + 3*mode[6 + ii * LBQ ]) / 6.;
-      pi[1] += mode[7 + ii * LBQ];
-      pi[3] += mode[8 + ii * LBQ];
-      pi[4] += mode[9 + ii * LBQ];
+/*  // OLD VERSION
+pi[0] += ( mode[0 + ii * LBQ] + mode[4 + ii * LBQ] + mode[5 + ii * LBQ] ) / 3.0;
+pi[2] += ( 2*mode[0 + ii * LBQ] + 2*mode[4 + ii * LBQ] - mode[5 + ii * LBQ] + 3*mode[6 + ii * LBQ] ) / 6.;
+pi[5] += ( 2*mode[0 + ii * LBQ] + 2*mode[4 + ii * LBQ] - mode[5 + ii * LBQ] + 3*mode[6 + ii * LBQ ]) / 6.;
+pi[1] += mode[7 + ii * LBQ];
+pi[3] += mode[8 + ii * LBQ];
+pi[4] += mode[9 + ii * LBQ];
 */
     }
      
