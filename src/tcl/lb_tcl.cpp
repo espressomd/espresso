@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb_tcl.c
+/** \file lb_tcl.cpp
  *
  * TCL Interface for the Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *

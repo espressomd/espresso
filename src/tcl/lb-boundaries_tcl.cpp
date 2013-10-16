@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb-boundaries_tcl.c
+/** \file lb-boundaries_tcl.cpp
  *
  * Boundary conditions parser file for Lattice Boltzmann fluid dynamics.
  *

@@ -26,7 +26,7 @@
 /** \file stretchlin_force.hpp
  *  Routines to calculate the STRETCHLIN_FORCE Energy or/and STRETCHLIN_FORCE force 
  *  for a particle pair. (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 /************************************************************/

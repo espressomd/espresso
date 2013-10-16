@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file parser.c
+/** \file parser.cpp
     Implementation of \ref parser.hpp "parser.h". \ref parse_int_list is too long for inlining.
  */
 

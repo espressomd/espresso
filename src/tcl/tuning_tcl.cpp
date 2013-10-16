@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file tuning_tcl.c
+/** \file tuning_tcl.cpp
  *
  *  Implements the callback for the timings global variable used during
  *  tuning of e.g. P3M or mmm1d.

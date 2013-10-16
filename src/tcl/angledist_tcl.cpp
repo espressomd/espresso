@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file angledist_tcl.c
+/** \file angledist_tcl.cpp
  *
  *  Implementation of \ref angledist_tcl.hpp
  */

@@ -21,7 +21,7 @@
 /** \file volume_force.hpp
  *  Routines to calculate the VOLUME_FORCE energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "tcl/parser.hpp"

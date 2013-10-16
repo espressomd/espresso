@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file interaction_data.c
+/** \file interaction_data.cpp
     Implementation of interaction_data.hpp
  */
 #include <cstring>

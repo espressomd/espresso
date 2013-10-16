@@ -20,7 +20,7 @@
 /** \file area_force_local.hpp
  *  Routines to calculate the AREA_FORCE_LOCAL energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"

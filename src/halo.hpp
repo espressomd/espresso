@@ -21,7 +21,7 @@
 /** \file halo.hpp 
  * 
  * Halo scheme for parallelization of lattice algorithms. 
- * Header file for \ref halo.c.
+ * Header file for \ref halo.cpp.
  *
  */
 

@@ -21,7 +21,7 @@
 /** \file statistics_fluid.hpp
  *
  * Fluid related analysis functions.
- * Header file for \ref statistics_fluid.c.
+ * Header file for \ref statistics_fluid.cpp.
  *
  */
 

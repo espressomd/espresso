@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file constraint.c
+/** \file constraint.cpp
     Implementation of \ref constraint.hpp "constraint.h", here it's just the parsing stuff.
 */
 #include "constraint.hpp"

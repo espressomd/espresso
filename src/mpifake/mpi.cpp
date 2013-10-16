@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file mpi.c
+/** \file mpi.cpp
  *
- *  For more information about MPIFake, see \ref mpi.hpp "mpi.h".
+ *  For more information about MPIFake, see \ref mpi.h "mpi.h".
  */
 #include "mpi.h"
 

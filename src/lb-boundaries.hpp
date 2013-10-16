@@ -21,7 +21,7 @@
 /** \file lb-boundaries.hpp
  *
  * Boundary conditions for Lattice Boltzmann fluid dynamics.
- * Header file for \ref lb-boundaries.c.
+ * Header file for \ref lb-boundaries.cpp.
  *
  * In the current version only simple bounce back walls are implemented. Thus
  * after the streaming step, in all wall nodes all populations are bounced

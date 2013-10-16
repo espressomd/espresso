@@ -21,7 +21,7 @@
 /** \file area_force_global.hpp
  *  Routines to calculate the AREA_FORCE_GLOBAL energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"
@@ -37,7 +37,7 @@ int area_force_global_set_params(int bond_type, double A0_g, double ka_g);
 
 /************************************************************/
 
-/** called in force_calc() from within forces.c
+/** called in force_calc() from within forces.cpp
  *  calculates the global area for a cell before the forces are handled
  *  sums up parts for area with mpi_reduce from local triangles
  *  synchronization with allreduce

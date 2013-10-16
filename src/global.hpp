@@ -29,7 +29,7 @@
 /**********************************************
  * description of global variables
  * add any variable that should be handled
- * automatically in global.c. This includes
+ * automatically in global.cpp. This includes
  * distribution to other nodes and
  * read/user-defined access from Tcl.
  **********************************************/

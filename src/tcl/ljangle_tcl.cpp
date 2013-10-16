@@ -34,7 +34,7 @@
  *  interaction strength in this medium. The interaction strengh of the second
  *  environment must be *stronger* than of the first one.
  *
- *  \ref forces.c
+ *  \ref forces.cpp
  */
 
 #include "utils.hpp"
