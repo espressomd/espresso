@@ -387,7 +387,7 @@ inline void lb_calc_local_pi(index_t index, double *pi) {
  * @param pi      local fluid pressure
  */
 inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi) {
-  
+
   if (!(lattice_switch & LATTICE_LB)) {
     ERROR_SPRINTF(runtime_error(128), 
         "{ Error in lb_calc_local_fields in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
@@ -458,22 +458,12 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
   // Duenweg and Ladd paper, when these are written out in populations.
   // But to ensure this, the expression in Schiller's modes has to be different!
 
-  pi[0] += ( 2.0*(mode[0] + mode[4]) + mode[6] + 3.0*mode[5] )/6.0; // xx
-  pi[2] += ( 2.0*(mode[0] + mode[4]) + mode[6] - 3.0*mode[5] )/6.0; // yy
-  pi[5] += ( mode[0] + mode[4] - mode[6] )/3.0; // zz
-  pi[1] += mode[7]; // xy
-  pi[4] += mode[9]; // yz
-  pi[3] += mode[8]; // zx
-
-/* // OLD VERSION
-  pi[0]=(mode[0]+mode[4]+mode[5])/3.;
-  pi[2]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
-  pi[5]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
-  pi[1]=mode[7];
-  pi[3]=mode[8];
-  pi[4]=mode[9];
-*/
-  
+  pi[0] = ( 2.0*(mode[0] + mode[4]) + mode[6] + 3.0*mode[5] )/6.0; // xx
+  pi[2] = ( 2.0*(mode[0] + mode[4]) + mode[6] - 3.0*mode[5] )/6.0; // yy
+  pi[5] = ( mode[0] + mode[4] - mode[6] )/3.0; // zz
+  pi[1] = mode[7]; // xy
+  pi[4] = mode[9]; // yz
+  pi[3] = mode[8]; // zx  
 }
 
 #ifdef LB_BOUNDARIES

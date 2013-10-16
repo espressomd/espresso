@@ -1130,7 +1130,7 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
 #ifdef LB
     index_t index;
     int node, grid[3], ind_shifted[3];
-    double rho; double j[3]; double pi[6];
+    double rho; double j[3]; double pi[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
     node = map_lattice_to_node(&lblattice,ind_shifted,grid);
