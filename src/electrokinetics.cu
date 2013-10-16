@@ -1871,7 +1871,7 @@ LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_no
                                                         sizeof( LB_rho_v_pi_gpu ) );
 lb_get_values_GPU( host_values ); 
 printf( "ve %f\n", host_values[ 0 ].v[2] );
-free(host_values);	
+free(host_values);
 */
 }
 
@@ -2164,18 +2164,17 @@ unsigned int ek_calculate_boundary_mass( )
 
   free(bound_array);
 
-	return boundary_node_number;
+  return boundary_node_number;
 }
 
 
 int ek_lb_print_vtk_velocity( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
-	
-  if( fp == NULL ) {
-  
-  	return 1;
-	}
+
+  if( fp == NULL ) {  
+    return 1;
+  }
   
   LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
                                                         sizeof( LB_rho_v_pi_gpu ) );
@@ -2205,21 +2204,20 @@ LOOKUP_TABLE default\n",
                               host_values[ i ].v[2]  );
   }
   
-  free(host_values);	
+  free(host_values);
   fclose(fp);
   
-	return 0;
+  return 0;
 }
 
 
 int ek_lb_print_vtk_density( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
-	
+
   if( fp == NULL ) {
-  
-  	return 1;
-	}
+    return 1;
+  }
   
   LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
                                                         sizeof( LB_rho_v_pi_gpu ) );
@@ -2248,20 +2246,21 @@ LOOKUP_TABLE default\n",
     fprintf( fp, "%f ", host_values[ i ].rho[ 0 ] );
   }
   
-  free( host_values );	
+  free( host_values );
   fclose( fp );
   
-	return 0;
+  return 0;
 }
 
 
 int ek_print_vtk_density( int species, char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
-	
-  if( fp == NULL )
-  	return 1;
-  	
+
+  if( fp == NULL ){
+    return 1;
+  }
+
   float* densities = (float*) malloc( ek_parameters.number_of_nodes *
                                       sizeof( float )                 );
   
@@ -2304,7 +2303,7 @@ LOOKUP_TABLE default\n",
   free( densities );
   fclose( fp );
   
-	return 0;
+  return 0;
 }
 
 
@@ -2358,10 +2357,10 @@ int ek_print_vtk_flux( int species, char* filename ) {
   float flux_local_cartesian[3]; //temporary variable for converting fluxes into cartesian coordinates for output
 
   unsigned int coord[3];
-	
-  if( fp == NULL )
-  	return 1;
-  	
+
+  if( fp == NULL ){
+    return 1;
+  }
 
   float* fluxes = (float*) malloc( ek_parameters.number_of_nodes * 13 * sizeof( float ) );
   
@@ -2499,19 +2498,18 @@ LOOKUP_TABLE default\n",
   free( fluxes );
   fclose( fp );
   
-	return 0;
+  return 0;
 }
 
 
 int ek_print_vtk_potential( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
-	
-  if( fp == NULL ) {
-  
-  	return 1;
-	}
-  	
+
+  if( fp == NULL ) {  
+    return 1;
+  }
+
   float* potential = (float*) malloc( ek_parameters.number_of_nodes * sizeof( cufftReal ) );
   
   cuda_safe_mem( cudaMemcpy( potential, ek_parameters.charge_potential,
@@ -2542,22 +2540,21 @@ LOOKUP_TABLE default\n",
     fprintf( fp, "%f\n", potential[ i ] );
   }
   
-  free( potential );	
+  free( potential );
   fclose( fp );
   
-	return 0;
+  return 0;
 }
 
 
 int ek_print_vtk_lbforce( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
-	
+
   if( fp == NULL ) {
-  
-  	return 1;
-	}
-  	
+    return 1;
+  }
+
   float* lbforce = (float*) malloc( ek_parameters.number_of_nodes * 3 *sizeof( float ) );
   
   cuda_safe_mem( cudaMemcpy( lbforce, node_f.force,
@@ -2593,19 +2590,18 @@ LOOKUP_TABLE default\n",
   free( lbforce );
   fclose( fp );
   
-	return 0;
+  return 0;
 }
 
 #ifdef EK_REACTION
 int ek_print_vtk_pressure( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
-	
+
   if( fp == NULL ) {
-  
-  	return 1;
-	}
-  	
+    return 1;
+  }
+
   float* pressure = (float*) malloc( ek_parameters.number_of_nodes * sizeof( float ) );
   
   cuda_safe_mem( cudaMemcpy( pressure, ek_parameters.pressure,
@@ -2636,10 +2632,10 @@ LOOKUP_TABLE default\n",
     fprintf( fp, "%f\n", pressure[ i ]/(ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) );
   }
   
-  free( pressure );	
+  free( pressure );
   fclose( fp );
   
-	return 0;
+  return 0;
 }
 #endif
 
