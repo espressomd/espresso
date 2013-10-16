@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file gb.c
+/** \file gb.cpp
  *
- *  Implementation of \ref gb.h
+ *  Implementation of \ref gb.hpp
  */
 #include "gb.hpp"
 #include "communication.hpp"

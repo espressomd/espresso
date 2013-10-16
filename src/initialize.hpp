@@ -20,7 +20,7 @@
 */
 #ifndef INITIALZE_H
 #define INITIALZE_H
-/** \file initialize.h This file contains the hook procedures. These
+/** \file initialize.hpp This file contains the hook procedures. These
     are the ones with names on_* and are called whenever something is
     changed in Espresso which might influence other parts. For
     example, the P3M code has to be reinitialized whenever the box

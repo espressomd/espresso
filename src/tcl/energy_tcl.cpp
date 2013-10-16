@@ -189,7 +189,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       for (i = 0; i < total_energy.n_coulomb; i++)
 	value += total_energy.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see myconfig.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see myconfig.hpp)\n", (char *)NULL);
 #endif
     }    
     else if( ARG0_IS_S("magnetic")) {
@@ -198,7 +198,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       for (i = 0; i < total_energy.n_dipolar; i++)
 	value += total_energy.dipolar[i];
 #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see myconfig.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see myconfig.hpp)\n", (char *)NULL);
 #endif
     }
     

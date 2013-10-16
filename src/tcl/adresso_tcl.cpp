@@ -20,7 +20,7 @@
 */
 /** \file adresso.c
     This is the place for adaptive resolution scheme
-    Implementation of adresso.h
+    Implementation of adresso.hpp
 */
 
 #include "adresso_tcl.hpp"
@@ -51,7 +51,7 @@ int tclcommand_adress(ClientData data, Tcl_Interp *interp, int argc, char **argv
    int err = TCL_OK;
 #ifndef ADRESS
    Tcl_ResetResult(interp);
-   Tcl_AppendResult(interp, "Adress is not compiled in (change config.h).", (char *)NULL);
+   Tcl_AppendResult(interp, "Adress is not compiled in (change config.hpp).", (char *)NULL);
    err = (TCL_ERROR);
 #else
    if (argc < 2) {

@@ -22,7 +22,7 @@
 /** \file integrate.c   Molecular dynamics integrator.
  *
  *  For more information about the integrator 
- *  see \ref integrate.h "integrate.h".
+ *  see \ref integrate.hpp "integrate.h".
 */
 
 #include "integrate.hpp"

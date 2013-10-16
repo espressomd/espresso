@@ -91,7 +91,7 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
 // Add it to the queue in case virtual sites should be added at the point of collision
 void detect_collision(Particle* p1, Particle* p2)
 {
-  // The check, whether collision detection is actually turned on is performed in forces.h
+  // The check, whether collision detection is actually turned on is performed in forces.hpp
 
   double dist_betw_part, vec21[3]; 
   int part1, part2, size;

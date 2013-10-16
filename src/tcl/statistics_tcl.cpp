@@ -20,7 +20,7 @@
 */
 /** \file statistics.c
     This is the place for analysis (so far...).
-    Implementation of statistics.h
+    Implementation of statistics.hpp
 */
 #include <tcl.h>
 #include <cstdlib>

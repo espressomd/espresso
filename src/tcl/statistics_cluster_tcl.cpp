@@ -23,7 +23,7 @@
  *  This file contains the necklace cluster algorithm. It can be used
  *  to identify the substructures 'pearls' and 'strings' on a linear
  *  chain.
- *  See also \ref statistics_cluster.h
+ *  See also \ref statistics_cluster.hpp
  */
 
 

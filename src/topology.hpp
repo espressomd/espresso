@@ -21,7 +21,7 @@
 #ifndef TOPOLOGY_H
 #define TOPOLOGY_H
 
-/** \file topology.h
+/** \file topology.hpp
  *
  *  This file contains functions for handling the system topology.
  */

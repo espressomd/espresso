@@ -20,7 +20,7 @@
 */
 #ifndef _PARSER_H
 #define _PARSER_H
-/** \file parser.h
+/** \file parser.hpp
     This file contains macros for parsing the parameters to the
     'inter' command.
  */

@@ -18,12 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file elc.h ELC algorithm for long range coulomb interactions.
+/** \file elc.hpp ELC algorithm for long range coulomb interactions.
     Implementation of the ELC method for the calculation of the
     electrostatic interaction in two dimensional periodic systems. For
     details on the method see MMM in general. The ELC method works
     together with any three dimensional method, which in Espresso is
-    for example \ref p3m.h "P3M", with metallic boundary conditions.  */
+    for example \ref p3m.hpp "P3M", with metallic boundary conditions.  */
 #ifndef _ELC_H
 #define _ELC_H
 
@@ -114,17 +114,17 @@ double ELC_P3M_dielectric_layers_energy_self();
 /// forces of particles in border layers with themselves
 void ELC_P3M_self_forces();
 
-/// assign the additional, virtual charges, used only in energy.c
+/// assign the additional, virtual charges, used only in energy.cpp
 void   ELC_p3m_charge_assign_both();
-/// assign the additional, virtual charges, used only in energy.c
+/// assign the additional, virtual charges, used only in energy.cpp
 void   ELC_p3m_charge_assign_image();
 
-/// take into account the virtual charges in the charge sums, used in energy.c
+/// take into account the virtual charges in the charge sums, used in energy.cpp
 void   ELC_P3M_modify_p3m_sums_both();
-/// take into account the virtual charges in the charge sums, used in energy.c
+/// take into account the virtual charges in the charge sums, used in energy.cpp
 void   ELC_P3M_modify_p3m_sums_image();
 
-/// assign the additional, virtual charges, used only in energy.c
+/// assign the additional, virtual charges, used only in energy.cpp
 void   ELC_P3M_restore_p3m_sums();
 
 #endif

@@ -21,7 +21,7 @@
 #ifndef BUCKINGHAM_TCL_H
 #define BUCKINGHAM_TCL_H
 /** \file buckingham_tcl.hpp
- * Tcl interface for \ref buckingham.h
+ * Tcl interface for \ref buckingham.hpp
  */
 
 #include "parser.hpp"

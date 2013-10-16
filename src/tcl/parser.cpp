@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file parser.c
-    Implementation of \ref parser.h "parser.h". \ref parse_int_list is too long for inlining.
+    Implementation of \ref parser.hpp "parser.h". \ref parse_int_list is too long for inlining.
  */
 
 #include "utils.hpp"

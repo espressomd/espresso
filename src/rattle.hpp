@@ -21,11 +21,11 @@
 #ifndef RATTLE_H
 #define RATTLE_H
 
-/** \file rattle.h    RATTLE Algorithm (Rattle: A "Velocity" Version of the Shake
+/** \file rattle.hpp    RATTLE Algorithm (Rattle: A "Velocity" Version of the Shake
  *                    Algorithm for Molecular Dynamics Calculations, H.C Andersen,
  *                    J Comp Phys, 52, 24-34, 1983)
  *
- *  For more information see \ref rattle.c "rattle.c".
+ *  For more information see \ref rattle.cpp "rattle.c".
 */
 #include "global.hpp"
 #include "particle_data.hpp"

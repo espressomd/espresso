@@ -21,7 +21,7 @@
 /** \file domain_decomposition.c
  *
  *  This file contains everything related to the cell system: domain decomposition.
- *  See also \ref domain_decomposition.h
+ *  See also \ref domain_decomposition.hpp
  */
 #include "utils.hpp"
 #include "parser.hpp"

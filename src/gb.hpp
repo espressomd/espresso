@@ -21,10 +21,10 @@
 #ifndef GB_H
 #define GB_H
 
-/** \file gb.h
+/** \file gb.hpp
  *  Routines to calculate the Gay-Berne energy and force 
  *  for a pair of particles.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"

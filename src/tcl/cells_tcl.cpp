@@ -22,7 +22,7 @@
  *
  *  This file contains functions for the cell system.
  *
- *  For more information on cells, see cells.h
+ *  For more information on cells, see cells.hpp
  *   */
 #include "parser.hpp"
 #include "domain_decomposition.hpp"

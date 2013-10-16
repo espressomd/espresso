@@ -20,7 +20,7 @@
 */
 /** \file mmm2d.c  MMM2D algorithm for long range coulomb interaction.
  *
- *  For more information about MMM2D, see \ref mmm2d.h "mmm2d.h".
+ *  For more information about MMM2D, see \ref mmm2d.hpp "mmm2d.h".
  */
 
 //#include <cmath>

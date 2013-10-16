@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file imd.c
-    Implementation of \ref imd.h "imd.h".
+    Implementation of \ref imd.hpp "imd.h".
  */
 #include <unistd.h>
 #include <cstdlib>

@@ -20,7 +20,7 @@
 */
 #ifndef _GRID_H
 #define _GRID_H
-/** \file grid.h   Domain decomposition for parallel computing.
+/** \file grid.hpp   Domain decomposition for parallel computing.
  *
  *  The primary simulation box is divided into orthogonal rectangular
  *  subboxes which are assigned to the different nodes (or processes
@@ -28,7 +28,7 @@
  *  node_grid. Each node has a number \ref this_node and a position
  *  \ref node_pos in that grid. Each node has also 6 nearest neighbors
  *  \ref node_neighbors which are necessary for the communication
- *  between the nodes (see also \ref ghosts.c and \ref p3m.c for more
+ *  between the nodes (see also \ref ghosts.cpp and \ref p3m.cpp for more
  *  details about the communication.
  *
  *  For the 6 directions \anchor directions we have the following convention:
@@ -40,7 +40,7 @@
  *  (e.g \ref node_grid, \ref box_l , \ref my_left,...).
  *  
  *
- *  For more information on the domain decomposition, see \ref grid.c "grid.c". 
+ *  For more information on the domain decomposition, see \ref grid.cpp "grid.c". 
 */
 #include "utils.hpp"
 #include <climits>

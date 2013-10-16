@@ -20,7 +20,7 @@
 */
 /** \file mmm1d.c  MMM1D algorithm for long range coulomb interaction.
  *
- *  For more information about MMM1D, see \ref mmm1d.h "mmm1d.h".
+ *  For more information about MMM1D, see \ref mmm1d.hpp "mmm1d.h".
  */
 
 #include <mpi.h>

@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file statistics_chain.c
-    Implementation of \ref statistics_chain.h "statistics_chain.h".
+    Implementation of \ref statistics_chain.hpp "statistics_chain.h".
 */
 #include "statistics.hpp"
 #include "parser.hpp"

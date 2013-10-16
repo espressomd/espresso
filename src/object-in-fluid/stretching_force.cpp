@@ -18,7 +18,7 @@
 */
 /** \file stretching_force.c
  *
- *  Implementation of \ref stretching_force.h
+ *  Implementation of \ref stretching_force.hpp
  */
 
 #include "stretching_force.hpp"

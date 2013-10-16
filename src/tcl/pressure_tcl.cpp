@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file pressure.c
-    Implementation of \ref pressure.h "pressure.h".
+    Implementation of \ref pressure.hpp "pressure.h".
 */
 #include "pressure.hpp"
 #include "parser.hpp"
@@ -325,7 +325,7 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
       for (i = 0; i < total_pressure.n_coulomb; i++)
 	value += total_pressure.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)\n", (char *)NULL);
 #endif
     }
     else if( ARG0_IS_S("dipolar")) {
@@ -334,7 +334,7 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
       for (i = total_pressure.n_coulomb-1; i < total_pressure.n_coulomb; i++)  /*when DLC will be installed this has to be changed */
         value += total_pressure.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.hpp)\n", (char *)NULL);
 #endif
     }
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -641,7 +641,7 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
 #ifdef ELECTROSTATICS
       for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];
 #else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)\n", (char *)NULL);
 #endif
     }
     else if( ARG0_IS_S("dipolar")) {
@@ -649,7 +649,7 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
       /* for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];*/
       fprintf(stderr," stress tensor, magnetostatics, something should go here, file pressure.c ");
 #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.hpp)\n", (char *)NULL);
 #endif
     }
 #ifdef VIRTUAL_SITES_RELATIVE

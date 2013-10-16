@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics.c
+/** \file statistics.cpp
     This is the place for analysis (so far...).
-    Implementation of statistics.h
+    Implementation of statistics.hpp
 */
 #include <cstdlib>
 #include <cstring>
@@ -539,7 +539,7 @@ void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry, d
     if (f < 0.0) {
       rtb = g1;  dg = g1-g2; }
     else {
-      fprintf(stderr,"WARNING: Lower boundary is actually larger than l.h.s, flipping!\n");
+      fprintf(stderr,"WARNING: Lower boundary is actually larger than l.hpp.s, flipping!\n");
       rtb = g1;  dg = g1;    }
     for (i = 1; i <= maxtry; i++) {
       gmid = rtb - (dg *= 0.5);

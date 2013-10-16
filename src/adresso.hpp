@@ -20,9 +20,9 @@
 */
 #ifndef _ADRESSO_H
 #define _ADRESSO_H
-/** \file adresso.h
+/** \file adresso.hpp
     This is the place for adaptive resolution scheme (adress)
-    Implementation of adresso.h
+    Implementation of adresso.hpp
 
     For more details about adress see:
     - M. Praprotnik, L. Delle Site and K. Kremer, JCP 123, 224106, 2005. 

@@ -21,7 +21,7 @@
 #ifndef REACTION_FIELD_TCL_H
 #define REACTION_FIELD_TCL_H
 /** \file reaction_field_tcl.hpp
- * Tcl interface for \ref reaction_field.h
+ * Tcl interface for \ref reaction_field.hpp
  */
 
 #include "parser.hpp"

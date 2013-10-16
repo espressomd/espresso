@@ -21,7 +21,7 @@
 #ifndef _DOMAIN_DECOMPOSITION_H
 #define _DOMAIN_DECOMPOSITION_H
 
-/** \file domain_decomposition.h
+/** \file domain_decomposition.hpp
  *
  *  This file contains everything related to the cell system: domain decomposition.
  *
@@ -52,7 +52,7 @@
  * some ghost-ghost cell interaction as well, which we do not need!
  *
  *  For more information on cells,
- *  see \ref cells.h 
+ *  see \ref cells.hpp 
 */
 
 #include "utils.hpp"
@@ -134,7 +134,7 @@ extern double max_skin;
  *  n_cells, is larger than max_num_cells the cell grid is
  *  reduced. max_num_cells has to be larger than 27, e.g one inner
  *  cell.  max_num_cells is initialized with the default value
- *  specified in \ref config.h as \ref CELLS_MAX_NUM_CELLS.
+ *  specified in \ref config.hpp as \ref CELLS_MAX_NUM_CELLS.
  */
 extern int max_num_cells;
 

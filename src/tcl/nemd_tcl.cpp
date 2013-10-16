@@ -20,7 +20,7 @@
 */
 /** \file nemd.c
 
-    For more information see \ref nemd.h
+    For more information see \ref nemd.hpp
  */
 #include "nemd.hpp"
 #include <cstdio>

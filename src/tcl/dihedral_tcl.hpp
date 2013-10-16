@@ -21,7 +21,7 @@
 #ifndef DIHEDRAL_TCL_H
 #define DIHEDRAL_TCL_H
 /** \file dihedral_tcl.hpp
- * Tcl interface for \ref dihedral.h
+ * Tcl interface for \ref dihedral.hpp
  */
 
 #include "parser.hpp"

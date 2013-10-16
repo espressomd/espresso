@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file domain_decomposition.c
+/** \file domain_decomposition.cpp
  *
  *  This file contains everything related to the cell system: domain decomposition.
- *  See also \ref domain_decomposition.h
+ *  See also \ref domain_decomposition.hpp
  */
 
 #include "domain_decomposition.hpp"
@@ -444,7 +444,7 @@ void dd_update_communicators_w_boxl()
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
  * created list of interacting neighbor cells is used by the verlet
- * algorithm (see verlet.c) to build the verlet lists.
+ * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void dd_init_cell_interactions()
 {

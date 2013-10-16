@@ -176,17 +176,17 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("lbboundary", tclcommand_lbboundary);
   /* here */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
-  /* in iccp3m.h */
+  /* in iccp3m.hpp */
   REGISTER_COMMAND("observable", tclcommand_observable);
-  /* in statistics_obsrvable.h */
+  /* in statistics_obsrvable.hpp */
   REGISTER_COMMAND("correlation", tclcommand_correlation);
-  /* in statistics_correlation.h */
+  /* in statistics_correlation.hpp */
 #ifdef ELECTROSTATICS
 #ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
 #endif 
 #endif 
-  /* in adresso.h */
+  /* in adresso.hpp */
   REGISTER_COMMAND("adress", tclcommand_adress);
 #ifdef ADRESS
   /* #ifdef THERMODYNAMIC_FORCE */

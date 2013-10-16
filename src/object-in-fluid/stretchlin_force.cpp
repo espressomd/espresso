@@ -18,7 +18,7 @@
 */
 /** \file stretchlin_force.c
  *
- *  Implementation of \ref stretchlin_force.h
+ *  Implementation of \ref stretchlin_force.hpp
  */
 
 #include "stretchlin_force.hpp"

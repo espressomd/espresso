@@ -20,10 +20,10 @@
 */
 #ifndef HARMONIC_H
 #define HARMONIC_H
-/** \file harmonic.h
+/** \file harmonic.hpp
  *  Routines to calculate the HARMONIC Energy or/and HARMONIC force 
  *  for a particle pair.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 /************************************************************/
@@ -37,10 +37,10 @@
 int harmonic_set_params(int bond_type, double k, double r,double r_cut);
 
 /** Computes the HARMONIC pair force and adds this
-    force to the particle forces (see \ref interaction_data.c). 
+    force to the particle forces (see \ref interaction_data.cpp). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
-    @param iaparams  bond type number of the angle interaction (see \ref interaction_data.c).
+    @param iaparams  bond type number of the angle interaction (see \ref interaction_data.cpp).
     @param dx        particle distance vector
     @param force     returns force of particle 1
     @return 0.

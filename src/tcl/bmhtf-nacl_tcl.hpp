@@ -21,7 +21,7 @@
 #ifndef BMHTF_NACL_TCL_H
 #define BMHTF_NACL_TCL_H
 /** \file bmhtf-nacl_tcl.hpp
- * Tcl interface for \ref bmhtf-nacl.h
+ * Tcl interface for \ref bmhtf-nacl.hpp
  */
 
 #include "parser.hpp"

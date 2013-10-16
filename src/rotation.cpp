@@ -18,13 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file rotation.c  Molecular dynamics integrator for rotational motion.
+/** \file rotation.cpp  Molecular dynamics integrator for rotational motion.
  *
  *  A velocity Verlet <a HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
  *  using quaternions is implemented to tackle rotational motion. A random torque and a friction
  *  term are added to provide the constant NVT conditions. Due to this feature all particles are
  *  treated as 3D objects with 3 translational and 3 rotational degrees of freedom if ROTATION
- *  flag is set in \ref config.h "config.h".
+ *  flag is set in \ref config.hpp "config.h".
 */
 
 #include <mpi.h>
@@ -57,7 +57,7 @@
 /** moment of inertia. Currently we define the inertia tensor here to be constant.
     If it is not spherical the angular velocities have to be refined several times
     in the \ref convert_torques_propagate_omega. Also the kinetic energy in file
-    \ref statistics.c is calculated assuming that I[0] =  I[1] =  I[2] = 1  */
+    \ref statistics.cpp is calculated assuming that I[0] =  I[1] =  I[2] = 1  */
 static double I[3] = { 1, 1, 1};
 
 /** \name Privat Functions */

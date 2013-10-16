@@ -20,7 +20,7 @@
 */
 /** \file mpi.c
  *
- *  For more information about MPIFake, see \ref mpi.h "mpi.h".
+ *  For more information about MPIFake, see \ref mpi.hpp "mpi.h".
  */
 #include "mpi.h"
 

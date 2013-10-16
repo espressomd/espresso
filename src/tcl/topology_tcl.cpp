@@ -23,7 +23,7 @@
  *
  *  This file contains functions for handling the system topology.
  *
- *  For more information see topology.h
+ *  For more information see topology.hpp
  *   */
 
 //#include "utils.hpp"

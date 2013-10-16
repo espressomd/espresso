@@ -23,13 +23,13 @@
 #ifndef _OVERLAP_H
 #define _OVERLAP_H
 
-/** \file overlap.h
+/** \file overlap.hpp
  *  Routines to calculate the energy and/or force 
  *  for bonds, angles and dihedrals as a sum of N functions in the forms:
  *  bonds --- parameter: [N, a_i, b_i, c_i], function: U(bond)  = sum_(i=1,N) {a_i*exp[-(bond-b_i)^2 /(c_i^2)]}.
  *  angles--- parameter: [N, a_i, b_i, c_i], function: U(cos(angl)) = sum_(i=1,N) {a_i*exp[-(cos(angl)-b_i)^2 / (2 * c_i^2)]}.
  *  dihedrals---parameter: [N, a_i, b_i, c_i], function: U(dihe)= sum_(i=1,N) {a_i*(1+Math.cos(c_i*dihe+b_i))}.
- *  Require feature OVERLAPPED compiled in myconfig.h (for more info of FEATURES, see \ref config.h ).
+ *  Require feature OVERLAPPED compiled in myconfig.hpp (for more info of FEATURES, see \ref config.hpp ).
 */
 
 #ifdef OVERLAPPED 
@@ -41,14 +41,14 @@ int overlapped_bonded_set_params(int bond_type, int overlap_type,
 				 char * filename);
 
 /** Computes the two body overlapped bonded force.
-    Adds this force to the particle forces in forces.h (see \ref tclcommand_inter). 
+    Adds this force to the particle forces in forces.hpp (see \ref tclcommand_inter). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param dx        particle distance vector
     @param force     returns force of particle 1
     @return 0.
-    Needs feature OVERLAPPED compiled in (see \ref config.h).
+    Needs feature OVERLAPPED compiled in (see \ref config.hpp).
 */
 inline int calc_overlap_bond_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3]) 
 {
@@ -92,7 +92,7 @@ inline int calc_overlap_bond_force(Particle *p1, Particle *p2, Bonded_ia_paramet
     @param dx        particle distance vector
     @param _energy   returns energy of this interaction
     @return 0.
-    Needs feature OVERLAPPED compiled in (see \ref config.h).
+    Needs feature OVERLAPPED compiled in (see \ref config.hpp).
 */
 inline int overlap_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy) 
 {
@@ -117,7 +117,7 @@ inline int overlap_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameters 
 }
 
 /** Computes the three body overlapped angle interaction force.
-    Adds this force to the particle forces in forces.h (see \ref tclcommand_inter). 
+    Adds this force to the particle forces in forces.hpp (see \ref tclcommand_inter). 
     @param p_mid     Pointer to second/middle particle.
     @param p_left    Pointer to first/left particle.
     @param p_right   Pointer to third/right particle.
@@ -125,7 +125,7 @@ inline int overlap_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameters 
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @return 0
-    Needs feature OVERLAPPED compiled in (see \ref config.h). 
+    Needs feature OVERLAPPED compiled in (see \ref config.hpp). 
 */
 inline int calc_overlap_angle_force(Particle *p_mid, Particle *p_left, 
 				  Particle *p_right, Bonded_ia_parameters *iaparams,
@@ -187,7 +187,7 @@ inline int calc_overlap_angle_force(Particle *p_mid, Particle *p_left,
     @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param _energy   return energy pointer.
     @return 0.
-    Needs feature OVERLAPPED compiled in (see \ref config.h). 
+    Needs feature OVERLAPPED compiled in (see \ref config.hpp). 
 */
 inline int overlap_angle_energy(Particle *p_mid, Particle *p_left, 
 			      Particle *p_right, Bonded_ia_parameters *iaparams,
@@ -232,14 +232,14 @@ inline int overlap_angle_energy(Particle *p_mid, Particle *p_left,
 }
 
 /** Computes the four body overlapped dihedral interaction force.
-    Adds this force to the particle forces in forces.h (see \ref tclcommand_inter). 
+    Adds this force to the particle forces in forces.hpp (see \ref tclcommand_inter). 
     @param p1, p2, p3, p4 define the angle between the planes p1,p2,p3 and p2,p3,p4
     @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @param force3 returns force of particle 3
     @return 0
-    Needs feature OVERLAPPED compiled in (see \ref config.h). 
+    Needs feature OVERLAPPED compiled in (see \ref config.hpp). 
 */
 inline int calc_overlap_dihedral_force(Particle *p2, Particle *p1,
 					 Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
@@ -310,7 +310,7 @@ inline int calc_overlap_dihedral_force(Particle *p2, Particle *p1,
     @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param _energy   return energy pointer.
     @return 0.
-    Needs feature OVERLAPPED compiled in (see \ref config.h). 
+    Needs feature OVERLAPPED compiled in (see \ref config.hpp). 
 */
 inline int overlap_dihedral_energy(Particle *p2, Particle *p1, 
 				 Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,

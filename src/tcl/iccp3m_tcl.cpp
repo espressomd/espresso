@@ -20,7 +20,7 @@
 */
 
 /** \file iccp3m.c
-    Detailed Information about the method is included in the corresponding header file \ref iccp3m.h.
+    Detailed Information about the method is included in the corresponding header file \ref iccp3m.hpp.
 
  */
 

@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file interaction_data.c
-    Implementation of interaction_data.h
+    Implementation of interaction_data.hpp
  */
 #include <cstring>
 #include <cstdlib>
@@ -536,7 +536,7 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "}",(char *) NULL);
 
 #else
-  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
+  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)",(char *) NULL);
 #endif
   return (TCL_OK);
 }
@@ -984,7 +984,7 @@ int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
     #ifdef ELECTROSTATICS
       return tclcommand_inter_parse_coulomb(interp, argc-1, argv+1);
    #else
-       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)", (char *) NULL);
+       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)", (char *) NULL);
     #endif
   }
   
@@ -992,7 +992,7 @@ int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
    #ifdef DIPOLES
       return tclcommand_inter_parse_magnetic(interp, argc-1, argv+1);
     #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)", (char *) NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.hpp)", (char *) NULL);
     #endif
   }
   

@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file ljangle.h
+/** \file ljangle.hpp
  *  Routines to calculate the lennard-jones 12-10 with angular dependance.
  *  The potential is a product of a 12-10 LJ potential with two cos^2.
  *  The potential actually relies on 6 particles: the 2 primary beads
