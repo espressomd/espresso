@@ -967,6 +967,10 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
   
     /** store vd temporary in second lattice to avoid race conditions */
     // TODO: fix the multicomponent version (rho...)
+
+// TODO : PUT IN EQUILIBRIUM CONTRIBUTION TO THE BOUNCE-BACK DENSITY FOR THE BOUNDARY FORCE
+// TODO : INITIALIZE BOUNDARY FORCE PROPERLY, HAS NONZERO ELEMENTS IN FIRST STEP
+
 #define BOUNCEBACK  \
   shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[0]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
   pop_to_bounce_back = n_b.vd[population*para.number_of_nodes + index ]; \
@@ -1216,11 +1220,10 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
         node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[1]*force_factor;
         node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2]*force_factor;
       }
-      else
-      {
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+      else{
+//        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f; // TODO : Uncomment
+//        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+//        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
       }
 #else
       /** reset force */
