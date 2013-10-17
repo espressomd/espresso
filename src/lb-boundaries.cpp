@@ -106,7 +106,7 @@ void lb_init_boundaries() {
     int wallcharge_species = -1, charged_boundaries = 0;
     int node_charged;
     
-    for(n = 0; n < n_lb_boundaries; n++) {
+    for(n = 0; n < int(n_lb_boundaries); n++) {
 
       if(lb_boundaries[n].charge_density != 0.0) {
         charged_boundaries = 1;
@@ -114,7 +114,7 @@ void lb_init_boundaries() {
       }
     }
       
-    for(n = 0; n < ek_parameters.number_of_species; n++)
+    for(n = 0; n < int(ek_parameters.number_of_species); n++)
       if(ek_parameters.valency[n] != 0.0) {
         wallcharge_species = n;
         break;

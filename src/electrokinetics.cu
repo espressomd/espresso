@@ -16,7 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#include "config.hpp"
 #ifdef CUDA
 
 #include <cuda.h>
@@ -26,9 +26,9 @@
 
 #include <stdio.h>
 //#include "lb-boundaries.hpp" //TODO: needed to get rid of the code duplication below
-#include "config.hpp"
 #include "electrokinetics.hpp"
-#include "cuda_common.hpp"
+#include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
 #include "lbgpu.hpp"
 #include "constraint.hpp"
 
@@ -122,9 +122,7 @@ int ek_initialized = 0;
   extern LB_node_force_gpu node_f;
   extern LB_nodes_gpu *current_nodes;
   
-#ifdef EK_REACTION
   LB_rho_v_gpu *ek_lb_device_values;
-#endif
 
 
 
@@ -446,6 +444,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
     atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], pressure_gradient );
   }
 }
+#endif
 
 __global__ void ek_accelerated_frame_transformation( LB_node_force_gpu node_f )
 {
@@ -470,7 +469,6 @@ __global__ void ek_accelerated_frame_transformation( LB_node_force_gpu node_f )
                ek_accelerated_frame_boundary_force[2] );
   }
 }
-#endif
 
 __global__ void ek_calculate_quantities( unsigned int species_index,
                                          LB_nodes_gpu lb_node,
@@ -1997,9 +1995,9 @@ int ek_init() {
 #ifdef EK_REACTION
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.pressure,
                              ek_parameters.number_of_nodes * sizeof( float ) ) );
-                             
-    lb_get_device_values_pointer( &ek_lb_device_values );
 #endif
+
+    lb_get_device_values_pointer( &ek_lb_device_values );
     
     if( cudaGetLastError() != cudaSuccess ) {
     

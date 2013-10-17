@@ -86,7 +86,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     if(floatarg != 0.0) {
       species = -1;
       
-      for(int i = 0; i < ek_parameters.number_of_species; i++)
+      for(unsigned int i = 0; i < ek_parameters.number_of_species; i++)
         if(ek_parameters.valency[i] != 0.0) {
           species = i;
           break;
