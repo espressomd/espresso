@@ -799,7 +799,7 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE    
      else if (ARG0_IS_S("vs_relative")) {
-       sprintf(buffer, "%d %f %f %f %f", part.p.vs_relative_to_particle_id, part.p.vs_relative_distance,
+       sprintf(buffer, "%d %f %f %f %f %f", part.p.vs_relative_to_particle_id, part.p.vs_relative_distance,
         part.p.vs_relative_rel_orientation[0],
         part.p.vs_relative_rel_orientation[1],
         part.p.vs_relative_rel_orientation[2],
