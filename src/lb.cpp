@@ -365,10 +365,6 @@ int lb_lbfluid_set_couple_flag(int couple_flag) {
       return -1;
     }
     lbpar_gpu.lb_couple_switch = couple_flag;
-/*    if (couple_flag == LB_COUPLE_TWO_POINT)
-      lbpar_gpu.lb_couple_switch = (lbpar_gpu.lb_couple_switch &~ LB_COUPLE_THREE_POINT) | LB_COUPLE_TWO_POINT;
-    if (couple_flag == LB_COUPLE_THREE_POINT)
-      lbpar_gpu.lb_couple_switch = (lbpar_gpu.lb_couple_switch &~ LB_COUPLE_TWO_POINT) | LB_COUPLE_THREE_POINT;*/
 #endif
   } else {
 #ifdef LB
@@ -1810,7 +1806,7 @@ void lb_reinit_fluid() {
 
     for (index=0; index<lblattice.halo_grid_volume; index++) {
 
-      lb_calc_n_equilibrium(index,rho,j,pi);
+      lb_calc_n_from_rho_j_pi(index,rho,j,pi);
 
       lbfields[index].recalc_fields = 1;
 #ifdef LB_BOUNDARIES
@@ -1877,7 +1873,7 @@ void lb_release() {
 /***********************************************************************/
 /*@{*/
 
-void lb_calc_n_equilibrium(const index_t index, const double rho, const double *j, double *pi) {
+void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double *j, double *pi) {
 
   const double rhoc_sq = rho*lbmodel.c_sound_sq;
   // unit conversion: mass density

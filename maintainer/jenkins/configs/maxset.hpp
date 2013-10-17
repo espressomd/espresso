@@ -34,6 +34,8 @@
 #ifdef CUDA
 #define LB_GPU
 #define LB_BOUNDARIES_GPU
+#define ELECTROKINETICS
+#define EK_BOUNDARIES
 #endif
 
 #define AREA_FORCE_GLOBAL   
