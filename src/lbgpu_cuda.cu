@@ -1320,15 +1320,15 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
       // Duenweg and Ladd paper, when these are written out in populations.
       // But to ensure this, the expression in Schiller's modes has to be different!
 //
-      pi[0] = (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
+      pi[0] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
                 + mode[6 + ii * LBQ] + 3.0f*mode[5 + ii * LBQ] )/6.0f; // xx
-      pi[2] = (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
+      pi[2] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
                 + mode[6 + ii * LBQ] - 3.0f*mode[5 + ii * LBQ] )/6.0f; // yy
-      pi[5] = (   mode[0 + ii * LBQ] + mode[4 + ii * LBQ]
+      pi[5] += (   mode[0 + ii * LBQ] + mode[4 + ii * LBQ]
                 - mode[6 + ii * LBQ] )/3.0f; // zz
-      pi[1] = mode[7 + ii * LBQ]; // xy
-      pi[4] = mode[9 + ii * LBQ]; // yz
-      pi[3] = mode[8 + ii * LBQ]; // zx
+      pi[1] += mode[7 + ii * LBQ]; // xy
+      pi[4] += mode[9 + ii * LBQ]; // yz
+      pi[3] += mode[8 + ii * LBQ]; // zx
     }
      
     for(int i = 0; i < 6; i++)
