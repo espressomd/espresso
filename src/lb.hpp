@@ -256,7 +256,7 @@ void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi)
     @param j local fluid speed
     @param pi local fluid pressure
 */
-void lb_calc_n_equilibrium(const index_t index, const double rho, const double *j, double *pi);
+void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double *j, double *pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.

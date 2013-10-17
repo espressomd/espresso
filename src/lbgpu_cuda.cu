@@ -1221,7 +1221,7 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
         node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2]*force_factor;
       }
       else{
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f; // TODO : Uncomment
+        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
         node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
         node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
       }
@@ -1244,7 +1244,7 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
 __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v, LB_rho_v_gpu *d_v, unsigned int index, unsigned int print_index) {
   
   float j[3]; 
-  float pi_eq[6] ; 
+  float pi_eq[6]; 
   float pi[6]={0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
   float rho_tot=0.0f;
 
@@ -1319,7 +1319,7 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
       // expression then corresponds exactly to those in Eqs. 116 - 121 in the
       // Duenweg and Ladd paper, when these are written out in populations.
       // But to ensure this, the expression in Schiller's modes has to be different!
-//
+
       pi[0] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
                 + mode[6 + ii * LBQ] + 3.0f*mode[5 + ii * LBQ] )/6.0f; // xx
       pi[2] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
@@ -1350,6 +1350,90 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
 
     for(int i = 0; i < 6; i++)
       d_p_v[print_index].pi[i] = 0.0f;
+  }
+}
+
+//TODO: finish this, make it equivalent to lb.cpp:1872 (lb_calc_n_from_rho_j_pi) and use in set_u
+__device__ void calc_values_from_n_in_LB_units(float *mode, LB_rho_v_gpu *d_v, float* rho, float* j, float* pi) {
+  for(int i = 0; i < 6; i++)
+    pi[i] = 0.0f;
+    
+  float pi_eq[6];
+  float rho_tot=0.0f;
+
+  for(int ii= 0; ii < LB_COMPONENTS; ii++)
+  {
+    rho_tot += d_v[index].rho[ii];
+  }
+
+  /* stress calculation */ 
+  for(int ii = 0; ii < LB_COMPONENTS; ii++)
+  {
+    float Rho = d_v[index].rho[ii];
+    
+    /* note that d_v[index].v[] already includes the 1/2 f term, accounting for the pre- and post-collisional average */
+
+    j[0] = Rho * d_v[index].v[0];
+    j[1] = Rho * d_v[index].v[1];
+    j[2] = Rho * d_v[index].v[2];
+
+    // equilibrium part of the stress modes, which comes from 
+    // the equality between modes and stress tensor components
+
+    /* m4 = trace(pi) - rho
+       m5 = pi_xx - pi_yy
+       m6 = trace(pi) - 3 pi_zz
+       m7 = pi_xy
+       m8 = pi_xz
+       m9 = pi_yz */
+
+    // and pluggin in the Euler stress:
+    // pi_eq = rho_0*c_s^2*I3 + (j \otimes j)/rho
+    // with I3 the 3D identity matrix and
+    // rho = \trace(rho_0*c_s^2*I3), which yields
+
+    /* pi_eq0 = j.j
+       pi_eq1 = j_x*j_x - j_y*j_y
+       pi_eq1 = j.j - 3*j_z*j_z
+       pi_eq1 = j_x*j_y
+       pi_eq1 = j_x*j_z
+       pi_eq1 = j_y*j_z */
+
+    // where the / Rho term has been dropped. We thus obtain: 
+
+    pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
+    pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
+    pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0*j[2]*j[2] ) / Rho;
+    pi_eq[3] = j[0]*j[1] / Rho;
+    pi_eq[4] = j[0]*j[2] / Rho;
+    pi_eq[5] = j[1]*j[2] / Rho;
+   
+    /* Now we must predict the outcome of the next collision */
+    /* We immediately average pre- and post-collision.  */
+    /* TODO: need a reference for this.   */
+
+    mode[4 + ii * LBQ ] = pi_eq[0] + (0.5 + 0.5* para.gamma_bulk[ii]) * (mode[4 + ii * LBQ] - pi_eq[0]);
+    mode[5 + ii * LBQ ] = pi_eq[1] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[5 + ii * LBQ] - pi_eq[1]);
+    mode[6 + ii * LBQ ] = pi_eq[2] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[6 + ii * LBQ] - pi_eq[2]);
+    mode[7 + ii * LBQ ] = pi_eq[3] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[7 + ii * LBQ] - pi_eq[3]);
+    mode[8 + ii * LBQ ] = pi_eq[4] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[8 + ii * LBQ] - pi_eq[4]);
+    mode[9 + ii * LBQ ] = pi_eq[5] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[9 + ii * LBQ] - pi_eq[5]);
+
+    // Transform the stress tensor components according to the modes that
+    // correspond to those used by U. Schiller. In terms of populations this
+    // expression then corresponds exactly to those in Eqs. 116 - 121 in the
+    // Duenweg and Ladd paper, when these are written out in populations.
+    // But to ensure this, the expression in Schiller's modes has to be different!
+
+    pi[0] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
+              + mode[6 + ii * LBQ] + 3.0f*mode[5 + ii * LBQ] )/6.0f; // xx
+    pi[2] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
+              + mode[6 + ii * LBQ] - 3.0f*mode[5 + ii * LBQ] )/6.0f; // yy
+    pi[5] += (   mode[0 + ii * LBQ] + mode[4 + ii * LBQ]
+              - mode[6 + ii * LBQ] )/3.0f; // zz
+    pi[1] += mode[7 + ii * LBQ]; // xy
+    pi[4] += mode[9 + ii * LBQ]; // yz
+    pi[3] += mode[8 + ii * LBQ]; // zx
   }
 }
 
@@ -2023,7 +2107,7 @@ __device__ void calc_m0_from_species(unsigned int index, float* mode, EK_paramet
  * @param n_a   Pointer to the lattice site (Input).
  * @param *gpu_check additional check if gpu kernel are executed(Input).
 */
-__global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, int *gpu_check) {
+__global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, int *gpu_check) {
    /* TODO: this can handle only a uniform density, something similar, but local, 
             has to be called every time the fields are set by the user ! */ 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -2125,7 +2209,11 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v, LB_node_
  * @param single_nodeindex the node to set the velocity for
  * @param velocity         the velocity to set
  */
-__global__ void set_u_equilibrium(LB_nodes_gpu n_a, int single_nodeindex,float *velocity) {
+__device__ void calc_pi_from_m(float* pi, float* mode) {
+    pi[]
+}
+ 
+__global__ void set_u_from_rho_j_pi(LB_nodes_gpu n_a, int single_nodeindex,float *velocity) {
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -2144,7 +2232,7 @@ __global__ void set_u_equilibrium(LB_nodes_gpu n_a, int single_nodeindex,float *
     { 
       /** default values for fields in lattice units */
       calc_mode(&mode[4*ii], n_a, single_nodeindex,ii);
-      float Rho = mode[0*4*ii] + para.rho[ii]*para.agrid*para.agrid*para.agrid; 
+      float Rho = mode[0*4*ii] + para.rho[ii]*para.agrid*para.agrid*para.agrid;
 
       float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
 
@@ -2879,7 +2967,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
   /** calc of velocitydensities from given parameters and initialize the Node_Force array with zero */
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
-  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, device_rho_v ,node_f, gpu_check));
+  KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, (nodes_a, device_rho_v, node_f, gpu_check));
  
   intflag = 1;
   current_nodes = &nodes_a;
@@ -2910,7 +2998,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
-  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, device_rho_v, node_f, gpu_check));
+  KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, (nodes_a, device_rho_v, node_f, gpu_check));
 }
 
 void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
@@ -3277,7 +3365,7 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float* host_velocity){
   int blocks_per_grid_flag_x = 1;
   dim3 dim_grid_flag = make_uint3(blocks_per_grid_flag_x, blocks_per_grid_flag_y, 1);
 
-  KERNELCALL(set_u_equilibrium, dim_grid_flag, threads_per_block_flag, (*current_nodes, single_nodeindex, device_velocity)); 
+  KERNELCALL(set_u_from_rho_j_pi, dim_grid_flag, threads_per_block_flag, (*current_nodes, single_nodeindex, device_velocity));
   cudaFree(device_velocity);
 }
 
