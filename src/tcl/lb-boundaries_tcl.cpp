@@ -233,9 +233,10 @@ LB_Boundary *generate_lbboundary()
   lb_boundaries[n_lb_boundaries-1].force[2]=0;
   
 #ifdef EK_BOUNDARIES
-  
-  lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
-  
+  if (ek_initialized)
+  {
+    lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
+  }  
 #endif
   
   return &lb_boundaries[n_lb_boundaries-1];
