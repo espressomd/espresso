@@ -800,8 +800,6 @@ typedef struct {
   /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
   double length;
   int reflecting;
-  double outer_rad_left;
-  double outer_rad_right;
 } Constraint_pore;
 
 /** Parameters for a ROD constraint. */
