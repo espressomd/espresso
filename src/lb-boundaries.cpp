@@ -102,9 +102,9 @@ void lb_init_boundaries() {
   
 #ifdef EK_BOUNDARIES
       float *host_wallcharge_species_density = NULL;
-      float node_wallcharge;
+      float node_wallcharge = 0.0f;
       int wallcharge_species = -1, charged_boundaries = 0;
-      int node_charged;
+      int node_charged = 0;
 
     if (ek_initialized)
     {
@@ -186,7 +186,8 @@ void lb_init_boundaries() {
             }
           
 #ifdef EK_BOUNDARIES
-            if (ek_initialized) {
+            if (ek_initialized)
+            {
               if(dist_tmp <= 0 && lb_boundaries[n].charge_density != 0.0f) {
                 node_charged = 1;
                 node_wallcharge += lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;

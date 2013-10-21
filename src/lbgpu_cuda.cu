@@ -478,28 +478,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
                                    + (n_a.vd[( 7 + ii*LBQ ) * para.number_of_nodes + index] + n_a.vd[( 8 + ii*LBQ ) * para.number_of_nodes + index])
                                    + (n_a.vd[( 9 + ii*LBQ ) * para.number_of_nodes + index] + n_a.vd[(10 + ii*LBQ ) * para.number_of_nodes + index])
                                  );
-/* TODO : REMOVE
-printf("calc %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-                              n_a.vd[(0 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(1 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(2 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(3 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(4 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(5 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(6 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(7 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(8 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(9 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(10 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(11 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(12 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(13 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(14 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(15 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(16 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(17 + ii*LBQ ) * para.number_of_nodes + index],
-                              n_a.vd[(18 + ii*LBQ ) * para.number_of_nodes + index]);
-*/
+
   }
 }
 
@@ -1280,8 +1259,6 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
     d_p_v[print_index].v[0] = d_v[index].v[0] / para.tau / para.agrid;
     d_p_v[print_index].v[1] = d_v[index].v[1] / para.tau / para.agrid;
     d_p_v[print_index].v[2] = d_v[index].v[2] / para.tau / para.agrid;
-// TODO : REMOVE
-// printf("%f %f %f %f %f %f\n",d_v[index].v[0], d_v[index].v[1], d_v[index].v[2], d_p_v[print_index].v[0],d_p_v[print_index].v[1],d_p_v[print_index].v[2]);
 
     /* stress calculation */ 
     for(int ii = 0; ii < LB_COMPONENTS; ii++)
@@ -1403,8 +1380,7 @@ __device__ void calc_values_from_m_in_LB_units(float *mode, LB_rho_v_gpu *d_v_si
     j[0] = Rho * d_v_single->v[0];
     j[1] = Rho * d_v_single->v[1];
     j[2] = Rho * d_v_single->v[2];
-// TODO : REMOVE
-//printf("\n\n cv %f %f %f %f \n\n", Rho, d_v_single->v[0], d_v_single->v[1], d_v_single->v[2] );
+
     j_out[3*ii + 0] = j[0];
     j_out[3*ii + 1] = j[1];
     j_out[3*ii + 2] = j[2];    
@@ -2259,10 +2235,8 @@ __global__ void set_u_from_rho_v_pi( LB_nodes_gpu n_a, int single_nodeindex, flo
       local_j[0] = local_rho * velocity[0];
       local_j[1] = local_rho * velocity[1];
       local_j[2] = local_rho * velocity[2];
-// TODO : REMOVE
-//printf("\n\n%f %f %f %f %f %f %f\n\n",local_j[0],local_j[1],local_j[2], local_rho, velocity[0], velocity[1], velocity[2]);
+
       // Take LB component pressure tensor and put in equilibrium
-      // TODO not what we want, Joost
 
       local_pi[0] = pi_from_m[6*ii + 0];
       local_pi[1] = pi_from_m[6*ii + 1];
@@ -2273,11 +2247,10 @@ __global__ void set_u_from_rho_v_pi( LB_nodes_gpu n_a, int single_nodeindex, flo
 
       // Reduce the pressure tensor to the part needed here and
       // compute the trace of what is left over
-// TODO : REMOVE
-//printf("%f %f\n\n", local_pi[0], rhoc_sq);
-//      local_pi[0] -= rhoc_sq; 
-//      local_pi[2] -= rhoc_sq;
-//      local_pi[5] -= rhoc_sq;
+
+      local_pi[0] -= rhoc_sq; 
+      local_pi[2] -= rhoc_sq;
+      local_pi[5] -= rhoc_sq;
 
       trace = local_pi[0] + local_pi[2] + local_pi[5];
 
@@ -2288,9 +2261,6 @@ __global__ void set_u_from_rho_v_pi( LB_nodes_gpu n_a, int single_nodeindex, flo
       // update the q=1 sublattice
 
       rho_times_coeff = 1.0f/18.0f * (local_rho - avg_rho);
-
-// TODO : REMOVE
-//printf("\n\n %f %f %f %f\n",rho_times_coeff,1.0f/6.0f*local_j[0],1.0f/4.0f*local_pi[0],-1.0f/12.0f*trace);
 
       n_a.vd[(1 + ii*LBQ ) * para.number_of_nodes + single_nodeindex] =   rho_times_coeff + 1.0f/6.0f*local_j[0]
                                                                         + 1.0f/4.0f*local_pi[0] - 1.0f/12.0f*trace;
@@ -2345,35 +2315,7 @@ __global__ void set_u_from_rho_v_pi( LB_nodes_gpu n_a, int single_nodeindex, flo
       n_a.vd[(18 + ii*LBQ ) * para.number_of_nodes + single_nodeindex] =   rho_times_coeff - 1.0f/12.0f*(local_j[1]-local_j[2])
                                                                          + 1.0f/8.0f*(tmp1-tmp2) - 1.0f/24.0f*trace;
 
-// TODO : REMOVE
-/*
-printf("set %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-                              n_a.vd[(0 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(1 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(2 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(3 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(4 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(5 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(6 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(7 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(8 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(9 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(10 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(11 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(12 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(13 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(14 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(15 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(16 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(17 + ii*LBQ ) * para.number_of_nodes + single_nodeindex],
-                              n_a.vd[(18 + ii*LBQ ) * para.number_of_nodes + single_nodeindex]);
-*/
     }
-// TODO : REMOVE
-/*
-    calc_m_from_n(n_a, single_nodeindex, mode_for_pi);
-printf("\n\n");
-*/
   }
 }
 

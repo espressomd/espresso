@@ -1900,6 +1900,7 @@ void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double
   trace = local_pi[0] + local_pi[2] + local_pi[5];
 
 #ifdef D3Q19
+
   double rho_times_coeff;
   double tmp1,tmp2;
 
@@ -1944,6 +1945,7 @@ void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double
   lbfluid[0][18][index] = rho_times_coeff - 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
 
 #else
+
   int i;
   double tmp=0.0;
   double (*c)[3] = lbmodel.c;
@@ -1961,6 +1963,7 @@ void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double
     lbfluid[0][i][index] += coeff[i][3] * trace;
 
   }
+
 #endif
 
   /* restore the pressure tensor to the full part */
@@ -2337,7 +2340,7 @@ inline void lb_calc_n_from_modes(index_t index, double *mode) {
 
   /* normalization factors enter in the back transformation */
   for (i=0;i<n_veloc;i++) {
-    m[i] = 1./e[19][i]*mode[i];
+    m[i] = (1./e[19][i])*mode[i];
   }
 
   lbfluid[0][ 0][index] = m[0] - m[4] + m[16];
@@ -2420,7 +2423,7 @@ inline void lb_calc_n_from_modes_push(index_t index, double *m) {
 
     /* normalization factors enter in the back transformation */
     for (i=0;i<n_veloc;i++) {
-      m[i] = 1./d3q19_modebase[19][i]*m[i];
+      m[i] = (1./d3q19_modebase[19][i])*m[i];
     }
 
 #ifndef OLD_FLUCT
