@@ -741,8 +741,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
   
   dlc_params.maxPWerror = maxPWerror;
   dlc_params.gap_size = gap_size;
-  dlc_params.hpp = box_l[2] - gap_size;
-
+  dlc_params.h = box_l[2] - gap_size;
   
   switch (coulomb.Dmethod) {
 #ifdef DP3M
