@@ -22,7 +22,7 @@
 #ifndef _FFT_MAGNETOSTATICS_H
 #define _FFT_MAGNETOSTATICS_H
 
-/** \file fft-dipolar.h
+/** \file fft-dipolar.hpp
  *
  *  Routines, row decomposition, data structures and communication for the 3D-FFT. 
  *
@@ -37,7 +37,7 @@
  *  sufficient)
  *
  *  \todo Combine the forward and backward structures.
- *  \todo The packing routines could be moved to utils.h when they are needed elsewhere.
+ *  \todo The packing routines could be moved to utils.hpp when they are needed elsewhere.
  */
 
 #include "config.hpp"

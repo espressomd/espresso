@@ -1010,7 +1010,7 @@ int tclcommand_part_parse_virtual(Tcl_Interp *interp, int argc, char **argv,
 int part_parse_vs_relative(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
-    // See particle_data.h for explanation of the quantities
+    // See particle_data.hpp for explanation of the quantities
     int vs_relative_to;
     double vs_distance;
 

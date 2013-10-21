@@ -21,7 +21,7 @@
 #ifndef MDLC_CORRECTION_TCL_H
 #define MDLC_CORRECTION_TCL_H
 /** \file mdlc_correction_tcl.hpp
- * Tcl interface for \ref mdlc_correction.h
+ * Tcl interface for \ref mdlc_correction.hpp
  */
 
 #include "parser.hpp"

@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file nsquare.c
+/** \file nsquare.cpp
  *
- *  Implementation of  \ref nsquare.h "nsquare.h".
+ *  Implementation of  \ref nsquare.hpp "nsquare.h".
  */
 
 #include <mpi.h>

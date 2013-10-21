@@ -23,7 +23,7 @@
 
 #include "utils.hpp"
 
-/** \file comfixed.h
+/** \file comfixed.hpp
  *  Routines to enable comfixed
  */
 #ifdef COMFIXED

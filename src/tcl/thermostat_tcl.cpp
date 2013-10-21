@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file thermostat.c
-    Implementation of \ref thermostat.h "thermostat.h"
+/** \file thermostat.cpp
+    Implementation of \ref thermostat.hpp "thermostat.h"
  */
 #include <cmath>
 #include "utils.hpp"

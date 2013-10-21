@@ -20,7 +20,7 @@
 */
 #ifndef GALILEI_H
 #define GALILEI_H
-/** \file galilei.h
+/** \file galilei.hpp
  *
  */
 

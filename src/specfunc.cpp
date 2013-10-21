@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file specfunc.c
-    Special functions, see \ref specfunc.h "specfunc.h"
+/** \file specfunc.cpp
+    Special functions, see \ref specfunc.hpp "specfunc.h"
 */
 #include <cmath>
 #include "utils.hpp"
@@ -27,7 +27,7 @@
 #include "polynom.hpp"
 
 /* Original gsl header
- * specfunc/bessel_K0.c
+ * specfunc/bessel_K0.cpp
  * 
  * Copyright (C) 1996, 1997, 1998, 1999, 2000 Gerard Jungman
  * 

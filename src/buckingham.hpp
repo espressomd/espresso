@@ -20,10 +20,10 @@
 */
 #ifndef BUCKINGHAM_H
 #define BUCKINGHAM_H
-/** \file buckingham.h
+/** \file buckingham.hpp
  *  Routines to calculate the Buckingham energy and/or  force
  *  for a particle pair.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 #include "utils.hpp"
 #include "interaction_data.hpp"

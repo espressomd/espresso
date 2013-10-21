@@ -21,7 +21,7 @@
 #ifndef OVERLAP_TCL_H
 #define OVERLAP_TCL_H
 /** \file overlap_tcl.hpp
- * Tcl interface for \ref overlap.h
+ * Tcl interface for \ref overlap.hpp
  */
 
 #include "parser.hpp"

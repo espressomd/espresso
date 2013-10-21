@@ -21,13 +21,13 @@
 #ifndef DIHEDRAL_TCL_H
 #define DIHEDRAL_TCL_H
 /** \file dihedral_tcl.hpp
- * Tcl interface for \ref dihedral.h
+ * Tcl interface for \ref dihedral.hpp
  */
 
 #include "parser.hpp"
 #include "interaction_data.hpp"
 
-/// parse parameters for the dihedral potential, dihedral_tcl.c
+/// parse parameters for the dihedral potential, dihedral_tcl.cpp
 int tclcommand_inter_parse_dihedral(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 
 ///

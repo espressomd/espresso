@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file p3m.h  code for calculating the MDLC (magnetic dipolar layer correction).
+/** \file p3m.hpp  code for calculating the MDLC (magnetic dipolar layer correction).
  *  Purpose:   get the corrections for dipolar 3D algorithms 
  *             when applied to a slab geometry and dipolar
  *	      particles. DLC & co
@@ -700,7 +700,7 @@ int mdlc_tune(double error)
  
   if(flag==0) {
     fprintf(stderr,"tune DLC dipolar: Sorry, unable to find a proper cut-off for such system and accuracy.\n");
-    fprintf(stderr,"Try modifiying the variable limitkc in the c-code: dlc_correction.c  ... \n");
+    fprintf(stderr,"Try modifiying the variable limitkc in the c-code: dlc_correction.cpp  ... \n");
     return ES_ERROR;
   }
  
@@ -741,7 +741,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
   
   dlc_params.maxPWerror = maxPWerror;
   dlc_params.gap_size = gap_size;
-  dlc_params.h = box_l[2] - gap_size;
+  dlc_params.hpp = box_l[2] - gap_size;
 
   
   switch (coulomb.Dmethod) {

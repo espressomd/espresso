@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file pressure.h
-    Pressure calculation. Really similar to \ref energy.h "energy.h".
+/** \file pressure.hpp
+    Pressure calculation. Really similar to \ref energy.hpp "energy.h".
 */
 
 #ifndef _PRESSURE_TCL_H

@@ -21,7 +21,7 @@
 #ifndef HARMONIC_TCL_H
 #define HARMONIC_TCL_H
 /** \file harmonic_tcl.hpp
- * Tcl interface for \ref harmonic.h
+ * Tcl interface for \ref harmonic.hpp
  */
 
 #include "parser.hpp"

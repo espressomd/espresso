@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file endangledist.c
+/** \file endangledist.cpp
  *
- *  Implementation of \ref endangledist.h
+ *  Implementation of \ref endangledist.hpp
  */
 #include "utils.hpp"
 #include "interaction_data.hpp"

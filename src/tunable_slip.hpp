@@ -21,7 +21,7 @@
 #ifndef _TUNABLE_SLIP_H
 #define _TUNABLE_SLIP_H
 
-/** \file tunable_slip.h
+/** \file tunable_slip.hpp
  *  Routines to generate tunable-slip boundary conditions.
  *  J.Smiatek, M.P. Allen, F. Schmid:
  *  "Tunable-slip boundaries for coarse-grained simulations of fluid flow", Europ. Phys. J. E 26, 115 (2008) 

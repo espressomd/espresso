@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file fene.c
+/** \file fene.cpp
  *
- *  Implementation of \ref fene.h
+ *  Implementation of \ref fene.hpp
  */
 
 #include "fene.hpp"

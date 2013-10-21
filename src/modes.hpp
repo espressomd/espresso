@@ -21,7 +21,7 @@
 #ifndef MODES_H
 #define MODES_H
 
-/** \file modes.h
+/** \file modes.hpp
 
     PLEASE INSERT DESCRIPTION
 */
@@ -62,7 +62,7 @@ extern int zdir;
 extern int mode_grid_changed;
 
 /** Parameter indicating distance beyond which a lipid is said to have
-    left the membrane the default value is set in \ref modes.c */
+    left the membrane the default value is set in \ref modes.cpp */
 extern double stray_cut_off;
 
 /* Exported Functions */

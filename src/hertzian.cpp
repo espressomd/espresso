@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file hertzian.c
+/** \file hertzian.cpp
  *
- *  Implementation of \ref hertzian.h
+ *  Implementation of \ref hertzian.hpp
  */
 #include "hertzian.hpp"
 #include "communication.hpp"

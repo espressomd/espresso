@@ -21,7 +21,7 @@
 #ifndef _ANGLE_TCL_H
 #define _ANGLE_TCL_H
 /** \file angle_tcl.hpp
- * Tcl interface for \ref angle.h
+ * Tcl interface for \ref angle.hpp
  */
 
 #include "parser.hpp"

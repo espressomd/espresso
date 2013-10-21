@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file p3m-dipolar.c  P3M algorithm for long range magnetic dipole-dipole interaction.
+/** \file p3m-dipolar.cpp  P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  NB: In general the magnetic dipole-dipole functions bear the same
      name than the charge-charge but, adding in front of the name a D
@@ -1905,7 +1905,7 @@ int dp3m_adaptive_tune(char **logger)
        be obtained with smaller meshes, but normally not all these
        meshes have to be tested */
     mesh_max = tmp_mesh * 256;
-    /* avoid using more than 1 GB of FFT arrays (per default, see config.h) */
+    /* avoid using more than 1 GB of FFT arrays (per default, see config.hpp) */
     if (mesh_max > P3M_MAX_MESH)
       mesh_max = P3M_MAX_MESH;
   }

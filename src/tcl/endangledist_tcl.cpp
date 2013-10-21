@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file endangledist_tcl.c
+/** \file endangledist_tcl.cpp
  *
  *  Implementation of \ref endangledist_tcl.hpp
  */

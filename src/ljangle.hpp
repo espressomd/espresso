@@ -21,7 +21,7 @@
 #ifndef _LJANGLE_H
 #define _LJANGLE_H
 
-/** \file ljangle.h
+/** \file ljangle.hpp
  *  Routines to calculate the lennard-jones 12-10 with angular dependance.
  *  The potential is a product of a 12-10 LJ potential with two cos^2.
  *  The potential actually relies on 6 particles: the 2 primary beads
@@ -36,7 +36,7 @@
  *  interaction strength in this medium. The interaction strengh of the second
  *  environment must be *stronger* than of the first one.
  *
- *  \ref forces.c
+ *  \ref forces.cpp
  */
 
 #include "utils.hpp"
@@ -206,7 +206,7 @@ inline void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 	}
 	      
 	/* Regroup the last two cases in one */
-	/* Propagate all forces in this function rather than in the forces.h file */
+	/* Propagate all forces in this function rather than in the forces.hpp file */
 	if (dist > 0.0){
 	  for(j=0;j<3;++j){
 	    p1->f.f[j] += angular_jik * angular_ikn * rik[j]/l_rik *radprime 

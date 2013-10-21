@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file npt.h
+/** \file npt.hpp
     exports for the NPT code, which otherwise is really spread all over...
 */
 

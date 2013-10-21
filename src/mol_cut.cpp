@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file mol_cut.c
+/** \file mol_cut.cpp
  *
- *  Implementation of \ref mol_cut.h
+ *  Implementation of \ref mol_cut.hpp
  */
 #include "utils.hpp"
 

@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file binary_file_tcl.c
+/** \file binary_file_tcl.cpp
     Implementation of \ref binary_file_tcl.hpp "binary_file_tcl.h".
 */
 #include <cstdio>

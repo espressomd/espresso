@@ -26,7 +26,7 @@
 #include "random.hpp"
 #include "communication.hpp"
 
-/** \file random.c A random generator. 
+/** \file random.cpp A random generator. 
     Be sure to run init_random() before you use any of the generators. */
 
 /* Stuff for Franks ran1-generator */

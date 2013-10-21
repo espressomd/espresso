@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file mdlc_correction_tcl.c
+/** \file mdlc_correction_tcl.cpp
  *
  *  Implementation of \ref mdlc_correction_tcl.hpp
  */

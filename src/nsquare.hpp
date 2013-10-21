@@ -20,7 +20,7 @@
 */
 #ifndef NSQUARE_H
 #define NSQUARE_H
-/** \file nsquare.h
+/** \file nsquare.hpp
     This file contains the code for a simple n^2 particle loop.
 
     The nsquare cell system performs a full n^2 particle interaction

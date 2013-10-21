@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file initialize.c
-    Implementation of \ref initialize.h "initialize.h"
+/** \file initialize.cpp
+    Implementation of \ref initialize.hpp "initialize.hpp"
 */
 #include "utils.hpp"
 #include "initialize.hpp"
@@ -318,7 +318,7 @@ if(reaction.ct_rate != 0.0) {
   /* Ensemble preparation: NVT or NPT */
   integrate_ensemble_init();
 
-  /* Update particle and observable information for routines in statistics.c */
+  /* Update particle and observable information for routines in statistics.cpp */
   invalidate_obs();
   freePartCfg();
 

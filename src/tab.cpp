@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file tab.c
+/** \file tab.cpp
  *
- *  Implementation of \ref tab.h
+ *  Implementation of \ref tab.hpp
  */
 #include "tab.hpp"
 
