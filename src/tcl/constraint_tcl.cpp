@@ -745,6 +745,9 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
   con->c.pore.reflecting = 0;
   con->part_rep.p.type = -1;
   con->c.pore.smoothing_radius = 1.;
+  con->c.pore.outer_rad_left = 1e99;
+  con->c.pore.outer_rad_right = 1e99;
+  
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 4) {
