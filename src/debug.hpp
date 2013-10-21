@@ -18,11 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file debug.h
+/** \file debug.hpp
  This file controls debug facilities. 
 
  The implementation is found in
- \ref debug.c "debug.c".
+ \ref debug.cpp "debug.c".
 
  For every define there exists a macro that can be used to encapsulate short lines (like printf("...",...);)
  of code that should be executed iff the respective *_DEBUG macro is defined.

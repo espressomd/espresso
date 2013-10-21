@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file elc.c
+/** \file elc.cpp
  *
- *  For more information about ELC, see \ref elc.h "elc.h".
+ *  For more information about ELC, see \ref elc.hpp "elc.hpp".
  */
 #include <cmath>
 #include <mpi.h>
@@ -1673,7 +1673,7 @@ void  ELC_P3M_modify_p3m_sums_image()
   p3m.square_sum_q = SQR(tot_sums[2]);
 }
 
-// this function is required in force.c for energy evaluation
+// this function is required in force.cpp for energy evaluation
 void  ELC_P3M_restore_p3m_sums()
 {
   Cell *cell;

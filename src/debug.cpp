@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file debug.c
-    Implements the malloc replacements as described in \ref debug.h "debug.h". 
+/** \file debug.cpp
+    Implements the malloc replacements as described in \ref debug.hpp "debug.h". 
 */
 
 #include <mpi.h>

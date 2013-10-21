@@ -20,7 +20,7 @@
 */
 #ifndef VERLET_H
 #define VERLET_H
-/** \file verlet.h   
+/** \file verlet.hpp   
  *
  *  This file contains routines to setup and handle interaction pair
  *  lists (verlet pair lists) for the non bonded interactions. 
@@ -47,7 +47,7 @@
  *  For energy and pressure calculations using verlet pair lists use
  *  \ref calculate_verlet_energies and \ref calculate_verlet_virials.
  *
- *  For more information see \ref verlet.c "verlet.c".
+ *  For more information see \ref verlet.cpp "verlet.c".
  */
 #include "particle_data.hpp"
 

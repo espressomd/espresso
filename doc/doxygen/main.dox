@@ -46,9 +46,9 @@ homepage</a>. The DG explains
 The script is interpreted on one node, the master node, whereas the
 other nodes wait for the master node to issue specific actions,
 i. e. a client-server model is utilized. More details can be found in
-\ref communication.h "communication.h". During the actual integration,
+\ref communication.hpp "communication.hpp". During the actual integration,
 however, the communication is done synchronously.  For more details
-see \ref integrate.c "integrate.c".
+see \ref integrate.cpp "integrate.cpp".
 
 \section Copyright and License of the Code Documentation
 Copyright (C) 2010,2011,2012 The ESPResSo project

@@ -21,7 +21,7 @@
 #ifndef _ENDANGLEDIST_TCL_H
 #define _ENDANGLEDIST_TCL_H
 /** \file endangledist_tcl.hpp
- * Tcl interface for \ref endangledist.h
+ * Tcl interface for \ref endangledist.hpp
  */
 
 #include "parser.hpp"

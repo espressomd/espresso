@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file polynom.h
+/** \file polynom.hpp
     Datatypes and functions for polynomials.
     Evaluation possible both as Taylor and Chebychev series. Note that the length of the
     double list is equal to the order of the polynomial plus 1, so that Polynom->n does not give

@@ -20,7 +20,7 @@
 */
 #ifndef _UTILS_H
 #define _UTILS_H
-/** \file utils.h
+/** \file utils.hpp
  *    Small functions that are useful not only for one modul.
 
  *  just some nice utilities... 

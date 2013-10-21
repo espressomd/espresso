@@ -20,12 +20,12 @@
 */
 #ifndef _FORCES_H
 #define _FORCES_H
-/** \file forces.h Force calculation. 
+/** \file forces.hpp Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
  *  \todo Implement more flexible thermostat, %e.g. which thermostat to use.
  *
- *  For more information see forces.c .
+ *  For more information see forces.cpp .
  */
 #include "utils.hpp"
 #include "thermostat.hpp"

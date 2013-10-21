@@ -21,7 +21,7 @@
 #ifndef COMFORCE_TCL_H
 #define COMFORCE_TCL_H
 /** \file comforce_tcl.hpp
-    Tcl interface for \ref comforce.h.
+    Tcl interface for \ref comforce.hpp.
 */
 
 #include "parser.hpp"

@@ -21,7 +21,7 @@
 #ifndef COMFIXED_TCL_H
 #define COMFIXED_TCL_H
 /** \file comfixed_tcl.hpp
- * Tcl interface for \ref comfixed.h
+ * Tcl interface for \ref comfixed.hpp
  */
 
 #include "parser.hpp"

@@ -64,48 +64,48 @@
  *****************************************/
 
 /** Implementation of the tcl command bin, which can be used
-    to bin data into arbitrary bins. See \ref bin_tcl.c
+    to bin data into arbitrary bins. See \ref bin_tcl.cpp
 */
 int tclcommand_bin(ClientData data, Tcl_Interp *interp,
 		   int argc, char **argv);
 /** Implementation of the Tcl command blockfile. Allows to read and write
-    blockfile comfortably from Tcl. See \ref blockfile_tcl.c */
+    blockfile comfortably from Tcl. See \ref blockfile_tcl.cpp */
 int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
-/** implementation of the Tcl command cellsystem. See \ref cells_tcl.c */
+/** implementation of the Tcl command cellsystem. See \ref cells_tcl.cpp */
 int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
 	       int argc, char **argv);
-/** replaces one of TCLs standart channels with a named pipe. See \ref channels_tcl.c */
+/** replaces one of TCLs standart channels with a named pipe. See \ref channels_tcl.cpp */
 int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 /** Implements the Tcl command code_info.  It provides information on the
     Version, Compilation status and the debug status of the used
-    code. See \ref config_tcl.c */
+    code. See \ref config_tcl.cpp */
 int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 /** Set the CUDA device to use or retrieve information
-    available devices. See \ref cuda_init_tcl.c */
+    available devices. See \ref cuda_init_tcl.cpp */
 int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
 		    int argc, char **argv);
-/** VMD connection. See \ref imd_tcl.c */
+/** VMD connection. See \ref imd_tcl.cpp */
 int tclcommand_imd(ClientData data, Tcl_Interp *interp,
 		   int argc, char **argv);
 /** tcl procedure for nemd steering.
     USAGE: nemd \<n_slabs\> \<n_exchange\>   
-    see also \ref tclcommand_nemd. See \ref nemd_tcl.c */
+    see also \ref tclcommand_nemd. See \ref nemd_tcl.cpp */
 int tclcommand_nemd(ClientData data, Tcl_Interp *interp,
 		    int argc, char **argv);
-/** Collision detection. See \ref collision_tcl.c */
+/** Collision detection. See \ref collision_tcl.cpp */
 int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** Implementation of the tcl command "part". This command allows to
-    modify particle data. See \ref particle_data_tcl.c */
+    modify particle data. See \ref particle_data_tcl.cpp */
 int tclcommand_part(ClientData data, Tcl_Interp *interp,
 		    int argc, char **argv);
-/** The C implementation of the tcl function uwerr. See \ref uwerr_tcl.c */
+/** The C implementation of the tcl function uwerr. See \ref uwerr_tcl.cpp */
 int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
-/** callback for \ref timing_samples. See \ref tuning_tcl.c */
+/** callback for \ref timing_samples. See \ref tuning_tcl.cpp */
 int tclcallback_timings(Tcl_Interp *interp, void *data);
 
-/// from \ref scriptsdir.c
+/// from \ref scriptsdir.cpp
 char *get_default_scriptsdir();
 
 /** Returns runtime of the integration loop in seconds. From tuning_tcl.cpp **/
@@ -119,27 +119,27 @@ int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, c
   Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
 
 static void register_tcl_commands(Tcl_Interp* interp) {
-  /* in cells.c */
+  /* in cells.cpp */
   REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
-  /* in integrate.c */
+  /* in integrate.cpp */
   REGISTER_COMMAND("invalidate_system", tclcommand_invalidate_system);
   REGISTER_COMMAND("integrate", tclcommand_integrate);
-  /* in global.c */
+  /* in global.cpp */
   REGISTER_COMMAND("setmd", tclcommand_setmd);
-  /* in grid.c */
+  /* in grid.cpp */
   REGISTER_COMMAND("change_volume", tclcommand_change_volume);
-  /* in config_tcl.c */
+  /* in config_tcl.cpp */
   REGISTER_COMMAND("code_info", tclcommand_code_info);
-  /* in interaction_data.c */
+  /* in interaction_data.cpp */
   REGISTER_COMMAND("inter",tclcommand_inter);
-  /* in particle_data.c */
+  /* in particle_data.cpp */
   REGISTER_COMMAND("part",tclcommand_part);
-  /* in file binaryfile.c */
+  /* in file binaryfile.cpp */
   REGISTER_COMMAND("writemd", tclcommand_writemd);
   REGISTER_COMMAND("readmd", tclcommand_readmd);
-  /* in file statistics.c */
+  /* in file statistics.cpp */
   REGISTER_COMMAND("analyze", tclcommand_analyze);
-  /* in file polymer.c */
+  /* in file polymer.cpp */
   REGISTER_COMMAND("polymer", tclcommand_polymer);
   REGISTER_COMMAND("counterions", tclcommand_counterions);
   REGISTER_COMMAND("salt", tclcommand_salt);
@@ -148,45 +148,45 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("crosslink", tclcommand_crosslink);
   REGISTER_COMMAND("diamond", tclcommand_diamond);
   REGISTER_COMMAND("icosaeder", tclcommand_icosaeder);
-  /* in file imd.c */
+  /* in file imd.cpp */
   REGISTER_COMMAND("imd", tclcommand_imd);
-  /* in file random.c */
+  /* in file random.cpp */
   REGISTER_COMMAND("t_random", tclcommand_t_random);
   REGISTER_COMMAND("bit_random", tclcommand_bit_random);
-  /* in file blockfile_tcl.c */
+  /* in file blockfile_tcl.cpp */
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
-  /* in constraint.c */
+  /* in constraint.cpp */
   REGISTER_COMMAND("constraint", tclcommand_constraint);
-  /* in uwerr.c */
+  /* in uwerr.cpp */
   REGISTER_COMMAND("uwerr", tclcommand_uwerr);
-  /* in nemd.c */
+  /* in nemd.cpp */
   REGISTER_COMMAND("nemd", tclcommand_nemd);
-  /* in thermostat.c */
+  /* in thermostat.cpp */
   REGISTER_COMMAND("thermostat", tclcommand_thermostat);
-  /* in bin.c */
+  /* in bin.cpp */
   REGISTER_COMMAND("bin", tclcommand_bin);
-  /* in ghmc.c */
+  /* in ghmc.cpp */
   REGISTER_COMMAND("ghmc", tclcommand_ghmc);
   REGISTER_COMMAND("save_state", tclcommand_save_state);
   REGISTER_COMMAND("load_state", tclcommand_load_state);
-  /* in lb.c */
+  /* in lb.cpp */
 
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
   REGISTER_COMMAND("lbnode", tclcommand_lbnode);
   REGISTER_COMMAND("lbboundary", tclcommand_lbboundary);
   /* here */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
-  /* in iccp3m.h */
+  /* in iccp3m.hpp */
   REGISTER_COMMAND("observable", tclcommand_observable);
-  /* in statistics_obsrvable.h */
+  /* in statistics_obsrvable.hpp */
   REGISTER_COMMAND("correlation", tclcommand_correlation);
-  /* in statistics_correlation.h */
+  /* in statistics_correlation.hpp */
 #ifdef ELECTROSTATICS
 #ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
 #endif 
 #endif 
-  /* in adresso.h */
+  /* in adresso.hpp */
   REGISTER_COMMAND("adress", tclcommand_adress);
 #ifdef ADRESS
   /* #ifdef THERMODYNAMIC_FORCE */
@@ -195,17 +195,17 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("update_adress_weights", tclcommand_update_adress_weights);
 #endif
 #ifdef METADYNAMICS
-  /* in metadynamics.c */
+  /* in metadynamics.cpp */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
 #endif
 #ifdef LB_GPU
-  /* in lbgpu_cfile.c */
+  /* in lbgpu_cfile.cpp */
   REGISTER_COMMAND("lbnode_extforce", tclcommand_lbnode_extforce_gpu);
 #endif
 #ifdef CUDA
   REGISTER_COMMAND("cuda", tclcommand_cuda);
 #endif
-  /* from collision.c */
+  /* from collision.cpp */
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif

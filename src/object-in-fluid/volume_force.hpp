@@ -18,10 +18,10 @@
 */
 #ifndef _OBJECT_IN_FLUID_VOLUME_FORCE_H
 #define _OBJECT_IN_FLUID_VOLUME_FORCE_H
-/** \file volume_force.h
+/** \file volume_force.hpp
  *  Routines to calculate the VOLUME_FORCE energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"
@@ -39,7 +39,7 @@ int volume_force_set_params(int bond_type, double V0, double kv);
 
 /************************************************************/
 
-/** called in force_calc() from within forces.c
+/** called in force_calc() from within forces.cpp
  *  calculates the volume for a cell before the forces are handled
  *  sums up parts for volume with mpi_reduce from Dupin2007 (Equ. 13)
  *  sends volume via mpi_send to nodes

@@ -20,10 +20,10 @@
 */
 #ifndef DPD_H
 #define DPD_H
-/** \file dpd.h
+/** \file dpd.hpp
  *  Routines to use dpd as thermostat or pair force
  *  T. Soddemann, B. Duenweg and K. Kremer, Phys. Rev. E 68, 046702 (2003)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"

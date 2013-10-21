@@ -21,10 +21,10 @@
 #ifndef STEPPOT_H
 #define STEPPOT_H
 
-/** \file steppot.h
+/** \file steppot.hpp
  *  Routines to calculate the smooth step potential energy and/or force 
  *  for a particle pair.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"

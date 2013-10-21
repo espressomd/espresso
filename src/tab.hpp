@@ -21,11 +21,11 @@
 #ifndef _TAB_H
 #define _TAB_H
 
-/** \file tab.h
+/** \file tab.hpp
  *  Routines to calculate the  energy and/or  force 
  *  for a particle pair or bonds via interpolating from lookup tables.
- *  \ref forces.c
- *  Needs feature TABULATED compiled in (see \ref config.h).
+ *  \ref forces.cpp
+ *  Needs feature TABULATED compiled in (see \ref config.hpp).
 */
 
 #include "utils.hpp"
@@ -81,7 +81,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
 int tabulated_bonded_set_params(int bond_type, int tab_type, char * filename);
 
 /** Add a non-bonded pair force by linear interpolation from a table.
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				       double d[3], double dist, double force[3])
 {
@@ -123,7 +123,7 @@ inline void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters *
 }
 
 /** Add a non-bonded pair energy by linear interpolation from a table.
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline double tabulated_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				      double d[3], double dist) {
   double phi, dindex;
@@ -160,7 +160,7 @@ inline double tabulated_pair_energy(Particle *p1, Particle *p2, IA_parameters *i
 /** check the tabulated forcecap to see that it is sensible \warning
     This routine will probably give strange results if forcecap is
     applied before the table is loaded.
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 void check_tab_forcecap(double force_cap);
 
 /* BONDED INTERACTIONS */
@@ -169,7 +169,7 @@ void check_tab_forcecap(double force_cap);
     \ref Bonded_ia_parameters). The force is calculated by linear
     interpolation between the closest tabulated values. There is no
     check for the upper bound! 
-    Needs feature TABULATED compiled in (see \ref config.h).*/
+    Needs feature TABULATED compiled in (see \ref config.hpp).*/
 inline double bonded_tab_force_lookup(double val, Bonded_ia_parameters *iaparams)
 {
   int    ind;
@@ -189,7 +189,7 @@ inline double bonded_tab_force_lookup(double val, Bonded_ia_parameters *iaparams
     Bonded_ia_parameters). The force is calculated by linear
     interpolation between the closest tabulated values. There is no
     check for the upper bound! 
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline double bonded_tab_energy_lookup(double val, Bonded_ia_parameters *iaparams)
 {
   int ind;
@@ -211,7 +211,7 @@ inline double bonded_tab_energy_lookup(double val, Bonded_ia_parameters *iaparam
     connecting vector between the particles. For distances smaller
     than the tabulated range it uses a linear extrapolation based on
     the first two tabulated force values.
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline int calc_tab_bond_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3]) 
 {
   int i;
@@ -236,7 +236,7 @@ inline int calc_tab_bond_force(Particle *p1, Particle *p2, Bonded_ia_parameters 
     p2. For distances smaller than the tabulated range it uses a
     quadratic extrapolation based on the first two tabulated force
     values and the first tabulated energy value. 
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline int tab_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy) 
 {
   double dist = sqrt(sqrlen(dx));
@@ -271,7 +271,7 @@ inline int tab_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iap
     forces. The forces are scaled with the invers length of the
     connecting vectors. It is assumed that the potential is tabulated
     for all angles between 0 and Pi. 
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline int calc_tab_angle_force(Particle *p_mid, Particle *p_left, 
 				  Particle *p_right, Bonded_ia_parameters *iaparams,
 				  double force1[3], double force2[3])
@@ -372,7 +372,7 @@ inline void calc_angle_3body_tabulated_forces(Particle *p_mid, Particle *p_left,
     type_num (see \ref Bonded_ia_parameters) between particles p_left,
     p_mid and p_right. It is assumed that the potential is tabulated
     for all angles between 0 and Pi. 
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline int tab_angle_energy(Particle *p_mid, Particle *p_left, 
 			      Particle *p_right, Bonded_ia_parameters *iaparams,
 			      double *_energy)
@@ -396,7 +396,7 @@ inline int tab_angle_energy(Particle *p_mid, Particle *p_left,
 /** Calculate a tabulated dihedral force with number type_num (see
     \ref Bonded_ia_parameters) between particles p1. p2, p3 and p4 and
     add it to the particle forces. This function is not tested yet.
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline int calc_tab_dihedral_force(Particle *p2, Particle *p1,
 				     Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
 				     double force2[3], double force1[3], double force3[3])
@@ -444,7 +444,7 @@ inline int calc_tab_dihedral_force(Particle *p2, Particle *p1,
 /** Calculate and return a tabulated dihedral energy with number
     type_num (see \ref Bonded_ia_parameters) between particles p1. p2,
     p3 and p4. This function is not tested yet. 
-    Needs feature TABULATED compiled in (see \ref config.h). */
+    Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline int tab_dihedral_energy(Particle *p2, Particle *p1, 
 				 Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
 				 double *_energy)

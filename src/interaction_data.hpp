@@ -20,7 +20,7 @@
 */
 #ifndef _INTERACTION_DATA_H
 #define _INTERACTION_DATA_H
-/** \file interaction_data.h
+/** \file interaction_data.hpp
     Various procedures concerning interactions between particles.
 */
 
@@ -597,7 +597,7 @@ typedef struct {
 #ifdef BOND_ANGLE_OLD
     /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
-	potential which you may chose with a compiler flag in the file \ref config.h !
+	potential which you may chose with a compiler flag in the file \ref config.hpp !
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi) */
     struct {
@@ -695,7 +695,7 @@ typedef struct {
     /** Parameters for three body angular potential (bond-angle potentials) that 
         depends on distance to wall constraint.
 	ATTENTION: Note that there are different implementations of the bond angle
-	potential which you may chose with a compiler flag in the file \ref config.h !
+	potential which you may chose with a compiler flag in the file \ref config.hpp !
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi)
 	dist0 - equilibrium distance (no default) */
@@ -1035,7 +1035,7 @@ void realloc_tf_params(int nsize);
     max_cut. The maximal cutoff of the non-bonded + real space
     electrostatic interactions is stored in max_cut_non_bonded. This
     value is used in the verlet pair list algorithm (see \ref
-    verlet.h). */
+    verlet.hpp). */
 void recalc_maximal_cutoff();
 
 /** call when the temperature changes, for Bjerrum length adjusting. */

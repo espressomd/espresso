@@ -20,10 +20,10 @@
 */
 #ifndef BMHTF_NACL_H
 #define BMHTF_NACL_H
-/** \file bmhtf-nacl.h
+/** \file bmhtf-nacl.hpp
  *  Routines to calculate the Born-Meyer-Huggins-Tosi-Fumi energy and/or force 
  *  for a particle pair.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"

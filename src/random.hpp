@@ -21,7 +21,7 @@
 #ifndef RANDOM_H
 #define RANDOM_H
 
-/** \file random.h 
+/** \file random.hpp 
 
     A random generator
 */

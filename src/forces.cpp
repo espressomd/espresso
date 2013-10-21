@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file forces.c Force calculation.
+/** \file forces.cpp Force calculation.
  *
- *  For more information see \ref forces.h "forces.h".
+ *  For more information see \ref forces.hpp "forces.h".
 */
 #include <mpi.h>
 #include <cstdio>
