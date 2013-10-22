@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = config src . scripts tools testsuite doc
+SUBDIRS = config src . cython scripts tools testsuite doc
 
 ACLOCAL_AMFLAGS = -I config
 AUTOMAKE_OPTIONS = gnu subdir-objects dist-xz

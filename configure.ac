@@ -168,8 +168,9 @@ AM_CONDITIONAL(HAVE_LATEX,
 	[test .$PDFLATEX != .no && 
 	test .$MAKEINDEX != .no && 
 	test .$BIBTEX != .no])
-AC_PATH_PROG(PYTHON,python,no)
+AM_PATH_PYTHON([2.5],,no)
 AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
+AC_PATH_PROG(CYTHON,cython,no)
 
 if test .$PYTHON != .no; then
    # Check whether python -B works
@@ -579,6 +580,7 @@ AC_CONFIG_FILES([
 	src/Makefile
 	tools/Makefile
 	scripts/Makefile 
+        cython/Makefile
 	testsuite/Makefile
 	doc/Makefile
 	doc/logo/Makefile
