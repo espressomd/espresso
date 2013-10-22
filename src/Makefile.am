@@ -21,12 +21,12 @@
 noinst_HEADERS = \
 	myconfig-default.hpp
 
-noinst_LIBRARIES = libEspresso.a
+noinst_LTLIBRARIES = libEspresso.la
 
 # List the sources of the Espresso binary here
 # config-features.cpp must be at the beginning so that it is compiled first
-nodist_libEspresso_a_SOURCES = 
-libEspresso_a_SOURCES = \
+nodist_libEspresso_la_SOURCES = 
+libEspresso_la_SOURCES = \
 	config-features.cpp \
 	adresso.cpp adresso.hpp \
 	cells.cpp cells.hpp \
@@ -100,7 +100,7 @@ libEspresso_a_SOURCES = \
 	ghmc.cpp ghmc.hpp
 
 # nonbonded potentials and forces
-libEspresso_a_SOURCES += \
+libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
 	buckingham.cpp buckingham.hpp \
 	dpd.cpp dpd.hpp \
@@ -120,7 +120,7 @@ libEspresso_a_SOURCES += \
 	tunable_slip.cpp tunable_slip.hpp 
 
 # bonded potentials and forces
-libEspresso_a_SOURCES += \
+libEspresso_la_SOURCES += \
 	angle.cpp angle.hpp \
 	angle_harmonic.cpp angle_harmonic.hpp \
 	angle_cosine.cpp angle_cosine.hpp \
@@ -140,7 +140,7 @@ libEspresso_a_SOURCES += \
 	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
 
 # Coulomb methods
-libEspresso_a_SOURCES += \
+libEspresso_la_SOURCES += \
 	debye_hueckel.cpp debye_hueckel.hpp \
 	elc.cpp elc.hpp \
 	magnetic_non_p3m_methods.cpp magnetic_non_p3m_methods.hpp \
@@ -157,7 +157,7 @@ libEspresso_a_SOURCES += \
 
 if TCL
 
-libEspresso_a_SOURCES += \
+libEspresso_la_SOURCES += \
 	tcl/adresso_tcl.cpp tcl/adresso_tcl.hpp \
 	tcl/bin_tcl.cpp \
 	tcl/binary_file_tcl.cpp tcl/binary_file_tcl.hpp \
@@ -206,7 +206,7 @@ libEspresso_a_SOURCES += \
 	tcl/ghmc_tcl.cpp tcl/ghmc_tcl.hpp
 
 # nonbonded potentials and forces
-libEspresso_a_SOURCES += \
+libEspresso_la_SOURCES += \
 	tcl/bmhtf-nacl_tcl.cpp tcl/bmhtf-nacl_tcl.hpp \
 	tcl/buckingham_tcl.cpp tcl/buckingham_tcl.hpp \
 	tcl/dpd_tcl.cpp tcl/dpd_tcl.hpp \
@@ -227,7 +227,7 @@ libEspresso_a_SOURCES += \
 	tcl/tunable_slip_tcl.cpp tcl/tunable_slip_tcl.hpp
 
 # bonded potentials and forces
-libEspresso_a_SOURCES += \
+libEspresso_la_SOURCES += \
 	tcl/angle_tcl.cpp tcl/angle_tcl.hpp \
 	tcl/angle_harmonic_tcl.cpp tcl/angle_harmonic_tcl.hpp \
 	tcl/angle_cosine_tcl.cpp tcl/angle_cosine_tcl.hpp \
@@ -253,7 +253,7 @@ libEspresso_a_SOURCES += \
 	tcl/object-in-fluid/volume_force_tcl.hpp
 
 # Coulomb methods
-libEspresso_a_SOURCES += \
+libEspresso_la_SOURCES += \
 	tcl/debye_hueckel_tcl.cpp tcl/debye_hueckel_tcl.hpp \
 	tcl/elc_tcl.cpp tcl/elc_tcl.hpp \
 	tcl/magnetic_non_p3m_methods_tcl.cpp tcl/magnetic_non_p3m_methods_tcl.hpp \
@@ -279,12 +279,12 @@ if TCL
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\"
 Espresso_SOURCES = tcl/scriptsdir.cpp tcl/main.cpp
-Espresso_LDADD = libEspresso.a
+Espresso_LDADD = libEspresso.la
 
 bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\"
 Espresso_install_SOURCES = tcl/scriptsdir.cpp tcl/main.cpp
-Espresso_install_LDADD = libEspresso.a
+Espresso_install_LDADD = libEspresso.la
 
 ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
 ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
@@ -302,7 +302,7 @@ endif
 #################################################################
 # Handling of myconfig.hpp
 #################################################################
-nodist_libEspresso_a_SOURCES += myconfig-final.hpp
+nodist_libEspresso_la_SOURCES += myconfig-final.hpp
 BUILT_SOURCES = myconfig-final.hpp
 CLEANFILES = myconfig-final.hpp
 
@@ -365,7 +365,7 @@ doc doxygen: config-doxygen.hpp
 #################################################################
 # Handling of the version
 #################################################################
-libEspresso_a_SOURCES += config-version.cpp 
+libEspresso_la_SOURCES += config-version.cpp 
 BUILT_SOURCES += config-version.cpp
 CLEANFILES += config-version.cpp
 config-version.cpp: FORCE
@@ -379,7 +379,7 @@ config-version.cpp: FORCE
 # Handling of the MPI fake implementation
 #################################################################
 if MPI_FAKE
-libEspresso_a_SOURCES += mpifake/mpi.h mpifake/mpi.cpp
+libEspresso_la_SOURCES += mpifake/mpi.h mpifake/mpi.cpp
 # mpifake should come before any system includes
 AM_CPPFLAGS = -I$(srcdir)/mpifake
 if TCL
@@ -414,7 +414,7 @@ CUDA_SOURCES += \
 
 endif
 
-libEspresso_a_SOURCES += $(CUDA_SOURCES)
+libEspresso_la_SOURCES += $(CUDA_SOURCES)
 
 EXTRA_DIST += $(CUDA_SOURCES)
 endif

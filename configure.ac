@@ -150,7 +150,7 @@ cat <<EOF
 ****************************************************************
 EOF
 
-AC_PROG_RANLIB
+LT_INIT([dlopen])
 AC_PROG_AWK
 AC_PROG_EGREP
 AC_PROG_INSTALL
