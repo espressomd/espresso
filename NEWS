@@ -31,6 +31,10 @@ User-visible changes
   blockfiles.  Clearer distinction between the reference frames for
   torque and angular momentum.
 
+* Lattice-Boltzmann now has a additional 3-point coupling scheme.
+
+* The noise type in thermalized Lattice-Boltzmann is now choosable via tcl.
+
 Changes visible for developers
 ------------------------------
 
@@ -94,10 +98,6 @@ User-visible changes
 
 * DPD (as thermostat) now works without any other interaction, so a pure
   DPD fluid is possible.
-  
-* Lattice-Boltzmann now has a additional 3-point coupling scheme.
-
-* The noise type in thermalized Lattice-Boltzmann is now choosable via tcl.
 
 ESPResSo 3.1.2
 ==============
