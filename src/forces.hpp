@@ -599,10 +599,10 @@ inline void add_bonded_force(Particle *p1)
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
-		p1->p.identity, p2->p.identity); 
-	continue;
+        char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
+        ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
+          p1->p.identity, p2->p.identity);
+        continue;
       }
       
 #ifdef ADRESS
