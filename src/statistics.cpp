@@ -90,10 +90,11 @@ double mindist(IntList *set1, IntList *set2)
     for (i=j+1; i<n_total_particles; i++)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice versa. */
       if (((in_set & 1) && (!set2 || intlist_contains(set2, partCfg[i].p.type))) ||
-	  ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
-	mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
+          ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
+        mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
   }
   mindist = sqrt(mindist);
+
   return mindist;
 }
 

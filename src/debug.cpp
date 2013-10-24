@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file debug.cpp
-    Implements the malloc replacements as described in \ref debug.hpp "debug.h". 
+    Implements the malloc replacements as described in \ref debug.hpp "debug.hpp". 
 */
 
 #include <mpi.h>
