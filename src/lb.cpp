@@ -1800,7 +1800,8 @@ void lb_reinit_fluid() {
     /* here the conversion to lb units is performed */
     double rho = lbpar.rho[0]*agrid*agrid*agrid;
     double j[3] = { 0., 0., 0. };
-    double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
+//    double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
+double pi[6] = { 0., 0., 0., 0., 0., 0. };
 
     LB_TRACE(fprintf(stderr, "Initialising the fluid with equilibrium populations\n"););
 
@@ -1875,13 +1876,9 @@ void lb_release() {
 
 void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double *j, double *pi) {
 
-  const double rhoc_sq = rho*lbmodel.c_sound_sq;
-  // unit conversion: mass density
-  const double avg_rho = lbpar.rho[0]*agrid*agrid*agrid;
-
-  double local_rho, local_j[3], local_pi[6], trace;
-
   int i;
+  double local_rho, local_j[3], local_pi[6], trace;
+  const double avg_rho = lbpar.rho[0]*agrid*agrid*agrid;
 
   local_rho  = rho;
 
@@ -1891,11 +1888,6 @@ void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double
 
   for (i=0; i<6; i++) 
     local_pi[i] = pi[i];
-
-  /* reduce the pressure tensor to the part needed here */
-  local_pi[0] -= rhoc_sq;
-  local_pi[2] -= rhoc_sq;
-  local_pi[5] -= rhoc_sq;
 
   trace = local_pi[0] + local_pi[2] + local_pi[5];
 
@@ -1965,12 +1957,6 @@ void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double
   }
 
 #endif
-
-  /* restore the pressure tensor to the full part */
-  local_pi[0] += rhoc_sq;
-  local_pi[2] += rhoc_sq;
-  local_pi[5] += rhoc_sq;
-
 }
   
 /*@}*/
@@ -2035,6 +2021,78 @@ void lb_calc_modes(index_t index, double *mode) {
   mode[17] = - n1p + n2p + n6p + n7p - n8p - n9p;
   mode[18] = - n1p - n2p -n6p - n7p - n8p - n9p
              + 2.*(n3p + n4p + n5p);
+
+//TODO : REMOVE JOOST
+/*
+if( index == get_linear_index(4,4,4,lblattice.halo_grid))
+printf("calc populations 0:%d \n %f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f\n\n",
+index,
+lbfluid[0][0][index],
+lbfluid[0][1][index],
+lbfluid[0][2][index],
+lbfluid[0][3][index],
+lbfluid[0][4][index],
+lbfluid[0][5][index],
+lbfluid[0][6][index],
+lbfluid[0][7][index],
+lbfluid[0][8][index],
+lbfluid[0][9][index],
+lbfluid[0][10][index],
+lbfluid[0][11][index],
+lbfluid[0][12][index],
+lbfluid[0][13][index],
+lbfluid[0][14][index],
+lbfluid[0][15][index],
+lbfluid[0][16][index],
+lbfluid[0][17][index],
+lbfluid[0][18][index]);
+
+if( index == get_linear_index(4,4,4,lblattice.halo_grid))
+printf("calc populations 1:%d \n %f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f\n\n",
+index,
+lbfluid[1][0][index],
+lbfluid[1][1][index],
+lbfluid[1][2][index],
+lbfluid[1][3][index],
+lbfluid[1][4][index],
+lbfluid[1][5][index],
+lbfluid[1][6][index],
+lbfluid[1][7][index],
+lbfluid[1][8][index],
+lbfluid[1][9][index],
+lbfluid[1][10][index],
+lbfluid[1][11][index],
+lbfluid[1][12][index],
+lbfluid[1][13][index],
+lbfluid[1][14][index],
+lbfluid[1][15][index],
+lbfluid[1][16][index],
+lbfluid[1][17][index],
+lbfluid[1][18][index]);
+
+if( index == get_linear_index(4,4,4,lblattice.halo_grid))
+printf("calc modes:%d \n %f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f\n",
+index,
+mode[0],
+mode[1],
+mode[2],
+mode[3],
+mode[4],
+mode[5],
+mode[6],
+mode[7],
+mode[8],
+mode[9],
+mode[10],
+mode[11],
+mode[12],
+mode[13],
+mode[14],
+mode[15],
+mode[16],
+mode[17],
+mode[18]);
+*/
 #endif
 
 #else
