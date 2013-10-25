@@ -2990,20 +2990,13 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 //fprintf(stderr, "initialization of lb gpu code %i\n", lbpar_gpu->number_of_nodes);
   cudaThreadSynchronize();
 
-<<<<<<< HEAD
+#if __CUDA_ARCH__ >= 200
   if(!h_gpu_check[0])
   {
     fprintf(stderr, "initialization of lb gpu code failed! \n");
     errexit();
   }
-=======
-#if __CUDA_ARCH__ >= 200
-  if(!h_gpu_check[0]){
-    fprintf(stderr, "initialization of lb gpu code failed! \n");
-    errexit();
-  }
 #endif
->>>>>>> master
 }
 
 /** reinitialization for the lb gpu fluid called from host
@@ -3144,19 +3137,16 @@ void lb_calc_particle_lattice_ia_gpu(){
                 );
     }
     else { /** only other option is the three point coupling scheme */
-<<<<<<< HEAD
-      KERNELCALL( calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles, 
-                  ( *current_nodes, gpu_get_particle_pointer(),
-                    gpu_get_particle_force_pointer(), node_f, 
-                    gpu_get_particle_seed_pointer(), device_rho_v )
-                );
-=======
+
 #ifdef SHANCHEN
       fprintf (stderr, "The three point particle coupling is not currently compatible with the Shan-Chen implementation of the LB\n");
       errexit(); 
 #endif
-      KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer(),device_rho_v));
->>>>>>> master
+      KERNELCALL( calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles,
+                   ( *current_nodes, gpu_get_particle_pointer(),
+                     gpu_get_particle_force_pointer(), node_f,
+                     gpu_get_particle_seed_pointer(), device_rho_v )
+                );
     }
   }
 }
