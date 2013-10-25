@@ -884,7 +884,6 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
                                pore, origin at pore centera */
   double z_vec[3], r_vec[3]; /* cartesian vectors that correspond to these coordinates */
   double e_z[3], e_r[3];    /* unit vectors in the cylindrical coordinate system */
-  int full_pore;            // Boolean flag: 1 indicates it's a wall with a hole and 0 indicates a thin sheath
   /* helper variables, for performance reasons should the be move the the
    * constraint struct*/
      double slope, slope2, z_left, z_right;
@@ -897,13 +896,6 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
      slope = (c->rad_right - c->rad_left)/2./(c->length-c->smoothing_radius);
      slope2 = (c->outer_rad_right - c->outer_rad_left)/2./(c->length-c->smoothing_radius);
 
-     
-  if (c->outer_rad_left == 0) {
-    full_pore = 1;
-  }
-  else {
-    full_pore = 0;
-  }
   /* compute the position relative to the center of the pore */
   for(i=0;i<3;i++) {
     c_dist[i] = ppos[i] - c->pos[i]; 
@@ -957,7 +949,7 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   double c2_or = c->outer_rad_right-c->smoothing_radius;
  
   /* Check if we are in the region of the left wall */
-  if ( ( (r >= c1_r) && (z <= c1_z) && full_pore ) || ( ( z <= 0 ) && (r>=std::max(c1_r, c2_r)) && full_pore ) || ( (r >= c1_r) && (r <= c1_or) && (z <= c1_z) && !full_pore ) ) { 
+  if (( (r >= c1_r) && (r <= c1_or) && (z <= c1_z) )) {
     dist_vector_z=-z - c->length;
     dist_vector_r=0;
     *dist = -z - c->length;
@@ -965,7 +957,7 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     return;
   }
   /* Check if we are in the region of the right wall */
-  if ( ( (r >= c2_r) && (z <= c2_z) && full_pore ) || ( ( z >= 0 ) && (r>=std::max(c1_r, c2_r)) && full_pore ) || ( (r >= c2_r) && (r<c2_or) && (z >= c2_z) && !full_pore ) ) { 
+  if (( (r >= c2_r) && (r<c2_or) && (z >= c2_z) ) ) {
     dist_vector_z=-z + c->length;
     dist_vector_r=0;
     *dist = +z - c->length;
@@ -997,31 +989,22 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   double dist_vector_r_o = p2_r-r;
   double dist_vector_z_o = p2_z-z;
 
-  if ( p1_z>=c1_z && p1_z<=c2_z && full_pore ) {
-    if ( dist_vector_r <= 0  ) {
-      if (z<0) {
-        dist_vector_z=-z - c->length;
-        dist_vector_r=0;
-        *dist = -z - c->length;
-        for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-        return;
-      } else {
-        dist_vector_z=-z + c->length;
-        dist_vector_r=0;
-        *dist = +z - c->length;
-        for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-        return;
-      }
-    } 
-    temp=sqrt( dist_vector_r*dist_vector_r + dist_vector_z*dist_vector_z );
-    *dist=temp-c->smoothing_radius;
-    dist_vector_r-=dist_vector_r/temp*c->smoothing_radius;
-    dist_vector_z-=dist_vector_z/temp*c->smoothing_radius;
-    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-    return;
-  }
-  
-  if ( p1_z>=c1_z && p1_z<=c2_z && dist_vector_r >= 0  && !full_pore) {
+  if ( p1_z>=c1_z && p1_z<=c2_z && dist_vector_r >= 0 ) {
+ //   if ( dist_vector_r <= 0  ) {
+ //     if (z<0) {
+ //       dist_vector_z=-z - c->length;
+ //       dist_vector_r=0;
+ //       *dist = -z - c->length;
+ //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+ //       return;
+ //     } else {
+ //       dist_vector_z=-z + c->length;
+ //       dist_vector_r=0;
+ //       *dist = +z - c->length;
+ //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+ //       return;
+ //     }
+ //   }
     temp=sqrt( dist_vector_r*dist_vector_r + dist_vector_z*dist_vector_z );
     *dist=temp-c->smoothing_radius;
     dist_vector_r-=dist_vector_r/temp*c->smoothing_radius;
@@ -1031,7 +1014,22 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   }
 
 
-  if ( p2_z>=c1_z && p2_z<=c2_z && dist_vector_r_o <= 0 && !full_pore) {
+  if ( p2_z>=c1_z && p2_z<=c2_z && dist_vector_r_o <= 0 ) {
+ //   if ( dist_vector_r <= 0  ) {
+ //     if (z<0) {
+ //       dist_vector_z=-z - c->length;
+ //       dist_vector_r=0;
+ //       *dist = -z - c->length;
+ //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+ //       return;
+ //     } else {
+ //       dist_vector_z=-z + c->length;
+ //       dist_vector_r=0;
+ //       *dist = +z - c->length;
+ //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - 2ist_vector_z*e_z[i];
+ //       return;
+ //     }
+ //   }
     temp=sqrt( dist_vector_r_o*dist_vector_r_o + dist_vector_z_o*dist_vector_z_o );
     *dist=temp-c->smoothing_radius;
     dist_vector_r_o-=dist_vector_r_o/temp*c->smoothing_radius;
@@ -1042,7 +1040,7 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
 
 
   /* Check if we are in the range of the left smoothing circle */
-  if ( ( p1_z <= c1_z && full_pore ) || (p1_z <= c1_z && r <= c1_r && !full_pore) ) {
+  if (p1_z <= c1_z && r <= c1_r ) {
     /* distance from the smoothing center */
     norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_r)*(r - c1_r) );
     *dist = norm - c->smoothing_radius;
@@ -1052,9 +1050,7 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     return;
   }
   /* upper left smoothing circle */
-
-  if (p2_z <= c1_z && r >= c1_or && !full_pore) {
-
+  if (p2_z <= c1_z && r >= c1_or ) {
     /* distance from the smoothing center */
     norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_or)*(r - c1_or) );
     *dist = norm - c->smoothing_radius;
@@ -1063,19 +1059,8 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
-
-   if ( p1_z >= c2_z && full_pore ) {
-     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_r)*(r - c2_r) );
-     *dist = norm - c->smoothing_radius;
-     dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_r);
-          dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c2_z);
-     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-     return;
-   }
-
-  
   /* Check if we are in the range of the right smoothing circle */
-  if (p1_z >= c2_z && r <= c2_r && !full_pore) {
+  if (p1_z >= c2_z && r <= c2_r ) {
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_r)*(r - c2_r) );
     *dist = norm - c->smoothing_radius;
     dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_or);
@@ -1083,9 +1068,8 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
-
   /* Check if we are in the range of the upper right smoothing circle */
-  if (p2_z >= c2_z && r >= c2_or && !full_pore) {
+  if (p2_z >= c2_z && r >= c2_or ) {
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_or)*(r - c2_or) );
     *dist = norm - c->smoothing_radius;
     dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_or);
@@ -1093,14 +1077,9 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
-  if (!full_pore) {
-    *dist=-1e99;
-    vec[0] = vec[1] = vec[2] = 1e99;
-  }
-  else {
-    exit(printf("should never be reached, z %f, r%f\n",z, r));
-  }
-
+  *dist=-1e99;
+  vec[0] = vec[1] = vec[2] = 1e99;
+//  exit(printf("should never be reached, z %f, r%f\n",z, r));
 }
 
 void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_plane *c, double *dist, double *vec)
