@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file tuning.c
-    Implementation of tuning.h .
+/** \file tuning.cpp
+    Implementation of tuning.hpp .
 */
 #include <sys/time.h>
 #include <sys/resource.h>

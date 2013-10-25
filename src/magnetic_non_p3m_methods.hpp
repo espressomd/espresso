@@ -20,7 +20,7 @@
 */
 #ifndef MAG_NON_P3M_H
 #define MAG_NON_P3M_H
-/** \file magnetic_non_p3m_methods.h   Header of all 3d non P3M methods to deal with the magnetic dipoles
+/** \file magnetic_non_p3m_methods.hpp   Header of all 3d non P3M methods to deal with the magnetic dipoles
  *   
  *  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
  *  Handling of a system of dipoles where no replicas exist

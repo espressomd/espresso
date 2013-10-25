@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file mmm1d.h MMM1D algorithm for long range coulomb interactions.
+/** \file mmm1d.hpp MMM1D algorithm for long range coulomb interactions.
     Implementation of the MMM1D method for the calculation of the
     electrostatic interaction in one dimensionally periodic
     systems. For details on the method see MMM in general. The MMM1D

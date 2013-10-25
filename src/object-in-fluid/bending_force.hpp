@@ -18,7 +18,7 @@
 */
 #ifndef _OBJECT_IN_FLUID_BENDING_FORCE_H
 #define _OBJECT_IN_FLUID_BENDING_FORCE_H
-/** \file bending_force.h Routines to calculate the bending_force energy or/and
+/** \file bending_force.hpp Routines to calculate the bending_force energy or/and
  *  and force for a particle quadruple (two triangles that have 2 particles in common)
 */
 

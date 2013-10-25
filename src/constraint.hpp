@@ -21,10 +21,10 @@
 #ifndef _CONSTRAINT_H
 #define _CONSTRAINT_H
 
-/** \file constraint.h
+/** \file constraint.hpp
  *  Routines for handling of constraints.
  *  Only active if the feature CONSTRAINTS is activated.
- *  see also \ref interaction_data.h
+ *  see also \ref interaction_data.hpp
  */
 
 #include "particle_data.hpp"

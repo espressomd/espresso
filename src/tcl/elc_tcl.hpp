@@ -21,7 +21,7 @@
 #ifndef ELC_TCL_H
 #define ELC_TCL_H
 /** \file elc_tcl.hpp
- * Tcl interface for \ref elc.h
+ * Tcl interface for \ref elc.hpp
  */
 
 #include "parser.hpp"

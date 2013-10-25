@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file comforce.c
+/** \file comforce.cpp
  *
- *  Implementation of \ref comforce.h
+ *  Implementation of \ref comforce.hpp
  */
 #include "utils.hpp"
 #include "comforce.hpp"

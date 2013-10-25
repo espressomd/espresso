@@ -17,10 +17,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu.h
- * Header file for lbgpu.c
+/** \file lbgpu.hpp
+ * Header file for lbgpu.cpp
  *
- * This is the header file for the Lattice Boltzmann implementation in lbgpu_cfile.c
+ * This is the header file for the Lattice Boltzmann implementation in lbgpu_cfile.cpp
  */
 
 #ifndef LB_GPU_H

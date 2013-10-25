@@ -18,11 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file layered.h
+/** \file layered.hpp
     The layered cellsystem. This cellsystem is a combination of a single processor n-squared method along x and y,
     and a multiprocessor domain decomposition along z. Therefore only \f$1\times 1\times N\f$ processors grids are
     allowed for this cellsystem. The implementation is pretty similar to
-    \ref domain_decomposition.h "domain_decomposition.h".
+    \ref domain_decomposition.hpp "domain_decomposition.h".
 */
 #ifndef LAYERED_H
 #define LAYERED_H

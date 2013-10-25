@@ -20,10 +20,10 @@
 */
 #ifndef DIHEDRAL_H
 #define DIHEDRAL_H
-/** \file dihedral.h Routines to calculate the dihedral energy or/and
+/** \file dihedral.hpp Routines to calculate the dihedral energy or/and
  *  and force for a particle quadruple.  Note that usage of dihedrals
  *  increases the interaction range of bonded interactions to 2 times
- *  the maximal bond length!  \ref forces.c
+ *  the maximal bond length!  \ref forces.cpp
 */
 
 #include "utils.hpp"

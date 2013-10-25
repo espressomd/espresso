@@ -21,7 +21,7 @@
 #ifndef RATTLE_TCL_H
 #define RATTLE_TCL_H
 /** \file rattle_tcl.hpp
- * Tcl interface for \ref rattle.h
+ * Tcl interface for \ref rattle.hpp
  */
 
 #include "parser.hpp"

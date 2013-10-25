@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file imd.c
-    Implementation of \ref imd.h "imd.h".
+/** \file imd.cpp
+    Implementation of \ref imd.hpp "imd.h".
  */
 #include <climits>
 #include <unistd.h>

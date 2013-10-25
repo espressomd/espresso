@@ -20,7 +20,7 @@
 */
 #ifndef _P3M_H 
 #define _P3M_H
-/** \file p3m.h P3M algorithm for long range coulomb interaction.
+/** \file p3m.hpp P3M algorithm for long range coulomb interaction.
  *
  *  We use a P3M (Particle-Particle Particle-Mesh) method based on the
  *  Ewald summation. Details of the used method can be found in
@@ -189,7 +189,7 @@ enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLA
 
     The function returns a log of the performed tuning.
 
-    The function is based on routines of the program HE_Q.c written by M. Deserno.
+    The function is based on routines of the program HE_Q.cpp written by M. Deserno.
  */
 
 /** assign the physical charges using the tabulated charge assignment function.

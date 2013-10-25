@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lb.c
+/** \file lb.cpp
  *
  * Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
@@ -44,7 +44,8 @@
 #include "cuda_interface.hpp"
 
 
-int lb_components = LB_COMPONENTS; // global variable holding the number of fluid components (see global.c)
+
+int lb_components = LB_COMPONENTS; // global variable holding the number of fluid components (see global.cpp)
 
 #ifdef LB
  
@@ -1654,7 +1655,7 @@ static void lb_realloc_fluid() {
 }
 
 /** Sets up the structures for exchange of the halo regions.
- *  See also \ref halo.c */
+ *  See also \ref halo.cpp */
 static void lb_prepare_communication() {
     int i;
     HaloCommunicator comm = { 0, NULL };

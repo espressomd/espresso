@@ -1514,7 +1514,7 @@ int p3m_adaptive_tune(char **log) {
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
        meshes have to be tested */
-    /* avoid using more than 1 GB of FFT arrays (per default, see config.h) */
+    /* avoid using more than 1 GB of FFT arrays (per default, see config.hpp) */
 
     P3M_TRACE(fprintf(stderr, "%d: starting with meshdensity %lf, using at most %lf.\n", this_node, mesh_density_min, mesh_density_max));
 

@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file bmhtf-nacl.c
+/** \file bmhtf-nacl.cpp
  *
- *  Implementation of \ref bmhtf-nacl.h
+ *  Implementation of \ref bmhtf-nacl.hpp
  */
 #include "bmhtf-nacl.hpp"
 

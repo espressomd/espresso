@@ -1597,16 +1597,10 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
     interpolated_u3 += (mode[3]/totmass)*delta[i];
  }
 
-#ifdef SHANCHEN
- printf (stderr, "Unfortunately the three point particle coupling is not currently compatible with the Shan-Chen implementation of the LB\n");
- exit(1);
-#else // SHANCHEN is not defined
  /* for LB we do not reweight the friction force */
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
   interpolated_rho[ii]=1.0;
  }
-
-#endif // SHANCHEN
 
   /** calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
@@ -1937,8 +1931,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #else // SHANCHEN is not defined
 
   /* for LB we do not reweight the friction force */
-  for(int ii=0; ii<LB_COMPONENTS; ++ii) 
+  for(int ii=0; ii<LB_COMPONENTS; ++ii){
     interpolated_rho[ii]=1.0;
+  }
 
 #endif // SHANCHEN
 
@@ -1948,9 +1943,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   float rhotot=0;
 
   #pragma unroll
-  for(int ii=0; ii<LB_COMPONENTS; ++ii) 
+  for(int ii=0; ii<LB_COMPONENTS; ++ii){
     rhotot+=interpolated_rho[ii];
-
+  }
 
  /* Viscous force */
  for(int ii=0; ii<LB_COMPONENTS; ++ii)
@@ -2995,11 +2990,20 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 //fprintf(stderr, "initialization of lb gpu code %i\n", lbpar_gpu->number_of_nodes);
   cudaThreadSynchronize();
 
+<<<<<<< HEAD
   if(!h_gpu_check[0])
   {
     fprintf(stderr, "initialization of lb gpu code failed! \n");
     errexit();
   }
+=======
+#if __CUDA_ARCH__ >= 200
+  if(!h_gpu_check[0]){
+    fprintf(stderr, "initialization of lb gpu code failed! \n");
+    errexit();
+  }
+#endif
+>>>>>>> master
 }
 
 /** reinitialization for the lb gpu fluid called from host
@@ -3140,11 +3144,19 @@ void lb_calc_particle_lattice_ia_gpu(){
                 );
     }
     else { /** only other option is the three point coupling scheme */
+<<<<<<< HEAD
       KERNELCALL( calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles, 
                   ( *current_nodes, gpu_get_particle_pointer(),
                     gpu_get_particle_force_pointer(), node_f, 
                     gpu_get_particle_seed_pointer(), device_rho_v )
                 );
+=======
+#ifdef SHANCHEN
+      fprintf (stderr, "The three point particle coupling is not currently compatible with the Shan-Chen implementation of the LB\n");
+      errexit(); 
+#endif
+      KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer(),device_rho_v));
+>>>>>>> master
     }
   }
 }

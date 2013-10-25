@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file morse_tcl.c
+/** \file morse_tcl.cpp
  *  TCL interface for the Morse potential
 */
 
