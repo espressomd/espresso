@@ -2965,12 +2965,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
   cudaStreamCreate(&stream[0]);
 
-  /** values for the particle kernel */
-  int threads_per_block_particles = 64;
-  int blocks_per_grid_particles_y = 4;
-  int blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
-  dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
   #ifdef SHANCHEN
