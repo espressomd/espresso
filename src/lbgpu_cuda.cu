@@ -478,54 +478,6 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
                                    + (n_a.vd[( 7 + ii*LBQ ) * para.number_of_nodes + index] + n_a.vd[( 8 + ii*LBQ ) * para.number_of_nodes + index])
                                    + (n_a.vd[( 9 + ii*LBQ ) * para.number_of_nodes + index] + n_a.vd[(10 + ii*LBQ ) * para.number_of_nodes + index])
                                  );
-//TODO : REMOVE JOOST
-/*
-if( index == 93)
-printf("calc populations: %d\n %f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f\n\n",
-index,
-n_a.vd[( 0 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 1 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 2 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 3 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 4 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 5 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 6 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 7 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 8 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 9 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 10 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 11 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 12 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 13 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 14 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 15 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 16 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 17 + ii*LBQ ) * para.number_of_nodes + index],
-n_a.vd[( 18 + ii*LBQ ) * para.number_of_nodes + index]);
-
-if( index == 93)
-printf("calc modes: %d\n %f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f %f\n%f %f %f %f\n\n",
-index,
-mode[0 + ii * LBQ],
-mode[1 + ii * LBQ],
-mode[2 + ii * LBQ],
-mode[3 + ii * LBQ],
-mode[4 + ii * LBQ],
-mode[5 + ii * LBQ],
-mode[6 + ii * LBQ],
-mode[7 + ii * LBQ],
-mode[8 + ii * LBQ],
-mode[9 + ii * LBQ],
-mode[10 + ii * LBQ],
-mode[11 + ii * LBQ],
-mode[12 + ii * LBQ],
-mode[13 + ii * LBQ],
-mode[14 + ii * LBQ],
-mode[15 + ii * LBQ],
-mode[16 + ii * LBQ],
-mode[17 + ii * LBQ],
-mode[18 + ii * LBQ]);
-*/
   }
 }
 
@@ -2264,6 +2216,10 @@ __global__ void set_u_from_rho_v_pi( LB_nodes_gpu n_a, int single_nodeindex, flo
 
     calc_m_from_n(n_a, single_nodeindex, mode_for_pi);
 
+    // Reset the d_v
+
+    update_rho_v(mode_for_pi, single_nodeindex, node_f, d_v);
+
     // Calculate the density, velocity, and pressure tensor
     // in LB unit for this node
 
@@ -3476,9 +3432,6 @@ void lb_integrate_GPU() {
   if (intflag == 1)
   {
 
-// TODO REMOVE JOOST
-//printf("** A  B **\n\n");
-
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, ek_parameters_gpu));
     current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU
@@ -3493,9 +3446,6 @@ void lb_integrate_GPU() {
   else
   {
 
-// TODO REMOVE JOOST
-//printf("** B  A **\n\n");
-
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_rho_v, node_f, ek_parameters_gpu));
     current_nodes = &nodes_a;
 #ifdef LB_BOUNDARIES_GPU
@@ -3507,8 +3457,6 @@ void lb_integrate_GPU() {
 #endif
     intflag = 1;
   }
-
-  cudaDeviceSynchronize();
 }
 
 void lb_gpu_get_boundary_forces(double* forces) {
