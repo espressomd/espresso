@@ -342,10 +342,10 @@ proc prepare_vmd_connection { args } {
   close $f
   
   for {set port 10000} { $port < 65000 } { incr port } {
-    catch {imd connect $port} res
-    if {$res == ""} {
-      break
-    }
+      catch {imd connect $port} res
+      if {$res == ""} {
+          break
+      }
   }
   
   set vmdout_file [open "${filename}.vmd_start.script" "w"]
@@ -354,11 +354,10 @@ proc prepare_vmd_connection { args } {
   puts $vmdout_file "mol load vsf $filename.vsf"
   puts $vmdout_file "rotate stop"
   puts $vmdout_file "mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000"
-  puts $vmdout_file "mol modcolor 0 0 SegName"
-  puts $vmdout_file "imd connect $hostname $port"
+  puts $vmdout_file "mol modcolor 0 0 Name"
+  puts $vmdout_file "imd connect $HOSTNAME $port"
   puts $vmdout_file "imd transfer 1"
   puts $vmdout_file "imd keep 1"
-  puts $vmdout_file "proc pbcsetup {} {pbc set \"[setmd box_l]\" -all}"
   
   # draw constraints  
   if {$draw_constraints != "0"} {
