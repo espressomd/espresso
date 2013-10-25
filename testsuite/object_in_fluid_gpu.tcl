@@ -39,6 +39,8 @@ source "tests_common.tcl"
 require_feature "AREA_FORCE_GLOBAL"
 require_feature "VOLUME_FORCE"
 require_feature "LB_GPU"
+require_feature "SHANCHEN" off
+
 require_max_nodes_per_side 2
 
 puts "------------------------------------------------"

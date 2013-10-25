@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file constraint.cpp
-    Implementation of \ref constraint.hpp "constraint.h", here it's just the parsing stuff.
+    Implementation of \ref constraint.hpp "constraint.hpp", here it's just the parsing stuff.
 */
 
 #include "constraint.hpp"

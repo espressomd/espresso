@@ -92,7 +92,7 @@ void mpi_stop();
 void mpi_finalize();
 
 /** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-    @param i the number from \ref global.hpp "global.h" referencing the datafield.
+    @param i the number from \ref global.hpp "global.hpp" referencing the datafield.
     @return nonzero on error
 */
 int mpi_bcast_parameter(int i);
@@ -476,7 +476,7 @@ void mpi_update_mol_ids(void);
 int mpi_sync_topo_part_info(void);
 
 /** Issue REQ_BCAST_LBPAR: Broadcast a parameter for Lattice Boltzmann.
- * @param field References the parameter field to be broadcasted. The references are defined in \ref lb.hpp "lb.h"
+ * @param field References the parameter field to be broadcasted. The references are defined in \ref lb.hpp "lb.hpp"
  */
 void mpi_bcast_lb_params(int field);
 
