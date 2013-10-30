@@ -1541,7 +1541,7 @@ __global__ void ek_reaction( ) {
       *rho_product1 += rho_change * fraction_1;
     }
     else if ( ek_parameters_gpu.node_is_catalyst[index] == 2 )
-    { 
+    {
       *rho_reactant = ek_parameters_gpu.rho_reactant_reservoir;
       *rho_product0 = ek_parameters_gpu.rho_product0_reservoir;
       *rho_product1 = ek_parameters_gpu.rho_product1_reservoir; 
@@ -1555,8 +1555,8 @@ __global__ void ek_reaction_tag( ) {
   unsigned int coord[3];
 
   float react_rad = ek_parameters_gpu.reaction_radius;
-  float bound_rad = 3.0f;
-  float offset = 4.0f;
+// TODO : RESET to 10.0
+  float bound_rad = 4.0f;
   float total_rad = bound_rad + react_rad;
 
   rhoindex_linear2cartesian(index, coord);
@@ -1565,9 +1565,9 @@ __global__ void ek_reaction_tag( ) {
   {
     float node_radius2 = ((coord[0] + 0.5f) - ek_parameters_gpu.dim_x*0.5f)*((coord[0] + 0.5f) - ek_parameters_gpu.dim_x*0.5f) +
                          ((coord[1] + 0.5f) - ek_parameters_gpu.dim_y*0.5f)*((coord[1] + 0.5f) - ek_parameters_gpu.dim_y*0.5f) +
-                         ((coord[2] + 0.5f) - ek_parameters_gpu.dim_z*0.5f - offset)*((coord[2] + 0.5f) - ek_parameters_gpu.dim_z*0.5f - offset);
+                         ((coord[2] + 0.5f) - ek_parameters_gpu.dim_z*0.5f)*((coord[2] + 0.5f) - ek_parameters_gpu.dim_z*0.5f);
 
-    if ( node_radius2 <= total_rad*total_rad && node_radius2 > bound_rad*bound_rad ) // && ((coord[0] + 0.5f) > ek_parameters_gpu.dim_x*0.5f + offset) )
+    if ( node_radius2 <= total_rad*total_rad && node_radius2 > bound_rad*bound_rad && (coord[2] + 0.5f) < ek_parameters_gpu.dim_z*0.5f )
     {
       ek_parameters_gpu.node_is_catalyst[index] = 1;
     }
