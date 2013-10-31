@@ -168,10 +168,14 @@ AM_CONDITIONAL(HAVE_LATEX,
 	[test .$PDFLATEX != .no && 
 	test .$MAKEINDEX != .no && 
 	test .$BIBTEX != .no])
+
+cat <<EOF
+****************************************************************
+*                  Checking for python                         *
+****************************************************************
+EOF
 AM_PATH_PYTHON([2.5],,no)
 AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
-AC_PATH_PROG(CYTHON,cython,no)
-
 if test .$PYTHON != .no; then
    # Check whether python -B works
    AC_MSG_CHECKING([whether python -B works])
@@ -182,6 +186,14 @@ if test .$PYTHON != .no; then
       AC_MSG_RESULT(no)
    fi
 fi
+
+AX_PYTHON_DEVEL([>= '2.5'])
+AC_PATH_PROG(CYTHON,cython,no)
+AX_PYTHON_MODULE(numpy)
+AC_MSG_CHECKING([for numpy include path])
+NUMPY_INCLUDE="`$PYTHON -c 'import numpy; print numpy.get_include()'`"
+PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
+AC_MSG_RESULT([$NUMPY_INCLUDE])
 
 cat <<EOF
 ****************************************************************
@@ -232,13 +244,6 @@ dnl with_tcl=no   bail out
 dnl otherwise     use the specified version
 
 if test .$with_tcl = .no; then
-   AC_MSG_WARN([
-*********************************************************
-*                                                       *
-* Without Tcl, ESPResSo doesn't do anything useful yet! *
-*                                                       *
-*********************************************************
-])
    use_tcl=none
    AC_DEFINE(TCL,[],[Whether Tcl is available])
 elif test .$with_tcl = .yes; then
@@ -627,7 +632,6 @@ linker flags		= $LDFLAGS
 libraries		= $LIBS
 using debug flags	= $enable_debug
 using profiling flags	= $enable_profiling
-inline			= $MDINLINE
 
 Libraries
 ---------
@@ -635,6 +639,14 @@ Tcl version		= $use_tcl
 Tk version		= $use_tk
 FFTW 			= $fftw_found
 efence			= $with_efence
+
+Python
+------
+python			= $PYTHON
+preprocessor flags      = $PYTHON_CPPFLAGS
+linker flags            = $PYTHON_LDFLAGS
+extra flags             = $PYTHON_EXTRA_LIBS
+extra linker flags      = $PYTHON_EXTRA_LDFLAGS
 
 Other settings
 --------------
@@ -648,7 +660,6 @@ makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 dot			= $DOT
-python			= $PYTHON
 EOF
 
 if test x$cuda_ok = xyes; then
@@ -665,7 +676,6 @@ fi
 if test x"$use_mpi_fake" = x"yes"; then
    echo "WARNING: MPI disabled or not supported! Parallelization turned off."
 fi
-
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
 fi
@@ -677,5 +687,8 @@ if test .$bibtex = .no; then
 fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
+fi
+if test .$use_tcl = .no; then
+   echo "Not building Tcl interface."
 fi
 

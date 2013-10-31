@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+AM_DEFAULT_SOURCE_EXT = .cpp
+
 # List headers that are not used by the program here
 noinst_HEADERS = \
 	myconfig-default.hpp
@@ -64,13 +66,13 @@ libEspresso_la_SOURCES = \
 	lb-d3q18.hpp lb-d3q19.hpp \
 	lbgpu.cpp lbgpu.hpp\
 	metadynamics.cpp metadynamics.hpp \
-	modes.cpp	modes.hpp \
+	modes.cpp modes.hpp \
 	molforces.cpp molforces.hpp \
 	mol_cut.cpp mol_cut.hpp \
 	nemd.cpp nemd.hpp \
 	npt.hpp \
 	nsquare.cpp nsquare.hpp \
-	particle_data.cpp	particle_data.hpp \
+	particle_data.cpp particle_data.hpp \
 	polymer.cpp polymer.hpp \
 	polynom.hpp \
 	pressure.cpp pressure.hpp \
@@ -157,7 +159,9 @@ libEspresso_la_SOURCES += \
 
 if TCL
 
-libEspresso_la_SOURCES += \
+noinst_LTLIBRARIES += libEspressoTcl.la
+
+libEspressoTcl_la_SOURCES = \
 	tcl/adresso_tcl.cpp tcl/adresso_tcl.hpp \
 	tcl/bin_tcl.cpp \
 	tcl/binary_file_tcl.cpp tcl/binary_file_tcl.hpp \
@@ -206,7 +210,7 @@ libEspresso_la_SOURCES += \
 	tcl/ghmc_tcl.cpp tcl/ghmc_tcl.hpp
 
 # nonbonded potentials and forces
-libEspresso_la_SOURCES += \
+libEspressoTcl_la_SOURCES += \
 	tcl/bmhtf-nacl_tcl.cpp tcl/bmhtf-nacl_tcl.hpp \
 	tcl/buckingham_tcl.cpp tcl/buckingham_tcl.hpp \
 	tcl/dpd_tcl.cpp tcl/dpd_tcl.hpp \
@@ -227,7 +231,7 @@ libEspresso_la_SOURCES += \
 	tcl/tunable_slip_tcl.cpp tcl/tunable_slip_tcl.hpp
 
 # bonded potentials and forces
-libEspresso_la_SOURCES += \
+libEspressoTcl_la_SOURCES += \
 	tcl/angle_tcl.cpp tcl/angle_tcl.hpp \
 	tcl/angle_harmonic_tcl.cpp tcl/angle_harmonic_tcl.hpp \
 	tcl/angle_cosine_tcl.cpp tcl/angle_cosine_tcl.hpp \
@@ -253,7 +257,7 @@ libEspresso_la_SOURCES += \
 	tcl/object-in-fluid/volume_force_tcl.hpp
 
 # Coulomb methods
-libEspresso_la_SOURCES += \
+libEspressoTcl_la_SOURCES += \
 	tcl/debye_hueckel_tcl.cpp tcl/debye_hueckel_tcl.hpp \
 	tcl/elc_tcl.cpp tcl/elc_tcl.hpp \
 	tcl/magnetic_non_p3m_methods_tcl.cpp tcl/magnetic_non_p3m_methods_tcl.hpp \
@@ -265,10 +269,6 @@ libEspresso_la_SOURCES += \
 	tcl/reaction_field_tcl.cpp tcl/reaction_field_tcl.hpp \
 	tcl/mdlc_correction_tcl.cpp tcl/mdlc_correction_tcl.hpp	
 
-endif
-
-if TCL
-
 #################################################################
 # Compile the (TCL) main program
 #################################################################
@@ -279,12 +279,12 @@ if TCL
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\"
 Espresso_SOURCES = tcl/scriptsdir.cpp tcl/main.cpp
-Espresso_LDADD = libEspresso.la
+Espresso_LDADD = libEspressoTcl.la libEspresso.la
 
 bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\"
 Espresso_install_SOURCES = tcl/scriptsdir.cpp tcl/main.cpp
-Espresso_install_LDADD = libEspresso.la
+Espresso_install_LDADD = libEspressoTcl.la libEspresso.la 
 
 ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
 ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)

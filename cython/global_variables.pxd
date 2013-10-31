@@ -1,6 +1,6 @@
 include "myconfig.pxi"
 
-cdef extern from "global.h":
+cdef extern from "global.hpp":
   int FIELD_MAXNUMCELLS
   int FIELD_MINNUMCELLS
   int FIELD_NODEGRID
@@ -9,25 +9,25 @@ cdef extern from "global.h":
   int FIELD_PERIODIC
   int FIELD_SIMTIME
 
-cdef extern from "communication.h":
+cdef extern from "communication.hpp":
   extern int n_nodes
   void mpi_set_time_step(double time_step)
   void mpi_bcast_parameter(int p)
 
-cdef extern from "integrate.h":
+cdef extern from "integrate.hpp":
   double time_step
   extern int integ_switch
   extern double sim_time
   extern double verlet_reuse
 
 
-cdef extern from "verlet.h":
+cdef extern from "verlet.hpp":
   double skin
 
-cdef extern from "lattice.h":
+cdef extern from "lattice.hpp":
   extern int lattice_switch
 
-cdef extern from "../src/domain_decomposition.h":
+cdef extern from "domain_decomposition.hpp":
   ctypedef struct IA_Neighbor:
     pass
   ctypedef struct IA_Neighbor_List:
@@ -43,11 +43,11 @@ cdef extern from "../src/domain_decomposition.h":
   int calc_processor_min_num_cells()
 
   
-cdef extern from "particle_data.h":
+cdef extern from "particle_data.hpp":
   extern int  n_total_particles
 
 
-cdef extern from "interaction_data.h":
+cdef extern from "interaction_data.hpp":
   double dpd_gamma
   double dpd_r_cut
   extern double max_cut
@@ -57,7 +57,7 @@ cdef extern from "interaction_data.h":
   extern double max_cut_bonded
 
 
-cdef extern from "thermostat.h":
+cdef extern from "thermostat.hpp":
   double langevin_gamma
   extern double nptiso_gamma0
   extern double nptiso_gammav
@@ -65,7 +65,7 @@ cdef extern from "thermostat.h":
   extern int thermo_switch   
 
 
-cdef extern from "dpd.h":
+cdef extern from "dpd.hpp":
   extern int dpd_wf
   extern double dpd_tgamma
   extern double dpd_tr_cut
@@ -73,45 +73,45 @@ cdef extern from "dpd.h":
 
 
 IF LB:
-  cdef extern from "lb.h":
+  cdef extern from "lb.hpp":
     ctypedef struct LB_Parameters:
       double tau
     extern LB_Parameters lbpar
 
 IF LB_GPU:
-  cdef extern from "lbgpu.h":
+  cdef extern from "lbgpu.hpp":
     ctypedef struct LB_parameters_gpu:
       double tau
     extern LB_parameters_gpu lbpar_gpu
 
-cdef extern from "adresso.h":
+cdef extern from "adresso.hpp":
   extern double adress_vars[7]
 
 
-cdef extern from "cells.h":
+cdef extern from "cells.hpp":
   extern double max_range
 
-cdef extern from "layered.h":
+cdef extern from "layered.hpp":
   extern int n_layers
 
-cdef extern from "rattle.h":
+cdef extern from "rattle.hpp":
   extern int n_rigidbonds
 
 
-cdef extern from "tuning.h":
+cdef extern from "tuning.hpp":
   extern int timing_samples
 
-cdef extern from "imd.h":
+cdef extern from "imd.hpp":
   extern int transfer_rate
 
 
-cdef extern from "grid.h":
+cdef extern from "grid.hpp":
   double box_l[3]
   double local_box_l[3]
   extern int node_grid[3]
   extern int periodic
 
-cdef extern from "npt.h":
+cdef extern from "npt.hpp":
   ctypedef struct nptiso_struct:
     double p_ext
     double p_inst
