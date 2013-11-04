@@ -2209,7 +2209,7 @@ LOOKUP_TABLE default\n",
 }
 
 
-int ek_lb_print_velocity( int x, int y, int z, double* velocity ) { //TODO only calculate single node velocity
+int ek_node_print_velocity( int x, int y, int z, double* velocity ) { //TODO only calculate single node velocity
   
   LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
                                                         sizeof( LB_rho_v_pi_gpu ) );
@@ -2318,6 +2318,30 @@ LOOKUP_TABLE default\n",
   
   free( densities );
   fclose( fp );
+  
+  return 0;
+}
+
+
+int ek_node_print_density( int species, int x, int y, int z, double* density ) {
+
+  float* densities = (float*) malloc( ek_parameters.number_of_nodes *
+                                      sizeof( float )                 );
+  
+  if( ek_parameters.species_index[ species ] != -1 ) {
+  
+    cuda_safe_mem( cudaMemcpy( densities, 
+                               ek_parameters.rho[ ek_parameters.species_index[ species ] ],
+                               ek_parameters.number_of_nodes * sizeof( float ),
+                               cudaMemcpyDeviceToHost )
+                 );
+  }
+  else
+    return 1;
+  
+  *density = densities[z * ek_parameters.dim_y * ek_parameters.dim_x + y * ek_parameters.dim_x + x] / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid);
+  
+  free( densities );
   
   return 0;
 }
