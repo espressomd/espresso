@@ -2209,6 +2209,24 @@ LOOKUP_TABLE default\n",
 }
 
 
+int ek_lb_print_velocity( int x, int y, int z, double* velocity ) { //TODO only calculate single node velocity
+  
+  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
+                                                        sizeof( LB_rho_v_pi_gpu ) );
+  lb_get_values_GPU( host_values );
+  
+  int i = z * ek_parameters.dim_y * ek_parameters.dim_x + y * ek_parameters.dim_x + x; //TODO calculate index
+  
+  velocity[0] = host_values[i].v[0];
+  velocity[1] = host_values[i].v[1];
+  velocity[2] = host_values[i].v[2];
+  
+  free(host_values);
+  
+  return 0;
+}
+
+
 int ek_lb_print_vtk_density( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
