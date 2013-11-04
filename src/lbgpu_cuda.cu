@@ -1289,10 +1289,10 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
 
       /* pi_eq0 = j.j
          pi_eq1 = j_x*j_x - j_y*j_y
-         pi_eq1 = j.j - 3*j_z*j_z
-         pi_eq1 = j_x*j_y
-         pi_eq1 = j_x*j_z
-         pi_eq1 = j_y*j_z */
+         pi_eq2 = j.j - 3*j_z*j_z
+         pi_eq3 = j_x*j_y
+         pi_eq4 = j_x*j_z
+         pi_eq5 = j_y*j_z */
 
       // where the / Rho term has been dropped. We thus obtain: 
 

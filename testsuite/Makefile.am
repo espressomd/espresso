@@ -31,6 +31,7 @@ tests = \
 	constraints_rhomboid.tcl \
 	dh.tcl \
 	dielectric.tcl \
+	ek_eof_one_species.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
