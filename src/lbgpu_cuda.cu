@@ -1329,6 +1329,7 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
       pi[1] += mode[7 + ii * LBQ]; // xy
       pi[4] += mode[9 + ii * LBQ]; // yz
       pi[3] += mode[8 + ii * LBQ]; // zx
+
     }
      
     for(int i = 0; i < 6; i++)
