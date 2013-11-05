@@ -534,7 +534,7 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   #pragma unroll
   for(int ii=0;ii<LB_COMPONENTS;++ii)
   { 
-      float Rho; float j[3]; float pi_eq[6];
+      float Rho; float j[3]; float modes_from_pi_eq[6];
 
       Rho = mode[0 + ii * LBQ] + para.rho[ii]*para.agrid*para.agrid*para.agrid ;
       j[0] = Rho * u_tot[0];
@@ -543,12 +543,12 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 
       /** equilibrium part of the stress modes (eq13 schiller)*/
 
-      pi_eq[0] = ((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2]))/Rho;
-      pi_eq[1] = ((j[0]*j[0])-(j[1]*j[1]))/Rho;
-      pi_eq[2] = (((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2])) - 3.0f*(j[2]*j[2]))/Rho;
-      pi_eq[3] = j[0]*j[1]/Rho;
-      pi_eq[4] = j[0]*j[2]/Rho;
-      pi_eq[5] = j[1]*j[2]/Rho;
+      modes_from_pi_eq[0] = ((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2]))/Rho;
+      modes_from_pi_eq[1] = ((j[0]*j[0])-(j[1]*j[1]))/Rho;
+      modes_from_pi_eq[2] = (((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2])) - 3.0f*(j[2]*j[2]))/Rho;
+      modes_from_pi_eq[3] = j[0]*j[1]/Rho;
+      modes_from_pi_eq[4] = j[0]*j[2]/Rho;
+      modes_from_pi_eq[5] = j[1]*j[2]/Rho;
  
       /** in Shan-Chen we have to relax the momentum modes as well using the mobility, but
           the total momentum is conserved */  
@@ -561,12 +561,12 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
  
       /** relax the stress modes (eq14 schiller)*/
 
-      mode[4 + ii * LBQ] = pi_eq[0] +  para.gamma_bulk[ii]*(mode[4 + ii * LBQ] - pi_eq[0]);
-      mode[5 + ii * LBQ] = pi_eq[1] + para.gamma_shear[ii]*(mode[5 + ii * LBQ] - pi_eq[1]);
-      mode[6 + ii * LBQ] = pi_eq[2] + para.gamma_shear[ii]*(mode[6 + ii * LBQ] - pi_eq[2]);
-      mode[7 + ii * LBQ] = pi_eq[3] + para.gamma_shear[ii]*(mode[7 + ii * LBQ] - pi_eq[3]);
-      mode[8 + ii * LBQ] = pi_eq[4] + para.gamma_shear[ii]*(mode[8 + ii * LBQ] - pi_eq[4]);
-      mode[9 + ii * LBQ] = pi_eq[5] + para.gamma_shear[ii]*(mode[9 + ii * LBQ] - pi_eq[5]);
+      mode[4 + ii * LBQ] = modes_from_pi_eq[0] +  para.gamma_bulk[ii]*(mode[4 + ii * LBQ] - modes_from_pi_eq[0]);
+      mode[5 + ii * LBQ] = modes_from_pi_eq[1] + para.gamma_shear[ii]*(mode[5 + ii * LBQ] - modes_from_pi_eq[1]);
+      mode[6 + ii * LBQ] = modes_from_pi_eq[2] + para.gamma_shear[ii]*(mode[6 + ii * LBQ] - modes_from_pi_eq[2]);
+      mode[7 + ii * LBQ] = modes_from_pi_eq[3] + para.gamma_shear[ii]*(mode[7 + ii * LBQ] - modes_from_pi_eq[3]);
+      mode[8 + ii * LBQ] = modes_from_pi_eq[4] + para.gamma_shear[ii]*(mode[8 + ii * LBQ] - modes_from_pi_eq[4]);
+      mode[9 + ii * LBQ] = modes_from_pi_eq[5] + para.gamma_shear[ii]*(mode[9 + ii * LBQ] - modes_from_pi_eq[5]);
     
       /** relax the ghost modes (project them out) */
       /** ghost modes have no equilibrium part due to orthogonality */
@@ -970,6 +970,7 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
 
 // TODO : PUT IN EQUILIBRIUM CONTRIBUTION TO THE BOUNCE-BACK DENSITY FOR THE BOUNDARY FORCE
 // TODO : INITIALIZE BOUNDARY FORCE PROPERLY, HAS NONZERO ELEMENTS IN FIRST STEP
+// TODO : SET INTERNAL BOUNDARY NODE VALUES TO ZERO
 
 #define BOUNCEBACK  \
   shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[0]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
@@ -1244,11 +1245,12 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
 __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, unsigned int index, unsigned int print_index) {
   
   float j[3]; 
-  float pi_eq[6]; 
+  float modes_from_pi_eq[6]; 
   float pi[6]={0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 
   if(n_a.boundary[index] == 0)
   {
+    /* Ensure we are working with the current values of d_v */
 
     update_rho_v(mode, index, node_f, d_v);
 
@@ -1282,37 +1284,37 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
          m8 = pi_xz
          m9 = pi_yz */
 
-      // and pluggin in the Euler stress:
+      // and pluggin in the Euler stress for the equilibrium:
       // pi_eq = rho_0*c_s^2*I3 + (j \otimes j)/rho
       // with I3 the 3D identity matrix and
       // rho = \trace(rho_0*c_s^2*I3), which yields
 
-      /* pi_eq0 = j.j
-         pi_eq1 = j_x*j_x - j_y*j_y
-         pi_eq2 = j.j - 3*j_z*j_z
-         pi_eq3 = j_x*j_y
-         pi_eq4 = j_x*j_z
-         pi_eq5 = j_y*j_z */
+      /* m4_from_pi_eq = j.j
+         m5_from_pi_eq = j_x*j_x - j_y*j_y
+         m6_from_pi_eq = j.j - 3*j_z*j_z
+         m7_from_pi_eq = j_x*j_y
+         m8_from_pi_eq = j_x*j_z
+         m9_from_pi_eq = j_y*j_z */
 
       // where the / Rho term has been dropped. We thus obtain: 
 
-      pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
-      pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
-      pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0*j[2]*j[2] ) / Rho;
-      pi_eq[3] = j[0]*j[1] / Rho;
-      pi_eq[4] = j[0]*j[2] / Rho;
-      pi_eq[5] = j[1]*j[2] / Rho;
+      modes_from_pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
+      modes_from_pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
+      modes_from_pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0*j[2]*j[2] ) / Rho;
+      modes_from_pi_eq[3] = j[0]*j[1] / Rho;
+      modes_from_pi_eq[4] = j[0]*j[2] / Rho;
+      modes_from_pi_eq[5] = j[1]*j[2] / Rho;
      
       /* Now we must predict the outcome of the next collision */
       /* We immediately average pre- and post-collision.  */
       /* TODO: need a reference for this.   */
 
-      mode[4 + ii * LBQ ] = pi_eq[0] + (0.5 + 0.5* para.gamma_bulk[ii]) * (mode[4 + ii * LBQ] - pi_eq[0]);
-      mode[5 + ii * LBQ ] = pi_eq[1] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[5 + ii * LBQ] - pi_eq[1]);
-      mode[6 + ii * LBQ ] = pi_eq[2] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[6 + ii * LBQ] - pi_eq[2]);
-      mode[7 + ii * LBQ ] = pi_eq[3] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[7 + ii * LBQ] - pi_eq[3]);
-      mode[8 + ii * LBQ ] = pi_eq[4] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[8 + ii * LBQ] - pi_eq[4]);
-      mode[9 + ii * LBQ ] = pi_eq[5] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[9 + ii * LBQ] - pi_eq[5]);
+      mode[4 + ii * LBQ ] = modes_from_pi_eq[0] + (0.5 + 0.5* para.gamma_bulk[ii]) * (mode[4 + ii * LBQ] - modes_from_pi_eq[0]);
+      mode[5 + ii * LBQ ] = modes_from_pi_eq[1] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[5 + ii * LBQ] - modes_from_pi_eq[1]);
+      mode[6 + ii * LBQ ] = modes_from_pi_eq[2] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[6 + ii * LBQ] - modes_from_pi_eq[2]);
+      mode[7 + ii * LBQ ] = modes_from_pi_eq[3] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[7 + ii * LBQ] - modes_from_pi_eq[3]);
+      mode[8 + ii * LBQ ] = modes_from_pi_eq[4] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[8 + ii * LBQ] - modes_from_pi_eq[4]);
+      mode[9 + ii * LBQ ] = modes_from_pi_eq[5] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[9 + ii * LBQ] - modes_from_pi_eq[5]);
 
       // Transform the stress tensor components according to the modes that
       // correspond to those used by U. Schiller. In terms of populations this
@@ -1321,14 +1323,14 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
       // But to ensure this, the expression in Schiller's modes has to be different!
 
       pi[0] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
-                + mode[6 + ii * LBQ] + 3.0f*mode[5 + ii * LBQ] )/6.0f; // xx
+                + mode[6 + ii * LBQ] + 3.0f*mode[5 + ii * LBQ] )/6.0f;  // xx
+      pi[1] += mode[7 + ii * LBQ];                                      // xy
       pi[2] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
-                + mode[6 + ii * LBQ] - 3.0f*mode[5 + ii * LBQ] )/6.0f; // yy
+                + mode[6 + ii * LBQ] - 3.0f*mode[5 + ii * LBQ] )/6.0f;  // yy
+      pi[3] += mode[8 + ii * LBQ];                                      // xz
+      pi[4] += mode[9 + ii * LBQ];                                      // yz
       pi[5] += (   mode[0 + ii * LBQ] + mode[4 + ii * LBQ]
-                - mode[6 + ii * LBQ] )/3.0f; // zz
-      pi[1] += mode[7 + ii * LBQ]; // xy
-      pi[4] += mode[9 + ii * LBQ]; // yz
-      pi[3] += mode[8 + ii * LBQ]; // zx
+                - mode[6 + ii * LBQ] )/3.0f;                            // zz
 
     }
      
@@ -1363,7 +1365,7 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
 */
 __device__ void calc_values_from_m_in_LB_units(float *mode_single, LB_rho_v_gpu *d_v_single, float* rho_out, float* j_out, float* pi_out) {
 
-  float pi_eq[6];
+  float modes_from_pi_eq[6];
   float j[6];
   float Rho; 
 
@@ -1390,34 +1392,34 @@ __device__ void calc_values_from_m_in_LB_units(float *mode_single, LB_rho_v_gpu 
     // equilibrium part of the stress modes, which comes from 
     // the equality between modes and stress tensor components
 
-    pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
-    pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
-    pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0*j[2]*j[2] ) / Rho;
-    pi_eq[3] = j[0]*j[1] / Rho;
-    pi_eq[4] = j[0]*j[2] / Rho;
-    pi_eq[5] = j[1]*j[2] / Rho;
+    modes_from_pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
+    modes_from_pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
+    modes_from_pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0*j[2]*j[2] ) / Rho;
+    modes_from_pi_eq[3] = j[0]*j[1] / Rho;
+    modes_from_pi_eq[4] = j[0]*j[2] / Rho;
+    modes_from_pi_eq[5] = j[1]*j[2] / Rho;
    
     // Now we must predict the outcome of the next collision
     // We immediately average pre- and post-collision.
 
-    mode_single[4 + ii * LBQ ] = pi_eq[0] + (0.5 + 0.5* para.gamma_bulk[ii]) * (mode_single[4 + ii * LBQ] - pi_eq[0]);
-    mode_single[5 + ii * LBQ ] = pi_eq[1] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[5 + ii * LBQ] - pi_eq[1]);
-    mode_single[6 + ii * LBQ ] = pi_eq[2] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[6 + ii * LBQ] - pi_eq[2]);
-    mode_single[7 + ii * LBQ ] = pi_eq[3] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[7 + ii * LBQ] - pi_eq[3]);
-    mode_single[8 + ii * LBQ ] = pi_eq[4] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[8 + ii * LBQ] - pi_eq[4]);
-    mode_single[9 + ii * LBQ ] = pi_eq[5] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[9 + ii * LBQ] - pi_eq[5]);
+    mode_single[4 + ii * LBQ ] = modes_from_pi_eq[0] + (0.5 + 0.5* para.gamma_bulk[ii]) * (mode_single[4 + ii * LBQ] - modes_from_pi_eq[0]);
+    mode_single[5 + ii * LBQ ] = modes_from_pi_eq[1] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[5 + ii * LBQ] - modes_from_pi_eq[1]);
+    mode_single[6 + ii * LBQ ] = modes_from_pi_eq[2] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[6 + ii * LBQ] - modes_from_pi_eq[2]);
+    mode_single[7 + ii * LBQ ] = modes_from_pi_eq[3] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[7 + ii * LBQ] - modes_from_pi_eq[3]);
+    mode_single[8 + ii * LBQ ] = modes_from_pi_eq[4] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[8 + ii * LBQ] - modes_from_pi_eq[4]);
+    mode_single[9 + ii * LBQ ] = modes_from_pi_eq[5] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[9 + ii * LBQ] - modes_from_pi_eq[5]);
 
     // Transform the stress tensor components according to the mode_singles.
 
     pi_out[6*ii + 0] = (   2.0f*(mode_single[0 + ii * LBQ] + mode_single[4 + ii * LBQ])
-                         + mode_single[6 + ii * LBQ] + 3.0f*mode_single[5 + ii * LBQ] )/6.0f; // xx
+                         + mode_single[6 + ii * LBQ] + 3.0f*mode_single[5 + ii * LBQ] )/6.0f;   // xx
+    pi_out[6*ii + 1] = mode_single[7 + ii * LBQ];                                               // xy
     pi_out[6*ii + 2] = (   2.0f*(mode_single[0 + ii * LBQ] + mode_single[4 + ii * LBQ])
-                         + mode_single[6 + ii * LBQ] - 3.0f*mode_single[5 + ii * LBQ] )/6.0f; // yy
+                         + mode_single[6 + ii * LBQ] - 3.0f*mode_single[5 + ii * LBQ] )/6.0f;   // yy
+    pi_out[6*ii + 3] = mode_single[8 + ii * LBQ];                                               // xz
+    pi_out[6*ii + 4] = mode_single[9 + ii * LBQ];                                               // yz
     pi_out[6*ii + 5] = (   mode_single[0 + ii * LBQ] + mode_single[4 + ii * LBQ]
-                         - mode_single[6 + ii * LBQ] )/3.0f; // zz
-    pi_out[6*ii + 1] = mode_single[7 + ii * LBQ]; // xy
-    pi_out[6*ii + 4] = mode_single[9 + ii * LBQ]; // yz
-    pi_out[6*ii + 3] = mode_single[8 + ii * LBQ]; // zx
+                         - mode_single[6 + ii * LBQ] )/3.0f;                                    // zz
   }
 }
 
