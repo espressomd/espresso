@@ -23,7 +23,7 @@ set nn [format %02d [setmd n_nodes]]
 puts "###############################################################"
 puts "#          Testcase ek_eof_one_species.tcl running on         #"
 puts "#                           $nn nodes                          #"
-puts "###############################################################"
+puts "###############################################################\n"
 
 ################################################################################
 #                              Set up the System                               # 
@@ -286,16 +286,21 @@ set total_stress_difference_yz [expr $agrid*$total_stress_difference_yz/$box_z]
 set total_stress_difference_xz [expr $agrid*$total_stress_difference_xz/$box_z]
 
 puts "Density deviation: $total_density_difference"
-puts "Velocity deviation: $total_velocity_difference"
+puts "Velocity deviation: $total_velocity_difference\n"
 puts "Stress deviation xx component: $total_stress_difference_xx"
 puts "Stress deviation yy component: $total_stress_difference_yy"
 puts "Stress deviation zz component: $total_stress_difference_zz"
-puts "Stress deviation between xx and yy: $total_stress_difference_xx_yy"
-puts "Stress deviation between yy and zz: $total_stress_difference_yy_zz"
-puts "Stress deviation between xx and zz: $total_stress_difference_xx_zz"
 puts "Stress deviation xy component: $total_stress_difference_xy"
 puts "Stress deviation yz component: $total_stress_difference_yz"
-puts "Stress deviation xz component: $total_stress_difference_xz"
+puts "Stress deviation xz component: $total_stress_difference_xz\n"
+puts "Stress deviation between xx and yy: $total_stress_difference_xx_yy"
+puts "Stress deviation between yy and zz: $total_stress_difference_yy_zz"
+puts "Stress deviation between xx and zz: $total_stress_difference_xx_zz\n"
+puts "NB. The stress on the diagonal of the tensor is only isotropic"
+puts "    in equilibrium. However, it is not isotropic for the LB."
+puts "    The anisotropic part relaxes towards isotropic, but it"
+puts "    is not instantaneously isotropic. The elements on the"
+puts "    diagonal must therefore be different.\n"
 
 if { $total_density_difference > 5.0e-04 } {
   error_exit "Density accuracy not achieved"
@@ -312,15 +317,6 @@ if { $total_stress_difference_yy > 2.5e-03 } {
 if { $total_stress_difference_zz > 2.5e-03 } {
   error_exit "Difference xx to zz component too large"
 }
-if { $total_stress_difference_xx_yy > 7.5e-03 } {
-  error_exit "Difference xx to yy component too large"
-}
-if { $total_stress_difference_yy_zz > 7.5e-03 } {
-  error_exit "Difference yy to zz component too large"
-}
-if { $total_stress_difference_xx_zz > 7.5e-03 } {
-  error_exit "Difference xx to zz component too large"
-}
 if { $total_stress_difference_xy > 5.0e-06 } {
   error_exit "Pressure accuracy xy component not achieved"
 }
@@ -329,6 +325,21 @@ if { $total_stress_difference_yz > 5.0e-06 } {
 }
 if { $total_stress_difference_xz > 7.5e-03 } {
   error_exit "Pressure accuracy xz component not achieved"
+}
+if { $total_stress_difference_xx_yy > 7.5e-03 } {
+  error_exit "Difference xx to yy component too large"
+}
+if { $total_stress_difference_xx_yy < 2.5e-03 } {
+  error_exit "Difference xx to yy component too small"
+}
+if { $total_stress_difference_yy_zz > 1.0e-05 } {
+  error_exit "Difference yy to zz component too large"
+}
+if { $total_stress_difference_xx_zz > 7.5e-03 } {
+  error_exit "Difference xx to zz component too large"
+}
+if { $total_stress_difference_xx_zz < 2.5e-03 } {
+  error_exit "Difference xx to zz component too small"
 }
 
 exit 0
