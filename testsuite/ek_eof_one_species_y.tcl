@@ -317,7 +317,7 @@ if { $total_stress_difference_yy > 2.5e-03 } {
 if { $total_stress_difference_zz > 2.5e-03 } {
   error_exit "Difference xx to zz component too large"
 }
-if { $total_stress_difference_xy > 7.5e-03 } {
+if { $total_stress_difference_xy > 7.5e-04 } {
   error_exit "Pressure accuracy xy component not achieved"
 }
 if { $total_stress_difference_yz > 5.0e-06 } {
@@ -338,7 +338,7 @@ if { $total_stress_difference_yy_zz > 7.5e-03 } {
 if { $total_stress_difference_yy_zz < 2.5e-03 } {
   error_exit "Difference yy to zz component too small"
 }
-if { $total_stress_difference_xx_zz > 1.0e-05 } {
+if { $total_stress_difference_xx_zz > 5.0e-06 } {
   error_exit "Difference xx to zz component too large"
 }
 

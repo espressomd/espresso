@@ -43,14 +43,14 @@ setmd box_l $box_x $box_y $box_z
 
 # Set the electrokinetic parameters
 
-set agrid 0.5
-set dt [expr 1.0/3.0]
+set agrid 1.0
+set dt [expr 1.0/7.0]
 set force 0.13
-set sigma -0.03
-set viscosity_dynamic 1.0
-set friction 1.0
-set temperature 2.3
-set bjerrum_length 0.7
+set sigma -0.05
+set viscosity_dynamic 2.3
+set friction 4.3
+set temperature 2.9
+set bjerrum_length 0.47
 
 set temperature_LB [expr $agrid*$agrid/(3.0*$dt*$dt)]
 set kB_LB 1.0
@@ -61,7 +61,7 @@ set cs_squared [expr (1.0/3.0)*($agrid*$agrid/($dt*$dt))]
 setmd time_step $dt
 setmd skin 0.1
 thermostat off
-set integration_length 10000
+set integration_length 20000
 
 # Set up the (LB) electrokinetics fluid
 
@@ -302,19 +302,19 @@ puts "    The anisotropic part relaxes towards isotropic, but it"
 puts "    is not instantaneously isotropic. The elements on the"
 puts "    diagonal must therefore be different.\n"
 
-if { $total_density_difference > 5.0e-04 } {
+if { $total_density_difference > 2.5e-03 } {
   error_exit "Density accuracy not achieved"
 }
 if { $total_velocity_difference > 5.0e-03 } {
   error_exit "Velocity accuracy not achieved"
 }
-if { $total_stress_difference_xx > 2.5e-03 } {
+if { $total_stress_difference_xx > 1.0e-02 } {
   error_exit "Difference xx to yy component too large"
 }
-if { $total_stress_difference_yy > 2.5e-03 } {
+if { $total_stress_difference_yy > 1.0e-02 } {
   error_exit "Difference yy to zz component too large"
 }
-if { $total_stress_difference_zz > 2.5e-03 } {
+if { $total_stress_difference_zz > 1.0e-02 } {
   error_exit "Difference xx to zz component too large"
 }
 if { $total_stress_difference_xy > 5.0e-06 } {
@@ -323,7 +323,7 @@ if { $total_stress_difference_xy > 5.0e-06 } {
 if { $total_stress_difference_yz > 5.0e-06 } {
   error_exit "Pressure accuracy yz component not achieved"
 }
-if { $total_stress_difference_xz > 7.5e-03 } {
+if { $total_stress_difference_xz > 5.0e-03 } {
   error_exit "Pressure accuracy xz component not achieved"
 }
 if { $total_stress_difference_xx_yy > 7.5e-03 } {
@@ -332,7 +332,7 @@ if { $total_stress_difference_xx_yy > 7.5e-03 } {
 if { $total_stress_difference_xx_yy < 2.5e-03 } {
   error_exit "Difference xx to yy component too small"
 }
-if { $total_stress_difference_yy_zz > 1.0e-05 } {
+if { $total_stress_difference_yy_zz > 5.0e-06 } {
   error_exit "Difference yy to zz component too large"
 }
 if { $total_stress_difference_xx_zz > 7.5e-03 } {
