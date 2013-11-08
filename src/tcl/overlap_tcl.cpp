@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file overlap_tcl.c
+/** \file overlap_tcl.cpp
  *
  *  Implementation of \ref overlap_tcl.hpp
  */

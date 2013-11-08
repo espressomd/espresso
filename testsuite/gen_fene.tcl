@@ -30,6 +30,9 @@ puts "------------------------------------------"
 puts "- Generating the testcase for fene.tcl"
 puts "------------------------------------------"
 
+source "tests_common.tcl"
+require_feature "ROTATION" off
+
 ##################################################
 # system setup
 set file "fene_system.data.gz"

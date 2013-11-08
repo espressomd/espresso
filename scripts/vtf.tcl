@@ -113,9 +113,6 @@ proc writevsf { file args } {
 		set radius $val
 		incr argnum 
 	    }
-	    "ignore_charges" {
-		set no_charges 1
-	    }
 	    "verbose" { set short 0 }
 	    "short" { set short 1 }
 	    default { 
@@ -128,6 +125,13 @@ proc writevsf { file args } {
     # cleanup particle mapping
     global vtf_pid
     array unset vtf_pid
+
+    # Print unitcell data
+    if { $short } then { 
+	puts $file "p [setmd box_l]"
+    } else { 
+	puts $file "pbc [setmd box_l]"
+    }
 
     set max_pid [setmd max_part]
 
@@ -143,51 +147,58 @@ proc writevsf { file args } {
     set typedesclist [get_typedesc_list $max_type $typedesc]
     set radiuslist [get_radius_list $max_type $radius]
 
-    ##################################################
-    # OUTPUT
-    ##################################################
-    # Print unitcell data
-    if { $short } then { 
-	puts $file "p [setmd box_l]"
-    } else { 
-	puts $file "pbc [setmd box_l]"
-    }
-
-    # Print atom data
-    set from 0
-    set to 0
-    set prev_type "na"
-
-    # Output the type
+    # collect combinations of charge and type
+    set uses_electrostatics [has_feature "ELECTROSTATICS"]
+    set qs ""
     for { set pid 0 } { $pid <= $max_pid } { incr pid } {
-	if { [part $pid] != "na" } then {
-	    # look for the type
-	    set type [part $pid print type]
-	    if { $prev_type == "na" } then { 
-		set prev_type $type 
-	    } elseif { $prev_type == $type } then {
-		set to $pid
-	    } else { 
-		# output from $from to $pid
-		puts $file [get_atom_record $from $to $prev_type]
-		
-		set to $pid
-		set from $pid
-		set prev_type $type
-	    }
-	}
-    }
-    puts $file [get_atom_record $from $to $prev_type]
-
-    if { [has_feature "ELECTROSTATICS"] && !$no_charges} {
-    # Output the charge
-	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
-	    if { [part $pid] != "na" } then {
-		puts $file "atom [vtfpid $pid] q [part $pid print q]"
-	    }
-	}
+        set type [part $pid print type]
+        if { $uses_electrostatics } then { 
+            set q [part $pid print q]
+            set qs "q$q"
+        }
+        set this "t$type$qs"
+        if { ! [info exists combination($this)] } then {
+            set combination($this) $pid
+            set desc "radius [lindex $radiuslist $type]"
+            set desc "$desc [lindex $typedesclist $type]"
+            if { $uses_electrostatics } then { set desc "$desc q $q" }
+            set combination("desc-$this") $desc
+        } else {
+            lappend combination($this) $pid
+        }
     }
 
+    # loop over the combinations and create atom record
+    foreach c [array names combination "t*"] {
+        set pids $combination($c)
+        set desc $combination("desc-$c")
+        set to [vtfpid [lindex $pids 0]]
+        set aids ""
+        foreach pid $pids {
+            set vpid [vtfpid $pid]
+            if { [expr $vpid-1] != $to } then {
+                if { [info exists from] } then {
+                    # print out records from $from to $to
+                    if { $from == $to } then {
+                        lappend aids "$to"
+                    } else {
+                        lappend aids "$from:$to"
+                    }
+                }
+                set from $vpid
+            }
+            set to $vpid
+        }
+        if { $from == $to } then {
+            lappend aids "$to"
+        } else {
+            lappend aids "$from:$to"
+        }
+        unset from
+        
+        puts $file "atom [join $aids ,] $desc"
+    }
+    
     # Print bond data
     for { set from 0 } { $from <= $max_pid } { incr from } {
 	if { [part $from] != "na" } then {

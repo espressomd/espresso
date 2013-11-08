@@ -20,11 +20,11 @@
 */
 #ifndef STATISTICS_MOLECULE_H
 #define STATISTICS_MOLECULE_H
-/** \file statistics_molecule.h
+/** \file statistics_molecule.hpp
 
     This file contains the code for statistics on the data using the
     molecule information set with analyse set, as it is described in
-    the file \ref topology.h.
+    the file \ref topology.hpp.
 */
 
 #include "utils.hpp"

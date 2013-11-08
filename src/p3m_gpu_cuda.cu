@@ -28,7 +28,8 @@
 #include <cuda.h>
 
 #include <cufft.h>
-#include "cuda_common.hpp"
+#include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
 #include "config.hpp"
 #include "p3m_gpu.hpp"
 #include "utils.hpp"

@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file debye_hueckel_tcl.c
+/** \file debye_hueckel_tcl.cpp
  *
  *  Implementation of \ref debye_hueckel_tcl.hpp
  */

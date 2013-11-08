@@ -90,7 +90,7 @@ if { abs($dv) > $tolerance } {
  error "Relative deviation in translational energy too large: $dv"
 }
 if { abs($do) > $tolerance } {
- error "Relative deviation in translational energy too large: $dv"
+ error "Relative deviation in rotational energy too large: $do"
 }
 
 exit 0

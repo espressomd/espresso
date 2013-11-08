@@ -26,7 +26,7 @@
 The functions in this file are no longer supported by the Espresso
 team. Use them at your own risk!
 
-    It is the header file for \ref binary_file_tcl.c "binary_file_tcl.c" and provides
+    It is the header file for \ref binary_file_tcl.cpp "binary_file_tcl.c" and provides
     functions to read and write binary particle data to Tcl channels.
     It also defines the structures and constants necessary to interprete/
     generate particle data files in this format. THE FILE FORMAT IS HARDWARE

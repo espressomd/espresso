@@ -21,7 +21,7 @@
 #ifndef DEBYE_HUECKEL_TCL_H
 #define DEBYE_HUECKEL_TCL_H
 /** \file debye_hueckel_tcl.hpp
- * Tcl interface for \ref debye_hueckel.h
+ * Tcl interface for \ref debye_hueckel.hpp
  */
 
 #include "parser.hpp"

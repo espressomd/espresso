@@ -20,12 +20,12 @@
 */
 #ifndef _FORCES_H
 #define _FORCES_H
-/** \file forces.h Force calculation. 
+/** \file forces.hpp Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
  *  \todo Implement more flexible thermostat, %e.g. which thermostat to use.
  *
- *  For more information see forces.c .
+ *  For more information see forces.cpp .
  */
 #include "utils.hpp"
 #include "thermostat.hpp"
@@ -599,10 +599,10 @@ inline void add_bonded_force(Particle *p1)
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
-		p1->p.identity, p2->p.identity); 
-	continue;
+        char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
+        ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
+          p1->p.identity, p2->p.identity);
+        continue;
       }
       
 #ifdef ADRESS

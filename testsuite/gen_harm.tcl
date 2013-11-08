@@ -28,6 +28,10 @@ puts "------------------------------------------"
 
 ##################################################
 # system setup
+
+source "tests_common.tcl"
+require_feature "ROTATION" off
+
 set file "harm_system.data.gz"
 
 set L 10

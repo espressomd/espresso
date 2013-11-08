@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics.c
+/** \file statistics.cpp
     This is the place for analysis (so far...).
-    Implementation of statistics.h
+    Implementation of statistics.hpp
 */
 #include <tcl.h>
 #include <cstdlib>
@@ -47,10 +47,10 @@
 #include "initialize.hpp"
 #include "statistics_chain_tcl.hpp"
 
-/** Set the topology. See \ref topology_tcl.c */
+/** Set the topology. See \ref topology_tcl.cpp */
 int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
 
-/** write out energy. See \ref energy_tcl.c */
+/** write out energy. See \ref energy_tcl.cpp */
 int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv);
 
 /** Variables for measuring the compressibility from volume fluctuations.

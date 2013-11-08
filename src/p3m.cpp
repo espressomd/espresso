@@ -1514,14 +1514,19 @@ int p3m_adaptive_tune(char **log) {
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
        meshes have to be tested */
-    /* avoid using more than 1 GB of FFT arrays (per default, see config.h) */
+    /* avoid using more than 1 GB of FFT arrays (per default, see config.hpp) */
 
     P3M_TRACE(fprintf(stderr, "%d: starting with meshdensity %lf, using at most %lf.\n", this_node, mesh_density_min, mesh_density_max));
 
   } else if ( p3m.params.mesh[1] == -1 && p3m.params.mesh[2] == -1) {
     mesh_density = mesh_density_min = mesh_density_max = p3m.params.mesh[0] / box_l[0];
     p3m.params.mesh[1] = mesh_density*box_l[1]+0.5;
-    p3m.params.mesh[2] = mesh_density*box_l[2]+0.5;    
+    p3m.params.mesh[2] = mesh_density*box_l[2]+0.5;
+    if ( p3m.params.mesh[1]%2 == 1 ) p3m.params.mesh[1]++; //Make sure that the mesh is even in all directions
+    if ( p3m.params.mesh[2]%2 == 1 ) p3m.params.mesh[2]++;
+    
+    sprintf(b, "fixed mesh %d %d %d\n", p3m.params.mesh[0], p3m.params.mesh[1], p3m.params.mesh[2]);
+    *log = strcat_alloc(*log, b);
   } else {
     mesh_density = mesh_density_min = mesh_density_max = p3m.params.mesh[0] / box_l[0];
 

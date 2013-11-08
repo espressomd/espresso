@@ -20,7 +20,7 @@
 */
 #ifndef DEBYE_HUECKEL_H
 #define DEBYE_HUECKEL_H
-/** \file debye_hueckel.h
+/** \file debye_hueckel.hpp
  *  Routines to calculate the Debye_Hueckel  Energy or/and Debye_Hueckel force 
  *  for a particle pair.
  */

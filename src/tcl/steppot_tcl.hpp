@@ -21,7 +21,7 @@
 #ifndef STEPPOT_TCL_H
 #define STEPPOT_TCL_H
 /** \file steppot_tcl.hpp
- * Tcl interface for \ref steppot.h
+ * Tcl interface for \ref steppot.hpp
  */
 
 #include "parser.hpp"

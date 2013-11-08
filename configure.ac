@@ -254,9 +254,9 @@ if test .$use_tcl = . ; then
    # Tcl was not found
    case $target_os in
 	*darwin*) AC_MSG_NOTICE(
-[If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
-there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
-/Library/Frameworks/Tcl.framework/Tcl.]) ;;
+[If you have Tcl installed, make sure that either libtcl<tclversion>.dylib is
+ in one of the library paths set by LDFLAGS, or that you set the appropriate
+ apple gcc -framework option in CPPFLAGS and LDFLAGS.]) ;;
 	*) AC_MSG_FAILURE([
 ********************************************************************************
 * Could not link against the (static) Tcl library (libtcl*.a).                 *
@@ -267,7 +267,6 @@ there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
 fi
 
 case $target_os in
-  *darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Headers ;;
   *linux*)  # path used by *buntu
 	  extrapaths=/usr/include/$version ;;
 esac
@@ -324,10 +323,11 @@ if test .$with_tk != .no; then
 	fi
 	if test .$use_tk = .; then
 		case $target_os in
-		(*darwin*) AC_MSG_ERROR([If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
-there is a link from lib<tkversion>.dylib to the Tk library, which usually is
-/Library/Frameworks/Tk.framework/Tk.]) ;;
-		(*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
+		*darwin*) AC_MSG_ERROR(
+[If you have Tk installed, make sure that either libtcl<tclversion>.dylib is
+ in one of the library paths set by LDFLAGS, or that you set the appropriate
+ apple gcc -framework option in CPPFLAGS and LDFLAGS.]) ;;
+		*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
 		esac
 	fi
 	if test .$use_tk = .tk; then
@@ -337,7 +337,6 @@ Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
 		fi
 	fi
 	case $target_os in
-	*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
 	*linux*)  # path used by *buntu
 		  extrapaths="/usr/include/$version /usr/include/$use_tcl" ;;
 	(*) ;;
@@ -408,39 +407,28 @@ AS_IF([test x$with_cuda != xno],[
     save_CXX=$CXX
     save_CXXFLAGS=$CXXFLAGS
 
-    AS_IF([test x$NVCC = x],[
-        NVCC=$cuda_path/bin/nvcc
+    # NVCC
+    AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
+    AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
+
+    AC_PATH_PROG(NVCC, nvcc, no, [$PATH:$cuda_path/bin])
+
+    AS_IF([test x$NVCC = xno],[
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
+        ],[
+            AC_MSG_WARN([could not find the CUDA compiler (nvcc). Some features will not be available!])
+        ])
     ])
 
-    AS_IF([test -d $cuda_path/lib64],[
-        LDFLAGS="$LDFLAGS -L$cuda_path/lib64"
-    ],[
-        LDFLAGS="$LDFLAGS -L$cuda_path/lib"
-    ])
-
-    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
-    AS_IF([test x"$use_mpi_fake" = xyes], [
-        NVCCFLAGS="$NVCCFLAGS -I./mpifake"
-    ],[
-        NVCCFLAGS="$NVCCFLAGS -I/usr/include/mpi"
-    ])
+    # MAC nvcc stays 32 bit, even if the rest is 64 bit
     case $target in
         x86_64-apple-darwin*)
                 NVCCFLAGS="$NVCCFLAGS -m64";;
     esac
-    CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
-
-    # NVCC
-    AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
-    AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
-    AC_PATH_PROG(NVCC, nvcc, no)
-
-    AS_IF([test x$NVCC = xno],[
-        AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
-    ])
-
-    # libraries
-    AC_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
+    
+    # since we link with mpic++, we need to find the cuda libraries manually
+    ES_ADDPATH_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
         cuda_ok=no
         
         AS_IF([test x$with_cuda = xyes],[
@@ -448,9 +436,9 @@ AS_IF([test x$with_cuda != xno],[
         ],[
             AC_MSG_WARN([could not find cuda runtime library (cudart). Some features will not be available!])
         ])
-    ])
+    ], [$cuda_path/lib $cuda_path/lib64])
 
-    AC_CHECK_LIB(cufft, cufftPlan3d, [LIBS="$LIBS -lcufft"], [
+    ES_ADDPATH_CHECK_LIB(cufft, cufftPlan3d, [LIBS="$LIBS -lcufft"], [
         cuda_ok=no
         
         AS_IF([test x$with_cuda = xyes],[
@@ -458,7 +446,7 @@ AS_IF([test x$with_cuda != xno],[
         ],[
             AC_MSG_WARN([could not find cuda FFT library (cufft). Some features will not be available!])
         ])
-    ])
+    ], [$cuda_path/lib $cuda_path/lib64])
 
     AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
         cuda_ok=no
@@ -592,7 +580,6 @@ AC_CONFIG_FILES([
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
-	testsuite/configs/Makefile
 	doc/Makefile
 	doc/logo/Makefile
 	doc/ug/Makefile

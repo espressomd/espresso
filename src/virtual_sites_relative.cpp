@@ -43,7 +43,7 @@ void update_mol_pos_particle(Particle *p)
  if (!p_real)
  {
    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-   ERROR_SPRINTF(errtxt,"virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
+   ERROR_SPRINTF(errtxt,"virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n");
    return;
  }
  
@@ -107,7 +107,7 @@ void update_mol_vel_particle(Particle *p)
  if (!p_real)
  {
    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-   ERROR_SPRINTF(errtxt, "virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
+   ERROR_SPRINTF(errtxt, "virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n");
    return;
  }
  
@@ -295,7 +295,7 @@ int vs_relate_to(int part_num, int relate_to)
 // Rigid body conribution to scalar pressure and stress tensor
 void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_tensor)
 {
-  // Division by 3 volume is somewhere else. (pressure.c after all presure calculations)
+  // Division by 3 volume is somewhere else. (pressure.cpp after all presure calculations)
 
 
   // Iterate over all the particles in the local cells

@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file constraint.c
-    Implementation of \ref constraint.h "constraint.h", here it's just the parsing stuff.
+/** \file constraint.cpp
+    Implementation of \ref constraint.hpp "constraint.h", here it's just the parsing stuff.
 */
 #include "constraint.hpp"
 #include "communication.hpp"
@@ -745,6 +745,9 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
   con->c.pore.reflecting = 0;
   con->part_rep.p.type = -1;
   con->c.pore.smoothing_radius = 1.;
+  con->c.pore.outer_rad_left = 1e99;
+  con->c.pore.outer_rad_right = 1e99;
+  
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 4) {
@@ -779,6 +782,16 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       con->c.pore.rad_right =  con->c.pore.rad_left; 
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "outer_radius", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore outer_radius <rad> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.outer_rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      con->c.pore.outer_rad_right =  con->c.pore.outer_rad_left; 
+      argc -= 2; argv += 2;
+    }
     else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
       if (argc < 1) {
 	Tcl_AppendResult(interp, "constraint pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
@@ -796,6 +809,17 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.rad_left)) == TCL_ERROR)
 	return (TCL_ERROR);
       if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.rad_right)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 3; argv += 3;
+    }
+    else if(!strncmp(argv[0], "outer_radii", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore outer_radii <rad_left> <rad_right> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.outer_rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.outer_rad_right)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 3; argv += 3;
     }

@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb-boundaries.c
+/** \file lb-boundaries.cpp
  *
  * Boundary conditions for Lattice Boltzmann fluid dynamics.
- * Header file for \ref lb-boundaries.h.
+ * Header file for \ref lb-boundaries.hpp.
  *
  */
 #include "utils.hpp"
@@ -98,9 +98,9 @@ void lb_init_boundaries() {
     size_t size_of_index;
     int boundary_number = -1; // the number the boundary will actually belong to.
 
-    for(z=0; z<lbpar_gpu.dim_z; z++) {
-      for(y=0; y<lbpar_gpu.dim_y; y++) {
-        for (x=0; x<lbpar_gpu.dim_x; x++) {	    
+    for(z=0; z<int(lbpar_gpu.dim_z); z++) {
+      for(y=0; y<int(lbpar_gpu.dim_y); y++) {
+        for (x=0; x<int(lbpar_gpu.dim_x); x++) {	    
           pos[0] = (x+0.5)*lbpar_gpu.agrid;
           pos[1] = (y+0.5)*lbpar_gpu.agrid;
           pos[2] = (z+0.5)*lbpar_gpu.agrid;

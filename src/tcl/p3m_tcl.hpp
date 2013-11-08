@@ -62,7 +62,7 @@ int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc,
 
     The function returns a log of the performed tuning.
 
-    The function is based on routines of the program HE_Q.c written by M. Deserno.
+    The function is based on routines of the program HE_Q.cpp written by M. Deserno.
  */
 int tclcommand_inter_coulomb_p3m_print_tune_parameters(Tcl_Interp *interp);
 

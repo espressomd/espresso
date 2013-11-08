@@ -53,6 +53,7 @@ description of the method, please refer to the literature.
   \require{1 or 2 or 3}{\opt{bulk_visc  \var{bulk\_viscosity}}}
   \require{1 or 2 or 3}{\opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}}
   \require{1 or 2 or 3}{\opt{friction   \var{gamma} } }
+  \require{2}{\opt{couple   \var{2pt/3pt} } }
   \require{1 or 2 or 3}{\opt{gamma_odd  \var{gamma\_odd}}}
   \require{1 or 2 or 3}{\opt{gamma_even  \var{gamma\_even}}}
   \require{3}{\opt{mobility} \var{mobilities}  }
@@ -111,7 +112,7 @@ set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau},
 
 If the feature \lit{SHANCHEN} is activated, the Lattice Boltzmann
 code (so far GPU version only) is extended to a two-component
-Shan-Chen method.  The \lit{lbfluid} command requires in this case
+Shan-Chen (SC) method.  The \lit{lbfluid} command requires in this case
 to supply two values, for the respective fluid components, to each
 of the options \lit{dens}, \lit{visc}, \lit{bulk_visc}, \lit{friction},
 \lit{gamma_odd} and \lit{gamma_even}, when they are used, otherwise
@@ -155,6 +156,8 @@ in a frictional force and a random force:
   \vec{F} = -\gamma \left(\vec{v}-\vec{u}\right) + \vec{F}_R.
 \end{equation*}
 The momentum acquired by the particles is then transferred back to the fluid using a linear interpolation scheme, to preserve total momentum.
+In the GPU implementation the force can alternatively be interpolated using a three point scheme which couples the particles to the nearest 27 LB nodes.
+This can be called using ``lbfluid \lit{couple} 3pt'' and is described in D\"{u}nweg and Ladd by equation 301\cite{duenweg08a}. Note that the three point coupling scheme is incompatible with the Shan Chen Lattice Boltmann.
 The frictional force tends to decrease the relative velocity
 between the fluid and the particle whereas the random forces are chosen
 so large that the average kinetic energy per particle corresponds to
@@ -171,15 +174,23 @@ Regarind the unit of the temperature, please refer to
 Section~\ref{sec:units}.
 
 \section{The Shan Chen bicomponent fluid\label{sec:shanchen}}
-The Lattice Boltzmann variant of Shan and Chan\cite{...} is widely
+\begin{citebox}
+  Please cite~\citewbibkey{sega13c} if you use the Shan Chen implementation described below.
+\end{citebox}
+
+
+The Lattice Boltzmann variant of Shan and Chan\cite{shan93a} is widely
 used as it is simple and yet very effective in reproducing the most
 important traits of multicomponent or multiphase fluids. The version
-of the Shan-Chen method implemented in \es is an extension of the
-single-component, multi-relaxation times Lattice Boltzmann with
-fluctuations applied to all modes, that is already present in \es.
+of the Shan-Chen method implemented in \es is an extension to
+bi-component fluids of the multi-relaxation-times Lattice Boltzmann
+with fluctuations applied to all modes, that is already present in
+\es. It features, in addition, coupling with particles\cite{sega13c}
+and component-dependent particle interactions (see sections
+\ref{sec:scmd-coupling} and\ref{sec:scmd-affinity}).
+
 The Shan-Chen fluid is set up using the \lit{lbfluid} command,
-supplying two  Besides the usual transport coefficients (shear and
-bulk viscosity, and relaxation constants for the ghost modes) it
+supplying two values (one per component) to the \lit{dens} option. Optionally, two values can be set for each of the usual transport coefficients  (shear and bulk viscosity), and for the ghost modes. It
 is possible to set a relaxation time also for the momentum modes,
 since they are not conserved quantities in the Shan-Chen method,
 by using the option \lit{mobility}. The mobility transport coefficient
@@ -189,7 +200,30 @@ is needed, as it carachterizes the mixture as a whole. When thermal
 fluctuations are switched on, a random noise is added, in addition,
 also to the momentum modes. Differently from the other modes, a
 correlated noise is added to the momentum ones, in order to preserve
-the \emph{total} momentum. The coupling between the fluid components
+the \emph{total} momentum. 
+
+
+The fluctuating hydrodynamic equations that are simulated using the
+Shan-Chen approach are
+\begin{equation}\label{eq:shanchen-NS}
+\rho \left(\frac{\partial }{\partial  t} {\vec {u}} + ({\vec {u}}\cdot {\vec {\nabla}})  {\vec {u}} \right)=-{\vec {\nabla}} p+{\vec {\nabla}} \cdot ({\vec {\Pi}}+\hat{{\vec {\sigma}}})+\sum_{\zeta} {\vec {g}}_{\zeta},
+\end{equation}
+\begin{equation}\label{eq:shanchen-cont}
+\frac{\partial }{\partial  t} \rho_{\zeta}+{\vec {\nabla}} \cdot (\rho_{\zeta} {\vec {u}}) = {\vec {\nabla}} \cdot  ({\vec {D}}_{\zeta}+\hat{{\vec {\xi}}}_{\zeta}),
+\end{equation}
+\begin{equation}\label{eq:shanchen-globalcont}
+\partial_t \rho+{\vec {\nabla}} \cdot (\rho {\vec {u}}) = 0,
+\end{equation}
+where the index $\zeta=1,2$ specifies the component, $\vec{u}$ is
+the fluid (baricentric) velocity, $\rho=\sum_\zeta\rho_\zeta$ is
+the total density, and $p=\sum_{\zeta} p_{\zeta}=\sum_{\zeta} c_s^2
+\rho_{\zeta}$ is the internal pressure of the mixture ($c_s$ being
+the sound speed). Two fluctuating terms $\hat{{\vec{\sigma}}}$ and
+$\hat{{\vec{\xi}}}_{\zeta}$ are associated, respectivelu, to the
+diffusive current ${\vec{D}}_{\zeta}$ and to the viscous stress
+tensor ${\vec{\Pi}}$.
+
+The coupling between the fluid components
 is realized by the force
 \begin{equation}
  \vec{g}_{\zeta}(\vec{r}) =  - \rho_{\zeta}(\vec{r})
@@ -209,7 +243,7 @@ active fluid components can be accessed through the global variable
 \lit{lb_components}.
 
 
-\section{Coupling particle dynamics to the Shan-Chen fluid\label{sec:scmd-coupling}}
+\section{SC as a thermostat\label{sec:scmd-coupling}}
 The coupling of particle dynamics to the Shan-Chen fluid has been conceived as an extension
 of the Ahlrichs and D\"unweg's point coupling, with the force acting on a particle given by
 \begin{equation}
@@ -229,7 +263,7 @@ In addition to the solvation force acting on particles, another one that acts on
 representing the solvation force of particles on the
 fluid.
 \begin{equation}
-  \vec{F}_{\zeta}^{\mathrm{fs}}(\vec{r}) = -\lambda_{\zeta} \rho_{\zeta}(\vec{r}) \sum_i \sum_{\vec{r}'} \Theta \left[\frac{(\vec{r}_i-\vec{r})}{|\vec{r}_i-\vec{r}|} \cdot \frac{(\vec{r}'-\vec{r})}{|\vec{r}'-\vec{r}|} \right] (\vec{r}'-\vec{r}),
+  \vec{F}_{\zeta}^{\mathrm{fs}}(\vec{r}) = -\lambda_{\zeta} \rho_{\zeta}(\vec{r}) \sum_i \sum_{\vec{r}'} \Theta \left[\frac{(\vec{r}_i-\vec{r})}{|\vec{r}_i-\vec{r}|} \cdot \frac{(\vec{r}'-\vec{r})}{|\vec{r}'-\vec{r}|} \right] \frac{\vec{r}'-\vec{r}}{|\vec{r}'-\vec{r}|^2},
 \end{equation}
 where $\Theta(x)=1$ if $0<x<1$, and 0 otherwise, the sum over
 lattice nodes is performed on the neighboring sites of $\vec{r}$ and the index $i$ runs over all particles. Note that a dependence on the particle index $i$ is assumed for $\kappa_\zeta$ and $\lambda_\zeta$.
@@ -239,8 +273,22 @@ eight nodes around a particle.
 The particle property \lit{solvation} (Chap.~\ref{chap:part}) sets the coupling constants
 $\lambda_A$,$\kappa_A$,$\lambda_B$ and $\kappa_B$, where $A$ and
 $B$ denote the first and second fluid component, respectively.
+A complete description of the copuling scheme can be found in \cite{sega13c}.
 
+\section{SC component-dependent interactions between particles\label{sec:scmd-affinity}}
 
+Often particle properties depend on the type of solvent in which
+they are. For example, a polymer chain swells in a good solvent,
+and collapses in a bad one. One of the possible ways to model the
+good or bad  solvent condition in coarse-grained models is to employ
+a WCA or a LJ (attractive) potential, respectively. If one wants
+to model the two components of the SC fluid as good/bad solvent,
+it is possible to do it using the \lit{affinity} argument of the
+\lit{inter} command. This non-bonded interaction type acts as a
+modifier to other interactions. So far only the Lennard-Jones
+interaction is changed by the \lit{affinity}, so that it switches
+in a continuous way (after the potential minimum) from the full
+interaction to the WCA one. For more information see \ref{sec:LennardJones} and \ref{sec:affinity}.
 
 \section{Reading and setting single lattice nodes}
 \begin{essyntax}
@@ -278,6 +326,20 @@ Example:
 \begin{tclcode}
 puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 \end{tclcode}
+
+\section{Removing total fluid momentum}
+\label{sec:remove-momentum}
+\begin{essyntax}
+  lbfluid remove_momentum
+  \begin{features}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
+  \required[3]{SHANCHEN}
+  \end{features}
+\end{essyntax}
+
+In some cases, such as free energy profile calculations, it might be useful to prevent interface motion. This can be achieved using the command \lit{lbfluid remove_momentum}, that removes the total momentum of the fluid.
+
 
 \section{Visualization}
 \label{ssec:LBvisualization}

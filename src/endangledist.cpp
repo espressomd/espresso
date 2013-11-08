@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file endangledist.c
+/** \file endangledist.cpp
  *
- *  Implementation of \ref endangledist.h
+ *  Implementation of \ref endangledist.hpp
  */
 #include "utils.hpp"
 #include "interaction_data.hpp"
@@ -151,7 +151,9 @@ static double calc_pwangle(Particle *p1, Particle *p2, Bonded_ia_parameters *iap
 #endif
 
 ///
-int calc_endangledist_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force1[3], double force2[3])
+int calc_endangledist_pair_force(Particle *p1, Particle *p2, 
+                                 Bonded_ia_parameters *iaparams, 
+                                 double dx[3], double force1[3], double force2[3])
 {
 
   int i=0;
@@ -228,8 +230,17 @@ int calc_endangledist_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameter
   }
 #endif
 
-  ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: ENDANGLEDIST f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac_b));
-  ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: ENDANGLEDIST f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac_b));
+  ONEPART_TRACE(if(p1->p.identity==check_id)                            \
+                  fprintf(stderr,"%d: OPT: ENDANGLEDIST f = (%.3e,%.3e,%.3e) " \
+                          "with part id=%d at dist %f fac %.3e %.3e\n",      \
+                          this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],   \
+                          p2->p.identity,dist,fac_a,fac_b)                   \
+                );
+  ONEPART_TRACE(if(p2->p.identity==check_id)                            \
+                  fprintf(stderr,"%d: OPT: ENDANGLEDIST f = (%.3e,%.3e,%.3e)" \
+                          " with part id=%d at dist %f fac %.3e\n",     \
+                          this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],   \
+                          p1->p.identity,dist,fac_a,fac_b));
 
   return 0;
 }

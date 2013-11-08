@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb_tcl.c
+/** \file lb_tcl.cpp
  *
  * TCL Interface for the Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
@@ -31,6 +31,44 @@
 #include "parser.hpp"
 
 #ifdef LB_GPU
+#ifdef SHANCHEN
+int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+  IA_parameters *data = get_ia_param(i, j);
+
+  Tcl_PrintDouble(interp, data->affinity[0], buffer);
+  Tcl_AppendResult(interp, "affinity ", buffer, " ", (char *) NULL);
+  for(int ii=1;ii<LB_COMPONENTS;ii++){
+     Tcl_PrintDouble(interp, data->affinity[ii], buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
+  return TCL_OK;
+}
+
+int tclcommand_inter_parse_affinity(Tcl_Interp * interp,int part_type_a,int part_type_b, int argc, char ** argv)
+{
+  double affinity[LB_COMPONENTS];
+  if (argc != LB_COMPONENTS+1 ) {
+    Tcl_AppendResult(interp, "Not enough values for affinity",
+		     (char *) NULL);      
+    return 0;
+  }
+  for (int ii=0;ii<LB_COMPONENTS;ii++){ 
+    if ( ! ARG_IS_D(ii+1, (affinity[ii]) )) { 
+      Tcl_AppendResult(interp, "list of doubles expected for affinity", (char *) NULL);
+      return 0;
+    } 
+  }
+  if(affinity_set_params(part_type_a,part_type_b,affinity) == ES_ERROR) { 
+    Tcl_AppendResult(interp, "Error setting affinity, values must lie between 0 and 1", (char *) NULL);
+    return 0;
+  }
+  Tcl_AppendResult(interp, "Error setting affinity", (char *) NULL);
+  return 3;
+}
+#endif
+
 static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
   double f[3];
   
@@ -264,6 +302,14 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
                }
         }
       }
+      else if (ARG0_IS_S("remove_momentum")) {
+          if ( lb_lbfluid_set_remove_momentum() == 0 ) {
+            argc-=2; argv+=2;
+          } else {
+	          Tcl_AppendResult(interp, "Unknown Error setting remove_momentum", (char *)NULL);
+            return TCL_ERROR;
+          }
+      }
 #endif // SHANCHEN
       else if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
         if ( argc < LB_COMPONENTS + 1 ) {
@@ -357,8 +403,25 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
       	          Tcl_AppendResult(interp, "Unknown Error setting friction", (char *)NULL);
                         return TCL_ERROR;
               }
-        } 
-      }    
+        }
+        lb_lbfluid_set_couple_flag (LB_COUPLE_TWO_POINT); //Default to nearest neighbor coupling for MD particles
+      }
+      else if (ARG0_IS_S("couple") ) {
+        if ( argc < 1 ) { 
+          Tcl_AppendResult(interp, "couple requires an argument, either 2pt or 3pt", (char *)NULL);
+          return TCL_ERROR;
+        } else {
+          if ( ARG1_IS_S("2pt") || ARG1_IS_S("2PT") || ARG1_IS_S("2Pt") ) {
+            lb_lbfluid_set_couple_flag (LB_COUPLE_TWO_POINT);
+          } else if ( ARG1_IS_S("3pt") || ARG1_IS_S("3PT") || ARG1_IS_S("3Pt") ) {
+            lb_lbfluid_set_couple_flag (LB_COUPLE_THREE_POINT);
+          } else {
+            Tcl_AppendResult(interp, "Did not understand argument to couple, please send 2pt or 3pt.", (char *)NULL);
+            return TCL_ERROR;
+          }
+          argc-=2; argv+=2;
+        }
+      }
       else if (ARG0_IS_S("gamma_odd") ) {
         if ( argc < (LB_COMPONENTS+1) ){ 
 	        Tcl_AppendResult(interp, "gamma_odd requires arguments", (char *)NULL); // TODO: fix this and similar ones...

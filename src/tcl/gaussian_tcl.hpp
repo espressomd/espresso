@@ -21,7 +21,7 @@
 #ifndef GAUSSIAN_TCL_H
 #define GAUSSIAN_TCL_H
 /** \file gaussian_tcl.hpp
- * Tcl interface for \ref gaussian.h
+ * Tcl interface for \ref gaussian.hpp
  */
 
 #include "parser.hpp"

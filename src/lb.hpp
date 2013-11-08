@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb.h
- * Header file for lb.c
+/** \file lb.hpp
+ * Header file for lb.cpp
  *
- * This is the header file for the Lattice Boltzmann implementation in lb.c
+ * This is the header file for the Lattice Boltzmann implementation in lb.cpp
  */
 
 #ifndef LB_H
@@ -53,6 +53,11 @@ extern int lb_components ; // global variable holding the number of fluid compon
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
 
+/** Note these are usef for binary logic so should be powers of 2 */
+#define LB_COUPLE_NULL        1
+#define LB_COUPLE_TWO_POINT   2
+#define LB_COUPLE_THREE_POINT 4
+  
 /*@}*/
   /** Some general remarks:
    * This file implements the LB D3Q19 method to Espresso. The LB_Model
@@ -502,9 +507,11 @@ int lb_lbfluid_set_bulk_visc(double * p_bulk_visc);
 int lb_lbfluid_set_gamma_odd(double * p_gamma_odd);
 int lb_lbfluid_set_gamma_even(double * p_gamma_even);
 int lb_lbfluid_set_friction(double * p_friction);
+int lb_lbfluid_set_couple_flag(int couple_flag);
 int lb_lbfluid_set_agrid(double p_agrid);
 int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
 int lb_lbfluid_set_tau(double p_tau);
+int lb_lbfluid_set_remove_momentum(void);
 #ifdef SHANCHEN
 int lb_lbfluid_set_shanchen_coupling(double * p_coupling);
 int lb_lbfluid_set_mobility(double * p_mobility);

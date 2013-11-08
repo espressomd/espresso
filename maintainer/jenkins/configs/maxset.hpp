@@ -1,4 +1,4 @@
-/* maximal set of features without FFTW library */
+/* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
@@ -11,21 +11,41 @@
 #define COMFORCE
 #define COMFIXED
 #define MOLFORCES
+
+#ifdef FFTW
+#define MODES
+#endif
+
 #define BOND_VIRTUAL
-#define GRANDCANONICAL
+#define COLLISION_DETECTION
+#define LANGEVIN_PER_PARTICLE
+#define ROTATION_PER_PARTICLE
+#define CATALYTIC_REACTIONS
+#define GRANDCANONCIAL
 
 #define NEMD
 #define NPT 
+#define GHMC
 
 #define LB
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
+
+#ifdef CUDA
+#define LB_GPU
+#define LB_BOUNDARIES_GPU
+#endif
+
+#define AREA_FORCE_GLOBAL   
+#define VOLUME_FORCE   
 
 #define TABULATED
 #define LENNARD_JONES
 #define LENNARD_JONES_GENERIC
 #define LJCOS
 #define LJCOS2
+#define GAUSSIAN
+#define HAT
 #define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
@@ -35,8 +55,12 @@
 #define BUCKINGHAM
 #define SOFT_SPHERE
 #define INTER_RF
+#define OVERLAPPED
 
 #define BOND_ANGLE
 #define BOND_ANGLEDIST
+#define BOND_ANGLEDIST_HARMONIC
+#define BOND_ENDANGLEDIST
+#define BOND_ENDANGLEDIST_HARMONIC
 
 #define VIRTUAL_SITES_RELATIVE

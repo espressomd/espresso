@@ -20,9 +20,9 @@
 */
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
-/** \file particle_data.h
+/** \file particle_data.hpp
     For more information on particle_data,
-    see \ref particle_data.c "particle_data.c"
+    see \ref particle_data.cpp "particle_data.c"
 */
 
 
@@ -167,6 +167,10 @@ typedef struct {
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
   double p_old[3];
+#endif
+
+#ifdef SHANCHEN
+  double composition[LB_COMPONENTS];
 #endif
 
 } ParticlePosition;

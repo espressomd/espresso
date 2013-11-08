@@ -17,10 +17,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu_cfile.c
+/** \file lbgpu_cfile.cpp
  *
  * C file for the Lattice Boltzmann implementation on GPUs.
- * Header file for \ref lbgpu.h.
+ * Header file for \ref lbgpu.hpp.
  */
 //#include <mpi.h>
 #include <cstdio>
@@ -39,7 +39,7 @@
 #include "particle_data.hpp"
 #include "global.hpp"
 #include "lb-boundaries.hpp"
-#include "cuda_common.hpp"
+#include "cuda_interface.hpp"
 #ifdef LB_GPU
 
 
@@ -88,6 +88,8 @@ LB_parameters_gpu lbpar_gpu = {
   SC0,
   // friction
   SC0,
+  // lb_couple_switch
+  LB_COUPLE_NULL,
   // lb_coupl_pref
   SC0,
   // lb_coupl_pref2
@@ -128,9 +130,12 @@ LB_parameters_gpu lbpar_gpu = {
   // mobility
   SC1,
   // coupling
-  SC20
+  SC20,
+  // remove_momentum
+  0
 #endif // SHANCHEN  
 };
+
 
 /** this is the array that stores the hydrodynamic fields for the output */
 LB_rho_v_pi_gpu *host_values = NULL;
@@ -163,7 +168,7 @@ LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
 /** main of lb_gpu_programm */
 /*-----------------------------------------------------------*/
 #ifdef SHANCHEN
-/* called from forces.c. This is at the beginning of the force
+/* called from forces.cpp. This is at the beginning of the force
    calculation loop, so we increment the fluidstep counter here,
    and we reset it only when the last call to a LB function
    [lattice_boltzmann_update_gpu()] is performed within integrate_vv()
@@ -177,7 +182,7 @@ void lattice_boltzmann_calc_shanchen_gpu(void){
 }
 #endif //SHANCHEN
 
-/** lattice boltzmann update gpu called from integrate.c
+/** lattice boltzmann update gpu called from integrate.cpp
 */
 
 void lattice_boltzmann_update_gpu() {
@@ -190,14 +195,17 @@ void lattice_boltzmann_update_gpu() {
 
     fluidstep=0; 
     lb_integrate_GPU();
+#ifdef SHANCHEN
+    if(lbpar_gpu.remove_momentum) lb_remove_fluid_momentum_GPU();
+#endif
     LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
 
   }
 }
 
-
-
-/** (re-) allocation of the memory need for the particles (cpu part)*/
+/** (re-) allocation of the memory needed for the particles (cpu part)
+  * @param *lbpar_gpu Pointer to parameters to setup the lb field
+*/
 void lb_realloc_particles_gpu(){
 
   lbpar_gpu.number_of_particles = n_total_particles;
@@ -210,13 +218,18 @@ void lb_realloc_particles_gpu(){
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
 
-  lb_realloc_particle_GPU_leftovers(&lbpar_gpu);
+  lb_realloc_particles_GPU_leftovers(&lbpar_gpu);
 }
+
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
   //lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
   lb_reinit_parameters_gpu();
+//#ifdef SHANCHEN
+//  lb_calc_particle_lattice_ia_gpu();
+//  copy_forces_from_GPU();
+//#endif 
   if(lbpar_gpu.number_of_nodes != 0){
     lb_reinit_GPU(&lbpar_gpu);
     lbpar_gpu.reinit = 1;
@@ -264,8 +277,7 @@ void lb_reinit_parameters_gpu() {
   	LB_TRACE (fprintf(stderr, "fluct on \n"));
       /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
       /* Note that the modes are not normalized as in the paper here! */
-  
-      lbpar_gpu.mu[ii] = (float)temperature/c_sound_sq*lbpar_gpu.tau*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid); // TODO: check how to change mu
+      lbpar_gpu.mu[ii] = (float)temperature*lbpar_gpu.tau*lbpar_gpu.tau/c_sound_sq/(lbpar_gpu.agrid*lbpar_gpu.agrid); 
   
       /* lb_coupl_pref is stored in MD units (force)
        * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -294,7 +306,6 @@ void lb_reinit_parameters_gpu() {
 void lb_init_gpu() {
 
   LB_TRACE(printf("Begin initialzing fluid on GPU\n"));
-
   /** set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 
@@ -312,9 +323,9 @@ void lb_init_gpu() {
 
 int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
 {
-  if ( ind[0] < 0 || ind[0] >=  lbpar_gpu.dim_x ||
-       ind[1] < 0 || ind[1] >= lbpar_gpu.dim_y ||
-       ind[2] < 0 || ind[2] >= lbpar_gpu.dim_z )
+  if ( ind[0] < 0 || ind[0] >= int(lbpar_gpu.dim_x) ||
+       ind[1] < 0 || ind[1] >= int(lbpar_gpu.dim_y) ||
+       ind[2] < 0 || ind[2] >= int(lbpar_gpu.dim_z) )
     return ES_ERROR;
 
   unsigned int index =

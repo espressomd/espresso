@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file gaussian.c
+/** \file gaussian.cpp
  *
- *  Implementation of \ref gaussian.h
+ *  Implementation of \ref gaussian.hpp
  */
 #include "gaussian.hpp"
 #include "communication.hpp"

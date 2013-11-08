@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file particle_data.c
+/** \file particle_data.cpp
     This file contains everything related to particle storage. If you want to add a new
     property to the particles, it is probably a good idea to modify \ref Particle to give
     scripts access to that property. You always have to modify two positions: first the
@@ -26,7 +26,7 @@
     section where you have to find a nice and short name for your property to appear in
     the Tcl code. Then you just parse your part out of argc and argv.
 
-    The corresponding header file is particle_data.h.
+    The corresponding header file is particle_data.hpp.
 */
 #include <cstdlib>
 #include <cstring>
@@ -115,7 +115,10 @@ void init_particle(Particle *part)
 #ifdef SHANCHEN
   int ii;
   for(ii=0;ii<2*LB_COMPONENTS;ii++){ 
-    part->p.solvation[ii]=0;
+    part->p.solvation[ii]=0.0;
+  }
+  for(ii=0;ii<LB_COMPONENTS;ii++){ 
+    part->r.composition[ii]=0.0;
   }
 #endif
 
@@ -624,6 +627,7 @@ int set_particle_solvation(int part, double * solvation)
   mpi_send_solvation(pnode, part, solvation);
   return ES_OK;
 }
+
 #endif
 
 

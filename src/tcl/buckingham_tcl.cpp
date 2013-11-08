@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file buckingham_tcl.c
+/** \file buckingham_tcl.cpp
  *
  *  Implementation of \ref buckingham_tcl.hpp
  */

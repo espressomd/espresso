@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file maggs.c
+/** \file maggs.cpp
  *  Maxwell Equations Molecular Dynamics (MEMD) method for electrostatic
  *  interactions.
  *
@@ -2055,6 +2055,10 @@ void maggs_interpolate_part_charge_from_grad(double *rel, double *grad, double *
 */
 void maggs_calc_interpolated_self_force(Particle *p)
 {
+// TODO : FIX WARNING ABOUT UNUSED VARIABLES
+// FUCTION CURRENTLY NOT USED IN CODE.
+/*
+
   int ix,iy,iz,k,index,globalindex;
   int xmax=2, ymax=2, zmax=2;
   double self_force[SPACE_DIM];
@@ -2067,7 +2071,7 @@ void maggs_calc_interpolated_self_force(Particle *p)
   double local_D_field[12];
   double *force = p->f.f;
 
-  /* calculate position in cell, normalized to lattice size: */
+  // calculate position in cell, normalized to lattice size:
   FOR3D(k) {
     position[k]           = (p->r.p[k] - lparams.left_down_position[k]) * maggs.inva;
     left_down_position[k] = floor(position[k]);
@@ -2076,7 +2080,7 @@ void maggs_calc_interpolated_self_force(Particle *p)
     local_D_field[k] = 0.0;
   }
 
-  /* Copy permittivity values to the mini-lattice: */
+  // Copy permittivity values to the mini-lattice:
 
   for (iz=0;iz<zmax;iz++) {
     for (iy=0;iy<ymax;iy++) {
@@ -2099,6 +2103,7 @@ void maggs_calc_interpolated_self_force(Particle *p)
   FOR3D(k) {
     force[k] += self_force[k];
   }
+*/
 }
 
 

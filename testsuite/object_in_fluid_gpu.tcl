@@ -39,6 +39,8 @@ source "tests_common.tcl"
 require_feature "AREA_FORCE_GLOBAL"
 require_feature "VOLUME_FORCE"
 require_feature "LB_GPU"
+require_feature "SHANCHEN" off
+
 require_max_nodes_per_side 2
 
 puts "------------------------------------------------"
@@ -48,7 +50,7 @@ puts "------------------------------------------------"
 set vmd "n"
 
 set tcl_precision 15
-set tolerance 1e-5
+set tolerance 1e-4
 
 setmd time_step 0.1
 setmd skin 0.2

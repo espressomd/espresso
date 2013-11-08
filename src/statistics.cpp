@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics.c
+/** \file statistics.cpp
     This is the place for analysis (so far...).
-    Implementation of statistics.h
+    Implementation of statistics.hpp
 */
 #include <cstdlib>
 #include <cstring>
@@ -90,10 +90,11 @@ double mindist(IntList *set1, IntList *set2)
     for (i=j+1; i<n_total_particles; i++)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice versa. */
       if (((in_set & 1) && (!set2 || intlist_contains(set2, partCfg[i].p.type))) ||
-	  ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
-	mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
+          ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
+        mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
   }
   mindist = sqrt(mindist);
+
   return mindist;
 }
 
@@ -539,7 +540,7 @@ void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry, d
     if (f < 0.0) {
       rtb = g1;  dg = g1-g2; }
     else {
-      fprintf(stderr,"WARNING: Lower boundary is actually larger than l.h.s, flipping!\n");
+      fprintf(stderr,"WARNING: Lower boundary is actually larger than l.hpp.s, flipping!\n");
       rtb = g1;  dg = g1;    }
     for (i = 1; i <= maxtry; i++) {
       gmid = rtb - (dg *= 0.5);

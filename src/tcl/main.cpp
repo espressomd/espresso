@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file main.c
+/** \file main.cpp
     Main file of Espresso. Initialization of tcl interpreter.
 */
 /* first, since we need the TK define */
@@ -30,7 +30,7 @@
 #include "initialize.hpp"
 #include "communication.hpp"
 
-// forward from initialize_interpreter.c
+// forward from initialize_interpreter.cpp
 int appinit(Tcl_Interp *interp);
 
 int main(int argc, char **argv)

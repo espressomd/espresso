@@ -20,7 +20,7 @@
 */
 #ifndef _STATISTICS_H
 #define _STATISTICS_H
-/** \file statistics.h
+/** \file statistics.hpp
     This file contains the code for statistics on the data.
 */
 

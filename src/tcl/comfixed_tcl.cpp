@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file comfixed_tcl.c
+/** \file comfixed_tcl.cpp
  *
  *  Implementation of \ref comfixed_tcl.hpp
  */

@@ -20,10 +20,10 @@
 */
 #ifndef _ANGLEDIST_H
 #define _ANGLEDIST_H
-/** \file angledist.h
+/** \file angledist.hpp
  *  Routines to calculate the angle and distance dependent (from a constraint) energy or/and and force
  *  for a particle triple.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"
@@ -33,7 +33,7 @@
 #ifdef BOND_ANGLEDIST
 
 /** set parameters for the angledist potential. The type of the
-    angledist potential is chosen via config.h and cannot be changed
+    angledist potential is chosen via config.hpp and cannot be changed
     at runtime.
 **/
 int angledist_set_params(int bond_type, double bend, double phimin,

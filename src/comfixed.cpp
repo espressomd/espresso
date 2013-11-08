@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file comfixed.c
+/** \file comfixed.cpp
  *
- *  Implementation of \ref comfixed.h
+ *  Implementation of \ref comfixed.hpp
  */
 #include "utils.hpp"
 #include "interaction_data.hpp"
