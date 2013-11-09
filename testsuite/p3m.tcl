@@ -66,7 +66,7 @@ if { [catch {
     integrate 0
 
     # here you can create the necessary snapshot
-    if { 1 } {
+    if { 0 } {
 	inter coulomb 1.0 p3m tune accuracy 1e-4
 	integrate 0
 
