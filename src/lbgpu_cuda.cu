@@ -1222,9 +1222,11 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
         node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2]*force_factor;
       }
       else{
+/* TODO : UNCOMMENT IF YOU ONLY HAVE LB AND NO EK
         node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
         node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
         node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+*/
       }
 #else
       /** reset force */
@@ -2016,7 +2018,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif 
 }
 
-/**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
+/**calculation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
   (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  * @param *delta        Pointer for the weighting of particle position (Input)
  * @param *delta_j      Pointer for the weighting of particle momentum (Input)

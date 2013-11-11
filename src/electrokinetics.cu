@@ -269,6 +269,8 @@ __device__ void ek_displacement( float * dx,
           ( mode[ 15 ] - mode[ 16 ] ) -
           ( mode[ 17 ] - mode[ 18 ] );
 
+  // Velocity requires half the force in the previous time step
+
   dx[0] += 0.5f * ek_parameters_gpu.lb_force_previous[ node_index ];
   dx[1] += 0.5f * ek_parameters_gpu.lb_force_previous[ ek_parameters_gpu.number_of_nodes + node_index ];
   dx[2] += 0.5f * ek_parameters_gpu.lb_force_previous[ 2 * ek_parameters_gpu.number_of_nodes + node_index ];
@@ -289,27 +291,6 @@ __global__ void ek_pressure(
 
   if( index < ek_parameters_gpu.number_of_nodes )
   {  
-/*
-    // DOESN'T WORK: the LB is decoupled so it does not
-    // go to a stationary state, when the EK does.
-
-    // Subtract the LB part of the pressure, since that 
-    // is applied in the LBGPU already given by rho*cs^2.
-    // In proper MD units this is rho/3 / (ts^2 * agr^3),
-    // where there is a factor ag^2/ts^2 coming from the
-    // speed of sound squared (cs^2) and a conversion 
-    // factor on top of that which turns out to be 1/ag^5. 
-    // The latter was verified by driving a pure LB against
-    // a wall and comparing the value of the externally
-    // applied force to the value of grad(rho)cs^2
-
-    ek_parameters_gpu.pressure[ index ] = -( d_v[index].rho[0] / 3.0 ) /
-                                           (
-                                             ek_parameters_gpu.time_step *
-                                             ek_parameters_gpu.time_step *
-                                             powf(ek_parameters_gpu.agrid, 3)
-                                           );
-*/
     ek_parameters_gpu.pressure[ index ] = 0.0f;
  
     // Add the ideal-gas contribution f from the EK
@@ -872,7 +853,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     dx[0] = fabs(dx[0]);
     dx[1] = fabs(dx[1]);
     dx[2] = fabs(dx[2]);
-    
+
     //face in x
     node =
       rhoindex_cartesian2linear(
@@ -1293,7 +1274,7 @@ __global__ void ek_init_species_density_homogeneous() {
   if(index < ek_parameters_gpu.number_of_nodes) {
   
     for(int i = 0; i < ek_parameters_gpu.number_of_species; i++) {
-    
+
       ek_parameters_gpu.rho[ i ][ index ] = ek_parameters_gpu.density[ i ] *
                                             ek_parameters_gpu.agrid *
                                             ek_parameters_gpu.agrid *
@@ -1492,7 +1473,7 @@ __global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
 }
 
 
-//TODO delete
+//TODO delete ?? (it has the previous step setting now)
 __global__ void ek_clear_node_force( LB_node_force_gpu node_f ) {
 
   unsigned int index = ek_getThreadIndex();
@@ -1868,7 +1849,7 @@ void ek_integrate() {
 LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
                                                         sizeof( LB_rho_v_pi_gpu ) );
 lb_get_values_GPU( host_values ); 
-printf( "ve %f\n", host_values[ 0 ].v[2] );
+printf( "ve %e %e %e\n", host_values[ 0 ].v[0], host_values[ 0 ].v[1], host_values[ 0 ].v[2] );
 free(host_values);
 */
 }
