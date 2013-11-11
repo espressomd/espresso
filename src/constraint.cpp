@@ -1820,19 +1820,19 @@ void add_constraints_forces(Particle *p1)
 				     torque1, torque2);
 	}
 	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
-	  if ( dist < 0 ) {
+	  if ( (constraints[n].c.wal.only_positive != 1) && ( dist < 0 ) ) {
 	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,-1.0*dist,dist*dist, force,
-				     torque1, torque2);
+				       ia_params,vec,-1.0*dist,dist*dist, force,
+				       torque1, torque2);
 	  }
 	}
 	else {
-    if(constraints[n].c.wal.reflecting){
-      reflect_particle(p1, &(vec[0]), constraints[n].c.wal.reflecting);
-    } else {
-	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	  ERROR_SPRINTF(errtxt, "{061 wall constraint %d violated by particle %d} ", n, p1->p.identity);
-    }
+	  if(constraints[n].c.wal.reflecting){
+	    reflect_particle(p1, &(vec[0]), constraints[n].c.wal.reflecting);
+	  } else {
+	    errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+	    ERROR_SPRINTF(errtxt, "{061 wall constraint %d violated by particle %d} ", n, p1->p.identity);
+	  }
 	}
       }
       break;
@@ -1848,17 +1848,17 @@ void add_constraints_forces(Particle *p1)
 	else if ( dist <= 0 && constraints[n].c.sph.penetrable == 1 ) {
 	  if ( dist < 0 ) {
 	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,-1.0*dist,dist*dist, force,
-				     torque1, torque2);
+				       ia_params,vec,-1.0*dist,dist*dist, force,
+				       torque1, torque2);
 	  }
 	}
 	else {
-    if(constraints[n].c.sph.reflecting){
-      reflect_particle(p1, &(vec[0]), constraints[n].c.sph.reflecting);
-    } else {
-	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	  ERROR_SPRINTF(errtxt, "{062 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
-    }
+	  if(constraints[n].c.sph.reflecting){
+	    reflect_particle(p1, &(vec[0]), constraints[n].c.sph.reflecting);
+	  } else {
+	    errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+	    ERROR_SPRINTF(errtxt, "{062 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
+	  }
 	}
       }
       break;

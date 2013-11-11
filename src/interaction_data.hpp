@@ -740,6 +740,7 @@ typedef struct {
   /** whether the constraint is penetrable 1 or not 0*/
   int penetrable; 
   int reflecting;
+  int only_positive;
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */
