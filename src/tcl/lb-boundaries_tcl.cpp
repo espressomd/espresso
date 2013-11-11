@@ -716,6 +716,9 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   
   lbb->c.pore.smoothing_radius = 1.;
   
+  lbb->c.pore.outer_rad_left = 1e99;
+  lbb->c.pore.outer_rad_right = 1e99;
+  
   while (argc > 0) {
     if(ARG_IS_S(0, "center")) {
       if(argc < 4) {
