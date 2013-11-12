@@ -30,6 +30,7 @@
 #include "interaction_data.hpp"
 #include "lb-boundaries.hpp"
 #include "communication.hpp"
+#include <limits>
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
@@ -726,6 +727,9 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   lbb->c.pore.reflecting = 0;
   
   lbb->c.pore.smoothing_radius = 1.;
+  
+  lbb->c.pore.outer_rad_left = std::numeric_limits<double>::max();
+  lbb->c.pore.outer_rad_right = std::numeric_limits<double>::max();
   
   while (argc > 0) {
     if(ARG_IS_S(0, "center")) {
