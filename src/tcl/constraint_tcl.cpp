@@ -21,6 +21,7 @@
 /** \file constraint.cpp
     Implementation of \ref constraint.hpp "constraint.h", here it's just the parsing stuff.
 */
+#include <limits>
 #include "constraint.hpp"
 #include "communication.hpp"
 #include "parser.hpp"
@@ -757,8 +758,8 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
   con->c.pore.reflecting = 0;
   con->part_rep.p.type = -1;
   con->c.pore.smoothing_radius = 1.;
-  con->c.pore.outer_rad_left = 1e99;
-  con->c.pore.outer_rad_right = 1e99;
+  con->c.pore.outer_rad_left = std::numeric_limits<double>::max();
+  con->c.pore.outer_rad_right = std::numeric_limits<double>::max();
   
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
