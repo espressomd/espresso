@@ -8,19 +8,23 @@ ESPResSo 3.3
 New user-visible features
 -------------------------
 
+* Provide the preliminary Python interface. Configure with
+  --with-python-interface.
+
 * Support of P3M on GPU.
 
 * Allow the p3m to dump the mesh in x, y, and z (before it only dumped
-the mesh in x). This allows for the dumping of the p3m in blockfile
-format in the case of non-cubic boxes. It will also now be possible to
-tune the settings of a non-cubic mesh.
+  the mesh in x). This allows for the dumping of the p3m in blockfile
+  format in the case of non-cubic boxes. It will also now be possible
+  to tune the settings of a non-cubic mesh.
 
 * Stomatocyte lb-boundary and constraint implemented.
 
 * MEMD electrostatics can now handle spatially varying dielectrc
   constants.
 
-* New command time_integration to get the runtime of the integration loop.
+* New command time_integration to get the runtime of the integration
+  loop.
 
 User-visible changes
 --------------------
