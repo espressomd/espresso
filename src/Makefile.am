@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+EXTRA_DIST =
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 # List headers that are not used by the program here
@@ -271,6 +272,38 @@ libEspressoTcl_la_SOURCES += \
 	tcl/reaction_field_tcl.cpp tcl/reaction_field_tcl.hpp \
 	tcl/mdlc_correction_tcl.cpp tcl/mdlc_correction_tcl.hpp	
 
+##################################################
+# CUDA rules
+##################################################
+
+if CUDA
+SUFFIXES=.cu
+.cu.o:
+	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
+
+CUDA_SOURCES = \
+	cuda_init_cuda.cu \
+	cuda_common_cuda.cu \
+	lbgpu_cuda.cu \
+	p3m_gpu_cuda.cu
+
+cuda_interface.o: cuda_interface.hpp myconfig-final.hpp
+cuda_init.o: cuda_init.hpp myconfig-final.hpp
+lbgpu_cuda.o: lbgpu.hpp myconfig-final.hpp
+p3m_gpu.o: p3m_gpu.hpp myconfig-final.hpp
+
+if TCL
+
+CUDA_SOURCES += \
+	tcl/cuda_init_tcl.cpp
+
+endif
+
+libEspresso_la_SOURCES += $(CUDA_SOURCES)
+
+EXTRA_DIST += $(CUDA_SOURCES)
+endif
+
 #################################################################
 # Compile the (TCL) main program
 #################################################################
@@ -338,7 +371,7 @@ myconfig-final.hpp: FORCE
 #################################################################
 # config-features.cpp must occur at the beginning of the SOURCES so that it is compiled first
 #libEspresso_a_SOURCES += config-features.cpp
-EXTRA_DIST = \
+EXTRA_DIST += \
 	features.def \
 	config-features.hpp config-features.cpp \
 	config-doxygen.hpp
@@ -390,36 +423,6 @@ Espresso_install_CPPFLAGS += $(AM_CPPFLAGS)
 endif
 endif
 
-##################################################
-# CUDA rules
-##################################################
-if CUDA
-SUFFIXES=.cu
-.cu.o:
-	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
-
-CUDA_SOURCES = \
-	cuda_init_cuda.cu \
-	cuda_common_cuda.cu \
-	lbgpu_cuda.cu \
-	p3m_gpu_cuda.cu
-
-cuda_interface.o: cuda_interface.hpp myconfig-final.hpp
-cuda_init.o: cuda_init.hpp myconfig-final.hpp
-lbgpu_cuda.o: lbgpu.hpp myconfig-final.hpp
-p3m_gpu.o: p3m_gpu.hpp myconfig-final.hpp
-
-if TCL
-
-CUDA_SOURCES += \
-	tcl/cuda_init_tcl.cpp
-
-endif
-
-libEspresso_la_SOURCES += $(CUDA_SOURCES)
-
-EXTRA_DIST += $(CUDA_SOURCES)
-endif
 
 .PHONY: FORCE
 FORCE:
