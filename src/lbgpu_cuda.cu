@@ -2079,7 +2079,7 @@ __device__ void calc_m0_from_species(unsigned int index, float* mode, EK_paramet
 #endif
 */
 
-#if defined(ELECTROKINETICS) && defined(EK_REACTION)
+#if defined(ELECTROKINETICS)
 __device__ void reset_mode0_homogeneously(float* mode) {
   mode[0] = 0.0;
 }
@@ -2685,12 +2685,15 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
 //  if (ek_initialized) calc_m0_from_species(index, mode, ek_parameters_gpu); //TODO remove
 #endif
 */
-#if defined(ELECTROKINETICS) && defined(EK_REACTION)
+#if defined(ELECTROKINETICS)
   /** reset the density profile to homogeneous to avoid
       LB internal pressure contribution */
-  if ( ek_parameters_gpu->reaction_species[0] != -1 &&
-       ek_parameters_gpu->reaction_species[1] != -1 &&
-       ek_parameters_gpu->reaction_species[2] != -1 )
+  if ( ( ek_parameters_gpu->reaction_species[0] != -1 &&
+         ek_parameters_gpu->reaction_species[1] != -1 &&
+         ek_parameters_gpu->reaction_species[2] != -1 ) ||
+       ( ek_parameters_gpu->accelerated_frame_enabled == 1 &&
+         n_lb_boundaries_gpu > 0 )
+     )
   {
     reset_mode0_homogeneously(mode);
   }
