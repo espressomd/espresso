@@ -169,31 +169,6 @@ AM_CONDITIONAL(HAVE_LATEX,
 	test .$MAKEINDEX != .no && 
 	test .$BIBTEX != .no])
 
-cat <<EOF
-****************************************************************
-*                  Checking for python                         *
-****************************************************************
-EOF
-AM_PATH_PYTHON([2.5],,no)
-AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
-if test .$PYTHON != .no; then
-   # Check whether python -B works
-   AC_MSG_CHECKING([whether python -B works])
-   if $PYTHON -B -c pass > /dev/null 2>&1; then
-      PYTHON="$PYTHON -B"
-      AC_MSG_RESULT(yes)
-   else
-      AC_MSG_RESULT(no)
-   fi
-fi
-
-AX_PYTHON_DEVEL([>= '2.5'])
-AC_PATH_PROG(CYTHON,cython,no)
-AX_PYTHON_MODULE(numpy)
-AC_MSG_CHECKING([for numpy include path])
-NUMPY_INCLUDE="`$PYTHON -c 'import numpy; print numpy.get_include()'`"
-PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
-AC_MSG_RESULT([$NUMPY_INCLUDE])
 
 cat <<EOF
 ****************************************************************
@@ -232,129 +207,6 @@ EOF
 
 LIBS="$LIBS -lm"
 
-##################################
-# check for tcl
-AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
-
-AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
-            [specify the tcl library to use (e.g. tcl8.4)]),
-            [], [with_tcl=yes])
-dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
-dnl with_tcl=no   bail out
-dnl otherwise     use the specified version
-
-if test .$with_tcl = .no; then
-   use_tcl=none
-   AC_DEFINE(TCL,[],[Whether Tcl is available])
-elif test .$with_tcl = .yes; then
-	for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
-		ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
-		if test .$use_tcl != .; then break; fi
-	done
-else
-	ES_ADDPATH_CHECK_LIB($with_tcl, Tcl_Init, [use_tcl=$with_tcl])
-fi
-
-# check the results
-if test .$use_tcl = . ; then
-   # Tcl was not found
-   case $target_os in
-	*darwin*) AC_MSG_NOTICE(
-[If you have Tcl installed, make sure that either libtcl<tclversion>.dylib is
- in one of the library paths set by LDFLAGS, or that you set the appropriate
- apple gcc -framework option in CPPFLAGS and LDFLAGS.]) ;;
-	*) AC_MSG_FAILURE([
-********************************************************************************
-* Could not link against the (static) Tcl library (libtcl*.a).                 *
-* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)!  *
-********************************************************************************
-]) ;;
-   esac
-fi
-
-case $target_os in
-  *linux*)  # path used by *buntu
-	  extrapaths=/usr/include/$version ;;
-esac
-
-if test .$use_tcl != .none; then
-   ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
-			[AC_MSG_FAILURE([
-********************************************************************************
-* Could not find the Tcl header files (tcl.h).                                 *
-* Please add the include path to CPPFLAGS                                      *
-* (e.g. configure CPPFLAGS=-I/usr/include)!                                    *
-********************************************************************************
-])], $extrapaths)
-fi
-
-if test .$use_tcl = .; then
-   use_tcl=none
-fi
-
-AM_CONDITIONAL(TCL, [test .$use_tcl != .none])
-
-##################################
-# check for tk
-AC_ARG_WITH(tk,
-	AS_HELP_STRING([--with-tk=VERSION],[whether to use Tk, and which version to use]),
-	[], [with_tk=no])
-dnl with_tk=no   don't use Tk
-dnl with_tk=yes  try to find a working Tk version, bail out if none is found
-dnl otherwise    use the specified version
-if test .$with_tk != .no; then
-	# test for X11
-	AC_PATH_XTRA
-	saved_CPPFLAGS=$CPPFLAGS
-	saved_LDFLAGS=$LDFLAGS
-	saved_LIBS=$LIBS
-	CPPFLAGS="$CPPFLAGS $X_CXXFLAGS"
-	LDFLAGS="$LDFLAGS $X_LIBS"
-	LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
-	AC_LINK_IFELSE([AC_LANG_CALL([],[XOpenDisplay])],[x11_works=yes],[x11_works=no])
-	if test $x11_works = no; then
-		AC_MSG_WARN([could not link against X11, hoping Tk works without])
-		CPPFLAGS=$saved_CPPFLAGS
-		LDFLAGS=$saved_LDFLAGS
-		LIBS=$saved_LIBS
-	fi
-	# now test whether Tk can be found
-	if test .$with_tk = .yes; then
-		for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk; do
-			ES_ADDPATH_CHECK_LIB($version, Tk_Init, [use_tk=$version], [])
-			if test .$use_tk != .; then break; fi
-		done
-	else
-		ES_ADDPATH_CHECK_LIB($with_tk, Tk_Init, [use_tk=$with_tk], [])
-	fi
-	if test .$use_tk = .; then
-		case $target_os in
-		*darwin*) AC_MSG_ERROR(
-[If you have Tk installed, make sure that either libtcl<tclversion>.dylib is
- in one of the library paths set by LDFLAGS, or that you set the appropriate
- apple gcc -framework option in CPPFLAGS and LDFLAGS.]) ;;
-		*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
-		esac
-	fi
-	if test .$use_tk = .tk; then
-		if test .$use_tcl != .tcl; then
-			AC_MSG_WARN([You are using a generic Tk version, but a defined Tcl version. This may cause problems.
-Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
-		fi
-	fi
-	case $target_os in
-	*linux*)  # path used by *buntu
-		  extrapaths="/usr/include/$version /usr/include/$use_tcl" ;;
-	(*) ;;
-	esac
-	ES_ADDPATH_CHECK_HEADER(tk.h, [], 
-		[AC_MSG_ERROR([Tk headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4).])
-		]
-		,$extrapaths)
-	AC_DEFINE_UNQUOTED(TK,$use_tk,[Whether to use Tk])
-else
-	use_tk=none
-fi
 
 ##################################
 # check for FFTW
@@ -395,7 +247,8 @@ AC_ARG_WITH([cuda],
 	specified by setting the NVCC environment variable. The CUDA
 	library and header can be manually specified by using
 	CPPFLAGS, LDFLAGS and LIBS. [guess]]), ,
-	with_cuda=guess) AC_MSG_RESULT($with_cuda)
+	with_cuda=guess) 
+AC_MSG_RESULT($with_cuda)
 
 AS_IF([test x$with_cuda = xguess || test x$with_cuda = xyes],[
    cuda_path=/usr/local/cuda
@@ -526,6 +379,175 @@ AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 
 cat <<EOF
 ****************************************************************
+*                  Checking for Python                         *
+****************************************************************
+EOF
+
+# check whether the python interpreter is available
+# This is needed for automatic generation of myconfig etc.
+AM_PATH_PYTHON([2.5],,no)
+AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
+if test .$PYTHON != .no; then
+   # Check whether python -B works
+   AC_MSG_CHECKING([whether python -B works])
+   if $PYTHON -B -c pass > /dev/null 2>&1; then
+     PYTHON="$PYTHON -B"
+     AC_MSG_RESULT(yes)
+   else
+     AC_MSG_RESULT(no)
+   fi
+fi
+
+AC_MSG_CHECKING([whether to build the python interface])
+AC_ARG_WITH([python-interface], AS_HELP_STRING([--with-python-interface], 
+                      [specify whether or not to use python]),
+                      [], [with_python_interface=no])
+AC_MSG_RESULT($with_python_interface)
+dnl with_python_interface=yes  try to find a working PYTHON devel version, 
+dnl                            bail out if none is found
+dnl with_python_interface=no   do not use python interface
+
+if test .$with_python_interface != .no; then
+   AX_PYTHON_DEVEL([>= '2.5'])
+   AC_PATH_PROG(CYTHON,cython,no)
+   AX_PYTHON_MODULE(numpy)
+   AC_MSG_CHECKING([for numpy include path])
+   NUMPY_INCLUDE="`$PYTHON -c 'import numpy; print numpy.get_include()'`"
+   PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
+   AC_MSG_RESULT([$NUMPY_INCLUDE])
+   AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])
+fi
+AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
+
+cat <<EOF
+****************************************************************
+*                  Checking for Tcl/Tk                         *
+****************************************************************
+EOF
+AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
+
+AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
+            [specify the tcl library to use (e.g. tcl8.4)]),
+            [], [with_tcl=yes])
+dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
+dnl with_tcl=no   bail out
+dnl otherwise     use the specified version
+
+if test .$with_tcl = .no; then
+   use_tcl=none
+elif test .$with_tcl = .yes; then
+	for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
+		ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
+		if test .$use_tcl != .; then break; fi
+	done
+        AC_DEFINE(TCL,[],[Whether Tcl is available])
+else
+	ES_ADDPATH_CHECK_LIB($with_tcl, Tcl_Init, [use_tcl=$with_tcl])
+fi
+
+# check the results
+if test .$use_tcl = . ; then
+   # Tcl was not found
+   case $target_os in
+	*darwin*) AC_MSG_NOTICE(
+[If you have Tcl installed, make sure that either libtcl<tclversion>.dylib is
+ in one of the library paths set by LDFLAGS, or that you set the appropriate
+ apple gcc -framework option in CPPFLAGS and LDFLAGS.]) ;;
+	*) AC_MSG_FAILURE([
+********************************************************************************
+* Could not link against the (static) Tcl library (libtcl*.a).                 *
+* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)!  *
+********************************************************************************
+]) ;;
+   esac
+fi
+
+case $target_os in
+  *linux*)  # path used by *buntu
+	  extrapaths=/usr/include/$version ;;
+esac
+
+if test .$use_tcl != .none; then
+   ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
+			[AC_MSG_FAILURE([
+********************************************************************************
+* Could not find the Tcl header files (tcl.h).                                 *
+* Please add the include path to CPPFLAGS                                      *
+* (e.g. configure CPPFLAGS=-I/usr/include)!                                    *
+********************************************************************************
+])], $extrapaths)
+fi
+
+if test .$use_tcl = .; then
+   use_tcl=none
+fi
+
+AM_CONDITIONAL(TCL, [test .$use_tcl != .none])
+
+##################################
+# check for tk
+AC_ARG_WITH(tk,
+	AS_HELP_STRING([--with-tk=VERSION],[whether to use Tk, and which version to use]),
+	[], [with_tk=no])
+dnl with_tk=no   don't use Tk
+dnl with_tk=yes  try to find a working Tk version, bail out if none is found
+dnl otherwise    use the specified version
+if test .$with_tk != .no; then
+	# test for X11
+	AC_PATH_XTRA
+	saved_CPPFLAGS=$CPPFLAGS
+	saved_LDFLAGS=$LDFLAGS
+	saved_LIBS=$LIBS
+	CPPFLAGS="$CPPFLAGS $X_CXXFLAGS"
+	LDFLAGS="$LDFLAGS $X_LIBS"
+	LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
+	AC_LINK_IFELSE([AC_LANG_CALL([],[XOpenDisplay])],[x11_works=yes],[x11_works=no])
+	if test $x11_works = no; then
+		AC_MSG_WARN([could not link against X11, hoping Tk works without])
+		CPPFLAGS=$saved_CPPFLAGS
+		LDFLAGS=$saved_LDFLAGS
+		LIBS=$saved_LIBS
+	fi
+	# now test whether Tk can be found
+	if test .$with_tk = .yes; then
+		for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk; do
+			ES_ADDPATH_CHECK_LIB($version, Tk_Init, [use_tk=$version], [])
+			if test .$use_tk != .; then break; fi
+		done
+	else
+		ES_ADDPATH_CHECK_LIB($with_tk, Tk_Init, [use_tk=$with_tk], [])
+	fi
+	if test .$use_tk = .; then
+		case $target_os in
+		*darwin*) AC_MSG_ERROR(
+[If you have Tk installed, make sure that either libtcl<tclversion>.dylib is
+ in one of the library paths set by LDFLAGS, or that you set the appropriate
+ apple gcc -framework option in CPPFLAGS and LDFLAGS.]) ;;
+		*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
+		esac
+	fi
+	if test .$use_tk = .tk; then
+		if test .$use_tcl != .tcl; then
+			AC_MSG_WARN([You are using a generic Tk version, but a defined Tcl version. This may cause problems.
+Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
+		fi
+	fi
+	case $target_os in
+	*linux*)  # path used by *buntu
+		  extrapaths="/usr/include/$version /usr/include/$use_tcl" ;;
+	(*) ;;
+	esac
+	ES_ADDPATH_CHECK_HEADER(tk.h, [], 
+		[AC_MSG_ERROR([Tk headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4).])
+		]
+		,$extrapaths)
+	AC_DEFINE_UNQUOTED(TK,$use_tk,[Whether to use Tk])
+else
+	use_tk=none
+fi
+
+cat <<EOF
+****************************************************************
 *                   Other settings                             *
 ****************************************************************
 EOF
@@ -635,18 +657,41 @@ using profiling flags	= $enable_profiling
 
 Libraries
 ---------
-Tcl version		= $use_tcl
-Tk version		= $use_tk
 FFTW 			= $fftw_found
 efence			= $with_efence
+
+Cuda
+----
+CUDA compiler		= $NVCC
+EOF
+
+if test .$NVCC != .no; then
+   echo "CUDA flags		= $NVCCFLAGS"
+fi
+
+cat  <<EOF
+
+Tcl/Tk
+------
+Tcl version		= $use_tcl
+Tk version		= $use_tk
 
 Python
 ------
 python			= $PYTHON
+build python interface  = $with_python_interface
+EOF
+
+if test .$with_python_interface = .yes; then
+  cat <<EOF
 preprocessor flags      = $PYTHON_CPPFLAGS
 linker flags            = $PYTHON_LDFLAGS
 extra flags             = $PYTHON_EXTRA_LIBS
 extra linker flags      = $PYTHON_EXTRA_LDFLAGS
+EOF
+fi
+
+cat <<EOF
 
 Other settings
 --------------
@@ -660,16 +705,10 @@ makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 dot			= $DOT
-EOF
-
-if test x$cuda_ok = xyes; then
-cat <<EOF
-CUDA compiler		= $NVCC
-CUDA flags		= $NVCCFLAGS
 
 EOF
-else
-   echo
+
+if test x$cuda_ok = xno; then
    echo "CUDA disabled or not supported."
 fi
 
@@ -687,6 +726,9 @@ if test .$bibtex = .no; then
 fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
+fi
+if test .$with_python_interface = .no; then
+   echo "Not building Python interface."
 fi
 if test .$use_tcl = .no; then
    echo "Not building Tcl interface."

@@ -28,6 +28,7 @@ noinst_LTLIBRARIES = libEspresso.la
 # List the sources of the Espresso binary here
 # config-features.cpp must be at the beginning so that it is compiled first
 nodist_libEspresso_la_SOURCES = 
+libEspresso_la_LIBTOOLFLAGS = --tag=disable-static
 libEspresso_la_SOURCES = \
 	config-features.cpp \
 	adresso.cpp adresso.hpp \
@@ -161,6 +162,7 @@ if TCL
 
 noinst_LTLIBRARIES += libEspressoTcl.la
 
+libEspressoTcl_la_LIBTOOLFLAGS = --tag=disable-static
 libEspressoTcl_la_SOURCES = \
 	tcl/adresso_tcl.cpp tcl/adresso_tcl.hpp \
 	tcl/bin_tcl.cpp \

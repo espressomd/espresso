@@ -16,12 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+AM_DEFAULT_SOURCE_EXT = .cpp
+LIBS =  ../src/libEspresso.la $(PYTHON_EXTRA_LIBS) @LIBS@
+
+if PYTHON_INTERFACE
+
 myconfig.pxi: ../src/myconfig-final.hpp
 	$(PYTHON) $(srcdir)/make_myconfig.py ../src/myconfig-final.hpp
 
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
-LIBS =  ../src/libEspresso.la $(PYTHON_EXTRA_LIBS)
 
 #SUFFIXES = .pyx
 .pyx.cpp:
@@ -42,7 +46,6 @@ thermostat.cpp: thermostat.pxd myconfig.pxi
 utils.cpp: utils.pxd myconfig.pxi
 
 BUILT_SOURCES = 
-AM_DEFAULT_SOURCE_EXT = .cpp
 pyexec_LTLIBRARIES = \
 	espresso.la \
 	particle_data.la \
@@ -61,4 +64,4 @@ pyexec_LTLIBRARIES = \
 #	lb.la
 #	cuda_init.la
 
-
+endif
