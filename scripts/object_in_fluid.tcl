@@ -83,13 +83,13 @@ proc oif_info { } {
 	global oif_first_bond_id
 	global oif_first_part_id
 	global oif_first_inter_id
-    global oif_templates
-    global oif_template_particles
+	global oif_templates
+	global oif_template_particles
 	global oif_template_edges
-    global oif_template_triangles
+	global oif_template_triangles
 	global oif_template_bending_incidences
-    global oif_object_starting_particles
-    global oif_template_starting_triangles
+	global oif_object_starting_particles
+	global oif_template_starting_triangles
 
 	puts " "
 	puts "*************************************"
@@ -1404,12 +1404,11 @@ proc oif_object_set { args } {
 	global oif_ntriangles
 	global oif_nedges
 	global oif_triangles
-	global oif_startingParticles
-	global oif_startingTriangles
 	global oif_firstBondId
 	global oif_firstPartId
 	global oif_objects
-
+	global oif_object_starting_particles
+	global oif_template_starting_triangles
 
 	set n_args 0
 		# counts the number of arguments
@@ -1616,13 +1615,13 @@ proc oif_object_output { args } {
 	global oif_nedges
 	global oif_triangles
 	global oif_object_starting_particles
-	global oif_startingTriangles
 	global oif_firstBondId
 	global oif_firstPartId
 	global oif_firstTriangleId
 	global oif_objects
 	global oif_template_starting_triangles
 	global oif_template_triangles
+	
 	set n_args 0
 		# counts the number of arguments
 	foreach arg $args {
@@ -1750,7 +1749,6 @@ proc oif_object_analyze { args } {
 	global oif_nedges
 	global oif_triangles
 	global oif_object_starting_particles
-	global oif_startingTriangles
 	global oif_firstBondId
 	global oif_firstPartId
 	global oif_firstTriangleId
@@ -2076,7 +2074,6 @@ proc oif_mesh_analyze { args } {
 	global oif_nedges
 	global oif_triangles
 	global oif_object_starting_particles
-	global oif_startingTriangles
 	global oif_firstBondId
 	global oif_firstPartId
 

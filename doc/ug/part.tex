@@ -644,7 +644,7 @@ All these examples do the same - making exact copies of particles 1 through 4.
 \begin{essyntax}
   \variant{1} 
   constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
-  dist \var{d} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
+  dist \var{d} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}} \opt{only_positive \var{flag}}
   
   \variant{2}
   constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
@@ -735,6 +735,9 @@ the \codebox{inter} command. In variants \variant{1} to \variant{7}, constraints
  The reflection property is only activated if an interaction is defined between
  a particular particle and the constraint! This will usually be a lennard-jones
  interaction with $\epsilon=0$, but finite interaction range.
+ In variant \variant{1} if the \codebox{only_positive} flag is set to 1, interactions are
+ only calculated if the particle is on the side of the wall in which the normal
+ vector is pointing. This has only an effect for penetrable walls.
 
 Variants \variant{8} and \variant{9} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the

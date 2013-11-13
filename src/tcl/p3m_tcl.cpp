@@ -134,6 +134,7 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   }
 
   if (ARG0_IS_S("gpu")) {
+    puts("Setting coulomb method to COULOMB_P3M_GPU");
     coulomb.method = COULOMB_P3M_GPU;
     
     argc--;

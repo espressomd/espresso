@@ -35,6 +35,8 @@ User-visible changes
 
 * The noise type in thermalized Lattice-Boltzmann is now choosable via tcl.
 
+* Interaction with a wall can be restricted to the inside.
+
 Changes visible for developers
 ------------------------------
 
