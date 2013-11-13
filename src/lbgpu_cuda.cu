@@ -2065,6 +2065,7 @@ __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1,
   }
 }
 
+/* // TODO Remove
 #ifdef ELECTROKINETICS
 __device__ void calc_m0_from_species(unsigned int index, float* mode, EK_parameters *ek_parameters_gpu) {
   mode[0] = 0.0;
@@ -2074,6 +2075,13 @@ __device__ void calc_m0_from_species(unsigned int index, float* mode, EK_paramet
   
   mode[0] /= powf(para.agrid, 3);
   mode[0] -= para.rho[0];
+}
+#endif
+*/
+
+#if defined(ELECTROKINETICS) && defined(EK_REACTION)
+__device__ void reset_mode0_homogeneously(float* mode) {
+  mode[0] = 0.0;
 }
 #endif
 
@@ -2671,9 +2679,21 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
     calc_m_from_n(n_a, index, mode);
+/* TODO remove
 #ifdef ELECTROKINETICS
-    /**calculate density from individual species' densities*/
-//    if (ek_initialized) calc_m0_from_species(index, mode, ek_parameters_gpu); //TODO remove
+//  calculate density from individual species' densities
+//  if (ek_initialized) calc_m0_from_species(index, mode, ek_parameters_gpu); //TODO remove
+#endif
+*/
+#if defined(ELECTROKINETICS) && defined(EK_REACTION)
+  /** reset the density profile to homogeneous to avoid
+      LB internal pressure contribution */
+  if ( ek_parameters_gpu->reaction_species[0] != -1 &&
+       ek_parameters_gpu->reaction_species[1] != -1 &&
+       ek_parameters_gpu->reaction_species[2] != -1 )
+  {
+    reset_mode0_homogeneously(mode);
+  }
 #endif
     /**lb_relax_modes*/
     relax_modes(mode, index, node_f,d_v);
