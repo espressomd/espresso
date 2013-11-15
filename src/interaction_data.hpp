@@ -869,6 +869,11 @@ typedef struct {
 
 } Constraint_stomatocyte;
 
+/** Parameters for a BOX constraint. */
+typedef struct {
+  int value;
+} Constraint_box;
+
 //ER
 /** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
 typedef struct{

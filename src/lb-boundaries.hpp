@@ -58,6 +58,8 @@
 #define LB_BOUNDARY_RHOMBOID 5
 /** stomatocyte shaped constraint applied */
 #define LB_BOUNDARY_STOMATOCYTE 6
+/** box shaped constraint (for electrokinetics reaction code) */
+#define LB_BOUNDARY_BOX 7
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
@@ -75,6 +77,7 @@ typedef struct {
     Constraint_rhomboid rhomboid;
     Constraint_pore pore;
     Constraint_stomatocyte stomatocyte;
+    Constraint_box box;
   } c;
   double force[3];
   double velocity[3];

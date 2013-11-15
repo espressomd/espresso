@@ -21,6 +21,7 @@
 #define ELECTROKINETICS_H
 
 #include "config.hpp"
+#include "lb-boundaries.hpp"
 
 //note that we need to declare the ek_parameters struct and instantiate it for LB_GPU
 //to compile when electrokinetics is not compiled in. This seemed more elegant than
@@ -58,7 +59,6 @@ typedef struct {
   float rho_product0_reservoir;
   float rho_product1_reservoir;
   float reaction_ct_rate;
-  float reaction_radius;
   float reaction_fraction_0;
   float reaction_fraction_1;
   cufftReal* greensfcn;
@@ -82,9 +82,6 @@ typedef struct {
 
 #ifdef ELECTROKINETICS
 
-
-
-//#ifdef ELECTROKINETICS
 
 /* Constants enumerating the links of a node in the link flux system EK_LINK_xyz
    is the number of the link in direction (x, y, z), where x, y and z can be 0, 
@@ -133,11 +130,13 @@ extern int ek_initialized;
 void ek_integrate();
 void ek_print_parameters();
 void ek_print_lbpar();
+void lb_set_ek_pointer(EK_parameters* pointeradress);
 unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char* filename);
 int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
 int ek_print_vtk_lbforce(char* filename);
+int ek_print_vtk_reaction_tags(char* filename);
 int ek_lb_print_vtk_density(char* filename);
 int ek_lb_print_vtk_velocity(char* filename);
 int ek_init();
@@ -162,15 +161,11 @@ int ek_node_print_density( int species, int x, int y, int z, double* density );
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
 #endif
 
-
 #ifdef EK_REACTION
-int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_radius, float reaction_fraction_0, float reaction_fraction_1 );
+int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1 );
 int ek_print_vtk_pressure(char* filename);
+int ek_tag_reaction_nodes( LB_Boundary* lbboundary, char reaction_type );
 #endif
-
-//#endif /* ELECTROKINETICS */
-
-
 
 #endif /* CUDA */
 

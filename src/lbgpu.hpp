@@ -28,8 +28,6 @@
 
 #include "utils.hpp"
 #include "config.hpp"
-#include "electrokinetics.hpp"
-
 
 #ifdef LB_GPU
 
@@ -210,6 +208,7 @@ extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 extern int n_lb_boundaries;
 #ifdef ELECTROKINETICS
 extern LB_node_force_gpu node_f;
+extern int ek_initialized;
 #endif
 
 
@@ -225,9 +224,6 @@ void lb_get_device_values_pointer(LB_rho_v_gpu** pointeradress);
 void lb_get_boundary_force_pointer(float** pointeradress);
 void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
-#ifdef ELECTROKINETICS
-void lb_set_ek_pointer(EK_parameters* pointeradress);
-#endif
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */

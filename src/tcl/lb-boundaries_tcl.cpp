@@ -247,7 +247,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 {
   int i;
   double norm;
-  
+
   lbb->type = LB_BOUNDARY_WAL;
   
   /* invalid entries to start of */
@@ -990,6 +990,14 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
+
+  return (TCL_OK);
+}
+
+int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
+{  
+  lbb->type = LB_BOUNDARY_BOX;
+  lbb->c.box.value = 0;
 
   return (TCL_OK);
 }

@@ -86,7 +86,7 @@ static __device__ __constant__ int ek_initialized_gpu = 0;
 static size_t size_of_boundindex;
 #endif
 
-static EK_parameters* ek_parameters_gpu;
+EK_parameters* lb_ek_parameters_gpu;
 
 /** pointers for additional cuda check flag*/
 static int *gpu_check = NULL;
@@ -2903,12 +2903,6 @@ void lb_get_para_pointer(LB_parameters_gpu** pointeradress) {
   }
 }
 
-#ifdef ELECTROKINETICS
-void lb_set_ek_pointer(EK_parameters* pointeradress) {
-  ek_parameters_gpu = pointeradress;
-}
-#endif
-
 void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress) {
   *pointeradress = &lbpar_gpu;
 }
@@ -3440,7 +3434,7 @@ void lb_integrate_GPU() {
   if (intflag == 1)
   {
 
-    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, ek_parameters_gpu));
+    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU
 
@@ -3454,7 +3448,7 @@ void lb_integrate_GPU() {
   else
   {
 
-    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_rho_v, node_f, ek_parameters_gpu));
+    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_a;
 #ifdef LB_BOUNDARIES_GPU
 

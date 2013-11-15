@@ -25,7 +25,7 @@
 
 
 #include <stdio.h>
-//#include "lb-boundaries.hpp" //TODO: needed to get rid of the code duplication below
+#include "lb-boundaries.hpp"
 #include "electrokinetics.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -36,8 +36,6 @@
 
 #ifdef ELECTROKINETICS
 
-
-
   /* TODO: get rid of this code duplication with lb-boundaries.h by solving the
            cuda-mpi incompatibility */
 
@@ -45,7 +43,8 @@
 #define LATTICE_LB_CPU   1
 #define LATTICE_LB_GPU   2
 extern int lattice_switch;
-int ek_initialized = 0;
+extern int ek_initialized;
+extern EK_parameters* lb_ek_parameters_gpu;
 
 // Used to limit register use for the pressure calculation
 #define EK_LINK_U00_pressure 0
@@ -56,34 +55,10 @@ int ek_initialized = 0;
 #define EK_LINK_00D_pressure 5
      
 #ifdef EK_BOUNDARIES
-
-  typedef struct {
-
-    int type;
-    double slip_pref;
-
-    union {
-      Constraint_wall wal;
-      Constraint_sphere sph;
-      Constraint_cylinder cyl;
-      Constraint_rhomboid rhomboid;
-      Constraint_pore pore;
-    } c;
-    
-    double force[3];
-    double velocity[3];
-    
-  #ifdef EK_BOUNDARIES
-    float charge_density;
-  #endif
-
-  } LB_Boundary;
-
   extern int n_lb_boundaries;
   extern LB_Boundary *lb_boundaries;
 
   void lb_init_boundaries();
-  
 #endif
   /* end of code duplication */
 
@@ -101,8 +76,7 @@ int ek_initialized = 0;
                                   {0.0,  0.0, 0.0},
                                   { -1,   -1,  -1},
                                   -1.0, -1.0, -1.0,
-                                  -1.0, -1.0, -1.0, 
-                                  -1.0
+                                  -1.0, -1.0, -1.0
                                 };
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
@@ -112,6 +86,7 @@ int ek_initialized = 0;
   LB_parameters_gpu *ek_lbparameters_gpu;
   CUDA_particle_data *particle_data_gpu;
   float *ek_lb_boundary_force;
+  char *ek_node_is_catalyst;
 
   cufftHandle plan_fft;
   cufftHandle plan_ifft;
@@ -121,6 +96,7 @@ int ek_initialized = 0;
   extern LB_parameters_gpu lbpar_gpu;
   extern LB_node_force_gpu node_f;
   extern LB_nodes_gpu *current_nodes;
+  extern EK_parameters *lb_ek_parameters;
   
   LB_rho_v_gpu *ek_lb_device_values;
 
@@ -1529,41 +1505,6 @@ __global__ void ek_reaction( ) {
     } 
   }
 }
-
-
-__global__ void ek_reaction_tag( ) {
-  unsigned int index = ek_getThreadIndex();
-  unsigned int coord[3];
-
-  float react_rad = ek_parameters_gpu.reaction_radius;
-// TODO : RESET to 10.0
-  float bound_rad = 4.0f;
-  float total_rad = bound_rad + react_rad;
-
-  rhoindex_linear2cartesian(index, coord);
-
-  if ( index < ek_parameters_gpu.number_of_nodes )
-  {
-    float node_radius2 = ((coord[0] + 0.5f) - ek_parameters_gpu.dim_x*0.5f)*((coord[0] + 0.5f) - ek_parameters_gpu.dim_x*0.5f) +
-                         ((coord[1] + 0.5f) - ek_parameters_gpu.dim_y*0.5f)*((coord[1] + 0.5f) - ek_parameters_gpu.dim_y*0.5f) +
-                         ((coord[2] + 0.5f) - ek_parameters_gpu.dim_z*0.5f)*((coord[2] + 0.5f) - ek_parameters_gpu.dim_z*0.5f);
-
-    if ( node_radius2 <= total_rad*total_rad && node_radius2 > bound_rad*bound_rad && (coord[2] + 0.5f) < ek_parameters_gpu.dim_z*0.5f )
-    {
-      ek_parameters_gpu.node_is_catalyst[index] = 1;
-    }
-    else if ( coord[0] == ek_parameters_gpu.dim_x - 1 || coord[0] == 0 ||
-              coord[1] == ek_parameters_gpu.dim_y - 1 || coord[1] == 0 ||
-              coord[2] == ek_parameters_gpu.dim_z - 1 || coord[2] == 0 )
-    {
-      ek_parameters_gpu.node_is_catalyst[index] = 2;
-    }
-    else
-    {
-      ek_parameters_gpu.node_is_catalyst[index] = 0;
-    }
-  }
-}
 #endif
 
 
@@ -1871,9 +1812,11 @@ void ek_init_species_density_wallcharge( float* wallcharge_species_density,
   
   if( wallcharge_species != -1 ) {
   
-    cuda_safe_mem( cudaMemcpy( ek_parameters.rho[wallcharge_species], wallcharge_species_density,
+    cuda_safe_mem( cudaMemcpy( ek_parameters.rho[wallcharge_species], 
+                               wallcharge_species_density,
                                ek_parameters.number_of_nodes * sizeof( float ),
-                               cudaMemcpyHostToDevice                                             ) );
+                               cudaMemcpyHostToDevice )
+                 );
   }
 }
 #endif
@@ -1976,6 +1919,7 @@ int ek_init() {
 #ifdef EK_REACTION
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.pressure,
                              ek_parameters.number_of_nodes * sizeof( float ) ) );
+    ek_node_is_catalyst = (char*) calloc( ek_parameters.number_of_nodes , sizeof( char ) );
 #endif
 
     lb_get_device_values_pointer( &ek_lb_device_values );
@@ -2115,10 +2059,9 @@ int ek_init() {
 #endif
 
 #ifdef EK_REACTION
+  // added to ensure that the pressure is set to the proper value in the first time step
   blocks_per_grid_x = (ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
   dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-  KERNELCALL(ek_reaction_tag, dim_grid, threads_per_block, ());
-  // added to ensure that the pressure is set to the proper value in the first time step
   KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, ek_lbparameters_gpu, ek_lb_device_values ) );
 #endif
 
@@ -2127,6 +2070,11 @@ int ek_init() {
   //ek_print_parameters(); //TODO delete
 
   return 0;
+}
+
+
+void lb_set_ek_pointer(EK_parameters* pointeradress) {
+  lb_ek_parameters_gpu = pointeradress;
 }
 
 
@@ -2178,7 +2126,7 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < lbpar_gpu.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f %f %f ", host_values[ i ].v[0],
+    fprintf( fp, "%e %e %e ", host_values[ i ].v[0],
                               host_values[ i ].v[1],
                               host_values[ i ].v[2]  );
   }
@@ -2240,7 +2188,7 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < lbpar_gpu.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f ", host_values[ i ].rho[ 0 ] );
+    fprintf( fp, "%e ", host_values[ i ].rho[ 0 ] );
   }
   
   free( host_values );
@@ -2294,7 +2242,7 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f\n", densities[ i ]/(ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) );
+    fprintf( fp, "%e\n", densities[ i ]/(ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) );
   }
   
   free( densities );
@@ -2403,7 +2351,8 @@ int ek_print_vtk_flux( int species, char* filename ) {
                 ( ek_parameters.species_index[ species ], *current_nodes, node_f )                     );
 #endif
   
-    cuda_safe_mem( cudaMemcpy( fluxes, ek_parameters.j,
+    cuda_safe_mem( cudaMemcpy( fluxes, 
+                               ek_parameters.j,
                                ek_parameters.number_of_nodes * 13*sizeof( float ),
                                cudaMemcpyDeviceToHost )
                  );
@@ -2510,7 +2459,7 @@ LOOKUP_TABLE default\n",
     flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]+1, EK_LINK_DUU-13) ];
 
 
-    fprintf( fp, "%f %f %f\n",
+    fprintf( fp, "%e %e %e\n",
              flux_local_cartesian[0] * ek_parameters.agrid / ek_parameters.time_step,
              flux_local_cartesian[1] * ek_parameters.agrid / ek_parameters.time_step,
              flux_local_cartesian[2] * ek_parameters.agrid / ek_parameters.time_step );
@@ -2533,7 +2482,8 @@ int ek_print_vtk_potential( char* filename ) {
 
   float* potential = (float*) malloc( ek_parameters.number_of_nodes * sizeof( cufftReal ) );
   
-  cuda_safe_mem( cudaMemcpy( potential, ek_parameters.charge_potential,
+  cuda_safe_mem( cudaMemcpy( potential, 
+                             ek_parameters.charge_potential,
                              ek_parameters.number_of_nodes * sizeof( cufftReal ),
                              cudaMemcpyDeviceToHost )                          
                );
@@ -2558,7 +2508,7 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f\n", potential[ i ] );
+    fprintf( fp, "%e\n", potential[ i ] );
   }
   
   free( potential );
@@ -2578,7 +2528,8 @@ int ek_print_vtk_lbforce( char* filename ) {
 
   float* lbforce = (float*) malloc( ek_parameters.number_of_nodes * 3 *sizeof( float ) );
   
-  cuda_safe_mem( cudaMemcpy( lbforce, node_f.force,
+  cuda_safe_mem( cudaMemcpy( lbforce, 
+                             node_f.force,
                              ek_parameters.number_of_nodes * 3 * sizeof( float ),
                              cudaMemcpyDeviceToHost )
                );
@@ -2603,7 +2554,7 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f %f %f\n", lbforce[ i ],
+    fprintf( fp, "%e %e %e\n", lbforce[ i ],
                                lbforce[ i + ek_parameters.number_of_nodes ],
                                lbforce[ i + 2 * ek_parameters.number_of_nodes ] );
   }
@@ -2625,7 +2576,8 @@ int ek_print_vtk_pressure( char* filename ) {
 
   float* pressure = (float*) malloc( ek_parameters.number_of_nodes * sizeof( float ) );
   
-  cuda_safe_mem( cudaMemcpy( pressure, ek_parameters.pressure,
+  cuda_safe_mem( cudaMemcpy( pressure, 
+                             ek_parameters.pressure,
                              ek_parameters.number_of_nodes * sizeof( float ),
                              cudaMemcpyDeviceToHost )
                );
@@ -2650,10 +2602,46 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f\n", pressure[ i ]/(ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) );
+    fprintf( fp, "%e\n", pressure[ i ]/(ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) );
   }
   
   free( pressure );
+  fclose( fp );
+  
+  return 0;
+}
+
+int ek_print_vtk_reaction_tags( char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
+
+  if( fp == NULL ) {
+    return 1;
+  }
+
+  fprintf(fp, "\
+# vtk DataFile Version 2.0\n\
+rection_tags\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS reaction_tags int 1\n\
+LOOKUP_TABLE default\n",
+          ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+          ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
+          ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+          ek_parameters.number_of_nodes                                              );
+
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
+  
+    fprintf( fp, "%d\n", ek_node_is_catalyst[ i ] );
+  }
+  
   fclose( fp );
   
   return 0;
@@ -2692,8 +2680,7 @@ void ek_print_parameters() {
   printf( "  float rho_reactant_reservoir = %f;\n",     ek_parameters.rho_reactant_reservoir);
   printf( "  float rho_product0_reservoir = %f;\n",     ek_parameters.rho_product0_reservoir);
   printf( "  float rho_product1_reservoir = %f;\n",     ek_parameters.rho_product1_reservoir);
-  printf( "  float reaction_ct_rate = %f;\n",           ek_parameters.reaction_ct_rate);
-  printf( "  float reaction_radius = %f;\n",            ek_parameters.reaction_radius); 
+  printf( "  float reaction_ct_rate = %f;\n",           ek_parameters.reaction_ct_rate); 
   printf( "  float reaction_fraction_0 = %f;\n",        ek_parameters.reaction_fraction_0);
   printf( "  float reaction_fraction_1 = %f;\n",        ek_parameters.reaction_fraction_0);
   printf( "  float* j = %p;\n",                         ek_parameters.j );
@@ -2973,7 +2960,7 @@ int ek_accelerated_frame_print_boundary_velocity( double* accelerated_boundary_v
 
 
 #ifdef EK_REACTION
-int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_radius, float reaction_fraction_0, float reaction_fraction_1 ) 
+int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1 ) 
 {
   if ( ek_parameters.species_index[reactant] == -1 ||
        ek_parameters.species_index[product0] == -1 ||
@@ -2989,15 +2976,88 @@ int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant
   ek_parameters.rho_product1_reservoir = rho_product1_reservoir;
 
   ek_parameters.reaction_ct_rate = reaction_ct_rate;
-  ek_parameters.reaction_radius = reaction_radius; 
 
   ek_parameters.reaction_fraction_0 = reaction_fraction_0;
   ek_parameters.reaction_fraction_1 = reaction_fraction_1;  
 
   return 0;
 }
+
+int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
+{
+
+#ifdef EK_BOUNDARIES
+  char *errtxt;
+  double pos[3], dist, dist_vec[3];
+
+  for(int z=0; z<int(ek_parameters.dim_z); z++) {
+  for(int y=0; y<int(ek_parameters.dim_y); y++) {
+  for(int x=0; x<int(ek_parameters.dim_x); x++) {	 
+
+    pos[0] = x + 0.5;
+    pos[1] = y + 0.5;
+    pos[2] = z + 0.5;
+
+    switch (boundary->type)
+    {
+      case LB_BOUNDARY_WAL:
+        calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.wal, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_SPH:
+        calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.sph, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_CYL:
+        calculate_cylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.cyl, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_RHOMBOID:
+        calculate_rhomboid_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.rhomboid, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_POR:
+        calculate_pore_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.pore, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_STOMATOCYTE:
+        calculate_stomatocyte_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.stomatocyte, &dist, dist_vec);
+        break;
+
+      case LB_BOUNDARY_BOX:
+        dist = -1.0;
+        break;
+                
+      default:
+        errtxt = runtime_error(128);
+        ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in ek_tag_reaction_nodes()\n", boundary->type);
+    }
+
+    if( dist <= 0.0 )
+    {
+      ek_node_is_catalyst[
+                           z * ek_parameters.dim_y * ek_parameters.dim_x +
+                           y * ek_parameters.dim_x +
+                           x
+                         ] = reaction_type;
+    }
+
+  }}}
+
+  cuda_safe_mem( cudaMemcpy( ek_parameters.node_is_catalyst, 
+                             ek_node_is_catalyst, 
+                             ek_parameters.number_of_nodes * sizeof( char ), 
+                             cudaMemcpyHostToDevice ) 
+               );
+
+  return 0;
+#else 
+  printf("ERROR: Need boundaries (EK_BOUNDARIES) for the catalytic reaction tagging.\n");
+  return 1;
 #endif
 
+}
+#endif
 
 
 #endif /* ELECTROKINETICS */

@@ -155,7 +155,7 @@ static int max_ran = 1000000;
 static int fluidstep = 0;
 
 /** c_sound_square in LB units*/
-static float c_sound_sq = 1.f/3.f;
+static float c_sound_sq = 1.0f/3.0f;
 
 //clock_t start, end;
 int i;
@@ -163,6 +163,7 @@ int i;
 
 int n_extern_nodeforces = 0;
 LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
+int ek_initialized = 0;
 
 /*-----------------------------------------------------------*/
 /** main of lb_gpu_programm */
