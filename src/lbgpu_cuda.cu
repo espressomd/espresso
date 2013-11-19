@@ -1221,12 +1221,11 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
         node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[1]*force_factor;
         node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2]*force_factor;
       }
-      else{
-/* TODO : UNCOMMENT IF YOU ONLY HAVE LB AND NO EK
+      else
+      {
         node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
         node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
         node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-*/
       }
 #else
       /** reset force */
