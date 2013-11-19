@@ -82,6 +82,7 @@ static float* lb_boundary_velocity = NULL;
 static int *boundary_node_list;
 static int *boundary_index_list;
 static __device__ __constant__ int n_lb_boundaries_gpu = 0;
+static __device__ __constant__ int ek_initialized_gpu = 0;
 static size_t size_of_boundindex;
 #endif
 
@@ -2064,20 +2065,6 @@ __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1,
   }
 }
 
-/* // TODO Remove
-#ifdef ELECTROKINETICS
-__device__ void calc_m0_from_species(unsigned int index, float* mode, EK_parameters *ek_parameters_gpu) {
-  mode[0] = 0.0;
-
-  for(int i = 0; i < ek_parameters_gpu->number_of_species; i++) 
-    mode[0] += ek_parameters_gpu->rho[i][index];
-  
-  mode[0] /= powf(para.agrid, 3);
-  mode[0] -= para.rho[0];
-}
-#endif
-*/
-
 #if defined(ELECTROKINETICS)
 __device__ void reset_mode0_homogeneously(float* mode) {
   mode[0] = 0.0;
@@ -2678,23 +2665,20 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
     calc_m_from_n(n_a, index, mode);
-/* TODO remove
-#ifdef ELECTROKINETICS
-//  calculate density from individual species' densities
-//  if (ek_initialized) calc_m0_from_species(index, mode, ek_parameters_gpu); //TODO remove
-#endif
-*/
 #if defined(ELECTROKINETICS)
   /** reset the density profile to homogeneous to avoid
       LB internal pressure contribution */
-  if ( ( ek_parameters_gpu->reaction_species[0] != -1 &&
-         ek_parameters_gpu->reaction_species[1] != -1 &&
-         ek_parameters_gpu->reaction_species[2] != -1 ) ||
-       ( ek_parameters_gpu->accelerated_frame_enabled == 1 &&
-         n_lb_boundaries_gpu > 0 )
-     )
+  if ( ek_initialized_gpu )
   {
-    reset_mode0_homogeneously(mode);
+    if ( ( ek_parameters_gpu->reaction_species[0] != -1 &&
+           ek_parameters_gpu->reaction_species[1] != -1 &&
+           ek_parameters_gpu->reaction_species[2] != -1 ) ||
+         ( ek_parameters_gpu->accelerated_frame_enabled == 1 &&
+           n_lb_boundaries_gpu > 0 )
+       )
+    {
+      reset_mode0_homogeneously(mode);
+    }
   }
 #endif
     /**lb_relax_modes*/
@@ -3042,6 +3026,7 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
 
   //copy parameters, especially number of parts to gpu mem
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(cudaMemcpyToSymbol(ek_initialized_gpu, &ek_initialized, sizeof(int)));
 }
 
 #ifdef LB_BOUNDARIES_GPU
