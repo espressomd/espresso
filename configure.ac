@@ -150,7 +150,7 @@ cat <<EOF
 ****************************************************************
 EOF
 
-AC_PROG_RANLIB
+LT_INIT([dlopen])
 AC_PROG_AWK
 AC_PROG_EGREP
 AC_PROG_INSTALL
@@ -168,19 +168,7 @@ AM_CONDITIONAL(HAVE_LATEX,
 	[test .$PDFLATEX != .no && 
 	test .$MAKEINDEX != .no && 
 	test .$BIBTEX != .no])
-AC_PATH_PROG(PYTHON,python,no)
-AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
 
-if test .$PYTHON != .no; then
-   # Check whether python -B works
-   AC_MSG_CHECKING([whether python -B works])
-   if $PYTHON -B -c pass > /dev/null 2>&1; then
-      PYTHON="$PYTHON -B"
-      AC_MSG_RESULT(yes)
-   else
-      AC_MSG_RESULT(no)
-   fi
-fi
 
 cat <<EOF
 ****************************************************************
@@ -219,8 +207,229 @@ EOF
 
 LIBS="$LIBS -lm"
 
+
 ##################################
-# check for tcl
+# check for FFTW
+# with_fftw=no    don't use FFTW
+# with_fftw=yes   try to find a working FFTW, bail out if none is found
+# not given	  try to find a working FFTW, continue if not found
+AC_MSG_CHECKING([whether to use FFTW])
+AC_ARG_WITH([fftw],
+	AS_HELP_STRING([--with-fftw],
+                       [specify whether or not to use FFTW3 [guess]]),
+	, with_fftw=guess)
+AC_MSG_RESULT($with_fftw)
+
+AS_IF([test x$with_fftw = xno], [fftw_found=no],
+  [ AC_SEARCH_LIBS(fftw_plan_many_dft, [fftw3], [fftw_found=yes], [fftw_found=no])
+    AS_IF([test x$fftw_found = xyes],
+      [AC_CHECK_HEADER([fftw3.h],, [fftw_found=no])])
+  ])
+
+AS_IF([test x$fftw_found = xno],[
+  AS_IF([test x$with_fftw = xyes],[
+    AC_MSG_FAILURE([FFTW requested, but FFTW was not found!])
+    ],[ AS_IF([test x$with_fftw = xguess], [
+          AC_MSG_WARN([FFTW3 not found. Some features will not be available!])
+         ])
+    ])
+  ])
+AS_IF([test x$fftw_found = xyes],[
+  AC_DEFINE(FFTW,[],[Whether FFTW is available])])
+
+##################################
+# check for CUDA
+AC_MSG_CHECKING([whether to use CUDA])
+AC_ARG_WITH([cuda],
+	AS_HELP_STRING([--with-cuda@<:@=DIR@:>@], [specify
+	where CUDA is installed.  The cuda compiler can also be
+	specified by setting the NVCC environment variable. The CUDA
+	library and header can be manually specified by using
+	CPPFLAGS, LDFLAGS and LIBS. [guess]]), ,
+	with_cuda=guess) 
+AC_MSG_RESULT($with_cuda)
+
+AS_IF([test x$with_cuda = xguess || test x$with_cuda = xyes],[
+   cuda_path=/usr/local/cuda
+],[test x$with_cuda != xno],[
+   cuda_path=$with_cuda
+   with_cuda=yes
+])
+
+cuda_ok=no
+
+AS_IF([test x$with_cuda != xno],[
+    cuda_ok=yes
+    save_LIBS=$LIBS
+    save_LDFLAGS=$LDFLAGS
+    save_CXX=$CXX
+    save_CXXFLAGS=$CXXFLAGS
+
+    # TODO: OLAF AND AXEL, IS THIS OKAY? NEEDED TO COMPILE
+    CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
+
+    # NVCC
+    AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
+    AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
+
+    AC_PATH_PROG(NVCC, nvcc, no, [$PATH:$cuda_path/bin])
+
+    AS_IF([test x$NVCC = xno],[
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
+        ],[
+            AC_MSG_WARN([could not find the CUDA compiler (nvcc). Some features will not be available!])
+        ])
+    ])
+
+    NVCCFLAGS="$NVCCFLAGS -Xcompiler -fPIC"
+
+    # MAC nvcc stays 32 bit, even if the rest is 64 bit
+    case $target in
+        x86_64-apple-darwin*)
+                NVCCFLAGS="$NVCCFLAGS -m64";;
+    esac
+    
+    # since we link with mpic++, we need to find the cuda libraries manually
+    ES_ADDPATH_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda runtime library (cudart), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda runtime library (cudart). Some features will not be available!])
+        ])
+    ], [$cuda_path/lib $cuda_path/lib64])
+
+    ES_ADDPATH_CHECK_LIB(cufft, cufftPlan3d, [LIBS="$LIBS -lcufft"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda FFT library (cufft), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda FFT library (cufft). Some features will not be available!])
+        ])
+    ], [$cuda_path/lib $cuda_path/lib64])
+
+    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
+        ])
+    ])
+
+    # NVCC compile check
+    AC_MSG_CHECKING([whether CUDA compiles])
+    
+    # if no other compute capability is defined by the user, we require at least 1.1
+    case "$NVCCFLAGS" in
+       *-arch=*) ;;
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
+    esac
+    
+    # use nvcc
+    
+    # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
+    save_CXX=$CXX
+    save_CXXFLAGS=$CXXFLAGS
+    
+    CXX=$NVCC
+    CXXFLAGS="$NVCCFLAGS -x cu"
+    
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
+        AC_MSG_RESULT(yes)
+    ],[
+        cuda_ok=no
+        AC_MSG_RESULT(no)
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])
+        ],[
+            AC_MSG_WARN([cannot compile CUDA code. Some features will not be available!])
+        ])
+    ])
+
+    # NVCC compile check
+    AC_MSG_CHECKING([whether CUDA runs])
+    
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[int no; cudaGetDeviceCount(&no);])], [
+        AC_MSG_RESULT(yes)
+    ],[
+        cuda_ok=no
+        AC_MSG_RESULT(no)
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([cannot run CUDA code. Look at config.log for more details.])
+        ],[
+            AC_MSG_WARN([cannot run CUDA code. Some features will not be available!])
+        ])
+    ],[
+        AC_MSG_RESULT([unknown (cross-compiling)])
+    ])
+
+    NVCCFLAGS="$NVCCFLAGS --shared"
+    
+    CXX=$save_CXX
+    CXXFLAGS=$save_CXXFLAGS
+    
+    AS_IF([test x$cuda_ok == xyes], [
+        AC_DEFINE(CUDA,[],[Whether CUDA is available])
+    ],[
+        LIBS=$save_LIBS
+        LDFLAGS=$save_LDFLAGS
+    ])
+])
+
+AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
+
+cat <<EOF
+****************************************************************
+*                  Checking for Python                         *
+****************************************************************
+EOF
+
+# check whether the python interpreter is available
+# This is needed for automatic generation of myconfig etc.
+AM_PATH_PYTHON([2.5],,no)
+AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
+if test .$PYTHON != .no; then
+   # Check whether python -B works
+   AC_MSG_CHECKING([whether python -B works])
+   if $PYTHON -B -c pass > /dev/null 2>&1; then
+     PYTHON="$PYTHON -B"
+     AC_MSG_RESULT(yes)
+   else
+     AC_MSG_RESULT(no)
+   fi
+fi
+
+AC_MSG_CHECKING([whether to build the python interface])
+AC_ARG_WITH([python-interface], AS_HELP_STRING([--with-python-interface], 
+                      [specify whether or not to use python]),
+                      [], [with_python_interface=no])
+AC_MSG_RESULT($with_python_interface)
+dnl with_python_interface=yes  try to find a working PYTHON devel version, 
+dnl                            bail out if none is found
+dnl with_python_interface=no   do not use python interface
+
+if test .$with_python_interface != .no; then
+   AX_PYTHON_DEVEL([>= '2.5'])
+   AC_PATH_PROG(CYTHON,cython,no)
+   AX_PYTHON_MODULE(numpy)
+   AC_MSG_CHECKING([for numpy include path])
+   NUMPY_INCLUDE="`$PYTHON -c 'import numpy; print numpy.get_include()'`"
+   PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
+   AC_MSG_RESULT([$NUMPY_INCLUDE])
+   AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])
+fi
+AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
+
+cat <<EOF
+****************************************************************
+*                  Checking for Tcl/Tk                         *
+****************************************************************
+EOF
 AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
 
 AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
@@ -231,20 +440,13 @@ dnl with_tcl=no   bail out
 dnl otherwise     use the specified version
 
 if test .$with_tcl = .no; then
-   AC_MSG_WARN([
-*********************************************************
-*                                                       *
-* Without Tcl, ESPResSo doesn't do anything useful yet! *
-*                                                       *
-*********************************************************
-])
    use_tcl=none
-   AC_DEFINE(TCL,[],[Whether Tcl is available])
 elif test .$with_tcl = .yes; then
 	for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
 		ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
 		if test .$use_tcl != .; then break; fi
 	done
+        AC_DEFINE(TCL,[],[Whether Tcl is available])
 else
 	ES_ADDPATH_CHECK_LIB($with_tcl, Tcl_Init, [use_tcl=$with_tcl])
 fi
@@ -350,177 +552,6 @@ else
 	use_tk=none
 fi
 
-##################################
-# check for FFTW
-# with_fftw=no    don't use FFTW
-# with_fftw=yes   try to find a working FFTW, bail out if none is found
-# not given	  try to find a working FFTW, continue if not found
-AC_MSG_CHECKING([whether to use FFTW])
-AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw],
-                       [specify whether or not to use FFTW3 [guess]]),
-	, with_fftw=guess)
-AC_MSG_RESULT($with_fftw)
-
-AS_IF([test x$with_fftw = xno], [fftw_found=no],
-  [ AC_SEARCH_LIBS(fftw_plan_many_dft, [fftw3], [fftw_found=yes], [fftw_found=no])
-    AS_IF([test x$fftw_found = xyes],
-      [AC_CHECK_HEADER([fftw3.h],, [fftw_found=no])])
-  ])
-
-AS_IF([test x$fftw_found = xno],[
-  AS_IF([test x$with_fftw = xyes],[
-    AC_MSG_FAILURE([FFTW requested, but FFTW was not found!])
-    ],[ AS_IF([test x$with_fftw = xguess], [
-          AC_MSG_WARN([FFTW3 not found. Some features will not be available!])
-         ])
-    ])
-  ])
-AS_IF([test x$fftw_found = xyes],[
-  AC_DEFINE(FFTW,[],[Whether FFTW is available])])
-
-##################################
-# check for CUDA
-AC_MSG_CHECKING([whether to use CUDA])
-
-AC_ARG_WITH([cuda],
-	AS_HELP_STRING([--with-cuda@<:@=DIR@:>@], [specify
-	where CUDA is installed.  The cuda compiler can also be
-	specified by setting the NVCC environment variable. The CUDA
-	library and header can be manually specified by using
-	CPPFLAGS, LDFLAGS and LIBS. [guess]]), ,
-	with_cuda=guess) AC_MSG_RESULT($with_cuda)
-
-AS_IF([test x$with_cuda = xguess || test x$with_cuda = xyes],[
-   cuda_path=/usr/local/cuda
-],[test x$with_cuda != xno],[
-   cuda_path=$with_cuda
-   with_cuda=yes
-])
-
-cuda_ok=no
-
-AS_IF([test x$with_cuda != xno],[
-    cuda_ok=yes
-    save_LIBS=$LIBS
-    save_LDFLAGS=$LDFLAGS
-    save_CXX=$CXX
-    save_CXXFLAGS=$CXXFLAGS
-
-    # TODO: OLAF AND AXEL, IS THIS OKAY? NEEDED TO COMPILE
-    CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
-
-    # NVCC
-    AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
-    AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
-
-    AC_PATH_PROG(NVCC, nvcc, no, [$PATH:$cuda_path/bin])
-
-    AS_IF([test x$NVCC = xno],[
-        AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
-        ],[
-            AC_MSG_WARN([could not find the CUDA compiler (nvcc). Some features will not be available!])
-        ])
-    ])
-
-    # MAC nvcc stays 32 bit, even if the rest is 64 bit
-    case $target in
-        x86_64-apple-darwin*)
-                NVCCFLAGS="$NVCCFLAGS -m64";;
-    esac
-    
-    # since we link with mpic++, we need to find the cuda libraries manually
-    ES_ADDPATH_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
-        cuda_ok=no
-        
-        AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([could not find cuda runtime library (cudart), specify location using LDFLAGS])
-        ],[
-            AC_MSG_WARN([could not find cuda runtime library (cudart). Some features will not be available!])
-        ])
-    ], [$cuda_path/lib $cuda_path/lib64])
-
-    ES_ADDPATH_CHECK_LIB(cufft, cufftPlan3d, [LIBS="$LIBS -lcufft"], [
-        cuda_ok=no
-        
-        AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([could not find cuda FFT library (cufft), specify location using LDFLAGS])
-        ],[
-            AC_MSG_WARN([could not find cuda FFT library (cufft). Some features will not be available!])
-        ])
-    ], [$cuda_path/lib $cuda_path/lib64])
-
-    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
-        cuda_ok=no
-        
-        AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
-        ],[
-            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
-        ])
-    ])
-
-    # NVCC compile check
-    AC_MSG_CHECKING([whether CUDA compiles])
-    
-    # if no other compute capability is defined by the user, we require at least 1.1
-    case "$NVCCFLAGS" in
-       *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
-    esac
-    
-    # use nvcc
-    
-    # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
-    save_CXX=$CXX
-    save_CXXFLAGS=$CXXFLAGS
-    
-    CXX=$NVCC
-    CXXFLAGS="$NVCCFLAGS -x cu"
-    
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
-        AC_MSG_RESULT(yes)
-    ],[
-        cuda_ok=no
-        AC_MSG_RESULT(no)
-        AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])
-        ],[
-            AC_MSG_WARN([cannot compile CUDA code. Some features will not be available!])
-        ])
-    ])
-
-    # NVCC compile check
-    AC_MSG_CHECKING([whether CUDA runs])
-    
-    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[int no; cudaGetDeviceCount(&no);])], [
-        AC_MSG_RESULT(yes)
-    ],[
-        cuda_ok=no
-        AC_MSG_RESULT(no)
-        AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([cannot run CUDA code. Look at config.log for more details.])
-        ],[
-            AC_MSG_WARN([cannot run CUDA code. Some features will not be available!])
-        ])
-    ],[
-        AC_MSG_RESULT([unknown (cross-compiling)])
-    ])
-    
-    CXX=$save_CXX
-    CXXFLAGS=$save_CXXFLAGS
-    
-    AS_IF([test x$cuda_ok == xyes], [
-        AC_DEFINE(CUDA,[],[Whether CUDA is available])
-    ],[
-        LIBS=$save_LIBS
-        LDFLAGS=$save_LDFLAGS
-    ])
-])
-
-AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
-
 cat <<EOF
 ****************************************************************
 *                   Other settings                             *
@@ -582,6 +613,7 @@ AC_CONFIG_FILES([
 	src/Makefile
 	tools/Makefile
 	scripts/Makefile 
+        cython/Makefile
 	testsuite/Makefile
 	doc/Makefile
 	doc/logo/Makefile
@@ -628,14 +660,46 @@ linker flags		= $LDFLAGS
 libraries		= $LIBS
 using debug flags	= $enable_debug
 using profiling flags	= $enable_profiling
-inline			= $MDINLINE
 
 Libraries
 ---------
-Tcl version		= $use_tcl
-Tk version		= $use_tk
 FFTW 			= $fftw_found
 efence			= $with_efence
+
+EOF
+
+if test x$cuda_ok = xno; then
+cat <<EOF
+Cuda
+----
+CUDA compiler		= $NVCC
+CUDA flags		= $NVCCFLAGS
+EOF
+fi
+
+cat  <<EOF
+
+Tcl/Tk
+------
+Tcl version		= $use_tcl
+Tk version		= $use_tk
+
+Python
+------
+python			= $PYTHON
+build python interface  = $with_python_interface
+EOF
+
+if test .$with_python_interface = .yes; then
+  cat <<EOF
+preprocessor flags      = $PYTHON_CPPFLAGS
+linker flags            = $PYTHON_LDFLAGS
+extra flags             = $PYTHON_EXTRA_LIBS
+extra linker flags      = $PYTHON_EXTRA_LDFLAGS
+EOF
+fi
+
+cat <<EOF
 
 Other settings
 --------------
@@ -649,24 +713,16 @@ makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 dot			= $DOT
-python			= $PYTHON
-EOF
-
-if test x$cuda_ok = xyes; then
-cat <<EOF
-CUDA compiler		= $NVCC
-CUDA flags		= $NVCCFLAGS
 
 EOF
-else
-   echo
+
+if test x$cuda_ok = xno; then
    echo "CUDA disabled or not supported."
 fi
 
 if test x"$use_mpi_fake" = x"yes"; then
    echo "WARNING: MPI disabled or not supported! Parallelization turned off."
 fi
-
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
 fi
@@ -678,5 +734,11 @@ if test .$bibtex = .no; then
 fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
+fi
+if test .$with_python_interface = .no; then
+   echo "Not building Python interface."
+fi
+if test .$use_tcl = .no; then
+   echo "Not building Tcl interface."
 fi
 
