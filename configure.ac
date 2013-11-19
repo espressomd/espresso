@@ -240,7 +240,6 @@ AS_IF([test x$fftw_found = xyes],[
 ##################################
 # check for CUDA
 AC_MSG_CHECKING([whether to use CUDA])
-
 AC_ARG_WITH([cuda],
 	AS_HELP_STRING([--with-cuda@<:@=DIR@:>@], [specify
 	where CUDA is installed.  The cuda compiler can also be
@@ -279,6 +278,8 @@ AS_IF([test x$with_cuda != xno],[
             AC_MSG_WARN([could not find the CUDA compiler (nvcc). Some features will not be available!])
         ])
     ])
+
+    NVCCFLAGS="$NVCCFLAGS -Xcompiler -fPIC"
 
     # MAC nvcc stays 32 bit, even if the rest is 64 bit
     case $target in
@@ -363,6 +364,8 @@ AS_IF([test x$with_cuda != xno],[
     ],[
         AC_MSG_RESULT([unknown (cross-compiling)])
     ])
+
+    NVCCFLAGS="$NVCCFLAGS --shared"
     
     CXX=$save_CXX
     CXXFLAGS=$save_CXXFLAGS
@@ -660,13 +663,15 @@ Libraries
 FFTW 			= $fftw_found
 efence			= $with_efence
 
+EOF
+
+if test x$cuda_ok = xno; then
+cat <<EOF
 Cuda
 ----
 CUDA compiler		= $NVCC
+CUDA flags		= $NVCCFLAGS
 EOF
-
-if test .$NVCC != .no; then
-   echo "CUDA flags		= $NVCCFLAGS"
 fi
 
 cat  <<EOF

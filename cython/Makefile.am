@@ -17,7 +17,7 @@
 #
 
 AM_DEFAULT_SOURCE_EXT = .cpp
-LIBS =  ../src/libEspresso.la $(PYTHON_EXTRA_LIBS) @LIBS@
+LIBS =  ../src/libEspresso.a $(PYTHON_EXTRA_LIBS) @LIBS@
 
 if PYTHON_INTERFACE
 
