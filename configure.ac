@@ -1,3 +1,4 @@
+
 # Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
@@ -267,10 +268,7 @@ AS_IF([test x$with_cuda != xno],[
     save_CXXFLAGS=$CXXFLAGS
 
     # NVCC
-    AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
-    AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
-
-    AC_PATH_PROG(NVCC, nvcc, no, [$PATH:$cuda_path/bin])
+    AC_PROG_CUDA
 
     AS_IF([test x$NVCC = xno],[
         AS_IF([test x$with_cuda = xyes],[
@@ -280,12 +278,6 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ])
 
-    # MAC nvcc stays 32 bit, even if the rest is 64 bit
-    case $target in
-        x86_64-apple-darwin*)
-                NVCCFLAGS="$NVCCFLAGS -m64";;
-    esac
-    
     # since we link with mpic++, we need to find the cuda libraries manually
     ES_ADDPATH_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
         cuda_ok=no

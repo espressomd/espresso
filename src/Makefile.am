@@ -278,8 +278,14 @@ libEspressoTcl_la_SOURCES += \
 
 if CUDA
 SUFFIXES=.cu
-.cu.o:
-	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
+.cu.lo:
+	# nvcc does not allow for MF, make a separate run to generate dependencies
+	# putting them into DEPDIR ensures configure creates empties dummies
+	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<
+	$(LIBTOOL) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+		--mode=compile $(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -c -o $@ $<
+
 
 CUDA_SOURCES = \
 	cuda_init_cuda.cu \
@@ -287,21 +293,19 @@ CUDA_SOURCES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu
 
-cuda_interface.o: cuda_interface.hpp myconfig-final.hpp
-cuda_init.o: cuda_init.hpp myconfig-final.hpp
-lbgpu_cuda.o: lbgpu.hpp myconfig-final.hpp
-p3m_gpu.o: p3m_gpu.hpp myconfig-final.hpp
+libEspresso_la_SOURCES += $(CUDA_SOURCES)
+EXTRA_DIST += $(CUDA_SOURCES)
+
+include ./$(DEPDIR)/cuda_init_cuda.Plo
+include ./$(DEPDIR)/cuda_common_cuda.Plo
+include ./$(DEPDIR)/libgpu_cuda.Plo
+include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 
 if TCL
 
-CUDA_SOURCES += \
-	tcl/cuda_init_tcl.cpp
+libEspressoTcl_la_SOURCES += tcl/cuda_init_tcl.cpp
 
 endif
-
-libEspresso_la_SOURCES += $(CUDA_SOURCES)
-
-EXTRA_DIST += $(CUDA_SOURCES)
 endif
 
 #################################################################
