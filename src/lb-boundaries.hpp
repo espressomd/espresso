@@ -61,6 +61,13 @@
 /** box shaped constraint (for electrokinetics reaction code) */
 #define LB_BOUNDARY_BOX 7
 
+#ifdef EK_BOUNDARIES
+/** flag indicating the voltage is to be set in the ek spacially varying E field code */
+#define int EK_TAG_VOLTAGE_FLAG 1
+/** flag indicating the permittivity is to be set in the ek spacially varying E field code */
+#define int EK_TAG_VOLTAGE_FLAG 2
+#endif
+
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
 

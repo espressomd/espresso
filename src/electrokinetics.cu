@@ -44,6 +44,7 @@
 #define LATTICE_LB_GPU   2
 extern int lattice_switch;
 extern int ek_initialized;
+extern int ek_spacially_varyingE_initialized;
 extern EK_parameters* lb_ek_parameters_gpu;
 
 // Used to limit register use for the pressure calculation
@@ -87,6 +88,8 @@ extern EK_parameters* lb_ek_parameters_gpu;
   CUDA_particle_data *particle_data_gpu;
   float *ek_lb_boundary_force;
   char *ek_node_is_catalyst;
+  double *ek_node_voltage;
+  double *ek_node_permittivity;
 
   cufftHandle plan_fft;
   cufftHandle plan_ifft;
@@ -1743,6 +1746,7 @@ void ek_integrate() {
 #endif
 
     KERNELCALL( ek_propagate_densities, dim_grid, threads_per_block, ( i ) );
+    
   }
 
 
@@ -1765,6 +1769,7 @@ void ek_integrate() {
   /* Integrate electrostatics */
   
   ek_integrate_electrostatics();
+  //CALCULATE NEW POTENTIAL HERE? TODO OWEN
   
   /* Integrate Navier-Stokes */
   
@@ -1921,7 +1926,7 @@ int ek_init() {
                              ek_parameters.number_of_nodes * sizeof( float ) ) );
     ek_node_is_catalyst = (char*) calloc( ek_parameters.number_of_nodes , sizeof( char ) );
 #endif
-
+    
     lb_get_device_values_pointer( &ek_lb_device_values );
     
     if( cudaGetLastError() != cudaSuccess ) {
@@ -2953,6 +2958,102 @@ int ek_accelerated_frame_print_boundary_velocity( double* accelerated_boundary_v
   return 0;
 #else 
   printf("ERROR: Need boundaries (EK_BOUNDARIES) for the accelerated frame.\n");
+  return 1;
+#endif
+
+}
+
+int ek_tag_value_nodes( LB_Boundary *boundary, double value, int EK_TAG_TYPE )
+{
+
+#ifdef EK_BOUNDARIES
+  char *errtxt;
+  double pos[3], dist, dist_vec[3];
+
+  for(int z=0; z<int(ek_parameters.dim_z); z++) {
+  for(int y=0; y<int(ek_parameters.dim_y); y++) {
+  for(int x=0; x<int(ek_parameters.dim_x); x++) {        
+
+    pos[0] = x + 0.5;
+    pos[1] = y + 0.5;
+    pos[2] = z + 0.5;
+
+    switch (boundary->type)
+    {
+      case LB_BOUNDARY_WAL:
+        calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.wal, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_SPH:
+        calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.sph, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_CYL:
+        calculate_cylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.cyl, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_RHOMBOID:
+        calculate_rhomboid_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.rhomboid, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_POR:
+        calculate_pore_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.pore, &dist, dist_vec);
+        break;
+                
+      case LB_BOUNDARY_STOMATOCYTE:
+        calculate_stomatocyte_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.stomatocyte, &dist, dist_vec);
+        break;
+
+      case LB_BOUNDARY_BOX:
+        dist = -1.0;
+        break;
+                
+      default:
+        errtxt = runtime_error(128);
+        ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in ek_tag_value_nodes()\n", boundary->type);
+    }
+
+    if( dist <= 0.0 )
+    {
+      if (EK_TAG_TYPE == EK_TAG_VOLTAGE) {
+        ek_node_voltage[
+                            z * ek_parameters.dim_y * ek_parameters.dim_x +
+                            y * ek_parameters.dim_x +
+                            x
+                          ] = value;
+      }
+      if (EK_TAG_TYPE == EK_TAG_PERMITTIVITY) {
+        ek_node_permittivity[
+                            z * ek_parameters.dim_y * ek_parameters.dim_x +
+                            y * ek_parameters.dim_x +
+                            x
+                          ] = value;
+      }
+    }
+
+  }}}
+
+  if (!ek_node_voltage) ek_node_voltage = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
+  if (!ek_node_permittivity) ek_node_permittivity = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
+
+  if (EK_TAG_TYPE == EK_TAG_VOLTAGE) {
+    cuda_safe_mem( cudaMemcpy( ek_parameters.node_voltage, 
+                              ek_node_voltage, 
+                              ek_parameters.number_of_nodes * sizeof( double ), 
+                              cudaMemcpyHostToDevice ) 
+                );
+  }
+  if (EK_TAG_TYPE == EK_TAG_PERMITTIVITY) {
+    cuda_safe_mem( cudaMemcpy( ek_parameters.node_permittivity, 
+                              ek_node_permittivity, 
+                              ek_parameters.number_of_nodes * sizeof( double ), 
+                              cudaMemcpyHostToDevice ) 
+                );
+  }
+  ek_spacially_varyingE_initialized = 1;
+  return 0;
+#else 
+  printf("ERROR: Need boundaries (EK_BOUNDARIES) to create electrodes or set permittivity.\n");
   return 1;
 #endif
 
