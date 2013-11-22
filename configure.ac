@@ -262,10 +262,10 @@ cuda_ok=no
 
 AS_IF([test x$with_cuda != xno],[
     cuda_ok=yes
+
+    # save current libs in case CUDA is not enabled at the end
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
-    save_CXX=$CXX
-    save_CXXFLAGS=$CXXFLAGS
 
     # NVCC
     AC_PROG_CUDA
@@ -279,7 +279,7 @@ AS_IF([test x$with_cuda != xno],[
     ])
 
     # since we link with mpic++, we need to find the cuda libraries manually
-    ES_ADDPATH_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
+    ES_ADDPATH_CHECK_LIB(cudart, cudaGetDevice, [], [
         cuda_ok=no
         
         AS_IF([test x$with_cuda = xyes],[
@@ -289,7 +289,7 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ], [$cuda_path/lib $cuda_path/lib64])
 
-    ES_ADDPATH_CHECK_LIB(cufft, cufftPlan3d, [LIBS="$LIBS -lcufft"], [
+    ES_ADDPATH_CHECK_LIB(cufft, cufftPlan3d, [], [
         cuda_ok=no
         
         AS_IF([test x$with_cuda = xyes],[
@@ -298,16 +298,6 @@ AS_IF([test x$with_cuda != xno],[
             AC_MSG_WARN([could not find cuda FFT library (cufft). Some features will not be available!])
         ])
     ], [$cuda_path/lib $cuda_path/lib64])
-
-    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
-        cuda_ok=no
-        
-        AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
-        ],[
-            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
-        ])
-    ])
 
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
@@ -321,11 +311,16 @@ AS_IF([test x$with_cuda != xno],[
     # use nvcc
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
-    save_CXX=$CXX
-    save_CXXFLAGS=$CXXFLAGS
-    
+    save_noncuda_CXX=$CXX
+    save_noncuda_CXXFLAGS=$CXXFLAGS
+    save_noncuda_LDFLAGS=$LDFLAGS
+    save_noncuda_LIBS=$LIBS
+
     CXX=$NVCC
     CXXFLAGS="$NVCCFLAGS -x cu"
+    # libtool linking options likely break NVCC linking, sort out all but simple -L options
+    LDFLAGS="-Xlinker `echo $LDFLAGS | sed -e ['s|-[^L][^ 	]*||g' -e 's|[ 	][ 	]*|,|g']`"
+    LIBS="-Xlinker `echo $LIBS | sed 's|[ 	][ 	]*|,|g'`"
     
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
         AC_MSG_RESULT(yes)
@@ -345,23 +340,27 @@ AS_IF([test x$with_cuda != xno],[
     AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[int no; cudaGetDeviceCount(&no);])], [
         AC_MSG_RESULT(yes)
     ],[
-        cuda_ok=no
         AC_MSG_RESULT(no)
         AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([cannot run CUDA code. Look at config.log for more details.])
+            cuda_running=no
+            AC_MSG_WARN([cannot run CUDA code. Look at config.log for more details. Still compiling since explicitely requested.])
         ],[
+            cuda_ok=no
             AC_MSG_WARN([cannot run CUDA code. Some features will not be available!])
         ])
     ],[
         AC_MSG_RESULT([unknown (cross-compiling)])
     ])
     
-    CXX=$save_CXX
-    CXXFLAGS=$save_CXXFLAGS
+    CXX=$save_noncuda_CXX
+    CXXFLAGS=$save_noncuda_CXXFLAGS
+    LDFLAGS=$save_noncuda_LDFLAGS
+    LIBS=$save_noncuda_LIBS
     
     AS_IF([test x$cuda_ok == xyes], [
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
+        # reset standard compiler options
         LIBS=$save_LIBS
         LDFLAGS=$save_LDFLAGS
     ])
@@ -702,6 +701,9 @@ EOF
 
 if test x$cuda_ok = xno; then
    echo "CUDA disabled or not supported."
+fi
+if test x$cuda_running = xno; then
+   echo "CUDA enabled, but cannot run CUDA code out of the box. Make sure to set the dynamic library loader path correctly."
 fi
 
 if test x"$use_mpi_fake" = x"yes"; then

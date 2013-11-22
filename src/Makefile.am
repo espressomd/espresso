@@ -277,10 +277,12 @@ libEspressoTcl_la_SOURCES += \
 ##################################################
 
 if CUDA
+
 SUFFIXES=.cu
+
+# nvcc does not allow for MF, make a separate run to generate dependencies
+# putting them into DEPDIR ensures configure creates empties dummies
 .cu.lo:
-	# nvcc does not allow for MF, make a separate run to generate dependencies
-	# putting them into DEPDIR ensures configure creates empties dummies
 	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
 	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<
 	$(LIBTOOL) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
