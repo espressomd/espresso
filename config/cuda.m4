@@ -7,7 +7,7 @@ AC_DEFUN([LT_PROG_CUDA],
     [AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
      AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
 
-     AC_CHECK_TOOL(NVCC, nvcc, no, [$PATH:$cuda_path/bin])
+     AC_PATH_PROG(NVCC, nvcc, no, [$PATH:$cuda_path/bin])
 
      # MAC nvcc stays 32 bit, even if the rest is 64 bit
      case $target in

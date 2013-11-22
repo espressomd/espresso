@@ -400,8 +400,13 @@ dnl with_python_interface=no   do not use python interface
 
 if test .$with_python_interface != .no; then
    AX_PYTHON_DEVEL([>= '2.5'])
+
    AC_PATH_PROG(CYTHON,cython,no)
-   AX_PYTHON_MODULE(numpy)
+   AS_IF([test x$CYTHON = xno],[
+      AC_MSG_FAILURE([cython not found, which is necessary for the Python interface])
+   ])
+
+   AX_PYTHON_MODULE(numpy, required)
    AC_MSG_CHECKING([for numpy include path])
    NUMPY_INCLUDE="`$PYTHON -c 'import numpy; print numpy.get_include()'`"
    PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
