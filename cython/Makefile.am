@@ -17,7 +17,7 @@
 #
 
 AM_DEFAULT_SOURCE_EXT = .cpp
-LIBS =  ../src/libEspresso.a $(PYTHON_EXTRA_LIBS) @LIBS@
+LIBS =  ../src/libEspresso.la $(PYTHON_EXTRA_LIBS) @LIBS@
 
 if PYTHON_INTERFACE
 
@@ -25,7 +25,7 @@ myconfig.pxi: ../src/myconfig-final.hpp
 	$(PYTHON) $(srcdir)/make_myconfig.py ../src/myconfig-final.hpp
 
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src
-AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
+AM_LDFLAGS = $(PYTHON_LDFLAGS) $(PYTHON_EXTRA_LDFLAGS) -module -avoid-version -no-undefined
 
 #SUFFIXES = .pyx
 .pyx.cpp:
