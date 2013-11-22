@@ -241,7 +241,6 @@ AS_IF([test x$fftw_found = xyes],[
 ##################################
 # check for CUDA
 AC_MSG_CHECKING([whether to use CUDA])
-
 AC_ARG_WITH([cuda],
 	AS_HELP_STRING([--with-cuda@<:@=DIR@:>@], [specify
 	where CUDA is installed.  The cuda compiler can also be
@@ -351,7 +350,7 @@ AS_IF([test x$with_cuda != xno],[
     ],[
         AC_MSG_RESULT([unknown (cross-compiling)])
     ])
-    
+
     CXX=$save_noncuda_CXX
     CXXFLAGS=$save_noncuda_CXXFLAGS
     LDFLAGS=$save_noncuda_LDFLAGS
@@ -656,13 +655,15 @@ Libraries
 FFTW 			= $fftw_found
 efence			= $with_efence
 
+EOF
+
+if test x$cuda_ok = xno; then
+cat <<EOF
 Cuda
 ----
 CUDA compiler		= $NVCC
+CUDA flags		= $NVCCFLAGS
 EOF
-
-if test .$NVCC != .no; then
-   echo "CUDA flags		= $NVCCFLAGS"
 fi
 
 cat  <<EOF
