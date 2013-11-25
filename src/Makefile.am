@@ -163,7 +163,7 @@ if TCL
 
 noinst_LTLIBRARIES += libEspressoTcl.la
 
-libEspressoTcl_la_LIBTOOLFLAGS = --tag=disable-static
+libEspressoTcl_la_LIBTOOLFLAGS = --tag=disable-dynamic
 libEspressoTcl_la_SOURCES = \
 	tcl/adresso_tcl.cpp tcl/adresso_tcl.hpp \
 	tcl/bin_tcl.cpp \
@@ -275,7 +275,6 @@ libEspressoTcl_la_SOURCES += \
 ##################################################
 # CUDA rules
 ##################################################
-
 if CUDA
 
 SUFFIXES=.cu
@@ -286,8 +285,8 @@ SUFFIXES=.cu
 	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
 	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<
 	$(LIBTOOL) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-		--mode=compile $(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -c -o $@ $<
-
+		--mode=compile $(NVCC) $(NVCCFLAGS) \
+		$(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -c -o $@ $<
 
 CUDA_SOURCES = \
 	cuda_init_cuda.cu \

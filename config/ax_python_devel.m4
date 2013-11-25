@@ -40,6 +40,7 @@
 #   Copyright (c) 2009 Matteo Settenvini <matteo@member.fsf.org>
 #   Copyright (c) 2009 Horst Knorr <hk_classes@knoda.org>
 #   Copyright (c) 2013 Daniel Mullner <muellner@math.stanford.edu>
+#   Copyright (c) 2013 Axel Arnold <arnolda@icp.uni-stuttgart.de>
 #
 #   This program is free software: you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License as published by the
@@ -67,7 +68,7 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
-#serial 16
+#serial 17
 
 AU_ALIAS([AC_PYTHON_DEVEL], [AX_PYTHON_DEVEL])
 AC_DEFUN([AX_PYTHON_DEVEL],[
