@@ -345,12 +345,13 @@ endif
 #################################################################
 noinst_HEADERS = myconfig-default.hpp
 CLEANFILES = myconfig-final.hpp
+BUILT_SOURCES = myconfig-final.hpp
 
 myconfig-final.hpp: FORCE
 	@config_files="\
 	  $(top_builddir)/$(myconfig) \
 	  $(top_srcdir)/$(myconfig) \
-	  $(top_srcdir)/src/myconfig-default.hpp"; \
+	  $(srcdir)/myconfig-default.hpp"; \
 	for file in $$config_files; do \
 	  if test -e $$file; then \
 	    echo "  GEN      $@ <= $$file"; \
@@ -378,7 +379,7 @@ EXTRA_DIST += \
 
 if HAVE_PYTHON
 
-BUILT_SOURCES = config-features.hpp config-features.cpp
+BUILT_SOURCES += config-features.hpp config-features.cpp
 CLEANFILES += config-features.hpp config-features.cpp config-doxygen.hpp
 config-features.hpp config-features.cpp: features.def $(top_srcdir)/config/gen_featureconfig.py
 	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.hpp config-features.cpp > /dev/null
@@ -401,7 +402,6 @@ doc doxygen: config-doxygen.hpp
 # Handling of the version
 #################################################################
 libEspresso_la_SOURCES += config-version.cpp
-#BUILT_SOURCES += config-version.cpp
 CLEANFILES += config-version.cpp
 config-version.cpp: FORCE
 	$(AM_V_GEN)VERSION=`cd $(top_srcdir); sh config/genversion.sh -c`; \
