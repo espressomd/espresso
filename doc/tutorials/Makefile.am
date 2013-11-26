@@ -17,3 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SUBDIRS=01-lennard_jones 02-charged_system
+
+if DEVEL_SRC
+
+.PHONY: FORCE doc tutorials $(SUBDIRS)
+doc: tutorials
+tutorials: FORCE
+	for dir in $(SUBDIRS); do \
+		cd $$dir; $(MAKE) --print-directory $@; cd ..;\
+	done
+FORCE:
+
+endif

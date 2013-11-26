@@ -28,8 +28,10 @@ dg_FILES = \
 
 # bibliography.bib
 
-doc-local: dg
-dg-local: dg.pdf
+.PHONY: doc dg
+
+doc: dg
+dg: dg.pdf
 dg.pdf: $(dg_FILES)
 
 if HAVE_LATEX

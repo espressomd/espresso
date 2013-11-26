@@ -37,8 +37,10 @@ tutorial_FILES = \
 	$(tutorial_TEXFILES) \
 	$(tutorial_FIGURES)
 
-doc-local: tutorials
-tutorials-local: $(BASENAME).pdf
+.PHONY: doc $(BASENAME).pdf
+
+doc: tutorials
+tutorials: $(BASENAME).pdf
 $(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
 if HAVE_LATEX
 	sh ../../latexit.sh $(srcdir):$(srcdir)/../common $(BASENAME)
