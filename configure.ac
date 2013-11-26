@@ -419,14 +419,18 @@ cat <<EOF
 *                  Checking for Tcl/Tk                         *
 ****************************************************************
 EOF
-AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
 
+AC_MSG_CHECKING([whether to build the Tcl interface])
 AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
             [specify the tcl library to use (e.g. tcl8.4)]),
             [], [with_tcl=yes])
+AC_MSG_RESULT($with_tcl)
+
 dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
 dnl with_tcl=no   bail out
 dnl otherwise     use the specified version
+
+AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
 
 if test .$with_tcl = .no; then
    use_tcl=none
@@ -481,9 +485,13 @@ AM_CONDITIONAL(TCL, [test .$use_tcl != .none])
 
 ##################################
 # check for tk
+
+AC_MSG_CHECKING([whether to use Tk])
 AC_ARG_WITH(tk,
 	AS_HELP_STRING([--with-tk=VERSION],[whether to use Tk, and which version to use]),
 	[], [with_tk=no])
+AC_MSG_RESULT($with_tcl)
+
 dnl with_tk=no   don't use Tk
 dnl with_tk=yes  try to find a working Tk version, bail out if none is found
 dnl otherwise    use the specified version
