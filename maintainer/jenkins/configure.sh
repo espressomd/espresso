@@ -16,8 +16,9 @@ start "CONFIGURE"
 [ ! -v with_cuda ] && with_cuda="true"
 [ ! -v with_mpi ] && with_mpi="true"
 [ ! -v with_fftw ] && with_fftw="true"
+[ ! -v with_tcl ] && with_tcl="true"
 [ ! -v with_python_interface ] && with_python_interface="false"
-outp configure_params configure_vars with_cuda with_mpi with_fftw without_python_interface
+outp configure_params configure_vars with_cuda with_mpi with_fftw with_python_interface
 
 # change into build dir
 pushd $builddir
@@ -57,6 +58,12 @@ else
     echo "Not using FFTW => generating mock $FFTW_HEADER..."
     echo "#error ERROR: fftw is not really present but used somewhere." \
         > $FFTW_HEADER
+fi
+
+if $with_tcl; then
+    configure_params="--with-tcl $configure_params"
+else
+    configure_params="--without-tcl $configure_params"
 fi
 
 if $with_python_interface; then
