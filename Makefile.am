@@ -33,10 +33,10 @@ CLEANFILES += Espresso
 
 if !DEVEL_SRC
 Espresso: FORCE
-	test -L Espresso || $(LN_S) src/Espresso .
+	test -L Espresso || $(LN_S) src/tcl/Espresso .
 else
 Espresso: version.txt
-	test -L Espresso || $(LN_S) src/Espresso .
+	test -L Espresso || $(LN_S) src/tcl/Espresso .
 endif
 endif
 

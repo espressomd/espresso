@@ -17,11 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-SUBDIRS = . python
+SUBDIRS = . tcl python
 
 EXTRA_DIST =
 AM_DEFAULT_SOURCE_EXT = .cpp
-
 
 noinst_LTLIBRARIES = libEspresso.la
 
@@ -157,117 +156,6 @@ libEspresso_la_SOURCES += \
 	p3m-dipolar.cpp p3m-dipolar.hpp \
 	reaction_field.cpp reaction_field.hpp
 
-if TCL
-
-noinst_LTLIBRARIES += libEspressoTcl.la
-
-libEspressoTcl_la_SOURCES = \
-	tcl/adresso_tcl.cpp tcl/adresso_tcl.hpp \
-	tcl/bin_tcl.cpp \
-	tcl/binary_file_tcl.cpp tcl/binary_file_tcl.hpp \
-	tcl/blockfile_tcl.cpp \
-	tcl/cells_tcl.cpp \
-	tcl/channels_tcl.cpp \
-	tcl/collision_tcl.cpp \
-	tcl/comfixed_tcl.cpp tcl/comfixed_tcl.hpp \
-	tcl/comforce_tcl.cpp tcl/comforce_tcl.hpp \
-	tcl/config_tcl.cpp \
-	tcl/constraint_tcl.cpp tcl/constraint_tcl.hpp \
-	tcl/domain_decomposition_tcl.cpp tcl/domain_decomposition_tcl.hpp \
-	tcl/energy_tcl.cpp \
-	tcl/galilei_tcl.cpp tcl/galilei_tcl.hpp \
-	tcl/global_tcl.cpp tcl/global_tcl.hpp \
-	tcl/grid_tcl.cpp tcl/grid_tcl.hpp \
-	tcl/iccp3m_tcl.cpp tcl/iccp3m_tcl.hpp \
-	tcl/imd_tcl.cpp \
-	tcl/initialize_interpreter.cpp \
-	tcl/integrate_tcl.cpp tcl/integrate_tcl.hpp \
-	tcl/interaction_data_tcl.cpp tcl/interaction_data_tcl.hpp \
-	tcl/lb-boundaries_tcl.cpp \
-	tcl/lb_tcl.cpp tcl/lb_tcl.hpp \
-	tcl/metadynamics_tcl.cpp tcl/metadynamics_tcl.hpp \
-	tcl/nemd_tcl.cpp \
-	tcl/mol_cut_tcl.cpp tcl/mol_cut_tcl.hpp \
-	tcl/parser.cpp tcl/parser.hpp \
-	tcl/particle_data_tcl.cpp \
-	tcl/polymer_tcl.cpp tcl/polymer_tcl.hpp \
-	tcl/pressure_tcl.cpp tcl/pressure_tcl.hpp \
-	tcl/random_tcl.cpp tcl/random_tcl.hpp \
-	tcl/reaction_tcl.cpp tcl/reaction_tcl.hpp \
-	tcl/rattle_tcl.cpp tcl/rattle_tcl.hpp \
-	tcl/statistics_chain_tcl.cpp tcl/statistics_chain_tcl.hpp \
-	tcl/statistics_cluster_tcl.cpp tcl/statistics_cluster_tcl.hpp \
-	tcl/statistics_correlation_tcl.cpp tcl/statistics_correlation_tcl.hpp \
-	tcl/statistics_fluid_tcl.cpp tcl/statistics_fluid_tcl.hpp \
-	tcl/statistics_observable_tcl.cpp tcl/statistics_observable_tcl.hpp \
-	tcl/statistics_wallstuff_tcl.cpp tcl/statistics_wallstuff_tcl.hpp \
-	tcl/statistics_tcl.cpp tcl/statistics_tcl.hpp \
-	tcl/thermostat_tcl.cpp tcl/thermostat_tcl.hpp \
-	tcl/topology_tcl.cpp \
-	tcl/tuning_tcl.cpp \
-	tcl/uwerr_tcl.cpp \
-	tcl/virtual_sites_com_tcl.cpp tcl/virtual_sites_com_tcl.hpp \
-	tcl/ghmc_tcl.cpp tcl/ghmc_tcl.hpp
-
-# nonbonded potentials and forces
-libEspressoTcl_la_SOURCES += \
-	tcl/bmhtf-nacl_tcl.cpp tcl/bmhtf-nacl_tcl.hpp \
-	tcl/buckingham_tcl.cpp tcl/buckingham_tcl.hpp \
-	tcl/dpd_tcl.cpp tcl/dpd_tcl.hpp \
-	tcl/forcecap_tcl.cpp tcl/forcecap_tcl.hpp \
-	tcl/gaussian_tcl.cpp tcl/gaussian_tcl.hpp \
-	tcl/gb_tcl.cpp tcl/gb_tcl.hpp \
-	tcl/hat_tcl.cpp tcl/hat_tcl.hpp \
-	tcl/hertzian_tcl.cpp tcl/hertzian_tcl.hpp \
-	tcl/lj_tcl.cpp tcl/lj_tcl.hpp \
-	tcl/ljangle_tcl.cpp tcl/ljangle_tcl.hpp \
-	tcl/ljcos2_tcl.cpp tcl/ljcos2_tcl.hpp \
-	tcl/ljcos_tcl.cpp tcl/ljcos_tcl.hpp \
-	tcl/ljgen_tcl.cpp tcl/ljgen_tcl.hpp \
-	tcl/morse_tcl.cpp tcl/morse_tcl.hpp \
-	tcl/soft_sphere_tcl.cpp tcl/soft_sphere_tcl.hpp \
-	tcl/steppot_tcl.cpp tcl/steppot_tcl.hpp \
-	tcl/tab_tcl.cpp tcl/tab_tcl.hpp \
-	tcl/tunable_slip_tcl.cpp tcl/tunable_slip_tcl.hpp
-
-# bonded potentials and forces
-libEspressoTcl_la_SOURCES += \
-	tcl/angle_tcl.cpp tcl/angle_tcl.hpp \
-	tcl/angle_harmonic_tcl.cpp tcl/angle_harmonic_tcl.hpp \
-	tcl/angle_cosine_tcl.cpp tcl/angle_cosine_tcl.hpp \
-	tcl/angle_cossquare_tcl.cpp tcl/angle_cossquare_tcl.hpp \
-	tcl/angledist_tcl.cpp tcl/angledist_tcl.hpp \
-	tcl/dihedral_tcl.cpp tcl/dihedral_tcl.hpp \
-	tcl/endangledist_tcl.cpp tcl/endangledist_tcl.hpp \
-	tcl/fene_tcl.cpp tcl/fene_tcl.hpp \
-	tcl/harmonic_tcl.cpp tcl/harmonic_tcl.hpp \
-	tcl/overlap_tcl.cpp tcl/overlap_tcl.hpp \
-	tcl/subt_lj_tcl.cpp tcl/subt_lj_tcl.hpp \
-	tcl/object-in-fluid/area_force_local_tcl.cpp \
-	tcl/object-in-fluid/area_force_local_tcl.hpp \
-	tcl/object-in-fluid/area_force_global_tcl.cpp \
-	tcl/object-in-fluid/area_force_global_tcl.hpp \
-	tcl/object-in-fluid/bending_force_tcl.cpp \
-	tcl/object-in-fluid/bending_force_tcl.hpp \
-	tcl/object-in-fluid/stretching_force_tcl.cpp \
-	tcl/object-in-fluid/stretching_force_tcl.hpp \
-	tcl/object-in-fluid/stretchlin_force_tcl.cpp \
-	tcl/object-in-fluid/stretchlin_force_tcl.hpp \
-	tcl/object-in-fluid/volume_force_tcl.cpp \
-	tcl/object-in-fluid/volume_force_tcl.hpp
-
-# Coulomb methods
-libEspressoTcl_la_SOURCES += \
-	tcl/debye_hueckel_tcl.cpp tcl/debye_hueckel_tcl.hpp \
-	tcl/elc_tcl.cpp tcl/elc_tcl.hpp \
-	tcl/magnetic_non_p3m_methods_tcl.cpp tcl/magnetic_non_p3m_methods_tcl.hpp \
-	tcl/maggs_tcl.cpp tcl/maggs_tcl.hpp \
-	tcl/mmm1d_tcl.cpp tcl/mmm1d_tcl.hpp \
-	tcl/mmm2d_tcl.cpp tcl/mmm2d_tcl.hpp \
-	tcl/p3m-dipolar_tcl.cpp tcl/p3m-dipolar_tcl.hpp \
-	tcl/p3m_tcl.cpp tcl/p3m_tcl.hpp \
-	tcl/reaction_field_tcl.cpp tcl/reaction_field_tcl.hpp \
-	tcl/mdlc_correction_tcl.cpp tcl/mdlc_correction_tcl.hpp	
 
 ##################################################
 # CUDA rules
@@ -303,42 +191,8 @@ include ./$(DEPDIR)/cuda_common_cuda.Plo
 include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 
-if TCL
-
-libEspressoTcl_la_SOURCES += tcl/cuda_init_tcl.cpp
-
-endif
 endif
 
-#################################################################
-# Compile the (TCL) main program
-#################################################################
-
-# Two binaries are generated: Espresso for the build dir,
-# Espresso.install for the installation dir. 
-# The ".install" suffix is removed upon installation.
-noinst_PROGRAMS = Espresso
-Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\"
-Espresso_SOURCES = tcl/scriptsdir.cpp tcl/main.cpp
-Espresso_LDADD = libEspressoTcl.la libEspresso.la
-
-bin_PROGRAMS = Espresso.install
-Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\"
-Espresso_install_SOURCES = tcl/scriptsdir.cpp tcl/main.cpp
-Espresso_install_LDADD = libEspressoTcl.la libEspresso.la 
-
-ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
-ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
-# rename Espresso after installation
-install-exec-hook:
-	$(am__mv) \
-		$(DESTDIR)$(bindir)/$(ESPRESSO_INSTALL) \
-		$(DESTDIR)$(bindir)/$(ESPRESSO)
-
-uninstall-local:
-	-rm -f $(DESTDIR)$(bindir)/$(ESPRESSO)
-
-endif
 
 #################################################################
 # Handling of myconfig.hpp
@@ -417,12 +271,7 @@ if MPI_FAKE
 libEspresso_la_SOURCES += mpifake/mpi.h mpifake/mpi.cpp
 # mpifake should come before any system includes
 AM_CPPFLAGS = -I$(srcdir)/mpifake
-if TCL
-Espresso_CPPFLAGS += $(AM_CPPFLAGS)
-Espresso_install_CPPFLAGS += $(AM_CPPFLAGS)
 endif
-endif
-
 
 .PHONY: FORCE
 FORCE:
