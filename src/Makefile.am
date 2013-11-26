@@ -22,9 +22,6 @@ SUBDIRS = . python
 EXTRA_DIST =
 AM_DEFAULT_SOURCE_EXT = .cpp
 
-# List headers that are not used by the program here
-noinst_HEADERS = \
-	myconfig-default.hpp
 
 noinst_LTLIBRARIES = libEspresso.la
 
@@ -346,21 +343,17 @@ endif
 #################################################################
 # Handling of myconfig.hpp
 #################################################################
-nodist_libEspresso_la_SOURCES += myconfig-final.hpp
-BUILT_SOURCES = myconfig-final.hpp
+noinst_HEADERS = myconfig-default.hpp
 CLEANFILES = myconfig-final.hpp
 
 myconfig-final.hpp: FORCE
-	@echo -n "Determining myconfig file..."
 	@config_files="\
 	  $(top_builddir)/$(myconfig) \
-	  $(top_srcdir)/$(myconfig)"; \
-	if test $(myconfig) = myconfig.hpp; then \
-	  config_files="$$config_files $(top_srcdir)/src/myconfig-default.hpp"; \
-	fi; \
+	  $(top_srcdir)/$(myconfig) \
+	  $(top_srcdir)/src/myconfig-default.hpp"; \
 	for file in $$config_files; do \
 	  if test -e $$file; then \
-	    echo " $$file"; \
+	    echo "  GEN      $@ <= $$file"; \
 	    myconfig_found=1; \
 	    if test -e $@; then \
 	      cmp -s $$file $@ || cp $$file $@; \
@@ -378,8 +371,6 @@ myconfig-final.hpp: FORCE
 #################################################################
 # Handling of the features
 #################################################################
-# config-features.cpp must occur at the beginning of the SOURCES so that it is compiled first
-#libEspresso_a_SOURCES += config-features.cpp
 EXTRA_DIST += \
 	features.def \
 	config-features.hpp config-features.cpp \
@@ -387,13 +378,13 @@ EXTRA_DIST += \
 
 if HAVE_PYTHON
 
-BUILT_SOURCES +=  config-features.hpp config-features.cpp
+BUILT_SOURCES = config-features.hpp config-features.cpp
 CLEANFILES += config-features.hpp config-features.cpp config-doxygen.hpp
 config-features.hpp config-features.cpp: features.def $(top_srcdir)/config/gen_featureconfig.py
-	$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.hpp config-features.cpp
+	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.hpp config-features.cpp > /dev/null
 
 config-doxygen.hpp: features.def $(top_srcdir)/config/gen_doxyconfig.py
-	$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.hpp
+	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.hpp > /dev/null
 
 else
 
@@ -409,11 +400,11 @@ doc doxygen: config-doxygen.hpp
 #################################################################
 # Handling of the version
 #################################################################
-libEspresso_la_SOURCES += config-version.cpp 
-BUILT_SOURCES += config-version.cpp
+libEspresso_la_SOURCES += config-version.cpp
+#BUILT_SOURCES += config-version.cpp
 CLEANFILES += config-version.cpp
 config-version.cpp: FORCE
-	VERSION=`cd $(top_srcdir); sh config/genversion.sh -c`; \
+	$(AM_V_GEN)VERSION=`cd $(top_srcdir); sh config/genversion.sh -c`; \
 	if ! test -e "config-version.cpp" || \
 		test "$$VERSION" != "`cat config-version.cpp`"; then \
 		echo "$$VERSION" > config-version.cpp; \

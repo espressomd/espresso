@@ -23,14 +23,17 @@ if PYTHON_INTERFACE
 
 # build rule for myconfig.pxi
 myconfig.pxi: ../myconfig-final.hpp
-	$(PYTHON) $(srcdir)/make_myconfig.py ../myconfig-final.hpp
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/make_myconfig.py ../myconfig-final.hpp > /dev/null
 CLEANFILES = myconfig.pxi
 BUILT_SOURCES = myconfig.pxi
 
 # Build rules for cython
 SUFFIXES = .pyx
+cython_verbose = $(cython_verbose_@AM_V@)
+cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
+cython_verbose_0 = @echo "  CYTHON   $@";
 .pyx.cpp:
-	cython -I $(builddir) $< -o $@
+	$(cython_verbose)cython -I $(builddir) $< -o $@
 
 # Build rules for python libraries
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src

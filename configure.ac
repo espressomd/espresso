@@ -38,7 +38,7 @@ AM_INIT_AUTOMAKE([1.11 gnu subdir-objects dist-xz])
 AM_MAINTAINER_MODE
 
 # silent rules, backwards compatiblity
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Are we in an unpacked dist or in the git repo?
 AC_MSG_CHECKING([whether we are using development sources])
