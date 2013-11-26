@@ -64,10 +64,10 @@ ug_FILES = \
 	otherrefs.bib \
 	todonotes.sty
 
-.PHONY: doc ug FORCE
+.PHONY: FORCE
 
-doc: ug
-ug: ug.pdf
+doc-local: ug
+ug-local: ug.pdf
 
 dist-hook: ug-dist.pdf
 	cp ug-dist.pdf $(distdir)/ug.pdf

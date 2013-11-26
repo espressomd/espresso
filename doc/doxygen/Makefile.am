@@ -40,13 +40,14 @@ EXTRA_DIST = \
         figs/particles.fig \
         figs/particles.gif
 
-.PHONY: doc doxygen
-doc: doxygen
+doc-local: doxygen
 
-doxygen:
+doxygen-local:
 if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
-	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/src/*.c $(top_srcdir)/src/*.h 
+	  $(SHELL) $(srcdir)/background_errors.sh \
+	  $(top_srcdir)/src/*.cpp $(top_srcdir)/src/*.hpp \
+	  $(top_srcdir)/src/tcl/*.cpp $(top_srcdir)/src/tcl/*.hpp 
 	ESPRESSO_VERSION=`cd $(top_srcdir); sh config/genversion.sh` \
 	PACKAGE="ESPResSo $$ESPRESSO_VERSION" \
 	SRCDIR=$(top_srcdir) INCLUDEDIR=$(top_builddir) \

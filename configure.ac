@@ -594,6 +594,7 @@ cat <<EOF
 ****************************************************************
 EOF
 # Creating the output
+AM_EXTRA_RECURSIVE_TARGETS([doc ug dg tutorials doxygen])
 AC_CONFIG_HEADERS([src/acconfig.hpp])
 AC_CONFIG_FILES([
 	Makefile

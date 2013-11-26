@@ -18,24 +18,5 @@
 #
 SUBDIRS = logo doxygen dg ug tutorials
 
-if DEVEL_SRC
+dg-local ug-local tutorials-local: latexit.sh
 
-.PHONY: FORCE doc ug dg tutorials doxygen
-doc: ug dg tutorials doxygen
-dg: latexit.sh FORCE
-	cd dg; $(MAKE) --print-directory $@
-ug: latexit.sh FORCE
-	cd ug; $(MAKE) --print-directory $@
-tutorials: latexit.sh FORCE
-	cd tutorials; $(MAKE) --print-directory $@
-
-else
-
-.PHONY: FORCE doc doxygen
-doc: doxygen
-
-endif
-
-doxygen: FORCE
-	cd doxygen; $(MAKE) --print-directory $@
-FORCE:
