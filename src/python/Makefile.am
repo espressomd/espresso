@@ -19,8 +19,6 @@
 AM_DEFAULT_SOURCE_EXT = .pyx
 LIBS =  ../libEspresso.la $(PYTHON_EXTRA_LIBS) @LIBS@
 
-if PYTHON_INTERFACE
-
 # build rule for myconfig.pxi
 myconfig.pxi: ../myconfig-final.hpp
 	$(AM_V_GEN)$(PYTHON) $(srcdir)/make_myconfig.py ../myconfig-final.hpp > /dev/null
@@ -86,5 +84,3 @@ pyexec_LTLIBRARIES = \
 #	
 #	lb.la
 #	cuda_init.la
-
-endif

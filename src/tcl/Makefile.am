@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-if TCL
 
 AM_CPPFLAGS = -I$(top_srcdir)/src
 if MPI_FAKE
 AM_CPPFLAGS += -I$(srcdir)/mpifake
 endif
+AM_DEFAULT_SOURCE_EXT = .cpp
 
 noinst_LTLIBRARIES = libEspressoTcl.la
 
@@ -133,7 +133,7 @@ libEspressoTcl_la_SOURCES += \
 	mdlc_correction_tcl.cpp mdlc_correction_tcl.hpp	
 
 if CUDA
-libEspressoTcl_la_SOURCES += tcl/cuda_init_tcl.cpp
+libEspressoTcl_la_SOURCES += cuda_init_tcl.cpp
 endif
 
 #################################################################
@@ -164,5 +164,3 @@ install-exec-hook:
 
 uninstall-local:
 	-rm -f $(DESTDIR)$(bindir)/$(ESPRESSO)
-
-endif

@@ -17,7 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-SUBDIRS = . tcl python
+DIST_SUBDIRS = . tcl python
+SUBDIRS = . 
+if TCL
+SUBDIRS += tcl
+endif
+if PYTHON_INTERFACE
+SUBDIRS += python
+endif
 
 EXTRA_DIST =
 AM_DEFAULT_SOURCE_EXT = .cpp
@@ -26,8 +33,6 @@ noinst_LTLIBRARIES = libEspresso.la
 
 # List the sources of the Espresso binary here
 # config-features.cpp must be at the beginning so that it is compiled first
-nodist_libEspresso_la_SOURCES = 
-libEspresso_la_LIBTOOLFLAGS = --tag=disable-static
 libEspresso_la_SOURCES = \
 	config-features.cpp \
 	adresso.cpp adresso.hpp \
