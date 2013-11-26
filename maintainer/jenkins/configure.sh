@@ -25,6 +25,8 @@ outp configure_params configure_vars with_cuda with_mpi with_fftw \
 pushd $builddir
 
 # set up configure params
+configure_params="--enable-silent-rules $configure_params"
+
 if $with_mpi; then
     configure_params="--with-mpi $configure_params"
 else
