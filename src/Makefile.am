@@ -154,7 +154,6 @@ libEspresso_la_SOURCES += \
 	mmm2d.cpp mmm2d.hpp \
 	mmm-common.cpp mmm-common.hpp \
 	p3m.cpp p3m.hpp \
-	p3m_gpu.hpp \
         p3m-common.cpp p3m-common.hpp \
 	p3m-dipolar.cpp p3m-dipolar.hpp \
 	reaction_field.cpp reaction_field.hpp
@@ -289,6 +288,10 @@ SUFFIXES=.cu
 		$(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -c -o $@ $<
 
 CUDA_SOURCES = \
+	cuda_utils.hpp \
+	cuda_interface.hpp \
+	p3m_gpu.hpp \
+	cuda_init.hpp \
 	cuda_init_cuda.cu \
 	cuda_common_cuda.cu \
 	lbgpu_cuda.cu \
