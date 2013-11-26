@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+SUBDIRS = . python
+
 EXTRA_DIST =
 AM_DEFAULT_SOURCE_EXT = .cpp
 
@@ -45,7 +47,7 @@ libEspresso_la_SOURCES = \
         debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	energy.cpp energy.hpp \
-	errorhandling.cpp	errorhandling.hpp \
+	errorhandling.cpp errorhandling.hpp \
 	fft.cpp fft.hpp \
 	fft-common.cpp fft-common.hpp \
 	fft-dipolar.cpp fft-dipolar.hpp \

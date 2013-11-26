@@ -17,13 +17,13 @@
 #
 
 AM_DEFAULT_SOURCE_EXT = .pyx
-LIBS =  ../src/libEspresso.la $(PYTHON_EXTRA_LIBS) @LIBS@
+LIBS =  ../libEspresso.la $(PYTHON_EXTRA_LIBS) @LIBS@
 
 if PYTHON_INTERFACE
 
 # build rule for myconfig.pxi
-myconfig.pxi: ../src/myconfig-final.hpp
-	$(PYTHON) $(srcdir)/make_myconfig.py ../src/myconfig-final.hpp
+myconfig.pxi: ../myconfig-final.hpp
+	$(PYTHON) $(srcdir)/make_myconfig.py ../myconfig-final.hpp
 CLEANFILES = myconfig.pxi
 BUILT_SOURCES = myconfig.pxi
 

@@ -600,9 +600,9 @@ AC_CONFIG_FILES([
 	config/Makefile
 	config/myconfig-sample-header.hpp
 	src/Makefile
+        src/python/Makefile
 	tools/Makefile
 	scripts/Makefile 
-        cython/Makefile
 	testsuite/Makefile
 	doc/Makefile
 	doc/logo/Makefile
