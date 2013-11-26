@@ -162,7 +162,6 @@ if TCL
 
 noinst_LTLIBRARIES += libEspressoTcl.la
 
-libEspressoTcl_la_LIBTOOLFLAGS = --tag=disable-dynamic
 libEspressoTcl_la_SOURCES = \
 	tcl/adresso_tcl.cpp tcl/adresso_tcl.hpp \
 	tcl/bin_tcl.cpp \
