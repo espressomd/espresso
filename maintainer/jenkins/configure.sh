@@ -18,7 +18,8 @@ start "CONFIGURE"
 [ ! -v with_fftw ] && with_fftw="true"
 [ ! -v with_tcl ] && with_tcl="true"
 [ ! -v with_python_interface ] && with_python_interface="false"
-outp configure_params configure_vars with_cuda with_mpi with_fftw with_python_interface
+outp configure_params configure_vars with_cuda with_mpi with_fftw \
+    with_tcl with_python_interface
 
 # change into build dir
 pushd $builddir
