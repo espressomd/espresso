@@ -17,7 +17,14 @@
 #
 
 AM_DEFAULT_SOURCE_EXT = .pyx
+
+# Build rules for python libraries
+AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src
+AM_LDFLAGS = $(PYTHON_LDFLAGS) $(PYTHON_EXTRA_LDFLAGS) -module -avoid-version -no-undefined
 LIBS =  ../libEspresso.la $(PYTHON_EXTRA_LIBS) @LIBS@
+if MPI_FAKE
+AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
+endif
 
 # build rule for myconfig.pxi
 myconfig.pxi: ../myconfig-final.hpp
@@ -33,9 +40,6 @@ cython_verbose_0 = @echo "  CYTHON   $@";
 .pyx.cpp:
 	$(cython_verbose)cython -I $(builddir) $< -o $@
 
-# Build rules for python libraries
-AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src
-AM_LDFLAGS = $(PYTHON_LDFLAGS) $(PYTHON_EXTRA_LDFLAGS) -module -avoid-version -no-undefined
 
 #espresso.cpp: espresso.pxd myconfig.pxi
 #particle_data.cpp: particle_data.pxd myconfig.pxi

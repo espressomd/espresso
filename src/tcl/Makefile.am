@@ -18,7 +18,7 @@
 
 AM_CPPFLAGS = -I$(top_srcdir)/src
 if MPI_FAKE
-AM_CPPFLAGS += -I$(srcdir)/mpifake
+AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
 endif
 AM_DEFAULT_SOURCE_EXT = .cpp
 
