@@ -18,10 +18,8 @@ start "CONFIGURE"
 [ ! -v with_fftw ] && with_fftw="true"
 [ ! -v with_tcl ] && with_tcl="true"
 [ ! -v with_python_interface ] && with_python_interface="false"
-[ ! -v enable_static ] && enable_static="false"
-[ ! -v enable_shared ] && enable_static="true"
 outp configure_params configure_vars with_cuda with_mpi with_fftw \
-    with_tcl with_python_interface enable_static enable_shared
+    with_tcl with_python_interface
 
 # change into build dir
 pushd $builddir
@@ -75,18 +73,6 @@ if $with_python_interface; then
     configure_params="--with-python-interface $configure_params"
 else
     configure_params="--without-python-interface $configure_params"
-fi
-
-if $enable_static; then
-    configure_params="--enable-static $configure_params"
-else
-    configure_params="--disable-static $configure_params"
-fi
-
-if $enable_shared; then
-    configure_params="--enable-shared $configure_params"
-else
-    configure_params="--disable-shared $configure_params"
 fi
 
 cmd "$srcdir/configure $configure_params $configure_vars" || exit $?
