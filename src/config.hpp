@@ -36,14 +36,7 @@
 #define OMPI_SKIP_MPICXX
 #define MPICH_SKIP_MPICXX
 
-/* doxyconfig.hpp is used instead of myconfig when doxygen is run */
-/* doxyconfig.hpp defines all features so that all features are documented */
-#ifndef DOXYGEN_RUN
 #include "myconfig-final.hpp"
-#else
-#include "config-doxygen.hpp"
-#endif
-
 #include "config-features.hpp"
 
 extern const char* ESPRESSO_VERSION;

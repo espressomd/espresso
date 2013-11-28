@@ -233,29 +233,23 @@ myconfig-final.hpp: FORCE
 #################################################################
 EXTRA_DIST += \
 	features.def \
-	config-features.hpp config-features.cpp \
-	config-doxygen.hpp
+	config-features.hpp config-features.cpp
 
 if HAVE_PYTHON
 
 BUILT_SOURCES += config-features.hpp config-features.cpp
-CLEANFILES += config-features.hpp config-features.cpp config-doxygen.hpp
+CLEANFILES += config-features.hpp config-features.cpp
 config-features.hpp config-features.cpp: features.def $(top_srcdir)/config/gen_featureconfig.py
 	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.hpp config-features.cpp > /dev/null
 
-config-doxygen.hpp: features.def $(top_srcdir)/config/gen_doxyconfig.py
-	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.hpp > /dev/null
-
 else
 
-config-doxygen.hpp config-features.hpp config-features.cpp: features.def
+config-features.hpp config-features.cpp: features.def
 	@echo "Python was not found in your PATH."
 	@echo "If you change the set of features, you need Python!"
 	@echo "Install it and rerun configure."
 
 endif
-
-doc doxygen: config-doxygen.hpp
 
 #################################################################
 # Handling of the version
