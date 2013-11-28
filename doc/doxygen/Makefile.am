@@ -43,14 +43,20 @@ EXTRA_DIST = \
 .PHONY: doc doxygen
 doc: doxygen
 
-doxygen:
 if HAVE_DOXYGEN
 if HAVE_PYTHON
-	SRCDIR=$(srcdir) AWK=$(AWK) \
+background_errors.dox:
+	$(AM_V_GEN)SRCDIR=$(srcdir) AWK=$(AWK) \
 	  $(SHELL) $(srcdir)/background_errors.sh \
 	    $(top_srcdir)/src/*.cpp $(top_srcdir)/src/*.hpp \
 	    $(top_srcdir)/src/tcl/*.cpp $(top_srcdir)/src/tcl/*.hpp
-	$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py $(top_srcdir)/src/features.def doxy-features
+
+doxy-features:
+	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py \
+	  $(top_srcdir)/src/features.def doxy-features
+
+doxygen-html: background_errors.dox doxy-features
+	$(AM_V_GEN)\
 	ESPRESSO_VERSION=`cd $(top_srcdir); sh config/genversion.sh` \
 	PACKAGE="ESPResSo $$ESPRESSO_VERSION" \
 	SRCDIR="$(abs_top_srcdir)" \
@@ -61,12 +67,17 @@ if HAVE_PYTHON
 	@echo "* The code documentation is now accessible at"
 	@echo "*  file://`pwd`/html/index.html"
 	@echo "***************************************************************************"
+
+doxygen: doxygen-html
+
 else
+doxygen:
 	@echo "Python was not found in your PATH."
 	@echo "Can't build the code documentation without python."
 	@echo "Install python and rerun configure."
 endif
 else
+doxygen:
 	@echo "doxygen was not found in your PATH."
 	@echo "Can't build the code documentation without doxygen and python."
 	@echo "Install doxygen and rerun configure."

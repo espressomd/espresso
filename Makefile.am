@@ -88,7 +88,6 @@ else
 endif
 
 doc doxygen: FORCE
-	cd src; $(MAKE) --print-directory $@
 	cd doc; $(MAKE) --print-directory $@
 
 FORCE:
