@@ -56,23 +56,23 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                         [reaction_fraction_pr_0 #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [reaction_fraction_pr_1 #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics reaction region #int [box]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [wall ]\n", (char *)NULL); //TODO full description
-    Tcl_AppendResult(interp, "                                     [sphere ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [cylinder ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [rhomboid ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [pore ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [stomatocyte ]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [wall ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [sphere ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [cylinder ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [rhomboid ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [pore ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [stomatocyte ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics accelerated_frame on\n", (char *)NULL);
     Tcl_AppendResult(interp, "                  boundary_mass_density #double\n", (char *)NULL);
     Tcl_AppendResult(interp, "                  ext_acceleration_force #double #double #double\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics accelerated_frame off\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics accelerated_frame print boundary_velocity\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics boundary charge_density #float [wall ]\n", (char *)NULL); //TODO full description
-    Tcl_AppendResult(interp, "                                               [sphere ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                               [cylinder ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                               [rhomboid ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                               [pore ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                               [stomatocyte ]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics boundary charge_density #float [wall ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [sphere ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [cylinder ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [rhomboid ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [pore ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [stomatocyte ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [T #float] [valency #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [ext_force #float #float #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
