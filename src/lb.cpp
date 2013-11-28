@@ -369,9 +369,9 @@ int lb_lbfluid_set_couple_flag(int couple_flag) {
 #endif
   } else {
 #ifdef LB
-     /* Only the two point nearest neighbor coupling is present in the case of the cpu, 
-        so just throw an error if something else is tried */
-     if ( couple_flag != LB_COUPLE_TWO_POINT ) {
+    /* Only the two point nearest neighbor coupling is present in the case of the cpu, 
+       so just throw an error if something else is tried */
+    if ( couple_flag != LB_COUPLE_TWO_POINT ) {
       return -1;
     }   
 #endif

@@ -89,7 +89,7 @@ LB_parameters_gpu lbpar_gpu = {
   // friction
   SC0,
   // lb_couple_switch
-  LB_COUPLE_NULL,
+  LB_COUPLE_TWO_POINT,
   // lb_coupl_pref
   SC0,
   // lb_coupl_pref2

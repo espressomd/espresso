@@ -3137,7 +3137,6 @@ void lb_calc_particle_lattice_ia_gpu(){
                 );
     }
     else { /** only other option is the three point coupling scheme */
-
 #ifdef SHANCHEN
       fprintf (stderr, "The three point particle coupling is not currently compatible with the Shan-Chen implementation of the LB\n");
       errexit(); 

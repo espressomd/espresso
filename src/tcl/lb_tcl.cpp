@@ -415,7 +415,6 @@ if ( ek_initialized ) {
                         return TCL_ERROR;
               }
         }
-        lb_lbfluid_set_couple_flag (LB_COUPLE_TWO_POINT); //Default to nearest neighbor coupling for MD particles
       }
       else if (ARG0_IS_S("couple") ) {
         if ( argc < 1 ) { 
