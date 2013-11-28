@@ -34,7 +34,7 @@
 #include "p3m_gpu.hpp"
 #include "utils.hpp"
 
-#include <iostream>
+//#include <iostream>
 
 #ifdef ELECTROSTATICS
 

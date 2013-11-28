@@ -37,7 +37,7 @@ ESSCRIPTS = \
 	vtf.tcl \
 	vtk.tcl
 
-EXTRA_DIST=$(ESSCRIPTS)
+EXTRA_DIST = $(ESSCRIPTS)
 
 # copy the scripts files from the source dir to the obj dir if they are different
 # using INSTALL_DATA here as the scripts should not be executable
