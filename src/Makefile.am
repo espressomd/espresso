@@ -177,9 +177,10 @@ cuda_verbose_0 = @echo "  NVCC     $@";
 .cu.lo:
 	$(cuda_verbose)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
 	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<; \
-	$(LIBTOOL) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-		--mode=compile $(NVCC) $(NVCCFLAGS) \
-		$(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -c -o $@ $<
+	$(LIBTOOL) $(AM_V_lt) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+		--mode=compile $(NVCC) $(DEFS) \
+		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
 CUDA_SOURCES = \
 	cuda_utils.hpp \
