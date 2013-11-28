@@ -171,8 +171,11 @@ SUFFIXES=.cu
 
 # nvcc does not allow for MF, make a separate run to generate dependencies
 # putting them into DEPDIR ensures configure creates empties dummies
+cuda_verbose = $(cuda_verbose_@AM_V@)
+cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
+cuda_verbose_0 = @echo "  NVCC     $@";
 .cu.lo:
-	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+	$(cuda_verbose)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
 	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<
 	$(LIBTOOL) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 		--mode=compile $(NVCC) $(NVCCFLAGS) \
