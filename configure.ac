@@ -265,8 +265,9 @@ AS_IF([test x$with_cuda != xno],[
     save_CXX=$CXX
     save_CXXFLAGS=$CXXFLAGS
 
-    # TODO: OLAF AND AXEL, IS THIS OKAY? NEEDED TO COMPILE
+    # TODO: OLAF AND AXEL, WE NEED SOLUTIONS FOR THIS 
     CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
+    NVCCFLAGS="$NVCCFLAGS -I/usr/include/mpi"
 
     # NVCC
     AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
