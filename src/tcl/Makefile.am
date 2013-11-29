@@ -23,7 +23,6 @@ endif
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 noinst_LTLIBRARIES = libEspressoTcl.la
-
 libEspressoTcl_la_SOURCES = \
 	adresso_tcl.cpp adresso_tcl.hpp \
 	bin_tcl.cpp \

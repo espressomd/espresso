@@ -30,7 +30,6 @@ EXTRA_DIST =
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 noinst_LTLIBRARIES = libEspresso.la
-
 # List the sources of the Espresso binary here
 # config-features.cpp must be at the beginning so that it is compiled first
 libEspresso_la_SOURCES = \
@@ -171,12 +170,16 @@ SUFFIXES=.cu
 
 # nvcc does not allow for MF, make a separate run to generate dependencies
 # putting them into DEPDIR ensures configure creates empties dummies
+cuda_verbose = $(cuda_verbose_@AM_V@)
+cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
+cuda_verbose_0 = @echo "  NVCC     $@";
 .cu.lo:
-	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<
-	$(LIBTOOL) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-		--mode=compile $(NVCC) $(NVCCFLAGS) \
-		$(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -c -o $@ $<
+	$(cuda_verbose)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<; \
+	$(LIBTOOL) $(AM_V_lt) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+		--mode=compile $(NVCC) $(DEFS) \
+		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
 CUDA_SOURCES = \
 	cuda_utils.hpp \
@@ -234,29 +237,23 @@ myconfig-final.hpp: FORCE
 #################################################################
 EXTRA_DIST += \
 	features.def \
-	config-features.hpp config-features.cpp \
-	config-doxygen.hpp
+	config-features.hpp config-features.cpp
 
 if HAVE_PYTHON
 
 BUILT_SOURCES += config-features.hpp config-features.cpp
-CLEANFILES += config-features.hpp config-features.cpp config-doxygen.hpp
+CLEANFILES += config-features.hpp config-features.cpp
 config-features.hpp config-features.cpp: features.def $(top_srcdir)/config/gen_featureconfig.py
 	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.hpp config-features.cpp > /dev/null
 
-config-doxygen.hpp: features.def $(top_srcdir)/config/gen_doxyconfig.py
-	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.hpp > /dev/null
-
 else
 
-config-doxygen.hpp config-features.hpp config-features.cpp: features.def
+config-features.hpp config-features.cpp: features.def
 	@echo "Python was not found in your PATH."
 	@echo "If you change the set of features, you need Python!"
 	@echo "Install it and rerun configure."
 
 endif
-
-doc doxygen: config-doxygen.hpp
 
 #################################################################
 # Handling of the version

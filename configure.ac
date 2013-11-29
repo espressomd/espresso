@@ -151,7 +151,7 @@ cat <<EOF
 ****************************************************************
 EOF
 
-LT_INIT([dlopen])
+LT_INIT([disable-static])
 AC_PROG_AWK
 AC_PROG_EGREP
 AC_PROG_INSTALL
