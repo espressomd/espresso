@@ -41,8 +41,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
   if(argc < 2) {
     Tcl_AppendResult(interp, "Usage of \"electrokinetics\":", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [viscosity #float] [friction #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|pressure|lbforce|reaction_tags|mass_flux> vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float] [T #float] [bjerrum_length #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags|mass_flux> vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics node #int #int #int print <velocity|mass_flux>\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics reaction [reactant_index #int]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [product0_index #int]\n", (char *)NULL);
@@ -74,7 +74,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                                               [rhomboid ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                               [pore ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                               [stomatocyte ... (c.f. constraint command)]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [T #float] [valency #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [valency #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [ext_force #float #float #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print flux vtk #string]\n", (char *)NULL);
