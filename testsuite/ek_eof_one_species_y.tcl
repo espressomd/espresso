@@ -21,7 +21,7 @@ require_feature "EK_BOUNDARIES"
 set nn [format %02d [setmd n_nodes]]
 
 puts "###############################################################"
-puts "#          Testcase ek_eof_one_species.tcl running on         #"
+puts "#         Testcase ek_eof_one_species_y.tcl running on        #"
 puts "#                           $nn nodes                          #"
 puts "###############################################################\n"
 
