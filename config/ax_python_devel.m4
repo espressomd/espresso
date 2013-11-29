@@ -40,6 +40,7 @@
 #   Copyright (c) 2009 Matteo Settenvini <matteo@member.fsf.org>
 #   Copyright (c) 2009 Horst Knorr <hk_classes@knoda.org>
 #   Copyright (c) 2013 Daniel Mullner <muellner@math.stanford.edu>
+#   Copyright (c) 2013 Axel Arnold <arnolda@icp.uni-stuttgart.de>
 #
 #   This program is free software: you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License as published by the
@@ -67,7 +68,7 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
-#serial 16
+#serial 17
 
 AU_ALIAS([AC_PYTHON_DEVEL], [AX_PYTHON_DEVEL])
 AC_DEFUN([AX_PYTHON_DEVEL],[
@@ -132,6 +133,84 @@ variable to configure. See ``configure --help'' for reference.
 		fi
 	fi
 
+        _AC_PYTHON_CHECK_DISTUTILS
+
+        # get the flags to compile against python
+        #########################################
+
+        # first try python-config, following the python manual
+        _AC_PYTHON_DEVEL_FROM_PYTHONCONFIG
+ 
+        # try again using distutils, if that failed
+        _AC_CHECK_PYTHON_DEVEL_CONSISTENCY
+
+        AS_IF([test "$pythonexists" = "no"], [
+            _AC_PYTHON_DEVEL_FROM_DISTUTILS
+            # check consistency again
+            _AC_CHECK_PYTHON_DEVEL_CONSISTENCY
+
+           if test ! "x$pythonexists" = "xyes"; then
+               AC_MSG_FAILURE([
+  Could not link test program to Python neither using distutils nor
+  python-config. Maybe the main Python library has been
+  installed in some non-standard library path. If so, pass it to configure,
+  via the LDFLAGS environment variable.
+  Example: ./configure LDFLAGS="-L/usr/non-standard-path/python/lib"
+  ============================================================================
+   ERROR!
+   You probably have to install the development version of the Python package
+   for your distribution.  The exact name of this package varies among them.
+  ============================================================================
+	       ])
+	   fi
+        ])
+
+	AC_SUBST([PYTHON_SITE_PKG])
+	AC_SUBST([PYTHON_CPPFLAGS])
+	AC_SUBST([PYTHON_LDFLAGS])
+	AC_SUBST(PYTHON_EXTRA_LDFLAGS)
+	AC_SUBST(PYTHON_EXTRA_LIBS)
+
+	#
+	# all done!
+	#
+])
+
+AC_DEFUN([_AC_CHECK_PYTHON_DEVEL_CONSISTENCY],[
+	# check to see if everything compiles alright
+	#
+	AC_MSG_CHECKING([consistency of all components of python development environment])
+	# save current global flags
+	ac_save_LIBS="$LIBS"
+	ac_save_CPPFLAGS="$CPPFLAGS"
+	LIBS="$ac_save_LIBS $PYTHON_LDFLAGS $PYTHON_EXTRA_LDFLAGS $PYTHON_EXTRA_LIBS"
+	CPPFLAGS="$ac_save_CPPFLAGS $PYTHON_CPPFLAGS"
+	AC_LANG_PUSH([C])
+	AC_LINK_IFELSE([
+		AC_LANG_PROGRAM([[#include <Python.h>]],
+				[[Py_Initialize();]])
+		],[pythonexists=yes],[pythonexists=no])
+	AC_LANG_POP([C])
+	# turn back to default flags
+	CPPFLAGS="$ac_save_CPPFLAGS"
+	LIBS="$ac_save_LIBS"
+	AC_MSG_RESULT([$pythonexists])
+])
+
+AC_DEFUN([_AC_PYTHON_DEVEL_FROM_PYTHONCONFIG],[
+
+	AC_PATH_PROG([PYTHONCONFIG],[python[$PYTHON_VERSION]-config],no)
+
+        if test -n "$PYTHONCONFIG"; then
+           # no splitting of LDFLAGS with python-config
+	   PYTHON_CPPFLAGS=`$PYTHONCONFIG --cflags`
+           PYTHON_LDFLAGS=`$PYTHONCONFIG --ldflags`
+	   PYTHON_EXTRA_LDFLAGS=
+	   PYTHON_EXTRA_LIBS=`$PYTHONCONFIG --libs`
+        fi
+])
+
+AC_DEFUN([_AC_PYTHON_CHECK_DISTUTILS],[
 	#
 	# Check if you have distutils, else fail
 	#
@@ -147,6 +226,18 @@ $ac_distutils_result])
 		PYTHON_VERSION=""
 	fi
 
+	#
+	# Check for site packages
+	#
+	AC_MSG_CHECKING([for Python site-packages path])
+	if test -z "$PYTHON_SITE_PKG"; then
+		PYTHON_SITE_PKG=`$PYTHON -c "import distutils.sysconfig; \
+			print (distutils.sysconfig.get_python_lib(0,0));"`
+	fi
+	AC_MSG_RESULT([$PYTHON_SITE_PKG])
+])
+
+AC_DEFUN([_AC_PYTHON_DEVEL_FROM_DISTUTILS],[
 	#
 	# Check for Python include path
 	#
@@ -166,7 +257,6 @@ $ac_distutils_result])
 		PYTHON_CPPFLAGS=$python_path
 	fi
 	AC_MSG_RESULT([$PYTHON_CPPFLAGS])
-	AC_SUBST([PYTHON_CPPFLAGS])
 
 	#
 	# Check for Python library path
@@ -245,18 +335,6 @@ EOD`
 		fi
 	fi
 	AC_MSG_RESULT([$PYTHON_LDFLAGS])
-	AC_SUBST([PYTHON_LDFLAGS])
-
-	#
-	# Check for site packages
-	#
-	AC_MSG_CHECKING([for Python site-packages path])
-	if test -z "$PYTHON_SITE_PKG"; then
-		PYTHON_SITE_PKG=`$PYTHON -c "import distutils.sysconfig; \
-			print (distutils.sysconfig.get_python_lib(0,0));"`
-	fi
-	AC_MSG_RESULT([$PYTHON_SITE_PKG])
-	AC_SUBST([PYTHON_SITE_PKG])
 
 	#
 	# libraries which must be linked in when embedding
@@ -268,8 +346,6 @@ EOD`
                 print (conf('LIBS'))"`
 	fi
 	AC_MSG_RESULT([$PYTHON_EXTRA_LIBS])
-	AC_SUBST(PYTHON_EXTRA_LIBS)
-
 	#
 	# linking flags needed when embedding
 	#
@@ -280,45 +356,4 @@ EOD`
 			print (conf('LINKFORSHARED'))"`
 	fi
 	AC_MSG_RESULT([$PYTHON_EXTRA_LDFLAGS])
-	AC_SUBST(PYTHON_EXTRA_LDFLAGS)
-
-	#
-	# final check to see if everything compiles alright
-	#
-	AC_MSG_CHECKING([consistency of all components of python development environment])
-	# save current global flags
-	ac_save_LIBS="$LIBS"
-	ac_save_CPPFLAGS="$CPPFLAGS"
-	LIBS="$ac_save_LIBS $PYTHON_LDFLAGS $PYTHON_EXTRA_LDFLAGS $PYTHON_EXTRA_LIBS"
-	CPPFLAGS="$ac_save_CPPFLAGS $PYTHON_CPPFLAGS"
-	AC_LANG_PUSH([C])
-	AC_LINK_IFELSE([
-		AC_LANG_PROGRAM([[#include <Python.h>]],
-				[[Py_Initialize();]])
-		],[pythonexists=yes],[pythonexists=no])
-	AC_LANG_POP([C])
-	# turn back to default flags
-	CPPFLAGS="$ac_save_CPPFLAGS"
-	LIBS="$ac_save_LIBS"
-
-	AC_MSG_RESULT([$pythonexists])
-
-        if test ! "x$pythonexists" = "xyes"; then
-	   AC_MSG_FAILURE([
-  Could not link test program to Python. Maybe the main Python library has been
-  installed in some non-standard library path. If so, pass it to configure,
-  via the LDFLAGS environment variable.
-  Example: ./configure LDFLAGS="-L/usr/non-standard-path/python/lib"
-  ============================================================================
-   ERROR!
-   You probably have to install the development version of the Python package
-   for your distribution.  The exact name of this package varies among them.
-  ============================================================================
-	   ])
-	  PYTHON_VERSION=""
-	fi
-
-	#
-	# all done!
-	#
 ])

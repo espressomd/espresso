@@ -1,6 +1,7 @@
 #include "config.hpp"
 #include "electrokinetics_tcl.hpp"
 #include "electrokinetics.hpp"
+#include "lb.hpp"
 #include "lb-boundaries.hpp"
 #include "lb-boundaries_tcl.hpp"
 #include "initialize.hpp"
