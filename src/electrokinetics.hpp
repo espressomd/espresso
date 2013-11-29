@@ -28,9 +28,14 @@
 //ifdeffing multiple versions of the kernel integrate.
 #ifdef CUDA
 
-#include <cufft.h>
-
 #define MAX_NUMBER_OF_SPECIES 10
+
+#ifdef __CUDACC__
+#include <cufft.h>
+#else
+typedef void cufftComplex;
+typedef void cufftReal;
+#endif
 
 /* Data structure holding parameters and memory pointers for the link flux system. */
 

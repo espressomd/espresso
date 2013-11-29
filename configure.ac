@@ -266,10 +266,6 @@ AS_IF([test x$with_cuda != xno],[
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
 
-    # TODO: OLAF AND AXEL, WE NEED SOLUTIONS FOR THIS 
-    CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
-    NVCCFLAGS="$NVCCFLAGS -I/usr/include/mpi"
-
     # NVCC
     AC_PROG_CUDA
 
