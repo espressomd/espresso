@@ -44,7 +44,7 @@ libEspresso_la_SOURCES = \
 	constraint.cpp constraint.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
 	cuda_init.hpp \
-        debug.cpp debug.hpp \
+	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	energy.cpp energy.hpp \
 	errorhandling.cpp errorhandling.hpp \
@@ -188,6 +188,7 @@ CUDA_SOURCES = \
 	cuda_init.hpp \
 	cuda_init_cuda.cu \
 	cuda_common_cuda.cu \
+	electrokinetics_cuda.cu \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu
 

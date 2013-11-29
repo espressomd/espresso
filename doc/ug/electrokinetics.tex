@@ -1,0 +1,425 @@
+\newcommand{\lb}{l_\mathrm{B}}
+\newcommand{\kT}{k_\mathrm{B}T}
+
+\chapter{\label{sec:electrokinetics} Electrokinetics}
+\newescommand{electrokinetics}
+
+The electrokinetics setup in \es{} allows for the description of electro-hydrodynamic
+systems on the level of ion density distributions coupled to a Lattice-Boltzmann 
+fluid interacting with explicit charged particles. In the following paragraph we 
+briefly explain the electrokinetic model implemented in \es{}, before we come to
+the description of the interface.
+
+\section{Electrokinetic Equations}
+
+In the electrokinetics code we solve the following system of coupled continuity,
+diffusion-advection, Poisson, and Navier-Stokes equations:
+\begin{eqnarray}
+\label{eq:ek_model_continuity} \frac{\partial \rho_k}{\partial t} & = & -\,\nabla\cdot\vec j_k; \\
+\label{eq:ek_model_fluxes} \vec j_{k} & = & -D_k \nabla \rho_k - \nu_k \, q_k \rho_k\, \nabla \Phi + \rho_\mathrm{k} \vec v; \\
+\label{eq:ek_model_poisson} \Delta \Phi & = & -4 \pi \, \lb \, \kT \sum_k q_k \rho_k; \\
+\label{eq:ek_model_velocity} \left(\frac{\partial \vec v}{\partial t} + \vec v \cdot \vec \nabla \vec v \right) \rho_\text{fl} & = & -\kT \nabla \rho_\text{fl} - q_k \rho_k \nabla \Phi + \eta \vec \Delta \vec v + (\eta / 3 + \eta_{\text{\,b}}) \nabla (\nabla \cdot \vec v); \qquad \\
+\label{eq:ek_model_continuity_fl} \frac{\partial \rho_\text{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\text{fl} \vec v \right), 
+\end{eqnarray}
+which define relations between the following observables
+\begin{description}[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
+  \item[$\rho_k$] the number density of the particles of species $k$,
+  \item[$\vec j_k$] the number density flux of the particles of species $k$,
+  \item[$\Phi$] the electrostatic potential,
+  \item[$\vec v$] the advective velocity,
+\end{description}
+and input parameters
+\begin{description}[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
+  \item[$D_k$] the diffusion constant of species $k$,
+  \item[$\nu_k$] the mobility of species $k$,
+  \item[$q_k$] the charge of a single particle of species $k$,
+  \item[$\lb$] the Bjerrum-length,
+  \item[$\kT$] the thermal energy given by the product of Boltzmann's constant
+  $k_\text{B}$\\and the temperature $T$,
+  \item[$\eta$] the dynamic viscosity of the fluid,
+  \item[$\eta_{\text{\,b}}$] the bulk viscosity of the fluid.
+\end{description}
+The temperature $T$, and diffusion constants $D_k$ and mobilities $\nu_k$ of
+individual species are linked through the Einstein-Smoluchowski relation $D_k /
+\nu_k = \kT$. The system of equations described in 
+%Eqs.~\ref{eq:ek_model_continuity}-\ref{eq:ek_model_continuity_fl}, combining 
+diffusion-advection, electrostatics, and hydrodynamics is conventionally 
+referred to as the \textit{Electrokinetic Equations}.
+
+\textbf{TODO complete broad borders on the applicability of the model.}
+
+The electrokinetic equations 
+
+\begin{itemize}
+	\item On the coarse time and length scale of the model, the dynamics of the
+	particle species can be described in terms of smooth density distributions and
+	potentials as opposed to the microscale where highly localized densities cause
+	singularities in the potential.
+	
+	In most situations, this restricts the application of the model to species of
+	monovalent ions, since ions of higher valency typically show strong
+	condensation and correlation effects -- the localization of individual ions in
+	local potential minima and the subsequent correlated motion with the charges
+	causing this minima.
+	
+	\item Only the entropy of an ideal gas and electrostatic interactions are
+	accounted for. In particular, there is no excluded volume.
+	
+	This restricts the application of the model to monovalend ions and moderate
+  charge densities. At higher valencies or densities, overcharging and layering
+  effects can occur, which lead to non-monotonic charge densities and potentials,
+  that can not be covered by a mean-field model such as Poisson-Boltzmann or this
+  one.
+	
+	Even in salt free systems containing only counterions, the counterion
+	densities close to highly charged objects can be overestimated when neglecting
+	excluded volume effects. Decades of the application of Poisson-Boltzmann
+	theory to systems of electrolytic solutions, however, show that those
+	conditions are fulfilled for monovalent salt ions (such as sodium chloride or
+	potassium chloride) at experimentally realizable concentrations.
+	
+	\item Electrodynamic and magnetic effects play no role. Electrolytic solutions
+	fulfill those conditions as long as they don't contain magnetic particles.
+	
+	\item The diffusion coefficient is a scalar, which means there can not be any
+	cross-diffusion. Additionally, the diffusive behaviour has been deduced using
+	a formalism relying on the notion of a local equilibrium. The resulting
+	diffusion equation, however, is known to be valid also far from equilibrium.
+	
+	\item The temperature is constant throughout the system.
+	
+	\item The density fluxes instantaneously relax to their local equilibrium
+	values. Obviously one can not extract information about processes on length
+	and time scales not covered by the model, such as dielectric spectra at
+	frequencies, high enough that they correspond to times faster than the
+	diffusive time scales of the charged species.
+\end{itemize}
+%The \lit{Electrokinetics} feature implements a continuum model for electrolyte solutions. It does so on a mean field level, describing the dissolved charged species of ions through density fields propagated according to a time-dependend diffusion advection equation
+
+%\begin{align}
+%  \frac{\partial \rho_k}{\partial t} &= -\,\nabla\cdot\vec j_k \; , \vphantom{\left(\frac{\partial \vec v}{\partial t} \right) \sum_k} \label{eq:ek_model_continuity}\\
+%  \vec j_{k} &= -D_k \nabla \rho_k - \nu_k \, q_k \rho_k\, \nabla \Phi + \rho_\mathrm{k} \vec v \; , \vphantom{\left(\frac{\partial \vec v}{\partial t} \right) \sum_k} \label{eq:ek_model_fluxes}
+%\end{align}
+
+%containing the following quantities
+%%\begin{description}[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
+%%%  \item[$\rho_k$] the number density of the particles of species $k$,
+%%%  \item[$\vec j_k$] the number density flux of the particles of species $k$,
+%%%  \item[$\Phi$] the electrostatic potential,
+%%%  \item[$\vec v$] the advective velocity,
+%%%  \item[$D_k$] the diffusion constant of species $k$,
+%%%  \item[$\nu_k$] the mobility of species $k$,
+%%%  \item[$q_k$] the charge of a single particle of species $k$,
+%%%  \item[$\lb$] the Bjerrum-length,
+%%%  \item[$\kT$] the thermal energy given by the product of Boltzmann's constant
+%%%  $k_\text{B}$\\and the temperature $T$,
+%%%  \item[$\eta$] the dynamic viscosity of the fluid,
+%%%  \item[$\eta_{\text{\,b}}$] the bulk viscosity of the fluid.
+%%\end{description}
+
+%The temperature $T$, and diffusion constants $D_k$ and mobilities $\nu_k$ of
+%individual species are linked through the Einstein-Smoluchowski relation $D_k /
+%\nu_k = \kT$.\\
+%This set of equations, combining diffusion-advection, electrostatics, and
+%hydrodynamics is conventionally referred to as the \textit{Electrokinetic
+%Equations}.
+
+%\begin{align}
+%  \Delta \Phi &= -4 \pi \, \lb \, \kT \sum_k q_k \rho_k \; , \vphantom{\left(\frac{\partial \vec v}{\partial t} \right) \sum_k} \label{eq:ek_model_poisson}
+%\end{align}
+
+%\begin{align}
+%  \left(\frac{\partial \vec v}{\partial t} + \vec v \cdot \vec \nabla \vec v \right) \sum_k \rho_k &= -\kT \sum_k \nabla \rho_k - q_k \rho_k \nabla \Phi + \eta \vec \Delta \vec v + (\eta / 3 + \eta_{\text{\,b}}) \nabla (\nabla \cdot \vec v) \; . \label{eq:ek_model_velocity}
+%\end{align}
+
+
+%This equation is solved using a finite volume scheme with explicit time stepping.  
+
+For an implicit treatment of a solvent, \es allows to couple the
+molecular dynamics simulation to a Lattice-Boltzmann fluid. The Lattice-
+Boltzmann-Method (LBM) is a fast, lattice based method that, in its
+``pure'' form, allows to calculate fluid flow in different boundary conditions
+of arbitrarily complex geometries. Coupled to molecular dynamics, it allows for 
+the computationally efficient inclusion of hydrodynamic interactions into the 
+simulation. The implementation of boundary conditions for the LBM is a difficult
+ task, a lot of research is still being conducted on this topic. The focus of 
+the \es implementation of the LBM is, of course, the coupling to MD and 
+therefore available geometries and boundary conditions are somewhat limited 
+in comparison to ``pure'' codes. 
+
+Here we restrict the documentation to the interface. For a more detailed
+description of the method, please refer to the literature.
+
+\section{Setup}
+
+\begin{essyntax}
+  electrokinetics
+  \require{2}{\opt{gpu}}
+  \require{1 or 2}{\opt{agrid  \var{agrid}}}
+  \require{1 or 2 or 3}{\opt{dens  \var{density} }}
+  \require{1 or 2 or 3}{\opt{visc  \var{viscosity}}}
+  \require{1 or 2}{\opt{tau  \var{lb\_timestep}}}
+  \require{1 or 2 or 3}{\opt{bulk_visc  \var{bulk\_viscosity}}}
+  \require{1 or 2 or 3}{\opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}}
+  \require{1 or 2 or 3}{\opt{friction   \var{gamma} } }
+  \require{2}{\opt{couple   \var{2pt/3pt} } }
+  \require{1 or 2 or 3}{\opt{gamma_odd  \var{gamma\_odd}}}
+  \require{1 or 2 or 3}{\opt{gamma_even  \var{gamma\_even}}}
+  \require{3}{\opt{mobility} \var{mobilities}  }
+  \require{3}{\opt{sc\_coupling} \var{coupling\_constants}  }
+  \begin{features}
+  \required[1]{ELECTROKINETICS}
+  \required[2]{EK_BOUNDARIES}
+  \required[3]{EK_REACTIONS}
+  \end{features}
+\end{essyntax}
+The \lit{electrokinetics} command initializes the fluid with a given
+set of parameters. It is also possible to change parameters on the
+fly, but this will only rarely be done in practice. Before being able
+to use the LBM, it is necessary to set up a box of a desired size. The
+parameter \lit{agrid} is used to set the lattice constant of the
+fluid, so the size of the box in every direction must be a multiple of
+\var{agrid}.
+
+In \es the LB scheme and the MD scheme are not synchronized: In one LB
+time step typically several MD steps are performed. This allows to
+speed up the simulations and is adjusted with the parameter \var{tau},
+the LB timestep.
+The parameters \var{dens} and \var{visc} set up the density and
+(kinematic) viscosity of the LB fluid in (usual) MD units.  Internally the LB
+implementation works with a different set of units: all lengths are
+expressed in \var{agrid}, all times in \var{tau} and so on.  Therefore
+changing \var{agrid} and \var{tau}, might change the behaviour of the
+LB fluid, \eg at boundaries, due to characteristics of the LBM
+itself. It should also be noted that the LB nodes are located at 0.5, 1.5, 2.5, etc (in terms of \var{agrid}).
+This has important implications for the location of hydrodynamic boundaries which are generally considered
+to be halfway between two nodes to first order.
+Currently it is not possible to precisely give a parameter set
+where reliable results are expected, but we are currently performing a
+study on that. Therefore the LBM should \emph{not be used as a black
+  box}, but only after a careful check of all parameters that were
+applied. 
+
+The parameter \lit{ext_force} allows to apply an external body force
+density that is homogeneous over the fluid. It is again to be given in
+MD units.  The parameter \lit{bulk_viscosity} allows to tune the bulk
+viscosity of the fluid and is given in MD units. In the limit of low
+Mach (often also low Reynolds) number the results should be
+independent of the bulk viscosity up to a scaling factor. 
+It is however known that the values of the viscosity does 
+affect the quality of the implemented link-bounce-back method.
+\lit{gamma_odd} and
+\lit{gamma_even} are the relaxation parameters for the kinetic
+modes. Due to their somewhat obscure nature they are to be given
+directly in LB units.
+
+Before running a simulation at least the following parameters must be
+set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau},
+\lit{friction}. For the other parameters, the following are taken:
+\var{bulk\_viscosity}=0, \var{gamma\_odd}=0, \var{gamma\_even}=0,
+\var{ f_x} = \var{ f_y} = \var{ f_z} = 0.
+
+If the feature \lit{SHANCHEN} is activated, the Lattice Boltzmann
+code (so far GPU version only) is extended to a two-component
+Shan-Chen (SC) method.  The \lit{lbfluid} command requires in this case
+to supply two values, for the respective fluid components, to each
+of the options \lit{dens}, \lit{visc}, \lit{bulk_visc}, \lit{friction},
+\lit{gamma_odd} and \lit{gamma_even}, when they are used, otherwise
+they are set to the default values. The three elements of the
+coupling matrix can be supplied with the option \lit{sc_coupling},
+and the mobility coefficient can be
+specified with the option \lit{mobility}. By default no copuling is activated, and the relaxation parameter associated to the mobility is zero, corresponding to an infinite value for \lit{mobility}. Additional details are
+given in \ref{sec:shanchen} and \ref{sec:scmd-coupling}.
+
+\begin{essyntax}
+  lbfluid print_interpolated_velocity \var{x} \var{y} \var{z}
+\end{essyntax}
+This variant returns the velocity at point in countinous space. 
+This can make it easier to calculate flow profiles independent of
+the lattice constant.
+
+\begin{essyntax}
+  lbfluid save_ascii_checkpoint \var{filename}
+  lbfluid save_binary_checkpoint \var{filename}
+  lbfluid load_ascii_checkpoint \var{filename}
+  lbfluid load_binary_checkpoint \var{filename}
+\end{essyntax}
+The first two save commands save all of the LB fluid nodes' populations to \var{filename} in ascii or binary format respectively.
+The two load commands load the populations from \var{filename}.  This is  useful for restarting a simulation either on the same
+machine or a different machine.  Some care should be taken when using the binary format as the format of doubles can depend
+on both the computer being used as well as the compiler.  This is currently  only implemented for the cpu version of LB.
+
+\section{LB as a thermostat}
+\begin{essyntax}
+  thermostat \require{1 or 2 or 3}{lb} \var{T}
+  \begin{features}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
+  \required[3]{SHANCHEN}
+  \end{features}
+\end{essyntax}
+The LBM implementation in \es uses Ahlrichs and D\"unweg's point coupling method
+to couple MD particles the LB fluid. This coupling consists
+in a frictional force and a random force:
+\begin{equation*}
+  \vec{F} = -\gamma \left(\vec{v}-\vec{u}\right) + \vec{F}_R.
+\end{equation*}
+The momentum acquired by the particles is then transferred back to the fluid using a linear interpolation scheme, to preserve total momentum.
+In the GPU implementation the force can alternatively be interpolated using a three point scheme which couples the particles to the nearest 27 LB nodes.
+This can be called using ``lbfluid \lit{couple} 3pt'' and is described in D\"{u}nweg and Ladd by equation 301\cite{duenweg08a}. Note that the three point coupling scheme is incompatible with the Shan Chen Lattice Boltmann.
+The frictional force tends to decrease the relative velocity
+between the fluid and the particle whereas the random forces are chosen
+so large that the average kinetic energy per particle corresponds to
+the given temperature, according to a fluctuation dissipation theorem.
+No other thermostatting mechanism is necessary then. Please switch off any other thermostat 
+ before starting the LB thermostatting mechanism.
+
+The LBM implementation provides a fully thermalized LB fluid, \ie all
+nonconserved modes, including the pressure tensor, fluctuate correctly
+according to the given temperature and the relaxation parameters. All
+fluctuations can be switched off by setting the temperature to 0.
+
+Regarind the unit of the temperature, please refer to
+Section~\ref{sec:units}.
+
+\section{Reading and setting single lattice nodes}
+\begin{essyntax}
+  lbnode \var{x} \var{y} \var{z} \alt{print \asep set} \var{args}
+  \begin{features}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
+  \required[3]{SHANCHEN}
+  \end{features}
+\end{essyntax}
+The \lit{lbnode} command allows to inspect (\lit{print}) and modify
+(\lit{set}) single LB nodes.  Note that the indexing in every
+direction starts with 0.  For both commands you have to specify what
+quantity should be printed
+or modified. Print allows the following arguments: \\
+\begin{tabular}{p{0.2\columnwidth}p{0.5\columnwidth}}
+  \lit{rho}\ & the density (one scalar$^{1,2}$ or two scalars$^3$). \\
+  \lit{u} & the fluid velocity (three floats: $u_x$, $u_y$, $u_z$) \\
+  \lit{pi} & the fluid velocity (six floats: $\Pi_{xx}$, $\Pi_{xy}$, $\Pi_{yy}$, $\Pi_{xz}$,  $\Pi_{yz}$,  $\Pi_{zz}$) \\
+  \lit{pi_neq} & the nonequilbrium part of the pressure tensor, components as above. \\
+  \lit{pop} & the 19 population (check the order from the source code please). \\
+  \lit{boundary} & the flag indicating whether the node is a fluid node ($\lit{boundary}=0$) or a boundary node ($\lit{boundary}\ne 0$). Does not support \lit{set}. Refer to the \lit{lbboundary} command for this functionality.\\
+$^1$\lit{LB} or \lit{LB_GPU}; $^2$\lit{SHANCHEN}
+\end{tabular}
+
+\noindent{}Example:
+The line
+\begin{tclcode}
+puts [ lbnode 0 0 0 print u ]
+\end{tclcode}
+prints the fluid velocity in node 0 0 0 to the screen.  The command
+\lit{set} allows to change the density or fluid velocity in a single
+node. Setting the other quantities can easily be implemented.
+Example:
+\begin{tclcode}
+puts [ lbnode 0 0 0 set u 0.01 0. 0.]
+\end{tclcode}
+
+
+\section{Output}
+\label{ssec:EKoutput}
+\begin{essyntax}
+  lbfluid print \opt{vtk} \var{property} \var{filename} [\var{filename}]
+\end{essyntax}
+The print parameter of the \lit{lbfluid} command is a feature to simplify visualization. It allows for the export of the whole fluid field data into a 
+file with name \var{filename} at once. Currently supported values for the 
+parameter \var{property} are boundary and velocity when using \lit{LB} or \lit{LB_GPU} and density and velocity when using \lit{SHANCHEN}. The additional option 
+\lit{vtk} enables export in the vtk format which is readable by visualization software such as paraview\footnote{http://www.paraview.org/} or mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. Otherwise gnuplot readable data will be 
+exported. If you plan to use paraview for visualization, note that also the 
+particle positions can be exportet in the VTK format \ref{sec:writevtk}.
+If the \lit{SHANCHEN} bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
+
+
+\section{Setting up boundary conditions}
+\begin{essyntax}
+  lbboundary \var{shape} \var{shape\_args} \opt{velocity \var{vx} \var{vy} \var{vz}}
+  \begin{features}
+  \required{LB_BOUNDARIES}
+  \end{features}
+\end{essyntax}
+
+If nothing else is specified periodic boundary conditions are assumed 
+for the LB fluid. The \lit{lbboundary} command allows to set up
+other (internal or external) boundaries.
+
+The \lit{lbboundary} command syntax is very close to the
+\lit{constraint} syntax, as usually one wants the hydrodynamic
+boundary conditions to be shaped similarily to the MD
+boundaries. Currently the shapes mentioned above are available and
+their syntax exactly follows the syntax of the constraint command. For
+example
+\begin{tclcode}
+  lbboundary wall dist 1.5 normal 1. 0. 0. 
+\end{tclcode}
+creates a planar boundary condition at distance 1.5 from the origin of
+the coordinate system where the half space $x>1.5$ is treated as
+normal LB fluid, and the other half space is filled with boundary
+nodes.
+
+Intersecting boundaries are in principle possible but must be treated
+with care. 
+In the current, only partly satisfactory, all nodes that are within at least
+one boundary are treated as boundary nodes. Improving this is nontrivial, 
+and suggestions are very welcome.
+
+Currently, only the so called ``link-bounce-back'' algorithm for wall
+nodes is available. This creates a boundary that is located
+approximately midway between the lattice nodes, so in the above
+example this corresponds indeed to a boundary at $x=1.5$. Note that
+the location of the boundary is unfortunately not entirely independent of the
+viscosity. This can \eg be seen when using the sample script
+\lit{poiseuille.tcl} with a high viscosity.
+
+The bounce back boundary conditions allow to set velocity at a boundary to a nonzero
+value. This allows to create shear flow and boundaries moving relative to 
+each other. This could be a fixed sphere in a channel moving at a finite speed -- 
+corresponding to the galilei-transform of a moving sphere in a fixed channel.
+The velocity boundary conditions are implemented according to \cite{succi01a}
+eq.~12.58. Using this implementation as a blueprint for the boundary treatment 
+an implementation of the Ladd-Coupling should be relatively straightforward.
+
+\begin{essyntax}
+  lbboundary force \opt{ \var{n_{boundary}}}
+  \begin{features}
+  \required{LB_BOUNDARIES}
+  \end{features}
+\end{essyntax}
+This variant prints out the force on boundary number \lit{n_boundary}.
+
+\section{Choosing between the GPU and CPU implementations}
+\begin{essyntax}
+  \variant{1} lbfluid cpu
+  \variant{2} lbfluid gpu
+  \begin{features}
+    \required[1]{LB}
+    \required[2]{LB_GPU}
+  \end{features}
+\end{essyntax}
+
+A very recent development is an implementation of the LBM for NVIDIA
+GPUs using the CUDA framework.  On CUDA-supporting machines this can
+be activated by configuring with \lit{configure
+  --with-cuda=/path/to/cuda} and activating the feature \lit{LB_GPU}.
+Within the \es-Tcl-script, the \lit{lbfluid} command can be used to
+choose between the CPU and GPU implementations of the
+Lattice-Boltzmann algorithm, for further information on CUDA support
+see section~\ref{sec:cuda}.
+
+Variant \variant{1} is the default and turns on the standard CPU
+implementation of the Lattice-Boltzmann fluid, while variant
+\variant{2} turns on the GPU implementation, implying that all
+following LB-related commands are executed on the GPU.
+
+Currently only a subset of the CPU commands are available for the GPU
+implementation.  For boundary conditions analogous to the CPU
+implementation, the feature \lit{LB_BOUNDARIES_GPU} has to be
+activated.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End:

@@ -366,16 +366,12 @@ int lb_lbfluid_set_couple_flag(int couple_flag) {
       return -1;
     }
     lbpar_gpu.lb_couple_switch = couple_flag;
-/*    if (couple_flag == LB_COUPLE_TWO_POINT)
-      lbpar_gpu.lb_couple_switch = (lbpar_gpu.lb_couple_switch &~ LB_COUPLE_THREE_POINT) | LB_COUPLE_TWO_POINT;
-    if (couple_flag == LB_COUPLE_THREE_POINT)
-      lbpar_gpu.lb_couple_switch = (lbpar_gpu.lb_couple_switch &~ LB_COUPLE_TWO_POINT) | LB_COUPLE_THREE_POINT;*/
 #endif
   } else {
 #ifdef LB
-     /* Only the two point nearest neighbor coupling is present in the case of the cpu, 
-        so just throw an error if something else is tried */
-     if ( couple_flag != LB_COUPLE_TWO_POINT ) {
+    /* Only the two point nearest neighbor coupling is present in the case of the cpu, 
+       so just throw an error if something else is tried */
+    if ( couple_flag != LB_COUPLE_TWO_POINT ) {
       return -1;
     }   
 #endif
@@ -584,7 +580,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
   
     int j;	
          /** print of the calculated phys values */
-      fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+      fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray float 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
         for(j=0; j<int(lbpar_gpu.number_of_nodes); ++j){
         /** print of the calculated phys values */
         fprintf(fp, "%d \n", bound_array[j]);
@@ -601,7 +597,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
 	   gridsize[1] = box_l[1] / lblattice.agrid;
 	   gridsize[2] = box_l[2] / lblattice.agrid;
 	
-	   fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	   fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray float 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
 	   for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
 		   for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
@@ -616,38 +612,48 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
 }
 
 int lb_lbfluid_print_vtk_density(char** filename) {
-int ii;
-for(ii=0;ii<LB_COMPONENTS;++ii){ 
-  FILE* fp = fopen(filename[ii], "w");
-  if(fp == NULL){
-	 perror("lb_lbfluid_print_vtk_density");
-	 return 1;
-  }
-  if (lattice_switch & LATTICE_LB_GPU) {
+  int ii;
+  
+  for(ii=0;ii<LB_COMPONENTS;++ii) {
+    FILE* fp = fopen(filename[ii], "w");
+    
+    if(fp == NULL) {
+      perror("lb_lbfluid_print_vtk_density");
+      return 1;
+    }
+    
+    if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
+
      int j;	
      size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
      host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
      lb_get_values_GPU(host_values);
-     fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 1\nLOOKUP_TABLE default\n", 
+     
+     fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray float 1\nLOOKUP_TABLE default\n", 
              lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, 
              lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, 
              lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+     
      for(j=0; j<int(lbpar_gpu.number_of_nodes); ++j){
          /** print the calculated phys values */
          fprintf(fp, "%f\n", host_values[j].rho[ii]);
      }
+     
      free(host_values);
+
 #endif
-  } else {
+    }
+    else {
 #ifdef LB
-    exit(printf("Not implemented yet (%s:%d) ",__FILE__,__LINE__));
+      exit(printf("Not implemented yet (%s:%d) ",__FILE__,__LINE__));
 #endif // LB
+    }
+    
+    fclose(fp);
   }
-  fclose(fp);	
-			
- } // for 
- return 0;
+  
+  return 0;
 }
 
 int lb_lbfluid_print_vtk_velocity(char* filename) {
@@ -662,7 +668,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
     lb_get_values_GPU(host_values);
-		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray float 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
     int j;	
     for(j=0; j<int(lbpar_gpu.number_of_nodes); ++j){
       /** print of the calculated phys values */
@@ -680,7 +686,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
 	   gridsize[1] = box_l[1] / lblattice.agrid;
 	   gridsize[2] = box_l[2] / lblattice.agrid;
 
-	    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray float 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
 	    for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
 		    for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
@@ -735,7 +741,7 @@ int lb_lbfluid_print_boundary(char* filename) {
       for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
         for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
           lb_lbnode_get_boundary(pos, &boundary);
-          boundary = boundary != 0 ? 1 : 0;
+          boundary = ( boundary != 0 ? 1 : 0 );
           fprintf(fp, "%f %f %f %d\n", (pos[0]+0.5)*lblattice.agrid, (pos[1]+0.5)*lblattice.agrid, (pos[2]+0.5)*lblattice.agrid, boundary);
         }
 #endif
@@ -1121,7 +1127,7 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
 #ifdef LB
     index_t index;
     int node, grid[3], ind_shifted[3];
-    double rho; double j[3]; double pi[6];
+    double rho; double j[3]; double pi[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
     node = map_lattice_to_node(&lblattice,ind_shifted,grid);
@@ -1795,13 +1801,14 @@ void lb_reinit_fluid() {
     /* here the conversion to lb units is performed */
     double rho = lbpar.rho[0]*agrid*agrid*agrid;
     double j[3] = { 0., 0., 0. };
-    double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
+//    double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
+double pi[6] = { 0., 0., 0., 0., 0., 0. };
 
     LB_TRACE(fprintf(stderr, "Initialising the fluid with equilibrium populations\n"););
 
     for (index=0; index<lblattice.halo_grid_volume; index++) {
 
-      lb_calc_n_equilibrium(index,rho,j,pi);
+      lb_calc_n_from_rho_j_pi(index,rho,j,pi);
 
       lbfields[index].recalc_fields = 1;
 #ifdef LB_BOUNDARIES
@@ -1868,15 +1875,11 @@ void lb_release() {
 /***********************************************************************/
 /*@{*/
 
-void lb_calc_n_equilibrium(const index_t index, const double rho, const double *j, double *pi) {
-
-  const double rhoc_sq = rho*lbmodel.c_sound_sq;
-  // unit conversion: mass density
-  const double avg_rho = lbpar.rho[0]*agrid*agrid*agrid;
-
-  double local_rho, local_j[3], local_pi[6], trace;
+void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double *j, double *pi) {
 
   int i;
+  double local_rho, local_j[3], local_pi[6], trace;
+  const double avg_rho = lbpar.rho[0]*agrid*agrid*agrid;
 
   local_rho  = rho;
 
@@ -1887,14 +1890,10 @@ void lb_calc_n_equilibrium(const index_t index, const double rho, const double *
   for (i=0; i<6; i++) 
     local_pi[i] = pi[i];
 
-  /* reduce the pressure tensor to the part needed here */
-  local_pi[0] -= rhoc_sq;
-  local_pi[2] -= rhoc_sq;
-  local_pi[5] -= rhoc_sq;
-
   trace = local_pi[0] + local_pi[2] + local_pi[5];
 
 #ifdef D3Q19
+
   double rho_times_coeff;
   double tmp1,tmp2;
 
@@ -1939,6 +1938,7 @@ void lb_calc_n_equilibrium(const index_t index, const double rho, const double *
   lbfluid[0][18][index] = rho_times_coeff - 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
 
 #else
+
   int i;
   double tmp=0.0;
   double (*c)[3] = lbmodel.c;
@@ -1956,13 +1956,8 @@ void lb_calc_n_equilibrium(const index_t index, const double rho, const double *
     lbfluid[0][i][index] += coeff[i][3] * trace;
 
   }
+
 #endif
-
-  /* restore the pressure tensor to the full part */
-  local_pi[0] += rhoc_sq;
-  local_pi[2] += rhoc_sq;
-  local_pi[5] += rhoc_sq;
-
 }
   
 /*@}*/
@@ -2332,7 +2327,7 @@ inline void lb_calc_n_from_modes(index_t index, double *mode) {
 
   /* normalization factors enter in the back transformation */
   for (i=0;i<n_veloc;i++) {
-    m[i] = 1./e[19][i]*mode[i];
+    m[i] = (1./e[19][i])*mode[i];
   }
 
   lbfluid[0][ 0][index] = m[0] - m[4] + m[16];
@@ -2415,7 +2410,7 @@ inline void lb_calc_n_from_modes_push(index_t index, double *m) {
 
     /* normalization factors enter in the back transformation */
     for (i=0;i<n_veloc;i++) {
-      m[i] = 1./d3q19_modebase[19][i]*m[i];
+      m[i] = (1./d3q19_modebase[19][i])*m[i];
     }
 
 #ifndef OLD_FLUCT

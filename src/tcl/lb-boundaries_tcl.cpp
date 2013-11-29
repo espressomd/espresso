@@ -220,14 +220,25 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 LB_Boundary *generate_lbboundary()
 {
   n_lb_boundaries++;
+
   lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+
   lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
+  
   lb_boundaries[n_lb_boundaries-1].velocity[0]=
   lb_boundaries[n_lb_boundaries-1].velocity[1]=
   lb_boundaries[n_lb_boundaries-1].velocity[2]=0;
+  
   lb_boundaries[n_lb_boundaries-1].force[0]=
   lb_boundaries[n_lb_boundaries-1].force[1]=
   lb_boundaries[n_lb_boundaries-1].force[2]=0;
+  
+#ifdef EK_BOUNDARIES
+  if (ek_initialized)
+  {
+    lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
+  }  
+#endif
   
   return &lb_boundaries[n_lb_boundaries-1];
 }
@@ -236,7 +247,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 {
   int i;
   double norm;
-  
+
   lbb->type = LB_BOUNDARY_WAL;
   
   /* invalid entries to start of */
@@ -983,12 +994,25 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
   return (TCL_OK);
 }
 
+int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
+{  
+  lbb->type = LB_BOUNDARY_BOX;
+  lbb->c.box.value = 0;
+
+  return (TCL_OK);
+}
+
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 
 int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
   int status = TCL_ERROR, c_num;
+  
+  if ( lattice_switch == LATTICE_OFF ) {
+    fprintf (stderr ,"WARNING: Specifying boundaries before using lbfluid assumes a CPU implementation of the LB.\n");
+    fprintf (stderr ,"WARNING: This will lead to unexpected behavior if a GPU LB fluid is later used since the boundaries wont exist.\n");
+  }
 
   if (argc < 2)
     return tclcommand_lbboundary_print_all(interp);

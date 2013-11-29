@@ -22,6 +22,7 @@
     Implementation of \ref constraint.hpp "constraint.hpp", here it's just the parsing stuff.
 */
 
+#include <algorithm>
 #include "constraint.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
