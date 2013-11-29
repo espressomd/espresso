@@ -5,15 +5,25 @@
 \label{sec:electrokinetics}
 \newescommand{electrokinetics}
 
-\begin{align}
-  \frac{\partial \rho_k}{\partial t} &= -\,\nabla\cdot\vec j_k \; , \vphantom{\left(\frac{\partial \vec v}{\partial t} \right)} \label{eq:ek_model_continuity}\\
-  \vec j_{k} &= -D_k \nabla \rho_k - \nu_k \, q_k \rho_k\, \nabla \Phi + \rho_\mathrm{k} \vec v \; , \vphantom{\left(\frac{\partial \vec v}{\partial t} \right) \sum_k} \label{eq:ek_model_fluxes}\\
-  \Delta \Phi &= -4 \pi \, \lb \, \kT \sum_k q_k \rho_k \; , \vphantom{\left(\frac{\partial \vec v}{\partial t} \right)} \label{eq:ek_model_poisson}\\
-  \left(\frac{\partial \vec v}{\partial t} + \vec v \cdot \vec \nabla \vec v \right) \rho_\text{fl} &= -\kT \nabla \rho_\text{fl} - q_k \rho_k \nabla \Phi + \eta \vec \Delta \vec v + (\eta / 3 + \eta_{\text{\,b}}) \nabla (\nabla \cdot \vec v) \; . \label{eq:ek_model_velocity}\\
-  \frac{\partial \rho_\text{fl}}{\partial t} &= -\,\nabla\cdot\left( \rho_\text{fl} \vec v \right) \vphantom{\left(\frac{\partial \vec v}{\partial t} \right)} \label{eq:ek_model_continuity_fl}
-\end{align}
-They define relations between the following observables
-\begin{description}%[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
+The electrokinetics setup in \es{} allows for the description of electro-hydrodynamic
+systems on the level of ion density distributions coupled to a Lattice-Boltzmann 
+fluid interacting with explicit charged particles. In the following paragraph we 
+briefly explain the electrokinetic model implemented in \es{}, before we come to
+the description of the interface.
+
+\section{Electrokinetic Equations}
+
+In the electrokinetics code we solve the following system of coupled continuity,
+diffusion-advection, Poisson, and Navier-Stokes equations:
+\begin{eqnarray}
+\label{eq:ek_model_continuity} \frac{\partial \rho_k}{\partial t} & = & -\,\nabla\cdot\vec j_k; \\
+\label{eq:ek_model_fluxes} \vec j_{k} & = & -D_k \nabla \rho_k - \nu_k \, q_k \rho_k\, \nabla \Phi + \rho_\mathrm{k} \vec v; \\
+\label{eq:ek_model_poisson} \Delta \Phi & = & -4 \pi \, \lb \, \kT \sum_k q_k \rho_k; \\
+\label{eq:ek_model_velocity} \left(\frac{\partial \vec v}{\partial t} + \vec v \cdot \vec \nabla \vec v \right) \rho_\text{fl} & = & -\kT \nabla \rho_\text{fl} - q_k \rho_k \nabla \Phi + \eta \vec \Delta \vec v + (\eta / 3 + \eta_{\text{\,b}}) \nabla (\nabla \cdot \vec v); \qquad \\
+\label{eq:ek_model_continuity_fl} \frac{\partial \rho_\text{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\text{fl} \vec v \right), 
+\end{eqnarray}
+which define relations between the following observables
+\begin{description}[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
   \item[$\rho_k$] the number density of the particles of species $k$,
   \item[$\vec j_k$] the number density flux of the particles of species $k$,
   \item[$\Phi$] the electrostatic potential,
@@ -32,13 +42,15 @@ and input parameters
 \end{description}
 The temperature $T$, and diffusion constants $D_k$ and mobilities $\nu_k$ of
 individual species are linked through the Einstein-Smoluchowski relation $D_k /
-\nu_k = \kT$.\\
-This set of equations, combining diffusion-advection, electrostatics, and
-hydrodynamics is conventionally referred to as the \textit{Electrokinetic
-Equations}.
-\newpage
+\nu_k = \kT$. The system of equations described in 
+%Eqs.~\ref{eq:ek_model_continuity}-\ref{eq:ek_model_continuity_fl}, combining 
+diffusion-advection, electrostatics, and hydrodynamics is conventionally 
+referred to as the \textit{Electrokinetic Equations}.
 
-TODO broad borders on the applicability of the model.
+\textbf{TODO complete broad borders on the applicability of the model.}
+
+The electrokinetic equations 
+
 \begin{itemize}
 	\item On the coarse time and length scale of the model, the dynamics of the
 	particle species can be described in terms of smooth density distributions and
@@ -55,10 +67,10 @@ TODO broad borders on the applicability of the model.
 	accounted for. In particular, there is no excluded volume.
 	
 	This restricts the application of the model to monovalend ions and moderate
-charge densities. At higher valencies or densities, overcharging and layering
-effects can occur, which lead to non-monotonic charge densities and potentials,
-that can not be covered by a mean-field model such as Poisson-Boltzmann or this
-one.
+  charge densities. At higher valencies or densities, overcharging and layering
+  effects can occur, which lead to non-monotonic charge densities and potentials,
+  that can not be covered by a mean-field model such as Poisson-Boltzmann or this
+  one.
 	
 	Even in salt free systems containing only counterions, the counterion
 	densities close to highly charged objects can be overestimated when neglecting

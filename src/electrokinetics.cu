@@ -1314,7 +1314,11 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
     gridpos      = particle_data[ index ].p[2] / ek_parameters_gpu.agrid - 0.5f;
     lowernode[2] = (int) floorf( gridpos );
     cellpos[2]   = gridpos - lowernode[2];
-    
+
+    lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim_x) % ek_lbparameters_gpu->dim_x;
+    lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim_y) % ek_lbparameters_gpu->dim_y;
+    lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim_z) % ek_lbparameters_gpu->dim_z;
+
     atomicadd( &((cufftReal*) ek_parameters_gpu.charge_potential)[
                  rhoindex_cartesian2linear( lowernode[0],
                                             lowernode[1],
@@ -1644,7 +1648,7 @@ void ek_integrate_electrostatics() {
     dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
     
     particle_data_gpu = gpu_get_particle_pointer();
-    
+  
     KERNELCALL( ek_gather_particle_charge_density,
                 dim_grid, threads_per_block,
                 ( particle_data_gpu, ek_lbparameters_gpu ) );
