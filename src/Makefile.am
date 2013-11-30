@@ -189,6 +189,7 @@ CUDA_SOURCES = \
 	cuda_init_cuda.cu \
 	cuda_common_cuda.cu \
 	electrokinetics_cuda.cu \
+	electrokinetics.hpp \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu
 
