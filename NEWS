@@ -8,6 +8,9 @@ ESPResSo 3.3
 New user-visible features
 -------------------------
 
+* ELECTROKINETICS: An algorithm to treat species of ions on a mean-field
+  level. Implementation takes advantage of a GPU.
+
 * Provide the preliminary Python interface. Configure with
   --with-python-interface.
 
