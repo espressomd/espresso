@@ -1720,7 +1720,7 @@ void ek_integrate() {
 #endif
 
 
-
+#ifdef EK_BOUNDARIES
   if ( ek_parameters.accelerated_frame_enabled == 1 && n_lb_boundaries > 0 )
   {
     /* Adds the force required to perform the accelerated frame tranformation,
@@ -1730,7 +1730,7 @@ void ek_integrate() {
 
     KERNELCALL( ek_accelerated_frame_transformation, dim_grid, threads_per_block, ( node_f ) );
   }
-
+#endif
 
 
   /* Integrate diffusion-advection */
@@ -1776,7 +1776,8 @@ void ek_integrate() {
   lb_integrate_GPU();
 
 
-
+  
+#ifdef EK_BOUNDARIES
   if ( ek_parameters.accelerated_frame_enabled == 1 && n_lb_boundaries > 0 )
   {
     /* Calculate the total force on the boundaries for the accelerated frame transformation,
@@ -1784,6 +1785,7 @@ void ek_integrate() {
 
     ek_calculate_boundary_forces<<<1,1>>>( n_lb_boundaries, ek_lb_boundary_force, ek_accelerated_frame_boundary_velocity, ek_lbparameters_gpu );
   }
+#endif
 
 
   
