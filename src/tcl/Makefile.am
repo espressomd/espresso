@@ -36,7 +36,7 @@ libEspressoTcl_la_SOURCES = \
 	config_tcl.cpp \
 	constraint_tcl.cpp constraint_tcl.hpp \
 	domain_decomposition_tcl.cpp domain_decomposition_tcl.hpp \
-  electrokinetics_tcl.cpp electrokinetics_tcl.hpp \
+	electrokinetics_tcl.cpp electrokinetics_tcl.hpp \
 	energy_tcl.cpp \
 	galilei_tcl.cpp galilei_tcl.hpp \
 	global_tcl.cpp global_tcl.hpp \
@@ -46,7 +46,7 @@ libEspressoTcl_la_SOURCES = \
 	initialize_interpreter.cpp \
 	integrate_tcl.cpp integrate_tcl.hpp \
 	interaction_data_tcl.cpp interaction_data_tcl.hpp \
-	lb-boundaries_tcl.cpp \
+	lb-boundaries_tcl.cpp lb-boundaries_tcl.hpp \
 	lb_tcl.cpp lb_tcl.hpp \
 	metadynamics_tcl.cpp metadynamics_tcl.hpp \
 	nemd_tcl.cpp \
