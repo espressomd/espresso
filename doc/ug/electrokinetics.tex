@@ -241,6 +241,11 @@ diffusive species on a single LB node.
 
 \textbf{TODO: Describe the catalytic reaction and the `mass solution'.}
 
+The electrokineticssolved implemented in \es{} can be used to simulate a system,
+where in addition to the electrokinetic equations, there is a (local) catalytic
+reaction which converts one species into another. This gives rise to a modified
+set of reaction-diffusion-advection equations. 
+
 \subsection{\label{ssec:ek-reac-init}Initialization and Geometry Definition}
 
 \begin{essyntax}
@@ -249,9 +254,9 @@ diffusive species on a single LB node.
   \opt{reactant_index \var{reactant\_index}}
   \opt{product0_index \var{product0\_index}}
   \opt{product1_index \var{product1\_index}}
-  \opt{reactant_resrv_density \var{reactant\_resrv_density}}
-  \opt{product0_resrv_density \var{product0\_resrv_density}}
-  \opt{product1_resrv_density \var{product1\_resrv_density}}
+  \opt{reactant_resrv_density \var{reactant\_resrv\_density}}
+  \opt{product0_resrv_density \var{product0\_resrv\_density}}
+  \opt{product1_resrv_density \var{product1\_resrv\_density}}
   \opt{reaction_rate \var{reaction_rate}}
   \opt{mass_reactant \var{mass\_reactant}}
   \opt{mass_product0 \var{mass\_product0}}
@@ -270,8 +275,8 @@ are given by \var{reactant\_index}, \var{product0\_index}, and \var{product1\_in
 respectively. In the 1:2 reaction, these fulfill the role of the reactant and 
 the two products, as indicated by the naming convention. For each species a 
 reservoir (number) density must be set, given by the variables
-\var{reactant\_resrv_density}, \var{product0\_resrv_density}, and
-\var{product1\_resrv_density}, respectively. These reservoir densities, in tandem
+\var{reactant\_resrv\_density}, \var{product0\_resrv\_density}, and
+\var{product1\_resrv\_density}, respectively. These reservoir densities, in tandem
 with reservoir nodes, see below, can be used to keep the reaction from depleting
 all the reactant in the simulation box. The \var{reaction_rate} variable specifies
 the speed at which the reaction proceeds. The three masses (typically given in 

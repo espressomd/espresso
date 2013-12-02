@@ -32,7 +32,7 @@ set l 12
 setmd box_l $l $l $l
 setmd time_step 0.01
 
-set agrid 0.75
+set agrid 1.0
 set visc 7.
 set rho 2.
 set tau 0.04

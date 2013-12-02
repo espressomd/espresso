@@ -82,8 +82,11 @@ static float* lb_boundary_velocity = NULL;
 static int *boundary_node_list;
 static int *boundary_index_list;
 static __device__ __constant__ int n_lb_boundaries_gpu = 0;
-static __device__ __constant__ int ek_initialized_gpu = 0;
 static size_t size_of_boundindex;
+#endif
+
+#if defined(ELECTROKINETICS)
+static __device__ __constant__ int ek_initialized_gpu = 0;
 #endif
 
 EK_parameters* lb_ek_parameters_gpu;
@@ -2977,6 +2980,11 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   /* We must add shan-chen forces, which are zero only if the densities are uniform*/
   #endif
 
+#if defined(ELECTROKINETICS)
+  // We need to know if the electrokinetics is being used or not
+  cuda_safe_mem(cudaMemcpyToSymbol(ek_initialized_gpu, &ek_initialized, sizeof(int)));
+#endif
+
 
   /** calc of velocitydensities from given parameters and initialize the Node_Force array with zero */
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
@@ -3020,7 +3028,6 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
 
   //copy parameters, especially number of parts to gpu mem
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
-  cuda_safe_mem(cudaMemcpyToSymbol(ek_initialized_gpu, &ek_initialized, sizeof(int)));
 }
 
 #ifdef LB_BOUNDARIES_GPU
