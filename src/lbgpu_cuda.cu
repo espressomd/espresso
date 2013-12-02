@@ -2668,7 +2668,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
     calc_m_from_n(n_a, index, mode);
-#if defined(ELECTROKINETICS)
+#if defined(ELECTROKINETICS) && defined(EK_BOUNDARIES)
   /** reset the density profile to homogeneous to avoid
       LB internal pressure contribution */
   if ( ek_initialized_gpu )

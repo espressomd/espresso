@@ -747,8 +747,10 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        argc--; argv++;
        if (ARG0_IS_S("rho") || ARG0_IS_S("density")) {
          argc--; argv++;
-         if (argc!=1) {
-           Tcl_AppendResult(interp, "LB node set density requires a double.", (char *)NULL);
+         if (argc!=LB_COMPONENTS) {
+           char integer_buffer[TCL_INTEGER_SPACE];
+           sprintf(integer_buffer, "%d", LB_COMPONENTS);
+           Tcl_AppendResult(interp, "LB node set density requires ", integer_buffer, " double(s).", (char *)NULL);
            return TCL_ERROR;
          }
          for (counter = 0; counter < LB_COMPONENTS; counter++) {
