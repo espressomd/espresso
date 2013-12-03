@@ -289,3 +289,13 @@ void copy_forces_from_GPU() {
     cuda_mpi_send_forces(particle_forces_host,fluid_composition_host);
   }
 }
+
+/** Generic copy functions from an to device **/
+
+void cuda_copy_to_device(void *host_data, void *device_data, size_t n) {
+  cuda_safe_mem( cudaMemcpy(host_data, device_data, n, cudaMemcpyHostToDevice) );
+}
+
+void cuda_copy_to_host(void *host_device, void *device_host, size_t n) {
+  cuda_safe_mem( cudaMemcpy(host_device, device_host, n, cudaMemcpyDeviceToHost) );
+}
