@@ -31,7 +31,10 @@ New user-visible features
 
 User-visible changes
 --------------------
-
+* The pressure contribution due to rigid bodies constructed by means of the 
+  virtual sites relative mechanism is included, both for pressure and stress 
+  tensor. Note that the corresponding contribution for rigid bonds is still not implemented.
+ 
 * Generic LJ can now be turned into an soft potential.
 
 * Renamed torque to torque_{lab,body}, improved torque handling in

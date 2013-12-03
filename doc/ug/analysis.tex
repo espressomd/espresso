@@ -462,7 +462,7 @@ energy contributions of the bonded resp. non-bonded interactions.
   \variant{1} analyze pressure
   \variant{2} analyze pressure total
   \variant{3} analyze pressure \alt{totals \asep ideal \asep coulomb
-    \asep \\tot_nonbonded_inter \asep tot_nonbonded_intra}
+    \asep \\tot_nonbonded_inter \asep tot_nonbonded_intra \asep vs_relative}
   \variant{4} analyze pressure bonded \var{bondid}
   \variant{5} analyze pressure nonbonded \var{typeid1} \var{typeid2}
   \variant{6} analyze pressure nonbonded_intra \opt{\var{typeid}}
@@ -505,7 +505,8 @@ well tested, so use with caution!
 Anything outside that is currently not implemented.
 Four-body dihedral potentials are not included.
 In case of rigid body rotation, virial contribution from torques is not included.
-Constraints of any kind are not currently accounted for in the pressure calculations. 
+The pressure contribution for rigid bodies constructed by means of the VIRTUAL\_SITES\_RELATIVE mechanism is included. On the other hand, the pressure contribution for rigid bonds is not included.
+All other constraints of any kind are not currently accounted for in the pressure calculations. 
 The pressure is no longer correct, e.g., when particles are confined to a plane.
 
 The command is implemented in parallel.
