@@ -32,6 +32,7 @@
 #include "lbgpu.hpp"
 #include "constraint.hpp"
 
+#include "paralution.hpp"
 
 
 #ifdef ELECTROKINETICS
@@ -1675,6 +1676,41 @@ void ek_integrate_electrostatics() {
   }
 }
 
+void update_spacially_varyingE_field() {
+
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x =
+    ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 ) /
+    ( threads_per_block * blocks_per_grid_y );
+  dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+  
+  KERNELCALL( ek_gather_species_charge_density, dim_grid, threads_per_block, () );
+  
+  if ( lbpar_gpu.number_of_particles != 0 ) { //TODO make it an if number_of_charged_particles != 0
+  
+    blocks_per_grid_x =
+      ( lbpar_gpu.number_of_particles + threads_per_block * blocks_per_grid_y - 1 ) /
+      ( threads_per_block * blocks_per_grid_y );
+    dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+    
+    particle_data_gpu = gpu_get_particle_pointer();
+    
+    KERNELCALL( ek_gather_particle_charge_density,
+                dim_grid, threads_per_block,
+                ( particle_data_gpu, ek_lbparameters_gpu ) );
+  }
+  
+  
+  KERNELCALL( ek_multiply_greensfcn, dim_grid, threads_per_block, () );
+    
+  if( cufftExecC2R( plan_ifft,
+                    ek_parameters.charge_potential,
+                    (cufftReal*) ek_parameters.charge_potential ) != CUFFT_SUCCESS ) {
+                    
+    fprintf(stderr, "ERROR: Unable to execute iFFT plan\n");
+  }
+}
 
 void ek_integrate() {
 
@@ -1768,8 +1804,16 @@ void ek_integrate() {
 
   /* Integrate electrostatics */
   
-  ek_integrate_electrostatics();
-  //CALCULATE NEW POTENTIAL HERE? TODO OWEN
+  if (ek_spacially_varyingE_initialized) 
+  {
+    update_spacially_varyingE_field();
+  }
+  else 
+  {
+    ek_integrate_electrostatics();
+  }
+
+  
   
   /* Integrate Navier-Stokes */
   
@@ -2070,8 +2114,15 @@ int ek_init() {
   KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, ek_lbparameters_gpu, ek_lb_device_values ) );
 #endif
 
-  ek_integrate_electrostatics();
-  
+  if (ek_spacially_varyingE_initialized) 
+  {
+    update_spacially_varyingE_field();
+  }
+  else 
+  {
+    ek_integrate_electrostatics();
+  }
+ 
   //ek_print_parameters(); //TODO delete
 
   return 0;
@@ -2970,6 +3021,9 @@ int ek_tag_value_nodes( LB_Boundary *boundary, double value, int EK_TAG_TYPE )
   char *errtxt;
   double pos[3], dist, dist_vec[3];
 
+  if (!ek_node_voltage) ek_node_voltage = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
+  if (!ek_node_permittivity) ek_node_permittivity = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
+  
   for(int z=0; z<int(ek_parameters.dim_z); z++) {
   for(int y=0; y<int(ek_parameters.dim_y); y++) {
   for(int x=0; x<int(ek_parameters.dim_x); x++) {        
@@ -3033,9 +3087,16 @@ int ek_tag_value_nodes( LB_Boundary *boundary, double value, int EK_TAG_TYPE )
 
   }}}
 
-  if (!ek_node_voltage) ek_node_voltage = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
-  if (!ek_node_permittivity) ek_node_permittivity = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
-
+  if (!ek_spacially_varyingE_initialized) 
+  {
+    paralution_init();
+    cudaMallocHost((void**) &ek_parameters.ek_node_voltage,
+                             sizeof( double ) * 
+                             ek_parameters.dim_z*ek_parameters.dim_y*ek_parameters.dim_x );
+    cudaMallocHost((void**) &ek_parameters.ek_node_permittivity,
+                             sizeof( double ) * 
+                             ek_parameters.dim_z*ek_parameters.dim_y*ek_parameters.dim_x );
+  }
   if (EK_TAG_TYPE == EK_TAG_VOLTAGE) {
     cuda_safe_mem( cudaMemcpy( ek_parameters.node_voltage, 
                               ek_node_voltage, 
@@ -3050,6 +3111,7 @@ int ek_tag_value_nodes( LB_Boundary *boundary, double value, int EK_TAG_TYPE )
                               cudaMemcpyHostToDevice ) 
                 );
   }
+
   ek_spacially_varyingE_initialized = 1;
   return 0;
 #else 

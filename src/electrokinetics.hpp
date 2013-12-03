@@ -160,8 +160,8 @@ int ek_node_print_density( int species, int x, int y, int z, double* density );
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
 int ek_tag_value_nodes( LB_Boundary lbboundary, double value, int EK_TAG_TYPE );
+void update_spacially_varyingE_field();
 #endif
-
 
 #ifdef EK_REACTION
 int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1 );
