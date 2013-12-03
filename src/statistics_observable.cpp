@@ -28,7 +28,11 @@ int n_observables = 0;
 
 int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
@@ -42,7 +46,11 @@ int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
 
 int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n_A) {
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for ( int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
@@ -76,7 +84,11 @@ int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n
 int observable_particle_currents(void* idlist, double* A, unsigned int n_A) {
   double charge;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
@@ -93,7 +105,11 @@ int observable_currents(void* idlist, double* A, unsigned int n_A) {
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] > n_total_particles)
@@ -113,7 +129,11 @@ int observable_dipole_moment(void* idlist, double* A, unsigned int n_A) {
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] > n_total_particles)
@@ -134,7 +154,11 @@ int observable_com_velocity(void* idlist, double* A, unsigned int n_A) {
   double v_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
@@ -158,7 +182,11 @@ int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A) {
   unsigned int id;
   double total_mass = 0;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   n_blocks=n_A/3; 
   blocksize=ids->n/n_blocks;
@@ -188,7 +216,11 @@ int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A) {
   unsigned int id;
   double total_mass = 0;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   n_blocks=n_A/3; 
   blocksize=ids->n/n_blocks;
@@ -214,7 +246,11 @@ int observable_com_position(void* idlist, double* A, unsigned int n_A) {
   double p_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
@@ -234,7 +270,11 @@ int observable_com_position(void* idlist, double* A, unsigned int n_A) {
 int observable_com_force(void* idlist, double* A, unsigned int n_A) {
   double f_com[3] = { 0. , 0., 0. } ;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
@@ -257,7 +297,11 @@ int observable_blocked_com_force(void* idlist, double* A, unsigned int n_A) {
   unsigned int blocksize;
   unsigned int id;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   n_blocks=n_A/3; 
   blocksize=ids->n/n_blocks;
@@ -281,7 +325,11 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
   int img[3];
   IntList* ids;
   profile_data* pdata;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   pdata=(profile_data*) pdata_;
   ids=pdata->id_list;
   double bin_volume=(pdata->maxx-pdata->minx)*(pdata->maxy-pdata->miny)*(pdata->maxz-pdata->minz)/pdata->xbins/pdata->ybins/pdata->zbins;
@@ -487,7 +535,11 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
   int img[3];
   double bin_volume;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   radial_profile_data* pdata;
   pdata=(radial_profile_data*) pdata_;
   ids=pdata->id_list;
@@ -526,7 +578,11 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
   int img[3];
   double bin_volume;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   radial_profile_data* pdata;
   pdata=(radial_profile_data*) pdata_;
   ids=pdata->id_list;
@@ -574,7 +630,11 @@ int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
   int img[3];
   double bin_volume;
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   profile_data* pdata;
   pdata=(profile_data*) pdata_;
   ids=pdata->id_list;
@@ -620,7 +680,11 @@ int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
 
 int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
@@ -634,7 +698,11 @@ int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
 
 int observable_particle_forces(void* idlist, double* A, unsigned int n_A) {
   IntList* ids;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
@@ -648,7 +716,11 @@ int observable_particle_forces(void* idlist, double* A, unsigned int n_A) {
 
 
 int observable_stress_tensor(void* params_p, double* A, unsigned int n_A) {
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   observable_compute_stress_tensor(1,A,n_A);
   return 0;
 }
@@ -656,7 +728,11 @@ int observable_stress_tensor(void* params_p, double* A, unsigned int n_A) {
 
 int observable_stress_tensor_acf_obs(void* params_p, double* A, unsigned int n_A) {
   double stress_tensor[9];
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   observable_compute_stress_tensor(1,stress_tensor,9);
   A[0]=stress_tensor[1];
   A[1]=stress_tensor[5];
@@ -681,7 +757,11 @@ int observable_structure_factor(void* params_p, double* A, unsigned int n_A) {
   order2=order*order;
   twoPI_L = 2*PI/box_l[0];
   
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
 
     for(unsigned int p=0; p<n_A; p++) {
        A[p]   = 0.0;
@@ -723,7 +803,11 @@ int observable_interacts_with (void* params_p, double* A, unsigned int n_A) {
   double pos1[3], pos2[3], dist[3];
   ids1=params->ids1;
   ids2=params->ids2;
-  sortPartCfg();
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
   for ( i = 0; i<ids1->n; i++ ) {
     if (ids1->e[i] >= n_total_particles)
       return 1;

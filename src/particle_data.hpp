@@ -681,7 +681,7 @@ void remove_all_bonds_to(int part);
     information in \ref partCfg to be valid you should set the value
     of  to \ref WITH_BONDS.
 */
-void updatePartCfg(int bonds_flag );
+int updatePartCfg(int bonds_flag );
 
 /** release the partCfg array. Use this function, since it also frees the
     bonds, if they are used.

@@ -299,12 +299,12 @@ void free_particle(Particle *part) {
  * organizational functions
  ************************************************/
 
-void updatePartCfg(int bonds_flag)
+int updatePartCfg(int bonds_flag)
 {
   int j;
 
   if(partCfg)
-    return;
+    return 1;
 
   partCfg = (Particle*)malloc(n_total_particles*sizeof(Particle));
   if (bonds_flag != WITH_BONDS)
@@ -316,10 +316,19 @@ void updatePartCfg(int bonds_flag)
     unfold_position(partCfg[j].r.p,partCfg[j].l.i);
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
-  if ((sortPartCfg()==0)||(update_mol_pos_cfg()==0)){
-     freePartCfg();
+
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return 0;
+  }
+  if (!updatePartCfg(bonds_flag)) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not update positions of virtual sites in partcfg } ");
+    return 0;
   }
 #endif
+return 1;
 }
 
 int sortPartCfg()

@@ -369,11 +369,12 @@ int get_lipid_orients(IntList* l_orient) {
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
   //Make sure particles are sorted
+  
   if (!sortPartCfg()) {
-    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
     return -1;
   }
-  
   if ( !calc_fluctuations(height_grid, 1) ) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
@@ -452,11 +453,12 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
   //Make sure particles are sorted
+  
   if (!sortPartCfg()) {
-    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
     return -1;
   }
-  
   if ( !calc_fluctuations(height_grid, switch_fluc)) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
