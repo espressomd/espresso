@@ -1247,7 +1247,9 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
  * @param mode    Pointer to the local register values mode (Input)
  * @param d_p_v   Pointer to local print values (Output)
  * @param d_v     Pointer to local device values (Input)
+ * @param node_f  Pointer to local node force (Input)
  * @param index   node index / thread index (Input)
+ * @param print_index   node index / thread index (Output)
 */
 __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, unsigned int index, unsigned int print_index) {
   
@@ -1434,6 +1436,7 @@ __device__ void calc_values_from_m_in_LB_units(float *mode_single, LB_rho_v_gpu 
  * @param n_a     Pointer to local node residing in array a for boundary flag(Input)
  * @param mode    Pointer to the local register values mode (Input)
  * @param d_v     Pointer to local device values (Input/Output)
+ * @param node_f  Pointer to local node force (Input)
  * @param index   node index / thread index (Input)
 */
 
@@ -1724,6 +1727,9 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
 /*********************************************************/
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  * @param n_a                   Pointer to local node residing in array a (Input)
+ * @param partgrad1             particle gradient for the Shan-Chen
+ * @param partgrad2             particle gradient for the Shan-Chen
+ * @param partgrad3             particle gradient for the Shan-Chen
  * @param *delta                Pointer for the weighting of particle position (Output)
  * @param *delta_j              Pointer for the weighting of particle momentum (Output)
  * @param *particle_data        Pointer to the particle position and velocity (Input)
@@ -2029,6 +2035,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 /**calculation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
   (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  * @param *delta        Pointer for the weighting of particle position (Input)
+ * @param partgrad1             particle gradient for the Shan-Chen
+ * @param partgrad2             particle gradient for the Shan-Chen
+ * @param partgrad3             particle gradient for the Shan-Chen
  * @param *delta_j      Pointer for the weighting of particle momentum (Input)
  * @param node_index    node index around (8) particle (Input)
  * @param node_f        Pointer to the node force (Output).
@@ -2527,7 +2536,6 @@ __device__ __inline__ void calc_shanchen_contribution(LB_nodes_gpu n_a,int compo
 }
 
 /** function to calc shanchen forces 
- * @param *mode   Pointer to the local register values mode (Output)
  * @param n_a     Pointer to local node residing in array a(Input)
  * @param node_f  Pointer to local node force (Input)
 */
@@ -2841,6 +2849,7 @@ __global__ void lb_get_boundaries(LB_nodes_gpu n_a, unsigned int *device_bound_a
  * @param *d_p_v            Pointer to result storage array (Input)
  * @param n_a               Pointer to local node residing in array a (Input)
  * @param *d_v    Pointer to local device values
+ * @param node_f  Pointer to local node force
 */
 __global__ void lb_print_node(int single_nodeindex, LB_rho_v_pi_gpu *d_p_v, LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_gpu node_f){
 
