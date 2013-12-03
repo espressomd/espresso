@@ -222,7 +222,9 @@ int vs_relate_to(int part_num, int relate_to)
     // If so, warn user
     double l=sqrt(sqrlen(d));
     if (l>min_global_cut) {
-     printf("Warning: The distance between virtual and non-virtual particle (%f) is\nlarger than the minimum global cutoff (%f). This may lead to incorrect simulations\nunder certain conditions. Use \"setmd min_global_cut\" to increase the minimum cutoff.\n",l,min_global_cut);
+      char *errtxt = runtime_error(300 + 3*ES_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt, "Warning: The distance between virtual and non-virtual particle (%f) is\nlarger than the minimum global cutoff (%f). This may lead to incorrect simulations\nunder certain conditions. Use \"setmd min_global_cut\" to increase the minimum cutoff.\n",l,min_global_cut);
+      return ES_ERROR;
     }
 
     // Now, calculate the quaternions which specify the angle between 
