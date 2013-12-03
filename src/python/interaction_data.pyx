@@ -72,9 +72,9 @@ cdef class NonBondedInteractionHandle:
               "min":self.params[0].LJ_min}
 
 
-class InteractionList:
-  def __getItem__(key):
-    return NonBondedInteractionHandle(0,0)
+#class InteractionList:
+#  def __getItem__(key):
+#    return NonBondedInteractionHandle(0,0)
 
 
 class InteractionList:
