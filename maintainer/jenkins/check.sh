@@ -9,10 +9,10 @@ DIR=`dirname $0`
 source $DIR/common.sh
 
 start "TEST"
-[ ! -v with_mpi ] && with_mpi="true"
+[ -z "$with_mpi" ] && with_mpi="true"
 ! $with_mpi && check_procs=1
-[ ! -v with_cuda ] && with_cuda="true"
-[ ! -v check_procs ] && check_procs=4
+[ -z "$with_cuda" ] && with_cuda="true"
+[ -z "$check_procs" ] && check_procs=4
 
 outp with_mpi with_cuda check_procs
 

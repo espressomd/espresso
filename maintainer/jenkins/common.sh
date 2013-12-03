@@ -28,11 +28,11 @@ function outp() {
 }
 
 # DIR SETTINGS
-[ ! -v insource ] && insource="true"
-[ ! -v srcdir ] && srcdir=`pwd`
+[ -z "$insource" ] && insource="true"
+[ -z "$srcdir" ] && srcdir=`pwd`
 if $insource; then
     builddir=$srcdir
-elif [ ! -v builddir ]; then
+elif [ -z "$builddir" ]; then
     builddir=$srcdir/build
 fi
 
@@ -51,10 +51,14 @@ if ! $insource; then
 fi
 
 # PARALLELISM SETTINGS
-if [ -v parallelism ]; then
+if [ -n "$parallelism" ]; then
     outp parallelism
 
     case $parallelism in
+        ("34core") 
+            with_mpi=true 
+            check_procs="3 4"
+            ;;
         ("3core") 
             with_mpi=true 
             check_procs=3
