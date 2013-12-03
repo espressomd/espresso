@@ -25,6 +25,7 @@
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "cuda_init.hpp"
+#include "SystemInterface.hpp"
 
 static int max_ran = 1000000;
 static CUDA_global_part_vars global_part_vars_host = {0,0,0};
@@ -250,7 +251,6 @@ CUDA_fluid_composition* gpu_get_fluid_composition_pointer() {
 }
 
 void copy_part_data_to_gpu() {
-  
   if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
     
     cuda_mpi_get_particles(particle_data_host);
@@ -299,3 +299,4 @@ void cuda_copy_to_device(void *host_data, void *device_data, size_t n) {
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n) {
   cuda_safe_mem( cudaMemcpy(host_device, device_host, n, cudaMemcpyDeviceToHost) );
 }
+

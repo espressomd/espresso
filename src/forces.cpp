@@ -54,6 +54,8 @@
 #include "p3m_gpu.hpp"
 #include "cuda_interface.hpp"
 
+#include "EspressoSystemInterface.hpp"
+
 /************************************************************/
 /* local prototypes                                         */
 /************************************************************/
@@ -72,9 +74,13 @@ void force_calc()
 
 #if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
 
-  copy_part_data_to_gpu();
-
+  espressoSystemInterface.requestRGpu();
+  gpu_init_particle_comm();
 #endif
+
+  espressoSystemInterface.update();
+
+
     
 #ifdef LB_GPU
 #ifdef SHANCHEN

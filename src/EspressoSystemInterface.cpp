@@ -51,39 +51,35 @@ void EspressoSystemInterface::gatherParticles() {
   Q.clear();
 
   // get particles from other nodes
-  CUDA_global_part_vars* global_part_vars_host = gpu_get_global_particle_vars_pointer_host();
-  if ( global_part_vars_host->communication_enabled == 1)
+#ifdef CUDA
+  if (needsRGpu() || needsQGpu())
   {
-//     np = global_part_vars_host->number_of_particles;
-//     cuda_mpi_get_particles(particle_data_host);
-//     if (this_node > 0)
-//       return;
-//     for (int i = 0; i < np; i++)
-//     {
-//       R.push_back(Vector3(particle_data_host[i].p));
-// #ifdef ELECTROSTATICS
-//       Q.push_back(particle_data_host[i].q);
-// #endif
-    // }
+    copy_part_data_to_gpu();
+    split_particle_struct();
   }
-  else // only get particles from local node
-    {
-      for (c = 0; c < local_cells.n; c++) {
-	cell = local_cells.cell[c];
-	p  = cell->part;
-	np = cell->n;
+#endif
+
+  if (needsQ() || needsR()) {
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      p  = cell->part;
+      np = cell->n;
+      if(needsR())
 	R.reserve(R.size()+np);
 #ifdef ELECTROSTATICS
+      if(needsQ())
 	Q.reserve(Q.size()+np);
 #endif
-	for(i = 0; i < np; i++) {
+      for(i = 0; i < np; i++) {
+	if(needsR())
 	  R.push_back(Vector3(p[i].r.p));
 #ifdef ELECTROSTATICS
+	if(needsQ())
 	  Q.push_back(p[i].p.q);
 #endif
-	}
       }
     }
+  }
 }
 
 void EspressoSystemInterface::init() {
@@ -115,9 +111,11 @@ const SystemInterface::const_real_iterator &EspressoSystemInterface::qEnd() {
 }
 
 unsigned int EspressoSystemInterface::npart() {
-  return R.size();
+  return m_npart;
 }
 
 SystemInterface::Vector3 EspressoSystemInterface::box() {
   return Vector3(box_l);
 }
+
+EspressoSystemInterface espressoSystemInterface;

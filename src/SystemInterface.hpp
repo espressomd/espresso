@@ -4,8 +4,11 @@
 #include "Vector.hpp"
 #include <vector>
 
+/** @TODO: Turn needsXY in getter/setter **/
+
 class SystemInterface {
 public:
+  SystemInterface() : m_needsR(false), m_needsRGpu(false), m_needsQGpu(false), m_needsQ(false) {};
   typedef Vector3d Vector3;
   typedef double Real;
 
@@ -89,13 +92,36 @@ public:
   virtual const_vec_iterator &rBegin() { return SystemInterface::null_vector; };
   virtual const const_vec_iterator &rEnd() { return SystemInterface::null_vector; };
   virtual bool hasR() { return false; };
+  virtual bool requestR() { m_needsR = hasR(); return m_needsR; }
+
+  virtual float *rGpuBegin() { return 0; };
+  virtual float *rGpuEnd() { return 0; };
+  virtual bool hasRGpu() { return false; };
+  virtual bool requestRGpu() { m_needsRGpu = hasRGpu(); return m_needsRGpu; }
+
+  virtual float *qGpuBegin() { return 0; };
+  virtual float *qGpuEnd() { return 0; };
+  virtual bool hasQGpu() { return false; };
+  virtual bool requestQGpu() { m_needsQGpu = hasQGpu(); return m_needsQGpu; }
 
   virtual const_real_iterator &qBegin() { return null_scalar; };
   virtual const const_real_iterator &qEnd() { return null_scalar; };
   virtual bool hasQ() { return false; };
+  virtual bool requestQ() { m_needsQ = hasQ(); return m_needsQ; }
 
   virtual unsigned int npart() = 0;
   virtual Vector3 box() = 0;
+
+  virtual bool needsR() { return m_needsR; };
+  virtual bool needsRGpu() { return m_needsRGpu;};
+  virtual bool needsQGpu() { return m_needsQGpu;};
+  virtual bool needsQ() { return m_needsQ;};
+  
+protected:
+  bool m_needsR;
+  bool m_needsRGpu;
+  bool m_needsQGpu;
+  bool m_needsQ;
 };
 
 #endif

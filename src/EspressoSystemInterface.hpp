@@ -2,9 +2,11 @@
 #define ESPRESSOSYSTEMINTERFACE_H
 
 #include "SystemInterface.hpp"
+#include "particle_data.hpp"
 
 class EspressoSystemInterface : public SystemInterface {
 public:
+  EspressoSystemInterface() : m_gpu_npart(0), m_r_gpu_begin(0), m_q_gpu_begin(0), m_r_gpu_end(0), m_q_gpu_end(0) {};
   void init();
   void update();
 
@@ -34,12 +36,27 @@ public:
 
   SystemInterface::const_vec_iterator &rBegin();
   const SystemInterface::const_vec_iterator &rEnd();
+  bool hasR() { return true; };
 
+  #ifdef ELECTROSTATICS
   SystemInterface::const_real_iterator &qBegin();
   const SystemInterface::const_real_iterator &qEnd();
+  bool hasQ() { return true; };
+  #endif
+
+  float *rGpuBegin() { return m_r_gpu_begin; };
+  float *rGpuEnd() { return m_r_gpu_end; };
+  bool hasRGpu() { return true; };
+  
+
+  float *qGpuBegin() { return m_q_gpu_begin; };
+  float *qGpuEnd() { return m_q_gpu_end; };
+  bool hasQGpu() { return true; };
+
 protected:
   void gatherParticles();
-  
+  void split_particle_struct();
+
   Vector3Container R;
   RealContainer Q;
 
@@ -49,8 +66,13 @@ protected:
   const_real_iterator m_q_begin;
   const_real_iterator m_q_end;
 
-  bool require_r;
-  bool have_r;
+  int m_gpu_npart;
+
+  float *m_r_gpu_begin;
+  float *m_r_gpu_end;
+
+  float *m_q_gpu_begin;
+  float *m_q_gpu_end;
 
   unsigned int m_npart;
   Vector3 m_box;
@@ -61,5 +83,7 @@ protected:
 template class EspressoSystemInterface::const_iterator<SystemInterface::Real>;
 template class EspressoSystemInterface::const_iterator<SystemInterface::Vector3>;
 template class EspressoSystemInterface::const_iterator<int>;
+
+extern EspressoSystemInterface espressoSystemInterface;
 
 #endif

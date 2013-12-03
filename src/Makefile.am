@@ -194,7 +194,8 @@ CUDA_SOURCES = \
 	electrokinetics_cuda.cu \
 	electrokinetics.hpp \
 	lbgpu_cuda.cu \
-	p3m_gpu_cuda.cu
+	p3m_gpu_cuda.cu \
+	EspressoSystemInterface_cuda.cu
 
 libEspresso_la_SOURCES += $(CUDA_SOURCES)
 EXTRA_DIST += $(CUDA_SOURCES)
