@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file angle_tcl.c
+/** \file angle_tcl.cpp
  *
  *  Implementation of \ref angle_tcl.hpp
  */

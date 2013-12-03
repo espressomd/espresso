@@ -21,7 +21,7 @@
 #ifndef SUBT_LJ_TCL_H
 #define SUBT_LJ_TCL_H
 /** \file subt_lj_tcl.hpp
- * Tcl interface for \ref subt_lj.h
+ * Tcl interface for \ref subt_lj.hpp
  */
 
 #include "parser.hpp"

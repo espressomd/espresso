@@ -20,9 +20,9 @@
 */
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
-/** \file particle_data.h
+/** \file particle_data.hpp
     For more information on particle_data,
-    see \ref particle_data.c "particle_data.c"
+    see \ref particle_data.cpp "particle_data.c"
 */
 
 

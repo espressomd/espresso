@@ -21,7 +21,7 @@
 #ifndef GB_TCL_H
 #define GB_TCL_H
 /** \file gb_tcl.hpp
- * Tcl interface for \ref gb.h
+ * Tcl interface for \ref gb.hpp
  */
 
 #include "parser.hpp"

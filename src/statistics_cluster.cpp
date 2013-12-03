@@ -18,12 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_cluster.c
+/** \file statistics_cluster.cpp
  *
  *  This file contains the necklace cluster algorithm. It can be used
  *  to identify the substructures 'pearls' and 'strings' on a linear
  *  chain.
- *  See also \ref statistics_cluster.h
+ *  See also \ref statistics_cluster.hpp
  */
 
 

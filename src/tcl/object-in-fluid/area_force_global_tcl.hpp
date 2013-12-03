@@ -18,10 +18,10 @@
 */
 #ifndef _OBJECT_IN_FLUID_AREA_FORCE_GLOBAL_TCL_H
 #define _OBJECT_IN_FLUID_AREA_FORCE_GLOBAL_TCL_H
-/** \file area_force_global.h
+/** \file area_force_global.hpp
  *  Routines to calculate the AREA_FORCE_GLOBAL energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 

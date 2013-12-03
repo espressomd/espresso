@@ -17,10 +17,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu.h
- * Header file for lbgpu.c
+/** \file lbgpu.hpp
+ * Header file for lbgpu.cpp
  *
- * This is the header file for the Lattice Boltzmann implementation in lbgpu_cfile.c
+ * This is the header file for the Lattice Boltzmann implementation in lbgpu_cfile.cpp
  */
 
 #ifndef LB_GPU_H
@@ -37,6 +37,11 @@
  * thus making the code more efficient. */
 #define D3Q19
 #define LBQ 19
+
+/** Note these are usef for binary logic so should be powers of 2 */
+#define LB_COUPLE_NULL        1
+#define LB_COUPLE_TWO_POINT   2
+#define LB_COUPLE_THREE_POINT 4
 
 /** \name Parameter fields for Lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
@@ -80,6 +85,10 @@ typedef struct {
    * lead to numerical artifacts with low order integrators */
   float friction[LB_COMPONENTS];
   /** amplitude of the fluctuations in the viscous coupling */
+  /** Switch indicating what type of coupling is used, can either
+  use nearest neighbors or next nearest neighbors. */
+  int lb_couple_switch;
+
   float lb_coupl_pref[LB_COMPONENTS];
   float lb_coupl_pref2[LB_COMPONENTS];
   float bulk_viscosity[LB_COMPONENTS];
@@ -129,6 +138,7 @@ typedef struct {
   /** density of the node */
   float rho[LB_COMPONENTS];
   /** veolcity of the node */
+
   float v[3];
 
 } LB_rho_v_gpu;
@@ -196,7 +206,10 @@ extern LB_rho_v_pi_gpu *host_values;
 extern int transfer_momentum_gpu;
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 extern int n_lb_boundaries;
-
+#ifdef ELECTROKINETICS
+extern LB_node_force_gpu node_f;
+extern int ek_initialized;
+#endif
 
 
 /*@}*/
@@ -207,9 +220,10 @@ extern int n_lb_boundaries;
 /*@{*/
 
 
+void lb_get_device_values_pointer(LB_rho_v_gpu** pointeradress);
+void lb_get_boundary_force_pointer(float** pointeradress);
 void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
-
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */
@@ -233,7 +247,7 @@ void lb_reinit_fluid_gpu();
 
 /** (Re-)initializes the particle array*/
 void lb_realloc_particles_gpu();
-void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
+void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();

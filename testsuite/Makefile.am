@@ -31,6 +31,10 @@ tests = \
 	constraints_rhomboid.tcl \
 	dh.tcl \
 	dielectric.tcl \
+	ek_eof_one_species_x.tcl \
+	ek_eof_one_species_y.tcl \
+	ek_eof_one_species_z.tcl \
+	ek_reaction.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
@@ -51,6 +55,7 @@ tests = \
 	lb_gpu.tcl \
 	lb_planar.tcl \
 	lb_planar_gpu.tcl \
+  lb_planar_embedded_particles.tcl \
 	lb_planar_embedded_particles_gpu.tcl \
 	lb_stokes_sphere.tcl \
 	lb_stokes_sphere_gpu.tcl \

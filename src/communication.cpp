@@ -2523,7 +2523,7 @@ void mpi_send_exclusion_slave(int part1, int part2)
 void mpi_send_fluid(int node, int index, double rho, double *j, double *pi) {
 #ifdef LB
   if (node==this_node) {
-    lb_calc_n_equilibrium(index, rho, j, pi);
+    lb_calc_n_from_rho_j_pi(index, rho, j, pi);
   } else {
     double data[10] = { rho, j[0], j[1], j[2], pi[0], pi[1], pi[2], pi[3], pi[4], pi[5] };
     mpi_call(mpi_send_fluid_slave, node, index);
@@ -2538,7 +2538,7 @@ void mpi_send_fluid_slave(int node, int index) {
     double data[10];
     MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
 
-    lb_calc_n_equilibrium(index, data[0], &data[1], &data[4]);
+    lb_calc_n_from_rho_j_pi(index, data[0], &data[1], &data[4]);
   }
 #endif
 }

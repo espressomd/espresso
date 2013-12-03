@@ -21,7 +21,7 @@
 #ifndef RANDOM_H
 #define RANDOM_H
 
-/** \file random.h 
+/** \file random.hpp 
 
     A random generator
 */
@@ -165,6 +165,80 @@ inline double gaussian_random(void) {
   }
 
 }
+
+/** Generator for Gaussian random numbers. Uses the Box-Muller
+ * transformation to generate two Gaussian random numbers from two
+ * uniform random numbers. which generates numbers between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.118591404 resulting in 
+ * an actual standard deviation of 1.
+ *
+ * @return Gaussian random number.
+ *
+ */
+inline double gaussian_random_cut(void) {
+  double x1, x2, r2, fac;
+  static int calc_new = 1;
+  static double save, curr;
+
+  /* On every second call two gaussian random numbers are calculated
+     via the Box-Muller transformation. One is returned as the result
+     and the second one is stored for use on the next call.
+  */
+
+  if (calc_new) {
+
+    /* draw two uniform random numbers in the unit circle */
+    do {      
+      x1 = 2.0*d_random()-1.0;
+      x2 = 2.0*d_random()-1.0;
+      r2 = x1*x1 + x2*x2;
+    } while (r2 >= 1.0 || r2 == 0.0);
+
+    /* perform Box-Muller transformation */
+    fac = sqrt(-2.0*log(r2)/r2);
+
+    // save one number for later use 
+    save = x1*fac*1.042267973;
+    if ( fabs(save) > 2*1.042267973 ) {
+      if ( save > 0 ) save = 2*1.042267973;
+      else save = -2*1.042267973;
+    }
+    calc_new = 0;
+
+    // return the second number 
+    curr = x2*fac*1.042267973;
+    if ( fabs(curr) > 2*1.042267973) {
+      if ( curr > 0 ) curr = 2*1.042267973;
+      else curr = -2*1.042267973;
+    }
+    return curr;
+    
+    /* save one number for later use */
+    /*
+    save = x1*fac*1.118591404;
+    if ( fabs(save) > 2*1.118591404 ) {
+      save = (2.0*d_random()-1.0)*2*1.118591404;
+    }
+    calc_new = 0;
+
+    // return the second number 
+    curr = x2*fac*1.118591404;
+    if ( fabs(curr) > 2*1.118591404) {
+      curr = (2.0*d_random()-1.0)*2*1.118591404;
+    }
+    return curr;
+    */
+
+  } else {
+
+    calc_new = 1;
+
+    /* return the stored gaussian random number */
+    return save;
+
+  }
+
+}
+
 
 /*----------------------------------------------------------*/
 /*----------------------------------------------------------*/

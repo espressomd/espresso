@@ -33,7 +33,7 @@ proc dielectric_wall { args } {
   set sigma 0
   set type 0 
   set eps 0.
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } { } {
     if { [ lindex $args $argno ] == "dist" } {
       incr argno
       set dist [ expr 1.0 * [ lindex $args $argno ] ]
@@ -157,7 +157,7 @@ proc dielectric_sphere { args } {
   set res 0
   set sigma 0
   set type 0 
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } { } {
     if { [ lindex $args $argno ] == "radius" } {
       incr argno
       set radius [ expr 1.* [ lindex $args $argno ] ]
@@ -264,7 +264,7 @@ proc dielectric_cylinder { args } {
   set direction 1
   set sigma 0
   set type 0
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } { } {
     if { [ lindex $args $argno ] == "center" } {
       incr argno
       set center_x [ lindex $args $argno ] 
@@ -481,6 +481,10 @@ proc sign x {
 }
 
 
+proc sqrt { a } {
+  return [ expr sqrt($a+1e-8) ]
+}
+
 proc dielectric_pore { args } { 
   global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
   if { ![ info exists n_induced_charges ] } {
@@ -503,7 +507,7 @@ proc dielectric_pore { args } {
   set box_l_z [ lindex [ setmd box_l ] 2 ]
   set max_radius [ expr sqrt($box_l_x*$box_l_x+ $box_l_y*$box_l_y + $box_l_z*$box_l_z) ]
 
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } { } {
     if { [ lindex $args $argno ] == "center" } {
       incr argno
       set center_x [ expr 1.0*[ lindex $args $argno ] ]
@@ -627,8 +631,8 @@ proc dielectric_pore { args } {
   set c1_r [ expr $r1 + $smoothing_radius ]
   set c2_r [ expr $r2 + $smoothing_radius ]
   set slope [ expr ($c2_r-$c1_r)/($c2_z-$c1_z) ]
-  set sina [ expr ($r2-$r1)/sqrt( pow(2*($length - $smoothing_radius),2) + pow($r1-$r2,2)) ]
-  set cosa [ expr sqrt(1-$sina*$sina) ]
+  set sina [ expr ($r2-$r1)/[ sqrt [ expr  pow(2*($length - $smoothing_radius),2) + pow($r1-$r2,2)] ] ]
+  set cosa [ sqrt [ expr (1-$sina*$sina) ] ]
   
 #  set z_left  [ expr $c1_z + [ sign $slope ] * sqrt($slope*$slope/(1+$slope*$slope))*$smoothing_radius]
 #  set z_right [ expr $c2_z + [ sign $slope ] * sqrt($slope*$slope/(1+$slope*$slope))*$smoothing_radius]
@@ -641,19 +645,19 @@ proc dielectric_pore { args } {
   set z [ expr - $length ]
   while { $z < $length } {
     if { $z < $z_left } {
-      set radius [ expr $c1_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c1_z)*($z-$c1_z) ) ] 
+      set radius [ expr $c1_r - [ sqrt [ expr  $smoothing_radius*$smoothing_radius - ($z-$c1_z)*($z-$c1_z) ] ] ] 
       set delta_b [ expr 2*$pi*$res/2/$pi/$smoothing_radius ]
       set sinb [ expr ($z - $c1_z)/$smoothing_radius ]
-      set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
+      set sinbnew [ expr $sinb*cos($delta_b) + [ sqrt [ expr 1-$sinb*$sinb ] ]*sin($delta_b) ]
       set incr_z [ expr $c1_z + $smoothing_radius * $sinbnew - $z ]
-      set slope_norm [ expr tan(asin($sinb)) ]
+      set slope_norm [ expr tan(asin($sinb+1e-8)) ]
     } elseif  { $z > $z_right } {
-      set radius [ expr $c2_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c2_z)*($z-$c2_z) ) ] 
+      set radius [ expr $c2_r - [ sqrt [ expr $smoothing_radius*$smoothing_radius - ($z-$c2_z)*($z-$c2_z) ] ] ] 
       set delta_b [ expr 2*$pi*$res/2/$pi/$smoothing_radius ]
       set sinb [ expr ($z - $c2_z)/$smoothing_radius ]
-      set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
+      set sinbnew [ expr $sinb*cos($delta_b) + [ sqrt [ expr 1-$sinb*$sinb ] ]*sin($delta_b) ]
       set incr_z [ expr $c2_z + $smoothing_radius * $sinbnew - $z ]
-      set slope_norm [ expr tan(asin($sinb)) ]
+      set slope_norm [ expr tan(asin($sinb+1e-8)) ]
       if { $incr_z <= 0 } { 
         set z 1000
         continue

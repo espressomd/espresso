@@ -23,7 +23,7 @@
 
 #include "particle_data.hpp"
 
-/** \file virtual_sites.h
+/** \file virtual_sites.hpp
  *  This file contains routine to handle virtual sites
  *  Virtual sites are like particles, but they will be not integrated.
  *  Step performed for virtual sites:

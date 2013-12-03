@@ -18,9 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file constraint.c
-    Implementation of \ref constraint.h "constraint.h", here it's just the parsing stuff.
+/** \file constraint.cpp
+    Implementation of \ref constraint.hpp "constraint.h", here it's just the parsing stuff.
 */
+#include <limits>
 #include "constraint.hpp"
 #include "communication.hpp"
 #include "parser.hpp"
@@ -47,6 +48,8 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->c.wal.penetrable);
     Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.wal.only_positive);
+    Tcl_AppendResult(interp, " only_positive ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_SPH:
     Tcl_PrintDouble(interp, con->c.sph.pos[0], buffer);
@@ -266,6 +269,7 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
     con->c.wal.n[2] = 0;
   con->c.wal.d = 0;
   con->c.wal.penetrable = 0;
+  con->c.wal.only_positive = 0;
   con->part_rep.p.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "normal", strlen(argv[0]))) {
@@ -312,6 +316,15 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       }
       if (Tcl_GetInt(interp, argv[1], &(con->c.wal.reflecting)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "only_positive", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint wall only_positive {0|1} expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.wal.only_positive)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -745,6 +758,9 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
   con->c.pore.reflecting = 0;
   con->part_rep.p.type = -1;
   con->c.pore.smoothing_radius = 1.;
+  con->c.pore.outer_rad_left = std::numeric_limits<double>::max();
+  con->c.pore.outer_rad_right = std::numeric_limits<double>::max();
+  
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 4) {
@@ -779,6 +795,16 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       con->c.pore.rad_right =  con->c.pore.rad_left; 
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "outer_radius", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore outer_radius <rad> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.outer_rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      con->c.pore.outer_rad_right =  con->c.pore.outer_rad_left; 
+      argc -= 2; argv += 2;
+    }
     else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
       if (argc < 1) {
 	Tcl_AppendResult(interp, "constraint pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
@@ -796,6 +822,17 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.rad_left)) == TCL_ERROR)
 	return (TCL_ERROR);
       if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.rad_right)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 3; argv += 3;
+    }
+    else if(!strncmp(argv[0], "outer_radii", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore outer_radii <rad_left> <rad_right> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.outer_rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.outer_rad_right)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 3; argv += 3;
     }

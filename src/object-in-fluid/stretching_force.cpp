@@ -16,9 +16,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file stretching_force.c
+/** \file stretching_force.cpp
  *
- *  Implementation of \ref stretching_force.h
+ *  Implementation of \ref stretching_force.hpp
  */
 
 #include "stretching_force.hpp"

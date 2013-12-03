@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file reaction_field.c
+/** \file reaction_field.cpp
  *
- *  Implementation of \ref reaction_field.h
+ *  Implementation of \ref reaction_field.hpp
  */
 #include "reaction_field.hpp"
 

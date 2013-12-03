@@ -51,18 +51,31 @@ set components [setmd lb_components]
 ## let's first check momentum conservation
 
 if { $components == 1 }  { 
-  lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep  friction 0.1 
+  lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep friction 0.1 
 } else  { if { $components ==2 } { 
   lbfluid gpu agrid 1 dens 0.5 0.5 visc 3.0 3.0 tau $tstep friction 0.1 0.1 sc_coupling 0.0 0.0 0.0  
 } else {
      error_exit "number of components ($components) not supported"
   }
 }
-part 0 pos [expr 0.5] [expr 0.5 ] [expr 0.5 ] v 1.0 0.0 0.0 
+part 0 pos [expr 0.5] [expr 0.5 ] [expr 0.5 ] v 1.0 0.5 0.2 
 thermostat lb 0.0
-set initial [expr [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] ] 
+set initialx [expr [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] ] 
+set initialy [expr [lindex [analyze momentum] 1 ] +  [ lindex [analyze fluid momentum] 1 ] ] 
+set initialz [expr [lindex [analyze momentum] 2 ] +  [ lindex [analyze fluid momentum] 2 ] ] 
+
 integrate 500
-set delta [expr $initial - ( [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] ) ] 
+set delta [expr abs($initialx - ( [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] )) ] 
+if { $delta > 1e-4 } {
+
+     error_exit "linear momentum not conserved"
+}
+set delta [expr abs($initialy - ( [lindex [analyze momentum] 1 ] +  [ lindex [analyze fluid momentum] 1 ] )) ] 
+if { $delta > 1e-4 } {
+
+     error_exit "linear momentum not conserved"
+}
+set delta [expr abs($initialz - ( [lindex [analyze momentum] 2 ] +  [ lindex [analyze fluid momentum] 2 ] )) ] 
 if { $delta > 1e-4 } {
 
      error_exit "linear momentum not conserved"
@@ -100,13 +113,54 @@ if { $components == 1 }  {
    set vel_works 0.0900439240
 }
 # check for the right terminal velocity
-set difference [expr ($vsum/$count - $vel_works)/$vel_works]
+
+set difference [expr abs( ($vsum/$count - $vel_works)/$vel_works )]
+
 puts -nonewline  "The velocity is [expr $vsum/$count] compared to the reference $vel_works : "
 if { $difference > 1e-3 } {
   puts "FAILED"
   error_exit "Particle terminal velocity is wrong: coupling might be broken."
 } else { 
-  puts "OK"
+  puts "OK difference is $difference"
+}
+
+if { $components == 1 }  { 
+  lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0 couple 3pt
+
+  #Note we don't reset the particle's velocity to maintain an overall net momentum of the system of zero
+  part 0 pos [expr 0.5*$length] [expr 0.5*$length] [expr 0.5*$length] f 0.0 0.0 0.0 ext_force $dragx $dragy $dragz 
+
+
+  # get over the initial acceleration
+  integrate 200
+
+  # average terminal velocity to remove node dependence
+  set vsum 0.0
+  set count 0
+  for { set i 0 } { $i < 100 } { incr i } {
+
+    integrate 5
+
+    set pv [part 0 print v]
+    set vel [expr sqrt([lindex $pv 0]*[lindex $pv 0] + [lindex $pv 1]*[lindex $pv 1] + [lindex $pv 2]*[lindex $pv 2]) ]
+    set vsum [expr $vsum + $vel]
+    incr count
+  }
+
+  #note that the linear interpolation in SC is different from LB, hence the different terminal velocity
+  if { $components == 1 }  { 
+    set vel_works 0.1092247459
+  }
+
+  # check for the right terminal velocity
+  set difference [expr abs($vsum/$count - $vel_works)/$vel_works]
+  puts -nonewline  "The velocity is [expr $vsum/$count] compared to the reference $vel_works for the 3 point coupling scheme: "
+  if { $difference > 1e-3 } {
+    puts "FAILED"
+    error_exit "Particle terminal velocity is wrong: 3 point coupling might be broken."
+  } else { 
+    puts "OK"
+  }
 }
 
 exit 0

@@ -21,7 +21,7 @@
 #ifndef SOFT_SPHERE_TCL_H
 #define SOFT_SPHERE_TCL_H
 /** \file soft_sphere_tcl.hpp
- * Tcl interface for \ref soft_sphere.h
+ * Tcl interface for \ref soft_sphere.hpp
  */
 
 #include "parser.hpp"

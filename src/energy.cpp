@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file energy.c
-    Implementation of \ref energy.h "energy.h".
+/** \file energy.cpp
+    Implementation of \ref energy.hpp "energy.hpp".
 */
 #include "energy.hpp"
 #include "cells.hpp"

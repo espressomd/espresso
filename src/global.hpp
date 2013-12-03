@@ -20,7 +20,7 @@
 */
 #ifndef GLOBAL_H
 #define GLOBAL_H
-/** \file global.h This file contains the code for access to globally
+/** \file global.hpp This file contains the code for access to globally
     defined variables using the script command setmd. Please refer to
     the Developer's guide, section "Adding global variables", for
     details on how to add new variables in the interpreter's
@@ -29,7 +29,7 @@
 /**********************************************
  * description of global variables
  * add any variable that should be handled
- * automatically in global.c. This includes
+ * automatically in global.cpp. This includes
  * distribution to other nodes and
  * read/user-defined access from Tcl.
  **********************************************/

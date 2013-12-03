@@ -18,12 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file polymer.c
+/** \file polymer.cpp
     This file contains everything needed to create a start-up configuration
     of (partially charged) polymer chains with counterions and salt molecules,
     assigning velocities to the particles and crosslinking the polymers if necessary.
  
-    The corresponding header file is polymer.h.
+    The corresponding header file is polymer.hpp.
  
     Created:       27.02.2003 by BAM
        Based upon 'polymer.tcl' by BAM (20.02.2003).

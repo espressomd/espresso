@@ -33,8 +33,6 @@ require_feature "ELECTROSTATICS"
 require_feature "CONSTRAINTS"
 require_feature "PARTIAL_PERIODIC"
 
-source ../../scripts/bundle.tcl
-
 global name level
 set name ""
 set level 0
@@ -54,22 +52,28 @@ pack .star -expand 1 -fill both -in .
 
 # title
 frame .star.title
-label .star.title.l -text "Polyelectrolyte Star Simulation" -bg lightblue -height 2
+label .star.title.l \
+    -text "Polyelectrolyte Star Simulation" \
+    -font TkHeadingFont \
+    -foreground #475f91 \
+    -background #e7edf9 \
+    -height 2
 
-canvas .star.title.logo -width 234 -height 72 -bg black
+canvas .star.title.logo -width 100 -height 105 -highlightthickness 0
 set esp_logo [image create photo -file "logo.gif"]
-.star.title.logo create image 117 36 -image $esp_logo
+.star.title.logo create image 50 50 -image $esp_logo
 
-pack .star.title.l .star.title.logo -fill both  -in .star.title
+#pack .star.title.l .star.title.logo -fill both  -in .star.title
+pack .star.title.l .star.title.logo -in .star.title
 pack .star.title -in .star
 
 # menu
 frame .star.menu -relief raised -border 1
-label  .star.menu.t1 -text "Main Menu" -bg lightyellow
-button .star.menu.b1 -text "Setup System"     -command SetupStar
-button .star.menu.b2 -text "Read in System"   -command ReadStar
-button .star.menu.b3 -text "Test System"   -command TestStar
-button .star.menu.b4 -text "Exit"   -command exit
+label  .star.menu.t1 -text "Main Menu" -background lightyellow
+button .star.menu.b1 -font TkMenuFont -text "Setup System"     -command SetupStar
+button .star.menu.b2 -font TkMenuFont -text "Read in System"   -command ReadStar
+button .star.menu.b3 -font TkMenuFont -text "Test System"   -command TestStar
+button .star.menu.b4 -font TkMenuFont -text "Exit"   -command exit
 
 pack .star.menu.t1 .star.menu.b1 .star.menu.b2 .star.menu.b3 .star.menu.b4 \
     -expand 1 -fill both -in .star.menu
@@ -78,6 +82,24 @@ pack .star.menu -expand 1 -fill both -in .star
 #############################################################
 #     Main Menu                                             #
 #############################################################
+
+proc bundle_counterion_setup { n_ci sphere_rad valency {center "0 0 0"} {type "1"} {start "0"} } {
+    set s_rad2 [expr $sphere_rad*$sphere_rad]
+
+    for {set i $start} { $i < [expr $n_ci+$start] } {incr i} {
+	set dist [expr $s_rad2 + 10.0]
+	while { $dist > [expr $s_rad2-(2.0*$sphere_rad-1.0)] } {
+	    set posx [expr 2*$sphere_rad*[t_random]-$sphere_rad]
+	    set posy [expr 2*$sphere_rad*[t_random]-$sphere_rad]
+	    set posz [expr 2*$sphere_rad*[t_random]-$sphere_rad]
+	    set dist [expr $posx*$posx + $posy*$posy + $posz*$posz]
+	}
+	set posx [expr $posx+[lindex $center 0] ]
+	set posy [expr $posy+[lindex $center 1] ]
+	set posz [expr $posz+[lindex $center 2] ] 
+	part $i pos $posx $posy $posz type $type q $valency
+    }
+}
 
 proc SetupStar  {} {
     global name level
@@ -255,13 +277,17 @@ proc CreateSystem {} {
     # Window appearance
     frame .star.create -relief raised -border 1
     label .star.create.title -text "Create System" -bg lightyellow -height 2
-    label .star.create.t1 -justify left -text "System: $name 
+    label .star.create.t1 -font TkTextFont -justify left \
+        -text "System: $name 
 Star with $n_arms arms of length $l_arms
 Put $n_part Particles, $n_ci Counterions
 in Sphere with radius $rad"	
-    button .star.create.int_but -text "Change Integrator settings" -command change_integrator
-    button .star.create.inter_but -text "Change Interactions" -command change_inter
-    button .star.create.start_but -text "Start Simulation" -command simulation
+    button .star.create.int_but -font TkMenuFont \
+        -text "Change Integrator settings" -command change_integrator
+    button .star.create.inter_but -font TkMenuFont \
+        -text "Change Interactions" -command change_inter
+    button .star.create.start_but -font TkMenuFont \
+        -text "Start Simulation" -command simulation
 
     pack .star.create.title .star.create.t1                                   \
 	.star.create.int_but .star.create.inter_but .star.create.start_but   \

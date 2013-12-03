@@ -289,7 +289,7 @@ proc prepare_vmd_connection { args } {
   set filename "vmd"
   set wait 0
   set start 1
-  set hostname [exec hostname]
+  set hostname [info hostname]
   set draw_constraints 0
 
   # parse off filename, both for old and new style
@@ -304,6 +304,7 @@ proc prepare_vmd_connection { args } {
     set wait [lindex $args 0]
     if {[llength $args] > 1} { set start [lindex $args 1] }
     if {[llength $args] > 2} { set draw_constraints [lindex $args 2] }
+    # old format did not allow to specify arguments for writevsf
     set vsf_args ""
   } {
     # new format with keyword arguments
@@ -315,6 +316,7 @@ proc prepare_vmd_connection { args } {
         }
         "start" {
           set start 1
+          # if we start VMD, it is necessarily on localhost
           set hostname "localhost"
           set args [lrange $args 1 end]
         }
@@ -342,10 +344,10 @@ proc prepare_vmd_connection { args } {
   close $f
   
   for {set port 10000} { $port < 65000 } { incr port } {
-    catch {imd connect $port} res
-    if {$res == ""} {
-      break
-    }
+      catch {imd connect $port} res
+      if {$res == ""} {
+          break
+      }
   }
   
   set vmdout_file [open "${filename}.vmd_start.script" "w"]
@@ -354,11 +356,10 @@ proc prepare_vmd_connection { args } {
   puts $vmdout_file "mol load vsf $filename.vsf"
   puts $vmdout_file "rotate stop"
   puts $vmdout_file "mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000"
-  puts $vmdout_file "mol modcolor 0 0 SegName"
+  puts $vmdout_file "mol modcolor 0 0 Name"
   puts $vmdout_file "imd connect $hostname $port"
   puts $vmdout_file "imd transfer 1"
   puts $vmdout_file "imd keep 1"
-  puts $vmdout_file "proc pbcsetup {} {pbc set \"[setmd box_l]\" -all}"
   
   # draw constraints  
   if {$draw_constraints != "0"} {

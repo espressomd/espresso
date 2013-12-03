@@ -20,7 +20,7 @@
 */
 #ifndef _CELLS_H
 #define _CELLS_H
-/** \file cells.h
+/** \file cells.hpp
     This file contains everything related to the cell structure / cell
     system.
     
@@ -31,18 +31,18 @@
   
     <ul>
     <li> domain decomposition: The simulation box is divided spatially
-    ino cells (see \ref domain_decomposition.h). This is suitable for
+    ino cells (see \ref domain_decomposition.hpp). This is suitable for
     short range interctions.
     <li> nsquare: The particles are distributed equally on all nodes
-    regardless their spatial position (see \ref nsquare.h). This is
+    regardless their spatial position (see \ref nsquare.hpp). This is
     suitable for long range interactions that can not be treated by a
-    special method like P3M (see \ref p3m.h).
+    special method like P3M (see \ref p3m.hpp).
     <li> layered: in x and y directions, it uses a nsquared type of interaction calculation,
                   but in z it has a domain decomposition into layers.
     </ul>
   
     One can switch between different cell systems with the tcl command
-    cellsystem implemented in \ref cells.c .
+    cellsystem implemented in \ref cells.cpp .
   
     Some structures are common to all cell systems: 
   

@@ -20,7 +20,7 @@
 */
 #ifndef _INTERACTION_DATA_H
 #define _INTERACTION_DATA_H
-/** \file interaction_data.h
+/** \file interaction_data.hpp
     Various procedures concerning interactions between particles.
 */
 
@@ -597,7 +597,7 @@ typedef struct {
 #ifdef BOND_ANGLE_OLD
     /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
-	potential which you may chose with a compiler flag in the file \ref config.h !
+	potential which you may chose with a compiler flag in the file \ref config.hpp !
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi) */
     struct {
@@ -695,7 +695,7 @@ typedef struct {
     /** Parameters for three body angular potential (bond-angle potentials) that 
         depends on distance to wall constraint.
 	ATTENTION: Note that there are different implementations of the bond angle
-	potential which you may chose with a compiler flag in the file \ref config.h !
+	potential which you may chose with a compiler flag in the file \ref config.hpp !
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi)
 	dist0 - equilibrium distance (no default) */
@@ -740,6 +740,7 @@ typedef struct {
   /** whether the constraint is penetrable 1 or not 0*/
   int penetrable; 
   int reflecting;
+  int only_positive;
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */
@@ -800,6 +801,8 @@ typedef struct {
   /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
   double length;
   int reflecting;
+  double outer_rad_left;
+  double outer_rad_right;
 } Constraint_pore;
 
 /** Parameters for a ROD constraint. */
@@ -865,6 +868,11 @@ typedef struct {
   int reflecting;
 
 } Constraint_stomatocyte;
+
+/** Parameters for a BOX constraint. */
+typedef struct {
+  int value;
+} Constraint_box;
 
 //ER
 /** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
@@ -1033,7 +1041,7 @@ void realloc_tf_params(int nsize);
     max_cut. The maximal cutoff of the non-bonded + real space
     electrostatic interactions is stored in max_cut_non_bonded. This
     value is used in the verlet pair list algorithm (see \ref
-    verlet.h). */
+    verlet.hpp). */
 void recalc_maximal_cutoff();
 
 /** call when the temperature changes, for Bjerrum length adjusting. */

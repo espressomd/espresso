@@ -23,10 +23,10 @@
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 
-/** \file stretching_force.h
+/** \file stretching_force.hpp
  *  Routines to calculate the STRETCHING_FORCE Energy or/and STRETCHING_FORCE force 
  *  for a particle pair. (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 /************************************************************/

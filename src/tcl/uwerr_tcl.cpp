@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file uwerr_tcl.c
+/** \file uwerr_tcl.cpp
     Implements the uwerr command.
 */
 

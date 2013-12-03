@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file domain_decomposition.c
+/** \file domain_decomposition.cpp
  *
  *  This file contains everything related to the cell system: domain decomposition.
- *  See also \ref domain_decomposition.h
+ *  See also \ref domain_decomposition.hpp
  */
 #include "utils.hpp"
 #include "parser.hpp"

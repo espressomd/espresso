@@ -20,7 +20,7 @@
 */
 //
 
-/** \file iccp3m.h 
+/** \file iccp3m.hpp 
 
     ICCP3M is a method that allows to take into account the influence
     of arbitrarliy shaped dielectric interfaces.  The dielectric
@@ -100,32 +100,32 @@ int bcast_iccp3m_cfg(void);
 /** Calculation of the electrostatic forces between source charges (= real charges) and wall charges.
  *  For each electrostatic method the proper functions for short and long range parts are called.
  *  Long Range Parts are calculated directly, short range parts need helper functions according
- *  to the particle data organisation. A modified version of \ref force_calc in \ref forces.h.
+ *  to the particle data organisation. A modified version of \ref force_calc in \ref forces.hpp.
  */
 void force_calc_iccp3m();
 
 /** Calculation of short range part of electrostatic interaction in layered systems 
- *  A modified version of \ref layered_calculate_ia in \ref layered.h
+ *  A modified version of \ref layered_calculate_ia in \ref layered.hpp
  */
 void layered_calculate_ia_iccp3m();
 
 /** Calculate the short range part of electrostatic interaction using verlet lists.
- * A modified version of \ref build_verlet_lists_and_calc_verlet_ia()	in \ref verlet.h
+ * A modified version of \ref build_verlet_lists_and_calc_verlet_ia()	in \ref verlet.hpp
  */
 void build_verlet_lists_and_calc_verlet_ia_iccp3m();
 
 /** Calculate he short range part of electrostatic interaction using verlet lists, if verlet lists
- * have already been properly built. A modified version of \ref calculate_verlet_ia()	in \ref verlet.h
+ * have already been properly built. A modified version of \ref calculate_verlet_ia()	in \ref verlet.hpp
  */
 void calculate_verlet_ia_iccp3m();
 
 /** Calculate he short range part of electrostatic interaction using for linked cell
- * systems. A modified version of \ref calc_link_cell() in \ref domain_decomposition.h
+ * systems. A modified version of \ref calc_link_cell() in \ref domain_decomposition.hpp
  */
 void calc_link_cell_iccp3m();
 
 /** Calculate he short range part of electrostatic interaction using for n-squared cell
- * systems. A modified version of nsq_calculate_ia \ref nsquare.h.
+ * systems. A modified version of nsq_calculate_ia \ref nsquare.hpp.
  */
 void nsq_calculate_ia_iccp3m();
 

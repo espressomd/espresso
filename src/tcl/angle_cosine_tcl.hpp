@@ -21,7 +21,7 @@
 #ifndef _ANGLE_COSINE_TCL_H
 #define _ANGLE_COSINE_TCL_H
 /** \file angle_cosine_tcl.hpp
- * Tcl interface for \ref angle_cosine.h
+ * Tcl interface for \ref angle_cosine.hpp
  */
 
 #include "parser.hpp"

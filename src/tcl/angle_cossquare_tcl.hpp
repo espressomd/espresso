@@ -21,7 +21,7 @@
 #ifndef _ANGLE_COSSQUARE_TCL_H
 #define _ANGLE_COSSQUARE_TCL_H
 /** \file angle_cossquare_tcl.hpp
- * Tcl interface for \ref angle_cossquare.h
+ * Tcl interface for \ref angle_cossquare.hpp
  */
 
 #include "parser.hpp"

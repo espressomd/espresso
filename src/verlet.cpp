@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file verlet.c   Verlet list.
- *  For more information see  \ref verlet.h "verlet.h"
+/** \file verlet.cpp   Verlet list.
+ *  For more information see  \ref verlet.hpp "verlet.h"
  */
 #include <cstdio>
 #include <cstdlib>

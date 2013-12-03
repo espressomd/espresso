@@ -18,17 +18,19 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb_tcl.c
+/** \file lb_tcl.cpp
  *
  * TCL Interface for the Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
  */
+
 
 #include "thermostat.hpp"
 #include "lb_tcl.hpp"
 #include "lb.hpp"
 #include "lbgpu.hpp"
 #include "parser.hpp"
+#include "electrokinetics.hpp"
 
 #ifdef LB_GPU
 #ifdef SHANCHEN
@@ -169,9 +171,18 @@ int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc,
 /** TCL Interface: The \ref lbfluid command. */
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
+#ifdef ELECTROKINETICS
+if ( ek_initialized ) {
+  Tcl_AppendResult(interp, "ERROR: Electrokinetics automatically intializes the LB on the GPU and can therefore not be used in conjunction with LB.\n");
+  Tcl_AppendResult(interp, "ERROR: Please run either electrokinetics or LB.\n");
+  
+  return TCL_ERROR;
+}
+#endif
+
 #if defined (LB) || defined (LB_GPU)
   argc--; argv++;
-
+  
 /**if we have LB the LB cpu is set by default */
 #ifdef LB
   if(!(lattice_switch & LATTICE_LB_GPU)) lattice_switch = lattice_switch | LATTICE_LB;
@@ -403,8 +414,24 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
       	          Tcl_AppendResult(interp, "Unknown Error setting friction", (char *)NULL);
                         return TCL_ERROR;
               }
-        } 
-      }    
+        }
+      }
+      else if (ARG0_IS_S("couple") ) {
+        if ( argc < 1 ) { 
+          Tcl_AppendResult(interp, "couple requires an argument, either 2pt or 3pt", (char *)NULL);
+          return TCL_ERROR;
+        } else {
+          if ( ARG1_IS_S("2pt") || ARG1_IS_S("2PT") || ARG1_IS_S("2Pt") ) {
+            lb_lbfluid_set_couple_flag (LB_COUPLE_TWO_POINT);
+          } else if ( ARG1_IS_S("3pt") || ARG1_IS_S("3PT") || ARG1_IS_S("3Pt") ) {
+            lb_lbfluid_set_couple_flag (LB_COUPLE_THREE_POINT);
+          } else {
+            Tcl_AppendResult(interp, "Did not understand argument to couple, please send 2pt or 3pt.", (char *)NULL);
+            return TCL_ERROR;
+          }
+          argc-=2; argv+=2;
+        }
+      }
       else if (ARG0_IS_S("gamma_odd") ) {
         if ( argc < (LB_COMPONENTS+1) ){ 
 	        Tcl_AppendResult(interp, "gamma_odd requires arguments", (char *)NULL); // TODO: fix this and similar ones...
@@ -464,10 +491,10 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 	        Tcl_AppendResult(interp, "Unknown Error setting ext_force", (char *)NULL);
           return TCL_ERROR;
         }
-      #else
+#else
         Tcl_AppendResult(interp, "External Forces not compiled in!", (char *)NULL);
          return TCL_ERROR;
-      #endif
+#endif
       }
       else if (ARG0_IS_S("print")) {
         if ( argc < 3 || (ARG1_IS_S("vtk") && argc < 4) ) {
@@ -475,58 +502,69 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
           return TCL_ERROR;
         }
         else {
-          argc--; argv++;
+          argc--;
+          argv++;
+          
           if (ARG0_IS_S("vtk")) {
           	if (ARG1_IS_S("boundary")) {
-                        if ( lb_lbfluid_print_vtk_boundary(argv[2]) != 0 ) {
-                           Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk boundary", (char *)NULL);
-                           return TCL_ERROR;
-                        }
-                        argc-=3; argv+=3;
-		}
-                else if (ARG1_IS_S("velocity")) {
-		        if ( lb_lbfluid_print_vtk_velocity(argv[2]) != 0 ) {
-                              Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
-                              return TCL_ERROR;
-                        }
-                        argc-=3; argv+=3;
-		}
-                else if (ARG1_IS_S("density")) {
-                        argc-=2; argv+=2;
-                        if ( argc < LB_COMPONENTS ) {
-	                         Tcl_AppendResult(interp, "lbfluid print vtk density requires\"", LB_COMPONENTS,"\" arguments.", 
-                                                           (char *)NULL);
-                                 return TCL_ERROR;
-                        }
+              if ( lb_lbfluid_print_vtk_boundary(argv[2]) != 0 ) {
+                Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk boundary", (char *)NULL);
+                return TCL_ERROR;
+              }
+              
+              argc -= 3;
+              argv += 3;
+            }
+            else if (ARG1_IS_S("velocity")) {
+	            if ( lb_lbfluid_print_vtk_velocity(argv[2]) != 0 ) {
+                Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+                return TCL_ERROR;
+              }
+              
+              argc -= 3;
+              argv += 3;
+	          }
+            else if (ARG1_IS_S("density")) {
+              argc -= 2;
+              argv += 2;
+             
+              if ( argc < LB_COMPONENTS ) {
+                Tcl_AppendResult(interp, "lbfluid print vtk density requires\"", LB_COMPONENTS,"\" arguments.", (char *)NULL);
+                return TCL_ERROR;
+              }
 
-		        if ( lb_lbfluid_print_vtk_density(argv) != 0 ) {
-                              Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk density", (char *)NULL);
-                              return TCL_ERROR;
-                        }
-                        argc-=LB_COMPONENTS; argv+=LB_COMPONENTS;
-		}
-	        else {
-                        return TCL_ERROR;
-		}
-	  }
-	  else { // SAW TODO : finish implementing for SHANCHEN
-		      	if (ARG0_IS_S("boundary")) {
-			   	  	if ( lb_lbfluid_print_boundary(argv[1]) != 0 ) {
-				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print boundary", (char *)NULL);
-			      	  return TCL_ERROR;
-			      	}
-			    	}
-			    	else if (ARG0_IS_S("velocity")) {
-			      	if ( lb_lbfluid_print_velocity(argv[1]) != 0 ) {
-				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print velocity", (char *)NULL);
-			      	  return TCL_ERROR;
-			      	}
+	            if ( lb_lbfluid_print_vtk_density(argv) != 0 ) {
+                Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk density", (char *)NULL);
+                return TCL_ERROR;
+              }
+              
+              argc -= LB_COMPONENTS;
+              argv += LB_COMPONENTS;
+	          }
+            else {
+              return TCL_ERROR;
+	          }
+	        }
+	        else { // SAW TODO : finish implementing for SHANCHEN
+	        	if (ARG0_IS_S("boundary")) {
+		     	  	if ( lb_lbfluid_print_boundary(argv[1]) != 0 ) {
+			      	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print boundary", (char *)NULL);
+		        	  return TCL_ERROR;
+		        	}
+		      	}
+		      	else if (ARG0_IS_S("velocity")) {
+		        	if ( lb_lbfluid_print_velocity(argv[1]) != 0 ) {
+			      	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print velocity", (char *)NULL);
+		        	  return TCL_ERROR;
+		        	}
+		        }
+			      else {
+			      	return TCL_ERROR;
 			      }
-				    else {
-				    	return TCL_ERROR;
-				    }
-			      argc-=2; argv+=2;
-		      }
+			      
+		        argc -= 2;
+		        argv += 2;
+	        }
         }
       }
       else if (ARG0_IS_S("save_ascii_checkpoint")) { 
@@ -640,10 +678,13 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 #endif
   }
 
-
-   argc-=3; argv+=3;
+   argc-=3;
+   argv+=3;
+   
    if (ARG0_IS_S("print")) {
-     argc--; argv++;
+     argc--;
+     argv++;
+     
      while (argc > 0) {
        if (ARG0_IS_S("rho") || ARG0_IS_S("density")) {
          lb_lbnode_get_rho(coord, double_return);
@@ -706,9 +747,15 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        argc--; argv++;
        if (ARG0_IS_S("rho") || ARG0_IS_S("density")) {
          argc--; argv++;
+         if (argc!=LB_COMPONENTS) {
+           char integer_buffer[TCL_INTEGER_SPACE];
+           sprintf(integer_buffer, "%d", LB_COMPONENTS);
+           Tcl_AppendResult(interp, "LB node set density requires ", integer_buffer, " double(s).", (char *)NULL);
+           return TCL_ERROR;
+         }
          for (counter = 0; counter < LB_COMPONENTS; counter++) {
            if (!ARG0_IS_D(double_return[counter])) {
-             Tcl_AppendResult(interp, "recieved not a double but \"", argv[0], "\" requested", (char *)NULL);
+             Tcl_AppendResult(interp, "received not a double but \"", argv[0], "\" requested", (char *)NULL);
              return TCL_ERROR;
            }
            argc--; argv++;
@@ -722,7 +769,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        else if (ARG0_IS_S("u") || ARG0_IS_S("v") || ARG0_IS_S("velocity")) {
          argc--; argv++;
          if(argc!=3) {
-             Tcl_AppendResult(interp, "lbnode set velocity|u|v needs three arguments", (char *)NULL);
+             Tcl_AppendResult(interp, "lbnode set velocity|u|v needs three arguments (vx vy vz)", (char *)NULL);
              return TCL_ERROR;
          }
          for (counter = 0; counter < 3; counter++) {
@@ -739,9 +786,13 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        }
        else if (ARG0_IS_S("pop") || ARG0_IS_S("populations") ) {
          argc--; argv++;
+         if (argc!=19) {
+           Tcl_AppendResult(interp, "LB node set populations requires 19 doubles.", (char *)NULL);
+           return TCL_ERROR;
+         }
          for (counter = 0; counter < 19; counter++) {
            if (!ARG0_IS_D(double_return[counter])) {
-             Tcl_AppendResult(interp, "recieved not a double but \"", argv[0], "\" requested", (char *)NULL);
+             Tcl_AppendResult(interp, "received not a double but \"", argv[0], "\" requested", (char *)NULL);
              return TCL_ERROR;
            }
            argc--; argv++;

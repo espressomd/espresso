@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file angle.c
+/** \file angle.cpp
  *
- *  Implementation of \ref angle.h
+ *  Implementation of \ref angle.hpp
  */
 #include "angle.hpp"
 
@@ -30,7 +30,7 @@
 /** set parameters for the angle potential.
 
     \todo The type of the angle potential
-    is chosen via config.h and cannot be changed at runtime.
+    is chosen via config.hpp and cannot be changed at runtime.
 */
 int angle_set_params(int bond_type, double bend, double phi0)
 {

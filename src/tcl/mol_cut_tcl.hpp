@@ -21,7 +21,7 @@
 #ifndef MOL_CUT_TCL_H
 #define MOL_CUT_TCL_H
 /** \file mol_cut_tcl.hpp
- * Tcl interface for \ref mol_cut.h
+ * Tcl interface for \ref mol_cut.hpp
  */
 
 #include "parser.hpp"

@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file reaction_field_tcl.c
+/** \file reaction_field_tcl.cpp
  *
  *  Implementation of \ref reaction_field_tcl.hpp
  */

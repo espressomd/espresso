@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file modes.c
-    Implementation of \ref modes.h "modes.h"
+/** \file modes.cpp
+    Implementation of \ref modes.hpp "modes.h"
 */
 
 #include "modes.hpp"

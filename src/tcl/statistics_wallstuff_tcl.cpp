@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_wallstuff_tcl.c
+/** \file statistics_wallstuff_tcl.cpp
     This is the place for analysis (so far...).
 */
 #include "parser.hpp"

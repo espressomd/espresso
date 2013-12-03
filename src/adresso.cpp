@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file adresso.c
+/** \file adresso.cpp
     This is the place for adaptive resolution scheme
-    Implementation of adresso.h
+    Implementation of adresso.hpp
 */
 
 #include "adresso.hpp"

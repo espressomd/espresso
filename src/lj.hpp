@@ -21,10 +21,10 @@
 #ifndef _LJ_H
 #define _LJ_H
 
-/** \file lj.h
+/** \file lj.hpp
  *  Routines to calculate the lennard jones energy and/or  force 
  *  for a particle pair.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"

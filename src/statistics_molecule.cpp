@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_molecule.c
+/** \file statistics_molecule.cpp
 
-    see \ref statistics_molecule.h
+    see \ref statistics_molecule.hpp
 */
 #include "statistics_molecule.hpp"
 #include "errorhandling.hpp"

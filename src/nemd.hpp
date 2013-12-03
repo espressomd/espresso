@@ -20,7 +20,7 @@
 */
 #ifndef NEMD_H
 #define NEMD_H
-/** \file nemd.h
+/** \file nemd.hpp
 
     This file contains the implementation of the NEMD (Non Equilibrium
     Molecular Dynamics) algorithm. It allows one to shear a system

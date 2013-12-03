@@ -16,7 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = config src . scripts tools testsuite doc
+DIST_SUBDIRS = config src . scripts tools testsuite doc
+SUBDIRS = config src . 
+if TCL
+SUBDIRS += scripts
+endif
+SUBDIRS += tools testsuite doc
 
 ACLOCAL_AMFLAGS = -I config
 AUTOMAKE_OPTIONS = gnu subdir-objects dist-xz
@@ -25,15 +30,19 @@ AUTOMAKE_OPTIONS = gnu subdir-objects dist-xz
 # by any other means
 EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
+CLEANFILES =
+
+if TCL
 all-local: Espresso
-CLEANFILES = Espresso 
+CLEANFILES += Espresso 
 
 if !DEVEL_SRC
 Espresso: FORCE
-	test -e Espresso || $(LN_S) src/Espresso .
+	test -L Espresso || $(LN_S) src/tcl/Espresso .
 else
 Espresso: version.txt
-	test -e Espresso || $(LN_S) src/Espresso .
+	test -L Espresso || $(LN_S) src/tcl/Espresso .
+endif
 endif
 
 # Sample myconfig generation
@@ -79,7 +88,6 @@ else
 endif
 
 doc doxygen: FORCE
-	cd src; $(MAKE) --print-directory $@
 	cd doc; $(MAKE) --print-directory $@
 
 FORCE:

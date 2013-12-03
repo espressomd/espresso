@@ -20,7 +20,7 @@
 */
 #ifndef _P3M_MAGNETOSTATICS_H
 #define _P3M_MAGNETOSTATICS_H
-/** \file p3m-dipolar.h P3M algorithm for long range magnetic dipole-dipole interaction.
+/** \file p3m-dipolar.hpp P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the dipolar Ewald summation. Details of the used method can be found in

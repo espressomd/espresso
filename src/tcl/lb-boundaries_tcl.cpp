@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb-boundaries_tcl.c
+/** \file lb-boundaries_tcl.cpp
  *
  * Boundary conditions parser file for Lattice Boltzmann fluid dynamics.
  *
@@ -30,6 +30,7 @@
 #include "interaction_data.hpp"
 #include "lb-boundaries.hpp"
 #include "communication.hpp"
+#include <limits>
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
@@ -219,14 +220,25 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 LB_Boundary *generate_lbboundary()
 {
   n_lb_boundaries++;
+
   lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+
   lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
+  
   lb_boundaries[n_lb_boundaries-1].velocity[0]=
   lb_boundaries[n_lb_boundaries-1].velocity[1]=
   lb_boundaries[n_lb_boundaries-1].velocity[2]=0;
+  
   lb_boundaries[n_lb_boundaries-1].force[0]=
   lb_boundaries[n_lb_boundaries-1].force[1]=
   lb_boundaries[n_lb_boundaries-1].force[2]=0;
+  
+#ifdef EK_BOUNDARIES
+  if (ek_initialized)
+  {
+    lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
+  }  
+#endif
   
   return &lb_boundaries[n_lb_boundaries-1];
 }
@@ -235,7 +247,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 {
   int i;
   double norm;
-  
+
   lbb->type = LB_BOUNDARY_WAL;
   
   /* invalid entries to start of */
@@ -485,6 +497,31 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
       
       argc -= 2; argv += 2;
     }
+    else if(ARG_IS_S(0, "velocity")) {
+      if(argc < 4) {
+	      Tcl_AppendResult(interp, "lbboundary cylinder velocity <vx> <vy> <vz> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->velocity[0])) == TCL_ERROR ||
+      	 Tcl_GetDouble(interp, argv[2], &(lbb->velocity[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(lbb->velocity[2])) == TCL_ERROR)
+	      return (TCL_ERROR);
+
+      if (lattice_switch & LATTICE_LB_GPU) {	
+#ifdef LB_GPU
+        /* No velocity rescaling is required */
+#endif
+      } else {	
+#ifdef LB
+        lbb->velocity[0]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[1]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[2]*=lbpar.tau/lbpar.agrid;
+#endif
+			}
+      
+      argc -= 4; argv += 4;
+    }
     else
       break;
   }
@@ -588,6 +625,31 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				
       argc -= 4; argv += 4;
     }
+    else if(ARG_IS_S(0, "velocity")) {
+        if(argc < 4) {
+            Tcl_AppendResult(interp, "lbboundary rhomboid velocity <vx> <vy> <vz> expected", (char *) NULL);
+            return (TCL_ERROR);
+        }
+        
+        if(Tcl_GetDouble(interp, argv[1], &(lbb->velocity[0])) == TCL_ERROR ||
+           Tcl_GetDouble(interp, argv[2], &(lbb->velocity[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(lbb->velocity[2])) == TCL_ERROR)
+            return (TCL_ERROR);
+        
+        if (lattice_switch & LATTICE_LB_GPU) {	
+#ifdef LB_GPU
+            /* No velocity rescaling is required */
+#endif
+        } else {	
+#ifdef LB
+            lbb->velocity[0]*=lbpar.tau/lbpar.agrid;
+            lbb->velocity[1]*=lbpar.tau/lbpar.agrid;
+            lbb->velocity[2]*=lbpar.tau/lbpar.agrid;
+#endif
+        }
+        
+        argc -= 4; argv += 4;
+    }
     else if(ARG_IS_S(0, "direction")) {
       if (argc < 2) {
 				Tcl_AppendResult(interp, "lbboundary rhomboid direction {inside|outside} expected", (char *) NULL);
@@ -666,6 +728,9 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   
   lbb->c.pore.smoothing_radius = 1.;
   
+  lbb->c.pore.outer_rad_left = std::numeric_limits<double>::max();
+  lbb->c.pore.outer_rad_right = std::numeric_limits<double>::max();
+  
   while (argc > 0) {
     if(ARG_IS_S(0, "center")) {
       if(argc < 4) {
@@ -705,7 +770,19 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
       lbb->c.pore.rad_right =  lbb->c.pore.rad_left; 
       argc -= 2; argv += 2;
     }
-    else if(ARG_IS_S(0, "smoothing_radius")) {
+    else if(!strncmp(argv[0], "outer_radius", strlen(argv[0]))) {
+      if(argc < 1) {
+    	  Tcl_AppendResult(interp, "lbboundary pore outer_radius <rad> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      lbb->c.pore.outer_rad_right =  lbb->c.pore.outer_rad_left; 
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -730,7 +807,21 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      
       argc -= 3; argv += 3;
     }
-    else if(ARG_IS_S(0, "length")) {
+    else if(!strncmp(argv[0], "outer_radii", strlen(argv[0]))) {
+      if(argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary pore outer_radii <rad_left> <rad_right> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      if (Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.outer_rad_right)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      argc -= 3; argv += 3;
+    }
+    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary pore length <len/2> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -903,12 +994,25 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
   return (TCL_OK);
 }
 
+int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
+{  
+  lbb->type = LB_BOUNDARY_BOX;
+  lbb->c.box.value = 0;
+
+  return (TCL_OK);
+}
+
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 
 int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
   int status = TCL_ERROR, c_num;
+  
+  if ( lattice_switch == LATTICE_OFF ) {
+    fprintf (stderr ,"WARNING: Specifying boundaries before using lbfluid assumes a CPU implementation of the LB.\n");
+    fprintf (stderr ,"WARNING: This will lead to unexpected behavior if a GPU LB fluid is later used since the boundaries wont exist.\n");
+  }
 
   if (argc < 2)
     return tclcommand_lbboundary_print_all(interp);

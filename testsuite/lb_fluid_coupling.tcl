@@ -69,7 +69,9 @@ for { set i 0 } { $i < 100 } { incr i } {
 
 # check for the right terminal velocity
 set vel_works 0.1100128183
-set difference [expr ($vsum/$count - $vel_works)/$vel_works]
+
+set difference [expr abs(($vsum/$count - $vel_works)/$vel_works)]
+
 if { $difference > 1e-3 } {
   error_exit "Particle terminal velocity is wrong: coupling might be broken."
 }

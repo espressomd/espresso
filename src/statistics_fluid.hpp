@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_fluid.h
+/** \file statistics_fluid.hpp
  *
  * Fluid related analysis functions.
- * Header file for \ref statistics_fluid.c.
+ * Header file for \ref statistics_fluid.cpp.
  *
  */
 
