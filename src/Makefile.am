@@ -105,7 +105,8 @@ libEspresso_la_SOURCES = \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
-	SystemInterface.hpp
+	SystemInterface.hpp \
+	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
