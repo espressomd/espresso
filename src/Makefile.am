@@ -211,10 +211,24 @@ noinst_HEADERS = myconfig-default.hpp
 CLEANFILES = myconfig-final.hpp
 BUILT_SOURCES = myconfig-final.hpp
 
+if MYCONFIG
+myconfig-final.hpp: FORCE
+	@if test -e $(top_builddir)/@MYCONFIG@; then \
+	  echo "  GEN      $@ <= @MYCONFIG@"; \
+	  if test -e $@; then \
+	    cmp -s $(top_builddir)/@MYCONFIG@ $@ || cp $(top_builddir)/@MYCONFIG@ $@; \
+	  else \
+	     cp $(top_builddir)/@MYCONFIG@ $@; \
+	  fi; \
+	else \
+	  echo "ERROR: Couldn't find @MYCONFIG@."; \
+	  exit 1; \
+	fi
+else
 myconfig-final.hpp: FORCE
 	@config_files="\
-	  $(top_builddir)/$(myconfig) \
-	  $(top_srcdir)/$(myconfig) \
+	  $(top_builddir)/myconfig.hpp \
+	  $(top_srcdir)/myconfig.hpp \
 	  $(srcdir)/myconfig-default.hpp"; \
 	for file in $$config_files; do \
 	  if test -e $$file; then \
@@ -232,6 +246,7 @@ myconfig-final.hpp: FORCE
 	  echo "ERROR: Couldn't find $(myconfig) anywhere"; \
 	  exit 1; \
 	fi
+endif
 
 #################################################################
 # Handling of the features

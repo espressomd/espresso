@@ -1,4 +1,3 @@
-
 # Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
@@ -570,15 +569,21 @@ AC_MSG_RESULT($with_efence)
 
 ##################################
 # Handling the myconfig-header
-AC_ARG_WITH(myconfig, 
-  AS_HELP_STRING([--with-myconfig=FILE],
-                 [default name of the local config file [FILE=myconfig.hpp]]),
-[ test .$with_myconfig = .no && with_myconfig=myconfig.hpp ],
-[ with_myconfig=myconfig.hpp ])
-AC_MSG_CHECKING([the name of the configuration header])
-myconfig=$with_myconfig
-AC_MSG_RESULT($myconfig)
-AC_SUBST(myconfig)
+AC_ARG_VAR([MYCONFIG], 
+           [Which myconfig file to use. @<:@myconfig.hpp@:>@])
+AC_MSG_CHECKING([whether the variable MYCONFIG is set])
+AS_IF([test "x$MYCONFIG" != "x"], [
+  AC_MSG_RESULT(yes)
+  AC_MSG_CHECKING([whether file $MYCONFIG exists])
+  if ! test -f $MYCONFIG; then
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([MYCONFIG file $MYCONFIG does not exist!])
+  fi
+],[
+  AC_MSG_RESULT(no)
+  MYCONFIG="myconfig.hpp"
+])
+AM_CONDITIONAL(MYCONFIG, [test x$MYCONFIG != xmyconfig.hpp])
 
 ##################################
 # Number of CPUs
@@ -701,7 +706,7 @@ cat <<EOF
 
 Other settings
 --------------
-local config header	= $myconfig
+config                  = $MYCONFIG
 installation prefix	= $prefix
 number of test tasks    = $CPU_COUNT
 mympiexec               = $MYMPIEXEC
