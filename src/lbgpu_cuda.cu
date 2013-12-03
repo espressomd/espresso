@@ -17,10 +17,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu.cu
+/** \file lbgpu_cuda.cu
  *
  * Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
- * Header file for \ref lbgpu.h.
+ * Header file for \ref lbgpu.hpp.
  */
 
 #include "config.hpp"
@@ -525,6 +525,7 @@ __device__ void update_rho_v(float *mode, unsigned int index, LB_node_force_gpu 
  * @param index   node index / thread index (Input)
  * @param mode    Pointer to the local register values mode (Input/Output)
  * @param node_f  Pointer to local node force (Input)
+ * @param *d_v    Pointer to local device values
 */
 __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu node_f, LB_rho_v_gpu *d_v){
   float u_tot[3]={0.0f,0.0f,0.0f};
@@ -1144,6 +1145,7 @@ __device__ void bounce_back_write(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned i
  * @param index   node index / thread index (Input)
  * @param mode    Pointer to the local register values mode (Input/Output)
  * @param node_f  Pointer to local node force (Input)
+ * @param *d_v    Pointer to local device values
 */
 __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu node_f, LB_rho_v_gpu *d_v) {
   
@@ -1484,6 +1486,7 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_rho_v_gpu *d_v, LB
  * @param node_index  node index around (8) particle (Input)
  * @param *mode       Pointer to the local register values mode (Output)
  * @param n_a         Pointer to local node residing in array a(Input)
+ * @param component_index   Shanchen component index        (Input)
 */
 __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index, int component_index){
 
@@ -1531,6 +1534,7 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
  * @param part_index    particle id / thread id (Input)
  * @param *rn_part    Pointer to randomnumber array of the particle
  * @param node_index    node index around (8) particle (Output)
+ * @param *d_v    Pointer to local device values
 */
 __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
   
@@ -1728,6 +1732,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
  * @param part_index            particle id / thread id (Input)
  * @param *rn_part              Pointer to randomnumber array of the particle
  * @param node_index            node index around (8) particle (Output)
+ * @param *d_v    Pointer to local device values
 */
 __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partgrad1, float * partgrad2, float * partgrad3, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, CUDA_fluid_composition * fluid_composition, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
 
@@ -2086,6 +2091,8 @@ __device__ void reset_mode0_homogeneously(float* mode) {
  *
  * @param n_a   Pointer to the lattice site (Input).
  * @param *gpu_check additional check if gpu kernel are executed(Input).
+ * @param *d_v    Pointer to local device values
+ * @param *node_f          Pointer to node forces
 */
 __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, int *gpu_check) {
    /* TODO: this can handle only a uniform density, something similar, but local, 
@@ -2401,7 +2408,7 @@ __global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodefo
 
 /** 
  * @param single_nodeindex  Single node index        (Input)
- * @param *mode             Pointer to the local register values mode (Output)
+ * @param component_index   Shanchen component index        (Input)
  * @param n_a               Pointer to local node residing in array a(Input)
 */
 __device__ __inline__ float calc_massmode(LB_nodes_gpu n_a, int single_nodeindex, int component_index){
@@ -2578,7 +2585,8 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
  * @param n_a               the current nodes array (double buffering!)
  * @param single_nodeindex  the node to set the velocity for
  * @param rho               the density to set
- */
+ * @param d_v                Pointer to the local modes
+*/
 __global__ void set_rho(LB_nodes_gpu n_a,  LB_rho_v_gpu *d_v, int single_nodeindex,float *rho) {
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -2652,6 +2660,7 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
  * @param n_b     Pointer to local node residing in array b (Input)
  * @param *d_v    Pointer to local device values (Input)
  * @param node_f  Pointer to local node force (Input)
+ * @param ek_parameters_gpu  Pointer to the parameters for the electrokinetics (Input)
 */
 
 
@@ -2708,11 +2717,13 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
 }
 
 /** part interaction kernel
- * @param n_a               Pointer to local node residing in array a (Input)
- * @param *particle_data    Pointer to the particle position and velocity (Input)
- * @param *particle_force   Pointer to the particle force (Input)
- * @param *part             Pointer to the rn array of the particles (Input)
- * @param node_f            Pointer to local node force (Input)
+ * @param n_a                Pointer to local node residing in array a (Input)
+ * @param *particle_data     Pointer to the particle position and velocity (Input)
+ * @param *particle_force    Pointer to the particle force (Input)
+ * @param *part              Pointer to the rn array of the particles (Input)
+ * @param node_f             Pointer to local node force (Input)
+ * @param *fluid_composition Pointer to the local fluid composition for the Shanchen
+ * @param *d_v    Pointer to local device values
 */
 __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
 
@@ -2743,6 +2754,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
  * @param *particle_force   Pointer to the particle force (Input)
  * @param *part       Pointer to the rn array of the particles (Input)
  * @param node_f      Pointer to local node force (Input)
+ * @param *d_v    Pointer to local device values
 */
 __global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force,                                             LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
   
@@ -2797,6 +2809,7 @@ __global__ void bb_write(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
  * @param n_a     Pointer to local node residing in array a (Input)
  * @param *p_v    Pointer to local print values (Output)
  * @param *d_v    Pointer to local device values (Input)
+ * @param node_f  The forces on the LB nodes
 */
 __global__ void get_mesoscopic_values_in_MD_units(LB_nodes_gpu n_a, LB_rho_v_pi_gpu *p_v,LB_rho_v_gpu *d_v, LB_node_force_gpu node_f) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -2827,6 +2840,7 @@ __global__ void lb_get_boundaries(LB_nodes_gpu n_a, unsigned int *device_bound_a
  * @param single_nodeindex  index of the node (Input)
  * @param *d_p_v            Pointer to result storage array (Input)
  * @param n_a               Pointer to local node residing in array a (Input)
+ * @param *d_v    Pointer to local device values
 */
 __global__ void lb_print_node(int single_nodeindex, LB_rho_v_pi_gpu *d_p_v, LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_gpu node_f){
 
@@ -3331,8 +3345,11 @@ void lb_calc_shanchen_GPU(){
 #endif // SHANCHEN
 
 /** setup and call kernel for getting macroscopic fluid values of all nodes
- * @param *host_values struct to save the gpu values
-*/
+ * @param *host_checkpoint_vd struct to save the gpu populations
+ * @param *host_checkpoint_seed struct to save the nodes' seeds for the lb on the gpu
+ * @param *host_checkpoint_boundary struct to save the boundary nodes
+ * @param *host_checkpoint_force struct to save the forces on the nodes
+ */
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force){
 
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd, lbpar_gpu.number_of_nodes * 19 * sizeof(float), cudaMemcpyDeviceToHost));
@@ -3343,7 +3360,10 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkp
 }
 
 /** setup and call kernel for setting macroscopic fluid values of all nodes
- * @param *host_values struct to set stored values
+ * @param *host_checkpoint_vd struct to save the gpu populations
+ * @param *host_checkpoint_seed struct to save the nodes' seeds for the lb on the gpu
+ * @param *host_checkpoint_boundary struct to save the boundary nodes
+ * @param *host_checkpoint_force struct to save the forces on the nodes
 */
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force){
 
@@ -3377,7 +3397,7 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
 
 /** set the density at a single node
  *  @param single_nodeindex the node to set the velocity for 
- *  @param host_velocity the velocity to set
+ *  @param *host_rho the density to set
  */
 void lb_set_node_rho_GPU(int single_nodeindex, float* host_rho){
    
