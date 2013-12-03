@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu_cfile.cpp
+/** \file lbgpu.cpp
  *
  * C file for the Lattice Boltzmann implementation on GPUs.
  * Header file for \ref lbgpu.hpp.
@@ -205,7 +205,6 @@ void lattice_boltzmann_update_gpu() {
 }
 
 /** (re-) allocation of the memory needed for the particles (cpu part)
-  * @param *lbpar_gpu Pointer to parameters to setup the lb field
 */
 void lb_realloc_particles_gpu(){
 
