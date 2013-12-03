@@ -8,7 +8,7 @@
 
 class SystemInterface {
 public:
-  SystemInterface() : m_needsR(false), m_needsRGpu(false), m_needsQGpu(false), m_needsQ(false) {};
+  SystemInterface() : m_needsR(false), m_needsV(false), m_needsQ(false), m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false) {};
   typedef Vector3d Vector3;
   typedef double Real;
 
@@ -99,6 +99,11 @@ public:
   virtual bool hasRGpu() { return false; };
   virtual bool requestRGpu() { m_needsRGpu = hasRGpu(); return m_needsRGpu; }
 
+  virtual float *vGpuBegin() { return 0; };
+  virtual float *vGpuEnd() { return 0; };
+  virtual bool hasVGpu() { return false; };
+  virtual bool requestVGpu() { m_needsVGpu = hasVGpu(); return m_needsVGpu; }
+
   virtual float *qGpuBegin() { return 0; };
   virtual float *qGpuEnd() { return 0; };
   virtual bool hasQGpu() { return false; };
@@ -119,9 +124,12 @@ public:
   
 protected:
   bool m_needsR;
-  bool m_needsRGpu;
-  bool m_needsQGpu;
+  bool m_needsV;
   bool m_needsQ;
+  bool m_needsRGpu;
+  bool m_needsVGpu;
+  bool m_needsQGpu;
+
 };
 
 #endif

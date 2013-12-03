@@ -3,10 +3,11 @@
 
 #include "SystemInterface.hpp"
 #include "particle_data.hpp"
+#include "cuda_interface.hpp"
 
 class EspressoSystemInterface : public SystemInterface {
 public:
-  EspressoSystemInterface() : m_gpu_npart(0), m_r_gpu_begin(0), m_q_gpu_begin(0), m_r_gpu_end(0), m_q_gpu_end(0) {};
+  EspressoSystemInterface() : m_gpu_npart(0), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_gpu(false) {};
   void init();
   void update();
 
@@ -47,11 +48,29 @@ public:
   float *rGpuBegin() { return m_r_gpu_begin; };
   float *rGpuEnd() { return m_r_gpu_end; };
   bool hasRGpu() { return true; };
-  
+  bool requestRGpu() { 
+    m_needsRGpu = hasRGpu();
+    m_gpu |= m_needsRGpu;
+    return m_needsRGpu; 
+  };
+
+  float *vGpuBegin() { return m_v_gpu_begin; };
+  float *vGpuEnd() { return m_v_gpu_end; };
+  bool hasVGpu() { return true; };
+  bool requestVGpu() { 
+    m_needsVGpu = hasVGpu();
+    m_gpu |= m_needsVGpu;
+    return m_needsVGpu; 
+  };
 
   float *qGpuBegin() { return m_q_gpu_begin; };
   float *qGpuEnd() { return m_q_gpu_end; };
   bool hasQGpu() { return true; };
+  bool requestQGpu() { 
+    m_needsQGpu = hasQGpu(); 
+    m_gpu |= m_needsQGpu;
+    return m_needsQGpu; 
+  };
 
 protected:
   void gatherParticles();
@@ -67,9 +86,13 @@ protected:
   const_real_iterator m_q_end;
 
   int m_gpu_npart;
+  bool m_gpu;
 
   float *m_r_gpu_begin;
   float *m_r_gpu_end;
+
+  float *m_v_gpu_begin;
+  float *m_v_gpu_end;
 
   float *m_q_gpu_begin;
   float *m_q_gpu_end;

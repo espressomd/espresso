@@ -72,12 +72,15 @@ void init_forces();
 void force_calc()
 {
 
-#if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
-
+#if defined(LB_GPU)
   espressoSystemInterface.requestRGpu();
-  gpu_init_particle_comm();
+  espressoSystemInterface.requestVGpu();
 #endif
 
+#if (defined(ELECTROSTATICS) && defined(CUDA))
+  espressoSystemInterface.requestRGpu();
+  espressoSystemInterface.requestQGpu();
+#endif
   espressoSystemInterface.update();
 
 

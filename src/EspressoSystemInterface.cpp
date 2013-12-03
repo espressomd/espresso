@@ -52,8 +52,10 @@ void EspressoSystemInterface::gatherParticles() {
 
   // get particles from other nodes
 #ifdef CUDA
-  if (needsRGpu() || needsQGpu())
+
+  if (m_gpu)
   {
+    gpu_init_particle_comm();    
     copy_part_data_to_gpu();
     split_particle_struct();
   }
@@ -117,5 +119,7 @@ unsigned int EspressoSystemInterface::npart() {
 SystemInterface::Vector3 EspressoSystemInterface::box() {
   return Vector3(box_l);
 }
+
+
 
 EspressoSystemInterface espressoSystemInterface;
