@@ -32,6 +32,10 @@ New user-visible features
 User-visible changes
 --------------------
 
+* The configure option "--with-myconfig" has been removed. Instead,
+  the configure variable "MYCONFIG" can be set to give the name of a
+  myconfig file.
+
 * Generic LJ can now be turned into an soft potential.
 
 * Renamed torque to torque_{lab,body}, improved torque handling in
