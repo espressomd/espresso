@@ -22,6 +22,7 @@ cdef class ParticleHandle:
       return 0
 
   property type:
+    """Particle type"""
     def __set__(self, _type):
       if isinstance(_type, int) and _type >= 0:  
         if set_particle_type(self.id, _type) == 1:
@@ -33,9 +34,10 @@ cdef class ParticleHandle:
       return self.particleData.p.type
 
   property pos:
+    """Particle position (not folded into periodic box)"""
     def __set__(self, _pos):
       cdef double mypos[3]
-      checkTypeOrExcept(_pos, float,"Postion must be a float")
+      checkTypeOrExcept(_pos, 3,float,"Postion must be 3 floats")
       for i in range(3): mypos[i]=_pos[i]
       if place_particle(self.id, mypos) == -1:
         raise Exception("particle could not be set")
@@ -46,10 +48,12 @@ cdef class ParticleHandle:
                        self.particleData.r.p[1],\
                        self.particleData.r.p[2]])
 
+
   property v:
+    """Particle velocity""" 
     def __set__(self, _v):
       cdef double myv[3]
-      checkTypeOrExcept(_v,float,"Velocity has to be floats")
+      checkTypeOrExcept(_v,3,float,"Velocity has to be floats")
       for i in range(3):
           myv[i]=_v[i]
       if set_particle_v(self.id, myv) == 1:
@@ -61,9 +65,10 @@ cdef class ParticleHandle:
                         self.particleData.m.v[2]])
 
   property f:
+    """Particle force"""
     def __set__(self, _f):
       cdef double myf[3]
-      checkTypeOrExcept(_f,float, "Force has to be floats")
+      checkTypeOrExcept(_f,3,float, "Force has to be floats")
       for i in range(3):
           myf[i]=_f[i]
       if set_particle_f(self.id, myf) == 1:
@@ -76,9 +81,10 @@ cdef class ParticleHandle:
 
   IF ELECTROSTATICS == 1:
     property q:
+      """particle charge"""
       def __set__(self, _q):
         cdef double myq
-        checkTypeOrExcept(_q,float, "Charge has to be floats")
+        checkTypeOrExcept(_q,1,float, "Charge has to be floats")
         myq=_q
         if set_particle_q(self.id, myq) == 1:
           raise Exception("set particle position first")
@@ -88,6 +94,7 @@ cdef class ParticleHandle:
 
 
 cdef class particleList:
+  """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
   def __getitem__(self, key):
     return ParticleHandle(key)
 

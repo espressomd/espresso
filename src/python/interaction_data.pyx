@@ -1,17 +1,21 @@
 cdef class NonBondedInteractionHandle:
+  """Provides access to Non-bonded interaction parameters for a specific pair of particle types """
   cdef int type1
   cdef int type2
   cdef IA_parameters* params
 
   def __init__(self, _type1, _type2):
+    """Takes two particle types as argument"""
     self.type1=_type1
     self.type2=_type2
     self.update()
   
   def update(self):
+    """Fetches the current interaction parameters from the Espresso core"""
     self.params =  get_ia_param(self.type1,self.type2) 
 
   property lennardJones:
+    """Lennard Jones parameters"""
     def __set__(self, value):
       self.update()
 
@@ -78,6 +82,8 @@ cdef class NonBondedInteractionHandle:
 
 
 class InteractionList:
+  """Access to non-bonded interaction parameters via [i,j], where i,j are particle 
+  types. Returns NonBondedInteractionHandle."""
   def __getitem__(self,key):
     return NonBondedInteractionHandle(key[0],key[1])
 
