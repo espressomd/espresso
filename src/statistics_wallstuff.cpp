@@ -45,7 +45,7 @@ void wall_sort_particles()
 
   // 2. for each particle, find the box and put its
   // identity there
-  for(int i=0; i<n_total_particles; i++) {
+  for(int i=0; i<n_part; i++) {
     double x = partCfg[i].r.p[0];
     // ignore particles outside the wallstuff_boundaries
     if (x < wallstuff_boundaries.e[0] || x > wallstuff_boundaries.e[wallstuff_boundaries.n-1])

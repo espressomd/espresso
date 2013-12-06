@@ -124,7 +124,7 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type,int bins,do
 
    centermass_vel(type,com);
 
-   for (i=0;i<n_total_particles;i++)
+   for (i=0;i<n_part;i++)
    {
       if (partCfg[i].p.type==type)
       {
@@ -150,7 +150,7 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type,int bins,do
    bin_width     = (max-min) / (double)bins;
    inv_bin_width = 1.0 / bin_width;
    dist_count=0;
-   for (i=0;i<n_total_particles;i++)
+   for (i=0;i<n_part;i++)
    {
      if (partCfg[i].p.type==type)
      {
@@ -229,9 +229,9 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
     ERROR_SPRINTF(errtxt, "{058 could not sort partCfg, particles have to start at 0 and have consecutive identities} ");
     return TCL_ERROR;
   }
-  coord = (float*)malloc(n_total_particles*3*sizeof(float));
+  coord = (float*)malloc(n_part*3*sizeof(float));
   /* Construct the array coord*/
-  for (i = 0; i < n_total_particles; i++) {
+  for (i = 0; i < n_part; i++) {
     int dummy[3] = {0,0,0};
     double tmpCoord[3];
     tmpCoord[0] = partCfg[i].r.p[0];
@@ -256,7 +256,7 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
   }
 
   //  Tcl_AppendResult(interp, "{ ", (char *)NULL);
-  for ( i = 0 ; i < n_total_particles ; i++) {
+  for ( i = 0 ; i < n_part ; i++) {
     sprintf(buffer, " { %d %f %f %f } ", partCfg[i].p.identity , coord[i*3] , coord[i*3+1] , coord[i*3+2] );
     Tcl_AppendResult(interp, buffer , (char *)NULL);
   }
@@ -316,7 +316,7 @@ static int tclcommand_analyze_parse_modes2d(Tcl_Interp *interp, int argc, char *
     return (TCL_ERROR);
   }
   
-  if (n_total_particles <= 2) {
+  if (n_part <= 2) {
     Tcl_AppendResult(interp, "(not enough particles for mode analysis)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -709,7 +709,7 @@ static int tclcommand_analyze_parse_lipid_orient_order(Tcl_Interp *interp, int a
   int i , j ;
   result = 0;
 
-  if (n_total_particles <= 1) {
+  if (n_part <= 1) {
     Tcl_AppendResult(interp, "(not enough particles)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -878,7 +878,7 @@ static int tclcommand_analyze_parse_mindist(Tcl_Interp *interp, int argc, char *
 
   init_intlist(&p1); init_intlist(&p2);
 
-  if (n_total_particles <= 1) {
+  if (n_part <= 1) {
     Tcl_AppendResult(interp, "(not enough particles)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -971,8 +971,8 @@ static int tclcommand_analyze_parse_cluster_size_dist(Tcl_Interp *interp, int ar
   int p1;
   double dist;
   int i,j,max_cluster_number,size;
-  int cluster_number[n_total_particles];//cluster number of particle number
-  int cluster_size[n_total_particles+1]; //number of clusters with some size
+  int cluster_number[n_part];//cluster number of particle number
+  int cluster_size[n_part+1]; //number of clusters with some size
 
   /* parse arguments */
   if (argc != 2) {
@@ -993,14 +993,14 @@ static int tclcommand_analyze_parse_cluster_size_dist(Tcl_Interp *interp, int ar
   }
 
   updatePartCfg(WITHOUT_BONDS);
-  for (i=0;i<n_total_particles;i++){
+  for (i=0;i<n_part;i++){
      cluster_number[i]=0;
      cluster_size[i]=0;
   }
-  cluster_size[n_total_particles]=0;
+  cluster_size[n_part]=0;
 
   max_cluster_number=1;
-  for (i=0;i<n_total_particles-1;i++){
+  for (i=0;i<n_part-1;i++){
      //if particle was not marked till now
      if ( (partCfg[i].p.type == p1) && (cluster_number[i]==0) ){
        //mark current particle with max_cluster_number
@@ -1010,7 +1010,7 @@ static int tclcommand_analyze_parse_cluster_size_dist(Tcl_Interp *interp, int ar
      }
   }
 
-  for (i=0;i<n_total_particles;i++){
+  for (i=0;i<n_part;i++){
     if ( (partCfg[i].p.type == p1) && (cluster_number[i]==0) ) {
        Tcl_ResetResult(interp);
        Tcl_AppendResult(interp, "ERROR: at least one particle is not marked !", (char *)NULL);
@@ -1020,7 +1020,7 @@ static int tclcommand_analyze_parse_cluster_size_dist(Tcl_Interp *interp, int ar
 
   for (i=1;i<max_cluster_number;i++){
      size=0;
-     for (j=0;j<n_total_particles;j++){
+     for (j=0;j<n_part;j++){
         //Finding particles belonging to cluster i
         if ( (partCfg[j].p.type == p1) && (cluster_number[j]==i)) {size++;}
      }
@@ -1029,7 +1029,7 @@ static int tclcommand_analyze_parse_cluster_size_dist(Tcl_Interp *interp, int ar
 
   sprintf(buffer,"%i %f",p1,dist);
   Tcl_AppendResult(interp, "{ analyze cluster_size_dist ",buffer,"} {\n",(char *)NULL);
-  for (i=0;i<n_total_particles+1;i++){
+  for (i=0;i<n_part+1;i++){
       if (cluster_size[i]!=0){
          sprintf(buffer,"%i %i",i,cluster_size[i]);
          Tcl_AppendResult(interp, "{ ",buffer," }\n", (char *)NULL);
@@ -1166,7 +1166,7 @@ static int tclcommand_analyze_parse_nbhood(Tcl_Interp *interp, int argc, char **
   IntList il;
   int planedims[3], change;
 
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -1232,7 +1232,7 @@ static int tclcommand_analyze_parse_distto(Tcl_Interp *interp, int argc, char **
   char buffer[TCL_DOUBLE_SPACE], usage[150];
   sprintf(usage, "distto { <partid> | <posx> <posy> <posz> }");
 
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -1381,7 +1381,7 @@ static int tclcommand_analyze_parse_distribution(Tcl_Interp *interp, int argc, c
 
   /* if not given set defaults */
   if(r_max == -1.) r_max = min_box_l/2.0;
-  if(r_bins < 0 )  r_bins = n_total_particles / 20;
+  if(r_bins < 0 )  r_bins = n_part / 20;
 
   /* give back what you do */
   Tcl_AppendResult(interp, "{ analyze distribution { ", (char *)NULL);
@@ -1860,7 +1860,7 @@ int tclcommand_analyze_current(Tcl_Interp *interp, int argc, char **argv)
 #ifdef ELECTROSTATICS
   updatePartCfg(WITHOUT_BONDS);
   
-  for(int i=0; i<n_total_particles; i++) {
+  for(int i=0; i<n_part; i++) {
     double q = partCfg[i].p.q/time_step;
     
     for (int c = 0; c < 3; ++c) {
@@ -1889,11 +1889,11 @@ static int tclcommand_analyze_parse_append(Tcl_Interp *interp, int argc, char **
   char buffer[2*TCL_INTEGER_SPACE+256];
 
   if (argc != 0) { Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze append", (char *)NULL); return TCL_ERROR; }
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp,"No particles to append! Use 'part' to create some, or 'analyze configs' to submit a bunch!",(char *) NULL); 
     return (TCL_ERROR); }
-  if ((n_configs > 0) && (n_part_conf != n_total_particles)) {
-    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_total_particles);
+  if ((n_configs > 0) && (n_part_conf != n_part)) {
+    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_part);
     Tcl_AppendResult(interp,buffer,(char *) NULL); return (TCL_ERROR); 
   }
   if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
@@ -1908,11 +1908,11 @@ static int tclcommand_analyze_parse_push(Tcl_Interp *interp, int argc, char **ar
   char buffer[2*TCL_INTEGER_SPACE+256];
   int i, j;
 
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp,"No particles to append! Use 'part' to create some, or 'analyze configs' to submit a bunch!",(char *) NULL); 
     return (TCL_ERROR); }
-  if ((n_configs > 0) && (n_part_conf != n_total_particles)) {
-    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_total_particles);
+  if ((n_configs > 0) && (n_part_conf != n_part)) {
+    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_part);
     Tcl_AppendResult(interp,buffer,(char *) NULL); return (TCL_ERROR); 
   }
   if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
@@ -1935,11 +1935,11 @@ static int tclcommand_analyze_parse_replace(Tcl_Interp *interp, int argc, char *
   int i;
 
   if (argc != 1) { Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze replace <index>", (char *)NULL); return TCL_ERROR; }
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp,"No particles to append! Use 'part' to create some, or 'analyze configs' to submit a bunch!",(char *) NULL); 
     return (TCL_ERROR); }
-  if ((n_configs > 0) && (n_part_conf != n_total_particles)) {
-    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_total_particles);
+  if ((n_configs > 0) && (n_part_conf != n_part)) {
+    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_part);
     Tcl_AppendResult(interp,buffer,(char *) NULL); return (TCL_ERROR); 
   }
   if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
@@ -2045,11 +2045,11 @@ static int tclcommand_analyze_parse_activate(Tcl_Interp *interp, int argc, char 
   int i;
 
   if (argc != 1) { Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze activate <index>", (char *)NULL); return TCL_ERROR; }
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp,"No particles to append! Use 'part' to create some, or 'analyze configs' to submit a bunch!",(char *) NULL); 
     return (TCL_ERROR); }
-  if ((n_configs > 0) && (n_part_conf != n_total_particles)) {
-    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_total_particles);
+  if ((n_configs > 0) && (n_part_conf != n_part)) {
+    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_part);
     Tcl_AppendResult(interp,buffer,(char *) NULL); return (TCL_ERROR); 
   }
   if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
@@ -2234,7 +2234,7 @@ double tclcommand_analyze_print_MSD(Tcl_Interp *interp,int type_m, int n_time_st
       p_z[i]=p_com[2];
   }
 
-  for(j=0; j<n_total_particles; j++) {
+  for(j=0; j<n_part; j++) {
      if((partCfg[j].p.type == type_m)||(type_m == -1)) {
        MSD_particles++;//count particles for MSD
        for(i=start_value;i<n_configs;i++) {
@@ -2288,7 +2288,7 @@ static int tclcommand_analyze_parse_and_print_dipole(Tcl_Interp *interp,int argc
    {
        dipole[i]=0;
    }
-   for (i=0;i<n_total_particles;i++)
+   for (i=0;i<n_part;i++)
    {
 #ifdef ELECTROSTATICS
        total_q+=partCfg[i].p.q;
@@ -2377,7 +2377,7 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
      return (TCL_ERROR);
   }
   updatePartCfg(WITHOUT_BONDS);
-  for (i=0;i<n_total_particles;i++)
+  for (i=0;i<n_part;i++)
   {
       if (partCfg[i].p.type == type )
       {

@@ -208,7 +208,7 @@ void lattice_boltzmann_update_gpu() {
 */
 void lb_realloc_particles_gpu(){
 
-  lbpar_gpu.number_of_particles = n_total_particles;
+  lbpar_gpu.number_of_particles = n_part;
   LB_TRACE (printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
   //fprintf(stderr, "%u \t \n", lbpar_gpu.number_of_particles);
   /**-----------------------------------------------------*/

@@ -304,7 +304,7 @@ typedef struct {
 */
 extern int max_seen_particle;
 /** total number of particles on all nodes. */
-extern int  n_total_particles;
+extern int  n_part;
 
 /** Capacity of the \ref particle_node / \ref local_particles. */
 extern int  max_particle_node;

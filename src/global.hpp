@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef GLOBAL_H
-#define GLOBAL_H
+#ifndef _GLOBAL_HPP
+#define _GLOBAL_HPP
 /** \file global.hpp This file contains the code for access to globally
     defined variables using the script command setmd. Please refer to
     the Developer's guide, section "Adding global variables", for
@@ -106,7 +106,7 @@ extern const Datafield fields[];
 #define FIELD_NLAYERS             14
 /** index of \ref n_nodes in \ref #fields */
 #define FIELD_NNODES              15
-/** index of \ref n_total_particles in  \ref #fields */
+/** index of \ref n_part in  \ref #fields */
 #define FIELD_NPART               16
 /** index of \ref n_particle_types in \ref #fields */
 #define FIELD_NPARTTYPE           17

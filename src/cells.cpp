@@ -187,7 +187,7 @@ void cells_re_init(int new_cs)
   /* 
      CELL_TRACE({
      int p;
-     for (p = 0; p < n_total_particles; p++)
+     for (p = 0; p < n_part; p++)
      if (local_particles[p])
      fprintf(stderr, "%d: cells_re_init: got particle %d\n", this_node, p);
      }
@@ -220,7 +220,7 @@ void cells_re_init(int new_cs)
   /*
     CELL_TRACE({
     int p;
-    for (p = 0; p < n_total_particles; p++)
+    for (p = 0; p < n_part; p++)
     if (local_particles[p])
     fprintf(stderr, "%d: cells_re_init: now got particle %d\n", this_node, p);
     }

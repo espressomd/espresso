@@ -35,7 +35,7 @@ int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
   }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
     A[3*i + 0] = partCfg[ids->e[i]].m.v[0]/time_step;
     A[3*i + 1] = partCfg[ids->e[i]].m.v[1]/time_step;
@@ -53,7 +53,7 @@ int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n
   }
   ids=(IntList*) idlist;
   for ( int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
 
     #ifdef ROTATION
@@ -91,7 +91,7 @@ int observable_particle_currents(void* idlist, double* A, unsigned int n_A) {
   }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
     charge = partCfg[ids->e[i]].p.q;
     A[3*i + 0] = charge * partCfg[ids->e[i]].m.v[0]/time_step;
@@ -112,7 +112,7 @@ int observable_currents(void* idlist, double* A, unsigned int n_A) {
   }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] > n_total_particles)
+    if (ids->e[i] > n_part)
       return 1;
     charge = partCfg[ids->e[i]].p.q;
     j[0] += charge * partCfg[ids->e[i]].m.v[0]/time_step;
@@ -136,7 +136,7 @@ int observable_dipole_moment(void* idlist, double* A, unsigned int n_A) {
   }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] > n_total_particles)
+    if (ids->e[i] > n_part)
       return 1;
     charge = partCfg[ids->e[i]].p.q;
     j[0] += charge * partCfg[ids->e[i]].r.p[0];
@@ -161,7 +161,7 @@ int observable_com_velocity(void* idlist, double* A, unsigned int n_A) {
   }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
     v_com[0] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].m.v[0]/time_step;
     v_com[1] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].m.v[1]/time_step;
@@ -194,7 +194,7 @@ int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A) {
     total_mass = 0;
     for ( i = 0; i < blocksize; i++ ) {
       id = ids->e[block*blocksize+i];
-      if (ids->e[i] >= n_total_particles)
+      if (ids->e[i] >= n_part)
         return 1;
       A[3*block+0] +=  PMASS(partCfg[id])*partCfg[id].m.v[0]/time_step;
       A[3*block+1] +=  PMASS(partCfg[id])*partCfg[id].m.v[1]/time_step;
@@ -228,7 +228,7 @@ int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A) {
     total_mass = 0;
     for ( i = 0; i < blocksize; i++ ) {
       id = ids->e[block*blocksize+i];
-      if (ids->e[i] >= n_total_particles)
+      if (ids->e[i] >= n_part)
         return 1;
       A[3*block+0] +=  PMASS(partCfg[id])*partCfg[id].r.p[0];
       A[3*block+1] +=  PMASS(partCfg[id])*partCfg[id].r.p[1];
@@ -253,7 +253,7 @@ int observable_com_position(void* idlist, double* A, unsigned int n_A) {
   }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
     p_com[0] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].r.p[0];
     p_com[1] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].r.p[1];
@@ -277,7 +277,7 @@ int observable_com_force(void* idlist, double* A, unsigned int n_A) {
   }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
     f_com[0] += partCfg[ids->e[i]].f.f[0]/time_step/time_step*2;
     f_com[1] += partCfg[ids->e[i]].f.f[1]/time_step/time_step*2;
@@ -308,7 +308,7 @@ int observable_blocked_com_force(void* idlist, double* A, unsigned int n_A) {
   for ( block = 0; block < n_blocks; block++ ) {
     for ( i = 0; i < blocksize; i++ ) {
       id = ids->e[block*blocksize+i];
-      if (ids->e[i] >= n_total_particles)
+      if (ids->e[i] >= n_part)
         return 1;
       A[3*block+0] +=  partCfg[id].f.f[0]/time_step/time_step*2;
       A[3*block+1] +=  partCfg[id].f.f[1]/time_step/time_step*2;
@@ -338,7 +338,7 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
     memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
@@ -551,7 +551,7 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
     memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
@@ -596,7 +596,7 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
     v[0]=partCfg[ids->e[i]].m.v[0]/time_step;
@@ -648,7 +648,7 @@ int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
     v[0]=partCfg[ids->e[i]].m.v[0]*time_step;
@@ -687,7 +687,7 @@ int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
   }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
       A[3*i + 0] = partCfg[ids->e[i]].r.p[0];
       A[3*i + 1] = partCfg[ids->e[i]].r.p[1];
@@ -705,7 +705,7 @@ int observable_particle_forces(void* idlist, double* A, unsigned int n_A) {
   }
   ids=(IntList*) idlist;
   for (int i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] >= n_total_particles)
+    if (ids->e[i] >= n_part)
       return 1;
       A[3*i + 0] = partCfg[ids->e[i]].f.f[0]/time_step/time_step*2;
       A[3*i + 1] = partCfg[ids->e[i]].f.f[1]/time_step/time_step*2;
@@ -776,7 +776,7 @@ int observable_structure_factor(void* params_p, double* A, unsigned int n_A) {
 	  if ((n<=order2) && (n>=1)) {
 	    C_sum = S_sum = 0.0;
             //printf("l: %d, n: %d %d %d\n",l,i,j,k); fflush(stdout);
-	    for(int p=0; p<n_total_particles; p++) {
+	    for(int p=0; p<n_part; p++) {
 	      qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
 	      C_sum+= scattering_length * cos(qr);
 	      S_sum-= scattering_length * sin(qr);
@@ -809,13 +809,13 @@ int observable_interacts_with (void* params_p, double* A, unsigned int n_A) {
     return -1;
   }
   for ( i = 0; i<ids1->n; i++ ) {
-    if (ids1->e[i] >= n_total_particles)
+    if (ids1->e[i] >= n_part)
       return 1;
     pos1[0]=partCfg[ids1->e[i]].r.p[0];
     pos1[1]=partCfg[ids1->e[i]].r.p[1];
     pos1[2]=partCfg[ids1->e[i]].r.p[2];
     for ( j = 0; j<ids2->n; j++ ) {
-      if (ids2->e[j] >= n_total_particles)
+      if (ids2->e[j] >= n_part)
         return 1;
       if (ids2->e[j] == ids1->e[i]) // do not count self-interaction :-)
         continue;

@@ -302,7 +302,7 @@ void tclcommand_part_print_bond_partners(Particle *part, char *buffer, Tcl_Inter
   updatePartCfg(WITH_BONDS);
 
   /* determine initial connectivity */
-  for (p = 0; p < n_total_particles; p++) {
+  for (p = 0; p < n_part; p++) {
     part1 = &partCfg[p];
     p1    = part1->p.identity;
     for (i = 0; i < part1->bl.n;) {
