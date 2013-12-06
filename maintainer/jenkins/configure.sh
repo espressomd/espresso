@@ -11,13 +11,13 @@ source $DIR/common.sh
 start "CONFIGURE"
 
 # DEFAULTS
-[ ! -v configure_params ] && configure_params=""
-[ ! -v configure_vars ] && configure_vars=""
-[ ! -v with_cuda ] && with_cuda="true"
-[ ! -v with_mpi ] && with_mpi="true"
-[ ! -v with_fftw ] && with_fftw="true"
-[ ! -v with_tcl ] && with_tcl="true"
-[ ! -v with_python_interface ] && with_python_interface="false"
+[ -z "$configure_params" ] && configure_params=""
+[ -z "$configure_vars" ] && configure_vars=""
+[ -z "$with_cuda" ] && with_cuda="true"
+[ -z "$with_mpi" ] && with_mpi="true"
+[ -z "$with_fftw" ] && with_fftw="true"
+[ -z "$with_tcl" ] && with_tcl="true"
+[ -z "$with_python_interface" ] && with_python_interface="false"
 outp configure_params configure_vars with_cuda with_mpi with_fftw \
     with_tcl with_python_interface
 
@@ -79,6 +79,3 @@ cmd "$srcdir/configure $configure_params $configure_vars" || exit $?
 end "CONFIGURE"
 
 popd
-
-
-
