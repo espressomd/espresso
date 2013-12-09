@@ -106,7 +106,7 @@ cdef class GlobalsHandle:
   
     property n_part:
         def __get__(self):
-            return n_total_particles;
+            return n_part;
   
     property n_part_types:
         def __get__(self):
