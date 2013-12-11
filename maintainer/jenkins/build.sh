@@ -10,8 +10,8 @@ source $DIR/common.sh
 
 start "BUILD"
 # DEFAULTS
-[ ! -v myconfig ] && myconfig="default"
-[ ! -v build_procs ] && build_procs=4
+[ -z "$myconfig" ] && myconfig="default"
+[ -z "$build_procs" ] && build_procs=4
 outp myconfig build_procs
 
 # change into build dir

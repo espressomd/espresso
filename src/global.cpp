@@ -56,7 +56,7 @@ const Datafield fields[] = {
   {&min_num_cells,      TYPE_INT, 1, "min_num_cells",     5 },         /* 13  from cells.cpp */
   {&n_layers,           TYPE_INT, 1, "n_layers",          3 },         /* 14 from layered.cpp */
   {&n_nodes,            TYPE_INT, 1, "n_nodes",           3 },         /* 15 from communication.cpp */
-  {&n_total_particles,  TYPE_INT, 1, "n_part",            6 },         /* 16 from particle.cpp */
+  {&n_part,             TYPE_INT, 1, "n_part",            6 },         /* 16 from particle.cpp */
   {&n_particle_types,   TYPE_INT, 1, "n_part_types",      8 },         /* 17 from interaction_data.cpp */
   {&n_rigidbonds,       TYPE_INT, 1, "n_rigidbonds",      5 },         /* 18 from rattle.cpp */
   {node_grid,           TYPE_INT, 3, "node_grid",         2 },         /* 19 from grid.cpp */

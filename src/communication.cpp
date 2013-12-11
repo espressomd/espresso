@@ -1157,7 +1157,7 @@ void mpi_remove_particle(int pnode, int part)
 void mpi_remove_particle_slave(int pnode, int part)
 {
   if (part != -1) {
-    n_total_particles--;
+    n_part--;
 
     if (pnode == this_node)
       local_remove_particle(part);
@@ -1583,7 +1583,7 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
 void mpi_get_particles(Particle *result, IntList *bi)
 {
   IntList local_bi;
-  int n_part;
+  int local_part;
   int tot_size, i, g, pnode;
   int *sizes;
   Cell *cell;
@@ -1592,17 +1592,17 @@ void mpi_get_particles(Particle *result, IntList *bi)
   mpi_call(mpi_get_particles_slave, -1, bi != NULL);
 
   sizes = (int*)malloc(sizeof(int)*n_nodes);
-  n_part = cells_get_n_particles();
+  local_part = cells_get_n_particles();
 
   /* first collect number of particles on each node */
-  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
+  MPI_Gather(&local_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
   tot_size = 0;
   for (i = 0; i < n_nodes; i++)
     tot_size += sizes[i];
 
-  if (tot_size!=n_total_particles) {
-    fprintf(stderr,"%d: ERROR: mpi_get_particles: n_total_particles %d, but I counted %d. Exiting...\n",
-	    this_node, n_total_particles, tot_size);
+  if (tot_size!=n_part) {
+    fprintf(stderr,"%d: ERROR: mpi_get_particles: n_part %d, but I counted %d. Exiting...\n",
+	    this_node, n_part, tot_size);
     errexit();
   }
 

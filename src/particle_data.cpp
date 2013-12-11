@@ -66,7 +66,7 @@ int Type_array_init;
 #endif
 
 int max_seen_particle = -1;
-int n_total_particles = 0;
+int n_part = 0;
 int max_particle_node = 0;
 int *particle_node = NULL;
 int max_local_particles = 0;
@@ -299,27 +299,36 @@ void free_particle(Particle *part) {
  * organizational functions
  ************************************************/
 
-void updatePartCfg(int bonds_flag)
+int updatePartCfg(int bonds_flag)
 {
   int j;
 
   if(partCfg)
-    return;
+    return 1;
 
-  partCfg = (Particle*)malloc(n_total_particles*sizeof(Particle));
+  partCfg = (Particle*)malloc(n_part*sizeof(Particle));
   if (bonds_flag != WITH_BONDS)
     mpi_get_particles(partCfg, NULL);
   else
     mpi_get_particles(partCfg,&partCfg_bl);
 
-  for(j=0; j<n_total_particles; j++)
+  for(j=0; j<n_part; j++)
     unfold_position(partCfg[j].r.p,partCfg[j].l.i);
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
-  if ((sortPartCfg()==0)||(update_mol_pos_cfg()==0)){
-     freePartCfg();
+
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return 0;
+  }
+  if (!updatePartCfg(bonds_flag)) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not update positions of virtual sites in partcfg } ");
+    return 0;
   }
 #endif
+return 1;
 }
 
 int sortPartCfg()
@@ -333,11 +342,11 @@ int sortPartCfg()
   if (partCfgSorted)
     return 1;
 
-  if (n_total_particles != max_seen_particle + 1)
+  if (n_part != max_seen_particle + 1)
     return 0;
 
-  sorted = (Particle*)malloc(n_total_particles*sizeof(Particle));
-  for(i = 0; i < n_total_particles; i++)
+  sorted = (Particle*)malloc(n_part*sizeof(Particle));
+  for(i = 0; i < n_part; i++)
     memcpy(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
   free(partCfg);
   partCfg = sorted;
@@ -1229,7 +1238,7 @@ void local_remove_all_particles()
 {
   Cell *cell;
   int c;
-  n_total_particles = 0;
+  n_part = 0;
   max_seen_particle = -1;
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
@@ -1269,7 +1278,7 @@ void added_particle(int part)
 {
   int i;
 
-  n_total_particles++;
+  n_part++;
 
   if (part > max_seen_particle) {
     realloc_local_particles(part);
@@ -1598,7 +1607,7 @@ void auto_exclusion(int distance)
     init_intlist(&partners[p]);
 
   /* determine initial connectivity */
-  for (p = 0; p < n_total_particles; p++) {
+  for (p = 0; p < n_part; p++) {
     part1 = &partCfg[p];
     p1    = part1->p.identity;
     for (i = 0; i < part1->bl.n;) {
@@ -1714,12 +1723,12 @@ int init_type_array(int type){
 	}
 
 	int t_c = 0; //index
-	type_array[Index.type[type]].id_list = (int *) malloc (sizeof (int) * n_total_particles);
-	for (int i=0; i<n_total_particles; i++) {
+	type_array[Index.type[type]].id_list = (int *) malloc (sizeof (int) * n_part);
+	for (int i=0; i<n_part; i++) {
 		if ( partCfg[i].p.type==type ) 
 			type_array[Index.type[type]].id_list[t_c++]=partCfg[i].p.identity;
 	}
-	int max_size=n_total_particles;
+	int max_size=n_part;
 	if ( t_c != 0 ) { 
 		while ( t_c < (double) max_size/4.0) { 
 			max_size= floor( (double ) max_size/2.0);
@@ -1794,7 +1803,7 @@ int update_particle_array(int type) {
 		return ES_ERROR;
 
 	int t_c = 0;
-	for (int i=0; i<n_total_particles; i++) {
+	for (int i=0; i<n_part; i++) {
 		if (partCfg[i].p.type == type ) {
 			type_array[Index.type[type]].id_list[t_c++] = partCfg[i].p.identity;
 		}	

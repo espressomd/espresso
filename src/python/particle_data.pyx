@@ -2,6 +2,8 @@
 cimport numpy as np
 import numpy as np
 cimport utils
+from utils cimport *
+include "myconfig.pxi"
 
 
 cdef class ParticleHandle:
@@ -23,9 +25,9 @@ cdef class ParticleHandle:
     def __set__(self, _type):
       if isinstance(_type, int) and _type >= 0:  
         if set_particle_type(self.id, _type) == 1:
-          print 'set particle position first'
+          raise Exception("set particle position first")
       else:
-        print 'type must be an integer >= 0'
+        raise ValueError("type must be an integer >= 0")
     def __get__(self):
       self.update_particle_data()
       return self.particleData.p.type
@@ -33,13 +35,11 @@ cdef class ParticleHandle:
   property pos:
     def __set__(self, _pos):
       cdef double mypos[3]
-      for i in range(3):
-        if not isinstance(_pos[i], float):
-          print 'position must be float'
-        else:
-          mypos[i]=_pos[i]
+      checkTypeOrExcept(_pos, float,"Postion must be a float")
+      for i in range(3): mypos[i]=_pos[i]
       if place_particle(self.id, mypos) == -1:
-        print 'particle could not be set'
+        raise Exception("particle could not be set")
+
     def __get__(self):
       self.update_particle_data()
       return np.array([self.particleData.r.p[0],\
@@ -49,13 +49,11 @@ cdef class ParticleHandle:
   property v:
     def __set__(self, _v):
       cdef double myv[3]
+      checkTypeOrExcept(_v,float,"Velocity has to be floats")
       for i in range(3):
-        if not isinstance(_v[i], float):
-          print 'velocity must be float'
-        else:
           myv[i]=_v[i]
       if set_particle_v(self.id, myv) == 1:
-        print 'set particle position first'
+        raise Exception("set particle position first")
     def __get__(self):
       self.update_particle_data()
       return np.array([ self.particleData.m.v[0],\
@@ -65,18 +63,28 @@ cdef class ParticleHandle:
   property f:
     def __set__(self, _f):
       cdef double myf[3]
+      checkTypeOrExcept(_f,float, "Force has to be floats")
       for i in range(3):
-        if not isinstance(_f[i], float):
-          print 'force must be float'
-        else:
           myf[i]=_f[i]
       if set_particle_f(self.id, myf) == 1:
-        print 'set particle position first'
+        raise Exception("set particle position first")
     def __get__(self):
       self.update_particle_data()
       return np.array([ self.particleData.f.f[0],\
                         self.particleData.f.f[1],\
                         self.particleData.f.f[2]])
+
+  IF ELECTROSTATICS == 1:
+    property q:
+      def __set__(self, _q):
+        cdef double myq
+        checkTypeOrExcept(_q,float, "Charge has to be floats")
+        myq=_q
+        if set_particle_q(self.id, myq) == 1:
+          raise Exception("set particle position first")
+      def __get__(self):
+        self.update_particle_data()
+        return self.particleData.p.q
 
 
 cdef class particleList:

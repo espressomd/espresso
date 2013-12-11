@@ -83,7 +83,7 @@ int tclcommand_analyze_parse_necklace(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "analyze necklace: identity of first particle can not be negative", (char *)NULL);
     return TCL_ERROR;
   }
-  if( first+length > n_total_particles+1) {
+  if( first+length > n_part+1) {
     Tcl_AppendResult(interp, "analyze necklace: identity of last particle out of partCfg array", (char *)NULL);
     return TCL_ERROR;
   }

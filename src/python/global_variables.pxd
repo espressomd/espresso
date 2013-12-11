@@ -44,7 +44,7 @@ cdef extern from "domain_decomposition.hpp":
 
   
 cdef extern from "particle_data.hpp":
-  extern int  n_total_particles
+  extern int n_part
 
 
 cdef extern from "interaction_data.hpp":

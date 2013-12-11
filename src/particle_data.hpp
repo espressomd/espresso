@@ -304,7 +304,7 @@ typedef struct {
 */
 extern int max_seen_particle;
 /** total number of particles on all nodes. */
-extern int  n_total_particles;
+extern int  n_part;
 
 /** Capacity of the \ref particle_node / \ref local_particles. */
 extern int  max_particle_node;
@@ -681,7 +681,7 @@ void remove_all_bonds_to(int part);
     information in \ref partCfg to be valid you should set the value
     of  to \ref WITH_BONDS.
 */
-void updatePartCfg(int bonds_flag );
+int updatePartCfg(int bonds_flag );
 
 /** release the partCfg array. Use this function, since it also frees the
     bonds, if they are used.

@@ -171,7 +171,7 @@ void check_particle_consistency()
 	fprintf(stderr, "%d: got particle %d in cell %d\n", this_node, local_cells.cell[c]->part[p].p.identity, c);
     }
     
-    for(p = 0; p < n_total_particles; p++)
+    for(p = 0; p < n_part; p++)
       if (local_particles[p])
 	fprintf(stderr, "%d: got particle %d in local_particles\n", this_node, p);
 
@@ -282,7 +282,7 @@ void check_particles()
     c = 0;
     for (p = 0; p <= max_seen_particle; p++)
       if (particle_node[p] != -1) c++;
-    if (c != n_total_particles) {
+    if (c != n_part) {
       fprintf(stderr,"%d: check_particles: #particles in particle_node inconsistent\n", this_node);
       errexit();
     }
