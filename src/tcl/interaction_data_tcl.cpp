@@ -447,11 +447,6 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
     Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
 #endif
 
-#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
-  if(data->ADRESS_TAB_maxval > 0.0)
-    Tcl_AppendResult(interp, "adress \"", data->ADRESS_TAB_filename,"\"", (char *) NULL);
-#endif
-
 #ifdef COMFORCE
   if (data->COMFORCE_flag > 0.0) tclprint_to_result_comforceIA(interp,i,j);
 #endif

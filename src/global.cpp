@@ -86,9 +86,9 @@ const Datafield fields[] = {
   {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5 },         /* 45 from interaction_data.cpp */
   {&ghmc_nmd,           TYPE_INT, 1, "ghmc_nmd",          6 },         /* 46 from thermostat.cpp */
   {&ghmc_phi,        TYPE_DOUBLE, 1, "ghmc_phi",          6 },         /* 47 from thermostat.cpp */
-  {&ghmc_mc_res,     TYPE_INT,    1, "ghmc_mc_res",       7 },         /* 48 from ghmc.cpp */
-  {&ghmc_mflip,      TYPE_INT,    1, "ghmc_mflip",        7 },         /* 49 from ghmc.cpp */
-  {&ghmc_tscale,     TYPE_INT,    1, "ghmc_tscale",       6 },         /* 50 from ghmc.cpp */
-  {&lb_components,   TYPE_INT,    1, "lb_components",     2 },         /* 51 from ghmc.cpp */
+  {&ghmc_mc_res,        TYPE_INT, 1, "ghmc_mc_res",       7 },         /* 48 from ghmc.cpp */
+  {&ghmc_mflip,         TYPE_INT, 1, "ghmc_mflip",        7 },         /* 49 from ghmc.cpp */
+  {&ghmc_tscale,        TYPE_INT, 1, "ghmc_tscale",       6 },         /* 50 from ghmc.cpp */
+  {&lb_components,      TYPE_INT, 1, "lb_components",     2 },         /* 51 from ghmc.cpp */
   { NULL, 0, 0, NULL, 0 }
 };
