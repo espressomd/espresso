@@ -1228,14 +1228,14 @@ int tclcommand_part_parse_type(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_ERROR;
   }
-//#ifdef GRANDCANONICAL
-//  if ( Type_array_init ) { 
-//	  if ( add_particle_to_list(part_num) ==  ES_ERROR ){
-//		  Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
-//		  return TCL_ERROR;
-//	  }
-//  }
-//#endif
+#ifdef ADDITIONAL_CHECKS
+  if ( Type_array_init ) { 
+	  if ( add_particle_to_list(part_num) ==  ES_ERROR ){
+		  Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
+		  return TCL_ERROR;
+	  }
+  }
+#endif
 
   return TCL_OK;
 }
@@ -1616,7 +1616,6 @@ int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
-#ifdef GRANDCANONICAL
 int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 
   char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
@@ -1778,8 +1777,6 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 	}
 	return TCL_OK;
 }
-#endif
-
 
 int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 		    int part_num, int *change)
@@ -2185,13 +2182,11 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 	else if (ARG0_IS_S("gamma"))
 	  err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
 #endif
-#ifdef GRANDCANONICAL
 	else if (ARG0_IS_S("gc")) { 
 	  argc--;
 	  argv++;
 	  err = part_parse_gc(interp, argc, argv);
 	}
-#endif
 
     else {
       Tcl_AppendResult(interp, "unknown particle parameter \"",
@@ -2254,7 +2249,6 @@ int tclcommand_part(ClientData data, Tcl_Interp *interp,
   }
 #endif
 
-#ifdef GRANDCANONICAL
   else if ( ARG1_IS_S("gc")) {
 	 argc-=2;
 	 argv+=2;
@@ -2262,7 +2256,6 @@ int tclcommand_part(ClientData data, Tcl_Interp *interp,
 		 return TCL_ERROR;
 	 return TCL_OK;
   }
-#endif
   
 
   /* only one argument is given */

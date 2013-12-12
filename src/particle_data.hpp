@@ -787,7 +787,6 @@ void auto_exclusion(int distance);
  and not already in the list. */
 void add_partner(IntList *il, int i, int j, int distance);
 
-#ifdef GRANDCANONICAL
 //value that is returned in the case there was no error, but the type was not yet indexed
 #define NOT_INDEXED -3
 //struct that associates the index used for the type_list and the real particle type
@@ -874,6 +873,5 @@ int add_particle_to_list(int part_id, int type);
 // print out a list of currently indexed ids
 int gc_status(int type);
 int number_of_particles_with_type(int type, int *number);
-#endif
 
 #endif
