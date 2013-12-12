@@ -68,12 +68,6 @@ int n_particle_types = 0;
 int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-TF_parameters *tf_params = NULL;
-/* #endif */
-#endif
-
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 Coulomb_parameters coulomb = { 
 #ifdef ELECTROSTATICS
@@ -107,21 +101,6 @@ DoubleList tabulated_forces;
 /** Corresponding array containing all tabulated energies*/
 DoubleList tabulated_energies;
 
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-/** Array containing all adress tabulated forces*/
-DoubleList adress_tab_forces;
-/** Corresponding array containing all adress tabulated energies*/
-DoubleList adress_tab_energies;
-#endif
-
-/* #ifdef THERMODYNAMIC_FORCE */
-/** Array containing the thermodynamic forces **/
-DoubleList thermodynamic_forces;
-DoubleList thermodynamic_f_energies;
-/* #endif */
-#endif
-
 /*****************************************
  * function prototypes
  *****************************************/
@@ -143,23 +122,6 @@ void force_and_energy_tables_init() {
   init_doublelist(&tabulated_forces);
   init_doublelist(&tabulated_energies);
 }
-
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-/** Initialize adress force and energy tables */
-void adress_force_and_energy_tables_init() {
-  init_doublelist(&adress_tab_forces);
-  init_doublelist(&adress_tab_energies);
-}
-#endif
-
-/* #ifdef THERMODYNAMIC_FORCE */
-void tf_tables_init() {
-  init_doublelist(&thermodynamic_forces);
-  init_doublelist(&thermodynamic_f_energies);
-}
-/* #endif */
-#endif
 
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
@@ -338,16 +300,6 @@ void initialize_ia_params(IA_parameters *params) {
   params->TUNABLE_SLIP_r_cut = INACTIVE_CUTOFF;
 #endif
 
-#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
-  //params->ADRESS_IC_npoints = 0;
-  params->ADRESS_TAB_npoints = 0;
-  params->ADRESS_TAB_startindex = 0;
-  params->ADRESS_TAB_minval = 0.0;
-  params->ADRESS_TAB_stepsize = 0.0;
-  strcpy(params->ADRESS_TAB_filename,"");
-  params->ADRESS_TAB_maxval = INACTIVE_CUTOFF;
-#endif
-
   /* things that are not strictly speaking short-ranged interactions,
      and do not have a cutoff */
 #ifdef COMFORCE
@@ -385,31 +337,6 @@ IA_parameters *get_ia_param_safe(int i, int j) {
   make_particle_type_exist(imax(i, j));
   return get_ia_param(i, j);
 }
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-void initialize_tf_params(TF_parameters *params){
-  params->TF_TAB_npoints = 0;
-  params->TF_TAB_startindex = 0;
-  
-  params->TF_prefactor = 0.0;
-  params->TF_TAB_minval = 0.0;
-  params->TF_TAB_maxval = 0.0;
-  params->TF_TAB_stepsize = 0.0;
-  strcpy(params->TF_TAB_filename, "");
-}
-
-void copy_tf_params(TF_parameters *dst, TF_parameters *src){
-  memcpy(dst, src, sizeof(TF_parameters));
-}
-
-int checkIfTF(TF_parameters *data){
-  if (data->TF_TAB_maxval !=0)
-    return 1;
-  return 0;
-}
-/* #endif */
-#endif
 
 static void recalc_maximal_cutoff_bonded()
 {
@@ -670,11 +597,6 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = data->TAB_maxval;
 #endif
 	 
-#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
-      if (max_cut_current < data->ADRESS_TAB_maxval)
-	max_cut_current = data->ADRESS_TAB_maxval;
-#endif
-
 #ifdef TUNABLE_SLIP
       if (max_cut_current < data->TUNABLE_SLIP_r_cut)
 	max_cut_current = data->TUNABLE_SLIP_r_cut;
@@ -814,40 +736,6 @@ void realloc_ia_params(int nsize)
   n_particle_types = nsize;
   ia_params = new_params;
 }
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-void realloc_tf_params(int nsize)
-{
-  int i;
-  TF_parameters *new_params;
-
-  if (nsize <= n_particle_types)
-    return;
-
-  new_params = (TF_parameters *) malloc(nsize*sizeof(TF_parameters));
-  if (tf_params) {
-    /* if there is an old field, copy entries and delete */
-    for (i = 0; i < nsize; i++)
-      {
-	if (i < n_particle_types)
-	  copy_tf_params(&new_params[i],
-			 &tf_params[i]);
-	else
-	  initialize_tf_params(&new_params[i]);
-      }
-    free(tf_params);
-  }
-  else {
-    /* new field, just init */
-    for (i = 0; i < nsize; i++)
-      initialize_tf_params(&new_params[i]);
-  }
-  
-  tf_params = new_params;
-}
-/* #endif */
-#endif
 
 void make_particle_type_exist(int type)
 {

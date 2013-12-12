@@ -131,11 +131,6 @@ typedef struct {
   #endif
 #endif
 
-#ifdef ADRESS
-  /** particles adress weight */
-  double adress_weight;
-#endif
-
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;

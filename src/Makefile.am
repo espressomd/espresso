@@ -34,7 +34,6 @@ noinst_LTLIBRARIES = libEspresso.la
 # config-features.cpp must be at the beginning so that it is compiled first
 libEspresso_la_SOURCES = \
 	config-features.cpp \
-	adresso.cpp adresso.hpp \
 	cells.cpp cells.hpp \
 	collision.cpp collision.hpp \
 	communication.cpp communication.hpp \

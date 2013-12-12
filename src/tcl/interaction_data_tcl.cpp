@@ -371,30 +371,6 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   return (TCL_ERROR);
 }
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-int tclprint_to_result_TF(Tcl_Interp *interp, int i)
-{
-  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
-  TF_parameters *data = get_tf_param(i);
-  
-  if (!data) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "thermodynamic force does not exist",
-		     (char *) NULL);
-    return (TCL_ERROR);
-  }
-  sprintf(buffer, "%d ", i);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-  
-  if(data->TF_TAB_maxval !=0)
-    Tcl_AppendResult(interp, "thermodynamic_force \"", data->TF_TAB_filename,"\"", (char *) NULL);
-  
-  return(TCL_OK);
-}
-/* #endif */
-#endif
-
 int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
@@ -698,24 +674,6 @@ int tclcommand_inter_print_non_bonded(Tcl_Interp * interp,
   return tclprint_to_result_NonbondedIA(interp, part_type_a, part_type_b);
 }
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-/* TODO: This function is not used anywhere. To be removed?  */
-int tf_print(Tcl_Interp * interp, int part_type)
-{
-  //TF_parameters *data;
-  Tcl_ResetResult(interp);
-    
-    make_particle_type_exist(part_type);
-    
-    //data = get_tf_param(part_type);
-    
-    return tclprint_to_result_TF(interp, part_type);
-}
-/* #endif */
-#endif
-
-
 int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b,
 			   int argc, char ** argv)
@@ -829,11 +787,6 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("affinity",tclcommand_inter_parse_affinity);
 #endif
  
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-    REGISTER_NONBONDED("adress_tab_ic", tclcommand_inter_parse_adress_tab);
-#endif
-#endif
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],
 		       "\" in parsing non bonded interaction",

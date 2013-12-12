@@ -158,8 +158,6 @@ extern const Datafield fields[];
 #define FIELD_DPD_TWF             40
 /** index of \ref dpd_wf in \ref #fields */
 #define FIELD_DPD_WF              41
-/** index of address variable in \ref #fields */
-#define FIELD_ADRESS              42
 /** index of \ref max_cut_bonded in \ref #fields */
 #define FIELD_MCUT_BONDED         43
 /** index of \ref transfer_rate in \ref #fields */

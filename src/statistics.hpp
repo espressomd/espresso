@@ -273,9 +273,6 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
 
 
-void calc_rdf_adress(int *p1_types, int n_p1, int *p2_types, int n_p2,
-			   double x_min, double x_max, double r_min, double r_max, int r_bins, double *rdf, int n_conf);
-
 /** Calculates the van Hove auto correlation function and as a side product the mean sqaure displacement (msd).
 
     Calculates the van Hove auto correlation function (acf)  G(r,t) which is the probability that a particle has moved

@@ -84,10 +84,6 @@ IF LB_GPU:
       double tau
     extern LB_parameters_gpu lbpar_gpu
 
-cdef extern from "adresso.hpp":
-  extern double adress_vars[7]
-
-
 cdef extern from "cells.hpp":
   extern double max_range
 
