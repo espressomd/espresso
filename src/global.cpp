@@ -29,7 +29,6 @@
 #include "layered.hpp"
 #include "npt.hpp"
 #include "tuning.hpp"
-#include "adresso.hpp"
 #include "rattle.hpp"
 #include "imd.hpp"
 #include "ghmc.hpp"
@@ -82,15 +81,14 @@ const Datafield fields[] = {
   {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",        6 },         /* 39 from thermostat.cpp */
   {&dpd_twf,            TYPE_INT, 1, "dpd_twf",           6 },         /* 40 from thermostat.cpp */
   {&dpd_wf,             TYPE_INT, 1, "dpd_wf",            5 },         /* 41 from thermostat.cpp */
-  {adress_vars,      TYPE_DOUBLE, 7, "adress_vars",       1 },         /* 42  from adresso.cpp */
   {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded",    9 },         /* 43 from interaction_data.cpp */
   {&transfer_rate,      TYPE_INT, 1, "vmd_transfer_rate", 5 },         /* 44 from imd_tcl.cpp */
   {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5 },         /* 45 from interaction_data.cpp */
   {&ghmc_nmd,           TYPE_INT, 1, "ghmc_nmd",          6 },         /* 46 from thermostat.cpp */
   {&ghmc_phi,        TYPE_DOUBLE, 1, "ghmc_phi",          6 },         /* 47 from thermostat.cpp */
-  {&ghmc_mc_res,     TYPE_INT,    1, "ghmc_mc_res",       7 },         /* 48 from ghmc.cpp */
-  {&ghmc_mflip,      TYPE_INT,    1, "ghmc_mflip",        7 },         /* 49 from ghmc.cpp */
-  {&ghmc_tscale,     TYPE_INT,    1, "ghmc_tscale",       6 },         /* 50 from ghmc.cpp */
-  {&lb_components,   TYPE_INT,    1, "lb_components",     2 },         /* 51 from ghmc.cpp */
+  {&ghmc_mc_res,        TYPE_INT, 1, "ghmc_mc_res",       7 },         /* 48 from ghmc.cpp */
+  {&ghmc_mflip,         TYPE_INT, 1, "ghmc_mflip",        7 },         /* 49 from ghmc.cpp */
+  {&ghmc_tscale,        TYPE_INT, 1, "ghmc_tscale",       6 },         /* 50 from ghmc.cpp */
+  {&lb_components,      TYPE_INT, 1, "lb_components",     2 },         /* 51 from ghmc.cpp */
   { NULL, 0, 0, NULL, 0 }
 };

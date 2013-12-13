@@ -51,6 +51,8 @@ User-visible changes
 
 * Interaction with a wall can be restricted to the inside.
 
+* Removed compiler switch GRANDCANONICAL.
+
 Changes visible for developers
 ------------------------------
 

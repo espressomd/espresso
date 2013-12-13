@@ -56,14 +56,13 @@
 /************************************************
  * variables
  ************************************************/
-#ifdef GRANDCANONICAL
+// List of particles for grandcanonical simulations
 TypeOfIndex Type; 
 IndexOfType Index; 
 TypeList *type_array;
 int number_of_type_lists;
 int GC_init;
 int Type_array_init;
-#endif
 
 int max_seen_particle = -1;
 int n_part = 0;
@@ -274,10 +273,6 @@ void init_particle(Particle *part)
 
 #ifdef GHOST_FLAG
   part->l.ghost        = 0;
-#endif
-
-#ifdef ADRESS
-  part->p.adress_weight = 1.0;
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -572,14 +567,6 @@ int place_particle(int part, double p[3])
     retcode = ES_PART_CREATED;
 
     mpi_place_new_particle(pnode, part, p);
-//#ifdef GRANDCANONICAL 
-//  if ( Type_array_init ) { 
-//	  if ( add_particle_to_list(part) ==  ES_ERROR ){
-//		  return ES_ERROR;
-//	  }
-//  }
-//#endif
-
 
   } else {
     mpi_place_particle(pnode, part, p);
@@ -821,7 +808,6 @@ int set_particle_type(int part, int type)
   if (pnode == -1)
     return ES_ERROR;
 
-#ifdef GRANDCANONICAL 
 // check if the particle exists already and the type is changed, then remove it from the list which contains it
   Particle *cur_par = (Particle *) malloc( sizeof(Particle) );
   if ( Type_array_init ) {
@@ -837,10 +823,9 @@ int set_particle_type(int part, int type)
 	  free(cur_par);
   }
 
-#endif
   mpi_send_type(pnode, part, type);
 
-#ifdef GRANDCANONICAL
+#ifdef ADDITIONAL_CHECKS
   if ( Type_array_init ) { 
 	  if ( add_particle_to_list(part, type) ==  ES_ERROR ){
 		  //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
@@ -1118,7 +1103,6 @@ int remove_particle(int part)
 {
   int pnode;
 
-#ifdef GRANDCANONICAL
   Particle *cur_par = (Particle *) malloc (sizeof(Particle));
   if (get_particle_data(part, cur_par) == ES_ERROR )
 	  return ES_ERROR;
@@ -1126,7 +1110,6 @@ int remove_particle(int part)
   free(cur_par);
   if (remove_id_type_array(part, type) == ES_ERROR )
 	  return ES_ERROR;
-#endif
 
   if (!particle_node)
     build_particle_node();
@@ -1663,8 +1646,6 @@ void auto_exclusion(int distance)
 #endif
 
 
-#ifdef GRANDCANONICAL 
-
 int init_gc(void){
 	if ( type_array == (TypeList *) NULL) {
 	//stores the number of currently available type_list's 
@@ -1984,4 +1965,3 @@ int number_of_particles_with_type(int type, int *number){
 	return NOT_INDEXED;
 }
 
-#endif

@@ -353,11 +353,6 @@ void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
   int i,j;
   Particle *p1,*p2;
   double vec12[3],dist2,dist;
-#ifdef ADRESS
-  int l;
-  double weight;
-  double temp_force[3]={0,0,0};
-#endif
   force[0]=force[1]=force[2]=0.0;
   for (i=0;i<topology[mol_id1].part.n;i++){
     p1=&partCfg[topology[mol_id1].part.e[i]];
@@ -367,25 +362,10 @@ void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
       get_mi_vector(vec12,p1->r.p, p2->r.p);
       dist2=sqrlen(vec12);
       dist=sqrt(dist2);
-#ifdef ADRESS
-      for(l=0;l<3;l++)
-	temp_force[l]=0;
 #ifdef EXCLUSIONS
       if(do_nonbonded(p1,p2))
 #endif
-	{
-	  calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,temp_force);
-	  weight = adress_non_bonded_force_weight(p1,p2);
-	  for(l=0;l<3;l++)
-	    force[l] += weight*temp_force[l];
-	}
-#else
-#ifdef EXCLUSIONS
-      if(do_nonbonded(p1,p2))
-#endif
-	calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,force);
-#endif
-      
+	calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,force);    
     }
   }
   
