@@ -189,6 +189,8 @@
 #define CONSTRAINT_RHOMBOID 10
 /** Constraint for a stomatocyte boundary */
 #define CONSTRAINT_STOMATOCYTE 11
+/** Constraint for a hollow cone boundary */
+#define CONSTRAINT_HOLLOW_CONE 12
 /*@}*/
 
 /* Data Types */
@@ -846,7 +848,7 @@ typedef struct {
   double position_y;
   double position_z;
 
-  /** Stomatocyte position. */
+  /** Stomatocyte orientation. */
 
   double orientation_x;
   double orientation_y;
@@ -868,6 +870,39 @@ typedef struct {
   int reflecting;
 
 } Constraint_stomatocyte;
+
+/** Parameters for a HOLLOW_CONE constraint. */
+typedef struct {
+
+  /** Hollow cone position. */
+
+  double position_x;
+  double position_y;
+  double position_z;
+
+  /** Hollow cone orientation. */
+
+  double orientation_x;
+  double orientation_y;
+  double orientation_z;
+
+  /** Hollow cone dimensions. */
+
+  double inner_radius;
+  double outer_radius;
+  double width;
+  double opening_angle;
+
+  /** Inside/Outside (+1 outside -1 inside interaction direction)*/
+
+  double direction;
+
+  /** whether the constraint is penetrable 1 or not 0*/
+
+  int penetrable; 
+  int reflecting;
+
+} Constraint_hollow_cone;
 
 /** Parameters for a BOX constraint. */
 typedef struct {
@@ -903,6 +938,7 @@ typedef struct {
     Constraint_maze maze;
     Constraint_pore pore;
     Constraint_stomatocyte stomatocyte;
+    Constraint_hollow_cone hollow_cone;
     //ER
     Constraint_ext_magn_field emfield;
     //end ER

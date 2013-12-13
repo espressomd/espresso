@@ -76,6 +76,10 @@ void calculate_stomatocyte_dist( Particle *p1, double ppos [3],
         Particle *c_p, Constraint_stomatocyte *cons, 
         double *dist, double *vec );
 
+void calculate_hollow_cone_dist( Particle *p1, double ppos [3], 
+        Particle *c_p, Constraint_hollow_cone *cons, 
+        double *dist, double *vec );
+
 void add_rod_force(Particle *p1, double ppos[3], 
 		   Particle *c_p, Constraint_rod *c);
 

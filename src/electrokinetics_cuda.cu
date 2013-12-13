@@ -3371,6 +3371,10 @@ int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
         dist = -1.0;
         break;
                 
+      case LB_BOUNDARY_HOLLOW_CONE:
+        calculate_hollow_cone_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.hollow_cone, &dist, dist_vec);
+        break;
+                
       default:
         errtxt = runtime_error(128);
         ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in ek_tag_reaction_nodes()\n", boundary->type);

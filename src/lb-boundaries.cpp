@@ -72,6 +72,10 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
       case CONSTRAINT_STOMATOCYTE:
 	      calculate_stomatocyte_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.stomatocyte, &dist, vec); 
         break;
+
+      case CONSTRAINT_HOLLOW_CONE:
+	      calculate_hollow_cone_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist, vec); 
+        break;
     }
     
     if (dist<*mindist || n == 0) {
@@ -173,6 +177,10 @@ void lb_init_boundaries() {
                 
               case LB_BOUNDARY_STOMATOCYTE:
                 calculate_stomatocyte_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.stomatocyte, &dist_tmp, dist_vec);
+                break;
+                
+              case LB_BOUNDARY_HOLLOW_CONE:
+                calculate_hollow_cone_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist_tmp, dist_vec);
                 break;
                 
               default:
@@ -299,6 +307,10 @@ void lb_init_boundaries() {
                 
               case LB_BOUNDARY_STOMATOCYTE:
                 calculate_stomatocyte_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.stomatocyte, &dist_tmp, dist_vec);
+                break;
+                
+              case LB_BOUNDARY_HOLLOW_CONE:
+                calculate_hollow_cone_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist_tmp, dist_vec);
                 break;
                 
               default:

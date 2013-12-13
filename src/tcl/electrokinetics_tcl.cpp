@@ -63,6 +63,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                                     [rhomboid ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                     [pore ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                     [stomatocyte ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [hollow_cone ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics accelerated_frame on\n", (char *)NULL);
     Tcl_AppendResult(interp, "                  boundary_mass_density #double\n", (char *)NULL);
     Tcl_AppendResult(interp, "                  ext_acceleration_force #double #double #double\n", (char *)NULL);
@@ -74,6 +75,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                                               [rhomboid ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                               [pore ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                               [stomatocyte ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [hollow_cone ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [valency #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [ext_force #float #float #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
@@ -146,6 +148,11 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       err = tclcommand_lbboundary_stomatocyte(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
     }
+    else if(ARG0_IS_S("hollow_cone")) {
+      lbboundary_tmp = generate_lbboundary();
+      err = tclcommand_lbboundary_hollow_cone(lbboundary_tmp, interp, argc - 1, argv + 1);
+      lbboundary_tmp->charge_density = floatarg;
+    }
     else if(ARG0_IS_S("delete")) {
       if(argc < 3) {
         /* delete all */
@@ -163,7 +170,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       }
     }
     else {
-      Tcl_AppendResult(interp, "possible electrokinetics boundary charge_density #float parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, delete {c} to delete a boundary", (char *) NULL);
+      Tcl_AppendResult(interp, "possible electrokinetics boundary charge_density #float parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, delete {c} to delete a boundary", (char *) NULL);
       return (TCL_ERROR);
     }
         
@@ -885,9 +892,12 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           else if(ARG0_IS_S("stomatocyte")) {
             err = tclcommand_lbboundary_stomatocyte(&lbboundary_tmp, interp, argc - 1, argv + 1);
           }
+          else if(ARG0_IS_S("hollow_cone")) {
+            err = tclcommand_lbboundary_hollow_cone(&lbboundary_tmp, interp, argc - 1, argv + 1);
+          }
           else {
             Tcl_AppendResult(interp, "possible electrokinetics reaction region #int parameters:\n", (char *) NULL);
-            Tcl_AppendResult(interp, "box, wall, sphere, cylinder, rhomboid, pore, stomatocyte", (char *) NULL);
+            Tcl_AppendResult(interp, "box, wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone", (char *) NULL);
             return (TCL_ERROR);
           }
 
