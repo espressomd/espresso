@@ -1972,5 +1972,3 @@ int number_of_particles_with_type(int type, int *number){
 	}
 	return NOT_INDEXED;
 }
-
-#endif

@@ -801,10 +801,6 @@ typedef struct {
 	int * index;
 } TypeOfIndex;
 
-TypeOfIndex Type; 
-
-IndexOfType Index; 
-
 typedef struct {
 	int max_entry;
 	int cur_size;
@@ -814,6 +810,9 @@ typedef struct {
 //undefined array size
 extern TypeList *type_array;
 extern int number_of_type_lists;
+
+extern TypeOfIndex Type; 
+extern IndexOfType Index; 
 
 // flag indicating init_gc was called 
 extern int GC_init;
