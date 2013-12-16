@@ -567,14 +567,6 @@ int place_particle(int part, double p[3])
     retcode = ES_PART_CREATED;
 
     mpi_place_new_particle(pnode, part, p);
-#ifdef ADDITIONAL_CHECKS 
-    if ( Type_array_init ) { 
-      if ( add_particle_to_list(part) ==  ES_ERROR ){
-        return ES_ERROR;
-      }
-    }
-#endif
-
 
   } else {
     mpi_place_particle(pnode, part, p);
