@@ -1834,13 +1834,15 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
     normal_x *= normalize;
     normal_y *= normalize;
 
-    if( -normal_x*cos(alpha) + normal_y*sin(alpha) > 0.0 )
+    if ( -normal_x*cos(alpha) + normal_y*sin(alpha) > 0.0 )
     {
       distance = mindist;
     }
     else
     {
-      distance = -mindist;  
+      distance = -mindist;
+      normal_x *= -1.0;
+      normal_y *= -1.0; 
     }
   }
   else if ( number == 1 )
@@ -1851,13 +1853,15 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
     normal_x *= normalize;
     normal_y *= normalize;
 
-    if( normal_x*cos(alpha) - normal_y*sin(alpha) > 0.0 )
+    if ( normal_x*cos(alpha) - normal_y*sin(alpha) > 0.0 )
     {
-      distance = mindist;
+      distance = mindist;  
     }
     else
     {
-      distance = -mindist;  
+      distance = -mindist;
+      normal_x *= -1.0;
+      normal_y *= -1.0; 
     }
   }
   else if ( number == 2 )
@@ -1868,13 +1872,15 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
     normal_x *= normalize;
     normal_y *= normalize;
 
-    if( -normal_x*sin(alpha) - normal_y*cos(alpha) > 0.0 )
+    if ( -normal_x*sin(alpha) - normal_y*cos(alpha) > 0.0 )
     {
       distance = mindist;
     }
     else
     {
-      distance = -mindist;  
+      distance = -mindist;
+      normal_x *= -1.0;
+      normal_y *= -1.0; 
     }
   }
   else if ( number == 3 )
@@ -1885,13 +1891,15 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
     normal_x *= normalize;
     normal_y *= normalize;
 
-    if( normal_x*sin(alpha) + normal_y*cos(alpha) > 0.0 )
+    if ( normal_x*sin(alpha) + normal_y*cos(alpha) > 0.0 )
     {
       distance = mindist;
     }
     else
     {
-      distance = -mindist;  
+      distance = -mindist;
+      normal_x *= -1.0;
+      normal_y *= -1.0; 
     }
   }
 
@@ -1982,7 +1990,7 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
 
   // Now use this direction to orient the normal
 
-  if ( xpp*xpp + ypp*ypp > 1.e-10 )
+  if ( xpp*xpp + ypp*ypp > 1.0e-10 )
   {
     // The point is off the rotational symmetry
     // axis of the hollow cone
@@ -2388,6 +2396,45 @@ void add_constraints_forces(Particle *p1)
           {
 	          errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	          ERROR_SPRINTF(errtxt, "{063 stomatocyte constraint %d violated by \
+                                   particle %d} ", n, p1->p.identity);
+          }
+	      }
+      }
+    break;
+
+    case CONSTRAINT_HOLLOW_CONE:
+      if( checkIfInteraction(ia_params) ) 
+      {
+
+        calculate_hollow_cone_dist( p1, folded_pos, &constraints[n].part_rep, 
+                                    &constraints[n].c.hollow_cone, &dist, vec );
+
+	      if ( dist > 0 ) 
+        {
+	        calc_non_bonded_pair_force( p1, &constraints[n].part_rep,
+				                              ia_params, vec, dist, dist*dist,
+                                      force, torque1, torque2 );
+	      }
+	      else if ( dist <= 0 && constraints[n].c.hollow_cone.penetrable == 1 )
+        {
+	        if ( dist < 0 ) 
+          {
+	          calc_non_bonded_pair_force( p1, &constraints[n].part_rep,
+				                                ia_params, vec, -1.0*dist, dist*dist,
+                                        force, torque1, torque2 );
+	        }
+	      }
+	      else
+        {
+          if( constraints[n].c.hollow_cone.reflecting )
+          {
+            reflect_particle( p1, &(vec[0]), 
+                              constraints[n].c.hollow_cone.reflecting );
+          } 
+          else
+          {
+	          errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+	          ERROR_SPRINTF(errtxt, "{063 hollow_cone constraint %d violated by \
                                    particle %d} ", n, p1->p.identity);
           }
 	      }
