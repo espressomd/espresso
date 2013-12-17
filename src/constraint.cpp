@@ -1655,7 +1655,7 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
 
   int number;
   double r0, r1, w, alpha, xd, yd, zd,
-         mu, x_2D, y_2D, t0, t1,
+         mu, x_2D, y_2D, t0, t1, t2,
          time1, time2, time3, time4,
          mdst0, mdst1, mdst2, mdst3,
          mindist, normalize, x, y, z,
@@ -1741,8 +1741,9 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
   // Calculate intermediate results which we need to determine
   // the distance
 
-  t0 = (r0 - y_2D*cos(alpha) - x_2D*sin(alpha))/(r0 - r1);
-  t1 = (w - 2.0*x_2D*cos(alpha) + 2.0*y_2D*sin(alpha))/(2.0*w);
+  t0 = ( y_2D*cos(alpha) + ( x_2D - r0 )*sin(alpha) )/r1;
+  t1 = ( w - 2.0*( x_2D - r0 )*cos(alpha) + 2.0*y_2D*sin(alpha) )/( 2.0*w );
+  t2 = ( w + 2.0*( x_2D - r0 )*cos(alpha) - 2.0*y_2D*sin(alpha) )/( 2.0*w );
 
   if ( t0 >= 0.0 && t0 <= 1.0 )
   {
@@ -1763,38 +1764,52 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
   if ( t1 >= 0.0 && t1 <= 1.0 )
   {
     time3 = t1;
-    time4 = t1;
   } 
   else if ( t1 > 1.0 )
   {
     time3 = 1.0;
-    time4 = 1.0;
   }
   else
   {
     time3 = 0.0;
+  }
+
+  if ( t2 >= 0.0 && t2 <= 1.0 )
+  {
+    time4 = t2;
+  } 
+  else if ( t2 > 1.0 )
+  {
+    time4 = 1.0;
+  }
+  else
+  {
     time4 = 0.0;
   }
 
-  mdst0 =   x_2D*x_2D + y_2D*y_2D + 0.25*w*w
-          + ( r0 - r0*time1 + r1*time1 )*( r0 - r0*time1 + r1*time1 )
-          + ( 2.0*y_2D*( r0*( -1.0 + time1 ) - r1*time1 ) + x_2D*w )*cos(alpha)
-          - ( 2.0*x_2D*( r0 - r0*time1 + r1*time1 ) + y_2D*w )*sin(alpha);
+  mdst0 =   x_2D*x_2D + y_2D*y_2D - 2.0*x_2D*r0 + r0*r0 + r1*r1*time1*time1
+          + 0.25*w*w + ( -2.0*y_2D*r1*time1 + (  x_2D - r0 )*w )*cos(alpha)
+          - (  2.0*x_2D*r1*time1 - 2.0*r0*r1*time1 + y_2D*w )*sin(alpha);
+  mdst0 = sqrt(mdst0);
 
-  mdst1 =   x_2D*x_2D + y_2D*y_2D + 0.25*w*w
-          + ( r0 - r0*time2 + r1*time2 )*( r0 - r0*time2 + r1*time2 )
-          + ( 2.0*y_2D*( r0*( -1.0 + time2 ) - r1*time2 ) - x_2D*w )*cos(alpha)
-          + ( 2.0*x_2D*( r0*( -1.0 + time2 ) - r1*time2 ) + y_2D*w )*sin(alpha);
+  mdst1 =   x_2D*x_2D + y_2D*y_2D - 2.0*x_2D*r0 + r0*r0 + r1*r1*time2*time2
+          + 0.25*w*w + ( -2.0*y_2D*r1*time2 + ( -x_2D + r0 )*w )*cos(alpha)
+          + ( -2.0*x_2D*r1*time2 + 2.0*r0*r1*time2 + y_2D*w )*sin(alpha);
+  mdst1 = sqrt(mdst1);
 
-  mdst2 =   x_2D*x_2D + y_2D*y_2D + r0*r0
-          + 0.25*( 1.0 - 2.0*time3 )*( 1.0 - 2.0*time3 )*w*w
-          - (  2.0*y_2D*r0 + x_2D*( 1.0 - 2.0*time3 )*w )*cos(alpha)
-          + ( -2.0*x_2D*r0 + y_2D*w - 2.0*y_2D*time3*w )*sin(alpha);
+  mdst2 =   x_2D*x_2D + y_2D*y_2D - 2.0*x_2D*r0 + r0*r0
+          + 0.25*w*w - time3*w*w + time3*time3*w*w
+          + ( x_2D - r0 )*( -1.0 + 2.0*time3 )*w*cos(alpha)
+          - y_2D*( -1.0 + 2.0*time3 )*w*sin(alpha);
+  mdst2 = sqrt(mdst2);
 
-  mdst3 =   x_2D*x_2D + y_2D*y_2D + r1*r1
-          + 0.25*( 1.0 - 2.0*time4 )*( 1.0 - 2.0*time4 )*w*w
-          - (  2.0*y_2D*r1 + x_2D*( 1.0 - 2.0*time4 )*w )*cos(alpha)
-          + ( -2.0*x_2D*r1 + y_2D*w - 2.0*y_2D*time4*w )*sin(alpha);
+  mdst3 =   x_2D*x_2D + y_2D*y_2D - 2.0*x_2D*r0 + r0*r0
+          + 0.25*w*w - time4*w*w + time4*time4*w*w
+          - ( x_2D - r0 )*( -1.0 + 2.0*time4 )*w*cos(alpha)
+          + y_2D*( -1.0 + 2.0*time4 )*w*sin(alpha)
+          + r1*r1 - 2.0*y_2D*r1*cos(alpha)
+          + ( -2.0*x_2D*r1 + 2.0*r0*r1 )*sin(alpha);
+  mdst3 = sqrt(mdst3);
 
   double distlist[4] = { mdst0, mdst1, mdst2, mdst3 };
 
@@ -1828,8 +1843,8 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
 
   if ( number == 0 )
   {
-    normal_x = x_2D + 0.5*w*cos(alpha) - ( r0 - r0*time1 + r1*time1 )*sin(alpha);
-    normal_y = y_2D - ( r0 - r0*time1 + r1*time1 )*cos(alpha) - 0.5*w*sin(alpha);
+    normal_x = x_2D - r0 + 0.5*w*cos(alpha) - r1*time1*sin(alpha);
+    normal_y = y_2D - r1*time1*cos(alpha) - 0.5*w*sin(alpha);
     normalize = 1.0/sqrt( normal_x*normal_x + normal_y*normal_y );
     normal_x *= normalize;
     normal_y *= normalize;
@@ -1847,8 +1862,8 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
   }
   else if ( number == 1 )
   {
-    normal_x = x_2D - 0.5*w*cos(alpha) - ( r0 - r0*time2 + r1*time2 )*sin(alpha);
-    normal_y = y_2D - ( r0 - r0*time2 + r1*time2 )*cos(alpha) + 0.5*w*sin(alpha);
+    normal_x = x_2D - r0 - 0.5*w*cos(alpha) - r1*time2*sin(alpha);
+    normal_y = y_2D - r1*time2*cos(alpha) + 0.5*w*sin(alpha);
     normalize = 1.0/sqrt( normal_x*normal_x + normal_y*normal_y );
     normal_x *= normalize;
     normal_y *= normalize;
@@ -1866,8 +1881,8 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
   }
   else if ( number == 2 )
   {
-    normal_x = x_2D - 0.5*( 1.0 - 2.0*time3 )*w*cos(alpha) - r0*sin(alpha);
-    normal_y = y_2D - r0*cos(alpha) + 0.5*( 1.0 - 2.0*time3 )*w*sin(alpha);
+    normal_x = x_2D - r0 - 0.5*( 1.0 - 2.0*time3 )*w*cos(alpha);
+    normal_y = y_2D + 0.5*( 1.0 - 2.0*time3 )*w*sin(alpha);
     normalize = 1.0/sqrt( normal_x*normal_x + normal_y*normal_y );
     normal_x *= normalize;
     normal_y *= normalize;
@@ -1885,8 +1900,8 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
   }
   else if ( number == 3 )
   {
-    normal_x = x_2D - 0.5*( 1.0 - 2.0*time4 )*w*cos(alpha) - r1*sin(alpha);
-    normal_y = y_2D - r1*cos(alpha) + 0.5*( 1.0 - 2.0*time4 )*w*sin(alpha);
+    normal_x = x_2D - r0 + 0.5*( 1.0 - 2.0*time4 )*w*cos(alpha) - r1*sin(alpha);
+    normal_y = y_2D - 0.5*( 1.0 - 2.0*time4 )*w*sin(alpha) - r1*cos(alpha);
     normalize = 1.0/sqrt( normal_x*normal_x + normal_y*normal_y );
     normal_x *= normalize;
     normal_y *= normalize;
