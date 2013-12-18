@@ -55,9 +55,12 @@ void EspressoSystemInterface::gatherParticles() {
 
   if (m_gpu)
   {
+    puts("starting     gpu_init_particle_comm();    ");
     gpu_init_particle_comm();    
+    puts("starting    copy_part_data_to_gpu();");
     copy_part_data_to_gpu();
     split_particle_struct();
+    puts("starting     split_particle_struct();");
   }
 #endif
 

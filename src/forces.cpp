@@ -1,3 +1,4 @@
+
 /*
   Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
@@ -71,7 +72,7 @@ void init_forces();
 
 void force_calc()
 {
-
+  puts("force_calc().");
 #if defined(LB_GPU)
   espressoSystemInterface.requestRGpu();
   espressoSystemInterface.requestVGpu();
@@ -83,7 +84,7 @@ void force_calc()
 #endif
   espressoSystemInterface.update();
 
-
+  puts("boing");
     
 #ifdef LB_GPU
 #ifdef SHANCHEN

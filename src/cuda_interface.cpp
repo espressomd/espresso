@@ -27,6 +27,7 @@ void cuda_bcast_global_part_params() {
 /*************** REQ_GETPARTS ************/
 void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
 {
+  puts("cuda_mpi_get_particles()");
     int n_part;
     int g, pnode;
     Cell *cell;
