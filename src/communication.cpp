@@ -93,6 +93,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_set_time_step_slave) \
   CB(mpi_get_particles_slave) \
   CB(mpi_bcast_coulomb_params_slave) \
+  CB(mpi_bcast_collision_params_slave) \
   CB(mpi_send_ext_force_slave) \
   CB(mpi_send_ext_torque_slave) \
   CB(mpi_place_new_particle_slave) \
@@ -1779,6 +1780,24 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 #endif  
   
   on_coulomb_change();
+#endif
+}
+
+/*************** REQ_BCAST_COULOMB ************/
+void mpi_bcast_collision_params()
+{
+#ifdef COLLISION_DETECTION
+  mpi_call(mpi_bcast_collision_params_slave, 1, 0);
+  mpi_bcast_collision_params_slave(-1, 0);
+#endif
+}
+
+void mpi_bcast_collision_params_slave(int node, int parm)
+{   
+#ifdef COLLISION_DETECTION
+  MPI_Bcast(&collision_params, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
+
+  recalc_forces = 1;
 #endif
 }
 
