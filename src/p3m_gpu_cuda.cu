@@ -17,10 +17,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu.cu
+/** \file p3m_gpu_cuda.cu
  *
  * Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
- * Header file for \ref lbgpu.h.
+ * Header file \ref p3m_gpu.hpp .
  */ 
 
 #include <stdio.h>

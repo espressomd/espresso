@@ -2,6 +2,7 @@ from espresso cimport *
 ## Here we create something to handle particles
 cimport numpy as np
 from utils cimport *
+include "myconfig.pxi"
 
 cdef extern from "particle_data.hpp":
   int place_particle(int part, double p[3])
@@ -9,6 +10,7 @@ cdef extern from "particle_data.hpp":
     pass
   ctypedef struct ParticleProperties:
     int type
+    double q
     pass
   ctypedef struct ParticlePosition:
     double p[3]
@@ -38,6 +40,9 @@ cdef extern from "particle_data.hpp":
   int set_particle_type(int part, int type)
   int set_particle_v(int part, double v[3])
   int set_particle_f(int part, double F[3])
+  IF ELECTROSTATICS == 1:
+    int set_particle_q(int part, double q)
+    
 
 cdef class ParticleHandle:
   cdef public int id

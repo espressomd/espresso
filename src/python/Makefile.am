@@ -40,6 +40,7 @@ cython_verbose_0 = @echo "  CYTHON   $@";
 .pyx.cpp:
 	$(cython_verbose)cython -I $(builddir) $< -o $@
 
+.PRECIOUS: .pyx.cpp
 
 #espresso.cpp: espresso.pxd myconfig.pxi
 #particle_data.cpp: particle_data.pxd myconfig.pxi
@@ -55,8 +56,7 @@ cython_verbose_0 = @echo "  CYTHON   $@";
 # thermostat.cpp: thermostat.pxd myconfig.pxi
 # utils.cpp: utils.pxd myconfig.pxi
 
-CLEANFILES += \
-	espresso.cpp \
+CLEANFILES = espresso.cpp \
 	particle_data.cpp \
 	analyze.cpp \
 	cellsystem.cpp \

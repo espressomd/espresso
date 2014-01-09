@@ -164,7 +164,7 @@ void nsq_balance_particles(int global_flag)
   int pp = cells_get_n_particles();
   int *ppnode = (int*)malloc(n_nodes*sizeof(int));
   /* minimal difference between node shares */
-  int minshare = n_total_particles/n_nodes;
+  int minshare = n_part/n_nodes;
   int maxshare = minshare + 1;
 
   CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: load %d-%d\n", this_node, minshare, maxshare));

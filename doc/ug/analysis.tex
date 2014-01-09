@@ -209,7 +209,13 @@ be used to shift the not separated molecules if needed.
   analyze Vkappa \opt{\alt{ reset \asep read \asep set \var{V_{\kappa, 1}} \var{V_{\kappa, 2}} \var{avk} } }
 \end{essyntax}
 
-\todo{Document the usage and what it is!}
+Calculates the compressibility $V \times \kappa_T$ through the Volume fluctuations
+$V \times \kappa_T = \beta \left(\langle V^2\rangle - \langle V \rangle^2\right)$ \cite{kolb99a}.
+Given no arguments this function calculates and returns the current value of the
+running average for the volume fluctuations.  
+The argument \keyword{reset} clears the currently stored values. With \keyword{read}
+the cumulative mean volume, cumulative mean squared volume and how many samples were
+used can be retrieved. Likewise the option \keyword{set} enables you to set those. 
 
 \subsection{Radial distribution function}
 \label{analyze:rdf}
@@ -462,7 +468,7 @@ energy contributions of the bonded resp. non-bonded interactions.
   \variant{1} analyze pressure
   \variant{2} analyze pressure total
   \variant{3} analyze pressure \alt{totals \asep ideal \asep coulomb
-    \asep \\tot_nonbonded_inter \asep tot_nonbonded_intra}
+    \asep \\tot_nonbonded_inter \asep tot_nonbonded_intra \asep vs_relative}
   \variant{4} analyze pressure bonded \var{bondid}
   \variant{5} analyze pressure nonbonded \var{typeid1} \var{typeid2}
   \variant{6} analyze pressure nonbonded_intra \opt{\var{typeid}}
@@ -505,7 +511,8 @@ well tested, so use with caution!
 Anything outside that is currently not implemented.
 Four-body dihedral potentials are not included.
 In case of rigid body rotation, virial contribution from torques is not included.
-Constraints of any kind are not currently accounted for in the pressure calculations. 
+The pressure contribution for rigid bodies constructed by means of the VIRTUAL\_SITES\_RELATIVE mechanism is included. On the other hand, the pressure contribution for rigid bonds is not included.
+All other constraints of any kind are not currently accounted for in the pressure calculations. 
 The pressure is no longer correct, e.g., when particles are confined to a plane.
 
 The command is implemented in parallel.

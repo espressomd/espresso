@@ -93,6 +93,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_set_time_step_slave) \
   CB(mpi_get_particles_slave) \
   CB(mpi_bcast_coulomb_params_slave) \
+  CB(mpi_bcast_collision_params_slave) \
   CB(mpi_send_ext_force_slave) \
   CB(mpi_send_ext_torque_slave) \
   CB(mpi_place_new_particle_slave) \
@@ -125,7 +126,6 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_recv_fluid_slave) \
   CB(mpi_local_stress_tensor_slave) \
   CB(mpi_send_virtual_slave) \
-  CB(mpi_bcast_tf_params_slave) \
   CB(mpi_iccp3m_iteration_slave) \
   CB(mpi_iccp3m_init_slave) \
   CB(mpi_send_rotational_inertia_slave) \
@@ -1157,7 +1157,7 @@ void mpi_remove_particle(int pnode, int part)
 void mpi_remove_particle_slave(int pnode, int part)
 {
   if (part != -1) {
-    n_total_particles--;
+    n_part--;
 
     if (pnode == this_node)
       local_remove_particle(part);
@@ -1209,10 +1209,6 @@ void mpi_bcast_ia_params(int i, int j)
 #ifdef TABULATED
   int tablesize = tabulated_forces.max;
 #endif
-#ifdef INTERFACE_CORRECTION
-  int adress_tablesize = adress_tab_forces.max;
-#endif
-  
   if (j>=0) {
     /* non-bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
@@ -1231,16 +1227,6 @@ void mpi_bcast_ia_params(int i, int j)
       MPI_Bcast(tabulated_forces.e,tablesize, MPI_DOUBLE, 0 , comm_cart);
       MPI_Bcast(tabulated_energies.e,tablesize, MPI_DOUBLE, 0 , comm_cart);
     }    
-#endif
-#ifdef INTERFACE_CORRECTION
-    if(get_ia_param(i,j)->ADRESS_TAB_maxval > 0) {
-      MPI_Bcast(&adress_tablesize, 1, MPI_INT, 0, comm_cart);
-      
-      /* Communicate the data */
-      MPI_Bcast(adress_tab_forces.e, adress_tablesize, MPI_DOUBLE, 0, comm_cart);
-      MPI_Bcast(adress_tab_energies.e, adress_tablesize, MPI_DOUBLE, 0, comm_cart);
-    }
-    /* NO IC FOR TABULATED BONDED INTERACTIONS YET!! */
 #endif
   }
   else {
@@ -1295,20 +1281,7 @@ void mpi_bcast_ia_params_slave(int i, int j)
       }
     }
 #endif
-#ifdef INTERFACE_CORRECTION 
-    {
-      int adress_tabsize=0;
-      if ( get_ia_param(i,j)->ADRESS_TAB_maxval > 0) {
-	MPI_Bcast(&adress_tabsize,1,MPI_INT,0,comm_cart);
-	realloc_doublelist(&adress_tab_forces, adress_tabsize);
-	realloc_doublelist(&adress_tab_energies, adress_tabsize);
-	MPI_Bcast(adress_tab_forces.e,adress_tabsize, MPI_DOUBLE, 0, comm_cart);
-	MPI_Bcast(adress_tab_energies.e,adress_tabsize, MPI_DOUBLE, 0, comm_cart);
-      }
-    }
-#endif
-  }
-  else { /* bonded interaction parameters */
+  } else { /* bonded interaction parameters */
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]),sizeof(Bonded_ia_parameters), MPI_BYTE,
 	      0, comm_cart);
@@ -1343,61 +1316,6 @@ void mpi_bcast_ia_params_slave(int i, int j)
 
 /*************** REQ_BCAST_IA_SIZE ************/
 
-/* #ifdef THERMODYNAMIC_FORCE */
-void mpi_bcast_tf_params(int i)
-{
-#ifdef ADRESS
-  int tablesize=0;
-  
-  mpi_call(mpi_bcast_tf_params_slave, i, i);
-  tablesize = thermodynamic_forces.max;
-  
-  /* thermodynamic force parameters */
-  /* non-bonded interaction parameters */
-  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-  MPI_Bcast(get_tf_param(i), sizeof(TF_parameters), MPI_BYTE,
-	    0, comm_cart);
-  
-  /* If there are tabulated forces broadcast those as well */
-  if ( get_tf_param(i)->TF_TAB_maxval > 0) {
-    /* First let all nodes know the new size for force and energy tables */
-    MPI_Bcast(&tablesize, 1, MPI_INT, 0, comm_cart);
-    MPI_Barrier(comm_cart); // Don't do anything until all nodes have this information
-    
-    /* Communicate the data */
-    MPI_Bcast(thermodynamic_forces.e,tablesize, MPI_DOUBLE, 0 , comm_cart);
-    MPI_Bcast(thermodynamic_f_energies.e,tablesize, MPI_DOUBLE, 0 , comm_cart);
-    //MPI_Bcast(TF_prefactor, 1, MPI_DOUBLE, 0, comm_cart);
-  }
-  
-  //on_short_range_ia_change();
-#endif
-}
-
-void mpi_bcast_tf_params_slave(int i, int j)
-{
-#ifdef ADRESS
-  int tablesize;
-  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-  MPI_Bcast(get_tf_param(i), sizeof(TF_parameters), MPI_BYTE,
-	    0, comm_cart);
-  tablesize=0;
-  /* If there are tabulated forces broadcast those as well */
-  if ( get_tf_param(i)->TF_TAB_maxval > 0) {
-    /* Determine the new size for force and energy tables */
-    MPI_Bcast(&tablesize,1,MPI_INT,0,comm_cart);
-    MPI_Barrier(comm_cart);
-    /* Allocate sizes accordingly */
-    realloc_doublelist(&thermodynamic_forces, tablesize);
-    realloc_doublelist(&thermodynamic_f_energies, tablesize);
-    /* Now communicate the data */
-    MPI_Bcast(thermodynamic_forces.e,tablesize, MPI_DOUBLE, 0 , comm_cart);
-    MPI_Bcast(thermodynamic_f_energies.e,tablesize, MPI_DOUBLE, 0 , comm_cart);
-  }
-#endif
-}
-
-
 void mpi_bcast_n_particle_types(int ns)
 {
   mpi_call(mpi_bcast_n_particle_types_slave, -1, ns);
@@ -1407,11 +1325,6 @@ void mpi_bcast_n_particle_types(int ns)
 
 void mpi_bcast_n_particle_types_slave(int pnode, int ns)
 {
-#ifdef ADRESS
-  /* #ifdef THERMODYNAMIC_FORCE */
-  realloc_tf_params(ns);
-  /* #endif */
-#endif
   realloc_ia_params(ns);
 }
 
@@ -1583,7 +1496,7 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
 void mpi_get_particles(Particle *result, IntList *bi)
 {
   IntList local_bi;
-  int n_part;
+  int local_part;
   int tot_size, i, g, pnode;
   int *sizes;
   Cell *cell;
@@ -1592,17 +1505,17 @@ void mpi_get_particles(Particle *result, IntList *bi)
   mpi_call(mpi_get_particles_slave, -1, bi != NULL);
 
   sizes = (int*)malloc(sizeof(int)*n_nodes);
-  n_part = cells_get_n_particles();
+  local_part = cells_get_n_particles();
 
   /* first collect number of particles on each node */
-  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
+  MPI_Gather(&local_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
   tot_size = 0;
   for (i = 0; i < n_nodes; i++)
     tot_size += sizes[i];
 
-  if (tot_size!=n_total_particles) {
-    fprintf(stderr,"%d: ERROR: mpi_get_particles: n_total_particles %d, but I counted %d. Exiting...\n",
-	    this_node, n_total_particles, tot_size);
+  if (tot_size!=n_part) {
+    fprintf(stderr,"%d: ERROR: mpi_get_particles: n_part %d, but I counted %d. Exiting...\n",
+	    this_node, n_part, tot_size);
     errexit();
   }
 
@@ -1867,6 +1780,24 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 #endif  
   
   on_coulomb_change();
+#endif
+}
+
+/*************** REQ_BCAST_COULOMB ************/
+void mpi_bcast_collision_params()
+{
+#ifdef COLLISION_DETECTION
+  mpi_call(mpi_bcast_collision_params_slave, 1, 0);
+  mpi_bcast_collision_params_slave(-1, 0);
+#endif
+}
+
+void mpi_bcast_collision_params_slave(int node, int parm)
+{   
+#ifdef COLLISION_DETECTION
+  MPI_Bcast(&collision_params, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
+
+  recalc_forces = 1;
 #endif
 }
 

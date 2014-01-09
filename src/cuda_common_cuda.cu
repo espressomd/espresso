@@ -146,10 +146,10 @@ __global__ void reset_particle_force(CUDA_particle_force *particle_forces_device
 void gpu_change_number_of_part_to_comm() {
   //we only run the function if there are new particles which have been created since the last call of this function
 
-  if ( global_part_vars_host.number_of_particles != n_total_particles && global_part_vars_host.communication_enabled == 1 && this_node == 0) {
+  if ( global_part_vars_host.number_of_particles != n_part && global_part_vars_host.communication_enabled == 1 && this_node == 0) {
     
     global_part_vars_host.seed = (unsigned int)i_random(max_ran);
-    global_part_vars_host.number_of_particles = n_total_particles;
+    global_part_vars_host.number_of_particles = n_part;
 
     cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
 

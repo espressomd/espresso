@@ -879,7 +879,7 @@ integration step, the forces accumulated on a virtual site are
 distributed back to those particles, from which the virtual site was
 derived.
 
-There are two distinct types of virtual sites, decribed in the
+There are two distinct types of virtual sites, described in the
 following.
 
 \subsection{Virtual sites in the center of mass of a molecule}
@@ -917,6 +917,8 @@ perform the following steps in that order
     integrate 0
   \end{essyntaxbox}
 \end{enumerate}
+Please note that the use of virtual sites requires that the particles are numbered consecutively. I.e., the particle ids should go from zero to $N-1$, where $N$ is the number of particles.
+
 
 \subsection{Rigid arrangements of particles}
 
@@ -992,6 +994,10 @@ Please note:
 \item If the virtual sites represent actual particles carrying a mass,
   the inertia tensor of the non-virtual particle in the center of mass
   needs to be adapted.
+\item 
+The presence of rigid bodies constructed by means of virtual sites adds a contribution to the pressure and stress tensor.
+\item
+The use of virtual sites requires that the particles are numbered consecutively. I.e., the particle ids should go from zero to $N-1$, where $N$ is the number of particles.
 \end{itemize}
 
 \subsection{Additional features}

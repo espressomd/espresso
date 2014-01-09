@@ -479,13 +479,13 @@ void    add_mdlc_force_corrections(){
   // --- Create arrays that should contain the corrections to
   //     the forces and torques, and set them to zero.   
  
-  dip_DLC_f_x = (double *) malloc(sizeof(double)*n_total_particles);
-  dip_DLC_f_y = (double *) malloc(sizeof(double)*n_total_particles);
-  dip_DLC_f_z = (double *) malloc(sizeof(double)*n_total_particles);
+  dip_DLC_f_x = (double *) malloc(sizeof(double)*n_part);
+  dip_DLC_f_y = (double *) malloc(sizeof(double)*n_part);
+  dip_DLC_f_z = (double *) malloc(sizeof(double)*n_part);
 	 
-  dip_DLC_t_x = (double *) malloc(sizeof(double)*n_total_particles);
-  dip_DLC_t_y = (double *) malloc(sizeof(double)*n_total_particles);
-  dip_DLC_t_z = (double *) malloc(sizeof(double)*n_total_particles);
+  dip_DLC_t_x = (double *) malloc(sizeof(double)*n_part);
+  dip_DLC_t_y = (double *) malloc(sizeof(double)*n_part);
+  dip_DLC_t_z = (double *) malloc(sizeof(double)*n_part);
 
 
   for(i=0;i<n_local_particles;i++){
@@ -665,7 +665,7 @@ int mdlc_tune(double error)
 
   MDLC_TRACE(fprintf(stderr, "%d: mdlc_tune().\n", this_node));
  
-  n=(double) n_total_particles;
+  n=(double) n_part;
   lz=box_l[2];
   
   a=box_l[0]*box_l[1];

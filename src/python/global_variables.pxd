@@ -44,7 +44,7 @@ cdef extern from "domain_decomposition.hpp":
 
   
 cdef extern from "particle_data.hpp":
-  extern int  n_total_particles
+  extern int n_part
 
 
 cdef extern from "interaction_data.hpp":
@@ -83,10 +83,6 @@ IF LB_GPU:
     ctypedef struct LB_parameters_gpu:
       double tau
     extern LB_parameters_gpu lbpar_gpu
-
-cdef extern from "adresso.hpp":
-  extern double adress_vars[7]
-
 
 cdef extern from "cells.hpp":
   extern double max_range
