@@ -1659,7 +1659,7 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
          time1, time2, time3, time4,
          mdst0, mdst1, mdst2, mdst3,
          mindist, normalize, x, y, z,
-         distance, normal_x, normal_y,
+         distance, normal_x, normal_y, direction,
          xp, yp, zp, xpp, ypp, sin_xy, cos_xy,
          normal_x_3D, normal_y_3D, normal_z_3D,
          normal_3D_x, normal_3D_y, normal_3D_z;
@@ -1849,7 +1849,21 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
     normal_x *= normalize;
     normal_y *= normalize;
 
-    if ( -normal_x*cos(alpha) + normal_y*sin(alpha) > 0.0 )
+    direction = -normal_x*cos(alpha) + normal_y*sin(alpha);
+
+    if ( fabs(direction) < 1.0e-06 && ( fabs( time1 - 0.0 ) < 1.0e-06 || fabs( time1 - 1.0 ) < 1.0e-06 ) )
+    {
+      if( fabs( time1 - 0.0 ) < 1.0e-06 )
+      {
+        direction = -normal_x*sin(alpha) - normal_y*cos(alpha);
+      }
+      else
+      {
+        direction = normal_x*sin(alpha) + normal_y*cos(alpha);
+      }
+    }
+
+    if ( direction > 0.0 )
     {
       distance = mindist;
     }
@@ -1868,9 +1882,23 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
     normal_x *= normalize;
     normal_y *= normalize;
 
-    if ( normal_x*cos(alpha) - normal_y*sin(alpha) > 0.0 )
+    direction = normal_x*cos(alpha) - normal_y*sin(alpha);
+
+    if ( fabs(direction) < 1.0e-06 && ( fabs( time2 - 0.0 ) < 1.0e-06 || fabs( time2 - 1.0 ) < 1.0e-06 ) )
     {
-      distance = mindist;  
+      if( fabs( time2 - 0.0 ) < 1.0e-06 )
+      {
+        direction = -normal_x*sin(alpha) - normal_y*cos(alpha);
+      }
+      else
+      {
+        direction = normal_x*sin(alpha) + normal_y*cos(alpha);
+      }
+    }
+
+    if ( direction > 0.0 )
+    {
+      distance = mindist;
     }
     else
     {
@@ -1887,7 +1915,21 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
     normal_x *= normalize;
     normal_y *= normalize;
 
-    if ( -normal_x*sin(alpha) - normal_y*cos(alpha) > 0.0 )
+    direction = -normal_x*sin(alpha) - normal_y*cos(alpha);
+
+    if ( fabs(direction) < 1.0e-06 && ( fabs( time3 - 0.0 ) < 1.0e-06 || fabs( time3 - 1.0 ) < 1.0e-06 ) )
+    {
+      if( fabs( time3 - 0.0 ) < 1.0e-06 )
+      {
+        direction = normal_x*cos(alpha) - normal_y*sin(alpha);
+      }
+      else
+      {
+        direction = -normal_x*cos(alpha) + normal_y*sin(alpha);
+      }
+    }
+
+    if ( direction > 0.0 )
     {
       distance = mindist;
     }
@@ -1906,7 +1948,21 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
     normal_x *= normalize;
     normal_y *= normalize;
 
-    if ( normal_x*sin(alpha) + normal_y*cos(alpha) > 0.0 )
+    direction = normal_x*sin(alpha) + normal_y*cos(alpha);
+
+    if ( fabs(direction) < 1.0e-06 && ( fabs( time4 - 0.0 ) < 1.0e-06 || fabs( time4 - 1.0 ) < 1.0e-06 ) )
+    {
+      if( fabs( time4 - 0.0 ) < 1.0e-06 )
+      {
+        direction = -normal_x*cos(alpha) + normal_y*sin(alpha);
+      }
+      else
+      {
+        direction = normal_x*cos(alpha) - normal_y*sin(alpha);
+      }
+    }
+
+    if ( direction > 0.0 )
     {
       distance = mindist;
     }
