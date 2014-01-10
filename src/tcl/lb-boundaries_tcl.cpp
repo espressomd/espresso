@@ -1175,6 +1175,18 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
     return (TCL_ERROR);    
   }
 
+  if ( fabs( fmod( lbb->c.hollow_cone.outer_radius , 1.0 ) ) < 1.0e-05 || 
+       fabs( fmod( lbb->c.hollow_cone.inner_radius , 1.0 ) ) < 1.0e-05 || 
+       fabs( fmod( lbb->c.hollow_cone.width , 1.0 ) ) < 1.0e-05 )
+  {
+      fprintf( stderr, "Warning: Using (almost) exact integer values for the radii or width.\n");
+      fprintf( stderr, "         can lead to numerical problems when the LB grid points coincide\n");
+      fprintf( stderr, "         with the lattice, for specific values of the position and\n");
+      fprintf( stderr, "         orientation. Consider adding or subtracting a small number\n");
+      fprintf( stderr, "         to/from the specified sizes to overcome such problems.\n");
+      fflush(stdout);
+  }
+
   return (TCL_OK);
 }
 
