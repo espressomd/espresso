@@ -47,24 +47,24 @@ void EspressoSystemInterface::gatherParticles() {
   Cell *cell;
   Particle *p;
   int i,c,np;
-  R.clear();
-  Q.clear();
+
+  // std::cout << "EspressoSystemInterface::gatherParticles() m_gpu " << m_gpu << " m_split_particleStruct " << m_splitParticleStructGpu << std::endl;
 
   // get particles from other nodes
 #ifdef CUDA
-
   if (m_gpu)
   {
-    puts("starting     gpu_init_particle_comm();    ");
     gpu_init_particle_comm();    
-    puts("starting    copy_part_data_to_gpu();");
     copy_part_data_to_gpu();
-    split_particle_struct();
-    puts("starting     split_particle_struct();");
+    if(m_splitParticleStructGpu)
+      split_particle_struct();
   }
 #endif
 
   if (needsQ() || needsR()) {
+    R.clear();
+    Q.clear();
+
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c];
       p  = cell->part;

@@ -223,9 +223,8 @@ void gpu_init_particle_comm() {
       }
     }
   }
+  gpu_change_number_of_part_to_comm(); 
   global_part_vars_host.communication_enabled = 1;
-
-  gpu_change_number_of_part_to_comm();  
 }
 
 CUDA_particle_data* gpu_get_particle_pointer() {
@@ -250,7 +249,6 @@ CUDA_fluid_composition* gpu_get_fluid_composition_pointer() {
 }
 
 void copy_part_data_to_gpu() {
-  printf("copy_part_data_to_gpu(): com_en %d, nop %d\n", global_part_vars_host.communication_enabled, global_part_vars_host.number_of_particles);
   if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
     
     cuda_mpi_get_particles(particle_data_host);

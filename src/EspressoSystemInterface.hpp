@@ -7,7 +7,7 @@
 
 class EspressoSystemInterface : public SystemInterface {
 public:
-  EspressoSystemInterface() : m_gpu_npart(0), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_gpu(false) {};
+  EspressoSystemInterface() : m_gpu_npart(0), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_gpu(false), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
   void init();
   void update();
 
@@ -50,6 +50,7 @@ public:
   bool hasRGpu() { return true; };
   bool requestRGpu() { 
     m_needsRGpu = hasRGpu();
+    m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
     return m_needsRGpu; 
   };
@@ -59,6 +60,7 @@ public:
   bool hasVGpu() { return true; };
   bool requestVGpu() { 
     m_needsVGpu = hasVGpu();
+    m_splitParticleStructGpu |= m_needsVGpu;
     m_gpu |= m_needsVGpu;
     return m_needsVGpu; 
   };
@@ -68,9 +70,16 @@ public:
   bool hasQGpu() { return true; };
   bool requestQGpu() { 
     m_needsQGpu = hasQGpu(); 
+    m_splitParticleStructGpu |= m_needsQGpu;
     m_gpu |= m_needsQGpu;
     return m_needsQGpu; 
   };
+
+  bool requestParticleStructGpu() {
+    m_needsParticleStructGpu = true;
+    m_gpu |= m_needsParticleStructGpu;
+    return true;
+  }
 
 protected:
   void gatherParticles();
@@ -99,6 +108,9 @@ protected:
 
   unsigned int m_npart;
   Vector3 m_box;
+
+  bool m_needsParticleStructGpu;
+  bool m_splitParticleStructGpu;
 };
 
 /* Need explicite specialization, otherwise some compilers do not produce the objects. */

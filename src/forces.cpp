@@ -72,20 +72,12 @@ void init_forces();
 
 void force_calc()
 {
-  puts("force_calc().");
-#if defined(LB_GPU)
-  espressoSystemInterface.requestRGpu();
-  espressoSystemInterface.requestVGpu();
+#if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
+  espressoSystemInterface.requestParticleStructGpu();
 #endif
 
-#if (defined(ELECTROSTATICS) && defined(CUDA))
-  espressoSystemInterface.requestRGpu();
-  espressoSystemInterface.requestQGpu();
-#endif
   espressoSystemInterface.update();
 
-  puts("boing");
-    
 #ifdef LB_GPU
 #ifdef SHANCHEN
   if (lattice_switch & LATTICE_LB_GPU && this_node == 0) lattice_boltzmann_calc_shanchen_gpu();
