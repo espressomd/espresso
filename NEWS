@@ -57,6 +57,7 @@ Changes visible for developers
 ------------------------------
 
 * The code has been switched to using a C++ compiler.
+* The EspressoInterfaceClass has changed.
 
 ESPResSo 3.2
 ============

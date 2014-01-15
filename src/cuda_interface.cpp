@@ -27,7 +27,6 @@ void cuda_bcast_global_part_params() {
 /*************** REQ_GETPARTS ************/
 void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
 {
-  printf("%d: cuda_mpi_get_particles()\n", this_node);
     int n_part;
     int g, pnode;
     Cell *cell;
@@ -41,14 +40,12 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
     n_part = cells_get_n_particles();
 
     
-    printf("%d: MPI_Gather\n", this_node);
     /* first collect number of particles on each node */
     MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 
     /* just check if the number of particles is correct */
     if(this_node > 0){
       /* call slave functions to provide the slave datas */
-      printf("%d: calling_slave()\n", this_node);
       cuda_mpi_get_particles_slave();
     }
     else {
