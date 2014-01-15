@@ -48,16 +48,17 @@ void EspressoSystemInterface::gatherParticles() {
   Particle *p;
   int i,c,np;
 
-  // std::cout << "EspressoSystemInterface::gatherParticles() m_gpu " << m_gpu << " m_split_particleStruct " << m_splitParticleStructGpu << std::endl;
+  std::cout << this_node << ": EspressoSystemInterface::gatherParticles() m_gpu " << m_gpu << " m_split_particleStruct " << m_splitParticleStructGpu << std::endl;
 
   // get particles from other nodes
 #ifdef CUDA
   if (m_gpu)
   {
-    gpu_init_particle_comm();    
-    copy_part_data_to_gpu();
-    if(m_splitParticleStructGpu)
-      split_particle_struct();
+    if(gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
+      copy_part_data_to_gpu();
+      if(m_splitParticleStructGpu && (this_node == 0)) 
+	split_particle_struct();
+    }
   }
 #endif
 

@@ -64,6 +64,7 @@
 #include "galilei.hpp"
 #include "statistics_correlation.hpp"
 #include "cuda_interface.hpp"
+#include "EspressoSystemInterface.hpp"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -2374,6 +2375,7 @@ void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy)
 {
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+  espressoSystemInterface.requestParticleStructGpu();
 #endif
 }
 

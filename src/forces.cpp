@@ -72,9 +72,6 @@ void init_forces();
 
 void force_calc()
 {
-#if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
-  espressoSystemInterface.requestParticleStructGpu();
-#endif
 
   espressoSystemInterface.update();
 
