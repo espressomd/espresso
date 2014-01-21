@@ -776,6 +776,89 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
 //  }
 //  return 0 ;
 
+int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **argv, int *change, int *dim_A, radial_density_data *r_data){
+	*change=0;
+	r_data->rbins = 1;
+	r_data->maxr	= 0;
+	r_data->minr	= 0;
+	double temp[3];
+	temp[0] = 0.0; temp[1] = 0.0; temp[2] = 0.0;
+	//memcpy(r_data->start_point, temp, 3*sizeof(double));
+	//memcpy(r_data->end_point, temp, 3*sizeof(double));
+	while (argc > 0) {
+		//printf("%d %s\n", argc, argv[0]);
+		if (ARG0_IS_S("type")){
+			if ( !parse_id_list(interp, argc, argv, change, &r_data->id_list) == TCL_OK ) {
+					Tcl_AppendResult(interp, "Parsing particles went wrong!\n", (char *) NULL);
+					return TCL_ERROR;
+				}
+			r_data->type = atoi(argv[1]);
+			argc-=*change;
+			argv+=*change;
+		}
+		if (ARG0_IS_S("rbins")){
+			r_data->rbins = atoi(argv[1]);
+			*dim_A = r_data->rbins;
+			argc-=2;
+			argv+=2;
+			*change+=2;
+		}
+		if (ARG0_IS_S("maxr")){
+			r_data->maxr = atof(argv[1]);
+			argc-=2;
+			argv+=2;
+			*change+=2;
+		}
+		if (ARG0_IS_S("minr")){
+			r_data->minr = atof(argv[1]);
+			argc-=2;
+			argv+=2;
+			*change+=2;
+		}
+		if (ARG0_IS_S("start_point")){
+//			r_data->start_point[0] = atof(argv[1]);
+//			r_data->start_point[1] = atof(argv[2]);
+//			r_data->start_point[2] = atof(argv[3]);
+//			argc-=4;
+//			argv+=4;
+//			*change += 4;
+			r_data->start_point_id = atoi(argv[1]);
+			argc-=2;
+			argv+=2;
+			*change += 2;
+						
+		}
+		if (ARG0_IS_S("end_point")){
+//			r_data->end_point[0] = atof(argv[1]);
+//			r_data->end_point[1] = atof(argv[2]);
+//			r_data->end_point[2] = atof(argv[3]);
+//			argc-=4;
+//			argv+=4;
+//			*change += 4;
+			r_data->end_point_id = atoi(argv[1]);
+			argc -= 2;
+			argv += 2;
+			*change += 2;			
+		}
+	}
+	return TCL_OK;
+}
+
+
+int tcl_command_radial_density_distribution(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs ){
+  int temp;
+  *change = 0;
+  radial_density_data *r_data = (radial_density_data *) malloc(sizeof(radial_density_data));
+	
+  if (! tcl_parse_radial_density_distribution(interp, argc-1, argv+1, &temp, &obs->n,  r_data) == TCL_OK ) {
+		Tcl_AppendResult(interp, "Usage: radial_density_distribution type $type minr $minr maxr $maxr rbins $rbins start_point $X $Y $Z end_point $X $Y $Z\n", (char *) NULL);
+    return TCL_ERROR;
+  }
+  obs->fun = &observable_radial_density_distribution;
+	obs->args = (void *) r_data;
+	return TCL_OK;
+}
+
 
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
@@ -848,6 +931,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(radial_flux_density_profile, tclcommand_observable_radial_flux_density_profile,id);
     REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile,id);
     REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile,id);
+	REGISTER_OBSERVABLE(radial_density_distribution, tcl_command_radial_density_distribution, id);
     REGISTER_OBSERVABLE(tclcommand, tclcommand_observable_tclcommand,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;

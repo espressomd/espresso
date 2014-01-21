@@ -127,6 +127,18 @@ typedef struct {
   int zbins;
 } radial_profile_data;
 
+int observable_radial_density_distribution(void* params, double* A, unsigned int n_A);
 
+typedef struct { 
+	IntList *id_list;
+	int type;
+	double minr;
+	double maxr;
+	int rbins;
+	int start_point_id;
+	int end_point_id;
+	//double start_point[3];
+	//double end_point[3];
+} radial_density_data;
 
 #endif

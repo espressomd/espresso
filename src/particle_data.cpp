@@ -825,14 +825,12 @@ int set_particle_type(int part, int type)
 
   mpi_send_type(pnode, part, type);
 
-#ifdef ADDITIONAL_CHECKS
   if ( Type_array_init ) { 
 	  if ( add_particle_to_list(part, type) ==  ES_ERROR ){
 		  //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
 		  return ES_ERROR;
 	  }
   }
-#endif
   
 
   return ES_OK;

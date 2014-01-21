@@ -836,6 +836,162 @@ int observable_interacts_with (void* params_p, double* A, unsigned int n_A) {
 }
 
 
+int observable_radial_density_distribution(void* params, double* A, unsigned int n_A){
+
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
+
+  radial_density_data *r_data = (radial_density_data *) params;
+  IntList *ids;  
+  if ( GC_init && Type_array_init ) {
+	  ids = (IntList *) malloc(sizeof(IntList));
+
+	  //using the grandcanonical scheme, always update the particle id list
+	  ids->e = (int *) malloc(sizeof(int)*type_array[Index.type[r_data->type]].max_entry);
+	  memcpy(ids->e, type_array[Index.type[r_data->type]].id_list, type_array[Index.type[r_data->type]].max_entry*sizeof(int));
+	  ids->n = type_array[Index.type[r_data->type]].max_entry;
+	  ids->max = type_array[Index.type[r_data->type]].cur_size;
+  } else { 
+	  ids = r_data->id_list;
+  }
+  //r_data->id_list = ids;
+  //ids = r_data->id_list;
+
+//  double *start_point = r_data->start_point;
+//  double *end_point = r_data->end_point;
+
+  double start_point[3];
+  double end_point[3];
+  int image_box[3];
+  memcpy(start_point, partCfg[r_data->start_point_id].r.p, 3*sizeof(double));
+  memcpy(image_box, partCfg[r_data->start_point_id].l.i, 3*sizeof(int));
+  unfold_position(start_point, image_box);
+  memcpy(end_point, partCfg[r_data->end_point_id].r.p, 3*sizeof(double));
+  memcpy(image_box, partCfg[r_data->end_point_id].l.i, 3*sizeof(int));
+  unfold_position(end_point, image_box);
 
 
+  double *bin_volume = (double *) malloc(sizeof(double)*r_data->rbins);
+ 
+  double part_pos[3];
+  int img[3];
+  double part_norm;
+  double AB[3];		// normalized normal vector pointing to start point
+  double BA[3];		// ...									end point
+  double Apart[3];	// vector difference start_point - part_pos
+  double norm_Apart;
+  double normAB;
+  double distA;
+  double distB;
+  double angle;
+  double r_dist;
+  double cross_section[3];
+  double tmp[3];
+  double tmp2[3];
+  char SP=0;
+
+  get_mi_vector(tmp, start_point, end_point);
+  end_point[0] = start_point[0] - tmp[0];
+  end_point[1] = start_point[1] - tmp[1];
+  end_point[2] = start_point[2] - tmp[2];
+
+  double rbin_size = (r_data->maxr - r_data->minr)/(r_data->rbins - 1);
+  int rbin_id;
+
+  get_mi_vector(AB, start_point, end_point);
+  get_mi_vector(BA, end_point, start_point);
+  //printf("lenAB: %1.3e, lenBA: %1.3e\n", normr(AB), normr(BA));
+  normAB = normr(AB); 
+  for (int i=0; i<r_data->rbins; i++) {
+	  bin_volume[i] = normAB*( pow(r_data->minr + (i+1)*rbin_size, 2) - pow(r_data->minr + i*rbin_size, 2) ) * PI;
+  }
+
+  unit_vector(AB, AB);
+  unit_vector(BA, BA);
+
+  for (unsigned int i=0; i<n_A; i++)
+	  A[i] = 0.0;
+
+  for (int i=0; i < ids->n; i++){
+	  part_pos[0]=partCfg[ids->e[i]].r.p[0];
+	  part_pos[1]=partCfg[ids->e[i]].r.p[1];
+	  part_pos[2]=partCfg[ids->e[i]].r.p[2];
+	  // that might seem weird, but this ensures that the used particle position is the
+	  // closest image to one of the two points that define the axis
+	  get_mi_vector(tmp, part_pos, start_point);
+	  get_mi_vector(tmp2, part_pos, end_point);
+
+	  if ( normr(tmp) < normr(tmp2) ) {
+		  SP = 1;
+		  part_pos[0] = start_point[0] + tmp[0];
+		  part_pos[1] = start_point[1] + tmp[1];
+		  part_pos[2] = start_point[2] + tmp[2];
+	  } else {
+		  SP = 0;
+		  part_pos[0] = end_point[0] + tmp2[0];
+		  part_pos[1] = end_point[1] + tmp2[1];
+		  part_pos[2] = end_point[2] + tmp2[2];
+	  }
+
+      //memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+      //fold_position(part_pos, img);
+	  part_norm = normr(part_pos);
+
+	  // test if the particle position is within our scope 
+	  // using the vector normal representation of a plane
+	  double dummy[3];
+	  distA = scalar(AB, tmp);
+	  if ( distA > 0 )
+		  continue;
+
+	  distB =  scalar(BA, tmp2);
+	  if ( distB > 0 )
+		  continue;
+
+	  // particle in scope
+	  // now calculate the distance from the given axis using simple geometry
+	  if ( SP == 1 ) 
+		  vecsub(start_point, part_pos, Apart);
+	  else {
+		  *AB = *BA;
+		  vecsub(end_point, part_pos, Apart);
+	  }
+
+	  norm_Apart = normr(Apart);
+	  angle = acos(scalar(Apart, AB)/norm_Apart);
+	  r_dist= sin(angle)*norm_Apart;
+	  vector_product(AB, Apart, tmp);
+	  vector_product(AB, tmp, tmp2);
+	  unit_vector(tmp2, tmp2);
+	  //tmp2 should now contain a vecor that is parallel to the connection from 
+	  //the crosssection of the axis to the particle position
+	  //if ( scalar(Apart, tmp2) < 0 ){
+	  //    cross_section[0] = part_pos[0] - tmp[0]*r_dist;
+	  //    cross_section[1] = part_pos[1] - tmp[1]*r_dist;
+	  //    cross_section[2] = part_pos[2] - tmp[2]*r_dist;
+	  //} else {
+	  //    cross_section[0] = part_pos[0] + tmp[0]*r_dist;
+	  //    cross_section[1] = part_pos[1] + tmp[1]*r_dist;
+	  //    cross_section[2] = part_pos[2] + tmp[2]*r_dist;
+	  //}
+	  //
+	  //get_mi_vector(tmp, part_pos, cross_section);
+	  //r_dist = normr(tmp); 
+	  ////finally the minimal distance of the particle and the chosen axis in periodic systems
+	  rbin_id = (int) floor( (r_dist - r_data->minr)/rbin_size );
+	  if ( rbin_id >= r_data->rbins || rbin_id < 0 )
+		  continue;
+
+	  A[rbin_id]+=1.0/bin_volume[rbin_id];
+  }
+  free(bin_volume);
+  if ( GC_init && Type_array_init ) {
+	  free(ids->e);
+	  free(ids);
+	}
+  return 0;
+}
 
