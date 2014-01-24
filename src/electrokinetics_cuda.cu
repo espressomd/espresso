@@ -1773,7 +1773,7 @@ void ek_integrate() {
   
   /* Integrate Navier-Stokes */
   
-  lb_integrate_GPU();
+//  lb_integrate_GPU();
 
 
   
