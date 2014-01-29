@@ -48,6 +48,7 @@
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
 #include "hat.hpp"
+#include "umbrella.hpp"
 #include "maggs.hpp"
 #include "tab.hpp"
 #include "overlap.hpp"
@@ -172,6 +173,10 @@ inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_para
  /*hat potential*/
 #ifdef HAT
   add_hat_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+  /*umbrella potential*/
+#ifdef UMBRELLA
+  add_umbrella_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
   /* lennard jones cosine */
 #ifdef LJCOS

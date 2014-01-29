@@ -40,6 +40,7 @@
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
 #include "hat.hpp"
+#include "umbrella.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljangle.hpp"
@@ -169,6 +170,11 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 #ifdef HAT
   /* hat */
   ret  += hat_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef UMBRELLA
+  /* umbrella */
+  ret  += umbrella_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef LJCOS2

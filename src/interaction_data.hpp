@@ -78,6 +78,8 @@
 #define BONDED_IA_AREA_FORCE_GLOBAL 18 
 /** Type of bonded interaction is a linear stretching force. */
 #define BONDED_IA_STRETCHLIN_FORCE 19 
+/** Type of bonded interaction is umbrella. */
+#define BONDED_IA_UMBRELLA 20
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -352,6 +354,15 @@ typedef struct {
   /*@{*/
   double HAT_Fmax;
   double HAT_r;
+  /*@}*/
+#endif
+
+#ifdef UMBRELLA
+  /** \name umbrella potential */
+  /*@{*/
+  double UMBRELLA_k;
+  int    UMBRELLA_dir;
+  double UMBRELLA_r;
   /*@}*/
 #endif
 
@@ -641,6 +652,14 @@ typedef struct {
       double *para_b;
       double *para_c;
     } overlap;
+#endif
+#ifdef UMBRELLA
+    /** Parameters for umbrella potential */
+    struct {
+      double k;
+      int    dir;
+      double r;
+    } umbrella;
 #endif
     /** Dummy parameters for -LJ Potential */
     struct {

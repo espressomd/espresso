@@ -46,6 +46,7 @@
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
 #include "hat.hpp"
+#include "umbrella.hpp"
 #include "tab.hpp"
 #include "overlap.hpp"
 #include "ljcos.hpp"
@@ -235,6 +236,12 @@ void initialize_ia_params(IA_parameters *params) {
   params->HAT_Fmax =
     params->HAT_r = 0.0;
 #endif
+
+#ifdef UMBRELLA
+  params->UMBRELLA_k =
+  params->UMBRELLA_dir =
+  params->UMBRELLA_r = 0.0;
+#endif    
 
 #ifdef LJCOS
   params->LJCOS_eps =
@@ -674,6 +681,8 @@ const char *get_name_of_bonded_ia(int i) {
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:
     return "tabulated";
+  case BONDED_IA_UMBRELLA:
+    return "umbrella";
   case BONDED_IA_OVERLAPPED:
     return "overlapped";
   case BONDED_IA_RIGID_BOND:
