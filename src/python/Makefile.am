@@ -56,7 +56,7 @@ cython_verbose_0 = @echo "  CYTHON   $@";
 # thermostat.cpp: thermostat.pxd myconfig.pxi
 # utils.cpp: utils.pxd myconfig.pxi
 
-CLEANFILES = espresso.cpp \
+CLEANFILES += espresso.cpp \
 	particle_data.cpp \
 	analyze.cpp \
 	cellsystem.cpp \
