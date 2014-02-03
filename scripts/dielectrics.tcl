@@ -216,7 +216,9 @@ proc dielectric_sphere { args } {
   for { set i 0 } { $i <= $n_half_equator } { incr i } {
     set phi 0.
     set n_circle [ expr 2*round($n_half_equator*sin($theta)) ]
-    set incr_phi [expr 2*$pi/$n_circle]
+    if {$n_circle > 0} {
+       set incr_phi [expr 2*$pi/$n_circle]                                      
+    }
     for { set j 0 } { $j < $n_circle } { incr j} {
        set x [ expr  $radius*cos($phi)*sin($theta) ]
        set y [ expr  $radius*sin($phi)*sin($theta) ]
