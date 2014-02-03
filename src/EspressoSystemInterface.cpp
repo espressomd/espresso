@@ -62,7 +62,9 @@ void EspressoSystemInterface::gatherParticles() {
 
   if (needsQ() || needsR()) {
     R.clear();
+    #ifdef ELECTROSTATICS
     Q.clear();
+    #endif
 
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c];
@@ -104,6 +106,7 @@ const SystemInterface::const_vec_iterator &EspressoSystemInterface::rEnd() {
   return m_r_end;
 }
 
+#ifdef ELECTROSTATICS
 SystemInterface::const_real_iterator &EspressoSystemInterface::qBegin() {
   m_q_begin = Q.begin();
   return m_q_begin;
@@ -113,6 +116,8 @@ const SystemInterface::const_real_iterator &EspressoSystemInterface::qEnd() {
   m_q_end = Q.end();
   return m_q_end;
 }
+
+#endif
 
 unsigned int EspressoSystemInterface::npart() {
   return m_npart;
