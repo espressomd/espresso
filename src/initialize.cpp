@@ -285,7 +285,7 @@ void on_integration_start()
         errtext = runtime_error(128);
         ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition} ");
         check_runtime_errors();
-      }
+    }
 
     if(max_cut < reaction.range) {
       errtext = runtime_error(128);
