@@ -39,11 +39,11 @@ public:
   const SystemInterface::const_vec_iterator &rEnd();
   bool hasR() { return true; };
 
-  #ifdef ELECTROSTATICS
+#ifdef ELECTROSTATICS
   SystemInterface::const_real_iterator &qBegin();
   const SystemInterface::const_real_iterator &qEnd();
   bool hasQ() { return true; };
-  #endif
+#endif
 
   float *rGpuBegin() { return m_r_gpu_begin; };
   float *rGpuEnd() { return m_r_gpu_end; };
@@ -86,7 +86,9 @@ protected:
   void split_particle_struct();
 
   Vector3Container R;
+  #ifdef ELECTROSTATICS
   RealContainer Q;
+  #endif
 
   const_vec_iterator m_r_begin;
   const_vec_iterator m_r_end;
