@@ -1069,8 +1069,11 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 #endif
 				}
 
+#ifdef SHANCHEN
 //printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
 exit(printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__));
+#endif
+
 				lb_lbnode_get_u(tmpind, local_v);
 				
 				
