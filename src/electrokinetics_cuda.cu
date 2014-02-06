@@ -1504,9 +1504,9 @@ __global__ void ek_reaction( ) {
     }
     else if ( ek_parameters_gpu.node_is_catalyst[index] == 2 )
     {
-      *rho_reactant = ek_parameters_gpu.rho_reactant_reservoir;
-      *rho_product0 = ek_parameters_gpu.rho_product0_reservoir;
-      *rho_product1 = ek_parameters_gpu.rho_product1_reservoir; 
+      *rho_reactant = ek_parameters_gpu.rho_reactant_reservoir * powf(ek_parameters_gpu.agrid,3);
+      *rho_product0 = ek_parameters_gpu.rho_product0_reservoir * powf(ek_parameters_gpu.agrid,3);
+      *rho_product1 = ek_parameters_gpu.rho_product1_reservoir * powf(ek_parameters_gpu.agrid,3); 
     } 
   }
 }
@@ -1773,7 +1773,7 @@ void ek_integrate() {
   
   /* Integrate Navier-Stokes */
   
-//  lb_integrate_GPU();
+  lb_integrate_GPU();
 
 
   
@@ -2342,9 +2342,12 @@ int ek_node_print_mass_flux( int x, int y, int z, double* mass_flux ) { //TODO o
     flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]-1, EK_LINK_DUD-13) ];
     flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]+1, EK_LINK_DUU-13) ];
 
-    mass_flux_local_cartesian[0] += current_mass_fraction * flux_local_cartesian[0] * ek_parameters.agrid / ek_parameters.time_step;
-    mass_flux_local_cartesian[1] += current_mass_fraction * flux_local_cartesian[1] * ek_parameters.agrid / ek_parameters.time_step;
-    mass_flux_local_cartesian[2] += current_mass_fraction * flux_local_cartesian[2] * ek_parameters.agrid / ek_parameters.time_step;
+    mass_flux_local_cartesian[0] += current_mass_fraction * flux_local_cartesian[0] 
+                                    / ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid );
+    mass_flux_local_cartesian[1] += current_mass_fraction * flux_local_cartesian[1] 
+                                    / ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid );
+    mass_flux_local_cartesian[2] += current_mass_fraction * flux_local_cartesian[2] 
+                                    / ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid );
   }
 
   mass_flux[0] = mass_flux_local_cartesian[0];
@@ -2443,7 +2446,7 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%e\n", densities[ i ]/(ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) );
+    fprintf( fp, "%e\n", densities[ i ] / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) );
   }
   
   free( densities );
@@ -2617,9 +2620,9 @@ LOOKUP_TABLE default\n",
 
 
     fprintf( fp, "%e %e %e\n",
-             flux_local_cartesian[0] * ek_parameters.agrid / ek_parameters.time_step,
-             flux_local_cartesian[1] * ek_parameters.agrid / ek_parameters.time_step,
-             flux_local_cartesian[2] * ek_parameters.agrid / ek_parameters.time_step );
+             flux_local_cartesian[0] / ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid ),
+             flux_local_cartesian[1] / ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid ),
+             flux_local_cartesian[2] / ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid ) );
   }
   
   free( fluxes );
@@ -2760,7 +2763,7 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%e\n", pressure[ i ]/(ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) );
+    fprintf( fp, "%e\n", pressure[ i ]/(ek_parameters.agrid) );
   }
   
   free( pressure );
@@ -2963,9 +2966,12 @@ LOOKUP_TABLE default\n",
       flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]-1, EK_LINK_DUD-13) ];
       flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]+1, EK_LINK_DUU-13) ];
 
-      mass_flux_local_cartesian[3*i + 0] += current_mass_fraction * flux_local_cartesian[0] * ek_parameters.agrid / ek_parameters.time_step;
-      mass_flux_local_cartesian[3*i + 1] += current_mass_fraction * flux_local_cartesian[1] * ek_parameters.agrid / ek_parameters.time_step;
-      mass_flux_local_cartesian[3*i + 2] += current_mass_fraction * flux_local_cartesian[2] * ek_parameters.agrid / ek_parameters.time_step;
+      mass_flux_local_cartesian[3*i + 0] += current_mass_fraction * flux_local_cartesian[0]
+                                            / ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid );
+      mass_flux_local_cartesian[3*i + 1] += current_mass_fraction * flux_local_cartesian[1]
+                                            / ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid );
+      mass_flux_local_cartesian[3*i + 2] += current_mass_fraction * flux_local_cartesian[2]
+                                            / ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid );
 
     }
   }
@@ -3337,9 +3343,9 @@ int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
   for(int y=0; y<int(ek_parameters.dim_y); y++) {
   for(int x=0; x<int(ek_parameters.dim_x); x++) {	 
 
-    pos[0] = x + 0.5;
-    pos[1] = y + 0.5;
-    pos[2] = z + 0.5;
+    pos[0] = (x + 0.5)*lbpar_gpu.agrid;
+    pos[1] = (y + 0.5)*lbpar_gpu.agrid;
+    pos[2] = (z + 0.5)*lbpar_gpu.agrid;
 
     switch (boundary->type)
     {

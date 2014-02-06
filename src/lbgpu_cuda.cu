@@ -2697,7 +2697,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
            n_lb_boundaries_gpu > 0 )
        )
     {
-//      reset_mode0_homogeneously(mode);
+      reset_mode0_homogeneously(mode);
     }
   }
 #endif
