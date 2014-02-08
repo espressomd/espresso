@@ -549,6 +549,9 @@ proc copy_particles { args } {
 		set args [lrange $args 3 end]
 	    }
 	    "shift" {
+                if {[llength $args] < 3} {
+                    error "copy_particles: shift requires 3 argumets, x-, y- and z-shift"
+                }
 		set shift [lrange $args 1 3]
 		set args [lrange $args 4 end]
 	    }
@@ -588,7 +591,7 @@ proc copy_particles { args } {
                 if {$element == "" || ![string is integer $element]} { break }
                 incr pend
             }
-            set partcmd [lreplace $partcmd $p $pend]
+            set partcmd [lreplace $partcmd $p [expr $pend - 1]]
         }
 
         # and set the new particle
