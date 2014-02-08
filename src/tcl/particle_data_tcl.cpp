@@ -1848,7 +1848,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 	j++;
       }
       /* set/delete bond */
-      if (change_particle_bond(part_num, bond, deleteIt) != TCL_OK) {
+      if (change_particle_bond(part_num, bond, deleteIt) != ES_OK) {
 	Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
 	free(bond);
 	return TCL_ERROR;
