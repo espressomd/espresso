@@ -43,8 +43,8 @@ setmd box_l $box_x $box_y $box_z
 
 # Set the electrokinetic parameters
 
-set agrid [expr 1.0/3.0]
-set dt [expr 1.0/5.0]
+set agrid [expr 2.0/3.0]
+set dt [expr 1.0/13.0]
 set force 0.07
 set sigma -0.04
 set viscosity_dynamic 1.7
@@ -302,10 +302,10 @@ puts "    The anisotropic part relaxes towards isotropic, but it"
 puts "    is not instantaneously isotropic. The elements on the"
 puts "    diagonal must therefore be different.\n"
 
-if { $total_density_difference > 5.0e-04 } {
+if { $total_density_difference > 2.5e-03 } {
   error_exit "Density accuracy not achieved"
 }
-if { $total_velocity_difference > 7.5e-03 } {
+if { $total_velocity_difference > 2.5e-03 } {
   error_exit "Velocity accuracy not achieved"
 }
 if { $total_stress_difference_xx > 5.0e-03 } {
@@ -320,7 +320,7 @@ if { $total_stress_difference_zz > 5.0e-03 } {
 if { $total_stress_difference_xy > 5.0e-06 } {
   error_exit "Pressure accuracy xy component not achieved"
 }
-if { $total_stress_difference_yz > 7.5e-04 } {
+if { $total_stress_difference_yz > 2.5e-02 } {
   error_exit "Pressure accuracy yz component not achieved"
 }
 if { $total_stress_difference_xz > 5.0e-06 } {
@@ -329,16 +329,16 @@ if { $total_stress_difference_xz > 5.0e-06 } {
 if { $total_stress_difference_xx_yy > 5.0e-06 } {
   error_exit "Difference xx to yy component too large"
 }
-if { $total_stress_difference_yy_zz > 2.5e-04 } {
+if { $total_stress_difference_yy_zz > 1.0e-03 } {
   error_exit "Difference yy to zz component too large"
 }
-if { $total_stress_difference_yy_zz < 7.5e-05 } {
+if { $total_stress_difference_yy_zz < 5.0e-04 } {
   error_exit "Difference yy to zz component too small"
 }
-if { $total_stress_difference_xx_zz > 2.5e-04 } {
+if { $total_stress_difference_xx_zz > 1.0e-03 } {
   error_exit "Difference xx to zz component too large"
 }
-if { $total_stress_difference_xx_zz < 7.5e-05 } {
+if { $total_stress_difference_xx_zz < 5.0e-04 } {
   error_exit "Difference xx to zz component too small"
 }
 
