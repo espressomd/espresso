@@ -359,7 +359,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
                           - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_U00_pressure] ] )/
                         ( 2.0f * ek_parameters_gpu.agrid );
 
-    pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
+    pressure_gradient *= powf(ek_parameters_gpu.agrid, 3) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
@@ -375,7 +375,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
                           - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0U0_pressure] ] )/
                         ( 2.0f * ek_parameters_gpu.agrid );
 
-    pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
+    pressure_gradient *= powf(ek_parameters_gpu.agrid, 3) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
@@ -391,7 +391,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
                           - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00U_pressure] ] )/
                         ( 2.0f * ek_parameters_gpu.agrid );
 
-    pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
+    pressure_gradient *= powf(ek_parameters_gpu.agrid, 3) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
@@ -538,7 +538,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
            )
          );
          
-    flux = ek_parameters_gpu.d[species_index] *
+    flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( 1.0f / boltzmannfactor_local +
              1.0f / boltzmannfactor_neighbor
            ) / 2.0f *
@@ -586,7 +586,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
            )
          );
          
-    flux = ek_parameters_gpu.d[species_index] *
+    flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( 1.0f / boltzmannfactor_local +
              1.0f / boltzmannfactor_neighbor
            ) / 2.0f *
@@ -635,7 +635,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              )
            );
            
-    flux = ek_parameters_gpu.d[species_index] *
+    flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( 1.0f / boltzmannfactor_local +
              1.0f / boltzmannfactor_neighbor
            ) / 2.0f *
@@ -685,7 +685,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
            )
          );
              
-    flux = ek_parameters_gpu.d[species_index] *
+    flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( 1.0f / boltzmannfactor_local +
              1.0f/boltzmannfactor_neighbor
            ) / 2.0f *
@@ -710,7 +710,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
            )
          );
     
-    flux = ek_parameters_gpu.d[species_index] *
+    flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( 1.0f / boltzmannfactor_local +
              1.0f / boltzmannfactor_neighbor
            ) / 2.0f *
@@ -734,7 +734,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
            )
          );
     
-    flux = ek_parameters_gpu.d[species_index] *
+    flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( 1.0f / boltzmannfactor_local +
              1.0f / boltzmannfactor_neighbor
            ) / 2.0f *
@@ -758,7 +758,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
            )
          );
     
-    flux = ek_parameters_gpu.d[species_index] *
+    flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( 1.0f / boltzmannfactor_local +
              1.0f / boltzmannfactor_neighbor
            ) / 2.0f *
@@ -782,7 +782,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
            )
          );
     
-    flux = ek_parameters_gpu.d[species_index] *
+    flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( 1.0f / boltzmannfactor_local +
              1.0f / boltzmannfactor_neighbor
            ) / 2.0f *
@@ -805,7 +805,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
            )
          );
     
-    flux = ek_parameters_gpu.d[species_index] *
+    flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( 1.0f / boltzmannfactor_local +
              1.0f / boltzmannfactor_neighbor
            ) / 2.0f *
@@ -2713,10 +2713,13 @@ LOOKUP_TABLE default\n",
            ek_parameters.number_of_nodes                                              );
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
-  
-    fprintf( fp, "%e %e %e\n", lbforce[ i ],
-                               lbforce[ i + ek_parameters.number_of_nodes ],
-                               lbforce[ i + 2 * ek_parameters.number_of_nodes ] );
+
+    fprintf( fp, "%e %e %e\n", lbforce[ i ] / 
+                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
+                               lbforce[ i + ek_parameters.number_of_nodes ] /
+                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
+                               lbforce[ i + 2 * ek_parameters.number_of_nodes ] /
+                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ) );
   }
   
   free( lbforce );
@@ -2763,7 +2766,7 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%e\n", pressure[ i ]/(ek_parameters.agrid) );
+    fprintf( fp, "%e\n", pressure[ i ] / ek_parameters.agrid );
   }
   
   free( pressure );
