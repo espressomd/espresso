@@ -282,8 +282,8 @@ void tscale_momentum_update()
   
   double tempt, tempr;
   calc_kinetic(&tempt, &tempr);
-  tempt /= (1.5*n_total_particles);
-  tempr /= (1.5*n_total_particles);
+  tempt /= (1.5*n_part);
+  tempr /= (1.5*n_part);
   
   double scalet = sqrt(temperature / tempt);
   #ifdef ROTATION    

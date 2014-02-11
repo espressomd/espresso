@@ -51,10 +51,13 @@ User-visible changes
 
 * Interaction with a wall can be restricted to the inside.
 
+* Removed compiler switch GRANDCANONICAL.
+
 Changes visible for developers
 ------------------------------
 
 * The code has been switched to using a C++ compiler.
+* The EspressoInterfaceClass has changed.
 
 ESPResSo 3.2
 ============

@@ -1,46 +1,60 @@
-import gc
+from functools import update_wrapper
 
-class ThereCanOnlyBeOne():
+class ThereCanOnlyBeOne(BaseException):
     def __init__(self, cls):
         self._cls = cls
     def __str__(self):
-        return "Can create only one instance of '%s'." % self._cls
-        
-class Highlander(object):
-    _instance_count = 0
-    def __init__(self):
-        # if there is more than one instance, it might not have been
-        # garbage collected yet, so start collection now
-        if self.__class__._instance_count > 0: gc.collect()
-        # afterwards, check once more
-        if self.__class__._instance_count > 0: 
+        return "There can only be one instance of '{}' at any time.".format(self._cls)
+
+def highlander(klass):
+    klass.highlander_created = False
+
+    def cls_init(self, *args, **kwargs):
+        "__init__ method by the highlander decorator."
+        if self.__class__.highlander_created:
             raise ThereCanOnlyBeOne(self.__class__)
-        #
-        self.__class__._instance_count += 1
+        self.__class__.highlander_created = True
+    def cls_init_call_orig(self, *args, **kwargs):
+        if self.__class__.highlander_created:
+            raise ThereCanOnlyBeOne(self.__class__)
+        self.__class__.highlander_created = True
+        self.__class__.__init_orig__(self, *args, **kwargs)
 
+    # override the __init__ method of the class to store the bool
+    # "highlander_created"
+    if hasattr(klass, '__init__'):
+        klass.__init_orig__ = klass.__init__
+        klass.__init__ = cls_init_call_orig
+        update_wrapper(cls_init_call_orig, klass.__init_orig__)
+    else:
+        klass.__init__ = cls_init
+        
+    # override the __del__ method of the class
+    def cls_del(self):
+        "__del__ method by the highlander decorator."
+        self.__class__.highlander_created = False
+    def cls_del_call_orig(self):
+        cls_del(self)
+        self.__class__.__del_orig__(self)
+
+    if hasattr(klass, '__del__'):
+        klass.__del_orig__ = klass.__del__
+        klass.__del__ = cls_del_call_orig
+        update_wrapper(cls_del_call_orig, klass.__del_orig__)
+    else:
+        klass.__del__ = cls_del
+
+    return klass
+
+@highlander
+class A:
+    def __init__(self, x):
+        "Create it."
+        self.x = x
     def __del__(self):
-        self.__class__._instance_count -= 1
+        print("A.del called")
 
-class A(Highlander):
-    def __init__(self):
-        pass
-    def __del__(self):
-        Highlander.__del__(self)
-
-h1 = Highlander()
-print A._instance_count
-del h1
-h2 = Highlander()
-try:
-    h3 = Highlander()
-except:
+@highlander
+class B:
     pass
-
-print A._instance_count
-a1 = A()
-print A._instance_count
-del a1
-print A._instance_count
-a2 = A()
-print A._instance_count
 

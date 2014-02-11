@@ -98,10 +98,10 @@ inline void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       part2n = p2->p.identity + ia_params->LJANGLE_bonded1neg;
     }
 
-    if (part1p >= 0 && part1p < n_total_particles &&
-	part1n >= 0 && part1n < n_total_particles &&
-	part2p >= 0 && part2p < n_total_particles &&
-	part2n >= 0 && part2n < n_total_particles     ) {
+    if (part1p >= 0 && part1p < n_part &&
+	part1n >= 0 && part1n < n_part &&
+	part2p >= 0 && part2p < n_part &&
+	part2n >= 0 && part2n < n_part     ) {
 	
       p3 = local_particles[part1p];
       p4 = local_particles[part1n];
@@ -295,10 +295,10 @@ inline double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
       part2n = p2->p.identity + ia_params->LJANGLE_bonded1neg;
     }
 	
-    if (part1p >= 0 && part1p < n_total_particles &&
-	part1n >= 0 && part1n < n_total_particles &&
-	part2p >= 0 && part2p < n_total_particles &&
-	part2n >= 0 && part2n < n_total_particles     ) {
+    if (part1p >= 0 && part1p < n_part &&
+	part1n >= 0 && part1n < n_part &&
+	part2p >= 0 && part2p < n_part &&
+	part2n >= 0 && part2n < n_part     ) {
 	    
       p3 = local_particles[part1p];
       p4 = local_particles[part1n];

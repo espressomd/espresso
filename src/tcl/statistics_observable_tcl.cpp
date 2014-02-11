@@ -55,7 +55,7 @@ int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntLis
     } 
     *ids=input;
     for (i=0; i<input->n; i++) {
-      if (input->e[i] >= n_total_particles) {
+      if (input->e[i] >= n_part) {
         Tcl_AppendResult(interp, "Error parsing ID list. Given particle ID exceeds the number of existing particles\n", (char *)NULL);
         return TCL_ERROR;
       }
@@ -873,7 +873,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
 static int convert_types_to_ids(IntList * type_list, IntList * id_list){ 
       int i,j,n_ids=0,flag;
       sortPartCfg();
-      for ( i = 0; i<n_total_particles; i++ ) {
+      for ( i = 0; i<n_part; i++ ) {
          if(type_list==NULL) { 
 		/* in this case we select all particles */
                flag=1 ;

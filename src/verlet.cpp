@@ -105,7 +105,7 @@ void build_verlet_lists()
   int estimate, sum=0;
   fprintf(stderr,"%d: build_verlet_list_and_force_calc:\n",this_node);
   /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range_nonbonded2,1.5))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+  estimate = 0.5*n_part*(4.0/3.0*PI*pow(max_range_nonbonded2,1.5))*(n_part/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
   if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
 #endif
@@ -211,7 +211,7 @@ void build_verlet_lists_and_calc_verlet_ia()
 
   fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
   /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range_nonbonded2,1.5))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+  estimate = 0.5*n_part*(4.0/3.0*PI*pow(max_range_nonbonded2,1.5))*(n_part/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
   if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
 #endif

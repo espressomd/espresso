@@ -455,20 +455,6 @@ typedef struct {
   double mol_cut_cutoff;
 #endif
   
-#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
-  /** \name Tabulated potential */
-  /*@{*/
-  int ADRESS_TAB_npoints;
-  int ADRESS_TAB_startindex;
-  double ADRESS_TAB_minval;
-  double ADRESS_TAB_maxval;
-  double ADRESS_TAB_stepsize;
-  /** The maximum allowable filename length for a tabulated potential file*/
-#define MAXLENGTH_ADRESSTABFILE_NAME 256
-  char ADRESS_TAB_filename[MAXLENGTH_ADRESSTABFILE_NAME];
-  /*@}*/    
-#endif
-
 #ifdef TUNABLE_SLIP
   double TUNABLE_SLIP_temp;
   double TUNABLE_SLIP_gamma;
@@ -491,23 +477,6 @@ typedef struct {
 } IA_parameters;
 
 /** thermodynamic force parameters */
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-typedef struct{
-  int TF_TAB_npoints;
-  int TF_TAB_startindex;
-  
-  double TF_prefactor;
-  double TF_TAB_minval;
-  double TF_TAB_maxval;
-  double TF_TAB_stepsize;
-#define MAXLENGTH_TF_FILENAME 256
-  char TF_TAB_filename[MAXLENGTH_TF_FILENAME];
-  
-} TF_parameters;
-/* #endif */
-#endif
 
 /** \name Compounds for Coulomb interactions */
 /*@{*/
@@ -975,20 +944,6 @@ extern DoubleList tabulated_forces;
 /** Array containing all tabulated energies*/
 extern DoubleList tabulated_energies;
 
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-/** Array containing all adress tabulated forces*/
-extern DoubleList adress_tab_forces;
-/** Array containing all adress tabulated energies*/
-extern DoubleList adress_tab_energies;
-#endif
-/* #ifdef THERMODYNAMIC_FORCE */
-extern DoubleList thermodynamic_forces;
-
-extern DoubleList thermodynamic_f_energies;
-/* #endif */
-#endif
-
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded interactions). */
@@ -1017,17 +972,6 @@ int coulomb_set_bjerrum(double bjerrum);
 int dipolar_set_Dbjerrum(double bjerrum);
 #endif
 
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-/** Function for initializing adress force and energy tables */
-void adress_force_and_energy_tables_init();
-#endif
-/* #ifdef THERMODYNAMIC_FORCE */
-void tf_tables_init();
-/* #endif */
-
-#endif
-
 /** copy a set of interaction parameters. */
 void copy_ia_params(IA_parameters *dst, IA_parameters *src);
 
@@ -1042,13 +986,6 @@ inline IA_parameters *get_ia_param(int i, int j) {
     Slower than @ref get_ia_param, but can also be used on not
     yet present particle types*/
 IA_parameters *get_ia_param_safe(int i, int j);
-
-#ifdef ADRESS 
-inline TF_parameters *get_tf_param(int i) {
-  extern TF_parameters *tf_params;
-  return &tf_params[i];
-}
-#endif
 
 /** Makes sure that ia_params is large enough to cover interactions
     for this particle type. The interactions are initialized with values
@@ -1066,10 +1003,6 @@ void make_bond_type_exist(int type);
     \ref make_particle_type_exist since it takes care of
     the other nodes.  */
 void realloc_ia_params(int nsize);
-
-#ifdef ADRESS
-void realloc_tf_params(int nsize);
-#endif
 
 /** calculates the maximal cutoff of all real space
     interactions. these are: bonded, non bonded + real space
@@ -1099,10 +1032,6 @@ inline int checkIfParticlesInteract(int i, int j) {
 
 ///
 const char *get_name_of_bonded_ia(int i);
-
-#ifdef ADRESS
-int checkIfTF(TF_parameters *data);
-#endif
 
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);

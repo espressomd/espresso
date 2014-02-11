@@ -127,7 +127,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
   int i, j;
   double value;
   value = 0.0;
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);

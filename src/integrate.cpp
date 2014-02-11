@@ -57,7 +57,6 @@
 #include "lattice.hpp"
 #include "lb.hpp"
 #include "virtual_sites.hpp"
-#include "adresso.hpp"
 #include "statistics_correlation.hpp"
 #include "ghmc.hpp"
 
@@ -191,10 +190,6 @@ void integrate_vv(int n_steps)
     update_mol_vel_pos();
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     if (check_runtime_errors()) return;
-#ifdef ADRESS
-    //    adress_update_weights();
-    if (check_runtime_errors()) return;
-#endif
 #endif
 #ifdef COLLISION_DETECTION
     prepare_collision_queue();
@@ -307,10 +302,6 @@ void integrate_vv(int n_steps)
       cells_update_ghosts();
 #endif
 
-#ifdef ADRESS
-    //adress_update_weights();
-    if (check_runtime_errors()) break;
-#endif
 #endif
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:

@@ -35,10 +35,6 @@
 
 void errexit();
 
-#ifndef inline
- #define inline static inline
-#endif
-
 
 /********************************** REMARK **********************/
 /* This is the fake MPI header of Espresso, and has nothing to  */

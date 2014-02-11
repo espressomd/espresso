@@ -28,7 +28,7 @@ require_feature "ADRESS" off
 require_max_nodes_per_side {1 1 1}
 
 puts "---------------------------------------------------------------"
-puts "- Testcase collision-detection-centers.tcl running on 1 nodes"
+puts "- Testcase collision-detection-centers.tcl running on [setmd n_nodes] nodes"
 puts "---------------------------------------------------------------"
 
 # Setup

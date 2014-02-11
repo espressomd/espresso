@@ -34,7 +34,6 @@ noinst_LTLIBRARIES = libEspresso.la
 # config-features.cpp must be at the beginning so that it is compiled first
 libEspresso_la_SOURCES = \
 	config-features.cpp \
-	adresso.cpp adresso.hpp \
 	cells.cpp cells.hpp \
 	collision.cpp collision.hpp \
 	communication.cpp communication.hpp \
@@ -103,7 +102,10 @@ libEspresso_la_SOURCES = \
 	virtual_sites_com.cpp virtual_sites_com.hpp \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
 	vmdsock.cpp vmdsock.hpp \
-	ghmc.cpp ghmc.hpp
+	ghmc.cpp ghmc.hpp \
+	Vector.hpp \
+	SystemInterface.hpp \
+	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -191,7 +193,8 @@ CUDA_SOURCES = \
 	electrokinetics_cuda.cu \
 	electrokinetics.hpp \
 	lbgpu_cuda.cu \
-	p3m_gpu_cuda.cu
+	p3m_gpu_cuda.cu \
+	EspressoSystemInterface_cuda.cu
 
 libEspresso_la_SOURCES += $(CUDA_SOURCES)
 EXTRA_DIST += $(CUDA_SOURCES)

@@ -24,7 +24,6 @@
 
 
 #include "global.hpp"
-#include "adresso_tcl.hpp"
 #include "binary_file_tcl.hpp"
 #include "constraint_tcl.hpp"
 #include "domain_decomposition_tcl.hpp"
@@ -189,14 +188,6 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
 #endif 
 #endif 
-  /* in adresso.hpp */
-  REGISTER_COMMAND("adress", tclcommand_adress);
-#ifdef ADRESS
-  /* #ifdef THERMODYNAMIC_FORCE */
-  REGISTER_COMMAND("thermodynamic_force", tclcommand_thermodynamic_force);
-  /* #endif */
-  REGISTER_COMMAND("update_adress_weights", tclcommand_update_adress_weights);
-#endif
 #ifdef METADYNAMICS
   /* in metadynamics.cpp */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);

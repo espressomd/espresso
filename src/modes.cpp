@@ -63,7 +63,7 @@ double stray_cut_off = 10000000.0;
 
 void fold_all ( void ) {
   int i ;
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,zdir);
@@ -82,10 +82,10 @@ double calc_zref ( int tmpzdir ) {
 
  /* Find the mean z position of folded particles*/
   zref = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     zref += partCfg[i].r.p[zdir];
   }
-  zref = zref/(double)(n_total_particles);
+  zref = zref/(double)(n_part);
   return zref;
 }
 
@@ -527,7 +527,7 @@ int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList
   fold_all( );
 
 
-   for (i = 0 ; i < n_total_particles ; i++) {
+   for (i = 0 ; i < n_part ; i++) {
     for ( j = 0 ; j < nbeadtypes ; j++ ) {
       if ( beadids->e[j] == partCfg[i].p.type ) {
 	/* What is the relative height compared to the grid */
@@ -633,7 +633,7 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
 
   zref = calc_zref( tmpzdir );
 
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     for ( j = 0 ; j < nbeadtypes ; j++ ) {
       if ( beadids->e[j] == partCfg[i].p.type ) {
 
@@ -786,7 +786,7 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   zref = calc_zref( zdir );
   
   /* Calculate an initial height function of all particles */
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
     gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
     height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
@@ -811,7 +811,7 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   
   /* Calculate the non normalized height function based on all lipids */
   nup = ndown = nstray = nrealstray = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
     gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
     
