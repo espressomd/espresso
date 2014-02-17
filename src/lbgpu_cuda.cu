@@ -3193,7 +3193,7 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values){
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL( get_mesoscopic_values_in_MD_units, dim_grid, threads_per_block,
-              ( nodes_a, print_rho_v_pi, device_rho_v, node_f ) );
+              ( *current_nodes, print_rho_v_pi, device_rho_v, node_f ) );
   cuda_safe_mem( cudaMemcpy( host_values, print_rho_v_pi, size_of_rho_v_pi, cudaMemcpyDeviceToHost ) );
 
 }
