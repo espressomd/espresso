@@ -1717,6 +1717,58 @@ void update_spacially_varyingE_field() {
   }
 }
 
+void create_matrix_spacially_varyingE_field() {
+  int i, j, k;
+  int x_neighbor, y_neighbor, z_neighbor;
+  int dir, incr;
+  
+  number_of_non_fixed_voltage_nodes = 0;
+  for (i=0;i<lbpar_gpu.dim_x;i++) {
+    for (j=0;j<lbpar_gpu.dim_y;j++) {
+      for (k=0;k<lbpar_gpu.dim_z;k++) {
+        if ( ek_node_voltage[i][j][k] != signalling_NaN() ) {
+          linear_index[i][j][k] = number_of_non_fixed_voltage_nodes;
+          number_of_non_fixed_voltage_nodes++;
+        }
+      }
+    }
+  }
+  for (i=0;i<lbpar_gpu.dim_x;i++) {
+    for (j=0;j<lbpar_gpu.dim_y;j++) {
+      for (k=0;k<lbpar_gpu.dim_z;k++) {
+        if ( ek_node_voltage[i][j][k] != signalling_NaN() ) {
+          A[linear_index[i][j][k], linear_index[i][j][k]] = 0;
+          rhs[linear_index[i][j][k]] = 0;
+          for (dir=0;dir<3;dir++) {
+            for (incr=-1;incr<2;incr+=2) { //counter for direction, 
+              x_neighbor = i;
+              if (dir==0) {
+                x_neighbor = (i+incr+lbpar_gpu.dim_x)%lbpar_gpu.dim_x;
+              }
+              y_neighbor = j;
+              if (dir==1) {
+                y_neighbor = (j+incr+lbpar_gpu.dim_y)%lbpar_gpu.dim_y;
+              }
+              z_neighbor = k;
+              if (dir==2) {
+                z_neighbor = (k+incr+lbpar_gpu.dim_z)%lbpar_gpu.dim_z;
+              }
+              if ( ek_node_voltage[x_neighbor][y_neighbor][z_neighbor] != signalling_NaN() ) {
+                A[linear_index[i][j][k], linear_index[x_neighbor][y_neighbor][z_neighbor]] = (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+                A[linear_index[i][j][k], linear_index[i][j][k]] -= (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+              }
+              else {
+                rhs[linear_index[i][j][k]] -= ek_node_voltage[x_neighbor][y_neighbor][z_neighbor]*(permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+                A[linear_index[i][j][k], linear_index[i][j][k]] -= (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 void ek_integrate() {
 
   /** values for the kernel call */
@@ -3357,8 +3409,26 @@ int ek_tag_value_nodes( LB_Boundary *boundary, double value, int EK_TAG_TYPE )
   char *errtxt;
   double pos[3], dist, dist_vec[3];
 
-  if (!ek_node_voltage) ek_node_voltage = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
-  if (!ek_node_permittivity) ek_node_permittivity = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
+  if (!ek_node_voltage) {
+    ek_node_voltage = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
+    for (i=0;i<lbpar_gpu.dim_x;i++) {
+      for (j=0;j<lbpar_gpu.dim_y;j++) {
+        for (k=0;k<lbpar_gpu.dim_z;k++) {
+          ek_node_voltage[i][j][k] = signalling_NaN();
+        }
+      }
+    }
+  }
+  if (!ek_node_permittivity) {
+    ek_node_permittivity = (double*) calloc( ek_parameters.number_of_nodes , sizeof( double ) );
+    for (i=0;i<lbpar_gpu.dim_x;i++) {
+      for (j=0;j<lbpar_gpu.dim_y;j++) {
+        for (k=0;k<lbpar_gpu.dim_z;k++) {
+          ek_node_permittivity[i][j][k] = signalling_NaN();
+        }
+      }
+    }
+  }
   
   for(int z=0; z<int(ek_parameters.dim_z); z++) {
   for(int y=0; y<int(ek_parameters.dim_y); y++) {
