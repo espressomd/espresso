@@ -327,13 +327,6 @@ int mpi_integrate(int n_steps);
                if negative: flag for bonded interaction */
 void mpi_bcast_ia_params(int i, int j);
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-void mpi_bcast_tf_params(int i);
-/* #endif */
-#endif
-
-
 /** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
     \param s the new size for \ref ia_params.
 */
@@ -403,6 +396,9 @@ void mpi_set_time_step(double time_step);
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();
+
+/** send new collision parameters. */
+void mpi_bcast_collision_params();
 
 /** Issue REQ_SEND_EXT_FORCE: send nex external flag and external force. */
 void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3]);

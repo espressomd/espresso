@@ -8,6 +8,9 @@ ESPResSo 3.3
 New user-visible features
 -------------------------
 
+* ELECTROKINETICS: An algorithm to treat species of ions on a mean-field
+  level. Implementation takes advantage of a GPU.
+
 * Provide the preliminary Python interface. Configure with
   --with-python-interface.
 
@@ -28,6 +31,13 @@ New user-visible features
 
 User-visible changes
 --------------------
+* The pressure contribution due to rigid bodies constructed by means of the 
+  virtual sites relative mechanism is included, both for pressure and stress 
+  tensor. Note that the corresponding contribution for rigid bonds is still not implemented.
+ 
+* The configure option "--with-myconfig" has been removed. Instead,
+  the configure variable "MYCONFIG" can be set to give the name of a
+  myconfig file.
 
 * Generic LJ can now be turned into an soft potential.
 
@@ -41,10 +51,13 @@ User-visible changes
 
 * Interaction with a wall can be restricted to the inside.
 
+* Removed compiler switch GRANDCANONICAL.
+
 Changes visible for developers
 ------------------------------
 
 * The code has been switched to using a C++ compiler.
+* The EspressoInterfaceClass has changed.
 
 ESPResSo 3.2
 ============

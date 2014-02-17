@@ -28,9 +28,14 @@
 //ifdeffing multiple versions of the kernel integrate.
 #ifdef CUDA
 
-#include <cufft.h>
-
 #define MAX_NUMBER_OF_SPECIES 10
+
+#ifdef __CUDACC__
+#include <cufft.h>
+#else
+typedef void cufftComplex;
+typedef void cufftReal;
+#endif
 
 /* Data structure holding parameters and memory pointers for the link flux system. */
 
@@ -61,6 +66,9 @@ typedef struct {
   float reaction_ct_rate;
   float reaction_fraction_0;
   float reaction_fraction_1;
+  float mass_reactant;
+  float mass_product0;
+  float mass_product1;
   cufftReal* greensfcn;
   cufftComplex* charge_potential;
   float* j;
@@ -137,6 +145,7 @@ int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
 int ek_print_vtk_lbforce(char* filename);
 int ek_print_vtk_reaction_tags(char* filename);
+int ek_print_vtk_mass_flux(char* filename);
 int ek_lb_print_vtk_density(char* filename);
 int ek_lb_print_vtk_velocity(char* filename);
 int ek_init();
@@ -155,6 +164,7 @@ int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double
 int ek_set_accelerated_frame( int enabled, double boundary_mass_density, double* ext_acceleration_force );
 int ek_accelerated_frame_print_boundary_velocity( double* accelerated_boundary_velocity );
 int ek_node_print_velocity( int x, int y, int z, double* velocity );
+int ek_node_print_mass_flux( int x, int y, int z, double* mass_flux );
 int ek_node_print_density( int species, int x, int y, int z, double* density );
 
 #ifdef EK_BOUNDARIES
@@ -164,7 +174,10 @@ void update_spacially_varyingE_field();
 #endif
 
 #ifdef EK_REACTION
-int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1 );
+int ek_set_reaction( int reactant, int product0, int product1, 
+                     float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, 
+                     float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1, 
+                     float mass_reactant, float mass_product0, float mass_product1 );
 int ek_print_vtk_pressure(char* filename);
 int ek_tag_reaction_nodes( LB_Boundary* lbboundary, char reaction_type );
 #endif

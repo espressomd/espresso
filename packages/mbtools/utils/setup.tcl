@@ -144,7 +144,10 @@ proc ::mbtools::utils::readcheckpoint { checkpointdir } {
 	return 0
     }
     ::mmsg::send [namespace current] "reading Checkpoint $checkpointdir/checkpoint.latest.gz"
-    checkpoint_read "$checkpointdir/checkpoint" 0
+    #checkpoint_read "$checkpointdir/checkpoint" 0
+    set in [open "|gzip -cd $checkpointdir/checkpoint.latest.gz" "r"]
+    while { [blockfile $in read auto] != "eof" } {}
+    close $in
     return 1
 }
 

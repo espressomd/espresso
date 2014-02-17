@@ -203,7 +203,7 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
   double value, p_vel[3];
   value = 0.0;
 
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -520,7 +520,7 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
   double p_vel[3], tvalue[9];
   for(j=0; j<9; j++)  tvalue[j] = 0.0;
 
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);

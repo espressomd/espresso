@@ -153,6 +153,7 @@ if {[setmd max_range] > 0.45 + [setmd skin] + 0.001} {
 }
 puts "OK: max cut is [setmd max_range], should not be bigger than 0.45 + [setmd skin]"
 
+setmd min_global_cut 0.21
 part 0 pos 2 2 2 v -1 0 0 type 0
 part 1 pos 1.8 2 2 virtual 1 vs_auto_relate_to 0 q 1 type 1
 part 2 pos 2.2 2 2 virtual 1 vs_auto_relate_to 0 q 1 type 1

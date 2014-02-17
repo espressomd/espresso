@@ -1,6 +1,7 @@
 #include "config.hpp"
 #include "electrokinetics_tcl.hpp"
 #include "electrokinetics.hpp"
+#include "lb.hpp"
 #include "lb-boundaries.hpp"
 #include "lb-boundaries_tcl.hpp"
 #include "initialize.hpp"
@@ -31,15 +32,18 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
          rho_product0_reservoir, 
          rho_product1_reservoir, 
          fraction0,
-         fraction1;
+         fraction1,
+         mass_reactant,
+         mass_product0,
+         mass_product1;
 #endif
 
   if(argc < 2) {
     Tcl_AppendResult(interp, "Usage of \"electrokinetics\":", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [viscosity #float] [friction #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|pressure|lbforce|reaction_tags> vtk #string]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics node i j k print velocity\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float] [T #float] [bjerrum_length #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags|mass_flux> vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics node #int #int #int print <velocity|mass_flux>\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics reaction [reactant_index #int]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [product0_index #int]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [product1_index #int]\n", (char *)NULL);
@@ -47,28 +51,30 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                         [product0_resrv_density #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [product1_resrv_density #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [reaction_rate #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                         [reaction_radius #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                         [mass_reactant #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                         [mass_product0 #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                         [mass_product1 #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [reaction_fraction_pr_0 #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [reaction_fraction_pr_1 #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics reaction region #int [box]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [wall ]\n", (char *)NULL); //TODO full description
-    Tcl_AppendResult(interp, "                                     [sphere ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [cylinder ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [rhomboid ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [pore ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                     [stomatocyte ]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [wall ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [sphere ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [cylinder ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [rhomboid ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [pore ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                     [stomatocyte ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics accelerated_frame on\n", (char *)NULL);
     Tcl_AppendResult(interp, "                  boundary_mass_density #double\n", (char *)NULL);
     Tcl_AppendResult(interp, "                  ext_acceleration_force #double #double #double\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics accelerated_frame off\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics accelerated_frame print boundary_velocity\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics boundary charge_density #float [wall ]\n", (char *)NULL); //TODO full description
-    Tcl_AppendResult(interp, "                                               [sphere ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                               [cylinder ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                               [rhomboid ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                               [pore ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                                               [stomatocyte ]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [T #float] [valency #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics boundary charge_density #float [wall ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [sphere ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [cylinder ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [rhomboid ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [pore ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [stomatocyte ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [valency #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [ext_force #float #float #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print flux vtk #string]\n", (char *)NULL);
@@ -330,8 +336,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
         
-        if(argc != 3 || !ARG1_IS_S("vtk") || (!ARG0_IS_S("velocity") && !ARG0_IS_S("density") && !ARG0_IS_S("boundary") && !ARG0_IS_S("potential") && !ARG0_IS_S("pressure") && !ARG0_IS_S("lbforce") && !ARG0_IS_S("reaction_tags") )) {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics print <velocity|density|potential|pressure|reaction_tags> vtk #string\n", (char *)NULL);
+        if(argc != 3 || !ARG1_IS_S("vtk") || (!ARG0_IS_S("velocity") && !ARG0_IS_S("density") && !ARG0_IS_S("boundary") && !ARG0_IS_S("potential") && !ARG0_IS_S("pressure") && !ARG0_IS_S("lbforce") && !ARG0_IS_S("reaction_tags") && !ARG0_IS_S("mass_flux") )) {
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics print <velocity|density|potential|pressure|reaction_tags|mass_flux> vtk #string\n", (char *)NULL);
           return TCL_ERROR;
         }
         
@@ -405,6 +411,16 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           Tcl_AppendResult(interp, "Feature EK_REACTION required", (char *) NULL);
           return (TCL_ERROR);
 #else
+          if( ek_parameters.number_of_species < 3 ||
+              ( ek_parameters.reaction_species[0] == -1 ||
+                ek_parameters.reaction_species[1] == -1 ||
+                ek_parameters.reaction_species[2] == -1 )
+            )
+          {
+            Tcl_AppendResult(interp, "The reaction must be set up to use this command\n", (char *) NULL);
+            return (TCL_ERROR);
+          }
+
           if(ek_print_vtk_pressure(argv[2]) == 0) {
             argc -= 3;
             argv += 3;
@@ -425,6 +441,16 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           Tcl_AppendResult(interp, "Feature EK_REACTION required", (char *) NULL);
           return (TCL_ERROR);
 #else
+          if( ek_parameters.number_of_species < 3 ||
+              ( ek_parameters.reaction_species[0] == -1 ||
+                ek_parameters.reaction_species[1] == -1 ||
+                ek_parameters.reaction_species[2] == -1 )
+            )
+          {
+            Tcl_AppendResult(interp, "The reaction must be set up to use this command\n", (char *) NULL);
+            return (TCL_ERROR);
+          }
+
           if(ek_print_vtk_reaction_tags(argv[2]) == 0) {
             argc -= 3;
             argv += 3;
@@ -436,6 +462,36 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
           else {
             Tcl_AppendResult(interp, "Unknown error in electrokinetics print reaction_tags vtk #string\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+#endif /* EK_PRESSURE */
+        }
+        else if(ARG0_IS_S("mass_flux")) {
+#ifndef EK_REACTION
+          Tcl_AppendResult(interp, "Feature EK_REACTION required", (char *) NULL);
+          return (TCL_ERROR);
+#else
+          if( ek_parameters.number_of_species < 3 ||
+              ( ek_parameters.reaction_species[0] == -1 ||
+                ek_parameters.reaction_species[1] == -1 ||
+                ek_parameters.reaction_species[2] == -1 )
+            )
+          {
+            Tcl_AppendResult(interp, "The reaction must be set up to use this command\n", (char *) NULL);
+            return (TCL_ERROR);
+          }
+
+          if(ek_print_vtk_mass_flux(argv[2]) == 0) {
+            argc -= 3;
+            argv += 3;
+
+            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+              return TCL_ERROR;
+            else
+              return TCL_OK;
+          }
+          else {
+            Tcl_AppendResult(interp, "Unknown error in electrokinetics print mass_flux vtk #string\n", (char *)NULL);
             return TCL_ERROR;
           }
 #endif /* EK_PRESSURE */
@@ -464,8 +520,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
         
-        if(argc != 5 || !ARG_IS_I(0, coord[0]) || !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) || !ARG_IS_S(3, "print") || !ARG_IS_S(4, "velocity") ) {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics node print velocity\n", (char *)NULL);
+        if(argc != 5 || !ARG_IS_I(0, coord[0]) || !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) || !ARG_IS_S(3, "print") || ( !ARG_IS_S(4, "velocity") && !ARG_IS_S(4, "mass_flux") ) ) {
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics node print <velocity|mass_flux>\n", (char *)NULL);
           return TCL_ERROR;
         }
         
@@ -491,6 +547,28 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
           else {
             Tcl_AppendResult(interp, "Unknown error in electrokinetics node print velocity\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        } 
+        else if(ARG0_IS_S("mass_flux")) {
+          if(ek_node_print_mass_flux(coord[0], coord[1], coord[2], vectarg) == 0) {
+            argc --;
+            argv ++;
+            
+            Tcl_PrintDouble(interp, vectarg[0], double_buffer);
+            Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+            Tcl_PrintDouble(interp, vectarg[1], double_buffer);
+            Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+            Tcl_PrintDouble(interp, vectarg[2], double_buffer);
+            Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+
+            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+              return TCL_ERROR;
+            else
+              return TCL_OK;
+          }
+          else {
+            Tcl_AppendResult(interp, "Unknown error in electrokinetics node print mass_flux\n", (char *)NULL);
             return TCL_ERROR;
           }
         }
@@ -846,6 +924,20 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           Tcl_AppendResult(interp, "Feature EK_BOUNDARIES required", (char *) NULL);
           return (TCL_ERROR);
 #else
+          if(ek_parameters.number_of_species < 3) {
+            Tcl_AppendResult(interp, "to invoke the reaction command 3 species must first be set\n", (char *) NULL);
+            return (TCL_ERROR);
+          }
+
+          if ( ek_parameters.reaction_species[0] == -1 ||
+               ek_parameters.reaction_species[1] == -1 ||
+               ek_parameters.reaction_species[2] == -1 )
+          {
+            Tcl_AppendResult(interp, "You need to set up the reaction first,\n", (char *) NULL);
+            Tcl_AppendResult(interp, "before you can tag the reactive regions", (char *) NULL);
+            return (TCL_ERROR);
+          }
+
           argc--;
           argv++;
 
@@ -854,10 +946,19 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
 
           if( !ARG0_IS_I(reaction_type) ) 
           {
-            Tcl_AppendResult(interp, "\nYou need to specify the reaction type you want to use", (char *) NULL);
+            Tcl_AppendResult(interp, "\nYou need to specify the reaction type you want to use\n", (char *) NULL);
             Tcl_AppendResult(interp, "\nelectrokinetics reaction region #int ...\n", (char *)NULL);
             return (TCL_ERROR);
           }         
+
+          if ( reaction_type != 0 &&
+               reaction_type != 1 &&
+               reaction_type != 2 )
+          {
+            Tcl_AppendResult(interp, "Not a valid choice for the type, choose from:\n", (char *) NULL);
+            Tcl_AppendResult(interp, "(0) no reaction, (1) reaction, (2) reservoir\n", (char *) NULL);
+            return (TCL_ERROR);
+          }
 
           argc--;
           argv++;
@@ -884,7 +985,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             err = tclcommand_lbboundary_stomatocyte(&lbboundary_tmp, interp, argc - 1, argv + 1);
           }
           else {
-            Tcl_AppendResult(interp, "possible electrokinetics reaction region #int parameters: box, wall, sphere, cylinder, rhomboid, pore, stomatocyte", (char *) NULL);
+            Tcl_AppendResult(interp, "possible electrokinetics reaction region #int parameters:\n", (char *) NULL);
+            Tcl_AppendResult(interp, "box, wall, sphere, cylinder, rhomboid, pore, stomatocyte", (char *) NULL);
             return (TCL_ERROR);
           }
 
@@ -895,9 +997,15 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         }
         else
         { 
-          if( argc < 15 ) 
+          if(ek_parameters.number_of_species < 3) {
+            Tcl_AppendResult(interp, "to invoke the reaction command 3 species must first be set\n", (char *) NULL);
+            return (TCL_ERROR);
+          }
+
+          if( argc < 22 )
           {
-            Tcl_AppendResult(interp, "electrokinetics reaction requires 15 arguments: 8 quantifiers, 3 ints, and 6 floats\n", (char *)NULL);
+            Tcl_AppendResult(interp, "electrokinetics reaction requires 15 arguments:\n", (char *) NULL);
+            Tcl_AppendResult(interp, "11 quantifiers, 3 ints, and 8 floats\n", (char *)NULL);
             return TCL_ERROR;
           }
           else
@@ -905,7 +1013,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
 
             int counter = 0;
 
-            while(argc > 0 && counter < 11 ) 
+            while(argc > 0 && counter < 13 ) 
             {
               counter++;
 
@@ -1045,6 +1153,63 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
                 argv += 2;
               }
 
+              else if (ARG_IS_S_EXACT(0,"mass_reactant")) 
+              {
+
+                if ( !ARG_IS_D(1, mass_reactant) )
+                {
+                  Tcl_AppendResult(interp, "electrokinetics mass_reactant requires one floating point number as argument\n", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                if ( mass_reactant <= 0 ) 
+                {
+                  Tcl_AppendResult(interp, "the mass has to be greater than zero\n", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                argc -= 2;
+                argv += 2;
+              }
+
+              else if (ARG_IS_S_EXACT(0,"mass_product0")) 
+              {
+
+                if ( !ARG_IS_D(1, mass_product0) )
+                {
+                  Tcl_AppendResult(interp, "electrokinetics mass_product0 requires one floating point number as argument\n", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                if ( mass_product0 <= 0 ) 
+                {
+                  Tcl_AppendResult(interp, "the mass has to be greater than zero\n", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                argc -= 2;
+                argv += 2;
+              }
+
+              else if (ARG_IS_S_EXACT(0,"mass_product1")) 
+              {
+
+                if ( !ARG_IS_D(1, mass_product1) )
+                {
+                  Tcl_AppendResult(interp, "electrokinetics mass_product1 requires one floating point number as argument\n", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                if ( mass_product1 <= 0 ) 
+                {
+                  Tcl_AppendResult(interp, "the mass has to be greater than zero\n", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                argc -= 2;
+                argv += 2;
+              }
+
               else if (ARG_IS_S_EXACT(0,"reaction_fraction_pr_0")) 
               {
 
@@ -1084,7 +1249,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
               }
             }
 
-            if ( counter == 11 )
+            if ( counter == 13 )
             {
               Tcl_AppendResult(interp, "unknown option given, please check for spelling errors\n", (char *)NULL);
               return TCL_ERROR;
@@ -1096,9 +1261,19 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             {
               Tcl_AppendResult(interp, "the reactant and product species need to be distinct\n", (char *)NULL);
               return TCL_ERROR;
-            }          
+            }     
 
-            if ( ek_set_reaction( reactant, product0, product1, rho_reactant_reservoir, rho_product0_reservoir, rho_product1_reservoir, ct_rate, fraction0, fraction1 ) != 0 ) 
+            if ( fabs( fraction0*mass_product0 + fraction1*mass_product1 - mass_reactant ) > 1.0e-06  ) 
+            {
+              Tcl_AppendResult(interp, "the reaction does not conserve mass:\n", (char *)NULL);
+              Tcl_AppendResult(interp, "please choose different masses or fractions\n", (char *)NULL);
+              return TCL_ERROR;
+            }       
+
+            if ( ek_set_reaction( reactant, product0, product1, 
+                                  rho_reactant_reservoir, rho_product0_reservoir, rho_product1_reservoir, 
+                                  ct_rate, fraction0, fraction1, 
+                                  mass_reactant, mass_product0, mass_product1 ) != 0 ) 
             {
               Tcl_AppendResult(interp, "species are not set before invoking electrokinetics reaction\n", (char *)NULL);
               return TCL_ERROR;

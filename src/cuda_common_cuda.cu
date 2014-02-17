@@ -146,10 +146,10 @@ __global__ void reset_particle_force(CUDA_particle_force *particle_forces_device
 void gpu_change_number_of_part_to_comm() {
   //we only run the function if there are new particles which have been created since the last call of this function
 
-  if ( global_part_vars_host.number_of_particles != n_total_particles && global_part_vars_host.communication_enabled == 1 && this_node == 0) {
+  if ( global_part_vars_host.number_of_particles != n_part && global_part_vars_host.communication_enabled == 1 && this_node == 0) {
     
     global_part_vars_host.seed = (unsigned int)i_random(max_ran);
-    global_part_vars_host.number_of_particles = n_total_particles;
+    global_part_vars_host.number_of_particles = n_part;
 
     cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
 
@@ -223,9 +223,8 @@ void gpu_init_particle_comm() {
       }
     }
   }
+  gpu_change_number_of_part_to_comm(); 
   global_part_vars_host.communication_enabled = 1;
-  
-  gpu_change_number_of_part_to_comm();  
 }
 
 CUDA_particle_data* gpu_get_particle_pointer() {
@@ -250,7 +249,6 @@ CUDA_fluid_composition* gpu_get_fluid_composition_pointer() {
 }
 
 void copy_part_data_to_gpu() {
-  
   if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
     
     cuda_mpi_get_particles(particle_data_host);
@@ -289,3 +287,14 @@ void copy_forces_from_GPU() {
     cuda_mpi_send_forces(particle_forces_host,fluid_composition_host);
   }
 }
+
+/** Generic copy functions from an to device **/
+
+void cuda_copy_to_device(void *host_data, void *device_data, size_t n) {
+  cuda_safe_mem( cudaMemcpy(host_data, device_data, n, cudaMemcpyHostToDevice) );
+}
+
+void cuda_copy_to_host(void *host_device, void *device_host, size_t n) {
+  cuda_safe_mem( cudaMemcpy(host_device, device_host, n, cudaMemcpyDeviceToHost) );
+}
+

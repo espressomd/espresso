@@ -39,6 +39,7 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
 
     n_part = cells_get_n_particles();
 
+    
     /* first collect number of particles on each node */
     MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 

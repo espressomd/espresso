@@ -1174,7 +1174,7 @@ double calc_surface_term(int force_flag, int energy_flag)
      } 
      #ifdef ROTATION	             
      if (force_flag) {
-          //fprintf(stderr," number of particles= %d ",n_total_particles);   
+          //fprintf(stderr," number of particles= %d ",n_part);   
 
           double *sumix = (double *) malloc(sizeof(double)*n_local_part);
           double *sumiy = (double *) malloc(sizeof(double)*n_local_part);
@@ -1186,7 +1186,7 @@ double calc_surface_term(int force_flag, int energy_flag)
             sumiz[i]=mx[i]*a[1]-my[i]*a[0];
 	  }
 	    
-         // for (i = 0; i < n_total_particles; i++){
+         // for (i = 0; i < n_part; i++){
   	 //    fprintf(stderr,"part %d, correccions torque  x:%le, y:%le, z:%le\n",i,sumix[i],sumiy[i],sumiz[i]);
          // }
 	      

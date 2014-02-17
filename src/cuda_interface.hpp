@@ -21,6 +21,8 @@
 
 #include "config.hpp" //this is required so that the ifdefs are actually defined
 
+#include "SystemInterface.hpp"
+
 #ifdef CUDA
 
 /** data which must be copied from the GPU at each step run on the GPU */
@@ -94,7 +96,8 @@ void cuda_mpi_get_particles(CUDA_particle_data *host_result);
 void copy_part_data_to_gpu();
 void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_fluid_composition);
 void cuda_bcast_global_part_params();
-
+void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
+void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
 #endif /* ifdef CUDA */
 
 #endif /* ifdef CUDA_INTERFACE_HPP */

@@ -37,7 +37,7 @@ AM_INIT_AUTOMAKE([1.11 gnu subdir-objects dist-xz])
 AM_MAINTAINER_MODE
 
 # silent rules, backwards compatiblity
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Are we in an unpacked dist or in the git repo?
 AC_MSG_CHECKING([whether we are using development sources])
@@ -150,7 +150,7 @@ cat <<EOF
 ****************************************************************
 EOF
 
-LT_INIT([dlopen])
+LT_INIT([disable-static])
 AC_PROG_AWK
 AC_PROG_EGREP
 AC_PROG_INSTALL
@@ -260,19 +260,13 @@ cuda_ok=no
 
 AS_IF([test x$with_cuda != xno],[
     cuda_ok=yes
+
+    # save current libs in case CUDA is not enabled at the end
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
-    save_CXX=$CXX
-    save_CXXFLAGS=$CXXFLAGS
-
-    # TODO: OLAF AND AXEL, IS THIS OKAY? NEEDED TO COMPILE
-    CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
 
     # NVCC
-    AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
-    AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
-
-    AC_PATH_PROG(NVCC, nvcc, no, [$PATH:$cuda_path/bin])
+    AC_PROG_CUDA
 
     AS_IF([test x$NVCC = xno],[
         AS_IF([test x$with_cuda = xyes],[
@@ -282,16 +276,8 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ])
 
-    NVCCFLAGS="$NVCCFLAGS -Xcompiler -fPIC"
-
-    # MAC nvcc stays 32 bit, even if the rest is 64 bit
-    case $target in
-        x86_64-apple-darwin*)
-                NVCCFLAGS="$NVCCFLAGS -m64";;
-    esac
-    
     # since we link with mpic++, we need to find the cuda libraries manually
-    ES_ADDPATH_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
+    ES_ADDPATH_CHECK_LIB(cudart, cudaGetDevice, [], [
         cuda_ok=no
         
         AS_IF([test x$with_cuda = xyes],[
@@ -301,7 +287,7 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ], [$cuda_path/lib $cuda_path/lib64])
 
-    ES_ADDPATH_CHECK_LIB(cufft, cufftPlan3d, [LIBS="$LIBS -lcufft"], [
+    ES_ADDPATH_CHECK_LIB(cufft, cufftPlan3d, [], [
         cuda_ok=no
         
         AS_IF([test x$with_cuda = xyes],[
@@ -310,16 +296,6 @@ AS_IF([test x$with_cuda != xno],[
             AC_MSG_WARN([could not find cuda FFT library (cufft). Some features will not be available!])
         ])
     ], [$cuda_path/lib $cuda_path/lib64])
-
-    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
-        cuda_ok=no
-        
-        AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
-        ],[
-            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
-        ])
-    ])
 
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
@@ -333,11 +309,16 @@ AS_IF([test x$with_cuda != xno],[
     # use nvcc
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
-    save_CXX=$CXX
-    save_CXXFLAGS=$CXXFLAGS
-    
+    save_noncuda_CXX=$CXX
+    save_noncuda_CXXFLAGS=$CXXFLAGS
+    save_noncuda_LDFLAGS=$LDFLAGS
+    save_noncuda_LIBS=$LIBS
+
     CXX=$NVCC
     CXXFLAGS="$NVCCFLAGS -x cu"
+    # libtool linking options likely break NVCC linking, sort out all but simple -L options
+    LDFLAGS="-Xlinker `echo $LDFLAGS | sed -e ['s|-[^L][^ 	]*||g' -e 's|[ 	][ 	]*|,|g']`"
+    LIBS="-Xlinker `echo $LIBS | sed ['s|[ 	][ 	]*|,|g']`"
     
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
         AC_MSG_RESULT(yes)
@@ -357,25 +338,27 @@ AS_IF([test x$with_cuda != xno],[
     AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[int no; cudaGetDeviceCount(&no);])], [
         AC_MSG_RESULT(yes)
     ],[
-        cuda_ok=no
         AC_MSG_RESULT(no)
         AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([cannot run CUDA code. Look at config.log for more details.])
+            cuda_running=no
+            AC_MSG_WARN([cannot run CUDA code. Look at config.log for more details. Still compiling since explicitely requested.])
         ],[
+            cuda_ok=no
             AC_MSG_WARN([cannot run CUDA code. Some features will not be available!])
         ])
     ],[
         AC_MSG_RESULT([unknown (cross-compiling)])
     ])
 
-    NVCCFLAGS="$NVCCFLAGS --shared"
-    
-    CXX=$save_CXX
-    CXXFLAGS=$save_CXXFLAGS
+    CXX=$save_noncuda_CXX
+    CXXFLAGS=$save_noncuda_CXXFLAGS
+    LDFLAGS=$save_noncuda_LDFLAGS
+    LIBS=$save_noncuda_LIBS
     
     AS_IF([test x$cuda_ok == xyes], [
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
+        # reset standard compiler options
         LIBS=$save_LIBS
         LDFLAGS=$save_LDFLAGS
     ])
@@ -415,8 +398,13 @@ dnl with_python_interface=no   do not use python interface
 
 if test .$with_python_interface != .no; then
    AX_PYTHON_DEVEL([>= '2.5'])
+
    AC_PATH_PROG(CYTHON,cython,no)
-   AX_PYTHON_MODULE(numpy)
+   AS_IF([test x$CYTHON = xno],[
+      AC_MSG_FAILURE([cython not found, which is necessary for the Python interface])
+   ])
+
+   AX_PYTHON_MODULE(numpy, required)
    AC_MSG_CHECKING([for numpy include path])
    NUMPY_INCLUDE="`$PYTHON -c 'import numpy; print numpy.get_include()'`"
    PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
@@ -430,14 +418,18 @@ cat <<EOF
 *                  Checking for Tcl/Tk                         *
 ****************************************************************
 EOF
-AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
 
+AC_MSG_CHECKING([whether to build the Tcl interface])
 AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
             [specify the tcl library to use (e.g. tcl8.4)]),
             [], [with_tcl=yes])
+AC_MSG_RESULT($with_tcl)
+
 dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
 dnl with_tcl=no   bail out
 dnl otherwise     use the specified version
+
+AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
 
 if test .$with_tcl = .no; then
    use_tcl=none
@@ -492,9 +484,13 @@ AM_CONDITIONAL(TCL, [test .$use_tcl != .none])
 
 ##################################
 # check for tk
+
+AC_MSG_CHECKING([whether to use Tk])
 AC_ARG_WITH(tk,
 	AS_HELP_STRING([--with-tk=VERSION],[whether to use Tk, and which version to use]),
 	[], [with_tk=no])
+AC_MSG_RESULT($with_tcl)
+
 dnl with_tk=no   don't use Tk
 dnl with_tk=yes  try to find a working Tk version, bail out if none is found
 dnl otherwise    use the specified version
@@ -573,15 +569,21 @@ AC_MSG_RESULT($with_efence)
 
 ##################################
 # Handling the myconfig-header
-AC_ARG_WITH(myconfig, 
-  AS_HELP_STRING([--with-myconfig=FILE],
-                 [default name of the local config file [FILE=myconfig.hpp]]),
-[ test .$with_myconfig = .no && with_myconfig=myconfig.hpp ],
-[ with_myconfig=myconfig.hpp ])
-AC_MSG_CHECKING([the name of the configuration header])
-myconfig=$with_myconfig
-AC_MSG_RESULT($myconfig)
-AC_SUBST(myconfig)
+AC_ARG_VAR([MYCONFIG], 
+           [Which myconfig file to use. @<:@myconfig.hpp@:>@])
+AC_MSG_CHECKING([whether the variable MYCONFIG is set])
+AS_IF([test "x$MYCONFIG" != "x"], [
+  AC_MSG_RESULT(yes)
+  AC_MSG_CHECKING([whether file $MYCONFIG exists])
+  if ! test -f $MYCONFIG; then
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([MYCONFIG file $MYCONFIG does not exist!])
+  fi
+],[
+  AC_MSG_RESULT(no)
+  MYCONFIG="myconfig.hpp"
+])
+AM_CONDITIONAL(MYCONFIG, [test x$MYCONFIG != xmyconfig.hpp])
 
 ##################################
 # Number of CPUs
@@ -611,9 +613,10 @@ AC_CONFIG_FILES([
 	config/Makefile
 	config/myconfig-sample-header.hpp
 	src/Makefile
+        src/tcl/Makefile
+        src/python/Makefile
 	tools/Makefile
 	scripts/Makefile 
-        cython/Makefile
 	testsuite/Makefile
 	doc/Makefile
 	doc/logo/Makefile
@@ -623,6 +626,7 @@ AC_CONFIG_FILES([
 	doc/tutorials/Makefile
 	doc/tutorials/01-lennard_jones/Makefile 
 	doc/tutorials/02-charged_system/Makefile 
+	doc/tutorials/03-object_in_fluid/Makefile 
 	doc/latexit.sh
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
@@ -703,7 +707,7 @@ cat <<EOF
 
 Other settings
 --------------
-local config header	= $myconfig
+config                  = $MYCONFIG
 installation prefix	= $prefix
 number of test tasks    = $CPU_COUNT
 mympiexec               = $MYMPIEXEC
@@ -718,6 +722,9 @@ EOF
 
 if test x$cuda_ok = xno; then
    echo "CUDA disabled or not supported."
+fi
+if test x$cuda_running = xno; then
+   echo "CUDA enabled, but cannot run CUDA code out of the box. Make sure to set the dynamic library loader path correctly."
 fi
 
 if test x"$use_mpi_fake" = x"yes"; then

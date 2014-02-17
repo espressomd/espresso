@@ -255,8 +255,25 @@ for {set k $startk } { $k <  $int_n_times } { incr k} {
     # If k is a multiple of write_frequency then write out a full
     # particle configuration
     if { $k%$write_frequency==0 } {
-	polyBlockWrite "$outputdir/$ident.[format %04d $j].gz" {time box_l npt_p_diff } {id pos type v f molecule} 
-	mmsg::send $this "wrote file $outputdir/$ident.[format %04d $j].gz " 
+	#polyBlockWrite "$outputdir/$ident.[format %04d $j].gz" {time box_l npt_p_diff } {id pos type v f molecule} 
+	
+    set out [open "|gzip -c - > $outputdir/$ident.[format %04d $j].gz" "w"]
+    blockfile $out write start "variable"
+    puts $out "time [setmd time]"
+    blockfile $out write end
+    blockfile $out write start "variable"
+    puts $out "box_l $box_l"
+    blockfile $out write end
+    blockfile $out write start "variable"
+    puts $out "npt_p_diff [setmd npt_p_diff]"
+    blockfile $out write end
+
+    blockfile $out write interactions
+    blockfile $out write particles "id pos type p v f" all
+    blockfile $out write bonds all
+    close $out
+
+    mmsg::send $this "wrote file $outputdir/$ident.[format %04d $j].gz " 
 	flush stdout
 
 	if { $use_vmd == "offline" } {
@@ -278,7 +295,17 @@ for {set k $startk } { $k <  $int_n_times } { incr k} {
     # Write a checkpoint to allow restarting.  Overwrites previous
     # checkpoint
     mmsg::send $this "setting checkpoint $k [setmd time] $j"    
-    checkpoint_set "$outputdir/checkpoint.latest.gz"
+    #checkpoint_set "$outputdir/checkpoint.latest.gz"
+    set out [open "|gzip -c - > $outputdir/checkpoint.latest.gz" "w"]
+    blockfile $out write variable all
+    blockfile $out write tclvariable all
+    blockfile $out write interactions
+    blockfile $out write random
+    blockfile $out write bitrandom
+    blockfile $out write particles "id pos type p v f" all
+    blockfile $out write bonds all
+    blockfile $out write configs
+    close $out
 
     # Try to copy a checkpoint to the backup checkpoint folder.
     # Usefull if the program crashes while writing a checkpoint

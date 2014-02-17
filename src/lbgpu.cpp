@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu_cfile.cpp
+/** \file lbgpu.cpp
  *
  * C file for the Lattice Boltzmann implementation on GPUs.
  * Header file for \ref lbgpu.hpp.
@@ -89,7 +89,7 @@ LB_parameters_gpu lbpar_gpu = {
   // friction
   SC0,
   // lb_couple_switch
-  LB_COUPLE_NULL,
+  LB_COUPLE_TWO_POINT,
   // lb_coupl_pref
   SC0,
   // lb_coupl_pref2
@@ -206,11 +206,10 @@ void lattice_boltzmann_update_gpu() {
 }
 
 /** (re-) allocation of the memory needed for the particles (cpu part)
-  * @param *lbpar_gpu Pointer to parameters to setup the lb field
 */
 void lb_realloc_particles_gpu(){
 
-  lbpar_gpu.number_of_particles = n_total_particles;
+  lbpar_gpu.number_of_particles = n_part;
   LB_TRACE (printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
   //fprintf(stderr, "%u \t \n", lbpar_gpu.number_of_particles);
   /**-----------------------------------------------------*/

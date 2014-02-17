@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS=01-lennard_jones 02-charged_system
+SUBDIRS=01-lennard_jones 02-charged_system 03-object_in_fluid
 
 if DEVEL_SRC
 

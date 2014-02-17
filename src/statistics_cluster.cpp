@@ -254,7 +254,7 @@ int test_mesh_elements(double pos[3], int probe_part_type)
   int i;
   double dist,vec[3];
 
-  for (i=0; i<n_total_particles; i++) {
+  for (i=0; i<n_part; i++) {
     IA_parameters *ia_params = get_ia_param(partCfg[i].p.type,probe_part_type);
     get_mi_vector(vec, pos, partCfg[i].r.p);
     dist = sqrt(sqrlen(vec));
