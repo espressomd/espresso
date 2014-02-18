@@ -624,8 +624,15 @@ Copy a group of particles including their bonds. Positions can be
 otherwise the copied set is at exactly the same position as the
 original set. The particles can be given as a combination of
 \opt{list}s or \opt{range}s. The new particles obtain in any case
-consecutive identities after the largest current identity. Bonds
-within the defined particle set are copied with translated identities,
+consecutive identities after the largest current identity. The mapping
+of the particles is returned as a list of old-new pairs, which can be
+conveniently read into an array:
+\begin{tclcode}
+array set newidentities [copy_particles ...]
+puts "particle 42 is now at position $newidentities(42)"
+\end{tclcode}
+
+Bonds within the defined particle set are copied with translated identities,
 but not bonds with particles outside the list. That is, if the
 particle set corresponds to a molecule, intramolecular bonds are
 preserved, but not intermolecular ones.

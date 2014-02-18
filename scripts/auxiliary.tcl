@@ -632,4 +632,5 @@ proc copy_particles { args } {
             eval part $newid exclude $exclusions
         }
     }
+    return [array get newids]
 }
