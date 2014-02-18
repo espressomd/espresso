@@ -296,7 +296,6 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
       }
       else if (ARG0_IS_S_EXACT("tau")) 
       {
-printf("\n\n\n %s \n\n\n", argv[0]);
         if ( argc < 2 || !ARG1_IS_D(floatarg) ) 
         {
           Tcl_AppendResult(interp, "tau requires 1 argument", (char *)NULL);
