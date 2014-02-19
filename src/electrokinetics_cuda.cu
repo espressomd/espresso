@@ -22,7 +22,11 @@
 #include <cuda.h>
 #include <cufft.h>
 
-
+//TODO OWEN ADD THESE LIBRARIES BACK
+//#include <cusp/coo_matrix.h>
+//#include <cusp/dia_matrix.h>
+//#include <cusp/krylov/cg.h>
+//#include <cusp/print.h>
 
 #include <stdio.h>
 #include "lb-boundaries.hpp"
@@ -31,9 +35,6 @@
 #include "cuda_utils.hpp"
 #include "lbgpu.hpp"
 #include "constraint.hpp"
-
-#include "paralution.hpp"
-
 
 #ifdef ELECTROKINETICS
 
@@ -92,6 +93,9 @@ extern EK_parameters* lb_ek_parameters_gpu;
   char *ek_node_is_catalyst;
   double *ek_node_voltage;
   double *ek_node_permittivity;
+  cusp::dia_matrix<int,float,cusp::device_memory> *A_dia;
+  cusp::array1d<ValueType,device_memory> *rhs0;
+  cusp::array1d<ValueType,device_memory> *rhs;
 
   cufftHandle plan_fft;
   cufftHandle plan_ifft;
@@ -1400,6 +1404,15 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
   }
 }
 
+__global__ void ek_create_new_rhs() {
+
+  unsigned int index = ek_getThreadIndex();
+
+  if( index < ek_parameters_gpu.number_of_nondirichlet_nodes ) {
+    rhs[index] = rhs0[index]; //This erases the previous step's rhs and gives the dirichlet from neighboring nodes
+    rhs[index] += ek_parameters_gpu.charge_potential[ek_matrix_linear_index[number_of_nondirichlet_nodes]]; //TODO OWEN is this right or are there constants missing? This adds the contribution to the RHS from wall charges (EK only, not from normal constraints) and particle charges
+  }
+}
 
 __global__ void ek_create_greensfcn() {
 
@@ -1707,14 +1720,9 @@ void update_spacially_varyingE_field() {
   }
   
   
-  KERNELCALL( ek_multiply_greensfcn, dim_grid, threads_per_block, () );
+  KERNELCALL( ek_create_new_rhs, dim_grid, threads_per_block, () );
     
-  if( cufftExecC2R( plan_ifft,
-                    ek_parameters.charge_potential,
-                    (cufftReal*) ek_parameters.charge_potential ) != CUFFT_SUCCESS ) {
-                    
-    fprintf(stderr, "ERROR: Unable to execute iFFT plan\n");
-  }
+  //TODO OWEN CG solver goes here
 }
 
 void create_matrix_spacially_varyingE_field() {
@@ -1722,23 +1730,14 @@ void create_matrix_spacially_varyingE_field() {
   int x_neighbor, y_neighbor, z_neighbor;
   int dir, incr;
   
-  number_of_non_fixed_voltage_nodes = 0;
+  number_of_nondirichlet_nodes = 0;
+  int number_of_non_zero_elements = 0;
   for (i=0;i<lbpar_gpu.dim_x;i++) {
     for (j=0;j<lbpar_gpu.dim_y;j++) {
       for (k=0;k<lbpar_gpu.dim_z;k++) {
         if ( ek_node_voltage[i][j][k] != signalling_NaN() ) {
-          linear_index[i][j][k] = number_of_non_fixed_voltage_nodes;
-          number_of_non_fixed_voltage_nodes++;
-        }
-      }
-    }
-  }
-  for (i=0;i<lbpar_gpu.dim_x;i++) {
-    for (j=0;j<lbpar_gpu.dim_y;j++) {
-      for (k=0;k<lbpar_gpu.dim_z;k++) {
-        if ( ek_node_voltage[i][j][k] != signalling_NaN() ) {
-          A[linear_index[i][j][k], linear_index[i][j][k]] = 0;
-          rhs[linear_index[i][j][k]] = 0;
+          linear_index[i][j][k] = number_of_nondirichlet_nodes; //index in our matrix A
+          number_of_nondirichlet_nodes++;
           for (dir=0;dir<3;dir++) {
             for (incr=-1;incr<2;incr+=2) { //counter for direction, 
               x_neighbor = i;
@@ -1754,12 +1753,10 @@ void create_matrix_spacially_varyingE_field() {
                 z_neighbor = (k+incr+lbpar_gpu.dim_z)%lbpar_gpu.dim_z;
               }
               if ( ek_node_voltage[x_neighbor][y_neighbor][z_neighbor] != signalling_NaN() ) {
-                A[linear_index[i][j][k], linear_index[x_neighbor][y_neighbor][z_neighbor]] = (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
-                A[linear_index[i][j][k], linear_index[i][j][k]] -= (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+                numer_of_non_zero_elements +=2;
               }
               else {
-                rhs[linear_index[i][j][k]] -= ek_node_voltage[x_neighbor][y_neighbor][z_neighbor]*(permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
-                A[linear_index[i][j][k], linear_index[i][j][k]] -= (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+                numer_of_non_zero_elements++;
               }
             }
           }
@@ -1767,6 +1764,70 @@ void create_matrix_spacially_varyingE_field() {
       }
     }
   }
+  cuda_safe_mem( cudaMalloc( (void**) &ek_matrix_linear_index, number_of_nondirichlet_nodes * sizeof( int ) ) );
+  // allocate storage for (number_of_nondirichlet_nodes,number_of_nondirichlet_nodes) matrix with number_of_non_zero_elements nonzeros
+  cusp::coo_matrix<int,float,cusp::host_memory> A(number_of_nondirichlet_nodes, number_of_nondirichlet_nodes, number_of_non_zero_elements);
+
+  //set initial right hand side due to dirichlet nodes
+  cusp::array1d<ValueType,host_memory> rhs0_tmp(number_of_nondirichlet_nodes, 0.0);
+
+  int diagonal_element_number; //temporary value to score the element number of the diagonal element
+  int element_number = 0; //Counter to keep track of which element we are adding to the  CUSP matrix
+  
+  for (i=0;i<lbpar_gpu.dim_x;i++) {
+    for (j=0;j<lbpar_gpu.dim_y;j++) {
+      for (k=0;k<lbpar_gpu.dim_z;k++) {
+        if ( ek_node_voltage[i][j][k] != signalling_NaN() ) {
+          diagonal_element_number = element_number;
+          ek_matrix_linear_index[element_number] = rhoindex_cartesian2linear_host( i, j, k); //EK style linear index of node for collecting charge later for the RHS
+          element_number++;
+          A.column_indices[diagonal_element_number] = linear_index[i][j][k];
+          A.row_indices[diagonal_element_number] = linear_index[i][j][k];
+          A.values[diagonal_element_number] = 0;
+          //A[linear_index[i][j][k], linear_index[i][j][k]] = 0;
+          rhs0_tmp[linear_index[i][j][k]] = 0;
+          for (dir=0;dir<3;dir++) {
+            for (incr=-1;incr<2;incr+=2) { //counter for direction, 
+              x_neighbor = i;
+              if (dir==0) {
+                x_neighbor = (i+incr+lbpar_gpu.dim_x)%lbpar_gpu.dim_x;
+              }
+              y_neighbor = j;
+              if (dir==1) {
+                y_neighbor = (j+incr+lbpar_gpu.dim_y)%lbpar_gpu.dim_y;
+              }
+              z_neighbor = k;
+              if (dir==2) {
+                z_neighbor = (k+incr+lbpar_gpu.dim_z)%lbpar_gpu.dim_z;
+              }
+              if ( ek_node_voltage[x_neighbor][y_neighbor][z_neighbor] != signalling_NaN() ) {
+                A.column_indices[element_number] = linear_index[i][j][k];
+                A.row_indices[element_number] = linear_index[x_neighbor][y_neighbor][z_neighbor];
+                A.values[element_number] = (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+                element_number++;
+                //A[linear_index[i][j][k], linear_index[x_neighbor][y_neighbor][z_neighbor]] = (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+                A.column_indices[diagonal_element_number] = linear_index[i][j][k];
+                A.row_indices[diagonal_element_number] = linear_index[i][j][k];
+                A.values[diagonal_element_number] -= (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+                //A[linear_index[i][j][k], linear_index[i][j][k]] -= (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+              }
+              else {
+                rhs0_tmp[linear_index[i][j][k]] -= ek_node_voltage[x_neighbor][y_neighbor][z_neighbor]*(permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+                A.column_indices[diagonal_element_number] = linear_index[i][j][k];
+                A.row_indices[diagonal_element_number] = linear_index[i][j][k];
+                A.values[diagonal_element_number] -= (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+                //A[linear_index[i][j][k], linear_index[i][j][k]] -= (permittivity[i][j][k]+permittivity[x_neighbor][y_neighbor][z_neighbor])/(2.0*pow(lbpar_gpu.agrid,2));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  // Save the matrices to be returned
+  A_dia = A;
+  rhs0 = rhs0_tmp;
+  rhs = rhs0; //This just makes sure rhs has the right dimensions
 }
 
 void ek_integrate() {

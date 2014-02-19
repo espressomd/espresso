@@ -46,6 +46,8 @@ typedef struct {
   unsigned int dim_y;
   unsigned int dim_z;
   unsigned int number_of_nodes;
+  unsigned int number_of_nondirichlet_nodes; //Only needed for dielectric case
+  unsigned int* ek_matrix_linear_index; //Only needed for dielectric case, associates matrix index with ek_linear_index
   float viscosity;
   float bulk_viscosity;
   float gamma_odd;
@@ -171,6 +173,7 @@ int ek_node_print_density( int species, int x, int y, int z, double* density );
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
 int ek_tag_value_nodes( LB_Boundary lbboundary, double value, int EK_TAG_TYPE );
 void update_spacially_varyingE_field();
+void create_matrix_spacially_varyingE_field();
 #endif
 
 #ifdef EK_REACTION

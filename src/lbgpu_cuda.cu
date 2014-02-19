@@ -1152,9 +1152,9 @@ __device__ void apply_spacially_varying_E_field(unsigned int index, LB_node_forc
   
   float force_factor=powf(para.agrid,4)*para.tau*para.tau;
     
-      node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] += 0.0f;
-      node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] += 0.0f;
-      node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] += 0.0f;
+      node_f.force[ 0 * para.number_of_nodes + index] += 0.0f;
+      node_f.force[ 1 * para.number_of_nodes + index] += 0.0f;
+      node_f.force[ 2 * para.number_of_nodes + index] += 0.0f;
 }
 
 
@@ -2726,13 +2726,14 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     {
       thermalize_modes(mode, index, &rng);
     }
-    
-#ifdef (ELECTROKINETICS)
-    if (ek_spacially_varyingE_initialized_gpu)
-    {
-      apply_spacially_varying_E_field(index, node_f);
-    }
-#endif
+
+// TODO OWEN should this be here?
+// #ifdef (ELECTROKINETICS)
+//     if (ek_spacially_varyingE_initialized_gpu)
+//     {
+//       apply_spacially_varying_E_field(index, node_f);
+//     }
+// #endif
     
 #if  defined(EXTERNAL_FORCES)  ||   defined (SHANCHEN)
     /**if external force is used apply node force */
@@ -3079,8 +3080,7 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
 
   //copy parameters, especially number of parts to gpu mem
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
-  cuda_safe_mem(cudaMemcpyToSymbol(ek_initialized_gpu, &ek_initialized, sizeof(int)));
-  cuda_safe_mem(cudaMemcpyToSymbol(ek_spacially_varyingE_initialized_gpu, &ek_spacially_varyingE_initialized, sizeof(int)));
+  //cuda_safe_mem(cudaMemcpyToSymbol(ek_spacially_varyingE_initialized_gpu, &ek_spacially_varyingE_initialized, sizeof(int))); TODO OWEN add back?
 }
 
 #ifdef LB_BOUNDARIES_GPU
