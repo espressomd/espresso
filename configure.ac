@@ -672,7 +672,7 @@ efence			= $with_efence
 
 EOF
 
-if test x$cuda_ok = xno; then
+if test x$cuda_ok = xyes; then
 cat <<EOF
 Cuda
 ----
