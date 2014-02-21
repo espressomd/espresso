@@ -59,9 +59,9 @@
 
 #ifdef EK_BOUNDARIES
 /** flag indicating the voltage is to be set in the ek spacially varying E field code */
-#define int EK_TAG_VOLTAGE_FLAG 1
+#define EK_TAG_VOLTAGE_FLAG 1
 /** flag indicating the permittivity is to be set in the ek spacially varying E field code */
-#define int EK_TAG_VOLTAGE_FLAG 2
+#define EK_TAG_PERMITTIVITY_FLAG 2
 #endif
 
 // If we have several possible types of boundary treatment

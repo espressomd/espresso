@@ -817,7 +817,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
 
-        int voltage;
+        double voltage;
         LB_Boundary lbboundary_tmp;
 
         if( !ARG0_IS_D(voltage) ) 
@@ -865,7 +865,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
 
-        int permittivity;
+        double permittivity;
         LB_Boundary lbboundary_tmp;
 
         if( !ARG0_IS_D(permittivity) ) 

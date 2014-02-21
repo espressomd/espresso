@@ -82,13 +82,12 @@ static float* lb_boundary_velocity = NULL;
 static int *boundary_node_list;
 static int *boundary_index_list;
 static __device__ __constant__ int n_lb_boundaries_gpu = 0;
-static __device__ __constant__ int ek_initialized_gpu = 0;
-static __device__ __constant__ int ek_spacially_varyingE_initialized_gpu = 0;
 static size_t size_of_boundindex;
 #endif
 
 #if defined(ELECTROKINETICS)
 static __device__ __constant__ int ek_initialized_gpu = 0;
+static __device__ __constant__ int ek_spacially_varyingE_initialized_gpu = 0;
 #endif
 
 EK_parameters* lb_ek_parameters_gpu;

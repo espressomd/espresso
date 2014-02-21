@@ -48,6 +48,7 @@ typedef struct {
   unsigned int number_of_nodes;
   unsigned int number_of_nondirichlet_nodes; //Only needed for dielectric case
   unsigned int* ek_matrix_linear_index; //Only needed for dielectric case, associates matrix index with ek_linear_index
+  float* ek_node_voltage; //only for dielectric case, dirichlet boundary conditions
   float viscosity;
   float bulk_viscosity;
   float gamma_odd;
@@ -133,6 +134,13 @@ typedef struct {
 #define EK_LINK_DUD 24
 #define EK_LINK_DUU 25
 
+#ifdef EK_BOUNDARIES
+/** flag indicating the voltage is to be set in the ek spacially varying E field code */
+#define EK_TAG_VOLTAGE_FLAG 1
+/** flag indicating the permittivity is to be set in the ek spacially varying E field code */
+#define EK_TAG_PERMITTIVITY_FLAG 2
+#endif
+
 
 extern EK_parameters ek_parameters;
 extern int ek_initialized;
@@ -171,7 +179,7 @@ int ek_node_print_density( int species, int x, int y, int z, double* density );
 
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
-int ek_tag_value_nodes( LB_Boundary lbboundary, double value, int EK_TAG_TYPE );
+int ek_tag_value_nodes( LB_Boundary* lbboundary, double value, int EK_TAG_TYPE );
 void update_spacially_varyingE_field();
 void create_matrix_spacially_varyingE_field();
 #endif
