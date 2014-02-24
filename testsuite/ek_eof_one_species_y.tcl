@@ -65,7 +65,7 @@ set integration_length 10000
 
 # Set up the (LB) electrokinetics fluid
 
-electrokinetics agrid $agrid viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length
+electrokinetics agrid $agrid lb_density 1.0 viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length
 
 # Set up the charged and neutral species
 
@@ -86,12 +86,6 @@ electrokinetics boundary charge_density [expr $sigma/$agrid] rhomboid corner [ex
 
 electrokinetics boundary charge_density 0.0 wall normal 1 0 0 d $padding 0 0 direction outside
 electrokinetics boundary charge_density 0.0 wall normal -1 0 0 d -[expr $padding+$width] 0 0 direction outside
-
-set dirini "./DATA/"
-set dirnex "charged_system_new"
-set dir "$dirini$dirnex/"
-file mkdir $dir
-after 250
 
 # Integrate the system
 

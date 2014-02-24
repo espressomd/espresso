@@ -42,6 +42,7 @@ typedef void cufftReal;
 typedef struct {
   float agrid;
   float time_step; //MD time step
+  float lb_density;
   unsigned int dim_x;
   unsigned int dim_y;
   unsigned int dim_z;
@@ -150,6 +151,7 @@ int ek_lb_print_vtk_density(char* filename);
 int ek_lb_print_vtk_velocity(char* filename);
 int ek_init();
 int ek_set_agrid(double agrid);
+int ek_set_lb_density(double lb_density);
 int ek_set_viscosity(double viscosity);
 int ek_set_friction(double friction);
 int ek_set_T(double T);

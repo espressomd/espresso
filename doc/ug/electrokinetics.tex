@@ -49,10 +49,9 @@ Eqs.~\eqref{eq:ek-model-continuity}-\eqref{eq:ek-model-continuity-fl}, combining
 diffusion-advection, electrostatics, and hydrodynamics is conventionally 
 referred to as the \textit{Electrokinetic Equations}.
 
-\textbf{TODO complete broad borders on the applicability of the model + difference in temperatures between EK and LB pieces.}
+\textbf{TODO: complete in broad strokes the applicability of the model + difference in temperatures between EK and LB species.}
 
-The electrokinetic equations 
-
+The electrokinetic equations have the following properties:
 \begin{itemize}
 	\item On the coarse time and length scale of the model, the dynamics of the
 	particle species can be described in terms of smooth density distributions and
@@ -105,6 +104,7 @@ The electrokinetic equations
 \begin{essyntax}
   \require{1 or 2 or 3}{electrokinetics}
   \opt{agrid  \var{agrid}}
+  \opt{lb_density  \var{lb\_density}}
   \opt{visc  \var{viscosity}}
   \opt{bulk_visc  \var{bulk\_viscosity}}
   \opt{friction   \var{gamma} } 
@@ -132,16 +132,18 @@ features it is therefore imperative that your computer contains a CUDA capable
 GPU which is sufficiently modern. 
 
 To set up a proper LB fluid using the \lit{electrokinetics} command one has to
-specify at least the following options: \var{agrid}, \var{visc}, \var{friction},
-\var{T}, and \var{bjerrum_length}. The other options can be used to modify the
-behavior of the LB fluid. Note that the \lit{electrokinetics} command does not 
-allow the user to set the time step parameter \lit{tau} as is the case for the
-\lit{lbfluid} command, this parameter is instead taken directly from the input
-of the \lit{setmd} \texttt{t\_step} command. Currently, the LB density is not
-directly specified, but is extracted from the initial total species density, as
-will be explained in the next paragraph. The two `new' parameters are \var{T} 
-the temperature at which the diffusive species are simulated and 
-\var{bjerrum\_length} the Bjerrum length associated with the electrostatic 
+specify at least the following options: \var{agrid}, \var{lb\_density}, \var{visc},
+\var{friction}, \var{T}, and \var{bjerrum\_length}. The other options can be used to 
+modify the behavior of the LB fluid. Note that the \lit{electrokinetics} command 
+does not allow the user to set the time step parameter \lit{tau} as is the case for
+the \lit{lbfluid} command, this parameter is instead taken directly from the input
+of the \lit{setmd} \texttt{t\_step} command. The LB \emph{mass density} is set 
+independently from the electrokinetic \emph{number densities}, since the LB fluid 
+serves only as a medium through which hydrodynamic interactions are propagated, 
+as will be explained further in the next paragraph. If no \var{lb\_density} is
+specified, then our algorithm assumes \var{lb\_density} = 1.0. The two `new'
+parameters are \var{T} the temperature at which the diffusive species are simulated
+and \var{bjerrum\_length} the Bjerrum length associated with the electrostatic 
 properties of the medium. See the above description of the electrokinetic 
 equations for an explanation of the introduction of a temperature, which does 
 not come in directly via a thermostat that introduces thermal fluctuations.
@@ -167,10 +169,10 @@ diffusive species. Here the options specify: the number density
 \var{density}, the diffusion coefficient \var{D}, the valency of the particles 
 of that species \var{valency}, and an optional external (electric) force which
 is applied to the diffusive species. As mentioned before, the LB density is 
-computed from the total (initial) value of the diffusive species. In the future
-these two will be completely decoupled and it will be possible to set the number
-densities of the diffusive species independent of the mass density of the LB
-fluid. The LB fluid must already be (partially) set up using the 
+completely decoupled from the electrokinetic densities. This has the advantage
+that greater freedom can be achieved in matching the internal parameters to an
+experimental system. Moreover, it is possible to choose parameters for which
+the LB is more stable. The LB fluid must already be (partially) set up using the 
 \lit{electrokinetics} \var{agrid} ... command, before the diffusive species can
 be initialized. The variables \var{density}, \var{D}, and \var{valency} must be 
 set to properly initialize the diffusive species; the \var{ext\_force} is
@@ -307,8 +309,7 @@ then we can write the (electro)kinetic equations for this system as
 \label{eq:ek-reaction-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
 \nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -\kT \, \sum_{k} \nabla n_k   \\
 \label{eq:ek-reaction-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{\,b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
-\label{eq:ek-reaction-continuity-fl} \frac{\partial \rho_\mathrm{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\mathrm{fl} \vec{v}_{\mathrm{fl}} \right) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
-\label{eq:ek-reaction-init} \rho_{\mathrm{fl}}(t = 0) & \equiv & \sum_{k} n_{k} (t = 0)
+\label{eq:ek-reaction-continuity-fl} \frac{\partial \rho_\mathrm{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\mathrm{fl} \vec{v}_{\mathrm{fl}} \right) \vphantom{\left(\frac{\partial}{\partial}\right)} ,
 \end{eqnarray}
 which define relations between the following observables
 \begin{description}[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
@@ -328,13 +329,8 @@ and input parameters
   \item[$c$] the reaction rate.
 \end{description}
 In this set of equations we have fully decoupled the number densities and the
-fluid mass density. N.B. We have set the initial fluid mass density equal to the
-sum of the species number densities in Eq.~\eqref{eq:ek-reaction-init}. This can
-be done under the assumption that there is a dimension-full mass conversion
-parameter, which has value 1.0 that couples the sum of the number densities to 
-the LB fluid mass density. This is a counter-intuitive way of setting up the 
-systems and therefore in future versions of the reaction-advection-diffusion 
-code, the way the LB fluid density is initialized will be improved. For now, 
+fluid mass density. N.B. We have set the initial fluid mass density is not necessarily 
+equal to the sum of the initial species number densities. This means that 
 some care needs to be taken in the interpretation of the results of the 
 simulations with this code. It is important to note that the reaction must 
 satisfy mass balance:
@@ -348,15 +344,13 @@ total mass flux in the system is given by
 \end{equation}
 which is the quantity of interested in systems where, for instance, the
 catalytic reaction drives a particle to self-propel. There is a way to directly 
-access the mass flux form the simulation, without having to go through the
-computations, as will be explained later. Subsequent versions of the code will
-eliminate the roundabout way of coupling LB mass density and diffusive species
-densities.
+access the mass flux from the simulation, without having to go through the
+computations, as will be shown later.
 
 The reaction is specified by the second term on the right-hand side of 
 Eq.~\eqref{eq:ek-reaction-continuity}. It is important to note that this term
 can be set locally, as opposed to the other terms in the equation system 
-Eqs.~\eqref{eq:ek-reaction-continuity}-\eqref{eq:ek-reaction-init}, in our 
+Eqs.~\eqref{eq:ek-reaction-continuity}-\eqref{eq:ek-reaction-continuity-fl}, in our 
 implementation, as will become clear in the following. This has the
 advantage that catalytic surfaces may be modeled. 
 
@@ -400,7 +394,7 @@ without careful consideration and experience in editing CUDA code. We therefore
   \opt{reactant_resrv_density \var{reactant\_resrv\_density}}
   \opt{product0_resrv_density \var{product0\_resrv\_density}}
   \opt{product1_resrv_density \var{product1\_resrv\_density}}
-  \opt{reaction_rate \var{reaction_rate}}
+  \opt{reaction_rate \var{reaction\_rate}}
   \opt{mass_reactant \var{mass\_reactant}}
   \opt{mass_product0 \var{mass\_product0}}
   \opt{mass_product1 \var{mass\_product1}}
@@ -423,7 +417,7 @@ each species a reservoir (number) density must be set, given by the variables
 correspond to the initial number densities associated with the reactive species.
 The reservoir densities, in tandem with reservoir nodes, see below, can be used 
 to keep the reaction from depleting all the reactant in the simulation box. The 
-\var{reaction_rate} variable specifies the speed at which the reaction proceeds.
+\var{reaction\_rate} variable specifies the speed at which the reaction proceeds.
 The three masses (typically given in the atomic weight equivalent) are used to 
 determine the total mass flux provided by the reaction, as described above, and 
 are also used to check whether the reaction ratios that are given satisfy the 

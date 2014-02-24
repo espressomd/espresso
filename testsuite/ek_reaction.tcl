@@ -174,7 +174,7 @@ thermostat off
 
 # Initialize fluid 
 
-electrokinetics agrid $agrid viscosity $viscosity_kinematic \
+electrokinetics agrid $agrid lb_density 1.0 viscosity $viscosity_kinematic \
                 friction $frict T $temp bjerrum_length $bjer_length
 
 # Set diffusion properties
