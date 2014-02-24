@@ -1923,6 +1923,8 @@ int ek_init() {
     lbpar_gpu.friction[0] = ek_parameters.friction;
 
     lbpar_gpu.rho[0] = ( ek_parameters.lb_density < 0.0 ? 1.0 : ek_parameters.lb_density );
+    lb_reinit_parameters_gpu();
+
     lbpar_gpu.external_force = 0;
     lbpar_gpu.ext_force[0] = 0.0;
     lbpar_gpu.ext_force[1] = 0.0;

@@ -63,16 +63,16 @@ setmd skin 0.1
 thermostat off
 set integration_length 20000
 
-# Set up the (LB) electrokinetics fluid
-
-electrokinetics agrid $agrid lb_density 1.0 viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length
-
 # Set up the charged and neutral species
 
 set density_neutral 33.4
 set density_charged [expr -2.0*double($sigma)/double($width)]
 set viscosity [expr $viscosity_dynamic*($density_charged + $density_neutral)]
 set valency 1.0
+
+# Set up the (LB) electrokinetics fluid
+
+electrokinetics agrid $agrid lb_density [expr $density_neutral + $density_charged] viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length
 
 electrokinetics 1 density $density_charged D 0.3 valency $valency ext_force 0 0 $force
 electrokinetics 2 density $density_neutral D 0.3 valency 0
