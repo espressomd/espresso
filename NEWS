@@ -31,6 +31,8 @@ New user-visible features
 
 User-visible changes
 --------------------
+* comfixed now works with periodic boundary conditions.
+
 * The pressure contribution due to rigid bodies constructed by means of the 
   virtual sites relative mechanism is included, both for pressure and stress 
   tensor. Note that the corresponding contribution for rigid bonds is still not implemented.

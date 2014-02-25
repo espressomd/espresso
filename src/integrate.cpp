@@ -221,6 +221,11 @@ void integrate_vv(int n_steps)
     calc_and_apply_mol_constraints();
 #endif
 
+    /* should be pretty late, since it needs to zero out the total force */
+#ifdef COMFIXED
+    calc_comfixed();
+#endif
+
     rescale_forces();
     recalc_forces = 0;
     
@@ -337,6 +342,11 @@ void integrate_vv(int n_steps)
     /*apply trap forces to trapped molecules*/
 #ifdef MOLFORCES         
     calc_and_apply_mol_constraints();
+#endif
+
+    /* should be pretty late, since it needs to zero out the total force */
+#ifdef COMFIXED
+    calc_comfixed();
 #endif
 
     if (check_runtime_errors())
