@@ -20,8 +20,8 @@ AM_DEFAULT_SOURCE_EXT = .pyx
 
 # Build rules for python libraries
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src
-AM_LDFLAGS = $(PYTHON_LDFLAGS) $(PYTHON_EXTRA_LDFLAGS) -module -avoid-version -no-undefined
-LIBS =  ../libEspresso.la $(PYTHON_EXTRA_LIBS) @LIBS@
+AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
+LIBS =  ../libEspresso.la @LIBS@
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
 endif

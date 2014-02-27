@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 
 FEATURES=[ \
@@ -113,7 +114,7 @@ def feature_value(myconfig, f):
     without_cpp_comments=re.sub("//.*", " ", without_c_comments)
     # The following regex requires the string to have at least a space or line break after the constant name
     m=re.match(".*(#define)\s*("+f+")\s+(\.*)", without_cpp_comments + "\n", re.DOTALL)
-    print f,m
+    print(f,m)
     if m:
         if m.group(3) != "":
             return m.group(3)

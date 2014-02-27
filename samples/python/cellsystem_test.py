@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+from __future__ import print_function
 import ctypes
 import sys
 sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
 import espresso as es
-print dir(es)
+print(dir(es))
 
 cs=es.cellsystem.Cellsystem()
 gh=es.global_variables.GlobalsHandle()
