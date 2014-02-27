@@ -1419,6 +1419,7 @@ void ek_create_new_rhs() {
   int i;
 
   cusp::array1d<float,cusp::host_memory> rhs0_tmp(ek_parameters.number_of_nondirichlet_nodes, 0.0);
+  rhs0_tmp.data(); //get pointer to first element of rhs0_tmp
   for (i=0;i<ek_parameters.number_of_nondirichlet_nodes;i++) {
 //    rhs[index] = rhs0[index]+((cufftReal*) ek_parameters_gpu.charge_potential)[ek_parameters_gpu.ek_matrix_linear_index[index]]; //This erases the previous step's rhs and gives the dirichlet from neighboring nodes, last term is the local charge
 //    rhs0_tmp[i] = rhs0[i]+((cufftReal*) ek_parameters_gpu.charge_potential)[ek_parameters_gpu.ek_matrix_linear_index[i]]; //This erases the previous step's rhs and gives the dirichlet from neighboring nodes, last term is the local charge
