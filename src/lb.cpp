@@ -891,7 +891,7 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
     resort_particles = 0;   //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
   }
   else {
-    fprintf (stderr, "To load an LB checkpoint one needs to have already initialized the LB fluid.\n");
+    fprintf (stderr, "To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.\n");
     return ES_ERROR;
   }
   if(lattice_switch & LATTICE_LB_GPU) {
