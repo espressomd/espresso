@@ -164,6 +164,7 @@ int i;
 int n_extern_nodeforces = 0;
 LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
 int ek_initialized = 0;
+int ek_spacially_varyingE_initialized = 0;
 
 /*-----------------------------------------------------------*/
 /** main of lb_gpu_programm */

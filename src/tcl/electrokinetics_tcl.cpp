@@ -811,6 +811,105 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           return TCL_ERROR;
         }
       }
+      //TODO OWEN CODE DUPLICATION, MERGE?
+      if( ARG0_IS_S("electrode_region") )
+      {
+        argc--;
+        argv++;
+
+        double voltage;
+        LB_Boundary lbboundary_tmp;
+
+        if( !ARG0_IS_D(voltage) ) 
+        {
+          Tcl_AppendResult(interp, "\nYou need to specify an applied voltage for the defined region", (char *) NULL);
+          Tcl_AppendResult(interp, "\nelectrokinetics electrode_region #double ...\n", (char *)NULL);
+          return (TCL_ERROR);
+        }         
+
+        argc--;
+        argv++;
+
+        if(ARG0_IS_S("box")) {
+          err = tclcommand_lbboundary_box(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }          
+        else if(ARG0_IS_S("wall")) {
+          err = tclcommand_lbboundary_wall(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("sphere")) {
+          err = tclcommand_lbboundary_sphere(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("cylinder")) {
+          err = tclcommand_lbboundary_cylinder(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("rhomboid")) {
+          err = tclcommand_lbboundary_rhomboid(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("pore")) {
+          err = tclcommand_lbboundary_pore(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("stomatocyte")) {
+          err = tclcommand_lbboundary_stomatocyte(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else {
+          Tcl_AppendResult(interp, "possible electrokinetics electrode_region #int parameters: box, wall, sphere, cylinder, rhomboid, pore, stomatocyte", (char *) NULL);
+          return (TCL_ERROR);
+        }
+
+        ek_tag_value_nodes( &lbboundary_tmp, voltage, EK_TAG_VOLTAGE_FLAG ); 
+
+        return TCL_OK;
+      }
+      if( ARG0_IS_S("set_permittivity") )
+      {
+        argc--;
+        argv++;
+
+        double permittivity;
+        LB_Boundary lbboundary_tmp;
+
+        if( !ARG0_IS_D(permittivity) ) 
+        {
+          Tcl_AppendResult(interp, "\nYou need to specify a permittivity for the defined region", (char *) NULL);
+          Tcl_AppendResult(interp, "\nelectrokinetics set_permittivity #double ...\n", (char *)NULL);
+          return (TCL_ERROR);
+        }         
+
+        argc--;
+        argv++;
+
+        if(ARG0_IS_S("box")) {
+          err = tclcommand_lbboundary_box(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }          
+        else if(ARG0_IS_S("wall")) {
+          err = tclcommand_lbboundary_wall(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("sphere")) {
+          err = tclcommand_lbboundary_sphere(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("cylinder")) {
+          err = tclcommand_lbboundary_cylinder(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("rhomboid")) {
+          err = tclcommand_lbboundary_rhomboid(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("pore")) {
+          err = tclcommand_lbboundary_pore(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else if(ARG0_IS_S("stomatocyte")) {
+          err = tclcommand_lbboundary_stomatocyte(&lbboundary_tmp, interp, argc - 1, argv + 1);
+        }
+        else {
+          Tcl_AppendResult(interp, "possible electrokinetics set_permittivity #int parameters: box, wall, sphere, cylinder, rhomboid, pore, stomatocyte", (char *) NULL);
+          return (TCL_ERROR);
+        }
+
+        ek_tag_value_nodes( &lbboundary_tmp, permittivity, EK_TAG_PERMITTIVITY_FLAG ); 
+
+        return TCL_OK;
+      }
+
+
       else if(ARG0_IS_S("reaction")) {
 #ifndef EK_REACTION
   Tcl_AppendResult(interp, "EK_REACTION needs to be compiled in to use electrokinetics reaction\n", (char *)NULL);

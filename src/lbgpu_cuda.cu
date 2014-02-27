@@ -87,6 +87,7 @@ static size_t size_of_boundindex;
 
 #if defined(ELECTROKINETICS)
 static __device__ __constant__ int ek_initialized_gpu = 0;
+static __device__ __constant__ int ek_spacially_varyingE_initialized_gpu = 0;
 #endif
 
 EK_parameters* lb_ek_parameters_gpu;
@@ -1139,6 +1140,21 @@ __device__ void bounce_back_write(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned i
 // to be implemented
 
 #endif // SHANCHEN
+
+/** add of spatially varying (external) forces within the modespace, needed for particle-interaction or non-uniform E field
+ * Note that we have code duplication but it is necessary to avoid unnecessarily computationally expensive Kernels
+ * @param index   node index / thread index (Input)
+ * @param mode    Pointer to the local register values mode (Input/Output)
+ * @param node_f  Pointer to local node force (Input)
+*/
+__device__ void apply_spacially_varying_E_field(unsigned int index, LB_node_force_gpu node_f) {
+  
+  float force_factor=powf(para.agrid,4)*para.tau*para.tau;
+    
+      node_f.force[ 0 * para.number_of_nodes + index] += 0.0f;
+      node_f.force[ 1 * para.number_of_nodes + index] += 0.0f;
+      node_f.force[ 2 * para.number_of_nodes + index] += 0.0f;
+}
 
 
 /** add of (external) forces within the modespace, needed for particle-interaction
@@ -2700,6 +2716,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
       reset_mode0_homogeneously(mode);
     }
   }
+
 #endif
     /**lb_relax_modes*/
     relax_modes(mode, index, node_f,d_v);
@@ -2708,13 +2725,23 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     {
       thermalize_modes(mode, index, &rng);
     }
-#if  defined(EXTERNAL_FORCES)  ||   defined (SHANCHEN)  
+
+// TODO OWEN should this be here?
+// #ifdef (ELECTROKINETICS)
+//     if (ek_spacially_varyingE_initialized_gpu)
+//     {
+//       apply_spacially_varying_E_field(index, node_f);
+//     }
+// #endif
+    
+#if  defined(EXTERNAL_FORCES)  ||   defined (SHANCHEN)
     /**if external force is used apply node force */
     apply_forces(index, mode, node_f,d_v);
 #else
     /**if particles are used apply node forces*/
-    if (para.number_of_particles) apply_forces(index, mode, node_f,d_v); 
+    if (para.number_of_particles) apply_forces(index, mode, node_f, d_v); 
 #endif
+
     /**lb_calc_n_from_modes_push*/
     normalize_modes(mode);
     /**calc of velocity densities and streaming with pbc*/
@@ -3010,6 +3037,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
 
   /** calc of velocitydensities from given parameters and initialize the Node_Force array with zero */
+  //TODO OWEN APPLY SPATIALLY VARYING E FIELD HERE
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, (nodes_a, device_rho_v, node_f, gpu_check));
  
@@ -3051,6 +3079,7 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
 
   //copy parameters, especially number of parts to gpu mem
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  //cuda_safe_mem(cudaMemcpyToSymbol(ek_spacially_varyingE_initialized_gpu, &ek_spacially_varyingE_initialized, sizeof(int))); TODO OWEN add back?
 }
 
 #ifdef LB_BOUNDARIES_GPU
@@ -3118,6 +3147,7 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu){
   int blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
+  //TODO OWEN APPLY SPATIALLY VARYNG FORCE HERE
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
 }
