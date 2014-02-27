@@ -847,7 +847,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_U00 )],
                (2 * di[0] - 1) * ek_parameters_gpu.rho[species_index][index] *
-               dx[0] * (1.0 - dx[1]) * (1.0 - dx[2])
+               dx[0] * (1.0f - dx[1]) * (1.0f - dx[2])
              );
     
     //face in y
@@ -860,7 +860,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_0U0 )],
               (2 * di[1] - 1) * ek_parameters_gpu.rho[species_index][index] *
-              (1.0 - dx[0]) * dx[1] * (1.0 - dx[2]) );
+              (1.0f - dx[0]) * dx[1] * (1.0f - dx[2]) );
     
     //face in z
     node =
@@ -872,7 +872,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_00U )],
                (2 * di[2] - 1) * ek_parameters_gpu.rho[species_index][index] *
-               (1.0 - dx[0]) * (1.0 - dx[1]) * dx[2] );
+               (1.0f - dx[0]) * (1.0f - dx[1]) * dx[2] );
     
     //edge in x
     node =
@@ -884,7 +884,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
         
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_0UU + (di[1] + di[2] == 1) )],
                (2 * di[1] - 1) * ek_parameters_gpu.rho[species_index][index] *
-               (1.0 - dx[0]) * dx[1] * dx[2]
+               (1.0f - dx[0]) * dx[1] * dx[2]
              );
     
     //edge in y
@@ -897,7 +897,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_U0U + (di[0] + di[2] == 1) )],
                (2 * di[0] - 1) * ek_parameters_gpu.rho[species_index][index] *
-               dx[0] * (1.0 - dx[1]) * dx[2] );
+               dx[0] * (1.0f - dx[1]) * dx[2] );
     
     //edge in z
     node =
@@ -909,7 +909,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_UU0 + (di[0] + di[1] == 1) )],
                (2 * di[0] - 1) * ek_parameters_gpu.rho[species_index][index] *
-               dx[0] * dx[1] * (1.0 - dx[2]) );
+               dx[0] * dx[1] * (1.0f - dx[2]) );
     
     //corner
     node =
