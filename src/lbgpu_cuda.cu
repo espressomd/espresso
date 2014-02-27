@@ -3377,14 +3377,12 @@ void lb_integrate_GPU() {
            it or device_rho_v are NULL depending on extended_values_flag */ 
   if (intflag == 1)
   {
-
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_b;
     intflag = 0;
   }
   else
   {
-
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_a;
     intflag = 1;
