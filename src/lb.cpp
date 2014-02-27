@@ -759,6 +759,10 @@ int lb_lbfluid_print_velocity(char* filename) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
+#ifdef SHANCHEN
+    printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__)
+    exit(1);
+#endif
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
     lb_get_values_GPU(host_values);
@@ -789,7 +793,8 @@ int lb_lbfluid_print_velocity(char* filename) {
       for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
         for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
 #ifdef SHANCHEN
-exit(printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__));
+          printf("SHANCHEN not implement for the CPU LB\n",__FILE__,__LINE__);
+          exit(1);
 #endif
           lb_lbnode_get_u(pos, u);
           fprintf(fp, "%f %f %f %f %f %f\n", (pos[0]+0.5)*lblattice.agrid, (pos[1]+0.5)*lblattice.agrid, (pos[2]+0.5)*lblattice.agrid, u[0], u[1], u[2]);
@@ -875,6 +880,20 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   return ES_OK;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
+  if (lattice_switch & LATTICE_LB) {
+    fprintf (stderr, "Loading an LB checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
+    recalc_forces = 0;      //Indicates the forces need not be recalculated
+    resort_particles = 0;   //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
+  }
+  else if (lattice_switch & LATTICE_LB_GPU) {
+    fprintf (stderr, "Loading an LB GPU checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB GPU checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
+    recalc_forces = 0;      //Indicates the forces need not be recalculated
+    resort_particles = 0;   //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
+  }
+  else {
+    fprintf (stderr, "To load an LB checkpoint one needs to have already initialized the LB fluid.\n");
+    return ES_ERROR;
+  }
   if(lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     FILE* cpfile;
@@ -933,13 +952,13 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         ind[1]=j;
         ind[2]=k;
         if (!binary) {
-	  if (fscanf(cpfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf \n", &pop[0],&pop[1],&pop[2],&pop[3],&pop[4],&pop[5],&pop[6],&pop[7],&pop[8],&pop[9],&pop[10],&pop[11],&pop[12],&pop[13],&pop[14],&pop[15],&pop[16],&pop[17],&pop[18]) != 19) {
-	    return ES_ERROR;
-	  } 
+          if (fscanf(cpfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf \n", &pop[0],&pop[1],&pop[2],&pop[3],&pop[4],&pop[5],&pop[6],&pop[7],&pop[8],&pop[9],&pop[10],&pop[11],&pop[12],&pop[13],&pop[14],&pop[15],&pop[16],&pop[17],&pop[18]) != 19) {
+            return ES_ERROR;
+          } 
         }
         else {
           if (fread(pop, sizeof(double), 19, cpfile) != 19)
-	    return ES_ERROR;
+            return ES_ERROR;
         }
         lb_lbnode_set_pop(ind, pop);
       } 
@@ -1069,8 +1088,12 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 #endif
 				}
 
-//printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
-exit(printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__));
+#ifdef SHANCHEN
+        //printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
+        printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__)
+        exit(1);
+#endif
+
 				lb_lbnode_get_u(tmpind, local_v);
 				
 				
@@ -2716,12 +2739,12 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   for (z=0;z<2;z++) {
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
-	
-	local_f = lbfields[node_index[(z*2+y)*2+x]].force;
 
-	local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
-	local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
-	local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
+        local_f = lbfields[node_index[(z*2+y)*2+x]].force;
+
+        local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
+        local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
+        local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
 
       }
     }
@@ -2950,21 +2973,21 @@ void calc_particle_lattice_ia() {
       np = cell->n ;
 
       for (i=0;i<np;i++) {
-	/* for ghost particles we have to check if they lie
-	 * in the range of the local lattice nodes */
- 	if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid
-	    && p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid && p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid
-	    && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid) {
+        /* for ghost particles we have to check if they lie
+        * in the range of the local lattice nodes */
+        if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid
+            && p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid && p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid
+            && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid) {
 
-	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
+          ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
 
-	  lb_viscous_coupling(&p[i],force);
+          lb_viscous_coupling(&p[i],force);
 
-	  /* ghosts must not have the force added! */
+          /* ghosts must not have the force added! */
 
-	  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+          ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
-	}
+        }
       }
     }
 
