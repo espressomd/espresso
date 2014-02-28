@@ -936,7 +936,7 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  * @param index   node index / thread index (Input)
- * @param n_curr  Pointer to local node which receives the curren node field (Input)
+ * @param n_curr  Pointer to local node which receives the current node field (Input)
  * @param lb_boundary_velocity    The constant velocity at the boundary, set by the user (Input)
  * @param lb_boundary_force       The force on the boundary nodes (Output)
 */
