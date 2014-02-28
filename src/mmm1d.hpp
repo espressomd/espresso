@@ -38,16 +38,6 @@
 typedef struct {
   /** square of the switching radius */
   double far_switch_radius_2;
-  /** cutoff of the bessel sum */
-  int    bessel_cutoff;
-  /** Wether to recalculate the Bessel cutoff automatically.
-      If some parameters like the box dimensions change, the current
-      Bessel cutoff may not be suitable to achieve the required accuracy
-      anymore. If the user did not specify the Bessel cutoff explicitly,
-      this flag is 1, and whenever necessary, the Bessel cutoff is
-      recalculated.
-  */
-  int    bessel_calculated;
   /** required accuracy */
   double maxPWerror;
 } MMM1D_struct;
@@ -58,14 +48,9 @@ extern MMM1D_struct mmm1d_params;
     if you set this parameters.
     @param switch_rad at which xy-distance the calculation switches from the far to the
                       near formula. If -1, this parameter will be tuned automatically.
-    @param bessel_cutoff the cutoff for the bessel sum, aka far formula. Normally set this
-                         to -1, then the cutoff is automatically determined using the error formula.
     @param maxPWerror the maximal allowed error for the potential and the forces without the
                       prefactors, i. e. for the pure lattice 1/r-sum. */
-int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror);
-
-/** recalculate the polygamma taylor series. */
-void MMM1D_recalcTables();
+int MMM1D_set_params(double switch_rad, double maxPWerror);
 
 /// check that MMM1D can run with the current parameters
 int MMM1D_sanity_checks();

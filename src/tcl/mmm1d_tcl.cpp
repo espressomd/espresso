@@ -46,8 +46,6 @@ int tclprint_to_result_MMM1D(Tcl_Interp *interp)
 
   Tcl_PrintDouble(interp, sqrt(mmm1d_params.far_switch_radius_2), buffer);
   Tcl_AppendResult(interp, "mmm1d ", buffer, " ",(char *) NULL);
-  sprintf(buffer, "%d", mmm1d_params.bessel_cutoff);
-  Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
   Tcl_PrintDouble(interp, mmm1d_params.maxPWerror, buffer);
   Tcl_AppendResult(interp, buffer,(char *) NULL);
 
@@ -57,7 +55,6 @@ int tclprint_to_result_MMM1D(Tcl_Interp *interp)
 int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv)
 {
   double switch_rad, maxPWerror;
-  int bessel_cutoff;
 
   if (argc < 2) {
     Tcl_AppendResult(interp, "wrong # arguments: inter coulomb mmm1d <switch radius> "
@@ -69,7 +66,6 @@ int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **ar
     /* autodetermine bessel cutoff AND switching radius */
     if (! ARG_IS_D(1, maxPWerror))
       return TCL_ERROR;
-    bessel_cutoff = -1;
     switch_rad = -1;
   }
   else {
@@ -78,23 +74,10 @@ int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **ar
       if ((! ARG_IS_D(0, switch_rad)) ||
 	  (! ARG_IS_D(1, maxPWerror))) 
 	return TCL_ERROR;
-      bessel_cutoff = -1;
-    }
-    else if (argc == 3) {
-      /* fully manual */
-      if((! ARG_IS_D(0, switch_rad)) ||
-	 (! ARG_IS_I(1, bessel_cutoff)) ||
-	 (! ARG_IS_D(2, maxPWerror))) 
-	return TCL_ERROR;
-
-      if (bessel_cutoff <=0) {
-	Tcl_AppendResult(interp, "bessel cutoff too small", (char *)NULL);
-	return TCL_ERROR;
-      }
     }
     else {
       Tcl_AppendResult(interp, "wrong # arguments: inter coulomb mmm1d <switch radius> "
-		       "{<bessel cutoff>} <maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
+		       "<maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
       return TCL_ERROR;
     }
     
@@ -104,7 +87,7 @@ int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **ar
     }
   }
 
-  MMM1D_set_params(switch_rad, bessel_cutoff, maxPWerror);
+  MMM1D_set_params(switch_rad, maxPWerror);
 
   char *log = NULL;
   int result = mmm1d_tune(&log) == ES_OK ? TCL_OK : TCL_ERROR;
