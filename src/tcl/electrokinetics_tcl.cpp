@@ -35,7 +35,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
          fraction1,
          mass_reactant,
          mass_product0,
-         mass_product1;
+         mass_product1,
+         reset_mode_0;
 #endif
 
   if(argc < 2) 
@@ -57,6 +58,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                         [mass_product1 #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [reaction_fraction_pr_0 #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [reaction_fraction_pr_1 #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics reaction reset_mode_zero #float\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics reaction region #int [box]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                     [wall ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                     [sphere ... (c.f. constraint command)]\n", (char *)NULL);
@@ -1105,6 +1107,44 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           return TCL_OK;
 #endif
         }
+        else if( ARG0_IS_S("reset_mode_zero") )
+        {
+#ifndef EK_BOUNDARIES
+          Tcl_AppendResult(interp, "Feature EK_BOUNDARIES required", (char *) NULL);
+          return (TCL_ERROR);
+#else
+          if(ek_parameters.number_of_species < 3) 
+          {
+            Tcl_AppendResult(interp, "to invoke the reaction command 3 species must first be set\n", (char *) NULL);
+            return (TCL_ERROR);
+          }
+
+          argc--;
+          argv++;
+
+          if( !ARG0_IS_D(reset_mode_0) ) 
+          {
+            Tcl_AppendResult(interp, "\nYou must specify a float between 0 and 1\n", (char *) NULL);
+            Tcl_AppendResult(interp, "\nelectrokinetics reaction reset_mode_zero #float ...\n", (char *)NULL);
+            return (TCL_ERROR);
+          }         
+
+          if ( reset_mode_0 < 0.0 || reset_mode_0 > 1.0 )
+          {
+            Tcl_AppendResult(interp, "Not a valid choice for the mode resetting, choose a value in [0,1]\n", (char *) NULL);
+            return (TCL_ERROR);
+          }
+
+          argc--;
+          argv++;
+
+          if ( ek_reset_mode_zero( reset_mode_0 ) != 0 ) 
+          {
+            Tcl_AppendResult(interp, "unknown error in resetting mode zero\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+#endif
+        }
         else
         { 
           if(ek_parameters.number_of_species < 3) 
@@ -1403,9 +1443,9 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
 
   if((err = gather_runtime_errors(interp, err)) != TCL_OK)
     return TCL_ERROR;
-  
+
   err = ek_init();
-  
+
   switch(err) 
   {
     case 0:

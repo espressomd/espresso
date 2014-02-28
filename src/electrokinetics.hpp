@@ -70,6 +70,7 @@ typedef struct {
   float mass_reactant;
   float mass_product0;
   float mass_product1;
+  float reset_mode_0;
   cufftReal* greensfcn;
   cufftComplex* charge_potential;
   float* j;
@@ -180,6 +181,7 @@ int ek_set_reaction( int reactant, int product0, int product1,
                      float mass_reactant, float mass_product0, float mass_product1 );
 int ek_print_vtk_pressure(char* filename);
 int ek_tag_reaction_nodes( LB_Boundary* lbboundary, char reaction_type );
+int ek_reset_mode_zero( double reset_mode_0 );
 #endif
 
 #endif /* CUDA */

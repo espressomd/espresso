@@ -2000,8 +2000,8 @@ __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1,
 }
 
 #if defined(ELECTROKINETICS)
-__device__ void reset_mode0_homogeneously(float* mode) {
-  mode[0] = 0.0;
+__device__ void reset_mode0_homogeneously(float* mode, float value) {
+  mode[0] *= value;
 }
 #endif
 
@@ -2614,7 +2614,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
            n_lb_boundaries_gpu > 0 )
        )
     {
-      reset_mode0_homogeneously(mode);
+      reset_mode0_homogeneously(mode, ek_parameters_gpu->reset_mode_0);
     }
   }
 #endif

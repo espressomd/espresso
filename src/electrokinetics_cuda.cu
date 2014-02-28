@@ -81,7 +81,8 @@ extern EK_parameters* lb_ek_parameters_gpu;
                                   { -1,   -1,  -1},
                                   -1.0, -1.0, -1.0,
                                   -1.0, -1.0, -1.0,
-                                  -1.0, -1.0, -1.0
+                                  -1.0, -1.0, -1.0,
+                                  -1.0
                                 };
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
@@ -2048,7 +2049,6 @@ int ek_init() {
                              sizeof( cufftComplex ) *
                              ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) ) );
 
-
     cuda_safe_mem( cudaMalloc( (void**) &ek_accelerated_frame_boundary_velocity,
                                3 * sizeof( float ) ) );
 
@@ -3058,6 +3058,7 @@ void ek_print_parameters() {
   printf( "  float reaction_ct_rate = %f;\n",           ek_parameters.reaction_ct_rate); 
   printf( "  float reaction_fraction_0 = %f;\n",        ek_parameters.reaction_fraction_0);
   printf( "  float reaction_fraction_1 = %f;\n",        ek_parameters.reaction_fraction_0);
+  printf( "  float reset_mode_0 = %f;\n",               ek_parameters.reset_mode_0);
   printf( "  float* j = %p;\n",                         ek_parameters.j );
   
   printf( "  float* rho[] = {%p, %p, %p, %p, %p, %p, %p, %p, %p, %p};\n",
@@ -3351,6 +3352,18 @@ int ek_set_reaction( int reactant, int product0, int product1,
   ek_parameters.reaction_fraction_0 = reaction_fraction_0;
   ek_parameters.reaction_fraction_1 = reaction_fraction_1;  
 
+  return 0;
+}
+
+int ek_reset_mode_zero( double reset_mode_0 ) {
+
+  if ( ek_parameters.reaction_species[0] == -1 ||
+       ek_parameters.reaction_species[1] == -1 ||
+       ek_parameters.reaction_species[2] == -1 ) 
+    return 1;
+                    
+  ek_parameters.reset_mode_0 = reset_mode_0;
+  
   return 0;
 }
 
