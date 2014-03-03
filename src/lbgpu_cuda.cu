@@ -2607,11 +2607,11 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
       LB internal pressure contribution */
   if ( ek_initialized_gpu )
   {
-    if ( ( ek_parameters_gpu->reaction_species[0] != -1 &&
-           ek_parameters_gpu->reaction_species[1] != -1 &&
-           ek_parameters_gpu->reaction_species[2] != -1 ) ||
-         ( ek_parameters_gpu->accelerated_frame_enabled == 1 &&
-           n_lb_boundaries_gpu > 0 )
+    if ( ek_parameters_gpu->reaction_species[0] != -1 &&
+         ek_parameters_gpu->reaction_species[1] != -1 &&
+         ek_parameters_gpu->reaction_species[2] != -1 &&
+         ek_parameters_gpu->reset_mode_0 >= 0.0 &&
+         n_lb_boundaries_gpu > 0 
        )
     {
       reset_mode0_homogeneously(mode, ek_parameters_gpu->reset_mode_0);
