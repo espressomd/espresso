@@ -93,6 +93,8 @@ extern EK_parameters* lb_ek_parameters_gpu;
   CUDA_particle_data *particle_data_gpu;
   float *ek_lb_boundary_force;
   char *ek_node_is_catalyst;
+  unsigned int old_number_of_species = 0;
+  unsigned int old_number_of_boundaries = 0;
 
   cufftHandle plan_fft;
   cufftHandle plan_ifft;
@@ -1896,9 +1898,8 @@ int ek_init() {
   {
     if( cudaGetSymbolAddress( (void**) &ek_parameters_gpu_pointer, ek_parameters_gpu ) != cudaSuccess) 
     {
-    
       fprintf( stderr, "ERROR: Fetching constant memory pointer\n" );
-      
+
       return 1;
     }
     
@@ -1916,7 +1917,7 @@ int ek_init() {
     }
 
     lattice_switch = LATTICE_LB_GPU;
-    ek_initialized = 1;
+    ek_initialized = 1;         
 
     lbpar_gpu.agrid = ek_parameters.agrid;
     lbpar_gpu.viscosity[0] = ek_parameters.viscosity;
@@ -2057,48 +2058,75 @@ int ek_init() {
                                3 * sizeof( float ) ) );
 
     initialized = true;
+
+    cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
   }
-  
-  cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
-  
+  else
+  {
+    if ( lbpar_gpu.agrid != ek_parameters.agrid ||
+         lbpar_gpu.viscosity[0] != ek_parameters.viscosity ||
+         lbpar_gpu.bulk_viscosity[0] != ek_parameters.bulk_viscosity ||
+         lbpar_gpu.friction[0] != ek_parameters.friction ||
+         ( ( lbpar_gpu.rho[0] != 1.0 ) || ( lbpar_gpu.rho[0] != ek_parameters.lb_density ) )
+       )
+    {
+      fprintf( stderr, "ERROR: The LB parameters on the GPU cannot be reinitialized.\n");
+      
+      return 1;
+    }
+    else
+    {
+      cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
+
 #ifdef EK_BOUNDARIES
-  lb_init_boundaries();
-  lb_get_boundary_force_pointer( &ek_lb_boundary_force );
+      if ( old_number_of_boundaries != n_lb_boundaries )
+      {
+        lb_init_boundaries();
+        lb_get_boundary_force_pointer( &ek_lb_boundary_force );
+        old_number_of_boundaries = n_lb_boundaries;
+      }
 
-  // Determine the total boundary mass and the fluid mass
+      // Determine the total boundary mass and the fluid mass
 
-  unsigned int number_of_boundary_nodes = ek_calculate_boundary_mass( );
-  unsigned int number_of_fluid_nodes = ek_parameters.number_of_nodes - number_of_boundary_nodes;
-  
-  ek_parameters.accelerated_frame_boundary_mass =   static_cast<float>( number_of_boundary_nodes )
-                                                  * ek_parameters.accelerated_frame_boundary_mass_density
-                                                  * powf(lbpar_gpu.agrid,3);
+      unsigned int number_of_boundary_nodes = ek_calculate_boundary_mass( );
+      unsigned int number_of_fluid_nodes = ek_parameters.number_of_nodes - number_of_boundary_nodes;
+      
+      ek_parameters.accelerated_frame_boundary_mass =   static_cast<float>( number_of_boundary_nodes )
+                                                      * ek_parameters.accelerated_frame_boundary_mass_density
+                                                      * powf(lbpar_gpu.agrid,3);
 
-  ek_parameters.accelerated_frame_fluid_mass =   static_cast<float>( number_of_fluid_nodes )
-                                               * lbpar_gpu.rho[0] * powf(lbpar_gpu.agrid,3);
-    
-  cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
+      ek_parameters.accelerated_frame_fluid_mass =   static_cast<float>( number_of_fluid_nodes )
+                                                   * lbpar_gpu.rho[0] * powf(lbpar_gpu.agrid,3);
+        
+      cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
 #else
-  blocks_per_grid_x =
-    ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
-    / (threads_per_block * blocks_per_grid_y );
-  dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
-  
-  KERNELCALL( ek_init_species_density_homogeneous, dim_grid, threads_per_block, () );
+      blocks_per_grid_x =
+        ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
+        / (threads_per_block * blocks_per_grid_y );
+      dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+      
+
+      if ( old_number_of_species != ek_parameters.number_of_species )
+      {
+        KERNELCALL( ek_init_species_density_homogeneous, dim_grid, threads_per_block, () );
+        old_number_of_species = ek_parameters.number_of_species;
+      }
 #endif
 
 #ifdef EK_REACTION
-  // added to ensure that the pressure is set to the proper value in the first time step
-  blocks_per_grid_x = (ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
-  dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-  KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, ek_lbparameters_gpu, ek_lb_device_values ) );
+      // added to ensure that the pressure is set to the proper value in the first time step
+      blocks_per_grid_x = (ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
+      dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+      KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, ek_lbparameters_gpu, ek_lb_device_values ) );
 #endif
 
-  ek_integrate_electrostatics();
-  
-  //ek_print_parameters(); //TODO delete
+      ek_integrate_electrostatics();
+    }
+  }
 
-  return 0;
+  //ek_print_parameters(); //TODO delete
+      
+  return 0; 
 }
 
 
@@ -3159,16 +3187,8 @@ void ek_print_lbpar() {
 
 int ek_set_agrid( double agrid ) {  
 
-  if( ek_parameters.agrid < 0.0 ) 
-  {  
-    ek_parameters.agrid = agrid;    
-    return 0;
-  }
-  else 
-  {  
-    printf("ERROR: electrokinetics agrid can not be changed\n");
-    return 1;
-  }
+  ek_parameters.agrid = agrid;    
+  return 0;
 }
 
 
@@ -3181,16 +3201,8 @@ int ek_set_lb_density( double lb_density ) {
 
 int ek_set_bjerrumlength( double bjerrumlength ) {
 
-  if( ek_parameters.bjerrumlength < 0.0 ) 
-  {
-    ek_parameters.bjerrumlength = bjerrumlength;
-    return 0;
-  }
-  else 
-  {
-    printf("ERROR: electrokinetics bjerrum_length can not be changed\n");
-    return 1;
-  }
+  ek_parameters.bjerrumlength = bjerrumlength;
+  return 0;
 }
 
 
