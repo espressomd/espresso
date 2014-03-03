@@ -2067,7 +2067,7 @@ int ek_init() {
          lbpar_gpu.viscosity[0] != ek_parameters.viscosity ||
          lbpar_gpu.bulk_viscosity[0] != ek_parameters.bulk_viscosity ||
          lbpar_gpu.friction[0] != ek_parameters.friction ||
-         ( ( lbpar_gpu.rho[0] != 1.0 ) || ( lbpar_gpu.rho[0] != ek_parameters.lb_density ) )
+         ( ( lbpar_gpu.rho[0] != 1.0 ) && ( lbpar_gpu.rho[0] != ek_parameters.lb_density ) )
        )
     {
       fprintf( stderr, "ERROR: The LB parameters on the GPU cannot be reinitialized.\n");
