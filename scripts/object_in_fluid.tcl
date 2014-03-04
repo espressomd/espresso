@@ -413,6 +413,15 @@ proc oif_create_template { args } {
 		puts "Something went wrong with mandatory arguments for template creator"  
 		return
 	}
+	
+#--------------------------------------------------------------------------------------------	
+# checking whether correct template-id was given
+	if { $template_id != $oif_n_templates } {
+		puts "error: Cannot create a template with template_id $template_id,"
+		puts "	because either one such template already exists or the template_id does not follow consecutively."
+		puts "	The next available template_id is $oif_n_templates."
+		exit	
+	}
 
 #--------------------------------------------------------------------------------------------
 # set files for output check
@@ -1003,7 +1012,7 @@ proc oif_add_object { args } {
 				set part_mass [lindex $args $pos]
 				incr pos
 			}
-	        "object-id" {  
+			"object-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
 					puts "error"
@@ -1022,7 +1031,7 @@ proc oif_add_object { args } {
 				set part_type [lindex $args $pos]
 				incr pos
 			}
-		    "template-id" {  
+			"template-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
 					puts "error"
@@ -1073,7 +1082,7 @@ proc oif_add_object { args } {
 				set origin_Z [lindex $args $pos]
 				incr pos
 			}
-	        "check" {  
+			"check" {  
 				incr pos
 				if { $pos >= $n_args } { 
 					puts "error check"
@@ -1102,6 +1111,16 @@ proc oif_add_object { args } {
 		puts "Something went wrong with mandatory arguments for creating object" 
 		return
 	}
+	
+#--------------------------------------------------------------------------------------------	
+# checking whether correct object-id has been given
+	if { $object_id != $oif_n_objects } {
+		puts "error: Cannot create an object with object_id $object_id,"
+		puts "	because either one such object already exists or the object_id does not follow consecutively."
+		puts "	The next available object_id is $oif_n_objects."
+		exit	
+	}
+	
 #--------------------------------------------------------------------------------------------
 # set files for output check
 	if {$check_output == 1} {
