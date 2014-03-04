@@ -49,7 +49,7 @@ Eqs.~\eqref{eq:ek-model-continuity}-\eqref{eq:ek-model-continuity-fl}, combining
 diffusion-advection, electrostatics, and hydrodynamics is conventionally 
 referred to as the \textit{Electrokinetic Equations}.
 
-\textbf{TODO: complete in broad strokes the applicability of the model + difference in temperatures between EK and LB species.}
+\todo{Complete in broad strokes the applicability of the electrokinetics model. Also mention the difference in temperatures between EK and LB species.}
 
 The electrokinetic equations have the following properties:
 \begin{itemize}
@@ -146,7 +146,7 @@ parameters are \var{T} the temperature at which the diffusive species are simula
 and \var{bjerrum\_length} the Bjerrum length associated with the electrostatic 
 properties of the medium. See the above description of the electrokinetic 
 equations for an explanation of the introduction of a temperature, which does 
-not come in directly via a thermostat that introduces thermal fluctuations.
+not come in directly via a thermostat that produces thermal fluctuations.
 
 \subsection{\label{ssec:ek-diff-species}Diffusive Species}
 
@@ -350,13 +350,13 @@ computations, as will be shown later.
 The reaction is specified by the second term on the right-hand side of 
 Eq.~\eqref{eq:ek-reaction-continuity}. It is important to note that this term
 can be set locally, as opposed to the other terms in the equation system 
-Eqs.~\eqref{eq:ek-reaction-continuity}-\eqref{eq:ek-reaction-continuity-fl}, in our 
-implementation, as will become clear in the following. This has the
+Eqs.~\eqref{eq:ek-reaction-continuity}-\eqref{eq:ek-reaction-continuity-fl}, in
+our implementation, as will become clear in the following. This has the
 advantage that catalytic surfaces may be modeled. 
 
 It turns out that in addition to the initial setting of the LB mass density, the
 inherent compressibility of the LB -- it satisfies the equation of state of an 
-ideal gas -- must be suppressed to obtain the correct advective contribution
+ideal gas -- must be suppressed to obtain the `correct' advective contribution
 from the Navier-Stokes equation~\eqref{eq:ek-reaction-velocity}. The force 
 applied to the LB fluid coming from the diffusive species is sufficiently
 strong to create a mass density heterogeneity in the LB fluid. This 
@@ -367,21 +367,16 @@ incorrect advective velocity is given by the LB scheme.
 In our implementation, suppression of LB fluid heterogeneity is achieved by 
 resetting the zeroth mode of the LB at the start of every time step. This 
 resetting violates mass conservation in the LB, but only by a small (and 
-controlled) amount, since the heterogeneities are in the order of 1\%. 
-As a more physical alternative to relaxing the mass conservation, one can 
-utilize a sufficiently small time step to remove any heterogeneities from the LB
-fluid. The LB diffusion is decoupled from the diffusion of the species and is
-completely specified by the time step and grid size. By decreasing the time step
-it is possible to increase the diffusion coefficient and thus allow diffusion to
-rectify any heterogeneities instantaneously. However, this proved to be 
-unpractical for the simulation parameters that are typically used in the
-reaction set-up. 
-
-For those who are interested to run the code without the mass-conservation
-violation, we recommend commenting out the relevant lines in the source code and
-testing the results with different time steps. However, this should not be done
-without careful consideration and experience in editing CUDA code. We therefore
-\emph{do not} specify the locations in the code that have to be edited here.
+controlled) amount, since the heterogeneities are in the order of 1\%, 
+for the physical systems that we considered thus far. Alternatively, one could
+use parameters for which the compressibility of the LB fluid is not as strong, 
+but tuning the internal LB parameters. However, this may severely limit the 
+range over which the system can be mapped to an experimental equivalent. 
+Regardless, great care must be taken to examine the effect of mode 0 resetting 
+and it should not be used without a good insight into the system you are 
+modeling. In future version of \es{} the reaction set-up will be built on top of
+an incompressible hydrodynamics solver, thus circumventing the problems that
+arrise in regular LB which necessitate mode resetting.
 
 \subsection{\label{ssec:ek-reac-init}Initialization and Geometry Definition}
 
@@ -426,6 +421,30 @@ chemical requirement of mass conservation. Finally, the parameters
 what fractions of the product are generated when a given quantity of reactant is
 catalytically converted. To use a chemical reaction, all options for the 
 \lit{electrokinetics reaction} command must be specified.
+
+\begin{essyntax}
+  \require{1 or 2 or 3}{electrokinetics}
+  \require{3}{reaction}
+  \require{3}{reset_mode_zero \var{fraction}}
+  \opt{shape \var{shape\_args}}
+  \begin{features}
+  \required[1]{ELECTROKINETICS}
+  \required[2]{EK_BOUNDARIES}
+  \required[3]{EK_REACTIONS}
+  \end{features}
+\end{essyntax}
+The \lit{reset_mode_zero} option of the \lit{electrokinetics reaction} command 
+enables the user to violate mass conservation in the LB to effectively kill off
+its compressiblity. The parameter \var{fraction} can assume values in the range
+[0,1]. The resetting acts on the zeroth mode of the LB as follows
+\begin{equation}
+\label{eq:ek-mode} M_{0,\mathrm{reset}} = f * M_{0,\mathrm{original}} ,
+\end{equation}
+with $f$ the value of the \var{fraction} parameter. The default behavior of the
+electrokinetics algorithm is no mode resetting. Once mode resetting is enabled
+it can be adjusted at any time during the simulation and it may be switched off
+by setting the value of \var{fraction} to 1.0. Mode zero resetting can only be
+applied if a reaction has been set up and there are boundaries in the system.
 
 \begin{essyntax}
   \require{1 or 2 or 3}{electrokinetics}
