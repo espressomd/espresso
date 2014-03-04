@@ -181,9 +181,13 @@ void integrate_vv(int n_steps)
     thermo_heat_up();
 #ifdef LB
     transfer_momentum = 0;
+    if (lattice_switch & LATTICE_LB && this_node == 0)
+      fprintf (stderr, "Warning, no valid forces from previous integration step, means the LB fluid coupling is not included in the particle forces for this step.\n");
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
+    if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
+      fprintf (stderr, "Warning, no valid forces from previous integration step, means the GPU LB fluid coupling is not included in the particle forces for this step.\n");
 #endif
 //VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
@@ -219,6 +223,11 @@ void integrate_vv(int n_steps)
     /*apply trap forces to trapped molecules*/
 #ifdef MOLFORCES         
     calc_and_apply_mol_constraints();
+#endif
+
+    /* should be pretty late, since it needs to zero out the total force */
+#ifdef COMFIXED
+    calc_comfixed();
 #endif
 
     rescale_forces();
@@ -337,6 +346,11 @@ void integrate_vv(int n_steps)
     /*apply trap forces to trapped molecules*/
 #ifdef MOLFORCES         
     calc_and_apply_mol_constraints();
+#endif
+
+    /* should be pretty late, since it needs to zero out the total force */
+#ifdef COMFIXED
+    calc_comfixed();
 #endif
 
     if (check_runtime_errors())

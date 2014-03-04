@@ -2,7 +2,10 @@ import re
 import numpy
 import sys
 import os
-import __builtin__
+try:
+    import __builtin__ # for Python 2
+except ImportError:
+    import builtins as __builtin__ # for Python 3
 
 col_types = {'^di': 3,
  '^ext_f': 3,
@@ -44,7 +47,7 @@ for col_type in col_types:
 def load_col_types(blockfile_support_tcl):
 	global col_types, re_col_types
 	col_types, re_col_types = {}, {}
-	with __builtin__.open(blockfile_support_tcl) as f:
+	with builtins.open(blockfile_support_tcl) as f:
 		for i in re.finditer('"(\^[a-z_]+\$*)"\s*{.*?; incr idx ([0-9]*)\s*}', f.read(), re.DOTALL):
 			var_name, var_cols = i.group(1), i.group(2)
 			if var_cols == '': var_cols = 1
@@ -129,7 +132,7 @@ class blockfile(object):
 		"""
 		Opens the blockfile.
 		"""
-		self.f = __builtin__.open(path)
+		self.f = builtins.open(path)
 	
 	def __iter__(self):
 		"""
@@ -171,5 +174,5 @@ if __name__ == "__main__":
 			sys.stderr.write("Please specify the path to scripts/blockfile_support.tcl from Espresso.\n")
 			sys.exit(1)
 		load_col_types(sys.argv[2])
-		print pprint(col_types)
+		print(pprint(col_types))
 		sys.exit()

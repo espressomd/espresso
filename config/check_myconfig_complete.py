@@ -17,16 +17,17 @@
 #
 # Check whether all features used in the code are defined
 #
+from __future__ import print_function
 import sys, os, re, fileinput
 sys.path.append(os.path.join(sys.path[0], '..', '..', 'config'))
 
 import featuredefs
 
 if len(sys.argv) < 3:
-    print "Usage: %s DEFFILE [FILE...]" % sys.argv[0]
+    print("Usage: %s DEFFILE [FILE...]" % sys.argv[0])
     exit(2)
 
-print "Checking for completeness of features in test configurations..."
+print("Checking for completeness of features in test configurations...")
 
 fdefs = featuredefs.defs(sys.argv[1])
 
@@ -42,8 +43,8 @@ unused = fdefs.features.difference(featurefound)
 unused = unused.difference(fdefs.notestfeatures)
 if len(unused) > 0:
     for feature in unused:
-        print "check_myconfig_complete: %s is not used" % feature
+        print("check_myconfig_complete: %s is not used" % feature)
 else:
-    print "check_myconfig_complete: All features are used!"
+    print("check_myconfig_complete: All features are used!")
         
 

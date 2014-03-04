@@ -237,33 +237,33 @@ void on_integration_start()
   }
 #endif
 #ifdef LB_GPU
-if(this_node == 0){
-  if(lattice_switch & LATTICE_LB_GPU) {
-    if (lbpar_gpu.agrid < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
-    }
-    if (lbpar_gpu.tau < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
-    }
-    for(int i=0;i<LB_COMPONENTS;i++){
-       if (lbpar_gpu.rho[0] < 0.0) {
-         errtext = runtime_error(128);
-         ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
-       }
-       if (lbpar_gpu.viscosity[0] < 0.0) {
-         errtext = runtime_error(128);
-         ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
-       }
-    }
+  if(this_node == 0){
+    if(lattice_switch & LATTICE_LB_GPU) {
+      if (lbpar_gpu.agrid < 0.0) {
+        errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+      }
+      if (lbpar_gpu.tau < 0.0) {
+        errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+      }
+      for(int i=0;i<LB_COMPONENTS;i++){
+        if (lbpar_gpu.rho[0] < 0.0) {
+          errtext = runtime_error(128);
+          ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+        }
+        if (lbpar_gpu.viscosity[0] < 0.0) {
+          errtext = runtime_error(128);
+          ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+        }
+      }
 
-    if (lb_reinit_particles_gpu) {
-      lb_realloc_particles_gpu();
-      lb_reinit_particles_gpu = 0;
+      if (lb_reinit_particles_gpu) {
+        lb_realloc_particles_gpu();
+        lb_reinit_particles_gpu = 0;
+      }
     }
   }
-}
 #endif
 #if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
   if (reinit_particle_comm_gpu){
@@ -279,19 +279,19 @@ if(this_node == 0){
 #endif
 
 #ifdef CATALYTIC_REACTIONS
-if(reaction.ct_rate != 0.0) {
+  if(reaction.ct_rate != 0.0) {
 
-   if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition} ");
-      check_runtime_errors();
+    if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+        errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition} ");
+        check_runtime_errors();
     }
 
-  if(max_cut < reaction.range) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{106 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
+    if(max_cut < reaction.range) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{106 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
+    }
   }
-}
 #endif
 
   /********************************************/
@@ -500,7 +500,8 @@ void on_resort_particles()
   case COULOMB_MMM2D:
     MMM2D_on_resort_particles();
     break;
-  default: break;
+  default: 
+    break;
   }
 #endif /* ifdef ELECTROSTATICS */
   

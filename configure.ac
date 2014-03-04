@@ -406,7 +406,7 @@ if test .$with_python_interface != .no; then
 
    AX_PYTHON_MODULE(numpy, required)
    AC_MSG_CHECKING([for numpy include path])
-   NUMPY_INCLUDE="`$PYTHON -c 'import numpy; print numpy.get_include()'`"
+   NUMPY_INCLUDE="`$PYTHON -c 'import numpy; import sys; sys.stdout.write(numpy.get_include())'`"
    PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
    AC_MSG_RESULT([$NUMPY_INCLUDE])
    AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])

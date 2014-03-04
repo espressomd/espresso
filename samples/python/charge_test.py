@@ -1,3 +1,4 @@
+from __future__ import print_function
 import ctypes
 import sys
 sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
@@ -8,5 +9,5 @@ import code_info
 
 es.part[0].pos = (0.,0.,0.) 
 es.part[0].q = 5.0
-print es.part[0].q
+print(es.part[0].q)
 

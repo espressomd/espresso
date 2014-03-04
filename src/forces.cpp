@@ -149,11 +149,6 @@ void force_calc()
 #if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
   copy_forces_from_GPU();
 #endif
-  
-/* this must be the last force to be calculated (Mehmet)*/
-#ifdef COMFIXED
-  calc_comfixed();
-#endif
 
 }
 

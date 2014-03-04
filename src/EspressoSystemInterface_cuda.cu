@@ -22,9 +22,9 @@ __global__ void split_kernel_q(CUDA_particle_data *particles,float *q, int n) {
   if(idx >= n)
     return;
 
+#ifdef ELECTROSTRATICS
   CUDA_particle_data p = particles[idx];
 
-#ifdef ELECTROSTRATICS
   q[idx] = p.q;
 #endif
 }

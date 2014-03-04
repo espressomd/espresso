@@ -43,10 +43,6 @@ int comfixed_set_params(int part_type_a, int part_type_b, int flag)
   if (n_nodes > 1)
     return 2;
 
-  if (PERIODIC(0) || PERIODIC(1) || PERIODIC(2)) {
-    return 3;
-  }
-
   data->COMFIXED_flag    = flag;
 
   /* broadcast interaction parameters */

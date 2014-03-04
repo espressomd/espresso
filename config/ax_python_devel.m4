@@ -87,66 +87,43 @@ AC_DEFUN([AX_PYTHON_DEVEL],[
 	fi
 
 	#
-	# Check for a version of Python >= 2.1.0
-	#
-	AC_MSG_CHECKING([for a version of Python >= '2.1.0'])
-	ac_supports_python_ver=`$PYTHON -c "import sys; \
-		ver = sys.version.split ()[[0]]; \
-		print (ver >= '2.1.0')"`
-	if test "$ac_supports_python_ver" != "True"; then
-		if test -z "$PYTHON_NOVERSIONCHECK"; then
-			AC_MSG_RESULT([no])
-			AC_MSG_FAILURE([
-This version of the AC@&t@_PYTHON_DEVEL macro
-doesn't work properly with versions of Python before
-2.1.0. You may need to re-run configure, setting the
-variables PYTHON_CPPFLAGS, PYTHON_LDFLAGS, PYTHON_SITE_PKG,
-PYTHON_EXTRA_LIBS and PYTHON_EXTRA_LDFLAGS by hand.
-Moreover, to disable this check, set PYTHON_NOVERSIONCHECK
-to something else than an empty string.
-])
-		else
-			AC_MSG_RESULT([skip at user request])
-		fi
-	else
-		AC_MSG_RESULT([yes])
-	fi
-
-	#
 	# if the macro parameter ``version'' is set, honour it
-	#
+	# otherwise, we need at least 2.1.0 for this to work
+        #
 	if test -n "$1"; then
-		AC_MSG_CHECKING([for a version of Python $1])
-		ac_supports_python_ver=`$PYTHON -c "import sys; \
-			ver = sys.version.split ()[[0]]; \
-			print (ver $1)"`
-		if test "$ac_supports_python_ver" = "True"; then
-		   AC_MSG_RESULT([yes])
-		else
-			AC_MSG_RESULT([no])
-			AC_MSG_ERROR([this package requires Python $1.
+            version='2.1.0'
+        else
+            version='$1'
+        fi
+        AC_MSG_CHECKING([for a version of Python $1])
+	ac_supports_python_ver=`$PYTHON -c "import sys; \
+	   ver = sys.version.split ()[[0]]; \
+	   print (ver $1)"`
+	if test "$ac_supports_python_ver" = "True"; then
+            AC_MSG_RESULT([yes])
+        else
+            AC_MSG_RESULT([no])
+            AC_MSG_ERROR([this package requires Python $1.
 If you have it installed, but it isn't the default Python
 interpreter in your system path, please pass the PYTHON_VERSION
 variable to configure. See ``configure --help'' for reference.
 ])
-			PYTHON_VERSION=""
-		fi
+            PYTHON_VERSION=""
 	fi
-
-        _AC_PYTHON_CHECK_DISTUTILS
 
         # get the flags to compile against python
         #########################################
 
         # first try python-config, following the python manual
         _AC_PYTHON_DEVEL_FROM_PYTHONCONFIG
- 
-        # try again using distutils, if that failed
-        _AC_CHECK_PYTHON_DEVEL_CONSISTENCY
+        AS_IF([test "$PYTHONCONFIG" != "no"], [
+            _AC_CHECK_PYTHON_DEVEL_CONSISTENCY
+        ],)
 
-        AS_IF([test "$pythonexists" = "no"], [
+        # try again using distutils, if that failed
+        AS_IF([test "$pythonexists" != "yes"], [
+            _AC_PYTHON_CHECK_DISTUTILS
             _AC_PYTHON_DEVEL_FROM_DISTUTILS
-            # check consistency again
             _AC_CHECK_PYTHON_DEVEL_CONSISTENCY
 
            if test ! "x$pythonexists" = "xyes"; then
@@ -201,7 +178,7 @@ AC_DEFUN([_AC_PYTHON_DEVEL_FROM_PYTHONCONFIG],[
 
 	AC_PATH_PROG([PYTHONCONFIG],[python[$PYTHON_VERSION]-config],no)
 
-        if test -n "$PYTHONCONFIG"; then
+        if test "$PYTHONCONFIG" != no; then
            # no splitting of LDFLAGS with python-config
 	   PYTHON_CPPFLAGS=`$PYTHONCONFIG --cflags`
            PYTHON_LDFLAGS=`$PYTHONCONFIG --ldflags`

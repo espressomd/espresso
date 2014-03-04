@@ -40,11 +40,12 @@
 /** How many trial calculations */
 #define TEST_INTEGRATIONS 1000
 
-/** Largest reasonable cutoff for Bessel function */
+/** Largest numerically stable cutoff for Bessel function. Don't
+    change without improving the formulas. */
 #define MAXIMAL_B_CUT 30
 
-/** Granularity of the radius scan in multiples of box_l[2] */
-#define RAD_STEPPING 0.1
+/** minimal radius for the far formula in multiples of box_l[2] */
+#define MIN_RAD 0.01
 
 /** if you define this, the Besselfunctions are calculated up
     to machine precision, otherwise 10^-14, which should be
@@ -61,62 +62,65 @@
 static double uz, L2, uz2, prefuz2, prefL3_i;
 /*@}*/
 
-MMM1D_struct mmm1d_params = { 0.05, 5, 1, 1e-5 };
+MMM1D_struct mmm1d_params = { 0.05, 1e-5 };
+/** From which distance a certain bessel cutoff is valid. Can't be part of the
+    params since these get broadcasted. */
+static double *bessel_radii;
+  
 
-
-static void MMM1D_setup_constants()
+static double far_error(int P, double minrad)
 {
-  uz  = 1/box_l[2];
-  L2   = box_l[2]*box_l[2];
-  uz2 = uz*uz;
-  prefuz2 = coulomb.prefactor*uz2;
-  prefL3_i = prefuz2*uz;
-}
-
-double determine_bessel_cutoff(double switch_rad, double maxPWerror, int maxP)
-{
-  /* this calculates an upper bound to all force components and the potential */
-
-  // fprintf(stderr, "determ: %f %f %d\n", switch_rad, maxPWerror, maxP);
-
-  double err;
-  double rhores = 2*M_PI*uz*switch_rad;
+  // this uses an upper bound to all force components and the potential
+  double rhores = 2*M_PI*uz*minrad;
   double pref = 4*uz*dmax(1, 2*M_PI*uz);
-  int P = 1;
-  do {
-    err = pref*K1(rhores*P)*exp(rhores)/rhores*(P - 1 + 1/rhores);
-    // fprintf(stderr, "%d %e\n", P, err); */
-    P++;
-  } while (err > maxPWerror && P <= maxP);
-  P--;
-  return P;
+
+  return pref*K1(rhores*P)*exp(rhores)/rhores*(P - 1 + 1/rhores);
 }
 
-int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror)
+static double determine_minrad(double maxPWerror, int P)
 {
-  MMM1D_setup_constants();
+  // bisection to search for where the error is maxPWerror
+  double rgranularity = MIN_RAD*box_l[2];
+  double rmin = rgranularity;
+  double rmax = dmin(box_l[0], box_l[1]);
+  double errmin = far_error(P, rmin);
+  double errmax = far_error(P, rmax);
+  if (errmin < maxPWerror) {
+    // we can do almost all radii with this P
+    return rmin;
+  }
+  if (errmax > maxPWerror) {
+    // make sure that this switching radius cannot be reached
+    return 2*dmax(box_l[0], box_l[1]);
+  }
 
-  mmm1d_params.far_switch_radius_2 = (switch_rad > 0) ? SQR(switch_rad) : -1;
-  mmm1d_params.bessel_cutoff = bessel_cutoff;
-  /* if parameters come from here they are never calculated that is
-     only the case if you call mmm1d_tune, which then
-     changes this flag */
-  mmm1d_params.bessel_calculated = 0;
-
-  mmm1d_params.maxPWerror = maxPWerror;
-  coulomb.method = COULOMB_MMM1D;
-
-  mpi_bcast_coulomb_params();
-
-  return 0;
+  while (rmax - rmin > rgranularity) {
+    double c = 0.5*(rmin + rmax);
+    double errc = far_error(P, c);
+    if (errc > maxPWerror) {
+      rmin = c;
+    } else {
+      rmax = c;
+    }
+  }
+  return 0.5*(rmin + rmax);
 }
 
-void MMM1D_recalcTables()
+static void determine_bessel_radii(double maxPWerror, int maxP)
+{
+  bessel_radii = (double *)realloc(bessel_radii, sizeof(double)*maxP);
+  for (int P = 1; P <= maxP; ++P) {
+    bessel_radii[P-1] = determine_minrad(maxPWerror, P);
+    //printf("cutoff %d %f\n", P, bessel_radii[P-1]);
+  }
+}
+
+static void prepare_polygamma_series(double maxPWerror, double maxrad2)
 {
   /* polygamma, determine order */
   int n;
   double err;
-  double rhomax2nm2, rhomax2 = uz2*mmm1d_params.far_switch_radius_2;
+  double rhomax2nm2, rhomax2 = uz2*maxrad2;
   /* rhomax2 < 1, so rhomax2m2 falls monotonously */
 
   n = 1;
@@ -130,7 +134,18 @@ void MMM1D_recalcTables()
     n++;
     // fprintf(stderr, "%f\n", err);
   }
-  while (err > 0.1*mmm1d_params.maxPWerror);
+  while (err > 0.1*maxPWerror);
+}
+
+int MMM1D_set_params(double switch_rad, double maxPWerror)
+{
+  mmm1d_params.far_switch_radius_2 = (switch_rad > 0) ? SQR(switch_rad) : -1;
+  mmm1d_params.maxPWerror = maxPWerror;
+  coulomb.method = COULOMB_MMM1D;
+
+  mpi_bcast_coulomb_params();
+
+  return 0;
 }
 
 int MMM1D_sanity_checks()
@@ -157,12 +172,14 @@ void MMM1D_init()
   if (mmm1d_params.far_switch_radius_2 >= SQR(box_l[2]))
     mmm1d_params.far_switch_radius_2 = 0.8*SQR(box_l[2]);
 
-  MMM1D_setup_constants();
+  uz  = 1/box_l[2];
+  L2  = box_l[2]*box_l[2];
+  uz2 = uz*uz;
+  prefuz2 = coulomb.prefactor*uz2;
+  prefL3_i = prefuz2*uz;
 
-  if (mmm1d_params.bessel_calculated) {
-    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2), mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
-  }
-  MMM1D_recalcTables();
+  determine_bessel_radii(mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
+  prepare_polygamma_series(mmm1d_params.maxPWerror, mmm1d_params.far_switch_radius_2);
 }
 
 void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2, double r, double force[3])
@@ -242,7 +259,10 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2, double 
     double sr = 0, sz = 0;
     int bp;
 
-    for (bp = 1; bp < mmm1d_params.bessel_cutoff; bp++) {
+    for (bp = 1; bp < MAXIMAL_B_CUT; bp++) {
+      if (bessel_radii[bp-1] < rxy)
+        break;
+
       double fq = C_2PI*bp, k0, k1;
 #ifdef BESSEL_MACHINE_PREC
       k0 = K0(fq*rxy_d);
@@ -320,7 +340,10 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
     /* The first Bessel term will compensate a little bit the
        log term, so add them close together */
     E = -0.25*log(rxy2_d) + 0.5*(M_LN2 - C_GAMMA);
-    for (bp = 1; bp < mmm1d_params.bessel_cutoff; bp++) {
+    for (bp = 1; bp < MAXIMAL_B_CUT; bp++) {
+      if (bessel_radii[bp-1] < rxy)
+        break;
+
       double fq = C_2PI*bp;
       E += K0(fq*rxy_d)*cos(fq*z_d);
     }
@@ -337,15 +360,16 @@ int mmm1d_tune(char **log)
   double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */
   double switch_radius;
 
-  if (mmm1d_params.bessel_cutoff < 0 && mmm1d_params.far_switch_radius_2 < 0) {
-    /* determine besselcutoff and optimal switching radius */
-    for (switch_radius = RAD_STEPPING*maxrad;
-	 switch_radius < maxrad;
-	 switch_radius += RAD_STEPPING*maxrad) {
-      mmm1d_params.bessel_cutoff = determine_bessel_cutoff(switch_radius, mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
-      /* no reasonable cutoff possible */
-      if (mmm1d_params.bessel_cutoff == MAXIMAL_B_CUT)
-	continue;
+  if (mmm1d_params.far_switch_radius_2 < 0) {
+    /* determine besselcutoff and optimal switching radius. Should be around 0.33 */
+    for (switch_radius = 0.2*maxrad;
+	 switch_radius < 0.4*maxrad;
+	 switch_radius += 0.025*maxrad) {
+      if (switch_radius <= bessel_radii[MAXIMAL_B_CUT - 1]) {
+        // this switching radius is too small for our Bessel series
+        continue;
+      }
+
       mmm1d_params.far_switch_radius_2 = SQR(switch_radius);
 
       coulomb.method = COULOMB_MMM1D;
@@ -360,8 +384,7 @@ int mmm1d_tune(char **log)
       if (int_time < 0)
 	return ES_ERROR;
 
-      sprintf(buffer, "r= %f c= %d t= %f ms\n",
-	      switch_radius, mmm1d_params.bessel_cutoff, int_time);
+      sprintf(buffer, "r= %f t= %f ms\n", switch_radius, int_time);
       *log = strcat_alloc(*log, buffer);
 
       if (int_time < min_time) {
@@ -372,23 +395,16 @@ int mmm1d_tune(char **log)
       else if (int_time > 2*min_time)
 	break;
     }
-    switch_radius    = min_rad;
+    switch_radius = min_rad;
     mmm1d_params.far_switch_radius_2 = SQR(switch_radius);
-    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(switch_radius, mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
-    mmm1d_params.bessel_calculated = 1;
   }
-  else if (mmm1d_params.bessel_cutoff < 0) {
-    /* determine besselcutoff to achieve at least the given pairwise error */
-    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2),
-							 mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
-    if (mmm1d_params.bessel_cutoff == MAXIMAL_B_CUT) {
+  else {
+    if (mmm1d_params.far_switch_radius_2 <= SQR(bessel_radii[MAXIMAL_B_CUT - 1])) {
+      // this switching radius is too small for our Bessel series
       *log = strcat_alloc(*log, "could not find reasonable bessel cutoff");
       return ES_ERROR;
     }
-    mmm1d_params.bessel_calculated = 1;
   }
-  else
-    mmm1d_params.bessel_calculated = 0;
 
   coulomb.method = COULOMB_MMM1D;
 

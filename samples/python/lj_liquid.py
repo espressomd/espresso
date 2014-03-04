@@ -1,3 +1,4 @@
+from __future__ import print_function
 import ctypes
 import sys
 sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
@@ -6,13 +7,13 @@ import espresso as es
 import numpy
 import code_info
 
-print " "
-print "======================================================="
-print "=                    lj_liquid.py                     ="
-print "======================================================="
-print " "
+print(" ")
+print("=======================================================")
+print("=                    lj_liquid.py                     =")
+print("=======================================================")
+print(" ")
 
-print "Program Information: \n%s\n" % code_info.electrostatics_defined()
+print("Program Information: \n%s\n" % code_info.electrostatics_defined())
 
 dev="cpu"
 
@@ -64,9 +65,9 @@ es.inter[0,0].lennardJones = \
 	{"eps": lj_eps, "sigma": lj_sig, \
 	 "cut": lj_cut, "ljcap": lj_cap}
 
-print "LJ-parameters:\n"
-print es.inter[0,0].lennardJones
-print "\n"
+print("LJ-parameters:\n")
+print(es.inter[0,0].lennardJones)
+print("\n")
 
 # Particle setup
 #############################################################
@@ -79,12 +80,12 @@ for i in range(n_part):
 
 es.analyze.distto(0)
 
-print "Simulate %d particles in a cubic simulation box " % n_part
-print "%f at density %f\n" % (box_l,density)
+print("Simulate %d particles in a cubic simulation box " % n_part)
+print("%f at density %f\n" % (box_l,density))
 #print "Interactions:\n"	# Nicht angepasst
 #act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
 act_min_dist = es.analyze.mindist()
-print "Start with minimal distance %f" % act_min_dist
+print("Start with minimal distance %f" % act_min_dist)
 
 es.glob.max_num_cells = 2744
 
@@ -99,15 +100,15 @@ obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
 #puts $obs_file "\# System: $name$ident"
 #puts $obs_file "\# Time\tE_tot\tE_kin\t..."
 
-print "\nStart warmup integration:"
-print "At maximum %d times %d steps" % (warm_n_times, warm_steps)
-print "Stop if minimal distance is larger than %f" % min_dist
+print("\nStart warmup integration:")
+print("At maximum %d times %d steps" % (warm_n_times, warm_steps))
+print("Stop if minimal distance is larger than %f" % min_dist)
 
 # set LJ cap
 lj_cap = 20
 es.inter[0,0].lennardJones = {"ljcap": lj_cap}
 #es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
-print es.inter[0,0].lennardJones
+print(es.inter[0,0].lennardJones)
 
 # Warmup Integration Loop
 i = 0
@@ -119,7 +120,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
   # Warmup criterion
 #  act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
   act_min_dist = es.analyze.mindist() 
-  print "\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist),
+  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist), end=' ')
 
   i = i + 1
 
@@ -133,20 +134,20 @@ while (i < warm_n_times and act_min_dist < min_dist):
 #  es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
 
 # Just to see what else we may get from the c code
-print "\n\nro variables:"
-print "cell_grid     %s" % es.glob.cell_grid
-print "cell_size     %s" % es.glob.cell_size 
-print "local_box_l    %s" % es.glob.local_box_l 
-print "max_cut        %s" % es.glob.max_cut
-print "max_part       %s" % es.glob.max_part
-print "max_range      %s" % es.glob.max_range 
-print "max_skin       %s" % es.glob.max_skin
-print "n_nodes        %s" % es.glob.n_nodes
-print "n_part         %s" % es.glob.n_part
-print "n_part_types   %s" % es.glob.n_part_types
-print "periodicity    %s" % es.glob.periodicity
-print "transfer_rate  %s" % es.glob.transfer_rate
-print "verlet_reuse   %s" % es.glob.verlet_reuse
+print("\n\nro variables:")
+print("cell_grid     %s" % es.glob.cell_grid)
+print("cell_size     %s" % es.glob.cell_size) 
+print("local_box_l    %s" % es.glob.local_box_l) 
+print("max_cut        %s" % es.glob.max_cut)
+print("max_part       %s" % es.glob.max_part)
+print("max_range      %s" % es.glob.max_range) 
+print("max_skin       %s" % es.glob.max_skin)
+print("n_nodes        %s" % es.glob.n_nodes)
+print("n_part         %s" % es.glob.n_part)
+print("n_part_types   %s" % es.glob.n_part_types)
+print("periodicity    %s" % es.glob.periodicity)
+print("transfer_rate  %s" % es.glob.transfer_rate)
+print("verlet_reuse   %s" % es.glob.verlet_reuse)
 
 # write parameter file
 
@@ -157,29 +158,29 @@ set_file.write("box_l %s\ntime_step %s\nskin %s\n" % (box_l, es.glob.time_step, 
 #############################################################
 #      Integration                                          #
 #############################################################
-print "\nStart integration: run %d times %d steps" % (int_n_times, int_steps)
+print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0 
 es.inter[0,0].lennardJones = {"ljcap": lj_cap}
 #es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
-print es.inter[0,0].lennardJones
+print(es.inter[0,0].lennardJones)
 
 # print initial energies
 #energies = es._espressoHandle.Tcl_Eval('analyze energy')
 energies = es.analyze.energy()
-print energies
+print(energies)
 
 j = 0
 for i in range(0,int_n_times):
-  print "run %d at time=%f " % (i,es.glob.time)
+  print("run %d at time=%f " % (i,es.glob.time))
 
 #  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
   es.integrate(int_steps)
   
 #  energies = es._espressoHandle.Tcl_Eval('analyze energy')
   energies = es.analyze.energy()
-  print energies
+  print(energies)
   obs_file.write('{ time %s } %s\n' % (es.glob.time,energies))
 
 #   write observables
@@ -209,4 +210,4 @@ end_file.close()
 es._espressoHandle.die()
 
 # terminate program
-print "\n\nFinished"
+print("\n\nFinished")
