@@ -182,12 +182,18 @@ void integrate_vv(int n_steps)
 #ifdef LB
     transfer_momentum = 0;
     if (lattice_switch & LATTICE_LB && this_node == 0)
-      fprintf (stderr, "Warning, no valid forces from previous integration step, means the LB fluid coupling is not included in the particle forces for this step.\n");
+      fprintf (stderr, "Warning: No valid forces are present from the previous integration step.\n");
+      fprintf (stderr, "         This means the LB fluid coupling is not included in the particle\n");
+      fprintf (stderr, "         forces for this step.\n");
+      fprintf (stderr, "The warning can be ignored if it is displayed only for the first cycle.\n");
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
     if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
-      fprintf (stderr, "Warning, no valid forces from previous integration step, means the GPU LB fluid coupling is not included in the particle forces for this step.\n");
+      fprintf (stderr, "Warning: No valid forces are present from the previous integration step.\n");
+      fprintf (stderr, "         This means the LB fluid coupling is not included in the particle\n");
+      fprintf (stderr, "         forces for this step.\n");
+      fprintf (stderr, "The warning can be ignored if it is displayed only for the first cycle.\n");
 #endif
 //VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
