@@ -48,9 +48,9 @@ int external_potential_tabulated_init(int number, char* filename, int n_particle
 }
 
 
-int external_potential_tabulated_read_potential_file(int number) {
+int lattice_read_file(Lattice* this, char* filename) {
   ExternalPotentialTabulated *e = &(external_potentials[number].e.tabulated);
-  FILE* infile = fopen(e->filename, "r");
+  FILE* infile = fopen(filename, "r");
   
   if (!infile)  {
     char *errtxt = runtime_error(128+MAX_FILENAME_SIZE);
@@ -104,9 +104,9 @@ int external_potential_tabulated_read_potential_file(int number) {
     if (!token) { fprintf(stderr, "Could not read offset[2]\n"); return ES_ERROR;}
     offset[2] = atof(token);
   }
-  e->potential.offset[0]=offset[0];
-  e->potential.offset[1]=offset[1];
-  e->potential.offset[2]=offset[2];
+  this->offset[0]=offset[0];
+  this->offset[1]=offset[1];
+  this->offset[2]=offset[2];
 
 
   int halosize=1;
