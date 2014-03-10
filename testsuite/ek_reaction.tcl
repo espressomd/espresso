@@ -92,11 +92,15 @@ proc calculate_vtk_max_pointwise_difference {file1 file2} {
       
       if {[string is double -strict $x1] && [string is double -strict $x2]} {
 
-        set current_diff [expr abs( $x2 - $x1 )/( abs($x2) + abs($x1) ) ]
-      
-        if { $current_diff > $max_diff} {
+        if { $x1 != 0.0 || $x2 != 0.0 } {
+
+          set current_diff [expr abs( $x2 - $x1 )/( abs($x2) + abs($x1) ) ]
         
-          set max_diff $current_diff
+          if { $current_diff > $max_diff} {
+          
+            set max_diff $current_diff
+          }
+
         }
       } elseif {$x1 != $x2} {
       
@@ -117,7 +121,7 @@ set new_configuration 0
 # Set the precision with which 
 # the Tcl values are output
 
-set tcl_precision 10
+set tcl_precision 15
 
 set length 12.0
 set box_x $length
@@ -174,7 +178,7 @@ thermostat off
 
 # Initialize fluid 
 
-electrokinetics agrid $agrid viscosity $viscosity_kinematic \
+electrokinetics agrid $agrid lb_density 1.0 viscosity $viscosity_kinematic \
                 friction $frict T $temp bjerrum_length $bjer_length
 
 # Set diffusion properties
@@ -213,6 +217,16 @@ electrokinetics reaction reactant_index $re_index \
                          reaction_fraction_pr_0 $fraction_0 \
                          reaction_fraction_pr_1 $fraction_1
 
+electrokinetics reaction reset_mode_zero 0.0
+
+# Set up the boundary
+
+electrokinetics boundary charge_density 0.0 \
+                         sphere center [expr $box_x/2.0] \
+                                       [expr $box_y/2.0] \
+                                       [expr $box_z/2.0] \
+                         radius 3 direction outside
+
 # Tag the reactive regions
 
 electrokinetics reaction region 0 box
@@ -221,7 +235,15 @@ electrokinetics reaction region 1 \
                          sphere center [expr $box_x/2.0] \
                                        [expr $box_y/2.0] \
                                        [expr $box_z/2.0] \
+                         radius 4 direction outside
+
+electrokinetics reaction region 1 \
+                         sphere center [expr $box_x/2.0] \
+                                       [expr $box_y/2.0] \
+                                       [expr $box_z/2.0] \
                          radius 3 direction outside
+
+electrokinetics reaction region 0 wall normal 0.0 0.0 1.0 dist [expr $box_z/2.0]
 
 electrokinetics reaction region 2 wall normal 1.0 0.0 0.0 dist 1.0
 electrokinetics reaction region 2 wall normal 0.0 1.0 0.0 dist 1.0
@@ -242,8 +264,11 @@ if { $new_configuration != 0 } {
   file delete "./mass_flux_tmp.vtk"
 
   puts "Maximum deviation to the reference point is: $difference\n"
+  puts "Minor deviations are to be expected due to the sensitive"
+  puts "dependence of the value of the mass flux for this system"
+  puts "on the numerical precision that is attainable on the GPU."
 
-  if { $difference < -0.5 || $difference > 1.0e-05 } {
+  if { $difference < -0.5 || $difference > 5.0e-03 } {
     error_exit "There is a significant difference with a previous result.\nPlease verify if this is correct."
   }
 }

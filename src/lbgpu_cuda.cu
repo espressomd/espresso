@@ -936,12 +936,11 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  * @param index   node index / thread index (Input)
- * @param n_b     Pointer to local node residing in array b (Input)
- * @param n_a     Pointer to local node residing in array a (Output) (temp stored in buffer a)
+ * @param n_curr  Pointer to local node which receives the current node field (Input)
  * @param lb_boundary_velocity    The constant velocity at the boundary, set by the user (Input)
  * @param lb_boundary_force       The force on the boundary nodes (Output)
 */
-__device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned int index, \
+__device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index, \
     float* lb_boundary_velocity, float* lb_boundary_force){
     
   unsigned int xyz[3];
@@ -953,7 +952,7 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
   int population, inverse;
   int boundary_index;
 
-  boundary_index=n_b.boundary[index];
+  boundary_index= n_curr.boundary[index];
   if(boundary_index != 0)
   {
     
@@ -979,20 +978,20 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
 
 #define BOUNCEBACK  \
   shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[0]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
-  pop_to_bounce_back = n_b.vd[population*para.number_of_nodes + index ]; \
+  pop_to_bounce_back =  n_curr.vd[population*para.number_of_nodes + index ]; \
   to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
   to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
   to_index_z = (z+c[2]+para.dim_z)%para.dim_z; \
   to_index = to_index_x + para.dim_x*to_index_y + para.dim_x*para.dim_y*to_index_z; \
-  if (n_b.boundary[to_index] == 0) \
+  if ( n_curr.boundary[to_index] == 0) \
   { \
     boundary_force[0] += (2.0f*pop_to_bounce_back+shift)*c[0]/para.tau/para.tau/para.agrid; \
     boundary_force[1] += (2.0f*pop_to_bounce_back+shift)*c[1]/para.tau/para.tau/para.agrid; \
     boundary_force[2] += (2.0f*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
-    n_b.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
+     n_curr.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
   }
 
-    // the resting population does nothing.
+    // the resting population does nothing, i.e., population 0.
     c[0]= 1;c[1]= 0;c[2]= 0; weight=1./18.; population= 2; inverse= 1; 
     BOUNCEBACK
     
@@ -1047,9 +1046,9 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     c[0]= 0;c[1]=-1;c[2]= 1; weight=1./36.; population=17; inverse=18; 
     BOUNCEBACK  
     
-    atomicadd(&lb_boundary_force[3*(n_b.boundary[index]-1)+0], boundary_force[0]);
-    atomicadd(&lb_boundary_force[3*(n_b.boundary[index]-1)+1], boundary_force[1]);
-    atomicadd(&lb_boundary_force[3*(n_b.boundary[index]-1)+2], boundary_force[2]);
+    atomicadd(&lb_boundary_force[3*( n_curr.boundary[index]-1)+0], boundary_force[0]);
+    atomicadd(&lb_boundary_force[3*( n_curr.boundary[index]-1)+1], boundary_force[1]);
+    atomicadd(&lb_boundary_force[3*( n_curr.boundary[index]-1)+2], boundary_force[2]);
   }
 }
 
@@ -1058,88 +1057,6 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
 // TODO To be implemented
 
 #endif // SHANCHEN
-
-#ifndef SHANCHEN
-
-/**bounce back read kernel needed to avoid raceconditions
- * @param index   node index / thread index (Input)
- * @param n_b     Pointer to local node residing in array b (Input)
- * @param n_a     Pointer to local node residing in array a (Output) (temp stored in buffer a)
-*/
-__device__ void bounce_back_write(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned int index){
-
-  unsigned int xyz[3];
-
-  if(n_b.boundary[index] != 0)
-  {
-    index_to_xyz(index, xyz);
-    unsigned int x = xyz[0];
-    unsigned int y = xyz[1];
-    unsigned int z = xyz[2];
-
-    /** stream vd from boundary node back to origin node */
-    n_b.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = 
-    n_a.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
-
-    n_b.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] =
-    n_a.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
-
-    n_b.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] =
-    n_a.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
-
-    n_b.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] =
-    n_a.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
-
-    n_b.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
-    n_a.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-
-    n_b.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
-    n_a.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-
-    n_b.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] =
-    n_a.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
-
-    n_b.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] =
-    n_a.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
-
-    n_b.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] =
-    n_a.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
-
-    n_b.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] =
-    n_a.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
-
-    n_b.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
-    n_a.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-
-    n_b.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
-    n_a.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-
-    n_b.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
-    n_a.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-
-    n_b.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
-    n_a.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-
-    n_b.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
-    n_a.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-
-    n_b.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
-    n_a.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-
-    n_b.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
-    n_a.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-
-    n_b.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
-    n_a.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-  }
-}
-
-#else // SHANCHEN
-
-// to be implemented
-
-#endif // SHANCHEN
-
 
 /** add of (external) forces within the modespace, needed for particle-interaction
  * @param index   node index / thread index (Input)
@@ -2083,8 +2000,8 @@ __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1,
 }
 
 #if defined(ELECTROKINETICS)
-__device__ void reset_mode0_homogeneously(float* mode) {
-  mode[0] = 0.0;
+__device__ void reset_mode0_homogeneously(float* mode, float value) {
+  mode[0] *= value;
 }
 #endif
 
@@ -2690,14 +2607,14 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
       LB internal pressure contribution */
   if ( ek_initialized_gpu )
   {
-    if ( ( ek_parameters_gpu->reaction_species[0] != -1 &&
-           ek_parameters_gpu->reaction_species[1] != -1 &&
-           ek_parameters_gpu->reaction_species[2] != -1 ) ||
-         ( ek_parameters_gpu->accelerated_frame_enabled == 1 &&
-           n_lb_boundaries_gpu > 0 )
+    if ( ek_parameters_gpu->reaction_species[0] != -1 &&
+         ek_parameters_gpu->reaction_species[1] != -1 &&
+         ek_parameters_gpu->reaction_species[2] != -1 &&
+         ek_parameters_gpu->reset_mode_0 >= 0.0 &&
+         n_lb_boundaries_gpu > 0 
        )
     {
-      reset_mode0_homogeneously(mode);
+      reset_mode0_homogeneously(mode, ek_parameters_gpu->reset_mode_0);
     }
   }
 #endif
@@ -2785,30 +2702,18 @@ __global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA
 
 
 #ifdef LB_BOUNDARIES_GPU
-/**Bounce back boundary read kernel
+/**Bounce back boundary kernel
  * @param n_a         Pointer to local node residing in array a (Input)
  * @param n_b         Pointer to local node residing in array b (Input)
  * @param lb_boundary_velocity    The constant velocity at the boundary, set by the user (Input)
  * @param lb_boundary_force       The force on the boundary nodes (Output)
 */
-__global__ void bb_read(LB_nodes_gpu n_a, LB_nodes_gpu n_b, float* lb_boundary_velocity, float* lb_boundary_force){
+__global__ void apply_boundaries(LB_nodes_gpu n_curr, float* lb_boundary_velocity, float* lb_boundary_force){
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes)
-    bounce_back_read(n_b, n_a, index, lb_boundary_velocity, lb_boundary_force);
-}
-
-/**Bounce back boundary write kernel
- * @param n_a   Pointer to local node residing in array a (Input)
- * @param n_b   Pointer to local node residing in array b (Input)
-*/
-__global__ void bb_write(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
-
-  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
-
-  if(index<para.number_of_nodes)
-    bounce_back_write(n_b, n_a, index);
+    bounce_back_boundaries(n_curr, index, lb_boundary_velocity, lb_boundary_force);
 }
 
 #endif
@@ -3460,8 +3365,10 @@ void lb_integrate_GPU() {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
 #ifdef LB_BOUNDARIES_GPU
-  if (n_lb_boundaries > 0) 
+  if (n_lb_boundaries > 0)
+  {
     cuda_safe_mem(cudaMemset( lb_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
+  }
 #endif
 
   /**call of fluid step*/
@@ -3470,32 +3377,23 @@ void lb_integrate_GPU() {
            it or device_rho_v are NULL depending on extended_values_flag */ 
   if (intflag == 1)
   {
-
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_b;
-#ifdef LB_BOUNDARIES_GPU
-
-    if (n_lb_boundaries > 0)
-    {
-      KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b, lb_boundary_velocity, lb_boundary_force));
-    }
-#endif
     intflag = 0;
   }
   else
   {
-
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_a;
-#ifdef LB_BOUNDARIES_GPU
-
-    if (n_lb_boundaries > 0)
-    {
-      KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a, lb_boundary_velocity, lb_boundary_force));
-    }
-#endif
     intflag = 1;
   }
+
+#ifdef LB_BOUNDARIES_GPU
+    if (n_lb_boundaries > 0)
+    {
+      KERNELCALL(apply_boundaries, dim_grid, threads_per_block, (*current_nodes, lb_boundary_velocity, lb_boundary_force));
+    }
+#endif
 }
 
 void lb_gpu_get_boundary_forces(double* forces) {

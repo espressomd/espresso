@@ -63,16 +63,16 @@ setmd skin 0.1
 thermostat off
 set integration_length 10000
 
-# Set up the (LB) electrokinetics fluid
-
-electrokinetics agrid $agrid viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length
-
 # Set up the charged and neutral species
 
 set density_neutral 33.4
 set density_charged [expr -2.0*double($sigma)/double($width)]
 set viscosity [expr $viscosity_dynamic*($density_charged + $density_neutral)]
 set valency 1.0
+
+# Set up the (LB) electrokinetics fluid
+
+electrokinetics agrid $agrid lb_density [expr $density_neutral + $density_charged] viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length
 
 electrokinetics 1 density $density_charged D 0.3 valency $valency ext_force 0 $force 0
 electrokinetics 2 density $density_neutral D 0.3 valency 0
@@ -86,12 +86,6 @@ electrokinetics boundary charge_density [expr $sigma/$agrid] rhomboid corner [ex
 
 electrokinetics boundary charge_density 0.0 wall normal 1 0 0 d $padding 0 0 direction outside
 electrokinetics boundary charge_density 0.0 wall normal -1 0 0 d -[expr $padding+$width] 0 0 direction outside
-
-set dirini "./DATA/"
-set dirnex "charged_system_new"
-set dir "$dirini$dirnex/"
-file mkdir $dir
-after 250
 
 # Integrate the system
 

@@ -56,6 +56,8 @@
 #define LB_BOUNDARY_STOMATOCYTE 6
 /** box shaped constraint (for electrokinetics reaction code) */
 #define LB_BOUNDARY_BOX 7
+/** hollow cone shaped constraint (for electrokinetics reaction code) */
+#define LB_BOUNDARY_HOLLOW_CONE 8
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
@@ -74,6 +76,7 @@ typedef struct {
     Constraint_pore pore;
     Constraint_stomatocyte stomatocyte;
     Constraint_box box;
+    Constraint_hollow_cone hollow_cone;
   } c;
   double force[3];
   double velocity[3];
