@@ -50,6 +50,7 @@
 #include "ljangle_tcl.hpp"
 #include "ljcos_tcl.hpp"
 #include "ljcos2_tcl.hpp"
+#include "cos2_tcl.hpp"
 #include "ljgen_tcl.hpp"
 #include "hertzian_tcl.hpp"
 #include "morse_tcl.hpp"
@@ -438,6 +439,10 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
   if (data->LJCOS2_cut > 0.0) tclprint_to_result_ljcos2IA(interp,i,j);
 #endif
 
+#ifdef COS2
+  if (data->COS2_cut > 0.0) tclprint_to_result_cos2IA(interp,i,j);
+#endif
+
 #ifdef GAY_BERNE
   if (data->GB_cut > 0.0) tclprint_to_result_gbIA(interp,i,j);
 #endif
@@ -753,6 +758,11 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef LJCOS2
     REGISTER_NONBONDED("lj-cos2", tclcommand_inter_parse_ljcos2);
 #endif
+
+#ifdef COS2
+    REGISTER_NONBONDED("cos2", tclcommand_inter_parse_cos2);
+#endif
+
 
 #ifdef COMFIXED
     REGISTER_NONBONDED("comfixed", tclcommand_inter_parse_comfixed);

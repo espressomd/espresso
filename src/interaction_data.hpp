@@ -391,6 +391,16 @@ typedef struct {
   double LJCOS2_capradius;
   /*@}*/
 #endif
+
+#ifdef COS2
+  /** \name Cos2 potential */
+  /*@{*/
+  double COS2_eps;
+  double COS2_cut;
+  double COS2_offset;
+  double COS2_w;
+  /*@}*/
+#endif
   
 #ifdef GAY_BERNE
   /** \name Gay-Berne potential */

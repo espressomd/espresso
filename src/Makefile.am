@@ -111,6 +111,7 @@ libEspresso_la_SOURCES = \
 libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
 	buckingham.cpp buckingham.hpp \
+	cos2.cpp cos2.hpp \
 	dpd.cpp dpd.hpp \
 	gaussian.cpp gaussian.hpp \
 	gb.cpp gb.hpp \

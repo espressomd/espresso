@@ -43,6 +43,7 @@
 #include "umbrella.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
+#include "cos2.hpp"
 #include "ljangle.hpp"
 #include "tab.hpp"
 #include "overlap.hpp"
@@ -180,6 +181,11 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 #ifdef LJCOS2
   /* lennard jones */
   ret += ljcos2_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef COS2
+  /* cos2 interaction */
+  ret += cos2_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef TABULATED

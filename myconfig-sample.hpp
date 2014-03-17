@@ -3,7 +3,7 @@
 
     Create a copy of this file in any of these locations: 
         @myconfig@ 
-	/data/pckr163/bereau/soft/espressomd/@myconfig@
+	/people/thnfs/homes/bereau/soft/espressomd/@myconfig@
 
     Then uncomment any of the following lines to activate the
     corresponding feature of ESPResSo. It is recommended to activate
@@ -88,6 +88,7 @@
 //#define LJCOS2
 //#define LJ_ANGLE
 //#define LJGEN_SOFTCORE
+//#define COS2
 //#define GAY_BERNE
 //#define SMOOTH_STEP
 //#define HERTZIAN

@@ -75,6 +75,7 @@ libEspressoTcl_la_SOURCES = \
 libEspressoTcl_la_SOURCES += \
 	bmhtf-nacl_tcl.cpp bmhtf-nacl_tcl.hpp \
 	buckingham_tcl.cpp buckingham_tcl.hpp \
+	cos2_tcl.cpp cos2_tcl.hpp \
 	dpd_tcl.cpp dpd_tcl.hpp \
 	forcecap_tcl.cpp forcecap_tcl.hpp \
 	gaussian_tcl.cpp gaussian_tcl.hpp \

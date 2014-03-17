@@ -168,6 +168,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
 	     ARG0_IS_S("buckingham") ||
 	     ARG0_IS_S("lj-cos") ||
              ARG0_IS_S("lj-cos2") ||
+       ARG0_IS_S("cos2") ||
 	     ARG0_IS_S("gb") ||
 	     ARG0_IS_S("tabulated")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {

@@ -54,6 +54,7 @@
 #include "overlap.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
+#include "cos2.hpp"
 #include "ljangle.hpp"
 #include "gb.hpp"
 #include "fene.hpp"
@@ -185,6 +186,10 @@ inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_para
   /* lennard jones cosine */
 #ifdef LJCOS2
   add_ljcos2_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+  /* cos2 interaction */
+#ifdef COS2
+  add_cos2_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
   /* tabulated */
 #ifdef TABULATED
