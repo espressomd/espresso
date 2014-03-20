@@ -105,7 +105,8 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
-	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
+	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
+	integrate_sd.hpp integrate_sd.cpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -194,7 +195,8 @@ CUDA_SOURCES = \
 	electrokinetics.hpp \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
-	EspressoSystemInterface_cuda.cu
+	EspressoSystemInterface_cuda.cu \
+	integrate_sd_cuda.cu
 
 libEspresso_la_SOURCES += $(CUDA_SOURCES)
 EXTRA_DIST += $(CUDA_SOURCES)

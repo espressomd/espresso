@@ -46,7 +46,7 @@
 #define THERMO_LB         8
 #define THERMO_INTER_DPD  16
 #define THERMO_GHMC       32
-
+#define THERMO_SD         64
 /*@}*/
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))

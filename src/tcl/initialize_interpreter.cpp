@@ -33,6 +33,7 @@
 #include "grid_tcl.hpp"
 #include "iccp3m_tcl.hpp"
 #include "integrate_tcl.hpp"
+#include "integrate_sd_tcl.hpp"
 #include "interaction_data_tcl.hpp"
 #include "lb_tcl.hpp"
 #include "lj_tcl.hpp"
@@ -213,6 +214,10 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
+#ifdef SD
+  /* from integrate_sd_tcl.cpp */
+  REGISTER_COMMAND("integrate_sd", tclcommand_integrate_sd);
+#endif
 }
 
 static void register_global_variables(Tcl_Interp *interp)

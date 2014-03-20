@@ -74,3 +74,30 @@ AC_DEFUN([ES_ADDPATH_CHECK_HEADER],[
 ])
 
 
+
+dnl search for a library in additional paths
+AC_DEFUN([ES_ADDPATH_CHECK_LIB_2],[
+	AC_MSG_CHECKING([for lib$1])
+	es_save_LDFLAGS=$LDFLAGS
+	es_save_LIBS=$LIBS
+	es_adp_found=no
+	dnl let's see whether it's in the default paths
+	LIBS="-l$1 $es_save_LIBS"
+	AC_LINK_IFELSE([AC_LANG_CALL([],[$2])],[es_adp_found=yes],[])
+
+	if test .$es_adp_found = .no; then
+		for path in $5 /usr/lib64 /usr/local/lib64 /opt/lib64 /sw/lib /opt/local/lib /usr/lib /usr/local/lib /opt/lib; do
+			LDFLAGS="$es_save_LDFLAGS -L$path"
+			AC_LINK_IFELSE([AC_LANG_PROGRAMM([],[$2])],[es_adp_found=yes],[])
+			if test .$es_adp_found = .yes; then break; fi
+		done
+	fi
+	if test .$es_adp_found = .yes; then
+		AC_MSG_RESULT(yes)
+	else
+		AC_MSG_RESULT(no)
+		LDFLAGS=$es_save_LDFLAGS
+		LIBS=$es_save_LIBS
+	fi
+	AS_IF([test .$es_adp_found = .yes], [$3],[$4])
+])

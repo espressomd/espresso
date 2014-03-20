@@ -168,14 +168,18 @@ extern const Datafield fields[];
 #define FIELD_GHMC_NMD            45
 /** index of \ref ghmc_phi in \ref #fields */
 #define FIELD_GHMC_PHI            46
-/** index of \ref ghmc_phi in \ref #fields */
+/** index of \ref ghmc_res in \ref #fields */
 #define FIELD_GHMC_RES            47 
-/** index of \ref ghmc_phi in \ref #fields */
+/** index of \ref ghmc_flip in \ref #fields */
 #define FIELD_GHMC_FLIP           48
-/** index of \ref ghmc_phi in \ref #fields */
+/** index of \ref ghmc_scale in \ref #fields */
 #define FIELD_GHMC_SCALE          49 
 /** index of \ref lb_components in \ref #fields */
 #define FIELD_LB_COMPONENTS       50 
+/** index of \ref sd_viscosity in \ref #fields */
+#define FIELD_SD_VISCOSITY        51
+/** index of \ref sd_radius in \ref #fields */
+#define FIELD_SD_RADIUS           52
 /*@}*/
 
 #endif

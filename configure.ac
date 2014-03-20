@@ -297,6 +297,16 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ], [$cuda_path/lib $cuda_path/lib64])
 
+    ES_ADDPATH_CHECK_LIB(cublas, cublasDgemm_v2, [], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda BLAS library (cublas), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda BLAS library (cublas). Some features will not be available!])
+        ])
+    ], [$cuda_path/lib $cuda_path/lib64])
+
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
     
@@ -365,6 +375,47 @@ AS_IF([test x$with_cuda != xno],[
 ])
 
 AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
+
+## Checking for MAGMA
+##################################
+AS_IF([test x$with_magma = xguess || test x$with_magma = xyes || test x$with_magma = x],[
+   magma_path=/usr/local/magma
+],[test x$with_magma != xno],[
+   magma_path=$with_magma
+   with_magma=yes
+])
+
+AC_MSG_CHECKING([whether to use MAGMA])
+AC_ARG_WITH([magma],
+	AS_HELP_STRING([--with-magma],
+                       [specify whether or not to use MAGMA [guess]]),
+	, with_magma=guess)
+AC_MSG_RESULT($with_magma)
+
+AS_IF([test x$with_magma = xno], [magma_found=no],
+  [ AC_SEARCH_LIBS(magma_init, [magma], [magma_found=yes], [magma_found=no])
+    AS_IF([test x$magma_found = xyes],
+      [ AC_CHECK_HEADER([magma.h],, [magma_found=no],[[#define HAVE_CUBLAS]])
+        AS_IF([test x$magma_found = xyes],
+          [ AC_SEARCH_LIBS([lsame_], [acml acml_mp],, [magma_found=no]
+	                                              AC_MSG_WARN([MAGMA needs LAPACK. Currently only for the acml libary is searched - others have still to be added to configure.ac]) )])
+      ])
+  ])
+
+
+AS_IF([test x$magma_found = xno],[
+  AS_IF([test x$with_magma = xyes],[
+    AC_MSG_FAILURE([MAGMA requested, but MAGMA was not found!])
+    ],[ AS_IF([test x$with_magma = xguess], [
+          AC_MSG_WARN([MAGMA not found. Some features will not be available!])
+         ])
+    ])
+  ])
+AS_IF([test x$magma_found = xyes],[
+  AC_DEFINE(MAGMA,[],[Whether MAGMA is available])])
+# end of check for MAGMA
+
+
 
 cat <<EOF
 ****************************************************************
