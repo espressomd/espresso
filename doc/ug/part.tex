@@ -752,7 +752,7 @@ surface and applies to all charged particles.
 
 Variant \variant{10} does not define a surface but is based on magnetic
 dipolar interaction with an external magnetic field. It applies to all particles
-with a dipol moment.
+with a dipole moment.
 
 Variant \variant{11} is essential for the use of tunable-slip boundary
 interactions for microchannel flows like the Plane Poiseuille or Plane Couette
@@ -763,7 +763,7 @@ constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore
 Negative distances mean that the position is ``within'' the area that
 particles should not access. Helpful to find initial configurations.) 
 
-\textbf{Note that constraints are not saved to checkpoints and that they have to
+\emph{Note that constraints are not saved to checkpoints and that they have to
 be reset upon restarting a simulation.}
 
 The resulting surface in variant \variant{1} is a plane defined by the
@@ -860,7 +860,11 @@ system.
 \begin{essyntax}
 constraint force \var{n} 
 \end{essyntax}
-Returns the force acting on the \var{n}th constraint.
+Returns the force acting on the \var{n}th constraint. Note, however, that this
+are only forces due to interactions with particles, not with other constraints.
+Also, these forces still do not mean that the constraints move, they are just
+the negative of the sum of forces acting on all particles due to this constraint.
+Similarly, the total energy does not containt constraint-constraint contributions.
 
 
 \subsection{Getting the currently defined constraints}
