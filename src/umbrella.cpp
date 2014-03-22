@@ -25,6 +25,8 @@
 #include "umbrella.hpp"
 #include "communication.hpp"
 
+#ifdef UMBRELLA
+
 int umbrella_set_params(int bond_type, double k,
 			   int dir, double r)
 {
@@ -45,3 +47,6 @@ int umbrella_set_params(int bond_type, double k,
   return ES_OK;
 
 }
+
+#endif /* ifdef UMBRELLA */
+
