@@ -86,6 +86,7 @@
 #include "overlap_tcl.hpp"
 #include "harmonic_tcl.hpp"
 #include "subt_lj_tcl.hpp"
+#include "umbrella_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
 #include "tcl/object-in-fluid/volume_force_tcl.hpp"
@@ -346,6 +347,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #ifdef OVERLAPPED
   case BONDED_IA_OVERLAPPED:
     return tclprint_to_result_overlapIA(interp, params);
+#endif
+#ifdef UMBRELLA
+  case BONDED_IA_UMBRELLA:
+    return tclprint_to_result_umbrellaIA(interp, params);
 #endif
 #ifdef BOND_CONSTRAINT
   case BONDED_IA_RIGID_BOND:
@@ -895,6 +900,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef OVERLAPPED
   REGISTER_BONDED("overlapped", tclcommand_inter_parse_overlapped_bonded);
+#endif
+#ifdef UMBRELLA
+  REGISTER_BONDED("umbrella", tclcommand_inter_parse_umbrella);
 #endif
 #ifdef BOND_CONSTRAINT
   REGISTER_BONDED("rigid_bond", tclcommand_inter_parse_rigid_bond);

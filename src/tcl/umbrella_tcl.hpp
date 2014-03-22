@@ -18,30 +18,19 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file umbrella.cpp
- *
- *  Implementation of \ref umbrella.hpp
+#ifndef UMBRELLA_TCL_H
+#define UMBRELLA_TCL_H
+/** \file umbrella_tcl.hpp
+ * Tcl interface for \ref umbrella.hpp
  */
-#include "umbrella.hpp"
-#include "communication.hpp"
 
-int umbrella_set_params(int bond_type, double k,
-			   int dir, double r)
-{
-  if(bond_type < 0)
-    return ES_ERROR;
+#include "parser.hpp"
+#include "interaction_data.hpp"
 
-  make_bond_type_exist(bond_type);
+/// parse parameters for the umbrella potential
+int tclcommand_inter_parse_umbrella(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 
-  bonded_ia_params[bond_type].p.umbrella.k = k;
-  bonded_ia_params[bond_type].p.umbrella.dir = dir;
-  bonded_ia_params[bond_type].p.umbrella.r = r;
-  bonded_ia_params[bond_type].type = BONDED_IA_UMBRELLA;
-  bonded_ia_params[bond_type].num  = 1;
+///
+int tclprint_to_result_umbrellaIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
 
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-
-}
+#endif

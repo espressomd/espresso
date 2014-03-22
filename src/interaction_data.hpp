@@ -357,15 +357,6 @@ typedef struct {
   /*@}*/
 #endif
 
-#ifdef UMBRELLA
-  /** \name umbrella potential */
-  /*@{*/
-  double UMBRELLA_k;
-  int    UMBRELLA_dir;
-  double UMBRELLA_r;
-  /*@}*/
-#endif
-
 #ifdef LJCOS
   /** \name Lennard-Jones+Cos potential */
   /*@{*/

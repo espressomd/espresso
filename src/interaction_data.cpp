@@ -238,12 +238,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->HAT_r = 0.0;
 #endif
 
-#ifdef UMBRELLA
-  params->UMBRELLA_k =
-  params->UMBRELLA_dir =
-  params->UMBRELLA_r = 0.0;
-#endif    
-
 #ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =

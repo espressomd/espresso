@@ -35,7 +35,7 @@
 #ifdef UMBRELLA
 
 ///
-int umbrella_bonded_set_params(int bond_type, double k,
+int umbrella_set_params(int bond_type, double k,
 			   int dir, double r);
 
 
@@ -45,36 +45,31 @@ inline double umbrella_force_r(double k, int dir, double r, double distn )
   return -k * (distn - r);
 }
 
-/** Potential Energy due to an umbrella potential */
-inline double umbrella_energy_r(double k, int dir, double r, double distn )
-{
-  return 0.5 * k * SQR(distn - r);
-}
-
 /** Calculate umbrella potential force between particle p1 and p2 */
-inline void add_umbrella_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-				double d[3], double dist, double force[3])
+inline int calc_umbrella_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *ia_params,
+				double d[3], double force[3])
 {
   double distn;
   double fac=0.0;
-  distn = d[ia_params->UMBRELLA_dir];
-  fac = umbrella_force_r(ia_params->UMBRELLA_k, ia_params->UMBRELLA_dir,
-			 ia_params->UMBRELLA_r, distn);
-  force[ia_params->UMBRELLA_dir] += fac;
+  distn = d[ia_params->p.umbrella.dir];
+  fac = -ia_params->p.umbrella.k * (distn - ia_params->p.umbrella.r);
+  force[ia_params->p.umbrella.dir] += fac;
       
-  ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: umbrella f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
-  ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: umbrella f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
-  
+  ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,
+    "%d: OPT: umbrella f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,distn,fac));
+  ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,
+    "%d: OPT: umbrella f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,distn,fac));
+  return 0;
 }
 
 /** calculate umbrella energy between particle p1 and p2. */
-inline double umbrella_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
-				double d[3], double dist)
+inline int umbrella_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *ia_params,
+				double d[3], double *_energy)
 { 
   double distn;
-  distn = d[ia_params->UMBRELLA_dir];  
-  return umbrella_energy_r(ia_params->UMBRELLA_k, ia_params->UMBRELLA_dir,
-			   ia_params->UMBRELLA_r, distn);    
+  distn = d[ia_params->p.umbrella.dir];  
+  *_energy = 0.5 * ia_params->p.umbrella.k * SQR(distn - ia_params->p.umbrella.r);
+  return 0;
 }
 
 #endif /* ifdef UMBRELLA */

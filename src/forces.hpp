@@ -175,10 +175,6 @@ inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_para
 #ifdef HAT
   add_hat_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
-  /*umbrella potential*/
-#ifdef UMBRELLA
-  add_umbrella_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
   /* lennard jones cosine */
 #ifdef LJCOS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
@@ -564,6 +560,11 @@ inline void add_bonded_force(Particle *p1)
         ERROR_SPRINTF(errtxt,"{081 add_bonded_force: overlapped bond type of atom %d unknown\n", p1->p.identity);
         return;
       }
+      break;
+#endif
+#ifdef UMBRELLA
+    case BONDED_IA_UMBRELLA:
+      bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
 #ifdef BOND_VIRTUAL

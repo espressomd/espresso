@@ -173,11 +173,6 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
   ret  += hat_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
-#ifdef UMBRELLA
-  /* umbrella */
-  ret  += umbrella_pair_energy(p1,p2,ia_params,d,dist);
-#endif
-
 #ifdef LJCOS2
   /* lennard jones */
   ret += ljcos2_pair_energy(p1,p2,ia_params,d,dist);
@@ -421,6 +416,11 @@ inline void add_bonded_energy(Particle *p1)
         ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: overlapped bond type of atom %d unknown\n", p1->p.identity);
         return;
       }
+      break;
+#endif
+#ifdef UMBRELLA
+    case BONDED_IA_UMBRELLA:
+      bond_broken = umbrella_pair_energy(p1,p2,iaparams,dx,&ret);
       break;
 #endif
 #ifdef BOND_VIRTUAL

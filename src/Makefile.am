@@ -126,7 +126,7 @@ libEspresso_la_SOURCES += \
 	soft_sphere.cpp soft_sphere.hpp \
 	steppot.cpp steppot.hpp \
 	tab.cpp tab.hpp \
-	tunable_slip.cpp tunable_slip.hpp 
+	tunable_slip.cpp tunable_slip.hpp
 
 # bonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -141,6 +141,7 @@ libEspresso_la_SOURCES += \
 	harmonic.cpp harmonic.hpp \
 	overlap.cpp overlap.hpp \
 	subt_lj.cpp subt_lj.hpp \
+	umbrella.cpp umbrella.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
 	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
