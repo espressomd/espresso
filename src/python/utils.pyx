@@ -25,12 +25,12 @@ cdef checkTypeOrExcept(x,n,t,msg):
     if hasattr(x, "__getitem__"): 
       for i in range(len(x)):
         if not isinstance(x[i], t):
-           raise ValueError(msg)
+           raise ValueError(msg + " -- Item "+str(i)+" was of type "+type(x[i]).__name__)
     else:
       # if n>1, but the user passed a single value, also throw exception
-      raise ValueError(msg)
+      raise ValueError(msg+" -- A single value was given but "+str(n)+" were expected.")
   else:
     # N=1 and a single value
     if not isinstance(x, t):
-       raise ValueError(msg)
+       raise ValueError(msg+" -- Got an "+type(x).__name__)
 
