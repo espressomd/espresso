@@ -22,7 +22,7 @@
 # particle support
 ######################################
 
-proc blockfile_write_particles {channel write particles {info "id pos v q"} {range "0-end"}} {
+proc blockfile_write_particles {channel write particles {info "id pos v type"} {range "all"}} {
     blockfile $channel write start "particles"
     if {![regexp "pos" $info]} {set info "pos $info"}
     if {![regexp "id" $info]} {set info "id $info"}
@@ -190,7 +190,7 @@ proc blockfile_read_auto_particles {channel read auto} {
 # bonds support
 ######################################
 
-proc blockfile_write_bonds {channel write bonds {range "0-end"}} {
+proc blockfile_write_bonds {channel write bonds {range "all"}} {
     blockfile $channel write start "bonds"
 
     puts $channel " "
