@@ -146,6 +146,8 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_galilei_transform_slave) \
   CB(mpi_setup_reaction_slave) \
   CB(mpi_send_rotation_slave) \
+  CB(mpi_bcast_recalc_forces_slave) \
+  CB(mpi_bcast_resort_particles_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2881,6 +2883,39 @@ void mpi_setup_reaction_slave(int pnode, int i)
   local_setup_reaction();
 #endif
 }
+
+/******************** LB CHECKPOINT FUNCTIONS ********************/
+
+/**************************************************************
+** WARNING THESE FUNCTIONS ARE REQUIRED FOR LB CHECKPOINTING **
+** THEY SHOULD BE USED WITH THE UTMOST CARE, OTHERWISE YOU   **
+** CAN REALLY FUCK THINGS UP BADLY                           **
+**************************************************************/
+
+void mpi_bcast_recalc_forces()
+{
+  mpi_call(mpi_bcast_recalc_forces_slave, 1, 0);
+  mpi_bcast_recalc_forces_slave(-1, 0);
+}
+
+void mpi_bcast_recalc_forces_slave(int node, int parm)
+{   
+  MPI_Bcast(&recalc_forces, sizeof(int), MPI_BYTE, 0, comm_cart);
+  recalc_forces = 0;
+}
+
+void mpi_bcast_resort_particles()
+{
+  mpi_call(mpi_bcast_resort_particles_slave, 1, 0);
+  mpi_bcast_resort_particles_slave(-1, 0);
+}
+
+void mpi_bcast_resort_particles_slave(int node, int parm)
+{   
+  MPI_Bcast(&resort_particles, sizeof(int), MPI_BYTE, 0, comm_cart);
+  resort_particles = 0;
+}
+
 
 /*********************** MAIN LOOP for slaves ****************/
 

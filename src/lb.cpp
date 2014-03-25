@@ -807,7 +807,7 @@ int lb_lbfluid_print_velocity(char* filename) {
 }
 
 int lb_lbfluid_save_checkpoint(char* filename, int binary) {
-  if(lattice_switch & LATTICE_LB_GPU) {
+  if( lattice_switch & LATTICE_LB_GPU ) {
 #ifdef LB_GPU
      FILE* cpfile;
      cpfile=fopen(filename, "w");
@@ -879,22 +879,36 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
 	}
   return ES_OK;
 }
+
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
-  if (lattice_switch & LATTICE_LB) {
-    fprintf (stderr, "Loading an LB checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
-    recalc_forces = 0;      //Indicates the forces need not be recalculated
-    resort_particles = 0;   //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
+  if (lattice_switch & LATTICE_LB ) 
+  {
+    if ( this_node == 0 ) 
+    {
+      fprintf (stderr, "Loading an LB checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
+    }
+
+    mpi_bcast_recalc_forces();    //Indicates the forces need not be recalculated
+    mpi_bcast_resort_particles(); //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
   }
-  else if (lattice_switch & LATTICE_LB_GPU) {
-    fprintf (stderr, "Loading an LB GPU checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB GPU checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
-    recalc_forces = 0;      //Indicates the forces need not be recalculated
-    resort_particles = 0;   //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
+  else if (lattice_switch & LATTICE_LB_GPU ) 
+  {
+    if ( this_node == 0 ) 
+    {
+      fprintf (stderr, "Loading an LB GPU checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
+    }
+
+    mpi_bcast_recalc_forces();    //Indicates the forces need not be recalculated
+    mpi_bcast_resort_particles(); //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
   }
   else {
     fprintf (stderr, "To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.\n");
     return ES_ERROR;
   }
-  if(lattice_switch & LATTICE_LB_GPU) {
+
+
+  if(lattice_switch & LATTICE_LB_GPU && this_node == 0)
+  {
 #ifdef LB_GPU
     FILE* cpfile;
     cpfile=fopen(filename, "r");
@@ -906,7 +920,8 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
     unsigned int* host_checkpoint_boundary = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
     float* host_checkpoint_force = (float *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
 
-    if (!binary) {
+    if (!binary) 
+    {
       for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
           fscanf(cpfile, "%f", &host_checkpoint_vd[n]); 
       }
@@ -919,7 +934,8 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
       for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
          fscanf(cpfile, "%f", &host_checkpoint_force[n]); 
       }
-     lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
+
+      lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
     }
     fclose(cpfile);
     free(host_checkpoint_vd);
@@ -928,11 +944,13 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
     free(host_checkpoint_force);
 #endif
   }
-  else if(lattice_switch & LATTICE_LB) {
+  else if(lattice_switch & LATTICE_LB) 
+  {
 #ifdef LB
   FILE* cpfile;
   cpfile=fopen(filename, "r");
-  if (!cpfile) {
+  if (!cpfile) 
+  {
     return ES_ERROR;
   }
   double pop[19];
