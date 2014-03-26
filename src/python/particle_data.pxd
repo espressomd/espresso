@@ -8,51 +8,47 @@ include "myconfig.pxi"
 # Import particle data structures and setter functions from particle_data.hpp
 
 cdef extern from "particle_data.hpp":
-
   
   # DATA STRUCTURES
-  ctypedef struct IntList:
-    pass
+
+  # Note: Conditional compilation is not possible within ctypedef blocks. 
+  # Therefore, only member variables are imported here, which are always compiled into Espresso.
+  # For all other properties, getter-funcionts have to be used on the c level.
   
   ctypedef struct ParticleProperties:
-    pass
-
+    int    identity
+    int    mol_id
+    int    type
+    
   ctypedef struct ParticlePosition:
     double p[3]
-    pass
+
 
   ctypedef struct ParticleForce:
-     pass
+    double f[3]
 
   ctypedef struct ParticleMomentum:
+    double v[3]
+
+  ctypedef struct ParticleLocal:
     pass
 
-  ctypedef struct ParticleLatticeCoupling:
-    pass
 
   ctypedef struct Particle: 
     ParticleProperties p
     ParticlePosition r
     ParticleMomentum m
     ParticleForce f
-    ParticleLatticeCoupling lc
+    ParticleLocal l
     IntList bl
-    IntList el
 
 
-
-  # Function s to deal with entire particles
+  # Setter functions + a few other oens
 
   int get_particle_data(int part, Particle *data)
+  
   int place_particle(int part, double p[3])
-  int remove_particle(int part)
-  void remove_all_particles()
-  void remove_all_bonds_to(int part)
   
-  
-  
-  # Setters / modifies for individual particle properties
-
   int set_particle_v(int part, double v[3])
   
   
@@ -116,8 +112,14 @@ cdef extern from "particle_data.hpp":
     void remove_all_exclusions()
   
   
+  int remove_particle(int part)
   
-cdef class ParticleHandle:
+  void remove_all_particles()
+  
+  void remove_all_bonds_to(int part)
+  
+  
+cdef class ParticleHandle(object):
   cdef public int id
   cdef bint valid
   cdef Particle particleData
