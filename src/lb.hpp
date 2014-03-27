@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb.h
- * Header file for lb.c
+/** \file lb.hpp
+ * Header file for lb.cpp
  *
- * This is the header file for the Lattice Boltzmann implementation in lb.c
+ * This is the header file for the Lattice Boltzmann implementation in lb.cpp
  */
 
 #ifndef LB_H
@@ -53,6 +53,11 @@ extern int lb_components ; // global variable holding the number of fluid compon
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
 
+/** Note these are usef for binary logic so should be powers of 2 */
+#define LB_COUPLE_NULL        1
+#define LB_COUPLE_TWO_POINT   2
+#define LB_COUPLE_THREE_POINT 4
+  
 /*@}*/
   /** Some general remarks:
    * This file implements the LB D3Q19 method to Espresso. The LB_Model
@@ -251,7 +256,7 @@ void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi)
     @param j local fluid speed
     @param pi local fluid pressure
 */
-void lb_calc_n_equilibrium(const index_t index, const double rho, const double *j, double *pi);
+void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double *j, double *pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
@@ -310,11 +315,11 @@ inline void lb_calc_local_rho(index_t index, double *rho) {
          + lbfluid[0][3][index]  + lbfluid[0][4][index]
          + lbfluid[0][5][index]  + lbfluid[0][6][index] 
          + lbfluid[0][7][index]  + lbfluid[0][8][index]  
-	 + lbfluid[0][9][index]  + lbfluid[0][10][index]
+	       + lbfluid[0][9][index]  + lbfluid[0][10][index]
          + lbfluid[0][11][index] + lbfluid[0][12][index] 
-	 + lbfluid[0][13][index] + lbfluid[0][14][index] 
+	       + lbfluid[0][13][index] + lbfluid[0][14][index] 
          + lbfluid[0][15][index] + lbfluid[0][16][index] 
-	 + lbfluid[0][17][index] + lbfluid[0][18][index];
+	       + lbfluid[0][17][index] + lbfluid[0][18][index];
 
 }
 
@@ -382,7 +387,7 @@ inline void lb_calc_local_pi(index_t index, double *pi) {
  * @param pi      local fluid pressure
  */
 inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi) {
-  
+
   if (!(lattice_switch & LATTICE_LB)) {
     ERROR_SPRINTF(runtime_error(128), 
         "{ Error in lb_calc_local_fields in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
@@ -410,7 +415,7 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
   }
 #endif
   double mode[19];
-  double pi_eq[6];
+  double modes_from_pi_eq[6];
   lb_calc_modes(index, mode);
 
   *rho = mode[0] + lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
@@ -431,30 +436,34 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
     return;
 
   /* equilibrium part of the stress modes */
-  pi_eq[0] = scalar(j,j)/ *rho;
-  pi_eq[1] = (SQR(j[0])-SQR(j[1]))/ *rho;
-  pi_eq[2] = (scalar(j,j) - 3.0*SQR(j[2]))/ *rho;
-  pi_eq[3] = j[0]*j[1]/ *rho;
-  pi_eq[4] = j[0]*j[2]/ *rho;
-  pi_eq[5] = j[1]*j[2]/ *rho;
+  modes_from_pi_eq[0] = scalar(j,j)/ *rho;
+  modes_from_pi_eq[1] = (SQR(j[0])-SQR(j[1]))/ *rho;
+  modes_from_pi_eq[2] = (scalar(j,j) - 3.0*SQR(j[2]))/ *rho;
+  modes_from_pi_eq[3] = j[0]*j[1]/ *rho;
+  modes_from_pi_eq[4] = j[0]*j[2]/ *rho;
+  modes_from_pi_eq[5] = j[1]*j[2]/ *rho;
   
   /* Now we must predict the outcome of the next collision */
   /* We immediately average pre- and post-collision. */
-  mode[4] = pi_eq[0] + (0.5+0.5*gamma_bulk )*(mode[4] - pi_eq[0]);
-  mode[5] = pi_eq[1] + (0.5+0.5*gamma_shear)*(mode[5] - pi_eq[1]);
-  mode[6] = pi_eq[2] + (0.5+0.5*gamma_shear)*(mode[6] - pi_eq[2]);
-  mode[7] = pi_eq[3] + (0.5+0.5*gamma_shear)*(mode[7] - pi_eq[3]);
-  mode[8] = pi_eq[4] + (0.5+0.5*gamma_shear)*(mode[8] - pi_eq[4]);
-  mode[9] = pi_eq[5] + (0.5+0.5*gamma_shear)*(mode[9] - pi_eq[5]);
+  mode[4] = modes_from_pi_eq[0] + (0.5+0.5*gamma_bulk )*(mode[4] - modes_from_pi_eq[0]);
+  mode[5] = modes_from_pi_eq[1] + (0.5+0.5*gamma_shear)*(mode[5] - modes_from_pi_eq[1]);
+  mode[6] = modes_from_pi_eq[2] + (0.5+0.5*gamma_shear)*(mode[6] - modes_from_pi_eq[2]);
+  mode[7] = modes_from_pi_eq[3] + (0.5+0.5*gamma_shear)*(mode[7] - modes_from_pi_eq[3]);
+  mode[8] = modes_from_pi_eq[4] + (0.5+0.5*gamma_shear)*(mode[8] - modes_from_pi_eq[4]);
+  mode[9] = modes_from_pi_eq[5] + (0.5+0.5*gamma_shear)*(mode[9] - modes_from_pi_eq[5]);
 
-  /* Now we have to transform to the "usual" stress tensor components */
-  /* We use eq. 116ff in Duenweg Ladd for that. */
-  pi[0]=(mode[0]+mode[4]+mode[5])/3.;
-  pi[2]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
-  pi[5]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
-  pi[1]=mode[7];
-  pi[3]=mode[8];
-  pi[4]=mode[9];
+  // Transform the stress tensor components according to the modes that
+  // correspond to those used by U. Schiller. In terms of populations this
+  // expression then corresponds exactly to those in Eqs. 116 - 121 in the
+  // Duenweg and Ladd paper, when these are written out in populations.
+  // But to ensure this, the expression in Schiller's modes has to be different!
+
+  pi[0] = ( 2.0*(mode[0] + mode[4]) + mode[6] + 3.0*mode[5] )/6.0;  // xx
+  pi[1] = mode[7];                                                  // xy
+  pi[2] = ( 2.0*(mode[0] + mode[4]) + mode[6] - 3.0*mode[5] )/6.0;  // yy
+  pi[3] = mode[8];                                                  // xz  
+  pi[4] = mode[9];                                                  // yz
+  pi[5] = ( mode[0] + mode[4] - mode[6] )/3.0;                      // zz
 
 }
 
@@ -502,9 +511,11 @@ int lb_lbfluid_set_bulk_visc(double * p_bulk_visc);
 int lb_lbfluid_set_gamma_odd(double * p_gamma_odd);
 int lb_lbfluid_set_gamma_even(double * p_gamma_even);
 int lb_lbfluid_set_friction(double * p_friction);
+int lb_lbfluid_set_couple_flag(int couple_flag);
 int lb_lbfluid_set_agrid(double p_agrid);
 int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
 int lb_lbfluid_set_tau(double p_tau);
+int lb_lbfluid_set_remove_momentum(void);
 #ifdef SHANCHEN
 int lb_lbfluid_set_shanchen_coupling(double * p_coupling);
 int lb_lbfluid_set_mobility(double * p_mobility);

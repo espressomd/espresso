@@ -16,9 +16,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file stretchlin_force.c
+/** \file stretchlin_force.cpp
  *
- *  Implementation of \ref stretchlin_force.h
+ *  Implementation of \ref stretchlin_force.hpp
  */
 
 #include "stretchlin_force.hpp"

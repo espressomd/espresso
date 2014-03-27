@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file comfixed.c
+/** \file comfixed.cpp
  *
- *  Implementation of \ref comfixed.h
+ *  Implementation of \ref comfixed.hpp
  */
 #include "utils.hpp"
 #include "interaction_data.hpp"
@@ -42,10 +42,6 @@ int comfixed_set_params(int part_type_a, int part_type_b, int flag)
 
   if (n_nodes > 1)
     return 2;
-
-  if (PERIODIC(0) || PERIODIC(1) || PERIODIC(2)) {
-    return 3;
-  }
 
   data->COMFIXED_flag    = flag;
 

@@ -21,34 +21,28 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
-/** \file config.h
+/** \file config.hpp
 
     This file contains the defaults for Espresso. To modify them, add
-    an appropriate line in myconfig.h. To find a list of features that
-    can be compiled into Espresso, refer to myconfig-sample.h or to
+    an appropriate line in myconfig.hpp. To find a list of features that
+    can be compiled into Espresso, refer to myconfig-sample.hpp or to
     the documentation of the features.
  */
 
 /* Include the defines created by configure. */
 #include <acconfig.hpp>
 
-/* Prevent C++ bindings in OpenMPI (there is a DataType called LB in there) */
+/* Prevent C++ bindings in MPI (there is a DataType called LB in there) */
 #define OMPI_SKIP_MPICXX
+#define MPICH_SKIP_MPICXX
 
-/* doxyconfig.h is used instead of myconfig when doxygen is run */
-/* doxyconfig.h defines all features so that all features are documented */
-#ifndef DOXYGEN_RUN
 #include "myconfig-final.hpp"
-#else
-#include "config-doxygen.hpp"
-#endif
-
 #include "config-features.hpp"
 
 extern const char* ESPRESSO_VERSION;
 
 /*********************************************************/
-/** \name Parameters from myconfig.h that need to be set */
+/** \name Parameters from myconfig.hpp that need to be set */
 /*********************************************************/
 /*@{*/
 
@@ -142,7 +136,7 @@ extern const char* ESPRESSO_VERSION;
 #endif
 
 
-/* Mathematical constants, from gcc's math.h */
+/* Mathematical constants, from gcc's math.hpp */
 #ifndef M_PI
 #define M_E		2.7182818284590452353602874713526625L  /* e */
 #define M_LOG2E		1.4426950408889634073599246810018921L  /* log_2 e */

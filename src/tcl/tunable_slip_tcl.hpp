@@ -21,7 +21,7 @@
 #ifndef TUNABLE_SLIP_TCL_H
 #define TUNABLE_SLIP_TCL_H
 /** \file tunable_slip_tcl.hpp
- * Tcl interface for \ref tunable_slip.h
+ * Tcl interface for \ref tunable_slip.hpp
  */
 
 #include "parser.hpp"

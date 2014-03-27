@@ -18,12 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file polymer.c
+/** \file polymer.cpp
     This file contains everything needed to create a start-up configuration
     of (partially charged) polymer chains with counterions and salt molecules,
     assigning velocities to the particles and crosslinking the polymers if necessary.
  
-    The corresponding header file is polymer.h.
+    The corresponding header file is polymer.hpp.
  
     Created:       27.02.2003 by BAM
        Based upon 'polymer.tcl' by BAM (20.02.2003).
@@ -261,7 +261,7 @@ else {
 }
 
 int tclcommand_counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  int N_CI; int part_id = n_total_particles; 
+  int N_CI; int part_id = n_part; 
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_CI = -1.0; int type_CI = 2;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -345,7 +345,7 @@ int tclcommand_counterions (ClientData data, Tcl_Interp *interp, int argc, char 
 }
 
 int tclcommand_salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  int N_pS, N_nS; int part_id = n_total_particles; 
+  int N_pS, N_nS; int part_id = n_part; 
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_pS = 1.0, val_nS = -1.0; int type_pS = 3, type_nS = 4;
   double rad=0.;
@@ -462,7 +462,7 @@ int tclcommand_salt (ClientData data, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  double v_max; int part_id = 0, N_T = n_total_particles;
+  double v_max; int part_id = 0, N_T = n_part;
   double tmp_try;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
@@ -484,8 +484,8 @@ int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char *
 	  Tcl_ResetResult(interp);
 	  Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
 	else {
-	  if ((part_id < 0) || (part_id>=n_total_particles)) {
-	    sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_total_particles);
+	  if ((part_id < 0) || (part_id>=n_part)) {
+	    sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_part);
 	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
 	i++;
       }
@@ -499,8 +499,8 @@ int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char *
 	  Tcl_ResetResult(interp);
 	  Tcl_AppendResult(interp, "The amount of particles to be set must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
 	else {
-	  if ((N_T < 0) || (part_id+N_T > n_total_particles)) {
-	    sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_total_particles-part_id);
+	  if ((N_T < 0) || (part_id+N_T > n_part)) {
+	    sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_part-part_id);
 	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
 	i++;
       }
@@ -511,7 +511,7 @@ int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char *
     /* default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
-  if (part_id+N_T > n_total_particles) N_T = n_total_particles - part_id;
+  if (part_id+N_T > n_part) N_T = n_part - part_id;
 
   POLY_TRACE(printf("double v_max %f, int part_id %d, int N_T %d\n", v_max, part_id, N_T));
 
@@ -521,7 +521,7 @@ int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char *
 }
 
 int tclcommand_maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  int part_id = 0, N_T = n_total_particles;
+  int part_id = 0, N_T = n_part;
   double tmp_try;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
@@ -535,8 +535,8 @@ int tclcommand_maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc
 	  Tcl_ResetResult(interp);
 	  Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
 	else {
-	  if ((part_id < 0) || (part_id>=n_total_particles)) {
-	    sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_total_particles);
+	  if ((part_id < 0) || (part_id>=n_part)) {
+	    sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_part);
 	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
 	i++;
       }
@@ -550,8 +550,8 @@ int tclcommand_maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc
 	  Tcl_ResetResult(interp);
 	  Tcl_AppendResult(interp, "The amount of particles to be set must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
 	else {
-	  if ((N_T < 0) || (part_id+N_T > n_total_particles)) {
-	    sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_total_particles-part_id);
+	  if ((N_T < 0) || (part_id+N_T > n_part)) {
+	    sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_part-part_id);
 	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
 	i++;
       }
@@ -559,7 +559,7 @@ int tclcommand_maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc
     /* default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
-  if (part_id+N_T > n_total_particles) N_T = n_total_particles - part_id;
+  if (part_id+N_T > n_part) N_T = n_part - part_id;
 
   POLY_TRACE(printf("int part_id %d, int N_T %d\n", part_id, N_T));
 
@@ -599,8 +599,8 @@ int tclcommand_crosslink (ClientData data, Tcl_Interp *interp, int argc, char **
 	if (!ARG_IS_I(i+1, part_id)) {	
 	  Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
 	else {
-	  if ((part_id < 0) || (part_id > n_total_particles - N_P*MPC)) {
-	    sprintf(buffer,"Index of first particle must be in [0,%d] (got: ", n_total_particles - N_P*MPC);
+	  if ((part_id < 0) || (part_id > n_part - N_P*MPC)) {
+	    sprintf(buffer,"Index of first particle must be in [0,%d] (got: ", n_part - N_P*MPC);
 	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
 	i++;
       }

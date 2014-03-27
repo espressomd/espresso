@@ -18,8 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/* This is the default myconfig.h-file. If no other myconfig-file is
+/* This is the default myconfig.hpp-file. If no other myconfig-file is
    found, this file is used.
+
+   DO NOT MODIFY THIS FILE! It should be modified *only* by the
+   maintainers of ESPResSo, as it has a profound impact on many users,
+   in particular newbies.
 */
 /* global features */
 #define PARTIAL_PERIODIC

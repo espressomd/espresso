@@ -20,9 +20,9 @@
 */
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
-/** \file particle_data.h
+/** \file particle_data.hpp
     For more information on particle_data,
-    see \ref particle_data.c "particle_data.c"
+    see \ref particle_data.cpp "particle_data.c"
 */
 
 
@@ -131,11 +131,6 @@ typedef struct {
   #endif
 #endif
 
-#ifdef ADRESS
-  /** particles adress weight */
-  double adress_weight;
-#endif
-
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
@@ -167,6 +162,10 @@ typedef struct {
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
   double p_old[3];
+#endif
+
+#ifdef SHANCHEN
+  double composition[LB_COMPONENTS];
 #endif
 
 } ParticlePosition;
@@ -300,7 +299,7 @@ typedef struct {
 */
 extern int max_seen_particle;
 /** total number of particles on all nodes. */
-extern int  n_total_particles;
+extern int  n_part;
 
 /** Capacity of the \ref particle_node / \ref local_particles. */
 extern int  max_particle_node;
@@ -677,7 +676,7 @@ void remove_all_bonds_to(int part);
     information in \ref partCfg to be valid you should set the value
     of  to \ref WITH_BONDS.
 */
-void updatePartCfg(int bonds_flag );
+int updatePartCfg(int bonds_flag );
 
 /** release the partCfg array. Use this function, since it also frees the
     bonds, if they are used.
@@ -788,7 +787,6 @@ void auto_exclusion(int distance);
  and not already in the list. */
 void add_partner(IntList *il, int i, int j, int distance);
 
-#ifdef GRANDCANONICAL
 //value that is returned in the case there was no error, but the type was not yet indexed
 #define NOT_INDEXED -3
 //struct that associates the index used for the type_list and the real particle type
@@ -803,15 +801,6 @@ typedef struct {
 	int * index;
 } TypeOfIndex;
 
-extern TypeOfIndex Type; 
-//index.max_entry=0;
-//index->type = (int *) 0;
-
-extern IndexOfType Index; 
-//tindex.max_entry=0;
-//tindex->type = (int *) 0;
-
-
 typedef struct {
 	int max_entry;
 	int cur_size;
@@ -822,25 +811,14 @@ typedef struct {
 extern TypeList *type_array;
 extern int number_of_type_lists;
 
+extern TypeOfIndex Type; 
+extern IndexOfType Index; 
+
 // flag indicating init_gc was called 
 extern int GC_init;
 
 // flag that indicates that the function init_type_array was called already
 extern int Type_array_init;
-
-/** linked list for particles of a given type */
-//typedef struct {
-//	int identifier;
-//	struct type_list_item *next;
-//} type_list item;
-//
-//typedef struct {
-//	struct type_list_item *list;
-//	int type;
-//	int max;
-//} type_list
-
-/** vars and fields */
 
 int init_gc(void);
 
@@ -861,9 +839,8 @@ int update_particle_array(int type);
 
 /* find a particle of given type and return its id */
 int find_particle_type(int type, int *id);
-/** return an array with real particle id and the corresponding index of typelist */
-//static int *find_particle_type(int type);
 
+/** return an array with real particle id and the corresponding index of typelist */
 int find_particle_type_id(int type, int *id, int *in_id );
 
 /** delete one randomly chosen particle of given type 
@@ -875,6 +852,5 @@ int add_particle_to_list(int part_id, int type);
 // print out a list of currently indexed ids
 int gc_status(int type);
 int number_of_particles_with_type(int type, int *number);
-#endif
 
 #endif

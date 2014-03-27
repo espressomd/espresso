@@ -17,9 +17,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file ghmc.c
+/** \file ghmc.cpp
 
-    For more information see \ref ghmc.h
+    For more information see \ref ghmc.hpp
  */
 
 #include <cmath>
@@ -282,8 +282,8 @@ void tscale_momentum_update()
   
   double tempt, tempr;
   calc_kinetic(&tempt, &tempr);
-  tempt /= (1.5*n_total_particles);
-  tempr /= (1.5*n_total_particles);
+  tempt /= (1.5*n_part);
+  tempr /= (1.5*n_part);
   
   double scalet = sqrt(temperature / tempt);
   #ifdef ROTATION    

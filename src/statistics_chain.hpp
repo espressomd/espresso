@@ -20,7 +20,7 @@
 */
 #ifndef STATISTICS_CHAIN_H
 #define STATISTICS_CHAIN_H
-/** \file statistics_chain.h 
+/** \file statistics_chain.hpp 
 
     This file contains the code for statistics on the data using the
     molecule information set with analyse set chains.

@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file endangledist.h
+/** \file endangledist.hpp
  *  Routines which apply an angle potential between two particles and a wall constraint
  *  At distmax the angle potential is slowly switched on to a maximum at distmin
  *  phi0 is constant but could easily be implemented to depend on the distance 

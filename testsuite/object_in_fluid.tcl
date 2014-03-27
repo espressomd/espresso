@@ -48,7 +48,7 @@ puts "------------------------------------------------"
 set vmd "n"
 
 set tcl_precision 15
-set tolerance 1e-5
+set tolerance 1e-8
 
 setmd time_step 0.1
 setmd skin 0.2
@@ -77,21 +77,8 @@ proc write_data_final {file} {
 
 if { [catch {
 
-	# 	Here you can write new initial configuration - by changing generate_new_data from 0 to 1
-	# 	For this, you need to supply the meshfiles: one for nodes and one for triangles
-	
-	set generate_new_data 0
-	if { $generate_new_data == 1} {
-	    set fileNodes "object_in_fluid_system-nodes.data"
-	    set fileTriangles "object_in_fluid_system-triangles.data"
-	    setmd box_l 100 20 20
-	    init_objects_in_fluid	
-	    add_oif_object origin 10.1 10.1 10.1 nodesfile $fileNodes trianglesfile $fileTriangles ks 0.2 kb 0.4 kal 0.2 kag 0.7 kv 1.0 type 0 mol 0
-	    write_data_init "object_in_fluid_system-init.data"
-	} else {
-	    read_data "object_in_fluid_system-init.data"
-	    invalidate_system
-	}
+  read_data "object_in_fluid_system-init.data"
+  invalidate_system
 	
 	lbfluid cpu grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
 		                           
@@ -125,8 +112,9 @@ if { [catch {
 	    incr cycle
 	}
 	
-	# Here, you write new reference configuration in case you have chosen to generate new data
-	#
+	set generate_new_data 0
+	# Here, you write new reference configuration in case you uncomment the next line
+  # set generate_new_data 1
 	if { $generate_new_data == 1} {
 	    write_data_final "object_in_fluid_system-final.data"
 	    exit
@@ -157,7 +145,7 @@ if { [catch {
 	    set Bz [lindex $POS($i) 2]
 	    # stores the vector of the computed position for $i-th particle
 	    set diffPOS [expr $diffPOS + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
-	
+
 	    set tmp [part $i pr v]
 	    set Ax [lindex $tmp 0]
 	    set Ay [lindex $tmp 1]
@@ -168,7 +156,7 @@ if { [catch {
 	    set Bz [lindex $VEL($i) 2]
 	    # stores the vector of the computed velocity for $i-th particle
 	    set diffVEL [expr $diffVEL + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
-	
+
 	    set tmp [part $i pr f]
 	    set Ax [lindex $tmp 0]
 	    set Ay [lindex $tmp 1]

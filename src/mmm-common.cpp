@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file mmm-common.c
+/** \file mmm-common.cpp
     Common parts of the MMM family of methods for the
     electrostatic interaction, MMM1D, MMM2D and ELC.  This file contains the code for the polygamma
     expansions used for the near formulas of MMM1D and MMM2D.

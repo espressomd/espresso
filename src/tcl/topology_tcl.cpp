@@ -19,11 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file topology.c
+/** \file topology.cpp
  *
  *  This file contains functions for handling the system topology.
  *
- *  For more information see topology.h
+ *  For more information see topology.hpp
  *   */
 
 //#include "utils.hpp"
@@ -81,7 +81,7 @@ int tclcommand_analyze_set_parse_topo_part_sync(Tcl_Interp *interp) {
     Tcl_AppendResult(interp, "Can't sync molecules to particle info: No molecules defined ", (char *)NULL);
     return TCL_ERROR;
   }
-  if (n_total_particles <= 0) {
+  if (n_part <= 0) {
     Tcl_AppendResult(interp, "Can't sync molecules to particle info: No particles defined ", (char *)NULL);
     return TCL_ERROR;
   }
@@ -94,7 +94,7 @@ int tclcommand_analyze_set_parse_topo_part_sync(Tcl_Interp *interp) {
       ntopoparts += 1;
     }
   }
-  if ( ntopoparts > n_total_particles ) {
+  if ( ntopoparts > n_part ) {
     Tcl_AppendResult(interp, "Can't sync molecules to particle info: Topology contains more particles than actually exist ", (char *)NULL);
     return TCL_ERROR;
   }

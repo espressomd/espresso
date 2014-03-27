@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file interaction_data.c
-    Implementation of interaction_data.h
+/** \file interaction_data.cpp
+    Implementation of interaction_data.hpp
  */
 #include <cstring>
 #include <cstdlib>
@@ -39,12 +39,13 @@
 #include "tab.hpp"
 #include "buckingham.hpp"
 
-// nonbonded
+// Nonbonded
 #include "bmhtf-nacl_tcl.hpp"
 #include "buckingham_tcl.hpp"
 #include "gb_tcl.hpp"
 #include "gaussian_tcl.hpp"
 #include "hat_tcl.hpp"
+#include "lb_tcl.hpp"
 #include "lj_tcl.hpp"
 #include "ljangle_tcl.hpp"
 #include "ljcos_tcl.hpp"
@@ -91,13 +92,12 @@
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
 
-int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
-
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
 #endif
 
 #ifdef ELECTROSTATICS
+int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 
 /********************************************************************************/
 /*                                 electrostatics                               */
@@ -371,30 +371,6 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   return (TCL_ERROR);
 }
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-int tclprint_to_result_TF(Tcl_Interp *interp, int i)
-{
-  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
-  TF_parameters *data = get_tf_param(i);
-  
-  if (!data) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "thermodynamic force does not exist",
-		     (char *) NULL);
-    return (TCL_ERROR);
-  }
-  sprintf(buffer, "%d ", i);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-  
-  if(data->TF_TAB_maxval !=0)
-    Tcl_AppendResult(interp, "thermodynamic_force \"", data->TF_TAB_filename,"\"", (char *) NULL);
-  
-  return(TCL_OK);
-}
-/* #endif */
-#endif
-
 int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
@@ -471,11 +447,6 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
     Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
 #endif
 
-#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
-  if(data->ADRESS_TAB_maxval > 0.0)
-    Tcl_AppendResult(interp, "adress \"", data->ADRESS_TAB_filename,"\"", (char *) NULL);
-#endif
-
 #ifdef COMFORCE
   if (data->COMFORCE_flag > 0.0) tclprint_to_result_comforceIA(interp,i,j);
 #endif
@@ -498,6 +469,9 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 
 #ifdef TUNABLE_SLIP
   if (data->TUNABLE_SLIP_r_cut > 0.0) tclprint_to_result_tunable_slipIA(interp,i,j);
+#endif
+#ifdef SHANCHEN
+  if (data->affinity_on == 1 ) tclprint_to_result_affinityIA(interp,i,j);
 #endif
 
   return (TCL_OK);
@@ -533,7 +507,7 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "}",(char *) NULL);
 
 #else
-  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
+  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)",(char *) NULL);
 #endif
   return (TCL_OK);
 }
@@ -695,24 +669,6 @@ int tclcommand_inter_print_non_bonded(Tcl_Interp * interp,
   return tclprint_to_result_NonbondedIA(interp, part_type_a, part_type_b);
 }
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-/* TODO: This function is not used anywhere. To be removed?  */
-int tf_print(Tcl_Interp * interp, int part_type)
-{
-  //TF_parameters *data;
-  Tcl_ResetResult(interp);
-    
-    make_particle_type_exist(part_type);
-    
-    //data = get_tf_param(part_type);
-    
-    return tclprint_to_result_TF(interp, part_type);
-}
-/* #endif */
-#endif
-
-
 int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b,
 			   int argc, char ** argv)
@@ -821,12 +777,11 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef MOL_CUT
     REGISTER_NONBONDED("molcut", tclcommand_inter_parse_molcut);
 #endif
-    
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-    REGISTER_NONBONDED("adress_tab_ic", tclcommand_inter_parse_adress_tab);
+  
+#ifdef SHANCHEN
+    REGISTER_NONBONDED("affinity",tclcommand_inter_parse_affinity);
 #endif
-#endif
+ 
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],
 		       "\" in parsing non bonded interaction",
@@ -977,7 +932,7 @@ int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
     #ifdef ELECTROSTATICS
       return tclcommand_inter_parse_coulomb(interp, argc-1, argv+1);
    #else
-       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)", (char *) NULL);
+       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)", (char *) NULL);
     #endif
   }
   
@@ -985,7 +940,7 @@ int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
    #ifdef DIPOLES
       return tclcommand_inter_parse_magnetic(interp, argc-1, argv+1);
     #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)", (char *) NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.hpp)", (char *) NULL);
     #endif
   }
   

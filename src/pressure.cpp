@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file pressure.c
-    Implementation of \ref pressure.h "pressure.h".
+/** \file pressure.cpp
+    Implementation of \ref pressure.hpp "pressure.h".
 */
 #include "pressure.hpp"
 #include "cells.hpp"

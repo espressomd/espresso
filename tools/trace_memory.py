@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+from __future__ import print_function
 import sys
 import re
 
@@ -71,11 +71,11 @@ for line in f:
         elif addr in allocated:
             del allocated[addr]
         else:
-            print "\n" + addr + " freed at " + src + ", but never allocated\n"
+            print(("\n" + addr + " freed at " + src + ", but never allocated\n"))
 
-print "\n"
-for (addr,info) in allocated.iteritems():
+print("\n")
+for (addr,info) in list(allocated.items()):
     s = info[0] + " @ " +  addr + " allocated at " + info[1][0]
     for loc in info[1][1:]:
         s += ", from " + loc
-    print s
+    print(s)

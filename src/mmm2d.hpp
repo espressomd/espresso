@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file mmm2d.h MMM2D algorithm for long range coulomb interaction
+/** \file mmm2d.hpp MMM2D algorithm for long range coulomb interaction
     in 2d+h geometries.  Implementation of the MMM2D method for the
     calculation of the electrostatic interaction for two dimensionally
     periodic systems. For details on the method see MMM general. The

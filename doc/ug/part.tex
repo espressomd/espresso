@@ -624,8 +624,15 @@ Copy a group of particles including their bonds. Positions can be
 otherwise the copied set is at exactly the same position as the
 original set. The particles can be given as a combination of
 \opt{list}s or \opt{range}s. The new particles obtain in any case
-consecutive identities after the largest current identity. Bonds
-within the defined particle set are copied with translated identities,
+consecutive identities after the largest current identity. The mapping
+of the particles is returned as a list of old-new pairs, which can be
+conveniently read into an array:
+\begin{tclcode}
+array set newidentities [copy_particles ...]
+puts "particle 42 is now at position $newidentities(42)"
+\end{tclcode}
+
+Bonds within the defined particle set are copied with translated identities,
 but not bonds with particles outside the list. That is, if the
 particle set corresponds to a molecule, intramolecular bonds are
 preserved, but not intermolecular ones.
@@ -644,7 +651,7 @@ All these examples do the same - making exact copies of particles 1 through 4.
 \begin{essyntax}
   \variant{1} 
   constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
-  dist \var{d} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
+  dist \var{d} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}} \opt{only_positive \var{flag}}
   
   \variant{2}
   constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
@@ -735,6 +742,9 @@ the \codebox{inter} command. In variants \variant{1} to \variant{7}, constraints
  The reflection property is only activated if an interaction is defined between
  a particular particle and the constraint! This will usually be a lennard-jones
  interaction with $\epsilon=0$, but finite interaction range.
+ In variant \variant{1} if the \codebox{only_positive} flag is set to 1, interactions are
+ only calculated if the particle is on the side of the wall in which the normal
+ vector is pointing. This has only an effect for penetrable walls.
 
 Variants \variant{8} and \variant{9} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the
@@ -876,7 +886,7 @@ integration step, the forces accumulated on a virtual site are
 distributed back to those particles, from which the virtual site was
 derived.
 
-There are two distinct types of virtual sites, decribed in the
+There are two distinct types of virtual sites, described in the
 following.
 
 \subsection{Virtual sites in the center of mass of a molecule}
@@ -900,7 +910,7 @@ perform the following steps in that order
   \end{essyntaxbox}
 \item Declare the list of molecules and the particles they consist of:
   \begin{essyntaxbox}
-    analyze set \{\var{molid} \{\var{list of particle ids ..}\} ...\}
+    eval analyze set \{\var{molid} \{\var{list of particle ids ..}\} ...\}
   \end{essyntaxbox}
   The lists of particles in a molecule comprise the non-virtual
   particles and the virtual site.
@@ -914,6 +924,8 @@ perform the following steps in that order
     integrate 0
   \end{essyntaxbox}
 \end{enumerate}
+Please note that the use of virtual sites requires that the particles are numbered consecutively. I.e., the particle ids should go from zero to $N-1$, where $N$ is the number of particles.
+
 
 \subsection{Rigid arrangements of particles}
 
@@ -989,6 +1001,10 @@ Please note:
 \item If the virtual sites represent actual particles carrying a mass,
   the inertia tensor of the non-virtual particle in the center of mass
   needs to be adapted.
+\item 
+The presence of rigid bodies constructed by means of virtual sites adds a contribution to the pressure and stress tensor.
+\item
+The use of virtual sites requires that the particles are numbered consecutively. I.e., the particle ids should go from zero to $N-1$, where $N$ is the number of particles.
 \end{itemize}
 
 \subsection{Additional features}

@@ -32,7 +32,18 @@ int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc,
 
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-/** lb boundary command. From \ref lb-boundaries_tcl.c */
+int tclcommand_inter_parse_affinity(Tcl_Interp * interp, int part_type_a, int part_type_b, int argc, char ** argv);
+
+
+/** lb boundary command. From \ref lb-boundaries_tcl.cpp */
 extern int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
+extern int affinity_set_params(int part_type_a, int part_type_b, double * affinity);
+
+#ifdef SHANCHEN
+int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j);
+#endif
+
+
+extern int ek_initialized;
 
 #endif /* LB_TCL_H */

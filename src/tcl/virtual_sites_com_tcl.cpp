@@ -193,7 +193,7 @@ int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, ch
    char buffer[TCL_DOUBLE_SPACE];
    Particle p;
    updatePartCfg(WITHOUT_BONDS);
-   for(j=0; j<n_total_particles; j++){
+   for(j=0; j<n_part; j++){
       if (!ifParticleIsVirtual(&partCfg[j])) continue;
       get_particle_data(j,&p);
       //dist=min_distance(partCfg[j].r.p,p.r.p);

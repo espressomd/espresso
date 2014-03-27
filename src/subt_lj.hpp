@@ -20,10 +20,10 @@
 */
 #ifndef SUBT_LJ_H
 #define SUBT_LJ_H
-/** \file subt_lj.h
+/** \file subt_lj.hpp
  *  Routines to subtract the LENNARD-JONES Energy and/or the LENNARD-JONES force 
  *  for a particle pair.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 #include "utils.hpp"
 #include "interaction_data.hpp"

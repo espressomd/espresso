@@ -1,0 +1,21 @@
+set lock ".lock-[pid]"
+
+proc checklock {} {
+	global lock
+	if {! [file exists $lock]} {quit} {after 200 checklock}
+}
+
+menu main off
+axes location off
+mol load vtf case2.vtf
+rock off
+rotate y by 90
+scale by 2.1 
+mol modstyle 0 0 CPK 1.500000 0.600000 8.000000 6.000000
+mol modcolor 0 0 Name
+
+exec touch $lock
+
+while { [catch {imd connect localhost 10000}] } { after 500 }
+
+checklock

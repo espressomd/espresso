@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef GLOBAL_H
-#define GLOBAL_H
-/** \file global.h This file contains the code for access to globally
+#ifndef _GLOBAL_HPP
+#define _GLOBAL_HPP
+/** \file global.hpp This file contains the code for access to globally
     defined variables using the script command setmd. Please refer to
     the Developer's guide, section "Adding global variables", for
     details on how to add new variables in the interpreter's
@@ -29,7 +29,7 @@
 /**********************************************
  * description of global variables
  * add any variable that should be handled
- * automatically in global.c. This includes
+ * automatically in global.cpp. This includes
  * distribution to other nodes and
  * read/user-defined access from Tcl.
  **********************************************/
@@ -106,7 +106,7 @@ extern const Datafield fields[];
 #define FIELD_NLAYERS             14
 /** index of \ref n_nodes in \ref #fields */
 #define FIELD_NNODES              15
-/** index of \ref n_total_particles in  \ref #fields */
+/** index of \ref n_part in  \ref #fields */
 #define FIELD_NPART               16
 /** index of \ref n_particle_types in \ref #fields */
 #define FIELD_NPARTTYPE           17
@@ -158,26 +158,24 @@ extern const Datafield fields[];
 #define FIELD_DPD_TWF             40
 /** index of \ref dpd_wf in \ref #fields */
 #define FIELD_DPD_WF              41
-/** index of address variable in \ref #fields */
-#define FIELD_ADRESS              42
 /** index of \ref max_cut_bonded in \ref #fields */
-#define FIELD_MCUT_BONDED         43
+#define FIELD_MCUT_BONDED         42
 /** index of \ref transfer_rate in \ref #fields */
-#define FIELD_TRANSFER_RATE       44
+#define FIELD_TRANSFER_RATE       43
 /** index of \ref min_global_cut in \ref #fields */
-#define FIELD_MIN_GLOBAL_CUT      45
+#define FIELD_MIN_GLOBAL_CUT      44
 /** index of \ref ghmc_nmd in \ref #fields */
-#define FIELD_GHMC_NMD            46
+#define FIELD_GHMC_NMD            45
 /** index of \ref ghmc_phi in \ref #fields */
-#define FIELD_GHMC_PHI            47
+#define FIELD_GHMC_PHI            46
 /** index of \ref ghmc_phi in \ref #fields */
-#define FIELD_GHMC_RES            48 
+#define FIELD_GHMC_RES            47 
 /** index of \ref ghmc_phi in \ref #fields */
-#define FIELD_GHMC_FLIP           49
+#define FIELD_GHMC_FLIP           48
 /** index of \ref ghmc_phi in \ref #fields */
-#define FIELD_GHMC_SCALE          50 
+#define FIELD_GHMC_SCALE          49 
 /** index of \ref lb_components in \ref #fields */
-#define FIELD_LB_COMPONENTS       51 
+#define FIELD_LB_COMPONENTS       50 
 /*@}*/
 
 #endif

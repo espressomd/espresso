@@ -21,7 +21,7 @@
 #ifndef _LJANGLE_H
 #define _LJANGLE_H
 
-/** \file ljangle.h
+/** \file ljangle.hpp
  *  Routines to calculate the lennard-jones 12-10 with angular dependance.
  *  The potential is a product of a 12-10 LJ potential with two cos^2.
  *  The potential actually relies on 6 particles: the 2 primary beads
@@ -36,7 +36,7 @@
  *  interaction strength in this medium. The interaction strengh of the second
  *  environment must be *stronger* than of the first one.
  *
- *  \ref forces.c
+ *  \ref forces.cpp
  */
 
 #include "utils.hpp"
@@ -98,10 +98,10 @@ inline void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       part2n = p2->p.identity + ia_params->LJANGLE_bonded1neg;
     }
 
-    if (part1p >= 0 && part1p < n_total_particles &&
-	part1n >= 0 && part1n < n_total_particles &&
-	part2p >= 0 && part2p < n_total_particles &&
-	part2n >= 0 && part2n < n_total_particles     ) {
+    if (part1p >= 0 && part1p < n_part &&
+	part1n >= 0 && part1n < n_part &&
+	part2p >= 0 && part2p < n_part &&
+	part2n >= 0 && part2n < n_part     ) {
 	
       p3 = local_particles[part1p];
       p4 = local_particles[part1n];
@@ -206,7 +206,7 @@ inline void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 	}
 	      
 	/* Regroup the last two cases in one */
-	/* Propagate all forces in this function rather than in the forces.h file */
+	/* Propagate all forces in this function rather than in the forces.hpp file */
 	if (dist > 0.0){
 	  for(j=0;j<3;++j){
 	    p1->f.f[j] += angular_jik * angular_ikn * rik[j]/l_rik *radprime 
@@ -295,10 +295,10 @@ inline double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
       part2n = p2->p.identity + ia_params->LJANGLE_bonded1neg;
     }
 	
-    if (part1p >= 0 && part1p < n_total_particles &&
-	part1n >= 0 && part1n < n_total_particles &&
-	part2p >= 0 && part2p < n_total_particles &&
-	part2n >= 0 && part2n < n_total_particles     ) {
+    if (part1p >= 0 && part1p < n_part &&
+	part1n >= 0 && part1n < n_part &&
+	part2p >= 0 && part2p < n_part &&
+	part2n >= 0 && part2n < n_part     ) {
 	    
       p3 = local_particles[part1p];
       p4 = local_particles[part1n];

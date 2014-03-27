@@ -19,7 +19,7 @@
 
 #include "collision.hpp"
 #include "cells.hpp"
-#include "communication.hpp" 
+#include "communication.hpp"
 #include "errorhandling.hpp"
 
 #ifdef COLLISION_DETECTION
@@ -53,9 +53,11 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
     return 1;
 #endif
 
+#ifndef COLLISION_USE_BROKEN_PARALLELIZATION
   // Binding so far only works on a single cpu
   if (mode && n_nodes != 1)
     return 2;
+#endif
 
   // Check if bonded ia exist
   if ((mode & COLLISION_MODE_BOND) &&
@@ -81,8 +83,8 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
   collision_params.vs_particle_type=t;
 
   make_particle_type_exist(t);
-  
-  recalc_forces = 1;
+
+  mpi_bcast_collision_params();
 
   return 0;
 }
@@ -91,7 +93,7 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
 // Add it to the queue in case virtual sites should be added at the point of collision
 void detect_collision(Particle* p1, Particle* p2)
 {
-  // The check, whether collision detection is actually turned on is performed in forces.h
+  // The check, whether collision detection is actually turned on is performed in forces.hpp
 
   double dist_betw_part, vec21[3]; 
   int part1, part2, size;
@@ -109,6 +111,12 @@ void detect_collision(Particle* p1, Particle* p2)
   p1 = local_particles[part1];
   p2 = local_particles[part2];
 
+#ifdef COLLISION_USE_BROKEN_PARALLELIZATION
+  // Ignore particles too distant to be on the same processor
+  if (!p1 || !p2)
+    return; 
+#endif
+
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
   if ((p1->p.isVirtual) || (p2->p.isVirtual))
@@ -116,31 +124,34 @@ void detect_collision(Particle* p1, Particle* p2)
 #endif
 
   // Check, if there's already a bond between the particles
-  // First check the bonds of p1 
-  int i = 0;
-  while(i < p1->bl.n) {
-    size = bonded_ia_params[p1->bl.e[i]].num;
-
-    if (p1->bl.e[i] == collision_params.bond_centers &&
-        p1->bl.e[i + 1] == part2) {
-      // There's a bond, already. Nothing to do for these particles
-      return;
-    }
-    i += size + 1;
-  }
+  // First check the bonds of p1
+  if (p1->bl.e) {
+    int i = 0;
+    while(i < p1->bl.n) {
+      size = bonded_ia_params[p1->bl.e[i]].num;
       
-  // Check, if a bond is already stored in p2
-  i = 0;
-  while(i < p2->bl.n) {
-    size = bonded_ia_params[p2->bl.e[i]].num;
-
-    /* COMPARE P2 WITH P1'S BONDED PARTICLES*/
-
-    if (p2->bl.e[i] == collision_params.bond_centers &&
-        p2->bl.e[i + 1] == part1) {
-      return;
+      if (p1->bl.e[i] == collision_params.bond_centers &&
+          p1->bl.e[i + 1] == part2) {
+        // There's a bond, already. Nothing to do for these particles
+        return;
+      }
+      i += size + 1;
     }
-    i += size + 1;
+  }
+  if (p2->bl.e) {
+    // Check, if a bond is already stored in p2
+    int i = 0;
+    while(i < p2->bl.n) {
+      size = bonded_ia_params[p2->bl.e[i]].num;
+
+      /* COMPARE P2 WITH P1'S BONDED PARTICLES*/
+
+      if (p2->bl.e[i] == collision_params.bond_centers &&
+          p2->bl.e[i + 1] == part1) {
+        return;
+      }
+      i += size + 1;
+    }
   }
 
   /* If we're still here, there is no previous bond between the particles,
@@ -149,9 +160,17 @@ void detect_collision(Particle* p1, Particle* p2)
   /* create marking bond between the colliding particles immediately */
   if (collision_params.mode & COLLISION_MODE_BOND) {
     int bondG[2];
+    int primary = part1, secondary = part2;
+#ifdef COLLISION_USE_BROKEN_PARALLELIZATION
+    // put the bond to the physical particle; at least one partner always is
+    if (p1->l.ghost) {
+      primary = part2;
+      secondary = part1;
+    }
+#endif
     bondG[0]=collision_params.bond_centers;
-    bondG[1]=part2;
-    local_change_bond(part1, bondG, 0);
+    bondG[1]=secondary;
+    local_change_bond(primary, bondG, 0);
   }
 
   if (collision_params.mode & (COLLISION_MODE_VS | COLLISION_MODE_EXCEPTION)) {
@@ -160,7 +179,7 @@ void detect_collision(Particle* p1, Particle* p2)
 
     // Point of collision
     double new_position[3];
-    for (i=0;i<3;i++) {
+    for (int i=0;i<3;i++) {
       new_position[i] = p1->r.p[i] - vec21[i] * 0.50;
     }
        
@@ -172,7 +191,7 @@ void detect_collision(Particle* p1, Particle* p2)
     // Save the collision      
     collision_queue[number_of_collisions-1].pp1 = part1;
     collision_queue[number_of_collisions-1].pp2 = part2;
-    for (i=0;i<3;i++) {
+    for (int i=0;i<3;i++) {
       collision_queue[number_of_collisions-1].point_of_collision[i] = new_position[i]; 
     }
   }
@@ -258,6 +277,8 @@ void handle_collisions ()
   // Reset the collision queue
   number_of_collisions = 0;
   free(collision_queue);
+
+  announce_resort_particles();
 }
 
 #endif

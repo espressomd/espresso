@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file particle_data.c
+/** \file particle_data.cpp
     This file contains everything related to particle storage. If you want to add a new
     property to the particles, it is probably a good idea to modify \ref Particle to give
     scripts access to that property. You always have to modify two positions: first the
@@ -26,7 +26,7 @@
     section where you have to find a nice and short name for your property to appear in
     the Tcl code. Then you just parse your part out of argc and argv.
 
-    The corresponding header file is particle_data.h.
+    The corresponding header file is particle_data.hpp.
 */
 #include <cstdlib>
 #include <cstring>
@@ -56,17 +56,16 @@
 /************************************************
  * variables
  ************************************************/
-#ifdef GRANDCANONICAL
+// List of particles for grandcanonical simulations
 TypeOfIndex Type; 
 IndexOfType Index; 
 TypeList *type_array;
 int number_of_type_lists;
 int GC_init;
 int Type_array_init;
-#endif
 
 int max_seen_particle = -1;
-int n_total_particles = 0;
+int n_part = 0;
 int max_particle_node = 0;
 int *particle_node = NULL;
 int max_local_particles = 0;
@@ -115,7 +114,10 @@ void init_particle(Particle *part)
 #ifdef SHANCHEN
   int ii;
   for(ii=0;ii<2*LB_COMPONENTS;ii++){ 
-    part->p.solvation[ii]=0;
+    part->p.solvation[ii]=0.0;
+  }
+  for(ii=0;ii<LB_COMPONENTS;ii++){ 
+    part->r.composition[ii]=0.0;
   }
 #endif
 
@@ -273,10 +275,6 @@ void init_particle(Particle *part)
   part->l.ghost        = 0;
 #endif
 
-#ifdef ADRESS
-  part->p.adress_weight = 1.0;
-#endif
-
 #ifdef LANGEVIN_PER_PARTICLE
   part->p.T = -1.0;
   part->p.gamma = -1.0;
@@ -296,27 +294,36 @@ void free_particle(Particle *part) {
  * organizational functions
  ************************************************/
 
-void updatePartCfg(int bonds_flag)
+int updatePartCfg(int bonds_flag)
 {
   int j;
 
   if(partCfg)
-    return;
+    return 1;
 
-  partCfg = (Particle*)malloc(n_total_particles*sizeof(Particle));
+  partCfg = (Particle*)malloc(n_part*sizeof(Particle));
   if (bonds_flag != WITH_BONDS)
     mpi_get_particles(partCfg, NULL);
   else
     mpi_get_particles(partCfg,&partCfg_bl);
 
-  for(j=0; j<n_total_particles; j++)
+  for(j=0; j<n_part; j++)
     unfold_position(partCfg[j].r.p,partCfg[j].l.i);
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
-  if ((sortPartCfg()==0)||(update_mol_pos_cfg()==0)){
-     freePartCfg();
+
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return 0;
+  }
+  if (!updatePartCfg(bonds_flag)) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not update positions of virtual sites in partcfg } ");
+    return 0;
   }
 #endif
+return 1;
 }
 
 int sortPartCfg()
@@ -330,11 +337,11 @@ int sortPartCfg()
   if (partCfgSorted)
     return 1;
 
-  if (n_total_particles != max_seen_particle + 1)
+  if (n_part != max_seen_particle + 1)
     return 0;
 
-  sorted = (Particle*)malloc(n_total_particles*sizeof(Particle));
-  for(i = 0; i < n_total_particles; i++)
+  sorted = (Particle*)malloc(n_part*sizeof(Particle));
+  for(i = 0; i < n_part; i++)
     memcpy(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
   free(partCfg);
   partCfg = sorted;
@@ -560,14 +567,6 @@ int place_particle(int part, double p[3])
     retcode = ES_PART_CREATED;
 
     mpi_place_new_particle(pnode, part, p);
-//#ifdef GRANDCANONICAL 
-//  if ( Type_array_init ) { 
-//	  if ( add_particle_to_list(part) ==  ES_ERROR ){
-//		  return ES_ERROR;
-//	  }
-//  }
-//#endif
-
 
   } else {
     mpi_place_particle(pnode, part, p);
@@ -624,6 +623,7 @@ int set_particle_solvation(int part, double * solvation)
   mpi_send_solvation(pnode, part, solvation);
   return ES_OK;
 }
+
 #endif
 
 
@@ -808,7 +808,6 @@ int set_particle_type(int part, int type)
   if (pnode == -1)
     return ES_ERROR;
 
-#ifdef GRANDCANONICAL 
 // check if the particle exists already and the type is changed, then remove it from the list which contains it
   Particle *cur_par = (Particle *) malloc( sizeof(Particle) );
   if ( Type_array_init ) {
@@ -824,10 +823,9 @@ int set_particle_type(int part, int type)
 	  free(cur_par);
   }
 
-#endif
   mpi_send_type(pnode, part, type);
 
-#ifdef GRANDCANONICAL
+#ifdef ADDITIONAL_CHECKS
   if ( Type_array_init ) { 
 	  if ( add_particle_to_list(part, type) ==  ES_ERROR ){
 		  //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
@@ -1105,7 +1103,6 @@ int remove_particle(int part)
 {
   int pnode;
 
-#ifdef GRANDCANONICAL
   Particle *cur_par = (Particle *) malloc (sizeof(Particle));
   if (get_particle_data(part, cur_par) == ES_ERROR )
 	  return ES_ERROR;
@@ -1113,7 +1110,6 @@ int remove_particle(int part)
   free(cur_par);
   if (remove_id_type_array(part, type) == ES_ERROR )
 	  return ES_ERROR;
-#endif
 
   if (!particle_node)
     build_particle_node();
@@ -1225,7 +1221,7 @@ void local_remove_all_particles()
 {
   Cell *cell;
   int c;
-  n_total_particles = 0;
+  n_part = 0;
   max_seen_particle = -1;
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
@@ -1265,7 +1261,7 @@ void added_particle(int part)
 {
   int i;
 
-  n_total_particles++;
+  n_part++;
 
   if (part > max_seen_particle) {
     realloc_local_particles(part);
@@ -1594,7 +1590,7 @@ void auto_exclusion(int distance)
     init_intlist(&partners[p]);
 
   /* determine initial connectivity */
-  for (p = 0; p < n_total_particles; p++) {
+  for (p = 0; p < n_part; p++) {
     part1 = &partCfg[p];
     p1    = part1->p.identity;
     for (i = 0; i < part1->bl.n;) {
@@ -1649,8 +1645,6 @@ void auto_exclusion(int distance)
 
 #endif
 
-
-#ifdef GRANDCANONICAL 
 
 int init_gc(void){
 	if ( type_array == (TypeList *) NULL) {
@@ -1710,12 +1704,12 @@ int init_type_array(int type){
 	}
 
 	int t_c = 0; //index
-	type_array[Index.type[type]].id_list = (int *) malloc (sizeof (int) * n_total_particles);
-	for (int i=0; i<n_total_particles; i++) {
+	type_array[Index.type[type]].id_list = (int *) malloc (sizeof (int) * n_part);
+	for (int i=0; i<n_part; i++) {
 		if ( partCfg[i].p.type==type ) 
 			type_array[Index.type[type]].id_list[t_c++]=partCfg[i].p.identity;
 	}
-	int max_size=n_total_particles;
+	int max_size=n_part;
 	if ( t_c != 0 ) { 
 		while ( t_c < (double) max_size/4.0) { 
 			max_size= floor( (double ) max_size/2.0);
@@ -1773,9 +1767,6 @@ int remove_id_type_array(int part_id, int type){
 		//particle is not in the list
 		return ES_OK;
 	}
-	//for ( int i =0; i < type_array[in_type].cur_size; i++) {
-	//	printf("%d\n", type_array[in_type].id_list[i]);
-	//}
 	if ( temp_id == max - 1 ) { 
 		type_array[in_type].id_list[temp_id] = -1;
 	} else {
@@ -1783,10 +1774,6 @@ int remove_id_type_array(int part_id, int type){
 		type_array[in_type].id_list[max-1] = -1;
 		type_array[in_type].id_list[temp_id]=temp;
 	}
-//	for ( int i =0; i < type_array[in_type].cur_size; i++) {
-//		printf("%d\n", type_array[in_type].id_list[i]);
-//	}
-//	printf("removed id: %d temp_id %d max %d type %d\n", part_id, temp_id, max, type);
 	type_array[in_type].max_entry--;
 	return ES_OK;
 }
@@ -1797,7 +1784,7 @@ int update_particle_array(int type) {
 		return ES_ERROR;
 
 	int t_c = 0;
-	for (int i=0; i<n_total_particles; i++) {
+	for (int i=0; i<n_part; i++) {
 		if (partCfg[i].p.type == type ) {
 			type_array[Index.type[type]].id_list[t_c++] = partCfg[i].p.identity;
 		}	
@@ -1870,15 +1857,6 @@ int find_particle_type_id(int type, int *id, int *in_id ){
 	}
 }
 
-//static int *find_particle_type(int type){
-//	int *temp=(int *) malloc( sizeof(int)*2);
-//	if (temp == (int *) 0)
-//		return ES_ERROR;
-//	int temp[1] = i_random ( type_array[type_index_of_type[type]].max_entry );
-//	int temp[0] = type_array[type_index_of_type[type]]->id_list[temp[1]];
-//	return temp;
-//}
-
 int delete_particle_of_type(int type) { 
 	int *p_id, *index_id;
 	p_id=(int *) malloc (sizeof(int));
@@ -1896,31 +1874,10 @@ int delete_particle_of_type(int type) {
 		// takes also care of removing the index from the array
 		return ES_ERROR;
 	}
-//	//update array:
-//	printf ("delete part update array\n");
-//
-//	if ( *index_id == max ) { 
-//		type_array[in_type].id_list[*index_id] = -1;
-//	} else {
-//		int temp=type_array[in_type].id_list[max]; 
-//		type_array[in_type].id_list[max] = -1;
-//		type_array[in_type].id_list[*index_id]=temp;
-//	}
-//	type_array[in_type].max_entry--;
-//	free(p_id);
-//	free(index_id);
-//	printf ("returned ok\n");
 	return ES_OK;
 }
 
 int add_particle_to_list(int part_id, int type){
-//	Particle *cur_par = (Particle *) malloc(sizeof(Particle));
-//	if (cur_par == (Particle *) 0 )
-//		return ES_ERROR;
-//	if (get_particle_data(part_id, cur_par) == ES_ERROR ) 
-//		return ES_ERROR; 
-//
-//	int type = cur_par->p.type;
 	int l_err=1;
 	int already_in = 0;
 //	int already_in_other_list = 0;
@@ -1946,22 +1903,6 @@ int add_particle_to_list(int part_id, int type){
 	if ( already_in ) { 
 		return ES_OK;
 	}
-//	int other_type_in = -1;
-//	int other_list_id = -1;
-//	for (int j=0; j<Type.max_entry; j++)
-//		for (int i=0; i<type_array[j].max_entry; i++ ) {
-//			if ( part_id == type_array[j].id_list[i] ) {
-//				already_in_other_list = 1;
-//				other_type_in = j;
-//				other_list_id= i;
-//				break;
-//			}
-//		}
-
-// if particle is already in an other list remove it
-//	if ( already_in_other_list ) {
-//		remove_id_type_array(type_array[other_type_in].id_list[other_list_id], Type.index[other_type_in]) ;
-//	}
 
 	if ( max >= (double ) type_array[in_type].cur_size/2.0 )
 		if (reallocate_type_array(type)== ES_ERROR)
@@ -1970,8 +1911,6 @@ int add_particle_to_list(int part_id, int type){
 	//add particle id to list:
 	type_array[in_type].id_list[max]=part_id;
 	type_array[in_type].max_entry++;
-//	free(cur_par);
-//	printf("added part %d to type list of type %d\n", part_id, type);
 	return ES_OK;
 }
 
@@ -1988,7 +1927,6 @@ int gc_status(int type){
 		return ES_ERROR;
 	}
 	int in_type = Index.type[type];
-	//printf("ids of particles with type %d\n", type);
 	for (int i = 0; i<type_array[in_type].max_entry; i++) {
 		printf("%d\n", type_array[in_type].id_list[i]);
 	}
@@ -2026,25 +1964,3 @@ int number_of_particles_with_type(int type, int *number){
 	}
 	return NOT_INDEXED;
 }
-//int init_particle_list(int type, ParticleList* plist, type_list* list){
-//	struct type_list *root;
-//	root=malloc (sizeof( struct type_list ));
-//	// save root pointer of the list
-//	root=list;
-//	list->max=0;
-//	for (int i=0; i<plist->n; i++){
-//		if (plist->part[i]->type == type){
-//			list->list->identifier=plist->part[i]->identity;
-//			list->type=type;
-//			list->list->next=malloc( sizeof (struct type_list) );
-//			list->max++;
-//		}
-//	}
-//	list->next= (type_list_item *)0;
-//	// restore list to root pointer
-//	list=root;
-//	return ES_OK
-//}
-
-
-#endif

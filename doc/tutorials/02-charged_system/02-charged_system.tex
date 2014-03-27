@@ -395,6 +395,50 @@ simulations without the need of modifications to the simulation core
 was one of the main reasons why we decided to use a script language
 for controlling the simulation core.
 
+\section{Using the MEMD algorithm}
+
+\es{} provides a variety of different electrostatics solvers. So far,
+we have been introduced to P$^3$M, but in this section we will try
+something new. A fairly recent addition to the family of electrostatics
+solvers is the "Maxwell Equations Molecular Dynamics" (MEMD) algorithm.
+To use it, two parameters have to be set: A mesh size, and a method
+parameter called \verb|f_mass|, which can be estimated following the
+formula in the \es{} user guide. In this example, a good estimate for
+the mesh size is 12, but this can be varied, affecting speed and
+accuracy of the algorithm.
+
+The MEMD algorithm relies on a very precise spatial distribution of
+the particles across processors, and will therefore currently not work
+with Verlet lists. Since those are switched on by default, they will
+have to be turned off manually.
+
+\begin{tclcode}
+  cellsystem domain_decomposition -no_verlet_list
+\end{tclcode}
+
+
+Other than that, you will have to replace the setup of the P$^3$M
+interaction with an according MEMD call.
+
+\begin{tclcode}
+  set memd_mesh 12
+  set f_mass [expr 100.0*pow( ([setmd time_step]*$memd_mesh/$box_l),2.0)]
+  inter coulomb 10.0 memd $f_mass $memd_mesh
+\end{tclcode}
+
+
+Be sure to comment out the P$^3$M part of your script, otherwise
+you will have both algorithms running at the same time, resulting
+in twice the electrostatic force. In the example script included
+within the \es{} code, there is already an \verb|if|-construct 
+provided and you can switch between the methods at the very top
+of the script.
+
+You can copy the results from your completed tasks so far to a different
+filename (e.g.~\verb|rdf_p3m.data|) for comparison. Then, just
+run the simulation and analysis again, and compare the speed and 
+resulting radial distribution function of the two methods.
+
 \section{Partially periodic boundary conditions}
 
 \begin{figure}[t]

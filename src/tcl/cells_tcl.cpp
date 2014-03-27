@@ -18,18 +18,17 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file cells.c
+/** \file cells.cpp
  *
  *  This file contains functions for the cell system.
  *
- *  For more information on cells, see cells.h
+ *  For more information on cells, see cells.hpp
  *   */
 #include "parser.hpp"
 #include "domain_decomposition.hpp"
 #include "layered.hpp"
 #include "ghosts.hpp"
 #include "verlet.hpp"
-
 
 /************************************************************
  *            Exported Functions                            *

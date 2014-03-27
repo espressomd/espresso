@@ -18,11 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file cells.c
+/** \file cells.cpp
  *
  *  This file contains functions for the cell system.
  *
- *  For more information on cells, see cells.h
+ *  For more information on cells, see cells.hpp
  *   */
 #include <cstdio>
 #include <cstdlib>
@@ -187,7 +187,7 @@ void cells_re_init(int new_cs)
   /* 
      CELL_TRACE({
      int p;
-     for (p = 0; p < n_total_particles; p++)
+     for (p = 0; p < n_part; p++)
      if (local_particles[p])
      fprintf(stderr, "%d: cells_re_init: got particle %d\n", this_node, p);
      }
@@ -220,7 +220,7 @@ void cells_re_init(int new_cs)
   /*
     CELL_TRACE({
     int p;
-    for (p = 0; p < n_total_particles; p++)
+    for (p = 0; p < n_part; p++)
     if (local_particles[p])
     fprintf(stderr, "%d: cells_re_init: now got particle %d\n", this_node, p);
     }

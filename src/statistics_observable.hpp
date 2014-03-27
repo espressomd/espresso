@@ -65,7 +65,7 @@ int observable_calc_particle_positions(observable* self);
 int observable_calc_particle_forces(observable* self);
 int observable_calc_com_force(observable* self);
 int observable_calc_blocked_com_force(observable* self);
-int observable_calc_stress_tensor(observable* self);
+int observable_stress_tensor(observable* self);
 int observable_calc_stress_tensor_acf_obs(observable* self);
 int observable_calc_com_position(observable* self);
 int observable_calc_blocked_com_position(observable* self);

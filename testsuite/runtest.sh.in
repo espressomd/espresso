@@ -44,9 +44,13 @@ ESMPIEXEC=@ESPRESSO_MPIEXEC@
 cd ${0%runtest.sh}
 
 # handle processors
-if test x@MPI_FAKE@ = "xyes" || test @CPU_COUNT@ = "1"; then 
+if test "x@MPI_FAKE@" = "xyes" || test x@CPU_COUNT@ = "x1"; then 
   processors=1
-elif test "$1" = "-p"; then
+  if test "x$1" = "x-p"; then
+      echo "ERROR: ESPResSo compiled without MPI, but -p $2 given!"
+      exit 2
+  fi
+elif test "x$1" = "x-p"; then
   processors="$2"
   shift 2
 elif test -n "$PROCESSORS"; then
@@ -99,6 +103,10 @@ done
 
 # execute the tests
 for np in $processors; do
+    #limit to 8 processors, causes trouble otherwise for mass-and-inertia.tcl on 12
+    if [ "$np" -gt "8" ]; then
+      np=8
+    fi
     echo "** RUNNING TESTSUITE FOR $np tasks"
     echo >> $TESTLOG
     echo "**************************************************" >> $TESTLOG

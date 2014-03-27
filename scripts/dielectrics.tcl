@@ -157,7 +157,7 @@ proc dielectric_sphere { args } {
   set res 0
   set sigma 0
   set type 0 
-  for { set argno 0 } { $argno < [ llength $args ] } {  } {
+  for { set argno 0 } { $argno < [ llength $args ] } { } {
     if { [ lindex $args $argno ] == "radius" } {
       incr argno
       set radius [ expr 1.* [ lindex $args $argno ] ]
@@ -216,7 +216,9 @@ proc dielectric_sphere { args } {
   for { set i 0 } { $i <= $n_half_equator } { incr i } {
     set phi 0.
     set n_circle [ expr 2*round($n_half_equator*sin($theta)) ]
-    set incr_phi [expr 2*$pi/$n_circle]
+    if {$n_circle > 0} {
+       set incr_phi [expr 2*$pi/$n_circle]                                      
+    }
     for { set j 0 } { $j < $n_circle } { incr j} {
        set x [ expr  $radius*cos($phi)*sin($theta) ]
        set y [ expr  $radius*sin($phi)*sin($theta) ]
@@ -264,7 +266,7 @@ proc dielectric_cylinder { args } {
   set direction 1
   set sigma 0
   set type 0
-  for { set argno 0 } { $argno < [ llength $args ] } {  } {
+  for { set argno 0 } { $argno < [ llength $args ] } { } {
     if { [ lindex $args $argno ] == "center" } {
       incr argno
       set center_x [ lindex $args $argno ] 
@@ -507,7 +509,7 @@ proc dielectric_pore { args } {
   set box_l_z [ lindex [ setmd box_l ] 2 ]
   set max_radius [ expr sqrt($box_l_x*$box_l_x+ $box_l_y*$box_l_y + $box_l_z*$box_l_z) ]
 
-  for { set argno 0 } { $argno < [ llength $args ] } {  } {
+  for { set argno 0 } { $argno < [ llength $args ] } { } {
     if { [ lindex $args $argno ] == "center" } {
       incr argno
       set center_x [ expr 1.0*[ lindex $args $argno ] ]

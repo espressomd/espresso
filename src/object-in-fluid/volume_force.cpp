@@ -18,10 +18,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file volume_force.h
+/** \file volume_force.hpp
  *  Routines to calculate the VOLUME_FORCE energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "volume_force.hpp"

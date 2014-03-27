@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_chain.c
-    Implementation of \ref statistics_chain.h "statistics_chain.h".
+/** \file statistics_chain.cpp
+    Implementation of \ref statistics_chain.hpp "statistics_chain.hpp".
 */
 #include "statistics.hpp"
 #include "utils.hpp"
@@ -416,9 +416,9 @@ void init_g123()
 
   /* Save particles' current positions 
      (which'll be used as initial position later on) */
-  partCoord_g = (float *) realloc(partCoord_g, 3*n_total_particles*sizeof(float));
+  partCoord_g = (float *) realloc(partCoord_g, 3*n_part*sizeof(float));
   partCM_g = (float *) realloc(partCM_g, 3*chain_n_chains*sizeof(float));
-  n_part_g = n_total_particles;
+  n_part_g = n_part;
   n_chains_g = chain_n_chains;
   for(j=0; j<chain_n_chains; j++) {
     cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
@@ -721,13 +721,13 @@ void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac) {
     *_evac = evac = (double*)realloc(evac,(maxtau+1)*sizeof(double));
     
     // set up velarray
-    varr = (double*)realloc(varr,(3*(n_configs-1)*n_total_particles)*sizeof(double));
+    varr = (double*)realloc(varr,(3*(n_configs-1)*n_part)*sizeof(double));
     
     // fill varr
     for(k=0;k<n_configs-1;k++) {
-      for(i=0;i<n_total_particles;i++) {
+      for(i=0;i<n_part;i++) {
     	for(j=0;j<3;j++) {
-          varr[k*3*n_total_particles+i*3+j]=configs[k+1][3*i+j]-configs[k][3*i+j];	
+          varr[k*3*n_part+i*3+j]=configs[k+1][3*i+j]-configs[k][3*i+j];	
     	}
       }
     } 
@@ -744,7 +744,7 @@ void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac) {
     	for(k=0;k<chain_length;k++) {
     	  mon = chain_start+n*chain_length+k;
     	  for(j=0;j<3;j++) {
-    	    vcm[j] +=  varr[ic*3*n_total_particles+mon*3+j];
+    	    vcm[j] +=  varr[ic*3*n_part+mon*3+j];
     	  }
     	}
     	for(j=0;j<3;j++) {
@@ -753,11 +753,11 @@ void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac) {
         // loop over tau (maxtau)
         for(tau=0;tau<=maxtau;tau++) {
           // loop over particles 
-          for(k=0;k<n_total_particles;k++) {
+          for(k=0;k<n_part;k++) {
             vac[tau] += partCfg[k].p.q*(
-                            varr[(ic-tau)*3*n_total_particles+k*3  ]*vcm[0]
-                         +  varr[(ic-tau)*3*n_total_particles+k*3+1]*vcm[1]
-                         +  varr[(ic-tau)*3*n_total_particles+k*3+2]*vcm[2]);
+                            varr[(ic-tau)*3*n_part+k*3  ]*vcm[0]
+                         +  varr[(ic-tau)*3*n_part+k*3+1]*vcm[1]
+                         +  varr[(ic-tau)*3*n_part+k*3+2]*vcm[2]);
             }
         }
       }

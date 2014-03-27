@@ -21,7 +21,7 @@
 #ifndef HAT_TCL_H
 #define HAT_TCL_H
 /** \file hat_tcl.hpp
- * Tcl interface for \ref hat.h
+ * Tcl interface for \ref hat.hpp
  */
 
 #include "parser.hpp"

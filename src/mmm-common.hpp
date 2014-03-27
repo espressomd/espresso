@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file mmm-common.h
+/** \file mmm-common.hpp
     modified polygamma functions. See Arnold,Holm 2002
 */
 #ifndef MMM_COMMON_H

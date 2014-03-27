@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_chain.c
-    Implementation of \ref statistics_chain.h "statistics_chain.h".
+/** \file statistics_chain.cpp
+    Implementation of \ref statistics_chain.hpp "statistics_chain.h".
 */
 #include "statistics.hpp"
 #include "parser.hpp"
@@ -275,8 +275,8 @@ int tclcommand_analyze_parse_g123(Tcl_Interp *interp, int average, int argc, cha
   if (init) { init_g123(); return TCL_OK; }
   if (partCoord_g == NULL || partCM_g == NULL) {
     Tcl_AppendResult(interp, "please call with -init first", (char *)NULL); return TCL_ERROR; }
-  if (chain_n_chains != n_chains_g || n_total_particles != n_part_g) {
-    fprintf(stderr, "%d %d %d %d\n", chain_n_chains, n_chains_g, n_total_particles, n_part_g);
+  if (chain_n_chains != n_chains_g || n_part != n_part_g) {
+    fprintf(stderr, "%d %d %d %d\n", chain_n_chains, n_chains_g, n_part, n_part_g);
     Tcl_AppendResult(interp, "initial config has different topology", (char *)NULL);
     return TCL_ERROR;      
   }

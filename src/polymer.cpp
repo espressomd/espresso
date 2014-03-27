@@ -18,12 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file polymer.c
+/** \file polymer.cpp
     This file contains everything needed to create a start-up configuration
     of (partially charged) polymer chains with counterions and salt molecules,
     assigning velocities to the particles and crosslinking the polymers if necessary.
  
-    The corresponding header file is polymer.h.
+    The corresponding header file is polymer.hpp.
  
     Created:       27.02.2003 by BAM
        Based upon 'polymer.tcl' by BAM (20.02.2003).
@@ -58,17 +58,17 @@ int mindist3(int part_id, double r_catch, int *ids) {
   double dx,dy,dz;
   int i, me, caught=0;
 
-  partCfgMD = (Particle*)malloc(n_total_particles*sizeof(Particle));
+  partCfgMD = (Particle*)malloc(n_part*sizeof(Particle));
   mpi_get_particles(partCfgMD, NULL);
   me = -1; /* Since 'mpi_get_particles' returns the particles unsorted, it's most likely that 'partCfgMD[i].p.identity != i'
 	      --> prevent that! */
-  for(i=0; i<n_total_particles; i++) if (partCfgMD[i].p.identity == part_id) me = i; 
+  for(i=0; i<n_part; i++) if (partCfgMD[i].p.identity == part_id) me = i; 
   if (me == -1) {
     char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtxt, "{049 failed to find desired particle %d} ",part_id);
     return 0;
   }
-  for (i=0; i<n_total_particles; i++) {
+  for (i=0; i<n_part; i++) {
     if (i != me) {
       dx = partCfgMD[me].r.p[0] - partCfgMD[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
       dy = partCfgMD[me].r.p[1] - partCfgMD[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
@@ -87,10 +87,10 @@ double mindist4(double pos[3]) {
   double mindist=30000.0, dx,dy,dz;
   int i;
 
-  if (n_total_particles ==0) return (dmin(dmin(box_l[0],box_l[1]),box_l[2]));
-  partCfgMD = (Particle*)malloc(n_total_particles*sizeof(Particle));
+  if (n_part ==0) return (dmin(dmin(box_l[0],box_l[1]),box_l[2]));
+  partCfgMD = (Particle*)malloc(n_part*sizeof(Particle));
   mpi_get_particles(partCfgMD, NULL); 
-  for (i=0; i<n_total_particles; i++) {
+  for (i=0; i<n_part; i++) {
     dx = pos[0] - partCfgMD[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
     dy = pos[1] - partCfgMD[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
     dz = pos[2] - partCfgMD[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
@@ -547,12 +547,12 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **b
   IntList *bl;
   Particle *prt, *sorted;
   bl  = (IntList*)malloc(1*sizeof(IntList));
-  prt = (Particle*)malloc(n_total_particles*sizeof(Particle));
+  prt = (Particle*)malloc(n_part*sizeof(Particle));
   mpi_get_particles(prt, bl); 
 
   /* Sort the received informations. */
-  sorted = (Particle*)malloc(n_total_particles*sizeof(Particle));
-  for(i = 0; i < n_total_particles; i++)
+  sorted = (Particle*)malloc(n_part*sizeof(Particle));
+  for(i = 0; i < n_part; i++)
     memcpy(&sorted[prt[i].p.identity], &prt[i], sizeof(Particle));
   free(prt);
   prt = sorted;
@@ -648,7 +648,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
   for (i=0; i < N_P; i++) {
     for (k=0; k<2; k++) {
       if (bond[i*MPC+k*(MPC-1)] == 1) {
-	links[2*i+k] = (int*)malloc(n_total_particles*sizeof(int));
+	links[2*i+k] = (int*)malloc(n_part*sizeof(int));
 	link[2*i+k] = mindist3(i*MPC+k*(MPC-1)+part_id, r_catch, links[2*i+k]);
 	links[2*i+k] = (int*)realloc(links[2*i+k],link[2*i+k]*sizeof(int));
       }

@@ -386,7 +386,7 @@ int double_correlation_get_data( double_correlation* self ) {
   // Lets find out how far we have to go back in the hierarchy to make space for the new value
   while (1) {
     if ( ( (self->t - ((self->tau_lin + 1)*((1<<(i+1))-1) + 1) )% (1<<(i+1)) == 0) ) {
-      if ( i < (self->hierarchy_depth - 1) && self->n_vals[i]> self->tau_lin) {
+      if ( i < (int(self->hierarchy_depth) - 1) && self->n_vals[i]> self->tau_lin) {
 
         highest_level_to_compress+=1;
         i++;
@@ -439,7 +439,7 @@ int double_correlation_get_data( double_correlation* self ) {
   if (!temp)
     return 4;
 // Now update the lowest level correlation estimates
-  for ( j = 0; j < MIN(self->tau_lin+1, self->n_vals[0]); j++) {
+  for ( j = 0; j < int(MIN(self->tau_lin+1, self->n_vals[0]) ); j++) {
     index_new = self->newest[0];
     index_old =  (self->newest[0] - j + self->tau_lin + 1) % (self->tau_lin + 1);
 //    printf("old %d new %d\n", index_old, index_new);
@@ -550,7 +550,7 @@ int double_correlation_finalize( double_correlation* self ) {
 
       // We only need to update correlation estimates for the higher levels
       for ( i = ll+1; i < highest_level_to_compress+2; i++) {
-        for ( j = (tau_lin+1)/2+1; j < MIN(tau_lin+1, self->n_vals[i]); j++) {
+        for ( j = (tau_lin+1)/2+1; j < int(MIN(tau_lin+1, self->n_vals[i])); j++) {
           index_new = self->newest[i];
           index_old = (self->newest[i] - j + tau_lin + 1) % (tau_lin + 1);
           index_res = tau_lin + (i-1)*tau_lin/2 + (j - tau_lin/2+1) -1;

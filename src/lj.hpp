@@ -21,10 +21,10 @@
 #ifndef _LJ_H
 #define _LJ_H
 
-/** \file lj.h
+/** \file lj.hpp
  *  Routines to calculate the lennard jones energy and/or  force 
  *  for a particle pair.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"
@@ -46,7 +46,11 @@ inline void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
 				double d[3], double dist, double force[3])
 {
   int j;
-  double r_off, frac2, frac6, fac=0.0;
+  double r_off, frac2, frac6, fac=0.0 ;
+#ifdef SHANCHEN
+  double order;
+  double SixtRootOfTwo=1.12246204830937;
+#endif 
   if (CUTOFF_CHECK(dist < ia_params->LJ_cut+ia_params->LJ_offset) &&
 	  CUTOFF_CHECK(dist > ia_params->LJ_min+ia_params->LJ_offset))
   {
@@ -56,7 +60,19 @@ inline void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
       frac2 = SQR(ia_params->LJ_sig/r_off);
       frac6 = frac2*frac2*frac2;
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / (r_off * dist);
-
+#ifdef SHANCHEN
+      if(ia_params->affinity_on==1){
+         if(LB_COMPONENTS==2){
+            if (dist > SixtRootOfTwo * ia_params->LJ_sig && 
+                p1->r.composition[0] * p1->r.composition[1] * p2->r.composition[0] * p2->r.composition[1] > 0 ) {
+               order = 2 * ( (p1->r.composition[0] - p1->r.composition[1])/(p1->r.composition[0] +  p1->r.composition[1])  + 
+                       (p2->r.composition[0] - p2->r.composition[1])/(p2->r.composition[0] +  p2->r.composition[1]));
+/* TODO: order should be rescaled properly by the lattice spacing */
+               fac *= ( (1-ia_params->affinity[1]) * 0.5 * (1+tanh(-order)) + (1-ia_params->affinity[0]) *  0.5 * (1+tanh(order)) )  ;
+            }
+         }
+      }
+#endif
       for(j=0;j<3;j++)
 	force[j] += fac * d[j];
 

@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics.c
+/** \file statistics.cpp
     This is the place for analysis (so far...).
-    Implementation of statistics.h
+    Implementation of statistics.hpp
 */
 #include <cstdlib>
 #include <cstring>
@@ -72,7 +72,7 @@ double mindist(IntList *set1, IntList *set2)
   mindist = SQR(box_l[0] + box_l[1] + box_l[2]);
 
   updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_total_particles-1; j++) {
+  for (j=0; j<n_part-1; j++) {
     pt[0] = partCfg[j].r.p[0];
     pt[1] = partCfg[j].r.p[1];
     pt[2] = partCfg[j].r.p[2];
@@ -87,13 +87,14 @@ double mindist(IntList *set1, IntList *set2)
     if (in_set == 0)
       continue;
 
-    for (i=j+1; i<n_total_particles; i++)
+    for (i=j+1; i<n_part; i++)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice versa. */
       if (((in_set & 1) && (!set2 || intlist_contains(set2, partCfg[i].p.type))) ||
-	  ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
-	mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
+          ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
+        mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
   }
   mindist = sqrt(mindist);
+
   return mindist;
 }
 
@@ -260,7 +261,7 @@ void centermass(int type, double *com)
   com[0]=com[1]=com[2]=0.;
    	
   updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_total_particles; j++) {
+  for (j=0; j<n_part; j++) {
     if ((partCfg[j].p.type == type) || (type == -1)) {
       for (i=0; i<3; i++) {
       	com[i] += partCfg[j].r.p[i]*PMASS(partCfg[j]);
@@ -283,7 +284,7 @@ void centermass_vel(int type, double *com)
   com[0]=com[1]=com[2]=0.;
 
   updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_total_particles; j++) {
+  for (j=0; j<n_part; j++) {
     if (type == partCfg[j].p.type) {
       for (i=0; i<3; i++) {
       	com[i] += partCfg[j].m.v[i];
@@ -306,7 +307,7 @@ void angularmomentum(int type, double *com)
   com[0]=com[1]=com[2]=0.;
 
   updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_total_particles; j++) 
+  for (j=0; j<n_part; j++) 
   {
     if (type == partCfg[j].p.type) 
     {
@@ -329,7 +330,7 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
   updatePartCfg(WITHOUT_BONDS);
   for(i=0;i<9;i++) MofImatrix[i]=0.;
   centermass(type, com);
-  for (j=0; j<n_total_particles; j++) {
+  for (j=0; j<n_part; j++) {
     if (type == partCfg[j].p.type) {
       count ++;
       for (i=0; i<3; i++) {
@@ -370,7 +371,7 @@ void calc_gyration_tensor(int type, double **_gt)
 
   /* Calculate the gyration tensor Smatrix */
   count=0;
-  for (i=0;i<n_total_particles;i++) {
+  for (i=0;i<n_part;i++) {
     if ((partCfg[i].p.type == type) || (type == -1)) {
       for ( j=0; j<3 ; j++ ) { 
         p1[j] = partCfg[i].r.p[j] - com[j];
@@ -429,7 +430,7 @@ void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
  
   updatePartCfg(WITHOUT_BONDS);
 
-  for (i = 0; i<n_total_particles; i++) {
+  for (i = 0; i<n_part; i++) {
     if ( (planedims[0] + planedims[1] + planedims[2]) == 3 ) {
       get_mi_vector(d, pt, partCfg[i].r.p);
     } else {
@@ -457,7 +458,7 @@ double distto(double p[3], int pid)
 
   /* larger than possible */
   mindist=SQR(box_l[0] + box_l[1] + box_l[2]);
-  for (i=0; i<n_total_particles; i++) {
+  for (i=0; i<n_part; i++) {
     if (pid != partCfg[i].p.identity) {
       get_mi_vector(d, p, partCfg[i].r.p);
       mindist = dmin(mindist, sqrlen(d));
@@ -539,7 +540,7 @@ void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry, d
     if (f < 0.0) {
       rtb = g1;  dg = g1-g2; }
     else {
-      fprintf(stderr,"WARNING: Lower boundary is actually larger than l.h.s, flipping!\n");
+      fprintf(stderr,"WARNING: Lower boundary is actually larger than l.hpp.s, flipping!\n");
       rtb = g1;  dg = g1;    }
     for (i = 1; i <= maxtry; i++) {
       gmid = rtb - (dg *= 0.5);
@@ -581,12 +582,12 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   else              inv_bin_width = (double)r_bins / (r_max-r_min);
 
   /* particle loop: p1_types*/
-  for(i=0; i<n_total_particles; i++) {
+  for(i=0; i<n_part; i++) {
     for(t1=0; t1<n_p1; t1++) {
       if(partCfg[i].p.type == p1_types[t1]) {
 	min_dist2 = start_dist2;
 	/* particle loop: p2_types*/
-	for(j=0; j<n_total_particles; j++) {
+	for(j=0; j<n_part; j++) {
 	  if(j != i) {
 	    for(t2=0; t2<n_p2; t2++) {
 	      if(partCfg[j].p.type == p2_types[t2]) {
@@ -640,14 +641,14 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
   inv_bin_width = 1.0 / bin_width;
   for(i=0;i<r_bins;i++) rdf[i] = 0.0;
   /* particle loop: p1_types*/
-  for(i=0; i<n_total_particles; i++) {
+  for(i=0; i<n_part; i++) {
     for(t1=0; t1<n_p1; t1++) {
       if(partCfg[i].p.type == p1_types[t1]) {
 	/* distinguish mixed and identical rdf's */
 	if(mixed_flag == 1) start = 0;
 	else                start = (i+1);
 	/* particle loop: p2_types*/
-	for(j=start; j<n_total_particles; j++) {
+	for(j=start; j<n_part; j++) {
 	  for(t2=0; t2<n_p2; t2++) {
 	    if(partCfg[j].p.type == p2_types[t2]) {
 	      dist = min_distance(partCfg[i].r.p, partCfg[j].r.p);
@@ -699,14 +700,14 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
     for(l=0;l<r_bins;l++) rdf_tmp[l]=0.0;
     cnt=0;
     k=n_configs-cnt_conf;
-    for(i=0; i<n_total_particles; i++) {
+    for(i=0; i<n_part; i++) {
       for(t1=0; t1<n_p1; t1++) {
 	if(partCfg[i].p.type == p1_types[t1]) {
 	  // distinguish mixed and identical rdf's
 	  if(mixed_flag == 1) start = 0;
 	  else                start = (i+1);
 	  //particle loop: p2_types
-	  for(j=start; j<n_total_particles; j++) {
+	  for(j=start; j<n_part; j++) {
 	    for(t2=0; t2<n_p2; t2++) {
 	      if(partCfg[j].p.type == p2_types[t2]) {
 		p1[0]=configs[k][3*i  ];p1[1]=configs[k][3*i+1];p1[2]=configs[k][3*i+2];
@@ -766,14 +767,14 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
     for(l=0;l<r_bins;l++) rdf_tmp[l]=0.0;
     cnt=0;
     k=n_configs-cnt_conf;
-    for(i=0; i<n_total_particles; i++) {
+    for(i=0; i<n_part; i++) {
       for(t1=0; t1<n_p1; t1++) {
 	if(partCfg[i].p.type == p1_types[t1]) {
 	  // distinguish mixed and identical rdf's
 	  if(mixed_flag == 1) start = 0;
 	  else                start = (i+1);
 	  //particle loop: p2_types
-	  for(j=start; j<n_total_particles; j++) {
+	  for(j=start; j<n_part; j++) {
 	    for(t2=0; t2<n_p2; t2++) {
 	      if(partCfg[j].p.type == p2_types[t2]) {
 		/*see if particles i and j belong to different molecules*/
@@ -810,85 +811,6 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   free(rdf_tmp);
 
 }
-
-/*addes this line*/
-void calc_rdf_adress(int *p1_types, int n_p1, int *p2_types, int n_p2,
-			   double x_min, double x_max, double r_min, double r_max, int r_bins, double *rdf, int n_conf)
-{
-  int i,j,k,l,t1,t2,ind,cnt=0,cnt_conf=1;
-  int mixed_flag=0,start;
-  double inv_bin_width=0.0,bin_width=0.0, dist;
-  double volume, bin_volume, r_in, r_out;
-  double *rdf_tmp, p1[3],p2[3];
-
-  rdf_tmp = (double*)malloc(r_bins*sizeof(double));
-
-  if(n_p1 == n_p2) {
-    for(i=0;i<n_p1;i++)
-      if( p1_types[i] != p2_types[i] ) mixed_flag=1;
-  }
-  else mixed_flag=1;
-  bin_width     = (r_max-r_min) / (double)r_bins;
-  inv_bin_width = 1.0 / bin_width;
-  volume = (x_max-x_min)*box_l[1]*box_l[2];
-  //volume = box_l[0]*box_l[1]*box_l[2];
-  for(l=0;l<r_bins;l++) rdf_tmp[l]=rdf[l] = 0.0;
-
-  while(cnt_conf<=n_conf) {
-    for(l=0;l<r_bins;l++) rdf_tmp[l]=0.0;
-    cnt=0;
-    k=n_configs-cnt_conf;
-    for(i=0; i<n_total_particles; i++) {
-      for(t1=0; t1<n_p1; t1++) {
-	if(partCfg[i].p.type == p1_types[t1]) {
-          //accepts particles i's contained in explicit region 
-          if(configs[k][3*i]<x_max && configs[k][3*i]>=x_min) {
-	  // distinguish mixed and identical rdf's
-	  if(mixed_flag == 1) start = 0;
-	  else                start = (i+1);
-	  //particle loop: p2_types
-	  for(j=start; j<n_total_particles; j++) {
-	    for(t2=0; t2<n_p2; t2++) {
-	      if(partCfg[j].p.type == p2_types[t2]) {
-                //accepts particles j's contained in explicit region 
-                if(configs[k][3*j]<x_max && configs[k][3*j]>=x_min) {
-		/*see if particles i and j belong to different molecules*/
-		if(partCfg[i].p.mol_id!=partCfg[j].p.mol_id) {
-		  p1[0]=configs[k][3*i  ];p1[1]=configs[k][3*i+1];p1[2]=configs[k][3*i+2];
-		  p2[0]=configs[k][3*j  ];p2[1]=configs[k][3*j+1];p2[2]=configs[k][3*j+2];
-		  dist =min_distance(p1, p2);
-		  if(dist > r_min && dist < r_max) {
-		    ind = (int) ( (dist - r_min)*inv_bin_width );
-		    rdf_tmp[ind]++;
-		  }
-		  cnt++;
-		}
-	      }
-             }
-	    }
-	  }
-	}
-        }
-      }
-    }
-    // normalization
-
-    for(i=0; i<r_bins; i++) {
-      r_in       = i*bin_width + r_min;
-      r_out      = r_in + bin_width;
-      bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
-      rdf[i] += rdf_tmp[i]*volume / (bin_volume * cnt);
-    }
-
-    cnt_conf++;
-  } //cnt_conf loop
-  for(i=0; i<r_bins; i++) {
-    rdf[i] /= (cnt_conf-1);
-  }
-  free(rdf_tmp);
-
-}
-/*Up to here*/
 
 void calc_structurefactor(int type, int order, double **_ff) {
   int i, j, k, n, qi, p, order2;
@@ -910,7 +832,7 @@ void calc_structurefactor(int type, int order, double **_ff) {
 	  n = i*i + j*j + k*k;
 	  if ((n<=order2) && (n>=1)) {
 	    C_sum = S_sum = 0.0;
-	    for(p=0; p<n_total_particles; p++) {
+	    for(p=0; p<n_part; p++) {
 	      if (partCfg[p].p.type == type) {
 		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
 		C_sum+= cos(qr);
@@ -924,7 +846,7 @@ void calc_structurefactor(int type, int order, double **_ff) {
       }
     }
     n = 0;
-    for(p=0; p<n_total_particles; p++) {
+    for(p=0; p<n_part; p++) {
       if (partCfg[p].p.type == type) n++;
     }
     for(qi=0; qi<order2; qi++) 
@@ -956,7 +878,7 @@ void density_profile_av(int n_conf, int n_bin, double density, int dir, double *
     j = 0;
     while (r < box_l[dir]) { 
       n = 0;
-      for(i=0; i<n_total_particles; i++) {
+      for(i=0; i<n_part; i++) {
 	//com particles
 	if(partCfg[i].p.type == type) {
 	  for(m=0; m<3; m++) {
@@ -1004,7 +926,7 @@ void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_
     /* check initial condition */
     count = 0;
     
-    for (i=0;i<n_total_particles;i++) {
+    for (i=0;i<n_part;i++) {
       if(partCfg[i].p.type == type) {
 	tpos[0] = configs[t][3*i];
 	tpos[1] = configs[t][3*i+1];
@@ -1065,7 +987,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
   updatePartCfg(WITHOUT_BONDS);
 
   /*Make sure particles are folded  */
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,0);
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,1);
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,2);
@@ -1074,7 +996,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
   beadcount = 0;
   xav = 0.0;
   yav = 0.0;
-  for ( pi = 0 ; pi < n_total_particles ; pi++ ) {
+  for ( pi = 0 ; pi < n_part ; pi++ ) {
     for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
       if ( beadids->e[bi] == partCfg[pi].p.type ) {
 
@@ -1146,7 +1068,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
       }
     }
     /* Maybe there is a nicer way to do this but now I will just repeat the loop over all particles */
-      for ( pi = 0 ; pi < n_total_particles ; pi++ ) {
+      for ( pi = 0 ; pi < n_part ; pi++ ) {
 	for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
 	  if ( beadids->e[bi] == partCfg[pi].p.type ) {
 	    vecsub(center,partCfg[pi].r.p,pvector);
@@ -1211,10 +1133,10 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, do
 
   /* create particle list */
   init_intlist(&p);
-  for(i=0; i<n_total_particles; i++) { if( partCfg[i].p.type == ptype ) { np ++; } }
+  for(i=0; i<n_part; i++) { if( partCfg[i].p.type == ptype ) { np ++; } }
   if(np==0) { return 0; }
   alloc_intlist(&p,np);
-  for(i=0; i<n_total_particles; i++) { if( partCfg[i].p.type == ptype ) { p.e[p.n]=i; p.n++; } }
+  for(i=0; i<n_part; i++) { if( partCfg[i].p.type == ptype ) { p.e[p.n]=i; p.n++; } }
 
   /* preparation */
   bin_width     = (rmax-rmin) / (double)rbins;
@@ -1253,7 +1175,7 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, do
 
 void analyze_append() {
   int i;
-  n_part_conf = n_total_particles;
+  n_part_conf = n_part;
   configs = (double**)realloc(configs,(n_configs+1)*sizeof(double *));
   configs[n_configs] = (double *) malloc(3*n_part_conf*sizeof(double));
   for(i=0; i<n_part_conf; i++) {
@@ -1266,7 +1188,7 @@ void analyze_append() {
 
 void analyze_push() {
   int i;
-  n_part_conf = n_total_particles;
+  n_part_conf = n_part;
   free(configs[0]);
   for(i=0; i<n_configs-1; i++) {
     configs[i]=configs[i+1];
@@ -1281,7 +1203,7 @@ void analyze_push() {
 
 void analyze_replace(int ind) {
   int i;
-  n_part_conf = n_total_particles;
+  n_part_conf = n_part;
   for(i=0; i<n_part_conf; i++) {
     configs[ind][3*i]   = partCfg[i].r.p[0];
     configs[ind][3*i+1] = partCfg[i].r.p[1];
@@ -1316,7 +1238,7 @@ void analyze_configs(double *tmp_config, int count) {
 void analyze_activate(int ind) {
   int i;
   double pos[3];
-  n_part_conf = n_total_particles;
+  n_part_conf = n_part;
 
   for(i=0; i<n_part_conf; i++) {
     pos[0] = configs[ind][3*i];
@@ -1388,7 +1310,7 @@ void invalidate_obs()
   //subfunction: mark all neighbors of a particle and their neighbors (recursiv!)
 void mark_neighbours(int type,int pa_nr,double dist,int *list){
   int k;
-  for (k=0;k<n_total_particles;k++){
+  for (k=0;k<n_part;k++){
      //only unmarked and particles with right distance
      if ( (partCfg[k].p.type == type) && (list[k] == 0) && (min_distance(partCfg[pa_nr].r.p,partCfg[k].r.p) < dist) ){
         //mark particle with same number as calling particle
@@ -1405,7 +1327,7 @@ void centermass_conf(int k, int type_1, double *com)
   double M = 0.0;
   com[0]=com[1]=com[2]=0.;
 
-  for (j=0; j<n_total_particles; j++) {
+  for (j=0; j<n_part; j++) {
     if ((partCfg[j].p.type == type_1) || (type_1 == -1))
     {
       for (i=0; i<3; i++)
