@@ -43,7 +43,7 @@ cdef extern from "particle_data.hpp":
     IntList bl
 
 
-  # Setter functions + a few other oens
+  # Setter/getter/modifier functions functions 
 
   int get_particle_data(int part, Particle *data)
   
@@ -84,6 +84,16 @@ cdef extern from "particle_data.hpp":
     int set_particle_torque_lab(int part, double torque[3])
   
     int set_particle_torque_body(int part, double torque[3])
+
+    void pointer_to_omega_body(Particle* p, double*& res)
+
+    void pointer_to_torque_lab(Particle* p, double*& res)
+
+    void pointer_to_quat(Particle* p, double*& res)
+
+
+  IF MASS ==1: 
+    void pointer_to_mass(Particle* p, double*&  res)
   
   IF DIPOLES == 1:
     int set_particle_dip(int part, double dip[3])
@@ -118,6 +128,10 @@ cdef extern from "particle_data.hpp":
   
   void remove_all_bonds_to(int part)
   
+
+cdef extern from "rotation.hpp":
+  void convert_omega_body_to_space(Particle *p, double *omega)
+  void convert_torques_body_to_space(Particle *p, double *torque)
   
 cdef class ParticleHandle(object):
   cdef public int id

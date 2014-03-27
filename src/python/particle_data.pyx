@@ -29,11 +29,12 @@ cdef class ParticleHandle:
   property type:
     """Particle type"""
     def __set__(self, _type):
-      if isinstance(_type, int) and _type >= 0:  
+      if isinstance(_type, int) and _type >=0:
         if set_particle_type(self.id, _type) == 1:
           raise Exception("set particle position first")
       else:
         raise ValueError("type must be an integer >= 0")
+
     def __get__(self):
       self.update_particle_data()
       return self.particleData.p.type
@@ -47,7 +48,9 @@ cdef class ParticleHandle:
     
     def __get__(self):
       self.update_particle_data()
-      return self.particleData.p.mass
+      cdef double* x
+      pointer_to_mass(&(self.particleData),x)
+      return x[0]
 
 
 
@@ -116,7 +119,7 @@ cdef class ParticleHandle:
       def __get__(self):
         self.update_particle_data()
         cdef double o[3]
-        convert_omega_body_to_space(self.particleData, o);
+        convert_omega_body_to_space(&(self.particleData), o);
         return np.array([ o[0], o[1],o[2]])
 
 # Omega (angular velocity) body frame
@@ -131,11 +134,9 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.update_particle_data()
-        return np.array([ self.particleData.m.omega_body[0],\
-                          self.particleData.m.omega_body[1],\
-                          self.particleData.m.omega_body[2]])
-  
-  
+        cdef double* o
+        pointer_to_omega_body(&(self.particleData),o)
+        return np.array([o[0],o[1],o[2]])
   
   
 # Torque in lab frame
@@ -150,9 +151,9 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.update_particle_data()
-        return np.array([ self.particleData.f.torque[0],\
-                          self.particleData.f.torque[1],\
-                          self.particleData.f.torque[2]])
+        cdef double x[3]
+        convert_torques_body_to_space(&(self.particleData),x)
+        return np.array([x[0],x[1],x[2]])
   
 # Quaternion
     property quat:
@@ -166,10 +167,9 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.update_particle_data()
-        return np.array([ self.particleData.r.quat[0],\
-                          self.particleData.r.quat[1],\
-                          self.particleData.r.quat[2],\
-                          self.particleData.r.quat[3]])
+        cdef double* x
+        pointer_to_quat(&(self.particleData),x)
+        return np.array([x[0],x[1],x[2],x[3]])
   
   
 # Force
