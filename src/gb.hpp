@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef GB_H
-#define GB_H
+#ifndef _GB_HPP
+#define _GB_HPP
 
 /** \file gb.hpp
  *  Routines to calculate the Gay-Berne energy and force 
@@ -41,7 +41,8 @@ int gay_berne_set_params(int part_type_a, int part_type_b,
 			 double mu, double nu);
 
 inline void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-				double d[3], double dist, double force[3], double torque1[3], double torque2[3])
+				double d[3], double dist, double force[3], 
+                              double torque1[3], double torque2[3])
 
 {
   if (!CUTOFF_CHECK(dist < ia_params->GB_cut))   
@@ -117,6 +118,7 @@ inline void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
       force[1] += FikY;
       force[2] += FikZ;
       
+      if (torque1 != NULL) {
       /* calculate torque:  torque = u_1 x G   */
 
       Gx = -dU_da*d[0] - dU_dc*u2x;
@@ -127,15 +129,18 @@ inline void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
       torque1[1]+= u1z*Gx - u1x*Gz;
       torque1[2]+= u1x*Gy - u1y*Gx;
 
-      /* calculate torque:  torque = u_2 x G     */
-
-      Gx = -dU_db*d[0] - dU_dc*u1x;
-      Gy = -dU_db*d[1] - dU_dc*u1y;
-      Gz = -dU_db*d[2] - dU_dc*u1z;
-
-      torque2[0]+= u2y*Gz - u2z*Gy;
-      torque2[1]+= u2z*Gx - u2x*Gz;
-      torque2[2]+= u2x*Gy - u2y*Gx;
+      if (torque2 != NULL) {
+        /* calculate torque:  torque = u_2 x G     */
+        
+        Gx = -dU_db*d[0] - dU_dc*u1x;
+        Gy = -dU_db*d[1] - dU_dc*u1y;
+        Gz = -dU_db*d[2] - dU_dc*u1z;
+        
+        torque2[0]+= u2y*Gz - u2z*Gy;
+        torque2[1]+= u2z*Gx - u2x*Gz;
+        torque2[2]+= u2x*Gy - u2y*Gx;
+      }
+      }
     }
     else { /* the particles are too close to each other */
       Koef1  = 100;

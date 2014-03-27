@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _FORCES_H
-#define _FORCES_H
+#ifndef _FORCES_HPP
+#define _FORCES_HPP
 /** \file forces.hpp Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
@@ -122,9 +122,11 @@ void init_forces_ghosts();
 void check_forces();
 
 
-inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
-					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
-{
+inline void 
+calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,
+                                 double d[3], double dist, double dist2, 
+                                 double force[3], 
+                                 double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
@@ -139,19 +141,19 @@ inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_para
   /* Directional LJ */
 #ifdef LJ_ANGLE
   /* The forces are propagated within the function */
-  add_ljangle_pair_force(p1,p2,ia_params,d,dist);
+  add_ljangle_pair_force(p1, p2, ia_params, d, dist);
 #endif
   /* smooth step */
 #ifdef SMOOTH_STEP
-  add_SmSt_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+  add_SmSt_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 #endif
   /* Hertzian force */
 #ifdef HERTZIAN
-  add_hertzian_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+  add_hertzian_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 #endif
   /* Gaussian force */
 #ifdef GAUSSIAN
-  add_gaussian_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+  add_gaussian_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 #endif
   /* BMHTF NaCl */
 #ifdef BMHTF_NACL
@@ -187,43 +189,56 @@ inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_para
 #endif
   /* Gay-Berne */
 #ifdef GAY_BERNE
-  add_gb_pair_force(p1,p2,ia_params,d,dist,force,torgue1,torgue2);
+  add_gb_pair_force(p1,p2,ia_params,d,dist,force,torque1,torque2);
 #endif
 #ifdef INTER_RF
   add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
 #endif
 }
 
-inline void calc_non_bonded_pair_force(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
+inline void 
+calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, 
+                           double d[3], double dist, double dist2, 
+                           double force[3], 
+                           double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef MOL_CUT
-   //You may want to put a correction factor and correction term for smoothing function else then theta
+   // You may want to put a correction factor and correction term for smoothing function else then theta
    if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
 #endif
    {
-      calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+      calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, 
+                                       force, torque1, torque2);
    }
 }
 
-inline void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
-   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double t1[3],t2[3];
-  calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
+inline void 
+calc_non_bonded_pair_force(Particle *p1, Particle *p2, 
+                           double d[3], double dist, double dist2, 
+                           double force[3]){
+  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+  calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 }
 
-inline void calc_non_bonded_pair_force_from_partcfg(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
+inline void 
+calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameters *ia_params,
+                                        double d[3], double dist, double dist2,
+                                        double force[3],
+                                        double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef MOL_CUT
    //You may want to put a correction factor and correction term for smoothing function else then theta
    if (checkIfParticlesInteractViaMolCut_partcfg(p1,p2,ia_params)==1)
 #endif
    {
-     calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+     calc_non_bonded_pair_force_parts(p1, p2, ia_params, 
+                                      d, dist, dist2, force, torque1, torque2);
    }
 }
 
 inline void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
    IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double t1[3],t2[3];
-   calc_non_bonded_pair_force_from_partcfg(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
+   double torque1[3],torque2[3];
+   calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
+                                           force, torque1, torque2);
 }
 
 /** Calculate non bonded forces between a pair of particles.
