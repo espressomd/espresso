@@ -16,8 +16,8 @@ class ParticleProperties(ut.TestCase):
 #    self.pid=particleId
   pid=17
 
-#  def setUp(self):
-#    es.part[self.pid].pos =0,0,0
+  def setUp(self):
+    es.part[self.pid].pos =0,0,0
 
   def generateTestForVectorProperty(_propName,_value):
     """Generates test cases for vectorial particle properties such as
@@ -34,6 +34,7 @@ class ParticleProperties(ut.TestCase):
       # It will use the state of the variables in the outer function, 
       # which was there, when the outer function was called
       setattr(es.part[self.pid],propName,value)
+      print(propName,value,getattr(es.part[self.pid],propName))
       self.assertTrue(np.all(getattr(es.part[self.pid],propName)==value),propName+": value set and value gotten back differ.")
 
     return func
@@ -53,19 +54,26 @@ class ParticleProperties(ut.TestCase):
       # It will use the state of the variables in the outer function, 
       # which was there, when the outer function was called
       setattr(es.part[self.pid],propName,value)
+      print(propName,value,getattr(es.part[self.pid],propName))
       self.assertTrue(getattr(es.part[self.pid],propName)==value,propName+": value set and value gotten back differ.")
 
     return func
 
 
-     
-  
-  
-  
   test_pos=generateTestForVectorProperty("pos",np.array([0.1,0.2,0.3]))
-  test_v=generateTestForVectorProperty("v",np.array([0.1,0.2,0.3]))
-  test_type=generateTestForScalarProperty("type",1)
+  test_v=generateTestForVectorProperty("v",np.array([0.2,0.3,0.4]))
+  test_type=generateTestForScalarProperty("type",int(3))
+  if "MASS" in es.code_info.features(): 
+    test_mass=generateTestForScalarProperty("mass",1.3)
 
+  if "ROTATION" in es.code_info.features(): 
+    test_omega_lab=generateTestForVectorProperty("omega_lab",np.array([4.,2.,1.]))
+    test_omega_body=generateTestForVectorProperty("omega_body",np.array([4.,72.,1.]))
+    test_torque_lab=generateTestForVectorProperty("torque_lab",np.array([4.,72.,3.7]))
+    # The tested value has to be nromalized!
+    test_quat=generateTestForVectorProperty("quat",np.array([0.5,0.5,0.5,0.5]))
+
+    
 
 if __name__ == "__main__":
  ut.main()
