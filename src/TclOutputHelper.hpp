@@ -24,7 +24,9 @@
 
 #include "tcl.h"
 #include <iostream>
-#include "Eigen/Core"
+#include <sstream>
+#include <vector>
+//#include "Eigen/Core"
 
 /**
  * In this file we define a few generic functions to make returning 
@@ -95,19 +97,19 @@ void Tcl_Append(Tcl_Interp* interp, const char (&what)[N], bool is_in_list=0) {
  * Appends a result that can be interpreted as TCL list.
  * 
  */
-void Tcl_Append(Tcl_Interp* interp, const Eigen::Vector3d &what, bool is_in_list=0) {
-  if (is_in_list) 
-    Tcl_Append(interp, "{");
-  char buffer[TCL_DOUBLE_SPACE];
-  Tcl_PrintDouble(interp, what[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, what[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, what[2], buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  if (is_in_list) 
-    Tcl_Append(interp, "}");
-}
+//void Tcl_Append(Tcl_Interp* interp, const Eigen::Vector3d &what, bool is_in_list=0) {
+//  if (is_in_list) 
+//    Tcl_Append(interp, "{");
+//  char buffer[TCL_DOUBLE_SPACE];
+//  Tcl_PrintDouble(interp, what[0], buffer);
+//  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+//  Tcl_PrintDouble(interp, what[1], buffer);
+//  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+//  Tcl_PrintDouble(interp, what[2], buffer);
+//  Tcl_AppendResult(interp, buffer, (char *)NULL);
+//  if (is_in_list) 
+//    Tcl_Append(interp, "}");
+//}
 
 /**
  * Implementation for std::vector<T>

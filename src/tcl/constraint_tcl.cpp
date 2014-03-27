@@ -25,7 +25,7 @@
 #include "constraint.hpp"
 #include "communication.hpp"
 #include "parser.hpp"
-#include "CppConversions.hpp"
+#include "TclOutputHelper.hpp"
 
 #ifdef CONSTRAINTS
 static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
