@@ -146,6 +146,11 @@ inline void friction_thermo_langevin(Particle *p)
 #ifdef LANGEVIN_PER_PARTICLE
   double langevin_pref1_temp, langevin_pref2_temp;
 #endif
+#ifdef MULTI_TIMESTEP
+  extern double smaller_time_step;
+  extern int current_time_step_is_small;
+  extern double langevin_pref1_small, langevin_pref2_small;
+#endif
   
   int j;
 #ifdef MASS
@@ -245,6 +250,16 @@ inline void friction_thermo_langevin(Particle *p)
 
 #else
 
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0.) {
+    if (p->p.smaller_timestep==1 && current_time_step_is_small==1)
+      p->f.f[j] = langevin_pref1_small*p->m.v[j]*PMASS(*p) + langevin_pref2_small*(d_random()-0.5)*massf;
+    else if (p->p.smaller_timestep==0 && current_time_step_is_small==0)
+      p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
+    else 
+      p->f.f[j] = 0.;
+  } else
+#endif
 #if defined (FLATNOISE)
       p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
 #elif defined (GAUSSRANDOMCUT)

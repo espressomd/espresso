@@ -87,6 +87,11 @@ int    recalc_forces    = 1;
 
 double verlet_reuse     = 0.0;
 
+#ifdef MULTI_TIMESTEP
+double smaller_time_step          = -1.0;
+int    current_time_step_is_small = 0;
+#endif
+
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
 int    db_maxf_id   = 0,   db_maxv_id = 0;
@@ -195,7 +200,10 @@ void integrate_vv(int n_steps)
     prepare_collision_queue();
 #endif
 
-   force_calc();
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step < 0.)
+#endif
+      force_calc();
    
    //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
@@ -221,8 +229,13 @@ void integrate_vv(int n_steps)
     calc_and_apply_mol_constraints();
 #endif
 
-    rescale_forces();
-    recalc_forces = 0;
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step < 0.)
+#endif
+    {
+      rescale_forces();
+      recalc_forces = 0;
+    }
     
 #ifdef COLLISION_DETECTION
     handle_collisions();
@@ -242,6 +255,36 @@ void integrate_vv(int n_steps)
   /* Integration loop */
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
+
+#ifdef MULTI_TIMESTEP
+    int j;
+    if (smaller_time_step > 0){
+      current_time_step_is_small = 1;
+      /* Calculate the forces */
+      thermo_heat_up();
+      force_calc();
+      thermo_cool_down();
+      ghost_communicator(&cell_structure.collect_ghost_force_comm);
+      rescale_forces();
+      for (j=0;j<time_step/smaller_time_step;++j) {
+        /* Small integration steps */
+        /* Propagate velocities and positions */
+        /* Assumes: not NPT and NEMD_METHOD_OFF */
+        propagate_vel_pos();
+        cells_update_ghosts();
+        force_calc();
+        ghost_communicator(&cell_structure.collect_ghost_force_comm);
+        rescale_forces_propagate_vel();
+      }
+      current_time_step_is_small = 0;             
+      thermo_heat_up();
+      force_calc();
+      thermo_cool_down();
+      rescale_forces();
+      recalc_forces=0;
+    }
+#endif
+    
 
 #ifdef BOND_CONSTRAINT
     save_old_pos();
@@ -469,6 +512,10 @@ void rescale_forces()
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces:\n",this_node));
 
   scale = 0.5 * time_step * time_step;
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0. && current_time_step_is_small)
+    scale = 0.5 * smaller_time_step * smaller_time_step;
+#endif
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
@@ -498,6 +545,10 @@ void rescale_forces_propagate_vel()
 #endif
 
   scale = 0.5 * time_step * time_step;
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0. && current_time_step_is_small)
+      scale = 0.5 * smaller_time_step * smaller_time_step;
+#endif
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces_propagate_vel:\n",this_node));
 
   for (c = 0; c < local_cells.n; c++) {
@@ -744,8 +795,11 @@ void propagate_pos()
 	      /* change momentum of each particle in top and bottom slab */
 	      if(j==0) nemd_add_velocity(&p[i]);
 #endif
-	      /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
-	      p[i].r.p[j] += p[i].m.v[j];
+#ifdef MULTI_TIMESTEP
+        if (smaller_time_step < 0. || p[i].p.smaller_timestep==current_time_step_is_small)    
+#endif
+	        /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
+  	      p[i].r.p[j] += p[i].m.v[j];
 	    }
 	}
 	/* Verlet criterion check */
@@ -778,16 +832,19 @@ void propagate_vel_pos()
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
      for(j=0; j < 3; j++){
+#ifdef MULTI_TIMESTEP
+        if (smaller_time_step < 0. || p[i].p.smaller_timestep==current_time_step_is_small)
+#endif      
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+        if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
-	  {
-	    /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-	    p[i].m.v[j] += p[i].f.f[j];
+        {
+          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
+          p[i].m.v[j] += p[i].f.f[j];
 
-	    /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
-	    p[i].r.p[j] += p[i].m.v[j];
-	  }
+          /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
+          p[i].r.p[j] += p[i].m.v[j];
+        }
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));

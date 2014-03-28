@@ -173,15 +173,36 @@ void tclcommand_part_print_rotation(Particle *part, char *buffer, Tcl_Interp *in
 }
 #endif
 
+#ifdef MULTI_TIMESTEP
+void tclcommand_part_print_smaller_timestep(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  sprintf(buffer,"%i", part->p.smaller_timestep);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+}
+#endif
+
+
 void tclcommand_part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale velocities ! */
-  Tcl_PrintDouble(interp, part->m.v[0]/time_step, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->m.v[1]/time_step, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->m.v[2]/time_step, buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0. && part->p.smaller_timestep) {
+    Tcl_PrintDouble(interp, part->m.v[0]/smaller_time_step, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part->m.v[1]/smaller_time_step, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part->m.v[2]/smaller_time_step, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+  } else 
+#endif
+  {
+    Tcl_PrintDouble(interp, part->m.v[0]/time_step, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->m.v[1]/time_step, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->m.v[2]/time_step, buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
 }
 
 #ifdef LB_ELECTROHYDRODYNAMICS
@@ -516,6 +537,12 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 #endif
 
+#ifdef MULTI_TIMESTEP
+  /* print information about smaller_timestep */
+  Tcl_AppendResult(interp, " smaller_timestep ", (char *)NULL);
+  tclcommand_part_print_smaller_timestep(&part, buffer, interp);
+#endif
+
 #ifdef EXCLUSIONS
   if (part.el.n > 0) {
     Tcl_AppendResult(interp, " exclude ", (char *)NULL);
@@ -698,6 +725,11 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
        sprintf(buffer, "%d %f", part.p.vs_relative_to_particle_id, part.p.vs_relative_distance);
        Tcl_AppendResult(interp, buffer, (char *)NULL);
      }
+#endif
+
+#ifdef MULTI_TIMESTEP
+    else if (ARG0_IS_S("smaller_timestep"))
+      tclcommand_part_print_smaller_timestep(&part, buffer, interp);
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -1069,7 +1101,32 @@ int part_parse_vs_relate_to(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
+#ifdef MULTI_TIMESTEP
+int tclcommand_part_parse_smaller_timestep(Tcl_Interp *interp, int argc, char **argv,
+     int part_num, int * change)
+{
+    int smaller_timestep;
 
+    *change = 1;
+
+    if (argc < 1) {
+      Tcl_AppendResult(interp, "smaller_timestep requires 1 argument", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set smaller_timestep */
+    if (! ARG0_IS_I(smaller_timestep))
+      return TCL_ERROR;
+
+    if (set_particle_smaller_timestep(part_num, smaller_timestep) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+#endif
 
 
 int tclcommand_part_parse_q(Tcl_Interp *interp, int argc, char **argv,
@@ -2136,6 +2193,13 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = part_parse_vs_relative(interp, argc-1, argv+1, part_num, &change);
     else if (ARG0_IS_S("vs_auto_relate_to"))
       err = part_parse_vs_relate_to(interp, argc-1, argv+1, part_num, &change);
+#endif
+
+#ifdef MULTI_TIMESTEP
+
+    else if (ARG0_IS_S("smaller_timestep"))
+      err = tclcommand_part_parse_smaller_timestep(interp, argc-1, argv+1, part_num, &change);
+
 #endif
 
 #ifdef EXTERNAL_FORCES

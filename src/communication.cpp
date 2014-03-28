@@ -92,6 +92,8 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_bcast_n_particle_types_slave) \
   CB(mpi_gather_stats_slave) \
   CB(mpi_set_time_step_slave) \
+  CB(mpi_set_smaller_time_step_slave) \
+  CB(mpi_send_smaller_timestep_flag_slave) \
   CB(mpi_get_particles_slave) \
   CB(mpi_bcast_coulomb_params_slave) \
   CB(mpi_bcast_collision_params_slave) \
@@ -1704,6 +1706,58 @@ void mpi_set_time_step_slave(int node, int i)
   time_step_squared_half = time_step_squared /2.;
   time_step_half= time_step / 2.;
 }
+
+/************ REQ_SET_SMALLER_TIME_STEP ************/
+void mpi_set_smaller_time_step(double time_s)
+{
+#ifdef MULTI_TIMESTEP
+  mpi_call(mpi_set_smaller_time_step_slave, -1, 0);
+
+  smaller_time_step = time_s;
+  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
+  on_parameter_change(FIELD_SMALLERTIMESTEP);
+#endif
+}
+
+void mpi_set_smaller_time_step_slave(int node, int i)
+{
+#ifdef MULTI_TIMESTEP
+  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
+  on_parameter_change(FIELD_SMALLERTIMESTEP);
+#endif
+}
+
+void mpi_send_smaller_timestep_flag(int pnode, int part, int smaller_timestep)
+{
+#ifdef MULTI_TIMESTEP
+  mpi_call(mpi_send_smaller_timestep_flag_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.smaller_timestep = smaller_timestep;
+  }
+  else {
+    MPI_Send(&smaller_timestep, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_smaller_timestep_flag_slave(int pnode, int part)
+{
+#ifdef MULTI_TIMESTEP
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
+       comm_cart, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
 
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params()

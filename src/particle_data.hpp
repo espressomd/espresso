@@ -139,6 +139,13 @@ typedef struct {
 #ifdef CATALYTIC_REACTIONS
   int catalyzer_count;
 #endif
+
+#ifdef MULTI_TIMESTEP
+  /** does the particle need a small timestep? 
+   * 1= yes
+   * 0 = no (default) */
+  int smaller_timestep;
+#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is
@@ -496,6 +503,14 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 int set_particle_rotation(int part, int rot);
 #endif
 
+#ifdef MULTI_TIMESTEP
+/** Call only on the master node: set particle smaller time step flag.
+    @param part the particle.
+    @param small_timestep its new smaller time step.
+    @return TCL_OK if particle existed
+*/
+int set_particle_smaller_timestep(int part,int small_timestep);
+#endif
 
 /** Call only on the master node: set particle charge.
     @param part the particle.

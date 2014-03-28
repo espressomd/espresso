@@ -230,6 +230,9 @@ static void register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_TIMESTEP, tclcallback_time_step);
   register_global_callback(FIELD_TIMINGSAMP, tclcallback_timings);
   register_global_callback(FIELD_MIN_GLOBAL_CUT, tclcallback_min_global_cut);
+#ifdef MULTI_TIMESTEP
+  register_global_callback(FIELD_SMALLERTIMESTEP, tclcallback_smaller_time_step);
+#endif
 }
 
 int appinit(Tcl_Interp *interp)

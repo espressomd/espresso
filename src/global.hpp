@@ -176,6 +176,8 @@ extern const Datafield fields[];
 #define FIELD_GHMC_SCALE          49 
 /** index of \ref lb_components in \ref #fields */
 #define FIELD_LB_COMPONENTS       50 
+/** index of \ref smaller_timestep in \ref #fields */
+#define FIELD_SMALLERTIMESTEP     51
 /*@}*/
 
 #endif

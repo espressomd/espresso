@@ -280,6 +280,10 @@ void init_particle(Particle *part)
   part->p.gamma = -1.0;
 #endif
 
+#ifdef MULTI_TIMESTEP
+  part->p.smaller_timestep = 0;
+#endif
+
 }
 
 void free_particle(Particle *part) {
@@ -754,6 +758,24 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
   
   // Send the stuff
   mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance);
+  return ES_OK;
+}
+#endif
+
+#ifdef MULTI_TIMESTEP
+int set_particle_smaller_timestep(int part, int smaller_timestep)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_smaller_timestep_flag(pnode, part, smaller_timestep);
   return ES_OK;
 }
 #endif

@@ -175,10 +175,15 @@ void calculate_verlet_ia()
     np  = cell->n;
     /* calculate bonded interactions (loop local particles) */
     for(i = 0; i < np; i++)  {
-      add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-      add_constraints_forces(&p1[i]);
+#ifdef MULTI_TIMESTEP
+      if (p1[i].p.smaller_timestep==current_time_step_is_small || smaller_time_step < 0.)
 #endif
+      {
+        add_bonded_force(&p1[i]);
+#ifdef CONSTRAINTS
+        add_constraints_forces(&p1[i]);
+#endif
+      }
     }
 
     /* Loop cell neighbors */
@@ -187,10 +192,17 @@ void calculate_verlet_ia()
       np    = dd.cell_inter[c].nList[n].vList.n;
       /* verlet list loop */
       for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    /* pointer to particle 1 */
-	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
-	add_non_bonded_pair_force(p1, p2, vec21, sqrt(dist2), dist2);
+        p1 = pairs[i];                    /* pointer to particle 1 */
+        p2 = pairs[i+1];                  /* pointer to particle 2 */
+#ifdef MULTI_TIMESTEP
+        if (smaller_time_step < 0. 
+            || (p1->p.smaller_timestep==1 && p2->p.smaller_timestep==1 && current_time_step_is_small==1)
+            || (!(p1->p.smaller_timestep==1 && p2->p.smaller_timestep==1) && current_time_step_is_small==0))
+#endif 
+        {
+          dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
+          add_non_bonded_pair_force(p1, p2, vec21, sqrt(dist2), dist2);
+        }
       }
     }
   }

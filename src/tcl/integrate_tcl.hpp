@@ -40,6 +40,13 @@ int tclcallback_skin(Tcl_Interp *interp, void *_data);
  */
 int tclcallback_time_step(Tcl_Interp *interp, void *_data);
 
+#ifdef MULTI_TIMESTEP
+/** Callback for integration time_step (0.0 <= time_step).
+    \return TCL status.
+*/
+int tclcallback_smaller_time_step(Tcl_Interp *interp, void *_data);
+#endif
+
 /** Callback for current time in the integration.
  */
 int tclcallback_time(Tcl_Interp *interp, void *_data);
