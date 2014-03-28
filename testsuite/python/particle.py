@@ -14,7 +14,33 @@ import numpy as np
 class ParticleProperties(ut.TestCase):
 #  def __init__(self,particleId):
 #    self.pid=particleId
+  
+  # Particle id to work on
   pid=17
+  
+  # Error tolerance when comparing arrays/tuples...
+  tol=1E-9
+
+  def arraysNearlyEqual(self,a,b):
+    """Test, if the magnitude of the difference between two arrays is smaller than the tolerance"""
+
+    # Check length
+    if len(a) != len(b):
+      return False
+
+
+    # We have to use a loop, since we can't be sure, we're getting numpy arrays
+    sum=0.
+    for i in range(len(a)):
+      sum+= abs(a[i]-b[i])
+
+    if sum >self.tol:
+      return False
+
+    return True
+      
+
+
 
   def setUp(self):
     es.part[self.pid].pos =0,0,0
@@ -35,7 +61,7 @@ class ParticleProperties(ut.TestCase):
       # which was there, when the outer function was called
       setattr(es.part[self.pid],propName,value)
       print(propName,value,getattr(es.part[self.pid],propName))
-      self.assertTrue(np.all(getattr(es.part[self.pid],propName)==value),propName+": value set and value gotten back differ.")
+      self.assertTrue(self.arraysNearlyEqual(getattr(es.part[self.pid],propName), value),propName+": value set and value gotten back differ.")
 
     return func
   
@@ -62,7 +88,9 @@ class ParticleProperties(ut.TestCase):
 
   test_pos=generateTestForVectorProperty("pos",np.array([0.1,0.2,0.3]))
   test_v=generateTestForVectorProperty("v",np.array([0.2,0.3,0.4]))
+  test_f=generateTestForVectorProperty("f",np.array([0.2,0.3,0.7]))
   test_type=generateTestForScalarProperty("type",int(3))
+
   if "MASS" in es.code_info.features(): 
     test_mass=generateTestForScalarProperty("mass",1.3)
 
@@ -72,9 +100,23 @@ class ParticleProperties(ut.TestCase):
     test_torque_lab=generateTestForVectorProperty("torque_lab",np.array([4.,72.,3.7]))
     # The tested value has to be nromalized!
     test_quat=generateTestForVectorProperty("quat",np.array([0.5,0.5,0.5,0.5]))
+#    test_director=generateTestForVectorProperty("director",np.array([0.5,0.4,0.3]))
 
+
+  if "ELECTROSTATICS" in es.code_info.features():
+    test_charge=generateTestForScalarProperty("q",-19.7)
+
+  if "DIPOLES" in es.code_info.features():
+    test_dip=generateTestForVectorProperty("dip",np.array([0.5,-0.5,3]))
+    test_dipm=generateTestForScalarProperty("dipm",-9.7)
+
+  if "VIRTUAL_SITES" in es.code_info.features():
+    test_virtual=generateTestForScalarProperty("virtual",1)
+  if "VIRTUAL_SITES_RELATIVE" in es.code_info.features():
+    test_zz_vs_relative=generateTestForScalarProperty("vs_relative",((0,5.0)))
     
 
 if __name__ == "__main__":
+ print("Features: ",es.code_info.features())
  ut.main()
 

@@ -1992,6 +1992,10 @@ void pointer_to_quat(Particle* p, double*& res)
   res=p->r.quat;
 }
 
+void pointer_to_quatu(Particle* p, double*& res)
+{
+  res=p->r.quatu;
+}
 #endif
 
 #ifdef ELECTROSTATICS
@@ -2021,6 +2025,19 @@ void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2)
 void pointer_to_mass(Particle* p, double*&  res)
 {
   res=&(p->p.mass);
+}
+#endif
+
+
+#ifdef DIPOLES
+void pointer_to_dip(Particle* p, double*& res)
+{
+res=p->r.dip;
+}
+
+void pointer_to_dipm(Particle* p, double*& res)
+{
+res=&(p->p.dipm);
 }
 #endif
 

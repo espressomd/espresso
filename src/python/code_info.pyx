@@ -14,6 +14,10 @@ def features():
     f.append("ROTATION")
   IF MASS == 1 : 
     f.append("MASS")
+  IF VIRTUAL_SITES == 1: 
+    f.append("VIRTUAL_SITES")
+  IF VIRTUAL_SITES_RELATIVE == 1: 
+    f.append("VIRTUAL_SITES_RELATIVE")
    
 
   return sorted(f)

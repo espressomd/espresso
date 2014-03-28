@@ -170,6 +170,24 @@ cdef class ParticleHandle:
         cdef double* x
         pointer_to_quat(&(self.particleData),x)
         return np.array([x[0],x[1],x[2],x[3]])
+
+# Director ( z-axis in body fixed frame)
+    property director:
+      """Director""" 
+      def __set__(self, _q):
+        raise Exception("Setting the director is not implemented in the c++-core of Espresso")
+#        cdef double myq[3]
+#        checkTypeOrExcept(_q,3,float,"Director has to be 3 floats")
+#        for i in range(3):
+#            myq[i]=_q[i]
+#        if set_particle_quatu(self.id, myq) == 1:
+#          raise Exception("set particle position first")
+
+      def __get__(self):
+        self.update_particle_data()
+        cdef double* x
+        pointer_to_quatu(&(self.particleData),x)
+        return np.array([x[0],x[1],x[2]])
   
   
 # Force
@@ -185,7 +203,9 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.update_particle_data()
-        return self.particleData.p.q
+        cdef double* x
+        pointer_to_q(&(self.particleData),x)
+        return x[0]
 
   def delete(self):
     """Delete the particle"""
@@ -207,21 +227,30 @@ cdef class ParticleHandle:
           raise ValueError("virtual must be an integer >= 0")
       def __get__(self):
         self.update_particle_data()
-        return self.particleData.p.virtual
+        cdef int* x
+        pointer_to_virtual(&(self.particleData),x)
+        return x[0]
 
-
+  IF VIRTUAL_SITES_RELATIVE ==1:
 # Virtual sites relative parameters
     property vs_relative:
       """virtual sites relative parameters"""
-      def __set__(self, _relto,_dist):
+      def __set__(self,x):
+        if len(x) !=2:
+          raise ValueError("vs_relative needs two args")
+        _relto=x[0] 
+        _dist=x[1]
         if isinstance(_relto, int) and isinstance(_dist,float):  
           if set_particle_vs_relative(self.id, _relto,_dist) == 1:
             raise Exception("set particle position first")
         else:
           raise ValueError("vs_relative takes one int and one float as parameters.")
-    def __get__(self):
-      self.update_particle_data()
-      return (self.particleData.p.vs_relative_to,self.particleData.p.vs_relative_distance)
+      def __get__(self):
+        self.update_particle_data()
+        cdef int* rel_to
+        cdef double* dist
+        pointer_to_vs_relative(&(self.particleData),rel_to,dist)
+        return (rel_to[0],dist[0])
 
 # vs_auto_relate_to
     def vs_auto_relate_to(self,_relto):
@@ -232,6 +261,37 @@ cdef class ParticleHandle:
       else:
             raise ValueError("Argument of vs_auto_relate_to has to be of type int")
 
+
+  IF DIPOLES:
+#Vector dipole moment
+    property dip:
+      """Dipole moment as vector""" 
+      def __set__(self, _q):
+        cdef double myq[3]
+        checkTypeOrExcept(_q,3,float,"Dipole moment vector has to be 3 floats")
+        for i in range(3):
+            myq[i]=_q[i]
+        if set_particle_dip(self.id, myq) == 1:
+          raise Exception("set particle position first")
+      def __get__(self):
+        self.update_particle_data()
+        cdef double* x
+        pointer_to_dip(&(self.particleData),x)
+        return np.array([x[0],x[1],x[2]])
+  
+#Scalar magnitude of dipole moment
+    property dipm:
+      """Dipole moment (magnitude)""" 
+      def __set__(self, _q):
+        checkTypeOrExcept(_q,1,float,"Magnitude of dipole moment has to be 1 floats")
+        if set_particle_dipm(self.id, _q) == 1:
+          raise Exception("set particle position first")
+      def __get__(self):
+        self.update_particle_data()
+        cdef double* x
+        pointer_to_dipm(&(self.particleData),x)
+        return x[0]
+  
 
 
 cdef class particleList:

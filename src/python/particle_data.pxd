@@ -76,6 +76,8 @@ cdef extern from "particle_data.hpp":
   
   IF ROTATION == 1:
     int set_particle_quat(int part, double quat[4])
+    
+#    int set_particle_quatu(int part, double quat[4])
   
     int set_particle_omega_lab(int part, double omega[3])
   
@@ -89,6 +91,8 @@ cdef extern from "particle_data.hpp":
 
     void pointer_to_torque_lab(Particle* p, double*& res)
 
+    
+    void pointer_to_quatu(Particle* p, double*& res)
     void pointer_to_quat(Particle* p, double*& res)
 
 
@@ -102,11 +106,26 @@ cdef extern from "particle_data.hpp":
   
   IF VIRTUAL_SITES == 1:
     int set_particle_virtual(int part,int isVirtual)
+
+
+ 
   
   IF LANGEVIN_PER_PARTICLE == 1:
     int set_particle_temperature(int part, double T)
   
     int set_particle_gamma(int part, double gamma)
+  IF DIPOLES ==1:
+    void pointer_to_dip(Particle* P, double*& res)
+    void pointer_to_dipm(Particle* P, double*& res)
+  
+  IF VIRTUAL_SITES == 1:
+    void pointer_to_virtual(Particle* P, int*& res)
+  
+  IF VIRTUAL_SITES_RELATIVE == 1:
+    void pointer_to_vs_relative(Particle* P, int*& res1, double*& res2)
+
+  IF ELECTROSTATICS == 1:
+    void pointer_to_q(Particle* P, double*& res)
   
   IF EXTERNAL_FORCES == 1:
     IF ROTATION == 1:
@@ -132,7 +151,12 @@ cdef extern from "particle_data.hpp":
 cdef extern from "rotation.hpp":
   void convert_omega_body_to_space(Particle *p, double *omega)
   void convert_torques_body_to_space(Particle *p, double *torque)
-  
+ 
+cdef extern from "virtual_sites_relative.hpp":
+  int vs_relate_to(int part_num, int relate_to)
+  int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
+ 
+
 cdef class ParticleHandle(object):
   cdef public int id
   cdef bint valid
