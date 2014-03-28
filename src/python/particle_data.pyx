@@ -115,7 +115,7 @@ cdef class ParticleHandle:
             myo[i]=_o[i]
         if set_particle_omega_lab(self.id, myo) == 1:
           raise Exception("set particle position first")
-
+      
       def __get__(self):
         self.update_particle_data()
         cdef double o[3]
@@ -170,7 +170,6 @@ cdef class ParticleHandle:
         cdef double* x
         pointer_to_quat(&(self.particleData),x)
         return np.array([x[0],x[1],x[2],x[3]])
-
 # Director ( z-axis in body fixed frame)
     property director:
       """Director""" 
@@ -292,6 +291,24 @@ cdef class ParticleHandle:
         pointer_to_dipm(&(self.particleData),x)
         return x[0]
   
+
+  def delete(self):
+    """Delete the particle"""
+    if remove_particle(self.id):
+      raise Exception("Could not delete particle")
+    del self
+
+
+  IF VIRTUAL_SITES ==1:
+# vs_auto_relate_to
+    def vs_auto_relate_to(self,_relto):
+      """Setup this particle as virtual site relative to the particle with the given id"""
+      if isinstance(_relto,int):
+          if vs_relate_to(self.id,_relto):
+            raise Exception("Vs_relative setup failed.")
+      else:
+            raise ValueError("Argument of vs_auto_relate_to has to be of type int")
+
 
 
 cdef class particleList:

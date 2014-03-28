@@ -148,15 +148,16 @@ cdef extern from "particle_data.hpp":
   void remove_all_bonds_to(int part)
   
 
-cdef extern from "rotation.hpp":
-  void convert_omega_body_to_space(Particle *p, double *omega)
-  void convert_torques_body_to_space(Particle *p, double *torque)
  
 cdef extern from "virtual_sites_relative.hpp":
   int vs_relate_to(int part_num, int relate_to)
   int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
  
 
+cdef extern from "rotation.hpp":
+  void convert_omega_body_to_space(Particle *p, double *omega)
+  void convert_torques_body_to_space(Particle *p, double *torque)
+  
 cdef class ParticleHandle(object):
   cdef public int id
   cdef bint valid

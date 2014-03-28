@@ -119,4 +119,3 @@ class ParticleProperties(ut.TestCase):
 if __name__ == "__main__":
  print("Features: ",es.code_info.features())
  ut.main()
-
