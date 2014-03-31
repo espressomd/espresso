@@ -157,7 +157,17 @@ cdef extern from "virtual_sites_relative.hpp":
 cdef extern from "rotation.hpp":
   void convert_omega_body_to_space(Particle *p, double *omega)
   void convert_torques_body_to_space(Particle *p, double *torque)
-  
+
+
+# The bonded_ia_params stuff has to be included here, because the setter/getter
+# of the particles' bond property needs to now about the correct number of bond partners
+cdef extern from "interaction_data.hpp":
+ ctypedef struct Bonded_ia_parameters: 
+   int num
+   pass
+ Bonded_ia_parameters* bonded_ia_params
+ cdef int n_bonded_ia
+
 cdef class ParticleHandle(object):
   cdef public int id
   cdef bint valid

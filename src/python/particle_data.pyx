@@ -310,6 +310,106 @@ cdef class ParticleHandle:
             raise ValueError("Argument of vs_auto_relate_to has to be of type int")
 
 
+# Bonds
+  property bonds:
+    """Bond partners with respect to bonded interactions."""
+    
+    def __set__(self,_bonds):
+      # First, we check that we got a list/tuple. 
+      if not hasattr(_bonds, "__getitem__"):
+        raise ValueError("bonds have to specified as a tuple of tuples. (Lists can also be used)")
+      # Check individual bonds
+      for bond in _bonds: 
+        self.checkBondOrThrowException(bond)
+    
+      # Assigning to the bond property means replacing the existing value
+      # i.e., we delete all existing bonds
+      if change_particle_bond(self.id,NULL,1):
+        raise Exception("Deleting existing bonds failed.")
+      
+      # And add the new ones
+      for bond in _bonds:
+        self.addVerifiedBond(bond)
+   
+   
+    def __get__(self):
+      self.updateParticleData()
+      bonds =[]
+      # Go through the bond list of the particle
+      i=0
+      while i<self.particleData.bl.n:
+        bond=[]
+        # Bond type:
+        bond.append(self.particleData.bl.e[i])
+        i+=1
+        # Number of partners
+        nPartners=bonded_ia_params[i].num
+        
+        # Copy bond partners
+        for j in range(nPartners):
+          bond.append(self.particleData.bl.e[i])
+          i+=1
+        bonds.append(tuple(bond))
+      
+      return tuple(bonds)
+      
+
+# Bond related methods
+  def addVerifiedBond(self,bond):
+    """Add a bond, the validity of which has already been verified"""
+    # If someone adds bond types with more than four partners, this has to be changed
+    cdef int bondInfo[5] 
+    for i in range(len(bond)):
+       bondInfo[i]=bond[i]
+    if change_particle_bond(self.id,bondInfo,0): 
+      raise Exception("Adding the bond failed.")
+
+  def deleteVerifiedBond(self,bond):
+    """Delete a bond, the validity of which has already been verified"""
+    # If someone adds bond types with more than four partners, this has to be changed
+    cdef int bondInfo[5] 
+    for i in range(len(bond)):
+       bondInfo[i]=bond[i]
+    if change_particle_bond(self.id,bondInfo,1):
+      raise Exception("Deleting the bond failed.")
+
+  def checkBondOrThrowException(self,bond)      :
+    """Checks the validity of the given bond:
+    * if the bond is given as a tuple
+    * if it contains at least two values.
+    * if all elements are of type int
+    * If the bond type used exists (is lower than n_bonded_ia)
+    * If the number of bond partners fits the bond type
+    Throw an exception if any of these are not met"""
+    if not hasattr(bond,"__getitem__"):
+       raise ValueError("Elements of the bond list have to be tuples of the form (bondType,bondPartner)")
+    if len(bond) <2:
+      raise ValueError("Elements of the bond list have to be tuples of the form (bondType,bondPartner)")
+      
+    for y in bond:
+      if not isinstance(y,int):
+        raise ValueError("The bond type and bond partners have to be integers.")
+    if bond[0] >= n_bonded_ia:
+      raise ValueError("The bond type",bond[0], "does not exist.")
+    
+    if bonded_ia_params[bond[0]].num != len(bond)-1:
+      raise ValueError("Bond of type",bond[0],"needs",bonded_ia_params[bond[0]],"partners.")
+      
+
+  def addBond(self,bond):
+    """Add a single bond to the particel"""
+    self.checkBondOrThrowException(bond)
+    self.addVerifiedBond(bond)
+    
+  def deleteBond(self, bond):
+    """Delete a single bond from the particle"""
+    self.checkBondOrThrowException(bond)
+    self.deleteVerifiedBond(bond)
+
+  def deleteAllBonds(self):
+    if change_particle_bond(self.id,NULL,1):
+      raise Exception("Deleting all bonds failed.")
+
 
 cdef class particleList:
   """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
