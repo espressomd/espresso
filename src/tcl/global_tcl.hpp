@@ -32,4 +32,7 @@ typedef int (SetCallback)(Tcl_Interp *interp, void *data);
 /// Register a global variable, should be used only in \ref register_global_variables
 void register_global_callback(int field, SetCallback *callback);
 
+/// Callback for warning settings.
+int tclcallback_warnings(Tcl_Interp *interp, void *data);
+
 #endif
