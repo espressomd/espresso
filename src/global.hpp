@@ -176,6 +176,11 @@ extern const Datafield fields[];
 #define FIELD_GHMC_SCALE          49 
 /** index of \ref lb_components in \ref #fields */
 #define FIELD_LB_COMPONENTS       50 
+/** index of \ref warnings in \ref #fields */
+#define FIELD_WARNINGS            51
 /*@}*/
+
+/** bool: whether to write out warnings or not */
+extern int warnings;
 
 #endif
