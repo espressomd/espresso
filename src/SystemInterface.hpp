@@ -109,6 +109,10 @@ public:
   virtual bool hasQGpu() { return false; };
   virtual bool requestQGpu() { m_needsQGpu = hasQGpu(); return m_needsQGpu; }
 
+  virtual float *fGpuBegin() { return 0; };
+  virtual float *fGpuEnd() { return 0; };
+  virtual bool hasFGpu() { return false; };
+
   virtual const_real_iterator &qBegin() { return null_scalar; };
   virtual const const_real_iterator &qEnd() { return null_scalar; };
   virtual bool hasQ() { return false; };

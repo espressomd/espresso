@@ -45,6 +45,7 @@ public:
   bool hasQ() { return true; };
 #endif
 
+#ifdef CUDA
   float *rGpuBegin() { return m_r_gpu_begin; };
   float *rGpuEnd() { return m_r_gpu_end; };
   bool hasRGpu() { return true; };
@@ -80,6 +81,12 @@ public:
     m_gpu |= m_needsParticleStructGpu;
     return true;
   }
+
+  float *fGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
+  float *fGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
+  bool hasFGpu() { return true; };
+
+#endif
 
 protected:
   void gatherParticles();
