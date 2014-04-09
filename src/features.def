@@ -28,6 +28,8 @@ NPT
 GHMC
 CATALYTIC_REACTIONS
 
+HARMONICFORCE requires CUDA
+
 /* Rotation */
 ROTATION
 ROTATIONAL_INERTIA    implies ROTATION
@@ -133,6 +135,7 @@ BOND_ANGLE_OLD       notest
 OLD_DIHEDRAL notest
 /* turn off nonbonded interactions within molecules */
 NO_INTRA_NB	notest
+
 
 /* Debugging */
 ADDITIONAL_CHECKS

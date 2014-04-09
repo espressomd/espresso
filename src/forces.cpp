@@ -54,6 +54,7 @@
 #include "iccp3m.hpp"
 #include "p3m_gpu.hpp"
 #include "cuda_interface.hpp"
+#include "HarmonicForce.hpp"
 
 #include "EspressoSystemInterface.hpp"
 
@@ -74,6 +75,11 @@ void force_calc()
 {
 
   espressoSystemInterface.update();
+
+#ifdef HARMONICFORCE
+  if(harmonicForce) 
+    harmonicForce->calc(espressoSystemInterface);
+#endif
 
 #ifdef LB_GPU
 #ifdef SHANCHEN

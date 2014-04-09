@@ -54,6 +54,7 @@ void EspressoSystemInterface::gatherParticles() {
   {
     if(gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
       copy_part_data_to_gpu();
+      m_gpu_npart = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
       if(m_splitParticleStructGpu && (this_node == 0)) 
 	split_particle_struct();
     }
