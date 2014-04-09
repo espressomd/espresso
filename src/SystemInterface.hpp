@@ -120,7 +120,7 @@ public:
   virtual bool requestQ() { m_needsQ = hasQ(); return m_needsQ; }
 
   virtual unsigned int npart() = 0;
-  virtual unsigned int npart_gpu() = 0;
+  virtual unsigned int npart_gpu() { return 0; };
   virtual Vector3 box() = 0;
 
   virtual bool needsR() { return m_needsR; };

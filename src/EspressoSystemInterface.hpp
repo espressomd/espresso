@@ -110,12 +110,14 @@ public:
 protected:
   void gatherParticles();
   void split_particle_struct();
+#ifdef CUDA
   void enableParticleCommunication() {
     if(!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
       gpu_init_particle_comm();
       cuda_bcast_global_part_params();
     }
   };
+#endif
 
   Vector3Container R;
   #ifdef ELECTROSTATICS
