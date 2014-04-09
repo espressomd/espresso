@@ -9,7 +9,7 @@
 /********************************************************************************************/
 
 template<class value_type>
-const value_type EspressoSystemInterface::const_iterator<value_type>::operator*() const {
+value_type EspressoSystemInterface::const_iterator<value_type>::operator*() const {
   return (*m_const_iterator);
 }
 
