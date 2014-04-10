@@ -26,7 +26,6 @@
 source "tests_common.tcl"
 
 require_feature "EXCLUSIONS"
-require_feature "ADRESS" off
 
 setmd skin 0.1
 setmd time_step 0.01

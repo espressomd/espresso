@@ -21,7 +21,6 @@ source "tests_common.tcl"
 
 require_feature "NPT"
 require_feature "LENNARD_JONES"
-require_feature "ADRESS" off
 # incompatible with NPT
 require_feature "ROTATION_PER_PARTICLE" off
 

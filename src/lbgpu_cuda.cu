@@ -1619,7 +1619,7 @@ __device__ void calc_node_force_three_point_couple(float *delta, float *delta_j,
  * @param *cpu_jsquared   Pointer to result storage value (Output)
  * @param n_a             Pointer to local node residing in array a (Input)
 */
-__global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
+__global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_of_non_boundary_nodes ) {
   float mode[4];
   float jsquared = 0.0f;
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -1633,6 +1633,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
          calc_mode(mode, n_a, index,ii);
          jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
          atomicadd(cpu_jsquared, jsquared);
+         atomicAdd(number_of_non_boundary_nodes, 1);
       }
     }
   }
@@ -3220,6 +3221,11 @@ void lb_remove_fluid_momentum_GPU(void){
 */
 void lb_calc_fluid_temperature_GPU(double* host_temp){
 
+  int host_number_of_non_boundary_nodes = 0;
+  int *device_number_of_non_boundary_nodes;
+  cuda_safe_mem(cudaMalloc((void**)&device_number_of_non_boundary_nodes, sizeof(int)));
+  cuda_safe_mem(cudaMemcpy(device_number_of_non_boundary_nodes, &host_number_of_non_boundary_nodes, sizeof(int), cudaMemcpyHostToDevice));
+
   float host_jsquared = 0.0f;
   float* device_jsquared;
   cuda_safe_mem(cudaMalloc((void**)&device_jsquared, sizeof(float)));
@@ -3231,16 +3237,18 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, device_jsquared));
+  KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, device_jsquared, device_number_of_non_boundary_nodes));
 
+  cuda_safe_mem(cudaMemcpy(&host_number_of_non_boundary_nodes, device_number_of_non_boundary_nodes, sizeof(int), cudaMemcpyDeviceToHost));
   cuda_safe_mem(cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float), cudaMemcpyDeviceToHost));
+
   // TODO: check that temperature calculation is properly implemented for shanchen
   *host_temp=0;
 
   #pragma unroll
   for(int ii=0;ii<LB_COMPONENTS;++ii)
   { 
-      *host_temp += (double)(host_jsquared*1./(3.0f*lbpar_gpu.rho[ii]*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
+      *host_temp += (double)(host_jsquared*1./(3.0f*lbpar_gpu.rho[ii]*host_number_of_non_boundary_nodes*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
   }
 }
 
