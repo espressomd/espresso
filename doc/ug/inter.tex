@@ -1453,7 +1453,6 @@ fluctuations in energy.
 
 For $\kappa = 0$, this corresponds to the plain coulomb potential.
 
-
 \subsection{MMM2D}
 \index{MMM2D method|mainindex}
 \index{interactions!MMM2D|mainindex}
@@ -2004,18 +2003,18 @@ two main boundary conditions in use:
 
 In recent years, experiments have indicated that the no-slip boundary
 condition is indeed usually not valid on the micrometer
-scale. Instead, it has to be replaced by the {\em {partial-slip
-    boundary condition}}
+scale. Instead, it has to be replaced by the \emph{partial-slip
+  boundary condition}
 \begin{displaymath}
-\delta_B \: \: \partial_{{\bf n}} v_{\parallel}|_{{\bf r}_B} =
-v_{\parallel}|_{{\bf r}_B},
+\delta_B \: \: \partial_\mathbf{n} v_{\parallel} \rVert_{\mathbf{r}_B} =
+v_{\parallel} \rVert_{\mathbf{r}_B},
 \end{displaymath}
 where $v_{\parallel}$ denotes the tangential component of the velocity
-and $\partial_{{\bf n}} v_{\parallel}$ its spatial derivative normal
-to the surface, both evaluated at the position ${\bf r}_B$ of the
-so-called {\em hydrodynamic boundary}.  This boundary condition is
+and $\partial_\mathbf{n} v_{\parallel}$ its spatial derivative normal
+to the surface, both evaluated at the position $\mathbf{r}_B$ of the
+so-called \emph{hydrodynamic boundary}.  This boundary condition is
 characterized by two effective parameters, namely (i) the slip length
-$\delta_B$ and (ii) the hydrodynamic boundary ${\bf r}_B$.
+$\delta_B$ and (ii) the hydrodynamic boundary $\mathbf{r}_B$.
 
 Within the approach of the tunable-slip boundary interactions it is
 possible to tune the slip length systematically from full-slip to
@@ -2055,9 +2054,9 @@ reference \cite{smiatek08a} before using this interaction.
 
 This is a special interaction that is to be used in conjunction with
 the Dissipative Particle Dynamics algorithm \ref{sec:DPD} when the
-\texttt{INTER_DPD} implementation is used. The parameters correspond
-to the parameters of the DPD thermostat \vref{sec:DPDinter}, but
-can be set individually for the different interactions.
+\feature{INTER_DPD} implementation is used. The parameters correspond
+to the parameters of the DPD thermostat \vref{sec:DPDinter}, but can
+be set individually for the different interactions.
 
 \subsection{Fixing the center of mass}
 \begin{essyntax}
@@ -2117,7 +2116,7 @@ applied on \var{typeid1} particles.
 \label{sec:forcecap}
 
 \begin{essyntax}
-  \variant{1} inter forcecap \alt{\var{F_\mathrm{max}} \asep individual}
+  inter forcecap \alt{\var{F_\mathrm{max}} \asep individual}
 \end{essyntax}
 
 Non-bonded interactions are often used to model the hard core
