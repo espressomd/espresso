@@ -565,7 +565,6 @@ typedef struct {
       double r_cut;
     } harmonic;
 
-#ifdef BOND_ANGLE_OLD
     /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
 	potential which you may chose with a compiler flag in the file \ref config.hpp !
@@ -574,17 +573,10 @@ typedef struct {
     struct {
       double bend;
       double phi0;
-#ifdef BOND_ANGLE_COSINE
       double cos_phi0;
       double sin_phi0;
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
-      double cos_phi0;
-#endif
     } angle;
-#endif
 
-#ifdef BOND_ANGLE
     /** Parameters for three body angular potential (bond_angle_harmonic). 
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi) */
@@ -611,7 +603,6 @@ typedef struct {
       double phi0;
       double cos_phi0;
     } angle_cossquare;
-#endif
 
    /** Parameters for four body angular potential (dihedral-angle potentials). */
     struct {
@@ -619,7 +610,6 @@ typedef struct {
       double bend;
       double phase;
     } dihedral;
-#ifdef TABULATED
     /** Parameters for n-body tabulated potential (n=2,3,4). */
     struct {
       char   *filename;
@@ -631,8 +621,6 @@ typedef struct {
       double *f;
       double *e;
     } tab;
-#endif
-#ifdef OVERLAPPED 
     /** Parameters for n-body overlapped potential (n=2,3,4). */
     struct {
       char   *filename;
@@ -643,7 +631,6 @@ typedef struct {
       double *para_b;
       double *para_c;
     } overlap;
-#endif
     /** Dummy parameters for -LJ Potential */
     struct {
       double k;
@@ -662,7 +649,6 @@ typedef struct {
       double v_tol;
     } rigid_bond;
 
-#ifdef BOND_ANGLEDIST
     /** Parameters for three body angular potential (bond-angle potentials) that 
         depends on distance to wall constraint.
 	ATTENTION: Note that there are different implementations of the bond angle
@@ -676,17 +662,10 @@ typedef struct {
       double distmin;
       double phimax;
       double distmax;
-#ifdef BOND_ANGLE_COSINE
       double cos_phi0;
       double sin_phi0;
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
-      double cos_phi0;
-#endif
     } angledist;
-#endif
 
-#ifdef BONDED_IA_ENDANGLEDIST
     /** Parameters for chainend angular potential with wall  */
     struct {
       double bend;
@@ -694,7 +673,6 @@ typedef struct {
       double distmin;
       double distmax;
     } endangledist;
-#endif
   } p;
 } Bonded_ia_parameters;
 
