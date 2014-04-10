@@ -760,7 +760,7 @@ int lb_lbfluid_print_velocity(char* filename) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
 #ifdef SHANCHEN
-    printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__)
+    printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
     exit(1);
 #endif
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
@@ -1090,7 +1090,7 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 
 #ifdef SHANCHEN
         //printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
-        printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__)
+        printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
         exit(1);
 #endif
 
