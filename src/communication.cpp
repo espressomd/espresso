@@ -2952,11 +2952,11 @@ void mpi_external_potential_tabulated_read_potential_file_slave(int node, int nu
 
 void mpi_external_potential_sum_energies() {
   mpi_call(mpi_external_potential_sum_energies_slave, 0, 0);
-  double* energies = (double*) malloc(n_external_potentials);
+  double* energies = (double*) malloc(n_external_potentials*sizeof(double));
   for (int i=0; i<n_external_potentials; i++) {
     energies[i]=external_potentials[i].energy;
   }
-  double* energies_sum = (double*) malloc(n_external_potentials); 
+  double* energies_sum = (double*) malloc(n_external_potentials*sizeof(double)); 
   MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
   for (int i=0; i<n_external_potentials; i++) {
     external_potentials[i].energy=energies_sum[i];
@@ -2967,7 +2967,7 @@ void mpi_external_potential_sum_energies() {
 
 
 void mpi_external_potential_sum_energies_slave(int dummy1, int dummy2) {
-  double* energies = (double*)malloc(n_external_potentials);
+  double* energies = (double*)malloc(n_external_potentials*sizeof(double));
   for (int i=0; i<n_external_potentials; i++) {
     energies[i]=external_potentials[i].energy;
   }

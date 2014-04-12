@@ -44,17 +44,22 @@ int external_potential_tabulated_init(int number, char* filename, int n_particle
   }
   mpi_external_potential_broadcast(number);
   mpi_external_potential_tabulated_read_potential_file(number);
-
+  return ES_OK;
 }
 
+int lattice_read_file(Lattice* self, char* filename); 
 
 int external_potential_tabulated_read_potential_file(int number) {
-  ExternalPotentialTabulated *e = &(external_potentials[number].e.tabulated);
-  FILE* infile = fopen(e->filename, "r");
+  lattice_read_file(&(external_potentials[number].e.tabulated.potential), external_potentials[number].e.tabulated.filename);
+}
+
+int lattice_read_file(Lattice* self, char* filename) {
+ // ExternalPotentialTabulated *e = &(external_potentials[number].e.tabulated);
+  FILE* infile = fopen(filename, "r");
   
   if (!infile)  {
     char *errtxt = runtime_error(128+MAX_FILENAME_SIZE);
-    ERROR_SPRINTF(errtxt,"Could not open file %s\n", e->filename);
+    ERROR_SPRINTF(errtxt,"Could not open file %s\n", filename);
     return ES_ERROR;
   }
   char first_line[100];
@@ -104,9 +109,9 @@ int external_potential_tabulated_read_potential_file(int number) {
     if (!token) { fprintf(stderr, "Could not read offset[2]\n"); return ES_ERROR;}
     offset[2] = atof(token);
   }
-  e->potential.offset[0]=offset[0];
-  e->potential.offset[1]=offset[1];
-  e->potential.offset[2]=offset[2];
+  self->offset[0]=offset[0];
+  self->offset[1]=offset[1];
+  self->offset[2]=offset[2];
 
 
   int halosize=1;
@@ -137,8 +142,8 @@ int external_potential_tabulated_read_potential_file(int number) {
 
   // Now we count how many entries we have:
 
-  init_lattice(&e->potential, res, offset, halosize, dim);
-  e->potential.interpolation_type = INTERPOLATION_LINEAR;
+  init_lattice(self, res, offset, halosize, dim);
+  self->interpolation_type = INTERPOLATION_LINEAR;
 
   unsigned int linelength = (3+dim)*ES_DOUBLE_SPACE;
   char* line = (char*) malloc((3+dim)*ES_DOUBLE_SPACE);
@@ -165,11 +170,11 @@ int external_potential_tabulated_read_potential_file(int number) {
       if (!token) { fprintf(stderr, "Coud not read f[%d]\n", i); return ES_ERROR; }
       f[i] = atof(token);
     }
-    lattice_set_data_for_global_position_with_periodic_image(&e->potential, pos, f);
+    lattice_set_data_for_global_position_with_periodic_image(self, pos, f);
   }
   free(line);
 
-  write_local_lattice_to_file("lattice", &e->potential);
+  write_local_lattice_to_file("lattice", self);
   
   if (check_runtime_errors()!=0)
     return ES_ERROR;
@@ -206,7 +211,6 @@ int write_local_lattice_to_file(char* filename_prefix, Lattice* lattice) {
 
 
   fprintf(outfile, "element_size %ld\n", l->element_size);
-  fprintf(outfile, "lattice_dim %ld\n", l->lattice_dim);
 
   
   for (i=0; i<lattice->halo_grid[0]; i++) 
