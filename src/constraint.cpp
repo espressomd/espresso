@@ -1079,7 +1079,6 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   }
   *dist=-1e99;
   vec[0] = vec[1] = vec[2] = 1e99;
-  printf("should never be reached, z %f, r%f\n",z, r);
 //  exit(printf("should never be reached, z %f, r%f\n",z, r));
 }
 

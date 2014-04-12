@@ -66,6 +66,7 @@
 #include "statistics_correlation.hpp"
 #include "cuda_interface.hpp"
 #include "EspressoSystemInterface.hpp"
+#include "statistics_observable.hpp"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -150,7 +151,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_external_potential_broadcast_slave) \
   CB(mpi_external_potential_tabulated_read_potential_file_slave) \
   CB(mpi_external_potential_sum_energies_slave) \
-
+  CB(mpi_observable_lb_radial_velocity_profile_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -1037,6 +1038,20 @@ void mpi_send_rotation_slave(int pnode, int part)
   on_particle_change();
 #endif
 }
+
+void mpi_observable_lb_radial_velocity_profile() 
+{
+#ifdef LB
+  mpi_call(mpi_observable_lb_radial_velocity_profile_slave, 0, 0);
+#endif
+}
+void mpi_observable_lb_radial_velocity_profile_slave(int pnode, int part)
+{
+#ifdef LB
+  mpi_observable_lb_radial_velocity_profile_slave_implementation(); 
+#endif
+}
+
 
 /********************* REQ_SET_BOND ********/
 

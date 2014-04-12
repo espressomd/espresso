@@ -552,6 +552,7 @@ void mpi_kill_particle_forces( int torque );
 void mpi_system_CMS();
 void mpi_system_CMS_velocity();
 void mpi_galilei_transform();
+void mpi_observable_lb_radial_velocity_profile();
 
 /** Issue REQ_CATALYTIC_REACTIONS: notify the system of changes to the reaction parameters
  */
