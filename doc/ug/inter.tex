@@ -1788,12 +1788,21 @@ the parameter \var{ext\_field}.
   \variant{2} dielectric wall normal \var{nx} \var{ny} \var{nz} dist \var{d} res \var{res}
   \variant{3} dielectric cylinder  center \var{cx} \var{cy} \var{cz} axis \var{ax} \var{ay} \var{az} radius \var{r} direction \var{d} 
   \variant{4} dielectric pore center \var{cx} \var{cy} \var{cz}  axis \var{ax} \var{ay} \var{az} radius \var{r} length \var {l} smoothing\_radius \var{rs} res \var{res}
+  \variant{5} dielectric slitpore pore_mouth \var{z} \
+             channel_width \var{c} \
+             pore_width \var{w} \
+             pore_length \var{l} \
+             upper_smoothing_radius \var{us} \
+             lower_smoothing_radius \var{ls} 
+
 \end{essyntax}
 
 The command \keyword{dielectric} allows to conveniently create
 dielectric interfaces similar to the constraint and the lbboundary
 command. Currently the creation of spherical, cylindrical and planar
-geometries as well as a pore geometry is supported. It is implemented
+geometries as well as a pore and slitpore geometry is supported.
+Please check the documentation of the corresponding constraint for the detailed geometry.
+It is implemented
 in Tcl and places particles in the right positions and adds the
 correct values to the global Tcl variables \var{icc\_areas}
 \var{icc\_normals} \var{icc\_sigmas} \var{icc\_epsilons} and increases
