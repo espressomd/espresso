@@ -557,6 +557,13 @@ void mpi_galilei_transform();
  */
 void mpi_setup_reaction();
 
+
+/** DANGEROUS FUNCTIONS: used for LB and LB GPU checkpointing
+ */
+void mpi_bcast_recalc_forces();
+void mpi_bcast_resort_particles();
+
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event
