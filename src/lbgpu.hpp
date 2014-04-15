@@ -178,6 +178,7 @@ typedef struct {
 typedef struct {
 
   float *force;
+  float *scforce;
 
 } LB_node_force_gpu;
 
