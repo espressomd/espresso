@@ -1176,14 +1176,14 @@ int mpi_integrate(int n_steps)
 {
   if (!correlations_autoupdate) {
     mpi_call(mpi_integrate_slave, -1, n_steps);
-    integrate_vv(n_steps);
+    integrate_vv(n_steps, 0);
     COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", \
                        this_node, n_steps));
     return check_runtime_errors();
   } else {
     for (int i=0; i<n_steps; i++) {
       mpi_call(mpi_integrate_slave, -1, 1);
-      integrate_vv(1);
+      integrate_vv(1, 0);
       COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n",     \
                          this_node, i));
       if (check_runtime_errors())
@@ -1197,7 +1197,7 @@ int mpi_integrate(int n_steps)
 
 void mpi_integrate_slave(int pnode, int task)
 {
-  integrate_vv(task);
+  integrate_vv(task, 0);
   COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", this_node, task));
 
   check_runtime_errors();

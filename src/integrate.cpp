@@ -123,6 +123,67 @@ void finalize_p_inst_npt();
 
 /*@}*/
 
+void integrator_sanity_checks()
+{
+  char *errtext;
+
+  if ( time_step < 0.0 ) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{010 time_step not set} ");
+  }
+  if ( skin < 0.0 ) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{011 skin not set} ");
+  }
+  if ( temperature < 0.0 ) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
+  }
+}
+
+#ifdef NPT
+
+void integrator_npt_sanity_checks()
+{  
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+    if (nptiso.piston <= 0.0) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
+    }
+
+#ifdef ELECTROSTATICS
+
+    switch(coulomb.method) {
+      case COULOMB_NONE:  break;
+      case COULOMB_DH:    break;
+      case COULOMB_RF:    break;
+#ifdef P3M
+      case COULOMB_P3M:   break;
+#endif /*P3M*/
+      default: {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{014 npt only works with P3M, Debye-Huckel or reaction field} ");
+      }
+    }
+#endif /*ELECTROSTATICS*/
+
+#ifdef DIPOLES
+
+    switch (coulomb.Dmethod) {
+      case DIPOLAR_NONE: break;
+#ifdef DP3M
+      case DIPOLAR_P3M: break;
+#endif /* DP3M */
+      default: {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
+      }
+    }
+#endif  /* ifdef DIPOLES */
+  }
+}
+#endif /*NPT*/
+
 /************************************************************/
 
 
@@ -158,7 +219,7 @@ void integrate_ensemble_init()
 
 /************************************************************/
 
-void integrate_vv(int n_steps)
+void integrate_vv(int n_steps, int reuse_forces)
 {
   int i;
 
@@ -177,8 +238,9 @@ void integrate_vv(int n_steps)
    
   /* Integration Step: Preparation for first integration step:
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) ) */
-  if (recalc_forces) {
+  if (recalc_forces && !reuse_forces) {
     thermo_heat_up();
+
 #ifdef LB
     transfer_momentum = 0;
     if (lattice_switch & LATTICE_LB && this_node == 0)
@@ -189,6 +251,7 @@ void integrate_vv(int n_steps)
     if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
       if (warnings) fprintf (stderr, "Warning: Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
+
 //VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
     update_mol_vel_pos();
