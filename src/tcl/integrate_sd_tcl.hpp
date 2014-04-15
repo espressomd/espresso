@@ -44,6 +44,14 @@ int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp,
  */
 //int tclcallback_time(Tcl_Interp *interp, void *_data);
 
+/** Callback for the sd particle radius (0.0 < sd_radius)
+ */
+int tclcallback_sd_radius(Tcl_Interp *interp, void *_data);
+
+/** Callback for the sd viscosity (0.0 < sd_viscosity)
+ */
+int tclcallback_sd_viscosity(Tcl_Interp *interp, void *_data);
+
 /** Implements the tcl-command 'invalidate_system' which forces a system re-init. 
     For more information, see \ref tclcommand_invalidate_system. */
 //int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv);

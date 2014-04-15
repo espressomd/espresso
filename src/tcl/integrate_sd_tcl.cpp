@@ -33,16 +33,17 @@
 #include "communication.hpp"
 #include "parser.hpp"
 #include "statistics_correlation.hpp"
+#include "global.hpp"
 
 /**  Hand over integrate usage information to tcl interpreter. */
 int tclcommand_integrate_sd_print_usage(Tcl_Interp *interp) 
 {
-  Tcl_AppendResult(interp, "Usage of tcl-command integrate:\n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate <INT n steps>' for integrating n steps \n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate set' for printing integrator status \n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate set nvt' for enabling NVT integration or \n" , (char *)NULL);
+  Tcl_AppendResult(interp, "Usage of tcl-command integrate_sd:\n", (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate_sd <INT n steps>' for integrating n steps \n", (char *)NULL);
+  //Tcl_AppendResult(interp, "'integrate set' for printing integrator status \n", (char *)NULL);
+  //Tcl_AppendResult(interp, "'integrate set nvt' for enabling NVT integration or \n" , (char *)NULL);
 #ifdef NPT
-  Tcl_AppendResult(interp, "'integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>] [<INT, INT, INT system_geometry>] [-cubic_box]' for enabling isotropic NPT integration \n" , (char *)NULL);
+  //Tcl_AppendResult(interp, "'integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>] [<INT, INT, INT system_geometry>] [-cubic_box]' for enabling isotropic NPT integration \n" , (char *)NULL);
 #endif
   return (TCL_ERROR);
 }
@@ -63,21 +64,35 @@ int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char 
 
   if (argc < 1) {
     Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
-    return tclcommand_integrate_sd_print_usage(interp);  }
-  else if (argc < 2) {                    return tclcommand_integrate_sd_print_status(interp); }
+    return tclcommand_integrate_sd_print_usage(interp);
+  }
+  else if (argc < 2) {
+    return tclcommand_integrate_sd_print_status(interp);
+    }
 
   if (ARG1_IS_S("set")) {
-    if      (argc < 3)                    return tclcommand_integrate_sd_print_status(interp);
+    if      (argc < 3){
+      return tclcommand_integrate_sd_print_status(interp);
+    }
     
     Tcl_AppendResult(interp, "unknown integrator method:\n", (char *)NULL);
     return tclcommand_integrate_sd_print_usage(interp);
       
   } else if ( !ARG_IS_I(1,n_steps) ) return tclcommand_integrate_sd_print_usage(interp);
+  
+  if (sd_radius < 0){
+    Tcl_AppendResult(interp, "The particle radius for SD was not set\n (set with setmd sd_radius <value>).\n", (char *)NULL);
+    return tclcommand_integrate_sd_print_usage(interp);
+  }
+  if (sd_viscosity < 0){
+    Tcl_AppendResult(interp, "The viscosity for SD was not set\n (set with setmd sd_viscosity <value>).\n", (char *)NULL);
+    return tclcommand_integrate_sd_print_usage(interp);
+  }
 
   /* go on with integrate <n_steps> */
-  if(n_steps < 0) {
+  if(n_steps <= 0) {
     Tcl_AppendResult(interp, "illegal number of steps (must be >0) \n", (char *) NULL);
-    return tclcommand_integrate_sd_print_usage(interp);;
+    return tclcommand_integrate_sd_print_usage(interp);
   }
   /* perform integration */
   integrate_sd(n_steps);
@@ -87,3 +102,27 @@ int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char 
 /************************************************************/
 /* Callback functions */
  
+
+int tclcallback_sd_radius(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+  if (data <= 0) {
+    Tcl_AppendResult(interp, "radius must be > 0.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  sd_radius = data;
+  mpi_bcast_parameter(FIELD_SD_RADIUS);
+  return (TCL_OK);
+}
+
+int tclcallback_sd_viscosity(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+  if (data <= 0) {
+    Tcl_AppendResult(interp, "viscosity must be > 0.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  sd_viscosity = data;
+  mpi_bcast_parameter(FIELD_SD_VISCOSITY);
+  return (TCL_OK);
+}

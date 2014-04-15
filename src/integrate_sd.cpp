@@ -32,6 +32,7 @@
 #include <cmath>
 #include "utils.hpp"
 #include "integrate_sd.hpp"
+#include "integrate_sd_cuda_debug.cuh"
 #include "integrate.hpp"
 #include "reaction.hpp"
 #include "electrokinetics.hpp"
@@ -75,8 +76,8 @@
 
 //double sim_time         = 0.0;
 
-double sd_viscosity;
-double sd_radius;
+double sd_viscosity=-1;
+double sd_radius=-1;
 
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
@@ -88,13 +89,13 @@ int    db_maxf_id   = 0,   db_maxv_id = 0;
 /*@{*/
 
 /** Rescale all particle forces with <s>\f[ 0.5 \Delta t^2 \f]</s> some factor. */
-void rescale_forces_sd();
+//void rescale_forces_sd();
 /** Propagate the positions. Integration step 2 of the Velocity Verletintegrator:<br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  \mu v(t) \f] */
 void propagate_pos_sd();
 
 #ifdef CUDA
-void propagate_pos_sd_cuda(double * box_l, int N,double * pos_h, double * force_h);
+void propagate_pos_sd_cuda(double * box_l, int N,double * pos_h, double * force_h, double * velo_h);
 #endif
 
 /*@}*/
@@ -141,7 +142,6 @@ void integrate_sd(int n_steps)
 #ifdef COLLISION_DETECTION
   prepare_collision_queue();
 #endif
-
   force_calc();
    
   //VIRTUAL_SITES distribute forces
@@ -207,7 +207,11 @@ void integrate_sd(int n_steps)
     }
 #endif
     if(thermo_switch & ~THERMO_SD){
-      fprintf (stderr, "Warning, using another thermo than the one provided by StokesDynamics breaks (most likely) StokesDynamics.\n");
+      static bool warned_thermo_sd_other=false;
+      if (!warned_thermo_sd_other){
+	fprintf (stderr, "Warning, using another thermo than the one provided by StokesDynamics breaks (most likely) StokesDynamics.\n");
+	warned_thermo_sd_other=true;
+      }
     }
 
     /* Integration Steps: Update the Positions
@@ -396,7 +400,6 @@ void integrate_sd(int n_steps)
 
 void propagate_pos_sd()
 {
-
   /* Verlet list criterion */
   double skin2 = SQR(0.5 * skin);
 
@@ -425,9 +428,13 @@ void propagate_pos_sd()
   double * force=NULL;
   force=(double *)malloc(DIM*N*sizeof(double));
   assert(force!=NULL);
+  double * velocity=NULL;
+  velocity=(double *)malloc(DIM*N*sizeof(double));
+  assert(velocity!=NULL);
 #ifdef EXTERNAL_FORCES
   const int COORD_ALL=COORD_FIXED(0)&COORD_FIXED(1)&COORD_FIXED(2);
 #endif
+  int j=0; // total particle counter
   for (c = 0; c < local_cells.n; c++){
     cell = local_cells.cell[c];
     p    = cell->part;
@@ -443,16 +450,21 @@ void propagate_pos_sd()
       if (!ifParticleIsVirtual(&p[i]))
 #endif
       {
-        memcpy(&pos[DIM*i], p[i].r.p, 3*sizeof(double));
-        memcpy(&force[DIM*i], p[i].f.f, 3*sizeof(double));
+        memcpy(&pos[3*j], p[i].r.p, 3*sizeof(double));
+	for (int d=0;d<3;d++){
+	  assert(!isnan(p[i].r.p[d]));
+	}
+        memcpy(&force[3*j], p[i].f.f, 3*sizeof(double));
+	j++;
       }
     }
   }
   // cuda part
 #ifdef CUDA
-  //void propagate_pos_sd_cuda(double * box_l_h,int N,double * pos_h, double * force_h);
-    
-  propagate_pos_sd_cuda(box_l,N,pos,force);
+  //void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * force_h, double * velo_h){
+  propagate_pos_sd_cuda(box_l,N,pos,force, velocity);
+#else
+  fprintf(stderr, "Warning - CUDA is currently required for SD");
 #endif
   
 
@@ -460,7 +472,7 @@ void propagate_pos_sd()
   /* change momentum of each particle in top and bottom slab */
   fprintf (stderr, "Warning: NEMD is in SD not supported.\n");
 #endif
-  
+  j=0;
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p    = cell->part;
@@ -469,13 +481,23 @@ void propagate_pos_sd()
 #ifdef VIRTUAL_SITES
       if (ifParticleIsVirtual(&p[i])) continue;
 #endif
+      // write back of position and velocity data
+      memcpy(p[i].r.p, &pos[DIM*j], 3*sizeof(double));
+      for (int d=0;d<DIM;d++){
+	assert(!isnan(pos[DIM*i+d]));
+      }
+      memcpy(p[i].m.v, &velocity[DIM*j], 3*sizeof(double));
+      j++;
       /* Verlet criterion check */
-      memcpy(p[i].r.p, &pos[DIM*i], 3*sizeof(double));
       if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
-
+      
     }
   }
-  
+  /*std::cout << pos[0] << " " << pos[1] << " " << pos[2]
+	    << pos[3] << " " << pos[4] << " " << pos[5]
+	    << pos[6] << " " << pos[7] << " " << pos[8] << " "<< force << "\n";*/
+  free(pos);
+  free(force);
   announce_resort_particles();
   
 }
