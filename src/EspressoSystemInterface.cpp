@@ -53,8 +53,9 @@ void EspressoSystemInterface::gatherParticles() {
   if (m_gpu)
   {
     if(gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
+      ESIF_TRACE(puts("Calling copy_part_data_to_gpu()"));
       copy_part_data_to_gpu();
-      m_gpu_npart = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+      reallocDeviceMemory(gpu_get_global_particle_vars_pointer_host()->number_of_particles);
       if(m_splitParticleStructGpu && (this_node == 0)) 
 	split_particle_struct();
     }

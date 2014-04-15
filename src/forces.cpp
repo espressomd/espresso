@@ -88,7 +88,7 @@ void force_calc()
 
   // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
   // this_node==0 makes sure it is the master node where the gpu exists
-  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && this_node==0 ) lb_calc_particle_lattice_ia_gpu();
+  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
@@ -152,7 +152,7 @@ void force_calc()
   meta_perform();
 #endif
 
-#if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
+#ifdef CUDA
   copy_forces_from_GPU();
 #endif
 
