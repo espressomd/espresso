@@ -35,7 +35,7 @@
 #include "errorhandling.hpp"
 #include "global.hpp"
 
-const int numThreadsPerBlock = 128;
+const int numThreadsPerBlock = 32;
 
 void _cudaCheckError(const char *msg, const char * file, const int line);
 #define cudaCheckError(msg)  _cudaCheckError((msg),__FILE__,__LINE__)
@@ -188,7 +188,7 @@ void sd_compute_mobility(cublasHandle_t cublas, double * r_d, int N, double eta,
   sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(mobility_d,3*N);
   sd_compute_mobility_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,1./(6.*M_PI*eta*a), a, L_d, mobility_d);
   cudaThreadSynchronize(); // just for debugging
-  printMatrixDev(mobility_d,3*N,3*N,"mobility_d");
+  //printMatrixDev(mobility_d,3*N,3*N,"mobility_d");
   cudaCheckError("compute mobility error");
   //printMatrixDev(mobility_d,3*N,3*N,"early mobility:");
   // compute the resistance matrix
@@ -250,6 +250,7 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
   double mypos[3];
   __shared__ double L[3];
   __shared__ double cachedPos[3*numThreadsPerBlock];
+  __shared__ double writeCache[3*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   if (threadIdx.x < 3){ // copy L to shared memory
     L[threadIdx.x]=L_g[threadIdx.x];
@@ -279,7 +280,7 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
     // copy positions to shared memory
 #pragma unroll
     for (int j=0;j<3;j++){
-      cachedPos[threadIdx.x+j*numThreadsPerBlock] = r[numThreadsPerBlock*j+i];
+      cachedPos[threadIdx.x+j*numThreadsPerBlock] = r[numThreadsPerBlock*j+blockIdx.x*blockDim.x*3+threadIdx.x];
     }
     __syncthreads();
     if (i < N){
@@ -295,8 +296,8 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
 	  double dr2=0;
 #pragma unroll 3
 	  for (int k=0;k<DIM;k++){
-	    dr[k]=r[DIM*i+k]-r[DIM*j+k]; // r_ij
-	    //dr[k]=mypos[k]-cachedPos[DIM*(j-offset)+k]; // r_ij
+	    //dr[k]=r[DIM*i+k]-r[DIM*j+k]; // r_ij
+	    dr[k]=mypos[k]-cachedPos[DIM*(j-offset)+k]; // r_ij
 	    /*if (isnan(dr[k])){
 	      dr[k]=1337;
 	      }*/
@@ -331,13 +332,41 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
 	      if (isnan(t2)){
 	    t2=1337;
 	    }*/
-#pragma unroll
+	    
+	    double tmp_el13;
+#pragma unroll 3
 	    for (int k=0; k < DIM; k++){
-#pragma unroll
-	      for (int l=0;l < DIM; l++){
-		mobility[myindex(DIM*i+k,DIM*j+l,N)]=dr[k]*dr[l]*t;
+	      if (k ==0){ // these ifs should be removed at compile time ... after unrolling
+#pragma unroll 3
+		for (int l=0;l < DIM; l++){
+		  //mobility[myindex(DIM*i+k,DIM*j+l,N)]=dr[k]*dr[l]*t;
+		  writeCache[3*threadIdx.x+l]=dr[k]*dr[l]*t;
+		}
 	      }
-	      mobility[myindex(DIM*i+k,DIM*j+k,N)]+=t2;
+	      else if(k==1){
+		tmp_el13 = writeCache[3*threadIdx.x+2];
+		writeCache[3*threadIdx.x+0]=writeCache[3*threadIdx.x+1];
+#pragma unroll 2
+		for (int l=1;l < DIM; l++){
+		  //mobility[myindex(DIM*i+k,DIM*j+l,N)]=dr[k]*dr[l]*t;
+		  writeCache[3*threadIdx.x+l]=dr[k]*dr[l]*t;
+		}		
+	      }
+	      else{
+		writeCache[3*threadIdx.x+0]=tmp_el13;
+		writeCache[3*threadIdx.x+1]=writeCache[3*threadIdx.x+2];
+		writeCache[3*threadIdx.x+2]=dr[k]*dr[2]*t;
+		
+	      }
+	      writeCache[3*threadIdx.x+k]+=t2;
+	      __syncthreads();
+	      int max = min(blockDim.x, N-offset);
+	      for (int l=0;l<3;l++){
+		//mobility[(DIM*j+k)*3*N+blockIdx.x*blockDim.x+threadIdx.x+blockDim.x*l]=writeCache[threadIdx.x+blockDim.x*l];
+		mobility[(DIM*j+k)*3*N+offset+threadIdx.x+max*l]=writeCache[threadIdx.x+max*l];
+		//mobility[(DIM*j+k)*3*N+DIM*i+l]
+	      }
+	      //mobility[myindex(DIM*i+k,DIM*j+k,N)]+=t2;
 	    }
 	    // python implementation:
 	    // T=one*(0.75+0.5*b2)*b+(0.75-1.5*b2)*b*drt*dr/dr2;
@@ -360,16 +389,19 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
   double mypos[3];
   __shared__ double L[3];
   __shared__ double cachedPos[3*numThreadsPerBlock];
-  int idx = blockIdx.x*blockDim.x + threadIdx.x;
+  //__shared__ double myresistance[6*numThreadsPerBlock];
+  double myresistance[6];
+  //__shared__ double otherresistance[6*numThreadsPerBlock];
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
   if (threadIdx.x < 3){ // copy L to shared memory
     L[threadIdx.x]=L_g[threadIdx.x];
   }
-  __syncthreads();
+  //__syncthreads();
   // get data for myposition - but alligned
   for (int j=0;j<3;j++){
-    cachedPos[threadIdx.x+j*numThreadsPerBlock] = r[idx+j*numThreadsPerBlock];
+    cachedPos[threadIdx.x+j*numThreadsPerBlock] = r[threadIdx.x+j*numThreadsPerBlock+blockIdx.x*blockDim.x*3];
   }
-  __syncthreads();
+  //__syncthreads();
   for (int j=0;j<3;j++){
     mypos[j] = cachedPos[threadIdx.x*3+j];
   }
@@ -377,7 +409,8 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
   
   
   
-  for (int i = idx; i < N; i+=blockDim.x*gridDim.x){
+  //for (int i = idx; i < N; i+=blockDim.x*gridDim.x){
+  /*if (i < N){
 #pragma unroll 3
     for (int k=0; k < DIM; k++){
 #pragma unroll 3
@@ -385,13 +418,15 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
 	resistance[myindex(DIM*i+k,DIM*i+l,N)]=0; // we will add some terms on the diagonal, so set it to zero before
       }
     }
-    for (int offset=0;offset<N;offset+=numThreadsPerBlock){
-      // copy positions to shared memory
+  }*/
+  for (int offset=0;offset<N;offset+=numThreadsPerBlock){
+    // copy positions to shared memory
 #pragma unroll
-      for (int j=0;j<3;j++){
-	cachedPos[threadIdx.x+j*numThreadsPerBlock] = r[numThreadsPerBlock*j+i];
-      }
-      __syncthreads();
+    for (int j=0;j<3;j++){
+      cachedPos[threadIdx.x+j*numThreadsPerBlock] = r[numThreadsPerBlock*j+offset*3];
+    }
+    __syncthreads();
+    if (i <N ){
       for (int j=offset;j<offset+numThreadsPerBlock;j++){
 	
 	//for (int j=0;j<N;j++){
@@ -431,15 +466,21 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
 #pragma unroll 3
 	    for (int l=0;l < DIM; l++){
 	      resistance[myindex(DIM*i+k,DIM*j+l,N)]=dr[k]*dr[l]*t;
-	      resistance[myindex(DIM*i+k,DIM*i+l,N)]-=dr[k]*dr[l]*t;
+	      //resistance[myindex(DIM*i+k,DIM*i+l,N)]-=dr[k]*dr[l]*t;
 	    }
+	    myresistance[k]-=dr[k]*dr[k]*t;
 	    resistance[myindex(DIM*i+k,DIM*j+k,N)]+=t2;
-	    resistance[myindex(DIM*i+k,DIM*i+k,N)]-=t2;
+	    myresistance[k]-=t2;
+	    //resistance[myindex(DIM*i+k,DIM*i+k,N)]-=t2;
 	  }
+	  myresistance[3]-=t*dr[0]*dr[1];
+	  myresistance[4]-=t*dr[0]*dr[2];
+	  myresistance[5]-=t*dr[1]*dr[2];
+	  
 	  // python implementation:
 	  //T=one*(1-9./32.*drn/a)+3./32.*dr*drt/drn/a;
 	}
-	else{ // set the block to zero
+	/*else{ // set the block to zero
 	  // it might be faster to set everything in the beginning to zero ...
 	  // or use sparse matrices ...
 #pragma unroll 3
@@ -449,9 +490,21 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
 	      resistance[myindex(DIM*i+k,DIM*j+l,N)]=0;
 	    }
 	  }  
-	}
+	  }*/
       }
     }
+  }
+  if ( i < N){
+    for (int k=0;k<3;k++){
+      resistance[myindex(DIM*i+k,DIM*i+k,N)]=myresistance[k];
+    }
+    resistance[myindex(DIM*i+0,DIM*i+1,N)]=myresistance[3];
+    resistance[myindex(DIM*i+1,DIM*i+0,N)]=myresistance[3];
+    resistance[myindex(DIM*i+0,DIM*i+2,N)]=myresistance[4];
+    resistance[myindex(DIM*i+2,DIM*i+0,N)]=myresistance[4];
+    resistance[myindex(DIM*i+1,DIM*i+2,N)]=myresistance[5];
+    resistance[myindex(DIM*i+2,DIM*i+1,N)]=myresistance[5];
+    
   }
 }
 
@@ -540,8 +593,13 @@ __global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, d
     }
     const double distmin=(3*a)*(3*a);
     for (int i=0;i<N;i++){
-      if (idx==i)
-	continue;
+      if (idx==i){
+	//continue;
+	i++;
+	if (i >N){
+	  continue;
+	}
+      }
       double dr2=0;
       for (int d=0;d<DIM;d++){
 	double tmp=r_d[i*DIM+d]-rnew[d];
