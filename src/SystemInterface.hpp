@@ -18,7 +18,7 @@ public:
   template<class value_type>
   class const_iterator {
   public:
-    virtual const value_type operator*() const = 0;
+    virtual value_type operator*() const = 0;
     virtual const_iterator<value_type> &operator=(const const_iterator<value_type> &rhs) = 0;
     virtual bool operator==(const_iterator<value_type> const &rhs) const = 0;
     virtual bool operator!=(const_iterator<value_type> const &rhs) const = 0;
@@ -27,7 +27,7 @@ public:
 
   class null_vec_iterator : public SystemInterface::const_iterator<Vector3> {
   public:
-    const Vector3 operator*() const { return Vector3(); };
+    Vector3 operator*() const { return Vector3(); };
     const_iterator<Vector3> &operator=(const const_iterator<Vector3> &rhs) { return *this; };
     bool operator==(const_iterator<Vector3> const &rhs) const { return true; };
     bool operator!=(const_iterator<Vector3> const &rhs) const { return false; };
@@ -38,7 +38,7 @@ public:
 
   class null_real_iterator : public SystemInterface::const_iterator<Real> {
   public:
-    const Real operator*() const { return Real(); };
+    Real operator*() const { return Real(); };
     const_iterator<Real> &operator=(const const_iterator<Real> &rhs) { return *this; };
     bool operator==(const_iterator<Real> const &rhs) const { return true; };
     bool operator!=(const_iterator<Real> const &rhs) const { return false; };

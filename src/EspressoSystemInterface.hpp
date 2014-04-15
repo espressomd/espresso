@@ -22,7 +22,7 @@ public:
   template<class value_type>
   class const_iterator : public SystemInterface::const_iterator<value_type> {
   public:
-    const value_type operator*() const;
+    value_type operator*() const;
     SystemInterface::const_iterator<value_type> &operator=(const SystemInterface::const_iterator<value_type> &rhs);
     EspressoSystemInterface::const_iterator<value_type> &operator=(typename std::vector<value_type>::const_iterator rhs);
     bool operator==(SystemInterface::const_iterator<value_type> const &rhs) const;
