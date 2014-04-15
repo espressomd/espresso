@@ -46,7 +46,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
 
   if(argc < 2) 
   {
-    Tcl_AppendResult(interp, "Usage of \"electrokinetics\":", (char *)NULL);
+    Tcl_AppendResult(interp, "Usage of \"electrokinetics\":\n\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [lb_density #float] [viscosity #float] [friction #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float] [T #float] [bjerrum_length #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags|mass_flux> vtk #string]\n", (char *)NULL);
@@ -117,6 +117,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       Tcl_AppendResult(interp, "Could not parse pdb- or itp-file. Please, check your format and filenames.", (char *) NULL);
       return (TCL_ERROR);
     }
+    lb_init_boundaries();
 #endif
   }
   else if(ARG0_IS_S("boundary")) 
