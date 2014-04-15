@@ -40,7 +40,7 @@ void HarmonicForce_kernel_wrapper(float x, float y, float z, float k, int n, flo
   // printf("Calling HarmonicForce_kernel<<<(%d %d %d),(%d %d %d)>>>\n",
   // 	 grid.x, grid.y, grid.z, block.x, block.y, block.z);
 
-  HarmonicForce_kernel<<<grid,block>>>(x, y, z, k, n, pos, f);
+KERNELCALL(HarmonicForce_kernel,grid,block,(x, y, z, k, n, pos, f))
 }
 
 #endif
