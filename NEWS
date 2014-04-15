@@ -29,6 +29,8 @@ New user-visible features
 * New command time_integration to get the runtime of the integration
   loop.
 
+* New harmoic force that runs on the GPU.
+
 User-visible changes
 --------------------
 * Comfixed now works with periodic boundary conditions.
