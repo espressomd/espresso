@@ -44,7 +44,7 @@ int tclcommand_harmonic_force(ClientData data, Tcl_Interp *interp, int argc, cha
     return TCL_ERROR;
   }
 
-  printf("x %e %e %e, k %e\n", dl.e[0], dl.e[1],dl.e[2],dl.e[3]);
+  // printf("x %e %e %e, k %e\n", dl.e[0], dl.e[1],dl.e[2],dl.e[3]);
 
   harmonicForce =  new HarmonicForce(dl.e[0], dl.e[1],dl.e[2],dl.e[3], espressoSystemInterface);
 
