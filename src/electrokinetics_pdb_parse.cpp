@@ -257,7 +257,7 @@ int calculate_bounding_box(bounding_box* bbox, particle_data* atom_data) {
   return pdb_SUCCESS;
 }
 
-int populate_lattice(particle_data* atom_data, int indices_only) {
+int populate_lattice(particle_data* atom_data) {
   /*
    * This routine will populate the lattice using the
    * values read from the pdb and itp files.
@@ -319,34 +319,29 @@ int populate_lattice(particle_data* atom_data, int indices_only) {
             lowernode[1] = (lowernode[1] + ek_parameters.dim_y) % ek_parameters.dim_y;
             lowernode[2] = (lowernode[2] + ek_parameters.dim_z) % ek_parameters.dim_z;
 
-            if ( indices_only == 0 ) {
-              pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],lowernode[1],lowernode[2] )]
-                = b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+            pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],lowernode[1],lowernode[2] )]
+              = b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
 
-              pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,lowernode[1],lowernode[2] )]
-                = b->charge * cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+            pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,lowernode[1],lowernode[2] )]
+              = b->charge * cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
 
-              pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],( lowernode[1] + 1 ) % ek_parameters.dim_y,lowernode[2] )]
-                = b->charge * ( 1 - cellpos[0] ) * cellpos[1] * ( 1 - cellpos[2] );
+            pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],( lowernode[1] + 1 ) % ek_parameters.dim_y,lowernode[2] )]
+              = b->charge * ( 1 - cellpos[0] ) * cellpos[1] * ( 1 - cellpos[2] );
 
-              pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],lowernode[1],( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-                = b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2];
+            pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],lowernode[1],( lowernode[2] + 1 ) % ek_parameters.dim_z )]
+              = b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2];
 
-              pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,( lowernode[1] + 1 ) % ek_parameters.dim_y,lowernode[2] )]
-                = b->charge * cellpos[0] * cellpos[1] * ( 1 - cellpos[2] );
+            pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,( lowernode[1] + 1 ) % ek_parameters.dim_y,lowernode[2] )]
+              = b->charge * cellpos[0] * cellpos[1] * ( 1 - cellpos[2] );
 
-              pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,lowernode[1],( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-                = b->charge * cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2];
+            pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,lowernode[1],( lowernode[2] + 1 ) % ek_parameters.dim_z )]
+              = b->charge * cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2];
 
-              pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],( lowernode[1] + 1 ) % ek_parameters.dim_y,( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-                = b->charge * ( 1 - cellpos[0] ) * cellpos[1] * cellpos[2];
+            pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],( lowernode[1] + 1 ) % ek_parameters.dim_y,( lowernode[2] + 1 ) % ek_parameters.dim_z )]
+              = b->charge * ( 1 - cellpos[0] ) * cellpos[1] * cellpos[2];
 
-              pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,( lowernode[1] + 1 ) % ek_parameters.dim_y,( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-                = b->charge * cellpos[0] * cellpos[1] * cellpos[2];
-            }
-	    else if ( indices_only == 1 ) {
-              printf("Only indices!\n");
-            }
+            pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,( lowernode[1] + 1 ) % ek_parameters.dim_y,( lowernode[2] + 1 ) % ek_parameters.dim_z )]
+              = b->charge * cellpos[0] * cellpos[1] * cellpos[2];
             // Interpolate lennard-jones parameters to boundary
             float r = pow(2,1./6.)*c->sigma;
 
@@ -376,12 +371,7 @@ int populate_lattice(particle_data* atom_data, int indices_only) {
                   printf("distance: %f <= %f\n\n", pow(lowernode[0] - a_x_shifted,2) + pow(lowernode[1] - a_y_shifted,2) + pow(lowernode[2] - a_z_shifted,2), pow(r/ek_parameters.agrid,2));
 #endif
                   if ( pow(lowernode[0] - a_x_shifted,2) + pow(lowernode[1] - a_y_shifted,2) + pow(lowernode[2] - a_z_shifted,2) <= pow(r/ek_parameters.agrid,2) ) {
-                    if ( indices_only == 0 ) {
-                      pdb_boundary_lattice[ek_parameters.dim_y*ek_parameters.dim_x*lowernode[2] + ek_parameters.dim_x*lowernode[1] + lowernode[0]] = 1;
-                    }
-                    else if ( indices_only == 1 ) {
-                      printf("Only indices!\n");
-                    }
+                    pdb_boundary_lattice[ek_parameters.dim_y*ek_parameters.dim_x*lowernode[2] + ek_parameters.dim_x*lowernode[1] + lowernode[0]] = 1;
                   }
                 }
               }
@@ -405,7 +395,6 @@ int pdb_parse(char* pdb_filename, char* itp_filename) {
    */
 
   /* BEGIN DEPLOY */
-  int indices_only = 0;
   galloc( (void**) &pdb_charge_lattice, ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z * sizeof(float));
   galloc( (void**) &pdb_boundary_lattice, ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z * sizeof(int));
   for ( unsigned int i = 0; i < ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z; i++ ) {
@@ -423,7 +412,7 @@ int pdb_parse(char* pdb_filename, char* itp_filename) {
 
   pdb_parse_files(pdb_filename, itp_filename, &atom_data);
 
-  populate_lattice(&atom_data, indices_only);
+  populate_lattice(&atom_data);
 
   return pdb_SUCCESS;
 }
