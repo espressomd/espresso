@@ -197,7 +197,8 @@ CUDA_SOURCES = \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
 	integrate_sd_cuda.cu \
-	integrate_sd_cuda_debug.cu
+	integrate_sd_cuda_debug.cu \
+	integrate_sd_cuda_debug.cuh
 
 libEspresso_la_SOURCES += $(CUDA_SOURCES)
 EXTRA_DIST += $(CUDA_SOURCES)
