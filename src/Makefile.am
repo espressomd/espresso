@@ -45,6 +45,7 @@ libEspresso_la_SOURCES = \
 	cuda_init.hpp \
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
+	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
 	energy.cpp energy.hpp \
 	errorhandling.cpp errorhandling.hpp \
 	fft.cpp fft.hpp \
