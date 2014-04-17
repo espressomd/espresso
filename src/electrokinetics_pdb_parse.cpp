@@ -183,9 +183,9 @@ int pdb_parse_files(char* pdb_filename, char* itp_filename, particle_data* atom_
     str >> tmp >> tmp >> tmp >> tmp;    
     str >> a->x >> a->y >> a->z;
 
-      a->x /= 10.0;
-      a->y /= 10.0;
-      a->z /= 10.0;
+//      a->x /= 10.0; //TODO put back in
+//      a->y /= 10.0;
+//      a->z /= 10.0;
 #ifdef DEBUG
       // Print all local variables
       printf("ATOM i=%d x=%f y=%f z=%f\n",a->i,a->x,a->y,a->z);
@@ -227,6 +227,7 @@ int pdb_parse_files(char* pdb_filename, char* itp_filename, particle_data* atom_
         itp_atomtypes* a = &atom_data->itp_array_atomtypes[atom_data->itp_n_parameters];
         // FIXME: no source :( Reverse engineered from the itp-file
         sscanf(itp_line," %2s %*s %*f %*f %*c %f %f ; %*f %*f",a->type,&a->sigma,&a->epsilon);
+        a->sigma *= 10.0; //TODO delete
 #ifdef DEBUG
         // Print all local variables
         printf("[ atomtypes ] name=%s sigma=%f epsilon=%f\n",a->type,a->sigma,a->epsilon);
