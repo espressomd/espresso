@@ -21,7 +21,7 @@
 #ifndef _ANGLE_HARMONIC_TCL_H
 #define _ANGLE_HARMONIC_TCL_H
 /** \file angle_harmonic_tcl.hpp
- * Tcl interface for \ref angle_harmonic.h
+ * Tcl interface for \ref angle_harmonic.hpp
  */
 
 #include "config.hpp"

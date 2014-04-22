@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file ghosts.c   Ghost particles and particle exchange.
+/** \file ghosts.cpp   Ghost particles and particle exchange.
  *
  *  For more information on ghosts,
- *  see \ref ghosts.h "ghosts.h" 
+ *  see \ref ghosts.hpp "ghosts.h" 
 */
 #include <mpi.h>
 #include <cstdio>
@@ -217,15 +217,23 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
 			  this_node, gc->part_lists[pl], *(int *)retrieve, gc->node));
       realloc_particlelist(gc->part_lists[pl], gc->part_lists[pl]->n = *(int *)retrieve);
-#ifdef GHOST_FLAG
-      {
-	//init ghost variable
-	int i;
-	for (i=0;i<gc->part_lists[pl]->n;i++){
-	  gc->part_lists[pl]->part[i].l.ghost=1;
-	}
-      }
+      // invalidate pointers etc
+      int np   = gc->part_lists[pl]->n;
+      Particle *part = gc->part_lists[pl]->part;
+      for (p = 0; p < np; p++) {
+	Particle *pt = &part[p];
+        // no bonds or exclusions
+        pt->bl.e = 0;
+        pt->bl.n = 0;
+#ifdef EXCLUSIONS
+        pt->el.e = 0;
+        pt->el.n = 0;
 #endif
+#ifdef GHOST_FLAG
+	//init ghost variable
+	pt->l.ghost=1;
+#endif
+      }
       retrieve += sizeof(int);
     }
     else {
@@ -319,15 +327,23 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
     if (data_parts == GHOSTTRANS_PARTNUM) {
       realloc_particlelist(gc->part_lists[pl + offset],
 			   gc->part_lists[pl + offset]->n = gc->part_lists[pl]->n); 
-#ifdef GHOST_FLAG
-      {
-        //init ghost variable
-        int i;
-        for (i=0;i<gc->part_lists[pl + offset]->n;i++){
-          gc->part_lists[pl + offset]->part[i].l.ghost=1;
-        }
-      }
+      // invalidate unset pointers etc
+      int np   = gc->part_lists[pl + offset]->n;
+      Particle *part = gc->part_lists[pl + offset]->part;
+      for (p = 0; p < np; p++) {
+	Particle *pt = &part[p];
+        // no bonds or exclusions
+        pt->bl.e = 0;
+        pt->bl.n = 0;
+#ifdef EXCLUSIONS
+        pt->el.e = 0;
+        pt->el.n = 0;
 #endif
+#ifdef GHOST_FLAG
+	//init ghost variable
+        pt->l.ghost=1;
+#endif
+      }
     }
     else {
       part1 = gc->part_lists[pl]->part;

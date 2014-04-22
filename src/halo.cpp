@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file halo.c
+/** \file halo.cpp
  * 
  * Halo scheme for parallelization of lattice algorithms. 
- * Implementation of file \ref halo.h.
+ * Implementation of file \ref halo.hpp.
  *
  */
 

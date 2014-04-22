@@ -17,7 +17,7 @@
 #
 EXTRA_DIST = \
 	gen_featureconfig.py \
-	gen_doxyconfig.py \
 	gen_sampleconfig.py \
+	gen_doxyconfig.py \
 	featuredefs.py \
 	genversion.sh

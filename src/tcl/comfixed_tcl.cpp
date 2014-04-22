@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file comfixed_tcl.c
+/** \file comfixed_tcl.cpp
  *
  *  Implementation of \ref comfixed_tcl.hpp
  */
@@ -70,9 +70,6 @@ int tclcommand_inter_parse_comfixed(Tcl_Interp * interp,
     return 0;
   case 2:
     Tcl_AppendResult(interp, "works only with a single CPU", (char *) NULL);
-    return 0;
-  case 3:
-    Tcl_AppendResult(interp, "works only with non periodic BC", (char *) NULL);
     return 0;
   }
 

@@ -21,56 +21,56 @@ dnl ******************** helper macros ********************
 dnl search for a library in additional paths
 AC_DEFUN([ES_ADDPATH_CHECK_LIB],[
 	AC_MSG_CHECKING([for lib$1])
-	save_LDFLAGS=$LDFLAGS
-	save_LIBS=$LIBS
-	adp_found=no
+	es_save_LDFLAGS=$LDFLAGS
+	es_save_LIBS=$LIBS
+	es_adp_found=no
 	dnl let's see whether it's in the default paths
-	LIBS="-l$1 $save_LIBS"
-	AC_LINK_IFELSE([AC_LANG_CALL([],[$2])],[adp_found=yes],[])
+	LIBS="-l$1 $es_save_LIBS"
+	AC_LINK_IFELSE([AC_LANG_CALL([],[$2])],[es_adp_found=yes],[])
 
-	if test .$adp_found = .no; then
-		for path in $5 /sw/lib /usr/lib64 /usr/local/lib64 /opt/lib64 /usr/lib /usr/local/lib /opt/lib; do
-			LDFLAGS="$save_LDFLAGS -L$path"
-			AC_LINK_IFELSE([AC_LANG_CALL([],[$2])],[adp_found=yes],[])
-			if test .$adp_found = .yes; then break; fi
+	if test .$es_adp_found = .no; then
+		for path in $5 /usr/lib64 /usr/local/lib64 /opt/lib64 /sw/lib /opt/local/lib /usr/lib /usr/local/lib /opt/lib; do
+			LDFLAGS="$es_save_LDFLAGS -L$path"
+			AC_LINK_IFELSE([AC_LANG_CALL([],[$2])],[es_adp_found=yes],[])
+			if test .$es_adp_found = .yes; then break; fi
 		done
 	fi
-	if test .$adp_found = .yes; then
+	if test .$es_adp_found = .yes; then
 		AC_MSG_RESULT(yes)
 	else
 		AC_MSG_RESULT(no)
-		LDFLAGS=$save_LDFLAGS
-		LIBS=$save_LIBS
+		LDFLAGS=$es_save_LDFLAGS
+		LIBS=$es_save_LIBS
 	fi
-	AS_IF([test .$adp_found = .yes], [$3],[$4])
+	AS_IF([test .$es_adp_found = .yes], [$3],[$4])
 ])
 
 dnl search for a header file in additional paths
 AC_DEFUN([ES_ADDPATH_CHECK_HEADER],[
 	AC_MSG_CHECKING([for $1])
-	save_CPPFLAGS=$CPPFLAGS
-	adp_found=no
+	es_save_CPPFLAGS=$CPPFLAGS
+	es_adp_found=no
 	dnl let's see whether it's in the default paths
 	AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 		#include <$1>
-	])],[adp_found=yes],[])
+	])],[es_adp_found=yes],[])
 
-	if test .$adp_found = .no; then
+	if test .$es_adp_found = .no; then
 		for path in $4 /sw/include /usr/include /usr/local/include /opt/include; do
-			CPPFLAGS="$save_CPPFLAGS -I$path"
+			CPPFLAGS="$es_save_CPPFLAGS -I$path"
 			AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 				#include <$1>
-			])],[adp_found=yes],[])
-			if test .$adp_found = .yes; then break; fi
+			])],[es_adp_found=yes],[])
+			if test .$es_adp_found = .yes; then break; fi
 		done
 	fi
-	if test .$adp_found = .yes; then
+	if test .$es_adp_found = .yes; then
 		AC_MSG_RESULT(yes)
 	else
 		AC_MSG_RESULT(no)
-		CPPFLAGS=$save_CPPFLAGS
+		CPPFLAGS=$es_save_CPPFLAGS
 	fi
-	AS_IF([test .$adp_found = .yes], [$2],[$3])
+	AS_IF([test .$es_adp_found = .yes], [$2],[$3])
 ])
 
 

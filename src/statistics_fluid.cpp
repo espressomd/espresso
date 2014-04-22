@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_fluid.c
+/** \file statistics_fluid.cpp
  *
  * Fluid related analysis functions.
- * Implementation of \ref statistics_fluid.h.
+ * Implementation of \ref statistics_fluid.hpp.
  *
  */
 
@@ -33,8 +33,6 @@
 #include "statistics_fluid.hpp"
 
 #ifdef LB
-
-//#include <fftw3.h>
 
 /** Caclulate mass of the LB fluid.
  * \param result Fluid mass
@@ -96,20 +94,27 @@ void lb_calc_fluid_temp(double *result) {
   int x, y, z, index;
   double rho, j[3];
   double temp = 0.0;
+  int number_of_non_boundary_nodes = 0;
 
   for (x=1; x<=lblattice.grid[0]; x++) {
     for (y=1; y<=lblattice.grid[1]; y++) {
       for (z=1; z<=lblattice.grid[2]; z++) {
-	index = get_linear_index(x,y,z,lblattice.halo_grid);
-	
-	lb_calc_local_fields(index, &rho, j, NULL);
 
-	temp += scalar(j,j);
+	index = get_linear_index(x,y,z,lblattice.halo_grid);
+
+#ifdef LB_BOUNDARIES
+	if ( !lbfields[index].boundary )
+#endif
+	  {
+	    lb_calc_local_fields(index, &rho, j, NULL);
+	    temp += scalar(j,j);
+	    number_of_non_boundary_nodes++;
+	  }
       }
     }
   }
 
-  temp *= 1./(3.*lbpar.rho[0]*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid)/n_nodes;
+  temp *= 1./(3.*lbpar.rho[0]*number_of_non_boundary_nodes*lbpar.tau*lbpar.tau*lblattice.agrid)/n_nodes;
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }

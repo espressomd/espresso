@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file global_tcl.c
+/** \file global_tcl.cpp
     Implementation of \ref global_tcl.hpp "global_tcl.h".
 */
 #include "utils.hpp"
@@ -48,6 +48,12 @@ static int tclcallback_ro(Tcl_Interp *interp, void *data)
 {
   Tcl_AppendResult(interp, "variable is readonly", (char *)NULL);
   return (TCL_ERROR);
+}
+
+int tclcallback_warnings(Tcl_Interp *interp, void *data)
+{
+  warnings = ((int *)data)[0];
+  return (TCL_OK);
 }
 
 static SetCallback *find_callback(int field)

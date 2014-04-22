@@ -21,7 +21,7 @@
 #ifndef HERTZIAN_TCL_H
 #define HERTZIAN_TCL_H
 /** \file hertzian_tcl.hpp
- * Tcl interface for \ref hertzian.h
+ * Tcl interface for \ref hertzian.hpp
  */
 
 #include "parser.hpp"

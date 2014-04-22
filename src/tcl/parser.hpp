@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _PARSER_H
-#define _PARSER_H
-/** \file parser.h
+#ifndef _TCL_PARSER_H
+#define _TCL_PARSER_H
+/** \file parser.hpp
     This file contains macros for parsing the parameters to the
     'inter' command.
  */

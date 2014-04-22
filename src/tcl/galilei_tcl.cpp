@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file reaction_tcl.c
+/** \file reaction_tcl.cpp
  *
 */
 

@@ -8,26 +8,63 @@ ESPResSo 3.3
 New user-visible features
 -------------------------
 
+* ELECTROKINETICS: An algorithm to treat species of ions on a mean-field
+  level. Implementation takes advantage of a GPU.
+
+* Provide the preliminary Python interface. Configure with
+  --with-python-interface.
+
 * Support of P3M on GPU.
 
 * Allow the p3m to dump the mesh in x, y, and z (before it only dumped
-the mesh in x). This allows for the dumping of the p3m in blockfile
-format in the case of non-cubic boxes. It will also now be possible to
-tune the settings of a non-cubic mesh.
+  the mesh in x). This allows for the dumping of the p3m in blockfile
+  format in the case of non-cubic boxes. It will also now be possible
+  to tune the settings of a non-cubic mesh.
 
 * Stomatocyte lb-boundary and constraint implemented.
 
 * MEMD electrostatics can now handle spatially varying dielectrc
   constants.
 
+* New command time_integration to get the runtime of the integration
+  loop.
+
+* New harmoic force that runs on the GPU.
+
 User-visible changes
 --------------------
+* Comfixed now works with periodic boundary conditions.
 
-* Generic LJ can now turned into an soft potential.
+* The pressure contribution due to rigid bodies constructed by means of the 
+  virtual sites relative mechanism is included, both for pressure and stress 
+  tensor. Note that the corresponding contribution for rigid bonds is still not implemented.
+ 
+* The configure option "--with-myconfig" has been removed. Instead,
+  the configure variable "MYCONFIG" can be set to give the name of a
+  myconfig file.
+
+* Generic LJ can now be turned into an soft potential.
 
 * Renamed torque to torque_{lab,body}, improved torque handling in
   blockfiles.  Clearer distinction between the reference frames for
   torque and angular momentum.
+
+* Lattice-Boltzmann now has a additional 3-point coupling scheme.
+
+* The noise type in thermalized Lattice-Boltzmann is now choosable via tcl.
+
+* Interaction with a wall can be restricted to the inside.
+
+* Removed compiler switch GRANDCANONICAL.
+
+* Removed outdated ADRESS code.
+
+Changes visible for developers
+------------------------------
+
+* The code has been switched to using a C++ compiler.
+
+* The EspressoInterfaceClass has changed.
 
 ESPResSo 3.2
 ============
@@ -142,7 +179,6 @@ New user-visible features
 
 * Added new feature LANGEVIN_PER_PARTICLE that allows to set the
   Langevin parameters temperature and gamma per particle.
-
 
 * Added new constraint and LB boundary condition "rhomboid".
 

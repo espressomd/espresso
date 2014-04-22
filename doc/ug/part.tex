@@ -100,18 +100,23 @@ set first because of the spatial decomposition.
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] Sets the
   quaternion representation of the rotational position of this
   particle.
-\item[\opt{omega_body/lab \var{x} \var{y} \var{z}}] The command \opt{omega_body} 
-  sets the angular momentum of this particle in the particle's co-rotating frame 
-  (or body frame) and the command \opt{omega_lab} sets it for the particle in the fixed
-  frame (or laboratory frame). If you set the angular momentum of the particle in the lab frame, the
-  orientation of the particle (\opt{quat}) must be set before invoking \opt{omega_lab}, otherwise the 
-  conversion from lab to body frame will not be handled properly.
-\item[\opt{torque_body/lab \var{x} \var{y} \var{z}}] The command \opt{torque_body} 
-  sets the torque of this particle in the particle's co-rotating frame 
-  (or body frame) and the command \opt{torque_lab} sets it for the particle in the fixed
-  frame (or laboratory frame). If you set the torque of the particle in the lab frame, the
-  orientation of the particle (\opt{quat}) must be set before invoking \opt{torque_lab}, otherwise the 
-  conversion from lab to body frame will not be handled properly.
+\item[\opt{omega_body} \var{x} \var{y} \var{z} \alt \opt{omega_body}
+  \var{x} \var{y} \var{z}] The command \opt{omega_body} sets the
+  angular momentum of this particle in the particle's co-rotating
+  frame (or body frame) and the command \opt{omega_lab} sets it for
+  the particle in the fixed frame (or laboratory frame). If you set
+  the angular momentum of the particle in the lab frame, the
+  orientation of the particle (\opt{quat}) must be set before invoking
+  \opt{omega_lab}, otherwise the conversion from lab to body frame
+  will not be handled properly.
+\item[\opt{torque_body/lab \var{x} \var{y} \var{z}}] The command
+  \opt{torque_body} sets the torque of this particle in the particle's
+  co-rotating frame (or body frame) and the command \opt{torque_lab}
+  sets it for the particle in the fixed frame (or laboratory
+  frame). If you set the torque of the particle in the lab frame, the
+  orientation of the particle (\opt{quat}) must be set before invoking
+  \opt{torque_lab}, otherwise the conversion from lab to body frame
+  will not be handled properly.
 \item[\opt{rinertia \var{x} \var{y} \var{z}}] Sets the diagonal
   elements of this particles rotational inertia tensor. These
   correspond with the inertial moments along the coordinate axes in
@@ -171,38 +176,22 @@ set first because of the spatial decomposition.
   rotational degrees of freedom are integrated (value of 1) or not
   (0). If set to zero, the content of the torque and omega variables
   are meaningless. The default is 1.
-\item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the four solvation coupling constant for the two components of a Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
+\item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the
+  four solvation coupling constants for the two components of a
+  Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
 \end{arguments}
 
-\warning{The options \opt{omega}, \opt{torque}, and \opt{tbf} are deprecated 
-  and will be removed in some future version. They might still usable in your
-  case, but be aware that if you use newer features in your simulation, you might
-  not have all the functionality that you desire. When you read the confusing 
-  (original) text below on the use of the commands, you will understand why they 
-  have been replaced\newline
-
-  The commands \opt{omega} set the rotational velocity of a particle in that
-  particle's co-rotating frame. The \opt{torque} set the rotational force of 
-  a particle, in global frame. When printing the values using 
-  {\em part id_particle print}, there is an alternative named \opt{tbf} which 
-  gives you the values of the torque in the body frame. Be aware: the values 
-  obtained when printing using \opt{torque} are computed in the frame laboratory
-  and are the ones one should usually look at. Nonetheless, in case you introduce
-  torques using \opt{torque} option, \es will assume they are given in the
-  body-frame. Thus \opt{tbf} is useful to know which should be the numerical
-  values you should reintroduce in order to have exactly the same conformation.
-  \newline
-
-  That is, the text directly contradicts itself.
-}
+\warning{The options \opt{omega}, \opt{torque}, and \opt{tbf} are
+  deprecated and will be removed in some future version.}
 
 \subsection{Getting particle properties}
 
 \begin{essyntax}
   \variant{1}
   part \var{pid} print
-  \optlong{\alt{id \asep pos \asep type \asep folded_position \asep type \asep
-      q \asep v \asep f \asep torque_body \asep torque_lab \asep fix \asep ext_force \asep ext_torque \asep bond \asep
+  \optlong{\alt{id \asep pos \asep type \asep folded_position \asep 
+      type \asep q \asep v \asep f \asep torque_body \asep torque_lab 
+      \asep fix \asep ext_force \asep ext_torque \asep bond \asep
       \asep exclusions \mbox{connections \opt{\var{range}}}}}\dots
   \variant{2} part
 \end{essyntax}
@@ -212,18 +201,20 @@ particle \var{pid}, or all properties, if no keyword is
 specified.  Variant \variant{2} will return a list of all properties
 of all particles.
 
-{\bf N.B.} There is a difference between the options \opt{*_body} and 
-\opt{*_lab}. The first prints the variable in the co-rotating frame, whereas
-the second gives the variable in the stationary frame, the body and laboratory 
-frames, respectively. One would typically want to output the variable in 
-the laboratory frame, since it is the frame of interest. However for some tests
-involving reading and writing the variable it may be desireable to know it in
-the body frame as well. Be careful with reading and writing, if 
-you write in the lab frame, then read in the lab frame. If you are setting the 
-variable in the lab frame, the orientation of the particle (\opt{quat}) must be set 
-before, otherwise the conversion from lab to body frame will not be handled properly.
-Also be careful about the order in which you write and read in data from a block\_file
-for instance if you output the variable in both frames! 
+Note that there is a difference between the \keyword{*_body} and
+\keyword{*_lab}.  The first prints the variable in the co-rotating
+frame, whereas the second gives the variable in the stationary frame,
+the body and laboratory frames, respectively. One would typically want
+to output the variable in the laboratory frame, since it is the frame
+of interest. However for some tests involving reading and writing the
+variable it may be desireable to know it in the body frame as well. Be
+careful with reading and writing, if you write in the lab frame, then
+read in the lab frame. If you are setting the variable in the lab
+frame, the orientation of the particle's \keyword{quat} must be set
+before, otherwise the conversion from lab to body frame will not be
+handled properly.  Also be careful about the order in which you write
+and read in data from a blockfile, for instance if you output the
+variable in both frames!
 
 \minisec{Example}
 \begin{code}
@@ -624,8 +615,15 @@ Copy a group of particles including their bonds. Positions can be
 otherwise the copied set is at exactly the same position as the
 original set. The particles can be given as a combination of
 \opt{list}s or \opt{range}s. The new particles obtain in any case
-consecutive identities after the largest current identity. Bonds
-within the defined particle set are copied with translated identities,
+consecutive identities after the largest current identity. The mapping
+of the particles is returned as a list of old-new pairs, which can be
+conveniently read into an array:
+\begin{tclcode}
+array set newidentities [copy_particles ...]
+puts "particle 42 is now at position $newidentities(42)"
+\end{tclcode} %$
+
+Bonds within the defined particle set are copied with translated identities,
 but not bonds with particles outside the list. That is, if the
 particle set corresponds to a molecule, intramolecular bonds are
 preserved, but not intermolecular ones.
@@ -644,7 +642,7 @@ All these examples do the same - making exact copies of particles 1 through 4.
 \begin{essyntax}
   \variant{1} 
   constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
-  dist \var{d} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
+  dist \var{d} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}} \opt{only_positive \var{flag}}
   
   \variant{2}
   constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
@@ -735,6 +733,9 @@ the \codebox{inter} command. In variants \variant{1} to \variant{7}, constraints
  The reflection property is only activated if an interaction is defined between
  a particular particle and the constraint! This will usually be a lennard-jones
  interaction with $\epsilon=0$, but finite interaction range.
+ In variant \variant{1} if the \codebox{only_positive} flag is set to 1, interactions are
+ only calculated if the particle is on the side of the wall in which the normal
+ vector is pointing. This has only an effect for penetrable walls.
 
 Variants \variant{8} and \variant{9} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the
@@ -742,7 +743,7 @@ surface and applies to all charged particles.
 
 Variant \variant{10} does not define a surface but is based on magnetic
 dipolar interaction with an external magnetic field. It applies to all particles
-with a dipol moment.
+with a dipole moment.
 
 Variant \variant{11} is essential for the use of tunable-slip boundary
 interactions for microchannel flows like the Plane Poiseuille or Plane Couette
@@ -753,7 +754,7 @@ constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore
 Negative distances mean that the position is ``within'' the area that
 particles should not access. Helpful to find initial configurations.) 
 
-\textbf{Note that constraints are not saved to checkpoints and that they have to
+\emph{Note that constraints are not saved to checkpoints and that they have to
 be reset upon restarting a simulation.}
 
 The resulting surface in variant \variant{1} is a plane defined by the
@@ -850,7 +851,11 @@ system.
 \begin{essyntax}
 constraint force \var{n} 
 \end{essyntax}
-Returns the force acting on the \var{n}th constraint.
+Returns the force acting on the \var{n}th constraint. Note, however, that this
+are only forces due to interactions with particles, not with other constraints.
+Also, these forces still do not mean that the constraints move, they are just
+the negative of the sum of forces acting on all particles due to this constraint.
+Similarly, the total energy does not containt constraint-constraint contributions.
 
 
 \subsection{Getting the currently defined constraints}
@@ -859,6 +864,20 @@ constraint  \opt{\var{num}}
 \end{essyntax}
 Prints out all constraint information. If \var{num} is specified only this
 constraint is displayed, otherwise all constraints will be printed.
+
+\subsection{\texttt{harmonic_force}: Creating a harmonic trap}
+ \newescommand{harmonic-force}
+ \begin{essyntax}
+   harmonic_force \{ \var{x} \var{y} \var{z} \} \var{k}
+  \begin{features}
+    \required{HARMONICFORCE}
+    \required{CUDA}
+  \end{features}
+ \end{essyntax}
+
+ Calculates a spring force for all particles, where the equilibrium position
+ of the spring is at \var{x y z} and it's force constant is \var{k}. A more
+ flexible trap can be constructed with constraints, but this one runs on the GPU.
 
 \section{Virtual sites}
 \label{sec:virtual}
@@ -876,19 +895,18 @@ integration step, the forces accumulated on a virtual site are
 distributed back to those particles, from which the virtual site was
 derived.
 
-There are two distinct types of virtual sites, decribed in the
+There are two distinct types of virtual sites, described in the
 following.
 
 \subsection{Virtual sites in the center of mass of a molecule}
 
 To activate this implementation, enable the feature
-\texttt{VIRTUAL_SITES_COM} in \texttt{myconfig.h}
-(sec. \ref{sec:myconfig}).  Virtual sites are then placed in the
-center of mass of a set of particles (as defined below). Their
-velocity will also be that of the center of mass. Forces accumulating
-on the virtual sites are distributed back to the particles which form
-the molecule.  To place a virtual site at the center of a molecule,
-perform the following steps in that order
+\feature{VIRTUAL_SITES_COM} (sec. \ref{sec:myconfig}).  Virtual sites
+are then placed in the center of mass of a set of particles (as
+defined below). Their velocity will also be that of the center of
+mass. Forces accumulating on the virtual sites are distributed back to
+the particles which form the molecule.  To place a virtual site at the
+center of a molecule, perform the following steps in that order
 \begin{enumerate}
 \item Create a particle of the desired type for each molecule. It
   should be placed at least roughly in the center of the molecule to
@@ -900,7 +918,7 @@ perform the following steps in that order
   \end{essyntaxbox}
 \item Declare the list of molecules and the particles they consist of:
   \begin{essyntaxbox}
-    analyze set \{\var{molid} \{\var{list of particle ids ..}\} ...\}
+    eval analyze set \{\var{molid} \{\var{list of particle ids ..}\} ...\}
   \end{essyntaxbox}
   The lists of particles in a molecule comprise the non-virtual
   particles and the virtual site.
@@ -914,6 +932,8 @@ perform the following steps in that order
     integrate 0
   \end{essyntaxbox}
 \end{enumerate}
+Please note that the use of virtual sites requires that the particles are numbered consecutively. I.e., the particle ids should go from zero to $N-1$, where $N$ is the number of particles.
+
 
 \subsection{Rigid arrangements of particles}
 
@@ -938,8 +958,8 @@ non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particle's center.
 
 To use this implementation of virtual sites, activate the feature
-\texttt{VIRTUAL_SITES_RELATIVE} in \texttt{myconfig.h} (see
-sec. \ref{sec:myconfig}).  To set up a virtual site,
+\feature{VIRTUAL_SITES_RELATIVE} (see sec. \ref{sec:myconfig}).  To
+set up a virtual site,
 \begin{enumerate}
 \item Place the particle to which the virtual site should be
   related. It needs to be in the center of mass of the rigid
@@ -976,7 +996,7 @@ Please note:
 \item In case you know the correct quaternions, you can also setup a
   virtual site using
   \begin{essyntaxbox}
-    part \var{v} virtual 1 quat \var{q} vs\_relative \var{n} \var{d}
+    part \var{v} virtual 1 quat \var{q} vs_relative \var{n} \var{d}
   \end{essyntaxbox}
   where n is the id of the non-virtual particle and d is its distance
   from the virtual site.
@@ -985,27 +1005,32 @@ Please note:
   particle and its associated virtual sites. To this aim, you need to
   set the global variable \var{min\_global\_cut} to this largest
   distance. \es issues a warning when creating a virtual site with
-  \lit{vs\_auto\_relate\_to} and the cutoff is insufficient.
+  \lit{vs_auto_relate_to} and the cutoff is insufficient.
 \item If the virtual sites represent actual particles carrying a mass,
   the inertia tensor of the non-virtual particle in the center of mass
   needs to be adapted.
+\item The presence of rigid bodies constructed by means of virtual
+  sites adds a contribution to the pressure and stress tensor.
+\item The use of virtual sites requires that the particles are
+  numbered consecutively, \ie, the particle ids should go from zero to
+  $N-1$, where $N$ is the number of particles.
 \end{itemize}
 
 \subsection{Additional features}
 
 The behaviour of virtual sites can be fine-tuned with the following
-switches in \texttt{myconfig.h} (sec.\ref{sec:myconfig})
+switches in \texttt{myconfig.hpp} (sec. \ref{sec:myconfig})
 \begin{itemize}
-\item \texttt{VIRTUAL_SITES_NO_VELOCITY} specifies that the velocity
+\item \feature{VIRTUAL_SITES_NO_VELOCITY} specifies that the velocity
   of virtual sites is not computed
-\item \texttt{VIRTUAL_SITES_THERMOSTAT} specifies that the Langevin
+\item \feature{VIRTUAL_SITES_THERMOSTAT} specifies that the Langevin
   thermostat should also act on virtual sites
-\item \texttt{THERMOSTAT_IGNORE_NON_VIRTUAL} specifies that the
+\item \feature{THERMOSTAT_IGNORE_NON_VIRTUAL} specifies that the
   thermostat does not act on non-virtual particles
 \end{itemize}
 
 \section{Grand canonical feature}
-For using ESPResSo conveniently for simulations in the grand canonical ensemble, or
+For using \es conveniently for simulations in the grand canonical ensemble, or
 other purposes, when particles of certain types are created and deleted frequently.
 
 \begin{essyntax}
@@ -1017,17 +1042,19 @@ status \asep number} \var{type}}}
 \end{features}
 
 \end{essyntax}
-By giving only a particle type as an argument, ESPResSo will initialize arrays on the
-c-level which will keep track of particles of the given type. When using the keyword
-\texttt{find} and a particle type, the command will return a randomly chosen particle
-id, for a particle of the given type. Similarly using the \texttt{delete} variant will
-delete a randomly chosen particle of the given type.  Notice however, that changing
-the type of an existing particle will not change the arrays. If the change is
-permanent, then re-initializing the arrays of the involved types will remove this
-inconsistency.
-The keyword \texttt{status} will return a list with all particles with the given type,
-similarly giving \texttt{number} as argument will return the number of particles
-which sharing the given type.
+By giving only a particle type as an argument, \es will initialize
+arrays on the c-level which will keep track of particles of the given
+type. When using the keyword \texttt{find} and a particle type, the
+command will return a randomly chosen particle id, for a particle of
+the given type. Similarly using the \texttt{delete} variant will
+delete a randomly chosen particle of the given type.  Notice however,
+that changing the type of an existing particle will not change the
+arrays. If the change is permanent, then re-initializing the arrays of
+the involved types will remove this inconsistency.  The keyword
+\texttt{status} will return a list with all particles with the given
+type, similarly giving \texttt{number} as argument will return the
+number of particles which sharing the given type.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"

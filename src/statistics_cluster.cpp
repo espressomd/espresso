@@ -18,12 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_cluster.c
+/** \file statistics_cluster.cpp
  *
  *  This file contains the necklace cluster algorithm. It can be used
  *  to identify the substructures 'pearls' and 'strings' on a linear
  *  chain.
- *  See also \ref statistics_cluster.h
+ *  See also \ref statistics_cluster.hpp
  */
 
 
@@ -254,7 +254,7 @@ int test_mesh_elements(double pos[3], int probe_part_type)
   int i;
   double dist,vec[3];
 
-  for (i=0; i<n_total_particles; i++) {
+  for (i=0; i<n_part; i++) {
     IA_parameters *ia_params = get_ia_param(partCfg[i].p.type,probe_part_type);
     get_mi_vector(vec, pos, partCfg[i].r.p);
     dist = sqrt(sqrlen(vec));

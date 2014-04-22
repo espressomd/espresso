@@ -208,16 +208,26 @@ void tclcommand_part_print_solvation(Particle *part, char *buffer, Tcl_Interp *i
   }
 }
 
+
+void tclcommand_part_print_composition(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  int ii;
+  for(ii=0;ii<LB_COMPONENTS;++ii){
+     Tcl_PrintDouble(interp, part->r.composition[ii], buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+}
+
 #endif 
 
 void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale forces ! */
-  Tcl_PrintDouble(interp, part->f.f[0]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[0]*PMASS(*part)/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.f[1]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[1]*PMASS(*part)/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.f[2]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[2]*PMASS(*part)/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
@@ -292,7 +302,7 @@ void tclcommand_part_print_bond_partners(Particle *part, char *buffer, Tcl_Inter
   updatePartCfg(WITH_BONDS);
 
   /* determine initial connectivity */
-  for (p = 0; p < n_total_particles; p++) {
+  for (p = 0; p < n_part; p++) {
     part1 = &partCfg[p];
     p1    = part1->p.identity;
     for (i = 0; i < part1->bl.n;) {
@@ -516,6 +526,9 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 #ifdef SHANCHEN
   Tcl_AppendResult(interp, " solvation ", (char *)NULL);
   tclcommand_part_print_solvation(&part, buffer, interp);
+
+  Tcl_AppendResult(interp, " composition ", (char *)NULL);
+  tclcommand_part_print_composition(&part, buffer, interp);
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -624,6 +637,9 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #ifdef SHANCHEN
     else if (ARG0_IS_S("solvation")) {
       tclcommand_part_print_solvation(&part, buffer, interp);
+    }
+    else if (ARG0_IS_S("composition")) {
+      tclcommand_part_print_composition(&part, buffer, interp);
     }
 #endif
 #ifdef ELECTROSTATICS
@@ -811,6 +827,8 @@ int tclcommand_part_parse_solvation(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_OK;
 }
+
+
 #endif
 
 
@@ -992,7 +1010,7 @@ int tclcommand_part_parse_virtual(Tcl_Interp *interp, int argc, char **argv,
 int part_parse_vs_relative(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
-    // See particle_data.h for explanation of the quantities
+    // See particle_data.hpp for explanation of the quantities
     int vs_relative_to;
     double vs_distance;
 
@@ -1210,15 +1228,6 @@ int tclcommand_part_parse_type(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_ERROR;
   }
-//#ifdef GRANDCANONICAL
-//  if ( Type_array_init ) { 
-//	  if ( add_particle_to_list(part_num) ==  ES_ERROR ){
-//		  Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
-//		  return TCL_ERROR;
-//	  }
-//  }
-//#endif
-
   return TCL_OK;
 }
 
@@ -1598,7 +1607,6 @@ int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
-#ifdef GRANDCANONICAL
 int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 
   char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
@@ -1657,8 +1665,6 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 		}
 		int id;
 		if (find_particle_type(type, &id) == ES_ERROR ){
-			//char buffer[TCL_INTEGER_SPACE + 32];
-			//sprintf(buffer, "no particle of type %d found", type);
 			Tcl_AppendResult(interp, "-1", (char *) NULL);
 			return TCL_OK;
 		}
@@ -1685,7 +1691,6 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
 		  return TCL_ERROR;
 		}
-		//if ( gc_status(type) == ES_ERROR ) {
 		if ( type_array!=(TypeList *) 0 && type_array[Index.type[type]].max_entry!= 0 ) {
 			int indexed=0;
 			for ( int i=0; i<Type.max_entry; i++) {
@@ -1702,7 +1707,6 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 					Tcl_AppendResult(interp, buffer, (char *) NULL);
 				}
 				Tcl_AppendResult(interp, " }", (char *) NULL);
-				//free(buffer);
 			}
 		}
 		else {
@@ -1760,8 +1764,6 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 	}
 	return TCL_OK;
 }
-#endif
-
 
 int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 		    int part_num, int *change)
@@ -1846,7 +1848,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 	j++;
       }
       /* set/delete bond */
-      if (change_particle_bond(part_num, bond, deleteIt) != TCL_OK) {
+      if (change_particle_bond(part_num, bond, deleteIt) != ES_OK) {
 	Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
 	free(bond);
 	return TCL_ERROR;
@@ -2167,13 +2169,11 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 	else if (ARG0_IS_S("gamma"))
 	  err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
 #endif
-#ifdef GRANDCANONICAL
 	else if (ARG0_IS_S("gc")) { 
 	  argc--;
 	  argv++;
 	  err = part_parse_gc(interp, argc, argv);
 	}
-#endif
 
     else {
       Tcl_AppendResult(interp, "unknown particle parameter \"",
@@ -2236,7 +2236,6 @@ int tclcommand_part(ClientData data, Tcl_Interp *interp,
   }
 #endif
 
-#ifdef GRANDCANONICAL
   else if ( ARG1_IS_S("gc")) {
 	 argc-=2;
 	 argv+=2;
@@ -2244,7 +2243,6 @@ int tclcommand_part(ClientData data, Tcl_Interp *interp,
 		 return TCL_ERROR;
 	 return TCL_OK;
   }
-#endif
   
 
   /* only one argument is given */

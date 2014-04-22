@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file modes.c
-    Implementation of \ref modes.h "modes.h"
+/** \file modes.cpp
+    Implementation of \ref modes.hpp "modes.h"
 */
 
 #include "modes.hpp"
@@ -63,7 +63,7 @@ double stray_cut_off = 10000000.0;
 
 void fold_all ( void ) {
   int i ;
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,zdir);
@@ -82,10 +82,10 @@ double calc_zref ( int tmpzdir ) {
 
  /* Find the mean z position of folded particles*/
   zref = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     zref += partCfg[i].r.p[zdir];
   }
-  zref = zref/(double)(n_total_particles);
+  zref = zref/(double)(n_part);
   return zref;
 }
 
@@ -369,11 +369,12 @@ int get_lipid_orients(IntList* l_orient) {
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
   //Make sure particles are sorted
+  
   if (!sortPartCfg()) {
-    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
     return -1;
   }
-  
   if ( !calc_fluctuations(height_grid, 1) ) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
@@ -452,11 +453,12 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
   //Make sure particles are sorted
+  
   if (!sortPartCfg()) {
-    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
     return -1;
   }
-  
   if ( !calc_fluctuations(height_grid, switch_fluc)) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
@@ -525,7 +527,7 @@ int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList
   fold_all( );
 
 
-   for (i = 0 ; i < n_total_particles ; i++) {
+   for (i = 0 ; i < n_part ; i++) {
     for ( j = 0 ; j < nbeadtypes ; j++ ) {
       if ( beadids->e[j] == partCfg[i].p.type ) {
 	/* What is the relative height compared to the grid */
@@ -631,7 +633,7 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
 
   zref = calc_zref( tmpzdir );
 
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     for ( j = 0 ; j < nbeadtypes ; j++ ) {
       if ( beadids->e[j] == partCfg[i].p.type ) {
 
@@ -784,7 +786,7 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   zref = calc_zref( zdir );
   
   /* Calculate an initial height function of all particles */
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
     gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
     height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
@@ -809,7 +811,7 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   
   /* Calculate the non normalized height function based on all lipids */
   nup = ndown = nstray = nrealstray = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
+  for (i = 0 ; i < n_part ; i++) {
     gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
     gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
     

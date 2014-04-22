@@ -19,10 +19,11 @@
 # This script appends the sample list of features to the file 
 #   myconfig-sample.h.
 #
+from __future__ import print_function
 import sys, featuredefs, time, string, fileinput
 
 if len(sys.argv) != 2:
-    print >> sys.stderr, "Usage: %s DEFFILE" % sys.argv[0]
+    print("Usage: %s DEFFILE" % sys.argv[0], file=sys.stderr)
     exit(2)
 
 deffilename = sys.argv[1]
@@ -39,17 +40,17 @@ for line in fileinput.input(deffilename):
 
     # Handle empty and comment lines
     if len(line) == 0:
-        print 
+        print() 
         continue
     elif line.startswith('#'):
         continue
     elif line.startswith('//') or line.startswith('/*'):
-        print line
+        print(line)
         continue
 
     # Tokenify line
     feature = line.split(None, 1)[0]
 
     if feature in defs.features and feature not in featuresdone:
-        print '//#define %s' % feature
+        print('//#define %s' % feature)
         featuresdone.add(feature)

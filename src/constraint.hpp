@@ -21,10 +21,10 @@
 #ifndef _CONSTRAINT_H
 #define _CONSTRAINT_H
 
-/** \file constraint.h
+/** \file constraint.hpp
  *  Routines for handling of constraints.
  *  Only active if the feature CONSTRAINTS is activated.
- *  see also \ref interaction_data.h
+ *  see also \ref interaction_data.hpp
  */
 
 #include "particle_data.hpp"
@@ -74,6 +74,10 @@ void calculate_plane_dist(Particle *p1, double ppos[3],
 
 void calculate_stomatocyte_dist( Particle *p1, double ppos [3], 
         Particle *c_p, Constraint_stomatocyte *cons, 
+        double *dist, double *vec );
+
+void calculate_hollow_cone_dist( Particle *p1, double ppos [3], 
+        Particle *c_p, Constraint_hollow_cone *cons, 
         double *dist, double *vec );
 
 void add_rod_force(Particle *p1, double ppos[3], 

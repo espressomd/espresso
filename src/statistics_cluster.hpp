@@ -20,7 +20,7 @@
 */
 #ifndef STATISTICS_CLUSTER_H
 #define STATISTICS_CLUSTER_H
-/** \file statistics_cluster.h
+/** \file statistics_cluster.hpp
  *
  *  1: This file contains the necklace cluster algorithm. It can be used
  *  to identify the substructures 'pearls' and 'strings' on a linear

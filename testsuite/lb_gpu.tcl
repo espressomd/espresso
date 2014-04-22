@@ -30,7 +30,6 @@ source "tests_common.tcl"
 
 require_feature "LB_GPU"
 require_feature "LENNARD_JONES"
-require_feature "ADRESS" off
 
 puts "----------------------------------------"
 puts "- Testcase lb_gpu.tcl running on [format %02d [setmd n_nodes]] nodes  -"
@@ -117,12 +116,12 @@ thermostat off
 
 set components [setmd lb_components]
 if {$components==1} {
-  lbfluid gpu agrid $agrid dens $dens visc $viscosity agrid $agrid tau $tau
-  lbfluid friction $friction
+  lbfluid gpu agrid $agrid dens $dens visc $viscosity agrid $agrid tau $tau \
+              friction $friction
 }
 if {$components==2} {
-  lbfluid gpu agrid $agrid dens $dens $dens visc $viscosity $viscosity agrid $agrid tau $tau sc_coupling 0.0 0.0 0.0 
-  lbfluid friction $friction $friction
+  lbfluid gpu agrid $agrid dens $dens $dens visc $viscosity $viscosity agrid $agrid tau $tau sc_coupling 0.0 0.0 0.0 \
+              friction $friction $friction
   exit 0
 }
 

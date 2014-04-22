@@ -20,7 +20,7 @@
 */
 #ifndef _INTERACTION_DATA_H
 #define _INTERACTION_DATA_H
-/** \file interaction_data.h
+/** \file interaction_data.hpp
     Various procedures concerning interactions between particles.
 */
 
@@ -189,6 +189,8 @@
 #define CONSTRAINT_RHOMBOID 10
 /** Constraint for a stomatocyte boundary */
 #define CONSTRAINT_STOMATOCYTE 11
+/** Constraint for a hollow cone boundary */
+#define CONSTRAINT_HOLLOW_CONE 12
 /*@}*/
 
 /* Data Types */
@@ -453,20 +455,6 @@ typedef struct {
   double mol_cut_cutoff;
 #endif
   
-#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
-  /** \name Tabulated potential */
-  /*@{*/
-  int ADRESS_TAB_npoints;
-  int ADRESS_TAB_startindex;
-  double ADRESS_TAB_minval;
-  double ADRESS_TAB_maxval;
-  double ADRESS_TAB_stepsize;
-  /** The maximum allowable filename length for a tabulated potential file*/
-#define MAXLENGTH_ADRESSTABFILE_NAME 256
-  char ADRESS_TAB_filename[MAXLENGTH_ADRESSTABFILE_NAME];
-  /*@}*/    
-#endif
-
 #ifdef TUNABLE_SLIP
   double TUNABLE_SLIP_temp;
   double TUNABLE_SLIP_gamma;
@@ -481,26 +469,14 @@ typedef struct {
   double REACTION_range;
 #endif
 
+#ifdef SHANCHEN
+  double affinity[LB_COMPONENTS];
+  int affinity_on;
+#endif
+
 } IA_parameters;
 
 /** thermodynamic force parameters */
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-typedef struct{
-  int TF_TAB_npoints;
-  int TF_TAB_startindex;
-  
-  double TF_prefactor;
-  double TF_TAB_minval;
-  double TF_TAB_maxval;
-  double TF_TAB_stepsize;
-#define MAXLENGTH_TF_FILENAME 256
-  char TF_TAB_filename[MAXLENGTH_TF_FILENAME];
-  
-} TF_parameters;
-/* #endif */
-#endif
 
 /** \name Compounds for Coulomb interactions */
 /*@{*/
@@ -592,7 +568,7 @@ typedef struct {
 #ifdef BOND_ANGLE_OLD
     /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
-	potential which you may chose with a compiler flag in the file \ref config.h !
+	potential which you may chose with a compiler flag in the file \ref config.hpp !
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi) */
     struct {
@@ -690,7 +666,7 @@ typedef struct {
     /** Parameters for three body angular potential (bond-angle potentials) that 
         depends on distance to wall constraint.
 	ATTENTION: Note that there are different implementations of the bond angle
-	potential which you may chose with a compiler flag in the file \ref config.h !
+	potential which you may chose with a compiler flag in the file \ref config.hpp !
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi)
 	dist0 - equilibrium distance (no default) */
@@ -735,6 +711,7 @@ typedef struct {
   /** whether the constraint is penetrable 1 or not 0*/
   int penetrable; 
   int reflecting;
+  int only_positive;
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */
@@ -795,6 +772,8 @@ typedef struct {
   /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
   double length;
   int reflecting;
+  double outer_rad_left;
+  double outer_rad_right;
 } Constraint_pore;
 
 /** Parameters for a ROD constraint. */
@@ -838,7 +817,7 @@ typedef struct {
   double position_y;
   double position_z;
 
-  /** Stomatocyte position. */
+  /** Stomatocyte orientation. */
 
   double orientation_x;
   double orientation_y;
@@ -860,6 +839,44 @@ typedef struct {
   int reflecting;
 
 } Constraint_stomatocyte;
+
+/** Parameters for a HOLLOW_CONE constraint. */
+typedef struct {
+
+  /** Hollow cone position. */
+
+  double position_x;
+  double position_y;
+  double position_z;
+
+  /** Hollow cone orientation. */
+
+  double orientation_x;
+  double orientation_y;
+  double orientation_z;
+
+  /** Hollow cone dimensions. */
+
+  double inner_radius;
+  double outer_radius;
+  double width;
+  double opening_angle;
+
+  /** Inside/Outside (+1 outside -1 inside interaction direction)*/
+
+  double direction;
+
+  /** whether the constraint is penetrable 1 or not 0*/
+
+  int penetrable; 
+  int reflecting;
+
+} Constraint_hollow_cone;
+
+/** Parameters for a BOX constraint. */
+typedef struct {
+  int value;
+} Constraint_box;
 
 //ER
 /** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
@@ -890,6 +907,7 @@ typedef struct {
     Constraint_maze maze;
     Constraint_pore pore;
     Constraint_stomatocyte stomatocyte;
+    Constraint_hollow_cone hollow_cone;
     //ER
     Constraint_ext_magn_field emfield;
     //end ER
@@ -926,20 +944,6 @@ extern DoubleList tabulated_forces;
 /** Array containing all tabulated energies*/
 extern DoubleList tabulated_energies;
 
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-/** Array containing all adress tabulated forces*/
-extern DoubleList adress_tab_forces;
-/** Array containing all adress tabulated energies*/
-extern DoubleList adress_tab_energies;
-#endif
-/* #ifdef THERMODYNAMIC_FORCE */
-extern DoubleList thermodynamic_forces;
-
-extern DoubleList thermodynamic_f_energies;
-/* #endif */
-#endif
-
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded interactions). */
@@ -968,17 +972,6 @@ int coulomb_set_bjerrum(double bjerrum);
 int dipolar_set_Dbjerrum(double bjerrum);
 #endif
 
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-/** Function for initializing adress force and energy tables */
-void adress_force_and_energy_tables_init();
-#endif
-/* #ifdef THERMODYNAMIC_FORCE */
-void tf_tables_init();
-/* #endif */
-
-#endif
-
 /** copy a set of interaction parameters. */
 void copy_ia_params(IA_parameters *dst, IA_parameters *src);
 
@@ -993,13 +986,6 @@ inline IA_parameters *get_ia_param(int i, int j) {
     Slower than @ref get_ia_param, but can also be used on not
     yet present particle types*/
 IA_parameters *get_ia_param_safe(int i, int j);
-
-#ifdef ADRESS 
-inline TF_parameters *get_tf_param(int i) {
-  extern TF_parameters *tf_params;
-  return &tf_params[i];
-}
-#endif
 
 /** Makes sure that ia_params is large enough to cover interactions
     for this particle type. The interactions are initialized with values
@@ -1018,17 +1004,13 @@ void make_bond_type_exist(int type);
     the other nodes.  */
 void realloc_ia_params(int nsize);
 
-#ifdef ADRESS
-void realloc_tf_params(int nsize);
-#endif
-
 /** calculates the maximal cutoff of all real space
     interactions. these are: bonded, non bonded + real space
     electrostatics. The result is stored in the global variable
     max_cut. The maximal cutoff of the non-bonded + real space
     electrostatic interactions is stored in max_cut_non_bonded. This
     value is used in the verlet pair list algorithm (see \ref
-    verlet.h). */
+    verlet.hpp). */
 void recalc_maximal_cutoff();
 
 /** call when the temperature changes, for Bjerrum length adjusting. */
@@ -1050,10 +1032,6 @@ inline int checkIfParticlesInteract(int i, int j) {
 
 ///
 const char *get_name_of_bonded_ia(int i);
-
-#ifdef ADRESS
-int checkIfTF(TF_parameters *data);
-#endif
 
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);

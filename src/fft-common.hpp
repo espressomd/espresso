@@ -21,10 +21,10 @@
 #ifndef _FFT_COMMON_H
 #define _FFT_COMMON_H
 
-#include <config.hpp>
-#include <fftw3.h>
-
+#include "config.hpp"
 #if defined(P3M) || defined(DP3M)
+
+#include <fftw3.h>
 
 /************************************************
  * data types
@@ -147,7 +147,7 @@ void fft_common_pre_init(fft_data_struct *fft);
  *  and grid2. The return value is the size of the communication
  *  group. It gives -1 if the two grids do not fit to each other
  *  (grid1 and grid2 have to be component wise multiples of each
- *  other. see e.g. \ref calc_2d_grid in \ref grid.c for how to do
+ *  other. see e.g. \ref calc_2d_grid in \ref grid.cpp for how to do
  *  this.).
  *
  * \param grid1       The node grid you start with (Input).

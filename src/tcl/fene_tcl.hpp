@@ -21,7 +21,7 @@
 #ifndef FENE_TCL_H
 #define FENE_TCL_H
 /** \file fene_tcl.hpp
- * Tcl interface for \ref fene.h
+ * Tcl interface for \ref fene.hpp
  */
 
 #include "parser.hpp"

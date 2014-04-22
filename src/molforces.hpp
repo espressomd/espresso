@@ -23,7 +23,7 @@
 #include "utils.hpp"
 #include "grid.hpp"
 
-/** \file molforces.h
+/** \file molforces.hpp
  *  Routines for calculating and applying trap forces upon molecules.
  *  This trap force can be set to
  *  - a harmonic potential with a restlength of zero on the molecular centre of mass
@@ -32,7 +32,7 @@
  *  The centre of mass can be fixed to an absolute position or to a relative position in the
  *  simulation box.
  *  The molecular trap forces is distributed evenly upon all particles in a molecule.
- *  (see file \ref topology.c and file \ref molforces.c)  
+ *  (see file \ref topology.cpp and file \ref molforces.cpp)  
  */
 
 #ifdef MOLFORCES

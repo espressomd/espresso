@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file energy_tcl.c
+/** \file energy_tcl.cpp
  *
  *  Implements the analyze energy command.
  */
@@ -127,7 +127,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
   int i, j;
   double value;
   value = 0.0;
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -189,7 +189,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       for (i = 0; i < total_energy.n_coulomb; i++)
 	value += total_energy.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see myconfig.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see myconfig.hpp)\n", (char *)NULL);
 #endif
     }    
     else if( ARG0_IS_S("magnetic")) {
@@ -198,7 +198,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       for (i = 0; i < total_energy.n_dipolar; i++)
 	value += total_energy.dipolar[i];
 #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see myconfig.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see myconfig.hpp)\n", (char *)NULL);
 #endif
     }
     

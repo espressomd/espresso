@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-/** \file metadynamics.h 
+/** \file metadynamics.hpp 
 *
 *  This file contains routines to perform metadynamics.  Right now, the
 *  reaction coordinate is defined between two particles. Note that these

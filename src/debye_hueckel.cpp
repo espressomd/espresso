@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file debye_hueckel.c
+/** \file debye_hueckel.cpp
  *
- *  Implementation of \ref debye_hueckel.h
+ *  Implementation of \ref debye_hueckel.hpp
  */
 #include "utils.hpp"
 #include "debye_hueckel.hpp"

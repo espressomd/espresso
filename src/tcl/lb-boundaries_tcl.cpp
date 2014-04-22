@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb-boundaries_tcl.c
+/** \file lb-boundaries_tcl.cpp
  *
  * Boundary conditions parser file for Lattice Boltzmann fluid dynamics.
  *
@@ -30,6 +30,7 @@
 #include "interaction_data.hpp"
 #include "lb-boundaries.hpp"
 #include "communication.hpp"
+#include <limits>
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
@@ -40,6 +41,7 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
 int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
 
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
@@ -191,6 +193,37 @@ int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
       Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
       break;
 
+    case LB_BOUNDARY_HOLLOW_CONE:
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.position_x, buffer);
+      Tcl_AppendResult(interp, "hollow_cone center ", buffer, " ", (char *) NULL);
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.position_y, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.position_z, buffer);
+      Tcl_AppendResult(interp, buffer, (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.orientation_x, buffer);
+      Tcl_AppendResult(interp, " orientation ", buffer, " ", (char *) NULL);
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.orientation_y, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.orientation_z, buffer);
+      Tcl_AppendResult(interp, buffer, (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.outer_radius, buffer);
+      Tcl_AppendResult(interp, " outer radius ", buffer, " ", (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.inner_radius, buffer);
+      Tcl_AppendResult(interp, " inner radius ", buffer, " ", (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.width, buffer);
+      Tcl_AppendResult(interp, " width ", buffer, " ", (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.opening_angle, buffer);
+      Tcl_AppendResult(interp, " opening angle ", buffer, " ", (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.hollow_cone.direction, buffer);
+      Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
+      break;
+
 		default:
 		  sprintf(buffer, "%d", lbb->type);
 		  Tcl_AppendResult(interp, "unknown lbboundary type ", buffer, ".", (char *) NULL);
@@ -219,14 +252,25 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 LB_Boundary *generate_lbboundary()
 {
   n_lb_boundaries++;
+
   lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+
   lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
+  
   lb_boundaries[n_lb_boundaries-1].velocity[0]=
   lb_boundaries[n_lb_boundaries-1].velocity[1]=
   lb_boundaries[n_lb_boundaries-1].velocity[2]=0;
+  
   lb_boundaries[n_lb_boundaries-1].force[0]=
   lb_boundaries[n_lb_boundaries-1].force[1]=
   lb_boundaries[n_lb_boundaries-1].force[2]=0;
+  
+#ifdef EK_BOUNDARIES
+  if (ek_initialized)
+  {
+    lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
+  }  
+#endif
   
   return &lb_boundaries[n_lb_boundaries-1];
 }
@@ -235,7 +279,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 {
   int i;
   double norm;
-  
+
   lbb->type = LB_BOUNDARY_WAL;
   
   /* invalid entries to start of */
@@ -485,6 +529,31 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
       
       argc -= 2; argv += 2;
     }
+    else if(ARG_IS_S(0, "velocity")) {
+      if(argc < 4) {
+	      Tcl_AppendResult(interp, "lbboundary cylinder velocity <vx> <vy> <vz> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->velocity[0])) == TCL_ERROR ||
+      	 Tcl_GetDouble(interp, argv[2], &(lbb->velocity[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(lbb->velocity[2])) == TCL_ERROR)
+	      return (TCL_ERROR);
+
+      if (lattice_switch & LATTICE_LB_GPU) {	
+#ifdef LB_GPU
+        /* No velocity rescaling is required */
+#endif
+      } else {	
+#ifdef LB
+        lbb->velocity[0]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[1]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[2]*=lbpar.tau/lbpar.agrid;
+#endif
+			}
+      
+      argc -= 4; argv += 4;
+    }
     else
       break;
   }
@@ -588,6 +657,31 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				
       argc -= 4; argv += 4;
     }
+    else if(ARG_IS_S(0, "velocity")) {
+        if(argc < 4) {
+            Tcl_AppendResult(interp, "lbboundary rhomboid velocity <vx> <vy> <vz> expected", (char *) NULL);
+            return (TCL_ERROR);
+        }
+        
+        if(Tcl_GetDouble(interp, argv[1], &(lbb->velocity[0])) == TCL_ERROR ||
+           Tcl_GetDouble(interp, argv[2], &(lbb->velocity[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(lbb->velocity[2])) == TCL_ERROR)
+            return (TCL_ERROR);
+        
+        if (lattice_switch & LATTICE_LB_GPU) {	
+#ifdef LB_GPU
+            /* No velocity rescaling is required */
+#endif
+        } else {	
+#ifdef LB
+            lbb->velocity[0]*=lbpar.tau/lbpar.agrid;
+            lbb->velocity[1]*=lbpar.tau/lbpar.agrid;
+            lbb->velocity[2]*=lbpar.tau/lbpar.agrid;
+#endif
+        }
+        
+        argc -= 4; argv += 4;
+    }
     else if(ARG_IS_S(0, "direction")) {
       if (argc < 2) {
 				Tcl_AppendResult(interp, "lbboundary rhomboid direction {inside|outside} expected", (char *) NULL);
@@ -666,6 +760,9 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   
   lbb->c.pore.smoothing_radius = 1.;
   
+  lbb->c.pore.outer_rad_left = std::numeric_limits<double>::max();
+  lbb->c.pore.outer_rad_right = std::numeric_limits<double>::max();
+  
   while (argc > 0) {
     if(ARG_IS_S(0, "center")) {
       if(argc < 4) {
@@ -705,7 +802,19 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
       lbb->c.pore.rad_right =  lbb->c.pore.rad_left; 
       argc -= 2; argv += 2;
     }
-    else if(ARG_IS_S(0, "smoothing_radius")) {
+    else if(!strncmp(argv[0], "outer_radius", strlen(argv[0]))) {
+      if(argc < 1) {
+    	  Tcl_AppendResult(interp, "lbboundary pore outer_radius <rad> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      lbb->c.pore.outer_rad_right =  lbb->c.pore.outer_rad_left; 
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -730,7 +839,21 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      
       argc -= 3; argv += 3;
     }
-    else if(ARG_IS_S(0, "length")) {
+    else if(!strncmp(argv[0], "outer_radii", strlen(argv[0]))) {
+      if(argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary pore outer_radii <rad_left> <rad_right> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      if (Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.outer_rad_right)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      argc -= 3; argv += 3;
+    }
+    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary pore length <len/2> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -903,12 +1026,190 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
   return (TCL_OK);
 }
 
+
+int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
+{
+  /* DON'T PLAY WITH THIS CONSTRAINT UNLESS
+     YOU KNOW WHAT IT IS THAT YOU ARE DOING */
+
+  lbb->type = LB_BOUNDARY_HOLLOW_CONE;
+
+  /* invalid entries to start of */
+
+  lbb->c.hollow_cone.position_x = -M_PI;
+  lbb->c.hollow_cone.position_y = -M_PI;
+  lbb->c.hollow_cone.position_z = -M_PI;
+  lbb->c.hollow_cone.orientation_x = -M_PI;
+  lbb->c.hollow_cone.orientation_y = -M_PI;
+  lbb->c.hollow_cone.orientation_z = -M_PI;
+  lbb->c.hollow_cone.outer_radius = -1.0;
+  lbb->c.hollow_cone.inner_radius = -1.0;
+  lbb->c.hollow_cone.width = -1.0;
+  lbb->c.hollow_cone.opening_angle = -1.0;
+  lbb->c.hollow_cone.direction = 0;
+
+  /* read the data */
+
+  while ( argc > 0 )
+  {
+    if ( ARG_IS_S( 0, "center" ) ) 
+    {
+      if(argc < 4) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary hollow_cone center <x> <y> <z> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.position_x ) ||
+	         !ARG_IS_D( 2, lbb->c.hollow_cone.position_y ) ||
+	         !ARG_IS_D( 3, lbb->c.hollow_cone.position_z ) )
+      {
+	      return (TCL_ERROR);
+      }
+
+      argc -= 4; argv += 4;
+    }
+    else if ( ARG_IS_S( 0, "orientation" ) ) 
+    {
+      if(argc < 4) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary hollow_cone orientation <ox> <oy> <oz> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.orientation_x ) ||
+	         !ARG_IS_D( 2, lbb->c.hollow_cone.orientation_y ) ||
+	         !ARG_IS_D( 3, lbb->c.hollow_cone.orientation_z ) )
+      {
+	      return (TCL_ERROR);
+      }
+
+      argc -= 4; argv += 4;
+    }
+    else if ( ARG_IS_S( 0, "outer_radius" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary hollow_cone outer_radius <Ro> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D(1, lbb->c.hollow_cone.outer_radius ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "inner_radius" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary hollow_cone inner_radius <Ri> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.inner_radius ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "width" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary hollow_cone width <w> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.width ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "opening_angle" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary hollow_cone opening_angle <alpha> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.opening_angle ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "direction" ) ) 
+    {
+      if ( argc < 2 ) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary hollow_cone direction {-1|1} or {inside|outside} is expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( ARG_IS_S( 1, "inside" ) )
+	      lbb->c.hollow_cone.direction = -1;
+      else if ( ARG_IS_S( 1, "outside" ) )
+	      lbb->c.hollow_cone.direction = 1;
+      else if ( !ARG_IS_D( 1, lbb->c.hollow_cone.direction ) )
+	      return (TCL_ERROR); 
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  if ( lbb->c.hollow_cone.outer_radius < 0.0 || 
+       lbb->c.hollow_cone.inner_radius < 0.0 || 
+       lbb->c.hollow_cone.width < 0.0 ) 
+  {
+    Tcl_AppendResult(interp, "hollow_cone radii and width have to be greater than zero",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  if ( lbb->c.hollow_cone.opening_angle < 0.0 || 
+       lbb->c.hollow_cone.opening_angle > M_PI ) 
+  {
+    Tcl_AppendResult(interp, "hollow_cone requires 0.0 <= opening_angle <= Pi",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  if ( fabs( fmod( lbb->c.hollow_cone.outer_radius , 1.0 ) ) < 1.0e-05 || 
+       fabs( fmod( lbb->c.hollow_cone.inner_radius , 1.0 ) ) < 1.0e-05 || 
+       fabs( fmod( lbb->c.hollow_cone.width , 1.0 ) ) < 1.0e-05 )
+  {
+      fprintf( stderr, "Warning: Using (almost) exact integer values for the radii or width.\n");
+      fprintf( stderr, "         can lead to numerical problems when the LB grid points coincide\n");
+      fprintf( stderr, "         with the lattice, for specific values of the position and\n");
+      fprintf( stderr, "         orientation. Consider adding or subtracting a small number\n");
+      fprintf( stderr, "         to/from the specified sizes to overcome such problems.\n");
+      fflush(stdout);
+  }
+
+  return (TCL_OK);
+}
+
+
+int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
+{  
+  lbb->type = LB_BOUNDARY_BOX;
+  lbb->c.box.value = 0;
+
+  return (TCL_OK);
+}
+
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 
 int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
   int status = TCL_ERROR, c_num;
+  
+  if ( lattice_switch == LATTICE_OFF ) {
+    fprintf (stderr ,"WARNING: Specifying boundaries before using lbfluid assumes a CPU implementation of the LB.\n");
+    fprintf (stderr ,"WARNING: This will lead to unexpected behavior if a GPU LB fluid is later used since the boundaries wont exist.\n");
+  }
 
   if (argc < 2)
     return tclcommand_lbboundary_print_all(interp);
@@ -950,6 +1251,13 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
   }
   else if(ARG_IS_S(1, "stomatocyte")) {
     status = tclcommand_lbboundary_stomatocyte(generate_lbboundary(),interp, argc - 2, argv + 2);
+    if (lattice_switch & LATTICE_LB_GPU) {
+        mpi_bcast_lbboundary(-3);
+    } else 
+        mpi_bcast_lbboundary(-1);
+  }
+  else if(ARG_IS_S(1, "hollow_cone")) {
+    status = tclcommand_lbboundary_hollow_cone(generate_lbboundary(),interp, argc - 2, argv + 2);
     if (lattice_switch & LATTICE_LB_GPU) {
         mpi_bcast_lbboundary(-3);
     } else 
@@ -1006,7 +1314,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
     status = TCL_OK;
   }
   else {
-    Tcl_AppendResult(interp, "possible lbboundary parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, delete {c} to delete lbboundary",(char *) NULL);
+    Tcl_AppendResult(interp, "possible lbboundary parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, delete {c} to delete lbboundary",(char *) NULL);
     return (TCL_ERROR);
   }
 

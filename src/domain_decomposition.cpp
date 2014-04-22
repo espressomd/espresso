@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file domain_decomposition.c
+/** \file domain_decomposition.cpp
  *
  *  This file contains everything related to the cell system: domain decomposition.
- *  See also \ref domain_decomposition.h
+ *  See also \ref domain_decomposition.hpp
  */
 
 #include "domain_decomposition.hpp"
@@ -444,7 +444,7 @@ void dd_update_communicators_w_boxl()
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
  * created list of interacting neighbor cells is used by the verlet
- * algorithm (see verlet.c) to build the verlet lists.
+ * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void dd_init_cell_interactions()
 {
@@ -778,7 +778,9 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	  for (p = 0; p < cell->n; p++) {
 	    part = &cell->part[p];
 	    /* Move particles to the left side */
-	    if(part->r.p[dir] - my_left[dir] < -ROUND_ERROR_PREC*box_l[dir]) {
+	    // Without the factor 0.5 in front of ROUND_ERROR_PREC, particles sitting exactly on the boundary 
+	    // may be accepted (i.e. not sent) here and rejected later on by dd_save_position_to_cell
+	    if(part->r.p[dir] - my_left[dir] < -0.5*ROUND_ERROR_PREC*box_l[dir]) {
 #ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir]==0) ) 
 #endif
@@ -790,7 +792,8 @@ void  dd_exchange_and_sort_particles(int global_flag)
 		}
 	    }
 	    /* Move particles to the right side */
-	    else if(part->r.p[dir] - my_right[dir] >= ROUND_ERROR_PREC*box_l[dir]) {
+	    // Factor 0.5 see above
+	    else if(part->r.p[dir] - my_right[dir] >= 0.5*ROUND_ERROR_PREC*box_l[dir]) {
 #ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir+1]==0) ) 
 #endif

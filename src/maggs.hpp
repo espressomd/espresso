@@ -20,7 +20,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
  */
 
-/** \file maggs.h
+/** \file maggs.hpp
  *  Maxwell Equations Molecular Dynamics (MEMD) method for electrostatic
  *  interactions.
  *
@@ -90,9 +90,9 @@ extern MAGGS_struct maggs;
 /*@{*/
 
 /** initialization function, parse command and set parameters.
-    Called from \ref initialize.c
+    Called from \ref initialize.cpp
 */
-void maggs_init(); /** called from: initialize.c */
+void maggs_init(); /** called from: initialize.cpp */
 
 /** set the main parameters for the algorithm.
     @param bjerrum   Bjerrum length for the system
@@ -118,7 +118,7 @@ int maggs_get_mesh_1D();
 double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon);
 
 /** Propagate the B-field in the system.
-    Called TWICE from \ref integrate.c with timestep dt/2 to ensure time-reversibility of the integrator.
+    Called TWICE from \ref integrate.cpp with timestep dt/2 to ensure time-reversibility of the integrator.
     @param dt Timestep for which to propagate the field.
 */
 void maggs_propagate_B_field(double dt);

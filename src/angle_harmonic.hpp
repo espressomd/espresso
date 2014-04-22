@@ -20,10 +20,10 @@
 */
 #ifndef ANGLE_HARMONIC_H
 #define ANGLE_HARMONIC_H
-/** \file angle_harmonic.h
+/** \file angle_harmonic.hpp
  *  Routines to calculate the angle energy or/and and force 
  *  for a particle triple.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"
@@ -36,7 +36,7 @@
 /** set parameters for the angle potential.
 
     \todo The type of the angle potential
-    is chosen via config.h and cannot be changed at runtime.
+    is chosen via config.hpp and cannot be changed at runtime.
 */
 int angle_harmonic_set_params(int bond_type, double bend, double phi0);
 

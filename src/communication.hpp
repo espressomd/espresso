@@ -20,10 +20,10 @@
 */
 #ifndef _COMMUNICATION_H
 #define _COMMUNICATION_H
-/** \file communication.h
+/** \file communication.hpp
     This file contains the asynchronous MPI communication.
  
-    It is the header file for \ref communication.c "communication.c".
+    It is the header file for \ref communication.cpp "communication.c".
 
     The asynchronous MPI communication is used during the script
     evaluation. Except for the master node that interpretes the Tcl
@@ -40,7 +40,7 @@
     following:
     - write the mpi_* function that is executed on the master
     - write the mpi_*_slave function
-    - Add your slave function to CALLBACK_LIST in communication.c
+    - Add your slave function to CALLBACK_LIST in communication.cpp
 
     After this your procedure is free to do anything. However, it has
     to be in (MPI) sync with what your new mpi_*_slave does.  This
@@ -92,7 +92,7 @@ void mpi_stop();
 void mpi_finalize();
 
 /** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-    @param i the number from \ref global.h "global.h" referencing the datafield.
+    @param i the number from \ref global.hpp "global.hpp" referencing the datafield.
     @return nonzero on error
 */
 int mpi_bcast_parameter(int i);
@@ -106,7 +106,7 @@ void mpi_who_has();
     <li> PARTICLE_CHANGED
     <li> INTERACTION_CHANGED
     </ul>
-    Then all nodes execute the respective on_* procedure from \ref initialize.c
+    Then all nodes execute the respective on_* procedure from \ref initialize.cpp
     Note that not all of these codes are used. Since some actions (like placing a
     particle) include communication anyways, this is handled by the way.
 */
@@ -144,14 +144,13 @@ void mpi_send_v(int node, int part, double v[3]);
 */
 void mpi_send_f(int node, int part, double F[3]);
 
-/** Issue REQ_SET_SOLV: send particle solvation free energy 
-    Also calls \ref on_particle_change.
+/** issue req_set_solv: send particle solvation free energy 
+    also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
     \param solvation its new solvation free energy.
 */
 void mpi_send_solvation(int node, int part, double *solvation);
-
 
 
 /** Issue REQ_SET_M: send particle mass.
@@ -328,13 +327,6 @@ int mpi_integrate(int n_steps);
                if negative: flag for bonded interaction */
 void mpi_bcast_ia_params(int i, int j);
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-void mpi_bcast_tf_params(int i);
-/* #endif */
-#endif
-
-
 /** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
     \param s the new size for \ref ia_params.
 */
@@ -404,6 +396,9 @@ void mpi_set_time_step(double time_step);
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();
+
+/** send new collision parameters. */
+void mpi_bcast_collision_params();
 
 /** Issue REQ_SEND_EXT_FORCE: send nex external flag and external force. */
 void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3]);
@@ -477,7 +472,7 @@ void mpi_update_mol_ids(void);
 int mpi_sync_topo_part_info(void);
 
 /** Issue REQ_BCAST_LBPAR: Broadcast a parameter for Lattice Boltzmann.
- * @param field References the parameter field to be broadcasted. The references are defined in \ref lb.h "lb.h"
+ * @param field References the parameter field to be broadcasted. The references are defined in \ref lb.hpp "lb.hpp"
  */
 void mpi_bcast_lb_params(int field);
 

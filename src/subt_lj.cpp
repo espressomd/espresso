@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file subt_lj.c
+/** \file subt_lj.cpp
  *
- *  Implementation of \ref subt_lj.h
+ *  Implementation of \ref subt_lj.hpp
  */
 #include "subt_lj.hpp"
 

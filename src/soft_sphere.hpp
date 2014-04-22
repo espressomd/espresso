@@ -21,10 +21,10 @@
 #ifndef soft_H
 #define soft_H
 
-/** \file soft_sphere.h
+/** \file soft_sphere.hpp
  *  Routines to calculate the soft-sphere energy and/or  force 
  *  for a particle pair.
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"

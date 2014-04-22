@@ -94,7 +94,7 @@ class defs:
                         raise SyntaxError("<feature> external", line)
                     if feature in derived:
                         raise SyntaxError("External feature is already defined as derived above:", line);
-                    implied = set(map((lambda (x,y):y), implications))
+                    implied = set(map((lambda x_y:x_y[1]), implications))
                     if feature in implied:
                         raise SyntaxError("External feature is implied above:", line);
                     externals.add(feature)
@@ -149,7 +149,7 @@ class defs:
 
         # handle requirements
         featurevars=dict()
-        derived = map((lambda(x,y,z):x), self.derivations)
+        derived = list(map((lambda x_y_z:x_y_z[0]), self.derivations))
         allfeatures = self.features.union(derived, self.externals)
         for feature in allfeatures:
             featurevars[feature] = feature in newset

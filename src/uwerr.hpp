@@ -20,7 +20,7 @@
 */
 #ifndef _UWERR_H
 #define _UWERR_H
-/** \file uwerr.h
+/** \file uwerr.hpp
  *
 */
 double UWerr_dsum_double(double * v, double * w, int len);

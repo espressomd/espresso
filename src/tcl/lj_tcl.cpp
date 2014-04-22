@@ -68,12 +68,17 @@ int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** arg
   return tclcommand_inter_parse_forcecap(interp, argc, argv);
 }
 
+
+
 int tclcommand_inter_parse_lj(Tcl_Interp * interp,
 			      int part_type_a, int part_type_b,
 			      int argc, char ** argv)
 {
   /* parameters needed for LJ */
   double eps, sig, cut, shift, offset, cap_radius, min;
+#ifdef SHANCHEN
+  double *affinity=NULL;
+#endif
   int compute_auto_shift, change;
 
   /* get lennard-jones interaction type */

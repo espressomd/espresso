@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file initialize.c
-    Implementation of \ref initialize.h "initialize.h"
+/** \file initialize.cpp
+    Implementation of \ref initialize.hpp "initialize.hpp"
 */
 #include "utils.hpp"
 #include "initialize.hpp"
@@ -56,7 +56,6 @@
 #include "rattle.hpp"
 #include "lattice.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
-#include "adresso.hpp"
 #include "metadynamics.hpp"
 #include "statistics_observable.hpp"
 #include "statistics_correlation.hpp"
@@ -64,7 +63,8 @@
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"
 #include "p3m_gpu.hpp"
-#include "cuda_common.hpp"
+#include "cuda_init.hpp"
+#include "cuda_interface.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -74,7 +74,7 @@ static int reinit_magnetostatics = 0;
 static int lb_reinit_particles_gpu = 1;
 #endif
 
-#if defined(LB_GPU) || defined(ELECTROSTATICS)
+#ifdef CUDA
 static int reinit_particle_comm_gpu = 1;
 #endif
 
@@ -115,14 +115,6 @@ void on_program_start()
   ghost_init();
   /* Initialise force and energy tables */
   force_and_energy_tables_init();
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-  adress_force_and_energy_tables_init();
-#endif
-  /* #ifdef THERMODYNAMIC_FORCE */
-  tf_tables_init();
-  /* #endif */
-#endif
 #ifdef P3M
   p3m_pre_init();
 #endif
@@ -245,41 +237,43 @@ void on_integration_start()
   }
 #endif
 #ifdef LB_GPU
-if(this_node == 0){
-  if(lattice_switch & LATTICE_LB_GPU) {
-    if (lbpar_gpu.agrid < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
-    }
-    if (lbpar_gpu.tau < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
-    }
-    for(int i=0;i<LB_COMPONENTS;i++){
-       if (lbpar_gpu.rho[0] < 0.0) {
-         errtext = runtime_error(128);
-         ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
-       }
-       if (lbpar_gpu.viscosity[0] < 0.0) {
-         errtext = runtime_error(128);
-         ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
-       }
-    }
+  if(this_node == 0){
+    if(lattice_switch & LATTICE_LB_GPU) {
+      if (lbpar_gpu.agrid < 0.0) {
+        errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+      }
+      if (lbpar_gpu.tau < 0.0) {
+        errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+      }
+      for(int i=0;i<LB_COMPONENTS;i++){
+        if (lbpar_gpu.rho[0] < 0.0) {
+          errtext = runtime_error(128);
+          ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+        }
+        if (lbpar_gpu.viscosity[0] < 0.0) {
+          errtext = runtime_error(128);
+          ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+        }
+      }
 
-    if (lb_reinit_particles_gpu) {
-      lb_realloc_particles_gpu();
-      lb_reinit_particles_gpu = 0;
+      if (lb_reinit_particles_gpu) {
+        lb_realloc_particles_gpu();
+        lb_reinit_particles_gpu = 0;
+      }
     }
   }
-}
 #endif
-#if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
+  //#if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
+#ifdef CUDA
   if (reinit_particle_comm_gpu){
     gpu_change_number_of_part_to_comm();
     reinit_particle_comm_gpu = 0;
   }
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
 #endif
+  //#endif
 
 
 #ifdef METADYNAMICS
@@ -287,19 +281,19 @@ if(this_node == 0){
 #endif
 
 #ifdef CATALYTIC_REACTIONS
-if(reaction.ct_rate != 0.0) {
+  if(reaction.ct_rate != 0.0) {
 
-   if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition} ");
-      check_runtime_errors();
+    if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+        errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition} ");
+        check_runtime_errors();
     }
 
-  if(max_cut < reaction.range) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{106 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
+    if(max_cut < reaction.range) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{106 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
+    }
   }
-}
 #endif
 
   /********************************************/
@@ -317,7 +311,7 @@ if(reaction.ct_rate != 0.0) {
   /* Ensemble preparation: NVT or NPT */
   integrate_ensemble_init();
 
-  /* Update particle and observable information for routines in statistics.c */
+  /* Update particle and observable information for routines in statistics.cpp */
   invalidate_obs();
   freePartCfg();
 
@@ -508,7 +502,8 @@ void on_resort_particles()
   case COULOMB_MMM2D:
     MMM2D_on_resort_particles();
     break;
-  default: break;
+  default: 
+    break;
   }
 #endif /* ifdef ELECTROSTATICS */
   

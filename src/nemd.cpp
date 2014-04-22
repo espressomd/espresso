@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file nemd.c
+/** \file nemd.cpp
 
-    For more information see \ref nemd.h
+    For more information see \ref nemd.hpp
  */
 #include "nemd.hpp"
 #include <cstdio>

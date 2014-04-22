@@ -16,48 +16,60 @@ function end() {
     echo "END $1"
 }
 
-function bootstrap() {
-    cd $SRCDIR
-    start "BOOTSTRAP"
-    ./bootstrap.sh
-    end "BOOTSTRAP"
-    cd $BUILDDIR
+function cmd() {
+    echo ">$1"
+    eval $1
 }
 
-function configure() {
-    start "CONFIGURE"
-    $SRCDIR/configure $@
-    end "CONFIGURE"
+function outp() {
+    for p in $*; do
+        echo "  $p=${!p}"
+    done
 }
 
-function use_myconfig() {
-    myconfig=$SRCDIR/testsuite/configs/myconfig-$1.hpp
-    if [ ! -e "$myconfig" ]; then
-        echo "$myconfig does not exist!"
-        exit 1
+# DIR SETTINGS
+[ -z "$insource" ] && insource="true"
+[ -z "$srcdir" ] && srcdir=`pwd`
+if $insource; then
+    builddir=$srcdir
+elif [ -z "$builddir" ]; then
+    builddir=$srcdir/build
+fi
+
+outp srcdir builddir insource 
+
+if [ ! -e $srcdir/configure.ac ]; then
+    echo "Could not find configure.ac in $srcdir!"
+    exit 1
+fi
+
+if ! $insource; then
+    if [ ! -d $builddir ]; then
+        echo "Creating $builddir..."
+        mkdir -p $builddir
     fi
-    echo "Using $myconfig."
-    cp $myconfig myconfig.hpp
-}
+fi
 
-function check() {
-    start "TEST"
-    # something should be done after ||, otherwise Jenkins will mark
-    # job as failed
-    make check || CHECK_UNSTABLE=1
-    end "TEST"
-}
+# PARALLELISM SETTINGS
+if [ -n "$parallelism" ]; then
+    outp parallelism
 
-function doc() {
-    start "DOC"
-    make doc
-    end "DOC"
-}
-
-function dist() {
-    start "DIST"
-    make dist 
-    make dist-xz
-    end "DIST"
-}
+    case $parallelism in
+        ("34core") 
+            with_mpi=true 
+            check_procs="3 4"
+            ;;
+        ("3core") 
+            with_mpi=true 
+            check_procs=3
+            ;;
+        ("4core")
+            with_mpi=true
+            check_procs=4
+            ;;
+        ("nompi")
+            with_mpi=false
+            ;;
+    esac
+fi
 

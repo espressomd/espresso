@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file magnetic_non_p3m_methods.c  All 3d non P3M methods to deal with the magnetic dipoles
+/** \file magnetic_non_p3m_methods.cpp  All 3d non P3M methods to deal with the magnetic dipoles
  *   
  *  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
  *   Handling of a system of dipoles where no replicas 
@@ -218,23 +218,23 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
   if(n_nodes!=1) {fprintf(stderr,"error: magnetic Direct Sum is just for one cpu .... \n"); exit(1);}
   if(!(force_flag) && !(energy_flag) ) {fprintf(stderr," I don't know why you call dawaanr_caclulations with all flags zero \n"); return 0;}
 
-  x = (double *) malloc(sizeof(double)*n_total_particles);
-  y = (double *) malloc(sizeof(double)*n_total_particles);
-  z = (double *) malloc(sizeof(double)*n_total_particles);
+  x = (double *) malloc(sizeof(double)*n_part);
+  y = (double *) malloc(sizeof(double)*n_part);
+  z = (double *) malloc(sizeof(double)*n_part);
 
-  mx = (double *) malloc(sizeof(double)*n_total_particles);
-  my = (double *) malloc(sizeof(double)*n_total_particles);
-  mz = (double *) malloc(sizeof(double)*n_total_particles);
+  mx = (double *) malloc(sizeof(double)*n_part);
+  my = (double *) malloc(sizeof(double)*n_part);
+  mz = (double *) malloc(sizeof(double)*n_part);
  
   if(force_flag) {
-    fx = (double *) malloc(sizeof(double)*n_total_particles);
-    fy = (double *) malloc(sizeof(double)*n_total_particles);
-    fz = (double *) malloc(sizeof(double)*n_total_particles);
+    fx = (double *) malloc(sizeof(double)*n_part);
+    fy = (double *) malloc(sizeof(double)*n_part);
+    fz = (double *) malloc(sizeof(double)*n_part);
  
 #ifdef ROTATION   
-    tx = (double *) malloc(sizeof(double)*n_total_particles);
-    ty = (double *) malloc(sizeof(double)*n_total_particles);
-    tz = (double *) malloc(sizeof(double)*n_total_particles);
+    tx = (double *) malloc(sizeof(double)*n_part);
+    ty = (double *) malloc(sizeof(double)*n_part);
+    tz = (double *) malloc(sizeof(double)*n_part);
 #endif  
   }
  

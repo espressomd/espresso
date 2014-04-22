@@ -18,9 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file constraint.c
-    Implementation of \ref constraint.h "constraint.h", here it's just the parsing stuff.
+/** \file constraint.cpp
+    Implementation of \ref constraint.hpp "constraint.h", here it's just the parsing stuff.
 */
+#include <limits>
 #include "constraint.hpp"
 #include "communication.hpp"
 #include "parser.hpp"
@@ -47,6 +48,8 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->c.wal.penetrable);
     Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.wal.only_positive);
+    Tcl_AppendResult(interp, " only_positive ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_SPH:
     Tcl_PrintDouble(interp, con->c.sph.pos[0], buffer);
@@ -169,7 +172,6 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_STOMATOCYTE:
-
     Tcl_PrintDouble(interp, con->c.stomatocyte.position_x, buffer);
     Tcl_AppendResult(interp, "stomatocyte center ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, con->c.stomatocyte.position_y, buffer);
@@ -195,6 +197,36 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
     sprintf(buffer, "%d", con->c.stomatocyte.penetrable);
     Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.stomatocyte.reflecting, buffer);
+    Tcl_AppendResult(interp, " reflecting ", buffer, (char *) NULL);
+    break;
+  case CONSTRAINT_HOLLOW_CONE:
+    Tcl_PrintDouble(interp, con->c.hollow_cone.position_x, buffer);
+    Tcl_AppendResult(interp, "hollow_cone center ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.position_y, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.position_z, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.orientation_x, buffer);
+    Tcl_AppendResult(interp, " orientation ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.orientation_y, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.orientation_z, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.outer_radius, buffer);
+    Tcl_AppendResult(interp, " outer radius ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.inner_radius, buffer);
+    Tcl_AppendResult(interp, " inner radius ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.width, buffer);
+    Tcl_AppendResult(interp, " width ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.opening_angle, buffer);
+    Tcl_AppendResult(interp, " opening angle ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.direction, buffer);
+    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.p.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.hollow_cone.penetrable);
+    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.hollow_cone.reflecting, buffer);
     Tcl_AppendResult(interp, " reflecting ", buffer, (char *) NULL);
     break;
 //ER
@@ -266,6 +298,7 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
     con->c.wal.n[2] = 0;
   con->c.wal.d = 0;
   con->c.wal.penetrable = 0;
+  con->c.wal.only_positive = 0;
   con->part_rep.p.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "normal", strlen(argv[0]))) {
@@ -312,6 +345,15 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       }
       if (Tcl_GetInt(interp, argv[1], &(con->c.wal.reflecting)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "only_positive", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint wall only_positive {0|1} expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.wal.only_positive)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -745,6 +787,9 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
   con->c.pore.reflecting = 0;
   con->part_rep.p.type = -1;
   con->c.pore.smoothing_radius = 1.;
+  con->c.pore.outer_rad_left = std::numeric_limits<double>::max();
+  con->c.pore.outer_rad_right = std::numeric_limits<double>::max();
+  
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 4) {
@@ -779,6 +824,16 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       con->c.pore.rad_right =  con->c.pore.rad_left; 
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "outer_radius", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore outer_radius <rad> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.outer_rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      con->c.pore.outer_rad_right =  con->c.pore.outer_rad_left; 
+      argc -= 2; argv += 2;
+    }
     else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
       if (argc < 1) {
 	Tcl_AppendResult(interp, "constraint pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
@@ -796,6 +851,17 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.rad_left)) == TCL_ERROR)
 	return (TCL_ERROR);
       if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.rad_right)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 3; argv += 3;
+    }
+    else if(!strncmp(argv[0], "outer_radii", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore outer_radii <rad_left> <rad_right> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.outer_rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.outer_rad_right)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 3; argv += 3;
     }
@@ -1110,6 +1176,200 @@ static int tclcommand_constraint_parse_stomatocyte(Constraint *con, Tcl_Interp *
   return (TCL_OK);
 }
 
+static int tclcommand_constraint_parse_hollow_cone(Constraint *con, Tcl_Interp *interp,
+		      int argc, char **argv)
+{
+  con->type = CONSTRAINT_HOLLOW_CONE;
+
+  /* invalid entries to start of */
+
+  con->c.hollow_cone.position_x = -M_PI;
+  con->c.hollow_cone.position_y = -M_PI;
+  con->c.hollow_cone.position_z = -M_PI;
+  con->c.hollow_cone.orientation_x = -M_PI;
+  con->c.hollow_cone.orientation_y = -M_PI;
+  con->c.hollow_cone.orientation_z = -M_PI;
+  con->c.hollow_cone.outer_radius = -1.0;
+  con->c.hollow_cone.inner_radius = -1.0;
+  con->c.hollow_cone.width = -1.0;
+  con->c.hollow_cone.opening_angle = -1.0;
+  con->c.hollow_cone.direction = 0;
+  con->c.hollow_cone.penetrable = 0;
+  con->c.hollow_cone.reflecting = 0;
+  con->part_rep.p.type = -1;
+
+  /* read the data */
+
+  while ( argc > 0 )
+  {
+    if ( ARG_IS_S( 0, "center" ) ) 
+    {
+      if(argc < 4) 
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone center <x> <y> <z> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, con->c.hollow_cone.position_x ) ||
+	         !ARG_IS_D( 2, con->c.hollow_cone.position_y ) ||
+	         !ARG_IS_D( 3, con->c.hollow_cone.position_z ) )
+      {
+	      return (TCL_ERROR);
+      }
+
+      argc -= 4; argv += 4;
+    }
+    else if ( ARG_IS_S( 0, "orientation" ) ) 
+    {
+      if(argc < 4) 
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone orientation <ox> <oy> <oz> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, con->c.hollow_cone.orientation_x ) ||
+	         !ARG_IS_D( 2, con->c.hollow_cone.orientation_y ) ||
+	         !ARG_IS_D( 3, con->c.hollow_cone.orientation_z ) )
+      {
+	      return (TCL_ERROR);
+      }
+
+      argc -= 4; argv += 4;
+    }
+    else if ( ARG_IS_S( 0, "outer_radius" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone outer_radius <Ro> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D(1, con->c.hollow_cone.outer_radius ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "inner_radius" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone inner_radius <Ri> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, con->c.hollow_cone.inner_radius ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "width" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone width <w> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, con->c.hollow_cone.width ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "opening_angle" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone opening_angle <alpha> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, con->c.hollow_cone.opening_angle ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "direction" ) ) 
+    {
+      if ( argc < 2 ) 
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone direction {-1|1} or {inside|outside} is expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( ARG_IS_S( 1, "inside" ) )
+	      con->c.hollow_cone.direction = -1;
+      else if ( ARG_IS_S( 1, "outside" ) )
+	      con->c.hollow_cone.direction = 1;
+      else if ( !ARG_IS_D( 1, con->c.hollow_cone.direction ) )
+	      return (TCL_ERROR); 
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "type" ) ) 
+    {
+      if ( argc < 2 )
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone type <t> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_I( 1, con->part_rep.p.type ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "penetrable" ) ) 
+    {
+      if ( argc < 2 ) 
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone penetrable {0|1} expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_I( 1, con->c.hollow_cone.penetrable ) ) 
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "reflecting" ) ) 
+    {
+      if (argc < 1) 
+      {
+	      Tcl_AppendResult(interp, "constraint hollow_cone reflecting {0|1} expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_I( 1, con->c.hollow_cone.reflecting ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  if ( con->c.hollow_cone.outer_radius < 0.0 || 
+       con->c.hollow_cone.inner_radius < 0.0 || 
+       con->c.hollow_cone.width < 0.0 ) 
+  {
+    Tcl_AppendResult(interp, "hollow_cone radii and width have to be greater than zero",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  if ( con->c.hollow_cone.opening_angle < 0.0 || 
+       con->c.hollow_cone.opening_angle > M_PI ) 
+  {
+    Tcl_AppendResult(interp, "hollow_cone requires 0.0 <= opening_angle <= Pi",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  make_particle_type_exist(con->part_rep.p.type);
+
+  return (TCL_OK);
+}
+
 static int tclcommand_constraint_parse_maze(Constraint *con, Tcl_Interp *interp,
 		      int argc, char **argv)
 {
@@ -1317,6 +1577,12 @@ static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, 
           else
             dist=1e100;
           break;
+        case CONSTRAINT_HOLLOW_CONE:
+          if ( !constraints[n].c.hollow_cone.penetrable )
+	          calculate_hollow_cone_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.hollow_cone, &dist, vec); 
+          else
+            dist=1e100;
+          break;
         case CONSTRAINT_PORE: 
 	        calculate_pore_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
           break;
@@ -1390,6 +1656,12 @@ int tclcommand_constraint_mindist_position_vec(Tcl_Interp *interp, int argc, cha
         case CONSTRAINT_STOMATOCYTE:
           if ( !constraints[n].c.stomatocyte.penetrable )
 	          calculate_stomatocyte_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.stomatocyte, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_HOLLOW_CONE:
+          if ( !constraints[n].c.hollow_cone.penetrable )
+	          calculate_hollow_cone_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.hollow_cone, &dist, vec); 
           else
             dist=1e100;
           break;
@@ -1472,6 +1744,10 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
     status = tclcommand_constraint_parse_stomatocyte(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
+  else if(!strncmp(argv[1], "hollow_cone", strlen(argv[1]))) {
+    status = tclcommand_constraint_parse_hollow_cone(generate_constraint(),interp, argc - 2, argv + 2);
+    mpi_bcast_constraint(-1);
+  }
   //ER
   else if(!strncmp(argv[1], "ext_magn_field", strlen(argv[1]))) {
     status = tclcommand_constraint_parse_ext_magn_field(generate_constraint(),interp, argc - 2, argv + 2);
@@ -1517,7 +1793,7 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
   }
   else {
   //ER "ext_magn_field" was put in the next line //end ER
-    Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder maze pore stomatocyte ext_magn_field or constraint delete {c} to delete constraint(s)",(char *) NULL);
+    Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder maze pore stomatocyte hollow_cone ext_magn_field or constraint delete {c} to delete constraint(s)",(char *) NULL);
     return (TCL_ERROR);
   }
 

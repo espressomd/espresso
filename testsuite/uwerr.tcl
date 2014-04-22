@@ -49,7 +49,7 @@ if { [catch {
 	error "uwerr does not give the correct number of values back"
     }
 
-    for e $expect g $got {
+    foreach e $expect g $got {
 	if {abs(($e - $g)/$g) > $epsilon} {
 	    error "uwerr deviations too large, expecting $e, not $g"
 	}

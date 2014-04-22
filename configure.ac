@@ -37,7 +37,7 @@ AM_INIT_AUTOMAKE([1.11 gnu subdir-objects dist-xz])
 AM_MAINTAINER_MODE
 
 # silent rules, backwards compatiblity
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Are we in an unpacked dist or in the git repo?
 AC_MSG_CHECKING([whether we are using development sources])
@@ -150,7 +150,7 @@ cat <<EOF
 ****************************************************************
 EOF
 
-AC_PROG_RANLIB
+LT_INIT([disable-static])
 AC_PROG_AWK
 AC_PROG_EGREP
 AC_PROG_INSTALL
@@ -168,19 +168,7 @@ AM_CONDITIONAL(HAVE_LATEX,
 	[test .$PDFLATEX != .no && 
 	test .$MAKEINDEX != .no && 
 	test .$BIBTEX != .no])
-AC_PATH_PROG(PYTHON,python,no)
-AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
 
-if test .$PYTHON != .no; then
-   # Check whether python -B works
-   AC_MSG_CHECKING([whether python -B works])
-   if $PYTHON -B -c pass > /dev/null 2>&1; then
-      PYTHON="$PYTHON -B"
-      AC_MSG_RESULT(yes)
-   else
-      AC_MSG_RESULT(no)
-   fi
-fi
 
 cat <<EOF
 ****************************************************************
@@ -219,137 +207,6 @@ EOF
 
 LIBS="$LIBS -lm"
 
-##################################
-# check for tcl
-AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
-
-AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
-            [specify the tcl library to use (e.g. tcl8.4)]),
-            [], [with_tcl=yes])
-dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
-dnl with_tcl=no   bail out
-dnl otherwise     use the specified version
-
-if test .$with_tcl = .no; then
-   AC_MSG_WARN([
-*********************************************************
-*                                                       *
-* Without Tcl, ESPResSo doesn't do anything useful yet! *
-*                                                       *
-*********************************************************
-])
-   use_tcl=none
-   AC_DEFINE(TCL,[],[Whether Tcl is available])
-elif test .$with_tcl = .yes; then
-	for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
-		ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
-		if test .$use_tcl != .; then break; fi
-	done
-else
-	ES_ADDPATH_CHECK_LIB($with_tcl, Tcl_Init, [use_tcl=$with_tcl])
-fi
-
-# check the results
-if test .$use_tcl = . ; then
-   # Tcl was not found
-   case $target_os in
-	*darwin*) AC_MSG_NOTICE(
-[If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
-there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
-/Library/Frameworks/Tcl.framework/Tcl.]) ;;
-	*) AC_MSG_FAILURE([
-********************************************************************************
-* Could not link against the (static) Tcl library (libtcl*.a).                 *
-* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)!  *
-********************************************************************************
-]) ;;
-   esac
-fi
-
-case $target_os in
-  *darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Headers ;;
-  *linux*)  # path used by *buntu
-	  extrapaths=/usr/include/$version ;;
-esac
-
-if test .$use_tcl != .none; then
-   ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
-			[AC_MSG_FAILURE([
-********************************************************************************
-* Could not find the Tcl header files (tcl.h).                                 *
-* Please add the include path to CPPFLAGS                                      *
-* (e.g. configure CPPFLAGS=-I/usr/include)!                                    *
-********************************************************************************
-])], $extrapaths)
-fi
-
-if test .$use_tcl = .; then
-   use_tcl=none
-fi
-
-AM_CONDITIONAL(TCL, [test .$use_tcl != .none])
-
-##################################
-# check for tk
-AC_ARG_WITH(tk,
-	AS_HELP_STRING([--with-tk=VERSION],[whether to use Tk, and which version to use]),
-	[], [with_tk=no])
-dnl with_tk=no   don't use Tk
-dnl with_tk=yes  try to find a working Tk version, bail out if none is found
-dnl otherwise    use the specified version
-if test .$with_tk != .no; then
-	# test for X11
-	AC_PATH_XTRA
-	saved_CPPFLAGS=$CPPFLAGS
-	saved_LDFLAGS=$LDFLAGS
-	saved_LIBS=$LIBS
-	CPPFLAGS="$CPPFLAGS $X_CXXFLAGS"
-	LDFLAGS="$LDFLAGS $X_LIBS"
-	LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
-	AC_LINK_IFELSE([AC_LANG_CALL([],[XOpenDisplay])],[x11_works=yes],[x11_works=no])
-	if test $x11_works = no; then
-		AC_MSG_WARN([could not link against X11, hoping Tk works without])
-		CPPFLAGS=$saved_CPPFLAGS
-		LDFLAGS=$saved_LDFLAGS
-		LIBS=$saved_LIBS
-	fi
-	# now test whether Tk can be found
-	if test .$with_tk = .yes; then
-		for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk; do
-			ES_ADDPATH_CHECK_LIB($version, Tk_Init, [use_tk=$version], [])
-			if test .$use_tk != .; then break; fi
-		done
-	else
-		ES_ADDPATH_CHECK_LIB($with_tk, Tk_Init, [use_tk=$with_tk], [])
-	fi
-	if test .$use_tk = .; then
-		case $target_os in
-		(*darwin*) AC_MSG_ERROR([If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
-there is a link from lib<tkversion>.dylib to the Tk library, which usually is
-/Library/Frameworks/Tk.framework/Tk.]) ;;
-		(*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
-		esac
-	fi
-	if test .$use_tk = .tk; then
-		if test .$use_tcl != .tcl; then
-			AC_MSG_WARN([You are using a generic Tk version, but a defined Tcl version. This may cause problems.
-Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
-		fi
-	fi
-	case $target_os in
-	*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
-	*linux*)  # path used by *buntu
-		  extrapaths="/usr/include/$version /usr/include/$use_tcl" ;;
-	(*) ;;
-	esac
-	ES_ADDPATH_CHECK_HEADER(tk.h, [], 
-		[AC_MSG_ERROR([Tk headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4).])
-		]
-		,$extrapaths)
-	AC_DEFINE_UNQUOTED(TK,$use_tk,[Whether to use Tk])
-else
-	use_tk=none
-fi
 
 ##################################
 # check for FFTW
@@ -383,14 +240,14 @@ AS_IF([test x$fftw_found = xyes],[
 ##################################
 # check for CUDA
 AC_MSG_CHECKING([whether to use CUDA])
-
 AC_ARG_WITH([cuda],
 	AS_HELP_STRING([--with-cuda@<:@=DIR@:>@], [specify
 	where CUDA is installed.  The cuda compiler can also be
 	specified by setting the NVCC environment variable. The CUDA
 	library and header can be manually specified by using
 	CPPFLAGS, LDFLAGS and LIBS. [guess]]), ,
-	with_cuda=guess) AC_MSG_RESULT($with_cuda)
+	with_cuda=guess) 
+AC_MSG_RESULT($with_cuda)
 
 AS_IF([test x$with_cuda = xguess || test x$with_cuda = xyes],[
    cuda_path=/usr/local/cuda
@@ -403,44 +260,24 @@ cuda_ok=no
 
 AS_IF([test x$with_cuda != xno],[
     cuda_ok=yes
+
+    # save current libs in case CUDA is not enabled at the end
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
-    save_CXX=$CXX
-    save_CXXFLAGS=$CXXFLAGS
-
-    AS_IF([test x$NVCC = x],[
-        NVCC=$cuda_path/bin/nvcc
-    ])
-
-    AS_IF([test -d $cuda_path/lib64],[
-        LDFLAGS="$LDFLAGS -L$cuda_path/lib64"
-    ],[
-        LDFLAGS="$LDFLAGS -L$cuda_path/lib"
-    ])
-
-    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
-    AS_IF([test x"$use_mpi_fake" = xyes], [
-        NVCCFLAGS="$NVCCFLAGS -I./mpifake"
-    ],[
-        NVCCFLAGS="$NVCCFLAGS -I/usr/include/mpi"
-    ])
-    case $target in
-        x86_64-apple-darwin*)
-                NVCCFLAGS="$NVCCFLAGS -m64";;
-    esac
-    CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
 
     # NVCC
-    AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
-    AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
-    AC_PATH_PROG(NVCC, nvcc, no)
+    AC_PROG_CUDA
 
     AS_IF([test x$NVCC = xno],[
-        AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
+        ],[
+            AC_MSG_WARN([could not find the CUDA compiler (nvcc). Some features will not be available!])
+        ])
     ])
 
-    # libraries
-    AC_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
+    # since we link with mpic++, we need to find the cuda libraries manually
+    ES_ADDPATH_CHECK_LIB(cudart, cudaGetDevice, [], [
         cuda_ok=no
         
         AS_IF([test x$with_cuda = xyes],[
@@ -448,9 +285,9 @@ AS_IF([test x$with_cuda != xno],[
         ],[
             AC_MSG_WARN([could not find cuda runtime library (cudart). Some features will not be available!])
         ])
-    ])
+    ], [$cuda_path/lib $cuda_path/lib64])
 
-    AC_CHECK_LIB(cufft, cufftPlan3d, [LIBS="$LIBS -lcufft"], [
+    ES_ADDPATH_CHECK_LIB(cufft, cufftPlan3d, [], [
         cuda_ok=no
         
         AS_IF([test x$with_cuda = xyes],[
@@ -458,17 +295,7 @@ AS_IF([test x$with_cuda != xno],[
         ],[
             AC_MSG_WARN([could not find cuda FFT library (cufft). Some features will not be available!])
         ])
-    ])
-
-    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
-        cuda_ok=no
-        
-        AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
-        ],[
-            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
-        ])
-    ])
+    ], [$cuda_path/lib $cuda_path/lib64])
 
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
@@ -482,11 +309,16 @@ AS_IF([test x$with_cuda != xno],[
     # use nvcc
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
-    save_CXX=$CXX
-    save_CXXFLAGS=$CXXFLAGS
-    
+    save_noncuda_CXX=$CXX
+    save_noncuda_CXXFLAGS=$CXXFLAGS
+    save_noncuda_LDFLAGS=$LDFLAGS
+    save_noncuda_LIBS=$LIBS
+
     CXX=$NVCC
     CXXFLAGS="$NVCCFLAGS -x cu"
+    # libtool linking options likely break NVCC linking, sort out all but simple -L options
+    LDFLAGS="-Xlinker `echo $LDFLAGS | sed -e ['s|-[^L][^ 	]*||g' -e 's|[ 	][ 	]*|,|g']`"
+    LIBS="-Xlinker `echo $LIBS | sed ['s|[ 	][ 	]*|,|g']`"
     
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
         AC_MSG_RESULT(yes)
@@ -506,29 +338,215 @@ AS_IF([test x$with_cuda != xno],[
     AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[int no; cudaGetDeviceCount(&no);])], [
         AC_MSG_RESULT(yes)
     ],[
-        cuda_ok=no
         AC_MSG_RESULT(no)
         AS_IF([test x$with_cuda = xyes],[
-            AC_MSG_FAILURE([cannot run CUDA code. Look at config.log for more details.])
+            cuda_running=no
+            AC_MSG_WARN([cannot run CUDA code. Look at config.log for more details. Still compiling since explicitely requested.])
         ],[
+            cuda_ok=no
             AC_MSG_WARN([cannot run CUDA code. Some features will not be available!])
         ])
     ],[
         AC_MSG_RESULT([unknown (cross-compiling)])
     ])
-    
-    CXX=$save_CXX
-    CXXFLAGS=$save_CXXFLAGS
+
+    CXX=$save_noncuda_CXX
+    CXXFLAGS=$save_noncuda_CXXFLAGS
+    LDFLAGS=$save_noncuda_LDFLAGS
+    LIBS=$save_noncuda_LIBS
     
     AS_IF([test x$cuda_ok == xyes], [
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
+        # reset standard compiler options
         LIBS=$save_LIBS
         LDFLAGS=$save_LDFLAGS
     ])
 ])
 
 AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
+
+cat <<EOF
+****************************************************************
+*                  Checking for Python                         *
+****************************************************************
+EOF
+
+# check whether the python interpreter is available
+# This is needed for automatic generation of myconfig etc.
+AM_PATH_PYTHON([2.5],,no)
+AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
+if test .$PYTHON != .no; then
+   # Check whether python -B works
+   AC_MSG_CHECKING([whether python -B works])
+   if $PYTHON -B -c pass > /dev/null 2>&1; then
+     PYTHON="$PYTHON -B"
+     AC_MSG_RESULT(yes)
+   else
+     AC_MSG_RESULT(no)
+   fi
+fi
+
+AC_MSG_CHECKING([whether to build the python interface])
+AC_ARG_WITH([python-interface], AS_HELP_STRING([--with-python-interface], 
+                      [specify whether or not to use python]),
+                      [], [with_python_interface=no])
+AC_MSG_RESULT($with_python_interface)
+dnl with_python_interface=yes  try to find a working PYTHON devel version, 
+dnl                            bail out if none is found
+dnl with_python_interface=no   do not use python interface
+
+if test .$with_python_interface != .no; then
+   AX_PYTHON_DEVEL([>= '2.5'])
+
+   AC_PATH_PROG(CYTHON,cython,no)
+   AS_IF([test x$CYTHON = xno],[
+      AC_MSG_FAILURE([cython not found, which is necessary for the Python interface])
+   ])
+
+   AX_PYTHON_MODULE(numpy, required)
+   AC_MSG_CHECKING([for numpy include path])
+   NUMPY_INCLUDE="`$PYTHON -c 'import numpy; import sys; sys.stdout.write(numpy.get_include())'`"
+   PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
+   AC_MSG_RESULT([$NUMPY_INCLUDE])
+   AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])
+fi
+AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
+
+cat <<EOF
+****************************************************************
+*                  Checking for Tcl/Tk                         *
+****************************************************************
+EOF
+
+AC_MSG_CHECKING([whether to build the Tcl interface])
+AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
+            [specify the tcl library to use (e.g. tcl8.4)]),
+            [], [with_tcl=yes])
+AC_MSG_RESULT($with_tcl)
+
+dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
+dnl with_tcl=no   bail out
+dnl otherwise     use the specified version
+
+AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
+
+if test .$with_tcl = .no; then
+   use_tcl=none
+elif test .$with_tcl = .yes; then
+	for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
+		ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
+		if test .$use_tcl != .; then break; fi
+	done
+        AC_DEFINE(TCL,[],[Whether Tcl is available])
+else
+	ES_ADDPATH_CHECK_LIB($with_tcl, Tcl_Init, [use_tcl=$with_tcl])
+fi
+
+# check the results
+if test .$use_tcl = . ; then
+   # Tcl was not found
+   case $target_os in
+	*darwin*) AC_MSG_NOTICE(
+[If you have Tcl installed, make sure that either libtcl<tclversion>.dylib is
+ in one of the library paths set by LDFLAGS, or that you set the appropriate
+ apple gcc -framework option in CPPFLAGS and LDFLAGS.]) ;;
+	*) AC_MSG_FAILURE([
+********************************************************************************
+* Could not link against the (static) Tcl library (libtcl*.a).                 *
+* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)!  *
+********************************************************************************
+]) ;;
+   esac
+fi
+
+case $target_os in
+  *linux*)  # path used by *buntu
+	  extrapaths=/usr/include/$version ;;
+esac
+
+if test .$use_tcl != .none; then
+   ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
+			[AC_MSG_FAILURE([
+********************************************************************************
+* Could not find the Tcl header files (tcl.h).                                 *
+* Please add the include path to CPPFLAGS                                      *
+* (e.g. configure CPPFLAGS=-I/usr/include)!                                    *
+********************************************************************************
+])], $extrapaths)
+fi
+
+if test .$use_tcl = .; then
+   use_tcl=none
+fi
+
+AM_CONDITIONAL(TCL, [test .$use_tcl != .none])
+
+##################################
+# check for tk
+
+AC_MSG_CHECKING([whether to use Tk])
+AC_ARG_WITH(tk,
+	AS_HELP_STRING([--with-tk=VERSION],[whether to use Tk, and which version to use]),
+	[], [with_tk=no])
+AC_MSG_RESULT($with_tcl)
+
+dnl with_tk=no   don't use Tk
+dnl with_tk=yes  try to find a working Tk version, bail out if none is found
+dnl otherwise    use the specified version
+if test .$with_tk != .no; then
+	# test for X11
+	AC_PATH_XTRA
+	saved_CPPFLAGS=$CPPFLAGS
+	saved_LDFLAGS=$LDFLAGS
+	saved_LIBS=$LIBS
+	CPPFLAGS="$CPPFLAGS $X_CXXFLAGS"
+	LDFLAGS="$LDFLAGS $X_LIBS"
+	LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
+	AC_LINK_IFELSE([AC_LANG_CALL([],[XOpenDisplay])],[x11_works=yes],[x11_works=no])
+	if test $x11_works = no; then
+		AC_MSG_WARN([could not link against X11, hoping Tk works without])
+		CPPFLAGS=$saved_CPPFLAGS
+		LDFLAGS=$saved_LDFLAGS
+		LIBS=$saved_LIBS
+	fi
+	# now test whether Tk can be found
+	if test .$with_tk = .yes; then
+		for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk; do
+			ES_ADDPATH_CHECK_LIB($version, Tk_Init, [use_tk=$version], [])
+			if test .$use_tk != .; then break; fi
+		done
+	else
+		ES_ADDPATH_CHECK_LIB($with_tk, Tk_Init, [use_tk=$with_tk], [])
+	fi
+	if test .$use_tk = .; then
+		case $target_os in
+		*darwin*) AC_MSG_ERROR(
+[If you have Tk installed, make sure that either libtcl<tclversion>.dylib is
+ in one of the library paths set by LDFLAGS, or that you set the appropriate
+ apple gcc -framework option in CPPFLAGS and LDFLAGS.]) ;;
+		*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
+		esac
+	fi
+	if test .$use_tk = .tk; then
+		if test .$use_tcl != .tcl; then
+			AC_MSG_WARN([You are using a generic Tk version, but a defined Tcl version. This may cause problems.
+Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
+		fi
+	fi
+	case $target_os in
+	*linux*)  # path used by *buntu
+		  extrapaths="/usr/include/$version /usr/include/$use_tcl" ;;
+	(*) ;;
+	esac
+	ES_ADDPATH_CHECK_HEADER(tk.h, [], 
+		[AC_MSG_ERROR([Tk headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4).])
+		]
+		,$extrapaths)
+	AC_DEFINE_UNQUOTED(TK,$use_tk,[Whether to use Tk])
+else
+	use_tk=none
+fi
 
 cat <<EOF
 ****************************************************************
@@ -551,15 +569,21 @@ AC_MSG_RESULT($with_efence)
 
 ##################################
 # Handling the myconfig-header
-AC_ARG_WITH(myconfig, 
-  AS_HELP_STRING([--with-myconfig=FILE],
-                 [default name of the local config file [FILE=myconfig.hpp]]),
-[ test .$with_myconfig = .no && with_myconfig=myconfig.hpp ],
-[ with_myconfig=myconfig.hpp ])
-AC_MSG_CHECKING([the name of the configuration header])
-myconfig=$with_myconfig
-AC_MSG_RESULT($myconfig)
-AC_SUBST(myconfig)
+AC_ARG_VAR([MYCONFIG], 
+           [Which myconfig file to use. @<:@myconfig.hpp@:>@])
+AC_MSG_CHECKING([whether the variable MYCONFIG is set])
+AS_IF([test "x$MYCONFIG" != "x"], [
+  AC_MSG_RESULT(yes)
+  AC_MSG_CHECKING([whether file $MYCONFIG exists])
+  if ! test -f $MYCONFIG; then
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([MYCONFIG file $MYCONFIG does not exist!])
+  fi
+],[
+  AC_MSG_RESULT(no)
+  MYCONFIG="myconfig.hpp"
+])
+AM_CONDITIONAL(MYCONFIG, [test x$MYCONFIG != xmyconfig.hpp])
 
 ##################################
 # Number of CPUs
@@ -589,10 +613,11 @@ AC_CONFIG_FILES([
 	config/Makefile
 	config/myconfig-sample-header.hpp
 	src/Makefile
+        src/tcl/Makefile
+        src/python/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
-	testsuite/configs/Makefile
 	doc/Makefile
 	doc/logo/Makefile
 	doc/ug/Makefile
@@ -601,6 +626,7 @@ AC_CONFIG_FILES([
 	doc/tutorials/Makefile
 	doc/tutorials/01-lennard_jones/Makefile 
 	doc/tutorials/02-charged_system/Makefile 
+	doc/tutorials/03-object_in_fluid/Makefile 
 	doc/latexit.sh
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
@@ -638,18 +664,50 @@ linker flags		= $LDFLAGS
 libraries		= $LIBS
 using debug flags	= $enable_debug
 using profiling flags	= $enable_profiling
-inline			= $MDINLINE
 
 Libraries
 ---------
-Tcl version		= $use_tcl
-Tk version		= $use_tk
 FFTW 			= $fftw_found
 efence			= $with_efence
 
+EOF
+
+if test x$cuda_ok = xyes; then
+cat <<EOF
+Cuda
+----
+CUDA compiler		= $NVCC
+CUDA flags		= $NVCCFLAGS
+EOF
+fi
+
+cat  <<EOF
+
+Tcl/Tk
+------
+Tcl version		= $use_tcl
+Tk version		= $use_tk
+
+Python
+------
+python			= $PYTHON
+build python interface  = $with_python_interface
+EOF
+
+if test .$with_python_interface = .yes; then
+  cat <<EOF
+preprocessor flags      = $PYTHON_CPPFLAGS
+linker flags            = $PYTHON_LDFLAGS
+extra flags             = $PYTHON_EXTRA_LIBS
+extra linker flags      = $PYTHON_EXTRA_LDFLAGS
+EOF
+fi
+
+cat <<EOF
+
 Other settings
 --------------
-local config header	= $myconfig
+config                  = $MYCONFIG
 installation prefix	= $prefix
 number of test tasks    = $CPU_COUNT
 mympiexec               = $MYMPIEXEC
@@ -659,24 +717,19 @@ makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 dot			= $DOT
-python			= $PYTHON
-EOF
-
-if test x$cuda_ok = xyes; then
-cat <<EOF
-CUDA compiler		= $NVCC
-CUDA flags		= $NVCCFLAGS
 
 EOF
-else
-   echo
+
+if test x$cuda_ok = xno; then
    echo "CUDA disabled or not supported."
+fi
+if test x$cuda_running = xno; then
+   echo "CUDA enabled, but cannot run CUDA code out of the box. Make sure to set the dynamic library loader path correctly."
 fi
 
 if test x"$use_mpi_fake" = x"yes"; then
    echo "WARNING: MPI disabled or not supported! Parallelization turned off."
 fi
-
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
 fi
@@ -688,5 +741,11 @@ if test .$bibtex = .no; then
 fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
+fi
+if test .$with_python_interface = .no; then
+   echo "Not building Python interface."
+fi
+if test .$use_tcl = .no; then
+   echo "Not building Tcl interface."
 fi
 

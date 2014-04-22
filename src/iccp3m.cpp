@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file iccp3m.c
-    Detailed Information about the method is included in the corresponding header file \ref iccp3m.h.
+/** \file iccp3m.cpp
+    Detailed Information about the method is included in the corresponding header file \ref iccp3m.hpp.
 
  */
 #include <cstdlib>
@@ -231,7 +231,7 @@ int iccp3m_iteration() {
 }
 
 void force_calc_iccp3m() {
-/* The following ist mostly copied from forces.c */
+/* The following ist mostly copied from forces.cpp */
 
 /*  I don´t see the point of this part until there are electrical dipoles in Espresso, BTW, it generates a warning .. JJCP
 #ifdef DIPOLES
@@ -334,7 +334,7 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
   int estimate, sum=0;
   fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
   /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_cut_nonbonded,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+  estimate = 0.5*n_part*(4.0/3.0*PI*pow(max_cut_nonbonded,3.0))*(n_part/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
   if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
 #endif
@@ -512,7 +512,7 @@ void nsq_calculate_ia_iccp3m()
 
 void init_forces_iccp3m()
 {
-  /* copied from forces.c */
+  /* copied from forces.cpp */
   Cell *cell;
   Particle *p;
   int np, c, i;

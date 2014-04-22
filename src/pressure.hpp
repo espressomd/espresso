@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file pressure.h
-    Pressure calculation. Really similar to \ref energy.h "energy.h".
+/** \file pressure.hpp
+    Pressure calculation. Really similar to \ref energy.hpp "energy.h".
 */
 
 #ifndef _PRESSURE_H
@@ -29,7 +29,6 @@
 #include "integrate.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
-#include "adresso.hpp"
 #include "forces.hpp"
 #include "npt.hpp"
 
@@ -76,7 +75,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
 
-  calc_non_bonded_pair_force_simple(p1, p2,d, dist, dist2,force);
+  calc_non_bonded_pair_force(p1, p2,d, dist, dist2, force);
 
   *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
 
@@ -158,13 +157,6 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
   char* errtxt;
 #endif
 
-#ifdef ADRESS
-  int j;
-  double force_weight=1;
-  //adress_bonded_force_weight(p1);
-  if (force_weight<ROUND_ERROR_PREC) return;
-#endif
-
   /* Calculates the bonded force between two particles */
     switch(iaparams->type) {
     case BONDED_IA_FENE:
@@ -239,15 +231,6 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
       force[0] = force[1] = force[2] = 0;
       break;
     }
-#ifdef ADRESS
-    if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity)
-      force_weight = 1.0;
-    else
-      force_weight=adress_non_bonded_force_weight(p1,p2);
-    for (j=0;j<3;j++){
-      force[j]*=force_weight;
-    }
-#endif
 }
 
 

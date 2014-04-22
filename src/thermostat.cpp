@@ -18,14 +18,19 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file thermostat.c
-    Implementation of \ref thermostat.h "thermostat.h"
+/** \file thermostat.cpp
+    Implementation of \ref thermostat.hpp "thermostat.h"
  */
 #include "thermostat.hpp"
 #include "communication.hpp"
 #include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
+
+#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
+#define FLATNOISE
+#endif
+
 
 /* thermostat switch */
 int thermo_switch = THERMO_OFF;
@@ -66,11 +71,23 @@ double nptiso_pref4;
 void thermo_init_langevin() 
 {
   langevin_pref1 = -langevin_gamma/time_step;
+#if defined (FLATNOISE)
   langevin_pref2 = sqrt(24.0*temperature*langevin_gamma/time_step);
-
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+  langevin_pref2 = sqrt(2.0*temperature*langevin_gamma/time_step);
+#else
+#error No Noise defined
+#endif
+  
 #ifdef ROTATION 
   langevin_gamma_rotation = langevin_gamma/3;
+#if defined (FLATNOISE)
   langevin_pref2_rotation = sqrt(24.0*temperature*langevin_gamma_rotation/time_step);
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+  langevin_pref2_rotation = sqrt(2.0*temperature*langevin_gamma_rotation/time_step);
+#else
+#error No Noise defined
+#endif
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_langevin: langevin_gamma_rotation=%f, langevin_pref2_rotation=%f",this_node, langevin_gamma_rotation,langevin_pref2_rotation));
 #endif
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_langevin: langevin_pref1=%f, langevin_pref2=%f",this_node,langevin_pref1,langevin_pref2));  
@@ -80,10 +97,19 @@ void thermo_init_langevin()
 void thermo_init_npt_isotropic()
 {
   if (nptiso.piston != 0.0) {
+#if defined (FLATNOISE)
     nptiso_pref1 = -nptiso_gamma0*0.5 * time_step;
     nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * time_step;
     nptiso_pref3 = -nptiso_gammav*(1.0/nptiso.piston)*0.5*time_step;
     nptiso_pref4 = sqrt(12.0*temperature*nptiso_gammav*time_step);
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+    nptiso_pref1 = -nptiso_gamma0*0.5 * time_step;
+    nptiso_pref2 = sqrt(1.0*temperature*nptiso_gamma0*time_step) * time_step;
+    nptiso_pref3 = -nptiso_gammav*(1.0/nptiso.piston)*0.5*time_step;
+    nptiso_pref4 = sqrt(1.0*temperature*nptiso_gammav*time_step);
+#else
+#error No Noise defined
+#endif
     THERMO_TRACE(fprintf(stderr,"%d: thermo_init_npt_isotropic: nptiso_pref1=%f, nptiso_pref2=%f, nptiso_pref3=%f, nptiso_pref4=%f \n",this_node,nptiso_pref1,nptiso_pref2,nptiso_pref3,nptiso_pref4));
   }
   else {

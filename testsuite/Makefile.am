@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = configs .
-
 # alphabetically sorted list of test scripts
 tests = \
 	analysis.tcl \
@@ -33,6 +31,10 @@ tests = \
 	constraints_rhomboid.tcl \
 	dh.tcl \
 	dielectric.tcl \
+	ek_eof_one_species_x.tcl \
+	ek_eof_one_species_y.tcl \
+	ek_eof_one_species_z.tcl \
+	ek_reaction.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
@@ -53,6 +55,7 @@ tests = \
 	lb_gpu.tcl \
 	lb_planar.tcl \
 	lb_planar_gpu.tcl \
+  lb_planar_embedded_particles.tcl \
 	lb_planar_embedded_particles_gpu.tcl \
 	lb_stokes_sphere.tcl \
 	lb_stokes_sphere_gpu.tcl \
@@ -84,6 +87,7 @@ tests = \
 	sc_fluid_gpu.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
+        uwerr.tcl \
 	virtual-sites.tcl
 # please keep the alphabetic ordering of the above list!
 
@@ -91,7 +95,6 @@ deactivated_tests =
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) $(deactivated_tests) \
-	configs \
 	tests_common.tcl \
 	analysis_system.data.00.gz analysis_system.data.01.gz \
 	analysis_system.data.02.gz analysis_system.data.03.gz \
@@ -108,7 +111,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
-	gb_system.data \
+	gb_system.data uwerr.data \
 	tabulated_system.data lj1.tab lj2.tab lj3.tab \
 	fene_system.data.gz harm_system.data.gz \
 	intpbc_system.data.gz intppbc.tcl intppbc_system.data.gz \
@@ -122,9 +125,6 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	object_in_fluid_system-triangles.data \
 	\
 	pe_micelle.tcl pe_micelle.data \
-	uwerr.tcl uwerr.data \
-	\
-	gen_fene.tcl gen_harm.tcl \
 	\
 	maggs_correct_rdf.data
 

@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file blockfile_tcl.c
+/** \file blockfile_tcl.cpp
     Implements the blockfile command for writing Tcl-formatted data files.
 */
 

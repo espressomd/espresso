@@ -18,10 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file constraint.c
-    Implementation of \ref constraint.h "constraint.h", here it's just the parsing stuff.
+/** \file constraint.cpp
+    Implementation of \ref constraint.hpp "constraint.hpp", here it's just the parsing stuff.
 */
 
+#include <algorithm>
 #include "constraint.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
@@ -62,10 +63,6 @@ static double sign(double x) {
     return 1.;
   else
     return -1;
-}
-
-static double max(double x1, double x2) {
-  return x1>x2?x1:x2;
 }
 
 void calculate_wall_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_wall *c, double *dist, double *vec)
@@ -889,7 +886,7 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   double e_z[3], e_r[3];    /* unit vectors in the cylindrical coordinate system */
   /* helper variables, for performance reasons should the be move the the
    * constraint struct*/
-     double slope, z_left, z_right;
+     double slope, slope2, z_left, z_right;
   /* and another helper that is hopefully optmized out */
      double norm;
      double c1_r, c1_z, c2_r, c2_z;
@@ -897,6 +894,7 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
 
      
      slope = (c->rad_right - c->rad_left)/2./(c->length-c->smoothing_radius);
+     slope2 = (c->outer_rad_right - c->outer_rad_left)/2./(c->length-c->smoothing_radius);
 
   /* compute the position relative to the center of the pore */
   for(i=0;i<3;i++) {
@@ -946,9 +944,12 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_right - c2_z ) );
   c1_r = c->rad_left+c->smoothing_radius;
   c2_r = c->rad_right+c->smoothing_radius;
+
+  double c1_or = c->outer_rad_left-c->smoothing_radius;
+  double c2_or = c->outer_rad_right-c->smoothing_radius;
  
   /* Check if we are in the region of the left wall */
-  if (( (r >= c1_r) && (z <= c1_z) ) || ( ( z <= 0 ) && (r>=max(c1_r, c2_r)))) {
+  if (( (r >= c1_r) && (r <= c1_or) && (z <= c1_z) )) {
     dist_vector_z=-z - c->length;
     dist_vector_r=0;
     *dist = -z - c->length;
@@ -956,7 +957,7 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     return;
   }
   /* Check if we are in the region of the right wall */
-  if (( (r >= c2_r) && (z <= c2_z) ) || ( ( z >= 0 ) && (r>=max(c1_r, c2_r)))) {
+  if (( (r >= c2_r) && (r<c2_or) && (z >= c2_z) ) ) {
     dist_vector_z=-z + c->length;
     dist_vector_r=0;
     *dist = +z - c->length;
@@ -972,29 +973,38 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
 
   cone_vector_z=1/sqrt(1+slope*slope);
   cone_vector_r=slope/sqrt(1+slope*slope);
+  
+  double cone_vector_z_o=1/sqrt(1+slope2*slope2);
+  double cone_vector_r_o=slope2/sqrt(1+slope2*slope2);
 
   p1_r = c1_r+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_r;
   p1_z = c1_z+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_z;
 
+  double p2_r = c1_or+ ( (r-c1_or)*cone_vector_r_o + (z-c1_z)*cone_vector_z_o) * cone_vector_r_o;
+  double p2_z = c1_z+ ( (r-c1_or)*cone_vector_r_o + (z-c1_z)*cone_vector_z_o) * cone_vector_z_o;
+
   dist_vector_r = p1_r-r;
   dist_vector_z = p1_z-z;
 
-  if ( p1_z>=c1_z && p1_z<=c2_z ) {
-    if ( dist_vector_r <= 0  ) {
-      if (z<0) {
-        dist_vector_z=-z - c->length;
-        dist_vector_r=0;
-        *dist = -z - c->length;
-        for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-        return;
-      } else {
-        dist_vector_z=-z + c->length;
-        dist_vector_r=0;
-        *dist = +z - c->length;
-        for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-        return;
-      }
-    }
+  double dist_vector_r_o = p2_r-r;
+  double dist_vector_z_o = p2_z-z;
+
+  if ( p1_z>=c1_z && p1_z<=c2_z && dist_vector_r >= 0 ) {
+ //   if ( dist_vector_r <= 0  ) {
+ //     if (z<0) {
+ //       dist_vector_z=-z - c->length;
+ //       dist_vector_r=0;
+ //       *dist = -z - c->length;
+ //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+ //       return;
+ //     } else {
+ //       dist_vector_z=-z + c->length;
+ //       dist_vector_r=0;
+ //       *dist = +z - c->length;
+ //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+ //       return;
+ //     }
+ //   }
     temp=sqrt( dist_vector_r*dist_vector_r + dist_vector_z*dist_vector_z );
     *dist=temp-c->smoothing_radius;
     dist_vector_r-=dist_vector_r/temp*c->smoothing_radius;
@@ -1004,8 +1014,33 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   }
 
 
+  if ( p2_z>=c1_z && p2_z<=c2_z && dist_vector_r_o <= 0 ) {
+ //   if ( dist_vector_r <= 0  ) {
+ //     if (z<0) {
+ //       dist_vector_z=-z - c->length;
+ //       dist_vector_r=0;
+ //       *dist = -z - c->length;
+ //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+ //       return;
+ //     } else {
+ //       dist_vector_z=-z + c->length;
+ //       dist_vector_r=0;
+ //       *dist = +z - c->length;
+ //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - 2ist_vector_z*e_z[i];
+ //       return;
+ //     }
+ //   }
+    temp=sqrt( dist_vector_r_o*dist_vector_r_o + dist_vector_z_o*dist_vector_z_o );
+    *dist=temp-c->smoothing_radius;
+    dist_vector_r_o-=dist_vector_r_o/temp*c->smoothing_radius;
+    dist_vector_z_o-=dist_vector_z_o/temp*c->smoothing_radius;
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r_o*e_r[i] - dist_vector_z_o*e_z[i];
+    return;
+  }
+
+
   /* Check if we are in the range of the left smoothing circle */
-  if (p1_z <= c1_z ) {
+  if (p1_z <= c1_z && r <= c1_r ) {
     /* distance from the smoothing center */
     norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_r)*(r - c1_r) );
     *dist = norm - c->smoothing_radius;
@@ -1014,16 +1049,37 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
+  /* upper left smoothing circle */
+  if (p2_z <= c1_z && r >= c1_or ) {
+    /* distance from the smoothing center */
+    norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_or)*(r - c1_or) );
+    *dist = norm - c->smoothing_radius;
+    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c1_or);
+    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c1_z);
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+    return;
+  }
   /* Check if we are in the range of the right smoothing circle */
-  if (p1_z >= c2_z ) {
+  if (p1_z >= c2_z && r <= c2_r ) {
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_r)*(r - c2_r) );
     *dist = norm - c->smoothing_radius;
-    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_r);
+    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_or);
     dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c2_z);
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
-  exit(printf("should never be reached, z %f, r%f\n",z, r));
+  /* Check if we are in the range of the upper right smoothing circle */
+  if (p2_z >= c2_z && r >= c2_or ) {
+    norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_or)*(r - c2_or) );
+    *dist = norm - c->smoothing_radius;
+    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_or);
+    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c2_z);
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+    return;
+  }
+  *dist=-1e99;
+  vec[0] = vec[1] = vec[2] = 1e99;
+//  exit(printf("should never be reached, z %f, r%f\n",z, r));
 }
 
 void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_plane *c, double *dist, double *vec)
@@ -1591,6 +1647,484 @@ void calculate_stomatocyte_dist( Particle *p1, double ppos [3],
   // And we are done with the stomatocyte
 }
 
+void calculate_hollow_cone_dist( Particle *p1, double ppos [3], 
+                                 Particle *c_p, Constraint_hollow_cone *cons, 
+                                 double *dist, double *vec )
+{
+  // Parameters
+
+  int number;
+  double r0, r1, w, alpha, xd, yd, zd,
+         mu, x_2D, y_2D, t0, t1, t2,
+         time1, time2, time3, time4,
+         mdst0, mdst1, mdst2, mdst3,
+         mindist, normalize, x, y, z,
+         distance, normal_x, normal_y, direction,
+         xp, yp, zp, xpp, ypp, sin_xy, cos_xy,
+         normal_x_3D, normal_y_3D, normal_z_3D,
+         normal_3D_x, normal_3D_y, normal_3D_z;
+
+  double closest_point_3D [3] = { -1.0, -1.0, -1.0 };
+
+  // Set the dimensions of the hollow cone
+
+  r0 = cons->inner_radius;
+  r1 = cons->outer_radius;
+  w = cons->width;
+  alpha = cons->opening_angle;
+
+  // Set the position and orientation of the hollow cone
+
+  double hollow_cone_3D_position [3] = { cons->position_x,
+                                         cons->position_y,
+                                         cons->position_z };
+
+  double hollow_cone_3D_orientation [3] = { cons->orientation_x,
+                                            cons->orientation_y,
+                                            cons->orientation_z };
+
+  // Set the point for which we want to know the distance
+
+  double point_3D[3];
+  
+  point_3D[0] = ppos[0];
+  point_3D[1] = ppos[1];
+  point_3D[2] = ppos[2];
+
+  /***** Convert 3D coordinates to 2D planar coordinates *****/
+
+  // Calculate the point on position + mu * orientation,
+  // where the difference segment is orthogonal
+
+  mu = (
+           hollow_cone_3D_orientation[0]*point_3D[0] 
+         + hollow_cone_3D_orientation[1]*point_3D[1]  
+         + hollow_cone_3D_orientation[2]*point_3D[2]
+         - hollow_cone_3D_position[0]*hollow_cone_3D_orientation[0] 
+         - hollow_cone_3D_position[1]*hollow_cone_3D_orientation[1] 
+         - hollow_cone_3D_position[2]*hollow_cone_3D_orientation[2] 
+       ) / (
+               hollow_cone_3D_orientation[0]*hollow_cone_3D_orientation[0] 
+             + hollow_cone_3D_orientation[1]*hollow_cone_3D_orientation[1] 
+             + hollow_cone_3D_orientation[2]*hollow_cone_3D_orientation[2]
+           );
+  
+  // Then the closest point to the line is
+
+  closest_point_3D[0] =   hollow_cone_3D_position[0]
+                        + mu*hollow_cone_3D_orientation[0];
+  closest_point_3D[1] =   hollow_cone_3D_position[1]
+                        + mu*hollow_cone_3D_orientation[1];
+  closest_point_3D[2] =   hollow_cone_3D_position[2]
+                        + mu*hollow_cone_3D_orientation[2];
+
+  // So the shortest distance to the line is
+
+  x_2D = sqrt(
+                 ( closest_point_3D[0] - point_3D[0] ) * 
+                   ( closest_point_3D[0] - point_3D[0] ) 
+               + ( closest_point_3D[1] - point_3D[1] ) * 
+                   ( closest_point_3D[1] - point_3D[1] )
+               + ( closest_point_3D[2] - point_3D[2] ) * 
+                   ( closest_point_3D[2] - point_3D[2] )
+             );
+
+  
+  y_2D = mu*sqrt(
+                    hollow_cone_3D_orientation[0]*hollow_cone_3D_orientation[0] 
+                  + hollow_cone_3D_orientation[1]*hollow_cone_3D_orientation[1] 
+                  + hollow_cone_3D_orientation[2]*hollow_cone_3D_orientation[2]
+                );
+
+  /***** Use the obtained planar coordinates in distance function *****/
+
+  // Calculate intermediate results which we need to determine
+  // the distance
+
+  t0 = ( y_2D*cos(alpha) + ( x_2D - r0 )*sin(alpha) )/r1;
+  t1 = ( w - 2.0*( x_2D - r0 )*cos(alpha) + 2.0*y_2D*sin(alpha) )/( 2.0*w );
+  t2 = ( w + 2.0*( x_2D - r0 )*cos(alpha) - 2.0*y_2D*sin(alpha) )/( 2.0*w );
+
+  if ( t0 >= 0.0 && t0 <= 1.0 )
+  {
+    time1 = t0;
+    time2 = t0;
+  } 
+  else if ( t0 > 1.0 )
+  {
+    time1 = 1.0;
+    time2 = 1.0;
+  }
+  else
+  {
+    time1 = 0.0;
+    time2 = 0.0;
+  }
+
+  if ( t1 >= 0.0 && t1 <= 1.0 )
+  {
+    time3 = t1;
+  } 
+  else if ( t1 > 1.0 )
+  {
+    time3 = 1.0;
+  }
+  else
+  {
+    time3 = 0.0;
+  }
+
+  if ( t2 >= 0.0 && t2 <= 1.0 )
+  {
+    time4 = t2;
+  } 
+  else if ( t2 > 1.0 )
+  {
+    time4 = 1.0;
+  }
+  else
+  {
+    time4 = 0.0;
+  }
+
+  mdst0 =   x_2D*x_2D + y_2D*y_2D - 2.0*x_2D*r0 + r0*r0 + r1*r1*time1*time1
+          + 0.25*w*w + ( -2.0*y_2D*r1*time1 + (  x_2D - r0 )*w )*cos(alpha)
+          - (  2.0*x_2D*r1*time1 - 2.0*r0*r1*time1 + y_2D*w )*sin(alpha);
+  mdst0 = sqrt(mdst0);
+
+  mdst1 =   x_2D*x_2D + y_2D*y_2D - 2.0*x_2D*r0 + r0*r0 + r1*r1*time2*time2
+          + 0.25*w*w + ( -2.0*y_2D*r1*time2 + ( -x_2D + r0 )*w )*cos(alpha)
+          + ( -2.0*x_2D*r1*time2 + 2.0*r0*r1*time2 + y_2D*w )*sin(alpha);
+  mdst1 = sqrt(mdst1);
+
+  mdst2 =   x_2D*x_2D + y_2D*y_2D - 2.0*x_2D*r0 + r0*r0
+          + 0.25*w*w - time3*w*w + time3*time3*w*w
+          + ( x_2D - r0 )*( -1.0 + 2.0*time3 )*w*cos(alpha)
+          - y_2D*( -1.0 + 2.0*time3 )*w*sin(alpha);
+  mdst2 = sqrt(mdst2);
+
+  mdst3 =   x_2D*x_2D + y_2D*y_2D - 2.0*x_2D*r0 + r0*r0
+          + 0.25*w*w - time4*w*w + time4*time4*w*w
+          - ( x_2D - r0 )*( -1.0 + 2.0*time4 )*w*cos(alpha)
+          + y_2D*( -1.0 + 2.0*time4 )*w*sin(alpha)
+          + r1*r1 - 2.0*y_2D*r1*cos(alpha)
+          + ( -2.0*x_2D*r1 + 2.0*r0*r1 )*sin(alpha);
+  mdst3 = sqrt(mdst3);
+
+  double distlist[4] = { mdst0, mdst1, mdst2, mdst3 };
+
+  // Now we only need to determine which distance is minimal
+  // and remember which one it is
+
+  mindist = -1.0;
+
+  for ( int i = 0; i < 4; i++ )
+  {
+    if ( mindist < 0.0 )
+    {
+      number = i;
+      mindist = distlist[i];
+    }
+
+    if ( mindist > distlist[i] )  
+    {
+      number = i;
+      mindist = distlist[i];
+    }
+  }
+
+  // Now we know the number corresponding to the boundary
+  // to which the point is closest, we know the distance,
+  // but we still need the normal
+
+  distance = -1.0;
+  normal_x = -1.0;
+  normal_y = -1.0;
+
+  if ( number == 0 )
+  {
+    normal_x = x_2D - r0 + 0.5*w*cos(alpha) - r1*time1*sin(alpha);
+    normal_y = y_2D - r1*time1*cos(alpha) - 0.5*w*sin(alpha);
+    normalize = 1.0/sqrt( normal_x*normal_x + normal_y*normal_y );
+    normal_x *= normalize;
+    normal_y *= normalize;
+
+    direction = -normal_x*cos(alpha) + normal_y*sin(alpha);
+
+    if ( fabs(direction) < 1.0e-06 && ( fabs( time1 - 0.0 ) < 1.0e-06 || fabs( time1 - 1.0 ) < 1.0e-06 ) )
+    {
+      if( fabs( time1 - 0.0 ) < 1.0e-06 )
+      {
+        direction = -normal_x*sin(alpha) - normal_y*cos(alpha);
+      }
+      else
+      {
+        direction = normal_x*sin(alpha) + normal_y*cos(alpha);
+      }
+    }
+
+    if ( direction > 0.0 )
+    {
+      distance = mindist;
+    }
+    else
+    {
+      distance = -mindist;
+      normal_x *= -1.0;
+      normal_y *= -1.0; 
+    }
+  }
+  else if ( number == 1 )
+  {
+    normal_x = x_2D - r0 - 0.5*w*cos(alpha) - r1*time2*sin(alpha);
+    normal_y = y_2D - r1*time2*cos(alpha) + 0.5*w*sin(alpha);
+    normalize = 1.0/sqrt( normal_x*normal_x + normal_y*normal_y );
+    normal_x *= normalize;
+    normal_y *= normalize;
+
+    direction = normal_x*cos(alpha) - normal_y*sin(alpha);
+
+    if ( fabs(direction) < 1.0e-06 && ( fabs( time2 - 0.0 ) < 1.0e-06 || fabs( time2 - 1.0 ) < 1.0e-06 ) )
+    {
+      if( fabs( time2 - 0.0 ) < 1.0e-06 )
+      {
+        direction = -normal_x*sin(alpha) - normal_y*cos(alpha);
+      }
+      else
+      {
+        direction = normal_x*sin(alpha) + normal_y*cos(alpha);
+      }
+    }
+
+    if ( direction > 0.0 )
+    {
+      distance = mindist;
+    }
+    else
+    {
+      distance = -mindist;
+      normal_x *= -1.0;
+      normal_y *= -1.0; 
+    }
+  }
+  else if ( number == 2 )
+  {
+    normal_x = x_2D - r0 - 0.5*( 1.0 - 2.0*time3 )*w*cos(alpha);
+    normal_y = y_2D + 0.5*( 1.0 - 2.0*time3 )*w*sin(alpha);
+    normalize = 1.0/sqrt( normal_x*normal_x + normal_y*normal_y );
+    normal_x *= normalize;
+    normal_y *= normalize;
+
+    direction = -normal_x*sin(alpha) - normal_y*cos(alpha);
+
+    if ( fabs(direction) < 1.0e-06 && ( fabs( time3 - 0.0 ) < 1.0e-06 || fabs( time3 - 1.0 ) < 1.0e-06 ) )
+    {
+      if( fabs( time3 - 0.0 ) < 1.0e-06 )
+      {
+        direction = normal_x*cos(alpha) - normal_y*sin(alpha);
+      }
+      else
+      {
+        direction = -normal_x*cos(alpha) + normal_y*sin(alpha);
+      }
+    }
+
+    if ( direction > 0.0 )
+    {
+      distance = mindist;
+    }
+    else
+    {
+      distance = -mindist;
+      normal_x *= -1.0;
+      normal_y *= -1.0; 
+    }
+  }
+  else if ( number == 3 )
+  {
+    normal_x = x_2D - r0 + 0.5*( 1.0 - 2.0*time4 )*w*cos(alpha) - r1*sin(alpha);
+    normal_y = y_2D - 0.5*( 1.0 - 2.0*time4 )*w*sin(alpha) - r1*cos(alpha);
+    normalize = 1.0/sqrt( normal_x*normal_x + normal_y*normal_y );
+    normal_x *= normalize;
+    normal_y *= normalize;
+
+    direction = normal_x*sin(alpha) + normal_y*cos(alpha);
+
+    if ( fabs(direction) < 1.0e-06 && ( fabs( time4 - 0.0 ) < 1.0e-06 || fabs( time4 - 1.0 ) < 1.0e-06 ) )
+    {
+      if( fabs( time4 - 0.0 ) < 1.0e-06 )
+      {
+        direction = -normal_x*cos(alpha) + normal_y*sin(alpha);
+      }
+      else
+      {
+        direction = normal_x*cos(alpha) - normal_y*sin(alpha);
+      }
+    }
+
+    if ( direction > 0.0 )
+    {
+      distance = mindist;
+    }
+    else
+    {
+      distance = -mindist;
+      normal_x *= -1.0;
+      normal_y *= -1.0; 
+    }
+  }
+
+  /***** Convert 2D normal to 3D coordinates *****/
+
+  // Now that we have the normal in 2D we need to make a final 
+  // transformation to get it in 3D. The minimum distance stays
+  // the same though. We first get the normalized direction vector.
+
+  x = hollow_cone_3D_orientation[0];
+  y = hollow_cone_3D_orientation[1];
+  z = hollow_cone_3D_orientation[2];
+
+  xd = x/sqrt( x*x + y*y + z*z);
+  yd = y/sqrt( x*x + y*y + z*z);
+  zd = z/sqrt( x*x + y*y + z*z);
+
+  // We now establish the rotion matrix required to go
+  // form {0,0,1} to {xd,yd,zd}
+
+  double matrix [9];
+
+  if ( xd*xd + yd*yd > 1.e-10 ) 
+  {
+      // Rotation matrix
+  
+      matrix[0] = ( yd*yd + xd*xd*zd )/( xd*xd + yd*yd );
+      matrix[1] = ( xd*yd*( zd - 1.0 ) )/( xd*xd + yd*yd );
+      matrix[2] = xd;
+
+      matrix[3] = ( xd*yd*( zd - 1.0 ) )/( xd*xd + yd*yd );
+      matrix[4] = ( xd*xd + yd*yd*zd )/( xd*xd + yd*yd );
+      matrix[5] = yd;
+
+      matrix[6] = -xd;
+      matrix[7] = -yd;
+      matrix[8] =  zd;
+  }
+  else
+  {
+    // The matrix is the identity matrix or reverses
+    // or does a 180 degree rotation to take z -> -z
+
+    if ( zd > 0 ) 
+    {
+      matrix[0] = 1.0;
+      matrix[1] = 0.0;
+      matrix[2] = 0.0;
+
+      matrix[3] = 0.0;
+      matrix[4] = 1.0;
+      matrix[5] = 0.0;
+
+      matrix[6] = 0.0;
+      matrix[7] = 0.0;
+      matrix[8] = 1.0;
+    }
+    else
+    {
+      matrix[0] =  1.0;
+      matrix[1] =  0.0;
+      matrix[2] =  0.0;
+
+      matrix[3] =  0.0;
+      matrix[4] =  1.0;
+      matrix[5] =  0.0;
+
+      matrix[6] =  0.0;
+      matrix[7] =  0.0;
+      matrix[8] = -1.0;
+    }
+  }   
+
+  // Next we determine the 3D vector between the center
+  // of the hollow cylinder and the point of interest
+
+  xp = point_3D[0] - hollow_cone_3D_position[0];
+  yp = point_3D[1] - hollow_cone_3D_position[1];
+  zp = point_3D[2] - hollow_cone_3D_position[2];
+
+  // Now we use the inverse matrix to find the 
+  // position of the point with respect to the origin
+  // of the z-axis oriented hollow cone located
+  // in the origin
+
+  xpp = matrix[0]*xp + matrix[3]*yp + matrix[6]*zp;
+  ypp = matrix[1]*xp + matrix[4]*yp + matrix[7]*zp;
+
+  // Now use this direction to orient the normal
+
+  if ( xpp*xpp + ypp*ypp > 1.0e-10 )
+  {
+    // The point is off the rotational symmetry
+    // axis of the hollow cone
+
+    sin_xy = ypp/sqrt( xpp*xpp + ypp*ypp );
+    cos_xy = xpp/sqrt( xpp*xpp + ypp*ypp );
+
+    normal_x_3D = cos_xy*normal_x;
+    normal_y_3D = sin_xy*normal_x;
+    normal_z_3D = normal_y;
+  }
+  else
+  {
+    // The point is on the rotational symmetry 
+    // axis of the hollow cone; a finite distance
+    // away from the center the normal might have
+    // an x and y component!
+
+    normal_x_3D = 0.0;
+    normal_y_3D = 0.0;
+    normal_z_3D = ( normal_y > 0.0 ? 1.0 : -1.0 );    
+  }
+   
+  // Now we need to transform the normal back to
+  // the real coordinate system
+
+  normal_3D_x =   matrix[0]*normal_x_3D 
+                + matrix[1]*normal_y_3D
+                + matrix[2]*normal_z_3D;
+  normal_3D_y =   matrix[3]*normal_x_3D 
+                + matrix[4]*normal_y_3D
+                + matrix[5]*normal_z_3D;
+  normal_3D_z =   matrix[6]*normal_x_3D 
+                + matrix[7]*normal_y_3D
+                + matrix[8]*normal_z_3D;
+
+  // Pass the values we obtained to ESPResSo
+
+  if ( cons->direction == -1 ) 
+  {
+    // Apply force towards inside hollow cone
+
+    *dist = -distance;
+
+    vec[0] = -normal_3D_x;
+    vec[1] = -normal_3D_y;
+    vec[2] = -normal_3D_z;
+  }
+  else
+  {
+    // Apply force towards inside hollow cone
+
+    *dist = distance;
+
+    vec[0] = normal_3D_x;
+    vec[1] = normal_3D_y;
+    vec[2] = normal_3D_z;
+  }
+
+  // And we are done with the hollow cone
+}
+
+
 void add_rod_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c)
 {
 #ifdef ELECTROSTATICS
@@ -1764,19 +2298,19 @@ void add_constraints_forces(Particle *p1)
 				     torque1, torque2);
 	}
 	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
-	  if ( dist < 0 ) {
+	  if ( (constraints[n].c.wal.only_positive != 1) && ( dist < 0 ) ) {
 	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,-1.0*dist,dist*dist, force,
-				     torque1, torque2);
+				       ia_params,vec,-1.0*dist,dist*dist, force,
+				       torque1, torque2);
 	  }
 	}
 	else {
-    if(constraints[n].c.wal.reflecting){
-      reflect_particle(p1, &(vec[0]), constraints[n].c.wal.reflecting);
-    } else {
-	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	  ERROR_SPRINTF(errtxt, "{061 wall constraint %d violated by particle %d} ", n, p1->p.identity);
-    }
+	  if(constraints[n].c.wal.reflecting){
+	    reflect_particle(p1, &(vec[0]), constraints[n].c.wal.reflecting);
+	  } else {
+	    errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+	    ERROR_SPRINTF(errtxt, "{061 wall constraint %d violated by particle %d} ", n, p1->p.identity);
+	  }
 	}
       }
       break;
@@ -1792,17 +2326,17 @@ void add_constraints_forces(Particle *p1)
 	else if ( dist <= 0 && constraints[n].c.sph.penetrable == 1 ) {
 	  if ( dist < 0 ) {
 	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,-1.0*dist,dist*dist, force,
-				     torque1, torque2);
+				       ia_params,vec,-1.0*dist,dist*dist, force,
+				       torque1, torque2);
 	  }
 	}
 	else {
-    if(constraints[n].c.sph.reflecting){
-      reflect_particle(p1, &(vec[0]), constraints[n].c.sph.reflecting);
-    } else {
-	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	  ERROR_SPRINTF(errtxt, "{062 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
-    }
+	  if(constraints[n].c.sph.reflecting){
+	    reflect_particle(p1, &(vec[0]), constraints[n].c.sph.reflecting);
+	  } else {
+	    errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+	    ERROR_SPRINTF(errtxt, "{062 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
+	  }
 	}
       }
       break;
@@ -1933,6 +2467,45 @@ void add_constraints_forces(Particle *p1)
           {
 	          errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	          ERROR_SPRINTF(errtxt, "{063 stomatocyte constraint %d violated by \
+                                   particle %d} ", n, p1->p.identity);
+          }
+	      }
+      }
+    break;
+
+    case CONSTRAINT_HOLLOW_CONE:
+      if( checkIfInteraction(ia_params) ) 
+      {
+
+        calculate_hollow_cone_dist( p1, folded_pos, &constraints[n].part_rep, 
+                                    &constraints[n].c.hollow_cone, &dist, vec );
+
+	      if ( dist > 0 ) 
+        {
+	        calc_non_bonded_pair_force( p1, &constraints[n].part_rep,
+				                              ia_params, vec, dist, dist*dist,
+                                      force, torque1, torque2 );
+	      }
+	      else if ( dist <= 0 && constraints[n].c.hollow_cone.penetrable == 1 )
+        {
+	        if ( dist < 0 ) 
+          {
+	          calc_non_bonded_pair_force( p1, &constraints[n].part_rep,
+				                                ia_params, vec, -1.0*dist, dist*dist,
+                                        force, torque1, torque2 );
+	        }
+	      }
+	      else
+        {
+          if( constraints[n].c.hollow_cone.reflecting )
+          {
+            reflect_particle( p1, &(vec[0]), 
+                              constraints[n].c.hollow_cone.reflecting );
+          } 
+          else
+          {
+	          errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+	          ERROR_SPRINTF(errtxt, "{063 hollow_cone constraint %d violated by \
                                    particle %d} ", n, p1->p.identity);
           }
 	      }
@@ -2149,6 +2722,38 @@ double add_constraints_energy(Particle *p1)
         {
 	        errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	        ERROR_SPRINTF(errtxt, "{066 stomatocyte constraint %d violated by \
+                                 particle %d} ", n, p1->p.identity);
+	      }
+      }
+    break;
+
+    case CONSTRAINT_HOLLOW_CONE: 
+      if( checkIfInteraction(ia_params) ) 
+      {
+	      calculate_hollow_cone_dist( p1, folded_pos, &constraints[n].part_rep,
+                                    &constraints[n].c.hollow_cone, &dist, vec ); 
+
+	      if ( dist > 0 )
+        {
+	        nonbonded_en = calc_non_bonded_pair_energy( p1, 
+                                                      &constraints[n].part_rep,
+						                                          ia_params, vec, dist,
+                                                      dist*dist );
+	      }
+	      else if ( dist <= 0 && constraints[n].c.hollow_cone.penetrable == 1 )
+        {
+	        if ( dist < 0 )
+          {
+	          nonbonded_en = calc_non_bonded_pair_energy(p1,
+                                                       &constraints[n].part_rep,
+						                                           ia_params, vec, 
+                                                       -1.0*dist, dist*dist);
+	        }
+	      }
+	      else
+        {
+	        errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+	        ERROR_SPRINTF(errtxt, "{066 hollow_cone constraint %d violated by \
                                  particle %d} ", n, p1->p.identity);
 	      }
       }

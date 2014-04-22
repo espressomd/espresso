@@ -18,14 +18,14 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _FORCES_H
-#define _FORCES_H
-/** \file forces.h Force calculation. 
+#ifndef _FORCES_HPP
+#define _FORCES_HPP
+/** \file forces.hpp Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
  *  \todo Implement more flexible thermostat, %e.g. which thermostat to use.
  *
- *  For more information see forces.c .
+ *  For more information see forces.cpp .
  */
 #include "utils.hpp"
 #include "thermostat.hpp"
@@ -33,7 +33,6 @@
 #include "topology.hpp"
 #endif
 #include "npt.hpp"
-#include "adresso.hpp"
 #include "virtual_sites.hpp"
 #include "metadynamics.hpp"
 
@@ -123,9 +122,11 @@ void init_forces_ghosts();
 void check_forces();
 
 
-inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
-					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
-{
+inline void 
+calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,
+                                 double d[3], double dist, double dist2, 
+                                 double force[3], 
+                                 double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
@@ -140,19 +141,19 @@ inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_para
   /* Directional LJ */
 #ifdef LJ_ANGLE
   /* The forces are propagated within the function */
-  add_ljangle_pair_force(p1,p2,ia_params,d,dist);
+  add_ljangle_pair_force(p1, p2, ia_params, d, dist);
 #endif
   /* smooth step */
 #ifdef SMOOTH_STEP
-  add_SmSt_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+  add_SmSt_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 #endif
   /* Hertzian force */
 #ifdef HERTZIAN
-  add_hertzian_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+  add_hertzian_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 #endif
   /* Gaussian force */
 #ifdef GAUSSIAN
-  add_gaussian_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+  add_gaussian_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 #endif
   /* BMHTF NaCl */
 #ifdef BMHTF_NACL
@@ -188,58 +189,56 @@ inline void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_para
 #endif
   /* Gay-Berne */
 #ifdef GAY_BERNE
-  add_gb_pair_force(p1,p2,ia_params,d,dist,force,torgue1,torgue2);
+  add_gb_pair_force(p1,p2,ia_params,d,dist,force,torque1,torque2);
 #endif
 #ifdef INTER_RF
   add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
 #endif
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-  add_adress_tab_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-#endif
 }
 
-inline void calc_non_bonded_pair_force(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
+inline void 
+calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, 
+                           double d[3], double dist, double dist2, 
+                           double force[3], 
+                           double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef MOL_CUT
-   //You may want to put a correction factor and correction term for smoothing function else then theta
+   // You may want to put a correction factor and correction term for smoothing function else then theta
    if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
 #endif
    {
-      calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+      calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, 
+                                       force, torque1, torque2);
    }
 }
 
-inline void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
-   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double t1[3],t2[3];
-#ifdef ADRESS
-  int j;
-  double force_weight=adress_non_bonded_force_weight(p1,p2);
-  if (force_weight<ROUND_ERROR_PREC) return;
-#endif
-  calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
-#ifdef ADRESS
-   for (j=0;j<3;j++){
-      force[j]*=force_weight;
-   }
-#endif
+inline void 
+calc_non_bonded_pair_force(Particle *p1, Particle *p2, 
+                           double d[3], double dist, double dist2, 
+                           double force[3]){
+  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+  calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 }
 
-inline void calc_non_bonded_pair_force_from_partcfg(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
+inline void 
+calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameters *ia_params,
+                                        double d[3], double dist, double dist2,
+                                        double force[3],
+                                        double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef MOL_CUT
    //You may want to put a correction factor and correction term for smoothing function else then theta
    if (checkIfParticlesInteractViaMolCut_partcfg(p1,p2,ia_params)==1)
 #endif
    {
-     calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+     calc_non_bonded_pair_force_parts(p1, p2, ia_params, 
+                                      d, dist, dist2, force, torque1, torque2);
    }
 }
 
 inline void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
    IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double t1[3],t2[3];
-   calc_non_bonded_pair_force_from_partcfg(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
+   double torque1[3],torque2[3];
+   calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
+                                           force, torque1, torque2);
 }
 
 /** Calculate non bonded forces between a pair of particles.
@@ -261,11 +260,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef COLLISION_DETECTION
   if (collision_params.mode > 0)
     detect_collision(p1,p2);
-#endif
-
-#ifdef ADRESS
-  double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
-  if (force_weight<ROUND_ERROR_PREC) return;
 #endif
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
@@ -391,14 +385,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /***********************************************/
 
   for (j = 0; j < 3; j++) {
-#ifdef ADRESS
-    tmp=force_weight*force[j];
-    p1->f.f[j] += tmp;
-    p2->f.f[j] -= tmp;
-#else
     p1->f.f[j] += force[j];
     p2->f.f[j] -= force[j];
-#endif
 #ifdef ROTATION
     p1->f.torque[j] += torque1[j];
     p2->f.torque[j] += torque2[j];
@@ -423,12 +411,6 @@ inline void add_bonded_force(Particle *p1)
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
   int i, j, type_num, type, n_partners, bond_broken;
-
-#ifdef ADRESS
-  double tmp, force_weight=1;
-  //double tmp,force_weight=adress_bonded_force_weight(p1);
-  //if (force_weight<ROUND_ERROR_PREC) return;
-#endif
 
   i = 0;
   while(i<p1->bl.n) {
@@ -599,23 +581,13 @@ inline void add_bonded_force(Particle *p1)
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
-		p1->p.identity, p2->p.identity); 
-	continue;
+        char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
+        ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
+          p1->p.identity, p2->p.identity);
+        continue;
       }
       
-#ifdef ADRESS
-      force_weight = adress_bonded_force_weight(p1,p2);
-#endif
-
       for (j = 0; j < 3; j++) {
-#ifdef ADRESS
-        tmp=force_weight*force[j];
-	p1->f.f[j] += tmp;
-	p2->f.f[j] -= tmp;
-#else // ADRESS
-
 	switch (type) {
 #ifdef BOND_ENDANGLEDIST
 	case BONDED_IA_ENDANGLEDIST:
@@ -631,7 +603,6 @@ inline void add_bonded_force(Particle *p1)
 	  p2->f.torque[j] += torque2[j];
 #endif
 	}
-#endif // NOT ADRESS
 
 #ifdef NPT
 	if(integ_switch == INTEG_METHOD_NPT_ISO)
@@ -647,15 +618,7 @@ inline void add_bonded_force(Particle *p1)
 	continue;
       }
       
-#ifdef ADRESS
-      force_weight=adress_angle_force_weight(p1,p2,p3);
-#endif
       for (j = 0; j < 3; j++) {
-#ifdef ADRESS
-	p1->f.f[j] += force_weight*force[j];
-	p2->f.f[j] += force_weight*force2[j];
-	p3->f.f[j] -= force_weight*(force[j] + force2[j]);
-#else
 switch (type) {
 	case BONDED_IA_AREA_FORCE_LOCAL:
 		p1->f.f[j] += force[j];
@@ -675,7 +638,6 @@ switch (type) {
 		p2->f.f[j] += force2[j];
 		p3->f.f[j] -= (force[j] + force2[j]);
 	}
-#endif
       }
       break;
     case 3:
@@ -685,17 +647,7 @@ switch (type) {
 		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;
       }
-#ifdef ADRESS
-      force_weight=adress_dihedral_force_weight(p1,p2,p3,p4);
-#endif 
       for (j = 0; j < 3; j++) {
-#ifdef ADRESS
-	p1->f.f[j] += force_weight*force[j];
-	p2->f.f[j] += force_weight*force2[j];
-	p3->f.f[j] += force_weight*force3[j];
-	p4->f.f[j] -= force_weight*(force[j] + force2[j] + force3[j]);
-#else
-	
 	switch (type) {
 	case BONDED_IA_BENDING_FORCE:
 		p1->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
@@ -709,8 +661,6 @@ switch (type) {
 		p3->f.f[j] += force3[j];
 		p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
 	}
-	
-#endif
       }
       break;
     }

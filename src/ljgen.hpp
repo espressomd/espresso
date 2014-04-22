@@ -21,13 +21,13 @@
 #ifndef _LJGEN_H
 #define _LJGEN_H
 
-/** \file ljgen.h Routines to calculate the generalized lennard jones
+/** \file ljgen.hpp Routines to calculate the generalized lennard jones
  *  energy and/or force for a particle pair. "Generalized" here means
  *  that the LJ energy is of the form
  *
  *  eps * [ b1 * (sigma/(r-r_offset))^a1 - b2 * (sigma/(r-r_offset))^a2 + shift]
  *
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "utils.hpp"

@@ -22,7 +22,6 @@
 #include <cstdlib>
 #include <cstring>
 #include "utils.hpp"
-//#include "global.hpp"
 #include "../random.hpp"
 #include "parser.hpp"
 #include "tcl.h"

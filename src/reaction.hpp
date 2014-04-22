@@ -20,7 +20,7 @@
 */
 #ifndef REACTION_H
 #define REACTION_H
-/** \file reaction.h
+/** \file reaction.hpp
  *
  */
  

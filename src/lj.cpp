@@ -56,7 +56,6 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
   if (min > 0) {
     data->LJ_min = min;
   }
-  
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
