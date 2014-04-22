@@ -385,20 +385,20 @@ void lb_GPU_sanity_checks()
   if(this_node == 0){
     if(lattice_switch & LATTICE_LB_GPU) {
       if (lbpar_gpu.agrid < 0.0) {
-        errtext = runtime_error(128);
+        char *errtext = runtime_error(128);
         ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
       }
       if (lbpar_gpu.tau < 0.0) {
-        errtext = runtime_error(128);
+        char *errtext = runtime_error(128);
         ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
       }
       for(int i=0;i<LB_COMPONENTS;i++){
         if (lbpar_gpu.rho[0] < 0.0) {
-          errtext = runtime_error(128);
+          char *errtext = runtime_error(128);
           ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
         }
         if (lbpar_gpu.viscosity[0] < 0.0) {
-          errtext = runtime_error(128);
+          char *errtext = runtime_error(128);
           ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
         }
       }
