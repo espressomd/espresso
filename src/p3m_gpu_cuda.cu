@@ -580,7 +580,7 @@ extern "C" {
 	block.x = 512 - mesh*mesh;
 	block.x -= block.x / 32;
 	grid.x = mesh / block.x + 1;
-	calculate_influence_function_device<<<grid,block>>>(cao, mesh, box, alpha, p3m_gpu_data.G_hat);
+	KERNELCALL(calculate_influence_function_device,grid,block,(cao, mesh, box, alpha, p3m_gpu_data.G_hat));
 	cudaThreadSynchronize();
       }
       p3m_gpu_data_initialized = 1;

@@ -4,6 +4,8 @@
 
 #include "electrokinetics.hpp"
 
+#ifdef ELECTROKINETICS
+
 extern float* pdb_charge_lattice;
 extern int* pdb_boundary_lattice;
 
@@ -13,5 +15,7 @@ int pdb_parse(char* pdb_filename, char* itp_filename);
 int print_charge_field(char* filename);
 
 int print_boundary_lattice(char* filename);
+
+#endif
 
 #endif
