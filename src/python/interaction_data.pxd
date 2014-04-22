@@ -23,20 +23,14 @@ cdef extern from "lj.hpp":
                                         double cap_radius, double min)
   cdef int ljforcecap_set_params(double ljforcecap)
 
-
-cdef extern from "interaction_data.hpp":
- ctypedef struct Bonded_ia_parameters: 
-  int type;
-  int num;
-  #* union to store the different bonded interaction parameters. */
-  union p:
+ctypedef union bond_params_union:
     #* Parameters for FENE bond Potential.
     #	k - spring constant.
     #	drmax - maximal bond streching.
     #   r0 - equilibrium bond length.
     #   drmax2 - square of drmax (internal parameter). 
     
-    struct fene: {
+    struct fene: 
       double k
       double drmax
       double r0
@@ -182,6 +176,13 @@ cdef extern from "interaction_data.hpp":
       double distmax
 
 
+
+cdef extern from "interaction_data.hpp":
+ ctypedef struct Bonded_ia_parameters: 
+  int type
+  int num
+  #* union to store the different bonded interaction parameters. */
+  bond_parameter_union p
 
  Bonded_ia_parameters* bonded_ia_params
  cdef int n_bonded_ia

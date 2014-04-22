@@ -90,6 +90,8 @@ class ParticleProperties(ut.TestCase):
   test_v=generateTestForVectorProperty("v",np.array([0.2,0.3,0.4]))
   test_f=generateTestForVectorProperty("f",np.array([0.2,0.3,0.7]))
   test_type=generateTestForScalarProperty("type",int(3))
+  test_bonds_property=generateTestForScalarProperty("bonds", ((0,1),(1,2)))
+
 
   if "MASS" in es.code_info.features(): 
     test_mass=generateTestForScalarProperty("mass",1.3)
