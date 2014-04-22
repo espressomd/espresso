@@ -1,3 +1,4 @@
+
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -57,34 +58,39 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   v[idx + 2] = p.v[2];
 }
 
+void EspressoSystemInterface::reallocDeviceMemory(int n) {
+
+  if(m_needsRGpu && ((n != m_gpu_npart) || (m_r_gpu_begin == 0))) {
+    if(m_r_gpu_begin != 0)
+      cuda_safe_mem(cudaFree(m_r_gpu_begin));
+    cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3*n*sizeof(float)));
+    m_r_gpu_end = m_r_gpu_begin + 3*n;
+  }
+
+  if(m_needsVGpu && ((n != m_gpu_npart) || (m_v_gpu_begin == 0))) {
+    if(m_v_gpu_begin != 0)
+      cuda_safe_mem(cudaFree(m_v_gpu_begin));
+    cuda_safe_mem(cudaMalloc(&m_v_gpu_begin, 3*n*sizeof(float)));
+    m_v_gpu_end = m_v_gpu_begin + 3*n;
+  }
+
+  if(m_needsQGpu && ((n != m_gpu_npart) || (m_q_gpu_begin == 0))) {
+    if(m_q_gpu_begin != 0)
+      cuda_safe_mem(cudaFree(m_q_gpu_begin));
+    cuda_safe_mem(cudaMalloc(&m_q_gpu_begin, 3*n*sizeof(float)));
+    m_q_gpu_end = m_q_gpu_begin + 3*n;
+  }
+
+  m_gpu_npart = n;
+}
+
 void EspressoSystemInterface::split_particle_struct() {
   int n = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
   if(n == 0) 
     return;
-  
-  if( (n != m_gpu_npart) ) {
-    if(m_needsRGpu) {
-      if(m_r_gpu_begin != 0)
-	cuda_safe_mem(cudaFree(m_r_gpu_begin));
-      cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3*n*sizeof(float)));
-      m_r_gpu_end = m_r_gpu_begin + 3*n;
-    }
-    if(m_needsVGpu) {
-      if(m_v_gpu_begin != 0)
-	cuda_safe_mem(cudaFree(m_v_gpu_begin));
-      cuda_safe_mem(cudaMalloc(&m_v_gpu_begin, 3*n*sizeof(float)));
-      m_v_gpu_end = m_v_gpu_begin + 3*n;
-    }
-    if(m_needsQGpu) {
-      if(m_q_gpu_begin != 0)
-	cuda_safe_mem(cudaFree(m_q_gpu_begin));
-      cuda_safe_mem(cudaMalloc(&m_q_gpu_begin, n*sizeof(float)));
-      m_q_gpu_end = m_q_gpu_begin + n;
-    }
-  }
 
-  m_gpu_npart = n;
-  
+  ESIF_TRACE(printf("n = %d, m_gpu_npart = %d\n", n, m_gpu_npart));
+    
   dim3 grid(n/512+1,1,1);
   dim3 block(512,1,1);
 

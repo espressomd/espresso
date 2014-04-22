@@ -1,6 +1,8 @@
 #ifndef ESPRESSOSYSTEMINTERFACE_H
 #define ESPRESSOSYSTEMINTERFACE_H
 
+#define ESIF_TRACE(A)
+
 #include "SystemInterface.hpp"
 #include "particle_data.hpp"
 #include "cuda_interface.hpp"
@@ -20,7 +22,7 @@ public:
   template<class value_type>
   class const_iterator : public SystemInterface::const_iterator<value_type> {
   public:
-    const value_type operator*() const;
+    value_type operator*() const;
     SystemInterface::const_iterator<value_type> &operator=(const SystemInterface::const_iterator<value_type> &rhs);
     EspressoSystemInterface::const_iterator<value_type> &operator=(typename std::vector<value_type>::const_iterator rhs);
     bool operator==(SystemInterface::const_iterator<value_type> const &rhs) const;
@@ -45,6 +47,7 @@ public:
   bool hasQ() { return true; };
 #endif
 
+#ifdef CUDA
   float *rGpuBegin() { return m_r_gpu_begin; };
   float *rGpuEnd() { return m_r_gpu_end; };
   bool hasRGpu() { return true; };
@@ -52,6 +55,8 @@ public:
     m_needsRGpu = hasRGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
+    if(m_gpu)
+      enableParticleCommunication();
     return m_needsRGpu; 
   };
 
@@ -62,6 +67,8 @@ public:
     m_needsVGpu = hasVGpu();
     m_splitParticleStructGpu |= m_needsVGpu;
     m_gpu |= m_needsVGpu;
+    if(m_gpu)
+      enableParticleCommunication();
     return m_needsVGpu; 
   };
 
@@ -72,18 +79,49 @@ public:
     m_needsQGpu = hasQGpu(); 
     m_splitParticleStructGpu |= m_needsQGpu;
     m_gpu |= m_needsQGpu;
+    if(m_gpu)
+      enableParticleCommunication();
     return m_needsQGpu; 
   };
 
   bool requestParticleStructGpu() {
     m_needsParticleStructGpu = true;
     m_gpu |= m_needsParticleStructGpu;
+    if(m_gpu)
+      enableParticleCommunication();
     return true;
   }
+
+  float *fGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
+  float *fGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
+  bool hasFGpu() { return true; };
+  bool requestFGpu() {
+    m_needsFGpu = hasFGpu();
+    m_gpu |= m_needsFGpu;
+    if(m_gpu)
+      enableParticleCommunication();
+    return m_needsFGpu;
+  };
+
+  unsigned int npart_gpu() {
+    return m_gpu_npart;
+  };
+
+#endif
 
 protected:
   void gatherParticles();
   void split_particle_struct();
+  void enableParticleCommunication() {
+    if(!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
+      ESIF_TRACE(puts("gpu communication not enabled;"));
+      ESIF_TRACE(puts("enableParticleCommunication"));
+      gpu_init_particle_comm();
+      cuda_bcast_global_part_params();
+      reallocDeviceMemory(gpu_get_global_particle_vars_pointer_host()->number_of_particles);
+    }
+  };
+  void reallocDeviceMemory(int n);
 
   Vector3Container R;
   #ifdef ELECTROSTATICS

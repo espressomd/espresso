@@ -865,6 +865,20 @@ constraint  \opt{\var{num}}
 Prints out all constraint information. If \var{num} is specified only this
 constraint is displayed, otherwise all constraints will be printed.
 
+\subsection{\texttt{harmonic_force}: Creating a harmonic trap}
+ \newescommand{harmonic-force}
+ \begin{essyntax}
+   harmonic_force \{ \var{x} \var{y} \var{z} \} \var{k}
+  \begin{features}
+    \required{HARMONICFORCE}
+    \required{CUDA}
+  \end{features}
+ \end{essyntax}
+
+ Calculates a spring force for all particles, where the equilibrium position
+ of the spring is at \var{x y z} and it's force constant is \var{k}. A more
+ flexible trap can be constructed with constraints, but this one runs on the GPU.
+
 \section{Virtual sites}
 \label{sec:virtual}
 \index{virtual sites|mainindex}
