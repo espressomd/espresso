@@ -18,7 +18,7 @@ public:
   template<class value_type>
   class const_iterator {
   public:
-    virtual const value_type operator*() const = 0;
+    virtual value_type operator*() const = 0;
     virtual const_iterator<value_type> &operator=(const const_iterator<value_type> &rhs) = 0;
     virtual bool operator==(const_iterator<value_type> const &rhs) const = 0;
     virtual bool operator!=(const_iterator<value_type> const &rhs) const = 0;
@@ -27,7 +27,7 @@ public:
 
   class null_vec_iterator : public SystemInterface::const_iterator<Vector3> {
   public:
-    const Vector3 operator*() const { return Vector3(); };
+    Vector3 operator*() const { return Vector3(); };
     const_iterator<Vector3> &operator=(const const_iterator<Vector3> &rhs) { return *this; };
     bool operator==(const_iterator<Vector3> const &rhs) const { return true; };
     bool operator!=(const_iterator<Vector3> const &rhs) const { return false; };
@@ -38,7 +38,7 @@ public:
 
   class null_real_iterator : public SystemInterface::const_iterator<Real> {
   public:
-    const Real operator*() const { return Real(); };
+    Real operator*() const { return Real(); };
     const_iterator<Real> &operator=(const const_iterator<Real> &rhs) { return *this; };
     bool operator==(const_iterator<Real> const &rhs) const { return true; };
     bool operator!=(const_iterator<Real> const &rhs) const { return false; };
@@ -109,18 +109,25 @@ public:
   virtual bool hasQGpu() { return false; };
   virtual bool requestQGpu() { m_needsQGpu = hasQGpu(); return m_needsQGpu; }
 
+  virtual float *fGpuBegin() { return 0; };
+  virtual float *fGpuEnd() { return 0; };
+  virtual bool hasFGpu() { return false; };
+  virtual bool requestFGpu() { m_needsFGpu = hasFGpu(); return m_needsFGpu; }
+
   virtual const_real_iterator &qBegin() { return null_scalar; };
   virtual const const_real_iterator &qEnd() { return null_scalar; };
   virtual bool hasQ() { return false; };
   virtual bool requestQ() { m_needsQ = hasQ(); return m_needsQ; }
 
   virtual unsigned int npart() = 0;
+  virtual unsigned int npart_gpu() = 0;
   virtual Vector3 box() = 0;
 
   virtual bool needsR() { return m_needsR; };
   virtual bool needsRGpu() { return m_needsRGpu;};
   virtual bool needsQGpu() { return m_needsQGpu;};
   virtual bool needsQ() { return m_needsQ;};
+  virtual bool needsFGpu() { return m_needsFGpu; };
   
 protected:
   bool m_needsR;
@@ -129,7 +136,7 @@ protected:
   bool m_needsRGpu;
   bool m_needsVGpu;
   bool m_needsQGpu;
-
+  bool m_needsFGpu;
 };
 
 #endif

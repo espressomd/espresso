@@ -395,7 +395,10 @@ cases with similar structures.
 \analyzeindex{finding holes}
 
 \begin{essyntax}
-  analyze holes \var{typeid_\mathrm{probe}} \var{mesh\_size} 
+  analyze holes \var{typeid_\mathrm{probe}} \var{mesh\_size}
+  \begin{features}
+    \required{LENNARD_JONES}
+  \end{features}
 \end{essyntax}
 Function for the calculation of the unoccupied volume (often also
 called free volume) in a system. Details can be found in
@@ -433,8 +436,27 @@ information is given in the element_lists for each hole. The element
 numbers give the position of a mesh point in the linear representation
 of the 3D grid (coordinates are in the order x, y, z). Attention: the
 algorithm assumes a cubic box. Surface results have not been tested.
-Requires the feature LENNARD_JONES.  \todo{I think there is still a
-  bug in there (Hanjo)}.
+\todo{I think there is still a bug in there (Hanjo)}.
+
+
+\subsection{Temperature of the LB fluid}
+\label{analyze:lbtemp}
+\analyzeindex{fluid temperature}
+
+\begin{essyntax}
+  \require{1 or 2 or 3}{analyze fluid temp}
+  \begin{features}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
+  \required[3]{ELECTROKINETICS}
+  \end{features}
+\end{essyntax}
+
+This command returns the temperature of the lattice-Boltzmann (LB)
+fluid, see Chapter~\ref{sec:lb}, by averaging over the fluid nodes. In
+case \feature{LB_BOUNDARIES} or \feature{LB_BOUNDARIES_GPU} are
+compiled in and boundaries are defined, only the available fluid
+volume is taken into account.
 
 \subsection{Energies}
 \label{analyze:energy}
@@ -458,7 +480,6 @@ energy contributions of the bonded resp. non-bonded interactions.
 \begin{code}
 \{ energy \var{value} \} \{ kinetic \var{value} \} \{ interaction \var{value} \} \dots 
 \end{code}
-
 
 \subsection{Pressure}
 \label{analyze:pressure}

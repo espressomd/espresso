@@ -29,9 +29,11 @@ New user-visible features
 * New command time_integration to get the runtime of the integration
   loop.
 
+* New harmoic force that runs on the GPU.
+
 User-visible changes
 --------------------
-* comfixed now works with periodic boundary conditions.
+* Comfixed now works with periodic boundary conditions.
 
 * The pressure contribution due to rigid bodies constructed by means of the 
   virtual sites relative mechanism is included, both for pressure and stress 
@@ -55,10 +57,13 @@ User-visible changes
 
 * Removed compiler switch GRANDCANONICAL.
 
+* Removed outdated ADRESS code.
+
 Changes visible for developers
 ------------------------------
 
 * The code has been switched to using a C++ compiler.
+
 * The EspressoInterfaceClass has changed.
 
 ESPResSo 3.2

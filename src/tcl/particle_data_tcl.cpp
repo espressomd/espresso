@@ -223,11 +223,11 @@ void tclcommand_part_print_composition(Particle *part, char *buffer, Tcl_Interp 
 void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale forces ! */
-  Tcl_PrintDouble(interp, part->f.f[0]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[0]*PMASS(*part)/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.f[1]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[1]*PMASS(*part)/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.f[2]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[2]*PMASS(*part)/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 

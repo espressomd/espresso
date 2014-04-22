@@ -74,7 +74,7 @@ static int reinit_magnetostatics = 0;
 static int lb_reinit_particles_gpu = 1;
 #endif
 
-#if defined(LB_GPU) || defined(ELECTROSTATICS)
+#ifdef CUDA
 static int reinit_particle_comm_gpu = 1;
 #endif
 
@@ -265,13 +265,15 @@ void on_integration_start()
     }
   }
 #endif
-#if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
+  //#if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
+#ifdef CUDA
   if (reinit_particle_comm_gpu){
     gpu_change_number_of_part_to_comm();
     reinit_particle_comm_gpu = 0;
   }
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
 #endif
+  //#endif
 
 
 #ifdef METADYNAMICS

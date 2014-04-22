@@ -31,6 +31,7 @@
 #include <stdlib.h>
 
 #include "electrokinetics.hpp"
+#include "electrokinetics_pdb_parse.hpp"
 #include "lbgpu.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -71,7 +72,7 @@ static LB_nodes_gpu nodes_a = {.vd=NULL,.seed=NULL,.boundary=NULL};
 static LB_nodes_gpu nodes_b = {.vd=NULL,.seed=NULL,.boundary=NULL};;
 /** struct for node force */
 
-LB_node_force_gpu node_f = {.force=NULL} ;
+LB_node_force_gpu node_f = {.force=NULL,.scforce=NULL} ;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
 
@@ -484,6 +485,34 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
                                  );
   }
 }
+
+__device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
+
+  float force_factor=powf(para.agrid,4)*para.tau*para.tau;
+  for(int ii=0;ii<LB_COMPONENTS;++ii)
+  {  
+#ifdef EXTERNAL_FORCES
+      if(para.external_force)
+      {
+        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[0]*force_factor;
+        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[1]*force_factor;
+        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2]*force_factor;
+      }
+      else
+      {
+        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+      }
+#else
+      /** reset force */
+      node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+      node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+      node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+#endif
+  }
+}
+
 
 __device__ void update_rho_v(float *mode, unsigned int index, LB_node_force_gpu node_f, LB_rho_v_gpu *d_v){
 
@@ -1068,7 +1097,6 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
   
   float u[3]={0.0f,0.0f,0.0f},
         C[6]={0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
-  float force_factor=powf(para.agrid,4)*para.tau*para.tau;
   /* Note: the values d_v were calculated in relax_modes() */
 
   u[0]=d_v[index].v[0]; 
@@ -1137,26 +1165,18 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
       mode[8 + ii * LBQ] += C[3];
       mode[9 + ii * LBQ] += C[4];
     
-#ifdef EXTERNAL_FORCES
-      if(para.external_force)
-      {
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[0]*force_factor;
-        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[1]*force_factor;
-        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2]*force_factor;
-      }
-      else
-      {
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-      }
-#else
-      /** reset force */
-      node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-      node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-      node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-#endif
   }
+  
+  reset_LB_forces(index, node_f);
+
+#ifdef SHANCHEN
+  for(int ii=0;ii<LB_COMPONENTS;++ii)
+  {  
+     node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] +=node_f.scforce[(0+ii*3)*para.number_of_nodes + index];
+     node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] +=node_f.scforce[(1+ii*3)*para.number_of_nodes + index];
+     node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] +=node_f.scforce[(2+ii*3)*para.number_of_nodes + index];
+  }
+#endif
 }
 
 /**function used to calculate hydrodynamic fields in MD units.
@@ -1619,7 +1639,7 @@ __device__ void calc_node_force_three_point_couple(float *delta, float *delta_j,
  * @param *cpu_jsquared   Pointer to result storage value (Output)
  * @param n_a             Pointer to local node residing in array a (Input)
 */
-__global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
+__global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_of_non_boundary_nodes ) {
   float mode[4];
   float jsquared = 0.0f;
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -1633,6 +1653,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
          calc_mode(mode, n_a, index,ii);
          jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
          atomicadd(cpu_jsquared, jsquared);
+         atomicAdd(number_of_non_boundary_nodes, 1);
       }
     }
   }
@@ -2463,13 +2484,18 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
 #if ( LB_COMPONENTS == 1  ) 
   #warning shanchen forces not implemented 
 #else  
-  
+
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int xyz[3];
   float pseudo;
 
   if(index<para.number_of_nodes)
   {
+
+    /* ShanChen forces are not reset at the end of the integration cycle, 
+       in order to compute properly the hydrodynamic fields, so we have
+       to reset them here. For the standard LB this is not needed */
+     reset_LB_forces(index, node_f) ;
      /*Let's first identify the neighboring nodes */
      index_to_xyz(index, xyz);
      int x = xyz[0];
@@ -2497,6 +2523,10 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
        node_f.force[(0+ii*3)*para.number_of_nodes + index]+=p[0];
        node_f.force[(1+ii*3)*para.number_of_nodes + index]+=p[1];
        node_f.force[(2+ii*3)*para.number_of_nodes + index]+=p[2];
+/* copy to be used when resetting forces */
+       node_f.scforce[(0+ii*3)*para.number_of_nodes + index]=p[0];
+       node_f.scforce[(1+ii*3)*para.number_of_nodes + index]=p[1];
+       node_f.scforce[(2+ii*3)*para.number_of_nodes + index]=p[2];
     }
   }
 #endif 
@@ -2876,6 +2906,9 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   free_and_realloc(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
   free_and_realloc(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
   free_and_realloc(node_f.force    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
+#ifdef SHANCHEN
+  free_and_realloc(node_f.scforce  , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
+#endif
 
   free_and_realloc(nodes_a.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
   free_and_realloc(nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));
@@ -2987,7 +3020,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes, 
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
-  if (n_lb_boundaries == 0)
+  if (n_lb_boundaries == 0 && !pdb_boundary_lattice)
   {
     cudaThreadSynchronize();
     return;
@@ -3073,8 +3106,10 @@ void lb_calc_particle_lattice_ia_gpu(){
     }
     else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
+#if __CUDA_ARCH__ >= 200
       fprintf (stderr, "The three point particle coupling is not currently compatible with the Shan-Chen implementation of the LB\n");
       errexit(); 
+#endif
 #endif
       KERNELCALL( calc_fluid_particle_ia_three_point_couple, dim_grid_particles, threads_per_block_particles,
                    ( *current_nodes, gpu_get_particle_pointer(),
@@ -3220,6 +3255,11 @@ void lb_remove_fluid_momentum_GPU(void){
 */
 void lb_calc_fluid_temperature_GPU(double* host_temp){
 
+  int host_number_of_non_boundary_nodes = 0;
+  int *device_number_of_non_boundary_nodes;
+  cuda_safe_mem(cudaMalloc((void**)&device_number_of_non_boundary_nodes, sizeof(int)));
+  cuda_safe_mem(cudaMemcpy(device_number_of_non_boundary_nodes, &host_number_of_non_boundary_nodes, sizeof(int), cudaMemcpyHostToDevice));
+
   float host_jsquared = 0.0f;
   float* device_jsquared;
   cuda_safe_mem(cudaMalloc((void**)&device_jsquared, sizeof(float)));
@@ -3231,16 +3271,18 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, device_jsquared));
+  KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, device_jsquared, device_number_of_non_boundary_nodes));
 
+  cuda_safe_mem(cudaMemcpy(&host_number_of_non_boundary_nodes, device_number_of_non_boundary_nodes, sizeof(int), cudaMemcpyDeviceToHost));
   cuda_safe_mem(cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float), cudaMemcpyDeviceToHost));
+
   // TODO: check that temperature calculation is properly implemented for shanchen
   *host_temp=0;
 
   #pragma unroll
   for(int ii=0;ii<LB_COMPONENTS;++ii)
   { 
-      *host_temp += (double)(host_jsquared*1./(3.0f*lbpar_gpu.rho[ii]*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
+      *host_temp += (double)(host_jsquared*1./(3.0f*lbpar_gpu.rho[ii]*host_number_of_non_boundary_nodes*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
   }
 }
 

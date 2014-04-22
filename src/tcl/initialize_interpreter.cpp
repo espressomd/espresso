@@ -55,6 +55,7 @@
 #include "ghmc_tcl.hpp"
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
+#include "harmonic_force_tcl.hpp"
 
 
 #ifdef TK
@@ -213,6 +214,9 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
+#ifdef HARMONICFORCE
+  REGISTER_COMMAND("harmonic_force", tclcommand_harmonic_force);
+#endif
 }
 
 static void register_global_variables(Tcl_Interp *interp)
