@@ -1873,7 +1873,11 @@ double pi[6] = { 0., 0., 0., 0., 0., 0. };
 void lb_init() {
 
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
-  lb_sanity_checks();
+
+  if (lbpar.agrid <= 0.0) {
+    char *errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set when initializing fluid} ");
+  }
   if (check_runtime_errors()) return;
 
   /* initialize the local lattice domain */
