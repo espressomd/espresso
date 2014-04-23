@@ -880,20 +880,6 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   return ES_OK;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
-  if (lattice_switch & LATTICE_LB) {
-    fprintf (stderr, "Loading an LB checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
-    recalc_forces = 0;      //Indicates the forces need not be recalculated
-    resort_particles = 0;   //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
-  }
-  else if (lattice_switch & LATTICE_LB_GPU) {
-    fprintf (stderr, "Loading an LB GPU checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB GPU checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
-    recalc_forces = 0;      //Indicates the forces need not be recalculated
-    resort_particles = 0;   //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
-  }
-  else {
-    fprintf (stderr, "To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.\n");
-    return ES_ERROR;
-  }
   if(lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     FILE* cpfile;
@@ -968,6 +954,11 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 //  lbpar.resend_halo=1;
 //  mpi_bcast_lb_params(0);
 #endif
+  }
+  else {
+    char *errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.}");
+    return ES_ERROR;
   }
   return ES_OK;
 }
