@@ -44,7 +44,7 @@ by stretching. Second, coupling forces of e.\,g. the Lattice Boltzmann fluid can
 be computed and are therefore lacking in the first half time step. In order to
 minimize these effects, \es{} has a quite conservative heuristics to decide whether
 a change makes it necessary to recompute forces before the first time step. Therefore,
-calling hundred times \texttt{integrate 1} does the same as \textt{integrate 100},
+calling hundred times \texttt{integrate 1} does the same as \texttt{integrate 100},
 apart from some small calling overhead.
 
 However, for checkpointing, there is no way for \es{} to tell that the forces that you
