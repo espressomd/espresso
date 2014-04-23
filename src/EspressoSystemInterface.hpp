@@ -153,12 +153,6 @@ protected:
   bool m_splitParticleStructGpu;
 };
 
-/* Need explicite specialization, otherwise some compilers do not produce the objects. */
-
-template class EspressoSystemInterface::const_iterator<SystemInterface::Real>;
-template class EspressoSystemInterface::const_iterator<SystemInterface::Vector3>;
-template class EspressoSystemInterface::const_iterator<int>;
-
 extern EspressoSystemInterface espressoSystemInterface;
 
 #endif
