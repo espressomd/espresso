@@ -1172,18 +1172,19 @@ void mpi_remove_particle_slave(int pnode, int part)
 }
 
 /********************* REQ_INTEGRATE ********/
-int mpi_integrate(int n_steps)
+int mpi_integrate(int n_steps, int reuse_forces)
 {
   if (!correlations_autoupdate) {
-    mpi_call(mpi_integrate_slave, -1, n_steps);
-    integrate_vv(n_steps);
+    mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
+    integrate_vv(n_steps, reuse_forces);
     COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", \
                        this_node, n_steps));
     return check_runtime_errors();
   } else {
     for (int i=0; i<n_steps; i++) {
-      mpi_call(mpi_integrate_slave, -1, 1);
-      integrate_vv(1);
+      mpi_call(mpi_integrate_slave, 1, reuse_forces);
+      integrate_vv(1, reuse_forces);
+      reuse_forces = 0; // makes even less sense after the first time step
       COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n",     \
                          this_node, i));
       if (check_runtime_errors())
@@ -1195,9 +1196,9 @@ int mpi_integrate(int n_steps)
   return 0;
 }
 
-void mpi_integrate_slave(int pnode, int task)
+void mpi_integrate_slave(int n_steps, int reuse_forces)
 {
-  integrate_vv(task);
+  integrate_vv(n_steps, reuse_forces);
   COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", this_node, task));
 
   check_runtime_errors();

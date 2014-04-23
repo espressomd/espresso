@@ -73,6 +73,27 @@ void init_forces();
 
 void force_calc()
 {
+  // Communication step: distribute ghost positions
+  cells_update_ghosts();
+
+  // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
+#ifdef VIRTUAL_SITES
+  update_mol_vel_pos();
+  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+#endif
+
+#if defined(VIRTUAL_SITES_RELATIVE) && defined(LB) 
+  // This is on a workaround stage: 
+  // When using virtual sites relative and LB at the same time, it is necessary 
+  // to reassemble the cell lists after all position updates, also of virtual
+  // particles. 
+  if ((lattice_switch & LATTICE_LB) && cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) ) 
+    cells_update_ghosts();
+#endif
+  
+#ifdef COLLISION_DETECTION
+  prepare_collision_queue();
+#endif
 
   espressoSystemInterface.update();
 
@@ -156,6 +177,32 @@ void force_calc()
   copy_forces_from_GPU();
 #endif
 
+  // VIRTUAL_SITES distribute forces
+#ifdef VIRTUAL_SITES
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  init_forces_ghosts();
+  distribute_mol_force();
+#endif
+
+  // Communication Step: ghost forces
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+
+  // apply trap forces to trapped molecules
+#ifdef MOLFORCES         
+  calc_and_apply_mol_constraints();
+#endif
+
+  // should be pretty late, since it needs to zero out the total force
+#ifdef COMFIXED
+  calc_comfixed();
+#endif
+
+  // mark that forces are now up-to-date
+  recalc_forces = 0;
+
+#ifdef COLLISION_DETECTION
+  handle_collisions();
+#endif
 }
 
 /************************************************************/

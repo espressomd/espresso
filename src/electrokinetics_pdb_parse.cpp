@@ -10,6 +10,8 @@
 
 //#define DEBUG
 
+#ifdef ELECTROKINETICS
+
 /* Replacements for bool variables */
 const int pdb_SUCCESS = 0;
 const int pdb_ERROR = 1;
@@ -428,3 +430,5 @@ int pdb_parse(char* pdb_filename, char* itp_filename) {
 
   return pdb_SUCCESS;
 }
+
+#endif

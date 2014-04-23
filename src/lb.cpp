@@ -1622,30 +1622,51 @@ static void halo_push_communication() {
 
 /** Performs basic sanity checks. */
 int lb_sanity_checks() {
-
-  char *errtxt;
+  char *errtext;
   int ret = 0;
 
-    if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{103 LB requires domain-decomposition cellsystem} ");
-      ret = -1;
-    } 
-    else if (dd.use_vList && skin>=lbpar.agrid/2.0) {
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
-      ret = -1;
-    }
-
-
-    if (thermo_switch & ~THERMO_LB) {
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{122 LB must not be used with other thermostats} ");
-      ret = 1;
-    }
-
-    return ret;
-
+  if (lbpar.agrid <= 0.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+    ret = 1;
+  }
+  if (lbpar.tau <= 0.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+    ret = 1;
+  }
+  if (lbpar.rho[0] <= 0.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+    ret = 1;
+  }
+  if (lbpar.viscosity[0] <= 0.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+    ret = 1;
+  }
+  if (dd.use_vList && skin>=lbpar.agrid/2.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
+    ret = 1;
+  }
+  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{103 LB requires domain-decomposition cellsystem} ");
+    ret = -1;
+  } 
+  else if (dd.use_vList && skin>=lbpar.agrid/2.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
+    ret = -1;
+  }
+  
+  if (thermo_switch & ~THERMO_LB) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{122 LB must not be used with other thermostats} ");
+    ret = 1;
+  }
+  return ret;
 }
 
 /***********************************************************************/
@@ -1852,7 +1873,12 @@ double pi[6] = { 0., 0., 0., 0., 0., 0. };
 void lb_init() {
 
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
-  if (lb_sanity_checks()) return;
+
+  if (lbpar.agrid <= 0.0) {
+    char *errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set when initializing fluid} ");
+  }
+  if (check_runtime_errors()) return;
 
   /* initialize the local lattice domain */
   init_lattice(&lblattice,lbpar.agrid,lbpar.tau);  

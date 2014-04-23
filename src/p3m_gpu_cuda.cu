@@ -113,6 +113,8 @@ __host__ __device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_
 }
 
 /* Calculate influence function */
+#if 0
+// host version, not used anywhere
 void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 
   int    NX,NY,NZ;
@@ -146,6 +148,7 @@ void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REA
     }
   }
 }
+#endif
 
 __global__ void calculate_influence_function_device ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 
@@ -577,7 +580,7 @@ extern "C" {
 	block.x = 512 - mesh*mesh;
 	block.x -= block.x / 32;
 	grid.x = mesh / block.x + 1;
-	calculate_influence_function_device<<<grid,block>>>(cao, mesh, box, alpha, p3m_gpu_data.G_hat);
+	KERNELCALL(calculate_influence_function_device,grid,block,(cao, mesh, box, alpha, p3m_gpu_data.G_hat));
 	cudaThreadSynchronize();
       }
       p3m_gpu_data_initialized = 1;
