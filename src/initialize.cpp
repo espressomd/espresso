@@ -165,10 +165,14 @@ void on_integration_start()
   reactions_sanity_checks();
 #endif
 #ifdef LB
-  lb_sanity_checks();
+  if(lattice_switch & LATTICE_LB) {
+    lb_sanity_checks();
+  }
 #endif
 #ifdef LB_GPU
-  lb_GPU_sanity_checks();
+  if(lattice_switch & LATTICE_LB_GPU) {
+    lb_GPU_sanity_checks();
+  }
 #endif
 
   /********************************************/
