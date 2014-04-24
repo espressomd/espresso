@@ -112,6 +112,8 @@ __host__ __device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_
 }
 
 /* Calculate influence function */
+#if 0
+// host version, not used anywhere
 void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 
   int    NX,NY,NZ;
@@ -145,6 +147,7 @@ void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REA
     }
   }
 }
+#endif
 
 __global__ void calculate_influence_function_device ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 

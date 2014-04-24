@@ -85,7 +85,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
   int n, i;
   double volume = box_l[0]*box_l[1]*box_l[2];
 
-  if (!check_obs_calc_initialized())
+  if (!interactions_sanity_checks())
     return;
 
   init_virials(&virials);

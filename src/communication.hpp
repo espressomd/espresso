@@ -310,9 +310,10 @@ void mpi_recv_part(int node, int part, Particle *part_data);
 
 /** Issue REQ_INTEGRATE: start integrator.
     @param n_steps how many steps to do.
+    @param reuse_forces whether to trust the old forces for the first half step
     @return nonzero on error
 */
-int mpi_integrate(int n_steps);
+int mpi_integrate(int n_steps, int reuse_forces);
 
 /** Issue REQ_BCAST_IA: send new ia params.
     Also calls \ref on_short_range_ia_change.
