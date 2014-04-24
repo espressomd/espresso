@@ -4,7 +4,6 @@
 #define ESIF_TRACE(A)
 
 #include "SystemInterface.hpp"
-#include "particle_data.hpp"
 #include "cuda_interface.hpp"
 
 class EspressoSystemInterface : public SystemInterface {
