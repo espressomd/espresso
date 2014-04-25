@@ -1199,7 +1199,7 @@ int mpi_integrate(int n_steps, int reuse_forces)
 void mpi_integrate_slave(int n_steps, int reuse_forces)
 {
   integrate_vv(n_steps, reuse_forces);
-  COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", this_node, task));
+  COMM_TRACE(fprintf(stderr, "%d: integration for %d n_steps with %d reuse_forces done.\n", this_node, n_steps, reuse_forces));
 
   check_runtime_errors();
 }
