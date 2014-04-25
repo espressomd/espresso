@@ -4,7 +4,6 @@
 #define ESIF_TRACE(A)
 
 #include "SystemInterface.hpp"
-#include "particle_data.hpp"
 #include "cuda_interface.hpp"
 
 class EspressoSystemInterface : public SystemInterface {
@@ -152,12 +151,6 @@ protected:
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;
 };
-
-/* Need explicite specialization, otherwise some compilers do not produce the objects. */
-
-template class EspressoSystemInterface::const_iterator<SystemInterface::Real>;
-template class EspressoSystemInterface::const_iterator<SystemInterface::Vector3>;
-template class EspressoSystemInterface::const_iterator<int>;
 
 extern EspressoSystemInterface espressoSystemInterface;
 
