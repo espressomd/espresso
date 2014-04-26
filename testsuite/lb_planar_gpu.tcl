@@ -131,7 +131,6 @@ if { $components == 1 }  {
      error_exit "number of components ($components) not supported"
   }
 }
-
 integrate 1000
 
 # Equation of state: p = rho*c_2**2
