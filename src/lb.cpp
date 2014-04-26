@@ -211,7 +211,6 @@ int lb_lbfluid_set_mobility(double *p_mobility) {
   return 0;
 }
 
-#ifdef SHANCHEN
 int affinity_set_params(int part_type_a, int part_type_b, double * affinity)
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
@@ -229,10 +228,7 @@ int affinity_set_params(int part_type_a, int part_type_b, double * affinity)
   return ES_OK;
 }
 
-#endif 
-
-#endif 
-
+#endif   // SHANCHEN
 
 int lb_lbfluid_set_density(double *p_dens) { //
   
@@ -450,13 +446,13 @@ int lb_lbfluid_set_remove_momentum(void){
 }
 #endif
 
-int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz) {
+int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_fz) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     /* external force density is stored in MD units */
-    lbpar_gpu.ext_force[0] = (float)p_fx;
-    lbpar_gpu.ext_force[1] = (float)p_fy;
-    lbpar_gpu.ext_force[2] = (float)p_fz;
+    lbpar_gpu.ext_force[3*component+0] = (float)p_fx;
+    lbpar_gpu.ext_force[3*component+1] = (float)p_fy;
+    lbpar_gpu.ext_force[3*component+2] = (float)p_fz;
     lbpar_gpu.external_force = 1;
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
 #endif
@@ -548,8 +544,10 @@ int lb_lbfluid_get_agrid(double* p_agrid){
     }
   return 0;
 }
-
 int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
+#ifdef SHANCHEN
+  exit(printf("Not implemented yet (%s:%d) ",__FILE__,__LINE__));
+#endif
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     *p_fx = lbpar_gpu.ext_force[0];
@@ -1109,7 +1107,6 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 }
 
 int lb_lbnode_get_pi(int* ind, double* p_pi) {
-// TODO implement correctly for all components!
 
   double p0 = 0;
 
@@ -1117,7 +1114,9 @@ int lb_lbnode_get_pi(int* ind, double* p_pi) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    p0 = lbpar_gpu.rho[0]*lbpar_gpu.agrid*lbpar_gpu.agrid/lbpar_gpu.tau/lbpar_gpu.tau/3.;
+    for(int ii=0;ii<LB_COMPONENTS;ii++){
+         p0 += lbpar_gpu.rho[ii]*lbpar_gpu.agrid*lbpar_gpu.agrid/lbpar_gpu.tau/lbpar_gpu.tau/3.;
+    }
 #endif
   } else {  
 #ifdef LB
@@ -1192,7 +1191,7 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
   return 0;
 }
 
-#endif // SHANCHEN 
+#endif  //defined (LB) || defined (LB_GPU)
 
 int lb_lbnode_get_pop(int* ind, double* p_pop) {
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -1221,10 +1220,6 @@ int lb_lbnode_set_rho(int* ind, double *p_rho){
        host_rho[i]=(float)p_rho[i];
     }
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
-//#ifdef SHANCHEN
-//    lb_calc_particle_lattice_ia_gpu();
-//    copy_forces_from_GPU();
-//#endif 
 #endif
   } else {
 #ifdef LB

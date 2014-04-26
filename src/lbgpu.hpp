@@ -116,7 +116,7 @@ typedef struct {
 
   int external_force;
 
-  float ext_force[3];
+  float ext_force[3*LB_COMPONENTS];
 
   unsigned int your_seed;
 
