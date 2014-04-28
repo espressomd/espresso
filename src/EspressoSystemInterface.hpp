@@ -101,16 +101,21 @@ public:
       enableParticleCommunication();
     return m_needsFGpu;
   };
+#endif
 
   unsigned int npart_gpu() {
+#ifdef CUDA
     return m_gpu_npart;
+#else
+    return 0;
+#endif
   };
 
-#endif
 
 protected:
   void gatherParticles();
   void split_particle_struct();
+#ifdef CUDA
   void enableParticleCommunication() {
     if(!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
       ESIF_TRACE(puts("gpu communication not enabled;"));
@@ -121,6 +126,7 @@ protected:
     }
   };
   void reallocDeviceMemory(int n);
+#endif
 
   Vector3Container R;
   #ifdef ELECTROSTATICS
