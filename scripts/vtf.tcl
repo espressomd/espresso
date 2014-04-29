@@ -195,8 +195,20 @@ proc writevsf { file args } {
             lappend aids "$from:$to"
         }
         unset from
-        
-        puts $file "atom [join $aids ,] $desc"
+        # let's group atom ranges, so that there are no more than 8 per line
+        # This fixes a problem with the vmd plugin, and makes the vtf more 
+        # readable anyway.
+        set start 0
+        set maxlen 8
+        set ll  [llength [lrange $aids $start end ]]
+        while { $ll >= $maxlen } {
+              puts $file "atom [join [lrange $aids $start [expr $start + $maxlen -1]] ,] $desc"
+              incr start $maxlen
+              set ll  [llength [lrange $aids $start end ]]
+        }
+        if { $start < [llength $aids ] } { 
+          puts $file "atom [join [lrange $aids  $start  end] ,] $desc"
+        }
     }
     
     # Print bond data
