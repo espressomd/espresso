@@ -777,7 +777,7 @@ void make_bond_type_exist(int type)
   n_bonded_ia = ns;
 }
 
-int check_obs_calc_initialized()
+int interactions_sanity_checks()
 {
   /* set to zero if initialization was not successful. */
   int state = 1;

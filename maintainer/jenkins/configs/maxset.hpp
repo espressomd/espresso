@@ -36,6 +36,7 @@
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
 #define EK_REACTION
+#define HARMONICFORCE
 #endif
 
 #define AREA_FORCE_GLOBAL   

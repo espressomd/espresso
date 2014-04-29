@@ -43,7 +43,7 @@ int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, 
 int tclcommand_integrate_print_usage(Tcl_Interp *interp) 
 {
   Tcl_AppendResult(interp, "Usage of tcl-command integrate:\n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate <INT n steps>' for integrating n steps \n", (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate [reuse_forces] <INT n steps>' for integrating n steps and reusing unconditionally the given forces for the first step \n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate set' for printing integrator status \n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate set nvt' for enabling NVT integration or \n" , (char *)NULL);
 #ifdef NPT
@@ -194,7 +194,7 @@ int tclcommand_integrate_set_npt_isotropic(Tcl_Interp *interp, int argc, char **
 
 int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
-  int  n_steps;
+  int  n_steps, reuse_forces = 0;
   
   INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
 
@@ -213,15 +213,21 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
       Tcl_AppendResult(interp, "unknown integrator method:\n", (char *)NULL);
       return tclcommand_integrate_print_usage(interp);
     }
-  } else if ( !ARG_IS_I(1,n_steps) ) return tclcommand_integrate_print_usage(interp);
-
+  } else {
+     // actual integration
+     if (ARG1_IS_S("reuse_forces") && (argc > 2)) {
+       reuse_forces = 1;
+       argc--; argv++;
+     }
+     if ( !ARG_IS_I(1,n_steps) ) return tclcommand_integrate_print_usage(interp);
+  }
   /* go on with integrate <n_steps> */
   if(n_steps < 0) {
     Tcl_AppendResult(interp, "illegal number of steps (must be >0) \n", (char *) NULL);
     return tclcommand_integrate_print_usage(interp);;
   }
   /* perform integration */
-  if (mpi_integrate(n_steps))
+  if (mpi_integrate(n_steps, reuse_forces))
     return gather_runtime_errors(interp, TCL_OK);
   return TCL_OK;
 }

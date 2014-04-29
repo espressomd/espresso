@@ -31,6 +31,7 @@
 #include <stdlib.h>
 
 #include "electrokinetics.hpp"
+#include "electrokinetics_pdb_parse.hpp"
 #include "lbgpu.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -3081,7 +3082,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes, 
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
-  if (n_lb_boundaries == 0)
+  if (n_lb_boundaries == 0 && !pdb_boundary_lattice)
   {
     cudaThreadSynchronize();
     return;

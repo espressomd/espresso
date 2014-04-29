@@ -473,6 +473,21 @@ use the \lit{electrokinetics reaction region} command, one must first set up
 a reaction, as described above. To successfully specify a region all the 
 relevant arguments that go with the shape constraints must be provided.
 
+\subsubsection{\label{sssec:ek-pdb-parse}Parsing PDB Files}
+
+\begin{essyntax}
+  \require{1 or 2 or 3}{electrokinetics}
+  \require{2}{pdb-parse}
+  \var{pdb\_filename}
+  \var{itp\_filename}
+  \begin{features}
+  \required[1]{ELECTROKINETICS}
+  \required[2]{EK_BOUNDARIES}
+  \required[3]{EK_REACTIONS}
+  \end{features}
+\end{essyntax}
+The \lit{electrokinetics pdb-parse} feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here \var{itp\_filename}) the structure gets interpolated to the \lit{electrokinetics} grid. For the input you will need to prepare a PDB file with a \lit{gromacs} force field to generate the topology file. Normally the PDB file extension is \lit{.pdb}, the topology file extension is \lit{.itp}. Obviously the PDB file is placed instead of \var{pdb\_filename} and the topology file instead of \var{itp\_filename}. \todo{At the moment this fails badly, if you try to parse incorrectly formatted files. This will be fixed in the future.}
+
 \subsection{\label{ssec:ek-reac-output}Reaction-Specific Output}
 
 \begin{essyntax}

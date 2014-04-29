@@ -18,35 +18,16 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef REACTION_H
-#define REACTION_H
-/** \file reaction.hpp
- *
- */
- 
-#include "utils.hpp"
-#include "particle_data.hpp"
 
-typedef struct {
-	int reactant_type;
-	int product_type;
-	int catalyzer_type;
-	double range;
-	double ct_rate;
-	double eq_rate;
-  int sing_mult;
-}  reaction_struct;
+#ifndef HARMONIC_FORCE_TCL_H
+#define HARMONIC_FORCE_TCL_H
 
-extern reaction_struct reaction;
+#include "parser.hpp"
 
-#ifdef CATALYTIC_REACTIONS
-/** sanity checks for the reaction code */
-void reactions_sanity_checks();
-/** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the verlet radius is equal or bigger than the reaction range.
-**/
-void local_setup_reaction();
-void integrate_reaction();
+#ifdef HARMONICFORCE
+
+int tclcommand_harmonic_force(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
 #endif
 
-#endif /* ifdef REACTION_H */
+#endif
