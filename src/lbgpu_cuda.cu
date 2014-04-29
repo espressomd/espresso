@@ -1019,7 +1019,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index, 
      n_curr.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
   }
 #else 
-/* TODO: check shift */
+
 #define BOUNCEBACK()  \
   for(int component=0; component<LB_COMPONENTS;component++){\
      shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[component]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
@@ -2398,122 +2398,89 @@ __device__ __inline__ void calc_shanchen_contribution(LB_nodes_gpu n_a,int compo
   int index;
 
   index  = (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z;
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]+=pseudo/18.0f;
-  }
 
   index  = (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z;
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]-=pseudo/18.0f;
-  }
 
   index  = x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[1]+=pseudo/18.0f;
-  }
 
   index  = x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[1]-=pseudo/18.0f;
-  }
 
   index  = x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[2]+=pseudo/18.0f;
-  }
 
   index  = x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[2]-=pseudo/18.0f;
-  }
 
   index  = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]+=pseudo/36.0f;
   tmp_p[1]+=pseudo/36.0f;
-  }
 
   index  = (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]-=pseudo/36.0f;
   tmp_p[1]-=pseudo/36.0f;
-  }
 
   index  = (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]+=pseudo/36.0f;
   tmp_p[1]-=pseudo/36.0f;
-  }
 
   index  = (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]-=pseudo/36.0f;
   tmp_p[1]+=pseudo/36.0f;
-  }
 
   index  = (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]+=pseudo/36.0f;
   tmp_p[2]+=pseudo/36.0f;
-  }
 
   index  = (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]-=pseudo/36.0f;
   tmp_p[2]-=pseudo/36.0f;
-  }
 
   index  = (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]+=pseudo/36.0f;
   tmp_p[2]-=pseudo/36.0f;
-  }
 
   index  = (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[0]-=pseudo/36.0f;
   tmp_p[2]+=pseudo/36.0f;
-  }
 
   index  = x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[1]+=pseudo/36.0f;
   tmp_p[2]+=pseudo/36.0f;
-  }
 
   index  = x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[1]-=pseudo/36.0f;
   tmp_p[2]-=pseudo/36.0f;
-  }
+
   index  = x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[1]+=pseudo/36.0f;
   tmp_p[2]-=pseudo/36.0f;
-   }
+  
   index  = x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  if( 1 || n_a.boundary[index] == 0){
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[1]-=pseudo/36.0f;
   tmp_p[2]+=pseudo/36.0f;
-  }
+ 
   p[0]=tmp_p[0];
   p[1]=tmp_p[1];
   p[2]=tmp_p[2];
@@ -2536,6 +2503,7 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
   float pseudo;
 
   if(index<para.number_of_nodes)
+  if( n_a.boundary[index] == 0 )
   {
 
     /* ShanChen forces are not reset at the end of the integration cycle, 
