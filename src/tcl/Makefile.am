@@ -69,7 +69,8 @@ libEspressoTcl_la_SOURCES = \
 	tuning_tcl.cpp \
 	uwerr_tcl.cpp \
 	virtual_sites_com_tcl.cpp virtual_sites_com_tcl.hpp \
-	ghmc_tcl.cpp ghmc_tcl.hpp
+	ghmc_tcl.cpp ghmc_tcl.hpp \
+	cg_dna_tcl.hpp cg_dna_tcl.cpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \

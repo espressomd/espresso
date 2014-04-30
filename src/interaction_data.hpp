@@ -78,6 +78,12 @@
 #define BONDED_IA_AREA_FORCE_GLOBAL 18 
 /** Type of bonded interaction is a linear stretching force. */
 #define BONDED_IA_STRETCHLIN_FORCE 19 
+/** Type of bonded interaction for cg DNA */
+#define BONDED_IA_CG_DNA_BASE 20
+/** Type of bonded interaction for cg DNA */
+#define BONDED_IA_CG_DNA_BASEPAIR 21
+/** Type of bonded interaction for cg DNA */
+#define BONDED_IA_CG_DNA_STACKING 22
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -526,6 +532,17 @@ typedef struct {
       double drmax2;
       double drmax2i;
     } fene;
+
+    /** Parameters for the cg_dna potential
+	Insert documentation here.
+    */
+    struct {
+      double dummy;      
+    } cg_dna_basepair;
+
+    struct {
+      double dummy;
+    } cg_dna_stacking;
 
     /** Parameters for hyperelastic stretching_force */
     struct {
