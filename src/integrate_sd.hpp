@@ -88,6 +88,10 @@ extern double sd_radius;
  */
 void integrate_sd(int n_steps);
 
+/** set particle apart so they dont overlap.
+ */
+int sd_set_particles_apart();
+
 
 /*@}*/
 

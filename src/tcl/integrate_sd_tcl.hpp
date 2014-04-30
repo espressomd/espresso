@@ -32,17 +32,11 @@
 int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
 
-/** Callback for the skin.
+/** tcl procedure to set particles to an non overlapping state
  */
-//int tclcallback_skin(Tcl_Interp *interp, void *_data);
-
-/** Callback for integration time_step (0.0 <= time_step).
- */
-//int tclcallback_time_step(Tcl_Interp *interp, void *_data);
-
-/** Callback for current time in the integration.
- */
-//int tclcallback_time(Tcl_Interp *interp, void *_data);
+int tclcommand_sd_set_particles_apart(ClientData data,
+				     Tcl_Interp *interp,
+				     int argc, char **argv);
 
 /** Callback for the sd particle radius (0.0 < sd_radius)
  */
@@ -52,9 +46,6 @@ int tclcallback_sd_radius(Tcl_Interp *interp, void *_data);
  */
 int tclcallback_sd_viscosity(Tcl_Interp *interp, void *_data);
 
-/** Implements the tcl-command 'invalidate_system' which forces a system re-init. 
-    For more information, see \ref tclcommand_invalidate_system. */
-//int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 
