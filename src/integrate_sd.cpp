@@ -98,6 +98,7 @@ void propagate_pos_sd();
 void propagate_pos_sd_cuda(double * box_l, int N,double * pos_h, double * force_h, double * velo_h);
 #endif
 
+int sd_get_particle_num();
 /*@}*/
 
 /************************************************************/
@@ -408,19 +409,7 @@ void propagate_pos_sd()
   Particle *p;
   int c, i, np;
   //get total number of particles
-  int N=0;
-  for (c = 0; c < local_cells.n; c++){
-#ifdef VIRTUAL_SITES
-    cell = local_cells.cell[c];
-    p    = cell->part;
-    np   = cell->n;
-    for (i = 0; i < np; i++) { // only count nonVirtual Particles
-      if (!ifParticleIsVirtual(&p[i])) ++N;
-    } 
-#else
-    N  += local_cells.cell[c]->n;
-#endif
-  }
+  int N=sd_get_particle_num();
   // gather all the data for mobility calculation
   double * pos=NULL;
   pos=(double *)malloc(DIM*N*sizeof(double));
@@ -429,7 +418,15 @@ void propagate_pos_sd()
   force=(double *)malloc(DIM*N*sizeof(double));
   assert(force!=NULL);
   double * velocity=NULL;
-  velocity=(double *)malloc(DIM*N*sizeof(double));
+  bool old_velocity_reuse;
+  { static int last_particle_number=0;
+    if (N != last_particle_number){
+      velocity=(double *)calloc(DIM*N*sizeof(double),1);
+      old_velocity_reuse=false;
+    } else {
+      old_velocity_reuse=true;
+      velocity=(double *)malloc(DIM*N*sizeof(double));
+    }}
   assert(velocity!=NULL);
 #ifdef EXTERNAL_FORCES
   const int COORD_ALL=COORD_FIXED(0)&COORD_FIXED(1)&COORD_FIXED(2);
@@ -451,10 +448,10 @@ void propagate_pos_sd()
 #endif
       {
         memcpy(&pos[3*j], p[i].r.p, 3*sizeof(double));
-	for (int d=0;d<3;d++){
-	  assert(!isnan(p[i].r.p[d]));
-	}
         memcpy(&force[3*j], p[i].f.f, 3*sizeof(double));
+	if (old_velocity_reuse){
+	  memcpy(velocity+3*j, p[i].m.v, 3*sizeof(double));
+	}
 	j++;
       }
     }
@@ -500,4 +497,125 @@ void propagate_pos_sd()
   free(force);
   announce_resort_particles();
   
+}
+
+
+int sd_set_particles_apart(){
+  {
+    double V=box_l[0];
+    V*=box_l[1];
+    V*=box_l[2];
+    int N=sd_get_particle_num();
+    double Vpart=4.*M_PI/3.*sd_radius*SQR(sd_radius)*N;
+    double phi = Vpart/V;
+    fprintf(stderr,"info: sd_set_particles_apart: Volume fraction of particles is %f.\n",phi);
+    if (phi > M_PI/3./sqrt(2)){
+      return -5;
+    }
+    if (phi > 0.7){
+      return -4;
+    }
+    if (phi > 0.5){
+      fprintf(stderr,"warning: sd_set_particles_apart: Volume fraction of particles is %f.\n\
+It could be difficult to set particles apart!\n",phi);
+    }
+  }
+  bool outer=false;
+  do {
+    outer=false;
+    for (int c = 0; c < local_cells.n; c++){
+      Cell * cell  = local_cells.cell[c];
+      Particle * p = cell->part;
+      int np   = cell->n;
+      bool inner=false;
+      do {
+	inner=false;
+	for (int i = 0; i < np; i++) { // only count nonVirtual Particles
+	  for (int j = i+1; j <np; j++){
+	    //position: p[i].r.p
+	    double dr2=0;
+	    double dr[3];
+	    for (int d=0; d<3;d++){
+	      dr[d]=p[i].r.p[d]-p[j].r.p[d];
+	      dr[d]-=box_l[d]*rint(dr[d]/box_l[d]);
+	      dr2+=SQR(dr[d]);
+	    }
+	    if (dr2 <= SQR(2*sd_radius*(1+1e-6))){
+	      double drn = sqrt(dr2);
+	      // push to a distance of 1e-6;
+	      double fac=(sd_radius+sd_radius*1.2e-6-drn/2)/drn;
+	      for (int d=0; d<3;d++){
+		assert(!isnan(dr[d]*fac));
+		p[i].r.p[d]+=fac*dr[d];
+		p[j].r.p[d]-=fac*dr[d];
+	      }
+	      dr2=0;
+	      for (int d=0; d<3;d++){
+		dr[d]=p[i].r.p[d]-p[j].r.p[d];
+		dr[d]-=box_l[d]*rint(dr[d]/box_l[d]);
+		dr2+=SQR(dr[d]);
+	      }
+	      assert(dr2 > SQR(2*sd_radius*(1+1e-6)));
+	      assert(dr2 < SQR(2*sd_radius*(1+2e-6)));
+	      inner=true;
+	    }
+	  }
+	}
+      } while (inner);/*
+      for (int cj =0; cj < local_cells.n;cj++){
+	Cell * cellJ  = local_cells.cell[cj];
+	Particle * pj = cellJ->part;
+	int npj       = cellJ->n;
+	for (int i = 0; i < np; i++) { // only count nonVirtual Particles
+	  for (int j = (c==cj?i+1:0); j <npj; j++){
+	    //position: p[i].r.p
+	    double dr2=0;
+	    double dr[3];
+	    for (int d=0; d<3;d++){
+	      dr[d]=p[i].r.p[d]-pj[j].r.p[d];
+	      dr[d]-=box_l[d]*rint(dr[d]/box_l[d]);
+	      dr2+=SQR(dr[d]);
+	    }
+	    if (dr2 <= SQR(2*sd_radius*(1+1e-6))){
+	      double drn = sqrt(dr2);
+	      // push to a distance of 1e-6;
+	      double fac=(sd_radius+sd_radius*5e-7-drn/2)/drn;
+	      assert(!isnan(fac));
+	      assert (fac > 0);
+	      for (int d=0; d<3;d++){
+		p[i].r.p[d] +=fac*dr[d];
+		pj[j].r.p[d]-=fac*dr[d];
+	      }
+	      inner=true;
+	    }
+	    for (int d=0;d<3;d++){
+	      assert(!isnan( pj[j].r.p[d]));
+	      assert(!isnan( p[i].r.p[d]));
+	    }
+	  }
+	}
+	}*/
+    }
+    fprintf(stderr,"+");
+  } while (outer);
+  fprintf(stderr,"pushed_apart");
+  return 0;
+}
+
+
+int sd_get_particle_num(){
+  int N=0;
+  for (int c = 0; c < local_cells.n; c++){
+#ifdef VIRTUAL_SITES
+    cell = local_cells.cell[c];
+    p    = cell->part;
+    np   = cell->n;
+    for (i = 0; i < np; i++) { // only count nonVirtual Particles
+      if (!ifParticleIsVirtual(&p[i])) ++N;
+    } 
+#else
+    N  += local_cells.cell[c]->n;
+#endif
+  }
+  return N;
 }

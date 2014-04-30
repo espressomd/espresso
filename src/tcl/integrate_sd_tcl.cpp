@@ -48,6 +48,16 @@ int tclcommand_integrate_sd_print_usage(Tcl_Interp *interp)
   return (TCL_ERROR);
 }
 
+int tclcommand_sd_set_particle_apart_print_usage(Tcl_Interp * interp)
+{
+  Tcl_AppendResult(interp, "Usage of tcl-command sd_set_particles_apart:\n", (char *)NULL);
+  Tcl_AppendResult(interp, "  The command does not need any argument. It just \n\
+  sets the particles at least 2*sd_radius away from each\n\
+  other, so they dont overlap. Make sure to have enogh space\n\
+  to reach this state fast ...\n",(char *) NULL);
+  return (TCL_ERROR);
+}
+
 /** Hand over integrate status information to tcl interpreter. */
 int tclcommand_integrate_sd_print_status(Tcl_Interp *interp) 
 {
@@ -55,6 +65,31 @@ int tclcommand_integrate_sd_print_status(Tcl_Interp *interp)
   return (TCL_ERROR);
 }
 
+int tclcommand_sd_set_particles_apart(ClientData data, Tcl_Interp *interp, int argc, char **argv)
+{
+  if (argc != 1){
+    Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
+    return tclcommand_sd_set_particle_apart_print_usage(interp);
+  }
+  int status = sd_set_particles_apart();
+  if (status == -5){
+    Tcl_AppendResult(interp, "The Volumefraction is above the highest possible with hcp.\n\
+Therefore this function cannot suceed ...\n", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  if (status == -4){
+    Tcl_AppendResult(interp, "The Volumefraction is above 0.7 (and 0.7408 is the limit with hcp)\n\
+Therefore this function will not suceed ...\n", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  if (status == 0){
+    return (TCL_OK);
+  }
+  else {
+    //Tcl_AppendResult(interp, "Unknown return code.\n", (char *) NULL);
+    return (TCL_ERROR);
+  }
+}
 
 int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {

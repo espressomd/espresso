@@ -217,6 +217,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef SD
   /* from integrate_sd_tcl.cpp */
   REGISTER_COMMAND("integrate_sd", tclcommand_integrate_sd);
+  REGISTER_COMMAND("sd_set_particles_apart", tclcommand_sd_set_particles_apart);
 #endif
 }
 
