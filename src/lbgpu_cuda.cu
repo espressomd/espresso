@@ -494,9 +494,9 @@ __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
 #ifdef EXTERNAL_FORCES
       if(para.external_force)
       {
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[0]*force_factor;
-        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[1]*force_factor;
-        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2]*force_factor;
+        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[0 + ii*3 ]*force_factor;
+        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[1 + ii*3 ]*force_factor;
+        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2 + ii*3 ]*force_factor;
       }
       else
       {
@@ -956,7 +956,6 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
 }
 
 
-#ifndef SHANCHEN
 
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node
@@ -999,13 +998,14 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index, 
        lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l] */
   
     /** store vd temporary in second lattice to avoid race conditions */
-    // TODO: fix the multicomponent version (rho...)
 
 // TODO : PUT IN EQUILIBRIUM CONTRIBUTION TO THE BOUNCE-BACK DENSITY FOR THE BOUNDARY FORCE
 // TODO : INITIALIZE BOUNDARY FORCE PROPERLY, HAS NONZERO ELEMENTS IN FIRST STEP
 // TODO : SET INTERNAL BOUNDARY NODE VALUES TO ZERO
 
-#define BOUNCEBACK  \
+#ifndef SHANCHEN
+
+#define BOUNCEBACK()  \
   shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[0]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
   pop_to_bounce_back =  n_curr.vd[population*para.number_of_nodes + index ]; \
   to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
@@ -1019,73 +1019,87 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index, 
     boundary_force[2] += (2.0f*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
      n_curr.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
   }
+#else 
+
+#define BOUNCEBACK()  \
+  for(int component=0; component<LB_COMPONENTS;component++){\
+     shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[component]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
+     pop_to_bounce_back =  n_curr.vd[(population+component*LBQ)*para.number_of_nodes + index ]; \
+     to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
+     to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
+     to_index_z = (z+c[2]+para.dim_z)%para.dim_z; \
+     to_index = to_index_x + para.dim_x*to_index_y + para.dim_x*para.dim_y*to_index_z; \
+     if ( n_curr.boundary[to_index] == 0) \
+     { \
+       boundary_force[0] += (2.0f*pop_to_bounce_back+shift)*c[0]/para.tau/para.tau/para.agrid; \
+       boundary_force[1] += (2.0f*pop_to_bounce_back+shift)*c[1]/para.tau/para.tau/para.agrid; \
+       boundary_force[2] += (2.0f*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
+       n_curr.vd[(inverse+component*LBQ)*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
+       n_curr.vd[(inverse+component*LBQ)*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
+     } \
+  }
+#endif
 
     // the resting population does nothing, i.e., population 0.
     c[0]= 1;c[1]= 0;c[2]= 0; weight=1./18.; population= 2; inverse= 1; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]=-1;c[1]= 0;c[2]= 0; weight=1./18.; population= 1; inverse= 2; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]= 0;c[1]= 1;c[2]= 0; weight=1./18.; population= 4; inverse= 3; 
-    BOUNCEBACK
+    BOUNCEBACK();
 
     c[0]= 0;c[1]=-1;c[2]= 0; weight=1./18.; population= 3; inverse= 4; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]= 0;c[1]= 0;c[2]= 1; weight=1./18.; population= 6; inverse= 5; 
-    BOUNCEBACK
+    BOUNCEBACK();
 
     c[0]= 0;c[1]= 0;c[2]=-1; weight=1./18.; population= 5; inverse= 6; 
-    BOUNCEBACK 
+    BOUNCEBACK(); 
     
     c[0]= 1;c[1]= 1;c[2]= 0; weight=1./36.; population= 8; inverse= 7; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]=-1;c[1]=-1;c[2]= 0; weight=1./36.; population= 7; inverse= 8; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]= 1;c[1]=-1;c[2]= 0; weight=1./36.; population=10; inverse= 9; 
-    BOUNCEBACK
+    BOUNCEBACK();
 
     c[0]=-1;c[1]= 1;c[2]= 0; weight=1./36.; population= 9; inverse=10; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]= 1;c[1]= 0;c[2]= 1; weight=1./36.; population=12; inverse=11; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]=-1;c[1]= 0;c[2]=-1; weight=1./36.; population=11; inverse=12; 
-    BOUNCEBACK
+    BOUNCEBACK();
 
     c[0]= 1;c[1]= 0;c[2]=-1; weight=1./36.; population=14; inverse=13; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]=-1;c[1]= 0;c[2]= 1; weight=1./36.; population=13; inverse=14; 
-    BOUNCEBACK
+    BOUNCEBACK();
 
     c[0]= 0;c[1]= 1;c[2]= 1; weight=1./36.; population=16; inverse=15; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]= 0;c[1]=-1;c[2]=-1; weight=1./36.; population=15; inverse=16; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]= 0;c[1]= 1;c[2]=-1; weight=1./36.; population=18; inverse=17; 
-    BOUNCEBACK
+    BOUNCEBACK();
     
     c[0]= 0;c[1]=-1;c[2]= 1; weight=1./36.; population=17; inverse=18; 
-    BOUNCEBACK  
+    BOUNCEBACK();  
     
     atomicadd(&lb_boundary_force[3*( n_curr.boundary[index]-1)+0], boundary_force[0]);
     atomicadd(&lb_boundary_force[3*( n_curr.boundary[index]-1)+1], boundary_force[1]);
     atomicadd(&lb_boundary_force[3*( n_curr.boundary[index]-1)+2], boundary_force[2]);
   }
 }
-
-#else  // SHANCHEN
-
-// TODO To be implemented
-
-#endif // SHANCHEN
 
 /** add of (external) forces within the modespace, needed for particle-interaction
  * @param index   node index / thread index (Input)
@@ -2310,9 +2324,9 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
 #ifdef EXTERNAL_FORCES
       if(para.external_force)
       {
-        node_f.force[(0+ii*3)*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
-        node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
-        node_f.force[(2+ii*3)*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
+        node_f.force[(0+ii*3)*para.number_of_nodes + index] = para.ext_force[0+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
+        node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
+        node_f.force[(2+ii*3)*para.number_of_nodes + index] = para.ext_force[2+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
       }
       else
       {
@@ -2462,12 +2476,12 @@ __device__ __inline__ void calc_shanchen_contribution(LB_nodes_gpu n_a,int compo
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[1]+=pseudo/36.0f;
   tmp_p[2]-=pseudo/36.0f;
-
+  
   index  = x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   pseudo =  calc_massmode(n_a,index,component_index);
   tmp_p[1]-=pseudo/36.0f;
   tmp_p[2]+=pseudo/36.0f;
-  
+ 
   p[0]=tmp_p[0];
   p[1]=tmp_p[1];
   p[2]=tmp_p[2];
@@ -2490,6 +2504,7 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
   float pseudo;
 
   if(index<para.number_of_nodes)
+  if( n_a.boundary[index] == 0 )
   {
 
     /* ShanChen forces are not reset at the end of the integration cycle, 
@@ -2745,6 +2760,53 @@ __global__ void apply_boundaries(LB_nodes_gpu n_curr, float* lb_boundary_velocit
   if(index<para.number_of_nodes)
     bounce_back_boundaries(n_curr, index, lb_boundary_velocity, lb_boundary_force);
 }
+#ifdef SHANCHEN
+__global__ void lb_shanchen_set_boundaries(LB_nodes_gpu n_curr){
+/* This implements neutral boundary conditions for the shanchen fluid (i.e., 90 deg contact angle) */
+
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int xyz[3];
+  if(index<para.number_of_nodes){
+   if(n_curr.boundary[index] != 0 ) { 
+    index_to_xyz(index, xyz);
+    unsigned int x = xyz[0];
+    unsigned int y = xyz[1];
+    unsigned int z = xyz[2];
+    unsigned int to_index_x,to_index_y,to_index_z,to_index;
+    int c[3],count=0;
+
+    for(int ii=0;ii<LB_COMPONENTS;ii++)
+       for(int comp=0;comp<19;comp++)
+          n_curr.vd[(comp + ii*LBQ ) * para.number_of_nodes + index]  =  0.0 ; 
+    for(c[0]=-1;c[0]<=1;c[0]++){
+       for(c[1]=-1;c[1]<=1;c[1]++){
+          for(c[2]=-1;c[2]<=1;c[2]++){
+             to_index_x = (x+c[0]+para.dim_x)%para.dim_x; 
+             to_index_y = (y+c[1]+para.dim_y)%para.dim_y; 
+             to_index_z = (z+c[2]+para.dim_z)%para.dim_z; 
+             to_index = to_index_x + para.dim_x*to_index_y + para.dim_x*para.dim_y*to_index_z;  
+	     if(n_curr.boundary[to_index] == 0 ) { 
+                  for(int ii=0;ii<LB_COMPONENTS;ii++){
+                     for(int comp=0;comp<19;comp++){ /* We copy all velocities: at the end we will need 
+                                                        only the density mode, but this introduces no overhead anyway */
+	                 n_curr.vd[(comp + ii*LBQ ) * para.number_of_nodes + index] += 
+	                    n_curr.vd[(comp + ii*LBQ ) * para.number_of_nodes + to_index] ;
+                         count++;
+                     }
+                  }
+             }	      	
+          }
+       }
+    }
+    if(count>0)
+      for(int ii=0;ii<LB_COMPONENTS;ii++)
+        for(int comp=0;comp<19;comp++)
+           n_curr.vd[(comp + ii*LBQ ) * para.number_of_nodes + index]  /= count ; 
+  }
+ }
+}
+#endif /* SHANCHEN */
+
 
 #endif
 
@@ -3295,6 +3357,11 @@ void lb_calc_shanchen_GPU(){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
+  if (n_lb_boundaries != 0)
+  {
+    KERNELCALL(lb_shanchen_set_boundaries, dim_grid, threads_per_block,(*current_nodes));
+    cudaThreadSynchronize();
+  }
   KERNELCALL(lb_shanchen_GPU, dim_grid, threads_per_block,(*current_nodes, node_f));
 }
 
