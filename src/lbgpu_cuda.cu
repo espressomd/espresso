@@ -3357,11 +3357,13 @@ void lb_calc_shanchen_GPU(){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
+#ifdef LB_BOUNDARIES_GPU
   if (n_lb_boundaries != 0)
   {
     KERNELCALL(lb_shanchen_set_boundaries, dim_grid, threads_per_block,(*current_nodes));
     cudaThreadSynchronize();
   }
+#endif
   KERNELCALL(lb_shanchen_GPU, dim_grid, threads_per_block,(*current_nodes, node_f));
 }
 
