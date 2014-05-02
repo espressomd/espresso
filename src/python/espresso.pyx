@@ -103,8 +103,8 @@ _espressoHandle=EspressoHandle()
 glob = global_variables.GlobalsHandle()
 part = particle_data.particleList()
 #lbfluid=lb.DeviceList()
-IF LB_GPU == 1:
-    cu=cuda_init.CudaInitHandle()
+#IF LB_GPU == 1:
+#    cu=cuda_init.CudaInitHandle()
 
 # def TclEval(string):
 #   if instance_counter == 0:

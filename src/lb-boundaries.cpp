@@ -206,13 +206,14 @@ void lb_init_boundaries() {
             }
 #endif
           }
-          
+
+#ifdef EK_BOUNDARIES 
           if(pdb_boundary_lattice && 
              pdb_boundary_lattice[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x]) {
             dist = -1;
             boundary_number = n_lb_boundaries; // Make sure that boundary_number is not used by a constraint
           }
-
+#endif
           if (dist <= 0 && boundary_number >= 0 && (n_lb_boundaries > 0 || pdb_boundary_lattice)) {
             size_of_index = (number_of_boundnodes+1)*sizeof(int);
             host_boundary_node_list = (int *) realloc(host_boundary_node_list, size_of_index);
