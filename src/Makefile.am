@@ -266,7 +266,8 @@ if HAVE_PYTHON
 BUILT_SOURCES += config-features.hpp config-features.cpp
 CLEANFILES += config-features.hpp config-features.cpp
 config-features.hpp config-features.cpp: features.def $(top_srcdir)/config/gen_featureconfig.py
-	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.hpp config-features.cpp > /dev/null
+	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py \
+	  $(srcdir)/features.def config-features.hpp config-features.cpp > /dev/null
 
 else
 
