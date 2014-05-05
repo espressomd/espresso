@@ -160,18 +160,18 @@ inline int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
 }
 
 inline int lattice_global_pos_in_local_box(Lattice* lattice, double pos[3]) {
-  if (!(pos[0]>my_left[0] > 0 &&  pos[0]<my_right[0] ))
+  if (!(pos[0]>my_left[0]  &&  pos[0]<my_right[0] ))
     return 0;
-  if (!(pos[1]>my_left[1] > 0 &&  pos[1]<my_right[1] ))
+  if (!(pos[1]>my_left[1]  &&  pos[1]<my_right[1] ))
     return 0;
-  if (!(pos[2]>my_left[2] > 0 &&  pos[2]<my_right[2] ))
+  if (!(pos[2]>my_left[2]  &&  pos[2]<my_right[2] ))
     return 0;
   return 1;
 }
 
 inline int lattice_global_pos_in_local_halobox(Lattice* lattice, double pos[3]) {
-  for (int i =0; i<lattice->dim; i++) {
-    if (!(pos[i]>lattice->local_offset[i]-lattice->halo_size*lattice->agrid[i] > 0 &&  
+  for (unsigned int i=0; i<lattice->dim; i++) {
+    if (!(pos[i]>lattice->local_offset[i]-lattice->halo_size*lattice->agrid[i] &&  
           pos[i]<lattice->local_offset[i]+lattice->halo_grid[i]*lattice->agrid[i] ))
       return 0;
   }
@@ -186,7 +186,7 @@ inline int lattice_global_pos_to_lattice_index_checked(Lattice* lattice, double 
   int ind[3];
   for (i=0; i<3; i++)
     ind[i] = (int) round((pos[i]-lattice->offset[i])/lattice->agrid[i]);
-  *index = get_linear_index(lattice->halo_size + index[0], lattice->halo_size + index[1], lattice->halo_size + index[2], lattice->halo_grid);
+  *index = get_linear_index(lattice->halo_size + ind[0], lattice->halo_size + ind[1], lattice->halo_size + ind[2], lattice->halo_grid);
   return ES_OK;
   
 }

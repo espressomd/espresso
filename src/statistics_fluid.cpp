@@ -166,11 +166,7 @@ void lb_calc_densprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot)
-<<<<<<< HEAD:src/statistics_fluid.cpp
-    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
-=======
-    result = realloc(result,box_l[pdir]/lbpar.agrid*sizeof(double));
->>>>>>> supercaps:src/statistics_fluid.c
+    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
   if (involved) {
 
@@ -256,11 +252,7 @@ void lb_calc_velprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot) 
-<<<<<<< HEAD:src/statistics_fluid.cpp
-    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
-=======
-    result = realloc(result,box_l[pdir]/lbpar.agrid*sizeof(double));
->>>>>>> supercaps:src/statistics_fluid.c
+    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
   //fprintf(stderr,"%d (%d,%d): result=%p vcomp=%d pdir=%d x1=%d x2=%d involved=%d\n",this_node,subrank,newroot,result,vcomp,pdir,x1,x2,involved);
 

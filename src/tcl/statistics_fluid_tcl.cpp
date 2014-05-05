@@ -171,11 +171,7 @@ static int tclcommand_analyze_fluid_parse_velprof(Tcl_Interp *interp, int argc, 
 	return TCL_ERROR;
     }
 
-<<<<<<< HEAD:src/tcl/statistics_fluid_tcl.cpp
-    velprof = (double*) malloc(box_l[pdir]/lblattice.agrid*sizeof(double));
-=======
-    velprof = malloc(box_l[pdir]/lbpar.agrid*sizeof(double));
->>>>>>> supercaps:src/tcl/statistics_fluid_tcl.c
+    velprof = (double*) malloc(box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
     lb_master_calc_velprof(velprof, vcomp, pdir, x1, x2);
 

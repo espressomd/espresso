@@ -50,7 +50,7 @@ int external_potential_tabulated_init(int number, char* filename, int n_particle
 int lattice_read_file(Lattice* self, char* filename); 
 
 int external_potential_tabulated_read_potential_file(int number) {
-  lattice_read_file(&(external_potentials[number].e.tabulated.potential), external_potentials[number].e.tabulated.filename);
+  return lattice_read_file(&(external_potentials[number].e.tabulated.potential), external_potentials[number].e.tabulated.filename);
 }
 
 int lattice_read_file(Lattice* self, char* filename) {
@@ -145,7 +145,6 @@ int lattice_read_file(Lattice* self, char* filename) {
   init_lattice(self, res, offset, halosize, dim);
   self->interpolation_type = INTERPOLATION_LINEAR;
 
-  unsigned int linelength = (3+dim)*ES_DOUBLE_SPACE;
   char* line = (char*) malloc((3+dim)*ES_DOUBLE_SPACE);
   double pos[3];
   double f[3];
