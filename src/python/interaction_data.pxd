@@ -23,99 +23,104 @@ cdef extern from "lj.hpp":
                                         double cap_radius, double min)
   cdef int ljforcecap_set_params(double ljforcecap)
 
-ctypedef union bond_params_union:
-    #* Parameters for FENE bond Potential.
-    #	k - spring constant.
-    #	drmax - maximal bond streching.
-    #   r0 - equilibrium bond length.
-    #   drmax2 - square of drmax (internal parameter). 
-    
-    struct fene: 
+
+
+
+
+
+cdef extern from "interaction_data.hpp":
+  ctypedef struct Fene_bond_parameters:
       double k
       double drmax
       double r0
       double drmax2
       double drmax2i
+   
 
-    #* Parameters for hyperelastic stretching_force 
-    struct stretching_force:
-      double r0
-      double ks
+
+#* Parameters for hyperelastic stretching_force */
+  ctypedef struct  Stretching_force_bond_parameters:
+    double r0
+    double ks
+
+
+#* Parameters for linear stretching_force */
+  ctypedef struct Stretchlin_force_bond_parameters:
+    double r0
+    double kslin
+
+
+#* Parameters for area_force_local */
+  ctypedef struct Area_force_local_bond_parameters:
+    double A0_l
+    double ka_l
+
+
+#* Parameters for area_force_global */
+  ctypedef struct Area_force_global_bond_parameters:
+    double A0_g
+    double ka_g
+ 
+
+#* Parameters for bending_force */
+  ctypedef struct Bending_force_bond_parameters:
+    double phi0
+    double kb
+ 
+
+#* Parameters for volume_force */
+  ctypedef struct Volume_force_bond_parameters:
+    double V0
+    double kv
+ 
     
-    #* Parameters for linear stretching_force 
-    struct Cstretchlin_force:
-          double r0
-      double kslin
     
-    #* Parameters for area_force_local 
-    struct area_force_local:
-      double A0_l
-      double ka_l
-    
-    #* Parameters for area_force_global 
-    struct area_force_global:
-      double A0_g
-      double ka_g
-    
-    #* Parameters for bending_force 
-    struct bending_force:
-          double phi0
-      double kb
-    
-    #* Parameters for volume_force 
-    struct volume_force:
-      double V0
-      double kv
-    
-    struct harmonic:
+#* Parameters for harmonic bond Potential */
+  ctypedef struct Harmonic_bond_parameters:
       double k
       double r
       double r_cut
 
-    #* Parameters for three body angular potential (bond-angle potentials). 
-        ATTENTION: Note that there are different implementations of the bond angle
-        potential which you may chose with a compiler flag in the file \ref config.hpp !
-        bend - bending constant.
-        phi0 - equilibrium angle (default is 180 degrees / Pi) 
-
-    struct angle:
+#* Parameters for three body angular potential (bond-angle potentials). 
+  ctypedef struct Angle_bond_parameters:
       double bend
       double phi0
       double cos_phi0
       double sin_phi0
 
-    #* Parameters for three body angular potential (bond_angle_harmonic). 
-    #   bend - bending constant.
-    #   phi0 - equilibrium angle (default is 180 degrees / Pi) 
-    struct angle_harmonic: 
-      double bend
-      double phi0
+#* Parameters for three body angular potential (bond_angle_harmonic). 
+  ctypedef struct Angle_harmonic_bond_parameters:
+    double bend
+    double phi0
+ 
 
-    #* Parameters for three body angular potential (bond_angle_cosine). 
-    #   bend - bending constant.
-    #   phi0 - equilibrium angle (default is 180 degrees / Pi) 
-    struct angle_cosine:
+
+
+
+#* Parameters for three body angular potential (bond_angle_cosine). 
+  ctypedef struct Angle_cosine_bond_parameters:
       double bend
       double phi0
       double cos_phi0
       double sin_phi0
+ 
 
-    #* Parameters for three body angular potential (bond_angle_cossquare). 
-    #   bend - bending constant.
-    #   phi0 - equilibrium angle (default is 180 degrees / Pi) 
-    struct angle_cossquare:
+
+#* Parameters for three body angular potential (bond_angle_cossquare). 
+  ctypedef struct Angle_cossquare_bond_parameters:
       double bend
       double phi0
       double cos_phi0
 
-   #* Parameters for four body angular potential (dihedral-angle potentials). 
-    struct dihedral:
-      double mult
-      double bend
-      double phase
-    
-    #* Parameters for n-body tabulated potential (n=2,3,4). 
-    struct tab:
+#* Parameters for four body angular potential (dihedral-angle potentials). */
+  ctypedef struct Dihedral_bond_parameters:
+    double mult
+    double bend
+    double phase
+ 
+
+#* Parameters for n-body tabulated potential (n=2,3,4). */
+  ctypedef struct Tabulated_bond_parameters:
       char   *filename
       int    type
       int    npoints
@@ -124,9 +129,9 @@ ctypedef union bond_params_union:
       double invstepsize
       double *f
       double *e
-    
-    #* Parameters for n-body overlapped potential (n=2,3,4). 
-    struct overlap:
+
+#* Parameters for n-body overlapped potential (n=2,3,4). */
+  ctypedef struct Overlap_bond_parameters:
       char   *filename
       int    type
       double maxval
@@ -134,32 +139,31 @@ ctypedef union bond_params_union:
       double *para_a
       double *para_b
       double *para_c
-    
-    #* Dummy parameters for -LJ Potential 
-    struct subst_lj:
+
+
+#* Dummy parameters for -LJ Potential */
+  ctypedef struct Subt_lj_bond_parameters:
       double k
       double r
       double r2
+ 
     
-    #*Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM
-    struct rigid_bond:
-      #*Length of rigid bond/Constrained Bond
-      //double d
-      #*Square of the length of Constrained Bond
+    
+#*Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
+  ctypedef struct Rigid_bond_parameters:
+      #*Length of rigid bond/Constrained Bond*/
+      #double d
+      #*Square of the length of Constrained Bond*/
       double d2
-      #*Positional Tolerance/Accuracy value for termination of RATTLE/SHAKE iterations during position corrections
+      #*Positional Tolerance/Accuracy value for termination of RATTLE/SHAKE iterations during position corrections*/
       double p_tol
-      #*Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections 
+      #*Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
       double v_tol
+ 
 
-    #* Parameters for three body angular potential (bond-angle potentials) that 
-    #   depends on distance to wall constraint.
-    #    ATTENTION: Note that there are different implementations of the bond angle
-    #   potential which you may chose with a compiler flag in the file \ref config.hpp !
-    #   bend - bending constant.
-    #   phi0 - equilibrium angle (default is 180 degrees / Pi)
-    #    dist0 - equilibrium distance (no default) 
-    struct angledist:
+
+#* Parameters for three body angular potential (bond-angle potentials) that 
+  ctypedef struct Angledist_bond_parameters:
       double bend
       double phimin
       double distmin
@@ -168,24 +172,48 @@ ctypedef union bond_params_union:
       double cos_phi0
       double sin_phi0
 
-    #* Parameters for chainend angular potential with wall  
-    struct endangledist:
+
+
+#* Parameters for chainend angular potential with wall  */
+  ctypedef struct Endangledist_bond_parameters:
       double bend
       double phi0
       double distmin
       double distmax
 
+#* Union in which to store the parameters of an individual bonded interaction */
+  ctypedef union Bond_parameters:
+    Fene_bond_parameters fene
+    Stretchlin_force_bond_parameters stretchlin_force
+    Stretching_force_bond_parameters stretching_force
+    Area_force_local_bond_parameters area_force_local
+    Area_force_global_bond_parameters area_force_global
+    Bending_force_bond_parameters bending_force
+    Volume_force_bond_parameters volume_force
+    Harmonic_bond_parameters harmonic
+    Angle_bond_parameters angle
+    Angle_harmonic_bond_parameters angle_harmonic
+    Angle_cosine_bond_parameters angle_cosine
+    Angle_cossquare_bond_parameters angle_cossquare
+    Dihedral_bond_parameters dihedral
+    Tabulated_bond_parameters tab
+    Overlap_bond_parameters overlap
+    Subt_lj_bond_parameters subt_lj
+    Rigid_bond_parameters rigid_bond
+    Angledist_bond_parameters angledist
+    Endangledist_bond_parameters endangledist
+  
 
 
-cdef extern from "interaction_data.hpp":
- ctypedef struct Bonded_ia_parameters: 
-  int type
-  int num
-  #* union to store the different bonded interaction parameters. */
-  bond_parameter_union p
 
- Bonded_ia_parameters* bonded_ia_params
- cdef int n_bonded_ia
+  ctypedef struct Bonded_ia_parameters: 
+    int type
+    int num
+    #* union to store the different bonded interaction parameters. */
+    Bond_parameters p
+
+  Bonded_ia_parameters* bonded_ia_params
+  cdef int n_bonded_ia
 
 cdef extern from "fene.hpp":
   int fene_set_params(int bond_type, double k, double drmax, double r0)
