@@ -274,7 +274,7 @@ void on_particle_change()
 #ifdef LB_GPU
   lb_reinit_particles_gpu = 1;
 #endif
-#if defined(LB_GPU) || defined (ELECTROSTATICS)
+#ifdef CUDA
   reinit_particle_comm_gpu = 1;
 #endif
   invalidate_obs();

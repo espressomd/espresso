@@ -16,6 +16,12 @@ int print_charge_field(char* filename);
 
 int print_boundary_lattice(char* filename);
 
+#else
+/* that is tested for in a number of places, make sure that pdb
+   appears disabled if not compiled in.
+ */
+#define pdb_boundary_lattice 0
+
 #endif
 
 #endif
