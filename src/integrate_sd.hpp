@@ -25,12 +25,12 @@
 #ifdef CUDA
 #define HAVE_CUBLAS
 #include <cublas_v2.h>
-#include <magma.h>
+//#include <magma.h>
 #define DIM (3)
 #else
 #ifdef SD
 #error "CUDA is not given!"
-#error "StokesDynamics requires CUDA and MAGMA"
+#error "StokesDynamics requires CUDA"
 #endif
 #endif
 

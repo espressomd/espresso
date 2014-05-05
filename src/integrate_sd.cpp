@@ -421,6 +421,7 @@ void propagate_pos_sd()
   bool old_velocity_reuse;
   { static int last_particle_number=0;
     if (N != last_particle_number){
+      last_particle_number=N;
       velocity=(double *)calloc(DIM*N*sizeof(double),1);
       old_velocity_reuse=false;
     } else {

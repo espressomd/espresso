@@ -71,6 +71,10 @@ int tclcommand_sd_set_particles_apart(ClientData data, Tcl_Interp *interp, int a
     Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
     return tclcommand_sd_set_particle_apart_print_usage(interp);
   }
+  if (sd_radius < 0){
+    Tcl_AppendResult(interp, "The particle radius for SD was not set\n (set with setmd sd_radius <value>).\n", (char *)NULL);
+    return tclcommand_sd_set_particle_apart_print_usage(interp);
+  }
   int status = sd_set_particles_apart();
   if (status == -5){
     Tcl_AppendResult(interp, "The Volumefraction is above the highest possible with hcp.\n\

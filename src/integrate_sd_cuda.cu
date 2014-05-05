@@ -94,6 +94,11 @@ __global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, d
 __global__ void sd_set_zero_matrix(double * matrix, int size);
 
 
+// this sets a block to zero
+// data  : pointer to the given data
+// size  : the size of the data
+__global__ void sd_set_zero(double * data, int size);
+
 // implementation of a bucket sort algorithm
 // puts all the N particles with given position pos 
 // and particle radius a within the periodic boundary 
@@ -173,7 +178,7 @@ void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * forc
       std::cerr << "CUBLAS initialization failed\n";
       errexit();
     }
-    magma_init();
+    //magma_init();
   }
 
   double * box_l_d=NULL;
@@ -198,9 +203,7 @@ void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * forc
   //alpha=1/time_step;
   //cublasCall(cublasDscal(cublas, DIM*N, &alpha, disp_d, 1));  
   sd_compute_displacement(cublas, pos_d, N, viscosity, radius, box_l_d, mobility_d, force_d, disp_d);
-  
-  
-  
+     
   //int numThreadsPerBlock = 3;
   int numBlocks = (N+numThreadsPerBlock-1)/numThreadsPerBlock;
   //stat = cublasDaxpy(cublas, DIM*N, &alpha, v_d, 1, xr_d, 1);
@@ -282,7 +285,7 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
 
                                    
   sd_iterative_solver(cublas, mobility_d, resistance_d, force_d, 3*N,disp_d);
-     
+  
   
 
   /*double alpha=1, beta =0;
@@ -346,59 +349,44 @@ void sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const d
   // mob_force = mobility * force
   cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mobility, lda, force, 1, &beta, mob_force, 1));
   int info;
-  //printMatrixDev(mat_a,lda,size,"A");
-  // use mob_force as initial guess
-  /*
-  cublasCall(cublasDcopy(cublas, size,mob_force,1,disp, 1));
-  magma_dpotrs_gpu('U', size, 1, mat_a, lda, disp, size, &info);
+  double res;
+  //printVectorDev((double *)force,6,"Kraft");
+  //printVectorDev(disp,6,"before");
+  info = sd_bicgstab_solver(cublas ,size, mat_a,lda, mob_force, 1e-4, 10*size+100, disp);
+  //printVectorDev(disp,6,"after");
   // compary to expected result
   cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
-  //printMatrixDev(mat_a,lda,size,"A");
   cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
   alpha=-1;
   cublasCall(cublasDaxpy( cublas, size, &alpha, mob_force, 1, result_checker, 1));
   alpha=1;
-  double res;
   cublasCall(cublasDdot( cublas, size, result_checker, 1, result_checker, 1,&res));
-  //magma_int_t magma_dpotrs_gpu( magma_uplo_t uplo,  magma_int_t n, magma_int_t nrhs,
-  //				double *dA, magma_int_t ldda,
-  //				double *dB, magma_int_t lddb, magma_int_t *info);
-  */
-  double res=1; info=1;
-  if (info != 0 || res > 1e-4){
-    static int error_was_printed=0;
-    if (!(error_was_printed&1)){
-      error_was_printed|=1;
-      fprintf(stderr, "We do not use the symmetry of the matrix ...\nThe residuum was %6f\n",res);
+  if (info != 0){
+    if (info == 1){
+      fprintf(stderr, "Iterative solver did not fully converge ... the residuum was %6e\n\
+We will continue anyway ...\n",res);
     }
-    // reset mat_a (is done during comparison
-    //cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
-    // dont - use given 
-    //cublasCall(cublasDcopy(cublas, size,mob_force,1,disp, 1)); // reset disp
-    printVectorDev((double *)force,6,"Kraft");
-    printVectorDev(disp,6,"before");
-    info = sd_bicgstab_solver(cublas ,size, mat_a,lda, mob_force, 1e-6, 10*size+100, disp);
-    printVectorDev(disp,6,"after");
-    //assert(info==0);
-    // compary to expected result
-    cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
-    cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
-    alpha=-1;
-    cublasCall(cublasDaxpy( cublas, size, &alpha, mob_force, 1, result_checker, 1));
-    alpha=1;
-    cublasCall(cublasDdot( cublas, size, result_checker, 1, result_checker, 1,&res));
-    //if (info != 0 || res > 1e-4){
-    if (res > 1e-1){
-      if (!(error_was_printed&2)){
-	//error_was_printed|=2;
-	fprintf(stderr, "Iterative solver failed ...\nThe residuum was %6f\n",res);
+    else{ // info == 2 || info == 4
+      // try again with reseted displacement vector as initial guess
+      sd_set_zero<<<192,16>>>(disp,size);
+      info = sd_bicgstab_solver(cublas ,size, mat_a,lda, mob_force, 1e-4, 10*size+100, disp);
+      //printVectorDev(disp,6,"after zeroing");
+      if (info == 1){
+	fprintf(stderr, "Iterative solver did not fully converge ... the residuum was %6e\n\
+We will continue anyway ...\n",res);
       }
-      /*int ipiv[size];
+      else if (info == 2){
+	fprintf(stderr, "Iterative solver failed ... the residuum was %6e\n\
+We will continue but the results may be problematic ...\n",res);
+      }
+    }
+    // dgetrs is not better - the contrary: results are worse ...
+    /*int ipiv[size];
       magma_dgetrf_gpu( size, size,mat_a, lda, ipiv, &info);
       assert(info==0);
       magma_dgetrs_gpu('N', size, 1,
-		       mat_a, lda, ipiv,
-		       disp, size, &info);
+      mat_a, lda, ipiv,
+      disp, size, &info);
       assert(info==0);
       // compary to expected result
       cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
@@ -406,22 +394,22 @@ void sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const d
       alpha=-1;
       cublasCall(cublasDaxpy( cublas, size, &alpha, mob_force, 1, result_checker, 1));
       alpha=1;
-      cublasCall(cublasDdot( cublas, size, result_checker, 1, result_checker, 1,&res));*/
+      cublasCall(cublasDdot( cublas, size, result_checker, 1, result_checker, 1,&res));
       if (res > 1e-1){
-	fprintf(stderr, "All methods failed :(. The residuum was %f\n",res);
-	//cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
-	printVectorDev(mob_force, size, "mob_force");
-	//printVectorDev(result_checker, size, "result_checker");
-	printVectorDev(disp, size, "disp");
-	printMatrixDev((double *)mobility,lda,size,"mobility");
-	printMatrixDev((double *)resistance,lda,size,"res");
-	printMatrixDev((double *)mat_a,lda,size,"mat_a");
-      }
-      //magma_int_t magma_dgetrs_gpu( magma_trans_t trans, magma_int_t n, magma_int_t nrhs,
-      //				  double *dA, magma_int_t ldda, magma_int_t *ipiv,
-      //				  double *dB, magma_int_t lddb, magma_int_t *info);
-    }
+      fprintf(stderr, "All methods failed :(. The residuum from getrs was %e\n",res);
+      //cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
+      //printVectorDev(mob_force, size, "mob_force");
+      //printVectorDev(result_checker, size, "result_checker");
+      //printVectorDev(disp, size, "disp");
+      //printMatrixDev((double *)mobility,lda,size,"mobility");
+      //printMatrixDev((double *)resistance,lda,size,"res");
+      //printMatrixDev((double *)mat_a,lda,size,"mat_a");
+      }*/
+    //magma_int_t magma_dgetrs_gpu( magma_trans_t trans, magma_int_t n, magma_int_t nrhs,
+    //				  double *dA, magma_int_t ldda, magma_int_t *ipiv,
+    //				  double *dB, magma_int_t lddb, magma_int_t *info);
   }
+  
   //assert(info==0);
   cuda_safe_mem(cudaFree((void*)mat_a));
   cuda_safe_mem(cudaFree((void*)mat_a_bak));
@@ -584,6 +572,7 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
   real normr=sqrt(rr0);
   int iteration=0;
   real lastnorm=normr;
+  real initnorm=normr;
   // check for conversion or max iterations
   while (iteration < maxit && normr >= tolb){
     // v=A*p
@@ -591,15 +580,17 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
     // vr0 = v*r0
     real vr0;
     cublasCall(cublasDdot( cublas, size, v, 1, r0, 1, &vr0));
-    if (fabs(vr0) < eps){
-      fprintf(stderr, "BICGSTAB break-down.\n");
+    if (fabs(vr0) < eps || rr0 == 0){
+      if (fabs(vr0) < eps)
+	fprintf(stderr, "BICGSTAB break-down.\n");
+      else
+	fprintf(stderr, "BICGSTAB solution stagnates.\n");
       cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
-      return 1;
-    }
-    if (rr0 == 0){
-      fprintf(stderr, "BICGSTAB solution stagnates.\n");
-      cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
-      return 2;
+      if (tolb*100 > normr){
+	return 1;
+      } else {
+	return 2;
+      }
     }
     // alpha = rr0/vr0
     real myAlpha=rr0/vr0;
@@ -618,7 +609,11 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
     if (tt==0 || ts == 0){
       fprintf(stderr, "BICGSTAB break-down.\n");
       cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
-      return 1;
+      if (tolb*100 > normr){
+	return 1;
+      } else {
+	return 2;
+      }
     }
     // omega = ts/tt
     real myOmega=ts/tt;
@@ -660,7 +655,7 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
       // p =r
       cublasCall(cublasDcopy(cublas, size,r,1,p, 1));
     }
-    if (iteration%500000 == 0){ // enable debugging by setting this to a lower value
+    if (iteration%50000 == 0){ // enable debugging by setting this to a lower value
       real realnorm;
       {// recalculate normr
 	cublasCall(cublasDcopy(cublas, size,b,1,test, 1));
@@ -672,20 +667,14 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
       }
       fprintf(stderr,"  Iteration: %6d Residuum: %12f RealResiduum: %12f\n",iteration, normr, realnorm);
     }
+    if (initnorm*1e10 < normr){ // somehow our solution explodes ...
+      fprintf(stderr, "BICGSTAB did not converge. Aborting.\n");
+      cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
+      return 4;
+    }
   }
-  {
-      real realnorm;
-      {// recalculate normr
-	cublasCall(cublasDcopy(cublas, size,b,1,test, 1));
-	alpha=-1;beta=1;
-	cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, test, 1));
-	alpha= 1;beta=0;
-	cublasCall(cublasDdot( cublas, size, test, 1, test, 1, &realnorm));
-	realnorm=sqrt(realnorm);
-      }
-      fprintf(stderr,"  Iteration: %6d Residuum: %12f RealResiduum: %12f\n",iteration, normr, realnorm);
-  }
-  {// recalculate normr
+  // this should not be needed, as we restart ...
+  /*{// recalculate normr
     cublasCall(cublasDcopy(cublas, size,b,1,r, 1));
     alpha=-1;beta=1;
     cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, r, 1));
@@ -693,13 +682,19 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
     real r1r1;
     cublasCall(cublasDdot( cublas, size, r, 1, r, 1, &r1r1));
     normr=sqrt(r1r1);
-  }
-  if (normr > tolb){
-    fprintf(stderr, "BICGSTAB solution did not converge after %d iterations. Error was %f %% to high.\n",iteration,(normr/tolb-1)*100);
+    }*/
+  if (normr > tolb*1.01){
+    fprintf(stderr, "BICGSTAB solution did not converge after %d iterations. Error was %e1 %% to high.\n",iteration,(normr/tolb-1)*100);
     cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
-    return 4;
+    if (tolb*100 > normr){
+      fprintf(stderr, "1: tolb: %e normr: %e \n",tolb, normr);
+      return 1;
+    } else {
+      fprintf(stderr, "2: tolb: %e normr: %e \n",tolb, normr);
+      return 2;
+    }
   }
-  fprintf(stderr, "BICGSTAB solution did converge after %d iterations.\n",iteration);
+  //fprintf(stderr, "BICGSTAB solution did converge after %d iterations.\n",iteration);
   
   cuda_safe_mem(cudaFree((void*)r0));
   cuda_safe_mem(cudaFree((void*)r));
@@ -1065,6 +1060,17 @@ __global__ void sd_set_zero_matrix(double * matrix, int size){
   matsize*=size;
   for (int i = idx;i< matsize; i+=blockDim.x*gridDim.x){
     matrix[i]=0;
+  }
+}
+
+
+// this sets a block to zero
+// data  : pointer to the given data
+// size  : the size of the data
+__global__ void sd_set_zero(double * data, int size){
+  int idx = blockIdx.x*blockDim.x + threadIdx.x;
+  for (int i = idx;i< size; i+=blockDim.x*gridDim.x){
+    data[i]=0;
   }
 }
 
