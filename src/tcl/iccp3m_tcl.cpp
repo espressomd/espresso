@@ -176,7 +176,12 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
    iccp3m_initialized=1;
    iccp3m_cfg.set_flag = 1;
       
-      
+   if (!iccp3m_cfg.areas || !iccp3m_cfg.ein || !iccp3m_cfg.nvectorx) 
+     return TCL_ERROR;
+   if (!iccp3m_cfg.sigma)  {
+     iccp3m_cfg.sigma = (double*) malloc(iccp3m_cfg.n_ic*sizeof(double));
+     memset(iccp3m_cfg.sigma, 0, iccp3m_cfg.n_ic*sizeof(double));
+   }
    mpi_iccp3m_init(0);
 
    return TCL_OK;
