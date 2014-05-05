@@ -1,10 +1,10 @@
 cdef extern from "../src/config.hpp":
   pass
 
-#cdef extern from "../src/lattice.h":
+#cdef extern from "../src/lattice.hpp":
 #  int lattice_switch
 
-cdef extern from "lb.h":
+cdef extern from "lb.hpp":
   int lb_lbfluid_set_tau(double p_tau)
   int lb_lbfluid_set_density(double p_dens)
   int lb_lbfluid_get_density(double* p_dens)
