@@ -25,6 +25,9 @@
 #include <cstdlib>
 #include <cmath>
 
+
+#define CONST_UNITITIALIZED 1e-23
+
 struct s_observable;
 
 struct s_observable {
@@ -76,6 +79,10 @@ int observable_calc_currents(observable* self);
 int observable_calc_dipole_moment(observable* self);
 #endif
 
+#ifdef LB
+int mpi_observable_lb_radial_velocity_profile_parallel(void* pdata_, double* A, unsigned int n_A);
+#endif
+
 int observable_update_average(observable* self);
 int observable_reset_average(observable* self);
 typedef struct {
@@ -122,6 +129,7 @@ typedef struct {
   int xbins;
   int ybins;
   int zbins;
+  void* container;
 } profile_data;
 
 int observable_calc_density_profile(observable* self);
@@ -144,6 +152,7 @@ typedef struct {
   int phibins;
   int rbins;
   int zbins;
+  void* container;
 } radial_profile_data;
 
 void mpi_observable_lb_radial_velocity_profile_slave_implementation();

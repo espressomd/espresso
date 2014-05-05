@@ -509,6 +509,9 @@ int tclcommand_observable_radial_flux_density_profile(Tcl_Interp* interp, int ar
   }
   obs->container=(void*)rpdata;
   obs->n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
+  rpdata->container=(double*)malloc(3*rpdata->id_list->n*sizeof(double));
+  double* temptemp=(double*) rpdata->container;
+  *temptemp=CONST_UNITITIALIZED;
   obs->last_value=(double*)malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;

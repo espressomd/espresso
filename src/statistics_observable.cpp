@@ -673,20 +673,52 @@ int observable_calc_radial_flux_density_profile(observable* self) {
   double zbinsize=(pdata->maxz - pdata->minz)/pdata->zbins;
   double v[3];
   double v_r, v_phi, v_z;
+
+  if (self->last_update==sim_time) {
+    return ES_ERROR;
+  }
     
   for ( i = 0; i< self->n; i++ ) {
     A[i]=0;
+  }
+  double* old_positions=(double*) pdata->container;
+  if (old_positions[0] == CONST_UNITITIALIZED) {
+    for (int i = 0; i<ids->n; i++ ) {
+      memcpy(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+      memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+      unfold_position(unfolded_ppos, img);
+      old_positions[3*i+0]=unfolded_ppos[0];
+      old_positions[3*i+1]=unfolded_ppos[1];
+      old_positions[3*i+2]=unfolded_ppos[2];
+    }
+    return 0;
   }
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
-    v[0]=partCfg[ids->e[i]].m.v[0]/time_step;
-    v[1]=partCfg[ids->e[i]].m.v[1]/time_step;
-    v[2]=partCfg[ids->e[i]].m.v[2]/time_step;
+    memcpy(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    unfold_position(unfolded_ppos, img);
+    v[0]=(unfolded_ppos[0] - old_positions[3*i+0]);
+    v[1]=(unfolded_ppos[1] - old_positions[3*i+1]);
+    v[2]=(unfolded_ppos[2] - old_positions[3*i+2]);
     memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
     memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
+    // The position of the particle is by definition the middle of old and new position
+    ppos[0]+=0.5*v[0]; ppos[1]+=0.5*v[1]; ppos[2]+=0.5*v[2];
+    fold_position(ppos, img);
+    v[0]/=(sim_time - self->last_update);
+    v[1]/=(sim_time - self->last_update);
+    v[2]/=(sim_time - self->last_update);
+    if (i==0) {
+//      printf("(%3.4f) %f %f %f\n", sim_time-self->last_update, v[2], partCfg[ids->e[i]].m.v[2]/time_step,v[2]* partCfg[ids->e[i]].m.v[2]/time_step/time_step);
+//      printf("(%3.3f) %f %f", sim_time, old_positions[3*i+2], unfolded_ppos[2]);
+    }
+    old_positions[3*i+0]=unfolded_ppos[0];
+    old_positions[3*i+1]=unfolded_ppos[1];
+    old_positions[3*i+2]=unfolded_ppos[2];
     transform_to_cylinder_coordinates(ppos[0]-pdata->center[0], ppos[1]-pdata->center[1], ppos[2]-pdata->center[2], &r, &phi, &z);
     binr  =(int)floor((r-pdata->minr)/rbinsize);
     binphi=(int)floor((phi-pdata->minphi)/phibinsize);
