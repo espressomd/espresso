@@ -207,6 +207,137 @@ EOF
 
 LIBS="$LIBS -lm"
 
+##################################
+# check for tcl
+AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
+
+AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
+            [specify the tcl library to use (e.g. tcl8.4)]),
+            [], [with_tcl=yes])
+dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
+dnl with_tcl=no   bail out
+dnl otherwise     use the specified version
+
+if test .$with_tcl = .no; then
+   AC_MSG_WARN([
+*********************************************************
+*                                                       *
+* Without Tcl, ESPResSo doesn't do anything useful yet! *
+*                                                       *
+*********************************************************
+])
+   use_tcl=none
+   AC_DEFINE(TCL,[],[Whether Tcl is available])
+elif test .$with_tcl = .yes; then
+	for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
+		ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
+		if test .$use_tcl != .; then break; fi
+	done
+else
+	ES_ADDPATH_CHECK_LIB($with_tcl, Tcl_Init, [use_tcl=$with_tcl])
+fi
+
+# check the results
+if test .$use_tcl = . ; then
+   # Tcl was not found
+   case $target_os in
+	*darwin*) AC_MSG_NOTICE(
+[If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
+there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
+/Library/Frameworks/Tcl.framework/Tcl.]) ;;
+	*) AC_MSG_FAILURE([
+********************************************************************************
+* Could not link against the (static) Tcl library (libtcl*.a).                 *
+* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)!  *
+********************************************************************************
+]) ;;
+   esac
+fi
+
+case $target_os in
+  *darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Headers ;;
+  *linux*)  # path used by *buntu
+	  extrapaths=/usr/include/$version ;;
+esac
+
+if test .$use_tcl != .none; then
+   ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
+			[AC_MSG_FAILURE([
+********************************************************************************
+* Could not find the Tcl header files (tcl.h).                                 *
+* Please add the include path to CPPFLAGS                                      *
+* (e.g. configure CPPFLAGS=-I/usr/include)!                                    *
+********************************************************************************
+])], $extrapaths)
+fi
+
+if test .$use_tcl = .; then
+   use_tcl=none
+fi
+
+AM_CONDITIONAL(TCL, [test .$use_tcl != .none])
+
+##################################
+# check for tk
+AC_ARG_WITH(tk,
+	AS_HELP_STRING([--with-tk=VERSION],[whether to use Tk, and which version to use]),
+	[], [with_tk=no])
+dnl with_tk=no   don't use Tk
+dnl with_tk=yes  try to find a working Tk version, bail out if none is found
+dnl otherwise    use the specified version
+if test .$with_tk != .no; then
+	# test for X11
+	AC_PATH_XTRA
+	saved_CPPFLAGS=$CPPFLAGS
+	saved_LDFLAGS=$LDFLAGS
+	saved_LIBS=$LIBS
+	CPPFLAGS="$CPPFLAGS $X_CXXFLAGS"
+	LDFLAGS="$LDFLAGS $X_LIBS"
+	LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
+	AC_LINK_IFELSE([AC_LANG_CALL([],[XOpenDisplay])],[x11_works=yes],[x11_works=no])
+	if test $x11_works = no; then
+		AC_MSG_WARN([could not link against X11, hoping Tk works without])
+		CPPFLAGS=$saved_CPPFLAGS
+		LDFLAGS=$saved_LDFLAGS
+		LIBS=$saved_LIBS
+	fi
+	# now test whether Tk can be found
+	if test .$with_tk = .yes; then
+		for version in $TK_VERSION tk8.6 tk8.5 tk8.4 tk8.3 tk8.2 tk; do
+			ES_ADDPATH_CHECK_LIB($version, Tk_Init, [use_tk=$version], [])
+			if test .$use_tk != .; then break; fi
+		done
+	else
+		ES_ADDPATH_CHECK_LIB($with_tk, Tk_Init, [use_tk=$with_tk], [])
+	fi
+	if test .$use_tk = .; then
+		case $target_os in
+		(*darwin*) AC_MSG_ERROR([If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
+there is a link from lib<tkversion>.dylib to the Tk library, which usually is
+/Library/Frameworks/Tk.framework/Tk.]) ;;
+		(*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
+		esac
+	fi
+	if test .$use_tk = .tk; then
+		if test .$use_tcl != .tcl; then
+			AC_MSG_WARN([You are using a generic Tk version, but a defined Tcl version. This may cause problems.
+Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
+		fi
+	fi
+	case $target_os in
+	*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
+	*linux*)  # path used by *buntu
+		  extrapaths="/usr/include/$version /usr/include/$use_tcl" ;;
+	(*) ;;
+	esac
+	ES_ADDPATH_CHECK_HEADER(tk.h, [], 
+		[AC_MSG_ERROR([Tk headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4).])
+		]
+		,$extrapaths)
+	AC_DEFINE_UNQUOTED(TK,$use_tk,[Whether to use Tk])
+else
+	use_tk=none
+fi
 
 ##################################
 # check for FFTW

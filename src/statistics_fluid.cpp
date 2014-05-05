@@ -79,9 +79,9 @@ void lb_calc_fluid_momentum(double *result) {
 	}
     }
 
-    momentum[0] *= lblattice.agrid/lbpar.tau;
-    momentum[1] *= lblattice.agrid/lbpar.tau;
-    momentum[2] *= lblattice.agrid/lbpar.tau;
+    momentum[0] *= lbpar.agrid/lbpar.tau;
+    momentum[1] *= lbpar.agrid/lbpar.tau;
+    momentum[2] *= lbpar.agrid/lbpar.tau;
 
     MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     
@@ -166,7 +166,11 @@ void lb_calc_densprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot)
+<<<<<<< HEAD:src/statistics_fluid.cpp
     result = (double*) realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
+=======
+    result = realloc(result,box_l[pdir]/lbpar.agrid*sizeof(double));
+>>>>>>> supercaps:src/statistics_fluid.c
 
   if (involved) {
 
@@ -252,7 +256,11 @@ void lb_calc_velprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot) 
+<<<<<<< HEAD:src/statistics_fluid.cpp
     result = (double*) realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
+=======
+    result = realloc(result,box_l[pdir]/lbpar.agrid*sizeof(double));
+>>>>>>> supercaps:src/statistics_fluid.c
 
   //fprintf(stderr,"%d (%d,%d): result=%p vcomp=%d pdir=%d x1=%d x2=%d involved=%d\n",this_node,subrank,newroot,result,vcomp,pdir,x1,x2,involved);
 
@@ -273,7 +281,7 @@ void lb_calc_velprof(double *result, int *params) {
 	velprof[dir[pdir]-1] = 0.0;
       } else {
 	//velprof[dir[pdir]-1] = local_j / (SQR(lbpar.agrid)*lbpar.tau);
-	velprof[dir[pdir]-1] = j[vcomp]/rho * lblattice.agrid/lbpar.tau;
+	velprof[dir[pdir]-1] = j[vcomp]/rho * lbpar.agrid/lbpar.tau;
 	//fprintf(stderr,"%f %f %f\n",velprof[dir[pdir]-1],local_j,local_rho);
       }
 

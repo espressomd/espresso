@@ -99,7 +99,7 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #endif
 
 /** The underlying lattice structure */
-Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, -1.0, -1.0, NULL, NULL };
+Lattice lblattice;
 
 /** Pointer to the velocity populations of the fluid nodes */
 double **lbfluid[2] = { NULL, NULL };
@@ -591,9 +591,9 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
     int boundary;
 	   int gridsize[3];
 	
-	   gridsize[0] = box_l[0] / lblattice.agrid;
-	   gridsize[1] = box_l[1] / lblattice.agrid;
-	   gridsize[2] = box_l[2] / lblattice.agrid;
+	   gridsize[0] = box_l[0] / lbpar.agrid;
+	   gridsize[1] = box_l[1] / lbpar.agrid;
+	   gridsize[2] = box_l[2] / lbpar.agrid;
 	
 	   fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS boundary float 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
@@ -680,9 +680,9 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     double u[3];
 	   int gridsize[3];
 	
-	   gridsize[0] = box_l[0] / lblattice.agrid;
-	   gridsize[1] = box_l[1] / lblattice.agrid;
-	   gridsize[2] = box_l[2] / lblattice.agrid;
+	   gridsize[0] = box_l[0] / lbpar.agrid;
+	   gridsize[1] = box_l[1] / lbpar.agrid;
+	   gridsize[2] = box_l[2] / lbpar.agrid;
 
 	    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS velocity float 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
@@ -849,9 +849,9 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
 		
 		int gridsize[3];
 
-		gridsize[0] = box_l[0] / lblattice.agrid;
-		gridsize[1] = box_l[1] / lblattice.agrid;
-		gridsize[2] = box_l[2] / lblattice.agrid;
+		gridsize[0] = box_l[0] / lbpar.agrid;
+		gridsize[1] = box_l[1] / lbpar.agrid;
+		gridsize[2] = box_l[2] / lbpar.agrid;
 
 		for (int i=0; i < gridsize[0]; i++) {
 			for (int j=0; j < gridsize[1]; j++) {
@@ -925,9 +925,9 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
   int gridsize[3];
   lbpar.resend_halo=1;
   mpi_bcast_lb_params(0);
-  gridsize[0] = box_l[0] / lblattice.agrid;
-  gridsize[1] = box_l[1] / lblattice.agrid;
-  gridsize[2] = box_l[2] / lblattice.agrid;
+  gridsize[0] = box_l[0] / lbpar.agrid;
+  gridsize[1] = box_l[1] / lbpar.agrid;
+  gridsize[2] = box_l[2] / lbpar.agrid;
 
   for (int i=0; i < gridsize[0]; i++) {
     for (int j=0; j < gridsize[1]; j++) {
@@ -1062,20 +1062,20 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
         tmpind[1] = ind[1]+y;
         tmpind[2] = ind[2]+z;
 
-				if (lattice_switch & LATTICE_LB_GPU) {
+	if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
 					if (tmpind[0] == int(lbpar_gpu.dim_x)) tmpind[0] =0;
 					if (tmpind[1] == int(lbpar_gpu.dim_y)) tmpind[1] =0;
 					if (tmpind[2] == int(lbpar_gpu.dim_z)) tmpind[2] =0;
 #endif
-				} else {  
+	} else {  
 #ifdef LB
-					if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] =0;
-					if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] =0;
-					if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] =0;
-
+	  if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] =0;
+	  if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] =0;
+	  if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] =0;
+	  
 #endif
-				}
+	}
 
 #ifdef SHANCHEN
         //printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
@@ -1085,8 +1085,7 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 
 				lb_lbnode_get_u(tmpind, local_v);
 				
-				
-				v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
+	v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
         v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
         v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
 
@@ -1866,8 +1865,16 @@ void lb_init() {
   }
   if (check_runtime_errors()) return;
 
+  double temp_agrid[3];
+  double temp_offset[3];
+  for (int i =0; i<3; i++) {
+    temp_agrid[i]=lbpar.agrid;
+    temp_offset[i]=0.5;
+  }
+
   /* initialize the local lattice domain */
-  init_lattice(&lblattice,lbpar.agrid,lbpar.tau);  
+  init_lattice(&lblattice, temp_agrid, temp_offset, 1, 0);  
+//  int init_lattice(Lattice *lattice, double* agrid, double* offset, int halo_size, size_t element_size);
 
   if (check_runtime_errors()) return;
 

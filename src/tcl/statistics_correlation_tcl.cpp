@@ -638,7 +638,7 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
 
   int qi,qj,qk,qn, dim_sf, order2;
   double dt=self->dt;
-  observable_sf_params* params=(observable_sf_params*)self->A_obs->args;
+  observable_sf_params* params=(observable_sf_params*)self->A_obs->container;
   char buffer[TCL_DOUBLE_SPACE];
   int *q_vals;
   double *q_density;

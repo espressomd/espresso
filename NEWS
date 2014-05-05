@@ -29,6 +29,10 @@ New user-visible features
 * MEMD electrostatics can now handle spatially varying dielectrc
   constants.
 
+* pore constraint / lbboundary can have a two outer radii now to create nozzles.
+
+* slitpore constraint and dielectric for IL based supercaps implemented.
+
 * New command time_integration to get the runtime of the integration
   loop.
 
