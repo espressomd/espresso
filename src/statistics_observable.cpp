@@ -34,20 +34,23 @@ void observable_init(observable* self) {
 }
 
 int observable_calculate(observable* self) {
-  if (self->calculate != 0) 
-    return (self->calculate)(self);
-  return 0;
+  int temp;
+  if (self->calculate!=0)
+    temp=(self->calculate)(self);
+  self->last_update = sim_time;
+  return temp;
 }
 
 int observable_update(observable* self) {
+  int temp;
   if (self->update!=0)
-    return (self->update)(self);
-  return 0;
+    temp=(self->update)(self);
+  self->last_update = sim_time;
+  return temp;
 }
 
 int observable_calc_particle_velocities(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   IntList* ids;
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
@@ -105,7 +108,6 @@ int observable_calc_particle_angular_momentum(observable* self) {
 #ifdef ELECTROSTATICS
 int observable_calc_particle_currents(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   double charge;
   IntList* ids;
   if (!sortPartCfg()) {
@@ -127,7 +129,6 @@ int observable_calc_particle_currents(observable* self) {
 
 int observable_calc_currents(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
@@ -153,7 +154,6 @@ int observable_calc_currents(observable* self) {
 
 int observable_calc_dipole_moment(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
@@ -180,7 +180,6 @@ int observable_calc_dipole_moment(observable* self) {
 
 int observable_calc_com_velocity(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   double v_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
@@ -276,7 +275,6 @@ int observable_calc_blocked_com_position(observable* self) {
 
 int observable_calc_com_position(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   double p_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
@@ -357,7 +355,6 @@ int observable_calc_blocked_com_force(observable* self) {
 
 int observable_calc_density_profile(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   int binx, biny, binz;
   double ppos[3];
   int img[3];
@@ -372,7 +369,7 @@ int observable_calc_density_profile(observable* self) {
   ids=pdata->id_list;
   double bin_volume=(pdata->maxx-pdata->minx)*(pdata->maxy-pdata->miny)*(pdata->maxz-pdata->minz)/pdata->xbins/pdata->ybins/pdata->zbins;
     
-  for ( i = 0; i<self->n; i++ ) {
+  for ( int i = 0; i<self->n; i++ ) {
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
@@ -405,7 +402,7 @@ int observable_calc_lb_velocity_profile(observable* self) {
   int linear_index;
 
     
-  for ( i = 0; i<self->n; i++ ) {
+  for ( int i = 0; i<self->n; i++ ) {
     A[i]=0;
   }
   double normalization_factor = 1.;
@@ -463,7 +460,7 @@ int observable_calc_lb_velocity_profile(observable* self) {
     }
   }
   
-  for ( i = 0; i<self->n; i++ ) {
+  for ( int i = 0; i<self->n; i++ ) {
     A[i]*=normalization_factor;
   }
 
@@ -475,22 +472,23 @@ int observable_calc_lb_velocity_profile(observable* self) {
 #ifdef LB
 int observable_calc_lb_radial_velocity_profile(observable* self) {
   double* A = self->last_value;
-  void* pdata = A->container;
+  void* pdata = self->container;
   unsigned int n_A = self->n;
 
   if (lattice_switch & LATTICE_LB_GPU)
-    return statistics_observable_lbgpu_radial_velocity_profile((radial_profile_data*) pdata_, A, n_A);
+    return statistics_observable_lbgpu_radial_velocity_profile((radial_profile_data*) pdata, A, n_A);
   
   if (!(lattice_switch & LATTICE_LB))
     return ES_ERROR;
 
   if (n_nodes==1) {
-    return mpi_observable_lb_radial_velocity_profile_parallel(pdata_, A, n_A);
+    mpi_observable_lb_radial_velocity_profile_parallel(pdata, A, n_A);
+    return ES_OK;
   } else {
     mpi_observable_lb_radial_velocity_profile();
-    MPI_Bcast(pdata_, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
-    double* data = malloc(n_A*sizeof(double));
-    mpi_observable_lb_radial_velocity_profile_parallel(pdata_, data, n_A);
+    MPI_Bcast(pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
+    double* data = (double*) malloc(n_A*sizeof(double));
+    mpi_observable_lb_radial_velocity_profile_parallel(pdata, data, n_A);
     MPI_Reduce(data, A, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     free(data);
     return ES_OK;
@@ -501,7 +499,7 @@ void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
   radial_profile_data pdata;
   MPI_Bcast(&pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
   unsigned int n_A=3*pdata.rbins*pdata.phibins*pdata.zbins;
-  double* data = malloc(n_A*sizeof(double));
+  double* data = (double*) malloc(n_A*sizeof(double));
   mpi_observable_lb_radial_velocity_profile_parallel(&pdata, data, n_A);
   MPI_Reduce(data, 0, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   free(data);
@@ -517,11 +515,11 @@ int mpi_observable_lb_radial_velocity_profile_parallel(void* pdata_, double* A, 
   double p[3], v[3];
   double v_r, v_phi, v_z;
   radial_profile_data* pdata;
-  pdata=(radial_profile_data*) self->container;
+  pdata=(radial_profile_data*) pdata_;
   int linear_index;
 
     
-  for ( i = 0; i<self->n; i++ ) {
+  for ( i = 0; i<n_A; i++ ) {
     A[i]=0;
   }
   double normalization_factor = 1.;
@@ -592,7 +590,7 @@ int mpi_observable_lb_radial_velocity_profile_parallel(void* pdata_, double* A, 
     }
   }
   
-  for ( i = 0; i<self->n; i++ ) {
+  for ( i = 0; i<n_A; i++ ) {
     A[i]*=normalization_factor;
   }
 
@@ -657,6 +655,7 @@ int observable_calc_radial_flux_density_profile(observable* self) {
   unsigned int i;
   int binr, binphi, binz;
   double ppos[3];
+  double unfolded_ppos[3];
   double r, phi, z;
   int img[3];
   double bin_volume;
@@ -958,7 +957,6 @@ void autoupdate_observables() {
 //    printf("checking observable %d autoupdate is %d \n", i, observables[i]->autoupdate);
     if (observables[i]->autoupdate && sim_time-observables[i]->last_update>observables[i]->autoupdate_dt*0.99999) {
 //      printf("updating %d\n", i);
-      observables[i]->last_update=sim_time;
       observable_update(observables[i]);
     }
   }

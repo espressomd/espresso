@@ -417,9 +417,14 @@ int double_correlation_get_data( double_correlation* self ) {
 
   if ( observable_calculate(self->A_obs) != 0 )
     return 1;
-  if (!self->autocorrelation)
+  // copy the result:
+  memcpy(self->A[0][self->newest[0]], self->A_obs->last_value, self->dim_A*sizeof(double));
+
+  if (!self->autocorrelation) {
     if ( observable_calculate(self->B_obs) != 0 )
       return 2;
+    memcpy(self->B[0][self->newest[0]], self->B_obs->last_value, self->dim_B*sizeof(double));
+  }
 
   // Now we update the cumulated averages and variances of A and B
   self->n_data++;
@@ -695,9 +700,7 @@ int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, doub
 
 void autoupdate_correlations() {
   for (unsigned i=0; i<n_correlations; i++) {
-//    printf("checking correlation %d autoupdate is %d \n", i, correlations[i].autoupdate);
     if (correlations[i].autoupdate && sim_time-correlations[i].last_update>correlations[i].dt*0.99999) {
-      //printf("updating %d\n", i);
       correlations[i].last_update=sim_time;
       double_correlation_get_data(&correlations[i]);
     }

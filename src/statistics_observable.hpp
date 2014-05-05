@@ -34,7 +34,7 @@ struct s_observable {
   int (*update)    ( struct s_observable* obs );
   int (*calculate) ( struct s_observable* obs );
   double* last_value;
-  int last_update;
+  double last_update;
   int autoupdate;
   double autoupdate_dt;
 };
