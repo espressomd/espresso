@@ -50,7 +50,7 @@ cython_verbose_0 = @echo "  CYTHON   $@";
 
 .PRECIOUS: .pyx.cpp
 
-espresso.cpp: espresso.pxd myconfig.pxi
+espresso.cpp: espresso.pxd myconfig.pxi espresso.pxd
 #particle_data.cpp: particle_data.pxd myconfig.pxi
 #analyze.cpp: analyze.pxd myconfig.pxi
 # cellsystem.cpp: cellsystem.pxd myconfig.pxi
@@ -76,7 +76,8 @@ CLEANFILES += espresso.cpp \
 	interaction_data.cpp \
 	invalidateSystem.cpp \
 	thermostat.cpp \
-	utils.cpp
+	utils.cpp\
+	cuda_init.cpp
 
 pyexec_LTLIBRARIES = \
 	espresso.la \
@@ -91,8 +92,7 @@ pyexec_LTLIBRARIES = \
 	interaction_data.la \
 	invalidateSystem.la \
 	thermostat.la \
-	utils.la
+	utils.la\
+	cuda_init.la\
+	lb.la
 
-#	
-#	lb.la
-#	cuda_init.la

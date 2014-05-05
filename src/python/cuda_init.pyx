@@ -4,7 +4,7 @@ cimport cuda_init
     
 cdef class CudaInitHandle:
   def __init__(self):
-    IF LB_GPU != 1:
+    IF CUDA != 1:
       raise Exception("Cuda is not compiled in")
   
   property device:

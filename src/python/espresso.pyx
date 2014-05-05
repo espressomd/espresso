@@ -21,6 +21,7 @@ cimport utils
 import debye_hueckel
 #import lb
 cimport cuda_init
+import cuda_init
 #cimport myconfig
 
 
