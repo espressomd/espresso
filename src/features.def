@@ -86,9 +86,7 @@ EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES
 LATTICE	                        equals LB or LB_GPU
 USE_TEMPORARY	                equals LB or LB_GPU
 SHANCHEN		        implies LB_GPU
-SHANCHEN 		        requires not LB_BOUNDARIES_GPU
 SHANCHEN 		        requires not ELECTROKINETICS
-
 
 /* Interaction features */
 TABULATED

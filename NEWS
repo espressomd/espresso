@@ -8,6 +8,9 @@ ESPResSo 3.3
 New user-visible features
 -------------------------
 
+* SHANCHEN: a bicomponent lattice Boltzmann fluid, with support for rigid 
+  boundaries and coupling to particle dynamics.
+
 * ELECTROKINETICS: An algorithm to treat species of ions on a mean-field
   level. Implementation takes advantage of a GPU.
 

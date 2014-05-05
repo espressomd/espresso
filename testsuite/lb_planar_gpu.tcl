@@ -39,9 +39,16 @@ set rho 2.
 set tau 0.04
 
 setmd skin [ expr 0.4*$agrid ]
+set components [setmd lb_components]
 
-lbfluid gpu agrid $agrid visc $visc dens $rho friction 1 tau $tau 
-
+if { $components == 1 }  { 
+   lbfluid gpu agrid $agrid visc $visc dens $rho friction 1 tau $tau 
+} else { if { $components ==2 } { 
+   lbfluid gpu agrid $agrid visc $visc $visc dens [expr $rho/2.] [expr $rho/2.] friction 1 1  tau $tau  sc_coupling 0.0 0.0 0.0
+} else {
+     error_exit "number of components ($components) not supported"
+  }
+}
 # Wall positions are set to $agrid and $l-$agrid, leaving one layer of boundary nodes 
 # on each side of the box
 #
@@ -115,7 +122,15 @@ set fx [ expr $f_hydrostatic*[ lindex $normal1 0 ] ]
 set fy [ expr $f_hydrostatic*[ lindex $normal1 1 ] ]
 set fz [ expr $f_hydrostatic*[ lindex $normal1 2 ] ]
 
-lbfluid gpu agrid $agrid visc $visc dens $rho friction 1 tau $tau ext_force $fx $fy $fz
+if { $components == 1 }  { 
+   lbfluid gpu agrid $agrid visc $visc dens $rho friction 1 tau $tau ext_force $fx $fy $fz
+} else { if { $components ==2 } { 
+   set fx [expr $fx/2.];set fy [expr $fy/2.];set fz [expr $fx/2.]
+   lbfluid gpu agrid $agrid visc $visc $visc dens [expr $rho/2.] [expr $rho/2.] friction 1 1  tau $tau ext_force $fx $fy $fz $fx $fy $fz sc_coupling 0.0 0.0 0.0 
+} else {
+     error_exit "number of components ($components) not supported"
+  }
+}
 integrate 1000
 
 # Equation of state: p = rho*c_2**2
@@ -164,11 +179,20 @@ puts "-------------"
 set f_body 0.1
 
 set f_body_vec [ list 0 0 0 ]
-lset f_body_vec $couette_flow_direction $f_body
 
-lbfluid gpu agrid $agrid visc $visc dens $rho friction 1 tau $tau ext_force \
-  [ lindex $f_body_vec 0 ] [ lindex $f_body_vec 1 ] [ lindex $f_body_vec 2 ]
-
+if { $components == 1 }  { 
+   lset f_body_vec $couette_flow_direction $f_body
+   lbfluid gpu agrid $agrid visc $visc dens $rho friction 1 tau $tau ext_force \
+        [ lindex $f_body_vec 0 ] [ lindex $f_body_vec 1 ] [ lindex $f_body_vec 2 ]
+} else { if { $components ==2 } { 
+   lset f_body_vec $couette_flow_direction [expr $f_body/2.]
+   lbfluid gpu agrid $agrid visc $visc $visc dens [expr $rho/2.] [expr $rho/2.] friction 1 1  tau $tau sc_coupling 0.0 0.0 0.0 \
+         ext_force  [ lindex $f_body_vec 0 ] [ lindex $f_body_vec 1 ] [ lindex $f_body_vec 2 ]\
+                    [ lindex $f_body_vec 0 ] [ lindex $f_body_vec 1 ] [ lindex $f_body_vec 2 ]
+} else {
+     error_exit "number of components ($components) not supported"
+  }
+}
 integrate 2000
 
 set accuracy_u 0.
@@ -203,7 +227,7 @@ for { set i 2 } { $i < int(floor($l/$agrid))-2 } { incr i } {
 set poisseuille_u_accuracy [ expr $accuracy_u / $meanabs_u ]
 set poisseuille_p_accuracy [ expr $accuracy_p / $meanabs_p ]
 
-puts "Poisseuille flow result:"
+puts "Poiseuille flow result:"
 puts "flow accuracy $poisseuille_u_accuracy"
 puts "pressure accuracy $poisseuille_p_accuracy"
 puts "----------"
@@ -218,10 +242,10 @@ if { $hydrostatic_p_accuracy > 1e-3 } {
   error_exit "hydrostatic pressure accuracy not achieved"
 }
 if { $poisseuille_u_accuracy > 3e-2 } {
-  error_exit "Poisseuille flow accuracy not achieved"
+  error_exit "Poiseuille flow accuracy not achieved"
 }
 if { $poisseuille_p_accuracy > 1e-2 } {
-  error_exit "Poisseuille pressure accuracy not achieved"
+  error_exit "Poiseuille pressure accuracy not achieved"
 }
 
 exit 0

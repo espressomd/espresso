@@ -658,20 +658,31 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
       else if (ARG0_IS_S_EXACT("ext_force")) 
       {
 #ifdef EXTERNAL_FORCES
-        if ( argc < 4 || !ARG_IS_D(1, vectarg[0]) || !ARG_IS_D(2, vectarg[1]) ||  !ARG_IS_D(3, vectarg[2]) ) 
+        int i;
+
+        if ( argc <= 3*LB_COMPONENTS ) 
         {
-          Tcl_AppendResult(interp, "friction requires 1 argument", (char *)NULL);
-          return TCL_ERROR;
+              Tcl_AppendResult(interp, "ext_force requires 3 arguments per component", (char *)NULL);
+              return TCL_ERROR;
         } 
-        else if (lb_lbfluid_set_ext_force(vectarg[0], vectarg[1], vectarg[2]) == 0) 
+        for(i=0;i<LB_COMPONENTS;i++)
         {
-          argc-=4; argv+=4;
-        } 
-        else 
-        {
-          Tcl_AppendResult(interp, "Unknown Error setting ext_force", (char *)NULL);
-          return TCL_ERROR;
+            if ( !ARG_IS_D(1, vectarg[0]) || !ARG_IS_D(2, vectarg[1]) ||  !ARG_IS_D(3, vectarg[2]) ) 
+            {
+              Tcl_AppendResult(interp, "ext_force requires 3 real numbers per component", (char *)NULL);
+              return TCL_ERROR;
+            } 
+            else if (lb_lbfluid_set_ext_force(i,vectarg[0], vectarg[1], vectarg[2]) == 0) 
+            {
+              argc-=3; argv+=3;
+            } 
+            else 
+            {
+              Tcl_AppendResult(interp, "Unknown Error setting ext_force", (char *)NULL);
+              return TCL_ERROR;
+            }
         }
+        argc-=1; argv+=1;
 #else
         Tcl_AppendResult(interp, "External Forces not compiled in!", (char *)NULL);
         return TCL_ERROR;
@@ -943,7 +954,6 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 
         argc--; argv++;
       }
-#ifndef SHANCHEN
       else if (ARG0_IS_S_EXACT("pi") || ARG0_IS_S_EXACT("pressure")) 
       {
         lb_lbnode_get_pi(coord, double_return);
@@ -970,6 +980,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 
         argc--; argv++;
       }
+#ifndef SHANCHEN
       else if (ARG0_IS_S_EXACT("boundary")) 
       {
         char integer_buffer[TCL_INTEGER_SPACE];
