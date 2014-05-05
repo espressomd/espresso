@@ -108,7 +108,8 @@ FEATURES=[ \
 "ASYNC_BARRIER", \
 "MPI_CORE", \
 "FORCE_CORE", \
-"OLD_RW_VERSION" \
+"OLD_RW_VERSION", \
+"CUDA" \
 ]
 import re
 def feature_value(myconfig, f):
