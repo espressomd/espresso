@@ -1,4 +1,4 @@
-cdef extern from "config.h":
+cdef extern from "config.hpp":
     pass
 
 cdef extern from "cuda_init.h":

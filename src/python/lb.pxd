@@ -1,4 +1,4 @@
-cdef extern from "../src/config.h":
+cdef extern from "../src/config.hpp":
   pass
 
 #cdef extern from "../src/lattice.h":
