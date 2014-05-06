@@ -108,6 +108,7 @@ cdef class BondedInteraction(object):
       if bonded_ia_params[bondId].type != self.typeNumber():
         raise Exception("The bond with this id is not defined as a "+self.typeName()+" bond in the Espresso core.")
       
+      self._bondId=bondId
       # Load the parameters currently set in the Espresso core
       self._params=self._getParamsFromEsCore()
       self._bondId=bondId
@@ -218,11 +219,33 @@ class FeneBond(BondedInteraction):
        "r_0":bonded_ia_params[self._bondId].p.fene.r0}
 
   def _setParamsInEsCore(self):
-   print "Setting fene params",self._bondId,self._params
    fene_set_params(self._bondId,self._params["k"],self._params["d_r_max"],self._params["r_0"])
 
 class HarmonicBond(BondedInteraction):
-  pass
+  def typeNumber(self):
+    return 1
+
+  def typeName(self): 
+    return "HARMONIC"
+
+  def validKeys(self):
+    return "k","r_0","r_cut"
+
+  def requiredKeys(self): 
+    return "k","r_0"
+
+  def setDefaultParams(self):
+    self._params = {"k'":0.,"r_0":0.,"r_cut":0.} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"k":bonded_ia_params[self._bondId].p.harmonic.k,\
+       "r_0":bonded_ia_params[self._bondId].p.harmonic.r,\
+       "r_cut":bonded_ia_params[self._bondId].p.harmonic.r_cut}
+
+  def _setParamsInEsCore(self):
+   harmonic_set_params(self._bondId,self._params["k"],self._params["r_0"],self._params["r_cut"])
+
     
 
 
@@ -237,7 +260,7 @@ class BondedInteractions:
   """Represents the non-bonded interactions. Individual interactions can be accessed using
   NonBondedInteractions[i], where i is the bond id. Will return an instance o
   BondedInteractionHandle"""
-  def __getItem__(self, key):
+  def __getitem__(self, key):
     if not isinstance(key,int):
       raise ValueError("Index to BondedInteractions[] hast to ba an integer referring to a bond id")
 
@@ -249,7 +272,7 @@ class BondedInteractions:
       raise ValueError("The bonded interaction with the id "+str(key)+" is not yet defined.")
 
     # Find the appropriate class representing such a bond
-    bondClass =bondedInteractionClasses[key]
+    bondClass =bondedInteractionClasses[bondType]
 
     # And return an instance of it, which refers to the bonded interaction id in Espresso
     return bondClass(key)

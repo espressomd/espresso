@@ -217,3 +217,5 @@ cdef extern from "interaction_data.hpp":
 
 cdef extern from "fene.hpp":
   int fene_set_params(int bond_type, double k, double drmax, double r0)
+cdef extern from "harmonic.hpp":
+  int harmonic_set_params(int bond_type, double k, double r,double r_cut)
