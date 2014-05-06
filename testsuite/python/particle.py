@@ -8,6 +8,7 @@ sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
 import unittest as ut
 import espresso as es
 import numpy as np
+from interaction_data import FeneBond
 
 
 
@@ -44,6 +45,8 @@ class ParticleProperties(ut.TestCase):
 
   def setUp(self):
     es.part[self.pid].pos =0,0,0
+    es.bondedInter[0]=FeneBond(k=1,d_r_max=5)
+    es.bondedInter[1]=FeneBond(k=1,d_r_max=5)
 
   def generateTestForVectorProperty(_propName,_value):
     """Generates test cases for vectorial particle properties such as

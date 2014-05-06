@@ -117,7 +117,9 @@ cdef class BondedInteraction(object):
       # Check if all required keys are given
       for k in self.requiredKeys():
         if k not in kwargs:
-          raise ValueError("At least the following keys have to be given as keyword arguments: "+self.requiredKeys().__str__)
+          raise ValueError("At least the following keys have to be given as keyword arguments: "+self.requiredKeys().__str__())
+      
+      self.params = kwargs
       
       # Validation of parameters
       self.validateParams()
@@ -151,7 +153,7 @@ cdef class BondedInteraction(object):
 
     def __set__(self,p):
       # Check, if any key was passed, which is not known
-      for k in p.keys:
+      for k in p.keys():
         if k not in self.validKeys():
           raise ValueError("Only the following keys are supported: "+self.validKeys().__str__)
       
@@ -160,7 +162,7 @@ cdef class BondedInteraction(object):
       # Put in values given by the user
       self._params.update(p)
 
-  def validateParameters(self):
+  def validateParams(self):
     return True
 
   def _getParamsFromEsCore(self):
@@ -216,7 +218,8 @@ class FeneBond(BondedInteraction):
        "r_0":bonded_ia_params[self._bondId].p.fene.r0}
 
   def _setParamsInEsCore(self):
-   fene_set_params(self._bondId,self._params["k"],self._params["d_r_max"],self.params["r_0"])
+   print "Setting fene params",self._bondId,self._params
+   fene_set_params(self._bondId,self._params["k"],self._params["d_r_max"],self._params["r_0"])
 
 class HarmonicBond(BondedInteraction):
   pass

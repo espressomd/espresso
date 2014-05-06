@@ -12,7 +12,7 @@ cdef class ParticleHandle:
     utils.init_intlist(&(self.particleData.bl))
     self.id=_id
 
-  cdef int update_particle_data(self) except -1:
+  cdef int updateParticleData(self) except -1:
 #    utils.realloc_intlist(self.particleData.el, 0)
     utils.realloc_intlist(&(self.particleData.bl), 0)
       
@@ -36,7 +36,7 @@ cdef class ParticleHandle:
         raise ValueError("type must be an integer >= 0")
 
     def __get__(self):
-      self.update_particle_data()
+      self.updateParticleData()
       return self.particleData.p.type
 
   property mass:
@@ -47,7 +47,7 @@ cdef class ParticleHandle:
         raise Exception("set particle position first")
     
     def __get__(self):
-      self.update_particle_data()
+      self.updateParticleData()
       cdef double* x
       pointer_to_mass(&(self.particleData),x)
       return x[0]
@@ -67,7 +67,7 @@ cdef class ParticleHandle:
         raise Exception("particle could not be set")
 
     def __get__(self):
-      self.update_particle_data()
+      self.updateParticleData()
       return np.array([self.particleData.r.p[0],\
                        self.particleData.r.p[1],\
                        self.particleData.r.p[2]])
@@ -84,7 +84,7 @@ cdef class ParticleHandle:
       if set_particle_v(self.id, myv) == 1:
         raise Exception("set particle position first")
     def __get__(self):
-      self.update_particle_data()
+      self.updateParticleData()
       return np.array([ self.particleData.m.v[0],\
                         self.particleData.m.v[1],\
                         self.particleData.m.v[2]])
@@ -100,7 +100,7 @@ cdef class ParticleHandle:
       if set_particle_f(self.id, myf) == 1:
         raise Exception("set particle position first")
     def __get__(self):
-      self.update_particle_data()
+      self.updateParticleData()
       return np.array([ self.particleData.f.f[0],\
                         self.particleData.f.f[1],\
                         self.particleData.f.f[2]])
@@ -117,7 +117,7 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef double o[3]
         convert_omega_body_to_space(&(self.particleData), o);
         return np.array([ o[0], o[1],o[2]])
@@ -133,7 +133,7 @@ cdef class ParticleHandle:
         if set_particle_omega_body(self.id, myo) == 1:
           raise Exception("set particle position first")
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef double* o
         pointer_to_omega_body(&(self.particleData),o)
         return np.array([o[0],o[1],o[2]])
@@ -150,7 +150,7 @@ cdef class ParticleHandle:
         if set_particle_torque_lab(self.id, myt) == 1:
           raise Exception("set particle position first")
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef double x[3]
         convert_torques_body_to_space(&(self.particleData),x)
         return np.array([x[0],x[1],x[2]])
@@ -166,7 +166,7 @@ cdef class ParticleHandle:
         if set_particle_quat(self.id, myq) == 1:
           raise Exception("set particle position first")
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef double* x
         pointer_to_quat(&(self.particleData),x)
         return np.array([x[0],x[1],x[2],x[3]])
@@ -183,7 +183,7 @@ cdef class ParticleHandle:
 #          raise Exception("set particle position first")
 
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef double* x
         pointer_to_quatu(&(self.particleData),x)
         return np.array([x[0],x[1],x[2]])
@@ -201,7 +201,7 @@ cdef class ParticleHandle:
         if set_particle_q(self.id, myq) == 1:
           raise Exception("set particle position first")
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef double* x
         pointer_to_q(&(self.particleData),x)
         return x[0]
@@ -225,7 +225,7 @@ cdef class ParticleHandle:
         else:
           raise ValueError("virtual must be an integer >= 0")
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef int* x
         pointer_to_virtual(&(self.particleData),x)
         return x[0]
@@ -245,7 +245,7 @@ cdef class ParticleHandle:
         else:
           raise ValueError("vs_relative takes one int and one float as parameters.")
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef int* rel_to
         cdef double* dist
         pointer_to_vs_relative(&(self.particleData),rel_to,dist)
@@ -273,7 +273,7 @@ cdef class ParticleHandle:
         if set_particle_dip(self.id, myq) == 1:
           raise Exception("set particle position first")
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef double* x
         pointer_to_dip(&(self.particleData),x)
         return np.array([x[0],x[1],x[2]])
@@ -286,7 +286,7 @@ cdef class ParticleHandle:
         if set_particle_dipm(self.id, _q) == 1:
           raise Exception("set particle position first")
       def __get__(self):
-        self.update_particle_data()
+        self.updateParticleData()
         cdef double* x
         pointer_to_dipm(&(self.particleData),x)
         return x[0]
@@ -340,10 +340,12 @@ cdef class ParticleHandle:
       while i<self.particleData.bl.n:
         bond=[]
         # Bond type:
-        bond.append(self.particleData.bl.e[i])
-        i+=1
+        bondId =self.particleData.bl.e[i]
+        bond.append(bondId)
         # Number of partners
-        nPartners=bonded_ia_params[i].num
+        nPartners=bonded_ia_params[bondId].num
+        
+        i+=1
         
         # Copy bond partners
         for j in range(nPartners):
