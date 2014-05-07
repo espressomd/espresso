@@ -58,6 +58,7 @@
 #include "lb.hpp"
 #include "virtual_sites.hpp"
 #include "statistics_correlation.hpp"
+#include "lbtracers.hpp"
 #include "ghmc.hpp"
 
 /************************************************
@@ -340,6 +341,16 @@ void integrate_vv(int n_steps, int reuse_forces)
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
+
+#ifdef LBTRACERS
+    if(sequ==1) { 
+      update_mol_vel_pos();
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+
+      if (check_runtime_errors()) break;
+    }
+#endif
+
 #ifdef ROTATION
     convert_torques_propagate_omega();
 #endif
