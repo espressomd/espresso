@@ -121,6 +121,8 @@ BOND_ANGLEDIST_HARMONIC         implies BOND_ANGLEDIST, CONSTRAINTS
 BOND_ENDANGLEDIST
 BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 
+CG_DNA
+
 /* Obsolete features. To be removed. */
 /* Old Bond angle */
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */

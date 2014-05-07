@@ -18,10 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file fene_tcl.cpp
- *
- *  Implementation of \ref fene_tcl.hpp
- */
+
 #include "utils.hpp"
 #include "parser.hpp"
 #include "cg_dna_tcl.hpp"
@@ -38,33 +35,34 @@ int tclprint_to_result_cg_dnaIA(Tcl_Interp *interp, Bonded_ia_parameters *params
   return (TCL_OK);
 }
 
-int tclcommand_inter_parse_cg_dna(Tcl_Interp *interp, int bond_type, int argc, char **argv)
-{
-  double k, drmax, r0;
-
-  if (argc != 3 && argc != 4) {
-    Tcl_AppendResult(interp, "fene needs 2 or 3 parameters: "
-		     "<k> <drmax> [<r0>]", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, drmax)))
-    {
-      Tcl_AppendResult(interp, "fene needs 2 or 3 DOUBLE parameters: "
-		       "<k> <drmax> [<r0>]", (char *) NULL);
-      return TCL_ERROR;
-    }
-
-  if (argc == 4) {
-    if (! ARG_IS_D(3, r0))
-      {
-	Tcl_AppendResult(interp, "fene needs 2 or 3 DOUBLE parameters: "
-			 "<k> <drmax> [<r0>]", (char *) NULL);
-	return TCL_ERROR;
-      }
-  } else {
-    /* default value for r0 is 0.0. */
-    r0 = 0.0;
-  }
+void cg_dna_basepair_usage(Tcl_Interp *interp) { 
+  puts("usage: cg_dna_basepair_usage { r0 alpha E0 kd E01 E02 sigma1 sigma2 theta01 theta02 }");
 }
+
+int tclcommand_inter_parse_cg_dna_basepair(Tcl_Interp *interp, int bond_type, int argc, char **argv) {   
+  DoubleList params;
+  
+  init_doublelist(&params);
+
+  argc--;
+  argv++;
+
+  if(!ARG0_IS_DOUBLELIST(params)) {
+    cg_dna_basepair_usage(interp);
+    return ES_ERROR;
+  }
+
+  if(params.n != 10) {
+    puts("Wrong number of parameters");
+    cg_dna_basepair_usage(interp);
+    return ES_ERROR;
+  }
+
+  cg_dna_basepair_set_params(bond_type, &params);
+
+  return ES_OK; 
+}
+
+int tclcommand_inter_parse_cg_dna_stacking(Tcl_Interp *interp, int bond_type, int argc, char **argv) { return 0; }
+int tclcommand_inter_parse_cg_dna_backbone(Tcl_Interp *interp, int bond_type, int argc, char **argv) { return 0;}
 

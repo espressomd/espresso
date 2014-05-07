@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,22 +18,20 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef CG_DNA_TCL_H
-#define CG_DNA_TCL_H
-/** \file fene_tcl.hpp
- * Tcl interface for \ref fene.hpp
- */
 
-#include "parser.hpp"
+#ifndef CG_DNA_HPP
+#define CG_DNA_HPP
+
+#include "utils.hpp"
 #include "interaction_data.hpp"
-#include "cg_dna.hpp"
+#include "particle_data.hpp"
 
-/// parse parameters for the fene potential
-int tclcommand_inter_parse_cg_dna_basepair(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-int tclcommand_inter_parse_cg_dna_stacking(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-int tclcommand_inter_parse_cg_dna_backbone(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+int cg_dna_basepair_set_params(int bond_type, DoubleList *params);
 
-///
-int tclprint_to_result_cg_dnaIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
+inline int calc_cg_dnae_basepair_force(Particle *p1, Particle *p2, Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams, double force1[3], double force2[3], double force3[3], double force4[3]) {
+
+  return 0;
+}
+
 
 #endif
