@@ -70,6 +70,7 @@ CLEANFILES += espresso.cpp \
 	cellsystem.cpp \
 	changeVolume.cpp \
 	code_info.cpp \
+	cuda_init.cpp \
 	debye_hueckel.cpp \
 	global_variables.cpp \
 	integrate.cpp \
@@ -86,6 +87,7 @@ pyexec_LTLIBRARIES = \
 	cellsystem.la \
 	changeVolume.la \
 	code_info.la \
+	cuda_init.la \
 	debye_hueckel.la \
 	global_variables.la \
 	integrate.la \

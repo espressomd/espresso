@@ -24,7 +24,6 @@ cimport cuda_init
 import cuda_init
 #cimport myconfig
 
-
 import code_info
 
 #public enum:
