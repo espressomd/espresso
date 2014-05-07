@@ -8,9 +8,7 @@
 #include <string>
 #include <sstream>
 
-//#define DEBUG
-
-#ifdef ELECTROKINETICS
+#ifdef EK_BOUNDARIES
 
 /* Replacements for bool variables */
 const int pdb_SUCCESS = 0;
@@ -175,19 +173,19 @@ int pdb_parse_files(char* pdb_filename, char* itp_filename, particle_data* atom_
       galloc( (void**) &atom_data->pdb_array_ATOM , (atom_data->pdb_n_particles+1)*sizeof(pdb_ATOM) );
       pdb_ATOM* a = &atom_data->pdb_array_ATOM[atom_data->pdb_n_particles];
       // See http://deposit.rcsb.org/adit/docs/pdb_atom_format.html#ATOM for the meaning of the format string
-//  #    sscanf(pdb_line,"ATOM %6d %*4s%*c%*4s%*c%*4d%*c %8f %8f %8f %*6f %*6f %*4s%*2s%*2s",&a->i,&a->x,&a->y,&a->z);
-    std::istringstream str(pdb_line);
+      // sscanf(pdb_line,"ATOM %6d %*4s%*c%*4s%*c%*4d%*c %8f %8f %8f %*6f %*6f %*4s%*2s%*2s",&a->i,&a->x,&a->y,&a->z);
+      std::istringstream str(pdb_line);
 
-    std::string tmp;   
+      std::string tmp;   
  
-    str.ignore(246,' ');
-    str >> a->i;
-    str >> tmp >> tmp >> tmp >> tmp;    
-    str >> a->x >> a->y >> a->z;
+      str.ignore(246,' ');
+      str >> a->i;
+      str >> tmp >> tmp >> tmp >> tmp;    
+      str >> a->x >> a->y >> a->z;
 
-//      a->x /= 10.0; //TODO put back in
-//      a->y /= 10.0;
-//      a->z /= 10.0;
+      a->x /= 10.0;
+      a->y /= 10.0;
+      a->z /= 10.0;
 #ifdef DEBUG
       // Print all local variables
       printf("ATOM i=%d x=%f y=%f z=%f\n",a->i,a->x,a->y,a->z);
@@ -229,7 +227,6 @@ int pdb_parse_files(char* pdb_filename, char* itp_filename, particle_data* atom_
         itp_atomtypes* a = &atom_data->itp_array_atomtypes[atom_data->itp_n_parameters];
         // FIXME: no source :( Reverse engineered from the itp-file
         sscanf(itp_line," %2s %*s %*f %*f %*c %f %f ; %*f %*f",a->type,&a->sigma,&a->epsilon);
-        a->sigma *= 10.0; //TODO delete
 #ifdef DEBUG
         // Print all local variables
         printf("[ atomtypes ] name=%s sigma=%f epsilon=%f\n",a->type,a->sigma,a->epsilon);
