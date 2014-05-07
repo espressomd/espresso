@@ -112,7 +112,8 @@ IF CUDA == 1:
 #     raise Exception("Espresso not initialized")
 #   if instance_counter == 1:
 #     _espressoHandle.Tcl_Eval(string)
-inter = interaction_data.InteractionList()
+nonBondedInter = interaction_data.NonBondedInteractions()
+bondedInter = interaction_data.BondedInteractions()
 
 if this_node==0:
   glob = global_variables.GlobalsHandle()
