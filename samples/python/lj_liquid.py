@@ -1,11 +1,8 @@
 from __future__ import print_function
-import ctypes
-import sys
-sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
 
-import espresso as es
+import espresso.System as es
 import numpy
-import code_info
+from espresso import code_info
 
 print(" ")
 print("=======================================================")
