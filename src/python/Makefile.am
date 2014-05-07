@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AM_DEFAULT_SOURCE_EXT = .pyx
+AM_DEFAULT_SOURCE_EXT = .cpp
 
 # Build rules for python libraries
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src 
@@ -26,8 +26,44 @@ if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
 endif
 
+# Build rules for cython
+SUFFIXES = .pyx
+
+PYXOBJECTS =  \
+	espresso \
+	particle_data \
+	analyze \
+	cellsystem \
+	changeVolume \
+	code_info \
+	cuda_init \
+	debye_hueckel \
+	global_variables \
+	integrate \
+	interaction_data \
+	invalidateSystem \
+	thermostat \
+	utils
+
+# lb has not been updated yet
+
+CPPOBJECTS = $(PYXOBJECTS:=.cpp)
+
+cython_verbose = $(cython_verbose_@AM_V@)
+cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
+cython_verbose_0 = @echo "  CYTHON   $@";
+
+$(CPPOBJECTS): %.cpp: %.pyx %.pxd myconfig.pxi
+	$(cython_verbose)cython -I $(builddir) $< -o $@
+
+CLEANFILES = $(CPPOBJECTS)
+
+LAOBJECTS = $(PYXOBJECTS:=.la)
+pyexec_LTLIBRARIES = $(LAOBJECTS)
+
 # build rule for myconfig.pxi
 noinst_PROGRAMS = gen_pxiconfig
+gen_pxiconfig_SOURCES = gen_pxiconfig.cpp
 
 gen_pxiconfig.cpp: $(top_srcdir)/config/gen_pxiconfig.py \
 		   $(top_srcdir)/src/features.def ../myconfig-final.hpp
@@ -39,62 +75,4 @@ myconfig.pxi: gen_pxiconfig
 
 CLEANFILES = gen_pxiconfig.cpp myconfig.pxi
 BUILT_SOURCES = gen_pxiconfig.cpp myconfig.pxi
-
-# Build rules for cython
-SUFFIXES = .pyx
-cython_verbose = $(cython_verbose_@AM_V@)
-cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
-cython_verbose_0 = @echo "  CYTHON   $@";
-.pyx.cpp:
-	$(cython_verbose)cython -I $(builddir) $< -o $@
-
-.PRECIOUS: .pyx.cpp
-
-espresso.cpp: espresso.pxd myconfig.pxi
-#particle_data.cpp: particle_data.pxd myconfig.pxi
-#analyze.cpp: analyze.pxd myconfig.pxi
-# cellsystem.cpp: cellsystem.pxd myconfig.pxi
-# changeVolume.cpp: changeVolume.pxd myconfig.pxi
-# code_info.cpp: code_info.pxd myconfig.pxi
-# debye_hueckel.cpp: debye_hueckel.pxd myconfig.pxi
-# global_variables.cpp: global_variables.pxd myconfig.pxi
-# integrate.cpp: integrate.pxd myconfig.pxi
-# interaction_data.cpp: interaction_data.pxd myconfig.pxi
-# invalidateSystem.cpp: invalidateSystem.pxd myconfig.pxi
-# thermostat.cpp: thermostat.pxd myconfig.pxi
-# utils.cpp: utils.pxd myconfig.pxi
-
-CLEANFILES += espresso.cpp \
-	particle_data.cpp \
-	analyze.cpp \
-	cellsystem.cpp \
-	changeVolume.cpp \
-	code_info.cpp \
-	cuda_init.cpp \
-	debye_hueckel.cpp \
-	global_variables.cpp \
-	integrate.cpp \
-	interaction_data.cpp \
-	invalidateSystem.cpp \
-	thermostat.cpp \
-	utils.cpp
-
-pyexec_LTLIBRARIES = \
-	espresso.la \
-	particle_data.la \
-	analyze.la \
-	cellsystem.la \
-	changeVolume.la \
-	code_info.la \
-	cuda_init.la \
-	debye_hueckel.la \
-	global_variables.la \
-	integrate.la \
-	interaction_data.la \
-	invalidateSystem.la \
-	thermostat.la \
-	utils.la
-
-# lb has not been updated yet
-#	lb.la 
 
