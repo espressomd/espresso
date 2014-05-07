@@ -106,7 +106,8 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
-	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
+	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
+	HarmonicForce.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -195,7 +196,8 @@ CUDA_SOURCES = \
 	electrokinetics.hpp \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
-	EspressoSystemInterface_cuda.cu
+	EspressoSystemInterface_cuda.cu \
+        HarmonicForce.cu
 
 libEspresso_la_SOURCES += $(CUDA_SOURCES)
 EXTRA_DIST += $(CUDA_SOURCES)
@@ -264,7 +266,8 @@ if HAVE_PYTHON
 BUILT_SOURCES += config-features.hpp config-features.cpp
 CLEANFILES += config-features.hpp config-features.cpp
 config-features.hpp config-features.cpp: features.def $(top_srcdir)/config/gen_featureconfig.py
-	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.hpp config-features.cpp > /dev/null
+	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py \
+	  $(srcdir)/features.def config-features.hpp config-features.cpp > /dev/null
 
 else
 

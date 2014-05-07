@@ -513,7 +513,7 @@ int lb_lbfluid_set_gamma_even(double * p_gamma_even);
 int lb_lbfluid_set_friction(double * p_friction);
 int lb_lbfluid_set_couple_flag(int couple_flag);
 int lb_lbfluid_set_agrid(double p_agrid);
-int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
+int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_fz);
 int lb_lbfluid_set_tau(double p_tau);
 int lb_lbfluid_set_remove_momentum(void);
 #ifdef SHANCHEN

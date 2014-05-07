@@ -46,7 +46,7 @@ void calc_long_range_energies();
 
 void energy_calc(double *result)
 {
-  if (!check_obs_calc_initialized())
+  if (!interactions_sanity_checks())
     return;
 
   init_energies(&energy);

@@ -24,8 +24,6 @@
 #include "p3m_tcl.hpp"
 #include "p3m.hpp"
 
-
-
 int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
 {
   int cao = -1, n_interpol = -1;
@@ -134,7 +132,6 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   }
 
   if (ARG0_IS_S("gpu")) {
-    puts("Setting coulomb method to COULOMB_P3M_GPU");
     coulomb.method = COULOMB_P3M_GPU;
     
     argc--;

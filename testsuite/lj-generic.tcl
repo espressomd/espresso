@@ -20,7 +20,6 @@
 source "tests_common.tcl"
 
 require_feature "LENNARD_JONES_GENERIC"
-require_feature "ADRESS" off
 
 puts "----------------------------------------"
 puts "- Testcase lj.tcl running on [format %02d [setmd n_nodes]] nodes: -"

@@ -300,10 +300,10 @@ AS_IF([test x$with_cuda != xno],[
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
     
-    # if no other compute capability is defined by the user, we require at least 1.1
+    # if no other compute capability is defined by the user, we default to 2.0
     case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_20,code=compute_20"
     esac
     
     # use nvcc

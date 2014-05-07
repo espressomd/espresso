@@ -418,7 +418,7 @@ int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** a
   int temp;
   profile_data* pdata;
   obs->fun = &observable_density_profile;
-  if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) == TCL_OK ) 
+  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) != TCL_OK ) 
     return TCL_ERROR;
   if (pdata->id_list==0) {
     Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
@@ -437,7 +437,7 @@ int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char
   int temp;
   profile_data* pdata;
   obs->fun = &observable_lb_velocity_profile;
-  if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) == TCL_OK ) 
+  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) != TCL_OK ) 
     return TCL_ERROR;
   obs->args=(void*)pdata;
   obs->n=3*pdata->xbins*pdata->ybins*pdata->zbins;
@@ -451,7 +451,7 @@ int tclcommand_observable_radial_density_profile(Tcl_Interp* interp, int argc, c
   int temp;
   radial_profile_data* rpdata;
   obs->fun = &observable_radial_density_profile;
-  if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) == TCL_OK ) 
+  if (tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) != TCL_OK ) 
      return TCL_ERROR;
   if (rpdata->id_list==0) {
     Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
@@ -467,7 +467,7 @@ int tclcommand_observable_radial_flux_density_profile(Tcl_Interp* interp, int ar
   int temp;
   radial_profile_data* rpdata;
   obs->fun = &observable_radial_flux_density_profile;
-  if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) == TCL_OK ) 
+  if (tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) != TCL_OK ) 
      return TCL_ERROR;
   if (rpdata->id_list==0) {
     Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
@@ -483,7 +483,7 @@ int tclcommand_observable_flux_density_profile(Tcl_Interp* interp, int argc, cha
   int temp;
   profile_data* pdata;
   obs->fun = &observable_flux_density_profile;
-  if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) == TCL_OK ) 
+  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) != TCL_OK ) 
      return TCL_ERROR;
   if (pdata->id_list==0) {
     Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
@@ -502,7 +502,7 @@ int tclcommand_observable_lb_radial_velocity_profile(Tcl_Interp* interp, int arg
   int temp;
   radial_profile_data* rpdata;
   obs->fun = &observable_lb_radial_velocity_profile;
-  if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) == TCL_OK ) 
+  if (tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) != TCL_OK ) 
      return TCL_ERROR;
   obs->args=(void*)rpdata;
   obs->n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
@@ -516,7 +516,7 @@ int tclcommand_observable_particle_currents(Tcl_Interp* interp, int argc, char**
   int temp;
   IntList* ids;
   obs->fun = &observable_particle_currents;
-  if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
   obs->args=(void*)ids;
   obs->n=3*ids->n;
@@ -534,7 +534,7 @@ int tclcommand_observable_currents(Tcl_Interp* interp, int argc, char** argv, in
   int temp;
   IntList* ids;
   obs->fun = &observable_currents;
-  if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
   obs->args=(void*)ids;
   obs->n=3;
@@ -551,7 +551,7 @@ int tclcommand_observable_dipole_moment(Tcl_Interp* interp, int argc, char** arg
   int temp;
   IntList* ids;
   obs->fun = &observable_dipole_moment;
-  if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
   obs->args=(void*)ids;
   obs->n=3;
@@ -704,7 +704,7 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
   ids1=(IntList*)malloc(sizeof(IntList));
   ids2=(IntList*)malloc(sizeof(IntList));
   iw_params* iw_params_p=(iw_params*) malloc(sizeof(iw_params));
-  if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids1) == TCL_OK ) {
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids1) != TCL_OK ) {
     free(ids1);
     free(ids2);
     free(iw_params_p);
@@ -713,7 +713,7 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
   iw_params_p=(iw_params*)malloc(sizeof(iw_params));
   iw_params_p->ids1=ids1;
   *change=1+temp;
-  if (! parse_id_list(interp, argc-3, argv+3, &temp, &ids2) == TCL_OK ) {
+  if (parse_id_list(interp, argc-3, argv+3, &temp, &ids2) != TCL_OK ) {
     free(ids1);
     free(ids2);
     free(iw_params_p);
@@ -780,7 +780,7 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
     observables[id]=(observable*)malloc(sizeof(observable));            \
-    if (parser(interp, argc-2, argv+2, &temp, observables[n_observables]) ==TCL_OK) { \
+    if (parser(interp, argc-2, argv+2, &temp, observables[n_observables]) == TCL_OK) { \
       n_observables++; \
       argc-=1+temp; \
       argv+=1+temp; \
@@ -993,7 +993,7 @@ int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* cha
   pdata->zbins=1;
   while (argc>0) {
     if (ARG0_IS_S("ids") || ARG0_IS_S("types") || ARG0_IS_S("all")) {
-      if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
+      if (parse_id_list(interp, argc, argv, &temp, &pdata->id_list ) != TCL_OK) {
         Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
         return TCL_ERROR;
       } else {
@@ -1128,7 +1128,7 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
   }
   while (argc>0) {
     if (ARG0_IS_S("ids") || ARG0_IS_S("types") || ARG0_IS_S("all")) {
-      if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
+      if (parse_id_list(interp, argc, argv, &temp, &pdata->id_list ) != TCL_OK) {
         Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
         return TCL_ERROR;
       } else {

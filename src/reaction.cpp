@@ -31,6 +31,26 @@
 reaction_struct reaction;
 
 #ifdef CATALYTIC_REACTIONS
+
+void reactions_sanity_checks()
+{
+  char *errtext;
+
+  if(reaction.ct_rate != 0.0) {
+
+    if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition} ");
+    }
+
+    if(max_cut < reaction.range) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{106 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
+    }
+  }
+}
+
+
 void local_setup_reaction() {
   
   /* Make available the various reaction parameters */

@@ -18,35 +18,38 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef REACTION_H
-#define REACTION_H
-/** \file reaction.hpp
- *
- */
- 
-#include "utils.hpp"
-#include "particle_data.hpp"
 
-typedef struct {
-	int reactant_type;
-	int product_type;
-	int catalyzer_type;
-	double range;
-	double ct_rate;
-	double eq_rate;
-  int sing_mult;
-}  reaction_struct;
+#include "harmonic_force_tcl.hpp"
 
-extern reaction_struct reaction;
+#ifdef HARMONICFORCE
 
-#ifdef CATALYTIC_REACTIONS
-/** sanity checks for the reaction code */
-void reactions_sanity_checks();
-/** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the verlet radius is equal or bigger than the reaction range.
-**/
-void local_setup_reaction();
-void integrate_reaction();
+#include "HarmonicForce.hpp"
+#include "EspressoSystemInterface.hpp"
+
+int tclcommand_harmonic_force(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  DoubleList dl;
+
+  init_doublelist(&dl);
+
+  if(!ARG1_IS_DOUBLELIST(dl)) {
+    puts("Expected double list");
+    return TCL_ERROR;
+  }
+
+  if(dl.n != 4) {
+    puts("Wrong # of args");
+    for(int i = 0; i < dl.n; i++)
+      printf("%d %e\n", i, dl.e[i]);
+
+    return TCL_ERROR;
+  }
+
+  // printf("x %e %e %e, k %e\n", dl.e[0], dl.e[1],dl.e[2],dl.e[3]);
+
+  harmonicForce =  new HarmonicForce(dl.e[0], dl.e[1],dl.e[2],dl.e[3], espressoSystemInterface);
+
+  return TCL_OK;
+}
+
+
 #endif
-
-#endif /* ifdef REACTION_H */

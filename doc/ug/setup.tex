@@ -279,7 +279,7 @@ the calculation of the forces. No special measures have been taken to
 self-consistently determine the velocities and the dissipative forces
 as it is for example described in \cite{Nikunen03}.  DPD adds a
 velocity dependent dissipative force and a random force to the usual
-conservative pair forces (e.g. Lennard-Jones).
+conservative pair forces (\eg Lennard-Jones).
 
 The dissipative force is calculated by
 
@@ -563,35 +563,6 @@ N*\var{n\_layers} layers along the z axis. Since in x and y direction
 there are no processor boundaries, the implementation is basically
 just a stripped down version of the domain decomposition cellsystem.
 
-\section{AdResS}
-
-\begin{citebox}
-  Please cite~\citewbibkey{adress} when using AdResS.
-\end{citebox}
-
-\begin{essyntax}
-adress set topo \var{kind} width \var{width} \var{hybrid\_width} center x \var{R\_x} wf \var{wf}
-\begin{features}
-    \required{ADRESSO}
-  \end{features}
-\end{essyntax}
-
-where \var{kind} determines the type of AdResS simulation:\newline
-\begin{tabular}{ll}
-0&disabled\\
-1&constant weight function\\
-2&one dimensional splitting\\
-3&spherical splitting
-\end{tabular}\newline
-\var{wf} the type of weighting function:\newline
-\begin{tabular}{ll}
-0&standard\\
-1&user defined
-\end{tabular}\newline
-\var{width} and \var{hybrid\_width} are the widths of the explicit and hybrid regions respectively and \var{R\_x} is the $x$ position of the center of the explicit zone.
-For more details on the method itself see \cite{praprotnik05,praprotnik08,poblete10}.
-And for further information about the technical implementation see \cite{adress}.
-
 \section{CUDA}
 \label{sec:cuda}
 \begin{essyntax}
@@ -729,7 +700,7 @@ concentration for the equilibrium and catalytic reaction are given by
 \begin{eqnarray}
 \frac{d[rt]}{dt} & = & k_{\text{eq,-}}[pr] - k_{\text{eq,+}}[rt] ; \\
 \frac{d[pr]}{dt} & = & k_{\text{eq,+}}[rt] - k_{\text{eq,-}}[pr] ; \\
--\frac{d[rt]}{dt} \;\: = \;\: \frac{d[pt]}{dt} & = & k_{\text{ct}}[rt] ,
+-\frac{d[rt]}{dt} \;\; = \;\; \frac{d[pt]}{dt} & = & k_{\text{ct}}[rt] ,
 \end{eqnarray}
 respectively.
 

@@ -155,9 +155,10 @@ configure --help
   be used to define compiler flags for the NVIDIA CUDA-compiler
   \texttt{nvcc}. For example, \texttt{NVCCFLAGS = "{}-gencode
     arch=compute_20,code=sm_20"{}} will compile code only for Fermi
-  cards.  Default is to compile for compute models 1.1 and 2.0,
-  i.e. everything with a G90 chip or newer.  Note that we require at
-  least compute model 1.1.
+  cards.  Default is to compile for compute model 2.0,
+  i.e. everything with a Fermi chip or newer.  Note that we require at
+  least compute model 1.1, that is G90. However, to use G90 (e.\,g.~Tesla
+  C1060), you need to manually specificy compute model 1.1.
 \end{description}
 
 \section{\texttt{make}: Compiling,  testing and installing \es}
