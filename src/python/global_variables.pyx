@@ -3,9 +3,6 @@ include "myconfig.pxi"
 cimport global_variables
 import numpy as np
 
-cpdef int marcello_test(int x):
-    return x**2
-
 cdef class GlobalsHandle:
     def __init__(self):
         pass
@@ -29,16 +26,13 @@ cdef class GlobalsHandle:
         def __get__(self):
             return np.array( [ dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]  ] )
   
-  
     property cell_size:
         def __get__(self):
             return np.array( [ dd.cell_size[0], dd.cell_size[1], dd.cell_size[2] ] )
-
     
     property dpd_gamma:
         def __get__(self):
             return dpd_gamma;
-      
   
     property dpd_r_cut:
         def __get__(self):
@@ -47,7 +41,6 @@ cdef class GlobalsHandle:
     property gamma:
         def __get__(self):
             return langevin_gamma;
-      
   
     property integ_switch:
         def __get__(self):

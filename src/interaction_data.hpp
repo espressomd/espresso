@@ -1034,7 +1034,7 @@ void recalc_maximal_cutoff();
 void recalc_coulomb_prefactor();
 
 /** check whether all force calculation routines are properly initialized. */
-int check_obs_calc_initialized();
+int interactions_sanity_checks();
 
 /**  check if a non bonded interaction is defined */
 inline int checkIfInteraction(IA_parameters *data) {

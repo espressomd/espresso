@@ -19,7 +19,7 @@
 AM_DEFAULT_SOURCE_EXT = .pyx
 
 # Build rules for python libraries
-AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src
+AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src 
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 LIBS =  ../libEspresso.la @LIBS@
 if MPI_FAKE
@@ -27,10 +27,18 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
 endif
 
 # build rule for myconfig.pxi
-myconfig.pxi: ../myconfig-final.hpp
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/make_myconfig.py ../myconfig-final.hpp > /dev/null
-CLEANFILES = myconfig.pxi
-BUILT_SOURCES = myconfig.pxi
+noinst_PROGRAMS = gen_pxiconfig
+
+gen_pxiconfig.cpp: $(top_srcdir)/config/gen_pxiconfig.py \
+		   $(top_srcdir)/src/features.def ../myconfig-final.hpp
+	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_pxiconfig.py \
+	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
+
+myconfig.pxi: gen_pxiconfig
+	$(AM_V_GEN)./gen_pxiconfig > myconfig.pxi
+
+CLEANFILES = gen_pxiconfig.cpp myconfig.pxi
+BUILT_SOURCES = gen_pxiconfig.cpp myconfig.pxi
 
 # Build rules for cython
 SUFFIXES = .pyx
@@ -42,7 +50,7 @@ cython_verbose_0 = @echo "  CYTHON   $@";
 
 .PRECIOUS: .pyx.cpp
 
-#espresso.cpp: espresso.pxd myconfig.pxi
+espresso.cpp: espresso.pxd myconfig.pxi
 #particle_data.cpp: particle_data.pxd myconfig.pxi
 #analyze.cpp: analyze.pxd myconfig.pxi
 # cellsystem.cpp: cellsystem.pxd myconfig.pxi
@@ -62,6 +70,7 @@ CLEANFILES += espresso.cpp \
 	cellsystem.cpp \
 	changeVolume.cpp \
 	code_info.cpp \
+	cuda_init.cpp \
 	debye_hueckel.cpp \
 	global_variables.cpp \
 	integrate.cpp \
@@ -77,6 +86,7 @@ pyexec_LTLIBRARIES = \
 	cellsystem.la \
 	changeVolume.la \
 	code_info.la \
+	cuda_init.la \
 	debye_hueckel.la \
 	global_variables.la \
 	integrate.la \
@@ -85,6 +95,6 @@ pyexec_LTLIBRARIES = \
 	thermostat.la \
 	utils.la
 
-#	
-#	lb.la
-#	cuda_init.la
+# lb has not been updated yet
+#	lb.la 
+

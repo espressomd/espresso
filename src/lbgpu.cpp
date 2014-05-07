@@ -380,4 +380,28 @@ int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
   return ES_OK;
 }
 
+void lb_GPU_sanity_checks()
+{
+  if(this_node == 0){
+    if (lbpar_gpu.agrid < 0.0) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+    }
+    if (lbpar_gpu.tau < 0.0) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+    }
+    for(int i=0;i<LB_COMPONENTS;i++){
+      if (lbpar_gpu.rho[0] < 0.0) {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+      }
+      if (lbpar_gpu.viscosity[0] < 0.0) {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+      }
+    }
+  }
+}
+
 #endif /* LB_GPU */

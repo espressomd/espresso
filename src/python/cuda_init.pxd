@@ -1,7 +1,4 @@
-cdef extern from "config.h":
-    pass
-
-cdef extern from "cuda_init.h":
-    int setdevice(int dev)
-    int getdevice(int* dev)
-    int getdevicelist(int* devl, char* devname)
+cdef extern from "cuda_init.hpp":
+    int cuda_set_device(int dev)
+    int cuda_get_device()
+#    int getdevicelist(int* devl, char* devname)

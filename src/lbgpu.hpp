@@ -116,7 +116,7 @@ typedef struct {
 
   int external_force;
 
-  float ext_force[3];
+  float ext_force[3*LB_COMPONENTS];
 
   unsigned int your_seed;
 
@@ -178,6 +178,7 @@ typedef struct {
 typedef struct {
 
   float *force;
+  float *scforce;
 
 } LB_node_force_gpu;
 
@@ -219,6 +220,7 @@ extern int ek_initialized;
 /************************************************************/
 /*@{*/
 
+void lb_GPU_sanity_checks();
 
 void lb_get_device_values_pointer(LB_rho_v_gpu** pointeradress);
 void lb_get_boundary_force_pointer(float** pointeradress);

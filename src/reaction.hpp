@@ -40,6 +40,8 @@ typedef struct {
 extern reaction_struct reaction;
 
 #ifdef CATALYTIC_REACTIONS
+/** sanity checks for the reaction code */
+void reactions_sanity_checks();
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so
     that the verlet radius is equal or bigger than the reaction range.
 **/
