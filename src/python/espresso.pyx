@@ -20,9 +20,8 @@ cimport utils
 
 import debye_hueckel
 #import lb
-#import cuda_init
+import cuda_init
 #cimport myconfig
-
 
 import code_info
 
