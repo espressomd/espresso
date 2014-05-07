@@ -60,7 +60,7 @@ cdef class NonBondedInteraction(object):
       # Check, if any key was passed, which is not known
       for k in p.keys():
         if k not in self.validKeys():
-          raise ValueError("Only the following keys are supported: "+self.validKeys().__str__)
+          raise ValueError("Only the following keys are supported: "+self.validKeys().__str__())
       
       # Initialize default values
       self.setDefaultParams()
@@ -113,7 +113,8 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
       "cutoff":iaParams.LJ_cut,\
       "shift":iaParams.LJ_shift,\
       "offset":iaParams.LJ_offset,\
-      "capradius":iaParams.LJ_capradius}
+      "capradius":iaParams.LJ_capradius,\
+      "min":iaParams.LJ_min}
        
 
     
@@ -128,7 +129,6 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
                                         self._params["capradius"], \
                                         self._params["min"]):
       raise Exception("Could not set Lennard Jones parameters")					
-    ljforcecap_set_params(self._params["capradius"])
   
   def setDefaultParams(self):
     self._params={\
