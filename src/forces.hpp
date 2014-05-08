@@ -82,6 +82,8 @@
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "collision.hpp" 
+#include "cg_dna.hpp"
+
 /* end of force files */
 
 /** \name Exported Functions */
@@ -403,6 +405,10 @@ inline void add_bonded_force(Particle *p1)
   double force[3]  = { 0., 0., 0. };
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
+#ifdef CG_DNA
+  double force4[4] = { 0., 0., 0. };
+  double force5to8[12] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. };
+#endif
 #ifdef ROTATION
   double torque1[3] = { 0., 0., 0. };
   double torque2[3] = { 0., 0., 0. };
@@ -473,6 +479,10 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_AREA_FORCE_LOCAL:
       bond_broken = calc_area_force_local(p1, p2, p3, iaparams, force, force2, force3);
       break;
+#ifdef CG_DNA
+    case BONDED_IA_CG_DNA_BASEPAIR:
+      bond_broken = calc_cg_dna_basepair_force(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
+#endif
 #ifdef AREA_FORCE_GLOBAL
     case BONDED_IA_AREA_FORCE_GLOBAL:
       bond_broken = 0;

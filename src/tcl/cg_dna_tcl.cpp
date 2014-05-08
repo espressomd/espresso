@@ -36,7 +36,7 @@ int tclprint_to_result_cg_dnaIA(Tcl_Interp *interp, Bonded_ia_parameters *params
 }
 
 void cg_dna_basepair_usage(Tcl_Interp *interp) { 
-  puts("usage: cg_dna_basepair_usage { r0 alpha E0 kd E01 E02 sigma1 sigma2 theta01 theta02 }");
+  puts("usage: cg_dna_basepair_usage { r0 alpha E0 kd E01 E02 sigma1 sigma2 psi01 psi02 }");
 }
 
 int tclcommand_inter_parse_cg_dna_basepair(Tcl_Interp *interp, int bond_type, int argc, char **argv) {   

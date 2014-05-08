@@ -546,8 +546,8 @@ typedef struct {
       double E02;
       double sigma1;
       double sigma2;
-      double theta01;
-      double theta02;
+      double psi10;
+      double psi20;
     } cg_dna_basepair;
 
     struct {

@@ -36,8 +36,8 @@ int cg_dna_basepair_set_params(int bond_type, DoubleList *params) {
   bonded_ia_params[bond_type].p.cg_dna_basepair.E02 = params->e[5];
   bonded_ia_params[bond_type].p.cg_dna_basepair.sigma1 = params->e[6];
   bonded_ia_params[bond_type].p.cg_dna_basepair.sigma2 = params->e[7];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.theta01 = params->e[8];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.theta02 = params->e[9];
+  bonded_ia_params[bond_type].p.cg_dna_basepair.psi10 = params->e[8];
+  bonded_ia_params[bond_type].p.cg_dna_basepair.psi20 = params->e[9];
 
   bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_BASEPAIR;
   bonded_ia_params[bond_type].num = 3;
