@@ -102,6 +102,7 @@ libEspresso_la_SOURCES = \
 	virtual_sites.cpp virtual_sites.hpp \
 	virtual_sites_com.cpp virtual_sites_com.hpp \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
+	lbtracers.cpp lbtracers.hpp \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
