@@ -1,10 +1,8 @@
-#from espresso.utils cimport ERROR 
+include "myconfig.pxi"
 cimport numpy as np
 import numpy as np
 cimport utils
 from utils cimport *
-include "myconfig.pxi"
-
 
 cdef class ParticleHandle:
   def __cinit__(self, _id):

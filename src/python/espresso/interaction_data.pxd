@@ -1,6 +1,6 @@
 # Handling of interactions
 
-from espresso cimport *
+from System cimport *
 cimport numpy as np
 from utils cimport *
 

@@ -1,7 +1,8 @@
-from espresso cimport *
+from System cimport *
 ## Here we create something to handle particles
 cimport numpy as np
 from utils cimport *
+
 include "myconfig.pxi"
 
 

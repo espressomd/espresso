@@ -412,6 +412,8 @@ if test .$with_python_interface != .no; then
    AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])
 fi
 AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
+# export libtool objdir, so that we can link the .so files to the dir itself
+AC_SUBST(objdir)
 
 cat <<EOF
 ****************************************************************
@@ -615,6 +617,7 @@ AC_CONFIG_FILES([
 	src/Makefile
         src/tcl/Makefile
         src/python/Makefile
+        src/python/espresso/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
