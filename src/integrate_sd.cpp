@@ -544,7 +544,7 @@ It could be difficult to set particles apart!\n",phi);
 	    if (dr2 <= SQR(2*sd_radius*(1+1e-6))){
 	      double drn = sqrt(dr2);
 	      // push to a distance of 1e-6;
-	      double fac=(sd_radius+sd_radius*1.2e-6-drn/2)/drn;
+	      double fac=(sd_radius*(1+1.2e-6)-drn/2)/drn;
 	      for (int d=0; d<3;d++){
 		assert(!isnan(dr[d]*fac));
 		p[i].r.p[d]+=fac*dr[d];
@@ -562,12 +562,12 @@ It could be difficult to set particles apart!\n",phi);
 	    }
 	  }
 	}
-      } while (inner);/*
+      } while (inner);
       for (int cj =0; cj < local_cells.n;cj++){
 	Cell * cellJ  = local_cells.cell[cj];
 	Particle * pj = cellJ->part;
 	int npj       = cellJ->n;
-	for (int i = 0; i < np; i++) { // only count nonVirtual Particles
+	for (int i = 0; i < np; i++) {
 	  for (int j = (c==cj?i+1:0); j <npj; j++){
 	    //position: p[i].r.p
 	    double dr2=0;
@@ -580,14 +580,14 @@ It could be difficult to set particles apart!\n",phi);
 	    if (dr2 <= SQR(2*sd_radius*(1+1e-6))){
 	      double drn = sqrt(dr2);
 	      // push to a distance of 1e-6;
-	      double fac=(sd_radius+sd_radius*5e-7-drn/2)/drn;
+	      double fac=(sd_radius*(1+1.2e-6)-drn/2)/drn;
 	      assert(!isnan(fac));
 	      assert (fac > 0);
 	      for (int d=0; d<3;d++){
 		p[i].r.p[d] +=fac*dr[d];
 		pj[j].r.p[d]-=fac*dr[d];
 	      }
-	      inner=true;
+	      outer=true;
 	    }
 	    for (int d=0;d<3;d++){
 	      assert(!isnan( pj[j].r.p[d]));
@@ -595,11 +595,11 @@ It could be difficult to set particles apart!\n",phi);
 	    }
 	  }
 	}
-	}*/
+      }
     }
     fprintf(stderr,"+");
   } while (outer);
-  fprintf(stderr,"pushed_apart");
+  fprintf(stderr,"set_apart suceeded ");
   return 0;
 }
 
