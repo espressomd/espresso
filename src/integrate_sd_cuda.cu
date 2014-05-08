@@ -25,13 +25,15 @@
 // * use preconditioner in iterative solver
 // * implement matrix-free farfield (via fft)
 // * add brownian motion
+// * add bucket versions
 
 typedef double real;
 
 #include <stdio.h>
 #include <iostream>
 #include "cuda_runtime.h"
-#include "device_functions.h"
+#include "curand.h"
+#include <device_functions.h>
 
 #include "assert.h"
 #include "integrate_sd_cuda_debug.cuh"
@@ -40,6 +42,8 @@ typedef double real;
 #include "errorhandling.hpp"
 #include "global.hpp"
 
+extern double temperature; // this is defined in thermostat.cpp
+
 const int numThreadsPerBlock = 32;
 
 void _cudaCheckError(const char *msg, const char * file, const int line);
@@ -47,7 +51,16 @@ void _cudaCheckError(const char *msg, const char * file, const int line);
 
 #define myindex(i,j) ((i)*(lda)+(j))
 
-#define cublasCall(call) stat=(call);assert(stat==CUBLAS_STATUS_SUCCESS)
+#define SQR(x) (x)*(x)
+
+#define cublasCall(call) { cublasStatus_t stat=(call);	\
+    assert(stat==CUBLAS_STATUS_SUCCESS);		\
+  }
+#define curandCall(call) { curandStatus_t stat =(call);	\
+    assert(stat == CURAND_STATUS_SUCCESS);		\
+  }
+
+#define SD_RESISTANCE_CORRECT
 
 #define SD_RESISTANCE_CORRECT
 
@@ -55,7 +68,7 @@ void _cudaCheckError(const char *msg, const char * file, const int line);
  * *******   private functions   ******* *
  * ************************************* */
 void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double eta, double a, double * L_d, 
-			     double * total_mobility_d, double * force_d, double * disp_d);
+			     double * total_mobility_d, double * force_d, double * disp_d, int * myInfo);
 //void sd_compute_mobility(cublasHandle_t cublas, double * r_d, int N, double eta, double a, double * L_d, double * total_mobility_d);
 
 
@@ -64,7 +77,7 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
 // and returnes disp
 // mobility and resistance are square matrizes with size <size> and lda <((size+31)/32)*32>
 // force and disp are vectors of size <size>
-void sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const double * resistance, const double * force, int size, double * disp);
+double sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const double * resistance, const double * force, int size, double * disp);
 
 // This computes the farfield contribution.
 // r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
@@ -81,7 +94,10 @@ __global__ void sd_add_identity_matrix(double * matrix, int size, int lda);
 void _cudaCheckError(const char *msg, const char * file, const int line);
 // this computes the near field
 // it calculates the ResistanceMatrix
-__global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobility, double a, double * L, double * resistance);
+__global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobility, double a, double * L, double * resistance, int * myInfo);
+// TODO: make the order of arguments uniform (and logical?)
+// TODO: description here
+__global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian_nf,int N,double * L, double a, double self_mobility,real * brownian_force_nf);
 
 // make sure to have one thread per particle
 __global__ void sd_real_integrate_prepare( double * r_d , double * disp_d, double * L, double a, int N);
@@ -92,6 +108,19 @@ __global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, d
 // matrix: pointer to the given matrix
 // size  : the size of the matrix (in the example below 3N)
 __global__ void sd_set_zero_matrix(double * matrix, int size);
+
+
+
+// this sets a block to zero
+// data  : pointer to the given data
+// size  : the size of the data
+__global__ void sd_set_zero(double * data, int size);
+
+// this sets a block to zero
+// data  : pointer to the given data
+// size  : the size of the data
+// value : the value written to the data block
+__global__ void sd_set_int(int * data, int size, int value);
 
 
 // implementation of a bucket sort algorithm
@@ -111,7 +140,7 @@ __global__ void sd_bucket_sort( double * pos , double * bucketSize, int * bucket
 				int * particleCount, int * particleList, int maxParticlePerCell, int totalBucketNum);
 
 // BICGSTAB-Solver
-// implimented as given in Numerik linearer Gleichungssysteme by Prof. Dr. Andreas Meister
+// implimented as given in `Numerik linearer Gleichungssysteme` by Prof. Dr. Andreas Meister
 // this solves A*x=b
 // cublas a handle for cublas
 // size   the size n of the matrix
@@ -122,7 +151,12 @@ __global__ void sd_bucket_sort( double * pos , double * bucketSize, int * bucket
 // maxit  maximum number of iterations
 // x      the requested solution with an initial guess (in/out)
 // returns 0 on success, else error code
-int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real * b, real tol, int maxit, real * x);
+int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real * b, real tol, int maxit, real * x, real * res);
+
+
+typedef unsigned long long ull;
+// atomicAdd implementation for double
+__device__ double atomicAdd(double * address, double inc);
 /* *************************************************************************************************************** *
  * ********************************************     implementation    ******************************************** *
  * *************************************************************************************************************** */
@@ -173,7 +207,7 @@ void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * forc
       std::cerr << "CUBLAS initialization failed\n";
       errexit();
     }
-    magma_init();
+    //magma_init();
   }
 
   double * box_l_d=NULL;
@@ -191,15 +225,21 @@ void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * forc
   double * disp_d=NULL;
   cuda_safe_mem(cudaMalloc((void**)&disp_d, DIM*N*sizeof(double)));
   cuda_safe_mem(cudaMemcpy(disp_d,velo_h,N*DIM*sizeof(double),cudaMemcpyHostToDevice));
+  int myInfo_h[]={0,0,0};
+  int * myInfo_d=NULL;
+  cuda_safe_mem(cudaMalloc((void**)&myInfo_d, 3*sizeof(int)));
+  cuda_safe_mem(cudaMemcpy(myInfo_d,myInfo_h,3*sizeof(int),cudaMemcpyHostToDevice));
   // rescale forces - this should not be done somewhere else ...
-  cublasStatus_t stat;
   double alpha=time_step;
   cublasCall(cublasDscal( cublas, 3*N, &alpha, force_d, 1));
   //alpha=1/time_step;
   //cublasCall(cublasDscal(cublas, DIM*N, &alpha, disp_d, 1));  
-  sd_compute_displacement(cublas, pos_d, N, viscosity, radius, box_l_d, mobility_d, force_d, disp_d);
-  
-  
+  sd_compute_displacement(cublas, pos_d, N, viscosity, radius, box_l_d, mobility_d, force_d, disp_d, myInfo_d);
+  cuda_safe_mem(cudaMemcpy(myInfo_h,myInfo_d,3*sizeof(int),cudaMemcpyDeviceToHost));
+  //std::cerr <<"MyInfo: "<< myInfo_h[0] <<"\t" << myInfo_h[1] <<"\t" << myInfo_h[2] <<"\n";
+  if (myInfo_h[0]){
+    sd_set_particles_apart();
+  }
   
   //int numThreadsPerBlock = 3;
   int numBlocks = (N+numThreadsPerBlock-1)/numThreadsPerBlock;
@@ -223,6 +263,7 @@ void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * forc
   cuda_safe_mem(cudaFree((void*)force_d));
   cuda_safe_mem(cudaFree((void*)mobility_d));
   cuda_safe_mem(cudaFree((void*)disp_d));
+  cuda_safe_mem(cudaFree((void*)myInfo_d));
 }
 
 
@@ -238,10 +279,10 @@ void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * forc
 // L_d    : boxsize in x y and z-directions (in)
 // total_mobility_d: matrix of the computed total mobility, size 3*3*N*N (in/out, is overwritten)
 void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double eta, double a, double * L_d, 
-			     double * total_mobility_d, double * force_d, double * disp_d)
+			     double * total_mobility_d, double * force_d, double * disp_d, int * myInfo_d)
 {
   cudaThreadSynchronize(); // just for debugging
-  cudaCheckError("");
+  cudaCheckError("START");
   int lda=((3*N+31)/32)*32;
   //int numThreadsPerBlock = 32;
   int numBlocks = (N+numThreadsPerBlock-1)/numThreadsPerBlock;
@@ -257,6 +298,8 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
   //printMatrixDev(mobility_d,3*N,3*N,"before mobility:");
   //printVectorDev(r_d,3*N,"positions");
   sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(mobility_d,3*N);
+  cudaThreadSynchronize(); // just for debugging
+  cudaCheckError("sd set zero");
   sd_compute_mobility_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,1./(6.*M_PI*eta*a), a, L_d, mobility_d);
   cudaThreadSynchronize(); // just for debugging
   //printMatrixDev(mobility_d,3*N,3*N,"mobility_d");
@@ -267,7 +310,7 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
   cuda_safe_mem(cudaMalloc( (void**)&resistance_d, ressize*sizeof(double) )); //this needs to be bigger for matrix inversion
   assert(resistance_d !=NULL);
   sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(resistance_d,3*N);
-  sd_compute_resistance_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,1./(6.*M_PI*eta*a), a, L_d, resistance_d);
+  sd_compute_resistance_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,1./(6.*M_PI*eta*a), a, L_d, resistance_d, myInfo_d);
   cudaThreadSynchronize(); // we need both matrices to continue;
   cudaCheckError("compute resistance or mobility error");
   assert(!hasAnyNanDev(mobility_d,N*3*lda));
@@ -275,43 +318,64 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
   assert(isSymmetricDev(resistance_d,lda,N*3));
   //cublasStatus_t status;
   
-  //debug
-  //printMatrixDev(mobility_d,lda,3*N,"mobility:");
-  //printVectorDev(r_d,3*N,"position: ");
-  //printMatrixDev(resistance_d,lda,3*N,"resitstance: ");
-
-                                   
-  sd_iterative_solver(cublas, mobility_d, resistance_d, force_d, 3*N,disp_d);
-     
+  double err = sd_iterative_solver(cublas, mobility_d, resistance_d, force_d, 3*N,disp_d);
   
-
-  /*double alpha=1, beta =0;
-  status = cublasDgemm(cublas,CUBLAS_OP_N,CUBLAS_OP_N, DIM*N , DIM*N ,DIM*N, &alpha, mobility_d, lda,resistance_d, lda, &beta,helper_d, lda);
-  assert(status == CUBLAS_STATUS_SUCCESS);*/
-  /*
-  sd_add_identity_matrix<<< numBlocks , numThreadsPerBlock  >>>(helper_d,DIM*N,lda);
-  cudaThreadSynchronize();
+  // brownian part
+  if (temperature > 0){
+    int myInfo_h[3];
+    cuda_safe_mem(cudaMemcpy(myInfo_h,myInfo_d,3*sizeof(int),cudaMemcpyDeviceToHost));
+    int N_ldd = ((N+31)/32)*32;
+    int num_of_rands = N_ldd*myInfo_h[2]*2*DIM+N_ldd*DIM;
+    
+    double * brownian_force_nf = NULL;
+    cuda_safe_mem(cudaMalloc( (void**)&brownian_force_nf, (3*N)*sizeof(double) ));     assert(brownian_force_nf != NULL);
+    double * brownian_force_ff = NULL;
+    cuda_safe_mem(cudaMalloc( (void**)&brownian_force_ff, (3*N)*sizeof(double) ));     assert(brownian_force_ff != NULL);
+    
+    double * gaussian = NULL;
+    cuda_safe_mem(cudaMalloc( (void**)&gaussian, (num_of_rands)*sizeof(double) ));     assert(gaussian != NULL);
+    double * gaussian_ff = gaussian;
+    double * gaussian_nf = gaussian+N_ldd*DIM;
+    static curandGenerator_t generator = NULL;
+    static int               sd_random_generator_offset=0;
+    if (generator == NULL){
+      curandCall(curandCreateGenerator(&generator, CURAND_RNG_PSEUDO_DEFAULT));
+      curandCall(curandSetPseudoRandomGeneratorSeed(generator, (unsigned long long)('E'+'S'+'P'+'R'+'e'+'s'+'S'+'o')));
+      curandCall(curandSetGeneratorOrdering( generator, CURAND_ORDERING_PSEUDO_BEST));
+      curandCall(curandSetGeneratorOffset( generator, sd_random_generator_offset));
+    }
+    //#ifdef FLATNOISE
+    // this does not work yet:
+    //curandCall(curandGenerateUniformDouble(generator, gaussian_d, num_of_rands, 0, sqrt(24.*temperature/time_step)));
+    //#else
+    curandCall(curandGenerateNormalDouble(generator, gaussian, num_of_rands, 0, sqrt(2.*temperature/time_step)));
+    //#endif
+    if (myInfo_h[2]){
+      int * gamma_index = NULL;
+      cuda_safe_mem(cudaMalloc( (void**)&gamma_index, (myInfo_h[2]*N)*sizeof(int) ));    assert(gamma_index != NULL);
+      sd_set_zero<<<64,192>>>(brownian_force_nf,3*N);
+      sd_set_int<<<64,192>>>(gamma_index,myInfo_h[2]*N, -1);
+      sd_compute_brownian_force_nearfield<<<numBlocks, numThreadsPerBlock>>>(r_d, gaussian_nf, N, L_d, a,
+									     1./(6.*M_PI*eta*a), brownian_force_nf);
+    }// end of near field
+    /*static bool recalc = true;
+    while (recalc){
+      if (recalc){
+	calculate_maxmin_eigenvalues(3*N,mobility_d,lda,
+      }
+      // do the calculation
+      //if (error to big && !recalc){
+      //  recalc = true;
+      //else{
+      //  recalc = false
+      //}
+      }*/
+    
+    
+  }// end of brownian motion
+  cudaCheckError("brownian motion error");
   
-  cudaCheckError("add identity error");
-  
-  // inverting the matrix 
-  int ipiv[DIM*N];
-  int info;
-  magma_dgetrf_gpu( DIM*N, DIM*N,helper_d, lda, ipiv, &info);
-  assert(info==0);
-  magma_dgetri_gpu( N*DIM, helper_d, lda, ipiv,resistance_d,ressize, &info);
-  assert(info==0);
-  // compute the inverse matrix
-  // this is an alternative implementation ...
-  // be sure to make sure everything else matches, because this one does not overwrite the original matrix
-  // GPUGausSeidelDev(helper_d,inverse_d,DIM*N);
-  cudaThreadSynchronize();
-  cudaCheckError("inversion error");
-  // compute total_mobility_d
-  status = cublasDgemm(cublas,CUBLAS_OP_N,CUBLAS_OP_N, DIM*N , DIM*N ,DIM*N, &alpha, \
-		       mobility_d, lda,helper_d, lda, &beta,total_mobility_d, lda);
-		       assert(status == CUBLAS_STATUS_SUCCESS);*/
-  // free the two matrices again
+  // free everything
   cudaFree((void*)resistance_d);
   cudaFree((void*)mobility_d);
   cudaFree((void*)helper_d);
@@ -323,7 +387,7 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
 // and returnes disp
 // mobility and resistance are square matrizes with size <size> and lda <((size+31)/32)*32>
 // force and disp are vectors of size <size>
-void sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const double * resistance, const double * force, int size, double * disp)
+double sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const double * resistance, const double * force, int size, double * disp)
 {
   int lda = ((size+31)/32)*32;
   double * mat_a = NULL;
@@ -339,66 +403,46 @@ void sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const d
   double alpha=1;
   double beta=0;
   // mat_a = (1+resistance*mobility)
-  cublasStatus_t stat;
   cublasCall(cublasDgemm(cublas,CUBLAS_OP_N,CUBLAS_OP_N, size , size ,size, &alpha, mobility, lda,resistance, lda, &beta,mat_a, lda));
   sd_add_identity_matrix<<<128,10>>>(mat_a,size,lda);// TODO: FIXME:  calculate something to set better values ...
   cuda_safe_mem(cudaMemcpy(mat_a_bak, mat_a, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
   // mob_force = mobility * force
   cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mobility, lda, force, 1, &beta, mob_force, 1));
   int info;
-  //printMatrixDev(mat_a,lda,size,"A");
-  // use mob_force as initial guess
-  /*
-  cublasCall(cublasDcopy(cublas, size,mob_force,1,disp, 1));
-  magma_dpotrs_gpu('U', size, 1, mat_a, lda, disp, size, &info);
-  // compary to expected result
-  cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
-  //printMatrixDev(mat_a,lda,size,"A");
-  cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
-  alpha=-1;
-  cublasCall(cublasDaxpy( cublas, size, &alpha, mob_force, 1, result_checker, 1));
-  alpha=1;
   double res;
-  cublasCall(cublasDdot( cublas, size, result_checker, 1, result_checker, 1,&res));
-  //magma_int_t magma_dpotrs_gpu( magma_uplo_t uplo,  magma_int_t n, magma_int_t nrhs,
-  //				double *dA, magma_int_t ldda,
-  //				double *dB, magma_int_t lddb, magma_int_t *info);
-  */
-  double res=1; info=1;
-  if (info != 0 || res > 1e-4){
-    static int error_was_printed=0;
-    if (!(error_was_printed&1)){
-      error_was_printed|=1;
-      fprintf(stderr, "We do not use the symmetry of the matrix ...\nThe residuum was %6f\n",res);
+  //printVectorDev((double *)force,6,"Kraft");
+  //printVectorDev(disp,6,"before");
+  info = sd_bicgstab_solver(cublas ,size, mat_a,lda, mob_force, 1e-4, 10*size+100, disp, &res);
+  //printVectorDev(disp,6,"after");
+  // compary to expected result
+  //cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
+  
+  if (info != 0){
+    if (info == 1){
+      fprintf(stderr, "Iterative solver did not fully converge ... the residuum was %6e\n\
+We will continue anyway ...\n",res);
     }
-    // reset mat_a (is done during comparison
-    //cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
-    // dont - use given 
-    //cublasCall(cublasDcopy(cublas, size,mob_force,1,disp, 1)); // reset disp
-    printVectorDev((double *)force,6,"Kraft");
-    printVectorDev(disp,6,"before");
-    info = sd_bicgstab_solver(cublas ,size, mat_a,lda, mob_force, 1e-6, 10*size+100, disp);
-    printVectorDev(disp,6,"after");
-    //assert(info==0);
-    // compary to expected result
-    cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
-    cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
-    alpha=-1;
-    cublasCall(cublasDaxpy( cublas, size, &alpha, mob_force, 1, result_checker, 1));
-    alpha=1;
-    cublasCall(cublasDdot( cublas, size, result_checker, 1, result_checker, 1,&res));
-    //if (info != 0 || res > 1e-4){
-    if (res > 1e-1){
-      if (!(error_was_printed&2)){
-	//error_was_printed|=2;
-	fprintf(stderr, "Iterative solver failed ...\nThe residuum was %6f\n",res);
+    else{ // info == 2 || info == 4
+      // try again with reseted displacement vector as initial guess
+      sd_set_zero<<<192,16>>>(disp,size);
+      info = sd_bicgstab_solver(cublas ,size, mat_a,lda, mob_force, 1e-4, 10*size+100, disp, &res);
+      //printVectorDev(disp,6,"after zeroing");
+      if (info == 1){
+	fprintf(stderr, "Iterative solver did not fully converge ... the residuum was %6e\n\
+We will continue anyway ...\n",res);
       }
-      /*int ipiv[size];
+      else if (info == 2){
+	fprintf(stderr, "Iterative solver failed ... the residuum was %6e\n\
+We will continue but the results may be problematic ...\n",res);
+      }
+    }
+    // dgetrs is not better - the contrary: results are worse ...
+    /*int ipiv[size];
       magma_dgetrf_gpu( size, size,mat_a, lda, ipiv, &info);
       assert(info==0);
       magma_dgetrs_gpu('N', size, 1,
-		       mat_a, lda, ipiv,
-		       disp, size, &info);
+      mat_a, lda, ipiv,
+      disp, size, &info);
       assert(info==0);
       // compary to expected result
       cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
@@ -406,27 +450,28 @@ void sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const d
       alpha=-1;
       cublasCall(cublasDaxpy( cublas, size, &alpha, mob_force, 1, result_checker, 1));
       alpha=1;
-      cublasCall(cublasDdot( cublas, size, result_checker, 1, result_checker, 1,&res));*/
+      cublasCall(cublasDdot( cublas, size, result_checker, 1, result_checker, 1,&res));
       if (res > 1e-1){
-	fprintf(stderr, "All methods failed :(. The residuum was %f\n",res);
-	//cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
-	printVectorDev(mob_force, size, "mob_force");
-	//printVectorDev(result_checker, size, "result_checker");
-	printVectorDev(disp, size, "disp");
-	printMatrixDev((double *)mobility,lda,size,"mobility");
-	printMatrixDev((double *)resistance,lda,size,"res");
-	printMatrixDev((double *)mat_a,lda,size,"mat_a");
-      }
-      //magma_int_t magma_dgetrs_gpu( magma_trans_t trans, magma_int_t n, magma_int_t nrhs,
-      //				  double *dA, magma_int_t ldda, magma_int_t *ipiv,
-      //				  double *dB, magma_int_t lddb, magma_int_t *info);
-    }
+      fprintf(stderr, "All methods failed :(. The residuum from getrs was %e\n",res);
+      //cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
+      //printVectorDev(mob_force, size, "mob_force");
+      //printVectorDev(result_checker, size, "result_checker");
+      //printVectorDev(disp, size, "disp");
+      //printMatrixDev((double *)mobility,lda,size,"mobility");
+      //printMatrixDev((double *)resistance,lda,size,"res");
+      //printMatrixDev((double *)mat_a,lda,size,"mat_a");
+      }*/
+    //magma_int_t magma_dgetrs_gpu( magma_trans_t trans, magma_int_t n, magma_int_t nrhs,
+    //				  double *dA, magma_int_t ldda, magma_int_t *ipiv,
+    //				  double *dB, magma_int_t lddb, magma_int_t *info);
   }
+  
   //assert(info==0);
   cuda_safe_mem(cudaFree((void*)mat_a));
   cuda_safe_mem(cudaFree((void*)mat_a_bak));
   cuda_safe_mem(cudaFree((void*)mob_force));
   cuda_safe_mem(cudaFree((void*)result_checker));
+  return res;
 }
 // this solves iteratively using CG
 // disp * (1+resistance*mobility) = mobility_d *  force_d 
@@ -456,7 +501,6 @@ void sd_iterative_solver_own(cublasHandle_t cublas, const double * mobility, con
   double alpha=1;
   double beta=0;
   // mat_a = (1+resistance*mobility)
-  cublasStatus_t stat;
   cublasCall(cublasDgemm(cublas,CUBLAS_OP_N,CUBLAS_OP_N, size , size ,size, &alpha, mobility, lda,resistance, lda, &beta,mat_a, lda));
   sd_add_identity_matrix<<<128,10>>>(mat_a,size,lda);// TODO: FIXME:  calculate something to set better values ...
   // mob_force = mobility * force
@@ -467,11 +511,11 @@ void sd_iterative_solver_own(cublasHandle_t cublas, const double * mobility, con
   //resid = mob_force-mat_a * disp; //r = b-A*x
   alpha = -1;
   cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, resid, 1));
-  printVectorDev(resid,size,"-A*disp");
-  printVectorDev(mob_force,size,"solution");
+  //printVectorDev(resid,size,"-A*disp");
+  //printVectorDev(mob_force,size,"solution");
   alpha = 1;
   cublasCall(cublasDaxpy(cublas, size, &alpha, mob_force, 1, resid, 1));
-  printVectorDev(resid,size,"residuum");
+  //printVectorDev(resid,size,"residuum");
   
   // p = resid;                     //p=r
   cublasCall(cublasDcopy(cublas, size,resid,1,p, 1));
@@ -534,7 +578,7 @@ void sd_iterative_solver_own(cublasHandle_t cublas, const double * mobility, con
 // maxit  maximum number of iterations
 // x      the requested solution with an initial guess (in/out)
 // returns 0 on success, else error code
-int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real * b, real tol, int maxit, real * x){
+int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real * b, real tol, int maxit, real * x, real * res){
   // vector malloc
   real * r0=NULL;
   cuda_safe_mem(cudaMalloc( (void**)&r0, size*sizeof(real) ));       assert(r0 != NULL);
@@ -557,7 +601,6 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
   }
   eps = min(eps,tol*1e-2);
   // other variables
-  cublasStatus_t stat;
   real alpha=1;
   real beta=0;
   real tolb;
@@ -584,6 +627,7 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
   real normr=sqrt(rr0);
   int iteration=0;
   real lastnorm=normr;
+  real initnorm=normr;
   // check for conversion or max iterations
   while (iteration < maxit && normr >= tolb){
     // v=A*p
@@ -591,15 +635,16 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
     // vr0 = v*r0
     real vr0;
     cublasCall(cublasDdot( cublas, size, v, 1, r0, 1, &vr0));
-    if (fabs(vr0) < eps){
-      fprintf(stderr, "BICGSTAB break-down.\n");
+    if (fabs(vr0) < eps || rr0 == 0){
+      if (fabs(vr0) < eps)
+	fprintf(stderr, "BICGSTAB break-down.\n");
+      else
+	fprintf(stderr, "BICGSTAB solution stagnates.\n");
       cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
-      return 1;
-    }
-    if (rr0 == 0){
-      fprintf(stderr, "BICGSTAB solution stagnates.\n");
-      cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
-      return 2;
+      res[0] = normr;
+      if (tolb > normr)     { return 0;}
+      if (tolb*100 > normr) { return 1;}
+      else                  { return 2;}
     }
     // alpha = rr0/vr0
     real myAlpha=rr0/vr0;
@@ -618,7 +663,16 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
     if (tt==0 || ts == 0){
       fprintf(stderr, "BICGSTAB break-down.\n");
       cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
-      return 1;
+      res[0] = normr;
+      if (tolb > normr)     { 
+	//fprintf(stderr, "0: tolb: %e normr: %e \n",tolb, normr);
+	return 0;}
+      if (tolb*100 > normr) { 
+	//fprintf(stderr, "1: tolb: %e normr: %e \n",tolb, normr);
+	return 1;}
+      else                  { 
+	//fprintf(stderr, "2: tolb: %e normr: %e \n",tolb, normr);
+	return 2;}
     }
     // omega = ts/tt
     real myOmega=ts/tt;
@@ -660,7 +714,7 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
       // p =r
       cublasCall(cublasDcopy(cublas, size,r,1,p, 1));
     }
-    if (iteration%500000 == 0){ // enable debugging by setting this to a lower value
+    if (iteration%50000 == 0){ // enable debugging by setting this to a lower value
       real realnorm;
       {// recalculate normr
 	cublasCall(cublasDcopy(cublas, size,b,1,test, 1));
@@ -672,20 +726,15 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
       }
       fprintf(stderr,"  Iteration: %6d Residuum: %12f RealResiduum: %12f\n",iteration, normr, realnorm);
     }
+    if (initnorm*1e10 < normr){ // somehow our solution explodes ...
+      fprintf(stderr, "BICGSTAB did not converge, residuum exploded. Aborting.\n");
+      cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
+      res[0]= normr;
+      return 4;
+    }
   }
-  {
-      real realnorm;
-      {// recalculate normr
-	cublasCall(cublasDcopy(cublas, size,b,1,test, 1));
-	alpha=-1;beta=1;
-	cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, test, 1));
-	alpha= 1;beta=0;
-	cublasCall(cublasDdot( cublas, size, test, 1, test, 1, &realnorm));
-	realnorm=sqrt(realnorm);
-      }
-      fprintf(stderr,"  Iteration: %6d Residuum: %12f RealResiduum: %12f\n",iteration, normr, realnorm);
-  }
-  {// recalculate normr
+  // this should not be needed, as we restart if it is needed ...
+  /*{// recalculate normr
     cublasCall(cublasDcopy(cublas, size,b,1,r, 1));
     alpha=-1;beta=1;
     cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, r, 1));
@@ -693,13 +742,20 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
     real r1r1;
     cublasCall(cublasDdot( cublas, size, r, 1, r, 1, &r1r1));
     normr=sqrt(r1r1);
-  }
-  if (normr > tolb){
-    fprintf(stderr, "BICGSTAB solution did not converge after %d iterations. Error was %f %% to high.\n",iteration,(normr/tolb-1)*100);
+    }*/
+  res[0]=normr;
+  if (normr > tolb*1.01){
+    fprintf(stderr, "BICGSTAB solution did not converge after %d iterations. Error was %e1 %% to high.\n",iteration,(normr/tolb-1)*100);
     cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
-    return 4;
+    if (tolb*100 > normr){
+      fprintf(stderr, "1: tolb: %e normr: %e \n",tolb, normr);
+      return 1;
+    } else {
+      fprintf(stderr, "2: tolb: %e normr: %e \n",tolb, normr);
+      return 2;
+    }
   }
-  fprintf(stderr, "BICGSTAB solution did converge after %d iterations.\n",iteration);
+  //fprintf(stderr, "BICGSTAB solution did converge after %d iterations.\n",iteration);
   
   cuda_safe_mem(cudaFree((void*)r0));
   cuda_safe_mem(cudaFree((void*)r));
@@ -858,16 +914,20 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
 }
 
 
-// this computes the near field
-// it calculates the ResistanceMatrix
-// r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
-// N is the number of particles
-// self_mobility is 1./(6.*PI*eta*a)
-// a is the particle radius
-// L_d is the boxlength
-// resistance is the resistance matrix which will be retruned
-__global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobility, double a, double * L_g, double * resistance){
+// this computes the near field as a  ResistanceMatrix
+// r             : is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+// N             : is the number of particles
+// self_mobility : is 1./(6.*PI*eta*a)
+// a             : is the particle radius
+// L_d           : is the boxlength
+// resistance    : is the resistance matrix which will be retruned
+// myInfo        : contains infos about the operation:
+//                myInfo[0] : number of overlapping particles
+//                myInfo[1] : number of interacting particles (via nf)
+//                myInfo[2] : max number of interacting particles per particle
+__global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobility, double a, double * L_g, double * resistance, int * myInfo){
   //__shared__ double myPos[3*numThreadsPerBlock];
+  int interactions=0;
   double mypos[3];
   __shared__ double L[3];
   __shared__ double cachedPos[3*numThreadsPerBlock];
@@ -930,53 +990,60 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
       if (i >= N || i ==j || j >= N){
 	;
       }
-      else if (dr2 < 4*a*4*a && 2*a*2*a < dr2 ){// check whether 2*a < drn < 4*a
-	// python code:
-	// # Use only singular therms, namely to order O(s_ij^0)                                                                  
-	// T=(1./4./s-1/4-9./40.*ls)*dr*drt/dr2
-	// #           ^ this additonal constant is so that the mobility is smooth
-	// # c.f. N.-Q. Nguyen and A. J. C. Ladd, PHYSICAL REVIEW E 66, 046708 (2002) equation (34)                               
-	// T+=1./6.*ls*(-one+dr*drt/dr2)
-	// R[3*i:3*i+3,3*j:3*j+3]=-T
-	// R[3*i:3*i+3,3*i:3*i+3]+=T
-	double drn= sqrt(dr2); // length of dr
-	double s = drn/a-2;
-	double ls = log(s);
-	
+
+      else if (dr2 < 4*a*4*a){
+	if (!(2*a*2*a < dr2 )){
+	  atomicAdd(myInfo,1); // count overlapping particles
+	}
+	else {// 2*a < drn < 4*a 
+	  interactions++;
+	  // python code:
+	  // # Use only singular therms, namely to order O(s_ij^0)                                                                  
+	  // T=(1./4./s-1/4-9./40.*ls)*dr*drt/dr2
+	  // #           ^ this additonal constant is so that the mobility is smooth
+	  // # c.f. N.-Q. Nguyen and A. J. C. Ladd, PHYSICAL REVIEW E 66, 046708 (2002) equation (34)                               
+	  // T+=1./6.*ls*(-one+dr*drt/dr2)
+	  // R[3*i:3*i+3,3*j:3*j+3]=-T
+	  // R[3*i:3*i+3,3*i:3*i+3]+=T
+	  double drn= sqrt(dr2); // length of dr
+	  double s = drn/a-2;
+	  double ls = log(s);
+	  
 #ifdef SD_RESISTANCE_CORRECT
-	double const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
-	double offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2;
-	double diag_fac    =(1./6.*ls);
+	  double const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
+	  double offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2;
+	  double diag_fac    =(1./6.*ls);
 #else
-	double const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
-	double const t2_c=2./6.*log(2.);
-	offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2/self_mobility;
-	diag_fac    =(1./6.*ls-t2_c)/self_mobility;
+	  double const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
+	  double const t2_c=2./6.*log(2.);
+	  offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2/self_mobility;
+	  diag_fac    =(1./6.*ls-t2_c)/self_mobility;
 #endif
 #ifdef SD_RESISTANCE_CORRECT
-	double dr4=dr2*dr2;
-	double dr6=dr4*dr2;
-	// constants for correction
-	const double dr_c1 = 4;
-	const double dr_c2 = 4*4;
-	const double dr_c3 = 4*4*4;
-	const double dr_c4 = 4*4*4*4;
-	const double dr_c5 = 4*4*4*4*4;
-	const double dr_c6 = 4*4*4*4*4*4;
-	const double r2bcorr_diag_self_c    = (4.*dr_c6)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)         ;
-	const double r2bcorr_diag_mix_c     = (9.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.);
-	const double r2bcorr_offdiag_self_c = 16.*dr_c2 /(16.*dr_c2-25)                            - 2./6.*log(2.);
-	const double r2bcorr_offdiag_mix_c  = 20.*dr_c1 /(16.*dr_c2-25)                            - 2./6.*log(2.);
-	// real computation
-	r2bcorr_diag_self     = diag_fac    - 1./(1-9./4./dr2+3./dr4-1./dr6)                     + r2bcorr_diag_self_c;
-	r2bcorr_diag_mix      = diag_fac    - (6.*dr4*drn-4.*dr2*drn)/(4.*dr6-9.*dr4+12.*dr2-4.) + r2bcorr_diag_mix_c;
-	r2bcorr_offdiag_self  = offdiag_fac - 1./(1.-25./16./dr2)                                + r2bcorr_offdiag_self_c;
-	r2bcorr_offdiag_mix   = offdiag_fac - 1./(16./20.*drn-25./20./drn)                       + r2bcorr_offdiag_mix_c;
-	r2bcorr_diag_self    /= self_mobility;
-	r2bcorr_diag_mix     /= self_mobility;
-	r2bcorr_offdiag_self /= self_mobility;
-	r2bcorr_offdiag_mix  /= self_mobility;
+	  double dr4=dr2*dr2;
+	  double dr6=dr4*dr2;
+	  // constants for correction
+	  const double dr_c1 = 4;
+	  const double dr_c2 = 4*4;
+	  const double dr_c3 = 4*4*4;
+	  const double dr_c4 = 4*4*4*4;
+	  const double dr_c5 = 4*4*4*4*4;
+	  const double dr_c6 = 4*4*4*4*4*4;
+	  const double r2bcorr_diag_self_c    = (4.*dr_c6)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)         ;
+	  const double r2bcorr_diag_mix_c     = (9.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.);
+	  const double r2bcorr_offdiag_self_c = 16.*dr_c2 /(16.*dr_c2-25)                            - 2./6.*log(2.);
+	  const double r2bcorr_offdiag_mix_c  = 20.*dr_c1 /(16.*dr_c2-25)                            - 2./6.*log(2.);
+	  // real computation
+	  r2bcorr_diag_self     = diag_fac    - 1./(1-9./4./dr2+3./dr4-1./dr6)                     + r2bcorr_diag_self_c;
+	  r2bcorr_diag_mix      = diag_fac    - (6.*dr4*drn-4.*dr2*drn)/(4.*dr6-9.*dr4+12.*dr2-4.) + r2bcorr_diag_mix_c;
+	  r2bcorr_offdiag_self  = offdiag_fac - 1./(1.-25./16./dr2)                                + r2bcorr_offdiag_self_c;
+	  r2bcorr_offdiag_mix   = offdiag_fac - 1./(16./20.*drn-25./20./drn)                       + r2bcorr_offdiag_mix_c;
+	  r2bcorr_diag_self    /= self_mobility;
+	  r2bcorr_diag_mix     /= self_mobility;
+	  r2bcorr_offdiag_self /= self_mobility;
+	  r2bcorr_offdiag_mix  /= self_mobility;
 #endif
+	}
       }
       if (i < N){
 #pragma unroll 3
@@ -988,7 +1055,7 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
 #else
 	    resistance[myindex(DIM*i+k,DIM*j+l)]=dr[k]*dr[l]*offdiag_fac;
 #endif
-	
+	    
 	    //resistance[myindex(DIM*i+k,DIM*i+l)]-=dr[k]*dr[l]*t;
 	  }
 #ifdef SD_RESISTANCE_CORRECT
@@ -1014,6 +1081,7 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
       // python implementation:
       //T=one*(1-9./32.*drn/a)+3./32.*dr*drt/drn/a;
     }
+    
     /*else{ // set the block to zero
     // it might be faster to set everything in the beginning to zero ...
     // or use sparse matrices ...
@@ -1039,9 +1107,240 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
     resistance[myindex(DIM*i+1,DIM*i+2)]=myresistance[5];
     resistance[myindex(DIM*i+2,DIM*i+1)]=myresistance[5];
   }
+  __syncthreads();
+  int * sharedInteractions = (int *) cachedPos; // reuse shared memory
+  int * maxInteractions    = sharedInteractions + blockDim.x*2;
+  sharedInteractions[threadIdx.x]=interactions;
+  sharedInteractions[threadIdx.x+blockDim.x]=0;
+  maxInteractions[threadIdx.x]   =interactions;
+  maxInteractions[threadIdx.x+blockDim.x]   =0;
+  for (int t=(blockDim.x+1)/2;t>1;t=(t+1)/2){
+    if (threadIdx.x < t){
+      sharedInteractions[threadIdx.x]+=sharedInteractions[threadIdx.x+t];
+      sharedInteractions[threadIdx.x+t]=0;
+      maxInteractions[threadIdx.x]=max(maxInteractions[threadIdx.x+t],maxInteractions[threadIdx.x]);
+    }
+    __syncthreads();
+  }
+  if (threadIdx.x==0){
+    sharedInteractions[0]+=sharedInteractions[1];
+    atomicAdd(myInfo+1, sharedInteractions[0]);
+    maxInteractions[0]=max(maxInteractions[0],maxInteractions[1]);
+    atomicMax(myInfo+2, maxInteractions[0]);
+  }
 }
 
+__global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian,int N,double * L_g, double a, double self_mobility,real * brownian_force_nf){
+  const int gaussian_ldd=((N+31)/32)*32;
+  int interactions=0;
+  double mypos[3];
+  double writeCache[6];
+  //double otherWriteCache[3];
+  __shared__ double L[3];
+  __shared__ double cachedPos[3*numThreadsPerBlock];
+  __shared__ double choleskyCache[12*numThreadsPerBlock];
+  //const int lda=(((N*3)+31)/32)*32;
+  //__shared__ double myresistance[6*numThreadsPerBlock];
+  //double myresistance[6];
+  //__shared__ double otherresistance[6*numThreadsPerBlock];
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
+  if (threadIdx.x < 3){ // copy L to shared memory
+    L[threadIdx.x]=L_g[threadIdx.x];
+  }
+  for (int l=0;l<3;l++){
+    cachedPos[threadIdx.x+l*numThreadsPerBlock] = r[threadIdx.x+l*numThreadsPerBlock+blockIdx.x*blockDim.x*3];
+    writeCache[l]= 0;
+  }
+  __syncthreads();
+  for (int d=0;d<3;d++){
+    mypos[d] = cachedPos[threadIdx.x*3+d];
+  }
+  
+  for (int offset=0;offset<N;offset+=numThreadsPerBlock){
+    // copy positions to shared memory
+#pragma unroll
+    for (int l=0;l<3;l++){
+      cachedPos[threadIdx.x+l*numThreadsPerBlock] = r[threadIdx.x+l*numThreadsPerBlock+offset*3];
+    }
+    __syncthreads();
+    for (int j=offset;j<min(offset+numThreadsPerBlock,N);j++){
+      double dr[DIM];
+      double dr2=0;
+#pragma unroll
+      for (int k=0;k<DIM;k++){
+	dr[k]=mypos[k]-cachedPos[3*(j-offset)+k]; // r_ij
+	dr[k]-=L[k]*rint(dr[k]/L[k]); // fold back
+	dr2+=dr[k]*dr[k];
+      }
+#ifndef SD_RESISTANCE_CORRECT
+#warning "SD Brownian motion only support corrected resistance calculation ..."
+#endif
+      double r2bcorr_diag_self     = 0;
+      double r2bcorr_diag_mix      = 0;
+      double r2bcorr_offdiag_self  = 0;
+      double r2bcorr_offdiag_mix   = 0;
 
+      int wasInLoop = 0;
+      if (i >= N || i >= j || j >= N){
+	writeCache[3]=0;
+	writeCache[4]=0;
+	writeCache[5]=0;
+      }
+      // j > i
+      else if (dr2 < 4*a*4*a  && 2*a*2*a < dr2 ){// 2*a < drn < 4*a 
+	wasInLoop = 1;
+	// python code:
+	// # Use only singular therms, namely to order O(s_ij^0)                                                                  
+	// T=(1./4./s-1/4-9./40.*ls)*dr*drt/dr2
+	// #           ^ this additonal constant is so that the mobility is smooth
+	// # c.f. N.-Q. Nguyen and A. J. C. Ladd, PHYSICAL REVIEW E 66, 046708 (2002) equation (34)                               
+	// T+=1./6.*ls*(-one+dr*drt/dr2)
+	// R[3*i:3*i+3,3*j:3*j+3]=-T
+	// R[3*i:3*i+3,3*i:3*i+3]+=T
+	double drn= sqrt(dr2); // length of dr
+	double s = drn/a-2;
+	double ls = log(s);
+	
+	double const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
+	double offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2;
+	double diag_fac    =(1./6.*ls);
+	
+	double dr4=dr2*dr2;
+	double dr6=dr4*dr2;
+	// constants for correction
+	const double dr_c1 = 4;
+	const double dr_c2 = 4*4;
+	const double dr_c3 = 4*4*4;
+	const double dr_c4 = 4*4*4*4;
+	const double dr_c5 = 4*4*4*4*4;
+	const double dr_c6 = 4*4*4*4*4*4;
+	const double r2bcorr_diag_self_c    = (4.*dr_c6)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)         ;
+	const double r2bcorr_diag_mix_c     = (9.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.);
+	const double r2bcorr_offdiag_self_c = 16.*dr_c2 /(16.*dr_c2-25)                            - 2./6.*log(2.);
+	const double r2bcorr_offdiag_mix_c  = 20.*dr_c1 /(16.*dr_c2-25)                            - 2./6.*log(2.);
+	// real computation
+	r2bcorr_diag_self     = diag_fac    - 1./(1-9./4./dr2+3./dr4-1./dr6)                     + r2bcorr_diag_self_c;
+	r2bcorr_diag_mix      = diag_fac    - (6.*dr4*drn-4.*dr2*drn)/(4.*dr6-9.*dr4+12.*dr2-4.) + r2bcorr_diag_mix_c;
+	r2bcorr_offdiag_self  = offdiag_fac - 1./(1.-25./16./dr2)                                + r2bcorr_offdiag_self_c;
+	r2bcorr_offdiag_mix   = offdiag_fac - 1./(16./20.*drn-25./20./drn)                       + r2bcorr_offdiag_mix_c;
+	r2bcorr_diag_self    /= self_mobility;
+	r2bcorr_diag_mix     /= self_mobility;
+	r2bcorr_offdiag_self /= self_mobility;
+	r2bcorr_offdiag_mix  /= self_mobility;
+	
+	// This is the cholesky decomposition.
+	// note that we try to avoid the usage of registers, so we use shared mem
+	// myCC is a makro, defined here to shorten the lines:
+#define myCC(pos) choleskyCache[threadIdx.x+ (pos)*numThreadsPerBlock]
+	// without it would look more like this:
+	//choleskyCache[threadIdx.x+ 0*numThreadsPerBlock] = sqrt(r2bcorr_diag_self+r2bcorr_offdiag_self*dr[0]*dr[0]);
+	//choleskyCache[threadIdx.x+ 1*numThreadsPerBlock] = r2bcorr_offdiag_self*dr[0]*dr[1] / choleskyCache[threadIdx.x+ 0*numThreadsPerBlock];
+	// L_{1,1} to L_{6,1}
+	myCC(0)  = sqrt(r2bcorr_diag_self+r2bcorr_offdiag_self*dr[0]*dr[0]);
+	myCC(1)  =                        r2bcorr_offdiag_self*dr[0]*dr[1] / myCC(0);
+	myCC(2)  =                        r2bcorr_offdiag_self*dr[0]*dr[2] / myCC(0);
+	myCC(3)  =    (r2bcorr_diag_mix + r2bcorr_offdiag_mix *dr[0]*dr[0])/ myCC(0);
+	myCC(4)  =                        r2bcorr_offdiag_mix *dr[0]*dr[1] / myCC(0);
+	myCC(5)  =                        r2bcorr_offdiag_mix *dr[0]*dr[2] / myCC(0);
+	
+	writeCache[0]+=myCC(0)  * gaussian[0*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[1]+=myCC(1)  * gaussian[0*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[2]+=myCC(2)  * gaussian[0*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[3] =myCC(3)  * gaussian[0*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[4] =myCC(4)  * gaussian[0*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[5] =myCC(5)  * gaussian[0*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	// used: 6
+	// L_{2,2} to L_{6,2}
+	myCC(0)  = sqrt(r2bcorr_diag_self+r2bcorr_offdiag_self*dr[1]*dr[1] - SQR(    myCC(1)));
+	myCC(6)  =                       (r2bcorr_offdiag_self*dr[1]*dr[2] - myCC(2)*myCC(1))/myCC(0);
+	myCC(7)  =                       (r2bcorr_offdiag_mix *dr[1]*dr[0] - myCC(3)*myCC(1))/myCC(0);
+	myCC(8)  =     (r2bcorr_diag_mix +r2bcorr_offdiag_mix *dr[1]*dr[1] - myCC(4)*myCC(1))/myCC(0);
+	myCC(9)  =                       (r2bcorr_offdiag_mix *dr[1]*dr[2] - myCC(5)*myCC(1))/myCC(0);
+	writeCache[1]+=myCC(0)  * gaussian[1*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[2]+=myCC(6)  * gaussian[1*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[3]+=myCC(7)  * gaussian[1*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[4]+=myCC(8)  * gaussian[1*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[5]+=myCC(9)  * gaussian[1*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	// used: 11 - 1
+	// L_{3,3} to L_{6,3}
+	myCC(0)  = sqrt(r2bcorr_diag_self+r2bcorr_offdiag_self*dr[2]*dr[2] - SQR(    myCC(2))- SQR(    myCC(6)));
+	myCC(1)  =                       (r2bcorr_offdiag_mix *dr[2]*dr[0] - myCC(3)*myCC(2) - myCC(7)*myCC(6))/myCC(0);
+	myCC(10) =                       (r2bcorr_offdiag_mix *dr[2]*dr[1] - myCC(4)*myCC(2) - myCC(8)*myCC(6))/myCC(0);
+	myCC(11) =     (r2bcorr_diag_mix +r2bcorr_offdiag_mix *dr[2]*dr[2] - myCC(5)*myCC(2) - myCC(9)*myCC(6))/myCC(0);
+	writeCache[2]+=myCC(0)  * gaussian[2*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[3]+=myCC(1)  * gaussian[2*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[4]+=myCC(10) * gaussian[2*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[5]+=myCC(11) * gaussian[2*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	// used: 15 - 3
+	// L_{4,4} to L_{6,4}
+	myCC(0)  = sqrt(r2bcorr_diag_mix +r2bcorr_offdiag_mix *dr[0]*dr[0] - SQR(    myCC(3))- SQR(    myCC(7))
+			- SQR(     myCC(1)));
+	myCC(2)  =                       (r2bcorr_offdiag_mix *dr[0]*dr[1] - myCC(4)*myCC(3) - myCC(8)*myCC(7) 
+					  - myCC(10)*myCC(1))/myCC(0);
+	myCC(6)  =                       (r2bcorr_offdiag_mix *dr[0]*dr[2] - myCC(5)*myCC(3) - myCC(9)*myCC(7) 
+					  - myCC(11)*myCC(1))/myCC(0);
+	writeCache[3]+=myCC(0)  * gaussian[3*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[4]+=myCC(2)  * gaussian[3*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[5]+=myCC(6)  * gaussian[3*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	// used: 18 - 6
+	// L_{5,5} and L_{6,5}
+	myCC(0)  = sqrt(r2bcorr_diag_mix +r2bcorr_offdiag_mix *dr[1]*dr[1] - SQR(    myCC(4))- SQR(    myCC(8))
+			- SQR(     myCC(10))- SQR(    myCC(2)));
+	myCC(3)  =                       (r2bcorr_offdiag_mix *dr[1]*dr[2] - myCC(5)*myCC(4) - myCC(9)*myCC(8) 
+					  - myCC(11)*myCC(10) - myCC(6)*myCC(2))/myCC(0);
+	writeCache[4]+=myCC(0)  * gaussian[4*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	writeCache[5]+=myCC(3)  * gaussian[4*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	// used: 20 - 10
+	// L_{6,6} would be:
+	myCC(0) = sqrt(r2bcorr_diag_mix +r2bcorr_offdiag_mix *dr[2]*dr[2] - SQR(myCC(5))    - SQR(myCC(9))     
+		       - SQR(myCC(11)) - SQR(myCC(6)) - SQR(myCC(3)));
+	writeCache[5]+=myCC(0)  * gaussian[5*gaussian_ldd+threadIdx.x+blockDim.x*blockIdx.x+6*gaussian_ldd*interactions];
+	// used 21 - 15
+	interactions++;
+      }
+      // for the particle j (writeCache[3-5]) we can reduce localy:
+      
+      int * haveInteraction = (int *) choleskyCache+6*numThreadsPerBlock; // reuse shared memory
+      choleskyCache[threadIdx.x+0*numThreadsPerBlock]=writeCache[3];
+      choleskyCache[threadIdx.x+1*numThreadsPerBlock]=0;
+      choleskyCache[threadIdx.x+2*numThreadsPerBlock]=writeCache[4];
+      choleskyCache[threadIdx.x+3*numThreadsPerBlock]=0;
+      choleskyCache[threadIdx.x+4*numThreadsPerBlock]=writeCache[5];
+      choleskyCache[threadIdx.x+5*numThreadsPerBlock]=0;
+      haveInteraction[threadIdx.x]=wasInLoop;
+      haveInteraction[threadIdx.x+numThreadsPerBlock]=0;
+      for (int t=(blockDim.x+1)/2;t>1;t=(t+1)/2){
+	if (threadIdx.x < t){
+	  choleskyCache[threadIdx.x]+=choleskyCache[threadIdx.x+t];
+	  choleskyCache[threadIdx.x+2*numThreadsPerBlock]+=choleskyCache[threadIdx.x+t +2*numThreadsPerBlock];
+	  choleskyCache[threadIdx.x+4*numThreadsPerBlock]+=choleskyCache[threadIdx.x+t +2*numThreadsPerBlock];
+	  haveInteraction[threadIdx.x]|=haveInteraction[threadIdx.x+t];
+	  choleskyCache[threadIdx.x+t]=0;
+	  choleskyCache[threadIdx.x+t +2*numThreadsPerBlock]=0;
+	  choleskyCache[threadIdx.x+t +4*numThreadsPerBlock]=0;
+	  haveInteraction[threadIdx.x+t]=0;
+	}
+	__syncthreads();
+      }
+      if (threadIdx.x==0){
+	if (haveInteraction[0] || haveInteraction[1]){
+	  choleskyCache[0]+=choleskyCache[1];
+	  choleskyCache[2*numThreadsPerBlock]+=choleskyCache[1+2*numThreadsPerBlock];
+	  choleskyCache[4*numThreadsPerBlock]+=choleskyCache[1+4*numThreadsPerBlock];
+	  atomicAdd(brownian_force_nf+j*3,   choleskyCache[0]);
+	  atomicAdd(brownian_force_nf+j*3+1, choleskyCache[2*numThreadsPerBlock]);
+	  atomicAdd(brownian_force_nf+j*3+2, choleskyCache[4*numThreadsPerBlock]);
+	}
+      }
+    }
+  }
+  if ( i < N){
+#pragma unroll 3
+    for (int k=0;k<3;k++){
+      atomicAdd(brownian_force_nf+i*3+k, writeCache[k]);
+    }
+  }
+}
 // this adds the identity matrix to a given matrix of ld=size
 // matrix: pointer to the given matrix
 // size  : the size of the matrix (in the example below 3N)
@@ -1065,6 +1364,28 @@ __global__ void sd_set_zero_matrix(double * matrix, int size){
   matsize*=size;
   for (int i = idx;i< matsize; i+=blockDim.x*gridDim.x){
     matrix[i]=0;
+  }
+}
+
+
+// this sets a block to zero
+// data  : pointer to the given data
+// size  : the size of the data
+__global__ void sd_set_zero(double * data, int size){
+  int idx = blockIdx.x*blockDim.x + threadIdx.x;
+  for (int i = idx;i< size; i+=blockDim.x*gridDim.x){
+    data[i]=0;
+  }
+}
+
+// this sets a block to zero
+// data  : pointer to the given data
+// size  : the size of the data
+// value : the value written to the data block
+__global__ void sd_set_int(int * data, int size, int value){
+  int idx = blockIdx.x*blockDim.x + threadIdx.x;
+  for (int i = idx;i< size; i+=blockDim.x*gridDim.x){
+    data[i]=value;
   }
 }
 
@@ -1255,9 +1576,18 @@ __global__ void sd_bucket_sort( double * pos , double * bucketSize, int * bucket
   }
 }
 
+__device__ double atomicAdd(double * address, double inc){
 
-
-
-
+ull *addressUll = (ull*) address;
+ull oldValue=*addressUll;
+ull assumedValue;
+do {
+assumedValue=oldValue;
+ull newValue = __double_as_longlong (__longlong_as_double(assumedValue)+inc);
+oldValue = atomicCAS(addressUll,assumedValue,newValue);
+}
+  while (oldValue != assumedValue);
+return __longlong_as_double(oldValue);
+}
 
 #endif
