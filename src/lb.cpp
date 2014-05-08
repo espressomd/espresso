@@ -2964,7 +2964,12 @@ void calc_particle_lattice_ia() {
       np = cell->n ;
 
       for (i=0;i<np;i++) {
+#ifdef LBTRACERS
 
+        if(ifParticlesIsVirtual(&p[i])) { 
+          couple_trace_to_fluid(&p[i]);
+        }
+        else {
         lb_viscous_coupling(&p[i],force);
 
         /* add force to the particle */
@@ -2973,7 +2978,18 @@ void calc_particle_lattice_ia() {
         p[i].f.f[2] += force[2];
 
         ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-  
+        }
+
+#else 
+        lb_viscous_coupling(&p[i],force);
+
+        /* add force to the particle */
+        p[i].f.f[0] += force[0];
+        p[i].f.f[1] += force[1];
+        p[i].f.f[2] += force[2];
+
+        ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+#endif
       }
 
     }
@@ -2993,7 +3009,19 @@ void calc_particle_lattice_ia() {
 
           ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
 
+#ifdef LBTRACERS
+
+          //Triangles are not subject to viscous coupling, but interact with the fluid via elastic forces
+          if(ifParticleIsVirtual(&p[i])) {
+            couple_trace_to_fluid(&p[i]);
+          } 
+          else {
+           //printf("Calling lb_viscous_coupling\n");
           lb_viscous_coupling(&p[i],force);
+          }
+#else
+          lb_viscous_coupling(&p[i],force);
+#endif      
 
           /* ghosts must not have the force added! */
 
