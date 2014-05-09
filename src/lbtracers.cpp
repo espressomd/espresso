@@ -28,7 +28,7 @@ double vAvg = 0;
 unsigned long int countAvg = 0;*/
 // End DEBUG
 
-double time_step;
+//double time_step;
 //extern double skin (?)
 
 //Update Position ~ Euler
