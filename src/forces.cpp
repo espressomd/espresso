@@ -178,7 +178,7 @@ void force_calc()
 #endif
 
   // VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
+#ifdef VIRTUAL_SITES 
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
   init_forces_ghosts();
   distribute_mol_force();

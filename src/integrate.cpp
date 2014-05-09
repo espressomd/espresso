@@ -58,7 +58,6 @@
 #include "lb.hpp"
 #include "virtual_sites.hpp"
 #include "statistics_correlation.hpp"
-#include "lbtracers.hpp"
 #include "ghmc.hpp"
 
 /************************************************
