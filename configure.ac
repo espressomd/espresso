@@ -310,10 +310,10 @@ AS_IF([test x$with_cuda != xno],[
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
     
-    # if no other compute capability is defined by the user, we require at least 1.1
+    # if no other compute capability is defined by the user, we default to 2.0
     case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_20,code=compute_20"
     esac
     
     # use nvcc
@@ -463,6 +463,8 @@ if test .$with_python_interface != .no; then
    AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])
 fi
 AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
+# export libtool objdir, so that we can link the .so files to the dir itself
+AC_SUBST(objdir)
 
 cat <<EOF
 ****************************************************************
@@ -666,6 +668,7 @@ AC_CONFIG_FILES([
 	src/Makefile
         src/tcl/Makefile
         src/python/Makefile
+        src/python/espresso/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile

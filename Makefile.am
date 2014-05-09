@@ -45,6 +45,11 @@ Espresso: version.txt
 endif
 endif
 
+if PYTHON_INTERFACE
+espresso: FORCE
+	test -L espresso || $(LN_S) src/python espresso
+endif
+
 # Sample myconfig generation
 myconfig-sample.hpp: 
 	./config.status myconfig-sample.hpp

@@ -24,15 +24,36 @@
 \newescommand{integrate}
 
 \begin{essyntax}
-  \variant{1} integrate \var{steps}
+  \variant{1} integrate \opt{reuse_forces} \var{steps}
   \variant{2} integrate set \opt{nvt}
-  \variant{3} integrate set npt_isotropic \var{p_{ext}} \var{piston} \opt{\var{x\: y\: z}} \opt{-cubic_box}
+  \variant{3} integrate set npt_isotropic \var{p_{ext}} \var{piston} \opt{\var{x\; y\; z}} \opt{-cubic_box}
 \end{essyntax}
 
 \es uses the Velocity Verlet algorithm for the integration of the
 equations of motion. The command \texttt{integrate} with an integer
 \texttt{steps} as parameter integrates the system for \texttt{steps}
 time steps.
+
+Note that this implementation of the Velocity Verlet algorithm reuses forces,
+that is, they are computed once in the middle of the time step, but used twice,
+at the beginning and end. However, in the first time step after setting up,
+there are no forces present yet. Therefore, \es{} has to compute them before the
+first time step. That has two consequences: first, random forces are redrawn,
+resulting in a narrower distribution of the random forces, which we compensate
+by stretching. Second, coupling forces of e.\,g. the Lattice Boltzmann fluid cannot
+be computed and are therefore lacking in the first half time step. In order to
+minimize these effects, \es{} has a quite conservative heuristics to decide whether
+a change makes it necessary to recompute forces before the first time step. Therefore,
+calling hundred times \texttt{integrate 1} does the same as \texttt{integrate 100},
+apart from some small calling overhead.
+
+However, for checkpointing, there is no way for \es{} to tell that the forces that you
+read back in actually match the parameters that are set. Therefore, \es{} would recompute
+the forces before the first time step, which makes it essentially impossible to checkpoint
+LB simulations, where it is vital to keep the coupling forces. Therefore, \texttt{integrate}
+has an additional parameter \opt{reuse_forces}, which tells integrate to not recalculate
+the forces for the first time step, but use that the values still stored with the particles.
+Use this only if you are absolutely sure that the forces stored match your current setup!
 
 Two methods for the integration can be set: For an NVT ensemble
 (thermostat) and for an NPT isotropic ensemble (barostat). The current

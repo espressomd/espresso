@@ -211,7 +211,6 @@ int lb_lbfluid_set_mobility(double *p_mobility) {
   return 0;
 }
 
-#ifdef SHANCHEN
 int affinity_set_params(int part_type_a, int part_type_b, double * affinity)
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
@@ -229,10 +228,7 @@ int affinity_set_params(int part_type_a, int part_type_b, double * affinity)
   return ES_OK;
 }
 
-#endif 
-
-#endif 
-
+#endif   // SHANCHEN
 
 int lb_lbfluid_set_density(double *p_dens) { //
   
@@ -450,13 +446,13 @@ int lb_lbfluid_set_remove_momentum(void){
 }
 #endif
 
-int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz) {
+int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_fz) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     /* external force density is stored in MD units */
-    lbpar_gpu.ext_force[0] = (float)p_fx;
-    lbpar_gpu.ext_force[1] = (float)p_fy;
-    lbpar_gpu.ext_force[2] = (float)p_fz;
+    lbpar_gpu.ext_force[3*component+0] = (float)p_fx;
+    lbpar_gpu.ext_force[3*component+1] = (float)p_fy;
+    lbpar_gpu.ext_force[3*component+2] = (float)p_fz;
     lbpar_gpu.external_force = 1;
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
 #endif
@@ -548,8 +544,10 @@ int lb_lbfluid_get_agrid(double* p_agrid){
     }
   return 0;
 }
-
 int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
+#ifdef SHANCHEN
+  exit(printf("Not implemented yet (%s:%d) ",__FILE__,__LINE__));
+#endif
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     *p_fx = lbpar_gpu.ext_force[0];
@@ -760,7 +758,7 @@ int lb_lbfluid_print_velocity(char* filename) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
 #ifdef SHANCHEN
-    printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__)
+    printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
     exit(1);
 #endif
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
@@ -880,20 +878,6 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   return ES_OK;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
-  if (lattice_switch & LATTICE_LB) {
-    fprintf (stderr, "Loading an LB checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
-    recalc_forces = 0;      //Indicates the forces need not be recalculated
-    resort_particles = 0;   //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
-  }
-  else if (lattice_switch & LATTICE_LB_GPU) {
-    fprintf (stderr, "Loading an LB GPU checkpoint requires first that all particles and forces are loaded into the system and then an integrate 0, this is required for the reformation of the neighbor lists. After this integration the particle data must then be reloaded just prior to loading the LB GPU checkpoint file. This is a rather inelegant hack to make the checkpointing work correctly.\n");
-    recalc_forces = 0;      //Indicates the forces need not be recalculated
-    resort_particles = 0;   //Prevents a call of on_resort_particles which gets called when the particle data is reset and then set recalc_forces = 1
-  }
-  else {
-    fprintf (stderr, "To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.\n");
-    return ES_ERROR;
-  }
   if(lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     FILE* cpfile;
@@ -968,6 +952,11 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 //  lbpar.resend_halo=1;
 //  mpi_bcast_lb_params(0);
 #endif
+  }
+  else {
+    char *errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.}");
+    return ES_ERROR;
   }
   return ES_OK;
 }
@@ -1090,7 +1079,7 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 
 #ifdef SHANCHEN
         //printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
-        printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__)
+        printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
         exit(1);
 #endif
 
@@ -1109,7 +1098,6 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 }
 
 int lb_lbnode_get_pi(int* ind, double* p_pi) {
-// TODO implement correctly for all components!
 
   double p0 = 0;
 
@@ -1117,7 +1105,9 @@ int lb_lbnode_get_pi(int* ind, double* p_pi) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    p0 = lbpar_gpu.rho[0]*lbpar_gpu.agrid*lbpar_gpu.agrid/lbpar_gpu.tau/lbpar_gpu.tau/3.;
+    for(int ii=0;ii<LB_COMPONENTS;ii++){
+         p0 += lbpar_gpu.rho[ii]*lbpar_gpu.agrid*lbpar_gpu.agrid/lbpar_gpu.tau/lbpar_gpu.tau/3.;
+    }
 #endif
   } else {  
 #ifdef LB
@@ -1192,7 +1182,7 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
   return 0;
 }
 
-#endif // SHANCHEN 
+#endif  //defined (LB) || defined (LB_GPU)
 
 int lb_lbnode_get_pop(int* ind, double* p_pop) {
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -1221,10 +1211,6 @@ int lb_lbnode_set_rho(int* ind, double *p_rho){
        host_rho[i]=(float)p_rho[i];
     }
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
-//#ifdef SHANCHEN
-//    lb_calc_particle_lattice_ia_gpu();
-//    copy_forces_from_GPU();
-//#endif 
 #endif
   } else {
 #ifdef LB
@@ -1622,30 +1608,51 @@ static void halo_push_communication() {
 
 /** Performs basic sanity checks. */
 int lb_sanity_checks() {
-
-  char *errtxt;
+  char *errtext;
   int ret = 0;
 
-    if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{103 LB requires domain-decomposition cellsystem} ");
-      ret = -1;
-    } 
-    else if (dd.use_vList && skin>=lbpar.agrid/2.0) {
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
-      ret = -1;
-    }
-
-
-    if (thermo_switch & ~THERMO_LB) {
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{122 LB must not be used with other thermostats} ");
-      ret = 1;
-    }
-
-    return ret;
-
+  if (lbpar.agrid <= 0.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+    ret = 1;
+  }
+  if (lbpar.tau <= 0.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+    ret = 1;
+  }
+  if (lbpar.rho[0] <= 0.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+    ret = 1;
+  }
+  if (lbpar.viscosity[0] <= 0.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+    ret = 1;
+  }
+  if (dd.use_vList && skin>=lbpar.agrid/2.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
+    ret = 1;
+  }
+  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{103 LB requires domain-decomposition cellsystem} ");
+    ret = -1;
+  } 
+  else if (dd.use_vList && skin>=lbpar.agrid/2.0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
+    ret = -1;
+  }
+  
+  if (thermo_switch & ~THERMO_LB) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{122 LB must not be used with other thermostats} ");
+    ret = 1;
+  }
+  return ret;
 }
 
 /***********************************************************************/
@@ -1852,7 +1859,12 @@ double pi[6] = { 0., 0., 0., 0., 0., 0. };
 void lb_init() {
 
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
-  if (lb_sanity_checks()) return;
+
+  if (lbpar.agrid <= 0.0) {
+    char *errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set when initializing fluid} ");
+  }
+  if (check_runtime_errors()) return;
 
   /* initialize the local lattice domain */
   init_lattice(&lblattice,lbpar.agrid,lbpar.tau);  

@@ -75,7 +75,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
 
-  calc_non_bonded_pair_force_simple(p1, p2,d, dist, dist2,force);
+  calc_non_bonded_pair_force(p1, p2,d, dist, dist2, force);
 
   *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
 

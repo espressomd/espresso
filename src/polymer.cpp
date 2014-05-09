@@ -493,10 +493,11 @@ double velocitiesC(double v_max, int part_id, int N_T) {
   v_av[0] = v_av[1] = v_av[2] = 0.0;
   for (i=part_id; i < part_id+N_T; i++) {
     do {
-      v[0] = v_max * 2.*(d_random()-.5);
-      v[1] = v_max * 2.*(d_random()-.5);
-      v[2] = v_max * 2.*(d_random()-.5);
-    } while ( sqrt(SQR(v[0])+SQR(v[1])+SQR(v[2])) > v_max);
+      v[0] = v_max * 2.*(d_random()-.5) * time_step;
+      v[1] = v_max * 2.*(d_random()-.5) * time_step;
+      v[2] = v_max * 2.*(d_random()-.5) * time_step;
+      // note that time_step == -1, as long as it is not yet set
+    } while ( sqrt(SQR(v[0])+SQR(v[1])+SQR(v[2])) > v_max * fabs(time_step));
     v_av[0]+=v[0]; v_av[1]+=v[1]; v_av[2]+=v[2];
     if (set_particle_v(i, v)==ES_ERROR) {
       fprintf(stderr, "INTERNAL ERROR: failed upon setting one of the velocities in Espresso (current average: %f)!\n",
@@ -504,7 +505,8 @@ double velocitiesC(double v_max, int part_id, int N_T) {
       fprintf(stderr, "Aborting...\n"); errexit();
     }
   }
-  return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) );
+  // note that time_step == -1, as long as it is not yet set
+  return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) / fabs(time_step) );
 }
 
 double maxwell_velocitiesC(int part_id, int N_T) {
@@ -537,7 +539,8 @@ double maxwell_velocitiesC(int part_id, int N_T) {
       fprintf(stderr, "Aborting...\n"); errexit();
     }
   }
-  return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) );
+  // note that time_step == -1, as long as it is not yet set
+  return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) / fabs(time_step) );
 }
 
 int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **bond_out, int ***bonds_out) {

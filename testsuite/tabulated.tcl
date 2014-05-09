@@ -19,7 +19,6 @@
 # 
 source "tests_common.tcl"
 
-require_feature "ADRESS" off
 require_feature "TABULATED"
 
 puts "----------------------------------------"

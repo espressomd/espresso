@@ -123,6 +123,67 @@ void finalize_p_inst_npt();
 
 /*@}*/
 
+void integrator_sanity_checks()
+{
+  char *errtext;
+
+  if ( time_step < 0.0 ) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{010 time_step not set} ");
+  }
+  if ( skin < 0.0 ) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{011 skin not set} ");
+  }
+  if ( temperature < 0.0 ) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
+  }
+}
+
+#ifdef NPT
+
+void integrator_npt_sanity_checks()
+{  
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+    if (nptiso.piston <= 0.0) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
+    }
+
+#ifdef ELECTROSTATICS
+
+    switch(coulomb.method) {
+      case COULOMB_NONE:  break;
+      case COULOMB_DH:    break;
+      case COULOMB_RF:    break;
+#ifdef P3M
+      case COULOMB_P3M:   break;
+#endif /*P3M*/
+      default: {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{014 npt only works with P3M, Debye-Huckel or reaction field} ");
+      }
+    }
+#endif /*ELECTROSTATICS*/
+
+#ifdef DIPOLES
+
+    switch (coulomb.Dmethod) {
+      case DIPOLAR_NONE: break;
+#ifdef DP3M
+      case DIPOLAR_P3M: break;
+#endif /* DP3M */
+      default: {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
+      }
+    }
+#endif  /* ifdef DIPOLES */
+  }
+}
+#endif /*NPT*/
+
 /************************************************************/
 
 
@@ -158,7 +219,7 @@ void integrate_ensemble_init()
 
 /************************************************************/
 
-void integrate_vv(int n_steps)
+void integrate_vv(int n_steps, int reuse_forces)
 {
   int i;
 
@@ -177,76 +238,33 @@ void integrate_vv(int n_steps)
    
   /* Integration Step: Preparation for first integration step:
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) ) */
-  if (recalc_forces) {
+  if (recalc_forces && !reuse_forces) {
     thermo_heat_up();
+
 #ifdef LB
     transfer_momentum = 0;
     if (lattice_switch & LATTICE_LB && this_node == 0)
-      fprintf (stderr, "Warning: No valid forces are present from the previous integration step.\n");
-      fprintf (stderr, "         This means the LB fluid coupling is not included in the particle\n");
-      fprintf (stderr, "         forces for this step.\n");
-      fprintf (stderr, "The warning can be ignored if it is displayed only for the first cycle.\n");
+      if (warnings) fprintf (stderr, "Warning: Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
     if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
-      fprintf (stderr, "Warning: No valid forces are present from the previous integration step.\n");
-      fprintf (stderr, "         This means the LB fluid coupling is not included in the particle\n");
-      fprintf (stderr, "         forces for this step.\n");
-      fprintf (stderr, "The warning can be ignored if it is displayed only for the first cycle.\n");
-#endif
-//VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
-    update_mol_vel_pos();
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    if (check_runtime_errors()) return;
-#endif
-#ifdef COLLISION_DETECTION
-    prepare_collision_queue();
+      if (warnings) fprintf (stderr, "Warning: Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
 
-   force_calc();
-   
-   //VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
-   ghost_communicator(&cell_structure.collect_ghost_force_comm);
-   init_forces_ghosts();
-   distribute_mol_force();
-   if (check_runtime_errors()) return;
-#endif
+    force_calc();
 
-   ghost_communicator(&cell_structure.collect_ghost_force_comm);
-
+    rescale_forces();
 #ifdef ROTATION
     convert_initial_torques();
 #endif
-
-    thermo_cool_down();
-
-    /* Communication Step: ghost forces */
-
-
-    /*apply trap forces to trapped molecules*/
-#ifdef MOLFORCES         
-    calc_and_apply_mol_constraints();
-#endif
-
-    /* should be pretty late, since it needs to zero out the total force */
-#ifdef COMFIXED
-    calc_comfixed();
-#endif
-
-    rescale_forces();
-    recalc_forces = 0;
     
-#ifdef COLLISION_DETECTION
-    handle_collisions();
-#endif
+    thermo_cool_down();
   }
 
 #ifdef GHMC
-    if(thermo_switch & THERMO_GHMC)
-      ghmc_init();
+  if(thermo_switch & THERMO_GHMC)
+    ghmc_init();
 #endif
 
   if (check_runtime_errors())
@@ -300,27 +318,9 @@ void integrate_vv(int n_steps)
       break;
 #endif
 
-    cells_update_ghosts();
-
-    //VIRTUAL_SITES update pos and vel (for DPD)
-#ifdef VIRTUAL_SITES
-    update_mol_vel_pos();
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-
-    if (check_runtime_errors()) break;
-#if  defined(VIRTUAL_SITES_RELATIVE) && defined(LB) 
-    // This is on a workaround stage: 
-    // When using virtual sites relative and LB at the same time, it is necessary 
-    // to reassemble the cell lists after all position updates, also of virtual
-    // particles. 
-    if (cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) ) 
-      cells_update_ghosts();
-#endif
-
-#endif
-
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities v(t+0.5*dt) ) */
+
 #ifdef LB
     transfer_momentum = 1;
 #endif
@@ -328,35 +328,10 @@ void integrate_vv(int n_steps)
     transfer_momentum_gpu = 1;
 #endif
 
-#ifdef COLLISION_DETECTION
-    prepare_collision_queue();
-#endif
-
     force_calc();
 
-    //VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
-    init_forces_ghosts();
-    distribute_mol_force();
-    if (check_runtime_errors()) break;
-#endif
-
 #ifdef CATALYTIC_REACTIONS
-  integrate_reaction();
-#endif
-
-    /* Communication step: ghost forces */
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
-
-    /*apply trap forces to trapped molecules*/
-#ifdef MOLFORCES         
-    calc_and_apply_mol_constraints();
-#endif
-
-    /* should be pretty late, since it needs to zero out the total force */
-#ifdef COMFIXED
-    calc_comfixed();
+    integrate_reaction();
 #endif
 
     if (check_runtime_errors())
@@ -365,8 +340,22 @@ void integrate_vv(int n_steps)
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
-    recalc_forces = 0;
-    
+#ifdef ROTATION
+    convert_torques_propagate_omega();
+#endif
+    // SHAKE velocity updates
+#ifdef BOND_CONSTRAINT
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    correct_vel_shake();
+#endif
+    //VIRTUAL_SITES update vel
+#ifdef VIRTUAL_SITES
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    update_mol_vel();
+    if (check_runtime_errors()) break;
+#endif
+
+    // progagate one-step functionalities
 #ifdef LB
     if (lattice_switch & LATTICE_LB)
       lattice_boltzmann_update();
@@ -391,30 +380,10 @@ void integrate_vv(int n_steps)
     }
 #endif //LB_GPU
 
-#ifdef BOND_CONSTRAINT
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    correct_vel_shake();
-#endif
-
-#ifdef ROTATION
-    convert_torques_propagate_omega();
-#endif
-
-    //VIRTUAL_SITES update vel
-#ifdef VIRTUAL_SITES
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    update_mol_vel();
-    if (check_runtime_errors()) break;
-#endif
-
 #ifdef ELECTROSTATICS
     if(coulomb.method == COULOMB_MAGGS) {
       maggs_propagate_B_field(0.5*time_step); 
     }
-#endif
-
-#ifdef COLLISION_DETECTION
-    handle_collisions();
 #endif
 
 #ifdef NPT

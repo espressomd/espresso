@@ -180,6 +180,7 @@ void gpu_change_number_of_part_to_comm() {
 #endif
       
       cuda_safe_mem(cudaMalloc((void**)&particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force)));
+
       cuda_safe_mem(cudaMalloc((void**)&particle_data_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data)));
       cuda_safe_mem(cudaMalloc((void**)&particle_seeds_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_seed)));
 #ifdef SHANCHEN
@@ -249,8 +250,8 @@ CUDA_fluid_composition* gpu_get_fluid_composition_pointer() {
 }
 
 void copy_part_data_to_gpu() {
+  COMM_TRACE(printf("global_part_vars_host.communication_enabled = %d && global_part_vars_host.number_of_particles = %d\n", global_part_vars_host.communication_enabled, global_part_vars_host.number_of_particles));
   if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
-    
     cuda_mpi_get_particles(particle_data_host);
     
     /** get espresso md particle values*/

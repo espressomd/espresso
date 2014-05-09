@@ -1,4 +1,4 @@
-from espresso cimport *
+from System cimport *
 from utils cimport *
 
 cdef extern from "stdlib.h":

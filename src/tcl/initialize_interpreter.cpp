@@ -56,6 +56,7 @@
 #include "ghmc_tcl.hpp"
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
+#include "harmonic_force_tcl.hpp"
 
 
 #ifdef TK
@@ -219,6 +220,9 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("integrate_sd", tclcommand_integrate_sd);
   REGISTER_COMMAND("sd_set_particles_apart", tclcommand_sd_set_particles_apart);
 #endif
+#ifdef HARMONICFORCE
+  REGISTER_COMMAND("harmonic_force", tclcommand_harmonic_force);
+#endif
 }
 
 static void register_global_variables(Tcl_Interp *interp)
@@ -238,6 +242,7 @@ static void register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_MIN_GLOBAL_CUT, tclcallback_min_global_cut);
   register_global_callback(FIELD_SD_VISCOSITY, tclcallback_sd_viscosity);
   register_global_callback(FIELD_SD_RADIUS, tclcallback_sd_radius);
+  register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
 }
 
 int appinit(Tcl_Interp *interp)

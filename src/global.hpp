@@ -176,10 +176,15 @@ extern const Datafield fields[];
 #define FIELD_GHMC_SCALE          49 
 /** index of \ref lb_components in \ref #fields */
 #define FIELD_LB_COMPONENTS       50 
+/** index of \ref warnings in \ref #fields */
+#define FIELD_WARNINGS            51
 /** index of \ref sd_viscosity in \ref #fields */
-#define FIELD_SD_VISCOSITY        51
+#define FIELD_SD_VISCOSITY        52
 /** index of \ref sd_radius in \ref #fields */
-#define FIELD_SD_RADIUS           52
+#define FIELD_SD_RADIUS           53
 /*@}*/
+
+/** bool: whether to write out warnings or not */
+extern int warnings;
 
 #endif

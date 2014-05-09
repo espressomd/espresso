@@ -25,7 +25,6 @@ source "tests_common.tcl"
 
 require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "COLLISION_DETECTION"
-require_feature "ADRESS" off
 require_max_nodes_per_side {1 1 1}
 
 puts "---------------------------------------------------------------"

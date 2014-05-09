@@ -91,7 +91,10 @@ const Datafield fields[] = {
   {&ghmc_mflip,         TYPE_INT, 1, "ghmc_mflip",        7 },         /* 48 from ghmc.cpp */
   {&ghmc_tscale,        TYPE_INT, 1, "ghmc_tscale",       6 },         /* 49 from ghmc.cpp */
   {&lb_components,      TYPE_INT, 1, "lb_components",     2 },         /* 50 from ghmc.cpp */
-  {&sd_viscosity,    TYPE_DOUBLE, 1, "sd_viscosoity",     4 },         /* 51 from integrate.cpp */
-  {&sd_radius,       TYPE_DOUBLE, 1, "sd_radius",         4 },         /* 52 from integrate.cpp */
+  {&warnings,           TYPE_INT, 1, "warnings",          1 },         /* 51 from global.cpp */
+  {&sd_viscosity,    TYPE_DOUBLE, 1, "sd_viscosoity",     4 },         /* 52 from integrate.cpp */
+  {&sd_radius,       TYPE_DOUBLE, 1, "sd_radius",         4 },         /* 53 from integrate.cpp */
   { NULL, 0, 0, NULL, 0 }
 };
+
+int warnings = 1;
