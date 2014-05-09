@@ -4,7 +4,7 @@
 #include "initialize.hpp"
 #include "communication.hpp"
 
-int sequ = 0;
+int sequ = 1;
 
 int tclcallback_sequ(Tcl_Interp *interp, void *_data) {
     int data = *(int *)_data;
