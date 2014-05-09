@@ -360,7 +360,7 @@ void integrate_vv(int n_steps, int reuse_forces)
     correct_vel_shake();
 #endif
     //VIRTUAL_SITES update vel
-#ifdef VIRTUAL_SITES
+#if defined (VIRTUAL_SITES) && !defined(LBTRACERS)
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     update_mol_vel();
     if (check_runtime_errors()) break;
