@@ -9,7 +9,7 @@ extern int sequ;
 
 int tclcallback_sequ(Tcl_Interp *interp, void *_data);
 
-#ifdef _LBTRACERS
+#ifdef LBTRACERS
 
 //Update Position ~ Euler/Runge-Kutta
 void update_mol_pos_particle(Particle *);
