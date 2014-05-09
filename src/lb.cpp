@@ -41,6 +41,7 @@
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
 
+
 #include "cuda_interface.hpp"
 
 
@@ -2685,6 +2686,75 @@ void lattice_boltzmann_update() {
 /***********************************************************************/
 /*@{*/
 
+/*********************************************************************/
+/* Coupling tracer particles to fluid; used in membrane simulations */
+/********************************************************************/
+
+//Note: At the time this function is called, the forces saved in p are not yet scaled! Only called for virtual parts
+inline void couple_trace_to_fluid(Particle *p) {
+  double *local_f, delta_j[3];
+  double force[3];
+  index_t node_index[8];
+        double delta[6];
+  int k,x,y,z;
+  
+  map_position_to_lattice(&lblattice,p->r.p,node_index,delta);
+  
+  for(k=0; k<3; k++) {
+    force[k]=p->f.f[k];
+  }
+  
+    
+  //Distribute force among adjacent nodes, just as in viscous coupling
+  //if ( p->p.identity == 0 ) printf("unscaled fx = %f\n", force[0]);
+  delta_j[0] = force[0]*time_step*tau/agrid;
+  delta_j[1] = force[1]*time_step*tau/agrid;
+    delta_j[2] = force[2]*time_step*tau/agrid;
+  
+  // DEBUG
+  /*if ( p->p.identity == 0)
+  {
+    double p_temp[3], v_int[3];
+    p_temp[0] = p->r.p[0];
+    p_temp[1] = p->r.p[1];
+    p_temp[2] = p->r.p[2];
+    lb_lbfluid_get_interpolated_velocity_global(p_temp,v_int);
+    printf("Before adding force: vx = %e\n", v_int[0]);
+  }*/
+  // End DEBUG
+    
+  for (z=0;z<2;z++) {
+       for (y=0;y<2;y++) {
+            for (x=0;x<2;x++) {
+  
+        local_f = lbfields[node_index[(z*2+y)*2+x]].force;
+
+        local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
+        local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
+        local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
+
+            }
+        }
+    }
+  
+  // DEBUG
+  /*if ( p->p.identity == 0)
+  {
+    double p_temp[3], v_int[3];
+    p_temp[0] = p->r.p[0];
+    p_temp[1] = p->r.p[1];
+    p_temp[2] = p->r.p[2];
+    lb_lbfluid_get_interpolated_velocity_global(p_temp,v_int);
+    printf("After adding force: vx = %e\n", v_int[0]);
+  }*/
+  // End DEBUG  
+}
+
+/***********************************************************************/
+/** \name Coupling part */
+/***********************************************************************/
+/*@{*/
+
 
 /** Coupling of a single particle to viscous fluid with Stokesian friction.
  * 
@@ -2865,6 +2935,113 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   
 }
 
+//Calculate interpolated velocity with updated (+f_ext), but not yet streamed modes
+int lb_lbfluid_get_interpolated_velocity_lbtrace(double* p, double* v, int id) {
+  index_t node_index[8], index;
+  double delta[6];
+  double local_rho, local_j[3], interpolated_u[3];
+  double modes[19];
+  int x,y,z;
+  double *f;
+
+  double lbboundary_mindist, distvec[3];
+  double pos[3];
+
+#ifdef LB_BOUNDARIES
+  int boundary_no;
+  int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0 
+
+  lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
+  if (lbboundary_mindist>lbpar.agrid/2) {
+    boundary_flag=0;
+    pos[0]=p[0];
+    pos[1]=p[1];
+    pos[2]=p[2];
+  } else if (lbboundary_mindist > 0 ) {
+    boundary_flag=1;
+    pos[0]=p[0] - distvec[0]+ distvec[0]/lbboundary_mindist*lbpar.agrid/2.;
+    pos[1]=p[1] - distvec[1]+ distvec[1]/lbboundary_mindist*lbpar.agrid/2.;
+    pos[2]=p[2] - distvec[2]+ distvec[2]/lbboundary_mindist*lbpar.agrid/2.;
+  } else {
+    boundary_flag=2;
+    v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
+    v[1]= lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
+    v[2]= lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
+    return 0; // we can return without interpolating
+  }
+#else
+  pos[0]=p[0];
+  pos[1]=p[1];
+  pos[2]=p[2];
+#endif
+  
+  /* determine elementary lattice cell surrounding the particle 
+     and the relative position of the particle in this cell */ 
+  map_position_to_lattice(&lblattice,pos,node_index,delta);
+
+  /* calculate fluid velocity at particle's position
+     this is done by linear interpolation
+     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
+
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+          
+        index = node_index[(z*2+y)*2+x];
+  f = lbfields[index].force;
+
+        
+#ifdef LB_BOUNDARIES
+        if (lbfields[index].boundary) {
+          local_rho=lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+          local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+        } else {
+          lb_calc_modes(index, modes);
+          local_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+          local_j[0] = modes[1] + f[0];
+          local_j[1] = modes[2] + f[1];
+          local_j[2] = modes[3] + f[2];
+        }
+#else 
+        lb_calc_modes(index, modes);
+        local_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+        local_j[0] = modes[1] + f[0];
+        local_j[1] = modes[2] + f[1];
+        local_j[2] = modes[3] + f[2];
+#endif
+  
+        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
+        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);   
+        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
+
+      }
+    }
+  }
+#ifdef LB_BOUNDARIES
+  if (boundary_flag==1) {
+    v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[0];
+    v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[1];
+    v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[2];
+  } else {
+    v[0] = interpolated_u[0];
+    v[1] = interpolated_u[1];
+    v[2] = interpolated_u[2];
+  }
+#else 
+    v[0] = interpolated_u[0];
+    v[1] = interpolated_u[1];
+    v[2] = interpolated_u[2];
+#endif
+  v[0] *= lbpar.agrid/lbpar.tau;
+  v[1] *= lbpar.agrid/lbpar.tau;
+  v[2] *= lbpar.agrid/lbpar.tau;
+  return 0;
+  
+}
+
 
 /** Calculate particle lattice interactions.
  * So far, only viscous coupling with Stokesian friction is
@@ -2966,7 +3143,7 @@ void calc_particle_lattice_ia() {
       for (i=0;i<np;i++) {
 #ifdef LBTRACERS
 
-        if(ifParticlesIsVirtual(&p[i])) { 
+        if(ifParticleIsVirtual(&p[i])) { 
           couple_trace_to_fluid(&p[i]);
         }
         else {
