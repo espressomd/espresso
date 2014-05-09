@@ -60,7 +60,6 @@
 #include "errorhandling.hpp"
 #include "molforces.hpp"
 #include "mdlc_correction.hpp"
-#include "lbtracers.hpp"
 #include "reaction.hpp"
 #include "galilei.hpp"
 #include "statistics_correlation.hpp"
