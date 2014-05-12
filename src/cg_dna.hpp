@@ -72,7 +72,7 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   /* Base-Base and Sugar-Sugar vectors */
   double rhb[3], rcc[3];
   /* Sugar-Base Vectors */
-  double rcb1[3], rcb2[3];
+  double rcb1[3], rcb2[3], rcb1_l, rcb2_l;
   /* Normal vectors of the base pairs */
   double n1[3], n2[3];
   /* Dihedral of the base pair */
@@ -88,6 +88,7 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   double f_r;
   double f_d;
   double f_f1, f_f2;
+  double f_sb1, f_sb2;
 
   /* helper variables */
   double ra, c, tau_r, tau_d, tau_flip, tau_rd;
@@ -98,6 +99,9 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   get_mi_vector(rcc, p3->r.p, p1->r.p);
   get_mi_vector(rcb1, p2->r.p, p1->r.p);
   get_mi_vector(rcb2, p4->r.p, p3->r.p);
+
+  rcb1_l = norm(rcb1);
+  rcb2_l = norm(rcb2);
 
   gamma1 = cos_angle(rcc, rcb1);
   gamma2 = cos_angle(rcc, rcb2);
@@ -141,6 +145,25 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   // PRINT_VECTOR(n1);
   // PRINT_VECTOR(n2);
 
+  /* Sugar base interaction strand 1 */
+  
+  const double r0sb = params.p.cg_dna_basepair.r0sb;
+  const double alphasb = params.p.cg_dna_basepair.alphasb;
+  const double f2 = params.p.cg_dna_basepair.f2;
+  const double f3 = params.p.cg_dna_basepair.f3;
+  const double E0sb = params.p.cg_dna_basepair.E0sb;
+  const double c0sb = (1. - 2.*f2)*E0sb*alphasb;
+  const double c1sb = (f2-3.*f3)*E0sb*alphasb;
+  const double c2sb = f3*E0sb*alphasb;
+
+  double temp;
+
+  temp = (rcb1_l - r0sb)*alphasb;
+  f_sb1 = exp(-temp)*temp*(c0sb+c1sb*temp+c2sb*temp*temp)/rcb1_l;
+
+  temp = (rcb2_l - r0sb)*alphasb;
+  f_sb2 = exp(-temp)*temp*(c0sb+c1sb*temp+c2sb*temp*temp)/rcb2_l;
+
   /* Radial part */
 
   ra = (rhb_l - params.p.cg_dna_basepair.r0)*params.p.cg_dna_basepair.alpha;
@@ -163,8 +186,8 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
 
   // printf("gamma1 %lf gamma2 %lf\n", gamma1, gamma2);
 
-  f_f1 = (gamma1 < 1.) ? -dpsi1 / sqrt(1. - SQR(gamma1)) * params.p.cg_dna_basepair.E01/s1sqr : 1.0;
-  f_f2 = (gamma2 < 1.) ? -dpsi2 / sqrt(1. - SQR(gamma2)) * params.p.cg_dna_basepair.E02/s2sqr : 1.0;
+  f_f1 = (gamma1 < 1.) ? -dpsi1 / sqrt(1. - SQR(gamma1)) * params.p.cg_dna_basepair.E0/s1sqr : 1.0;
+  f_f2 = (gamma2 < 1.) ? -dpsi2 / sqrt(1. - SQR(gamma2)) * params.p.cg_dna_basepair.E0/s2sqr : 1.0;
 
   // printf("f_f1 %lf, f_f2 %lf\n", f_f1, f_f2);
   
@@ -196,8 +219,6 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   const double dot4 = dot2 - dot1;
   const double dot5 = dot1 + dot3;
 
-  const double rcb1_l = norm(rcb1);
-  const double rcb2_l = norm(rcb2);
   const double rcc_l = norm(rcc);
 
   // printf("rcb1_l %lf, rcb2_l %lf, rcc_l %lf\n", rcb1_l, rcb2_l, rcc_l);
@@ -230,10 +251,10 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
 
     // printf("fBase1 %lf, fSugar2 %lf, fBase2 %lf, fSugar1 %lf\n", fBase1, fSugar2, fBase2, fSugar1);
 
-    force1[i] = dot4*n1[i] - dot3*n2[i] + fSugar1 - fBase1 - fSugar2;
-    force2[i] = -fr + dot1*n1[i] + fBase1;
-    force3[i] = dot5*n2[i] - dot2*n1[i] + fSugar2 - fBase2 - fSugar1;
-    force4[i] = fr - dot1*n2[i] + fBase2;
+    force1[i] = dot4*n1[i] - dot3*n2[i] + fSugar1 - fBase1 - fSugar2 - f_sb1 *rcb1[i];
+    force2[i] = -fr + dot1*n1[i] + fBase1 + f_sb1 *rcb1[i];
+    force3[i] = dot5*n2[i] - dot2*n1[i] + fSugar2 - fBase2 - fSugar1 - f_sb1 *rcb1[i];
+    force4[i] = fr - dot1*n2[i] + fBase2 + f_sb1 *rcb1[i];
   }
 
   // printf("rhb_l %lf thetad %lf f_r %lf, f_d %lf, tau_d = %lf\n", rhb_l, thetad, f_r, f_d, tau_d);

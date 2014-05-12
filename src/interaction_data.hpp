@@ -542,12 +542,16 @@ typedef struct {
       double alpha;
       double E0;
       double kd;
-      double E01;
-      double E02;
       double sigma1;
       double sigma2;
       double psi10;
       double psi20;
+      /* Parameters for the sugar base interaction */
+      double E0sb;
+      double r0sb;
+      double alphasb;
+      double f2;
+      double f3;
     } cg_dna_basepair;
 
     struct {
