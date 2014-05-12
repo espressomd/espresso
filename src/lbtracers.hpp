@@ -3,11 +3,6 @@
 
 #include "config.hpp"
 #include "particle_data.hpp"
-#include "tcl/parser.hpp"
-
-extern int sequ; 
-
-int tclcallback_sequ(Tcl_Interp *interp, void *_data);
 
 #ifdef LBTRACERS
 

@@ -342,12 +342,12 @@ void integrate_vv(int n_steps, int reuse_forces)
     rescale_forces_propagate_vel();
 
 #ifdef LBTRACERS
-    if(sequ==1) { 
+   
       update_mol_vel_pos();
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
-
+      
       if (check_runtime_errors()) break;
-    }
+  
 #endif
 
 #ifdef ROTATION

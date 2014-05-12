@@ -178,8 +178,6 @@ extern const Datafield fields[];
 #define FIELD_LB_COMPONENTS       50 
 /** index of \ref warnings in \ref #fields */
 #define FIELD_WARNINGS            51
-/** index of \ref sequence in \ref #fields */
-#define FIELD_SEQU                52
 /*@}*/
 
 /** bool: whether to write out warnings or not */

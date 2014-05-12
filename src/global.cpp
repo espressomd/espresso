@@ -92,7 +92,6 @@ const Datafield fields[] = {
   {&ghmc_tscale,        TYPE_INT, 1, "ghmc_tscale",       6 },         /* 49 from ghmc.cpp */
   {&lb_components,      TYPE_INT, 1, "lb_components",     2 },         /* 50 from ghmc.cpp */
   {&warnings,           TYPE_INT, 1, "warnings",          1 },         /* 51 from global.cpp */
-  {&sequ,               TYPE_INT, 1, "sequ",          4 },             /* 52 from lbtracers.cpp */
   { NULL, 0, 0, NULL, 0 }
 };
 
