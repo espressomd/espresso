@@ -708,6 +708,11 @@ void dd_topology_init(CellPList *old)
   dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm) ;
 #endif
 
+#ifdef TRIELASTIC
+	dd_prepare_comm(&cell_structure.ghost_triel_comm, GHOSTTRANS_FORCE);
+	dd_assign_prefetches(&cell_structure.ghost_triel_comm);
+#endif
+
   /* initialize cell neighbor structures */
   dd_init_cell_interactions();
 
@@ -751,6 +756,10 @@ void dd_topology_release()
   free_comm(&cell_structure.collect_ghost_force_comm);
 #ifdef LB
   free_comm(&cell_structure.ghost_lbcoupling_comm);
+#endif
+
+#ifdef TRIELASTIC
+	free_comm(&cell_structure.ghost_triel_comm);
 #endif
 }
 
