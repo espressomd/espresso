@@ -60,7 +60,9 @@
 /** Type of overlapped bonded interaction potential, 
     may be of bond length, of bond angle or of dihedral type. */
 #define BONDED_IA_OVERLAPPED 10
-/** Type of bonded interaction is a bond angle cosine potential. */ 
+/** Type of Triangle_Stretch potential */
+#define TRIEL_IA 11
+/** Type of bonded interaction is a bond angle cosine potential. */
 #define BONDED_IA_ANGLE_HARMONIC 11
 /** Type of bonded interaction is a bond angle cosine potential. */ 
 #define BONDED_IA_ANGLE_COSINE 12
@@ -694,6 +696,25 @@ typedef struct {
       double distmin;
       double distmax;
     } endangledist;
+#endif
+#ifdef TRIELASTIC
+	/** Parameters for triangle with stretch forces */
+	struct {
+		double a1;
+		double a2;
+		double a3;
+		double b1;
+		double b2;
+		double b3;
+		double lo;
+		double lpo;
+		double sinpo;
+		double cospo;
+		double Area0;
+		double maxdist;
+		double ks;
+		double ka;
+	} triel;
 #endif
   } p;
 } Bonded_ia_parameters;
