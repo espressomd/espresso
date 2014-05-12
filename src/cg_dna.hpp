@@ -99,26 +99,40 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   get_mi_vector(rcb1, p2->r.p, p1->r.p);
   get_mi_vector(rcb2, p4->r.p, p3->r.p);
 
+  gamma1 = cos_angle(rcc, rcb1);
+  gamma2 = cos_angle(rcc, rcb2);
+
   cross(rcc, rcb1, n1);
   cross(rcc, rcb2, n2);
 
-  thetad = angle(n1, n2);
+  double n1_l2 = norm2(n1);
+  double n2_l2 = norm2(n2);
 
-  gamma1 = cos_angle(rcc, rcb1);
-  gamma2 = cos_angle(rcc, rcb2);
+  if((n1_l2 == 0) || (n2_l2 == 0)) {
+    // puts("(n1_l2 == 0) || (n2_l2 == 0)");
+    thetad = 0;
+    n1_l2 = 1;
+    n2_l2 = 1;
+  } else {
+    thetad = (gamma1 != 1. && gamma2 != 1.) ? angle(n1, n2) : 0;
+  }
+
+  // printf("cos(<(n1,n2)) = %lf, cos(<(rcc,rcb1)) = %lf\n", cos_angle(n1,n2), gamma1);
+  // PRINT_VECTOR(n1);
+  // PRINT_VECTOR(n2);
+
+  psi1 = gamma1 >= 1. ? 0. : (gamma1 <= -1. ? M_PI : acos(gamma1));
+  psi2 = gamma2 >= 1. ? 0. : (gamma2 <= -1. ? M_PI : acos(gamma2));  
 
   if((psi1 > COS_MAX) || (psi1 < COS_MIN) || (psi2 > COS_MAX) || (psi2 < COS_MIN)) {
     printf("Warning basepair angle out of bounds.\n");
   }
 
-  psi1 = gamma1 >= 1. ? 0. : (gamma1 <= -1. ? M_PI : acos(gamma1));
-  psi2 = gamma2 >= 1. ? 0. : (gamma2 <= -1. ? M_PI : acos(gamma2));  
-
   rhb_l = norm(rhb);
 
-  printf("p1 %lf %lf %lf, p2 %lf %lf %lf, p3 %lf %lf %lf, p4 %lf %lf %lf\n",
-	 p1->r.p[0], p1->r.p[1], p1->r.p[2], p2->r.p[0], p2->r.p[1], p2->r.p[2], 
-	 p3->r.p[0], p3->r.p[1], p3->r.p[2], p4->r.p[0], p4->r.p[1], p4->r.p[2]);
+  // printf("p1 %lf %lf %lf, p2 %lf %lf %lf, p3 %lf %lf %lf, p4 %lf %lf %lf\n",
+  // 	 p1->r.p[0], p1->r.p[1], p1->r.p[2], p2->r.p[0], p2->r.p[1], p2->r.p[2], 
+  // 	 p3->r.p[0], p3->r.p[1], p3->r.p[2], p4->r.p[0], p4->r.p[1], p4->r.p[2]);
 
   // PRINT_VECTOR(rhb);
   // PRINT_VECTOR(rcc);
@@ -147,8 +161,12 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   double s1sqr = (SQR(params.p.cg_dna_basepair.sigma1));
   double s2sqr = (SQR(params.p.cg_dna_basepair.sigma2));
 
-  f_f1 = -dpsi1 / sqrt(1. - SQR(gamma1)) * params.p.cg_dna_basepair.E01/s1sqr;
-  f_f2 = -dpsi2 / sqrt(1. - SQR(gamma2)) * params.p.cg_dna_basepair.E02/s2sqr;
+  // printf("gamma1 %lf gamma2 %lf\n", gamma1, gamma2);
+
+  f_f1 = (gamma1 < 1.) ? -dpsi1 / sqrt(1. - SQR(gamma1)) * params.p.cg_dna_basepair.E01/s1sqr : 1.0;
+  f_f2 = (gamma2 < 1.) ? -dpsi2 / sqrt(1. - SQR(gamma2)) * params.p.cg_dna_basepair.E02/s2sqr : 1.0;
+
+  // printf("f_f1 %lf, f_f2 %lf\n", f_f1, f_f2);
   
   tau_rd = tau_r * tau_d;
 
@@ -170,6 +188,8 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   /* Dihedral force */
   double vec[3];
   cross(n1, n2, vec);
+  // puts("vec");
+  // PRINT_VECTOR(vec);
   const double dot1 = f_d * dot(vec, rhb);
   const double dot2 = f_d * dot(vec, rcb1);
   const double dot3 = f_d * dot(vec, rcb2);
@@ -180,6 +200,9 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   const double rcb2_l = norm(rcb2);
   const double rcc_l = norm(rcc);
 
+  // printf("rcb1_l %lf, rcb2_l %lf, rcc_l %lf\n", rcb1_l, rcb2_l, rcc_l);
+  // printf("f_f1 %lf, f_f2 %lf\n", f_f1, f_f2);
+
   const double factor1 = f_f1/(rcc_l * rcb1_l);
   const double factor2 = f_f1*gamma1/SQR(rcb1_l);
   const double factor3 = f_f1*gamma1/SQR(rcc_l);
@@ -187,9 +210,10 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   const double factor4 = f_f1/(rcc_l * rcb2_l);
   const double factor5 = f_f2*gamma2/SQR(rcb2_l);
   const double factor6 = f_f2*gamma2/SQR(rcc_l);
-  
-  const double n1_l2 = norm2(n1);
-  const double n2_l2 = norm2(n2);
+
+  // printf("factorx (%lf, %lf, %lf, %lf, %lf, %lf)\n",
+  // 	 factor1,factor2,factor3,
+  // 	 factor4,factor5,factor6);
 
   double fBase1, fSugar2, fBase2, fSugar1;
   double fr;
@@ -204,20 +228,20 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
     fBase2  = -factor4*rcc[i]  - factor5 * rcb2[i];
     fSugar1 =  factor4*rcb2[i] + factor6 * rcc[i];
 
-    /* @TODO: norm forces */
+    // printf("fBase1 %lf, fSugar2 %lf, fBase2 %lf, fSugar1 %lf\n", fBase1, fSugar2, fBase2, fSugar1);
+
     force1[i] = dot4*n1[i] - dot3*n2[i] + fSugar1 - fBase1 - fSugar2;
     force2[i] = -fr + dot1*n1[i] + fBase1;
     force3[i] = dot5*n2[i] - dot2*n1[i] + fSugar2 - fBase2 - fSugar1;
     force4[i] = fr - dot1*n2[i] + fBase2;
   }
 
+  // printf("rhb_l %lf thetad %lf f_r %lf, f_d %lf, tau_d = %lf\n", rhb_l, thetad, f_r, f_d, tau_d);
 
-  printf("rhb_l %lf thetad %lf f_r %lf, f_d %lf\n", rhb_l, thetad, f_r, f_d);
-
-  PRINT_VECTOR(force1);
-  PRINT_VECTOR(force2);
-  PRINT_VECTOR(force3);
-  PRINT_VECTOR(force4);
+  // PRINT_VECTOR(force1);
+  // PRINT_VECTOR(force2);
+  // PRINT_VECTOR(force3);
+  // PRINT_VECTOR(force4);
  
   return 0;
 }

@@ -482,6 +482,7 @@ inline void add_bonded_force(Particle *p1)
 #ifdef CG_DNA
     case BONDED_IA_CG_DNA_BASEPAIR:
       bond_broken = calc_cg_dna_basepair_force(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
+      break;
 #endif
 #ifdef AREA_FORCE_GLOBAL
     case BONDED_IA_AREA_FORCE_GLOBAL:
@@ -673,6 +674,23 @@ switch (type) {
 	}
       }
       break;
+    case 4:
+      if (bond_broken) {
+	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
+		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+	continue;
+      }
+      switch(type) {
+      case BONDED_IA_CG_DNA_BASEPAIR:
+	for (j = 0; j < 3; j++) {
+	  p1->f.f[j] = force[j];
+	  p2->f.f[j] = force2[j];
+	  p3->f.f[j] = force3[j];
+	  p4->f.f[j] = force4[j];
+	}
+	break;
+      }
     }
   }
 }  
