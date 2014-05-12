@@ -3133,6 +3133,10 @@ void calc_particle_lattice_ia() {
     
     /* communicate the random numbers */
     ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
+
+#ifdef TRIELASTIC
+    ghost_communicator(&cell_structure.ghost_triel_comm);
+#endif    
     
     /* local cells */
     for (c=0;c<local_cells.n;c++) {
@@ -3141,7 +3145,7 @@ void calc_particle_lattice_ia() {
       np = cell->n ;
 
       for (i=0;i<np;i++) {
-#ifdef LBTRACERS
+#if defined(LBTRACERS) && defined(TRIELASTIC)
 
         if(ifParticleIsVirtual(&p[i])) { 
           couple_trace_to_fluid(&p[i]);
@@ -3186,7 +3190,7 @@ void calc_particle_lattice_ia() {
 
           ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
 
-#ifdef LBTRACERS
+#if defined(LBTRACERS) && defined(TRIELASTIC)
 
           //Triangles are not subject to viscous coupling, but interact with the fluid via elastic forces
           if(ifParticleIsVirtual(&p[i])) {
