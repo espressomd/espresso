@@ -1,10 +1,10 @@
 #ifndef TRIEL_H
 #define TRIEL_H
 
-#include "utils.h"
-#include "interaction_data.h"
-#include "particle_data.h"
-#include "grid.h"
+#include "utils.hpp"
+#include "interaction_data.hpp"
+#include "particle_data.hpp"
+#include "grid.hpp"
 
 #ifdef TRIELASTIC
 

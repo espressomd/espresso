@@ -60,8 +60,6 @@
 /** Type of overlapped bonded interaction potential, 
     may be of bond length, of bond angle or of dihedral type. */
 #define BONDED_IA_OVERLAPPED 10
-/** Type of Triangle_Stretch potential */
-#define TRIEL_IA 11
 /** Type of bonded interaction is a bond angle cosine potential. */
 #define BONDED_IA_ANGLE_HARMONIC 11
 /** Type of bonded interaction is a bond angle cosine potential. */ 
@@ -80,6 +78,8 @@
 #define BONDED_IA_AREA_FORCE_GLOBAL 18 
 /** Type of bonded interaction is a linear stretching force. */
 #define BONDED_IA_STRETCHLIN_FORCE 19 
+/** Type of Triangle_Stretch potential */
+#define TRIEL_IA 20
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0

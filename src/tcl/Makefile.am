@@ -106,6 +106,7 @@ libEspressoTcl_la_SOURCES += \
 	harmonic_tcl.cpp harmonic_tcl.hpp \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
+	triel_tcl.cpp triel_tcl.hpp \
 	object-in-fluid/area_force_local_tcl.cpp \
 	object-in-fluid/area_force_local_tcl.hpp \
 	object-in-fluid/area_force_global_tcl.cpp \

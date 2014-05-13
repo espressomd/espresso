@@ -870,6 +870,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
 #endif
+#ifdef TRIELASTIC
+  REGISTER_BONDED("triel", tclcommand_inter_parse_triel);
+#endif
 #ifdef BOND_ANGLE_OLD
   REGISTER_BONDED("angle", tclcommand_inter_parse_angle);
 #endif
@@ -896,9 +899,6 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef BOND_VIRTUAL
   REGISTER_BONDED("virtual_bond", tclcommand_inter_parse_virtual_bonds);
-#endif
-#ifdef TRIELASTIC
-  REGISTER_BONDED("triel", tclcommand_inter_parse_triel);
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);

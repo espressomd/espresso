@@ -2,7 +2,7 @@
 
 #ifdef TRIELASTIC
 #include "triel.hpp"
-#include "communication.h"
+#include "communication.hpp"
 
 /// parse parameters for the triel potential
 int tclcommand_inter_parse_triel(Tcl_Interp *interp, int bond_type, int argc, char **argv)
@@ -14,7 +14,7 @@ int tclcommand_inter_parse_triel(Tcl_Interp *interp, int bond_type, int argc, ch
   if (argc != 7 && argc !=9) {
     Tcl_AppendResult(interp, "The elastic triangle initially needs 4 parameters: "
 		     "<ind1> <ind2> <ind3> <maxdist> <ks> <ka>", (char *) NULL);
-    return (TCL_ERROR);
+    return TCL_ERROR;
   } else if (argc == 7) {
 
       if (! ARG_IS_I(1, ind1)) {

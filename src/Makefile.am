@@ -143,7 +143,7 @@ libEspresso_la_SOURCES += \
 	harmonic.cpp harmonic.hpp \
 	overlap.cpp overlap.hpp \
 	subt_lj.cpp subt_lj.hpp \
-	triel.c triel.h \
+	triel.cpp triel.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
 	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \

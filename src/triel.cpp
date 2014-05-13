@@ -1,8 +1,8 @@
-#include "triel.h"
+#include "triel.hpp"
 
 
 #ifdef TRIELASTIC
-#include "communication.h"
+#include "communication.hpp"
 
 
 int triel_set_params(int bond_type, int ind1, int ind2, int ind3, double max, double ks, double ka) {
