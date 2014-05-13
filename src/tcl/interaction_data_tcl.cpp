@@ -85,6 +85,7 @@
 #include "overlap_tcl.hpp"
 #include "harmonic_tcl.hpp"
 #include "subt_lj_tcl.hpp"
+#include "triel_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
 #include "tcl/object-in-fluid/volume_force_tcl.hpp"
@@ -353,6 +354,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
     return tclprint_to_result_subt_ljIA(interp, params);
+#endif
+#ifdef TRIELASTIC
+   case TRIEL_IA:
+     return tclprint_to_result_trielIA(interp, params);
 #endif
 #ifdef BOND_VIRTUAL
   case BONDED_IA_VIRTUAL_BOND:
@@ -891,6 +896,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef BOND_VIRTUAL
   REGISTER_BONDED("virtual_bond", tclcommand_inter_parse_virtual_bonds);
+#endif
+#ifdef TRIELASTIC
+  REGISTER_BONDED("triel", tclcommand_inter_parse_triel);
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);
