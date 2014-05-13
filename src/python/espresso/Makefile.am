@@ -19,7 +19,7 @@
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 # Build rules for python libraries
-AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src
+AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src 
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 LIBS =  $(top_builddir)/src/libEspresso.la @LIBS@
 
@@ -95,8 +95,7 @@ CLEANFILES += $(CPPFILES)
 # want to use libtool, so we have to give it a corresponding target.
 # Also, like this, the .so-files are installed to the right place.
 LAFILES = $(PYXFILES:.pyx=.la)
-$(LAFILES): %.la: %.cpp
-	$(AM_V_CXXLD)$(CXXLINK) -rpath $(pyexecdir) $< $(LIBS)
+pyexec_LTLIBRARIES = $(LAFILES)
 
 # create links to the ./libs/*.so in the dir
 SOFILES = $(PYXFILES:.pyx=.so)
@@ -107,18 +106,17 @@ $(SOFILES): %.so: %.la
 	$(AM_V_GEN)test -L $@ || $(LN_S) @objdir@/$@ $@
 
 # build rule for myconfig.pxi
-# create gen_pxiconfig.cpp from features.def
-gen_pxiconfig.cpp: $(top_srcdir)/config/gen_pxiconfig.py $(top_srcdir)/src/features.def 
+noinst_PROGRAMS = gen_pxiconfig
+gen_pxiconfig_SOURCES = gen_pxiconfig.cpp
+
+gen_pxiconfig.cpp: $(top_srcdir)/config/gen_pxiconfig.py \
+		   $(top_srcdir)/src/features.def $(top_builddir)/src/myconfig-final.hpp
 	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_pxiconfig.py \
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
-# create gen_pxiconfig from gen_pxiconfig.cpp
-noinst_PROGRAMS = gen_pxiconfig
-nodist_gen_pxiconfig_SOURCES = gen_pxiconfig.cpp $(top_builddir)/src/myconfig-final.hpp
-
-# create myconfig.pxi from gen_pxiconfig
 myconfig.pxi: gen_pxiconfig
 	$(AM_V_GEN)./gen_pxiconfig > myconfig.pxi
 
 CLEANFILES += gen_pxiconfig.cpp myconfig.pxi
+BUILT_SOURCES = gen_pxiconfig.cpp myconfig.pxi
 
