@@ -149,6 +149,11 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
     return (self._params["epsilon"] >0)
   
   def _setParamsInEsCore(self):
+    # Handle the case of shift="auto"
+    if self._params["shift"]=="auto": 
+      # Calc shift
+      self._params["shift"]= -( (self._params["sigma"]/self._params["cutoff"])**12 - (self._params["sigma"]/self._params["cutoff"])**6 )
+    
     if lennard_jones_set_params(self._partTypes[0],self._partTypes[1],\
                                         self._params["epsilon"], \
                                         self._params["sigma"], \
