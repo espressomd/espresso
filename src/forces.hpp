@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -110,17 +110,17 @@
  *       <li> Ramp.
  *       </ul>
  *  <li> Calculate long range interaction forces:<br>
-         Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
+ Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
  *  </ol>
  */
 void force_calc();
 
 /** Set forces of all ghosts to zero
-*/
+ */
 void init_forces_ghosts();
 
 /** Check if forces are NAN 
-*/
+ */
 void check_forces();
 
 
@@ -169,11 +169,11 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
 #ifdef MORSE
   add_morse_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
- /*soft-sphere potential*/
+  /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
   add_soft_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
- /*hat potential*/
+  /*hat potential*/
 #ifdef HAT
   add_hat_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
@@ -204,13 +204,13 @@ calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
                            double force[3], 
                            double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef MOL_CUT
-   // You may want to put a correction factor and correction term for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
+  // You may want to put a correction factor and correction term for smoothing function else then theta
+  if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
 #endif
-   {
+    {
       calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, 
                                        force, torque1, torque2);
-   }
+    }
 }
 
 inline void 
@@ -227,20 +227,20 @@ calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameter
                                         double force[3],
                                         double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef MOL_CUT
-   //You may want to put a correction factor and correction term for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut_partcfg(p1,p2,ia_params)==1)
+  //You may want to put a correction factor and correction term for smoothing function else then theta
+  if (checkIfParticlesInteractViaMolCut_partcfg(p1,p2,ia_params)==1)
 #endif
-   {
-     calc_non_bonded_pair_force_parts(p1, p2, ia_params, 
-                                      d, dist, dist2, force, torque1, torque2);
-   }
+    {
+      calc_non_bonded_pair_force_parts(p1, p2, ia_params, 
+				       d, dist, dist2, force, torque1, torque2);
+    }
 }
 
 inline void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
-   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double torque1[3],torque2[3];
-   calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
-                                           force, torque1, torque2);
+  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+  double torque1[3],torque2[3];
+  calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
+					  force, torque1, torque2);
 }
 
 /** Calculate non bonded forces between a pair of particles.
@@ -250,7 +250,7 @@ inline void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, 
-					double d[3], double dist, double dist2)
+				      double d[3], double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
   double force[3] = { 0., 0., 0. };
@@ -283,7 +283,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* non bonded pair potentials                  */
   /***********************************************/
 
-   calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
+  calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
 
   /***********************************************/
   /* short range electrostatics                  */
@@ -317,7 +317,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   double q1q2 = p1->p.q*p2->p.q;
   if (!(iccp3m_initialized && iccp3m_cfg.set_flag)) {
     switch (coulomb.method) {
-  #ifdef P3M
+#ifdef P3M
     case COULOMB_ELC_P3M: {
       if (q1q2) {
         p3m_add_pair_force(q1q2,d,dist2,dist,force); 
@@ -325,24 +325,24 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
         // forces from the virtual charges
         // they go directly onto the particles, since they are not pairwise forces
         if (elc_params.dielectric_contrast_on)
-  	ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+	  ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
       }
       break;
     }
     case COULOMB_P3M_GPU:
     case COULOMB_P3M: {
-  #ifdef NPT
+#ifdef NPT
       if (q1q2) {
         double eng = p3m_add_pair_force(q1q2,d,dist2,dist,force);
         if(integ_switch == INTEG_METHOD_NPT_ISO)
-  	nptiso.p_vir[0] += eng;
+	  nptiso.p_vir[0] += eng;
       }
-  #else
+#else
       if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force); 
-  #endif
+#endif
       break;
     }
-  #endif
+#endif
     case COULOMB_MMM1D:
       if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
       break;
@@ -367,7 +367,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case  DIPOLAR_MDLC_P3M: 
-   //fall trough 
+    //fall trough 
   case DIPOLAR_P3M: {
 #ifdef NPT
     double eng = dp3m_add_pair_force(p1,p2,d,dist2,dist,force);
@@ -408,6 +408,7 @@ inline void add_bonded_force(Particle *p1)
 #ifdef CG_DNA
   double force4[4] = { 0., 0., 0. };
   double force5to8[12] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. };
+  Particle *p5 = NULL,*p6 = NULL,*p7 = NULL,*p8 = NULL;
 #endif
 #ifdef ROTATION
   double torque1[3] = { 0., 0., 0. };
@@ -430,7 +431,7 @@ inline void add_bonded_force(Particle *p1)
     if (!p2) {
       errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{078 bond broken between particles %d and %d (particles not stored on the same node)} ",
-	      p1->p.identity, p1->bl.e[i-1]);
+		    p1->p.identity, p1->bl.e[i-1]);
       return;
     }
 
@@ -440,7 +441,7 @@ inline void add_bonded_force(Particle *p1)
       if (!p3) {
 	errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{079 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
+		      p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
       }
     }
@@ -451,7 +452,7 @@ inline void add_bonded_force(Particle *p1)
       if (!p4) {
 	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{080 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
+		      p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
       }
     }
@@ -483,6 +484,10 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_CG_DNA_BASEPAIR:
       bond_broken = calc_cg_dna_basepair_force(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
       break;
+    case BONDED_IA_CG_DNA_STACKING:
+      bond_broken = calc_cg_dna_stacking_force(p1, p2, p3, p4, p5, p6, p7, p8, iaparams,
+					       force, force2, force3, force4, force5to8);
+      break;
 #endif
 #ifdef AREA_FORCE_GLOBAL
     case BONDED_IA_AREA_FORCE_GLOBAL:
@@ -503,7 +508,7 @@ inline void add_bonded_force(Particle *p1)
       break;
 #endif
 #ifdef BOND_ANGLE_OLD
-	/* the first case is not needed and should not be called */ 
+      /* the first case is not needed and should not be called */ 
     case BONDED_IA_ANGLE_OLD:
       bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
       break;
@@ -594,7 +599,7 @@ inline void add_bonded_force(Particle *p1)
       if (bond_broken) {
         char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
-          p1->p.identity, p2->p.identity);
+		      p1->p.identity, p2->p.identity);
         continue;
       }
       
@@ -625,29 +630,29 @@ inline void add_bonded_force(Particle *p1)
       if (bond_broken) {
 	char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity); 
+		      p1->p.identity, p2->p.identity, p3->p.identity); 
 	continue;
       }
       
       for (j = 0; j < 3; j++) {
-switch (type) {
+	switch (type) {
 	case BONDED_IA_AREA_FORCE_LOCAL:
-		p1->f.f[j] += force[j];
-		p2->f.f[j] += force2[j];
-		p3->f.f[j] += force3[j];
-		break;
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  break;
 #ifdef AREA_FORCE_GLOBAL
 	case BONDED_IA_AREA_FORCE_GLOBAL:
-		break;
+	  break;
 #endif
 #ifdef VOLUME_FORCE
 	case BONDED_IA_VOLUME_FORCE:
-		break;
+	  break;
 #endif
 	default:
-		p1->f.f[j] += force[j];
-		p2->f.f[j] += force2[j];
-		p3->f.f[j] -= (force[j] + force2[j]);
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] -= (force[j] + force2[j]);
 	}
       }
       break;
@@ -655,22 +660,22 @@ switch (type) {
       if (bond_broken) {
 	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+		      p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;
       }
       for (j = 0; j < 3; j++) {
 	switch (type) {
 	case BONDED_IA_BENDING_FORCE:
-		p1->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
-		p2->f.f[j] += force[j];
-		p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
-		p4->f.f[j] += force2[j];
-		break;
+	  p1->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
+	  p2->f.f[j] += force[j];
+	  p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
+	  p4->f.f[j] += force2[j];
+	  break;
 	default:
-		p1->f.f[j] += force[j];
-		p2->f.f[j] += force2[j];
-		p3->f.f[j] += force3[j];
-		p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
 	}
       }
       break;
@@ -678,7 +683,7 @@ switch (type) {
       if (bond_broken) {
 	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+		      p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;
       }
       switch(type) {
@@ -691,43 +696,65 @@ switch (type) {
 	}
 	break;
       }
+      break;
+    case 8:
+      if (bond_broken) {
+      char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
+      ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
+      	p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+      continue;
     }
-  }
-}  
+      switch(type) {
+    case BONDED_IA_CG_DNA_BASEPAIR:      
+      for (j = 0; j < 3; j++) {
+      p1->f.f[j] = force[j];
+      p2->f.f[j] = force2[j];
+      p3->f.f[j] = force3[j];
+      p4->f.f[j] = force4[j];
+      p5->f.f[j] = force5to8[0 + j];
+      p6->f.f[j] = force5to8[3 + j];
+      p7->f.f[j] = force5to8[6 + j];
+      p8->f.f[j] = force5to8[9 + j];
+    }
+      break;
+    }
+    }
+    }
+    }  
 
-/** add force to another. This is used when collecting ghost forces. */
-inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
-{
-  int i;
-  for (i = 0; i < 3; i++)
-    F_to->f[i] += F_add->f[i];
+      /** add force to another. This is used when collecting ghost forces. */
+      inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
+      {
+      int i;
+      for (i = 0; i < 3; i++)
+	F_to->f[i] += F_add->f[i];
 #ifdef ROTATION
-  for (i = 0; i < 3; i++)
-    F_to->torque[i] += F_add->torque[i];
+      for (i = 0; i < 3; i++)
+	F_to->torque[i] += F_add->torque[i];
 #endif
-}
+    }
 
-inline void check_particle_force(Particle *part)
-{
+      inline void check_particle_force(Particle *part)
+      {
   
-  int i;
-  for (i=0; i< 3; i++) {
-    if (isnan(part->f.f[i])) {
+      int i;
+      for (i=0; i< 3; i++) {
+      if (isnan(part->f.f[i])) {
       char *errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
     }
-  }
+    }
 
 #ifdef ROTATION
-  for (i=0; i< 3; i++) {
-    if (isnan(part->f.torque[i])) {
+      for (i=0; i< 3; i++) {
+      if (isnan(part->f.torque[i])) {
       char *errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
     }
-  }
+    }
 #endif
-}
+    }
 
-/*@}*/
+      /*@}*/
 
 #endif

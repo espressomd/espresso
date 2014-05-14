@@ -33,6 +33,8 @@
 
 int cg_dna_basepair_set_params(int bond_type, DoubleList *params);
 
+int cg_dna_stacking_set_params(int bond_type, DoubleList *params);
+
 #define PRINT_VECTOR(A) printf("%lf %lf %lf\n", A[0], A[1], A[2])
 
 #define SQR(x) ((x)*(x))
@@ -65,6 +67,23 @@ inline double cos_angle(double *x1, double *x2) {
 
 inline double angle(double *x1, double *x2) {
   return acos(cos_angle(x1, x2));
+}
+
+inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si2, Particle *bi2, 
+				      Particle *sj1, Particle *bj1, Particle *sj2, Particle *bj2, 
+				      Bonded_ia_parameters *iaprams,
+				      double force1[3], double force2[3], double force3[3], double force4[3],
+				      double force5to8[12]) {
+
+  double n1[3], n2[3], n1_l, n2_l;
+  double vec1[3], u1[3], dot01, dot11;
+  double vec2[3], u2[3], dot02, dot12;
+  double vec3[3], u3[3], dot03, dot13;
+  double vec4[3], u4[3], dot04, dot14;
+
+  
+
+  return 0;
 }
 
 inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams, double force1[3], double force2[3], double force3[3], double force4[3]) {
@@ -253,8 +272,8 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
 
     force1[i] = dot4*n1[i] - dot3*n2[i] + fSugar1 - fBase1 - fSugar2 - f_sb1 *rcb1[i];
     force2[i] = -fr + dot1*n1[i] + fBase1 + f_sb1 *rcb1[i];
-    force3[i] = dot5*n2[i] - dot2*n1[i] + fSugar2 - fBase2 - fSugar1 - f_sb1 *rcb1[i];
-    force4[i] = fr - dot1*n2[i] + fBase2 + f_sb1 *rcb1[i];
+    force3[i] = dot5*n2[i] - dot2*n1[i] + fSugar2 - fBase2 - fSugar1 - f_sb2 *rcb2[i];
+    force4[i] = fr - dot1*n2[i] + fBase2 + f_sb2 *rcb2[i];
   }
 
   // printf("rhb_l %lf thetad %lf f_r %lf, f_d %lf, tau_d = %lf\n", rhb_l, thetad, f_r, f_d, tau_d);

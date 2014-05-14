@@ -555,7 +555,10 @@ typedef struct {
     } cg_dna_basepair;
 
     struct {
-      double dummy;
+      double rm;
+      double epsilon;
+      double a[8];
+      double b[7];
     } cg_dna_stacking;
     struct {
       double dummy;

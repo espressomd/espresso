@@ -46,4 +46,29 @@ int cg_dna_basepair_set_params(int bond_type, DoubleList *params) {
   bonded_ia_params[bond_type].num = 3;
 
   mpi_bcast_ia_params(bond_type, -1);
+
+  return ES_OK;
+}
+
+int cg_dna_stacking_set_params(int bond_type, DoubleList *params) {
+  if(bond_type < 0)
+    return ES_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.cg_dna_stacking.rm = params->e[0];
+  bonded_ia_params[bond_type].p.cg_dna_stacking.epsilon = params->e[1];
+
+  for(int i = 0; i < 8; i++)
+    bonded_ia_params[bond_type].p.cg_dna_stacking.a[i] = params->e[2+i];
+
+  for(int i = 0; i < 7; i++)
+    bonded_ia_params[bond_type].p.cg_dna_stacking.b[i] = params->e[10+i];
+
+  bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_STACKING;
+  bonded_ia_params[bond_type].num = 7;
+
+  mpi_bcast_ia_params(bond_type, -1);
+
+  return ES_OK;
 }
