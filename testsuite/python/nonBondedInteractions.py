@@ -79,6 +79,11 @@ class NonBondedInteractionsTests(ut.TestCase):
     "lennardJones")
     
 
+  def test_forcecap(self):
+    es.nonBondedInter.setForceCap(17.5)
+    self.assertEqual(es.nonBondedInter.getForceCap(),17.5)
+
+
 if __name__ == "__main__":
  print("Features: ",es.code_info.features())
  ut.main()

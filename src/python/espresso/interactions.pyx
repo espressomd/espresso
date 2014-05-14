@@ -214,14 +214,22 @@ class NonBondedInteractionHandle(object):
 
 cdef class NonBondedInteractions:
   """Access to non-bonded interaction parameters via [i,j], where i,j are particle 
-  types. Returns NonBondedInteractionHandle."""
+  types. Returns NonBondedInteractionHandle.
+  Also: access to force capping
+  """
   def __getitem__(self,key):
     if not isinstance(key,tuple):
       raise ValueError("NonBondedInteractions[] expects two particle types as indices.")
     if len(key) != 2 or (not isinstance(key[0],int)) or (not isinstance(key[1],int)):
       raise ValueError("NonBondedInteractions[] expects two particle types as indices.")
     return NonBondedInteractionHandle(key[0],key[1])
+    
+  def setForceCap(self,cap):
+   if forcecap_set_params(cap):
+     raise Exception("Could not set forcecap")
 
+  def getForceCap(self):
+    return force_cap
 
 
 
