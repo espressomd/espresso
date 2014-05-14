@@ -2,7 +2,7 @@
 import unittest as ut
 import espresso.System as es
 import numpy as np
-from espresso.interaction_data import FeneBond
+from espresso.interactions import FeneBond
 
 
 

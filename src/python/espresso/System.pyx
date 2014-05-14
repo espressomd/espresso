@@ -3,8 +3,8 @@ cimport numpy as np
 import numpy as np
 import particle_data
 cimport particle_data 
-import interaction_data
-cimport interaction_data
+import interactions
+cimport interactions
 import global_variables
 from integrate import integrate
 import thermostat
@@ -111,8 +111,8 @@ IF CUDA == 1:
 #     raise Exception("Espresso not initialized")
 #   if instance_counter == 1:
 #     _espressoHandle.Tcl_Eval(string)
-nonBondedInter = interaction_data.NonBondedInteractions()
-bondedInter = interaction_data.BondedInteractions()
+nonBondedInter = interactions.NonBondedInteractions()
+bondedInter = interactions.BondedInteractions()
 
 if this_node==0:
   glob = global_variables.GlobalsHandle()

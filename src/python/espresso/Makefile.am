@@ -43,7 +43,7 @@ PYXFILES =  \
 	debye_hueckel.pyx \
 	global_variables.pyx \
 	integrate.pyx \
-	interaction_data.pyx \
+	interactions.pyx \
 	invalidateSystem.pyx \
 	thermostat.pyx \
 	utils.pyx
@@ -59,7 +59,7 @@ PXDFILES = \
 	debye_hueckel.pxd \
 	global_variables.pxd \
 	integrate.pxd \
-	interaction_data.pxd \
+	interactions.pxd \
 	invalidateSystem.pxd \
 	thermostat.pxd \
 	utils.pxd
