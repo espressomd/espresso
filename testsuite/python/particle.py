@@ -1,14 +1,8 @@
-from __future__ import print_function
-import ctypes
-import sys
-
-sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
-
 # Tests particle property setters/getters
 import unittest as ut
-import espresso as es
+import espresso.System as es
 import numpy as np
-from interaction_data import FeneBond
+from espresso.interaction_data import FeneBond
 
 
 

@@ -1,15 +1,8 @@
-
-from __future__ import print_function
-import ctypes
-import sys
-
-sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
-
 # Tests particle property setters/getters
 import unittest as ut
-import espresso as es
+import espresso.System as es
 import numpy as np
-from interaction_data import LennardJonesInteraction
+from espresso.interaction_data import LennardJonesInteraction
 
 
 class NonBondedInteractionsTests(ut.TestCase):
@@ -59,9 +52,15 @@ class NonBondedInteractionsTests(ut.TestCase):
       # This code is run at the execution of the generated function.
       # It will use the state of the variables in the outer function, 
       # which was there, when the outer function was called
-      setattr(es.nonBondedInter[partType1,partType2],interName,interClass(**params))
+      
+      # Set parameters
+      getattr(es.nonBondedInter[partType1,partType2],interName).setParams(**params)
+      
+      # Read them out again
       outInter=getattr(es.nonBondedInter[partType1,partType2],interName)
-      outParams=outInter.params
+      outParams=outInter.getParams()
+      
+      
       self.assertTrue(self.intersMatch(interClass,type(outInter),params,outParams), interClass(**params).typeName()+": value set and value gotten back differ for particle types "+str(partType1)+" and "+str(partType2)+": "+params.__str__()+" vs. "+outParams.__str__())
 
     return func
