@@ -75,7 +75,7 @@ class NonBondedInteractionsTests(ut.TestCase):
     "lennardJones")
   test_lj3=generateTestForNonBondedInteraction(\
     0,0,LennardJonesInteraction,\
-    {"capradius":2.3,"epsilon":1.3,"sigma":2.2,"cutoff":3.4,"shift":4.1,"offset":5.1,"min":7.1},\
+    {"epsilon":1.3,"sigma":2.2,"cutoff":3.4,"shift":4.1,"offset":5.1,"min":7.1},\
     "lennardJones")
     
 

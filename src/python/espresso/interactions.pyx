@@ -142,7 +142,6 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
       "cutoff":iaParams.LJ_cut,\
       "shift":iaParams.LJ_shift,\
       "offset":iaParams.LJ_offset,\
-      "capradius":iaParams.LJ_capradius,\
       "min":iaParams.LJ_min}
        
 
@@ -156,7 +155,7 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
                                         self._params["cutoff"], \
                                         self._params["shift"], \
                                         self._params["offset"], \
-                                        self._params["capradius"], \
+					0.0, \
                                         self._params["min"]):
       raise Exception("Could not set Lennard Jones parameters")					
   
@@ -167,14 +166,13 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
       "cutoff":0.,\
       "shift":0.,\
       "offset":0.,\
-      "capradius":0.,\
       "min":0.}
 
   def typeName(self): 
     return "LennardJones" 
   
   def validKeys(self): 
-    return "epsilon","sigma","cutoff","shift","offset","capradius","min"
+    return "epsilon","sigma","cutoff","shift","offset","min"
   
   def requiredKeys(self): 
     return "epsilon","sigma","cutoff","shift" 
