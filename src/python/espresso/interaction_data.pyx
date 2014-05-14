@@ -21,13 +21,16 @@ cdef class NonBondedInteraction(object):
     
     # Or have we been called with keyword args describing the interaction
     elif len(args)==0:
+      # Initialize default values
+      self._params=self.defaultParams()
       self._partTypes=[-1,-1]
+      
       # Check if all required keys are given
       for k in self.requiredKeys():
         if k not in kwargs:
           raise ValueError("At least the following keys have to be given as keyword arguments: "+self.requiredKeys().__str__())
       
-      self.params = kwargs
+      self._params = kwargs
       
       # Validation of parameters
       self.validateParams()
@@ -52,20 +55,39 @@ cdef class NonBondedInteraction(object):
     return True
  
  
-  property params:
-    def __get__(self):
-      return self._params
+  def getParams(self):
+    """Get interaction parameters"""
+    # If this instance refers to an actual interaction defined in the es core, load
+    # current parameters from there
+    if self._partTypes[0]>=0 and self._partTypes[1]>=0:
+      self._params=self._getParamsFromEsCore()
+    
+    return self._params
 
-    def __set__(self,p):
-      # Check, if any key was passed, which is not known
-      for k in p.keys():
-        if k not in self.validKeys():
-          raise ValueError("Only the following keys are supported: "+self.validKeys().__str__())
-      
-      # Initialize default values
-      self.setDefaultParams()
-      # Put in values given by the user
-      self._params.update(p)
+  def setParams(self,**p):
+    """Update parameters. Only given """
+    # Check, if any key was passed, which is not known
+    for k in p.keys():
+      if k not in self.validKeys():
+        raise ValueError("Only the following keys are supported: "+self.validKeys().__str__())
+
+    # When an interaction is newly activated, all required keys must be given
+    if not self.isActive():
+      for k in self.requiredKeys():
+        if k not in p:
+          raise ValueError("At least the following keys have to be given as keyword arguments: "+self.requiredKeys().__str__())
+    
+    # If this instance refers to an interaction defined in the espresso core,
+    # load the parameters from there
+
+    if self._partTypes[0]>=0 and self._partTypes[1]>=0:
+      self._params=self._getParamsFromEsCore()
+    
+    # Put in values given by the user
+    self._params.update(p)
+    
+    if self._partTypes[0]>=0 and self._partTypes[1]>=0:
+      self._setParamsInEsCore()
 
   def validateParams(self):
     return True
@@ -76,8 +98,15 @@ cdef class NonBondedInteraction(object):
   def _setParamsInEsCore(self):
     raise Exception("Subclasses of NonBondedInteraction must define the setParamsFromEsCore() method.")
   
-  def setDefaultParams(self):
-    raise Exception("Subclasses of NonBondedInteraction must define the setDefaultParams() method.")
+  def defaultParams(self):
+    raise Exception("Subclasses of NonBondedInteraction must define the defaultParams() method.")
+  
+  def isActive(self):
+    # If this instance refers to an actual interaction defined in the es core, load
+    # current parameters from there
+    if self._partTypes[0]>=0 and self._partTypes[1]>=0:
+      self._params=self._getParamsFromEsCore()
+    raise Exception("Subclasses of NonBondedInteraction must define the isActive() method.")
 
   
   def typeName(self): 
@@ -96,11 +125,11 @@ cdef class NonBondedInteraction(object):
 
 cdef class LennardJonesInteraction(NonBondedInteraction):
   def validateParams(self):
-    if self.params["epsilon"]<0:
+    if self._params["epsilon"]<0:
       raise ValueError("Lennard-Jones eps has to be >=0")
-    if self.params["sigma"]<0:
+    if self._params["sigma"]<0:
       raise ValueError("Lennard-Jones sigma has to be >=0")
-    if self.params["cutoff"]<0:
+    if self._params["cutoff"]<0:
       raise ValueError("Lennard-Jones cutoff has to be >=0")
     return True
 
@@ -117,7 +146,8 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
       "min":iaParams.LJ_min}
        
 
-    
+  def isActive(self):
+    return (self._params["epsilon"] >0)
   
   def _setParamsInEsCore(self):
     if lennard_jones_set_params(self._partTypes[0],self._partTypes[1],\
@@ -130,7 +160,7 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
                                         self._params["min"]):
       raise Exception("Could not set Lennard Jones parameters")					
   
-  def setDefaultParams(self):
+  def defaultParams(self):
     self._params={\
       "epsilon":0.,\
       "sigma":0.,\
@@ -165,6 +195,10 @@ class NonBondedInteractionHandle(object):
   type1=-1
   type2=-1
 
+  # Here, one line per non-bonded ia
+  lennardJones=None
+
+
   def __init__(self, _type1, _type2):
     """Takes two particle types as argument"""
     if not (isinstance(_type1,int) and isinstance(_type2,int)):
@@ -172,31 +206,10 @@ class NonBondedInteractionHandle(object):
     self.type1=_type1
     self.type2=_type2
     
+    
     # Here, add one line for each nonbonded ia
-    self.__class__.lennardJones =self.iaProperty(LennardJonesInteraction,"LennardJones")
+    self.lennardJones =LennardJonesInteraction(_type1,_type2)
 
-  def _getter(self,iaClass):
-    """Generates a getter funciton for a speciffic interaction type such as Lennard Jones""" 
-    return lambda self: iaClass(self.type1,self.type2)
-
-  def _setter(self,_iaClass):
-    """Generates a setter funciton for a speciffic interaction type such as Lennard Jones""" 
-
-    iaClass = _iaClass
-
-    def f(self,v):
-      if not isinstance(v,iaClass):
-        raise TypeError("The value given must be of type "+iaClass.__name__)
-      v._partTypes[0]=self.type1
-      v._partTypes[1]=self.type2
-      v._setParamsInEsCore()
-
-    return f
-
-  def iaProperty(self,iaClass,iaName):
-    """Generate a property with the correct setter and getter for
-    a specific interaction such as Lennard Jones"""
-    return property(fget=self._getter(iaClass),fset=self._setter(iaClass),doc=iaName)
   
   
 
