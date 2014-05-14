@@ -27,6 +27,8 @@
 #include "particle_data.hpp"
 #include "grid.hpp"
 
+#ifdef CG_DNA
+
 // extrema for cos(theta), used for the force calculations that involve angles
 #define COS_MAX (0.99999999)
 #define COS_MIN (-0.99999999)
@@ -286,5 +288,7 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   return 0;
 }
 
+
+#endif
 
 #endif

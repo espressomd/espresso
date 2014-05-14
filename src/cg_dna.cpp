@@ -22,6 +22,8 @@
 #include "cg_dna.hpp"
 #include "communication.hpp"
 
+#ifdef CG_DNA
+
 int cg_dna_basepair_set_params(int bond_type, DoubleList *params) {
   if(bond_type < 0)
     return ES_ERROR;
@@ -72,3 +74,6 @@ int cg_dna_stacking_set_params(int bond_type, DoubleList *params) {
 
   return ES_OK;
 }
+
+#endif
+

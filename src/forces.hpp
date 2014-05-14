@@ -687,6 +687,7 @@ inline void add_bonded_force(Particle *p1)
 	continue;
       }
       switch(type) {
+	#ifdef CG_DNA
       case BONDED_IA_CG_DNA_BASEPAIR:
 	for (j = 0; j < 3; j++) {
 	  p1->f.f[j] = force[j];
@@ -695,6 +696,7 @@ inline void add_bonded_force(Particle *p1)
 	  p4->f.f[j] = force4[j];
 	}
 	break;
+#endif
       }
       break;
     case 8:
@@ -706,6 +708,7 @@ inline void add_bonded_force(Particle *p1)
     }
       switch(type) {
     case BONDED_IA_CG_DNA_BASEPAIR:      
+#ifdef CG_DNA
       for (j = 0; j < 3; j++) {
       p1->f.f[j] = force[j];
       p2->f.f[j] = force2[j];
@@ -716,6 +719,7 @@ inline void add_bonded_force(Particle *p1)
       p7->f.f[j] = force5to8[6 + j];
       p8->f.f[j] = force5to8[9 + j];
     }
+#endif
       break;
     }
     }

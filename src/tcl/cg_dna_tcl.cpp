@@ -23,6 +23,8 @@
 #include "parser.hpp"
 #include "cg_dna_tcl.hpp"
 
+#ifdef CG_DNA
+
 int tclprint_to_result_cg_dnaIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
 {
   char buffer[TCL_DOUBLE_SPACE];
@@ -93,3 +95,4 @@ int tclcommand_inter_parse_cg_dna_backbone(Tcl_Interp *interp, int bond_type, in
 
 }
 
+#endif
