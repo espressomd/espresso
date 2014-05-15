@@ -69,19 +69,54 @@ inline double angle(double *x1, double *x2) {
   return acos(cos_angle(x1, x2));
 }
 
+/* get_mi_vector(c, a, b ) (a,b) -> a -x */
+
 inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si2, Particle *bi2, 
 				      Particle *sj1, Particle *bj1, Particle *sj2, Particle *bj2, 
 				      Bonded_ia_parameters *iaprams,
 				      double force1[3], double force2[3], double force3[3], double force4[3],
 				      double force5to8[12]) {
 
+  /* Base-Base and Sugar-Sugar vectors */
+  double rhb[3], rcc[3];
+  /* Sugar-Base Vectors */
+  double rcb1[3], rcb2[3], rcb1_l, rcb2_l;
+  /* Mean basepair distance */
+  double r;
+  /* Base normals */
   double n1[3], n2[3], n1_l, n2_l;
+
   double vec1[3], u1[3], dot01, dot11;
   double vec2[3], u2[3], dot02, dot12;
   double vec3[3], u3[3], dot03, dot13;
   double vec4[3], u4[3], dot04, dot14;
 
+  get_mi_vector(vec1, sj1->r.p, si1->r.p);
+  get_mi_vector(vec2, bj1->r.p, bi1->r.p);
+  get_mi_vector(vec3, sj2->r.p, si2->r.p);
+  get_mi_vector(vec4, bj2->r.p, bi2->r.p);
   
+  cross(rcc, rcb1, n1);
+  cross(rcc, rcb2, n2);
+
+  double n1_l2 = norm2(n1);
+  double n2_l2 = norm2(n2);
+ 
+  for(int i = 0; i < 3; i++) {
+    n1[i] /= n1_l2;
+    n2[i] /= n2_l2;
+  }
+
+  r = 0.25*(dot(vec1, n1) + dot(vec2,n1) + dot(vec3,n2) + dot(vec4,n2));
+
+  {
+    const double ir = 1. / r;
+    const double ir2 =SQR(ir);        
+    const double ir5 = ir2*ir2*ir;
+    const double ir6 = ir5*ir;
+
+    r = 
+  }
 
   return 0;
 }
