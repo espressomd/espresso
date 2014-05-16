@@ -113,6 +113,7 @@ gen_pxiconfig.cpp: $(top_srcdir)/config/gen_pxiconfig.py $(top_srcdir)/src/featu
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
 # create gen_pxiconfig from gen_pxiconfig.cpp
+# this is also required so that automake creates the CXXLINK-macro
 noinst_PROGRAMS = gen_pxiconfig
 nodist_gen_pxiconfig_SOURCES = gen_pxiconfig.cpp $(top_builddir)/src/myconfig-final.hpp
 
