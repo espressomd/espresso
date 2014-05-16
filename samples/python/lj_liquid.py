@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import espresso.System as es
 import numpy
 from espresso import code_info
@@ -10,7 +8,7 @@ print("=                    lj_liquid.py                     =")
 print("=======================================================")
 print(" ")
 
-print("Program Information: \n%s\n" % code_info.electrostatics_defined())
+print("Program Information: \n%s\n" % code_info.features())
 
 dev="cpu"
 
@@ -58,12 +56,13 @@ int_n_times = 5
 
 es.glob.box_l = [box_l,box_l,box_l]
 
-es.inter[0,0].lennardJones = \
-	{"eps": lj_eps, "sigma": lj_sig, \
-	 "cut": lj_cut, "ljcap": lj_cap}
+es.nonBondedInter[0,0].lennardJones.setParams(\
+	epsilon=lj_eps, sigma=lj_sig, \
+	 cutoff=lj_cut,shift="auto")
+es.nonBondedInter.setForceCap(lj_cap)
 
 print("LJ-parameters:\n")
-print(es.inter[0,0].lennardJones)
+print(es.nonBondedInter[0,0].lennardJones.getParams())
 print("\n")
 
 # Particle setup
@@ -103,21 +102,19 @@ print("Stop if minimal distance is larger than %f" % min_dist)
 
 # set LJ cap
 lj_cap = 20
-es.inter[0,0].lennardJones = {"ljcap": lj_cap}
-#es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
-print(es.inter[0,0].lennardJones)
+es.nonBondedInter.setForceCap(lj_cap)
+print(es.nonBondedInter[0,0].lennardJones)
 
 # Warmup Integration Loop
 i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
 
-  #es._espressoHandle.Tcl_Eval('integrate %d' % warm_steps)
   es.integrate(warm_steps)
 
   # Warmup criterion
 #  act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
   act_min_dist = es.analyze.mindist() 
-  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist), end=' ')
+#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist), end=' ')
 
   i = i + 1
 
@@ -127,8 +124,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
 #   Increase LJ cap
   lj_cap = lj_cap + 10
-  es.inter[0,0].lennardJones = {"ljcap": lj_cap}
-#  es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
+  es.nonBondedInter.setForceCap(lj_cap)
 
 # Just to see what else we may get from the c code
 print("\n\nro variables:")
@@ -159,9 +155,8 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0 
-es.inter[0,0].lennardJones = {"ljcap": lj_cap}
-#es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
-print(es.inter[0,0].lennardJones)
+es.nonBondedInter.setForceCap(lj_cap)
+print(es.nonBondedInter[0,0].lennardJones)
 
 # print initial energies
 #energies = es._espressoHandle.Tcl_Eval('analyze energy')

@@ -317,8 +317,8 @@ AS_IF([test x$with_cuda != xno],[
     CXX=$NVCC
     CXXFLAGS="$NVCCFLAGS -x cu"
     # libtool linking options likely break NVCC linking, sort out all but simple -L options
-    LDFLAGS="-Xlinker `echo $LDFLAGS | sed -e ['s|-[^L][^ 	]*||g' -e 's|[ 	][ 	]*|,|g']`"
-    LIBS="-Xlinker `echo $LIBS | sed ['s|[ 	][ 	]*|,|g']`"
+    AS_IF([test -n "$LDFLAGS"],[ LDFLAGS="-Xlinker `echo $LDFLAGS | sed -e ['s|-[^L][^ 	]*||g' -e 's|[ 	][ 	]*|,|g']`" ])
+    AS_IF([test -n "$LIBS"   ],[ LIBS="-Xlinker `echo $LIBS | sed ['s|[ 	][ 	]*|,|g']`"])
     
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
         AC_MSG_RESULT(yes)

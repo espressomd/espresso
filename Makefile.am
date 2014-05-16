@@ -46,6 +46,7 @@ endif
 endif
 
 if PYTHON_INTERFACE
+all-local: espresso
 espresso: FORCE
 	test -L espresso || $(LN_S) src/python espresso
 endif

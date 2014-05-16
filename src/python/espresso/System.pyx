@@ -3,8 +3,8 @@ cimport numpy as np
 import numpy as np
 import particle_data
 cimport particle_data 
-import interaction_data
-cimport interaction_data
+import interactions
+cimport interactions
 import global_variables
 from integrate import integrate
 import thermostat
@@ -20,6 +20,7 @@ cimport utils
 
 import debye_hueckel
 #import lb
+cimport cuda_init
 import cuda_init
 #cimport myconfig
 
@@ -65,7 +66,7 @@ cdef extern from "initialize.hpp":
 
 ## Now comes the real deal
 cdef class EspressoHandle:
-  # cdef Tcl_Interp* interp
+  cdef Tcl_Interp* interp
   cdef public int this_node
   def __init__(self):
     global instance_counter
@@ -76,9 +77,9 @@ cdef class EspressoHandle:
       mpi_init_helper()
       self.this_node=this_node
       if this_node==0:
-        # self.interp = Tcl_CreateInterp() 
-        # self.Tcl_Eval('global argv; set argv ""')
-        # self.Tcl_Eval('set tcl_interactive 0')
+        self.interp = Tcl_CreateInterp() 
+        self.Tcl_Eval('global argv; set argv ""')
+        self.Tcl_Eval('set tcl_interactive 0')
         on_program_start()
       else:
         on_program_start()
@@ -89,11 +90,11 @@ cdef class EspressoHandle:
     self.die()
     raise Exception("Espresso can not be deleted")
 
-  # def Tcl_Eval(self, string):
-  #   result=Tcl_Eval(self.interp, string)
-  #   if result:
-  #     raise Exception("Tcl reports an error", self.interp.result)
-  #   return self.interp.result
+  def Tcl_Eval(self, string):
+    result=Tcl_Eval(self.interp, string)
+    if result:
+      raise Exception("Tcl reports an error", self.interp.result)
+    return self.interp.result
 
   def die(self):
     mpi_stop()
@@ -110,7 +111,8 @@ IF CUDA == 1:
 #     raise Exception("Espresso not initialized")
 #   if instance_counter == 1:
 #     _espressoHandle.Tcl_Eval(string)
-inter = interaction_data.InteractionList()
+nonBondedInter = interactions.NonBondedInteractions()
+bondedInter = interactions.BondedInteractions()
 
 if this_node==0:
   glob = global_variables.GlobalsHandle()
