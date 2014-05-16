@@ -30,8 +30,6 @@ import code_info
 #  ERROR=-1
 
 
-#### This is the main Espresso Cython interface.
-
 ### Now come all the includes
 
 cdef int instance_counter 

@@ -1,17 +1,17 @@
+from __future__ import print_function
 import espresso.System as es
 import numpy
 from espresso import code_info
 
-print(" ")
-print("=======================================================")
-print("=                    lj_liquid.py                     =")
-print("=======================================================")
-print(" ")
+print("""
+=======================================================
+=                    lj_liquid.py                     =
+=======================================================
 
-print("Program Information: \n%s\n" % code_info.features())
+Program Information:""")
+print(code_info.features())
 
 dev="cpu"
-
 
 # System parameters
 #############################################################
@@ -30,7 +30,6 @@ lj_cap   = 20
 
 # Integration parameters
 #############################################################
-
 es.glob.time_step = 0.01
 es.glob.skin      = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
