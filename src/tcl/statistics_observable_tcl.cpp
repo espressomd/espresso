@@ -48,6 +48,11 @@ int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntLis
   }
 
 
+  //Observables rely on the partCfg being sortable. If this is not true, an ambiguous error pops up later
+  if (!sortPartCfg()) {
+    Tcl_AppendResult(interp, "Error parsing particle specifications.\nProbably your particle ids are not contiguous.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
   if (ARG0_IS_S("ids")) {
     if (!parse_int_list(interp, argv[1],input)) {
       Tcl_AppendResult(interp, "Error parsing id list\n", (char *)NULL);
@@ -780,6 +785,8 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
     observables[id]=(observable*)malloc(sizeof(observable));            \
+    observables[id]->obs_name = (char*)malloc((1+strlen(#name))*sizeof(char)); \
+    strcpy(observables[id]->obs_name,#name); \
     if (parser(interp, argc-2, argv+2, &temp, observables[n_observables]) == TCL_OK) { \
       n_observables++; \
       argc-=1+temp; \
@@ -788,6 +795,7 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
       Tcl_AppendResult(interp,buffer,(char *)NULL);\
       return TCL_OK; \
     } else { \
+      free(observables[n_observables]->obs_name);\
       free(observables[n_observables]);\
       Tcl_AppendResult(interp, "\nError parsing observable ", #name, "\n", (char *)NULL); \
       return TCL_ERROR; \
@@ -1266,7 +1274,7 @@ int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* 
   char buffer[TCL_DOUBLE_SPACE];
   double* values=(double*)malloc(obs->n*sizeof(double));
   if ( (*obs->fun)(obs->args, values, obs->n) ) {
-    Tcl_AppendResult(interp, "\nFailed to compute observable tclcommand\n", (char *)NULL );
+    Tcl_AppendResult(interp, "\nFailed to compute observable ", obs->obs_name, "\n", (char *)NULL );
     return TCL_ERROR;
   }
   if (argc==0) {
