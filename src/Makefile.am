@@ -197,7 +197,7 @@ CUDA_SOURCES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
-        HarmonicForce.cu
+	HarmonicForce.hpp HarmonicForce.cu
 
 libEspresso_la_SOURCES += $(CUDA_SOURCES)
 EXTRA_DIST += $(CUDA_SOURCES)
