@@ -24,7 +24,6 @@ require_feature "ELECTROSTATICS"
 require_feature "FFTW"
 require_feature "PARTIAL_PERIODIC"
 require_feature "CONSTRAINTS"
-require_feature "ADRESS" off
 
 puts "-------------------------------------------"
 puts "- Testcase el2d_nonneutral.tcl running on [format %02d [setmd n_nodes]] nodes: -"

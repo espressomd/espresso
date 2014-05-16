@@ -23,7 +23,6 @@
 #
 source "tests_common.tcl"
 
-require_feature "ADRESS" off
 
 puts "------------------------------------------"
 puts "- Testcase harm.tcl running on [format %02d [setmd n_nodes]] nodes: -"

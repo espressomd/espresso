@@ -395,7 +395,10 @@ cases with similar structures.
 \analyzeindex{finding holes}
 
 \begin{essyntax}
-  analyze holes \var{typeid_\mathrm{probe}} \var{mesh\_size} 
+  analyze holes \var{typeid_\mathrm{probe}} \var{mesh\_size}
+  \begin{features}
+    \required{LENNARD_JONES}
+  \end{features}
 \end{essyntax}
 Function for the calculation of the unoccupied volume (often also
 called free volume) in a system. Details can be found in
@@ -433,8 +436,27 @@ information is given in the element_lists for each hole. The element
 numbers give the position of a mesh point in the linear representation
 of the 3D grid (coordinates are in the order x, y, z). Attention: the
 algorithm assumes a cubic box. Surface results have not been tested.
-Requires the feature LENNARD_JONES.  \todo{I think there is still a
-  bug in there (Hanjo)}.
+\todo{I think there is still a bug in there (Hanjo)}.
+
+
+\subsection{Temperature of the LB fluid}
+\label{analyze:lbtemp}
+\analyzeindex{fluid temperature}
+
+\begin{essyntax}
+  \require{1 or 2 or 3}{analyze fluid temp}
+  \begin{features}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
+  \required[3]{ELECTROKINETICS}
+  \end{features}
+\end{essyntax}
+
+This command returns the temperature of the lattice-Boltzmann (LB)
+fluid, see Chapter~\ref{sec:lb}, by averaging over the fluid nodes. In
+case \feature{LB_BOUNDARIES} or \feature{LB_BOUNDARIES_GPU} are
+compiled in and boundaries are defined, only the available fluid
+volume is taken into account.
 
 \subsection{Energies}
 \label{analyze:energy}
@@ -458,7 +480,6 @@ energy contributions of the bonded resp. non-bonded interactions.
 \begin{code}
 \{ energy \var{value} \} \{ kinetic \var{value} \} \{ interaction \var{value} \} \dots 
 \end{code}
-
 
 \subsection{Pressure}
 \label{analyze:pressure}
@@ -633,18 +654,6 @@ specifying the local pressure tensor in each bin.
 \analyzeindex{topologies}
 \label{analyze:set}
 
-The following set of functions is designed to facilitate analysis of molecules. Molecules are expected to be a group of particles
-comprising a contiguous range of particle IDs. Each molecule
-is a set of consecutively numbered particles and all molecules
-are supposed to consist of the same number of particles.
-Some functions in this group require that the particles constituting
-a molecule are connected into linear chains (particle $n$ is connected
-to $n+1$ and so on) while others are applicable to molecules
-of whatever topology.
-
-The \lit{analyze set} command defines the structure of the current
-system to be used with some of the analysis functions.
-
 \begin{essyntax}
   \variant{1} analyze set chains \opt{\var{chain\_start} \var{n\_chains}
     \var{chain\_length}}
@@ -653,13 +662,26 @@ system to be used with some of the analysis functions.
   %\variant{4} analyze set trapmol \var{mol\_id} \var{xpos} \var{ypos} \var{zpos} \var{isrelative} \var{spring\_constant} \var{drag\_constant} coords \var{trapped\_coord\_x} \var{trapped\_coord\_y} \var{trapped\_coord\_z} noforce\_coords \var{noforce\_coord\_x} \var{noforce\_coord\_y} \var{noforce\_coord\_z}
 \end{essyntax}
 
+The above set of functions is designed to facilitate analysis of
+molecules. Molecules are expected to be a group of particles
+comprising a contiguous range of particle IDs. Each molecule is a set
+of consecutively numbered particles and all molecules are supposed to
+consist of the same number of particles.  Some functions in this group
+require that the particles constituting a molecule are connected into
+linear chains (particle $n$ is connected to $n+1$ and so on) while
+others are applicable to molecules of whatever topology.
+
+The \lit{analyze set} command defines the structure of the current
+system to be used with some of the analysis functions.
+
 Variant \variant{1} defines a set of \var{n\_chains} chains of equal
 length \var{chain\_length} which start with the particle with particle
 number \var{chain\_start} and are consecutively numbered (\ie the last
 particle in that topology has number $\var{chain\_start} +
 \var{n\_chains}*\var{chain\_length} - 1$). 
 
-Variant \variant{2} synchronizes topology and particle data, assigning \var{mol\_id} values to particles.
+Variant \variant{2} synchronizes topology and particle data, assigning
+\var{mol\_id} values to particles.
 
 Variant \variant{3} will return the chains currently stored.
 

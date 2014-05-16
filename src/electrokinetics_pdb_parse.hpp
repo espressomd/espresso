@@ -4,6 +4,8 @@
 
 #include "electrokinetics.hpp"
 
+#ifdef ELECTROKINETICS
+
 extern float* pdb_charge_lattice;
 extern int* pdb_boundary_lattice;
 
@@ -13,5 +15,13 @@ int pdb_parse(char* pdb_filename, char* itp_filename);
 int print_charge_field(char* filename);
 
 int print_boundary_lattice(char* filename);
+
+#else
+/* that is tested for in a number of places, make sure that pdb
+   appears disabled if not compiled in.
+ */
+#define pdb_boundary_lattice 0
+
+#endif
 
 #endif

@@ -25,7 +25,6 @@ require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 require_feature "CUDA"
 require_feature "FFTW"
-require_feature "ADRESS" off
 require_feature "NPT" off
 
 puts "---------------------------------------------------------------"
