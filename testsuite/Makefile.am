@@ -39,6 +39,7 @@ tests = \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
 	exclusions.tcl \
+	external_potential.tcl \
 	fene.tcl \
 	gb.tcl \
 	ghmc.tcl \

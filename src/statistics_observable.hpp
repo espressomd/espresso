@@ -26,46 +26,72 @@
 #include <cmath>
 
 
-typedef struct {
+#define CONST_UNITITIALIZED 1e-23
+
+struct s_observable;
+
+struct s_observable {
   char* obs_name;
-  void* args;
+  void* container;
   int n;
-  int (*fun)  ( void* A_args, double* A, unsigned int dim_A);
+  int (*update)    ( struct s_observable* obs );
+  int (*calculate) ( struct s_observable* obs );
   double* last_value;
-  int last_update;
-} observable;
+  double last_update;
+  int autoupdate;
+  double autoupdate_dt;
+};
+
+typedef struct s_observable observable;
 
 extern observable** observables;
 extern int n_observables; 
 
-int* observable_calc(observable* self, double* A);
+// flag if autoupdates are necessary.
+extern int observables_autoupdate;
+
+void autoupdate_observables(); 
+
+void observable_init(observable* self);
+int observable_calculate(observable* self);
+int observable_update(observable* self);
 
 /* Here we have the particular observables listed */
-int observable_particle_velocities(void* idlist, double* A, unsigned int n_A);
-int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n_A);
-int observable_com_velocity(void* idlist, double* A, unsigned int n_A); 
-int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A); 
+int observable_calc_particle_velocities(observable* self_);
+int observable_calc_particle_angular_momentum(observable* self_);
+int observable_calc_com_velocity(observable* self); 
+int observable_calc_blocked_com_velocity(observable* self); 
 /** Obtain the particle positions.
  * TODO: Folded or unfolded?
  */ 
-int observable_particle_positions(void* typelist, double* A, unsigned int n_A);
-int observable_particle_forces(void* typelist, double* A, unsigned int n_A);
-int observable_com_force(void* typelist, double* A, unsigned int n_A);
-int observable_blocked_com_force(void* typelist, double* A, unsigned int n_A);
-int observable_stress_tensor(void* typelist, double* A, unsigned int n_A);
-int observable_stress_tensor_acf_obs(void* typelist, double* A, unsigned int n_A);
-int observable_com_position(void* idlist, double* A, unsigned int n_A);
-int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A);
+int observable_calc_particle_positions(observable* self);
+int observable_calc_particle_forces(observable* self);
+int observable_calc_com_force(observable* self);
+int observable_calc_blocked_com_force(observable* self);
+int observable_stress_tensor(observable* self);
+int observable_calc_stress_tensor_acf_obs(observable* self);
+int observable_calc_com_position(observable* self);
+int observable_calc_blocked_com_position(observable* self);
 
 #ifdef ELECTROSTATICS
-int observable_particle_currents(void* typelist, double* A, unsigned int n_A);
-int observable_currents(void* typelist, double* A, unsigned int n_A);
-int observable_dipole_moment(void* typelist, double* A, unsigned int n_A);
+int observable_calc_particle_currents(observable* self);
+int observable_calc_currents(observable* self);
+int observable_calc_dipole_moment(observable* self);
 #endif
 
+#ifdef LB
+int mpi_observable_lb_radial_velocity_profile_parallel(void* pdata_, double* A, unsigned int n_A);
+#endif
+
+int observable_update_average(observable* self);
+int observable_reset_average(observable* self);
+typedef struct {
+  observable* reference_observable;
+  unsigned int n_sweeps;
+} observable_average_container;
 
 /** Calculate structure factor from positions and scattering length */
-int observable_structure_factor(void* params, double* A, unsigned int n_A);
+int observable_calc_structure_factor(observable* self);
 typedef struct {
 // FIXME finish the implementation of scattering length
   IntList* id_list;
@@ -80,7 +106,7 @@ typedef struct {
 /** See if particles from idList1 interact with any of the particles in idList2 
 input parameters are passed via struct iw_params
 */
-int observable_interacts_with(void* params, double* A, unsigned int n_A);
+int observable_calc_interacts_with(observable* self);
 typedef struct {
   double cutoff;
   IntList *ids1;
@@ -89,9 +115,9 @@ typedef struct {
 
 
 /** Do nothing */
-int observable_obs_nothing (void* params, double* A, unsigned int n_A);
+int observable_calc_obs_nothing (observable* self);
 
-int observable_flux_density_profile(void* params, double* A, unsigned int n_A);
+int observable_calc_flux_density_profile(observable* self);
 typedef struct { 
   IntList* id_list;
   double minx;
@@ -103,15 +129,16 @@ typedef struct {
   int xbins;
   int ybins;
   int zbins;
+  void* container;
 } profile_data;
 
-int observable_density_profile(void* params, double* A, unsigned int n_A);
+int observable_calc_density_profile(observable* self);
 
-int observable_lb_velocity_profile(void* params, double* A, unsigned int n_A);
+int observable_calc_lb_velocity_profile(observable* self);
 
-int observable_radial_density_profile(void* params, double* A, unsigned int n_A);
-int observable_radial_flux_density_profile(void* params, double* A, unsigned int n_A);
-int observable_lb_radial_velocity_profile(void* params, double* A, unsigned int n_A);
+int observable_calc_radial_density_profile(observable* self);
+int observable_calc_radial_flux_density_profile(observable* self);
+int observable_calc_lb_radial_velocity_profile(observable* self);
 typedef struct {
   IntList* id_list;
   double minr;
@@ -125,8 +152,10 @@ typedef struct {
   int phibins;
   int rbins;
   int zbins;
+  void* container;
 } radial_profile_data;
 
+void mpi_observable_lb_radial_velocity_profile_slave_implementation();
 
 
 #endif

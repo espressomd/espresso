@@ -189,8 +189,10 @@
 #define CONSTRAINT_RHOMBOID 10
 /** Constraint for a stomatocyte boundary */
 #define CONSTRAINT_STOMATOCYTE 11
+/** slitpore constraint applied */
+#define CONSTRAINT_SLITPORE 12
 /** Constraint for a hollow cone boundary */
-#define CONSTRAINT_HOLLOW_CONE 12
+#define CONSTRAINT_HOLLOW_CONE 13
 /*@}*/
 
 /* Data Types */
@@ -796,6 +798,21 @@ typedef struct {
   double outer_rad_right;
 } Constraint_pore;
 
+
+/** Parameters for a SLITPORE constraint. */
+typedef struct {
+  /** center of the cylinder. */
+  double pore_mouth;
+  /** Axis of the cylinder .*/
+  double upper_smoothing_radius;
+  double lower_smoothing_radius;
+  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  double channel_width;
+  double pore_width;
+  double pore_length;
+  int reflecting;
+} Constraint_slitpore;
+
 /** Parameters for a ROD constraint. */
 typedef struct {
   /** center of the cylinder in the x-y plane. */
@@ -912,6 +929,11 @@ typedef struct {
   double pos[3];
 } Constraint_plane;
 
+typedef struct {
+  double omega;
+  double Prefactor;
+} SinusoidalField;
+
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */
@@ -926,6 +948,7 @@ typedef struct {
     Constraint_plate plate;
     Constraint_maze maze;
     Constraint_pore pore;
+    Constraint_slitpore slitpore;
     Constraint_stomatocyte stomatocyte;
     Constraint_hollow_cone hollow_cone;
     //ER

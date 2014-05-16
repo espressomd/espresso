@@ -36,6 +36,7 @@ libEspressoTcl_la_SOURCES = \
 	constraint_tcl.cpp constraint_tcl.hpp \
 	domain_decomposition_tcl.cpp domain_decomposition_tcl.hpp \
 	electrokinetics_tcl.cpp electrokinetics_tcl.hpp \
+	external_potential_tcl.cpp external_potential_tcl.hpp \
 	energy_tcl.cpp \
 	galilei_tcl.cpp galilei_tcl.hpp \
 	global_tcl.cpp global_tcl.hpp \

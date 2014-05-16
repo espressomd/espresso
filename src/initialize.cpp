@@ -63,6 +63,7 @@
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"
 #include "p3m_gpu.hpp"
+#include "external_potential.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 
@@ -121,6 +122,7 @@ void on_program_start()
 #ifdef DP3M
   dp3m_pre_init();
 #endif
+  external_potential_pre_init();
 
 #ifdef LB_GPU
   if(this_node == 0){
@@ -616,6 +618,8 @@ void on_parameter_change(int field)
     on_ghost_flags_change();
     break;
 #endif
+  case FIELD_DPD_IGNORE_FIXED_PARTICLES:
+    break;
   }
 }
 

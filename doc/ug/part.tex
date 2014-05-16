@@ -679,28 +679,38 @@ All these examples do the same - making exact copies of particles 1 through 4.
   outer_radius \var{Ro} inner_radius \var{Ri} layer_width \var{w} direction \var{direction} 
   type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
   
+  \variant{8}
+  constraint slitpore
+  pore_mouth \var{z} \
+             channel_width \var{c} \
+             pore_width \var{w} \
+             pore_length \var{l} \
+             upper_smoothing_radius \var{us} \
+             lower_smoothing_radius \var{ls} 
+  
+  
   \require{1}{%
-    \variant{8}
+    \variant{9}
     constraint rod center \var{c_x} \var{c_y} 
     lambda \var{lambda}
   } 
   
   \require{1}{%
-    \variant{9}
+    \variant{10}
     constraint plate height \var{h}
     sigma \var{sigma} 
   }
   
   \require{2,3}{%
-    \variant{10}
+    \variant{11}
     constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
   }
   
-  \variant{11} 
+  \variant{12} 
   constraint plane cell \var{x} \var{y} \var{z} 
   type \var{id}
 
-  \variant{12}
+  \variant{13}
   constraint mindist_position \var{x} \var{y} \var{z} 
 
   \begin{features}
@@ -737,20 +747,20 @@ the \codebox{inter} command. In variants \variant{1} to \variant{7}, constraints
  only calculated if the particle is on the side of the wall in which the normal
  vector is pointing. This has only an effect for penetrable walls.
 
-Variants \variant{8} and \variant{9} create interactions based on electrostatic
+Variants \variant{9} and \variant{10} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the
 surface and applies to all charged particles.
 
-Variant \variant{10} does not define a surface but is based on magnetic
+Variant \variant{11} does not define a surface but is based on magnetic
 dipolar interaction with an external magnetic field. It applies to all particles
 with a dipole moment.
 
-Variant \variant{11} is essential for the use of tunable-slip boundary
+Variant \variant{12} is essential for the use of tunable-slip boundary
 interactions for microchannel flows like the Plane Poiseuille or Plane Couette
 Flow.
 
-Variant \variant{12} calculates the smallest distance to all non-penetrable
-constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore).
+Variant \variant{13} calculates the smallest distance to all non-penetrable
+constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore, slitpore).
 Negative distances mean that the position is ``within'' the area that
 particles should not access. Helpful to find initial configurations.) 
 
@@ -812,6 +822,23 @@ a stomatocyte given by \var{Ro}:\var{Ri}:\var{w} = 7:3:1 is half the size
 of the stomatocyte given by 7:3:2. Not all choices of the parameters give
 reasonable values for the shape of the stomatocyte, but the combination
 7:3:1 is a good point to start from when trying to modify the shape. 
+
+In variant \variant{8}, a slit-shaped pore in a T-orientation to a flat channel
+is created. 
+The geometry is depicted in Fig.~\ref{fig:slitpore}.
+It translationally invariant in y direction.
+The pore (lower vertical part) extends in z-direction, and the channel (upper
+horizontal part). The pore mouth is defined as the z-coordinate, where the lower
+plane of the channel and the slit pore intersect. It is always centered in the
+x-direction. A corresponding \codebox{dielectric} command decorates the surface
+with surface charges that can be calculated with the ICC$\star$ algorithm.
+\begin{figure}[ht]
+  \label{fig:slitpore}
+  \begin{center}
+  \includegraphics[height=6cm]{figures/slitpore.pdf}
+  \caption{The slitpore created by the \codebox{constraint slitpore.}}
+  \end{center}
+\end{figure}
 
 Variant \variant{8} specifies an electrostatic interaction between the
 charged particles in the system to an infinitely long rod with a line

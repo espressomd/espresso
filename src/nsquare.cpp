@@ -256,6 +256,7 @@ void nsq_calculate_ia()
 #ifdef CONSTRAINTS
     add_constraints_forces(pt1);
 #endif
+    add_external_potential_forces(pt1);
 
     if (rebuild_verletlist)
       memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
@@ -310,6 +311,7 @@ void nsq_calculate_energies()
 #ifdef CONSTRAINTS
     add_constraints_energy(pt1);
 #endif
+    add_external_potential_energy(pt1);
 
     if (rebuild_verletlist)
       memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));

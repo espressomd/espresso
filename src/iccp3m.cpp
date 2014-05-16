@@ -85,6 +85,14 @@ void iccp3m_init(void){
    iccp3m_cfg.extx = 0;
    iccp3m_cfg.exty = 0;
    iccp3m_cfg.extz = 0;
+   iccp3m_cfg.first_id = 0;
+   iccp3m_cfg.num_iteration=30;
+   iccp3m_cfg.convergence=1e-2;
+   iccp3m_cfg.relax=0.7;
+   iccp3m_cfg.eout=1;
+   iccp3m_cfg.citeration=0;
+
+
 }
 
 
@@ -104,9 +112,11 @@ int bcast_iccp3m_cfg(void){
     iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.n_ic) * sizeof(double));
     iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.n_ic) * sizeof(double));
     iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.sigma      = (double*) realloc (iccp3m_cfg.sigma     ,(iccp3m_cfg.n_ic) * sizeof(double));
   }
 
   MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, comm_cart); 
+  MPI_Bcast((int*)&iccp3m_cfg.first_id, 1, MPI_INT, 0, comm_cart); 
   MPI_Bcast((double*)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast((double*)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast((double*)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, comm_cart);
@@ -119,6 +129,7 @@ int bcast_iccp3m_cfg(void){
     MPI_Bcast((double*)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast((double*)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast((double*)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.sigma[i], 1, MPI_DOUBLE, 0, comm_cart);
   }
   MPI_Bcast((double*)&iccp3m_cfg.extx, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast((double*)&iccp3m_cfg.exty, 1, MPI_DOUBLE, 0, comm_cart);
@@ -160,8 +171,8 @@ int iccp3m_iteration() {
        part = cell->part;
        np   = cell->n;
        for(i=0 ; i < np; i++) {
-         id = part[i].p.identity ;
-         if( id < iccp3m_cfg.n_ic ) {
+         if( part[i].p.identity < iccp3m_cfg.n_ic+iccp3m_cfg.first_id && part[i].p.identity >= iccp3m_cfg.first_id ) {
+           id = part[i].p.identity - iccp3m_cfg.first_id;
            /* the dielectric-related prefactor: */                     
            del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
            /* calculate the electric field at the certain position */
@@ -184,50 +195,50 @@ int iccp3m_iteration() {
              ez*iccp3m_cfg.nvectorz[id];
            
            /* recalculate the old charge density */
-           hold=part[i].p.q/iccp3m_cfg.areas[id];
-           /* determine if it is higher than the previously highest charge density */            
-           if(hold>fabs(hmax))hmax=fabs(hold); 
-           f1 =  (+del_eps*fdot/l_b);
-           //                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
-           if (iccp3m_cfg.sigma!=0) {
-             f2 = (2*iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] )*(iccp3m_cfg.sigma[id]);
-           } 
-           
-           hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
-           difftemp=fabs( 2.*(hnew - hold)/(hold+hnew) ); /* relative variation: never use 
-                                                             an estimator which can be negative
-                                                             here */
-           if(difftemp > diff && part[i].p.q > 1e-5)
-             {
-               //                          if (fabs(difftemp - 1./(1./iccp3m_cfg.relax - 1.)) > 1e-10) 
-               diff=difftemp;  /* Take the largest error to check for convergence */
-             }
-           part[i].p.q = hnew * iccp3m_cfg.areas[id];
-           /* check if the charge now is more than 1e6, to determine if ICC still leads to reasonable results */
-           /* this is kind a arbitrary measure but, does a good job spotting divergence !*/
-           if(fabs(part[i].p.q) > 1e6) { 
-             errtxt = runtime_error(128);
-             ERROR_SPRINTF(errtxt, "{error occured 990 : too big charge assignment in iccp3m! q >1e6 , \
+                      hold=part[i].p.q/iccp3m_cfg.areas[id];
+          /* determine if it is higher than the previously highest charge density */            
+                      if(fabs(hold)>hmax)hmax=fabs(hold); 
+                      f1 =  (+del_eps*fdot/l_b);
+//                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
+                      if (iccp3m_cfg.sigma!=0) {
+                        f2 = (2*iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] )*(iccp3m_cfg.sigma[id]);
+                      } 
+
+                      hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
+                      difftemp=fabs( 1*(hnew - hold)/(hmax + fabs(hnew+hold)) ); /* relative variation: never use 
+                                                                              an estimator which can be negative
+                                                                              here */
+                      if(difftemp > diff && part[i].p.q > 1e-5)
+                      {
+//                          if (fabs(difftemp - 1./(1./iccp3m_cfg.relax - 1.)) > 1e-10) 
+                        diff=difftemp;  /* Take the largest error to check for convergence */
+                      }
+                      part[i].p.q = hnew * iccp3m_cfg.areas[id];
+         /* check if the charge now is more than 1e6, to determine if ICC still leads to reasonable results */
+         /* this is kind a arbitrary measure but, does a good job spotting divergence !*/
+                      if(fabs(part[i].p.q) > 1e6) { 
+                        errtxt = runtime_error(128);
+            	          ERROR_SPRINTF(errtxt, "{error occured 990 : too big charge assignment in iccp3m! q >1e6 , \
                                assigned charge= %f } \n",part[i].p.q);
-             diff = 1e90; /* A very high value is used as error code */
-             break;
-           }
-         }
-       }  /* cell particles */
-       // printf("cell %d w %d particles over (node %d)\n",c,np,this_node); fflush(stdout);
-     } /* local cells */
-     iccp3m_cfg.citeration++;
-     MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, comm_cart);
-     
-     if (globalmax < iccp3m_cfg.convergence) 
-       break; 
-     if ( diff > 1e89 ) /* Error happened */
-       return iccp3m_cfg.citeration++;
-     
-   } /* iteration */
-   //on_particle_change();
-   
-   return iccp3m_cfg.citeration++;
+                        diff = 1e90; /* A very high value is used as error code */
+                        break;
+                      }
+                 }
+             }  /* cell particles */
+           // printf("cell %d w %d particles over (node %d)\n",c,np,this_node); fflush(stdout);
+       } /* local cells */
+       iccp3m_cfg.citeration++;
+       MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, comm_cart);
+
+       if (globalmax < iccp3m_cfg.convergence) 
+         break; 
+       if ( diff > 1e89 ) /* Error happened */
+         return iccp3m_cfg.citeration++;
+
+  } /* iteration */
+  on_particle_change();
+
+  return iccp3m_cfg.citeration;
 }
 
 void force_calc_iccp3m() {

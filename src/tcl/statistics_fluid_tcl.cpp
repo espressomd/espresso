@@ -127,7 +127,7 @@ static int tclcommand_analyze_fluid_parse_densprof(Tcl_Interp *interp, int argc,
   lb_master_calc_densprof(profile, pdir, x1, x2);
 
   for (i=0; i<lblattice.grid[pdir]*node_grid[pdir]; i++) {
-    Tcl_PrintDouble(interp, i*lblattice.agrid, buffer);
+    Tcl_PrintDouble(interp, i*lbpar.agrid, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
     Tcl_PrintDouble(interp, profile[i], buffer);
     Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
@@ -171,12 +171,12 @@ static int tclcommand_analyze_fluid_parse_velprof(Tcl_Interp *interp, int argc, 
 	return TCL_ERROR;
     }
 
-    velprof = (double*) malloc(box_l[pdir]/lblattice.agrid*sizeof(double));
+    velprof = (double*) malloc(box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
     lb_master_calc_velprof(velprof, vcomp, pdir, x1, x2);
 
-    for (i=0; i<box_l[pdir]/lblattice.agrid; i++) {
-	Tcl_PrintDouble(interp, i*lblattice.agrid, buffer);
+    for (i=0; i<box_l[pdir]/lbpar.agrid; i++) {
+	Tcl_PrintDouble(interp, i*lbpar.agrid, buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
 	Tcl_PrintDouble(interp, velprof[i], buffer);
 	Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);

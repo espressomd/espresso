@@ -115,9 +115,8 @@ void force_calc()
 #ifdef ELECTROSTATICS
   if (iccp3m_initialized && iccp3m_cfg.set_flag)
     iccp3m_iteration();
-  else
 #endif
-    init_forces();
+  init_forces();
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
@@ -211,7 +210,6 @@ void calc_long_range_forces()
 {
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
-  if (!(iccp3m_initialized && iccp3m_cfg.set_flag)) {
     switch (coulomb.method) {
   #ifdef P3M
     case COULOMB_ELC_P3M:
@@ -257,7 +255,6 @@ void calc_long_range_forces()
       MMM2D_add_far_force();
       MMM2D_dielectric_layers_force_contribution();
     }
-  }
 #endif  /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES  
