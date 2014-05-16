@@ -59,14 +59,15 @@ extern int lattice_switch;
  *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
  */
 
-enum { LATTICE_ANISOTROPIC = 1, LATTICE_X_NOTEXT = 2, LATTICE_Y_NOTEXT = 4, LATTICE_Z_NOTEXT = 8 };
+enum { LATTICE_ANISOTROPIC = 1, 
+       LATTICE_X_NOTEXT = 2, LATTICE_Y_NOTEXT = 4, LATTICE_Z_NOTEXT = 8 };
 
 /** Data structure describing a lattice.
  *  Contains the lattice layout and pointers to the data fields.
  *  For parallelization purposes, it is assumed that a halo region
  *  surrounds the local lattice sites.
  */
-typedef struct _Lattice {
+struct Lattice {
 
   /** number of local lattice sites in each direction (excluding halo) */
   int grid[3] ;
@@ -115,7 +116,7 @@ typedef struct _Lattice {
   size_t lattice_dim;
 
   unsigned int interpolation_type;
-} Lattice;
+};
 
 /** Initialize lattice.
  *
@@ -126,7 +127,6 @@ typedef struct _Lattice {
  * \param agrid   lattice spacing
  */
 int init_lattice(Lattice *lattice, double* agrid, double* offset, int halo_size, size_t element_size);
-
 
 void lattice_allocate_memory(Lattice *lattice, size_t element_size);
 

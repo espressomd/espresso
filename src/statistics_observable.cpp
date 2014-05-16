@@ -475,8 +475,10 @@ int observable_calc_lb_radial_velocity_profile(observable* self) {
   void* pdata = self->container;
   unsigned int n_A = self->n;
 
+#ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU)
     return statistics_observable_lbgpu_radial_velocity_profile((radial_profile_data*) pdata, A, n_A);
+#endif
   
   if (!(lattice_switch & LATTICE_LB))
     return ES_ERROR;

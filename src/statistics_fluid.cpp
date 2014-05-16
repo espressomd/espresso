@@ -114,7 +114,9 @@ void lb_calc_fluid_temp(double *result) {
     }
   }
 
-  temp *= 1./(3.*lbpar.rho[0]*number_of_non_boundary_nodes*lbpar.tau*lbpar.tau*lblattice.agrid)/n_nodes;
+  // @Todo: lblattice.agrid is 3d. What to use here?
+  temp *= 1./(3.*lbpar.rho[0]*number_of_non_boundary_nodes*
+              lbpar.tau*lbpar.tau*lblattice.agrid[0])/n_nodes;
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
@@ -127,7 +129,8 @@ void lb_collect_boundary_forces(double *result) {
     for (int j = 0; j < 3; j++)
       boundary_forces[3*i+j]=lb_boundaries[i].force[j];
 
-  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, 
+             MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   free(boundary_forces);
 #endif
 }
