@@ -95,8 +95,9 @@ CLEANFILES += $(CPPFILES)
 # want to use libtool, so we have to give it a corresponding target.
 # Also, like this, the .so-files are installed to the right place.
 LAFILES = $(PYXFILES:.pyx=.la)
-$(LAFILES): %.la: %.cpp
-	$(AM_V_CXXLD)$(CXXLINK) -rpath $(pyexecdir) $< $*.lo $(LIBS)
+$(LAFILES): %.la: %.lo
+	$(AM_V_CXXLD)$(CXXLINK) -rpath $(pyexecdir) $< $(LIBS)
+CLEANFILES += $(LAFILES)
 
 # create links to the ./libs/*.so in the dir
 SOFILES = $(PYXFILES:.pyx=.so)

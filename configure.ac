@@ -767,6 +767,8 @@ AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
+AC_CONFIG_FILES([src/python/pypresso],
+	[chmod 755 src/python/pypresso])
 
 AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/src/features.def $(top_srcdir)/config/gen_sampleconfig.py'])
 AC_CONFIG_COMMANDS([myconfig-sample.hpp],
