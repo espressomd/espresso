@@ -448,8 +448,8 @@ AS_IF([test x$with_cuda != xno],[
     CXX=$NVCC
     CXXFLAGS="$NVCCFLAGS -x cu"
     # libtool linking options likely break NVCC linking, sort out all but simple -L options
-    LDFLAGS="-Xlinker `echo $LDFLAGS | sed -e ['s|-[^L][^ 	]*||g' -e 's|[ 	][ 	]*|,|g']`"
-    LIBS="-Xlinker `echo $LIBS | sed ['s|[ 	][ 	]*|,|g']`"
+    AS_IF([test -n "$LDFLAGS"],[ LDFLAGS="-Xlinker `echo $LDFLAGS | sed -e ['s|-[^L][^ 	]*||g' -e 's|[ 	][ 	]*|,|g']`" ])
+    AS_IF([test -n "$LIBS"   ],[ LIBS="-Xlinker `echo $LIBS | sed ['s|[ 	][ 	]*|,|g']`"])
     
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
         AC_MSG_RESULT(yes)
@@ -543,6 +543,8 @@ if test .$with_python_interface != .no; then
    AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])
 fi
 AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
+# export libtool objdir, so that we can link the .so files to the dir itself
+AC_SUBST(objdir)
 
 cat <<EOF
 ****************************************************************
@@ -746,6 +748,7 @@ AC_CONFIG_FILES([
 	src/Makefile
         src/tcl/Makefile
         src/python/Makefile
+        src/python/espresso/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile

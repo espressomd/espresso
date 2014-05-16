@@ -36,21 +36,23 @@ New user-visible features
 * New command time_integration to get the runtime of the integration
   loop.
 
-* New harmoic force that runs on the GPU.
+* New harmonic force that runs on the GPU.
 
 User-visible changes
 --------------------
+
 * Comfixed now works with periodic boundary conditions.
 
 * The pressure contribution due to rigid bodies constructed by means of the 
   virtual sites relative mechanism is included, both for pressure and stress 
-  tensor. Note that the corresponding contribution for rigid bonds is still not implemented.
+  tensor. Note that the corresponding contribution for rigid bonds is still 
+  not implemented.
  
 * The configure option "--with-myconfig" has been removed. Instead,
   the configure variable "MYCONFIG" can be set to give the name of a
   myconfig file.
 
-* Generic LJ can now be turned into an soft potential.
+* Generic LJ can now be turned into a soft potential.
 
 * Renamed torque to torque_{lab,body}, improved torque handling in
   blockfiles.  Clearer distinction between the reference frames for
@@ -58,9 +60,9 @@ User-visible changes
 
 * Lattice-Boltzmann now has a additional 3-point coupling scheme.
 
-* The noise type in thermalized Lattice-Boltzmann is now choosable via tcl.
+* The noise type in thermalized Lattice-Boltzmann is now selectable via Tcl.
 
-* Interaction with a wall can be restricted to the inside.
+* Interaction with a wall can be restricted to the outside.
 
 * Removed compiler switch GRANDCANONICAL.
 

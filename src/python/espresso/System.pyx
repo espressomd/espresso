@@ -20,9 +20,8 @@ cimport utils
 
 import debye_hueckel
 #import lb
-#import cuda_init
+import cuda_init
 #cimport myconfig
-
 
 import code_info
 
@@ -103,8 +102,8 @@ _espressoHandle=EspressoHandle()
 glob = global_variables.GlobalsHandle()
 part = particle_data.particleList()
 #lbfluid=lb.DeviceList()
-#IF LB_GPU == 1:
-#    cu=cuda_init.CudaInitHandle()
+IF CUDA == 1:
+    cu=cuda_init.CudaInitHandle()
 
 # def TclEval(string):
 #   if instance_counter == 0:
