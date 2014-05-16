@@ -618,6 +618,8 @@ void on_parameter_change(int field)
     on_ghost_flags_change();
     break;
 #endif
+  case FIELD_DPD_IGNORE_FIXED_PARTICLES:
+    break;
   }
 }
 

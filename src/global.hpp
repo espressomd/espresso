@@ -178,6 +178,8 @@ extern const Datafield fields[];
 #define FIELD_LB_COMPONENTS       50 
 /** index of \ref warnings in \ref #fields */
 #define FIELD_WARNINGS            51
+/** DPD_IGNORE_FIXED_PARTICLES */
+#define FIELD_DPD_IGNORE_FIXED_PARTICLES 52
 /*@}*/
 
 /** bool: whether to write out warnings or not */
