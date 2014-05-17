@@ -2693,23 +2693,28 @@ void lattice_boltzmann_update() {
 //Note: At the time this function is called, the forces saved in p are not yet scaled! Only called for virtual parts
 inline void couple_trace_to_fluid(Particle *p) {
   double *local_f, delta_j[3];
-  double force[3];
+  double force[3], interpolated_u[3];
   index_t node_index[8];
         double delta[6];
   int k,x,y,z;
   
   map_position_to_lattice(&lblattice,p->r.p,node_index,delta);
+  lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
   
   for(k=0; k<3; k++) {
     force[k]=p->f.f[k];
   }
-  
-    
+   
+   
   //Distribute force among adjacent nodes, just as in viscous coupling
   //if ( p->p.identity == 0 ) printf("unscaled fx = %f\n", force[0]);
-  delta_j[0] = force[0]*time_step*tau/agrid;
-  delta_j[1] = force[1]*time_step*tau/agrid;
-    delta_j[2] = force[2]*time_step*tau/agrid;
+  delta_j[0] != 0 ? (force[0]*time_step*tau/agrid) - (lbpar.friction[0]*tau/agrid * interpolated_u[0]*tau/agrid) : 0;
+  delta_j[1] != 0 ? (force[1]*time_step*tau/agrid) - (lbpar.friction[0]*tau/agrid * interpolated_u[1]*tau/agrid) : 0;
+  delta_j[2] != 0 ? (force[2]*time_step*tau/agrid) - (lbpar.friction[0]*tau/agrid * interpolated_u[2]*tau/agrid) : 0;
+
+  // printf("Particle Velocity - interpolated v = %f \n", (p->m.v[0]*tau/agrid - interpolated_u[0]));
+  // printf("Friction: %f, interpolated v: %f \n", lbpar.friction[0]*tau/agrid, interpolated_u[0]);
+  // printf("TriForce: %f, FricForce: %f \n", (force[0]*time_step*tau/agrid),  (lbpar.friction[0]*tau/agrid * interpolated_u[0]*tau/agrid));
   
   // DEBUG
   /*if ( p->p.identity == 0)
