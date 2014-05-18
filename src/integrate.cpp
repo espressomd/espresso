@@ -225,7 +225,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 
   /* Prepare the Integrator */
   on_integration_start();
-  printf("dpd_ignore_fixed_particles %d\n", dpd_ignore_fixed_particles);
+//  printf("dpd_ignore_fixed_particles %d\n", dpd_ignore_fixed_particles);
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors())
