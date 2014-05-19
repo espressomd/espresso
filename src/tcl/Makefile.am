@@ -24,6 +24,7 @@ AM_DEFAULT_SOURCE_EXT = .cpp
 
 noinst_LTLIBRARIES = libEspressoTcl.la
 libEspressoTcl_la_SOURCES = \
+	TclOutputHelper.hpp \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
