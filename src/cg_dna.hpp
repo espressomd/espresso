@@ -75,12 +75,12 @@ inline double angle(double *x1, double *x2) {
 
 inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si2, Particle *bi2, 
 				      Particle *sj1, Particle *bj1, Particle *sj2, Particle *bj2, 
-				      Bonded_ia_parameters *iaprams,
+				      Bonded_ia_parameters *iaparams,
 				      double force1[3], double force2[3], double force3[3], double force4[3],
 				      double force5to8[12]) {
 
   /* Base-Base and Sugar-Sugar vectors */
-  double rhb[3], rcc[3];
+  double rcci[3], rccj[3];
   /* Sugar-Base Vectors */
   double rcb1[3], rcb2[3], rcb1_l, rcb2_l;
   /* Mean basepair distance */
@@ -97,28 +97,125 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si
   get_mi_vector(vec2, bj1->r.p, bi1->r.p);
   get_mi_vector(vec3, sj2->r.p, si2->r.p);
   get_mi_vector(vec4, bj2->r.p, bi2->r.p);
-  
-  cross(rcc, rcb1, n1);
-  cross(rcc, rcb2, n2);
 
-  double n1_l2 = norm2(n1);
-  double n2_l2 = norm2(n2);
+  get_mi_vector(rcci, si1->r.p, si2->r.p);
+  get_mi_vector(rcb1, si1->r.p, bi1->r.p);
+  get_mi_vector(rcb2, si2->r.p, bi2->r.p);
+  
+  get_mi_vector(rccj, sj1->r.p, sj2->r.p);
+
+  cross(rcci, rcb1, n1);
+  cross(rcci, rcb2, n2);
+
+  n1_l = norm(n1);
+  n2_l = norm(n2);
  
-  for(int i = 0; i < 3; i++) {
-    n1[i] /= n1_l2;
-    n2[i] /= n2_l2;
+  n1_l = ( n1_l == 0 ) ? 1 : n1_l;
+  n2_l = ( n2_l == 0 ) ? 1 : n2_l;
+
+  for(int i = 0; i < 3; i++) {    
+    n1[i] /= n1_l;
+    n2[i] /= n2_l;
   }
 
   r = 0.25*(dot(vec1, n1) + dot(vec2,n1) + dot(vec3,n2) + dot(vec4,n2));
+  
+  double f_r;
+  double pot_stack;
 
-  {
-    const double ir = 1. / r;
-    const double ir2 =SQR(ir);        
-    const double ir5 = ir2*ir2*ir;
-    const double ir6 = ir5*ir;
+  const double ir = 1. / r;
+  const double ir2 =SQR(ir);        
+  const double ir5 = ir2*ir2*ir;
+  const double ir6 = ir5*ir;
 
-    r = 
+  const double rm = iaparams->p.cg_dna_stacking.rm; 
+  const double epsilon = iaparams->p.cg_dna_stacking.epsilon;
+  const double *a = iaparams->p.cg_dna_stacking.a;
+  const double *b = iaparams->p.cg_dna_stacking.b;
+
+  const double rm2 = rm*rm;
+  const double rm5 = rm2*rm2*rm;
+  const double rm6 = rm*rm5;
+  const double eps5rm6 = 5.*epsilon*rm6;
+  const double eps6rm5 = 6.*epsilon*rm5;
+  const double eps30rm6 = 6.*eps5rm6;
+  const double eps30rm5 = 5.*eps6rm5;
+
+  pot_stack = eps5rm6*ir6 - eps6rm5*ir5;  
+  f_r = 0.25*ir*(eps30rm6*ir6 - eps30rm5*ir5);
+
+  cross(n1, vec1, u1);
+  cross(n1, vec2, u2);
+  cross(n2, vec3, u3);
+  cross(n2, vec4, u4);
+  dot01 = dot(u1, rcci)/n1_l;
+  dot02 = dot(u2, rcci)/n1_l;
+  dot03 = dot(u3, rcci)/n2_l;
+  dot04 = dot(u4, rcci)/n2_l;
+  dot11 = dot(u1, rcb1)/n1_l;
+  dot12 = dot(u2, rcb1)/n1_l;
+  dot13 = dot(u3, rcb2)/n2_l;
+  dot14 = dot(u4, rcb2)/n2_l;
+
+  double mag1, mag2;
+
+  for(int k = 0; k < 3; k++) {
+    mag1 = f_r*n1[k];
+    mag2 = f_r*n2[k];
+    force2[k] = (dot01+dot02)*mag1;
+    force4[k] = (dot03+dot04)*mag2;
+    force1[k] = -(2.+dot01-dot11+dot02-dot12)*mag1 + (dot13+dot14)*mag2;
+    force3[k] = -(2.+dot03+dot13+dot04+dot14)*mag2 - (dot11+dot12)*mag1;
+    force5to8[3 + k]  = mag1;
+    force5to8[9 + k]  = mag2;
+    force5to8[0 + k] = mag1;
+    force5to8[6 + k] = mag2;    
   }
+
+  /* Parallel projection of rccj */
+  const double rccj_parallel = dot(rccj, n1);
+
+  /* Projection of rccj to plane of bp i */
+  double rccj_p[3];
+
+  rccj_p[0] = rccj[0] - rccj_parallel*n1[0];
+  rccj_p[1] = rccj[1] - rccj_parallel*n1[1];
+  rccj_p[2] = rccj[2] - rccj_parallel*n1[2];
+  
+  const double rcci_l = norm(rcci);
+  const double rccj_l = norm(rccj);
+
+  const double rccj_p_l2 = SQR(rccj_l) - SQR(rccj_parallel);
+  const double rccj_p_l = sqrt(rccj_p_l2);
+
+  double cos1 = dot(rccj_p, rcci)/(rccj_p_l * rcci_l);
+  
+  cos1 = (cos1 > COS_MAX) ? COS_MAX : cos1;
+  cos1 = (cos1 < COS_MIN) ? COS_MIN : cos1;
+
+  // Evaluation of cos(n*theta) by Chebyshev polynomials
+  const double cos2 = 2.*cos1*cos1 - 1.;
+  const double cos3 = 2.*cos2*cos1 - cos1;
+  const double cos4 = 2.*cos3*cos1 - cos2;
+  const double cos5 = 2.*cos4*cos1 - cos3;
+  const double cos6 = 2.*cos5*cos1 - cos4;
+  const double cos7 = 2.*cos6*cos1 - cos5;
+
+  // Evaluation of sin(n*theta) by Chebyshev polynomials
+  const double sin1 = sqrt(1.-SQR(cos1));
+  const double sin2 = 2.*sin1*cos1;
+  const double sin3 = 2.*sin2*cos1 - sin1;
+  const double sin4 = 2.*sin3*cos1 - sin2;
+  const double sin5 = 2.*sin4*cos1 - sin3;
+  const double sin6 = 2.*sin5*cos1 - sin4;
+  const double sin7 = 2.*sin6*cos1 - sin5;
+
+  const double pot_twist = a[0] + a[1]*cos1 + a[2]*cos2 + a[3]*cos3 + a[4]*cos4
+    +a[5]*cos5 + a[6]*cos6 + a[7]*cos7 + b[0]*sin1 + b[1]*sin2 + b[2]*sin3 + b[3]*sin4 + b[4]*sin5 + b[5]*sin6 + b[6] *sin7;
+
+  double fmag = a[1]*sin1 - b[0] * cos1 + 2.* (a[2]*sin2 - b[1] *cos2) + 3.*(a[3]*sin3 - b[2]*cos3) + 4. * (a[4]*sin4 - b[3]*cos4) + 5.*(a[5]*sin5 - b[4]*cos5) + 6.*(a[6]*sin6 - b[5]*cos6) + 7. * (a[7]*sin7 - b[6]*cos7);
+
+  fmag = -fmag/sin1;
 
   return 0;
 }

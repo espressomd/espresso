@@ -560,10 +560,6 @@ typedef struct {
       double a[8];
       double b[7];
     } cg_dna_stacking;
-    struct {
-      double dummy;
-    } cg_dna_backbone;
-
 #endif
 
     /** Parameters for hyperelastic stretching_force */
