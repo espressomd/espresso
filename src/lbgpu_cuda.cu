@@ -3520,6 +3520,84 @@ void lb_gpu_get_boundary_forces(double* forces) {
 #endif
 }
 
+__device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, LB_node_force_gpu node_f, int asdf) {
+
+  /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
+  float temp_delta[6];
+  float delta[8];
+  int my_left[3];
+  int node_index[8];
+  float mode[4];
+  float Rho;
+  u[0]=u[1]=u[2]=0;
+  #pragma unroll
+  for(int i=0; i<3; ++i){
+    float scaledpos = r[i]/para.agrid - 0.5f;
+    my_left[i] = (int)(floorf(scaledpos));
+    temp_delta[3+i] = scaledpos - my_left[i];
+    temp_delta[i] = 1.f - temp_delta[3+i];
+  }
+
+  delta[0] = temp_delta[0] * temp_delta[1] * temp_delta[2];
+  delta[1] = temp_delta[3] * temp_delta[1] * temp_delta[2];
+  delta[2] = temp_delta[0] * temp_delta[4] * temp_delta[2];
+  delta[3] = temp_delta[3] * temp_delta[4] * temp_delta[2];
+  delta[4] = temp_delta[0] * temp_delta[1] * temp_delta[5];
+  delta[5] = temp_delta[3] * temp_delta[1] * temp_delta[5];
+  delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
+  delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
+
+  // modulo for negative numbers is strange at best, shift to make sure we are positive
+  int x = my_left[0] + para.dim_x;
+  int y = my_left[1] + para.dim_y;
+  int z = my_left[2] + para.dim_z;
+
+  node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+
+  for(int i=0; i<8; ++i)
+  {
+      float totmass=0.0f;
+
+      if(n_a.boundary[node_index[i]])
+        continue;
+
+
+      calc_m_from_n(n_a,node_index[i],mode);
+
+      #pragma unroll
+      for(int ii=0;ii<LB_COMPONENTS;ii++)
+      {
+        totmass+=mode[0]+para.rho[ii]*para.agrid*para.agrid*para.agrid;
+      } 
+
+#ifndef SHANCHEN
+      u[0] += (mode[1]/totmass)*delta[i];
+      u[1] += (mode[2]/totmass)*delta[i];
+      u[2] += (mode[3]/totmass)*delta[i];
+#else //SHANCHEN
+      u[0] += d_v[node_index[i]].v[0]/8.0f;  
+      u[1] += d_v[node_index[i]].v[1]/8.0f;
+      u[2] += d_v[node_index[i]].v[2]/8.0f;
+#endif
+
+//      mode[1]+=0.5f*node_f.force[0*para.number_of_nodes + node_index[i]];
+//      mode[2]+=0.5f*node_f.force[1*para.number_of_nodes + node_index[i]];
+//      mode[3]+=0.5f*node_f.force[2*para.number_of_nodes + node_index[i]];
+//
+    }
+
+  #pragma unroll
+  for(int i=0; i<3; ++i){
+    u[i]*=para.agrid/para.tau;
+  }
+}
 __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile_data* pdata, float* data, LB_node_force_gpu node_f){
 
   unsigned int rbin=threadIdx.x;
@@ -3540,7 +3618,7 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   } else {
     maxj = pdata->phibins;
     phioffset=pdata->minphi;
-    phi_incr=(pdata->maxphi-pdata->minphi)/(pdata->phibins-1);
+    phi_incr=(pdata->maxphi-pdata->minphi)/(pdata->phibins);
   }
   float phi = phioffset + phibin*phi_incr;
 
@@ -3564,7 +3642,7 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   p[2]=z+pdata->center[2];
 
   float v[3];
-  get_interpolated_velocity(n_a, p, v, 0, 0, node_f);
+  get_interpolated_velocity(n_a, p, v, node_f, 0);
   unsigned int linear_index = rbin*maxj*maxk + phibin*maxk + zbin;
 
  float v_r,v_phi;
