@@ -23,16 +23,22 @@
 
 
 #ifdef CUDA
-#define HAVE_CUBLAS
-#include <cublas_v2.h>
+#  define HAVE_CUBLAS
+#  include <cublas_v2.h>
 //#include <magma.h>
-#define DIM (3)
+#  ifdef __CUDA_ARCH__
+#    if __CUDA_ARCH__ < 200
+#      error "Stokesian Dynamics needs at least CUDA ComputeCapability 2.0"
+#    endif //#if __CUDA_ARCH__ < 200
+#  endif //#ifdef  __CUDA_ARCH__
 #else
-#ifdef SD
-#error "CUDA is not given!"
-#error "StokesDynamics requires CUDA"
+#  ifdef SD
+#    error "CUDA is not given!"
+#    error "StokesDynamics requires CUDA"
+#  endif
 #endif
-#endif
+
+#define DIM (3)
 
 /** \file integrate.hpp    Stokes dynamics integrator.
  *
@@ -82,6 +88,9 @@ extern double sd_radius;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+
+/** check sanity of integrator params */
+void integrator_sanity_checks_sd();
 
 /** integrate with euler integrator.
     \param n_steps number of steps to integrate.

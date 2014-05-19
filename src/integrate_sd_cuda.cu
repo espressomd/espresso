@@ -27,13 +27,16 @@
 // * add brownian motion
 // * add bucket versions
 
-typedef double real;
 
 #include <stdio.h>
 #include <iostream>
 #include "cuda_runtime.h"
 #include "curand.h"
 #include <device_functions.h>
+// C++98:
+#include <algorithm>
+// C++11:
+//#include <utility>
 
 #include "assert.h"
 #include "integrate_sd_cuda_debug.cuh"
@@ -41,6 +44,35 @@ typedef double real;
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
+
+#ifndef SD_USE_FLOAT
+#warning using double
+typedef double real;
+#define cublasRgemm(...)              cublasDgemm( __VA_ARGS__)
+#define cublasRdot(...)               cublasDdot( __VA_ARGS__)
+#define cublasRgemv(...)              cublasDgemv( __VA_ARGS__)
+#define cublasRcopy(...)              cublasDcopy( __VA_ARGS__)
+#define cublasRaxpy(...)              cublasDaxpy( __VA_ARGS__)
+#define cublasRscal(...)              cublasDscal( __VA_ARGS__)
+#define cublasRnrm2(...)              cublasDnrm2( __VA_ARGS__)
+#define curandGenerateNormalReal(...) curandGenerateNormalDouble(__VA_ARGS__)
+#define __real2int_rd(...)            __double2int_rd(__VA_ARGS__)
+#define rnaupd(...)                   dnaupd_(__VA_ARGS__)
+#else // use float
+#warning Using Float
+typedef float real;
+#define cublasRgemm(...)              cublasSgemm( __VA_ARGS__)
+#define cublasRdot(...)               cublasSdot( __VA_ARGS__)
+#define cublasRgemv(...)              cublasSgemv( __VA_ARGS__)
+#define cublasRcopy(...)              cublasScopy( __VA_ARGS__)
+#define cublasRaxpy(...)              cublasSaxpy( __VA_ARGS__)
+#define cublasRscal(...)              cublasSscal( __VA_ARGS__)
+#define cublasRnrm2(...)              cublasSnrm2( __VA_ARGS__)
+#define curandGenerateNormalReal(...) curandGenerateNormal(__VA_ARGS__)
+#define __real2int_rd(...)            __float2int_rd(__VA_ARGS__)
+#define rnaupd(...)                   snaupd_(__VA_ARGS__)
+#endif //#ifndef SD_USE_FLOAT
+
 
 extern double temperature; // this is defined in thermostat.cpp
 
@@ -60,16 +92,26 @@ void _cudaCheckError(const char *msg, const char * file, const int line);
     assert(stat == CURAND_STATUS_SUCCESS);		\
   }
 
-#define SD_RESISTANCE_CORRECT
+// headers for ARPACK-NG: http://forge.scilab.org/index.php/p/arpack-ng/
+extern "C"
+{
+  void dnaupd_(int* IDO, char* BMAT, int* N, char WHICH[], int* NEV, double* TOL, double RESID[], int* NCV, double V[], int* LDV, int IPARAM[],
+	       int IPNTR[], double WORKD[], double WORKL[], int* LWORKL, int* INFO);
+  void snaupd_(int* IDO, char* BMAT, int* N, char WHICH[], int* NEV, float* TOL, float RESID[], int* NCV, float V[], int* LDV, int IPARAM[],
+	       int IPNTR[], float WORKD[], float WORKL[], int* LWORKL, int* INFO);
+  // this is to compute eigenvectors - but we want only eigenvalues
+  //void dneupd_(int* RVEC, char* HOWMNY, int SELECT[], double DR[], double DI[], double Z[], int* LDZ, double* SIGMAR, double* SIGMAI, double WORKEV[],
+  //	       char* BMAT, int* N, char WHICH[], int* NEV, double* TOL, double RESID[], int* NCV, double V[], int* LDV, int IPARAM[], int IPNTR[],
+  //	       double WORKD[], double WORKL[], int* LWORKL, int* INFO);
+}
 
 #define SD_RESISTANCE_CORRECT
 
 /* ************************************* *
  * *******   private functions   ******* *
  * ************************************* */
-void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double eta, double a, double * L_d, 
-			     double * total_mobility_d, double * force_d, double * disp_d, int * myInfo);
-//void sd_compute_mobility(cublasHandle_t cublas, double * r_d, int N, double eta, double a, double * L_d, double * total_mobility_d);
+void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real eta, real a, real * L_d, 
+			     real * total_mobility_d, real * force_d, real * disp_d, int * myInfo);
 
 
 // this solves iteratively using CG
@@ -77,7 +119,7 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
 // and returnes disp
 // mobility and resistance are square matrizes with size <size> and lda <((size+31)/32)*32>
 // force and disp are vectors of size <size>
-double sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const double * resistance, const double * force, int size, double * disp);
+real sd_iterative_solver(cublasHandle_t cublas, const real * mobility, const real * resistance, const real * force, int size, real * disp);
 
 // This computes the farfield contribution.
 // r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
@@ -86,35 +128,35 @@ double sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const
 // a is the particle radius
 // mobility is the mobility matrix which will be retruned
 // L is the boxlength
-__global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobility, double a, double * L, double * mobility);
+__global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, real a, real * L, real * mobility);
 
 // adds to each of the diagonal elemnts of the sizse*size matrix matrix
 // with lda lda 1
-__global__ void sd_add_identity_matrix(double * matrix, int size, int lda);
+__global__ void sd_add_identity_matrix(real * matrix, int size, int lda);
 void _cudaCheckError(const char *msg, const char * file, const int line);
 // this computes the near field
 // it calculates the ResistanceMatrix
-__global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobility, double a, double * L, double * resistance, int * myInfo);
+__global__ void sd_compute_resistance_matrix(real * r, int N, real self_mobility, real a, real * L, real * resistance, int * myInfo);
 // TODO: make the order of arguments uniform (and logical?)
 // TODO: description here
-__global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian_nf,int N,double * L, double a, double self_mobility,real * brownian_force_nf);
+__global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian_nf,int N,real * L, real a, real self_mobility,real * brownian_force_nf);
 
 // make sure to have one thread per particle
-__global__ void sd_real_integrate_prepare( double * r_d , double * disp_d, double * L, double a, int N);
-__global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, double a, int N);
+__global__ void sd_real_integrate_prepare( real * r_d , real * disp_d, real * L, real a, int N);
+__global__ void sd_real_integrate( real * r_d , real * disp_d, real * L, real a, int N);
 
 
 // this sets a block to zero
 // matrix: pointer to the given matrix
 // size  : the size of the matrix (in the example below 3N)
-__global__ void sd_set_zero_matrix(double * matrix, int size);
+__global__ void sd_set_zero_matrix(real * matrix, int size);
 
 
 
 // this sets a block to zero
 // data  : pointer to the given data
 // size  : the size of the data
-__global__ void sd_set_zero(double * data, int size);
+__global__ void sd_set_zero(real * data, int size);
 
 // this sets a block to zero
 // data  : pointer to the given data
@@ -136,7 +178,7 @@ __global__ void sd_set_int(int * data, int size, int value);
 // particleList       device array of the partilces in each bucket
 // maxParticlePerCell maximum particles per cell
 // totalBucketNUm     bucketNum[0]*bucketNum[1]*bucketNum[2] - the total number of buckets
-__global__ void sd_bucket_sort( double * pos , double * bucketSize, int * bucketNum, int N,
+__global__ void sd_bucket_sort( real * pos , real * bucketSize, int * bucketNum, int N,
 				int * particleCount, int * particleList, int maxParticlePerCell, int totalBucketNum);
 
 // BICGSTAB-Solver
@@ -154,9 +196,28 @@ __global__ void sd_bucket_sort( double * pos , double * bucketSize, int * bucket
 int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real * b, real tol, int maxit, real * x, real * res);
 
 
+
+// calculates the largest and snalles eigenvalue of the matrix
+// size        : size of the eigenvector / the matrix           (IN)
+// mobility_d  : handle of the mobility matrix (on the device)  (IN)
+// lambda_min  : smalles eigenvalue                            (OUT)
+// lambda_max  : largest eigenvalue                            (OUT)
+void calculate_maxmin_eigenvalues(int size,real *mobility_d,real * lamba_min,real * lambda_max);
+
+
+// this function should be fast, as the data should fit (mostly) in L1
+// lambda_min   : the lower boundery
+// lambda_max   : the upper boundery of the interval
+// tol          : the given tollerance which should be achieved
+// coefficents  : the pointer where the data will be stored
+real calculate_chebyshev_coefficents(real lambda_min, real lambda_max, real tol,real ** coefficents);
+
 typedef unsigned long long ull;
 // atomicAdd implementation for double
 __device__ double atomicAdd(double * address, double inc);
+
+// global variables for usage in this file
+cublasHandle_t cublas=NULL;
 /* *************************************************************************************************************** *
  * ********************************************     implementation    ******************************************** *
  * *************************************************************************************************************** */
@@ -169,6 +230,9 @@ __device__ double atomicAdd(double * address, double inc);
  * *************************************************************************************************************** */
 /* *************************************************************************************************************** */
 
+/* *************************************************************************************************************** *
+ * ********************************************     HOST-Functions    ******************************************** *
+ * *************************************************************************************************************** */
 
 // this calls all the functions to:
 //  * generate the mobility matrix (farfield and nearfield)
@@ -182,10 +246,10 @@ __device__ double atomicAdd(double * address, double inc);
 // force_h : forces on the particles, simple* array on host (in)
 // velo_h  : velocities of the particles, simple* array on host (in and out)
 // * : a simple array is e.g. [x_1, y_1, z_1, x_2, y_2, z_2, ...]
-void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * force_h, double * velo_h){
+void propagate_pos_sd_cuda(real * box_l_h, int N,real * pos_h, real * force_h, real * velo_h){
   //printVectorHost(pos_h,3*N,"pos after call");
-  double viscosity=sd_viscosity;
-  double radius   =sd_radius;
+  real viscosity=sd_viscosity;
+  real radius   =sd_radius;
   if (viscosity  < 0){
     std::cerr << "The viscosity for SD was not set\n";
     errexit();
@@ -201,61 +265,72 @@ void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * forc
   
   int lda=((3*N+31)/32)*32;
   
-  static cublasHandle_t cublas=NULL;
+  //static cublasHandle_t cublas=NULL;
   if (cublas==NULL){
-    if (cublasCreate(&cublas) != CUBLAS_STATUS_SUCCESS) {
-      std::cerr << "CUBLAS initialization failed\n";
+    cublasStatus_t stat = cublasCreate(&cublas);
+    if (stat != CUBLAS_STATUS_SUCCESS) {
+      std::cerr << "CUBLAS initialization failed in " << __FILE__ << " l. " << __LINE__ <<"\n\t"  ;
+      if (stat == CUBLAS_STATUS_NOT_INITIALIZED){
+	std::cerr << "the CUDA Runtime initialization failed.\n";
+      } else if (stat == CUBLAS_STATUS_ALLOC_FAILED) {
+	std::cerr << "the resources could not be allocated\n";
+      } else {
+	std::cerr << "unknown error\n";
+      }
       errexit();
     }
     //magma_init();
   }
 
-  double * box_l_d=NULL;
-  cuda_safe_mem(cudaMalloc((void**)&box_l_d, 3*sizeof(double)));
-  cuda_safe_mem(cudaMemcpy(box_l_d,box_l_h,3*sizeof(double),cudaMemcpyHostToDevice));
-  double * pos_d=NULL;
-  cuda_safe_mem(cudaMalloc((void**)&pos_d, (DIM)*N*sizeof(double)));
-  cuda_safe_mem(cudaMemcpy(pos_d,pos_h,N*DIM*sizeof(double),cudaMemcpyHostToDevice));
+  real * box_l_d=NULL;
+  cuda_safe_mem(cudaMalloc((void**)&box_l_d, 3*sizeof(real)));
+  cuda_safe_mem(cudaMemcpy(box_l_d,box_l_h,3*sizeof(real),cudaMemcpyHostToDevice));
+  real * pos_d=NULL;
+  cuda_safe_mem(cudaMalloc((void**)&pos_d, (DIM)*N*sizeof(real)));
+  cuda_safe_mem(cudaMemcpy(pos_d,pos_h,N*DIM*sizeof(real),cudaMemcpyHostToDevice));
   //printVectorDev(pos_d,3*N,"pos after copy");
-  double * force_d=NULL;
-  cuda_safe_mem(cudaMalloc((void**)&force_d, DIM*N*sizeof(double)));
-  cuda_safe_mem(cudaMemcpy(force_d,force_h,N*DIM*sizeof(double),cudaMemcpyHostToDevice));
-  double * mobility_d=NULL;
-  cuda_safe_mem(cudaMalloc((void**)&mobility_d, lda*N*3*sizeof(double)));
-  double * disp_d=NULL;
-  cuda_safe_mem(cudaMalloc((void**)&disp_d, DIM*N*sizeof(double)));
-  cuda_safe_mem(cudaMemcpy(disp_d,velo_h,N*DIM*sizeof(double),cudaMemcpyHostToDevice));
+  real * force_d=NULL;
+  cuda_safe_mem(cudaMalloc((void**)&force_d, DIM*N*sizeof(real)));
+  cuda_safe_mem(cudaMemcpy(force_d,force_h,N*DIM*sizeof(real),cudaMemcpyHostToDevice));
+  real * mobility_d=NULL;
+  cuda_safe_mem(cudaMalloc((void**)&mobility_d, lda*N*3*sizeof(real)));
+  real * disp_d=NULL;
+  cuda_safe_mem(cudaMalloc((void**)&disp_d, DIM*N*sizeof(real)));
+  cuda_safe_mem(cudaMemcpy(disp_d,velo_h,N*DIM*sizeof(real),cudaMemcpyHostToDevice));
   int myInfo_h[]={0,0,0};
   int * myInfo_d=NULL;
   cuda_safe_mem(cudaMalloc((void**)&myInfo_d, 3*sizeof(int)));
   cuda_safe_mem(cudaMemcpy(myInfo_d,myInfo_h,3*sizeof(int),cudaMemcpyHostToDevice));
   // rescale forces - this should not be done somewhere else ...
-  double alpha=time_step;
-  cublasCall(cublasDscal( cublas, 3*N, &alpha, force_d, 1));
+  real alpha=time_step;
+  cublasCall(cublasRscal( cublas, 3*N, &alpha, force_d, 1));
   //alpha=1/time_step;
-  //cublasCall(cublasDscal(cublas, DIM*N, &alpha, disp_d, 1));  
+  //cublasCall(cublasRscal(cublas, DIM*N, &alpha, disp_d, 1));  
   sd_compute_displacement(cublas, pos_d, N, viscosity, radius, box_l_d, mobility_d, force_d, disp_d, myInfo_d);
   cuda_safe_mem(cudaMemcpy(myInfo_h,myInfo_d,3*sizeof(int),cudaMemcpyDeviceToHost));
   //std::cerr <<"MyInfo: "<< myInfo_h[0] <<"\t" << myInfo_h[1] <<"\t" << myInfo_h[2] <<"\n";
-  if (myInfo_h[0]){
-    sd_set_particles_apart();
-  }
   
   //int numThreadsPerBlock = 3;
   int numBlocks = (N+numThreadsPerBlock-1)/numThreadsPerBlock;
-  //stat = cublasDaxpy(cublas, DIM*N, &alpha, v_d, 1, xr_d, 1);
+  //stat = cublasRaxpy(cublas, DIM*N, &alpha, v_d, 1, xr_d, 1);
   //assert(stat==CUBLAS_STATUS_SUCCESS);
   alpha=time_step;
-  cublasCall(cublasDscal( cublas, 3*N, &alpha, disp_d, 1));  
+  cublasCall(cublasRscal( cublas, 3*N, &alpha, disp_d, 1));  
   sd_real_integrate_prepare<<< numBlocks , numThreadsPerBlock  >>>(pos_d , disp_d, box_l_d, sd_radius, N);
   sd_real_integrate<<< numBlocks , numThreadsPerBlock  >>>(pos_d , disp_d, box_l_d, sd_radius, N);
   
   // copy back the positions
-  cuda_safe_mem(cudaMemcpy(pos_h,pos_d,N*DIM*sizeof(double),cudaMemcpyDeviceToHost));
+  cuda_safe_mem(cudaMemcpy(pos_h,pos_d,N*DIM*sizeof(real),cudaMemcpyDeviceToHost));
   // save the displacements as velocities (maybe somebody is interested)
   alpha=1/time_step;
-  cublasCall(cublasDscal(cublas, DIM*N, &alpha, disp_d, 1));
-  cuda_safe_mem(cudaMemcpy(velo_h,disp_d,N*DIM*sizeof(double),cudaMemcpyDeviceToHost));
+  cublasCall(cublasRscal(cublas, DIM*N, &alpha, disp_d, 1));
+  cuda_safe_mem(cudaMemcpy(velo_h,disp_d,N*DIM*sizeof(real),cudaMemcpyDeviceToHost));
+
+  if (myInfo_h[0]){
+    ;
+    // this needs to be done later, after the data is put where it was in the beginning ...
+    //sd_set_particles_apart();
+  }
   
   
   cuda_safe_mem(cudaFree((void*)box_l_d));
@@ -278,8 +353,8 @@ void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * forc
 // a      : Particle radius (in)
 // L_d    : boxsize in x y and z-directions (in)
 // total_mobility_d: matrix of the computed total mobility, size 3*3*N*N (in/out, is overwritten)
-void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double eta, double a, double * L_d, 
-			     double * total_mobility_d, double * force_d, double * disp_d, int * myInfo_d)
+void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real eta, real a, real * L_d, 
+			     real * total_mobility_d, real * force_d, real * disp_d, int * myInfo_d)
 {
   cudaThreadSynchronize(); // just for debugging
   cudaCheckError("START");
@@ -288,37 +363,51 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
   int numBlocks = (N+numThreadsPerBlock-1)/numThreadsPerBlock;
   
   // compute the mobility Matrix
-  double * helper_d=NULL;
+  real * helper_d=NULL;
   int ressize=max(4000,lda*DIM*N); // ressize has to be larger for small matrizes (else magma complains)
-  cuda_safe_mem(cudaMalloc( (void**)&helper_d, ressize*sizeof(double) ));
+  cuda_safe_mem(cudaMalloc( (void**)&helper_d, ressize*sizeof(real) ));
   assert(helper_d);
-  double * mobility_d=NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&mobility_d, lda*DIM*N*sizeof(double) ));
+  real * mobility_d=NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&mobility_d, lda*DIM*N*sizeof(real) ));
   assert(mobility_d);
-  //printMatrixDev(mobility_d,3*N,3*N,"before mobility:");
-  //printVectorDev(r_d,3*N,"positions");
   sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(mobility_d,3*N);
   cudaThreadSynchronize(); // just for debugging
   cudaCheckError("sd set zero");
+  if(N>32){
+    printVectorDev(r_d,96,"pos a: ");
+    printVectorDev(r_d+96,N*3-96,"pos b: ");
+  }
+  else{
+    printVectorDev(r_d,3*N,"pos: ");
+  }
   sd_compute_mobility_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,1./(6.*M_PI*eta*a), a, L_d, mobility_d);
   cudaThreadSynchronize(); // just for debugging
-  //printMatrixDev(mobility_d,3*N,3*N,"mobility_d");
   cudaCheckError("compute mobility error");
-  //printMatrixDev(mobility_d,3*N,3*N,"early mobility:");
   // compute the resistance matrix
-  double * resistance_d=NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&resistance_d, ressize*sizeof(double) )); //this needs to be bigger for matrix inversion
+  real * resistance_d=NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&resistance_d, ressize*sizeof(real) )); //this needs to be bigger for matrix inversion
   assert(resistance_d !=NULL);
   sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(resistance_d,3*N);
+  cudaThreadSynchronize(); // debug
+  cudaCheckError("sd_set_zero");
   sd_compute_resistance_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,1./(6.*M_PI*eta*a), a, L_d, resistance_d, myInfo_d);
   cudaThreadSynchronize(); // we need both matrices to continue;
-  cudaCheckError("compute resistance or mobility error");
+  cudaCheckError("compute resistance error");
+#ifdef SD_DEBUG
   assert(!hasAnyNanDev(mobility_d,N*3*lda));
   assert(!hasAnyNanDev(resistance_d,N*3*lda));
   assert(isSymmetricDev(resistance_d,lda,N*3));
-  //cublasStatus_t status;
+#endif
   
   double err = sd_iterative_solver(cublas, mobility_d, resistance_d, force_d, 3*N,disp_d);
+#ifdef SD_DEBUG
+  if (hasAnyNanDev(disp_d,N*3)){
+    printVectorDev(disp_d,N*3,"disp");
+    printVectorDev(force_d,N*3,"force");
+    printMatrixDev(resistance_d,lda,N*3,"resistance produces nans?");
+  }
+  assert(!hasAnyNanDev(disp_d,N*3));
+#endif
   
   // brownian part
   if (temperature > 0){
@@ -327,15 +416,14 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
     int N_ldd = ((N+31)/32)*32;
     int num_of_rands = N_ldd*myInfo_h[2]*2*DIM+N_ldd*DIM;
     
-    double * brownian_force_nf = NULL;
-    cuda_safe_mem(cudaMalloc( (void**)&brownian_force_nf, (3*N)*sizeof(double) ));     assert(brownian_force_nf != NULL);
-    double * brownian_force_ff = NULL;
-    cuda_safe_mem(cudaMalloc( (void**)&brownian_force_ff, (3*N)*sizeof(double) ));     assert(brownian_force_ff != NULL);
-    
-    double * gaussian = NULL;
-    cuda_safe_mem(cudaMalloc( (void**)&gaussian, (num_of_rands)*sizeof(double) ));     assert(gaussian != NULL);
-    double * gaussian_ff = gaussian;
-    double * gaussian_nf = gaussian+N_ldd*DIM;
+    real * brownian_force_nf = NULL;
+    cuda_safe_mem(cudaMalloc( (void**)&brownian_force_nf, (3*N)*sizeof(real) ));     assert(brownian_force_nf != NULL);
+    real * brownian_force_ff = NULL;
+    cuda_safe_mem(cudaMalloc( (void**)&brownian_force_ff, (3*N)*sizeof(real) ));     assert(brownian_force_ff != NULL);
+    real * gaussian = NULL;
+    cuda_safe_mem(cudaMalloc( (void**)&gaussian, (num_of_rands)*sizeof(real) ));     assert(gaussian != NULL);
+    real * gaussian_ff = gaussian;
+    real * gaussian_nf = gaussian+N_ldd*DIM;
     static curandGenerator_t generator = NULL;
     static int               sd_random_generator_offset=0;
     if (generator == NULL){
@@ -346,11 +434,12 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
     }
     //#ifdef FLATNOISE
     // this does not work yet:
-    //curandCall(curandGenerateUniformDouble(generator, gaussian_d, num_of_rands, 0, sqrt(24.*temperature/time_step)));
+    //curandCall(curandGenerateUniformReal(generator, gaussian_d, num_of_rands, 0, sqrt(24.*temperature/time_step)));
     //#else
-    curandCall(curandGenerateNormalDouble(generator, gaussian, num_of_rands, 0, sqrt(2.*temperature/time_step)));
+    curandCall(curandGenerateNormalReal(generator, gaussian, num_of_rands, 0, sqrt(2.*temperature/time_step)));
     //#endif
     if (myInfo_h[2]){
+      std::cerr << "Bla!\n";
       int * gamma_index = NULL;
       cuda_safe_mem(cudaMalloc( (void**)&gamma_index, (myInfo_h[2]*N)*sizeof(int) ));    assert(gamma_index != NULL);
       sd_set_zero<<<64,192>>>(brownian_force_nf,3*N);
@@ -358,18 +447,78 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
       sd_compute_brownian_force_nearfield<<<numBlocks, numThreadsPerBlock>>>(r_d, gaussian_nf, N, L_d, a,
 									     1./(6.*M_PI*eta*a), brownian_force_nf);
     }// end of near field
-    /*static bool recalc = true;
-    while (recalc){
-      if (recalc){
-	calculate_maxmin_eigenvalues(3*N,mobility_d,lda,
+    static real * cheby_coefficents=NULL;
+    static int N_chebyshev;
+    static bool recalc_ew = true;
+    int size=3*N;
+    real lambda_min, lambda_max;
+    if (recalc_ew){
+      calculate_maxmin_eigenvalues(3*N,mobility_d,&lambda_min, &lambda_max);
+      N_chebyshev = calculate_chebyshev_coefficents(lambda_min, lambda_max,1e-3,&cheby_coefficents);
+      recalc_ew=false;
+    }
+    if (lambda_min < 0){
+      printMatrixDev(mobility_d,lda,size,"Mobility has negative eigenvalues!\n");
+      errexit();
+    }
+    real * chebyshev_vec_curr, * chebyshev_vec_last, * chebyshev_vec_next;
+    real gaussian_ff_norm;
+    sd_set_zero<<<192,192>>>(brownian_force_ff,size);
+    cudaThreadSynchronize(); // just for debugging
+    cudaCheckError("set zero");
+    cublasCall(cublasRnrm2(cublas, size, gaussian_ff, 1, &gaussian_ff_norm));
+    chebyshev_vec_curr=gaussian_ff;
+    cublasCall(cublasRaxpy( cublas, size, cheby_coefficents+0, chebyshev_vec_curr, 1, brownian_force_ff, 1 ));
+    printVectorDev(brownian_force_ff, min(15,size), "l. ?458: ");
+    //chebyshev_vec_last=chebyshev_vec_curr;
+    chebyshev_vec_last=NULL;
+    cuda_safe_mem(cudaMalloc( (void**)&chebyshev_vec_last, size*sizeof(real) ));    assert(chebyshev_vec_last != NULL);
+    chebyshev_vec_next=NULL;
+    cuda_safe_mem(cudaMalloc( (void**)&chebyshev_vec_next, size*sizeof(real) ));    assert(chebyshev_vec_next != NULL);
+    //sd_set_zero<<<192,192>>>(chebyshev_vec_????,size);
+    real lambda_minus=lambda_max-lambda_min;
+    for (int i=1;i<=N_chebyshev;i++){
+      real alpha=2./lambda_minus, beta =0;
+      if (i==1){
+	alpha=1./lambda_minus;
       }
-      // do the calculation
-      //if (error to big && !recalc){
-      //  recalc = true;
-      //else{
-      //  recalc = false
-      //}
-      }*/
+      cublasCall(cublasRgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mobility_d, lda, chebyshev_vec_curr, 1, &beta, chebyshev_vec_next , 1));
+      alpha=-2*(lambda_min+lambda_max)/lambda_minus;
+      if (i==1){
+	alpha=-(lambda_min+lambda_max)/lambda_minus;
+      }
+      cublasCall(cublasRaxpy( cublas, size, &alpha, chebyshev_vec_curr, 1, chebyshev_vec_next, 1 ));
+      if (i>1){
+	alpha=-1;
+	cublasCall(cublasRaxpy( cublas, size, &alpha, chebyshev_vec_last, 1, chebyshev_vec_next, 1 ));
+      }
+      std::swap(chebyshev_vec_curr,chebyshev_vec_next);
+      std::swap(chebyshev_vec_last,chebyshev_vec_next);
+      cublasCall(cublasRaxpy( cublas, size, cheby_coefficents+i, chebyshev_vec_curr, 1, brownian_force_ff, 1 ));
+      real tmp;
+      cublasCall(cublasRnrm2(cublas, size, brownian_force_ff, 1 , &tmp));
+      fprintf(stderr,"norm brownian force: %e ", tmp);
+      cublasCall(cublasRnrm2(cublas, size, chebyshev_vec_last, 1 , &tmp));
+      fprintf(stderr,"norm cheby last: %e ", tmp);
+      cublasCall(cublasRnrm2(cublas, size, chebyshev_vec_curr, 1 , &tmp));
+      fprintf(stderr,"norm cheby curr: %e ", tmp);
+      cublasCall(cublasRnrm2(cublas, size, chebyshev_vec_next, 1 , &tmp));
+      fprintf(stderr,"norm cheby next: %e \n", tmp);
+      //printVectorDev(brownian_force_ff, 15,  "l. ?467:      ");
+      //printVectorDev(chebyshev_vec_last, 15, "cheb467: last ");
+      //printVectorDev(chebyshev_vec_curr, 15, "cheb467: curr ");
+      //printVectorDev(chebyshev_vec_next, 15, "cheb467: next ");
+    }
+    // errorcheck of chebyshev polynomial
+    assert(isSymmetricDev(mobility_d,lda,size));
+    real zMz;
+    real alpha = 1, beta = 0;
+    cublasCall(cublasRgemv(cublas, CUBLAS_OP_T, size, size, &alpha, mobility_d, lda, brownian_force_ff, 1, &beta,  chebyshev_vec_last, 1));
+    cublasCall(cublasRdot(cublas, size, chebyshev_vec_last, 1, brownian_force_ff, 1, &zMz));
+    real E_cheby = sqrt(abs(zMz-gaussian_ff_norm*gaussian_ff_norm))/gaussian_ff_norm;
+    fprintf(stderr, "The error of the Chebyshev-approximation was %7.3f%% nrm y:%e,  zMz:%e \n",E_cheby*100,gaussian_ff_norm, zMz);
+    
+    
     
     
   }// end of brownian motion
@@ -387,40 +536,48 @@ void sd_compute_displacement(cublasHandle_t cublas, double * r_d, int N, double 
 // and returnes disp
 // mobility and resistance are square matrizes with size <size> and lda <((size+31)/32)*32>
 // force and disp are vectors of size <size>
-double sd_iterative_solver(cublasHandle_t cublas, const double * mobility, const double * resistance, const double * force, int size, double * disp)
+real sd_iterative_solver(cublasHandle_t cublas, const real * mobility, const real * resistance, const real * force, int size, real * disp)
 {
   int lda = ((size+31)/32)*32;
-  double * mat_a = NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&mat_a, lda*size*sizeof(double) ));       assert(mat_a != NULL);
-  double * mat_a_bak = NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&mat_a_bak, lda*size*sizeof(double) ));   assert(mat_a_bak != NULL);
+#ifdef SD_DEBUG
+  assert(!hasAnyNanDev(mobility,size*lda));
+  assert(!hasAnyNanDev(resistance,size*lda));
+  assert(!hasAnyNanDev(force,size));
+#endif
+  real * mat_a = NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&mat_a, lda*size*sizeof(real) ));       assert(mat_a != NULL);
+  real * mat_a_bak = NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&mat_a_bak, lda*size*sizeof(real) ));   assert(mat_a_bak != NULL);
   sd_set_zero_matrix<<<192,32>>>(mat_a,size);
-  double * mob_force=NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&mob_force, size*sizeof(double) ));       assert(mob_force !=NULL);
-  double * result_checker=NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&result_checker, size*sizeof(double) ));  assert(result_checker !=NULL);
+  real * mob_force=NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&mob_force, size*sizeof(real) ));       assert(mob_force !=NULL);
+  real * result_checker=NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&result_checker, size*sizeof(real) ));  assert(result_checker !=NULL);
   // vars for cuBLAS calls
-  double alpha=1;
-  double beta=0;
+  real alpha=1;
+  real beta=0;
   // mat_a = (1+resistance*mobility)
-  cublasCall(cublasDgemm(cublas,CUBLAS_OP_N,CUBLAS_OP_N, size , size ,size, &alpha, mobility, lda,resistance, lda, &beta,mat_a, lda));
+  cublasCall(cublasRgemm(cublas,CUBLAS_OP_N,CUBLAS_OP_N, size , size ,size, &alpha, mobility, lda,resistance, lda, &beta,mat_a, lda));
   sd_add_identity_matrix<<<128,10>>>(mat_a,size,lda);// TODO: FIXME:  calculate something to set better values ...
-  cuda_safe_mem(cudaMemcpy(mat_a_bak, mat_a, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
+  cuda_safe_mem(cudaMemcpy(mat_a_bak, mat_a, lda*size*sizeof(real),cudaMemcpyDeviceToDevice));
   // mob_force = mobility * force
-  cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mobility, lda, force, 1, &beta, mob_force, 1));
+  cublasCall(cublasRgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mobility, lda, force, 1, &beta, mob_force, 1));
+#ifdef SD_DEBUG
+  assert(!hasAnyNanDev(mat_a,size*lda));
+  assert(!hasAnyNanDev(mob_force,size));
+#endif
   int info;
-  double res;
-  //printVectorDev((double *)force,6,"Kraft");
+  real res;
+  //printVectorDev((real *)force,6,"Kraft");
   //printVectorDev(disp,6,"before");
   info = sd_bicgstab_solver(cublas ,size, mat_a,lda, mob_force, 1e-4, 10*size+100, disp, &res);
   //printVectorDev(disp,6,"after");
   // compary to expected result
-  //cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
+  //cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(real),cudaMemcpyDeviceToDevice));
   
   if (info != 0){
     if (info == 1){
-      fprintf(stderr, "Iterative solver did not fully converge ... the residuum was %6e\n\
-We will continue anyway ...\n",res);
+      if (warnings>1) fprintf(stderr, "Iterative solver did not fully converge ... the residuum was %6e\nWe will continue anyway ...\n",res);
     }
     else{ // info == 2 || info == 4
       // try again with reseted displacement vector as initial guess
@@ -428,12 +585,10 @@ We will continue anyway ...\n",res);
       info = sd_bicgstab_solver(cublas ,size, mat_a,lda, mob_force, 1e-4, 10*size+100, disp, &res);
       //printVectorDev(disp,6,"after zeroing");
       if (info == 1){
-	fprintf(stderr, "Iterative solver did not fully converge ... the residuum was %6e\n\
-We will continue anyway ...\n",res);
+	if (warnings>1) fprintf(stderr, "Iterative solver did not fully converge ... the residuum was %6e\nWe will continue anyway ...\n",res);
       }
       else if (info == 2){
-	fprintf(stderr, "Iterative solver failed ... the residuum was %6e\n\
-We will continue but the results may be problematic ...\n",res);
+	if(warnings) fprintf(stderr, "Iterative solver failed ... the residuum was %6e\nWe will continue but the results may be problematic ...\n",res);
       }
     }
     // dgetrs is not better - the contrary: results are worse ...
@@ -445,27 +600,29 @@ We will continue but the results may be problematic ...\n",res);
       disp, size, &info);
       assert(info==0);
       // compary to expected result
-      cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(double),cudaMemcpyDeviceToDevice));
-      cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
+      cuda_safe_mem(cudaMemcpy(mat_a, mat_a_bak, lda*size*sizeof(real),cudaMemcpyDeviceToDevice));
+      cublasCall(cublasRgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
       alpha=-1;
-      cublasCall(cublasDaxpy( cublas, size, &alpha, mob_force, 1, result_checker, 1));
+      cublasCall(cublasRaxpy( cublas, size, &alpha, mob_force, 1, result_checker, 1));
       alpha=1;
-      cublasCall(cublasDdot( cublas, size, result_checker, 1, result_checker, 1,&res));
+      cublasCall(cublasRdot( cublas, size, result_checker, 1, result_checker, 1,&res));
       if (res > 1e-1){
       fprintf(stderr, "All methods failed :(. The residuum from getrs was %e\n",res);
-      //cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
+      //cublasCall(cublasRgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, result_checker, 1));
       //printVectorDev(mob_force, size, "mob_force");
       //printVectorDev(result_checker, size, "result_checker");
       //printVectorDev(disp, size, "disp");
-      //printMatrixDev((double *)mobility,lda,size,"mobility");
-      //printMatrixDev((double *)resistance,lda,size,"res");
-      //printMatrixDev((double *)mat_a,lda,size,"mat_a");
+      //printMatrixDev((real *)mobility,lda,size,"mobility");
+      //printMatrixDev((real *)resistance,lda,size,"res");
+      //printMatrixDev((real *)mat_a,lda,size,"mat_a");
       }*/
     //magma_int_t magma_dgetrs_gpu( magma_trans_t trans, magma_int_t n, magma_int_t nrhs,
     //				  double *dA, magma_int_t ldda, magma_int_t *ipiv,
     //				  double *dB, magma_int_t lddb, magma_int_t *info);
   }
-  
+#ifdef SD_DEBUG
+  assert(!hasAnyNanDev(disp,size));
+#endif
   //assert(info==0);
   cuda_safe_mem(cudaFree((void*)mat_a));
   cuda_safe_mem(cudaFree((void*)mat_a_bak));
@@ -478,79 +635,81 @@ We will continue but the results may be problematic ...\n",res);
 // and returnes disp
 // mobility and resistance are square matrizes with size <size> and lda <((size+31)/32)*32>
 // force and disp are vectors of size <size>
-void sd_iterative_solver_own(cublasHandle_t cublas, const double * mobility, const double * resistance, const double * force, int size, double * disp)
+void sd_iterative_solver_cg(cublasHandle_t cublas, const real * mobility, const real * resistance, const real * force, int size, real * disp)
 {
   int lda = ((size+31)/32)*32;
-  double * mat_a = NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&mat_a, lda*size*sizeof(double) ));  assert(mat_a != NULL);
+  real * mat_a = NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&mat_a, lda*size*sizeof(real) ));  assert(mat_a != NULL);
   sd_set_zero_matrix<<<192,32>>>(mat_a,size);
-  double * mob_force=NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&mob_force, size*sizeof(double) ));  assert(mob_force !=NULL);
-  double * resid=NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&resid, size*sizeof(double) ));      assert(resid !=NULL);
-  double * p=NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&p, size*sizeof(double) ));          assert(p !=NULL);
-  double * Ap=NULL;
-  cuda_safe_mem(cudaMalloc( (void**)&Ap, size*sizeof(double) ));         assert(Ap !=NULL);
-  double rs_old;
+  real * mob_force=NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&mob_force, size*sizeof(real) ));  assert(mob_force !=NULL);
+  real * resid=NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&resid, size*sizeof(real) ));      assert(resid !=NULL);
+  real * p=NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&p, size*sizeof(real) ));          assert(p !=NULL);
+  real * Ap=NULL;
+  cuda_safe_mem(cudaMalloc( (void**)&Ap, size*sizeof(real) ));         assert(Ap !=NULL);
+  real rs_old;
   // count how many iterations we need
   int counter=0;
+#ifdef SD_DEBUG
   assert(!hasAnyNanDev(mobility,size*lda));
   assert(!hasAnyNanDev(resistance,size*lda));
+#endif
   // vars for cuBLAS calls
-  double alpha=1;
-  double beta=0;
+  real alpha=1;
+  real beta=0;
   // mat_a = (1+resistance*mobility)
-  cublasCall(cublasDgemm(cublas,CUBLAS_OP_N,CUBLAS_OP_N, size , size ,size, &alpha, mobility, lda,resistance, lda, &beta,mat_a, lda));
+  cublasCall(cublasRgemm(cublas,CUBLAS_OP_N,CUBLAS_OP_N, size , size ,size, &alpha, mobility, lda,resistance, lda, &beta,mat_a, lda));
   sd_add_identity_matrix<<<128,10>>>(mat_a,size,lda);// TODO: FIXME:  calculate something to set better values ...
   // mob_force = mobility * force
-  cublasCall(cublasDgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mobility, lda, force, 1, &beta, mob_force, 1));
+  cublasCall(cublasRgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mobility, lda, force, 1, &beta, mob_force, 1));
   //printMatrixDev(mat_a,lda,size,"A");
   // use mob_force as initial guess
-  cublasCall(cublasDcopy(cublas, size,mob_force,1,disp, 1));
+  cublasCall(cublasRcopy(cublas, size,mob_force,1,disp, 1));
   //resid = mob_force-mat_a * disp; //r = b-A*x
   alpha = -1;
-  cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, resid, 1));
+  cublasCall(cublasRgemv(cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, disp, 1, &beta, resid, 1));
   //printVectorDev(resid,size,"-A*disp");
   //printVectorDev(mob_force,size,"solution");
   alpha = 1;
-  cublasCall(cublasDaxpy(cublas, size, &alpha, mob_force, 1, resid, 1));
+  cublasCall(cublasRaxpy(cublas, size, &alpha, mob_force, 1, resid, 1));
   //printVectorDev(resid,size,"residuum");
   
   // p = resid;                     //p=r
-  cublasCall(cublasDcopy(cublas, size,resid,1,p, 1));
+  cublasCall(cublasRcopy(cublas, size,resid,1,p, 1));
   // rsquare_old = r * r;           //rsold=r*r
-  cublasCall(cublasDdot( cublas, size, resid, 1, resid, 1, &rs_old));
+  cublasCall(cublasRdot( cublas, size, resid, 1, resid, 1, &rs_old));
   std::cerr << counter <<" iterations in integrate_sd::inversion, residuum is "<<rs_old<<std::endl;
-  const double req_prec=1e-4;
+  const real req_prec=1e-4;
   if (sqrt(rs_old) < req_prec){
     printf("Converged immediatly\n");
     return;
   }
   while (true){
     // Ap = A * p
-    beta = 0;  alpha = 1; cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, p, 1, &beta, Ap, 1));
-    double pAp;
-    cublasCall(cublasDdot( cublas, size, p, 1, Ap, 1, &pAp));
+    beta = 0;  alpha = 1; cublasCall(cublasRgemv(cublas, CUBLAS_OP_T, size, size, &alpha, mat_a, lda, p, 1, &beta, Ap, 1));
+    real pAp;
+    cublasCall(cublasRdot( cublas, size, p, 1, Ap, 1, &pAp));
     assert(!isnan(pAp));
     //                              //alpha=rsold/pAp
     alpha = rs_old / pAp;
     // disp += alpha * p            // x=x+alpha * p
-    cublasCall(cublasDaxpy(cublas, size, &alpha,  p, 1, disp, 1));
+    cublasCall(cublasRaxpy(cublas, size, &alpha,  p, 1, disp, 1));
     // resid -= alpha * Ap;         // r=r-alpha * Ap
-    double minusalpha=-alpha;
-    cublasCall(cublasDaxpy(cublas, size, &minusalpha, Ap, 1, resid, 1));
-    double rs_new;
+    real minusalpha=-alpha;
+    cublasCall(cublasRaxpy(cublas, size, &minusalpha, Ap, 1, resid, 1));
+    real rs_new;
     // rs_new = r * r;              // rsnew = r*r
-    cublasCall(cublasDdot( cublas, size, resid, 1, resid, 1, &rs_new));
+    cublasCall(cublasRdot( cublas, size, resid, 1, resid, 1, &rs_new));
     if (sqrt(rs_new) < req_prec || counter > 2000){
       break;
     }
     // p=resid+rs_new/rs_old*p      // p = r+rsnew/rsold*p
     alpha = rs_new/rs_old;
-    cublasCall(cublasDscal( cublas, size, &alpha, p, 1));
+    cublasCall(cublasRscal( cublas, size, &alpha, p, 1));
     alpha=1;
-    cublasCall(cublasDaxpy( cublas, size, &alpha, resid, 1, p, 1));
+    cublasCall(cublasRaxpy( cublas, size, &alpha, resid, 1, p, 1));
     //                              // rsold=rsnew;
     rs_old=rs_new;
     counter++;
@@ -606,23 +765,23 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
   real tolb;
   // compute the norm of b
   real normb;
-  cublasCall(cublasDdot( cublas, size, b, 1, b, 1, &normb));
+  cublasCall(cublasRdot( cublas, size, b, 1, b, 1, &normb));
   normb=sqrt(normb);
   //tolb=min(tol*size, tol*normb); // tol is not realy usefull as this wont be reached ... at least without preconditioning
   //tolb=max(normb*eps, tolb);
   tolb=tol*normb;
   // r0 = b-A*x
   alpha = -1;
-  cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, r0, 1));
+  cublasCall(cublasRgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, r0, 1));
   alpha = 1;
-  cublasCall(cublasDaxpy(cublas, size, &alpha, b, 1, r0, 1));
+  cublasCall(cublasRaxpy(cublas, size, &alpha, b, 1, r0, 1));
   // r = r0
-  cublasCall(cublasDcopy(cublas, size,r0,1,r, 1));
+  cublasCall(cublasRcopy(cublas, size,r0,1,r, 1));
   // rr0 = r*r0
   real rr0;
-  cublasCall(cublasDdot( cublas, size, r0, 1, r0, 1, &rr0));
+  cublasCall(cublasRdot( cublas, size, r0, 1, r0, 1, &rr0));
   // p =r
-  cublasCall(cublasDcopy(cublas, size,r0,1,p, 1));
+  cublasCall(cublasRcopy(cublas, size,r0,1,p, 1));
   // normr=norm(r)
   real normr=sqrt(rr0);
   int iteration=0;
@@ -631,15 +790,16 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
   // check for conversion or max iterations
   while (iteration < maxit && normr >= tolb){
     // v=A*p
-    cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, p, 1, &beta, v, 1));
+    cublasCall(cublasRgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, p, 1, &beta, v, 1));
     // vr0 = v*r0
     real vr0;
-    cublasCall(cublasDdot( cublas, size, v, 1, r0, 1, &vr0));
+    cublasCall(cublasRdot( cublas, size, v, 1, r0, 1, &vr0));
     if (fabs(vr0) < eps || rr0 == 0){
-      if (fabs(vr0) < eps)
-	fprintf(stderr, "BICGSTAB break-down.\n");
-      else
-	fprintf(stderr, "BICGSTAB solution stagnates.\n");
+      if (fabs(vr0) < eps){
+	if (warnings > 1) fprintf(stderr, "BICGSTAB break-down.\n");
+      }else{
+	if (warnings > 1) fprintf(stderr, "BICGSTAB solution stagnates.\n");
+      }
       cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
       res[0] = normr;
       if (tolb > normr)     { return 0;}
@@ -650,18 +810,19 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
     real myAlpha=rr0/vr0;
     real minusMyAlpha = -myAlpha;
     // s = r - alpha v
-    //cublasCall(cublasDcopy(cublas, size,r,1,s, 1));
-    cublasCall(cublasDaxpy(cublas, size, &minusMyAlpha, v, 1, r, 1)); //s->r
+    //cublasCall(cublasRcopy(cublas, size,r,1,s, 1));
+    cublasCall(cublasRaxpy(cublas, size, &minusMyAlpha, v, 1, r, 1)); //s->r
     // t = A * s
-    cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, r, 1, &beta, t, 1));// s->r
+    cublasCall(cublasRgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, r, 1, &beta, t, 1));// s->r
     // ts = s * t
     real ts;
-    cublasCall(cublasDdot( cublas, size, t, 1, r, 1, &ts));// s->r
+    cublasCall(cublasRdot( cublas, size, t, 1, r, 1, &ts));// s->r
     // tt = t * t
     real tt;
-    cublasCall(cublasDdot( cublas, size, t, 1, t, 1, &tt));
-    if (tt==0 || ts == 0){
-      fprintf(stderr, "BICGSTAB break-down.\n");
+    cublasCall(cublasRdot( cublas, size, t, 1, t, 1, &tt));
+    if (abs(tt)<eps || ts == 0){
+      fprintf(stderr,"Exit: abs(tt)<eps || ts == 0\n");
+      if (warnings > 1) fprintf(stderr, "BICGSTAB break-down.\n");
       cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
       res[0] = normr;
       if (tolb > normr)     { 
@@ -677,72 +838,70 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
     // omega = ts/tt
     real myOmega=ts/tt;
     // x = x + alpha p + omega s
-    cublasCall(cublasDaxpy(cublas, size, &myAlpha, p, 1, x, 1));
-    cublasCall(cublasDaxpy(cublas, size, &myOmega, r, 1, x, 1));
+    cublasCall(cublasRaxpy(cublas, size, &myAlpha, p, 1, x, 1));
+    cublasCall(cublasRaxpy(cublas, size, &myOmega, r, 1, x, 1));
     // copyback of s to r
     // r = s - omega t
     real minusMyOmega=-1*myOmega;
-    cublasCall(cublasDaxpy(cublas, size, &minusMyOmega, t, 1, r, 1));
+    cublasCall(cublasRaxpy(cublas, size, &minusMyOmega, t, 1, r, 1));
     //myOmega*=-1;
     // r1r0 = r * r0
     real r1r0;
-    cublasCall(cublasDdot( cublas, size, r, 1, r0, 1, &r1r0));
+    cublasCall(cublasRdot( cublas, size, r, 1, r0, 1, &r1r0));
     // beta = (alpha * r1r0 ) / (omega rr0)
     real myBeta = (myAlpha*r1r0)/(myOmega*rr0);
+    if (abs(myBeta)>1/eps){
+      fprintf(stderr,"Exit: abs(myBeta)<1/eps\n");
+      cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
+      res[0] = normr;
+      if (tolb > normr)     { return 0;}
+      if (tolb*100 > normr) { return 1;}
+      else                  { return 2;}
+    }
     // p = r + beta ( p - omega v)= beta p + r - beta omega v
-    cublasCall(cublasDscal(cublas, size, &myBeta, p, 1));
-    cublasCall(cublasDaxpy(cublas, size, &alpha, r, 1, p, 1));
+    cublasCall(cublasRscal(cublas, size, &myBeta, p, 1));
+    cublasCall(cublasRaxpy(cublas, size, &alpha, r, 1, p, 1));
     alpha=-myBeta*myOmega;
-    cublasCall(cublasDaxpy(cublas, size, &alpha, v, 1, p, 1));
+    cublasCall(cublasRaxpy(cublas, size, &alpha, v, 1, p, 1));
     alpha=1;
     rr0=r1r0;
     real r1r1;
-    cublasCall(cublasDdot( cublas, size, r, 1, r, 1, &r1r1));
+    cublasCall(cublasRdot( cublas, size, r, 1, r, 1, &r1r1));
     normr=sqrt(r1r1);
     iteration++;
     if (lastnorm*sqrt(eps) > normr){ // restart
       //fprintf(stderr, "recalculation r\n");
-      cublasCall(cublasDcopy(cublas, size,b,1,r, 1));
+      cublasCall(cublasRcopy(cublas, size,b,1,r, 1));
       alpha=-1;beta=1;
-      cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, r, 1));
+      cublasCall(cublasRgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, r, 1));
       alpha= 1;beta=0;
-      cublasCall(cublasDdot( cublas, size, r, 1, r, 1, &rr0));
+      cublasCall(cublasRdot( cublas, size, r, 1, r, 1, &rr0));
       normr=sqrt(rr0);
       lastnorm = normr;
       // r = r0
-      cublasCall(cublasDcopy(cublas, size,r,1,r0, 1));
+      cublasCall(cublasRcopy(cublas, size,r,1,r0, 1));
       // p =r
-      cublasCall(cublasDcopy(cublas, size,r,1,p, 1));
+      cublasCall(cublasRcopy(cublas, size,r,1,p, 1));
     }
-    if (iteration%50000 == 0){ // enable debugging by setting this to a lower value
+    if (iteration%500000 == 0){ // enable debugging by setting this to a lower value
       real realnorm;
       {// recalculate normr
-	cublasCall(cublasDcopy(cublas, size,b,1,test, 1));
+	cublasCall(cublasRcopy(cublas, size,b,1,test, 1));
 	alpha=-1;beta=1;
-	cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, test, 1));
+	cublasCall(cublasRgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, test, 1));
 	alpha= 1;beta=0;
-	cublasCall(cublasDdot( cublas, size, test, 1, test, 1, &realnorm));
+	cublasCall(cublasRdot( cublas, size, test, 1, test, 1, &realnorm));
 	realnorm=sqrt(realnorm);
       }
       fprintf(stderr,"  Iteration: %6d Residuum: %12f RealResiduum: %12f\n",iteration, normr, realnorm);
     }
     if (initnorm*1e10 < normr){ // somehow our solution explodes ...
-      fprintf(stderr, "BICGSTAB did not converge, residuum exploded. Aborting.\n");
+      if (warnings) fprintf(stderr, "BICGSTAB did not converge, residuum exploded. Aborting.\n");
       cuda_safe_mem(cudaFree((void*)r0));cuda_safe_mem(cudaFree((void*)r));cuda_safe_mem(cudaFree((void*)p));cuda_safe_mem(cudaFree((void*)v));cuda_safe_mem(cudaFree((void*)t));cuda_safe_mem(cudaFree((void*)test));
       res[0]= normr;
       return 4;
     }
   }
-  // this should not be needed, as we restart if it is needed ...
-  /*{// recalculate normr
-    cublasCall(cublasDcopy(cublas, size,b,1,r, 1));
-    alpha=-1;beta=1;
-    cublasCall(cublasDgemv(cublas, CUBLAS_OP_T, size, size, &alpha, A, lda, x, 1, &beta, r, 1));
-    alpha= 1;beta=0;
-    real r1r1;
-    cublasCall(cublasDdot( cublas, size, r, 1, r, 1, &r1r1));
-    normr=sqrt(r1r1);
-    }*/
   res[0]=normr;
   if (normr > tolb*1.01){
     fprintf(stderr, "BICGSTAB solution did not converge after %d iterations. Error was %e1 %% to high.\n",iteration,(normr/tolb-1)*100);
@@ -766,6 +925,219 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
   return 0;
 }
 
+// calculates the largest and snalles eigenvalue of the matrix
+// size        : size of the eigenvector / the matrix           (IN)
+// mobility_d  : handle of the mobility matrix (on the device)  (IN)
+// lambda_min  : smalles eigenvalue                            (OUT)
+// lambda_max  : largest eigenvalue                            (OUT)
+void calculate_maxmin_eigenvalues(int size,real *mobility_d,real * lambda_min,real * lambda_max){
+  int lda = ((size+31)/32)*32;
+  int maxit=max(500,size);
+  int IDO;
+  char BMAT='I'; // standard eigenvalue problem
+  char WHICH[]="SR"; // start with largest eigenvalue
+  int NEV = 1; // only one eigenvalue
+  // TUNING: these could be adjusted?
+  real TOL=1e-1;
+  if (sizeof(double) == sizeof(real)){
+    TOL=max(1e-12,TOL);
+  } else {
+    TOL=max(1e-6,TOL);
+  }
+  // TUNING: make some tests to find good value ...
+  int NCV=min(size, 6); // must be at least 3, but a bit bigger should be better ...
+  int LDV=lda;
+  int LWORKL=3*NCV*(NCV + 2);
+  int mode=1;
+  int IPARAM[11] = {1,0,maxit,1,0,0,mode,0,0,0,0};
+  int IPNTR[14];
+  int INFO=0;
+  real RESID[size];
+  real V[LDV*NCV];
+  real WORKD[3*size];
+  real WORKL[LWORKL];
+  real * vec_in_d;
+  real * vec_out_d;
+  cuda_safe_mem(cudaMalloc((void**)&vec_in_d , lda*sizeof(real)));
+  cuda_safe_mem(cudaMalloc((void**)&vec_out_d, lda*sizeof(real)));
+  for (int minmax=0;minmax<2;minmax++){
+    IDO=0;
+    if (minmax){
+      sprintf(WHICH,"LR");
+      INFO=1;
+      IPARAM[2]=maxit;
+      TOL=1e-3;
+    }
+    while (IDO != 99){
+      //dnaupd_(&IDO,&BMAT,&N,WHICH,&NEV,&TOL,RESID.memptr(),&NCV,V.memptr(),&LDV,IPARAM,IPNTR,WORKD,WORKL,&LWORKL,&INFONAUP);
+      rnaupd(&IDO,&BMAT,&size, WHICH, &NEV, &TOL, RESID, &NCV, V, &LDV, IPARAM, IPNTR, WORKD, WORKL, &LWORKL, &INFO);
+      switch (IDO){
+      case 1:
+	cuda_safe_mem(cudaMemcpy(vec_in_d,WORKD+IPNTR[0]-1,size*sizeof(real),cudaMemcpyHostToDevice));
+	{
+	  real alpha=1, beta=0;
+	  cublasCall(cublasRgemv( cublas, CUBLAS_OP_T, size, size, &alpha, mobility_d, lda, vec_in_d, 1, &beta, vec_out_d, 1));
+	}
+	cuda_safe_mem(cudaMemcpy(WORKD+IPNTR[1]-1,vec_out_d,size*sizeof(real),cudaMemcpyDeviceToHost));
+	break;
+      case -1:
+      case 2:
+      case 3:
+      case 4:
+	fprintf(stderr,"Error in %s l. %d: unexpected work from rnaupd: %d: Not Implemented!\n",__FILE__,__LINE__,IDO);
+	break;
+      case 99: //we are done
+	break;
+      default:
+	fprintf(stderr,"Error in %s l. %d: unexpected work from rnaupd: %d: Not Understood!\n",__FILE__,__LINE__,IDO);
+	break;
+      }
+    } 
+    fprintf(stderr,"calculationg eigenvalue needed %d iterations and %d gemv operations (tolerance is %e, EW is %e).\n"
+	    ,IPARAM[2], IPARAM[8], TOL,WORKL[IPNTR[5]-1]);
+    if (INFO){
+      fprintf(stderr,"Unexpected return value in %s l. %d from rnaupd_: %d\n",__FILE__,__LINE__,INFO);
+    }
+    if (WORKL[IPNTR[5]-1]<0 && TOL > 1e-3){
+      minmax--;
+      TOL=1e-4;
+      INFO=1;
+      IPARAM[2]=maxit*100;
+    }
+    if (minmax){ // make them a bit larger/smaller to be sure that we are in the interval of interrest ...
+      *lambda_max=WORKL[IPNTR[5]-1]*(1+TOL);
+    } else {
+      *lambda_min=WORKL[IPNTR[5]-1]*(1-TOL);
+    }
+  }
+  /* FORTRAN Comments ...
+     c          IPNTR(6): pointer to the real part of the ritz value array     
+     c                    RITZR in WORKL.                                          
+     c          IPNTR(7): pointer to the imaginary part of the ritz value array    
+     c                    RITZI in WORKL.                                          
+     c          IPNTR(8): pointer to the Ritz estimates in array WORKL associated
+     c                    with the Ritz values located in RITZR and RITZI in WORK
+  */
+}
+
+// lambda_min   : the lower boundery
+// lambda_max   : the upper boundery of the interval
+// tol          : the given tollerance which should be achieved
+// coefficents  : the pointer where the data will be stored
+real calculate_chebyshev_coefficents(real lambda_min, real lambda_max, real tol,real ** coefficents){
+  // use chebyshev-gausquadrature: https://en.wikipedia.org/wiki/Chebyshev%E2%80%93Gauss_quadrature
+  const int steps=1024*128; // with 1024 it should fit in L1
+  unsigned int N=1024; // guess the number of coefficents we need, if more are needed -> realocate
+  if (*coefficents==NULL){
+    *coefficents = (real *)malloc(N*sizeof(real));
+  } else {
+    *coefficents = (real *)realloc(*coefficents,N*sizeof(real));
+  }
+  real * current_polynome=NULL;
+  real * last_polynome=NULL;
+  last_polynome    = (real *) malloc(steps * sizeof(real));
+  current_polynome = (real *) malloc(steps * sizeof(real));
+  real x[steps];
+  real weight_and_func[steps];
+  real lambda_m=lambda_max-lambda_min;
+  real lambda_p=lambda_max+lambda_min;
+  //fprintf(stderr,"lambda_min: %e lambda_max: %e  ", lambda_min, lambda_max);
+  //fprintf(stderr,"lambda_minus: %e lambda_plusminus: %e\n", lambda_m, lambda_pm);
+  // init
+  real fac=2./steps;
+  //fprintf(stderr,"fac: %e\n", fac);
+  double ai=0;
+  double a1=0;
+  for (int i=0;i<steps;i++){
+    last_polynome[i]=1; //T0(x)=1
+    //real x = -1.+(i*2.+1.)/steps;
+    x[i]=cos((2.*i+1)/2./steps*M_PI);
+    current_polynome[i]= x[i];  //T1(x)=x
+    weight_and_func[i]=fac*1./sqrt(x[i]*lambda_m/2.+lambda_p/2.);// /sqrt(1-x*x);// this could be big, but should not be inf
+    ai+=weight_and_func[i];
+    a1+=weight_and_func[i]*x[i];
+    if (i%100 == 0){
+      ;//fprintf(stderr,"i: %d a0: %e  a1: %e \n",i,ai,a1);
+    }
+  }
+  real error;
+  int loop=0;
+  //fprintf(stderr,"%s l. %d: a[%d]: %e\n",__FILE__,__LINE__,0,ai);
+  //fprintf(stderr,"%s l. %d: a[%d]: %e\n",__FILE__,__LINE__,1,a1);
+  (*coefficents)[loop]=ai/2.;
+  loop++;
+  (*coefficents)[loop]=a1;
+  //double sumfacmax=lambda_max;
+  //double totalsum=abs(ai)+abs(a1)*sumfacmax;
+  double totalsum=abs(ai)+abs(a1);
+  //sumfacmax*=lambda_max;
+  const int miniloop=10;
+  do{
+    error=0;
+    do {
+      std::swap(last_polynome,current_polynome);
+      //{	real * tmp       = last_polynome; last_polynome    = current_polynome; current_polynome = tmp; }
+      //printf("addresses: 0x%08x  0x%08x ",last_polynome,current_polynome);
+      ai=0;
+      for (int i=0;i<steps;i++){
+	//real x = -1.+(i*2.+1.)/steps;
+	current_polynome[i]=-1.*current_polynome[i]+((real)2)*x[i]*last_polynome[i];
+	//printf ("%e %e %e\n", x, weight_and_func[i], current_polynome[i]);
+	ai+=current_polynome[i]*weight_and_func[i];
+      }
+      //fprintf(stderr,"%s l. %d: a[%d]: %e\n",__FILE__,__LINE__,loop,ai);
+      //printf("\n\n");
+      //sumfacmax*=lambda_max;
+      error+=abs(ai);//*sumfacmax;
+      totalsum+=abs(ai);//*sumfacmax;
+      (*coefficents)[loop]=ai;
+      loop++;
+    } while (loop%miniloop);
+    if (loop+miniloop > N){
+      N*=2;
+      *coefficents=(real *)realloc(*coefficents,N*sizeof(real));
+    }
+  } while ((error > tol*totalsum || loop < 20 ) && loop < sqrt(steps));
+  if (loop >=steps/10 -1 ){
+    fprintf(stderr,"to few steps to get sufficent results in %s l. %d\n",__FILE__,__LINE__);
+  }
+  error=0;
+  while (error < tol*totalsum){ // approximate error
+    loop--;
+    error+=abs((*coefficents)[loop]);//*sumfacmax;
+    //sumfacmax/=lambda_max;
+  }
+  fprintf(stderr,"sum: %e   error: %e",totalsum,error);
+  loop++;
+  free(last_polynome);
+  free(current_polynome);
+  fprintf(stderr,"loops: %d\n",loop);
+  return loop;
+}
+
+
+// check whether there was any cuda error so far.
+// do not use this function directly but use the macro cudaCheckError(const char *msg);
+// which requires only the first paramter
+// PARAMTERS:
+// msg   : the message which should be printed in case of an error
+// file  : the file in which the function is called
+// line  : the line in which the function is called
+void _cudaCheckError(const char *msg, const char * file, const int line)
+{
+  cudaError_t err = cudaGetLastError();
+  if( cudaSuccess != err)
+    {
+      std::cerr <<  "Cuda error:" <<  msg << ": '" <<  cudaGetErrorString( err) << "' in "<<file << " l. "<<line<<"\n";
+      errexit();
+    }
+}
+
+
+/* *************************************************************************************************************** *
+ * ********************************************      CUDA-KERNELS     ******************************************** *
+ * *************************************************************************************************************** */
+
 
 // This computes the farfield contribution of the mobility
 // r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
@@ -774,24 +1146,29 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, real * A,int lda, real *
 // a is the particle radius
 // mobility is the mobility matrix which will be retruned
 // L_d is the boxlength
-__global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobility, double a, double * L_g, double * mobility){
-  double mypos[3];
+#define mydebug(str,...)
+// if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
+__global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, real a, real * L_g, real * mobility){
+  real mypos[3];
   const int lda=((3*N+31)/32)*32;
-  __shared__ double L[3];
-  __shared__ double cachedPos[3*numThreadsPerBlock];
-  __shared__ double writeCache[3*numThreadsPerBlock];
+  __shared__ real L[3];
+  __shared__ real cachedPos[3*numThreadsPerBlock];
+  __shared__ real writeCache[3*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   if (threadIdx.x < 3){ // copy L to shared memory
+    //mydebug("0x%08x  \n",L_g + threadIdx.x);
     L[threadIdx.x]=L_g[threadIdx.x];
   }
   __syncthreads();
   // get data for myposition - using coalscaled memory access
   for (int l=0;l<3;l++){
+    mydebug(" 0x%08x -> 0x%08x  \n",numThreadsPerBlock*(l+blockIdx.x*3)+threadIdx.x,numThreadsPerBlock*l+threadIdx.x);
     cachedPos[numThreadsPerBlock*l+threadIdx.x] = r[numThreadsPerBlock*(l+blockIdx.x*3)+threadIdx.x];
   }
   __syncthreads();
   for (int l=0;l<3;l++){
     mypos[l] = cachedPos[threadIdx.x*3+l];
+    mydebug("mypos[%d]:  %e\n",l,mypos[l]);
   }
 
   /*if (i < N){
@@ -806,47 +1183,31 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
     }
     }*/
   for (int offset=0;offset<N;offset+=numThreadsPerBlock){
+    mydebug("offset: %d\n",offset)
     // copy positions to shared memory
 #pragma unroll
     for (int l=0;l<3;l++){
+      mydebug("fuu:: 0x%08x  0x%08x  0x%08x  0x%08x %e\n",r, offset*3,numThreadsPerBlock*l,threadIdx.x,cachedPos[numThreadsPerBlock*l+threadIdx.x]);
       cachedPos[numThreadsPerBlock*l+threadIdx.x] = r[offset*3+numThreadsPerBlock*l+threadIdx.x];
     }
     __syncthreads();
     if (i < N){
       for (int j=offset;j<min(offset+numThreadsPerBlock,N);j++){
-	// this destroys coascaled memory access ...
-	/*if (i==j){
-	  j++; //just continue with next particle
-	  if (j==offset+numThreadsPerBlock){
-	    continue;
-	  }
-	}*/
-	/*if (i==j){
-#pragma unroll 3
-	  for (int l=0;l<3;l++){
-	    writeCache[threadIdx.x*3+l]=0;
-	  }
-	}*/
-	//if (j < N ){
-	double dr[DIM];
-	double dr2=0;
+	real dr[DIM];
+	real dr2=0;
 #pragma unroll 3
 	for (int k=0;k<DIM;k++){
-	  //dr[k]=r[DIM*i+k]-r[DIM*j+k]; // r_ij
 	  dr[k]=mypos[k]-cachedPos[DIM*(j-offset)+k]; // r_ij
-	  /*if (isnan(dr[k])){
-	    dr[k]=1337;
-	    }*/
 	  dr[k]-=rint(dr[k]/L[k])*L[k]; // fold back
 	  dr2+=dr[k]*dr[k];
 	}
 	dr2=max(dr2,0.01);
-	double drn= sqrt(dr2); // length of dr
-	double b = a/drn;
+	real drn= sqrt(dr2); // length of dr
+	real b = a/drn;
       
 	/*if (0.5 < b){  // drn < 2*a
-	  /*double t=3./32./drn/a*self_mobility;
-	  double t2=(1-9./32.*drn/a)*self_mobility;
+	  /*real t=3./32./drn/a*self_mobility;
+	  real t2=(1-9./32.*drn/a)*self_mobility;
 	  for (k=0; k < DIM; k++){
 	  for (l=0;l < DIM; l++){
 	  mobility[myindex(DIM*i+k,DIM*j+l)]=dr[k]*dr[l]*t;
@@ -856,7 +1217,7 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
 	// python implementation:
 	//T=one*(1-9./32.*drn/a)+3./32.*dr*drt/drn/a;
 	//}
-	double t,t2;
+	real t,t2;
 	// this also catches the case i == j
 	if (0.5 < b){  // drn < 2*a
 	  t=0;
@@ -865,12 +1226,17 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
 	    t2=self_mobility;
 	  }
 	} else {
-	  double b2=b*b;
-	  t=(0.75-1.5*b2)*b/dr2*self_mobility;
-	  t2=(0.75+0.5*b2)*b*self_mobility;
+	  real b2=(a*a)/dr2;
+	  // Rotne Prager
+	  //t=(0.75-1.5*b2)*b/dr2*self_mobility;
+	  //t2=(0.75+0.5*b2)*b*self_mobility;
+#warning "Wrong Mobility in Farfield - to assure positive definiteness"
+	  // the /5. is to much ... but like this it seems to work
+	  t=(0.75-1.5*b2)*b/dr2*self_mobility/5.;
+	  t2=(0.75+0.5*b2)*b*self_mobility/5.;
 	}
 	//mobility[threadIdx.x]=3+threadIdx.x;
-	double tmp_el13;
+	real tmp_el13;
 #pragma unroll 3
 	for (int k=0; k < DIM; k++){
 	  if (k ==0){ // these ifs should be removed at compile time ... after unrolling
@@ -913,7 +1279,9 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
   }// for offset = ...
 }
 
-
+#undef mydebug
+#define mydebug(str,...)
+// if (threadIdx.x < 3 && blockIdx.x < 2){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
 // this computes the near field as a  ResistanceMatrix
 // r             : is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
 // N             : is the number of particles
@@ -925,16 +1293,20 @@ __global__ void sd_compute_mobility_matrix(double * r, int N, double self_mobili
 //                myInfo[0] : number of overlapping particles
 //                myInfo[1] : number of interacting particles (via nf)
 //                myInfo[2] : max number of interacting particles per particle
-__global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobility, double a, double * L_g, double * resistance, int * myInfo){
-  //__shared__ double myPos[3*numThreadsPerBlock];
+__global__ void sd_compute_resistance_matrix(real * pos, int N, real self_mobility, real a, real * L_g, real * resistance, int * myInfo){
+  //__shared__ real myPos[3*numThreadsPerBlock];
   int interactions=0;
-  double mypos[3];
-  __shared__ double L[3];
-  __shared__ double cachedPos[3*numThreadsPerBlock];
+  real mypos[3];
+  __shared__ real L[3];
+#ifdef SD_USE_FLOAT
+  __shared__ real cachedPos[4*numThreadsPerBlock];
+#else
+  __shared__ real cachedPos[3*numThreadsPerBlock];
+#endif
   const int lda=(((N*3)+31)/32)*32;
-  //__shared__ double myresistance[6*numThreadsPerBlock];
-  double myresistance[6];
-  //__shared__ double otherresistance[6*numThreadsPerBlock];
+  //__shared__ real myresistance[6*numThreadsPerBlock];
+  real myresistance[6]={0,0,0,0,0,0};
+  //__shared__ real otherresistance[6*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   if (threadIdx.x < 3){ // copy L to shared memory
     L[threadIdx.x]=L_g[threadIdx.x];
@@ -945,8 +1317,10 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
     myPos[threadIdx.x+l*numThreadsPerBlock] = r[threadIdx.x+l*numThreadsPerBlock+blockIdx.x*blockDim.x*3];
     }*/
   for (int l=0;l<3;l++){
-    cachedPos[threadIdx.x+l*numThreadsPerBlock] = r[threadIdx.x+l*numThreadsPerBlock+blockIdx.x*blockDim.x*3];
+    //mydebug("pos: 0x%010x   offset: 0x%010x\n",pos,threadIdx.x+l*numThreadsPerBlock+blockIdx.x*blockDim.x*3);
+    cachedPos[threadIdx.x+l*numThreadsPerBlock] = pos[threadIdx.x+l*numThreadsPerBlock+blockIdx.x*blockDim.x*3];
   }
+
   __syncthreads();
   for (int d=0;d<3;d++){
     mypos[d] = cachedPos[threadIdx.x*3+d];
@@ -966,31 +1340,32 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
     // copy positions to shared memory
 #pragma unroll
     for (int l=0;l<3;l++){
-      cachedPos[threadIdx.x+l*numThreadsPerBlock] = r[threadIdx.x+l*numThreadsPerBlock+offset*3];
+      cachedPos[threadIdx.x+l*numThreadsPerBlock] = pos[threadIdx.x+l*numThreadsPerBlock+offset*3];
     }
     __syncthreads();
     for (int j=offset;j<min(offset+numThreadsPerBlock,N);j++){
-      double dr[DIM];
-      double dr2=0;
+      real dr[DIM];
+      real dr2=0;
 #pragma unroll
       for (int k=0;k<DIM;k++){
 	dr[k]=mypos[k]-cachedPos[3*(j-offset)+k]; // r_ij
 	dr[k]-=L[k]*rint(dr[k]/L[k]); // fold back
 	dr2+=dr[k]*dr[k];
+	mydebug("dr[%d]: %f\n",k,dr[k]);
       }
 #ifdef SD_RESISTANCE_CORRECT
-      double r2bcorr_diag_self     = 0;
-      double r2bcorr_diag_mix      = 0;
-      double r2bcorr_offdiag_self  = 0;
-      double r2bcorr_offdiag_mix   = 0;
+      mydebug("dr2: %f\n",dr2);
+      real r2bcorr_diag_self     = 0;
+      real r2bcorr_diag_mix      = 0;
+      real r2bcorr_offdiag_self  = 0;
+      real r2bcorr_offdiag_mix   = 0;
 #else
-      double offdiag_fac=0;
-      double diag_fac=0;
+      real offdiag_fac=0;
+      real diag_fac=0;
 #endif
       if (i >= N || i ==j || j >= N){
 	;
       }
-
       else if (dr2 < 4*a*4*a){
 	if (!(2*a*2*a < dr2 )){
 	  atomicAdd(myInfo,1); // count overlapping particles
@@ -1005,34 +1380,35 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
 	  // T+=1./6.*ls*(-one+dr*drt/dr2)
 	  // R[3*i:3*i+3,3*j:3*j+3]=-T
 	  // R[3*i:3*i+3,3*i:3*i+3]+=T
-	  double drn= sqrt(dr2); // length of dr
-	  double s = drn/a-2;
-	  double ls = log(s);
+	  real drn= sqrt(dr2); // length of dr
+	  real s = drn/a-2;
+	  real ls = log(s);
 	  
+	  mydebug("ls: %e \n",ls);
 #ifdef SD_RESISTANCE_CORRECT
-	  double const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
-	  double offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2;
-	  double diag_fac    =(1./6.*ls);
+	  real const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
+	  real offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2;
+	  real diag_fac    =(1./6.*ls);
 #else
-	  double const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
-	  double const t2_c=2./6.*log(2.);
+	  real const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
+	  real const t2_c=2./6.*log(2.);
 	  offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2/self_mobility;
 	  diag_fac    =(1./6.*ls-t2_c)/self_mobility;
 #endif
 #ifdef SD_RESISTANCE_CORRECT
-	  double dr4=dr2*dr2;
-	  double dr6=dr4*dr2;
+	  real dr4=dr2*dr2;
+	  real dr6=dr4*dr2;
 	  // constants for correction
-	  const double dr_c1 = 4;
-	  const double dr_c2 = 4*4;
-	  const double dr_c3 = 4*4*4;
-	  const double dr_c4 = 4*4*4*4;
-	  const double dr_c5 = 4*4*4*4*4;
-	  const double dr_c6 = 4*4*4*4*4*4;
-	  const double r2bcorr_diag_self_c    = (4.*dr_c6)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)         ;
-	  const double r2bcorr_diag_mix_c     = (9.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.);
-	  const double r2bcorr_offdiag_self_c = 16.*dr_c2 /(16.*dr_c2-25)                            - 2./6.*log(2.);
-	  const double r2bcorr_offdiag_mix_c  = 20.*dr_c1 /(16.*dr_c2-25)                            - 2./6.*log(2.);
+	  const real dr_c1 = 4;
+	  const real dr_c2 = 4*4;
+	  const real dr_c3 = 4*4*4;
+	  const real dr_c4 = 4*4*4*4;
+	  const real dr_c5 = 4*4*4*4*4;
+	  const real dr_c6 = 4*4*4*4*4*4;
+	  const real r2bcorr_diag_self_c    = (4.*dr_c6)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)         ;
+	  const real r2bcorr_diag_mix_c     = (9.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.);
+	  const real r2bcorr_offdiag_self_c = 16.*dr_c2 /(16.*dr_c2-25)                            - 2./6.*log(2.);
+	  const real r2bcorr_offdiag_mix_c  = 20.*dr_c1 /(16.*dr_c2-25)                            - 2./6.*log(2.);
 	  // real computation
 	  r2bcorr_diag_self     = diag_fac    - 1./(1-9./4./dr2+3./dr4-1./dr6)                     + r2bcorr_diag_self_c;
 	  r2bcorr_diag_mix      = diag_fac    - (6.*dr4*drn-4.*dr2*drn)/(4.*dr6-9.*dr4+12.*dr2-4.) + r2bcorr_diag_mix_c;
@@ -1066,6 +1442,7 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
 	  myresistance[k]-=dr[k]*dr[k]*offdiag_fac;
 	  resistance[myindex(DIM*i+k,DIM*j+k)]+=diag_fac;
 	  myresistance[k]-=diag_fac;
+	  mydebug(""
 #endif
 	}
       }
@@ -1130,19 +1507,19 @@ __global__ void sd_compute_resistance_matrix(double * r, int N, double self_mobi
   }
 }
 
-__global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian,int N,double * L_g, double a, double self_mobility,real * brownian_force_nf){
+__global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian,int N,real * L_g, real a, real self_mobility,real * brownian_force_nf){
   const int gaussian_ldd=((N+31)/32)*32;
   int interactions=0;
-  double mypos[3];
-  double writeCache[6];
-  //double otherWriteCache[3];
-  __shared__ double L[3];
-  __shared__ double cachedPos[3*numThreadsPerBlock];
-  __shared__ double choleskyCache[12*numThreadsPerBlock];
+  real mypos[3];
+  real writeCache[6];
+  //real otherWriteCache[3];
+  __shared__ real L[3];
+  __shared__ real cachedPos[3*numThreadsPerBlock];
+  __shared__ real choleskyCache[12*numThreadsPerBlock];
   //const int lda=(((N*3)+31)/32)*32;
-  //__shared__ double myresistance[6*numThreadsPerBlock];
-  //double myresistance[6];
-  //__shared__ double otherresistance[6*numThreadsPerBlock];
+  //__shared__ real myresistance[6*numThreadsPerBlock];
+  //real myresistance[6];
+  //__shared__ real otherresistance[6*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   if (threadIdx.x < 3){ // copy L to shared memory
     L[threadIdx.x]=L_g[threadIdx.x];
@@ -1164,8 +1541,8 @@ __global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian,int
     }
     __syncthreads();
     for (int j=offset;j<min(offset+numThreadsPerBlock,N);j++){
-      double dr[DIM];
-      double dr2=0;
+      real dr[DIM];
+      real dr2=0;
 #pragma unroll
       for (int k=0;k<DIM;k++){
 	dr[k]=mypos[k]-cachedPos[3*(j-offset)+k]; // r_ij
@@ -1175,10 +1552,10 @@ __global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian,int
 #ifndef SD_RESISTANCE_CORRECT
 #warning "SD Brownian motion only support corrected resistance calculation ..."
 #endif
-      double r2bcorr_diag_self     = 0;
-      double r2bcorr_diag_mix      = 0;
-      double r2bcorr_offdiag_self  = 0;
-      double r2bcorr_offdiag_mix   = 0;
+      real r2bcorr_diag_self     = 0;
+      real r2bcorr_diag_mix      = 0;
+      real r2bcorr_offdiag_self  = 0;
+      real r2bcorr_offdiag_mix   = 0;
 
       int wasInLoop = 0;
       if (i >= N || i >= j || j >= N){
@@ -1197,27 +1574,27 @@ __global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian,int
 	// T+=1./6.*ls*(-one+dr*drt/dr2)
 	// R[3*i:3*i+3,3*j:3*j+3]=-T
 	// R[3*i:3*i+3,3*i:3*i+3]+=T
-	double drn= sqrt(dr2); // length of dr
-	double s = drn/a-2;
-	double ls = log(s);
+	real drn= sqrt(dr2); // length of dr
+	real s = drn/a-2;
+	real ls = log(s);
 	
-	double const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
-	double offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2;
-	double diag_fac    =(1./6.*ls);
+	real const t_c=-0.125+9./40.*log(2.)+3./112.*2.*log(2.);
+	real offdiag_fac =(-0.25/s+9./40.*ls+3./112.*s*ls-t_c)/dr2;
+	real diag_fac    =(1./6.*ls);
 	
-	double dr4=dr2*dr2;
-	double dr6=dr4*dr2;
+	real dr4=dr2*dr2;
+	real dr6=dr4*dr2;
 	// constants for correction
-	const double dr_c1 = 4;
-	const double dr_c2 = 4*4;
-	const double dr_c3 = 4*4*4;
-	const double dr_c4 = 4*4*4*4;
-	const double dr_c5 = 4*4*4*4*4;
-	const double dr_c6 = 4*4*4*4*4*4;
-	const double r2bcorr_diag_self_c    = (4.*dr_c6)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)         ;
-	const double r2bcorr_diag_mix_c     = (9.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.);
-	const double r2bcorr_offdiag_self_c = 16.*dr_c2 /(16.*dr_c2-25)                            - 2./6.*log(2.);
-	const double r2bcorr_offdiag_mix_c  = 20.*dr_c1 /(16.*dr_c2-25)                            - 2./6.*log(2.);
+	const real dr_c1 = 4;
+	const real dr_c2 = 4*4;
+	const real dr_c3 = 4*4*4;
+	const real dr_c4 = 4*4*4*4;
+	const real dr_c5 = 4*4*4*4*4;
+	const real dr_c6 = 4*4*4*4*4*4;
+	const real r2bcorr_diag_self_c    = (4.*dr_c6)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)         ;
+	const real r2bcorr_diag_mix_c     = (9.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.);
+	const real r2bcorr_offdiag_self_c = 16.*dr_c2 /(16.*dr_c2-25)                            - 2./6.*log(2.);
+	const real r2bcorr_offdiag_mix_c  = 20.*dr_c1 /(16.*dr_c2-25)                            - 2./6.*log(2.);
 	// real computation
 	r2bcorr_diag_self     = diag_fac    - 1./(1-9./4./dr2+3./dr4-1./dr6)                     + r2bcorr_diag_self_c;
 	r2bcorr_diag_mix      = diag_fac    - (6.*dr4*drn-4.*dr2*drn)/(4.*dr6-9.*dr4+12.*dr2-4.) + r2bcorr_diag_mix_c;
@@ -1346,7 +1723,7 @@ __global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian,int
 // size  : the size of the matrix (in the example below 3N)
 // block : (ignored) the number of elements to process per thread
 //         if this is e.g. 3 and the matrix is 3Nx3N, than N threads have to be started
-__global__ void sd_add_identity_matrix(double * matrix, int size, int lda){
+__global__ void sd_add_identity_matrix(real * matrix, int size, int lda){
   //int lda=((size+31)/32)*32;
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
   //for (int i = idx*block; i< (idx+1)*block; i++){
@@ -1358,7 +1735,7 @@ __global__ void sd_add_identity_matrix(double * matrix, int size, int lda){
 // this sets a block to zero
 // matrix: pointer to the given matrix
 // size  : the size of the matrix (in the example below 3N)
-__global__ void sd_set_zero_matrix(double * matrix, int size){
+__global__ void sd_set_zero_matrix(real * matrix, int size){
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
   int matsize=((size+31)/32)*32;
   matsize*=size;
@@ -1371,7 +1748,7 @@ __global__ void sd_set_zero_matrix(double * matrix, int size){
 // this sets a block to zero
 // data  : pointer to the given data
 // size  : the size of the data
-__global__ void sd_set_zero(double * data, int size){
+__global__ void sd_set_zero(real * data, int size){
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
   for (int i = idx;i< size; i+=blockDim.x*gridDim.x){
     data[i]=0;
@@ -1392,41 +1769,20 @@ __global__ void sd_set_int(int * data, int size, int value){
 
 
 
-// check whether there was any cuda error so far.
-// do not use this function directly but use the macro cudaCheckError(const char *msg);
-// which requires only the first paramter
-// PARAMTERS:
-// msg   : the message which should be printed in case of an error
-// file  : the file in which the function is called
-// line  : the line in which the function is called
-void _cudaCheckError(const char *msg, const char * file, const int line)
-{
-  cudaError_t err = cudaGetLastError();
-  if( cudaSuccess != err)
-    {
-      std::cerr <<  "Cuda error:" <<  msg << ": '" <<  cudaGetErrorString( err) << "' in "<<file << " l. "<<line<<"\n";
-      errexit();
-    }
-}
-
-
-
-
-
 #define DIST (2+1e-1)
 #define DISP_MAX (10000)
 
-__global__ void sd_real_integrate_prepare( double * r_d , double * disp_d, double * L, double a, int N){
+__global__ void sd_real_integrate_prepare( real * r_d , real * disp_d, real * L, real a, int N){
   /*for (int idx = blockIdx.x*blockDim.x + threadIdx.x;
        idx<N ;
        idx+=blockDim.x*gridDim.x){
-    double disp2=0;
+    real disp2=0;
 #pragma unroll
     for (int d=0;d<DIM;d++){
       disp2+=disp_d[idx*DIM+d]*disp_d[idx*DIM+d];
     }
     if (disp2 > DISP_MAX*DISP_MAX){
-      double fac=DISP_MAX/sqrt(disp2);
+      real fac=DISP_MAX/sqrt(disp2);
 #pragma unroll
       for (int d=0;d<DIM;d++){
 	disp_d[idx*DIM+d]*=fac;
@@ -1435,7 +1791,7 @@ __global__ void sd_real_integrate_prepare( double * r_d , double * disp_d, doubl
   }*/
   int i=blockIdx.x*blockDim.x + threadIdx.x;
   i*=3;
-  double disp2;
+  real disp2;
 #pragma unroll
   for (int d=0;d<3;d++){
     disp2+=disp_d[i+d]*disp_d[i+d];
@@ -1448,7 +1804,7 @@ __global__ void sd_real_integrate_prepare( double * r_d , double * disp_d, doubl
     }
   }
 }
-__global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, double a, int N)
+__global__ void sd_real_integrate( real * r_d , real * disp_d, real * L, real a, int N)
 {
   
   //for (int idx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -1458,12 +1814,12 @@ __global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, d
   // t is the factor how far of disp_d we will move.
   // in case everything is fine, we will move t, if there is some trouble,
   // we will move less to avoid collision
-  double t=1;
-  double rnew[DIM];
+  real t=1;
+  real rnew[DIM];
   for (int d=0;d<DIM;d++){
     rnew[d]=r_d[DIM*idx+d]+disp_d[DIM*idx+d];
   }
-  const double distmin=(3*a)*(3*a);
+  const real distmin=(3*a)*(3*a);
   for (int i=0;i<N;i++){
     if (idx==i){
       i++;
@@ -1471,17 +1827,17 @@ __global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, d
 	continue;
       }
     }
-    double dr2=0;
+    real dr2=0;
     for (int d=0;d<DIM;d++){
-      double tmp=r_d[i*DIM+d]-rnew[d];
+      real tmp=r_d[i*DIM+d]-rnew[d];
       tmp-=L[d]*rint(tmp/L[d]);
       dr2+=tmp*tmp;
     }
     if (dr2 <distmin){ // possible colision - check better
       dr2=0;
-      //double dr2o=0; // or do we need old distance?
+      //real dr2o=0; // or do we need old distance?
       for (int d=0;d<DIM;d++){
-	double tmp=r_d[i*DIM+d]+disp_d[i*DIM+d]-rnew[d];
+	real tmp=r_d[i*DIM+d]+disp_d[i*DIM+d]-rnew[d];
 	tmp-=L[d]*rint(tmp/L[d]);
 	dr2+=tmp*tmp;
 	//tmp=r_d[i*DIM+d]-r_d[idx*DIM+d];
@@ -1494,11 +1850,11 @@ __global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, d
 	// therefore we need the soluten of an quadratic equation
 	// in case they are already closer than DIST*a this will move them appart.
 	// first: get the coefficents
-	double alpha=0,beta=0,gamma=0;
+	real alpha=0,beta=0,gamma=0;
 	for (int d=0;d<DIM;d++){
-	  double t1=r_d[i*DIM+d]-r_d[idx*DIM+d];
+	  real t1=r_d[i*DIM+d]-r_d[idx*DIM+d];
 	  t1-=L[d]*rint(t1/L[d]);
-	  double t2=disp_d[i*DIM+d]-disp_d[idx*DIM+d];
+	  real t2=disp_d[i*DIM+d]-disp_d[idx*DIM+d];
 	  //t2-=L*rint(t2/L); // we would have a problem if we would need to fold back these ...
 	  alpha +=t2*t2;
 	  beta  +=2*t1*t2;
@@ -1507,7 +1863,7 @@ __global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, d
 	// now we want to solve for t: alpha*t**2+beta*t+gamma=DIST*a
 	// we want the solution with the minus in the 'mitternachtsformel'
 	// because the other solution is when the particles moved through each other
-	double tnew = (-beta-sqrt(beta*beta-4*alpha*gamma))/(2*alpha);
+	real tnew = (-beta-sqrt(beta*beta-4*alpha*gamma))/(2*alpha);
 	if (tnew < t){ // use the smallest t
 	  t=tnew;
 	}
@@ -1521,7 +1877,7 @@ __global__ void sd_real_integrate( double * r_d , double * disp_d, double * L, d
     //pos_d[DIM*N+idx]=t;
 }
 
-__global__ void sd_bucket_sort( double * pos , double * bucketSize, int * bucketNum, int N,
+__global__ void sd_bucket_sort( real * pos , real * bucketSize, int * bucketNum, int N,
 				int * particleCount, int * particleList, int maxParticlePerCell, int totalBucketNum){
   for (int i = blockIdx.x*blockDim.x + threadIdx.x;
        i<N ;
@@ -1529,16 +1885,21 @@ __global__ void sd_bucket_sort( double * pos , double * bucketSize, int * bucket
     int3 bucket;
 #pragma unroll 3
     for (int d =0; d<3; d++){
-      double tmp;
+      real tmp;
       // no asm version:
       // tmp = pos[i*3+d];
       // asm version avoids caching
+#ifdef SD_USE_FLOAT
+      asm("ld.global.cs.f32 %0,[%1];\n"
+	: "=f"(tmp) : "l"(pos+i*3+d) : );
+#else
       asm("ld.global.cs.f64 %0,[%1];\n"
-	  : "=d"(tmp) : "l"(pos+i*3+d) : );
+	: "=d"(tmp) : "l"(pos+i*3+d) : );
+#endif
       tmp/=bucketSize[d];
       int x;
       // this should work - but somehow it does not compile
-      //x=__double2int_rd(tmp);
+      x=__real2int_rd(tmp);
       // the following code is an replacement ...
       // but with this the loop is not getting unrolled
       //asm("cvt.rmi.s32.f64 %0, %1;\n"
@@ -1546,11 +1907,12 @@ __global__ void sd_bucket_sort( double * pos , double * bucketSize, int * bucket
       // this should also work.
       // but the corresponding ptx code first rounds, and then converts in a second step ...
       // this could lead to rounding errors ...
-      x=floor(tmp);
-      x%=bucketNum[d];
+      //x=floor(tmp);
+      //x%=bucketNum[d];
       // avoid negativ numbers
-      x+=bucketNum[d];
-      x%=bucketNum[d];
+      x= (x < 0)?x+bucketNum[d]: x;
+      //x+=bucketNum[d];
+      //x%=bucketNum[d];
       switch (d){
       case 0:
 	bucket.x = x;
@@ -1575,6 +1937,11 @@ __global__ void sd_bucket_sort( double * pos , double * bucketSize, int * bucket
     }
   }
 }
+
+
+/* *************************************************************************************************************** *
+ * ********************************************    DEVICE-Functions   ******************************************** *
+ * *************************************************************************************************************** */
 
 __device__ double atomicAdd(double * address, double inc){
 

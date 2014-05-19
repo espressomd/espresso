@@ -54,6 +54,7 @@ void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
     printf("CUDA error: %s\n", cudaGetErrorString(err));
     if ( err == cudaErrorInvalidValue )
       fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n", file, line);
+    
     exit(EXIT_FAILURE);
   } else {
     err=cudaGetLastError();

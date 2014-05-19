@@ -307,6 +307,16 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ], [$cuda_path/lib $cuda_path/lib64])
 
+    ES_ADDPATH_CHECK_LIB(curand, curandCreateGenerator, [], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda RAND library (curand), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda RAND library (curand). Some features will not be available!])
+        ])
+    ], [$cuda_path/lib $cuda_path/lib64])
+
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
     

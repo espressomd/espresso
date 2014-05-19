@@ -39,7 +39,7 @@
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "communication.hpp"
-#include "grid.hpp" // required
+#include "grid.hpp"
 #include "cells.hpp"
 #include "verlet.hpp"
 #include "rotation.hpp"
@@ -72,10 +72,6 @@
 
 /*******************  variables  *******************/
 
-//double time_step        = -1.0;
-
-//double sim_time         = 0.0;
-
 double sd_viscosity=-1;
 double sd_radius=-1;
 
@@ -88,18 +84,34 @@ int    db_maxf_id   = 0,   db_maxv_id = 0;
 /************************************************************/
 /*@{*/
 
-/** Rescale all particle forces with <s>\f[ 0.5 \Delta t^2 \f]</s> some factor. */
-//void rescale_forces_sd();
-/** Propagate the positions. Integration step 2 of the Velocity Verletintegrator:<br>
+/** Propagate the positions. Integration step:<br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  \mu v(t) \f] */
 void propagate_pos_sd();
 
 #ifdef CUDA
-void propagate_pos_sd_cuda(double * box_l, int N,double * pos_h, double * force_h, double * velo_h);
+void propagate_pos_sd_cuda(real * box_l, int N,real * pos_h, real * force_h, real * velo_h);
 #endif
 
 int sd_get_particle_num();
 /*@}*/
+
+void integrator_sanity_checks_sd()
+{
+  char *errtext;
+
+  if ( time_step < 0.0 ) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext, "{010 time_step not set} ");
+  }
+  if ( skin < 0.0 ) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{011 skin not set} ");
+  }
+  if ( temperature < 0.0 ) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
+  }
+}
 
 /************************************************************/
 
@@ -124,34 +136,7 @@ void integrate_sd(int n_steps)
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) ) */
   //if (recalc_forces) { 
   //thermo_heat_up();
-#ifdef LB
-  transfer_momentum = 0;
-  if (lattice_switch & LATTICE_LB && this_node == 0)
-    fprintf (stderr, "Warning, no valid forces from previous integration step, means the LB fluid coupling is not included in the particle forces for this step.\n");
-#endif
-#ifdef LB_GPU
-  transfer_momentum_gpu = 0;
-  if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
-    fprintf (stderr, "Warning, no valid forces from previous integration step, means the GPU LB fluid coupling is not included in the particle forces for this step.\n");
-#endif
-//VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
-  update_mol_vel_pos();
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
-  if (check_runtime_errors()) return;
-#endif
-#ifdef COLLISION_DETECTION
-  prepare_collision_queue();
-#endif
-  force_calc();
-   
-  //VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
-  init_forces_ghosts();
-  distribute_mol_force();
-  if (check_runtime_errors()) return;
-#endif
+
 
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
@@ -221,7 +206,7 @@ void integrate_sd(int n_steps)
     propagate_pos_sd(); // we dont have velocities
 
 #ifdef BOND_CONSTRAINT
-    const bool bond_constraint_with_sd_warned=false;
+    static bool bond_constraint_with_sd_warned=false;
     if (!bond_constraint_with_sd_warned){ // warn only once
       fprintf (stderr, "Warning, using BOND_CONSTRAINT with StokesDynamics might not work as expected!.\n");    
       bond_constraint_with_sd_warned=true;
@@ -243,27 +228,9 @@ void integrate_sd(int n_steps)
       break;
 #endif
 
-    cells_update_ghosts();
-
-    //VIRTUAL_SITES update pos and vel (for DPD)
-#ifdef VIRTUAL_SITES
-    update_mol_vel_pos();
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-
-    if (check_runtime_errors()) break;
-#if  defined(VIRTUAL_SITES_RELATIVE) && defined(LB) 
-    // This is on a workaround stage: 
-    // When using virtual sites relative and LB at the same time, it is necessary 
-    // to reassemble the cell lists after all position updates, also of virtual
-    // particles. 
-    if (cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) ) 
-      cells_update_ghosts();
-#endif
-
-#endif
-
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities v(t+0.5*dt) ) */
+
 #ifdef LB
     transfer_momentum = 1;
 #endif
@@ -271,35 +238,10 @@ void integrate_sd(int n_steps)
     transfer_momentum_gpu = 1;
 #endif
 
-#ifdef COLLISION_DETECTION
-    prepare_collision_queue();
-#endif
-
     force_calc();
 
-    //VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
-    init_forces_ghosts();
-    distribute_mol_force();
-    if (check_runtime_errors()) break;
-#endif
-
 #ifdef CATALYTIC_REACTIONS
-  integrate_reaction();
-#endif
-
-    /* Communication step: ghost forces */
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
-
-    /*apply trap forces to trapped molecules*/
-#ifdef MOLFORCES         
-    calc_and_apply_mol_constraints();
-#endif
-
-    /* should be pretty late, since it needs to zero out the total force */
-#ifdef COMFIXED
-    calc_comfixed();
+    integrate_reaction();
 #endif
 
     if (check_runtime_errors())
@@ -330,30 +272,10 @@ void integrate_sd(int n_steps)
     }
 #endif //LB_GPU
 
-#ifdef BOND_CONSTRAINT
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    correct_vel_shake();
-#endif
-
-#ifdef ROTATION
-    convert_torques_propagate_omega();
-#endif
-
-    //VIRTUAL_SITES update vel
-#ifdef VIRTUAL_SITES
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    update_mol_vel();
-    if (check_runtime_errors()) break;
-#endif
-
 #ifdef ELECTROSTATICS
     if(coulomb.method == COULOMB_MAGGS) {
       maggs_propagate_B_field(0.5*time_step); 
     }
-#endif
-
-#ifdef COLLISION_DETECTION
-    handle_collisions();
 #endif
 
 #ifdef NPT
@@ -411,22 +333,22 @@ void propagate_pos_sd()
   //get total number of particles
   int N=sd_get_particle_num();
   // gather all the data for mobility calculation
-  double * pos=NULL;
-  pos=(double *)malloc(DIM*N*sizeof(double));
+  real * pos=NULL;
+  pos=(real *)malloc(DIM*N*sizeof(double));
   assert(pos!=NULL);
-  double * force=NULL;
-  force=(double *)malloc(DIM*N*sizeof(double));
+  real * force=NULL;
+  force=(real *)malloc(DIM*N*sizeof(double));
   assert(force!=NULL);
-  double * velocity=NULL;
+  real * velocity=NULL;
   bool old_velocity_reuse;
   { static int last_particle_number=0;
     if (N != last_particle_number){
       last_particle_number=N;
-      velocity=(double *)calloc(DIM*N*sizeof(double),1);
+      velocity=(real *)calloc(DIM*N*sizeof(real),1);
       old_velocity_reuse=false;
     } else {
       old_velocity_reuse=true;
-      velocity=(double *)malloc(DIM*N*sizeof(double));
+      velocity=(real *)malloc(DIM*N*sizeof(real));
     }}
   assert(velocity!=NULL);
 #ifdef EXTERNAL_FORCES
@@ -448,11 +370,22 @@ void propagate_pos_sd()
       if (!ifParticleIsVirtual(&p[i]))
 #endif
       {
+#ifdef SD_USE_FLOAT
+	for (int d=0;d<3;d++){
+	  pos[3*j+d]        = p[i].r.p[d];
+	  pos[3*j+d]        -=rint(pos[3*j+d]/box_l[d])*box_l[d];
+	  force[3*j+d]      = p[i].f.f[d];
+	  if (old_velocity_reuse){
+	    velocity[3*j+d] = p[i].m.v[d];
+	  }
+	}
+#else
         memcpy(&pos[3*j], p[i].r.p, 3*sizeof(double));
         memcpy(&force[3*j], p[i].f.f, 3*sizeof(double));
 	if (old_velocity_reuse){
 	  memcpy(velocity+3*j, p[i].m.v, 3*sizeof(double));
 	}
+#endif
 	j++;
       }
     }
@@ -460,9 +393,18 @@ void propagate_pos_sd()
   // cuda part
 #ifdef CUDA
   //void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * force_h, double * velo_h){
-  propagate_pos_sd_cuda(box_l,N,pos,force, velocity);
+#ifdef SD_USE_FLOAT
+  real box_size[3];
+  for (int d=0;d<3;d++){
+    box_size[d]=box_l[d];
+  }
 #else
-  fprintf(stderr, "Warning - CUDA is currently required for SD");
+  real * box_size = box_l;
+#endif
+  propagate_pos_sd_cuda(box_size,N,pos,force, velocity);
+#else
+  fprintf(stderr, "Warning - CUDA is currently required for SD\n");
+  fprintf(stderr, "So i am just sitting here and copying stupidly stuff :'(\n");
 #endif
   
 
@@ -480,24 +422,40 @@ void propagate_pos_sd()
       if (ifParticleIsVirtual(&p[i])) continue;
 #endif
       // write back of position and velocity data
-      memcpy(p[i].r.p, &pos[DIM*j], 3*sizeof(double));
-      for (int d=0;d<DIM;d++){
-	assert(!isnan(pos[DIM*i+d]));
+#ifdef SD_USE_FLOAT
+      for (int d=0;d<3;d++){
+	p[i].r.p[d] = pos[3*j+d]+box_l[d]*rint(p[i].r.p[d]/box_l[d]);
+	p[i].m.v[d] = velocity[3*j+d];
       }
+#else
+      memcpy(p[i].r.p, &pos[DIM*j], 3*sizeof(double));
       memcpy(p[i].m.v, &velocity[DIM*j], 3*sizeof(double));
+#endif
+      for (int d=0;d<DIM;d++){
+        assert(!isnan(pos[DIM*i+d]));
+      }
       j++;
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
+   
+#ifdef ADDITIONAL_CHECKS
+      force_and_velocity_check(&p[i]);
+#endif
+#ifdef ROTATION
+      propagate_omega_quat_particle(&p[i]);
+#endif
+
       /* Verlet criterion check */
       if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
-      
     }
   }
-  /*std::cout << pos[0] << " " << pos[1] << " " << pos[2]
-	    << pos[3] << " " << pos[4] << " " << pos[5]
-	    << pos[6] << " " << pos[7] << " " << pos[8] << " "<< force << "\n";*/
   free(pos);
   free(force);
   announce_resort_particles();
-  
+
+#ifdef ADDITIONAL_CHECKS
+  force_and_velocity_display();
+#endif  
 }
 
 
@@ -509,7 +467,7 @@ int sd_set_particles_apart(){
     int N=sd_get_particle_num();
     double Vpart=4.*M_PI/3.*sd_radius*SQR(sd_radius)*N;
     double phi = Vpart/V;
-    fprintf(stderr,"info: sd_set_particles_apart: Volume fraction of particles is %f.\n",phi);
+    //fprintf(stderr,"info: sd_set_particles_apart: Volume fraction of particles is %f.\n",phi);
     if (phi > M_PI/3./sqrt(2)){
       return -5;
     }
@@ -545,7 +503,12 @@ It could be difficult to set particles apart!\n",phi);
 	      double drn = sqrt(dr2);
 	      // push to a distance of 1e-6;
 	      double fac=(sd_radius*(1+1.2e-6)-drn/2)/drn;
+	      assert(!isnan(fac));
 	      for (int d=0; d<3;d++){
+		if(isnan(dr[d]*fac)){
+		  fprintf(stderr, "%4d %4d %6e %6e ",i,j,dr[d],fac);
+		}
+		assert(!isnan(dr[d]));
 		assert(!isnan(dr[d]*fac));
 		p[i].r.p[d]+=fac*dr[d];
 		p[j].r.p[d]-=fac*dr[d];
@@ -599,10 +562,9 @@ It could be difficult to set particles apart!\n",phi);
     }
     fprintf(stderr,"+");
   } while (outer);
-  fprintf(stderr,"set_apart suceeded ");
+  //fprintf(stderr,"set_apart suceeded ");
   return 0;
 }
-
 
 int sd_get_particle_num(){
   int N=0;
