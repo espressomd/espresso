@@ -3599,7 +3599,7 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
   }
 }
 __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile_data* pdata, float* data, LB_node_force_gpu node_f){
-
+#if 0
   unsigned int rbin=threadIdx.x;
   unsigned int phibin=blockIdx.x;
   unsigned int zbin=blockIdx.y;
@@ -3658,6 +3658,7 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   data[3*linear_index+1]=v_phi;
   data[3*linear_index+2]=v[2];
 
+#endif
 }
 
 
