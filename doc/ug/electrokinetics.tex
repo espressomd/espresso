@@ -9,7 +9,9 @@ electro-hydrodynamic systems on the level of ion density distributions coupled
 to a Lattice-Boltzmann (LB) fluid. The ion density distributions may also
 interact with explicit charged particles, which are interpolated on the LB grid.
 In the following paragraph we briefly explain the electrokinetic model
-implemented in \es{}, before we come to the description of the interface.
+implemented in \es{}, before we come to the description of the interface.\\
+
+If you are interested in using the electrokinetic implementation in \es{} for scientific purposes, please contact G.~Rempfer before you start your project.
 
 \section{Electrokinetic Equations}
 
@@ -291,8 +293,12 @@ This command can be used to output the number density of the
 
 The electrokinetics solver implemented in \es{} can be used to simulate a
 system, for which in addition to the electrokinetic equations, there is a 
-(local) catalytic reaction which converts one species into another. Currently,
-a linear reaction is implemented which converts one species into two others, in
+(local) catalytic reaction which converts one species into another.\\
+
+If you are interested in using this implementation in \es{} for scientific purposes, please contact J.~de~Graaf before you start your project.\\
+
+
+Currently, a linear reaction is implemented which converts one species into two others, in
 order to model the catalytic decomposition of hydrogen peroxide in the presence
 of a platinum catalyst: $2 \mathrm{H}_{2}\mathrm{O}_{2} \rightarrow 
 2 \mathrm{H}_{2}\mathrm{O} + \mathrm{O}_{2}$. The decomposition of 
