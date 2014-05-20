@@ -397,6 +397,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
         error = double_correlation_get_data(&correlations[no]);
         if (error) {
           Tcl_AppendResult(interp, double_correlation_get_data_errors[error], (char *)NULL);
+	  return TCL_ERROR;
         } else {
           return TCL_OK;
         }

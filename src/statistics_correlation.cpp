@@ -64,8 +64,8 @@ const char file_data_source_init_errors[][64] = {
 
 const char double_correlation_get_data_errors[][64] = {
   "",                                                                // 0
-  "Error calculating variable A" ,                                   // 2
-  "Error calculating variable B" ,                                   // 3
+  "Error calculating variable A\n" ,                                   // 2
+  "Error calculating variable B\n" ,                                   // 3
   "Error calculating correlation\n",                                 // 4
   "Error allocating temporary memory\n",                             // 4
   "Error in corr_operation: observable dimensions do not match\n",   // 5
