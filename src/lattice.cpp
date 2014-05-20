@@ -98,7 +98,7 @@ int init_lattice(Lattice *lattice, double *agrid, double* offset, int halo_size,
 void _lattice_allocate_memory(Lattice *lattice) {
 
   lattice->_data = malloc(lattice->element_size*lattice->halo_grid_volume);
-  memset(lattice->_data, 0, lattice->element_size*lattice->halo_grid_volume);
+  memset(lattice->_data, 1e90, lattice->element_size*lattice->halo_grid_volume);
 
 }
 
@@ -134,8 +134,8 @@ void lattice_interpolate_linear_gradient(Lattice* lattice, double* pos, double* 
      return;
    }
    for (int dim = 0; dim<3; dim++) {
-     left_halo_index[dim]=(int) floor((pos[dim]-my_left[dim]-lattice->offset[dim])/lattice->agrid[dim]) + lattice->halo_size;
-     d[dim]=((pos[dim]-my_left[dim]-lattice->offset[dim])/lattice->agrid[dim] - floor((pos[dim]-my_left[dim])/lattice->agrid[dim]));
+     left_halo_index[dim]=(int) floor((pos[dim]-lattice->local_offset[dim])/lattice->agrid[dim]) + lattice->halo_size;
+     d[dim]=((pos[dim]-lattice->local_offset[dim])/lattice->agrid[dim] - floor((pos[dim]-lattice->local_offset[dim])/lattice->agrid[dim]));
      if (left_halo_index[dim] < 0 || left_halo_index[dim] >= lattice->halo_grid[dim]) {
        char* c = runtime_error(128);
        ERROR_SPRINTF(c, "Error in lattice_interpolate_linear: Particle out of range");
@@ -221,8 +221,8 @@ void lattice_interpolate_linear(Lattice* lattice, double* pos, double* value) {
      return;
    }
    for (int dim = 0; dim<3; dim++) {
-     left_halo_index[dim]=(int) floor((pos[dim]-my_left[dim]-lattice->offset[dim])/lattice->agrid[dim]) + lattice->halo_size;
-     d[dim]=((pos[dim]-my_left[dim]-lattice->offset[dim])/lattice->agrid[dim] - floor((pos[dim]-my_left[dim])/lattice->agrid[dim]));
+     left_halo_index[dim]=(int) floor((pos[dim]-lattice->local_offset[dim])/lattice->agrid[dim]) + lattice->halo_size;
+     d[dim]=((pos[dim]-lattice->local_offset[dim])/lattice->agrid[dim] - floor((pos[dim]-lattice->local_offset[dim])/lattice->agrid[dim]));
      if (left_halo_index[dim] < 0 || left_halo_index[dim] >= lattice->halo_grid[dim]) {
        char* c = runtime_error(128);
        ERROR_SPRINTF(c, "Error in lattice_interpolate_linear: Particle out of range");
