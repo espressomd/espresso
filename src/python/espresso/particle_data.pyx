@@ -22,8 +22,7 @@ cdef class ParticleHandle:
 
   # The individual attributes of a particle are implemented as properties.
 
-# Particle Type
-
+  # Particle Type
   property type:
     """Particle type"""
     def __set__(self, _type):
@@ -37,26 +36,9 @@ cdef class ParticleHandle:
       self.updateParticleData()
       return self.particleData.p.type
 
-  property mass:
-    """Particle mass"""
-    def __set__(self, _mass):
-      checkTypeOrExcept(_mass,1,float,"Mass has to be 1 floats")
-      if set_particle_mass(self.id, _mass) == 1:
-        raise Exception("set particle position first")
-    
-    def __get__(self):
-      self.updateParticleData()
-      cdef double* x
-      pointer_to_mass(&(self.particleData),x)
-      return x[0]
-
-
-
-
-# Position
-
+  # Position
   property pos:
-    """Particle position (not folded into periodic box)"""
+    """Particle position (not folded into central image)."""
     def __set__(self, _pos):
       cdef double mypos[3]
       checkTypeOrExcept(_pos, 3,float,"Postion must be 3 floats")
@@ -70,8 +52,7 @@ cdef class ParticleHandle:
                        self.particleData.r.p[1],\
                        self.particleData.r.p[2]])
 
-
-# Velocity
+  # Velocity
   property v:
     """Particle velocity""" 
     def __set__(self, _v):
@@ -87,7 +68,7 @@ cdef class ParticleHandle:
                         self.particleData.m.v[1],\
                         self.particleData.m.v[2]])
 
-# Force
+  # Force
   property f:
     """Particle force"""
     def __set__(self, _f):
@@ -102,8 +83,70 @@ cdef class ParticleHandle:
       return np.array([ self.particleData.f.f[0],\
                         self.particleData.f.f[1],\
                         self.particleData.f.f[2]])
-  IF ROTATION ==1:
-# Omega (angular velocity) lab frame
+
+  # Bonds
+  property bonds:
+    """Bond partners with respect to bonded interactions."""
+    
+    def __set__(self,_bonds):
+      # First, we check that we got a list/tuple. 
+      if not hasattr(_bonds, "__getitem__"):
+        raise ValueError("bonds have to specified as a tuple of tuples. (Lists can also be used)")
+      # Check individual bonds
+      for bond in _bonds: 
+        self.checkBondOrThrowException(bond)
+    
+      # Assigning to the bond property means replacing the existing value
+      # i.e., we delete all existing bonds
+      if change_particle_bond(self.id,NULL,1):
+        raise Exception("Deleting existing bonds failed.")
+      
+      # And add the new ones
+      for bond in _bonds:
+        self.addVerifiedBond(bond)
+   
+   
+    def __get__(self):
+      self.updateParticleData()
+      bonds =[]
+      # Go through the bond list of the particle
+      i=0
+      while i<self.particleData.bl.n:
+        bond=[]
+        # Bond type:
+        bondId =self.particleData.bl.e[i]
+        bond.append(bondId)
+        # Number of partners
+        nPartners=bonded_ia_params[bondId].num
+        
+        i+=1
+        
+        # Copy bond partners
+        for j in range(nPartners):
+          bond.append(self.particleData.bl.e[i])
+          i+=1
+        bonds.append(tuple(bond))
+      
+      return tuple(bonds)
+
+  # Preoperties that exist only when certain features are activated
+  # MASS
+  IF MASS == 1:
+    property mass:
+      """Particle mass"""
+      def __set__(self, _mass):
+        checkTypeOrExcept(_mass,1,float,"Mass has to be 1 floats")
+        if set_particle_mass(self.id, _mass) == 1:
+          raise Exception("set particle position first")
+
+      def __get__(self):
+        self.updateParticleData()
+        cdef double* x
+        pointer_to_mass(&(self.particleData),x)
+        return x[0]
+
+  IF ROTATION == 1:
+    # Omega (angular velocity) lab frame
     property omega_lab:
       """Angular velocity in lab frame""" 
       def __set__(self, _o):
@@ -186,8 +229,6 @@ cdef class ParticleHandle:
         pointer_to_quatu(&(self.particleData),x)
         return np.array([x[0],x[1],x[2]])
   
-  
-# Force
 # Charge
   IF ELECTROSTATICS == 1:
     property q:
@@ -228,8 +269,8 @@ cdef class ParticleHandle:
         pointer_to_virtual(&(self.particleData),x)
         return x[0]
 
-  IF VIRTUAL_SITES_RELATIVE ==1:
-# Virtual sites relative parameters
+  IF VIRTUAL_SITES_RELATIVE == 1:
+    # Virtual sites relative parameters
     property vs_relative:
       """virtual sites relative parameters"""
       def __set__(self,x):
@@ -249,7 +290,7 @@ cdef class ParticleHandle:
         pointer_to_vs_relative(&(self.particleData),rel_to,dist)
         return (rel_to[0],dist[0])
 
-# vs_auto_relate_to
+    # vs_auto_relate_to
     def vs_auto_relate_to(self,_relto):
       """Setup this particle as virtual site relative to the particle with the given id"""
       if isinstance(_relto,int):
@@ -259,8 +300,8 @@ cdef class ParticleHandle:
             raise ValueError("Argument of vs_auto_relate_to has to be of type int")
 
 
-  IF DIPOLES:
-#Vector dipole moment
+  IF DIPOLES == 1:
+    # Vector dipole moment
     property dip:
       """Dipole moment as vector""" 
       def __set__(self, _q):
@@ -276,7 +317,7 @@ cdef class ParticleHandle:
         pointer_to_dip(&(self.particleData),x)
         return np.array([x[0],x[1],x[2]])
   
-#Scalar magnitude of dipole moment
+    # Scalar magnitude of dipole moment
     property dipm:
       """Dipole moment (magnitude)""" 
       def __set__(self, _q):
@@ -298,7 +339,7 @@ cdef class ParticleHandle:
 
 
   IF VIRTUAL_SITES ==1:
-# vs_auto_relate_to
+    # vs_auto_relate_to
     def vs_auto_relate_to(self,_relto):
       """Setup this particle as virtual site relative to the particle with the given id"""
       if isinstance(_relto,int):
@@ -307,54 +348,7 @@ cdef class ParticleHandle:
       else:
             raise ValueError("Argument of vs_auto_relate_to has to be of type int")
 
-
-# Bonds
-  property bonds:
-    """Bond partners with respect to bonded interactions."""
-    
-    def __set__(self,_bonds):
-      # First, we check that we got a list/tuple. 
-      if not hasattr(_bonds, "__getitem__"):
-        raise ValueError("bonds have to specified as a tuple of tuples. (Lists can also be used)")
-      # Check individual bonds
-      for bond in _bonds: 
-        self.checkBondOrThrowException(bond)
-    
-      # Assigning to the bond property means replacing the existing value
-      # i.e., we delete all existing bonds
-      if change_particle_bond(self.id,NULL,1):
-        raise Exception("Deleting existing bonds failed.")
-      
-      # And add the new ones
-      for bond in _bonds:
-        self.addVerifiedBond(bond)
-   
-   
-    def __get__(self):
-      self.updateParticleData()
-      bonds =[]
-      # Go through the bond list of the particle
-      i=0
-      while i<self.particleData.bl.n:
-        bond=[]
-        # Bond type:
-        bondId =self.particleData.bl.e[i]
-        bond.append(bondId)
-        # Number of partners
-        nPartners=bonded_ia_params[bondId].num
-        
-        i+=1
-        
-        # Copy bond partners
-        for j in range(nPartners):
-          bond.append(self.particleData.bl.e[i])
-          i+=1
-        bonds.append(tuple(bond))
-      
-      return tuple(bonds)
-      
-
-# Bond related methods
+  # Bond related methods
   def addVerifiedBond(self,bond):
     """Add a bond, the validity of which has already been verified"""
     # If someone adds bond types with more than four partners, this has to be changed
@@ -395,9 +389,8 @@ cdef class ParticleHandle:
     if bonded_ia_params[bond[0]].num != len(bond)-1:
       raise ValueError("Bond of type",bond[0],"needs",bonded_ia_params[bond[0]],"partners.")
       
-
   def addBond(self,bond):
-    """Add a single bond to the particel"""
+    """Add a single bond to the particle"""
     self.checkBondOrThrowException(bond)
     self.addVerifiedBond(bond)
     
