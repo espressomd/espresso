@@ -3582,9 +3582,13 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
       u[1] += (mode[2]/totmass)*delta[i];
       u[2] += (mode[3]/totmass)*delta[i];
 #else //SHANCHEN
-      u[0] += d_v[node_index[i]].v[0]/8.0f;  
-      u[1] += d_v[node_index[i]].v[1]/8.0f;
-      u[2] += d_v[node_index[i]].v[2]/8.0f;
+//      u[0] += d_v[node_index[i]].v[0]/8.0f;  
+//      u[1] += d_v[node_index[i]].v[1]/8.0f;
+//      u[2] += d_v[node_index[i]].v[2]/8.0f;
+#warning "lb_radial_velocity_profile does not work with SHANCHEN yet/"
+        u[0] = 0;
+        u[1] = 0;
+        u[2] = 0;
 #endif
 
 //      mode[1]+=0.5f*node_f.force[0*para.number_of_nodes + node_index[i]];
