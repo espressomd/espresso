@@ -253,9 +253,9 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si
   cross(n1, rccj, u1);
   dot01 = dot(u1, rcci)/n1_l;
   dot11 = dot(u1, rcb1)/n1_l;
-  const double factor1 = fmag/(rcci_l*rccj_p_l);
-  const double factor2 = fmag*cos1/SQR(rcci_l);
-  const double factor3 = fmag*cos1/rccj_p_l2;
+  double factor1 = fmag/(rcci_l*rccj_p_l);
+  double factor2 = fmag*cos1/SQR(rcci_l);
+  double factor3 = fmag*cos1/rccj_p_l2;
   const double factor4 = factor3*rccj_parallel;
 
   double mag0; 
@@ -297,7 +297,37 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si
       veci[i] = bi1->r.p[i] - si2->r.p[i] + rcb2[i];
       vecj[i] = bj1->r.p[i] - sj2->r.p[i] + rcb2j[i];
     }
+
+    cross(ui, rcci, f_tilt_bi1);
+    cross(ui, veci, f_tilt_si1);
+    cross(uj, rccj, f_tilt_bi1);
+    cross(uj, vecj, f_tilt_si1);
+
+    for(int k = 0; k < 3; k++) {
+      f_tilt_bi2[k] = f_tilt_bi1[k];
+      f_tilt_sj2[k] = -f_tilt_si1[k] - 2.*f_tilt_bi1[k];
+      f_tilt_bj2[k] = f_tilt_bj1[k];
+      f_tilt_sj2[k] = -f_tilt_sj1[k] - 2.*f_tilt_bj1[k];
+    }
   }
+
+  double tau_stack = pot_stack/epsilon;
+  double tau_twist = pot_twist/epsilon;
+
+  factor1 = tau_twist*tau_tilt;
+  factor2 = tau_stack*tau_tilt;
+  factor3 = tau_stack*tau_twist;
+
+  for(int k = 0; k < 3; k++) {
+    force2[k] = factor1*f_stack_bi1[k] + factor2*f_twist_bi1[k] + factor3*f_tilt_bi1[k];
+    force4[k] = factor1*f_stack_bi2[k]                          + factor3*f_tilt_bi2[k];
+    force1[k] = factor1*f_stack_si1[k] + factor2*f_twist_si1[k] + factor3*f_tilt_si1[k];
+    force3[k] = factor1*f_stack_si2[k] + factor2*f_twist_si2[k] + factor3*f_tilt_si2[k];
+    force5to8[3 + k] = factor1*f_stack_bj1[k] + factor2*f_twist_bj1[k] + factor3*f_tilt_bj1[k];
+    force5to8[9 + k] = factor1*f_stack_bj2[k]                          + factor3*f_tilt_bj2[k];
+    force5to8[0 + k] = factor1*f_stack_sj1[k] + factor2*f_twist_sj1[k] + factor3*f_tilt_sj1[k];
+    force5to8[6 + k] = factor1*f_stack_sj2[k] + factor2*f_twist_sj2[k] + factor3*f_tilt_sj2[k];
+  }	  
 
   return 0;
 }
