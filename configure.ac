@@ -33,7 +33,8 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialize automake
-AM_INIT_AUTOMAKE([1.11 gnu subdir-objects dist-xz])
+# tar-ustar is needed for filenames longer than 99 chars
+AM_INIT_AUTOMAKE([1.11 gnu tar-ustar subdir-objects dist-xz])
 AM_MAINTAINER_MODE
 
 # silent rules, backwards compatiblity

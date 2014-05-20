@@ -56,7 +56,7 @@ tests = \
 	lb_gpu.tcl \
 	lb_planar.tcl \
 	lb_planar_gpu.tcl \
-  lb_planar_embedded_particles.tcl \
+	lb_planar_embedded_particles.tcl \
 	lb_planar_embedded_particles_gpu.tcl \
 	lb_stokes_sphere.tcl \
 	lb_stokes_sphere_gpu.tcl \
@@ -115,6 +115,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	gb_system.data uwerr.data \
 	tabulated_system.data lj1.tab lj2.tab lj3.tab \
 	fene_system.data.gz harm_system.data.gz \
+	harmonic_potential.dat \
 	intpbc_system.data.gz intppbc.tcl intppbc_system.data.gz \
 	npt_lj_system.data \
 	thermostat.data thermostat_rot.data \
@@ -141,4 +142,5 @@ CLEANFILES = runtest.log
 
 DISTCLEANFILES = \
 	fftw3_1d_wisdom_*.file \
-	dfftw3_1d_wisdom_*.file
+	dfftw3_1d_wisdom_*.file \
+	lattice_*.dat
