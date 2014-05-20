@@ -83,15 +83,26 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si
   double rcci[3], rccj[3];
   /* Sugar-Base Vectors */
   double rcb1[3], rcb2[3], rcb1_l, rcb2_l;
+  double rcb1j[3], rcb2j[3];
   /* Mean basepair distance */
   double r;
   /* Base normals */
   double n1[3], n2[3], n1_l, n2_l;
+  double n1j[3], n2j[3], n1j_l, n2j_l;
+  double f_tilt_si1[3], f_tilt_si2[3], f_tilt_sj1[3], f_tilt_sj2[3];
+  double f_tilt_bi1[3], f_tilt_bi2[3], f_tilt_bj1[3], f_tilt_bj2[3];
+  double f_twist_si1[3], f_twist_si2[3], f_twist_sj1[3], f_twist_sj2[3];
+  double f_twist_bi1[3], f_twist_bi2[3], f_twist_bj1[3], f_twist_bj2[3];
+  double f_stack_si1[3], f_stack_si2[3], f_stack_sj1[3], f_stack_sj2[3];
+  double f_stack_bi1[3], f_stack_bi2[3], f_stack_bj1[3], f_stack_bj2[3];
 
   double vec1[3], u1[3], dot01, dot11;
   double vec2[3], u2[3], dot02, dot12;
   double vec3[3], u3[3], dot03, dot13;
   double vec4[3], u4[3], dot04, dot14;
+
+  double ani[3], anj[3];
+  double ani_l, anj_l;
 
   get_mi_vector(vec1, sj1->r.p, si1->r.p);
   get_mi_vector(vec2, bj1->r.p, bi1->r.p);
@@ -103,21 +114,43 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si
   get_mi_vector(rcb2, si2->r.p, bi2->r.p);
   
   get_mi_vector(rccj, sj1->r.p, sj2->r.p);
+  get_mi_vector(rcb1j, sj1->r.p, bj1->r.p);
+  get_mi_vector(rcb2j, sj2->r.p, bj2->r.p);
 
   cross(rcci, rcb1, n1);
   cross(rcci, rcb2, n2);
 
+  cross(rccj, rcb1j, n1j);
+  cross(rccj, rcb2j, n2j);
+
   n1_l = norm(n1);
   n2_l = norm(n2);
+  n1j_l = norm(n1j);
+  n2j_l = norm(n2j);
  
   n1_l = ( n1_l == 0 ) ? 1 : n1_l;
   n2_l = ( n2_l == 0 ) ? 1 : n2_l;
 
+  n1j_l = ( n1j_l == 0 ) ? 1 : n1j_l;
+  n2j_l = ( n2j_l == 0 ) ? 1 : n2j_l;
+
   for(int i = 0; i < 3; i++) {    
     n1[i] /= n1_l;
     n2[i] /= n2_l;
+    n1j[i] /= n1j_l;
+    n2j[i] /= n2j_l;
+    ani[i] = n1[i] + n2[i];
+    anj[i] = n1j[i] + n2j[i];
   }
 
+  ani_l = norm(ani);
+  anj_l = norm(anj);
+
+  for(int i = 0; i < 3; i++) {    
+    ani[i] /= ani_l;
+    anj[i] /= anj_l;
+  }
+  
   r = 0.25*(dot(vec1, n1) + dot(vec2,n1) + dot(vec3,n2) + dot(vec4,n2));
   
   double f_r;
@@ -162,14 +195,14 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si
   for(int k = 0; k < 3; k++) {
     mag1 = f_r*n1[k];
     mag2 = f_r*n2[k];
-    force2[k] = (dot01+dot02)*mag1;
-    force4[k] = (dot03+dot04)*mag2;
-    force1[k] = -(2.+dot01-dot11+dot02-dot12)*mag1 + (dot13+dot14)*mag2;
-    force3[k] = -(2.+dot03+dot13+dot04+dot14)*mag2 - (dot11+dot12)*mag1;
-    force5to8[3 + k]  = mag1;
-    force5to8[9 + k]  = mag2;
-    force5to8[0 + k] = mag1;
-    force5to8[6 + k] = mag2;    
+    f_stack_bi1[k] = (dot01+dot02)*mag1;
+    f_stack_bi2[k] = (dot03+dot04)*mag2;
+    f_stack_si1[k] = -(2.+dot01-dot11+dot02-dot12)*mag1 + (dot13+dot14)*mag2;
+    f_stack_si2[k] = -(2.+dot03+dot13+dot04+dot14)*mag2 - (dot11+dot12)*mag1;
+    f_stack_bj1[k] = mag1;
+    f_stack_bj2[k] = mag2;
+    f_stack_sj1[k] = mag1;
+    f_stack_sj2[k] = mag2;    
   }
 
   /* Parallel projection of rccj */
@@ -216,6 +249,55 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si
   double fmag = a[1]*sin1 - b[0] * cos1 + 2.* (a[2]*sin2 - b[1] *cos2) + 3.*(a[3]*sin3 - b[2]*cos3) + 4. * (a[4]*sin4 - b[3]*cos4) + 5.*(a[5]*sin5 - b[4]*cos5) + 6.*(a[6]*sin6 - b[5]*cos6) + 7. * (a[7]*sin7 - b[6]*cos7);
 
   fmag = -fmag/sin1;
+ 
+  cross(n1, rccj, u1);
+  dot01 = dot(u1, rcci)/n1_l;
+  dot11 = dot(u1, rcb1)/n1_l;
+  const double factor1 = fmag/(rcci_l*rccj_p_l);
+  const double factor2 = fmag*cos1/SQR(rcci_l);
+  const double factor3 = fmag*cos1/rccj_p_l2;
+  const double factor4 = factor3*rccj_parallel;
+
+  double mag0; 
+  double mag3; 
+  double mag4; 
+
+  for(int k = 0; k < 3; k++) {
+    mag0 = factor1*rcci[k];
+    mag1 = factor1*rccj[k];
+    mag2 = factor2*rcci[k];
+    mag3 = factor3*rccj[k];
+    mag4 = factor4*n1[k];
+
+    f_twist_bi1[k] = dot01*mag4;
+    f_twist_si1[k] = -mag1 + mag2 + (dot11-dot01)*mag4;
+    f_twist_si2[k] = mag1 - mag2 - dot11*mag4;
+    f_twist_sj1[k] = -mag0 + mag3 - mag4;
+    f_twist_sj2[k] = -f_twist_sj1[k];
+  }
+
+  cos1 = dot(ani, anj);
+  double tau_tilt;
+  double f_tilt;
+
+  double ui[3], uj[3], veci[3], vecj[3];
+
+  if(cos1 < 0) {
+    tau_tilt = 0.0;
+    for(int i = 0; i < 3; i++) {
+      f_tilt_si1[i] = f_tilt_si2[i] = f_tilt_sj1[i] = f_tilt_sj2[i] = 0;
+      f_tilt_bi1[i] = f_tilt_bi2[i] = f_tilt_bj1[i] = f_tilt_bj2[i] = 0;
+    }
+  } else {
+    tau_tilt = cos1*cos1;
+    f_tilt = -2.*epsilon*cos1;
+    for(int i = 0; i < 3; i++) {
+      ui[i] = f_tilt*(anj[i] - cos1*ani[i])/ani_l;
+      uj[i] = f_tilt*(ani[i] - cos1*anj[i])/anj_l;
+      veci[i] = bi1->r.p[i] - si2->r.p[i] + rcb2[i];
+      vecj[i] = bj1->r.p[i] - sj2->r.p[i] + rcb2j[i];
+    }
+  }
 
   return 0;
 }
