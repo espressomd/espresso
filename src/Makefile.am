@@ -47,6 +47,7 @@ libEspresso_la_SOURCES = \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
 	energy.cpp energy.hpp \
+	external_potential.hpp external_potential.cpp \
 	errorhandling.cpp errorhandling.hpp \
 	fft.cpp fft.hpp \
 	fft-common.cpp fft-common.hpp \

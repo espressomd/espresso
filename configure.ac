@@ -33,7 +33,8 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialize automake
-AM_INIT_AUTOMAKE([1.11 gnu subdir-objects dist-xz])
+# tar-ustar is needed for filenames longer than 99 chars
+AM_INIT_AUTOMAKE([1.11 gnu tar-ustar subdir-objects dist-xz])
 AM_MAINTAINER_MODE
 
 # silent rules, backwards compatiblity
@@ -206,7 +207,6 @@ cat <<EOF
 EOF
 
 LIBS="$LIBS -lm"
-
 
 ##################################
 # check for FFTW
@@ -463,6 +463,7 @@ if test .$use_tcl = . ; then
 fi
 
 case $target_os in
+  *darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Headers ;;
   *linux*)  # path used by *buntu
 	  extrapaths=/usr/include/$version ;;
 esac
@@ -537,6 +538,7 @@ Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
 		fi
 	fi
 	case $target_os in
+	*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
 	*linux*)  # path used by *buntu
 		  extrapaths="/usr/include/$version /usr/include/$use_tcl" ;;
 	(*) ;;
@@ -636,6 +638,8 @@ AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
+AC_CONFIG_FILES([src/python/pypresso],
+	[chmod 755 src/python/pypresso])
 
 AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/src/features.def $(top_srcdir)/config/gen_sampleconfig.py'])
 AC_CONFIG_COMMANDS([myconfig-sample.hpp],

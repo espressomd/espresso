@@ -29,6 +29,10 @@ New user-visible features
 * MEMD electrostatics can now handle spatially varying dielectrc
   constants.
 
+* pore constraint / lbboundary can have a two outer radii now to create nozzles.
+
+* slitpore constraint and dielectric for IL based supercaps implemented.
+
 * New command time_integration to get the runtime of the integration
   loop.
 
@@ -64,12 +68,24 @@ User-visible changes
 
 * Removed outdated ADRESS code.
 
+* external_potential tabulated to include arbitrary potentials applied to all particles
+
+* thermostat inter_dpd ignore_fixed_particles 1 allows the user to swith on DPD with fixed particles
+
+* New Observable concept that includes running averages and other observables 
+  with history
+
+
 Changes visible for developers
 ------------------------------
 
 * The code has been switched to using a C++ compiler.
 
 * The EspressoInterfaceClass has changed.
+
+* Improved Lattice Structure
+
+* Generic TclAppend function
 
 ESPResSo 3.2
 ============

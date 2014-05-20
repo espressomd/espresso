@@ -19,7 +19,7 @@
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 # Build rules for python libraries
-AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src
+AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src 
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 LIBS =  $(top_builddir)/src/libEspresso.la @LIBS@
 
@@ -43,7 +43,7 @@ PYXFILES =  \
 	debye_hueckel.pyx \
 	global_variables.pyx \
 	integrate.pyx \
-	interaction_data.pyx \
+	interactions.pyx \
 	invalidateSystem.pyx \
 	thermostat.pyx \
 	utils.pyx
@@ -59,7 +59,7 @@ PXDFILES = \
 	debye_hueckel.pxd \
 	global_variables.pxd \
 	integrate.pxd \
-	interaction_data.pxd \
+	interactions.pxd \
 	invalidateSystem.pxd \
 	thermostat.pxd \
 	utils.pxd
@@ -95,8 +95,9 @@ CLEANFILES += $(CPPFILES)
 # want to use libtool, so we have to give it a corresponding target.
 # Also, like this, the .so-files are installed to the right place.
 LAFILES = $(PYXFILES:.pyx=.la)
-$(LAFILES): %.la: %.cpp
+$(LAFILES): %.la: %.lo
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(pyexecdir) $< $(LIBS)
+CLEANFILES += $(LAFILES)
 
 # create links to the ./libs/*.so in the dir
 SOFILES = $(PYXFILES:.pyx=.so)
@@ -112,7 +113,6 @@ gen_pxiconfig.cpp: $(top_srcdir)/config/gen_pxiconfig.py $(top_srcdir)/src/featu
 	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_pxiconfig.py \
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
-# create gen_pxiconfig from gen_pxiconfig.cpp
 noinst_PROGRAMS = gen_pxiconfig
 nodist_gen_pxiconfig_SOURCES = gen_pxiconfig.cpp $(top_builddir)/src/myconfig-final.hpp
 
@@ -121,4 +121,5 @@ myconfig.pxi: gen_pxiconfig
 	$(AM_V_GEN)./gen_pxiconfig > myconfig.pxi
 
 CLEANFILES += gen_pxiconfig.cpp myconfig.pxi
+BUILT_SOURCES = gen_pxiconfig.cpp myconfig.pxi
 

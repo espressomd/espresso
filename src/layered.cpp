@@ -583,6 +583,7 @@ void layered_calculate_ia()
 #ifdef CONSTRAINTS
       add_constraints_forces(p1);
 #endif
+      add_external_potential_forces(p1);
 
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
@@ -639,6 +640,7 @@ void layered_calculate_energies()
 #ifdef CONSTRAINTS
       add_constraints_energy(p1);
 #endif
+      add_external_potential_energy(p1);
 
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {

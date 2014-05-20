@@ -46,8 +46,13 @@ endif
 endif
 
 if PYTHON_INTERFACE
-espresso: FORCE
-	test -L espresso || $(LN_S) src/python espresso
+all-local: espresso-python pypresso
+espresso-python: FORCE
+	test -L espresso || $(LN_S) src/python/espresso espresso
+pypresso: FORCE
+	test -L pypresso || $(LN_S) src/python/pypresso pypresso
+
+CLEANFILES += pypresso espresso
 endif
 
 # Sample myconfig generation

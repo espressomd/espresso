@@ -32,6 +32,9 @@
 #include "particle_data.hpp"
 #include "virtual_sites.hpp"
 
+/** Flag to decide wether to allow for fixed particles with DPD */
+extern int dpd_ignore_fixed_particles;
+
 /** DPD Friction coefficient gamma. */
 extern double dpd_gamma;
 /** DPD thermostat cutoff */
@@ -95,7 +98,8 @@ inline void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], d
   // if any of the two particles is fixed in some direction then
   // do not add any dissipative or stochastic dpd force part
   // because dissipation-fluctuation theorem is violated
-  if ( (p1->l.ext_flag | p2->l.ext_flag) & COORDS_FIX_MASK) return;
+  if (dpd_ignore_fixed_particles)
+    if ( (p1->l.ext_flag | p2->l.ext_flag) & COORDS_FIX_MASK) return;
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -219,7 +223,8 @@ inline void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *
   // if any of the two particles is fixed in some direction then
   // do not add any dissipative or stochastic dpd force part
   // because dissipation-fluctuation theorem is violated
-  if ( (p1->l.ext_flag | p2->l.ext_flag) & COORDS_FIX_MASK) return;
+  if (dpd_ignore_fixed_particles)
+    if ( (p1->l.ext_flag | p2->l.ext_flag) & COORDS_FIX_MASK) return;
 #endif
 
 #ifdef DPD_MASS_RED

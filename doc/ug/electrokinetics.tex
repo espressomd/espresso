@@ -4,12 +4,17 @@
 \chapter{\label{sec:electrokinetics}Electrokinetics}
 \newescommand{electrokinetics}
 
-The electrokinetics setup in \es{} allows for the description of 
-electro-hydrodynamic systems on the level of ion density distributions coupled 
-to a Lattice-Boltzmann (LB) fluid. The ion density distributions may also
-interact with explicit charged particles, which are interpolated on the LB grid.
-In the following paragraph we briefly explain the electrokinetic model
-implemented in \es{}, before we come to the description of the interface.
+The electrokinetics setup in \es{} allows for the description of
+electro-hydrodynamic systems on the level of ion density distributions
+coupled to a Lattice-Boltzmann (LB) fluid. The ion density
+distributions may also interact with explicit charged particles, which
+are interpolated on the LB grid.  In the following paragraph we
+briefly explain the electrokinetic model implemented in \es, before
+we come to the description of the interface.
+
+If you are interested in using the electrokinetic implementation in
+\es for scientific purposes, please contact G.~Rempfer before you
+start your project.
 
 \section{Electrokinetic Equations}
 
@@ -49,52 +54,58 @@ Eqs.~\eqref{eq:ek-model-continuity}-\eqref{eq:ek-model-continuity-fl}, combining
 diffusion-advection, electrostatics, and hydrodynamics is conventionally 
 referred to as the \textit{Electrokinetic Equations}.
 
-\todo{Complete in broad strokes the applicability of the electrokinetics model. Also mention the difference in temperatures between EK and LB species.}
+\todo{Complete in broad strokes the applicability of the
+  electrokinetics model. Also mention the difference in temperatures
+  between EK and LB species.}
 
 The electrokinetic equations have the following properties:
 \begin{itemize}
-	\item On the coarse time and length scale of the model, the dynamics of the
-	particle species can be described in terms of smooth density distributions and
-	potentials as opposed to the microscale where highly localized densities cause
-	singularities in the potential.
+\item On the coarse time and length scale of the model, the dynamics
+  of the particle species can be described in terms of smooth density
+  distributions and potentials as opposed to the microscale where
+  highly localized densities cause singularities in the potential.
 	
-	In most situations, this restricts the application of the model to species of
-	monovalent ions, since ions of higher valency typically show strong
-	condensation and correlation effects -- the localization of individual ions in
-	local potential minima and the subsequent correlated motion with the charges
-	causing this minima.
+  In most situations, this restricts the application of the model to
+  species of monovalent ions, since ions of higher valency typically
+  show strong condensation and correlation effects -- the localization
+  of individual ions in local potential minima and the subsequent
+  correlated motion with the charges causing this minima.
 	
-	\item Only the entropy of an ideal gas and electrostatic interactions are
-	accounted for. In particular, there is no excluded volume.
+\item Only the entropy of an ideal gas and electrostatic interactions
+  are accounted for. In particular, there is no excluded volume.
 	
-	This restricts the application of the model to monovalent ions and moderate
-  charge densities. At higher valencies or densities, overcharging and layering
-  effects can occur, which lead to non-monotonic charge densities and potentials,
-  that can not be covered by a mean-field model such as Poisson-Boltzmann or this
-  one.
+  This restricts the application of the model to monovalent ions and
+  moderate charge densities. At higher valencies or densities,
+  overcharging and layering effects can occur, which lead to
+  non-monotonic charge densities and potentials, that can not be
+  covered by a mean-field model such as Poisson-Boltzmann or this one.
 	
-	Even in salt free systems containing only counter ions, the counter-ion
-	densities close to highly charged objects can be overestimated when neglecting
-	excluded volume effects. Decades of the application of Poisson-Boltzmann
-	theory to systems of electrolytic solutions, however, show that those
-	conditions are fulfilled for monovalent salt ions (such as sodium chloride or
-	potassium chloride) at experimentally realizable concentrations.
+  Even in salt free systems containing only counter ions, the
+  counter-ion densities close to highly charged objects can be
+  overestimated when neglecting excluded volume effects. Decades of
+  the application of Poisson-Boltzmann theory to systems of
+  electrolytic solutions, however, show that those conditions are
+  fulfilled for monovalent salt ions (such as sodium chloride or
+  potassium chloride) at experimentally realizable concentrations.
 	
-	\item Electrodynamic and magnetic effects play no role. Electrolytic solutions
-	fulfill those conditions as long as they don't contain magnetic particles.
+\item Electrodynamic and magnetic effects play no role. Electrolytic
+  solutions fulfill those conditions as long as they don't contain
+  magnetic particles.
 	
-	\item The diffusion coefficient is a scalar, which means there can not be any
-	cross-diffusion. Additionally, the diffusive behavior has been deduced using
-	a formalism relying on the notion of a local equilibrium. The resulting
-	diffusion equation, however, is known to be valid also far from equilibrium.
+\item The diffusion coefficient is a scalar, which means there can not
+  be any cross-diffusion. Additionally, the diffusive behavior has
+  been deduced using a formalism relying on the notion of a local
+  equilibrium. The resulting diffusion equation, however, is known to
+  be valid also far from equilibrium.
 	
-	\item The temperature is constant throughout the system.
+\item The temperature is constant throughout the system.
 	
-	\item The density fluxes instantaneously relax to their local equilibrium
-	values. Obviously one can not extract information about processes on length
-	and time scales not covered by the model, such as dielectric spectra at
-	frequencies, high enough that they correspond to times faster than the
-	diffusive time scales of the charged species.
+\item The density fluxes instantaneously relax to their local
+  equilibrium values. Obviously one can not extract information about
+  processes on length and time scales not covered by the model, such
+  as dielectric spectra at frequencies, high enough that they
+  correspond to times faster than the diffusive time scales of the
+  charged species.
 \end{itemize}
 
 \section{Setup}
@@ -289,10 +300,16 @@ This command can be used to output the number density of the
 
 \subsection{Concept}
 
-The electrokinetics solver implemented in \es{} can be used to simulate a
-system, for which in addition to the electrokinetic equations, there is a 
-(local) catalytic reaction which converts one species into another. Currently,
-a linear reaction is implemented which converts one species into two others, in
+The electrokinetics solver implemented in \es{} can be used to
+simulate a system, for which in addition to the electrokinetic
+equations, there is a (local) catalytic reaction which converts one
+species into another.
+
+If you are interested in using this implementation in \es{} for
+scientific purposes, please contact J.~de~Graaf before you start your
+project.
+
+Currently, a linear reaction is implemented which converts one species into two others, in
 order to model the catalytic decomposition of hydrogen peroxide in the presence
 of a platinum catalyst: $2 \mathrm{H}_{2}\mathrm{O}_{2} \rightarrow 
 2 \mathrm{H}_{2}\mathrm{O} + \mathrm{O}_{2}$. The decomposition of 

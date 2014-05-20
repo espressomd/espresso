@@ -33,6 +33,7 @@
 #include "communication.hpp"
 #include "parser.hpp"
 #include "statistics_correlation.hpp"
+#include "statistics_observable.hpp"
 
 int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   mpi_bcast_event(INVALIDATE_SYSTEM);
@@ -227,8 +228,17 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
     return tclcommand_integrate_print_usage(interp);;
   }
   /* perform integration */
-  if (mpi_integrate(n_steps, reuse_forces))
-    return gather_runtime_errors(interp, TCL_OK);
+  if (!correlations_autoupdate && !observables_autoupdate) {
+    if (mpi_integrate(n_steps, reuse_forces))
+      return gather_runtime_errors(interp, TCL_OK);
+  } else  {
+    for (int i=0; i<n_steps; i++) {
+      if (mpi_integrate(1, reuse_forces))
+        return gather_runtime_errors(interp, TCL_OK);
+      autoupdate_observables();
+      autoupdate_correlations();
+    }
+  }
   return TCL_OK;
 }
 

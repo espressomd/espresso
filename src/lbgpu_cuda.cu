@@ -3520,4 +3520,227 @@ void lb_gpu_get_boundary_forces(double* forces) {
 #endif
 }
 
+__device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, LB_node_force_gpu node_f, int asdf) {
+
+  /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
+  float temp_delta[6];
+  float delta[8];
+  int my_left[3];
+  int node_index[8];
+  float mode[4];
+  float Rho;
+  u[0]=u[1]=u[2]=0;
+  #pragma unroll
+  for(int i=0; i<3; ++i){
+    float scaledpos = r[i]/para.agrid - 0.5f;
+    my_left[i] = (int)(floorf(scaledpos));
+    temp_delta[3+i] = scaledpos - my_left[i];
+    temp_delta[i] = 1.f - temp_delta[3+i];
+  }
+
+  delta[0] = temp_delta[0] * temp_delta[1] * temp_delta[2];
+  delta[1] = temp_delta[3] * temp_delta[1] * temp_delta[2];
+  delta[2] = temp_delta[0] * temp_delta[4] * temp_delta[2];
+  delta[3] = temp_delta[3] * temp_delta[4] * temp_delta[2];
+  delta[4] = temp_delta[0] * temp_delta[1] * temp_delta[5];
+  delta[5] = temp_delta[3] * temp_delta[1] * temp_delta[5];
+  delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
+  delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
+
+  // modulo for negative numbers is strange at best, shift to make sure we are positive
+  int x = my_left[0] + para.dim_x;
+  int y = my_left[1] + para.dim_y;
+  int z = my_left[2] + para.dim_z;
+
+  node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+
+  for(int i=0; i<8; ++i)
+  {
+      float totmass=0.0f;
+
+      if(n_a.boundary[node_index[i]])
+        continue;
+
+
+      calc_m_from_n(n_a,node_index[i],mode);
+
+      #pragma unroll
+      for(int ii=0;ii<LB_COMPONENTS;ii++)
+      {
+        totmass+=mode[0]+para.rho[ii]*para.agrid*para.agrid*para.agrid;
+      } 
+
+#ifndef SHANCHEN
+      u[0] += (mode[1]/totmass)*delta[i];
+      u[1] += (mode[2]/totmass)*delta[i];
+      u[2] += (mode[3]/totmass)*delta[i];
+#else //SHANCHEN
+//      u[0] += d_v[node_index[i]].v[0]/8.0f;  
+//      u[1] += d_v[node_index[i]].v[1]/8.0f;
+//      u[2] += d_v[node_index[i]].v[2]/8.0f;
+#warning "lb_radial_velocity_profile does not work with SHANCHEN yet/"
+        u[0] = 0;
+        u[1] = 0;
+        u[2] = 0;
+#endif
+
+//      mode[1]+=0.5f*node_f.force[0*para.number_of_nodes + node_index[i]];
+//      mode[2]+=0.5f*node_f.force[1*para.number_of_nodes + node_index[i]];
+//      mode[3]+=0.5f*node_f.force[2*para.number_of_nodes + node_index[i]];
+//
+    }
+
+  #pragma unroll
+  for(int i=0; i<3; ++i){
+    u[i]*=para.agrid/para.tau;
+  }
+}
+__global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile_data* pdata, float* data, LB_node_force_gpu node_f){
+
+  unsigned int rbin=threadIdx.x;
+  unsigned int phibin=blockIdx.x;
+  unsigned int zbin=blockIdx.y;
+
+  float roffset=pdata->minr;
+  float r_incr=(pdata->maxr-pdata->minr)/(pdata->rbins-1);
+
+  float r = roffset + rbin*r_incr;
+
+  unsigned int maxj;
+  float phioffset, phi_incr;
+  if ( pdata->phibins == 1 ) {
+    maxj = (int)floor( 2*3.1415*pdata->maxr/para.agrid ) ; 
+    phioffset=0;
+    phi_incr=2*3.1415/maxj;
+  } else {
+    maxj = pdata->phibins;
+    phioffset=pdata->minphi;
+    phi_incr=(pdata->maxphi-pdata->minphi)/(pdata->phibins);
+  }
+  float phi = phioffset + phibin*phi_incr;
+
+  unsigned int maxk;
+  float zoffset, z_incr;
+  if ( pdata->zbins == 1 ) {
+    maxk = (int) para.dim_z;
+    zoffset=-pdata->center[2];
+    z_incr=para.agrid;
+  } else {
+    maxk = (int) pdata->zbins;
+    zoffset=pdata->minz;
+    z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
+  }
+
+  float z = zoffset + zbin*z_incr;
+
+  float p[3];
+  p[0]=r*cos(phi)+pdata->center[0];
+  p[1]=r*sin(phi)+pdata->center[1];
+  p[2]=z+pdata->center[2];
+
+  float v[3];
+  get_interpolated_velocity(n_a, p, v, node_f, 0);
+  unsigned int linear_index = rbin*maxj*maxk + phibin*maxk + zbin;
+
+ float v_r,v_phi;
+
+  if (r==0) {
+    v_r=0;
+    v_phi=0;
+  } else {
+    v_r = 1/r*((p[0]-pdata->center[0])*v[0] + (p[1]-pdata->center[1])*v[1]); 
+    v_phi = 1/r/r*((p[0]-pdata->center[0])*v[1]-(p[1]-pdata->center[1])*v[0]);
+  }
+  data[3*linear_index+0]=v_r;
+  data[3*linear_index+1]=v_phi;
+  data[3*linear_index+2]=v[2];
+
+}
+
+
+int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A){
+
+  unsigned int maxj, maxk;
+  float normalization_factor=1;
+  
+  if ( pdata->rbins == 1 ) {
+    return 1;
+  }
+
+  unsigned int maxi=pdata->rbins;
+  
+  if ( pdata->phibins == 1 ) {
+    maxj = (int)floor( 2*3.1415*pdata->maxr/lbpar_gpu.agrid ) ; 
+    normalization_factor/=maxj;
+  } else {
+    maxj = pdata->phibins;
+  }
+  if ( pdata->zbins == 1 ) {
+    maxk = (int) lbpar_gpu.dim_z;
+    normalization_factor/=maxk;
+  } else {
+    maxk = pdata->zbins;
+  }
+
+  for (int i = 0; i<n_A; i++) {
+    A[i]=0;
+  }
+
+  
+  // copy radial profile to device
+  radial_profile_data* pdata_device;
+  cuda_safe_mem(cudaMalloc((void**)&pdata_device, sizeof(radial_profile_data)));
+  cuda_safe_mem(cudaMemcpy(pdata_device, pdata,  sizeof(radial_profile_data), cudaMemcpyHostToDevice));
+
+  // allocate data on device
+  float* data_device;
+  cuda_safe_mem(cudaMalloc((void**)&data_device, sizeof(float)*3*maxi*maxj*maxk));
+  // kernellcall
+  int threads_per_block = maxi;
+  int blocks_per_grid_x = maxj;
+  int blocks_per_grid_y = maxk;
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  KERNELCALL(fill_lb_radial_velocity_profile, dim_grid, threads_per_block, (nodes_a, pdata_device, data_device, node_f ));
+
+  // allocate data on host
+  float* host_data;
+  host_data = (float*) malloc(sizeof(float)*3*maxi*maxj*maxk);
+
+  // copy data back
+  cuda_safe_mem(cudaMemcpy(host_data, data_device,  sizeof(float)*3*maxi*maxj*maxk, cudaMemcpyDeviceToHost));
+
+  // average (or store)
+  unsigned int linear_index;
+  for (int i =0; i<maxi; i++)
+    for (int j =0; j<maxj; j++)
+      for (int k =0; k<maxk; k++) {
+        linear_index = 0;
+        if (pdata->rbins > 1)
+          linear_index += i*pdata->phibins*pdata->zbins;
+        if (pdata->phibins > 1)
+          linear_index += j*pdata->zbins;
+        if (pdata->zbins > 1)
+          linear_index +=k;
+        A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor;
+        A[3*linear_index+1]+=host_data[3*(i*maxj*maxk + j*maxk + k)+1]*normalization_factor;
+        A[3*linear_index+2]+=host_data[3*(i*maxj*maxk + j*maxk + k)+2]*normalization_factor;
+      }
+
+  // free device data
+  cudaFree(pdata_device);
+  cudaFree(data_device);
+
+  // free host data
+  free(host_data);
+
+  return 0;
+}
+
 #endif /* LB_GPU */

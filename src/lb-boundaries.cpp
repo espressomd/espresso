@@ -296,9 +296,9 @@ void lb_init_boundaries() {
     for (z=0; z<lblattice.grid[2]+2; z++) {
       for (y=0; y<lblattice.grid[1]+2; y++) {
         for (x=0; x<lblattice.grid[0]+2; x++) {	    
-          pos[0] = (offset[0]+(x-0.5))*lblattice.agrid;
-          pos[1] = (offset[1]+(y-0.5))*lblattice.agrid;
-          pos[2] = (offset[2]+(z-0.5))*lblattice.agrid;
+          pos[0] = (offset[0]+(x-0.5))*lblattice.agrid[0];
+          pos[1] = (offset[1]+(y-0.5))*lblattice.agrid[1];
+          pos[2] = (offset[2]+(z-0.5))*lblattice.agrid[2];
           
           dist = 1e99;
 
