@@ -55,6 +55,8 @@ extern double max_cut;
 /** Verlet list skin. */
 extern double skin;
 
+extern int step_counter;
+
 /** If non-zero, the particle data will be resorted before the next integration. */
 extern int    resort_particles;
 /** If non-zero, the forces will be recalculated before the next integration. */
