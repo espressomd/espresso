@@ -184,6 +184,12 @@ void init_particle(Particle *part)
   part->m.omega[2] = 0.0;
 #endif
 
+#ifdef LBTRACERS
+  part->m.v_old[0] = 0.0;
+  part->m.v_old[1] = 0.0;
+  part->m.v_old[2] = 0.0;
+#endif
+
   /* ParticleForce */
   part->f.f[0]     = 0.0;
   part->f.f[1]     = 0.0;

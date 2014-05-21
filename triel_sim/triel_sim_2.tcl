@@ -101,7 +101,7 @@ setmd skin 0.1
 setmd time_step $dt
 
 # setting up the fluid with or without using gpu
-lbfluid agrid $gridPara dens $rho visc $nu tau $tau friction $zeta ext_force 5 0 0
+lbfluid agrid $gridPara dens $rho visc $nu tau $tau friction $zeta ext_force 20 0 0
 
 
 #setting themostat
@@ -145,6 +145,7 @@ puts "Starting simulation"
 for {set step 0} {$step < $numSteps} {incr step} {
   
   integrate $stepSize
+  puts "Done $step out of $numSteps"
   for {set j 0} { $j < $numParts } {incr j} {
       set partCsv [ open "simfiles/partInfo$j.csv" "a"]
       set dataPart [part $j print pos v f]
@@ -156,10 +157,6 @@ for {set step 0} {$step < $numSteps} {incr step} {
       puts -nonewline $partCsv "$step\n"
       close $partCsv
   }
-  if {fmod($step, 100)==0} { 
-      puts "Done $step out of $numSteps"
-  }
-  
  #  imd positions
 }
 

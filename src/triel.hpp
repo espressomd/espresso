@@ -64,7 +64,7 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     sinp = sqrt(sqrlen(vecpro))/(l*lp);
     
     if( (lp-iaparams->p.triel.lpo > iaparams->p.triel.maxdist) ||  (l-iaparams->p.triel.lo > iaparams->p.triel.maxdist)) {
-      //return 1;
+        return 1;
     }
     
     
@@ -104,39 +104,68 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     f2_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b2*dyy))+ (-1)*e2*((i21*0.0)+(i22*a2*dyy)+(i23*a2*dyy)+(i24*2*b2*dyy)));
     //((int) ((double*)(fields[FIELD_TIMESTEP].data)));
       
-    // double vo[3], vpo[3];
-    // get_mi_vector(vo, p_ind3->m.v, p_ind1->m.v);
-    // get_mi_vector(vpo, p_ind2->m.v, p_ind1->m.v);
-    // double damping_coeff = 1.0; // kg/s
-    // double damping_force_o = (damping_coeff * (sqrt(sqrlen(vo))));
-    // double damping_force_po = (damping_coeff * (sqrt(sqrlen(vpo))));
-    // f1_rot[0] += (-damping_force_po);
-    // f1_rot[1] += (-damping_force_o);
-    // f2_rot[0] += (damping_force_po);
-    // f2_rot[1] += (damping_force_o);
+    double vo[3], vpo[3];
+    get_mi_vector(vo, p_ind3->m.v, p_ind1->m.v);
+    get_mi_vector(vpo, p_ind2->m.v, p_ind1->m.v);
+    double damping_coeff = 1; // kg/s
+    double damping_force_o = (damping_coeff * (sqrt(sqrlen(vo))));
+    double damping_force_po = (damping_coeff * (sqrt(sqrlen(vpo))));
+
+     ofstream myfile ("c.dat", std::ofstream::out | std::ofstream::app);
+    double v_int[3] = {0,0,0};
+    double p_temp[3] = {p_ind1->r.p[0], p_ind1->r.p[1], p_ind1->r.p[0]};
+    int time_step_c = step_counter;
+    if( time_step_c > time_step_p ) { 
+      
+      // myfile << "Time Step: " << time_step_c << "\n";
+      // myfile << "Particle's Velocity: " << p_ind1->m.v[0] << ", " <<  p_ind1->m.v[1] << ", " << p_ind1->m.v[2] << "\n";
+      // myfile << "Particle's Relative Velocity: " << (p_ind2->m.v[0] - p_ind1->m.v[0]) << "\n";
+      // lb_lbfluid_get_interpolated_velocity_lbtrace(p_temp,v_int, p_ind1->p.identity);
+      // myfile << "Fluid Velocity around Particle: " << v_int[0] << ", " << v_int[1] << "," << v_int[2] << "\n";
+      // myfile << "Force Rot0 : " << f1_rot[0] << ", " << f1_rot[1] << "\n";
+      // myfile << "Force Rot1 : " << f2_rot[0] << ", " << f2_rot[1] << "\n";
+      // myfile << "DampForce in X: " << damping_force_po << "\n";
+      // myfile << "DampForce in Y: " << damping_force_o << "\n";
+     myfile << "Particle's Old Velocity: " << p_ind1->m.v_old[0] << ", " <<  p_ind1->m.v_old[1] << ", " << p_ind1->m.v_old[2] << "\n";
+     myfile << "Particle's Velocity: " << p_ind1->m.v[0] << ", " <<  p_ind1->m.v[1] << ", " << p_ind1->m.v[2] << "\n"; 
+     
+    }
+
+
+
+    // f1_rot[0] += f1_rot[0] > 0 ? - damping_force_po : f1_rot[0] != 0 ? damping_force_po : 0;
+    // f1_rot[1] += f1_rot[1] > 0 ? - damping_force_o : f1_rot[1] != 0 ? damping_force_o : 0;
+    // f2_rot[0] += f2_rot[0] > 0 ? - damping_force_po : f2_rot[0] != 0 ? damping_force_po : 0;
+    // f2_rot[1] += f2_rot[1] > 0 ? - damping_force_o : f2_rot[1] != 0 ? damping_force_o : 0;
+
+    // f1_rot[0] += 1000;
+    // f1_rot[1] += 1000;
+    // f2_rot[0] += -1000;
+    // f2_rot[1] += -1000;
+
+    // f1_rot[0] *= -damping_force_po;
+    // f1_rot[1] *= -damping_force_o;
+    // f2_rot[0] *= damping_force_po;
+    // f2_rot[1] *= damping_force_o;
+
+
     
-    // // printf("vx2, vx1: %d, %d", p_ind2->m.v[0], p_ind1->m.v[0]);
-    // // printf("vpo = %d \n", (sqrt(sqrlen(vpo)))); 
+    // printf("vx2, vx1: %d, %d", p_ind2->m.v[0], p_ind1->m.v[0]);
+    // printf("vpo = %d \n", (sqrt(sqrlen(vpo)))); 
 
-    // //Rotate forces back into original position of triangle
-    // RotateForces(f1_rot,f2_rot,force1,force2, vec1, vec2); 
+    //Rotate forces back into original position of triangle
+    RotateForces(f1_rot,f2_rot,force1,force2, vec1, vec2); 
 
-    // ofstream myfile ("c.dat", std::ofstream::out | std::ofstream::app);
-    // double v_int[3] = {0,0,0};
-    // double p_temp[3] = {p_ind1->r.p[0], p_ind1->r.p[1], p_ind1->r.p[0]};
-    // int time_step_c = step_counter;
-    // if( time_step_c > time_step_p ) { 
-    //   time_step_p = time_step_c;
-    //   myfile << "Time Step: " << time_step_c << "\n";
-    //   myfile << "Particle's Velocity: " << p_ind1->m.v[0] << ", " <<  p_ind1->m.v[1] << ", " << p_ind1->m.v[2] << "\n";
-    //   myfile << "Particle's Relative Velocity: " << (p_ind2->m.v[0] - p_ind1->m.v[0]) << "\n";
-    //   lb_lbfluid_get_interpolated_velocity_lbtrace(p_temp,v_int, p_ind1->p.identity);
-    //   myfile << "Fluid Velocity around Particle: " << v_int[0] << ", " << v_int[1] << "," << v_int[2] << "\n";
+    // if( time_step_c > time_step_p  ) { 
     //   myfile << "Force Rot0 : " << f1_rot[0] << ", " << f1_rot[1] << "\n";
     //   myfile << "Force Rot1 : " << f2_rot[0] << ", " << f2_rot[1] << "\n";
     //   myfile << "Force0: " << force1[0] << ", " << force1[1] << ", " << force1[2] << "\n";
-    //   myfile << "Force1: " << force2[0] << ", " << force2[1] << ", " << force2[2] << "\n \n";
+    //   myfile << "Force1: " << force2[0] << ", " << force2[1] << ", " << force2[2] << "\n\n";
+
     // }
+
+    time_step_p = time_step_c;
+   
    
     
     

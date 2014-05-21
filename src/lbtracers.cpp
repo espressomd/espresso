@@ -24,8 +24,11 @@ void update_mol_pos_particle(Particle *p) {
 		
   for(j=0;j<3;j++) 
     {
-      // Euler
-      p->r.p[j] = p->r.p[j] + p->m.v[j]*time_step;
+      // // Euler
+      // p->r.p[j] = p->r.p[j] + p->m.v[j]*time_step;
+
+      // Two-step Adams–Bashforth
+       p->r.p[j] = p->r.p[j] + 1.5*p->m.v[j]*time_step - 0.5*p->m.v_old[j]*time_step;
     }
 	    
   // Check if a particle might have crossed a box border (Verlet criterium); 
@@ -64,10 +67,15 @@ void update_mol_vel_particle(Particle *p)
       // Need to interpolate velocity here only for CPU
       // For GPU it is already stored
       double v_int[3] = {0,0,0};
+
+       
 		
       lb_lbfluid_get_interpolated_velocity_lbtrace(p_temp,v_int, p->p.identity);
-      for ( j = 0; j < 3; j++)	
+      for ( j = 0; j < 3; j++){ 
+          p->m.v_old[j] = p->m.v[j];
 	p->m.v[j] = v_int[j];
+
+}
     }
 }
 
