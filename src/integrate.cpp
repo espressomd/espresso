@@ -772,10 +772,20 @@ void propagate_vel_pos()
 #endif
 	  {
 	    /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
+#if defined(ENGINE) && defined(ROTATION)
+            //p[i].m.vswim = M_PI/100;
+            /* Subtract the old swimming velocity from the previous propagation */
+            p[i].m.v[j] -= p[i].m.vswim_prev[j];
+            /* Calculate the new swimming velocity */
+            p[i].m.vswim_prev[j] = p[i].m.vswim * p[i].r.quatu[j];
+            /* Add the new swimming velocity */
+            p[i].m.v[j] += p[i].m.vswim_prev[j];
+#endif
 	    p[i].m.v[j] += p[i].f.f[j];
 
 	    /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
 	    p[i].r.p[j] += p[i].m.v[j];
+
 	  }
       }
 

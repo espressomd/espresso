@@ -179,6 +179,12 @@ void init_particle(Particle *part)
   part->m.v[1]     = 0.0;
   part->m.v[2]     = 0.0;
 #ifdef ROTATION
+#ifdef ENGINE
+  part->m.vswim         = 0.0;
+  part->m.vswim_prev[0] = 0.0;
+  part->m.vswim_prev[1] = 0.0;
+  part->m.vswim_prev[2] = 0.0;
+#endif
   part->m.omega[0] = 0.0;
   part->m.omega[1] = 0.0;
   part->m.omega[2] = 0.0;

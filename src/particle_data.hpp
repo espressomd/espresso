@@ -190,6 +190,11 @@ typedef struct {
   /** velocity. */
   double v[3];
 
+#ifdef ENGINE
+  double vswim;
+  double vswim_prev[3];
+#endif
+
 #ifdef ROTATION
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
