@@ -108,6 +108,7 @@ libEspresso_la_SOURCES = \
 	Vector.hpp \
 	SystemInterface.hpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
+	Mmm1dgpuForce.cu Mmm1dgpuForce.hpp \
 	HarmonicForce.hpp
 
 # nonbonded potentials and forces
@@ -198,6 +199,9 @@ CUDA_SOURCES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
+	Mmm1dgpuForce.cu Mmm1dgpuForce.hpp \
+	mmm-common_cuda.hpp \
+	specfunc_cuda.hpp \
 	HarmonicForce.hpp HarmonicForce.cu
 
 libEspresso_la_SOURCES += $(CUDA_SOURCES)

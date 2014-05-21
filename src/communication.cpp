@@ -1758,6 +1758,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_MMM1D:
+  case COULOMB_MMM1D_GPU:
     MPI_Bcast(&mmm1d_params, sizeof(MMM1D_struct), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_MMM2D:

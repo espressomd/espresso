@@ -55,6 +55,7 @@
 #include "p3m_gpu.hpp"
 #include "cuda_interface.hpp"
 #include "HarmonicForce.hpp"
+#include "Mmm1dgpuForce.hpp"
 
 #include "EspressoSystemInterface.hpp"
 
@@ -100,6 +101,11 @@ void force_calc()
 #ifdef HARMONICFORCE
   if(harmonicForce) 
     harmonicForce->calc(espressoSystemInterface);
+#endif
+
+#ifdef MMM1D_GPU
+  if(mmm1dgpuForce) 
+    mmm1dgpuForce->calc(espressoSystemInterface);
 #endif
 
 #ifdef LB_GPU

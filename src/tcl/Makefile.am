@@ -128,6 +128,7 @@ libEspressoTcl_la_SOURCES += \
 	magnetic_non_p3m_methods_tcl.cpp magnetic_non_p3m_methods_tcl.hpp \
 	maggs_tcl.cpp maggs_tcl.hpp \
 	mmm1d_tcl.cpp mmm1d_tcl.hpp \
+	mmm1dgpu_tcl.cpp mmm1dgpu_tcl.hpp \
 	mmm2d_tcl.cpp mmm2d_tcl.hpp \
 	p3m-dipolar_tcl.cpp p3m-dipolar_tcl.hpp \
 	p3m_tcl.cpp p3m_tcl.hpp \
