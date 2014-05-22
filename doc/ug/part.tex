@@ -54,6 +54,7 @@
   \require{9}{\opt{gamma \var{g}}}
   \require{10}{\opt{rotation \var{rot}}}
   \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
+  \require{12}{\opt{swimming \alt{v_swim \var{v\_swim} \asep f_swim \var{f\_swim}}}}
   \begin{features}
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
@@ -66,6 +67,7 @@
     \required[9]{LANGEVIN\_PER\_PARTICLE}
     \required[10]{ROTATION\_PER\_PARTICLE}
     \required[11]{SHANCHEN}
+    \required[12]{ENGINE}
   \end{features}
 \end{essyntax}
 
@@ -179,6 +181,10 @@ set first because of the spatial decomposition.
 \item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the
   four solvation coupling constants for the two components of a
   Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
+\item[\opt{swimming \alt{v_swim \var{v\_swim} \asep f_swim \var{f\_swim}}}]% TODO: Comment in stuff as soon as pushers and pullers are implemented
+%\item[\opt{swimming \alt{v_swim \var{v\_swim} \asep f_swim \var{f\_swim}} \alt{pusher \asep puller}}]
+  Enables the particle to be self-propelled in the direction of its quaternion. For setting the quaternion of the particle see \keyword{quat}. The self-propelling will relax to either a constant velocity, when using it with \texttt{v_swim \var{v\_swim}} or to a constant force for \texttt{f_swim \var{f\_swim}}. You may only set one of the possibilities \texttt{\alt{v_swim \var{v\_swim} \asep f_swim \var{f\_swim}}} as you cannot relax to constant force \emph{and} constant velocity at the same time (only for rare special cases).
+  %In Lattice-Boltzmann self-propelling is less trivial than for normal MD, because it can happen in two ways --- \emph{pushing} and \emph{pulling}. You can specify if the particle pushes or pulls by \keyword{pusher} or \keyword{puller} right after the magnitude of \var{v\_swim} or \var{f\_swim}.
 \end{arguments}
 
 \warning{The options \opt{omega}, \opt{torque}, and \opt{tbf} are
@@ -192,7 +198,7 @@ set first because of the spatial decomposition.
   \optlong{\alt{id \asep pos \asep type \asep folded_position \asep 
       type \asep q \asep v \asep f \asep torque_body \asep torque_lab 
       \asep fix \asep ext_force \asep ext_torque \asep bond \asep
-      \asep exclusions \mbox{connections \opt{\var{range}}}}}\dots
+      \asep exclusions \mbox{connections \opt{\var{range}}} \asep swimming}}\dots
   \variant{2} part
 \end{essyntax}
 
@@ -215,6 +221,14 @@ before, otherwise the conversion from lab to body frame will not be
 handled properly.  Also be careful about the order in which you write
 and read in data from a blockfile, for instance if you output the
 variable in both frames!
+
+\begin{arguments}
+\item[\opt{swimming}] % TODO: Comment in stuff as soon as pushers and pullers are implemented
+  This will return a tuple
+  (\var{v\_swim}, \var{f\_swim}) %, \var{push\_or\_pull})
+  where one of \var{v\_swim} and \var{f\_swim} will always be $0$ because you can't set both simultaneously.
+  % \var{push\_or\_pull} puts out if the particle is a pusher or a puller.
+\end{arguments}
 
 \minisec{Example}
 \begin{code}
