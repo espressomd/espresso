@@ -455,7 +455,21 @@ inline void add_bonded_force(Particle *p1)
 		      p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
       }
-    }
+    }    
+
+      if(n_partners >= 7) {
+	p5 = local_particles[p1->bl.e[i++]];
+	p6 = local_particles[p1->bl.e[i++]];
+	p7 = local_particles[p1->bl.e[i++]];
+	p8 = local_particles[p1->bl.e[i++]];
+
+	if(!p4 || !p5 || !p6 || !p7 || !p8) {
+	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtxt,"{080 bond broken between particles %d, %d, %d, %d, %d, %d, %d and %d (particles not stored on the same node)} ",
+		      p1->p.identity, p1->bl.e[i-7], p1->bl.e[i-6], p1->bl.e[i-5], p1->bl.e[i-4], p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
+	return;
+	}
+      }
 
     if (n_partners == 1) {
       /* because of the NPT pressure calculation for pair forces, we need the
