@@ -179,6 +179,11 @@ typedef struct {
 #ifdef ROTATION
   /** torque */
   double torque[3];
+
+#ifdef ENGINE
+  double f_swim;
+#endif
+
 #endif
 
 } ParticleForce;
@@ -190,15 +195,15 @@ typedef struct {
   /** velocity. */
   double v[3];
 
-#ifdef ENGINE
-  double vswim;
-  double vswim_prev[3];
-#endif
-
 #ifdef ROTATION
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
+
+#ifdef ENGINE
+  double v_swim;
+#endif
+
 #endif
 } ParticleMomentum;
 
@@ -223,10 +228,10 @@ typedef struct {
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
   double ext_force[3];
 
-  #ifdef ROTATION
+#ifdef ROTATION
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
   double ext_torque[3];
-  #endif
+#endif
 
 #endif
 

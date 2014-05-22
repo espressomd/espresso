@@ -179,15 +179,14 @@ void init_particle(Particle *part)
   part->m.v[1]     = 0.0;
   part->m.v[2]     = 0.0;
 #ifdef ROTATION
-#ifdef ENGINE
-  part->m.vswim         = 0.0;
-  part->m.vswim_prev[0] = 0.0;
-  part->m.vswim_prev[1] = 0.0;
-  part->m.vswim_prev[2] = 0.0;
-#endif
   part->m.omega[0] = 0.0;
   part->m.omega[1] = 0.0;
   part->m.omega[2] = 0.0;
+
+#ifdef ENGINE
+  part->m.v_swim    = 0.0;
+#endif
+
 #endif
 
   /* ParticleForce */
@@ -198,6 +197,11 @@ void init_particle(Particle *part)
   part->f.torque[0] = 0.0;
   part->f.torque[1] = 0.0;
   part->f.torque[2] = 0.0;
+
+#ifdef ENGINE
+  part->f.f_swim    = 0.0;
+#endif
+
 #endif
 
   /* ParticleLocal */
