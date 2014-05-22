@@ -84,6 +84,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_bcast_event_slave) \
   CB(mpi_place_particle_slave) \
   CB(mpi_send_v_slave) \
+  CB(mpi_send_swimming_slave) \
   CB(mpi_send_f_slave) \
   CB(mpi_send_q_slave) \
   CB(mpi_send_type_slave) \
@@ -497,6 +498,41 @@ void mpi_send_v_slave(int pnode, int part)
   }
 
   on_particle_change();
+}
+
+/****************** REQ_SET_SWIMMING ************/
+void mpi_send_swimming(int pnode, int part, double v_swim, double f_swim, int pusher, int puller)
+{
+#ifdef ENGINE
+  mpi_call(mpi_send_swimming_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->m.v_swim = v_swim;
+    p->f.f_swim = f_swim;
+  }
+  else {
+    MPI_Send(&v_swim, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(&f_swim, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_swimming_slave(int pnode, int part)
+{
+#ifdef ENGINE
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+        MPI_Recv(&p->m.v_swim, 1, MPI_DOUBLE, 0, SOME_TAG,
+	     comm_cart, MPI_STATUS_IGNORE);
+        MPI_Recv(&p->f.f_swim, 1, MPI_DOUBLE, 0, SOME_TAG,
+	     comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
 }
 
 /****************** REQ_SET_F ************/

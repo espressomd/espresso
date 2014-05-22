@@ -601,6 +601,24 @@ int set_particle_v(int part, double v[3])
   return ES_OK;
 }
 
+#ifdef ENGINE
+int set_particle_swimming(int part, double v_swim, double f_swim, int pusher, int puller)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_swimming(pnode, part, v_swim, f_swim, pusher, puller);
+  return ES_OK;
+}
+#endif
+
 int set_particle_f(int part, double F[3])
 {
   int pnode;

@@ -464,6 +464,18 @@ int place_particle(int part, double p[3]);
 */
 int set_particle_v(int part, double v[3]);
 
+#ifdef ENGINE
+/** Call only on the master node: set particle velocity.
+    @param part the particle.
+    @param v_swim swimming at constant velocity.
+    @param f_swim swimming at constant force.
+    @param pusher particle is a pusher in LB.
+    @param puller particle is a puller in LB.
+    @return ES_OK if particle existed
+*/
+int set_particle_swimming(int part, double v_swim, double f_swim, int pusher, int puller);
+#endif
+
 /** Call only on the master node: set particle force.
     @param part the particle.
     @param F its new force.
