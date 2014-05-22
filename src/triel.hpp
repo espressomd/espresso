@@ -38,7 +38,7 @@ inline void RotateForces(double f1_rot[2], double f2_rot[2], double f1[3], doubl
     
 }
 
-inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3,
+inline int * calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3,
 			      Bonded_ia_parameters *iaparams, double force1[3], double force2[3]) 
 {
   double dxy, dxx, dyy, dyx; //Displacment gradient tensor matrix elements
@@ -48,6 +48,8 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     double l, lp, sinp, cosp;  // l, l' and cross and dot product between them 
     double vec1[3], vec2[3], vecpro[3];
     double f1_rot[2], f2_rot[2];
+
+    static int triel_params[3];
     
     //Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
     //l = length between 1 and 3
@@ -64,7 +66,8 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     sinp = sqrt(sqrlen(vecpro))/(l*lp);
     
     if( (lp-iaparams->p.triel.lpo > iaparams->p.triel.maxdist) ||  (l-iaparams->p.triel.lo > iaparams->p.triel.maxdist)) {
-        return 1;
+      triel_params[0] = 1;
+      return triel_params;
     }
     
     
@@ -107,36 +110,56 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     double vo[3], vpo[3];
     get_mi_vector(vo, p_ind3->m.v, p_ind1->m.v);
     get_mi_vector(vpo, p_ind2->m.v, p_ind1->m.v);
-    double damping_coeff = 1; // kg/s
+    double damping_coeff = 10; // kg/s
     double damping_force_o = (damping_coeff * (sqrt(sqrlen(vo))));
     double damping_force_po = (damping_coeff * (sqrt(sqrlen(vpo))));
 
-     ofstream myfile ("c.dat", std::ofstream::out | std::ofstream::app);
+    // double damping_force_o = (damping_coeff * (p_ind3->m.v[1] - p_ind1->m.v[1]));
+    // double damping_force_po = (damping_coeff * (p_ind2->m.v[0] - p_ind1->m.v[0]));
+
+    ofstream myfile ("c.dat", std::ofstream::out | std::ofstream::app);
     double v_int[3] = {0,0,0};
     double p_temp[3] = {p_ind1->r.p[0], p_ind1->r.p[1], p_ind1->r.p[0]};
     int time_step_c = step_counter;
     if( time_step_c > time_step_p ) { 
       
-      // myfile << "Time Step: " << time_step_c << "\n";
-      // myfile << "Particle's Velocity: " << p_ind1->m.v[0] << ", " <<  p_ind1->m.v[1] << ", " << p_ind1->m.v[2] << "\n";
-      // myfile << "Particle's Relative Velocity: " << (p_ind2->m.v[0] - p_ind1->m.v[0]) << "\n";
-      // lb_lbfluid_get_interpolated_velocity_lbtrace(p_temp,v_int, p_ind1->p.identity);
-      // myfile << "Fluid Velocity around Particle: " << v_int[0] << ", " << v_int[1] << "," << v_int[2] << "\n";
-      // myfile << "Force Rot0 : " << f1_rot[0] << ", " << f1_rot[1] << "\n";
-      // myfile << "Force Rot1 : " << f2_rot[0] << ", " << f2_rot[1] << "\n";
-      // myfile << "DampForce in X: " << damping_force_po << "\n";
-      // myfile << "DampForce in Y: " << damping_force_o << "\n";
-     myfile << "Particle's Old Velocity: " << p_ind1->m.v_old[0] << ", " <<  p_ind1->m.v_old[1] << ", " << p_ind1->m.v_old[2] << "\n";
-     myfile << "Particle's Velocity: " << p_ind1->m.v[0] << ", " <<  p_ind1->m.v[1] << ", " << p_ind1->m.v[2] << "\n"; 
-     
+      myfile << "Time Step: " << time_step_c << "\n";
+      myfile << "Particle's Velocity: " << p_ind1->m.v[0] << ", " <<  p_ind1->m.v[1] << ", " << p_ind1->m.v[2] << "\n";
+      myfile << "Particle's Relative Velocity: " << (p_ind2->m.v[0] - p_ind1->m.v[0]) << "\n";
+      lb_lbfluid_get_interpolated_velocity_lbtrace(p_temp,v_int, p_ind1->p.identity);
+      myfile << "Fluid Velocity around Particle: " << v_int[0] << ", " << v_int[1] << "," << v_int[2] << "\n";
+      myfile << "Force Rot0 : " << f1_rot[0] << ", " << f1_rot[1] << "\n";
+      myfile << "Force Rot1 : " << f2_rot[0] << ", " << f2_rot[1] << "\n";
+      myfile << "DampForce in X: " << damping_force_po << "\n";
+      myfile << "DampForce in Y: " << damping_force_o << "\n";
     }
 
+    if(f1_rot[0] > 0)
+      f1_rot[0] -= damping_force_po;
+    else
+      if(f1_rot[0] < 0)
+	f1_rot[0] += damping_force_po;
+
+    if(f1_rot[1] > 0)
+      f1_rot[1] -= damping_force_o;
+    else
+      if(f1_rot[1] < 0)
+	f1_rot[1] += damping_force_o;
+
+    if(f2_rot[0] > 0)
+      f2_rot[0] -= damping_force_po;
+    else
+      if(f2_rot[0] < 0)
+	f2_rot[0] += damping_force_po;
+     
+    if(f2_rot[1] > 0)
+      f2_rot[1] -= damping_force_o;
+    else
+      if(f2_rot[1] < 0)
+	f2_rot[1] += damping_force_o;
 
 
-    // f1_rot[0] += f1_rot[0] > 0 ? - damping_force_po : f1_rot[0] != 0 ? damping_force_po : 0;
-    // f1_rot[1] += f1_rot[1] > 0 ? - damping_force_o : f1_rot[1] != 0 ? damping_force_o : 0;
-    // f2_rot[0] += f2_rot[0] > 0 ? - damping_force_po : f2_rot[0] != 0 ? damping_force_po : 0;
-    // f2_rot[1] += f2_rot[1] > 0 ? - damping_force_o : f2_rot[1] != 0 ? damping_force_o : 0;
+    
 
     // f1_rot[0] += 1000;
     // f1_rot[1] += 1000;
@@ -156,13 +179,13 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     //Rotate forces back into original position of triangle
     RotateForces(f1_rot,f2_rot,force1,force2, vec1, vec2); 
 
-    // if( time_step_c > time_step_p  ) { 
-    //   myfile << "Force Rot0 : " << f1_rot[0] << ", " << f1_rot[1] << "\n";
-    //   myfile << "Force Rot1 : " << f2_rot[0] << ", " << f2_rot[1] << "\n";
-    //   myfile << "Force0: " << force1[0] << ", " << force1[1] << ", " << force1[2] << "\n";
-    //   myfile << "Force1: " << force2[0] << ", " << force2[1] << ", " << force2[2] << "\n\n";
+    if( time_step_c > time_step_p  ) { 
+      myfile << "Force Rot0 : " << f1_rot[0] << ", " << f1_rot[1] << "\n";
+      myfile << "Force Rot1 : " << f2_rot[0] << ", " << f2_rot[1] << "\n";
+      myfile << "Force0: " << force1[0] << ", " << force1[1] << ", " << force1[2] << "\n";
+      myfile << "Force1: " << force2[0] << ", " << force2[1] << ", " << force2[2] << "\n\n";
 
-    // }
+     }
 
     time_step_p = time_step_c;
    
@@ -172,8 +195,9 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     /*printf("Adding force to particles \n");
     force1[0] = 1;
     force2[0] = -1;*/
-    
-    return 0;
+    triel_params[1] = damping_force_po;
+    triel_params[2] = damping_force_o;
+    return triel_params;
 }
 
 #endif
