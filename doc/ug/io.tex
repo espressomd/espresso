@@ -372,7 +372,6 @@ timesteps. This is a restriction of VMD itself, not of the format.
   \opt{\alt{short \asep verbose}}
   \opt{radius \alt{\var{radii} \asep auto}} 
   \opt{typedesc \var{typedesc}}
-  \opt{ignore_charges}
 \end{essyntax}
 Writes a structure block describing the system's structure to the
 channel given by \var{channelId}. \var{channelId} must be an
@@ -405,12 +404,6 @@ contains a trajectory of a whole simulation.
   is an atom name and \textit{type} is the type id.
   \minisec{Example} 
   \verb!writevsf $file typedesc {0 "name colloid" 1 "name pe"}!
-\item[\opt{ignore_charges}]
-  this is a temporary workaround for a bug in the VTF reader of VMD,
-  which cannot handle multiple atom sections for the same
-  atom. However, charges are written out per-atom, so that VMD forgets
-  about atom types and radii. If you don't need the charges, you can
-  switch them off by this flat, making the other settings work again.
 \end{arguments}
 
 \subsection{\texttt{writevcf}: Writing  the coordinates}

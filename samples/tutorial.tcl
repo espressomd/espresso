@@ -208,7 +208,7 @@ if { $vmd == "yes" } {
 # This calls a small tcl script which starts the program    #
 # VMD and opens a socket connection between ESPResSo and    #
 # VMD.                                                      #
-    prepare_vmd_connection tutorial start wait 3000 ignore_charges
+    prepare_vmd_connection tutorial start wait 3000
 
 # The additional command imd steers the socket connection   #
 # to VMD, e.g. sending the actual coordinates               #
