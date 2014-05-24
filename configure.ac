@@ -128,7 +128,18 @@ if test "${CXXFLAGS+set}" != set; then
   ],[
     AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
   ])
-  
+  # if not, try O3 (e.g. llvm does not support O5)
+  AS_IF([test x$try_add_flag_res = xno], [
+    AC_MSG_CHECKING([whether the compiler accepts -O3])
+    saved_CXXFLAGS=$CXXFLAGS
+    CXXFLAGS="-O3 $CXXFLAGS"
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
+      AC_MSG_RESULT(yes);try_add_flag_res=yes
+    ],[
+      AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
+    ])
+   ],[])
+
   ##################################
   # test for -Wall
   AC_MSG_CHECKING([whether the compiler accepts -Wall])
