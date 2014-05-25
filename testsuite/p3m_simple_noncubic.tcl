@@ -46,8 +46,6 @@ set f1 [ lindex [part 0 print f] 0 ]
 
 setmd box_l 20 10 10
 
-invalidate_system 
-
 part 0 pos 4 5 5 q +1 v 0 0 0
 part 1 pos 6 5 5 q -1 v 0 0 0
 part 2 pos 14 5 5 q +1 v 0 0 0

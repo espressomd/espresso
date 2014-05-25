@@ -67,7 +67,6 @@ puts [inter coulomb]
 
 if { [catch {
 
-    invalidate_system
     integrate 0
 
     set rmsf 0

@@ -137,8 +137,6 @@ if { [catch {
 	set F($i) [part $i pr f]
     }
  
-    # to ensure force recalculation
-    invalidate_system
     integrate 0
 
     set new_energy [analyze energy]
