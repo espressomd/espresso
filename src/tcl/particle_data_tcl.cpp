@@ -2005,8 +2005,10 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
   if (ARG0_IS_S("print"))
-    err = tclcommand_part_parse_print(interp, argc-1, argv+1, part_num);
-  else while (argc > 0) {
+    return tclcommand_part_parse_print(interp, argc-1, argv+1, part_num);
+
+  // various setters
+  while (argc > 0) {
     if (ARG0_IS_S("delete"))
       err = tclcommand_part_parse_delete(interp, argc-1, argv+1, part_num, &change);
 
