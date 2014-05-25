@@ -55,8 +55,7 @@ double time_force_calc(int default_samples)
   /* perform force calculation test */
   markTime();
   for (i = 0; i < rds; i++) {
-    mpi_bcast_event(INVALIDATE_SYSTEM);
-    if (mpi_integrate(0, 0))
+    if (mpi_integrate(0, -1))
       return -1;
   }
   markTime();

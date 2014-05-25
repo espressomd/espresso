@@ -305,6 +305,30 @@ void print_local_particle_positions()
 
 /*************************************************/
 
+#ifdef CELL_DEBUG
+
+static void dump_particle_ordering()
+{
+  /* Loop local cells */
+  for (int c = 0; c < local_cells.n; c++) {
+    Cell *cell  = local_cells.cell[c];
+    Particle *p = cell->part;
+    int np      = cell->n;
+
+    fprintf(stderr, "%d: cell %d has particles", this_node, c);
+
+    /* Loop cell particles */
+    for(int i=0; i < np; i++) {
+      fprintf(stderr, " %d", p[i].p.identity);
+    }
+    fprintf(stderr, "\n");
+  }
+}
+
+#endif // CELL_TRACE
+
+/*************************************************/
+
 void cells_resort_particles(int global_flag)
 {
   CELL_TRACE(fprintf(stderr, "%d: entering cells_resort_particles %d\n", this_node, global_flag));
@@ -339,7 +363,49 @@ void cells_resort_particles(int global_flag)
 
   on_resort_particles();
 
+  CELL_TRACE(dump_particle_ordering());
   CELL_TRACE(fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));
+}
+
+/*************************************************/
+
+static int compare_particles(const void *a, const void *b)
+{ 
+  int id_a = static_cast<const Particle *>(a)->p.identity;
+  int id_b = static_cast<const Particle *>(b)->p.identity;
+  return id_a - id_b;
+}
+
+void local_sort_particles()
+{
+  CELL_TRACE(fprintf(stderr, "%d: entering local_sort_particles\n", this_node));
+
+  /* first distribute strictly on nodes */
+  cells_resort_particles(CELL_GLOBAL_EXCHANGE);
+
+  CELL_TRACE(fprintf(stderr, "%d: sorting local cells\n", this_node));
+
+  /* now sort the local cells */
+  for (int c = 0; c < local_cells.n; c++) {
+    Cell *cell  = local_cells.cell[c];
+    Particle *p = cell->part;
+    int np      = cell->n;
+
+#ifdef CELL_DEBUG
+    for (int id = 0; id < np; ++id) {
+      Cell *tgt_cell = cell_structure.position_to_cell(p[id].r.p);
+      if (tgt_cell != cell) {
+        fprintf(stderr, "%d: particle %d at position %lf %lf %lf is not in its expected cell. Have %ld, expected %ld\n", this_node, p[id].p.identity, p[id].r.p[0], p[id].r.p[1], p[id].r.p[2], (cell - cells)/sizeof(Cell*), (tgt_cell - cells) /sizeof(Cell*)); 
+      }
+    }
+#endif
+
+    qsort(p, np, sizeof(Particle), compare_particles);
+    update_local_particles(cell);
+  }
+
+  CELL_TRACE(dump_particle_ordering());
+  CELL_TRACE(fprintf(stderr, "%d: leaving local_sort_particles\n", this_node));
 }
 
 /*************************************************/

@@ -59,7 +59,27 @@ running in parallel.
 
 Instead, in \es, the user has to specify what information needs to be
 saved to a file to be able to restore the simulation state.  The
-\texttt{blockfile} command helps you to do that.
+\texttt{blockfile} and \texttt{writemd} commands help you to do that.
+\texttt{blockfile} writes text files, which is ok for saving integer
+properties, but not for floating point numbers. These need to be
+stored in binary for exact reproduction, which is provided by the
+\texttt{writemd} command. Note that there is no command to binarily
+write other MD parameters like time step or interactions. You should
+restore these using exactly the same Tcl command that you used to
+create them.
+
+Finally, there is one more complication: random forces are computed
+in the order the particles are stored in memory. This order usually
+differs after reading a blockfile back, since the particles are
+stored in consecutive identity order. In memory, they are usually
+not in a specific order. Therefore, you need to use \texttt{sort_particles}
+after writing a blockfile that you want to use for checkpointing, so
+that the particles are resorted to the same consecutive order. Note
+that this does not change physics, just the order the random numbers
+are applied.
+
+When using an LB fluid, you need to also write out the fluid nodes,
+see the \texttt{lbfluid} command for further details.
 
 \section{\texttt{blockfile}: Using the structured file format}
 \label{sec:structured-file-format}
@@ -142,13 +162,18 @@ even write those.
   \variant{3} blockfile \var{channel} write interactions
 \end{essyntax}
 
-\todo{How is a Tcl-range specified?}  Variant \variant{1} writes
+Variant \variant{1} writes
 particle information in a standardized format to \var{channel}.
 \var{what} can be any list of parameters that can be specified in
 \codebox{part \var{part_id} print}, except for \lit{bonds}.  Note that
 \lit{id} and \lit{pos} will automatically be added if missing.
-\var{range} is a Tcl list of ranges which particles to write.  The
-keyword \keyword{all} denotes all known particles.
+\var{range} is a Tcl list of ranges which particles to write. A range
+is defined as \textit{start}-\textit{stop}, where \textit{start} and
+\textit{stop} are particle identities. \textit{stop} can also be the
+string ``end'', denoting the highest used particle identity. Thus
+\texttt{"{} 0-5 10-end"{}} are all particles with the exception of
+particles 6-9.  The keyword \keyword{all} denotes all known particles,
+\ie{} is eqivalent to \texttt{"0-end"{}}).
 
 Variant \variant{2} writes the bond information in a standardized
 format to \var{channel}. The involved particles and bond types must
@@ -225,10 +250,10 @@ to the file \lit{data.dat}.
 \begin{essyntax}
   \variant{1} blockfile \var{channel} read start 
   \variant{2} blockfile \var{channel} read toend 
-  \variant{3} blockfile \var{channel} read \alt{particles \asep
+  \variant{3} blockfile \var{channel} read auto 
+  \variant{4} blockfile \var{channel} read \alt{particles \asep
     interactions \asep bonds \asep variable \asep seed \asep random
     \asep bitrandom \asep configs}
-  \variant{4} blockfile \var{channel} read auto 
 \end{essyntax}
 
 Variants \variant{1} and \variant{2} are the low-level block-reading
@@ -236,11 +261,8 @@ commands. Variant \variant{1} reads the start part of a block and
 returns the block title, while variant \variant{2} reads the block
 data and returns it.
 
-\todo{Needs to be rewritten!}
-Variants \variant{3} and \variant{4} read whole blocks.  Variant
-\variant{3} reads the beginning of one block, checks wether it
-contains data of the given type and reads it. Variant \variant{4}
-reads in one block and does the following:
+Variants \variant{3} and \variant{4} read whole blocks.
+Variant \variant{3} reads in one block and does the following:
 \begin{enumerate}
 \item if a procedure \keyword{blockfile_read_auto_\var{tag}} exists,
   this procedure takes over (\var{tag} is the first expression in the
@@ -257,7 +279,7 @@ reads in one block and does the following:
 \item if the file is at the end, it returns \lit{eof}
 \end{enumerate}
 
-Variant \variant{3} checks for a block with tag \var{block} and then
+Variant \variant{4} checks for a block with tag \var{block} and then
 again executes the corresponding \lit{blockfile_read_auto_\var{tag}},
 if it exists.
 
@@ -309,6 +331,31 @@ close $in
 \end{tclcode}
 This is basically all you need to restore the information in the
 blockfile, overwriting the current settings in \es.
+
+\section{Writing and reading binary files}
+\index{binary I/O}
+
+Binary files are written using the command
+\begin{essyntax}
+  writemd \var{channel} \opt{posx|posy|posz|vx|vy|vz|fx|fy|fz}
+\end{essyntax}
+This will write out particle data to the Tcl channel \var{channel} for
+all particles in binary format. Apart from the mandatory particle id,
+only limited information can be stored. The coordinates (\opt{posx},
+\opt{posy} and \opt{posz}), velocities (\opt{vx}, \opt{vy} and
+\opt{vz}) and forces (\opt{fx}, \opt{fy} and \opt{fz}). Other
+information should be stored in a blockfile or reconstructed
+differently. Note that since both \texttt{blockfile} and
+\texttt{writemd} are using a Tcl channel, it is actually possible to
+mix them, so that you can write a single checkpoint file. However, the
+\texttt{blockfile read auto} mechanism cannot handle the binary
+section, thus you need to read this section manually. Reading of
+binary particle data happens through
+\begin{essyntax}
+  readmd \var{channel}
+\end{essyntax}
+For the exact format of the written binary sequence, see
+\texttt{src/tcl/binary_file_tcl.cpp}.
 
 \section{Writing VTF files}
 \label{sec:vtf}

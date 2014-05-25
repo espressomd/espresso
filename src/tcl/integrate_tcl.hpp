@@ -44,8 +44,7 @@ int tclcallback_time_step(Tcl_Interp *interp, void *_data);
  */
 int tclcallback_time(Tcl_Interp *interp, void *_data);
 
-/** Implements the tcl-command 'invalidate_system' which forces a system re-init. 
-    For more information, see \ref tclcommand_invalidate_system. */
+/** Implements the obsolete tcl-command 'invalidate_system'. */
 int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
