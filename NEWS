@@ -29,9 +29,9 @@ New user-visible features
 * MEMD electrostatics can now handle spatially varying dielectrc
   constants.
 
-* pore constraint / lbboundary can have a two outer radii now to create nozzles.
+* Pore constraint / lbboundary can have a two outer radii now to create nozzles.
 
-* slitpore constraint and dielectric for IL based supercaps implemented.
+* Slitpore constraint and dielectric for IL based supercaps implemented.
 
 * New command time_integration to get the runtime of the integration
   loop.
@@ -40,6 +40,14 @@ New user-visible features
 
 User-visible changes
 --------------------
+
+* Added new arguments "recalc_forces" and "reuse_forces" to the
+  command "integrate". These arguments can be used to enforce or
+  suppress the recalculation of the forces at the beginning of the
+  call to "integrate". This is important for doing checkpoints, where
+  the forces have to be stored and reloaded.
+
+* Removed command "invalidate_system".
 
 * Comfixed now works with periodic boundary conditions.
 
