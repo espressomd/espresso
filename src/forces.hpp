@@ -693,64 +693,44 @@ inline void add_bonded_force(Particle *p1)
 	}
       }
       break;
-    case 4:
+    case 7:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
-		      p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
-	continue;
+      char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
+      ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
+		    p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+      continue;
       }
       switch(type) {
-	#ifdef CG_DNA
-      case BONDED_IA_CG_DNA_BASEPAIR:
+      case BONDED_IA_CG_DNA_STACKING:      
+#ifdef CG_DNA
 	for (j = 0; j < 3; j++) {
 	  p1->f.f[j] = force[j];
 	  p2->f.f[j] = force2[j];
 	  p3->f.f[j] = force3[j];
 	  p4->f.f[j] = force4[j];
+	  p5->f.f[j] = force5to8[0 + j];
+	  p6->f.f[j] = force5to8[3 + j];
+	  p7->f.f[j] = force5to8[6 + j];
+	  p8->f.f[j] = force5to8[9 + j];
 	}
+#endif
 	break;
-#endif
       }
-      break;
-    case 8:
-      if (bond_broken) {
-      char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
-      	p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
-      continue;
     }
-      switch(type) {
-    case BONDED_IA_CG_DNA_BASEPAIR:      
-#ifdef CG_DNA
-      for (j = 0; j < 3; j++) {
-      p1->f.f[j] = force[j];
-      p2->f.f[j] = force2[j];
-      p3->f.f[j] = force3[j];
-      p4->f.f[j] = force4[j];
-      p5->f.f[j] = force5to8[0 + j];
-      p6->f.f[j] = force5to8[3 + j];
-      p7->f.f[j] = force5to8[6 + j];
-      p8->f.f[j] = force5to8[9 + j];
-    }
-#endif
-      break;
-    }
-    }
-    }
-    }  
+  }
+}  
 
-      /** add force to another. This is used when collecting ghost forces. */
-      inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
-      {
-      int i;
-      for (i = 0; i < 3; i++)
-	F_to->f[i] += F_add->f[i];
+/** add force to another. This is used when collecting ghost forces. */
+inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
+{
+  int i;
+  for (i = 0; i < 3; i++)
+    F_to->f[i] += F_add->f[i];
 #ifdef ROTATION
-      for (i = 0; i < 3; i++)
-	F_to->torque[i] += F_add->torque[i];
+  for (i = 0; i < 3; i++)
+    F_to->torque[i] += F_add->torque[i];
 #endif
-    }
+}
 
       inline void check_particle_force(Particle *part)
       {
