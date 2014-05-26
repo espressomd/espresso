@@ -22,7 +22,6 @@
 #include <cstring>
 #include <cstdio>
 
-
 #include "global.hpp"
 #include "binary_file_tcl.hpp"
 #include "cells_tcl.hpp"
