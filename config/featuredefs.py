@@ -37,8 +37,6 @@ def toCPPExpr(expr):
     expr = re.sub('([A-Z0-9_]+)', 'defined(\\1)', expr)
     return expr
 
-    
-
 class defs:
     def __init__(self, filename):
         # complete set of all defined features
