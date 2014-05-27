@@ -31,9 +31,11 @@
 /** Structure to hold Debye-Hueckel Parameters. */
 typedef struct {
   /** Cutoff for Debey-Hueckel interaction. */
-  double r_cut;
+  double r0, r1;
   /** Debye kappa (inverse Debye length) . */
   double kappa;
+  double epislon_int;
+  double alpha;
 } Coulomb_debye_hueckel_params;
 
 /** Structure containing the Debye-Hueckel parameters. */
