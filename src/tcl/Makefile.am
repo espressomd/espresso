@@ -29,6 +29,7 @@ libEspressoTcl_la_SOURCES = \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
 	cells_tcl.cpp \
+	cells_tcl.hpp \
 	channels_tcl.cpp \
 	collision_tcl.cpp \
 	comfixed_tcl.cpp comfixed_tcl.hpp \
