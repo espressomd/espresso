@@ -597,6 +597,22 @@ int set_particle_v(int part, double v[3])
   return ES_OK;
 }
 
+int set_particle_v_old(int part, double v[3])
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_v_old(pnode, part, v);
+  return ES_OK;
+}
+
 int set_particle_f(int part, double F[3])
 {
   int pnode;

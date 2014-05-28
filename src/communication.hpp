@@ -136,6 +136,14 @@ void mpi_place_new_particle(int node, int id, double pos[3]);
 */
 void mpi_send_v(int node, int part, double v[3]);
 
+/** Issue REQ_SET_V: send particle old velocity.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param v its new velocity.
+*/
+void mpi_send_v_old(int node , int part, double v[3]);
+
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.
     \param part the particle.

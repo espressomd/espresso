@@ -459,6 +459,13 @@ int place_particle(int part, double p[3]);
 */
 int set_particle_v(int part, double v[3]);
 
+/** Call only on the master node: set particle's old velocity.
+    @param part the particle.
+    @param v its new velocity.
+    @return ES_OK if particle existed
+*/
+int set_particle_v_old(int part, double v[3]);
+
 /** Call only on the master node: set particle force.
     @param part the particle.
     @param F its new force.

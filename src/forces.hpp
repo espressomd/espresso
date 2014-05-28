@@ -412,7 +412,6 @@ inline void add_bonded_force(Particle *p1)
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
   int i, j, type_num, type, n_partners, bond_broken;
-  int *triel_params;
 
   i = 0;
   while(i<p1->bl.n) {
@@ -576,8 +575,7 @@ inline void add_bonded_force(Particle *p1)
 #endif
 #ifdef TRIELASTIC
     case TRIEL_IA:
-      triel_params = calc_triel_force(p1,p2,p3,iaparams,force,force2);
-      bond_broken=triel_params[0];
+      bond_broken=calc_triel_force(p1,p2,p3,iaparams,force,force2);
     break; 
 #endif
     default :
@@ -641,28 +639,13 @@ switch (type) {
 	case BONDED_IA_VOLUME_FORCE:
 		break;
 #endif
-	default:
-		p1->f.f[j] += force[j];
-		p2->f.f[j] += force2[j];
-		p3->f.f[j] -= (force[j] + force2[j]);
-	}
+ default:
+	  
+   p1->f.f[j] += force[j];
+   p2->f.f[j] += force2[j];
+   p3->f.f[j] -= (force[j] + force2[j]);
+ }
       }
-#ifdef TRIELASTIC
-      
-      if(p3->f.f[0] > 0)
-	p3->f.f[0] -= triel_params[1];
-      else
-	if(p3->f.f[0] < 0)
-	  p3->f.f[0] += triel_params[1];
-
-      if(p3->f.f[1] > 0)
-	p3->f.f[1] -= triel_params[2];
-      else
-	if(p3->f.f[1] < 0)
-	  p3->f.f[1] += triel_params[2];
-
-#endif
-
       break;
     case 3:
       if (bond_broken) {
