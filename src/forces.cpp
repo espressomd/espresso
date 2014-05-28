@@ -97,8 +97,8 @@ void force_calc()
 
   espressoSystemInterface.update();
 
-#ifdef HARMONICFORCE
-  if(harmonicForce) 
+#ifdef CUDA
+  if (harmonicForce)
     harmonicForce->calc(espressoSystemInterface);
 #endif
 

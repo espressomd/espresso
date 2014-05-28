@@ -3,8 +3,6 @@
 #include "cuda_utils.hpp"
 #include <stdio.h>
 
-#ifdef HARMONICFORCE
-
 HarmonicForce *harmonicForce = 0;
 
 __global__ void HarmonicForce_kernel(float x, float y, float z, float k,
@@ -38,4 +36,3 @@ void HarmonicForce_kernel_wrapper(float x, float y, float z, float k, int n, flo
 
   KERNELCALL(HarmonicForce_kernel,grid,block,(x, y, z, k, n, pos, f))
 }
-#endif

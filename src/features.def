@@ -33,8 +33,6 @@ NPT
 GHMC
 CATALYTIC_REACTIONS
 
-HARMONICFORCE                   requires CUDA
-
 /* Rotation */
 ROTATION
 ROTATIONAL_INERTIA              implies ROTATION
