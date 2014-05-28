@@ -16,6 +16,24 @@ float multigpu_factors[] = {1.0};
 #include "grid.hpp"
 #include "interaction_data.hpp"
 
+__device__ inline void atomicadd(float* address, float value)
+{
+#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
+  atomicAdd(address, value);
+#elif __CUDA_ARCH__ >= 110
+	int oldval, newval, readback;
+	oldval = __float_as_int(*address);
+	newval = __float_as_int(__int_as_float(oldval) + value);
+	while ((readback=atomicCAS((int *)address, oldval, newval)) != oldval)
+	{
+		oldval = readback;
+		newval = __float_as_int(__int_as_float(oldval) + value);
+	}
+#else
+#error atomicAdd needs compute capability 1.1 or higher
+#endif
+}
+
 const mmm1dgpu_real C_GAMMAf = C_GAMMA;
 const mmm1dgpu_real C_2PIf = C_2PI;
 
@@ -36,6 +54,9 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefacto
 
 	if(!s.requestRGpu())
 		std::cerr << "Mmm1dgpuForce needs access to positions on GPU!" << std::endl;
+
+	if(!s.requestQGpu())
+		std::cerr << "Mmm1dgpuForce needs access to charges on GPU!" << std::endl;
 
 	// system sanity checks
 	if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2))
@@ -64,8 +85,8 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefacto
 	mpi_bcast_coulomb_params();
 	tune(s, maxPWerror, far_switch_radius, bessel_cutoff);
 
-	// for all but the largest systems, it is faster to store force pairs and then sum them up
-	// so unless we're limited by memory, do the latter
+	// For all but the largest systems, it is faster to store force pairs and then sum them up.
+	// Atomics are just so slow: so unless we're limited by memory, do the latter.
 	pairs = 2;
 	for (int d = 0; d < deviceCount; d++)
 	{
@@ -243,9 +264,202 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefa
 		printf("@@@ Using far switch radius %f and bessel cutoff %d\n", _far_switch_radius, _bessel_cutoff);
 }
 
+__global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *force, int N, int pairs, int tStart = 0, int tStop = -1)
+{
+	if (tStop < 0)
+		tStop = N*N;
+
+	for (int tid = threadIdx.x + blockIdx.x * blockDim.x + tStart; tid < tStop; tid += blockDim.x * gridDim.x)
+	{
+		int p1 = tid%N, p2 = tid/N;
+		mmm1dgpu_real x = r[3*p2] - r[3*p1], y = r[3*p2+1] - r[3*p1+1], z = r[3*p2+2] - r[3*p1+2];
+		mmm1dgpu_real rxy2 = sqpow(x) + sqpow(y);
+		mmm1dgpu_real rxy = sqrt(rxy2);
+		mmm1dgpu_real sum_r = 0, sum_z = 0;
+		
+//		if (boxz <= 0.0) return; // otherwise we'd get into an infinite loop if we're not initialized correctly
+
+		while (fabs(z) > boxz/2) // make sure we take the shortest distance
+			z -= (z > 0? 1 : -1)*boxz;
+
+		if (p1 == p2) // particle exerts no force on itself
+		{
+			rxy = 1; // so the division at the end doesn't fail with NaN (sum_r is 0 anyway)
+		}
+		else if (rxy2 <= far_switch_radius_2) // near formula
+		{
+			mmm1dgpu_real uzz = uz*z;
+			mmm1dgpu_real uzr = uz*rxy;
+			sum_z = dev_mod_psi_odd(0, uzz);
+			mmm1dgpu_real uzrpow = uzr;
+			for (int n = 1; n < device_n_modPsi; n++)
+			{
+				mmm1dgpu_real sum_r_old = sum_r;
+				mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
+     			mmm1dgpu_real mpo = dev_mod_psi_odd(n, uzz);
+
+     			sum_r += 2*n*mpe * uzrpow;
+     			uzrpow *= uzr;
+     			sum_z += mpo * uzrpow;
+     			uzrpow *= uzr;
+
+     			if (fabs(sum_r_old - sum_r) < maxPWerror)
+					break;
+			}
+
+			sum_r *= sqpow(uz);
+			sum_z *= sqpow(uz);
+
+			sum_r += rxy*cbpow(rsqrt(rxy2+pow(z,2)));
+			sum_r += rxy*cbpow(rsqrt(rxy2+pow(z+boxz,2)));
+			sum_r += rxy*cbpow(rsqrt(rxy2+pow(z-boxz,2)));
+
+			sum_z += z*cbpow(rsqrt(rxy2+pow(z,2)));
+			sum_z += (z+boxz)*cbpow(rsqrt(rxy2+pow(z+boxz,2)));
+			sum_z += (z-boxz)*cbpow(rsqrt(rxy2+pow(z-boxz,2)));
+
+			if (rxy == 0) // particles at the same radial position only exert a force in z direction
+			{
+				rxy = 1;  // so the division at the end doesn't fail with NaN (sum_r is 0 anyway)
+			}
+		}
+		else // far formula
+		{
+			for (int p = 1; p < bessel_cutoff; p++)
+			{
+				mmm1dgpu_real arg = C_2PIf*uz*p;
+				sum_r += p*dev_K1(arg*rxy)*cos(arg*z);
+				sum_z += p*dev_K0(arg*rxy)*sin(arg*z);
+			}
+			sum_r *= sqpow(uz)*4*C_2PIf;
+			sum_z *= sqpow(uz)*4*C_2PIf;
+			sum_r += 2*uz/rxy;
+		}
+
+		mmm1dgpu_real pref = coulomb_prefactor*q[p1]*q[p2];
+		if (pairs)
+		{
+			force[3*(p1+p2*N-tStart)] = pref*sum_r/rxy*x;
+			force[3*(p1+p2*N-tStart)+1] = pref*sum_r/rxy*y;
+			force[3*(p1+p2*N-tStart)+2] = pref*sum_z;
+		}
+		else
+		{
+#ifdef ELECTROSTATICS_GPU_DOUBLE_PRECISION
+			atomicadd8(&force[3*p2], pref*sum_r/rxy*x);
+			atomicadd8(&force[3*p2+1], pref*sum_r/rxy*y);
+			atomicadd8(&force[3*p2+2], pref*sum_z);
+#else
+			atomicadd(&force[3*p2], pref*sum_r/rxy*x);
+			atomicadd(&force[3*p2+1], pref*sum_r/rxy*y);
+			atomicadd(&force[3*p2+2], pref*sum_z);
+#endif
+		}
+	}
+}
+
+__global__ void energiesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *energy, int N, int pairs, int tStart = 0, int tStop = -1)
+{
+	if (tStop < 0)
+		tStop = N*N;
+
+	extern __shared__ mmm1dgpu_real partialsums[];
+	if (!pairs)
+	{
+		partialsums[threadIdx.x] = 0;
+		__syncthreads();
+	}
+	for (int tid = threadIdx.x + blockIdx.x * blockDim.x + tStart; tid < tStop; tid += blockDim.x * gridDim.x)
+	{
+		int p1 = tid%N, p2 = tid/N;
+		mmm1dgpu_real z = r[3*p2+2] - r[3*p1+2];
+		mmm1dgpu_real rxy2 = sqpow(r[3*p2] - r[3*p1]) + sqpow(r[3*p2+1] - r[3*p1+1]);
+		mmm1dgpu_real rxy = sqrt(rxy2);
+		mmm1dgpu_real sum_e = 0;
+
+//		if (boxz <= 0.0) return; // otherwise we'd get into an infinite loop if we're not initialized correctly
+
+		while (fabs(z) > boxz/2) // make sure we take the shortest distance
+			z -= (z > 0? 1 : -1)*boxz;
+
+		if (p1 == p2) // particle exerts no force on itself
+		{
+		}
+		else if (rxy2 <= far_switch_radius_2) // near formula
+		{
+			mmm1dgpu_real uzz = uz*z;
+			mmm1dgpu_real uzr2 = sqpow(uz*rxy);
+			mmm1dgpu_real uzrpow = uzr2;
+			sum_e = dev_mod_psi_even(0, uzz);
+			for (int n = 1; n < device_n_modPsi; n++)
+			{
+				mmm1dgpu_real sum_e_old = sum_e;
+				mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
+     			sum_e += mpe * uzrpow;
+     			uzrpow *= uzr2;
+				
+				if (fabs(sum_e_old - sum_e) < maxPWerror)
+					break;
+			}
+
+			sum_e *= -1*uz;
+			sum_e -= 2*uz*C_GAMMAf;
+			sum_e += rsqrt(rxy2+sqpow(z));
+			sum_e += rsqrt(rxy2+sqpow(z+boxz));
+			sum_e += rsqrt(rxy2+sqpow(z-boxz));
+		}
+		else // far formula
+		{
+			sum_e = -(log(rxy*uz/2) + C_GAMMAf)/2;
+			for (int p = 1; p < bessel_cutoff; p++)
+			{
+				mmm1dgpu_real arg = C_2PIf*uz*p;
+				sum_e += dev_K0(arg*rxy)*cos(arg*z);
+			}
+			sum_e *= uz*4;
+		}
+
+		if (pairs)
+		{
+			energy[p1+p2*N-tStart] = coulomb_prefactor*q[p1]*q[p2]*sum_e;
+		}
+		else
+		{
+			partialsums[threadIdx.x] += coulomb_prefactor*q[p1]*q[p2]*sum_e;
+		}
+	}
+	if (!pairs)
+	{
+		sumReduction(partialsums, &energy[blockIdx.x]);
+	}
+}
+
+__global__ void vectorReductionKernel(mmm1dgpu_real *src, mmm1dgpu_real *dst, int N, int tStart = 0, int tStop = -1)
+{
+	if (tStop < 0)
+		tStop = N*N;
+
+	for (int tid = threadIdx.x + blockIdx.x * blockDim.x; tid < N; tid += blockDim.x * gridDim.x)
+	{
+		int offset = ((tid + (tStart % N)) % N);
+		
+		for (int i = 0; tid+i*N < (tStop - tStart); i++)
+		{
+			#pragma unroll 3
+			for (int d = 0; d<3; d++)
+			{
+				dst[3*offset+d] -= src[3*(tid+i*N)+d];
+			}
+		}
+	}
+}
+
 void Mmm1dgpuForce::calc(SystemInterface &s)
 {
-	
+	dim3 grid(1,1,1);
+	dim3 block(1,1,1);
+	printf("pairs=%d\n", 0);
+	KERNELCALL(forcesKernel,grid,block,(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), 0))
 }
 
 void Mmm1dgpuForce::calc_energy(SystemInterface &s)
@@ -263,7 +477,7 @@ float Mmm1dgpuForce::force_benchmark(SystemInterface &s)
 	HANDLE_ERROR( cudaEventCreate(&eventStart) );
 	HANDLE_ERROR( cudaEventCreate(&eventStop) );
 	HANDLE_ERROR( cudaEventRecord(eventStart, stream) );
-	Mmm1dgpuForce::calc(s);
+	calc(s);
 	HANDLE_ERROR( cudaEventRecord(eventStop, stream) );
 	HANDLE_ERROR( cudaEventSynchronize(eventStop) );
 	HANDLE_ERROR( cudaEventElapsedTime(&elapsedTime, eventStart, eventStop) );

@@ -86,7 +86,7 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
   #endif
 
   #ifdef ELECTROSTATICS
-                if (coulomb.method == COULOMB_P3M_GPU) {
+                if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU) { // TODO: this defeats the purpose of needsQ in the interface...
                   particle_data_host[i+g].q = (float)part[i].p.q;
                 }
   #endif
@@ -162,7 +162,7 @@ static void cuda_mpi_get_particles_slave(){
   #endif
 
   #ifdef ELECTROSTATICS
-          if (coulomb.method == COULOMB_P3M_GPU) {
+          if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU) {
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
           }
   #endif
