@@ -218,17 +218,16 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
       return tclcommand_integrate_print_usage(interp);
     }
   } else {
-    // actual integration
-    if (ARG1_IS_S("reuse_forces") && (argc > 2)) {
-      reuse_forces = 1;
-      argc--; argv++;
-    }
-    else if (ARG1_IS_S("recalc_forces") && (argc > 2)) {
-      reuse_forces = -1;
-      argc--; argv++;
-    }
-    
     if ( !ARG_IS_I(1,n_steps) ) return tclcommand_integrate_print_usage(interp);
+
+    // actual integration
+    if ((argc == 3) && ARG_IS_S(2, "reuse_forces")) {
+      reuse_forces = 1;
+    }
+    else if ((argc == 3) && ARG_IS_S(2, "recalc_forces")) {
+      reuse_forces = -1;
+    }
+    else if (argc != 2) return tclcommand_integrate_print_usage(interp);
   }
   /* go on with integrate <n_steps> */
   if(n_steps < 0) {
