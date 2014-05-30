@@ -17,14 +17,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "harmonic_force_tcl.hpp"
+#include "HarmonicPotential_tcl.hpp"
+#include "forces.hpp"
 
 #ifdef CUDA
 
 #include "HarmonicForce.hpp"
 #include "EspressoSystemInterface.hpp"
 
-int tclcommand_harmonic_force(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_HarmonicPotential(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   DoubleList dl;
 
   init_doublelist(&dl);
@@ -44,7 +45,7 @@ int tclcommand_harmonic_force(ClientData data, Tcl_Interp *interp, int argc, cha
 
   // printf("x %e %e %e, k %e\n", dl.e[0], dl.e[1],dl.e[2],dl.e[3]);
 
-  harmonicForce =  new HarmonicForce(dl.e[0], dl.e[1],dl.e[2],dl.e[3], espressoSystemInterface);
+  potentials.push_back(new HarmonicPotential(dl.e[0], dl.e[1],dl.e[2],dl.e[3], espressoSystemInterface));
 
   return TCL_OK;
 }
