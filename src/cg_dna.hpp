@@ -73,6 +73,10 @@ inline double angle(double *x1, double *x2) {
 
 /* get_mi_vector(c, a, b ) (a,b) -> a -x */
 
+inline void calc_cg_dna_electrostatics_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3]) {
+
+}
+
 inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si2, Particle *bi2, 
 				      Particle *sj1, Particle *bj1, Particle *sj2, Particle *bj2, 
 				      Bonded_ia_parameters *iaparams,
