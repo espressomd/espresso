@@ -44,7 +44,7 @@ int external_potential_tabulated_read_potential_file(int number);
 void add_external_potential_forces(Particle* p);
 void add_external_potential_energy(Particle* p);
 
-int write_local_lattice_to_file(char* filename_prefix, Lattice* lattice); 
+int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice); 
 
 
 #endif

@@ -34,7 +34,7 @@ void observable_init(observable* self) {
 }
 
 int observable_calculate(observable* self) {
-  int temp;
+  int temp = 0;
   if (self->calculate!=0)
     temp=(self->calculate)(self);
   self->last_update = sim_time;
@@ -42,7 +42,7 @@ int observable_calculate(observable* self) {
 }
 
 int observable_update(observable* self) {
-  int temp;
+  int temp = 0;
   if (self->update!=0)
     temp=(self->update)(self);
   self->last_update = sim_time;
@@ -881,7 +881,7 @@ int observable_reset_average(observable* self) {
     for (int i =0; i<self->n; i++) {
       self->last_value[i] = 0;
     }
-    return 0;
+    return error;
 }
 
 
