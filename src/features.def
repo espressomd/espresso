@@ -26,7 +26,7 @@ BOND_CONSTRAINT
 MODES                           requires FFTW
 BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
-COLLISION_DETECTION
+COLLISION_DETECTION		implies GHOST_FLAG, GHOSTS_HAVE_BONDS
 METADYNAMICS
 NEMD
 NPT 
@@ -136,7 +136,10 @@ BOND_ANGLE_OLD                  notest
 OLD_DIHEDRAL                    notest
 /* turn off nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
-
+/* add an int to the particle marking ghosts. Only visible on C level */
+GHOST_FLAG
+/* ghost particles also have the bond information. */
+GHOSTS_HAVE_BONDS
 
 /* Debugging */
 ADDITIONAL_CHECKS

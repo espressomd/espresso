@@ -512,7 +512,6 @@ void layered_exchange_and_sort_particles(int global_flag)
 	}
       }
     }
-#ifdef ADDITIONAL_CHECKS
     else {
       if (recv_buf.n != 0 || send_buf_dn.n != 0 || send_buf_up.n != 0) {
 	fprintf(stderr, "1 node but transfer buffers are not empty. send up %d, down %d, recv %d\n",
@@ -520,7 +519,6 @@ void layered_exchange_and_sort_particles(int global_flag)
 	errexit();
       }
     }
-#endif
     layered_append_particles(&recv_buf, &send_buf_up, &send_buf_dn);
 
     /* handshake redo */

@@ -64,10 +64,9 @@ int rebuild_verletlist = 0;
 /************************************************************/
 /*@{*/
 
-#ifdef ADDITIONAL_CHECKS
 /** Extensive Debug function to check the consistency of the cells and
     the particles therein. Use with care! */
-static void check_cells_consistency()
+void check_cells_consistency()
 {
   int c, index;
   IntList used;
@@ -116,7 +115,6 @@ static void check_cells_consistency()
     }
   realloc_intlist(&used, 0);
 }
-#endif
 
 /** Switch for choosing the topology release function of a certain
     cell system. */

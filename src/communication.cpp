@@ -216,8 +216,8 @@ void mpi_init(int *argc, char ***argv)
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
 #ifdef MPI_CORE
-  MPI_Errhandler_create((MPI_Handler_function *)mpi_core, &mpi_errh);
-  MPI_Errhandler_set(comm_cart, mpi_errh);
+  MPI_Comm_create_errhandler((MPI_Handler_function *)mpi_core, &mpi_errh);
+  MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
 }
 
@@ -403,11 +403,9 @@ void mpi_bcast_event_slave(int node, int event)
   case SORT_PARTICLES:
     local_sort_particles();
     break;
-#ifdef ADDITIONAL_CHECKS
   case CHECK_PARTICLES:
     check_particles();
     break;
-#endif
 
 #ifdef DP3M
   case P3M_COUNT_DIPOLES:

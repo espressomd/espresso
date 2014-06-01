@@ -87,6 +87,8 @@ User-visible changes
 Changes visible for developers
 ------------------------------
 
+* Feature GHOSTS_HAVE_BONDS allows for ghost particles to also store the bonds.
+
 * The code has been switched to using a C++ compiler.
 
 * The EspressoInterfaceClass has changed.

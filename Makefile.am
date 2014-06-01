@@ -48,7 +48,7 @@ endif
 if PYTHON_INTERFACE
 all-local: espresso-python pypresso
 espresso-python: FORCE
-	test -L espresso || $(LN_S) src/python/espresso espresso
+	test -L espressomd || $(LN_S) src/python/espresso espressomd
 pypresso: FORCE
 	test -L pypresso || $(LN_S) src/python/pypresso pypresso
 
