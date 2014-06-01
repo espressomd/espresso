@@ -303,7 +303,6 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
             bond_retrieve += n_bonds;
           }
 #ifdef EXCLUSIONS
-          int n_bonds;
 	  memcpy(&n_bonds, retrieve, sizeof(int));
 	  retrieve +=  sizeof(int);
           if (n_bonds) {
