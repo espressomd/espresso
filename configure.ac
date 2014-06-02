@@ -628,9 +628,8 @@ AC_CONFIG_FILES([
 	config/Makefile
 	config/myconfig-sample-header.hpp
 	src/Makefile
-        src/tcl/Makefile
-        src/python/Makefile
-        src/python/espresso/Makefile
+	src/tcl/Makefile
+	src/python/espressomd/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile

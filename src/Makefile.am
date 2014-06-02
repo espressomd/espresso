@@ -17,13 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-DIST_SUBDIRS = . tcl python
+DIST_SUBDIRS = . tcl python/espressomd
 SUBDIRS = . 
 if TCL
 SUBDIRS += tcl
 endif
 if PYTHON_INTERFACE
-SUBDIRS += python
+SUBDIRS += python/espressomd
 endif
 
 EXTRA_DIST =
