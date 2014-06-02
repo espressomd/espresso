@@ -1815,7 +1815,7 @@ void mpi_bcast_collision_params()
 void mpi_bcast_collision_params_slave(int node, int parm)
 {   
 #ifdef COLLISION_DETECTION
-  MPI_Bcast(&collision_params, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
+  MPI_Bcast(&collision_params, sizeof(Collision_parameters), MPI_BYTE, 0, comm_cart);
 
   recalc_forces = 1;
 #endif

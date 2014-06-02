@@ -22,6 +22,14 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
+// #define DEBUG
+
+#ifdef DEBUG
+#define TRACE(a) a
+#else
+#define TRACE(a)
+#endif
+
 #ifdef COLLISION_DETECTION
 
 /// Data type holding the info about a single collision
@@ -53,11 +61,9 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
     return 1;
 #endif
 
-#ifndef COLLISION_USE_BROKEN_PARALLELIZATION
   // Binding so far only works on a single cpu
-  if (mode && n_nodes != 1)
+  if ((mode & COLLISION_MODE_VS) && n_nodes != 1)
     return 2;
-#endif
 
   // Check if bonded ia exist
   if ((mode & COLLISION_MODE_BOND) &&
@@ -98,24 +104,22 @@ void detect_collision(Particle* p1, Particle* p2)
   double dist_betw_part, vec21[3]; 
   int part1, part2, size;
 
+  TRACE(printf("%d: consider particles %d and %d\n", this_node, p1->p.identity, p2->p.identity));
+
   // Obtain distance between particles
   dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
   if (dist_betw_part > collision_params.distance)
     return;
 
+  TRACE(printf("%d: particles %d and %d on bonding distance %lf\n", this_node, p1->p.identity, p2->p.identity, dist_betw_part));
+
   part1 = p1->p.identity;
   part2 = p2->p.identity;
       
   // Retrieving the particles from local_particles is necessary, because the particle might be a
-  // ghost, and those don't contain bonding info
+  // ghost, and those can't store bonding info.
   p1 = local_particles[part1];
   p2 = local_particles[part2];
-
-#ifdef COLLISION_USE_BROKEN_PARALLELIZATION
-  // Ignore particles too distant to be on the same processor
-  if (!p1 || !p2)
-    return; 
-#endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
@@ -154,6 +158,8 @@ void detect_collision(Particle* p1, Particle* p2)
     }
   }
 
+  TRACE(printf("%d: no previous bond, binding\n", this_node));
+
   /* If we're still here, there is no previous bond between the particles,
      we have a new collision */
 
@@ -161,13 +167,11 @@ void detect_collision(Particle* p1, Particle* p2)
   if (collision_params.mode & COLLISION_MODE_BOND) {
     int bondG[2];
     int primary = part1, secondary = part2;
-#ifdef COLLISION_USE_BROKEN_PARALLELIZATION
     // put the bond to the physical particle; at least one partner always is
     if (p1->l.ghost) {
       primary = part2;
       secondary = part1;
     }
-#endif
     bondG[0]=collision_params.bond_centers;
     bondG[1]=secondary;
     local_change_bond(primary, bondG, 0);
