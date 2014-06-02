@@ -24,6 +24,7 @@
 #ifdef CUDA
 
 #include "Potential.hpp"
+#include "EspressoSystemInterface.hpp"
 #include <iostream>
 
 void HarmonicPotential_kernel_wrapper(float x, float y, float z, float k,
@@ -52,6 +53,10 @@ protected:
   float x,y,z;
   float k;
 };
+
+inline void addHarmonicPotential(float x1, float x2, float x3, float _k) {
+	potentials.push_back(new HarmonicPotential(x1, x2, x3, _k, espressoSystemInterface));
+}
 
 #endif
 #endif

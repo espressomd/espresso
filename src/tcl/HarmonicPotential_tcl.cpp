@@ -18,12 +18,11 @@
 */
 
 #include "HarmonicPotential_tcl.hpp"
-#include "forces.hpp"
 
 #ifdef CUDA
 
-#include "HarmonicForce.hpp"
-#include "EspressoSystemInterface.hpp"
+#include "forces.hpp"
+#include "HarmonicPotential.hpp"
 
 int tclcommand_HarmonicPotential(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   DoubleList dl;
@@ -45,7 +44,7 @@ int tclcommand_HarmonicPotential(ClientData data, Tcl_Interp *interp, int argc, 
 
   // printf("x %e %e %e, k %e\n", dl.e[0], dl.e[1],dl.e[2],dl.e[3]);
 
-  potentials.push_back(new HarmonicPotential(dl.e[0], dl.e[1],dl.e[2],dl.e[3], espressoSystemInterface));
+  addHarmonicPotential(dl.e[0], dl.e[1], dl.e[2], dl.e[3]);
 
   return TCL_OK;
 }

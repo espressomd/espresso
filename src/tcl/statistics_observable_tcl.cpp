@@ -31,7 +31,6 @@ int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* 
 int tclcommand_observable_update(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs);
 
 static int convert_types_to_ids(IntList * type_list, IntList * id_list); 
-static int observable_tclcommand(void* _container, double* A, unsigned int n_A);
   
 int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ) {
   int i,ret;
@@ -1415,7 +1414,6 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
 }
 
 int tclcommand_observable_update(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
-  char buffer[TCL_DOUBLE_SPACE];
   if ( observable_update(obs) ) {
     Tcl_AppendResult(interp, "\nFailed to update observable\n", (char *)NULL );
     return TCL_ERROR;
