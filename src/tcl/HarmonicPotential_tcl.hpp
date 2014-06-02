@@ -17,14 +17,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _HARMONIC_FORCE_TCL_HPP
-#define _HARMONIC_FORCE_TCL_HPP
+#ifndef _HARMONICPOTENTIAL_TCL_HPP
+#define _HARMONICPOTENTIAL_TCL_HPP
 
 #include "parser.hpp"
 
 #ifdef CUDA
 
-int tclcommand_harmonic_force(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_HarmonicPotential(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 #endif
 

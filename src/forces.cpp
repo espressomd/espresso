@@ -54,9 +54,10 @@
 #include "iccp3m.hpp"
 #include "p3m_gpu.hpp"
 #include "cuda_interface.hpp"
-#include "HarmonicForce.hpp"
 
 #include "EspressoSystemInterface.hpp"
+
+PotentialList potentials;
 
 /************************************************************/
 /* local prototypes                                         */
@@ -97,10 +98,10 @@ void force_calc()
 
   espressoSystemInterface.update();
 
-#ifdef CUDA
-  if (harmonicForce)
-    harmonicForce->calc(espressoSystemInterface);
-#endif
+  // Compute the forces from the force objects
+  for (PotentialList::iterator potential= potentials.begin();
+		  potential != potentials.end(); ++potential)
+	  (*potential)->computeForces(espressoSystemInterface);
 
 #ifdef LB_GPU
 #ifdef SHANCHEN

@@ -82,6 +82,7 @@ libEspressoTcl_la_SOURCES += \
 	forcecap_tcl.cpp forcecap_tcl.hpp \
 	gaussian_tcl.cpp gaussian_tcl.hpp \
 	gb_tcl.cpp gb_tcl.hpp \
+	HarmonicPotential_tcl.cpp HarmonicPotential_tcl.hpp \
 	hat_tcl.cpp hat_tcl.hpp \
 	hertzian_tcl.cpp hertzian_tcl.hpp \
 	lj_tcl.cpp lj_tcl.hpp \
@@ -93,8 +94,7 @@ libEspressoTcl_la_SOURCES += \
 	soft_sphere_tcl.cpp soft_sphere_tcl.hpp \
 	steppot_tcl.cpp steppot_tcl.hpp \
 	tab_tcl.cpp tab_tcl.hpp \
-	tunable_slip_tcl.cpp tunable_slip_tcl.hpp \
-	harmonic_force_tcl.cpp harmonic_force_tcl.hpp
+	tunable_slip_tcl.cpp tunable_slip_tcl.hpp
 
 # bonded potentials and forces
 libEspressoTcl_la_SOURCES += \
