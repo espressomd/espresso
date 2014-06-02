@@ -182,12 +182,16 @@ SUFFIXES=.cu
 cuda_verbose = $(cuda_verbose_@AM_V@)
 cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
 cuda_verbose_0 = @echo "  NVCC     $@";
-.cu.o:
+
+# nvcc does not allow for option MF for dependency generation, 
+# therefore make a separate run to generate dependencies
+# putting them into DEPDIR ensures configure creates empties dummies
+cuda_workaround.o: cuda_workaround.cu
 	$(cuda_verbose)$(NVCC) \
 		$(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
-Espresso_SOURCES += cuda_workaround.cu
-Espresso_install_SOURCES += cuda_workaround.cu
+Espresso_LDADD += cuda_workaround.o
+Espresso_install_LDADD += cuda_workaround.o
 
 endif

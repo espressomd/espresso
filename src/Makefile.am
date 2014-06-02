@@ -176,12 +176,41 @@ if CUDA
 
 SUFFIXES=.cu
 
-# nvcc does not allow for MF, make a separate run to generate dependencies
-# putting them into DEPDIR ensures configure creates empties dummies
+CUDA_HEADER_FILES = \
+	cuda_utils.hpp \
+	cuda_interface.hpp \
+	p3m_gpu.hpp \
+	cuda_init.hpp \
+	electrokinetics.hpp
+
+CUDA_SOURCE_FILES = \
+	cuda_init_cuda.cu \
+	cuda_common_cuda.cu \
+	electrokinetics_cuda.cu \
+	lbgpu_cuda.cu \
+	p3m_gpu_cuda.cu \
+	EspressoSystemInterface_cuda.cu \
+	potential/HarmonicPotential_cuda.cu
+
+# include the dependency tracking files
+include ./$(DEPDIR)/cuda_init_cuda.Plo
+include ./$(DEPDIR)/cuda_common_cuda.Plo
+include ./$(DEPDIR)/electrokinetics_cuda.Plo
+include ./$(DEPDIR)/libgpu_cuda.Plo
+include ./$(DEPDIR)/p3m_gpu_cuda.Plo
+include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
+include ./$(DEPDIR)/HarmonicPotential_cuda.Plo
+
+LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
+
 cuda_verbose = $(cuda_verbose_@AM_V@)
 cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
 cuda_verbose_0 = @echo "  NVCC     $@";
-.cu.lo:
+
+# nvcc does not allow for option MF for dependency generation, 
+# therefore make a separate run to generate dependencies
+# putting them into DEPDIR ensures configure creates empties dummies
+$(LOFILES): %.lo: %.cu
 	$(cuda_verbose)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
 	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<; \
 	$(LIBTOOL) $(AM_V_lt) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -189,27 +218,8 @@ cuda_verbose_0 = @echo "  NVCC     $@";
 		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
-CUDA_SOURCES = \
-	cuda_utils.hpp \
-	cuda_interface.hpp \
-	p3m_gpu.hpp \
-	cuda_init.hpp \
-	cuda_init_cuda.cu \
-	cuda_common_cuda.cu \
-	electrokinetics_cuda.cu \
-	electrokinetics.hpp \
-	lbgpu_cuda.cu \
-	p3m_gpu_cuda.cu \
-	EspressoSystemInterface_cuda.cu \
-	potential/HarmonicPotential_cuda.cu
+libEspresso_la_LIBADD = $(LOFILES)
 
-libEspresso_la_SOURCES += $(CUDA_SOURCES)
-EXTRA_DIST += $(CUDA_SOURCES)
-
-include ./$(DEPDIR)/cuda_init_cuda.Plo
-include ./$(DEPDIR)/cuda_common_cuda.Plo
-include ./$(DEPDIR)/libgpu_cuda.Plo
-include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 
 endif
 
