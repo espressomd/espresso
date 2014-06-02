@@ -56,7 +56,7 @@
 #include "external_potential_tcl.hpp"
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
-#include "HarmonicPotential_tcl.hpp"
+#include "potential/HarmonicPotential_tcl.hpp"
 
 
 #ifdef TK

@@ -5,8 +5,8 @@
  *      Author: olenz
  */
 
-#ifndef _POTENTIAL_HPP
-#define _POTENTIAL_HPP
+#ifndef _POTENTIAL_POTENTIAL_HPP
+#define _POTENTIAL_POTENTIAL_HPP
 
 #include "SystemInterface.hpp"
 
@@ -17,6 +17,7 @@
 class Potential {
 public:
 	virtual void computeForces(SystemInterface &s) = 0;
+	virtual ~Potential() {}
 };
 
 #endif /* _POTENTIAL_HPP */

@@ -17,12 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "HarmonicPotential_tcl.hpp"
+#include "potential/HarmonicPotential_tcl.hpp"
 
 #ifdef CUDA
 
 #include "forces.hpp"
-#include "HarmonicPotential.hpp"
+#include "potential/HarmonicPotential.hpp"
 
 int tclcommand_HarmonicPotential(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   DoubleList dl;

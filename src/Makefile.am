@@ -127,7 +127,7 @@ libEspresso_la_SOURCES += \
 	soft_sphere.cpp soft_sphere.hpp \
 	steppot.cpp steppot.hpp \
 	tab.cpp tab.hpp \
-	tunable_slip.cpp tunable_slip.hpp 
+	tunable_slip.cpp tunable_slip.hpp
 
 # bonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -160,10 +160,14 @@ libEspresso_la_SOURCES += \
 	mmm2d.cpp mmm2d.hpp \
 	mmm-common.cpp mmm-common.hpp \
 	p3m.cpp p3m.hpp \
-        p3m-common.cpp p3m-common.hpp \
+	p3m-common.cpp p3m-common.hpp \
 	p3m-dipolar.cpp p3m-dipolar.hpp \
 	reaction_field.cpp reaction_field.hpp
 
+# Generic potentials
+libEspresso_la_SOURCES += \
+	potential/Potential.hpp \
+	potential/HarmonicPotential.cpp potential/HarmonicPotential.hpp
 
 ##################################################
 # CUDA rules
@@ -197,7 +201,7 @@ CUDA_SOURCES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
-	HarmonicPotential.hpp HarmonicPotential.cu
+	potential/HarmonicPotential_cuda.cu
 
 libEspresso_la_SOURCES += $(CUDA_SOURCES)
 EXTRA_DIST += $(CUDA_SOURCES)

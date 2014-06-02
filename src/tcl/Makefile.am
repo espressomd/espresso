@@ -82,7 +82,6 @@ libEspressoTcl_la_SOURCES += \
 	forcecap_tcl.cpp forcecap_tcl.hpp \
 	gaussian_tcl.cpp gaussian_tcl.hpp \
 	gb_tcl.cpp gb_tcl.hpp \
-	HarmonicPotential_tcl.cpp HarmonicPotential_tcl.hpp \
 	hat_tcl.cpp hat_tcl.hpp \
 	hertzian_tcl.cpp hertzian_tcl.hpp \
 	lj_tcl.cpp lj_tcl.hpp \
@@ -134,6 +133,10 @@ libEspressoTcl_la_SOURCES += \
 	p3m_tcl.cpp p3m_tcl.hpp \
 	reaction_field_tcl.cpp reaction_field_tcl.hpp \
 	mdlc_correction_tcl.cpp mdlc_correction_tcl.hpp	
+
+# Generic potentials
+libEspressoTcl_la_SOURCES += \
+	potential/HarmonicPotential_tcl.cpp potential/HarmonicPotential_tcl.hpp
 
 if CUDA
 libEspressoTcl_la_SOURCES += cuda_init_tcl.cpp

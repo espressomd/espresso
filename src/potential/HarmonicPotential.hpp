@@ -16,15 +16,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _HARMONICPOTENTIAL_HPP
-#define _HARMONICPOTENTIAL_HPP
+#ifndef _POTENTIAL_HARMONICPOTENTIAL_HPP
+#define _POTENTIAL_HARMONICPOTENTIAL_HPP
 
 #include "config.hpp"
 
 #ifdef CUDA
 
-#include "Potential.hpp"
-#include "EspressoSystemInterface.hpp"
+#include "potential/Potential.hpp"
+#include "SystemInterface.hpp"
 #include <iostream>
 
 void HarmonicPotential_kernel_wrapper(float x, float y, float z, float k,
@@ -32,31 +32,20 @@ void HarmonicPotential_kernel_wrapper(float x, float y, float z, float k,
 
 class HarmonicPotential : public Potential {
 public:
-  HarmonicPotential(float x1, float x2, float x3, float _k, SystemInterface &s) {
-    x = x1;
-    y = x2;
-    z = x3;
-    k = _k;
+  HarmonicPotential(float x1, float x2, float x3, float _k, SystemInterface &s);
 
-    if(!s.requestFGpu())
-      std::cerr << "HarmonicPotential needs access to forces on GPU!" << std::endl;
-
-    if(!s.requestRGpu())
-      std::cerr << "HarmonicPotential needs access to positions on GPU!" << std::endl;
-
-  }; 
   virtual void computeForces(SystemInterface &s) {
     HarmonicPotential_kernel_wrapper(x,y,z,k,s.npart_gpu(),
 					 s.rGpuBegin(), s.fGpuBegin());
   };
+
+  virtual ~HarmonicPotential() {}
 protected:
   float x,y,z;
   float k;
 };
 
-inline void addHarmonicPotential(float x1, float x2, float x3, float _k) {
-	potentials.push_back(new HarmonicPotential(x1, x2, x3, _k, espressoSystemInterface));
-}
+void addHarmonicPotential(float x1, float x2, float x3, float _k);
 
 #endif
 #endif
