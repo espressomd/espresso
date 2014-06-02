@@ -27,6 +27,8 @@
  *
  *  For more information see forces.cpp .
  */
+#include "config.hpp"
+#include <list>
 #include "utils.hpp"
 #include "thermostat.hpp"
 #ifdef MOLFORCES
@@ -83,7 +85,10 @@
 #include "iccp3m.hpp"
 #include "collision.hpp" 
 #include "external_potential.hpp"
-/* end of force files */
+#include "potential/Potential.hpp"
+
+typedef std::list<Potential*> PotentialList;
+extern PotentialList potentials;
 
 /** \name Exported Functions */
 /************************************************************/

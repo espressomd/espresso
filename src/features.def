@@ -26,7 +26,7 @@ BOND_CONSTRAINT
 MODES                           requires FFTW
 BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
-COLLISION_DETECTION		implies GHOST_FLAG, GHOSTS_HAVE_BONDS
+COLLISION_DETECTION				implies GHOST_FLAG, GHOSTS_HAVE_BONDS
 METADYNAMICS
 NEMD
 NPT 
@@ -76,15 +76,15 @@ INTER_DPD
 LB
 LB_GPU                          requires CUDA
 LB_BOUNDARIES	                implies LB, CONSTRAINTS
-LB_BOUNDARIES_GPU	        implies LB_GPU, CONSTRAINTS
+LB_BOUNDARIES_GPU	        	implies LB_GPU, CONSTRAINTS
 LB_ELECTROHYDRODYNAMICS	        implies LB
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
 EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 LATTICE	                        equals LB or LB_GPU
 USE_TEMPORARY	                equals LB or LB_GPU
-SHANCHEN		        implies LB_GPU
-SHANCHEN 		        requires not ELECTROKINETICS
+SHANCHEN		        		implies LB_GPU
+SHANCHEN 		        		requires not ELECTROKINETICS
 
 /* Interaction features */
 TABULATED
@@ -122,12 +122,12 @@ BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 /* Obsolete features. To be removed. */
 /* Old Bond angle */
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
-BOND_ANGLE_HARMONIC	        requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
-BOND_ANGLE_COSINE	        requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_HARMONIC	        	requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_COSINE	        	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
 BOND_ANGLE_COSSQUARE            requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
 BOND_ANGLE_OLD                  equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
-BOND_ANGLE_HARMONIC	        notest
-BOND_ANGLE_COSINE	        notest
+BOND_ANGLE_HARMONIC	        	notest
+BOND_ANGLE_COSINE	        	notest
 BOND_ANGLE_COSSQUARE            notest
 BOND_ANGLE_OLD                  notest
 
@@ -137,9 +137,10 @@ OLD_DIHEDRAL                    notest
 /* turn off nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
 /* add an int to the particle marking ghosts. Only visible on C level */
-GHOST_FLAG
+GHOST_FLAG						notest
 /* ghost particles also have the bond information. */
-GHOSTS_HAVE_BONDS
+GHOSTS_HAVE_BONDS				notest
+
 
 /* Debugging */
 ADDITIONAL_CHECKS

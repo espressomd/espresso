@@ -93,8 +93,7 @@ libEspressoTcl_la_SOURCES += \
 	soft_sphere_tcl.cpp soft_sphere_tcl.hpp \
 	steppot_tcl.cpp steppot_tcl.hpp \
 	tab_tcl.cpp tab_tcl.hpp \
-	tunable_slip_tcl.cpp tunable_slip_tcl.hpp \
-	harmonic_force_tcl.cpp harmonic_force_tcl.hpp
+	tunable_slip_tcl.cpp tunable_slip_tcl.hpp
 
 # bonded potentials and forces
 libEspressoTcl_la_SOURCES += \
@@ -134,6 +133,10 @@ libEspressoTcl_la_SOURCES += \
 	p3m_tcl.cpp p3m_tcl.hpp \
 	reaction_field_tcl.cpp reaction_field_tcl.hpp \
 	mdlc_correction_tcl.cpp mdlc_correction_tcl.hpp	
+
+# Generic potentials
+libEspressoTcl_la_SOURCES += \
+	potential/HarmonicPotential_tcl.cpp potential/HarmonicPotential_tcl.hpp
 
 if CUDA
 libEspressoTcl_la_SOURCES += cuda_init_tcl.cpp
