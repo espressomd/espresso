@@ -11,65 +11,111 @@ set boxx  20
 set boxy  20
 set boxz  20
 
-#######################################################################
-# calculations to get quantities in espresso units
-# Fix dimensions 
-
-# length scale
-set L0 1e-7 
-# energy scale
-set kbT0 3.77e-21 
-# densityscale
-set rho0 1e3
-# viscosity
-set nu0 [expr sqrt( $kbT0/($L0*$rho0) )]
-# time scale
-set t0 [expr pow($L0,5/2.) * sqrt($rho0) / sqrt( $kbT0 ) ]
-# hydrodyn. friction
-set zeta0 [expr sqrt( $L0*$rho0*$kbT0) ]
-# shear konstant
-set ks0 [expr $kbT0 / ($L0*$L0) ]
-# bending constant
-set kb0 $kbT0
-
-######################################################################
-# define Simulation Parameters
-
-# time step MD
-set dt 0.001
-# time step LB-Fluid 
-set tau 0.01 
-# Integrations per frameco
-set stepSize 100
-# number of steps ( frames)
-set numSteps 50000
-# gridsize setting
-set gridPara 1
-# maximum strech length
-set maxStretch 5
-
-# No. of particles
-set numParts 3
-
-# calculate other values from this setup
+# Fix physical quantities (SI)
 
 # kinematic viscosity 
-set nu [expr 0.5* $gridPara * $gridPara / (3* $tau )]
+# -> if visc is given here time step has to be set later
+set nu_SI [expr 1e-6] 
+# density of fluid
+set rho_SI 1e3
+# shear modulus
+set ks_SI 5e-6
+# bending
+set kb_SI 1e-19
+# grid size
+set gridsize_SI 1e-7
+# thermal energy
+set kbT_SI [expr 1.38e-23 * 0]
 
-# density
-set rho 1
+# Particle parameters:
 
-# hydrodynamic particle radius (used to define zeta)
-set r [expr $gridPara * 1]
-# friction constant
-set zeta [expr 6 * 3.141* $nu* $rho * $r]
-# thermal energy (equals 300 K here)
-set kbT [expr 300.0 *1.38e-23 / $kbT0] 
+# radius:
+# hydrodynamic radius, used to calculate friction constant. Diameter should be around grid constant
+set rad_SI [expr 0.5*$gridsize_SI] 
+# friction constant: is only set here for consitancy
+set zeta_SI [expr 6*3.142*$nu_SI*$rho_SI*$rad_SI]
+# # drag force on particle 
+set part_force_SI [expr 0.01*$zeta_SI]
+# particle volume 
+set vol_part_SI [expr 4/3*3.142*$rad_SI*$rad_SI*$rad_SI]
+# mass 
+# set mass_SI [expr $rho_SI*$vol_part_SI]
 
-# bending 
-set kB [expr 1e-19 / $kb0]
-# shearing
-set kS [expr 5e-6/ $ks0]
+
+# fixed scales
+set rho0 1e3
+set L0 1e-7
+# be careful energy scale is not set to 0°c!
+set E0 [expr 1.38e-23 * 273]
+
+# derived scales
+set nu0 [expr sqrt($E0/($rho0*$L0))]
+# set V0 $nu0/$L0
+set ks0 [expr $E0/($L0*$L0) ]
+set kb0 $E0
+set m0 [expr $rho0*$L0*$L0*$L0]
+
+
+# # Unit system  IV
+# 
+# # fixed scales  
+# set rho0 $rho_SI
+# set L0 $deltaX_SI
+# set ks0 $ks_SI
+# 
+# # derived scales
+# set E0 [expr $ks0*$L0*$L0]
+# set nu0 [expr sqrt($E0/($rho0*$L0))]
+# set V0 $nu0/$L0 
+# set kb0 $E0
+
+############### Calculate quantities in Espresso units ###############################
+
+set rho [expr $rho_SI / $rho0]
+set nu [expr $nu_SI / $nu0]
+set kbT [expr $kbT_SI / $E0]
+set kS [expr $ks_SI / $ks0]
+set kB [expr $kb_SI / $kb0]
+set kC $kS
+# set V [expr $V_SI /  $V0]
+set gridsize [expr $gridsize_SI / $L0]
+
+# particle scales
+#radius
+set rad [expr $rad_SI / $L0]
+# volume
+set vol_part_SI [expr 4/3*3.142*$rad*$rad*$rad]
+# mass 
+set mass 1
+# friction constant: is calculated new from viscosity and paricle radius
+set zeta [expr 6*3.142*$nu*$rho*$rad]
+# drag force
+set part_force [expr 0.01*$zeta]
+
+# Cell parameters
+set cellRad 18
+set cellhight [expr $cellRad/6.0]
+# distance from Cell surface to particle
+set distance 2.0
+
+########################################################################
+# Numerical parameters
+
+# maximum strech length for bonds
+set maxStretch 3
+# timestep calculated from condition that relaxation parameter tau in LB has to be 1 (or similar)
+set taurelax 1
+set dt_lb [expr ($taurelax - 0.5)*$gridsize*$gridsize/(3*$nu)]
+set dt_md [expr $dt_lb]
+
+# Integrations per step
+set stepSize 100
+# number of steps
+set numSteps 10000
+
+# Number of particles
+set numParts 3
+
 
 #################################################################################
 ######## SETUP #########################################################
@@ -80,23 +126,6 @@ exec rm -r vtkfiles
 exec mkdir simfiles
 exec mkdir vtkfiles
 
-# Write an info File, contains relevant information about the Simulation
-set infoFile [open "simfiles/simInfo.dat" "w"] 		
-puts $infoFile "# Scalar"
-puts $infoFile "# timeStep / stepSize / numSteps / timeScale / lengthScale"
-puts $infoFile "$dt $stepSize $numSteps $t0 $L0"
-close $infoFile
-
-# info File that contains relevant Data about the system
-set paraFile [open "simfiles/paraInfo.dat" "w"]
-puts $paraFile "# Scalar"
-puts $paraFile "# nu / rho / radius / zeta / kT / kS / kB"
-puts $paraFile "$nu $rho $r $zeta $kbT $kS $kB"
-close $paraFile
-
-file mkdir "vtkfiles"
-
-
 # setting Boxlength
 setmd box_l $boxx $boxy $boxz
 
@@ -104,11 +133,14 @@ setmd box_l $boxx $boxy $boxz
 # skin for verlet list
 setmd skin 0.1 
 # timestep
-setmd time_step $dt
+setmd time_step $dt_md
 
 # setting up the fluid with or without using gpu
-lbfluid agrid $gridPara dens $rho visc $nu tau $tau friction $zeta ext_force 0 0 0
+lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 0 0 0
 
+# walls located at z=1 and z=boxz-1 in x-y-plane
+# lbboundary wall dist 1 normal 0. 0. 20.
+# lbboundary wall dist [expr -$boxz+1]  normal 0. 0. -20.
 
 #setting themostat
 thermostat lb 0

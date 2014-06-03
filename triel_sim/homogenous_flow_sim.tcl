@@ -124,9 +124,6 @@ exec rm -r vtkfiles
 exec mkdir simfiles
 exec mkdir vtkfiles
 
-file mkdir "vtkfiles"
-
-
 # setting Boxlength
 setmd box_l $boxx $boxy $boxz
 
@@ -210,9 +207,9 @@ for {set step 0} {$step < $numSteps} {incr step} {
   
   
 # output for paraview only every 10th step
-  # if {fmod($step, 10)==0} { 
-  #     writevtk "vtkfiles/tri $step.vtk"
-  # }
+  if {fmod($step, 10)==0} { 
+      writevtk "vtkfiles/tri $step.vtk"
+  }
   
  
  #imd positions
