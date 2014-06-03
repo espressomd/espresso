@@ -138,7 +138,7 @@
 //#define GHOST_DEBUG
 //#define LATTICE_DEBUG
 //#define HALO_DEBUG
-//#define GRID_DEBUG
+#define GRID_DEBUG
 //#define VERLET_DEBUG
 //#define PARTICLE_DEBUG
 //#define P3M_DEBUG
