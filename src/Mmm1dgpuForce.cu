@@ -131,7 +131,11 @@ Mmm1dgpuForce::~Mmm1dgpuForce()
 	modpsi_destroy();
 	cudaFree(dev_forcePairs);
 
-	// TODO: unset coulomb.method
+	if (coulomb.method == COULOMB_MMM1D_GPU)
+	{
+		coulomb.method = COULOMB_NONE;
+		mpi_bcast_coulomb_params();
+	}
 }
 
 __forceinline__ __device__ mmm1dgpu_real sqpow(mmm1dgpu_real x)
@@ -477,6 +481,12 @@ __global__ void vectorReductionKernel(mmm1dgpu_real *src, mmm1dgpu_real *dst, in
 
 void Mmm1dgpuForce::calc(SystemInterface &s)
 {
+	if (coulomb.method != COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody cares about our calculations anymore
+	{
+		::mmm1dgpuForce = NULL;
+		delete this;
+		return;
+	}
 	setup(s);
 
 	if (pairs < 0)
@@ -485,23 +495,26 @@ void Mmm1dgpuForce::calc(SystemInterface &s)
 		exit(EXIT_FAILURE);
 	}
 
-	dim3 grid(1,1,1);
-	dim3 block(1,1,1);
+	int numThreads = 64;
+	int numBlocks = s.npart_gpu()*s.npart_gpu()/numThreads+1;
+	if (numBlocks > 65535)
+		numBlocks = 65535;
 
 	if (pairs) // if we calculate force pairs, we need to reduce them to forces
 	{
-		KERNELCALL(forcesKernel,grid,block,(s.rGpuBegin(), s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs))
-		KERNELCALL(vectorReductionKernel,grid,block,(dev_forcePairs, s.fGpuBegin(), s.npart_gpu()))
+		int blocksRed = s.npart_gpu()/numThreads+1;
+		KERNELCALL(forcesKernel,numBlocks,numThreads,(s.rGpuBegin(), s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs))
+		KERNELCALL(vectorReductionKernel,blocksRed,numThreads,(dev_forcePairs, s.fGpuBegin(), s.npart_gpu()))
 	}
 	else
 	{
-		KERNELCALL(forcesKernel,grid,block,(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), pairs))
+		KERNELCALL(forcesKernel,numBlocks,numThreads,(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), pairs))
 	}
 }
 
 void Mmm1dgpuForce::calc_energy(SystemInterface &s)
 {
-	
+	// TODO
 }
 
 float Mmm1dgpuForce::force_benchmark(SystemInterface &s)
