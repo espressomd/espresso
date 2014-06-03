@@ -22,9 +22,9 @@
 #include <cstring>
 #include <cstdio>
 
-
 #include "global.hpp"
 #include "binary_file_tcl.hpp"
+#include "cells_tcl.hpp"
 #include "constraint_tcl.hpp"
 #include "domain_decomposition_tcl.hpp"
 #include "dpd_tcl.hpp"
@@ -53,9 +53,10 @@
 #include "thermostat_tcl.hpp"
 #include "virtual_sites_com_tcl.hpp"
 #include "ghmc_tcl.hpp"
+#include "external_potential_tcl.hpp"
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
-#include "harmonic_force_tcl.hpp"
+#include "potential/HarmonicPotential_tcl.hpp"
 
 
 #ifdef TK
@@ -75,9 +76,6 @@ int tclcommand_bin(ClientData data, Tcl_Interp *interp,
     blockfile comfortably from Tcl. See \ref blockfile_tcl.cpp */
 int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
-/** implementation of the Tcl command cellsystem. See \ref cells_tcl.cpp */
-int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
-	       int argc, char **argv);
 /** replaces one of TCLs standart channels with a named pipe. See \ref channels_tcl.cpp */
 int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 /** Implements the Tcl command code_info.  It provides information on the
@@ -123,6 +121,7 @@ int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, c
 
 static void register_tcl_commands(Tcl_Interp* interp) {
   /* in cells.cpp */
+  REGISTER_COMMAND("sort_particles", tclcommand_sort_particles);
   REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
   /* in integrate.cpp */
   REGISTER_COMMAND("invalidate_system", tclcommand_invalidate_system);
@@ -160,7 +159,9 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
   /* in constraint.cpp */
   REGISTER_COMMAND("constraint", tclcommand_constraint);
-  /* in uwerr.cpp */
+  /* in external_potential.hpp */
+  REGISTER_COMMAND("external_potential", tclcommand_external_potential);
+  /* in uwerr.c */
   REGISTER_COMMAND("uwerr", tclcommand_uwerr);
   /* in nemd.cpp */
   REGISTER_COMMAND("nemd", tclcommand_nemd);
@@ -214,8 +215,8 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
-#ifdef HARMONICFORCE
-  REGISTER_COMMAND("harmonic_force", tclcommand_harmonic_force);
+#ifdef CUDA
+  REGISTER_COMMAND("harmonic_force", tclcommand_HarmonicPotential);
 #endif
 }
 

@@ -31,7 +31,6 @@ source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"
 require_feature "CONSTRAINTS"
-require_feature "ADRESS" off
 
 puts "---------------------------------------------------------"
 puts "- Testcase constraint_rhomboid.tcl running on [format %02d [setmd n_nodes]] nodes  -"

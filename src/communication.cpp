@@ -62,9 +62,11 @@
 #include "mdlc_correction.hpp"
 #include "reaction.hpp"
 #include "galilei.hpp"
+#include "external_potential.hpp"
 #include "statistics_correlation.hpp"
 #include "cuda_interface.hpp"
 #include "EspressoSystemInterface.hpp"
+#include "statistics_observable.hpp"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -146,6 +148,10 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_galilei_transform_slave) \
   CB(mpi_setup_reaction_slave) \
   CB(mpi_send_rotation_slave) \
+  CB(mpi_external_potential_broadcast_slave) \
+  CB(mpi_external_potential_tabulated_read_potential_file_slave) \
+  CB(mpi_external_potential_sum_energies_slave) \
+  CB(mpi_observable_lb_radial_velocity_profile_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -210,8 +216,8 @@ void mpi_init(int *argc, char ***argv)
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
 #ifdef MPI_CORE
-  MPI_Errhandler_create((MPI_Handler_function *)mpi_core, &mpi_errh);
-  MPI_Errhandler_set(comm_cart, mpi_errh);
+  MPI_Comm_create_errhandler((MPI_Handler_function *)mpi_core, &mpi_errh);
+  MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
 }
 
@@ -394,14 +400,12 @@ void mpi_bcast_event_slave(int node, int event)
     maggs_count_charged_particles();
     break; 
 #endif
-  case INVALIDATE_SYSTEM:
-    local_invalidate_system();
+  case SORT_PARTICLES:
+    local_sort_particles();
     break;
-#ifdef ADDITIONAL_CHECKS
   case CHECK_PARTICLES:
     check_particles();
     break;
-#endif
 
 #ifdef DP3M
   case P3M_COUNT_DIPOLES:
@@ -1033,6 +1037,20 @@ void mpi_send_rotation_slave(int pnode, int part)
 #endif
 }
 
+void mpi_observable_lb_radial_velocity_profile() 
+{
+#ifdef LB
+  mpi_call(mpi_observable_lb_radial_velocity_profile_slave, 0, 0);
+#endif
+}
+void mpi_observable_lb_radial_velocity_profile_slave(int pnode, int part)
+{
+#ifdef LB
+  mpi_observable_lb_radial_velocity_profile_slave_implementation(); 
+#endif
+}
+
+
 /********************* REQ_SET_BOND ********/
 
 
@@ -1172,18 +1190,19 @@ void mpi_remove_particle_slave(int pnode, int part)
 }
 
 /********************* REQ_INTEGRATE ********/
-int mpi_integrate(int n_steps)
+int mpi_integrate(int n_steps, int reuse_forces)
 {
   if (!correlations_autoupdate) {
-    mpi_call(mpi_integrate_slave, -1, n_steps);
-    integrate_vv(n_steps);
+    mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
+    integrate_vv(n_steps, reuse_forces);
     COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", \
                        this_node, n_steps));
     return check_runtime_errors();
   } else {
     for (int i=0; i<n_steps; i++) {
-      mpi_call(mpi_integrate_slave, -1, 1);
-      integrate_vv(1);
+      mpi_call(mpi_integrate_slave, 1, reuse_forces);
+      integrate_vv(1, reuse_forces);
+      reuse_forces = 0; // makes even less sense after the first time step
       COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n",     \
                          this_node, i));
       if (check_runtime_errors())
@@ -1195,10 +1214,10 @@ int mpi_integrate(int n_steps)
   return 0;
 }
 
-void mpi_integrate_slave(int pnode, int task)
+void mpi_integrate_slave(int n_steps, int reuse_forces)
 {
-  integrate_vv(task);
-  COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", this_node, task));
+  integrate_vv(n_steps, reuse_forces);
+  COMM_TRACE(fprintf(stderr, "%d: integration for %d n_steps with %d reuse_forces done.\n", this_node, n_steps, reuse_forces));
 
   check_runtime_errors();
 }
@@ -1796,7 +1815,7 @@ void mpi_bcast_collision_params()
 void mpi_bcast_collision_params_slave(int node, int parm)
 {   
 #ifdef COLLISION_DETECTION
-  MPI_Bcast(&collision_params, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
+  MPI_Bcast(&collision_params, sizeof(Collision_parameters), MPI_BYTE, 0, comm_cart);
 
   recalc_forces = 1;
 #endif
@@ -2900,6 +2919,56 @@ void mpi_loop()
     slave_callbacks[request[0]](request[1], request[2]);
     COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
 		       names[request[0]], request[1], request[2]));
+  
   }
 }
 
+void mpi_external_potential_broadcast(int number) {
+  mpi_call(mpi_external_potential_broadcast_slave, 0, number);
+  MPI_Bcast(&external_potentials[number], sizeof(ExternalPotential), MPI_BYTE, 0, comm_cart);
+  MPI_Bcast(external_potentials[number].scale, external_potentials[number].n_particle_types, MPI_DOUBLE, 0, comm_cart);
+}
+
+void mpi_external_potential_broadcast_slave(int node, int number) {
+  ExternalPotential E;
+  MPI_Bcast(&E, sizeof(ExternalPotential), MPI_BYTE, 0, comm_cart);
+  ExternalPotential* new_;
+  generate_external_potential(&new_);
+  external_potentials[number] = E;
+  external_potentials[number].scale=(double*) malloc(external_potentials[number].n_particle_types);
+  MPI_Bcast(external_potentials[number].scale, external_potentials[number].n_particle_types, MPI_DOUBLE, 0, comm_cart);
+}
+
+void mpi_external_potential_tabulated_read_potential_file(int number) {
+  mpi_call(mpi_external_potential_tabulated_read_potential_file_slave, 0, number);
+  external_potential_tabulated_read_potential_file(number);
+}
+
+void mpi_external_potential_tabulated_read_potential_file_slave(int node, int number) {
+  external_potential_tabulated_read_potential_file(number);
+}
+
+void mpi_external_potential_sum_energies() {
+  mpi_call(mpi_external_potential_sum_energies_slave, 0, 0);
+  double* energies = (double*) malloc(n_external_potentials*sizeof(double));
+  for (int i=0; i<n_external_potentials; i++) {
+    energies[i]=external_potentials[i].energy;
+  }
+  double* energies_sum = (double*) malloc(n_external_potentials*sizeof(double)); 
+  MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
+  for (int i=0; i<n_external_potentials; i++) {
+    external_potentials[i].energy=energies_sum[i];
+  }
+  free(energies);
+  free(energies_sum);
+}
+
+
+void mpi_external_potential_sum_energies_slave(int dummy1, int dummy2) {
+  double* energies = (double*)malloc(n_external_potentials*sizeof(double));
+  for (int i=0; i<n_external_potentials; i++) {
+    energies[i]=external_potentials[i].energy;
+  }
+  MPI_Reduce(energies, 0, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
+  free(energies);
+}

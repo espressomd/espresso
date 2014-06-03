@@ -27,6 +27,8 @@
  *
  *  For more information see forces.cpp .
  */
+#include "config.hpp"
+#include <list>
 #include "utils.hpp"
 #include "thermostat.hpp"
 #ifdef MOLFORCES
@@ -82,7 +84,11 @@
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "collision.hpp" 
-/* end of force files */
+#include "external_potential.hpp"
+#include "potential/Potential.hpp"
+
+typedef std::list<Potential*> PotentialList;
+extern PotentialList potentials;
 
 /** \name Exported Functions */
 /************************************************************/
@@ -262,11 +268,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     detect_collision(p1,p2);
 #endif
 
-#ifdef ADRESS
-  double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
-  if (force_weight<ROUND_ERROR_PREC) return;
-#endif
-
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
 
   /***********************************************/
@@ -279,7 +280,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #endif
 
 #ifdef INTER_DPD
-  if ( thermo_switch == THERMO_INTER_DPD ) add_inter_dpd_pair_force(p1,p2,ia_params,d,dist,dist2);
+  if ( thermo_switch & THERMO_INTER_DPD ) add_inter_dpd_pair_force(p1,p2,ia_params,d,dist,dist2);
 #endif
 
   /***********************************************/
@@ -318,7 +319,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   /* real space coulomb */
   double q1q2 = p1->p.q*p2->p.q;
-  if (!(iccp3m_initialized && iccp3m_cfg.set_flag)) {
     switch (coulomb.method) {
   #ifdef P3M
     case COULOMB_ELC_P3M: {
@@ -355,7 +355,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     case COULOMB_NONE:
       break;
     }
-  }
 
 #endif /*ifdef ELECTROSTATICS */
 

@@ -1,7 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
 # Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -107,7 +103,6 @@ for { set i 0 } { $i < $bl_histo_bins } { incr i } {
 # compute and write the testcase data
 thermostat off
 velocities 0
-invalidate_system
 integrate 0
 
 # write the data

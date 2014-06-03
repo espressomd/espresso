@@ -63,6 +63,7 @@
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"
 #include "p3m_gpu.hpp"
+#include "external_potential.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 
@@ -74,7 +75,7 @@ static int reinit_magnetostatics = 0;
 static int lb_reinit_particles_gpu = 1;
 #endif
 
-#if defined(LB_GPU) || defined(ELECTROSTATICS)
+#ifdef CUDA
 static int reinit_particle_comm_gpu = 1;
 #endif
 
@@ -121,6 +122,7 @@ void on_program_start()
 #ifdef DP3M
   dp3m_pre_init();
 #endif
+  external_potential_pre_init();
 
 #ifdef LB_GPU
   if(this_node == 0){
@@ -148,8 +150,6 @@ void on_program_start()
 
 void on_integration_start()
 {
-  char *errtext;
-
   EVENT_TRACE(fprintf(stderr, "%d: on_integration_start\n", this_node));
   INTEG_TRACE(fprintf(stderr,"%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
 		      this_node,reinit_thermo,resort_particles));
@@ -158,139 +158,22 @@ void on_integration_start()
   /* sanity checks                            */
   /********************************************/
 
-  if ( time_step < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext, "{010 time_step not set} ");
-  }
-  if ( skin < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{011 skin not set} ");
-  }
-  if ( temperature < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
-  }
-  
+  integrator_sanity_checks();
 #ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    if (nptiso.piston <= 0.0) {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
-    }
-  
-#ifdef ELECTROSTATICS
-
-    switch(coulomb.method) {
-      case COULOMB_NONE:  break;
-      case COULOMB_DH:    break;
-      case COULOMB_RF:    break;
-#ifdef P3M
-      case COULOMB_P3M:   break;
-#endif /*P3M*/
-      default: {
-        char *errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{014 npt only works with P3M, Debye-Huckel or reaction field} ");
-      }
-    }
-#endif /*ELECTROSTATICS*/
-
-#ifdef DIPOLES
-
-    switch (coulomb.Dmethod) {
-      case DIPOLAR_NONE: break;
-#ifdef DP3M
-      case DIPOLAR_P3M: break;
-#endif /* DP3M */
-      default: {
-        char *errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
-      }
-    }
-#endif  /* ifdef DIPOLES */
-  }
-#endif /*NPT*/
-
-  if (!check_obs_calc_initialized()) return;
-
+  integrator_npt_sanity_checks();
+#endif
+  interactions_sanity_checks();
+#ifdef CATALYTIC_REACTIONS
+  reactions_sanity_checks();
+#endif
 #ifdef LB
   if(lattice_switch & LATTICE_LB) {
-    if (lbpar.agrid <= 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
-    }
-    if (lbpar.tau <= 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
-    }
-    if (lbpar.rho[0] <= 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
-    }
-    if (lbpar.viscosity[0] <= 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
-    }
-    if (dd.use_vList && skin>=lbpar.agrid/2.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
-    }
+    lb_sanity_checks();
   }
 #endif
 #ifdef LB_GPU
-  if(this_node == 0){
-    if(lattice_switch & LATTICE_LB_GPU) {
-      if (lbpar_gpu.agrid < 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
-      }
-      if (lbpar_gpu.tau < 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
-      }
-      for(int i=0;i<LB_COMPONENTS;i++){
-        if (lbpar_gpu.rho[0] < 0.0) {
-          errtext = runtime_error(128);
-          ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
-        }
-        if (lbpar_gpu.viscosity[0] < 0.0) {
-          errtext = runtime_error(128);
-          ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
-        }
-      }
-
-      if (lb_reinit_particles_gpu) {
-        lb_realloc_particles_gpu();
-        lb_reinit_particles_gpu = 0;
-      }
-    }
-  }
-#endif
-#if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
-  if (reinit_particle_comm_gpu){
-    gpu_change_number_of_part_to_comm();
-    reinit_particle_comm_gpu = 0;
-  }
-  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-#endif
-
-
-#ifdef METADYNAMICS
-  meta_init();
-#endif
-
-#ifdef CATALYTIC_REACTIONS
-  if(reaction.ct_rate != 0.0) {
-
-    if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition} ");
-        check_runtime_errors();
-    }
-
-    if(max_cut < reaction.range) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{106 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
-    }
+  if(lattice_switch & LATTICE_LB_GPU) {
+    lb_GPU_sanity_checks();
   }
 #endif
 
@@ -298,6 +181,27 @@ void on_integration_start()
   /* end sanity checks                        */
   /********************************************/
 
+
+#ifdef LB_GPU
+  if(this_node == 0){
+    if (lb_reinit_particles_gpu) {
+      lb_realloc_particles_gpu();
+      lb_reinit_particles_gpu = 0;
+    }
+  }
+#endif
+
+#ifdef CUDA
+  if (reinit_particle_comm_gpu){
+    gpu_change_number_of_part_to_comm();
+    reinit_particle_comm_gpu = 0;
+  }
+  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+#endif
+
+#ifdef METADYNAMICS
+  meta_init();
+#endif
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
@@ -372,7 +276,7 @@ void on_particle_change()
 #ifdef LB_GPU
   lb_reinit_particles_gpu = 1;
 #endif
-#if defined(LB_GPU) || defined (ELECTROSTATICS)
+#ifdef CUDA
   reinit_particle_comm_gpu = 1;
 #endif
   invalidate_obs();
@@ -714,6 +618,8 @@ void on_parameter_change(int field)
     on_ghost_flags_change();
     break;
 #endif
+  case FIELD_DPD_IGNORE_FIXED_PARTICLES:
+    break;
   }
 }
 

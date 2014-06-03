@@ -79,9 +79,9 @@ void lb_calc_fluid_momentum(double *result) {
 	}
     }
 
-    momentum[0] *= lblattice.agrid/lbpar.tau;
-    momentum[1] *= lblattice.agrid/lbpar.tau;
-    momentum[2] *= lblattice.agrid/lbpar.tau;
+    momentum[0] *= lbpar.agrid/lbpar.tau;
+    momentum[1] *= lbpar.agrid/lbpar.tau;
+    momentum[2] *= lbpar.agrid/lbpar.tau;
 
     MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     
@@ -94,20 +94,29 @@ void lb_calc_fluid_temp(double *result) {
   int x, y, z, index;
   double rho, j[3];
   double temp = 0.0;
+  int number_of_non_boundary_nodes = 0;
 
   for (x=1; x<=lblattice.grid[0]; x++) {
     for (y=1; y<=lblattice.grid[1]; y++) {
       for (z=1; z<=lblattice.grid[2]; z++) {
-	index = get_linear_index(x,y,z,lblattice.halo_grid);
-	
-	lb_calc_local_fields(index, &rho, j, NULL);
 
-	temp += scalar(j,j);
+	index = get_linear_index(x,y,z,lblattice.halo_grid);
+
+#ifdef LB_BOUNDARIES
+	if ( !lbfields[index].boundary )
+#endif
+	  {
+	    lb_calc_local_fields(index, &rho, j, NULL);
+	    temp += scalar(j,j);
+	    number_of_non_boundary_nodes++;
+	  }
       }
     }
   }
 
-  temp *= 1./(3.*lbpar.rho[0]*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid)/n_nodes;
+  // @Todo: lblattice.agrid is 3d. What to use here?
+  temp *= 1./(3.*lbpar.rho[0]*number_of_non_boundary_nodes*
+              lbpar.tau*lbpar.tau*lbpar.agrid)/n_nodes;
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
@@ -120,7 +129,8 @@ void lb_collect_boundary_forces(double *result) {
     for (int j = 0; j < 3; j++)
       boundary_forces[3*i+j]=lb_boundaries[i].force[j];
 
-  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, 
+             MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   free(boundary_forces);
 #endif
 }
@@ -159,7 +169,7 @@ void lb_calc_densprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot)
-    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
+    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
   if (involved) {
 
@@ -245,7 +255,7 @@ void lb_calc_velprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot) 
-    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
+    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
   //fprintf(stderr,"%d (%d,%d): result=%p vcomp=%d pdir=%d x1=%d x2=%d involved=%d\n",this_node,subrank,newroot,result,vcomp,pdir,x1,x2,involved);
 
@@ -266,7 +276,7 @@ void lb_calc_velprof(double *result, int *params) {
 	velprof[dir[pdir]-1] = 0.0;
       } else {
 	//velprof[dir[pdir]-1] = local_j / (SQR(lbpar.agrid)*lbpar.tau);
-	velprof[dir[pdir]-1] = j[vcomp]/rho * lblattice.agrid/lbpar.tau;
+	velprof[dir[pdir]-1] = j[vcomp]/rho * lbpar.agrid/lbpar.tau;
 	//fprintf(stderr,"%f %f %f\n",velprof[dir[pdir]-1],local_j,local_rho);
       }
 

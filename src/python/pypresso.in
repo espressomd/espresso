@@ -1,0 +1,8 @@
+#!/bin/sh
+if test -n "$PYTHONPATH"; then
+    PYTHONPATH=$PYTHONPATH:@abs_top_builddir@
+else
+    PYTHONPATH=@@
+fi
+export PYTHONPATH
+exec @PYTHON@ $@

@@ -21,7 +21,6 @@ source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
-require_feature "ADRESS" off
 
 puts "-------------------------------------------"
 puts "- Testcase mmm1d.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -59,8 +58,6 @@ if { [catch {
     setmd periodic 0 0 1
     inter coulomb 1.0 mmm1d 6.0 0.0001
 
-    # to ensure force recalculation
-    invalidate_system
     integrate 0
 
     # here you can create the necessary snapshot

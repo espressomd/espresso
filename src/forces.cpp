@@ -54,9 +54,10 @@
 #include "iccp3m.hpp"
 #include "p3m_gpu.hpp"
 #include "cuda_interface.hpp"
-#include "HarmonicForce.hpp"
 
 #include "EspressoSystemInterface.hpp"
+
+PotentialList potentials;
 
 /************************************************************/
 /* local prototypes                                         */
@@ -73,13 +74,34 @@ void init_forces();
 
 void force_calc()
 {
+  // Communication step: distribute ghost positions
+  cells_update_ghosts();
+
+  // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
+#ifdef VIRTUAL_SITES
+  update_mol_vel_pos();
+  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+#endif
+
+#if defined(VIRTUAL_SITES_RELATIVE) && defined(LB) 
+  // This is on a workaround stage: 
+  // When using virtual sites relative and LB at the same time, it is necessary 
+  // to reassemble the cell lists after all position updates, also of virtual
+  // particles. 
+  if ((lattice_switch & LATTICE_LB) && cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) ) 
+    cells_update_ghosts();
+#endif
+  
+#ifdef COLLISION_DETECTION
+  prepare_collision_queue();
+#endif
 
   espressoSystemInterface.update();
 
-#ifdef HARMONICFORCE
-  if(harmonicForce) 
-    harmonicForce->calc(espressoSystemInterface);
-#endif
+  // Compute the forces from the force objects
+  for (PotentialList::iterator potential= potentials.begin();
+		  potential != potentials.end(); ++potential)
+	  (*potential)->computeForces(espressoSystemInterface);
 
 #ifdef LB_GPU
 #ifdef SHANCHEN
@@ -88,15 +110,14 @@ void force_calc()
 
   // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
   // this_node==0 makes sure it is the master node where the gpu exists
-  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && this_node==0 ) lb_calc_particle_lattice_ia_gpu();
+  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
   if (iccp3m_initialized && iccp3m_cfg.set_flag)
     iccp3m_iteration();
-  else
 #endif
-    init_forces();
+  init_forces();
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
@@ -152,10 +173,36 @@ void force_calc()
   meta_perform();
 #endif
 
-#if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
+#ifdef CUDA
   copy_forces_from_GPU();
 #endif
 
+  // VIRTUAL_SITES distribute forces
+#ifdef VIRTUAL_SITES
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  init_forces_ghosts();
+  distribute_mol_force();
+#endif
+
+  // Communication Step: ghost forces
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+
+  // apply trap forces to trapped molecules
+#ifdef MOLFORCES         
+  calc_and_apply_mol_constraints();
+#endif
+
+  // should be pretty late, since it needs to zero out the total force
+#ifdef COMFIXED
+  calc_comfixed();
+#endif
+
+  // mark that forces are now up-to-date
+  recalc_forces = 0;
+
+#ifdef COLLISION_DETECTION
+  handle_collisions();
+#endif
 }
 
 /************************************************************/
@@ -164,7 +211,6 @@ void calc_long_range_forces()
 {
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
-  if (!(iccp3m_initialized && iccp3m_cfg.set_flag)) {
     switch (coulomb.method) {
   #ifdef P3M
     case COULOMB_ELC_P3M:
@@ -210,7 +256,6 @@ void calc_long_range_forces()
       MMM2D_add_far_force();
       MMM2D_dielectric_layers_force_contribution();
     }
-  }
 #endif  /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES  

@@ -261,8 +261,12 @@ void print_ghost_positions();
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();
 
-/* Checks if a particle resorting is required.*/
+/* Checks if a particle resorting is required. */
 void check_resort_particles();
+
+/* Do a strict particle sorting, including order in the cells. */
+void local_sort_particles();
+
 /*@}*/
 
 #endif

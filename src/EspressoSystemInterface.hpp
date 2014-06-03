@@ -1,8 +1,9 @@
 #ifndef ESPRESSOSYSTEMINTERFACE_H
 #define ESPRESSOSYSTEMINTERFACE_H
 
+#define ESIF_TRACE(A)
+
 #include "SystemInterface.hpp"
-#include "particle_data.hpp"
 #include "cuda_interface.hpp"
 
 class EspressoSystemInterface : public SystemInterface {
@@ -100,12 +101,16 @@ public:
       enableParticleCommunication();
     return m_needsFGpu;
   };
+#endif
 
   unsigned int npart_gpu() {
+#ifdef CUDA
     return m_gpu_npart;
+#else
+    return 0;
+#endif
   };
 
-#endif
 
 protected:
   void gatherParticles();
@@ -113,10 +118,14 @@ protected:
 #ifdef CUDA
   void enableParticleCommunication() {
     if(!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
+      ESIF_TRACE(puts("gpu communication not enabled;"));
+      ESIF_TRACE(puts("enableParticleCommunication"));
       gpu_init_particle_comm();
       cuda_bcast_global_part_params();
+      reallocDeviceMemory(gpu_get_global_particle_vars_pointer_host()->number_of_particles);
     }
   };
+  void reallocDeviceMemory(int n);
 #endif
 
   Vector3Container R;
@@ -148,12 +157,6 @@ protected:
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;
 };
-
-/* Need explicite specialization, otherwise some compilers do not produce the objects. */
-
-template class EspressoSystemInterface::const_iterator<SystemInterface::Real>;
-template class EspressoSystemInterface::const_iterator<SystemInterface::Vector3>;
-template class EspressoSystemInterface::const_iterator<int>;
 
 extern EspressoSystemInterface espressoSystemInterface;
 

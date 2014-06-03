@@ -57,8 +57,6 @@ void __free(void *p, const char *where, int line);
 void core();
 #endif
 
-#ifdef ADDITIONAL_CHECKS
-
 /** this performs a lot of tests which will very likely detect corruptions of
     \ref local_particles and the cell structure.
 */
@@ -68,8 +66,6 @@ void check_particle_consistency();
     mpi_bcast_event(CHECK_PARTICLES)
 */
 void check_particles();
-
-#endif
 
 /** Print all particle positions contained in \ref cells::cells array. */
 void print_particle_positions();

@@ -19,7 +19,7 @@
 
 /** \file p3m_gpu_cuda.cu
  *
- * Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
+ * Cuda (.cu) file for the P3M electrostatics method.
  * Header file \ref p3m_gpu.hpp .
  */ 
 
@@ -33,8 +33,7 @@
 #include "config.hpp"
 #include "p3m_gpu.hpp"
 #include "utils.hpp"
-
-//#include <iostream>
+#include "EspressoSystemInterface.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -113,6 +112,8 @@ __host__ __device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_
 }
 
 /* Calculate influence function */
+#if 0
+// host version, not used anywhere
 void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 
   int    NX,NY,NZ;
@@ -146,6 +147,7 @@ void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REA
     }
   }
 }
+#endif
 
 __global__ void calculate_influence_function_device ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 
@@ -508,12 +510,19 @@ extern "C" {
    */
 
   void p3m_gpu_init(int cao, int mesh, REAL_TYPE alpha, REAL_TYPE box) {
-    gpu_init_particle_comm();
+    puts("p3m_gpu_init()");
+    //    gpu_init_particle_comm();
     int reinit_if = 0, mesh_changed = 0;
  
+    espressoSystemInterface.requestParticleStructGpu();
+
     if ( this_node == 0 ) {
+      
+
       p3m_gpu_data.npart = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
       
+      //      printf("p3m_gpu_data.npart = %d\n", p3m_gpu_data.npart);
+
       if((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
 	p3m_gpu_data.alpha = alpha;
 	reinit_if = 1;
@@ -550,6 +559,7 @@ extern "C" {
 
 	p3m_gpu_data.G_hat_host = (REAL_TYPE *)malloc(mesh3*sizeof(REAL_TYPE));
       
+	//	printf("mesh3 = %d, p3m_gpu_data.charge_mesh = %p\n", mesh3, p3m_gpu_data.charge_mesh);
 
 	cufftDestroy(p3m_gpu_data.fft_plan);
 	cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
@@ -573,11 +583,15 @@ extern "C" {
       // cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);
 	dim3 grid(1,1,1);
 	dim3 block(1,1,1);
-        block.y = block.z = mesh;
-	block.x = 512 - mesh*mesh;
-	block.x -= block.x / 32;
+        block.y = mesh;
+	block.z = 1;
+	block.x = 512 / mesh + 1;
 	grid.x = mesh / block.x + 1;
-	calculate_influence_function_device<<<grid,block>>>(cao, mesh, box, alpha, p3m_gpu_data.G_hat);
+	grid.z = mesh;
+
+	//	printf("mesh %d, grid (%d %d %d), block (%d %d %d)\n", mesh, grid.x, grid.y, grid.z, block.x, block.y, block.z);
+
+	KERNELCALL(calculate_influence_function_device,grid,block,(cao, mesh, box, alpha, p3m_gpu_data.G_hat));
 	cudaThreadSynchronize();
       }
       p3m_gpu_data_initialized = 1;
@@ -612,7 +626,7 @@ void p3m_gpu_add_farfield_force() {
   REAL_TYPE hi = mesh/box;
   REAL_TYPE prefactor = 1.0/(box*box*box*2.0);
 
-  cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(CUFFT_TYPE_COMPLEX));
+  cuda_safe_mem(cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(CUFFT_TYPE_COMPLEX)));
 
   KERNELCALL(assign_charges, gridAssignment, threadsAssignment, (lb_particle_gpu,p3m_gpu_data.charge_mesh,mesh,cao,pos_shift,hi));
 

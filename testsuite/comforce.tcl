@@ -19,7 +19,6 @@
 # 
 source "tests_common.tcl"
 
-require_feature "ADRESS" off
 require_feature "COMFORCE"
 require_max_nodes_per_side 1
 
@@ -56,8 +55,6 @@ if { [catch {
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
     }
-    # to ensure force recalculation
-    invalidate_system
 
     ############## comforce-specific part
 

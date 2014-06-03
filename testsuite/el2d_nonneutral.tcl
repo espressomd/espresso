@@ -24,7 +24,6 @@ require_feature "ELECTROSTATICS"
 require_feature "FFTW"
 require_feature "PARTIAL_PERIODIC"
 require_feature "CONSTRAINTS"
-require_feature "ADRESS" off
 
 puts "-------------------------------------------"
 puts "- Testcase el2d_nonneutral.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -73,8 +72,6 @@ if { [catch {
     puts -nonewline "MMM2D   node_grid=[setmd node_grid]  "
     flush stdout
 
-    # to ensure force recalculation
-    invalidate_system
     integrate 0
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
@@ -103,8 +100,6 @@ if { [catch {
 	inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5
 	inter coulomb elc 1e-4 [expr 0.1*[lindex [setmd box_l] 2]] -noneutralization
 
-	# to ensure force recalculation
-	invalidate_system
 	integrate 0
 
 	############## RMS force error for P3M + ELC

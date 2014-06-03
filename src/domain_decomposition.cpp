@@ -31,6 +31,7 @@
 #include "energy.hpp"
 #include "constraint.hpp"
 #include "initialize.hpp"
+#include "external_potential.hpp"
 
 /************************************************/
 /** \name Defines */
@@ -974,6 +975,7 @@ void calc_link_cell()
 #ifdef CONSTRAINTS
 	  add_constraints_forces(&p1[i]);
 #endif
+    add_external_potential_forces(&p1[i]);
 	  if (rebuild_verletlist)
 	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 
@@ -1019,6 +1021,7 @@ void calculate_link_cell_energies()
 #ifdef CONSTRAINTS
       add_constraints_energy(&p1[i]);
 #endif
+      add_external_potential_energy(&p1[i]);
 
       if (rebuild_verletlist)
         memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));

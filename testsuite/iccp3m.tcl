@@ -20,7 +20,6 @@
 
 source "tests_common.tcl"
 
-require_feature "ADRESS" off
 require_feature "ELECTROSTATICS"
 require_feature "EXTERNAL_FORCES"
 require_feature "FFTW"
@@ -36,7 +35,9 @@ setmd time_step 0.01
 setmd skin 0.5
 thermostat off
 
-set counter 0
+part 000 pos 5 5 1 q 1
+set counter 1
+
 set normals [ list ] 
 set areas [ list ] 
 set normals [ list ] 
@@ -59,11 +60,10 @@ for { set i 0 } { $i < 10 } { incr i } {
     incr counter 
   }
 }
-part 200 pos 5 5 1 q 1
 
 puts "[ inter coulomb 1. p3m tunev2 accuracy 1e-3 mesh 32 cao 4 ]"
 
-iccp3m 200 eps_out 1 max_iterations 60 convergence 1e-1 relax 0.7 areas $areas normals $normals epsilons $epsilons
+iccp3m 200 eps_out 1 max_iterations 60 convergence 1e-1 relax 0.7 areas $areas normals $normals epsilons $epsilons first_id 1
 if {[catch {
     integrate 0
     integrate 100
@@ -73,8 +73,8 @@ if {[catch {
 
 set refpos 1.0429519727877221 
 set refforce 0.07816245324943571
-set pos [ lindex [ part 200 print pos ] 2 ] 
-set force [ lindex [ part 200 print force ] 2 ]
+set pos [ lindex [ part 0 print pos ] 2 ] 
+set force [ lindex [ part 0 print force ] 2 ]
 if { abs($refpos-$pos) > 1e-4 } {
     error_exit "iccp3m: position is wrong"
 }

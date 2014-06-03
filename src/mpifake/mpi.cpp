@@ -134,6 +134,11 @@ int MPI_Type_vector(int count, int length, int stride,
 }
 
 int MPI_Type_hvector(int count, int length, int stride,
+		     MPI_Datatype oldtype, MPI_Datatype *newtype) {
+  return MPI_Type_create_hvector(count, length, stride, oldtype, newtype);
+}
+
+int MPI_Type_create_hvector(int count, int length, int stride,
 		     MPI_Datatype oldtype, MPI_Datatype *newtype)
 {
   struct mpifake_dtype *ntype;

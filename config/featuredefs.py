@@ -37,11 +37,11 @@ def toCPPExpr(expr):
     expr = re.sub('([A-Z0-9_]+)', 'defined(\\1)', expr)
     return expr
 
-    
-
 class defs:
     def __init__(self, filename):
         # complete set of all defined features
+        allfeatures = set()
+        # allfeatures minus externals and derived
         features = set()
         # list of implications (pairs of feature -> implied feature)
         implications = list()
@@ -67,7 +67,7 @@ class defs:
 
             # Register the feature
             feature = tokens.pop(0)
-            features.add(feature)
+            allfeatures.add(feature)
 
             # get the keyword
             if len(tokens) > 0:
@@ -122,8 +122,9 @@ class defs:
                         raise SyntaxError("<feature> notest", line)
                     notestfeatures.add(feature)
 
-        features = features.difference(derived)
+        features = allfeatures.difference(derived)
         features = features.difference(externals)
+        self.allfeatures = allfeatures
         self.features = features
         self.requirements = requirements
         self.implications = implications

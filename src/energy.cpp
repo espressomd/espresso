@@ -31,6 +31,7 @@
 #include "elc.hpp"
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
+#include "external_potential.hpp"
 
 Observable_stat energy = {0, {NULL,0,0}, 0,0,0};
 Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
@@ -46,7 +47,7 @@ void calc_long_range_energies();
 
 void energy_calc(double *result)
 {
-  if (!check_obs_calc_initialized())
+  if (!interactions_sanity_checks())
     return;
 
   init_energies(&energy);
@@ -76,6 +77,21 @@ void energy_calc(double *result)
   
   /* gather data */
   MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+
+  if (n_external_potentials > 0) {
+    double* energies = (double*) malloc(n_external_potentials*sizeof(double));
+    for (int i=0; i<n_external_potentials; i++) {
+      energies[i]=external_potentials[i].energy;
+    }
+    double* energies_sum =  (double*) malloc(n_external_potentials*sizeof(double)); 
+    MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
+    for (int i=0; i<n_external_potentials; i++) {
+      external_potentials[i].energy=energies_sum[i];
+    }
+    free(energies);
+    free(energies_sum);
+  }
+
 }
 
 /************************************************************/
@@ -198,6 +214,8 @@ void init_energies(Observable_stat *stat)
   
   obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, 0, 1);
   stat->init_status = 0;
+
+  external_potential_init_energies();
 }
 
 /************************************************************/

@@ -25,7 +25,6 @@ require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 require_feature "CUDA"
 require_feature "FFTW"
-require_feature "ADRESS" off
 require_feature "NPT" off
 
 puts "---------------------------------------------------------------"
@@ -62,9 +61,6 @@ if { [catch {
     ############## P3M-specific part
     # the P3M parameters are stored in p3m_system.data
 
-    # to ensure force recalculation
-#    inter coulomb n_interpol 0
-    invalidate_system
     integrate 0
 #after 99999
 

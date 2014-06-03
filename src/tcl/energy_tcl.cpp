@@ -25,6 +25,7 @@
 #include "utils.hpp"
 #include "parser.hpp"
 #include "energy.hpp"
+#include "external_potential.hpp"
 
 /**********************************************************************
  *                                 parser
@@ -39,6 +40,10 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
   value = total_energy.data.e[0];
   for (i = 1; i < total_energy.data.n; i++)
     value += total_energy.data.e[i];
+  
+  for (i = 0; i < n_external_potentials; i++) {
+    value+=external_potentials[i].energy;
+  }
 
   Tcl_PrintDouble(interp, value, buffer);
   Tcl_AppendResult(interp, "{ energy ", buffer, " } ", (char *)NULL);
@@ -103,6 +108,7 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
     }
+    Tcl_AppendResult(interp, " }", (char *)NULL);
 #endif
 
 #ifdef DIPOLES
@@ -113,9 +119,17 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
       }
     }
 #endif
-    Tcl_AppendResult(interp, " }", (char *)NULL);
   }
+
 #endif
+  if (n_external_potentials > 0) {
+	  Tcl_AppendResult(interp, " { external_potential", (char *)NULL);
+    for (i = 0; i < n_external_potentials; i++) {
+ 	    Tcl_PrintDouble(interp, external_potentials[i].energy, buffer);
+	    Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
+    }
+  }
+
 }
 
 /************************************************************/
@@ -206,6 +220,10 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       value = total_energy.data.e[0];
       for (i = 1; i < total_energy.data.n; i++)
 	value += total_energy.data.e[i];
+      for (i = 0; i < n_external_potentials; i++) {
+        value += external_potentials[i].energy;
+      }
+
     }
     else {
       Tcl_AppendResult(interp, "unknown feature of: analyze energy",

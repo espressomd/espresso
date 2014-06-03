@@ -853,4 +853,40 @@ int add_particle_to_list(int part_id, int type);
 int gc_status(int type);
 int number_of_particles_with_type(int type, int *number);
 
+
+// The following functions are used by the python interface to obtain 
+// properties of a particle, which are only compiled in in some configurations
+// This is needed, because cython does not support conditional compilation 
+// within a ctypedef definition
+
+
+#ifdef ROTATION
+void pointer_to_omega_body(Particle* p, double*& res);
+
+void pointer_to_torque_lab(Particle* p, double*& res);
+
+void pointer_to_quat(Particle* p, double*& res);
+void pointer_to_quatu(Particle* p, double*& res);
+
+#endif
+
+#ifdef ELECTROSTATICS
+void pointer_to_q(Particle* p, double*& res);
+#endif
+
+#ifdef VIRTUAL_SITES
+void pointer_to_virtual(Particle* p, int*& res);
+#endif
+
+#ifdef VIRTUAL_SITES_RELATIVE
+void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2);
+#endif
+
+#ifdef MASS
+void pointer_to_mass(Particle* p, double*&  res);
+#endif
+
+void pointer_to_dip(Particle* P, double*& res);
+
+void pointer_to_dipm(Particle* P, double*& res);
 #endif
