@@ -46,7 +46,8 @@ __constant__ mmm1dgpu_real maxPWerror = 1e-5;
 
 Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror,
 	mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
-:coulomb_prefactor(_coulomb_prefactor), maxPWerror(_maxPWerror), far_switch_radius(_far_switch_radius), bessel_cutoff(_bessel_cutoff)
+:coulomb_prefactor(_coulomb_prefactor), maxPWerror(_maxPWerror), far_switch_radius(_far_switch_radius),
+	bessel_cutoff(_bessel_cutoff), host_boxz(0), host_npart(0), pairs(-1), dev_forcePairs(NULL)
 {
 	// interface sanity checks
 	if(!s.requestFGpu())
@@ -61,17 +62,17 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefacto
 	// system sanity checks
 	if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2))
 	{
-		printf("MMM1D requires periodicity (0,0,1)\n");
+		std::cerr << "MMM1D requires periodicity (0,0,1)" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
 	if (s.box()[2] <= 0)
 	{
-		printf("Error: Please set box length before initializing MMM1D!\n");
+		std::cerr << "Error: Please set box length before initializing MMM1D!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	if (s.npart() <= 0 && far_switch_radius < 0)
+	if (s.npart_gpu() <= 0 && far_switch_radius < 0)
 	{
 		std::cerr << "Warning: Please add particles to system before intializing MMM1D." << std::endl;
 		std::cerr << "Tuning will not be performed! Setting far switch radius to half box length." << std::endl;
@@ -85,6 +86,20 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefacto
 	mpi_bcast_coulomb_params();
 	tune(s, maxPWerror, far_switch_radius, bessel_cutoff);
 
+	setup(s);
+}
+
+void Mmm1dgpuForce::setup(SystemInterface &s)
+{
+	if (s.box()[2] != host_boxz)
+	{
+		set_params(s.box()[2], 0,-1,-1,-1);
+	}
+	if (s.npart_gpu() == host_npart) // unchanged
+	{
+		return;
+	}
+
 	// For all but the largest systems, it is faster to store force pairs and then sum them up.
 	// Atomics are just so slow: so unless we're limited by memory, do the latter.
 	pairs = 2;
@@ -94,18 +109,27 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefacto
 
 		size_t freeMem, totalMem;
 		cudaMemGetInfo(&freeMem, &totalMem);
-		if (freeMem/2 < s.npart()*s.npart()*sizeof(mmm1dgpu_real)) // don't use more than half the device's memory
+		if (freeMem/2 < 3*s.npart_gpu()*s.npart_gpu()*sizeof(mmm1dgpu_real)) // don't use more than half the device's memory
 		{
 			std::cerr << "Switching to atomicAdd due to memory constraints." << std::endl;
 			pairs = 0;
 			break;
 		}
 	}
+	if (dev_forcePairs)
+		cudaFree(dev_forcePairs);
+	if (pairs) // we need memory to store force pairs
+	{
+		printf("Allocating %d bytes of memory for vector reduction\n", 3*s.npart_gpu()*s.npart_gpu()*sizeof(mmm1dgpu_real));
+		HANDLE_ERROR( cudaMalloc((void**)&dev_forcePairs, 3*s.npart_gpu()*s.npart_gpu()*sizeof(mmm1dgpu_real)) );
+	}
+	host_npart = s.npart_gpu();
 }
 
 Mmm1dgpuForce::~Mmm1dgpuForce()
 {
 	modpsi_destroy();
+	cudaFree(dev_forcePairs);
 
 	// TODO: unset coulomb.method
 }
@@ -211,7 +235,7 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror, mmm1dgpu
 		cudaFree(dev_cutoff);
 		if (_bessel_cutoff != -2 && bessel_cutoff >= maxCut) // we already have our switching radius and only need to determine the cutoff, i.e. this is the final tuning round
 		{
-			printf("No reasonable Bessel cutoff could be determined.\n");
+			std::cerr << "No reasonable Bessel cutoff could be determined." << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
@@ -259,9 +283,6 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefa
 			mmm1d_params.maxPWerror = _maxPWerror;
 		}
 	}
-
-	if (_far_switch_radius >= 0 && _bessel_cutoff > 0)
-		printf("@@@ Using far switch radius %f and bessel cutoff %d\n", _far_switch_radius, _bessel_cutoff);
 }
 
 __global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *force, int N, int pairs, int tStart = 0, int tStop = -1)
@@ -456,10 +477,26 @@ __global__ void vectorReductionKernel(mmm1dgpu_real *src, mmm1dgpu_real *dst, in
 
 void Mmm1dgpuForce::calc(SystemInterface &s)
 {
+	setup(s);
+
+	if (pairs < 0)
+	{
+		std::cerr << "MMM1D was not initialized correctly" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
 	dim3 grid(1,1,1);
 	dim3 block(1,1,1);
-	printf("pairs=%d\n", 0);
-	KERNELCALL(forcesKernel,grid,block,(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), 0))
+
+	if (pairs) // if we calculate force pairs, we need to reduce them to forces
+	{
+		KERNELCALL(forcesKernel,grid,block,(s.rGpuBegin(), s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs))
+		KERNELCALL(vectorReductionKernel,grid,block,(dev_forcePairs, s.fGpuBegin(), s.npart_gpu()))
+	}
+	else
+	{
+		KERNELCALL(forcesKernel,grid,block,(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), pairs))
+	}
 }
 
 void Mmm1dgpuForce::calc_energy(SystemInterface &s)
@@ -469,6 +506,7 @@ void Mmm1dgpuForce::calc_energy(SystemInterface &s)
 
 float Mmm1dgpuForce::force_benchmark(SystemInterface &s)
 {
+	printf("Doing force benchmark\n");
 	cudaEvent_t eventStart, eventStop;
 	cudaStream_t stream;
 	float elapsedTime;

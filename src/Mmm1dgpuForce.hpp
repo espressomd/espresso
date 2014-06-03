@@ -17,6 +17,7 @@ public:
 	void calc(SystemInterface &s);
 	void calc_energy(SystemInterface &s);
 	// configuration methods
+	void setup(SystemInterface &s);
 	void tune(SystemInterface &s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff);
 	void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff);
 
@@ -24,11 +25,14 @@ private:
 	// the box length currently set on the GPU
 	// Needed to make sure it hasn't been modified using setmd after inter coulomb was used.
 	mmm1dgpu_real host_boxz;
+	// the number of particles we had during the last run. Needed to check if we have to realloc dev_forcePairs
+	int host_npart;
 
 	// pairs==0: return forces using atomicAdd
 	// pairs==1: return force pairs
 	// pairs==2: return forces using a global memory reduction
 	int pairs;
+	mmm1dgpu_real *dev_forcePairs;
 
 	mmm1dgpu_real coulomb_prefactor, maxPWerror, far_switch_radius;
 	int bessel_cutoff;

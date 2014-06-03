@@ -79,7 +79,8 @@ int tclcommand_inter_coulomb_parse_mmm1dgpu(Tcl_Interp *interp, int argc, char *
   }
   else // we only need to update the parameters
   {
-    mmm1dgpuForce->set_params(0, 0, maxPWerror,switch_rad, bessel_cutoff);
+    mmm1dgpuForce->set_params(0, 0, maxPWerror, switch_rad, bessel_cutoff);
+    mmm1dgpuForce->tune(espressoSystemInterface, maxPWerror, switch_rad, bessel_cutoff);
   }
 
   return TCL_OK;
