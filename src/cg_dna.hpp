@@ -84,7 +84,7 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si
   /* Base-Base and Sugar-Sugar vectors */
   double rcci[3], rccj[3];
   /* Sugar-Base Vectors */
-  double rcb1[3], rcb2[3], rcb1_l, rcb2_l;
+  double rcb1[3], rcb2[3];
   double rcb1j[3], rcb2j[3];
   /* Mean basepair distance */
   double r;
@@ -94,7 +94,7 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *si
   double f_tilt_si1[3], f_tilt_si2[3], f_tilt_sj1[3], f_tilt_sj2[3];
   double f_tilt_bi1[3], f_tilt_bi2[3], f_tilt_bj1[3], f_tilt_bj2[3];
   double f_twist_si1[3], f_twist_si2[3], f_twist_sj1[3], f_twist_sj2[3];
-  double f_twist_bi1[3], f_twist_bi2[3], f_twist_bj1[3], f_twist_bj2[3];
+  double f_twist_bi1[3], f_twist_bj1[3];
   double f_stack_si1[3], f_stack_si2[3], f_stack_sj1[3], f_stack_sj2[3];
   double f_stack_bi1[3], f_stack_bi2[3], f_stack_bj1[3], f_stack_bj2[3];
 

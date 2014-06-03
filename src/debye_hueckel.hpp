@@ -34,6 +34,12 @@ typedef struct {
   double r_cut;
   /** Debye kappa (inverse Debye length) . */
   double kappa;
+  #ifdef COULOMB_DEBYE_HUECKEL
+  double eps_int;
+  /** Transition distances **/
+  double r0, r1;
+  double alpha;
+  #endif
 } Debye_hueckel_params;
 
 /** Structure containing the Debye-Hueckel parameters. */
@@ -44,6 +50,7 @@ extern Debye_hueckel_params dh_params;
 /*@{*/
 
 int dh_set_params(double kappa, double r_cut);
+int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double r0, double r1, double alpha);
 
 /** Computes the Debye_Hueckel pair force and adds this
     force to the particle forces (see \ref tclcommand_inter). 

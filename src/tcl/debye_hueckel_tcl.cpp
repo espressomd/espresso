@@ -42,11 +42,21 @@ int tclcommand_inter_coulomb_parse_dh(Tcl_Interp * interp, int argc, char ** arg
 {
   double kappa, r_cut;
   int i;
+#ifdef COULOMB_DEBYE_HUECKEL
+  double eps_int, r0, r1, alpha;
+#endif
 
+#ifdef COULOMB_DEBYE_HUECKEL
+  if(argc < 6) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut> <eps_int> <r0> <r1> <alpha>", (char *) NULL);
+    return TCL_ERROR;
+  }
+#else
   if(argc < 2) {
     Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut>", (char *) NULL);
     return TCL_ERROR;
   }
+#endif
   
   coulomb.method = COULOMB_DH;
 
@@ -54,8 +64,16 @@ int tclcommand_inter_coulomb_parse_dh(Tcl_Interp * interp, int argc, char ** arg
     return TCL_ERROR;
   if(! ARG1_IS_D(r_cut))
     return TCL_ERROR;
+#ifdef COULOMB_DEBYE_HUECKEL
+  if(!ARG_IS_D(2, eps_int) || !ARG_IS_D(3,r0) || !ARG_IS_D(4,r1) || !ARG_IS_D(5,alpha))
+    return TCL_ERROR;  
 
-  if ( (i = dh_set_params(kappa, r_cut)) < 0) {
+  i = dh_set_params_cdh(kappa, r_cut, eps_int, r0, r1, alpha);
+#else
+  i = dh_set_params(kappa, r_cut);
+#endif
+
+  if ( i < 0) {
     switch (i) {
     case -1:
       Tcl_AppendResult(interp, "dh kappa must be positiv.",(char *) NULL);
