@@ -2708,13 +2708,10 @@ inline void couple_trace_to_fluid(Particle *p) {
    
   //Distribute force among adjacent nodes, just as in viscous coupling
   //if ( p->p.identity == 0 ) printf("unscaled fx = %f\n", force[0]);
-  delta_j[0] != 0 ? (force[0]*time_step*tau/agrid) - (lbpar.friction[0]*tau/agrid * interpolated_u[0]*tau/agrid) : 0;
-  delta_j[1] != 0 ? (force[1]*time_step*tau/agrid) - (lbpar.friction[0]*tau/agrid * interpolated_u[1]*tau/agrid) : 0;
-  delta_j[2] != 0 ? (force[2]*time_step*tau/agrid) - (lbpar.friction[0]*tau/agrid * interpolated_u[2]*tau/agrid) : 0;
+  delta_j[0] = force[0]*time_step*tau/agrid;
+  delta_j[1] = force[1]*time_step*tau/agrid;
+  delta_j[2] = force[2]*time_step*tau/agrid;
 
-  // printf("Particle Velocity - interpolated v = %f \n", (p->m.v[0]*tau/agrid - interpolated_u[0]));
-  // printf("Friction: %f, interpolated v: %f \n", lbpar.friction[0]*tau/agrid, interpolated_u[0]);
-  // printf("TriForce: %f, FricForce: %f \n", (force[0]*time_step*tau/agrid),  (lbpar.friction[0]*tau/agrid * interpolated_u[0]*tau/agrid));
   
   // DEBUG
   /*if ( p->p.identity == 0)

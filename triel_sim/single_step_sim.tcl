@@ -1,4 +1,4 @@
-# description: simulates a lbtracers in an LB fluid with Temperature
+# description: simulates 3 lbtracers bonded by trielastic forces in an LB fluid with homogenous flow
 # author: Mohamed
 # date: 7.05.14
 
@@ -16,19 +16,19 @@ set boxz  20
 # Fix dimensions 
 
 # length scale
-set L0 1 
+set L0 1e-7 
 # energy scale
-set kbT0 1 
+set kbT0 3.77e-21 
 # densityscale
-set rho0 1
+set rho0 1e3
 # viscosity
-set nu0 1
+set nu0 [expr sqrt( $kbT0/($L0*$rho0) )]
 # time scale
-set t0 1
+set t0 [expr pow($L0,5/2.) * sqrt($rho0) / sqrt( $kbT0 ) ]
 # hydrodyn. friction
-set zeta0 1
+set zeta0 [expr sqrt( $L0*$rho0*$kbT0) ]
 # shear konstant
-set ks0 1
+set ks0 [expr $kbT0 / ($L0*$L0) ]
 # bending constant
 set kb0 $kbT0
 
@@ -38,11 +38,11 @@ set kb0 $kbT0
 # time step MD
 set dt 0.001
 # time step LB-Fluid 
-set tau 0.16666666667
-# Integrations per frame
+set tau 0.01 
+# Integrations per frameco
 set stepSize 100
 # number of steps ( frames)
-set numSteps 1000
+set numSteps 50000
 # gridsize setting
 set gridPara 1
 # maximum strech length
@@ -62,22 +62,23 @@ set rho 1
 # hydrodynamic particle radius (used to define zeta)
 set r [expr $gridPara * 1]
 # friction constant
-set zeta 1
+set zeta [expr 6 * 3.141* $nu* $rho * $r]
 # thermal energy (equals 300 K here)
-#set kbT [expr 300.0 *1.38e-23 / $kbT0] 
-set kbT 0
+set kbT [expr 300.0 *1.38e-23 / $kbT0] 
 
 # bending 
-set kB 1
+set kB [expr 1e-19 / $kb0]
 # shearing
-set kS 1
-
+set kS [expr 5e-6/ $ks0]
 
 #################################################################################
 ######## SETUP #########################################################
 
-# make directory for simulation files
-file mkdir "simfiles"
+exec rm -r simfiles
+exec rm -r vtkfiles
+
+exec mkdir simfiles
+exec mkdir vtkfiles
 
 # Write an info File, contains relevant information about the Simulation
 set infoFile [open "simfiles/simInfo.dat" "w"] 		
@@ -93,10 +94,8 @@ puts $paraFile "# nu / rho / radius / zeta / kT / kS / kB"
 puts $paraFile "$nu $rho $r $zeta $kbT $kS $kB"
 close $paraFile
 
-# write file with particle sequence data
-set partFile [ open "partInfo.dat" "w" ]
-puts $partFile "#PartInfo"
-puts $partFile "#NumPart = $numParts"
+file mkdir "vtkfiles"
+
 
 # setting Boxlength
 setmd box_l $boxx $boxy $boxz
@@ -108,29 +107,21 @@ setmd skin 0.1
 setmd time_step $dt
 
 # setting up the fluid with or without using gpu
-lbfluid agrid $gridPara dens $rho visc $nu tau $tau friction $zeta ext_force 5 0 0
+lbfluid agrid $gridPara dens $rho visc $nu tau $tau friction $zeta ext_force 0 0 0
 
 
 #setting themostat
-thermostat lb $kbT
+thermostat lb 0
 
 #turning off warnings
 setmd warnings 0
 
-part 0 pos 0 0 0 virtual 1
-part 1 pos 2 0 0 virtual 1
-part 2 pos 0 3 0 virtual 1
+part 0 pos 2 2 0 virtual 1
+part 1 pos 4 2 0 virtual 1
+part 2 pos 2 5 0 virtual 1
 
 inter 0 triel 0 1 2 $maxStretch $kS 0
 part 0 bond 0 1 2
-
-#part 1 (x) - part 0 (x)
-set equDistX 2 
-#part 2 (y) - part 0 (y)
-set equDistY 3
-
-#equDistY 
-set equAngle 90
 
 #prepare_vmd_connection test 1 0
 #prepare_vmd_connection test 0 3000
@@ -145,7 +136,6 @@ puts $partCsv1 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,t"
 set partCsv2 [ open "simfiles/partInfo2.csv" "w"]
 puts $partCsv2 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,t"
 
-
 ####### SIMULATION ######
 
 # update position of all particles
@@ -158,72 +148,36 @@ set startT [clock seconds]
 
 puts "Starting simulation"
 
+set part2pos [part 2 print pos]
+part 2 pos [expr [lindex $part2pos 0] + 2] [expr [lindex $part2pos 1]] [expr [lindex $part2pos 2]]
+
 for {set step 0} {$step < $numSteps} {incr step} {
   
   integrate $stepSize
+  puts "Done $step out of $numSteps"
   for {set j 0} { $j < $numParts } {incr j} {
       set partCsv [ open "simfiles/partInfo$j.csv" "a"]
       set dataPart [part $j print pos v f]
       set dataFlow [lbfluid print_interpolated_velocity [lindex $dataPart 1] [lindex $dataPart 2] [lindex $dataPart 3]]
       set data [concat $dataPart $dataFlow]
-      #puts $data
-      #lappend data $step
       foreach x $data { 
 	  puts -nonewline $partCsv "$x,"
       }
       puts -nonewline $partCsv "$step\n"
       close $partCsv
   }
-  if {fmod($step, 100)==0} { 
-      puts "Done $step out of $numSteps"
-      puts $partFile "----- Integration Step : $step -----"
-      for {set j 0} { $j < $numParts } {incr j} {
-     
-      puts  $partFile "Force acting on part: [part $j print id f]"
-      set partPos [part $j print pos]
-      puts  $partFile "Fluid Velocity at Particle: [lbfluid print_interpolated_velocity [lindex $partPos 0] [lindex $partPos 1] [lindex $partPos 2]]"
-  }
-      set partPos0 [part 0 print pos]
-      set partPos1 [part 1 print pos]
-      set partPos2 [part 2 print pos]
-  
-      puts $partFile "DistX: [lindex $partPos1 0] - [lindex $partPos0 0] = [expr [lindex $partPos1 0] - [lindex $partPos0 0]]"
-      puts $partFile "DistY: [lindex $partPos2 1] - [lindex $partPos0 1] = [expr [lindex $partPos2 1] - [lindex $partPos0 1]] \n"
-  }
-
-  if {$step > 3500} { 
-      puts $partFile "----- Integration Step : $step -----"
-         for {set j 0} { $j < $numParts } {incr j} {
-     
-	     puts  $partFile "Force acting on part: [part $j print id f]"
-	     set partPos [part $j print pos]
-	     puts  $partFile "Fluid Velocity at Particle: [lbfluid print_interpolated_velocity [lindex $partPos 0] [lindex $partPos 1] [lindex $partPos 2]]"
-  }
-      set partPos0 [part 0 print pos]
-      set partPos1 [part 1 print pos]
-      set partPos2 [part 2 print pos]
-  
-      puts $partFile "DistX: [lindex $partPos1 0] - [lindex $partPos0 0] = [expr [lindex $partPos1 0] - [lindex $partPos0 0]]"
-      puts $partFile "DistY: [lindex $partPos2 1] - [lindex $partPos0 1] = [expr [lindex $partPos2 1] - [lindex $partPos0 1]] \n"
-      
-  }
   
   
-  
-  if 0 { 
-  for {set j 0} { $j < $numParts } {incr j} {
-     
-      puts  $partFile "Force acting on part: [part $j print id f]"
-      set partPos [part $j print pos]
-      puts  $partFile "Fluid Velocity at Particle: [lbfluid print_interpolated_velocity [lindex $partPos 0] [lindex $partPos 1] [lindex $partPos 2]]"
+# output for paraview only every 10th step
+  if {fmod($step, 10)==0} { 
+      writevtk "vtkfiles/tri $step.vtk"
   }
-  }
-
   
- #  imd positions
+ 
+ #imd positions
 }
 
 # store simulation time in log.dat
 set endT [clock seconds]
-set logfile [open "log.dat" "w"]
+set logfile [open "simfiles/log.dat" "w"]
 puts $logfile "Needed [expr $endT-$startT] seconds ([expr ($endT-$startT)/60] minutes)."

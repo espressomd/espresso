@@ -38,11 +38,11 @@ set kb0 $kbT0
 # time step MD
 set dt 0.001
 # time step LB-Fluid 
-set tau 0.001 
+set tau 0.01 
 # Integrations per frameco
 set stepSize 100
 # number of steps ( frames)
-set numSteps 10000
+set numSteps 50000
 # gridsize setting
 set gridPara 1
 # maximum strech length
@@ -74,8 +74,11 @@ set kS [expr 5e-6/ $ks0]
 #################################################################################
 ######## SETUP #########################################################
 
-# make directory for simulation files
-file mkdir "simfiles"
+exec rm -r simfiles
+exec mkdir simfiles
+
+exec rm -r vtkfiles
+exec mkdir vtkfiles
 
 # Write an info File, contains relevant information about the Simulation
 set infoFile [open "simfiles/simInfo.dat" "w"] 		
@@ -91,6 +94,9 @@ puts $paraFile "# nu / rho / radius / zeta / kT / kS / kB"
 puts $paraFile "$nu $rho $r $zeta $kbT $kS $kB"
 close $paraFile
 
+file mkdir "vtkfiles"
+
+
 # setting Boxlength
 setmd box_l $boxx $boxy $boxz
 
@@ -101,7 +107,7 @@ setmd skin 0.1
 setmd time_step $dt
 
 # setting up the fluid with or without using gpu
-lbfluid agrid $gridPara dens $rho visc $nu tau $tau friction $zeta ext_force 20 0 0
+lbfluid agrid $gridPara dens $rho visc $nu tau $tau friction $zeta ext_force 0 0 0
 
 
 #setting themostat
@@ -110,14 +116,14 @@ thermostat lb 0
 #turning off warnings
 setmd warnings 0
 
-part 0 pos 0 0 0 virtual 1
-part 1 pos 2 0 0 virtual 1
-part 2 pos 0 3 0 virtual 1
+part 0 pos 2 2 0 virtual 1
+part 1 pos 4 2 0 virtual 1
+part 2 pos 2 5 0 virtual 1
 
 inter 0 triel 0 1 2 $maxStretch $kS 0
 part 0 bond 0 1 2
 
-#prepare_vmd_connection test 1 0
+
 #prepare_vmd_connection test 0 3000
 
 # The additional command imd steers the socket connection   #
@@ -142,7 +148,12 @@ set startT [clock seconds]
 
 puts "Starting simulation"
 
+
 for {set step 0} {$step < $numSteps} {incr step} {
+
+    set part2pos [part 2 print pos]
+    part 2 pos [expr [lindex $part2pos 0] + 0.0001] [expr [lindex $part2pos 1]] [expr [lindex $part2pos 2]]
+
   
   integrate $stepSize
   puts "Done $step out of $numSteps"
@@ -157,7 +168,15 @@ for {set step 0} {$step < $numSteps} {incr step} {
       puts -nonewline $partCsv "$step\n"
       close $partCsv
   }
- #  imd positions
+  
+  
+# output for paraview only every 10th step
+  if {fmod($step, 10)==0} { 
+      writevtk "vtkfiles/tri $step.vtk"
+  }
+  
+ 
+ #imd positions
 }
 
 # store simulation time in log.dat
