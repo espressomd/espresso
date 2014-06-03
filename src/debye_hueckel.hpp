@@ -60,6 +60,27 @@ int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double r0, dou
     @param dist      Distance between p1 and p2.
     @param force     returns the force on particle 1.
 */
+#ifdef COULOMB_DEBYE_HUECKEL
+inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3]) {
+  double fac;
+
+  if(dist >= dh_params.r_cut)
+    return;
+
+  /* Coulomb part */
+  if(dist < dh_params.r0) {
+    fac = coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int * dist*dist*dist);
+  } else if (dist < dh_params.r1) {
+    fac = coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int * exp(alpha*(dist - dh_params.r0)) * dist*dist*dist) * (1. + alpha*dist);
+  } else {
+    const double kappa_dist = dh_params.kappa*dist;
+    fac = coulomb.prefactor * p1->p.q * p2->p.q * (exp(-kappa_dist)/(dist*dist*dist)) * (1.0 + kappa_dist);
+  } 
+  force[0] += fac * d[0];
+  force[1] += fac * d[1];  
+  force[2] += fac * d[2];
+}
+#else
 inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
   int j;
@@ -82,6 +103,7 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], d
     ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: DH   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
   }
 }
+#endif
 
 inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
