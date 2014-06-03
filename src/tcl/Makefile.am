@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+EXTRA_DIST =
+CLEANFILES =
 AM_CPPFLAGS = -I$(top_srcdir)/src
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
@@ -193,5 +195,6 @@ cuda_workaround.o: cuda_workaround.cu
 
 Espresso_LDADD += cuda_workaround.o
 Espresso_install_LDADD += cuda_workaround.o
+EXTRA_DIST += cuda_workaround.cu
 
 endif

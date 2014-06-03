@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+EXTRA_DIST =
+CLEANFILES =
 DIST_SUBDIRS = . tcl python/espressomd
 SUBDIRS = . 
 if TCL
@@ -26,7 +28,6 @@ if PYTHON_INTERFACE
 SUBDIRS += python/espressomd
 endif
 
-EXTRA_DIST =
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 noinst_LTLIBRARIES = libEspresso.la
@@ -219,7 +220,8 @@ $(LOFILES): %.lo: %.cu
 		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
 libEspresso_la_LIBADD = $(LOFILES)
-
+EXTRA_DIST += $(CUDA_SOURCE_FILES) $(CUDA_HEADER_FILES)
+CLEANFILES += $(LOFILES)
 
 endif
 
@@ -228,7 +230,7 @@ endif
 # Handling of myconfig.hpp
 #################################################################
 noinst_HEADERS = myconfig-default.hpp
-CLEANFILES = myconfig-final.hpp
+CLEANFILES += myconfig-final.hpp
 BUILT_SOURCES = myconfig-final.hpp
 
 if MYCONFIG
