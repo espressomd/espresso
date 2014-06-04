@@ -398,30 +398,32 @@ if test .$PYTHON != .no; then
    fi
 fi
 
-AC_MSG_CHECKING([whether to build the python interface])
+AC_MSG_CHECKING([whether the python interface is wanted])
 AC_ARG_WITH([python-interface], AS_HELP_STRING([--with-python-interface], 
-                      [specify whether or not to use python]),
-                      [], [with_python_interface=no])
+                      [specify whether or not to use python [guess]]),
+                      [], [with_python_interface=guess])
 AC_MSG_RESULT($with_python_interface)
 dnl with_python_interface=yes  try to find a working PYTHON devel version, 
 dnl                            bail out if none is found
+dnl with_python_interface=guess  try to find a working PYTHON devel version, 
 dnl with_python_interface=no   do not use python interface
 
-if test .$with_python_interface != .no; then
-   AX_PYTHON_DEVEL([>= '2.5'])
+AS_IF([test .$with_python_interface != .no], [
+	AX_PYTHON_DEVEL([>= '2.5'])
 
-   AC_PATH_PROG(CYTHON,cython,no)
-   AS_IF([test x$CYTHON = xno],[
-      AC_MSG_FAILURE([cython not found, which is necessary for the Python interface])
-   ])
+   	AC_PATH_PROG(CYTHON,cython,no)
+   	AS_IF([test .$CYTHON = .no],[build_python_interface=no],[build_python_interface=yes])
 
-   AX_PYTHON_MODULE(numpy, required)
-   AC_MSG_CHECKING([for numpy include path])
-   NUMPY_INCLUDE="`$PYTHON -c 'import numpy; import sys; sys.stdout.write(numpy.get_include())'`"
-   PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
-   AC_MSG_RESULT([$NUMPY_INCLUDE])
-   AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])
-fi
+   	AX_PYTHON_MODULE(numpy, required)
+   	AC_MSG_CHECKING([for numpy include path])
+   	NUMPY_INCLUDE="`$PYTHON -c 'import numpy; import sys; sys.stdout.write(numpy.get_include())'`" #`
+   	PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
+   	AC_MSG_RESULT([$NUMPY_INCLUDE])
+
+	AS_IF([test .$with_python_interface = .yes && test .$build_python_interface = .no],
+		[AC_MSG_FAILURE([Cannot build python interface!])])
+   	AC_DEFINE(PYTHON_DEV,[],[Whether Python is available]) 
+])
 AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
 # export libtool objdir, so that we can link the .so files to the dir itself
 AC_SUBST(objdir)
@@ -708,10 +710,10 @@ Tk version		= $use_tk
 Python
 ------
 python			= $PYTHON
-build python interface  = $with_python_interface
+build python interface  = $build_python_interface
 EOF
 
-if test .$with_python_interface = .yes; then
+if test .$build_python_interface = .yes; then
   cat <<EOF
 preprocessor flags      = $PYTHON_CPPFLAGS
 linker flags            = $PYTHON_LDFLAGS
