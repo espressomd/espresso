@@ -136,9 +136,9 @@ libEspressoTcl_la_SOURCES += \
 	reaction_field_tcl.cpp reaction_field_tcl.hpp \
 	mdlc_correction_tcl.cpp mdlc_correction_tcl.hpp	
 
-# Generic potentials
+# Generic actors
 libEspressoTcl_la_SOURCES += \
-	potential/HarmonicPotential_tcl.cpp potential/HarmonicPotential_tcl.hpp
+	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
 
 if CUDA
 libEspressoTcl_la_SOURCES += cuda_init_tcl.cpp

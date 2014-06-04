@@ -85,9 +85,9 @@
 #include "iccp3m.hpp"
 #include "collision.hpp" 
 #include "external_potential.hpp"
-#include "potential/Potential.hpp"
+#include "actor/Actor.hpp"
 
-typedef std::list<Potential*> PotentialList;
+typedef std::list<Actor*> PotentialList;
 extern PotentialList potentials;
 
 /** \name Exported Functions */

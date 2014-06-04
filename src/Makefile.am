@@ -165,10 +165,10 @@ libEspresso_la_SOURCES += \
 	p3m-dipolar.cpp p3m-dipolar.hpp \
 	reaction_field.cpp reaction_field.hpp
 
-# Generic potentials
+# Generic actors
 libEspresso_la_SOURCES += \
-	potential/Potential.hpp \
-	potential/HarmonicPotential.cpp potential/HarmonicPotential.hpp
+	actor/Actor.hpp \
+	actor/HarmonicWell.cpp actor/HarmonicWell.hpp
 
 ##################################################
 # CUDA rules
@@ -191,7 +191,7 @@ CUDA_SOURCE_FILES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
-	potential/HarmonicPotential_cuda.cu
+	actor/HarmonicWell_cuda.cu
 
 # include the dependency tracking files
 include ./$(DEPDIR)/cuda_init_cuda.Plo
@@ -200,7 +200,7 @@ include ./$(DEPDIR)/electrokinetics_cuda.Plo
 include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
-include ./$(DEPDIR)/HarmonicPotential_cuda.Plo
+include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 

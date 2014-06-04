@@ -146,7 +146,7 @@ void lattice_interpolate_linear_gradient(Lattice* lattice, double* pos, double* 
    index_t index;
    double* local_value;
 
-   for (int i = 0; i<3*lattice->dim; i++) {
+   for (unsigned int i = 0; i<3*lattice->dim; i++) {
      value[i] = 0;
    }
    

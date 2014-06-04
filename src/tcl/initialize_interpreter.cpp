@@ -56,7 +56,7 @@
 #include "external_potential_tcl.hpp"
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
-#include "potential/HarmonicPotential_tcl.hpp"
+#include "actor/HarmonicWell_tcl.hpp"
 
 
 #ifdef TK
@@ -216,7 +216,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
 #ifdef CUDA
-  REGISTER_COMMAND("harmonic_force", tclcommand_HarmonicPotential);
+  REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);
 #endif
 }
 

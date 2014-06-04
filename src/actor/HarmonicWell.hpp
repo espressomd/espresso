@@ -16,25 +16,36 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "HarmonicPotential.hpp"
-#include "EspressoSystemInterface.hpp"
-#include "forces.hpp"
+#ifndef _ACTOR_HARMONICWELL_HPP
+#define _ACTOR_HARMONICWELL_HPP
+
+#include "config.hpp"
 
 #ifdef CUDA
-HarmonicPotential::HarmonicPotential(float x1, float x2, float x3, float _k, SystemInterface &s) {
-  x = x1;
-  y = x2;
-  z = x3;
-  k = _k;
 
-  if(!s.requestFGpu())
-    std::cerr << "HarmonicPotential needs access to forces on GPU!" << std::endl;
+#include "Actor.hpp"
+#include "SystemInterface.hpp"
+#include <iostream>
 
-  if(!s.requestRGpu())
-    std::cerr << "HarmonicPotential needs access to positions on GPU!" << std::endl;
-}
+void HarmonicWell_kernel_wrapper(float x, float y, float z, float k,
+		     int n, float *pos, float *f);
 
-void addHarmonicPotential(float x1, float x2, float x3, float _k) {
-	potentials.push_back(new HarmonicPotential(x1, x2, x3, _k, espressoSystemInterface));
-}
+class HarmonicWell : public Actor {
+public:
+  HarmonicWell(float x1, float x2, float x3, float _k, SystemInterface &s);
+
+  virtual void computeForces(SystemInterface &s) {
+    HarmonicWell_kernel_wrapper(x,y,z,k,s.npart_gpu(),
+					 s.rGpuBegin(), s.fGpuBegin());
+  };
+
+  virtual ~HarmonicWell() {}
+protected:
+  float x,y,z;
+  float k;
+};
+
+void addHarmonicWell(float x1, float x2, float x3, float _k);
+
+#endif
 #endif

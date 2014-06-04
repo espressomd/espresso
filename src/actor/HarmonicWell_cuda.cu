@@ -16,12 +16,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include "HarmonicPotential.hpp"
+#include "HarmonicWell.hpp"
 
 #include "cuda_utils.hpp"
 #include <stdio.h>
 
-__global__ void HarmonicPotential_kernel(float x, float y, float z, float k,
+__global__ void HarmonicWell_kernel(float x, float y, float z, float k,
 				     int n, float *pos, float *f) {
 
   int id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -35,7 +35,7 @@ __global__ void HarmonicPotential_kernel(float x, float y, float z, float k,
 }
 
 
-void HarmonicPotential_kernel_wrapper(float x, float y, float z, float k, int n, float *pos, float *f) {
+void HarmonicWell_kernel_wrapper(float x, float y, float z, float k, int n, float *pos, float *f) {
   dim3 grid(1,1,1);
   dim3 block(1,1,1);
 
@@ -50,5 +50,5 @@ void HarmonicPotential_kernel_wrapper(float x, float y, float z, float k, int n,
     block.x = 512;
   }
 
-  KERNELCALL(HarmonicPotential_kernel,grid,block,(x, y, z, k, n, pos, f))
+  KERNELCALL(HarmonicWell_kernel,grid,block,(x, y, z, k, n, pos, f))
 }

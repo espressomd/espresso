@@ -16,36 +16,19 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _POTENTIAL_HARMONICPOTENTIAL_HPP
-#define _POTENTIAL_HARMONICPOTENTIAL_HPP
+#ifndef _ACTOR_ACTOR_HPP
+#define _ACTOR_ACTOR_HPP
 
-#include "config.hpp"
-
-#ifdef CUDA
-
-#include "potential/Potential.hpp"
 #include "SystemInterface.hpp"
-#include <iostream>
 
-void HarmonicPotential_kernel_wrapper(float x, float y, float z, float k,
-		     int n, float *pos, float *f);
-
-class HarmonicPotential : public Potential {
+/**
+ * Generic abstract potential class.
+ * All potentials should be derived from this one.
+ */
+class Actor {
 public:
-  HarmonicPotential(float x1, float x2, float x3, float _k, SystemInterface &s);
-
-  virtual void computeForces(SystemInterface &s) {
-    HarmonicPotential_kernel_wrapper(x,y,z,k,s.npart_gpu(),
-					 s.rGpuBegin(), s.fGpuBegin());
-  };
-
-  virtual ~HarmonicPotential() {}
-protected:
-  float x,y,z;
-  float k;
+	virtual void computeForces(SystemInterface &s) = 0;
+	virtual ~Actor() {}
 };
 
-void addHarmonicPotential(float x1, float x2, float x3, float _k);
-
-#endif
-#endif
+#endif /* _ACTOR_ACTOR_HPP */

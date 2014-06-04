@@ -17,14 +17,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "potential/HarmonicPotential_tcl.hpp"
+#include "actor/HarmonicWell_tcl.hpp"
 
 #ifdef CUDA
 
 #include "forces.hpp"
-#include "potential/HarmonicPotential.hpp"
+#include "actor/HarmonicWell.hpp"
 
-int tclcommand_HarmonicPotential(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_HarmonicWell(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   DoubleList dl;
 
   init_doublelist(&dl);
@@ -44,7 +44,7 @@ int tclcommand_HarmonicPotential(ClientData data, Tcl_Interp *interp, int argc, 
 
   // printf("x %e %e %e, k %e\n", dl.e[0], dl.e[1],dl.e[2],dl.e[3]);
 
-  addHarmonicPotential(dl.e[0], dl.e[1], dl.e[2], dl.e[3]);
+  addHarmonicWell(dl.e[0], dl.e[1], dl.e[2], dl.e[3]);
 
   return TCL_OK;
 }
