@@ -47,16 +47,25 @@ typedef struct {
   float p[3];
   /** particle momentum struct velocity p.m->v*/
   float v[3];
-  
+
 #ifdef SHANCHEN
   float solvation[2*LB_COMPONENTS];
 #endif 
+
 #ifdef LB_ELECTROHYDRODYNAMICS
   float mu_E[3];
 #endif
+
 #ifdef ELECTROSTATICS
   float q;
 #endif
+
+#ifdef ENGINE
+  float v_swim;
+  float f_swim;
+  float quatu[3];
+#endif
+
   unsigned int fixed;
 
 } CUDA_particle_data;

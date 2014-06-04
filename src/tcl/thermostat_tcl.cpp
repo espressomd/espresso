@@ -374,7 +374,7 @@ int tclcommand_thermostat_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 
   /* get lb interaction type */
   if (argc < 2) {
-    Tcl_AppendResult(interp, "lattice-Boltzmann needs 1 parameter: "
+    Tcl_AppendResult(interp, "lb needs 1 parameter: "
 		     "<temperature>",
 		     (char *) NULL);
     return TCL_ERROR;

@@ -67,32 +67,40 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
                 particle_data_host[i+g].p[0] = (float)pos[0];
                 particle_data_host[i+g].p[1] = (float)pos[1];
                 particle_data_host[i+g].p[2] = (float)pos[2];
-                
+
                 particle_data_host[i+g].v[0] = (float)part[i].m.v[0];
                 particle_data_host[i+g].v[1] = (float)part[i].m.v[1];
                 particle_data_host[i+g].v[2] = (float)part[i].m.v[2];
 #ifdef SHANCHEN
-              // SAW TODO: does this really need to be copied every time?
-              int ii;
-              for(ii=0;ii<2*LB_COMPONENTS;ii++){
-                 particle_data_host[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
-              }
+                // SAW TODO: does this really need to be copied every time?
+                int ii;
+                for(ii=0;ii<2*LB_COMPONENTS;ii++){
+                  particle_data_host[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
+                }
 #endif
-   
-  #ifdef LB_ELECTROHYDRODYNAMICS
+
+#ifdef LB_ELECTROHYDRODYNAMICS
                 particle_data_host[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
                 particle_data_host[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
                 particle_data_host[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
-  #endif
+#endif
 
-  #ifdef ELECTROSTATICS
+#ifdef ELECTROSTATICS
                 if (coulomb.method == COULOMB_P3M_GPU) {
                   particle_data_host[i+g].q = (float)part[i].p.q;
                 }
-  #endif
+#endif
+
+#ifdef ENGINE
+                particle_data_host[i+g].v_swim = (float)part[i].m.v_swim;
+                particle_data_host[i+g].f_swim = (float)part[i].f.f_swim;
+                particle_data_host[i+g].quatu[0] = (float)part[i].r.quatu[0];
+                particle_data_host[i+g].quatu[1] = (float)part[i].r.quatu[1];
+                particle_data_host[i+g].quatu[2] = (float)part[i].r.quatu[2];
+#endif
               }  
               g += npart;
-            }  
+            }
           }
           else {
             MPI_Recv(&particle_data_host[g], sizes[pnode]*sizeof(CUDA_particle_data), MPI_BYTE, pnode, REQ_CUDAGETPARTS,

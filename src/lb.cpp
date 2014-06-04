@@ -166,25 +166,25 @@ int lb_lbfluid_set_shanchen_coupling(double *p_coupling) {
 #ifdef LB_GPU
   int ii,jj,n=0;
   switch(LB_COMPONENTS){
-        case 1: 
-           lbpar_gpu.coupling[0] = (float)p_coupling[0];
-           lbpar_gpu.coupling[1] = (float)p_coupling[1];
-        break;
-        default:
-           for(ii=0;ii<LB_COMPONENTS;ii++){
-             for(jj=ii;jj<LB_COMPONENTS;jj++){
-                  lbpar_gpu.coupling[LB_COMPONENTS*ii+jj] = (float)p_coupling[n]; 
-                  lbpar_gpu.coupling[LB_COMPONENTS*jj+ii] = (float)p_coupling[n]; 
-                  n++;
-             }
-           }
-        break;
+    case 1: 
+      lbpar_gpu.coupling[0] = (float)p_coupling[0];
+      lbpar_gpu.coupling[1] = (float)p_coupling[1];
+      break;
+    default:
+      for(ii=0;ii<LB_COMPONENTS;ii++){
+        for(jj=ii;jj<LB_COMPONENTS;jj++){
+          lbpar_gpu.coupling[LB_COMPONENTS*ii+jj] = (float)p_coupling[n]; 
+          lbpar_gpu.coupling[LB_COMPONENTS*jj+ii] = (float)p_coupling[n]; 
+          n++;
+        }
+      }
+      break;
 
   }
   on_lb_params_change_gpu(LBPAR_COUPLING);
 #endif
 #ifdef LB
-    #error not implemented
+#error not implemented
 #endif
   return 0;
 }
@@ -2766,14 +2766,25 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  double velocity[3];
+  velocity[0] = p->m.v[0];
+  velocity[1] = p->m.v[1];
+  velocity[2] = p->m.v[2];
+
+#ifdef ENGINE
+  velocity[0] -= p->m.v_swim*p->r.quatu[0];
+  velocity[1] -= p->m.v_swim*p->r.quatu[1];
+  velocity[2] -= p->m.v_swim*p->r.quatu[2];
+#endif
+
 #ifdef LB_ELECTROHYDRODYNAMICS
-  force[0] = - lbpar.friction[0] * (p->m.v[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
-  force[1] = - lbpar.friction[0] * (p->m.v[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
-  force[2] = - lbpar.friction[0] * (p->m.v[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
+  force[0] = - lbpar.friction[0] * (velocity[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
+  force[1] = - lbpar.friction[0] * (velocity[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
+  force[2] = - lbpar.friction[0] * (velocity[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
 #else
-  force[0] = - lbpar.friction[0] * (p->m.v[0]/time_step - interpolated_u[0]);
-  force[1] = - lbpar.friction[0] * (p->m.v[1]/time_step - interpolated_u[1]);
-  force[2] = - lbpar.friction[0] * (p->m.v[2]/time_step - interpolated_u[2]);
+  force[0] = - lbpar.friction[0] * (velocity[0]/time_step - interpolated_u[0]);
+  force[1] = - lbpar.friction[0] * (velocity[1]/time_step - interpolated_u[1]);
+  force[2] = - lbpar.friction[0] * (velocity[2]/time_step - interpolated_u[2]);
 #endif
 
 

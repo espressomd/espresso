@@ -1279,39 +1279,42 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
   int pusher = 0;
   int puller = 0;
 
-  // TODO: Increase to 3 as soon as we handle pushers and pullers
-  *change = 2;
+  *change = 1;
+  if (!ARG_IS_S(0,"off")) {
+    // TODO: Increase to 3 as soon as we handle pushers and pullers
+    *change = 2;
 
-  if (argc < *change) {
-    Tcl_AppendResult(interp, "swimming requires at 3 arguments", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  /* Parse v_swim */
-  if (ARG_IS_S(0,"v_swim")) {
-    if (!ARG_IS_D(1,v_swim)) {
+    if (argc < *change) {
+      Tcl_AppendResult(interp, "swimming requires at 3 arguments", (char *) NULL);
       return TCL_ERROR;
     }
-  }
-  v_swim *= time_step;
 
-  /* Parse f_swim */
-  if (ARG_IS_S(0,"f_swim")) {
-    if (!ARG_IS_D(1,f_swim)) {
+    /* Parse v_swim */
+    if (ARG_IS_S(0,"v_swim")) {
+      if (!ARG_IS_D(1,v_swim)) {
+        return TCL_ERROR;
+      }
+    }
+    v_swim *= time_step;
+
+    /* Parse f_swim */
+    if (ARG_IS_S(0,"f_swim")) {
+      if (!ARG_IS_D(1,f_swim)) {
+        return TCL_ERROR;
+      }
+    }
+
+    /* Parse pusher or puller */
+    /* TODO: Comment back in as soon as we handle pushers and pullers
+    if (ARG_IS_S(2,"pusher")) {
+      pusher = 1;
+    } else if (ARG_IS_S(2,"puller")) {
+      puller = 1;
+    } else {
       return TCL_ERROR;
     }
+    */
   }
-
-  /* Parse pusher or puller */
-  /* TODO: Comment back in as soon as we handle pushers and pullers
-  if (ARG_IS_S(2,"pusher")) {
-    pusher = 1;
-  } else if (ARG_IS_S(2,"puller")) {
-    puller = 1;
-  } else {
-    return TCL_ERROR;
-  }
-  */
 
   if (set_particle_swimming(part_num, v_swim, f_swim, pusher, puller) == TCL_ERROR) {
     return TCL_ERROR;

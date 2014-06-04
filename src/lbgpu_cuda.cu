@@ -1552,20 +1552,20 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
  interpolated_u1 = interpolated_u2 = interpolated_u3 = 0.0f;
  #pragma unroll
  for(int i=0; i<27; ++i){
-    float totmass=0.0f;
-    calc_m_from_n(n_a,node_index[i],mode);
-    #pragma unroll
-    for(int ii=0;ii<LB_COMPONENTS;ii++){
-      totmass+=mode[0]+para.rho[ii]*para.agrid*para.agrid*para.agrid;
-    } 
-    interpolated_u1 += (mode[1]/totmass)*delta[i];
-    interpolated_u2 += (mode[2]/totmass)*delta[i];
-    interpolated_u3 += (mode[3]/totmass)*delta[i];
+   float totmass=0.0f;
+   calc_m_from_n(n_a,node_index[i],mode);
+   #pragma unroll
+   for(int ii=0;ii<LB_COMPONENTS;ii++){
+     totmass+=mode[0]+para.rho[ii]*para.agrid*para.agrid*para.agrid;
+   } 
+   interpolated_u1 += (mode[1]/totmass)*delta[i];
+   interpolated_u2 += (mode[2]/totmass)*delta[i];
+   interpolated_u3 += (mode[3]/totmass)*delta[i];
  }
 
  /* for LB we do not reweight the friction force */
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-  interpolated_rho[ii]=1.0;
+   interpolated_rho[ii]=1.0;
  }
 
   /** calculate viscous force
@@ -1575,20 +1575,31 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
 
  #pragma unroll
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-  rhotot+=interpolated_rho[ii];
+   rhotot+=interpolated_rho[ii];
  }
 
 
  /* Viscous force */
+ float velocity[3];
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-  viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau)/rhotot;
-  viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau)/rhotot;
-  viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau)/rhotot;
+   velocity[0] = particle_data[part_index].v[0];
+   velocity[1] = particle_data[part_index].v[1];
+   velocity[2] = particle_data[part_index].v[2];
+
+#ifdef ENGINE
+   velocity[0] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[0];
+   velocity[1] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[1];
+   velocity[2] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[2];
+#endif
+
+   viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u1*para.agrid/para.tau)/rhotot;
+   viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1]/para.time_step - interpolated_u2*para.agrid/para.tau)/rhotot;
+   viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2]/para.time_step - interpolated_u3*para.agrid/para.tau)/rhotot;
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  viscforce[0+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[0]/rhotot;
-  viscforce[1+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[1]/rhotot;
-  viscforce[2+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[2]/rhotot;
+   viscforce[0+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[0]/rhotot;
+   viscforce[1+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[1]/rhotot;
+   viscforce[2+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[2]/rhotot;
 #endif
 
   /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
@@ -1918,12 +1929,23 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
     rhotot+=interpolated_rho[ii];
   }
 
- /* Viscous force */
- for(int ii=0; ii<LB_COMPONENTS; ++ii)
- { 
-    viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau)/rhotot;
-    viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau)/rhotot;
-    viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau)/rhotot;
+  /* Viscous force */
+  float velocity[3];
+  for(int ii=0; ii<LB_COMPONENTS; ++ii)
+  { 
+    velocity[0] = particle_data[part_index].v[0];
+    velocity[1] = particle_data[part_index].v[1];
+    velocity[2] = particle_data[part_index].v[2];
+
+#ifdef ENGINE
+    velocity[0] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[0];
+    velocity[1] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[1];
+    velocity[2] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[2];
+#endif
+
+    viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u1*para.agrid/para.tau)/rhotot;
+    viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1]/para.time_step - interpolated_u2*para.agrid/para.tau)/rhotot;
+    viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2]/para.time_step - interpolated_u3*para.agrid/para.tau)/rhotot;
 
 #ifdef LB_ELECTROHYDRODYNAMICS
     viscforce[0+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[0]/rhotot;
@@ -1955,32 +1977,32 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif 
 
     /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
-    (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 
     particle_force[part_index].f[0] += viscforce[0+ii*3];
     particle_force[part_index].f[1] += viscforce[1+ii*3];
     particle_force[part_index].f[2] += viscforce[2+ii*3];
-    
+
     /* the average force from the particle to surrounding nodes is transmitted back to preserve momentum */
     for(int node=0 ; node < 8 ; node++ ) { 
       particle_force[part_index].f[0] -= partgrad1[node+ii*8]/8.0f;
       particle_force[part_index].f[1] -= partgrad2[node+ii*8]/8.0f;
       particle_force[part_index].f[2] -= partgrad3[node+ii*8]/8.0f;
     }
-    
+
     /* note that scforce is zero if SHANCHEN is not #defined */
     delta_j[0+3*ii] -= (scforce[0+ii*3]+viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
     delta_j[1+3*ii] -= (scforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
     delta_j[2+3*ii] -= (scforce[2+ii*3]+viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;
- }
+  }
 #ifdef SHANCHEN
- for(int node=0 ; node < 8 ; node++ ) { 
+  for(int node=0 ; node < 8 ; node++ ) { 
     for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
       partgrad1[node+ii*8]*=(para.time_step*para.tau/para.agrid);
       partgrad2[node+ii*8]*=(para.time_step*para.tau/para.agrid);
       partgrad3[node+ii*8]*=(para.time_step*para.tau/para.agrid);
     }
- }
+  }
 #endif 
 }
 
