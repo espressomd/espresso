@@ -217,8 +217,8 @@ void mpi_init(int *argc, char ***argv)
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
 #ifdef MPI_CORE
-  MPI_Errhandler_create((MPI_Handler_function *)mpi_core, &mpi_errh);
-  MPI_Errhandler_set(comm_cart, mpi_errh);
+  MPI_Comm_create_errhandler((MPI_Handler_function *)mpi_core, &mpi_errh);
+  MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
 }
 
@@ -401,14 +401,12 @@ void mpi_bcast_event_slave(int node, int event)
     maggs_count_charged_particles();
     break; 
 #endif
-  case INVALIDATE_SYSTEM:
-    local_invalidate_system();
+  case SORT_PARTICLES:
+    local_sort_particles();
     break;
-#ifdef ADDITIONAL_CHECKS
   case CHECK_PARTICLES:
     check_particles();
     break;
-#endif
 
 #ifdef DP3M
   case P3M_COUNT_DIPOLES:
@@ -1853,7 +1851,7 @@ void mpi_bcast_collision_params()
 void mpi_bcast_collision_params_slave(int node, int parm)
 {   
 #ifdef COLLISION_DETECTION
-  MPI_Bcast(&collision_params, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
+  MPI_Bcast(&collision_params, sizeof(Collision_parameters), MPI_BYTE, 0, comm_cart);
 
   recalc_forces = 1;
 #endif
@@ -2962,7 +2960,6 @@ void mpi_loop()
 }
 
 void mpi_external_potential_broadcast(int number) {
-  ExternalPotentialTabulated *e = &(external_potentials[number].e.tabulated);
   mpi_call(mpi_external_potential_broadcast_slave, 0, number);
   MPI_Bcast(&external_potentials[number], sizeof(ExternalPotential), MPI_BYTE, 0, comm_cart);
   MPI_Bcast(external_potentials[number].scale, external_potentials[number].n_particle_types, MPI_DOUBLE, 0, comm_cart);

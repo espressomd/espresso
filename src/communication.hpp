@@ -583,9 +583,9 @@ void mpi_external_potential_sum_energies_slave();
     of doing something now.
 */
 /*@{*/
-#define P3M_COUNT_CHARGES 0
-#define INVALIDATE_SYSTEM 1
-#define CHECK_PARTICLES   2
+#define P3M_COUNT_CHARGES   0
+#define SORT_PARTICLES      1
+#define CHECK_PARTICLES     2
 #define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES   5
 /*@}*/

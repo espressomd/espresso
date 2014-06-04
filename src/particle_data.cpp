@@ -62,7 +62,7 @@ IndexOfType Index;
 TypeList *type_array;
 int number_of_type_lists;
 int GC_init;
-int Type_array_init;
+int Type_array_init = 0;
 
 int max_seen_particle = -1;
 int n_part = 0;
@@ -853,15 +853,12 @@ int set_particle_type(int part, int type)
 
   mpi_send_type(pnode, part, type);
 
-#ifdef ADDITIONAL_CHECKS
   if ( Type_array_init ) { 
 	  if ( add_particle_to_list(part, type) ==  ES_ERROR ){
 		  //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
 		  return ES_ERROR;
 	  }
   }
-#endif
-  
 
   return ES_OK;
 }
@@ -1524,12 +1521,10 @@ void recv_particles(ParticleList *particles, int node)
 #endif
 
     PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n", this_node, p->p.identity));
-#ifdef ADDITIONAL_CHECKS
     if (local_particles[p->p.identity] != NULL) {
       fprintf(stderr, "%d: transmitted particle %d is already here...\n", this_node, p->p.identity);
       errexit();
     }
-#endif
   }
 
   update_local_particles(particles);

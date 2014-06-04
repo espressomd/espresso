@@ -34,7 +34,7 @@ void observable_init(observable* self) {
 }
 
 int observable_calculate(observable* self) {
-  int temp;
+  int temp = 0;
   if (self->calculate!=0)
     temp=(self->calculate)(self);
   self->last_update = sim_time;
@@ -42,7 +42,7 @@ int observable_calculate(observable* self) {
 }
 
 int observable_update(observable* self) {
-  int temp;
+  int temp = 0;
   if (self->update!=0)
     temp=(self->update)(self);
   self->last_update = sim_time;
@@ -609,7 +609,6 @@ void transform_to_cylinder_coordinates(double x, double y, double z_, double* r,
 
 int observable_calc_radial_density_profile(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   int binr, binphi, binz;
   double ppos[3];
   double r, phi, z;
@@ -628,7 +627,7 @@ int observable_calc_radial_density_profile(observable* self) {
   double phibinsize=(pdata->maxphi - pdata->minphi)/pdata->phibins;
   double zbinsize=(pdata->maxz - pdata->minz)/pdata->zbins;
     
-  for ( i = 0; i< self->n; i++ ) {
+  for (int i = 0; i< self->n; i++ ) {
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
@@ -654,7 +653,6 @@ int observable_calc_radial_density_profile(observable* self) {
 
 int observable_calc_radial_flux_density_profile(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   int binr, binphi, binz;
   double ppos[3];
   double unfolded_ppos[3];
@@ -680,7 +678,7 @@ int observable_calc_radial_flux_density_profile(observable* self) {
     return ES_ERROR;
   }
     
-  for ( i = 0; i< self->n; i++ ) {
+  for (int i = 0; i< self->n; i++ ) {
     A[i]=0;
   }
   double* old_positions=(double*) pdata->container;
@@ -741,7 +739,6 @@ int observable_calc_radial_flux_density_profile(observable* self) {
 
 int observable_calc_flux_density_profile(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   int binx, biny, binz;
   double ppos[3];
   double x, y, z;
@@ -762,7 +759,7 @@ int observable_calc_flux_density_profile(observable* self) {
   double v[3];
   double v_x, v_y, v_z;
     
-  for ( i = 0; i< self->n; i++ ) {
+  for (int i = 0; i< self->n; i++ ) {
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
@@ -798,7 +795,6 @@ int observable_calc_flux_density_profile(observable* self) {
 
 int observable_calc_particle_positions(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   IntList* ids;
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
@@ -818,7 +814,6 @@ int observable_calc_particle_positions(observable* self) {
 
 int observable_calc_particle_forces(observable* self) {
   double* A = self->last_value;
-  unsigned int i;
   IntList* ids;
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
@@ -886,7 +881,7 @@ int observable_reset_average(observable* self) {
     for (int i =0; i<self->n; i++) {
       self->last_value[i] = 0;
     }
-    return 0;
+    return error;
 }
 
 

@@ -18,16 +18,22 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-
-#ifndef HARMONIC_FORCE_TCL_H
-#define HARMONIC_FORCE_TCL_H
-
+#ifndef _CELLS_TCL_H
+#define _CELLS_TCL_H
 #include "parser.hpp"
 
-#ifdef HARMONICFORCE
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
 
-int tclcommand_harmonic_force(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+/** implementation of the Tcl command cellsystem. See \ref cells_tcl.cpp */
+int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv);
 
-#endif
+/** implementation of the Tcl command sort_particles. See \ref cells_tcl.cpp */
+int tclcommand_sort_particles(ClientData data, Tcl_Interp *interp,
+                              int argc, char **argv);
+
+/*@}*/
 
 #endif

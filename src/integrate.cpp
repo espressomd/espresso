@@ -185,15 +185,6 @@ void integrator_npt_sanity_checks()
 #endif /*NPT*/
 
 /************************************************************/
-
-
-void local_invalidate_system()
-{
-  resort_particles = 1;
-  invalidate_obs();
-}
-
-/************************************************************/
 void integrate_ensemble_init()
 {
 #ifdef NPT
@@ -238,7 +229,12 @@ void integrate_vv(int n_steps, int reuse_forces)
    
   /* Integration Step: Preparation for first integration step:
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) ) */
-  if (recalc_forces && !reuse_forces) {
+  /* reuse_forces logic:
+     -1: recalculate forces unconditionally, mostly used for timing
+      0: recalculate forces if recalc_forces is set, meaning it is probably necessary
+      1: do not recalculate forces. Mostly when reading checkpoints with forces
+   */
+  if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     thermo_heat_up();
 
 #ifdef LB

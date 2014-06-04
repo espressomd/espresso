@@ -55,8 +55,6 @@ if { [catch {
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
     }
-    # to ensure force recalculation
-    invalidate_system
 
     ############## gb-specific part
 

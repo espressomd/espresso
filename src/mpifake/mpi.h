@@ -148,8 +148,8 @@ inline int MPI_Type_get_extent(MPI_Datatype dtype, MPI_Aint *lower, MPI_Aint *pe
 inline int MPI_Barrier(MPI_Comm comm) { return MPI_SUCCESS; }
 inline int MPI_Waitall(int count, MPI_Request *reqs, MPI_Status *stats) { return MPI_SUCCESS; }
 inline int MPI_Wait(MPI_Request *reqs, MPI_Status *stats) { return MPI_SUCCESS; }
-inline int MPI_Errhandler_create(MPI_Handler_function *errfunc, MPI_Errhandler *errhdl) { return MPI_SUCCESS; }
-inline int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhdl) { return MPI_SUCCESS; }
+inline int MPI_Comm_create_errhandler(MPI_Handler_function *errfunc, MPI_Errhandler *errhdl) { return MPI_SUCCESS; }
+inline int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhdl) { return MPI_SUCCESS; }
 inline int MPI_Bcast(void *buff, int count, MPI_Datatype datatype, int root, MPI_Comm comm) { return MPI_SUCCESS; }
 
 #ifndef GNU_MPIFAKE_DEBUG

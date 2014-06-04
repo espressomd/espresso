@@ -311,7 +311,7 @@ mol modmaterial 1 0 Glass2
 # start vmd
 if { $vmd_online == "yes" } then {
     set vtf_file [open "espresso_logo_online.vtf" w]
-    writevsf $vtf_file ignore_charges
+    writevsf $vtf_file
     puts $vtf_file $vtf_bonds
     writevcf $vtf_file
     close $vtf_file
@@ -326,7 +326,7 @@ if { $vmd_online == "yes" } then {
 # create vtf-file
 if { $vmd_offline == "yes" } then {
     set vtf_file [open "espresso_logo.vtf" w]
-    writevsf $vtf_file ignore_charges
+    writevsf $vtf_file
     # connect cup
     puts $vtf_file $vtf_bonds
     writevcf $vtf_file

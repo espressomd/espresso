@@ -98,7 +98,7 @@ int init_lattice(Lattice *lattice, double *agrid, double* offset, int halo_size,
 void _lattice_allocate_memory(Lattice *lattice) {
 
   lattice->_data = malloc(lattice->element_size*lattice->halo_grid_volume);
-  memset(lattice->_data, 1e90, lattice->element_size*lattice->halo_grid_volume);
+  memset(lattice->_data, (unsigned int)(-1), lattice->element_size*lattice->halo_grid_volume);
 
 }
 
@@ -142,8 +142,6 @@ void lattice_interpolate_linear_gradient(Lattice* lattice, double* pos, double* 
        return;
      }
    }
-   double w[8], wd[8];
-   index_t temp_index[3];
    
    index_t index;
    double* local_value;
@@ -231,7 +229,6 @@ void lattice_interpolate_linear(Lattice* lattice, double* pos, double* value) {
    }
    double w[8];
    index_t index[8];
-   index_t temp_index[3];
    w[0] = (1-d[0])*(1-d[1])*(1-d[2]);
    index[0]=get_linear_index(   left_halo_index[0], left_halo_index[1], left_halo_index[2], lattice->halo_grid);
    w[1] = ( +d[0])*(1-d[1])*(1-d[2]);

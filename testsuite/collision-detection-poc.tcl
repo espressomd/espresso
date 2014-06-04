@@ -104,9 +104,7 @@ if {$bonds != "{0 1}"} {
 }
 
 # Integrate again and make sure, no extra bonds are added
-# enforce force recalculation
-invalidate_system
-integrate 0
+integrate 0 recalc_forces
 
 # Check, whether the bonds are still correct, not doubled
 set bonds [analyze_topology 2]

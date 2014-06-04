@@ -89,9 +89,6 @@ void integrate_vv(int n_steps, int reuse_forces);
     new time step. */
 void rescale_velocities(double scale); 
 
-/** local routine of \ref tclcommand_invalidate_system */
-void local_invalidate_system();
-
 /*@}*/
 
 #endif
