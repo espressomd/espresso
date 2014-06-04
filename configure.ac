@@ -25,7 +25,7 @@ AC_INIT([ESPResSo],[ESPRESSO_VERSION],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
 
-AC_CONFIG_SRCDIR([src/initialize.cpp])
+AC_CONFIG_SRCDIR([src/features.def])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_PREFIX_DEFAULT($HOME/Espresso)
@@ -169,8 +169,8 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PATH_PROG(DOXYGEN,doxygen,no)
 AM_CONDITIONAL(HAVE_DOXYGEN,[test .$DOXYGEN != .no])
-AC_PATH_PROG(DOT,dot)
-if test "$DOT"; then HAVE_DOT=YES; else HAVE_DOT=NO; fi
+AC_PATH_PROG(DOT,dot,no)
+if test "$DOT" != no; then HAVE_DOT=YES; else HAVE_DOT=NO; fi
 AC_SUBST(HAVE_DOT)
 AC_SUBST(DOT_PATH, `AS_DIRNAME(["$DOT"])`)
 AC_PATH_PROG(PDFLATEX,pdflatex,no)
@@ -628,6 +628,7 @@ AC_CONFIG_FILES([
 	config/Makefile
 	config/myconfig-sample-header.hpp
 	src/Makefile
+	src/core/Makefile
 	src/tcl/Makefile
 	src/python/espressomd/Makefile
 	tools/Makefile
