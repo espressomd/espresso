@@ -19,9 +19,10 @@
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 # Build rules for python libraries
-AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/src 
+AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
+	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
-LIBS =  $(top_builddir)/src/libEspresso.la @LIBS@
+LIBS =  $(top_builddir)/src/core/libEspresso.la @LIBS@
 
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
@@ -109,12 +110,12 @@ $(SOFILES): %.so: %.la
 
 # build rule for myconfig.pxi
 # create gen_pxiconfig.cpp from features.def
-gen_pxiconfig.cpp: $(top_srcdir)/config/gen_pxiconfig.py $(top_srcdir)/src/features.def 
-	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_pxiconfig.py \
+gen_pxiconfig.cpp: $(srcdir)/gen_pxiconfig.py $(top_srcdir)/src/features.def 
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_pxiconfig.py \
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
 noinst_PROGRAMS = gen_pxiconfig
-nodist_gen_pxiconfig_SOURCES = gen_pxiconfig.cpp $(top_builddir)/src/myconfig-final.hpp
+nodist_gen_pxiconfig_SOURCES = gen_pxiconfig.cpp $(top_builddir)/src/core/config.hpp
 
 # create myconfig.pxi from gen_pxiconfig
 myconfig.pxi: gen_pxiconfig
