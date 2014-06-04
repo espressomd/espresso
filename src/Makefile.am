@@ -17,16 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-DIST_SUBDIRS = . tcl python
+EXTRA_DIST =
+CLEANFILES =
+DIST_SUBDIRS = . tcl python/espressomd
 SUBDIRS = . 
 if TCL
 SUBDIRS += tcl
 endif
 if PYTHON_INTERFACE
-SUBDIRS += python
+SUBDIRS += python/espressomd
 endif
 
-EXTRA_DIST =
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 noinst_LTLIBRARIES = libEspresso.la
@@ -47,6 +48,7 @@ libEspresso_la_SOURCES = \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
 	energy.cpp energy.hpp \
+	external_potential.hpp external_potential.cpp \
 	errorhandling.cpp errorhandling.hpp \
 	fft.cpp fft.hpp \
 	fft-common.cpp fft-common.hpp \
@@ -107,9 +109,8 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
-	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
-	HarmonicForce.hpp
-
+	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
+	
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
@@ -128,7 +129,7 @@ libEspresso_la_SOURCES += \
 	soft_sphere.cpp soft_sphere.hpp \
 	steppot.cpp steppot.hpp \
 	tab.cpp tab.hpp \
-	tunable_slip.cpp tunable_slip.hpp 
+	tunable_slip.cpp tunable_slip.hpp
 
 # bonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -162,10 +163,14 @@ libEspresso_la_SOURCES += \
 	mmm2d.cpp mmm2d.hpp \
 	mmm-common.cpp mmm-common.hpp \
 	p3m.cpp p3m.hpp \
-        p3m-common.cpp p3m-common.hpp \
+	p3m-common.cpp p3m-common.hpp \
 	p3m-dipolar.cpp p3m-dipolar.hpp \
 	reaction_field.cpp reaction_field.hpp
 
+# Generic actors
+libEspresso_la_SOURCES += \
+	actor/Actor.hpp \
+	actor/HarmonicWell.cpp actor/HarmonicWell.hpp
 
 ##################################################
 # CUDA rules
@@ -174,12 +179,41 @@ if CUDA
 
 SUFFIXES=.cu
 
-# nvcc does not allow for MF, make a separate run to generate dependencies
-# putting them into DEPDIR ensures configure creates empties dummies
+CUDA_HEADER_FILES = \
+	cuda_utils.hpp \
+	cuda_interface.hpp \
+	p3m_gpu.hpp \
+	cuda_init.hpp \
+	electrokinetics.hpp
+
+CUDA_SOURCE_FILES = \
+	cuda_init_cuda.cu \
+	cuda_common_cuda.cu \
+	electrokinetics_cuda.cu \
+	lbgpu_cuda.cu \
+	p3m_gpu_cuda.cu \
+	EspressoSystemInterface_cuda.cu \
+	actor/HarmonicWell_cuda.cu
+
+# include the dependency tracking files
+include ./$(DEPDIR)/cuda_init_cuda.Plo
+include ./$(DEPDIR)/cuda_common_cuda.Plo
+include ./$(DEPDIR)/electrokinetics_cuda.Plo
+include ./$(DEPDIR)/libgpu_cuda.Plo
+include ./$(DEPDIR)/p3m_gpu_cuda.Plo
+include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
+include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
+
+LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
+
 cuda_verbose = $(cuda_verbose_@AM_V@)
 cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
 cuda_verbose_0 = @echo "  NVCC     $@";
-.cu.lo:
+
+# nvcc does not allow for option MF for dependency generation, 
+# therefore make a separate run to generate dependencies
+# putting them into DEPDIR ensures configure creates empties dummies
+$(LOFILES): %.lo: %.cu
 	$(cuda_verbose)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
 	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<; \
 	$(LIBTOOL) $(AM_V_lt) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -187,27 +221,9 @@ cuda_verbose_0 = @echo "  NVCC     $@";
 		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
-CUDA_SOURCES = \
-	cuda_utils.hpp \
-	cuda_interface.hpp \
-	p3m_gpu.hpp \
-	cuda_init.hpp \
-	cuda_init_cuda.cu \
-	cuda_common_cuda.cu \
-	electrokinetics_cuda.cu \
-	electrokinetics.hpp \
-	lbgpu_cuda.cu \
-	p3m_gpu_cuda.cu \
-	EspressoSystemInterface_cuda.cu \
-        HarmonicForce.cu
-
-libEspresso_la_SOURCES += $(CUDA_SOURCES)
-EXTRA_DIST += $(CUDA_SOURCES)
-
-include ./$(DEPDIR)/cuda_init_cuda.Plo
-include ./$(DEPDIR)/cuda_common_cuda.Plo
-include ./$(DEPDIR)/libgpu_cuda.Plo
-include ./$(DEPDIR)/p3m_gpu_cuda.Plo
+libEspresso_la_LIBADD = $(LOFILES)
+EXTRA_DIST += $(CUDA_SOURCE_FILES) $(CUDA_HEADER_FILES)
+CLEANFILES += $(LOFILES)
 
 endif
 
@@ -216,7 +232,7 @@ endif
 # Handling of myconfig.hpp
 #################################################################
 noinst_HEADERS = myconfig-default.hpp
-CLEANFILES = myconfig-final.hpp
+CLEANFILES += myconfig-final.hpp
 BUILT_SOURCES = myconfig-final.hpp
 
 if MYCONFIG

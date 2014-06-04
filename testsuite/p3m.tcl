@@ -61,7 +61,6 @@ if { [catch {
 
     # to ensure force recalculation
 #    inter coulomb n_interpol 0
-    invalidate_system
     integrate 0
 
     # here you can create the necessary snapshot

@@ -259,7 +259,7 @@ proc imd_reconnect {case} {
 
     puts "creating $case.vtf"
     set f [open "$case.vtf" "w"]
-    writevsf $f radius {0 2 1 2 2 3 3 2 4 2} ignore_charges
+    writevsf $f radius {0 2 1 2 2 3 3 2 4 2}
     writevcf $f
     close $f
 

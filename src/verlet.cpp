@@ -37,6 +37,7 @@
 #include "pressure.hpp"
 #include "domain_decomposition.hpp"
 #include "constraint.hpp"
+#include "external_potential.hpp"
 
 /** Granularity of the verlet list */
 #define LIST_INCREMENT 20
@@ -179,6 +180,7 @@ void calculate_verlet_ia()
 #ifdef CONSTRAINTS
       add_constraints_forces(&p1[i]);
 #endif
+      add_external_potential_forces(&p1[i]);
     }
 
     /* Loop cell neighbors */
@@ -242,6 +244,7 @@ void build_verlet_lists_and_calc_verlet_ia()
 #ifdef CONSTRAINTS
 	  add_constraints_forces(&p1[i]);
 #endif
+    add_external_potential_forces(&p1[i]);
 	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 	  j_start = i+1;
 	}
@@ -305,6 +308,7 @@ void calculate_verlet_energies()
 #ifdef CONSTRAINTS
       add_constraints_energy(&p1[i]);
 #endif
+      add_external_potential_energy(&p1[i]);
     }
 
     /* no interaction set */

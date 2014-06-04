@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef HARMONIC_H
-#define HARMONIC_H
+#ifndef _HARMONIC_HPP
+#define _HARMONIC_HPP
 /** \file harmonic.hpp
  *  Routines to calculate the HARMONIC Energy or/and HARMONIC force 
  *  for a particle pair.

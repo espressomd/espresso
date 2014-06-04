@@ -18,38 +18,22 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#ifndef _CELLS_TCL_H
+#define _CELLS_TCL_H
+#include "parser.hpp"
 
-#include "harmonic_force_tcl.hpp"
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
 
-#ifdef HARMONICFORCE
+/** implementation of the Tcl command cellsystem. See \ref cells_tcl.cpp */
+int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv);
 
-#include "HarmonicForce.hpp"
-#include "EspressoSystemInterface.hpp"
+/** implementation of the Tcl command sort_particles. See \ref cells_tcl.cpp */
+int tclcommand_sort_particles(ClientData data, Tcl_Interp *interp,
+                              int argc, char **argv);
 
-int tclcommand_harmonic_force(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  DoubleList dl;
-
-  init_doublelist(&dl);
-
-  if(!ARG1_IS_DOUBLELIST(dl)) {
-    puts("Expected double list");
-    return TCL_ERROR;
-  }
-
-  if(dl.n != 4) {
-    puts("Wrong # of args");
-    for(int i = 0; i < dl.n; i++)
-      printf("%d %e\n", i, dl.e[i]);
-
-    return TCL_ERROR;
-  }
-
-  // printf("x %e %e %e, k %e\n", dl.e[0], dl.e[1],dl.e[2],dl.e[3]);
-
-  harmonicForce =  new HarmonicForce(dl.e[0], dl.e[1],dl.e[2],dl.e[3], espressoSystemInterface);
-
-  return TCL_OK;
-}
-
+/*@}*/
 
 #endif

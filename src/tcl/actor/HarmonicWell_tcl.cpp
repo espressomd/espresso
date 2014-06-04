@@ -1,7 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -19,15 +17,37 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef HARMONIC_FORCE_TCL_H
-#define HARMONIC_FORCE_TCL_H
+#include "actor/HarmonicWell_tcl.hpp"
 
-#include "parser.hpp"
+#ifdef CUDA
 
-#ifdef HARMONICFORCE
+#include "forces.hpp"
+#include "actor/HarmonicWell.hpp"
 
-int tclcommand_harmonic_force(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_HarmonicWell(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  DoubleList dl;
 
-#endif
+  init_doublelist(&dl);
+
+  if(!ARG1_IS_DOUBLELIST(dl)) {
+    puts("Expected double list");
+    return TCL_ERROR;
+  }
+
+  if(dl.n != 4) {
+    puts("Wrong # of args");
+    for(int i = 0; i < dl.n; i++)
+      printf("%d %e\n", i, dl.e[i]);
+
+    return TCL_ERROR;
+  }
+
+  // printf("x %e %e %e, k %e\n", dl.e[0], dl.e[1],dl.e[2],dl.e[3]);
+
+  addHarmonicWell(dl.e[0], dl.e[1], dl.e[2], dl.e[3]);
+
+  return TCL_OK;
+}
+
 
 #endif

@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+EXTRA_DIST =
+CLEANFILES =
 AM_CPPFLAGS = -I$(top_srcdir)/src
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
@@ -24,10 +26,12 @@ AM_DEFAULT_SOURCE_EXT = .cpp
 
 noinst_LTLIBRARIES = libEspressoTcl.la
 libEspressoTcl_la_SOURCES = \
+	TclOutputHelper.hpp \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
 	cells_tcl.cpp \
+	cells_tcl.hpp \
 	channels_tcl.cpp \
 	collision_tcl.cpp \
 	comfixed_tcl.cpp comfixed_tcl.hpp \
@@ -36,6 +40,7 @@ libEspressoTcl_la_SOURCES = \
 	constraint_tcl.cpp constraint_tcl.hpp \
 	domain_decomposition_tcl.cpp domain_decomposition_tcl.hpp \
 	electrokinetics_tcl.cpp electrokinetics_tcl.hpp \
+	external_potential_tcl.cpp external_potential_tcl.hpp \
 	energy_tcl.cpp \
 	galilei_tcl.cpp galilei_tcl.hpp \
 	global_tcl.cpp global_tcl.hpp \
@@ -90,8 +95,7 @@ libEspressoTcl_la_SOURCES += \
 	soft_sphere_tcl.cpp soft_sphere_tcl.hpp \
 	steppot_tcl.cpp steppot_tcl.hpp \
 	tab_tcl.cpp tab_tcl.hpp \
-	tunable_slip_tcl.cpp tunable_slip_tcl.hpp \
-	harmonic_force_tcl.cpp harmonic_force_tcl.hpp
+	tunable_slip_tcl.cpp tunable_slip_tcl.hpp
 
 # bonded potentials and forces
 libEspressoTcl_la_SOURCES += \
@@ -132,6 +136,10 @@ libEspressoTcl_la_SOURCES += \
 	p3m_tcl.cpp p3m_tcl.hpp \
 	reaction_field_tcl.cpp reaction_field_tcl.hpp \
 	mdlc_correction_tcl.cpp mdlc_correction_tcl.hpp	
+
+# Generic actors
+libEspressoTcl_la_SOURCES += \
+	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
 
 if CUDA
 libEspressoTcl_la_SOURCES += cuda_init_tcl.cpp
@@ -177,12 +185,17 @@ SUFFIXES=.cu
 cuda_verbose = $(cuda_verbose_@AM_V@)
 cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
 cuda_verbose_0 = @echo "  NVCC     $@";
-.cu.o:
+
+# nvcc does not allow for option MF for dependency generation, 
+# therefore make a separate run to generate dependencies
+# putting them into DEPDIR ensures configure creates empties dummies
+cuda_workaround.o: cuda_workaround.cu
 	$(cuda_verbose)$(NVCC) \
 		$(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
-Espresso_SOURCES += cuda_workaround.cu
-Espresso_install_SOURCES += cuda_workaround.cu
+Espresso_LDADD += cuda_workaround.o
+Espresso_install_LDADD += cuda_workaround.o
+EXTRA_DIST += cuda_workaround.cu
 
 endif

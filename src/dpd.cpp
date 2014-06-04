@@ -23,6 +23,9 @@
  */
 #include "dpd.hpp"
 
+/** Flag to decide wether to allow for fixed particles with DPD */
+int dpd_ignore_fixed_particles=1;
+
 /* DPD THERMOSTAT */
 /* DPD longitudinal friction coefficient gamma. */
 double dpd_gamma = 0.0;

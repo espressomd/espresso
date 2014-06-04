@@ -1517,13 +1517,11 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
   double rho2 = d[1]*d[1] + z2;
   int i;
 
-#ifdef ADDITIONAL_CHECKS
   if (d[2] >box_l[1]/2) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt, "{024 near formula called for too distant particle pair} ");
     return;
   }
-#endif
 
   F[0] = F[1] = F[2] = 0;
 

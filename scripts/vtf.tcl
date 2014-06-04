@@ -98,7 +98,6 @@ proc writevsf { file args } {
     set typedesc {}
     set radius {}
     set short 0
-    set no_charges 0
 
     # Parse options
     for { set argnum 0 } { $argnum < [llength $args] } { incr argnum } {

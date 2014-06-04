@@ -26,6 +26,9 @@
 
 #include "iccp3m.hpp"
 #include "parser.hpp"
+#include <string>
+#include <sstream>
+#include <iostream>
 
 #ifdef ELECTROSTATICS
 enum { ICCP3M_AREA , ICCP3M_EPSILON, ICCP3M_NORMAL, ICCP3M_SIGMA, ICCP3M_EXTFIELD } ;
@@ -42,12 +45,6 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
       iccp3m_initialized=1;
   }
 
-    iccp3m_cfg.num_iteration=30;
-  iccp3m_cfg.convergence=1e-2;
-  iccp3m_cfg.relax=0.7;
-  iccp3m_cfg.eout=1;
-
-
   if(argc < 2 ) { 
          Tcl_AppendResult(interp, "Usage of ICCP3M: RTFM", (char *)NULL); 
          return (TCL_ERROR); 
@@ -57,13 +54,17 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
            if (iccp3m_cfg.set_flag==0) {
                  Tcl_AppendResult(interp, "iccp3m parameters not set!", (char *)NULL);
                  return (TCL_ERROR);
-           }
-           else{ 
+           } else { 
               Tcl_PrintDouble(interp,mpi_iccp3m_iteration(0),buffer); 
               Tcl_AppendResult(interp, buffer, (char *) NULL);
               return TCL_OK;
-	   }
-      }
+           }
+	   } else if(ARG_IS_S(1,"no_iterations")) {
+            Tcl_PrintDouble(interp,iccp3m_cfg.citeration,buffer); 
+            Tcl_AppendResult(interp, buffer, (char *) NULL);
+            return TCL_OK;
+          
+       }
    }
    else {
      if(ARG_IS_I(1, iccp3m_cfg.n_ic)) {
@@ -112,6 +113,14 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
            argv+=2;
          } else {
            Tcl_AppendResult(interp, "ICCP3M Usage: max_iterations <max_iterations>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
+       } else if (ARG0_IS_S("first_id")) {
+         if (argc>1 && ARG1_IS_I(iccp3m_cfg.first_id)) {
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: first_id <first_id>", (char *)NULL); 
            return (TCL_ERROR);
          }
        } else if (ARG0_IS_S("normals")) {
@@ -167,69 +176,55 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
    iccp3m_initialized=1;
    iccp3m_cfg.set_flag = 1;
       
-      
+   if (!iccp3m_cfg.areas || !iccp3m_cfg.ein || !iccp3m_cfg.nvectorx) 
+     return TCL_ERROR;
+   if (!iccp3m_cfg.sigma)  {
+     iccp3m_cfg.sigma = (double*) malloc(iccp3m_cfg.n_ic*sizeof(double));
+     memset(iccp3m_cfg.sigma, 0, iccp3m_cfg.n_ic*sizeof(double));
+   }
    mpi_iccp3m_init(0);
 
    return TCL_OK;
 }
 
 int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
-  char *arg, *token;
+  char *token;
   int scan_succes;
-  arg=strdup(string);
   iccp3m_cfg.nvectorx = (double*) realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.n_ic));
   iccp3m_cfg.nvectory = (double*) realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.n_ic));
   iccp3m_cfg.nvectorz = (double*) realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.n_ic));
   const char opening_bracket[] = "{";
   const char closing_bracket[] = "}";
   const char space[] = " ";
-  
 
-  // Searching for first opening bracket
+  const char delimiters[]=" {}";
+
+  std::string arg(string);
+  size_t beginVector;
+  size_t endVector;
+  std::string sVector;
+  std::stringstream ssVector;
+
+  double x,y,z;
   for (int i = 0; i<n_ic; i++) {
-    if (i==0) {
-      token=strtok(arg, space);
-      token++;
-    } else {
-      token=strtok(NULL, space);
-    }
-    if (token==0) {
-      return TCL_ERROR;
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-    }
-    // convert to float
-    scan_succes = sscanf(token,"%lf",&(iccp3m_cfg.nvectorx[i]));
-    if (!scan_succes) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-      return TCL_ERROR;
-    } 
-    token=strtok(NULL, space);
-    if (token==0) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
+    beginVector = arg.find_first_of("{");
+    endVector = arg.find_first_of("}");
+    sVector = arg.substr(beginVector+1, endVector-2);
+    sVector.append(" "); // I could not figure out why -2 and append " " but it works!
+    ssVector.str(sVector);
+    ssVector >> x;
+    ssVector >> y;
+    ssVector >> z;
+    if (!ssVector.good()) {
+      Tcl_AppendResult(interp, "Could not understand ", ssVector.str().c_str(), (char *)NULL); 
       return TCL_ERROR;
     }
-    // convert to float
-    scan_succes = sscanf(token,"%lf",&(iccp3m_cfg.nvectory[i]));
-    if (!scan_succes) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-      return TCL_ERROR;
-    } 
-    token=strtok(NULL, closing_bracket);
-    if (token==0) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-      return TCL_ERROR;
-    }
-    // convert to float
-    scan_succes = sscanf(token,"%lf",&(iccp3m_cfg.nvectorz[i]));
-    if (!scan_succes) {
-      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
-      return TCL_ERROR;
-    } 
-
-    token=strtok(NULL, opening_bracket);
-
+    iccp3m_cfg.nvectorx[i] = x;
+    iccp3m_cfg.nvectory[i] = y;
+    iccp3m_cfg.nvectorz[i] = z;
+    arg.erase(0, endVector+1);
   }
-  free(arg);
+
   return TCL_OK;
 }
   

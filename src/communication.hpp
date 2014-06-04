@@ -561,10 +561,17 @@ void mpi_kill_particle_forces( int torque );
 void mpi_system_CMS();
 void mpi_system_CMS_velocity();
 void mpi_galilei_transform();
+void mpi_observable_lb_radial_velocity_profile();
 
 /** Issue REQ_CATALYTIC_REACTIONS: notify the system of changes to the reaction parameters
  */
 void mpi_setup_reaction();
+
+void mpi_external_potential_broadcast(int number);
+void mpi_external_potential_broadcast_slave(int node, int number);
+void mpi_external_potential_tabulated_read_potential_file(int number);
+void mpi_external_potential_sum_energies(); 
+void mpi_external_potential_sum_energies_slave(); 
 
 /*@}*/
 
@@ -573,9 +580,9 @@ void mpi_setup_reaction();
     of doing something now.
 */
 /*@{*/
-#define P3M_COUNT_CHARGES 0
-#define INVALIDATE_SYSTEM 1
-#define CHECK_PARTICLES   2
+#define P3M_COUNT_CHARGES   0
+#define SORT_PARTICLES      1
+#define CHECK_PARTICLES     2
 #define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES   5
 /*@}*/

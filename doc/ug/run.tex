@@ -24,7 +24,7 @@
 \newescommand{integrate}
 
 \begin{essyntax}
-  \variant{1} integrate \opt{reuse_forces} \var{steps}
+  \variant{1} integrate \opt{recalc_forces} \opt{reuse_forces} \var{steps}
   \variant{2} integrate set \opt{nvt}
   \variant{3} integrate set npt_isotropic \var{p_{ext}} \var{piston} \opt{\var{x\; y\; z}} \opt{-cubic_box}
 \end{essyntax}
@@ -50,10 +50,16 @@ apart from some small calling overhead.
 However, for checkpointing, there is no way for \es{} to tell that the forces that you
 read back in actually match the parameters that are set. Therefore, \es{} would recompute
 the forces before the first time step, which makes it essentially impossible to checkpoint
-LB simulations, where it is vital to keep the coupling forces. Therefore, \texttt{integrate}
+LB simulations, where it is vital to keep the coupling forces. To work
+around this, \texttt{integrate}
 has an additional parameter \opt{reuse_forces}, which tells integrate to not recalculate
 the forces for the first time step, but use that the values still stored with the particles.
 Use this only if you are absolutely sure that the forces stored match your current setup!
+
+The opposite problem occurs when timing interactions: In this case,
+one would like to recompute the forces, despite the fact that they are
+already correctly calculated. To this aim, the option
+\opt{recalc_forces} can be used to enforce force recalculation.
 
 Two methods for the integration can be set: For an NVT ensemble
 (thermostat) and for an NPT isotropic ensemble (barostat). The current
@@ -123,33 +129,24 @@ Sets the velocities of the particles with particle IDs between
 less than \var{v_\mathrm{max}}, and returns the absolute value of the
 total velocity assigned. By default, all particles are affected.
 
-\section{\texttt{invalidate_system}}
-\newescommand[invalidate-system]{invalidate_system}
+\section{Fixing the particle sorting}
+\newescommand[sort-particles]{sort_particles}
 \begin{essyntax}
-  invalidate_system
+  sort_particles
 \end{essyntax}
 
-Forces a system re-init which, among others, causes the integrator to
-also update the forces at its beginning (instead of re-using the
-values from the previous integration step).  This is particularly
-necessary to ensure continuity after setting a checkpoint:
-\texttt{integrate} - \texttt{set_checkpoint} - \texttt{integrate} has
-only one call to the force calculation routine, while
-\texttt{read_checkpoint} - \texttt{integrate} has two at the beginning
-of the \texttt{integrate} command (because loading a new system from
-disk typically requires re-initializing the system), and since the
-forces routine also uses the thermostat which in turn draws random
-numbers, the two situations do not end up at the same segment of the
-random number sequence, all random events will therefore slightly
-differ.  To prevent this, simply include a call to
-\texttt{invalidate_system} upon setting the checkpoint, because in
-that case both scenarios will call the forces routine twice at the
-beginning of the second integration phase thus having their random
-number sequences in total sync.
-
-Without applying this command directly before or after writing a
-checkpoint, you will run into a different state of the random number
-generator when reading the checkpoint to start again later!
+Resorts the particles, making sure that
+\begin{itemize}
+\item the domain decomposition is strictly fullfilled, \ie{} each
+   particle is on the processor and in the cell that its
+   position belongs to
+\item the particles within each cell are ordered with ascending
+identity.
+\end{itemize}
+Both conditions together form a unique particle ordering. This is
+important when doing checkpointing, because this makes sure that
+random numbers are applied in a specific order. Therefore, after
+writing or reading a checkpoint, you should call \texttt{sort_particles}.
 
 \section{Parallel tempering}
 \newescommand[parallel-tempering]{parallel_tempering}

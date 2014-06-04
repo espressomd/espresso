@@ -1,4 +1,4 @@
-from espresso cimport *
+from System cimport *
 from utils cimport *
 
 cdef extern from "stdlib.h":
@@ -22,4 +22,4 @@ cdef extern from "utils.hpp":
   cdef void realloc_intlist(IntList *il, int size)
 
 cdef IntList* create_IntList_from_python_object(obj)
-cdef checkTypeOrExcept(x,t,msg)
+cdef checkTypeOrExcept(x,n,t,msg)

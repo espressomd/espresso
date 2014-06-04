@@ -62,7 +62,7 @@ IndexOfType Index;
 TypeList *type_array;
 int number_of_type_lists;
 int GC_init;
-int Type_array_init;
+int Type_array_init = 0;
 
 int max_seen_particle = -1;
 int n_part = 0;
@@ -847,15 +847,12 @@ int set_particle_type(int part, int type)
 
   mpi_send_type(pnode, part, type);
 
-#ifdef ADDITIONAL_CHECKS
   if ( Type_array_init ) { 
 	  if ( add_particle_to_list(part, type) ==  ES_ERROR ){
 		  //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
 		  return ES_ERROR;
 	  }
   }
-#endif
-  
 
   return ES_OK;
 }
@@ -1518,12 +1515,10 @@ void recv_particles(ParticleList *particles, int node)
 #endif
 
     PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n", this_node, p->p.identity));
-#ifdef ADDITIONAL_CHECKS
     if (local_particles[p->p.identity] != NULL) {
       fprintf(stderr, "%d: transmitted particle %d is already here...\n", this_node, p->p.identity);
       errexit();
     }
-#endif
   }
 
   update_local_particles(particles);
@@ -1986,3 +1981,80 @@ int number_of_particles_with_type(int type, int *number){
 	}
 	return NOT_INDEXED;
 }
+
+
+
+
+
+
+// The following functions are used by the python interface to obtain 
+// properties of a particle, which are only compiled in in some configurations
+// This is needed, because cython does not support conditional compilation 
+// within a ctypedef definition
+
+
+#ifdef ROTATION
+void pointer_to_omega_body(Particle* p, double*&  res)
+{
+  res=p->m.omega;
+}
+
+void pointer_to_torque_lab(Particle* p, double*& res)
+{
+  res=p->f.torque;
+}
+
+void pointer_to_quat(Particle* p, double*& res)
+{
+  res=p->r.quat;
+}
+
+void pointer_to_quatu(Particle* p, double*& res)
+{
+  res=p->r.quatu;
+}
+#endif
+
+#ifdef ELECTROSTATICS
+void pointer_to_q(Particle* p, double*& res)
+{
+ res =&(p->p.q);
+}
+#endif
+
+#ifdef VIRTUAL_SITES
+void pointer_to_virtual(Particle* p, int*&  res)
+{
+  res=&(p->p.isVirtual);
+}
+#endif
+
+#ifdef VIRTUAL_SITES_RELATIVE
+void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2)
+{
+  res1=&(p->p.vs_relative_to_particle_id);
+  res2=&(p->p.vs_relative_distance);
+}
+#endif
+
+
+#ifdef MASS
+void pointer_to_mass(Particle* p, double*&  res)
+{
+  res=&(p->p.mass);
+}
+#endif
+
+
+#ifdef DIPOLES
+void pointer_to_dip(Particle* p, double*& res)
+{
+res=p->r.dip;
+}
+
+void pointer_to_dipm(Particle* p, double*& res)
+{
+res=&(p->p.dipm);
+}
+#endif
+
