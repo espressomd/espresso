@@ -110,8 +110,8 @@ $(SOFILES): %.so: %.la
 
 # build rule for myconfig.pxi
 # create gen_pxiconfig.cpp from features.def
-gen_pxiconfig.cpp: $(top_srcdir)/config/gen_pxiconfig.py $(top_srcdir)/src/features.def 
-	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_pxiconfig.py \
+gen_pxiconfig.cpp: $(srcdir)/gen_pxiconfig.py $(top_srcdir)/src/features.def 
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_pxiconfig.py \
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
 noinst_PROGRAMS = gen_pxiconfig

@@ -407,7 +407,7 @@ dnl with_python_interface=yes  try to find a working PYTHON devel version,
 dnl                            bail out if none is found
 dnl with_python_interface=no   do not use python interface
 
-if test .$with_python_interface != .no; then
+AS_IF([test .$with_python_interface != .no], [
    AX_PYTHON_DEVEL([>= '2.5'])
 
    AC_PATH_PROG(CYTHON,cython,no)
@@ -417,11 +417,12 @@ if test .$with_python_interface != .no; then
 
    AX_PYTHON_MODULE(numpy, required)
    AC_MSG_CHECKING([for numpy include path])
-   NUMPY_INCLUDE="`$PYTHON -c 'import numpy; import sys; sys.stdout.write(numpy.get_include())'`"
+   NUMPY_INCLUDE="`$PYTHON -c 'import numpy; import sys; sys.stdout.write(numpy.get_include())'`" #`
+
    PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
    AC_MSG_RESULT([$NUMPY_INCLUDE])
    AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])
-fi
+])
 AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
 # export libtool objdir, so that we can link the .so files to the dir itself
 AC_SUBST(objdir)

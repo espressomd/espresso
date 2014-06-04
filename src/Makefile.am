@@ -30,4 +30,4 @@ endif
 #################################################################
 # Handling of the features
 #################################################################
-EXTRA_DIST += features.def
+EXTRA_DIST += features.def featuredefs.py
