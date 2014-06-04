@@ -25,6 +25,7 @@ tools/es_mpiexec
 src/libEspresso.a
 Espresso
 Espresso.install
+build.eclipse
 
 # Espresso output
 *.end

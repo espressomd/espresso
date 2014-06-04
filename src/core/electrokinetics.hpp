@@ -17,8 +17,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ELECTROKINETICS_H
-#define ELECTROKINETICS_H
+#ifndef _ELECTROKINETICS_HPP
+#define _ELECTROKINETICS_HPP
 
 #include "config.hpp"
 #include "lb-boundaries.hpp"

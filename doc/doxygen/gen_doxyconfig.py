@@ -1,4 +1,4 @@
-# Copyright (C) 2013 The ESPResSo project
+# Copyright (C) 2013,2014 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -19,7 +19,12 @@
 # This script generates the file doxy-features
 #
 from __future__ import print_function
-import sys, featuredefs, time
+import inspect, sys, os 
+# find featuredefs.py 
+moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
+sys.path.append(os.path.join(moduledir, '..', '..', 'src'))
+import featuredefs 
+import time
 
 if len(sys.argv) != 3:
     print("Usage: {} DEFFILE DOXYCONFIG".format(sys.argv[0]), file=sys.stderr)
