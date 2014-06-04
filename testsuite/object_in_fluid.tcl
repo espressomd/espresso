@@ -78,7 +78,6 @@ proc write_data_final {file} {
 if { [catch {
 
   read_data "object_in_fluid_system-init.data"
-  invalidate_system
 	
 	lbfluid cpu grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
 		                           

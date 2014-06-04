@@ -55,7 +55,6 @@ foreach type { harmonic cosine cossquare }  {
   part 1 bond 0 0 2
 
   # integrate
-  invalidate_system
 
   set asteps 10.0
 

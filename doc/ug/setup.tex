@@ -395,6 +395,18 @@ the friction and other parameters have to be set via the command
 \texttt{inter inter_dpd} (see \vref{sec:DPDinter}).  This allows to
 set the friction on a per-interaction basis.
 
+DPD interactions with fixed particles is switched off by default, because
+it is not clear if the results obtained with that method are physically 
+correct. If you want activate \texttt{inter_dpd} with fixed particles please 
+use:
+\begin{essyntax}
+  thermostat inter_dpd ignore_fixed_particles 0
+  \begin{features}
+    \required{INTER_DPD}
+  \end{features}
+\end{essyntax}
+By default the flag \texttt{ignore_fixed_particles} is switched ON.
+
 \subsubsection{Other DPD extensions}
 
 The features \feature{DPD_MASS_RED} or \feature{DPD_MASS_LIN} make the
