@@ -231,10 +231,7 @@ test_catch {
     set F($i) [part $i pr f]
   }
 
-  
-  # to ensure force recalculation
-  invalidate_system
-  integrate 0
+  integrate 0 recalc_forces
 
   foreach obs $observables get_obs $get_observables {
     set rel_error [expr abs(([eval $get_obs] - $obs)/$obs)]

@@ -54,8 +54,11 @@ as input for the core analysis. See more below.
 \subsection{Introduction}
 The first step of the core analysis is to tell \es to create an observable.
 An observable in the sense of the core analysis can be considered as 
-a rule how to compute a certain set of numbers from a given state of the system.
-It does not refer to the numbers itself.
+a rule how to compute a certain set of numbers from a given state of the system
+or a role how to collect data from other observables. Any observable
+is represented as a single array of double values. Any more complex
+shape (tensor, complex number, \ldots) must be compatible to this
+prerequisite. Every observable however documents the storage order.
 
 Creating an observable means just allocating the corresponding memory, assigning a function 
 to compute the observable value and reserving an \var{id} which will be used to refer 
@@ -66,7 +69,10 @@ the \var{id} of a core-observable can be passed to another analysis function.
 The observable value is computed from the current state of the system
 at the moment when it is needed, \ie when requested explicitly by the 
 user calling the \verb!observable print! function or when requested
-automatically by some other analysis function.
+automatically by some other analysis function. Updating is an orthogonal 
+concept: Observables that collect data over time (e.g. the average observable)
+need to be updated regularly, even though their current value is not
+of interest. 
 
 Not all observables are implemented in parallel. When performing a parallel
 computation, too frequent updates to observables which are not implemented
@@ -90,6 +96,8 @@ define a group of particles, from which the observable should be calculated.
 They are generic to all observables and are described after the list of observables.
 
 \todo{Missing descriptions of parameters of several observables}
+Here are the observables, that only depend on the current state of the simulation
+system:
   \begin{itemize}
     \item \lit{particle_positions} \var{particle\_specifications}\\
           Positions of the particles, in the format 
@@ -190,13 +198,25 @@ They are generic to all observables and are described after the list of observab
     \item \lit{lb_radial_velocity_profile} \\
         Compute the Lattice-Boltzmann velocity profile in cylindrical coordinates.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
+  \end{itemize}
+The tclcommand observable is a helpful tool, that allows to make the 
+analysis framework much more versatile, by allowing
+the evaluation of arbitrary tcl commands.
+  \begin{itemize}
     \item \lit{tclcommand \var{dimQ} \var{command}} \\
         An arbitrary Tcl function that returns a list of floating point numbers of fixed size
         \var{dimQ} can be specified. Although its execution might be slow, it allows 
         to prototype new observables without a lot of trouble.
         Many existing analysis commands can be made to cooperate with the core analysis that way.
   \end{itemize}
+The following commands allow to collect data automatically over time
+once their autoupdate feature is enabled.
 
+  \begin{itemize}
+    \item \lit{average \var{ref}} \\
+      The running average of the reference observable with id \var{ref}. 
+      It can be resetted by \lit{observable \var{no} reset}
+  \end{itemize}
 \subsection{Printing an observable}
 \begin{essyntax}
 observable \var{id} print \opt{formatted}

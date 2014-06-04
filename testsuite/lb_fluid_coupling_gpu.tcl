@@ -84,7 +84,7 @@ if { $delta > 1e-4 } {
 if { $components == 1 }  { 
 lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0
 } else {
-lbfluid gpu agrid 1 dens 0.5 0.5 visc 3.0 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0 10.0
+lbfluid gpu agrid 1 dens 0.5 0.5 visc 3.0 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz $fdragx $fdragy $fdragz friction 10.0 10.0
 }
 part 0 pos [expr 0.5*$length] [expr 0.5*$length] [expr 0.5*$length] v 0.0 0.0 0.0 f 0.0 0.0 0.0 ext_force $dragx $dragy $dragz 
 
