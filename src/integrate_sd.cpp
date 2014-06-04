@@ -181,7 +181,7 @@ void integrate_sd(int n_steps)
   /* Integration loop */
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
-
+    sd_set_particles_apart();
 #ifdef BOND_CONSTRAINT
     save_old_pos();
 #endif
@@ -201,7 +201,7 @@ void integrate_sd(int n_steps)
     }
 
     /* Integration Steps: Update the Positions
-       p_i(t + dt)   = p_i(t) + dt * mu_{ij} * f_j(t)
+       p_i(t + dt)   = p_i(t) + dt * mu_{ij} * f_j(t) + dt * mu_{ij} * f^B_j
     */
     propagate_pos_sd(); // we dont have velocities
 
@@ -499,10 +499,10 @@ It could be difficult to set particles apart!\n",phi);
 	      dr[d]-=box_l[d]*rint(dr[d]/box_l[d]);
 	      dr2+=SQR(dr[d]);
 	    }
-	    if (dr2 <= SQR(2*sd_radius*(1+1e-6))){
+	    if (dr2 <= SQR(2*sd_radius*(1+1e-5))){
 	      double drn = sqrt(dr2);
-	      // push to a distance of 1e-6;
-	      double fac=(sd_radius*(1+1.2e-6)-drn/2)/drn;
+	      // push to a distance of 1e-5;
+	      double fac=(sd_radius*(1+1.2e-5)-drn/2)/drn;
 	      assert(!isnan(fac));
 	      for (int d=0; d<3;d++){
 		if(isnan(dr[d]*fac)){
@@ -519,8 +519,8 @@ It could be difficult to set particles apart!\n",phi);
 		dr[d]-=box_l[d]*rint(dr[d]/box_l[d]);
 		dr2+=SQR(dr[d]);
 	      }
-	      assert(dr2 > SQR(2*sd_radius*(1+1e-6)));
-	      assert(dr2 < SQR(2*sd_radius*(1+2e-6)));
+	      assert(dr2 > SQR(2*sd_radius*(1+1e-5)));
+	      assert(dr2 < SQR(2*sd_radius*(1+2e-5)));
 	      inner=true;
 	    }
 	  }
@@ -540,10 +540,10 @@ It could be difficult to set particles apart!\n",phi);
 	      dr[d]-=box_l[d]*rint(dr[d]/box_l[d]);
 	      dr2+=SQR(dr[d]);
 	    }
-	    if (dr2 <= SQR(2*sd_radius*(1+1e-6))){
+	    if (dr2 <= SQR(2*sd_radius*(1+1e-5))){
 	      double drn = sqrt(dr2);
-	      // push to a distance of 1e-6;
-	      double fac=(sd_radius*(1+1.2e-6)-drn/2)/drn;
+	      // push to a distance of 1e-5;
+	      double fac=(sd_radius*(1+1.2e-5)-drn/2)/drn;
 	      assert(!isnan(fac));
 	      assert (fac > 0);
 	      for (int d=0; d<3;d++){
@@ -563,6 +563,28 @@ It could be difficult to set particles apart!\n",phi);
     fprintf(stderr,"+");
   } while (outer);
   //fprintf(stderr,"set_apart suceeded ");
+  for (int c = 0; c < local_cells.n; c++){
+    Cell * cell  = local_cells.cell[c];
+    Particle * p = cell->part;
+    int np   = cell->n;
+    for (int cj =0; cj < local_cells.n;cj++){
+      Cell * cellJ  = local_cells.cell[cj];
+      Particle * pj = cellJ->part;
+      int npj       = cellJ->n;
+      for (int i = 0; i < np; i++) {
+	for (int j = (c==cj?i+1:0); j <npj; j++){
+	  double dr2=0;
+	  double dr[3];
+	  for (int d=0; d<3;d++){
+	    dr[d]=p[i].r.p[d]-pj[j].r.p[d];
+	    dr[d]-=box_l[d]*rint(dr[d]/box_l[d]);
+	    dr2+=SQR(dr[d]);
+	  }
+	  assert((dr2 > SQR(2*sd_radius*(1+1e-5))));
+	}
+      }
+    }
+  }
   return 0;
 }
 
