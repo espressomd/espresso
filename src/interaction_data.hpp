@@ -687,25 +687,25 @@ typedef struct {
       double phi0;
       double distmin;
       double distmax;
-    } 
+
 } Endangledist_bond_parameters;
 
-		typedef struct {
-			double a1;
-			double a2;
-			double a3;
-			double b1;
-			double b2;
-			double b3;
-			double lo;
-			double lpo;
-			double sinpo;
-			double cospo;
-			double Area0;
-			double maxdist;
-			double ks;
-			double ka;
-		} Triel_bond_parameters;
+typedef struct {
+  double a1;
+  double a2;
+  double a3;
+  double b1;
+  double b2;
+  double b3;
+  double lo;
+  double lpo;
+  double sinpo;
+  double cospo;
+  double Area0;
+  double maxdist;
+  double ks;
+  double ka;
+} Triel_bond_parameters;
 
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
@@ -728,7 +728,7 @@ typedef union {
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
     Endangledist_bond_parameters endangledist;
-	Triel_bond_parameters triel
+  Triel_bond_parameters triel;
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */

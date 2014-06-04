@@ -234,7 +234,7 @@ file mkdir "vtkfiles"
 # file mkdir "cellSeq"
 
 #tools needed for system setup (Juropa or local)
-set tclToolsDir "~/Desktop/github/espresso/triel_sim/tclTools"
+set tclToolsDir "~/tclTools"
 source "$tclToolsDir/addCell_tools.tcl"
 source "$tclToolsDir/writeVtk_folded.tcl"
 source "$tclToolsDir/addCell_fixed.tcl"
@@ -251,7 +251,7 @@ setmd skin 0.1
 # timestep
 setmd time_step $dt_md
 # coose how good no slip condition is: 0 non, 1 better
-# setmd sequ 1
+setmd sequ 1
 
 # setting up the fluid with or without using gpu
 lbfluid gpu agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta
