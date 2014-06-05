@@ -2497,7 +2497,13 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
     updatePartCfg(WITHOUT_BONDS);
     for (i = 0; i < n_part; i++) {
         if (partCfg[i].p.type == type) {
-            E_kin += PMASS(partCfg[i]) * sqrlen(partCfg[i].m.v);
+#ifdef MULTI_TIMESTEP
+            printf("here\n");
+            if (smaller_time_step > 0.)
+                E_kin += PMASS(partCfg[i]) * SQR(time_step/smaller_time_step) * sqrlen(partCfg[i].m.v);
+            else
+#endif
+                E_kin += PMASS(partCfg[i]) * sqrlen(partCfg[i].m.v);
         }
     }
     E_kin *= 0.5 / time_step / time_step;

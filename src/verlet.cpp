@@ -196,8 +196,8 @@ void calculate_verlet_ia()
         p2 = pairs[i+1];                  /* pointer to particle 2 */
 #ifdef MULTI_TIMESTEP
         if (smaller_time_step < 0. 
-            || (p1->p.smaller_timestep==1 && p2->p.smaller_timestep==1 && current_time_step_is_small==1)
-            || (!(p1->p.smaller_timestep==1 && p2->p.smaller_timestep==1) && current_time_step_is_small==0))
+            || (p1->p.smaller_timestep==0 && p2->p.smaller_timestep==0 && current_time_step_is_small==0)
+            || (!(p1->p.smaller_timestep==0 && p2->p.smaller_timestep==0) && current_time_step_is_small==1))
 #endif 
         {
           dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
@@ -250,10 +250,15 @@ void build_verlet_lists_and_calc_verlet_ia()
 	j_start = 0;
 	/* Tasks within cell: bonded forces, store old position, avoid double counting */
 	if(n == 0) {
-	  add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-	  add_constraints_forces(&p1[i]);
+#ifdef MULTI_TIMESTEP
+    if (p1[i].p.smaller_timestep==current_time_step_is_small || smaller_time_step < 0.)
 #endif
+    {
+        add_bonded_force(&p1[i]);
+#ifdef CONSTRAINTS
+        add_constraints_forces(&p1[i]);
+#endif
+    }
 	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 	  j_start = i+1;
 	}
@@ -275,10 +280,16 @@ void build_verlet_lists_and_calc_verlet_ia()
 	  if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
 	    ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
 	    ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
-
 	    add_pair(pl, &p1[i], &p2[j]);
-	    /* calc non bonded interactions */
-	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+#ifdef MULTI_TIMESTEP
+      if (smaller_time_step < 0.
+        || (p1[i].p.smaller_timestep==0 && p2[j].p.smaller_timestep==0 && current_time_step_is_small==0)
+        || (!(p1[i].p.smaller_timestep==0 && p2[j].p.smaller_timestep==0) && current_time_step_is_small==1))
+#endif      
+      {
+	      /* calc non bonded interactions */
+	      add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+      }
 	  }
 	 }
 	}

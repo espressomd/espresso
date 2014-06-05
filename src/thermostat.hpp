@@ -147,11 +147,10 @@ inline void friction_thermo_langevin(Particle *p)
   double langevin_pref1_temp, langevin_pref2_temp;
 #endif
 #ifdef MULTI_TIMESTEP
-  extern double smaller_time_step;
-  extern int current_time_step_is_small;
   extern double langevin_pref1_small, langevin_pref2_small;
 #endif
-  
+
+
   int j;
 #ifdef MASS
   double massf = sqrt(PMASS(*p));
@@ -255,7 +254,7 @@ inline void friction_thermo_langevin(Particle *p)
     if (p->p.smaller_timestep==1 && current_time_step_is_small==1)
       p->f.f[j] = langevin_pref1_small*p->m.v[j]*PMASS(*p) + langevin_pref2_small*(d_random()-0.5)*massf;
     else if (p->p.smaller_timestep==0 && current_time_step_is_small==0)
-      p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
+      p->f.f[j] = langevin_pref1_small*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
     else 
       p->f.f[j] = 0.;
   } else
@@ -276,7 +275,7 @@ inline void friction_thermo_langevin(Particle *p)
     else p->f.f[j] = 0;
 #endif
   }
-//  printf("%d: %e %e %e %e %e %e\n",p->p.identity, p->f.f[0],p->f.f[1],p->f.f[2], p->m.v[0],p->m.v[1],p->m.v[2]);
+  // printf("%d: %e %e %e %e %e %e\n",p->p.identity, p->f.f[0],p->f.f[1],p->f.f[2], p->m.v[0],p->m.v[1],p->m.v[2]);
   
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));

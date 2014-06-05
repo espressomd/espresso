@@ -474,7 +474,7 @@ inline void add_kinetic_energy(Particle *p1)
 #endif
 
 #ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0. && p1->p.smaller_timestep)
+  if (smaller_time_step > 0.)
     /* kinetic energy */
     energy.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
   else

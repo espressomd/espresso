@@ -57,8 +57,8 @@ double ghmc_phi = 0;
 
 double langevin_pref1, langevin_pref2, langevin_pref2_rotation;
 #ifdef MULTI_TIMESTEP
-double langevin_pref1_small, langevin_pref2_small;
-static double langevin_pref2_small_buffer;
+  double langevin_pref1_small, langevin_pref2_small;
+  static double langevin_pref2_small_buffer;
 #endif
 
 /** buffers for the work around for the correlated random values which cool the system,

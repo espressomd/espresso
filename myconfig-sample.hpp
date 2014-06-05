@@ -3,7 +3,7 @@
 
     Create a copy of this file in any of these locations: 
         @myconfig@ 
-	/people/thnfs/homes/bereau/soft/espressomd-mts/@myconfig@
+	/people/thnfs/homes/bereau/soft/espressomd/@myconfig@
 
     Then uncomment any of the following lines to activate the
     corresponding feature of ESPResSo. It is recommended to activate
