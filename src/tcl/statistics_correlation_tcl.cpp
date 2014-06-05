@@ -578,6 +578,9 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
   } else if (ARG_IS_S_EXACT(0,"complex_conjugate_product")) {
     *change=1;
     return TCL_OK;
+  } else if (ARG_IS_S_EXACT(0,"tensor_product")) {
+    *change=1;
+    return TCL_OK;
   } else if (ARG_IS_S_EXACT(0,"square_distance_componentwise")) {
     *change=1;
     return TCL_OK;

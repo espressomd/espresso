@@ -196,9 +196,6 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
     dim_B = dim_A;
   else if (dim_B>0)
     self->autocorrelation=0;
-  else if (dim_A != dim_B) 
-    return 8;
-    // currently there is no correlation function able to handel observables of different dimensionalities
   else 
     return 7;
   self->dim_B = dim_B;
@@ -222,6 +219,10 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   } else if ( strcmp(corr_operation_name,"complex_conjugate_product") == 0 ) {
     dim_corr = dim_A;
     self->corr_operation = &complex_conjugate_product;
+    self->args = NULL;
+  } else if ( strcmp(corr_operation_name,"tensor_product") == 0 ) {
+    dim_corr = dim_A*dim_B;
+    self->corr_operation = &tensor_product;
     self->args = NULL;
   } else if ( strcmp(corr_operation_name,"square_distance_componentwise") == 0 ) {
     dim_corr = dim_A;
@@ -643,8 +644,9 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
     printf("Error in componentwise product: The vector sizes do not match");
     return 5;
   }
-  for ( i = 0; i < dim_A; i++ )
+  for ( i = 0; i < dim_A; i++ ) {
     C[i] = A[i]*B[i];
+  }
   return 0;
 }
 
@@ -663,6 +665,17 @@ int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsign
   return 0;
 }
 
+int tensor_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
+  unsigned int i,j;
+  for ( i = 0; i < dim_A; i++ )
+  {
+    for ( j = 0; j < dim_B; j++ )
+    {
+      C[i*dim_B + j] = A[i]*B[j];
+    }
+  }
+  return 0;
+}
 
 int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   unsigned int i;
@@ -675,7 +688,6 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
   }
   return 0;
 }
-
 
 int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   DoubleList *wsquare = (DoubleList*)args;
