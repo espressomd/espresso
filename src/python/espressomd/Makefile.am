@@ -94,6 +94,10 @@ $(CPPFILES): %.cpp: %.pyx %.pxd myconfig.pxi
 
 CLEANFILES += $(CPPFILES)
 
+# Dummy target to generate libtool rules
+noinst_PROGRAMS = dummy
+nodist_dummy_SOURCES = dummy.cpp
+
 # Generate the ".la" files. We do not really need these files, but we
 # want to use libtool, so we have to give it a corresponding target.
 # Also, like this, the .so-files are installed to the right place.
@@ -116,8 +120,9 @@ gen_pxiconfig.cpp: $(srcdir)/gen_pxiconfig.py $(top_srcdir)/src/features.def
 	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_pxiconfig.py \
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
-noinst_PROGRAMS = gen_pxiconfig
-nodist_gen_pxiconfig_SOURCES = gen_pxiconfig.cpp $(top_builddir)/src/core/config.hpp
+gen_pxiconfig_CPPFLAGS=-I$(top_srcdir)/src/core -I$(top_builddir)/src/core -I$(top_builddir)/src
+gen_pxiconfig: gen_pxiconfig.cpp $(top_builddir)/src/core/config.hpp $(top_builddir)/src/core/myconfig-final.hpp
+	$(AM_V_CXXLD)$(CXXLINK) $(gen_pxiconfig_CPPFLAGS) $<
 
 # create myconfig.pxi from gen_pxiconfig
 myconfig.pxi: gen_pxiconfig
