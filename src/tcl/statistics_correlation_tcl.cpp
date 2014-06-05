@@ -428,7 +428,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
     // Else we must parse the other arguments and see if we can construct a fully
     // working correlation class instance from that.
     while (argc > 0) {
-      if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
+      if ( ARG0_IS_S("first_obs") || ARG0_IS_S_EXACT("obs1") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
           if (temp>=n_observables) {
              Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
@@ -441,7 +441,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
           tclcommand_correlation_print_usage(interp);
           return TCL_ERROR;
         }
-      } else if ( ARG0_IS_S("second_obs") || ARG0_IS_S("obs2") ) {
+      } else if ( ARG0_IS_S("second_obs") || ARG0_IS_S_EXACT("obs2") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
           if (temp>=n_observables) {
              Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
