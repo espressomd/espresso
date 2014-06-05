@@ -31,6 +31,7 @@ endif
 # Build rules for cython
 SUFFIXES = .pyx
 
+EXTRA_DIST = gen_pxiconfig.py
 PYFILES = __init__.py
 
 PYXFILES =  \
@@ -53,6 +54,7 @@ PXDFILES = \
 	System.pxd \
 	particle_data.pxd \
 	analyze.pxd \
+	c_analyze.pxd \
 	cellsystem.pxd \
 	changeVolume.pxd \
 	code_info.pxd \
@@ -78,7 +80,7 @@ all-local: python-all
 PYCFILES = $(PYFILES:.py=.pyc)
 CLEANFILES = $(PYFILES) $(PYCFILES)
 
-EXTRA_DIST = $(PYFILES) $(PYXFILES) $(PXDFILES)
+EXTRA_DIST += $(PYFILES) $(PYXFILES) $(PXDFILES)
 
 # Generate the ".cpp" files 
 CPPFILES = $(PYXFILES:.pyx=.cpp)
