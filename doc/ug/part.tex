@@ -20,7 +20,7 @@
 \chapter{Setting up particles}
 \label{chap:part}
 
-\section{\texttt{part}: Creating single particles}
+\section{\keyword{part}: Creating single particles}
 \newescommand{part}
 
 \subsection{Defining particle properties}
@@ -764,9 +764,6 @@ constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore
 Negative distances mean that the position is ``within'' the area that
 particles should not access. Helpful to find initial configurations.) 
 
-\emph{Note that constraints are not saved to checkpoints and that they have to
-be reset upon restarting a simulation.}
-
 The resulting surface in variant \variant{1} is a plane defined by the
 normal vector \var{n_x} \var{n_y} \var{n_z} and the distance
 \var{d} from the origin. The force acts in direction of the normal. 
@@ -897,7 +894,6 @@ constraint is displayed, otherwise all constraints will be printed.
  \begin{essyntax}
    harmonic_force \{ \var{x} \var{y} \var{z} \} \var{k}
   \begin{features}
-    \required{HARMONICFORCE}
     \required{CUDA}
   \end{features}
  \end{essyntax}

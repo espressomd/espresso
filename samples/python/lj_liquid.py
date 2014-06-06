@@ -1,7 +1,7 @@
 from __future__ import print_function
-import espresso.System as es
+import espressomd.System as es
 import numpy
-from espresso import code_info
+from espressomd import code_info
 
 print("""
 =======================================================

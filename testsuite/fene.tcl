@@ -47,8 +47,6 @@ if { [catch {
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
     }
-    # to ensure force recalculation
-    invalidate_system
     integrate 0
 
     # ensures that no other forces are on

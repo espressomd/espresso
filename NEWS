@@ -29,17 +29,25 @@ New user-visible features
 * MEMD electrostatics can now handle spatially varying dielectrc
   constants.
 
-* pore constraint / lbboundary can have a two outer radii now to create nozzles.
+* Pore constraint / lbboundary can have a two outer radii now to create nozzles.
 
-* slitpore constraint and dielectric for IL based supercaps implemented.
+* Slitpore constraint and dielectric for IL based supercaps implemented.
 
 * New command time_integration to get the runtime of the integration
   loop.
 
-* New harmonic force that runs on the GPU.
+* New harmonic well that runs on the GPU.
 
 User-visible changes
 --------------------
+
+* Added new arguments "recalc_forces" and "reuse_forces" to the
+  command "integrate". These arguments can be used to enforce or
+  suppress the recalculation of the forces at the beginning of the
+  call to "integrate". This is important for doing checkpoints, where
+  the forces have to be stored and reloaded.
+
+* Removed command "invalidate_system".
 
 * Comfixed now works with periodic boundary conditions.
 
@@ -68,9 +76,11 @@ User-visible changes
 
 * Removed outdated ADRESS code.
 
-* external_potential tabulated to include arbitrary potentials applied to all particles
+* external_potential tabulated to include arbitrary potentials applied to all 
+  particles.
 
-* thermostat inter_dpd ignore_fixed_particles 1 allows the user to swith on DPD with fixed particles
+* thermostat inter_dpd ignore_fixed_particles 1 allows the user to swith on DPD 
+  with fixed particles.
 
 * New Observable concept that includes running averages and other observables 
   with history
@@ -79,11 +89,14 @@ User-visible changes
 Changes visible for developers
 ------------------------------
 
+* Feature GHOSTS_HAVE_BONDS allows for ghost particles to also store the bonds.
+
 * The code has been switched to using a C++ compiler.
 
-* The EspressoInterfaceClass has changed.
+* Introduced object-oriented interfaces for forces/constraints/external fields: 
+  SystemInterface and Actor. 
 
-* Improved Lattice Structure
+* Improved Lattice structure
 
 * Generic TclAppend function
 
