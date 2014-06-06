@@ -2,7 +2,7 @@
 if test -n "$PYTHONPATH"; then
     PYTHONPATH=$PYTHONPATH:@abs_top_builddir@
 else
-    PYTHONPATH=@@
+    PYTHONPATH=@abs_top_builddir@
 fi
 export PYTHONPATH
 exec @PYTHON@ $@

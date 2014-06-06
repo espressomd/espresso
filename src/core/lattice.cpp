@@ -151,56 +151,56 @@ void lattice_interpolate_linear_gradient(Lattice* lattice, double* pos, double* 
    }
    
    index=get_linear_index(   left_halo_index[0], left_halo_index[1], left_halo_index[2], lattice->halo_grid);
-   for (int i = 0; i<lattice->dim; i++) {
+   for (unsigned int i = 0; i<lattice->dim; i++) {
      lattice_get_data_for_linear_index(lattice, index, (void**) &local_value);
      value[3*i  ]+= (  -1  )*(1-d[1])*(1-d[2]) * local_value[i] / lattice->agrid[0];
      value[3*i+1]+= (1-d[0])*( -1   )*(1-d[2]) * local_value[i] / lattice->agrid[1];
      value[3*i+2]+= (1-d[0])*(1-d[1])*(  -1  ) * local_value[i] / lattice->agrid[2];
    }
    index=get_linear_index(   left_halo_index[0]+1, left_halo_index[1], left_halo_index[2], lattice->halo_grid);
-   for (int i = 0; i<lattice->dim; i++) {
+   for (unsigned int i = 0; i<lattice->dim; i++) {
      lattice_get_data_for_linear_index(lattice, index, (void**) &local_value);
      value[3*i  ]+= (  +1  )*(1-d[1])*(1-d[2]) * local_value[i] / lattice->agrid[0];
      value[3*i+1]+= ( +d[0])*( -1   )*(1-d[2]) * local_value[i] / lattice->agrid[1];
      value[3*i+2]+= ( +d[0])*(1-d[1])*(  -1  ) * local_value[i] / lattice->agrid[2];
    }
    index=get_linear_index(   left_halo_index[0], left_halo_index[1]+1, left_halo_index[2], lattice->halo_grid);
-   for (int i = 0; i<lattice->dim; i++) {
+   for (unsigned int i = 0; i<lattice->dim; i++) {
      lattice_get_data_for_linear_index(lattice, index, (void**) &local_value);
      value[3*i  ]+= (  -1  )*( +d[1])*(1-d[2]) * local_value[i] / lattice->agrid[0];
      value[3*i+1]+= (1-d[0])*( +1   )*(1-d[2]) * local_value[i] / lattice->agrid[1];
      value[3*i+2]+= (1-d[0])*( +d[1])*(  -1  ) * local_value[i] / lattice->agrid[2];
    }
    index=get_linear_index(   left_halo_index[0]+1, left_halo_index[1]+1, left_halo_index[2], lattice->halo_grid);
-   for (int i = 0; i<lattice->dim; i++) {
+   for (unsigned int i = 0; i<lattice->dim; i++) {
      lattice_get_data_for_linear_index(lattice, index, (void**) &local_value);
      value[3*i  ]+= (  +1  )*( +d[1])*(1-d[2]) * local_value[i] / lattice->agrid[0];
      value[3*i+1]+= ( +d[0])*( +1   )*(1-d[2]) * local_value[i] / lattice->agrid[1];
      value[3*i+2]+= ( +d[0])*( +d[1])*(  -1  ) * local_value[i] / lattice->agrid[2];
    }
    index=get_linear_index(   left_halo_index[0]  , left_halo_index[1]  , left_halo_index[2] + 1, lattice->halo_grid);
-   for (int i = 0; i<lattice->dim; i++) {
+   for (unsigned int i = 0; i<lattice->dim; i++) {
      lattice_get_data_for_linear_index(lattice, index, (void**) &local_value);
      value[3*i  ]+= (  -1  )*(1-d[1])*( +d[2]) * local_value[i] / lattice->agrid[0];
      value[3*i+1]+= (1-d[0])*( -1   )*( +d[2]) * local_value[i] / lattice->agrid[1];
      value[3*i+2]+= (1-d[0])*(1-d[1])*(  +1  ) * local_value[i] / lattice->agrid[2];
    }
    index=get_linear_index(   left_halo_index[0]+1, left_halo_index[1], left_halo_index[2]+1, lattice->halo_grid);
-   for (int i = 0; i<lattice->dim; i++) {
+   for (unsigned int i = 0; i<lattice->dim; i++) {
      lattice_get_data_for_linear_index(lattice, index, (void**) &local_value);
      value[3*i  ]+= (  +1  )*(1-d[1])*( +d[2]) * local_value[i] / lattice->agrid[0];
      value[3*i+1]+= ( +d[0])*( -1   )*( +d[2]) * local_value[i] / lattice->agrid[1];
      value[3*i+2]+= ( +d[0])*(1-d[1])*(  +1  ) * local_value[i] / lattice->agrid[2];
    }
    index=get_linear_index(   left_halo_index[0], left_halo_index[1]+1, left_halo_index[2]+1, lattice->halo_grid);
-   for (int i = 0; i<lattice->dim; i++) {
+   for (unsigned int i = 0; i<lattice->dim; i++) {
      lattice_get_data_for_linear_index(lattice, index, (void**) &local_value);
      value[3*i  ]+= (  -1  )*( +d[1])*( +d[2]) * local_value[i] / lattice->agrid[0];
      value[3*i+1]+= (1-d[0])*( +1   )*( +d[2]) * local_value[i] / lattice->agrid[1];
      value[3*i+2]+= (1-d[0])*( +d[1])*(  +1  ) * local_value[i] / lattice->agrid[2];
    }
    index=get_linear_index(   left_halo_index[0]+1, left_halo_index[1]+1, left_halo_index[2]+1, lattice->halo_grid);
-   for (int i = 0; i<lattice->dim; i++) {
+   for (unsigned int i = 0; i<lattice->dim; i++) {
      lattice_get_data_for_linear_index(lattice, index, (void**) &local_value);
      value[3*i  ]+= (  +1  )*( +d[1])*( +d[2]) * local_value[i] / lattice->agrid[0];
      value[3*i+1]+= ( +d[0])*( +1   )*( +d[2]) * local_value[i] / lattice->agrid[1];
@@ -247,14 +247,14 @@ void lattice_interpolate_linear(Lattice* lattice, double* pos, double* value) {
    w[7] = ( +d[0])*( +d[1])*( +d[2]);
    index[7]=get_linear_index(   left_halo_index[0]+1, left_halo_index[1]+1, left_halo_index[2]+1, lattice->halo_grid);
    
-   for (int i = 0; i<lattice->dim; i++) {
+   for (unsigned int i = 0; i<lattice->dim; i++) {
      value[i] = 0;
    }
 
    double* local_value;
-   for (int i=0; i<8; i++) {
+   for (unsigned int i=0; i<8; i++) {
      lattice_get_data_for_linear_index(lattice, index[i], (void**) &local_value);
-     for (int j = 0; j<lattice->dim; j++) {
+     for (unsigned int j = 0; j<lattice->dim; j++) {
        value[j]+=w[i]*local_value[j];
      }
    }
