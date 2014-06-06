@@ -67,7 +67,7 @@
 #include "mmm2d_tcl.hpp"
 #include "p3m_tcl.hpp"
 #include "reaction_field_tcl.hpp"
-#include "mmm1dgpu_tcl.hpp"
+#include "actor/Mmm1dgpu_tcl.hpp"
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"

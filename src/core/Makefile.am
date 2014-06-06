@@ -174,6 +174,7 @@ CUDA_HEADER_FILES = \
 	cuda_interface.hpp \
 	p3m_gpu.hpp \
 	cuda_init.hpp \
+	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
 	electrokinetics.hpp
 
 CUDA_SOURCE_FILES = \
@@ -183,6 +184,7 @@ CUDA_SOURCE_FILES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
+	actor/Mmm1dgpuForce.cu actor/Mmm1dgpuForce.hpp \
 	actor/HarmonicWell_cuda.cu
 
 # include the dependency tracking files

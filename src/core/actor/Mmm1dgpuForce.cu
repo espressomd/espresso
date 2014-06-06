@@ -1,4 +1,4 @@
-#include "Mmm1dgpuForce.hpp"
+#include "actor/Mmm1dgpuForce.hpp"
 #include "cuda_utils.hpp"
 
 #ifdef MMM1D_GPU
@@ -15,6 +15,24 @@ float multigpu_factors[] = {1.0};
 #include "mmm1d.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
+#include "forces.hpp"
+#include "EspressoSystemInterface.hpp"
+
+void addMmm1dgpuForce(double coulomb_prefactor, double maxPWerror, double switch_rad, int bessel_cutoff)
+{
+	static Mmm1dgpuForce *mmm1dgpuForce = NULL;
+	if (!mmm1dgpuForce) // inter coulomb mmm1dgpu was never called before
+	{
+		// coulomb prefactor gets updated in Mmm1dgpuForce::run()
+		mmm1dgpuForce = new Mmm1dgpuForce(espressoSystemInterface, 0, maxPWerror, switch_rad, bessel_cutoff);
+		potentials.push_back(mmm1dgpuForce);
+	}
+	else // we only need to update the parameters
+	{
+		mmm1dgpuForce->set_params(0, 0, maxPWerror, switch_rad, bessel_cutoff);
+		mmm1dgpuForce->tune(espressoSystemInterface, maxPWerror, switch_rad, bessel_cutoff);
+	}
+}
 
 __device__ inline void atomicadd(float* address, float value)
 {
@@ -47,7 +65,8 @@ __constant__ mmm1dgpu_real maxPWerror = 1e-5;
 Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror,
 	mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
 :coulomb_prefactor(_coulomb_prefactor), maxPWerror(_maxPWerror), far_switch_radius(_far_switch_radius),
-	bessel_cutoff(_bessel_cutoff), host_boxz(0), host_npart(0), pairs(-1), dev_forcePairs(NULL)
+	bessel_cutoff(_bessel_cutoff), host_boxz(0), host_npart(0), pairs(-1), dev_forcePairs(NULL), dev_energyBlocks(NULL),
+	numThreads(64), need_tune(true)
 {
 	// interface sanity checks
 	if(!s.requestFGpu())
@@ -66,31 +85,25 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefacto
 		exit(EXIT_FAILURE);
 	}
 
+	// turn on MMM1DGPU
+	coulomb.method = COULOMB_MMM1D_GPU;
+	mpi_bcast_coulomb_params();
+	modpsi_init();
+}
+
+void Mmm1dgpuForce::setup(SystemInterface &s)
+{
 	if (s.box()[2] <= 0)
 	{
 		std::cerr << "Error: Please set box length before initializing MMM1D!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-
-	if (s.npart_gpu() <= 0 && far_switch_radius < 0)
+	if (need_tune == true && s.npart_gpu() > 0)
 	{
-		std::cerr << "Warning: Please add particles to system before intializing MMM1D." << std::endl;
-		std::cerr << "Tuning will not be performed! Setting far switch radius to half box length." << std::endl;
-		far_switch_radius = s.box()[2]/2;
+		printf("Tuning in setup\n");
+		set_params(s.box()[2], coulomb_prefactor, maxPWerror, far_switch_radius, bessel_cutoff);
+		tune(s, maxPWerror, far_switch_radius, bessel_cutoff);
 	}
-
-	// turn on MMM1DGPU
-	modpsi_init();
-	set_params(s.box()[2], coulomb_prefactor, maxPWerror, far_switch_radius, bessel_cutoff);
-	coulomb.method = COULOMB_MMM1D_GPU;
-	mpi_bcast_coulomb_params();
-	tune(s, maxPWerror, far_switch_radius, bessel_cutoff);
-
-	setup(s);
-}
-
-void Mmm1dgpuForce::setup(SystemInterface &s)
-{
 	if (s.box()[2] != host_boxz)
 	{
 		set_params(s.box()[2], 0,-1,-1,-1);
@@ -123,7 +136,18 @@ void Mmm1dgpuForce::setup(SystemInterface &s)
 		printf("Allocating %d bytes of memory for vector reduction\n", 3*s.npart_gpu()*s.npart_gpu()*sizeof(mmm1dgpu_real));
 		HANDLE_ERROR( cudaMalloc((void**)&dev_forcePairs, 3*s.npart_gpu()*s.npart_gpu()*sizeof(mmm1dgpu_real)) );
 	}
+	if (dev_energyBlocks)
+		cudaFree(dev_energyBlocks);
+	HANDLE_ERROR( cudaMalloc((void**)&dev_energyBlocks, numBlocks(s)*sizeof(mmm1dgpu_real)) );
 	host_npart = s.npart_gpu();
+}
+
+unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s)
+{
+	int b = s.npart_gpu()*s.npart_gpu()/numThreads+1;
+	if (b > 65535)
+		b = 65535;
+	return b;
 }
 
 Mmm1dgpuForce::~Mmm1dgpuForce()
@@ -479,12 +503,11 @@ __global__ void vectorReductionKernel(mmm1dgpu_real *src, mmm1dgpu_real *dst, in
 	}
 }
 
-void Mmm1dgpuForce::calc(SystemInterface &s)
+void Mmm1dgpuForce::computeForces(SystemInterface &s)
 {
 	if (coulomb.method != COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody cares about our calculations anymore
 	{
-		::mmm1dgpuForce = NULL;
-		delete this;
+		std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation" << std::endl;
 		return;
 	}
 	setup(s);
@@ -495,27 +518,33 @@ void Mmm1dgpuForce::calc(SystemInterface &s)
 		exit(EXIT_FAILURE);
 	}
 
-	int numThreads = 64;
-	int numBlocks = s.npart_gpu()*s.npart_gpu()/numThreads+1;
-	if (numBlocks > 65535)
-		numBlocks = 65535;
-
 	if (pairs) // if we calculate force pairs, we need to reduce them to forces
 	{
 		int blocksRed = s.npart_gpu()/numThreads+1;
-		KERNELCALL(forcesKernel,numBlocks,numThreads,(s.rGpuBegin(), s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs))
+		KERNELCALL(forcesKernel,numBlocks(s),numThreads,(s.rGpuBegin(), s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs))
 		KERNELCALL(vectorReductionKernel,blocksRed,numThreads,(dev_forcePairs, s.fGpuBegin(), s.npart_gpu()))
 	}
 	else
 	{
-		KERNELCALL(forcesKernel,numBlocks,numThreads,(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), pairs))
+		KERNELCALL(forcesKernel,numBlocks(s),numThreads,(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), pairs))
 	}
 }
 
-void Mmm1dgpuForce::calc_energy(SystemInterface &s)
+/*
+void Mmm1dgpuForce::computeEnergy(SystemInterface &s) // TODO: this is not yet tested
 {
-	// TODO
+	if (pairs < 0)
+	{
+		std::cerr << "MMM1D was not initialized correctly" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	int shared = numThreads*sizeof(mmm1dgpu_real);
+
+	KERNELCALL_shared(energiesKernel,numBlocks(s),numThreads,shared,(s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks, s.npart_gpu(), pairs));
+	KERNELCALL_shared(sumKernel,1,numThreads,shared,(dev_energyBlocks, numBlocks(s)));
+	HANDLE_ERROR( cudaMemcpyAsync(&dev_energyBlocks, s.eGpuBegin(), sizeof(mmm1dgpu_real), cudaMemcpyDeviceToDevice, stream[0]) );
 }
+*/
 
 float Mmm1dgpuForce::force_benchmark(SystemInterface &s)
 {
@@ -528,7 +557,7 @@ float Mmm1dgpuForce::force_benchmark(SystemInterface &s)
 	HANDLE_ERROR( cudaEventCreate(&eventStart) );
 	HANDLE_ERROR( cudaEventCreate(&eventStop) );
 	HANDLE_ERROR( cudaEventRecord(eventStart, stream) );
-	calc(s);
+	//KERNELCALL(forcesKernel,numBlocks(s),numThreads,(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), 0))
 	HANDLE_ERROR( cudaEventRecord(eventStop, stream) );
 	HANDLE_ERROR( cudaEventSynchronize(eventStop) );
 	HANDLE_ERROR( cudaEventElapsedTime(&elapsedTime, eventStart, eventStop) );
