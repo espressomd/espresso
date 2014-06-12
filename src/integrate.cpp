@@ -187,7 +187,8 @@ void integrate_vv(int n_steps)
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
       current_time_step_is_small = 1;
       // Compute forces for small timestep -> get virial contribution.
-      thermo_heat_up();
+      if (recalc_forces)
+        thermo_heat_up();
       force_calc();
       thermo_cool_down();
       ghost_communicator(&cell_structure.collect_ghost_force_comm);
@@ -195,6 +196,11 @@ void integrate_vv(int n_steps)
       // Store virial
       for(j=0;j<3;++j)
         virial_store[j] = nptiso.p_vir[j];
+      thermo_heat_up();
+      force_calc();
+      thermo_cool_down();
+      ghost_communicator(&cell_structure.collect_ghost_force_comm);
+      rescale_forces();
     }
   }
 #endif
@@ -255,6 +261,14 @@ void integrate_vv(int n_steps)
     rescale_forces();
     recalc_forces = 0;
 
+#ifdef MULTI_TIMESTEP
+#ifdef NPT
+    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO) 
+      for(j=0;j<3;++j)
+        nptiso.p_vir[j] += virial_store[j];
+#endif
+#endif
+
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
@@ -283,14 +297,6 @@ void integrate_vv(int n_steps)
       if ((int) fmod(i,ghmc_nmd) == 0)
         ghmc_momentum_update();
     }
-#endif
-
-#ifdef MULTI_TIMESTEP
-#ifdef NPT
-    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO) 
-      for(j=0;j<3;++j)
-        nptiso.p_vir[j] += virial_store[j];
-#endif
 #endif
 
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
