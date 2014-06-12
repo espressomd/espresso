@@ -97,7 +97,7 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #endif
 
 /** The underlying lattice structure */
-Lattice lblattice;
+Lattice lblattice=new Lattice();
 
 /** Pointer to the velocity populations of the fluid nodes */
 double **lbfluid[2] = { NULL, NULL };
@@ -1013,7 +1013,7 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
     double rho; double j[3]; double pi[6];
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    node = lblattice.map_lattice_to_node(ind_shifted,grid);
     index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
   
     mpi_recv_fluid(node,index,&rho,j,pi);
@@ -1045,7 +1045,7 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
     double rho; double j[3]; double pi[6];
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    node = lblattice.map_lattice_to_node(ind_shifted,grid);
     index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
   
     mpi_recv_fluid(node,index,&rho,j,pi);
@@ -1175,7 +1175,7 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
     double rho; double j[3]; double pi[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    node = lblattice.map_lattice_to_node(ind_shifted,grid);
     index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
   
     mpi_recv_fluid(node,index,&rho,j,pi);
@@ -1205,7 +1205,7 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
     int node, grid[3], ind_shifted[3];
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    node = lblattice.map_lattice_to_node(ind_shifted,grid);
     index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
   
     mpi_recv_fluid_boundary_flag(node,index,p_boundary);
@@ -1225,7 +1225,7 @@ int lb_lbnode_get_pop(int* ind, double* p_pop) {
     int node, grid[3], ind_shifted[3];
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    node = lblattice.map_lattice_to_node(ind_shifted,grid);
     index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
     mpi_recv_fluid_populations(node, index, p_pop);
 #endif
@@ -1251,7 +1251,7 @@ int lb_lbnode_set_rho(int* ind, double *p_rho){
     double rho; double j[3]; double pi[6];
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    node = lblattice.map_lattice_to_node(ind_shifted,grid);
     index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
 
     mpi_recv_fluid(node,index,&rho,j,pi);
@@ -1282,7 +1282,7 @@ int lb_lbnode_set_u(int* ind, double* u){
     double rho; double j[3]; double pi[6];
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    node = lblattice.map_lattice_to_node(ind_shifted,grid);
     index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
 
     /* transform to lattice units */
@@ -1316,7 +1316,7 @@ int lb_lbnode_set_pop(int* ind, double* p_pop) {
     int node, grid[3], ind_shifted[3];
 
     ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    node = lblattice.map_lattice_to_node(ind_shifted,grid);
     index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
 #endif
@@ -1911,7 +1911,7 @@ void lb_init() {
   }
 
   /* initialize the local lattice domain */
-  init_lattice(&lblattice, temp_agrid, temp_offset, 1, 0);  
+  lblattice.init(temp_agrid, temp_offset, 1, 0);
 //  int init_lattice(Lattice *lattice, double* agrid, double* offset, int halo_size, size_t element_size);
 
   if (check_runtime_errors()) return;
@@ -2752,7 +2752,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 
   /* determine elementary lattice cell surrounding the particle 
      and the relative position of the particle in this cell */ 
-  map_position_to_lattice(&lblattice,p->r.p,node_index,delta);
+  lblattice.map_position_to_lattice(p->r.p,node_index,delta);
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]));
 
@@ -2848,7 +2848,7 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   
   /* determine elementary lattice cell surrounding the particle 
      and the relative position of the particle in this cell */ 
-  map_position_to_lattice(&lblattice,pos,node_index,delta);
+  lblattice.map_position_to_lattice(pos,node_index,delta);
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
