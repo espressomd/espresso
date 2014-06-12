@@ -157,7 +157,7 @@ void lb_calc_densprof(double *result, int *params) {
   dir[(pdir+1)%3] = x1;
   dir[(pdir+2)%3] = x2;
 
-  newroot = map_lattice_to_node(&lblattice, dir, grid);
+  newroot = lblattice.map_lattice_to_node(dir, grid);
   map_node_array(this_node, node_pos);
 
   if (     (grid[(pdir+1)%3] == node_pos[(pdir+1)%3])
@@ -241,7 +241,7 @@ void lb_calc_velprof(double *result, int *params) {
 
   //fprintf(stderr,"%d: (%d,%d,%d)\n",this_node,dir[0],dir[1],dir[2]);
 
-  newroot = map_lattice_to_node(&lblattice, dir, grid);
+  newroot = lblattice.map_lattice_to_node(dir, grid);
   map_node_array(this_node, node_pos);
 
   //fprintf(stderr,"%d: newroot=%d (%d,%d,%d)\n",this_node,newroot,grid[0],grid[1],grid[2]);
