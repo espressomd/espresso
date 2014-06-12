@@ -107,7 +107,7 @@ void thermo_cool_down();
     @return       j-component of the noise added to the velocity, also scaled by dt (contained in prefactors) */
 inline double friction_therm0_nptiso(double dt_vj) {
   extern double nptiso_pref1, nptiso_pref2;
-  if(thermo_switch & THERMO_NPT_ISO)   
+  if(thermo_switch & THERMO_NPT_ISO)
 #if defined (FLATNOISE)
     return ( nptiso_pref1*dt_vj + nptiso_pref2*(d_random()-0.5) );
 #elif defined (GAUSSRANDOMCUT)

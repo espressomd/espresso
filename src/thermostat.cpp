@@ -87,6 +87,9 @@ void thermo_init_langevin()
   if (smaller_time_step > 0.) {
     langevin_pref1_small = -langevin_gamma/smaller_time_step;
     langevin_pref2_small = sqrt(24.0*temperature*langevin_gamma/smaller_time_step);
+  } else {
+    langevin_pref1_small = -langevin_gamma/time_step;
+    langevin_pref2_small = sqrt(24.0*temperature*langevin_gamma/time_step);
   }
 #endif
   
@@ -110,7 +113,12 @@ void thermo_init_npt_isotropic()
   if (nptiso.piston != 0.0) {
 #if defined (FLATNOISE)
     nptiso_pref1 = -nptiso_gamma0*0.5 * time_step;
-    nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * time_step;
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step > 0.) 
+      nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * smaller_time_step;
+    else
+#endif
+      nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * time_step;
     nptiso_pref3 = -nptiso_gammav*(1.0/nptiso.piston)*0.5*time_step;
     nptiso_pref4 = sqrt(12.0*temperature*nptiso_gammav*time_step);
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)

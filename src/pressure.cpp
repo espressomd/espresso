@@ -118,7 +118,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 #ifdef ROTATION_PER_PARTICLE
     fprintf(stderr, "Switching rotation per particle (#define ROTATION_PER_PARTICLE) and pressure calculation are incompatible.\n");
 #endif
-  
+
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
 
   calc_long_range_virials();

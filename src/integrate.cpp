@@ -90,6 +90,12 @@ double verlet_reuse     = 0.0;
 #ifdef MULTI_TIMESTEP
 double smaller_time_step          = -1.0;
 int    current_time_step_is_small = 0;
+int    mts_index                  = 0;
+int    mts_max                    = 0;
+#ifdef NPT
+double scal_store[3]              = {0.,0.,0.};
+double virial_store[3]            = {0.,0.,0.};
+#endif
 #endif
 
 #ifdef ADDITIONAL_CHECKS
@@ -165,7 +171,7 @@ void integrate_ensemble_init()
 
 void integrate_vv(int n_steps)
 {
-  int i;
+  int i,j;
 
   /* Prepare the Integrator */
   on_integration_start();
@@ -174,11 +180,31 @@ void integrate_vv(int n_steps)
   if (check_runtime_errors())
     return;
 
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0.){
+    mts_max = time_step/smaller_time_step;
+#ifdef NPT
+    if (integ_switch == INTEG_METHOD_NPT_ISO) {
+      current_time_step_is_small = 1;
+      // Compute forces for small timestep -> get virial contribution.
+      thermo_heat_up();
+      force_calc();
+      thermo_cool_down();
+      ghost_communicator(&cell_structure.collect_ghost_force_comm);
+      current_time_step_is_small = 0;
+      // Store virial
+      for(j=0;j<3;++j)
+        virial_store[j] = nptiso.p_vir[j];
+    }
+  }
+#endif
+#endif
+
   /* Verlet list criterion */
   skin2 = SQR(0.5 * skin);
 
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps (recalc_forces=%d)\n",
-		      this_node, n_steps, recalc_forces));
+                      this_node, n_steps, recalc_forces));
    
   /* Integration Step: Preparation for first integration step:
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) ) */
@@ -259,6 +285,14 @@ void integrate_vv(int n_steps)
     }
 #endif
 
+#ifdef MULTI_TIMESTEP
+#ifdef NPT
+    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO) 
+      for(j=0;j<3;++j)
+        nptiso.p_vir[j] += virial_store[j];
+#endif
+#endif
+
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
        v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
@@ -310,7 +344,6 @@ void integrate_vv(int n_steps)
 #endif
 
 #ifdef MULTI_TIMESTEP
-    int j;
     if (smaller_time_step > 0){
       current_time_step_is_small = 1;
       /* Calculate the forces */
@@ -319,20 +352,20 @@ void integrate_vv(int n_steps)
       thermo_cool_down();
       ghost_communicator(&cell_structure.collect_ghost_force_comm);
       rescale_forces();
-      for (j=0;j<time_step/smaller_time_step;++j) {
+      for (mts_index=0;mts_index<mts_max;++mts_index) {
         /* Small integration steps */
         /* Propagate velocities and positions */
-        /* Assumes: not NEMD_METHOD_OFF */
+        /* Assumes: not NEMD_METHOD_OFF; NPT not updated during small steps */
         if(integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
-          propagate_vel();  
-          propagate_pos(); 
-        }
-        else {
-          propagate_vel_pos();  
-        }        
+          propagate_vel();  propagate_pos(); }
+        else
+          propagate_vel_pos();        
         cells_update_ghosts();
         force_calc();
         ghost_communicator(&cell_structure.collect_ghost_force_comm);
+        // Store virial
+        for(j=0;j<3;++j)
+          virial_store[j] = nptiso.p_vir[j];
         rescale_forces_propagate_vel();
       }
       current_time_step_is_small = 0;             
@@ -384,6 +417,13 @@ void integrate_vv(int n_steps)
     if (check_runtime_errors())
       break;
 
+#ifdef MULTI_TIMESTEP
+#ifdef NPT
+    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO) 
+      for(j=0;j<3;++j)
+        nptiso.p_vir[j] += virial_store[j];
+#endif
+#endif
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
@@ -556,10 +596,6 @@ void rescale_forces_propagate_vel()
       scale = 0.5 * smaller_time_step *         time_step;
   }
 #endif
-// #ifdef MULTI_TIMESTEP
-//   if (smaller_time_step > 0. && current_time_step_is_small)
-//       scale = 0.5 * smaller_time_step * smaller_time_step;
-// #endif
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces_propagate_vel:\n",this_node));
 
   for (c = 0; c < local_cells.n; c++) {
@@ -580,19 +616,24 @@ void rescale_forces_propagate_vel()
 #endif
       for(j = 0; j < 3 ; j++) {
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
+        if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
 #endif
 #ifdef NPT
-	  if(integ_switch == INTEG_METHOD_NPT_ISO && ( nptiso.geometry & nptiso.nptgeom_dir[j] )) {
-	    nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
-	    p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
-	  }
-	  else
+          if(integ_switch == INTEG_METHOD_NPT_ISO && ( nptiso.geometry & nptiso.nptgeom_dir[j] )) {
+            nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
+#ifdef MULTI_TIMESTEP
+            if (smaller_time_step > 0. && current_time_step_is_small==1)
+              p[i].m.v[j] += p[i].f.f[j];
+            else
 #endif
-	    /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-	    p[i].m.v[j] += p[i].f.f[j]; 
+              p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
+          }
+          else
+#endif
+            /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
+            p[i].m.v[j] += p[i].f.f[j]; 
 #ifdef EXTERNAL_FORCES
-	}
+        }
 #endif
       }
 
@@ -600,7 +641,10 @@ void rescale_forces_propagate_vel()
     }
   }
 #ifdef NPT
-  finalize_p_inst_npt();
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step < 0. || current_time_step_is_small == 0)
+#endif
+    finalize_p_inst_npt();
 #endif
 }
 
@@ -614,8 +658,13 @@ void finalize_p_inst_npt()
     nptiso.p_inst = 0.0;
     for ( i = 0 ; i < 3 ; i++ ) {
       if( nptiso.geometry & nptiso.nptgeom_dir[i] ) {
-	nptiso.p_vel[i] /= SQR(time_step);
-	nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
+#ifdef MULTI_TIMESTEP
+        if (smaller_time_step > 0.)
+          nptiso.p_vel[i] /= SQR(smaller_time_step);
+        else
+#endif
+          nptiso.p_vel[i] /= SQR(time_step);
+        nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
       }
     }
 
@@ -638,71 +687,113 @@ void propagate_press_box_pos_and_rescale_npt()
     double scal[3]={0.,0.,0.}, L_new=0.0;
 
     /* finalize derivation of p_inst */
-    finalize_p_inst_npt();
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step < 0. || current_time_step_is_small == 0)
+#endif
+      finalize_p_inst_npt();
 
     /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and vel-rescaling */
     if (this_node == 0) {
-      nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
+#ifdef MULTI_TIMESTEP
+      if (smaller_time_step < 0. || current_time_step_is_small == 0)
+#endif      
+        nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
-      nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
+#ifdef MULTI_TIMESTEP
+      if (smaller_time_step < 0. || current_time_step_is_small == 0)
+#endif
+        nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
-	char *errtxt = runtime_error(128 + 3*ES_DOUBLE_SPACE);
+        char *errtxt = runtime_error(128 + 3*ES_DOUBLE_SPACE);
         ERROR_SPRINTF(errtxt, "{015 your choice of piston=%g, dt=%g, p_diff=%g just caused the volume to become negative, decrease dt} ",
                 nptiso.piston,time_step,nptiso.p_diff);
-	nptiso.volume = box_l[0]*box_l[1]*box_l[2];
-	scal[2] = 1;
+        nptiso.volume = box_l[0]*box_l[1]*box_l[2];
+        scal[2] = 1;
       }
 
       L_new = pow(nptiso.volume,1.0/nptiso.dimension);
-      //      printf(stdout,"Lnew, %f: volume, %f: dim, %f: press, %f \n", L_new, nptiso.volume, nptiso.dimension,nptiso.p_inst );
-      //    fflush(stdout);
+      // printf("Lnew, %f: volume, %f: dim, %f: press, %f \n", L_new, nptiso.volume, nptiso.dimension,nptiso.p_inst );
+      // fflush(stdout);
 
       scal[1] = L_new/box_l[nptiso.non_const_dim];
       scal[0] = 1/scal[1];
+#ifdef MULTI_TIMESTEP
+      if (smaller_time_step > 0.) {
+        if (current_time_step_is_small == 1) {
+          // load scal variable
+          scal[0] = scal_store[0];
+          scal[1] = scal_store[1];
+          scal[2] = scal_store[2];
+        } else {
+          // save scal variable
+          scal_store[0] = scal[0];
+          scal_store[1] = scal[1];
+          scal_store[2] = scal[2];
+        }
+      }
+#endif
     }
     MPI_Bcast(scal,  3, MPI_DOUBLE, 0, comm_cart);
+    
 
     /* propagate positions while rescaling positions and velocities */
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c]; p  = cell->part; np = cell->n;
-      for(i = 0; i < np; i++) {	
+      for(i = 0; i < np; i++) { 
 #ifdef VIRTUAL_SITES
-	if (ifParticleIsVirtual(&p[i])) continue;
+        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
-	for(j=0; j < 3; j++){
+        for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	  if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
-#endif	    
-	    if(nptiso.geometry & nptiso.nptgeom_dir[j]) {
-	      p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
-	      p[i].l.p_old[j] *= scal[1];
-	      p[i].m.v[j]     *= scal[0];
-	    } else {
-	      p[i].r.p[j] += p[i].m.v[j];
-	    }
+          if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
+#endif
+            if(nptiso.geometry & nptiso.nptgeom_dir[j]) {
+#ifdef MULTI_TIMESTEP
+              if (smaller_time_step > 0.) { 
+                if (current_time_step_is_small == 1) {
+                  if (mts_index==mts_max-1) {
+                    p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
+                    p[i].l.p_old[j] *= scal[1];
+                    p[i].m.v[j]     *= scal[0];
+                  }
+                  else
+                    p[i].r.p[j]     += p[i].m.v[j];
+                }
+              } else
+#endif
+              {
+                p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
+                p[i].l.p_old[j] *= scal[1];
+                p[i].m.v[j]     *= scal[0];          
+              }
+            } else {
+#ifdef MULTI_TIMESTEP
+              if (smaller_time_step < 0. || current_time_step_is_small == 1) 
+#endif              
+                p[i].r.p[j] += p[i].m.v[j];
+            }
 
 #ifdef EXTERNAL_FORCES
-	  }
+          }
 #endif
-	}
-	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
+        }
+        ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+        ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
 #ifdef ADDITIONAL_CHECKS
-	force_and_velocity_check(&p[i]); 
+        force_and_velocity_check(&p[i]); 
 #endif
       }
     }
-
     resort_particles = 1; 
 
     /* Apply new volume to the box-length, communicate it, and account for necessary adjustments to the cell geometry */
     if (this_node == 0) {
       for ( i = 0 ; i < 3 ; i++ ){ 
-	if ( nptiso.geometry & nptiso.nptgeom_dir[i] ) {
-	  box_l[i] = L_new;
-	} else if ( nptiso.cubic_box ) {
-	  box_l[i] = L_new;
-	}
+        if ( nptiso.geometry & nptiso.nptgeom_dir[i] ) {
+          box_l[i] = L_new;
+        } else if ( nptiso.cubic_box ) {
+          box_l[i] = L_new;
+        }
       }
     }
     MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, comm_cart);
@@ -736,26 +827,31 @@ void propagate_vel()
 #endif
       for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
+        if (!(p[i].l.ext_flag & COORD_FIXED(j)))        
 #endif
-	  {
+          {
 #ifdef NPT
-	    if(integ_switch == INTEG_METHOD_NPT_ISO && (nptiso.geometry & nptiso.nptgeom_dir[j] )) {
-	      p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
-	      nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
-	    }
-	    else
+            if(integ_switch == INTEG_METHOD_NPT_ISO && (nptiso.geometry & nptiso.nptgeom_dir[j] )) {
+#ifdef MULTI_TIMESTEP
+              if (smaller_time_step > 0. && current_time_step_is_small==1)
+                p[i].m.v[j] += p[i].f.f[j];
+              else
 #endif
-	      /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-	      p[i].m.v[j] += p[i].f.f[j];
+                p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
+              nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
+            }
+            else
+#endif
+              /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
+              p[i].m.v[j] += p[i].f.f[j];
 
-	    /* SPECIAL TASKS in particle loop */
+            /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
-	    if(j==0) nemd_get_velocity(p[i]);
+            if(j==0) nemd_get_velocity(p[i]);
 #endif
-	  }
+          }
 
-	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+        ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
 #endif
@@ -797,24 +893,21 @@ void propagate_pos()
 #ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
-	for(j=0; j < 3; j++){
-#ifdef MULTI_TIMESTEP
-        if (smaller_time_step < 0. || current_time_step_is_small==1)
-#endif 
+        for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	  if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+          if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
-	    {
+            {
 #ifdef NEMD
-	      /* change momentum of each particle in top and bottom slab */
-	      if(j==0) nemd_add_velocity(&p[i]);
+              /* change momentum of each particle in top and bottom slab */
+              if(j==0) nemd_add_velocity(&p[i]);
 #endif
-	        /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
-  	      p[i].r.p[j] += p[i].m.v[j];
-	    }
-	}
-	/* Verlet criterion check */
-	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
+              /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
+              p[i].r.p[j] += p[i].m.v[j];
+            }
+        }
+        /* Verlet criterion check */
+        if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
       }
     }
   }
@@ -889,23 +982,23 @@ void force_and_velocity_check(Particle *p)
   for (i = 0; i < 3; i++)
     if(fabs(p->r.p[i] - p->l.p_old[i]) > local_box_l[i]) {
       fprintf(stderr, "%d: particle %d moved further than local box length by %lf %lf %lf\n",
-	      this_node, p->p.identity, p->r.p[0] - p->l.p_old[0], p->r.p[1] - p->l.p_old[1],
-	      p->r.p[2] - p->l.p_old[2]);
+              this_node, p->p.identity, p->r.p[0] - p->l.p_old[0], p->r.p[1] - p->l.p_old[1],
+              p->r.p[2] - p->l.p_old[2]);
     }
 
   /* force check */
   db_force = SQR(p->f.f[0])+SQR(p->f.f[1])+SQR(p->f.f[2]);
   if(db_force > skin2)
     fprintf(stderr,"%d: Part %d has force %f (%f,%f,%f)\n",
-	    this_node,p->p.identity,sqrt(db_force),
-	    p->f.f[0],p->f.f[1],p->f.f[2]);
+            this_node,p->p.identity,sqrt(db_force),
+            p->f.f[0],p->f.f[1],p->f.f[2]);
   if(db_force > db_max_force) { db_max_force=db_force; db_maxf_id=p->p.identity; }
   /* velocity check */
   db_vel   = SQR(p->m.v[0])+SQR(p->m.v[1])+SQR(p->m.v[2]);
   if(db_vel > skin2)
     fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
-	    this_node,p->p.identity,sqrt(db_vel),
-	    p->m.v[0],p->m.v[1],p->m.v[2]);
+            this_node,p->p.identity,sqrt(db_vel),
+            p->m.v[0],p->m.v[1],p->m.v[2]);
   if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p->p.identity; }
 #endif
 }
@@ -915,11 +1008,11 @@ void force_and_velocity_display()
 #ifdef ADDITIONAL_CHECKS
   if(db_max_force > skin2)
     fprintf(stderr,"%d: max_force=%e, part=%d f=(%e,%e,%e)\n",this_node,
-	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f.f[0],
-	    local_particles[db_maxf_id]->f.f[1],local_particles[db_maxf_id]->f.f[2]);
+            sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f.f[0],
+            local_particles[db_maxf_id]->f.f[1],local_particles[db_maxf_id]->f.f[2]);
   if(db_max_vel > skin2)
     fprintf(stderr,"%d: max_vel=%e, part=%d v=(%e,%e,%e)\n",this_node,
-	    sqrt(db_max_vel),db_maxv_id,local_particles[db_maxv_id]->m.v[0],
-	    local_particles[db_maxv_id]->m.v[1],local_particles[db_maxv_id]->m.v[2]);
+            sqrt(db_max_vel),db_maxv_id,local_particles[db_maxv_id]->m.v[0],
+            local_particles[db_maxv_id]->m.v[1],local_particles[db_maxv_id]->m.v[2]);
 #endif
 }

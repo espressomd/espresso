@@ -51,6 +51,16 @@ extern double time_step_squared_half;
 extern double smaller_time_step;
 /** Flag to determine what kind of time step we're calculating */
 extern int current_time_step_is_small;
+/** Smaller integration time step index */
+extern int mts_index;
+/** Number of MTS time steps */
+extern int mts_max;
+#ifdef NPT
+/** Store box dimensions for small timesteps */
+extern double scal_store[3];
+/** Flag to compute virial of all particles */
+extern double virial_store[3];
+#endif
 #endif
 
 /** Old time step needed for rescaling of forces. */
