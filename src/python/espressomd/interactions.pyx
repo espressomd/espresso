@@ -19,6 +19,9 @@
 include "myconfig.pxi"
 # Non-bonded interactions
 
+include "myconfig.pxi"
+
+
 cdef class NonBondedInteraction(object):
   
   cdef public object _partTypes
@@ -138,7 +141,6 @@ cdef class NonBondedInteraction(object):
     raise Exception("Subclasses of NonBondedInteraction must define the requiredKeys() method.")
 
 # Lennard Jones
-
 cdef class LennardJonesInteraction(NonBondedInteraction):
   if LENNARD_JONES == 1:
       def validateParams(self):
@@ -199,7 +201,6 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
       def requiredKeys(self): 
         return "epsilon","sigma","cutoff","shift" 
 
-
 class NonBondedInteractionHandle(object):
   """Provides access to all Non-bonded interactions between 
   two particle types.""" 
@@ -207,8 +208,9 @@ class NonBondedInteractionHandle(object):
   type1=-1
   type2=-1
 
-  # Here, one line per non-bonded ia
-  lennardJones=None
+  # Here, the individual nonbonded interactions have to be added
+  IF LENNARD_JONES == 1:
+    lennardJones=None
 
 
   def __init__(self, _type1, _type2):
@@ -219,11 +221,13 @@ class NonBondedInteractionHandle(object):
     self.type2=_type2
     
     
-    # Here, add one line for each nonbonded ia
-    self.lennardJones =LennardJonesInteraction(_type1,_type2)
+    # Here, add all nonbonded ia
+    IF LENNARD_JONES ==1:
+      self.lennardJones =LennardJonesInteraction(_type1,_type2)
 
-  
-  
+
+
+
 
 
 cdef class NonBondedInteractions:
