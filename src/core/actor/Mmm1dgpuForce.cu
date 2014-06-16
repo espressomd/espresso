@@ -27,10 +27,9 @@ void addMmm1dgpuForce(double maxPWerror, double switch_rad, int bessel_cutoff)
 		mmm1dgpuForce = new Mmm1dgpuForce(espressoSystemInterface, 0, maxPWerror, switch_rad, bessel_cutoff);
 		potentials.push_back(mmm1dgpuForce);
 	}
-	else // we only need to update the parameters
-	{
-		mmm1dgpuForce->set_params(0, 0, maxPWerror, switch_rad, bessel_cutoff, true);
-	}
+	/* set_params needs to be called both upon create and upon update because it is responsible for writing
+		to the struct from which the TCL command "inter coulomb" retrieves the current parameter set */
+	mmm1dgpuForce->set_params(0, 0, maxPWerror, switch_rad, bessel_cutoff, true);
 }
 
 __device__ inline void atomicadd(float* address, float value)
