@@ -86,10 +86,14 @@ void thermo_init_langevin()
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0.) {
     langevin_pref1_small = -langevin_gamma/smaller_time_step;
+ #ifndef LANGEVIN_PER_PARTICLE
     langevin_pref2_small = sqrt(24.0*temperature*langevin_gamma/smaller_time_step);
+ #endif
   } else {
     langevin_pref1_small = -langevin_gamma/time_step;
+ #ifndef LANGEVIN_PER_PARTICLE
     langevin_pref2_small = sqrt(24.0*temperature*langevin_gamma/time_step);
+ #endif
   }
 #endif
   
