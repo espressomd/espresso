@@ -8,7 +8,7 @@
 
 typedef float mmm1dgpu_real;
 
-void addMmm1dgpuForce(double coulomb_prefactor, double maxPWerror, double far_switch_radius, int bessel_cutoff);
+void addMmm1dgpuForce(double maxPWerror, double far_switch_radius, int bessel_cutoff);
 
 class Mmm1dgpuForce : public Actor
 {

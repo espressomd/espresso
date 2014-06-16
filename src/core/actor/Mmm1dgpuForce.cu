@@ -18,19 +18,20 @@ float multigpu_factors[] = {1.0};
 #include "forces.hpp"
 #include "EspressoSystemInterface.hpp"
 
-void addMmm1dgpuForce(double coulomb_prefactor, double maxPWerror, double switch_rad, int bessel_cutoff)
+void addMmm1dgpuForce(double maxPWerror, double switch_rad, int bessel_cutoff)
 {
 	static Mmm1dgpuForce *mmm1dgpuForce = NULL;
 	if (!mmm1dgpuForce) // inter coulomb mmm1dgpu was never called before
 	{
+		printf("Creating Mmm1dgpuForce with %f %f %d\n", maxPWerror, switch_rad, bessel_cutoff );
 		// coulomb prefactor gets updated in Mmm1dgpuForce::run()
 		mmm1dgpuForce = new Mmm1dgpuForce(espressoSystemInterface, 0, maxPWerror, switch_rad, bessel_cutoff);
 		potentials.push_back(mmm1dgpuForce);
 	}
 	else // we only need to update the parameters
 	{
+		printf("Updating Mmm1dgpuForce with %f %f %d\n", maxPWerror, switch_rad, bessel_cutoff );
 		mmm1dgpuForce->set_params(0, 0, maxPWerror, switch_rad, bessel_cutoff);
-		mmm1dgpuForce->tune(espressoSystemInterface, maxPWerror, switch_rad, bessel_cutoff);
 	}
 }
 
@@ -100,7 +101,7 @@ void Mmm1dgpuForce::setup(SystemInterface &s)
 	}
 	if (need_tune == true && s.npart_gpu() > 0)
 	{
-		printf("Tuning in setup\n");
+		printf("Tuning in setup. %f %f %f %d\n", coulomb_prefactor, maxPWerror, far_switch_radius, bessel_cutoff);
 		set_params(s.box()[2], coulomb_prefactor, maxPWerror, far_switch_radius, bessel_cutoff);
 		tune(s, maxPWerror, far_switch_radius, bessel_cutoff);
 	}
@@ -273,6 +274,7 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror, mmm1dgpu
 
 void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
 {
+	printf("Setting %f %f %f %f %d\n",_boxz,_coulomb_prefactor,_maxPWerror,_far_switch_radius,_bessel_cutoff);
 	if (_boxz > 0 && _far_switch_radius > _boxz)
 	{
 		printf("Far switch radius (%f) must not be larger than the box length (%f).\n", _far_switch_radius, _boxz);
@@ -289,6 +291,7 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefa
 		{
 			HANDLE_ERROR( cudaMemcpyToSymbol(::far_switch_radius_2, &_far_switch_radius_2, sizeof(mmm1dgpu_real)) );
 			mmm1d_params.far_switch_radius_2 = _far_switch_radius*_far_switch_radius;
+			far_switch_radius = _far_switch_radius;
 		}
 		if (_boxz > 0)
 		{
@@ -299,18 +302,22 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefa
 		if (_coulomb_prefactor != 0)
 		{
 			HANDLE_ERROR( cudaMemcpyToSymbol(::coulomb_prefactor, &_coulomb_prefactor, sizeof(mmm1dgpu_real)) );
+			coulomb_prefactor = _coulomb_prefactor;
 		}
 		if (_bessel_cutoff > 0)
 		{
 			HANDLE_ERROR( cudaMemcpyToSymbol(::bessel_cutoff, &_bessel_cutoff, sizeof(int)) );
 			mmm1d_params.bessel_cutoff = _bessel_cutoff;
+			bessel_cutoff = _bessel_cutoff;
 		}
 		if (_maxPWerror > 0)
 		{
 			HANDLE_ERROR( cudaMemcpyToSymbol(::maxPWerror, &_maxPWerror, sizeof(mmm1dgpu_real)) );
 			mmm1d_params.maxPWerror = _maxPWerror;
+			maxPWerror = _maxPWerror;
 		}
 	}
+	need_tune = true;
 }
 
 __global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *force, int N, int pairs, int tStart = 0, int tStop = -1)
@@ -558,6 +565,7 @@ float Mmm1dgpuForce::force_benchmark(SystemInterface &s)
 	HANDLE_ERROR( cudaEventCreate(&eventStop) );
 	HANDLE_ERROR( cudaEventRecord(eventStart, stream) );
 	//KERNELCALL(forcesKernel,numBlocks(s),numThreads,(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), 0))
+	forcesKernel<<<numBlocks(s),numThreads>>>(s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), 0);
 	HANDLE_ERROR( cudaEventRecord(eventStop, stream) );
 	HANDLE_ERROR( cudaEventSynchronize(eventStop) );
 	HANDLE_ERROR( cudaEventElapsedTime(&elapsedTime, eventStart, eventStop) );
