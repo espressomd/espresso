@@ -43,8 +43,8 @@ setmd box_l $box_x $box_y $box_z
 
 # Set the electrokinetic parameters
 
-set agrid [expr 1.0/3.0]
-set dt [expr 1.0/5.0]
+set agrid [expr 2.0/3.0]
+set dt [expr 1.0/13.0]
 set force 0.07
 set sigma -0.04
 set viscosity_dynamic 1.7
@@ -63,16 +63,16 @@ setmd skin 0.1
 thermostat off
 set integration_length 20000
 
-# Set up the (LB) electrokinetics fluid
-
-electrokinetics agrid $agrid viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length
-
 # Set up the charged and neutral species
 
 set density_neutral 33.4
 set density_charged [expr -2.0*double($sigma)/double($width)]
 set viscosity [expr $viscosity_dynamic*($density_charged + $density_neutral)]
 set valency 1.0
+
+# Set up the (LB) electrokinetics fluid
+
+electrokinetics agrid $agrid lb_density [expr $density_neutral + $density_charged] viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length
 
 electrokinetics 1 density $density_charged D 0.3 valency $valency ext_force 0 0 $force
 electrokinetics 2 density $density_neutral D 0.3 valency 0
@@ -86,12 +86,6 @@ electrokinetics boundary charge_density [expr $sigma/$agrid] rhomboid corner 0 [
 
 electrokinetics boundary charge_density 0.0 wall normal 0 1 0 d $padding 0 0 direction outside
 electrokinetics boundary charge_density 0.0 wall normal 0 -1 0 d -[expr $padding+$width] 0 0 direction outside
-
-set dirini "./DATA/"
-set dirnex "charged_system_new"
-set dir "$dirini$dirnex/"
-file mkdir $dir
-after 250
 
 # Integrate the system
 
@@ -302,10 +296,10 @@ puts "    The anisotropic part relaxes towards isotropic, but it"
 puts "    is not instantaneously isotropic. The elements on the"
 puts "    diagonal must therefore be different.\n"
 
-if { $total_density_difference > 5.0e-04 } {
+if { $total_density_difference > 2.5e-03 } {
   error_exit "Density accuracy not achieved"
 }
-if { $total_velocity_difference > 7.5e-03 } {
+if { $total_velocity_difference > 2.5e-03 } {
   error_exit "Velocity accuracy not achieved"
 }
 if { $total_stress_difference_xx > 5.0e-03 } {
@@ -320,7 +314,7 @@ if { $total_stress_difference_zz > 5.0e-03 } {
 if { $total_stress_difference_xy > 5.0e-06 } {
   error_exit "Pressure accuracy xy component not achieved"
 }
-if { $total_stress_difference_yz > 7.5e-04 } {
+if { $total_stress_difference_yz > 2.5e-02 } {
   error_exit "Pressure accuracy yz component not achieved"
 }
 if { $total_stress_difference_xz > 5.0e-06 } {
@@ -329,16 +323,16 @@ if { $total_stress_difference_xz > 5.0e-06 } {
 if { $total_stress_difference_xx_yy > 5.0e-06 } {
   error_exit "Difference xx to yy component too large"
 }
-if { $total_stress_difference_yy_zz > 2.5e-04 } {
+if { $total_stress_difference_yy_zz > 1.0e-03 } {
   error_exit "Difference yy to zz component too large"
 }
-if { $total_stress_difference_yy_zz < 7.5e-05 } {
+if { $total_stress_difference_yy_zz < 5.0e-04 } {
   error_exit "Difference yy to zz component too small"
 }
-if { $total_stress_difference_xx_zz > 2.5e-04 } {
+if { $total_stress_difference_xx_zz > 1.0e-03 } {
   error_exit "Difference xx to zz component too large"
 }
-if { $total_stress_difference_xx_zz < 7.5e-05 } {
+if { $total_stress_difference_xx_zz < 5.0e-04 } {
   error_exit "Difference xx to zz component too small"
 }
 

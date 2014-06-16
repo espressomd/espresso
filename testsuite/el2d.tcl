@@ -23,7 +23,6 @@ source "tests_common.tcl"
 require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
 require_feature "LENNARD_JONES"
-require_feature "ADRESS" off
 
 puts "-------------------------------------------"
 puts "- Testcase el2d.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -70,8 +69,6 @@ if { [catch {
     puts -nonewline "MMM2D   node_grid=[setmd node_grid]  "
     flush stdout
 
-    # to ensure force recalculation
-    invalidate_system
     integrate 0
 
     # here you can create the necessary snapshot
@@ -148,8 +145,6 @@ if { [catch {
     puts -nonewline "MMM2D nsquare  "
     flush stdout
 
-    # to ensure force recalculation
-    invalidate_system
     integrate 0
 
     ############## RMS force error for MMM2D, nsquared
@@ -204,8 +199,6 @@ if { [catch {
 	inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5
 	inter coulomb elc 1e-4 [expr 0.1*[lindex [setmd box_l] 2]]
 
-	# to ensure force recalculation
-	invalidate_system
 	integrate 0
 
 	############## RMS force error for P3M + ELC

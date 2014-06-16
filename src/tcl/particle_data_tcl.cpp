@@ -244,11 +244,11 @@ void tclcommand_part_print_composition(Particle *part, char *buffer, Tcl_Interp 
 void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale forces ! */
-  Tcl_PrintDouble(interp, part->f.f[0]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[0]*PMASS(*part)/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.f[1]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[1]*PMASS(*part)/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.f[2]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[2]*PMASS(*part)/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
@@ -1905,7 +1905,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 	j++;
       }
       /* set/delete bond */
-      if (change_particle_bond(part_num, bond, deleteIt) != TCL_OK) {
+      if (change_particle_bond(part_num, bond, deleteIt) != ES_OK) {
 	Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
 	free(bond);
 	return TCL_ERROR;
@@ -2062,8 +2062,10 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
   if (ARG0_IS_S("print"))
-    err = tclcommand_part_parse_print(interp, argc-1, argv+1, part_num);
-  else while (argc > 0) {
+    return tclcommand_part_parse_print(interp, argc-1, argv+1, part_num);
+
+  // various setters
+  while (argc > 0) {
     if (ARG0_IS_S("delete"))
       err = tclcommand_part_parse_delete(interp, argc-1, argv+1, part_num, &change);
 

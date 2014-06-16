@@ -50,6 +50,12 @@ static int tclcallback_ro(Tcl_Interp *interp, void *data)
   return (TCL_ERROR);
 }
 
+int tclcallback_warnings(Tcl_Interp *interp, void *data)
+{
+  warnings = ((int *)data)[0];
+  return (TCL_OK);
+}
+
 static SetCallback *find_callback(int field)
 {
   if (field >= n_callbacks)

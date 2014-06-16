@@ -24,7 +24,6 @@ source "tests_common.tcl"
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
-require_feature "ADRESS" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes"
@@ -62,7 +61,6 @@ if { [catch {
 
     # to ensure force recalculation
 #    inter coulomb n_interpol 0
-    invalidate_system
     integrate 0
 
     # here you can create the necessary snapshot

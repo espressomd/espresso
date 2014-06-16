@@ -1453,7 +1453,6 @@ fluctuations in energy.
 
 For $\kappa = 0$, this corresponds to the plain coulomb potential.
 
-
 \subsection{MMM2D}
 \index{MMM2D method|mainindex}
 \index{interactions!MMM2D|mainindex}
@@ -1788,12 +1787,21 @@ the parameter \var{ext\_field}.
   \variant{2} dielectric wall normal \var{nx} \var{ny} \var{nz} dist \var{d} res \var{res}
   \variant{3} dielectric cylinder  center \var{cx} \var{cy} \var{cz} axis \var{ax} \var{ay} \var{az} radius \var{r} direction \var{d} 
   \variant{4} dielectric pore center \var{cx} \var{cy} \var{cz}  axis \var{ax} \var{ay} \var{az} radius \var{r} length \var {l} smoothing\_radius \var{rs} res \var{res}
+  \variant{5} dielectric slitpore pore_mouth \var{z} \
+             channel_width \var{c} \
+             pore_width \var{w} \
+             pore_length \var{l} \
+             upper_smoothing_radius \var{us} \
+             lower_smoothing_radius \var{ls} 
+
 \end{essyntax}
 
 The command \keyword{dielectric} allows to conveniently create
 dielectric interfaces similar to the constraint and the lbboundary
 command. Currently the creation of spherical, cylindrical and planar
-geometries as well as a pore geometry is supported. It is implemented
+geometries as well as a pore and slitpore geometry is supported.
+Please check the documentation of the corresponding constraint for the detailed geometry.
+It is implemented
 in Tcl and places particles in the right positions and adds the
 correct values to the global Tcl variables \var{icc\_areas}
 \var{icc\_normals} \var{icc\_sigmas} \var{icc\_epsilons} and increases
@@ -2004,18 +2012,18 @@ two main boundary conditions in use:
 
 In recent years, experiments have indicated that the no-slip boundary
 condition is indeed usually not valid on the micrometer
-scale. Instead, it has to be replaced by the {\em {partial-slip
-    boundary condition}}
+scale. Instead, it has to be replaced by the \emph{partial-slip
+  boundary condition}
 \begin{displaymath}
-\delta_B \: \: \partial_{{\bf n}} v_{\parallel}|_{{\bf r}_B} =
-v_{\parallel}|_{{\bf r}_B},
+\delta_B \; \; \partial_\mathbf{n} v_{\parallel} \rVert_{\mathbf{r}_B} =
+v_{\parallel} \rVert_{\mathbf{r}_B},
 \end{displaymath}
 where $v_{\parallel}$ denotes the tangential component of the velocity
-and $\partial_{{\bf n}} v_{\parallel}$ its spatial derivative normal
-to the surface, both evaluated at the position ${\bf r}_B$ of the
-so-called {\em hydrodynamic boundary}.  This boundary condition is
+and $\partial_\mathbf{n} v_{\parallel}$ its spatial derivative normal
+to the surface, both evaluated at the position $\mathbf{r}_B$ of the
+so-called \emph{hydrodynamic boundary}.  This boundary condition is
 characterized by two effective parameters, namely (i) the slip length
-$\delta_B$ and (ii) the hydrodynamic boundary ${\bf r}_B$.
+$\delta_B$ and (ii) the hydrodynamic boundary $\mathbf{r}_B$.
 
 Within the approach of the tunable-slip boundary interactions it is
 possible to tune the slip length systematically from full-slip to
@@ -2055,9 +2063,9 @@ reference \cite{smiatek08a} before using this interaction.
 
 This is a special interaction that is to be used in conjunction with
 the Dissipative Particle Dynamics algorithm \ref{sec:DPD} when the
-\texttt{INTER_DPD} implementation is used. The parameters correspond
-to the parameters of the DPD thermostat \vref{sec:DPDinter}, but
-can be set individually for the different interactions.
+\feature{INTER_DPD} implementation is used. The parameters correspond
+to the parameters of the DPD thermostat \vref{sec:DPDinter}, but can
+be set individually for the different interactions.
 
 \subsection{Fixing the center of mass}
 \begin{essyntax}
@@ -2072,13 +2080,21 @@ these particles is fixed. This is accomplished as follows: The sum of
 all the forces acting on particles of type \var{typeid1} are
 calculated. These include all the forces due to other interaction
 types and also the thermostat. Next a force equal in magnitude, but in
-the oppositte direction is applied on the particles. This force is
-divided equally on all the particles of type \var{typeid1}, since
-currently there is no mass concept in \es. Note that the syntax of the
+the opposite direction is applied to all the particles. This force is
+divided on the particles of type \var{typeid1} relative to
+their respective mass. Under periodic boundary conditions, this fixes
+the itinerant center of mass, that is, the one obtained from the
+unfolded coordinates.
+
+Note that the syntax of the
 declaration of comfixed interaction requires the same particle type to
 be input twice. If different particle types are given in the input,
 the program exits with an error message. \var{flag} can be set to 1
 (which turns on the interaction) or 0 (to turn off the interaction).
+
+
+Since the necessary communication is lacking at present, this interaction
+only works on a single node.
 
 \subsection{Pulling particles apart}
 \begin{essyntax}
@@ -2109,7 +2125,7 @@ applied on \var{typeid1} particles.
 \label{sec:forcecap}
 
 \begin{essyntax}
-  \variant{1} inter forcecap \alt{\var{F_\mathrm{max}} \asep individual}
+  inter forcecap \alt{\var{F_\mathrm{max}} \asep individual}
 \end{essyntax}
 
 Non-bonded interactions are often used to model the hard core

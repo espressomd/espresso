@@ -445,15 +445,9 @@ t\_random stat <status-list>
 \end{code}
 with \var{status-list} being the tcl-list mentioned above without any
 braces.  Be careful! A complete recovery of the current state of the
-simulation is only possible if you make sure to include a call to The
-invalidate\_system command after you saved the checkpoint
-(tcl\_checkpoint\_set will do this automatically for you), because the
-integration algorithm re-uses the old forces calculated in the
-previous time-step; if something has changed in the system (or if it
-has just been read from a file) the forces are re-derived (including
-application of the thermostat and its random numbers) leading to
-slightly different results compared to the uninterrupted run (see The
-invalidate\_system command for details)!
+simulation is only possible if you make sure to include a call to the
+\texttt{sort_particles} command after you saved the blockfile to make
+sure random numbers are applied in the same order.
 \end{itemize}
 The C implementation is t\_random
 
@@ -498,16 +492,9 @@ whole list back using
 bit\_random stat <status-list>
 \end{code}
 with <status-list> being the tcl-list mentioned above without any
-braces.  Be careful! A complete recovery of the current state of the
-simulation is only possible if you make sure to include a call to The
-invalidate\_system command after you saved the checkpoint
-(tcl\_checkpoint\_set will do this automatically for you), because the
-integration algorithm re-uses the old forces calculated in the
-previous time-step; if something has changed in the system (or if it
-has just been read from a file) the forces are re-derived (including
-application of the thermostat and its random numbers) leading to
-slightly different results compared to the uninterrupted run (see The
-invalidate\_system command for details)!
+braces.  Be careful! See \ref{ssec:trandom} for more information
+on how to recover of the current state, include the sequence the random
+numbers are applied.
 \item Note further that the bit-wise display of integers, as it is
   used by this random number generator, is platform dependent. As long
   as you stay on the same architecture this doesn't matter at all;

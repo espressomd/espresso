@@ -143,14 +143,21 @@ set:
   your actions on the data.
 \item[verlet_reuse] (double) Average number of integration steps the
   verlet list has been re-used.
+\item[warnings] (int) if non-zero (default), some warnings are printed out. Set this to zero if you get annoyed by them.
 \end{globvar}
 
 \section{\texttt{thermostat}: Setting up the thermostat}
 \label{sec:thermostat}
 \newescommand{thermostat}
 
+\begin{essyntax}
+  \variant{1} thermostat
+  \variant{2} thermostat off
+  \variant{3} thermostat \var{parameters}
+\end{essyntax}
+
 The \keyword{thermostat} command is used to change settings of the
-thermostat.  
+thermostat. 
 
 The different available thermostats will be described in the following
 subsections. Note that for a simulation of the NPT ensemble, you need
@@ -169,12 +176,6 @@ specifying the temperature of a thermostat, you actually do not define
 the temperature, but the value of the thermal energy $k_B T$ in the
 current unit system (see the discussion on units, Section~\ref{sec:units}).
 
-\begin{essyntax}
-  \variant{1} thermostat
-  \variant{2} thermostat off
-  \variant{3} thermostat \var{parameters}
-\end{essyntax}
-
 Variant \variant{1} returns the thermostat parameters. A Tcl list is
 given containing all the parameters needed to set the specific
 thermostat. (exactly the same as the input command line, without the
@@ -186,23 +187,25 @@ electrostatics are handled (see also Section~\ref{sec:inter-electrostatics}).
 
 Variant \variant{3} sets up one of the thermostats described below.
 
-Note that their are three different types of noise which can be used in
-Espresso. The one used typically in simulations is flat noise with the
-correct variance and it is the default used in Espresso, though can be
-explicitly specified using the feature \feature{FLATNOISE}. You can also
-employ Gaussian noise which is, in some sense, more realistic. Notably
-Gaussian noise (activated using the feature \feature{GAUSSRANDOM}) does
-a superior job of reproducing higher order moments of the Maxwell-Boltzmann
-distribution. For typical generic
-coarse-grained polymers using FENE bonds the Gaussian noise tends to break
-the FENE bonds. We thus offer a third type of noise, activate using the
-feature \feature{GAUSSRANDOMCUT}, which produces Gaussian random numbers
-but takes anything which is two standard deviations ($2\sigma$) below or above zero
-and set it to $-2\sigma$ or $2\sigma$ respectively. In all three cases the 
-distribution is made such that the second moment of the distribution is
-the same and thus results in the same temperature.
+Note that their are three different types of noise which can be used
+in \es. The one used typically in simulations is flat noise with the
+correct variance and it is the default used in \es, though it can be
+explicitly specified using the feature \feature{FLATNOISE}.  You can
+also employ Gaussian noise which is, in some sense, more realistic.
+Notably Gaussian noise (activated using the feature
+\feature{GAUSSRANDOM}) does a superior job of reproducing higher order
+moments of the Maxwell-Boltzmann distribution.  For typical generic
+coarse-grained polymers using FENE bonds the Gaussian noise tends to
+break the FENE bonds.  We thus offer a third type of noise, activate
+using the feature \feature{GAUSSRANDOMCUT}, which produces Gaussian
+random numbers but takes anything which is two standard deviations
+($2\sigma$) below or above zero and set it to $-2\sigma$ or $2\sigma$
+respectively. In all three cases the distribution is made such that
+the second moment of the distribution is the same and thus results in
+the same temperature.
 
 \subsection{Langevin thermostat}
+
 \begin{essyntax}
   thermostat langevin \var{temperature} \var{gamma}
 \end{essyntax}
@@ -216,9 +219,10 @@ If the feature \feature{ROTATION} is compiled in, the rotational
 degrees of freedom are also coupled to the thermostat.
 
 Using the Langevin thermostat, it is posible to set a temperature and
-a friction coefficient for every particle individually. Consult the
-\texttt{part} commands reference (chapter \ref{chap:part}) for
-information on how to achieve this.
+a friction coefficient for every particle individually via the feature
+\feature{LANGEVIN_PER_PARTICLE}. Consult the reference of the
+\texttt{part} command (chapter \ref{chap:part}) for information on how
+to achieve this.
 
 \subsection{GHMC thermostat}
 
@@ -278,39 +282,43 @@ the calculation of the forces. No special measures have been taken to
 self-consistently determine the velocities and the dissipative forces
 as it is for example described in \cite{Nikunen03}.  DPD adds a
 velocity dependent dissipative force and a random force to the usual
-conservative pair forces (e.g. Lennard-Jones).
+conservative pair forces (\eg Lennard-Jones).
 
-The dissipative force is calculated by
+\noindent The dissipative force is calculated by
+\begin{equation}
+  \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
+\end{equation}
 
-$$ \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij} $$
+\noindent The random force by
+\begin{equation}
+  \vec{F}_{ij}^R = \sigma w^R (r_{ij}) \Theta_{ij} \hat{r}_{ij}
+\end{equation}
+where $ \Theta_{ij} \in [ -0.5 , 0.5 [ $ is a uniformly distributed
+random number.  The connection of $\sigma $ and $\zeta $ is given by
+the dissipation fluctuation theorem:
+\begin{equation}
+  (\sigma w^R (r_{ij})^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T
+\end{equation}
 
-The random force by
-
-$$ \vec{F}_{ij}^R = \sigma w^R (r_{ij}) \Theta_{ij} \hat{r}_{ij} $$
-
-where $ \Theta_{ij} \in [ -0.5 , 0.5 [ $ is a uniformly distributed random number.
-The connection of $\sigma $ and $\zeta $ is given by the dissipation fluctuation theorem:
- 
-$$ (\sigma w^R (r_{ij})^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T $$
-
-The parameters \var{gamma} \var{r\_cut} define the strength of the
+The parameters \var{gamma} and \var{r_cut} define the strength of the
 friction $\zeta$ and the cutoff radius.
 
 According to the optional parameter WF (can be set to 0 or 1, default
 is 0) of the thermostat command the functions $w^D$ and $w^R$ are
 chosen in the following way ( $ r_{ij} < \var{r\_cut} $ ) :
 
-$$ 
+\begin{equation}
 w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
    \left\{
    \begin{array}{clcr} 
-             {( 1 - \frac{r_{ij}}{r_c}} )^2 & , \; WF = 0 \\
-             1                      & , \; WF = 1
+             {( 1 - \frac{r_{ij}}{r_c}} )^2 & , \; \var{wf} = 0 \\
+             1                      & , \; \var{wf} = 1
    \end{array}
    \right.
-$$
+ \end{equation}
 
-For $ r_{ij} \ge \var{r\_cut} $  $w^D$ and $w^R$ are identical to 0 in both cases.
+ For $ r_{ij} \ge \var{r\_cut} $ $w^D$ and $w^R$ are identical to 0 in
+ both cases.
 
 The friction (dissipative) and noise (random) term are coupled via the
 fluctuation- dissipation theorem. The friction term is a function of
@@ -357,12 +365,14 @@ feature \feature{TRANS_DPD} is required instead of the feature
 \texttt{DPD}.
 
 The dissipative force is calculated by
-
-$$ \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}$$
+\begin{equation}
+  \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
+\end{equation}
 
 The random force by
-
-$$ \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\Theta}_{ij}$$
+\begin{equation}
+  \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\Theta}_{ij}
+\end{equation}
 
 The parameters \var{tgamma} \var{tr\_cut} define the strength of the
 friction and the cutoff in the same way as above.  Note: This
@@ -385,18 +395,35 @@ the friction and other parameters have to be set via the command
 \texttt{inter inter_dpd} (see \vref{sec:DPDinter}).  This allows to
 set the friction on a per-interaction basis.
 
+DPD interactions with fixed particles is switched off by default, because
+it is not clear if the results obtained with that method are physically 
+correct. If you want activate \texttt{inter_dpd} with fixed particles please 
+use:
+\begin{essyntax}
+  thermostat inter_dpd ignore_fixed_particles 0
+  \begin{features}
+    \required{INTER_DPD}
+  \end{features}
+\end{essyntax}
+By default the flag \texttt{ignore_fixed_particles} is switched ON.
+
 \subsubsection{Other DPD extensions}
+
 The features \feature{DPD_MASS_RED} or \feature{DPD_MASS_LIN} make the
 friction constant mass dependent:
-$$ \zeta \to \zeta M_{ij} $$ 
-and 
-$$ \zeta \to \zeta M_{ij} $$
-There are two implemented cases. \feature{DPD_MASS_RED} uses the
-reduced mass:
-$$ M_{ij}=2\frac{m_i m_j}{m_i+m_j} $$
-while \feature{DPD_MASS_LIN} uses the real mass mass:
-$$ M_{ij}=\frac{m_i+m_j}{2} $$
-The prefactors are such that equal masses result in a factor 1.
+\begin{equation*}
+\zeta \to \zeta M_{ij}
+\end{equation*}
+
+\noindent There are two implemented cases. 
+\begin{itemize}
+\item \feature{DPD_MASS_RED} uses the reduced mass: $M_{ij}=2\frac{m_i
+    m_j}{m_i+m_j}$
+\item \feature{DPD_MASS_LIN} uses the real mass:
+  $M_{ij}=\frac{m_i+m_j}{2}$
+\end{itemize}
+The prefactors are such that equal masses
+result in a factor $1$.
 
 \subsection{Isotropic NPT thermostat}
 \label{ssec:NPTthermostat}
@@ -562,35 +589,6 @@ N*\var{n\_layers} layers along the z axis. Since in x and y direction
 there are no processor boundaries, the implementation is basically
 just a stripped down version of the domain decomposition cellsystem.
 
-\section{AdResS}
-
-\begin{citebox}
-  Please cite~\citewbibkey{adress} when using AdResS.
-\end{citebox}
-
-\begin{essyntax}
-adress set topo \var{kind} width \var{width} \var{hybrid\_width} center x \var{R\_x} wf \var{wf}
-\begin{features}
-    \required{ADRESSO}
-  \end{features}
-\end{essyntax}
-
-where \var{kind} determines the type of AdResS simulation:\newline
-\begin{tabular}{ll}
-0&disabled\\
-1&constant weight function\\
-2&one dimensional splitting\\
-3&spherical splitting
-\end{tabular}\newline
-\var{wf} the type of weighting function:\newline
-\begin{tabular}{ll}
-0&standard\\
-1&user defined
-\end{tabular}\newline
-\var{width} and \var{hybrid\_width} are the widths of the explicit and hybrid regions respectively and \var{R\_x} is the $x$ position of the center of the explicit zone.
-For more details on the method itself see \cite{praprotnik05,praprotnik08,poblete10}.
-And for further information about the technical implementation see \cite{adress}.
-
 \section{CUDA}
 \label{sec:cuda}
 \begin{essyntax}
@@ -728,7 +726,7 @@ concentration for the equilibrium and catalytic reaction are given by
 \begin{eqnarray}
 \frac{d[rt]}{dt} & = & k_{\text{eq,-}}[pr] - k_{\text{eq,+}}[rt] ; \\
 \frac{d[pr]}{dt} & = & k_{\text{eq,+}}[rt] - k_{\text{eq,-}}[pr] ; \\
--\frac{d[rt]}{dt} \;\: = \;\: \frac{d[pt]}{dt} & = & k_{\text{ct}}[rt] ,
+-\frac{d[rt]}{dt} \;\; = \;\; \frac{d[pt]}{dt} & = & k_{\text{ct}}[rt] ,
 \end{eqnarray}
 respectively.
 

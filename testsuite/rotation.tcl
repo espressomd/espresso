@@ -41,9 +41,6 @@ if { [catch {
 
     setmd skin 0.5
 
-    # to ensure force recalculation
-    invalidate_system
-    
     inter 0 0 gay-berne 1.0 1.0 4.0 3.0 5.0 2.0 1.0
     
     set GBeng_0 [expr [analyze energy gb 0 0]]

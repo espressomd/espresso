@@ -45,8 +45,18 @@ Espresso: version.txt
 endif
 endif
 
+if PYTHON_INTERFACE
+all-local: espresso-python pypresso
+espresso-python: FORCE
+	test -L espressomd || $(LN_S) src/python/espressomd espressomd
+pypresso: FORCE
+	test -L pypresso || $(LN_S) src/python/pypresso pypresso
+
+CLEANFILES += pypresso espresso
+endif
+
 # Sample myconfig generation
-myconfig-sample.hpp: 
+myconfig-sample.hpp:
 	./config.status myconfig-sample.hpp
 CLEANFILES += myconfig-sample.hpp
 # config.status deps in configure.ac

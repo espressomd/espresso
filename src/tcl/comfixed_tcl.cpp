@@ -71,9 +71,6 @@ int tclcommand_inter_parse_comfixed(Tcl_Interp * interp,
   case 2:
     Tcl_AppendResult(interp, "works only with a single CPU", (char *) NULL);
     return 0;
-  case 3:
-    Tcl_AppendResult(interp, "works only with non periodic BC", (char *) NULL);
-    return 0;
   }
 
   return 2;

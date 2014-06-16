@@ -1,3 +1,4 @@
+from __future__ import print_function
 import ctypes
 import sys
 sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
@@ -6,7 +7,7 @@ import espresso as es
 import numpy
 import code_info
 
-print code_info.electrostatics_defined()
+print(code_info.electrostatics_defined())
 
 es._espressoHandle.Tcl_Eval("thermostat lb 1.")
 dev="cpu"
@@ -23,10 +24,10 @@ es.lbfluid[dev].friction=1
 es.lbfluid[dev].tau=0.1
 
 es.lbfluid[dev].ext_force=[1., 2., 3.,]
-print es.lbfluid[dev].ext_force
-print es.lbfluid[dev].dens
-print es.lbfluid[dev].visc
-print es.lbfluid[dev].agrid
+print(es.lbfluid[dev].ext_force)
+print(es.lbfluid[dev].dens)
+print(es.lbfluid[dev].visc)
+print(es.lbfluid[dev].agrid)
 es.lbfluid[dev].print_vtk_velocity="test.vtk"
 #es.lb[dev].checkpoint_style=1
 #es.lb[dev].checkpoint="cp.dat"

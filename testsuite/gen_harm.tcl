@@ -105,7 +105,6 @@ for { set i 0 } { $i < $blbins } { incr i } {
 # compute and write the testcase data
 thermostat off
 velocities 0
-invalidate_system
 integrate 0
 
 # write the data

@@ -23,7 +23,6 @@ source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
-require_feature "ADRESS" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase p3m_wall.tcl running on [format %02d [setmd n_nodes]] nodes:"
@@ -68,7 +67,6 @@ puts [inter coulomb]
 
 if { [catch {
 
-    invalidate_system
     integrate 0
 
     set rmsf 0

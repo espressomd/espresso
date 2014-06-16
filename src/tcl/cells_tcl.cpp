@@ -34,6 +34,11 @@
  *            Exported Functions                            *
  ************************************************************/
 
+int tclcommand_sort_particles(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  mpi_bcast_event(SORT_PARTICLES);
+  return TCL_OK;
+}
+
 int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
 	       int argc, char **argv)
 {

@@ -1,11 +1,16 @@
 # Feature definitions
 #
+# The definitions are used for
+# * generation of src/config-features.hpp, which checks the sanity of
+#   the various features and their combinations
+# * generation of myconfig-sample.hpp
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 #
-# Lines commented with '/* ... */' or '//' are copied to myconfig-sample.h
+# Lines commented with '/* ... */' or '//' are copied to myconfig-sample.hpp
 # Lines commented with '#' are ignored
 
 /* Generic features */
@@ -18,10 +23,10 @@ COMFORCE
 COMFIXED
 MOLFORCES
 BOND_CONSTRAINT
-MODES	                requires FFTW
+MODES                           requires FFTW
 BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
-COLLISION_DETECTION
+COLLISION_DETECTION				implies GHOST_FLAG, GHOSTS_HAVE_BONDS
 METADYNAMICS
 NEMD
 NPT 
@@ -31,64 +36,62 @@ MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
 
 /* Rotation */
 ROTATION
-ROTATIONAL_INERTIA    implies ROTATION
-BOND_CONSTRAINT	      requires not ROTATION
-ROTATION_PER_PARTICLE	implies ROTATION
+ROTATIONAL_INERTIA              implies ROTATION
+BOND_CONSTRAINT	                requires not ROTATION
+ROTATION_PER_PARTICLE	        implies ROTATION
 
 /* Adress */
-MOL_CUT implies VIRTUAL_SITES_COM
+MOL_CUT                         implies VIRTUAL_SITES_COM
 
 /* Electrostatics */
 ELECTROSTATICS
-P3M	     equals ELECTROSTATICS and FFTW
-INTER_RF implies ELECTROSTATICS
+P3M                             equals ELECTROSTATICS and FFTW
+INTER_RF                        implies ELECTROSTATICS
 
 /* Magnetostatics */
 DIPOLES
-DP3M    equals DIPOLES and FFTW
+DP3M                            equals DIPOLES and FFTW
 
 /* Virtual sites features */
-VIRTUAL_SITES_COM	            requires not VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_RELATIVE        requires not VIRTUAL_SITES_COM
-VIRTUAL_SITES_RELATIVE        implies ROTATION
+VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
+VIRTUAL_SITES_RELATIVE          requires not VIRTUAL_SITES_COM
+VIRTUAL_SITES_RELATIVE          implies ROTATION
 VIRTUAL_SITES	                equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_NO_VELOCITY     require VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_THERMOSTAT      require VIRTUAL_SITES_RELATIVE
-THERMOSTAT_IGNORE_NON_VIRTUAL implies VIRTUAL_SITES_THERMOSTAT
+VIRTUAL_SITES_NO_VELOCITY       require VIRTUAL_SITES_RELATIVE
+VIRTUAL_SITES_THERMOSTAT        require VIRTUAL_SITES_RELATIVE
+THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
 
 /* DPD features */
 DPD
-TRANS_DPD	   implies DPD
-DPD_MASS_RED requires not DPD_MASS_LIN
-DPD_MASS_LIN requires not DPD_MASS_RED
-DPD_MASS     equals DPD_MASS_RED or DPD_MASS_LIN
-DPD_MASS     implies MASS, DPD
-TUNABLE_SLIP implies DPD
+TRANS_DPD                       implies DPD
+DPD_MASS_RED                    requires not DPD_MASS_LIN
+DPD_MASS_LIN                    requires not DPD_MASS_RED
+DPD_MASS                        equals DPD_MASS_RED or DPD_MASS_LIN
+DPD_MASS                        implies MASS, DPD
+TUNABLE_SLIP                    implies DPD
 
 /* Alternative implementation of DPD */
 INTER_DPD
 
 /* Lattice-Boltzmann features */
 LB
-LB_GPU                  requires CUDA
-LB_BOUNDARIES	          implies LB, CONSTRAINTS
-LB_BOUNDARIES_GPU	      implies LB_GPU, CONSTRAINTS
-LB_ELECTROHYDRODYNAMICS	implies LB
-ELECTROKINETICS         implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
-EK_BOUNDARIES           implies ELECROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
-EK_REACTION             implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
-LATTICE	                equals LB or LB_GPU
-USE_TEMPORARY	          equals LB or LB_GPU
-SHANCHEN		            implies LB_GPU
-SHANCHEN 		            requires not LB_BOUNDARIES_GPU
-SHANCHEN 		            requires not ELECTROKINETICS
-
+LB_GPU                          requires CUDA
+LB_BOUNDARIES	                implies LB, CONSTRAINTS
+LB_BOUNDARIES_GPU	        	implies LB_GPU, CONSTRAINTS
+LB_ELECTROHYDRODYNAMICS	        implies LB
+ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
+EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
+EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
+LATTICE	                        equals LB or LB_GPU
+USE_TEMPORARY	                equals LB or LB_GPU
+SHANCHEN		        		implies LB_GPU
+SHANCHEN 		        		requires not ELECTROKINETICS
 
 /* Interaction features */
 TABULATED
 LENNARD_JONES
 LJ_WARN_WHEN_CLOSE
-LENNARD_JONES_GENERIC
+LENNARD_JONES_GENERIC implies LENNARD_JONES
 LJCOS
 LJCOS2
 LJ_ANGLE
@@ -111,31 +114,36 @@ OVERLAPPED
 AREA_FORCE_GLOBAL
 VOLUME_FORCE
 
-BOND_ANGLE        requires not BOND_ANGLE_OLD
+BOND_ANGLE                      requires not BOND_ANGLE_OLD
 
 BOND_ANGLEDIST
-BOND_ANGLEDIST_HARMONIC	implies BOND_ANGLEDIST, CONSTRAINTS
+BOND_ANGLEDIST_HARMONIC         implies BOND_ANGLEDIST, CONSTRAINTS
 
 BOND_ENDANGLEDIST
-BOND_ENDANGLEDIST_HARMONIC implies BOND_ENDANGLEDIST, CONSTRAINTS
+BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 
 /* Obsolete features. To be removed. */
 /* Old Bond angle */
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
-BOND_ANGLE_HARMONIC	 requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
-BOND_ANGLE_COSINE	   requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
-BOND_ANGLE_COSSQUARE requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
-BOND_ANGLE_OLD       equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
-BOND_ANGLE_HARMONIC	 notest
-BOND_ANGLE_COSINE	   notest
-BOND_ANGLE_COSSQUARE notest
-BOND_ANGLE_OLD       notest
+BOND_ANGLE_HARMONIC	        	requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_COSINE	        	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_COSSQUARE            requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
+BOND_ANGLE_OLD                  equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
+BOND_ANGLE_HARMONIC	        	notest
+BOND_ANGLE_COSINE	        	notest
+BOND_ANGLE_COSSQUARE            notest
+BOND_ANGLE_OLD                  notest
 
 /* Strange features. Use only if you know what you are doing! */
 /* activate the old dihedral form */
-OLD_DIHEDRAL notest
+OLD_DIHEDRAL                    notest
 /* turn off nonbonded interactions within molecules */
-NO_INTRA_NB	notest
+NO_INTRA_NB                     notest
+/* add an int to the particle marking ghosts. Only visible on C level */
+GHOST_FLAG						notest
+/* ghost particles also have the bond information. */
+GHOSTS_HAVE_BONDS				notest
+
 
 /* Debugging */
 ADDITIONAL_CHECKS

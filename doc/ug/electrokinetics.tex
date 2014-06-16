@@ -4,36 +4,44 @@
 \chapter{\label{sec:electrokinetics}Electrokinetics}
 \newescommand{electrokinetics}
 
-The electrokinetics setup in \es{} allows for the description of electro-hydrodynamic
-systems on the level of ion density distributions coupled to a Lattice-Boltzmann 
-fluid interacting with explicit charged particles. In the following paragraph we 
-briefly explain the electrokinetic model implemented in \es{}, before we come to
-the description of the interface.
+The electrokinetics setup in \es{} allows for the description of
+electro-hydrodynamic systems on the level of ion density distributions
+coupled to a Lattice-Boltzmann (LB) fluid. The ion density
+distributions may also interact with explicit charged particles, which
+are interpolated on the LB grid.  In the following paragraph we
+briefly explain the electrokinetic model implemented in \es, before
+we come to the description of the interface.
+
+If you are interested in using the electrokinetic implementation in
+\es for scientific purposes, please contact G.~Rempfer before you
+start your project.
 
 \section{Electrokinetic Equations}
 
 In the electrokinetics code we solve the following system of coupled continuity,
 diffusion-advection, Poisson, and Navier-Stokes equations:
 \begin{eqnarray}
-\label{eq:ek-model-continuity} \frac{\partial \rho_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
-\label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla \rho_k - \nu_k \, q_k \rho_k\, \nabla \Phi + \rho_k \vec{v} \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
-\label{eq:ek-model-poisson} \Delta \Phi & = & -4 \pi \, \lb \, \kT \sum_k q_k \rho_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
-\label{eq:ek-model-velocity} \left(\frac{\partial \vec{v}}{\partial t} + \vec{v} \cdot \vec{\nabla} \vec{v} \right) \rho_\text{fl} & = & -\kT \, \nabla \rho_\text{fl} - q_k \rho_k \nabla \Phi + \eta \vec{\Delta} \vec{v} + (\eta / 3 + \eta_{\text{\,b}}) \nabla (\nabla \cdot \vec{v}); \qquad \\
-\label{eq:ek-model-continuity-fl} \frac{\partial \rho_\text{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\text{fl} \vec{v} \right) \vphantom{\left(\frac{\partial}{\partial}\right)}, 
+\label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+\label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+\label{eq:ek-model-poisson} \Delta \Phi & = & -4 \pi \, \lb \, \kT \sum_k q_k n_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
+\nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -\kT \, \nabla \rho_\mathrm{fl} - q_k n_k \nabla \Phi \\
+\label{eq:ek-model-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{\,b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+\label{eq:ek-model-continuity-fl} \frac{\partial \rho_\mathrm{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\mathrm{fl} \vec{v}_{\mathrm{fl}} \right) \vphantom{\left(\frac{\partial}{\partial}\right)} , 
 \end{eqnarray}
 which define relations between the following observables
 \begin{description}[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
-  \item[$\rho_k$] the number density of the particles of species $k$,
+  \item[$n_k$] the number density of the particles of species $k$,
   \item[$\vec{j}_k$] the number density flux of the particles of species $k$,
   \item[$\Phi$] the electrostatic potential,
-  \item[$\vec{v}$] the advective velocity,
+  \item[$\rho_{\mathrm{fl}}$] the mass density of the fluid,
+  \item[$\vec{v}_{\mathrm{fl}}$] the advective velocity of the fluid,
 \end{description}
 and input parameters
 \begin{description}[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
   \item[$D_k$] the diffusion constant of species $k$,
   \item[$\nu_k$] the mobility of species $k$,
   \item[$q_k$] the charge of a single particle of species $k$,
-  \item[$\lb$] the Bjerrum-length,
+  \item[$\lb$] the Bjerrum length,
   \item[$\kT$] the thermal energy given by the product of Boltzmann's constant
   $k_\text{B}$\\and the temperature $T$,
   \item[$\eta$] the dynamic viscosity of the fluid,
@@ -46,53 +54,58 @@ Eqs.~\eqref{eq:ek-model-continuity}-\eqref{eq:ek-model-continuity-fl}, combining
 diffusion-advection, electrostatics, and hydrodynamics is conventionally 
 referred to as the \textit{Electrokinetic Equations}.
 
-\textbf{TODO complete broad borders on the applicability of the model + difference in temperatures between EK and LB pieces.}
+\todo{Complete in broad strokes the applicability of the
+  electrokinetics model. Also mention the difference in temperatures
+  between EK and LB species.}
 
-The electrokinetic equations 
-
+The electrokinetic equations have the following properties:
 \begin{itemize}
-	\item On the coarse time and length scale of the model, the dynamics of the
-	particle species can be described in terms of smooth density distributions and
-	potentials as opposed to the microscale where highly localized densities cause
-	singularities in the potential.
+\item On the coarse time and length scale of the model, the dynamics
+  of the particle species can be described in terms of smooth density
+  distributions and potentials as opposed to the microscale where
+  highly localized densities cause singularities in the potential.
 	
-	In most situations, this restricts the application of the model to species of
-	monovalent ions, since ions of higher valency typically show strong
-	condensation and correlation effects -- the localization of individual ions in
-	local potential minima and the subsequent correlated motion with the charges
-	causing this minima.
+  In most situations, this restricts the application of the model to
+  species of monovalent ions, since ions of higher valency typically
+  show strong condensation and correlation effects -- the localization
+  of individual ions in local potential minima and the subsequent
+  correlated motion with the charges causing this minima.
 	
-	\item Only the entropy of an ideal gas and electrostatic interactions are
-	accounted for. In particular, there is no excluded volume.
+\item Only the entropy of an ideal gas and electrostatic interactions
+  are accounted for. In particular, there is no excluded volume.
 	
-	This restricts the application of the model to monovalend ions and moderate
-  charge densities. At higher valencies or densities, overcharging and layering
-  effects can occur, which lead to non-monotonic charge densities and potentials,
-  that can not be covered by a mean-field model such as Poisson-Boltzmann or this
-  one.
+  This restricts the application of the model to monovalent ions and
+  moderate charge densities. At higher valencies or densities,
+  overcharging and layering effects can occur, which lead to
+  non-monotonic charge densities and potentials, that can not be
+  covered by a mean-field model such as Poisson-Boltzmann or this one.
 	
-	Even in salt free systems containing only counterions, the counterion
-	densities close to highly charged objects can be overestimated when neglecting
-	excluded volume effects. Decades of the application of Poisson-Boltzmann
-	theory to systems of electrolytic solutions, however, show that those
-	conditions are fulfilled for monovalent salt ions (such as sodium chloride or
-	potassium chloride) at experimentally realizable concentrations.
+  Even in salt free systems containing only counter ions, the
+  counter-ion densities close to highly charged objects can be
+  overestimated when neglecting excluded volume effects. Decades of
+  the application of Poisson-Boltzmann theory to systems of
+  electrolytic solutions, however, show that those conditions are
+  fulfilled for monovalent salt ions (such as sodium chloride or
+  potassium chloride) at experimentally realizable concentrations.
 	
-	\item Electrodynamic and magnetic effects play no role. Electrolytic solutions
-	fulfill those conditions as long as they don't contain magnetic particles.
+\item Electrodynamic and magnetic effects play no role. Electrolytic
+  solutions fulfill those conditions as long as they don't contain
+  magnetic particles.
 	
-	\item The diffusion coefficient is a scalar, which means there can not be any
-	cross-diffusion. Additionally, the diffusive behavior has been deduced using
-	a formalism relying on the notion of a local equilibrium. The resulting
-	diffusion equation, however, is known to be valid also far from equilibrium.
+\item The diffusion coefficient is a scalar, which means there can not
+  be any cross-diffusion. Additionally, the diffusive behavior has
+  been deduced using a formalism relying on the notion of a local
+  equilibrium. The resulting diffusion equation, however, is known to
+  be valid also far from equilibrium.
 	
-	\item The temperature is constant throughout the system.
+\item The temperature is constant throughout the system.
 	
-	\item The density fluxes instantaneously relax to their local equilibrium
-	values. Obviously one can not extract information about processes on length
-	and time scales not covered by the model, such as dielectric spectra at
-	frequencies, high enough that they correspond to times faster than the
-	diffusive time scales of the charged species.
+\item The density fluxes instantaneously relax to their local
+  equilibrium values. Obviously one can not extract information about
+  processes on length and time scales not covered by the model, such
+  as dielectric spectra at frequencies, high enough that they
+  correspond to times faster than the diffusive time scales of the
+  charged species.
 \end{itemize}
 
 \section{Setup}
@@ -100,16 +113,16 @@ The electrokinetic equations
 \subsection{\label{ssec:ek-init}Initialization}
 
 \begin{essyntax}
-  electrokinetics
-  \require{1 or 2 or 3}{\opt{agrid  \var{agrid}}}
-  \require{1 or 2 or 3}{\opt{dens  \var{density} }}
-  \require{1 or 2 or 3}{\opt{visc  \var{viscosity}}}
-  \require{1 or 2 or 3}{\opt{bulk_visc  \var{bulk\_viscosity}}}
-  \require{1 or 2 or 3}{\opt{friction   \var{gamma} } }
-  \require{1 or 2 or 3}{\opt{gamma_odd  \var{gamma\_odd}}}
-  \require{1 or 2 or 3}{\opt{gamma_even  \var{gamma\_even}}}
-  \require{1 or 2 or 3}{\opt{T  \var{T}}}
-  \require{1 or 2 or 3}{\opt{bjerrum_length  \var{bjerrum\_length}}}
+  \require{1 or 2 or 3}{electrokinetics}
+  \opt{agrid  \var{agrid}}
+  \opt{lb_density  \var{lb\_density}}
+  \opt{visc  \var{viscosity}}
+  \opt{bulk_visc  \var{bulk\_viscosity}}
+  \opt{friction   \var{gamma} } 
+  \opt{gamma_odd  \var{gamma\_odd}}
+  \opt{gamma_even  \var{gamma\_even}}
+  \opt{T  \var{T}}
+  \opt{bjerrum_length  \var{bjerrum\_length}}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
@@ -117,103 +130,145 @@ The electrokinetic equations
   \end{features}
 \end{essyntax}
 The \lit{electrokinetics} command initializes the LB fluid with a given
-set of parameters, which in set-up is very similar to the Lattice-Boltzmann 
-\lit{lbfluid} command. We therefore refer the reader to that chapter for any 
-details and describe only the major differences here. 
+set of parameters, and it is very similar to the \es{} Lattice-Boltzmann 
+\lit{lbfluid} command in set-up. We therefore refer the reader to 
+Chapter~\ref{sec:lb} for details on the implementation of LB in \es{} and 
+describe only the major differences here. 
 
-The \lit{electrokinetics} command does not allow for a setup of the parameter 
-\lit{tau} the time step, which is instead taken directly from the \lit{setmd}
-\texttt{t\_step} command. Two additional parameters are however specified
-\lit{T} the temperature at which the diffusive species are simulated and 
-\lit{bjerrum\_length} the bjerrum length associated with the electrostatic 
-properties of the medium.
+The first major difference with the LB implementation is that the 
+electrokinetics set-up is a Graphics Processing Unit (GPU) only implementation. 
+There is no Central Processing Unit (CPU) version, and at this time there are no
+plans to make a CPU version available in the future. To use the electrokinetics
+features it is therefore imperative that your computer contains a CUDA capable
+GPU which is sufficiently modern. 
+
+To set up a proper LB fluid using the \lit{electrokinetics} command one has to
+specify at least the following options: \var{agrid}, \var{lb\_density}, \var{visc},
+\var{friction}, \var{T}, and \var{bjerrum\_length}. The other options can be used to 
+modify the behavior of the LB fluid. Note that the \lit{electrokinetics} command 
+does not allow the user to set the time step parameter \lit{tau} as is the case for
+the \lit{lbfluid} command, this parameter is instead taken directly from the input
+of the \lit{setmd} \texttt{t\_step} command. The LB \emph{mass density} is set 
+independently from the electrokinetic \emph{number densities}, since the LB fluid 
+serves only as a medium through which hydrodynamic interactions are propagated, 
+as will be explained further in the next paragraph. If no \var{lb\_density} is
+specified, then our algorithm assumes \var{lb\_density} = 1.0. The two `new'
+parameters are \var{T} the temperature at which the diffusive species are simulated
+and \var{bjerrum\_length} the Bjerrum length associated with the electrostatic 
+properties of the medium. See the above description of the electrokinetic 
+equations for an explanation of the introduction of a temperature, which does 
+not come in directly via a thermostat that produces thermal fluctuations.
 
 \subsection{\label{ssec:ek-diff-species}Diffusive Species}
 
 \begin{essyntax}
-  electrokinetics \var{species\_number}
-  \require{1 or 2 or 3}{\opt{density  \var{density}}}
-  \require{1 or 2 or 3}{\opt{D  \var{D} }}
-  \require{1 or 2 or 3}{\opt{valency  \var{valency}}}
-  \require{1 or 2 or 3}{\opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}}
+  \require{1 or 2 or 3}{electrokinetics}
+  \var{species\_number}
+  \opt{density  \var{density}}
+  \opt{D  \var{D}}
+  \opt{valency  \var{valency}}
+  \opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
   \required[3]{EK_REACTIONS}
   \end{features}
 \end{essyntax}
-The \lit{electrokinetics} command with a specified integer \var{species\_number}
-initializes the diffusive species, where the options specify: the number density
+The \lit{electrokinetics} command followed by an integer \var{species\_number}
+(in the range 0 to 10) and several options can be used to initialize the 
+diffusive species. Here the options specify: the number density
 \var{density}, the diffusion coefficient \var{D}, the valency of the particles 
-of that species \var{valency}, and an optional external (electric) force which is
-applied to the diffusive species. 
+of that species \var{valency}, and an optional external (electric) force which
+is applied to the diffusive species. As mentioned before, the LB density is 
+completely decoupled from the electrokinetic densities. This has the advantage
+that greater freedom can be achieved in matching the internal parameters to an
+experimental system. Moreover, it is possible to choose parameters for which
+the LB is more stable. The LB fluid must already be (partially) set up using the 
+\lit{electrokinetics} \var{agrid} ... command, before the diffusive species can
+be initialized. The variables \var{density}, \var{D}, and \var{valency} must be 
+set to properly initialize the diffusive species; the \var{ext\_force} is
+optional.
 
 \subsection{\label{ssec:ek-boundaries}Boundaries}
 
 \begin{essyntax}
-  electrokinetics boundary 
-  \require{2}{\opt{charge_density  \var{charge\_density}}} \var{shape} \var{shape\_args}
+  \require{1 or 2 or 3}{electrokinetics}
+  \require{2}{boundary} 
+  \opt{charge_density \var{charge\_density}}
+  \opt{shape \var{shape\_args}}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
   \required[3]{EK_REACTIONS}
   \end{features}
 \end{essyntax}
-
 The \lit{boundary} command allows one to set up (internal or external) boundaries
 for the electrokinetics algorithm in much the same way as the \lit{lbboundary} 
-command is used. The major difference with the LB command is given by the inclusion
-of the option \var{charge\_density}, with which a boundary can be endowed with a
-volume charge density. To create a surface charge density, a combination of two
-oppositely charged boundaries, one inside the other, can be used. However, care
-should be taken to maintain the surface charge density when the value of 
-\var{agrid} is changed. Currently, the following \var{shape}s are available:
-wall, sphere, cylinder, rhomboid, pore, and stomatocyte. We refer to the 
-documentation of the \lit{lbboundary} command for information on the options
-associated to these shapes.
+command is used for the LB fluid. The major difference with the LB command is 
+given by the option \var{charge\_density}, with which a boundary can be endowed 
+with a volume charge density. To create a surface charge density, a combination 
+of two oppositely charged boundaries, one inside the other, can be used. 
+However, care should be taken to maintain the surface charge density when the
+value of \var{agrid} is changed. Currently, the following \var{shape}s are 
+available: wall, sphere, cylinder, rhomboid, pore, and stomatocyte. We refer to 
+the documentation of the \lit{lbboundary} command (Chapter~\ref{sec:lb}) for
+information on the options \var{shape\_args} associated to these shapes. In
+order to properly set up the boundaries, the \var{charge\_density} and relevant
+\var{shape\_args} must be specified.
 
 \section{\label{ssec:ek-output}Output}
 
 \subsection{\label{ssec:ek-output-fields}Fields}
 
 \begin{essyntax}
-  electrokinetics print 
+  \require{1 or 2 or 3}{electrokinetics}
+  print 
   \require{1 or 2}{\var{property}}
-  \opt{vtk} \var{filename} [\var{filename}]
+  \opt{vtk}
+  filename [\var{filename}]
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
   \required[3]{EK_REACTIONS}
   \end{features}
 \end{essyntax}
-The print parameter of the \lit{electrokinetics} command is a feature to simplify 
-visualization. It allows for the export a property of the fluid field into a 
-file with name \var{filename} in one go. Currently supported values of the 
-parameter \var{property} are: \var{density}, \var{velocity}, \var{potential}, and
-\var{boundary}, which give the LB fluid density, the LB fluid velocity, the 
-electrostatic potential, and the location and type of the boundaries, respectively.
-The boundaries can only be printed when the \texttt{EK_BOUNDARIES} is compiled in.
-The additional option \lit{vtk} enables export in the vtk format which is readable
-by visualization software such as paraview\footnote{http://www.paraview.org/} or 
-mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. If the \lit{vtk} 
-option is not specified gnuplot readable data will be exported.
+The print parameter of the \lit{electrokinetics} command enables simple 
+visualization of simulation data. A property of the fluid field can be exported
+into a file with name \var{filename} in one go. Currently, supported values of
+the parameter \var{property} are: \var{density}, \var{velocity}, 
+\var{potential}, and \var{boundary}, which give the LB fluid density, the LB 
+fluid velocity, the electrostatic potential, and the location and type of the
+boundaries, respectively. The boundaries can only be printed when the 
+\texttt{EK_BOUNDARIES} is compiled in. The additional option \lit{vtk} can be
+used to directly export in the vtk format. The vtk format is readable
+by visualization software such as paraview\footnote{http://www.paraview.org/}
+and mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. If the 
+\opt{vtk} option is not specified, a gnuplot readable data will be exported.
 
 \begin{essyntax}
-  electrokinetics \var{species\_number} print \var{property} \opt{vtk} \var{filename} [\var{filename}]
+  \require{1 or 2 or 3}{electrokinetics}
+  \var{species\_number} 
+  print 
+  \var{property} 
+  \opt{vtk}
+  filename [\var{filename}]
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
   \required[3]{EK_REACTIONS}
   \end{features}
 \end{essyntax}
-This print statement allows for a similar export of the properties of the 
-diffusive species, namely: \var{density} and \var{flux}, which specify the 
-number density and species flux of species \var{species\_number}, respectively.
+This print statement is similar to the above command. It enables the export of
+diffusive species properties, namely: \var{density} and \var{flux}, which 
+specify the number density and flux of species \var{species\_number},
+respectively.
 
 \subsection{\label{ssec:ek-local-quantities}Local Quantities}
 
 \begin{essyntax}
-  electrokinetics node \var{x} \var{y} \var{z} velocity
+  \require{1 or 2 or 3}{electrokinetics}
+  node \var{x} \var{y} \var{z} 
+  velocity
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
@@ -221,35 +276,129 @@ number density and species flux of species \var{species\_number}, respectively.
   \end{features}
 \end{essyntax}
 The \lit{node} option of the \lit{electrokinetics} command allows one to output 
-the value of a quantity on a single LB node, thus far only the velocity has been
-implemented. For other quantities the \lit{lbnode} command may be used. 
+the value of a quantity on a single LB node. The node is addressed using three
+integer values which run from 0 to \var{dim\_x}/\var{agrid},
+\var{dim\_y}/\var{agrid}, and \var{dim\_z}/\var{agrid}, respectively. Thus far,
+only the velocity of the LB fluid can be printed in the standard electrokinetics
+implementation. For other quantities the \lit{lbnode} command may be used. 
 
 \begin{essyntax}
-  electrokinetics \var{species\_number} node \var{x} \var{y} \var{z} density
+  \require{1 or 2 or 3}{electrokinetics}
+  \var{species\_number}
+  node \var{x} \var{y} \var{z}
+  density
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
   \required[3]{EK_REACTIONS}
   \end{features}
 \end{essyntax}
-This command can be used to output the number density of the \var{species\_number}
-diffusive species on a single LB node.
+This command can be used to output the number density of the
+\var{species\_number}-th diffusive species on a single LB node.
 
 \section{Catalytic Reaction}
 
 \subsection{Concept}
 
-\textbf{TODO: Describe the catalytic reaction and the `mass solution'.}
+The electrokinetics solver implemented in \es{} can be used to
+simulate a system, for which in addition to the electrokinetic
+equations, there is a (local) catalytic reaction which converts one
+species into another.
 
-The electrokineticssolved implemented in \es{} can be used to simulate a system,
-where in addition to the electrokinetic equations, there is a (local) catalytic
-reaction which converts one species into another. This gives rise to a modified
-set of reaction-diffusion-advection equations. 
+If you are interested in using this implementation in \es{} for
+scientific purposes, please contact J.~de~Graaf before you start your
+project.
+
+Currently, a linear reaction is implemented which converts one species into two others, in
+order to model the catalytic decomposition of hydrogen peroxide in the presence
+of a platinum catalyst: $2 \mathrm{H}_{2}\mathrm{O}_{2} \rightarrow 
+2 \mathrm{H}_{2}\mathrm{O} + \mathrm{O}_{2}$. The decomposition of 
+$\mathrm{H}_{2}\mathrm{O}_{2}$ is in reality more complicated than a linear 
+reaction, since it is assumed to proceed via many intermediate complexed-states, 
+but the linear reaction can be thought of as modeling the rate-limiting step.
+If we assume that there are three non-ionic species with number densities
+$n_{k}$, where $n_{0} = [ \mathrm{H}_{2}\mathrm{O}_{2} ]$,
+$n_{1} = [ \mathrm{H}_{2}\mathrm{O} ]$, and $n_{2} = [ \mathrm{O}_{2} ]$, 
+then we can write the (electro)kinetic equations for this system as
+
+\begin{eqnarray}
+\label{eq:ek-reaction-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k +\, f_{k} c n_{k} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+\label{eq:ek-reaction-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+\nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -\kT \, \sum_{k} \nabla n_k   \\
+\label{eq:ek-reaction-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{\,b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+\label{eq:ek-reaction-continuity-fl} \frac{\partial \rho_\mathrm{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\mathrm{fl} \vec{v}_{\mathrm{fl}} \right) \vphantom{\left(\frac{\partial}{\partial}\right)} ,
+\end{eqnarray}
+which define relations between the following observables
+\begin{description}[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
+  \item[$n_k$] the number density of the particles of species $k$,
+  \item[$\vec{j}_k$] the number density flux of the particles of species $k$,
+  \item[$\rho_{\mathrm{fl}}$] the mass density of the fluid,
+  \item[$\vec{v}_{\mathrm{fl}}$] the advective velocity of the fluid,
+\end{description}
+and input parameters
+\begin{description}[itemsep=0cm,labelindent=1.5em,leftmargin=4.5em,style=nextline]
+  \item[$D_k$] the diffusion constant of species $k$,
+  \item[$\kT$] the thermal energy given by the product of Boltzmann's constant
+  $k_\text{B}$\\and the temperature $T$,
+  \item[$\eta$] the dynamic viscosity of the fluid,
+  \item[$\eta_{\text{\,b}}$] the bulk viscosity of the fluid,
+  \item[$f_{k}$] the reaction constant $f_{0} \equiv -1$, $f_{1} = 1$ and $f_{2} = 0.5$ for the above reaction,
+  \item[$c$] the reaction rate.
+\end{description}
+In this set of equations we have fully decoupled the number densities and the
+fluid mass density. N.B. We have set the initial fluid mass density is not necessarily 
+equal to the sum of the initial species number densities. This means that 
+some care needs to be taken in the interpretation of the results of the 
+simulations with this code. It is important to note that the reaction must 
+satisfy mass balance:
+\begin{equation}
+\label{eq:ek-mass-balance} \sum_{k} f_{k} m_{k} = 0 ,
+\end{equation}
+where $m_{k}$ is the molecular mass of a reactive species. This implies that the
+total mass flux in the system is given by
+\begin{equation}
+\label{eq:ek-mass-flux} \vec{j}_{\mathrm{mass}} = \rho_{\mathrm{fl}}(t = 0) \frac{\sum_{k} m_{k} \vec{j}_{k}}{\sum_{k} m_{k} n_{k} (t = 0)}
+\end{equation}
+which is the quantity of interested in systems where, for instance, the
+catalytic reaction drives a particle to self-propel. There is a way to directly 
+access the mass flux from the simulation, without having to go through the
+computations, as will be shown later.
+
+The reaction is specified by the second term on the right-hand side of 
+Eq.~\eqref{eq:ek-reaction-continuity}. It is important to note that this term
+can be set locally, as opposed to the other terms in the equation system 
+Eqs.~\eqref{eq:ek-reaction-continuity}-\eqref{eq:ek-reaction-continuity-fl}, in
+our implementation, as will become clear in the following. This has the
+advantage that catalytic surfaces may be modeled. 
+
+It turns out that in addition to the initial setting of the LB mass density, the
+inherent compressibility of the LB -- it satisfies the equation of state of an 
+ideal gas -- must be suppressed to obtain the `correct' advective contribution
+from the Navier-Stokes equation~\eqref{eq:ek-reaction-velocity}. The force 
+applied to the LB fluid coming from the diffusive species is sufficiently
+strong to create a mass density heterogeneity in the LB fluid. This 
+heterogeneity leads to an internal restorative force within the LB, which
+exceeds the applied force. An unfortunate consequence of this is that an 
+incorrect advective velocity is given by the LB scheme.
+
+In our implementation, suppression of LB fluid heterogeneity is achieved by 
+resetting the zeroth mode of the LB at the start of every time step. This 
+resetting violates mass conservation in the LB, but only by a small (and 
+controlled) amount, since the heterogeneities are in the order of 1\%, 
+for the physical systems that we considered thus far. Alternatively, one could
+use parameters for which the compressibility of the LB fluid is not as strong, 
+but tuning the internal LB parameters. However, this may severely limit the 
+range over which the system can be mapped to an experimental equivalent. 
+Regardless, great care must be taken to examine the effect of mode 0 resetting 
+and it should not be used without a good insight into the system you are 
+modeling. In future version of \es{} the reaction set-up will be built on top of
+an incompressible hydrodynamics solver, thus circumventing the problems that
+arrise in regular LB which necessitate mode resetting.
 
 \subsection{\label{ssec:ek-reac-init}Initialization and Geometry Definition}
 
 \begin{essyntax}
-  electrokinetics 
+  \require{1 or 2 or 3}{electrokinetics}
   \require{3}{reaction}
   \opt{reactant_index \var{reactant\_index}}
   \opt{product0_index \var{product0\_index}}
@@ -257,7 +406,7 @@ set of reaction-diffusion-advection equations.
   \opt{reactant_resrv_density \var{reactant\_resrv\_density}}
   \opt{product0_resrv_density \var{product0\_resrv\_density}}
   \opt{product1_resrv_density \var{product1\_resrv\_density}}
-  \opt{reaction_rate \var{reaction_rate}}
+  \opt{reaction_rate \var{reaction\_rate}}
   \opt{mass_reactant \var{mass\_reactant}}
   \opt{mass_product0 \var{mass\_product0}}
   \opt{mass_product1 \var{mass\_product1}}
@@ -269,30 +418,57 @@ set of reaction-diffusion-advection equations.
   \required[3]{EK_REACTIONS}
   \end{features}
 \end{essyntax}
-The \lit{electrokinetics reaction} command is used to set up the catalytic reaction
-between three previously defined the diffusive species, of which the identifiers 
-are given by \var{reactant\_index}, \var{product0\_index}, and \var{product1\_index}
-respectively. In the 1:2 reaction, these fulfill the role of the reactant and 
-the two products, as indicated by the naming convention. For each species a 
-reservoir (number) density must be set, given by the variables
+The \lit{electrokinetics reaction} command is used to set up the catalytic 
+reaction between three previously defined the diffusive species, of which the i
+identifiers are given by \var{reactant\_index}, \var{product0\_index}, and 
+\var{product1\_index}, respectively. In the 1:2 reaction, these fulfill the role
+of the reactant and the two products, as indicated by the naming convention. For
+each species a reservoir (number) density must be set, given by the variables
 \var{reactant\_resrv\_density}, \var{product0\_resrv\_density}, and
-\var{product1\_resrv\_density}, respectively. These reservoir densities, in tandem
-with reservoir nodes, see below, can be used to keep the reaction from depleting
-all the reactant in the simulation box. The \var{reaction_rate} variable specifies
-the speed at which the reaction proceeds. The three masses (typically given in 
-the atomic weigth equivalent) are used to determine the total mass flux provided
-by the reaction, and are used to check whether the reaction that is given satisfies
-the chemical requirement of mass conservation. Finally, the parameters
+\var{product1\_resrv\_density}, respectively. These reservoir densities
+correspond to the initial number densities associated with the reactive species.
+The reservoir densities, in tandem with reservoir nodes, see below, can be used 
+to keep the reaction from depleting all the reactant in the simulation box. The 
+\var{reaction\_rate} variable specifies the speed at which the reaction proceeds.
+The three masses (typically given in the atomic weight equivalent) are used to 
+determine the total mass flux provided by the reaction, as described above, and 
+are also used to check whether the reaction ratios that are given satisfy the 
+chemical requirement of mass conservation. Finally, the parameters
 \var{reaction\_fraction\_pr\_0} and \var{reaction\_fraction\_pr\_1} specify
 what fractions of the product are generated when a given quantity of reactant is
-catalytically converted.
+catalytically converted. To use a chemical reaction, all options for the 
+\lit{electrokinetics reaction} command must be specified.
 
 \begin{essyntax}
-  electrokinetics 
+  \require{1 or 2 or 3}{electrokinetics}
   \require{3}{reaction}
-  region
-  \opt{reaction_type  \var{reaction\_type}}
-  \var{shape} \var{shape\_args}
+  \require{3}{reset_mode_zero \var{fraction}}
+  \opt{shape \var{shape\_args}}
+  \begin{features}
+  \required[1]{ELECTROKINETICS}
+  \required[2]{EK_BOUNDARIES}
+  \required[3]{EK_REACTIONS}
+  \end{features}
+\end{essyntax}
+The \lit{reset_mode_zero} option of the \lit{electrokinetics reaction} command 
+enables the user to violate mass conservation in the LB to effectively kill off
+its compressiblity. The parameter \var{fraction} can assume values in the range
+[0,1]. The resetting acts on the zeroth mode of the LB as follows
+\begin{equation}
+\label{eq:ek-mode} M_{0,\mathrm{reset}} = f * M_{0,\mathrm{original}} ,
+\end{equation}
+with $f$ the value of the \var{fraction} parameter. The default behavior of the
+electrokinetics algorithm is no mode resetting. Once mode resetting is enabled
+it can be adjusted at any time during the simulation and it may be switched off
+by setting the value of \var{fraction} to 1.0. Mode zero resetting can only be
+applied if a reaction has been set up and there are boundaries in the system.
+
+\begin{essyntax}
+  \require{1 or 2 or 3}{electrokinetics}
+  \require{3}{reaction}
+  \require{3}{region}
+  \opt{reaction_type \var{reaction\_type}}
+  \opt{shape \var{shape\_args}}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
@@ -300,35 +476,60 @@ catalytically converted.
   \end{features}
 \end{essyntax}
 The \lit{region} option of the \lit{electrokinetics reaction} command allows one 
-to set up regions in which the reaction takes place with the help of the constraints
-that are available to set up boundaries. The integer value \var{reaction\_type}
-can be used to select the reaction: 0 no reaction, 1 reaction, and 2 reservoir.
-the rest of the command follows the same format of the \lit{electrokinetics boundary}
-command. Currently, the following \var{shape}s are available: box,
-wall, sphere, cylinder, rhomboid, pore, and stomatocyte. The box shape is a 
-\lit{region} specific command, to set the entire box to a specific reaction value.
+to set up regions in which the reaction takes place with the help of the 
+constraints that are available to set up boundaries. The integer value 
+\var{reaction\_type} can be used to select the reaction: 0 no reaction takes
+place for this region, 1 the catalytic reaction takes place in this region, and 
+2 the region functions as a reservoir, wherein the species densities are reset
+to their initial (or reservoir) concentrations. The rest of the command follows 
+the same format of the \lit{electrokinetics boundary} command. Currently, the 
+following \var{shape}s are available: box, wall, sphere, cylinder, rhomboid, 
+pore, and stomatocyte. The box shape is a \lit{region} specific command, which
+can be used to set the entire simulation box to a specific reaction value. To
+use the \lit{electrokinetics reaction region} command, one must first set up
+a reaction, as described above. To successfully specify a region all the 
+relevant arguments that go with the shape constraints must be provided.
 
-\subsection{\label{ssec:ek-reac-output}Reaction-Specific Output}
+\subsubsection{\label{sssec:ek-pdb-parse}Parsing PDB Files}
 
 \begin{essyntax}
-  electrokinetics print 
-  \require{3}{\var{property}}
-  \opt{vtk} \var{filename} [\var{filename}]
+  \require{1 or 2 or 3}{electrokinetics}
+  \require{2}{pdb-parse}
+  \var{pdb\_filename}
+  \var{itp\_filename}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
   \required[3]{EK_REACTIONS}
   \end{features}
 \end{essyntax}
-The print parameter of the \lit{electrokinetics} command can be used in combination
-with the \texttt{EK\_REACTION} feature to give advanced output options. Currently
-supported values of the parameter \var{property} are: \var{pressure}, 
-\var{reaction\_tags}, and \var{mass\_flux}, which give the the location and type of 
-the reactive regions, the ideal-gas pressure coming from the diffusive species and
-the total mass flux of the reactive species, respectively.
+The \lit{electrokinetics pdb-parse} feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here \var{itp\_filename}) the structure gets interpolated to the \lit{electrokinetics} grid. For the input you will need to prepare a PDB file with a \lit{gromacs} force field to generate the topology file. Normally the PDB file extension is \lit{.pdb}, the topology file extension is \lit{.itp}. Obviously the PDB file is placed instead of \var{pdb\_filename} and the topology file instead of \var{itp\_filename}. \todo{At the moment this fails badly, if you try to parse incorrectly formatted files. This will be fixed in the future.}
+
+\subsection{\label{ssec:ek-reac-output}Reaction-Specific Output}
 
 \begin{essyntax}
-  electrokinetics node \var{x} \var{y} \var{z} 
+  \require{1 or 2 or 3}{electrokinetics}
+  print 
+  \require{3}{\var{property}}
+  \opt{vtk} 
+  \var{filename} [\var{filename}]
+  \begin{features}
+  \required[1]{ELECTROKINETICS}
+  \required[2]{EK_BOUNDARIES}
+  \required[3]{EK_REACTIONS}
+  \end{features}
+\end{essyntax}
+The print parameter of the \lit{electrokinetics} command can be used in
+combination with the \texttt{EK\_REACTION} feature to give advanced output 
+options. Currently, supported values of the parameter \var{property} are: 
+\var{pressure}, \var{reaction\_tags}, and \var{mass\_flux}, which give the 
+location and type of the reactive regions, the ideal-gas pressure coming from 
+the diffusive species and the total mass flux of the reactive species,
+respectively. To use this command a reaction must be set up.
+
+\begin{essyntax}
+  \require{1 or 2 or 3}{electrokinetics}
+  node \var{x} \var{y} \var{z} 
   \require{3}{mass_flux}
   \begin{features}
   \required[1]{ELECTROKINETICS}
@@ -336,9 +537,9 @@ the total mass flux of the reactive species, respectively.
   \required[3]{EK_REACTIONS}
   \end{features}
 \end{essyntax}
-In combination with the \texttt{EK\_REACTION} feature the \lit{node} option of the
-\lit{electrokinetics} command allows one to output the value mass flux on a single 
-LB node.
+In combination with the \texttt{EK\_REACTION} feature the \lit{node} option of 
+the \lit{electrokinetics} command allows one to output the value of the mass 
+flux on a single LB node.
 
 %%% Local Variables:
 %%% mode: latex

@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function
 import string, re, os
 
 # Execute git log with the desired command line options.
@@ -106,7 +107,7 @@ for line in fin:
         elif authorLine == prevAuthorLine:
             pass
         else:
-            print("\n" + authorLine)
+            print(("\n" + authorLine))
 
         # Assemble the actual commit message line(s) and limit the line length
         # to 80 characters.

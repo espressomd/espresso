@@ -23,7 +23,6 @@
 #
 source "tests_common.tcl"
 
-require_feature "ADRESS" off
 
 puts "------------------------------------------"
 puts "- Testcase harm.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -48,8 +47,6 @@ if { [catch {
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
     }
-    # to ensure force recalculation
-    invalidate_system
     integrate 0
     # here you can create the necessary snapshot
     # write_data "harm_system.data2"
