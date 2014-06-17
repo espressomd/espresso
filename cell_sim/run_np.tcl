@@ -107,13 +107,21 @@ set m0 [expr $rho0*$L0*$L0*$L0]
 # set kb0 $E0
 
 ############### Calculate quantities in Espresso units ###############################
-
+set pi 3.1415926535897931
+set G 0.2
+set r 4.9856099295288183473
+set H 2
 set rho [expr $rho_SI / $rho0]
 set nu [expr $nu_SI / $nu0]
 set kbT [expr $kbT_SI / $E0]
 set kS [expr $ks_SI / $ks0]
 set kB [expr $kb_SI / $kb0]
 set kC $kS
+
+set shear_rate [expr ($G * $kS) / ($nu * $r)]
+set u [expr $shear_rate * $boxz]
+# set u 1
+
 # set V [expr $V_SI /  $V0]
 set gridsize [expr $gridsize_SI / $L0]
 
@@ -148,10 +156,11 @@ set dt_md [expr $dt_lb]
 # Integrations per step
 set stepSize 1
 # number of steps
-set numSteps 10000
+set numSteps 1500000
 # set after which number of steps vtkfile should be written
-set distVtk 100
-set distCellSeq [expr 1]
+set distVtk  10000
+set distCellSeq 100
+set distDone 1000
 set distPartSeq [expr 1]
 # set distFlow [expr $numSteps/100]
 
@@ -194,10 +203,12 @@ puts "kC = $kC"
 puts "zeta = $zeta"
 puts "final vel = $vel_final"
 puts "N_drag = $N_drag "
-
+puts "Radius = $r"
+puts "Shear Rate =  [expr ($G * $kS)] / [expr ($nu * $r)] * $H =  [expr ( ($G * $kS) / ($nu * $r) )]"
+puts "u = [expr $shear_rate * ($boxz - ($H/2))]"
 
 ######## big info file #########
-set simInfo [open "paraInfo_step1e4.dat" w]
+set simInfo [open "~/sphere/simfiles/paraInfo_step1e4.dat" w]
 puts $simInfo "nu = $nu"
 puts $simInfo "rho = $rho"
 # puts $simInfo "V = $V"
@@ -214,12 +225,13 @@ puts $simInfo "zeta = $zeta"
 puts $simInfo "particle radius = $rad"
 puts $simInfo "final vel = $vel_final"
 puts $simInfo "N_drag = $N_drag "
+puts $simInfo "gamma_dot = $shear_rate/$H"
 
 close $simInfo
 
 ####### parameter file #########
 # Write an info File, contains relevant information about the Simulation
-set infoFile [open "simInfo_step1e4.dat" "w"] 		
+set infoFile [open "~/sphere/simfiles/simInfo_step1e4.dat" "w"] 		
 puts $infoFile "# Scalar"
 puts $infoFile "# timeStep / stepSize / numSteps / lengthScale"
 puts $infoFile "$dt_md $stepSize $numSteps $L0"
@@ -246,22 +258,27 @@ setmd box_l $boxx $boxy $boxz
 
 # setting integration parameters
 # skin for verlet list
-setmd skin 0.1 
+setmd skin 0.1
 # timestep
 setmd time_step $dt_md
 # coose how good no slip condition is: 0 non, 1 better
 # setmd sequ 1
+
+setmd warnings 0
 
 # setting up the fluid with or without using gpu
 lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 0 0 0
 #setting themostat
 thermostat lb $kbT
 
+# cellsystem domain_decomposition -no_verlet_list
+# cellsystem nsquare
+
 ############## ADD WALL ##################
 
 # walls located at z=1 and z=boxz-1 in x-y-plane
-lbboundary wall dist 1 normal 0. 1. 0. velocity 1 0 0 
-lbboundary wall dist [expr -$boxz+1]  normal 0. -1. 0. velocity -1 0 0
+lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity [expr $u/2] 0 0 
+lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity [expr -$u/2] 0 0
 
 ################## ADD CELLS #############
 set interCount 0
@@ -276,14 +293,13 @@ set numCells 1
 # setmd vescnum $numCells
 
 # write file with cell sequence data
-set cellSeqFile [ open "cellSeq.dat" "w" ]
+set cellSeqFile [ open "~/sphere/simfiles/cellSeq.dat" "w" ]
 puts $cellSeqFile "#CellSequence"
 puts $cellSeqFile "#NumCells = $numCells"
 
 addCell [expr $boxx*0.5] [expr $boxy*0.5] [expr $boxz*0.5] $numType
+# addCell 10 10 10 $numType
 incr numType
-
-
 
 ####### SIMULATION ######
 
@@ -298,25 +314,26 @@ set startT [clock seconds]
 puts "Starting simulation"
 
 for {set step 0} {$step < $numSteps} {incr step} {
-  
-  integrate $stepSize
-  if {fmod($step, 10)==0} { puts "Done $step out of $numSteps steps." }
-   
-#   write cell sequence to cellSeq.dat
-  puts $cellSeqFile "#Frame = [expr $stepSize*$step]"
-  puts $cellSeqFile "#Time = [expr $stepSize*$step*$dt_md]"
-  
-  for {set j 0} { $j < $numCells } {incr j} {
-   for {set k 0} {$k < $numNodesPerCell} {incr k} {
-     puts $cellSeqFile [part [expr $j*$numNodesPerCell + $k ] print pos]
-    }
-  
-  }
-  
-# output for paraview only every 10th step
-  if {fmod($step, $distVtk)==0} { 
-      for { set i 0} { $i < $numCells} {incr i} {writevtkCell "~/sphere/vtkfiles/cell-$i $step.vtk" $i}
+    
+    integrate $stepSize
+    if {fmod($step, $distDone)==0} { puts "Done $step out of $numSteps steps." }
+
+    #   write cell sequence to cellSeq.dat
+     if {fmod($step, $distCellSeq)==0} { 
+	 
+	 puts $cellSeqFile "#Frame = [expr $stepSize*$step]"
+	 puts $cellSeqFile "#Time = [expr $stepSize*$step*$dt_md]"
+	for {set j 0} { $j < $numCells } {incr j} {
+	    for {set k 0} {$k < $numNodesPerCell} {incr k} {
+		puts $cellSeqFile [part [expr $j*$numNodesPerCell + $k ] print pos]
+	    }
+	}
      }
+    
+    # output for paraview only every 10th step
+    if {fmod($step, $distVtk)==0} { 
+	for { set i 0} { $i < $numCells} {incr i} {writevtkCell "~/sphere/vtkfiles/cell-$i $step.vtk" $i}
+    }
 
 }
 

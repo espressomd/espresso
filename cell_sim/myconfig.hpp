@@ -57,7 +57,7 @@
 #define TRIELNEOHOOKEAN
 
 /* Virtual sites features */
-//#define VIRTUAL_SITES
+#define VIRTUAL_SITES
 //#define VIRTUAL_SITES_COM
 //#define VIRTUAL_SITES_RELATIVE
 //#define VIRTUAL_SITES_NO_VELOCITY
@@ -138,7 +138,7 @@
 //#define GHOST_DEBUG
 //#define LATTICE_DEBUG
 //#define HALO_DEBUG
-#define GRID_DEBUG
+//#define GRID_DEBUG
 //#define VERLET_DEBUG
 //#define PARTICLE_DEBUG
 //#define P3M_DEBUG

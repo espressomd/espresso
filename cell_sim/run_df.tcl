@@ -2,7 +2,6 @@
 # author: Vera
 # date: 18.01.14
 
-
 #######################################################################
 # Parameters setting on for every simulation
 
@@ -98,7 +97,6 @@ source "$tclToolsDir/addCell_tools.tcl"
 source "$tclToolsDir/writeVtk_folded.tcl"
 # source "$tclToolsDir/addCell_fixed.tcl"
 
-
 # setting Boxlength
 setmd box_l $boxx $boxy $boxz
 
@@ -155,20 +153,20 @@ for {set step 0} {$step < $numSteps} {incr step} {
   integrate $stepSize
   if {fmod($step, 10)==0} { puts "Done $step out of $numSteps steps." }
    
-#   write cell sequence to cellSeq.dat
-  puts $cellSeqFile "#Frame = [expr $stepSize*$step]"
-  puts $cellSeqFile "#Time = [expr $stepSize*$step*$dt]"
+# #   write cell sequence to cellSeq.dat
+#   puts $cellSeqFile "#Frame = [expr $stepSize*$step]"
+#   puts $cellSeqFile "#Time = [expr $stepSize*$step*$dt]"
   
-  for {set j 0} { $j < $numCells } {incr j} {
-   for {set k 0} {$k < $numNodesPerCell} {incr k} {
-     puts $cellSeqFile [part [expr $j*$numNodesPerCell + $k ] print pos]
-    }
+#   for {set j 0} { $j < $numCells } {incr j} {
+#    for {set k 0} {$k < $numNodesPerCell} {incr k} {
+#      puts $cellSeqFile [part [expr $j*$numNodesPerCell + $k ] print pos]
+#     }
   
-  }
+  # }
   
 # output for paraview only every 10th step
   if {fmod($step, $distVtk)==0} { 
-      for { set i 0} { $i < $numCells} {incr i}  {writevtkCell "~/sphere/vtkfiles/cell-$i $step.vtk" $i}
+  for { set i 0} { $i < $numCells} {incr i}  {writevtkCell "~/sphere/vtkfiles/cell-$i $step.vtk" $i}
      }
 
 }
