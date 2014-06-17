@@ -47,7 +47,7 @@ int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, 
 int tclcommand_integrate_print_usage(Tcl_Interp *interp) 
 {
   Tcl_AppendResult(interp, "Usage of tcl-command integrate:\n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate [reuse_forces] <INT n steps>' for integrating n steps and reusing unconditionally the given forces for the first step \n", (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate <INT n steps> [reuse_forces|recalc_forces]' for integrating n steps\n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate set' for printing integrator status \n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate set nvt' for enabling NVT integration or \n" , (char *)NULL);
 #ifdef NPT
