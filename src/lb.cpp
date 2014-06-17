@@ -2561,6 +2561,7 @@ inline void lb_collide_stream() {
     index_t index;
     int x, y, z;
     double modes[19];
+    int i;
 
     /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
@@ -2619,6 +2620,22 @@ inline void lb_collide_stream() {
       
       index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
+
+    for (i=0; i<lblattice.halo_grid_volume; ++i) {
+
+#ifdef EXTERNAL_FORCES
+	// unit conversion: force density
+	lbfields[i].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*tau*tau;
+	lbfields[i].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*tau*tau;
+	lbfields[i].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*tau*tau;
+#else
+	lbfields[i].force[0] = 0.0;
+	lbfields[i].force[1] = 0.0;
+	lbfields[i].force[2] = 0.0;
+	lbfields[i].has_force = 0;
+#endif
+     }
+
 
     /* exchange halo regions */
     halo_push_communication();
