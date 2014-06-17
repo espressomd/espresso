@@ -25,6 +25,7 @@
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "cuda_init.hpp"
+#include "energy.hpp"
 
 static int max_ran = 1000000;
 static CUDA_global_part_vars global_part_vars_host = {0,0,0};
@@ -38,9 +39,12 @@ static CUDA_particle_data *particle_data_device = NULL;
 static CUDA_particle_seed *particle_seeds_device = NULL;
   /** struct for fluid composition */
 static CUDA_fluid_composition *fluid_composition_device = NULL;
+/** struct for energies */
+static CUDA_energy *energy_device = NULL;
 
 CUDA_particle_data *particle_data_host = NULL;
 CUDA_particle_force *particle_forces_host = NULL;
+CUDA_energy energy_host;
 CUDA_fluid_composition *fluid_composition_host = NULL;
 
 /**cuda streams for parallel computing on cpu and gpu */
@@ -240,6 +244,9 @@ CUDA_global_part_vars* gpu_get_global_particle_vars_pointer() {
 CUDA_particle_force* gpu_get_particle_force_pointer() {
   return particle_forces_device;
 }
+CUDA_energy* gpu_get_energy_pointer() {
+  return energy_device;
+}
 
 CUDA_particle_seed* gpu_get_particle_seed_pointer() {
   return particle_seeds_device;
@@ -287,6 +294,20 @@ void copy_forces_from_GPU() {
     }
     cuda_mpi_send_forces(particle_forces_host,fluid_composition_host);
   }
+}
+
+void clear_energy_on_GPU() {
+  if (energy_device == NULL)
+    cuda_safe_mem( cudaMalloc((void**) &energy_device, sizeof(CUDA_energy)) );
+ cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)) );
+}
+
+void copy_energy_from_GPU() {
+  cuda_safe_mem (cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy), cudaMemcpyDeviceToHost));
+  energy.bonded[0] += energy_host.bonded;
+  energy.non_bonded[0] += energy_host.non_bonded;
+  energy.coulomb[0] += energy_host.coulomb;
+  energy.dipolar[0] += energy_host.dipolar;
 }
 
 /** Generic copy functions from an to device **/

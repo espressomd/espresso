@@ -32,6 +32,9 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "external_potential.hpp"
+#include "cuda_interface.hpp"
+#include "forces.hpp"
+#include "EspressoSystemInterface.hpp"
 
 Observable_stat energy = {0, {NULL,0,0}, 0,0,0};
 Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
@@ -51,6 +54,16 @@ void energy_calc(double *result)
     return;
 
   init_energies(&energy);
+#ifdef CUDA
+  clear_energy_on_GPU();
+#endif
+
+  espressoSystemInterface.update();
+
+  // Compute the energies from the force objects
+  for (PotentialList::iterator potential= potentials.begin();
+      potential != potentials.end(); ++potential)
+    (*potential)->computeEnergy(espressoSystemInterface);
 
   on_observable_calc();
   
@@ -74,6 +87,10 @@ void energy_calc(double *result)
   energy.data.e[0] /= (2.0*time_step*time_step);
 
   calc_long_range_energies();
+
+#ifdef CUDA
+  copy_energy_from_GPU();
+#endif
   
   /* gather data */
   MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);

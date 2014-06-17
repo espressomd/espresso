@@ -536,9 +536,23 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s)
 	}
 }
 
-/*
-void Mmm1dgpuForce::computeEnergy(SystemInterface &s) // TODO: this is not yet tested
+__global__ void scaleAndAddKernel(mmm1dgpu_real *dst, mmm1dgpu_real *src, int N, mmm1dgpu_real factor)
 {
+	for (int tid = threadIdx.x + blockIdx.x * blockDim.x; tid < N; tid += blockDim.x * gridDim.x)
+	{
+		dst[tid] += src[tid]*factor;
+	}
+}
+
+void Mmm1dgpuForce::computeEnergy(SystemInterface &s)
+{
+	if (coulomb.method != COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody cares about our calculations anymore
+	{
+		std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation" << std::endl;
+		return;
+	}
+	setup(s);
+
 	if (pairs < 0)
 	{
 		std::cerr << "MMM1D was not initialized correctly" << std::endl;
@@ -546,11 +560,10 @@ void Mmm1dgpuForce::computeEnergy(SystemInterface &s) // TODO: this is not yet t
 	}
 	int shared = numThreads*sizeof(mmm1dgpu_real);
 
-	KERNELCALL_shared(energiesKernel,numBlocks(s),numThreads,shared,(s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks, s.npart_gpu(), pairs));
+	KERNELCALL_shared(energiesKernel,numBlocks(s),numThreads,shared,(s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks, s.npart_gpu(), 0));
 	KERNELCALL_shared(sumKernel,1,numThreads,shared,(dev_energyBlocks, numBlocks(s)));
-	HANDLE_ERROR( cudaMemcpyAsync(&dev_energyBlocks, s.eGpuBegin(), sizeof(mmm1dgpu_real), cudaMemcpyDeviceToDevice, stream[0]) );
+	KERNELCALL(scaleAndAddKernel,1,1,(&(((CUDA_energy*)s.eGpu())->coulomb), &dev_energyBlocks[0], 1, 0.5)); // we have counted every interaction twice, so halve the total energy
 }
-*/
 
 float Mmm1dgpuForce::force_benchmark(SystemInterface &s)
 {
@@ -566,7 +579,6 @@ float Mmm1dgpuForce::force_benchmark(SystemInterface &s)
 	HANDLE_ERROR( cudaEventRecord(eventStop, stream[0]) );
 	HANDLE_ERROR( cudaEventSynchronize(eventStop) );
 	HANDLE_ERROR( cudaEventElapsedTime(&elapsedTime, eventStart, eventStop) );
-	printf(">>> Calculated in %3.3f ms\n", elapsedTime);
 	HANDLE_ERROR( cudaEventDestroy(eventStart) );
 	HANDLE_ERROR( cudaEventDestroy(eventStop) );
 	HANDLE_ERROR( cudaFree(dev_f_benchmark));
