@@ -20,10 +20,10 @@ float multigpu_factors[] = {1.0};
 
 void addMmm1dgpuForce(double maxPWerror, double switch_rad, int bessel_cutoff)
 {
+	/* coulomb.prefactor apparently is not available yet at this point */
 	static Mmm1dgpuForce *mmm1dgpuForce = NULL;
 	if (!mmm1dgpuForce) // inter coulomb mmm1dgpu was never called before
 	{
-		// coulomb prefactor gets updated in Mmm1dgpuForce::run()
 		mmm1dgpuForce = new Mmm1dgpuForce(espressoSystemInterface, 0, maxPWerror, switch_rad, bessel_cutoff);
 		potentials.push_back(mmm1dgpuForce);
 	}
@@ -98,7 +98,7 @@ void Mmm1dgpuForce::setup(SystemInterface &s)
 	}
 	if (need_tune == true && s.npart_gpu() > 0)
 	{
-		set_params(s.box()[2], coulomb_prefactor, maxPWerror, far_switch_radius, bessel_cutoff);
+		set_params(s.box()[2], coulomb.prefactor, maxPWerror, far_switch_radius, bessel_cutoff);
 		tune(s, maxPWerror, far_switch_radius, bessel_cutoff);
 	}
 	if (s.box()[2] != host_boxz)
@@ -317,6 +317,9 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefa
 		}
 	}
 	need_tune = true;
+	// broadcast changed parameters
+	coulomb.method = COULOMB_MMM1D_GPU;
+	mpi_bcast_coulomb_params();
 }
 
 __global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *force, int N, int pairs, int tStart = 0, int tStop = -1)
