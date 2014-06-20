@@ -79,7 +79,6 @@
 //#define EK_REACTION
 //#define SHANCHEN
 
-
 /* Interaction features */
 //#define TABULATED
 //#define LENNARD_JONES
@@ -126,6 +125,11 @@
 //#define OLD_DIHEDRAL
 /* turn off nonbonded interactions within molecules */
 //#define NO_INTRA_NB
+/* add an int to the particle marking ghosts. Only visible on C level */
+//#define GHOST_FLAG
+/* ghost particles also have the bond information. */
+//#define GHOSTS_HAVE_BONDS
+
 
 /* Debugging */
 //#define ADDITIONAL_CHECKS

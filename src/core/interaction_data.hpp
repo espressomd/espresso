@@ -650,15 +650,16 @@ typedef struct {
       double *para_b;
       double *para_c;
 } Overlap_bond_parameters;
-#endif
+
 #ifdef UMBRELLA
     /** Parameters for umbrella potential */
-    struct {
+typedef struct {
       double k;
       int    dir;
       double r;
 } Umbrella_bond_parameters;
 #endif
+
 /** Dummy parameters for -LJ Potential */
 typedef struct {
       double k;
@@ -723,6 +724,7 @@ typedef union {
     Dihedral_bond_parameters dihedral;
     Tabulated_bond_parameters tab;
     Overlap_bond_parameters overlap;
+    Umbrella_bond_parameters umbrella;
     Subt_lj_bond_parameters subt_lj;
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
