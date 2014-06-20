@@ -181,6 +181,13 @@ void tclcommand_part_print_smaller_timestep(Particle *part, char *buffer, Tcl_In
 }
 #endif
 
+#ifdef CONFIGTEMP
+void tclcommand_part_print_configtemp(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  sprintf(buffer,"%i", part->p.configtemp);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+}
+#endif
 
 void tclcommand_part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 {
@@ -543,6 +550,12 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   tclcommand_part_print_smaller_timestep(&part, buffer, interp);
 #endif
 
+#ifdef CONFIGTEMP
+  /* print information about configtemp */
+  Tcl_AppendResult(interp, " configtemp ", (char *)NULL);
+  tclcommand_part_print_configtemp(&part, buffer, interp);
+#endif
+
 #ifdef EXCLUSIONS
   if (part.el.n > 0) {
     Tcl_AppendResult(interp, " exclude ", (char *)NULL);
@@ -730,6 +743,11 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #ifdef MULTI_TIMESTEP
     else if (ARG0_IS_S("smaller_timestep"))
       tclcommand_part_print_smaller_timestep(&part, buffer, interp);
+#endif
+
+#ifdef CONFIGTEMP
+    else if (ARG0_IS_S("configtemp"))
+      tclcommand_part_print_configtemp(&part, buffer, interp);
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -1119,6 +1137,34 @@ int tclcommand_part_parse_smaller_timestep(Tcl_Interp *interp, int argc, char **
       return TCL_ERROR;
 
     if (set_particle_smaller_timestep(part_num, smaller_timestep) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+#endif
+
+
+#ifdef CONFIGTEMP
+int tclcommand_part_parse_configtemp(Tcl_Interp *interp, int argc, char **argv,
+     int part_num, int * change)
+{
+    int configtemp;
+
+    *change = 1;
+
+    if (argc < 1) {
+      Tcl_AppendResult(interp, "configtemp requires 1 argument", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set smaller_timestep */
+    if (! ARG0_IS_I(configtemp))
+      return TCL_ERROR;
+
+    if (set_particle_configtemp(part_num, configtemp) == TCL_ERROR) {
       Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
 
       return TCL_ERROR;
@@ -2201,6 +2247,13 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
     else if (ARG0_IS_S("smaller_timestep"))
       err = tclcommand_part_parse_smaller_timestep(interp, argc-1, argv+1, part_num, &change);
+
+#endif
+
+#ifdef CONFIGTEMP
+
+    else if (ARG0_IS_S("configtemp"))
+      err = tclcommand_part_parse_configtemp(interp, argc-1, argv+1, part_num, &change);
 
 #endif
 

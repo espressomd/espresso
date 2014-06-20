@@ -217,6 +217,9 @@ void integrate_ensemble_init()
       nptiso.p_inst = 0.0;  
       nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
       nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
+#ifdef CONFIGTEMP
+      configtemp[0] = configtemp[1] = 0.0;
+#endif
     }
   }
 #endif

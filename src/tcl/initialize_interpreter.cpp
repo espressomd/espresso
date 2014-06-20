@@ -238,9 +238,6 @@ static void register_global_variables(Tcl_Interp *interp)
 #ifdef MULTI_TIMESTEP
   register_global_callback(FIELD_SMALLERTIMESTEP, tclcallback_smaller_time_step);
 #endif
-#ifdef CONFIGTEMP
-  register_global_callback(FIELD_CONFIGTEMP, tclcallback_configtemp);
-#endif
   register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
 }
 

@@ -204,6 +204,9 @@ const char* FEATURES[] = {
 #ifdef MULTI_TIMESTEP
   "MULTI_TIMESTEP",
 #endif
+#ifdef CONFIGTEMP
+  "CONFIGTEMP",
+#endif
 #ifdef LB_DEBUG
   "LB_DEBUG",
 #endif

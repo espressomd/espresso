@@ -2513,6 +2513,25 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
     return TCL_OK;
 }
 
+#ifdef CONFIGTEMP
+static int tclcommand_analyze_parse_and_print_configtemp(Tcl_Interp *interp, int argc, char **argv) {
+    extern double configtemp[2];
+    char buffer[TCL_DOUBLE_SPACE];
+    double config_temp = 0.;
+
+    /* parse arguments */
+    if (argc > 0) {
+        Tcl_AppendResult(interp, "usage: analyze configtemp", (char *) NULL);
+        return (TCL_ERROR);
+    }
+    config_temp = configtemp[0]/configtemp[1];
+    Tcl_PrintDouble(interp, config_temp, buffer);
+    ;
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return TCL_OK;
+}
+#endif
+
 /****************************************************************************************
  *                                 main parser for analyze
  ****************************************************************************************/
@@ -2629,6 +2648,9 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
     REGISTER_ANALYZE_STORAGE("remove", tclcommand_analyze_parse_remove);
     REGISTER_ANALYZE_STORAGE("stored", tclcommand_analyze_parse_stored);
     REGISTER_ANALYZE_STORAGE("configs", tclcommand_analyze_parse_configs);
+#ifdef CONFIGTEMP
+    REGISTER_ANALYSIS("configtemp", tclcommand_analyze_parse_and_print_configtemp);
+#endif
     else {
         /* the default */
         /***************/

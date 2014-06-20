@@ -77,10 +77,11 @@ inline int calc_harmonic_pair_force(Particle *p1, Particle *p2, Bonded_ia_parame
 
 #ifdef CONFIGTEMP
   extern double configtemp[2];
-  if (p1->p.configtemp || p2->p.configtemp) {
-    configtemp[0] += -SQR(fac);
-    configtemp[1] += iaparams->p.harmonic.k;
-  }
+  int numfac = 0;
+  if (p1->p.configtemp) numfac+=1;
+  if (p2->p.configtemp) numfac+=1;
+  configtemp[0] += numfac*SQR(iaparams->p.harmonic.k * dr);
+  configtemp[1] += numfac*iaparams->p.harmonic.k*(3-2.*iaparams->p.harmonic.r/dist);
 #endif
 
   return 0;
