@@ -96,6 +96,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_set_time_step_slave) \
   CB(mpi_set_smaller_time_step_slave) \
   CB(mpi_send_smaller_timestep_flag_slave) \
+  CB(mpi_send_configtemp_flag_slave) \
   CB(mpi_get_particles_slave) \
   CB(mpi_bcast_coulomb_params_slave) \
   CB(mpi_bcast_collision_params_slave) \
@@ -1770,6 +1771,37 @@ void mpi_send_smaller_timestep_flag_slave(int pnode, int part)
     Particle *p = local_particles[part];
     MPI_Status status;
     MPI_Recv(&p->p.smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
+       comm_cart, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_configtemp_flag(int pnode, int part, int configtemp)
+{
+#ifdef CONFIGTEMP
+  mpi_call(mpi_send_configtemp_flag_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.configtemp = configtemp;
+  }
+  else {
+    MPI_Send(&configtemp, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_configtemp_flag_slave(int pnode, int part)
+{
+#ifdef CONFIGTEMP
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.configtemp, 1, MPI_INT, 0, SOME_TAG,
        comm_cart, &status);
   }
 

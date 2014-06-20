@@ -182,6 +182,8 @@ extern const Datafield fields[];
 #define FIELD_DPD_IGNORE_FIXED_PARTICLES 52
 /** index of \ref smaller_timestep in \ref #fields */
 #define FIELD_SMALLERTIMESTEP     53
+/** index of \ref configtemp in \ref #fields */
+#define FIELD_CONFIGTEMP          54
 /*@}*/
 
 /** bool: whether to write out warnings or not */

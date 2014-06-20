@@ -87,8 +87,8 @@ int    recalc_forces    = 1;
 
 double verlet_reuse     = 0.0;
 
-#ifdef MULTI_TIMESTEP
 double smaller_time_step          = -1.0;
+#ifdef MULTI_TIMESTEP
 int    current_time_step_is_small = 0;
 int    mts_index                  = 0;
 int    mts_max                    = 0;
@@ -97,6 +97,9 @@ double scal_store[3]              = {0.,0.,0.};
 double virial_store[3]            = {0.,0.,0.};
 #endif
 #endif
+
+/** For configurational temperature only */
+double configtemp[2]              = {0.,0.};
 
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
@@ -223,7 +226,7 @@ void integrate_ensemble_init()
 
 void integrate_vv(int n_steps, int reuse_forces)
 {
-  int i,j;
+  int i;
 
   /* Prepare the Integrator */
   on_integration_start();
@@ -233,6 +236,7 @@ void integrate_vv(int n_steps, int reuse_forces)
     return;
 
 #ifdef MULTI_TIMESTEP
+  int j;
   if (smaller_time_step > 0.){
     mts_max = time_step/smaller_time_step;
 #ifdef NPT

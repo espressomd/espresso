@@ -46,9 +46,9 @@ extern double time_step_half;
 extern double time_step_squared;
 extern double time_step_squared_half;
 
-#ifdef MULTI_TIMESTEP
 /** Other time step in the multiple time step scheme */
 extern double smaller_time_step;
+#ifdef MULTI_TIMESTEP
 /** Flag to determine what kind of time step we're calculating */
 extern int current_time_step_is_small;
 /** Smaller integration time step index */
@@ -62,6 +62,9 @@ extern double scal_store[3];
 extern double virial_store[3];
 #endif
 #endif
+
+/** Store configurational temperature terms (numerator/denominator) */
+extern double configtemp[2];
 
 /** Old time step needed for rescaling of forces. */
 extern double old_time_step;

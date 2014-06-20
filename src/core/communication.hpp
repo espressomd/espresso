@@ -265,6 +265,16 @@ void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_dist
 void mpi_send_smaller_timestep_flag(int node, int part, int smaller_timestep_flag);
 #endif
 
+#ifdef CONFIGTEMP
+/** Issue REQ_SET_CONFIGTEMP: send configurational temperature flag.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param configtemp the configurational temperature flag.
+*/
+void mpi_send_configtemp_flag(int node, int part, int configtemp_flag);
+#endif
+
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.
     \param part the particle.
