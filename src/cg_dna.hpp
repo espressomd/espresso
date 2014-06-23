@@ -395,7 +395,7 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
 
     for(int k = 0; k < 3; k++) {
       f_tilt_bi2[k] = f_tilt_bi1[k];
-      f_tilt_sj2[k] = -f_tilt_si1[k] - 2.*f_tilt_bi1[k];
+      f_tilt_si2[k] = -f_tilt_si1[k] - 2.*f_tilt_bi1[k];
       f_tilt_bj2[k] = f_tilt_bj1[k];
       f_tilt_sj2[k] = -f_tilt_sj1[k] - 2.*f_tilt_bj1[k];
     }
@@ -441,6 +441,8 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
   PV(factor3*f_tilt_sj2);
   PV(factor3*f_tilt_bj1);
   PV(factor3*f_tilt_bj2);
+
+  PV(f_tilt_si2);
 
 #ifdef CG_DNA_DEBUG
   fflush(NULL);
