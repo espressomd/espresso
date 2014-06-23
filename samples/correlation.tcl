@@ -100,10 +100,19 @@ set msd [correlation new obs1 $pos corr_operation square_distance_componentwise 
 # same msd as above, but we will update it manually, with much lower frequency
 set msd_man [correlation new obs1 $pos corr_operation square_distance_componentwise tau_lin 16 tau_max $run_time dt [expr $time_step*$int_steps] compress1 discard1]
 
-# example of correlating data from an input file
-# one more vacf, this time we use the tclcommand observable to read velocities from a file and pass them to the correlator
-set msd_file [correlation new obs1 $pos_file corr_operation square_distance_componentwise tau_lin 16 tau_max $run_time dt [expr $time_step*$int_steps] compress1 discard1]
+# Example of feeding arbitrary data to the correlator (using an input file)
+# We compute msd once again, using the positions which we stored in a file
 
+# First we need to define a procedure which enables feeding 
+# the values of the tcl variable "line" to an observable tclcommand
+proc my_get_line { } {
+    global line;
+    return $line;
+}
+# the observable which will be used to read positions from file
+set obs_pos_file [observable new tclcommand 6 my_get_line];
+# one more msd, this time we use the tclcommand observable to read positions from a file and pass them to the correlator
+set msd_file [correlation new obs1 $obs_pos_file corr_operation square_distance_componentwise tau_lin 16 tau_max $run_time dt [expr $time_step*$int_steps] compress1 discard1]
 
 # Tell Espresso to update the desired correlations automatically
 correlation $vacf1 autoupdate start
@@ -151,17 +160,6 @@ while { $time < $run_time } {
 }
 close $fp;
 
-# Example of feeding arbitrary data to the correlator
-# here we compute msd again, using the positions which we stored in a file
-
-# first we need to define a procedure which enables feeding 
-# values of the current tcl variable to an observable tclcommand
-proc my_get_line { } {
-    global line;
-    return $line;
-}
-# the observable which will be used to read positions from file
-set pos_file [observable new tclcommand [expr 3*[setmd n_part]] my_get_line];
 
 # now read-in the positions from the file and feed them to msd_file
 set fp [open $pos_file_name r];

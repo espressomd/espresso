@@ -259,6 +259,15 @@ int tclcommand_thermostat_parse_inter_dpd(Tcl_Interp *interp, int argc, char ** 
     return TCL_ERROR;
   }
 
+  if (argc>2 && ARG_IS_S(2, "ignore_fixed_particles")) {
+    if (argc == 3)
+      dpd_ignore_fixed_particles=1;
+    else if (argc!= 4 || (!ARG_IS_I(3, dpd_ignore_fixed_particles))) 
+      return TCL_ERROR;
+    mpi_bcast_parameter(FIELD_DPD_IGNORE_FIXED_PARTICLES);
+    return TCL_OK;
+  }
+
   /* copy lattice-boltzmann parameters */
   if (! ARG_IS_D(2, temp)) { return TCL_ERROR; }
 

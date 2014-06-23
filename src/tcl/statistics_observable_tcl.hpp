@@ -27,6 +27,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
 int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values);
 int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ); 
 
+int observable_calc_tclcommand(observable* self);
 
 typedef struct {
   Tcl_Interp* interp;

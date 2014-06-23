@@ -174,4 +174,13 @@ if { ![ veccompare [ observable $tclcommand print ] { 1 2 3 } ] } {
   error "tclcommand is not working"
 }
 
-exit 0
+part 0 pos 0 0 0
+set p0 [ observable new particle_positions id 0 ]
+set av [ observable new average $p0 ]
+observable $av update
+part 0 pos 2 2 2
+observable $av update
+if { ![ veccompare [ observable $av print ] { 1 1 1 } ] } {
+  error "average is not working"
+}
+
