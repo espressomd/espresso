@@ -86,11 +86,15 @@ void EspressoSystemInterface::gatherParticles() {
   }
 #endif
 
-  if (needsQ() || needsR()) {
+  if (needsQ() || needsR() || needsDip()) {
     R.clear();
     #ifdef ELECTROSTATICS
     Q.clear();
     #endif
+    #ifdef DIPOLES
+    Dip.clear();
+    #endif
+
 
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c];
@@ -102,12 +106,20 @@ void EspressoSystemInterface::gatherParticles() {
       if(needsQ())
 	Q.reserve(Q.size()+np);
 #endif
+#ifdef DIPOLES
+      if(needsDip())
+	Dip.reserve(Q.size()+np);
+#endif
       for(i = 0; i < np; i++) {
 	if(needsR())
 	  R.push_back(Vector3(p[i].r.p));
 #ifdef ELECTROSTATICS
 	if(needsQ())
 	  Q.push_back(p[i].p.q);
+#endif
+#ifdef DIPOLES
+	if(needsDip())
+	  Dip.push_back(p[i].r.dip);
 #endif
       }
     }
@@ -132,6 +144,18 @@ const SystemInterface::const_vec_iterator &EspressoSystemInterface::rEnd() {
   return m_r_end;
 }
 
+#ifdef DIPOLES
+SystemInterface::const_vec_iterator &EspressoSystemInterface::dipBegin() {
+  m_dip_begin = Dip.begin();
+  return m_dip_begin;
+}
+
+const SystemInterface::const_vec_iterator &EspressoSystemInterface::dipEnd() {
+  m_dip_end = Dip.end();
+  return m_dip_end;
+}
+#endif
+
 #ifdef ELECTROSTATICS
 SystemInterface::const_real_iterator &EspressoSystemInterface::qBegin() {
   m_q_begin = Q.begin();
@@ -152,6 +176,7 @@ unsigned int EspressoSystemInterface::npart() {
 SystemInterface::Vector3 EspressoSystemInterface::box() {
   return Vector3(box_l);
 }
+
 
 
 

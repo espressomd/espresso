@@ -26,9 +26,22 @@
 
 class EspressoSystemInterface : public SystemInterface {
 public:
-  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
+  EspressoSystemInterface() : 
+    m_gpu_npart(0), 
+    m_gpu(false), 
+    m_r_gpu_begin(0), 
+    m_r_gpu_end(0), 
+#ifdef DIPOLES
+    m_dip_gpu_begin(0), 
+    m_dip_gpu_end(0), 
+#endif   
+    m_v_gpu_begin(0), 
+    m_v_gpu_end(0), 
+    m_q_gpu_begin(0),  
+    m_q_gpu_end(0), 
+    m_needsParticleStructGpu(false), 
+    m_splitParticleStructGpu(false)  {};
   virtual ~EspressoSystemInterface() {}
-
   void init();
   void update();
 
@@ -56,9 +69,17 @@ public:
   typedef const_iterator<int> const_int_iterator;
 
 
+  // Particle position
   SystemInterface::const_vec_iterator &rBegin();
   const SystemInterface::const_vec_iterator &rEnd();
   bool hasR() { return true; };
+  
+  // Dipole moment
+#ifdef DIPOLES  
+  SystemInterface::const_vec_iterator &dipBegin();
+  const SystemInterface::const_vec_iterator &dipEnd();
+  bool hasDip() { return true; };
+#endif
 
 #ifdef ELECTROSTATICS
   SystemInterface::const_real_iterator &qBegin();
@@ -78,7 +99,19 @@ public:
       enableParticleCommunication();
     return m_needsRGpu; 
   };
-
+#ifdef DIPOLES
+  float *dipGpuBegin() { return m_r_gpu_begin; };
+  float *dipGpuEnd() { return m_r_gpu_end; };
+  bool hasDipGpu() { return true; };
+  bool requestDipGpu() { 
+    m_needsDipGpu = hasDipGpu();
+    m_splitParticleStructGpu |= m_needsRGpu;
+    m_gpu |= m_needsRGpu;
+    if(m_gpu)
+      enableParticleCommunication();
+    return m_needsDipGpu; 
+  };
+#endif
   float *vGpuBegin() { return m_v_gpu_begin; };
   float *vGpuEnd() { return m_v_gpu_end; };
   bool hasVGpu() { return true; };
@@ -153,8 +186,17 @@ protected:
   RealContainer Q;
   #endif
 
+#ifdef DIPOLES
+  Vector3Container Dip;
+#endif
+
   const_vec_iterator m_r_begin;
   const_vec_iterator m_r_end;
+
+#ifdef DIPOLES
+  const_vec_iterator m_dip_begin;
+  const_vec_iterator m_dip_end;
+#endif
 
   const_real_iterator m_q_begin;
   const_real_iterator m_q_end;
@@ -164,6 +206,11 @@ protected:
 
   float *m_r_gpu_begin;
   float *m_r_gpu_end;
+
+#ifdef DIPOLES
+  float *m_dip_gpu_begin;
+  float *m_dip_gpu_end;
+#endif
 
   float *m_v_gpu_begin;
   float *m_v_gpu_end;
@@ -177,6 +224,7 @@ protected:
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;
 };
+
 
 extern EspressoSystemInterface espressoSystemInterface;
 

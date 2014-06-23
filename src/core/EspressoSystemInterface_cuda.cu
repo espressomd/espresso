@@ -21,6 +21,9 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 
+// These functions will split the paritlce data structure into individual arrays for each property
+
+// Position and charge
 __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r, float *q, int n) {
   int idx = blockDim.x*blockIdx.x + threadIdx.x;
   if(idx >= n)
@@ -36,6 +39,7 @@ __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r, float *
   #endif
 }
 
+// Charge only
 __global__ void split_kernel_q(CUDA_particle_data *particles,float *q, int n) {
   int idx = blockDim.x*blockIdx.x + threadIdx.x;
   if(idx >= n)
@@ -48,6 +52,7 @@ __global__ void split_kernel_q(CUDA_particle_data *particles,float *q, int n) {
 #endif
 }
 
+// Position only
 __global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
   int idx = blockDim.x*blockIdx.x + threadIdx.x;
   if(idx >= n)
@@ -62,6 +67,7 @@ __global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
   r[idx + 2] = p.p[2];
 }
 
+// Velocity
 __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   int idx = blockDim.x*blockIdx.x + threadIdx.x;
   if(idx >= n)
@@ -75,6 +81,25 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   v[idx + 1] = p.v[1];
   v[idx + 2] = p.v[2];
 }
+
+
+#ifdef DIPOLES
+// Dipole moment
+__global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip, int n) {
+  int idx = blockDim.x*blockIdx.x + threadIdx.x;
+  if(idx >= n)
+    return;
+
+  CUDA_particle_data p = particles[idx];
+
+  idx *= 3;
+
+  v[idx + 0] = p.dip[0];
+  v[idx + 1] = p.dip[1];
+  v[idx + 2] = p.dip[2];
+}
+#endif
+
 
 void EspressoSystemInterface::reallocDeviceMemory(int n) {
 
@@ -120,4 +145,10 @@ void EspressoSystemInterface::split_particle_struct() {
     split_kernel_r<<<grid,block>>>(gpu_get_particle_pointer(), m_r_gpu_begin,n);
   if(m_needsVGpu)
     split_kernel_v<<<grid,block>>>(gpu_get_particle_pointer(), m_v_gpu_begin,n);
+#ifdef DIPOLES
+  if(m_needsDipGpu)
+    split_kernel_dip<<<grid,block>>>(gpu_get_particle_pointer(), m_dip_gpu_begin,n);
+
+#endif
+
 }

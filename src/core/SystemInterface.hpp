@@ -26,7 +26,7 @@
 
 class SystemInterface {
 public:
-  SystemInterface() : m_needsR(false), m_needsV(false), m_needsQ(false), m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false) {};
+  SystemInterface() : m_needsR(false), m_needsV(false), m_needsQ(false), m_needsDip(false), m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false), m_needsDipGpu(false) {};
   typedef Vector3d Vector3;
   typedef double Real;
 
@@ -144,6 +144,8 @@ public:
 
   virtual bool needsR() { return m_needsR; };
   virtual bool needsRGpu() { return m_needsRGpu;};
+  virtual bool needsDip() { return m_needsR; };
+  virtual bool needsDipGpu() { return m_needsRGpu;};
   virtual bool needsQGpu() { return m_needsQGpu;};
   virtual bool needsQ() { return m_needsQ;};
   virtual bool needsFGpu() { return m_needsFGpu; };
@@ -152,10 +154,12 @@ protected:
   bool m_needsR;
   bool m_needsV;
   bool m_needsQ;
+  bool m_needsDip;
   bool m_needsRGpu;
   bool m_needsVGpu;
   bool m_needsQGpu;
   bool m_needsFGpu;
+  bool m_needsDipGpu;
 };
 
 #endif

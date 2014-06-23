@@ -97,6 +97,13 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
                 particle_data_host[i+g].v[0] = (float)part[i].m.v[0];
                 particle_data_host[i+g].v[1] = (float)part[i].m.v[1];
                 particle_data_host[i+g].v[2] = (float)part[i].m.v[2];
+
+#ifdef DIPOLES
+                particle_data_host[i+g].dip[0] = (float)part[i].r.dip[0];
+                particle_data_host[i+g].dip[1] = (float)part[i].r.dip[1];
+                particle_data_host[i+g].dip[2] = (float)part[i].r.dip[2];
+#endif
+
 #ifdef SHANCHEN
               // SAW TODO: does this really need to be copied every time?
               int ii;
@@ -177,6 +184,12 @@ static void cuda_mpi_get_particles_slave(){
           particle_data_host_sl[i+g].v[0] = (float)part[i].m.v[0];
           particle_data_host_sl[i+g].v[1] = (float)part[i].m.v[1];
           particle_data_host_sl[i+g].v[2] = (float)part[i].m.v[2];
+#ifdef DIPOLES
+          particle_data_host_sl[i+g].dip[0] = (float)part[i].r.dip[0];
+          particle_data_host_sl[i+g].dip[1] = (float)part[i].r.dip[1];
+          particle_data_host_sl[i+g].dip[2] = (float)part[i].r.dip[2];
+#endif
+
           
 #ifdef SHANCHEN
         // SAW TODO: does this really need to be copied every time?
@@ -238,6 +251,12 @@ static void cuda_mpi_get_particles_slave(){
                 cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
                 cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
                 cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
+#ifdef ROTATION
+                cell->part[i].f.torque[0] += (double)host_forces[i+g].torque[0];
+                cell->part[i].f.torque[1] += (double)host_forces[i+g].torque[1];
+                cell->part[i].f.torque[2] += (double)host_forces[i+g].torque[2];
+#endif
+
 #ifdef SHANCHEN
                 for (int ii=0;ii<LB_COMPONENTS;ii++) {
                    cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
@@ -299,6 +318,13 @@ static void cuda_mpi_send_forces_slave(){
           cell->part[i].f.f[0] += (double)host_forces_sl[i+g].f[0];
           cell->part[i].f.f[1] += (double)host_forces_sl[i+g].f[1];
           cell->part[i].f.f[2] += (double)host_forces_sl[i+g].f[2];
+#ifdef ROTATION
+          cell->part[i].f.torque[0] += (double)host_forces_sl[i+g].torque[0];
+          cell->part[i].f.torque[1] += (double)host_forces_sl[i+g].torque[1];
+          cell->part[i].f.torque[2] += (double)host_forces_sl[i+g].torque[2];
+#endif
+
+
 #ifdef SHANCHEN
           for (int ii=0;ii<LB_COMPONENTS;ii++) {
              cell->part[i].r.composition[ii] = (double)host_composition_sl[i+g].weight[ii];

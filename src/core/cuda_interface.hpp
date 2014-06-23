@@ -30,6 +30,11 @@ typedef struct {
 
   /** force on the particle given to md part */
   float f[3];
+  
+#ifdef ROTATION
+   float torque[3];
+   #endif
+
 
 } CUDA_particle_force;
 
@@ -58,6 +63,9 @@ typedef struct {
   float q;
 #endif
   unsigned int fixed;
+#ifdef DIPOLES
+  float dip[3];
+#endif
 
 } CUDA_particle_data;
 
