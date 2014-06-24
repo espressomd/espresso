@@ -22,9 +22,7 @@ typedef struct {
   int type;
   double* scale;
   int n_particle_types;
-  union {
-    ExternalPotentialTabulated tabulated;
-  } e;
+  ExternalPotentialTabulated tabulated;
   double energy;
 } ExternalPotential;
 
