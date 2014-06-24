@@ -94,9 +94,9 @@ __global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip, int 
 
   idx *= 3;
 
-  v[idx + 0] = p.dip[0];
-  v[idx + 1] = p.dip[1];
-  v[idx + 2] = p.dip[2];
+  dip[idx + 0] = p.dip[0];
+  dip[idx + 1] = p.dip[1];
+  dip[idx + 2] = p.dip[2];
 }
 #endif
 

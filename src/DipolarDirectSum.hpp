@@ -5,7 +5,7 @@
 #include "SystemInterface.hpp"
 #include <iostream>
 
-void DipolarDirectSum_kernel_wrapper(float x, float y, float z, float k,
+void DipolarDirectSum_kernel_wrapper(float k,
 		     int n, float *pos, float *dip, float *f, float* torque);
 
 class DipolarDirectSum {
@@ -19,11 +19,10 @@ public:
 
   }; 
   void calc(SystemInterface &s) {
-    DipolarDirectSum_kernel_wrapper(x,y,z,k,s.npart_gpu(),
-					 s.rGpuBegin(), s.fGpuBegin());
+    DipolarDirectSum_kernel_wrapper(k,s.npart_gpu(),
+					 s.rGpuBegin(), s.dipGpuBegin(), s.fGpuBegin(),s.torqueGpuBegin());
   };
 protected:
-  float x,y,z;
   float k;
 };
 
