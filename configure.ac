@@ -275,6 +275,7 @@ AS_IF([test x$with_cuda != xno],[
     # save current libs in case CUDA is not enabled at the end
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
+    save_CPPFLAGS=$CPPFLAGS
 
     # NVCC
     AC_PROG_CUDA
@@ -317,6 +318,17 @@ AS_IF([test x$with_cuda != xno],[
             AC_MSG_WARN([could not find cuda BLAS library (cublas). Some features will not be available!])
         ])
     ], [$cuda_path/lib $cuda_path/lib64])
+
+    ES_ADDPATH_CHECK_HEADER([cublas_v2.h],, [
+    	cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda BLAS header files (cublas_v2.h), specify location using CPPFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda BLAS header files (cublas_v2.h). Some features will not be available!])
+        ])
+    ], [$cuda_path/include])
+
 
     ES_ADDPATH_CHECK_LIB(curand, curandCreateGenerator, [], [
         cuda_ok=no
@@ -392,6 +404,7 @@ AS_IF([test x$with_cuda != xno],[
         # reset standard compiler options
         LIBS=$save_LIBS
         LDFLAGS=$save_LDFLAGS
+	CPPFLAGS=$save_CPPFLAGS
     ])
 ])
 
@@ -435,6 +448,48 @@ AS_IF([test x$magma_found = xno],[
 AS_IF([test x$magma_found = xyes],[
   AC_DEFINE(MAGMA,[],[Whether MAGMA is available])])
 # end of check for MAGMA
+
+
+## Checking for ARPACK
+##################################
+AS_IF([test x$with_arpack = xguess || test x$with_arpack = xyes || test x$with_arpack = x],[
+   arpack_path=/usr/local/arpack
+],[test x$with_arpack != xno],[
+   arpack_path=$with_arpack
+   with_arpack=yes
+])
+
+AC_MSG_CHECKING([whether to use ARPACK])
+AC_ARG_WITH([arpack],
+	AS_HELP_STRING([--with-arpack],
+                       [specify whether or not to use ARPACK [guess]]),
+	, with_arpack=guess)
+AC_MSG_RESULT($with_arpack)
+
+
+ES_ADDPATH_CHECK_LIB(arpack, dnaupd_, [arpack_found=yes], [
+	arpack_found=no
+        
+        AS_IF([test x$with_arpack = xyes],[
+            AC_MSG_FAILURE([could not find ARPACK library, specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find ARPACK library. Some features will not be available!])
+        ])
+    ], [$arpack_path/.libs])
+
+
+
+AS_IF([test x$arpack_found = xno],[
+  AS_IF([test x$with_arpack = xyes],[
+    AC_MSG_FAILURE([ARPACK requested, but ARPACK was not found!])
+    ],[ AS_IF([test x$with_arpack = xguess], [
+          AC_MSG_WARN([ARPACK not found. Some features will not be available!])
+         ])
+    ])
+  ])
+AS_IF([test x$arpack_found = xyes],[
+  AC_DEFINE(ARPACK,[],[Whether ARPACK is available])])
+# end of check for ARPACK
 
 
 

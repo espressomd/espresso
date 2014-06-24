@@ -184,6 +184,10 @@ extern const Datafield fields[];
 #define FIELD_SD_VISCOSITY        53
 /** index of \ref sd_radius in \ref #fields */
 #define FIELD_SD_RADIUS           54
+/** index of \ref sd_seed in \ref #fields */
+#define FIELD_SD_SEED             55
+/** index of \ref sd_random_state in \ref #fields */
+#define FIELD_SD_RANDOM_STATE     56
 /*@}*/
 
 /** bool: whether to write out warnings or not */

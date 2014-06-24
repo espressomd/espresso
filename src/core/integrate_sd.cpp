@@ -75,6 +75,8 @@
 double sd_viscosity=-1;
 double sd_radius=-1;
 
+int sd_seed[]={0,('E'+'S'+'P'+'R'+'e'+'s'+'S'+'o')};
+int sd_random_state[]={0,0};
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
 int    db_maxf_id   = 0,   db_maxv_id = 0;
@@ -110,6 +112,14 @@ void integrator_sanity_checks_sd()
   if ( temperature < 0.0 ) {
     errtext = runtime_error(128);
     ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
+  }
+  if (sd_radius < 0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{Stokesian Dynamics Hydrodynamic particle radius not initialized} ");
+  }
+  if (sd_viscosity < 0) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{Stokesian Dynamics fluid viscosity not initialized} ");
   }
 }
 
@@ -340,16 +350,7 @@ void propagate_pos_sd()
   force=(real *)malloc(DIM*N*sizeof(double));
   assert(force!=NULL);
   real * velocity=NULL;
-  bool old_velocity_reuse;
-  { static int last_particle_number=0;
-    if (N != last_particle_number){
-      last_particle_number=N;
-      velocity=(real *)calloc(DIM*N*sizeof(real),1);
-      old_velocity_reuse=false;
-    } else {
-      old_velocity_reuse=true;
-      velocity=(real *)malloc(DIM*N*sizeof(real));
-    }}
+  velocity=(real *)malloc(DIM*N*sizeof(real));
   assert(velocity!=NULL);
 #ifdef EXTERNAL_FORCES
   const int COORD_ALL=COORD_FIXED(0)&COORD_FIXED(1)&COORD_FIXED(2);
@@ -375,16 +376,10 @@ void propagate_pos_sd()
 	  pos[3*j+d]        = p[i].r.p[d];
 	  pos[3*j+d]        -=rint(pos[3*j+d]/box_l[d])*box_l[d];
 	  force[3*j+d]      = p[i].f.f[d];
-	  if (old_velocity_reuse){
-	    velocity[3*j+d] = p[i].m.v[d];
-	  }
 	}
 #else
         memcpy(&pos[3*j], p[i].r.p, 3*sizeof(double));
         memcpy(&force[3*j], p[i].f.f, 3*sizeof(double));
-	if (old_velocity_reuse){
-	  memcpy(velocity+3*j, p[i].m.v, 3*sizeof(double));
-	}
 #endif
 	j++;
       }
@@ -426,11 +421,16 @@ void propagate_pos_sd()
       for (int d=0;d<3;d++){
 	p[i].r.p[d] = pos[3*j+d]+box_l[d]*rint(p[i].r.p[d]/box_l[d]);
 	p[i].m.v[d] = velocity[3*j+d];
+	//p[i].f.f[d] *= (0.5*time_step*time_step)/PMASS(*part);
       }
 #else
       memcpy(p[i].r.p, &pos[DIM*j], 3*sizeof(double));
       memcpy(p[i].m.v, &velocity[DIM*j], 3*sizeof(double));
 #endif
+      // somehow this does not effect anything, although it is called ...
+      for (int d=0;d<3;d++){
+	p[i].f.f[d] *= (0.5*time_step*time_step)/PMASS(*p);
+      }
       for (int d=0;d<DIM;d++){
         assert(!isnan(pos[DIM*i+d]));
       }
@@ -480,6 +480,7 @@ It could be difficult to set particles apart!\n",phi);
     }
   }
   bool outer=false;
+  bool moved=false;
   do {
     outer=false;
     for (int c = 0; c < local_cells.n; c++){
@@ -504,6 +505,7 @@ It could be difficult to set particles apart!\n",phi);
 	      // push to a distance of 1e-5;
 	      double fac=(sd_radius*(1+1.2e-5)-drn/2)/drn;
 	      assert(!isnan(fac));
+	      printf("%d %d\t\t",i,j);
 	      for (int d=0; d<3;d++){
 		if(isnan(dr[d]*fac)){
 		  fprintf(stderr, "%4d %4d %6e %6e ",i,j,dr[d],fac);
@@ -522,6 +524,7 @@ It could be difficult to set particles apart!\n",phi);
 	      assert(dr2 > SQR(2*sd_radius*(1+1e-5)));
 	      assert(dr2 < SQR(2*sd_radius*(1+2e-5)));
 	      inner=true;
+	      moved=true;
 	    }
 	  }
 	}
@@ -551,6 +554,7 @@ It could be difficult to set particles apart!\n",phi);
 		pj[j].r.p[d]-=fac*dr[d];
 	      }
 	      outer=true;
+	      moved=true;
 	    }
 	    for (int d=0;d<3;d++){
 	      assert(!isnan( pj[j].r.p[d]));
@@ -560,7 +564,7 @@ It could be difficult to set particles apart!\n",phi);
 	}
       }
     }
-    fprintf(stderr,"+");
+    if (moved) fprintf(stderr,"+");
   } while (outer);
   //fprintf(stderr,"set_apart suceeded ");
   for (int c = 0; c < local_cells.n; c++){

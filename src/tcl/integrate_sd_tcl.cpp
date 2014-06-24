@@ -95,6 +95,27 @@ Therefore this function will not suceed ...\n", (char *) NULL);
   }
 }
 
+int tclcommand_sd_test(ClientData data, Tcl_Interp *interp, int argc, char **argv)
+{
+  if (argc < 3){
+    Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
+    return tclcommand_sd_set_particle_apart_print_usage(interp);
+  }
+  int type, size;
+  int status=0;
+  ARG_IS_I(1,size);
+  ARG_IS_I(2,type);
+  printf("size: %d  type: %d\n", size, type);
+  
+  status = sd_test(size, type);
+  printf("test returned: %d\n", status);
+    //}else {
+    //Tcl_AppendResult(interp, "wrong args: :-( \n\"", (char *) NULL);
+    //return TCL_ERROR;
+    //}
+  return status;
+}
+
 int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
   int  n_steps;

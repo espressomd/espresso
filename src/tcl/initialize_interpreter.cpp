@@ -220,6 +220,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   /* from integrate_sd_tcl.cpp */
   REGISTER_COMMAND("integrate_sd", tclcommand_integrate_sd);
   REGISTER_COMMAND("sd_set_particles_apart", tclcommand_sd_set_particles_apart);
+  REGISTER_COMMAND("sd_test", tclcommand_sd_test);
 #endif
 #ifdef CUDA
   REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);

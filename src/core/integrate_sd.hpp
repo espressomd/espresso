@@ -40,7 +40,7 @@
 
 #define DIM (3)
 
-/** \file integrate.hpp    Stokes dynamics integrator.
+/** \file integrate_sd.hpp    Stokes dynamics integrator.
  *
  *  For more information see \ref integrate_sd.cpp "integrate_sd.cpp".
 */
@@ -83,6 +83,9 @@ extern double sd_viscosity;
 
 extern double sd_radius;
 
+extern int sd_seed[2];
+extern int sd_random_state[2];
+
 /*@}*/
 
 /** \name Exported Functions */
@@ -101,6 +104,7 @@ void integrate_sd(int n_steps);
  */
 int sd_set_particles_apart();
 
+int sd_test(int size, int type);
 
 /*@}*/
 

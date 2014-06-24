@@ -461,6 +461,37 @@ the biased force are not gaussian function (as in many metadynamics
 codes) but so-called Lucy functions. See \cite{marsili09} for more
 details. These avoid the calculation of exponentials.
 
+\section{\texttt{integrate_sd}: Running a stokesian dynamics simulation}
+\newescommand{integrate_sd}
+
+\begin{essyntax}
+  \variant{1} integrate_sd \var{steps}
+\end{essyntax}
+
+\es uses in the stokesian dynamics algorithm  the euler integrater for the
+equations of motion. The motion are overdamped. The command \texttt{integrate_sd} with an integer
+\texttt{steps} as parameter integrates the system for \texttt{steps}
+time steps.
+This is implemented using CUDA, so \required{CUDA} has to be available in the system.
+
+Currently there is no parallel implementation of this integrator, so all
+particles have to be in a single process.
+
+\subsection{Setting up the system}
+Before running a stokesian dynamics simulation, you have to set a view
+constants:
+\begin{globvar}
+\item[sd_radius] The hydrodynamic particle radius of the (sperical)
+  particles. Only one particle size is currently supported.
+\item[sd_viscosity] The viscisity of the fluid.
+\end{globvar}
+
+Make sure to only use the stokesian dynamics thermostat. If you made a warmup
+integration without SD, set it with:
+\begin{code}
+thermostat off
+thermostat sd \$temp
+\end{code}
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"

@@ -325,6 +325,14 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
     Tcl_AppendResult(interp,"{ inter_dpd ",buffer, " } ", (char *)NULL);
   }
 #endif
+
+#ifdef SD
+  if (thermo_switch & THERMO_SD){
+    Tcl_PrintDouble(interp, temperature, buffer);
+    Tcl_AppendResult(interp,"{ sd ",buffer, " } ", (char *)NULL);
+    
+  }
+#endif
   return (TCL_OK);
 }
 

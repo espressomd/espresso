@@ -38,6 +38,11 @@ int tclcommand_sd_set_particles_apart(ClientData data,
 				     Tcl_Interp *interp,
 				     int argc, char **argv);
 
+/** tcl procedure to test some internal stuff in sd integrater
+ */
+int tclcommand_sd_test(ClientData data, Tcl_Interp *interp,
+		       int argc, char **argv);
+
 /** Callback for the sd particle radius (0.0 < sd_radius)
  */
 int tclcallback_sd_radius(Tcl_Interp *interp, void *_data);
