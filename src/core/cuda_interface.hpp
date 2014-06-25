@@ -64,6 +64,8 @@ typedef struct {
   float v_swim;
   float f_swim;
   float quatu[3];
+  int push_pull;
+  float dipole_length;
 #endif
 
   unsigned int fixed;

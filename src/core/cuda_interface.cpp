@@ -97,6 +97,8 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
                 particle_data_host[i+g].quatu[0] = (float)part[i].r.quatu[0];
                 particle_data_host[i+g].quatu[1] = (float)part[i].r.quatu[1];
                 particle_data_host[i+g].quatu[2] = (float)part[i].r.quatu[2];
+                particle_data_host[i+g].push_pull = part[i].f.push_pull;
+                particle_data_host[i+g].dipole_length = (float)part[i].f.dipole_length;
 #endif
               }  
               g += npart;

@@ -142,10 +142,10 @@ void mpi_send_v(int node, int part, double v[3]);
     \param node the node it is attached to.
     \param v_swim swimming at constant velocity.
     \param f_swim swimming at constant force.
-    \param pusher particle is a pusher in LB.
-    \param puller particle is a puller in LB.
+    \param push_pull decides if particle is pusher or puller
+    \param dipole_length length of force dipole
 */
-void mpi_send_swimming(int node, int part, double v_swim, double f_swim, int pusher, int puller);
+void mpi_send_swimming(int node, int part, double v_swim, double f_swim, int push_pull, double dipole_length);
 
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.
