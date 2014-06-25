@@ -1276,8 +1276,8 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
 {
   double v_swim = 0.0;
   double f_swim = 0.0;
-  int pusher = 0;
-  int puller = 0;
+  int push_pull = -1; // default to pusher
+  double dipole_length = 0.0;
 
   *change = 1;
   if (!ARG_IS_S(0,"off")) {
@@ -1307,16 +1307,16 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
     /* Parse pusher or puller */
     /* TODO: Comment back in as soon as we handle pushers and pullers
     if (ARG_IS_S(2,"pusher")) {
-      pusher = 1;
+      push_pull = -1;
     } else if (ARG_IS_S(2,"puller")) {
-      puller = 1;
+      push_pull = 1;
     } else {
       return TCL_ERROR;
     }
     */
   }
 
-  if (set_particle_swimming(part_num, v_swim, f_swim, pusher, puller) == TCL_ERROR) {
+  if (set_particle_swimming(part_num, v_swim, f_swim, push_pull, dipole_length) == TCL_ERROR) {
     return TCL_ERROR;
   }
 

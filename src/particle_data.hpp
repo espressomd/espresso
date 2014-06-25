@@ -182,6 +182,10 @@ typedef struct {
 
 #ifdef ENGINE
   double f_swim;
+#if defined(LB) || defined(LB_GPU)
+  int push_pull;
+  double dipole_length;
+#endif
 #endif
 
 #endif
@@ -469,11 +473,11 @@ int set_particle_v(int part, double v[3]);
     @param part the particle.
     @param v_swim swimming at constant velocity.
     @param f_swim swimming at constant force.
-    @param pusher particle is a pusher in LB.
-    @param puller particle is a puller in LB.
+    @param push_pull decides if particle is pusher or puller
+    @param dipole_length is the length of the force dipole
     @return ES_OK if particle existed
 */
-int set_particle_swimming(int part, double v_swim, double f_swim, int pusher, int puller);
+int set_particle_swimming(int part, double v_swim, double f_swim, int push_pull, double dipole_length);
 #endif
 
 /** Call only on the master node: set particle force.
