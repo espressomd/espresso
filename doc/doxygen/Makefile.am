@@ -17,28 +17,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 EXTRA_DIST = \
+	gen_doxyconfig.py \
 	background_errors.sh background_errors.awk \
 	Doxyfile \
-        figs/bond_angle.fig \
-        figs/bond_angle.gif \
-        figs/datastorage.gif \
-        figs/dihedral_angle.fig \
-        figs/dihedral_angle.gif \
-        figs/dihedral_angle.pdf \
-        figs/directions.fig \
-        figs/directions.gif \
-        figs/elc_errordist.gif \
-        figs/ghost_cells.fig \
-        figs/ghost_cells.gif \
-        figs/ghost_communication.fig \
-        figs/ghost_communication.gif \
-        figs/linked_cells.fig \
-        figs/linked_cells.gif \
-        figs/logo.png \
-        figs/move_to_p_buf.fig \
-        figs/move_to_p_buf.gif \
-        figs/particles.fig \
-        figs/particles.gif
+	figs/bond_angle.fig \
+	figs/bond_angle.gif \
+	figs/datastorage.gif \
+	figs/dihedral_angle.fig \
+	figs/dihedral_angle.gif \
+	figs/dihedral_angle.pdf \
+	figs/directions.fig \
+	figs/directions.gif \
+	figs/elc_errordist.gif \
+	figs/ghost_cells.fig \
+	figs/ghost_cells.gif \
+	figs/ghost_communication.fig \
+	figs/ghost_communication.gif \
+	figs/linked_cells.fig \
+	figs/linked_cells.gif \
+	figs/logo.png \
+	figs/move_to_p_buf.fig \
+	figs/move_to_p_buf.gif \
+	figs/particles.fig \
+	figs/particles.gif
 
 .PHONY: doc doxygen
 doc: doxygen
@@ -52,7 +53,7 @@ background_errors.dox:
 	    $(top_srcdir)/src/tcl/*.cpp $(top_srcdir)/src/tcl/*.hpp
 
 doxy-features:
-	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py \
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_doxyconfig.py \
 	  $(top_srcdir)/src/features.def doxy-features
 
 doxygen-html: background_errors.dox doxy-features

@@ -19,13 +19,18 @@
 # This script generates the files featureconfig.h and featureconfig.c.
 #
 from __future__ import print_function
-import sys, featuredefs, time, string
+import time, string
+import inspect, sys, os 
+# find featuredefs.py 
+moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
+sys.path.append(os.path.join(moduledir, '..'))
+import featuredefs 
 
 if len(sys.argv) != 4:
-    print("Usage: %s DEFFILE HPPFILE CPPFILE" % sys.argv[0], file=sys.stderr)
+    print("Usage: {} DEFFILE HPPFILE CPPFILE".format(sys.argv[0]), file=sys.stderr)
     exit(2)
 
-deffilename, hfilename, cfilename = sys.argv[1:4]
+deffilename, hfilename, cfilename = sys.argv[1:5]
 
 print("Reading definitions from " + deffilename + "...")
 defs = featuredefs.defs(deffilename)

@@ -85,9 +85,9 @@
 #include "iccp3m.hpp"
 #include "collision.hpp" 
 #include "external_potential.hpp"
-#include "potential/Potential.hpp"
+#include "actor/Actor.hpp"
 
-typedef std::list<Potential*> PotentialList;
+typedef std::list<Actor*> PotentialList;
 extern PotentialList potentials;
 
 /** \name Exported Functions */
@@ -690,7 +690,8 @@ inline void check_particle_force(Particle *part)
   for (i=0; i< 3; i++) {
     if (isnan(part->f.f[i])) {
       char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+      ERROR_SPRINTF(errtext,"{999 force on particle %d was NAN.} ",
+		    part->p.identity);
     }
   }
 
@@ -698,7 +699,8 @@ inline void check_particle_force(Particle *part)
   for (i=0; i< 3; i++) {
     if (isnan(part->f.torque[i])) {
       char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+      ERROR_SPRINTF(errtext,"{999 force on particle %d was NAN.} ",
+		    part->p.identity);
     }
   }
 #endif

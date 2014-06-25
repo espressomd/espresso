@@ -28,8 +28,6 @@ int tclcommand_external_potential(ClientData _data, Tcl_Interp *interp,
 int tclcommand_external_potential_tabulated(Tcl_Interp* interp, int argc, char **argv, ExternalPotential* e) 
 {
   char* filename =0;
-  int type = 0;
-  double scale = 1;
 
   DoubleList scalelist;
 

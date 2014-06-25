@@ -24,7 +24,7 @@
 
 #ifdef CUDA
 
-int tclcommand_HarmonicPotential(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_HarmonicWell(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 #endif
 

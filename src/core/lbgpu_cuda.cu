@@ -2056,12 +2056,6 @@ __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1,
   }
 }
 
-#if defined(ELECTROKINETICS)
-__device__ void reset_mode0_homogeneously(float* mode, float value) {
-  mode[0] *= value;
-}
-#endif
-
 /*********************************************************/
 /** \name System setup and Kernel functions */
 /*********************************************************/
@@ -2669,22 +2663,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
     calc_m_from_n(n_a, index, mode);
-#if defined(ELECTROKINETICS) && defined(EK_BOUNDARIES)
-  /** reset the density profile to homogeneous to avoid
-      LB internal pressure contribution */
-  if ( ek_initialized_gpu )
-  {
-    if ( ek_parameters_gpu->reaction_species[0] != -1 &&
-         ek_parameters_gpu->reaction_species[1] != -1 &&
-         ek_parameters_gpu->reaction_species[2] != -1 &&
-         ek_parameters_gpu->reset_mode_0 >= 0.0 &&
-         n_lb_boundaries_gpu > 0 
-       )
-    {
-      reset_mode0_homogeneously(mode, ek_parameters_gpu->reset_mode_0);
-    }
-  }
-#endif
     /**lb_relax_modes*/
     relax_modes(mode, index, node_f,d_v);
     /**lb_thermalize_modes */
@@ -3550,7 +3528,6 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
   int my_left[3];
   int node_index[8];
   float mode[4];
-  float Rho;
   u[0]=u[1]=u[2]=0;
   #pragma unroll
   for(int i=0; i<3; ++i){
