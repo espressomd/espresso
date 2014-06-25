@@ -2079,11 +2079,12 @@ int ek_init() {
       cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
 
 #ifdef EK_BOUNDARIES
-      if ( old_number_of_boundaries != n_lb_boundaries )
+      if ( old_number_of_boundaries != n_lb_boundaries || old_number_of_species != ek_parameters.number_of_species)
       {
         lb_init_boundaries();
         lb_get_boundary_force_pointer( &ek_lb_boundary_force );
         old_number_of_boundaries = n_lb_boundaries;
+        old_number_of_species = ek_parameters.number_of_species;
       }
 
       // Determine the total boundary mass and the fluid mass
