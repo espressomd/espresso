@@ -704,14 +704,14 @@ inline void add_bonded_force(Particle *p1)
       case BONDED_IA_CG_DNA_STACKING:      
 #ifdef CG_DNA
 	for (j = 0; j < 3; j++) {
-	  p1->f.f[j] = force[j];
-	  p2->f.f[j] = force2[j];
-	  p3->f.f[j] = force3[j];
-	  p4->f.f[j] = force4[j];
-	  p5->f.f[j] = force5to8[0 + j];
-	  p6->f.f[j] = force5to8[3 + j];
-	  p7->f.f[j] = force5to8[6 + j];
-	  p8->f.f[j] = force5to8[9 + j];
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] += force4[j];
+	  p5->f.f[j] += force5to8[0 + j];
+	  p6->f.f[j] += force5to8[3 + j];
+	  p7->f.f[j] += force5to8[6 + j];
+	  p8->f.f[j] += force5to8[9 + j];
 	}
 #endif
 	break;

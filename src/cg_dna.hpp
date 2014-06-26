@@ -61,6 +61,13 @@ inline double norm(double *x) {
   return sqrt(norm2(x));
 }
 
+inline void normalize(double *x) {
+  const double n = sqrt(norm(x));
+  x[0] /= n;
+  x[1] /= n;
+  x[2] /= n;
+}
+
 inline double cos_angle(double *x1, double *x2) {
   return dot(x1, x2) / (norm(x1) * norm(x2) );
 }
@@ -471,7 +478,7 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   /* Normal vectors of the base pairs */
   double n1[3], n2[3];
   /* Dihedral of the base pair */
-  double thetad;
+  double gammad;
   /* Base angles */
   double psi1, psi2;
   double dpsi1, dpsi2;
@@ -489,6 +496,10 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   double ra, c, tau_r, tau_d, tau_flip, tau_rd;
   const Bonded_ia_parameters params = *iaparams;
   const double E0 = params.p.cg_dna_basepair.E0;
+  
+#ifdef CG_DNA_DEBUG
+  puts("calc_cg_dna_basepair_force():");
+#endif
 
   get_mi_vector(rhb, p4->r.p, p2->r.p);
   get_mi_vector(rcc, p3->r.p, p1->r.p);
@@ -507,8 +518,8 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   cross(rcc, rcb1, n1);
   cross(rcc, rcb2, n2);
 
-  double n1_l2 = norm2(n1);
-  double n2_l2 = norm2(n2);
+  normalize(n1);
+  normalize(n2);
 
   PS(p1->p.identity);
   PS(p2->p.identity);
@@ -526,22 +537,20 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
 
   PS(gamma1);
   PS(gamma2);
-  PS(angle(n1,n2));
+  PS(dot(n1,n2));
   PV(n1);
   PV(n2);
-  PS(n1_l2);
-  PS(n2_l2);
 
-  if((n1_l2 == 0) || (n2_l2 == 0)) {
-    // puts("(n1_l2 == 0) || (n2_l2 == 0)");
-    thetad = 0;
-    n1_l2 = 1;
-    n2_l2 = 1;
-  } else {
-    thetad = (gamma1 != 1. && gamma2 != 1.) ? angle(n1, n2) : 0;
-  }
+  // if((n1_l2 == 0) || (n2_l2 == 0)) {
+  //   // puts("(n1_l2 == 0) || (n2_l2 == 0)");
+  //   gammad = 1;
+  //   n1_l2 = 1;
+  //   n2_l2 = 1;
+  // } else {
+    gammad = (gamma1 != 1. && gamma2 != 1.) ? cos_angle(n1, n2) : 0;
+    //  }
 
-  PS(thetad);
+  PS(gammad);
 
   // printf("cos(<(n1,n2)) = %lf, cos(<(rcc,rcb1)) = %lf\n", cos_angle(n1,n2), gamma1);
   // PRINT_VECTOR(n1);
@@ -558,16 +567,9 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
 
   rhb_l = norm(rhb);
 
-  // printf("p1 %lf %lf %lf, p2 %lf %lf %lf, p3 %lf %lf %lf, p4 %lf %lf %lf\n",
-  // 	 p1->r.p[0], p1->r.p[1], p1->r.p[2], p2->r.p[0], p2->r.p[1], p2->r.p[2], 
-  // 	 p3->r.p[0], p3->r.p[1], p3->r.p[2], p4->r.p[0], p4->r.p[1], p4->r.p[2]);
-
-  // PRINT_VECTOR(rhb);
-  // PRINT_VECTOR(rcc);
-  // PRINT_VECTOR(rcb1);
-  // PRINT_VECTOR(rcb2);
-  // PRINT_VECTOR(n1);
-  // PRINT_VECTOR(n2);
+  PS(psi1);
+  PS(psi2);
+  PS(rhb_l);
 
   /* Sugar base interaction strand 1 */
   
@@ -610,7 +612,7 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
 
   /* Dihedral part */
 
-  tau_d = exp(params.p.cg_dna_basepair.kd*(thetad - 1));
+  tau_d = exp(params.p.cg_dna_basepair.kd*(gammad - 1));
   f_d = -E0*params.p.cg_dna_basepair.kd*tau_d;  
 
   /* Flip part */
@@ -643,6 +645,20 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
     f_f2 *= tau_flip * tau_rd;
   } else {
     tau_flip = 1.;
+  }
+
+  /* Angle at which the constraint sets in */
+  const double psi_cutoff = PI*140./180.;
+  /* Spring constant for the angle constraint */
+  const double k_constraint = 50.;
+
+  if(psi1 > psi_cutoff) {
+    PS(k_constraint*(psi1-psi_cutoff)/sqrt(1. - SQR(gamma1)));
+    f_f1 += k_constraint*(psi1-psi_cutoff)/sqrt(1. - SQR(gamma1));
+  }
+  if(psi2 > psi_cutoff) {
+    PS(k_constraint*(psi2-psi_cutoff)/sqrt(1. - SQR(gamma2)));
+    f_f2 += k_constraint*(psi2-psi_cutoff)/sqrt(1. - SQR(gamma2));
   }
 
   /* Dihedral force */
@@ -678,8 +694,6 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
 
   for(int i = 0; i < 3; i++) {
     fr = f_r * rhb[i];
-    n1[i] /= n1_l2;
-    n2[i] /= n2_l2;
 
     fBase1  =  factor1*rcc[i]  - factor2 * rcb1[i];
     fSugar2 =  factor1*rcb1[i] - factor3 * rcc[i];
