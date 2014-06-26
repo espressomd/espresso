@@ -1489,7 +1489,7 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
  * @param *d_v            Pointer to local device values
  * @param *interpolated_u Pointer to the interpolated velocity
 */
-__device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, unsigned int *node_index, LB_rho_v_gpu *d_v, float *delta, float *interpolated_u ) {
+__device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a, float* particle_position, unsigned int *node_index, LB_rho_v_gpu *d_v, float *delta, float *interpolated_u ) {
 
   int my_center[3];
   float temp_delta[27];
@@ -1499,7 +1499,7 @@ __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a,
   /** the i index is left node, nearest node, right node */
   for(int i=0; i<3; ++i){
     /** note the -0.5f is to account for the shift of the LB grid relative to the MD */
-    float scaledpos = particle_data[part_index].p[i]/para.agrid-0.5f;
+    float scaledpos = particle_position[i]/para.agrid-0.5f;
     /** the +0.5 is to turn the floorf into a round function */
     my_center[i] = (int)(floorf(scaledpos+0.5f));
     scaledpos = scaledpos-1.0f*my_center[i];
@@ -1533,10 +1533,6 @@ __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a,
     }
   }
 
-  particle_force[part_index].f[0] = 0.0f;
-  particle_force[part_index].f[1] = 0.0f;
-  particle_force[part_index].f[2] = 0.0f;
-
   interpolated_u[0] = 0.0f;
   interpolated_u[1] = 0.0f;
   interpolated_u[2] = 0.0f;
@@ -1559,107 +1555,109 @@ __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a,
 /** \name calc_viscous_force_three_point_couple */
 /*********************************************************/
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
- * @param n_a             Pointer to local node residing in array a (Input)
- * @param *delta          Pointer for the weighting of particle position (Output)
- * @param *delta_j        Pointer for the weighting of particle momentum (Output)
- * @param *particle_data  Pointer to the particle position and velocity (Input)
- * @param *particle_force Pointer to the particle force (Input)
- * @param part_index      particle id / thread id (Input)
- * @param *rn_part        Pointer to randomnumber array of the particle
- * @param node_index      node index around (8) particle (Output)
- * @param *d_v            Pointer to local device values
+ * @param n_a                Pointer to local node residing in array a (Input)
+ * @param *delta             Pointer for the weighting of particle position (Output)
+ * @param *delta_j           Pointer for the weighting of particle momentum (Output)
+ * @param *particle_position Pointer to the particle position (Input)
+ * @param *rn_part           Pointer to randomnumber array of the particle
+ * @param node_index         node index around (8) particle (Output)
+ * @param *d_v               Pointer to local device values
 */
 __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
-  
- float interpolated_u[3];
- float interpolated_rho[LB_COMPONENTS];
- float viscforce[3*LB_COMPONENTS];
 
- #pragma unroll
- for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-   #pragma unroll
-   for(int jj=0; jj<3; ++jj){ 
-    viscforce[jj+ii*3]=0.0f;
-    delta_j[jj+ii*3]  =0.0f;
-   }
- }
+  float interpolated_u[3];
+  float interpolated_rho[LB_COMPONENTS];
+  float viscforce[3*LB_COMPONENTS];
 
- /* Do the velocity interpolation */
- interpolation_three_point_coupling(n_a, particle_data, particle_force, part_index, node_index, d_v, delta, interpolated_u);
+  // Zero out workspace
+#pragma unroll
+  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
+#pragma unroll
+    for(int jj=0; jj<3; ++jj){ 
+      viscforce[jj+ii*3]=0.0f;
+      delta_j[jj+ii*3]  =0.0f;
+    }
+  }
+  particle_force[part_index].f[0] = 0.0f;
+  particle_force[part_index].f[1] = 0.0f;
+  particle_force[part_index].f[2] = 0.0f;
 
- /* for LB we do not reweight the friction force */
- for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-   interpolated_rho[ii]=1.0;
- }
+  // Do the velocity interpolation
+  interpolation_three_point_coupling(n_a, particle_data[part_index].p, node_index, d_v, delta, interpolated_u);
+
+  /* for LB we do not reweight the friction force */
+  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
+    interpolated_rho[ii]=1.0;
+  }
 
   /** calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
- float rhotot=0;
+  float rhotot=0;
 
- #pragma unroll
- for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-   rhotot+=interpolated_rho[ii];
- }
+#pragma unroll
+  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
+    rhotot+=interpolated_rho[ii];
+  }
 
 
- /* Viscous force */
- float velocity[3];
- for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-   velocity[0] = particle_data[part_index].v[0];
-   velocity[1] = particle_data[part_index].v[1];
-   velocity[2] = particle_data[part_index].v[2];
+  /* Viscous force */
+  float velocity[3];
+  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
+    velocity[0] = particle_data[part_index].v[0];
+    velocity[1] = particle_data[part_index].v[1];
+    velocity[2] = particle_data[part_index].v[2];
 
 #ifdef ENGINE
-   velocity[0] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[0];
-   velocity[1] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[1];
-   velocity[2] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[2];
+    velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
+    velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
+    velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
 #endif
 
-   viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u[0]*para.agrid/para.tau)/rhotot;
-   viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1]/para.time_step - interpolated_u[1]*para.agrid/para.tau)/rhotot;
-   viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2]/para.time_step - interpolated_u[2]*para.agrid/para.tau)/rhotot;
+    viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u[0]*para.agrid/para.tau)/rhotot;
+    viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1]/para.time_step - interpolated_u[1]*para.agrid/para.tau)/rhotot;
+    viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2]/para.time_step - interpolated_u[2]*para.agrid/para.tau)/rhotot;
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-   viscforce[0+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[0]/rhotot;
-   viscforce[1+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[1]/rhotot;
-   viscforce[2+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[2]/rhotot;
+    viscforce[0+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[0]/rhotot;
+    viscforce[1+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[1]/rhotot;
+    viscforce[2+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[2]/rhotot;
 #endif
 
-  /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
+    /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
 #ifdef FLATNOISE
-  random_01(rn_part);
-  viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-  viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
-  random_01(rn_part);
-  viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+    random_01(rn_part);
+    viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+    viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
+    random_01(rn_part);
+    viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
 #elif defined(GAUSSRANDOMCUT)
-  gaussian_random_cut(rn_part);
-  viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
-  viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
-  gaussian_random_cut(rn_part);
-  viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+    gaussian_random_cut(rn_part);
+    viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+    viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
+    gaussian_random_cut(rn_part);
+    viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
 #elif defined(GAUSSRANDOM)
-  gaussian_random(rn_part);
-  viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
-  viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
-  gaussian_random(rn_part);
-  viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+    gaussian_random(rn_part);
+    viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+    viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
+    gaussian_random(rn_part);
+    viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
 #else
 #error No noise type defined for the GPU LB
 #endif    
-  /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
-  (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+    /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
+      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 
-  particle_force[part_index].f[0] += viscforce[0+ii*3];
-  particle_force[part_index].f[1] += viscforce[1+ii*3];
-  particle_force[part_index].f[2] += viscforce[2+ii*3];
+    particle_force[part_index].f[0] += viscforce[0+ii*3];
+    particle_force[part_index].f[1] += viscforce[1+ii*3];
+    particle_force[part_index].f[2] += viscforce[2+ii*3];
 
-  /* note that scforce is zero if SHANCHEN is not #defined */
-  delta_j[0+3*ii] -= (viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
-  delta_j[1+3*ii] -= (viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
-  delta_j[2+3*ii] -= (viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;    
- }
+    /* note that scforce is zero if SHANCHEN is not #defined */
+    delta_j[0+3*ii] -= (viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
+    delta_j[1+3*ii] -= (viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
+    delta_j[2+3*ii] -= (viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;    
+  }
 }
 
 /**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
@@ -1714,29 +1712,26 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  * @param n_a                   Pointer to local node residing in array a (Input)
  * @param node_index            node index around (8) particle (Output)
- * @param *particle_data        Pointer to the particle position and velocity (Input)
- * @param *particle_force       Pointer to the particle force (Input)
- * @param part_index            particle id / thread id (Input)
+ * @param *particle_position    Pointer to the particle position (Input)
  * @param *mode                 Pointer to the 19 modes for current lattice point
  * @param *d_v                  Pointer to local device values
  * @param *interpolated_u       Pointer to the interpolated velocity
  * @param *delta                Pointer for the weighting of particle position (Output)
 */
-__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, unsigned int* node_index, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, float* mode, LB_rho_v_gpu *d_v, float *interpolated_u, float* delta ) {
+__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, unsigned int* node_index, float *particle_position, float* mode, LB_rho_v_gpu *d_v, float *interpolated_u, float* delta ) {
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
 
-  /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
+  // see ahlrichs + duenweg page 8227 equ (10) and (11)
 #pragma unroll
   for(int i=0; i<3; ++i)
   {
-    float scaledpos = particle_data[part_index].p[i]/para.agrid - 0.5f;
+    float scaledpos = particle_position[i]/para.agrid - 0.5f;
     left_node_index[i] = (int)(floorf(scaledpos));
-    //printf("scaledpos %f \t myleft: %d \n", scaledpos, left_node_index[i]);
     temp_delta[3+i] = scaledpos - left_node_index[i];
     temp_delta[i] = 1.0f - temp_delta[3+i];
-    /**further value used for interpolation of fluid velocity at part pos near boundaries */
+    // further value used for interpolation of fluid velocity at part pos near boundaries
     temp_delta_half[3+i] = (scaledpos - left_node_index[i])*2.0f;
     temp_delta_half[i] = 2.0f - temp_delta_half[3+i];
   }
@@ -1764,9 +1759,6 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, u
   node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
 
-  particle_force[part_index].f[0] = 0.0f;
-  particle_force[part_index].f[1] = 0.0f;
-  particle_force[part_index].f[2] = 0.0f;
 
   interpolated_u[0] = 0.0f;
   interpolated_u[1] = 0.0f;
@@ -1824,7 +1816,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #ifdef SHANCHEN
   float gradrho1, gradrho2, gradrho3;
   float Rho;
-#endif 
+#endif
+  // Zero out workspace
   #pragma unroll
   for(int ii=0; ii<LB_COMPONENTS; ++ii)
   { 
@@ -1844,10 +1837,12 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
       partgrad3[jj+ii*8]=0.0f;
     }
   }
-  
-  /* Do the velocity interpolation */
-  interpolation_two_point_coupling(n_a, node_index, particle_data, particle_force, part_index, mode, d_v, interpolated_u, delta);
+  particle_force[part_index].f[0] = 0.0f;
+  particle_force[part_index].f[1] = 0.0f;
+  particle_force[part_index].f[2] = 0.0f;
 
+  // Do the velocity interpolation
+  interpolation_two_point_coupling(n_a, node_index, particle_data[part_index].p, mode, d_v, interpolated_u, delta);
 #ifdef SHANCHEN
 
  #pragma unroll
@@ -1983,9 +1978,12 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
     velocity[2] = particle_data[part_index].v[2];
 
 #ifdef ENGINE
-    velocity[0] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[0];
-    velocity[1] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[1];
-    velocity[2] -= particle_data[part_index].v_swim*particle_data[part_index].quatu[2];
+    velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
+    velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
+    velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
+    particle_data[part_index].swim.v_center[0] = interpolated_u[0];
+    particle_data[part_index].swim.v_center[1] = interpolated_u[1];
+    particle_data[part_index].swim.v_center[2] = interpolated_u[2];
 #endif
 
     viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u[0]*para.agrid/para.tau)/rhotot;

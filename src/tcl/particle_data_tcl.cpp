@@ -630,7 +630,7 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
 #ifdef ENGINE
     else if (ARG0_IS_S("swimming")) {
-      sprintf(buffer, "%f %f", part.m.v_swim/time_step, part.f.f_swim);
+      sprintf(buffer, "%f %f", part.swim.v_swim/time_step, part.swim.f_swim);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif

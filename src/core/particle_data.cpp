@@ -182,11 +182,6 @@ void init_particle(Particle *part)
   part->m.omega[0] = 0.0;
   part->m.omega[1] = 0.0;
   part->m.omega[2] = 0.0;
-
-#ifdef ENGINE
-  part->m.v_swim    = 0.0;
-#endif
-
 #endif
 
   /* ParticleForce */
@@ -198,8 +193,10 @@ void init_particle(Particle *part)
   part->f.torque[1] = 0.0;
   part->f.torque[2] = 0.0;
 
+  // Swimming parameters
 #ifdef ENGINE
-  part->f.f_swim    = 0.0;
+  part->swim.v_swim    = 0.0;
+  part->swim.f_swim    = 0.0;
 #endif
 
 #endif

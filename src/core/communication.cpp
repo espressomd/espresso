@@ -504,23 +504,17 @@ void mpi_send_swimming(int pnode, int part, double v_swim, double f_swim, int pu
 #ifdef ENGINE
   mpi_call(mpi_send_swimming_slave, pnode, part);
 
+  Particle *p = local_particles[part];
   if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->m.v_swim = v_swim;
-    p->f.f_swim = f_swim;
+    p->swim.v_swim = v_swim;
+    p->swim.f_swim = f_swim;
 #if defined(LB) || defined(LB_GPU)
-    p->f.push_pull = push_pull;
-    p->f.dipole_length = dipole_length;
+    p->swim.push_pull = push_pull;
+    p->swim.dipole_length = dipole_length;
 #endif
   }
   else {
-    /* TODO: Copy one struct with all variables instead of single variables */
-    MPI_Send(&v_swim, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-    MPI_Send(&f_swim, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#if defined(LB) || defined(LB_GPU)
-    MPI_Send(&push_pull, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
-    MPI_Send(&dipole_length, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#endif
+    MPI_Send(&p->swim, sizeof(ParticleParametersSwimming), MPI_BYTE, 0, SOME_TAG, comm_cart);
   }
 
   on_particle_change();
@@ -532,16 +526,8 @@ void mpi_send_swimming_slave(int pnode, int part)
 #ifdef ENGINE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-        MPI_Recv(&p->m.v_swim, 1, MPI_DOUBLE, 0, SOME_TAG,
-	     comm_cart, MPI_STATUS_IGNORE);
-        MPI_Recv(&p->f.f_swim, 1, MPI_DOUBLE, 0, SOME_TAG,
-	     comm_cart, MPI_STATUS_IGNORE);
-#if defined(LB) || defined(LB_GPU)
-        MPI_Recv(&p->f.push_pull, 1, MPI_INT, 0, SOME_TAG,
-	     comm_cart, MPI_STATUS_IGNORE);
-        MPI_Recv(&p->f.dipole_length, 1, MPI_DOUBLE, 0, SOME_TAG,
-	     comm_cart, MPI_STATUS_IGNORE);
-#endif
+        MPI_Recv(&p->swim, sizeof(ParticleParametersSwimming), MPI_BYTE, 0, SOME_TAG,
+            comm_cart, MPI_STATUS_IGNORE);
   }
 
   on_particle_change();

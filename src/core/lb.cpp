@@ -2772,9 +2772,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   velocity[2] = p->m.v[2];
 
 #ifdef ENGINE
-  velocity[0] -= p->m.v_swim*p->r.quatu[0];
-  velocity[1] -= p->m.v_swim*p->r.quatu[1];
-  velocity[2] -= p->m.v_swim*p->r.quatu[2];
+  velocity[0] -= p->swim.v_swim*p->r.quatu[0];
+  velocity[1] -= p->swim.v_swim*p->r.quatu[1];
+  velocity[2] -= p->swim.v_swim*p->r.quatu[2];
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS

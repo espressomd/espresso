@@ -40,6 +40,18 @@ typedef struct {
 
 } CUDA_fluid_composition;
 
+// Parameters for swimmers
+#ifdef ENGINE
+typedef struct {
+  float v_swim;
+  float f_swim;
+  float quatu[3];
+  int push_pull;
+  float dipole_length;
+  float v_source[3];
+  float v_center[3];
+} CUDA_ParticleParametersSwimming;
+#endif
 
 /** data structure which must be copied to the GPU at each step run on the GPU */
 typedef struct {
@@ -61,11 +73,7 @@ typedef struct {
 #endif
 
 #ifdef ENGINE
-  float v_swim;
-  float f_swim;
-  float quatu[3];
-  int push_pull;
-  float dipole_length;
+  CUDA_ParticleParametersSwimming swim;
 #endif
 
   unsigned int fixed;

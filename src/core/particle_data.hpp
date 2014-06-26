@@ -180,13 +180,7 @@ typedef struct {
   /** torque */
   double torque[3];
 
-#ifdef ENGINE
-  double f_swim;
-#if defined(LB) || defined(LB_GPU)
-  int push_pull;
-  double dipole_length;
-#endif
-#endif
+
 
 #endif
 
@@ -204,9 +198,6 @@ typedef struct {
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
 
-#ifdef ENGINE
-  double v_swim;
-#endif
 
 #endif
 } ParticleMomentum;
@@ -260,6 +251,17 @@ typedef struct {
 } ParticleLatticeCoupling;
 #endif
 
+#ifdef ENGINE
+typedef struct {
+  double f_swim;
+  double v_swim;
+#if defined(LB) || defined(LB_GPU)
+  int push_pull;
+  double dipole_length;
+#endif
+} ParticleParametersSwimming;
+#endif
+
 /** Struct holding all information for one particle. */
 typedef struct {
   ///
@@ -284,6 +286,10 @@ typedef struct {
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded interactions */
   IntList el;
+#endif
+
+#ifdef ENGINE
+  ParticleParametersSwimming swim;
 #endif
 
 } Particle;

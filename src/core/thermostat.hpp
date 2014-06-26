@@ -181,7 +181,7 @@ inline void friction_thermo_langevin(Particle *p)
   {
     double velocity = p->m.v[j];
 #ifdef ENGINE
-    velocity -= p->m.v_swim*p->r.quatu[j];
+    velocity -= p->swim.v_swim*p->r.quatu[j];
 #endif
 
 #ifdef EXTERNAL_FORCES
