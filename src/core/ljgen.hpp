@@ -55,6 +55,7 @@ inline void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_p
     int j;
     double r_off, frac, fac=0.0;
     r_off = dist - ia_params->LJGEN_offset;
+
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;
     r_off += pow(ia_params->LJGEN_sig,2) * (1.0-ia_params->LJGEN_lambda)
@@ -64,7 +65,7 @@ inline void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_p
     r_off  = sqrt(r_off);
 #endif
     /* normal case: resulting force/energy smaller than capping. */
-    if(r_off > ia_params->LJGEN_capradius) {
+    if((ia_params->LJGEN_capradius == 0) || (r_off > ia_params->LJGEN_capradius)) {
       frac = ia_params->LJGEN_sig/r_off;
       fac   = ia_params->LJGEN_eps 
 #ifdef LJGEN_SOFTCORE

@@ -3528,7 +3528,6 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
   int my_left[3];
   int node_index[8];
   float mode[4];
-  float Rho;
   u[0]=u[1]=u[2]=0;
   #pragma unroll
   for(int i=0; i<3; ++i){
