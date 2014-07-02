@@ -25,18 +25,23 @@
 
 #ifdef CUDA
 
-/** data which must be copied from the GPU at each step run on the GPU */
+/** Forces on particles on the gpu, which must be copied from the GPU at each step run on the GPU */
 typedef struct {
 
   /** force on the particle given to md part */
   float f[3];
   
-#ifdef ROTATION
-   float torque[3];
-   #endif
-
-
 } CUDA_particle_force;
+
+/** Torques on particles on the gpu, which must be copied from the GPU at each step run on the GPU */
+typedef struct {
+
+  /** torque on the particle given to md part */
+  float torque[3];
+  
+} CUDA_particle_torque;
+
+
 
 
 typedef struct {
@@ -100,18 +105,20 @@ void copy_energy_from_GPU();
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
 void copy_composition_from_GPU();
+
 CUDA_global_part_vars* gpu_get_global_particle_vars_pointer_host();
 CUDA_global_part_vars* gpu_get_global_particle_vars_pointer();
 CUDA_particle_data* gpu_get_particle_pointer();
 CUDA_particle_force* gpu_get_particle_force_pointer();
 CUDA_energy* gpu_get_energy_pointer();
+CUDA_particle_torque* gpu_get_particle_torque_pointer();
 CUDA_fluid_composition* gpu_get_fluid_composition_pointer();
 CUDA_particle_seed* gpu_get_particle_seed_pointer();
 void gpu_change_number_of_part_to_comm();
 void gpu_init_particle_comm();
 void cuda_mpi_get_particles(CUDA_particle_data *host_result);
 void copy_part_data_to_gpu();
-void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_fluid_composition);
+void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_particle_torque *host_torques,CUDA_fluid_composition * host_fluid_composition);
 void cuda_bcast_global_part_params();
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);

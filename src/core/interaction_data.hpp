@@ -153,8 +153,11 @@ enum DipolarInteration{
     DIPOLAR_DS,
    /** Dipolar method is direct sum plus DLC. */
     DIPOLAR_MDLC_DS
-};
-   /*@}*/
+   #define DIPOLAR_MDLC_DS  5
+   /** Direct summation on gpu */
+   #define DIPOLAR_DS_GPU 6 
+
+   }
 #endif 
 
 

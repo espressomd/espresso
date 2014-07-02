@@ -100,8 +100,8 @@ public:
     return m_needsRGpu; 
   };
 #ifdef DIPOLES
-  float *dipGpuBegin() { return m_r_gpu_begin; };
-  float *dipGpuEnd() { return m_r_gpu_end; };
+  float *dipGpuBegin() { return m_dip_gpu_begin; };
+  float *dipGpuEnd() { return m_dip_gpu_end; };
   bool hasDipGpu() { return true; };
   bool requestDipGpu() { 
     m_needsDipGpu = hasDipGpu();
@@ -147,6 +147,8 @@ public:
   float *fGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
   float *fGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
   float *eGpu() { return (float *)gpu_get_energy_pointer(); };
+  float *torqueGpuBegin() { return (float *)gpu_get_particle_torque_pointer(); };
+  float *torqueGpuEnd() { return (float *)(gpu_get_particle_torque_pointer()) + 3*m_gpu_npart; };
   bool hasFGpu() { return true; };
   bool requestFGpu() {
     m_needsFGpu = hasFGpu();

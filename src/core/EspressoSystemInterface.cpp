@@ -119,7 +119,7 @@ void EspressoSystemInterface::gatherParticles() {
 #endif
 #ifdef DIPOLES
 	if(needsDip())
-	  Dip.push_back(p[i].r.dip);
+	  Dip.push_back(Vector3(p[i].r.dip));
 #endif
       }
     }

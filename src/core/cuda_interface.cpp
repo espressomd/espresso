@@ -221,7 +221,9 @@ static void cuda_mpi_get_particles_slave(){
     }
 }
 
-  void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_composition){
+  void cuda_mpi_send_forces(CUDA_particle_force *host_forces,
+                            CUDA_particle_torque *host_torques,
+                            CUDA_fluid_composition * host_composition){
     int n_part;
     int g, pnode;
     Cell *cell;
@@ -252,9 +254,9 @@ static void cuda_mpi_get_particles_slave(){
                 cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
                 cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
 #ifdef ROTATION
-                cell->part[i].f.torque[0] += (double)host_forces[i+g].torque[0];
-                cell->part[i].f.torque[1] += (double)host_forces[i+g].torque[1];
-                cell->part[i].f.torque[2] += (double)host_forces[i+g].torque[2];
+//                cell->part[i].f.torque[0] += (double)host_torques[i+g].torque[0];
+//                cell->part[i].f.torque[1] += (double)host_torques[i+g].torque[1];
+//                cell->part[i].f.torque[2] += (double)host_torques[i+g].torque[2];
 #endif
 
 #ifdef SHANCHEN
@@ -269,6 +271,10 @@ static void cuda_mpi_get_particles_slave(){
           else {
           /* and send it back to the slave node */
           MPI_Send(&host_forces[g], sizes[pnode]*sizeof(CUDA_particle_force), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);      
+#ifdef ROTATION          
+	  MPI_Send(&host_torques[g], sizes[pnode]*sizeof(CUDA_particle_torque), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);      
+#endif
+
 #ifdef SHANCHEN
           MPI_Send(&host_composition[g], sizes[pnode]*sizeof(CUDA_fluid_composition), MPI_BYTE, pnode, REQ_CUDAGETPARTS, comm_cart);      
 #endif
@@ -285,6 +291,9 @@ static void cuda_mpi_get_particles_slave(){
 static void cuda_mpi_send_forces_slave(){
 
     int n_part;
+#ifdef ROTATION
+     CUDA_particle_torque *host_torques_sl=NULL;
+#endif
     CUDA_particle_force *host_forces_sl=NULL;
 #ifdef SHANCHEN
     CUDA_fluid_composition *host_composition_sl=NULL;
@@ -303,7 +312,12 @@ static void cuda_mpi_send_forces_slave(){
       /* get (unsorted) particle informations as an array of type 'particle' */
       /* then get the particle information */
       host_forces_sl = (CUDA_particle_force *) malloc(n_part*sizeof(CUDA_particle_force));
+#ifdef ROTATION
+      host_torques_sl = (CUDA_particle_torque *) malloc(n_part*sizeof(CUDA_particle_torque));
+#endif
       MPI_Recv(host_forces_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_CUDAGETFORCES,
+        comm_cart, &status);
+      MPI_Recv(host_torques_sl, n_part*sizeof(CUDA_particle_torque), MPI_BYTE, 0, REQ_CUDAGETFORCES,
         comm_cart, &status);
 #ifdef SHANCHEN
       host_composition_sl = (CUDA_fluid_composition *) malloc(n_part*sizeof(CUDA_fluid_composition));
@@ -319,9 +333,9 @@ static void cuda_mpi_send_forces_slave(){
           cell->part[i].f.f[1] += (double)host_forces_sl[i+g].f[1];
           cell->part[i].f.f[2] += (double)host_forces_sl[i+g].f[2];
 #ifdef ROTATION
-          cell->part[i].f.torque[0] += (double)host_forces_sl[i+g].torque[0];
-          cell->part[i].f.torque[1] += (double)host_forces_sl[i+g].torque[1];
-          cell->part[i].f.torque[2] += (double)host_forces_sl[i+g].torque[2];
+//          cell->part[i].f.torque[0] += (double)host_torques_sl[i+g].torque[0];
+//          cell->part[i].f.torque[1] += (double)host_torques_sl[i+g].torque[1];
+//          cell->part[i].f.torque[2] += (double)host_torques_sl[i+g].torque[2];
 #endif
 
 
@@ -334,6 +348,10 @@ static void cuda_mpi_send_forces_slave(){
         g += npart;
       }
       free(host_forces_sl);
+#ifdef ROTATION
+      free(host_torques_sl);
+#endif
+
 #ifdef SHANCHEN
       free(host_composition_sl);
 #endif 

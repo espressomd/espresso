@@ -38,6 +38,9 @@ __device__ float dipole_ia(float pf, float* r1, float *r2, float* dip1, float* d
 	
   // Distance between particles
   get_mi_vector_float(dr,r1,r2,box_l,periodic);
+  printf("dr: %f %f %f\n",dr[0],dr[1],dr[2]);
+  printf("dip1: %f %f %f\n",dip1[0],dip1[1],dip1[2]);
+  printf("dip2: %f %f %f\n",dip2[0],dip2[1],dip2[2]);
 
   // Powers of distance
   r_sq=dr[0]*dr[0]+dr[1]*dr[1]+dr[2]*dr[2];

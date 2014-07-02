@@ -38,6 +38,7 @@ libEspressoTcl_la_SOURCES = \
 	comforce_tcl.cpp comforce_tcl.hpp \
 	config_tcl.cpp \
 	constraint_tcl.cpp constraint_tcl.hpp \
+	DipolarDirectSum_tcl.cpp DipolarDirectSum_tcl.hpp \
 	domain_decomposition_tcl.cpp domain_decomposition_tcl.hpp \
 	electrokinetics_tcl.cpp electrokinetics_tcl.hpp \
 	external_potential_tcl.cpp external_potential_tcl.hpp \

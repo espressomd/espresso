@@ -152,6 +152,8 @@ libEspresso_la_SOURCES += \
 # Coulomb methods
 libEspresso_la_SOURCES += \
 	debye_hueckel.cpp debye_hueckel.hpp \
+	actor/DipolarDirectSum.cpp actor/DipolarDirectSum.hpp \
+	actor/DipolarDirectSum_cuda.hpp \
 	elc.cpp elc.hpp \
 	magnetic_non_p3m_methods.cpp magnetic_non_p3m_methods.hpp \
 	mdlc_correction.cpp  mdlc_correction.hpp \
@@ -195,7 +197,8 @@ CUDA_SOURCE_FILES = \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
-	actor/HarmonicWell_cuda.cu
+	actor/HarmonicWell_cuda.cu \
+	actor/DipolarDirectSum_cuda.cu actor/DipolarDirectSum_cuda.hpp 
 
 # include the dependency tracking files
 include ./$(DEPDIR)/cuda_init_cuda.Plo

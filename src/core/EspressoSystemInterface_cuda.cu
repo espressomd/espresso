@@ -109,6 +109,13 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
     cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3*n*sizeof(float)));
     m_r_gpu_end = m_r_gpu_begin + 3*n;
   }
+  
+  if(m_needsDipGpu && ((n != m_gpu_npart) || (m_dip_gpu_begin == 0))) {
+    if(m_dip_gpu_begin != 0)
+      cuda_safe_mem(cudaFree(m_dip_gpu_begin));
+    cuda_safe_mem(cudaMalloc(&m_dip_gpu_begin, 3*n*sizeof(float)));
+    m_dip_gpu_end = m_dip_gpu_begin + 3*n;
+  }
 
   if(m_needsVGpu && ((n != m_gpu_npart) || (m_v_gpu_begin == 0))) {
     if(m_v_gpu_begin != 0)
