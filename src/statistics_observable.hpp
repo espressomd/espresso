@@ -137,8 +137,21 @@ typedef struct {
 	int rbins;
 	int start_point_id;
 	int end_point_id;
-	//double start_point[3];
-	//double end_point[3];
+	// id_flag == 0 : actual positions given, otherwise two particle ids for the start- and 
+	// end-point are given
+	int id_flag;
+	double start_point[3];
+	double end_point[3];
 } radial_density_data;
+
+int observable_spatial_polymer_properties(void *params, double *A, unsigned int n_A);
+typedef struct { 
+	IntList *id_list;
+	int npoly;
+	int cut_off;
+} spatial_polym_data;
+
+int observable_persistence_length(void *params, double *A, unsigned int n_A);
+// uses the same data as spatial_polymer_properties
 
 #endif

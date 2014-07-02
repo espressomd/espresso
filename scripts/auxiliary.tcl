@@ -418,7 +418,7 @@ proc prepare_vmd_connection { args } {
         
         set l [lindex $c 13]
         
-        puts $vmdout_file "draw cylinder \{[expr $l*($c_x-$a_x)] [expr $l*($c_y-$a_y)] [expr $l*($c_z-$a_z)]\} \{[expr $l*($c_x+$a_x)] [expr $l*($c_y+$a_y)] [expr $l*($c_z+$a_z)]\} radius $r resolution 36"
+        puts $vmdout_file "draw cylinder \{[expr $l*($c_x/$l-$a_x)] [expr $l*($c_y/$l-$a_y)] [expr $l*($c_z/$l-$a_z)]\} \{[expr $l*($c_x/$l+$a_x)] [expr $l*($c_y/$l+$a_y)] [expr $l*($c_z/$l+$a_z)]\} radius $r resolution 36"
       }
     }
   }
