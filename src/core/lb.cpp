@@ -97,7 +97,7 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #endif
 
 /** The underlying lattice structure */
-Lattice lblattice=new Lattice();
+Lattice lblattice;
 
 /** Pointer to the velocity populations of the fluid nodes */
 double **lbfluid[2] = { NULL, NULL };
@@ -1075,11 +1075,11 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
   // convert the position into lower left grid point
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-	map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
+	lblattice.map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
 #endif
   } else {  
 #ifdef LB
-	map_position_to_lattice_global(p, ind, delta,  lbpar.agrid);
+	lblattice.map_position_to_lattice_global(p, ind, delta,  lbpar.agrid);
 #endif
   }
 
@@ -1097,15 +1097,15 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 
 	if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-					if (tmpind[0] == int(lbpar_gpu.dim_x)) tmpind[0] =0;
-					if (tmpind[1] == int(lbpar_gpu.dim_y)) tmpind[1] =0;
-					if (tmpind[2] == int(lbpar_gpu.dim_z)) tmpind[2] =0;
+					if (tmpind[0] == int(lbpar_gpu.dim_x)) tmpind[0] = 0;
+					if (tmpind[1] == int(lbpar_gpu.dim_y)) tmpind[1] = 0;
+					if (tmpind[2] == int(lbpar_gpu.dim_z)) tmpind[2] = 0;
 #endif
 	} else {  
 #ifdef LB
-	  if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] =0;
-	  if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] =0;
-	  if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] =0;
+	  if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] = 0;
+	  if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] = 0;
+	  if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] = 0;
 	  
 #endif
 	}
