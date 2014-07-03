@@ -65,6 +65,24 @@ void thermo_init_dpd();
 void dpd_heat_up();
 void dpd_cool_down();
 
+/** Chatterjee 2007 proposes that for DPD with Lees Edwards BCs,
+ *  it is better not to count interactions with Ghost particles. */
+inline int le_chatterjee_test_pair(Particle *p1, Particle *p2){
+#ifdef LEES_EDWARDS
+    /* cannot assume that we have a flag set to mark ghost particles,
+     * but can assume (for LE) that non-ghost
+     * particle y-coords are always imaged inside the box */
+
+    if( p1->r.p[1] < 0 )        return(0);
+    if( p1->r.p[1] > box_l[1] ) return(0);
+    if( p2->r.p[1] < 0 )        return(0);
+    if( p2->r.p[1] > box_l[1] ) return(0);
+#endif
+    return(1);
+}
+
+
+
 /** Calculate Random Force and Friction Force acting between particle
     p1 and p2 and add them to their forces. */
 inline void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
@@ -94,6 +112,10 @@ inline void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], d
   double massf;
 #endif
 
+#ifdef LEES_EDWARDS
+  if( le_chatterjee_test_pair(p1, p2) == 0 ) return;
+#endif
+  
 #ifdef EXTERNAL_FORCES
   // if any of the two particles is fixed in some direction then
   // do not add any dissipative or stochastic dpd force part
@@ -227,6 +249,10 @@ inline void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *
     if ( (p1->l.ext_flag | p2->l.ext_flag) & COORDS_FIX_MASK) return;
 #endif
 
+#ifdef LEES_EDWARDS
+  if( le_chatterjee_test_pair(p1, p2) == 0 ) return;
+#endif
+  
 #ifdef DPD_MASS_RED
   massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
 #endif

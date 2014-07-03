@@ -409,7 +409,11 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up, Particl
 
   CELL_TRACE(fprintf(stderr, "%d: sorting in %d\n", this_node, pl->n));
   for(p = 0; p < pl->n; p++) {
+#ifdef LEES_EDWARDS
+    fold_position(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i);
+#else
     fold_position(pl->part[p].r.p, pl->part[p].l.i);
+#endif
     if (LAYERED_BTM_NEIGHBOR && pl->part[p].r.p[2] < my_left[2]) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n", this_node, pl->part[p].p.identity));
       move_indexed_particle(dn, pl, p);
@@ -460,7 +464,11 @@ void layered_exchange_and_sort_particles(int global_flag)
       }
       else {
 	/* particle stays here. Fold anyways to get x,y correct */
-	fold_position(part->r.p, part->l.i);
+#ifdef LEES_EDWARDS
+    fold_position(part->r.p, part->m.v, part->l.i);
+#else
+    fold_position(part->r.p, part->l.i);
+#endif
 	nc = layered_position_to_cell(part->r.p);
 	if (nc != oc) {
 	  move_indexed_particle(nc, oc, p);

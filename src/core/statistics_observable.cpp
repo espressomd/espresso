@@ -23,6 +23,11 @@
 #include "pressure.hpp"
 #include "rotation.hpp"
 
+#ifdef LEES_EDWARDS
+#define fold_position(x,i)     fold_position(x,v_le,i)
+#define unfold_position(x,i) unfold_position(x,v_le,i)
+#endif
+
 observable** observables = 0;
 int n_observables = 0; 
 int observables_autoupdate = 0;
@@ -360,6 +365,10 @@ int observable_calc_density_profile(observable* self) {
   int img[3];
   IntList* ids;
   profile_data* pdata;
+#ifdef LEES_EDWARDS
+  double v_le[3];
+#endif
+
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
@@ -615,6 +624,10 @@ int observable_calc_radial_density_profile(observable* self) {
   int img[3];
   double bin_volume;
   IntList* ids;
+#ifdef LEES_EDWARDS
+  double v_le[3];
+#endif
+  
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
@@ -660,6 +673,10 @@ int observable_calc_radial_flux_density_profile(observable* self) {
   int img[3];
   double bin_volume;
   IntList* ids;
+#ifdef LEES_EDWARDS
+  double v_le[3];
+#endif
+
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
@@ -745,6 +762,10 @@ int observable_calc_flux_density_profile(observable* self) {
   int img[3];
   double bin_volume;
   IntList* ids;
+#ifdef LEES_EDWARDS
+  double v_le[3];
+#endif
+
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");

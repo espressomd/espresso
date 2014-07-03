@@ -112,7 +112,15 @@ void local_system_CMS( double *sdata ) {
 
       memcpy(ppos, part[i].r.p, 3*sizeof(double));
       memcpy(img, part[i].l.i, 3*sizeof(int));
+#ifdef LEES_EDWARDS
+{
+      double pv[3];
+      memcpy(pv, part[i].m.v, 3*sizeof(double));
+      unfold_position(ppos, pv, img);
+}
+#else
       unfold_position(ppos, img);
+#endif
 
       x += M*ppos[0];
       y += M*ppos[1];
@@ -139,7 +147,15 @@ void local_system_CMS( double *sdata ) {
 
       memcpy(ppos, part[i].r.p, 3*sizeof(double));
       memcpy(img, part[i].l.i, 3*sizeof(int));
+#ifdef LEES_EDWARDS
+{
+      double pv[3];
+      memcpy(pv, part[i].m.v, 3*sizeof(double));
+      unfold_position(ppos, pv, img);
+}
+#else
       unfold_position(ppos, img);
+#endif
 
       x += ppos[0];
       y += ppos[1];

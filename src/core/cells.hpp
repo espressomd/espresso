@@ -95,9 +95,11 @@
 /*@{*/
 
 /** Flag for cells_on_geometry_change: the processor grid has changed. */
-#define CELL_FLAG_GRIDCHANGED 1
+#define CELL_FLAG_GRIDCHANGED  1
 /** Flag for cells_on_geometry_change: skip shrinking of cells. */
-#define CELL_FLAG_FAST 2
+#define CELL_FLAG_FAST         2
+/** Flag for cells_on_geometry_change: Lees-Edwards offset has changed. */
+#define CELL_FLAG_LEES_EDWARDS 4
 
 /*@}*/
 
@@ -237,9 +239,12 @@ void cells_resort_particles(int global_flag);
     If bit CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
     has changed, i. e. the grid or periodicity. In this case a full
     reorganization is due.
+    
+    If bit CELL_FLAG_LEES_EDWARDS is set, it means the nodes' topology
+    has changed, but only on the period wrap in the y direction.
 
-    @param flags a combination of CELL_FLAG_GRIDCHANGED and
-    CELL_FLAG_FAST, see above.
+    @param flags a bitmask of CELL_FLAG_GRIDCHANGED,
+    CELL_FLAG_FAST, and/or CELL_FLAG_LEES_EDWARDS, see above.
 
 */
 void cells_on_geometry_change(int flags);

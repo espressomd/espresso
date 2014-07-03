@@ -121,7 +121,15 @@ void meta_perform()
             p1 = &p[i];
             memcpy(ppos1, p[i].r.p, 3*sizeof(double));
             memcpy(img1, p[i].l.i, 3*sizeof(int));
+#ifdef LEES_EDWARDS
+           {
+            double pv[3];
+            memcpy(pv, part[i].m.v, 3*sizeof(double));
+            unfold_position(ppos1, pv, img1);
+           }
+#else
             unfold_position(ppos1, img1);
+#endif
             if (flag1 && flag2) {
                /* vector r2-r1 - Not a minimal image! Unfolded position */
                vector_subt(meta_cur_xi,ppos2,ppos1);
@@ -133,7 +141,15 @@ void meta_perform()
             p2 = &p[i];
             memcpy(ppos2, p[i].r.p, 3*sizeof(double));
             memcpy(img2, p[i].l.i, 3*sizeof(int));
+#ifdef LEES_EDWARDS
+           {
+            double pv[3];
+            memcpy(pv, part[i].m.v, 3*sizeof(double));
+            unfold_position(ppos2, pv, img2);
+           }
+#else
             unfold_position(ppos2, img2);
+#endif
             if (flag1 && flag2) {
                /* vector r2-r1 - Not a minimal image! Unfolded position */
                vector_subt(meta_cur_xi,ppos2,ppos1);
