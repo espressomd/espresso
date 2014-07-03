@@ -106,10 +106,12 @@ particles coordinates as well. The function returns the new volume of
 the deformed simulation box.
 
 \section{\texttt{lees_edwards_offset}: Applying shear between periodic images}
-\label{sec:lees_edwards}
-\index{Lees-Edwards Boundaries|mainindex}
-
 \newescommand[lees-edwards-offset]{lees_edwards_offset}
+\label{sec:lees-edwards}
+\index{Lees-Edwards Boundaries|mainindex}
+\index{shear boundaries}
+\index{shear viscosity}
+
 
 \begin{essyntax}
   \variant{1} lees_edwards_offset \var{offset_\mathrm{new}}  
@@ -121,8 +123,8 @@ the deformed simulation box.
 
 Lees-Edwards Periodic Boundary Conditions are used to impose a shear flow of speed $\dot{\gamma}$ on the system relative to its periodic images by moving the PBC wrap such that:  $v\_x_{unfolded} =  v\_x_{folded} + \dot{\gamma} y_{img}$ (where $v\_x_{unfolded}$ is the $x$-component of the velocity of an image particle outside the main simulation box, and $y_{img}$ is the count of PBC boundaries crossed in the $y$-direction).  
 The absolute value of the shear offset is set using this command; with the shear flow rate $\dot{\gamma}$ then determined internally as the difference between successive offsets.  
-A typical usage would be to integrate by 1 md timestep and then to increase the offset to a new value using this command; this usage pattern is intended to allow for arbitrary shear flow time profiles, such as an oscillatory shear.  
-A common calculation to make using Lees-Edwards boundary conditions is to find the shear viscosity by plotting shear stress against the applied strain for different values of constant $\dot{\gamma}$. 
+A typical usage would be to integrate by 1 {MD} timestep and then to increase the offset to a new value using this command; this usage pattern is intended to allow for arbitrary shear flow time profiles, such as an oscillatory shear.  
+A common calculation to make using Lees-Edwards boundary conditions is to find the shear viscosity (or kinematic viscosity) by plotting shear stress (or shear stress/density) against the applied strain for different values of constant $\dot{\gamma}$. 
 
 Lees-Edwards differs from the NEMD approach (see \vref{sec:NEMD}) in that the shear imposed is homogenous across the system (but only on average: symmetry breaking effects are not ruled out) rather than reversing direction with a periodicity of the box length. 
 Accordingly the transport properties  measured using Lees-Edwards are likely to be different to (and arguably more physical than) those measured using NEMD or those from equilibrium simulations by a Green-Kubo type approach.
