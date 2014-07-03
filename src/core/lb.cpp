@@ -1075,11 +1075,11 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
   // convert the position into lower left grid point
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-	map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
+	map_position_to_lattice_global_GPU(p, ind, delta, lbpar_gpu.agrid);
 #endif
   } else {  
 #ifdef LB
-	map_position_to_lattice_global(p, ind, delta,  lbpar.agrid);
+	lblattice.map_position_to_lattice_global(p, ind, delta,  lbpar.agrid);
 #endif
   }
 
