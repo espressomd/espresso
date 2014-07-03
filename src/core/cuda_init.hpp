@@ -21,6 +21,11 @@
 
 #include "config.hpp"
 
+
+/** Initializes the CUDA stream.
+*/
+void cuda_init();
+
 /** get the number of CUDA devices.
 
     @return the number of GPUs, or -1 if CUDA could not be

@@ -99,6 +99,9 @@ void on_program_start()
 #endif
     atexit(mpi_stop);
   }
+#ifdef CUDA
+  cuda_init();
+#endif
 
   /*
     call the initialization of the modules here

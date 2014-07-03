@@ -64,9 +64,6 @@ extern EK_parameters* lb_ek_parameters_gpu;
 #endif
   /* end of code duplication */
 
-  extern cudaStream_t stream[1];
-  extern cudaError_t _err;
-
   #define PI_FLOAT 3.14159265358979323846f
 
   EK_parameters ek_parameters = { -1.0, -1.0, -1.0,
