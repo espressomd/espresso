@@ -549,9 +549,6 @@ proc copy_particles { args } {
 		set args [lrange $args 3 end]
 	    }
 	    "shift" {
-                if {[llength $args] < 3} {
-                    error "copy_particles: shift requires 3 argumets, x-, y- and z-shift"
-                }
 		set shift [lrange $args 1 3]
 		set args [lrange $args 4 end]
 	    }
@@ -560,7 +557,7 @@ proc copy_particles { args } {
 	    }
 	}
     }
-    set parts [lsort -integer -unique $parts]
+    set parts [lsort -unique $parts]
 
     # copy loop.
     # step 1: all except bonds and exclusions
@@ -591,7 +588,7 @@ proc copy_particles { args } {
                 if {$element == "" || ![string is integer $element]} { break }
                 incr pend
             }
-            set partcmd [lreplace $partcmd $p [expr $pend - 1]]
+            set partcmd [lreplace $partcmd $p $pend]
         }
 
         # and set the new particle
@@ -632,5 +629,4 @@ proc copy_particles { args } {
             eval part $newid exclude $exclusions
         }
     }
-    return [array get newids]
 }

@@ -858,6 +858,185 @@ int tclcommand_observable_average(Tcl_Interp* interp, int argc, char** argv, int
 //  }
 //  return 0 ;
 
+int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **argv, int *change, int *dim_A, radial_density_data *r_data){
+	*change=0;
+	r_data->rbins = 1;
+	r_data->maxr	= 0;
+	r_data->minr	= 0;
+	double temp[3];
+	temp[0] = 0.0; temp[1] = 0.0; temp[2] = 0.0;
+	memcpy(r_data->start_point, temp, 3*sizeof(double));
+	memcpy(r_data->end_point, temp, 3*sizeof(double));
+	int security = 0;
+	while (argc > 0) {
+		//printf("%d %s\n", argc, argv[0]);
+		if (ARG0_IS_S("type")){
+			if ( !parse_id_list(interp, argc, argv, change, &r_data->id_list) == TCL_OK ) {
+					Tcl_AppendResult(interp, "Parsing particles went wrong!\n", (char *) NULL);
+					return TCL_ERROR;
+				}
+			r_data->type = atoi(argv[1]);
+			argc-=*change;
+			argv+=*change;
+		}
+		if (ARG0_IS_S("rbins")){
+			r_data->rbins = atoi(argv[1]);
+			*dim_A = r_data->rbins;
+			argc-=2;
+			argv+=2;
+			*change+=2;
+		}
+		if (ARG0_IS_S("maxr")){
+			r_data->maxr = atof(argv[1]);
+			argc-=2;
+			argv+=2;
+			*change+=2;
+		}
+		if (ARG0_IS_S("minr")){
+			r_data->minr = atof(argv[1]);
+			argc-=2;
+			argv+=2;
+			*change+=2;
+		}
+		if (ARG0_IS_S("id_start_point")){
+			r_data->start_point_id = atoi(argv[1]);
+			r_data->id_flag = 1;
+			argc-=2;
+			argv+=2;
+			*change += 2;
+		}
+		if (ARG0_IS_S("id_end_point")){
+			r_data->end_point_id = atoi(argv[1]);
+			r_data->id_flag = 1;
+			argc -= 2;
+			argv += 2;
+			*change += 2;			
+		}
+		if ( argc > 0 && ARG0_IS_S("start_point")){
+			r_data->start_point[0] = atof(argv[1]);
+			r_data->start_point[1] = atof(argv[2]);
+			r_data->start_point[2] = atof(argv[3]);
+			r_data->id_flag = 0;
+			argc-=4;
+			argv+=4;
+			*change += 4;
+						
+		}
+		if ( argc > 0 && ARG0_IS_S("end_point")){
+			r_data->end_point[0] = atof(argv[1]);
+			r_data->end_point[1] = atof(argv[2]);
+			r_data->end_point[2] = atof(argv[3]);
+			r_data->id_flag = 0;
+			argc-=4;
+			argv+=4;
+			*change += 4;
+		}
+		security ++;
+		if ( security > argc + *change + 1 ) {
+			return TCL_ERROR;
+		}
+
+	}
+	return TCL_OK;
+}
+
+
+int tcl_command_radial_density_distribution(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs ){
+  int temp;
+  *change = 0;
+  radial_density_data *r_data = (radial_density_data *) malloc(sizeof(radial_density_data));
+	
+  if (! tcl_parse_radial_density_distribution(interp, argc-1, argv+1, &temp, &obs->n,  r_data) == TCL_OK ) {
+		Tcl_AppendResult(interp, "Usage: radial_density_distribution type $type minr $minr maxr $maxr rbins $rbins ( start_point $X $Y $Z end_point $X $Y $Z | id_start_point $id id_end_point $id ) \n", (char *) NULL);
+    return TCL_ERROR;
+  }
+  obs->fun = &observable_radial_density_distribution;
+	obs->args = (void *) r_data;
+	return TCL_OK;
+}
+
+int tcl_parse_spatial_polymer_properties(Tcl_Interp* interp, int argc, char **argv, int *change, int *dim_A, spatial_polym_data *p_data){
+	*change = 0;
+	while ( argc > 0 ) {
+	
+		if (ARG0_IS_S("ids") ) {
+			if (! parse_id_list(interp, argc, argv, change, &p_data->id_list) == TCL_OK){
+				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
+				return TCL_ERROR;
+			}
+			argc-=*change;
+			argv+=*change;
+		}
+		
+		if ( argc > 0 && ARG0_IS_S("N") ) {
+			p_data->npoly = atoi(argv[1]);
+			argc-=2;
+			argv+=2;
+		}
+	
+	}	
+	*dim_A = p_data->id_list->n / p_data->npoly;
+	return TCL_OK;
+}
+
+int tcl_command_spatial_polymer_properties(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+	int temp;
+	*change = 0;
+	spatial_polym_data *p_data = (spatial_polym_data *) malloc(sizeof(spatial_polym_data));
+	p_data->npoly = 1;
+	
+	if (! tcl_parse_spatial_polymer_properties(interp, argc-1, argv+1, &temp, &obs->n, p_data) == TCL_OK){
+		Tcl_AppendResult(interp, "Usage: spatial_polymer_property (ids $id_list | types $type) N $Npoly\n", (char *) NULL);
+		return TCL_ERROR;
+	}
+	obs->fun = &observable_spatial_polymer_properties;
+	obs->args = (void *) p_data;
+	return TCL_OK;
+}
+
+int tcl_parse_persistence_length(Tcl_Interp* interp, int argc, char** argv, int *change, int* dim_A, spatial_polym_data *p_data){
+	*change = 0;
+	while (argc > 0) {
+		if ( ARG0_IS_S("ids") ) {
+			if (! parse_id_list(interp, argc, argv, change, &p_data->id_list) == TCL_OK ) {
+				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
+				return TCL_ERROR;
+			}
+			p_data->npoly = p_data->id_list->n;
+			argc -= *change;
+			argv += *change;
+		}
+		if (argc > 0 && ARG0_IS_S("max_d") ) {
+			*dim_A = atoi(argv[1]);
+			argc -=2;
+			argv +=2;
+		}
+		if (argc > 0 && ARG0_IS_S("cut_off") ) {
+			p_data->cut_off = atoi(argv[1]);
+			argc -=2;
+			argv +=2;
+		}
+	}
+	return TCL_OK;
+}
+
+int tcl_command_persistence_length(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+	*change = 0;
+	spatial_polym_data *p_data = (spatial_polym_data *) malloc(sizeof(spatial_polym_data));
+	p_data->npoly = 1;
+	p_data->cut_off = 0;
+	if (! tcl_parse_persistence_length(interp, argc-1, argv+1, change, &obs->n, p_data) == TCL_OK){
+		Tcl_AppendResult(interp, "Usage: persistence_length ids $id_list max_d $max_d cut_off $cut_off\n", (char *) NULL);
+		return TCL_ERROR;
+	}
+	if ( p_data->npoly - 2*p_data->cut_off < obs->n ) {
+		Tcl_AppendResult(interp, "Error using persistence length, can't compute the bond vector correlation for this set of Parameters!\n", (char *) NULL);
+		return TCL_ERROR;
+	}
+	obs->fun = &observable_persistence_length;
+	obs->args = (void *) p_data;
+	return TCL_OK;
+}
 
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
@@ -936,6 +1115,9 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(radial_flux_density_profile, tclcommand_observable_radial_flux_density_profile,id);
     REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile,id);
     REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile,id);
+	REGISTER_OBSERVABLE(radial_density_distribution, tcl_command_radial_density_distribution, id);
+	REGISTER_OBSERVABLE(spatial_polymer_property, tcl_command_spatial_polymer_properties, id);
+	REGISTER_OBSERVABLE(persistence_length, tcl_command_persistence_length, id);
     REGISTER_OBSERVABLE(tclcommand, tclcommand_observable_tclcommand,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
