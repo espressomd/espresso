@@ -980,26 +980,14 @@ int observable_calc_interacts_with (observable* self) {
 }
 
 
-void autoupdate_observables() {
-  int i;
-  for (i=0; i<n_observables; i++) {
-//    printf("checking observable %d autoupdate is %d \n", i, observables[i]->autoupdate);
-    if (observables[i]->autoupdate && sim_time-observables[i]->last_update>observables[i]->autoupdate_dt*0.99999) {
-//      printf("updating %d\n", i);
-      observable_update(observables[i]);
-    }
-  }
-}
-
-int observable_radial_density_distribution(void* params, double* A, unsigned int n_A){
-
+int observable_radial_density_distribution(observable* self){
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
     return -1;
   }
 
-  radial_density_data *r_data = (radial_density_data *) params;
+  radial_density_data *r_data = (radial_density_data *) self->container;
   IntList *ids;  
   if ( GC_init && Type_array_init ) {
 	  ids = (IntList *) malloc(sizeof(IntList));
@@ -1015,6 +1003,8 @@ int observable_radial_density_distribution(void* params, double* A, unsigned int
   //r_data->id_list = ids;
   //ids = r_data->id_list;
 
+  double* A = self->last_value;
+  int n_A   = self->n;
   double start_point[3];
   double end_point[3];
   int image_box[3];
@@ -1139,16 +1129,17 @@ int observable_radial_density_distribution(void* params, double* A, unsigned int
   return 0;
 }
 
-int observable_spatial_polymer_properties(void *params, double *A, unsigned int n_A){
+int observable_spatial_polymer_properties(observable* self){
     if (!sortPartCfg()) {
       char *errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
       return -1;
     }
-	spatial_polym_data *p_data = (spatial_polym_data *) params;
+	double* A = self->last_value;
+	spatial_polym_data *p_data = (spatial_polym_data *) self->container;
 	IntList *ids=p_data->id_list;
-	int poly_len = n_A;
-	for (unsigned int i = 0; i<n_A; i++ )
+	int poly_len = self->n;
+	for (unsigned int i = 0; i<poly_len; i++ )
 		A[i]=0.0;
 
 	for (int i = 0; i<ids->n; i++){
@@ -1157,13 +1148,14 @@ int observable_spatial_polymer_properties(void *params, double *A, unsigned int 
 	return 0;
 }
 
-int observable_persistence_length(void *params, double *A, unsigned int n_A){
+int observable_persistence_length(observable* self){
     if (!sortPartCfg()) {
       char *errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
       return -1;
     }
-	spatial_polym_data *p_data = (spatial_polym_data *) params;
+	double* A = self->last_value;
+	spatial_polym_data *p_data = (spatial_polym_data *) self->container;
 	IntList *ids=p_data->id_list;
 
 	double v1[3];
@@ -1171,6 +1163,7 @@ int observable_persistence_length(void *params, double *A, unsigned int n_A){
 	double abs1, abs2;
 	int num_parts = ids->n;
 	int cut_off = p_data->cut_off;
+	int n_A = self->n;
 
 	for (unsigned int i = 0; i<n_A; i++ )
 		A[i]=0.0;
@@ -1189,3 +1182,13 @@ int observable_persistence_length(void *params, double *A, unsigned int n_A){
 }	
 
 	
+void autoupdate_observables() {
+  int i;
+  for (i=0; i<n_observables; i++) {
+//    printf("checking observable %d autoupdate is %d \n", i, observables[i]->autoupdate);
+    if (observables[i]->autoupdate && sim_time-observables[i]->last_update>observables[i]->autoupdate_dt*0.99999) {
+//      printf("updating %d\n", i);
+      observable_update(observables[i]);
+    }
+  }
+}

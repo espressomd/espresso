@@ -950,9 +950,10 @@ int tcl_command_radial_density_distribution(Tcl_Interp* interp, int argc, char**
 		Tcl_AppendResult(interp, "Usage: radial_density_distribution type $type minr $minr maxr $maxr rbins $rbins ( start_point $X $Y $Z end_point $X $Y $Z | id_start_point $id id_end_point $id ) \n", (char *) NULL);
     return TCL_ERROR;
   }
-  obs->fun = &observable_radial_density_distribution;
-	obs->args = (void *) r_data;
-	return TCL_OK;
+  obs->calculate = &observable_radial_density_distribution;
+  obs->container = (void *) r_data;
+  obs->last_value= (double *) malloc(sizeof(double) * obs->n);
+  return TCL_OK;
 }
 
 int tcl_parse_spatial_polymer_properties(Tcl_Interp* interp, int argc, char **argv, int *change, int *dim_A, spatial_polym_data *p_data){
@@ -989,8 +990,9 @@ int tcl_command_spatial_polymer_properties(Tcl_Interp* interp, int argc, char** 
 		Tcl_AppendResult(interp, "Usage: spatial_polymer_property (ids $id_list | types $type) N $Npoly\n", (char *) NULL);
 		return TCL_ERROR;
 	}
-	obs->fun = &observable_spatial_polymer_properties;
-	obs->args = (void *) p_data;
+	obs->calculate = &observable_spatial_polymer_properties;
+	obs->container = (void *) p_data;
+	obs->last_value= (double *) malloc(sizeof(double)*obs->n);
 	return TCL_OK;
 }
 
@@ -1033,8 +1035,9 @@ int tcl_command_persistence_length(Tcl_Interp* interp, int argc, char** argv, in
 		Tcl_AppendResult(interp, "Error using persistence length, can't compute the bond vector correlation for this set of Parameters!\n", (char *) NULL);
 		return TCL_ERROR;
 	}
-	obs->fun = &observable_persistence_length;
-	obs->args = (void *) p_data;
+	obs->calculate = &observable_persistence_length;
+	obs->container = (void *) p_data;
+	obs->last_value= (double *) malloc(sizeof(double) * obs->n);
 	return TCL_OK;
 }
 

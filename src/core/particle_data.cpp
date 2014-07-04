@@ -567,14 +567,6 @@ int place_particle(int part, double p[3])
     retcode = ES_PART_CREATED;
 
     mpi_place_new_particle(pnode, part, p);
-#ifdef ADDITIONAL_CHECKS 
-  if ( Type_array_init ) { 
-	  if ( add_particle_to_list(part) ==  ES_ERROR ){
-		  return ES_ERROR;
-	  }
-  }
-#endif
-
 
   } else {
     mpi_place_particle(pnode, part, p);
@@ -816,9 +808,9 @@ int set_particle_type(int part, int type)
   if (pnode == -1)
     return ES_ERROR;
 
-// check if the particle exists already and the type is changed, then remove it from the list which contains it
-  Particle *cur_par = (Particle *) malloc( sizeof(Particle) );
   if ( Type_array_init ) {
+	// check if the particle exists already and the type is changed, then remove it from the list which contains it
+	  Particle *cur_par = (Particle *) malloc( sizeof(Particle) );
 	  if ( cur_par != (Particle *) 0 ) {
 		  if ( get_particle_data(part, cur_par) != ES_ERROR ) {
 			  int prev_type = cur_par->p.type;
