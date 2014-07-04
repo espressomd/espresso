@@ -1060,7 +1060,7 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
 
 
 /** calculates the fluid velocity at a given position of the 
- * lattice. Note that it can lead to undefined behaviour if the
+ * lattice. Note that it can lead to undefined behavior if the
  * position is not within the local lattice. This version of the function
  * can be called without the position needing to be on the local processor.
  * Note that this gives a slightly different version then the values used to
@@ -1079,7 +1079,7 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 #endif
   } else {  
 #ifdef LB
-	lblattice.map_position_to_lattice_global(p, ind, delta,  lbpar.agrid);
+	lblattice.map_position_to_lattice_global(p, ind, delta, lbpar.agrid);
 #endif
   }
 
@@ -1827,7 +1827,10 @@ void lb_reinit_parameters() {
     lb_coupl_pref2 = 0.0;
   }
 
-  LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f, bulkvisc=%f, visc=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu, lbpar.bulk_viscosity, lbpar.viscosity));
+  LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f " \
+		  "bulk_fluct=%f mu=%f, bulkvisc=%f, visc=%f\n", \
+		  this_node, gamma_shear, gamma_bulk, lb_phi[9], lb_phi[4], mu, \
+		  lbpar.bulk_viscosity, lbpar.viscosity));
 
 }
 
