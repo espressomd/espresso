@@ -29,7 +29,7 @@ void update_mol_pos_particle(Particle *p) {
        // p->r.p[j] = p->r.p[j] + p->m.v[j]*time_step;
 
       // Two-step Adams–Bashforth
-           p->r.p[j] = p->r.p[j] + 1.5*p->m.v[j]*time_step - 0.5*p->m.v_old[j]*time_step;
+      p->r.p[j] = p->r.p[j] + (((1.5*p->m.v[j]) - (0.5*p->l.v_old[j]))*time_step);
     }
 	    
   // Check if a particle might have crossed a box border (Verlet criterium); 
@@ -68,15 +68,22 @@ void update_mol_vel_particle(Particle *p)
       // Need to interpolate velocity here only for CPU
       // For GPU it is already stored
       double v_int[3] = {0,0,0};
-
-       
-		
       lb_lbfluid_get_interpolated_velocity_lbtrace(p_temp,v_int, p->p.identity);
-      // set_particle_v_old(p->p.identity, p->m.v);
-      // set_particle_v(p->p.identity, v_int);
-          
+       
+      // ofstream myfile ("/home/btpj/s1mokhal/sphere/simfiles/lbtracers_debug.dat", std::ofstream::out | std::ofstream::app);
+      // int time_step_c = step_counter;
+
+    
+      // if( time_step_c > time_step_p ) { 
+      // 	myfile << "Time Step: " << time_step_c << "\n";
+      // 	myfile << "P->ID: " << p->p.identity << "\n";
+      // 	myfile << "P->F.F: " << p->f.f[0] << ", " << p->f.f[1] << ", " << p->f.f[2] << "\n\n";   
+      // }
+      // time_step_p = time_step_c;
+      
       for ( j = 0; j < 3; j++){ 
-          p->m.v_old[j] = p->m.v[j];
+          // p->m.v_old[j] = p->m.v[j];
+	p->l.v_old[j] = p->m.v[j];
 	p->m.v[j] = v_int[j];
 
 }
