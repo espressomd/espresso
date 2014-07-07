@@ -7,46 +7,38 @@
 #include "grid.hpp"
 #include "lb.hpp"
 #include "integrate.hpp"
-#include <iostream>
-#include <fstream>
-using namespace std;
 
 #ifdef TRIELASTIC
 
 int triel_set_params(int bond_type, int ind1, int ind2, int ind3, double max, double ks, double ka);
 int triel_reset_params(int bond_type, double lo, double lpo, double cospo, double sinpo, double Area0, double max, double ks, double ka);
 
-static int time_step_p = -1;
+
+
 
 //Use knowledge that the x-axis in rotates system is parallel to r(p1->p2) in original system;
 //To find the corresponding unit vector to y in the rotated system, construct vector perpendicular to r(p1->p2);
 inline void RotateForces(double f1_rot[2], double f2_rot[2], double f1[3], double f2[3], double r1[3], double r2[3]) {
-	double xu[3];
-	double y[3], yu[3];
-	double sca;
-	int i;
-	unit_vector(r1,xu);
-	sca = scalar(r2,xu);
-	for(i=0; i<3; i++) {
-		y[i] = r2[i] - sca * xu[i];
-	}
+  double xu[3] = {0., 0., 0.};
+  double y[3] = {0., 0., 0.};
+  double yu[3] = {0., 0., 0.};
+  double sca;
+  int i;
+  unit_vector(r1,xu);
+  sca = scalar(r2,xu);
+  for(i=0; i<3; i++) {
+    y[i] = r2[i] - (sca * xu[i]);
+  }
 	
-	unit_vector(y,yu);
-
-	f1[0] = f1_rot[0] * xu[0] + f1_rot[1] * yu[0]; 
-	f1[1] = f1_rot[0] * xu[1] + f1_rot[1] * yu[1]; 
-	f1[2] = f1_rot[0] * xu[2] + f1_rot[1] * yu[2]; 
+  unit_vector(y,yu);
+   
+  f1[0] = (f1_rot[0] * xu[0]) + (f1_rot[1] * yu[0]);
+  f1[1] = (f1_rot[0] * xu[1]) + (f1_rot[1] * yu[1]); 
+  f1[2] = (f1_rot[0] * xu[2]) + (f1_rot[1] * yu[2]); 
 	
-	f2[0] = f2_rot[0] * xu[0] + f2_rot[1] * yu[0]; 
-	f2[1] = f2_rot[0] * xu[1] + f2_rot[1] * yu[1];
-	f2[2] = f2_rot[0] * xu[2] + f2_rot[1] * yu[2];
-	
-	// f3[0] = f3_rot[0] * xu[0] + f3_rot[1] * yu[0]; 
-	// f3[1] = f3_rot[0] * xu[1] + f3_rot[1] * yu[1];
-	// f3[2] = f3_rot[0] * xu[2] + f3_rot[1] * yu[2];
-
-
-	
+  f2[0] = (f2_rot[0] * xu[0]) + (f2_rot[1] * yu[0]); 
+  f2[1] = (f2_rot[0] * xu[1]) + (f2_rot[1] * yu[1]);
+  f2[2] = (f2_rot[0] * xu[2]) + (f2_rot[1] * yu[2]);
     
 }
 
@@ -58,19 +50,23 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     double e1, e2, i1, i2, i11, i12, i21, i22, i23, i24; // eigen values 1, 2 and D matrix elements  
     double A0, a1, a2, a3, b1, b2, b3;
     double l, lp, sinp, cosp;  // l, l' and cross and dot product between them 
-    double vec1[3], vec2[3], vecpro[3];
-    double f1_rot[2], f2_rot[2], f3_rot[2];
+    double vec1[3] = {0., 0., 0.};
+    double vec2[3] = {0., 0., 0.}; 
+    double vecpro[3] = {0., 0., 0.};
+    double f1_rot[2] = {0., 0.};
+    double f2_rot[2] = {0., 0.};
 
     static int triel_params[3];
     
     //Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
     //l = length between 1 and 3
+
     get_mi_vector(vec2, p_ind3->r.p, p_ind1->r.p);
-    //vecsub(p_ind3->r.p,p_ind1->r.p,vec2);
+    vecsub(p_ind3->r.p,p_ind1->r.p,vec2);
     l = sqrt (sqrlen(vec2));
-    //lp = lenght between 1 and 2
+    // lp = lenght between 1 and 2
     get_mi_vector(vec1, p_ind2->r.p, p_ind1->r.p);
-    //vecsub(p_ind2->r.p,p_ind1->r.p,vec1);
+    vecsub(p_ind2->r.p,p_ind1->r.p,vec1);
     lp = sqrt (sqrlen(vec1));
     //cosp / sinp angle functions between these vectors; calculated directly via the producs
     cosp = scalar(vec1,vec2)/(lp*l);
@@ -113,11 +109,11 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
 	a1 = iaparams->p.triel.a1; a2 = iaparams->p.triel.a2; a3 = iaparams->p.triel.a3;
 	b1 = iaparams->p.triel.b1; b2 = iaparams->p.triel.b2; b3 = iaparams->p.triel.b3;
 	
-    f1_rot[0] = A0*((-1)*e1*((i11*2*a1*dxx)+(i12*2*b1*dxy))+ (-1)*e2*((i21*2*a1*dxx)+(i22*(a1*dxy+b1*dxx))+(i23*(a1*dxy+b1*dxx))+(i24*2*b1*dxy)));
-    f1_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b1*dyy))+ (-1)*e2*((i21*0.0)+(i22*a1*dyy)+(i23*a1*dyy)+(i24*2*b1*dyy)));
+    f1_rot[0] = iaparams->p.triel.Area0*((-1)*e1*((i11*2*a1*dxx)+(i12*2*b1*dxy))+ (-1)*e2*((i21*2*a1*dxx)+(i22*(a1*dxy+b1*dxx))+(i23*(a1*dxy+b1*dxx))+(i24*2*b1*dxy)));
+    f1_rot[1] = iaparams->p.triel.Area0*((-1)*e1*((i11*0.0)+(i12*2*b1*dyy))+ (-1)*e2*((i21*0.0)+(i22*a1*dyy)+(i23*a1*dyy)+(i24*2*b1*dyy)));
 
-    f2_rot[0] = A0*((-1)*e1*((i11*2*a2*dxx)+(i12*2*b2*dxy))+ (-1)*e2*((i21*2*a2*dxx)+(i22*(a2*dxy+b2*dxx))+(i23*(a2*dxy+b2*dxx))+(i24*2*b2*dxy)));
-    f2_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b2*dyy))+ (-1)*e2*((i21*0.0)+(i22*a2*dyy)+(i23*a2*dyy)+(i24*2*b2*dyy)));
+    f2_rot[0] = iaparams->p.triel.Area0*((-1)*e1*((i11*2*a2*dxx)+(i12*2*b2*dxy))+ (-1)*e2*((i21*2*a2*dxx)+(i22*(a2*dxy+b2*dxx))+(i23*(a2*dxy+b2*dxx))+(i24*2*b2*dxy)));
+    f2_rot[1] = iaparams->p.triel.Area0*((-1)*e1*((i11*0.0)+(i12*2*b2*dyy))+ (-1)*e2*((i21*0.0)+(i22*a2*dyy)+(i23*a2*dyy)+(i24*2*b2*dyy)));
 
     // f3_rot[0] = -f1_rot[0]-f2_rot[0];
     // f3_rot[1] = -f1_rot[1]-f2_rot[1];
@@ -129,25 +125,6 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     // double damping_force_o = (damping_coeff * (sqrt(sqrlen(vo))));
     // double damping_force_po = (damping_coeff * (sqrt(sqrlen(vpo))));
 
-    // ofstream myfile ("c.dat", std::ofstream::out | std::ofstream::app);
-    // double v_int[3] = {0,0,0};
-    // double p_temp[3] = {p_ind1->r.p[0], p_ind1->r.p[1], p_ind1->r.p[0]};
-
-    // int time_step_c = step_counter;
-
-    // if( time_step_c > time_step_p ) { 
-      
-    //   myfile << "Time Step: " << time_step_c << "\n";
-    //   myfile << "Particle's Velocity: " << p_ind1->m.v[0] << ", " <<  p_ind1->m.v[1] << ", " << p_ind1->m.v[2] << "\n";
-    //   myfile << "Particle's Relative Velocity: " << (p_ind2->m.v[0] - p_ind1->m.v[0]) << "\n";
-    //   lb_lbfluid_get_interpolated_velocity_lbtrace(p_temp,v_int, p_ind1->p.identity);
-    //   myfile << "Fluid Velocity around Particle: " << v_int[0] << ", " << v_int[1] << "," << v_int[2] << "\n";
-    //   myfile << "Force Rot1 : " << f1_rot[0] << ", " << f1_rot[1] << "\n";
-    //   myfile << "Force Rot2 : " << f2_rot[0] << ", " << f2_rot[1] << "\n";
-    //   myfile << "Force Rot3 : " << f3_rot[0] << ", " << f3_rot[1] << "\n";
-    //   myfile << "DampForce in X: " << damping_force_po << "\n";
-    //   myfile << "DampForce in Y: " << damping_force_o << "\n";
-    // }
 
     // if(f1_rot[0] > 0)
     //   f1_rot[0] -= damping_force_po;
@@ -186,26 +163,8 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     //   if(f3_rot[1] < 0)
     // 	f3_rot[1] += (damping_force_o*2);
 
-
-   
-
     //Rotate forces back into original position of triangle
-    RotateForces(f1_rot,f2_rot, force1,force2, vec1, vec2); 
-
-    // if( time_step_c > time_step_p  ) { 
-    //   myfile << "Force Rot1 : " << f1_rot[0] << ", " << f1_rot[1] << "\n";
-    //   myfile << "Force Rot2 : " << f2_rot[0] << ", " << f2_rot[1] << "\n";
-    //   myfile << "Force Rot3 : " << f3_rot[0] << ", " << f3_rot[1] << "\n";
-    //   myfile << "Force1: " << force1[0] << ", " << force1[1] << ", " << force1[2] << "\n";
-    //   myfile << "Force2: " << force2[0] << ", " << force2[1] << ", " << force2[2] << "\n";
-    //   myfile << "Force3: " << force3[0] << ", " << force3[1] << ", " << force3[2] << "\n\n";
-
-
-    //  }
-    // time_step_p = time_step_c;    
-    
-    // triel_params[1] = damping_force_po;
-    // triel_params[2] = damping_force_o;
+    RotateForces(f1_rot,f2_rot, force1,force2, vec1, vec2);
 
     return 0;
 }
