@@ -196,10 +196,6 @@ typedef struct {
   double omega[3];
 #endif
 
-#ifdef LBTRACERS
-   /**stores the particle velocity at the previous time step*/
-  double v_old[3];
-#endif
 } ParticleMomentum;
 
 /** Information on a particle that is needed only on the
@@ -240,6 +236,11 @@ typedef struct {
       position and monentum of particle */
   ParticlePosition r_ls;
   ParticleMomentum m_ls;
+#endif
+
+#ifdef LBTRACERS
+   /**stores the particle velocity at the previous time step*/
+  double v_old[3];
 #endif
 } ParticleLocal;
 
@@ -458,13 +459,6 @@ int place_particle(int part, double p[3]);
     @return ES_OK if particle existed
 */
 int set_particle_v(int part, double v[3]);
-
-/** Call only on the master node: set particle's old velocity.
-    @param part the particle.
-    @param v its new velocity.
-    @return ES_OK if particle existed
-*/
-int set_particle_v_old(int part, double v[3]);
 
 /** Call only on the master node: set particle force.
     @param part the particle.

@@ -183,13 +183,6 @@ void init_particle(Particle *part)
   part->m.omega[1] = 0.0;
   part->m.omega[2] = 0.0;
 #endif
-
-#ifdef LBTRACERS
-  part->m.v_old[0] = 0.0;
-  part->m.v_old[1] = 0.0;
-  part->m.v_old[2] = 0.0;
-#endif
-
   /* ParticleForce */
   part->f.f[0]     = 0.0;
   part->f.f[1]     = 0.0;
@@ -248,6 +241,12 @@ void init_particle(Particle *part)
     part->l.m_ls.omega[1] = 0.0;
     part->l.m_ls.omega[2] = 0.0;
   #endif
+
+#ifdef LBTRACERS
+  part->m.v_old[0] = 0.0;
+  part->m.v_old[1] = 0.0;
+  part->m.v_old[2] = 0.0;
+#endif
 
 #endif
 
@@ -594,22 +593,6 @@ int set_particle_v(int part, double v[3])
   if (pnode == -1)
     return ES_ERROR;
   mpi_send_v(pnode, part, v);
-  return ES_OK;
-}
-
-int set_particle_v_old(int part, double v[3])
-{
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
-
-  if (pnode == -1)
-    return ES_ERROR;
-  mpi_send_v_old(pnode, part, v);
   return ES_OK;
 }
 
