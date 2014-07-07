@@ -84,7 +84,6 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_bcast_event_slave) \
   CB(mpi_place_particle_slave) \
   CB(mpi_send_v_slave) \
-  CB(mpi_send_v_old_slave) \
   CB(mpi_send_f_slave) \
   CB(mpi_send_q_slave) \
   CB(mpi_send_type_slave) \
@@ -497,34 +496,6 @@ void mpi_send_v_slave(int pnode, int part)
 
   on_particle_change();
 }
-
-/****************** REQ_SET_OLD_V ************/
-void mpi_send_v_old(int pnode, int part, double v[3])
-{
-  mpi_call(mpi_send_v_old_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    memcpy(p->m.v_old, v, 3*sizeof(double));
-  }
-  else
-    MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-
-  on_particle_change();
-}
-
-void mpi_send_v_old_slave(int pnode, int part)
-{
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    MPI_Recv(p->m.v_old, 3, MPI_DOUBLE, 0, SOME_TAG,
-	     comm_cart, MPI_STATUS_IGNORE);
-  }
-
-  on_particle_change();
-}
-
-
 
 /****************** REQ_SET_F ************/
 void mpi_send_f(int pnode, int part, double F[3])
