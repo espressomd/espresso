@@ -14,9 +14,9 @@
 # set tcl_precision 3
 
 # Box geometry
-set boxx  50
-set boxy  50
-set boxz  50
+set boxx  20
+set boxy  20
+set boxz  20
 
 # Fix physical quantities (SI)
 
@@ -119,7 +119,7 @@ set kB [expr $kb_SI / $kb0]
 set kC $kS
 
 set shear_rate [expr ($G * $kS) / ($nu * $r)]
-set u [expr $shear_rate * ($boxz - 24)]
+set u [expr $shear_rate * $boxz]
 # set u 1
 
 # set V [expr $V_SI /  $V0]
@@ -146,6 +146,9 @@ set distance 2.0
 ########################################################################
 # Numerical parameters
 
+exec rm -r /home/btpj/s1mokhal/sphere/simfiles
+exec mkdir /home/btpj/s1mokhal/sphere/simfiles
+
 # maximum strech length for bonds
 set maxStretch 3
 # timestep calculated from condition that relaxation parameter tau in LB has to be 1 (or similar)
@@ -156,12 +159,11 @@ set dt_md [expr $dt_lb]
 # Integrations per step
 set stepSize 1
 # number of steps
-set numSteps 1500000
+set numSteps 10
 # set after which number of steps vtkfile should be written
-set distVtk  10000
-set distCellSeq 100
-set distDone 1000
-set distPartSeq [expr 1]
+set distVtk 1
+set distDone 1
+set distPartSeq 1
 # set distFlow [expr $numSteps/100]
 
 # Dimensionless numbers following Le
@@ -208,6 +210,7 @@ puts "Shear Rate =  [expr ($G * $kS)] / [expr ($nu * $r)] * $H =  [expr ( ($G * 
 puts "u = [expr $shear_rate * ($boxz - ($H/2))]"
 
 ######## big info file #########
+exec touch /home/btpj/s1mokhal/sphere/simfiles/paraInfo_step1e4.dat
 set simInfo [open "~/sphere/simfiles/paraInfo_step1e4.dat" w]
 puts $simInfo "nu = $nu"
 puts $simInfo "rho = $rho"
@@ -231,6 +234,7 @@ close $simInfo
 
 ####### parameter file #########
 # Write an info File, contains relevant information about the Simulation
+exec touch /home/btpj/s1mokhal/sphere/simfiles/simInfo_step1e4.dat
 set infoFile [open "~/sphere/simfiles/simInfo_step1e4.dat" "w"] 		
 puts $infoFile "# Scalar"
 puts $infoFile "# timeStep / stepSize / numSteps / lengthScale"
@@ -241,8 +245,32 @@ close $infoFile
 # SETUP 
 #########################################################################
 
-exec rm -r /home/btpj/s1mokhal/sphere/vtkfiles
-exec mkdir /home/btpj/s1mokhal/sphere/vtkfiles
+# exec rm -r /home/btpj/s1mokhal/sphere/vtkfiles
+# exec mkdir /home/btpj/s1mokhal/sphere/vtkfiles
+
+
+
+exec touch /home/btpj/s1mokhal/sphere/simfiles/triel_debug.dat
+exec rm /home/btpj/s1mokhal/sphere/simfiles/triel_debug.dat
+
+exec touch  /home/btpj/s1mokhal/sphere/simfiles/forces_debug.dat
+exec rm /home/btpj/s1mokhal/sphere/simfiles/forces_debug.dat
+
+exec touch  /home/btpj/s1mokhal/sphere/simfiles/lbtracers_debug.dat
+exec rm /home/btpj/s1mokhal/sphere/simfiles/lbtracers_debug.dat
+
+exec touch  /home/btpj/s1mokhal/sphere/simfiles/integ_debug.dat
+exec rm /home/btpj/s1mokhal/sphere/simfiles/integ_debug.dat
+
+exec touch  /home/btpj/s1mokhal/sphere/simfiles/lb_debug.dat
+exec rm /home/btpj/s1mokhal/sphere/simfiles/lb_debug.dat
+
+exec touch  /home/btpj/s1mokhal/sphere/simfiles/lb_cells_debug.dat
+exec rm /home/btpj/s1mokhal/sphere/simfiles/lb_cells_debug.dat
+
+exec touch /home/btpj/s1mokhal/sphere/simfiles/verlet_debug.dat
+exec rm /home/btpj/s1mokhal/sphere/simfiles/verlet_debug.dat
+
 
 #tools needed for system setup (Juropa or local)
 set tclToolsDir "~/sphere/tclTools"
@@ -254,11 +282,11 @@ set numParts 3
 set parts {353 356 358}
 
 set partCsv353 [ open "~/sphere/simfiles/partInfo353.csv" "w"]
-puts $partCsv353 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,t"
+puts $partCsv353 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,nvx,nvy,nvz,t"
 set partCsv356 [ open "~/sphere/simfiles/partInfo356.csv" "w"]   
-puts $partCsv356 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,t"
+puts $partCsv356 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,nvx,nvy,nvz,t"
 set partCsv358 [ open "~/sphere/simfiles/partInfo358.csv" "w"]
-puts $partCsv358 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,t"
+puts $partCsv358 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,nvx,nvy,nvz,t"
 
 # seed randumnumber generator:
 # t_random seed [clock seconds] [clock seconds] [clock seconds] [clock seconds]
@@ -275,6 +303,14 @@ setmd time_step $dt_md
 # setmd sequ 1
 
 setmd warnings 0
+# setmd verlet_reuse 0
+
+part 353 pos 11.12083 10 5.127 virtual 1
+part 356 pos 11.68887 10.4057 5.3111 virtual 1
+part 358 pos 11.68887 9.5942 5.3111 virtual 1
+
+inter 0 triel 353 356 358 $maxStretch $kS 0
+part 353 bond 0 356 358
 
 # setting up the fluid with or without using gpu
 lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 0 0 0
@@ -287,29 +323,8 @@ thermostat lb $kbT
 ############## ADD WALL ##################
 
 # walls located at z=1 and z=boxz-1 in x-y-plane
-lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity [expr $u/2] 0 0 
-lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity [expr -$u/2] 0 0
-
-################## ADD CELLS #############
-set interCount 0
-set cellCount 0
-set nodeCount 0
-set numNodesPerCell 0
-
-set numType 0
-
-# number of cells
-set numCells 1
-# setmd vescnum $numCells
-
-# write file with cell sequence data
-set cellSeqFile [ open "~/sphere/simfiles/cellSeq.dat" "w" ]
-puts $cellSeqFile "#CellSequence"
-puts $cellSeqFile "#NumCells = $numCells"
-
-addCell [expr $boxx*0.5] [expr $boxy*0.5] [expr $boxz*0.5] $numType
-# addCell 10 10 10 $numType
-incr numType
+# lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity [expr $u/2] 0 0 
+# lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity [expr -$u/2] 0 0
 
 ####### SIMULATION ######
 
@@ -320,6 +335,8 @@ incr numType
 
 set startT [clock seconds]
 
+set partPos [part 356 print pos]
+part 356 pos [expr [lindex $partPos 0] + 2] [expr [lindex $partPos 1]] [expr [lindex $partPos 2]]
 
 puts "Starting simulation"
 
@@ -327,18 +344,6 @@ for {set step 0} {$step < $numSteps} {incr step} {
     
     integrate $stepSize
     if {fmod($step, $distDone)==0} { puts "Done $step out of $numSteps steps." }
-
-    #   write cell sequence to cellSeq.dat
-     if {fmod($step, $distCellSeq)==0} { 
-	 
-	 puts $cellSeqFile "#Frame = [expr $stepSize*$step]"
-	 puts $cellSeqFile "#Time = [expr $stepSize*$step*$dt_md]"
-	 for {set j 0} { $j < $numCells } {incr j} {
-	     for {set k 0} {$k < $numNodesPerCell} {incr k} {
-		 puts $cellSeqFile [part [expr $j*$numNodesPerCell + $k ] print pos]
-	     }
-	 }
-
 	 
   for {set j 0} { $j < $numParts } {incr j} {
       set partCsv [ open "~/sphere/simfiles/partInfo[lindex $parts $j].csv" "a"]
@@ -351,13 +356,18 @@ for {set step 0} {$step < $numSteps} {incr step} {
       puts -nonewline $partCsv "$step\n"
       close $partCsv
   }
-}
-    
-    # output for paraview only every 10th step
-    if {fmod($step, $distVtk)==0} { 
-	for { set i 0} { $i < $numCells} {incr i} {writevtkCell "~/sphere/vtkfiles/cell-$i $step.vtk" $i}
+    if { $step == 1 || $step == 4} { 
+	set nodeCsv [ open "~/sphere/simfiles/nodeInfo$step.csv" "a"]
+	puts $nodeCsv "nx ny nz ux uy uz"
+	for {set i 0} { $i < $boxx } {incr i} { 
+	    for {set j 0} { $j < $boxy} {incr j} { 
+		for {set k 0} { $k < $boxz} {incr k} { 
+		    puts $nodeCsv "$i $j $k [lbnode $i $j $k print u]"
+		}
+	    }
+	}
     }
-
+		
 }
 
 # store simulation time in log.dat

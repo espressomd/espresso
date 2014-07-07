@@ -57,7 +57,7 @@
 #define TRIELNEOHOOKEAN
 
 /* Virtual sites features */
-#define VIRTUAL_SITES
+// #define VIRTUAL_SITES
 //#define VIRTUAL_SITES_COM
 //#define VIRTUAL_SITES_RELATIVE
 //#define VIRTUAL_SITES_NO_VELOCITY
@@ -128,18 +128,18 @@
 //#define NO_INTRA_NB
 
 /* Debugging */
-//#define ADDITIONAL_CHECKS
+// #define ADDITIONAL_CHECKS
 //#define ASYNC_BARRIER
 
 //#define COMM_DEBUG
 //#define EVENT_DEBUG
-//#define INTEG_DEBUG
+// #define INTEG_DEBUG
 //#define CELL_DEBUG
 //#define GHOST_DEBUG
 //#define LATTICE_DEBUG
 //#define HALO_DEBUG
-//#define GRID_DEBUG
-//#define VERLET_DEBUG
+#define GRID_DEBUG
+// #define VERLET_DEBUG
 //#define PARTICLE_DEBUG
 //#define P3M_DEBUG
 //#define FFT_DEBUG
