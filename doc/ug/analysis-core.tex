@@ -406,7 +406,10 @@ Its further arguments are described below.
     corresponding components of the observables, \ie $C_i = (A_i-B_i)^2$. 
     Example: when $A$ is \lit{particle_positions}, it produces the mean square displacement
     (for each component separately).
+    \item \lit{tensor_product} \\
+    Tensor product of $A$ and $B$, \ie $C_{i \cdot l_B + j} = A_i B_j$, with $l_B$ the length of $B$.
     \item \lit{complex_conjugate_product}
+    \todo{Complex conjugate product must be defined.}
     \item \lit{fcs_acf} \var{w_x}\var{w_y} \var{w_z} \\
     Fluorescence Correlation Spectroscopy (FCS) autocorrelation function, \ie
     \begin{equation}
