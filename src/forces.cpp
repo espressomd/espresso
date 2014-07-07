@@ -78,7 +78,7 @@ void force_calc()
   cells_update_ghosts();
 
   // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef defined (VIRTUAL_SITES) && !defined(LBTRACERS)
+#if defined (VIRTUAL_SITES) && !defined(LBTRACERS)
   update_mol_vel_pos();
   ghost_communicator(&cell_structure.update_ghost_pos_comm);
 #endif
@@ -160,10 +160,20 @@ void force_calc()
 
   calc_long_range_forces();
 
+  // VIRTUAL_SITES distribute forces
+#ifdef VIRTUAL_SITES 
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  init_forces_ghosts();
+  distribute_mol_force();
+#endif
+
+  // Communication Step: ghost forces
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
 #endif
-
+ 
 #ifdef COMFORCE
   calc_comforce();
 #endif
@@ -176,16 +186,6 @@ void force_calc()
 #ifdef CUDA
   copy_forces_from_GPU();
 #endif
-
-  // VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES 
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
-  init_forces_ghosts();
-  distribute_mol_force();
-#endif
-
-  // Communication Step: ghost forces
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
   // apply trap forces to trapped molecules
 #ifdef MOLFORCES         
