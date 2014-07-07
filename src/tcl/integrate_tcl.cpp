@@ -26,6 +26,7 @@
 */
 
 #include "integrate.hpp"
+#include "global.hpp"
 #include "npt.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
