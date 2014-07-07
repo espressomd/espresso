@@ -298,7 +298,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    * \param tmp_agrid  lattice mesh distance
    */
-  void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
+  static void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
   //not sure why I don't have access to agrid here so I make a temp var and pass it to this function
     int i;
     double rel[3];
