@@ -29,6 +29,7 @@
 #include <cstring>
 #include <cmath>
 #include "utils.hpp"
+#include "global.hpp"
 #include "grid.hpp"
 #include "communication.hpp"
 #include "verlet.hpp"

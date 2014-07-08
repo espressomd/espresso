@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef FENE_H
-#define FENE_H
+#ifndef _FENE_HPP
+#define _FENE_HPP
 /** \file fene.hpp
  *  Routines to calculate the FENE Energy or/and FENE force 
  *  for a particle pair.

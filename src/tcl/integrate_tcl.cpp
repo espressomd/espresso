@@ -26,6 +26,7 @@
 */
 
 #include "integrate.hpp"
+#include "global.hpp"
 #include "npt.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
@@ -47,7 +48,7 @@ int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, 
 int tclcommand_integrate_print_usage(Tcl_Interp *interp) 
 {
   Tcl_AppendResult(interp, "Usage of tcl-command integrate:\n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate [reuse_forces] <INT n steps>' for integrating n steps and reusing unconditionally the given forces for the first step \n", (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate <INT n steps> [reuse_forces|recalc_forces]' for integrating n steps\n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate set' for printing integrator status \n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate set nvt' for enabling NVT integration or \n" , (char *)NULL);
 #ifdef NPT
@@ -242,8 +243,13 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
     for (int i=0; i<n_steps; i++) {
       if (mpi_integrate(1, reuse_forces))
         return gather_runtime_errors(interp, TCL_OK);
+      reuse_forces=1;
       autoupdate_observables();
       autoupdate_correlations();
+    }
+    if (n_steps == 0){
+      if (mpi_integrate(0, reuse_forces))
+        return gather_runtime_errors(interp, TCL_OK);
     }
   }
   return TCL_OK;

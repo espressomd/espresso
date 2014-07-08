@@ -52,7 +52,6 @@
 
 /* from here we borrow the enumeration of
    the global variables */
-#include "global.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
 #include "topology.hpp"

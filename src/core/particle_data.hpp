@@ -27,7 +27,6 @@
 
 
 #include "utils.hpp"
-#include "global.hpp"
 
 /************************************************
  * defines

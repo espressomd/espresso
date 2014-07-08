@@ -26,8 +26,8 @@
  * surrounds the local lattice sites.
  */
 
-#ifndef LATTICE_H
-#define LATTICE_H
+#ifndef _LATTICE_HPP
+#define _LATTICE_HPP
 
 #include <mpi.h>
 #include "utils.hpp"
@@ -82,7 +82,7 @@ public:
   Particle part_rep;
 
   /* Constructor */
-  Lattice(){}
+  Lattice() {}
 
   /** Initialize lattice.
    *
@@ -123,7 +123,7 @@ public:
    * \param  grid     local coordinates of the lattice site (Output)
    * \return         index of the node for the lattice site
    */
-  inline int map_lattice_to_node(int *ind, int *grid) {
+  int map_lattice_to_node(int *ind, int *grid) {
 
     /* determine coordinates in node_grid */
     grid[0] = (int)floor(ind[0]*this->agrid[0]*box_l_i[0]*node_grid[0]);
@@ -141,7 +141,7 @@ public:
     return map_array_node(grid);
   }
 
-  inline int global_pos_in_local_box(double pos[3]) {
+  int global_pos_in_local_box(double pos[3]) {
     if (!(pos[0]>my_left[0]  &&  pos[0]<my_right[0] ))
       return 0;
     if (!(pos[1]>my_left[1]  &&  pos[1]<my_right[1] ))
@@ -151,7 +151,7 @@ public:
     return 1;
   }
 
-  inline int global_pos_in_local_halobox(double pos[3]) {
+  int global_pos_in_local_halobox(double pos[3]) {
     for (unsigned int i=0; i<this->dim; i++) {
       if (!(pos[i]>this->local_offset[i]-this->halo_size*this->agrid[i] &&
             pos[i]<this->local_offset[i]+this->halo_grid[i]*this->agrid[i] ))
@@ -160,7 +160,7 @@ public:
     return 1;
   }
 
-  inline int global_pos_to_lattice_index_checked(double pos[3], int* index) {
+  int global_pos_to_lattice_index_checked(double pos[3], int* index) {
     int i;
     for (i=0; i<3; i++)
       if (abs(fmod(pos[i]-this->offset[i],this->agrid[i])) > ROUND_ERROR_PREC)
@@ -185,11 +185,11 @@ public:
    * \return         index of the node for the lattice site
    */
   /* @TODO: Implement! */
-  inline int map_lattice_to_position(int *ind, int *grid) {
+  int map_lattice_to_position(int *ind, int *grid) {
     return 0;
   }
 
-  inline void map_linear_index_to_global_pos(index_t ind, double* pos) {
+  void map_linear_index_to_global_pos(index_t ind, double* pos) {
     int index_in_halogrid[3];
     get_grid_pos(ind, &index_in_halogrid[0], &index_in_halogrid[1], &index_in_halogrid[2], this->halo_grid);
     pos[0] = this->local_offset[0] + (index_in_halogrid[0] - this->halo_size)*this->agrid[0];
@@ -197,13 +197,13 @@ public:
     pos[2] = this->local_offset[2] + (index_in_halogrid[2] - this->halo_size)*this->agrid[2];
   }
 
-  inline void map_local_index_to_pos(index_t* index, double* pos) {
+  void map_local_index_to_pos(index_t* index, double* pos) {
     pos[0] = this->local_offset[0] + (index[0])*this->agrid[0];
     pos[1] = this->local_offset[1] + (index[1])*this->agrid[1];
     pos[2] = this->local_offset[2] + (index[2])*this->agrid[2];
   }
 
-  inline int map_global_index_to_halo_index(index_t* global_index, index_t* halo_index) {
+  int map_global_index_to_halo_index(index_t* global_index, index_t* halo_index) {
     int out=0;
     for (int d=0; d<3; d++) {
       halo_index[d] = global_index[d]-this->local_index_offset[d] +this->halo_size;
@@ -218,7 +218,7 @@ public:
 
   }
 
-  inline void map_halo_index_to_pos(index_t* index_in_halogrid, double* pos) {
+  void map_halo_index_to_pos(index_t* index_in_halogrid, double* pos) {
     pos[0] = this->local_offset[0] + (index_in_halogrid[0] - this->halo_size)*this->agrid[0];
     pos[1] = this->local_offset[1] + (index_in_halogrid[1] - this->halo_size)*this->agrid[1];
     pos[2] = this->local_offset[2] + (index_in_halogrid[2] - this->halo_size)*this->agrid[2];
@@ -240,7 +240,7 @@ public:
    * \param delta      distance fraction of pos from the surrounding
    *                   elementary cell, 6 directions (Output)
    */
-  inline void map_position_to_lattice(const double pos[3], index_t node_index[8], double delta[6]) {
+  void map_position_to_lattice(const double pos[3], index_t node_index[8], double delta[6]) {
 
     int dir,ind[3] ;
     double lpos, rel;
@@ -298,7 +298,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    * \param tmp_agrid  lattice mesh distance
    */
-  inline void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
+  static void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
   //not sure why I don't have access to agrid here so I make a temp var and pass it to this function
     int i;
     double rel[3];
@@ -328,17 +328,17 @@ public:
   }
 
 
-  inline void get_data_for_halo_index(index_t* ind, void** data) {
+  void get_data_for_halo_index(index_t* ind, void** data) {
     (*data) = ((char*)this->_data) + get_linear_index(ind[0], ind[1], ind[2], this->halo_grid)*this->element_size;
 
 
   }
 
-  inline void get_data_for_linear_index(index_t ind, void** data) {
+  void get_data_for_linear_index(index_t ind, void** data) {
     (*data) = ((char*)this->_data) + ind*this->element_size;
   }
 
-  inline void get_data_for_local_index(index_t* ind, void** data) {
+  void get_data_for_local_index(index_t* ind, void** data) {
     index_t index_in_halogrid[3];
     index_in_halogrid[0] = ind[0]+this->halo_size;
     index_in_halogrid[1] = ind[1]+this->halo_size;
@@ -346,16 +346,16 @@ public:
     (*data) = ((char*)this->_data) + get_linear_index(index_in_halogrid[0], index_in_halogrid[1], index_in_halogrid[2], this->halo_grid)*this->element_size;
   }
 
-  inline void set_data_for_local_halo_grid_index(index_t* ind, void* data) {
+  void set_data_for_local_halo_grid_index(index_t* ind, void* data) {
     memcpy(((char*)this->_data) + get_linear_index(ind[0], ind[1], ind[2],  this->halo_grid)*this->element_size, data, this->element_size);
 
   }
 
-  inline void set_data_for_local_grid_index(index_t* ind, void* data) {
+  void set_data_for_local_grid_index(index_t* ind, void* data) {
     memcpy(((char*)this->_data) + get_linear_index(ind[0]+this->halo_size, ind[1]+this->halo_size, ind[2]+this->halo_size,  this->halo_grid)*this->element_size, data, this->element_size);
   }
 
-  inline int global_pos_to_lattice_halo_index(double* pos, index_t*  ind) {
+  int global_pos_to_lattice_halo_index(double* pos, index_t*  ind) {
     for (int i = 0; i<3; i++) {
       ind[i] = (int) floor((pos[i]-this->local_offset[i])/this->agrid[i]+ROUND_ERROR_PREC)+this->halo_size;
       if (ind[i] < 0 || ind[i] >= this->halo_grid[i])
@@ -366,4 +366,4 @@ public:
 
 };
 
-#endif /* LATTICE_H */
+#endif /* LATTICE_HPP */
