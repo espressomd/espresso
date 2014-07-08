@@ -557,6 +557,7 @@ typedef struct {
     struct {
       double rm;
       double epsilon;
+      double ref_pot;
       double a[8];
       double b[7];
     } cg_dna_stacking;

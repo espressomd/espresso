@@ -62,10 +62,12 @@ inline double norm(double *x) {
 }
 
 inline void normalize(double *x) {
-  const double n = sqrt(norm(x));
-  x[0] /= n;
-  x[1] /= n;
-  x[2] /= n;
+  const double n = norm(x);
+  if(n > 0.0) {
+    x[0] /= n;
+    x[1] /= n;
+    x[2] /= n;
+  }
 }
 
 inline double cos_angle(double *x1, double *x2) {
@@ -93,8 +95,8 @@ inline double angle(double *x1, double *x2) {
 inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
 				      Particle *sj1, Particle *bj1, Particle *bj2, Particle *sj2,
 				      Bonded_ia_parameters *iaparams,
-				      double force1[3], double force2[3], double force3[3], double force4[3],
-				      double force5to8[12]) {
+				      double f_si1[3], double f_bi1[3], double f_bi2[3], double f_si2[3],
+				      double f_sj1[3], double f_bj1[3], double f_bj2[3], double f_sj2[3]) {
 
   /* Base-Base and Sugar-Sugar vectors */
   double rcci[3], rccj[3];
@@ -109,7 +111,7 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
   double f_tilt_si1[3], f_tilt_si2[3], f_tilt_sj1[3], f_tilt_sj2[3];
   double f_tilt_bi1[3], f_tilt_bi2[3], f_tilt_bj1[3], f_tilt_bj2[3];
   double f_twist_si1[3], f_twist_si2[3], f_twist_sj1[3], f_twist_sj2[3];
-  double f_twist_bi1[3], f_twist_bj1[3];
+  double f_twist_bi1[3];
   double f_stack_si1[3], f_stack_si2[3], f_stack_sj1[3], f_stack_sj2[3];
   double f_stack_bi1[3], f_stack_bi2[3], f_stack_bj1[3], f_stack_bj2[3];
 
@@ -120,13 +122,6 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
 
   double ani[3], anj[3];
   double ani_l, anj_l;
-
-  // x[i][iRs][k]  = x[i][iSugar2][k] - x[i][iSugar1][k];  // sugar-sugar vector
-  // x[i][iRb][k]  = x[i][iBase2][k]  - x[i][iBase1][k];   // base-base vector
-  // x[i][iRb1][k] = x[i][iBase1][k]  - x[i][iSugar1][k];  // base-sugar vector 1
-  // x[i][iRb2][k] = x[i][iBase2][k]  - x[i][iSugar2][k];  // base-sugar vector 2
-
-  // get_mi_vector(c, a, b) -> c = a - b
    
   get_mi_vector(vec1, sj1->r.p, si1->r.p);
   get_mi_vector(vec2, bj1->r.p, si1->r.p);
@@ -136,16 +131,6 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
   get_mi_vector(rcci, si2->r.p, si1->r.p);
   get_mi_vector(rcb1, bi1->r.p, si1->r.p);
   get_mi_vector(rcb2, bi2->r.p, si2->r.p);
-
-  PV(si1->r.p);
-  PV(bi1->r.p);
-  PV(bi2->r.p);
-  PV(si2->r.p);
-
-  PV(sj1->r.p);
-  PV(bj1->r.p);
-  PV(bj2->r.p);
-  PV(sj2->r.p);
   
   get_mi_vector(rccj, sj2->r.p, sj1->r.p);
   get_mi_vector(rcb1j, bj1->r.p, sj1->r.p);
@@ -189,34 +174,7 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
     anj[i] /= anj_l;
   }
 
-  PV(ani);
-  PV(anj); 
-  PV(vec1);
-  PV(vec2);
-  PV(vec3);
-  PV(vec4);
-  PV(n1);
-  PV(n2);  
-  PV(n1j);
-  PV(n2j);
-
   r = 0.25*(dot(vec1, n1) + dot(vec2,n1) + dot(vec3,n2) + dot(vec4,n2));
-
-  // PS(dot(vec1, n1));
-  // PS(dot(vec2, n1));
-  // PS(dot(vec3, n2));
-  // PS(dot(vec4, n2));
-
-  // PS((dot(vec1, n1) + dot(vec2,n1) + dot(vec3,n2) + dot(vec4,n2)));
-
-  PS(r);
-
-  /* In the degenrate case take the average euclidian distance between the sugars. */
-  if( r == 0) {
-    r = 0.5 * (norm(vec1) +norm(vec3));
-  }
-  
-  PS(r);
 
   double f_r;
   double pot_stack;
@@ -242,9 +200,6 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
   pot_stack = eps5rm6*ir6 - eps6rm5*ir5;  
   f_r = 0.25*ir*(eps30rm6*ir6 - eps30rm5*ir5);
 
-  PS(pot_stack);
-  PS(f_r);
-
   cross(n1, vec1, u1);
   cross(n1, vec2, u2);
   cross(n2, vec3, u3);
@@ -257,21 +212,6 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
   dot12 = dot(u2, rcb1)/n1_l;
   dot13 = dot(u3, rcb2)/n2_l;
   dot14 = dot(u4, rcb2)/n2_l;
-
-  // PS(dot01); 
-  // PS(dot02); 
-  // PS(dot03); 
-  // PS(dot04); 
-
-  // PS(dot11); 
-  // PS(dot12); 
-  // PS(dot13); 
-  // PS(dot14); 
-
-  // PV(u1);
-  // PV(u2);
-  // PV(u3);
-  // PV(u4);
 
   double mag1, mag2;
 
@@ -329,14 +269,14 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
   const double sin6 = 2.*sin5*cos1 - sin4;
   const double sin7 = 2.*sin6*cos1 - sin5;
 
-  const double pot_twist = 0.5*a[0] + a[1]*cos1 + a[2]*cos2 + a[3]*cos3 + a[4]*cos4
+  const double pot_twist_ref = iaparams->p.cg_dna_stacking.ref_pot;
+
+  const double pot_twist = a[0] + a[1]*cos1 + a[2]*cos2 + a[3]*cos3 + a[4]*cos4
     +a[5]*cos5 + a[6]*cos6 + a[7]*cos7 + b[0]*sin1 + b[1]*sin2 + b[2]*sin3 + b[3]*sin4 + b[4]*sin5 + b[5]*sin6 + b[6] *sin7;
 
   double fmag = a[1]*sin1 - b[0] * cos1 + 2.* (a[2]*sin2 - b[1] *cos2) + 3.*(a[3]*sin3 - b[2]*cos3) + 4. * (a[4]*sin4 - b[3]*cos4) + 5.*(a[5]*sin5 - b[4]*cos5) + 6.*(a[6]*sin6 - b[5]*cos6) + 7. * (a[7]*sin7 - b[6]*cos7);
 
   fmag = -fmag/sin1;
- 
-  // PS(fmag);
 
   cross(n1, rccj, u1);
   dot01 = dot(u1, rcci)/n1_l;
@@ -378,11 +318,8 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
     }
   } else {
     tau_tilt = cos1*cos1;
-    f_tilt = -2.*epsilon*cos1;
+    f_tilt = -2.*pot_twist_ref*cos1;
     
-    // PS(tau_tilt);
-    // PS(cos1);
-
     for(int i = 0; i < 3; i++) {
       ui[i] = f_tilt*(anj[i] - cos1*ani[i])/ani_l;
       uj[i] = f_tilt*(ani[i] - cos1*anj[i])/anj_l;
@@ -390,16 +327,11 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
       vecj[i] = bj1->r.p[i] - sj2->r.p[i] + rcb2j[i];
     }
 
-    // PV(ui);
-    // PV(rcci);
-
     cross(ui, rcci, f_tilt_bi1);
     cross(ui, veci, f_tilt_si1);
     cross(uj, rccj, f_tilt_bj1);
     cross(uj, vecj, f_tilt_sj1);
     
-  // printf("f_tilt_bi1 (%e %e %e)\n", EX(f_tilt_bi1));
-
     for(int k = 0; k < 3; k++) {
       f_tilt_bi2[k] = f_tilt_bi1[k];
       f_tilt_si2[k] = -f_tilt_si1[k] - 2.*f_tilt_bi1[k];
@@ -408,68 +340,97 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
     }
   }
 
-  double tau_stack = pot_stack/epsilon;
-  double tau_twist = pot_twist/epsilon;
+  double tau_stack = pot_stack/pot_twist_ref;
+  double tau_twist = pot_twist/pot_twist_ref;
 
   factor1 = tau_twist*tau_tilt;
   factor2 = tau_stack*tau_tilt;
   factor3 = tau_stack*tau_twist;
 
-  PS(tau_twist);
-  PS(tau_tilt);
-  PS(tau_stack);
-
-  PS(factor1);
-  PS(factor2);
-  PS(factor3);
-  PS(factor4);
-
-  PV(factor1*f_stack_si1);
-  PV(factor1*f_stack_si2);
-  PV(factor1*f_stack_bi1);
-  PV(factor1*f_stack_bi2);
-  PV(factor1*f_stack_sj1);
-  PV(factor1*f_stack_sj2);
-  PV(factor1*f_stack_bj1);
-  PV(factor1*f_stack_bj2);
-
-  PV(factor2*f_twist_si1);
-  PV(factor2*f_twist_si2);
-  PV(factor2*f_twist_bi1);
-  PV(factor2*f_twist_sj1);
-  PV(factor2*f_twist_sj2);
-  PV(factor2*f_twist_bj1);
-
-  PV(factor3*f_tilt_si1);
-  PV(factor3*f_tilt_si2);
-  PV(factor3*f_tilt_bi1);
-  PV(factor3*f_tilt_bi2);
-  PV(factor3*f_tilt_sj1);
-  PV(factor3*f_tilt_sj2);
-  PV(factor3*f_tilt_bj1);
-  PV(factor3*f_tilt_bj2);
-
-  PV(f_tilt_si2);
 
 #ifdef CG_DNA_DEBUG
   fflush(NULL);
+  int big_force = 0;
 #endif
 
   for(int k = 0; k < 3; k++) {
-    force2[k] = factor1*f_stack_bi1[k] + factor2*f_twist_bi1[k] + factor3*f_tilt_bi1[k];
-    force4[k] = factor1*f_stack_bi2[k]                          + factor3*f_tilt_bi2[k];
-    force1[k] = factor1*f_stack_si1[k] + factor2*f_twist_si1[k] + factor3*f_tilt_si1[k];
-    force3[k] = factor1*f_stack_si2[k] + factor2*f_twist_si2[k] + factor3*f_tilt_si2[k];
-    force5to8[3 + k] = factor1*f_stack_bj1[k] + factor2*f_twist_bj1[k] + factor3*f_tilt_bj1[k];
-    force5to8[9 + k] = factor1*f_stack_bj2[k]                          + factor3*f_tilt_bj2[k];
-    force5to8[0 + k] = factor1*f_stack_sj1[k] + factor2*f_twist_sj1[k] + factor3*f_tilt_sj1[k];
-    force5to8[6 + k] = factor1*f_stack_sj2[k] + factor2*f_twist_sj2[k] + factor3*f_tilt_sj2[k];
+    f_bi1[k] = factor1*f_stack_bi1[k] + factor2*f_twist_bi1[k] + factor3*f_tilt_bi1[k];
+    f_bi2[k] = factor1*f_stack_bi2[k]                          + factor3*f_tilt_bi2[k];
+    f_si1[k] = factor1*f_stack_si1[k] + factor2*f_twist_si1[k] + factor3*f_tilt_si1[k];
+    f_si2[k] = factor1*f_stack_si2[k] + factor2*f_twist_si2[k] + factor3*f_tilt_si2[k];
+
+    f_bj1[k] = factor1*f_stack_bj1[k]                          + factor3*f_tilt_bj1[k];
+    f_bj2[k] = factor1*f_stack_bj2[k]                          + factor3*f_tilt_bj2[k];
+    f_sj1[k] = factor1*f_stack_sj1[k] + factor2*f_twist_sj1[k] + factor3*f_tilt_sj1[k];
+    f_sj2[k] = factor1*f_stack_sj2[k] + factor2*f_twist_sj2[k] + factor3*f_tilt_sj2[k];
+
+#ifdef CG_DNA_DEBUG
+    if((f_bi1[k] >= 100.) || (f_bi2[k] >= 100.) || (f_si1[k] >= 100.) || (f_si2[k] >= 100.) || (f_bj1[k] >= 100.) || (f_bj2[k] >= 100.) || (f_sj1[k] >= 100.) || (f_sj2[k] >= 100.)) {
+      big_force = 1;
+    }
+#endif
+
+ 
   }	  
+
+#ifdef CG_DNA_DEBUG
+  if(big_force) {
+    puts("Big Force Twist/Stack.");
+    PS(si1->p.identity);
+
+    PS(r);
+    PS(epsilon);
+
+    PS(tau_twist);
+    PS(tau_tilt);
+    PS(tau_stack);
+
+    PS(factor1);
+    PS(factor2);
+    PS(factor3);
+
+    PV(factor1*f_stack_si1);
+    PV(factor1*f_stack_si2);
+    PV(factor1*f_stack_bi1);
+    PV(factor1*f_stack_bi2);
+    PV(factor1*f_stack_sj1);
+    PV(factor1*f_stack_sj2);
+    PV(factor1*f_stack_bj1);
+    PV(factor1*f_stack_bj2);
+
+    PV(factor2*f_twist_si1);
+    PV(factor2*f_twist_si2);
+    PV(factor2*f_twist_bi1);
+    PV(factor2*f_twist_sj1);
+    PV(factor2*f_twist_sj2);
+
+    PV(factor3*f_tilt_si1);
+    PV(factor3*f_tilt_si2);
+    PV(factor3*f_tilt_bi1);
+    PV(factor3*f_tilt_bi2);
+    PV(factor3*f_tilt_sj1);
+    PV(factor3*f_tilt_sj2);
+    PV(factor3*f_tilt_bj1);
+    PV(factor3*f_tilt_bj2);
+
+
+    PV(f_bi1);
+    PV(f_bi2);
+    PV(f_si1);
+    PV(f_si2);
+
+    PV(f_bj1);
+    PV(f_bj2);
+    PV(f_sj1);
+    PV(f_sj2);
+
+  }
+#endif
 
   return 0;
 }
 
-inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams, double force1[3], double force2[3], double force3[3], double force4[3]) {
+inline int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double f_s1[3], double f_b1[3], double f_b2[3], double f_s2[3]) {
 
   /* Base-Base and Sugar-Sugar vectors */
   double rhb[3], rcc[3];
@@ -485,7 +446,7 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   /* gamma1 = cos(psi1) */
   /* length of rhb */
   double gamma1, gamma2;
-  double rhb_l;
+  double rhb_l, rcc_l;
   /* magnitude of the _r contribution to the force */
   double f_r;
   double f_d;
@@ -493,27 +454,24 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   double f_sb1, f_sb2;
 
   /* helper variables */
-  double ra, c, tau_r, tau_d, tau_flip, tau_rd;
+  double ra, temp, tau_r, tau_d, tau_flip, tau_rd;
   const Bonded_ia_parameters params = *iaparams;
   const double E0 = params.p.cg_dna_basepair.E0;
   
 #ifdef CG_DNA_DEBUG
-  puts("calc_cg_dna_basepair_force():");
+  //  puts("calc_cg_dna_basepair_force():");
 #endif
 
-  get_mi_vector(rhb, p4->r.p, p2->r.p);
-  get_mi_vector(rcc, p3->r.p, p1->r.p);
-  get_mi_vector(rcb1, p2->r.p, p1->r.p);
-  get_mi_vector(rcb2, p4->r.p, p3->r.p);
+  /* Calculate geometry variables */
+
+  get_mi_vector(rcc, s2->r.p, s1->r.p);
+  get_mi_vector(rhb, b2->r.p, b1->r.p);
+  get_mi_vector(rcb1, b1->r.p, s1->r.p);
+  get_mi_vector(rcb2, b2->r.p, s2->r.p);
 
   rcb1_l = norm(rcb1);
   rcb2_l = norm(rcb2);
-
-  PS(rcb1_l);
-  PS(rcb2_l);
-
-  gamma1 =  cos_angle(rcc, rcb1);
-  gamma2 = -cos_angle(rcc, rcb2);
+  rcc_l = norm(rcc);
 
   cross(rcc, rcb1, n1);
   cross(rcc, rcb2, n2);
@@ -521,57 +479,9 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   normalize(n1);
   normalize(n2);
 
-  PS(p1->p.identity);
-  PS(p2->p.identity);
-  PS(p3->p.identity);
-  PS(p4->p.identity);
-  PV(p1->r.p);
-  PV(p2->r.p);
-  PV(p3->r.p);
-  PV(p4->r.p);
-
-  PV(rhb);
-  PV(rcc);
-  PV(rcb1);
-  PV(rcb2);
-
-  PS(gamma1);
-  PS(gamma2);
-  PS(dot(n1,n2));
-  PV(n1);
-  PV(n2);
-
-  // if((n1_l2 == 0) || (n2_l2 == 0)) {
-  //   // puts("(n1_l2 == 0) || (n2_l2 == 0)");
-  //   gammad = 1;
-  //   n1_l2 = 1;
-  //   n2_l2 = 1;
-  // } else {
-    gammad = (gamma1 != 1. && gamma2 != 1.) ? cos_angle(n1, n2) : 0;
-    //  }
-
-  PS(gammad);
-
-  // printf("cos(<(n1,n2)) = %lf, cos(<(rcc,rcb1)) = %lf\n", cos_angle(n1,n2), gamma1);
-  // PRINT_VECTOR(n1);
-  // PRINT_VECTOR(n2);
-
-  if((gamma1 > COS_MAX) || (gamma1 < COS_MIN)) {
-    gamma1 = (gamma1 > COS_MAX)? COS_MAX : COS_MIN;
-  }
-  if((gamma2 > COS_MAX) || (gamma2 < COS_MIN))
-    gamma2 = (gamma2 > COS_MAX)? COS_MAX : COS_MIN;
-
-  psi1 = gamma1 >= 1. ? 0. : (gamma1 <= -1. ? M_PI : acos(gamma1));
-  psi2 = gamma2 >= 1. ? 0. : (gamma2 <= -1. ? M_PI : acos(gamma2));  
-
   rhb_l = norm(rhb);
 
-  PS(psi1);
-  PS(psi2);
-  PS(rhb_l);
-
-  /* Sugar base interaction strand 1 */
+  /* Sugar base interaction */
   
   const double r0sb = params.p.cg_dna_basepair.r0sb;
   const double alphasb = params.p.cg_dna_basepair.alphasb;
@@ -582,66 +492,63 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   const double c1sb = (f2-3.*f3)*E0sb*alphasb;
   const double c2sb = f3*E0sb*alphasb;
 
-  double temp;
+  ra = (rcb1_l - r0sb)*alphasb;
+  f_sb1 = exp(-ra)*ra*(c0sb+c1sb*ra+c2sb*ra*ra)/rcb1_l;
 
-  PS(alphasb);
-  PS(r0sb);
-  PS(c0sb);
-  PS(c1sb);
-  PS(c2sb);
+  ra = (rcb2_l - r0sb)*alphasb;
+  f_sb2 = exp(-ra)*ra*(c0sb+c1sb*ra+c2sb*ra*ra)/rcb2_l;
 
-  temp = (rcb1_l - r0sb)*alphasb;
-  f_sb1 = exp(-temp)*temp*(c0sb+c1sb*temp+c2sb*temp*temp)/rcb1_l;
-
-  PS(temp);
-  PS(exp(-temp));
-  PS(f_sb1*rcb1_l);
-
-  temp = (rcb2_l - r0sb)*alphasb;
-  f_sb2 = exp(-temp)*temp*(c0sb+c1sb*temp+c2sb*temp*temp)/rcb2_l;
-
-  PS(temp);
-  PS(f_sb2);
+  /* Hydrogen bond interaction */
 
   /* Radial part */
 
   ra = (rhb_l - params.p.cg_dna_basepair.r0)*params.p.cg_dna_basepair.alpha;
-  c = exp(-ra);
-  tau_r = c *(1.+ra);
-  f_r = E0*params.p.cg_dna_basepair.alpha*c*ra/rhb_l;
+  temp = exp(-ra);
+  tau_r = temp *(1.+ra);
+  f_r = E0*params.p.cg_dna_basepair.alpha*temp*ra/rhb_l;
 
   /* Dihedral part */
 
+  gammad = dot(n1, n2);
   tau_d = exp(params.p.cg_dna_basepair.kd*(gammad - 1));
   f_d = -E0*params.p.cg_dna_basepair.kd*tau_d;  
 
   /* Flip part */
 
+  gamma1 =  dot(rcc, rcb1)/(rcc_l*rcb1_l);
+  gamma2 = -dot(rcc, rcb2)/(rcc_l*rcb2_l);
+
+  /* Avoid illdefined values */
+
+  if((gamma1 > COS_MAX) || (gamma1 < COS_MIN)) {
+    gamma1 = (gamma1 > COS_MAX)? COS_MAX : COS_MIN;
+  }
+  if((gamma2 > COS_MAX) || (gamma2 < COS_MIN))
+    gamma2 = (gamma2 > COS_MAX)? COS_MAX : COS_MIN;
+
+  psi1 = gamma1 >= 1. ? 0. : (gamma1 <= -1. ? M_PI : acos(gamma1));
+  psi2 = gamma2 >= 1. ? 0. : (gamma2 <= -1. ? M_PI : acos(gamma2));  
+
   dpsi1 = psi1 - params.p.cg_dna_basepair.psi10;
   dpsi2 = psi2 - params.p.cg_dna_basepair.psi20;
 
-  double s1sqr = (SQR(params.p.cg_dna_basepair.sigma1));
-  double s2sqr = (SQR(params.p.cg_dna_basepair.sigma2));
+  const double sigma1sqr = (SQR(params.p.cg_dna_basepair.sigma1));
+  const double sigma2sqr = (SQR(params.p.cg_dna_basepair.sigma2));
 
-  // printf("gamma1 %lf gamma2 %lf\n", gamma1, gamma2);
-
-  f_f1 = (gamma1 < 1.) ? -dpsi1 / sqrt(1. - SQR(gamma1)) * params.p.cg_dna_basepair.E0/s1sqr : 1.0;
-  f_f2 = (gamma2 < 1.) ? -dpsi2 / sqrt(1. - SQR(gamma2)) * params.p.cg_dna_basepair.E0/s2sqr : 1.0;
-
-  // printf("f_f1 %lf, f_f2 %lf\n", f_f1, f_f2);
+  f_f1 = -dpsi1 / sqrt(1. - SQR(gamma1)) * params.p.cg_dna_basepair.E0/sigma1sqr;
+  f_f2 = -dpsi2 / sqrt(1. - SQR(gamma2)) * params.p.cg_dna_basepair.E0/sigma2sqr;
   
   tau_rd = tau_r * tau_d;
 
   if(dpsi1 > 0 && dpsi2 > 0) {
-    tau_flip = exp(-(SQR(dpsi1)/(2*s1sqr)+SQR(dpsi2)/(2*s2sqr)));
+    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)+SQR(dpsi2)/(2.*sigma2sqr)));
     f_f1 *= tau_flip * tau_rd;
     f_f2 *= tau_flip * tau_rd;
   } else if (dpsi1 > 0.) {
-    tau_flip = exp(-(SQR(dpsi1)/(2*s1sqr)));
+    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)));
     f_f1 *= tau_flip * tau_rd;
-  }
-  else if (dpsi2 > 0.) {
-    tau_flip = exp(-(SQR(dpsi2)/(2*s2sqr)));
+  } else if (dpsi2 > 0.) {
+    tau_flip = exp(-(SQR(dpsi2)/(2.*sigma2sqr)));
     f_f2 *= tau_flip * tau_rd;
   } else {
     tau_flip = 1.;
@@ -653,44 +560,39 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
   const double k_constraint = 50.;
 
   if(psi1 > psi_cutoff) {
-    PS(k_constraint*(psi1-psi_cutoff)/sqrt(1. - SQR(gamma1)));
     f_f1 += k_constraint*(psi1-psi_cutoff)/sqrt(1. - SQR(gamma1));
   }
   if(psi2 > psi_cutoff) {
-    PS(k_constraint*(psi2-psi_cutoff)/sqrt(1. - SQR(gamma2)));
-    f_f2 += k_constraint*(psi2-psi_cutoff)/sqrt(1. - SQR(gamma2));
+    f_f2 += k_constraint*(psi2-psi_cutoff)/sqrt(1. - SQR(gamma1));
   }
+  
+  f_d *= tau_d*tau_flip;
+  f_r *= tau_r*tau_flip;
 
   /* Dihedral force */
   double vec[3];
   cross(n1, n2, vec);
-  // puts("vec");
-  // PRINT_VECTOR(vec);
-  const double dot1 = f_d * dot(vec, rhb);
+  
+  const double dot1 = f_d * dot(vec, rcc);
   const double dot2 = f_d * dot(vec, rcb1);
   const double dot3 = f_d * dot(vec, rcb2);
   const double dot4 = dot2 - dot1;
   const double dot5 = dot1 + dot3;
 
-  const double rcc_l = norm(rcc);
-
-  // printf("rcb1_l %lf, rcb2_l %lf, rcc_l %lf\n", rcb1_l, rcb2_l, rcc_l);
-  // printf("f_f1 %lf, f_f2 %lf\n", f_f1, f_f2);
-
   const double factor1 = f_f1/(rcc_l * rcb1_l);
   const double factor2 = f_f1*gamma1/SQR(rcb1_l);
   const double factor3 = f_f1*gamma1/SQR(rcc_l);
 
-  const double factor4 = f_f1/(rcc_l * rcb2_l);
+  const double factor4 = f_f2/(rcc_l * rcb2_l);
   const double factor5 = f_f2*gamma2/SQR(rcb2_l);
   const double factor6 = f_f2*gamma2/SQR(rcc_l);
 
-  // printf("factorx (%lf, %lf, %lf, %lf, %lf, %lf)\n",
-  // 	 factor1,factor2,factor3,
-  // 	 factor4,factor5,factor6);
-
   double fBase1, fSugar2, fBase2, fSugar1;
   double fr;
+
+#ifdef CG_DNA_DEBUG
+  int big_force = 0;
+#endif
 
   for(int i = 0; i < 3; i++) {
     fr = f_r * rhb[i];
@@ -700,30 +602,53 @@ inline int calc_cg_dna_basepair_force(Particle *p1, Particle *p2, Particle *p3, 
     fBase2  = -factor4*rcc[i]  - factor5 * rcb2[i];
     fSugar1 =  factor4*rcb2[i] + factor6 * rcc[i];
 
-    PS(fBase1);
-    PS(fBase2);
-    PS(fSugar1);
-    PS(fSugar2);
+    f_b1[i] = -fr + dot1*n1[i] + fBase1 + f_sb1 *rcb1[i];
+    f_b2[i] =  fr - dot1*n2[i] + fBase2 + f_sb2 *rcb2[i];
 
-    // printf("fBase1 %lf, fSugar2 %lf, fBase2 %lf, fSugar1 %lf\n", fBase1, fSugar2, fBase2, fSugar1);
+    f_s1[i] = dot4*n1[i] - dot3*n2[i] + fSugar1 - fBase1 - fSugar2 - f_sb1 *rcb1[i];
+    f_s2[i] = dot5*n2[i] - dot2*n1[i] + fSugar2 - fBase2 - fSugar1 - f_sb2 *rcb2[i];
 
-    force1[i] = dot4*n1[i] - dot3*n2[i] + fSugar1 - fBase1 - fSugar2 - f_sb1 *rcb1[i];
-    force2[i] = -fr + dot1*n1[i] + fBase1 + f_sb1 *rcb1[i];
-    force3[i] = dot5*n2[i] - dot2*n1[i] + fSugar2 - fBase2 - fSugar1 - f_sb2 *rcb2[i];
-    force4[i] = fr - dot1*n2[i] + fBase2 + f_sb2 *rcb2[i];
+#ifdef CG_DNA_DEBUG
+    PS(f_b1[i]);
+    PS(f_b2[i]);
+    PS(f_s1[i]);
+    PS(f_s2[i]);
+    PS(f_b1[i] + f_b2[i] + f_s1[i] + f_s2[i]);
+
+    if((f_b1[i] >= 100.) || (f_b2[i] >= 100.) || (f_s1[i] >= 100.) || (f_s2[i] >= 100.)) 
+      big_force = 1;
+#endif
   }
 
-  PV(force1);
-  PV(force2);
-  PV(force3);
-  PV(force4);
+#ifdef CG_DNA_DEBUG
+  if(big_force) {  
+    puts("Big Force Basepair.");
+    PS(s1->p.identity);
+    PS(b1->p.identity);
+    PS(b2->p.identity);
+    PS(s2->p.identity);
+    PV(s1->r.p);
+    PV(b1->r.p);
+    PV(b2->r.p);
+    PV(s2->r.p);
 
-  // printf("rhb_l %lf thetad %lf f_r %lf, f_d %lf, tau_d = %lf\n", rhb_l, thetad, f_r, f_d, tau_d);
+    PV(rhb);
+    PV(rcc);
+    PV(rcb1);
+    PV(rcb2);
 
-  // PRINT_VECTOR(force1);
-  // PRINT_VECTOR(force2);
-  // PRINT_VECTOR(force3);
-  // PRINT_VECTOR(force4);
+    PS(gamma1);
+    PS(gamma2);
+    PS(dot(n1,n2));
+    PV(n1);
+    PV(n2);
+
+    PV(f_s1);
+    PV(f_b1);
+    PV(f_b2);
+    PV(f_s2);
+  }
+#endif
  
   return 0;
 }

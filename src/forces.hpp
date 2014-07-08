@@ -406,8 +406,12 @@ inline void add_bonded_force(Particle *p1)
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
 #ifdef CG_DNA
-  double force4[4] = { 0., 0., 0. };
-  double force5to8[12] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. };
+  double force4[3] = { 0., 0., 0. };
+  double force5[3] = { 0., 0., 0. };
+  double force6[3] = { 0., 0., 0. };
+  double force7[3] = { 0., 0., 0. };
+  double force8[3] = { 0., 0., 0. };
+
   Particle *p5 = NULL,*p6 = NULL,*p7 = NULL,*p8 = NULL;
 #endif
 #ifdef ROTATION
@@ -500,7 +504,7 @@ inline void add_bonded_force(Particle *p1)
       break;
     case BONDED_IA_CG_DNA_STACKING:
       bond_broken = calc_cg_dna_stacking_force(p1, p2, p3, p4, p5, p6, p7, p8, iaparams,
-					       force, force2, force3, force4, force5to8);
+					       force, force2, force3, force4, force5, force6, force7, force8);
       break;
 #endif
 #ifdef AREA_FORCE_GLOBAL
@@ -689,7 +693,7 @@ inline void add_bonded_force(Particle *p1)
 	  p1->f.f[j] += force[j];
 	  p2->f.f[j] += force2[j];
 	  p3->f.f[j] += force3[j];
-	  p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
+	  p4->f.f[j] += force4[j];
 	}
       }
       break;
@@ -708,10 +712,10 @@ inline void add_bonded_force(Particle *p1)
 	  p2->f.f[j] += force2[j];
 	  p3->f.f[j] += force3[j];
 	  p4->f.f[j] += force4[j];
-	  p5->f.f[j] += force5to8[0 + j];
-	  p6->f.f[j] += force5to8[3 + j];
-	  p7->f.f[j] += force5to8[6 + j];
-	  p8->f.f[j] += force5to8[9 + j];
+	  p5->f.f[j] += force5[j];
+	  p6->f.f[j] += force6[j];
+	  p7->f.f[j] += force7[j];
+	  p8->f.f[j] += force8[j];
 	}
 #endif
 	break;
