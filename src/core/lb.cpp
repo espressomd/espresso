@@ -97,7 +97,7 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #endif
 
 /** The underlying lattice structure */
-Lattice lblattice=new Lattice();
+Lattice lblattice;
 
 /** Pointer to the velocity populations of the fluid nodes */
 double **lbfluid[2] = { NULL, NULL };
@@ -1060,7 +1060,7 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
 
 
 /** calculates the fluid velocity at a given position of the 
- * lattice. Note that it can lead to undefined behaviour if the
+ * lattice. Note that it can lead to undefined behavior if the
  * position is not within the local lattice. This version of the function
  * can be called without the position needing to be on the local processor.
  * Note that this gives a slightly different version then the values used to
@@ -1075,11 +1075,11 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
   // convert the position into lower left grid point
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-	map_position_to_lattice_global_GPU(p, ind, delta, lbpar_gpu.agrid);
+	Lattice::map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
 #endif
   } else {  
 #ifdef LB
-	lblattice.map_position_to_lattice_global(p, ind, delta,  lbpar.agrid);
+	Lattice::map_position_to_lattice_global(p, ind, delta, lbpar.agrid);
 #endif
   }
 
@@ -1097,15 +1097,15 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 
 	if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-					if (tmpind[0] == int(lbpar_gpu.dim_x)) tmpind[0] =0;
-					if (tmpind[1] == int(lbpar_gpu.dim_y)) tmpind[1] =0;
-					if (tmpind[2] == int(lbpar_gpu.dim_z)) tmpind[2] =0;
+					if (tmpind[0] == int(lbpar_gpu.dim_x)) tmpind[0] = 0;
+					if (tmpind[1] == int(lbpar_gpu.dim_y)) tmpind[1] = 0;
+					if (tmpind[2] == int(lbpar_gpu.dim_z)) tmpind[2] = 0;
 #endif
 	} else {  
 #ifdef LB
-	  if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] =0;
-	  if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] =0;
-	  if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] =0;
+	  if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] = 0;
+	  if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] = 0;
+	  if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] = 0;
 	  
 #endif
 	}
@@ -1827,7 +1827,10 @@ void lb_reinit_parameters() {
     lb_coupl_pref2 = 0.0;
   }
 
-  LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f, bulkvisc=%f, visc=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu, lbpar.bulk_viscosity, lbpar.viscosity));
+  LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f " \
+		  "bulk_fluct=%f mu=%f, bulkvisc=%f, visc=%f\n", \
+		  this_node, gamma_shear, gamma_bulk, lb_phi[9], lb_phi[4], mu, \
+		  lbpar.bulk_viscosity, lbpar.viscosity));
 
 }
 
@@ -2759,6 +2762,14 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+#ifdef ENGINE
+  double source_position[3];
+  double direction = double(p->swim.push_pull) * p->swim.dipole_length;
+  source_position[0] = p->r.p[0] + direction * p->r.quatu[0];
+  source_position[1] = p->r.p[1] + direction * p->r.quatu[1];
+  source_position[2] = p->r.p[2] + direction * p->r.quatu[2];
+  lb_lbfluid_get_interpolated_velocity(source_position, p->swim.v_source);
+#endif
   lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB u = (%.16e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",this_node,interpolated_u[0],interpolated_u[1],interpolated_u[2],p->m.v[0],p->m.v[1],p->m.v[2]));
@@ -2775,6 +2786,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   velocity[0] -= p->swim.v_swim*p->r.quatu[0];
   velocity[1] -= p->swim.v_swim*p->r.quatu[1];
   velocity[2] -= p->swim.v_swim*p->r.quatu[2];
+  p->swim.v_center[0] = interpolated_u[0];
+  p->swim.v_center[1] = interpolated_u[1];
+  p->swim.v_center[2] = interpolated_u[2];
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS

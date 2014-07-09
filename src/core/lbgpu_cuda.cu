@@ -1582,6 +1582,17 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
   particle_force[part_index].f[1] = 0.0f;
   particle_force[part_index].f[2] = 0.0f;
 
+#ifdef ENGINE
+  // First calculate interpolated velocity for dipole source,
+  // such that we don't overwrite mode, d_v, etc. for the rest of the function
+  float source_position[3];
+  float direction = float(particle_data[part_index].swim.push_pull) * particle_data[part_index].swim.dipole_length;
+  source_position[0] = particle_data[part_index].p[0] + direction * particle_data[part_index].swim.quatu[0];
+  source_position[1] = particle_data[part_index].p[1] + direction * particle_data[part_index].swim.quatu[1];
+  source_position[2] = particle_data[part_index].p[2] + direction * particle_data[part_index].swim.quatu[2];
+  interpolation_three_point_coupling(n_a, source_position, node_index, d_v, delta, particle_data[part_index].swim.v_source);
+#endif
+
   // Do the velocity interpolation
   interpolation_three_point_coupling(n_a, particle_data[part_index].p, node_index, d_v, delta, interpolated_u);
 
@@ -1612,6 +1623,9 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
     velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
     velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
     velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
+    particle_data[part_index].swim.v_center[0] = interpolated_u[0];
+    particle_data[part_index].swim.v_center[1] = interpolated_u[1];
+    particle_data[part_index].swim.v_center[2] = interpolated_u[2];
 #endif
 
     viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u[0]*para.agrid/para.tau)/rhotot;
@@ -1718,7 +1732,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
  * @param *interpolated_u       Pointer to the interpolated velocity
  * @param *delta                Pointer for the weighting of particle position (Output)
 */
-__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, unsigned int* node_index, float *particle_position, float* mode, LB_rho_v_gpu *d_v, float *interpolated_u, float* delta ) {
+__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
@@ -1841,8 +1855,20 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   particle_force[part_index].f[1] = 0.0f;
   particle_force[part_index].f[2] = 0.0f;
 
+#ifdef ENGINE
+  // First calculate interpolated velocity for dipole source,
+  // such that we don't overwrite mode, d_v, etc. for the rest of the function
+  float source_position[3];
+  float direction = float(particle_data[part_index].swim.push_pull) * particle_data[part_index].swim.dipole_length;
+  source_position[0] = particle_data[part_index].p[0] + direction * particle_data[part_index].swim.quatu[0];
+  source_position[1] = particle_data[part_index].p[1] + direction * particle_data[part_index].swim.quatu[1];
+  source_position[2] = particle_data[part_index].p[2] + direction * particle_data[part_index].swim.quatu[2];
+  interpolation_two_point_coupling(n_a, source_position, node_index, mode, d_v, delta, particle_data[part_index].swim.v_source);
+#endif
+
   // Do the velocity interpolation
-  interpolation_two_point_coupling(n_a, node_index, particle_data[part_index].p, mode, d_v, interpolated_u, delta);
+  interpolation_two_point_coupling(n_a, particle_data[part_index].p, node_index, mode, d_v, delta, interpolated_u);
+
 #ifdef SHANCHEN
 
  #pragma unroll
@@ -2736,7 +2762,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  * @param *part              Pointer to the rn array of the particles (Input)
  * @param node_f             Pointer to local node force (Input)
  * @param *fluid_composition Pointer to the local fluid composition for the Shanchen
- * @param *d_v    Pointer to local device values
+ * @param *d_v               Pointer to local device values
 */
 __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
 
@@ -3036,8 +3062,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-
-  cudaStreamCreate(&stream[0]);
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 

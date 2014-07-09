@@ -26,6 +26,7 @@
 #include "interaction_data_tcl.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
+#include "global.hpp"
 
 #include "comforce_tcl.hpp"
 #include "comfixed_tcl.hpp"

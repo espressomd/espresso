@@ -332,28 +332,28 @@ int populate_lattice(particle_data* atom_data) {
             lowernode[2] = (lowernode[2] + ek_parameters.dim_z) % ek_parameters.dim_z;
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],lowernode[1],lowernode[2] )]
-              = b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+              += b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,lowernode[1],lowernode[2] )]
-              = b->charge * cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+              += b->charge * cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],( lowernode[1] + 1 ) % ek_parameters.dim_y,lowernode[2] )]
-              = b->charge * ( 1 - cellpos[0] ) * cellpos[1] * ( 1 - cellpos[2] );
+              += b->charge * ( 1 - cellpos[0] ) * cellpos[1] * ( 1 - cellpos[2] );
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],lowernode[1],( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-              = b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2];
+              += b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2];
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,( lowernode[1] + 1 ) % ek_parameters.dim_y,lowernode[2] )]
-              = b->charge * cellpos[0] * cellpos[1] * ( 1 - cellpos[2] );
+              += b->charge * cellpos[0] * cellpos[1] * ( 1 - cellpos[2] );
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,lowernode[1],( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-              = b->charge * cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2];
+              += b->charge * cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2];
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],( lowernode[1] + 1 ) % ek_parameters.dim_y,( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-              = b->charge * ( 1 - cellpos[0] ) * cellpos[1] * cellpos[2];
+              += b->charge * ( 1 - cellpos[0] ) * cellpos[1] * cellpos[2];
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,( lowernode[1] + 1 ) % ek_parameters.dim_y,( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-              = b->charge * cellpos[0] * cellpos[1] * cellpos[2];
+              += b->charge * cellpos[0] * cellpos[1] * cellpos[2];
             // Interpolate lennard-jones parameters to boundary
             float r = pow(2,1./6.)*c->sigma;
 

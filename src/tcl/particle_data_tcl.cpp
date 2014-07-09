@@ -119,7 +119,21 @@ void tclcommand_part_print_torque_lab_frame(Particle *part, char *buffer, Tcl_In
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
+/* Print velocity in the body frame */
+void tclcommand_part_print_v_body(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  double vel[3];
+  //Convert the velocity to body-fixed coordinates from space-fixed coordinates.
+  convert_vel_space_to_body(part, vel);
 
+  /* unscale velocities ! */
+  Tcl_PrintDouble(interp, vel[0]/time_step, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, vel[1]/time_step, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, vel[2]/time_step, buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
 
 void tclcommand_part_print_quat(Particle *part, char *buffer, Tcl_Interp *interp)
 {
@@ -475,6 +489,9 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 
   Tcl_AppendResult(interp, " torque_body ", (char *)NULL);
   tclcommand_part_print_torque_body_frame(&part, buffer, interp);
+
+  Tcl_AppendResult(interp, " body_frame_velocity ", (char *)NULL);
+  tclcommand_part_print_v_body(&part, buffer, interp);
 #endif
 
 #ifdef ROTATION_PER_PARTICLE
@@ -675,6 +692,8 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_torque_lab_frame(&part, buffer, interp);
     else if ( ARG0_IS_S_EXACT("torque_body") || ARG0_IS_S("tbf") )
       tclcommand_part_print_torque_body_frame(&part, buffer, interp);
+    else if ( ARG0_IS_S_EXACT("body_frame_velocity") )
+      tclcommand_part_print_v_body(&part, buffer, interp);
 #endif
 #ifdef ROTATION_PER_PARTICLE
     else if (ARG0_IS_S("rotation"))

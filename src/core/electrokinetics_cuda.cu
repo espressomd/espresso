@@ -64,9 +64,6 @@ extern EK_parameters* lb_ek_parameters_gpu;
 #endif
   /* end of code duplication */
 
-  extern cudaStream_t stream[1];
-  extern cudaError_t _err;
-
   #define PI_FLOAT 3.14159265358979323846f
 
   EK_parameters ek_parameters = { -1.0, -1.0, -1.0,
@@ -1891,11 +1888,12 @@ int ek_init() {
       cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
 
 #ifdef EK_BOUNDARIES
-      if ( old_number_of_boundaries != n_lb_boundaries )
+      if ( old_number_of_boundaries != n_lb_boundaries || old_number_of_species != ek_parameters.number_of_species)
       {
         lb_init_boundaries();
         lb_get_boundary_force_pointer( &ek_lb_boundary_force );
         old_number_of_boundaries = n_lb_boundaries;
+        old_number_of_species = ek_parameters.number_of_species;
       }
       
       cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );

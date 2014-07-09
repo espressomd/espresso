@@ -17,7 +17,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"
 #include "config.hpp"
@@ -25,6 +24,10 @@
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "cuda_init.hpp"
+
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
 
 static int max_ran = 1000000;
 static CUDA_global_part_vars global_part_vars_host = {0,0,0};

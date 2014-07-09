@@ -27,7 +27,6 @@
 
 
 #include "utils.hpp"
-#include "global.hpp"
 
 /************************************************
  * defines
@@ -258,6 +257,8 @@ typedef struct {
 #if defined(LB) || defined(LB_GPU)
   int push_pull;
   double dipole_length;
+  double v_center[3];
+  double v_source[3];
 #endif
 } ParticleParametersSwimming;
 #endif

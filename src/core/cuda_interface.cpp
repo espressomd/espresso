@@ -176,6 +176,16 @@ static void cuda_mpi_get_particles_slave(){
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
           }
   #endif
+
+#ifdef ENGINE
+          particle_data_host[i+g].swim.v_swim        = (float)part[i].swim.v_swim;
+          particle_data_host[i+g].swim.f_swim        = (float)part[i].swim.f_swim;
+          particle_data_host[i+g].swim.quatu[0]      = (float)part[i].r.quatu[0];
+          particle_data_host[i+g].swim.quatu[1]      = (float)part[i].r.quatu[1];
+          particle_data_host[i+g].swim.quatu[2]      = (float)part[i].r.quatu[2];
+          particle_data_host[i+g].swim.push_pull     =        part[i].swim.push_pull;
+          particle_data_host[i+g].swim.dipole_length = (float)part[i].swim.dipole_length;
+#endif
         }
         g+=npart;
       }
@@ -185,59 +195,59 @@ static void cuda_mpi_get_particles_slave(){
     }
 }
 
-  void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_composition){
-    int n_part;
-    int g, pnode;
-    Cell *cell;
-    int c;
-    int i;  
-    int *sizes;
-    sizes = (int *) malloc(sizeof(int)*n_nodes);
-    n_part = cells_get_n_particles();
-    /* first collect number of particles on each node */
-    MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
+void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_composition){
+  int n_part;
+  int g, pnode;
+  Cell *cell;
+  int c;
+  int i;  
+  int *sizes;
+  sizes = (int *) malloc(sizeof(int)*n_nodes);
+  n_part = cells_get_n_particles();
+  /* first collect number of particles on each node */
+  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 
-    /* call slave functions to provide the slave datas */
-    if(this_node > 0) {
-      cuda_mpi_send_forces_slave();
-    }
-    else{
+  /* call slave functions to provide the slave datas */
+  if(this_node > 0) {
+    cuda_mpi_send_forces_slave();
+  }
+  else{
     /* fetch particle informations into 'result' */
     g = 0;
-      for (pnode = 0; pnode < n_nodes; pnode++) {
-        if (sizes[pnode] > 0) {
-          if (pnode == 0) {
-            for (c = 0; c < local_cells.n; c++) {
-              int npart;  
-              cell = local_cells.cell[c];
-              npart = cell->n;
-              for (i=0;i<npart;i++) {
-                cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
-                cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
-                cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
+    for (pnode = 0; pnode < n_nodes; pnode++) {
+      if (sizes[pnode] > 0) {
+        if (pnode == 0) {
+          for (c = 0; c < local_cells.n; c++) {
+            int npart;  
+            cell = local_cells.cell[c];
+            npart = cell->n;
+            for (i=0;i<npart;i++) {
+              cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
+              cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
+              cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
 #ifdef SHANCHEN
-                for (int ii=0;ii<LB_COMPONENTS;ii++) {
-                   cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
-                }
-#endif
+              for (int ii=0;ii<LB_COMPONENTS;ii++) {
+                cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
               }
-        g += npart;
+#endif
             }
+            g += npart;
           }
-          else {
+        }
+        else {
           /* and send it back to the slave node */
           MPI_Send(&host_forces[g], sizes[pnode]*sizeof(CUDA_particle_force), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);      
 #ifdef SHANCHEN
           MPI_Send(&host_composition[g], sizes[pnode]*sizeof(CUDA_fluid_composition), MPI_BYTE, pnode, REQ_CUDAGETPARTS, comm_cart);      
 #endif
           g += sizes[pnode];
-          }
         }
       }
     }
-    COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
+  }
+  COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
 
-    free(sizes);
+  free(sizes);
 }
 
 static void cuda_mpi_send_forces_slave(){
