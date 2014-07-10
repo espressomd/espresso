@@ -100,48 +100,49 @@ void calc_long_range_energies()
 {
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
-  switch (coulomb.method) {
+	switch (coulomb.method) {
 #ifdef P3M
-  case COULOMB_P3M_GPU:
-    printf("long range energy calculation not implemented for GPU P3M\n"); //TODO make right
-    break;
-  case COULOMB_P3M:
-    p3m_charge_assign(); 
-    energy.coulomb[1] = p3m_calc_kspace_forces(0,1);
-    break;
-  case COULOMB_ELC_P3M:
-    // assign the original charges first
-    // they may not have been assigned yet
-    p3m_charge_assign(); 
-    if(!elc_params.dielectric_contrast_on)
-      energy.coulomb[1] = p3m_calc_kspace_forces(0,1);
-    else {
-      energy.coulomb[1] = 0.5*p3m_calc_kspace_forces(0,1); 
-      energy.coulomb[1]+= 0.5*ELC_P3M_dielectric_layers_energy_self(); 
+	case COULOMB_P3M_GPU:
+		printf("long range energy calculation not implemented for GPU P3M\n"); //TODO make right
+		break;
+	case COULOMB_P3M:
+		p3m_charge_assign();
+		energy.coulomb[1] = p3m_calc_kspace_forces(0,1);
+		break;
+	case COULOMB_ELC_P3M:
+		// assign the original charges first
+		// they may not have been assigned yet
+		p3m_charge_assign();
+		if(!elc_params.dielectric_contrast_on)
+			energy.coulomb[1] = p3m_calc_kspace_forces(0,1);
+		else {
+			energy.coulomb[1] = 0.5*p3m_calc_kspace_forces(0,1);
+			energy.coulomb[1]+= 0.5*ELC_P3M_dielectric_layers_energy_self();
 
-      //  assign both original and image charges now
-      ELC_p3m_charge_assign_both();
-      ELC_P3M_modify_p3m_sums_both();
+			//  assign both original and image charges now
+			ELC_p3m_charge_assign_both();
+			ELC_P3M_modify_p3m_sums_both();
 
-      energy.coulomb[1] += 0.5*p3m_calc_kspace_forces(0,1); 
+			energy.coulomb[1] += 0.5*p3m_calc_kspace_forces(0,1);
 
-      //assign only the image charges now
-      ELC_p3m_charge_assign_image();
-      ELC_P3M_modify_p3m_sums_image();
+			//assign only the image charges now
+			ELC_p3m_charge_assign_image();
+			ELC_P3M_modify_p3m_sums_image();
 
-      energy.coulomb[1]-= 0.5*p3m_calc_kspace_forces(0,1); 
-    }
-    energy.coulomb[2] = ELC_energy();
-    break;
+			energy.coulomb[1]-= 0.5*p3m_calc_kspace_forces(0,1);
+		}
+		energy.coulomb[2] = ELC_energy();
+		break;
 #endif
-  case COULOMB_MMM2D:
-    *energy.coulomb += MMM2D_far_energy();
-    *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
-    break;
-    /* calculate electric part of energy (only for MAGGS) */
-  case COULOMB_MAGGS:
-    *energy.coulomb += maggs_electric_energy();
-    break;
+	case COULOMB_MMM2D:
+		*energy.coulomb += MMM2D_far_energy();
+		*energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
+		break;
+		/* calculate electric part of energy (only for MAGGS) */
+	case COULOMB_MAGGS:
+		*energy.coulomb += maggs_electric_energy();
+		break;
+	default: break;
   }
 #endif  /* ifdef ELECTROSTATICS */
 

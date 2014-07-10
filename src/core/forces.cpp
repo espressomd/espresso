@@ -210,52 +210,55 @@ void force_calc()
 void calc_long_range_forces()
 {
 #ifdef ELECTROSTATICS  
-  /* calculate k-space part of electrostatic interaction. */
-    switch (coulomb.method) {
-  #ifdef P3M
-    case COULOMB_ELC_P3M:
-      if (elc_params.dielectric_contrast_on) {
-        ELC_P3M_modify_p3m_sums_both();
-        ELC_p3m_charge_assign_both();
-        ELC_P3M_self_forces();
-      }
-      else
-        p3m_charge_assign();
-  
-      p3m_calc_kspace_forces(1,0);
-  
-      if (elc_params.dielectric_contrast_on)
-        ELC_P3M_restore_p3m_sums();
-   
-      ELC_add_force(); 
-  
-      break;
+	/* calculate k-space part of electrostatic interaction. */
+	switch (coulomb.method) {
+#ifdef P3M
+	case COULOMB_ELC_P3M:
+		if (elc_params.dielectric_contrast_on) {
+			ELC_P3M_modify_p3m_sums_both();
+			ELC_p3m_charge_assign_both();
+			ELC_P3M_self_forces();
+		}
+		else
+			p3m_charge_assign();
+
+		p3m_calc_kspace_forces(1,0);
+
+		if (elc_params.dielectric_contrast_on)
+			ELC_P3M_restore_p3m_sums();
+
+		ELC_add_force();
+
+		break;
 #ifdef CUDA
-    case COULOMB_P3M_GPU:
-      if (this_node == 0) p3m_gpu_add_farfield_force();
-  #ifdef NPT
-      printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO fix this?
-      exit(1); //TODO ALTERNATIVELY CHECK IF BAROSTAT IS ACTUALLY ON
-  #endif
-      break;
+	case COULOMB_P3M_GPU:
+		if (this_node == 0) p3m_gpu_add_farfield_force();
+#ifdef NPT
+		printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO fix this?
+		exit(1); //TODO ALTERNATIVELY CHECK IF BAROSTAT IS ACTUALLY ON
 #endif
-    case COULOMB_P3M:
-      p3m_charge_assign();
-  #ifdef NPT
-      if(integ_switch == INTEG_METHOD_NPT_ISO)
-        nptiso.p_vir[0] += p3m_calc_kspace_forces(1,1);
-      else
-  #endif
-        p3m_calc_kspace_forces(1,0);
-      break;
-  #endif
-    case COULOMB_MAGGS:
-      maggs_calc_forces();
-      break;
-    case COULOMB_MMM2D:
-      MMM2D_add_far_force();
-      MMM2D_dielectric_layers_force_contribution();
-    }
+		break;
+#endif
+	case COULOMB_P3M:
+		p3m_charge_assign();
+#ifdef NPT
+		if(integ_switch == INTEG_METHOD_NPT_ISO)
+			nptiso.p_vir[0] += p3m_calc_kspace_forces(1,1);
+		else
+#endif
+			p3m_calc_kspace_forces(1,0);
+		break;
+#endif
+	case COULOMB_MAGGS:
+		maggs_calc_forces();
+		break;
+	case COULOMB_MMM2D:
+		MMM2D_add_far_force();
+		MMM2D_dielectric_layers_force_contribution();
+		break;
+	default:
+		break;
+	}
 #endif  /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES  
