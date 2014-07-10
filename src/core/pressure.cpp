@@ -184,6 +184,8 @@ void calc_long_range_virials()
   case COULOMB_MMM1D:
     fprintf(stderr, "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
     break;
+  default:
+	  break;
   }
 #endif /*ifdef ELECTROSTATICS */  
   

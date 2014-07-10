@@ -175,7 +175,7 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   case COULOMB_MMM2D:
     if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
     break;
-  case COULOMB_NONE:
+  default:
     break;
   }
 
