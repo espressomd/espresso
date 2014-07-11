@@ -32,7 +32,7 @@ col_types = {'^di': 3,
 
 re_block_type = re.compile('^{([a-z_]+)\s')
 re_particles = re.compile('{particles\s*{([a-z_\s]*)}((?:\s*{.*?})*)\s*}')
-re_particle = re.compile('\{(\s*(?:[0-9\.-]+\s*)*)\}')
+re_particle = re.compile('\{(.*?)\}')
 re_space = re.compile('\s')
 re_variable = re.compile('\{(?!variable\s)([^\s\}]+)([^\}]*)\}')
 re_int_list = re.compile('^[0-9\s]+$')
