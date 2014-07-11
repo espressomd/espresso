@@ -46,6 +46,7 @@ MOL_CUT                         implies VIRTUAL_SITES_COM
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
 INTER_RF                        implies ELECTROSTATICS
+MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
 
 /* Magnetostatics */
 DIPOLES
