@@ -131,7 +131,6 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   lattice->offset[1]=offset[1];
   lattice->offset[2]=offset[2];
 
-
   int halosize=1;
 
   if (size[0] > 0 && abs(size[0] - box_l[0]) > ROUND_ERROR_PREC) {

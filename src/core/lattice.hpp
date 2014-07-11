@@ -330,8 +330,6 @@ public:
 
   void get_data_for_halo_index(index_t* ind, void** data) {
     (*data) = ((char*)this->_data) + get_linear_index(ind[0], ind[1], ind[2], this->halo_grid)*this->element_size;
-
-
   }
 
   void get_data_for_linear_index(index_t ind, void** data) {
