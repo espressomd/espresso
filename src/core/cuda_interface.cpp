@@ -7,6 +7,7 @@
 #include "random.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
+#include "energy.hpp"
 
 #ifdef CUDA
 
@@ -279,6 +280,16 @@ static void cuda_mpi_send_forces_slave(){
       free(host_composition_sl);
 #endif 
     } 
+}
+
+/** Takes a CUDA_energy struct and adds it to the core energy struct.
+This cannot be done from inside cuda_common_cuda.cu:copy_energy_from_GPU() because energy.hpp indirectly includes on mpi.h while .cu files may not depend on mpi.h.*/
+void copy_CUDA_energy_to_energy(CUDA_energy energy_host)
+{
+  energy.bonded[0] += energy_host.bonded;
+  energy.non_bonded[0] += energy_host.non_bonded;
+  energy.coulomb[0] += energy_host.coulomb;
+  energy.dipolar[0] += energy_host.dipolar;
 }
 
 #endif /* ifdef CUDA */

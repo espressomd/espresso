@@ -24,7 +24,6 @@
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "cuda_init.hpp"
-#include "energy.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -307,10 +306,7 @@ void clear_energy_on_GPU() {
 
 void copy_energy_from_GPU() {
   cuda_safe_mem (cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy), cudaMemcpyDeviceToHost));
-  energy.bonded[0] += energy_host.bonded;
-  energy.non_bonded[0] += energy_host.non_bonded;
-  energy.coulomb[0] += energy_host.coulomb;
-  energy.dipolar[0] += energy_host.dipolar;
+  copy_CUDA_energy_to_energy(energy_host);
 }
 
 /** Generic copy functions from an to device **/
