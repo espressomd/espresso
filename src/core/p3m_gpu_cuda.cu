@@ -112,7 +112,7 @@ __host__ __device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_
 }
 
 /* Calculate influence function */
-#if 0
+#if 1
 // host version, not used anywhere
 void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 
@@ -510,8 +510,6 @@ extern "C" {
    */
 
   void p3m_gpu_init(int cao, int mesh, REAL_TYPE alpha, REAL_TYPE box) {
-    puts("p3m_gpu_init()");
-    //    gpu_init_particle_comm();
     int reinit_if = 0, mesh_changed = 0;
  
     espressoSystemInterface.requestParticleStructGpu();
@@ -577,10 +575,10 @@ extern "C" {
 
       if((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) {
       // // Calculate influence function of host.
-      // calculate_influence_function( cao, mesh, box, alpha, p3m_gpu_data.G_hat_host);
+      calculate_influence_function( cao, mesh, box, alpha, p3m_gpu_data.G_hat_host);
 
       // // Copy influence function to device.
-      // cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);
+      cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);
 	dim3 grid(1,1,1);
 	dim3 block(1,1,1);
         block.y = mesh;
@@ -591,7 +589,7 @@ extern "C" {
 
 	//	printf("mesh %d, grid (%d %d %d), block (%d %d %d)\n", mesh, grid.x, grid.y, grid.z, block.x, block.y, block.z);
 
-	KERNELCALL(calculate_influence_function_device,grid,block,(cao, mesh, box, alpha, p3m_gpu_data.G_hat));
+	//	KERNELCALL(calculate_influence_function_device,grid,block,(cao, mesh, box, alpha, p3m_gpu_data.G_hat));
 	cudaThreadSynchronize();
       }
       p3m_gpu_data_initialized = 1;
