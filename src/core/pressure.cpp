@@ -935,11 +935,6 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
      skin from on opposite sides of the box overlaps then we produce an error message.  To code dround this would be
      creating unnecessary work since I can't imagine when we might want that */
 
-  if (skin < 0.0) {
-    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{analyze stress_profile: parameter skin not set}");
-    return 0;
-  }
   for (i=0;i<3;i++) {
     if ((! periodic[i]) && (range[i] + 2*skin +2*max_cut > box_l[i])) {
       char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);

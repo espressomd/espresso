@@ -79,8 +79,9 @@ double time_step_squared= -1.0;
 double time_step_squared_half = -1.0;
 
 double sim_time         = 0.0;
-double skin             = -1.0;
-double skin2;
+double skin             = 0.0;
+double skin2            = 0.0;
+bool   skin_set         = false;
 
 int    resort_particles = 1;
 int    recalc_forces    = 1;
@@ -131,13 +132,8 @@ void integrator_sanity_checks()
     errtext = runtime_error(128);
     ERROR_SPRINTF(errtext, "{010 time_step not set} ");
   }
-  if ( skin < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{011 skin not set} ");
-  }
-  if ( temperature < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
+  if ( ! skin_set ) {
+    fprintf(stderr, "WARNING: skin not set, expect suboptimal performance.\n");
   }
 }
 

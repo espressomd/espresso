@@ -411,11 +411,7 @@ void local_sort_particles()
 void cells_on_geometry_change(int flags)
 {
   if (max_cut > 0.0) {
-    if (skin >= 0.0)
-      max_range = max_cut + skin;
-    else
-      /* if the skin is not yet set, assume zero. */
-      max_range = max_cut;
+    max_range = max_cut + skin;
   }
   else
     /* if no interactions yet, we also don't need a skin */

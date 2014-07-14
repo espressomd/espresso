@@ -35,7 +35,7 @@
 /* thermostat switch */
 int thermo_switch = THERMO_OFF;
 /** Temperature */
-double temperature = -1.0;
+double temperature = 0.0;
 
 /* LANGEVIN THERMOSTAT */
 /* Langevin friction coefficient gamma. */

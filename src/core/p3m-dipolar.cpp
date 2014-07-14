@@ -1875,11 +1875,6 @@ int dp3m_adaptive_tune(char **logger)
  
   P3M_TRACE(fprintf(stderr,"%d: dp3m_adaptive_tune\n",this_node));
 
-  if (skin == -1) {
-    *logger = strcat_alloc(*logger, "p3m cannot be tuned, since the skin is not yet set");
-    return ES_ERROR;
-  }
-
   /* preparation */
   mpi_bcast_event(P3M_COUNT_DIPOLES);
 
@@ -2336,12 +2331,6 @@ int dp3m_sanity_checks()
 
   if (dp3m_sanity_checks_boxl()) ret = 1;
 
-  if (skin == -1) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{047 dipolar P3M_init: skin is not yet set} ");
-    ret = 1;
-  }
-  
   if( dp3m.params.mesh[0] == 0) {
     errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{045 dipolar P3M_init: mesh size is not yet set} ");

@@ -266,6 +266,7 @@ int tclcallback_skin(Tcl_Interp *interp, void *_data)
     return (TCL_ERROR);
   }
   skin = data;
+  skin_set = true;
   mpi_bcast_parameter(FIELD_SKIN);
   return (TCL_OK);
 }
