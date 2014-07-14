@@ -206,6 +206,10 @@ void on_integration_start()
   meta_init();
 #endif
 
+  if (! skin_set) {
+    /* no user set default, time for an educated guess */
+    skin = 0.4*max_cut;
+  }
   /* Prepare the thermostat */
   if (reinit_thermo) {
     thermo_init();

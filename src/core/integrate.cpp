@@ -132,9 +132,6 @@ void integrator_sanity_checks()
     errtext = runtime_error(128);
     ERROR_SPRINTF(errtext, "{010 time_step not set} ");
   }
-  if ( ! skin_set ) {
-    fprintf(stderr, "WARNING: skin not set, expect suboptimal performance.\n");
-  }
 }
 
 #ifdef NPT
