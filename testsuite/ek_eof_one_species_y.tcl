@@ -299,7 +299,7 @@ puts "    diagonal must therefore be different.\n"
 if { $total_density_difference > 5.0e-04 } {
   error_exit "Density accuracy not achieved"
 }
-if { $total_velocity_difference > 5.0e-03 } {
+if { $total_velocity_difference > 7.5e-03 } {
   error_exit "Velocity accuracy not achieved"
 }
 if { $total_stress_difference_xx > 2.5e-03 } {
