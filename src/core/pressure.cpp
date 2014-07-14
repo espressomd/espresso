@@ -182,6 +182,7 @@ void calc_long_range_virials()
     fprintf(stderr, "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
     break;
   case COULOMB_MMM1D:
+  case COULOMB_MMM1D_GPU:
     fprintf(stderr, "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
     break;
   default:

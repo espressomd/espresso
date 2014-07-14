@@ -40,6 +40,8 @@ typedef struct {
   double far_switch_radius_2;
   /** required accuracy */
   double maxPWerror;
+  /** cutoff of the bessel sum. only used by the GPU implementation */
+  int    bessel_cutoff;
 } MMM1D_struct;
 extern MMM1D_struct mmm1d_params;
 
