@@ -1761,6 +1761,8 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case COULOMB_MMM2D:
     MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
     break;  
+  case COULOMB_EWALD_GPU:
+  	MPI_Bcast(&ewaldgpu_params, sizeof(Ewaldgpu_params), MPI_BYTE, 0, comm_cart);
   case COULOMB_MAGGS:
     MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart); 
     break;

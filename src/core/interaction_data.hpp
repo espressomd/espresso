@@ -117,6 +117,7 @@
 		COULOMB_INTER_RF, //< Coulomb method is Reaction-Field BUT as interaction
 		COULOMB_P3M_GPU, //< Coulomb method is P3M with GPU based long range part calculation
 		COULOMB_MMM1D_GPU, //< Coulomb method is on-dimensional MMM running on GPU
+		COULOMB_EWALD_GPU, //< Coulomb method is Ewald with GPU based long range part calculation
 	};
 
 #endif

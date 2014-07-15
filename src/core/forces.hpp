@@ -86,6 +86,7 @@
 #include "collision.hpp" 
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
+#include "actor/EwaldgpuForce.hpp"
 
 typedef std::list<Actor*> PotentialList;
 extern PotentialList potentials;
@@ -352,6 +353,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   case COULOMB_MMM2D:
 	  if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
 	  break;
+  case COULOMB_EWALD_GPU:
+		if (q1q2) add_ewald_gpu_coulomb_pair_force(p1,p2,d,dist,force);
+		break;
   default:
 	  break;
   }

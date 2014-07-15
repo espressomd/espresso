@@ -100,6 +100,10 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
       for(l=0;l<3;l++)
         obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
   }
+
+#ifdef EWALD_GPU
+  if(ewaldgpu_params.ewaldgpu_is_running == true) fprintf(stderr,"calculating pressure for electrostatics method that doesn't have it implemented\n");
+#endif
   
 #ifdef ELECTROSTATICS
   /* real space coulomb */
