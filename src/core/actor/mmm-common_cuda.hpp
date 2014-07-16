@@ -1,5 +1,6 @@
 #include "mmm-common.hpp"
 #include "specfunc_cuda.hpp"
+#include "cuda_utils.hpp"
 
 // order hardcoded. mmm1d_recalcTables() typically does order less than 30.
 // As the coefficients are stored in __constant__ memory, the array needs to be sized in advance.
@@ -54,10 +55,10 @@ int modpsi_init()
 			printf("ERROR: __constant__ device_linModPsi[] is not large enough\n");
 			exit(EXIT_FAILURE);
 		}
-		HANDLE_ERROR( cudaMemcpyToSymbol(device_linModPsi_offsets, linModPsi_offsets, 2*n_modPsi*sizeof(int)) );
-		HANDLE_ERROR( cudaMemcpyToSymbol(device_linModPsi_lengths, linModPsi_lengths, 2*n_modPsi*sizeof(int)) );
-		HANDLE_ERROR( cudaMemcpyToSymbol(device_linModPsi, linModPsi, linModPsiSize*sizeof(mmm1dgpu_real)) );
-		HANDLE_ERROR( cudaMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)) );
+		cuda_safe_mem( cudaMemcpyToSymbol(device_linModPsi_offsets, linModPsi_offsets, 2*n_modPsi*sizeof(int)) );
+		cuda_safe_mem( cudaMemcpyToSymbol(device_linModPsi_lengths, linModPsi_lengths, 2*n_modPsi*sizeof(int)) );
+		cuda_safe_mem( cudaMemcpyToSymbol(device_linModPsi, linModPsi, linModPsiSize*sizeof(mmm1dgpu_real)) );
+		cuda_safe_mem( cudaMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)) );
 	}
 
 	return 0;
