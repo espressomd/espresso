@@ -310,7 +310,7 @@ inline void init_local_particle_force(Particle *part)
     part->f.f[2] += part->l.ext_force[2];
   }
 #endif
-  
+
 #ifdef ROTATION
   {
     double scale;

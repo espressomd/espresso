@@ -647,7 +647,7 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
 #ifdef ENGINE
     else if (ARG0_IS_S("swimming")) {
-      sprintf(buffer, "%f %f", part.swim.v_swim/time_step, part.swim.f_swim);
+      sprintf(buffer, "%f %f %d %f", part.swim.v_swim/time_step, part.swim.f_swim, part.swim.push_pull, part.swim.dipole_length);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif
@@ -1298,13 +1298,12 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
   int push_pull = -1; // default to pusher
   double dipole_length = 0.0;
 
-  *change = 1;
+  *change = 2;
   if (!ARG_IS_S(0,"off")) {
-    // TODO: Increase to 3 as soon as we handle pushers and pullers
-    *change = 2;
+    *change = 5;
 
     if (argc < *change) {
-      Tcl_AppendResult(interp, "swimming requires at 3 arguments", (char *) NULL);
+      Tcl_AppendResult(interp, "swimming requires (v_swim|f_swim) [float] (pusher|puller) dipole_length [float]", (char *) NULL);
       return TCL_ERROR;
     }
 
@@ -1324,7 +1323,6 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
     }
 
     /* Parse pusher or puller */
-    /* TODO: Comment back in as soon as we handle pushers and pullers
     if (ARG_IS_S(2,"pusher")) {
       push_pull = -1;
     } else if (ARG_IS_S(2,"puller")) {
@@ -1332,7 +1330,13 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
     } else {
       return TCL_ERROR;
     }
-    */
+
+    /* Parse dipole_length */
+    if (ARG_IS_S(3,"dipole_length")) {
+      if (!ARG_IS_D(4,dipole_length)) {
+        return TCL_ERROR;
+      }
+    }
   }
 
   if (set_particle_swimming(part_num, v_swim, f_swim, push_pull, dipole_length) == TCL_ERROR) {

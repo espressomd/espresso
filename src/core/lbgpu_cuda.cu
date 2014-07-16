@@ -1562,8 +1562,9 @@ __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a,
  * @param *rn_part           Pointer to randomnumber array of the particle
  * @param node_index         node index around (8) particle (Output)
  * @param *d_v               Pointer to local device values
+ * @param flag_cs            Determine if we are at the centre (0, typical) or at the source (1, swimmer only)
 */
-__device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
+__device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs){
 
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
@@ -1578,23 +1579,44 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
       delta_j[jj+ii*3]  =0.0f;
     }
   }
-  particle_force[part_index].f[0] = 0.0f;
-  particle_force[part_index].f[1] = 0.0f;
-  particle_force[part_index].f[2] = 0.0f;
+  // Zero out only if we are at the centre of the particle <=> flag_cs = 0
+  particle_force[part_index].f[0] = flag_cs * particle_force[part_index].f[0];
+  particle_force[part_index].f[1] = flag_cs * particle_force[part_index].f[1];
+  particle_force[part_index].f[2] = flag_cs * particle_force[part_index].f[2];
+
+  float position[3];
+  position[0] = particle_data[part_index].p[0];
+  position[1] = particle_data[part_index].p[1];
+  position[2] = particle_data[part_index].p[2];
+
+  float velocity[3];
+  velocity[0] = particle_data[part_index].v[0];
+  velocity[1] = particle_data[part_index].v[1];
+  velocity[2] = particle_data[part_index].v[2];
 
 #ifdef ENGINE
   // First calculate interpolated velocity for dipole source,
   // such that we don't overwrite mode, d_v, etc. for the rest of the function
-  float source_position[3];
   float direction = float(particle_data[part_index].swim.push_pull) * particle_data[part_index].swim.dipole_length;
-  source_position[0] = particle_data[part_index].p[0] + direction * particle_data[part_index].swim.quatu[0];
-  source_position[1] = particle_data[part_index].p[1] + direction * particle_data[part_index].swim.quatu[1];
-  source_position[2] = particle_data[part_index].p[2] + direction * particle_data[part_index].swim.quatu[2];
-  interpolation_three_point_coupling(n_a, source_position, node_index, d_v, delta, particle_data[part_index].swim.v_source);
+  // Extrapolate position by dipole length if we are at the centre of the particle
+  position[0] += flag_cs * direction * particle_data[part_index].swim.quatu[0];
+  position[1] += flag_cs * direction * particle_data[part_index].swim.quatu[1];
+  position[2] += flag_cs * direction * particle_data[part_index].swim.quatu[2];
 #endif
 
   // Do the velocity interpolation
-  interpolation_three_point_coupling(n_a, particle_data[part_index].p, node_index, d_v, delta, interpolated_u);
+  interpolation_three_point_coupling(n_a, position, node_index, d_v, delta, interpolated_u);
+
+#ifdef ENGINE
+  velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
+  velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
+  velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
+
+  // The first three components are v_center, the last three v_source
+  particle_data[part_index].swim.v_cs[0+3*flag_cs] = interpolated_u[0];
+  particle_data[part_index].swim.v_cs[1+3*flag_cs] = interpolated_u[1];
+  particle_data[part_index].swim.v_cs[2+3*flag_cs] = interpolated_u[2];
+#endif
 
   /* for LB we do not reweight the friction force */
   for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
@@ -1613,21 +1635,7 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
 
 
   /* Viscous force */
-  float velocity[3];
   for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-    velocity[0] = particle_data[part_index].v[0];
-    velocity[1] = particle_data[part_index].v[1];
-    velocity[2] = particle_data[part_index].v[2];
-
-#ifdef ENGINE
-    velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
-    velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
-    velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
-    particle_data[part_index].swim.v_center[0] = interpolated_u[0];
-    particle_data[part_index].swim.v_center[1] = interpolated_u[1];
-    particle_data[part_index].swim.v_center[2] = interpolated_u[2];
-#endif
-
     viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u[0]*para.agrid/para.tau)/rhotot;
     viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1]/para.time_step - interpolated_u[1]*para.agrid/para.tau)/rhotot;
     viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2]/para.time_step - interpolated_u[2]*para.agrid/para.tau)/rhotot;
@@ -1662,15 +1670,19 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
 #endif    
     /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
       (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+    // only add to particle_force for particle centre <=> (1-flag_cs) = 1
+    particle_force[part_index].f[0] += (1-flag_cs) * viscforce[0+ii*3];
+    particle_force[part_index].f[1] += (1-flag_cs) * viscforce[1+ii*3];
+    particle_force[part_index].f[2] += (1-flag_cs) * viscforce[2+ii*3];
 
-    particle_force[part_index].f[0] += viscforce[0+ii*3];
-    particle_force[part_index].f[1] += viscforce[1+ii*3];
-    particle_force[part_index].f[2] += viscforce[2+ii*3];
-
-    /* note that scforce is zero if SHANCHEN is not #defined */
-    delta_j[0+3*ii] -= (viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
-    delta_j[1+3*ii] -= (viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
-    delta_j[2+3*ii] -= (viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;    
+    // only add to particle_force for particle centre <=> (1-flag_cs) = 1
+    delta_j[0+3*ii] -= (1-flag_cs)*viscforce[0+ii*3]*para.time_step*para.tau/para.agrid;
+    delta_j[1+3*ii] -= (1-flag_cs)*viscforce[1+ii*3]*para.time_step*para.tau/para.agrid;
+    delta_j[2+3*ii] -= (1-flag_cs)*viscforce[2+ii*3]*para.time_step*para.tau/para.agrid;
+    // add swimming force to source position
+    delta_j[0+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[0]*para.time_step*para.tau/para.agrid;
+    delta_j[1+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[1]*para.time_step*para.tau/para.agrid;
+    delta_j[2+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[2]*para.time_step*para.tau/para.agrid;
   }
 }
 
@@ -1819,8 +1831,9 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
  * @param *rn_part              Pointer to randomnumber array of the particle
  * @param node_index            node index around (8) particle (Output)
  * @param *d_v                  Pointer to local device values
+ * @param flag_cs               Determine if we are at the centre (0, typical) or at the source (1, swimmer only)
 */
-__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partgrad1, float * partgrad2, float * partgrad3, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, CUDA_fluid_composition * fluid_composition, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v){
+__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partgrad1, float * partgrad2, float * partgrad3, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, CUDA_fluid_composition * fluid_composition, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs){
 
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
@@ -1851,23 +1864,44 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
       partgrad3[jj+ii*8]=0.0f;
     }
   }
-  particle_force[part_index].f[0] = 0.0f;
-  particle_force[part_index].f[1] = 0.0f;
-  particle_force[part_index].f[2] = 0.0f;
+  // Zero out only if we are at the centre of the particle <=> flag_cs = 0
+  particle_force[part_index].f[0] = flag_cs * particle_force[part_index].f[0];
+  particle_force[part_index].f[1] = flag_cs * particle_force[part_index].f[1];
+  particle_force[part_index].f[2] = flag_cs * particle_force[part_index].f[2];
+
+  float position[3];
+  position[0] = particle_data[part_index].p[0];
+  position[1] = particle_data[part_index].p[1];
+  position[2] = particle_data[part_index].p[2];
+
+  float velocity[3];
+  velocity[0] = particle_data[part_index].v[0];
+  velocity[1] = particle_data[part_index].v[1];
+  velocity[2] = particle_data[part_index].v[2];
 
 #ifdef ENGINE
   // First calculate interpolated velocity for dipole source,
   // such that we don't overwrite mode, d_v, etc. for the rest of the function
-  float source_position[3];
   float direction = float(particle_data[part_index].swim.push_pull) * particle_data[part_index].swim.dipole_length;
-  source_position[0] = particle_data[part_index].p[0] + direction * particle_data[part_index].swim.quatu[0];
-  source_position[1] = particle_data[part_index].p[1] + direction * particle_data[part_index].swim.quatu[1];
-  source_position[2] = particle_data[part_index].p[2] + direction * particle_data[part_index].swim.quatu[2];
-  interpolation_two_point_coupling(n_a, source_position, node_index, mode, d_v, delta, particle_data[part_index].swim.v_source);
+  // Extrapolate position by dipole length if we are at the centre of the particle
+  position[0] += flag_cs * direction * particle_data[part_index].swim.quatu[0];
+  position[1] += flag_cs * direction * particle_data[part_index].swim.quatu[1];
+  position[2] += flag_cs * direction * particle_data[part_index].swim.quatu[2];
 #endif
 
   // Do the velocity interpolation
-  interpolation_two_point_coupling(n_a, particle_data[part_index].p, node_index, mode, d_v, delta, interpolated_u);
+  interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, interpolated_u);
+
+#ifdef ENGINE
+  velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
+  velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
+  velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
+
+  // The first three components are v_center, the last three v_source
+  particle_data[part_index].swim.v_cs[0+3*flag_cs] = interpolated_u[0];
+  particle_data[part_index].swim.v_cs[1+3*flag_cs] = interpolated_u[1];
+  particle_data[part_index].swim.v_cs[2+3*flag_cs] = interpolated_u[2];
+#endif
 
 #ifdef SHANCHEN
 
@@ -1965,15 +1999,18 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
     gradrho2 *= para.agrid; 
     gradrho3 *= para.agrid; 
 
-    scforce[0+ii*3] += particle_data[part_index].solvation[2*ii] * gradrho1 ; 
-    scforce[1+ii*3] += particle_data[part_index].solvation[2*ii] * gradrho2 ;
-    scforce[2+ii*3] += particle_data[part_index].solvation[2*ii] * gradrho3 ;
+    // scforce is 0 at the interpolated point where the swimming force gets put back on the fluid
+    // only add sc_force up for particle centre <=> (1-flag_cs) = 1
+    scforce[0+ii*3] += (1-flag_cs) * particle_data[part_index].solvation[2*ii] * gradrho1 ; 
+    scforce[1+ii*3] += (1-flag_cs) * particle_data[part_index].solvation[2*ii] * gradrho2 ;
+    scforce[2+ii*3] += (1-flag_cs) * particle_data[part_index].solvation[2*ii] * gradrho3 ;
 
     /* scforce is used also later...*/
     particle_force[part_index].f[0] += scforce[0+ii*3];
     particle_force[part_index].f[1] += scforce[1+ii*3];
     particle_force[part_index].f[2] += scforce[2+ii*3];
-    fluid_composition[part_index].weight[ii] = interpolated_rho[ii];
+    // only set fluid_composition for particle centre <=> (1-flag_cs) = 1
+    fluid_composition[part_index].weight[ii] = (1-flag_cs) * interpolated_rho[ii];
  }
 
 #else // SHANCHEN is not defined
@@ -1996,22 +2033,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   }
 
   /* Viscous force */
-  float velocity[3];
   for(int ii=0; ii<LB_COMPONENTS; ++ii)
   { 
-    velocity[0] = particle_data[part_index].v[0];
-    velocity[1] = particle_data[part_index].v[1];
-    velocity[2] = particle_data[part_index].v[2];
-
-#ifdef ENGINE
-    velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
-    velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
-    velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
-    particle_data[part_index].swim.v_center[0] = interpolated_u[0];
-    particle_data[part_index].swim.v_center[1] = interpolated_u[1];
-    particle_data[part_index].swim.v_center[2] = interpolated_u[2];
-#endif
-
     viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u[0]*para.agrid/para.tau)/rhotot;
     viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1]/para.time_step - interpolated_u[1]*para.agrid/para.tau)/rhotot;
     viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2]/para.time_step - interpolated_u[2]*para.agrid/para.tau)/rhotot;
@@ -2048,21 +2071,27 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
     /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
       (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 
-    particle_force[part_index].f[0] += viscforce[0+ii*3];
-    particle_force[part_index].f[1] += viscforce[1+ii*3];
-    particle_force[part_index].f[2] += viscforce[2+ii*3];
+    // only add to particle_force for particle centre <=> (1-flag_cs) = 1
+    particle_force[part_index].f[0] += (1-flag_cs) * viscforce[0+ii*3];
+    particle_force[part_index].f[1] += (1-flag_cs) * viscforce[1+ii*3];
+    particle_force[part_index].f[2] += (1-flag_cs) * viscforce[2+ii*3];
 
     /* the average force from the particle to surrounding nodes is transmitted back to preserve momentum */
     for(int node=0 ; node < 8 ; node++ ) { 
-      particle_force[part_index].f[0] -= partgrad1[node+ii*8]/8.0f;
-      particle_force[part_index].f[1] -= partgrad2[node+ii*8]/8.0f;
-      particle_force[part_index].f[2] -= partgrad3[node+ii*8]/8.0f;
+      particle_force[part_index].f[0] -= (1-flag_cs) * partgrad1[node+ii*8]/8.0f;
+      particle_force[part_index].f[1] -= (1-flag_cs) * partgrad2[node+ii*8]/8.0f;
+      particle_force[part_index].f[2] -= (1-flag_cs) * partgrad3[node+ii*8]/8.0f;
     }
 
     /* note that scforce is zero if SHANCHEN is not #defined */
-    delta_j[0+3*ii] -= (scforce[0+ii*3]+viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
-    delta_j[1+3*ii] -= (scforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
-    delta_j[2+3*ii] -= (scforce[2+ii*3]+viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;
+    // only add to particle_force for particle centre <=> (1-flag_cs) = 1
+    delta_j[0+3*ii] -= (scforce[0+ii*3]+(1-flag_cs)*viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
+    delta_j[1+3*ii] -= (scforce[1+ii*3]+(1-flag_cs)*viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
+    delta_j[2+3*ii] -= (scforce[2+ii*3]+(1-flag_cs)*viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;
+    // add swimming force to source position
+    delta_j[0+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[0]*para.time_step*para.tau/para.agrid;
+    delta_j[1+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[1]*para.time_step*para.tau/para.agrid;
+    delta_j[2+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[2]*para.time_step*para.tau/para.agrid;
   }
 #ifdef SHANCHEN
   for(int node=0 ; node < 8 ; node++ ) { 
@@ -2779,8 +2808,13 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
     rng_part.seed = part[part_index].seed;
 
     /**force acting on the particle. delta_j will be used later to compute the force that acts back onto the fluid. */
-    calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index,d_v);
+    calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index, d_v, 0);
     calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f); 
+
+#ifdef ENGINE
+    calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index, d_v, 1);
+    calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f);
+#endif
 
     /**force which acts back to the fluid node */
     part[part_index].seed = rng_part.seed;
@@ -2806,8 +2840,13 @@ __global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA
 
     rng_part.seed = part[part_index].seed;
     /**force acting on the particle. delta_j will be used later to compute the force that acts back onto the fluid. */
-    calc_viscous_force_three_point_couple(n_a, delta, particle_data, particle_force, part_index, &rng_part, delta_j, node_index,d_v);
+    calc_viscous_force_three_point_couple(n_a, delta, particle_data, particle_force, part_index, &rng_part, delta_j, node_index,d_v,0);
     calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
+
+#ifdef ENGINE
+    calc_viscous_force_three_point_couple(n_a, delta, particle_data, particle_force, part_index, &rng_part, delta_j, node_index,d_v,1);
+    calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
+#endif
 
     /**force which acts back to the fluid node */
     part[part_index].seed = rng_part.seed;    
