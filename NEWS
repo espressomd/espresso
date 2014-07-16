@@ -38,6 +38,8 @@ New user-visible features
 
 * New harmonic well that runs on the GPU.
 
+* The mmm1d electrostatics algorithm is now avaiable as GPU version.
+
 User-visible changes
 --------------------
 
