@@ -50,6 +50,7 @@
 #include "gb.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
+#include "actor/EwaldgpuForce.hpp"
 #include "maggs.hpp"
 #include "elc.hpp"
 #include "iccp3m.hpp"
@@ -1761,9 +1762,11 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case COULOMB_MMM2D:
     MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
     break;  
+#ifdef EWALD_GPU
   case COULOMB_EWALD_GPU:
   	MPI_Bcast(&ewaldgpu_params, sizeof(Ewaldgpu_params), MPI_BYTE, 0, comm_cart);
   	break;
+#endif
   case COULOMB_MAGGS:
     MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart); 
     break;

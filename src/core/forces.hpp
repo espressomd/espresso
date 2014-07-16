@@ -353,9 +353,11 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   case COULOMB_MMM2D:
 	  if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
 	  break;
+#ifdef EWALD_GPU
   case COULOMB_EWALD_GPU:
 		if (q1q2) add_ewald_gpu_coulomb_pair_force(p1,p2,d,dist,force);
 		break;
+#endif
   default:
 	  break;
   }
