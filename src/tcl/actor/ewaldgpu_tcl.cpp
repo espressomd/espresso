@@ -1,6 +1,7 @@
 #include "ewaldgpu_tcl.hpp"
 #include "forces.hpp"
-#include "EwaldgpuForce.hpp"
+#include "actor/EwaldgpuForce.hpp"
+#include "EspressoSystemInterface.hpp"
 
 #ifdef EWALD_GPU
 
@@ -104,13 +105,14 @@ int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char 
   }
 
   // Create object
-  EwaldgpuForce *A=new EwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
-  FI.addMethod(A);
+  //EwaldgpuForce *A=new EwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);//xxx???
+  //FI.addMethod(A);//xxx???
+  addEwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
   rebuild_verletlist = 1;
   ewaldgpu_params.ewaldgpu_is_running = true;
   ewaldgpu_params.isTuned = true;
 	mpi_bcast_coulomb_params();
-	mpi_bcast_event(INVALIDATE_SYSTEM);
+	//mpi_bcast_event(INVALIDATE_SYSTEM);???
   return TCL_OK;
 }
 int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
@@ -169,8 +171,9 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, 
   ewaldgpu_set_params_tune(accuracy, precision, K_max, time_calc_steps);
 
   /* Create object */
-  EwaldgpuForce *A=new EwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
-  FI.addMethod(A);
+  //EwaldgpuForce *A=new EwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);//xxx???
+  //FI.addMethod(A);//xxx???
+  addEwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
   rebuild_verletlist = 1;
 
   /* do the tuning */
@@ -188,7 +191,7 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, 
 
   rebuild_verletlist = 1;
 	mpi_bcast_coulomb_params();
-	mpi_bcast_event(INVALIDATE_SYSTEM);
+	//mpi_bcast_event(INVALIDATE_SYSTEM);//???
   return TCL_OK;
 }
 int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int argc, char ** argv)
@@ -246,10 +249,11 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
   alpha = ewaldgpu_compute_optimal_alpha(r_cut, num_kx, num_ky, num_kz, q_sqr, box_l, precision);
   ewaldgpu_params.isTuned = true;
   mpi_bcast_coulomb_params();
-  mpi_bcast_event(INVALIDATE_SYSTEM);
+  //mpi_bcast_event(INVALIDATE_SYSTEM);//???
   // Create object
-  EwaldgpuForce *A=new EwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
-  FI.addMethod(A);
+  //EwaldgpuForce *A=new EwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);//xxx???
+  //FI.addMethod(A);//xxx???
+  addEwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
   rebuild_verletlist = 1;
 
   return TCL_OK;
