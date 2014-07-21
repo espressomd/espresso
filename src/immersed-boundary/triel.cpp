@@ -25,6 +25,8 @@
 #ifdef TRIELASTIC
 #include "communication.hpp"
 
+//default law neo-hookean use setmd triel_law 1 to change to skalak
+int triel_law = 0;
 
 int triel_set_params(int bond_type, int ind1, int ind2, int ind3, double max, double ks, double ka) {
 	Particle part1, part2, part3;

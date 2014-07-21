@@ -131,6 +131,19 @@ int tclcommand_inter_parse_triel(Tcl_Interp *interp, int bond_type, int argc, ch
   }
 }
 
+
+int tclcallback_triel_law(Tcl_Interp *interp, void *_data) {
+  int data = *(int *)_data;
+  
+  if (data < 0 || data > 1) {
+    Tcl_AppendResult(interp, "triel law is either 0 or 1.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  triel_law = data;
+  mpi_bcast_parameter(FIELD_TRIEL_LAW);
+  return (TCL_OK);
+}
+
 int tclprint_to_result_trielIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
 {
   char buffer[TCL_DOUBLE_SPACE];

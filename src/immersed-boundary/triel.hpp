@@ -31,6 +31,12 @@
 
 #ifdef TRIELASTIC
 
+
+const int NEO_HOOK = 0;
+const int SKALAK = 1;
+
+extern int triel_law;
+
 /*@}*/
   /** Some general remarks:
    * This file implements membrane strain and area dilation force calculation as described
@@ -159,14 +165,15 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
 	i11 = 1.0; i12 = 1.0;
 	i21 = gyy; i22 = -gyx; i23 = i22; i24 = gxx;
 	
-#ifdef TRIELNEOHOOKEAN	
-	e1 = iaparams->p.triel.ks/6.0;
-	e2 = (-1)*iaparams->p.triel.ks/(6.0*(i2+1.0)*(i2+1.0));
-#else
-	//Skalak-Law = Standard
-	e1 = iaparams->p.triel.ks*(i1+1)/6.0;
-	e2 = (-1)*iaparams->p.triel.ks/6.0 + iaparams->p.triel.ka*i2/6.0;
-#endif	
+	if(triel_law == NEO_HOOK) { 
+	  e1 = iaparams->p.triel.ks/6.0;
+	  e2 = (-1)*iaparams->p.triel.ks/(6.0*(i2+1.0)*(i2+1.0));
+	}
+	  else if(triel_law == SKALAK) { 
+	  //Skalak-Law = Standard
+	  e1 = iaparams->p.triel.ks*(i1+1)/6.0;
+	  e2 = (-1)*iaparams->p.triel.ks/6.0 + iaparams->p.triel.ka*i2/6.0;
+	}
     
     //For sake of better readability shorten the call for the triangle's constants:
 	A0 = iaparams->p.triel.Area0; 
