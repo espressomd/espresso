@@ -27,6 +27,7 @@
 #include "parser.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
+#include "global.hpp"
 
 int tclcallback_node_grid(Tcl_Interp *interp, void *_data)
 {

@@ -138,12 +138,12 @@ the lattice constant.
 The first two save commands save all of the LB fluid nodes' populations to \var{filename} in ascii or binary format respectively.
 The two load commands load the populations from \var{filename}.  This is  useful for restarting a simulation either on the same
 machine or a different machine.  Some care should be taken when using the binary format as the format of doubles can depend
-on both the computer being used as well as the compiler.  This is currently  only implemented for the cpu version of LB.
-One thing that one needs to be aware of is that loading the checkpoint causes Espresso to reuse the old forces. This is necessary
-since the coupling force between the paricles and the fluid has already been  applied to the fluid. The correct way to restart
-an LB simulation is to first load in the particles with the correct forces, followed by "integrate 0", and then load the LB
-checkpoint with the above command. Failing to do this means that the particles do not have the correct forces during the first Verlet
-step.
+on both the computer being used as well as the compiler. One thing that one needs to be aware of is that loading the checkpoint also requires the used to reuse the old forces. This is necessary
+since the coupling force between the paricles and the fluid has already been applied to the fluid. Failing to reuse the old forces breaks momentum conservation, which is in general a problem. It is
+particularly problematic for bulk simulations as the system as a whole acquires a drift of the center of mass, causing errors in the calculation of velocities and diffusion coefficients.
+The correct way to restart
+an LB simulation is to first load in the particles with the correct forces, and use ``integrate {\it steps} reuse_forces'' upon the first
+call to integrate. This causes the old forces to be reused and thus conserves momentum.
 
 \section{LB as a thermostat}
 \begin{essyntax}

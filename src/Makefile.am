@@ -1,5 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
-# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
+# Copyright (C) 2014 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,8 +18,8 @@
 
 EXTRA_DIST =
 CLEANFILES =
-DIST_SUBDIRS = . tcl python/espressomd
-SUBDIRS = . 
+DIST_SUBDIRS = core tcl python/espressomd
+SUBDIRS = core 
 if TCL
 SUBDIRS += tcl
 endif
@@ -275,51 +274,7 @@ myconfig-final.hpp: FORCE
 	  exit 1; \
 	fi
 endif
-
 #################################################################
 # Handling of the features
 #################################################################
-EXTRA_DIST += \
-	features.def \
-	config-features.hpp config-features.cpp
-
-if HAVE_PYTHON
-
-BUILT_SOURCES += config-features.hpp config-features.cpp
-CLEANFILES += config-features.hpp config-features.cpp
-config-features.hpp config-features.cpp: features.def $(top_srcdir)/config/gen_featureconfig.py
-	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py \
-	  $(srcdir)/features.def config-features.hpp config-features.cpp > /dev/null
-
-else
-
-config-features.hpp config-features.cpp: features.def
-	@echo "Python was not found in your PATH."
-	@echo "If you change the set of features, you need Python!"
-	@echo "Install it and rerun configure."
-
-endif
-
-#################################################################
-# Handling of the version
-#################################################################
-libEspresso_la_SOURCES += config-version.cpp
-CLEANFILES += config-version.cpp
-config-version.cpp: FORCE
-	$(AM_V_GEN)VERSION=`cd $(top_srcdir); sh config/genversion.sh -c`; \
-	if ! test -e "config-version.cpp" || \
-		test "$$VERSION" != "`cat config-version.cpp`"; then \
-		echo "$$VERSION" > config-version.cpp; \
-	fi
-
-#################################################################
-# Handling of the MPI fake implementation
-#################################################################
-if MPI_FAKE
-libEspresso_la_SOURCES += mpifake/mpi.h mpifake/mpi.cpp
-# mpifake should come before any system includes
-AM_CPPFLAGS = -I$(srcdir)/mpifake
-endif
-
-.PHONY: FORCE
-FORCE:
+EXTRA_DIST += features.def featuredefs.py

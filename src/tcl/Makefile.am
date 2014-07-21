@@ -1,4 +1,4 @@
-# Copyright (C) 2013 Olaf Lenz
+# Copyright (C) 2013,2014 Olaf Lenz
 #
 # This file is part of ESPResSo.
 #
@@ -18,9 +18,9 @@
 
 EXTRA_DIST =
 CLEANFILES =
-AM_CPPFLAGS = -I$(top_srcdir)/src
+AM_CPPFLAGS = -I$(top_srcdir)/src/core -I$(top_srcdir)/src -I$(builddir)/../core
 if MPI_FAKE
-AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
+AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
 AM_DEFAULT_SOURCE_EXT = .cpp
 
@@ -142,6 +142,7 @@ libEspressoTcl_la_SOURCES += \
 
 # Generic actors
 libEspressoTcl_la_SOURCES += \
+	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
 	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
 
 if CUDA
@@ -158,12 +159,12 @@ endif
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
 Espresso_SOURCES = scriptsdir.cpp main.cpp
-Espresso_LDADD = libEspressoTcl.la ../libEspresso.la
+Espresso_LDADD = libEspressoTcl.la ../core/libEspresso.la
 
 bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\" $(AM_CPPFLAGS)
 Espresso_install_SOURCES = scriptsdir.cpp main.cpp
-Espresso_install_LDADD = libEspressoTcl.la ../libEspresso.la 
+Espresso_install_LDADD = libEspressoTcl.la ../core/libEspresso.la 
 
 ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
 ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)

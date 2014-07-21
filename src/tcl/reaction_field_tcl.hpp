@@ -25,6 +25,7 @@
  */
 
 #include "parser.hpp"
+#include "interaction_data.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -33,7 +34,7 @@ int tclprint_to_result_rf(Tcl_Interp *interp, const char *name);
 
 ///
 int tclcommand_inter_coulomb_parse_rf(Tcl_Interp * interp,
-				      int argc, char ** argv,int method);
+				      int argc, char ** argv, CoulombMethod method);
 
 #ifdef INTER_RF
 
