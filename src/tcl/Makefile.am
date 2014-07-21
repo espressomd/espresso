@@ -110,6 +110,10 @@ libEspressoTcl_la_SOURCES += \
 	harmonic_tcl.cpp harmonic_tcl.hpp \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
+	immersed-boundary/triel_tcl.cpp \
+	immersed-boundary/triel_tcl.hpp \
+	immersed-boundary/vvolume_tcl.cpp \
+	immersed-boundary/vvolume_tcl.hpp \
 	object-in-fluid/area_force_local_tcl.cpp \
 	object-in-fluid/area_force_local_tcl.hpp \
 	object-in-fluid/area_force_global_tcl.cpp \

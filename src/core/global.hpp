@@ -45,7 +45,11 @@
 #define TYPE_BOOL 2
 
 /** Maximal size of an array in \ref Datafield. */
+#ifdef VVOLUME
+#define MAX_DIMENSION 200
+#else
 #define MAX_DIMENSION 64
+#endif
 
 /** Type describing global variables. These are accessible from the
     front end, and are distributed to all compute nodes. */
@@ -180,7 +184,14 @@ extern const Datafield fields[];
 #define FIELD_WARNINGS            51
 /** DPD_IGNORE_FIXED_PARTICLES */
 #define FIELD_DPD_IGNORE_FIXED_PARTICLES 52
+/** index of \ref vesicle number in \ref #fields */
+#define FIELD_VESCNUM			  53
+/** index of \ref VVolo in \ref #fields */
+#define FIELD_VVOLO				  54
+/** index of \ref TRIEL_LAW in \ref #fields */
+#define FIELD_TRIEL_LAW				  55
 /*@}*/
+
 
 /** bool: whether to write out warnings or not */
 extern int warnings;

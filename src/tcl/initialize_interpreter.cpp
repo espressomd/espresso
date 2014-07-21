@@ -57,6 +57,8 @@
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
 #include "actor/HarmonicWell_tcl.hpp"
+#include "immersed-boundary/vvolume.hpp"
+#include "tcl/immersed-boundary/vvolume_tcl.hpp"
 
 
 #ifdef TK
@@ -236,6 +238,9 @@ static void register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_TIMINGSAMP, tclcallback_timings);
   register_global_callback(FIELD_MIN_GLOBAL_CUT, tclcallback_min_global_cut);
   register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
+  register_global_callback(FIELD_VESCNUM, tclcallback_vescnum);
+  register_global_callback(FIELD_VVOLO, tclcallback_vvolo);
+  
 }
 
 int appinit(Tcl_Interp *interp)

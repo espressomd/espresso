@@ -60,7 +60,7 @@
 /** Type of overlapped bonded interaction potential, 
     may be of bond length, of bond angle or of dihedral type. */
 #define BONDED_IA_OVERLAPPED 10
-/** Type of bonded interaction is a bond angle cosine potential. */ 
+/** Type of bonded interaction is a bond angle cosine potential. */
 #define BONDED_IA_ANGLE_HARMONIC 11
 /** Type of bonded interaction is a bond angle cosine potential. */ 
 #define BONDED_IA_ANGLE_COSINE 12
@@ -78,6 +78,8 @@
 #define BONDED_IA_AREA_FORCE_GLOBAL 18 
 /** Type of bonded interaction is a linear stretching force. */
 #define BONDED_IA_STRETCHLIN_FORCE 19 
+/** Type of Triangle_Stretch potential */
+#define TRIEL_IA 20
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -677,7 +679,25 @@ typedef struct {
       double phi0;
       double distmin;
       double distmax;
+
 } Endangledist_bond_parameters;
+
+typedef struct {
+  double a1;
+  double a2;
+  double a3;
+  double b1;
+  double b2;
+  double b3;
+  double lo;
+  double lpo;
+  double sinpo;
+  double cospo;
+  double Area0;
+  double maxdist;
+  double ks;
+  double ka;
+} Triel_bond_parameters;
 
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
@@ -700,6 +720,7 @@ typedef union {
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
     Endangledist_bond_parameters endangledist;
+  Triel_bond_parameters triel;
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */

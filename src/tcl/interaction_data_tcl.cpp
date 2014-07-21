@@ -87,6 +87,7 @@
 #include "overlap_tcl.hpp"
 #include "harmonic_tcl.hpp"
 #include "subt_lj_tcl.hpp"
+#include "tcl/immersed-boundary/triel_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
 #include "tcl/object-in-fluid/volume_force_tcl.hpp"
@@ -359,6 +360,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
     return tclprint_to_result_subt_ljIA(interp, params);
+#endif
+#ifdef TRIELASTIC
+   case TRIEL_IA:
+     return tclprint_to_result_trielIA(interp, params);
 #endif
 #ifdef BOND_VIRTUAL
   case BONDED_IA_VIRTUAL_BOND:
@@ -873,6 +878,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
+#endif
+#ifdef TRIELASTIC
+  REGISTER_BONDED("triel", tclcommand_inter_parse_triel);
 #endif
 #ifdef BOND_ANGLE_OLD
   REGISTER_BONDED("angle", tclcommand_inter_parse_angle);

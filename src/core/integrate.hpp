@@ -57,6 +57,8 @@ extern double skin;
 /** True iff the user has changed the skin setting. */
 extern bool skin_set;
 
+extern int step_counter;
+
 /** If non-zero, the particle data will be resorted before the next integration. */
 extern int    resort_particles;
 /** If non-zero, the forces will be recalculated before the next integration. */

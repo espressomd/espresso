@@ -84,6 +84,7 @@
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "collision.hpp" 
+#include "immersed-boundary/triel.hpp"
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
 
@@ -576,6 +577,11 @@ inline void add_bonded_force(Particle *p1)
       force[0]=force[1]=force[2]=0.0;
       break;
 #endif
+#ifdef TRIELASTIC
+    case TRIEL_IA:
+      bond_broken=calc_triel_force(p1,p2,p3,iaparams,force,force2);
+    break; 
+#endif
     default :
       errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{082 add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);
@@ -637,11 +643,12 @@ switch (type) {
 	case BONDED_IA_VOLUME_FORCE:
 		break;
 #endif
-	default:
-		p1->f.f[j] += force[j];
-		p2->f.f[j] += force2[j];
-		p3->f.f[j] -= (force[j] + force2[j]);
-	}
+ default:
+	  
+   p1->f.f[j] += force[j];
+   p2->f.f[j] += force2[j];
+   p3->f.f[j] -= (force[j] + force2[j]);
+ }
       }
       break;
     case 3:

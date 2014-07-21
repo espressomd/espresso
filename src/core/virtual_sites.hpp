@@ -84,6 +84,10 @@ inline int ifParticleIsVirtual(Particle *p){
  #include "virtual_sites_relative.hpp"
 #endif
 
+#ifdef LBTRACERS
+ #include "immersed-boundary/lbtracers.hpp"
+#endif
+
 #endif
 
 #endif

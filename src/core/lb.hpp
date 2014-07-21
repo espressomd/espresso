@@ -265,6 +265,13 @@ void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double
  */
 void lb_propagate();
 
+/** Calculates the coupling of lbtracers to the LB fluid.
+ * This function  is called from \ref force_calc. The force is retrieved
+ * from the particle force and then it is distributed to the fluid
+ * Note that this function changes the state of the fluid!
+ */
+void lb_ibm_coupling();
+
 /** Calculates the coupling of MD particles to the LB fluid.
  * This function  is called from \ref force_calc. The force is added
  * to the particle force and the corresponding momentum exchange is
@@ -549,6 +556,9 @@ int lb_lbnode_set_pop(int* ind, double* pop);
  * position is not within the local lattice. This version of the function
  * can be called without the position needing to be on the local processor */
 int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v); 
+
+//Calculate interpolated velocity with updated (+f_ext), but not yet streamed modes
+int lb_lbfluid_get_interpolated_velocity_lbtrace(double* p, double* v, int id);
 
 #endif
 

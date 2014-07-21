@@ -194,6 +194,7 @@ typedef struct {
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
 #endif
+
 } ParticleMomentum;
 
 /** Information on a particle that is needed only on the
@@ -234,6 +235,11 @@ typedef struct {
       position and monentum of particle */
   ParticlePosition r_ls;
   ParticleMomentum m_ls;
+#endif
+
+#ifdef LBTRACERS
+   /**stores the particle velocity at the previous time step*/
+  double v_old[3];
 #endif
 } ParticleLocal;
 

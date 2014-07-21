@@ -78,7 +78,7 @@ void force_calc()
   cells_update_ghosts();
 
   // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
+#if defined (VIRTUAL_SITES) && !defined(LBTRACERS)
   update_mol_vel_pos();
   ghost_communicator(&cell_structure.update_ghost_pos_comm);
 #endif
@@ -163,7 +163,7 @@ void force_calc()
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
 #endif
-
+ 
 #ifdef COMFORCE
   calc_comforce();
 #endif
@@ -178,7 +178,7 @@ void force_calc()
 #endif
 
   // VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
+#ifdef VIRTUAL_SITES 
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
   init_forces_ghosts();
   distribute_mol_force();
@@ -186,6 +186,10 @@ void force_calc()
 
   // Communication Step: ghost forces
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  
+#ifdef IMMERSED_BOUNDARY
+ if (lattice_switch & LATTICE_LB) lb_ibm_coupling() ;
+#endif
 
   // apply trap forces to trapped molecules
 #ifdef MOLFORCES         
