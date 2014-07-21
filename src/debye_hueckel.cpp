@@ -45,8 +45,9 @@ int dh_set_params(double kappa, double r_cut)
 }
 
 #ifdef COULOMB_DEBYE_HUECKEL
-int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double r0, double r1, double alpha) {
+int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha) {
   dh_params.eps_int = eps_int;
+  dh_params.eps_ext = eps_ext;
   dh_params.r0 = r0;
   dh_params.r1 = r1;
   dh_params.alpha = alpha;

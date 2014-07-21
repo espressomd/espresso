@@ -43,7 +43,7 @@ int tclcommand_inter_coulomb_parse_dh(Tcl_Interp * interp, int argc, char ** arg
   double kappa, r_cut;
   int i;
 #ifdef COULOMB_DEBYE_HUECKEL
-  double eps_int, r0, r1, alpha;
+  double eps_int, eps_ext, r0, r1, alpha;
 #endif
 
 #ifdef COULOMB_DEBYE_HUECKEL
@@ -65,10 +65,10 @@ int tclcommand_inter_coulomb_parse_dh(Tcl_Interp * interp, int argc, char ** arg
   if(! ARG1_IS_D(r_cut))
     return TCL_ERROR;
 #ifdef COULOMB_DEBYE_HUECKEL
-  if(!ARG_IS_D(2, eps_int) || !ARG_IS_D(3,r0) || !ARG_IS_D(4,r1) || !ARG_IS_D(5,alpha))
+  if(!ARG_IS_D(2, eps_int) || !ARG_IS_D(3, eps_ext) || !ARG_IS_D(4,r0) || !ARG_IS_D(5,r1) || !ARG_IS_D(6,alpha))
     return TCL_ERROR;  
 
-  i = dh_set_params_cdh(kappa, r_cut, eps_int, r0, r1, alpha);
+  i = dh_set_params_cdh(kappa, r_cut, eps_int, eps_ext, r0, r1, alpha);
 #else
   i = dh_set_params(kappa, r_cut);
 #endif

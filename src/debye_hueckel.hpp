@@ -35,7 +35,7 @@ typedef struct {
   /** Debye kappa (inverse Debye length) . */
   double kappa;
   #ifdef COULOMB_DEBYE_HUECKEL
-  double eps_int;
+  double eps_int, eps_ext;
   /** Transition distances **/
   double r0, r1;
   double alpha;
@@ -50,7 +50,7 @@ extern Debye_hueckel_params dh_params;
 /*@{*/
 
 int dh_set_params(double kappa, double r_cut);
-int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double r0, double r1, double alpha);
+int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha);
 
 /** Computes the Debye_Hueckel pair force and adds this
     force to the particle forces (see \ref tclcommand_inter). 
@@ -74,7 +74,7 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], d
     fac = coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int * exp(dh_params.alpha*(dist - dh_params.r0)) * dist*dist*dist) * (1. + dh_params.alpha*dist);
   } else {
     const double kappa_dist = dh_params.kappa*dist;
-    fac = coulomb.prefactor * p1->p.q * p2->p.q * (exp(-kappa_dist)/(dist*dist*dist)) * (1.0 + kappa_dist);
+    fac = coulomb.prefactor * p1->p.q * p2->p.q * (exp(-kappa_dist)/(dh_params.eps_ext * dist*dist*dist)) * (1.0 + kappa_dist);
   } 
   force[0] += fac * d[0];
   force[1] += fac * d[1];  
