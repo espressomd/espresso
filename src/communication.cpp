@@ -67,6 +67,7 @@
 #include "cuda_interface.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "statistics_observable.hpp"
+#include "immersed-boundary/vvolume.hpp"
 
 int this_node = -1;
 int n_nodes = -1;

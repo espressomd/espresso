@@ -31,9 +31,9 @@
 #include "tuning.hpp"
 #include "rattle.hpp"
 #include "imd.hpp"
-#include "lbtracers.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
+#include "immersed-boundary/vvolume.hpp"
 
 /** This array contains the description of all global variables.
 
@@ -93,6 +93,9 @@ const Datafield fields[] = {
   {&lb_components,      TYPE_INT, 1, "lb_components",     2 },         /* 50 from ghmc.cpp */
   {&warnings,           TYPE_INT, 1, "warnings",          1 },         /* 51 from global.cpp */
   {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles",          1 },         /* 51 from global.cpp */
+  {&vescnum,            TYPE_INT, 1, "vescnum",           7 },         /* 52 from immersed_boundary/vvolume.cpp */
+  {VVolo,			 TYPE_DOUBLE, MAX_DIMENSION, "vvolo",           5 },         /* 53 from immersed_boundary/vvolume.cpp */
+  {&triel_law,			 TYPE_INT, 1, "triel_law",  5},         /* 54 from immersed_boundary/triel.cpp */
   { NULL, 0, 0, NULL, 0 }
 };
 

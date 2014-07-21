@@ -104,13 +104,16 @@ libEspresso_la_SOURCES = \
 	virtual_sites.cpp virtual_sites.hpp \
 	virtual_sites_com.cpp virtual_sites_com.hpp \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
-	lbtracers.cpp lbtracers.hpp \
+	immersed-boundary/lbtracers.cpp \
+	immersed-boundary/lbtracers.hpp \
+	immersed-boundary/vvolume.cpp \
+	immersed-boundary/vvolume.hpp \	
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
-	
+
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
@@ -144,7 +147,8 @@ libEspresso_la_SOURCES += \
 	harmonic.cpp harmonic.hpp \
 	overlap.cpp overlap.hpp \
 	subt_lj.cpp subt_lj.hpp \
-	triel.cpp triel.hpp \
+	immersed-boundary/triel.cpp \
+	immersed-boundary/triel.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
 	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
