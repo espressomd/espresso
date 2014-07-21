@@ -85,7 +85,7 @@ inline int ifParticleIsVirtual(Particle *p){
 #endif
 
 #ifdef LBTRACERS
- #include "lbtracers.hpp"
+ #include "immersed-boundary/lbtracers.hpp"
 #endif
 
 #endif

@@ -84,7 +84,7 @@
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "collision.hpp" 
-#include "triel.hpp"
+#include "immersed-boundary/triel.hpp"
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
 

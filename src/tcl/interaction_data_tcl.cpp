@@ -85,7 +85,7 @@
 #include "overlap_tcl.hpp"
 #include "harmonic_tcl.hpp"
 #include "subt_lj_tcl.hpp"
-#include "triel_tcl.hpp"
+#include "tcl/immersed-boundary/triel_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
 #include "tcl/object-in-fluid/volume_force_tcl.hpp"

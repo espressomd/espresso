@@ -160,16 +160,6 @@ void force_calc()
 
   calc_long_range_forces();
 
-  // VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES 
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
-  init_forces_ghosts();
-  distribute_mol_force();
-#endif
-
-  // Communication Step: ghost forces
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
-  
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
 #endif
@@ -185,6 +175,20 @@ void force_calc()
 
 #ifdef CUDA
   copy_forces_from_GPU();
+#endif
+
+  // VIRTUAL_SITES distribute forces
+#ifdef VIRTUAL_SITES 
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  init_forces_ghosts();
+  distribute_mol_force();
+#endif
+
+  // Communication Step: ghost forces
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  
+#ifdef IMMERSED_BOUNDARY
+ if (lattice_switch & LATTICE_LB) lb_ibm_coupling() ;
 #endif
 
   // apply trap forces to trapped molecules

@@ -3198,9 +3198,9 @@ void calc_particle_lattice_ia() {
     /* communicate the random numbers */
     ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
 
-#ifdef TRIELASTIC
-    ghost_communicator(&cell_structure.ghost_triel_comm);
-#endif    
+// #ifdef TRIELASTIC
+//     ghost_communicator(&cell_structure.ghost_triel_comm);
+// #endif    
     
     /* local cells */
     for (c=0;c<local_cells.n;c++) {
@@ -3209,24 +3209,20 @@ void calc_particle_lattice_ia() {
       np = cell->n ;
 
       for (i=0;i<np;i++) {
-#if defined(LBTRACERS) && defined(TRIELASTIC)
 
-        if(ifParticleIsVirtual(&p[i])) { 
-          couple_trace_to_fluid(&p[i]);
-        }
-        else {
-        lb_viscous_coupling(&p[i],force);
+#ifdef IMMERSED_BOUNDARY
+	if(!ifParticleIsVirtual(&p[i])) { 
+	  lb_viscous_coupling(&p[i],force);
 
-        /* add force to the particle */
-        p[i].f.f[0] += force[0];
-        p[i].f.f[1] += force[1];
-        p[i].f.f[2] += force[2];
+	  /* add force to the particle */
+	  p[i].f.f[0] += force[0];
+	  p[i].f.f[1] += force[1];
+	  p[i].f.f[2] += force[2];
 
-        ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-        }
-
+	  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+	}
 #else 
-        lb_viscous_coupling(&p[i],force);
+	lb_viscous_coupling(&p[i],force);
 
         /* add force to the particle */
         p[i].f.f[0] += force[0];
@@ -3234,13 +3230,95 @@ void calc_particle_lattice_ia() {
         p[i].f.f[2] += force[2];
 
         ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+      }
 #endif
       }
 
     }
 
-    /* ghost cells */
-    for (c=0;c<ghost_cells.n;c++) {
+  /* ghost cells */
+  for (c=0;c<ghost_cells.n;c++) {
+    cell = ghost_cells.cell[c] ;
+    p = cell->part ;
+    np = cell->n ;
+
+    for (i=0;i<np;i++) {
+      /* for ghost particles we have to check if they lie
+       * in the range of the local lattice nodes */
+      if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid[0] 
+	  && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid[0]
+	  && p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid[1] 
+	  && p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid[1]
+	  && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid[2] 
+	  && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid[2]) {
+
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
+#ifdef IMMERSED_BOUNDARY
+	if(!ifParticleIsVirtual(&p[i])) { 
+          lb_viscous_coupling(&p[i],force);
+	}
+#else
+	lb_viscous_coupling(&p[i],force);
+#endif      
+
+          /* ghosts must not have the force added! */
+
+          ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+
+        }
+      }
+    }
+
+  }
+}
+
+void lb_ibm_coupling() { 
+  
+  int i, c, np;
+  Cell *cell ;
+  Particle *p ;
+  double force[3];
+
+
+  if (transfer_momentum) {
+
+    if (lbpar.resend_halo) { /* first MD step after last LB update */
+      
+      /* exchange halo regions (for fluid-particle coupling) */
+      halo_communication(&update_halo_comm, (char*)**lbfluid);
+#ifdef ADDITIONAL_CHECKS
+      lb_check_halo_regions();
+#endif
+      
+      /* halo is valid now */
+      lbpar.resend_halo = 0;
+
+      /* all fields have to be recalculated */
+      for (i=0; i<lblattice.halo_grid_volume; ++i) {
+        lbfields[i].recalc_fields = 1;
+      }
+
+    }
+
+    /* communicate the random numbers */
+    ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
+
+#ifdef TRIELASTIC
+    ghost_communicator(&cell_structure.ghost_triel_comm);
+#endif
+
+    /* local cells */
+    for (c=0;c<local_cells.n;c++) {
+    cell = local_cells.cell[c] ;
+    p = cell->part ;
+    np = cell->n ;
+
+    for (i=0;i<np;i++) {
+    if(ifParticleIsVirtual(&p[i])) { 
+    couple_trace_to_fluid(&p[i]);
+  }
+  }}
+     for (c=0;c<ghost_cells.n;c++) {
       cell = ghost_cells.cell[c] ;
       p = cell->part ;
       np = cell->n ;
@@ -3255,30 +3333,10 @@ void calc_particle_lattice_ia() {
             && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid[2] 
             && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid[2]) {
 
-          ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
-
-#if defined(LBTRACERS) && defined(TRIELASTIC)
-
           //Triangles are not subject to viscous coupling, but interact with the fluid via elastic forces
           if(ifParticleIsVirtual(&p[i])) {
             couple_trace_to_fluid(&p[i]);
-          } 
-          else {
-           //printf("Calling lb_viscous_coupling\n");
-          lb_viscous_coupling(&p[i],force);
-          }
-#else
-          lb_viscous_coupling(&p[i],force);
-#endif      
-
-          /* ghosts must not have the force added! */
-
-          ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-
-        }
-      }
-    }
-
+  } }}}
   }
 }
 

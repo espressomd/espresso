@@ -265,6 +265,13 @@ void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double
  */
 void lb_propagate();
 
+/** Calculates the coupling of lbtracers to the LB fluid.
+ * This function  is called from \ref force_calc. The force is retrieved
+ * from the particle force and then it is distributed to the fluid
+ * Note that this function changes the state of the fluid!
+ */
+void lb_ibm_coupling();
+
 /** Calculates the coupling of MD particles to the LB fluid.
  * This function  is called from \ref force_calc. The force is added
  * to the particle force and the corresponding momentum exchange is
