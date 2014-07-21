@@ -105,6 +105,20 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], d
 }
 #endif
 
+#ifdef COULOMB_DEBYE_HUECKEL
+inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {
+  if(dist < dh_params.r_cut) {
+    if(dist < dh_params.r0) {
+      return coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int*dist);
+    } else if (dist < dh_params.r1) {
+      return coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int * exp(dh_params.alpha*(dist - dh_params.r0)) * dist);
+    } else {
+      return coulomb.prefactor * p1->p.q * p2->p.q * exp(-dh_params.kappa*dist) / (dh_params.eps_ext * dist);
+    }
+  }
+  return 0.0;
+}
+#else
 inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
   if(dist < dh_params.r_cut) {
@@ -115,7 +129,7 @@ inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
   }
   return 0.0;
 }
-
+#endif
 /*@}*/
 #endif
 
