@@ -1,3 +1,21 @@
+/*
+  Copyright (C) 2014 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /* vim: set ts=8 sts=2 sw=2 et: */
 #include <stdio.h>
 #include <stdlib.h>
@@ -332,28 +350,28 @@ int populate_lattice(particle_data* atom_data) {
             lowernode[2] = (lowernode[2] + ek_parameters.dim_z) % ek_parameters.dim_z;
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],lowernode[1],lowernode[2] )]
-              = b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+              += b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,lowernode[1],lowernode[2] )]
-              = b->charge * cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+              += b->charge * cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],( lowernode[1] + 1 ) % ek_parameters.dim_y,lowernode[2] )]
-              = b->charge * ( 1 - cellpos[0] ) * cellpos[1] * ( 1 - cellpos[2] );
+              += b->charge * ( 1 - cellpos[0] ) * cellpos[1] * ( 1 - cellpos[2] );
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],lowernode[1],( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-              = b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2];
+              += b->charge * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2];
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,( lowernode[1] + 1 ) % ek_parameters.dim_y,lowernode[2] )]
-              = b->charge * cellpos[0] * cellpos[1] * ( 1 - cellpos[2] );
+              += b->charge * cellpos[0] * cellpos[1] * ( 1 - cellpos[2] );
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,lowernode[1],( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-              = b->charge * cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2];
+              += b->charge * cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2];
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( lowernode[0],( lowernode[1] + 1 ) % ek_parameters.dim_y,( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-              = b->charge * ( 1 - cellpos[0] ) * cellpos[1] * cellpos[2];
+              += b->charge * ( 1 - cellpos[0] ) * cellpos[1] * cellpos[2];
 
             pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,( lowernode[1] + 1 ) % ek_parameters.dim_y,( lowernode[2] + 1 ) % ek_parameters.dim_z )]
-              = b->charge * cellpos[0] * cellpos[1] * cellpos[2];
+              += b->charge * cellpos[0] * cellpos[1] * cellpos[2];
             // Interpolate lennard-jones parameters to boundary
             float r = pow(2,1./6.)*c->sigma;
 

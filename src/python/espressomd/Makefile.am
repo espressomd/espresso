@@ -1,4 +1,4 @@
-# Copyright (C) 2013 The ESPResSo project
+# Copyright (C) 2013,2014 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -31,6 +31,7 @@ endif
 # Build rules for cython
 SUFFIXES = .pyx
 
+EXTRA_DIST = gen_pxiconfig.py
 PYFILES = __init__.py
 
 PYXFILES =  \
@@ -53,6 +54,7 @@ PXDFILES = \
 	System.pxd \
 	particle_data.pxd \
 	analyze.pxd \
+	c_analyze.pxd \
 	cellsystem.pxd \
 	changeVolume.pxd \
 	code_info.pxd \
@@ -76,9 +78,15 @@ python-all:
 all-local: python-all
 
 PYCFILES = $(PYFILES:.py=.pyc)
-CLEANFILES = $(PYFILES) $(PYCFILES)
+CLEANFILES = $(PYCFILES)
+clean-local: 
+	for file in $(PYFILES); do \
+          if test -e $$file && test ! $$file -ef $(abs_srcdir)/$$file; then \
+            rm -f $$file; \
+          fi; \
+	done
 
-EXTRA_DIST = $(PYFILES) $(PYXFILES) $(PXDFILES)
+EXTRA_DIST += $(PYFILES) $(PYXFILES) $(PXDFILES)
 
 # Generate the ".cpp" files 
 CPPFILES = $(PYXFILES:.pyx=.cpp)
@@ -91,6 +99,10 @@ $(CPPFILES): %.cpp: %.pyx %.pxd myconfig.pxi
 	$(cython_verbose)cython -I $(builddir) $< -o $@
 
 CLEANFILES += $(CPPFILES)
+
+# Dummy target to generate libtool rules
+noinst_PROGRAMS = dummy
+dummy_SOURCES = dummy.cpp
 
 # Generate the ".la" files. We do not really need these files, but we
 # want to use libtool, so we have to give it a corresponding target.
@@ -114,8 +126,11 @@ gen_pxiconfig.cpp: $(srcdir)/gen_pxiconfig.py $(top_srcdir)/src/features.def
 	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_pxiconfig.py \
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
-noinst_PROGRAMS = gen_pxiconfig
-nodist_gen_pxiconfig_SOURCES = gen_pxiconfig.cpp $(top_builddir)/src/core/config.hpp
+gen_pxiconfig_CPPFLAGS=-I$(top_srcdir)/src/core -I$(top_builddir)/src/core -I$(top_builddir)/src
+gen_pxiconfig: gen_pxiconfig.cpp $(top_builddir)/src/core/config.hpp $(top_builddir)/src/core/myconfig-final.hpp
+	$(AM_V_CXXLD)$(CXXLINK) $(gen_pxiconfig_CPPFLAGS) $<
+
+CLEANFILES += gen_pxiconfig
 
 # create myconfig.pxi from gen_pxiconfig
 myconfig.pxi: gen_pxiconfig

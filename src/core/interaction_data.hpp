@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -105,28 +105,20 @@
 /*@{*/
 
 #ifdef ELECTROSTATICS
-  /** Coulomb interation switched off (NONE). */
-  #define COULOMB_NONE    0
-  /** Coulomb method is Debye-Hueckel. */
-  #define COULOMB_DH      1
-  /** Coulomb method is Debye-Hueckel with parallel separate calculation. */
-  #define COULOMB_DH_PW   2
-  /** Coulomb method is P3M. */
-  #define COULOMB_P3M     3
-  /** Coulomb method is one-dimensional MMM */
-  #define COULOMB_MMM1D   4
- /** Coulomb method is two-dimensional MMM */
-  #define COULOMB_MMM2D   5
-  /** Coulomb method is "Maggs" */
-  #define COULOMB_MAGGS   6
-  /** Coulomb method is P3M plus ELC. */
-  #define COULOMB_ELC_P3M 8
-  /** Coulomb method is Reaction-Field. */
-  #define COULOMB_RF 9
-  /** Coulomb method is Reaction-Field BUT as interactions */
-  #define COULOMB_INTER_RF 10
-  /** Coulomb method is P3M with GPU based long range part calculation */
-  #define COULOMB_P3M_GPU 11
+	enum CoulombMethod {
+		COULOMB_NONE, //< Coulomb interaction switched off (NONE)
+		COULOMB_DH, //< Coulomb method is Debye-Hueckel
+		COULOMB_P3M, //< Coulomb method is P3M
+		COULOMB_MMM1D, //< Coulomb method is one-dimensional MMM
+		COULOMB_MMM2D, //< Coulomb method is two-dimensional MMM
+		COULOMB_MAGGS, //< Coulomb method is "Maggs"
+		COULOMB_ELC_P3M, //< Coulomb method is P3M plus ELC
+		COULOMB_RF, //< Coulomb method is Reaction-Field
+		COULOMB_INTER_RF, //< Coulomb method is Reaction-Field BUT as interaction
+		COULOMB_P3M_GPU, //< Coulomb method is P3M with GPU based long range part calculation
+		COULOMB_MMM1D_GPU, //< Coulomb method is on-dimensional MMM running on GPU
+	};
+
 #endif
 /*@}*/
 
@@ -493,8 +485,8 @@ typedef struct {
   /** bjerrum length times temperature. */
   double prefactor;
   
-  /** Method to treat coulomb interaction. See \ref COULOMB_NONE "Type codes for Coulomb" */
-  int method;
+  /** Method to treat coulomb interaction. */
+  CoulombMethod method;
  #endif
 
  #ifdef DIPOLES

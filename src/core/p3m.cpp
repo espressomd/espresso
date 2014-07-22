@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -1478,11 +1478,6 @@ int p3m_adaptive_tune(char **log) {
   char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
   int tune_mesh = 0; //boolean to indicate if mesh should be tuned
 
-  if (skin == -1) {
-    *log = strcat_alloc(*log, "p3m cannot be tuned, since the skin is not yet set");
-    return ES_ERROR;
-  }
-
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if( !((box_l[0] == box_l[1]) &&
 	  (box_l[1] == box_l[2]))) {
@@ -1873,11 +1868,6 @@ int p3m_sanity_checks()
   if( p3m.params.cao == 0) {
     errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{046 P3M_init: cao is not yet set} ");
-    ret = 1;
-  }
-  if (skin == -1) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{047 P3M_init: skin is not yet set} ");
     ret = 1;
   }
   if (p3m.params.alpha < 0.0 ) {

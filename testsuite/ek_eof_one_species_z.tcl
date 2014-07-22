@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -43,7 +43,7 @@ setmd box_l $box_x $box_y $box_z
 
 # Set the electrokinetic parameters
 
-set agrid [expr 2.0/3.0]
+set agrid [expr 1.0/3.0]
 set dt [expr 1.0/13.0]
 set force 0.07
 set sigma -0.04
@@ -323,16 +323,16 @@ if { $total_stress_difference_xz > 5.0e-06 } {
 if { $total_stress_difference_xx_yy > 5.0e-06 } {
   error_exit "Difference xx to yy component too large"
 }
-if { $total_stress_difference_yy_zz > 1.0e-03 } {
+if { $total_stress_difference_yy_zz > 2.5e-04 } {
   error_exit "Difference yy to zz component too large"
 }
-if { $total_stress_difference_yy_zz < 5.0e-04 } {
+if { $total_stress_difference_yy_zz < 7.5e-05 } {
   error_exit "Difference yy to zz component too small"
 }
-if { $total_stress_difference_xx_zz > 1.0e-03 } {
+if { $total_stress_difference_xx_zz > 2.5e-04 } {
   error_exit "Difference xx to zz component too large"
 }
-if { $total_stress_difference_xx_zz < 5.0e-04 } {
+if { $total_stress_difference_xx_zz < 7.5e-05 } {
   error_exit "Difference xx to zz component too small"
 }
 

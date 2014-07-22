@@ -1,5 +1,21 @@
+/*
+  Copyright (C) 2014 The ESPResSo project
 
+  This file is part of ESPResSo.
 
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "external_potential.hpp"
 #include "lattice.hpp"
 #include "communication.hpp"
@@ -15,10 +31,11 @@ void external_potential_pre_init() {
 
 
 int generate_external_potential(ExternalPotential** e) {
-  external_potentials = (ExternalPotential*) realloc(external_potentials, (n_external_potentials+1)*sizeof(ExternalPotential));
-  *e=&external_potentials[n_external_potentials];
+  external_potentials = (ExternalPotential*) realloc(external_potentials,
+		  (n_external_potentials+1) * sizeof(ExternalPotential));
+  *e = &external_potentials[n_external_potentials];
   n_external_potentials++;
-  (*e)->energy=0;
+  (*e)->energy = 0;
 
 
 //  e = &external_potentials[n_external_potentials-1];
@@ -31,7 +48,7 @@ int external_potential_tabulated_init(int number, char* filename, int n_particle
   }
   printf("scale\n");
 
-  ExternalPotentialTabulated* e = &external_potentials[number].e.tabulated;
+  ExternalPotentialTabulated* e = &external_potentials[number].tabulated;
 
   if (strlen(filename)>MAX_FILENAME_SIZE)
     return ES_ERROR;
@@ -47,19 +64,20 @@ int external_potential_tabulated_init(int number, char* filename, int n_particle
   return ES_OK;
 }
 
-int lattice_read_file(Lattice* self, char* filename); 
+int lattice_read_file(Lattice* lattice, char* filename);
 
 int external_potential_tabulated_read_potential_file(int number) {
-  return lattice_read_file(&(external_potentials[number].e.tabulated.potential), external_potentials[number].e.tabulated.filename);
+  return lattice_read_file(&(external_potentials[number].tabulated.potential),
+		  external_potentials[number].tabulated.filename);
 }
 
-int lattice_read_file(Lattice* self, char* filename) {
+int lattice_read_file(Lattice* lattice, char* filename) {
  // ExternalPotentialTabulated *e = &(external_potentials[number].e.tabulated);
   FILE* infile = fopen(filename, "r");
   
   if (!infile)  {
-    char *errtxt = runtime_error(128+MAX_FILENAME_SIZE);
-    ERROR_SPRINTF(errtxt,"Could not open file %s\n", filename);
+    char *errtxt = runtime_error(128 + MAX_FILENAME_SIZE);
+    ERROR_SPRINTF(errtxt, "Could not open file %s\n", filename);
     return ES_ERROR;
   }
   char first_line[100];
@@ -109,10 +127,9 @@ int lattice_read_file(Lattice* self, char* filename) {
     if (!token) { fprintf(stderr, "Could not read offset[2]\n"); return ES_ERROR;}
     offset[2] = atof(token);
   }
-  self->offset[0]=offset[0];
-  self->offset[1]=offset[1];
-  self->offset[2]=offset[2];
-
+  lattice->offset[0]=offset[0];
+  lattice->offset[1]=offset[1];
+  lattice->offset[2]=offset[2];
 
   int halosize=1;
 
@@ -142,8 +159,8 @@ int lattice_read_file(Lattice* self, char* filename) {
 
   // Now we count how many entries we have:
 
-  init_lattice(self, res, offset, halosize, dim);
-  self->interpolation_type = INTERPOLATION_LINEAR;
+  lattice->init(res, offset, halosize, dim);
+  lattice->interpolation_type = INTERPOLATION_LINEAR;
 
   char* line = (char*) malloc((3+dim)*ES_DOUBLE_SPACE);
   double pos[3];
@@ -166,14 +183,14 @@ int lattice_read_file(Lattice* self, char* filename) {
     pos[2] = atof(token);
     for (i=0; i<dim;i++) {
       token = strtok(NULL, " \t");
-      if (!token) { fprintf(stderr, "Coud not read f[%d]\n", i); return ES_ERROR; }
+      if (!token) { fprintf(stderr, "Could not read f[%d]\n", i); return ES_ERROR; }
       f[i] = atof(token);
     }
-    lattice_set_data_for_global_position_with_periodic_image(self, pos, f);
+    lattice->set_data_for_global_position_with_periodic_image(pos, f);
   }
   free(line);
 
-  write_local_lattice_to_file("lattice", self);
+  write_local_lattice_to_file("lattice", lattice);
   
   if (check_runtime_errors()!=0)
     return ES_ERROR;
@@ -188,36 +205,36 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
   double *d;
 
   char filename[60];
-  Lattice* l = lattice;
+  //Lattice* l = lattice;
   sprintf(filename, "%s_%02d.dat", filename_prefix, this_node);
   FILE* outfile = fopen(filename , "w");
-  fprintf(outfile,"grid %d %d %d\n", l->grid[0], l->grid[1], l->grid[2]); ;
-  fprintf(outfile,"halo_grid %d %d %d\n", l->halo_grid[0], l->halo_grid[1], l->halo_grid[2]); ;
-  fprintf(outfile,"halo_size %d\n", l->halo_size);
+  fprintf(outfile,"grid %d %d %d\n", lattice->grid[0], lattice->grid[1], lattice->grid[2]);
+  fprintf(outfile,"halo_grid %d %d %d\n", lattice->halo_grid[0], lattice->halo_grid[1], lattice->halo_grid[2]);
+  fprintf(outfile,"halo_size %d\n", lattice->halo_size);
   
-  fprintf(outfile,"grid_volume %ld\n", l->grid_volume);
-  fprintf(outfile,"halo_grid_volume %ld\n", l->halo_grid_volume);
-  fprintf(outfile,"halo_grid_surface %ld\n", l->halo_grid_surface);
-  fprintf(outfile,"halo_offset %ld\n", l->halo_offset);
+  fprintf(outfile,"grid_volume %ld\n", lattice->grid_volume);
+  fprintf(outfile,"halo_grid_volume %ld\n", lattice->halo_grid_volume);
+  fprintf(outfile,"halo_grid_surface %ld\n", lattice->halo_grid_surface);
+  fprintf(outfile,"halo_offset %ld\n", lattice->halo_offset);
 
-  fprintf(outfile,"dim %d\n", l->dim);
+  fprintf(outfile,"dim %d\n", lattice->dim);
 
-  fprintf(outfile,"agrid %f %f %f\n", l->agrid[0], l->agrid[1], l->agrid[2]);
+  fprintf(outfile,"agrid %f %f %f\n", lattice->agrid[0], lattice->agrid[1], lattice->agrid[2]);
  
-  fprintf(outfile,"offset %f %f %f\n", l->offset[0], l->offset[1], l->offset[2]);
-  fprintf(outfile,"local_offset %f %f %f\n", l->local_offset[0], l->local_offset[1], l->local_offset[2]);
-  fprintf(outfile,"local_index_offset %d %d %d\n", l->local_index_offset[0], l->local_index_offset[1], l->local_index_offset[2]);
+  fprintf(outfile,"offset %f %f %f\n", lattice->offset[0], lattice->offset[1], lattice->offset[2]);
+  fprintf(outfile,"local_offset %f %f %f\n", lattice->local_offset[0], lattice->local_offset[1], lattice->local_offset[2]);
+  fprintf(outfile,"local_index_offset %d %d %d\n", lattice->local_index_offset[0], lattice->local_index_offset[1], lattice->local_index_offset[2]);
 
 
-  fprintf(outfile, "element_size %ld\n", l->element_size);
+  fprintf(outfile, "element_size %ld\n", lattice->element_size);
 
   
   for (i=0; i<lattice->halo_grid[0]; i++) 
     for (j=0; j<lattice->halo_grid[1]; j++) 
       for (k=0; k<lattice->halo_grid[2]; k++) {
         index[0]=i; index[1] = j; index[2] = k;
-        lattice_get_data_for_halo_index(lattice, index, (void**) &d);
-        map_halo_index_to_pos(lattice, index, pos);
+        lattice->get_data_for_halo_index(index, (void**) &d);
+        lattice->map_halo_index_to_pos(index, pos);
 //        map_local_index_to_pos(&e->lattice, index, pos);
         fprintf(outfile, "%f %f %f %f \n",pos[0], pos[1], pos[2], d[0]);
       } 
@@ -225,7 +242,7 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
   return ES_OK;
 }
 
-inline void add_external_potential_tabulated_forces(ExternalPotential* e, Particle* p) {
+void add_external_potential_tabulated_forces(ExternalPotential* e, Particle* p) {
   if (p->p.type >= e->n_particle_types) {
     return;
   }
@@ -236,7 +253,7 @@ inline void add_external_potential_tabulated_forces(ExternalPotential* e, Partic
   memcpy(img, p->r.p, 3*sizeof(int));
   fold_position(ppos, img);
  
-  lattice_interpolate_gradient(&e->e.tabulated.potential, p->r.p, field);
+  e->tabulated.potential.interpolate_gradient(p->r.p, field);
   p->f.f[0]-=e->scale[p->p.type]*field[0];
   p->f.f[1]-=e->scale[p->p.type]*field[1];
   p->f.f[2]-=e->scale[p->p.type]*field[2];
@@ -244,7 +261,7 @@ inline void add_external_potential_tabulated_forces(ExternalPotential* e, Partic
 }
 
 void add_external_potential_forces(Particle* p) {
-  for (int i=0; i<n_external_potentials; i++) {
+  for (int i = 0; i < n_external_potentials; i++) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_forces(&external_potentials[i], p);
     } else {
@@ -256,7 +273,7 @@ void add_external_potential_forces(Particle* p) {
 }
 
 
-inline void add_external_potential_tabulated_energy(ExternalPotential* e, Particle* p) {
+void add_external_potential_tabulated_energy(ExternalPotential* e, Particle* p) {
   if (p->p.type >= e->n_particle_types) {
     return;
   }
@@ -267,7 +284,7 @@ inline void add_external_potential_tabulated_energy(ExternalPotential* e, Partic
   memcpy(img, p->r.p, 3*sizeof(int));
   fold_position(ppos, img);
  
-  lattice_interpolate(&e->e.tabulated.potential, p->r.p, &potential);
+  e->tabulated.potential.interpolate(p->r.p, &potential);
   e->energy += e->scale[p->p.type] * potential;
 }
 

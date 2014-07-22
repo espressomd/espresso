@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -79,8 +79,9 @@ double time_step_squared= -1.0;
 double time_step_squared_half = -1.0;
 
 double sim_time         = 0.0;
-double skin             = -1.0;
-double skin2;
+double skin             = 0.0;
+double skin2            = 0.0;
+bool   skin_set         = false;
 
 int    resort_particles = 1;
 int    recalc_forces    = 1;
@@ -130,14 +131,6 @@ void integrator_sanity_checks()
   if ( time_step < 0.0 ) {
     errtext = runtime_error(128);
     ERROR_SPRINTF(errtext, "{010 time_step not set} ");
-  }
-  if ( skin < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{011 skin not set} ");
-  }
-  if ( temperature < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
   }
 }
 

@@ -26,7 +26,7 @@ BOND_CONSTRAINT
 MODES                           requires FFTW
 BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
-COLLISION_DETECTION				implies GHOST_FLAG, GHOSTS_HAVE_BONDS
+COLLISION_DETECTION		implies GHOST_FLAG, GHOSTS_HAVE_BONDS
 METADYNAMICS
 NEMD
 NPT 
@@ -46,6 +46,8 @@ MOL_CUT                         implies VIRTUAL_SITES_COM
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
 INTER_RF                        implies ELECTROSTATICS
+MMM1D_GPU                       implies PARTIAL_PERIODIC, ELECTROSTATICS
+MMM1D_GPU                       requires CUDA
 
 /* Magnetostatics */
 DIPOLES
@@ -76,15 +78,15 @@ INTER_DPD
 LB
 LB_GPU                          requires CUDA
 LB_BOUNDARIES	                implies LB, CONSTRAINTS
-LB_BOUNDARIES_GPU	        	implies LB_GPU, CONSTRAINTS
+LB_BOUNDARIES_GPU	        implies LB_GPU, CONSTRAINTS
 LB_ELECTROHYDRODYNAMICS	        implies LB
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
 EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 LATTICE	                        equals LB or LB_GPU
 USE_TEMPORARY	                equals LB or LB_GPU
-SHANCHEN		        		implies LB_GPU
-SHANCHEN 		        		requires not ELECTROKINETICS
+SHANCHEN		        implies LB_GPU
+SHANCHEN 		        requires not ELECTROKINETICS
 
 /* Interaction features */
 TABULATED

@@ -14,10 +14,12 @@ New user-visible features
 * ELECTROKINETICS: An algorithm to treat species of ions on a mean-field
   level. Implementation takes advantage of a GPU.
 
-* Provide the preliminary Python interface. Configure with
-  --with-python-interface.
+* MMM1D_GPU: The mmm1d electrostatics algorithm is now available as GPU version.
 
 * Support of P3M on GPU.
+
+* Provide the preliminary Python interface. Configure with
+  --with-python-interface.
 
 * Allow the p3m to dump the mesh in x, y, and z (before it only dumped
   the mesh in x). This allows for the dumping of the p3m in blockfile
@@ -37,6 +39,7 @@ New user-visible features
   loop.
 
 * New harmonic well that runs on the GPU.
+
 
 User-visible changes
 --------------------
@@ -466,7 +469,7 @@ Changes visible for developers
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

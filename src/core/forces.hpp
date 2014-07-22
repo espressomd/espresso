@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -319,42 +319,42 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   /* real space coulomb */
   double q1q2 = p1->p.q*p2->p.q;
-    switch (coulomb.method) {
-  #ifdef P3M
-    case COULOMB_ELC_P3M: {
-      if (q1q2) {
-        p3m_add_pair_force(q1q2,d,dist2,dist,force); 
-      
-        // forces from the virtual charges
-        // they go directly onto the particles, since they are not pairwise forces
-        if (elc_params.dielectric_contrast_on)
-  	ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
-      }
-      break;
-    }
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M: {
-  #ifdef NPT
-      if (q1q2) {
-        double eng = p3m_add_pair_force(q1q2,d,dist2,dist,force);
-        if(integ_switch == INTEG_METHOD_NPT_ISO)
-  	nptiso.p_vir[0] += eng;
-      }
-  #else
-      if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force); 
-  #endif
-      break;
-    }
-  #endif
-    case COULOMB_MMM1D:
-      if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
-      break;
-    case COULOMB_MMM2D:
-      if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
-      break;
-    case COULOMB_NONE:
-      break;
-    }
+  switch (coulomb.method) {
+#ifdef P3M
+  case COULOMB_ELC_P3M: {
+	  if (q1q2) {
+		  p3m_add_pair_force(q1q2,d,dist2,dist,force);
+
+		  // forces from the virtual charges
+		  // they go directly onto the particles, since they are not pairwise forces
+		  if (elc_params.dielectric_contrast_on)
+			  ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+	  }
+	  break;
+  }
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M: {
+#ifdef NPT
+	  if (q1q2) {
+		  double eng = p3m_add_pair_force(q1q2,d,dist2,dist,force);
+		  if(integ_switch == INTEG_METHOD_NPT_ISO)
+			  nptiso.p_vir[0] += eng;
+	  }
+#else
+	  if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force);
+#endif
+	  break;
+  }
+#endif
+  case COULOMB_MMM1D:
+	  if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
+	  break;
+  case COULOMB_MMM2D:
+	  if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
+	  break;
+  default:
+	  break;
+  }
 
 #endif /*ifdef ELECTROSTATICS */
 
@@ -690,7 +690,8 @@ inline void check_particle_force(Particle *part)
   for (i=0; i< 3; i++) {
     if (isnan(part->f.f[i])) {
       char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+      ERROR_SPRINTF(errtext,"{999 force on particle %d was NAN.} ",
+		    part->p.identity);
     }
   }
 
@@ -698,7 +699,8 @@ inline void check_particle_force(Particle *part)
   for (i=0; i< 3; i++) {
     if (isnan(part->f.torque[i])) {
       char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+      ERROR_SPRINTF(errtext,"{999 force on particle %d was NAN.} ",
+		    part->p.identity);
     }
   }
 #endif

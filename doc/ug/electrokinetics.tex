@@ -1,3 +1,20 @@
+% Copyright (C) 2013,2014 The ESPResSo project
+%  
+% This file is part of ESPResSo.
+%   
+% ESPResSo is free software: you can redistribute it and/or modify it
+% under the terms of the GNU General Public License as published by the
+% Free Software Foundation, either version 3 of the License, or (at your
+% option) any later version.
+%  
+% ESPResSo is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% General Public License for more details.
+%  
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
 \newcommand{\lb}{l_\mathrm{B}}
 \newcommand{\kT}{k_\mathrm{B}T}
 
@@ -313,9 +330,9 @@ Currently, a linear reaction is implemented which converts one species into two 
 order to model the catalytic decomposition of hydrogen peroxide in the presence
 of a platinum catalyst: $2 \mathrm{H}_{2}\mathrm{O}_{2} \rightarrow 
 2 \mathrm{H}_{2}\mathrm{O} + \mathrm{O}_{2}$. The decomposition of 
-$\mathrm{H}_{2}\mathrm{O}_{2}$ is in reality more complicated than a linear 
-reaction, since it is assumed to proceed via many intermediate complexed-states, 
-but the linear reaction can be thought of as modeling the rate-limiting step.
+$\mathrm{H}_{2}\mathrm{O}_{2}$ is in reality more complicated than the linear 
+reaction introduced here, since it is assumed to proceed via several intermediate complexed-states, 
+but our model can be thought of as modeling the rate-limiting step.
 If we assume that there are three non-ionic species with number densities
 $n_{k}$, where $n_{0} = [ \mathrm{H}_{2}\mathrm{O}_{2} ]$,
 $n_{1} = [ \mathrm{H}_{2}\mathrm{O} ]$, and $n_{2} = [ \mathrm{O}_{2} ]$, 
@@ -348,52 +365,31 @@ and input parameters
 In this set of equations we have fully decoupled the number densities and the
 fluid mass density. N.B. We have set the initial fluid mass density is not necessarily 
 equal to the sum of the initial species number densities. This means that 
-some care needs to be taken in the interpretation of the results of the 
-simulations with this code. It is important to note that the reaction must 
-satisfy mass balance:
+some care needs to be taken in the interpretation of the results obtained using
+this feature. In particular, the solution of the Navier-Stokes equation exclusively
+models the momentum transport through the (multicomponent) fluid, while the diffusive
+properties of the individual chemical species are handled by Eqs.~\eqref{eq:ek-reaction-continuity}
+and~\eqref{eq:ek-reaction-fluxes}.
+
+It is important to note that to ensure mass conservation the reaction must satisfy:
 \begin{equation}
 \label{eq:ek-mass-balance} \sum_{k} f_{k} m_{k} = 0 ,
 \end{equation}
-where $m_{k}$ is the molecular mass of a reactive species. This implies that the
-total mass flux in the system is given by
-\begin{equation}
-\label{eq:ek-mass-flux} \vec{j}_{\mathrm{mass}} = \rho_{\mathrm{fl}}(t = 0) \frac{\sum_{k} m_{k} \vec{j}_{k}}{\sum_{k} m_{k} n_{k} (t = 0)}
-\end{equation}
-which is the quantity of interested in systems where, for instance, the
-catalytic reaction drives a particle to self-propel. There is a way to directly 
-access the mass flux from the simulation, without having to go through the
-computations, as will be shown later.
+where $m_{k}$ is the molecular mass of a reactive species. Unfortunately, the current
+electrokinetic implementation does not conserve mass flux locally. That is to say, the
+LB fluid is compressible and the sum of the fluxes of the three species is not equal to
+zero in the frame co-moving with the advective fluid velocity. It is therefore debatable
+whether it is necessary to impose Eq.~\eqref{eq:ek-mass-balance}, since the EK algorithm
+itself does not conserve mass density. However, we strived to be as accurate as
+possible and in future versions of the EK algorithm the lack of incompressiblity will 
+be addressed. 
 
 The reaction is specified by the second term on the right-hand side of 
 Eq.~\eqref{eq:ek-reaction-continuity}. It is important to note that this term
 can be set locally, as opposed to the other terms in the equation system 
 Eqs.~\eqref{eq:ek-reaction-continuity}-\eqref{eq:ek-reaction-continuity-fl}, in
 our implementation, as will become clear in the following. This has the
-advantage that catalytic surfaces may be modeled. 
-
-It turns out that in addition to the initial setting of the LB mass density, the
-inherent compressibility of the LB -- it satisfies the equation of state of an 
-ideal gas -- must be suppressed to obtain the `correct' advective contribution
-from the Navier-Stokes equation~\eqref{eq:ek-reaction-velocity}. The force 
-applied to the LB fluid coming from the diffusive species is sufficiently
-strong to create a mass density heterogeneity in the LB fluid. This 
-heterogeneity leads to an internal restorative force within the LB, which
-exceeds the applied force. An unfortunate consequence of this is that an 
-incorrect advective velocity is given by the LB scheme.
-
-In our implementation, suppression of LB fluid heterogeneity is achieved by 
-resetting the zeroth mode of the LB at the start of every time step. This 
-resetting violates mass conservation in the LB, but only by a small (and 
-controlled) amount, since the heterogeneities are in the order of 1\%, 
-for the physical systems that we considered thus far. Alternatively, one could
-use parameters for which the compressibility of the LB fluid is not as strong, 
-but tuning the internal LB parameters. However, this may severely limit the 
-range over which the system can be mapped to an experimental equivalent. 
-Regardless, great care must be taken to examine the effect of mode 0 resetting 
-and it should not be used without a good insight into the system you are 
-modeling. In future version of \es{} the reaction set-up will be built on top of
-an incompressible hydrodynamics solver, thus circumventing the problems that
-arrise in regular LB which necessitate mode resetting.
+advantage that catalytic surfaces may be modeled.
 
 \subsection{\label{ssec:ek-reac-init}Initialization and Geometry Definition}
 
@@ -438,30 +434,6 @@ chemical requirement of mass conservation. Finally, the parameters
 what fractions of the product are generated when a given quantity of reactant is
 catalytically converted. To use a chemical reaction, all options for the 
 \lit{electrokinetics reaction} command must be specified.
-
-\begin{essyntax}
-  \require{1 or 2 or 3}{electrokinetics}
-  \require{3}{reaction}
-  \require{3}{reset_mode_zero \var{fraction}}
-  \opt{shape \var{shape\_args}}
-  \begin{features}
-  \required[1]{ELECTROKINETICS}
-  \required[2]{EK_BOUNDARIES}
-  \required[3]{EK_REACTIONS}
-  \end{features}
-\end{essyntax}
-The \lit{reset_mode_zero} option of the \lit{electrokinetics reaction} command 
-enables the user to violate mass conservation in the LB to effectively kill off
-its compressiblity. The parameter \var{fraction} can assume values in the range
-[0,1]. The resetting acts on the zeroth mode of the LB as follows
-\begin{equation}
-\label{eq:ek-mode} M_{0,\mathrm{reset}} = f * M_{0,\mathrm{original}} ,
-\end{equation}
-with $f$ the value of the \var{fraction} parameter. The default behavior of the
-electrokinetics algorithm is no mode resetting. Once mode resetting is enabled
-it can be adjusted at any time during the simulation and it may be switched off
-by setting the value of \var{fraction} to 1.0. Mode zero resetting can only be
-applied if a reaction has been set up and there are boundaries in the system.
 
 \begin{essyntax}
   \require{1 or 2 or 3}{electrokinetics}
@@ -522,24 +494,9 @@ The \lit{electrokinetics pdb-parse} feature allows the user to parse simple PDB 
 The print parameter of the \lit{electrokinetics} command can be used in
 combination with the \texttt{EK\_REACTION} feature to give advanced output 
 options. Currently, supported values of the parameter \var{property} are: 
-\var{pressure}, \var{reaction\_tags}, and \var{mass\_flux}, which give the 
-location and type of the reactive regions, the ideal-gas pressure coming from 
-the diffusive species and the total mass flux of the reactive species,
-respectively. To use this command a reaction must be set up.
-
-\begin{essyntax}
-  \require{1 or 2 or 3}{electrokinetics}
-  node \var{x} \var{y} \var{z} 
-  \require{3}{mass_flux}
-  \begin{features}
-  \required[1]{ELECTROKINETICS}
-  \required[2]{EK_BOUNDARIES}
-  \required[3]{EK_REACTIONS}
-  \end{features}
-\end{essyntax}
-In combination with the \texttt{EK\_REACTION} feature the \lit{node} option of 
-the \lit{electrokinetics} command allows one to output the value of the mass 
-flux on a single LB node.
+\var{pressure} and \var{reaction\_tags}, which give the 
+location and type of the reactive regions and the ideal-gas pressure coming from 
+the diffusive species, respectively. To use this command a reaction must be set up.
 
 %%% Local Variables:
 %%% mode: latex

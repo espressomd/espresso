@@ -1,8 +1,27 @@
+#
+# Copyright (C) 2013,2014 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#  
 include "myconfig.pxi"
 cimport numpy as np
 import numpy as np
 cimport utils
 from utils cimport *
+cimport particle_data
 
 cdef class ParticleHandle:
   def __cinit__(self, _id):
@@ -129,7 +148,7 @@ cdef class ParticleHandle:
       
       return tuple(bonds)
 
-  # Preoperties that exist only when certain features are activated
+  # Properties that exist only when certain features are activated
   # MASS
   IF MASS == 1:
     property mass:
@@ -142,7 +161,7 @@ cdef class ParticleHandle:
       def __get__(self):
         self.updateParticleData()
         cdef double* x
-        pointer_to_mass(&(self.particleData),x)
+        pointer_to_mass(&(self.particleData), x)
         return x[0]
 
   IF ROTATION == 1:
@@ -176,7 +195,7 @@ cdef class ParticleHandle:
       def __get__(self):
         self.updateParticleData()
         cdef double* o
-        pointer_to_omega_body(&(self.particleData),o)
+        pointer_to_omega_body(&(self.particleData), o)
         return np.array([o[0],o[1],o[2]])
   
   

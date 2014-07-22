@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -58,7 +58,9 @@ int observable_update(observable* self);
 
 /* Here we have the particular observables listed */
 int observable_calc_particle_velocities(observable* self_);
+int observable_calc_particle_body_velocities(observable* self_);
 int observable_calc_particle_angular_momentum(observable* self_);
+int observable_calc_particle_body_angular_momentum(observable* self_);
 int observable_calc_com_velocity(observable* self); 
 int observable_calc_blocked_com_velocity(observable* self); 
 /** Obtain the particle positions.
