@@ -1,3 +1,21 @@
+/*
+  Copyright (C) 2014 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
@@ -10,9 +28,9 @@ __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r, float *
 
   CUDA_particle_data p = particles[idx];
 
-  r[idx + 0] = p.p[0];
-  r[idx + 1] = p.p[1];
-  r[idx + 2] = p.p[2];
+  r[3*idx + 0] = p.p[0];
+  r[3*idx + 1] = p.p[1];
+  r[3*idx + 2] = p.p[2];
   #ifdef ELECTROSTATICS
   q[idx] = p.q;
   #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2013 The ESPResSo project
+  Copyright (C) 2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -61,6 +61,11 @@ typedef struct {
 
 } CUDA_particle_data;
 
+/** data structure for the different kinds of energies */
+typedef struct {
+  float bonded, non_bonded, coulomb, dipolar;
+} CUDA_energy;
+
 /** Note the particle's seed gets its own struct since it doesn't get copied back and forth from the GPU */
 typedef struct {
     
@@ -83,11 +88,15 @@ typedef struct {
 } CUDA_global_part_vars;
 
 void copy_forces_from_GPU();
+void copy_energy_from_GPU();
+void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
+void clear_energy_on_GPU();
 void copy_composition_from_GPU();
 CUDA_global_part_vars* gpu_get_global_particle_vars_pointer_host();
 CUDA_global_part_vars* gpu_get_global_particle_vars_pointer();
 CUDA_particle_data* gpu_get_particle_pointer();
 CUDA_particle_force* gpu_get_particle_force_pointer();
+CUDA_energy* gpu_get_energy_pointer();
 CUDA_fluid_composition* gpu_get_fluid_composition_pointer();
 CUDA_particle_seed* gpu_get_particle_seed_pointer();
 void gpu_change_number_of_part_to_comm();

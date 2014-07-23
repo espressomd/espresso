@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -2034,12 +2034,6 @@ __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1,
   }
 }
 
-#if defined(ELECTROKINETICS)
-__device__ void reset_mode0_homogeneously(float* mode, float value) {
-  mode[0] *= value;
-}
-#endif
-
 /*********************************************************/
 /** \name System setup and Kernel functions */
 /*********************************************************/
@@ -2647,22 +2641,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
     calc_m_from_n(n_a, index, mode);
-#if defined(ELECTROKINETICS) && defined(EK_BOUNDARIES)
-  /** reset the density profile to homogeneous to avoid
-      LB internal pressure contribution */
-  if ( ek_initialized_gpu )
-  {
-    if ( ek_parameters_gpu->reaction_species[0] != -1 &&
-         ek_parameters_gpu->reaction_species[1] != -1 &&
-         ek_parameters_gpu->reaction_species[2] != -1 &&
-         ek_parameters_gpu->reset_mode_0 >= 0.0 &&
-         n_lb_boundaries_gpu > 0 
-       )
-    {
-      reset_mode0_homogeneously(mode, ek_parameters_gpu->reset_mode_0);
-    }
-  }
-#endif
     /**lb_relax_modes*/
     relax_modes(mode, index, node_f,d_v);
     /**lb_thermalize_modes */
@@ -2993,8 +2971,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-
-  cudaStreamCreate(&stream[0]);
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 

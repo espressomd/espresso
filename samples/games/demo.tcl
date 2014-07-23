@@ -1,12 +1,21 @@
 #!/usr/bin/env Espresso $*
-#  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-#  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-#  and by which you are legally bound while utilizing this file in any form or way.
-#  There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-#  You should have received a copy of that license along with this program;
-#  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-#  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-#  Copyright (c) 2002-2013; all rights reserved unless otherwise stated.
+# Copyright (C) 2013,2014 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#  
 # 
 #############################################################
 #                                                           #
@@ -79,6 +88,7 @@ proc set_status {stat} {
 }
 
 wm geometry . -0+0
+wm title . "ESPResSo-Spiel"
 
 ##### case 1
 frame .case1 -relief raised -border 2
@@ -129,20 +139,20 @@ pack .case2.title.b -side right -in .case2.title
 pack .case2.title -pady {0 10} -fill x -side top -in .case2
 
 # sliders
-label .case2.label1 -justify left -text "Ladung Wand mitte"
-scale .case2.slider1 -orient h -from -1.5 -to 1.5 \
+label .case2.label1 -justify left -text "Ladung Wand mitte" -foreground blue
+scale .case2.slider1 -orient h -from -1.5 -to 1.5 -troughcolor blue \
     -resolution [expr 3/5.] -command Case2Wall1ChargeChange
-pack .case2.slider1 .case2.label1 -fill x -in .case2
 
-label .case2.label2 -justify left -text "Ladung Wand links"
-scale .case2.slider2 -orient h -from -1.5 -to 1.5 \
+label .case2.label2 -justify left -text "Ladung Wand links" -foreground yellow
+scale .case2.slider2 -orient h -from -1.5 -to 1.5 -troughcolor yellow \
     -resolution [expr 3/5.] -command Case2Wall2ChargeChange
-pack .case2.slider2 .case2.label2 -fill x -in .case2
 
-label .case2.label3 -justify left -text "Ladung Wand oben"
-scale .case2.slider3 -orient h -from -1.5 -to 1.5 \
+label .case2.label3 -justify left -text "Ladung Wand oben" -foreground white
+scale .case2.slider3 -orient h -from -1.5 -to 1.5 -troughcolor white \
     -resolution [expr 3/5.] -command Case2Wall3ChargeChange
 pack .case2.slider3 .case2.label3 -fill x -in .case2
+pack .case2.slider1 .case2.label1 -fill x -in .case2
+pack .case2.slider2 .case2.label2 -fill x -in .case2
 
 label .case2.status -justify left -text ""
 pack .case2.status -fill x -in .case2
