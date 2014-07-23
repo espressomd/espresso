@@ -78,7 +78,7 @@ python-all:
 all-local: python-all
 
 PYCFILES = $(PYFILES:.py=.pyc)
-CLEANFILES = $(PYFILES) $(PYCFILES)
+CLEANFILES = $(PYCFILES)
 
 EXTRA_DIST += $(PYFILES) $(PYXFILES) $(PXDFILES)
 
