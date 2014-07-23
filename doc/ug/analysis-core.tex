@@ -1,4 +1,4 @@
-% Copyright (C) 2012,2013 The ESPResSo project
+% Copyright (C) 2012,2013,2014 The ESPResSo project
 %  
 % This file is part of ESPResSo.
 %   
@@ -108,6 +108,13 @@ system:
           $v^x_1,\ v^y_1,\ v^z_1,\ v^x_2,\ v^y_2,\ v^z_2,\ 
           \dots\ v^x_n,\ v^y_n,\ v^z_n$. 
           The particles are ordered ascending according to their ids.
+    \item \lit{particle_body_velocities} \var{particle\_specifications}\\
+          Velocities of the particles in the body frame, in the format\\ 
+          $v^x_1,\ v^y_1,\ v^z_1,\ v^x_2,\ v^y_2,\ v^z_2,\ 
+          \dots\ v^x_n,\ v^y_n,\ v^z_n$. 
+          The particles are ordered ascending according to their ids. This
+          command only produces a meaningful result when \texttt{ROTATIONS}
+          is compiled in.
     \item \lit{particle_forces} \var{particle\_specifications}\\
           Forces on the particles, in the format\\ 
           $f^x_1,\ f^y_1,\ f^z_1,\ f^x_2,\ f^y_2,\ f^z_2,\ 
@@ -119,6 +126,12 @@ system:
           \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n$. 
           The particles are ordered ascending according to their ids and the 
           angular velocity/momentum is specified in the laboratory frame.
+    \item \lit{particle_body_angular_momentum} \var{particle\_specifications}\\
+          Angular momenta (omega) of the particles, in the format\\ 
+          $\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2,\ 
+          \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n$. 
+          The particles are ordered ascending according to their ids and the 
+          angular velocity/momentum is specified in the body (co-rotating) frame.
     \item \lit{com_position} \var{particle\_specifications} \opt{blocked \var{size}}\\
           Position of the centre of mass. 
           If \lit{blocked \var{size}} is specified,
@@ -393,7 +406,10 @@ Its further arguments are described below.
     corresponding components of the observables, \ie $C_i = (A_i-B_i)^2$. 
     Example: when $A$ is \lit{particle_positions}, it produces the mean square displacement
     (for each component separately).
+    \item \lit{tensor_product} \\
+    Tensor product of $A$ and $B$, \ie $C_{i \cdot l_B + j} = A_i B_j$, with $l_B$ the length of $B$.
     \item \lit{complex_conjugate_product}
+    \todo{Complex conjugate product must be defined.}
     \item \lit{fcs_acf} \var{w_x}\var{w_y} \var{w_z} \\
     Fluorescence Correlation Spectroscopy (FCS) autocorrelation function, \ie
     \begin{equation}

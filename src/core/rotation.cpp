@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -381,6 +381,17 @@ void convert_torques_body_to_space(Particle *p, double *torque)
   torque[1] = A[0 + 3*1]*p->f.torque[0] + A[1 + 3*1]*p->f.torque[1] + A[2 + 3*1]*p->f.torque[2];
   torque[2] = A[0 + 3*2]*p->f.torque[0] + A[1 + 3*2]*p->f.torque[1] + A[2 + 3*2]*p->f.torque[2];
 }
+
+void convert_vel_space_to_body(Particle *p, double *vel_body)
+{
+  double A[9];
+  define_rotation_matrix(p, A);
+
+  vel_body[0] = A[0 + 3*0]*p->m.v[0] + A[0 + 3*1]*p->m.v[1] + A[0 + 3*2]*p->m.v[2];
+  vel_body[1] = A[1 + 3*0]*p->m.v[0] + A[1 + 3*1]*p->m.v[1] + A[1 + 3*2]*p->m.v[2];
+  vel_body[2] = A[2 + 3*0]*p->m.v[0] + A[2 + 3*1]*p->m.v[1] + A[2 + 3*2]*p->m.v[2];
+}
+
 
 /** Multiply two quaternions */
 void multiply_quaternions(double a[4], double b[4], double result[4])

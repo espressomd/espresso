@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -161,6 +161,8 @@ libEspresso_la_SOURCES += \
 # Generic actors
 libEspresso_la_SOURCES += \
 	actor/Actor.hpp \
+	actor/Mmm1dgpuForce.cu actor/Mmm1dgpuForce.hpp \
+	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp
 
 ##################################################
@@ -175,6 +177,7 @@ CUDA_HEADER_FILES = \
 	cuda_interface.hpp \
 	p3m_gpu.hpp \
 	cuda_init.hpp \
+	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
 	electrokinetics.hpp \
 	integrate_sd_cuda_debug.cuh
 
@@ -187,6 +190,7 @@ CUDA_SOURCE_FILES = \
 	EspressoSystemInterface_cuda.cu \
 	integrate_sd_cuda.cu \
 	integrate_sd_cuda_debug.cu \
+	actor/Mmm1dgpuForce.cu \
 	actor/HarmonicWell_cuda.cu
 
 # include the dependency tracking files
@@ -197,6 +201,7 @@ include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
+include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 

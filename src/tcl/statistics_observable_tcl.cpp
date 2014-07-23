@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -273,12 +273,40 @@ int tclcommand_observable_particle_velocities(Tcl_Interp* interp, int argc, char
   return TCL_OK;
 }
 
+int tclcommand_observable_particle_body_velocities(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  IntList* ids;
+  int temp;
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
+    return TCL_ERROR;
+  obs->calculate=&observable_calc_particle_body_velocities;
+  obs->update=0;
+  obs->container=ids;
+  obs->n=3*ids->n;
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
+  *change=1+temp;
+  return TCL_OK;
+}
+
 int tclcommand_observable_particle_angular_momentum(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   IntList* ids;
   int temp;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
   obs->calculate=&observable_calc_particle_angular_momentum;
+  obs->update=0;
+  obs->container=ids;
+  obs->n=3*ids->n;
+  obs->last_value=(double*)malloc(obs->n*sizeof(double));
+  *change=1+temp;
+  return TCL_OK;
+}
+
+int tclcommand_observable_particle_body_angular_momentum(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  IntList* ids;
+  int temp;
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
+    return TCL_ERROR;
+  obs->calculate=&observable_calc_particle_body_angular_momentum;
   obs->update=0;
   obs->container=ids;
   obs->n=3*ids->n;
@@ -915,7 +943,9 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
 
     REGISTER_OBSERVABLE(average, tclcommand_observable_average,id);
     REGISTER_OBSERVABLE(particle_velocities, tclcommand_observable_particle_velocities,id);
+    REGISTER_OBSERVABLE(particle_body_velocities, tclcommand_observable_particle_body_velocities,id);
     REGISTER_OBSERVABLE(particle_angular_momentum, tclcommand_observable_particle_angular_momentum,id);
+    REGISTER_OBSERVABLE(particle_body_angular_momentum, tclcommand_observable_particle_body_angular_momentum,id);
     REGISTER_OBSERVABLE(particle_forces, tclcommand_observable_particle_forces,id);
     REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity,id);
     REGISTER_OBSERVABLE(com_position, tclcommand_observable_com_position,id);

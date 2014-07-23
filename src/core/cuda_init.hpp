@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -20,6 +20,11 @@
 #define _CUDA_INIT_H
 
 #include "config.hpp"
+
+
+/** Initializes the CUDA stream.
+*/
+void cuda_init();
 
 /** get the number of CUDA devices.
 
