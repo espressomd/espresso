@@ -79,13 +79,6 @@ all-local: python-all
 
 PYCFILES = $(PYFILES:.py=.pyc)
 CLEANFILES = $(PYCFILES)
-clean-local: 
-	for file in $(PYFILES); do \
-          if test -e $$file && test ! $$file -ef $(abs_srcdir)/$$file; then \
-            rm -f $$file; \
-          fi; \
-	done
-
 EXTRA_DIST += $(PYFILES) $(PYXFILES) $(PXDFILES)
 
 # Generate the ".cpp" files 
