@@ -57,5 +57,7 @@ else
 fi
 echo
 
-
+if [ -n "$nolicense" ] || [ -n "$missing_current_copyright" ]; then
+  exit 1
+fi  
     

@@ -228,11 +228,11 @@ void on_observable_calc()
   EVENT_TRACE(fprintf(stderr, "%d: on_observable_calc\n", this_node));
   /* Prepare particle structure: Communication step: number of ghosts and ghost information */
 
-  if(resort_particles)
+  if (resort_particles)
     cells_resort_particles(CELL_GLOBAL_EXCHANGE);
 
 #ifdef ELECTROSTATICS  
-  if(reinit_electrostatics) {
+  if (reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
     switch (coulomb.method) {
 #ifdef P3M
