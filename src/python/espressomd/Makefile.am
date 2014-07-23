@@ -1,4 +1,4 @@
-# Copyright (C) 2013 The ESPResSo project
+# Copyright (C) 2013,2014 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,7 @@ AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 LIBS =  $(top_builddir)/src/core/libEspresso.la @LIBS@
 
 if MPI_FAKE
-AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
+AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
 
 # Build rules for cython

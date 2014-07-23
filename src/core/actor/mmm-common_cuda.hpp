@@ -1,5 +1,24 @@
+/*
+  Copyright (C) 2014 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #include "mmm-common.hpp"
 #include "specfunc_cuda.hpp"
+#include "cuda_utils.hpp"
 
 // order hardcoded. mmm1d_recalcTables() typically does order less than 30.
 // As the coefficients are stored in __constant__ memory, the array needs to be sized in advance.
@@ -54,10 +73,10 @@ int modpsi_init()
 			printf("ERROR: __constant__ device_linModPsi[] is not large enough\n");
 			exit(EXIT_FAILURE);
 		}
-		HANDLE_ERROR( cudaMemcpyToSymbol(device_linModPsi_offsets, linModPsi_offsets, 2*n_modPsi*sizeof(int)) );
-		HANDLE_ERROR( cudaMemcpyToSymbol(device_linModPsi_lengths, linModPsi_lengths, 2*n_modPsi*sizeof(int)) );
-		HANDLE_ERROR( cudaMemcpyToSymbol(device_linModPsi, linModPsi, linModPsiSize*sizeof(mmm1dgpu_real)) );
-		HANDLE_ERROR( cudaMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)) );
+		cuda_safe_mem( cudaMemcpyToSymbol(device_linModPsi_offsets, linModPsi_offsets, 2*n_modPsi*sizeof(int)) );
+		cuda_safe_mem( cudaMemcpyToSymbol(device_linModPsi_lengths, linModPsi_lengths, 2*n_modPsi*sizeof(int)) );
+		cuda_safe_mem( cudaMemcpyToSymbol(device_linModPsi, linModPsi, linModPsiSize*sizeof(mmm1dgpu_real)) );
+		cuda_safe_mem( cudaMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)) );
 	}
 
 	return 0;

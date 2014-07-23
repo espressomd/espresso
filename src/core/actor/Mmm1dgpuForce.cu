@@ -1,3 +1,21 @@
+/*
+  Copyright (C) 2014 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #include "actor/Mmm1dgpuForce.hpp"
 #include "cuda_utils.hpp"
 
@@ -9,7 +27,6 @@ Mmm1dgpuForce *mmm1dgpuForce = 0;
 const int deviceCount = 1;
 float multigpu_factors[] = {1.0};
 #define cudaSetDevice(d)
-#define HANDLE_ERROR(a) cuda_safe_mem(a) // TODO: inline
 
 #include "mmm-common_cuda.hpp"
 #include "mmm1d.hpp"
@@ -30,6 +47,10 @@ void addMmm1dgpuForce(double maxPWerror, double switch_rad, int bessel_cutoff)
 	/* set_params needs to be called both upon create and upon update because it is responsible for writing
 		to the struct from which the TCL command "inter coulomb" retrieves the current parameter set */
 	mmm1dgpuForce->set_params(0, 0, maxPWerror, switch_rad, bessel_cutoff, true);
+	
+	// turn on MMM1DGPU
+	coulomb.method = COULOMB_MMM1D_GPU;
+	mpi_bcast_coulomb_params();
 }
 
 __device__ inline void atomicadd(float* address, float value)
@@ -83,9 +104,6 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefacto
 		exit(EXIT_FAILURE);
 	}
 
-	// turn on MMM1DGPU
-	coulomb.method = COULOMB_MMM1D_GPU;
-	mpi_bcast_coulomb_params();
 	modpsi_init();
 }
 
@@ -130,11 +148,11 @@ void Mmm1dgpuForce::setup(SystemInterface &s)
 		cudaFree(dev_forcePairs);
 	if (pairs) // we need memory to store force pairs
 	{
-		HANDLE_ERROR( cudaMalloc((void**)&dev_forcePairs, 3*s.npart_gpu()*s.npart_gpu()*sizeof(mmm1dgpu_real)) );
+		cuda_safe_mem( cudaMalloc((void**)&dev_forcePairs, 3*s.npart_gpu()*s.npart_gpu()*sizeof(mmm1dgpu_real)) );
 	}
 	if (dev_energyBlocks)
 		cudaFree(dev_energyBlocks);
-	HANDLE_ERROR( cudaMalloc((void**)&dev_energyBlocks, numBlocks(s)*sizeof(mmm1dgpu_real)) );
+	cuda_safe_mem( cudaMalloc((void**)&dev_energyBlocks, numBlocks(s)*sizeof(mmm1dgpu_real)) );
 	host_npart = s.npart_gpu();
 }
 
@@ -253,9 +271,9 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror, mmm1dgpu
 	{
 		int *dev_cutoff;
 		int maxCut = 30;
-		HANDLE_ERROR( cudaMalloc((void**)&dev_cutoff, sizeof(int)) );
+		cuda_safe_mem( cudaMalloc((void**)&dev_cutoff, sizeof(int)) );
 		besselTuneKernel<<<1,1>>>(dev_cutoff, far_switch_radius, maxCut);
-		HANDLE_ERROR( cudaMemcpy(&bessel_cutoff, dev_cutoff, sizeof(int), cudaMemcpyDeviceToHost) );
+		cuda_safe_mem( cudaMemcpy(&bessel_cutoff, dev_cutoff, sizeof(int), cudaMemcpyDeviceToHost) );
 		cudaFree(dev_cutoff);
 		if (_bessel_cutoff != -2 && bessel_cutoff >= maxCut) // we already have our switching radius and only need to determine the cutoff, i.e. this is the final tuning round
 		{
@@ -288,38 +306,37 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefa
 		}
 		if (_far_switch_radius >= 0)
 		{
-			HANDLE_ERROR( cudaMemcpyToSymbol(::far_switch_radius_2, &_far_switch_radius_2, sizeof(mmm1dgpu_real)) );
 			mmm1d_params.far_switch_radius_2 = _far_switch_radius*_far_switch_radius;
+			cuda_safe_mem( cudaMemcpyToSymbol(::far_switch_radius_2, &_far_switch_radius_2, sizeof(mmm1dgpu_real)) );
 			far_switch_radius = _far_switch_radius;
 		}
 		if (_boxz > 0)
 		{
 			host_boxz = _boxz;
-			HANDLE_ERROR( cudaMemcpyToSymbol(::boxz, &_boxz, sizeof(mmm1dgpu_real)) );
-			HANDLE_ERROR( cudaMemcpyToSymbol(::uz, &_uz, sizeof(mmm1dgpu_real)) );
+			cuda_safe_mem( cudaMemcpyToSymbol(::boxz, &_boxz, sizeof(mmm1dgpu_real)) );
+			cuda_safe_mem( cudaMemcpyToSymbol(::uz, &_uz, sizeof(mmm1dgpu_real)) );
 		}
 		if (_coulomb_prefactor != 0)
 		{
-			HANDLE_ERROR( cudaMemcpyToSymbol(::coulomb_prefactor, &_coulomb_prefactor, sizeof(mmm1dgpu_real)) );
+			cuda_safe_mem( cudaMemcpyToSymbol(::coulomb_prefactor, &_coulomb_prefactor, sizeof(mmm1dgpu_real)) );
 			coulomb_prefactor = _coulomb_prefactor;
 		}
 		if (_bessel_cutoff > 0)
 		{
-			HANDLE_ERROR( cudaMemcpyToSymbol(::bessel_cutoff, &_bessel_cutoff, sizeof(int)) );
 			mmm1d_params.bessel_cutoff = _bessel_cutoff;
+			cuda_safe_mem( cudaMemcpyToSymbol(::bessel_cutoff, &_bessel_cutoff, sizeof(int)) );
 			bessel_cutoff = _bessel_cutoff;
 		}
 		if (_maxPWerror > 0)
 		{
-			HANDLE_ERROR( cudaMemcpyToSymbol(::maxPWerror, &_maxPWerror, sizeof(mmm1dgpu_real)) );
 			mmm1d_params.maxPWerror = _maxPWerror;
+			cuda_safe_mem( cudaMemcpyToSymbol(::maxPWerror, &_maxPWerror, sizeof(mmm1dgpu_real)) );
 			maxPWerror = _maxPWerror;
 		}
 	}
 	need_tune = true;
-	// broadcast changed parameters
-	coulomb.method = COULOMB_MMM1D_GPU;
-	mpi_bcast_coulomb_params();
+	
+	// The changed parameters in mmm1d_params do not need to be broadcast: they are only accessed by the TCL print function (on node 0) when you call inter coulomb. The CUDA code only runs on node 0, so other nodes do not need the parameters. We couldn't broadcast from here anyway because set_params() might be called from inside computeForces() which is not a time at which the MPI loop on the slave nodes is waiting for broadcasts.
 }
 
 __global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *force, int N, int pairs, int tStart = 0, int tStop = -1)
@@ -574,17 +591,17 @@ float Mmm1dgpuForce::force_benchmark(SystemInterface &s)
 	float elapsedTime;
 	mmm1dgpu_real *dev_f_benchmark;
 
-	HANDLE_ERROR( cudaMalloc((void**)&dev_f_benchmark, 3*s.npart_gpu()*sizeof(mmm1dgpu_real)) );
-	HANDLE_ERROR( cudaEventCreate(&eventStart) );
-	HANDLE_ERROR( cudaEventCreate(&eventStop) );
-	HANDLE_ERROR( cudaEventRecord(eventStart, stream[0]) );
+	cuda_safe_mem( cudaMalloc((void**)&dev_f_benchmark, 3*s.npart_gpu()*sizeof(mmm1dgpu_real)) );
+	cuda_safe_mem( cudaEventCreate(&eventStart) );
+	cuda_safe_mem( cudaEventCreate(&eventStop) );
+	cuda_safe_mem( cudaEventRecord(eventStart, stream[0]) );
 	KERNELCALL(forcesKernel,numBlocks(s),numThreads,(s.rGpuBegin(), s.qGpuBegin(), dev_f_benchmark, s.npart_gpu(), 0))
-	HANDLE_ERROR( cudaEventRecord(eventStop, stream[0]) );
-	HANDLE_ERROR( cudaEventSynchronize(eventStop) );
-	HANDLE_ERROR( cudaEventElapsedTime(&elapsedTime, eventStart, eventStop) );
-	HANDLE_ERROR( cudaEventDestroy(eventStart) );
-	HANDLE_ERROR( cudaEventDestroy(eventStop) );
-	HANDLE_ERROR( cudaFree(dev_f_benchmark));
+	cuda_safe_mem( cudaEventRecord(eventStop, stream[0]) );
+	cuda_safe_mem( cudaEventSynchronize(eventStop) );
+	cuda_safe_mem( cudaEventElapsedTime(&elapsedTime, eventStart, eventStop) );
+	cuda_safe_mem( cudaEventDestroy(eventStart) );
+	cuda_safe_mem( cudaEventDestroy(eventStop) );
+	cuda_safe_mem( cudaFree(dev_f_benchmark));
 
 	return elapsedTime;
 }
