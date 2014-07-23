@@ -1,3 +1,4 @@
+# Copyright (C) 2014 The ESPResSo project
 # Copyright (C) 2012,2013 Olaf Lenz
 #
 # This file is part of ESPResSo.

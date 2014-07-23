@@ -28,6 +28,7 @@
 class Actor {
 public:
 	virtual void computeForces(SystemInterface &s) = 0;
+  virtual void computeEnergy(SystemInterface &s) = 0;
 	virtual ~Actor() {}
 };
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -1752,10 +1752,10 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     break;
 #endif
   case COULOMB_DH:
-  case COULOMB_DH_PW:
     MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_MMM1D:
+  case COULOMB_MMM1D_GPU:
     MPI_Bcast(&mmm1d_params, sizeof(MMM1D_struct), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_MMM2D:
