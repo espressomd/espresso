@@ -979,6 +979,19 @@ int observable_calc_interacts_with (observable* self) {
   return 0;
 }
 
+int observable_calc_rdf(observable* self){
+  if (!sortPartCfg()) {
+    return 1;
+  }
+  double * last = self->last_value;
+  rdf_profile_data * rdf_data = (rdf_profile_data *) self->container;
+  calc_rdf(rdf_data->p1_types, rdf_data->n_p1,
+	   rdf_data->p2_types, rdf_data->n_p2,
+	   rdf_data->r_min,    rdf_data->r_max,
+	   rdf_data->r_bins,   last);
+  return 0;
+}
+
 
 void autoupdate_observables() {
   int i;
