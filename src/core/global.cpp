@@ -93,10 +93,11 @@ const Datafield fields[] = {
   {&lb_components,              TYPE_INT, 1, "lb_components",     2 },         /* 50 from ghmc.cpp */
   {&warnings,                   TYPE_INT, 1, "warnings",          1 },         /* 51 from global.cpp */
   {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles", 1 },         /* 52 from global.cpp */
-  {&sd_viscosity,            TYPE_DOUBLE, 1, "sd_viscosoity",     4 },         /* 53 from integrate_sd.cpp */
-  {&sd_radius,               TYPE_DOUBLE, 1, "sd_radius",         4 },         /* 54 from integrate_sd.cpp */
-  {&sd_seed,                    TYPE_INT, 2, "sd_seed",           4 },         /* 55 from integrate_sd.cpp */
-  {&sd_random_state,            TYPE_INT, 2, "sd_random_state",   4 },         /* 56 from integrate_sd.cpp */
+  {&sd_viscosity,            TYPE_DOUBLE, 1, "sd_viscosoity",              4 },         /* 53 from integrate_sd.cpp */
+  {&sd_radius,               TYPE_DOUBLE, 1, "sd_radius",                  4 },         /* 54 from integrate_sd.cpp */
+  {&sd_seed,                    TYPE_INT, 2, "sd_seed",                    4 },         /* 55 from integrate_sd.cpp */
+  {&sd_random_state,            TYPE_INT, 2, "sd_random_state",            4 },         /* 56 from integrate_sd.cpp */
+  {&sd_random_precision,     TYPE_DOUBLE, 1, "sd_precision_random",        4 },         /* 57 from integrate_sd.cpp */
   { NULL, 0, 0, NULL, 0 }
 };
 

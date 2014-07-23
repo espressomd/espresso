@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file integrate_sd.cpp   Stokes dynamics integrator.
+/** \file integrate_sd.cpp   Stokesian dynamics integrator.
  *
  *  For more information about the integrator 
  *  see \ref integrate_sd.hpp "integrate_sd.hpp".
@@ -62,7 +62,6 @@
 #include "statistics_correlation.hpp"
 #include "ghmc.hpp"
 
-
 /************************************************
  * DEFINES
  ************************************************/
@@ -77,6 +76,7 @@ double sd_radius=-1;
 
 int sd_seed[]={0,('E'+'S'+'P'+'R'+'e'+'s'+'S'+'o')};
 int sd_random_state[]={0,0};
+double sd_random_precision=1e-3;
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
 int    db_maxf_id   = 0,   db_maxv_id = 0;
@@ -87,7 +87,7 @@ int    db_maxf_id   = 0,   db_maxv_id = 0;
 /*@{*/
 
 /** Propagate the positions. Integration step:<br>
-    \f[ p(t+\Delta t) = p(t) + \Delta t  \mu v(t) \f] */
+    \f[ p(t+\Delta t) = p(t) + \Delta t  \mu f(t) \f] */
 void propagate_pos_sd();
 
 #ifdef CUDA
@@ -210,36 +210,8 @@ void integrate_sd(int n_steps)
       }
     }
 
-    /* Integration Steps: Update the Positions
-       p_i(t + dt)   = p_i(t) + dt * mu_{ij} * f_j(t) + dt * mu_{ij} * f^B_j
-    */
-    propagate_pos_sd(); // we dont have velocities
-
-#ifdef BOND_CONSTRAINT
-    static bool bond_constraint_with_sd_warned=false;
-    if (!bond_constraint_with_sd_warned){ // warn only once
-      fprintf (stderr, "Warning, using BOND_CONSTRAINT with StokesDynamics might not work as expected!.\n");    
-      bond_constraint_with_sd_warned=true;
-    }
-    /**Correct those particle positions that participate in a rigid/constrained bond */
-    cells_update_ghosts();
-
-    correct_pos_shake();
-#endif
-
-#ifdef ELECTROSTATICS
-    if(coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5*time_step); 
-    }
-#endif
-
-#ifdef NPT
-    if (check_runtime_errors())
-      break;
-#endif
-
     /* Integration Step: Step 3 of Velocity Verlet scheme:
-       Calculate f(t+dt) as function of positions p(t+dt) ( and velocities v(t+0.5*dt) ) */
+       Calculate f(t) as function of positions p(t) ( and ``velocities'' v(t) ) */
 
 #ifdef LB
     transfer_momentum = 1;
@@ -299,6 +271,37 @@ void integrate_sd(int n_steps)
         ghmc_mc();
     }
 #endif
+
+
+
+    /** Integration Steps: Update the Positions
+      \[ p_i(t + dt)   = p_i(t) + dt * \mu_{ij} * f_j(t) + dt * \mu_{ij} * f^B_j \]
+    */
+    propagate_pos_sd(); // we dont have velocities
+
+#ifdef BOND_CONSTRAINT
+    static bool bond_constraint_with_sd_warned=false;
+    if (!bond_constraint_with_sd_warned){ // warn only once
+      fprintf (stderr, "Warning, using BOND_CONSTRAINT with StokesDynamics might not work as expected!.\n");    
+      bond_constraint_with_sd_warned=true;
+    }
+    /**Correct those particle positions that participate in a rigid/constrained bond */
+    cells_update_ghosts();
+
+    correct_pos_shake();
+#endif
+
+#ifdef ELECTROSTATICS
+    if(coulomb.method == COULOMB_MAGGS) {
+      maggs_propagate_B_field(0.5*time_step); 
+    }
+#endif
+
+#ifdef NPT
+    if (check_runtime_errors())
+      break;
+#endif
+
 
     /* Propagate time: t = t+dt */
     sim_time += time_step;
@@ -451,6 +454,7 @@ void propagate_pos_sd()
   }
   free(pos);
   free(force);
+  free(velocity);
   announce_resort_particles();
 
 #ifdef ADDITIONAL_CHECKS

@@ -155,7 +155,19 @@ int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char 
     return tclcommand_integrate_sd_print_usage(interp);
   }
   /* perform integration */
-  integrate_sd(n_steps);
+  if (!correlations_autoupdate && !observables_autoupdate) {
+    integrate_sd(n_steps);
+  } else  {
+    for (int i=0; i<n_steps; i++) {
+      integrate_sd(1);
+      autoupdate_observables();
+      autoupdate_correlations();
+    }
+    if (n_steps == 0){
+      integrate_sd(0);
+    }
+  }
+  ;
   return gather_runtime_errors(interp, TCL_OK);
 }
 
@@ -184,5 +196,17 @@ int tclcallback_sd_viscosity(Tcl_Interp *interp, void *_data)
   }
   sd_viscosity = data;
   mpi_bcast_parameter(FIELD_SD_VISCOSITY);
+  return (TCL_OK);
+}
+
+int tclcallback_sd_random_precision(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+  if (data <= 0) {
+    Tcl_AppendResult(interp, "precision_random must be > 0.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  sd_random_precision = data;
+  mpi_bcast_parameter(FIELD_SD_RANDOM_PRECISION);
   return (TCL_OK);
 }

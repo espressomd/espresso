@@ -16,7 +16,7 @@ void printVectorDev( real * data, int m){
   cuda_safe_mem(cudaMemcpy( host, data, m*sizeof(*data), cudaMemcpyDeviceToHost ));
   for (int j=0; j < m;j++){
     //std::cout << ",\t" << std::setw(20) << std::setprecision(15) << host[j];
-    printf(",\t%20.15e",host[j]);
+    printf(",\t%20.12e",host[j]);
   }
   std::cout << "\n";
 }

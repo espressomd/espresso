@@ -86,6 +86,8 @@ extern double sd_radius;
 extern int sd_seed[2];
 extern int sd_random_state[2];
 
+extern double sd_random_precision;
+
 /*@}*/
 
 /** \name Exported Functions */

@@ -188,6 +188,8 @@ extern const Datafield fields[];
 #define FIELD_SD_SEED             55
 /** index of \ref sd_random_state in \ref #fields */
 #define FIELD_SD_RANDOM_STATE     56
+/** index of \ref sd_precision_random in \ref #fields */
+#define FIELD_SD_RANDOM_PRECISION 57
 /*@}*/
 
 /** bool: whether to write out warnings or not */
