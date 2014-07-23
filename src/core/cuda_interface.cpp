@@ -1,21 +1,3 @@
-/*
-  Copyright (C) 2014 The ESPResSo project
-  
-  This file is part of ESPResSo.
-  
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-  
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-  
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-*/
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -105,7 +87,7 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
   #endif
 
   #ifdef ELECTROSTATICS
-                if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU) { // TODO: this defeats the purpose of needsQ in the interface...
+                if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU || coulomb.method == COULOMB_EWALD_GPU) { // TODO: this defeats the purpose of needsQ in the interface...
                   particle_data_host[i+g].q = (float)part[i].p.q;
                 }
   #endif
@@ -181,7 +163,7 @@ static void cuda_mpi_get_particles_slave(){
   #endif
 
   #ifdef ELECTROSTATICS
-          if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU) {
+          if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU || coulomb.method == COULOMB_EWALD_GPU) {
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
           }
   #endif

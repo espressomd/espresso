@@ -1,4 +1,4 @@
-#include "ewaldgpu_tcl.hpp"
+#include "Ewaldgpu_tcl.hpp"
 #include "forces.hpp"
 #include "actor/EwaldgpuForce.hpp"
 #include "EspressoSystemInterface.hpp"
@@ -164,13 +164,13 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, 
     argv += 2;
   }
 
-  ewaldgpu_set_params_tune(accuracy, precision, K_max, time_calc_steps);
+  ewaldgpuForce->ewaldgpu_set_params_tune(accuracy, precision, K_max, time_calc_steps);
   addEwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
   rebuild_verletlist = 1;
 
   /* do the tuning */
   char *log = NULL;
-  if (ewaldgpu_adaptive_tune(&log) == ES_ERROR)
+  if (ewaldgpuForce->ewaldgpu_adaptive_tune(&log) == ES_ERROR)
   {
     Tcl_AppendResult(interp, log, "\nfailed to tune ewaldgpu parameters to required accuracy ", (char *) NULL);
     if (log) free(log);
@@ -236,8 +236,8 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
     return 0;
   }
   //Compute alpha
-  double q_sqr = ewaldgpu_compute_q_sqare();
-  alpha = ewaldgpu_compute_optimal_alpha(r_cut, num_kx, num_ky, num_kz, q_sqr, box_l, precision);
+  double q_sqr = ewaldgpuForce->ewaldgpu_compute_q_sqare();
+  alpha = ewaldgpuForce->ewaldgpu_compute_optimal_alpha(r_cut, num_kx, num_ky, num_kz, q_sqr, box_l, precision);
   ewaldgpu_params.isTuned = true;
   addEwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
   rebuild_verletlist = 1;
@@ -248,3 +248,4 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
 
 
 #endif
+

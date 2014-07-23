@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -116,8 +116,8 @@
 		COULOMB_RF, //< Coulomb method is Reaction-Field
 		COULOMB_INTER_RF, //< Coulomb method is Reaction-Field BUT as interaction
 		COULOMB_P3M_GPU, //< Coulomb method is P3M with GPU based long range part calculation
-		COULOMB_MMM1D_GPU, //< Coulomb method is on-dimensional MMM running on GPU
-		COULOMB_EWALD_GPU, //< Coulomb method is Ewald with GPU based long range part calculation
+		COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
+    COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
 	};
 
 #endif
