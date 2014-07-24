@@ -122,7 +122,7 @@ configure --help
 \begin{description}
 \item[\texttt{--with-myconfig=MYCONFIG\_HEADER}] This option sets the
   name of the local configuration header (see \vref{sec:myconfig}). It
-  defaults to ``\texttt{myconfig.h}''.
+  defaults to ``\texttt{myconfig.hpp}''.
 \item[\texttt{--with-mpi=\alt{\lit{yes} \asep \lit{no} \asep
       \lit{guess}}}/ \texttt{--without-mpi}] By default,
   \codebox{configure} will automatically determine whether an MPI
@@ -199,9 +199,9 @@ following targets are available:
   The variable \texttt{extra} can be used to specify additional
   files and directories that are to be included in the archive
   file. \\
-  \textbf{Example:} \verb!make dist extra="myconfig.h internal"!\\
+  \textbf{Example:} \verb!make dist extra="myconfig.hpp internal"!\\
   will create the archive file and include the file
-  \texttt{myconfig.h} and the directory \texttt{internal} with all
+  \texttt{myconfig.hpp} and the directory \texttt{internal} with all
   files and subdirectories.
 \item[\texttt{install}] Install \es. The variables \texttt{prefix} and
   \texttt{exec-prefix} can be used to specify the installation
@@ -262,10 +262,10 @@ command line. Also, older installations sometimes require ``-np''
 instead of ``-n'' or ``mpirun'' instead of ``mpiexec''. 
 
 
-\section{\texttt{myconfig.h}: Activating and deactivating features}
+\section{\texttt{myconfig.hpp}: Activating and deactivating features}
 \label{sec:myconfig}
 
-\index{features} \index{myconfig.h} \index{configuration header} \es
+\index{features} \index{myconfig.hpp} \index{configuration header} \es
 has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
 features, as this will slow down \es significantly.  Instead, compile
@@ -277,8 +277,8 @@ The features and debug messages can be controlled via a configuration
 header file that contains C-preprocessor declarations. Appendix
 \vref{chap:features} lists and describes all available features.  When
 no configuration header is provided by the user, a default header,
-found in src/myconfig-default.h, will be used that turns on the
-default features.  The file \texttt{myconfig-sample.h} in the source
+found in src/myconfig-default.hpp, will be used that turns on the
+default features.  The file \texttt{myconfig-sample.hpp} in the source
 directory contains a list of all possible features that can be copied
 into your own configuration file.
 
@@ -287,7 +287,7 @@ configuration header can be put in either of these. Note, however,
 that when a configuration header is found in both directories, the one
 in the build directory will be used.
 
-By default, the configuration header is called \texttt{myconfig.h}.
+By default, the configuration header is called \texttt{myconfig.hpp}.
 The name of the configuration header can be changed either when the
 \texttt{configure}-script is called with the option
 \mbox{\texttt{--with-myconfig}} (see section \vref{sec:configure}), or
@@ -302,13 +302,13 @@ and two build directories \texttt{\$builddir1} and
 \texttt{\$builddir2} that contain different configuration headers:
 
 \begin{itemize}
-\item \texttt{\$builddir1/myconfig.h}:
+\item \texttt{\$builddir1/myconfig.hpp}:
 \begin{code}
 #define ELECTROSTATICS
 #define LENNARD-JONES
 \end{code}
 
-\item \texttt{\$builddir2/myconfig.h}:
+\item \texttt{\$builddir2/myconfig.hpp}:
 \begin{code}
 #define LJCOS
 \end{code}
