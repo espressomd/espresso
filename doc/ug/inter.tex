@@ -1468,6 +1468,7 @@ For $\kappa = 0$, this corresponds to the plain coulomb potential.
  \opt{\var{fixed\_far\_cutoff}}
  \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
  \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
+ \opt{capacitor \var{U}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1494,6 +1495,27 @@ $\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}$ and
 $\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}$. Using
 this form allows to choose $\Delta_{t/b}=-1$, corresponding to
 metallic boundary conditions.
+
+Using \keyword{capacitor} \var{U} allows to maintain a constant 
+electric potential difference \var{U} between the xy-plane at $z=0$ 
+and $z=L$. This is done by encountering the total dipol moment of
+the system with the electric field $E_{induced}$ and superposing 
+a homogeneous electric field $E_{applied} = \frac{U}{L}$ 
+to retain \var{U}. This mimics the induction of surface charges
+$\pm\sigma = E_{induced} \cdot \epsilon_0$ for planar electrodes at $z=0$ 
+and $z=L$ in a capacitor connected to a battery with voltage \var{U}.
+Using \var{capacitor} 0 is equivalent to $\Delta_{t/b}=-1$.
+
+\begin{essyntax}
+  efield_caps \alt{total \asep induced \asep applied}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+The electric fields added by \var{capacitor} \var{U} can be obtained 
+by calling the above command, where \var{induced} returns $E_{induced}$,
+\var{applied} returns $E_{applied}$ and \var{total} their sum.
 
 \subsection{MMM1D}
 \index{MMM1D method|mainindex}
@@ -1706,6 +1728,7 @@ default.
   \opt{noneutralization}
   \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
   \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
+  \opt{capacitor \var{U}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1747,7 +1770,11 @@ if you add neutralizing walls explicitely as constraints, you have to
 disable the neutralization.
 
 The dielectric contrast features work exactly the same as for MMM2D,
-see the documentation above.
+see the documentation above. Same accounts for \keyword{capacitor} 
+\var{U}, but the constant potential is maintained between the xy-plane
+at $z=0$ and $z=L-gap\_size$. The command \var{efield\_caps} to read  
+out the electric fields added by \var{capacitor} \var{U} also applies 
+for the capacitor-feature of ELC.
 
 Make sure that you read the papers on ELC (\cite{elc,icelc})
 before using it.
