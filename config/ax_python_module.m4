@@ -14,6 +14,7 @@
 #
 # LICENSE
 #
+#   Copyright (C) 2014 The ESPResSo project
 #   Copyright (c) 2008 Andrew Collier
 #
 #   Copying and distribution of this file, with or without modification, are

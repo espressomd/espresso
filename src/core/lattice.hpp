@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -298,7 +298,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    * \param tmp_agrid  lattice mesh distance
    */
-  void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
+  static void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
   //not sure why I don't have access to agrid here so I make a temp var and pass it to this function
     int i;
     double rel[3];
@@ -330,8 +330,6 @@ public:
 
   void get_data_for_halo_index(index_t* ind, void** data) {
     (*data) = ((char*)this->_data) + get_linear_index(ind[0], ind[1], ind[2], this->halo_grid)*this->element_size;
-
-
   }
 
   void get_data_for_linear_index(index_t ind, void** data) {

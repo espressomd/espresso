@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -568,40 +568,43 @@ void init_forces_iccp3m()
 void calc_long_range_forces_iccp3m()
 {
 #ifdef ELECTROSTATICS
-  char* errtxt;
-  /* calculate k-space part of electrostatic interaction. */
-  if (!(coulomb.method == COULOMB_ELC_P3M || 
-        coulomb.method == COULOMB_P3M     || 
-        coulomb.method == COULOMB_MMM2D   ||
-        coulomb.method == COULOMB_MMM1D)  ) { 
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ");
-     }
-  switch (coulomb.method) {
+	char* errtxt;
+	/* calculate k-space part of electrostatic interaction. */
+	if (!(coulomb.method == COULOMB_ELC_P3M ||
+			coulomb.method == COULOMB_P3M     ||
+			coulomb.method == COULOMB_MMM2D   ||
+			coulomb.method == COULOMB_MMM1D)  ) {
+		errtxt = runtime_error(128);
+		ERROR_SPRINTF(errtxt, "{ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ");
+	}
+	switch (coulomb.method) {
 #ifdef P3M
-    case COULOMB_ELC_P3M:
-       if (elc_params.dielectric_contrast_on) {
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{ICCP3M conflicts with ELC dielectric constrast");
-       }
-       p3m_charge_assign();
-       p3m_calc_kspace_forces(1,0);
-       ELC_add_force(); 
-    break;
+	case COULOMB_ELC_P3M:
+		if (elc_params.dielectric_contrast_on) {
+			errtxt = runtime_error(128);
+			ERROR_SPRINTF(errtxt, "{ICCP3M conflicts with ELC dielectric constrast");
+		}
+		p3m_charge_assign();
+		p3m_calc_kspace_forces(1,0);
+		ELC_add_force();
+		break;
 
-    case COULOMB_P3M:
-       p3m_charge_assign();
-       p3m_calc_kspace_forces(1,0);
-    break;
+	case COULOMB_P3M:
+		p3m_charge_assign();
+		p3m_calc_kspace_forces(1,0);
+		break;
 #endif
-    case COULOMB_MMM2D:
-       MMM2D_add_far_force();
-       MMM2D_dielectric_layers_force_contribution();
-  }
+	case COULOMB_MMM2D:
+		MMM2D_add_far_force();
+		MMM2D_dielectric_layers_force_contribution();
+		break;
+	default: break;
+	}
 
 #endif
 }
-/** \name Privat Functions */
+
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -726,28 +729,30 @@ void iccp3m_store_forces() {
 
 int iccp3m_sanity_check()
 {
-  switch (coulomb.method) {
+	switch (coulomb.method) {
 #ifdef P3M
-    case COULOMB_ELC_P3M: {
-      if (elc_params.dielectric_contrast_on) {
-	char *errtxt = runtime_error(128);
-	ERROR_SPRINTF(errtxt, "ICCP3M conflicts with ELC dielectric constrast");
-	return 1;
-      }
-      break;
-    }
+	case COULOMB_ELC_P3M: {
+		if (elc_params.dielectric_contrast_on) {
+			char *errtxt = runtime_error(128);
+			ERROR_SPRINTF(errtxt, "ICCP3M conflicts with ELC dielectric constrast");
+			return 1;
+		}
+		break;
+	}
 #endif
-    case COULOMB_DH: {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "ICCP3M does not work with Debye-Hueckel iccp3m.h");
-      return 1;
-    }
-    case COULOMB_RF: {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "ICCP3M does not work with COULOMB_RF iccp3m.h");
-      return 1;
-    }
-  }
+	case COULOMB_DH: {
+		char *errtxt = runtime_error(128);
+		ERROR_SPRINTF(errtxt, "ICCP3M does not work with Debye-Hueckel iccp3m.h");
+		return 1;
+	}
+	case COULOMB_RF: {
+		char *errtxt = runtime_error(128);
+		ERROR_SPRINTF(errtxt, "ICCP3M does not work with COULOMB_RF iccp3m.h");
+		return 1;
+	}
+	default:
+		break;
+	}
   
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {

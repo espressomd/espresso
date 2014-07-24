@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -191,8 +191,9 @@ set first because of the spatial decomposition.
   part \var{pid} print
   \optlong{\alt{id \asep pos \asep type \asep folded_position \asep 
       type \asep q \asep v \asep f \asep torque_body \asep torque_lab 
-      \asep fix \asep ext_force \asep ext_torque \asep bond \asep
-      \asep exclusions \mbox{connections \opt{\var{range}}}}}\dots
+      \asep body_frame_velocity \asep fix \asep ext_force 
+      \asep ext_torque \asep bond \asep exclusions 
+      \mbox{connections \opt{\var{range}}}}}\dots
   \variant{2} part
 \end{essyntax}
 
@@ -215,6 +216,11 @@ before, otherwise the conversion from lab to body frame will not be
 handled properly.  Also be careful about the order in which you write
 and read in data from a blockfile, for instance if you output the
 variable in both frames!
+
+The \keyword{body_frame_velocity} command is a print-only command that
+gives the velocity in the body frame, which can be useful for 
+determining the translational diffusion tensor of an anisotropic 
+particle via the velocity auto-correlation (Green-Kubo) method.
 
 \minisec{Example}
 \begin{code}

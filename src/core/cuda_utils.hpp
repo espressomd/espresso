@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2013 The ESPResSo project
+  Copyright (C) 2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -45,8 +45,10 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
 
 #define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
 
-#define KERNELCALL(_f, _a, _b, _params) \
-  _f<<<_a, _b, 0, stream[0]>>>_params;  \
+#define KERNELCALL_shared(_f, _a, _b, _s, _params) \
+  _f<<<_a, _b, _s, stream[0]>>>_params;  \
   _cuda_check_errors(_a, _b, #_f, __FILE__, __LINE__);
+
+#define KERNELCALL(_f, _a, _b, _params) KERNELCALL_shared(_f, _a, _b, 0, _params)
 
 #endif

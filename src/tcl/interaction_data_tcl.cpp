@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -26,6 +26,7 @@
 #include "interaction_data_tcl.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
+#include "global.hpp"
 
 #include "comforce_tcl.hpp"
 #include "comfixed_tcl.hpp"
@@ -67,6 +68,7 @@
 #include "mmm2d_tcl.hpp"
 #include "p3m_tcl.hpp"
 #include "reaction_field_tcl.hpp"
+#include "actor/Mmm1dgpu_tcl.hpp"
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -180,6 +182,10 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("maggs", tclcommand_inter_coulomb_parse_maggs);
 
   REGISTER_COULOMB("memd", tclcommand_inter_coulomb_parse_maggs);
+
+  #ifdef MMM1D_GPU
+  REGISTER_COULOMB("mmm1dgpu", tclcommand_inter_coulomb_parse_mmm1dgpu);
+  #endif
 
   /* fallback */
   coulomb.method  = COULOMB_NONE;
@@ -500,6 +506,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   case COULOMB_RF: tclprint_to_result_rf(interp,"rf"); break;
   case COULOMB_INTER_RF: tclprint_to_result_rf(interp,"inter_rf"); break;
   case COULOMB_MMM1D: tclprint_to_result_MMM1D(interp); break;
+#ifdef MMM1D_GPU
+  case COULOMB_MMM1D_GPU: tclprint_to_result_MMM1DGPU(interp); break;
+#endif
   case COULOMB_MMM2D: tclprint_to_result_MMM2D(interp); break;
   case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
   default: break;

@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2010,2011,2012 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2014 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -55,10 +55,6 @@ typedef struct {
   float T;
   float bjerrumlength;
   unsigned int number_of_species;
-  unsigned int accelerated_frame_enabled;
-  float accelerated_frame_boundary_mass_density;
-  float accelerated_frame_boundary_mass;
-  float accelerated_frame_fluid_mass;
   float ext_acceleration_force[3];
   int reaction_species[3];
   float rho_reactant_reservoir;
@@ -70,7 +66,6 @@ typedef struct {
   float mass_reactant;
   float mass_product0;
   float mass_product1;
-  float reset_mode_0;
   cufftReal* greensfcn;
   cufftComplex* charge_potential;
   float* j;
@@ -147,7 +142,6 @@ int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
 int ek_print_vtk_lbforce(char* filename);
 int ek_print_vtk_reaction_tags(char* filename);
-int ek_print_vtk_mass_flux(char* filename);
 int ek_lb_print_vtk_density(char* filename);
 int ek_lb_print_vtk_velocity(char* filename);
 int ek_init();
@@ -164,10 +158,7 @@ int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
-int ek_set_accelerated_frame( int enabled, double boundary_mass_density, double* ext_acceleration_force );
-int ek_accelerated_frame_print_boundary_velocity( double* accelerated_boundary_velocity );
 int ek_node_print_velocity( int x, int y, int z, double* velocity );
-int ek_node_print_mass_flux( int x, int y, int z, double* mass_flux );
 int ek_node_print_density( int species, int x, int y, int z, double* density );
 
 #ifdef EK_BOUNDARIES
@@ -181,7 +172,6 @@ int ek_set_reaction( int reactant, int product0, int product1,
                      float mass_reactant, float mass_product0, float mass_product1 );
 int ek_print_vtk_pressure(char* filename);
 int ek_tag_reaction_nodes( LB_Boundary* lbboundary, char reaction_type );
-int ek_reset_mode_zero( double reset_mode_0 );
 #endif
 
 #endif /* CUDA */
