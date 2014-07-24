@@ -188,8 +188,9 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef ELECTROSTATICS
 #ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
-#endif 
-#endif 
+#endif
+  REGISTER_COMMAND("efield_caps", tclcommand_print_efield_capacitors);
+#endif
 #ifdef METADYNAMICS
   /* in metadynamics.cpp */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
