@@ -67,6 +67,10 @@ private:
 
 	// run a single force calculation and return the time it takes using high-precision CUDA timers
 	float force_benchmark(SystemInterface &s);
+	
+	// some functions to move MPI dependencies out of the .cu file
+	void disable();
+	void check_periodicity();
 };
 
 #endif
