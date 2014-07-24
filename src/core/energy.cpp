@@ -54,6 +54,7 @@ void energy_calc(double *result)
     return;
 
   init_energies(&energy);
+
 #ifdef CUDA
   clear_energy_on_GPU();
 #endif

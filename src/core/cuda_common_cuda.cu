@@ -299,12 +299,16 @@ void copy_forces_from_GPU() {
 }
 
 void clear_energy_on_GPU() {
+  if ( !global_part_vars_host.communication_enabled || !global_part_vars_host.number_of_particles )
+    return;
   if (energy_device == NULL)
     cuda_safe_mem( cudaMalloc((void**) &energy_device, sizeof(CUDA_energy)) );
  cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)) );
 }
 
 void copy_energy_from_GPU() {
+  if ( !global_part_vars_host.communication_enabled || !global_part_vars_host.number_of_particles )
+    return;
   cuda_safe_mem (cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy), cudaMemcpyDeviceToHost));
   copy_CUDA_energy_to_energy(energy_host);
 }

@@ -25,7 +25,7 @@ AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 LIBS =  $(top_builddir)/src/core/libEspresso.la @LIBS@
 
 if MPI_FAKE
-AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
+AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
 
 # Build rules for cython
