@@ -101,7 +101,7 @@ libEspresso_la_SOURCES = \
 	Vector.hpp \
 	SystemInterface.hpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
-	
+
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
@@ -160,9 +160,10 @@ libEspresso_la_SOURCES += \
 # Generic actors
 libEspresso_la_SOURCES += \
 	actor/Actor.hpp \
+	actor/ActorList.cpp actor/ActorList.hpp \
+	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
-	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
-	actor/HarmonicWell.cpp actor/HarmonicWell.hpp
+	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
 # CUDA rules

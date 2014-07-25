@@ -36,6 +36,8 @@
 #include "forces.hpp"
 #include "EspressoSystemInterface.hpp"
 
+ActorList energyActors;
+
 Observable_stat energy = {0, {NULL,0,0}, 0,0,0};
 Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
 
@@ -61,10 +63,10 @@ void energy_calc(double *result)
 
   espressoSystemInterface.update();
 
-  // Compute the energies from the force objects
-  for (PotentialList::iterator potential= potentials.begin();
-      potential != potentials.end(); ++potential)
-    (*potential)->computeEnergy(espressoSystemInterface);
+  // Compute the energies from the energyActors
+  for (ActorList::iterator actor= energyActors.begin();
+      actor != energyActors.end(); ++actor)
+    (*actor)->computeEnergy(espressoSystemInterface);
 
   on_observable_calc();
   
