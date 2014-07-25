@@ -57,7 +57,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
-PotentialList potentials;
+ActorList forceActors;
 
 /************************************************************/
 /* local prototypes                                         */
@@ -99,9 +99,9 @@ void force_calc()
   espressoSystemInterface.update();
 
   // Compute the forces from the force objects
-  for (PotentialList::iterator potential= potentials.begin();
-		  potential != potentials.end(); ++potential)
-	  (*potential)->computeForces(espressoSystemInterface);
+  for (ActorList::iterator actor = forceActors.begin();
+		  actor != forceActors.end(); ++actor)
+	  (*actor)->computeForces(espressoSystemInterface);
 
 #ifdef LB_GPU
 #ifdef SHANCHEN

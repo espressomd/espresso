@@ -71,12 +71,15 @@
 #include "elc.hpp"
 #include "mdlc_correction.hpp"
 #include "actor/EwaldgpuForceShortRange.hpp"
+#include "actor/ActorList.hpp"
 
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
 ///
 extern Observable_stat energy, total_energy;
+
+extern ActorList energyActors;
 /*@}*/
 
 /** \name Exported Functions */

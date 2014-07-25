@@ -28,7 +28,7 @@
  *  For more information see forces.cpp .
  */
 #include "config.hpp"
-#include <list>
+#include <vector>
 #include "utils.hpp"
 #include "thermostat.hpp"
 #ifdef MOLFORCES
@@ -87,9 +87,9 @@
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
 #include "actor/EwaldgpuForceShortRange.hpp"
+#include "actor/ActorList.hpp"
 
-typedef std::list<Actor*> PotentialList;
-extern PotentialList potentials;
+extern ActorList forceActors;
 
 /** \name Exported Functions */
 /************************************************************/

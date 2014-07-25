@@ -35,7 +35,6 @@
 #include "domain_decomposition.hpp"
 #include "interaction_data.hpp"
 #include "thermostat.hpp"
-#include "lattice.hpp"
 #include "halo.hpp"
 #include "lb-d3q19.hpp"
 #include "lb-boundaries.hpp"

@@ -57,7 +57,7 @@ libEspresso_la_SOURCES = \
 	initialize.cpp initialize.hpp \
 	integrate.cpp integrate.hpp \
 	interaction_data.cpp interaction_data.hpp \
-	lattice.cpp lattice.hpp \
+	lattice.cpp lattice_inline.hpp lattice.hpp \
 	layered.cpp layered.hpp \
 	lb.cpp lb.hpp \
 	lb-boundaries.cpp lb-boundaries.hpp \
@@ -101,7 +101,7 @@ libEspresso_la_SOURCES = \
 	Vector.hpp \
 	SystemInterface.hpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
-	
+
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
@@ -160,10 +160,11 @@ libEspresso_la_SOURCES += \
 # Generic actors
 libEspresso_la_SOURCES += \
 	actor/Actor.hpp \
-	actor/Mmm1dgpuForce.cu actor/Mmm1dgpuForce.hpp \
-	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
+	actor/ActorList.cpp actor/ActorList.hpp \
+	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
+	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
 	actor/EwaldgpuForce.cu actor/EwaldgpuForce.hpp actor/EwaldgpuForceShortRange.hpp \
-	actor/HarmonicWell.cpp actor/HarmonicWell.hpp
+	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
 # CUDA rules
@@ -187,7 +188,8 @@ CUDA_SOURCE_FILES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
-	actor/Mmm1dgpuForce.cu \
+<<<<<<< HEAD
+	actor/Mmm1dgpuForce_cuda.cu \
 	actor/EwaldgpuForce.cu \
 	actor/HarmonicWell_cuda.cu
 
@@ -200,7 +202,7 @@ include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
-include ./actor/$(DEPDIR)/EwaldgpuForce.Plo
+include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 

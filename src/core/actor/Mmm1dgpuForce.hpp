@@ -26,8 +26,6 @@
 
 typedef float mmm1dgpu_real;
 
-void addMmm1dgpuForce(double maxPWerror, double far_switch_radius, int bessel_cutoff);
-
 class Mmm1dgpuForce : public Actor
 {
 public:
@@ -67,6 +65,9 @@ private:
 
 	// run a single force calculation and return the time it takes using high-precision CUDA timers
 	float force_benchmark(SystemInterface &s);
+	
+	// some functions to move MPI dependencies out of the .cu file
+	void check_periodicity();
 };
 
 #endif

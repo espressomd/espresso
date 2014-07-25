@@ -28,7 +28,7 @@
 #define LB_H
 
 #include "utils.hpp"
-#include "lattice.hpp"
+#include "lattice_inline.hpp"
 
 extern int lb_components ; // global variable holding the number of fluid components
 
