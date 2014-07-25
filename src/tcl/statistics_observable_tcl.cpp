@@ -491,6 +491,76 @@ int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** a
   return TCL_OK;
 }
 
+int tclcommand_observable_rdf(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+  rdf_profile_data* pdata = (rdf_profile_data*) malloc(sizeof(rdf_profile_data));
+  obs->calculate=&observable_calc_rdf;
+  obs->update=0;
+  
+  pdata->r_bins=100;
+  pdata->r_min=0;
+  pdata->r_max=-1;
+  IntList p1, p2;
+  
+  init_intlist(&p1);
+  init_intlist(&p2);
+  
+  argc--;
+  argv++;
+  *change=1;
+  printf("argc:%d  argv[0]: %s, argv[1]:%s\n", argc, argv[0], argv[1]);
+  
+  if (argc < 2 || (!ARG0_IS_INTLIST(p1)) || (!ARG1_IS_INTLIST(p2))) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze rdf <type_list> <type_list> [<r_min> [<r_max> [<n_bins>]]]", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  argc -= 2;
+  argv += 2;
+  *change+=2;
+  
+  if (argc > 0) {
+    if (!ARG0_IS_D(pdata->r_min)) return (TCL_ERROR);
+    argc--;
+    argv++;
+    (*change)++;
+  }
+  if (argc > 0) {
+    if (!ARG0_IS_D(pdata->r_max)) return (TCL_ERROR);
+    argc--;
+    argv++;
+    (*change)++;
+  }
+  if (argc > 0) {
+    if (!ARG0_IS_I(pdata->r_bins)) return (TCL_ERROR);
+    argc--;
+    argv++;
+    (*change)++;
+  }
+  
+  /* if not given use default */
+  if (pdata->r_max < 0) pdata->r_max = min_box_l / 2.0;
+
+  
+  if (!sortPartCfg()) {
+    Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  
+  //calc_rdf(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf);
+  
+  pdata->p1_types = (int *) malloc(p1.n * sizeof(int));
+  memcpy(pdata->p1_types, p1.e,p1.n*sizeof(int));
+  pdata->n_p1     = p1.n;
+  pdata->p2_types = (int *) malloc(p2.n * sizeof(int));
+  memcpy(pdata->p2_types, p2.e,p2.n*sizeof(int));
+  pdata->n_p2     = p2.n;
+  
+  obs->container=(void*)pdata;
+  obs->n=pdata->r_bins;
+  obs->last_value= (double*) malloc(obs->n * sizeof (double));
+  return TCL_OK;
+}
+
 int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
 #ifndef LB
   return TCL_ERROR;
@@ -966,6 +1036,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(radial_flux_density_profile, tclcommand_observable_radial_flux_density_profile,id);
     REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile,id);
     REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile,id);
+    REGISTER_OBSERVABLE(rdf, tclcommand_observable_rdf,id);
     REGISTER_OBSERVABLE(tclcommand, tclcommand_observable_tclcommand,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;

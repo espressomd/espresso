@@ -157,7 +157,22 @@ typedef struct {
   void* container;
 } radial_profile_data;
 
+
 void mpi_observable_lb_radial_velocity_profile_slave_implementation();
+
+
+
+
+int observable_calc_rdf(observable* self);
+typedef struct {
+  int *p1_types;
+  int n_p1;
+  int *p2_types;
+  int n_p2;
+  double r_min;
+  double r_max;
+  int r_bins;
+} rdf_profile_data;
 
 
 #endif
