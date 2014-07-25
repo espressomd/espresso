@@ -1327,7 +1327,7 @@ double MMM2D_add_far(int f, int e)
     else {
       q2 = mmm2d_params.far_cut2 - SQR(ux*(p - 1));
       if (q2 > 0)
-	q = 1 + box_l[1]*(int)ceil(sqrt(q2));
+	q = 1 + (int)ceil(box_l[1]*sqrt(q2));
       else
 	q = 1;
       /* just to be on the safe side... */
