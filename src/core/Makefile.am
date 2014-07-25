@@ -57,7 +57,7 @@ libEspresso_la_SOURCES = \
 	initialize.cpp initialize.hpp \
 	integrate.cpp integrate.hpp \
 	interaction_data.cpp interaction_data.hpp \
-	lattice.cpp lattice.hpp \
+	lattice.cpp lattice_inline.hpp lattice.hpp \
 	layered.cpp layered.hpp \
 	lb.cpp lb.hpp \
 	lb-boundaries.cpp lb-boundaries.hpp \
@@ -161,9 +161,10 @@ libEspresso_la_SOURCES += \
 # Generic actors
 libEspresso_la_SOURCES += \
 	actor/Actor.hpp \
-	actor/Mmm1dgpuForce.cu actor/Mmm1dgpuForce.hpp \
-	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
-	actor/HarmonicWell.cpp actor/HarmonicWell.hpp
+	actor/ActorList.cpp actor/ActorList.hpp \
+	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
+	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
+	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
 # CUDA rules
@@ -190,7 +191,7 @@ CUDA_SOURCE_FILES = \
 	EspressoSystemInterface_cuda.cu \
 	integrate_sd_cuda.cu \
 	integrate_sd_cuda_debug.cu \
-	actor/Mmm1dgpuForce.cu \
+	actor/Mmm1dgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu
 
 # include the dependency tracking files
@@ -201,7 +202,7 @@ include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
-include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
+include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 

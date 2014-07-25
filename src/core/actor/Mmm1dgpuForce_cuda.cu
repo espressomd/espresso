@@ -21,8 +21,6 @@
 
 #ifdef MMM1D_GPU
 
-Mmm1dgpuForce *mmm1dgpuForce = 0;
-
 // the code is mostly multi-GPU capable, but Espresso is not yet
 const int deviceCount = 1;
 float multigpu_factors[] = {1.0};
@@ -30,28 +28,12 @@ float multigpu_factors[] = {1.0};
 
 #include "mmm-common_cuda.hpp"
 #include "mmm1d.hpp"
-#include "grid.hpp"
 #include "interaction_data.hpp"
-#include "forces.hpp"
 #include "EspressoSystemInterface.hpp"
 
-void addMmm1dgpuForce(double maxPWerror, double switch_rad, int bessel_cutoff)
-{
-	/* coulomb.prefactor apparently is not available yet at this point */
-	static Mmm1dgpuForce *mmm1dgpuForce = NULL;
-	if (!mmm1dgpuForce) // inter coulomb mmm1dgpu was never called before
-	{
-		mmm1dgpuForce = new Mmm1dgpuForce(espressoSystemInterface, 0, maxPWerror, switch_rad, bessel_cutoff);
-		potentials.push_back(mmm1dgpuForce);
-	}
-	/* set_params needs to be called both upon create and upon update because it is responsible for writing
-		to the struct from which the TCL command "inter coulomb" retrieves the current parameter set */
-	mmm1dgpuForce->set_params(0, 0, maxPWerror, switch_rad, bessel_cutoff, true);
-	
-	// turn on MMM1DGPU
-	coulomb.method = COULOMB_MMM1D_GPU;
-	mpi_bcast_coulomb_params();
-}
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
 
 __device__ inline void atomicadd(float* address, float value)
 {
@@ -98,11 +80,7 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefacto
 		std::cerr << "Mmm1dgpuForce needs access to charges on GPU!" << std::endl;
 
 	// system sanity checks
-	if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2))
-	{
-		std::cerr << "MMM1D requires periodicity (0,0,1)" << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	check_periodicity();
 
 	modpsi_init();
 }
@@ -164,16 +142,9 @@ unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s)
 	return b;
 }
 
-Mmm1dgpuForce::~Mmm1dgpuForce()
-{
+Mmm1dgpuForce::~Mmm1dgpuForce() {
 	modpsi_destroy();
 	cudaFree(dev_forcePairs);
-
-	if (coulomb.method == COULOMB_MMM1D_GPU)
-	{
-		coulomb.method = COULOMB_NONE;
-		mpi_bcast_coulomb_params();
-	}
 }
 
 __forceinline__ __device__ mmm1dgpu_real sqpow(mmm1dgpu_real x)

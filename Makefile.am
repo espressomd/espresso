@@ -58,6 +58,7 @@ endif
 # Sample myconfig generation
 myconfig-sample.hpp:
 	./config.status myconfig-sample.hpp
+DISTCLEANFILES = myconfig-sample.hpp
 
 # config.status deps in configure.ac
 
