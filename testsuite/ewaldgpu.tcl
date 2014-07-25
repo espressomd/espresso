@@ -58,14 +58,11 @@ if { [catch {
 		set F($i) [part $i pr f]
     }
 
-#Init
-#integrate 0
-
 # INTEGRATION
-inter coulomb 1.0 ewaldgpu 4.1681094122 8 0.49675450325012194
+#inter coulomb 1.0 ewaldgpu 4.1681094122 8 0.49675450325012194
 #inter coulomb 1.0 ewaldgpu tunealpha 4.1681094122 8 0.000024
 #inter coulomb 1.0 ewaldgpu tune accuracy 1e-4 K_max 20 precision 0.00001
-#inter coulomb 1.0 p3m tune accuracy 1e-4
+inter coulomb 1.0 p3m tune accuracy 1e-4
 
 
 puts "TUNED"

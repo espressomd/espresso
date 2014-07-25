@@ -50,24 +50,25 @@ public:
 	EwaldgpuForce(SystemInterface &s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha);
 	~EwaldgpuForce();
 	void setup(SystemInterface &s);
+	void cuda_check_error(const dim3 &block, const dim3 &grid,char *function, char *file, unsigned int line);
 	void computeForces(SystemInterface &s);
 	void computeEnergy(SystemInterface &s);
 	//Set parameters
-	int ewaldgpu_set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha);
-	int ewaldgpu_set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps);
+	int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha);
+	int set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps);
 	//TUNING r_cut, num_kx, num_ky, num_kz, alpha
-	int ewaldgpu_adaptive_tune(char **log);
-	double ewaldgpu_error_estimate_r(double q_sqr, int N, double r_cut, double V, double alpha, double accuracy);
-	double ewaldgpu_error_estimate_k(double q_sqr, int N, int K, double V, double alpha, double accuracy);
-	double ewaldgpu_tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N);
-	double ewaldgpu_tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N);
-	int ewaldgpu_count_charged_particles();
+	int adaptive_tune(char **log);
+	double error_estimate_r(double q_sqr, int N, double r_cut, double V, double alpha, double accuracy);
+	double error_estimate_k(double q_sqr, int N, int K, double V, double alpha, double accuracy);
+	double tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N);
+	double tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N);
+	int determine_calc_time_steps();
 	//Kolaffa compute optimal alpha
-	double ewaldgpu_compute_E_error_estimate_r(double alpha, double rcut, double q_sqr, double box_l[3]);
-	double ewaldgpu_compute_E_error_estimate_k(double alpha, int num_kx, int num_ky, int num_kz, double q_sqr, double box_l[3]);
-	double ewaldgpu_E_estimate_error(double rcut, int num_kx, int num_ky, int num_kz, double alpha, double q_sqr, double box_l[3]);
-	double ewaldgpu_compute_optimal_alpha(double rcut, int num_kx, int num_ky, int num_kz, double q_sqr, double box_l[3], double precision);
-	double ewaldgpu_compute_q_sqare();
+	double compute_E_error_estimate_r(double alpha, double rcut, double q_sqr, double box_l[3]);
+	double compute_E_error_estimate_k(double alpha, int num_kx, int num_ky, int num_kz, double q_sqr, double box_l[3]);
+	double E_estimate_error(double rcut, int num_kx, int num_ky, int num_kz, double alpha, double q_sqr, double box_l[3]);
+	double compute_optimal_alpha(double rcut, int num_kx, int num_ky, int num_kz, double q_sqr, double box_l[3], double precision);
+	double compute_q_sqare();
 
 protected:
 	//SYSTEM
@@ -104,8 +105,8 @@ protected:
 	void compute_num_k(); // Compute the number of k's in sphere respectively in ellipsoid
 	void compute_k_AND_influence_factor(); // Compute the k-vectors in sphere respectively in ellipsoid and influence factor
 	//GPU PROGRAM
-	void runGPU_Forces(SystemInterface &s); // Run GPU forces part
-	void runGPU_Energy(); // Run GPU energy part
+	void GPU_Forces(SystemInterface &s); // Run GPU forces part
+	void GPU_Energy(); // Run GPU energy part
 	int nextPow2(int x); // Determine the next power of x
 	bool isPow2(int x); // Determine if x of power 2
 	void getNumBlocksAndThreads(int Size, int maxBlocks, int maxThreads, int &blocks, int &threads); // Determine the number of blocks and threads in GPU part
@@ -113,7 +114,6 @@ protected:
 	void Output(); // Output in terminal
 	//REAL SPACE
 	void EwaldCPU_EnergySelf(); // Calculate the self energy
-	void compute_q_sqare(SystemInterface &s); // Calculate sum q_i**2
 };
 
 extern EwaldgpuForce *ewaldgpuForce;
