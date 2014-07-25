@@ -244,6 +244,7 @@ static void register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_MIN_GLOBAL_CUT, tclcallback_min_global_cut);
   register_global_callback(FIELD_SD_VISCOSITY, tclcallback_sd_viscosity);
   register_global_callback(FIELD_SD_RADIUS, tclcallback_sd_radius);
+  register_global_callback(FIELD_SD_RANDOM_PRECISION, tclcallback_sd_random_precision);
   register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
 }
 

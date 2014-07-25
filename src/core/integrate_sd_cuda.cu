@@ -437,6 +437,11 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
   real det_prec=1e-3;
 #endif
   real ran_prec=sd_random_precision;
+  static real ran_prec_last=-1;
+  if ( ran_prec_last != ran_prec){
+    ran_prec_last=ran_prec;
+    printf("\nSetting the precision for the random part to %e\n",ran_prec);
+  }
   cudaThreadSynchronize(); // just for debugging
   cudaCheckError("START");
   int lda=((3*N+31)/32)*32;
@@ -1313,9 +1318,9 @@ void calculate_maxmin_eigenvalues(int size,real *mobility_d,real * lambda_min,re
     if (warnings > 1) fprintf(stderr,"calculating eigenvalue needed %d iterations and %d gemv operations (tolerance is %e, EW is %e).\n"
 	    ,IPARAM[2], IPARAM[8], TOL,WORKL[IPNTR[5]-1]);
     if (INFO){
-      if (INFO == 1 && warnings){
+      if (INFO == 1 && warnings > 1){
 	fprintf(stderr,"Maximum iterations taken to find Eigenvalues.\n",__FILE__,__LINE__,INFO, minmax, V[0]);
-      } else if( INFO > 1){
+      } else if( INFO > 1 && warnings){
 	fprintf(stderr,"Unexpected return value in %s l. %d from rnaupd_: %d (debug info: %d %e)\n",__FILE__,__LINE__,INFO, minmax, V[0]);
       }
       /*

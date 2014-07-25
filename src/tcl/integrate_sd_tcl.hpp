@@ -51,6 +51,10 @@ int tclcallback_sd_radius(Tcl_Interp *interp, void *_data);
  */
 int tclcallback_sd_viscosity(Tcl_Interp *interp, void *_data);
 
+/** Callback for the sd random precision (0.0 < sd_random_precision)
+ */
+int tclcallback_sd_random_precision(Tcl_Interp *interp, void *_data);
+
 
 /*@}*/
 

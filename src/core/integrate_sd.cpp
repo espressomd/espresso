@@ -509,7 +509,7 @@ It could be difficult to set particles apart!\n",phi);
 	      // push to a distance of 1e-5;
 	      double fac=(sd_radius*(1+1.2e-5)-drn/2)/drn;
 	      assert(!isnan(fac));
-	      printf("%d %d\t\t",i,j);
+	      //printf("%d %d\t\t",i,j);
 	      for (int d=0; d<3;d++){
 		if(isnan(dr[d]*fac)){
 		  fprintf(stderr, "%4d %4d %6e %6e ",i,j,dr[d],fac);
