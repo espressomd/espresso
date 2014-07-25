@@ -57,7 +57,7 @@ libEspresso_la_SOURCES = \
 	initialize.cpp initialize.hpp \
 	integrate.cpp integrate.hpp \
 	interaction_data.cpp interaction_data.hpp \
-	lattice.cpp lattice.hpp \
+	lattice.cpp lattice_inline.hpp lattice.hpp \
 	layered.cpp layered.hpp \
 	lb.cpp lb.hpp \
 	lb-boundaries.cpp lb-boundaries.hpp \
