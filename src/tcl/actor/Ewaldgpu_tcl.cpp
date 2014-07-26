@@ -1,9 +1,12 @@
 #include "Ewaldgpu_tcl.hpp"
 #include "forces.hpp"
+#include "energy.hpp"
 #include "actor/EwaldgpuForce.hpp"
 #include "EspressoSystemInterface.hpp"
 
 #ifdef EWALD_GPU
+
+EwaldgpuForce *ewaldgpuForce;
 
 int tclprint_to_result_ewaldgpu(Tcl_Interp *interp)
 {
@@ -104,7 +107,16 @@ int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char 
     }
   }
 
-  addEwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
+  // turn on EWALDGPU
+  /* coulomb.prefactor apparently is not available yet at this point */
+  if (!ewaldgpuForce) // inter coulomb ewaldgpu was never called before
+  {
+	  ewaldgpuForce = new EwaldgpuForce(espressoSystemInterface, r_cut, num_kx, num_ky, num_kz, alpha);
+	  forceActors.add(ewaldgpuForce);
+	  energyActors.add(ewaldgpuForce);
+  }
+
+  coulomb.method = COULOMB_EWALD_GPU;
   rebuild_verletlist = 1;
   ewaldgpu_params.ewaldgpu_is_running = true;
   ewaldgpu_params.isTuned = true;
@@ -164,8 +176,15 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, 
     argv += 2;
   }
 
+  // turn on EWALDGPU
+  /* coulomb.prefactor apparently is not available yet at this point */
+  if (!ewaldgpuForce) // inter coulomb ewaldgpu was never called before
+  {
+	  ewaldgpuForce = new EwaldgpuForce(espressoSystemInterface, r_cut, num_kx, num_ky, num_kz, alpha);
+	  forceActors.add(ewaldgpuForce);
+	  energyActors.add(ewaldgpuForce);
+  }
   ewaldgpuForce->set_params_tune(accuracy, precision, K_max, time_calc_steps);
-  addEwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
   rebuild_verletlist = 1;
 
   /* do the tuning */
@@ -181,6 +200,7 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, 
   Tcl_AppendResult(interp, log, (char *) NULL);
   if (log) free(log);
 
+  coulomb.method = COULOMB_EWALD_GPU;
   rebuild_verletlist = 1;
 	mpi_bcast_coulomb_params();
   return TCL_OK;
@@ -235,11 +255,21 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
 		     (char *) NULL);
     return 0;
   }
+
+  // turn on EWALDGPU
+  /* coulomb.prefactor apparently is not available yet at this point */
+  if (!ewaldgpuForce) // inter coulomb ewaldgpu was never called before
+  {
+	  ewaldgpuForce = new EwaldgpuForce(espressoSystemInterface, r_cut, num_kx, num_ky, num_kz, alpha);
+	  forceActors.add(ewaldgpuForce);
+	  energyActors.add(ewaldgpuForce);
+  }
   //Compute alpha
   double q_sqr = ewaldgpuForce->compute_q_sqare();
   alpha = ewaldgpuForce->compute_optimal_alpha(r_cut, num_kx, num_ky, num_kz, q_sqr, box_l, precision);
   ewaldgpu_params.isTuned = true;
-  addEwaldgpuForce(r_cut, num_kx, num_ky, num_kz, alpha);
+
+  coulomb.method = COULOMB_EWALD_GPU;
   rebuild_verletlist = 1;
   mpi_bcast_coulomb_params();
 

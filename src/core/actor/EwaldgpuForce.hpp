@@ -1,17 +1,15 @@
 #ifndef EWALDGPUFORCE_HPP
 #define EWALDGPUFORCE_HPP
 #include "config.hpp"
-#include "SystemInterface.hpp"
 
 #ifdef EWALD_GPU
+
+#include "SystemInterface.hpp"
+#include "Actor.hpp"
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <math.h>
 #include "cells.hpp"
-#include "interaction_data.hpp"
-#include "SystemInterface.hpp"
-#include "Actor.hpp"
-
 
 #ifndef INT64
 #define INT64	long long
