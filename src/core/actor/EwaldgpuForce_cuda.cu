@@ -427,7 +427,7 @@ __global__ void EwaldGPU_EnergyReci_LowThreads(real *rho_hat, real *infl_factor,
 //Ewaldgpuforce
 EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int num_ky, int num_kz, double alpha)
 {
-	// interface sanity checks
+	//Interface sanity checks
 	if(!s.requestFGpu())
 		std::cerr << "EwaldgpuForce needs access to forces on GPU!" << std::endl;
 
@@ -485,6 +485,7 @@ void EwaldgpuForce::setup(SystemInterface &s)
 	m_num_ky = ewaldgpu_params.num_ky;
 	m_num_kz = ewaldgpu_params.num_kz;
 	m_alpha = ewaldgpu_params.alpha;
+
 	//Compute the number of k's in k-sphere
 	compute_num_k();
 
@@ -525,12 +526,12 @@ void EwaldgpuForce::setup(SystemInterface &s)
 	//Particle number
 	m_N = s.npart_gpu();
 
-	//COMPUTE REZIPROCAL K's
+	//Compute reciprocal space vectors k
 	m_V=m_box_l[0]*m_box_l[1]*m_box_l[2];
-	compute_q_sqare();
+	compute_q_sqare(s);
 	compute_k_AND_influence_factor();
 
-	//INIT GPU STREAM
+	//Init GPU stream
 	stream0 = (cudaStream_t *) malloc (1 * sizeof(cudaStream_t));
 	start = (cudaEvent_t *) malloc (1 * sizeof(cudaEvent_t));
 	stop = (cudaEvent_t *) malloc (1 * sizeof(cudaEvent_t));

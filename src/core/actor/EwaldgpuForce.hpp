@@ -23,10 +23,6 @@ typedef float ewaldgpu_real;
 void addEwaldgpuForce(double r_cut, int num_kx, int num_ky, int num_kz, double alpha);
 
 typedef struct {
-	Cell *cell;
-  Particle *p;
-  int i,c,np;
-	
 	double rcut;
 	int num_kx;
 	int num_ky;
@@ -55,7 +51,7 @@ public:
 	int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha);
 	int set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps);
 	//TUNING r_cut, num_kx, num_ky, num_kz, alpha
-	int adaptive_tune(char **log);
+	int adaptive_tune(char **log, SystemInterface &s);
 	double error_estimate_r(double q_sqr, int N, double r_cut, double V, double alpha, double accuracy);
 	double error_estimate_k(double q_sqr, int N, int K, double V, double alpha, double accuracy);
 	double tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N);
@@ -66,7 +62,7 @@ public:
 	double compute_E_error_estimate_k(double alpha, int num_kx, int num_ky, int num_kz, double q_sqr, double box_l[3]);
 	double E_estimate_error(double rcut, int num_kx, int num_ky, int num_kz, double alpha, double q_sqr, double box_l[3]);
 	double compute_optimal_alpha(double rcut, int num_kx, int num_ky, int num_kz, double q_sqr, double box_l[3], double precision);
-	double compute_q_sqare();
+	double compute_q_sqare(SystemInterface &s);
 
 protected:
 	//SYSTEM

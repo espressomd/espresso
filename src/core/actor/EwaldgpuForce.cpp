@@ -98,13 +98,13 @@ int EwaldgpuForce::set_params_tune(double accuracy, double precision, int K_max,
 }
 
 //Tuning r_cut, num_kx, num_ky, num_kz, alpha
-int EwaldgpuForce::adaptive_tune(char **log)
+int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 {
 	ewaldgpu_params.isTuned = false;
 	int Kmax = ewaldgpu_params.K_max;
 	double alpha_array[Kmax]; //All computed alpha in dependence of K
 	double rcut_array[Kmax]; //All computed r_cut in dependence of all computed alpha
-	double q_sqr = compute_q_sqare();
+	double q_sqr = compute_q_sqare(s);
 	char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
 
   if (skin == -1) {
@@ -319,7 +319,7 @@ double EwaldgpuForce::compute_optimal_alpha(double rcut, int num_kx, int num_ky,
 
   return 0.5 *(alpha_low + alpha_high);
 }
-double EwaldgpuForce::compute_q_sqare()
+double EwaldgpuForce::compute_q_sqare(SystemInterface &s)
 {
 	double q_sqr=0;
   Cell *cell;
