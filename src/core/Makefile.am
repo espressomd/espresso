@@ -163,7 +163,7 @@ libEspresso_la_SOURCES += \
 	actor/ActorList.cpp actor/ActorList.hpp \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
-	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForceShortRange.hpp \
+	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
