@@ -42,8 +42,9 @@ static void HandleError(cudaError_t err,const char *file,int line)
 #define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
 #define HANDLE_NULL( a ) {if (a == NULL) {printf( "Host memory failed in %s at line %d\n", __FILE__, __LINE__ ); exit( EXIT_FAILURE );}}
 
-/*Here MaxThreads/LowThreads means that if for example 2000 Particles/k-Vectors are given and the GPU uses 256 Threads the first 3*(2*256)=1536 will be
-reduced by the MaxThread function and the remaining 464 Particles will be reduced by the LowThread function*/
+//Kernels
+/*Here MaxThreads/LowThreads means that, if for example 10000 Particles/k-Vectors are given and the GPU uses 256 Threads the first 19*(2*256)=9728 will be
+reduced by the MaxThread function and the remaining 272 Particles will be reduced by the LowThread function*/
 //Structure factor
 template <int blockSize, bool nIsPow2>
 __global__ void EwaldGPU_Rho_hat_MaxThreads(real *k,real *r_i, real *q_i, real *rho_hat, int N, int num_k, int maxThreadsPerBlock,int loops)
@@ -64,55 +65,52 @@ __global__ void EwaldGPU_Rho_hat_MaxThreads(real *k,real *r_i, real *q_i, real *
  	real *sin_ptr=&sin_kr;
 	real *cos_ptr=&cos_kr;
 	int blockId = blockIdx.x*gridDim.x+blockIdx.y;
-
 	int l = loops;
+
+	//Init
+	i = tid;
+	sdata[tid] = 0;
+	sdata[tid+2*blockSize] = 0;
+
+	//Reduction
+	while (i < mTPB)
 	{
-		//Init
-		i = tid;
-		sdata[tid] = 0;
-		sdata[tid+2*blockSize] = 0;
+		kr = k[blockId]*r_i[i+2*l*mTPB]+k[blockId+num_k]*r_i[i+2*l*mTPB+N]+k[blockId+2*num_k]*r_i[i+2*l*mTPB+2*N];
+		sincos(kr,sin_ptr,cos_ptr);
+		factor = q_i[i+2*l*mTPB];
 
-		//REDUCTION
-		while (i < mTPB)
-		{
-			kr = k[blockId]*r_i[i+2*l*mTPB]+k[blockId+num_k]*r_i[i+2*l*mTPB+N]+k[blockId+2*num_k]*r_i[i+2*l*mTPB+2*N];
-			sincos(kr,sin_ptr,cos_ptr);
-			factor = q_i[i+2*l*mTPB];
+		sdata[tid]      						+=  factor*cos_kr;
+		sdata[tid+2*blockSize]      += -factor*sin_kr;
+		//BECAUSE nIsPow2=True
+		kr = k[blockId]*r_i[i+2*l*mTPB+blockSize]+k[blockId+num_k]*r_i[i+2*l*mTPB+blockSize+N]+k[blockId+2*num_k]*r_i[i+2*l*mTPB+blockSize+2*N];
+		sincos(kr,sin_ptr,cos_ptr);
+		factor = q_i[i+2*l*mTPB+blockSize];
+		sdata[tid]      						+=  factor*cos_kr;
+		sdata[tid+2*blockSize]      += -factor*sin_kr;
 
-			sdata[tid]      						+=  factor*cos_kr;
-			sdata[tid+2*blockSize]      += -factor*sin_kr;
-			//BECAUSE nIsPow2=True
-			kr = k[blockId]*r_i[i+2*l*mTPB+blockSize]+k[blockId+num_k]*r_i[i+2*l*mTPB+blockSize+N]+k[blockId+2*num_k]*r_i[i+2*l*mTPB+blockSize+2*N];
-			sincos(kr,sin_ptr,cos_ptr);
-			factor = q_i[i+2*l*mTPB+blockSize];
-			sdata[tid]      						+=  factor*cos_kr;
-			sdata[tid+2*blockSize]      += -factor*sin_kr;
-
-			i += gridSize;
-		}
-		__syncthreads();
-
-		if (blockSize >= 1024){ if (tid < 512) { sdata[tid] += sdata[tid + 512];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 512]; } __syncthreads(); }
-		if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 256]; } __syncthreads(); }
-		if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 128]; } __syncthreads(); }
-		if (blockSize >= 128) { if (tid < 64)  { sdata[tid] += sdata[tid + 64];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 64];  }  __syncthreads(); }
-		if (tid < 32) {
-		if (blockSize >= 64) {sdata[tid] += sdata[tid + 32];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 32]; __syncthreads(); }
-		if (blockSize >= 32) {sdata[tid] += sdata[tid + 16];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 16]; __syncthreads(); }
-		if (blockSize >= 16) {sdata[tid] += sdata[tid + 8]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 8]; __syncthreads(); }
-		if (blockSize >= 8)  {sdata[tid] += sdata[tid + 4]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 4]; __syncthreads(); }
-		if (blockSize >= 4)  {sdata[tid] += sdata[tid + 2]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 2]; __syncthreads(); }
-		if (blockSize >= 2)  {sdata[tid] += sdata[tid + 1]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 1]; __syncthreads(); }
-		}
-		//Write result for this block to global memory
-		if (tid == 0)
-		{
-			rho_hat[blockId]       += sdata[0];
-			rho_hat[blockId+num_k] += sdata[2*blockSize];
-		}
-		__syncthreads();
+		i += gridSize;
 	}
+	__syncthreads();
 
+	if (blockSize >= 1024){ if (tid < 512) { sdata[tid] += sdata[tid + 512];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 512]; } __syncthreads(); }
+	if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 256]; } __syncthreads(); }
+	if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 128]; } __syncthreads(); }
+	if (blockSize >= 128) { if (tid < 64)  { sdata[tid] += sdata[tid + 64];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 64];  }  __syncthreads(); }
+	if (tid < 32) {
+	if (blockSize >= 64) {sdata[tid] += sdata[tid + 32];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 32]; __syncthreads(); }
+	if (blockSize >= 32) {sdata[tid] += sdata[tid + 16];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 16]; __syncthreads(); }
+	if (blockSize >= 16) {sdata[tid] += sdata[tid + 8]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 8]; __syncthreads(); }
+	if (blockSize >= 8)  {sdata[tid] += sdata[tid + 4]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 4]; __syncthreads(); }
+	if (blockSize >= 4)  {sdata[tid] += sdata[tid + 2]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 2]; __syncthreads(); }
+	if (blockSize >= 2)  {sdata[tid] += sdata[tid + 1]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 1]; __syncthreads(); }
+	}
+	//Write result for this block to global memory
+	if (tid == 0)
+	{
+		rho_hat[blockId]       += sdata[0];
+		rho_hat[blockId+num_k] += sdata[2*blockSize];
+	}
+	__syncthreads();
 }
 template <int blockSize, bool nIsPow2>
 __global__ void EwaldGPU_Rho_hat_LowThreads(real *k,real *r_i, real *q_i, real *rho_hat, int N, int num_k,int maxThreadsPerBlock,int elapsedLoops)
@@ -140,7 +138,7 @@ __global__ void EwaldGPU_Rho_hat_LowThreads(real *k,real *r_i, real *q_i, real *
 	sdata[tid] = 0;
 	sdata[tid+2*blockSize] = 0;
 
-	//REDUCTION
+	//Reduction
 	while (i < N-2*l*mTPB)
 	{
 		kr = k[blockId]*r_i[i+2*l*mTPB]+k[blockId+num_k]*r_i[i+2*l*mTPB+N]+k[blockId+2*num_k]*r_i[i+2*l*mTPB+2*N];
@@ -200,58 +198,56 @@ __global__ void EwaldGPU_ForcesReci_MaxThreads(real *k,real *r_i, real *q_i, rea
  	real *sin_ptr=&sin_kr;
 	real *cos_ptr=&cos_kr;
 	int blockId = blockIdx.x*gridDim.x+blockIdx.y;
-
 	int l = loops;
+
+	//Init
+	i = tid;
+	sdata[tid] 						 = 0;
+	sdata[tid+2*blockSize] = 0;
+	sdata[tid+4*blockSize] = 0;
+
+	//Reduction
+	while (i < mTPB)
 	{
-		//Init
-		i = tid;
-		sdata[tid] 						 = 0;
-		sdata[tid+2*blockSize] = 0;
-		sdata[tid+4*blockSize] = 0;
+		kr = k[i+2*l*mTPB]*r_i[blockId] + k[i+2*l*mTPB+num_k]*r_i[blockId+N] + k[i+2*l*mTPB+2*num_k]*r_i[blockId+2*N];
+		sincos(kr,sin_ptr,cos_ptr);
+		factor = infl_factor[i+2*l*mTPB] * q_i[blockId];
 
-		//REDUCTION
-		while (i < mTPB)
-		{
-			kr = k[i+2*l*mTPB]*r_i[blockId] + k[i+2*l*mTPB+num_k]*r_i[blockId+N] + k[i+2*l*mTPB+2*num_k]*r_i[blockId+2*N];
-			sincos(kr,sin_ptr,cos_ptr);
-			factor = infl_factor[i+2*l*mTPB] * q_i[blockId];
+		sdata[tid]      			 += factor * (k[i+2*l*mTPB]*rho_hat[i+2*l*mTPB]         * sin_kr + k[i+2*l*mTPB]*rho_hat[i+2*l*mTPB+num_k]         * cos_kr);
+		sdata[tid+2*blockSize] += factor * (k[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB]   * sin_kr + k[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB+num_k]   * cos_kr);
+		sdata[tid+4*blockSize] += factor * (k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB] * sin_kr + k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB+num_k] * cos_kr);
+		//BECAUSE nIsPow2=True
+		kr = k[i+2*l*mTPB+blockSize]*r_i[blockId] + k[i+2*l*mTPB+num_k+blockSize]*r_i[blockId+N] + k[i+2*l*mTPB+2*num_k+blockSize]*r_i[blockId+2*N];
+		factor = infl_factor[i+2*l*mTPB+blockSize]* q_i[blockId];
+		sincos(kr,sin_ptr,cos_ptr);
+		sdata[tid]      			 += factor * (k[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+blockSize]         * sin_kr + k[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize]         * cos_kr);
+		sdata[tid+2*blockSize] += factor * (k[i+2*l*mTPB+num_k+blockSize]*rho_hat[i+2*l*mTPB+blockSize]   * sin_kr + k[i+2*l*mTPB+num_k+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize]   * cos_kr);
+		sdata[tid+4*blockSize] += factor * (k[i+2*l*mTPB+2*num_k+blockSize]*rho_hat[i+2*l*mTPB+blockSize] * sin_kr + k[i+2*l*mTPB+2*num_k+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize] * cos_kr);
 
-			sdata[tid]      			 += factor * (k[i+2*l*mTPB]*rho_hat[i+2*l*mTPB]         * sin_kr + k[i+2*l*mTPB]*rho_hat[i+2*l*mTPB+num_k]         * cos_kr);
-			sdata[tid+2*blockSize] += factor * (k[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB]   * sin_kr + k[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB+num_k]   * cos_kr);
-			sdata[tid+4*blockSize] += factor * (k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB] * sin_kr + k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB+num_k] * cos_kr);
-			//BECAUSE nIsPow2=True
-			kr = k[i+2*l*mTPB+blockSize]*r_i[blockId] + k[i+2*l*mTPB+num_k+blockSize]*r_i[blockId+N] + k[i+2*l*mTPB+2*num_k+blockSize]*r_i[blockId+2*N];
-			factor = infl_factor[i+2*l*mTPB+blockSize]* q_i[blockId];
-			sincos(kr,sin_ptr,cos_ptr);
-			sdata[tid]      			 += factor * (k[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+blockSize]         * sin_kr + k[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize]         * cos_kr);
-			sdata[tid+2*blockSize] += factor * (k[i+2*l*mTPB+num_k+blockSize]*rho_hat[i+2*l*mTPB+blockSize]   * sin_kr + k[i+2*l*mTPB+num_k+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize]   * cos_kr);
-			sdata[tid+4*blockSize] += factor * (k[i+2*l*mTPB+2*num_k+blockSize]*rho_hat[i+2*l*mTPB+blockSize] * sin_kr + k[i+2*l*mTPB+2*num_k+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize] * cos_kr);
-
-			i += gridSize;
-		}
-		__syncthreads();
-
-		if (blockSize >= 1024){ if (tid < 512) { sdata[tid] += sdata[tid + 512];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 512];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 512]; } __syncthreads(); }
-		if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 256];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 256]; } __syncthreads(); }
-		if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 128];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 128]; } __syncthreads(); }
-		if (blockSize >= 128) { if (tid < 64)  { sdata[tid] += sdata[tid + 64]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 64]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 64];  } __syncthreads(); }
-		if (tid < 32) {
-		if (blockSize >= 64) {sdata[tid] += sdata[tid + 32];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 32];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 32]; __syncthreads(); }
-		if (blockSize >= 32) {sdata[tid] += sdata[tid + 16];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 16];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 16]; __syncthreads(); }
-		if (blockSize >= 16) {sdata[tid] += sdata[tid + 8]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 8]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 8]; __syncthreads(); }
-		if (blockSize >= 8)  {sdata[tid] += sdata[tid + 4]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 4]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 4]; __syncthreads(); }
-		if (blockSize >= 4)  {sdata[tid] += sdata[tid + 2]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 2]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 2]; __syncthreads(); }
-		if (blockSize >= 2)  {sdata[tid] += sdata[tid + 1]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 1]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 1]; __syncthreads(); }
-		}
-		//Write result for this block to global memory
-		if (tid == 0)
-		{
-			forces_reci[blockId]     += sdata[0];
-			forces_reci[blockId+N]   += sdata[2*blockSize];
-			forces_reci[blockId+2*N] += sdata[4*blockSize];
-		}
-		__syncthreads();
+		i += gridSize;
 	}
+	__syncthreads();
+
+	if (blockSize >= 1024){ if (tid < 512) { sdata[tid] += sdata[tid + 512];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 512];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 512]; } __syncthreads(); }
+	if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 256];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 256]; } __syncthreads(); }
+	if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 128];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 128]; } __syncthreads(); }
+	if (blockSize >= 128) { if (tid < 64)  { sdata[tid] += sdata[tid + 64]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 64]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 64];  } __syncthreads(); }
+	if (tid < 32) {
+	if (blockSize >= 64) {sdata[tid] += sdata[tid + 32];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 32];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 32]; __syncthreads(); }
+	if (blockSize >= 32) {sdata[tid] += sdata[tid + 16];sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 16];sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 16]; __syncthreads(); }
+	if (blockSize >= 16) {sdata[tid] += sdata[tid + 8]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 8]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 8]; __syncthreads(); }
+	if (blockSize >= 8)  {sdata[tid] += sdata[tid + 4]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 4]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 4]; __syncthreads(); }
+	if (blockSize >= 4)  {sdata[tid] += sdata[tid + 2]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 2]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 2]; __syncthreads(); }
+	if (blockSize >= 2)  {sdata[tid] += sdata[tid + 1]; sdata[tid+2*blockSize] += sdata[tid+2*blockSize + 1]; sdata[tid+4*blockSize] += sdata[tid+4*blockSize + 1]; __syncthreads(); }
+	}
+	//Write result for this block to global memory
+	if (tid == 0)
+	{
+		forces_reci[blockId]     += sdata[0];
+		forces_reci[blockId+N]   += sdata[2*blockSize];
+		forces_reci[blockId+2*N] += sdata[4*blockSize];
+	}
+	__syncthreads();
 }
 template <int blockSize, bool nIsPow2>
 __global__ void EwaldGPU_ForcesReci_LowThreads(real *k,real *r_i, real *q_i, real *rho_hat, real *infl_factor, real *forces_reci, int N, int num_k, real V,int maxThreadsPerBlock,int elapsedLoops)
@@ -285,7 +281,7 @@ __global__ void EwaldGPU_ForcesReci_LowThreads(real *k,real *r_i, real *q_i, rea
 		sincos(kr,sin_ptr,cos_ptr);
 		factor = infl_factor[i+2*l*mTPB] * q_i[blockId];
 
-		//REDUCTION
+		//Reduction
 		sdata[tid]      			 += factor * (k[i+2*l*mTPB]*rho_hat[i+2*l*mTPB]         * sin_kr + k[i+2*l*mTPB]*rho_hat[i+2*l*mTPB+num_k]         * cos_kr);
 		sdata[tid+2*blockSize] += factor * (k[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB]   * sin_kr + k[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB+num_k]   * cos_kr);
 		sdata[tid+4*blockSize] += factor * (k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB] * sin_kr + k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB+num_k] * cos_kr);
@@ -332,47 +328,45 @@ __global__ void EwaldGPU_EnergyReci_MaxThreads(real *rho_hat, real *infl_factor,
 	int i = tid;
 	int gridSize = blockSize*2*gridDim.x;
 	int mTPB=maxThreadsPerBlock;
-	real factor; // Factor to multiply with
+	real factor;
+	int l = loops;
 
-	int l = loops;//TODO
+	//Init
+	i = tid;
+	sdata[tid] 						 = 0;
+
+	//Reduction
+	while (i < mTPB)
 	{
-		//iNIT
-		i = tid;
-		sdata[tid] 						 = 0;
+		factor = infl_factor[i+2*l*mTPB] / 2;
 
-		//REDUCTION
-		while (i < mTPB)
-		{
-			factor = infl_factor[i+2*l*mTPB] / 2;
+		sdata[tid]      			 += factor * (rho_hat[i+2*l*mTPB]*rho_hat[i+2*l*mTPB] + rho_hat[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB+num_k]);
+		//BECAUSE nIsPow2=True
+		factor = infl_factor[i+2*l*mTPB+blockSize] / 2;
+		sdata[tid]      			 += factor * (rho_hat[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+blockSize] + rho_hat[i+2*l*mTPB+num_k+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize]);
 
-			sdata[tid]      			 += factor * (rho_hat[i+2*l*mTPB]*rho_hat[i+2*l*mTPB] + rho_hat[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB+num_k]);
-			//BECAUSE nIsPow2=True
-			factor = infl_factor[i+2*l*mTPB+blockSize] / 2;
-			sdata[tid]      			 += factor * (rho_hat[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+blockSize] + rho_hat[i+2*l*mTPB+num_k+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize]);
-
-			i += gridSize;
-		}
-		__syncthreads();
-
-		if (blockSize >= 1024){ if (tid < 512) { sdata[tid] += sdata[tid + 512]; } __syncthreads(); }
-		if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
-		if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
-		if (blockSize >= 128) { if (tid < 64)  { sdata[tid] += sdata[tid + 64];  } __syncthreads(); }
-		if (tid < 32) {
-		if (blockSize >= 64) {sdata[tid] += sdata[tid + 32]; __syncthreads(); }
-		if (blockSize >= 32) {sdata[tid] += sdata[tid + 16]; __syncthreads(); }
-		if (blockSize >= 16) {sdata[tid] += sdata[tid + 8]; __syncthreads(); }
-		if (blockSize >= 8)  {sdata[tid] += sdata[tid + 4]; __syncthreads(); }
-		if (blockSize >= 4)  {sdata[tid] += sdata[tid + 2]; __syncthreads(); }
-		if (blockSize >= 2)  {sdata[tid] += sdata[tid + 1]; __syncthreads(); }
-		}
-		//Write result for this block to global memory
-		if (tid == 0)
-		{
-			energy_reci[0] += sdata[0];
-		}
-		__syncthreads();
+		i += gridSize;
 	}
+	__syncthreads();
+
+	if (blockSize >= 1024){ if (tid < 512) { sdata[tid] += sdata[tid + 512]; } __syncthreads(); }
+	if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
+	if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
+	if (blockSize >= 128) { if (tid < 64)  { sdata[tid] += sdata[tid + 64];  } __syncthreads(); }
+	if (tid < 32) {
+	if (blockSize >= 64) {sdata[tid] += sdata[tid + 32]; __syncthreads(); }
+	if (blockSize >= 32) {sdata[tid] += sdata[tid + 16]; __syncthreads(); }
+	if (blockSize >= 16) {sdata[tid] += sdata[tid + 8]; __syncthreads(); }
+	if (blockSize >= 8)  {sdata[tid] += sdata[tid + 4]; __syncthreads(); }
+	if (blockSize >= 4)  {sdata[tid] += sdata[tid + 2]; __syncthreads(); }
+	if (blockSize >= 2)  {sdata[tid] += sdata[tid + 1]; __syncthreads(); }
+	}
+	//Write result for this block to global memory
+	if (tid == 0)
+	{
+		energy_reci[0] += sdata[0];
+	}
+	__syncthreads();
 }
 template <int blockSize, bool nIsPow2>
 __global__ void EwaldGPU_EnergyReci_LowThreads(real *rho_hat, real *infl_factor,real *energy_reci, int N, int num_k, real V,int maxThreadsPerBlock,int elapsedLoops)
@@ -386,11 +380,11 @@ __global__ void EwaldGPU_EnergyReci_LowThreads(real *rho_hat, real *infl_factor,
 	int l=elapsedLoops;
 	real factor;
 
-	//iNIT
+	//Init
 	i = tid;
 	sdata[tid] 						 = 0;
 
-	//REDUCTION
+	//Reduction
 	while (i < num_k-2*l*mTPB)
 	{
 		factor = infl_factor[i+2*l*mTPB] / 2;

@@ -86,7 +86,7 @@
 #include "collision.hpp" 
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
-#include "actor/EwaldgpuForceShortRange.hpp"
+#include "actor/EwaldgpuForce_ShortRange.hpp"
 #include "actor/ActorList.hpp"
 
 extern ActorList forceActors;

@@ -321,6 +321,12 @@ double EwaldgpuForce::compute_optimal_alpha(double rcut, int num_kx, int num_ky,
 }
 double EwaldgpuForce::compute_q_sqare(SystemInterface &s)
 {
+
+
+	//float *q_i=s.qGpuBegin();
+	//printf("XXXXXXXXXXXXX %i %f\n",q_i,*q_i);
+	//printf("XXXXXXXXXXXXX %i %f\n",local_particles[0]->p.q);
+
 	double q_sqr=0;
   Cell *cell;
   Particle *p;

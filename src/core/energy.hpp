@@ -70,7 +70,7 @@
 #include "morse.hpp"
 #include "elc.hpp"
 #include "mdlc_correction.hpp"
-#include "actor/EwaldgpuForceShortRange.hpp"
+#include "actor/EwaldgpuForce_ShortRange.hpp"
 #include "actor/ActorList.hpp"
 
 /** \name Exported Variables */
