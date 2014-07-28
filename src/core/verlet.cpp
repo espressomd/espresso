@@ -32,7 +32,7 @@
 #include "interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "forces.hpp"
+#include "forces_inline.hpp"
 #include "energy.hpp"
 #include "pressure.hpp"
 #include "domain_decomposition.hpp"

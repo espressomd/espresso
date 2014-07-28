@@ -36,7 +36,7 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "forces.hpp"
+#include "forces_inline.hpp"
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
