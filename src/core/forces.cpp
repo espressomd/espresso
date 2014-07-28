@@ -233,10 +233,8 @@ void calc_long_range_forces()
 #ifdef CUDA
 	case COULOMB_P3M_GPU:
 		if (this_node == 0) p3m_gpu_add_farfield_force();
-#ifdef NPT
-		printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO fix this?
-		exit(1); //TODO ALTERNATIVELY CHECK IF BAROSTAT IS ACTUALLY ON
-#endif
+                /* there is no NPT handling here as long as we cannot compute energies.
+                   This is checked in integrator_npt_sanity_checks() when integration starts. */
 		break;
 #endif
 	case COULOMB_P3M:
