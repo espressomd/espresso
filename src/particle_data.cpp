@@ -243,9 +243,9 @@ void init_particle(Particle *part)
   #endif
 
 #ifdef LBTRACERS
-  part->m.v_old[0] = 0.0;
-  part->m.v_old[1] = 0.0;
-  part->m.v_old[2] = 0.0;
+  part->l.v_old[0] = 0.0;
+  part->l.v_old[1] = 0.0;
+  part->l.v_old[2] = 0.0;
 #endif
 
 #endif

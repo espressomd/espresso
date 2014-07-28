@@ -2,8 +2,8 @@
 # Simulation Info #
 
 # Date: 05.05.14
-# author: Vera
-# description: Drag particle parallel to Cell while holding cell with Ring of fixed nanoparticles
+# author: Mohamed Abdelkhalek
+# description: Spherical Membrane in a flow.
 
 #######################################################################
 # Parameters setting on for every simulation 
@@ -108,7 +108,7 @@ set m0 [expr $rho0*$L0*$L0*$L0]
 
 ############### Calculate quantities in Espresso units ###############################
 set pi 3.1415926535897931
-set G 0.2
+set G 0.05
 set r 4.9856099295288183473
 set H 2
 set rho [expr $rho_SI / $rho0]
@@ -119,7 +119,7 @@ set kB [expr $kb_SI / $kb0]
 set kC $kS
 
 set shear_rate [expr ($G * $kS) / ($nu * $r)]
-set u [expr $shear_rate * ($boxz - 24)]
+set u [expr $shear_rate * (($boxz - $H)/2)]
 # set u 1
 
 # set V [expr $V_SI /  $V0]
@@ -156,10 +156,10 @@ set dt_md [expr $dt_lb]
 # Integrations per step
 set stepSize 1
 # number of steps
-set numSteps 1500000
+set numSteps 6250000
 # set after which number of steps vtkfile should be written
 set distVtk  10000
-set distCellSeq 100
+set distCellSeq 1000
 set distDone 1000
 set distPartSeq [expr 1]
 # set distFlow [expr $numSteps/100]
@@ -250,19 +250,6 @@ source "$tclToolsDir/addCell_tools.tcl"
 source "$tclToolsDir/writeVtk_folded.tcl"
 # source "$tclToolsDir/addCell_fixed.tcl"
 
-set numParts 3
-set parts {353 356 358}
-
-set partCsv353 [ open "~/sphere/simfiles/partInfo353.csv" "w"]
-puts $partCsv353 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,t"
-set partCsv356 [ open "~/sphere/simfiles/partInfo356.csv" "w"]   
-puts $partCsv356 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,t"
-set partCsv358 [ open "~/sphere/simfiles/partInfo358.csv" "w"]
-puts $partCsv358 "posx,posy,posz,vx,vy,vz,fx,fy,fz,lbvx,lbvy,lbvz,t"
-
-# seed randumnumber generator:
-# t_random seed [clock seconds] [clock seconds] [clock seconds] [clock seconds]
-
 # setting Boxlength
 setmd box_l $boxx $boxy $boxz
 
@@ -287,8 +274,8 @@ thermostat lb $kbT
 ############## ADD WALL ##################
 
 # walls located at z=1 and z=boxz-1 in x-y-plane
-lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity [expr $u/2] 0 0 
-lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity [expr -$u/2] 0 0
+lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity $u 0 0 
+lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity -$u 0 0
 
 ################## ADD CELLS #############
 set interCount 0
@@ -300,7 +287,7 @@ set numType 0
 
 # number of cells
 set numCells 1
-# setmd vescnum $numCells
+setmd vescnum $numCells
 
 # write file with cell sequence data
 set cellSeqFile [ open "~/sphere/simfiles/cellSeq.dat" "w" ]
@@ -338,19 +325,6 @@ for {set step 0} {$step < $numSteps} {incr step} {
 		 puts $cellSeqFile [part [expr $j*$numNodesPerCell + $k ] print pos]
 	     }
 	 }
-
-	 
-  for {set j 0} { $j < $numParts } {incr j} {
-      set partCsv [ open "~/sphere/simfiles/partInfo[lindex $parts $j].csv" "a"]
-      set dataPart [part [lindex $parts $j] print pos v f]
-      set dataFlow [lbfluid print_interpolated_velocity [lindex $dataPart 1] [lindex $dataPart 2] [lindex $dataPart 3]]
-      set data [concat $dataPart $dataFlow]
-      foreach x $data { 
-	  puts -nonewline $partCsv "$x,"
-      }
-      puts -nonewline $partCsv "$step\n"
-      close $partCsv
-  }
 }
     
     # output for paraview only every 10th step
