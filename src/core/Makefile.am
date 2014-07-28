@@ -100,7 +100,9 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
-	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
+	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
+	immersed_boundary/vvolume.cpp immersed_boundary/vvolume.hpp \
+	immersed_boundary/lbtracers.cpp immersed_boundary/lbtracers.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -140,7 +142,8 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
-	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
+	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp \
+	immersed_boundary/triel.cpp immersed_boundary/triel.hpp
 
 # Coulomb methods
 libEspresso_la_SOURCES += \

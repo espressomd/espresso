@@ -1,4 +1,4 @@
-# Copyright (C) 2013 Olaf Lenz
+# Copyright (C) 2013,2014 Olaf Lenz
 #
 # This file is part of ESPResSo.
 #
@@ -18,9 +18,9 @@
 
 EXTRA_DIST =
 CLEANFILES =
-AM_CPPFLAGS = -I$(top_srcdir)/src
+AM_CPPFLAGS = -I$(top_srcdir)/src/core -I$(top_srcdir)/src -I$(builddir)/../core
 if MPI_FAKE
-AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
+AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
 AM_DEFAULT_SOURCE_EXT = .cpp
 
@@ -75,6 +75,8 @@ libEspressoTcl_la_SOURCES = \
 	uwerr_tcl.cpp \
 	virtual_sites_com_tcl.cpp virtual_sites_com_tcl.hpp \
 	ghmc_tcl.cpp ghmc_tcl.hpp
+	immersed_boundary/vvolume_tcl.cpp \ 
+	immersed_boundary/vvolume_tcl.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \
@@ -110,10 +112,6 @@ libEspressoTcl_la_SOURCES += \
 	harmonic_tcl.cpp harmonic_tcl.hpp \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
-	immersed-boundary/triel_tcl.cpp \
-	immersed-boundary/triel_tcl.hpp \
-	immersed-boundary/vvolume_tcl.cpp \
-	immersed-boundary/vvolume_tcl.hpp \
 	object-in-fluid/area_force_local_tcl.cpp \
 	object-in-fluid/area_force_local_tcl.hpp \
 	object-in-fluid/area_force_global_tcl.cpp \
@@ -126,6 +124,8 @@ libEspressoTcl_la_SOURCES += \
 	object-in-fluid/stretchlin_force_tcl.hpp \
 	object-in-fluid/volume_force_tcl.cpp \
 	object-in-fluid/volume_force_tcl.hpp
+	immersed_boundary/triel_tcl.cpp \
+	immersed_boundary/triel_tcl.hpp
 
 # Coulomb methods
 libEspressoTcl_la_SOURCES += \
@@ -142,6 +142,7 @@ libEspressoTcl_la_SOURCES += \
 
 # Generic actors
 libEspressoTcl_la_SOURCES += \
+	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
 	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
 
 if CUDA
@@ -158,12 +159,12 @@ endif
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
 Espresso_SOURCES = scriptsdir.cpp main.cpp
-Espresso_LDADD = libEspressoTcl.la ../libEspresso.la
+Espresso_LDADD = libEspressoTcl.la ../core/libEspresso.la
 
 bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\" $(AM_CPPFLAGS)
 Espresso_install_SOURCES = scriptsdir.cpp main.cpp
-Espresso_install_LDADD = libEspressoTcl.la ../libEspresso.la 
+Espresso_install_LDADD = libEspressoTcl.la ../core/libEspresso.la 
 
 ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
 ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)

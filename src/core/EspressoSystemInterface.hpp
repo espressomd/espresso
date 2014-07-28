@@ -111,6 +111,7 @@ public:
 
   float *fGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
   float *fGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
+  float *eGpu() { return (float *)gpu_get_energy_pointer(); };
   bool hasFGpu() { return true; };
   bool requestFGpu() {
     m_needsFGpu = hasFGpu();

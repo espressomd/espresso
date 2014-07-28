@@ -27,7 +27,6 @@
 
 
 #include "utils.hpp"
-#include "global.hpp"
 
 /************************************************
  * defines
@@ -195,7 +194,6 @@ typedef struct {
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
 #endif
-
 } ParticleMomentum;
 
 /** Information on a particle that is needed only on the

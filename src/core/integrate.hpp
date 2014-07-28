@@ -54,8 +54,8 @@ extern double sim_time;
 extern double max_cut;
 /** Verlet list skin. */
 extern double skin;
-
-extern int step_counter;
+/** True iff the user has changed the skin setting. */
+extern bool skin_set;
 
 /** If non-zero, the particle data will be resorted before the next integration. */
 extern int    resort_particles;

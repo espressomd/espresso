@@ -20,6 +20,7 @@
 
 #include "utils.hpp"
 #include "cuda_init.hpp"
+#include "cuda_utils.hpp"
 
 
 #ifdef CUDA
@@ -33,6 +34,11 @@ static const int computeCapabilityMinMinor = 1;
 /*@}*/
 
 const char *cuda_error;
+
+void cuda_init()
+{
+  cudaStreamCreate(&stream[0]);
+}
 
 /// get the number of CUDA devices.
 int cuda_get_n_gpus()
@@ -78,13 +84,16 @@ void cuda_get_gpu_name(int dev, char name[64])
 
 int cuda_set_device(int dev)
 {
-  cudaError_t error = cudaSetDevice(dev);
+  cudaSetDevice(dev);
+  cudaStreamDestroy(stream[0]);
+  cudaError_t error = cudaStreamCreate(&stream[0]);
+  
   if (error != cudaSuccess) {
     cuda_error = cudaGetErrorString(error);
     return ES_ERROR;
   }
-  else
-    return ES_OK;
+  
+  return ES_OK;
 }
 
 int cuda_get_device()

@@ -1289,23 +1289,21 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
   else if(ARG_IS_S(1, "delete")) {
     if(argc < 3) {
       /* delete all */
-      if (lattice_switch & LATTICE_LB_GPU) {
-        Tcl_AppendResult(interp, "Cannot delete individual lb boundaries",(char *) NULL);
-        status = TCL_ERROR;
-      } else 
         mpi_bcast_lbboundary(-2);
-      status = TCL_OK;
+        status = TCL_OK;
     }
     else {
+      if (lattice_switch & LATTICE_LB_GPU) {
+        Tcl_AppendResult(interp, "Cannot delete individual lb boundaries",(char *) NULL);
+        return(TCL_ERROR);
+      } 
+
       if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
       if(c_num < 0 || c_num >= n_lb_boundaries) {
 	Tcl_AppendResult(interp, "Can not delete non existing lbboundary",(char *) NULL);
 	return (TCL_ERROR);
       }
-      if (lattice_switch & LATTICE_LB_GPU) {
-	mpi_bcast_lbboundary(-3);
-      } else 
-	mpi_bcast_lbboundary(c_num);
+      mpi_bcast_lbboundary(c_num);
       status = TCL_OK;    
     }
   }

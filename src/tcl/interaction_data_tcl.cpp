@@ -26,6 +26,7 @@
 #include "interaction_data_tcl.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
+#include "global.hpp"
 
 #include "comforce_tcl.hpp"
 #include "comfixed_tcl.hpp"
@@ -67,6 +68,7 @@
 #include "mmm2d_tcl.hpp"
 #include "p3m_tcl.hpp"
 #include "reaction_field_tcl.hpp"
+#include "actor/Mmm1dgpu_tcl.hpp"
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -85,7 +87,6 @@
 #include "overlap_tcl.hpp"
 #include "harmonic_tcl.hpp"
 #include "subt_lj_tcl.hpp"
-#include "tcl/immersed-boundary/triel_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
 #include "tcl/object-in-fluid/volume_force_tcl.hpp"
@@ -181,6 +182,10 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("maggs", tclcommand_inter_coulomb_parse_maggs);
 
   REGISTER_COULOMB("memd", tclcommand_inter_coulomb_parse_maggs);
+
+  #ifdef MMM1D_GPU
+  REGISTER_COULOMB("mmm1dgpu", tclcommand_inter_coulomb_parse_mmm1dgpu);
+  #endif
 
   /* fallback */
   coulomb.method  = COULOMB_NONE;
@@ -355,10 +360,6 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   case BONDED_IA_SUBT_LJ:
     return tclprint_to_result_subt_ljIA(interp, params);
 #endif
-#ifdef TRIELASTIC
-   case TRIEL_IA:
-     return tclprint_to_result_trielIA(interp, params);
-#endif
 #ifdef BOND_VIRTUAL
   case BONDED_IA_VIRTUAL_BOND:
     Tcl_AppendResult(interp, "VIRTUAL_BOND ", (char *) NULL);
@@ -505,6 +506,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   case COULOMB_RF: tclprint_to_result_rf(interp,"rf"); break;
   case COULOMB_INTER_RF: tclprint_to_result_rf(interp,"inter_rf"); break;
   case COULOMB_MMM1D: tclprint_to_result_MMM1D(interp); break;
+#ifdef MMM1D_GPU
+  case COULOMB_MMM1D_GPU: tclprint_to_result_MMM1DGPU(interp); break;
+#endif
   case COULOMB_MMM2D: tclprint_to_result_MMM2D(interp); break;
   case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
   default: break;
@@ -869,9 +873,6 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
-#endif
-#ifdef TRIELASTIC
-  REGISTER_BONDED("triel", tclcommand_inter_parse_triel);
 #endif
 #ifdef BOND_ANGLE_OLD
   REGISTER_BONDED("angle", tclcommand_inter_parse_angle);

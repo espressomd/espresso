@@ -129,6 +129,7 @@ public:
 
   virtual float *fGpuBegin() { return 0; };
   virtual float *fGpuEnd() { return 0; };
+  virtual float *eGpu() { return 0; };
   virtual bool hasFGpu() { return false; };
   virtual bool requestFGpu() { m_needsFGpu = hasFGpu(); return m_needsFGpu; }
 

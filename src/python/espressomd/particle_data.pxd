@@ -114,9 +114,8 @@ cdef extern from "particle_data.hpp":
     void pointer_to_quatu(Particle* p, double*& res)
     void pointer_to_quat(Particle* p, double*& res)
 
-
-  IF MASS ==1: 
-    void pointer_to_mass(Particle* p, double*&  res)
+  IF MASS == 1: 
+    void pointer_to_mass(Particle* p, double*& res)
   
   IF DIPOLES == 1:
     int set_particle_dip(int part, double dip[3])

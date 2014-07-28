@@ -188,16 +188,11 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
 }
 
 int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
-  char *token;
-  int scan_succes;
   iccp3m_cfg.nvectorx = (double*) realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.n_ic));
   iccp3m_cfg.nvectory = (double*) realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.n_ic));
   iccp3m_cfg.nvectorz = (double*) realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.n_ic));
-  const char opening_bracket[] = "{";
-  const char closing_bracket[] = "}";
-  const char space[] = " ";
-
-  const char delimiters[]=" {}";
+  const char opening_bracket = '{';
+  const char closing_bracket = '}';
 
   std::string arg(string);
   size_t beginVector;
@@ -207,8 +202,8 @@ int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
 
   double x,y,z;
   for (int i = 0; i<n_ic; i++) {
-    beginVector = arg.find_first_of("{");
-    endVector = arg.find_first_of("}");
+    beginVector = arg.find_first_of(opening_bracket);
+    endVector = arg.find_first_of(closing_bracket);
     sVector = arg.substr(beginVector+1, endVector-2);
     sVector.append(" "); // I could not figure out why -2 and append " " but it works!
     ssVector.str(sVector);

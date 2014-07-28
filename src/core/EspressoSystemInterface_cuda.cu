@@ -28,9 +28,9 @@ __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r, float *
 
   CUDA_particle_data p = particles[idx];
 
-  r[idx + 0] = p.p[0];
-  r[idx + 1] = p.p[1];
-  r[idx + 2] = p.p[2];
+  r[3*idx + 0] = p.p[0];
+  r[3*idx + 1] = p.p[1];
+  r[3*idx + 2] = p.p[2];
   #ifdef ELECTROSTATICS
   q[idx] = p.q;
   #endif

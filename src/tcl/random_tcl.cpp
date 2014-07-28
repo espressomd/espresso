@@ -22,7 +22,7 @@
 #include <cstdlib>
 #include <cstring>
 #include "utils.hpp"
-#include "../random.hpp"
+#include "random.hpp"
 #include "parser.hpp"
 #include "tcl.h"
 #include "communication.hpp"

@@ -70,6 +70,7 @@ tests = \
 	mass-and-rinertia.tcl \
 	mdlc.tcl \
 	mmm1d.tcl \
+	mmm1dgpu.tcl \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \

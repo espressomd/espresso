@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 #
 # Copyright (C) 2013,2014 The ESPResSo project
 #  
@@ -19,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
 include "myconfig.pxi"
-
 # Non-bonded interactions
 
 cdef class NonBondedInteraction(object):
@@ -140,77 +137,67 @@ cdef class NonBondedInteraction(object):
   def requiredKeys(self): 
     raise Exception("Subclasses of NonBondedInteraction must define the requiredKeys() method.")
 
-
-
-
 # Lennard Jones
 
 cdef class LennardJonesInteraction(NonBondedInteraction):
-  def validateParams(self):
-    if self._params["epsilon"]<0:
-      raise ValueError("Lennard-Jones eps has to be >=0")
-    if self._params["sigma"]<0:
-      raise ValueError("Lennard-Jones sigma has to be >=0")
-    if self._params["cutoff"]<0:
-      raise ValueError("Lennard-Jones cutoff has to be >=0")
-    return True
-
-  def _getParamsFromEsCore(self):
-    cdef IA_parameters* iaParams
-    iaParams =  get_ia_param(self._partTypes[0],self._partTypes[1]) 
-    return {\
-      "epsilon":iaParams.LJ_eps,\
-      "sigma":iaParams.LJ_sig,\
-      "cutoff":iaParams.LJ_cut,\
-      "shift":iaParams.LJ_shift,\
-      "offset":iaParams.LJ_offset,\
-      "min":iaParams.LJ_min}
-       
-
-  def isActive(self):
-    return (self._params["epsilon"] >0)
-  
-  def _setParamsInEsCore(self):
-    # Handle the case of shift="auto"
-    if self._params["shift"]=="auto": 
-      # Calc shift
-      self._params["shift"]= -( (self._params["sigma"]/self._params["cutoff"])**12 - (self._params["sigma"]/self._params["cutoff"])**6 )
+  if LENNARD_JONES == 1:
+      def validateParams(self):
+        if self._params["epsilon"]<0:
+          raise ValueError("Lennard-Jones eps has to be >=0")
+        if self._params["sigma"]<0:
+          raise ValueError("Lennard-Jones sigma has to be >=0")
+        if self._params["cutoff"]<0:
+          raise ValueError("Lennard-Jones cutoff has to be >=0")
+        return True
     
-    if lennard_jones_set_params(self._partTypes[0],self._partTypes[1],\
-                                        self._params["epsilon"], \
-                                        self._params["sigma"], \
-                                        self._params["cutoff"], \
-                                        self._params["shift"], \
-                                        self._params["offset"], \
-					0.0, \
-                                        self._params["min"]):
-      raise Exception("Could not set Lennard Jones parameters")					
-  
-  def defaultParams(self):
-    self._params={\
-      "epsilon":0.,\
-      "sigma":0.,\
-      "cutoff":0.,\
-      "shift":0.,\
-      "offset":0.,\
-      "min":0.}
-
-  def typeName(self): 
-    return "LennardJones" 
-  
-  def validKeys(self): 
-    return "epsilon","sigma","cutoff","shift","offset","min"
-  
-  def requiredKeys(self): 
-    return "epsilon","sigma","cutoff","shift" 
-
-
-
-
-
-
-
-
+      def _getParamsFromEsCore(self):
+        cdef IA_parameters* iaParams
+        iaParams =  get_ia_param(self._partTypes[0],self._partTypes[1]) 
+        return { \
+          "epsilon": iaParams.LJ_eps, \
+          "sigma": iaParams.LJ_sig, \
+          "cutoff": iaParams.LJ_cut, \
+          "shift": iaParams.LJ_shift, \
+          "offset": iaParams.LJ_offset, \
+          "min": iaParams.LJ_min }
+           
+    
+      def isActive(self):
+        return (self._params["epsilon"] >0)
+      
+      def _setParamsInEsCore(self):
+        # Handle the case of shift="auto"
+        if self._params["shift"]=="auto": 
+          # Calc shift
+          self._params["shift"]= -( (self._params["sigma"]/self._params["cutoff"])**12 - (self._params["sigma"]/self._params["cutoff"])**6 )
+        
+        if lennard_jones_set_params(self._partTypes[0],self._partTypes[1],\
+                                            self._params["epsilon"], \
+                                            self._params["sigma"], \
+                                            self._params["cutoff"], \
+                                            self._params["shift"], \
+                                            self._params["offset"], \
+    					0.0, \
+                                            self._params["min"]):
+          raise Exception("Could not set Lennard Jones parameters")					
+      
+      def defaultParams(self):
+        self._params={\
+          "epsilon":0.,\
+          "sigma":0.,\
+          "cutoff":0.,\
+          "shift":0.,\
+          "offset":0.,\
+          "min":0.}
+    
+      def typeName(self): 
+        return "LennardJones" 
+      
+      def validKeys(self): 
+        return "epsilon","sigma","cutoff","shift","offset","min"
+      
+      def requiredKeys(self): 
+        return "epsilon","sigma","cutoff","shift" 
 
 
 class NonBondedInteractionHandle(object):

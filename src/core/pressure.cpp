@@ -182,8 +182,11 @@ void calc_long_range_virials()
     fprintf(stderr, "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
     break;
   case COULOMB_MMM1D:
+  case COULOMB_MMM1D_GPU:
     fprintf(stderr, "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
     break;
+  default:
+	  break;
   }
 #endif /*ifdef ELECTROSTATICS */  
   
@@ -932,11 +935,6 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
      skin from on opposite sides of the box overlaps then we produce an error message.  To code dround this would be
      creating unnecessary work since I can't imagine when we might want that */
 
-  if (skin < 0.0) {
-    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{analyze stress_profile: parameter skin not set}");
-    return 0;
-  }
   for (i=0;i<3;i++) {
     if ((! periodic[i]) && (range[i] + 2*skin +2*max_cut > box_l[i])) {
       char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);

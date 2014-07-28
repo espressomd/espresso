@@ -100,6 +100,9 @@ void on_program_start()
 #endif
     atexit(mpi_stop);
   }
+#ifdef CUDA
+  cuda_init();
+#endif
 
   /*
     call the initialization of the modules here
@@ -423,22 +426,24 @@ void on_boxl_change() {
   switch(coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    ELC_init();
-    // fall through
+	  ELC_init();
+	  // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    p3m_scaleby_box_l();
-    break;
+	  p3m_scaleby_box_l();
+	  break;
 #endif
   case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
+	  MMM1D_init();
+	  break;
   case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
+	  MMM2D_init();
+	  break;
   case COULOMB_MAGGS: 
-    maggs_init();
-    break;
+	  maggs_init();
+	  break;
+  default:
+	  break;
   }
 #endif
 

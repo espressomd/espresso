@@ -183,6 +183,7 @@ void init_particle(Particle *part)
   part->m.omega[1] = 0.0;
   part->m.omega[2] = 0.0;
 #endif
+
   /* ParticleForce */
   part->f.f[0]     = 0.0;
   part->f.f[1]     = 0.0;

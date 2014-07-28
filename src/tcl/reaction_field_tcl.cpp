@@ -45,7 +45,7 @@ int tclprint_to_result_rf(Tcl_Interp *interp, const char *name)
 }
 
 int tclcommand_inter_coulomb_parse_rf(Tcl_Interp * interp,
-				      int argc, char ** argv,int method)
+				      int argc, char ** argv, CoulombMethod method)
 {
   double kappa,epsilon1,epsilon2, r_cut;
   int i;
