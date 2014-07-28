@@ -365,6 +365,9 @@ inline void add_bonded_energy(Particle *p1)
     case BONDED_IA_CG_DNA_STACKING:
       bond_broken = calc_cg_dna_stacking_energy(p1, p2, p3, p4, p5, p6, p7, p8, iaparams, &ret);
       break;
+    case BONDED_IA_CG_DNA_BASEPAIR:
+      bond_broken = calc_cg_dna_basepair_energy(p1, p2, p3, p4, iaparams, &ret);
+      break;
 #endif
 #ifdef BOND_ANGLE
     case BONDED_IA_ANGLE_HARMONIC:

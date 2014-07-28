@@ -813,6 +813,134 @@ inline int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, 
   return 0;
 }
 
+inline int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double *_energy) {
+
+  /* Base-Base and Sugar-Sugar vectors */
+  double rhb[3], rcc[3];
+  /* Sugar-Base Vectors */
+  double rcb1[3], rcb2[3], rcb1_l, rcb2_l;
+  /* Normal vectors of the base pairs */
+  double n1[3], n2[3];
+  /* Dihedral of the base pair */
+  double gammad;
+  /* Base angles */
+  double psi1, psi2;
+  double dpsi1, dpsi2;
+  /* gamma1 = cos(psi1) */
+  /* length of rhb */
+  double gamma1, gamma2;
+  double rhb_l, rcc_l;
+
+  double potential = 0.0;
+
+  /* helper variables */
+  double ra, temp, tau_r, tau_d, tau_flip;
+  const Bonded_ia_parameters params = *iaparams;
+  const double E0 = params.p.cg_dna_basepair.E0;
+  
+#ifdef CG_DNA_DEBUG
+  //  puts("calc_cg_dna_basepair_force():");
+#endif
+
+  /* Calculate geometry variables */
+
+  get_mi_vector(rcc, s2->r.p, s1->r.p);
+  get_mi_vector(rhb, b2->r.p, b1->r.p);
+  get_mi_vector(rcb1, b1->r.p, s1->r.p);
+  get_mi_vector(rcb2, b2->r.p, s2->r.p);
+
+  rcb1_l = norm(rcb1);
+  rcb2_l = norm(rcb2);
+  rcc_l = norm(rcc);
+
+  cross(rcc, rcb1, n1);
+  cross(rcc, rcb2, n2);
+
+  normalize(n1);
+  normalize(n2);
+
+  rhb_l = norm(rhb);
+
+  /* Sugar base interaction */
+  
+  const double r0sb = params.p.cg_dna_basepair.r0sb;
+  const double alphasb = params.p.cg_dna_basepair.alphasb;
+  const double f2 = params.p.cg_dna_basepair.f2;
+  const double f3 = params.p.cg_dna_basepair.f3;
+  const double E0sb = params.p.cg_dna_basepair.E0sb;
+  const double c0sb = (1. - 2.*f2)*E0sb*alphasb;
+  const double c1sb = (f2-3.*f3)*E0sb*alphasb;
+  const double c2sb = f3*E0sb*alphasb;
+
+
+
+  /* Hydrogen bond interaction */
+
+  /* Radial part */
+
+  ra = (rhb_l - params.p.cg_dna_basepair.r0)*params.p.cg_dna_basepair.alpha;
+  temp = exp(-ra);
+  tau_r = temp *(1.+ra);
+
+  /* Dihedral part */
+
+  gammad = dot(n1, n2);
+  tau_d = exp(params.p.cg_dna_basepair.kd*(gammad - 1));
+
+  /* Flip part */
+
+  gamma1 =  dot(rcc, rcb1)/(rcc_l*rcb1_l);
+  gamma2 = -dot(rcc, rcb2)/(rcc_l*rcb2_l);
+
+  /* Avoid illdefined values */
+
+  if((gamma1 > COS_MAX) || (gamma1 < COS_MIN)) {
+    gamma1 = (gamma1 > COS_MAX)? COS_MAX : COS_MIN;
+  }
+  if((gamma2 > COS_MAX) || (gamma2 < COS_MIN))
+    gamma2 = (gamma2 > COS_MAX)? COS_MAX : COS_MIN;
+
+  psi1 = gamma1 >= 1. ? 0. : (gamma1 <= -1. ? M_PI : acos(gamma1));
+  psi2 = gamma2 >= 1. ? 0. : (gamma2 <= -1. ? M_PI : acos(gamma2));  
+
+  dpsi1 = psi1 - params.p.cg_dna_basepair.psi10;
+  dpsi2 = psi2 - params.p.cg_dna_basepair.psi20;
+
+  const double sigma1sqr = (SQR(params.p.cg_dna_basepair.sigma1));
+  const double sigma2sqr = (SQR(params.p.cg_dna_basepair.sigma2));
+  
+  if(dpsi1 > 0 && dpsi2 > 0) {
+    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)+SQR(dpsi2)/(2.*sigma2sqr)));
+  } else if (dpsi1 > 0.) {
+    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)));
+    potential += SQR(dpsi2)*(-0.5*E0/sigma2sqr);
+  } else if (dpsi2 > 0.) {
+    tau_flip = exp(-(SQR(dpsi2)/(2.*sigma2sqr)));
+    potential += SQR(dpsi1)*(-0.5*E0/sigma1sqr);
+  } else {
+    tau_flip = 1.;
+    potential += SQR(dpsi2)*(-0.5*E0/sigma2sqr) + SQR(dpsi1)*(-0.5*E0/sigma1sqr);
+  }
+
+  /* Angle at which the constraint sets in */
+  const double psi_cutoff = PI*140./180.;
+  /* Spring constant for the angle constraint */
+  const double k_constraint = 50.;
+
+  if(psi1 > psi_cutoff) {
+    potential += 0.5*k_constraint*SQR(psi1-psi_cutoff);
+  }
+  if(psi2 > psi_cutoff) {
+    potential += 0.5*k_constraint*SQR(psi2-psi_cutoff);
+  }
+ 
+  potential += tau_r * tau_flip * tau_d * E0;
+
+  *_energy += potential;
+
+  return 0;
+}
+
 
 #endif
 
