@@ -59,15 +59,16 @@ if { [catch {
     }
 
 # INTEGRATION
-#inter coulomb 1.0 ewaldgpu 12.145383715391159 6 0.2506565073132515
+inter coulomb 1.0 ewaldgpu 12.145383715391159 6 0.2506565073132515
 #inter coulomb 1.0 ewaldgpu tunealpha 4.1681094122 8 0.000024
-inter coulomb 1.0 ewaldgpu tune accuracy 1e-4 K_max 20 precision 0.00001
+#inter coulomb 1.0 ewaldgpu tune accuracy 1e-4 K_max 20 precision 0.00001
 #inter coulomb 1.0 p3m tune accuracy 1e-4
 
 
 puts "TUNED"
 
 set start_time [expr 1.0*[clock clicks -milliseconds]]
+integrate $int_steps recalc_forces
 integrate $int_steps recalc_forces
 set end_time [expr 1.0*[clock clicks -milliseconds]]
 puts "TIME: [expr $end_time-$start_time] millisec"

@@ -212,7 +212,7 @@ double EwaldgpuForce::tune_alpha(double accuracy, double precision, int K, doubl
 }
 double EwaldgpuForce::tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N)
 {
-	double rcut_low=0.001;
+	double rcut_low=0.0;
 	double rcut_high=0.5 * std::max(box_l[0],std::max(box_l[1],box_l[2]));
 	double rcut_guess;
 	double fkt_low;
@@ -323,9 +323,8 @@ double EwaldgpuForce::compute_q_sqare(SystemInterface &s)
 {
 
 
-	//float *q_i=s.qGpuBegin();
-	//printf("XXXXXXXXXXXXX %i %f\n",q_i,*q_i);
-	//printf("XXXXXXXXXXXXX %i %f\n",local_particles[0]->p.q);
+//	float *q_i=s.qGpuBegin();
+//	printf("q_i:%f\n",q_i[0]);
 
 	double q_sqr=0;
   Cell *cell;

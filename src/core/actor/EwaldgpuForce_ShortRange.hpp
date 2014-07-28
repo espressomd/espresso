@@ -21,7 +21,6 @@ inline double ewaldgpu_coulomb_pair_energy(double chgfac, double *d,double dist2
   return 0.0;
 }
 
-
 //Add forces
 inline void add_ewald_gpu_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
