@@ -70,6 +70,7 @@
 #include "morse.hpp"
 #include "elc.hpp"
 #include "mdlc_correction.hpp"
+#include "cg_dna.hpp"
 
 /** \name Exported Variables */
 /************************************************************/
@@ -279,6 +280,9 @@ inline void add_bonded_energy(Particle *p1)
 {
   char *errtxt;
   Particle *p2, *p3 = NULL, *p4 = NULL;
+#ifdef CG_DNA
+  Particle *p5 = NULL,*p6 = NULL,*p7 = NULL,*p8 = NULL;
+#endif
   Bonded_ia_parameters *iaparams;
   int i, type_num, type, n_partners, bond_broken;
   double ret=0, dx[3] = {0, 0, 0};
@@ -321,6 +325,20 @@ inline void add_bonded_energy(Particle *p1)
       }
     }
 
+    if(n_partners >= 7) {
+      p5 = local_particles[p1->bl.e[i++]];
+      p6 = local_particles[p1->bl.e[i++]];
+      p7 = local_particles[p1->bl.e[i++]];
+      p8 = local_particles[p1->bl.e[i++]];
+
+      if(!p4 || !p5 || !p6 || !p7 || !p8) {
+	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtxt,"{080 bond broken between particles %d, %d, %d, %d, %d, %d, %d and %d (particles not stored on the same node)} ",
+		      p1->p.identity, p1->bl.e[i-7], p1->bl.e[i-6], p1->bl.e[i-5], p1->bl.e[i-4], p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
+	return;
+      }
+    }
+
     /* similar to the force, we prepare the center-center vector */
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
@@ -342,6 +360,11 @@ inline void add_bonded_energy(Particle *p1)
     case BONDED_IA_ANGLE_OLD:
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
       break; 
+#endif
+#ifdef CG_DNA
+    case BONDED_IA_CG_DNA_STACKING:
+      bond_broken = calc_cg_dna_stacking_energy(p1, p2, p3, p4, p5, p6, p7, p8, iaparams, &ret);
+      break;
 #endif
 #ifdef BOND_ANGLE
     case BONDED_IA_ANGLE_HARMONIC:

@@ -692,6 +692,10 @@ const char *get_name_of_bonded_ia(int i) {
     return "VOLUME_FORCE";
   case BONDED_IA_STRETCHLIN_FORCE:
     return "STRETCHLIN_FORCE";
+  case BONDED_IA_CG_DNA_BASEPAIR:
+    return "CG_DNA_BASEPAIR";
+  case BONDED_IA_CG_DNA_STACKING:
+    return "CG_DNA_STACKING";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
 	    this_node, i);

@@ -92,6 +92,165 @@ inline double angle(double *x1, double *x2) {
 #define PS(A)
 #endif
 
+inline int calc_cg_dna_stacking_energy(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
+				      Particle *sj1, Particle *bj1, Particle *bj2, Particle *sj2,
+				      Bonded_ia_parameters *iaparams, double *_energy) {
+
+  /* Base-Base and Sugar-Sugar vectors */
+  double rcci[3], rccj[3];
+  /* Sugar-Base Vectors */
+  double rcb1[3], rcb2[3];
+  double rcb1j[3], rcb2j[3];
+  /* Mean basepair distance */
+  double r;
+  /* Base normals */
+  double n1[3], n2[3], n1_l, n2_l;
+  double n1j[3], n2j[3], n1j_l, n2j_l;
+
+  double vec1[3];
+  double vec2[3];
+  double vec3[3];
+  double vec4[3];
+
+  double ani[3], anj[3];
+  double ani_l, anj_l;
+   
+  get_mi_vector(vec1, sj1->r.p, si1->r.p);
+  get_mi_vector(vec2, bj1->r.p, si1->r.p);
+  get_mi_vector(vec3, sj2->r.p, si2->r.p);
+  get_mi_vector(vec4, bj2->r.p, si2->r.p);
+
+  get_mi_vector(rcci, si2->r.p, si1->r.p);
+  get_mi_vector(rcb1, bi1->r.p, si1->r.p);
+  get_mi_vector(rcb2, bi2->r.p, si2->r.p);
+  
+  get_mi_vector(rccj, sj2->r.p, sj1->r.p);
+  get_mi_vector(rcb1j, bj1->r.p, sj1->r.p);
+  get_mi_vector(rcb2j, bj2->r.p, sj2->r.p);
+
+  cross(rcci, rcb1, n1);
+  cross(rcci, rcb2, n2);
+
+  cross(rccj, rcb1j, n1j);
+  cross(rccj, rcb2j, n2j);
+
+  n1_l = norm(n1);
+  n2_l = norm(n2);
+  n1j_l = norm(n1j);
+  n2j_l = norm(n2j);
+ 
+  n1_l = ( n1_l == 0 ) ? 1 : n1_l;
+  n2_l = ( n2_l == 0 ) ? 1 : n2_l;
+
+  n1j_l = ( n1j_l == 0 ) ? 1 : n1j_l;
+  n2j_l = ( n2j_l == 0 ) ? 1 : n2j_l;
+
+  for(int i = 0; i < 3; i++) {    
+    n1[i] /= n1_l;
+    n2[i] /= n2_l;
+    n1j[i] /= n1j_l;
+    n2j[i] /= n2j_l;
+    ani[i] = n1[i] + n2[i];
+    anj[i] = n1j[i] + n2j[i];
+  }
+
+  ani_l = norm(ani);
+  anj_l = norm(anj);
+
+  /* Prevent division by 0 in degenerate case */
+  ani_l = (ani_l == 0) ? 1 : ani_l;
+  anj_l = (anj_l == 0) ? 1 : anj_l;
+
+  for(int i = 0; i < 3; i++) {    
+    ani[i] /= ani_l;
+    anj[i] /= anj_l;
+  }
+
+  r = 0.25*(dot(vec1, n1) + dot(vec2,n1) + dot(vec3,n2) + dot(vec4,n2));
+
+  double pot_stack;
+
+  const double ir = 1. / r;
+  const double ir2 =SQR(ir);        
+  const double ir5 = ir2*ir2*ir;
+  const double ir6 = ir5*ir;
+
+  const double rm = iaparams->p.cg_dna_stacking.rm; 
+  const double epsilon = iaparams->p.cg_dna_stacking.epsilon;
+  const double *a = iaparams->p.cg_dna_stacking.a;
+  const double *b = iaparams->p.cg_dna_stacking.b;
+
+  const double rm2 = rm*rm;
+  const double rm5 = rm2*rm2*rm;
+  const double rm6 = rm*rm5;
+  const double eps5rm6 = 5.*epsilon*rm6;
+  const double eps6rm5 = 6.*epsilon*rm5;
+
+  pot_stack = eps5rm6*ir6 - eps6rm5*ir5;  
+
+  /* Parallel projection of rccj */
+  const double rccj_parallel = dot(rccj, n1);
+
+  /* Projection of rccj to plane of bp i */
+  double rccj_p[3];
+
+  rccj_p[0] = rccj[0] - rccj_parallel*n1[0];
+  rccj_p[1] = rccj[1] - rccj_parallel*n1[1];
+  rccj_p[2] = rccj[2] - rccj_parallel*n1[2];
+  
+  const double rcci_l = norm(rcci);
+  const double rccj_l = norm(rccj);
+
+  const double rccj_p_l2 = SQR(rccj_l) - SQR(rccj_parallel);
+  const double rccj_p_l = sqrt(rccj_p_l2);
+
+  double cos1 = dot(rccj_p, rcci)/(rccj_p_l * rcci_l);
+  
+  cos1 = (cos1 > COS_MAX) ? COS_MAX : cos1;
+  cos1 = (cos1 < COS_MIN) ? COS_MIN : cos1;
+
+  cross(rcci, rccj_p, vec1);
+
+  const double sin1 = (dot(vec1, n1) < 0.) ? -sqrt(1.-SQR(cos1)) : sqrt(1.-SQR(cos1));
+
+  // Evaluation of cos(n*theta) by Chebyshev polynomials
+  const double cos2 = 2.*cos1*cos1 - 1.;
+  const double cos3 = 2.*cos2*cos1 - cos1;
+  const double cos4 = 2.*cos3*cos1 - cos2;
+  const double cos5 = 2.*cos4*cos1 - cos3;
+  const double cos6 = 2.*cos5*cos1 - cos4;
+  const double cos7 = 2.*cos6*cos1 - cos5;
+
+  // Evaluation of sin(n*theta) by Chebyshev polynomials
+  const double sin2 = 2.*sin1*cos1;
+  const double sin3 = 2.*sin2*cos1 - sin1;
+  const double sin4 = 2.*sin3*cos1 - sin2;
+  const double sin5 = 2.*sin4*cos1 - sin3;
+  const double sin6 = 2.*sin5*cos1 - sin4;
+  const double sin7 = 2.*sin6*cos1 - sin5;
+
+  const double pot_twist_ref = iaparams->p.cg_dna_stacking.ref_pot;
+
+  const double pot_twist = a[0] + a[1]*cos1 + a[2]*cos2 + a[3]*cos3 + a[4]*cos4
+    +a[5]*cos5 + a[6]*cos6 + a[7]*cos7 + b[0]*sin1 + b[1]*sin2 + b[2]*sin3 + b[3]*sin4 + b[4]*sin5 + b[5]*sin6 + b[6] *sin7;
+
+  cos1 = dot(ani, anj);
+  double tau_tilt;
+
+  if(cos1 < 0) {
+    tau_tilt = 0.0;
+  } else {
+    tau_tilt = cos1*cos1;
+  }
+
+  double tau_twist = pot_twist/pot_twist_ref;
+
+  *_energy += pot_stack*tau_twist*tau_tilt;
+
+  return 0;
+}
+
+
 inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
 				      Particle *sj1, Particle *bj1, Particle *bj2, Particle *sj2,
 				      Bonded_ia_parameters *iaparams,
@@ -379,6 +538,7 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
     PS(si1->p.identity);
 
     PS(r);
+    PS(cos1);
     PS(epsilon);
 
     PS(tau_twist);
@@ -609,11 +769,11 @@ inline int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, 
     f_s2[i] = dot5*n2[i] - dot2*n1[i] + fSugar2 - fBase2 - fSugar1 - f_sb2 *rcb2[i];
 
 #ifdef CG_DNA_DEBUG
-    PS(f_b1[i]);
-    PS(f_b2[i]);
-    PS(f_s1[i]);
-    PS(f_s2[i]);
-    PS(f_b1[i] + f_b2[i] + f_s1[i] + f_s2[i]);
+    // PS(f_b1[i]);
+    // PS(f_b2[i]);
+    // PS(f_s1[i]);
+    // PS(f_s2[i]);
+    // PS(f_b1[i] + f_b2[i] + f_s1[i] + f_s2[i]);
 
     if((f_b1[i] >= 100.) || (f_b2[i] >= 100.) || (f_s1[i] >= 100.) || (f_s2[i] >= 100.)) 
       big_force = 1;
