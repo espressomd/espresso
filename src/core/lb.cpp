@@ -2541,26 +2541,26 @@ inline void lb_calc_n_from_modes_push(index_t index, double *m) {
 
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
-    index_t index;
-    int x, y, z;
-    double modes[19];
+  index_t index;
+  int x, y, z;
+  double modes[19];
 
-    /* loop over all lattice cells (halo excluded) */
+  /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
-    for (int i =0; i < n_lb_boundaries; i++) {
-      lb_boundaries[i].force[0]=0.;
-      lb_boundaries[i].force[1]=0.;
-      lb_boundaries[i].force[2]=0.;
-    }
+  for (int i =0; i < n_lb_boundaries; i++) {
+    lb_boundaries[i].force[0]=0.;
+    lb_boundaries[i].force[1]=0.;
+    lb_boundaries[i].force[2]=0.;
+  }
 #endif
 
-    index = lblattice.halo_offset;
-    for (z=1; z<=lblattice.grid[2]; z++) {
-      for (y=1; y<=lblattice.grid[1]; y++) {
-	for (x=1; x<=lblattice.grid[0]; x++) {
+  index = lblattice.halo_offset;
+  for (z=1; z<=lblattice.grid[2]; z++) {
+    for (y=1; y<=lblattice.grid[1]; y++) {
+      for (x=1; x<=lblattice.grid[0]; x++) {
 	  
 #ifdef LB_BOUNDARIES
-	  if (!lbfields[index].boundary)
+	if (!lbfields[index].boundary)
 #endif
 	  {
 	
@@ -2585,113 +2585,116 @@ inline void lb_collide_stream() {
 
 	  }
 #ifdef LB_BOUNDARIES
-	  else {
+	else {
 
-/*      Here collision in the boundary nodes
- *      can be included, if this is necessary */
-//	    lb_boundary_collisions(index, modes);
+	  /*      Here collision in the boundary nodes
+	   *      can be included, if this is necessary */
+	  //	    lb_boundary_collisions(index, modes);
 
-	  }
+	}
 #endif
 
-	  ++index; /* next node */
-	}
-
-	index += 2; /* skip halo region */
+	++index; /* next node */
       }
-      
-      index += 2*lblattice.halo_grid[0]; /* skip halo region */
-    }
 
-    for (i=0; i<lblattice.halo_grid_volume; ++i) {
+      index += 2; /* skip halo region */
+    }
+      
+    index += 2*lblattice.halo_grid[0]; /* skip halo region */
+  }
 
 #ifdef IMMERSED_BOUNDARY
-	int i
-	// unit conversion: force density
-	lbfields[i].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*tau*tau;
-	lbfields[i].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*tau*tau;
-	lbfields[i].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*tau*tau;
+int i = 0;
+for (i=0; i<lblattice.halo_grid_volume; ++i) {
+
+#ifdef EXTERNAL_FORCES
+// unit conversion: force density
+lbfields[i].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
+lbfields[i].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
+lbfields[i].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
 #else
-	lbfields[i].force[0] = 0.0;
-	lbfields[i].force[1] = 0.0;
-	lbfields[i].force[2] = 0.0;
-	lbfields[i].has_force = 0;
+lbfields[i].force[0] = 0.0;
+lbfields[i].force[1] = 0.0;
+lbfields[i].force[2] = 0.0;
+lbfields[i].has_force = 0;
 #endif
-     }
+}
+#endif
 
 
-    /* exchange halo regions */
-    halo_push_communication();
+
+  /* exchange halo regions */
+  halo_push_communication();
 
 #ifdef LB_BOUNDARIES
-    /* boundary conditions for links */
-    lb_bounce_back();
+  /* boundary conditions for links */
+  lb_bounce_back();
 #endif
 
-   /* swap the pointers for old and new population fields */
-    double **tmp;
-    tmp = lbfluid[0];
-    lbfluid[0] = lbfluid[1];
-    lbfluid[1] = tmp;
+  /* swap the pointers for old and new population fields */
+  double **tmp;
+  tmp = lbfluid[0];
+  lbfluid[0] = lbfluid[1];
+  lbfluid[1] = tmp;
 
-    /* halo region is invalid after update */
-    lbpar.resend_halo = 1;
+  /* halo region is invalid after update */
+  lbpar.resend_halo = 1;
 }
 
 /** Streaming and collisions (pull scheme) */
 inline void lb_stream_collide() {
-    index_t index;
-    int x, y, z;
-    double modes[19];
+  index_t index;
+  int x, y, z;
+  double modes[19];
 
-    /* exchange halo regions */
-    halo_communication(&update_halo_comm,(char*)**lbfluid);
+  /* exchange halo regions */
+  halo_communication(&update_halo_comm,(char*)**lbfluid);
 #ifdef ADDITIONAL_CHECKS
-    lb_check_halo_regions();
+  lb_check_halo_regions();
 #endif
 
-    /* loop over all lattice cells (halo excluded) */
-    index = lblattice.halo_offset;
-    for (z=1; z<=lblattice.grid[2]; z++) {
-      for (y=1; y<=lblattice.grid[1]; y++) {
-	for (x=1; x<=lblattice.grid[0]; x++) {
+  /* loop over all lattice cells (halo excluded) */
+  index = lblattice.halo_offset;
+  for (z=1; z<=lblattice.grid[2]; z++) {
+    for (y=1; y<=lblattice.grid[1]; y++) {
+      for (x=1; x<=lblattice.grid[0]; x++) {
 	  
-	  {
+	{
 
-	    /* stream (pull) and calculate modes */
-	    lb_pull_calc_modes(index, modes);
+	  /* stream (pull) and calculate modes */
+	  lb_pull_calc_modes(index, modes);
   
-	    /* deterministic collisions */
-	    lb_relax_modes(index, modes);
+	  /* deterministic collisions */
+	  lb_relax_modes(index, modes);
     
-	    /* fluctuating hydrodynamics */
-	    if (fluct) lb_thermalize_modes(index, modes);
+	  /* fluctuating hydrodynamics */
+	  if (fluct) lb_thermalize_modes(index, modes);
   
-	    /* apply forces */
-	    if (lbfields[index].has_force) lb_apply_forces(index, modes);
+	  /* apply forces */
+	  if (lbfields[index].has_force) lb_apply_forces(index, modes);
     
-	    /* calculate new particle populations */
-	    lb_calc_n_from_modes(index, modes);
+	  /* calculate new particle populations */
+	  lb_calc_n_from_modes(index, modes);
 
-	  }
-
-	  ++index; /* next node */
 	}
 
-	index += 2; /* skip halo region */
+	++index; /* next node */
       }
-      
-      index += 2*lblattice.halo_grid[0]; /* skip halo region */
+
+      index += 2; /* skip halo region */
     }
+      
+    index += 2*lblattice.halo_grid[0]; /* skip halo region */
+  }
 
-    /* swap the pointers for old and new population fields */
-    //fprintf(stderr,"swapping pointers\n");
-    double **tmp = lbfluid[0];
-    lbfluid[0] = lbfluid[1];
-    lbfluid[1] = tmp;
+  /* swap the pointers for old and new population fields */
+  //fprintf(stderr,"swapping pointers\n");
+  double **tmp = lbfluid[0];
+  lbfluid[0] = lbfluid[1];
+  lbfluid[1] = tmp;
 
-    /* halo region is invalid after update */
-    lbpar.resend_halo = 1;
+  /* halo region is invalid after update */
+  lbpar.resend_halo = 1;
       
 }
 
@@ -2743,7 +2746,7 @@ inline void couple_trace_to_fluid(Particle *p) {
         double delta[6];
   int k,x,y,z;
   
-  map_position_to_lattice(&lblattice,p->r.p,node_index,delta);
+  lblattice.map_position_to_lattice(p->r.p,node_index,delta);
   lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
   
   for(k=0; k<3; k++) {
@@ -2753,9 +2756,9 @@ inline void couple_trace_to_fluid(Particle *p) {
    
   //Distribute force among adjacent nodes, just as in viscous coupling
   //if ( p->p.identity == 0 ) printf("unscaled fx = %f\n", force[0]);
-  delta_j[0] = force[0]*time_step*tau/agrid;
-  delta_j[1] = force[1]*time_step*tau/agrid;
-  delta_j[2] = force[2]*time_step*tau/agrid;
+  delta_j[0] = force[0]*time_step*lbpar.tau/lbpar.agrid;
+  delta_j[1] = force[1]*time_step*lbpar.tau/lbpar.agrid;
+  delta_j[2] = force[2]*time_step*lbpar.tau/lbpar.agrid;
 
   
   // DEBUG
@@ -3024,7 +3027,7 @@ int lb_lbfluid_get_interpolated_velocity_lbtrace(double* p, double* v, int id) {
   
   /* determine elementary lattice cell surrounding the particle 
      and the relative position of the particle in this cell */ 
-  map_position_to_lattice(&lblattice,pos,node_index,delta);
+  lblattice.map_position_to_lattice(pos,node_index,delta);
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
@@ -3322,6 +3325,7 @@ void lb_ibm_coupling() {
   } }}}
   }
 }
+
 
 /***********************************************************************/
 

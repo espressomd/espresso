@@ -59,6 +59,7 @@
 #include "virtual_sites.hpp"
 #include "statistics_correlation.hpp"
 #include "ghmc.hpp"
+#include "immersed-boundary/lbtracers.hpp"
 #include "immersed-boundary/vvolume.hpp"
 
 /************************************************
