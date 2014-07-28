@@ -547,29 +547,12 @@ static void setup_z_force()
   int np, c, i;
   double pref = coulomb.prefactor*C_2PI*ux*uy;
   Particle *part;
-  double *lclimgebot=NULL,*lclimgetop=NULL;
   int e_size=1,size = 2;
   
-  /* there is NO contribution from images here, unlike claimed in Tyagi07a. Please refer to the Entropy
+  /* there is NO contribution from images here, unlike claimed in Tyagi et al.
+     Please refer to the Entropy
      article of Arnold, Kesselheim, Breitsprecher et al, 2013, for details. */
 
-  /* REMOVE
-  double fac_imgsum;
-  double e, e_di_l, e_di_h;
-
-  /* in case of metallic boundary conditions on both sides, we get an infinite array,
-     which only exists for charge neutral systems. But in this case, we can as well
-     not sum up the force array, as the net force per image is 0
-  if (mmm2d_params.delta_mult != 1.0) {
-    fac_imgsum = 1/(1 - mmm2d_params.delta_mult);
-  }
-  else {
-    fac_imgsum = 0;
-  }
-
-  if (mmm2d_params.dielectric_contrast_on) 
-    clear_vec(lclimge, size); 
-  */
   if(this_node==0) {
     clear_vec(blwentry(lclcblk,0,e_size), e_size);
   }
@@ -586,48 +569,11 @@ static void setup_z_force()
     for (i = 0; i < np; i++) {
       lclcblk[size*c] += part[i].p.q;					
 
-      /** REMOVE      
-      if (mmm2d_params.dielectric_contrast_on) {
-
-	e_di_l = (mmm2d_params.delta_mult*mmm2d_params.delta_mid_bot
-		  + mmm2d_params.delta_mult)*fac_imgsum;
-
-	if (c==1 && this_node==0) {
-	  e = mmm2d_params.delta_mid_bot;
-	  lclimgebot[QQEQQP] += part[i].p.q*e;				
-	}
-	else
-	  e_di_l += mmm2d_params.delta_mid_bot;				
-
-	e_di_h = (mmm2d_params.delta_mult*mmm2d_params.delta_mid_top
-		  + mmm2d_params.delta_mult)*fac_imgsum;
-
-	if (c==n_layers && this_node==n_nodes-1) {
-	  e = mmm2d_params.delta_mid_top;
-	  lclimgetop[QQEQQP] += part[i].p.q*e;				
-	}
-	else
-	  e_di_h += mmm2d_params.delta_mid_top;
-
-	lclimge[QQEQQP] += part[i].p.q*e_di_l;		
-       	lclimge[QQEQQM] += part[i].p.q*e_di_h;
-      }
-      **/
     }
     lclcblk[size*c] *= pref;
     lclcblk[size*c+1] = lclcblk[size*c];
 
   }
-
-  /* REMOVE
-  if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
-    if(this_node==0)
-      scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
-    if(this_node==n_nodes-1)
-      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
-  }
-  */
 }
 
 static void add_z_force()
@@ -1244,12 +1190,6 @@ static void add_force_contribution(int p, int q)
   if (q == 0) {
     if (p == 0) {
       setup_z_force();
-
-      /* REMOVE
-      if (mmm2d_params.dielectric_contrast_on)
-	gather_image_contributions(1);
-      else
-      */
 
       //Clear image contr. calculated for p,q <> 0
       clear_image_contributions(1);

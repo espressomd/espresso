@@ -53,7 +53,7 @@
 
 /** \name Inverse box dimensions and derived constants */
 /*@{*/
-static double ux, ux2, uy, uy2, uz ,uz2;
+static double ux, ux2, uy, uy2, uz, height_inverse;
 /*@}*/
 
 ELC_struct elc_params = { 1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0 };
@@ -149,7 +149,8 @@ void ELC_setup_constants()
   uy  = 1/box_l[1];
   uy2 = uy*uy;  
   uz  = 1/box_l[2];
-  uz2 = 1/elc_params.h;
+
+  height_inverse = 1/elc_params.h;
 }
 
 /* SC Cache */
@@ -338,7 +339,7 @@ static void add_dipole_force()
     }
   }
   gblcblk[0] *= pref;
-  gblcblk[1] *= pref*uz2/uz;
+  gblcblk[1] *= pref*height_inverse/uz;
   
   distribute(2);
   
@@ -348,7 +349,7 @@ static void add_dipole_force()
   if (elc_params.const_pot_on) {
 
     field_induced = gblcblk[1];
-    field_applied = elc_params.pot_diff * uz2;
+    field_applied = elc_params.pot_diff * height_inverse;
     field_tot -= field_applied + gblcblk[1];
   }
 

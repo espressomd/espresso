@@ -31,11 +31,6 @@
 #include "mmm-common.hpp"
 #include "utils.hpp"
 
-/** Induced field (for const. potential feature) **/
-double field_induced;
-/** Applied field (for const. potential feature) **/
-double field_applied;
-
 Polynom *modPsi = NULL;
 int      n_modPsi = 0;
 

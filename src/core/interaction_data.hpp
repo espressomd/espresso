@@ -497,6 +497,15 @@ typedef struct {
 
 } Coulomb_parameters;
 
+#ifdef ELECTROSTATICS
+
+/** Induced field (for const. potential feature). **/
+extern double field_induced;
+/** Applied field (for const. potential feature) **/
+extern double field_applied;
+
+#endif
+
 /*@}*/
 /** Parameters for FENE bond Potential.
 k - spring constant.
