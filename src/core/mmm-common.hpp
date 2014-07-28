@@ -39,6 +39,11 @@
 extern Polynom *modPsi;
 extern int      n_modPsi;
 
+/** Induced field (for const. potential feature) **/
+extern double field_induced;
+/** Applied field (for const. potential feature) **/
+extern double field_applied;
+
 /** modified polygamma for even order 2*n, n >= 0 */
 inline double mod_psi_even(int n, double x)
 { return evaluateAsTaylorSeriesAt(&modPsi[2*n],x*x); }
