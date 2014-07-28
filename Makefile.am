@@ -56,7 +56,7 @@ CLEANFILES += pypresso espresso
 endif
 
 # Sample myconfig generation
-myconfig-sample.hpp:
+myconfig-sample.hpp: 
 	./config.status myconfig-sample.hpp
 CLEANFILES += myconfig-sample.hpp
 # config.status deps in configure.ac

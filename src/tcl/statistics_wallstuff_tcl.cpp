@@ -21,11 +21,10 @@
 /** \file statistics_wallstuff_tcl.cpp
     This is the place for analysis (so far...).
 */
-#include "statistics_wallstuff_tcl.hpp"
-
 #include "parser.hpp"
-#include "statistics_wallstuff.hpp"
-#include "statistics.hpp"
+#include "statistics_wallstuff_tcl.hpp"
+#include "../statistics_wallstuff.hpp"
+#include "../statistics.hpp"
 
 int tclcommand_analyze_wallstuff(Tcl_Interp *interp, int argc, char **argv)
 {

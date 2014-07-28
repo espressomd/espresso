@@ -217,6 +217,8 @@ electrokinetics reaction reactant_index $re_index \
                          reaction_fraction_pr_0 $fraction_0 \
                          reaction_fraction_pr_1 $fraction_1
 
+electrokinetics reaction reset_mode_zero 0.0
+
 # Set up the boundary
 
 electrokinetics boundary charge_density 0.0 \
@@ -255,10 +257,10 @@ integrate 1000
 # Make a new configuration file, otherwise do the comparison
 
 if { $new_configuration != 0 } {
-  electrokinetics 2 print density vtk "ek_reaction_density.vtk"
+  electrokinetics print mass_flux vtk "mass_flux.vtk"
 } else {
-  electrokinetics 2 print density vtk "ek_reaction_density_tmp.vtk"
-  set difference [calculate_vtk_max_pointwise_difference "./ek_reaction_density.vtk" "./ek_reaction_density_tmp.vtk"]
+  electrokinetics print mass_flux vtk "mass_flux_tmp.vtk"
+  set difference [calculate_vtk_max_pointwise_difference "./mass_flux.vtk" "./mass_flux_tmp.vtk"]
   file delete "./mass_flux_tmp.vtk"
 
   puts "Maximum deviation to the reference point is: $difference\n"
@@ -266,7 +268,7 @@ if { $new_configuration != 0 } {
   puts "dependence of the value of the mass flux for this system"
   puts "on the numerical precision that is attainable on the GPU."
 
-  if { abs($difference) > 1.0e-05 } {
+  if { $difference < -0.5 || $difference > 5.0e-03 } {
     error_exit "There is a significant difference with a previous result.\nPlease verify if this is correct."
   }
 }

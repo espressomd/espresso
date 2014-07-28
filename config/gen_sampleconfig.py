@@ -20,15 +20,10 @@
 #   myconfig-sample.h.
 #
 from __future__ import print_function
-import time, string, fileinput
-import inspect, sys, os 
-# find featuredefs.py 
-moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
-sys.path.append(os.path.join(moduledir, '..', 'src'))
-import featuredefs 
+import sys, featuredefs, time, string, fileinput
 
 if len(sys.argv) != 2:
-    print("Usage: {} DEFFILE".format(sys.argv[0]), file=sys.stderr)
+    print("Usage: %s DEFFILE" % sys.argv[0], file=sys.stderr)
     exit(2)
 
 deffilename = sys.argv[1]

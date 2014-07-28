@@ -37,11 +37,13 @@ cdef int instance_counter
 ### Here we make a minimalistic Tcl_Interp available
 cdef extern from "tcl.h":
   cdef struct Tcl_Interp:
-    pass
+    char *result
+    int errorLine
     
   Tcl_Interp* Tcl_CreateInterp()
-  int Tcl_Eval(Tcl_Interp * interp, char* script)
-  char* Tcl_GetStringResult(Tcl_Interp * interp)
+  int Tcl_Eval (Tcl_Interp * interp, char* script)
+  ctypedef Tcl_Interp* Interp_pointer
+
 
 ## Let's import on_program_start
 cdef extern from *:
@@ -87,12 +89,10 @@ cdef class EspressoHandle:
     raise Exception("Espresso can not be deleted")
 
   def Tcl_Eval(self, string):
-    result = Tcl_Eval(self.interp, string)
-    tclresult = Tcl_GetStringResult(self.interp)
+    result=Tcl_Eval(self.interp, string)
     if result:
-      raise Exception("Tcl reports an error", tclresult)
-  
-    return tclresult
+      raise Exception("Tcl reports an error", self.interp.result)
+    return self.interp.result
 
   def die(self):
     mpi_stop()

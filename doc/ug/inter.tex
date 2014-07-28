@@ -1506,7 +1506,7 @@ metallic boundary conditions.
 \begin{essyntax}
   \variant{1}
   inter coulomb \var{l_B} mmm1d \var{switch\_radius}
-  \var{maximal\_pairwise\_error}
+  \opt{\var{bessel\_cutoff}} \var{maximal\_pairwise\_error}
 
   \variant{2}
   inter coulomb \var{l_B} mmm1d tune \var{maximal\_pairwise\_error}
@@ -1518,39 +1518,14 @@ MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
 nsquared cell system (see section \vref{sec:cell-systems}). The first
 form sets parameters manually. The switch radius determines at which
 xy-distance the force calculation switches from the near to the far
-formula. The Bessel cutoff does not need to be specified as it is
-automatically determined from the particle distances and maximal
-pairwise error. The second tuning form just takes the
+formula. If the Bessel cutoff is not explicitly given, it is
+determined from the maximal pairwise error, otherwise this error only
+counts for the near formula. The second, tuning form just takes the
 maximal pairwise error and tries out a lot of switching radii to find
 out the fastest one. If this takes too long, you can change the value
 of the setmd variable \keyword{timings}, which controls the number of
-test force calculations.
-
-\begin{essyntax}
-  \variant{1}
-  inter coulomb \var{l_B} mmm1dgpu \var{switch\_radius}
-  \opt{\var{bessel\_cutoff}} \var{maximal\_pairwise\_error}
-
-  \variant{2}
-  inter coulomb \var{l_B} mmm1dgpu tune \var{maximal\_pairwise\_error}
-  \begin{features}
-    \required{CUDA}
-	\required{ELECTROSTATICS}
-	\required{MMM1D_GPU}
-  \end{features}
-\end{essyntax}
-MMM1D is also available in a GPU implementation. Unlike its CPU
-counterpart, it  does not need the nsquared cell system. The first
-form sets parameters manually. The switch radius determines at which
-xy-distance the force calculation switches from the near to the far
-formula. If the Bessel cutoff is not explicitly given, it is
-determined from the maximal pairwise error, otherwise this error only
-counts for the near formula. The second tuning form just takes the
-maximal pairwise error and tries out a lot of switching radii to find
-out the fastest one.
-
-For details on the MMM family of algorithms, refer to appendix
-\vref{chap:mmm}.
+test force calculations. For details on the MMM family of algorithms,
+refer to appendix \vref{chap:mmm}.
 
 \subsection{Maxwell Equation Molecular Dynamics (MEMD)}
 \index{Maggs method|mainindex}

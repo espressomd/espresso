@@ -79,7 +79,6 @@ proc set_status {stat} {
 }
 
 wm geometry . -0+0
-wm title . "ESPResSo-Spiel"
 
 ##### case 1
 frame .case1 -relief raised -border 2
@@ -130,20 +129,20 @@ pack .case2.title.b -side right -in .case2.title
 pack .case2.title -pady {0 10} -fill x -side top -in .case2
 
 # sliders
-label .case2.label1 -justify left -text "Ladung Wand mitte" -foreground blue
-scale .case2.slider1 -orient h -from -1.5 -to 1.5 -troughcolor blue \
+label .case2.label1 -justify left -text "Ladung Wand mitte"
+scale .case2.slider1 -orient h -from -1.5 -to 1.5 \
     -resolution [expr 3/5.] -command Case2Wall1ChargeChange
+pack .case2.slider1 .case2.label1 -fill x -in .case2
 
-label .case2.label2 -justify left -text "Ladung Wand links" -foreground yellow
-scale .case2.slider2 -orient h -from -1.5 -to 1.5 -troughcolor yellow \
+label .case2.label2 -justify left -text "Ladung Wand links"
+scale .case2.slider2 -orient h -from -1.5 -to 1.5 \
     -resolution [expr 3/5.] -command Case2Wall2ChargeChange
+pack .case2.slider2 .case2.label2 -fill x -in .case2
 
-label .case2.label3 -justify left -text "Ladung Wand oben" -foreground white
-scale .case2.slider3 -orient h -from -1.5 -to 1.5 -troughcolor white \
+label .case2.label3 -justify left -text "Ladung Wand oben"
+scale .case2.slider3 -orient h -from -1.5 -to 1.5 \
     -resolution [expr 3/5.] -command Case2Wall3ChargeChange
 pack .case2.slider3 .case2.label3 -fill x -in .case2
-pack .case2.slider1 .case2.label1 -fill x -in .case2
-pack .case2.slider2 .case2.label2 -fill x -in .case2
 
 label .case2.status -justify left -text ""
 pack .case2.status -fill x -in .case2

@@ -3,7 +3,6 @@ cimport numpy as np
 import numpy as np
 cimport utils
 from utils cimport *
-cimport particle_data
 
 cdef class ParticleHandle:
   def __cinit__(self, _id):
@@ -130,7 +129,7 @@ cdef class ParticleHandle:
       
       return tuple(bonds)
 
-  # Properties that exist only when certain features are activated
+  # Preoperties that exist only when certain features are activated
   # MASS
   IF MASS == 1:
     property mass:
@@ -143,7 +142,7 @@ cdef class ParticleHandle:
       def __get__(self):
         self.updateParticleData()
         cdef double* x
-        pointer_to_mass(&(self.particleData), x)
+        pointer_to_mass(&(self.particleData),x)
         return x[0]
 
   IF ROTATION == 1:
@@ -177,7 +176,7 @@ cdef class ParticleHandle:
       def __get__(self):
         self.updateParticleData()
         cdef double* o
-        pointer_to_omega_body(&(self.particleData), o)
+        pointer_to_omega_body(&(self.particleData),o)
         return np.array([o[0],o[1],o[2]])
   
   

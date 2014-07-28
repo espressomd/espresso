@@ -138,6 +138,9 @@ void Tcl_Append_Iterable(Tcl_Interp* interp, const C& what, bool is_in_list=0) {
 
   typename C::const_iterator it=what.begin();
   
+  char* list = 0;
+  char* position;
+  
   if (is_in_list) 
     Tcl_Append(interp, "{");
   if (it!=what.end()) {

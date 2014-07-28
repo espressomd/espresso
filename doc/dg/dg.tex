@@ -90,7 +90,7 @@ idxtotoc                        % add the index to the TOC
 
 \tableofcontents
 
-\chapter{Getting into Contact}
+\chapter{Getting into contact}
 
 The first thing that you should do when you want to start to
 participate is to get into contact with the \es developers. To do
@@ -102,10 +102,10 @@ with simulations and programming and the things that you would like to
 do in \es. We do not bite, and we are happy about anybody who wants to
 participate!
 
-\chapter{Development Environment}
+\chapter{Development environment}
 \label{sec:env}
 
-\section{Required Development Tools}
+\section{Required development tools}
 \label{sec:requirements}
 
 If you want to participate in the development of \es, you will require
@@ -134,7 +134,7 @@ the following tools depending on what tasks you want to perform:
 All of these tools should be easy to install on most Unix operating
 systems.
 
-\section{Building the Development Code}
+\section{Building the development code}
 \label{sec:build_devel}
 
 \begin{itemize}
@@ -155,19 +155,14 @@ systems.
 \end{itemize}
 
 
-\section{Git Repositories}
+\section{Git repositories}
 \label{sec:git}
 
-\begin{itemize}
-\item Development Repository: \url{https://github.com/espressomd/espresso}
-\item 
-
-Code hosting at GNU Savannah
-  \url{https://savannah.nongnu.org/projects/espressomd/}
-
-\end{itemize}
-\section{Jenkins Build Server}
+\section{Jenkins build server}
 \label{sec:jenkins}
+
+Code hosting at GNU Savannah 
+  \url{https://savannah.nongnu.org/projects/espressomd/}
 
 \url{http://espressomd.org/jenkins}
 \begin{itemize}
@@ -175,7 +170,7 @@ Code hosting at GNU Savannah
 \item Jenkins build server 
 \end{itemize}
 
-\section{Build System}
+\section{Build system}
 \label{sec:build_system}
 
 The build system of \es makes use of the GNU autotools suite
@@ -205,7 +200,7 @@ tools to generate the \texttt{configure} script and the
 \texttt{bootstrap.sh}, the \es development code can be build and used
 like the release code.
 
-\subsection{Creating a Distribution Package}
+\subsection{Creating a distribution package}
 
 As described in the User's Guide, to create a \texttt{.tar.gz}
 distribution file that contains all required files, you can simply run
@@ -239,7 +234,7 @@ DISTCHECK_CONFIGURE_FLAGS="--without-mpi CPPFLAGS=\"-I /usr/include/tcl8.4\"" \
   make distcheck
 \end{verbatim}
 
-\subsection{Adding New Files}
+\subsection{Adding new files}
 
 To add new files to \es (like C source files or header files)
 you need to do the following:
@@ -313,7 +308,7 @@ awk -f assemble_quickref.awk > quickref.inp
   \end{itemize}
 \end{itemize}
 
-\subsection{Adding New Files}
+\subsection{Adding new files}
 
 To add new \LaTeX-files to the User's Guide, you need to modify
 \begin{itemize}
@@ -323,7 +318,7 @@ To add new \LaTeX-files to the User's Guide, you need to modify
   \texttt{ug\_TEXFILES}. 
 \end{itemize}
 
-\subsection{Additional Environments and Commands}
+\subsection{Additional environments and commands}
 
 To maintain a consistent layout, a number of environments and
 commands have been defined that should be used where applicable. 
@@ -359,7 +354,7 @@ commands have been defined that should be used where applicable.
 \subsection{Documentation of Tcl commands}
 \label{tcl_docs}
 
-\subsubsection{Formal Syntax Definition}
+\subsubsection{Formal syntax definition}
 
 All \es-commands have to be documented in the User's Guide.
 
@@ -496,7 +491,7 @@ nicely format the descriptions.
 \end{arguments}
 \end{verbatim}
 
-\section{Doxygen Code Documentation}
+\section{Doxygen code documentation}
 \label{sec:doxygen}
 
 The documentation of each function should contain a short description,
@@ -541,7 +536,7 @@ This chapter provides some hints on how to extend \es.  It is not
 exhaustive, so for major changes the best documentation are the other
 developers.
 
-\section{Adding Global Variables}
+\section{Adding global variables}
 
 Global variables are the simplest way to communicate values between
 the Tcl script and the C simulation code.  To make a C variable
@@ -562,7 +557,7 @@ nodes. A simple example is \verb!box_l! with the callback procedure
 necessary that they occur in the list of constant definitions at the
 beginning of \texttt{global.h}.  So please keep this list in sync!
 
-\section{Adding New Bonded Interactions}
+\section{Adding new bonded interactions}
 
 Every interaction resides in its own source file. A simple example for
 a bonded interaction is the FENE bond in \texttt{fene.h}. The data
@@ -653,7 +648,7 @@ After the new bonded interaction works properly, it would be a good
 idea to add a testcase to the testsuite, so that changes breaking your
 interaction can be detected early.
 
-\section{Adding New Nonbonded Interactions}
+\section{Adding new nonbonded interactions}
 
 Writing nonbonded interactions is similar to writing nonbonded
 interactions. Again we start with \verb!interaction_data.h!, where the
@@ -735,7 +730,7 @@ After the new non-bonded interaction works properly, it would be a
 good idea to add a testcase to the testsuite, so that changes breaking
 your interaction can be detected early.
 
-\section{Tcl I/O - Parsing and Printing}
+\section{Tcl I/O - Parsing and printing}
 \begin{itemize}
 \item \verb!ARG_0_IS!
 \item \verb!Tcl_GetDouble/Int ...!
@@ -743,7 +738,7 @@ your interaction can be detected early.
 \item \verb!TCL_INTEGER_SPACE! ...
 \end{itemize}
 
-\section{Particle Data Organization}
+\section{Particle data organization}
 
 The particle data organization is described in the Tcl command
 cellsystem, its implementation is briefly described in
@@ -832,7 +827,7 @@ each cell system has its specific part of the code, where only this
 cellsystem does something strange and unique, so here you are
 completely on your own. Good luck.
 
-\section{Errorhandling for Developers}
+\section{Errorhandling for developers}
 
 Developers should use the errorhandling mechanism whenever it is
 possible to recover from an error such that continuing the simulation
