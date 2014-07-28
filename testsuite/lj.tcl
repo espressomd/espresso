@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -47,7 +47,6 @@ proc write_data {file} {
     close $f
 }
 
-
 if { [catch {
     read_data "lj_system.data"
 
@@ -60,6 +59,7 @@ if { [catch {
     inter 0 0 lennard-jones 1.0 1.0 1.12246
     inter 1 1 lennard-jones 1.3 0.5 2 auto 0.0
     inter 0 1 lennard-jones 2.2 1.0 1.12246 0.0 0.5
+
     integrate 0
 
     # here you can create the necessary snapshot
@@ -73,6 +73,7 @@ if { [catch {
 
     set toteng [analyze energy total]
     set totprs [analyze pressure total]
+
 
     if { [expr abs($toteng - $cureng)] > $epsilon } {
 	error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"

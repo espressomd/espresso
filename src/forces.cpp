@@ -1,6 +1,6 @@
 
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -57,7 +57,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
-PotentialList potentials;
+ActorList forceActors;
 
 /************************************************************/
 /* local prototypes                                         */
@@ -99,9 +99,9 @@ void force_calc()
   espressoSystemInterface.update();
 
   // Compute the forces from the force objects
-  for (PotentialList::iterator potential= potentials.begin();
-		  potential != potentials.end(); ++potential)
-	  (*potential)->computeForces(espressoSystemInterface);
+  for (ActorList::iterator actor = forceActors.begin();
+		  actor != forceActors.end(); ++actor)
+	  (*actor)->computeForces(espressoSystemInterface);
 
 #ifdef LB_GPU
 #ifdef SHANCHEN
@@ -235,13 +235,11 @@ void calc_long_range_forces()
   
       break;
 #ifdef CUDA
-    case COULOMB_P3M_GPU:
-      if (this_node == 0) p3m_gpu_add_farfield_force();
-  #ifdef NPT
-      printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO fix this?
-      exit(1); //TODO ALTERNATIVELY CHECK IF BAROSTAT IS ACTUALLY ON
-  #endif
-      break;
+	case COULOMB_P3M_GPU:
+		if (this_node == 0) p3m_gpu_add_farfield_force();
+                /* there is no NPT handling here as long as we cannot compute energies.
+                   This is checked in integrator_npt_sanity_checks() when integration starts. */
+		break;
 #endif
     case COULOMB_P3M:
       p3m_charge_assign();

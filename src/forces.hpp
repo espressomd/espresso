@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -28,7 +28,7 @@
  *  For more information see forces.cpp .
  */
 #include "config.hpp"
-#include <list>
+#include <vector>
 #include "utils.hpp"
 #include "thermostat.hpp"
 #ifdef MOLFORCES
@@ -87,9 +87,9 @@
 #include "immersed-boundary/triel.hpp"
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
+#include "actor/ActorList.hpp"
 
-typedef std::list<Actor*> PotentialList;
-extern PotentialList potentials;
+extern ActorList forceActors;
 
 /** \name Exported Functions */
 /************************************************************/

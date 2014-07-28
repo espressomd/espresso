@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -33,6 +33,8 @@
 #include "mdlc_correction.hpp"
 #include "external_potential.hpp"
 
+ActorList energyActors;
+
 Observable_stat energy = {0, {NULL,0,0}, 0,0,0};
 Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
 
@@ -51,6 +53,17 @@ void energy_calc(double *result)
     return;
 
   init_energies(&energy);
+
+#ifdef CUDA
+  clear_energy_on_GPU();
+#endif
+
+  espressoSystemInterface.update();
+
+  // Compute the energies from the energyActors
+  for (ActorList::iterator actor= energyActors.begin();
+      actor != energyActors.end(); ++actor)
+    (*actor)->computeEnergy(espressoSystemInterface);
 
   on_observable_calc();
   

@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -287,6 +287,21 @@ void copy_forces_from_GPU() {
     }
     cuda_mpi_send_forces(particle_forces_host,fluid_composition_host);
   }
+}
+
+void clear_energy_on_GPU() {
+  if ( !global_part_vars_host.communication_enabled || !global_part_vars_host.number_of_particles )
+    return;
+  if (energy_device == NULL)
+    cuda_safe_mem( cudaMalloc((void**) &energy_device, sizeof(CUDA_energy)) );
+ cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)) );
+}
+
+void copy_energy_from_GPU() {
+  if ( !global_part_vars_host.communication_enabled || !global_part_vars_host.number_of_particles )
+    return;
+  cuda_safe_mem (cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy), cudaMemcpyDeviceToHost));
+  copy_CUDA_energy_to_energy(energy_host);
 }
 
 /** Generic copy functions from an to device **/

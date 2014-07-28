@@ -45,7 +45,5 @@ protected:
   float k;
 };
 
-void addHarmonicWell(float x1, float x2, float x3, float _k);
-
 #endif
 #endif
