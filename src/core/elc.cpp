@@ -53,10 +53,10 @@
 
 /** \name Inverse box dimensions and derived constants */
 /*@{*/
-static double ux, ux2, uy, uy2, uz;
+static double ux, ux2, uy, uy2, uz ,uz2;
 /*@}*/
 
-ELC_struct elc_params = { 1e100, 10, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0 };
+ELC_struct elc_params = { 1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0 };
 
 /****************************************
  * LOCAL ARRAYS
@@ -149,6 +149,7 @@ void ELC_setup_constants()
   uy  = 1/box_l[1];
   uy2 = uy*uy;  
   uz  = 1/box_l[2];
+  uz2 = 1/elc_params.h;
 }
 
 /* SC Cache */
@@ -315,13 +316,17 @@ static void add_dipole_force()
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
   double shift = 0.5*box_l[2];
+  double field_tot = 0;
 
   gblcblk[0] = 0;
+  gblcblk[1] = 0;
+
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
       gblcblk[0] += part[i].p.q*(part[i].r.p[2] - shift);
+      gblcblk[1] += part[i].p.q*part[i].r.p[2];
 
       if(elc_params.dielectric_contrast_on) {
 	if(part[i].r.p[2]<elc_params.space_layer)
@@ -333,14 +338,25 @@ static void add_dipole_force()
     }
   }
   gblcblk[0] *= pref;
+  gblcblk[1] *= pref*uz2/uz;
   
-  distribute(1);
+  distribute(2);
   
+  field_tot = gblcblk[0];
+
+  /* Const. potential: subtract global dipole moment */
+  if (elc_params.const_pot_on) {
+
+    field_induced = gblcblk[1];
+    field_applied = elc_params.pot_diff * uz2;
+    field_tot -= field_applied + gblcblk[1];
+  }
+
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) 
-      part[i].f.f[2] -= gblcblk[0]*part[i].p.q;
+      part[i].f.f[2] -= field_tot*part[i].p.q;
   }
   
   if (!elc_params.neutralize) {
@@ -449,18 +465,18 @@ static double dipole_energy()
 
       gblcblk[0] = 0;  gblcblk[1] = 0;
       for (c = 0; c < local_cells.n; c++) {
-	np   = local_cells.cell[c]->n;
-	part = local_cells.cell[c]->part;
-	for (i = 0; i < np; i++) {
-	  if(part[i].r.p[2]<elc_params.space_layer) {
-	    gblcblk[0] +=elc_params.di_mid_bot*part[i].p.q;
-	    gblcblk[1] +=elc_params.di_mid_bot*part[i].p.q*(SQR(-part[i].r.p[2]-shift));
-	  }
-	  if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
-	    gblcblk[0] +=elc_params.di_mid_top*part[i].p.q;
-	    gblcblk[1] +=elc_params.di_mid_top*part[i].p.q*(SQR(2*elc_params.h-part[i].r.p[2]-shift));
-	  }
-	}
+		np   = local_cells.cell[c]->n;
+		part = local_cells.cell[c]->part;
+		for (i = 0; i < np; i++) {
+		  if(part[i].r.p[2]<elc_params.space_layer) {
+		  	gblcblk[0] +=elc_params.di_mid_bot*part[i].p.q;
+			gblcblk[1] +=elc_params.di_mid_bot*part[i].p.q*(SQR(-part[i].r.p[2]-shift));
+		  }
+		  if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
+		    gblcblk[0] +=elc_params.di_mid_top*part[i].p.q;
+			gblcblk[1] +=elc_params.di_mid_top*part[i].p.q*(SQR(2*elc_params.h-part[i].r.p[2]-shift));
+		  }
+		}
       }
       distribute(2);
     
@@ -506,48 +522,80 @@ static double z_energy()
   double q_m_t=0.0,q_m_b=0.0,q=0.0; 
   double fac_delta_mid_bot=1,fac_delta_mid_top=1,fac_delta=1; 
   
-  if(elc_params.dielectric_contrast_on) {
-    fac_delta_mid_bot=elc_params.di_mid_bot/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
-    fac_delta_mid_top=elc_params.di_mid_top/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
-    fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
-    q_m_t=elc_params.di_mid_top;
-    q_m_b=elc_params.di_mid_bot;
-    q=q_m_t*q_m_b;
+  if(elc_params.const_pot_on) {
+
+	  fac_delta_mid_bot=elc_params.di_mid_bot/(1-elc_params.di_mid_top*elc_params.di_mid_bot);
+	  fac_delta_mid_top=elc_params.di_mid_top/(1-elc_params.di_mid_top*elc_params.di_mid_bot);
+	  fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
+	  q_m_t=elc_params.di_mid_top;
+	  q_m_b=elc_params.di_mid_bot;
+	  q=q_m_t*q_m_b;
+	  
+	  
+	  clear_vec(gblcblk, 4);
+	  for (c = 0; c < local_cells.n; c++) {
+	    np   = local_cells.cell[c]->n;
+	    part = local_cells.cell[c]->part;
+	    for (i = 0; i < np; i++) {
+	      gblcblk[0] += part[i].p.q; //q_i 
+	      gblcblk[1] += part[i].p.q*(part[i].r.p[2] - shift);
+	      if(elc_params.dielectric_contrast_on) {
+			if(part[i].r.p[2]<elc_params.space_layer) {
+				gblcblk[2] -= elc_params.di_mid_bot*part[i].p.q;
+			} else if (part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
+				gblcblk[2] -= elc_params.di_mid_top*part[i].p.q;
+			} else {
+				gblcblk[3] -= part[i].p.q*2*elc_params.h*fac_delta;
+			}
+	      }      
+	    }
+	  }
+	  distribute(4);
   }
-  
-  clear_vec(gblcblk, 4);
-  for (c = 0; c < local_cells.n; c++) {
-    np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      gblcblk[0] += part[i].p.q; //q_i 
-      gblcblk[1] += part[i].p.q*(part[i].r.p[2] - shift); //q_i z_
-      if(elc_params.dielectric_contrast_on) {
-	if(part[i].r.p[2]<elc_params.space_layer) {
-	  gblcblk[2] += fac_delta*(1+elc_params.di_mid_bot)*part[i].p.q; 
-	  gblcblk[3] += part[i].p.q*(image_sum_b(q_m_b*q,-(2*elc_params.h+part[i].r.p[2]))
-				     +image_sum_b(q,-(2*elc_params.h-part[i].r.p[2])));
-	} else {
-	  gblcblk[2] += fac_delta_mid_bot*(1+elc_params.di_mid_top)*part[i].p.q; 
-	  gblcblk[3] += part[i].p.q*(image_sum_b(q_m_b,-part[i].r.p[2])
-				     +image_sum_b(q,-(2*elc_params.h-part[i].r.p[2])));
-	}
-	if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
-	  //note the minus sign here which is required due to |z_i-z_j|
-	  gblcblk[2] -= fac_delta*(1+elc_params.di_mid_top)*part[i].p.q; 
-	  gblcblk[3] -= part[i].p.q*(image_sum_t(q_m_t*q,4*elc_params.h-part[i].r.p[2])
-	    			     +image_sum_t(q,2*elc_params.h+part[i].r.p[2]));
-	} else {
-	  //note the minus sign here which is required due to |z_i-z_j|
-	  gblcblk[2] -= fac_delta_mid_top*(1+elc_params.di_mid_bot)*part[i].p.q; 	  
-	  gblcblk[3] -= part[i].p.q*(image_sum_t(q_m_t,2*elc_params.h-part[i].r.p[2])
-	  			     +image_sum_t(q,2*elc_params.h+part[i].r.p[2]));
-	}
-      }      
-    }
+  else {
+	  if(elc_params.dielectric_contrast_on) {
+	    fac_delta_mid_bot=elc_params.di_mid_bot/(1-elc_params.di_mid_top*elc_params.di_mid_bot);
+	    fac_delta_mid_top=elc_params.di_mid_top/(1-elc_params.di_mid_top*elc_params.di_mid_bot);
+	    fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
+	    q_m_t=elc_params.di_mid_top;
+	    q_m_b=elc_params.di_mid_bot;
+	    q=q_m_t*q_m_b;
+	  }
+	  
+	  clear_vec(gblcblk, 4);
+	  for (c = 0; c < local_cells.n; c++) {
+	    np   = local_cells.cell[c]->n;
+	    part = local_cells.cell[c]->part;
+	    for (i = 0; i < np; i++) {
+	      gblcblk[0] += part[i].p.q;
+	      gblcblk[1] += part[i].p.q*(part[i].r.p[2] - shift);
+	      if(elc_params.dielectric_contrast_on) {
+		if(part[i].r.p[2]<elc_params.space_layer) {
+		  gblcblk[2] += fac_delta*(1+elc_params.di_mid_bot)*part[i].p.q; 
+		  gblcblk[3] += part[i].p.q*(image_sum_b(q_m_b*q,-(2*elc_params.h+part[i].r.p[2]))
+					     +image_sum_b(q,-(2*elc_params.h-part[i].r.p[2])));
+		} else {
+		  gblcblk[2] += fac_delta_mid_bot*(1+elc_params.di_mid_top)*part[i].p.q; 
+		  gblcblk[3] += part[i].p.q*(image_sum_b(q_m_b,-part[i].r.p[2])
+					     +image_sum_b(q,-(2*elc_params.h-part[i].r.p[2])));
+		}
+		if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
+		  //note the minus sign here which is required due to |z_i-z_j|
+		  gblcblk[2] -= fac_delta*(1+elc_params.di_mid_top)*part[i].p.q; 
+		  gblcblk[3] -= part[i].p.q*(image_sum_t(q_m_t*q,4*elc_params.h-part[i].r.p[2])
+		    			     +image_sum_t(q,2*elc_params.h+part[i].r.p[2]));
+		} else {
+		  //note the minus sign here which is required due to |z_i-z_j|
+		  gblcblk[2] -= fac_delta_mid_top*(1+elc_params.di_mid_bot)*part[i].p.q; 	  
+		  gblcblk[3] -= part[i].p.q*(image_sum_t(q_m_t,2*elc_params.h-part[i].r.p[2])
+		  			     +image_sum_t(q,2*elc_params.h+part[i].r.p[2]));
+		}
+	      }      
+	    }
+	  }
+	  distribute(4);
   }
-  distribute(4);
-  
+
   if (this_node == 0)
     eng -= pref*(gblcblk[1]*gblcblk[2]-gblcblk[0]*gblcblk[3]); 
 
@@ -562,44 +610,64 @@ static void add_z_force()
   double pref = coulomb.prefactor*2*M_PI*ux*uy;
   int size = 2;
   double fac_delta_mid_bot=1,fac_delta_mid_top=1,fac_delta=1;
+
   if(elc_params.dielectric_contrast_on) {
-    double fac_elc=1.0/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
-    fac_delta_mid_bot=elc_params.di_mid_bot*fac_elc; 
-    fac_delta_mid_top=elc_params.di_mid_top*fac_elc; 
-    fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
-
-    clear_vec(gblcblk, size);
-    for (c = 0; c < local_cells.n; c++) {
-      np   = local_cells.cell[c]->n;
-      part = local_cells.cell[c]->part;
-      for (i = 0; i < np; i++) {
-	gblcblk[0] += part[i].p.q; 
-	if(part[i].r.p[2]<elc_params.space_layer)
-	  gblcblk[1] += fac_delta*(1+elc_params.di_mid_bot)*part[i].p.q; 
-	else
-	  gblcblk[1] += fac_delta_mid_bot*(1+elc_params.di_mid_top)*part[i].p.q; 
-
-	if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
-	  //note the minus sign here which is required due to |z_i-z_j|
-	  gblcblk[1] -= fac_delta*(1+elc_params.di_mid_top)*part[i].p.q; 
-	} else {
-	  //note the minus sign here which is required due to |z_i-z_j|
-	  gblcblk[1] -= fac_delta_mid_top*(1+elc_params.di_mid_bot)*part[i].p.q; 
+	if (elc_params.const_pot_on) {
+		clear_vec(gblcblk, size);
+		for (c = 0; c < local_cells.n; c++) {
+			np   = local_cells.cell[c]->n;
+			part = local_cells.cell[c]->part;
+			for (i = 0; i < np; i++) {
+				gblcblk[0] += part[i].p.q;
+				if(part[i].r.p[2]<elc_params.space_layer)
+					gblcblk[1] += part[i].p.q;
+				if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer))
+					gblcblk[1] -= part[i].p.q;
+			}
+		}
 	}
-      }
-    }
+	else
+	{
+		//Division by zero for const_pot off and diel. contrast -1 -1
+		double fac_elc=1.0/(1-elc_params.di_mid_top*elc_params.di_mid_bot);
+		fac_delta_mid_bot=elc_params.di_mid_bot*fac_elc;
+		fac_delta_mid_top=elc_params.di_mid_top*fac_elc;
+		fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
 
-    gblcblk[0] *= pref;
-    gblcblk[1] *= pref;
+		clear_vec(gblcblk, size);
+		for (c = 0; c < local_cells.n; c++) {
+			np   = local_cells.cell[c]->n;
+			part = local_cells.cell[c]->part;
+			for (i = 0; i < np; i++) {
+				gblcblk[0] += part[i].p.q;
+				if(part[i].r.p[2]<elc_params.space_layer) {
+					gblcblk[1] += fac_delta*(1+elc_params.di_mid_bot)*part[i].p.q;
+				} else {
+					gblcblk[1] += fac_delta_mid_bot*(1+elc_params.di_mid_top)*part[i].p.q;
+				}
 
-    distribute(2);
+				if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
+					//note the minus sign here which is required due to |z_i-z_j|
+					gblcblk[1] -= fac_delta*(1+elc_params.di_mid_top)*part[i].p.q;
+				} else {
+					//note the minus sign here which is required due to |z_i-z_j|
+					gblcblk[1] -= fac_delta_mid_top*(1+elc_params.di_mid_bot)*part[i].p.q;
+				}
+			}
+		}
+	}
+
+	gblcblk[0] *= pref;
+	gblcblk[1] *= pref;
+
+	distribute(2);
   
-    for (c = 0; c < local_cells.n; c++) {
-      np   = local_cells.cell[c]->n;
-      part = local_cells.cell[c]->part;
-      for (i = 0; i < np; i++) {
-	part[i].f.f[2] += gblcblk[1]*part[i].p.q; 
-      }
+	for (c = 0; c < local_cells.n; c++) {
+	  np   = local_cells.cell[c]->n;
+	  part = local_cells.cell[c]->part;
+	  for (i = 0; i < np; i++) {
+		part[i].f.f[2] += gblcblk[1]*part[i].p.q; 
+	  }
     }
   }
 }
@@ -1128,7 +1196,7 @@ double ELC_energy()
   double omega;
 
   eng = 2*dipole_energy(); 
-  eng+=z_energy();
+  eng += z_energy();
   prepare_scx_cache();
   prepare_scy_cache();
 
@@ -1266,20 +1334,17 @@ void ELC_on_resort_particles()
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutralize,
-		   double top, double mid, double bot)
+		   double delta_top, double delta_bot, int const_pot_on, double pot_diff)
 {
   elc_params.maxPWerror = maxPWerror;
   elc_params.gap_size = gap_size;
   elc_params.h = box_l[2] - gap_size;
 
-  if (mid != top || mid != bot) {
+  if (delta_top != 0.0 || delta_bot != 0.0) {
     elc_params.dielectric_contrast_on = 1;
 
-    elc_params.di_top = top;
-    elc_params.di_mid = mid;
-    elc_params.di_bot = bot;
-    elc_params.di_mid_top = (elc_params.di_mid-elc_params.di_top)/(elc_params.di_mid+elc_params.di_top);
-    elc_params.di_mid_bot = (elc_params.di_mid-elc_params.di_bot)/(elc_params.di_mid+elc_params.di_bot);   
+    elc_params.di_mid_top = delta_top;
+    elc_params.di_mid_bot = delta_bot;   
 
     // neutralize is automatical with dielectric contrast
     elc_params.neutralize = 0;
@@ -1290,11 +1355,20 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
     elc_params.space_box = gap_size - 2*elc_params.space_layer;
     // reset minimal_dist for tuning
     elc_params.minimal_dist = dmin(elc_params.space_box, elc_params.space_layer);
+
+    //Constant potential parameter setup
+    if (const_pot_on)
+    {
+       elc_params.const_pot_on = 1;
+       elc_params.pot_diff = pot_diff;	
+    }
   }
   else {
     // setup without dielectric contrast
     elc_params.dielectric_contrast_on = 0;
-
+    elc_params.const_pot_on = 0;
+    elc_params.di_mid_top = 0;
+    elc_params.di_mid_bot = 0;
     elc_params.neutralize = neutralize;
     elc_params.space_layer=0;
     elc_params.space_box = elc_params.minimal_dist = gap_size;
@@ -1717,3 +1791,4 @@ void  ELC_P3M_restore_p3m_sums()
 }
 
 #endif
+
