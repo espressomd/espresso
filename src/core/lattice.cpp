@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,9 +24,7 @@
  *
  */
 
-#include "utils.hpp"
-#include "grid.hpp"
-#include "lattice.hpp"
+#include "lattice_inline.hpp"
 
 int lattice_switch = LATTICE_OFF ;
 
@@ -172,14 +170,14 @@ void Lattice::interpolate_linear_gradient(double* pos, double* value) {
        return;
      }
    }
-   
+
    index_t index;
    double* local_value;
 
    for (unsigned int i = 0; i<3*this->dim; i++) {
      value[i] = 0;
    }
-   
+
    index=get_linear_index(   left_halo_index[0], left_halo_index[1], left_halo_index[2], this->halo_grid);
    for (unsigned int i = 0; i<this->dim; i++) {
      get_data_for_linear_index(index, (void**) &local_value);
@@ -264,3 +262,181 @@ void Lattice::set_data_for_global_position_with_periodic_image(double* pos, void
     }
   }
 }
+
+int global_pos_in_local_box(double pos[3]) {
+  if (!(pos[0]>my_left[0]  &&  pos[0]<my_right[0] ))
+    return 0;
+  if (!(pos[1]>my_left[1]  &&  pos[1]<my_right[1] ))
+    return 0;
+  if (!(pos[2]>my_left[2]  &&  pos[2]<my_right[2] ))
+    return 0;
+  return 1;
+}
+
+int Lattice::global_pos_in_local_halobox(double pos[3]) {
+  for (unsigned int i=0; i<this->dim; i++) {
+    if (!(pos[i]>this->local_offset[i]-this->halo_size*this->agrid[i] &&
+          pos[i]<this->local_offset[i]+this->halo_grid[i]*this->agrid[i] ))
+      return 0;
+  }
+  return 1;
+}
+
+int Lattice::global_pos_to_lattice_index_checked(double pos[3], int* index) {
+  int i;
+  for (i=0; i<3; i++)
+    if (abs(fmod(pos[i]-this->offset[i],this->agrid[i])) > ROUND_ERROR_PREC)
+      return ES_ERROR;
+  int ind[3];
+  for (i=0; i<3; i++)
+    ind[i] = (int) round((pos[i]-this->offset[i])/this->agrid[i]);
+  *index = get_linear_index(this->halo_size + ind[0], this->halo_size + ind[1], this->halo_size + ind[2], this->halo_grid);
+  return ES_OK;
+}
+
+/* @TODO: Implement! */
+int Lattice::map_lattice_to_position(int *ind, int *grid) {
+  return 0;
+}
+
+void Lattice::map_linear_index_to_global_pos(index_t ind, double* pos) {
+  int index_in_halogrid[3];
+  get_grid_pos(ind, &index_in_halogrid[0], &index_in_halogrid[1], &index_in_halogrid[2], this->halo_grid);
+  pos[0] = this->local_offset[0] + (index_in_halogrid[0] - this->halo_size)*this->agrid[0];
+  pos[1] = this->local_offset[1] + (index_in_halogrid[1] - this->halo_size)*this->agrid[1];
+  pos[2] = this->local_offset[2] + (index_in_halogrid[2] - this->halo_size)*this->agrid[2];
+}
+
+void Lattice::map_local_index_to_pos(index_t* index, double* pos) {
+  pos[0] = this->local_offset[0] + (index[0])*this->agrid[0];
+  pos[1] = this->local_offset[1] + (index[1])*this->agrid[1];
+  pos[2] = this->local_offset[2] + (index[2])*this->agrid[2];
+}
+
+int Lattice::map_global_index_to_halo_index(index_t* global_index, index_t* halo_index) {
+  int out=0;
+  for (int d=0; d<3; d++) {
+    halo_index[d] = global_index[d]-this->local_index_offset[d] +this->halo_size;
+    if (halo_index[d] < 0 || halo_index[d] >= this->halo_grid[d])
+      out=1;
+  }
+
+  if (out) {
+    return 0;
+  }
+  return 1;
+
+}
+
+void Lattice::map_halo_index_to_pos(index_t* index_in_halogrid, double* pos) {
+  pos[0] = this->local_offset[0] + (index_in_halogrid[0] - this->halo_size)*this->agrid[0];
+  pos[1] = this->local_offset[1] + (index_in_halogrid[1] - this->halo_size)*this->agrid[1];
+  pos[2] = this->local_offset[2] + (index_in_halogrid[2] - this->halo_size)*this->agrid[2];
+}
+
+void Lattice::map_position_to_lattice(const double pos[3], index_t node_index[8], double delta[6]) {
+
+  int dir,ind[3] ;
+  double lpos, rel;
+
+  /* determine the elementary lattice cell containing the particle
+     and the relative position of the particle in this cell */
+  for (dir=0;dir<3;dir++) {
+    lpos = pos[dir] - my_left[dir];
+    rel = lpos/this->agrid[dir] + 0.5; // +1 for halo offset
+    ind[dir] = (int)floor(rel);
+
+    /* surrounding elementary cell is not completely inside this box,
+       adjust if this is due to round off errors */
+    if (ind[dir] < 0) {
+      if (abs(rel) < ROUND_ERROR_PREC) {
+    ind[dir] = 0; // TODO
+      } else {
+    fprintf(stderr,"%d: map_position_to_lattice: position (%f,%f,%f) not inside a local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",this_node,pos[0],pos[1],pos[2],dir,ind[dir],rel,lpos);
+      }
+    }
+    else if (ind[dir] > this->grid[dir]) {
+      if (lpos - local_box_l[dir] < ROUND_ERROR_PREC*local_box_l[dir])
+    ind[dir] = this->grid[dir];
+      else
+    fprintf(stderr,"%d: map_position_to_lattice: position (%f,%f,%f) not inside a local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",this_node,pos[0],pos[1],pos[2],dir,ind[dir],rel,lpos);
+    }
+
+    delta[3+dir] = rel - ind[dir]; // delta_x/a
+    delta[dir]   = 1.0 - delta[3+dir];
+  }
+
+  node_index[0] = get_linear_index(ind[0],ind[1],ind[2],this->halo_grid);
+  node_index[1] = node_index[0] + 1;
+  node_index[2] = node_index[0] + this->halo_grid[0];
+  node_index[3] = node_index[0] + this->halo_grid[0] + 1;
+  node_index[4] = node_index[0] + this->halo_grid[0]*this->halo_grid[1];
+  node_index[5] = node_index[4] + 1;
+  node_index[6] = node_index[4] + this->halo_grid[0];
+  node_index[7] = node_index[4] + this->halo_grid[0] + 1;
+}
+
+void Lattice::get_data_for_halo_index(index_t* ind, void** data) {
+  (*data) = ((char*)this->_data) + get_linear_index(ind[0], ind[1], ind[2], this->halo_grid)*this->element_size;
+}
+
+void Lattice::get_data_for_linear_index(index_t ind, void** data) {
+  (*data) = ((char*)this->_data) + ind*this->element_size;
+}
+
+void Lattice::get_data_for_local_index(index_t* ind, void** data) {
+  index_t index_in_halogrid[3];
+  index_in_halogrid[0] = ind[0]+this->halo_size;
+  index_in_halogrid[1] = ind[1]+this->halo_size;
+  index_in_halogrid[2] = ind[2]+this->halo_size;
+  (*data) = ((char*)this->_data) + get_linear_index(index_in_halogrid[0], index_in_halogrid[1], index_in_halogrid[2], this->halo_grid)*this->element_size;
+}
+
+void Lattice::set_data_for_local_halo_grid_index(index_t* ind, void* data) {
+  memcpy(((char*)this->_data) + get_linear_index(ind[0], ind[1], ind[2],  this->halo_grid)*this->element_size, data, this->element_size);
+
+}
+
+void Lattice::set_data_for_local_grid_index(index_t* ind, void* data) {
+  memcpy(((char*)this->_data) + get_linear_index(ind[0]+this->halo_size, ind[1]+this->halo_size, ind[2]+this->halo_size,  this->halo_grid)*this->element_size, data, this->element_size);
+}
+
+int Lattice::global_pos_to_lattice_halo_index(double* pos, index_t*  ind) {
+  for (int i = 0; i<3; i++) {
+    ind[i] = (int) floor((pos[i]-this->local_offset[i])/this->agrid[i]+ROUND_ERROR_PREC)+this->halo_size;
+    if (ind[i] < 0 || ind[i] >= this->halo_grid[i])
+      return 0;
+  }
+  return 1;
+}
+
+/********************** static Functions **********************/
+
+void Lattice::map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
+  //not sure why I don't have access to agrid here so I make a temp var and pass it to this function
+    int i;
+    double rel[3];
+    // fold the position onto the local box, note here ind is used as a dummy variable
+      for (i=0;i<3;i++) {
+          pos[i] = pos[i]-0.5*tmp_agrid;
+      }
+
+    fold_position (pos,ind);
+
+    // convert the position into lower left grid point
+      for (i=0;i<3;i++) {
+          rel[i] = (pos[i])/tmp_agrid;
+      }
+
+    // calculate the index of the position
+    for (i=0;i<3;i++) {
+      ind[i] = floor(rel[i]);
+    }
+
+    // calculate the linear interpolation weighting
+    for (i=0;i<3;i++) {
+      delta[3+i] = rel[i] - ind[i];
+      delta[i] = 1 - delta[3+i];
+    }
+
+  }

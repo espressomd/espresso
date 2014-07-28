@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -49,7 +49,11 @@ void convert_initial_torques();
 /** convert angular velocities and torques from the 
     body-fixed frames to space-fixed coordinates */
 void convert_omega_body_to_space(Particle *p, double *omega);
-void convert_torques_body_to_space(Particle *p, double torque[3]);
+void convert_torques_body_to_space(Particle *p, double *torque);
+
+/** convert velocity form the lab-fixed coordinates
+    to the body-fixed frame */
+void convert_vel_space_to_body(Particle *p, double *vel_body);
 
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to

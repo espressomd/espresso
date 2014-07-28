@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -2971,8 +2971,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-
-  cudaStreamCreate(&stream[0]);
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 

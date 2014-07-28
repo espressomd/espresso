@@ -3,6 +3,7 @@
 
 scriptversion=2012-01-06.18; # UTC
 
+# Copyright (C) 2014 The ESPResSo project
 # Copyright (C) 1996-2012 Free Software Foundation, Inc.
 # Originally by Fran,cois Pinard <pinard@iro.umontreal.ca>, 1996.
 

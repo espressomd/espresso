@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -411,11 +411,7 @@ void local_sort_particles()
 void cells_on_geometry_change(int flags)
 {
   if (max_cut > 0.0) {
-    if (skin >= 0.0)
-      max_range = max_cut + skin;
-    else
-      /* if the skin is not yet set, assume zero. */
-      max_range = max_cut;
+    max_range = max_cut + skin;
   }
   else
     /* if no interactions yet, we also don't need a skin */

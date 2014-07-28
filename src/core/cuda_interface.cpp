@@ -1,3 +1,21 @@
+/*
+  Copyright (C) 2014 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -7,6 +25,7 @@
 #include "random.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
+#include "energy.hpp"
 
 #ifdef CUDA
 
@@ -86,7 +105,7 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
   #endif
 
   #ifdef ELECTROSTATICS
-                if (coulomb.method == COULOMB_P3M_GPU) {
+                if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU) { // TODO: this defeats the purpose of needsQ in the interface...
                   particle_data_host[i+g].q = (float)part[i].p.q;
                 }
   #endif
@@ -162,7 +181,7 @@ static void cuda_mpi_get_particles_slave(){
   #endif
 
   #ifdef ELECTROSTATICS
-          if (coulomb.method == COULOMB_P3M_GPU) {
+          if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU) {
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
           }
   #endif
@@ -279,6 +298,16 @@ static void cuda_mpi_send_forces_slave(){
       free(host_composition_sl);
 #endif 
     } 
+}
+
+/** Takes a CUDA_energy struct and adds it to the core energy struct.
+This cannot be done from inside cuda_common_cuda.cu:copy_energy_from_GPU() because energy.hpp indirectly includes on mpi.h while .cu files may not depend on mpi.h.*/
+void copy_CUDA_energy_to_energy(CUDA_energy energy_host)
+{
+  energy.bonded[0] += energy_host.bonded;
+  energy.non_bonded[0] += energy_host.non_bonded;
+  energy.coulomb[0] += energy_host.coulomb;
+  energy.dipolar[0] += energy_host.dipolar;
 }
 
 #endif /* ifdef CUDA */

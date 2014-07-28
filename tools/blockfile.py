@@ -1,3 +1,21 @@
+#
+# Copyright (C) 2013,2014 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#
 import re
 import numpy
 import sys
@@ -32,7 +50,7 @@ col_types = {'^di': 3,
 
 re_block_type = re.compile('^{([a-z_]+)\s')
 re_particles = re.compile('{particles\s*{([a-z_\s]*)}((?:\s*{.*?})*)\s*}')
-re_particle = re.compile('\{(\s*(?:[0-9\.-]+\s*)*)\}')
+re_particle = re.compile('\{(.*?)\}')
 re_space = re.compile('\s')
 re_variable = re.compile('\{(?!variable\s)([^\s\}]+)([^\}]*)\}')
 re_int_list = re.compile('^[0-9\s]+$')

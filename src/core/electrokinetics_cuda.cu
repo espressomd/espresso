@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2014 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -63,9 +63,6 @@ extern EK_parameters* lb_ek_parameters_gpu;
   void lb_init_boundaries();
 #endif
   /* end of code duplication */
-
-  extern cudaStream_t stream[1];
-  extern cudaError_t _err;
 
   #define PI_FLOAT 3.14159265358979323846f
 
@@ -636,7 +633,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0U0]],
                 ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0U0]] *
                 force / 2.0f );
-              
+
     //face in z
     /*boltzmannfactor_neighbor =
       exp( 1.0f / ek_parameters_gpu.T *
@@ -701,7 +698,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_00U]],
                 ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_00U]] *
                 force / 2.0f );
-    
+
     //edge in z
     /*boltzmannfactor_neighbor =
       exp( 1.0f / ek_parameters_gpu.T *
@@ -727,7 +724,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( ( ek_parameters_gpu.rho[species_index][index] -
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UU0]]
-             ) / ek_parameters_gpu.agrid +
+             ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
              ( ek_parameters_gpu.rho[species_index][index] +
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UU0]]
              ) / (2.0f * ek_parameters_gpu.T) *
@@ -768,7 +765,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( ( ek_parameters_gpu.rho[species_index][index] -
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UD0]]
-             ) / ek_parameters_gpu.agrid +
+             ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
              ( ek_parameters_gpu.rho[species_index][index] +
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UD0]]
              ) / (2.0f * ek_parameters_gpu.T) *
@@ -781,13 +778,9 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              )
            );
 
-    atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_UU0)],
-               flux * ek_parameters_gpu.time_step
-             );
-    
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_UD0)],
                flux * ek_parameters_gpu.time_step );
-    
+
     //edge in y
     /*boltzmannfactor_neighbor =
       exp( 1.0f / ek_parameters_gpu.T *
@@ -813,7 +806,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( ( ek_parameters_gpu.rho[species_index][index] -
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0U]]
-             ) / ek_parameters_gpu.agrid +
+             ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
              ( ek_parameters_gpu.rho[species_index][index] +
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0U]]
              ) / (2.0f * ek_parameters_gpu.T) *
@@ -828,7 +821,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
  
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U0U)],
                flux * ek_parameters_gpu.time_step );
-        
+
     /*boltzmannfactor_neighbor =
       exp( 1.0f / ek_parameters_gpu.T *
            ( ek_parameters_gpu.valency[species_index] *
@@ -853,7 +846,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( ( ek_parameters_gpu.rho[species_index][index] -
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0D]]
-             ) / ek_parameters_gpu.agrid +
+             ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
              ( ek_parameters_gpu.rho[species_index][index] +
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0D]]
              ) / (2.0f * ek_parameters_gpu.T) *
@@ -868,7 +861,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
 
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U0D)],
                flux * ek_parameters_gpu.time_step );
-    
+
     //edge in x
     /*boltzmannfactor_neighbor =
       exp( 1.0f / ek_parameters_gpu.T *
@@ -893,7 +886,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( ( ek_parameters_gpu.rho[species_index][index] -
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UU]]
-             ) / ek_parameters_gpu.agrid +
+             ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
              ( ek_parameters_gpu.rho[species_index][index] +
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UU]]
              ) / (2.0f * ek_parameters_gpu.T) *
@@ -908,7 +901,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
 
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0UU)],
                flux * ek_parameters_gpu.time_step );
-    
+
     /*boltzmannfactor_neighbor =
       exp( 1.0f / ek_parameters_gpu.T *
            ( ek_parameters_gpu.valency[species_index] *
@@ -933,7 +926,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
            ( ( ek_parameters_gpu.rho[species_index][index] -
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UD]]
-             ) / ek_parameters_gpu.agrid +
+             ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
              ( ek_parameters_gpu.rho[species_index][index] +
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UD]]
              ) / (2.0f * ek_parameters_gpu.T) *
@@ -948,7 +941,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
 
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0UD)],
                flux * ek_parameters_gpu.time_step );    
-    
+return;    
     /* advective contribution to flux */
 
     ek_displacement( dx, lb_node, index, ek_lbparameters_gpu );
@@ -1379,15 +1372,21 @@ __global__ void ek_clear_fluxes() {
 __global__ void ek_init_species_density_homogeneous() {
 
   unsigned int index = ek_getThreadIndex();
+  unsigned int coord[3];
+
+  rhoindex_linear2cartesian(index, coord);
 
   if(index < ek_parameters_gpu.number_of_nodes) 
   {  
     for(int i = 0; i < ek_parameters_gpu.number_of_species; i++) 
     {
-      ek_parameters_gpu.rho[ i ][ index ] = ek_parameters_gpu.density[ i ] *
-                                            ek_parameters_gpu.agrid *
-                                            ek_parameters_gpu.agrid *
-                                            ek_parameters_gpu.agrid;
+      if(coord[0] == ek_parameters_gpu.dim_x/2 && coord[1] == ek_parameters_gpu.dim_y/2 && coord[2] == ek_parameters_gpu.dim_z/2)
+        ek_parameters_gpu.rho[ i ][ index ] = ek_parameters_gpu.density[ i ] *
+                                              ek_parameters_gpu.agrid *
+                                              ek_parameters_gpu.agrid *
+                                              ek_parameters_gpu.agrid;
+      else
+        ek_parameters_gpu.rho[ i ][ index ] = 0.0f;
     }
   }
 }

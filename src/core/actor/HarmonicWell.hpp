@@ -39,13 +39,15 @@ public:
 					 s.rGpuBegin(), s.fGpuBegin());
   };
 
+  virtual void computeEnergy(SystemInterface &s) {
+    std::cout << "HarmonidWell does not currently support energies" << std::endl;
+  };
+
   virtual ~HarmonicWell() {}
 protected:
   float x,y,z;
   float k;
 };
-
-void addHarmonicWell(float x1, float x2, float x3, float _k);
 
 #endif
 #endif
