@@ -47,7 +47,7 @@
 #include "maggs.hpp"
 #include "thermostat.hpp"
 #include "initialize.hpp"
-#include "forces.hpp"
+#include "forces_inline.hpp"
 #include "nsquare.hpp"
 #include "domain_decomposition.hpp"
 #include "layered.hpp"

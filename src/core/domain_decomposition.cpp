@@ -26,7 +26,7 @@
 
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
-#include "forces.hpp"
+#include "forces_inline.hpp"
 #include "pressure.hpp"
 #include "energy.hpp"
 #include "constraint.hpp"
