@@ -843,9 +843,12 @@ int tclcommand_print_efield_capacitors(ClientData data, Tcl_Interp * interp, int
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   double value=0;
 
-  if ((coulomb.method != COULOMB_MMM2D   && coulomb.method != COULOMB_ELC_P3M) ||
-      (coulomb.method == COULOMB_MMM2D   && !mmm2d_params.const_pot_on)        ||
-      (coulomb.method == COULOMB_ELC_P3M && !elc_params.const_pot_on)) {
+  if (!(
+        (coulomb.method == COULOMB_MMM2D   && mmm2d_params.const_pot_on)
+#ifdef P3M
+     || (coulomb.method == COULOMB_ELC_P3M && elc_params.const_pot_on)
+#endif
+     )) {
     Tcl_AppendResult(interp, "Electric field output only available for mmm2d or p3m+elc with capacitor feature", (char *) NULL);
     return TCL_ERROR;
   }
