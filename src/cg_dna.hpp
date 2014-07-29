@@ -868,11 +868,13 @@ inline int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2,
   const double f2 = params.p.cg_dna_basepair.f2;
   const double f3 = params.p.cg_dna_basepair.f3;
   const double E0sb = params.p.cg_dna_basepair.E0sb;
-  const double c0sb = (1. - 2.*f2)*E0sb*alphasb;
-  const double c1sb = (f2-3.*f3)*E0sb*alphasb;
-  const double c2sb = f3*E0sb*alphasb;
 
+  ra = (rcb1_l - r0sb)*alphasb;
+  potential += E0sb * exp(-ra)*(1.+ra+f2*ra*ra+f3*ra*ra*ra);
 
+  ra = (rcb2_l - r0sb)*alphasb;
+  potential += E0sb * exp(-ra)*(1.+ra+f2*ra*ra+f3*ra*ra*ra);
+ 
 
   /* Hydrogen bond interaction */
 
