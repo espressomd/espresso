@@ -74,7 +74,7 @@ libEspressoTcl_la_SOURCES = \
 	tuning_tcl.cpp \
 	uwerr_tcl.cpp \
 	virtual_sites_com_tcl.cpp virtual_sites_com_tcl.hpp \
-	ghmc_tcl.cpp ghmc_tcl.hpp
+	ghmc_tcl.cpp ghmc_tcl.hpp \
 	immersed-boundary/vvolume_tcl.cpp \
 	immersed-boundary/vvolume_tcl.hpp
 
@@ -123,7 +123,7 @@ libEspressoTcl_la_SOURCES += \
 	object-in-fluid/stretchlin_force_tcl.cpp \
 	object-in-fluid/stretchlin_force_tcl.hpp \
 	object-in-fluid/volume_force_tcl.cpp \
-	object-in-fluid/volume_force_tcl.hpp
+	object-in-fluid/volume_force_tcl.hpp \
 	immersed-boundary/triel_tcl.cpp \
 	immersed-boundary/triel_tcl.hpp
 

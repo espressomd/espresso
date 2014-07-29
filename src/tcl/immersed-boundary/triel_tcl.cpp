@@ -20,7 +20,7 @@
 */
 
 #include "immersed-boundary/triel_tcl.hpp"
-
+#include "global.hpp"
 #ifdef TRIELASTIC
 #include "immersed-boundary/triel.hpp"
 #include "communication.hpp"
