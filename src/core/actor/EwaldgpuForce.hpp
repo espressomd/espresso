@@ -44,13 +44,12 @@ public:
 	EwaldgpuForce(SystemInterface &s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha);
 	~EwaldgpuForce();
 	void setup(SystemInterface &s);
-	void cuda_check_error(const dim3 &block, const dim3 &grid,char *function, char *file, unsigned int line);
 	void computeForces(SystemInterface &s);
 	void computeEnergy(SystemInterface &s);
 	//Set parameters
 	int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha);
 	int set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps);
-	//TUNING r_cut, num_kx, num_ky, num_kz, alpha
+	//Tuning
 	int adaptive_tune(char **log, SystemInterface &s);
 	double error_estimate_r(double q_sqr, int N, double r_cut, double V, double alpha, double accuracy);
 	double error_estimate_k(double q_sqr, int N, int K, double V, double alpha, double accuracy);
@@ -103,6 +102,7 @@ protected:
 	int nextPow2(int x); //Determine the next power of x
 	bool isPow2(int x); //Determine if x of power 2
 	void getNumBlocksAndThreads(int Size, int maxBlocks, int maxThreads, int &blocks, int &threads); // Determine the number of blocks and threads in GPU part
+	void cuda_check_error(const dim3 &block, const dim3 &grid,char *function, char *file, unsigned int line);
 	//Output
 	void Output(); //Output in terminal
 	//Real space

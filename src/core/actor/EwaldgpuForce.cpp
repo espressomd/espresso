@@ -97,7 +97,7 @@ int EwaldgpuForce::set_params_tune(double accuracy, double precision, int K_max,
 	return 0;
 }
 
-//Tuning r_cut, num_kx, num_ky, num_kz, alpha
+//Tuning
 int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 {
 	ewaldgpu_params.isTuned = false;
@@ -157,7 +157,7 @@ int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
   ewaldgpu_params.isTuned = true;
 	mpi_bcast_coulomb_params();
 
-  /* Print Status */
+  //Print Status
   sprintf(b, "ewaldgpu tune parameters: Accuracy goal = %f\n", ewaldgpu_params.accuracy);
   *log = strcat_alloc(*log, b);
   sprintf(b, "ewaldgpu tune parameters: Alpha = %f\n", ewaldgpu_params.alpha);

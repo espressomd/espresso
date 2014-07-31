@@ -437,6 +437,7 @@ EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int nu
 	m_num_ky = num_ky;
 	m_num_kz = num_kz;
 	m_alpha = alpha;
+	m_isTuned = false;
 
 	//Compute the number of k's in k-sphere
 	compute_num_k();
@@ -463,7 +464,7 @@ EwaldgpuForce::~EwaldgpuForce()
 }
 void EwaldgpuForce::setup(SystemInterface &s)
 {
-	if (s.npart_gpu() == m_N and m_isTuned and ewaldgpu_params.isTuned) // unchanged
+	if (s.npart_gpu() == m_N and m_isTuned) // unchanged
 	{
 		return;
 	}
