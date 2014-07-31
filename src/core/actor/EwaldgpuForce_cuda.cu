@@ -445,7 +445,7 @@ EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int nu
 	//Compute the number of k's in k-sphere
 	compute_num_k();
 
-	//COULOMB METHOD
+	//Coulomb method
 	coulomb.method = COULOMB_EWALD_GPU;
 	set_params(m_rcut, m_num_kx, m_num_ky, m_num_kz, m_alpha);
 	if(ewaldgpu_params.time_calc_steps==0) ewaldgpu_params.time_calc_steps = determine_calc_time_steps();

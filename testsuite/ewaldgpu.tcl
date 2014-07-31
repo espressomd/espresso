@@ -69,7 +69,6 @@ puts "TUNED"
 
 set start_time [expr 1.0*[clock clicks -milliseconds]]
 integrate $int_steps recalc_forces
-integrate $int_steps recalc_forces
 set end_time [expr 1.0*[clock clicks -milliseconds]]
 puts "TIME: [expr $end_time-$start_time] millisec"
 

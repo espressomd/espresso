@@ -109,7 +109,6 @@ int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char 
   //Broadcast parameters
   coulomb.method = COULOMB_EWALD_GPU;
   rebuild_verletlist = 1;
-  ewaldgpu_params.ewaldgpu_is_running = true;
   ewaldgpu_params.isTuned = true;
 	mpi_bcast_coulomb_params();
   return TCL_OK;
