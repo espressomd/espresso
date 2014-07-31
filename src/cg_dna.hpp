@@ -537,6 +537,24 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
     puts("Big Force Twist/Stack.");
     PS(si1->p.identity);
 
+    PV(si1->r.p);
+    PV(si2->r.p);
+    PV(bi1->r.p);
+    PV(bi2->r.p);
+
+    PV(sj1->r.p);
+    PV(sj2->r.p);
+    PV(bj1->r.p);
+    PV(bj2->r.p);
+
+    PS(rcci_l);
+    PS(rccj_l);
+
+    PS( dot(vec1,n1));
+    PS( dot(vec2,n1));
+    PS( dot(vec3,n2));
+    PS( dot(vec4,n2));
+
     PS(r);
     PS(cos1);
     PS(epsilon);
@@ -548,6 +566,11 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
     PS(factor1);
     PS(factor2);
     PS(factor3);
+
+    PS(fmag);
+    PS(rccj_p_l2);
+    PS(pot_stack);
+    PS(pot_twist_ref);
 
     PV(factor1*f_stack_si1);
     PV(factor1*f_stack_si2);
@@ -723,11 +746,11 @@ inline int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, 
     f_f1 += k_constraint*(psi1-psi_cutoff)/sqrt(1. - SQR(gamma1));
   }
   if(psi2 > psi_cutoff) {
-    f_f2 += k_constraint*(psi2-psi_cutoff)/sqrt(1. - SQR(gamma1));
+    f_f2 += k_constraint*(psi2-psi_cutoff)/sqrt(1. - SQR(gamma2));
   }
-  
-  f_d *= tau_d*tau_flip;
-  f_r *= tau_r*tau_flip;
+
+  f_r *= tau_d*tau_flip;  
+  f_d *= tau_r*tau_flip;
 
   /* Dihedral force */
   double vec[3];
@@ -797,11 +820,50 @@ inline int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, 
     PV(rcb1);
     PV(rcb2);
 
+    PS(rhb_l);
+    PS(rcc_l);
+    PS(rcb1_l);
+    PS(rcb2_l);
+
     PS(gamma1);
     PS(gamma2);
     PS(dot(n1,n2));
     PV(n1);
     PV(n2);
+
+    PV(dot1*n1);
+    PV(dot2*n2);
+    
+    PV(f_sb1 *rcb1);
+    PV(f_sb2 *rcb2);
+    PV(f_r*rhb);
+
+    PS(f_r);
+    PS(f_r*rhb_l);
+    PS(f_sb1);
+    PS(f_sb2);
+
+    PS(tau_d);
+    PS(tau_r);
+    PS(tau_flip);
+
+    PS(dot1);
+    PS(dot2);
+    PS(dot3);
+    PS(dot4);
+    PS(dot5);
+
+    PS(factor1);
+    PS(factor2);
+    PS(factor3);
+    PS(factor4);
+    PS(factor5);
+    PS(factor6);
+
+    PS(fSugar1);
+    PS(fBase1);
+    PS(fBase2);
+    PS(fSugar2);
 
     PV(f_s1);
     PV(f_b1);
