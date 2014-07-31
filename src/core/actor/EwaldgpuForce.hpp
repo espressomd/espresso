@@ -92,8 +92,7 @@ protected:
 
 protected:
   //Variables
-  bool initialized; /Memory etc has been initialized
-  bool isTuned; //Tuning is over
+  bool m_isTuned; //Tuning is over
   SystemInterface *System;
 	//Ccompute k's
 	void compute_num_k(); //Compute the number of k's in sphere respectively in ellipsoid

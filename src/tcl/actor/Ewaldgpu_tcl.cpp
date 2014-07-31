@@ -240,6 +240,10 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
     return 0;
   }
 
+  //Compute alpha
+  double q_sqr = ewaldgpuForce->compute_q_sqare(espressoSystemInterface);
+  alpha = ewaldgpuForce->compute_optimal_alpha(r_cut, num_kx, num_ky, num_kz, q_sqr, box_l, precision);
+
   //Turn on EWALDGPU
   if (!ewaldgpuForce) // inter coulomb ewaldgpu was never called before
   {
@@ -247,11 +251,9 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
 	  forceActors.add(ewaldgpuForce);
 	  energyActors.add(ewaldgpuForce);
   }
-  //Compute alpha
-  double q_sqr = ewaldgpuForce->compute_q_sqare(espressoSystemInterface);
-  alpha = ewaldgpuForce->compute_optimal_alpha(r_cut, num_kx, num_ky, num_kz, q_sqr, box_l, precision);
-  ewaldgpu_params.isTuned = true;
+
   //Broadcast parameters
+  ewaldgpu_params.isTuned = true;
   coulomb.method = COULOMB_EWALD_GPU;
   rebuild_verletlist = 1;
   mpi_bcast_coulomb_params();
