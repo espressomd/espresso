@@ -142,8 +142,8 @@ typedef struct {
   GhostCommunicator ghost_lbcoupling_comm;
 #endif
 
-#ifdef TRIELASTIC
-  GhostCommunicator ghost_triel_comm;
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+  GhostCommunicator ghost_stretching_force_ibm_comm;
 #endif
 
   /** Cell system dependent function to find the right node for a

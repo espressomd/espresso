@@ -19,21 +19,21 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef TRIEL_TCL_H
-#define TRIEL_TCL_H
-//Interface for triel.h/c
+#ifndef _VIRTUAL_SITES_IMMERSED_BOUNDARY_H
+#define _VIRTUAL_SITES_IMMERSED_BOUNDARY_H
 
-#include "parser.hpp"
-#include "interaction_data.hpp"
+#include "config.hpp"
+#include "particle_data.hpp"
 
-#ifdef TRIELASTIC
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
 
+//Update Position ~ Euler/Runge-Kutta/Adams-Bashforth
+void update_mol_pos_particle(Particle *);
+//Update Velocity ~ Get interpolated velocity of LB , update old velocity for ab integration
+void update_mol_vel_particle(Particle *);
+//Since no 'real' particles are involved, this function will stay empty
+void distribute_mol_force();
 
-int tclcommand_inter_parse_triel(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-
-
-int tclprint_to_result_trielIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
-
-#endif
+#endif 
 
 #endif

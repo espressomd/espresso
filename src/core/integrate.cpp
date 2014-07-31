@@ -59,8 +59,8 @@
 #include "virtual_sites.hpp"
 #include "statistics_correlation.hpp"
 #include "ghmc.hpp"
-#include "immersed-boundary/lbtracers.hpp"
-#include "immersed-boundary/vvolume.hpp"
+#include "immersed-boundary/virtual_sites_ibm.hpp"
+#include "immersed-boundary/volume_conservation_ibm.hpp"
 
 /************************************************
  * DEFINES
@@ -213,7 +213,7 @@ void integrate_vv(int n_steps, int reuse_forces)
   on_integration_start();
 
     
-#ifdef VVOLUME
+#ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY
   if(vescnum > 0) {
     GetCentroidV();
     GetVolumeV();
@@ -280,7 +280,7 @@ void integrate_vv(int n_steps, int reuse_forces)
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
 
-#ifdef VVOLUME
+#ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY
     if(vescnum > 0) {
       GetCentroidV();
       GetVolumeV();
@@ -353,7 +353,7 @@ void integrate_vv(int n_steps, int reuse_forces)
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
 
-#ifdef LBTRACERS
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
    
       update_mol_vel_pos();
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
@@ -371,7 +371,7 @@ void integrate_vv(int n_steps, int reuse_forces)
     correct_vel_shake();
 #endif
     //VIRTUAL_SITES update vel
-#if defined (VIRTUAL_SITES) && !defined(LBTRACERS)
+#if defined (VIRTUAL_SITES) && !defined(VIRTUAL_SITES_IMMERSED_BOUNDARY)
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     update_mol_vel();
     if (check_runtime_errors()) break;

@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef TRIEL_H
-#define TRIEL_H
+#ifndef STRETCHING_FORCE_IMMERSED_BOUNDARY_H
+#define STRETCHING_FORCE_IMMERSED_BOUNDARY_H
 
 #include "utils.hpp"
 #include "interaction_data.hpp"
@@ -29,13 +29,13 @@
 #include "lb.hpp"
 #include "integrate.hpp"
 
-#ifdef TRIELASTIC
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
 
 
 const int NEO_HOOK = 0;
 const int SKALAK = 1;
 
-extern int triel_law;
+extern int stretching_force_ibm_law;
 
 /*@}*/
   /** Some general remarks:
@@ -53,7 +53,7 @@ extern int triel_law;
  *  @param ks elastic shear modulus as described in literature refer kruger 2011
  *  @param ka area dilation modulus as described in literature refer kruger 2011
  */
-int triel_set_params(int bond_type, int ind1, int ind2, int ind3, double max, double ks, double ka);
+int stretching_force_ibm_set_params(int bond_type, int ind1, int ind2, int ind3, double max, double ks, double ka);
 
 /** Resetting the reference position of a triangular interaction between 3 particles
  *
@@ -67,7 +67,7 @@ int triel_set_params(int bond_type, int ind1, int ind2, int ind3, double max, do
  *  @param ks elastic shear modulus as described in literature refer kruger 2011
  *  @param ka area dilation modulus as described in literature refer kruger 2011
  */
-int triel_reset_params(int bond_type, double lo, double lpo, double cospo, double sinpo, double Area0, double max, double ks, double ka);
+int stretching_force_ibm_reset_params(int bond_type, double lo, double lpo, double cospo, double sinpo, double Area0, double max, double ks, double ka);
 
 
 
@@ -114,12 +114,12 @@ inline void RotateForces(double f1_rot[2], double f2_rot[2], double f1[3], doubl
  *  @param force1 forces in xy on particle 1
  *  @param force2 forces in xy on particle 2
  */
-inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3,
+inline int calc_stretching_force_ibm(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3,
 			      Bonded_ia_parameters *iaparams, double force1[3], double force2[3]) 
 {
   double dxy, dxx, dyy, dyx; //Displacment gradient tensor matrix elements
   double gxy, gyx, gxx, gyy; //matrix calculations to get I1 and I2
-    double e1, e2, i1, i2, i11, i12, i21, i22, i23, i24; // eigen values 1, 2 and D matrix elements  
+  double e1, e2, i1, i2, i11, i12, i21, i22, i23, i24; // eigen values 1, 2 and D matrix elements  
     double A0, a1, a2, a3, b1, b2, b3;
     double l, lp, sinp, cosp;  // l, l' and cross and dot product between them 
     double vec1[3] = {0., 0., 0.};
@@ -143,7 +143,7 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     vector_product(vec1, vec2, vecpro);
     sinp = sqrt(sqrlen(vecpro))/(l*lp);
     
-    if( (lp-iaparams->p.triel.lpo > iaparams->p.triel.maxdist) ||  (l-iaparams->p.triel.lo > iaparams->p.triel.maxdist)) {
+    if( (lp-iaparams->p.stretching_force_ibm.lpo > iaparams->p.stretching_force_ibm.maxdist) ||  (l-iaparams->p.stretching_force_ibm.lo > iaparams->p.stretching_force_ibm.maxdist)) {
       // triel_params[0] = 1;
       return 1;
     }
@@ -152,10 +152,10 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
     //Calculate forces in common plane (after assumed triangle rotation/translation in xy-plane);
     //Note that certain geometries and parameters (e.g. a3=0) can be used to speed the code up.
     //For now it will be played safe and done in detail. 
-	dxx = lp/iaparams->p.triel.lpo;
-	dxy = ((l*cosp/iaparams->p.triel.lo) - (lp*iaparams->p.triel.cospo/iaparams->p.triel.lpo)) / iaparams->p.triel.sinpo;
+	dxx = lp/iaparams->p.stretching_force_ibm.lpo;
+	dxy = ((l*cosp/iaparams->p.stretching_force_ibm.lo) - (lp*iaparams->p.stretching_force_ibm.cospo/iaparams->p.stretching_force_ibm.lpo)) / iaparams->p.stretching_force_ibm.sinpo;
 	dyx = 0.0;
-	dyy = (l*sinp)/(iaparams->p.triel.lo * iaparams->p.triel.sinpo);
+	dyy = (l*sinp)/(iaparams->p.stretching_force_ibm.lo * iaparams->p.stretching_force_ibm.sinpo);
 	gxx = SQR(dxx)+SQR(dyx);
 	gxy = dxx*dxy + dyx*dyy;
 	gyx = dxx*dxy + dyy*dyx;
@@ -165,20 +165,20 @@ inline int calc_triel_force(Particle *p_ind1, Particle *p_ind2, Particle *p_ind3
 	i11 = 1.0; i12 = 1.0;
 	i21 = gyy; i22 = -gyx; i23 = i22; i24 = gxx;
 	
-	if(triel_law == NEO_HOOK) { 
-	  e1 = iaparams->p.triel.ks/6.0;
-	  e2 = (-1)*iaparams->p.triel.ks/(6.0*(i2+1.0)*(i2+1.0));
+	if(stretching_force_ibm_law == NEO_HOOK) { 
+	  e1 = iaparams->p.stretching_force_ibm.ks/6.0;
+	  e2 = (-1)*iaparams->p.stretching_force_ibm.ks/(6.0*(i2+1.0)*(i2+1.0));
 	}
-	  else if(triel_law == SKALAK) { 
+	  else if(stretching_force_ibm_law == SKALAK) { 
 	  //Skalak-Law = Standard
-	  e1 = iaparams->p.triel.ks*(i1+1)/6.0;
-	  e2 = (-1)*iaparams->p.triel.ks/6.0 + iaparams->p.triel.ka*i2/6.0;
+	  e1 = iaparams->p.stretching_force_ibm.ks*(i1+1)/6.0;
+	  e2 = (-1)*iaparams->p.stretching_force_ibm.ks/6.0 + iaparams->p.stretching_force_ibm.ka*i2/6.0;
 	}
     
     //For sake of better readability shorten the call for the triangle's constants:
-	A0 = iaparams->p.triel.Area0; 
-	a1 = iaparams->p.triel.a1; a2 = iaparams->p.triel.a2; a3 = iaparams->p.triel.a3;
-	b1 = iaparams->p.triel.b1; b2 = iaparams->p.triel.b2; b3 = iaparams->p.triel.b3;
+	A0 = iaparams->p.stretching_force_ibm.Area0; 
+	a1 = iaparams->p.stretching_force_ibm.a1; a2 = iaparams->p.stretching_force_ibm.a2; a3 = iaparams->p.stretching_force_ibm.a3;
+	b1 = iaparams->p.stretching_force_ibm.b1; b2 = iaparams->p.stretching_force_ibm.b2; b3 = iaparams->p.stretching_force_ibm.b3;
 	
     f1_rot[0] = A0*((-1)*e1*((i11*2*a1*dxx)+(i12*2*b1*dxy))+ (-1)*e2*((i21*2*a1*dxx)+(i22*(a1*dxy+b1*dxx))+(i23*(a1*dxy+b1*dxx))+(i24*2*b1*dxy)));
     f1_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b1*dyy))+ (-1)*e2*((i21*0.0)+(i22*a1*dyy)+(i23*a1*dyy)+(i24*2*b1*dyy)));

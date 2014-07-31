@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _VVOLUME_TCL_H
-#define _VVOLUME_TCL_H
+#ifndef _VOLUME_CONSERVATION_IMMERSED_BOUNDARY_TCL_H
+#define _VOLUME_CONSERVATION_IMMERSED_BOUNDARY_TCL_H
 
 #include "parser.hpp"
 

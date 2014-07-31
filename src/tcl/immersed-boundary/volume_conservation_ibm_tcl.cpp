@@ -19,26 +19,38 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "immersed-boundary/vvolume.hpp"
+#include "immersed-boundary/volume_conservation_ibm_tcl.hpp"
+#include "immersed-boundary/volume_conservation_ibm.hpp"
+#include "communication.hpp"
+#include "parser.hpp"
 
-double *CentVV;
-int setvo = 1;
-int vescnum = 0;
-double *VVol;
-double VVolo[200] = {0.0};
-
-void SetCentVV() {
-  int i;
-  CentVV = (double *) malloc(4*vescnum*sizeof(double));
-  for(i=0; i<4*vescnum; i++) {
-    CentVV[i]=0.0;
+int tclcallback_vescnum(Tcl_Interp *interp, void *_data) {
+  int data = *(int *)_data;
+  
+  if (data < 0 || data > 200) {
+    Tcl_AppendResult(interp, "vescnum must be positive and smaller than 200.", (char *) NULL);
+    return (TCL_ERROR);
   }
+  vescnum = data;
+  mpi_bcast_parameter(FIELD_VESCNUM);
+  return (TCL_OK);
 }
 
-void SetVVol() {
+int tclcallback_vvolo(Tcl_Interp *interp, void *_data) {
+  double *data = (double*)_data;
   int i;
-  VVol = (double *) malloc(vescnum*sizeof(double));
-  for(i=0; i<vescnum; i++) {
-    VVol[i]=0.0;
+	
+  for(i=0; i<200; i++) {
+		
+    if(data[i]<0.0) {
+      Tcl_AppendResult(interp, "illegal value, Volume must be positive", (char *) NULL);
+      return (TCL_ERROR);
+    }
+		
+    VVolo[i]=data[i];
   }
+	
+  mpi_bcast_parameter(FIELD_VVOLO);
+	
+  return (TCL_OK);
 }

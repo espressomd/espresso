@@ -75,8 +75,8 @@ libEspressoTcl_la_SOURCES = \
 	uwerr_tcl.cpp \
 	virtual_sites_com_tcl.cpp virtual_sites_com_tcl.hpp \
 	ghmc_tcl.cpp ghmc_tcl.hpp \
-	immersed-boundary/vvolume_tcl.cpp \
-	immersed-boundary/vvolume_tcl.hpp
+	immersed-boundary/volume_conservation_ibm_tcl.cpp \
+	immersed-boundary/volume_conservation_ibm_tcl.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \
@@ -124,8 +124,8 @@ libEspressoTcl_la_SOURCES += \
 	object-in-fluid/stretchlin_force_tcl.hpp \
 	object-in-fluid/volume_force_tcl.cpp \
 	object-in-fluid/volume_force_tcl.hpp \
-	immersed-boundary/triel_tcl.cpp \
-	immersed-boundary/triel_tcl.hpp
+	immersed-boundary/stretching_force_ibm_tcl.cpp \
+	immersed-boundary/stretching_force_ibm_tcl.hpp
 
 # Coulomb methods
 libEspressoTcl_la_SOURCES += \

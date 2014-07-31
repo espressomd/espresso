@@ -1,5 +1,5 @@
-#ifndef VVOLUME_H
-#define VVOLUME_H
+#ifndef VOLUME_CONSERVATION_IMMERSED_BOUNDARY_H
+#define VOLUME_CONSERVATION_IMMERSED_BOUNDARY_H
 
 #include "utils.hpp"
 #include "interaction_data.hpp"
@@ -59,13 +59,13 @@ inline void GetCentroidV() {
       }
     }
     
-#ifdef VVOLUME_TRACE
+#ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY_TRACE
     fprintf(stderr, "@node %d: t = %lf Before MPI_Allreduce Centroid\n", this_node, sim_time);
 #endif    
     
     MPI_Allreduce(temp,CentVV,4*vescnum,MPI_DOUBLE,MPI_SUM,comm_cart);  
     
-#ifdef VVOLUME_TRACE
+#ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY_TRACE
     fprintf(stderr, "@node %d: t = %lf After MPI_Allreduce Centroid\n", this_node, sim_time);
 #endif      
     
@@ -150,7 +150,7 @@ inline void GetVolumeV() {
 	      }
 	      
 	      //Get Volume Fragment
-	      if(type == TRIEL_IA) {
+	      if(type == STRETCHING_FORCE_IBM_IA) {
 		
 		get_mi_vector(x1,p[i].r.p,rm);
 		get_mi_vector(x2,p2->r.p,rm);
@@ -167,13 +167,13 @@ inline void GetVolumeV() {
       }//end for particles in cell
     } //end for all cells
      
-#ifdef VVOLUME_TRACE
+#ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY_TRACE
     fprintf(stderr, "@node %d: t = %lf Before MPI_Allreduce Volume\n", this_node, sim_time);
 #endif    
      
      MPI_Allreduce(temp, VVol, vescnum, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-#ifdef VVOLUME_TRACE
+#ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY_TRACE
     fprintf(stderr, "@node %d: t = %lf After MPI_Allreduce Volumne\n", this_node, sim_time);
 #endif        
 

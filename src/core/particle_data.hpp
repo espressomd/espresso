@@ -236,7 +236,7 @@ typedef struct {
   ParticleMomentum m_ls;
 #endif
 
-#ifdef LBTRACERS
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
    /**stores the particle velocity at the previous time step*/
   double v_old[3];
 #endif

@@ -33,7 +33,7 @@ void update_mol_vel_pos()
 
    // ORDER MATTERS! Update_mol_vel may rely on correct positions of virtual particcles
 
-#ifdef LBTRACERS
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
    update_mol_vel();
    update_mol_pos();
 #else
@@ -76,7 +76,7 @@ void update_mol_pos()
     //only for real particles
   }
 
-#ifdef LBTRACERS
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
    //Needed if tracers cross a box border
    announce_resort_particles();
 #endif

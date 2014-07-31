@@ -19,16 +19,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "immersed-boundary/triel.hpp"
+#include "immersed-boundary/stretching_force_ibm.hpp"
 
 
-#ifdef TRIELASTIC
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
 #include "communication.hpp"
 
-//default law neo-hookean use setmd triel_law 1 to change to skalak
-int triel_law = 0;
+//default law neo-hookean use setmd stretching_force_ibm_law 1 to change to skalak
+int stretching_force_ibm_law = 0;
 
-int triel_set_params(int bond_type, int ind1, int ind2, int ind3, double max, double ks, double ka) {
+int stretching_force_ibm_set_params(int bond_type, int ind1, int ind2, int ind3, double max, double ks, double ka) {
 	Particle part1, part2, part3;
 	double templo[3], templpo[3],vecpro[3];
 	double lo, lpo, sinpo, cospo;
@@ -70,22 +70,22 @@ int triel_set_params(int bond_type, int ind1, int ind2, int ind3, double max, do
 	b3 = lpo/area2;
 
 	//Hand these values over to parameter structure
-  	bonded_ia_params[bond_type].p.triel.a1 = a1;
-  	bonded_ia_params[bond_type].p.triel.a2 = a2;
-	bonded_ia_params[bond_type].p.triel.a3 = a3;
-  	bonded_ia_params[bond_type].p.triel.b1 = b1;
-  	bonded_ia_params[bond_type].p.triel.b2 = b2;
-  	bonded_ia_params[bond_type].p.triel.b3 = b3;
-  	bonded_ia_params[bond_type].p.triel.lo = lo;
-  	bonded_ia_params[bond_type].p.triel.lpo = lpo;
-  	bonded_ia_params[bond_type].p.triel.sinpo = sinpo;
-  	bonded_ia_params[bond_type].p.triel.cospo = cospo;
-	bonded_ia_params[bond_type].p.triel.Area0 = 0.5*area2;
-  	bonded_ia_params[bond_type].p.triel.maxdist = max;
-  	bonded_ia_params[bond_type].p.triel.ks = ks;
-  	bonded_ia_params[bond_type].p.triel.ka = ka;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.a1 = a1;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.a2 = a2;
+	bonded_ia_params[bond_type].p.stretching_force_ibm.a3 = a3;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.b1 = b1;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.b2 = b2;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.b3 = b3;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.lo = lo;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.lpo = lpo;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.sinpo = sinpo;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.cospo = cospo;
+	bonded_ia_params[bond_type].p.stretching_force_ibm.Area0 = 0.5*area2;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.maxdist = max;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.ks = ks;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.ka = ka;
   	
-  	bonded_ia_params[bond_type].type = TRIEL_IA;
+  	bonded_ia_params[bond_type].type = STRETCHING_FORCE_IBM_IA;
     bonded_ia_params[bond_type].num = 2;
   	
   	//Communicate this to whoever is interested
@@ -99,7 +99,7 @@ int triel_set_params(int bond_type, int ind1, int ind2, int ind3, double max, do
 	return ES_OK;
 }
 
-int triel_reset_params(int bond_type, double lo, double lpo, double cospo, double sinpo, double Area0, double max, double ks, double ka) {
+int stretching_force_ibm_reset_params(int bond_type, double lo, double lpo, double cospo, double sinpo, double Area0, double max, double ks, double ka) {
   
 	double a1, a2, a3, b1, b2, b3;
 	double area2;
@@ -120,25 +120,25 @@ int triel_reset_params(int bond_type, double lo, double lpo, double cospo, doubl
 	b3 = lpo/area2;
 
 	//Hand these values over to parameter structure
-	//bonded_ia_params[bond_type].p.triel.ind1 = ind1;
-	//bonded_ia_params[bond_type].p.triel.ind2 = ind2;
-	//bonded_ia_params[bond_type].p.triel.ind3 = ind3;
-  	bonded_ia_params[bond_type].p.triel.a1 = a1;
-  	bonded_ia_params[bond_type].p.triel.a2 = a2;
-	bonded_ia_params[bond_type].p.triel.a3 = a3;
-  	bonded_ia_params[bond_type].p.triel.b1 = b1;
-  	bonded_ia_params[bond_type].p.triel.b2 = b2;
-  	bonded_ia_params[bond_type].p.triel.b3 = b3;
-  	bonded_ia_params[bond_type].p.triel.lo = lo;
-  	bonded_ia_params[bond_type].p.triel.lpo = lpo;
-  	bonded_ia_params[bond_type].p.triel.sinpo = sinpo;
-  	bonded_ia_params[bond_type].p.triel.cospo = cospo;
-	bonded_ia_params[bond_type].p.triel.Area0 = 0.5*area2;
-  	bonded_ia_params[bond_type].p.triel.maxdist = max;
-  	bonded_ia_params[bond_type].p.triel.ks = ks;
-  	bonded_ia_params[bond_type].p.triel.ka = ka;
+	//bonded_ia_params[bond_type].p.stretching_force_ibm.ind1 = ind1;
+	//bonded_ia_params[bond_type].p.stretching_force_ibm.ind2 = ind2;
+	//bonded_ia_params[bond_type].p.stretching_force_ibm.ind3 = ind3;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.a1 = a1;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.a2 = a2;
+	bonded_ia_params[bond_type].p.stretching_force_ibm.a3 = a3;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.b1 = b1;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.b2 = b2;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.b3 = b3;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.lo = lo;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.lpo = lpo;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.sinpo = sinpo;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.cospo = cospo;
+	bonded_ia_params[bond_type].p.stretching_force_ibm.Area0 = 0.5*area2;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.maxdist = max;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.ks = ks;
+  	bonded_ia_params[bond_type].p.stretching_force_ibm.ka = ka;
   	
-  	bonded_ia_params[bond_type].type = TRIEL_IA;
+  	bonded_ia_params[bond_type].type = STRETCHING_FORCE_IBM_IA;
     bonded_ia_params[bond_type].num = 2;
   	
   	//Communicate this to whoever is interested

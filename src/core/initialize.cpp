@@ -66,7 +66,7 @@
 #include "external_potential.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
-#include "immersed-boundary/vvolume.hpp"
+#include "immersed-boundary/volume_conservation_ibm.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -626,7 +626,7 @@ void on_parameter_change(int field)
 #endif
   case FIELD_DPD_IGNORE_FIXED_PARTICLES:
     break;
-#ifdef VVOLUME
+#ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY
   case FIELD_VESCNUM:
     SetCentVV();
     SetVVol();

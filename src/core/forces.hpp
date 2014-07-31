@@ -84,7 +84,7 @@
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "collision.hpp" 
-#include "immersed-boundary/triel.hpp"
+#include "immersed-boundary/stretching_force_ibm.hpp"
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
@@ -577,9 +577,9 @@ inline void add_bonded_force(Particle *p1)
       force[0]=force[1]=force[2]=0.0;
       break;
 #endif
-#ifdef TRIELASTIC
-    case TRIEL_IA:
-      bond_broken=calc_triel_force(p1,p2,p3,iaparams,force,force2);
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+    case STRETCHING_FORCE_IBM_IA:
+      bond_broken=calc_stretching_force_ibm(p1,p2,p3,iaparams,force,force2);
     break; 
 #endif
     default :

@@ -28,8 +28,8 @@ noinst_LTLIBRARIES = libEspresso.la
 libEspresso_la_SOURCES = \
 	config-features.cpp \
 	cells.cpp cells.hpp \
-	immersed-boundary/vvolume.cpp immersed-boundary/vvolume.hpp \
-	immersed-boundary/lbtracers.cpp immersed-boundary/lbtracers.hpp \
+	immersed-boundary/volume_conservation_ibm.cpp immersed-boundary/volume_conservation_ibm.hpp \
+	immersed-boundary/virtual_sites_ibm.cpp immersed-boundary/virtual_sites_ibm.hpp \
 	collision.cpp collision.hpp \
 	communication.cpp communication.hpp \
 	comfixed.cpp comfixed.hpp \
@@ -143,7 +143,7 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
 	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp \
-	immersed-boundary/triel.cpp immersed-boundary/triel.hpp
+	immersed-boundary/stretching_force_ibm.cpp immersed-boundary/stretching_force_ibm.hpp
 
 # Coulomb methods
 libEspresso_la_SOURCES += \

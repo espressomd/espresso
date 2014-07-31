@@ -57,7 +57,7 @@
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
 #include "actor/HarmonicWell_tcl.hpp"
-#include "immersed-boundary/vvolume_tcl.hpp"
+#include "immersed-boundary/volume_conservation_ibm_tcl.hpp"
 
 
 #ifdef TK

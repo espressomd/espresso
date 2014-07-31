@@ -19,21 +19,21 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _LBTRACERS_H
-#define _LBTRACERS_H
+#ifndef STRETCHING_FORCE_IBM_TCL_H
+#define STRETCHING_FORCE_IBM_TCL_H
+//Interface for stretching_force_ibm.h/c
 
-#include "config.hpp"
-#include "particle_data.hpp"
+#include "parser.hpp"
+#include "interaction_data.hpp"
 
-#ifdef LBTRACERS
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
 
-//Update Position ~ Euler/Runge-Kutta/Adams-Bashforth
-void update_mol_pos_particle(Particle *);
-//Update Velocity ~ Get interpolated velocity of LB , update old velocity for ab integration
-void update_mol_vel_particle(Particle *);
-//Since no 'real' particles are involved, this function will stay empty
-void distribute_mol_force();
 
-#endif 
+int tclcommand_inter_parse_stretching_force_ibm(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+
+
+int tclprint_to_result_stretching_force_ibmIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
+
+#endif
 
 #endif

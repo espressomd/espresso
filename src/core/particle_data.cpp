@@ -243,7 +243,7 @@ void init_particle(Particle *part)
     part->l.m_ls.omega[2] = 0.0;
   #endif
 
-#ifdef LBTRACERS
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
   part->l.v_old[0] = 0.0;
   part->l.v_old[1] = 0.0;
   part->l.v_old[2] = 0.0;

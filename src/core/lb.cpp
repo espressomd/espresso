@@ -3184,8 +3184,8 @@ void calc_particle_lattice_ia() {
     /* communicate the random numbers */
     ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
 
-// #ifdef TRIELASTIC
-//     ghost_communicator(&cell_structure.ghost_triel_comm);
+// #ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+//     ghost_communicator(&cell_structure.ghost_stretching_force_ibm_comm);
 // #endif    
     
     /* local cells */
@@ -3263,8 +3263,6 @@ void lb_ibm_coupling() {
   int i, c, np;
   Cell *cell ;
   Particle *p ;
-  double force[3];
-
 
   if (transfer_momentum) {
 
@@ -3289,8 +3287,8 @@ void lb_ibm_coupling() {
     /* communicate the random numbers */
     ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
 
-#ifdef TRIELASTIC
-    ghost_communicator(&cell_structure.ghost_triel_comm);
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+    ghost_communicator(&cell_structure.ghost_stretching_force_ibm_comm);
 #endif
 
     /* local cells */

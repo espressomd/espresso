@@ -19,14 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "immersed-boundary/triel_tcl.hpp"
+#include "immersed-boundary/stretching_force_ibm_tcl.hpp"
 #include "global.hpp"
-#ifdef TRIELASTIC
-#include "immersed-boundary/triel.hpp"
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+#include "immersed-boundary/stretching_force_ibm.hpp"
 #include "communication.hpp"
 
-/// parse parameters for the triel potential
-int tclcommand_inter_parse_triel(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+/// parse parameters for the stretching_force_ibm potential
+int tclcommand_inter_parse_stretching_force_ibm(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   int ind1, ind2, ind3;
   double max, ks, ka;
@@ -74,7 +74,7 @@ int tclcommand_inter_parse_triel(Tcl_Interp *interp, int bond_type, int argc, ch
 	return TCL_ERROR;
       }
   
-    CHECK_VALUE(triel_set_params(bond_type, ind1, ind2, ind3, max,ks,ka), "bond type must be nonnegative");
+    CHECK_VALUE(stretching_force_ibm_set_params(bond_type, ind1, ind2, ind3, max,ks,ka), "bond type must be nonnegative");
     
   } else {
     
@@ -126,43 +126,43 @@ int tclcommand_inter_parse_triel(Tcl_Interp *interp, int bond_type, int argc, ch
 	return TCL_ERROR;
       }
     
-      CHECK_VALUE(triel_reset_params(bond_type, lo, lpo, cospo, sinpo, Area0, max,ks,ka), "bond type must be nonnegative");
+      CHECK_VALUE(stretching_force_ibm_reset_params(bond_type, lo, lpo, cospo, sinpo, Area0, max,ks,ka), "bond type must be nonnegative");
     
   }
 }
 
 
-int tclcallback_triel_law(Tcl_Interp *interp, void *_data) {
+int tclcallback_stretching_force_ibm_law(Tcl_Interp *interp, void *_data) {
   int data = *(int *)_data;
   
   if (data < 0 || data > 1) {
-    Tcl_AppendResult(interp, "triel law is either 0 or 1.", (char *) NULL);
+    Tcl_AppendResult(interp, "stretching_force_ibm law is either 0 or 1.", (char *) NULL);
     return (TCL_ERROR);
   }
-  triel_law = data;
-  mpi_bcast_parameter(FIELD_TRIEL_LAW);
+  stretching_force_ibm_law = data;
+  mpi_bcast_parameter(FIELD_STRETCHING_FORCE_IBM_LAW);
   return (TCL_OK);
 }
 
-int tclprint_to_result_trielIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
+int tclprint_to_result_stretching_force_ibmIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
-   Tcl_PrintDouble(interp, params->p.triel.lo, buffer);
-  Tcl_AppendResult(interp, "triel ", buffer," ", (char *) NULL);
-   Tcl_PrintDouble(interp, params->p.triel.lpo, buffer);
+   Tcl_PrintDouble(interp, params->p.stretching_force_ibm.lo, buffer);
+  Tcl_AppendResult(interp, "stretching_force_ibm ", buffer," ", (char *) NULL);
+   Tcl_PrintDouble(interp, params->p.stretching_force_ibm.lpo, buffer);
   Tcl_AppendResult(interp," ",buffer, " ", (char *) NULL);
-   Tcl_PrintDouble(interp, params->p.triel.cospo, buffer);
+   Tcl_PrintDouble(interp, params->p.stretching_force_ibm.cospo, buffer);
   Tcl_AppendResult(interp," ", buffer, " ", (char *) NULL);
-   Tcl_PrintDouble(interp, params->p.triel.sinpo, buffer);
+   Tcl_PrintDouble(interp, params->p.stretching_force_ibm.sinpo, buffer);
     Tcl_AppendResult(interp," ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.triel.Area0, buffer);
+    Tcl_PrintDouble(interp, params->p.stretching_force_ibm.Area0, buffer);
   Tcl_AppendResult(interp," ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, params->p.triel.maxdist, buffer);
+  Tcl_PrintDouble(interp, params->p.stretching_force_ibm.maxdist, buffer);
   Tcl_AppendResult(interp," ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, params->p.triel.ks, buffer);
+  Tcl_PrintDouble(interp, params->p.stretching_force_ibm.ks, buffer);
   Tcl_AppendResult(interp," ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, params->p.triel.ka, buffer);
+  Tcl_PrintDouble(interp, params->p.stretching_force_ibm.ka, buffer);
   Tcl_AppendResult(interp," ", buffer, " ", (char *) NULL);
   return TCL_OK;
 }

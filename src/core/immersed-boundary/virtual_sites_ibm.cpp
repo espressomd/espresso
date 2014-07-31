@@ -19,14 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "immersed-boundary/lbtracers.hpp"
+#include "immersed-boundary/virtual_sites_ibm.hpp"
 #include "lb.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
 #include "communication.hpp"
 #include "particle_data.hpp"
 
-#ifdef LBTRACERS
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
 
 //Update Position ~ Euler/Adams Bashforth
 void update_mol_pos_particle(Particle *p) {
