@@ -408,6 +408,14 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
   cos1 = (cos1 > COS_MAX) ? COS_MAX : cos1;
   cos1 = (cos1 < COS_MIN) ? COS_MIN : cos1;
 
+#ifdef CG_DNA_DEBUG
+  double vec1o[3];
+  vec1o[0] = vec1[0];
+  vec1o[1] = vec1[1];
+  vec1o[2] = vec1[2];
+#endif
+
+
   cross(rcci, rccj_p, vec1);
 
   const double sin1 = (dot(vec1, n1) < 0.) ? -sqrt(1.-SQR(cos1)) : sqrt(1.-SQR(cos1));
@@ -478,12 +486,15 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
   } else {
     tau_tilt = cos1*cos1;
     f_tilt = -2.*pot_twist_ref*cos1;
-    
+
+    get_mi_vector(veci, bi1->r.p, si2->r.p);
+    get_mi_vector(vecj, bj1->r.p, sj2->r.p);
+
     for(int i = 0; i < 3; i++) {
       ui[i] = f_tilt*(anj[i] - cos1*ani[i])/ani_l;
       uj[i] = f_tilt*(ani[i] - cos1*anj[i])/anj_l;
-      veci[i] = bi1->r.p[i] - si2->r.p[i] + rcb2[i];
-      vecj[i] = bj1->r.p[i] - sj2->r.p[i] + rcb2j[i];
+      veci[i] += rcb2[i];
+      vecj[i] +=rcb2j[i];
     }
 
     cross(ui, rcci, f_tilt_bi1);
@@ -550,10 +561,18 @@ inline int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi
     PS(rcci_l);
     PS(rccj_l);
 
-    PS( dot(vec1,n1));
-    PS( dot(vec2,n1));
-    PS( dot(vec3,n2));
-    PS( dot(vec4,n2));
+    PV(vec1o);
+    PV(vec2);
+    PV(vec3);
+    PV(vec4);
+
+    PV(n1);
+    PV(n2);
+
+    PS(dot(vec1o,n1));
+    PS(dot(vec2,n1));
+    PS(dot(vec3,n2));
+    PS(dot(vec4,n2));
 
     PS(r);
     PS(cos1);
