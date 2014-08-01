@@ -532,19 +532,12 @@ extern "C" {
 
 	free(p3m_gpu_data.G_hat_host);
 
-	cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
-	cudaMalloc((void **)&(p3m_gpu_data.force_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
-	cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(REAL_TYPE));
-
-	p3m_gpu_data.G_hat_host = (REAL_TYPE *)malloc(mesh3*sizeof(REAL_TYPE));
-      
-	//	printf("mesh3 = %d, p3m_gpu_data.charge_mesh = %p\n", mesh3, p3m_gpu_data.charge_mesh);
-
 	cufftDestroy(p3m_gpu_data.fft_plan);
-	cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
+
+	p3m_gpu_data_initialized = 0;
       }
 
-      if(p3m_gpu_data_initialized == 0) {
+      if(p3m_gpu_data_initialized == 0 && mesh > 0) {
 	cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
 	cudaMalloc((void **)&(p3m_gpu_data.force_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
 	cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(REAL_TYPE));
@@ -554,7 +547,7 @@ extern "C" {
 	cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
       }
 
-      if((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) {
+      if(((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) && mesh > 0) {
 	// // Calculate influence function of host.
 	calculate_influence_function( cao, mesh, box, alpha, p3m_gpu_data.G_hat_host);
 
@@ -654,9 +647,8 @@ extern "C" {
   
     // assign_forces_3<<<gridAssignment, threadsAssignment, cao*cao*cao*sizeof(REAL_TYPE)>>>(lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 2);
 
-
-    const int n_part = p3m_gpu_data.npart;
-    int n_blocks = n_part / 24 + 1;
+    //const int n_part = p3m_gpu_data.npart;
+    //int n_blocks = n_part / 24 + 1;
 
     dim3 gridAssignment2(1,1,1);
     dim3 threadsAssignment2(1,1,1);

@@ -108,8 +108,9 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	constraints_system.data \
         p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
-	p3m_wall_system.data \
-	p3m_system.data el2d_system.data el2d_system_die.data \
+	p3m_wall_system.data p3m_wall_system_gpu.data \
+	p3m_system.data p3m_system_gpu.data \
+	el2d_system.data el2d_system_die.data \
 	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
