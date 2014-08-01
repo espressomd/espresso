@@ -85,19 +85,6 @@ static int btm, top;
 
 #define SQRLEN(A) (SQR((A[0])) + SQR((A[1])) + SQR((A[2])))
 
-void layered_get_mi_vector(double res[3], double a[3], double b[3])
-{
-  int i;
-
-  for(i=0;i<2;i++) {
-    res[i] = a[i] - b[i];
-#ifdef PARTIAL_PERIODIC
-    if (PERIODIC(i))
-#endif
-      res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
-  }
-  res[2] = a[2] - b[2];
-}
 
 Cell *layered_position_to_cell(double pos[3])
 {
