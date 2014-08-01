@@ -83,6 +83,8 @@ double layer_h = 0, layer_h_i = 0;
 
 static int btm, top;
 
+#define SQRLEN(A) (SQR((A[0])) + SQR((A[1])) + SQR((A[2])))
+
 void layered_get_mi_vector(double res[3], double a[3], double b[3])
 {
   int i;
@@ -587,7 +589,7 @@ void layered_calculate_ia()
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-	dist2 = sqrlen(d);
+	dist2 = SQRLEN(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pl[j]))
 #endif
@@ -597,7 +599,7 @@ void layered_calculate_ia()
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-	dist2 = sqrlen(d);
+	dist2 = SQRLEN(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pb[j]))
 #endif
@@ -643,7 +645,7 @@ void layered_calculate_energies()
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-	dist2 = sqrlen(d);
+	dist2 = SQRLEN(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pl[j]))
 #endif
@@ -653,7 +655,7 @@ void layered_calculate_energies()
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-	dist2 = sqrlen(d);
+	dist2 = SQRLEN(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pb[j]))
 #endif
@@ -700,7 +702,7 @@ void layered_calculate_virials(int v_comp)
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-	dist2 = sqrlen(d);
+	dist2 = SQRLEN(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pl[j]))
 #endif
@@ -710,7 +712,7 @@ void layered_calculate_virials(int v_comp)
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-	dist2 = sqrlen(d);
+	dist2 = SQRLEN(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pb[j]))
 #endif
