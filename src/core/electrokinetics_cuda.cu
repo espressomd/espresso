@@ -731,9 +731,10 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ( ek_parameters_gpu.valency[species_index] *
                ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index] -
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_UU0]]
-               ) / ek_parameters_gpu.agrid +
-               ek_parameters_gpu.ext_force[0][species_index] +
-               ek_parameters_gpu.ext_force[1][species_index]
+               ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
+               ( ek_parameters_gpu.ext_force[0][species_index] +
+                 ek_parameters_gpu.ext_force[1][species_index]
+               ) / sqrtf(2.0f)
              )
            );
           
@@ -772,9 +773,10 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ( ek_parameters_gpu.valency[species_index] *
                ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index] -
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_UD0]]
-               ) / ek_parameters_gpu.agrid +
-               ek_parameters_gpu.ext_force[0][species_index] -
-               ek_parameters_gpu.ext_force[1][species_index]
+               ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
+               ( ek_parameters_gpu.ext_force[0][species_index] -
+                 ek_parameters_gpu.ext_force[1][species_index]
+               ) / sqrtf(2.0f)
              )
            );
 
@@ -813,9 +815,10 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ( ek_parameters_gpu.valency[species_index] *
                ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index] -
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_U0U]]
-               ) / ek_parameters_gpu.agrid +
-               ek_parameters_gpu.ext_force[0][species_index] +
-               ek_parameters_gpu.ext_force[2][species_index]
+               ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
+               ( ek_parameters_gpu.ext_force[0][species_index] +
+                 ek_parameters_gpu.ext_force[2][species_index]
+               ) / sqrtf(2.0f)
              )
            );
  
@@ -853,9 +856,10 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ( ek_parameters_gpu.valency[species_index] *
                ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index] -
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_U0D]]
-               ) / ek_parameters_gpu.agrid +
-               ek_parameters_gpu.ext_force[0][species_index] -
-               ek_parameters_gpu.ext_force[2][species_index]
+               ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
+               ( ek_parameters_gpu.ext_force[0][species_index] -
+                 ek_parameters_gpu.ext_force[2][species_index]
+               ) / sqrtf(2.0f)
              )
            );
 
@@ -893,9 +897,10 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ( ek_parameters_gpu.valency[species_index] *
                ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index] -
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_0UU]]
-               ) / ek_parameters_gpu.agrid +
-               ek_parameters_gpu.ext_force[1][species_index] +
-               ek_parameters_gpu.ext_force[2][species_index]
+               ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
+               ( ek_parameters_gpu.ext_force[1][species_index] +
+                 ek_parameters_gpu.ext_force[2][species_index]
+               ) / sqrtf(2.0f)
              )
            );
 
@@ -933,9 +938,10 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ( ek_parameters_gpu.valency[species_index] *
                ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index] -
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_0UD]]
-               ) / ek_parameters_gpu.agrid +
-               ek_parameters_gpu.ext_force[1][species_index] -
-               ek_parameters_gpu.ext_force[2][species_index]
+               ) / (sqrtf(2.0f) * ek_parameters_gpu.agrid) +
+               ( ek_parameters_gpu.ext_force[1][species_index] -
+                 ek_parameters_gpu.ext_force[2][species_index]
+               ) / sqrtf(2.0f)
              )
            );
 
