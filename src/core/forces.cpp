@@ -24,6 +24,7 @@
  *  For more information see \ref forces.hpp "forces.h".
 */
 #include <mpi.h>
+#include "forces_inline.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -294,8 +295,7 @@ void calc_long_range_forces()
 /************************************************************/
 
 /** initialize the forces for a real particle */
-inline void init_local_particle_force(Particle *part)
-{
+void init_local_particle_force(Particle *part) {
   if ( thermo_switch & THERMO_LANGEVIN )
     friction_thermo_langevin(part);
   else {
@@ -340,7 +340,7 @@ inline void init_local_particle_force(Particle *part)
 }
 
 /** initialize the forces for a ghost particle */
-inline void init_ghost_force(Particle *part)
+void init_ghost_force(Particle *part)
 {
   part->f.f[0] = 0;
   part->f.f[1] = 0;
