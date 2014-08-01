@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef STRETCHING_FORCE_IMMERSED_BOUNDARY_H
-#define STRETCHING_FORCE_IMMERSED_BOUNDARY_H
+#ifndef STRETCHING_FORCE_IBM_H
+#define STRETCHING_FORCE_IBM_H
 
 #include "utils.hpp"
 #include "interaction_data.hpp"
@@ -35,7 +35,7 @@
 const int NEO_HOOK = 0;
 const int SKALAK = 1;
 
-extern int stretching_force_ibm_law;
+extern int stretching_force_law_ibm;
 
 /*@}*/
   /** Some general remarks:
@@ -165,11 +165,11 @@ inline int calc_stretching_force_ibm(Particle *p_ind1, Particle *p_ind2, Particl
 	i11 = 1.0; i12 = 1.0;
 	i21 = gyy; i22 = -gyx; i23 = i22; i24 = gxx;
 	
-	if(stretching_force_ibm_law == NEO_HOOK) { 
+	if(stretching_force_law_ibm == NEO_HOOK) { 
 	  e1 = iaparams->p.stretching_force_ibm.ks/6.0;
 	  e2 = (-1)*iaparams->p.stretching_force_ibm.ks/(6.0*(i2+1.0)*(i2+1.0));
 	}
-	  else if(stretching_force_ibm_law == SKALAK) { 
+	  else if(stretching_force_law_ibm == SKALAK) { 
 	  //Skalak-Law = Standard
 	  e1 = iaparams->p.stretching_force_ibm.ks*(i1+1)/6.0;
 	  e2 = (-1)*iaparams->p.stretching_force_ibm.ks/6.0 + iaparams->p.stretching_force_ibm.ka*i2/6.0;

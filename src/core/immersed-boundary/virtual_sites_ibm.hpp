@@ -19,13 +19,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _VIRTUAL_SITES_IMMERSED_BOUNDARY_H
-#define _VIRTUAL_SITES_IMMERSED_BOUNDARY_H
+#ifndef _VIRTUAL_SITES_IBM_H
+#define _VIRTUAL_SITES_IBM_H
 
 #include "config.hpp"
 #include "particle_data.hpp"
 
 #ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
+
+extern int integration_rule_ibm;
 
 //Update Position ~ Euler/Runge-Kutta/Adams-Bashforth
 void update_mol_pos_particle(Particle *);

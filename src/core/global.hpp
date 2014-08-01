@@ -189,7 +189,9 @@ extern const Datafield fields[];
 /** index of \ref VVolo in \ref #fields */
 #define FIELD_VVOLO				  54
 /** index of \ref STRETCHING_FORCE_IBM_LAW in \ref #fields */
-#define FIELD_STRETCHING_FORCE_IBM_LAW				  55
+#define FIELD_STRETCHING_FORCE_LAW_IBM				  55
+/** index of \ref INTEGRATION_RULE_IBM in \ref #fields */
+#define INTEGRATION_RULE_IBM				  56
 /*@}*/
 
 

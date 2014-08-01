@@ -132,15 +132,15 @@ int tclcommand_inter_parse_stretching_force_ibm(Tcl_Interp *interp, int bond_typ
 }
 
 
-int tclcallback_stretching_force_ibm_law(Tcl_Interp *interp, void *_data) {
+int tclcallback_stretching_force_law_ibm(Tcl_Interp *interp, void *_data) {
   int data = *(int *)_data;
   
   if (data < 0 || data > 1) {
-    Tcl_AppendResult(interp, "stretching_force_ibm law is either 0 or 1.", (char *) NULL);
+    Tcl_AppendResult(interp, "stretching_force_law for immersed boundary method is either 0 (neo-hookean) or 1 (skalak.", (char *) NULL);
     return (TCL_ERROR);
   }
-  stretching_force_ibm_law = data;
-  mpi_bcast_parameter(FIELD_STRETCHING_FORCE_IBM_LAW);
+  stretching_force_law_ibm = data;
+  mpi_bcast_parameter(FIELD_STRETCHING_FORCE_LAW_IBM);
   return (TCL_OK);
 }
 

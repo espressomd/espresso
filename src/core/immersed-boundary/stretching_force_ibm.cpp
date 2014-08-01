@@ -26,7 +26,7 @@
 #include "communication.hpp"
 
 //default law neo-hookean use setmd stretching_force_ibm_law 1 to change to skalak
-int stretching_force_ibm_law = 0;
+int stretching_force_law_ibm = 0;
 
 int stretching_force_ibm_set_params(int bond_type, int ind1, int ind2, int ind3, double max, double ks, double ka) {
 	Particle part1, part2, part3;

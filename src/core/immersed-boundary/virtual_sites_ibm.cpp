@@ -28,6 +28,8 @@
 
 #ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
 
+int integration_rule_ibm = 1;
+
 //Update Position ~ Euler/Adams Bashforth
 void update_mol_pos_particle(Particle *p) {
   //Do Euler/Adams Bashforth for particle p; assume velocity and previous velocity has already been calculated 
@@ -37,11 +39,14 @@ void update_mol_pos_particle(Particle *p) {
 		
   for(j=0;j<3;j++) 
     {
-      // // Euler
-      // p->r.p[j] = p->r.p[j] + p->m.v[j]*time_step;
-
-      // Two-step Adams–Bashforth
-      p->r.p[j] = p->r.p[j] + (((1.5*p->m.v[j]) - (0.5*p->l.v_old[j]))*time_step);
+      if(integration_rule_ibm == 0) {
+	// Euler
+	p->r.p[j] = p->r.p[j] + p->m.v[j]*time_step;
+      }
+      else if(integration_rule_ibm == 1) { 
+	// Two-step Adams–Bashforth
+	p->r.p[j] = p->r.p[j] + (((1.5*p->m.v[j]) - (0.5*p->l.v_old[j]))*time_step);
+      }
     }
 	    
   // Check if a particle might have crossed a box border (Verlet criterium); 
