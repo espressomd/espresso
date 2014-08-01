@@ -78,8 +78,7 @@ libEspressoTcl_la_SOURCES = \
 	immersed-boundary/virtual_sites_ibm_tcl.hpp \
 	immersed-boundary/volume_conservation_ibm_tcl.cpp \
 	immersed-boundary/volume_conservation_ibm_tcl.hpp \
-	ghmc_tcl.cpp ghmc_tcl.hpp \
-
+	ghmc_tcl.cpp ghmc_tcl.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \

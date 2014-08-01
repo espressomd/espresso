@@ -96,7 +96,7 @@ const Datafield fields[] = {
   {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles",          1 },         /* 52 from global.cpp */
   {&vescnum,            TYPE_INT, 1, "vescnum",           7 },         /* 53 from immersed_boundary/volume_conservation_ibm.cpp */
   {VVolo,			 TYPE_DOUBLE, MAX_DIMENSION, "vvolo",           5 },         /* 54 from immersed_boundary/volume_conservation_ibm.cpp */
-  {&stretching_force_ibm_law,			 TYPE_INT, 1, "stretching_force_law_ibm",  8},         /* 55 from immersed_boundary/stretching_force_ibm.cpp */
+  {&stretching_force_law_ibm,			 TYPE_INT, 1, "stretching_force_law_ibm",  8},         /* 55 from immersed_boundary/stretching_force_ibm.cpp */
   {&integration_rule_ibm,			 TYPE_INT, 1, "integration_rule_ibm",  8},         /* 56 from immersed_boundary/virtual_sites_ibm */
   { NULL, 0, 0, NULL, 0 }
 };

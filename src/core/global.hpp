@@ -191,7 +191,7 @@ extern const Datafield fields[];
 /** index of \ref STRETCHING_FORCE_IBM_LAW in \ref #fields */
 #define FIELD_STRETCHING_FORCE_LAW_IBM				  55
 /** index of \ref INTEGRATION_RULE_IBM in \ref #fields */
-#define INTEGRATION_RULE_IBM				  56
+#define FIELD_INTEGRATION_RULE_IBM				  56
 /*@}*/
 
 
