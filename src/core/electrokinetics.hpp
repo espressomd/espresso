@@ -70,6 +70,7 @@ typedef struct {
   cufftComplex* charge_potential;
   float* j;
   float* lb_force_previous;
+  int use_nonlinear_stencil;
   float* rho[MAX_NUMBER_OF_SPECIES];
   int species_index[MAX_NUMBER_OF_SPECIES];
   float density[MAX_NUMBER_OF_SPECIES];
@@ -158,6 +159,7 @@ int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
+int ek_set_use_nonlinear_stencil(int use_nonlinear_stencil);
 int ek_node_print_velocity( int x, int y, int z, double* velocity );
 int ek_node_print_density( int species, int x, int y, int z, double* density );
 

@@ -40,6 +40,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
 
   int err = TCL_OK;
   int species;
+  int intarg;
   double floatarg;
   double vectarg[3];
   int coord[3];
@@ -64,7 +65,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
   if(argc < 2) 
   {
     Tcl_AppendResult(interp, "Usage of \"electrokinetics\":\n\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics [agrid #float] [lb_density #float] [viscosity #float] [friction #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics [agrid #float] [lb_density #float] [viscosity #float] [friction #float] [use_nonlinear_stencil]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float] [T #float] [bjerrum_length #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags> vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics node #int #int #int print <velocity>\n", (char *)NULL);
@@ -1310,6 +1311,27 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
         }     
 #endif 
+      }
+      else if(ARG0_IS_S("use_nonlinear_stencil")) {
+        if(argc < 2 || !ARG1_IS_I(intarg) || (intarg != 0 && intarg != 1) ) 
+        {
+          Tcl_AppendResult(interp, "electrokinetics use_nonlinear_stencil requires 0 or 1 as argument\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else 
+        {
+          if(ek_set_use_nonlinear_stencil(intarg) == 0) 
+          {
+            argc -= 2;
+            argv += 2;
+          }
+          else 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics use_nonlinear_stencil\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+      
       }
       else 
       {
