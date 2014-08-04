@@ -25,15 +25,18 @@
 #############################################################
 source "tests_common.tcl"
 
-require_feature "LBTRACERS"
+require_feature "IMMERSED_BOUNDARY"
+require_feature "VIRTUAL_SITES_IMMERSED_BOUNDARY"
+require_feature "STRETCHING_FORCE_IMMERSED_BOUNDARY"
 require_feature "EXTERNAL_FORCES"
 require_feature "LB"
-require_feature "LB_BOUNDARY"
+require_feature "LB_BOUNDARIES"
 
-set error_margin 1e-5 
+set error_margin 1e-5
+set disp_margin 1e-1
 
 puts "---------------------------------------------------------------"
-puts "- Testcase lbtracers.tcl running on 1 nodes"
+puts "- Testcase triel.tcl running on  [format %02d [setmd n_nodes]] nodes: -"
 puts "---------------------------------------------------------------"
 
 # Box geometry
@@ -158,7 +161,6 @@ set part_force [expr 0.01*$zeta]
 set taurelax 1
 set dt_lb [expr ($taurelax - 0.5)*$gridsize*$gridsize/(3*$nu)]
 set dt_md [expr $dt_lb]
-set numSteps 100
 
 # Dimensionless numbers following Le
 # both in espresso and SI units for consistency check
@@ -190,6 +192,11 @@ puts "kC = $kC"
 puts "kbT = $kbT"
 puts "zeta = $zeta"
 
+# Verify that the triangle tries to maintain it's shape during $numSteps steps after a single x + 1.0 stretch to a vertex
+
+# Set maximum bond stretch length
+set maxStretch 2
+
 # setting Boxlength
 setmd box_l $boxx $boxy $boxz
 
@@ -206,51 +213,122 @@ lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 0
 #setting themostat
 thermostat lb $kbT
 
-part 1 pos 5 5 6 virtual 
-part 2 pos 5 5 4 virtual
+set numSteps 100
 
+part 0 pos 2 2 0 virtual 1
+part 1 pos 4 2 0 virtual 1
+part 2 pos 2 5 0 virtual 1
+
+inter 0 triel 0 1 2 $maxStretch $kS 0
+part 0 bond 0 1 2
+
+puts [part 0 print pos ]
 puts [part 1 print pos ]
 puts [part 2 print pos ]
 
+set part1PosRef [part 1 print pos]
+set part2PosRef [part 2 print pos]
 
 integrate 0
-if { ([part 1 print pos] != "5.0 5.0 6.0") || ([part 2 print pos] != "5.0 5.0 4.0")} {
+if { ([part 0 print pos] != "2.0 2.0 0.0") || ([part 1 print pos] != "4.0 2.0 0.0")  || ([part 2 print pos] != "2.0 5.0 0.0") } {
  error_exit  "Error: lbtracers incorrectly positioned: [part 1 print pos] [part 2 print pos]"
 } else {
  puts "OK: Position of lbtracers"
 }
 
+part 1 pos [expr [lindex $part1PosRef 0] + 1.0]  [lindex $part1PosRef 1]  [lindex $part1PosRef 2]
+part 2 pos [expr [lindex $part2PosRef 0] + 2.0]  [lindex $part2PosRef 1]  [lindex $part2PosRef 2]
+ 
 set error 0
 puts "Checking "
 for {set step 0} {$step < $numSteps} {incr step} {
-integrate 1
-# Verify that velocity of the lbtracers matches the velocity of fluid near their positions
-set part1v [part 1 print v]
-set part2v [part 2 print v]
+    integrate 1
 
-set part1pos [part 1 print pos]
-set part2pos [part 2 print pos]
-
-set part1lbv [lbfluid print_interpolated_velocity [lindex $part1pos 0] [lindex $part1pos 1] [lindex $part1pos 2]]
-set part2lbv [lbfluid print_interpolated_velocity [lindex $part2pos 0] [lindex $part2pos 2] [lindex $part2pos 2]]
-
-if { [expr abs([lindex $part1v 0] - [lindex $part1lbv 0])] > $error_margin ||     
-[expr abs([lindex $part1v 1] - [lindex $part1lbv 1])] > $error_margin || 
-[expr abs([lindex $part1v 2] - [lindex $part1lbv 2])] > $error_margin} {
-
- error_exit "Error: Particle 1 velocity incorrect."
 }
 
-if { [expr abs([lindex $part2v 0] - [lindex $part2lbv 0])] > $error_margin ||     
-[expr abs([lindex $part2v 1] - [lindex $part2lbv 1])] > $error_margin || 
-[expr abs([lindex $part2v 2] - [lindex $part2lbv 2])] > $error_margin} {
+set part1PosComp [part 1 print pos]
+set part2PosComp [part 2 print pos]
 
- error_exit "Error: Particle 2 velocity incorrect."
-}
-}
-puts "OK: Velocities of lbtracer particles matches the lb fluid velocity at near their positions"
+if { [expr abs([lindex $part1PosRef 0] - [lindex $part1PosComp 0])] < $disp_margin } {
 
-# Testing wether periodic boundaries are handled correctly
+    error_exit "Error: Distance between particle 2 and particle 0 not reduced."
+}
+
+
+if { [expr abs([lindex $part2PosRef 0] - [lindex $part2PosComp 0])] < $disp_margin } {
+
+    error_exit "Error: Distance between particle 2 and particle 0 not reduced."
+}
+
+puts "OK: triangle tries to maintain it's shape during $numSteps steps after a single x + 1.0 stretch to a vertex "
+
+
+# Verify that the triangle maintains it's shape during $numSteps steps during a constant stretch of x + 0.01
+part delete
+
+# setting Boxlength
+setmd box_l $boxx $boxy $boxz
+
+# setting integration parameters
+# skin for verlet list
+setmd skin 0.1
+# timestep
+setmd time_step $dt_md
+
+setmd warnings 0
+
+# setting up the fluid with or without using gpu
+lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 0 0 0
+#setting themostat
+thermostat lb $kbT
+
+set numSteps 100
+
+part 0 pos 2 2 0 virtual 1
+part 1 pos 4 2 0 virtual 1
+part 2 pos 2 5 0 virtual 1
+
+inter 0 triel 0 1 2 $maxStretch $kS 0
+part 0 bond 0 1 2
+
+puts [part 0 print pos ]
+puts [part 1 print pos ]
+puts [part 2 print pos ]
+
+set part1PosRef [part 1 print pos]
+set part2PosRef [part 2 print pos]
+
+set posInc [expr 0.01 * $numSteps]
+
+set error 0
+puts "Checking "
+for {set step 0} {$step < $numSteps} {incr step} {
+    integrate 1
+    set part1pos [part 1 print pos]
+    part 1 pos [expr [lindex $part1pos 0] + 0.01]  [lindex $part1pos 1]  [lindex $part1pos 2]
+    set part2pos [part 2 print pos]
+    part 2 pos   [lindex $part2pos 0]  [expr [lindex $part2pos 1] + 0.01] [lindex $part2pos 2]
+
+}
+
+set part1PosComp [part 1 print pos]
+set part2PosComp [part 2 print pos]
+
+if { [expr abs([lindex $part1PosComp 0] - ([lindex $part1PosRef 0]) + $posInc)] < $disp_margin } {
+
+    error_exit "Error: Distance between particle 2 and particle 0 less than expected."
+}
+
+
+     if { [expr abs([lindex $part2PosComp 1] -  ([lindex $part2PosRef 1]) + $posInc)] < $disp_margin } {
+
+    error_exit "Error: Distance between particle 2 and particle 0 less than expected."
+}
+
+
+puts "OK: Triangle tries to maintain it's shape after $numSteps steps during a constant stretch displacement of x + 0.01 "
+
+# Verify that the triangle maintains it's shape during $numSteps steps in a homogenous flow in x direction
 part delete
 
 # setting Boxlength
@@ -269,42 +347,100 @@ lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 1
 #setting themostat
 thermostat lb $kbT
 
-part 1 pos 9 5 2 virtual 
-part 2 pos 9 2 3 virtual
+set numSteps 100
 
+part 0 pos 2 2 0 virtual 1
+part 1 pos 4 2 0 virtual 1
+part 2 pos 2 5 0 virtual 1
+
+inter 0 triel 0 1 2 $maxStretch $kS 0
+part 0 bond 0 1 2
+
+puts [part 0 print pos ]
 puts [part 1 print pos ]
 puts [part 2 print pos ]
 
+set l0 [vecsub [part 2 print pos] [part 0 print pos]]
+set lp0 [vecsub [part 1 print pos] [part 0 print pos]]
 
 set error 0
 puts "Checking "
 for {set step 0} {$step < $numSteps} {incr step} {
-integrate 1
-# Verify that velocity of the lbtracers matches the velocity of fluid near their positions
-set part1v [part 1 print v]
-set part2v [part 2 print v]
-
-set part1pos [part 1 print pos]
-set part2pos [part 2 print pos]
-
-set part1lbv [lbfluid print_interpolated_velocity [lindex $part1pos 0] [lindex $part1pos 1] [lindex $part1pos 2]]
-set part2lbv [lbfluid print_interpolated_velocity [lindex $part2pos 0] [lindex $part2pos 2] [lindex $part2pos 2]]
-
-if { [expr abs([lindex $part1v 0] - [lindex $part1lbv 0])] > $error_margin ||     
-[expr abs([lindex $part1v 1] - [lindex $part1lbv 1])] > $error_margin || 
-[expr abs([lindex $part1v 2] - [lindex $part1lbv 2])] > $error_margin} {
-
- error_exit "Error: Particle 1 velocity incorrect."
+    integrate 1
 }
 
-if { [expr abs([lindex $part2v 0] - [lindex $part2lbv 0])] > $error_margin ||     
-[expr abs([lindex $part2v 1] - [lindex $part2lbv 1])] > $error_margin || 
-[expr abs([lindex $part2v 2] - [lindex $part2lbv 2])] > $error_margin} {
+set l0_tmp [vecsub [part 2 print pos] [part 0 print pos]]
+set lp_tmp [vecsub [part 1 print pos] [part 0 print pos]]
 
- error_exit "Error: Particle 2 velocity incorrect."
-}
-}
-puts "OK: Handling of periodic boundaries"
+if { [expr abs([lindex $l0 0] - [lindex $l0_tmp 0])] > $error_margin ||     
+[expr abs([lindex $l0 1] - [lindex $l0_tmp 1])] > $error_margin || 
+[expr abs([lindex $l0 2] - [lindex $l0_tmp 2])] > $error_margin} {
 
+error_exit "Error: Distance between particle 2 and particle 0 incorrect."
+}
+
+
+if { [expr abs([lindex $lp0 0] - [lindex $lp_tmp 0])] > $error_margin ||     
+[expr abs([lindex $lp0 1] - [lindex $lp_tmp 1])] > $error_margin || 
+[expr abs([lindex $lp0 2] - [lindex $lp_tmp 2])] > $error_margin} {
+
+error_exit "Error: Distance between particle 1 and particle 0 incorrect."
+}
+
+puts "OK: Triangle maintains it's shape during $numSteps steps in a homogenous flow in x direction"
+
+# Verify that the forces on the triange vertices are balanced during the $numsteps steps in a flow in x direction
+part delete
+
+# setting Boxlength
+setmd box_l $boxx $boxy $boxz
+
+# setting integration parameters
+# skin for verlet list
+setmd skin 0.1
+# timestep
+setmd time_step $dt_md
+
+setmd warnings 0
+
+# setting up the fluid with or without using gpu
+lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 1 0 0
+#setting themostat
+thermostat lb $kbT
+
+set numSteps 100
+
+part 0 pos 2 2 0 virtual 1
+part 1 pos 4 2 0 virtual 1
+part 2 pos 2 5 0 virtual 1
+
+inter 0 triel 0 1 2 $maxStretch $kS 0
+part 0 bond 0 1 2
+
+puts [part 0 print pos ]
+puts [part 1 print pos ]
+puts [part 2 print pos ]
+
+set error 0
+puts "Checking "
+for {set step 0} {$step < $numSteps} {incr step} {
+    integrate 1
+    
+    set part0f [part 0 print f]
+    set part1f [part 1 print f]
+    set part2f [part 2 print f]
+
+    set f_tot [vecsub [vecadd $part0f $part1f] $part2f]
+    
+    if { [expr abs([lindex $f_tot 0])] > $error_margin ||     
+	 [expr abs([lindex $f_tot 1])] > $error_margin || 
+	 [expr abs([lindex $f_tot 2])] > $error_margin} {
+
+	error_exit "Error: Forces on triange unbalanced !."
+    }
+    
+}
+
+puts "OK: Forces on the triange vertices are balanced during the $numSteps steps in a flow in x direction"
 
 exit 0

@@ -33,7 +33,7 @@ proc addCell {originX originY originZ {num "0"}} {
   incr cellCount
 
   # read cell nodes
-  set nodefile [open "immersed_boundary_system-nodes.data" "r"]
+  set nodefile [open "~/Sources/espresso-fork/espresso/build/immersed_boundary_system-nodes.data" "r"]
   gets $nodefile numNodes
   set numNodesPerCell $numNodes
 
@@ -49,7 +49,7 @@ proc addCell {originX originY originZ {num "0"}} {
   close $nodefile
 
   # open triangle file
-  set trianfile [open "immersed_boundary_system-triangles.data" "r"]
+  set trianfile [open "~/Sources/espresso-fork/espresso/build/immersed_boundary_system-triangles.data" "r"]
   set intercount 0
   gets $trianfile numTri
 

@@ -35,11 +35,12 @@
 #    stored in FOR, VEL and POS corresponds to the reference configuration. 
 
 source "tests_common.tcl"
+source "immersed_boundary_system-tools.tcl"
 
 require_feature "IMMERSED_BOUNDARY"
-require_feature "LBTRACERS"
-require_feature "TRIEL"
-require_feature "VVOLUME"
+require_feature "VIRTUAL_SITES_IMMERSED_BOUNDARY"
+require_feature "STRETCHING_FORCE_IMMERSED_BOUNDARY"
+require_feature "VOLUME_CONSERVATION_IMMERSED_BOUNDARY"
 require_feature "LB"
 require_feature "LB_BOUNDARIES"
 
@@ -63,13 +64,13 @@ proc read_data {file} {
 proc write_data_init {file} {
     set f [open $file "w"]
     blockfile $f write variable box_l
-    blockfile $f write particles {id pos vel force}
+    blockfile $f write particles {id pos v f}
     close $f
 }
 
 proc write_data_final {file} {
     set f [open $file "w"]
-    blockfile $f write particles {id pos vel force}
+    blockfile $f write particles {id pos v f}
     close $f
 }
 
@@ -230,10 +231,6 @@ set Re_SI [expr $rad_SI*$v_mean_SI / $nu_SI]
 # set Sr [expr $kC/$kS]
 # set Sr_SI [expr $kc_SI / $ks_SI]
 
-# estimate final velocity, number of timesteps to get near Cell border
-set vel_final [expr $part_force / $zeta]
-set N_drag [expr $cellRad/($vel_final * $dt_md) ]
-
 # output
 puts "nu = $nu"
 puts "rho = $rho"
@@ -245,8 +242,6 @@ puts "kB = $kB"
 puts "kC = $kC"
 # puts "kbT = $kbT0"
 puts "zeta = $zeta"
-puts "final vel = $vel_final"
-puts "N_drag = $N_drag "
 puts "Radius = $r"
 puts "Shear Rate =  [expr ($G * $kS)] / [expr ($nu * $r)] * $H =  [expr ( ($G * $kS) / ($nu * $r) )]"
 puts "u = [expr $shear_rate * ($boxz - ($H/2))]"
@@ -302,7 +297,14 @@ incr numType
 
 if { [catch {
 
-  read_data "object_in_fluid_system-init.data"	
+    set write_init_data 0
+    # Here, you write the initial reference configuration in case you uncomment the next line
+    # set write_init_data 1
+    if { $write_init_data == 1} {
+	write_data_init "~/Sources/espresso-fork/espresso/build/immersed_boundary_system-init.data"
+	exit
+    }
+
 	
 	# main iteration loop
 	
@@ -319,7 +321,7 @@ if { [catch {
 	# Here, you write new reference configuration in case you uncomment the next line
   # set generate_new_data 1
 	if { $generate_new_data == 1} {
-	    write_data_final "immersed_boundary_system-final.data"
+	    write_data_final "~/Sources/espresso-fork/espresso/build/immersed_boundary_system-generate.data"
 	    exit
 	}
 	
@@ -331,7 +333,7 @@ if { [catch {
 	}
 	
 	# load reference configuration
-	read_data "object_in_fluid_system-final.data"
+	read_data "~/Sources/espresso-fork/espresso/build/immersed_boundary_system-final.data"
 	
 	set diffPOS 0.0
 	set diffVEL 0.0
@@ -377,7 +379,7 @@ if { [catch {
 	puts "		velocities: $diffVEL"
 	puts "		forces: $diffFOR"
 	if { $diffPOS > $tolerance || $diffVEL > $tolerance || $diffFOR > $tolerance } {
-	    error "A difference occured between the reference configuration and the computed configuration"
+	    error "A difference occured between the reference configuration and the computed configuration that is higher than the allowed tolerance value"
 	}
     } res ] } {
     error_exit $res
@@ -390,133 +392,133 @@ puts "OK: particle properties correspondence within a shear flow with volume con
 # SETUP 
 #########################################################################
 
-# setting Boxlength
-setmd box_l $boxx $boxy $boxz
+# # setting Boxlength
+# setmd box_l $boxx $boxy $boxz
 
-# setting integration parameters
-# skin for verlet list
-setmd skin 0.1
-# timestep
-setmd time_step $dt_md
-# coose how good no slip condition is: 0 non, 1 better
-# setmd sequ 1
+# # setting integration parameters
+# # skin for verlet list
+# setmd skin 0.1
+# # timestep
+# setmd time_step $dt_md
+# # coose how good no slip condition is: 0 non, 1 better
+# # setmd sequ 1
 
-setmd warnings 0
+# setmd warnings 0
 
-# setting up the fluid with or without using gpu
-lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force [expr $u*2] 0 0
-#setting themostat
-thermostat lb $kbT
+# # setting up the fluid with or without using gpu
+# lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force [expr $u*2] 0 0
+# #setting themostat
+# thermostat lb $kbT
 
-# cellsystem domain_decomposition -no_verlet_list
-# cellsystem nsquare
+# # cellsystem domain_decomposition -no_verlet_list
+# # cellsystem nsquare
 
-############## ADD WALL ##################
+# ############## ADD WALL ##################
 
-# walls located at z=1 and z=boxz-1 in x-y-plane
-lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity 0 0 0 
-lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity 0 0 0
+# # walls located at z=1 and z=boxz-1 in x-y-plane
+# lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity 0 0 0 
+# lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity 0 0 0
 
-################## ADD CELLS #############
-set interCount 0
-set cellCount 0
-set nodeCount 0
-set numNodesPerCell 0
+# ################## ADD CELLS #############
+# set interCount 0
+# set cellCount 0
+# set nodeCount 0
+# set numNodesPerCell 0
 
-set numType 0
+# set numType 0
 
-# number of cells
-set numCells 1
-# setmd vescnum $numCells
+# # number of cells
+# set numCells 1
+# # setmd vescnum $numCells
 
-addCell [expr $boxx*0.5] [expr $boxy*0.5] [expr $boxz*0.5] $numType
-# addCell 10 10 10 $numType
-incr numType
+# addCell [expr $boxx*0.5] [expr $boxy*0.5] [expr $boxz*0.5] $numType
+# # addCell 10 10 10 $numType
+# incr numType
 
 
-if { [catch {
+# if { [catch {
 
-  read_data "object_in_fluid_system-init.data"	
+#   read_data "object_in_fluid_system-init.data"	
 	
-	# main iteration loop
+# 	# main iteration loop
 	
-	set cycle 0 
-	while { $cycle < 100 } {
-	    puts -nonewline "time step $cycle/100\r"; flush stdout
+# 	set cycle 0 
+# 	while { $cycle < 100 } {
+# 	    puts -nonewline "time step $cycle/100\r"; flush stdout
        
-	    integrate 1
+# 	    integrate 1
 
-	    incr cycle
-	}
+# 	    incr cycle
+# 	}
 	
-	set generate_new_data 0
-	# Here, you write new reference configuration in case you uncomment the next line
-  # set generate_new_data 1
-	if { $generate_new_data == 1} {
-	    write_data_final "immersed_boundary_system-final.data"
-	    exit
-	}
+# 	set generate_new_data 0
+# 	# Here, you write new reference configuration in case you uncomment the next line
+#   # set generate_new_data 1
+# 	if { $generate_new_data == 1} {
+# 	    write_data_final "immersed_boundary_system-final.data"
+# 	    exit
+# 	}
 	
-	# store computed values for velocities, positions and forces
-	for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-	    set POS($i) [part $i pr pos]
-	    set VEL($i) [part $i pr v]
-	    set FOR($i) [part $i pr f]
-	}
+# 	# store computed values for velocities, positions and forces
+# 	for { set i 0 } { $i <= [setmd max_part] } { incr i } {
+# 	    set POS($i) [part $i pr pos]
+# 	    set VEL($i) [part $i pr v]
+# 	    set FOR($i) [part $i pr f]
+# 	}
 	
-	# load reference configuration
-	read_data "object_in_fluid_system-final.data"
+# 	# load reference configuration
+# 	read_data "object_in_fluid_system-final.data"
 	
-	set diffPOS 0.0
-	set diffVEL 0.0
-	set diffFOR 0.0
+# 	set diffPOS 0.0
+# 	set diffVEL 0.0
+# 	set diffFOR 0.0
 	
-	for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-	    set tmp [part $i pr pos]
-	    set Ax [lindex $tmp 0]
-	    set Ay [lindex $tmp 1]
-	    set Az [lindex $tmp 2]
-	    # stores the vector of the reference position for $i-th particle
-	    set Bx [lindex $POS($i) 0]
-	    set By [lindex $POS($i) 1]
-	    set Bz [lindex $POS($i) 2]
-	    # stores the vector of the computed position for $i-th particle
-	    set diffPOS [expr $diffPOS + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
+# 	for { set i 0 } { $i <= [setmd max_part] } { incr i } {
+# 	    set tmp [part $i pr pos]
+# 	    set Ax [lindex $tmp 0]
+# 	    set Ay [lindex $tmp 1]
+# 	    set Az [lindex $tmp 2]
+# 	    # stores the vector of the reference position for $i-th particle
+# 	    set Bx [lindex $POS($i) 0]
+# 	    set By [lindex $POS($i) 1]
+# 	    set Bz [lindex $POS($i) 2]
+# 	    # stores the vector of the computed position for $i-th particle
+# 	    set diffPOS [expr $diffPOS + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
 
-	    set tmp [part $i pr v]
-	    set Ax [lindex $tmp 0]
-	    set Ay [lindex $tmp 1]
-	    set Az [lindex $tmp 2]
-	    # stores the vector of the reference velocity for $i-th particle
-	    set Bx [lindex $VEL($i) 0]
-	    set By [lindex $VEL($i) 1]
-	    set Bz [lindex $VEL($i) 2]
-	    # stores the vector of the computed velocity for $i-th particle
-	    set diffVEL [expr $diffVEL + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
+# 	    set tmp [part $i pr v]
+# 	    set Ax [lindex $tmp 0]
+# 	    set Ay [lindex $tmp 1]
+# 	    set Az [lindex $tmp 2]
+# 	    # stores the vector of the reference velocity for $i-th particle
+# 	    set Bx [lindex $VEL($i) 0]
+# 	    set By [lindex $VEL($i) 1]
+# 	    set Bz [lindex $VEL($i) 2]
+# 	    # stores the vector of the computed velocity for $i-th particle
+# 	    set diffVEL [expr $diffVEL + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
 
-	    set tmp [part $i pr f]
-	    set Ax [lindex $tmp 0]
-	    set Ay [lindex $tmp 1]
-	    set Az [lindex $tmp 2]
-	    # stores the vector of the reference force for $i-th particle
-	    set Bx [lindex $FOR($i) 0]
-	    set By [lindex $FOR($i) 1]
-	    set Bz [lindex $FOR($i) 2]
-	    # stores the vector of the computed force for $i-th particle
-	    set diffFOR [expr $diffFOR + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
-	}
+# 	    set tmp [part $i pr f]
+# 	    set Ax [lindex $tmp 0]
+# 	    set Ay [lindex $tmp 1]
+# 	    set Az [lindex $tmp 2]
+# 	    # stores the vector of the reference force for $i-th particle
+# 	    set Bx [lindex $FOR($i) 0]
+# 	    set By [lindex $FOR($i) 1]
+# 	    set Bz [lindex $FOR($i) 2]
+# 	    # stores the vector of the computed force for $i-th particle
+# 	    set diffFOR [expr $diffFOR + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
+# 	}
 
-	puts "difference between the reference configuration and the computed configuration: "
-	puts "		positions: $diffPOS"
-	puts "		velocities: $diffVEL"
-	puts "		forces: $diffFOR"
-	if { $diffPOS > $tolerance || $diffVEL > $tolerance || $diffFOR > $tolerance } {
-	    error "A difference occured between the reference configuration and the computed configuration"
-	}
-    } res ] } {
-    error_exit $res
-}
+# 	puts "difference between the reference configuration and the computed configuration: "
+# 	puts "		positions: $diffPOS"
+# 	puts "		velocities: $diffVEL"
+# 	puts "		forces: $diffFOR"
+# 	if { $diffPOS > $tolerance || $diffVEL > $tolerance || $diffFOR > $tolerance } {
+# 	    error "A difference occured between the reference configuration and the computed configuration"
+# 	}
+#     } res ] } {
+#     error_exit $res
+# }
 
-puts "OK: particle properties correspondence within a Poiseuille flow with volume conservation after $cycle steps"
+# puts "OK: particle properties correspondence within a Poiseuille flow with volume conservation after $cycle steps"
 
 exit 0
