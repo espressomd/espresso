@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -25,7 +25,6 @@ require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 require_feature "CUDA"
 require_feature "FFTW"
-require_feature "NPT" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes"
@@ -61,9 +60,6 @@ if { [catch {
     ############## P3M-specific part
     # the P3M parameters are stored in p3m_system.data
 
-    # to ensure force recalculation
-#    inter coulomb n_interpol 0
-    invalidate_system
     integrate 0
 #after 99999
 

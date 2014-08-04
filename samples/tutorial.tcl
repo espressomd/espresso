@@ -4,7 +4,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -208,7 +208,7 @@ if { $vmd == "yes" } {
 # This calls a small tcl script which starts the program    #
 # VMD and opens a socket connection between ESPResSo and    #
 # VMD.                                                      #
-    prepare_vmd_connection tutorial start wait 3000 ignore_charges
+    prepare_vmd_connection tutorial start wait 3000
 
 # The additional command imd steers the socket connection   #
 # to VMD, e.g. sending the actual coordinates               #

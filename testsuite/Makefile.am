@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -39,6 +39,7 @@ tests = \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
 	exclusions.tcl \
+	external_potential.tcl \
 	fene.tcl \
 	gb.tcl \
 	ghmc.tcl \
@@ -55,7 +56,7 @@ tests = \
 	lb_gpu.tcl \
 	lb_planar.tcl \
 	lb_planar_gpu.tcl \
-  lb_planar_embedded_particles.tcl \
+	lb_planar_embedded_particles.tcl \
 	lb_planar_embedded_particles_gpu.tcl \
 	lb_stokes_sphere.tcl \
 	lb_stokes_sphere_gpu.tcl \
@@ -69,6 +70,7 @@ tests = \
 	mass-and-rinertia.tcl \
 	mdlc.tcl \
 	mmm1d.tcl \
+	mmm1dgpu.tcl \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
@@ -106,14 +108,16 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	constraints_system.data \
         p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
-	p3m_wall_system.data \
-	p3m_system.data el2d_system.data el2d_system_die.data \
+	p3m_wall_system.data p3m_wall_system_gpu.data \
+	p3m_system.data p3m_system_gpu.data \
+	el2d_system.data el2d_system_die.data \
 	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
 	gb_system.data uwerr.data \
 	tabulated_system.data lj1.tab lj2.tab lj3.tab \
 	fene_system.data.gz harm_system.data.gz \
+	harmonic_potential.dat \
 	intpbc_system.data.gz intppbc.tcl intppbc_system.data.gz \
 	npt_lj_system.data \
 	thermostat.data thermostat_rot.data \
@@ -140,4 +144,5 @@ CLEANFILES = runtest.log
 
 DISTCLEANFILES = \
 	fftw3_1d_wisdom_*.file \
-	dfftw3_1d_wisdom_*.file
+	dfftw3_1d_wisdom_*.file \
+	lattice_*.dat

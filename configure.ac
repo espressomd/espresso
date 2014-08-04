@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -25,7 +25,7 @@ AC_INIT([ESPResSo],[ESPRESSO_VERSION],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
 
-AC_CONFIG_SRCDIR([src/initialize.cpp])
+AC_CONFIG_SRCDIR([src/features.def])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_PREFIX_DEFAULT($HOME/Espresso)
@@ -33,7 +33,8 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialize automake
-AM_INIT_AUTOMAKE([1.11 gnu subdir-objects dist-xz])
+# tar-ustar is needed for filenames longer than 99 chars
+AM_INIT_AUTOMAKE([1.11 gnu tar-ustar subdir-objects dist-xz])
 AM_MAINTAINER_MODE
 
 # silent rules, backwards compatiblity
@@ -127,7 +128,18 @@ if test "${CXXFLAGS+set}" != set; then
   ],[
     AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
   ])
-  
+  # if not, try O3 (e.g. llvm does not support O5)
+  AS_IF([test x$try_add_flag_res = xno], [
+    AC_MSG_CHECKING([whether the compiler accepts -O3])
+    saved_CXXFLAGS=$CXXFLAGS
+    CXXFLAGS="-O3 $CXXFLAGS"
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
+      AC_MSG_RESULT(yes);try_add_flag_res=yes
+    ],[
+      AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
+    ])
+   ],[])
+
   ##################################
   # test for -Wall
   AC_MSG_CHECKING([whether the compiler accepts -Wall])
@@ -157,8 +169,8 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PATH_PROG(DOXYGEN,doxygen,no)
 AM_CONDITIONAL(HAVE_DOXYGEN,[test .$DOXYGEN != .no])
-AC_PATH_PROG(DOT,dot)
-if test "$DOT"; then HAVE_DOT=YES; else HAVE_DOT=NO; fi
+AC_PATH_PROG(DOT,dot,no)
+if test "$DOT" != no; then HAVE_DOT=YES; else HAVE_DOT=NO; fi
 AC_SUBST(HAVE_DOT)
 AC_SUBST(DOT_PATH, `AS_DIRNAME(["$DOT"])`)
 AC_PATH_PROG(PDFLATEX,pdflatex,no)
@@ -206,7 +218,6 @@ cat <<EOF
 EOF
 
 LIBS="$LIBS -lm"
-
 
 ##################################
 # check for FFTW
@@ -387,30 +398,32 @@ if test .$PYTHON != .no; then
    fi
 fi
 
-AC_MSG_CHECKING([whether to build the python interface])
+AC_MSG_CHECKING([whether the python interface is wanted])
 AC_ARG_WITH([python-interface], AS_HELP_STRING([--with-python-interface], 
-                      [specify whether or not to use python]),
-                      [], [with_python_interface=no])
+                      [specify whether or not to use python [guess]]),
+                      [], [with_python_interface=guess])
 AC_MSG_RESULT($with_python_interface)
 dnl with_python_interface=yes  try to find a working PYTHON devel version, 
 dnl                            bail out if none is found
+dnl with_python_interface=guess  try to find a working PYTHON devel version, 
 dnl with_python_interface=no   do not use python interface
 
-if test .$with_python_interface != .no; then
-   AX_PYTHON_DEVEL([>= '2.5'])
+AS_IF([test .$with_python_interface != .no], [
+	AX_PYTHON_DEVEL([>= '2.5'])
 
-   AC_PATH_PROG(CYTHON,cython,no)
-   AS_IF([test x$CYTHON = xno],[
-      AC_MSG_FAILURE([cython not found, which is necessary for the Python interface])
-   ])
+   	AC_PATH_PROG(CYTHON,cython,no)
+   	AS_IF([test .$CYTHON = .no],[build_python_interface=no],[build_python_interface=yes])
 
-   AX_PYTHON_MODULE(numpy, required)
-   AC_MSG_CHECKING([for numpy include path])
-   NUMPY_INCLUDE="`$PYTHON -c 'import numpy; import sys; sys.stdout.write(numpy.get_include())'`"
-   PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
-   AC_MSG_RESULT([$NUMPY_INCLUDE])
-   AC_DEFINE(PYTHON_DEV,[],[Whether Python is available])
-fi
+   	AX_PYTHON_MODULE(numpy, required)
+   	AC_MSG_CHECKING([for numpy include path])
+   	NUMPY_INCLUDE="`$PYTHON -c 'import numpy; import sys; sys.stdout.write(numpy.get_include())'`" #`
+   	PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$NUMPY_INCLUDE"
+   	AC_MSG_RESULT([$NUMPY_INCLUDE])
+
+	AS_IF([test .$with_python_interface = .yes && test .$build_python_interface = .no],
+		[AC_MSG_FAILURE([Cannot build python interface!])])
+   	AC_DEFINE(PYTHON_DEV,[],[Whether Python is available]) 
+])
 AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
 # export libtool objdir, so that we can link the .so files to the dir itself
 AC_SUBST(objdir)
@@ -463,6 +476,7 @@ if test .$use_tcl = . ; then
 fi
 
 case $target_os in
+  *darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Headers ;;
   *linux*)  # path used by *buntu
 	  extrapaths=/usr/include/$version ;;
 esac
@@ -537,6 +551,7 @@ Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
 		fi
 	fi
 	case $target_os in
+	*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
 	*linux*)  # path used by *buntu
 		  extrapaths="/usr/include/$version /usr/include/$use_tcl" ;;
 	(*) ;;
@@ -615,9 +630,9 @@ AC_CONFIG_FILES([
 	config/Makefile
 	config/myconfig-sample-header.hpp
 	src/Makefile
-        src/tcl/Makefile
-        src/python/Makefile
-        src/python/espresso/Makefile
+	src/core/Makefile
+	src/tcl/Makefile
+	src/python/espressomd/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
@@ -636,6 +651,8 @@ AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
+AC_CONFIG_FILES([src/python/pypresso],
+	[chmod 755 src/python/pypresso])
 
 AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/src/features.def $(top_srcdir)/config/gen_sampleconfig.py'])
 AC_CONFIG_COMMANDS([myconfig-sample.hpp],
@@ -694,10 +711,10 @@ Tk version		= $use_tk
 Python
 ------
 python			= $PYTHON
-build python interface  = $with_python_interface
+build python interface  = $build_python_interface
 EOF
 
-if test .$with_python_interface = .yes; then
+if test .$build_python_interface = .yes; then
   cat <<EOF
 preprocessor flags      = $PYTHON_CPPFLAGS
 linker flags            = $PYTHON_LDFLAGS
@@ -743,7 +760,7 @@ if test .$bibtex = .no; then
    echo "To be able to rebuild the user's guide, add bibtex to your PATH."
 fi
 if test .$doxygen = .no; then
-   echo "To be able to build the developer's guide, add doxygen to your PATH."
+   echo "To be able to build the developer's guide, add doxygen to your PATH." #'
 fi
 if test .$with_python_interface = .no; then
    echo "Not building Python interface."

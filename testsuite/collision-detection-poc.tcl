@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -104,9 +104,7 @@ if {$bonds != "{0 1}"} {
 }
 
 # Integrate again and make sure, no extra bonds are added
-# enforce force recalculation
-invalidate_system
-integrate 0
+integrate 0 recalc_forces
 
 # Check, whether the bonds are still correct, not doubled
 set bonds [analyze_topology 2]

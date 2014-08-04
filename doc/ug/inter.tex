@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -1486,6 +1486,7 @@ The parameter $\alpha$ that controlls the transition from Coulomb- to Debye-H\"u
  \opt{\var{fixed\_far\_cutoff}}
  \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
  \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
+ \opt{capacitor \var{U}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1513,6 +1514,28 @@ $\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}$. Using
 this form allows to choose $\Delta_{t/b}=-1$, corresponding to
 metallic boundary conditions.
 
+Using \keyword{capacitor} \var{U} allows to maintain a constant 
+electric potential difference \var{U} between the xy-plane at $z=0$ 
+and $z=L$, where $L$ denotes the box length in $z$-direction.
+This is done by countering the total dipol moment of
+the system with the electric field $E_{induced}$ and superposing 
+a homogeneous electric field $E_{applied} = \frac{U}{L}$ 
+to retain \var{U}. This mimics the induction of surface charges
+$\pm\sigma = E_{induced} \cdot \epsilon_0$ for planar electrodes at $z=0$ 
+and $z=L$ in a capacitor connected to a battery with voltage \var{U}.
+Using \var{capacitor} 0 is equivalent to $\Delta_{t/b}=-1$.
+
+\begin{essyntax}
+  efield_caps \alt{total \asep induced \asep applied}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+The electric fields added by \var{capacitor} \var{U} can be obtained 
+by calling the above command, where \var{induced} returns $E_{induced}$,
+\var{applied} returns $E_{applied}$ and \var{total} their sum.
+
 \subsection{MMM1D}
 \index{MMM1D method|mainindex}
 \index{interactions!MMM1D|mainindex}
@@ -1524,7 +1547,7 @@ metallic boundary conditions.
 \begin{essyntax}
   \variant{1}
   inter coulomb \var{l_B} mmm1d \var{switch\_radius}
-  \opt{\var{bessel\_cutoff}} \var{maximal\_pairwise\_error}
+  \var{maximal\_pairwise\_error}
 
   \variant{2}
   inter coulomb \var{l_B} mmm1d tune \var{maximal\_pairwise\_error}
@@ -1536,14 +1559,39 @@ MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
 nsquared cell system (see section \vref{sec:cell-systems}). The first
 form sets parameters manually. The switch radius determines at which
 xy-distance the force calculation switches from the near to the far
-formula. If the Bessel cutoff is not explicitly given, it is
-determined from the maximal pairwise error, otherwise this error only
-counts for the near formula. The second, tuning form just takes the
+formula. The Bessel cutoff does not need to be specified as it is
+automatically determined from the particle distances and maximal
+pairwise error. The second tuning form just takes the
 maximal pairwise error and tries out a lot of switching radii to find
 out the fastest one. If this takes too long, you can change the value
 of the setmd variable \keyword{timings}, which controls the number of
-test force calculations. For details on the MMM family of algorithms,
-refer to appendix \vref{chap:mmm}.
+test force calculations.
+
+\begin{essyntax}
+  \variant{1}
+  inter coulomb \var{l_B} mmm1dgpu \var{switch\_radius}
+  \opt{\var{bessel\_cutoff}} \var{maximal\_pairwise\_error}
+
+  \variant{2}
+  inter coulomb \var{l_B} mmm1dgpu tune \var{maximal\_pairwise\_error}
+  \begin{features}
+    \required{CUDA}
+	\required{ELECTROSTATICS}
+	\required{MMM1D_GPU}
+  \end{features}
+\end{essyntax}
+MMM1D is also available in a GPU implementation. Unlike its CPU
+counterpart, it  does not need the nsquared cell system. The first
+form sets parameters manually. The switch radius determines at which
+xy-distance the force calculation switches from the near to the far
+formula. If the Bessel cutoff is not explicitly given, it is
+determined from the maximal pairwise error, otherwise this error only
+counts for the near formula. The second tuning form just takes the
+maximal pairwise error and tries out a lot of switching radii to find
+out the fastest one.
+
+For details on the MMM family of algorithms, refer to appendix
+\vref{chap:mmm}.
 
 \subsection{Maxwell Equation Molecular Dynamics (MEMD)}
 \index{Maggs method|mainindex}
@@ -1699,6 +1747,7 @@ default.
   \opt{noneutralization}
   \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
   \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
+  \opt{capacitor \var{U}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1740,7 +1789,11 @@ if you add neutralizing walls explicitely as constraints, you have to
 disable the neutralization.
 
 The dielectric contrast features work exactly the same as for MMM2D,
-see the documentation above.
+see the documentation above. Same accounts for \keyword{capacitor} 
+\var{U}, but the constant potential is maintained between the xy-plane
+at $z=0$ and $z=L-gap\_size$. The command \var{efield\_caps} to read  
+out the electric fields added by \var{capacitor} \var{U} also applies 
+for the capacitor-feature of ELC.
 
 Make sure that you read the papers on ELC (\cite{elc,icelc})
 before using it.
@@ -1805,12 +1858,21 @@ the parameter \var{ext\_field}.
   \variant{2} dielectric wall normal \var{nx} \var{ny} \var{nz} dist \var{d} res \var{res}
   \variant{3} dielectric cylinder  center \var{cx} \var{cy} \var{cz} axis \var{ax} \var{ay} \var{az} radius \var{r} direction \var{d} 
   \variant{4} dielectric pore center \var{cx} \var{cy} \var{cz}  axis \var{ax} \var{ay} \var{az} radius \var{r} length \var {l} smoothing\_radius \var{rs} res \var{res}
+  \variant{5} dielectric slitpore pore_mouth \var{z} \
+             channel_width \var{c} \
+             pore_width \var{w} \
+             pore_length \var{l} \
+             upper_smoothing_radius \var{us} \
+             lower_smoothing_radius \var{ls} 
+
 \end{essyntax}
 
 The command \keyword{dielectric} allows to conveniently create
 dielectric interfaces similar to the constraint and the lbboundary
 command. Currently the creation of spherical, cylindrical and planar
-geometries as well as a pore geometry is supported. It is implemented
+geometries as well as a pore and slitpore geometry is supported.
+Please check the documentation of the corresponding constraint for the detailed geometry.
+It is implemented
 in Tcl and places particles in the right positions and adds the
 correct values to the global Tcl variables \var{icc\_areas}
 \var{icc\_normals} \var{icc\_sigmas} \var{icc\_epsilons} and increases

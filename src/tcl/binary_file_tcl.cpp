@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -148,7 +148,7 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
 
   for (p = 0; p <= max_seen_particle; p++) {
     Particle data;
-    if (get_particle_data(p, &data)) {
+    if (get_particle_data(p, &data) == ES_OK) {
       unfold_position(data.r.p, data.l.i);
 
       /* write particle index */

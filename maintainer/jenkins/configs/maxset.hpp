@@ -36,7 +36,7 @@
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
 #define EK_REACTION
-#define HARMONICFORCE
+#define MMM1D_GPU
 #endif
 
 #define AREA_FORCE_GLOBAL   
