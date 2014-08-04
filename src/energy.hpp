@@ -324,7 +324,7 @@ inline void add_bonded_energy(Particle *p1)
 	return;
       }
     }
-
+#ifdef CG_DNA
     if(n_partners >= 7) {
       p5 = local_particles[p1->bl.e[i++]];
       p6 = local_particles[p1->bl.e[i++]];
@@ -338,7 +338,7 @@ inline void add_bonded_energy(Particle *p1)
 	return;
       }
     }
-
+#endif
     /* similar to the force, we prepare the center-center vector */
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
