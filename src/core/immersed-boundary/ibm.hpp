@@ -27,6 +27,7 @@
 #ifndef IBM_H
 #define IBM_H
 
+#ifdef IMMERSED_BOUNDARY
 
 /** Calculates the coupling of virtual_sites_ibm to the LB fluid.
  * This function  is called from \ref force_calc. The force is retrieved
@@ -56,4 +57,5 @@ int lb_lbfluid_get_interpolated_velocity_lbtrace(double* p, double* v, int id);
  */
 void force_density_conversion_ibm();
 
+#endif
 #endif

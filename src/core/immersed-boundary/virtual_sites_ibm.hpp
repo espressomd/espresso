@@ -25,9 +25,9 @@
 #include "config.hpp"
 #include "particle_data.hpp"
 
-#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
-
 extern int integration_rule_ibm;
+
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
 
 //Update Position ~ Euler/Runge-Kutta/Adams-Bashforth
 void update_mol_pos_particle(Particle *);

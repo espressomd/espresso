@@ -29,13 +29,12 @@
 #include "lb.hpp"
 #include "integrate.hpp"
 
-#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+extern int stretching_force_law_ibm;
 
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
 
 const int NEO_HOOK = 0;
 const int SKALAK = 1;
-
-extern int stretching_force_law_ibm;
 
 /*@}*/
   /** Some general remarks:

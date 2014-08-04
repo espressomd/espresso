@@ -26,9 +26,9 @@
 #include "communication.hpp"
 #include "particle_data.hpp"
 
-#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
-
 int integration_rule_ibm = 1;
+
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
 
 //Update Position ~ Euler/Adams Bashforth
 void update_mol_pos_particle(Particle *p) {

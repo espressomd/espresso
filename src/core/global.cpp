@@ -35,6 +35,7 @@
 #include "lb.hpp"
 #include "immersed-boundary/volume_conservation_ibm.hpp"
 #include "immersed-boundary/stretching_force_ibm.hpp"
+#include "immersed-boundary/virtual_sites_ibm.hpp"
 
 /** This array contains the description of all global variables.
 
@@ -97,7 +98,7 @@ const Datafield fields[] = {
   {&vescnum,            TYPE_INT, 1, "vescnum",           7 },         /* 53 from immersed_boundary/volume_conservation_ibm.cpp */
   {VVolo,			 TYPE_DOUBLE, MAX_DIMENSION, "vvolo",           5 },         /* 54 from immersed_boundary/volume_conservation_ibm.cpp */
   {&stretching_force_law_ibm,			 TYPE_INT, 1, "stretching_force_law_ibm",  8},         /* 55 from immersed_boundary/stretching_force_ibm.cpp */
-  {&integration_rule_ibm,			 TYPE_INT, 1, "integration_rule_ibm",  8},         /* 56 from immersed_boundary/virtual_sites_ibm */
+  {&integration_rule_ibm,			 TYPE_INT, 1, "integration_rule_ibm",  8},         /* 56 from immersed_boundary/virtual_sites_ibm.cpp */
   { NULL, 0, 0, NULL, 0 }
 };
 

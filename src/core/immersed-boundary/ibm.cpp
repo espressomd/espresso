@@ -33,6 +33,8 @@
 #include "lb.cpp"
 #include "ibm.hpp"
 
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+
 void lb_ibm_coupling() { 
   
   int i, c, np;
@@ -284,3 +286,5 @@ void force_density_conversion_ibm() {
 #endif
   }
 }
+
+#endif
