@@ -29,6 +29,7 @@ tests = \
 	constraints_reflecting.tcl \
 	correlation.tcl \
 	constraints_rhomboid.tcl \
+	coulomb_cloud_wall.tcl \
 	dh.tcl \
 	dielectric.tcl \
 	ek_eof_one_species_x.tcl \
@@ -82,8 +83,6 @@ tests = \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
-	p3m_wall.tcl \
-	p3m_wall_gpu.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
@@ -106,9 +105,9 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	analysis_system.data.10.gz \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
+	coulomb_cloud_wall_system.data \
         p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
-	p3m_wall_system.data p3m_wall_system_gpu.data \
 	p3m_system.data p3m_system_gpu.data \
 	el2d_system.data el2d_system_die.data \
 	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
