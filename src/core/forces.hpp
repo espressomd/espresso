@@ -465,7 +465,7 @@ inline void add_bonded_force(Particle *p1)
 	return;
       }
     }    
-
+#ifdef CG_DNA
       if(n_partners >= 7) {
 	p5 = local_particles[p1->bl.e[i++]];
 	p6 = local_particles[p1->bl.e[i++]];
@@ -479,6 +479,7 @@ inline void add_bonded_force(Particle *p1)
 	return;
 	}
       }
+#endif
 
     if (n_partners == 1) {
       /* because of the NPT pressure calculation for pair forces, we need the
@@ -694,11 +695,14 @@ inline void add_bonded_force(Particle *p1)
 	  p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
 	  p4->f.f[j] += force2[j];
 	  break;
+#ifdef CG_DNA
 	default:
 	  p1->f.f[j] += force[j];
 	  p2->f.f[j] += force2[j];
 	  p3->f.f[j] += force3[j];
 	  p4->f.f[j] += force4[j];
+	  break;
+#endif
 	}
       }
       break;
