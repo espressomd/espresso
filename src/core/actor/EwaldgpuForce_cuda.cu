@@ -450,17 +450,17 @@ EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int nu
 }
 EwaldgpuForce::~EwaldgpuForce()
 {
-  cudaFree(m_k);
-  cudaFree(m_dev_k);
-  cudaFree(m_forces_reci);
-  cudaFree(m_dev_forces_reci);
-  cudaFree(m_infl_factor);
-  cudaFree(m_dev_infl_factor);
-  cudaFree(m_rho_hat);
-  cudaFree(m_dev_rho_hat);
-  cudaFree(m_energy_reci);
-  cudaFree(m_dev_energy_reci);
-  cudaFree(m_energy_self);
+	HANDLE_ERROR(cudaFree(m_k));
+	HANDLE_ERROR(cudaFree(m_dev_k));
+	HANDLE_ERROR(cudaFree(m_forces_reci));
+	HANDLE_ERROR(cudaFree(m_dev_forces_reci));
+  HANDLE_ERROR(cudaFree(m_infl_factor));
+  HANDLE_ERROR(cudaFree(m_dev_infl_factor));
+  HANDLE_ERROR(cudaFree(m_rho_hat));
+  HANDLE_ERROR(cudaFree(m_dev_rho_hat));
+  HANDLE_ERROR(cudaFree(m_energy_reci));
+  HANDLE_ERROR(cudaFree(m_dev_energy_reci));
+  HANDLE_ERROR(cudaFree(m_energy_self));
 }
 void EwaldgpuForce::setup(SystemInterface &s)
 {
@@ -482,28 +482,28 @@ void EwaldgpuForce::setup(SystemInterface &s)
 	compute_num_k();
 
 //	if (m_dev_k)
-//		cudaFree(m_dev_k);
+//		HANDLE_ERROR(cudaFree(m_dev_k));
 	HANDLE_ERROR(cudaMalloc((void**)&(m_dev_k),3*m_num_k*sizeof(real)));
 //	if (m_k)
-//		cudaFree(m_k);
+//		HANDLE_ERROR(cudaFree(m_k));
 	HANDLE_ERROR(cudaMallocHost((void**)&(m_k),3*m_num_k*sizeof(real)));
 //	if (m_dev_rho_hat)
-//		cudaFree(m_dev_rho_hat);
+//		HANDLE_ERROR(cudaFree(m_dev_rho_hat));
 	HANDLE_ERROR(cudaMalloc((void**)&(m_dev_rho_hat),2*m_num_k*sizeof(real)));
 //	if (m_rho_hat)
-//		cudaFree(m_rho_hat);
+//		HANDLE_ERROR(cudaFree(m_rho_hat));
 	HANDLE_ERROR(cudaMallocHost((void**)&(m_rho_hat),2*m_num_k*sizeof(real)));
 //	if (m_dev_infl_factor)
-//		cudaFree(m_dev_infl_factor);
+//		HANDLE_ERROR(cudaFree(m_dev_infl_factor));
 	HANDLE_ERROR(cudaMalloc((void**)&(m_dev_infl_factor),m_num_k*sizeof(real)));
 //	if (m_infl_factor)
-//		cudaFree(m_infl_factor);
+//		HANDLE_ERROR(cudaFree(m_infl_factor));
 	HANDLE_ERROR(cudaMallocHost((void**)&(m_infl_factor),m_num_k*sizeof(real)));
 //	if (m_dev_energy_reci)
-//		cudaFree(m_dev_energy_reci);
+//		HANDLE_ERROR(cudaFree(m_dev_energy_reci));
 	HANDLE_ERROR(cudaMalloc((void**)&(m_dev_energy_reci),sizeof(real)));
 //	if (m_energy_reci)
-//		cudaFree(m_energy_reci);
+//		HANDLE_ERROR(cudaFree(m_energy_reci));
 	HANDLE_ERROR(cudaMallocHost((void**)&(m_energy_reci),sizeof(real)));
 	m_energy_self = (real*)malloc(sizeof(real));
 
@@ -529,7 +529,7 @@ void EwaldgpuForce::setup(SystemInterface &s)
 	HANDLE_ERROR(cudaEventCreate(&(*stop)));
 	HANDLE_ERROR(cudaStreamCreate(&(*stream0)));
 	HANDLE_ERROR(cudaDeviceSynchronize());
-	cudaEventRecord(*start, 0);
+	HANDLE_ERROR(cudaEventRecord(*start, 0));
 
 	//Parameters
 	set_params(m_rcut, m_num_kx, m_num_ky, m_num_kz, m_alpha);
