@@ -352,6 +352,9 @@ void on_coulomb_change()
      since the required cutoff might have reduced. */
   on_short_range_ia_change();
 
+#ifdef CUDA
+  reinit_particle_comm_gpu = 1;
+#endif
   recalc_forces = 1;
 }
 
