@@ -58,6 +58,7 @@
 
 #include "EspressoSystemInterface.hpp"*/
 
+#include "p3m_gpu.hpp"
 #include "maggs.hpp"
 #include "forces_inline.hpp"
 ActorList forceActors;
