@@ -77,6 +77,10 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
       case CONSTRAINT_HOLLOW_CONE:
 	      calculate_hollow_cone_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist, vec); 
         break;
+      
+      case CONSTRAINT_SPHEROCYLINDER: 
+	      calculate_spherocylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.spherocyl, &dist, vec); 
+        break;
     }
     
     if (dist<*mindist || n == 0) {
@@ -138,6 +142,9 @@ void lb_init_boundaries() {
     }
 #endif
 
+FILE* fout = fopen("boundary.vtk", "w"); //TODO delete
+double testdistvec[3];
+fprintf( fout, "# vtk DataFile Version 2.0\nboundary distance\nASCII\n\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\n\nPOINT_DATA %u\nSCALARS boundary_distance float 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes); //TODO delete
 
     for(z=0; z<int(lbpar_gpu.dim_z); z++) {
       for(y=0; y<int(lbpar_gpu.dim_y); y++) {
@@ -187,6 +194,10 @@ void lb_init_boundaries() {
                 calculate_hollow_cone_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist_tmp, dist_vec);
                 break;
                 
+              case LB_BOUNDARY_SPHEROCYLINDER:
+                calculate_spherocylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.spherocyl, &dist_tmp, dist_vec);
+                break;
+
               default:
                 errtxt = runtime_error(128);
                 ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
@@ -194,6 +205,9 @@ void lb_init_boundaries() {
             
             if (dist > dist_tmp || n == 0) {
               dist = dist_tmp;
+testdistvec[0] = -dist_vec[0]; //TODO delete
+testdistvec[1] = -dist_vec[1];
+testdistvec[2] = -dist_vec[2];
               boundary_number = n;
             }
 #ifdef EK_BOUNDARIES
@@ -206,6 +220,10 @@ void lb_init_boundaries() {
             }
 #endif
           }
+
+fprintf(fout, "%e %e %e\n", testdistvec[0], testdistvec[1], testdistvec[2]); //TODO delete
+
+
 
 #ifdef EK_BOUNDARIES 
           if(pdb_boundary_lattice && 
@@ -245,6 +263,8 @@ void lb_init_boundaries() {
         }
       }
     }
+
+fclose(fout); //TODO delete
 
     /**call of cuda fkt*/
     float* boundary_velocity = (float *) malloc(3*(n_lb_boundaries+1)*sizeof(float));

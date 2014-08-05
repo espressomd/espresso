@@ -717,7 +717,19 @@ All these examples do the same - making exact copies of particles 1 through 4.
   type \var{id}
 
   \variant{13}
-  constraint mindist_position \var{x} \var{y} \var{z} 
+  constraint mindist_position \var{x} \var{y} \var{z}
+
+  \variant{14}
+  constraint hollow_cone center \var{x} \var{y} \var{z} orientation \var{ox} \var{oy} \var{oz}
+  outer_radius \var{Ro} inner_radius \var{Ri} width \var{w} opening_angle \var{alpha} direction \var{direction} 
+  type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
+
+  \variant{15}
+  constraint spherocylinder center \var{c_x} \var{c_y} \var{c_z} 
+  axis \var{n_x} \var{n_y} \var{n_z} 
+  radius \var{rad} length \var{length} 
+  direction \var{direction} 
+  type \var{id}  \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
 
   \begin{features}
     \required{CONSTRAINTS}
@@ -860,6 +872,14 @@ Variant \variant{11} creates an infinite plane at a fixed position. For
 non-initializing a direction of the constraint values of the positions
 have to be negative. For the tunable-slip boundary interactions you
 have to set \emph{two} constraints.
+
+Variant \variant{14} creates a hollow-cone shaped boundary. The position can be any point in the simulation
+box, and the orientation of the (cylindrically symmetric) cone is
+given by a vector, which points in the direction of the symmetry axis, it
+does not need to be normalized. The parameters: outer_radius \var{Ro},
+inner_radius \var{Ri}, width \var{w}, and opening_angle \var{alpha}, specify the shape of the object. The inner radius gives the narrow end opening size, the outer radius the length of the shaft, and the width the layer width, i.e., the thickness of the cone. The opening_angle (between 0 and $\pi/2$) specifies the angle of the cone. 
+
+Variant \variant{15} creates a spherocylinder, that is, a cylinder capped by a hemisphere on either side. The parameter length \var{length} specifies the length of the shaft, excluding the two hemispherical caps. 
 
 \minisec{Example}
 To create an infinite plane in $z$-direction at $z=20.0$ of type id 1,

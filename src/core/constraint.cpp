@@ -232,6 +232,42 @@ void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
   }
 }
 
+void calculate_spherocylinder_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_spherocylinder *c, double *dist, double *vec)
+{
+  int i;
+  double d = 0.0;
+  double ppos_local[3];
+
+  for(i = 0; i < 3; i++) {
+    ppos_local[i] = ppos[i] - c->pos[i];
+    d += ppos_local[i] * c->axis[i];
+  }
+
+  if(abs(d) >= c->length) {
+    *dist = 0.0;
+    
+    for(i = 0; i < 3; i++) {
+      vec[i] = ppos_local[i] - c->length * c->axis[i] * sign(d);
+      *dist += vec[i]*vec[i];
+    }
+
+    *dist = sqrt(*dist);
+    
+    if(*dist != 0.0)
+      for(i = 0; i < 3; i++)
+        vec[i] /= *dist;
+    
+    *dist -= c->rad;
+
+    for(i = 0; i < 3; i++)
+      vec[i] *= *dist;
+
+    *dist *= c->direction;
+  }
+  else
+    calculate_cylinder_dist(p1, ppos, c_p, (Constraint_cylinder*) c, dist, vec);
+}
+
 void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
 {	
 	double axb[3], bxc[3], axc[3];
@@ -1645,6 +1681,10 @@ void calculate_stomatocyte_dist( Particle *p1, double ppos [3],
   }
 
   // And we are done with the stomatocyte
+  
+  vec[0] *= *dist;
+  vec[1] *= *dist;
+  vec[2] *= *dist;
 }
 
 void calculate_hollow_cone_dist( Particle *p1, double ppos [3], 
@@ -2122,6 +2162,10 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
   }
 
   // And we are done with the hollow cone
+
+  vec[0] *= *dist;
+  vec[1] *= *dist;
+  vec[2] *= *dist;
 }
 
 

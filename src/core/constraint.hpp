@@ -60,6 +60,10 @@ void calculate_cylinder_dist(Particle *p1, double ppos[3],
 			     Particle *c_p, Constraint_cylinder *c, 
 			     double *dist, double *vec);
 
+void calculate_spherocylinder_dist(Particle *p1, double ppos[3], 
+			     Particle *c_p, Constraint_spherocylinder *c, 
+			     double *dist, double *vec);
+
 void calculate_rhomboid_dist(Particle *p1, double ppos[3], 
 			     Particle *c_p, Constraint_rhomboid *c, 
 			     double *dist, double *vec);
