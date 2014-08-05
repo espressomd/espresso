@@ -357,7 +357,7 @@ cdef class ParticleHandle:
     del self
 
 
-  IF VIRTUAL_SITES ==1:
+  IF VIRTUAL_SITES_RELATIVE == 1:
     # vs_auto_relate_to
     def vs_auto_relate_to(self,_relto):
       """Setup this particle as virtual site relative to the particle with the given id"""
