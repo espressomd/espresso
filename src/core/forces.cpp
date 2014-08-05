@@ -153,54 +153,60 @@ void calc_long_range_forces()
 {
 #ifdef ELECTROSTATICS  
 	/* calculate k-space part of electrostatic interaction. */
-	switch (coulomb.method) {
+  switch (coulomb.method) {
 #ifdef P3M
-	case COULOMB_ELC_P3M:
-		if (elc_params.dielectric_contrast_on) {
-			ELC_P3M_modify_p3m_sums_both();
-			ELC_p3m_charge_assign_both();
-			ELC_P3M_self_forces();
-		}
-		else
-			p3m_charge_assign();
-
-		p3m_calc_kspace_forces(1,0);
-
-		if (elc_params.dielectric_contrast_on)
-			ELC_P3M_restore_p3m_sums();
-
-		ELC_add_force();
-
-		break;
+  case COULOMB_ELC_P3M:
+    if (elc_params.dielectric_contrast_on) {
+      ELC_P3M_modify_p3m_sums_both();
+      ELC_p3m_charge_assign_both();
+      ELC_P3M_self_forces();
+    }
+    else
+      p3m_charge_assign();
+    
+    p3m_calc_kspace_forces(1,0);
+    
+    if (elc_params.dielectric_contrast_on)
+      ELC_P3M_restore_p3m_sums();
+    
+    ELC_add_force();
+    
+    break;
+#endif
 #ifdef CUDA
-	case COULOMB_P3M_GPU:
-		if (this_node == 0) p3m_gpu_add_farfield_force();
-                /* there is no NPT handling here as long as we cannot compute energies.
-                   This is checked in integrator_npt_sanity_checks() when integration starts. */
-		break;
+  case COULOMB_P3M_GPU:
+    if (this_node == 0) {
+      FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
+      p3m_gpu_add_farfield_force();
+    }
+    /* there is no NPT handling here as long as we cannot compute energies.
+       This is checked in integrator_npt_sanity_checks() when integration starts. */
+    break;
 #endif
-	case COULOMB_P3M:
-		p3m_charge_assign();
+#ifdef P3M
+  case COULOMB_P3M:
+    FORCE_TRACE(printf("%d: Computing P3M forces.\n", this_node));
+    p3m_charge_assign();
 #ifdef NPT
-		if(integ_switch == INTEG_METHOD_NPT_ISO)
-			nptiso.p_vir[0] += p3m_calc_kspace_forces(1,1);
-		else
+    if (integ_switch == INTEG_METHOD_NPT_ISO)
+      nptiso.p_vir[0] += p3m_calc_kspace_forces(1,1);
+    else
 #endif
-			p3m_calc_kspace_forces(1,0);
-		break;
+      p3m_calc_kspace_forces(1, 0);
+    break;
 #endif
-	case COULOMB_MAGGS:
-		maggs_calc_forces();
-		break;
-	case COULOMB_MMM2D:
-		MMM2D_add_far_force();
-		MMM2D_dielectric_layers_force_contribution();
-		break;
-	default:
-		break;
-	}
+  case COULOMB_MAGGS:
+    maggs_calc_forces();
+    break;
+  case COULOMB_MMM2D:
+    MMM2D_add_far_force();
+    MMM2D_dielectric_layers_force_contribution();
+    break;
+  default:
+    break;
+  }
 #endif  /*ifdef ELECTROSTATICS */
-
+  
 #ifdef DIPOLES  
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
