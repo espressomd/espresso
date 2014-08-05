@@ -21,7 +21,7 @@
 #ifndef _FORCES_INLINE_HPP
 #define _FORCES_INLINE_HPP
 
-#include "forces.hpp"
+/*#include "forces.hpp"
 
 #include <vector>
 #include "utils.hpp"
@@ -33,7 +33,6 @@
 #include "virtual_sites.hpp"
 #include "metadynamics.hpp"
 
-/* include the force files */
 #include "p3m.hpp"
 #include "p3m-dipolar.hpp"
 #include "lj.hpp"
@@ -79,7 +78,262 @@
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "collision.hpp" 
-#include "external_potential.hpp"
+#include "external_potential.hpp"*/
+
+#ifdef MOLFORCES
+#include "topology.hpp"
+#endif
+
+#include "magnetic_non_p3m_methods.hpp"
+#include "mdlc_correction.hpp"
+#include "constraint.hpp"
+#include "EspressoSystemInterface.hpp"
+#include "forces.hpp"
+
+#include "npt.hpp"
+#include "p3m-dipolar.hpp"
+#include "lj.hpp"
+#include "ljgen.hpp"
+#include "steppot.hpp"
+#include "hertzian.hpp"
+#include "gaussian.hpp"
+#include "bmhtf-nacl.hpp"
+#include "buckingham.hpp"
+#include "soft_sphere.hpp"
+#include "hat.hpp"
+#include "tab.hpp"
+#include "overlap.hpp"
+#include "ljcos.hpp"
+#include "ljcos2.hpp"
+#include "ljangle.hpp"
+#include "gb.hpp"
+#include "fene.hpp"
+#include "object-in-fluid/stretching_force.hpp"
+#include "object-in-fluid/stretchlin_force.hpp"
+#include "object-in-fluid/area_force_local.hpp"
+#include "object-in-fluid/area_force_global.hpp"
+#include "object-in-fluid/bending_force.hpp"
+#include "object-in-fluid/volume_force.hpp"
+#include "harmonic.hpp"
+#include "subt_lj.hpp"
+#include "angle_harmonic.hpp"
+#include "angle_cosine.hpp"
+#include "angle_cossquare.hpp"
+#include "angledist.hpp"
+#include "debye_hueckel.hpp"
+#include "endangledist.hpp"
+#include "reaction_field.hpp"
+#include "comforce.hpp"
+#include "comfixed.hpp"
+#include "molforces.hpp"
+#include "morse.hpp"
+#include "elc.hpp"
+#include "collision.hpp"
+
+/** initialize the forces for a ghost particle */
+inline void init_ghost_force(Particle *part)
+{
+  part->f.f[0] = 0;
+  part->f.f[1] = 0;
+  part->f.f[2] = 0;
+
+#ifdef ROTATION
+  {
+    double scale;
+    /* set torque to zero */
+    part->f.torque[0] = 0;
+    part->f.torque[1] = 0;
+    part->f.torque[2] = 0;
+
+    /* and rescale quaternion, so it is exactly of unit length */
+    scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
+          SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    part->r.quat[0]/= scale;
+    part->r.quat[1]/= scale;
+    part->r.quat[2]/= scale;
+    part->r.quat[3]/= scale;
+  }
+#endif
+}
+
+/** initialize the forces for a real particle */
+inline void init_local_particle_force(Particle *part) {
+  if ( thermo_switch & THERMO_LANGEVIN )
+    friction_thermo_langevin(part);
+  else {
+    part->f.f[0] = 0;
+    part->f.f[1] = 0;
+    part->f.f[2] = 0;
+  }
+
+#ifdef EXTERNAL_FORCES
+  if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
+    part->f.f[0] += part->l.ext_force[0];
+    part->f.f[1] += part->l.ext_force[1];
+    part->f.f[2] += part->l.ext_force[2];
+  }
+#endif
+
+#ifdef ROTATION
+  {
+    double scale;
+    /* set torque to zero */
+    part->f.torque[0] = 0;
+    part->f.torque[1] = 0;
+    part->f.torque[2] = 0;
+
+    #ifdef EXTERNAL_FORCES
+      if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
+        part->f.torque[0] += part->l.ext_torque[0];
+        part->f.torque[1] += part->l.ext_torque[1];
+        part->f.torque[2] += part->l.ext_torque[2];
+      }
+    #endif
+
+    /* and rescale quaternion, so it is exactly of unit length */
+    scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
+          SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    part->r.quat[0]/= scale;
+    part->r.quat[1]/= scale;
+    part->r.quat[2]/= scale;
+    part->r.quat[3]/= scale;
+  }
+#endif
+}
+
+inline void force_calc()
+{
+  // Communication step: distribute ghost positions
+  cells_update_ghosts();
+
+  // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
+#ifdef VIRTUAL_SITES
+  update_mol_vel_pos();
+  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+#endif
+
+#if defined(VIRTUAL_SITES_RELATIVE) && defined(LB)
+  // This is on a workaround stage:
+  // When using virtual sites relative and LB at the same time, it is necessary
+  // to reassemble the cell lists after all position updates, also of virtual
+  // particles.
+  if ((lattice_switch & LATTICE_LB) && cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) )
+    cells_update_ghosts();
+#endif
+
+#ifdef COLLISION_DETECTION
+  prepare_collision_queue();
+#endif
+
+  espressoSystemInterface.update();
+
+  // Compute the forces from the force objects
+  for (ActorList::iterator actor = forceActors.begin();
+          actor != forceActors.end(); ++actor)
+      (*actor)->computeForces(espressoSystemInterface);
+
+#ifdef LB_GPU
+#ifdef SHANCHEN
+  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) lattice_boltzmann_calc_shanchen_gpu();
+#endif // SHANCHEN
+
+  // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
+  // this_node==0 makes sure it is the master node where the gpu exists
+  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
+#endif // LB_GPU
+
+#ifdef ELECTROSTATICS
+  if (iccp3m_initialized && iccp3m_cfg.set_flag)
+    iccp3m_iteration();
+#endif
+  init_forces();
+
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_LAYERED:
+    layered_calculate_ia();
+    break;
+  case CELL_STRUCTURE_DOMDEC:
+    if(dd.use_vList) {
+      if (rebuild_verletlist)
+    build_verlet_lists_and_calc_verlet_ia();
+      else
+    calculate_verlet_ia();
+    }
+    else
+      calc_link_cell();
+    break;
+  case CELL_STRUCTURE_NSQUARE:
+    nsq_calculate_ia();
+
+  }
+
+#ifdef VOLUME_FORCE
+    double volume=0.;
+
+    for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
+        calc_volume(&volume,i);
+        if (volume<1e-100) break;
+        add_volume_force(volume,i);
+    }
+#endif
+
+#ifdef AREA_FORCE_GLOBAL
+    double area=0.;
+
+    for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
+        calc_area_global(&area,i);
+        if (area<1e-100) break;
+        add_area_global_force(area,i);
+    }
+#endif
+
+  calc_long_range_forces();
+
+#ifdef LB
+  if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
+#endif
+
+#ifdef COMFORCE
+  calc_comforce();
+#endif
+
+#ifdef METADYNAMICS
+  /* Metadynamics main function */
+  meta_perform();
+#endif
+
+#ifdef CUDA
+  copy_forces_from_GPU();
+#endif
+
+  // VIRTUAL_SITES distribute forces
+#ifdef VIRTUAL_SITES
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  init_forces_ghosts();
+  distribute_mol_force();
+#endif
+
+  // Communication Step: ghost forces
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+
+  // apply trap forces to trapped molecules
+#ifdef MOLFORCES
+  calc_and_apply_mol_constraints();
+#endif
+
+  // should be pretty late, since it needs to zero out the total force
+#ifdef COMFIXED
+  calc_comfixed();
+#endif
+
+  // mark that forces are now up-to-date
+  recalc_forces = 0;
+
+#ifdef COLLISION_DETECTION
+  handle_collisions();
+#endif
+}
+
 
 inline void 
 calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -178,27 +432,6 @@ calc_non_bonded_pair_force(Particle *p1, Particle *p2,
   calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 }
 
-inline void 
-calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameters *ia_params,
-                                        double d[3], double dist, double dist2,
-                                        double force[3],
-                                        double torque1[3], double torque2[3]) {
-#ifdef MOL_CUT
-   //You may want to put a correction factor and correction term for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut_partcfg(p1,p2,ia_params)==1)
-#endif
-   {
-     calc_non_bonded_pair_force_parts(p1, p2, ia_params, 
-                                      d, dist, dist2, force, torque1, torque2);
-   }
-}
-
-inline void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
-   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double torque1[3],torque2[3];
-   calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
-                                           force, torque1, torque2);
-}
 
 /** Calculate non bonded forces between a pair of particles.
     @param p1        pointer to particle 1.
