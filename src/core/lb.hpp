@@ -131,7 +131,7 @@ typedef struct {
 
   /** normal vector of the boundary surface */
   double *nvec; //doesn't work like that any more, I think (georg, 17.08.10)
-#endif
+#endif // LB_BOUNDARIES
 
 } LB_FluidNode;
 

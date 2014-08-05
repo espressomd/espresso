@@ -90,7 +90,7 @@ public:
    * \param lattice pointer to the lattice
    * \param agrid   lattice spacing
    */
-  int init(double* agrid, double* offset, int halo_size, size_t element_size);
+  int init(double* agrid, double* offset, int halo_size, size_t dim);
 
   /** lattice memory allocation.
    * \param lattice pointer to the lattice
