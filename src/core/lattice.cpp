@@ -46,16 +46,16 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
                                      / this->agrid[d]);
     }
 
-    /* sanity checks */
+    // sanity checks
     // for (dir=0;dir<3;dir++) {
-        /* check if local_box_l is compatible with lattice spacing */
-//    if (fabs(local_box_l[dir]-this->grid[dir]*agrid[dir]) > ROUND_ERROR_PREC*box_l[dir]) {
-//      char *errtxt = runtime_error(128);
-//      ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid[%d]=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d) %f} ",dir,agrid[dir],dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-this->grid[dir]*agrid[dir]);
-//      return ES_ERROR;
-//    }
-        /* set the lattice spacing */
-//    }
+    //     // check if local_box_l is compatible with lattice spacing
+    //     if (fabs(local_box_l[dir]-this->grid[dir]*agrid[dir]) > ROUND_ERROR_PREC*box_l[dir]) {
+    //         char *errtxt = runtime_error(128);
+    //         ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid[%d]=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d) %f} ",dir,agrid[dir],dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-this->grid[dir]*agrid[dir]);
+    //         return ES_ERROR;
+    //     }
+    //     // set the lattice spacing
+    // }
 
     this->element_size = this->dim*sizeof(double);
 
