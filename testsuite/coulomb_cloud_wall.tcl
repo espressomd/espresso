@@ -38,7 +38,7 @@ while {![eof $f]} { blockfile $f read auto}
     close $f
 
 for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-  set F($i) [part $i pr f]
+  set F($i) [part $i print f]
 }
 
 # write vtf file
@@ -64,37 +64,56 @@ for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 set methods {}
 set setups {}
 set accuracies {}
+
 if { [ has_feature "P3M" ] } then {
+    proc setup_p3m {} {
+        inter coulomb 1.0 p3m 1.001 64 7 2.70746
+        inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5 
+    }
     lappend methods "P3M" 
-    lappend setups {inter coulomb 1.0 p3m 1.001 64 7 2.70746}
+    lappend setups "setup_p3m"
     lappend accuracies 1e-3
 }
 if { [ has_feature "SCAFACOS_P3M" ] } then {
+    proc setup_scafacos_p3m {} {
+        inter coulomb 1.0 scafacos_p3m cutoff 1.001 grid 64 cao 7 alpha 2.70746
+    }
     lappend methods "SCAFACOS_P3M"
-    lappend setups \
-        {inter coulomb 1.0 scafacos_p3m cutoff 1.001 grid 64 cao 7 alpha 2.70746}
-    lappend accuracies 1e-3
-}
-if { [ has_feature "CUDA" ] && ! [ has_feature "NPT" ] } then {
-    lappend methods "P3M-GPU"
-    lappend setups { inter coulomb 1.0 p3m gpu 1.001 64 7 2.70746 }
+    lappend setups "setup_scafacos_p3m"
     lappend accuracies 1e-3
 }
 
+if { [ has_feature "CUDA" ] } then {
+    proc setup_p3m_gpu {} {
+        inter coulomb 1.0 p3m gpu 1.001 64 7 2.70746
+        inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5 
+    }
+    lappend methods "P3M-GPU"
+    lappend setups "setup_p3m_gpu"
+    lappend accuracies 1e-3
+}
+
+if { ! [ llength $methods ] } {
+    puts "No Coulomb methods to test."
+    ignore_exit
+}
+puts "Methods to test: $methods"
+
 foreach method $methods setup $setups accuracy $accuracies {
-    inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5
     puts "Testing $method..."
     eval $setup
     puts [inter coulomb]
 
     if { [catch {
+        for { set pid 0 } { $pid <= [setmd max_part] } { incr pid } {
+            part $pid f 0.0 0.0 0.0
+        }        
         integrate 0 recalc_forces
 
-        puts [part 3 print f]
         set rmsf 0
-        for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-            set resF [part $i print f]
-            set tgtF $F($i)
+        for { set pid 0 } { $pid <= [setmd max_part] } { incr pid } {
+            set resF [part $pid print f]
+            set tgtF $F($pid)
             set dx [expr ([lindex $resF 0] - [lindex $tgtF 0])]
             set dy [expr ([lindex $resF 1] - [lindex $tgtF 1])]
             set dz [expr ([lindex $resF 2] - [lindex $tgtF 2])]
