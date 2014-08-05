@@ -142,10 +142,6 @@ void lb_init_boundaries() {
     }
 #endif
 
-FILE* fout = fopen("boundary.vtk", "w"); //TODO delete
-double testdistvec[3];
-fprintf( fout, "# vtk DataFile Version 2.0\nboundary distance\nASCII\n\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\n\nPOINT_DATA %u\nSCALARS boundary_distance float 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid*0.5f, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes); //TODO delete
-
     for(z=0; z<int(lbpar_gpu.dim_z); z++) {
       for(y=0; y<int(lbpar_gpu.dim_y); y++) {
         for (x=0; x<int(lbpar_gpu.dim_x); x++) {
@@ -205,9 +201,6 @@ fprintf( fout, "# vtk DataFile Version 2.0\nboundary distance\nASCII\n\nDATASET 
             
             if (dist > dist_tmp || n == 0) {
               dist = dist_tmp;
-testdistvec[0] = -dist_vec[0]; //TODO delete
-testdistvec[1] = -dist_vec[1];
-testdistvec[2] = -dist_vec[2];
               boundary_number = n;
             }
 #ifdef EK_BOUNDARIES
@@ -220,10 +213,6 @@ testdistvec[2] = -dist_vec[2];
             }
 #endif
           }
-
-fprintf(fout, "%e %e %e\n", testdistvec[0], testdistvec[1], testdistvec[2]); //TODO delete
-
-
 
 #ifdef EK_BOUNDARIES 
           if(pdb_boundary_lattice && 
@@ -263,8 +252,6 @@ fprintf(fout, "%e %e %e\n", testdistvec[0], testdistvec[1], testdistvec[2]); //T
         }
       }
     }
-
-fclose(fout); //TODO delete
 
     /**call of cuda fkt*/
     float* boundary_velocity = (float *) malloc(3*(n_lb_boundaries+1)*sizeof(float));
