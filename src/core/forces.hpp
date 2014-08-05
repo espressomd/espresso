@@ -27,8 +27,9 @@
  *
  *  For more information see forces.cpp .
  */
-#include "config.hpp"
-#include "interaction_data.hpp"
+
+#include "iccp3m.hpp"
+#include "external_potential.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
 
@@ -61,42 +62,59 @@ extern ActorList forceActors;
          Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
  *  </ol>
  */
-void force_calc();
+
+/******************* forces.cpp *******************/
+
+/** initialize real particle forces with thermostat forces and
+    ghost particle forces with zero. */
+void init_forces();
 
 /** Set forces of all ghosts to zero
 */
 void init_forces_ghosts();
 
-/** Check if forces are NAN 
+/** Check if forces are NAN
 */
 void check_forces();
 
-void 
-calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,
+/** Calculate long range forces (P3M, MMM2d...). */
+void calc_long_range_forces();
+
+void calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameters *ia_params,
+                                        double d[3], double dist, double dist2,
+                                        double force[3],
+                                        double torque1[3] = NULL, double torque2[3] = NULL);
+
+void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]);
+
+/******************* forces_inline.hpp *******************/
+
+/** initialize the forces for a ghost particle */
+void init_ghost_force(Particle *part);
+
+/** initialize the forces for a real particle */
+void init_local_particle_force(Particle *part);
+
+void force_calc();
+
+void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,
                                  double d[3], double dist, double dist2, 
                                  double force[3], 
                                  double torque1[3] = NULL, double torque2[3] = NULL);
 
-void 
-calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, 
+void calc_non_bonded_pair_force(Particle *p1, Particle *p2,
+                           double d[3], double dist, double dist2,
+                           double force[3]);
+
+void calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
                            double d[3], double dist, double dist2, 
                            double force[3], 
                            double torque1[3] = NULL, double torque2[3] = NULL);
 
-void 
-calc_non_bonded_pair_force(Particle *p1, Particle *p2, 
-                           double d[3], double dist, double dist2, 
-                           double force[3]);
-
-void 
-calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, 
-                                        IA_parameters *ia_params,
-                                        double d[3], double dist, double dist2,
-                                        double force[3],
-                                        double torque1[3] = NULL, 
-                                        double torque2[3] = NULL);
-
-void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]);
+/** Calculate bonded forces for one particle.
+    @param p1 particle for which to calculate forces
+*/
+void add_bonded_force(Particle *p1);
 
 /** Calculate non bonded forces between a pair of particles.
     @param p1        pointer to particle 1.
@@ -104,22 +122,14 @@ void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,do
     @param d         vector between p1 and p2. 
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
-void add_non_bonded_pair_force(Particle *p1, Particle *p2, 
-                               double d[3], double dist, double dist2);
+void add_non_bonded_pair_force(Particle *p1, Particle *p2,
+                    double d[3], double dist, double dist2);
 
-/** Calculate bonded forces for one particle.
-    @param p1 particle for which to calculate forces
-*/
-void add_bonded_force(Particle *p1);
 
 /** add force to another. This is used when collecting ghost forces. */
 void add_force(ParticleForce *F_to, ParticleForce *F_add);
 
-/** add force to another. This is used when collecting ghost forces. */
-//void add_force(ParticleForce *F_to, ParticleForce *F_add);
-
 void check_particle_force(Particle *part);
-
 /*@}*/
 
 #endif
