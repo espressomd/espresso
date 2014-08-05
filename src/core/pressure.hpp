@@ -29,7 +29,7 @@
 #include "integrate.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
-#include "forces.hpp"
+#include "forces_inline.hpp"
 #include "npt.hpp"
 
 /** \name Exported Variables */

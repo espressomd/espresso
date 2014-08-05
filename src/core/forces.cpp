@@ -24,6 +24,7 @@
  *  For more information see \ref forces.hpp "forces.h".
 */
 
+#include "maggs.hpp"
 #include "forces_inline.hpp"
 ActorList forceActors;
 
@@ -54,7 +55,7 @@ void init_forces()
     for (i = 0; i < np; i++)
       init_local_particle_force(&p[i]);
   }
-  
+
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
@@ -65,7 +66,7 @@ void init_forces()
     for (i = 0; i < np; i++)
       init_ghost_force(&p[i]);
   }
-   
+
 #ifdef CONSTRAINTS
   init_constraint_forces();
 #endif
@@ -198,31 +199,6 @@ void calc_long_range_forces()
 #endif  /*ifdef DIPOLES */
 }
 
-
-
-void
-calc_non_bonded_pair_force(Particle *p1, Particle *p2,
-                           double d[3], double dist, double dist2,
-                           double force[3]){
-  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-  calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
-}
-
-void
-calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-                           double d[3], double dist, double dist2,
-                           double force[3],
-                           double torque1[3], double torque2[3]) {
-#ifdef MOL_CUT
-   // You may want to put a correction factor and correction term for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
-#endif
-   {
-      calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2,
-                                       force, torque1, torque2);
-   }
-}
-
 void
 calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameters *ia_params,
                                         double d[3], double dist, double dist2,
@@ -244,4 +220,3 @@ void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,do
    calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
                                            force, torque1, torque2);
 }
-

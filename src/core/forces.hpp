@@ -27,63 +27,8 @@
  *
  *  For more information see forces.cpp .
  */
-#include "config.hpp"
-#include <vector>
-#include "utils.hpp"
-#include "thermostat.hpp"
-#ifdef MOLFORCES
-#include "topology.hpp"
-#endif
-#include "npt.hpp"
-#include "virtual_sites.hpp"
-#include "metadynamics.hpp"
 
-/* include the force files */
-#include "p3m.hpp"
-#include "p3m-dipolar.hpp"
-#include "lj.hpp"
-#include "ljgen.hpp"
-#include "steppot.hpp"
-#include "hertzian.hpp"
-#include "gaussian.hpp"
-#include "bmhtf-nacl.hpp"
-#include "buckingham.hpp"
-#include "soft_sphere.hpp"
-#include "hat.hpp"
-#include "maggs.hpp"
-#include "tab.hpp"
-#include "overlap.hpp"
-#include "ljcos.hpp"
-#include "ljcos2.hpp"
-#include "ljangle.hpp"
-#include "gb.hpp"
-#include "fene.hpp"
-#include "object-in-fluid/stretching_force.hpp"
-#include "object-in-fluid/stretchlin_force.hpp"
-#include "object-in-fluid/area_force_local.hpp"
-#include "object-in-fluid/area_force_global.hpp"
-#include "object-in-fluid/bending_force.hpp"
-#include "object-in-fluid/volume_force.hpp"
-#include "harmonic.hpp"
-#include "subt_lj.hpp"
-#include "angle.hpp"
-#include "angle_harmonic.hpp"
-#include "angle_cosine.hpp"
-#include "angle_cossquare.hpp"
-#include "angledist.hpp"
-#include "dihedral.hpp"
-#include "debye_hueckel.hpp"
-#include "endangledist.hpp"
-#include "reaction_field.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "comforce.hpp"
-#include "comfixed.hpp"
-#include "molforces.hpp"
-#include "morse.hpp"
-#include "elc.hpp"
 #include "iccp3m.hpp"
-#include "collision.hpp" 
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
@@ -135,6 +80,13 @@ void check_forces();
 /** Calculate long range forces (P3M, MMM2d...). */
 void calc_long_range_forces();
 
+void calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameters *ia_params,
+                                        double d[3], double dist, double dist2,
+                                        double force[3],
+                                        double torque1[3] = NULL, double torque2[3] = NULL);
+
+void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]);
+
 /******************* forces_inline.hpp *******************/
 
 /** initialize the forces for a ghost particle */
@@ -159,12 +111,10 @@ void calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
                            double force[3], 
                            double torque1[3] = NULL, double torque2[3] = NULL);
 
-void calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameters *ia_params,
-                                        double d[3], double dist, double dist2,
-                                        double force[3],
-                                        double torque1[3] = NULL, double torque2[3] = NULL);
-
-void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]);
+/** Calculate bonded forces for one particle.
+    @param p1 particle for which to calculate forces
+*/
+void add_bonded_force(Particle *p1);
 
 /** Calculate non bonded forces between a pair of particles.
     @param p1        pointer to particle 1.
@@ -175,10 +125,6 @@ void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,do
 void add_non_bonded_pair_force(Particle *p1, Particle *p2,
                     double d[3], double dist, double dist2);
 
-/** Calculate bonded forces for one particle.
-    @param p1 particle for which to calculate forces
-*/
-void add_bonded_force(Particle *p1);
 
 /** add force to another. This is used when collecting ghost forces. */
 void add_force(ParticleForce *F_to, ParticleForce *F_add);

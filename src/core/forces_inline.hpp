@@ -22,40 +22,55 @@
 #define FORCES_INLINE_HPP
 /** \file forces_inline.hpp Force calculation. */
 
-#include <mpi.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cmath>
-#include "utils.hpp"
-#include "thermostat.hpp"
-#include "pressure.hpp"
-#include "communication.hpp"
-#include "ghosts.hpp"
-#include "verlet.hpp"
-#include "grid.hpp"
-#include "cells.hpp"
-#include "particle_data.hpp"
-#include "interaction_data.hpp"
-#include "rotation.hpp"
-#include "elc.hpp"
-#include "lattice.hpp"
-#include "lb.hpp"
-#include "nsquare.hpp"
-#include "layered.hpp"
-#include "domain_decomposition.hpp"
+#ifdef MOLFORCES
+#include "topology.hpp"
+#endif
+
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
-#include "virtual_sites.hpp"
 #include "constraint.hpp"
-#include "lbgpu.hpp"
-#include "iccp3m.hpp"
-#include "p3m_gpu.hpp"
-#include "cuda_interface.hpp"
-
 #include "EspressoSystemInterface.hpp"
-
 #include "forces.hpp"
+
+#include "npt.hpp"
+#include "p3m-dipolar.hpp"
+#include "lj.hpp"
+#include "ljgen.hpp"
+#include "steppot.hpp"
+#include "hertzian.hpp"
+#include "gaussian.hpp"
+#include "bmhtf-nacl.hpp"
+#include "buckingham.hpp"
+#include "soft_sphere.hpp"
+#include "hat.hpp"
+#include "tab.hpp"
+#include "overlap.hpp"
+#include "ljcos.hpp"
+#include "ljcos2.hpp"
+#include "ljangle.hpp"
+#include "gb.hpp"
+#include "fene.hpp"
+#include "object-in-fluid/stretching_force.hpp"
+#include "object-in-fluid/stretchlin_force.hpp"
+#include "object-in-fluid/area_force_local.hpp"
+#include "object-in-fluid/area_force_global.hpp"
+#include "object-in-fluid/bending_force.hpp"
+#include "object-in-fluid/volume_force.hpp"
+#include "harmonic.hpp"
+#include "subt_lj.hpp"
+#include "angle_harmonic.hpp"
+#include "angle_cosine.hpp"
+#include "angle_cossquare.hpp"
+#include "angledist.hpp"
+#include "debye_hueckel.hpp"
+#include "endangledist.hpp"
+#include "reaction_field.hpp"
+#include "comforce.hpp"
+#include "comfixed.hpp"
+#include "molforces.hpp"
+#include "morse.hpp"
+#include "elc.hpp"
+#include "collision.hpp"
 
 inline void init_ghost_force(Particle *part)
 {
@@ -332,6 +347,30 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
 #ifdef INTER_RF
   add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
 #endif
+}
+
+
+inline void
+calc_non_bonded_pair_force(Particle *p1, Particle *p2,
+                           double d[3], double dist, double dist2,
+                           double force[3]){
+  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+  calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
+}
+
+inline void
+calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+                           double d[3], double dist, double dist2,
+                           double force[3],
+                           double torque1[3], double torque2[3]) {
+#ifdef MOL_CUT
+   // You may want to put a correction factor and correction term for smoothing function else then theta
+   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
+#endif
+   {
+      calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2,
+                                       force, torque1, torque2);
+   }
 }
 
 
