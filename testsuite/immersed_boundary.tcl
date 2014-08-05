@@ -182,7 +182,12 @@ set kC $kS
 
 set shear_rate [expr ($G * $kS) / ($nu * $r)]
 set u [expr $shear_rate * ($boxz - (($boxz - $H)/2))]
-# set u 1
+
+# Hagen–Poiseuille equation #
+set LP [expr $boxz - $H]
+set QP [expr $shear_rate*($boxz - $H) * $pi * $LP*$LP]
+set PP [expr (8 * $nu * $boxz * $QP) / ($pi * $LP*$LP*$LP*$LP)]
+set FP [expr $PP / $boxz]
 
 # set V [expr $V_SI /  $V0]
 set gridsize [expr $gridsize_SI / $L0]
@@ -264,19 +269,32 @@ setmd time_step $dt_md
 
 setmd warnings 0
 
-# setting up the fluid with or without using gpu
-lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 0 0 0
 #setting themostat
 thermostat lb $kbT
 
-# cellsystem domain_decomposition -no_verlet_list
-# cellsystem nsquare
+############## INITIALIZE FLOW  ###############
 
-############## ADD WALL ##################
+set flow 0
 
+if {$flow == 0} {
+
+set flowType "Shear flow with volume conservation"
+# setting up the fluid with or without using gpu
+lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 0 0 0
 # walls located at z=1 and z=boxz-1 in x-y-plane
 lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity $u 0 0 
 lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity -$u 0 0
+
+} elseif {$flow == 1} { 
+
+set flowType "Hagen-Pouiessele Flow with volume conservation"
+# setting up the fluid with or without using gpu
+lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force $FP 0 0
+# walls located at z=1 and z=boxz-1 in x-y-plane
+lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity 0 0 0 
+lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity 0 0 0
+
+}
 
 ################## ADD CELLS #############
 set interCount 0
@@ -301,7 +319,7 @@ if { [catch {
     # Here, you write the initial reference configuration in case you uncomment the next line
     # set write_init_data 1
     if { $write_init_data == 1} {
-	write_data_init "~/Sources/espresso-fork/espresso/build/immersed_boundary_system-init.data"
+	write_data_init "immersed_boundary_system-init.data"
 	exit
     }
 
@@ -321,7 +339,7 @@ if { [catch {
 	# Here, you write new reference configuration in case you uncomment the next line
   # set generate_new_data 1
 	if { $generate_new_data == 1} {
-	    write_data_final "~/Sources/espresso-fork/espresso/build/immersed_boundary_system-generate.data"
+	    write_data_final "immersed_boundary_system-generate.data"
 	    exit
 	}
 	
@@ -333,7 +351,7 @@ if { [catch {
 	}
 	
 	# load reference configuration
-	read_data "~/Sources/espresso-fork/espresso/build/immersed_boundary_system-final.data"
+	read_data "immersed_boundary_system-final.data"
 	
 	set diffPOS 0.0
 	set diffVEL 0.0
@@ -385,140 +403,7 @@ if { [catch {
     error_exit $res
 }
 
-puts "OK: particle properties correspondence within a shear flow with volume conservation after $cycle steps"
+puts "OK: particle properties correspondence within a $flowType after $cycle steps"
 
-
-#########################################################################
-# SETUP 
-#########################################################################
-
-# # setting Boxlength
-# setmd box_l $boxx $boxy $boxz
-
-# # setting integration parameters
-# # skin for verlet list
-# setmd skin 0.1
-# # timestep
-# setmd time_step $dt_md
-# # coose how good no slip condition is: 0 non, 1 better
-# # setmd sequ 1
-
-# setmd warnings 0
-
-# # setting up the fluid with or without using gpu
-# lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force [expr $u*2] 0 0
-# #setting themostat
-# thermostat lb $kbT
-
-# # cellsystem domain_decomposition -no_verlet_list
-# # cellsystem nsquare
-
-# ############## ADD WALL ##################
-
-# # walls located at z=1 and z=boxz-1 in x-y-plane
-# lbboundary wall dist [expr $H/2] normal 0. 0. 1. velocity 0 0 0 
-# lbboundary wall dist [expr -$boxz + ($H/2)] normal 0. 0. -1. velocity 0 0 0
-
-# ################## ADD CELLS #############
-# set interCount 0
-# set cellCount 0
-# set nodeCount 0
-# set numNodesPerCell 0
-
-# set numType 0
-
-# # number of cells
-# set numCells 1
-# # setmd vescnum $numCells
-
-# addCell [expr $boxx*0.5] [expr $boxy*0.5] [expr $boxz*0.5] $numType
-# # addCell 10 10 10 $numType
-# incr numType
-
-
-# if { [catch {
-
-#   read_data "object_in_fluid_system-init.data"	
-	
-# 	# main iteration loop
-	
-# 	set cycle 0 
-# 	while { $cycle < 100 } {
-# 	    puts -nonewline "time step $cycle/100\r"; flush stdout
-       
-# 	    integrate 1
-
-# 	    incr cycle
-# 	}
-	
-# 	set generate_new_data 0
-# 	# Here, you write new reference configuration in case you uncomment the next line
-#   # set generate_new_data 1
-# 	if { $generate_new_data == 1} {
-# 	    write_data_final "immersed_boundary_system-final.data"
-# 	    exit
-# 	}
-	
-# 	# store computed values for velocities, positions and forces
-# 	for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-# 	    set POS($i) [part $i pr pos]
-# 	    set VEL($i) [part $i pr v]
-# 	    set FOR($i) [part $i pr f]
-# 	}
-	
-# 	# load reference configuration
-# 	read_data "object_in_fluid_system-final.data"
-	
-# 	set diffPOS 0.0
-# 	set diffVEL 0.0
-# 	set diffFOR 0.0
-	
-# 	for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-# 	    set tmp [part $i pr pos]
-# 	    set Ax [lindex $tmp 0]
-# 	    set Ay [lindex $tmp 1]
-# 	    set Az [lindex $tmp 2]
-# 	    # stores the vector of the reference position for $i-th particle
-# 	    set Bx [lindex $POS($i) 0]
-# 	    set By [lindex $POS($i) 1]
-# 	    set Bz [lindex $POS($i) 2]
-# 	    # stores the vector of the computed position for $i-th particle
-# 	    set diffPOS [expr $diffPOS + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
-
-# 	    set tmp [part $i pr v]
-# 	    set Ax [lindex $tmp 0]
-# 	    set Ay [lindex $tmp 1]
-# 	    set Az [lindex $tmp 2]
-# 	    # stores the vector of the reference velocity for $i-th particle
-# 	    set Bx [lindex $VEL($i) 0]
-# 	    set By [lindex $VEL($i) 1]
-# 	    set Bz [lindex $VEL($i) 2]
-# 	    # stores the vector of the computed velocity for $i-th particle
-# 	    set diffVEL [expr $diffVEL + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
-
-# 	    set tmp [part $i pr f]
-# 	    set Ax [lindex $tmp 0]
-# 	    set Ay [lindex $tmp 1]
-# 	    set Az [lindex $tmp 2]
-# 	    # stores the vector of the reference force for $i-th particle
-# 	    set Bx [lindex $FOR($i) 0]
-# 	    set By [lindex $FOR($i) 1]
-# 	    set Bz [lindex $FOR($i) 2]
-# 	    # stores the vector of the computed force for $i-th particle
-# 	    set diffFOR [expr $diffFOR + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
-# 	}
-
-# 	puts "difference between the reference configuration and the computed configuration: "
-# 	puts "		positions: $diffPOS"
-# 	puts "		velocities: $diffVEL"
-# 	puts "		forces: $diffFOR"
-# 	if { $diffPOS > $tolerance || $diffVEL > $tolerance || $diffFOR > $tolerance } {
-# 	    error "A difference occured between the reference configuration and the computed configuration"
-# 	}
-#     } res ] } {
-#     error_exit $res
-# }
-
-# puts "OK: particle properties correspondence within a Poiseuille flow with volume conservation after $cycle steps"
 
 exit 0
