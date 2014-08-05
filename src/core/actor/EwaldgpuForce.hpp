@@ -6,8 +6,6 @@
 
 #include "SystemInterface.hpp"
 #include "Actor.hpp"
-#include <cuda.h>
-#include <cuda_runtime.h>
 #include <math.h>
 #include "cells.hpp"
 
@@ -85,9 +83,6 @@ protected:
   double m_alpha; //Separation parameter
   double m_rcut; //Cutoff radius
   int m_num_kx, m_num_ky, m_num_kz, m_num_k; //Number of k's in xyz-direction
-  //Stream
-  cudaEvent_t *start, *stop;
-  cudaStream_t    *stream0;
 
 protected:
   //Variables
@@ -102,7 +97,6 @@ protected:
 	int nextPow2(int x); //Determine the next power of x
 	bool isPow2(int x); //Determine if x of power 2
 	void getNumBlocksAndThreads(int Size, int maxBlocks, int maxThreads, int &blocks, int &threads); // Determine the number of blocks and threads in GPU part
-	void cuda_check_error(const dim3 &block, const dim3 &grid,char *function, char *file, unsigned int line);
 	//Output
 	void Output(); //Output in terminal
 	//Real space

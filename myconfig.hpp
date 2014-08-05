@@ -82,7 +82,7 @@
 
 /* Interaction features */
 //#define TABULATED
-//#define LENNARD_JONES
+#define LENNARD_JONES
 //#define LJ_WARN_WHEN_CLOSE
 //#define LENNARD_JONES_GENERIC
 //#define LJCOS

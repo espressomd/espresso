@@ -19,6 +19,12 @@
 typedef ewaldgpu_real real;
 Ewaldgpu_params ewaldgpu_params;
 
+//Stream
+cudaEvent_t *start, *stop;
+cudaStream_t    *stream0;
+
+void cuda_check_error(const dim3 &block, const dim3 &grid,char *function, char *file, unsigned int line);
+
 //Error handler
 static void HandleError(cudaError_t err,const char *file,int line)
 {
@@ -852,7 +858,7 @@ void EwaldgpuForce::GPU_Energy()
 	HANDLE_ERROR( cudaMemcpyAsync( m_energy_reci, m_dev_energy_reci,sizeof(real),cudaMemcpyDeviceToHost, *stream0 ) );
 	m_energy_reci[0] = coulomb.prefactor * m_energy_reci[0];
 }
-void EwaldgpuForce::cuda_check_error(const dim3 &block, const dim3 &grid, char *function, char *file, unsigned int line)
+void cuda_check_error(const dim3 &block, const dim3 &grid, char *function, char *file, unsigned int line)
 {
   err=cudaGetLastError();
   if (err!=cudaSuccess)
