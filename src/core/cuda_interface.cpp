@@ -17,6 +17,9 @@
 
 static void cuda_mpi_get_particles_slave();
 static void cuda_mpi_send_forces_slave();
+#ifdef ENGINE
+static void cuda_mpi_send_v_cs_slave();
+#endif
 
 void cuda_bcast_global_part_params() {
   COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params\n", this_node));
@@ -207,7 +210,7 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_compositio
   /* first collect number of particles on each node */
   MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 
-  /* call slave functions to provide the slave datas */
+  /* call slave functions to provide the slave data */
   if(this_node > 0) {
     cuda_mpi_send_forces_slave();
   }
@@ -300,5 +303,104 @@ static void cuda_mpi_send_forces_slave(){
 #endif 
     } 
 }
+
+#ifdef ENGINE
+void cuda_mpi_send_v_cs(CUDA_v_cs *host_v_cs){
+  int n_part;
+  int g;
+  Cell *cell;
+  int *sizes;
+
+  // first collect number of particles on each node
+  sizes = (int *) malloc(sizeof(int)*n_nodes);
+  n_part = cells_get_n_particles();
+  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
+
+  // call slave functions to provide the slave data
+  if(this_node > 0)
+  {
+    cuda_mpi_send_v_cs_slave();
+  }
+  else
+  {
+    // fetch particle informations into 'result'
+    g = 0;
+    for (int pnode = 0; pnode < n_nodes; pnode++)
+    {
+      if (sizes[pnode] > 0)
+      {
+        if (pnode == 0)
+        {
+          for (int c = 0; c < local_cells.n; c++)
+          {
+            int npart;  
+            cell = local_cells.cell[c];
+            npart = cell->n;
+            for (int i = 0; i < npart; i++)
+            {
+              cell->part[i].swim.v_center[0] += (double)host_v_cs[i+g].v_cs[0];
+              cell->part[i].swim.v_center[1] += (double)host_v_cs[i+g].v_cs[1];
+              cell->part[i].swim.v_center[2] += (double)host_v_cs[i+g].v_cs[2];
+              cell->part[i].swim.v_source[0] += (double)host_v_cs[i+g].v_cs[3];
+              cell->part[i].swim.v_source[1] += (double)host_v_cs[i+g].v_cs[4];
+              cell->part[i].swim.v_source[2] += (double)host_v_cs[i+g].v_cs[5];
+            }
+            g += npart;
+          }
+        }
+        else
+        {
+          // and send it back to the slave node
+          MPI_Send(&host_v_cs[g], sizes[pnode]*sizeof(CUDA_v_cs), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);      
+          g += sizes[pnode];
+        }
+      }
+    }
+  }
+  COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
+
+  free(sizes);
+}
+
+static void cuda_mpi_send_v_cs_slave(){
+  int n_part;
+  CUDA_v_cs *host_v_cs_slave = NULL;
+  Cell *cell;
+  MPI_Status status;
+
+  n_part = cells_get_n_particles();
+
+  COMM_TRACE(fprintf(stderr, "%d: send_particles_slave, %d particles\n", this_node, n_part));
+
+
+  if (n_part > 0)
+  {
+    int g = 0;
+    // get (unsorted) particle informations as an array of type 'particle'
+    // then get the particle information
+    host_v_cs_slave = (CUDA_v_cs *) malloc(n_part*sizeof(CUDA_v_cs));
+    MPI_Recv(host_v_cs_slave, n_part*sizeof(CUDA_v_cs), MPI_BYTE, 0, REQ_CUDAGETFORCES,
+        comm_cart, &status);
+
+    for (int c = 0; c < local_cells.n; c++)
+    {
+      int npart;  
+      cell = local_cells.cell[c];
+      npart = cell->n;
+      for (int i = 0; i < npart; i++)
+      {
+        cell->part[i].swim.v_center[0] += (double)host_v_cs_slave[i+g].v_cs[0];
+        cell->part[i].swim.v_center[1] += (double)host_v_cs_slave[i+g].v_cs[1];
+        cell->part[i].swim.v_center[2] += (double)host_v_cs_slave[i+g].v_cs[2];
+        cell->part[i].swim.v_source[0] += (double)host_v_cs_slave[i+g].v_cs[3];
+        cell->part[i].swim.v_source[1] += (double)host_v_cs_slave[i+g].v_cs[4];
+        cell->part[i].swim.v_source[2] += (double)host_v_cs_slave[i+g].v_cs[5];
+      }
+      g += npart;
+    }
+    free(host_v_cs_slave);
+  } 
+}
+#endif // ifdef ENGINE
 
 #endif /* ifdef CUDA */

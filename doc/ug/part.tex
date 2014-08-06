@@ -54,7 +54,7 @@
   \require{9}{\opt{gamma \var{g}}}
   \require{10}{\opt{rotation \var{rot}}}
   \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
-  \require{12}{\opt{swimming \alt{\alt{v_swim \var{v\_swim} \asep f_swim \var{f\_swim}} \alt{pusher \asep puller} dipole_length \var{dipole\_length}} \asep off}}
+  \require{12}{\optlong{swimming \alt{\alt{v_swim \var{v\_swim} \asep f_swim \var{f\_swim}} \alt{pusher \asep puller} dipole_length \var{dipole\_length}} \asep off}}
   \begin{features}
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
@@ -181,7 +181,7 @@ set first because of the spatial decomposition.
 \item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the
   four solvation coupling constants for the two components of a
   Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
-\item[\opt{swimming \alt{\alt{v_swim \var{v\_swim} \asep f_swim \var{f\_swim}} \alt{pusher \asep puller} dipole_length \var{dipole\_length} \asep off}}]
+\item[\optlong{swimming \alt{\alt{v_swim \var{v\_swim} \asep f_swim \var{f\_swim}} \alt{pusher \asep puller} dipole_length \var{dipole\_length} \asep off}}]
   Enables the particle to be self-propelled in the direction of its quaternion. For setting the quaternion of the particle see \keyword{quat}. The self-propelling will relax to either a constant velocity, when using it with \texttt{v_swim \var{v\_swim}} or to a constant force for \texttt{f_swim \var{f\_swim}}. You may only set one of the possibilities \texttt{\alt{v_swim \var{v\_swim} \asep f_swim \var{f\_swim}}} as you cannot relax to constant force \emph{and} constant velocity at the same time (only for rare special cases). The option \texttt{off} resets \var{v\_swim} and \var{f\_swim} both to $0.0$ and hence disables swimming.
   In Lattice-Boltzmann self-propelling is less trivial than for normal MD, because it can happen in two ways --- \emph{pushing} and \emph{pulling}. You can specify if the particle pushes or pulls by \keyword{pusher} or \keyword{puller} right after the magnitude of \var{v\_swim} or \var{f\_swim}. You will also need to specify a \var{dipole\_length} which determines the distance of the source from the particle centre.
   \texttt{off} disables swimming.
