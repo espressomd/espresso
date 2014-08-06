@@ -27,6 +27,8 @@
 #include "initialize.hpp"
 #include "forces.hpp"
 #include "errorhandling.hpp"
+#include "cells.hpp"
+#include "domain_decomposition.hpp"
 
 reaction_struct reaction;
 

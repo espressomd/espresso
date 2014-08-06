@@ -300,7 +300,6 @@ void on_coulomb_change()
   switch (coulomb.method) {
   case COULOMB_DH:
     break;    
-#ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
     if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
@@ -308,10 +307,12 @@ void on_coulomb_change()
       exit(1);
     }
     p3m_gpu_init(p3m.params.cao, p3m.params.mesh[0], p3m.params.alpha, box_l[0]);
-    MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), 
+              sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
     p3m_init();
     break;
 #endif
+#ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
@@ -352,6 +353,9 @@ void on_coulomb_change()
      since the required cutoff might have reduced. */
   on_short_range_ia_change();
 
+#ifdef CUDA
+  reinit_particle_comm_gpu = 1;
+#endif
   recalc_forces = 1;
 }
 

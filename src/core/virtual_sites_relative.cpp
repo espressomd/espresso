@@ -16,11 +16,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include "config.hpp"
-#ifdef VIRTUAL_SITES_RELATIVE
 
 #include "virtual_sites_relative.hpp"
 #include "rotation.hpp"
+
+#ifdef VIRTUAL_SITES_RELATIVE
 
 // This is the "relative" implementation for virtual sites.
 // Virtual particles are placed relative to the position of a real particle

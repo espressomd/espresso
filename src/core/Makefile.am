@@ -46,7 +46,7 @@ libEspresso_la_SOURCES = \
 	fft-common.cpp fft-common.hpp \
 	fft-dipolar.cpp fft-dipolar.hpp \
 	forcecap.cpp forcecap.hpp \
-	forces.cpp forces.hpp \
+	forces.cpp forces_inline.hpp forces.hpp \
 	galilei.cpp galilei.hpp \
 	ghosts.cpp ghosts.hpp \
 	global.cpp global.hpp \

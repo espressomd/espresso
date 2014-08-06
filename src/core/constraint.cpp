@@ -25,7 +25,7 @@
 #include <algorithm>
 #include "constraint.hpp"
 #include "energy.hpp"
-#include "forces.hpp"
+#include "forces_inline.hpp"
 #include "tunable_slip.hpp"
 
 // for the charged rod "constraint"
