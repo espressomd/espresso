@@ -37,7 +37,6 @@ tests = \
 	ek_eof_one_species_z.tcl \
 	ek_reaction.tcl \
 	el2d.tcl \
-	el2d_die.tcl \
 	el2d_nonneutral.tcl \
 	exclusions.tcl \
 	external_potential.tcl \
