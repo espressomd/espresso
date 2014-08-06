@@ -40,6 +40,12 @@ New user-visible features
 
 * New harmonic well that runs on the GPU.
 
+Known bugs
+----------
+
+* The implementation of dielectric contrasts in conjunction with ELC
+  seems to have an error. Please do not use it if you do not know
+  exactly what you are doing until we have fixe the problem.
 
 User-visible changes
 --------------------
