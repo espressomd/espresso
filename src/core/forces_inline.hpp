@@ -31,7 +31,6 @@
 #endif
 #include "npt.hpp"
 #include "virtual_sites.hpp"
-#include "metadynamics.hpp"
 
 #include "p3m.hpp"
 #include "p3m-dipolar.hpp"
@@ -129,6 +128,8 @@
 #include "morse.hpp"
 #include "elc.hpp"
 #include "collision.hpp"
+#include "metadynamics.hpp"
+#include "angle.hpp"
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
