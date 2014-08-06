@@ -254,9 +254,9 @@ static void cuda_mpi_get_particles_slave(){
                 cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
                 cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
 #ifdef ROTATION
-//                cell->part[i].f.torque[0] += (double)host_torques[i+g].torque[0];
-//                cell->part[i].f.torque[1] += (double)host_torques[i+g].torque[1];
-//                cell->part[i].f.torque[2] += (double)host_torques[i+g].torque[2];
+                cell->part[i].f.torque[0] += (double)host_torques[i+g].torque[0];
+                cell->part[i].f.torque[1] += (double)host_torques[i+g].torque[1];
+                cell->part[i].f.torque[2] += (double)host_torques[i+g].torque[2];
 #endif
 
 #ifdef SHANCHEN
@@ -333,9 +333,9 @@ static void cuda_mpi_send_forces_slave(){
           cell->part[i].f.f[1] += (double)host_forces_sl[i+g].f[1];
           cell->part[i].f.f[2] += (double)host_forces_sl[i+g].f[2];
 #ifdef ROTATION
-//          cell->part[i].f.torque[0] += (double)host_torques_sl[i+g].torque[0];
-//          cell->part[i].f.torque[1] += (double)host_torques_sl[i+g].torque[1];
-//          cell->part[i].f.torque[2] += (double)host_torques_sl[i+g].torque[2];
+          cell->part[i].f.torque[0] += (double)host_torques_sl[i+g].torque[0];
+          cell->part[i].f.torque[1] += (double)host_torques_sl[i+g].torque[1];
+          cell->part[i].f.torque[2] += (double)host_torques_sl[i+g].torque[2];
 #endif
 
 

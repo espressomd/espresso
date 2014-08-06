@@ -2,7 +2,9 @@
 #include "config.hpp"
 
 
-__device__ inline void get_mi_vector_float(float res[3], float a[3], float b[3],float box_l[3],int periodic[3])
+typedef double real;
+
+__device__ inline void get_mi_vector_real(real res[3], real a[3], real b[3],float box_l[3],int periodic[3])
 {
   int i;
 
@@ -16,34 +18,41 @@ __device__ inline void get_mi_vector_float(float res[3], float a[3], float b[3],
 }
 
 
-__device__ float scalar(float a[3], float b[3])
+//__device__ real scalar(real a[3], real b[3])
+//{
+// real sum=0.;
+// for (int i=0;i<3;i++)
+//  sum+=a[i]*b[i];
+// return sum;
+//}
+
+#define scalar(a,b) a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
+
+
+
+__device__ float dipole_ia(float pf, float* _r1, float *_r2, float* _dip1, float* _dip2, float* f1, float* torque1, int force_flag, float box_l[3], int periodic[3])
 {
- float sum=0.;
- for (int i=0;i<3;i++)
-  sum+=a[i]*b[i];
- return sum;
+real dip1[3],dip2[3],r1[3],r2[3];
+for (int i=0;i<3;i++)
+{
+ dip1[i]=_dip1[i];
+ dip2[i]=_dip2[i];
+ r1[i]=_r1[i];
+ r2[i]=_r2[i];
+
 }
-  
-
-
-
-__device__ float dipole_ia(float pf, float* r1, float *r2, float* dip1, float* dip2, float* f1, float* torque1, int force_flag, float box_l[3], int periodic[3])
-{
-  float u,r,pe1,pe2,pe3,pe4,r3,r5,r_sq,r7,a,b,cc,d,ab;
+  real u,r,pe1,pe2,pe3,pe4,r3,r5,r_sq,r7,a,b,cc,d,ab;
 #ifdef ROTATION
-  float bx,by,bz,ax,ay,az; 
+  real bx,by,bz,ax,ay,az; 
 #endif
-  float dr[3];
+  real dr[3];
  
 	
   // Distance between particles
-  get_mi_vector_float(dr,r1,r2,box_l,periodic);
-  printf("dr: %f %f %f\n",dr[0],dr[1],dr[2]);
-  printf("dip1: %f %f %f\n",dip1[0],dip1[1],dip1[2]);
-  printf("dip2: %f %f %f\n",dip2[0],dip2[1],dip2[2]);
+  get_mi_vector_real(dr,r1,r2,box_l,periodic);
 
   // Powers of distance
-  r_sq=dr[0]*dr[0]+dr[1]*dr[1]+dr[2]*dr[2];
+  r_sq=scalar(dr,dr);
   r=sqrt(r_sq);
   r3=r_sq*r;
   r5=r3*r_sq;
@@ -67,9 +76,9 @@ __device__ float dipole_ia(float pf, float* r1, float *r2, float* dip1, float* d
     d=pe4*pe2;
     
     //  Result
-    f1[0]=pf*ab*dr[0]+cc*dip1[0]+d*dip2[0];
-    f1[1]=pf*ab*dr[1]+cc*dip1[1]+d*dip2[1];
-    f1[2]=pf*ab*dr[2]+cc*dip1[2]+d*dip2[2];
+    f1[0]=(float)(pf*(ab*dr[0]+cc*dip1[0]+d*dip2[0]));
+    f1[1]=(float)(pf*(ab*dr[1]+cc*dip1[1]+d*dip2[1]));
+    f1[2]=(float)(pf*(ab*dr[2]+cc*dip1[2]+d*dip2[2]));
     
 // Torques
 #ifdef ROTATION
@@ -81,9 +90,9 @@ __device__ float dipole_ia(float pf, float* r1, float *r2, float* dip1, float* d
     by=dr[0]*dip1[2]-dip1[0]*dr[2];
     bz=dip1[0]*dr[1]-dr[0]*dip1[1];
     
-    torque1[0]+=pf*(-ax/r3+bx*cc);
-    torque1[1]+=pf *(-ay/r3+by*cc);
-    torque1[2]+=pf *(-az/r3+bz*cc);
+    torque1[0]=(float)(pf*(-ax/r3+bx*cc));
+    torque1[1]=(float)(pf *(-ay/r3+by*cc));
+    torque1[2]=(float)(pf *(-az/r3+bz*cc));
     
 #endif
   }    

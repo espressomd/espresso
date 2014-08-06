@@ -42,6 +42,8 @@ public:
     m_needsParticleStructGpu(false), 
     m_splitParticleStructGpu(false)  {};
   virtual ~EspressoSystemInterface() {}
+  
+  
   void init();
   void update();
 
@@ -212,6 +214,8 @@ protected:
 #ifdef DIPOLES
   float *m_dip_gpu_begin;
   float *m_dip_gpu_end;
+
+
 #endif
 
   float *m_v_gpu_begin;

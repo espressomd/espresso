@@ -64,7 +64,7 @@ double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag)
   pe4=3.0/r5;
 
   // Energy, if requested
-  u= coulomb.Dprefactor* ( pe1/r3 - pe4*pe2*pe3);
+  u= coulomb.Dprefactor* ( pe1/r3 -   pe4*pe2*pe3);
 
   // Force, if requested
   if(force_flag) { 
@@ -85,8 +85,18 @@ double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag)
     p2->f.f[0] -=coulomb.Dprefactor*ffx;
     p2->f.f[1] -=coulomb.Dprefactor*ffy;
     p2->f.f[2] -=coulomb.Dprefactor*ffz;
+//    if (p1->p.identity==248)
+//    {
+//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
+//      printf("%d %g %g %g - %g %g %g\n",p2->p.identity,ffx,ffy,ffz,p2->r.p[0],p2->r.p[1],p2->r.p[2]);
+//     }
+//    if (p2->p.identity==248)
+ //   {
+//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
+//      printf("%d %g %g %g - %g %g %g\n",p1->p.identity,-ffx,-ffy,-ffz,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+//     }
 
-    // Torques
+      // Torques
 #ifdef ROTATION
     ax=p1->r.dip[1]*p2->r.dip[2]-p2->r.dip[1]*p1->r.dip[2];
     ay=p2->r.dip[0]*p1->r.dip[2]-p1->r.dip[0]*p2->r.dip[2];

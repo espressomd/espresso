@@ -30,6 +30,7 @@ typedef struct {
 
   /** force on the particle given to md part */
   float f[3];
+
   
 } CUDA_particle_force;
 
