@@ -94,6 +94,7 @@
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
 #include "immersed-boundary/stretching_force_ibm_tcl.hpp"
+#include "immersed-boundary/bending_force_ibm_tcl.hpp"
 
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
@@ -364,6 +365,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
    case STRETCHING_FORCE_IBM_IA:
      return tclprint_to_result_stretching_force_ibmIA(interp, params);
+#endif
+#ifdef BENDING_FORCE_IMMERSED_BOUNDARY
+   case BENDINGG_FORCE_IBM_IA:
+     return tclprint_to_result_bending_force_ibmIA(interp, params);
 #endif
 #ifdef BOND_VIRTUAL
   case BONDED_IA_VIRTUAL_BOND:
@@ -908,6 +913,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
   REGISTER_BONDED("triel", tclcommand_inter_parse_stretching_force_ibm);
+#endif
+#ifdef BENDING_FORCE_IMMERSED_BOUNDARY
+  REGISTER_BONDED("tribend", tclcommand_inter_parse_bending_force_ibm);
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);

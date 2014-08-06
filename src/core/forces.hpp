@@ -85,6 +85,7 @@
 #include "iccp3m.hpp"
 #include "collision.hpp" 
 #include "immersed-boundary/stretching_force_ibm.hpp"
+#include "immersed-boundary/bending_force_ibm.hpp"
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
@@ -582,6 +583,11 @@ inline void add_bonded_force(Particle *p1)
       bond_broken=calc_stretching_force_ibm(p1,p2,p3,iaparams,force,force2);
     break; 
 #endif
+#ifdef BENDING_FORCE_IMMERSED_BOUNDARY
+    case BENDING_FORCE_IBM_IA:
+      bond_broken=calc_bending_force_ibm(p1,p2,p3,p4,iaparams);  
+    break;
+#endif
     default :
       errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{082 add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);
@@ -665,6 +671,8 @@ switch (type) {
 		p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
 		p4->f.f[j] += force2[j];
 		break;
+        case BENDING_FORCE_IBM_IA :
+	        break;
 	default:
 		p1->f.f[j] += force[j];
 		p2->f.f[j] += force2[j];

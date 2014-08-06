@@ -385,6 +385,12 @@ static void recalc_maximal_cutoff_bonded()
 	     max_cut_bonded = bonded_ia_params[i].p.stretching_force_ibm.maxdist;
 	break;
 #endif
+#ifdef BENDING_FORCE_IMMERSED_BOUNDARY
+	case BENDING_FORCE_IBM_IA:
+	   if(max_cut_bonded < bonded_ia_params[i].p.tribend.max) 
+	     max_cut_bonded = bonded_ia_params[i].p.tribend.max;
+	break;
+#endif
       
     default:
      break;

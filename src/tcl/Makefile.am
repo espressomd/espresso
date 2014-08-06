@@ -127,7 +127,9 @@ libEspressoTcl_la_SOURCES += \
 	object-in-fluid/volume_force_tcl.cpp \
 	object-in-fluid/volume_force_tcl.hpp \
 	immersed-boundary/stretching_force_ibm_tcl.cpp \
-	immersed-boundary/stretching_force_ibm_tcl.hpp
+	immersed-boundary/stretching_force_ibm_tcl.hpp \
+	immersed-boundary/bending_force_ibm_tcl.cpp \
+	immersed-boundary/bending_force_ibm_tcl.hpp
 
 # Coulomb methods
 libEspressoTcl_la_SOURCES += \
