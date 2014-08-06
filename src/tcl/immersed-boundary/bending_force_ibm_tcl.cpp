@@ -56,35 +56,35 @@ int tclcommand_inter_parse_bending_force_ibm(Tcl_Interp *interp, int bond_type, 
 	return TCL_ERROR;
       }
   
-      CHECK_VALUE(tribend_set_params(bond_type, i1, i2, i3, i4, boo, max,kb), "bond type must be nonnegative");
+      CHECK_VALUE(bending_force_ibm_set_params(bond_type, i1, i2, i3, i4, boo, max,kb), "bond type must be nonnegative");
       
     } else if(argc == 5) {
       
       if (! ARG_IS_D(1, bood)) {
-	Tcl_AppendResult(interp, "Fatal Error Resurrecting tribend"
+	Tcl_AppendResult(interp, "Fatal Error Resurrecting bending_force_ibm"
 		     "<bool> ", (char *) NULL);
 	return TCL_ERROR;
       }
       
       if (! ARG_IS_D(2, theta0)) {
-	Tcl_AppendResult(interp, "Fatal Error Resurrecting tribend"
+	Tcl_AppendResult(interp, "Fatal Error Resurrecting bending_force_ibm"
 		     "<theta0> ", (char *) NULL);
 	return TCL_ERROR;
       }
       
       if (! ARG_IS_D(3, kb)) {
-	Tcl_AppendResult(interp, "Fatal Error Resurrecting tribend"
+	Tcl_AppendResult(interp, "Fatal Error Resurrecting bending_force_ibm"
 		     "<kb> ", (char *) NULL);
 	return TCL_ERROR;
       }
       
       if (! ARG_IS_D(4, max)) {
-	Tcl_AppendResult(interp, "Fatal Error Resurrecting tribend"
+	Tcl_AppendResult(interp, "Fatal Error Resurrecting bending_force_ibm"
 		     "<max> ", (char *) NULL);
 	return TCL_ERROR;
       }
       
-       CHECK_VALUE(tribend_reset_params(bond_type, bood, theta0, kb, max), "bond type must be nonnegative");
+       CHECK_VALUE(bending_force_ibm_reset_params(bond_type, bood, theta0, kb, max), "bond type must be nonnegative");
       
     }
 }
@@ -93,13 +93,13 @@ int tclprint_to_result_bending_force_ibmIA(Tcl_Interp *interp, Bonded_ia_paramet
 {
   char buffer[TCL_DOUBLE_SPACE];
 
-   Tcl_PrintDouble(interp, params->p.tribend.boo, buffer);
-  Tcl_AppendResult(interp, "tribend ", buffer," ", (char *) NULL);
-   Tcl_PrintDouble(interp, params->p.tribend.theta0, buffer);
+   Tcl_PrintDouble(interp, params->p.bending_force_ibm.boo, buffer);
+  Tcl_AppendResult(interp, "bending_force_ibm ", buffer," ", (char *) NULL);
+   Tcl_PrintDouble(interp, params->p.bending_force_ibm.theta0, buffer);
   Tcl_AppendResult(interp," ",buffer, " ", (char *) NULL);
-   Tcl_PrintDouble(interp, params->p.tribend.kb, buffer);
+   Tcl_PrintDouble(interp, params->p.bending_force_ibm.kb, buffer);
   Tcl_AppendResult(interp," ", buffer, " ", (char *) NULL);
-   Tcl_PrintDouble(interp, params->p.tribend.max, buffer);
+   Tcl_PrintDouble(interp, params->p.bending_force_ibm.max, buffer);
   Tcl_AppendResult(interp," ", buffer, " ", (char *) NULL);
   
   return TCL_OK;

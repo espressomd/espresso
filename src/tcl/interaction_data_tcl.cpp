@@ -372,7 +372,7 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
      return tclprint_to_result_stretching_force_ibmIA(interp, params);
 #endif
 #ifdef BENDING_FORCE_IMMERSED_BOUNDARY
-   case BENDINGG_FORCE_IBM_IA:
+   case BENDING_FORCE_IBM_IA:
      return tclprint_to_result_bending_force_ibmIA(interp, params);
 #endif
 #ifdef BOND_VIRTUAL

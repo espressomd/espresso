@@ -4,7 +4,7 @@
 #include "communication.hpp"
 
 
-int tribend_set_params(int bond_type, int ind1, int ind2, int ind3, int ind4, int boo, double max, double kb) {
+int bending_force_ibm_set_params(int bond_type, int ind1, int ind2, int ind3, int ind4, int boo, double max, double kb) {
     Particle p1, p2, p3, p4;
     double n1l[3], n2l[3], n1[3], n2[3];
     double dx1[3], dx2[3], dx3[3];
@@ -78,12 +78,12 @@ int tribend_set_params(int bond_type, int ind1, int ind2, int ind3, int ind4, in
     //printf("%lf\n", theta0*TOANGLE);
     
     //effective springconstant = bending resistance^(1/3); Krueger2012
-    bonded_ia_params[bond_type].p.tribend.kb = sqrt(3)*kb;
-    bonded_ia_params[bond_type].p.tribend.theta0 = theta0;
-    bonded_ia_params[bond_type].p.tribend.boo = boo;
-    bonded_ia_params[bond_type].p.tribend.max = max;
+    bonded_ia_params[bond_type].p.bending_force_ibm.kb = sqrt(3)*kb;
+    bonded_ia_params[bond_type].p.bending_force_ibm.theta0 = theta0;
+    bonded_ia_params[bond_type].p.bending_force_ibm.boo = boo;
+    bonded_ia_params[bond_type].p.bending_force_ibm.max = max;
     
-    bonded_ia_params[bond_type].type = TRIBEND_IA;
+    bonded_ia_params[bond_type].type = BENDING_FORCE_IBM_IA;
     bonded_ia_params[bond_type].num = 3;
     
     mpi_bcast_ia_params(bond_type, -1);
@@ -98,7 +98,7 @@ int tribend_set_params(int bond_type, int ind1, int ind2, int ind3, int ind4, in
     
 }
 
-int tribend_reset_params(int bond_type, double bood, double theta0, double kb, double max) {
+int bending_force_ibm_reset_params(int bond_type, double bood, double theta0, double kb, double max) {
     
     int boo = bood;
   
@@ -108,12 +108,12 @@ int tribend_reset_params(int bond_type, double bood, double theta0, double kb, d
     
     make_bond_type_exist(bond_type);
     
-    bonded_ia_params[bond_type].p.tribend.boo = boo;
-    bonded_ia_params[bond_type].p.tribend.theta0 = theta0;
-    bonded_ia_params[bond_type].p.tribend.kb = kb;
-    bonded_ia_params[bond_type].p.tribend.max = max;
+    bonded_ia_params[bond_type].p.bending_force_ibm.boo = boo;
+    bonded_ia_params[bond_type].p.bending_force_ibm.theta0 = theta0;
+    bonded_ia_params[bond_type].p.bending_force_ibm.kb = kb;
+    bonded_ia_params[bond_type].p.bending_force_ibm.max = max;
     
-    bonded_ia_params[bond_type].type = TRIBEND_IA;
+    bonded_ia_params[bond_type].type = BENDING_FORCE_IBM_IA;
     bonded_ia_params[bond_type].num = 3;
     
     mpi_bcast_ia_params(bond_type, -1);

@@ -8,10 +8,10 @@
 
 #define TOANGLE 360.0/(2.0*PI)
 
-#ifdef TRIBEND
+#ifdef BENDING_FORCE_IMMERSED_BOUNDARY
 
-int tribend_set_params(int bond_type, int ind1, int ind2, int ind3, int ind4, int boo, double max, double kb);
-int tribend_reset_params(int bond_type, double bood, double theta0, double kb, double max);
+int bending_force_ibm_set_params(int bond_type, int ind1, int ind2, int ind3, int ind4, int boo, double max, double kb);
+int bending_force_ibm_reset_params(int bond_type, double bood, double theta0, double kb, double max);
 
 inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams) { 
   double theta, Ai, Aj;
@@ -36,7 +36,7 @@ inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Part
   vector_product(dx1, dx2, n1);
   vector_product(dx1, dx3, n2);
     
-  if(iaparams->p.tribend.boo == 0) {
+  if(iaparams->p.bending_force_ibm.boo == 0) {
       n2[0]=-1*n2[0]; n2[1]=-1*n2[1]; n2[2]=-1*n2[2];
   }
    
@@ -77,10 +77,10 @@ inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Part
       theta = -1.0*theta;
   }
   
-  //printf("theta = %lf  theta0 = %lf\n", theta, iaparams->p.tribend.theta0);
+  //printf("theta = %lf  theta0 = %lf\n", theta, iaparams->p.bending_force_ibm.theta0);
   
   
-  DTh = theta-iaparams->p.tribend.theta0;  
+  DTh = theta-iaparams->p.bending_force_ibm.theta0;  
   
  
   //printf("DTh = %lf\n", DTh);
@@ -97,18 +97,18 @@ inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Part
   }
   
   
-  //printf("%lf %lf\n", theta*TOANGLE, iaparams->p.tribend.theta0*TOANGLE);
+  //printf("%lf %lf\n", theta*TOANGLE, iaparams->p.bending_force_ibm.theta0*TOANGLE);
   
   //printf("sc = %lf\n", sc);
   
   
   if(theta>0) {
-    Pre = 1.0*iaparams->p.tribend.kb * sin(DTh);  
+    Pre = 1.0*iaparams->p.bending_force_ibm.kb * sin(DTh);  
   } else {
-    Pre = -1.0*iaparams->p.tribend.kb * sin(DTh); 
+    Pre = -1.0*iaparams->p.bending_force_ibm.kb * sin(DTh); 
   }
   
-  //printf("Pre = %lf  kb=%lf\n", Pre, iaparams->p.tribend.kb); 
+  //printf("Pre = %lf  kb=%lf\n", Pre, iaparams->p.bending_force_ibm.kb); 
   
   for(i=0; i<3; i++) {
       v1l[i] = n2[i]-sc*n1[i];

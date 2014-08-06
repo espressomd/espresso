@@ -718,7 +718,7 @@ typedef struct {
   double theta0;
   double max;
   int boo;
-} Bending_force_force_ibm_bond_parameters;
+} Bending_force_ibm_bond_parameters;
 
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
@@ -742,7 +742,7 @@ typedef union {
   Angledist_bond_parameters angledist;
   Endangledist_bond_parameters endangledist;
   Stretching_force_ibm_bond_parameters stretching_force_ibm;
-  Bending_force_force_ibm_bond_parameters bending_force_ibm;
+  Bending_force_ibm_bond_parameters bending_force_ibm;
 } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */

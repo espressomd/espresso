@@ -392,8 +392,8 @@ static void recalc_maximal_cutoff_bonded()
 #endif
 #ifdef BENDING_FORCE_IMMERSED_BOUNDARY
 	case BENDING_FORCE_IBM_IA:
-	   if(max_cut_bonded < bonded_ia_params[i].p.tribend.max) 
-	     max_cut_bonded = bonded_ia_params[i].p.tribend.max;
+	   if(max_cut_bonded < bonded_ia_params[i].p.bending_force_ibm.max) 
+	     max_cut_bonded = bonded_ia_params[i].p.bending_force_ibm.max;
 	break;
 #endif
       
