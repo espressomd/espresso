@@ -21,6 +21,8 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 
+
+
 // These functions will split the paritlce data structure into individual arrays for each property
 
 // Position and charge

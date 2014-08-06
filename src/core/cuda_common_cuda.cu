@@ -144,7 +144,7 @@ __global__ void init_fluid_composition(CUDA_fluid_composition *fluid_composition
 /** kernel for the initalisation of the partikel force array
  * @param *particle_forces_device	pointer to local particle force (Input)
 */
-__global__ void reset_particle_force(CUDA_particle_force *particle_forces_device){
+__global__ void reset_particle_force(CUDA_particle_force *particle_forces_device, CUDA_particle_torque* particle_torques_device){
 	
   unsigned int part_index = getThreadIndex();
 	
@@ -152,10 +152,10 @@ __global__ void reset_particle_force(CUDA_particle_force *particle_forces_device
     particle_forces_device[part_index].f[0] = 0.0f;
     particle_forces_device[part_index].f[1] = 0.0f;
     particle_forces_device[part_index].f[2] = 0.0f;
-#ifdef TORQUES
-    particle_forces_device[part_index].torque[0] = 0.0f;
-    particle_forces_device[part_index].torque[1] = 0.0f;
-    particle_forces_device[part_index].torque[2] = 0.0f;
+#ifdef ROTATION
+    particle_torques_device[part_index].torque[0] = 0.0f;
+    particle_torques_device[part_index].torque[1] = 0.0f;
+    particle_torques_device[part_index].torque[2] = 0.0f;
 #endif
   }			
 }
@@ -322,10 +322,10 @@ void copy_forces_from_GPU() {
       
       /** reset part forces with zero*/
       
-      KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device));
+      KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device,particle_torques_device));
       cudaThreadSynchronize();
     }
-    cuda_mpi_send_forces(particle_forces_host,particle_torques_device,fluid_composition_host);
+    cuda_mpi_send_forces(particle_forces_host,particle_torques_host,fluid_composition_host);
   }
 }
 

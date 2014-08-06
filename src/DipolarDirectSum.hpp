@@ -6,6 +6,7 @@
 #include <iostream>
 #include "Actor.hpp"
 #include "DipolarDirectSum_cuda.hpp"
+#include "grid.hpp" 
 
 #ifndef ACTOR_DIPOLARDIRECTSUM_HPP
 #define ACTOR_DIPOLARDIRECTSUM_HPP
@@ -28,14 +29,14 @@ public:
   }; 
   void computeForces(SystemInterface &s) {
     float box[3];
-    int periodic[3];
+    int per[3];
     for (int i=0;i<3;i++)
     {
      box[i]=s.box()[i];
-     periodic[i]=0;
+     per[i] = (PERIODIC(i));
     }
     DipolarDirectSum_kernel_wrapper(k,s.npart_gpu(),
-					 s.rGpuBegin(), s.dipGpuBegin(), s.fGpuBegin(),s.torqueGpuBegin(),box,periodic);
+					 s.rGpuBegin(), s.dipGpuBegin(), s.fGpuBegin(),s.torqueGpuBegin(),box,per);
   };
 protected:
   float k;
