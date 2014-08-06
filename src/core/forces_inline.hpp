@@ -317,6 +317,10 @@ inline void force_calc()
   // Communication Step: ghost forces
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
+#ifdef IMMERSED_BOUNDARY
+  if (lattice_switch & (LATTICE_LB | LATTICE_LB_GPU)) lb_ibm_coupling() ;
+#endif
+
   // apply trap forces to trapped molecules
 #ifdef MOLFORCES
   calc_and_apply_mol_constraints();
