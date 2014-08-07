@@ -188,7 +188,7 @@ void gpu_change_number_of_part_to_comm() {
       cudaMallocHost((void**)&particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data));
       cudaMallocHost((void**)&particle_forces_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force));
 #ifdef ENGINE
-      cudaMallocHost((void**)&hostv_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs));
+      cudaMallocHost((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs));
 #endif
 #ifdef SHANCHEN
       cudaMallocHost((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition));
@@ -313,11 +313,7 @@ void copy_v_cs_from_GPU() {
     // Copy result from device memory to host memory
     if ( this_node == 0 )
     {
-      // TODO: How to use cudaMemcpy2D?
-      //cuda_safe_mem(cudaMemcpy(particle_forces_host, particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force), cudaMemcpyDeviceToHost));
-
-      // TODO: Ask Georg if we still need that without reset_particle force
-      cudaThreadSynchronize();
+      cuda_safe_mem(cudaMemcpy2D(host_v_cs, sizeof(CUDA_v_cs), particle_data_device, sizeof(CUDA_particle_data), sizeof(CUDA_v_cs), global_part_vars_host.number_of_particles, cudaMemcpyDeviceToHost));
     }
     cuda_mpi_send_v_cs(host_v_cs);
   }
