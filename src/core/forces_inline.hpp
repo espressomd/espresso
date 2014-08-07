@@ -211,7 +211,7 @@ inline void force_calc()
   cells_update_ghosts();
 
   // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
+#ifdef VIRTUAL_SITES && !defined(VIRTUAL_SITES_IMMERSED_BOUNDARY)
   update_mol_vel_pos();
   ghost_communicator(&cell_structure.update_ghost_pos_comm);
 #endif
@@ -321,7 +321,7 @@ inline void force_calc()
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef IMMERSED_BOUNDARY
-  if (lattice_switch & (LATTICE_LB | LATTICE_LB_GPU)) lb_ibm_coupling() ;
+  if (lattice_switch & LATTICE_LB) lb_ibm_coupling() ;
 #endif
 
   // apply trap forces to trapped molecules
