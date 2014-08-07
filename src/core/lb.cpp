@@ -2228,12 +2228,12 @@ inline void lb_relax_modes(index_t index, double *mode)
      * Chapman-Enskog expansion in [Ladd & Verberg]. */
 #ifndef EXTERNAL_FORCES
     if (lbfields[index].has_force)
+#endif // !EXTERNAL_FORCES
     {
         j[0] += 0.5 * lbfields[index].force[0];
         j[1] += 0.5 * lbfields[index].force[1];
         j[2] += 0.5 * lbfields[index].force[2];
     }
-#endif // !EXTERNAL_FORCES
 
     /* equilibrium part of the stress modes */
     pi_eq[0] = scalar(j,j) / rho;
