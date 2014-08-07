@@ -49,7 +49,10 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
       // check if local_box_l is compatible with lattice spacing
       if (fabs(local_box_l[dir]-this->grid[dir]*agrid[dir]) > ROUND_ERROR_PREC*box_l[dir]) {
         char *errtxt = runtime_error(256);
-        ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid[%d]=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d)} ",\
+        ERROR_SPRINTF(errtxt, \
+                      "{097 Lattice spacing agrid[%d]=%f " \
+                      "is incompatible with local_box_l[%d]=%f " \
+                      "(box_l[%d]=%f node_grid[%d]=%d)} ",       \
                       dir, agrid[dir], \
                       dir, local_box_l[dir], \
                       dir, box_l[dir], \
