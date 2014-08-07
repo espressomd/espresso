@@ -21,6 +21,8 @@ puts "---------------------------------------------------------------"
 puts "- Testcase external_potential.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
+require_max_nodes_per_side 1
+
 setmd box_l 6. 6. 6.
 thermostat off
 setmd skin 1.00
@@ -38,9 +40,9 @@ for { set i 0 } { $i < 100 } { incr i } {
   if { abs($current_energy - $initial_energy ) > 0.02}  {
     puts "Error in energy conservation"
     puts "The deviations are larger than 0.02"
-    exit 1
+    error_exit
   }
 }
 
 puts "Test successful"
-exit 0
+ok_exit

@@ -43,11 +43,6 @@ int generate_external_potential(ExternalPotential** e) {
 }     
 
 int external_potential_tabulated_init(int number, char* filename, int n_particle_types, double* scale) {
-  for (int i =0; i<n_particle_types; i++) {
-    printf("%f ", scale[i]);
-  }
-  printf("scale\n");
-
   ExternalPotentialTabulated* e = &external_potentials[number].tabulated;
 
   if (strlen(filename)>MAX_FILENAME_SIZE)
