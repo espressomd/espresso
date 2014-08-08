@@ -211,7 +211,7 @@ inline void force_calc()
   cells_update_ghosts();
 
   // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES && !defined(VIRTUAL_SITES_IMMERSED_BOUNDARY)
+#ifdefined VIRTUAL_SITES && !defined(VIRTUAL_SITES_IMMERSED_BOUNDARY)
   update_mol_vel_pos();
   ghost_communicator(&cell_structure.update_ghost_pos_comm);
 #endif
