@@ -46,6 +46,7 @@
 #include "p3m.hpp"
 #include "thermostat.hpp"
 #include "initialize.hpp"
+#include "cuda_interface.hpp"
 
 /****************************************************
  *                     DEFINES
@@ -265,11 +266,12 @@ void convert_torques_propagate_omega()
       tz = A[2 + 3*0]*p[i].f.torque[0] + A[2 + 3*1]*p[i].f.torque[1] + A[2 + 3*2]*p[i].f.torque[2];
 
 #ifdef ENGINE
+      copy_v_cs_from_GPU();
       double omega_swim[3];
       double omega_swim_body[3];
-      omega_swim[0] = 1.0/p[i].swim.dipole_length * ( p[i].swim.v_center[0] - p[i].swim.v_source[0] );
-      omega_swim[1] = 1.0/p[i].swim.dipole_length * ( p[i].swim.v_center[1] - p[i].swim.v_source[1] );
-      omega_swim[2] = 1.0/p[i].swim.dipole_length * ( p[i].swim.v_center[2] - p[i].swim.v_source[2] );
+      omega_swim[0] = ( p[i].swim.v_center[0] - p[i].swim.v_source[0] ) / p[i].swim.dipole_length;
+      omega_swim[1] = ( p[i].swim.v_center[1] - p[i].swim.v_source[1] ) / p[i].swim.dipole_length;
+      omega_swim[2] = ( p[i].swim.v_center[2] - p[i].swim.v_source[2] ) / p[i].swim.dipole_length;
       omega_swim_body[0] = A[0 + 3*0]*omega_swim[0] + A[0 + 3*1]*omega_swim[1] + A[0 + 3*2]*omega_swim[2];
       omega_swim_body[1] = A[1 + 3*0]*omega_swim[0] + A[1 + 3*1]*omega_swim[1] + A[1 + 3*2]*omega_swim[2];
       omega_swim_body[2] = A[2 + 3*0]*omega_swim[0] + A[2 + 3*1]*omega_swim[1] + A[2 + 3*2]*omega_swim[2];
