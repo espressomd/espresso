@@ -33,7 +33,7 @@
 #include "lb.cpp"
 #include "ibm.hpp"
 
-#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
 
 void lb_ibm_coupling() { 
   
@@ -109,7 +109,6 @@ void couple_trace_to_fluid(Particle *p) {
   int k,x,y,z;
   
   lblattice.map_position_to_lattice(p->r.p,node_index,delta);
-  lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
   
   for(k=0; k<3; k++) {
     force[k]=p->f.f[k];
