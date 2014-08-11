@@ -24,7 +24,7 @@
 
 #include <algorithm>
 #include "constraint.hpp"
-#include "energy.hpp"
+#include "energy_inline.hpp"
 #include "forces_inline.hpp"
 #include "tunable_slip.hpp"
 
