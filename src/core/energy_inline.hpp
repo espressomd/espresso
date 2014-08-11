@@ -24,6 +24,7 @@
 #ifndef ENERGY_INLINE_HPP
 #define ENERGY_INLINE_HPP
 
+#include "statistics.hpp"
 #include "thermostat.hpp"
 #include "p3m.hpp"
 #include "p3m-dipolar.hpp"
@@ -45,6 +46,7 @@
 #include "fene.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
+#include "angle.hpp"
 #include "angle_harmonic.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
@@ -60,6 +62,15 @@
 
 #include "energy.hpp"
 
+/** Calculate non bonded energies between a pair of particles.
+    @param p1        pointer to particle 1.
+    @param p2        pointer to particle 2.
+    @param ia_params the interaction parameters between the two particles
+    @param d         vector between p1 and p2.
+    @param dist      distance between p1 and p2.
+    @param dist2     distance squared between p1 and p2.
+    @return the short ranged interaction energy between the two particles
+*/
 inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
                         IA_parameters *ia_params,
                         double d[3], double dist, double dist2)
@@ -157,6 +168,13 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
   return ret;
 }
 
+/** Add non bonded energies and short range coulomb between a pair of particles.
+    @param p1        pointer to particle 1.
+    @param p2        pointer to particle 2.
+    @param d         vector between p1 and p2.
+    @param dist      distance between p1 and p2.
+    @param dist2     distance squared between p1 and p2.
+*/
 inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
                      double dist, double dist2)
 {
@@ -225,6 +243,9 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 
 }
 
+/** Calculate bonded energies for one particle.
+    @param p1 particle for which to calculate energies
+*/
 inline void add_bonded_energy(Particle *p1)
 {
   char *errtxt;
@@ -402,6 +423,9 @@ inline void add_bonded_energy(Particle *p1)
   }
 }
 
+/** Calculate kinetic energies for one particle.
+    @param p1 particle for which to calculate energies
+*/
 inline void add_kinetic_energy(Particle *p1)
 {
 #ifdef VIRTUAL_SITES
