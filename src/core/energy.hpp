@@ -66,40 +66,6 @@ void energy_calc(double *result);
 /** Calculate long range energies (P3M, MMM2d...). */
 void calc_long_range_energies();
 
-/* ************************** inline ************************** */
-
-/** Calculate non bonded energies between a pair of particles.
-    @param p1        pointer to particle 1.
-    @param p2        pointer to particle 2.
-    @param ia_params the interaction parameters between the two particles
-    @param d         vector between p1 and p2. 
-    @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2.
-    @return the short ranged interaction energy between the two particles
-*/
-double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
-					    IA_parameters *ia_params,
-                        double d[3], double dist, double dist2);
-
-/** Add non bonded energies and short range coulomb between a pair of particles.
-    @param p1        pointer to particle 1.
-    @param p2        pointer to particle 2.
-    @param d         vector between p1 and p2. 
-    @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2. */
-void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
-                     double dist, double dist2);
-
-/** Calculate bonded energies for one particle.
-    @param p1 particle for which to calculate energies
-*/
-void add_bonded_energy(Particle *p1);
-
-/** Calculate kinetic energies for one particle.
-    @param p1 particle for which to calculate energies
-*/
-void add_kinetic_energy(Particle *p1);
-
 /*@}*/
 
 #endif
