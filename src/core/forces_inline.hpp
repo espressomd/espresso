@@ -202,6 +202,29 @@ inline void init_local_particle_force(Particle *part) {
 #endif
 }
 
+/** Calculate forces.
+ *
+ *  A short list, what the function is doing:
+ *  <ol>
+ *  <li> Initialize forces with: \ref friction_thermo_langevin (ghost forces with zero).
+ *  <li> Calculate bonded interaction forces:<br>
+ *       Loop all local particles (not the ghosts).
+ *       <ul>
+ *       <li> FENE
+ *       <li> ANGLE (cos bend potential)
+ *       </ul>
+ *  <li> Calculate non-bonded short range interaction forces:<br>
+ *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
+ *       <ul>
+ *       <li> Lennard-Jones.
+ *       <li> Buckingham.
+ *       <li> Real space part: Coulomb.
+ *       <li> Ramp.
+ *       </ul>
+ *  <li> Calculate long range interaction forces:<br>
+         Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
+ *  </ol>
+ */
 inline void force_calc()
 {
   // Communication step: distribute ghost positions
@@ -340,7 +363,7 @@ inline void
 calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,
                                  double d[3], double dist, double dist2, 
                                  double force[3], 
-                                 double torque1[3], double torque2[3]) {
+                                 double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
@@ -410,11 +433,11 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
 #endif
 }
 
-inline void 
-calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, 
-                           double d[3], double dist, double dist2, 
-                           double force[3], 
-                           double torque1[3], double torque2[3]) {
+inline void
+calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+                           double d[3], double dist, double dist2,
+                           double force[3],
+                           double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef MOL_CUT
    // You may want to put a correction factor and correction term for smoothing function else then theta
    if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
