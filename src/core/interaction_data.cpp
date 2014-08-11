@@ -657,8 +657,8 @@ void recalc_maximal_cutoff()
     max_cut = max_cut_bonded;
 }
 
-const char *get_name_of_bonded_ia(int i) {
-  switch (i) {
+const char *get_name_of_bonded_ia(BondedInteraction type) {
+  switch (type) {
   case BONDED_IA_FENE:
     return "FENE";
   case BONDED_IA_ANGLE_OLD:
@@ -701,7 +701,7 @@ const char *get_name_of_bonded_ia(int i) {
     return "STRETCHLIN_FORCE";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
-	    this_node, i);
+        this_node, type);
     errexit();
   }
   /* just to keep the compiler happy */

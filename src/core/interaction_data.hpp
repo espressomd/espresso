@@ -33,51 +33,76 @@
 /************************************************************/
 /*@{*/
 
-/** This bonded interaction was not set. */
+enum BondedInteraction{
+    /** This bonded interaction was not set. */
+    BONDED_IA_NONE = -1,
+    /** Type of bonded interaction is a FENE potential
+        (to be combined with Lennard Jones). */
+    BONDED_IA_FENE,
+    /** Type of bonded interaction is a HARMONIC potential. */
+    BONDED_IA_HARMONIC,
+    /** Type of bonded interaction is a bond angle potential. */
+    BONDED_IA_ANGLE_OLD,
+    /** Type of bonded interaction is a dihedral potential. */
+    BONDED_IA_DIHEDRAL,
+    /** Type of tabulated bonded interaction potential,
+        may be of bond length, of bond angle or of dihedral type. */
+    BONDED_IA_TABULATED,
+    /** Type of bonded interaction is a (-LJ) potential. */
+    BONDED_IA_SUBT_LJ,
+    /** Type of a Rigid/Constrained bond*/
+    BONDED_IA_RIGID_BOND,
+    /** Type of a virtual bond*/
+    BONDED_IA_VIRTUAL_BOND,
+    /** Type of bonded interaction is a bond angle -- constraint distance potential. */
+    BONDED_IA_ANGLEDIST,
+    /** Type of bonded interaction is a bond angle -- chain ends have angle with wall constraint */
+    BONDED_IA_ENDANGLEDIST,
+    /** Type of overlapped bonded interaction potential,
+        may be of bond length, of bond angle or of dihedral type. */
+    BONDED_IA_OVERLAPPED,
+    /** Type of bonded interaction is a bond angle cosine potential. */
+    BONDED_IA_ANGLE_HARMONIC,
+    /** Type of bonded interaction is a bond angle cosine potential. */
+    BONDED_IA_ANGLE_COSINE,
+    /** Type of bonded interaction is a bond angle cosine potential. */
+    BONDED_IA_ANGLE_COSSQUARE,
+    /** Type of bonded interaction is a hyperelastic stretching force. */
+    BONDED_IA_STRETCHING_FORCE,
+    /** Type of bonded interaction is a local area force. */
+    BONDED_IA_AREA_FORCE_LOCAL,
+    /** Type of bonded interaction is a bending force. */
+    BONDED_IA_BENDING_FORCE,
+    /** Type of bonded interaction is a bending force. */
+    BONDED_IA_VOLUME_FORCE,
+    /** Type of bonded interaction is a global area force. */
+    BONDED_IA_AREA_FORCE_GLOBAL,
+    /** Type of bonded interaction is a linear stretching force. */
+    BONDED_IA_STRETCHLIN_FORCE
+};
+/*
 #define BONDED_IA_NONE     -1
-/** Type of bonded interaction is a FENE potential 
-    (to be combined with Lennard Jones). */
 #define BONDED_IA_FENE      0
-/** Type of bonded interaction is a HARMONIC potential. */
 #define BONDED_IA_HARMONIC  1
-/** Type of bonded interaction is a bond angle potential. */
 #define BONDED_IA_ANGLE_OLD     2
-/** Type of bonded interaction is a dihedral potential. */
 #define BONDED_IA_DIHEDRAL  3
-/** Type of tabulated bonded interaction potential, 
-    may be of bond length, of bond angle or of dihedral type. */
 #define BONDED_IA_TABULATED 4
-/** Type of bonded interaction is a (-LJ) potential. */
 #define BONDED_IA_SUBT_LJ   5
-/** Type of a Rigid/Constrained bond*/
 #define BONDED_IA_RIGID_BOND  6
-/** Type of a virtual bond*/
 #define BONDED_IA_VIRTUAL_BOND  7
-/** Type of bonded interaction is a bond angle -- constraint distance potential. */
 #define BONDED_IA_ANGLEDIST     8
-/** Type of bonded interaction is a bond angle -- chain ends have angle with wall constraint */
 #define BONDED_IA_ENDANGLEDIST    9
-/** Type of overlapped bonded interaction potential, 
-    may be of bond length, of bond angle or of dihedral type. */
 #define BONDED_IA_OVERLAPPED 10
-/** Type of bonded interaction is a bond angle cosine potential. */ 
 #define BONDED_IA_ANGLE_HARMONIC 11
-/** Type of bonded interaction is a bond angle cosine potential. */ 
 #define BONDED_IA_ANGLE_COSINE 12
-/** Type of bonded interaction is a bond angle cosine potential. */ 
 #define BONDED_IA_ANGLE_COSSQUARE 13
-/** Type of bonded interaction is a hyperelastic stretching force. */
 #define BONDED_IA_STRETCHING_FORCE 14
-/** Type of bonded interaction is a local area force. */
-#define BONDED_IA_AREA_FORCE_LOCAL 15 
-/** Type of bonded interaction is a bending force. */
-#define BONDED_IA_BENDING_FORCE 16 
-/** Type of bonded interaction is a bending force. */
-#define BONDED_IA_VOLUME_FORCE 17 
-/** Type of bonded interaction is a global area force. */
-#define BONDED_IA_AREA_FORCE_GLOBAL 18 
-/** Type of bonded interaction is a linear stretching force. */
+#define BONDED_IA_AREA_FORCE_LOCAL 15
+#define BONDED_IA_BENDING_FORCE 16
+#define BONDED_IA_VOLUME_FORCE 17
+#define BONDED_IA_AREA_FORCE_GLOBAL 18
 #define BONDED_IA_STRETCHLIN_FORCE 19 
+*/
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -714,7 +739,7 @@ typedef union {
 /** Defines parameters for a bonded interaction. */
 typedef struct {
   /** bonded interaction type. See \ref BONDED_IA_FENE "Type code for bonded" */
-  int type;
+  BondedInteraction type;
   /** (Number of particles - 1) interacting for that type */ 
   int num;
   /** union to store the different bonded interaction parameters. */
@@ -1075,7 +1100,7 @@ inline int checkIfParticlesInteract(int i, int j) {
 }
 
 ///
-const char *get_name_of_bonded_ia(int i);
+const char *get_name_of_bonded_ia(BondedInteraction type);
 
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);

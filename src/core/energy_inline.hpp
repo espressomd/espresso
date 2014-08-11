@@ -251,7 +251,8 @@ inline void add_bonded_energy(Particle *p1)
   char *errtxt;
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
-  int i, type_num, type, n_partners, bond_broken;
+  int i, type_num, n_partners, bond_broken;
+  BondedInteraction type;
   double ret=0, dx[3] = {0, 0, 0};
 
   i = 0;
