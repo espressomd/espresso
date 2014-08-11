@@ -50,31 +50,31 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
   
   for(n=0;n<n_lb_boundaries;n++) {
     switch(lb_boundaries[n].type) {
-      case CONSTRAINT_WAL: 
+      case LB_BOUNDARY_WAL:
 	      calculate_wall_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist, vec); 
         break;
         
-      case CONSTRAINT_SPH:
+      case LB_BOUNDARY_SPH:
 	      calculate_sphere_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.sph, &dist, vec); 
         break;
         
-      case CONSTRAINT_CYL: 
+      case LB_BOUNDARY_CYL:
 	      calculate_cylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.cyl, &dist, vec); 
         break;
         
-      case CONSTRAINT_RHOMBOID: 
+      case LB_BOUNDARY_RHOMBOID:
 	      calculate_rhomboid_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.rhomboid, &dist, vec); 
         break;
         
-      case CONSTRAINT_PORE: 
+      case LB_BOUNDARY_POR:
 	      calculate_pore_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.pore, &dist, vec); 
         break;
 
-      case CONSTRAINT_STOMATOCYTE:
+      case LB_BOUNDARY_STOMATOCYTE:
 	      calculate_stomatocyte_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.stomatocyte, &dist, vec); 
         break;
 
-      case CONSTRAINT_HOLLOW_CONE:
+      case LB_BOUNDARY_HOLLOW_CONE:
 	      calculate_hollow_cone_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist, vec); 
         break;
     }
