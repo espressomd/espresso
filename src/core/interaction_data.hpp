@@ -33,63 +33,99 @@
 /************************************************************/
 /*@{*/
 
+enum {
 /** This bonded interaction was not set. */
-#define BONDED_IA_NONE     -1
+    BONDED_IA_NONE = -1,
 /** Type of bonded interaction is a FENE potential 
     (to be combined with Lennard Jones). */
-#define BONDED_IA_FENE      0
+    BONDED_IA_FENE,
 /** Type of bonded interaction is a HARMONIC potential. */
-#define BONDED_IA_HARMONIC  1
+    BONDED_IA_HARMONIC,
 /** Type of bonded interaction is a bond angle potential. */
-#define BONDED_IA_ANGLE_OLD     2
+    BONDED_IA_ANGLE_OLD,
 /** Type of bonded interaction is a dihedral potential. */
-#define BONDED_IA_DIHEDRAL  3
+    BONDED_IA_DIHEDRAL,
 /** Type of tabulated bonded interaction potential, 
     may be of bond length, of bond angle or of dihedral type. */
-#define BONDED_IA_TABULATED 4
+    BONDED_IA_TABULATED,
 /** Type of bonded interaction is a (-LJ) potential. */
-#define BONDED_IA_SUBT_LJ   5
+    BONDED_IA_SUBT_LJ,
 /** Type of a Rigid/Constrained bond*/
-#define BONDED_IA_RIGID_BOND  6
+    BONDED_IA_RIGID_BOND,
 /** Type of a virtual bond*/
-#define BONDED_IA_VIRTUAL_BOND  7
+    BONDED_IA_VIRTUAL_BOND,
 /** Type of bonded interaction is a bond angle -- constraint distance potential. */
-#define BONDED_IA_ANGLEDIST     8
+    BONDED_IA_ANGLEDIST,
 /** Type of bonded interaction is a bond angle -- chain ends have angle with wall constraint */
-#define BONDED_IA_ENDANGLEDIST    9
+    BONDED_IA_ENDANGLEDIST,
 /** Type of overlapped bonded interaction potential, 
     may be of bond length, of bond angle or of dihedral type. */
-#define BONDED_IA_OVERLAPPED 10
+    BONDED_IA_OVERLAPPED,
 /** Type of bonded interaction is a bond angle cosine potential. */ 
-#define BONDED_IA_ANGLE_HARMONIC 11
+    BONDED_IA_ANGLE_HARMONIC,
 /** Type of bonded interaction is a bond angle cosine potential. */ 
-#define BONDED_IA_ANGLE_COSINE 12
+    BONDED_IA_ANGLE_COSINE,
 /** Type of bonded interaction is a bond angle cosine potential. */ 
-#define BONDED_IA_ANGLE_COSSQUARE 13
+    BONDED_IA_ANGLE_COSSQUARE,
 /** Type of bonded interaction is a hyperelastic stretching force. */
-#define BONDED_IA_STRETCHING_FORCE 14
+    BONDED_IA_STRETCHING_FORCE,
 /** Type of bonded interaction is a local area force. */
-#define BONDED_IA_AREA_FORCE_LOCAL 15 
+    BONDED_IA_AREA_FORCE_LOCAL,
 /** Type of bonded interaction is a bending force. */
-#define BONDED_IA_BENDING_FORCE 16 
+    BONDED_IA_BENDING_FORCE,
 /** Type of bonded interaction is a bending force. */
-#define BONDED_IA_VOLUME_FORCE 17 
+    BONDED_IA_VOLUME_FORCE,
 /** Type of bonded interaction is a global area force. */
-#define BONDED_IA_AREA_FORCE_GLOBAL 18 
+    BONDED_IA_AREA_FORCE_GLOBAL,
 /** Type of bonded interaction is a linear stretching force. */
-#define BONDED_IA_STRETCHLIN_FORCE 19 
+    BONDED_IA_STRETCHLIN_FORCE
+};
+/*
+#define BONDED_IA_NONE     -1
+#define BONDED_IA_FENE      0
+#define BONDED_IA_HARMONIC  1
+#define BONDED_IA_ANGLE_OLD     2
+#define BONDED_IA_DIHEDRAL  3
+#define BONDED_IA_TABULATED 4
+#define BONDED_IA_SUBT_LJ   5
+#define BONDED_IA_RIGID_BOND  6
+#define BONDED_IA_VIRTUAL_BOND  7
+#define BONDED_IA_ANGLEDIST     8
+#define BONDED_IA_ENDANGLEDIST    9
+#define BONDED_IA_OVERLAPPED 10
+#define BONDED_IA_ANGLE_HARMONIC 11
+#define BONDED_IA_ANGLE_COSINE 12
+#define BONDED_IA_ANGLE_COSSQUARE 13
+#define BONDED_IA_STRETCHING_FORCE 14
+#define BONDED_IA_AREA_FORCE_LOCAL 15
+#define BONDED_IA_BENDING_FORCE 16
+#define BONDED_IA_VOLUME_FORCE 17
+#define BONDED_IA_AREA_FORCE_GLOBAL 18
+#define BONDED_IA_STRETCHLIN_FORCE 19
+*/
 
 /** Specify tabulated bonded interactions  */
+enum {TAB_UNKNOWN = 0,
+     TAB_BOND_LENGTH,
+     TAB_BOND_ANGLE,
+     TAB_BOND_DIHEDRAL};
+/*
 #define TAB_UNKNOWN          0
 #define TAB_BOND_LENGTH      1
 #define TAB_BOND_ANGLE       2
 #define TAB_BOND_DIHEDRAL    3
-
+*/
 /** Specify overlapped bonded interactions  */
+enum {OVERLAP_UNKNOWN = 0,
+     OVERLAP_BOND_LENGTH,
+     OVERLAP_BOND_ANGLE,
+     OVERLAP_BOND_DIHEDRAL};
+/*
 #define OVERLAP_UNKNOWN          0
 #define OVERLAP_BOND_LENGTH      1
 #define OVERLAP_BOND_ANGLE       2
 #define OVERLAP_BOND_DIHEDRAL    3
+*/
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
