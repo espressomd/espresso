@@ -30,7 +30,6 @@
 #include "object-in-fluid/area_force_global.hpp"
 #include "object-in-fluid/bending_force.hpp"
 #include "object-in-fluid/volume_force.hpp"
-#include "angle.hpp"
 #include "dihedral.hpp"
 #include "mdlc_correction.hpp"
 */

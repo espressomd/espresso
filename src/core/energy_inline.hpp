@@ -45,6 +45,7 @@
 #include "fene.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
+#include "angle.hpp"
 #include "angle_harmonic.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
