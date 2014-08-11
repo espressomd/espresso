@@ -29,7 +29,7 @@
 
 #ifdef OVERLAPPED
 
-int overlapped_bonded_set_params(int bond_type, int overlap_type,
+int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
 				 char * filename) 
 {
   int i, scan_success = 0, size;

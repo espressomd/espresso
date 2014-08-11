@@ -32,7 +32,7 @@
 int tclcommand_inter_parse_overlapped_bonded(Tcl_Interp *interp, int bond_type,
 					     int argc, char **argv)
 {
-  int overlap_type = OVERLAP_UNKNOWN;
+  OverlappedBondedInteraction overlap_type = OVERLAP_UNKNOWN;
 
   if (argc < 3 ) {
     Tcl_AppendResult(interp, "overlappedd needs two string parameter: "

@@ -105,16 +105,32 @@ enum BondedInteraction{
 */
 
 /** Specify tabulated bonded interactions  */
+enum TabulatedBondedInteraction{
+    TAB_UNKNOWN = 0,
+    TAB_BOND_LENGTH,
+    TAB_BOND_ANGLE,
+    TAB_BOND_DIHEDRAL
+};
+/*
 #define TAB_UNKNOWN          0
 #define TAB_BOND_LENGTH      1
 #define TAB_BOND_ANGLE       2
 #define TAB_BOND_DIHEDRAL    3
+*/
 
 /** Specify overlapped bonded interactions  */
+enum OverlappedBondedInteraction{
+    OVERLAP_UNKNOWN = 0,
+    OVERLAP_BOND_LENGTH,
+    OVERLAP_BOND_ANGLE,
+    OVERLAP_BOND_DIHEDRAL
+};
+/*
 #define OVERLAP_UNKNOWN          0
 #define OVERLAP_BOND_LENGTH      1
 #define OVERLAP_BOND_ANGLE       2
 #define OVERLAP_BOND_DIHEDRAL    3
+*/
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
@@ -155,20 +171,28 @@ enum BondedInteraction{
    */
   /************************************************************/
   /*@{*/
-
+enum DipolarInteration{
   /** dipolar interation switched off (NONE). */
-   #define DIPOLAR_NONE       0
+    DIPOLAR_NONE = 0,
    /** dipolar method is P3M. */
-   #define DIPOLAR_P3M        1
+    DIPOLAR_P3M,
    /** Dipolar method is P3M plus DLC. */
-   #define DIPOLAR_MDLC_P3M    2
+    DIPOLAR_MDLC_P3M,
    /** Dipolar method is all with all and no replicas */
-   #define DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA  3
+    DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
    /** Dipolar method is magnetic dipolar direct sum */
-   #define DIPOLAR_DS  4
+    DIPOLAR_DS,
    /** Dipolar method is direct sum plus DLC. */
+    DIPOLAR_MDLC_DS
+};
+/*
+   #define DIPOLAR_NONE       0
+   #define DIPOLAR_P3M        1
+   #define DIPOLAR_MDLC_P3M    2
+   #define DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA  3
+   #define DIPOLAR_DS  4
    #define DIPOLAR_MDLC_DS  5
-
+*/
    /*@}*/
 #endif 
 
@@ -179,37 +203,54 @@ enum BondedInteraction{
 */
 /************************************************************/
 /*@{*/
-
+enum ConstraintApplied{
 /** No constraint applied */
-#define CONSTRAINT_NONE 0
+    CONSTRAINT_NONE = 0,
 /** wall constraint applied */
-#define CONSTRAINT_WAL 1
+    CONSTRAINT_WAL,
 /** spherical constraint applied */
-#define CONSTRAINT_SPH 2
+    CONSTRAINT_SPH,
 /** (finite) cylinder shaped constraint applied */
-#define CONSTRAINT_CYL 3
+    CONSTRAINT_CYL,
 /** Rod-like charge. */
-#define CONSTRAINT_ROD 4
+    CONSTRAINT_ROD,
 /** Plate-like charge. */
-#define CONSTRAINT_PLATE 5
+    CONSTRAINT_PLATE,
 /** maze-like constraint applied */
-#define CONSTRAINT_MAZE 6
+    CONSTRAINT_MAZE,
 /** pore constraint applied */
-#define CONSTRAINT_PORE 7
+    CONSTRAINT_PORE,
 //ER
 /** External magnetic field constraint applied */
-#define CONSTRAINT_EXT_MAGN_FIELD 8
+    CONSTRAINT_EXT_MAGN_FIELD,
 //end ER
 /** Constraint for tunable-lsip boundary conditions */
-#define CONSTRAINT_PLANE 9
+    CONSTRAINT_PLANE,
 /** Constraint for tunable-lsip boundary conditions */
-#define CONSTRAINT_RHOMBOID 10
+    CONSTRAINT_RHOMBOID,
 /** Constraint for a stomatocyte boundary */
-#define CONSTRAINT_STOMATOCYTE 11
+    CONSTRAINT_STOMATOCYTE,
 /** slitpore constraint applied */
-#define CONSTRAINT_SLITPORE 12
+    CONSTRAINT_SLITPORE,
 /** Constraint for a hollow cone boundary */
+    CONSTRAINT_HOLLOW_CONE
+};
+/*
+#define CONSTRAINT_NONE 0
+#define CONSTRAINT_WAL 1
+#define CONSTRAINT_SPH 2
+#define CONSTRAINT_CYL 3
+#define CONSTRAINT_ROD 4
+#define CONSTRAINT_PLATE 5
+#define CONSTRAINT_MAZE 6
+#define CONSTRAINT_PORE 7
+#define CONSTRAINT_EXT_MAGN_FIELD 8
+#define CONSTRAINT_PLANE 9
+#define CONSTRAINT_RHOMBOID 10
+#define CONSTRAINT_STOMATOCYTE 11
+#define CONSTRAINT_SLITPORE 12
 #define CONSTRAINT_HOLLOW_CONE 13
+*/
 /*@}*/
 
 /* Data Types */
@@ -517,7 +558,7 @@ typedef struct {
  #ifdef DIPOLES
   double Dbjerrum;
   double Dprefactor;
-  int    Dmethod;
+  DipolarInteration    Dmethod;
  #endif
 
 } Coulomb_parameters;
@@ -645,7 +686,7 @@ typedef struct {
 /** Parameters for n-body tabulated potential (n=2,3,4). */
 typedef struct {
       char   *filename;
-      int    type;
+      TabulatedBondedInteraction    type;
       int    npoints;
       double minval;
       double maxval;
@@ -657,7 +698,7 @@ typedef struct {
 /** Parameters for n-body overlapped potential (n=2,3,4). */
 typedef struct {
       char   *filename;
-      int    type;
+      OverlappedBondedInteraction    type;
       double maxval;
       int    noverlaps;
       double *para_a;
@@ -963,7 +1004,7 @@ typedef struct {
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */
-  int type;
+  ConstraintApplied type;
 
   union {
     Constraint_wall wal;
