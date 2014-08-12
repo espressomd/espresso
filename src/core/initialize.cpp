@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -110,7 +110,7 @@ void on_program_start()
   init_bit_random();
 
   init_node_grid();
-  /* calculate initial minimimal number of cells (see tclcallback_min_num_cells) */
+  /* calculate initial minimal number of cells (see tclcallback_min_num_cells) */
   min_num_cells = calc_processor_min_num_cells();
 
   /* initially go for domain decomposition */
@@ -228,11 +228,11 @@ void on_observable_calc()
   EVENT_TRACE(fprintf(stderr, "%d: on_observable_calc\n", this_node));
   /* Prepare particle structure: Communication step: number of ghosts and ghost information */
 
-  if(resort_particles)
+  if (resort_particles)
     cells_resort_particles(CELL_GLOBAL_EXCHANGE);
 
 #ifdef ELECTROSTATICS  
-  if(reinit_electrostatics) {
+  if (reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
     switch (coulomb.method) {
 #ifdef P3M
@@ -299,7 +299,6 @@ void on_coulomb_change()
   switch (coulomb.method) {
   case COULOMB_DH:
     break;    
-#ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
     if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
@@ -307,10 +306,12 @@ void on_coulomb_change()
       exit(1);
     }
     p3m_gpu_init(p3m.params.cao, p3m.params.mesh[0], p3m.params.alpha, box_l[0]);
-    MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), 
+              sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
     p3m_init();
     break;
 #endif
+#ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
@@ -351,6 +352,9 @@ void on_coulomb_change()
      since the required cutoff might have reduced. */
   on_short_range_ia_change();
 
+#ifdef CUDA
+  reinit_particle_comm_gpu = 1;
+#endif
   recalc_forces = 1;
 }
 
@@ -425,22 +429,24 @@ void on_boxl_change() {
   switch(coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    ELC_init();
-    // fall through
+	  ELC_init();
+	  // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    p3m_scaleby_box_l();
-    break;
+	  p3m_scaleby_box_l();
+	  break;
 #endif
   case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
+	  MMM1D_init();
+	  break;
   case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
+	  MMM2D_init();
+	  break;
   case COULOMB_MAGGS: 
-    maggs_init();
-    break;
+	  maggs_init();
+	  break;
+  default:
+	  break;
   }
 #endif
 

@@ -43,11 +43,6 @@ int generate_external_potential(ExternalPotential** e) {
 }     
 
 int external_potential_tabulated_init(int number, char* filename, int n_particle_types, double* scale) {
-  for (int i =0; i<n_particle_types; i++) {
-    printf("%f ", scale[i]);
-  }
-  printf("scale\n");
-
   ExternalPotentialTabulated* e = &external_potentials[number].tabulated;
 
   if (strlen(filename)>MAX_FILENAME_SIZE)
@@ -130,7 +125,6 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   lattice->offset[0]=offset[0];
   lattice->offset[1]=offset[1];
   lattice->offset[2]=offset[2];
-
 
   int halosize=1;
 

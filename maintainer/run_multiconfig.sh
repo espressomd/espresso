@@ -1,4 +1,21 @@
 #!/bin/bash
+# Copyright (C) 2013,2014 Axel Arnold
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#
 
 # parallelism levels to check
 parallelisms="34core nompi"
@@ -28,10 +45,11 @@ done
 ########################################################
 topdir="`dirname $0`/.."
 
-if ! test -f "$topdir/src/initialize.cpp"; then
+sourcefile="$topdir/src/features.def"
+if ! test -f $sourcefile; then
     echo "Cannot determine the source directory." 1>&2
     echo "I am >$0< and think the source directory is >$topdir<." 1>&2
-    echo "However, >$topdir/src/initialize.cpp< is missing." 1>&2
+    echo "However, >$sourcefile< is missing." 1>&2
     exit 1
 fi
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -235,6 +235,13 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
     Tcl_AppendResult(interp, "illegal number of steps (must be >0) \n", (char *) NULL);
     return tclcommand_integrate_print_usage(interp);;
   }
+
+  /* if skin wasn't set, do an educated guess now */
+  if (!skin_set) {
+    skin = 0.4*max_cut;
+    mpi_bcast_parameter(FIELD_SKIN);
+  }
+
   /* perform integration */
   if (!correlations_autoupdate && !observables_autoupdate) {
     if (mpi_integrate(n_steps, reuse_forces))
@@ -265,6 +272,7 @@ int tclcallback_skin(Tcl_Interp *interp, void *_data)
     Tcl_AppendResult(interp, "skin must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
+  skin_set = true;
   skin = data;
   mpi_bcast_parameter(FIELD_SKIN);
   return (TCL_OK);

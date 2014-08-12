@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -22,14 +22,14 @@
     Pressure calculation. Really similar to \ref energy.hpp "energy.h".
 */
 
-#ifndef _PRESSURE_H
-#define _PRESSURE_H
+#ifndef _PRESSURE_HPP
+#define _PRESSURE_HPP
 
 #include "utils.hpp"
 #include "integrate.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
-#include "forces.hpp"
+#include "forces_inline.hpp"
 #include "npt.hpp"
 
 /** \name Exported Variables */
@@ -351,7 +351,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
 
   int i, k, j, l;
   int type_num;
-  int type;
+  BondedInteraction type;
 
   i = 0;
   while(i < p1->bl.n) {

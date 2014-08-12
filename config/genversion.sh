@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2013 The ESPResSo project
+# Copyright (C) 2013,2014 The ESPResSo project
 # Copyright (C) 2011,2012 Olaf Lenz
 #
 # This program is free software: you can redistribute it and/or modify
@@ -47,11 +47,11 @@ fi
 VERSIONFILE=version.txt
 
 # try to use git describe --dirty
-if VERSION=`git describe --dirty --match=?\.?\.? 2> /dev/null`; then
+if VERSION=`git describe --dirty --match=?\.* 2> /dev/null`; then
     test -z "$DIST" && VERSION=$VERSION-git
 
 # try to use git without --dirty
-elif VERSION=`git describe --match=?\.?\.? 2> /dev/null`-maybedirty; then
+elif VERSION=`git describe --match=?\.* 2> /dev/null`-maybedirty; then
     test -z "$DIST" && VERSION=$VERSION-git
 
 # otherwise use the versionfile

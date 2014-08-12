@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -58,7 +58,8 @@ inline void calc_volume(double *volume, int molType){ //first-fold-then-the-same
 	int img[3];
 	
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners, id;
+    int type_num, n_partners, id;
+    BondedInteraction type;
 	char *errtxt;
 
 	//int test=0;
@@ -137,7 +138,8 @@ inline void add_volume_force(double volume, int molType){  //first-fold-then-the
 	Particle *p, *p1, *p2, *p3;
 	double p11[3],p22[3],p33[3];
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners, id;
+    int type_num, n_partners, id;
+    BondedInteraction type;
 	char *errtxt;
 
 	int test=0;

@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -29,6 +29,7 @@ tests = \
 	constraints_reflecting.tcl \
 	correlation.tcl \
 	constraints_rhomboid.tcl \
+	coulomb_cloud_wall.tcl \
 	dh.tcl \
 	dielectric.tcl \
 	ek_eof_one_species_x.tcl \
@@ -36,7 +37,6 @@ tests = \
 	ek_eof_one_species_z.tcl \
 	ek_reaction.tcl \
 	el2d.tcl \
-	el2d_die.tcl \
 	el2d_nonneutral.tcl \
 	exclusions.tcl \
 	external_potential.tcl \
@@ -70,6 +70,7 @@ tests = \
 	mass-and-rinertia.tcl \
 	mdlc.tcl \
 	mmm1d.tcl \
+	mmm1dgpu.tcl \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
@@ -81,8 +82,6 @@ tests = \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
-	p3m_wall.tcl \
-	p3m_wall_gpu.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
@@ -105,10 +104,11 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	analysis_system.data.10.gz \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
+	coulomb_cloud_wall_system.data \
         p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
-	p3m_wall_system.data \
-	p3m_system.data el2d_system.data el2d_system_die.data \
+	p3m_system.data p3m_system_gpu.data \
+	el2d_system.data el2d_system_die.data \
 	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \

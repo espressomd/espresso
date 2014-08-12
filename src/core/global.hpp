@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -66,7 +66,7 @@ typedef struct {
 /** This array contains the description of all global variables that
     are synchronized across nodes and that can be changed/adressed via
     the TCL command setmd. read the documentation of \ref Datafield
-    befor you add new features. */
+    before you add new features. */
 extern const Datafield fields[];
 
 /** \name Field Enumeration

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -28,7 +28,7 @@
 #define LB_H
 
 #include "utils.hpp"
-#include "lattice.hpp"
+#include "lattice_inline.hpp"
 
 extern int lb_components ; // global variable holding the number of fluid components
 
@@ -53,7 +53,7 @@ extern int lb_components ; // global variable holding the number of fluid compon
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
 
-/** Note these are usef for binary logic so should be powers of 2 */
+/** Note these are used for binary logic so should be powers of 2 */
 #define LB_COUPLE_NULL        1
 #define LB_COUPLE_TWO_POINT   2
 #define LB_COUPLE_THREE_POINT 4
@@ -131,7 +131,7 @@ typedef struct {
 
   /** normal vector of the boundary surface */
   double *nvec; //doesn't work like that any more, I think (georg, 17.08.10)
-#endif
+#endif // LB_BOUNDARIES
 
 } LB_FluidNode;
 

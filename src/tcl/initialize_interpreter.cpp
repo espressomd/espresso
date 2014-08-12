@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -188,8 +188,9 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef ELECTROSTATICS
 #ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
-#endif 
-#endif 
+#endif
+  REGISTER_COMMAND("efield_caps", tclcommand_print_efield_capacitors);
+#endif
 #ifdef METADYNAMICS
   /* in metadynamics.cpp */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);

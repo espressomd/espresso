@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -55,7 +55,8 @@ inline void calc_area_global(double *area, int molType){ //first-fold-then-the-s
 	double p11[3],p22[3],p33[3];
 	int img[3];
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners,id;
+    int type_num, n_partners,id;
+    BondedInteraction type;
 	char *errtxt;
 
 	int test=0;
@@ -137,7 +138,8 @@ inline void add_area_global_force(double area, int molType){  //first-fold-then-
 	int img[3];
 
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners,id;
+    int type_num, n_partners,id;
+    BondedInteraction type;
 	char *errtxt;
 
 	int test=0;

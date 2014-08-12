@@ -1,3 +1,21 @@
+#
+# Copyright (C) 2013,2014 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#  
 include "myconfig.pxi"
 cimport numpy as np
 import numpy as np
@@ -339,7 +357,7 @@ cdef class ParticleHandle:
     del self
 
 
-  IF VIRTUAL_SITES ==1:
+  IF VIRTUAL_SITES_RELATIVE == 1:
     # vs_auto_relate_to
     def vs_auto_relate_to(self,_relto):
       """Setup this particle as virtual site relative to the particle with the given id"""

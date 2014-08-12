@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -56,10 +56,12 @@ typedef struct {
   /// flag whether there is any dielectric contrast in the system
   int dielectric_contrast_on;
 
-  /// dielectric constants
-  double di_top, di_mid, di_bot;
   /// dielectric prefactors
-  double di_mid_top, di_mid_bot, di_fac;
+  double di_mid_top,di_mid_bot;
+
+  /// const. potential parameters
+  int const_pot_on;
+  double pot_diff;
 
   /** minimal distance of two charges for which the far formula is used. For plain ELC, this equals
       gap_size, but for dielectric ELC it is only 1./3. of that. */
@@ -87,7 +89,7 @@ extern ELC_struct elc_params;
     @param bottom  dielectric constant of lower part
 */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize,
-		   double top, double mid, double bottom);
+		   double top, double bottom, int const_pot_on, double pot_diff);
 
 /// the force calculation 
 void ELC_add_force();

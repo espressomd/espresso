@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -41,9 +41,12 @@ static CUDA_particle_data *particle_data_device = NULL;
 static CUDA_particle_seed *particle_seeds_device = NULL;
   /** struct for fluid composition */
 static CUDA_fluid_composition *fluid_composition_device = NULL;
+/** struct for energies */
+static CUDA_energy *energy_device = NULL;
 
 CUDA_particle_data *particle_data_host = NULL;
 CUDA_particle_force *particle_forces_host = NULL;
+CUDA_energy energy_host;
 CUDA_fluid_composition *fluid_composition_host = NULL;
 #ifdef ENGINE
 CUDA_v_cs *host_v_cs = NULL;
@@ -256,6 +259,9 @@ CUDA_global_part_vars* gpu_get_global_particle_vars_pointer() {
 CUDA_particle_force* gpu_get_particle_force_pointer() {
   return particle_forces_device;
 }
+CUDA_energy* gpu_get_energy_pointer() {
+  return energy_device;
+}
 
 CUDA_particle_seed* gpu_get_particle_seed_pointer() {
   return particle_seeds_device;
@@ -305,6 +311,7 @@ void copy_forces_from_GPU() {
   }
 }
 
+
 #ifdef ENGINE
 // setup and call kernel to copy v_cs to host
 void copy_v_cs_from_GPU() {
@@ -319,6 +326,21 @@ void copy_v_cs_from_GPU() {
   }
 }
 #endif
+
+void clear_energy_on_GPU() {
+  if ( !global_part_vars_host.communication_enabled || !global_part_vars_host.number_of_particles )
+    return;
+  if (energy_device == NULL)
+    cuda_safe_mem( cudaMalloc((void**) &energy_device, sizeof(CUDA_energy)) );
+ cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)) );
+}
+
+void copy_energy_from_GPU() {
+  if ( !global_part_vars_host.communication_enabled || !global_part_vars_host.number_of_particles )
+    return;
+  cuda_safe_mem (cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy), cudaMemcpyDeviceToHost));
+  copy_CUDA_energy_to_energy(energy_host);
+}
 
 /** Generic copy functions from an to device **/
 
