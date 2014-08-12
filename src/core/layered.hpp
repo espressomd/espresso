@@ -56,28 +56,6 @@ void layered_calculate_energies();
 void layered_calculate_virials(int v_comp);
 
 /// calculate the minimum image vector
-
-#ifdef PARTIAL_PERIODIC
-void layered_get_mi_vector(double res[3], double a[3], double b[3])
-{
-  int i;
-
-  for(i=0;i<2;i++) {
-    res[i] = a[i] - b[i];
-#ifdef PARTIAL_PERIODIC
-    if (PERIODIC(i))
-#endif
-      res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
-  }
-  res[2] = a[2] - b[2];
-}
-#else
-#define layered_get_mi_vector(res, a, b) res[0] = a[0] - b[0]; \
-  res[0] -= dround(res[0]*box_l_i[0])*box_l[0]; \
-  res[1] = a[1] - b[1]; \
-  res[1] -= dround(res[1]*box_l_i[1])*box_l[1];	\
-  res[2] = a[2] - b[2];
-#endif
-
+void layered_get_mi_vector(double res[3], double a[3], double b[3]);
 
 #endif

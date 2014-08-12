@@ -31,7 +31,9 @@
 #include "communication.hpp"
 #include "ghosts.hpp"
 #include "forces.hpp"
+#include "forces_inline.hpp"
 #include "pressure.hpp"
+#include "energy.hpp"
 #include "energy_inline.hpp"
 #include "constraint.hpp"
 #include "domain_decomposition.hpp"
@@ -83,8 +85,19 @@ double layer_h = 0, layer_h_i = 0;
 
 static int btm, top;
 
-#define SQRLEN(A) (SQR((A[0])) + SQR((A[1])) + SQR((A[2])))
+void layered_get_mi_vector(double res[3], double a[3], double b[3])
+{
+  int i;
 
+  for(i=0;i<2;i++) {
+    res[i] = a[i] - b[i];
+#ifdef PARTIAL_PERIODIC
+    if (PERIODIC(i))
+#endif
+      res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
+  }
+  res[2] = a[2] - b[2];
+}
 
 Cell *layered_position_to_cell(double pos[3])
 {
@@ -575,7 +588,7 @@ void layered_calculate_ia()
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-	dist2 = SQRLEN(d);
+	dist2 = sqrlen(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pl[j]))
 #endif
@@ -585,7 +598,7 @@ void layered_calculate_ia()
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-	dist2 = SQRLEN(d);
+	dist2 = sqrlen(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pb[j]))
 #endif
@@ -632,7 +645,7 @@ void layered_calculate_energies()
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-	dist2 = SQRLEN(d);
+	dist2 = sqrlen(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pl[j]))
 #endif
@@ -642,7 +655,7 @@ void layered_calculate_energies()
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-	dist2 = SQRLEN(d);
+	dist2 = sqrlen(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pb[j]))
 #endif
@@ -689,7 +702,7 @@ void layered_calculate_virials(int v_comp)
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-	dist2 = SQRLEN(d);
+	dist2 = sqrlen(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pl[j]))
 #endif
@@ -699,7 +712,7 @@ void layered_calculate_virials(int v_comp)
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-	dist2 = SQRLEN(d);
+	dist2 = sqrlen(d);
 #ifdef EXCLUSIONS
 	if (do_nonbonded(p1, &pb[j]))
 #endif

@@ -30,13 +30,8 @@
 
 #ifdef CG_DNA
 
-/// parse parameters for the fene potential
 int tclcommand_inter_parse_cg_dna_basepair(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 int tclcommand_inter_parse_cg_dna_stacking(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-int tclcommand_inter_parse_cg_dna_backbone(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-
-///
-int tclprint_to_result_cg_dnaIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
 
 #endif
 

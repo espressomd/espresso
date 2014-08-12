@@ -25,18 +25,6 @@
 
 #ifdef CG_DNA
 
-int tclprint_to_result_cg_dnaIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  Tcl_PrintDouble(interp, params->p.fene.k, buffer);
-  Tcl_AppendResult(interp, "FENE ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, params->p.fene.drmax, buffer);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-  Tcl_PrintDouble(interp, params->p.fene.r0, buffer);
-  Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  return (TCL_OK);
-}
-
 void cg_dna_basepair_usage(Tcl_Interp *interp) { 
   puts("usage: cg_dna_basepair { r0 alpha E0 kd sigma1 sigma2 psi01 psi02 E0sb r0sb alphasb f2 f3 }");
 }
@@ -91,12 +79,6 @@ int tclcommand_inter_parse_cg_dna_stacking(Tcl_Interp *interp, int bond_type, in
   cg_dna_stacking_set_params(bond_type, &params);
 
   return ES_OK; 
-}
-
-int tclcommand_inter_parse_cg_dna_backbone(Tcl_Interp *interp, int bond_type, int argc, char **argv) { 
-
-  return 0;
-
 }
 
 #endif

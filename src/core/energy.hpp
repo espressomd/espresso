@@ -41,7 +41,6 @@
 
 /* include the energy files */
 #include "statistics.hpp"
->>>>>>> origin
 #include "actor/ActorList.hpp"
 
 /** \name Exported Variables */

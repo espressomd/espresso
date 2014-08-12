@@ -58,7 +58,7 @@
 #include "mmm2d.hpp"
 #include "morse.hpp"
 #include "elc.hpp"
-
+#include "cg_dna.hpp"
 
 #include "energy.hpp"
 

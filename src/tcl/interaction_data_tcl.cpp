@@ -949,7 +949,6 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef CG_DNA
   REGISTER_BONDED("cg_dna_basepair", tclcommand_inter_parse_cg_dna_basepair);
   REGISTER_BONDED("cg_dna_stacking", tclcommand_inter_parse_cg_dna_stacking);  
-  REGISTER_BONDED("cg_dna_backbone", tclcommand_inter_parse_cg_dna_backbone);
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);
