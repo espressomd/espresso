@@ -1,3 +1,5 @@
+# ESPResSo
+
 This is the Molecular Dynamics software ESPResSo ("Extensible
 Simulation Package for the Research on Soft Matter Systems").
 
@@ -43,20 +45,20 @@ Computational Physics of the University of Stuttgart, but has
 contributors from all over the world.
 
 
-DOCUMENTATION
--------------
+## Documentation
+
 You can find documentation on how to compile, use and develop ESPResSo
 on the homepage at
 
-	http://espressomd.org
+	[http://espressomd.org]
 
 ESPResSo is intended to be used by people that have proper knowledge
 of simulation techniques and know how to use them. We do not take
 responsibility if you use ESPResSo to create and publish bogus
 results. You have been warned!
 
-PLEASE CITE US!
----------------
+## PLEASE CITE US!
+
 If you use ESPResSo and obtain scientific results that you publish, we
 would ask you to acknowledge the usage of ESPResSo by referencing
 
@@ -75,8 +77,8 @@ relevant publications, as indicated in the ESPResSo User's Guide
 (see http://espressomd.org or doc/ug/ug.pdf). For your convenience, the
 BibTeX records are compiled in doc/ug/citations.bib.
 
-LICENSE
--------
+## Licence
+
 The following files are licensed and copyrighted as indicated below:
 
 doc/dg/figs/bond_angle.fig
@@ -202,7 +204,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>."
 
 This file is licensed as follows:
 
-Copyright (C) 2010,2011 The ESPResSo project
+Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
