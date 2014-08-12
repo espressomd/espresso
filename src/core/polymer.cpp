@@ -162,10 +162,8 @@ int constraint_collision(double *p1, double *p2){
       if(d1*d2<0.0)
 	return 1;
       break;
-    case CONSTRAINT_MAZE:
-    case CONSTRAINT_PORE:
-    case CONSTRAINT_PLATE:
-    case CONSTRAINT_RHOMBOID:
+      /* @TODO: All constraints except none should do something. */
+    case CONSTRAINT_NONE:
       break;
     }
   }
