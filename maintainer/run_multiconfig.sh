@@ -45,10 +45,11 @@ done
 ########################################################
 topdir="`dirname $0`/.."
 
-if ! test -f "$topdir/src/initialize.cpp"; then
+sourcefile="$topdir/src/features.def"
+if ! test -f $sourcefile; then
     echo "Cannot determine the source directory." 1>&2
     echo "I am >$0< and think the source directory is >$topdir<." 1>&2
-    echo "However, >$topdir/src/initialize.cpp< is missing." 1>&2
+    echo "However, >$sourcefile< is missing." 1>&2
     exit 1
 fi
 
