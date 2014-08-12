@@ -21,17 +21,21 @@
 /** \file energy.cpp
     Implementation of \ref energy.hpp "energy.hpp".
 */
-#include "energy.hpp"
+
+/*
 #include "cells.hpp"
 #include "integrate.hpp"
-#include "initialize.hpp"
 #include "domain_decomposition.hpp"
 #include "nsquare.hpp"
 #include "layered.hpp"
 #include "elc.hpp"
+#include "external_potential.hpp"
+*/
+#include "energy_inline.hpp"
+#include "maggs.hpp"
+#include "initialize.hpp"
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
-#include "external_potential.hpp"
 #include "cuda_interface.hpp"
 #include "forces.hpp"
 #include "EspressoSystemInterface.hpp"
@@ -42,11 +46,56 @@ Observable_stat energy = {0, {NULL,0,0}, 0,0,0};
 Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
 
 /************************************************************/
-/* local prototypes                                         */
+
+void init_energies(Observable_stat *stat)
+{
+    int n_pre, n_non_bonded, n_coulomb, n_dipolar;
+
+  n_pre        = 1;
+  n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
+
+  n_coulomb    = 0;
+#ifdef ELECTROSTATICS
+  switch (coulomb.method) {
+  case COULOMB_NONE:  n_coulomb = 0; break;
+#ifdef P3M
+  case COULOMB_ELC_P3M: n_coulomb = 3; break;
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M:   n_coulomb = 2; break;
+#endif
+  default: n_coulomb  = 1;
+  }
+#endif
+
+  n_dipolar    = 0;
+#ifdef DIPOLES
+
+  switch (coulomb.Dmethod) {
+  case DIPOLAR_NONE:  n_dipolar = 1; break;
+#ifdef DP3M
+  case DIPOLAR_MDLC_P3M: n_dipolar=3; break;
+  case DIPOLAR_P3M:   n_dipolar = 2; break;
+#endif
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:   n_dipolar = 2; break;
+ case DIPOLAR_MDLC_DS: n_dipolar=3; break;
+ case DIPOLAR_DS:   n_dipolar = 2; break;
+  }
+
+#endif
+
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, 0, 1);
+  stat->init_status = 0;
+
+  external_potential_init_energies();
+}
+
 /************************************************************/
 
-/** Calculate long range energies (P3M, MMM2d...). */
-void calc_long_range_energies();
+void master_energy_calc() {
+  mpi_gather_stats(1, total_energy.data.e, NULL, NULL, NULL);
+
+  total_energy.init_status=1;
+}
 
 /************************************************************/
 
@@ -195,54 +244,3 @@ void calc_long_range_energies()
 
 }
 
-/************************************************************/
-
-void init_energies(Observable_stat *stat)
-{
-    int n_pre, n_non_bonded, n_coulomb, n_dipolar;
-
-  n_pre        = 1;
-  n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
-
-  n_coulomb    = 0;
-#ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_NONE:  n_coulomb = 0; break;
-#ifdef P3M
-  case COULOMB_ELC_P3M: n_coulomb = 3; break;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:   n_coulomb = 2; break;
-#endif
-  default: n_coulomb  = 1;
-  }
-#endif
-
-  n_dipolar    = 0;
-#ifdef DIPOLES
-
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:  n_dipolar = 1; break;
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M: n_dipolar=3; break;
-  case DIPOLAR_P3M:   n_dipolar = 2; break;
-#endif
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:   n_dipolar = 2; break;
- case DIPOLAR_MDLC_DS: n_dipolar=3; break;
- case DIPOLAR_DS:   n_dipolar = 2; break;
-  }
-
-#endif
-  
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, 0, 1);
-  stat->init_status = 0;
-
-  external_potential_init_energies();
-}
-
-/************************************************************/
-
-void master_energy_calc() {
-  mpi_gather_stats(1, total_energy.data.e, NULL, NULL, NULL);
-
-  total_energy.init_status=1;
-}

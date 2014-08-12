@@ -78,7 +78,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
     <li> 6 parameter out of bounds
     </ul>
 */
-int tabulated_bonded_set_params(int bond_type, int tab_type, char * filename);
+int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename);
 
 /** Add a non-bonded pair force by linear interpolation from a table.
     Needs feature TABULATED compiled in (see \ref config.hpp). */

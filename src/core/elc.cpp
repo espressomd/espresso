@@ -486,11 +486,11 @@ static double z_energy()
           if(elc_params.dielectric_contrast_on) {
             if(part[i].r.p[2]<elc_params.space_layer) {
               gblcblk[2] -= elc_params.di_mid_bot*part[i].p.q;
-              gblcblk[3] -= elc_params.di_mid_bot*part[i].p.q*(part[i].r.p[2] - shift);
+              gblcblk[3] -= elc_params.di_mid_bot*part[i].p.q*(-part[i].r.p[2] - shift);
             }
             if (part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
               gblcblk[2] += elc_params.di_mid_top*part[i].p.q;
-              gblcblk[3] += elc_params.di_mid_top*part[i].p.q*(part[i].r.p[2] - shift);
+              gblcblk[3] += elc_params.di_mid_top*part[i].p.q*(2*elc_params.h - part[i].r.p[2] - shift);
             }
           }      
         }
@@ -1623,6 +1623,10 @@ void  ELC_P3M_modify_p3m_sums_both()
     for(i=0;i<np;i++) {
       if( part[i].p.q != 0.0 ) {
 	
+        node_sums[0] += 1.0;
+        node_sums[1] += SQR(part[i].p.q);
+        node_sums[2] += part[i].p.q;
+
 	if(part[i].r.p[2]<elc_params.space_layer) {
 
 	  node_sums[0] += 1.0;
@@ -1643,9 +1647,9 @@ void  ELC_P3M_modify_p3m_sums_both()
   }
   
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
-  p3m.sum_qpart    += (int)(tot_sums[0]+0.1);
-  p3m.sum_q2       += tot_sums[1];
-  p3m.square_sum_q += SQR(tot_sums[2]);
+  p3m.sum_qpart    = (int)(tot_sums[0]+0.1);
+  p3m.sum_q2       = tot_sums[1];
+  p3m.square_sum_q = SQR(tot_sums[2]);
 }
 
 void  ELC_P3M_modify_p3m_sums_image()
@@ -1706,31 +1710,19 @@ void  ELC_P3M_restore_p3m_sums()
     np   = cell->n;
     for(i=0;i<np;i++) {
       if( part[i].p.q != 0.0 ) {
-	if(elc_params.dielectric_contrast_on){
-	  if(part[i].r.p[2]<elc_params.space_layer) {
-	    
-	    node_sums[0] += 1.0;
-	    node_sums[1] += SQR(elc_params.di_mid_bot*part[i].p.q);
-	    node_sums[2] += elc_params.di_mid_bot*part[i].p.q;
-	    
-	  }
-	  if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
-	    
-	    node_sums[0] += 1.0;
-	    node_sums[1] += SQR(elc_params.di_mid_top*part[i].p.q);
-	    node_sums[2] += elc_params.di_mid_top*part[i].p.q;
-	    
-	  }
-	}
+
+        node_sums[0] += 1.0;
+        node_sums[1] += SQR(part[i].p.q);
+        node_sums[2] += part[i].p.q;
       }
     }
   }
   
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-  p3m.sum_qpart    -= (int)(tot_sums[0]+0.1);
-  p3m.sum_q2       -= tot_sums[1];
-  p3m.square_sum_q -= SQR(tot_sums[2]);
+  p3m.sum_qpart    = (int)(tot_sums[0]+0.1);
+  p3m.sum_q2       = tot_sums[1];
+  p3m.square_sum_q = SQR(tot_sums[2]);
 }
 
 #endif
