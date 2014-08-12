@@ -899,6 +899,31 @@ a pair bond without associated potential or force. It can used to specify
 topologies and for some analysis that rely on bonds, or \eg for bonds that
 should be displayed in VMD.
 
+\subsection{Coarse grained DNA model}
+
+\begin{citebox}
+  Please cite~\citewbibkey{hsu12a} when using the DNA model in this subsection.
+\end{citebox}
+
+The following interactions are those that are specific to the DNA model
+described in \cite{hsu12a}. Please be aware that these two interactions
+are not the complete model. For an implementation of the complete model
+in Espresso please see the file \verb|samples/cg_dna.tcl|.
+The DNA model is a coarse grained DNA model with four beads per nucleotide,
+for a more detailed description check the reference.
+
+\subsubsection{DNA basepair interaction}
+
+This is a four body potential that describes the interaction between the
+sugar and its base as well as the hydrogend bond between the bases.
+
+\subsubsection{DNA stacking interaction}
+
+This 8-body potential describes the interaction between neighboring
+basepairs.
+
+
+
 \section{Object-in-fluid interactions}
 \label{sec:inter-bonded-fsi}
 \index{bonded interactions fsi|mainindex}
