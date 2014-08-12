@@ -71,7 +71,7 @@ void EwaldgpuForce::compute_k_AND_influence_factor()
 //Real space
 void EwaldgpuForce::EwaldCPU_EnergySelf()
 {
-	m_energy_self[0]=coulomb.prefactor * (-m_alpha/sqrt(M_PI) * m_q_sqr);
+	m_energy_self[0]=coulomb.prefactor * (-m_alpha/sqrt(M_PI) * m_q_sqr[0]);
 }
 
 //Parameters
@@ -105,6 +105,7 @@ int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 	double alpha_array[Kmax]; //All computed alpha in dependence of K
 	double rcut_array[Kmax]; //All computed r_cut in dependence of all computed alpha
 	double q_sqr = compute_q_sqare(s);
+	printf("XXXXXXXXXXXXX tune qsqr:%f\n",q_sqr);
 	char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
 
   if (skin == -1) {
@@ -321,11 +322,6 @@ double EwaldgpuForce::compute_optimal_alpha(double rcut, int num_kx, int num_ky,
 }
 double EwaldgpuForce::compute_q_sqare(SystemInterface &s)
 {
-
-
-//	float *q_i=s.qGpuBegin();
-//	printf("q_i:%f\n",q_i[0]);
-
 	double q_sqr=0;
   Cell *cell;
   Particle *p;

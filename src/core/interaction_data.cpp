@@ -934,7 +934,7 @@ int virtual_set_params(int bond_type)
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
 
-  return ES_OK;
+  return ES_OK; 
 }
 
 #endif
