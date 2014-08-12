@@ -1293,6 +1293,7 @@ int tclcommand_part_parse_mol_id(Tcl_Interp *interp, int argc, char **argv,
 int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
 		      int part_num, int *change)
 {
+  bool swimming = false;
   double v_swim = 0.0;
   double f_swim = 0.0;
   int push_pull = -1; // default to pusher
@@ -1301,6 +1302,8 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
   *change = 2;
   if (!ARG_IS_S(0,"off")) {
     *change = 5;
+
+    swimming = true;
 
     if (argc < *change) {
       Tcl_AppendResult(interp, "swimming requires (v_swim|f_swim) [float] (pusher|puller) dipole_length [float]", (char *) NULL);
@@ -1339,7 +1342,7 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
     }
   }
 
-  if (set_particle_swimming(part_num, v_swim, f_swim, push_pull, dipole_length) == TCL_ERROR) {
+  if (set_particle_swimming(swimming, part_num, v_swim, f_swim, push_pull, dipole_length) == TCL_ERROR) {
     return TCL_ERROR;
   }
 

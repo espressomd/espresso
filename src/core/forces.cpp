@@ -331,9 +331,12 @@ inline void init_local_particle_force(Particle *part)
 #ifdef ENGINE
     /* apply a swimming force in the direction of
        the particle's orientation axis */
-    part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
-    part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
-    part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+    if ( part->swim.swimming )
+    {
+      part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
+      part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
+      part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+    }
 #endif
     
     /* and rescale quaternion, so it is exactly of unit length */	

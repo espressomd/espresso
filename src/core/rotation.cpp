@@ -265,16 +265,23 @@ void convert_torques_propagate_omega()
       ty = A[1 + 3*0]*p[i].f.torque[0] + A[1 + 3*1]*p[i].f.torque[1] + A[1 + 3*2]*p[i].f.torque[2];
       tz = A[2 + 3*0]*p[i].f.torque[0] + A[2 + 3*1]*p[i].f.torque[1] + A[2 + 3*2]*p[i].f.torque[2];
 
-#ifdef ENGINE
-      copy_v_cs_from_GPU();
-      double omega_swim[3];
-      double omega_swim_body[3];
-      omega_swim[0] = ( p[i].swim.v_center[0] - p[i].swim.v_source[0] ) / p[i].swim.dipole_length;
-      omega_swim[1] = ( p[i].swim.v_center[1] - p[i].swim.v_source[1] ) / p[i].swim.dipole_length;
-      omega_swim[2] = ( p[i].swim.v_center[2] - p[i].swim.v_source[2] ) / p[i].swim.dipole_length;
-      omega_swim_body[0] = A[0 + 3*0]*omega_swim[0] + A[0 + 3*1]*omega_swim[1] + A[0 + 3*2]*omega_swim[2];
-      omega_swim_body[1] = A[1 + 3*0]*omega_swim[0] + A[1 + 3*1]*omega_swim[1] + A[1 + 3*2]*omega_swim[2];
-      omega_swim_body[2] = A[2 + 3*0]*omega_swim[0] + A[2 + 3*1]*omega_swim[1] + A[2 + 3*2]*omega_swim[2];
+#if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
+      double omega_swim[3] = {0, 0, 0};
+      double omega_swim_body[3] = {0, 0, 0};
+      if ( p[i].swim.swimming && lattice_switch != 0 )
+      {
+#ifdef LB_GPU
+        if (lattice_switch & LATTICE_LB_GPU) {
+          copy_v_cs_from_GPU();
+        }
+#endif
+        omega_swim[0] = ( p[i].swim.v_center[0] - p[i].swim.v_source[0] ) / p[i].swim.dipole_length;
+        omega_swim[1] = ( p[i].swim.v_center[1] - p[i].swim.v_source[1] ) / p[i].swim.dipole_length;
+        omega_swim[2] = ( p[i].swim.v_center[2] - p[i].swim.v_source[2] ) / p[i].swim.dipole_length;
+        omega_swim_body[0] = A[0 + 3*0]*omega_swim[0] + A[0 + 3*1]*omega_swim[1] + A[0 + 3*2]*omega_swim[2];
+        omega_swim_body[1] = A[1 + 3*0]*omega_swim[0] + A[1 + 3*1]*omega_swim[1] + A[1 + 3*2]*omega_swim[2];
+        omega_swim_body[2] = A[2 + 3*0]*omega_swim[0] + A[2 + 3*1]*omega_swim[1] + A[2 + 3*2]*omega_swim[2];
+      }
 #endif
 
 
@@ -330,10 +337,13 @@ void convert_torques_propagate_omega()
         p[i].m.omega[2]+= time_step_half*Wd[2];
       }
 
-#ifdef ENGINE
-      p[i].m.omega[0]+= omega_swim_body[0];
-      p[i].m.omega[1]+= omega_swim_body[1];
-      p[i].m.omega[2]+= omega_swim_body[2];
+#if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
+      if ( p[i].swim.swimming && lattice_switch != 0 )
+      {
+        p[i].m.omega[0]+= omega_swim_body[0];
+        p[i].m.omega[1]+= omega_swim_body[1];
+        p[i].m.omega[2]+= omega_swim_body[2];
+      }
 #endif
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));

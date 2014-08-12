@@ -2774,12 +2774,15 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   velocity[2] = p->m.v[2];
 
 #ifdef ENGINE
-  velocity[0] -= p->swim.v_swim*p->r.quatu[0];
-  velocity[1] -= p->swim.v_swim*p->r.quatu[1];
-  velocity[2] -= p->swim.v_swim*p->r.quatu[2];
-  p->swim.v_center[0] = interpolated_u[0];
-  p->swim.v_center[1] = interpolated_u[1];
-  p->swim.v_center[2] = interpolated_u[2];
+  if ( p->swim.swimming )
+  {
+    velocity[0] -= p->swim.v_swim*p->r.quatu[0];
+    velocity[1] -= p->swim.v_swim*p->r.quatu[1];
+    velocity[2] -= p->swim.v_swim*p->r.quatu[2];
+    p->swim.v_center[0] = interpolated_u[0];
+    p->swim.v_center[1] = interpolated_u[1];
+    p->swim.v_center[2] = interpolated_u[2];
+  }
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
@@ -2824,29 +2827,40 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   }
 
 #ifdef ENGINE
-  // calculate source position
-  double source_position[3];
-  double direction = double(p->swim.push_pull) * p->swim.dipole_length;
-  source_position[0] = p->r.p[0] + direction * p->r.quatu[0];
-  source_position[1] = p->r.p[1] + direction * p->r.quatu[1];
-  source_position[2] = p->r.p[2] + direction * p->r.quatu[2];
-  // get lattice cell corresponding to source position and interpolate velocity
-  lblattice.map_position_to_lattice(source_position,node_index,delta);
-  lb_lbfluid_get_interpolated_velocity(source_position, p->swim.v_source);
+  if ( p->swim.swimming )
+  {
+    // TODO: Fix LB mapping
+    if ( lattice_switch & LATTICE_LB )
+    {
+      fprintf(stderr,"ERROR: Swimming is not yet compatible with CPU LB. Please use LB_GPU instead.\n");
+      errexit();
+    }
 
-  // calculate and set force at source position
-  delta_j[0] = - p->swim.f_swim*p->r.quatu[0]*time_step*tau/agrid;
-  delta_j[1] = - p->swim.f_swim*p->r.quatu[1]*time_step*tau/agrid;
-  delta_j[2] = - p->swim.f_swim*p->r.quatu[2]*time_step*tau/agrid;
-  
-  for (z=0;z<2;z++) {
-    for (y=0;y<2;y++) {
-      for (x=0;x<2;x++) {
-        local_f = lbfields[node_index[(z*2+y)*2+x]].force;
+    // calculate source position
+    double source_position[3];
+    double direction = double(p->swim.push_pull) * p->swim.dipole_length;
+    source_position[0] = p->r.p[0] + direction * p->r.quatu[0];
+    source_position[1] = p->r.p[1] + direction * p->r.quatu[1];
+    source_position[2] = p->r.p[2] + direction * p->r.quatu[2];
 
-        local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
-        local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
-        local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
+    // get lattice cell corresponding to source position and interpolate velocity
+    lblattice.map_position_to_lattice(source_position,node_index,delta);
+    lb_lbfluid_get_interpolated_velocity(source_position, p->swim.v_source);
+
+    // calculate and set force at source position
+    delta_j[0] = - p->swim.f_swim*p->r.quatu[0]*time_step*tau/agrid;
+    delta_j[1] = - p->swim.f_swim*p->r.quatu[1]*time_step*tau/agrid;
+    delta_j[2] = - p->swim.f_swim*p->r.quatu[2]*time_step*tau/agrid;
+
+    for (z=0;z<2;z++) {
+      for (y=0;y<2;y++) {
+        for (x=0;x<2;x++) {
+          local_f = lbfields[node_index[(z*2+y)*2+x]].force;
+
+          local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
+          local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
+          local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
+        }
       }
     }
   }

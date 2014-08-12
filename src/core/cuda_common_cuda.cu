@@ -184,7 +184,7 @@ void gpu_change_number_of_part_to_comm() {
 #ifdef SHANCHEN
       cudaHostAlloc((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition), cudaHostAllocWriteCombined);
 #endif
-#else
+#else // __CUDA_ARCH__
       cudaMallocHost((void**)&particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data));
       cudaMallocHost((void**)&particle_forces_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force));
 #ifdef ENGINE
@@ -193,7 +193,7 @@ void gpu_change_number_of_part_to_comm() {
 #ifdef SHANCHEN
       cudaMallocHost((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition));
 #endif
-#endif
+#endif // __CUDA_ARCH__
       
       cuda_safe_mem(cudaMalloc((void**)&particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force)));
 

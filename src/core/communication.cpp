@@ -499,13 +499,14 @@ void mpi_send_v_slave(int pnode, int part)
 }
 
 /****************** REQ_SET_SWIMMING ************/
-void mpi_send_swimming(int pnode, int part, double v_swim, double f_swim, int push_pull, double dipole_length)
+void mpi_send_swimming(bool swimming, int pnode, int part, double v_swim, double f_swim, int push_pull, double dipole_length)
 {
 #ifdef ENGINE
   mpi_call(mpi_send_swimming_slave, pnode, part);
 
   Particle *p = local_particles[part];
   if (pnode == this_node) {
+    p->swim.swimming = swimming;
     p->swim.v_swim = v_swim;
     p->swim.f_swim = f_swim;
 #if defined(LB) || defined(LB_GPU)
