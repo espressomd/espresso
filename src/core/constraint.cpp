@@ -2559,7 +2559,10 @@ void add_constraints_forces(Particle *p1)
 	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{063 plane constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
-      }
+     }
+      break;
+    case CONSTRAINT_NONE:
+      firce[0] = force[1] = force[2] = 0.0;
       break;
     }
     for (j = 0; j < 3; j++) {
@@ -2785,6 +2788,8 @@ double add_constraints_energy(Particle *p1)
       break;
     case CONSTRAINT_EXT_MAGN_FIELD:
       magnetic_en = ext_magn_field_energy(p1, &constraints[n].c.emfield);
+      break;
+    case CONTRAINT_NONE:
       break;
     }
 
