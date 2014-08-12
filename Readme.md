@@ -50,7 +50,7 @@ contributors from all over the world.
 You can find documentation on how to compile, use and develop ESPResSo
 on the homepage at
 
-	[http://espressomd.org]
+	[http://espressomd.org](http://espressomd.org)
 
 ESPResSo is intended to be used by people that have proper knowledge
 of simulation techniques and know how to use them. We do not take
@@ -81,6 +81,7 @@ BibTeX records are compiled in doc/ug/citations.bib.
 
 The following files are licensed and copyrighted as indicated below:
 
+```
 doc/dg/figs/bond_angle.fig
 doc/dg/figs/datastorage.gif
 doc/dg/figs/dihedral_angle.fig
@@ -182,31 +183,32 @@ testsuite/tabulated_system.data
 testsuite/thermostat.data
 testsuite/thermostat_rot.data
 testsuite/uwerr.data
+```
 
-"Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-  Max-Planck-Institute for Polymer Research, Theory Group
-  
-This file is part of ESPResSo.
-  
-ESPResSo is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation, either version 3 of the License, or (at your
-option) any later version.
-  
-ESPResSo is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-  
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>."
+> "Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+> Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+>  Max-Planck-Institute for Polymer Research, Theory Group
+>  
+> This file is part of ESPResSo.
+>  
+> ESPResSo is free software: you can redistribute it and/or modify it
+> under the terms of the GNU General Public License as published by the
+> Free Software Foundation, either version 3 of the License, or (at your
+> option) any later version.
+>  
+> ESPResSo is distributed in the hope that it will be useful, but
+> WITHOUT ANY WARRANTY; without even the implied warranty of
+> MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+> General Public License for more details.
+>  
+> You should have received a copy of the GNU General Public License
+> along with this program.  If not, see <http://www.gnu.org/licenses/>."
 
 This file is licensed as follows:
 
-Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-
-Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty provided the copyright
-notice and this notice are preserved.  This file is offered as-is,
-without any warranty.
+> Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+> 
+> Copying and distribution of this file, with or without modification,
+> are permitted in any medium without royalty provided the copyright
+> notice and this notice are preserved.  This file is offered as-is,
+>without any warranty.
