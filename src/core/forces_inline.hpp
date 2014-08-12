@@ -624,7 +624,8 @@ inline void add_bonded_force(Particle *p1)
   char *errtxt;
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
-  int i, j, type_num, type, n_partners, bond_broken;
+  int i, j, type_num, n_partners, bond_broken;
+  BondedInteraction type;
 
   i = 0;
   while(i<p1->bl.n) {
