@@ -2736,6 +2736,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   double delta[6];
   double *local_f, interpolated_u[3],delta_j[3];
   
+#ifdef EXTERNAL_FORCES
   if (!(p->l.ext_flag & COORD_FIXED(0)) 
       && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2)))
     {
@@ -2748,6 +2749,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
                       }
                     );
     }
+#endif
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
