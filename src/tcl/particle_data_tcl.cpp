@@ -456,6 +456,14 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
     sprintf(buffer, "%d", part.p.mol_id);
     Tcl_AppendResult(interp, " molecule ", buffer, (char *)NULL);
   }
+#ifdef ENGINE
+#if defined(LB) || defined(LB_GPU)
+  sprintf(buffer, " swimming %s %f %f %d %f", part.swim.swimming?"on":"off", part.swim.v_swim/time_step, part.swim.f_swim, part.swim.push_pull, part.swim.dipole_length);
+#else
+  sprintf(buffer, " swimming %s %f %f %d %f", part.swim.swimming?"on":"off", part.swim.v_swim/time_step, part.swim.f_swim, 0, 0.0);
+#endif
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+#endif
 #ifdef MASS
   Tcl_PrintDouble(interp, part.p.mass, buffer);
   Tcl_AppendResult(interp, " mass ", buffer, (char *)NULL);
@@ -647,7 +655,11 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
 #ifdef ENGINE
     else if (ARG0_IS_S("swimming")) {
-      sprintf(buffer, "%f %f %d %f", part.swim.v_swim/time_step, part.swim.f_swim, part.swim.push_pull, part.swim.dipole_length);
+#if defined(LB) || defined(LB_GPU)
+      sprintf(buffer, "%s %f %f %d %f", part.swim.swimming?"on":"off", part.swim.v_swim/time_step, part.swim.f_swim, part.swim.push_pull, part.swim.dipole_length);
+#else
+      sprintf(buffer, "%s %f %f %d %f", part.swim.swimming?"on":"off", part.swim.v_swim/time_step, part.swim.f_swim, part.0, 0.0);
+#endif
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif
@@ -1340,6 +1352,8 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
         return TCL_ERROR;
       }
     }
+  } else {
+    swimming = false;
   }
 
   if (set_particle_swimming(swimming, part_num, v_swim, f_swim, push_pull, dipole_length) == TCL_ERROR) {

@@ -1679,10 +1679,12 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
     delta_j[0+3*ii] -= (1-flag_cs)*viscforce[0+ii*3]*para.time_step*para.tau/para.agrid;
     delta_j[1+3*ii] -= (1-flag_cs)*viscforce[1+ii*3]*para.time_step*para.tau/para.agrid;
     delta_j[2+3*ii] -= (1-flag_cs)*viscforce[2+ii*3]*para.time_step*para.tau/para.agrid;
+#ifdef ENGINE
     // add swimming force to source position
     delta_j[0+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[0]*para.time_step*para.tau/para.agrid;
     delta_j[1+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[1]*para.time_step*para.tau/para.agrid;
     delta_j[2+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[2]*para.time_step*para.tau/para.agrid;
+#endif
   }
 }
 
@@ -2088,11 +2090,16 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
     delta_j[0+3*ii] -= (scforce[0+ii*3]+(1-flag_cs)*viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
     delta_j[1+3*ii] -= (scforce[1+ii*3]+(1-flag_cs)*viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
     delta_j[2+3*ii] -= (scforce[2+ii*3]+(1-flag_cs)*viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;
+
+#ifdef ENGINE
     // add swimming force to source position
     delta_j[0+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[0]*para.time_step*para.tau/para.agrid;
     delta_j[1+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[1]*para.time_step*para.tau/para.agrid;
     delta_j[2+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[2]*para.time_step*para.tau/para.agrid;
+#endif
+
   }
+
 #ifdef SHANCHEN
   for(int node=0 ; node < 8 ; node++ ) { 
     for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
@@ -2101,7 +2108,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
       partgrad3[node+ii*8]*=(para.time_step*para.tau/para.agrid);
     }
   }
-#endif 
+#endif
+
 }
 
 /**calculation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
