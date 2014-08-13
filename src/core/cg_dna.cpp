@@ -22,6 +22,10 @@
 #include "cg_dna.hpp"
 #include "communication.hpp"
 
+#ifdef CG_DNA_DEBUG
+#include "integrate.hpp"
+#endif
+
 #ifdef CG_DNA
 
 #define SQR(x) ((x)*(x))
@@ -533,6 +537,10 @@ int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Part
   if(big_force) {
     puts("Big Force Twist/Stack.");
     PS(si1->p.identity);
+
+    PS(sim_time);
+    PS(time_step);
+    PS(sim_time/time_step);
 
     PV(si1->r.p);
     PV(si2->r.p);
