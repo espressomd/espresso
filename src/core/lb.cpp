@@ -3095,7 +3095,10 @@ void calc_particle_lattice_ia() {
       }
       
     /* communicate the random numbers */
-    ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
+    ghost_communicator(&cell_structure.ghost_lbcoupling_comm);
+#ifdef ENGINE
+    ghost_communicator(&cell_structure.ghost_swimming_comm);
+#endif
       
     /* local cells */
     for (int c = 0; c < local_cells.n; c++) {
