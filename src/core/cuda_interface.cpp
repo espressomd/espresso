@@ -200,13 +200,13 @@ static void cuda_mpi_get_particles_slave(){
   #endif
 
 #ifdef ENGINE
-          particle_data_host[i+g].swim.v_swim        = (float)part[i].swim.v_swim;
-          particle_data_host[i+g].swim.f_swim        = (float)part[i].swim.f_swim;
-          particle_data_host[i+g].swim.quatu[0]      = (float)part[i].r.quatu[0];
-          particle_data_host[i+g].swim.quatu[1]      = (float)part[i].r.quatu[1];
-          particle_data_host[i+g].swim.quatu[2]      = (float)part[i].r.quatu[2];
-          particle_data_host[i+g].swim.push_pull     =        part[i].swim.push_pull;
-          particle_data_host[i+g].swim.dipole_length = (float)part[i].swim.dipole_length;
+          particle_data_host_sl[i+g].swim.v_swim        = (float)part[i].swim.v_swim;
+          particle_data_host_sl[i+g].swim.f_swim        = (float)part[i].swim.f_swim;
+          particle_data_host_sl[i+g].swim.quatu[0]      = (float)part[i].r.quatu[0];
+          particle_data_host_sl[i+g].swim.quatu[1]      = (float)part[i].r.quatu[1];
+          particle_data_host_sl[i+g].swim.quatu[2]      = (float)part[i].r.quatu[2];
+          particle_data_host_sl[i+g].swim.push_pull     =        part[i].swim.push_pull;
+          particle_data_host_sl[i+g].swim.dipole_length = (float)part[i].swim.dipole_length;
 #endif
         }
         g+=npart;

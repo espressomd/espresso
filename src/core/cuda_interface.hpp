@@ -118,7 +118,6 @@ typedef struct {
 } CUDA_global_part_vars;
 
 void copy_forces_from_GPU();
-void copy_v_cs_from_GPU();
 void copy_energy_from_GPU();
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
@@ -140,6 +139,7 @@ void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
 
 #ifdef ENGINE
+void copy_v_cs_from_GPU();
 void cuda_mpi_send_v_cs(CUDA_v_cs *host_v_cs);
 #endif
 
