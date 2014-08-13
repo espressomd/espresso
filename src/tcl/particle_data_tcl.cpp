@@ -147,7 +147,6 @@ void tclcommand_part_print_quat(Particle *part, char *buffer, Tcl_Interp *interp
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-/* TODO: This function is not used anywhere. To be removed?  */
 void tclcommand_part_print_quatu(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   Tcl_PrintDouble(interp, part->r.quatu[0], buffer);
@@ -156,6 +155,23 @@ void tclcommand_part_print_quatu(Particle *part, char *buffer, Tcl_Interp *inter
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, part->r.quatu[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
+#ifdef ENGINE
+void tclcommand_part_print_swimming(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+#if defined(LB) || defined(LB_GPU)
+  sprintf(buffer, " swimming %s %f %f %d %f",
+      part->swim.swimming?"on":"off",
+      part->swim.v_swim/time_step, part->swim.f_swim,
+      part->swim.push_pull, part->swim.dipole_length);
+#else
+  sprintf(buffer, " swimming %s %f %f %s %s",
+      part->swim.swimming?"on":"off",
+      part->swim.v_swim/time_step, part->swim.f_swim,
+      "n/a", "n/a");
+#endif
 }
 #endif
 
@@ -457,11 +473,7 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
     Tcl_AppendResult(interp, " molecule ", buffer, (char *)NULL);
   }
 #ifdef ENGINE
-#if defined(LB) || defined(LB_GPU)
-  sprintf(buffer, " swimming %s %f %f %d %f", part.swim.swimming?"on":"off", part.swim.v_swim/time_step, part.swim.f_swim, part.swim.push_pull, part.swim.dipole_length);
-#else
-  sprintf(buffer, " swimming %s %f %f %d %f", part.swim.swimming?"on":"off", part.swim.v_swim/time_step, part.swim.f_swim, 0, 0.0);
-#endif
+  tclcommand_part_print_swimming(&part, buffer, interp);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 #endif
 #ifdef MASS
@@ -485,6 +497,9 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   /* print information about rotation */
   Tcl_AppendResult(interp, " quat ", (char *)NULL);
   tclcommand_part_print_quat(&part, buffer, interp);
+
+  Tcl_AppendResult(interp, " quatu ", (char *)NULL);
+  tclcommand_part_print_quatu(&part, buffer, interp);
 
   Tcl_AppendResult(interp, " omega_lab ", (char *)NULL);
   tclcommand_part_print_omega_lab_frame(&part, buffer, interp);
@@ -655,11 +670,7 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
 #ifdef ENGINE
     else if (ARG0_IS_S("swimming")) {
-#if defined(LB) || defined(LB_GPU)
-      sprintf(buffer, "%s %f %f %d %f", part.swim.swimming?"on":"off", part.swim.v_swim/time_step, part.swim.f_swim, part.swim.push_pull, part.swim.dipole_length);
-#else
-      sprintf(buffer, "%s %f %f %d %f", part.swim.swimming?"on":"off", part.swim.v_swim/time_step, part.swim.f_swim, part.0, 0.0);
-#endif
+      tclcommand_part_print_swimming(&part, buffer, interp);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif

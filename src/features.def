@@ -32,13 +32,13 @@ NEMD
 NPT 
 GHMC
 CATALYTIC_REACTIONS
+ENGINE                          implies ROTATION
 
 /* Rotation */
 ROTATION
 ROTATIONAL_INERTIA              implies ROTATION
 BOND_CONSTRAINT	                requires not ROTATION
 ROTATION_PER_PARTICLE	        implies ROTATION
-ENGINE                          implies ROTATION
 
 /* Adress */
 MOL_CUT                         implies VIRTUAL_SITES_COM
