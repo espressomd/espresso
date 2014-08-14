@@ -153,6 +153,9 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_external_potential_tabulated_read_potential_file_slave) \
   CB(mpi_external_potential_sum_energies_slave) \
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
+  CB(mpi_set_vescnum_slave) \
+  CB(mpi_set_vvolo_slave) \
+
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -1692,6 +1695,33 @@ void mpi_get_particles_slave(int pnode, int bi)
       MPI_Gather(&g, 1, MPI_INT, NULL, 1, MPI_INT, 0, comm_cart);      
     }
   }
+}
+
+/**************** REQ_SET_VVolo ****************/
+void mpi_set_vvolo(double Vo[200]) {
+	int i;
+	mpi_call(mpi_set_vvolo_slave, -1, 0);
+	for(i=0;i<200;i++) {
+		VVolo[i] = Vo[i];
+	}
+	MPI_Bcast(VVolo, 200, MPI_DOUBLE, 0, comm_cart);
+}
+
+void mpi_set_vvolo_slave(int node, int i) {
+	MPI_Bcast(VVolo, 200, MPI_DOUBLE, 0, comm_cart);
+}
+
+/*************** REQ_SET_VESCNUM ***************/
+void mpi_set_vescnum(int vesn) {
+	mpi_call(mpi_set_vescnum_slave, -1, 0);
+	vescnum = vesn;
+	MPI_Bcast(&vescnum, 1, MPI_INT, 0, comm_cart);
+	on_parameter_change(FIELD_VESCNUM);
+} 
+
+void mpi_set_vescnum_slave(int node, int i) {
+	MPI_Bcast(&vescnum, 1, MPI_INT, 0, comm_cart);
+	on_parameter_change(FIELD_VESCNUM);
 }
 
 /*************** REQ_SET_TIME_STEP ************/
