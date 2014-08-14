@@ -1498,13 +1498,13 @@ __global__ void ek_init_species_density_homogeneous() {
   {  
     for(int i = 0; i < ek_parameters_gpu.number_of_species; i++) 
     {
-      if(coord[0] == ek_parameters_gpu.dim_x/2 && coord[1] == ek_parameters_gpu.dim_y/2 && coord[2] == ek_parameters_gpu.dim_z/2)
+//      if(coord[0] == ek_parameters_gpu.dim_x/2 && coord[1] == ek_parameters_gpu.dim_y/2 && coord[2] == ek_parameters_gpu.dim_z/2)
         ek_parameters_gpu.rho[ i ][ index ] = ek_parameters_gpu.density[ i ] *
                                               ek_parameters_gpu.agrid *
                                               ek_parameters_gpu.agrid *
                                               ek_parameters_gpu.agrid;
-      else
-        ek_parameters_gpu.rho[ i ][ index ] = 0.0f;
+//      else
+//        ek_parameters_gpu.rho[ i ][ index ] = 0.0f;
     }
   }
 }

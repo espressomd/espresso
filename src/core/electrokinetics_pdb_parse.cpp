@@ -21,10 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "electrokinetics_pdb_parse.hpp"
 #include <iostream>
 #include <string>
 #include <sstream>
+#include "electrokinetics_pdb_parse.hpp"
 
 #ifdef EK_BOUNDARIES
 

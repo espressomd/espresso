@@ -670,25 +670,25 @@ cat <<EOF
 ****************************************************************
 *                   Configuration summary                      *
 ****************************************************************
-platform detected	= $target
-package version		= $PACKAGE_VERSION
+platform detected       = $target
+package version         = $PACKAGE_VERSION
 development sources     = $devel_src
 
 Compiler
 --------
-compiler		= $CXX
-linker			= $LD
-c++ compiler flags	= $CXXFLAGS
-c++ preprocessor flags	= $CPPFLAGS
-linker flags		= $LDFLAGS
-libraries		= $LIBS
-using debug flags	= $enable_debug
-using profiling flags	= $enable_profiling
+compiler                = $CXX
+linker                  = $LD
+c++ compiler flags      = $CXXFLAGS
+c++ preprocessor flags  = $CPPFLAGS
+linker flags            = $LDFLAGS
+libraries               = $LIBS
+using debug flags       = $enable_debug
+using profiling flags   = $enable_profiling
 
 Libraries
 ---------
-FFTW 			= $fftw_found
-efence			= $with_efence
+FFTW                    = $fftw_found
+efence                  = $with_efence
 
 EOF
 
@@ -696,8 +696,8 @@ if test x$cuda_ok = xyes; then
 cat <<EOF
 Cuda
 ----
-CUDA compiler		= $NVCC
-CUDA flags		= $NVCCFLAGS
+CUDA compiler           = $NVCC
+CUDA flags              = $NVCCFLAGS
 EOF
 fi
 
@@ -705,12 +705,12 @@ cat  <<EOF
 
 Tcl/Tk
 ------
-Tcl version		= $use_tcl
-Tk version		= $use_tk
+Tcl version             = $use_tcl
+Tk version              = $use_tk
 
 Python
 ------
-python			= $PYTHON
+python                  = $PYTHON
 build python interface  = $build_python_interface
 EOF
 
@@ -728,15 +728,15 @@ cat <<EOF
 Other settings
 --------------
 config                  = $MYCONFIG
-installation prefix	= $prefix
+installation prefix     = $prefix
 number of test tasks    = $CPU_COUNT
 mympiexec               = $MYMPIEXEC
-mpiexec	     		= $MPIEXEC
-pdflatex		= $PDFLATEX
-makeindex		= $MAKEINDEX
-bibtex			= $BIBTEX
-doxygen			= $DOXYGEN
-dot			= $DOT
+mpiexec                 = $MPIEXEC
+pdflatex                = $PDFLATEX
+makeindex               = $MAKEINDEX
+bibtex                  = $BIBTEX
+doxygen                 = $DOXYGEN
+dot                     = $DOT
 
 EOF
 

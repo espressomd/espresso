@@ -89,6 +89,8 @@ int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, cha
 	argc--; argv++;
       }
       else if (argc >= 4 && ARG0_IS_S("dielectric")) {
+  	Tcl_AppendResult(interp, "There seems to be an error when using ELC with dielectric constrasts. If you are sure you want to use it, you have to deactivate this message manually. ", (char *)NULL);
+	return TCL_ERROR;
 	// just a dummy, not used, as it is only printed for information
 	// purposes. We need to calculate it
 	double space_layer_dummy;
@@ -104,11 +106,16 @@ int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, cha
 	}
       }
       else if (argc >= 3 && ARG0_IS_S("dielectric-contrasts")) {
+  	Tcl_AppendResult(interp, "There seems to be an error when using ELC with dielectric constrasts. If you are sure you want to use it, you have to deactivate this message manually. ", (char *)NULL);
+	return TCL_ERROR;
+
         if (!ARG_IS_D(1,delta_top) || !ARG_IS_D(2,delta_bot))
 	  return TCL_ERROR;
         argc -= 3; argv += 3;
       }
       else if (argc >= 1 && ARG0_IS_S("capacitor")) {
+  	Tcl_AppendResult(interp, "There seems to be an error when using ELC with dielectric constrasts. If you are sure you want to use it, you have to deactivate this message manually. ", (char *)NULL);
+	return TCL_ERROR;
 	if (!ARG_IS_D(1,pot_diff))
 	   return TCL_ERROR;
  	argc -= 2; argv += 2;

@@ -109,7 +109,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
   return 0;
 }
 
-int tabulated_bonded_set_params(int bond_type, int tab_type, char * filename) 
+int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename)
 {
   int i, token = 0, size;
   double dummr;

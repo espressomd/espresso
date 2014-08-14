@@ -28,7 +28,7 @@
 #include "errorhandling.hpp"
 #include "forces.hpp"
 #include "pressure.hpp"
-#include "energy.hpp"
+#include "energy_inline.hpp"
 #include "constraint.hpp"
 #include "initialize.hpp"
 #include "external_potential.hpp"
