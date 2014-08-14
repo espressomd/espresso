@@ -212,7 +212,7 @@ cuda_verbose_0 = @echo "  NVCC     $@";
 $(LOFILES): %.lo: %.cu
 	$(cuda_verbose)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
 	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) \
-	  -MD -MP -MF -MT $@ -o $$depbase.Plo $<; \
+	  -M -MT $@ -o $$depbase.Plo $<; \
 	$(LIBTOOL) $(AM_V_lt) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 		--mode=compile $(NVCC) $(DEFS) \
 		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
