@@ -81,14 +81,14 @@ __global__ void EwaldGPU_Rho_hat_MaxThreads(real *k,real *r_i, real *q_i, real *
 	//Reduction
 	while (i < mTPB)
 	{
-		kr = k[blockId]*r_i[i+2*l*mTPB]+k[blockId+num_k]*r_i[i+2*l*mTPB+N]+k[blockId+2*num_k]*r_i[i+2*l*mTPB+2*N];
+		kr = k[blockId]*r_i[3*i+2*l*mTPB]+k[blockId+num_k]*r_i[3*i+2*l*mTPB+1]+k[blockId+2*num_k]*r_i[3*i+2*l*mTPB+2];
 		sincos(kr,sin_ptr,cos_ptr);
 		factor = q_i[i+2*l*mTPB];
 
 		sdata[tid]      						+=  factor*cos_kr;
 		sdata[tid+2*blockSize]      += -factor*sin_kr;
 		//BECAUSE nIsPow2=True
-		kr = k[blockId]*r_i[i+2*l*mTPB+blockSize]+k[blockId+num_k]*r_i[i+2*l*mTPB+blockSize+N]+k[blockId+2*num_k]*r_i[i+2*l*mTPB+blockSize+2*N];
+		kr = k[blockId]*r_i[3*i+2*l*mTPB+blockSize]+k[blockId+num_k]*r_i[3*i+2*l*mTPB+blockSize+1]+k[blockId+2*num_k]*r_i[3*i+2*l*mTPB+blockSize+2];
 		sincos(kr,sin_ptr,cos_ptr);
 		factor = q_i[i+2*l*mTPB+blockSize];
 		sdata[tid]      						+=  factor*cos_kr;
@@ -147,7 +147,7 @@ __global__ void EwaldGPU_Rho_hat_LowThreads(real *k,real *r_i, real *q_i, real *
 	//Reduction
 	while (i < N-2*l*mTPB)
 	{
-		kr = k[blockId]*r_i[i+2*l*mTPB]+k[blockId+num_k]*r_i[i+2*l*mTPB+N]+k[blockId+2*num_k]*r_i[i+2*l*mTPB+2*N];
+		kr = k[blockId]*r_i[3*i+2*l*mTPB]+k[blockId+num_k]*r_i[3*i+2*l*mTPB+1]+k[blockId+2*num_k]*r_i[3*i+2*l*mTPB+2];
 		sincos(kr,sin_ptr,cos_ptr);
 		factor = q_i[i+2*l*mTPB];
 
@@ -155,11 +155,11 @@ __global__ void EwaldGPU_Rho_hat_LowThreads(real *k,real *r_i, real *q_i, real *
 		sdata[tid+2*blockSize]      += -factor*sin_kr;
 		if (nIsPow2 || i + blockSize < N-2*l*mTPB)
 		{
-		kr = k[blockId]*r_i[i+2*l*mTPB+blockSize]+k[blockId+num_k]*r_i[i+2*l*mTPB+blockSize+N]+k[blockId+2*num_k]*r_i[i+2*l*mTPB+blockSize+2*N];
-		sincos(kr,sin_ptr,cos_ptr);
-		factor = q_i[i+2*l*mTPB+blockSize];
-		sdata[tid]      						+=  factor*cos_kr;
-		sdata[tid+2*blockSize]      += -factor*sin_kr;
+			kr = k[blockId]*r_i[3*(i+blockSize)+2*l*mTPB]+k[blockId+num_k]*r_i[3*(i+blockSize)+2*l*mTPB+1]+k[blockId+2*num_k]*r_i[3*(i+blockSize)+2*l*mTPB+2];
+			sincos(kr,sin_ptr,cos_ptr);
+			factor = q_i[i+2*l*mTPB+blockSize];
+			sdata[tid]      						+=  factor*cos_kr;
+			sdata[tid+2*blockSize]      += -factor*sin_kr;
 		}
 		i += gridSize;
 	}
@@ -215,7 +215,7 @@ __global__ void EwaldGPU_ForcesReci_MaxThreads(real *k,real *r_i, real *q_i, rea
 	//Reduction
 	while (i < mTPB)
 	{
-		kr = k[i+2*l*mTPB]*r_i[blockId] + k[i+2*l*mTPB+num_k]*r_i[blockId+N] + k[i+2*l*mTPB+2*num_k]*r_i[blockId+2*N];
+		kr = k[i+2*l*mTPB]*r_i[3*blockId] + k[i+2*l*mTPB+num_k]*r_i[3*blockId+1] + k[i+2*l*mTPB+2*num_k]*r_i[3*blockId+2];
 		sincos(kr,sin_ptr,cos_ptr);
 		factor = infl_factor[i+2*l*mTPB] * q_i[blockId];
 
@@ -223,7 +223,7 @@ __global__ void EwaldGPU_ForcesReci_MaxThreads(real *k,real *r_i, real *q_i, rea
 		sdata[tid+2*blockSize] += factor * (k[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB]   * sin_kr + k[i+2*l*mTPB+num_k]*rho_hat[i+2*l*mTPB+num_k]   * cos_kr);
 		sdata[tid+4*blockSize] += factor * (k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB] * sin_kr + k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB+num_k] * cos_kr);
 		//BECAUSE nIsPow2=True
-		kr = k[i+2*l*mTPB+blockSize]*r_i[blockId] + k[i+2*l*mTPB+num_k+blockSize]*r_i[blockId+N] + k[i+2*l*mTPB+2*num_k+blockSize]*r_i[blockId+2*N];
+		kr = k[i+2*l*mTPB+blockSize]*r_i[3*blockId] + k[i+2*l*mTPB+num_k+blockSize]*r_i[3*blockId+1] + k[i+2*l*mTPB+2*num_k+blockSize]*r_i[3*blockId+2];
 		factor = infl_factor[i+2*l*mTPB+blockSize]* q_i[blockId];
 		sincos(kr,sin_ptr,cos_ptr);
 		sdata[tid]      			 += factor * (k[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+blockSize]         * sin_kr + k[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize]         * cos_kr);
@@ -249,9 +249,9 @@ __global__ void EwaldGPU_ForcesReci_MaxThreads(real *k,real *r_i, real *q_i, rea
 	//Write result for this block to global memory
 	if (tid == 0)
 	{
-		forces_reci[blockId]     += sdata[0]*coulomb_prefactor;
-		forces_reci[blockId+N]   += sdata[2*blockSize]*coulomb_prefactor;
-		forces_reci[blockId+2*N] += sdata[4*blockSize]*coulomb_prefactor;
+		forces_reci[3*blockId]     += sdata[0]*coulomb_prefactor;
+		forces_reci[3*blockId+1]   += sdata[2*blockSize]*coulomb_prefactor;
+		forces_reci[3*blockId+2] += sdata[4*blockSize]*coulomb_prefactor;
 	}
 	__syncthreads();
 }
@@ -283,7 +283,7 @@ __global__ void EwaldGPU_ForcesReci_LowThreads(real *k,real *r_i, real *q_i, rea
 	sdata[tid+4*blockSize] = 0;
 	while (i < num_k-2*l*mTPB)
 	{
-		kr = k[i+2*l*mTPB]*r_i[blockId] + k[i+2*l*mTPB+num_k]*r_i[blockId+N] + k[i+2*l*mTPB+2*num_k]*r_i[blockId+2*N];
+		kr = k[i+2*l*mTPB]*r_i[3*blockId] + k[i+2*l*mTPB+num_k]*r_i[3*blockId+1] + k[i+2*l*mTPB+2*num_k]*r_i[3*blockId+2];
 		sincos(kr,sin_ptr,cos_ptr);
 		factor = infl_factor[i+2*l*mTPB] * q_i[blockId];
 
@@ -293,7 +293,7 @@ __global__ void EwaldGPU_ForcesReci_LowThreads(real *k,real *r_i, real *q_i, rea
 		sdata[tid+4*blockSize] += factor * (k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB] * sin_kr + k[i+2*l*mTPB+2*num_k]*rho_hat[i+2*l*mTPB+num_k] * cos_kr);
 		if (nIsPow2 || i + blockSize < num_k-2*l*mTPB)
 		{
-			kr = k[i+2*l*mTPB+blockSize]*r_i[blockId] + k[i+2*l*mTPB+num_k+blockSize]*r_i[blockId+N] + k[i+2*l*mTPB+2*num_k+blockSize]*r_i[blockId+2*N];
+			kr = k[i+2*l*mTPB+blockSize]*r_i[3*blockId] + k[i+2*l*mTPB+num_k+blockSize]*r_i[3*blockId+1] + k[i+2*l*mTPB+2*num_k+blockSize]*r_i[3*blockId+2];
 			sincos(kr,sin_ptr,cos_ptr);
 			factor = infl_factor[i+2*l*mTPB+blockSize] * q_i[blockId];
 			sdata[tid]      			 += factor * (k[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+blockSize]         * sin_kr + k[i+2*l*mTPB+blockSize]*rho_hat[i+2*l*mTPB+num_k+blockSize]         * cos_kr);
@@ -319,9 +319,9 @@ __global__ void EwaldGPU_ForcesReci_LowThreads(real *k,real *r_i, real *q_i, rea
 	//Write result for this block to global memory
 	if (tid == 0)
 	{
-		forces_reci[blockId]     += sdata[0]*coulomb_prefactor;
-		forces_reci[blockId+N]   += sdata[2*blockSize]*coulomb_prefactor;
-		forces_reci[blockId+2*N] += sdata[4*blockSize]*coulomb_prefactor;
+		forces_reci[3*blockId]     += sdata[0]*coulomb_prefactor;
+		forces_reci[3*blockId+1]   += sdata[2*blockSize]*coulomb_prefactor;
+		forces_reci[3*blockId+2] += sdata[4*blockSize]*coulomb_prefactor;
 	}
 }
 //Energy in reciprocal space
@@ -1061,7 +1061,6 @@ void EwaldgpuForce::GPU_q_sqr(SystemInterface &s)
 
 	//Copy the values back from the GPU to the CPU
 	HANDLE_ERROR( cudaMemcpy( m_q_sqr, m_dev_q_sqr,sizeof(real),cudaMemcpyDeviceToHost) );
-	//printf("XXXXXXXXXXXXX GPU_q_sqr qsqr:%f\n",m_q_sqr[0]);
 }
 void cuda_check_error(const dim3 &block, const dim3 &grid, char *function, char *file, unsigned int line)
 {
