@@ -1,3 +1,24 @@
+/*
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
+
 #ifndef BENDING_FORCE_IBM_H
 #define BENDING_FORCE_IBM_H
 
@@ -10,9 +31,46 @@
 
 #ifdef BENDING_FORCE_IMMERSED_BOUNDARY
 
+/*@}*/
+  /** Some general remarks:
+   * This file implements membrane bending stiffness as described
+   * in this paper "Computer simulation study of collective phenomena in dense suspensions   * of red blood cells under shear* by Kruger 2011, pg 149
+   */
+
+/** Setting the reference configuration of bending interaction between 4 particles
+ *
+ *  @param bond_type type of bond refer to interaction_data.hpp
+ *  @param ind1 particle id of first particle in the bond
+ *  @param ind2 particle id of second particle in the bond
+ *  @param ind3 particle id of third particle in the bond
+ *  @param ind4 particle id of fourth particle in the bond
+ *  @param max maximum stretch distance
+ *  @param boo direction of cross product between surface normals
+ *  @param kb bending modulus as described in literature refer kruger 2011
+ */
 int bending_force_ibm_set_params(int bond_type, int ind1, int ind2, int ind3, int ind4, int boo, double max, double kb);
+
+/** Resetting the reference configuration of bending interaction between 4 particles
+ *
+ *  @param bond_type type of bond refer to interaction_data.hpp
+ *  @param theta0 angle between surface normals of the triangles composed of the 4 particles aligned to each other
+ *  @param max maximum stretch distance
+ *  @param bood direction of cross product between surface normals
+ *  @param kb bending modulus as described in literature refer kruger 2011
+ */
 int bending_force_ibm_reset_params(int bond_type, double bood, double theta0, double kb, double max);
 
+/** Main method for calculation of bending forces described in literature
+ *  @param p_ind1 particle object for particle 1
+ *  @param p_ind2 particle object for particle 2
+ *  @param p_ind3 particle object for particle 3
+ *  @param p_ind3 particle object for particle 4
+ *  @param iaparams parameters of the interaction such as max stretch, kb and theta0
+ *  @param force forces in xyz on particle 1
+ *  @param force2 forces in xyz on particle 2
+ *  @param force3 forces in xyz on particle 3
+ *  @param force4 forces in xyz on particle 4
+ */
 inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams, double force[3], double force2[3], double force3[3], double force4[3]) { 
   double theta, Ai, Aj;
   double dx1[3], dx2[3], dx3[3], n1[3], n2[3];
