@@ -40,29 +40,13 @@ void lb_ibm_coupling() {
   int i, c, np;
   Cell *cell ;
   Particle *p ;
-
-  if (transfer_momentum) {
-
-    if (lbpar.resend_halo) { /* first MD step after last LB update */
+   
+    /* exchange halo regions (for fluid-particle coupling) */
+    // halo_communication(&update_halo_comm, (char*)**lbfluid);
       
-      /* exchange halo regions (for fluid-particle coupling) */
-      halo_communication(&update_halo_comm, (char*)**lbfluid);
-#ifdef ADDITIONAL_CHECKS
-      lb_check_halo_regions();
-#endif
-      
-      /* halo is valid now */
-      lbpar.resend_halo = 0;
-
-      /* all fields have to be recalculated */
-      for (i=0; i<lblattice.halo_grid_volume; ++i) {
-        lbfields[i].recalc_fields = 1;
-      }
-
-    }
-
+   
     /* communicate the random numbers */
-    ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
+    // ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
 
 #ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
     ghost_communicator(&cell_structure.ghost_stretching_force_ibm_comm);
@@ -98,7 +82,6 @@ void lb_ibm_coupling() {
           if(ifParticleIsVirtual(&p[i])) {
             couple_trace_to_fluid(&p[i]);
   } }}}
-  }
 }
 
 void couple_trace_to_fluid(Particle *p) {

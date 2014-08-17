@@ -601,6 +601,9 @@ inline void add_bonded_force(Particle *p1)
   double force[3]  = { 0., 0., 0. };
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
+#ifdef BENDING_FORCE_IMMERSED_BOUNDARY
+  double force4[3] = { 0., 0., 0. };
+#endif
 #ifdef ROTATION
   double torque1[3] = { 0., 0., 0. };
   double torque2[3] = { 0., 0., 0. };
@@ -777,7 +780,7 @@ inline void add_bonded_force(Particle *p1)
 #endif 
 #ifdef BENDING_FORCE_IMMERSED_BOUNDARY
     case BENDING_FORCE_IBM_IA:
-      bond_broken=calc_bending_force_ibm(p1,p2,p3,p4,iaparams);  
+      bond_broken=calc_bending_force_ibm(p1,p2,p3,p4,iaparams,force, force2, force3, force4);  
     break;
 #endif
     default :
@@ -865,6 +868,10 @@ switch (type) {
 		break;
 #ifdef BENDING_FORCE_IMMERSED_BOUNDARY
         case BENDING_FORCE_IBM_IA:
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] += force4[j];
 	        break;
 #endif
 	default:

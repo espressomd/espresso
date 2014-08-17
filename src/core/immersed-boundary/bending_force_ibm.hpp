@@ -13,7 +13,7 @@
 int bending_force_ibm_set_params(int bond_type, int ind1, int ind2, int ind3, int ind4, int boo, double max, double kb);
 int bending_force_ibm_reset_params(int bond_type, double bood, double theta0, double kb, double max);
 
-inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams) { 
+inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams, double force[3], double force2[3], double force3[3], double force4[3]) { 
   double theta, Ai, Aj;
   double dx1[3], dx2[3], dx3[3], n1[3], n2[3];
   double Pre, sc, len;
@@ -149,7 +149,7 @@ inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Part
   //printf("p1f: ");
   
   for(i=0;i<3;i++) {
-      p1->f.f[i] += Pre*(term1[i]/Ai + term2[i]/Aj);
+      force[i] = Pre*(term1[i]/Ai + term2[i]/Aj);
       //printf("%lf ", Pre*(term1[i]/Ai + term2[i]/Aj));
   }
   
@@ -160,7 +160,7 @@ inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Part
   //printf("\np2f: ");
   
   for(i=0;i<3;i++) {
-      p2->f.f[i] += Pre*(term1[i]/Ai);
+      force2[i] = Pre*(term1[i]/Ai);
       //printf("%lf ", term1[i]/Ai);
   }
   
@@ -171,7 +171,7 @@ inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Part
   //printf("\np3f: ");
   
   for(i=0;i<3;i++) {
-      p3->f.f[i] += Pre*(term1[i]/Ai + term2[i]/Aj);
+      force3[i] = Pre*(term1[i]/Ai + term2[i]/Aj);
       //printf("%lf ", Pre*(term1[i]/Ai + term2[i]/Aj));
   }
   
@@ -182,7 +182,7 @@ inline int calc_bending_force_ibm(Particle *p1, Particle *p2, Particle *p3, Part
   //printf("\np4f: ");
   
   for(i=0;i<3;i++) {
-      p4->f.f[i] += Pre*(term1[i]/Aj);
+      force4[i] = Pre*(term1[i]/Aj);
       //printf("%lf ", Pre*(term1[i]/Aj));
   }
   

@@ -212,6 +212,9 @@ void integrate_vv(int n_steps, int reuse_forces)
   /* Prepare the Integrator */
   on_integration_start();
 
+#ifdef IMMERSED_BOUNDARY
+    resort_particles = 1;
+#endif
     
 #ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY
   if(vescnum > 0) {
@@ -370,12 +373,6 @@ void integrate_vv(int n_steps, int reuse_forces)
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     correct_vel_shake();
 #endif
-    //VIRTUAL_SITES update vel
-#if defined (VIRTUAL_SITES) && !defined(VIRTUAL_SITES_IMMERSED_BOUNDARY)
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    update_mol_vel();
-    if (check_runtime_errors()) break;
-#endif
 
     // progagate one-step functionalities
 #ifdef LB
@@ -384,6 +381,13 @@ void integrate_vv(int n_steps, int reuse_forces)
       
     if (check_runtime_errors())
       break;
+#endif
+
+    //VIRTUAL_SITES update vel
+#if defined (VIRTUAL_SITES) && !defined(VIRTUAL_SITES_IMMERSED_BOUNDARY)
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    update_mol_vel();
+    if (check_runtime_errors()) break;
 #endif
 
 #ifdef LB_GPU
