@@ -212,7 +212,7 @@ void integrate_vv(int n_steps, int reuse_forces)
   /* Prepare the Integrator */
   on_integration_start();
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
     resort_particles = 1;
 #endif
     
