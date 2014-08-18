@@ -477,6 +477,8 @@ static void recalc_global_maximal_nonbonded_cutoff()
     break;
   }
 #endif /*ifdef DP3M */
+  default:
+      break;
   }       
 #endif
 
@@ -810,6 +812,8 @@ int interactions_sanity_checks()
 #endif
   case DIPOLAR_MDLC_DS: if (mdlc_sanity_checks()) state = 0; // fall through
   case DIPOLAR_DS: if (magnetic_dipolar_direct_sum_sanity_checks()) state = 0; break;
+  default:
+      break;
   }
 #endif /* ifdef  DIPOLES */
 
@@ -888,6 +892,8 @@ int dipolar_set_Dbjerrum(double bjerrum)
       dp3m_set_bjerrum();
       break;
 #endif
+    default:
+        break;
     }
  
     mpi_bcast_coulomb_params();
