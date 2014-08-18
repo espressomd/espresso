@@ -261,11 +261,11 @@ set part1PosRef [part 1 print pos]
 set part2PosRef [part 2 print pos]
 set part3PosRef [part 3 print pos]
 
-part 0 pos [lindex $part0PosRef 0] [lindex $part0PosRef 1] [expr [lindex $part0PosRef 2] + 1.5]
+part 1 pos [lindex $part1PosRef 0] [lindex $part1PosRef 1] [expr [lindex $part1PosRef 2] + 1.5]
 part 3 pos [lindex $part3PosRef 0] [lindex $part3PosRef 1] [expr [lindex $part3PosRef 2] + 1.5]
 
 integrate 0
-if { ([part 0 print pos] != "2.0 2.0 1.5") || ([part 1 print pos] != "4.0 2.0 0.0")  || ([part 2 print pos] != "2.0 5.0 0.0") || ([part 3 print pos] != "0.0 2.0 1.5")} {
+if { ([part 0 print pos] != "2.0 2.0 0.0") || ([part 1 print pos] != "4.0 2.0 1.5")  || ([part 2 print pos] != "2.0 5.0 0.0") || ([part 3 print pos] != "0.0 2.0 1.5")} {
  error_exit  "Error: lbtracers incorrectly positioned: [part 0 print pos] [part 1 print pos] [part 2 print pos] [part 3 print pos]"
 } else {
  puts "OK: Position of lbtracers"
@@ -336,6 +336,126 @@ if { $thetaRef  >= $thetaComp } {
     error_exit "Error: Bending angle between the two triangles not reduced. thetaRef: $thetaRef >= thetaComp: $thetaComp"
 }
 
-puts "OK: The two triangles try to maintain the reference bending angle during $numSteps steps after a single x + 1.5  stretch to two vertices in the z direction "
+puts "OK: The two triangles try to maintain the reference bending angle during $numSteps steps after a single x + 1.5  stretch to two vertices in the z direction (Flat)"
+
+part delete
+
+# Verify that the triangle tries to return to it's bent shape
+
+# Set maximum bond stretch length
+set maxStretch 2
+
+# setting Boxlength
+setmd box_l $boxx $boxy $boxz
+
+# setting integration parameters
+# skin for verlet list
+setmd skin 0.1
+# timestep
+setmd time_step $dt_md
+
+setmd warnings 0
+
+# setting up the fluid with or without using gpu
+lbfluid agrid $gridsize dens $rho visc $nu tau $dt_lb friction $zeta ext_force 0 0 0
+#setting themostat
+thermostat lb $kbT
+
+set numSteps 100
+
+part 0 pos 2 2 0 virtual 1
+part 1 pos 4 2 -1.5 virtual 1
+part 2 pos 2 5 0 virtual 1
+part 3 pos 0 2 -1.5 virtual 1
+
+inter 2 tribend 0 1 2 3 0 $kB $maxStretch
+part 0 bond 2 1 2 3
+
+puts [part 0 print pos ]
+puts [part 1 print pos ]
+puts [part 2 print pos ]
+puts [part 3 print pos ]
+
+set part0PosRef [part 0 print pos]
+set part1PosRef [part 1 print pos]
+set part2PosRef [part 2 print pos]
+set part3PosRef [part 3 print pos]
+
+part 1 pos [lindex $part1PosRef 0] [lindex $part1PosRef 1] [expr [lindex $part1PosRef 2] + 1.5]
+part 3 pos [lindex $part3PosRef 0] [lindex $part3PosRef 1] [expr [lindex $part3PosRef 2] + 1.5]
+
+integrate 0
+if { ([part 0 print pos] != "2.0 2.0 0.0") || ([part 1 print pos] != "4.0 2.0 0.0")  || ([part 2 print pos] != "2.0 5.0 0.0") || ([part 3 print pos] != "0.0 2.0 0.0")} {
+ error_exit  "Error: lbtracers incorrectly positioned: [part 0 print pos] [part 1 print pos] [part 2 print pos] [part 3 print pos]"
+} else {
+ puts "OK: Position of lbtracers"
+}
+
+set dx1 [vecsub $part0PosRef $part2PosRef]
+set dx2 [vecsub $part1PosRef $part2PosRef]
+set dx3 [vecsub $part3PosRef $part2PosRef]
+
+set n1 [vcrossp $dx1 $dx2]
+set n2 [vcrossp $dx1 $dx3]
+
+lset n2 0 [expr [lindex $n2 0] * -1]
+lset n2 1 [expr [lindex $n2 1] * -1]
+lset n2 2 [expr [lindex $n2 2] * -1]
+
+set n1 [vnor $n1]
+set n2 [vnor $n2]
+
+set sc [vdotp $n1 $n2]
+
+set thetaRef [expr acos($sc)] 
+set direc [vcrossp $n1 $n2]
+set desc [vdotp $dx1 $direc]
+if {$desc < 0} { 
+    set thetaRef [expr (2 * $pi) - $thetaRef]
+}
+ 
+set error 0
+puts "Checking "
+for {set step 0} {$step < $numSteps} {incr step} {
+    integrate 1
+
+}
+
+set part0PosComp [part 0 print pos]
+set part1PosComp [part 1 print pos]
+set part2PosComp [part 2 print pos]
+set part3PosComp [part 3 print pos]
+
+set dx1 [vecsub $part0PosComp $part2PosComp]
+set dx2 [vecsub $part1PosComp $part2PosComp]
+set dx3 [vecsub $part3PosComp $part2PosComp]
+
+set n1 [vcrossp $dx1 $dx2]
+set n2 [vcrossp $dx1 $dx3]
+
+lset n2 0 [expr [lindex $n2 0] * -1]
+lset n2 1 [expr [lindex $n2 1] * -1]
+lset n2 2 [expr [lindex $n2 2] * -1]
+
+set n1 [vnor $n1]
+set n2 [vnor $n2]
+
+set sc [vdotp $n1 $n2]
+	
+set thetaComp [expr acos($sc)] 
+set direc [vcrossp $n1 $n2]
+set desc [vdotp $dx1 $direc]
+
+if {$desc < 0} { 
+    set thetaComp [expr (2 * $pi) - $thetaComp]
+}
+
+if { $thetaRef  <= $thetaComp } {
+    
+    
+    error_exit "Error: Bending angle between the two triangles not increased. thetaRef: $thetaRef <= thetaComp: $thetaComp"
+}
+
+puts "OK: The two triangles try to maintain the reference bending angle during $numSteps steps after a single x + 1.5  stretch to two vertices in the z direction (Bent)"
 
 exit 0
