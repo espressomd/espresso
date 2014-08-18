@@ -81,7 +81,10 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   double size[3];
   double offset[3]={0,0,0};
   int dim=0;
-  fgets(first_line, 100, infile);
+  if (fgets(first_line, 100, infile) == NULL) {
+      fprintf(stderr, "Nothing read from file\n");
+      return ES_ERROR;
+  }
 
   token = strtok(first_line, " \t");
   if (!token) { fprintf(stderr, "Error reading dimensionality\n"); return ES_ERROR; }
@@ -221,7 +224,7 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
   fprintf(outfile,"local_index_offset %d %d %d\n", lattice->local_index_offset[0], lattice->local_index_offset[1], lattice->local_index_offset[2]);
 
 
-  fprintf(outfile, "element_size %ld\n", lattice->element_size);
+  fprintf(outfile, "element_size %d\n", lattice->element_size);
 
   
   for (i=0; i<lattice->halo_grid[0]; i++) 
