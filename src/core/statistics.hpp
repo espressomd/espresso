@@ -45,7 +45,7 @@ typedef struct {
 
   /** number of coulomb interactions */
   int n_coulomb;
-  /** number of coulomb interactions */
+  /** number of dipolar interactions */
   int n_dipolar;
   /** number of non bonded interactions */
   int n_non_bonded;
