@@ -59,7 +59,7 @@
 #include "actor/HarmonicWell_tcl.hpp"
 #include "immersed-boundary/volume_conservation_ibm_tcl.hpp"
 #include "immersed-boundary/virtual_sites_ibm_tcl.hpp"
-
+#include "immersed-boundary/stretching_force_ibm_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -239,10 +239,17 @@ static void register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_TIMINGSAMP, tclcallback_timings);
   register_global_callback(FIELD_MIN_GLOBAL_CUT, tclcallback_min_global_cut);
   register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
+  #ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY
   register_global_callback(FIELD_VESCNUM, tclcallback_vescnum);
   register_global_callback(FIELD_VVOLO, tclcallback_vvolo);
+  #endif
+  #ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+  // Strange compilation error for this line
+  // register_global_callback(FIELD_STRETCHING_FORCE_LAW_IBM, tclcallback_stretching_force_law_ibm);
+  #endif
+  #ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
   register_global_callback(FIELD_INTEGRATION_RULE_IBM, tclcallback_integration_rule_ibm);
-  
+  #endif
 }
 
 int appinit(Tcl_Interp *interp)

@@ -31,7 +31,7 @@
 
 int tclcommand_inter_parse_stretching_force_ibm(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 
-int tclcallback_stretching_force_ibm_law(Tcl_Interp *interp, void *_data);
+int tclcallback_stretching_force_law_ibm(Tcl_Interp *interp, void *_data);
 
 int tclprint_to_result_stretching_force_ibmIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
 
