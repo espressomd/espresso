@@ -459,6 +459,8 @@ void on_boxl_change() {
     dp3m_scaleby_box_l();
     break;
 #endif
+  default:
+      break;
   }
 #endif
 

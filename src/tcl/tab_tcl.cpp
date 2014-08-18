@@ -146,9 +146,11 @@ int tclprint_to_result_tabulated_bondedIA(Tcl_Interp *interp,
   case TAB_BOND_DIHEDRAL:
     Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\"",(char *) NULL);
     return TCL_OK;
+
+  default:
+    Tcl_AppendResult(interp, "unknown type of tabulated bonded interaction encountered",(char *) NULL);
+    return TCL_ERROR;
   }
-  Tcl_AppendResult(interp, "unknown type of tabulated bonded interaction encountered",(char *) NULL);
-  return TCL_ERROR;
 }
 
 #endif

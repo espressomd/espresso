@@ -221,6 +221,8 @@ void calc_long_range_virials()
     break;
   }
 #endif
+  default:
+      break;
  } 
 #endif /*ifdef DIPOLES */
 }
@@ -254,6 +256,9 @@ void init_virials(Observable_stat *stat)
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:  n_dipolar = 0; break;
   case DIPOLAR_DS:  n_dipolar = 0; break;
   case DIPOLAR_P3M:   n_dipolar = 2; break;
+  default:
+      n_dipolar = 0;
+      break;
   }
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -309,6 +314,7 @@ void init_p_tensor(Observable_stat *stat)
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:  n_dipolar = 0; break;
   case DIPOLAR_DS:  n_dipolar = 0; break;
   case DIPOLAR_P3M:  n_dipolar = 2; break;
+  default: n_dipolar = 0;
   }
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE

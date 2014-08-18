@@ -167,6 +167,7 @@ void energy_calc(double *result)
 
 void calc_long_range_energies()
 {
+    char *errtxt;
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
 	switch (coulomb.method) {
@@ -238,7 +239,12 @@ void calc_long_range_energies()
   case DIPOLAR_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
     break;
-  
+  case DIPOLAR_NONE:
+      break;
+  default:
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{999 unknown dipolar method} ");
+      break;
   } 
 #endif /* ifdef DIPOLES */
 

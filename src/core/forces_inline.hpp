@@ -591,6 +591,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     break;
   }
 #endif /*ifdef DP3M */
+  default:
+      break;
   }  
 #endif /* ifdef DIPOLES */
 

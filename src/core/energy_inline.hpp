@@ -227,7 +227,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 
 #ifdef DIPOLES
   if (coulomb.Dmethod != DIPOLAR_NONE) {
-    ret=0;
+    //ret=0;
     switch (coulomb.Dmethod) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
@@ -236,6 +236,8 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
       ret = dp3m_pair_energy(p1,p2,d,dist2,dist);
       break;
 #endif
+    default:
+      ret=0;
     }
     energy.dipolar[0] += ret;
   }
