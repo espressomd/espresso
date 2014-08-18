@@ -44,6 +44,7 @@ tests = \
 	gb.tcl \
 	ghmc.tcl \
 	harm.tcl \
+	quartic.tcl \
 	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
