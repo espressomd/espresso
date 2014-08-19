@@ -299,57 +299,38 @@ void convert_torques_propagate_omega()
         double diff[3];
         double cross[3];
         double l_diff, l_cross;
-        dip[0] = p[i].swim.dipole_length * p[i].r.quatu[0];
-        dip[1] = p[i].swim.dipole_length * p[i].r.quatu[1];
-        dip[2] = p[i].swim.dipole_length * p[i].r.quatu[2];
-        diff[0] = ( p[i].swim.v_center[0] - p[i].swim.v_source[0] );
-        diff[1] = ( p[i].swim.v_center[1] - p[i].swim.v_source[1] );
-        diff[2] = ( p[i].swim.v_center[2] - p[i].swim.v_source[2] );
+
+        dip[0]   = p[i].swim.dipole_length * p[i].r.quatu[0];
+        dip[1]   = p[i].swim.dipole_length * p[i].r.quatu[1];
+        dip[2]   = p[i].swim.dipole_length * p[i].r.quatu[2];
+
+        diff[0]  = ( p[i].swim.v_center[0] - p[i].swim.v_source[0] );
+        diff[1]  = ( p[i].swim.v_center[1] - p[i].swim.v_source[1] );
+        diff[2]  = ( p[i].swim.v_center[2] - p[i].swim.v_source[2] );
+
         cross[0] = diff[1]*dip[2] - diff[2]*dip[1];
         cross[1] = diff[0]*dip[2] - diff[2]*dip[0];
         cross[2] = diff[0]*dip[1] - diff[1]*dip[0];
-        l_diff = sqrt(diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]);
-        l_cross = sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]);
-        omega_swim[0] = l_diff * cross[0] / ( l_cross * p[i].swim.dipole_length );
-        omega_swim[1] = l_diff * cross[1] / ( l_cross * p[i].swim.dipole_length );
-        omega_swim[2] = l_diff * cross[2] / ( l_cross * p[i].swim.dipole_length );
-        omega_swim_body[0] = A[0 + 3*0]*omega_swim[0] + A[0 + 3*1]*omega_swim[1] + A[0 + 3*2]*omega_swim[2];
-        omega_swim_body[1] = A[1 + 3*0]*omega_swim[0] + A[1 + 3*1]*omega_swim[1] + A[1 + 3*2]*omega_swim[2];
-        omega_swim_body[2] = A[2 + 3*0]*omega_swim[0] + A[2 + 3*1]*omega_swim[1] + A[2 + 3*2]*omega_swim[2];
-        // For testing
-        p[i].swim.rotational_friction = 1;
-        p[i].f.torque[0] += p[i].swim.rotational_friction * ( omega_swim_body[0] - p[i].m.omega[0] );
-        p[i].f.torque[1] += p[i].swim.rotational_friction * ( omega_swim_body[1] - p[i].m.omega[1] );
-        p[i].f.torque[2] += p[i].swim.rotational_friction * ( omega_swim_body[2] - p[i].m.omega[2] );
-        
-        /* TODO: remove
-        printf("diff            = [%e %e %e]\n"
-            , diff[0]
-            , diff[1]
-            , diff[2]
-            );
-        printf("omega_swim      = [%e %e %e]\n"
-            , omega_swim[0]
-            , omega_swim[1]
-            , omega_swim[2]
-            );
-        printf("omega_swim_body = [%e %e %e]\n"
-            , omega_swim_body[0]
-            , omega_swim_body[1]
-            , omega_swim_body[2]
-            );
-        printf("p[%d].m.omega    = [%e %e %e]\n", i
-            , p[i].m.omega[0]
-            , p[i].m.omega[1]
-            , p[i].m.omega[2]
-            );
-        printf("p[%d].f.torque  += [%e %e %e]\n", i
-            , p[i].swim.rotational_friction * ( omega_swim_body[0] - p[i].m.omega[0] )
-            , p[i].swim.rotational_friction * ( omega_swim_body[1] - p[i].m.omega[1] )
-            , p[i].swim.rotational_friction * ( omega_swim_body[2] - p[i].m.omega[2] )
-            );
-        printf("\n");
-        */
+
+        l_diff   = sqrt(diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]);
+        l_cross  = sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]);
+
+        if ( l_cross > 0 && p[i].swim.dipole_length > 0 )
+        {
+          omega_swim[0]      = l_diff * cross[0] / ( l_cross * p[i].swim.dipole_length );
+          omega_swim[1]      = l_diff * cross[1] / ( l_cross * p[i].swim.dipole_length );
+          omega_swim[2]      = l_diff * cross[2] / ( l_cross * p[i].swim.dipole_length );
+
+          omega_swim_body[0] = A[0 + 3*0]*omega_swim[0] + A[0 + 3*1]*omega_swim[1] + A[0 + 3*2]*omega_swim[2];
+          omega_swim_body[1] = A[1 + 3*0]*omega_swim[0] + A[1 + 3*1]*omega_swim[1] + A[1 + 3*2]*omega_swim[2];
+          omega_swim_body[2] = A[2 + 3*0]*omega_swim[0] + A[2 + 3*1]*omega_swim[1] + A[2 + 3*2]*omega_swim[2];
+
+          // TODO: Interface for rotational_friction
+          p[i].swim.rotational_friction = 10;
+          p[i].f.torque[0]  += p[i].swim.rotational_friction * ( omega_swim_body[0] - p[i].m.omega[0] );
+          p[i].f.torque[1]  += p[i].swim.rotational_friction * ( omega_swim_body[1] - p[i].m.omega[1] );
+          p[i].f.torque[2]  += p[i].swim.rotational_friction * ( omega_swim_body[2] - p[i].m.omega[2] );
+        }
       }
 #endif
 
