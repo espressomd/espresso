@@ -21,9 +21,9 @@
 # check the charge-charge P3M  algorithm
 source "tests_common.tcl"
 
+require_cudadevice
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
-require_feature "CUDA"
 require_feature "FFTW"
 
 puts "---------------------------------------------------------------"
@@ -53,7 +53,7 @@ proc write_data {file} {
 if { [catch {
     puts "Tests for P3M charge-charge interaction"
     read_data "p3m_system_gpu.data"
-
+    
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
     }
@@ -78,9 +78,6 @@ if { [catch {
 
     set cureng [lindex [analyze   energy coulomb] 0]
     set curprs 0
-
-
-
 
 
     ############## end, here RMS force error for P3M

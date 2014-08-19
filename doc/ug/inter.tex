@@ -807,6 +807,25 @@ radius.  Whenever a harmonic bond gets longer than
 \var{r_\mathrm{cut}}, the bond will be reported as broken, and a
 background error will be raised.
 
+\subsection{Quartic bond}
+\index{quartic bond|mainindex}
+\index{interactions!quartic|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  quartic \var{K_0} \var{K_1} \var{R} \opt{\var{r_\mathrm{cut}}}
+\end{essyntax}
+This creates a bond type with identificator \var{bondid} with a
+quartic potential. The potential is minimal at particle distance $r=R$.
+It is given by
+\begin{equation}
+  V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4
+\end{equation}
+The fourth, optional, parameter \var{r_\mathrm{cut}} defines a cutoff
+radius.  Whenever a quartic bond gets longer than
+\var{r_\mathrm{cut}}, the bond will be reported as broken, and a
+background error will be raised.
+
 \subsection{Subtracted Lennard-Jones bond}
 \index{subtracted Lennard-Jones bond|mainindex}
 \index{interactions!subtracted Lennard-Jones|mainindex}

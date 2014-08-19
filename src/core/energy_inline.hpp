@@ -45,6 +45,7 @@
 #include "gb.hpp"
 #include "fene.hpp"
 #include "harmonic.hpp"
+#include "quartic.hpp"
 #include "subt_lj.hpp"
 #include "angle.hpp"
 #include "angle_harmonic.hpp"
@@ -227,7 +228,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 
 #ifdef DIPOLES
   if (coulomb.Dmethod != DIPOLAR_NONE) {
-    ret=0;
+    //ret=0;
     switch (coulomb.Dmethod) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
@@ -236,6 +237,8 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
       ret = dp3m_pair_energy(p1,p2,d,dist2,dist);
       break;
 #endif
+    default:
+      ret=0;
     }
     energy.dipolar[0] += ret;
   }
@@ -320,6 +323,9 @@ inline void add_bonded_energy(Particle *p1)
       break;
     case BONDED_IA_HARMONIC:
       bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+    case BONDED_IA_QUARTIC:
+      bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:

@@ -41,6 +41,8 @@ enum BondedInteraction{
     BONDED_IA_FENE,
     /** Type of bonded interaction is a HARMONIC potential. */
     BONDED_IA_HARMONIC,
+    /** Type of bonded interaction is a QUARTIC potential. */
+    BONDED_IA_QUARTIC,
     /** Type of bonded interaction is a bond angle potential. */
     BONDED_IA_ANGLE_OLD,
     /** Type of bonded interaction is a dihedral potential. */
@@ -608,6 +610,14 @@ typedef struct {
       double r_cut;
 } Harmonic_bond_parameters;
 
+/** Parameters for harmonic bond Potential */
+typedef struct {
+      double k0, k1;
+      double r;
+      double r_cut;
+} Quartic_bond_parameters;
+
+
 /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
 	potential which you may chose with a compiler flag in the file \ref config.hpp !
@@ -740,6 +750,7 @@ typedef union {
     Bending_force_bond_parameters bending_force;
     Volume_force_bond_parameters volume_force;
     Harmonic_bond_parameters harmonic;
+    Quartic_bond_parameters quartic;
     Angle_bond_parameters angle;
     Angle_harmonic_bond_parameters angle_harmonic;
     Angle_cosine_bond_parameters angle_cosine;
@@ -750,11 +761,11 @@ typedef union {
     Subt_lj_bond_parameters subt_lj;
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
-    Endangledist_bond_parameters endangledist;    
 #ifdef CG_DNA
     Cg_dna_basepair_parameters cg_dna_basepair;
     Cg_dna_stacking_parameters cg_dna_stacking;
 #endif
+    Endangledist_bond_parameters endangledist;
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */

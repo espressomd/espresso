@@ -83,6 +83,8 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clc
         for(j=0;j<3;j++) wall.n[j]=wall.n[j]/normal;
       }
       break;
+    //default://@TODO: handle default case
+      //  break;
     }
   }
 
@@ -106,6 +108,8 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clc
       }
       /*fprintf(stdout,"  k=%d  clconstr=%d\n",k,*clconstr);*/
       break;
+    //default://@TODO: handle default case
+      //  break;
     }
   }
   /*

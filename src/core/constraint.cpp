@@ -2564,6 +2564,9 @@ void add_constraints_forces(Particle *p1)
     case CONSTRAINT_NONE:
       firce[0] = force[1] = force[2] = 0.0;
       break;
+  default:
+      break;
+
     }
     for (j = 0; j < 3; j++) {
       p1->f.f[j] += force[j];
@@ -2789,7 +2792,20 @@ double add_constraints_energy(Particle *p1)
     case CONSTRAINT_EXT_MAGN_FIELD:
       magnetic_en = ext_magn_field_energy(p1, &constraints[n].c.emfield);
       break;
-    case CONTRAINT_NONE:
+      //@TODO: implement energy of Plane, Slitpore
+  case CONSTRAINT_PLANE:
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{999 energy computation for PLANE not implemented} ");
+      break;
+  case CONSTRAINT_SLITPORE:
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{999 energy computation for SLITPORE not implemented} ");
+      break;
+  case CONSTRAINT_NONE:
+      break;
+  default:
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{999 trying to compute energy for unknown constraint} ");
       break;
     }
 

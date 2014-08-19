@@ -74,6 +74,7 @@
 #include "metadynamics.hpp"
 #include "angle.hpp"
 #include "cg_dna.hpp"
+#include "quartic.hpp"
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
@@ -535,6 +536,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     break;
   }
 #endif /*ifdef DP3M */
+  default:
+      break;
   }  
 #endif /* ifdef DIPOLES */
 
@@ -646,6 +649,9 @@ inline void add_bonded_force(Particle *p1)
       break;
     case BONDED_IA_HARMONIC:
       bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
+      break;
+    case BONDED_IA_QUARTIC:
+      bond_broken = calc_quartic_pair_force(p1, p2,  iaparams, dx, force);
       break;
     case BONDED_IA_STRETCHING_FORCE:
       bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);

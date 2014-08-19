@@ -165,6 +165,8 @@ int constraint_collision(double *p1, double *p2){
       /* @TODO: All constraints except none should do something. */
     case CONSTRAINT_NONE:
       break;
+    //default://@TODO: handle default case
+      //  break;
     }
   }
   return 0;
