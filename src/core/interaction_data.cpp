@@ -678,7 +678,9 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
   case BONDED_IA_ENDANGLEDIST:
     return "endangledist";
   case BONDED_IA_HARMONIC:
-    return "HARMONIC";
+    return "HARMONIC";    
+  case BONDED_IA_QUARTIC:
+    return "QUARTIC";
   case BONDED_IA_SUBT_LJ:
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:

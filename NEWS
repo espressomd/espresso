@@ -2,6 +2,24 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 3.4
+============
+
+New user-visible features
+-------------------------
+
+* New quartic bonded interaction
+
+Known bugs
+----------
+
+User-visible changes
+--------------------
+
+Changes visible for developers
+------------------------------
+
+
 ESPResSo 3.3
 ============
 

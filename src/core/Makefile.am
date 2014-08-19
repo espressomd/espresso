@@ -133,6 +133,7 @@ libEspresso_la_SOURCES += \
 	endangledist.cpp endangledist.hpp \
 	fene.cpp fene.hpp \
 	harmonic.cpp harmonic.hpp \
+	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
