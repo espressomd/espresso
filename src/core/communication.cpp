@@ -499,7 +499,7 @@ void mpi_send_v_slave(int pnode, int part)
 }
 
 /****************** REQ_SET_SWIMMING ************/
-void mpi_send_swimming(bool swimming, int pnode, int part, double v_swim, double f_swim, int push_pull, double dipole_length)
+void mpi_send_swimming(bool swimming, int pnode, int part, double v_swim, double f_swim, int push_pull, double dipole_length, double rotational_friction)
 {
 #ifdef ENGINE
   mpi_call(mpi_send_swimming_slave, pnode, part);
@@ -512,6 +512,7 @@ void mpi_send_swimming(bool swimming, int pnode, int part, double v_swim, double
 #if defined(LB) || defined(LB_GPU)
     p->swim.push_pull = push_pull;
     p->swim.dipole_length = dipole_length;
+    p->swim.rotational_friction = rotational_friction;
 #endif
   }
   else {

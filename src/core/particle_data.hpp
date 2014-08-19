@@ -485,9 +485,10 @@ int set_particle_v(int part, double v[3]);
     @param f_swim swimming at constant force.
     @param push_pull decides if particle is pusher or puller
     @param dipole_length is the length of the force dipole
+    @param rotational_friction is the friction applied when calculating omega
     @return ES_OK if particle existed
 */
-int set_particle_swimming(bool swimming, int part, double v_swim, double f_swim, int push_pull, double dipole_length);
+int set_particle_swimming(bool swimming, int part, double v_swim, double f_swim, int push_pull, double dipole_length, double rotational_friction);
 #endif
 
 /** Call only on the master node: set particle force.

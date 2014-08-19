@@ -325,8 +325,6 @@ void convert_torques_propagate_omega()
           omega_swim_body[1] = A[1 + 3*0]*omega_swim[0] + A[1 + 3*1]*omega_swim[1] + A[1 + 3*2]*omega_swim[2];
           omega_swim_body[2] = A[2 + 3*0]*omega_swim[0] + A[2 + 3*1]*omega_swim[1] + A[2 + 3*2]*omega_swim[2];
 
-          // TODO: Interface for rotational_friction
-          p[i].swim.rotational_friction = 10;
           p[i].f.torque[0]  += p[i].swim.rotational_friction * ( omega_swim_body[0] - p[i].m.omega[0] );
           p[i].f.torque[1]  += p[i].swim.rotational_friction * ( omega_swim_body[1] - p[i].m.omega[1] );
           p[i].f.torque[2]  += p[i].swim.rotational_friction * ( omega_swim_body[2] - p[i].m.omega[2] );

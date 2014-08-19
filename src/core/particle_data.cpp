@@ -605,7 +605,7 @@ int set_particle_v(int part, double v[3])
 }
 
 #ifdef ENGINE
-int set_particle_swimming(bool swimming, int part, double v_swim, double f_swim, int push_pull, double dipole_length)
+int set_particle_swimming(bool swimming, int part, double v_swim, double f_swim, int push_pull, double dipole_length, double rotational_friction)
 {
   int pnode;
   if (!particle_node)
@@ -617,7 +617,7 @@ int set_particle_swimming(bool swimming, int part, double v_swim, double f_swim,
 
   if (pnode == -1)
     return ES_ERROR;
-  mpi_send_swimming(swimming, pnode, part, v_swim, f_swim, push_pull, dipole_length);
+  mpi_send_swimming(swimming, pnode, part, v_swim, f_swim, push_pull, dipole_length, rotational_friction);
   return ES_OK;
 }
 #endif
