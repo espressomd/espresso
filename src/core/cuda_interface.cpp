@@ -408,12 +408,12 @@ static void cuda_mpi_send_v_cs_slave(){
       npart = cell->n;
       for (int i = 0; i < npart; i++)
       {
-        cell->part[i].swim.v_center[0] += (double)host_v_cs_slave[i+g].v_cs[0];
-        cell->part[i].swim.v_center[1] += (double)host_v_cs_slave[i+g].v_cs[1];
-        cell->part[i].swim.v_center[2] += (double)host_v_cs_slave[i+g].v_cs[2];
-        cell->part[i].swim.v_source[0] += (double)host_v_cs_slave[i+g].v_cs[3];
-        cell->part[i].swim.v_source[1] += (double)host_v_cs_slave[i+g].v_cs[4];
-        cell->part[i].swim.v_source[2] += (double)host_v_cs_slave[i+g].v_cs[5];
+        cell->part[i].swim.v_center[0] = (double)host_v_cs_slave[i+g].v_cs[0];
+        cell->part[i].swim.v_center[1] = (double)host_v_cs_slave[i+g].v_cs[1];
+        cell->part[i].swim.v_center[2] = (double)host_v_cs_slave[i+g].v_cs[2];
+        cell->part[i].swim.v_source[0] = (double)host_v_cs_slave[i+g].v_cs[3];
+        cell->part[i].swim.v_source[1] = (double)host_v_cs_slave[i+g].v_cs[4];
+        cell->part[i].swim.v_source[2] = (double)host_v_cs_slave[i+g].v_cs[5];
       }
       g += npart;
     }

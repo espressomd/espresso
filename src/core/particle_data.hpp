@@ -260,6 +260,7 @@ typedef struct {
   double dipole_length;
   double v_center[3];
   double v_source[3];
+  double rotational_friction;
 #endif
 } ParticleParametersSwimming;
 #endif

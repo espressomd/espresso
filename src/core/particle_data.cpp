@@ -195,12 +195,13 @@ void init_particle(Particle *part)
 
   // Swimming parameters
 #ifdef ENGINE
-  part->swim.swimming      = false;
-  part->swim.v_swim        = 0.0;
-  part->swim.f_swim        = 0.0;
+  part->swim.swimming            = false;
+  part->swim.v_swim              = 0.0;
+  part->swim.f_swim              = 0.0;
 #if defined(LB) || defined(LB_GPU)
-  part->swim.push_pull     = 0;
-  part->swim.dipole_length = 0.0;
+  part->swim.push_pull           = 0;
+  part->swim.dipole_length       = 0.0;
+  part->swim.rotational_friction = 0.0;
 #endif
 #endif
 

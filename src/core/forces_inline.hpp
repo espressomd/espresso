@@ -193,8 +193,8 @@ inline void init_local_particle_force(Particle *part) {
 #endif
 
 #ifdef ENGINE
-    /* apply a swimming force in the direction of
-       the particle's orientation axis */
+    // apply a swimming force in the direction of
+    // the particle's orientation axis
     if ( part->swim.swimming )
     {
       part->f.f[0] += part->swim.f_swim * part->r.quatu[0];

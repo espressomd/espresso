@@ -1613,9 +1613,10 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
   velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
 
   // The first three components are v_center, the last three v_source
-  particle_data[part_index].swim.v_cs[0+3*flag_cs] = interpolated_u[0];
-  particle_data[part_index].swim.v_cs[1+3*flag_cs] = interpolated_u[1];
-  particle_data[part_index].swim.v_cs[2+3*flag_cs] = interpolated_u[2];
+  // Do not use within LB, because these have already been converted back to MD units
+  particle_data[part_index].swim.v_cs[0+3*flag_cs] = interpolated_u[0] * para.agrid / para.tau;
+  particle_data[part_index].swim.v_cs[1+3*flag_cs] = interpolated_u[1] * para.agrid / para.tau;
+  particle_data[part_index].swim.v_cs[2+3*flag_cs] = interpolated_u[2] * para.agrid / para.tau;
 #endif
 
   /* for LB we do not reweight the friction force */
@@ -1900,9 +1901,10 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
 
   // The first three components are v_center, the last three v_source
-  particle_data[part_index].swim.v_cs[0+3*flag_cs] = interpolated_u[0];
-  particle_data[part_index].swim.v_cs[1+3*flag_cs] = interpolated_u[1];
-  particle_data[part_index].swim.v_cs[2+3*flag_cs] = interpolated_u[2];
+  // Do not use within LB, because these have already been converted back to MD units
+  particle_data[part_index].swim.v_cs[0+3*flag_cs] = interpolated_u[0] * para.agrid / para.tau;
+  particle_data[part_index].swim.v_cs[1+3*flag_cs] = interpolated_u[1] * para.agrid / para.tau;
+  particle_data[part_index].swim.v_cs[2+3*flag_cs] = interpolated_u[2] * para.agrid / para.tau;
 #endif
 
 #ifdef SHANCHEN
