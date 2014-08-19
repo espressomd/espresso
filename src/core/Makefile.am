@@ -199,8 +199,6 @@ include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
-cuda_common_cuda.lo: myconfig-final.hpp
-
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 
