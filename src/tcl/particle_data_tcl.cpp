@@ -1317,7 +1317,7 @@ int tclcommand_part_parse_mol_id(Tcl_Interp *interp, int argc, char **argv,
 int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
 		      int part_num, int *change)
 {
-  bool swimming = true;
+  bool swimming = false;
   double v_swim = 0.0;
   double f_swim = 0.0;
   int push_pull = 0;
@@ -1325,29 +1325,32 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
   double rotational_friction = 0.0;
 
   *change = 0;
+  bool parse = true;
   int count = 0;
-  while ( swimming ) {
-    if ( !ARG_IS_S(count,"v_swim")
+  while ( parse ) {
+    if ( !ARG_IS_S(count,"off")
+        && !ARG_IS_S(count,"v_swim")
         && !ARG_IS_S(count,"f_swim")
         && !ARG_IS_S(count,"pusher")
         && !ARG_IS_S(count,"puller")
         && !ARG_IS_S(count,"dipole_length")
         && !ARG_IS_S(count,"rotational_friction")
        ) {
-      swimming = false;
+      parse = false;
     }
 
     // Switch off swimming
     if (ARG_IS_S(count,"off")) {
       // Revert to defaults
+      swimming = false;
       v_swim = 0.0;
       f_swim = 0.0;
       push_pull = 0;
       dipole_length = 0.0;
       rotational_friction = 0.0;
       count++;
-      swimming = false;
-      break; // Stop parsing
+    } else {
+      swimming = true;
     }
 
     // Parse v_swim
