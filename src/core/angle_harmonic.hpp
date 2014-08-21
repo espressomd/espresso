@@ -78,6 +78,7 @@ inline int calc_angle_harmonic_force(Particle *p_mid, Particle *p_left, Particle
     if ( cosine >  TINY_COS_VALUE) cosine = TINY_COS_VALUE;
     if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
     phi =  acos(-cosine);
+
     sinphi = sin(phi);
     if ( sinphi < TINY_SIN_VALUE ) sinphi = TINY_SIN_VALUE;
     fac *= (phi - iaparams->p.angle_harmonic.phi0)/sinphi;

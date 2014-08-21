@@ -1065,7 +1065,7 @@ int cg_dna_stacking_set_params(int bond_type, DoubleList *params) {
   const double *a = bonded_ia_params[bond_type].p.cg_dna_stacking.a;
   const double *b = bonded_ia_params[bond_type].p.cg_dna_stacking.b;
 
-  bonded_ia_params[bond_type].p.cg_dna_stacking.ref_pot = 0.5*a[0] + a[1] * cos(dt) + a[2] * cos(2*dt) + a[3] * cos(3*dt) + a[4] * cos(4*dt) + a[5] * cos(5*dt) + a[6] * cos(6*dt) + a[7] * cos(7*dt) + b[0] * sin(dt) + b[1] * sin(2*dt) + b[2] * sin(3*dt) + b[3] * sin(4*dt) + b[5] * sin(5*dt) + b[6] * sin(6*dt);
+  bonded_ia_params[bond_type].p.cg_dna_stacking.ref_pot = a[0] + a[1] * cos(dt) + a[2] * cos(2*dt) + a[3] * cos(3*dt) + a[4] * cos(4*dt) + a[5] * cos(5*dt) + a[6] * cos(6*dt) + a[7] * cos(7*dt) + b[0] * sin(dt) + b[1] * sin(2*dt) + b[2] * sin(3*dt) + b[3] * sin(4*dt) + b[5] * sin(5*dt) + b[6] * sin(6*dt);
   bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_STACKING;
   bonded_ia_params[bond_type].num = 7;
 
