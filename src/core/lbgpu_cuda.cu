@@ -2822,8 +2822,10 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
     calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f); 
 
 #ifdef ENGINE
-    calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index, d_v, 1);
-    calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f);
+    if ( particle_data[part_index].swim.swimming ) {
+      calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index, d_v, 1);
+      calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f);
+    }
 #endif
 
     /**force which acts back to the fluid node */
@@ -2854,8 +2856,10 @@ __global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA
     calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
 
 #ifdef ENGINE
-    calc_viscous_force_three_point_couple(n_a, delta, particle_data, particle_force, part_index, &rng_part, delta_j, node_index,d_v,1);
-    calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
+    if ( particle_data[part_index].swim.swimming ) {
+      calc_viscous_force_three_point_couple(n_a, delta, particle_data, particle_force, part_index, &rng_part, delta_j, node_index,d_v,1);
+      calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
+    }
 #endif
 
     /**force which acts back to the fluid node */

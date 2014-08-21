@@ -59,6 +59,7 @@ typedef struct {
   float quatu[3];
   int push_pull;
   float dipole_length;
+  bool swimming;
 } CUDA_ParticleParametersSwimming;
 #endif
 
