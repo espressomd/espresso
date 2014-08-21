@@ -41,6 +41,8 @@ enum BondedInteraction{
     BONDED_IA_FENE,
     /** Type of bonded interaction is a HARMONIC potential. */
     BONDED_IA_HARMONIC,
+    /** Type of bonded interaction is a QUARTIC potential. */
+    BONDED_IA_QUARTIC,
     /** Type of bonded interaction is a bond angle potential. */
     BONDED_IA_ANGLE_OLD,
     /** Type of bonded interaction is a dihedral potential. */
@@ -80,29 +82,6 @@ enum BondedInteraction{
     /** Type of bonded interaction is a linear stretching force. */
     BONDED_IA_STRETCHLIN_FORCE
 };
-/*
-#define BONDED_IA_NONE     -1
-#define BONDED_IA_FENE      0
-#define BONDED_IA_HARMONIC  1
-#define BONDED_IA_ANGLE_OLD     2
-#define BONDED_IA_DIHEDRAL  3
-#define BONDED_IA_TABULATED 4
-#define BONDED_IA_SUBT_LJ   5
-#define BONDED_IA_RIGID_BOND  6
-#define BONDED_IA_VIRTUAL_BOND  7
-#define BONDED_IA_ANGLEDIST     8
-#define BONDED_IA_ENDANGLEDIST    9
-#define BONDED_IA_OVERLAPPED 10
-#define BONDED_IA_ANGLE_HARMONIC 11
-#define BONDED_IA_ANGLE_COSINE 12
-#define BONDED_IA_ANGLE_COSSQUARE 13
-#define BONDED_IA_STRETCHING_FORCE 14
-#define BONDED_IA_AREA_FORCE_LOCAL 15
-#define BONDED_IA_BENDING_FORCE 16
-#define BONDED_IA_VOLUME_FORCE 17
-#define BONDED_IA_AREA_FORCE_GLOBAL 18
-#define BONDED_IA_STRETCHLIN_FORCE 19 
-*/
 
 /** Specify tabulated bonded interactions  */
 enum TabulatedBondedInteraction{
@@ -111,12 +90,6 @@ enum TabulatedBondedInteraction{
     TAB_BOND_ANGLE,
     TAB_BOND_DIHEDRAL
 };
-/*
-#define TAB_UNKNOWN          0
-#define TAB_BOND_LENGTH      1
-#define TAB_BOND_ANGLE       2
-#define TAB_BOND_DIHEDRAL    3
-*/
 
 /** Specify overlapped bonded interactions  */
 enum OverlappedBondedInteraction{
@@ -125,12 +98,6 @@ enum OverlappedBondedInteraction{
     OVERLAP_BOND_ANGLE,
     OVERLAP_BOND_DIHEDRAL
 };
-/*
-#define OVERLAP_UNKNOWN          0
-#define OVERLAP_BOND_LENGTH      1
-#define OVERLAP_BOND_ANGLE       2
-#define OVERLAP_BOND_DIHEDRAL    3
-*/
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
@@ -185,14 +152,6 @@ enum DipolarInteration{
    /** Dipolar method is direct sum plus DLC. */
     DIPOLAR_MDLC_DS
 };
-/*
-   #define DIPOLAR_NONE       0
-   #define DIPOLAR_P3M        1
-   #define DIPOLAR_MDLC_P3M    2
-   #define DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA  3
-   #define DIPOLAR_DS  4
-   #define DIPOLAR_MDLC_DS  5
-*/
    /*@}*/
 #endif 
 
@@ -235,22 +194,6 @@ enum ConstraintApplied{
 /** Constraint for a hollow cone boundary */
     CONSTRAINT_HOLLOW_CONE
 };
-/*
-#define CONSTRAINT_NONE 0
-#define CONSTRAINT_WAL 1
-#define CONSTRAINT_SPH 2
-#define CONSTRAINT_CYL 3
-#define CONSTRAINT_ROD 4
-#define CONSTRAINT_PLATE 5
-#define CONSTRAINT_MAZE 6
-#define CONSTRAINT_PORE 7
-#define CONSTRAINT_EXT_MAGN_FIELD 8
-#define CONSTRAINT_PLANE 9
-#define CONSTRAINT_RHOMBOID 10
-#define CONSTRAINT_STOMATOCYTE 11
-#define CONSTRAINT_SLITPORE 12
-#define CONSTRAINT_HOLLOW_CONE 13
-*/
 /*@}*/
 
 /* Data Types */
@@ -632,6 +575,14 @@ typedef struct {
       double r_cut;
 } Harmonic_bond_parameters;
 
+/** Parameters for harmonic bond Potential */
+typedef struct {
+      double k0, k1;
+      double r;
+      double r_cut;
+} Quartic_bond_parameters;
+
+
 /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
 	potential which you may chose with a compiler flag in the file \ref config.hpp !
@@ -764,6 +715,7 @@ typedef union {
     Bending_force_bond_parameters bending_force;
     Volume_force_bond_parameters volume_force;
     Harmonic_bond_parameters harmonic;
+    Quartic_bond_parameters quartic;
     Angle_bond_parameters angle;
     Angle_harmonic_bond_parameters angle_harmonic;
     Angle_cosine_bond_parameters angle_cosine;
@@ -775,6 +727,7 @@ typedef union {
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
     Endangledist_bond_parameters endangledist;
+    
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */
