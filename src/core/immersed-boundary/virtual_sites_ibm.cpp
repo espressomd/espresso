@@ -21,6 +21,7 @@
 
 #include "immersed-boundary/virtual_sites_ibm.hpp"
 #include "lb.hpp"
+#include "ibm.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
 #include "communication.hpp"

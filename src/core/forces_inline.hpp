@@ -293,10 +293,8 @@ inline void force_calc()
 
   calc_long_range_forces();
 
-#ifndef IMMERSED_BOUNDARY
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
-#endif
 #endif
 
 #ifdef COMFORCE
@@ -323,9 +321,7 @@ inline void force_calc()
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef IMMERSED_BOUNDARY
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
-#endif
+  lb_ibm_coupling();
 #endif
 
   // apply trap forces to trapped molecules
