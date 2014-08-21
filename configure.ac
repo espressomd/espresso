@@ -415,6 +415,7 @@ dnl with_python_interface=no   do not use python interface
 AS_IF([test .$with_python_interface != .no], [
 	AX_PYTHON_DEVEL([>= '2.5'])
 
+        AC_ARG_VAR(CYTHON,[Specify the cython tool to use]))
    	AC_PATH_PROG(CYTHON,cython,no)
    	AS_IF([test .$CYTHON = .no],[build_python_interface=no],[build_python_interface=yes])
 
