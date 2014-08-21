@@ -28,6 +28,7 @@
 #define LB_H
 
 #include "utils.hpp"
+#include "halo.hpp"
 #include "lattice_inline.hpp"
 
 extern int lb_components ; // global variable holding the number of fluid components
@@ -199,6 +200,10 @@ extern int resend_halo;
 
 extern double gamma_shear;
 extern double gamma_bulk;
+
+#ifdef IMMERSED_BOUNDARY
+extern HaloCommunicator update_halo_comm;
+#endif
 
 /************************************************************/
 /** \name Exported Functions */
@@ -557,8 +562,25 @@ int lb_lbnode_set_pop(int* ind, double* pop);
  * can be called without the position needing to be on the local processor */
 int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v); 
 
-//Calculate interpolated velocity with updated (+f_ext), but not yet streamed modes
-int lb_lbfluid_get_interpolated_velocity_lbtrace(double* p, double* v, int id);
+#ifdef IMMERSED_BOUNDARY
+/** Fluid-Membrane Interaction distributes particle force to surrounding fluid nodes via linear interpolation.
+ * 
+ * Note: At the time this function is called, the forces saved in p are not yet scaled! Only called for virtual parts
+ *
+ * @param p          The coupled particle (Input).
+ */
+void couple_trace_to_fluid(Particle *p);
+
+/** Fluid Membrane interaction, calculate interpolated velocity with updated (+f_ext), but not yet streamed modes
+ * 
+ * follows the implementation of lb_fluid_get_interpolated_velocity in lb.cpp but with forces on nodes 
+ * taken into account by linear interpolation
+ *
+ * @param p          The coupled particle (Input).
+ */
+int lb_lbfluid_get_interpolated_velocity_ibm(double* p, double* v, int id);
+#endif
+
 
 #endif
 

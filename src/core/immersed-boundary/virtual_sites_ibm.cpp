@@ -70,7 +70,7 @@ void update_mol_vel_particle(Particle *p)
       // Need to interpolate velocity here only for CPU
       // For GPU it is already stored
       double v_int[3] = {0,0,0};
-      lb_lbfluid_get_interpolated_velocity_lbtrace(p_temp,v_int, p->p.identity);
+      lb_lbfluid_get_interpolated_velocity_ibm(p_temp,v_int, p->p.identity);
             
       for ( j = 0; j < 3; j++){ 
        

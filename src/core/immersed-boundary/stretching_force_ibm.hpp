@@ -131,11 +131,13 @@ inline int calc_stretching_force_ibm(Particle *p_ind1, Particle *p_ind2, Particl
     //l = length between 1 and 3
 
     get_mi_vector(vec2, p_ind3->r.p, p_ind1->r.p);
-    vecsub(p_ind3->r.p,p_ind1->r.p,vec2);
+    // vecsub(p_ind3->r.p,p_ind1->r.p,vec2);
+
     l = sqrt (sqrlen(vec2));
     // lp = lenght between 1 and 2
     get_mi_vector(vec1, p_ind2->r.p, p_ind1->r.p);
-    vecsub(p_ind2->r.p,p_ind1->r.p,vec1);
+    // vecsub(p_ind2->r.p,p_ind1->r.p,vec1);
+
     lp = sqrt (sqrlen(vec1));
     //cosp / sinp angle functions between these vectors; calculated directly via the producs
     cosp = scalar(vec1,vec2)/(lp*l);
@@ -182,7 +184,8 @@ inline int calc_stretching_force_ibm(Particle *p_ind1, Particle *p_ind2, Particl
     f1_rot[0] = A0*((-1)*e1*((i11*2*a1*dxx)+(i12*2*b1*dxy))+ (-1)*e2*((i21*2*a1*dxx)+(i22*(a1*dxy+b1*dxx))+(i23*(a1*dxy+b1*dxx))+(i24*2*b1*dxy)));
     f1_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b1*dyy))+ (-1)*e2*((i21*0.0)+(i22*a1*dyy)+(i23*a1*dyy)+(i24*2*b1*dyy)));
 
-    f2_rot[0] = A0*((-1)*e1*((i11*2*a2*dxx)+(i12*2*b2*dxy))+ (-1)*e2*((i21*2*a2*dxx)+(i22*(a2*dxy+b2*dxx))+(i23*(a2*dxy+b2*dxx))+(i24*2*b2*dxy)));
+    f2_rot[0] = A0*((-1)*e1*((i11*2*a2*dxx)+(i12*2*b2*dxy))+ (-1)*e2*((i21*2*a2*dxx)+(i22*(a2*dxy+b2*dxx))+(i23*(a2*dxy+b2*dxx))+(
+i24*2*b2*dxy)));
     f2_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b2*dyy))+ (-1)*e2*((i21*0.0)+(i22*a2*dyy)+(i23*a2*dyy)+(i24*2*b2*dyy)));
 
     //Rotate forces back into original position of triangle
