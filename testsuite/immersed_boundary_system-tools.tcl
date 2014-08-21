@@ -18,80 +18,83 @@
 # add a Cell orientated in z direction 
 # ---------------------------------------------------------------
 
-proc addCell {originX originY originZ {num "0"}} {
-  cd ..
-  # edited: 13.9.13
-  # contains variable num to set type for virtual partikles of cell (needed to show more cells with paraview)  
+proc addCell {originX originY originZ {num "0"} {conserve_vol "0"}} {
+    cd ..
+    # edited: 13.9.13
+    # contains variable num to set type for virtual partikles of cell (needed to show more cells with paraview)  
 
-  #declare global variables
-  global boxx boxy boxz
-  global interCount cellCount nodeCount
-  global kB kS maxStretch
-  global numNodesPerCell
-  global cellSeqFile
+    #declare global variables
+    global boxx boxy boxz
+    global interCount cellCount nodeCount
+    global kB kS maxStretch
+    global numNodesPerCell
+    global cellSeqFile
 
-  incr cellCount
+    incr cellCount
 
-  # read cell nodes
-  set nodefile [open "immersed_boundary_system-nodes.data" "r"]
-  gets $nodefile numNodes
-  set numNodesPerCell $numNodes
+    # read cell nodes
+    set nodefile [open "immersed_boundary_system-nodes.data" "r"]
+    gets $nodefile numNodes
+    set numNodesPerCell $numNodes
 
-  for {set i 0} {$i < $numNodes} {incr i} {
-    gets $nodefile point
-    set x [expr [lindex $point 0] + $originX ]
-    set y [expr [lindex $point 1] + $originY ]
-    set z [expr [lindex $point 2] + $originZ ]
-        
-      part [expr $i + $nodeCount] pos $x $y $z type $num virtual 1 molecule_id $cellCount
-      # part [expr $i + $nodeCount] pos $x $y $z type $num virtual 1
-  }
-  close $nodefile
+    for {set i 0} {$i < $numNodes} {incr i} {
+	gets $nodefile point
+	set x [expr [lindex $point 0] + $originX ]
+	set y [expr [lindex $point 1] + $originY ]
+	set z [expr [lindex $point 2] + $originZ ]
+	if {$conserve_vol == 1} { 
+	    part [expr $i + $nodeCount] pos $x $y $z type $num virtual 1 molecule_id $cellCount} else { 
+		part [expr $i + $nodeCount] pos $x $y $z type $num virtual 1
+	    }
+    }
 
-  # open triangle file
-  set trianfile [open "immersed_boundary_system-triangles.data" "r"]
-  set intercount 0
-  gets $trianfile numTri
+}
+close $nodefile
 
-  # read cell triangles & store in output file          
-  for {set i 0} {$i < $numTri } {incr i} {
+# open triangle file
+set trianfile [open "immersed_boundary_system-triangles.data" "r"]
+set intercount 0
+gets $trianfile numTri
+
+# read cell triangles & store in output file          
+for {set i 0} {$i < $numTri } {incr i} {
     gets $trianfile tri
     lappend indices $tri
     # set second ks parameter to rubbish. Since we use Neo-Hookean, this does not matter  
     set ind1 [expr $nodeCount + [lindex $tri 0]]
     set ind2 [expr $nodeCount + [lindex $tri 1]]  
     set ind3 [expr $nodeCount + [lindex $tri 2]]  
-  
+    
     inter $intercount triel $ind1 $ind2 $ind3 $maxStretch $kS -1e6
     part $ind1 bond $intercount $ind2 $ind3
     incr intercount
     incr interCount
-  }
+}
 
-  close $trianfile
+close $trianfile
 
-  # # read bending information
-  # set bendfile [open "~/sphere/bend" "r"]
-  # gets $bendfile numBend
+# read bending information
+set bendfile [open "immersed_boundary_system-bend.data" "r"]
+gets $bendfile numBend
 
-  # for {set i 0} {$i< $numBend } {incr i} {
-  #   gets $bendfile bend
+for {set i 0} {$i< $numBend } {incr i} {
+    gets $bendfile bend
 
-  #   set ind1 [expr $nodeCount + [lindex $bend 0]]
-  #   set ind2 [expr $nodeCount + [lindex $bend 1]]
-  #   set ind3 [expr $nodeCount + [lindex $bend 2]]
-  #   set ind4 [expr $nodeCount + [lindex $bend 3]]
-  
-  #   inter $intercount tribend $ind1 $ind2 $ind3 $ind4 0 $kB $maxStretch
-  #   part $ind1 bond $intercount $ind2 $ind3 $ind4
-  #   incr intercount
-  #   incr interCount
-  # }
-        
-  # close $bendfile
+    set ind1 [expr $nodeCount + [lindex $bend 0]]
+    set ind2 [expr $nodeCount + [lindex $bend 1]]
+    set ind3 [expr $nodeCount + [lindex $bend 2]]
+    set ind4 [expr $nodeCount + [lindex $bend 3]]
+    
+    inter $intercount tribend $ind1 $ind2 $ind3 $ind4 0 $kB $maxStretch
+    part $ind1 bond $intercount $ind2 $ind3 $ind4
+    incr intercount
+    incr interCount
+}
 
-  # increase counter
-  incr nodeCount $numNodes
+close $bendfile
+
+# increase counter
+incr nodeCount $numNodes
 
 }
 
