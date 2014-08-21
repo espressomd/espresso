@@ -484,7 +484,7 @@ int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Part
       ui[i] = f_tilt*(anj[i] - cos1*ani[i])/ani_l;
       uj[i] = f_tilt*(ani[i] - cos1*anj[i])/anj_l;
       veci[i] += rcb2[i];
-      vecj[i] +=rcb2j[i];
+      vecj[i] += rcb2j[i];
     }
 
     cross(ui, rcci, f_tilt_bi1);
