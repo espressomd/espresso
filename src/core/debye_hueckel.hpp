@@ -64,14 +64,19 @@ int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext
 inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3]) {
   double fac;
 
+  const double q1 = p1->p.q;
+  const double q2 = p2->p.q;
+
+  if((q1 == 0.0) || (q2 == 0.0))
+    return;
+
   if(dist >= dh_params.r_cut)
     return;
 
-  /* Coulomb part */
   if(dist < dh_params.r0) {
     fac = coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int * dist*dist*dist);
   } else if (dist < dh_params.r1) {
-    fac = coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int * exp(dh_params.alpha*(dist - dh_params.r0)) * dist*dist*dist) * (1. + dh_params.alpha*dist);
+    fac = coulomb.prefactor * p1->p.q * p2->p.q * exp(dh_params.alpha*(dist - dh_params.r0)) / (dh_params.eps_int * dist*dist*dist) * (1. + dh_params.alpha*dist);
   } else {
     const double kappa_dist = dh_params.kappa*dist;
     fac = coulomb.prefactor * p1->p.q * p2->p.q * (exp(-kappa_dist)/(dh_params.eps_ext * dist*dist*dist)) * (1.0 + kappa_dist);
@@ -106,16 +111,24 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], d
 #endif
 
 #ifdef COULOMB_DEBYE_HUECKEL
-inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {
-  if(dist < dh_params.r_cut) {
+inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {  
+  const double q1 = p1->p.q;
+  const double q2 = p2->p.q;
+
+  if((q1 == 0.0) || (q2 == 0.0))
+    return 0.0;
+
+  const double fac = q1 * q2 * coulomb.prefactor;
+
+  if((dist < dh_params.r_cut)) {
     if(dist < dh_params.r0) {
-      return coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int*dist);
-    } else if (dist < dh_params.r1) {
-      return coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int * exp(dh_params.alpha*(dist - dh_params.r0)) * dist);
-    } else {
-      return coulomb.prefactor * p1->p.q * p2->p.q * exp(-dh_params.kappa*dist) / (dh_params.eps_ext * dist);
+      return  fac / (dh_params.eps_int*dist);
     }
-  }
+    if (dist < dh_params.r1) {
+      return fac * exp(dh_params.alpha*(dist - dh_params.r0)) / (dh_params.eps_int * dist);
+    } 
+    return fac * exp(-dh_params.kappa*dist) / (dh_params.eps_ext * dist);
+    }
   return 0.0;
 }
 #else

@@ -672,8 +672,8 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
   cross(rcc, rcb1, n1);
   cross(rcc, rcb2, n2);
 
-  normalize(n1);
-  normalize(n2);
+  const double n1_l = norm(n1);
+  const double n2_l = norm(n2);
 
   rhb_l = norm(rhb);
 
@@ -705,9 +705,9 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
 
   /* Dihedral part */
 
-  gammad = dot(n1, n2);
+  gammad = dot(n1, n2)/(n1_l*n2_l);
   tau_d = exp(params.p.cg_dna_basepair.kd*(gammad - 1));
-  f_d = -E0*params.p.cg_dna_basepair.kd*tau_d;  
+  f_d = -E0*params.p.cg_dna_basepair.kd*tau_d/(n1_l*n2_l);  
 
   /* Flip part */
 
@@ -737,7 +737,8 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
   tau_rd = tau_r * tau_d;
 
   if(dpsi1 > 0 && dpsi2 > 0) {
-    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)+SQR(dpsi2)/(2.*sigma2sqr)));
+    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)+
+		     SQR(dpsi2)/(2.*sigma2sqr)));
     f_f1 *= tau_flip * tau_rd;
     f_f2 *= tau_flip * tau_rd;
   } else if (dpsi1 > 0.) {
@@ -784,7 +785,7 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
   const double factor6 = f_f2*gamma2/SQR(rcc_l);
 
   double fBase1, fSugar2, fBase2, fSugar1;
-  double fr;
+  double fr, n1n, n2n;
 
 #ifdef CG_DNA_DEBUG
   int big_force = 0;
@@ -792,25 +793,21 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
 
   for(int i = 0; i < 3; i++) {
     fr = f_r * rhb[i];
-
+    n1n = n1[i]/n1_l;
+    n2n = n2[i]/n2_l;
+   
     fBase1  =  factor1*rcc[i]  - factor2 * rcb1[i];
     fSugar2 =  factor1*rcb1[i] - factor3 * rcc[i];
     fBase2  = -factor4*rcc[i]  - factor5 * rcb2[i];
     fSugar1 =  factor4*rcb2[i] + factor6 * rcc[i];
 
-    f_b1[i] = -fr + dot1*n1[i] + fBase1 + f_sb1 *rcb1[i];
-    f_b2[i] =  fr - dot1*n2[i] + fBase2 + f_sb2 *rcb2[i];
+    f_b1[i] = -fr + dot1*n1n + fBase1 + f_sb1 *rcb1[i];
+    f_b2[i] =  fr - dot1*n2n + fBase2 + f_sb2 *rcb2[i];
 
-    f_s1[i] = dot4*n1[i] - dot3*n2[i] + fSugar1 - fBase1 - fSugar2 - f_sb1 *rcb1[i];
-    f_s2[i] = dot5*n2[i] - dot2*n1[i] + fSugar2 - fBase2 - fSugar1 - f_sb2 *rcb2[i];
+    f_s1[i] = dot4*n1n - dot3*n2n + fSugar1 - fBase1 - fSugar2 - f_sb1 *rcb1[i];
+    f_s2[i] = dot5*n2n - dot2*n1n + fSugar2 - fBase2 - fSugar1 - f_sb2 *rcb2[i];
 
 #ifdef CG_DNA_DEBUG
-    // PS(f_b1[i]);
-    // PS(f_b2[i]);
-    // PS(f_s1[i]);
-    // PS(f_s2[i]);
-    // PS(f_b1[i] + f_b2[i] + f_s1[i] + f_s2[i]);
-
     if((f_b1[i] >= 100.) || (f_b2[i] >= 100.) || (f_s1[i] >= 100.) || (f_s2[i] >= 100.)) 
       big_force = 1;
 #endif
@@ -956,8 +953,7 @@ int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Partic
   /* Radial part */
 
   ra = (rhb_l - params.p.cg_dna_basepair.r0)*params.p.cg_dna_basepair.alpha;
-  temp = exp(-ra);
-  tau_r = temp *(1.+ra);
+  tau_r = exp(-ra)*(1.+ra);
 
   /* Dihedral part */
 
@@ -1013,7 +1009,7 @@ int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Partic
  
   potential += tau_r * tau_flip * tau_d * E0;
 
-  *_energy += potential;
+  *_energy = potential;
 
   return 0;
 }

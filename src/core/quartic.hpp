@@ -58,19 +58,11 @@ inline int calc_quartic_pair_force(Particle *p1, Particle *p2, Bonded_ia_paramet
     return 1;
 
   dr = dist - iaparams->p.quartic.r;
-  if (fabs(dr) > ROUND_ERROR_PREC) {
-     if(dist>ROUND_ERROR_PREC) {  /* Regular case */
-        fac = dr / dist;
-     } else { /* dx[] == 0: the force is undefined. Let's use a random direction */
-        for(i=0;i<3;i++) dx[i] = d_random()-0.5;
-        fac = dr / sqrt(sqrlen(dx));
-     }
-  } else { 
-     fac=0;
-  }
+
+  fac = (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr)/dist;
   
   for(i=0;i<3;i++)
-    force[i] = -(iaparams->p.quartic.k0 + iaparams->p.quartic.k1 * dr * dr ) * fac*dx[i];
+    force[i] = -fac*dx[i];
 
   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist2,fac));
   ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist2,fac));
