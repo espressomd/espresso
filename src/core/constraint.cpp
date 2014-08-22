@@ -2562,11 +2562,10 @@ void add_constraints_forces(Particle *p1)
      }
       break;
     case CONSTRAINT_NONE:
-      firce[0] = force[1] = force[2] = 0.0;
+      force[0] = force[1] = force[2] = 0.0;
       break;
   default:
       break;
-
     }
     for (j = 0; j < 3; j++) {
       p1->f.f[j] += force[j];

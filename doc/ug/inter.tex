@@ -826,6 +826,24 @@ radius.  Whenever a quartic bond gets longer than
 \var{r_\mathrm{cut}}, the bond will be reported as broken, and a
 background error will be raised.
 
+\subsection{Bonded coulomb}
+\index{bonded coulomb bond|mainindex}
+\index{interactions!bonded_coulomb|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  bonded_coulomb \var{\alpha}
+\end{essyntax}
+This creates a bond type with identificator \var{bondid} with a
+coulomb pair potential.
+It is given by
+\begin{equation}
+  V(r) = \frac{\alpha q_1 q_2}{r},
+\end{equation}
+where \var{q_1} and \var{q_2} are the charges of the bound particles.
+There is no cutoff, the bejerrum length of other coulomb interactions
+is not taken into account.
+
 \subsection{Subtracted Lennard-Jones bond}
 \index{subtracted Lennard-Jones bond|mainindex}
 \index{interactions!subtracted Lennard-Jones|mainindex}

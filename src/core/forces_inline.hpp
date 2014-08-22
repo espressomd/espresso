@@ -21,7 +21,6 @@
 #ifndef _FORCES_INLINE_HPP
 #define _FORCES_INLINE_HPP
 
-
 #ifdef MOLFORCES
 #include "topology.hpp"
 #endif
@@ -75,6 +74,9 @@
 #include "angle.hpp"
 #include "cg_dna.hpp"
 #include "quartic.hpp"
+#ifdef ELECTROSTATICS
+#include "bonded_coulomb.hpp"
+#endif
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
@@ -653,6 +655,11 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_QUARTIC:
       bond_broken = calc_quartic_pair_force(p1, p2,  iaparams, dx, force);
       break;
+#ifdef ELECTROSTATICS
+    case BONDED_IA_BONDED_COULOMB:
+      bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
     case BONDED_IA_STRETCHING_FORCE:
       bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);
       break;
