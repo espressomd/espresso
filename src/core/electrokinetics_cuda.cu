@@ -411,7 +411,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                                          LB_parameters_gpu *ek_lbparameters_gpu,
                                          LB_rho_v_gpu *d_v
                                        ) {
-                                       
+  
   unsigned int index = ek_getThreadIndex ();
 
   if(index < ek_parameters_gpu.number_of_nodes)
@@ -794,7 +794,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              ( sqrt(2.0f) * ek_parameters_gpu.agrid );
            
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0UD)],
-                 flux * ek_parameters_gpu.time_step );    
+                 flux * ek_parameters_gpu.time_step );
     }
     else {
       //face in x
@@ -817,16 +817,16 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U00)],
                  flux * ek_parameters_gpu.time_step );
   
-      force  = -1.0f * ek_parameters_gpu.valency[species_index] *
+      /*force  = -1.0f * ek_parameters_gpu.valency[species_index] *
                ( ((cufftReal*)ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_U00]] -
                  ((cufftReal*)ek_parameters_gpu.charge_potential)[index]
                ) / ek_parameters_gpu.agrid;
-  
+
       force *= powf(ek_parameters_gpu.agrid, 1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
-               
-      atomicadd( &node_f.force[index],
+
+      /*atomicadd( &node_f.force[index],
                  ek_parameters_gpu.rho[species_index][index] *
                  (
                    force / 2.0f +
@@ -838,11 +838,21 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                    )
                  )
                );
-  
+
       atomicadd( &node_f.force[neighborindex[EK_LINK_U00]],
                   ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U00]] *
-                  force / 2.0f );
+                  force / 2.0f );*/
       
+      force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
+      //force = flux;
+  
+      force *= powf(ek_parameters_gpu.agrid, 1) *
+               ek_parameters_gpu.time_step *
+               ek_parameters_gpu.time_step;
+
+      atomicadd( &node_f.force[index], force / 2.0f);
+      atomicadd( &node_f.force[neighborindex[EK_LINK_U00]], force / 2.0f);
+  
       //face in y
       flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
              ( ( ek_parameters_gpu.rho[species_index][index] -
@@ -863,7 +873,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0U0)],
                  flux * ek_parameters_gpu.time_step );
                 
-      force  = -1.0f * ek_parameters_gpu.valency[species_index] *
+      /*force  = -1.0f * ek_parameters_gpu.valency[species_index] *
                ( ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_0U0]] -
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
                ) / ek_parameters_gpu.agrid;
@@ -887,7 +897,17 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
   
       atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0U0]],
                   ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0U0]] *
-                  force / 2.0f );
+                  force / 2.0f );*/
+  
+      force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
+      //force = flux;
+  
+      force *= powf(ek_parameters_gpu.agrid, 1) *
+               ek_parameters_gpu.time_step *
+               ek_parameters_gpu.time_step;
+
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], force / 2.0f);
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0U0]], force / 2.0f);
   
       //face in z
       flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
@@ -909,7 +929,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_00U)],
                  flux * ek_parameters_gpu.time_step );
   
-      force  = -1.0f * ek_parameters_gpu.valency[species_index] *
+      /*force  = -1.0f * ek_parameters_gpu.valency[species_index] *
                ( ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_00U]] -
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
                ) / ek_parameters_gpu.agrid;
@@ -933,7 +953,17 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
   
       atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_00U]],
                   ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_00U]] *
-                  force / 2.0f );
+                  force / 2.0f );*/
+  
+      force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
+      //force = flux;
+  
+      force *= powf(ek_parameters_gpu.agrid, 1) *
+               ek_parameters_gpu.time_step *
+               ek_parameters_gpu.time_step;
+
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], force / 2.0f);
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_00U]], force / 2.0f);
   
       //edge in z
       flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
@@ -956,7 +986,24 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_UU0)],
                  flux * ek_parameters_gpu.time_step
                );
+      
+      force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
+      //force = flux;
   
+      force *= powf(ek_parameters_gpu.agrid, 1) *
+               ek_parameters_gpu.time_step *
+               ek_parameters_gpu.time_step;
+
+      //atomicadd( &node_f.force[index], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[neighborindex[EK_LINK_UU0]], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_UU0]], force / 2.0f / sqrtf(2.0f));
+  
+      atomicadd( &node_f.force[index], force / 2.0f);
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], force / 2.0f);
+      atomicadd( &node_f.force[neighborindex[EK_LINK_UU0]], force / 2.0f);
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_UU0]], force / 2.0f);
+
       flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
              ( ( ek_parameters_gpu.rho[species_index][index] -
                  ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UD0]]
@@ -976,7 +1023,24 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
   
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_UD0)],
                  flux * ek_parameters_gpu.time_step );
+   
+      force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
+      //force = flux;
   
+      force *= powf(ek_parameters_gpu.agrid, 1) *
+               ek_parameters_gpu.time_step *
+               ek_parameters_gpu.time_step;
+
+      //atomicadd( &node_f.force[index], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], -force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[neighborindex[EK_LINK_UD0]], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_UD0]], -force / 2.0f / sqrtf(2.0f));
+
+      atomicadd( &node_f.force[index], force / 2.0f);
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], -force / 2.0f);
+      atomicadd( &node_f.force[neighborindex[EK_LINK_UD0]], force / 2.0f);
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_UD0]], -force / 2.0f);
+
       //edge in y
       flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
              ( ( ek_parameters_gpu.rho[species_index][index] -
@@ -997,7 +1061,24 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
    
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U0U)],
                  flux * ek_parameters_gpu.time_step );
+   
+      force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
+      //force = flux;
   
+      force *= powf(ek_parameters_gpu.agrid, 1) *
+               ek_parameters_gpu.time_step *
+               ek_parameters_gpu.time_step;
+
+      //atomicadd( &node_f.force[index], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[neighborindex[EK_LINK_U0U]], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_U0U]], force / 2.0f / sqrtf(2.0f));
+
+      atomicadd( &node_f.force[index], force / 2.0f);
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], force / 2.0f);
+      atomicadd( &node_f.force[neighborindex[EK_LINK_U0U]], force / 2.0f);
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_U0U]], force / 2.0f);
+
       flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
              ( ( ek_parameters_gpu.rho[species_index][index] -
                  ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0D]]
@@ -1017,7 +1098,24 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
   
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U0D)],
                  flux * ek_parameters_gpu.time_step );
-  
+   
+      force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
+      //force = flux;
+
+      force *= powf(ek_parameters_gpu.agrid, 1) *
+               ek_parameters_gpu.time_step *
+               ek_parameters_gpu.time_step;
+
+      //atomicadd( &node_f.force[index], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], -force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[neighborindex[EK_LINK_U0D]], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_U0D]], -force / 2.0f / sqrtf(2.0f));
+
+      atomicadd( &node_f.force[index], force / 2.0f);
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], -force / 2.0f);
+      atomicadd( &node_f.force[neighborindex[EK_LINK_U0D]], force / 2.0f);
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_U0D]], -force / 2.0f);
+
       //edge in x
       flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
              ( ( ek_parameters_gpu.rho[species_index][index] -
@@ -1038,7 +1136,24 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
   
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0UU)],
                  flux * ek_parameters_gpu.time_step );
+   
+      force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
+      //force = flux;
   
+      force *= powf(ek_parameters_gpu.agrid, 1) *
+               ek_parameters_gpu.time_step *
+               ek_parameters_gpu.time_step;
+
+      //atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0UU]], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0UU]], force / 2.0f / sqrtf(2.0f));
+
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], force / 2.0f);
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], force / 2.0f);
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0UU]], force / 2.0f);
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0UU]], force / 2.0f);
+
       flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
              ( ( ek_parameters_gpu.rho[species_index][index] -
                  ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UD]]
@@ -1057,7 +1172,24 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              );
   
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0UD)],
-                 flux * ek_parameters_gpu.time_step );    
+                 flux * ek_parameters_gpu.time_step );
+ 
+      force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
+      //force = flux;
+  
+      force *= powf(ek_parameters_gpu.agrid, 1) *
+               ek_parameters_gpu.time_step *
+               ek_parameters_gpu.time_step;
+
+      //atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], -force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0UD]], force / 2.0f / sqrtf(2.0f));
+      //atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0UD]], -force / 2.0f / sqrtf(2.0f));
+
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], force / 2.0f);
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], -force / 2.0f);
+      atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0UD]], force / 2.0f);
+      atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0UD]], -force / 2.0f);
     }
 
     /* advective contribution to flux */
@@ -1666,13 +1798,11 @@ __global__ void ek_create_greensfcn() {
               
     if( index == 0 ) 
     {
-    
       //setting 0th fourier mode to 0 enforces charge neutrality
       ek_parameters_gpu.greensfcn[index] = 0.0f;
     }
     else 
     {
-    
       ek_parameters_gpu.greensfcn[ index ] =
         -4.0f * PI_FLOAT * ek_parameters_gpu.bjerrumlength *
         ek_parameters_gpu.T * ek_parameters_gpu.agrid * ek_parameters_gpu.agrid *
@@ -1699,7 +1829,6 @@ __global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
   {  
     if( lbnode.boundary[ index ] ) 
     {
-    
       for( int i = 0; i < ek_parameters_gpu.number_of_species; i++ ) 
       {     
         ek_parameters_gpu.rho[ i ][ index ] = 0.0f;
@@ -1871,8 +2000,11 @@ void ek_integrate() {
                 ( i, *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values ) );
               
 #ifdef EK_BOUNDARIES
-    KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
-                ( i, *current_nodes, node_f ) );
+    if( ek_parameters.use_nonlinear_stencil)
+    {
+      KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
+                  ( i, *current_nodes, node_f ) );
+    }
 #endif
 
     KERNELCALL( ek_propagate_densities, dim_grid, threads_per_block, ( i ) );
@@ -2688,11 +2820,11 @@ LOOKUP_TABLE default\n",
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) 
   {
     fprintf( fp, "%e %e %e\n", lbforce[ i ] / 
-                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
+                                 ( powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
                                lbforce[ i + ek_parameters.number_of_nodes ] /
-                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
+                                 ( powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
                                lbforce[ i + 2 * ek_parameters.number_of_nodes ] /
-                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ) );
+                                 ( powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ) );
   }
   
   free( lbforce );

@@ -55,7 +55,6 @@ typedef struct {
   float T;
   float bjerrumlength;
   unsigned int number_of_species;
-  float ext_acceleration_force[3];
   int reaction_species[3];
   float rho_reactant_reservoir;
   float rho_product0_reservoir;
