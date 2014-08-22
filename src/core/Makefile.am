@@ -135,6 +135,7 @@ libEspresso_la_SOURCES += \
 	harmonic.cpp harmonic.hpp \
 	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
+	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \

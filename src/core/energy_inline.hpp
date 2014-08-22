@@ -46,6 +46,9 @@
 #include "fene.hpp"
 #include "harmonic.hpp"
 #include "quartic.hpp"
+#ifdef ELECTROSTATICS
+#include "bonded_coulomb.hpp"
+#endif
 #include "subt_lj.hpp"
 #include "angle.hpp"
 #include "angle_harmonic.hpp"
@@ -310,6 +313,11 @@ inline void add_bonded_energy(Particle *p1)
     case BONDED_IA_QUARTIC:
       bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
+#ifdef ELECTROSTATICS
+    case BONDED_IA_BONDED_COULOMB:
+      bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif 
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);

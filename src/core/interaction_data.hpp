@@ -43,6 +43,8 @@ enum BondedInteraction{
     BONDED_IA_HARMONIC,
     /** Type of bonded interaction is a QUARTIC potential. */
     BONDED_IA_QUARTIC,
+    /** Type of bonded interaction is a BONDED_COULOMB */
+    BONDED_IA_BONDED_COULOMB,
     /** Type of bonded interaction is a bond angle potential. */
     BONDED_IA_ANGLE_OLD,
     /** Type of bonded interaction is a dihedral potential. */
@@ -575,13 +577,17 @@ typedef struct {
       double r_cut;
 } Harmonic_bond_parameters;
 
-/** Parameters for harmonic bond Potential */
+/** Parameters for quartic bond Potential */
 typedef struct {
       double k0, k1;
       double r;
       double r_cut;
 } Quartic_bond_parameters;
 
+/** Parameters for coulomb bond Potential */
+typedef struct {
+      double prefactor;
+} Bonded_coulomb_bond_parameters;
 
 /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
@@ -716,6 +722,7 @@ typedef union {
     Volume_force_bond_parameters volume_force;
     Harmonic_bond_parameters harmonic;
     Quartic_bond_parameters quartic;
+    Bonded_coulomb_bond_parameters bonded_coulomb;
     Angle_bond_parameters angle;
     Angle_harmonic_bond_parameters angle_harmonic;
     Angle_cosine_bond_parameters angle_cosine;

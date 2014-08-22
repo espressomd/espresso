@@ -21,64 +21,6 @@
 #ifndef _FORCES_INLINE_HPP
 #define _FORCES_INLINE_HPP
 
-/*#include "forces.hpp"
-
-#include <vector>
-#include "utils.hpp"
-#include "thermostat.hpp"
-#ifdef MOLFORCES
-#include "topology.hpp"
-#endif
-#include "npt.hpp"
-#include "virtual_sites.hpp"
-
-#include "p3m.hpp"
-#include "p3m-dipolar.hpp"
-#include "lj.hpp"
-#include "ljgen.hpp"
-#include "steppot.hpp"
-#include "hertzian.hpp"
-#include "gaussian.hpp"
-#include "bmhtf-nacl.hpp"
-#include "buckingham.hpp"
-#include "soft_sphere.hpp"
-#include "hat.hpp"
-#include "maggs.hpp"
-#include "tab.hpp"
-#include "overlap.hpp"
-#include "ljcos.hpp"
-#include "ljcos2.hpp"
-#include "ljangle.hpp"
-#include "gb.hpp"
-#include "fene.hpp"
-#include "object-in-fluid/stretching_force.hpp"
-#include "object-in-fluid/stretchlin_force.hpp"
-#include "object-in-fluid/area_force_local.hpp"
-#include "object-in-fluid/area_force_global.hpp"
-#include "object-in-fluid/bending_force.hpp"
-#include "object-in-fluid/volume_force.hpp"
-#include "harmonic.hpp"
-#include "subt_lj.hpp"
-#include "angle.hpp"
-#include "angle_harmonic.hpp"
-#include "angle_cosine.hpp"
-#include "angle_cossquare.hpp"
-#include "angledist.hpp"
-#include "dihedral.hpp"
-#include "debye_hueckel.hpp"
-#include "endangledist.hpp"
-#include "reaction_field.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "comforce.hpp"
-#include "comfixed.hpp"
-#include "molforces.hpp"
-#include "morse.hpp"
-#include "elc.hpp"
-#include "iccp3m.hpp"
-#include "collision.hpp" 
-#include "external_potential.hpp"*/
-
 #ifdef MOLFORCES
 #include "topology.hpp"
 #endif
@@ -131,6 +73,9 @@
 #include "metadynamics.hpp"
 #include "angle.hpp"
 #include "quartic.hpp"
+#ifdef ELECTROSTATICS
+#include "bonded_coulomb.hpp"
+#endif
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
@@ -685,6 +630,11 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_QUARTIC:
       bond_broken = calc_quartic_pair_force(p1, p2,  iaparams, dx, force);
       break;
+#ifdef ELECTROSTATICS
+    case BONDED_IA_BONDED_COULOMB:
+      bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
     case BONDED_IA_STRETCHING_FORCE:
       bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);
       break;
