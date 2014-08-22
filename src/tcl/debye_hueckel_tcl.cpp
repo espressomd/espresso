@@ -34,7 +34,18 @@ int tclprint_to_result_dh(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "dh ", buffer, " ",(char *) NULL);
   Tcl_PrintDouble(interp, dh_params.r_cut, buffer);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
-
+#ifdef COULOMB_DEBYE_HUECKEL
+  Tcl_PrintDouble(interp, dh_params.eps_int, buffer);
+  Tcl_AppendResult(interp, " ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, dh_params.eps_ext, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, dh_params.r0, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, dh_params.r1, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, dh_params.alpha, buffer);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+#endif
   return TCL_OK;
 }
 
