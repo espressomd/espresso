@@ -3101,6 +3101,9 @@ for (c=0;c<ghost_cells.n;c++) {
       if(!ifParticleIsVirtual(&p[i])) { 
 	lb_viscous_coupling(&p[i],force);
       }
+#else
+      lb_viscous_coupling(&p[i],force);
+#endif
     }
   }
  }

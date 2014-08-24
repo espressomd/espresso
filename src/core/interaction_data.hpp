@@ -82,11 +82,11 @@ enum BondedInteraction{
     /** Type of bonded interaction is a global area force. */
     BONDED_IA_AREA_FORCE_GLOBAL,
     /** Type of bonded interaction is a linear stretching force. */
-    BONDED_IA_STRETCHLIN_FORCE
+    BONDED_IA_STRETCHLIN_FORCE,
     /** Type of Triangle_Stretch potential */
-    STRETCHING_FORCE_IBM_IA 20
+    STRETCHING_FORCE_IBM_IA,
     /** Type of Triangle_Bending potential */
-    BENDING_FORCE_IBM_IA 21
+    BENDING_FORCE_IBM_IA
 };
 
 /** Specify tabulated bonded interactions  */
@@ -744,7 +744,6 @@ typedef struct {
 
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
-<<<<<<< HEAD
   Fene_bond_parameters fene;
   Stretchlin_force_bond_parameters stretchlin_force;
   Stretching_force_bond_parameters stretching_force;
@@ -753,6 +752,8 @@ typedef union {
   Bending_force_bond_parameters bending_force;
   Volume_force_bond_parameters volume_force;
   Harmonic_bond_parameters harmonic;
+  Quartic_bond_parameters quartic;
+  Bonded_coulomb_bond_parameters bonded_coulomb;
   Angle_bond_parameters angle;
   Angle_harmonic_bond_parameters angle_harmonic;
   Angle_cosine_bond_parameters angle_cosine;
