@@ -50,4 +50,15 @@ void errexit();
 /** register a handler for sigint that translates it into an background error. */
 void register_sigint_handler();
 
+#define background_error(msg) _background_error(msg, __FILE__, __LINE__)
+void _background_error(const char* msg, const char* file, const char* line);
+
+
+class BackgroundErrorStream {
+  enum Type { ERROR, WARNING };
+public:
+  BackgroundErrorStream(Type type = ERROR);
+  
+};
+
 #endif

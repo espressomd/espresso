@@ -44,6 +44,8 @@ tests = \
 	gb.tcl \
 	ghmc.tcl \
 	harm.tcl \
+	quartic.tcl \
+	bonded_coulomb.tcl \
 	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \

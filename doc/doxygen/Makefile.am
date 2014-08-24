@@ -49,8 +49,7 @@ if HAVE_PYTHON
 background_errors.dox:
 	$(AM_V_GEN)SRCDIR=$(srcdir) AWK=$(AWK) \
 	  $(SHELL) $(srcdir)/background_errors.sh \
-	    $(top_srcdir)/src/*.cpp $(top_srcdir)/src/*.hpp \
-	    $(top_srcdir)/src/tcl/*.cpp $(top_srcdir)/src/tcl/*.hpp
+	    $(top_srcdir)/src/core/*.cpp $(top_srcdir)/src/core/*.hpp
 
 doxy-features:
 	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_doxyconfig.py \

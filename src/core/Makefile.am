@@ -39,7 +39,7 @@ libEspresso_la_SOURCES = \
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
-	energy.cpp energy.hpp \
+	energy.cpp energy_inline.hpp energy.hpp \
 	external_potential.hpp external_potential.cpp \
 	errorhandling.cpp errorhandling.hpp \
 	fft.cpp fft.hpp \
@@ -136,7 +136,9 @@ libEspresso_la_SOURCES += \
 	endangledist.cpp endangledist.hpp \
 	fene.cpp fene.hpp \
 	harmonic.cpp harmonic.hpp \
+	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
+	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
@@ -216,7 +218,8 @@ cuda_verbose_0 = @echo "  NVCC     $@";
 # putting them into DEPDIR ensures configure creates empties dummies
 $(LOFILES): %.lo: %.cu
 	$(cuda_verbose)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<; \
+	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) \
+	  -M -MT $@ -o $$depbase.Plo $<; \
 	$(LIBTOOL) $(AM_V_lt) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 		--mode=compile $(NVCC) $(DEFS) \
 		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
