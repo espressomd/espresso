@@ -1326,21 +1326,8 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
 
   *change = 0;
   bool parse = true;
-  int count = 0;
   while ( parse ) {
-    if ( !ARG_IS_S(count,"off")
-        && !ARG_IS_S(count,"v_swim")
-        && !ARG_IS_S(count,"f_swim")
-        && !ARG_IS_S(count,"pusher")
-        && !ARG_IS_S(count,"puller")
-        && !ARG_IS_S(count,"dipole_length")
-        && !ARG_IS_S(count,"rotational_friction")
-       ) {
-      parse = false;
-    }
-
-    // Switch off swimming
-    if (ARG_IS_S(count,"off")) {
+    if ( ARG_IS_S(*change,"off") ) {
       // Revert to defaults
       swimming = false;
       v_swim = 0.0;
@@ -1348,66 +1335,45 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
       push_pull = 0;
       dipole_length = 0.0;
       rotational_friction = 0.0;
-      count++;
-    } else {
-      swimming = true;
-    }
-
-    // Parse v_swim
-    if (ARG_IS_S(count,"v_swim")) {
-      if (!ARG_IS_D(++count,v_swim)) {
+    } else if ( ARG_IS_S(*change,"v_swim") ) {
+      if ( !ARG_IS_D(++(*change),v_swim) ) {
         return TCL_ERROR;
-      } else if (f_swim > 0.0 || f_swim < 0.0) {
+      } else if ( f_swim > 0.0 || f_swim < 0.0 ) {
         printf("You can't set v_swim and f_swim at the same time!\n");
         return TCL_ERROR;
       } else {
         v_swim *= time_step;
-        count++;
       }
-    }
-
-    // Parse f_swim
-    if (ARG_IS_S(count,"f_swim")) {
-      if (!ARG_IS_D(++count,f_swim)) {
+    } else if ( ARG_IS_S(*change,"f_swim") ) {
+      if ( !ARG_IS_D(++(*change),f_swim) ) {
         return TCL_ERROR;
-      } else if (v_swim > 0.0 || v_swim < 0.0) {
+      } else if ( v_swim > 0.0 || v_swim < 0.0 ) {
         printf("You can't set v_swim and f_swim at the same time!\n");
         return TCL_ERROR;
-      } else {
-        count++;
       }
-    }
-
-    // Parse pusher or puller
-    if (ARG_IS_S(count,"pusher")) {
+    } else if ( ARG_IS_S(*change,"pusher") ) {
       push_pull = -1;
-      count++;
-    }
-    if (ARG_IS_S(count,"puller")) {
+    } else if ( ARG_IS_S(*change,"puller") ) {
       push_pull = 1;
-      count++;
+    } else if ( ARG_IS_S(*change,"dipole_length") ) {
+      if ( !ARG_IS_D(++(*change),dipole_length) ) {
+        return TCL_ERROR;
+      }
+    } else if ( ARG_IS_S(*change,"rotational_friction") ) {
+      if ( !ARG_IS_D(++(*change),rotational_friction) ) {
+        return TCL_ERROR;
+      }
+    } else {
+      parse = false;
+      break;
     }
 
-    // Parse dipole_length
-    if (ARG_IS_S(count,"dipole_length")) {
-      if (!ARG_IS_D(++count,dipole_length)) {
-        return TCL_ERROR;
-      } else {
-        count++;
-      }
-    }
-
-    // Parse rotational_friction
-    if (ARG_IS_S(count,"rotational_friction")) {
-      if (!ARG_IS_D(++count,rotational_friction)) {
-        return TCL_ERROR;
-      } else {
-        count++;
-      }
+    if ( ++(*change) >= argc ) {
+      parse = false;
+      break;
     }
   }
 
-  *change += count;
 
   if (set_particle_swimming(swimming, part_num, v_swim, f_swim, push_pull, dipole_length, rotational_friction) == TCL_ERROR) {
     return TCL_ERROR;
