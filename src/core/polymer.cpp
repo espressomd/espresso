@@ -167,6 +167,8 @@ int constraint_collision(double *p1, double *p2){
     case CONSTRAINT_PLATE:
     case CONSTRAINT_RHOMBOID:
       break;
+    //default://@TODO: handle default case
+      //  break;
     }
   }
   return 0;

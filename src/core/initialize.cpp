@@ -111,7 +111,7 @@ void on_program_start()
   init_bit_random();
 
   init_node_grid();
-  /* calculate initial minimimal number of cells (see tclcallback_min_num_cells) */
+  /* calculate initial minimal number of cells (see tclcallback_min_num_cells) */
   min_num_cells = calc_processor_min_num_cells();
 
   /* initially go for domain decomposition */
@@ -460,6 +460,8 @@ void on_boxl_change() {
     dp3m_scaleby_box_l();
     break;
 #endif
+  default:
+      break;
   }
 #endif
 

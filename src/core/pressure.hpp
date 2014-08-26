@@ -351,7 +351,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
 
   int i, k, j, l;
   int type_num;
-  int type;
+  BondedInteraction type;
 
   i = 0;
   while(i < p1->bl.n) {

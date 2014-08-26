@@ -21,64 +21,6 @@
 #ifndef _FORCES_INLINE_HPP
 #define _FORCES_INLINE_HPP
 
-/*#include "forces.hpp"
-
-#include <vector>
-#include "utils.hpp"
-#include "thermostat.hpp"
-#ifdef MOLFORCES
-#include "topology.hpp"
-#endif
-#include "npt.hpp"
-#include "virtual_sites.hpp"
-
-#include "p3m.hpp"
-#include "p3m-dipolar.hpp"
-#include "lj.hpp"
-#include "ljgen.hpp"
-#include "steppot.hpp"
-#include "hertzian.hpp"
-#include "gaussian.hpp"
-#include "bmhtf-nacl.hpp"
-#include "buckingham.hpp"
-#include "soft_sphere.hpp"
-#include "hat.hpp"
-#include "maggs.hpp"
-#include "tab.hpp"
-#include "overlap.hpp"
-#include "ljcos.hpp"
-#include "ljcos2.hpp"
-#include "ljangle.hpp"
-#include "gb.hpp"
-#include "fene.hpp"
-#include "object-in-fluid/stretching_force.hpp"
-#include "object-in-fluid/stretchlin_force.hpp"
-#include "object-in-fluid/area_force_local.hpp"
-#include "object-in-fluid/area_force_global.hpp"
-#include "object-in-fluid/bending_force.hpp"
-#include "object-in-fluid/volume_force.hpp"
-#include "harmonic.hpp"
-#include "subt_lj.hpp"
-#include "angle.hpp"
-#include "angle_harmonic.hpp"
-#include "angle_cosine.hpp"
-#include "angle_cossquare.hpp"
-#include "angledist.hpp"
-#include "dihedral.hpp"
-#include "debye_hueckel.hpp"
-#include "endangledist.hpp"
-#include "reaction_field.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "comforce.hpp"
-#include "comfixed.hpp"
-#include "molforces.hpp"
-#include "morse.hpp"
-#include "elc.hpp"
-#include "iccp3m.hpp"
-#include "collision.hpp" 
-#include "external_potential.hpp"*/
-
 #ifdef MOLFORCES
 #include "topology.hpp"
 #endif
@@ -132,7 +74,10 @@
 #include "angle.hpp"
 #include "immersed-boundary/stretching_force_ibm.hpp"
 #include "immersed-boundary/bending_force_ibm.hpp"
-
+#include "quartic.hpp"
+#ifdef ELECTROSTATICS
+#include "bonded_coulomb.hpp"
+#endif
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
@@ -205,6 +150,29 @@ inline void init_local_particle_force(Particle *part) {
 #endif
 }
 
+/** Calculate forces.
+ *
+ *  A short list, what the function is doing:
+ *  <ol>
+ *  <li> Initialize forces with: \ref friction_thermo_langevin (ghost forces with zero).
+ *  <li> Calculate bonded interaction forces:<br>
+ *       Loop all local particles (not the ghosts).
+ *       <ul>
+ *       <li> FENE
+ *       <li> ANGLE (cos bend potential)
+ *       </ul>
+ *  <li> Calculate non-bonded short range interaction forces:<br>
+ *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
+ *       <ul>
+ *       <li> Lennard-Jones.
+ *       <li> Buckingham.
+ *       <li> Real space part: Coulomb.
+ *       <li> Ramp.
+ *       </ul>
+ *  <li> Calculate long range interaction forces:<br>
+         Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
+ *  </ol>
+ */
 inline void force_calc()
 {
   // Communication step: distribute ghost positions
@@ -347,7 +315,7 @@ inline void
 calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,
                                  double d[3], double dist, double dist2, 
                                  double force[3], 
-                                 double torque1[3], double torque2[3]) {
+                                 double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
@@ -417,11 +385,11 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
 #endif
 }
 
-inline void 
-calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, 
-                           double d[3], double dist, double dist2, 
-                           double force[3], 
-                           double torque1[3], double torque2[3]) {
+inline void
+calc_non_bonded_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+                           double d[3], double dist, double dist2,
+                           double force[3],
+                           double torque1[3] = NULL, double torque2[3] = NULL) {
 #ifdef MOL_CUT
    // You may want to put a correction factor and correction term for smoothing function else then theta
    if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
@@ -575,6 +543,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     break;
   }
 #endif /*ifdef DP3M */
+  default:
+      break;
   }  
 #endif /* ifdef DIPOLES */
 
@@ -611,7 +581,8 @@ inline void add_bonded_force(Particle *p1)
   char *errtxt;
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
-  int i, j, type_num, type, n_partners, bond_broken;
+  int i, j, type_num, n_partners, bond_broken;
+  BondedInteraction type;
 
   i = 0;
   while(i<p1->bl.n) {
@@ -665,6 +636,14 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_HARMONIC:
       bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
       break;
+    case BONDED_IA_QUARTIC:
+      bond_broken = calc_quartic_pair_force(p1, p2,  iaparams, dx, force);
+      break;
+#ifdef ELECTROSTATICS
+    case BONDED_IA_BONDED_COULOMB:
+      bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
     case BONDED_IA_STRETCHING_FORCE:
       bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);
       break;

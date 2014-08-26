@@ -112,6 +112,8 @@ libEspressoTcl_la_SOURCES += \
 	endangledist_tcl.cpp endangledist_tcl.hpp \
 	fene_tcl.cpp fene_tcl.hpp \
 	harmonic_tcl.cpp harmonic_tcl.hpp \
+	quartic_tcl.cpp quartic_tcl.hpp \
+	bonded_coulomb_tcl.cpp bonded_coulomb_tcl.hpp \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
 	object-in-fluid/area_force_local_tcl.cpp \

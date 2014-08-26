@@ -91,6 +91,8 @@
 #include "fene_tcl.hpp"
 #include "overlap_tcl.hpp"
 #include "harmonic_tcl.hpp"
+#include "quartic_tcl.hpp"
+#include "bonded_coulomb_tcl.hpp"
 #include "subt_lj_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
@@ -329,6 +331,12 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #endif
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
+  case BONDED_IA_QUARTIC:
+    return tclprint_to_result_quarticIA(interp, params);
+#ifdef ELECTROSTATICS
+  case BONDED_IA_BONDED_COULOMB:
+    return tclprint_to_result_bonded_coulombIA(interp, params);
+#endif
 #ifdef BOND_ANGLE_OLD
   case BONDED_IA_ANGLE_OLD:
     return tclprint_to_result_angleIA(interp, params);
@@ -923,6 +931,10 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);
 #endif
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
+  REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
+#ifdef ELECTROSTATICS
+  REGISTER_BONDED("bonded_coulomb", tclcommand_inter_parse_bonded_coulomb);  
+#endif
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
 #endif

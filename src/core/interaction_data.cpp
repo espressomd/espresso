@@ -490,6 +490,8 @@ static void recalc_global_maximal_nonbonded_cutoff()
     break;
   }
 #endif /*ifdef DP3M */
+  default:
+      break;
   }       
 #endif
 
@@ -670,8 +672,8 @@ void recalc_maximal_cutoff()
     max_cut = max_cut_bonded;
 }
 
-const char *get_name_of_bonded_ia(int i) {
-  switch (i) {
+const char *get_name_of_bonded_ia(BondedInteraction type) {
+  switch (type) {
   case BONDED_IA_FENE:
     return "FENE";
   case BONDED_IA_ANGLE_OLD:
@@ -689,7 +691,11 @@ const char *get_name_of_bonded_ia(int i) {
   case BONDED_IA_ENDANGLEDIST:
     return "endangledist";
   case BONDED_IA_HARMONIC:
-    return "HARMONIC";
+    return "HARMONIC";    
+  case BONDED_IA_QUARTIC:
+    return "QUARTIC";
+  case BONDED_IA_BONDED_COULOMB:
+    return "BONDED_COULOMB";
   case BONDED_IA_SUBT_LJ:
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:
@@ -714,7 +720,7 @@ const char *get_name_of_bonded_ia(int i) {
     return "STRETCHLIN_FORCE";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
-	    this_node, i);
+        this_node, type);
     errexit();
   }
   /* just to keep the compiler happy */
@@ -823,6 +829,8 @@ int interactions_sanity_checks()
 #endif
   case DIPOLAR_MDLC_DS: if (mdlc_sanity_checks()) state = 0; // fall through
   case DIPOLAR_DS: if (magnetic_dipolar_direct_sum_sanity_checks()) state = 0; break;
+  default:
+      break;
   }
 #endif /* ifdef  DIPOLES */
 
@@ -901,6 +909,8 @@ int dipolar_set_Dbjerrum(double bjerrum)
       dp3m_set_bjerrum();
       break;
 #endif
+    default:
+        break;
     }
  
     mpi_bcast_coulomb_params();
