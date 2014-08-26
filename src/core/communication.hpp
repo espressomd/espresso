@@ -137,16 +137,11 @@ void mpi_send_v(int node, int part, double v[3]);
 
 /** Issue REQ_SET_SWIMMING: send particle swimming properties.
     Also calls \ref on_particle_change.
-    \param swimming is a boolean which determines the state of swimming
     \param part the particle.
     \param node the node it is attached to.
-    \param v_swim swimming at constant velocity.
-    \param f_swim swimming at constant force.
-    \param push_pull decides if particle is pusher or puller
-    \param dipole_length length of force dipole
-    \param rotational_friction is the friction applied when calculating omega
+    \param swim struct containing swimming parameters
 */
-void mpi_send_swimming(bool swimming, int node, int part, double v_swim, double f_swim, int push_pull, double dipole_length, double rotational_friction);
+void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
 
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.
