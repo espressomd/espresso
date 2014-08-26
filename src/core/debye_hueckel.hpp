@@ -72,15 +72,16 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], d
 
   if(dist >= dh_params.r_cut)
     return;
-
-  if(dist < dh_params.r0) {
-    fac = coulomb.prefactor * p1->p.q * p2->p.q / (dh_params.eps_int * dist*dist*dist);
-  } else if (dist < dh_params.r1) {
-    fac = coulomb.prefactor * p1->p.q * p2->p.q * exp(dh_params.alpha*(dist - dh_params.r0)) / (dh_params.eps_int * dist*dist*dist) * (1. + dh_params.alpha*dist);
-  } else {
+  
+  if(dist > dh_params.r1) {
     const double kappa_dist = dh_params.kappa*dist;
-    fac = coulomb.prefactor * p1->p.q * p2->p.q * (exp(-kappa_dist)/(dh_params.eps_ext * dist*dist*dist)) * (1.0 + kappa_dist);
-  } 
+    fac = coulomb.prefactor * q1 * q2 * exp(-kappa_dist)/(dh_params.eps_ext * dist*dist*dist) * (1.0 + kappa_dist);
+  }
+  else if (dist > dh_params.r0) 
+    fac = coulomb.prefactor * q1 * q2 * exp(dh_params.alpha*(dist - dh_params.r0)) / (dh_params.eps_int * dist*dist*dist) * (1. - dh_params.alpha*dist); 
+  else 
+    fac = coulomb.prefactor * q1 * q2 * p2->p.q / (dh_params.eps_int * dist*dist*dist);
+
   force[0] += fac * d[0];
   force[1] += fac * d[1];  
   force[2] += fac * d[2];
