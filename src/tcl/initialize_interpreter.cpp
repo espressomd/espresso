@@ -244,8 +244,7 @@ static void register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_VVOLO, tclcallback_vvolo);
   #endif
   #ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
-  // Strange compilation error for this line
-  // register_global_callback(FIELD_STRETCHING_FORCE_LAW_IBM, tclcallback_stretching_force_law_ibm);
+  register_global_callback(FIELD_STRETCHING_FORCE_LAW_IBM, tclcallback_stretching_force_law_ibm);
   #endif
   #ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
   register_global_callback(FIELD_INTEGRATION_RULE_IBM, tclcallback_integration_rule_ibm);

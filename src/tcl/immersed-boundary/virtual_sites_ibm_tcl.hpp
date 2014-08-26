@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef STRETCHING_FORCE_IBM_TCL_H
-#define STRETCHING_FORCE_IBM_TCL_H
+#ifndef VIRTUAL_SITES_IBM_TCL_H
+#define VIRTUAL_SITES_IBM_TCL_H
 //Interface for stretching_force_ibm.h/c
 
 #include "parser.hpp"
