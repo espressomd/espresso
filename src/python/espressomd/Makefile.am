@@ -23,6 +23,7 @@ AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
 	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 LIBS =  $(top_builddir)/src/core/libEspresso.la @LIBS@
+# $(top_builddir)/src/tcl/libEspressoTcl.la
 
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
@@ -32,10 +33,13 @@ endif
 SUFFIXES = .pyx
 
 EXTRA_DIST = gen_pxiconfig.py
-PYFILES = __init__.py
+PYFILES = __init__.py \
+	  system.py \
+	  highlander.py
 
 PYXFILES =  \
-	System.pyx \
+	_init.pyx \
+	_system.pyx \
 	particle_data.pyx \
 	analyze.pyx \
 	cellsystem.pyx \
@@ -51,7 +55,8 @@ PYXFILES =  \
 	utils.pyx
 
 PXDFILES = \
-	System.pxd \
+	_init.pxd \
+	_system.pxd \
 	particle_data.pxd \
 	analyze.pxd \
 	c_analyze.pxd \

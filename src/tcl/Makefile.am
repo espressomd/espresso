@@ -47,7 +47,7 @@ libEspressoTcl_la_SOURCES = \
 	grid_tcl.cpp grid_tcl.hpp \
 	iccp3m_tcl.cpp iccp3m_tcl.hpp \
 	imd_tcl.cpp \
-	initialize_interpreter.cpp \
+	initialize_interpreter.cpp initialize_interpreter.hpp \
 	integrate_tcl.cpp integrate_tcl.hpp \
 	interaction_data_tcl.cpp interaction_data_tcl.hpp \
 	lb-boundaries_tcl.cpp lb-boundaries_tcl.hpp \

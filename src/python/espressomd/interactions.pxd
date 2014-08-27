@@ -18,7 +18,7 @@
 #  
 # Handling of interactions
 
-from System cimport *
+from _system cimport *
 cimport numpy as np
 from utils cimport *
 

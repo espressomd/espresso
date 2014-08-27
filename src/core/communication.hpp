@@ -79,7 +79,7 @@ extern MPI_Comm comm_cart;
 /** \name Exported Functions */
 /*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
-void mpi_init(int *argc, char ***argv);
+void mpi_init(int *argc = NULL, char ***argv = NULL);
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();

@@ -15,10 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# This script generates gen_pxiconfig.cpp, which in turn generates myconfig.pxi.
 #
-# Define the espresso package
-import sys, ctypes
+# Define the espressomd package
+import sys, ctypes, atexit
 
 # OpenMPI magic
 sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
+
+import espressomd._init
+espressomd._init.setup()
+atexit.register(espressomd._init.finalize)
+
+from espressomd.system import System

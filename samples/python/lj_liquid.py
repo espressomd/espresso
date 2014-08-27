@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
 from __future__ import print_function
-import espressomd.System as es
+import espressomd
+import espressomd._system as es
 import numpy
 from espressomd import code_info
 
@@ -94,8 +95,7 @@ es.analyze.distto(0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
   .format(n_part, box_l, density).strip())
-#print "Interactions:\n"	# Nicht angepasst
-#act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
+print("Interactions:\n")
 act_min_dist = es.analyze.mindist()
 print("Start with minimal distance {}".format(act_min_dist))
 

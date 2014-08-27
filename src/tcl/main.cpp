@@ -23,15 +23,12 @@
 */
 /* first, since we need the TK define */
 #include "utils.hpp"
-#include <tcl.h>
 #ifdef TK
 #include <tk.h>
 #endif
+#include "initialize_interpreter.hpp"
 #include "initialize.hpp"
 #include "communication.hpp"
-
-// forward from initialize_interpreter.cpp
-int appinit(Tcl_Interp *interp);
 
 int main(int argc, char **argv)
 {
