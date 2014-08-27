@@ -22,8 +22,8 @@ AM_DEFAULT_SOURCE_EXT = .cpp
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
 	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
-LIBS =  $(top_builddir)/src/core/libEspresso.la @LIBS@
-# $(top_builddir)/src/tcl/libEspressoTcl.la
+LIBS =  $(top_builddir)/src/core/libEspresso.la \
+	@LIBS@
 
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
@@ -55,23 +55,13 @@ PYXFILES =  \
 	utils.pyx
 
 PXDFILES = \
-	_init.pxd \
-	_system.pxd \
-	particle_data.pxd \
-	analyze.pxd \
 	c_analyze.pxd \
-	cellsystem.pxd \
-	changeVolume.pxd \
-	code_info.pxd \
-	cuda_init.pxd \
-	debye_hueckel.pxd \
-	global_variables.pxd \
-	integrate.pxd \
-	interactions.pxd \
-	invalidateSystem.pxd \
-	thermostat.pxd \
-	utils.pxd
-# lb has not been updated yet
+	$(PYXFILES:.pyx=.pxd)
+
+if TCL
+LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
+PYXFILES += _tcl.pyx
+endif
 
 # Python files have to be copied to the build dir
 python-all:

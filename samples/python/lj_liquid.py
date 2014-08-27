@@ -128,7 +128,6 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
   es.integrate(warm_steps)
   # Warmup criterion
-#  act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
   act_min_dist = es.analyze.mindist() 
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist), end=' ')
   i += 1

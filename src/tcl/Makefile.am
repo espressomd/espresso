@@ -164,6 +164,14 @@ Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\" $(AM_C
 Espresso_install_SOURCES = scriptsdir.cpp main.cpp
 Espresso_install_LDADD = libEspressoTcl.la ../core/libEspresso.la 
 
+# generate the Tcl library for the python interpreter
+if PYTHON_INTERFACE
+noinst_LTLIBRARIES += libEspressoTcl4Py.la
+libEspressoTcl4Py_la_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
+libEspressoTcl4Py_la_SOURCES = scriptsdir.cpp
+libEspressoTcl4Py_la_LIBADD = libEspressoTcl.la
+endif
+
 ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
 ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
 # rename Espresso after installation

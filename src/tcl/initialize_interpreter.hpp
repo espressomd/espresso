@@ -17,5 +17,4 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 #include <tcl.h>
-
-int appinit(Tcl_Interp *interp);
+int tcl_appinit(Tcl_Interp *interp);

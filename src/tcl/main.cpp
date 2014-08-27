@@ -40,9 +40,9 @@ int main(int argc, char **argv)
   if (this_node == 0) {
     /* master node */
 #ifdef TK
-    Tk_Main(argc, argv, appinit);
+    Tk_Main(argc, argv, tcl_appinit);
 #else
-    Tcl_Main(argc, argv, appinit);
+    Tcl_Main(argc, argv, tcl_appinit);
 #endif
   }
   else {
