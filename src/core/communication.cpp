@@ -111,6 +111,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_bit_random_seed_slave) \
   CB(mpi_bit_random_stat_slave) \
   CB(mpi_get_constraint_force_slave) \
+  CB(mpi_get_configtemp_slave) \
   CB(mpi_rescale_particles_slave) \
   CB(mpi_bcast_cell_structure_slave) \
   CB(mpi_send_quat_slave) \
@@ -2237,6 +2238,24 @@ void mpi_get_constraint_force_slave(int node, int parm)
 {
 #ifdef CONSTRAINTS
   MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+#endif
+}
+
+/*************** REQ_GET_CONFIGTEMP ************/
+void mpi_get_configtemp(double cfgtmp[2])
+{
+#ifdef CONFIGTEMP
+  extern double configtemp[2];
+  mpi_call(mpi_get_configtemp_slave, -1, 0);
+  MPI_Reduce(configtemp, cfgtmp, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+#endif
+}
+
+void mpi_get_configtemp_slave(int node, int cnt)
+{
+#ifdef CONFIGTEMP
+  extern double configtemp[2];  
+  MPI_Reduce(configtemp, NULL, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 #endif
 }
 

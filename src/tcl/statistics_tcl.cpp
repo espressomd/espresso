@@ -2515,18 +2515,21 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
 
 #ifdef CONFIGTEMP
 static int tclcommand_analyze_parse_and_print_configtemp(Tcl_Interp *interp, int argc, char **argv) {
-    extern double configtemp[2];
     char buffer[TCL_DOUBLE_SPACE];
-    double config_temp = 0.;
+    double cfgtmp1 = 0.;
+    double cfgtmp2 = 0.;
+    double cfgtmp[2];
+
+    mpi_get_configtemp(cfgtmp);
 
     /* parse arguments */
     if (argc > 0) {
         Tcl_AppendResult(interp, "usage: analyze configtemp", (char *) NULL);
         return (TCL_ERROR);
     }
-    config_temp = configtemp[0]/configtemp[1];
-    Tcl_PrintDouble(interp, config_temp, buffer);
-    ;
+    cfgtmp1 = cfgtmp[0];
+    cfgtmp2 = cfgtmp[1];    
+    sprintf(buffer, "%f %f", cfgtmp1, cfgtmp2);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return TCL_OK;
 }

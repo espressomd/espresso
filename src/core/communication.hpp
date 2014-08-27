@@ -470,6 +470,11 @@ void mpi_cap_forces(double force_cap);
 /** Issue REQ_GET_CONSFOR: get force acting on constraint */
 void mpi_get_constraint_force(int constraint, double force[3]);
 
+#ifdef CONFIGTEMP
+/** Issue REQ_GET_CONFIGTEMP: get configurational temperature */
+void mpi_get_configtemp(double cfgtmp[2]);
+#endif
+
 /** Issue REQ_BIT_RANDOM_SEED: read/set seed of the bit random number generators on each node. */
 void mpi_bit_random_seed(int cnt, int *seed);
 
