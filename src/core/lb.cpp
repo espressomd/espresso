@@ -2609,9 +2609,6 @@ inline void lb_collide_stream() {
         }
         index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
-      
-    index += 2*lblattice.halo_grid[0]; /* skip halo region */
-  }
 
 #ifdef IMMERSED_BOUNDARY
   force_density_conversion_ibm();
@@ -2688,9 +2685,6 @@ inline void lb_stream_collide() {
             index += 2; /* skip halo region */
         }
         index += 2*lblattice.halo_grid[0]; /* skip halo region */
-    }
-      
-    index += 2*lblattice.halo_grid[0]; /* skip halo region */
   }
 
   /* swap the pointers for old and new population fields */
@@ -3053,7 +3047,7 @@ void calc_particle_lattice_ia() {
       p = cell->part ;
       np = cell->n ;
 
-      for (i=0;i<np;i++) {
+      for (int i=0;i<np;i++) {
 
 #ifdef IMMERSED_BOUNDARY
 	if(!ifParticleIsVirtual(&p[i])) { 
@@ -3081,12 +3075,12 @@ void calc_particle_lattice_ia() {
   }
 
 /* ghost cells */
-for (c=0;c<ghost_cells.n;c++) {
+for (int c=0;c<ghost_cells.n;c++) {
   cell = ghost_cells.cell[c] ;
   p = cell->part ;
   np = cell->n ;
 
-  for (i=0;i<np;i++) {
+  for (int i=0;i<np;i++) {
     /* for ghost particles we have to check if they lie
      * in the range of the local lattice nodes */
     if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid[0] 
