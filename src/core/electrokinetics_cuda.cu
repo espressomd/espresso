@@ -813,6 +813,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ek_parameters_gpu.ext_force[0][species_index]
                )
              );
+
+      flux *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[EK_LINK_U00]]);
              
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U00)],
                  flux * ek_parameters_gpu.time_step );
@@ -870,6 +872,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                )
              );
              
+      flux *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[EK_LINK_0U0]]);
+
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0U0)],
                  flux * ek_parameters_gpu.time_step );
                 
@@ -926,6 +930,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                )
              );
   
+      flux *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[EK_LINK_00U]]);
+
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_00U)],
                  flux * ek_parameters_gpu.time_step );
   
@@ -982,7 +988,9 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ) / sqrtf(2.0f)
                )
              );
-            
+             
+      flux *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[EK_LINK_UU0]]);
+
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_UU0)],
                  flux * ek_parameters_gpu.time_step
                );
@@ -1020,7 +1028,9 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ) / sqrtf(2.0f)
                )
              );
-  
+   
+      flux *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[EK_LINK_UD0]]);
+
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_UD0)],
                  flux * ek_parameters_gpu.time_step );
    
@@ -1058,7 +1068,9 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ) / sqrtf(2.0f)
                )
              );
-   
+    
+      flux *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[EK_LINK_U0U]]);
+
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U0U)],
                  flux * ek_parameters_gpu.time_step );
    
@@ -1095,7 +1107,9 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ) / sqrtf(2.0f)
                )
              );
-  
+      
+      flux *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[EK_LINK_U0D]]);
+
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U0D)],
                  flux * ek_parameters_gpu.time_step );
    
@@ -1133,7 +1147,9 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ) / sqrtf(2.0f)
                )
              );
-  
+   
+      flux *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[EK_LINK_0UU]]);
+
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0UU)],
                  flux * ek_parameters_gpu.time_step );
    
@@ -1170,7 +1186,9 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ) / sqrtf(2.0f)
                )
              );
-  
+
+      flux *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[EK_LINK_0UD]]);
+
       atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0UD)],
                  flux * ek_parameters_gpu.time_step );
  
