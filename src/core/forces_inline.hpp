@@ -77,6 +77,8 @@
 #include "bonded_coulomb.hpp"
 #endif
 
+using namespace std;
+
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
 {
@@ -576,7 +578,7 @@ inline void add_bonded_force(Particle *p1)
   BondedInteraction type;
 
   i = 0;
-  while(i<p1->bl.n) {
+  while (i<p1->bl.n) {
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
@@ -585,9 +587,10 @@ inline void add_bonded_force(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"{078 bond broken between particles %d and %d (particles not stored on the same node)} ",
-	      p1->p.identity, p1->bl.e[i-1]);
+      ostringstream msg;
+      msg << "bond broken between particles " << p1->p.identity << " and " 
+          << p1->bl.e[i-1] << " (particles are not stored on the same node)";
+      runtimeError(msg);
       return;
     }
 
@@ -595,9 +598,12 @@ inline void add_bonded_force(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-	errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtxt,"{079 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
+        ostringstream msg;
+        msg << "bond broken between particles " 
+            << p1->p.identity << ", " 
+            << p1->bl.e[i-2] << " and "
+            << p1->bl.e[i-1] << " (particles are not stored on the same node)";
+        runtimeError(msg);
 	return;
       }
     }

@@ -24,9 +24,12 @@
 #include <cstring>
 #include <cstdlib>
 #include <csignal>
+#include <iostream>
 #include "utils.hpp"
 #include "errorhandling.hpp"
 #include "communication.hpp"
+
+using namespace std;
 
 /******************* exported variables **********************/
 /** buffer for error messages during the integration process. NULL if no errors occured. */
@@ -34,9 +37,7 @@ char *error_msg;
 int n_error_msg = 0;
 
 /******************* exported functions **********************/
-
-char *runtime_error(int errlen)
-{
+char *runtime_error(int errlen) {
   /* the true length of the string will be in general shorter than n_error_msg,
      at least if numbers are involved */
   int curend = error_msg ? strlen(error_msg) : 0;
@@ -46,11 +47,55 @@ char *runtime_error(int errlen)
   return error_msg + curend;
 }
 
-int check_runtime_errors()
-{
+int check_runtime_errors() {
   int n_all_error_msg;
   MPI_Allreduce(&n_error_msg, &n_all_error_msg, 1, MPI_INT, MPI_SUM, comm_cart);
-  return n_all_error_msg;
+  return n_all_error_msg + runtimeErrors->count();
+}
+
+int mpi_gather_runtime_errors(char **errors) {
+  // Tell other processors to send their erros
+  mpi_call(mpi_gather_runtime_errors_slave, -1, 0);
+
+  // If no processor encountered an error, return
+  if (!check_runtime_errors())
+    return ES_OK;
+
+  // gather the maximum length of the error messages
+  int *errcnt = (int*)malloc(n_nodes*sizeof(int));
+  MPI_Gather(&n_error_msg, 1, MPI_INT, errcnt, 1, MPI_INT, 0, comm_cart);
+
+  for (int node = 0; node < n_nodes; node++) {
+    if (errcnt[node] > 0) {
+      errors[node] = (char *)malloc(errcnt[node]);
+
+      if (node == 0)
+	strcpy(errors[node], error_msg);
+      else 
+	MPI_Recv(errors[node], errcnt[node], MPI_CHAR, node, 0, comm_cart, MPI_STATUS_IGNORE);
+    }
+    else
+      errors[node] = NULL;
+  }
+
+  /* reset error message on master node */
+  error_msg = (char*)realloc(error_msg, n_error_msg = 0);
+
+  free(errcnt);
+
+  return ES_ERROR;
+}
+
+void mpi_gather_runtime_errors_slave(int node, int parm) {
+  if (!check_runtime_errors())
+    return;
+
+  MPI_Gather(&n_error_msg, 1, MPI_INT, NULL, 0, MPI_INT, 0, comm_cart);
+  if (n_error_msg > 0) {
+    MPI_Send(error_msg, n_error_msg, MPI_CHAR, 0, 0, comm_cart);
+    /* reset error message on slave node */
+    error_msg = (char*)realloc(error_msg, n_error_msg = 0);
+  }
 }
 
 void errexit()
@@ -86,3 +131,141 @@ void register_sigint_handler()
 {
   signal(SIGINT, sigint_handler);
 }
+
+/* New runtime error handling. */
+/** list that contains the runtime error messages */
+ParallelRuntimeErrors *runtimeErrors = NULL;
+
+enum RuntimeErrorType { ERROR, WARNING };
+
+static const string
+createRuntimeErrorMessage(const string &_message,
+                          const char* function, const char* file, const int line, 
+                          RuntimeErrorType type = ERROR) {
+  ostringstream ostr;
+  ostr << "{ ";
+  switch (type) {
+  case ERROR:
+    ostr << "ERROR: "; break;
+  case WARNING:
+    ostr << "WARNING: "; break;
+  }
+  ostr << _message;
+  ostr << " in function " << function << " (" << file << ":" << line 
+       << ") on node " << this_node;
+  ostr << " }";
+  return ostr.str();
+}
+
+ParallelRuntimeErrors::
+ParallelRuntimeErrors(MPI_Comm comm) {
+  this->comm = comm;
+}
+
+void ParallelRuntimeErrors::
+warning(const string &msg,
+        const char* function, const char* file, const int line) {
+  errors.push_back
+    (createRuntimeErrorMessage(msg, function, file, line, WARNING));
+}
+
+void ParallelRuntimeErrors::
+warning(const char *msg,
+        const char* function, const char* file, const int line) {
+  this->warning(string(msg), function, file, line);
+}
+
+void ParallelRuntimeErrors::
+warning(ostringstream &mstr,
+        const char* function, const char* file, const int line) {
+  this->warning(mstr.str(), function, file, line);
+}
+
+void ParallelRuntimeErrors::
+error(const string &msg,
+      const char* function, const char* file, const int line) {
+  errors.push_back
+    (createRuntimeErrorMessage(msg, function, file, line, ERROR));
+}
+
+void ParallelRuntimeErrors::
+error(const char *msg,
+      const char* function, const char* file, const int line) {
+  this->error(string(msg), function, file, line);
+}
+
+void ParallelRuntimeErrors::
+error(ostringstream &mstr,
+      const char* function, const char* file, const int line) {
+  this->error(mstr.str(), function, file, line);
+}
+
+int ParallelRuntimeErrors::
+count() {
+  int numMessages = errors.size();
+  MPI_Allreduce(MPI_IN_PLACE, &numMessages, 1, MPI_INT, MPI_SUM, this->comm);
+  return numMessages;
+}
+
+list<string> &ParallelRuntimeErrors::
+gather() {
+  // Tell other processors to send their erros
+  mpi_call(mpiParallelRuntimeErrorsGatherSlave, -1, 0);
+
+  int numMessages = this->count();
+  
+  // If no processor encountered an error, return
+  if (!numMessages) return errors;
+
+  // subtract the number of messages on the master
+  numMessages -= errors.size();
+
+  MPI_Status status;
+  int count;
+  for (int i = 0; i < numMessages; ++i) {
+    // get the next message
+    MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, this->comm, &status);
+    MPI_Get_count(&status, MPI_CHAR, &count);
+
+    char buffer[count];
+    MPI_Recv(buffer, count, MPI_CHAR, 
+             MPI_ANY_SOURCE, MPI_ANY_TAG, this->comm, MPI_STATUS_IGNORE);
+    
+    errors.push_back(string());
+    string &s = errors.back();
+    s.assign(buffer, count);
+  }
+
+  return errors;
+}
+
+void ParallelRuntimeErrors::
+gatherSlave() {
+  // If no processor encountered an error, return
+  if (!this->count()) return;
+  
+  // send all messages
+  for (list<string>::iterator it = errors.begin();
+       it != errors.end(); ++it)
+    MPI_Send(const_cast<char*>(it->data()), it->length(), MPI_CHAR, 0, 42, comm_cart);
+
+  // finally empty the list
+  this->clear();
+}
+
+void ParallelRuntimeErrors::
+clear() {
+  errors.clear();
+}
+
+void
+initRuntimeErrors() {
+  runtimeErrors = new ParallelRuntimeErrors(comm_cart);
+}
+
+void
+mpiParallelRuntimeErrorsGatherSlave(int node, int parm) {
+  runtimeErrors->gatherSlave();
+}
+
+

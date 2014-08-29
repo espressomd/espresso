@@ -25,6 +25,10 @@
 #include "utils.hpp"
 #include "parser.hpp"
 #include "communication.hpp"
+#include <list>
+#include <string>
+
+using namespace std;
 
 int parse_int_list(Tcl_Interp *interp, char *list, IntList *il)
 {
@@ -87,6 +91,12 @@ int gather_runtime_errors(Tcl_Interp *interp, int error_code)
 	free(errors[node]);
     }
   }
+
+  list<string> &errorList = runtimeErrors->gather();
+  for (list<string>::const_iterator it = errorList.begin();
+       it != errorList.end(); ++it)
+    Tcl_AppendResult(interp, it->c_str(), (char*)NULL);
+  runtimeErrors->clear();
 
   free(errors[0]);
   free(errors);

@@ -205,8 +205,6 @@ void integrate_ensemble_init()
 
 void integrate_vv(int n_steps, int reuse_forces)
 {
-  int i;
-
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -262,8 +260,8 @@ void integrate_vv(int n_steps, int reuse_forces)
   n_verlet_updates = 0;
 
   /* Integration loop */
-  for(i=0;i<n_steps;i++) {
-    INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
+  for (int step=0; step<n_steps; step++) {
+    INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
     save_old_pos();
@@ -271,7 +269,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 
 #ifdef GHMC
     if(thermo_switch & THERMO_GHMC) {
-      if ((int) fmod(i,ghmc_nmd) == 0)
+      if ((int) fmod(step, ghmc_nmd) == 0)
         ghmc_momentum_update();
     }
 #endif
@@ -284,10 +282,10 @@ void integrate_vv(int n_steps, int reuse_forces)
        NOTE 2: Depending on the integration method Step 1 and Step 2 
        cannot be combined for the translation. 
     */
-    if(integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
-      propagate_vel();  propagate_pos(); }
-    else
-      propagate_vel_pos();
+    if (integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
+      propagate_vel();
+      propagate_pos(); 
+    } else propagate_vel_pos();
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained bond */
