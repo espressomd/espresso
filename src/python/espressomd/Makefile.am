@@ -47,7 +47,6 @@ PYXFILES =  \
 	code_info.pyx \
 	cuda_init.pyx \
 	debye_hueckel.pyx \
-	global_variables.pyx \
 	integrate.pyx \
 	interactions.pyx \
 	invalidateSystem.pyx \
@@ -55,6 +54,7 @@ PYXFILES =  \
 	utils.pyx
 
 PXDFILES = \
+	_espresso/globals.pxd \
 	c_analyze.pxd \
 	$(PYXFILES:.pyx=.pxd)
 
@@ -90,8 +90,9 @@ cython_verbose = $(cython_verbose_@AM_V@)
 cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
 cython_verbose_0 = @echo "  CYTHON   $@";
 
-$(CPPFILES): %.cpp: %.pyx %.pxd myconfig.pxi
-	$(cython_verbose)cython -I $(builddir) $< -o $@
+$(CPPFILES): %.cpp: %.pyx myconfig.pxi
+	$(cython_verbose)cython \
+	  -I $(builddir) -I $(srcdir)/_espresso $< -o $@
 
 CLEANFILES += $(CPPFILES)
 

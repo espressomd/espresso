@@ -38,7 +38,6 @@ cdef extern from "integrate.hpp":
   extern double sim_time
   extern double verlet_reuse
 
-
 cdef extern from "verlet.hpp":
   double skin
 

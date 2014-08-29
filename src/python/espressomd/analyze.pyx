@@ -70,9 +70,9 @@ def mindist(p1 = 'default', p2 = 'default'):
 #
 # Distance to particle or point
 #
-def distto(id_or_pos):
+def distto(system, id_or_pos):
   cdef double cpos[3]
-  if global_variables.GlobalsHandle().n_part == 0:
+  if system.n_part == 0:
     print  'no particles'
     return 'no particles'
 
@@ -91,9 +91,8 @@ def distto(id_or_pos):
 #
 # Energy analysis
 #
-def energy(etype = 'all', id1 = 'default', id2 = 'default'):
-
-  if global_variables.GlobalsHandle().n_part == 0:
+def energy(system, etype = 'all', id1 = 'default', id2 = 'default'):
+  if system.n_part == 0:
     print  'no particles'
     return 'no particles'
 
@@ -103,8 +102,8 @@ def energy(etype = 'all', id1 = 'default', id2 = 'default'):
   _value = 0.0
 
   if etype == 'all':
-    _result = energy('total') + ' ' + energy('kinetic')
-    _result += energy('nonbonded',0,0)
+    _result = energy(system, 'total') + ' ' + energy(system, 'kinetic')
+    _result += energy(system, 'nonbonded',0,0)
     # todo: check for existing particle and bond types
     # and add those to _result
     return _result
