@@ -55,7 +55,6 @@ PYXFILES =  \
 PXDFILES = \
 	c_analyze.pxd \
 	_espresso.pxd \
-	_system.pxd \
 	particle_data.pxd \
 	analyze.pxd \
 	changeVolume.pxd \
