@@ -100,7 +100,7 @@ analyze.distto(system, 0)
 print("Simulate {} particles in a cubic simulation box {} at density {}."
   .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = analyze.mindist()
+act_min_dist = analyze.mindist(system)
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
@@ -132,7 +132,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
   integrate.integrate(warm_steps)
   # Warmup criterion
-  act_min_dist = analyze.mindist() 
+  act_min_dist = analyze.mindist(system) 
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
   i += 1
 
