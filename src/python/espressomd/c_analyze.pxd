@@ -18,7 +18,6 @@
 #  
 # For C-extern Analysis 
 
-from _system cimport *
 cimport numpy as np
 from utils cimport *
 

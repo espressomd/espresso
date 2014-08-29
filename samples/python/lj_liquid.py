@@ -146,8 +146,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
 # Just to see what else we may get from the c code
 print("""
 ro variables:
-cell_grid     {0.cell_grid}
-cell_size     {0.cell_size} 
+cell_grid     {0.cellsystem.cell_grid}
+cell_size     {0.cellsystem.cell_size} 
 local_box_l   {0.local_box_l} 
 max_cut       {0.max_cut}
 max_part      {0.max_part}

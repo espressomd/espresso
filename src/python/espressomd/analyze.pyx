@@ -23,7 +23,6 @@ cimport utils
 cimport particle_data
 import utils
 import code_info
-import global_variables
 import particle_data
 
 #
