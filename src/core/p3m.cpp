@@ -708,6 +708,7 @@ void p3m_shrink_wrap_charge_grid(int n_charges) {
 #endif
 
 /* assign the forces obtained from k-space */
+template<int cao>
 static void P3M_assign_forces(double force_prefac, int d_rs) 
 {
   Cell *cell;
@@ -738,9 +739,9 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
       if( (q=p[i].p.q) != 0.0 ) {
 #ifdef P3M_STORE_CA_FRAC
 	q_ind = p3m.ca_fmp[cp_cnt];
-	for(i0=0; i0<p3m.params.cao; i0++) {
-	  for(i1=0; i1<p3m.params.cao; i1++) {
-	    for(i2=0; i2<p3m.params.cao; i2++) {
+	for(i0=0; i0<cao; i0++) {
+	  for(i1=0; i1<cao; i1++) {
+	    for(i2=0; i2<cao; i2++) {
 	      p[i].f.f[d_rs] -= force_prefac*p3m.ca_frac[cf_cnt]*p3m.rs_mesh[q_ind]; 
 	      q_ind++;
 	      cf_cnt++;
@@ -772,12 +773,12 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
 	}
 
 	if (p3m.params.inter == 0) {
-	  for(i0=0; i0<p3m.params.cao; i0++) {
-	    tmp0 = p3m_caf(i0, dist[0],p3m.params.cao);
-	    for(i1=0; i1<p3m.params.cao; i1++) {
-	      tmp1 = tmp0 * p3m_caf(i1, dist[1],p3m.params.cao);
-	      for(i2=0; i2<p3m.params.cao; i2++) {
-		cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], p3m.params.cao);
+	  for(i0=0; i0<cao; i0++) {
+	    tmp0 = p3m_caf(i0, dist[0],cao);
+	    for(i1=0; i1<cao; i1++) {
+	      tmp1 = tmp0 * p3m_caf(i1, dist[1],cao);
+	      for(i2=0; i2<cao; i2++) {
+		cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
 		p[i].f.f[d_rs] -= force_prefac*cur_ca_frac_val*p3m.rs_mesh[q_ind];
 		q_ind++;
 	      }
@@ -786,11 +787,11 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
 	    q_ind += p3m.local_mesh.q_21_off;
 	  }
 	} else {
-	  for(i0=0; i0<p3m.params.cao; i0++) {
+	  for(i0=0; i0<cao; i0++) {
 	    tmp0 = p3m.int_caf[i0][arg[0]];
-	    for(i1=0; i1<p3m.params.cao; i1++) {
+	    for(i1=0; i1<cao; i1++) {
 	      tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-	      for(i2=0; i2<p3m.params.cao; i2++) {
+	      for(i2=0; i2<cao; i2++) {
 		cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
 		p[i].f.f[d_rs] -= force_prefac*cur_ca_frac_val*p3m.rs_mesh[q_ind];
 		q_ind++;
@@ -900,9 +901,35 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag)
                     }
                 }
             }
-            fft_perform_back(p3m.rs_mesh);              /* Back FFT force component mesh */
-            p3m_spread_force_grid(p3m.rs_mesh);             /* redistribute force component mesh */
-            P3M_assign_forces(force_prefac, d_rs);  /* Assign force component from mesh to particle */
+	    /* Back FFT force component mesh */
+            fft_perform_back(p3m.rs_mesh);
+	    /* redistribute force component mesh */
+            p3m_spread_force_grid(p3m.rs_mesh);
+	    /* Assign force component from mesh to particle */
+	    switch(p3m.params.cao) 
+	      {
+	      case 1:
+		P3M_assign_forces<1>(force_prefac, d_rs); 
+		break;
+	      case 2:
+		P3M_assign_forces<2>(force_prefac, d_rs); 
+		break;
+	      case 3:
+		P3M_assign_forces<3>(force_prefac, d_rs); 
+		break;
+	      case 4:
+		P3M_assign_forces<4>(force_prefac, d_rs); 
+		break;
+	      case 5:
+		P3M_assign_forces<5>(force_prefac, d_rs); 
+		break;
+	      case 6:
+		P3M_assign_forces<6>(force_prefac, d_rs); 
+		break;
+	      case 7:
+		P3M_assign_forces<7>(force_prefac, d_rs); 
+		break;
+	      }
         }
     } /* if(force_flag) */
 
