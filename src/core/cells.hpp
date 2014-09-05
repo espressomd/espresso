@@ -142,6 +142,10 @@ typedef struct {
   GhostCommunicator ghost_lbcoupling_comm;
 #endif
 
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+  GhostCommunicator ghost_stretching_force_ibm_comm;
+#endif
+
   /** Cell system dependent function to find the right node for a
       particle at position pos. 
       \param  pos Position of a particle.

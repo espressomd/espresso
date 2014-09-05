@@ -709,6 +709,11 @@ void dd_topology_init(CellPList *old)
   dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm) ;
 #endif
 
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+	dd_prepare_comm(&cell_structure.ghost_stretching_force_ibm_comm, GHOSTTRANS_FORCE);
+	dd_assign_prefetches(&cell_structure.ghost_stretching_force_ibm_comm);
+#endif
+
   /* initialize cell neighbor structures */
   dd_init_cell_interactions();
 
@@ -752,6 +757,10 @@ void dd_topology_release()
   free_comm(&cell_structure.collect_ghost_force_comm);
 #ifdef LB
   free_comm(&cell_structure.ghost_lbcoupling_comm);
+#endif
+
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+	free_comm(&cell_structure.ghost_stretching_force_ibm_comm);
 #endif
 }
 

@@ -235,6 +235,11 @@ typedef struct {
   ParticlePosition r_ls;
   ParticleMomentum m_ls;
 #endif
+
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
+   /**stores the particle velocity at the previous time step*/
+  double v_old[3];
+#endif
 } ParticleLocal;
 
 #ifdef LB

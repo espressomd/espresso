@@ -82,7 +82,11 @@ enum BondedInteraction{
     /** Type of bonded interaction is a global area force. */
     BONDED_IA_AREA_FORCE_GLOBAL,
     /** Type of bonded interaction is a linear stretching force. */
-    BONDED_IA_STRETCHLIN_FORCE
+    BONDED_IA_STRETCHLIN_FORCE,
+    /** Type of Triangle_Stretch potential */
+    STRETCHING_FORCE_IBM_IA,
+    /** Type of Triangle_Bending potential */
+    BENDING_FORCE_IBM_IA
 };
 
 /** Specify tabulated bonded interactions  */
@@ -709,33 +713,61 @@ typedef struct {
       double phi0;
       double distmin;
       double distmax;
+
 } Endangledist_bond_parameters;
+
+/** Parameters for trielastic bond **/
+typedef struct {
+  double a1;
+  double a2;
+  double a3;
+  double b1;
+  double b2;
+  double b3;
+  double lo;
+  double lpo;
+  double sinpo;
+  double cospo;
+  double Area0;
+  double maxdist;
+  double ks;
+  double ka;
+} Stretching_force_ibm_bond_parameters;
+
+/** Parameters for tribend bond **/
+typedef struct {
+  double kb;
+  double theta0;
+  double max;
+  int boo;
+} Bending_force_ibm_bond_parameters;
 
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
-    Fene_bond_parameters fene;
-    Stretchlin_force_bond_parameters stretchlin_force;
-    Stretching_force_bond_parameters stretching_force;
-    Area_force_local_bond_parameters area_force_local;
-    Area_force_global_bond_parameters area_force_global;
-    Bending_force_bond_parameters bending_force;
-    Volume_force_bond_parameters volume_force;
-    Harmonic_bond_parameters harmonic;
-    Quartic_bond_parameters quartic;
-    Bonded_coulomb_bond_parameters bonded_coulomb;
-    Angle_bond_parameters angle;
-    Angle_harmonic_bond_parameters angle_harmonic;
-    Angle_cosine_bond_parameters angle_cosine;
-    Angle_cossquare_bond_parameters angle_cossquare;
-    Dihedral_bond_parameters dihedral;
-    Tabulated_bond_parameters tab;
-    Overlap_bond_parameters overlap;
-    Subt_lj_bond_parameters subt_lj;
-    Rigid_bond_parameters rigid_bond;
-    Angledist_bond_parameters angledist;
-    Endangledist_bond_parameters endangledist;
-    
-  } Bond_parameters;
+  Fene_bond_parameters fene;
+  Stretchlin_force_bond_parameters stretchlin_force;
+  Stretching_force_bond_parameters stretching_force;
+  Area_force_local_bond_parameters area_force_local;
+  Area_force_global_bond_parameters area_force_global;
+  Bending_force_bond_parameters bending_force;
+  Volume_force_bond_parameters volume_force;
+  Harmonic_bond_parameters harmonic;
+  Quartic_bond_parameters quartic;
+  Bonded_coulomb_bond_parameters bonded_coulomb;
+  Angle_bond_parameters angle;
+  Angle_harmonic_bond_parameters angle_harmonic;
+  Angle_cosine_bond_parameters angle_cosine;
+  Angle_cossquare_bond_parameters angle_cossquare;
+  Dihedral_bond_parameters dihedral;
+  Tabulated_bond_parameters tab;
+  Overlap_bond_parameters overlap;
+  Subt_lj_bond_parameters subt_lj;
+  Rigid_bond_parameters rigid_bond;
+  Angledist_bond_parameters angledist;
+  Endangledist_bond_parameters endangledist;
+  Stretching_force_ibm_bond_parameters stretching_force_ibm;
+  Bending_force_ibm_bond_parameters bending_force_ibm;
+} Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */
 typedef struct {

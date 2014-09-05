@@ -54,6 +54,9 @@ libEspresso_la_SOURCES = \
 	halo.cpp halo.hpp \
 	iccp3m.cpp iccp3m.hpp \
 	imd.cpp imd.hpp \
+	immersed-boundary/ibm.cpp immersed-boundary/ibm.hpp \
+	immersed-boundary/volume_conservation_ibm.cpp immersed-boundary/volume_conservation_ibm.hpp \
+	immersed-boundary/virtual_sites_ibm.cpp immersed-boundary/virtual_sites_ibm.hpp \
 	initialize.cpp initialize.hpp \
 	integrate.cpp integrate.hpp \
 	interaction_data.cpp interaction_data.hpp \
@@ -142,7 +145,9 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
-	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
+	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp \
+	immersed-boundary/stretching_force_ibm.cpp immersed-boundary/stretching_force_ibm.hpp \
+	immersed-boundary/bending_force_ibm.cpp immersed-boundary/bending_force_ibm.hpp
 
 # Coulomb methods
 libEspresso_la_SOURCES += \

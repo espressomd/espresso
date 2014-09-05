@@ -39,6 +39,8 @@
 #include "lb-d3q19.hpp"
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
+#include "immersed-boundary/ibm.hpp"
+
 
 #include "cuda_interface.hpp"
 
@@ -2550,11 +2552,11 @@ inline void lb_calc_n_from_modes_push(index_t index, double *m) {
 
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
-    index_t index;
-    int x, y, z;
-    double modes[19];
+  index_t index;
+  int x, y, z;
+  double modes[19];
 
-    /* loop over all lattice cells (halo excluded) */
+  /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
     for (int i = 0; i < n_lb_boundaries; i++) {
         lb_boundaries[i].force[0]=0.;
@@ -2608,8 +2610,12 @@ inline void lb_collide_stream() {
         index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
 
-    /* exchange halo regions */
-    halo_push_communication();
+#ifdef IMMERSED_BOUNDARY
+  force_density_conversion_ibm();
+#endif
+
+  /* exchange halo regions */
+  halo_push_communication();
 
 #ifdef LB_BOUNDARIES
     /* boundary conditions for links */
@@ -2622,8 +2628,8 @@ inline void lb_collide_stream() {
     lbfluid[0] = lbfluid[1];
     lbfluid[1] = tmp;
 
-    /* halo region is invalid after update */
-    lbpar.resend_halo = 1;
+  /* halo region is invalid after update */
+  lbpar.resend_halo = 1;
 }
 
 
@@ -2679,13 +2685,13 @@ inline void lb_stream_collide() {
             index += 2; /* skip halo region */
         }
         index += 2*lblattice.halo_grid[0]; /* skip halo region */
-    }
+  }
 
-    /* swap the pointers for old and new population fields */
-    //fprintf(stderr,"swapping pointers\n");
-    double **tmp = lbfluid[0];
-    lbfluid[0] = lbfluid[1];
-    lbfluid[1] = tmp;
+  /* swap the pointers for old and new population fields */
+  //fprintf(stderr,"swapping pointers\n");
+  double **tmp = lbfluid[0];
+  lbfluid[0] = lbfluid[1];
+  lbfluid[1] = tmp;
 
     /* halo region is invalid after update */
     lbpar.resend_halo = 1;
@@ -2945,7 +2951,6 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   return 0;
 }
 
-
 /** Calculate particle lattice interactions.
  * So far, only viscous coupling with Stokesian friction is
  * implemented.
@@ -3041,66 +3046,63 @@ void calc_particle_lattice_ia() {
       cell = local_cells.cell[c] ;
       p = cell->part ;
       np = cell->n ;
-      
-      for (int i = 0; i < np; i++) {
-        lb_viscous_coupling(&p[i],force);
-        
-        /* add force to the particle */
-        p[i].f.f[0] += force[0];
-        p[i].f.f[1] += force[1];
-        p[i].f.f[2] += force[2];
-        
-        ONEPART_TRACE(
-                      if (p->p.identity == check_id)
-                        {
-                          fprintf(stderr,
-                                  "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",
-                                  this_node, p->f.f[0], p->f.f[1], p->f.f[2]);
-                        }
-                      );
-      }
-    }
-      
-    /* ghost cells */
-    for (int c = 0; c < ghost_cells.n ;c++) {
-      cell = ghost_cells.cell[c] ;
-      p = cell->part ;
-      np = cell->n ;
-      
-      for (int i = 0; i < np; i++) {
-        /* for ghost particles we have to check if they lie
-         * in the range of the local lattice nodes */
-        if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid[0]
-            && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid[0]
-            && p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid[1]
-            && p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid[1]
-            && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid[2]
-            && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid[2]) 
-          {
-            ONEPART_TRACE(
-                          if (p[i].p.identity == check_id)
-                            {
-                              fprintf(stderr,
-                                      "%d: OPT: LB coupling of ghost particle:\n",
-                                      this_node);
-                            }
-                          );
-            
-            lb_viscous_coupling(&p[i],force);
-            
-            /* ghosts must not have the force added! */
-            ONEPART_TRACE(
-                          if (p->p.identity == check_id)
-                            {
-                              fprintf(stderr,
-                                      "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",
-                                      this_node, p->f.f[0], p->f.f[1], p->f.f[2]);
-                            }
-                          );
-          }
-      }
+
+      for (int i=0;i<np;i++) {
+
+#ifdef IMMERSED_BOUNDARY
+	if(!ifParticleIsVirtual(&p[i])) { 
+
+	  lb_viscous_coupling(&p[i],force);
+
+	  /* add force to the particle */
+	  p[i].f.f[0] += force[0];
+	  p[i].f.f[1] += force[1];
+	  p[i].f.f[2] += force[2];
+
+	  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+	}
+#else 
+      lb_viscous_coupling(&p[i],force);
+
+      /* add force to the particle */
+      p[i].f.f[0] += force[0];
+      p[i].f.f[1] += force[1];
+      p[i].f.f[2] += force[2];
+
+      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+#endif
     }
   }
+
+/* ghost cells */
+for (int c=0;c<ghost_cells.n;c++) {
+  cell = ghost_cells.cell[c] ;
+  p = cell->part ;
+  np = cell->n ;
+
+  for (int i=0;i<np;i++) {
+    /* for ghost particles we have to check if they lie
+     * in the range of the local lattice nodes */
+    if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid[0] 
+	&& p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid[0]
+	&& p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid[1] 
+	&& p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid[1]
+	&& p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid[2] 
+	&& p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid[2]) {
+
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
+#ifdef IMMERSED_BOUNDARY
+      if(!ifParticleIsVirtual(&p[i])) { 
+	lb_viscous_coupling(&p[i],force);
+      }
+#else
+      lb_viscous_coupling(&p[i],force);
+#endif
+    }
+  }
+ }
+
+}
 }
 
 /***********************************************************************/

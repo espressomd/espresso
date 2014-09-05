@@ -384,6 +384,19 @@ static void recalc_maximal_cutoff_bonded()
         max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
       break;
 #endif
+#ifdef STRETCHING_FORCE_IMMERSED_BOUNDARY
+	case STRETCHING_FORCE_IBM_IA:
+	   if(max_cut_bonded < bonded_ia_params[i].p.stretching_force_ibm.maxdist)
+	     max_cut_bonded = bonded_ia_params[i].p.stretching_force_ibm.maxdist;
+	break;
+#endif
+#ifdef BENDING_FORCE_IMMERSED_BOUNDARY
+	case BENDING_FORCE_IBM_IA:
+	   if(max_cut_bonded < bonded_ia_params[i].p.bending_force_ibm.max) 
+	     max_cut_bonded = bonded_ia_params[i].p.bending_force_ibm.max;
+	break;
+#endif
+      
     default:
      break;
     }

@@ -59,6 +59,8 @@
 #include "virtual_sites.hpp"
 #include "statistics_correlation.hpp"
 #include "ghmc.hpp"
+#include "immersed-boundary/virtual_sites_ibm.hpp"
+#include "immersed-boundary/volume_conservation_ibm.hpp"
 
 /************************************************
  * DEFINES
@@ -210,6 +212,22 @@ void integrate_vv(int n_steps, int reuse_forces)
   /* Prepare the Integrator */
   on_integration_start();
 
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
+    resort_particles = 1;
+#endif
+    
+#ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY
+  if(vescnum > 0) {
+    GetCentroidV();
+    GetVolumeV();
+    //if Vo(0) = 0 => Initial Volume has not been set yet; assume at least one body of non-zero volume
+    if(VVolo[0]==0.0) {
+      SetVo();
+    }
+  }
+#endif
+
+
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors())
     return;
@@ -264,6 +282,14 @@ void integrate_vv(int n_steps, int reuse_forces)
   /* Integration loop */
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
+
+#ifdef VOLUME_CONSERVATION_IMMERSED_BOUNDARY
+    if(vescnum > 0) {
+      GetCentroidV();
+      GetVolumeV();
+      RescaleVesicle(); 
+    }
+#endif
 
 #ifdef BOND_CONSTRAINT
     save_old_pos();
@@ -329,6 +355,16 @@ void integrate_vv(int n_steps, int reuse_forces)
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
+
+#ifdef VIRTUAL_SITES_IMMERSED_BOUNDARY
+   
+      update_mol_vel_pos();
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      
+      if (check_runtime_errors()) break;
+  
+#endif
+
 #ifdef ROTATION
     convert_torques_propagate_omega();
 #endif
@@ -336,12 +372,6 @@ void integrate_vv(int n_steps, int reuse_forces)
 #ifdef BOND_CONSTRAINT
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     correct_vel_shake();
-#endif
-    //VIRTUAL_SITES update vel
-#ifdef VIRTUAL_SITES
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    update_mol_vel();
-    if (check_runtime_errors()) break;
 #endif
 
     // progagate one-step functionalities
@@ -351,6 +381,13 @@ void integrate_vv(int n_steps, int reuse_forces)
       
     if (check_runtime_errors())
       break;
+#endif
+
+    //VIRTUAL_SITES update vel
+#if defined (VIRTUAL_SITES) && !defined(VIRTUAL_SITES_IMMERSED_BOUNDARY)
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    update_mol_vel();
+    if (check_runtime_errors()) break;
 #endif
 
 #ifdef LB_GPU

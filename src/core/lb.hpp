@@ -28,6 +28,7 @@
 #define LB_H
 
 #include "utils.hpp"
+#include "halo.hpp"
 #include "lattice_inline.hpp"
 
 extern int lb_components ; // global variable holding the number of fluid components
@@ -200,6 +201,10 @@ extern int resend_halo;
 extern double gamma_shear;
 extern double gamma_bulk;
 
+#ifdef IMMERSED_BOUNDARY
+extern HaloCommunicator update_halo_comm;
+#endif
+
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
@@ -264,6 +269,13 @@ void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double
  * If boundaries are present, it also applies the boundary conditions.
  */
 void lb_propagate();
+
+/** Calculates the coupling of virtual_sites_ibm to the LB fluid.
+ * This function  is called from \ref force_calc. The force is retrieved
+ * from the particle force and then it is distributed to the fluid
+ * Note that this function changes the state of the fluid!
+ */
+void lb_ibm_coupling();
 
 /** Calculates the coupling of MD particles to the LB fluid.
  * This function  is called from \ref force_calc. The force is added
