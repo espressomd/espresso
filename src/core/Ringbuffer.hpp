@@ -28,8 +28,8 @@ template<typename T>
 class Ringbuffer {
 public:
   Ringbuffer(int _n) {
-    if(_n < 0)
-      n = 0;
+    if(_n =< 0)
+      n = 1;
     else if (_n > d.max_size())
       n = d.max_size();
     else
