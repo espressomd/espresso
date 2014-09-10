@@ -77,6 +77,7 @@ libEspresso_la_SOURCES = \
 	random.cpp random.hpp \
 	rattle.cpp rattle.hpp \
 	reaction.cpp reaction.hpp \
+	Ringbuffer.hpp \
 	rotation.cpp rotation.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
