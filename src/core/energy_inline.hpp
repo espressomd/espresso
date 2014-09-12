@@ -254,7 +254,6 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 */
 inline void add_bonded_energy(Particle *p1)
 {
-  char *errtxt;
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
   int i, type_num, n_partners, bond_broken;
@@ -271,9 +270,10 @@ inline void add_bonded_energy(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"{069 bond broken between particles %d and %d (particles not stored on the same node)} ",
-          p1->p.identity, p1->bl.e[i-1]);
+        ostringstream msg;
+        msg <<"bond broken between particles " << p1->p.identity << " and " << p1->bl.e[i-1]
+           <<" (particles not stored on the same node)";
+        runtimeError(msg);
       return;
     }
 
@@ -281,9 +281,10 @@ inline void add_bonded_energy(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-    errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt,"{070 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
-        p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
+      ostringstream msg;
+      msg <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-2] << " and " << p1->bl.e[i-1]
+         <<" (particles not stored on the same node)";
+      runtimeError(msg);
     return;
       }
     }
@@ -292,9 +293,10 @@ inline void add_bonded_energy(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-    errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt,"{071 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
-        p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
+      ostringstream msg;
+      msg <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-3] <<", "<< p1->bl.e[i-2]
+            << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
+      runtimeError(msg);
     return;
       }
     }
@@ -372,8 +374,9 @@ inline void add_bonded_energy(Particle *p1)
     bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
     break;
       default :
-    errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: tabulated bond type of atom %d unknown\n", p1->p.identity);
+      ostringstream msg;
+      msg << "add_bonded_energy: tabulated bond type of atom " << p1->p.identity << " unknown\n";
+      runtimeError(msg);
     return;
       }
       break;
@@ -391,8 +394,9 @@ inline void add_bonded_energy(Particle *p1)
         bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
         break;
       default :
-        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-        ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: overlapped bond type of atom %d unknown\n", p1->p.identity);
+          ostringstream msg;
+          msg << "add_bonded_energy: overlapped bond type of atom " << p1->p.identity << " unknown\n";
+          runtimeError(msg);
         return;
       }
       break;
@@ -404,29 +408,31 @@ inline void add_bonded_energy(Particle *p1)
       break;
 #endif
     default :
-      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"{073 add_bonded_energy: bond type of atom %d unknown\n", p1->p.identity);
+        ostringstream msg;
+        msg <<"add_bonded_energy: bond type of atom "<< p1->p.identity << " unknown\n";
+        runtimeError(msg);
       return;
     }
 
     if (bond_broken) {
       switch (n_partners) {
       case 1: {
-    char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
-              p1->p.identity, p2->p.identity);
+      ostringstream msg;
+      msg <<"bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
+      runtimeError(msg);
     break;
       }
       case 2: {
-    char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
-              p1->p.identity, p2->p.identity, p3->p.identity);
+    ostringstream msg;
+    msg <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and " << p3->p.identity;
+    runtimeError(msg);
     break;
       }
       case 3: {
-    char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
-              p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity);
+      ostringstream msg;
+      msg <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
+          << ", " << p3->p.identity << " and " << p4->p.identity;
+      runtimeError(msg);
     break;
       }
       }

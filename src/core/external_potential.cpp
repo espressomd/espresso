@@ -71,8 +71,9 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   FILE* infile = fopen(filename, "r");
   
   if (!infile)  {
-    char *errtxt = runtime_error(128 + MAX_FILENAME_SIZE);
-    ERROR_SPRINTF(errtxt, "Could not open file %s\n", filename);
+      ostringstream msg;
+      msg <<"Could not open file "<< filename << "\n";
+      runtimeError(msg);
     return ES_ERROR;
   }
   char first_line[100];
@@ -132,18 +133,21 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   int halosize=1;
 
   if (size[0] > 0 && abs(size[0] - box_l[0]) > ROUND_ERROR_PREC) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"Box size in x is wrong %f vs %f\n", size[0], box_l[0]);
+      ostringstream msg;
+      msg <<"Box size in x is wrong "<< size[0] << " vs " << box_l[0] <<"\n";
+      runtimeError(msg);
     return ES_ERROR;
   }
   if (size[1] > 0 && abs(size[1] - box_l[1]) > ROUND_ERROR_PREC) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"Box size in y is wrong %f vs %f\n", size[1], box_l[1]);
+    ostringstream msg;
+    msg <<"Box size in y is wrong "<< size[1] << " vs " << box_l[1] <<"\n";
+    runtimeError(msg);
     return ES_ERROR;
   }
   if (size[2] > 0 && abs(size[2] - box_l[2]) > ROUND_ERROR_PREC) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"Box size in z is wrong %f vs %f\n", size[2], box_l[2]);
+    ostringstream msg;
+    msg <<"Box size in z is wrong "<< size[2] << " vs " << box_l[2] <<"\n";
+    runtimeError(msg);
     return ES_ERROR;
   }
 
@@ -263,8 +267,9 @@ void add_external_potential_forces(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_forces(&external_potentials[i], p);
     } else {
-      char* c = runtime_error(128);
-      ERROR_SPRINTF(c, "unknown external potential type");
+        ostringstream msg;
+        msg <<"unknown external potential type";
+        runtimeError(msg);
       return;
     }
   }
@@ -291,8 +296,9 @@ void add_external_potential_energy(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_energy(&external_potentials[i], p);
     } else {
-      char* c = runtime_error(128);
-      ERROR_SPRINTF(c, "unknown external potential type");
+        ostringstream msg;
+        msg <<"unknown external potential type";
+        runtimeError(msg);
       return;
     }
   }
