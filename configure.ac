@@ -117,6 +117,10 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
+# try to find best __FUNCTION__ variant
+AX_CXX_VAR_PRETTYFUNC()
+
+# set the optimization flags
 # never overwrite users CXXFLAGS
 if test "${CXXFLAGS+set}" != set; then
   # test for -O5

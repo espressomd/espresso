@@ -1913,18 +1913,20 @@ void p3m_init_a_ai_cao_cut() {
 
 
 int p3m_sanity_checks_boxl() {
-  char *errtxt;
+  //char *errtxt;
   int i, ret = 0;
   for(i=0;i<3;i++) {
     /* check k-space cutoff */
     if(p3m.params.cao_cut[i] >= 0.5*box_l[i]) {
-      errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
-      ERROR_SPRINTF(errtxt,"{039 P3M_init: k-space cutoff %g is larger than half of box dimension %g} ",p3m.params.cao_cut[i],box_l[i]);
+        ostringstream msg;
+        msg <<"P3M_init: k-space cutoff " << p3m.params.cao_cut[i] << " is larger than half of box dimension " << box_l[i];
+        runtimeError(msg);
       ret = 1;
     }
     if(p3m.params.cao_cut[i] >= local_box_l[i]) {
-      errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
-      ERROR_SPRINTF(errtxt,"{040 P3M_init: k-space cutoff %g is larger than local box dimension %g} ",p3m.params.cao_cut[i],local_box_l[i]);
+        ostringstream msg;
+        msg <<"P3M_init: k-space cutoff " << p3m.params.cao_cut[i] << " is larger than local box dimension " << local_box_l[i];
+        runtimeError(msg);
       ret = 1;
     }
   }
@@ -1938,49 +1940,55 @@ int p3m_sanity_checks_boxl() {
 
 int p3m_sanity_checks()
 {
-  char *errtxt;
   int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{041 P3M requires periodicity 1 1 1} ");
+      ostringstream msg;
+      msg <<"P3M requires periodicity 1 1 1";
+      runtimeError(msg);
     ret = 1;
   }
   
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{042 P3M at present requires the domain decomposition cell system} ");
+      ostringstream msg;
+      msg << "P3M at present requires the domain decomposition cell system";
+      runtimeError(msg);
     ret = 1;
   }
 
   if (p3m_sanity_checks_boxl()) ret = 1;
 
   if( p3m.params.mesh[0] == 0) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{045 P3M_init: mesh size is not yet set} ");
+      ostringstream msg;
+      msg <<"P3M_init: mesh size is not yet set";
+      runtimeError(msg);
     ret = 1;
   }
   if( p3m.params.cao == 0) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{046 P3M_init: cao is not yet set} ");
+      ostringstream msg;
+      msg <<"P3M_init: cao is not yet set";
+      runtimeError(msg);
     ret = 1;
   }
   if (p3m.params.alpha < 0.0 ) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{048 P3M_init: alpha must be >0} ");
+      ostringstream msg;
+      msg <<"P3M_init: alpha must be >0";
+      runtimeError(msg);
     ret = 1;
   }
   if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{048a P3M_init: node grid must be sorted, largest first} ");
+      ostringstream msg;
+      msg <<"P3M_init: node grid must be sorted, largest first";
+      runtimeError(msg);
     ret = 1;
   }
   
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
-	  (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-	  errtxt = runtime_error(128);
-	  ERROR_SPRINTF(errtxt,"{049 P3M_init: Nonmetallic epsilon requires cubic box} ");
+      (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
+        ostringstream msg;
+        msg <<"P3M_init: Nonmetallic epsilon requires cubic box";
+        runtimeError(msg);
 	  ret = 1;
 	}
   }

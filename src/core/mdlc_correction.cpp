@@ -719,11 +719,11 @@ int mdlc_tune(double error)
 
 int mdlc_sanity_checks()
 {
-#ifdef PARTIAL_PERIODIC  
-  char *errtxt;
+#ifdef PARTIAL_PERIODIC
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{006 mdlc requires periodicity 1 1 1} ");
+      ostringstream msg;
+      msg <<"mdlc requires periodicity 1 1 1";
+      runtimeError(msg);
     return 1;
   }
 #endif  
@@ -765,8 +765,9 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
   else {
     dlc_params.far_calculated = 1;
     if (mdlc_tune(dlc_params.maxPWerror) == ES_ERROR) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{009 mdlc tuning failed, gap size too small} ");
+        ostringstream msg;
+        msg <<"mdlc tuning failed, gap size too small";
+        runtimeError(msg);
     }
   }
   mpi_bcast_coulomb_params();

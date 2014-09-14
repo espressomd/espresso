@@ -27,38 +27,70 @@
 #ifndef _ERRORHANDLING_HPP
 #define _ERRORHANDLING_HPP
 
-/** buffer for error messages during the integration process. */
-extern char *error_msg;
-extern int n_error_msg;
-
-/* request space for leaving an error message to be passed to the master node.
-   Also takes care of the error counter.
-   @param errlen maximal length of the error message. If you use sprintf to create the error
-   message, remember to use ES_INTEGER/DOUBLE_SPACE as usual
-   @return where to put the (null-terminated) string */
-char *runtime_error(int errlen);
-
-#define ERROR_SPRINTF sprintf
+#include "config.hpp"
+#include <string>
+#include <sstream>
+#include <list>
+#include <mpi.h>
 
 /** check for runtime errors on all nodes. This has to be called on all nodes synchronously.
     @return the number of characters in the error messages of all nodes together. */
 int check_runtime_errors();
 
+/** Gather all error messages from all nodes and return them
+
+    @param errors contains the errors from all nodes. This has to point to an array
+    of character pointers, one for each node.
+    @return \ref ES_OK if no error occured, otherwise \ref ES_ERROR
+*/
+int mpi_gather_runtime_errors(char **errors);
+void mpi_gather_runtime_errors_slave(int node, int parm);
+
 /** exit ungracefully, core dump if switched on. */
 void errexit();
 
-/** register a handler for sigint that translates it into an background error. */
+/** register a handler for sigint that translates it into an runtime error. */
 void register_sigint_handler();
 
-#define background_error(msg) _background_error(msg, __FILE__, __LINE__)
-void _background_error(const char* msg, const char* file, const char* line);
+#define runtimeWarning(msg)                                     \
+ runtimeErrors->warning(msg, __PRETTYFUNC__, __FILE__, __LINE__)
+#define runtimeError(msg) \
+ runtimeErrors->error(msg, __PRETTYFUNC__, __FILE__, __LINE__)
 
 
-class BackgroundErrorStream {
-  enum Type { ERROR, WARNING };
+class ParallelRuntimeErrors {
+  std::list<std::string> errors;
+  MPI_Comm comm;
+
 public:
-  BackgroundErrorStream(Type type = ERROR);
-  
+  ParallelRuntimeErrors(MPI_Comm comm);
+
+  void warning(const std::string &msg,
+               const char* function, const char* file, const int line);
+  void warning(const char *msg,
+               const char* function, const char* file, const int line);
+  void warning(std::ostringstream &mstr,
+               const char* function, const char* file, const int line);
+
+  void error(const std::string &msg,
+             const char* function, const char* file, const int line);
+  void error(const char *msg,
+             const char* function, const char* file, const int line);
+  void error(std::ostringstream &mstr,
+             const char* function, const char* file, const int line);
+
+  int count();
+  std::list<std::string> &gather();
+  void gatherSlave();
+
+  void clear();
 };
+
+// Function to initialize the global runtimeErrors object
+void initRuntimeErrors();
+
+// callback function for communicator
+void mpiParallelRuntimeErrorsGatherSlave(int node, int parm);
+extern ParallelRuntimeErrors *runtimeErrors;
 
 #endif

@@ -31,6 +31,8 @@
 #include "particle_data.hpp"
 #include "random.hpp"
 
+using namespace std;
+
 /************************************************************/
 
 /// set the parameters for the fene potential
@@ -89,8 +91,9 @@ inline int fene_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *ia
 
   /* check bond stretching */
   if(dr >= iaparams->p.fene.drmax) {
-    char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtext,"{077 FENE bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
+      ostringstream msg;
+      msg <<"FENE bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
+      runtimeError(msg);
     return 1;
   }
 

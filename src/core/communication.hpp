@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _COMMUNICATION_H
-#define _COMMUNICATION_H
+#ifndef _COMMUNICATION_HPP
+#define _COMMUNICATION_HPP
 /** \file communication.hpp
     This file contains the asynchronous MPI communication.
  
@@ -76,15 +76,23 @@ extern MPI_Comm comm_cart;
  * the slave nodes. It is denoted by *_slave.
  **************************************************/
 
+/**********************************************
+ * slave callbacks.
+ **********************************************/
+typedef void (SlaveCallback)(int node, int param);
+
 /** \name Exported Functions */
 /*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
 void mpi_init(int *argc = NULL, char ***argv = NULL);
 
+/* Call a slave function. */
+void mpi_call(SlaveCallback cb, int node, int param);
+
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Issue REQ_TERM: stop Espresso, all slave nodes exit. */
+/** Stop Espresso, all slave nodes exit. */
 void mpi_stop();
 
 /** Finalize MPI. Called by all nodes upon exit */
@@ -532,14 +540,6 @@ void mpi_send_fluid_populations(int node, int index, double *pop);
 /** Part of MDLC
  */
 void mpi_bcast_max_mu();
-
-/** Issue REQ_GET_ERRS: gather all error messages from all nodes and return them
-
-    @param errors contains the errors from all nodes. This has to point to an array
-    of character pointers, one for each node.
-    @return \ref ES_OK if no error occured, otherwise \ref ES_ERROR
-*/
-int mpi_gather_runtime_errors(char **errors);
 
 /** Galilei and other: set all particle velocities and rotational inertias to zero. 
                        set all forces and torques on the particles to zero 

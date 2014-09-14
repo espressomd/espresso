@@ -77,6 +77,8 @@
 #include "bonded_coulomb.hpp"
 #endif
 
+using namespace std;
+
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
 {
@@ -569,14 +571,13 @@ inline void add_bonded_force(Particle *p1)
   double torque1[3] = { 0., 0., 0. };
   double torque2[3] = { 0., 0., 0. };
 #endif
-  char *errtxt;
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
   int i, j, type_num, n_partners, bond_broken;
   BondedInteraction type;
 
   i = 0;
-  while(i<p1->bl.n) {
+  while (i<p1->bl.n) {
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
@@ -585,9 +586,10 @@ inline void add_bonded_force(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"{078 bond broken between particles %d and %d (particles not stored on the same node)} ",
-	      p1->p.identity, p1->bl.e[i-1]);
+      ostringstream msg;
+      msg << "bond broken between particles " << p1->p.identity << " and " 
+          << p1->bl.e[i-1] << " (particles are not stored on the same node)";
+      runtimeError(msg);
       return;
     }
 
@@ -595,9 +597,12 @@ inline void add_bonded_force(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-	errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtxt,"{079 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
+        ostringstream msg;
+        msg << "bond broken between particles " 
+            << p1->p.identity << ", " 
+            << p1->bl.e[i-2] << " and "
+            << p1->bl.e[i-1] << " (particles are not stored on the same node)";
+        runtimeError(msg);
 	return;
       }
     }
@@ -606,9 +611,10 @@ inline void add_bonded_force(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtxt,"{080 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
+      ostringstream msg;
+      msg <<"bond broken between particles "<< p1->p.identity << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2]
+            << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
+      runtimeError(msg);
 	return;
       }
     }
@@ -712,8 +718,9 @@ inline void add_bonded_force(Particle *p1)
 	bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
 	break;
       default:
-	errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtxt,"{081 add_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
+      ostringstream msg;
+      msg << "add_bonded_force: tabulated bond type of atom "<< p1->p.identity << " unknown\n";
+      runtimeError(msg);
 	return;
       }
       break;
@@ -731,8 +738,9 @@ inline void add_bonded_force(Particle *p1)
         bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
         break;
       default:
-        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-        ERROR_SPRINTF(errtxt,"{081 add_bonded_force: overlapped bond type of atom %d unknown\n", p1->p.identity);
+          ostringstream msg;
+          msg <<"add_bonded_force: overlapped bond type of atom "<< p1->p.identity << " unknown\n";
+          runtimeError(msg);
         return;
       }
       break;
@@ -744,17 +752,18 @@ inline void add_bonded_force(Particle *p1)
       break;
 #endif
     default :
-      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"{082 add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);
+        ostringstream msg;
+        msg <<"add_bonded_force: bond type of atom "<< p1->p.identity << " unknown\n";
+        runtimeError(msg);
       return;
     }
 
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-        char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-        ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
-          p1->p.identity, p2->p.identity);
+          ostringstream msg;
+          msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity;
+          runtimeError(msg);
         continue;
       }
       
@@ -783,9 +792,10 @@ inline void add_bonded_force(Particle *p1)
       break;
     case 2:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity); 
+      ostringstream msg;
+      msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and "
+          << p3->p.identity;
+      runtimeError(msg);
 	continue;
       }
       
@@ -813,9 +823,10 @@ switch (type) {
       break;
     case 3:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+      ostringstream msg;
+      msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
+          << ", " << p3->p.identity << " and " << p4->p.identity;
+      runtimeError(msg);
 	continue;
       }
       for (j = 0; j < 3; j++) {
@@ -852,18 +863,18 @@ inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
 inline void check_particle_force(Particle *part) {
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.f[i])) {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle %d was NAN.} ",
-		    part->p.identity);
+        ostringstream msg;
+        msg << "force on particle "<< part->p.identity << " was NAN.";
+        runtimeError(msg);
     }
   }
 
 #ifdef ROTATION
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.torque[i])) {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle %d was NAN.} ",
-		    part->p.identity);
+        ostringstream msg;
+        msg << "force on particle "<< part->p.identity << " was NAN.";
+        runtimeError(msg);
     }
   }
 #endif
