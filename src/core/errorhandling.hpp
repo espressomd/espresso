@@ -42,9 +42,9 @@ extern int n_error_msg;
    @param errlen maximal length of the error message. If you use sprintf to create the error
    message, remember to use ES_INTEGER/DOUBLE_SPACE as usual
    @return where to put the (null-terminated) string */
-char *runtime_error(int errlen);
+//char *runtime_error(int errlen);
 
-#define ERROR_SPRINTF sprintf
+//#define ERROR_SPRINTF sprintf
 
 /** check for runtime errors on all nodes. This has to be called on all nodes synchronously.
     @return the number of characters in the error messages of all nodes together. */
@@ -99,7 +99,7 @@ public:
   void clear();
 };
 
-// Function to initializze the global runtimeErrors object
+// Function to initialize the global runtimeErrors object
 void initRuntimeErrors();
 
 // callback function for communicator

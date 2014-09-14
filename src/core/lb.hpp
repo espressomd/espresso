@@ -301,8 +301,9 @@ inline void lb_calc_local_rho(index_t index, double *rho) {
 
   // unit conversion: mass density
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_rho in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_rho in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     *rho =0;
     return;
   }
@@ -334,8 +335,9 @@ inline void lb_calc_local_j(index_t index, double *j) {
 #error Only D3Q19 is implemened!
 #endif
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_j in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_j in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     j[0]=j[1]=j[2]=0;
     return;
   }
@@ -369,8 +371,9 @@ inline void lb_calc_local_pi(index_t index, double *pi) {
   double j[3];
   
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_pi in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_pi in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     j[0] = j[1] = j[2] = 0;
     return;
   }
@@ -389,8 +392,9 @@ inline void lb_calc_local_pi(index_t index, double *pi) {
 inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi) {
 
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_fields in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_fields in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     *rho=0; j[0]=j[1]=j[2]=0; pi[0]=pi[1]=pi[2]=pi[3]=pi[4]=pi[5]=0;
     return;
   }
@@ -400,8 +404,9 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
 #endif
   
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_pi in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_pi in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     j[0] = j[1] = j[2] = 0;
     return;
   }
@@ -471,8 +476,9 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
 inline void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
   
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_local_fields_get_boundary_flag in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_local_fields_get_boundary_flag in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     *boundary = 0;
     return;
   }

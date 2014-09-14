@@ -48,15 +48,12 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
     for (int dir=0;dir<3;dir++) {
       // check if local_box_l is compatible with lattice spacing
       if (fabs(local_box_l[dir]-this->grid[dir]*agrid[dir]) > ROUND_ERROR_PREC*box_l[dir]) {
-        char *errtxt = runtime_error(256);
-        ERROR_SPRINTF(errtxt, \
-                      "{097 Lattice spacing agrid[%d]=%f " \
-                      "is incompatible with local_box_l[%d]=%f " \
-                      "(box_l[%d]=%f node_grid[%d]=%d)} ",       \
-                      dir, agrid[dir], \
-                      dir, local_box_l[dir], \
-                      dir, box_l[dir], \
-                      dir, node_grid[dir]);
+          ostringstream msg;
+          msg << "Lattice spacing agrid["<< dir << "]=" << agrid[dir] \
+              << " is incompatible with local_box_l["<< dir << "]=" << local_box_l[dir]\
+              << " ( box_l["<< dir << "]=" << box_l[dir] \
+              << " node_grid["<< dir << "]=" << node_grid[dir] <<" )";
+          runtimeError(msg);
       }
     }
 
@@ -93,8 +90,9 @@ void Lattice::interpolate(double* pos, double* value) {
     if (this->interpolation_type == INTERPOLATION_LINEAR) {
         interpolate_linear(pos, value);
     } else {
-        char* c = runtime_error(128);
-        ERROR_SPRINTF(c, "Unknown interpolation type");
+        ostringstream msg;
+        msg <<"Unknown interpolation type";
+        runtimeError(msg);
     }
 }
 
@@ -102,16 +100,18 @@ void Lattice::interpolate_linear(double* pos, double* value) {
     int left_halo_index[3];
     double d[3];
     if (this->halo_size <= 0) {
-        char* c = runtime_error(128);
-        ERROR_SPRINTF(c, "Error in interpolate_linear: halo size is 0");
+        ostringstream msg;
+        msg <<"Error in interpolate_linear: halo size is 0";
+        runtimeError(msg);
         return;
     }
     for (int dim = 0; dim<3; dim++) {
         left_halo_index[dim]=(int) floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]) + this->halo_size;
         d[dim]=((pos[dim]-this->local_offset[dim])/this->agrid[dim] - floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]));
         if (left_halo_index[dim] < 0 || left_halo_index[dim] >= this->halo_grid[dim]) {
-            char* c = runtime_error(128);
-            ERROR_SPRINTF(c, "Error in interpolate_linear: Particle out of range");
+            ostringstream msg;
+            msg <<"Error in interpolate_linear: Particle out of range";
+            runtimeError(msg);
             return;
         }
     }
@@ -152,8 +152,9 @@ void Lattice::interpolate_gradient(double* pos, double* value) {
     if (this->interpolation_type == INTERPOLATION_LINEAR) {
         interpolate_linear_gradient(pos, value);
     } else {
-        char* c = runtime_error(128);
-        ERROR_SPRINTF(c, "Unknown interpolation type");
+        ostringstream msg;
+        msg <<"Unknown interpolation type";
+        runtimeError(msg);
     }
 }
 
@@ -161,16 +162,18 @@ void Lattice::interpolate_linear_gradient(double* pos, double* value) {
     int left_halo_index[3];
     double d[3];
     if (this->halo_size <= 0) {
-        char* c = runtime_error(128);
-        ERROR_SPRINTF(c, "Error in interpolate_linear: halo size is 0");
+        ostringstream msg;
+        msg << "Error in interpolate_linear: halo size is 0";
+        runtimeError(msg);
         return;
     }
     for (int dim = 0; dim<3; dim++) {
         left_halo_index[dim]=(int) floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]) + this->halo_size;
         d[dim]=((pos[dim]-this->local_offset[dim])/this->agrid[dim] - floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]));
         if (left_halo_index[dim] < 0 || left_halo_index[dim] >= this->halo_grid[dim]) {
-            char* c = runtime_error(128);
-            ERROR_SPRINTF(c, "Error in interpolate_linear: Particle out of range");
+            ostringstream msg;
+            msg <<"Error in interpolate_linear: Particle out of range";
+            runtimeError(msg);
             return;
         }
     }

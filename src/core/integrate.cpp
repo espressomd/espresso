@@ -126,11 +126,12 @@ void finalize_p_inst_npt();
 
 void integrator_sanity_checks()
 {
-  char *errtext;
+  //char *errtext;
 
   if ( time_step < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext, "{010 time_step not set} ");
+      ostringstream msg;
+      msg <<"time_step not set";
+      runtimeError(msg);
   }
 }
 
@@ -140,8 +141,9 @@ void integrator_npt_sanity_checks()
 {  
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     if (nptiso.piston <= 0.0) {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
+        ostringstream msg;
+        msg <<"npt on, but piston mass not set";
+        runtimeError(msg);
     }
 
 #ifdef ELECTROSTATICS
@@ -154,8 +156,9 @@ void integrator_npt_sanity_checks()
       case COULOMB_P3M:   break;
 #endif /*P3M*/
       default: {
-        char *errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{014 npt only works with P3M, Debye-Huckel or reaction field} ");
+        ostringstream msg;
+        msg <<"npt only works with P3M, Debye-Huckel or reaction field";
+        runtimeError(msg);
       }
     }
 #endif /*ELECTROSTATICS*/
@@ -168,8 +171,9 @@ void integrator_npt_sanity_checks()
       case DIPOLAR_P3M: break;
 #endif /* DP3M */
       default: {
-        char *errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
+        ostringstream msg;
+        msg <<"NpT does not work with your dipolar method, please use P3M.";
+        runtimeError(msg);
       }
     }
 #endif  /* ifdef DIPOLES */
@@ -205,6 +209,7 @@ void integrate_ensemble_init()
 
 void integrate_vv(int n_steps, int reuse_forces)
 {
+    int i;
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -560,9 +565,10 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
-	char *errtxt = runtime_error(128 + 3*ES_DOUBLE_SPACE);
-        ERROR_SPRINTF(errtxt, "{015 your choice of piston=%g, dt=%g, p_diff=%g just caused the volume to become negative, decrease dt} ",
-                nptiso.piston,time_step,nptiso.p_diff);
+          ostringstream msg;
+          msg << "your choice of piston= "<< nptiso.piston << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
+                 << " just caused the volume to become negative, decrease dt";
+          runtimeError(msg);
 	nptiso.volume = box_l[0]*box_l[1]*box_l[2];
 	scal[2] = 1;
       }

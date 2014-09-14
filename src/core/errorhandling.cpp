@@ -37,15 +37,13 @@ char *error_msg;
 int n_error_msg = 0;
 
 /******************* exported functions **********************/
-char *runtime_error(int errlen) {
-  /* the true length of the string will be in general shorter than n_error_msg,
-     at least if numbers are involved */
+/*char *runtime_error(int errlen) {
   int curend = error_msg ? strlen(error_msg) : 0;
   n_error_msg = curend + errlen + 1;
  
   error_msg = (char*)realloc(error_msg, n_error_msg);
   return error_msg + curend;
-}
+}*/
 
 int check_runtime_errors() {
   int n_all_error_msg;
@@ -115,7 +113,6 @@ static void sigint_handler(int sig)
    * NOTE: mpirun installs its own handler for SIGINT/SIGTERM
    *       and takes care of proper cleanup and exit */
 
-  char *errtxt;
 
   static int numcalls = 0;
   if (numcalls++ > 0) exit(sig); // catch sig only once
@@ -123,8 +120,9 @@ static void sigint_handler(int sig)
   /* we use runtime_error to indicate that sig was called;
    * upon next call of mpi_gather_runtime_errors all nodes 
    * will clean up and exit. */
-  errtxt = runtime_error(64);
-  ERROR_SPRINTF(errtxt, "{000 caught signal %d} ",sig);
+  ostringstream msg;
+  msg <<"caught signal "<< sig ;
+  runtimeError(msg);
 }
 
 void register_sigint_handler()
