@@ -117,7 +117,6 @@ MPI_Comm comm_cart;
   CB(mpi_sync_topo_part_info_slave) \
   CB(mpi_send_mass_slave) \
   CB(mpi_send_solvation_slave) \
-  CB(mpi_gather_runtime_errors_slave) \
   CB(mpi_send_exclusion_slave) \
   CB(mpi_bcast_lb_params_slave) \
   CB(mpi_bcast_cuda_global_part_vars_slave) \

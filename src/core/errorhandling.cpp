@@ -31,81 +31,14 @@
 
 using namespace std;
 
-/******************* exported variables **********************/
-/** buffer for error messages during the integration process. NULL if no errors occured. */
-char *error_msg;
-int n_error_msg = 0;
-
-/******************* exported functions **********************/
-/*char *runtime_error(int errlen) {
-  int curend = error_msg ? strlen(error_msg) : 0;
-  n_error_msg = curend + errlen + 1;
- 
-  error_msg = (char*)realloc(error_msg, n_error_msg);
-  return error_msg + curend;
-}*/
-
-int check_runtime_errors() {
-  int n_all_error_msg;
-  MPI_Allreduce(&n_error_msg, &n_all_error_msg, 1, MPI_INT, MPI_SUM, comm_cart);
-  return n_all_error_msg + runtimeErrors->count();
-}
-
-int mpi_gather_runtime_errors(char **errors) {
-  // Tell other processors to send their erros
-  mpi_call(mpi_gather_runtime_errors_slave, -1, 0);
-
-  // If no processor encountered an error, return
-  if (!check_runtime_errors())
-    return ES_OK;
-
-  // gather the maximum length of the error messages
-  int *errcnt = (int*)malloc(n_nodes*sizeof(int));
-  MPI_Gather(&n_error_msg, 1, MPI_INT, errcnt, 1, MPI_INT, 0, comm_cart);
-
-  for (int node = 0; node < n_nodes; node++) {
-    if (errcnt[node] > 0) {
-      errors[node] = (char *)malloc(errcnt[node]);
-
-      if (node == 0)
-	strcpy(errors[node], error_msg);
-      else 
-	MPI_Recv(errors[node], errcnt[node], MPI_CHAR, node, 0, comm_cart, MPI_STATUS_IGNORE);
-    }
-    else
-      errors[node] = NULL;
-  }
-
-  /* reset error message on master node */
-  error_msg = (char*)realloc(error_msg, n_error_msg = 0);
-
-  free(errcnt);
-
-  return ES_ERROR;
-}
-
-void mpi_gather_runtime_errors_slave(int node, int parm) {
-  if (!check_runtime_errors())
-    return;
-
-  MPI_Gather(&n_error_msg, 1, MPI_INT, NULL, 0, MPI_INT, 0, comm_cart);
-  if (n_error_msg > 0) {
-    MPI_Send(error_msg, n_error_msg, MPI_CHAR, 0, 0, comm_cart);
-    /* reset error message on slave node */
-    error_msg = (char*)realloc(error_msg, n_error_msg = 0);
-  }
-}
-
-void errexit()
-{
+void errexit() {
 #ifdef FORCE_CORE
   core();
 #endif
   exit(1);
 }
 
-static void sigint_handler(int sig) 
-{
+static void sigint_handler(int sig) {
   /* without this exit handler the nodes might exit asynchronously
    * without calling MPI_Finalize, which may cause MPI to hang
    * (e.g. this handler makes CTRL-c work properly with poe)
@@ -125,8 +58,7 @@ static void sigint_handler(int sig)
   runtimeError(msg);
 }
 
-void register_sigint_handler()
-{
+void register_sigint_handler() {
   signal(SIGINT, sigint_handler);
 }
 
@@ -151,7 +83,7 @@ createRuntimeErrorMessage(const string &_message,
   ostr << _message;
   ostr << " in function " << function << " (" << file << ":" << line 
        << ") on node " << this_node;
-  ostr << " }";
+  ostr << " } ";
   return ostr.str();
 }
 
@@ -254,6 +186,10 @@ gatherSlave() {
 void ParallelRuntimeErrors::
 clear() {
   errors.clear();
+}
+
+int check_runtime_errors() {
+  return runtimeErrors->count();
 }
 
 void

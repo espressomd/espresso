@@ -233,7 +233,7 @@ void handle_collisions ()
 	id2 = collision_queue[i].pp2;
       }
       ostringstream msg;
-      msg<<"collision between particles "<<id1<<" and "<<id2;
+      msg << "collision between particles " << id1 << " and " <<id2;
       runtimeError(msg);
     }
 
