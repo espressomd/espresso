@@ -18,7 +18,6 @@
 #
 EXTRA_DIST = \
 	gen_doxyconfig.py \
-	background_errors.sh background_errors.awk \
 	Doxyfile \
 	figs/bond_angle.fig \
 	figs/bond_angle.gif \
@@ -46,16 +45,11 @@ doc: doxygen
 
 if HAVE_DOXYGEN
 if HAVE_PYTHON
-background_errors.dox:
-	$(AM_V_GEN)SRCDIR=$(srcdir) AWK=$(AWK) \
-	  $(SHELL) $(srcdir)/background_errors.sh \
-	    $(top_srcdir)/src/core/*.cpp $(top_srcdir)/src/core/*.hpp
-
 doxy-features:
 	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_doxyconfig.py \
 	  $(top_srcdir)/src/features.def doxy-features
 
-doxygen-html: background_errors.dox doxy-features
+doxygen-html: doxy-features
 	$(AM_V_GEN)\
 	ESPRESSO_VERSION=`cd $(top_srcdir); sh config/genversion.sh` \
 	PACKAGE="ESPResSo $$ESPRESSO_VERSION" \
@@ -84,6 +78,5 @@ doxygen:
 
 endif
 
-MOSTLYCLEANFILES = background_errors.doxygen background_errors.sorted background_errors.unsorted
 clean-local:
 	-rm -rf html
