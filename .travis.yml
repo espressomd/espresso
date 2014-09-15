@@ -21,7 +21,6 @@ matrix:
 
 before_script:
   - if [[ $MPI = with ]]; then export CXX=mpic++; fi #there is MPICXX, but CXX overwrites it, so let's see CXX 
-  - sudo update-alternatives --install /bin/sh sh /bin/bash 100 # es_mpiexec does not work in dash, so let's use bash
 
 script: #Travis' cython is too old to compile the python-interface
   - ./bootstrap.sh &&
