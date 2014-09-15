@@ -31,13 +31,6 @@
 
 using namespace std;
 
-void errexit() {
-#ifdef FORCE_CORE
-  core();
-#endif
-  exit(1);
-}
-
 static void sigint_handler(int sig) {
   /* without this exit handler the nodes might exit asynchronously
    * without calling MPI_Finalize, which may cause MPI to hang

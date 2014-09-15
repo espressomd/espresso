@@ -30,6 +30,7 @@
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
+#include "errorhandling.hpp"
 
 using namespace std;
 
@@ -47,24 +48,23 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
     @param force     returns force of particle 1
     @return true if the bond is broken
 */
-inline int calc_fene_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
-{
+inline int calc_fene_pair_force(Particle *p1, Particle *p2, 
+                                Bonded_ia_parameters *iaparams, 
+                                double dx[3], double force[3]) {
   int i;
-  double fac, dr, len2, len;
  
-  len2 = sqrlen(dx);
-  len = sqrt(len2);
-  dr = len - iaparams->p.fene.r0;
+  const double len2 = sqrlen(dx);
+  const double len = sqrt(len2);
+  const double dr = len - iaparams->p.fene.r0;
 
-  if(dr >= iaparams->p.fene.drmax)
-    return 1;
+  if (dr >= iaparams->p.fene.drmax) return 1;
 
-  fac = -iaparams->p.fene.k * dr / ((1.0 - dr*dr*iaparams->p.fene.drmax2i));
+  double fac = -iaparams->p.fene.k * dr / ((1.0 - dr*dr*iaparams->p.fene.drmax2i));
   if (fabs(dr) > ROUND_ERROR_PREC) {
      if(len > ROUND_ERROR_PREC) {  /* Regular case */
 	fac /= len ; 
      } else { /* dx[] == 0: the force is undefined. Let's use a random direction */
-        for(i=0;i<3;i++) dx[i] = d_random()-0.5;
+        for(int i = 0;i < 3;i++) dx[i] = d_random()-0.5;
         fac /= sqrt(sqrlen(dx));
      }
   } else { 
@@ -82,12 +82,11 @@ inline int calc_fene_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters
   return 0;
 }
 
-inline int fene_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
-{
-  double energy, dr;
-
+inline int fene_pair_energy(Particle *p1, Particle *p2, 
+                            Bonded_ia_parameters *iaparams, 
+                            double dx[3], double *_energy) {
   /* compute bond stretching (r-r0) */
-  dr = sqrt(sqrlen(dx))-iaparams->p.fene.r0;
+  double dr = sqrt(sqrlen(dx))-iaparams->p.fene.r0;
 
   /* check bond stretching */
   if(dr >= iaparams->p.fene.drmax) {
@@ -97,7 +96,7 @@ inline int fene_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *ia
     return 1;
   }
 
-  energy = -0.5*iaparams->p.fene.k*iaparams->p.fene.drmax2;
+  double energy = -0.5*iaparams->p.fene.k*iaparams->p.fene.drmax2;
   energy *= log((1.0 - dr*dr*iaparams->p.fene.drmax2i));
   *_energy = energy;
   return 0;
