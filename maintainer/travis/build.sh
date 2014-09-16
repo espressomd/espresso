@@ -10,28 +10,28 @@
 # HELPER FUNCTIONS
 
 # output value of env variables
-function outp() {
+function outp {
     for p in $*; do
         echo "  $p=${!p}"
     done
 }
 
 # start a block
-function start() {
+function start {
     echo "=================================================="
     echo "START $1"
     echo "=================================================="
 }
 
 # end a block
-function end() {
+function end {
     echo "=================================================="
     echo "END $1"
     echo "=================================================="
 }
 
 # execute and output a command
-function cmd() {
+function cmd {
     echo ">$1"
     eval $1
 }
