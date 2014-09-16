@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # Copyright (C) 2014 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
