@@ -81,6 +81,7 @@ start "CONFIGURE"
 
 if $with_mpi; then
     configure_params="--with-mpi $configure_params"
+    configure_vars="CXX=mpic++"
 else
     configure_params="--without-mpi $configure_params"
 fi
@@ -107,7 +108,7 @@ else
     configure_params="--without-python-interface $configure_params"
 fi
 
-cmd "$srcdir/configure $configure_params" || exit $?
+cmd "$srcdir/configure $configure_params $configure_vars" || exit $?
 end "CONFIGURE"
 
 # BUILD
