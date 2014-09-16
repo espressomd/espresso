@@ -3,29 +3,19 @@ language: cpp
 before_install:
  - sudo apt-get update
  - sudo apt-get install tcl-dev #cython python-numpy
- - if [[ $FFTW = with ]]; then sudo apt-get install libfftw3-dev; fi
- - if [[ $MPI = with ]]; then sudo apt-get install libopenmpi-dev openmpi-bin; fi
+ - if [[ $with_fftw = true ]]; then sudo apt-get install libfftw3-dev; fi
+ - if [[ $with_mpi = with ]]; then sudo apt-get install libopenmpi-dev openmpi-bin; fi
 
 env:
-  - FFTW=with MPI=with
-  - FFTW=without MPI=with
-  - FFTW=with MPI=without
-  - FFTW=without MPI=without
+  - with_fftw=true with_mpi=true
+  - with_fftw=false with_mpi=false
 
 matrix:
   exclude:
     - compiler: clang
-      env: FFTW=with MPI=with #no mpi support for clang in Ubuntu yet
-    - compiler: clang
-      env: FFTW=without MPI=with #no mpi support for clang in Ubuntu yet
+      env: with_fftw=true with_mpi=true
 
-before_script:
-  - if [[ $MPI = with ]]; then export CXX=mpic++; fi #there is MPICXX, but CXX overwrites it, so let's see CXX 
-
-script: #Travis' cython is too old to compile the python-interface
-  - ./bootstrap.sh &&
-    ./configure --${FFTW}-fftw --${MPI}-mpi --without-python-interface CPU_COUNT=4 && 
-    make -j4 && { make check || cat testsuite/runtest.log; }
+script: ./maintainer/travis/build.sh
 
 compiler:
   - clang
