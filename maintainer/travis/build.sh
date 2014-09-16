@@ -138,7 +138,7 @@ cmd "make check $make_params"
 ec=$?
 if [ $ec != 0 ]; then
     cat $srcdir/testsuite/runtest.log
-    exit $?
+    exit $ec
 fi
 
 end "TEST"
