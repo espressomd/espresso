@@ -4,7 +4,7 @@ before_install:
  - sudo apt-get update
  - sudo apt-get install tcl-dev #cython python-numpy
  - if [[ $with_fftw = true ]]; then sudo apt-get install libfftw3-dev; fi
- - if [[ $with_mpi = with ]]; then sudo apt-get install libopenmpi-dev openmpi-bin; fi
+ - if [[ $with_mpi = true ]]; then sudo apt-get install libopenmpi-dev openmpi-bin; fi
 
 env:
   - with_fftw=true with_mpi=true
