@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file errorhandling.cpp
-    Implementation of \ref errorhandling.hpp "errorhandling.h".
+    Implementation of \ref errorhandling.hpp.
 */
 #include <cstring>
 #include <cstdlib>
@@ -28,6 +28,7 @@
 #include "utils.hpp"
 #include "errorhandling.hpp"
 #include "communication.hpp"
+#include "RuntimeErrorCollector.hpp"
 
 using namespace std;
 
@@ -55,144 +56,61 @@ void register_sigint_handler() {
   signal(SIGINT, sigint_handler);
 }
 
-/* New runtime error handling. */
+/* NEW RUNTIME ERROR HANDLING. */
+
 /** list that contains the runtime error messages */
-ParallelRuntimeErrors *runtimeErrors = NULL;
+RuntimeErrorCollector *runtimeErrorCollector = NULL;
 
-enum RuntimeErrorType { ERROR, WARNING };
-
-static const string
-createRuntimeErrorMessage(const string &_message,
-                          const char* function, const char* file, const int line, 
-                          RuntimeErrorType type = ERROR) {
-  ostringstream ostr;
-  ostr << "{ ";
-  switch (type) {
-  case ERROR:
-    ostr << "ERROR: "; break;
-  case WARNING:
-    ostr << "WARNING: "; break;
-  }
-  ostr << _message;
-  ostr << " in function " << function << " (" << file << ":" << line 
-       << ") on node " << this_node;
-  ostr << " } ";
-  return ostr.str();
+void
+initRuntimeErrorCollector() {
+  runtimeErrorCollector = new RuntimeErrorCollector(comm_cart);
 }
 
-ParallelRuntimeErrors::
-ParallelRuntimeErrors(MPI_Comm comm) {
-  this->comm = comm;
+void _runtimeWarning(const std::string &msg, 
+                     const char* function, const char* file, const int line) {
+  runtimeErrorCollector->warning(msg, function, file, line);
 }
 
-void ParallelRuntimeErrors::
-warning(const string &msg,
-        const char* function, const char* file, const int line) {
-  errors.push_back
-    (createRuntimeErrorMessage(msg, function, file, line, WARNING));
+void _runtimeWarning(const char* msg, 
+                     const char* function, const char* file, const int line) {
+  runtimeErrorCollector->warning(msg, function, file, line);
 }
 
-void ParallelRuntimeErrors::
-warning(const char *msg,
-        const char* function, const char* file, const int line) {
-  this->warning(string(msg), function, file, line);
+void _runtimeWarning(const std::ostringstream &msg, 
+                     const char* function, const char* file, const int line) {
+  runtimeErrorCollector->warning(msg, function, file, line);
 }
 
-void ParallelRuntimeErrors::
-warning(ostringstream &mstr,
-        const char* function, const char* file, const int line) {
-  this->warning(mstr.str(), function, file, line);
+void _runtimeError(const std::string &msg, 
+                     const char* function, const char* file, const int line) {
+  runtimeErrorCollector->error(msg, function, file, line);
 }
 
-void ParallelRuntimeErrors::
-error(const string &msg,
-      const char* function, const char* file, const int line) {
-  errors.push_back
-    (createRuntimeErrorMessage(msg, function, file, line, ERROR));
+void _runtimeError(const char* msg, 
+                     const char* function, const char* file, const int line) {
+  runtimeErrorCollector->error(msg, function, file, line);
 }
 
-void ParallelRuntimeErrors::
-error(const char *msg,
-      const char* function, const char* file, const int line) {
-  this->error(string(msg), function, file, line);
-}
-
-void ParallelRuntimeErrors::
-error(ostringstream &mstr,
-      const char* function, const char* file, const int line) {
-  this->error(mstr.str(), function, file, line);
-}
-
-int ParallelRuntimeErrors::
-count() {
-  int numMessages = errors.size();
-  MPI_Allreduce(MPI_IN_PLACE, &numMessages, 1, MPI_INT, MPI_SUM, this->comm);
-  return numMessages;
-}
-
-list<string> &ParallelRuntimeErrors::
-gather() {
-  // Tell other processors to send their erros
-  mpi_call(mpiParallelRuntimeErrorsGatherSlave, -1, 0);
-
-  int numMessages = this->count();
-  
-  // If no processor encountered an error, return
-  if (!numMessages) return errors;
-
-  // subtract the number of messages on the master
-  numMessages -= errors.size();
-
-  MPI_Status status;
-  int count;
-  for (int i = 0; i < numMessages; ++i) {
-    // get the next message
-    MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, this->comm, &status);
-    MPI_Get_count(&status, MPI_CHAR, &count);
-
-    char buffer[count];
-    MPI_Recv(buffer, count, MPI_CHAR, 
-             MPI_ANY_SOURCE, MPI_ANY_TAG, this->comm, MPI_STATUS_IGNORE);
-    
-    errors.push_back(string());
-    string &s = errors.back();
-    s.assign(buffer, count);
-  }
-
-  return errors;
-}
-
-void ParallelRuntimeErrors::
-gatherSlave() {
-  // If no processor encountered an error, return
-  if (!this->count()) return;
-  
-  // send all messages
-  for (list<string>::iterator it = errors.begin();
-       it != errors.end(); ++it)
-    MPI_Send(const_cast<char*>(it->data()), it->length(), MPI_CHAR, 0, 42, comm_cart);
-
-  // finally empty the list
-  this->clear();
-}
-
-void ParallelRuntimeErrors::
-clear() {
-  errors.clear();
+void _runtimeError(const std::ostringstream &msg, 
+                     const char* function, const char* file, const int line) {
+  runtimeErrorCollector->error(msg, function, file, line);
 }
 
 int check_runtime_errors() {
-  return runtimeErrors->count();
+  return runtimeErrorCollector->count();
+}
+
+list<string>
+mpiRuntimeErrorCollectorGather() {
+  // Tell other processors to send their erros
+  mpi_call(mpiRuntimeErrorCollectorGatherSlave, -1, 0);
+  return runtimeErrorCollector->gather();
 }
 
 void
-initRuntimeErrors() {
-  runtimeErrors = new ParallelRuntimeErrors(comm_cart);
+mpiRuntimeErrorCollectorGatherSlave(int node, int parm) {
+  runtimeErrorCollector->gatherSlave();
 }
 
-void
-mpiParallelRuntimeErrorsGatherSlave(int node, int parm) {
-  runtimeErrors->gatherSlave();
-}
 
 
