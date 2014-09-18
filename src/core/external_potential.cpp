@@ -43,11 +43,6 @@ int generate_external_potential(ExternalPotential** e) {
 }     
 
 int external_potential_tabulated_init(int number, char* filename, int n_particle_types, double* scale) {
-  for (int i =0; i<n_particle_types; i++) {
-    printf("%f ", scale[i]);
-  }
-  printf("scale\n");
-
   ExternalPotentialTabulated* e = &external_potentials[number].tabulated;
 
   if (strlen(filename)>MAX_FILENAME_SIZE)
@@ -76,8 +71,9 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   FILE* infile = fopen(filename, "r");
   
   if (!infile)  {
-    char *errtxt = runtime_error(128 + MAX_FILENAME_SIZE);
-    ERROR_SPRINTF(errtxt, "Could not open file %s\n", filename);
+      ostringstream msg;
+      msg <<"Could not open file "<< filename << "\n";
+      runtimeError(msg);
     return ES_ERROR;
   }
   char first_line[100];
@@ -86,7 +82,10 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   double size[3];
   double offset[3]={0,0,0};
   int dim=0;
-  fgets(first_line, 100, infile);
+  if (fgets(first_line, 100, infile) == NULL) {
+      fprintf(stderr, "Nothing read from file\n");
+      return ES_ERROR;
+  }
 
   token = strtok(first_line, " \t");
   if (!token) { fprintf(stderr, "Error reading dimensionality\n"); return ES_ERROR; }
@@ -134,18 +133,21 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   int halosize=1;
 
   if (size[0] > 0 && abs(size[0] - box_l[0]) > ROUND_ERROR_PREC) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"Box size in x is wrong %f vs %f\n", size[0], box_l[0]);
+      ostringstream msg;
+      msg <<"Box size in x is wrong "<< size[0] << " vs " << box_l[0] <<"\n";
+      runtimeError(msg);
     return ES_ERROR;
   }
   if (size[1] > 0 && abs(size[1] - box_l[1]) > ROUND_ERROR_PREC) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"Box size in y is wrong %f vs %f\n", size[1], box_l[1]);
+    ostringstream msg;
+    msg <<"Box size in y is wrong "<< size[1] << " vs " << box_l[1] <<"\n";
+    runtimeError(msg);
     return ES_ERROR;
   }
   if (size[2] > 0 && abs(size[2] - box_l[2]) > ROUND_ERROR_PREC) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"Box size in z is wrong %f vs %f\n", size[2], box_l[2]);
+    ostringstream msg;
+    msg <<"Box size in z is wrong "<< size[2] << " vs " << box_l[2] <<"\n";
+    runtimeError(msg);
     return ES_ERROR;
   }
 
@@ -226,7 +228,7 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
   fprintf(outfile,"local_index_offset %d %d %d\n", lattice->local_index_offset[0], lattice->local_index_offset[1], lattice->local_index_offset[2]);
 
 
-  fprintf(outfile, "element_size %ld\n", lattice->element_size);
+  fprintf(outfile, "element_size %d\n", lattice->element_size);
 
   
   for (i=0; i<lattice->halo_grid[0]; i++) 
@@ -265,8 +267,9 @@ void add_external_potential_forces(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_forces(&external_potentials[i], p);
     } else {
-      char* c = runtime_error(128);
-      ERROR_SPRINTF(c, "unknown external potential type");
+        ostringstream msg;
+        msg <<"unknown external potential type";
+        runtimeError(msg);
       return;
     }
   }
@@ -293,8 +296,9 @@ void add_external_potential_energy(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_energy(&external_potentials[i], p);
     } else {
-      char* c = runtime_error(128);
-      ERROR_SPRINTF(c, "unknown external potential type");
+        ostringstream msg;
+        msg <<"unknown external potential type";
+        runtimeError(msg);
       return;
     }
   }

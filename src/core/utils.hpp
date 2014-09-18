@@ -33,7 +33,6 @@
 #include <cstring>
 #include "config.hpp"
 #include "debug.hpp"
-#include "errorhandling.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -110,6 +109,13 @@ typedef struct {
 #ifdef malloc
 #undef malloc
 #endif
+
+inline void errexit() {
+#ifdef FORCE_CORE
+  core();
+#endif
+  exit(1);
+}
 
 /** used instead of realloc.
     Makes sure that resizing to zero FREEs pointer */

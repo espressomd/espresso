@@ -807,6 +807,43 @@ radius.  Whenever a harmonic bond gets longer than
 \var{r_\mathrm{cut}}, the bond will be reported as broken, and a
 background error will be raised.
 
+\subsection{Quartic bond}
+\index{quartic bond|mainindex}
+\index{interactions!quartic|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  quartic \var{K_0} \var{K_1} \var{R} \opt{\var{r_\mathrm{cut}}}
+\end{essyntax}
+This creates a bond type with identificator \var{bondid} with a
+quartic potential. The potential is minimal at particle distance $r=R$.
+It is given by
+\begin{equation}
+  V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4
+\end{equation}
+The fourth, optional, parameter \var{r_\mathrm{cut}} defines a cutoff
+radius.  Whenever a quartic bond gets longer than
+\var{r_\mathrm{cut}}, the bond will be reported as broken, and a
+background error will be raised.
+
+\subsection{Bonded coulomb}
+\index{bonded coulomb bond|mainindex}
+\index{interactions!bonded_coulomb|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  bonded_coulomb \var{\alpha}
+\end{essyntax}
+This creates a bond type with identificator \var{bondid} with a
+coulomb pair potential.
+It is given by
+\begin{equation}
+  V(r) = \frac{\alpha q_1 q_2}{r},
+\end{equation}
+where \var{q_1} and \var{q_2} are the charges of the bound particles.
+There is no cutoff, the bejerrum length of other coulomb interactions
+is not taken into account.
+
 \subsection{Subtracted Lennard-Jones bond}
 \index{subtracted Lennard-Jones bond|mainindex}
 \index{interactions!subtracted Lennard-Jones|mainindex}
@@ -1468,6 +1505,7 @@ For $\kappa = 0$, this corresponds to the plain coulomb potential.
  \opt{\var{fixed\_far\_cutoff}}
  \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
  \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
+ \opt{capacitor \var{U}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1494,6 +1532,28 @@ $\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}$ and
 $\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}$. Using
 this form allows to choose $\Delta_{t/b}=-1$, corresponding to
 metallic boundary conditions.
+
+Using \keyword{capacitor} \var{U} allows to maintain a constant 
+electric potential difference \var{U} between the xy-plane at $z=0$ 
+and $z=L$, where $L$ denotes the box length in $z$-direction.
+This is done by countering the total dipol moment of
+the system with the electric field $E_{induced}$ and superposing 
+a homogeneous electric field $E_{applied} = \frac{U}{L}$ 
+to retain \var{U}. This mimics the induction of surface charges
+$\pm\sigma = E_{induced} \cdot \epsilon_0$ for planar electrodes at $z=0$ 
+and $z=L$ in a capacitor connected to a battery with voltage \var{U}.
+Using \var{capacitor} 0 is equivalent to $\Delta_{t/b}=-1$.
+
+\begin{essyntax}
+  efield_caps \alt{total \asep induced \asep applied}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+The electric fields added by \var{capacitor} \var{U} can be obtained 
+by calling the above command, where \var{induced} returns $E_{induced}$,
+\var{applied} returns $E_{applied}$ and \var{total} their sum.
 
 \subsection{MMM1D}
 \index{MMM1D method|mainindex}
@@ -1706,6 +1766,7 @@ default.
   \opt{noneutralization}
   \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
   \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
+  \opt{capacitor \var{U}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1747,7 +1808,11 @@ if you add neutralizing walls explicitely as constraints, you have to
 disable the neutralization.
 
 The dielectric contrast features work exactly the same as for MMM2D,
-see the documentation above.
+see the documentation above. Same accounts for \keyword{capacitor} 
+\var{U}, but the constant potential is maintained between the xy-plane
+at $z=0$ and $z=L-gap\_size$. The command \var{efield\_caps} to read  
+out the electric fields added by \var{capacitor} \var{U} also applies 
+for the capacitor-feature of ELC.
 
 Make sure that you read the papers on ELC (\cite{elc,icelc})
 before using it.

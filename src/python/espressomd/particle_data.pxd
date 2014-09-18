@@ -16,13 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
-from System cimport *
 ## Here we create something to handle particles
 cimport numpy as np
 from utils cimport *
 
 include "myconfig.pxi"
-
 
 # Import particle data structures and setter functions from particle_data.hpp
 
@@ -124,9 +122,6 @@ cdef extern from "particle_data.hpp":
   
   IF VIRTUAL_SITES == 1:
     int set_particle_virtual(int part,int isVirtual)
-
-
- 
   
   IF LANGEVIN_PER_PARTICLE == 1:
     int set_particle_temperature(int part, double T)
@@ -165,17 +160,14 @@ cdef extern from "particle_data.hpp":
   
   void remove_all_bonds_to(int part)
   
-
- 
 cdef extern from "virtual_sites_relative.hpp":
-  int vs_relate_to(int part_num, int relate_to)
-  int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
+  IF VIRTUAL_SITES_RELATIVE == 1:
+    int vs_relate_to(int part_num, int relate_to)
+    int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
  
-
 cdef extern from "rotation.hpp":
   void convert_omega_body_to_space(Particle *p, double *omega)
   void convert_torques_body_to_space(Particle *p, double *torque)
-
 
 # The bonded_ia_params stuff has to be included here, because the setter/getter
 # of the particles' bond property needs to now about the correct number of bond partners

@@ -66,7 +66,7 @@ typedef struct {
 /** This array contains the description of all global variables that
     are synchronized across nodes and that can be changed/adressed via
     the TCL command setmd. read the documentation of \ref Datafield
-    befor you add new features. */
+    before you add new features. */
 extern const Datafield fields[];
 
 /** \name Field Enumeration

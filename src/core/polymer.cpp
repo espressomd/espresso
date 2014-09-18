@@ -64,8 +64,9 @@ int mindist3(int part_id, double r_catch, int *ids) {
 	      --> prevent that! */
   for(i=0; i<n_part; i++) if (partCfgMD[i].p.identity == part_id) me = i; 
   if (me == -1) {
-    char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{049 failed to find desired particle %d} ",part_id);
+      ostringstream msg;
+      msg <<"failed to find desired particle " << part_id;
+      runtimeError(msg);
     return 0;
   }
   for (i=0; i<n_part; i++) {
@@ -167,6 +168,8 @@ int constraint_collision(double *p1, double *p2){
     case CONSTRAINT_PLATE:
     case CONSTRAINT_RHOMBOID:
       break;
+    //default://@TODO: handle default case
+      //  break;
     }
   }
   return 0;

@@ -39,14 +39,14 @@ libEspresso_la_SOURCES = \
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
-	energy.cpp energy.hpp \
+	energy.cpp energy_inline.hpp energy.hpp \
 	external_potential.hpp external_potential.cpp \
 	errorhandling.cpp errorhandling.hpp \
 	fft.cpp fft.hpp \
 	fft-common.cpp fft-common.hpp \
 	fft-dipolar.cpp fft-dipolar.hpp \
 	forcecap.cpp forcecap.hpp \
-	forces.cpp forces.hpp \
+	forces.cpp forces_inline.hpp forces.hpp \
 	galilei.cpp galilei.hpp \
 	ghosts.cpp ghosts.hpp \
 	global.cpp global.hpp \
@@ -57,7 +57,7 @@ libEspresso_la_SOURCES = \
 	initialize.cpp initialize.hpp \
 	integrate.cpp integrate.hpp \
 	interaction_data.cpp interaction_data.hpp \
-	lattice.cpp lattice.hpp \
+	lattice.cpp lattice_inline.hpp lattice.hpp \
 	layered.cpp layered.hpp \
 	lb.cpp lb.hpp \
 	lb-boundaries.cpp lb-boundaries.hpp \
@@ -77,6 +77,7 @@ libEspresso_la_SOURCES = \
 	random.cpp random.hpp \
 	rattle.cpp rattle.hpp \
 	reaction.cpp reaction.hpp \
+	Ringbuffer.hpp \
 	rotation.cpp rotation.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
@@ -101,7 +102,7 @@ libEspresso_la_SOURCES = \
 	Vector.hpp \
 	SystemInterface.hpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
-	
+
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
@@ -133,7 +134,9 @@ libEspresso_la_SOURCES += \
 	endangledist.cpp endangledist.hpp \
 	fene.cpp fene.hpp \
 	harmonic.cpp harmonic.hpp \
+	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
+	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
@@ -160,9 +163,10 @@ libEspresso_la_SOURCES += \
 # Generic actors
 libEspresso_la_SOURCES += \
 	actor/Actor.hpp \
-	actor/Mmm1dgpuForce.cu actor/Mmm1dgpuForce.hpp \
-	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
-	actor/HarmonicWell.cpp actor/HarmonicWell.hpp
+	actor/ActorList.cpp actor/ActorList.hpp \
+	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
+	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
+	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
 # CUDA rules
@@ -186,7 +190,7 @@ CUDA_SOURCE_FILES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
-	actor/Mmm1dgpuForce.cu \
+	actor/Mmm1dgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu
 
 # include the dependency tracking files
@@ -197,7 +201,7 @@ include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
-include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
+include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 
@@ -210,7 +214,8 @@ cuda_verbose_0 = @echo "  NVCC     $@";
 # putting them into DEPDIR ensures configure creates empties dummies
 $(LOFILES): %.lo: %.cu
 	$(cuda_verbose)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<; \
+	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) \
+	  -M -MT $@ -o $$depbase.Plo $<; \
 	$(LIBTOOL) $(AM_V_lt) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 		--mode=compile $(NVCC) $(DEFS) \
 		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \

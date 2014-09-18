@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _HARMONICPOTENTIAL_TCL_HPP
-#define _HARMONICPOTENTIAL_TCL_HPP
+#ifndef _ACTOR_HARMONICWELL_TCL_HPP
+#define _ACTOR_HARMONICWELL_TCL_HPP
 
 #include "parser.hpp"
 

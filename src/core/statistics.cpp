@@ -1245,8 +1245,9 @@ void analyze_activate(int ind) {
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
     if (place_particle(i, pos)==ES_ERROR) {
-      char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{057 failed upon replacing particle %d in Espresso} ", i); 
+        ostringstream msg;
+        msg <<"failed upon replacing particle " << i << "  in Espresso";
+        runtimeError(msg);
     }
   }
 }

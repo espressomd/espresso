@@ -27,6 +27,8 @@
 class EspressoSystemInterface : public SystemInterface {
 public:
   EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
+  virtual ~EspressoSystemInterface() {}
+
   void init();
   void update();
 
@@ -129,7 +131,6 @@ public:
     return 0;
 #endif
   };
-
 
 protected:
   void gatherParticles();
