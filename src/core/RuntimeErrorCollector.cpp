@@ -89,16 +89,15 @@ void RuntimeErrorCollector::clear() {
 
 list<string> RuntimeErrorCollector::
 gather() {
-
   int numMessages = this->count();
-  
-  list<string> allerrors;
 
   // If no processor encountered an error, return
-  if (!numMessages) return allerrors;
+  if (numMessages == 0) return list<string>();
 
-  // subtract the number of messages on the master
-  numMessages -= errors.size();
+  list<string> allerrors = this->errors;
+
+  // subtract the number of messages on the master, as they are not to be sent
+  numMessages -= this->errors.size();
 
   MPI_Status status;
   int count;
@@ -124,12 +123,13 @@ gather() {
 void RuntimeErrorCollector::
 gatherSlave() {
   // If no processor encountered an error, return
-  if (!this->count()) return;
+  if (this->count() == 0) return;
   
   // send all messages
-  for (list<string>::iterator it = errors.begin();
-       it != errors.end(); ++it)
-    MPI_Send(const_cast<char*>(it->data()), it->length(), MPI_CHAR, 0, 42, comm_cart);
+  for (list<string>::iterator it = this->errors.begin();
+       it != errors.end(); ++it) {
+    MPI_Send(const_cast<char*>(it->data()), it->length(), MPI_CHAR, 0, 42, this->comm);
+  }
 
   // finally empty the list
   this->clear();
