@@ -79,6 +79,7 @@ libEspresso_la_SOURCES = \
 	reaction.cpp reaction.hpp \
 	Ringbuffer.hpp \
 	rotation.cpp rotation.hpp \
+	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
 	statistics_chain.cpp statistics_chain.hpp \

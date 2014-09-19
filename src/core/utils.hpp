@@ -92,6 +92,13 @@ typedef struct {
   int max;
 } DoubleList;
 
+inline void errexit() {
+#ifdef FORCE_CORE
+  core();
+#endif
+  exit(1);
+}
+
 /*************************************************************/
 /** \name Dynamic memory allocation.                         */
 /*************************************************************/
@@ -109,13 +116,6 @@ typedef struct {
 #ifdef malloc
 #undef malloc
 #endif
-
-inline void errexit() {
-#ifdef FORCE_CORE
-  core();
-#endif
-  exit(1);
-}
 
 /** used instead of realloc.
     Makes sure that resizing to zero FREEs pointer */

@@ -19,22 +19,17 @@
 #include "config.hpp"
 #ifdef CUDA /* Terminates at end of file */
 
-
-
 #include <cuda.h>
 #include <cufft.h>
-
-
-
 #include <stdio.h>
+#include <sstream>
+#include "errorhandling.hpp"
 #include "lb-boundaries.hpp"
 #include "electrokinetics.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "lbgpu.hpp"
 #include "constraint.hpp"
-
-
 
 #ifdef ELECTROKINETICS /* Terminates at end of file */
 
@@ -2789,7 +2784,6 @@ int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
 {
 
 #ifdef EK_BOUNDARIES
-  char *errtxt;
   double pos[3], dist, dist_vec[3];
 
   for(int z=0; z<int(ek_parameters.dim_z); z++) {
@@ -2835,8 +2829,9 @@ int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
         break;
                 
       default:
-        errtxt = runtime_error(128);
-        ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in ek_tag_reaction_nodes()\n", boundary->type);
+        std::ostringstream msg;
+        msg << "lbboundary type " << boundary->type << " not implemented";
+        runtimeError(msg);
     }
 
     if( dist <= 0.0 )
