@@ -535,9 +535,6 @@ void on_temperature_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_temperature_change\n", this_node));
 
-#ifdef ELECTROSTATICS
-
-#endif
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
     lb_reinit_parameters();

@@ -20,6 +20,7 @@
 tests = \
 	analysis.tcl \
 	angle.tcl \
+	bonded_coulomb.tcl \
 	collision-detection-centers.tcl \
 	collision-detection-poc.tcl \
 	comforce.tcl \
@@ -45,7 +46,6 @@ tests = \
 	ghmc.tcl \
 	harm.tcl \
 	quartic.tcl \
-	bonded_coulomb.tcl \
 	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \

@@ -23,8 +23,8 @@
 using namespace std;
 
 RuntimeErrorCollector::
-RuntimeErrorCollector(MPI_Comm comm) {
-  this->comm = comm;
+RuntimeErrorCollector(MPI_Comm _comm) {
+  this->comm = _comm;
 }
 
 void RuntimeErrorCollector::
@@ -78,7 +78,7 @@ error(const ostringstream &mstr,
 
 int RuntimeErrorCollector::
 count() {
-  int numMessages = errors.size();
+  int numMessages = this->errors.size();
   MPI_Allreduce(MPI_IN_PLACE, &numMessages, 1, MPI_INT, MPI_SUM, this->comm);
   return numMessages;
 }

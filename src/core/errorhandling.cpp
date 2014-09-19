@@ -63,7 +63,7 @@ RuntimeErrorCollector *runtimeErrorCollector = NULL;
 
 void
 initRuntimeErrorCollector() {
-  runtimeErrorCollector = new RuntimeErrorCollector(comm_cart);
+  runtimeErrorCollector = new RuntimeErrorCollector(MPI_COMM_WORLD);
 }
 
 void _runtimeWarning(const std::string &msg, 
