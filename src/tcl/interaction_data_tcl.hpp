@@ -42,4 +42,9 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
 /** datafield callback for \ref min_global_cut. Sets the minimal cell size. */
 int tclcallback_min_global_cut(Tcl_Interp *interp, void *_data);
 
+/* Print the surface charge for capacitor feature in ic-mmm2d and ic-elc */
+int tclcommand_print_efield_capacitors(ClientData data, Tcl_Interp * interp,
+               int argc, char ** argv);
+
+
 #endif

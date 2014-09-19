@@ -45,8 +45,10 @@
 #include "integrate_sd_cuda_debug.cuh"
 #include "integrate_sd.hpp" // this includes cublas header
 #include "cuda_utils.hpp"
-#include "errorhandling.hpp"
+//#include "errorhandling.hpp"
 #include "global.hpp"
+
+void errexit();
 
 #ifndef SD_USE_FLOAT
 //#warning using double
@@ -89,6 +91,7 @@ struct matrix{
   real * data;
   int  * col_idx;
   int  * row_l;
+  real * wavespace;
   bool is_sparse;
   int size;
   int ldd;
@@ -100,7 +103,9 @@ extern double temperature; ///< this is defined in \file thermostat.cpp
 
 const int numThreadsPerBlock = 32; ///< gives the number of threads per cuda block. should be a multiple of 32 and much smaller then the numbers of particles
 
+#ifndef SD_FF_ONLY
 const int bucket_size_factor = 3;  //TODO: find optimal parameter for given implementation
+#endif
 
 void _cudaCheckError(const char *msg, const char * file, const int line);
 #define cudaCheckError(msg)  _cudaCheckError((msg),__FILE__,__LINE__)
@@ -495,7 +500,8 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
 #endif  
   
   // compute the mobility Matrix
-  real * mobility_d=NULL;
+  matrix mobility={NULL, NULL, NULL, NULL};
+  real * &mobility_d=mobility.data;
   cuda_safe_mem(cudaMalloc( (void**)&mobility_d, lda*DIM*N*sizeof(real) ));
   assert(mobility_d);
   sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(mobility_d,3*N);
@@ -507,7 +513,7 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
 
 #ifndef SD_FF_ONLY
   // compute the resistance matrix
-  matrix resistance={NULL, NULL, NULL};
+  matrix resistance={NULL, NULL, NULL, NULL};
   resistance.size      = N*3;
   resistance.ldd       = ((N*3+31)/32)*32;
   resistance.ldd_short = ((N+31)/32)*32;
@@ -644,7 +650,7 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
     real alpha=1/sqrt(2.);
     // in the case of FF_ONLY this computes directly the displacement
     real E_cheby=sd_compute_brownian_force_farfield(cublas, size, mobility_d, gaussian_ff, ran_prec, brownian_force_ff);
-    real bff_nrm;
+    //real bff_nrm;
     //cublasCall(cublasRnrm2(cublas, size, brownian_force_ff, 1, &bff_nrm));
     if (E_cheby > 10*ran_prec){
       E_cheby=sd_compute_brownian_force_farfield(cublas, size, mobility_d, gaussian_ff, ran_prec, brownian_force_ff);
@@ -1513,7 +1519,6 @@ real sd_compute_brownian_force_farfield(cublasHandle_t cublas, int size, real * 
     errexit();
   }
   real * chebyshev_vec_curr, * chebyshev_vec_last, * chebyshev_vec_next;
-  real gaussian_ff_norm;
   const real zero =0;
   const real one  =1;
   sd_set_zero<<<64,192>>>(brownian_force_ff,size);
@@ -1526,6 +1531,7 @@ real sd_compute_brownian_force_farfield(cublasHandle_t cublas, int size, real * 
   cublasCall(cublasRgemv(cublas, CUBLAS_OP_N, size, size, &one, mobility_d, lda, gaussian_ff, 1, &zero,  chebyshev_vec_curr, 1));
   cublasCall(cublasRdot(cublas, size, chebyshev_vec_curr, 1, gaussian_ff, 1, &gMg));
 #else
+  real gaussian_ff_norm;
   cublasCall(cublasRnrm2(cublas, size, gaussian_ff, 1, &gaussian_ff_norm));
 #endif
   cublasCall(cublasRcopy( cublas, size, gaussian_ff, 1, chebyshev_vec_curr, 1));
@@ -1758,8 +1764,167 @@ __global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, 
     } // if (i < N)
   }// for offset = ...
 }
-
 #undef mydebug
+
+/// This computes the farfield contribution of the mobility with ewald summation
+/// this version assumes that the real-space cutoff is smaller than the boxlength
+// r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+// N is the number of particles
+// self_mobility is 1./(6.*PI*eta*a)
+// a is the particle radius
+// mobility is the mobility matrix which will be retruned
+// L_d is the boxlength
+// cutoff the realspace cutoff distance
+// xi the splitting parameter as defined by Beenakker 1986
+// xa  = xi * a
+// xa3 = xa * xa * xa
+#define mydebug(str,...)
+// if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
+ __global__ void sd_compute_mobility_matrix_real_short(real * r, int N, real self_mobility, real a, real * L_g, real * mobility, real cutoff, real xi, real xa, real xa3){
+  real mypos[3];
+  const int lda=((3*N+31)/32)*32;
+  __shared__ real L[3];
+  __shared__ real cachedPos[3*numThreadsPerBlock];
+  __shared__ real writeCache[3*numThreadsPerBlock];
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
+  if (threadIdx.x < 3){ // copy L to shared memory
+    L[threadIdx.x]=L_g[threadIdx.x];
+  }
+  __syncthreads();
+  // get data for myposition - using coalscaled memory access
+  for (int l=0;l<3;l++){
+    mydebug(" 0x%08x -> 0x%08x  \n",numThreadsPerBlock*(l+blockIdx.x*3)+threadIdx.x,numThreadsPerBlock*l+threadIdx.x);
+    cachedPos[numThreadsPerBlock*l+threadIdx.x] = r[numThreadsPerBlock*(l+blockIdx.x*3)+threadIdx.x];
+  }
+  __syncthreads();
+  for (int l=0;l<3;l++){
+    mypos[l] = cachedPos[threadIdx.x*3+l];
+    mydebug("mypos[%d]:  %e\n",l,mypos[l]);
+  }
+
+  for (int offset=0;offset<N;offset+=numThreadsPerBlock){
+    mydebug("offset: %d\n",offset)
+    // copy positions to shared memory
+#pragma unroll
+    for (int l=0;l<3;l++){
+      mydebug("fuu:: 0x%08x  0x%08x  0x%08x  0x%08x %e\n",r, offset*3,numThreadsPerBlock*l,threadIdx.x,cachedPos[numThreadsPerBlock*l+threadIdx.x]);
+      cachedPos[numThreadsPerBlock*l+threadIdx.x] = r[offset*3+numThreadsPerBlock*l+threadIdx.x];
+    }
+    __syncthreads();
+    if (i < N){
+      for (int j=offset;j<min(offset+numThreadsPerBlock,N);j++){
+	real dr[DIM];
+	real dr2=0;
+#pragma unroll 3
+	for (int k=0;k<DIM;k++){
+	  dr[k]=mypos[k]-cachedPos[DIM*(j-offset)+k]; // r_ij
+	  dr[k]-=rint(dr[k]/L[k])*L[k]; // fold back
+	  dr2+=dr[k]*dr[k];
+	}
+	dr2=max(dr2,0.01);
+	real drn= sqrt(dr2); // length of dr
+	real ar = a/drn;
+	real xr = xi*drn;
+	//real xa is given
+	
+	real t,t2;
+	// this also catches the case i == j
+	if (0.5 < ar || drn < cutoff){  // drn < 2*a
+	  t=0;
+	  t2=0;
+	  if (i==j){
+	    //t2=1-6./sqrt(M_PI)*xa+40./3./sqrt(M_PI)*xa*xa*xa;
+#ifdef SD_USE_FLOAT
+	    t2=1-3.385137501286537721688476709364635515064303775f*xa + 7.52252778063675049264105935414363447792067505f*xa3;
+#else
+	    t2=1-3.385137501286537721688476709364635515064303775*xa + 7.52252778063675049264105935414363447792067505*xa3;
+#endif
+	  }
+	} else {
+	  // Rotne Prager
+	  real xr2=xr*xr;
+	  real ar2=ar*ar;
+#ifdef SD_USE_FLOAT
+	  t=(0.75f-1.5f*ar2)*ar*erfcf(xr)+(-4.f*xa3*xr2*xr2-3.f*xa*xr2+16f*xa3*xr2+1.5f*xa-2.f *xa3-3.f*xa*ar2)*0.5641895835477562869480794515607725858440506f*exp(-xr2);
+	  t2=(0.75f+0.5f*ar2)*ar*erfcf(xr)+(4.f*xa3*xr2*xr2+3.f*xa*xr2-20f*xa3*xr2-4.5f*xa+14.f*xa3+    xa*ar2)*0.5641895835477562869480794515607725858440506f*exp(-xr2);
+#else
+	  t=(0.75-1.5*ar2)*ar*erfc(xr)+(-4.*xa3*xr2*xr2-3.*xa*xr2+16.*xa3*xr2+1.5*xa-2. *xa3-3.*xa*ar2)*0.5641895835477562869480794515607725858440506*exp(-xr2);
+	  t2=(0.75+0.5*ar2)*ar*erfc(xr)+(4.*xa3*xr2*xr2+3.*xa*xr2-20.*xa3*xr2-4.5*xa+14.*xa3+   xa*ar2)*0.5641895835477562869480794515607725858440506*exp(-xr2);
+#endif
+	}
+	real tmp_el13;
+#pragma unroll 3
+	for (int k=0; k < DIM; k++){
+	  if (k ==0){ // these ifs should be removed at compile time ... after unrolling
+#pragma unroll 3
+	    for (int l=0;l < 3; l++){
+	      writeCache[3*threadIdx.x+l]=dr[k]*dr[l]*t;
+	    }
+	  }
+	  else if(k==1){
+	    tmp_el13 = writeCache[3*threadIdx.x+2];
+	    writeCache[3*threadIdx.x+0]=writeCache[3*threadIdx.x+1];
+#pragma unroll 2
+	    for (int l=1;l < DIM; l++){
+	      writeCache[3*threadIdx.x+l]=dr[k]*dr[l]*t;
+	    }	
+	  }
+	  else{
+	    writeCache[3*threadIdx.x+0]=tmp_el13;
+	    writeCache[3*threadIdx.x+1]=writeCache[3*threadIdx.x+2];
+	    writeCache[3*threadIdx.x+2]=dr[k]*dr[2]*t;
+	  }
+	  writeCache[3*threadIdx.x+k]+=t2;
+	    
+	  __syncthreads();
+	  int max = min(blockDim.x,N-blockDim.x*blockIdx.x);
+	  for (int l=0;l<3;l++){
+	    mobility[(DIM*j+k)*lda+blockIdx.x*blockDim.x*3+max*l+threadIdx.x]=writeCache[max*l+threadIdx.x];
+	  }
+	}
+      } // for (j = ...
+    } // if (i < N)
+  }// for offset = ...
+}
+#undef mydebug
+
+/// This computes the farfield contribution of the mobility with ewald summation
+/// this version assumes that the real-space cutoff is smaller than the boxlength
+// r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+// N is the number of particles
+// self_mobility is 1./(6.*PI*eta*a)
+// a is the particle radius
+// mobility is the mobility matrix which will be retruned
+// L_d is the boxlength
+// cutoff the realspace cutoff distance
+// xi the splitting parameter as defined by Beenakker 1986
+// xa  = xi * a
+// xa3 = xa * xa * xa
+#define mydebug(str,...)
+// if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
+ __global__ void sd_compute_mobility_matrix_wave(real * r, int N, real self_mobility, real a, real * L_g, real * mobility, real cutoff, real xi, real xa, real xa3){
+  real mypos[3];
+  const int lda=((3*N+31)/32)*32;
+  __shared__ real L[3];
+  __shared__ real cachedPos[3*numThreadsPerBlock];
+  __shared__ real writeCache[3*numThreadsPerBlock];
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
+  if (threadIdx.x < 3){ // copy L to shared memory
+    L[threadIdx.x]=L_g[threadIdx.x];
+  }
+  __syncthreads();
+  // get data for myposition - using coalscaled memory access
+  for (int l=0;l<3;l++){
+    cachedPos[numThreadsPerBlock*l+threadIdx.x] = r[numThreadsPerBlock*(l+blockIdx.x*3)+threadIdx.x];
+  }
+  __syncthreads();
+  for (int l=0;l<3;l++){
+    mypos[l] = cachedPos[threadIdx.x*3+l];
+  }
+}
+#undef mydebug
+
+
 #define mydebug(str,...)
 // if (threadIdx.x < 3 && blockIdx.x < 2){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
 // this computes the near field as a  ResistanceMatrix

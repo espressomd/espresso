@@ -24,6 +24,8 @@
 
 #include "galilei.hpp"
 #include "utils.hpp"
+#include "cells.hpp"
+#include "grid.hpp"
 #include "initialize.hpp"
 #include "forces.hpp"
 

@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "integrate_sd_cuda_debug.cuh"
-#include "errorhandling.hpp"
+//#include "errorhandling.hpp"
 #include "cuda_utils.hpp"
 
 void printVectorDev( real * data, int m, const char * msg){

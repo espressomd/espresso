@@ -31,7 +31,7 @@
 /// parse parameters for the tabulated bonded potential
 int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
-  int tab_type = TAB_UNKNOWN;
+  TabulatedBondedInteraction tab_type = TAB_UNKNOWN;
 
   if (argc < 3 ) {
     Tcl_AppendResult(interp, "tabulated needs two string parameter: "
@@ -146,9 +146,11 @@ int tclprint_to_result_tabulated_bondedIA(Tcl_Interp *interp,
   case TAB_BOND_DIHEDRAL:
     Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\"",(char *) NULL);
     return TCL_OK;
+
+  default:
+    Tcl_AppendResult(interp, "unknown type of tabulated bonded interaction encountered",(char *) NULL);
+    return TCL_ERROR;
   }
-  Tcl_AppendResult(interp, "unknown type of tabulated bonded interaction encountered",(char *) NULL);
-  return TCL_ERROR;
 }
 
 #endif

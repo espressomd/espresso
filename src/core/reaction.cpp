@@ -27,6 +27,8 @@
 #include "initialize.hpp"
 #include "forces.hpp"
 #include "errorhandling.hpp"
+#include "cells.hpp"
+#include "domain_decomposition.hpp"
 
 reaction_struct reaction;
 
@@ -34,18 +36,19 @@ reaction_struct reaction;
 
 void reactions_sanity_checks()
 {
-  char *errtext;
 
   if(reaction.ct_rate != 0.0) {
 
     if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition} ");
+        ostringstream msg;
+        msg <<"The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition";
+        runtimeError(msg);
     }
 
     if(max_cut < reaction.range) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{106 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
+        ostringstream msg;
+        msg <<"Reaction range of " << reaction.range << " exceeds maximum cutoff of " << max_cut;
+        runtimeError(msg);
     }
   }
 }
@@ -70,9 +73,10 @@ void local_setup_reaction() {
   /* Make ESPResSo aware that reactants and catalyst are interacting species */
   IA_parameters *data = get_ia_param_safe(reaction.reactant_type, reaction.catalyzer_type);
   
-  if(!data) {    
-	  char *error_msg = runtime_error(128);
-	  ERROR_SPRINTF(error_msg, "{106 interaction parameters for reaction could not be set} ");
+  if(!data) {
+      ostringstream msg;
+      msg <<"interaction parameters for reaction could not be set";
+      runtimeError(msg);
   }
 
   /* Used for the range of the verlet lists */

@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -43,8 +43,8 @@ const Datafield fields[] = {
   {box_l,                    TYPE_DOUBLE, 3, "box_l",             1 },         /* 0  from grid.cpp */
   {dd.cell_grid,                TYPE_INT, 3, "cell_grid",         6 },         /* 1  from cells.cpp */
   {dd.cell_size,             TYPE_DOUBLE, 3, "cell_size",         6 },         /* 2  from cells.cpp */
-  {&dpd_gamma,               TYPE_DOUBLE, 1, "dpd_gamma",         5 },         /* 3  from thermostat.cpp */
-  {&dpd_r_cut,               TYPE_DOUBLE, 1, "dpd_r_cut",         5 },         /* 4  from thermostat.cpp */
+  {&dpd_gamma,               TYPE_DOUBLE, 1, "dpd_gamma",         5 },         /* 3  from dpd.cpp */
+  {&dpd_r_cut,               TYPE_DOUBLE, 1, "dpd_r_cut",         5 },         /* 4  from dpd.cpp */
   {&langevin_gamma,          TYPE_DOUBLE, 1, "gamma",             1 },         /* 5  from thermostat.cpp */
   {&integ_switch,               TYPE_INT, 1, "integ_switch",      1 },         /* 6  from integrate.cpp */
   {local_box_l,              TYPE_DOUBLE, 3, "local_box_l",       2 },         /* 7  from global.cpp */
@@ -78,10 +78,10 @@ const Datafield fields[] = {
   {&max_cut_nonbonded,       TYPE_DOUBLE, 1, "max_cut_nonbonded", 9 },         /* 35 from interaction_data.cpp */
   {&verlet_reuse,            TYPE_DOUBLE, 1, "verlet_reuse",      8 },         /* 36 from integrate.cpp */
   {&lattice_switch,             TYPE_INT, 1, "lattice_switch",    2 },         /* 37 from lattice.cpp */
-  {&dpd_tgamma,              TYPE_DOUBLE, 1, "dpd_tgamma",        6 },         /* 38 from thermostat.cpp */
-  {&dpd_tr_cut,              TYPE_DOUBLE, 1, "dpd_tr_cut",        6 },         /* 39 from thermostat.cpp */
-  {&dpd_twf,                    TYPE_INT, 1, "dpd_twf",           6 },         /* 40 from thermostat.cpp */
-  {&dpd_wf,                     TYPE_INT, 1, "dpd_wf",            5 },         /* 41 from thermostat.cpp */
+  {&dpd_tgamma,              TYPE_DOUBLE, 1, "dpd_tgamma",        6 },         /* 38 from dpd.cpp */
+  {&dpd_tr_cut,              TYPE_DOUBLE, 1, "dpd_tr_cut",        6 },         /* 39 from dpd.cpp */
+  {&dpd_twf,                    TYPE_INT, 1, "dpd_twf",           6 },         /* 40 from dpd.cpp */
+  {&dpd_wf,                     TYPE_INT, 1, "dpd_wf",            5 },         /* 41 from dpd.cpp */
   {&max_cut_bonded,          TYPE_DOUBLE, 1, "max_cut_bonded",    9 },         /* 42 from interaction_data.cpp */
   {&transfer_rate,              TYPE_INT, 1, "vmd_transfer_rate", 5 },         /* 43 from imd_tcl.cpp */
   {&min_global_cut,          TYPE_DOUBLE, 1, "min_global_cut",    5 },         /* 44 from interaction_data.cpp */
@@ -90,7 +90,7 @@ const Datafield fields[] = {
   {&ghmc_mc_res,                TYPE_INT, 1, "ghmc_mc_res",       7 },         /* 47 from ghmc.cpp */
   {&ghmc_mflip,                 TYPE_INT, 1, "ghmc_mflip",        7 },         /* 48 from ghmc.cpp */
   {&ghmc_tscale,                TYPE_INT, 1, "ghmc_tscale",       6 },         /* 49 from ghmc.cpp */
-  {&lb_components,              TYPE_INT, 1, "lb_components",     2 },         /* 50 from ghmc.cpp */
+  {&lb_components,              TYPE_INT, 1, "lb_components",     2 },         /* 50 from lb.cpp */
   {&warnings,                   TYPE_INT, 1, "warnings",          1 },         /* 51 from global.cpp */
   {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles", 1 },         /* 52 from global.cpp */
   {&sd_viscosity,            TYPE_DOUBLE, 1, "sd_viscosoity",              4 },         /* 53 from integrate_sd.cpp */

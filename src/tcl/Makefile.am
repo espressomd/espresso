@@ -47,7 +47,7 @@ libEspressoTcl_la_SOURCES = \
 	grid_tcl.cpp grid_tcl.hpp \
 	iccp3m_tcl.cpp iccp3m_tcl.hpp \
 	imd_tcl.cpp \
-	initialize_interpreter.cpp \
+	initialize_interpreter.cpp initialize_interpreter.hpp \
 	integrate_tcl.cpp integrate_tcl.hpp \
 	interaction_data_tcl.cpp interaction_data_tcl.hpp \
 	lb-boundaries_tcl.cpp lb-boundaries_tcl.hpp \
@@ -109,6 +109,8 @@ libEspressoTcl_la_SOURCES += \
 	endangledist_tcl.cpp endangledist_tcl.hpp \
 	fene_tcl.cpp fene_tcl.hpp \
 	harmonic_tcl.cpp harmonic_tcl.hpp \
+	quartic_tcl.cpp quartic_tcl.hpp \
+	bonded_coulomb_tcl.cpp bonded_coulomb_tcl.hpp \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
 	object-in-fluid/area_force_local_tcl.cpp \
@@ -162,6 +164,14 @@ bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\" $(AM_CPPFLAGS)
 Espresso_install_SOURCES = scriptsdir.cpp main.cpp
 Espresso_install_LDADD = libEspressoTcl.la ../core/libEspresso.la 
+
+# generate the Tcl library for the python interpreter
+if PYTHON_INTERFACE
+noinst_LTLIBRARIES += libEspressoTcl4Py.la
+libEspressoTcl4Py_la_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
+libEspressoTcl4Py_la_SOURCES = scriptsdir.cpp
+libEspressoTcl4Py_la_LIBADD = libEspressoTcl.la
+endif
 
 ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
 ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)

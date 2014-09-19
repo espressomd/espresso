@@ -53,8 +53,9 @@ int observable_calc_particle_velocities(observable* self) {
   double* A = self->last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -72,8 +73,9 @@ int observable_calc_particle_body_velocities(observable* self) {
   double* A = self->last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -116,8 +118,9 @@ int observable_calc_particle_angular_momentum(observable* self) {
   double* A = self->last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -154,8 +157,9 @@ int observable_calc_particle_body_angular_momentum(observable* self) {
   double* A = self->last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -187,8 +191,9 @@ int observable_calc_particle_currents(observable* self) {
   double charge;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -209,8 +214,9 @@ int observable_calc_currents(observable* self) {
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -234,8 +240,9 @@ int observable_calc_dipole_moment(observable* self) {
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -260,8 +267,9 @@ int observable_calc_com_velocity(observable* self) {
   double total_mass = 0;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -289,8 +297,9 @@ int observable_calc_blocked_com_velocity(observable* self) {
   double total_mass = 0;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -324,8 +333,9 @@ int observable_calc_blocked_com_position(observable* self) {
   double total_mass = 0;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -355,8 +365,9 @@ int observable_calc_com_position(observable* self) {
   double total_mass = 0;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -380,8 +391,9 @@ int observable_calc_com_force(observable* self) {
   double f_com[3] = { 0. , 0., 0. } ;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -408,8 +420,9 @@ int observable_calc_blocked_com_force(observable* self) {
   unsigned int id;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -437,8 +450,9 @@ int observable_calc_density_profile(observable* self) {
   IntList* ids;
   profile_data* pdata;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   pdata=(profile_data*) self->container;
@@ -692,8 +706,9 @@ int observable_calc_radial_density_profile(observable* self) {
   double bin_volume;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   radial_profile_data* pdata;
@@ -737,8 +752,9 @@ int observable_calc_radial_flux_density_profile(observable* self) {
   double bin_volume;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   radial_profile_data* pdata;
@@ -822,8 +838,9 @@ int observable_calc_flux_density_profile(observable* self) {
   double bin_volume;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   profile_data* pdata;
@@ -873,8 +890,9 @@ int observable_calc_particle_positions(observable* self) {
   double* A = self->last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -892,8 +910,9 @@ int observable_calc_particle_forces(observable* self) {
   double* A = self->last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   ids=(IntList*) self->container;
@@ -910,8 +929,9 @@ int observable_calc_particle_forces(observable* self) {
 
 int observable_stress_tensor(observable* self) {
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   observable_compute_stress_tensor(1,self->last_value,self->n);
@@ -923,8 +943,9 @@ int observable_calc_stress_tensor_acf_obs(observable* self) {
   double* A = self->last_value;
   double stress_tensor[9];
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   observable_compute_stress_tensor(1,stress_tensor,9);
@@ -977,8 +998,9 @@ int observable_calc_structure_factor(observable* self) {
   twoPI_L = 2*PI/box_l[0];
   
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
 
@@ -1024,8 +1046,9 @@ int observable_calc_interacts_with (observable* self) {
   ids1=params->ids1;
   ids2=params->ids2;
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   for ( i = 0; i<ids1->n; i++ ) {

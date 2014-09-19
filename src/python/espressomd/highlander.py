@@ -64,15 +64,4 @@ def highlander(klass):
 
     return klass
 
-@highlander
-class A:
-    def __init__(self, x):
-        "Create it."
-        self.x = x
-    def __del__(self):
-        print("A.del called")
-
-@highlander
-class B:
-    pass
 

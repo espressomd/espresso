@@ -37,8 +37,9 @@ int analyze_fold_molecules(float *coord, double shift[3])
   if ( n_molecules < 0 ) return ES_ERROR;
 
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{059 analyze_fold_molecules: could not sort particle config, particle ids not consecutive?} ");
+      ostringstream msg;
+      msg <<"analyze_fold_molecules: could not sort particle config, particle ids not consecutive?";
+      runtimeError(msg);
     return ES_ERROR;
   }
 
@@ -60,10 +61,10 @@ int analyze_fold_molecules(float *coord, double shift[3])
 	    cm_tmp     += coord[ind];
 	  }
 	  cm_tmp /= (double)mol_size;
-	  if(cm_tmp < -10e-6 || cm_tmp > box_l[i]+10e-6) {
-	    char *errtxt = runtime_error(128 + ES_INTEGER_SPACE + 2*ES_DOUBLE_SPACE);
-	    ERROR_SPRINTF(errtxt,"{060 analyze_fold_molecules: chain center of mass is out of range (coord %d: %.14f not in box_l %.14f)} ",
-		    i,cm_tmp,box_l[i]);
+      if(cm_tmp < -10e-6 || cm_tmp > box_l[i]+10e-6) {
+          ostringstream msg;
+          msg <<"analyze_fold_molecules: chain center of mass is out of range (coord " << i << ": " << cm_tmp << " not in box_l " << box_l[i] << ")";
+          runtimeError(msg);
 	    return ES_ERROR;
 	  }
 	}

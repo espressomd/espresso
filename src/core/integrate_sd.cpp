@@ -99,27 +99,25 @@ int sd_get_particle_num();
 
 void integrator_sanity_checks_sd()
 {
-  char *errtext;
-
   if ( time_step < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext, "{010 time_step not set} ");
-  }
-  if ( skin < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{011 skin not set} ");
+      ostringstream msg;
+      msg <<"time_step not set";
+      runtimeError(msg);
   }
   if ( temperature < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
+      ostringstream msg;
+      msg <<"thermostat not initialized";
+      runtimeError(msg);
   }
   if (sd_radius < 0) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{Stokesian Dynamics Hydrodynamic particle radius not initialized} ");
+      ostringstream msg;
+      msg <<"Stokesian Dynamics Hydrodynamic particle radius not initialized";
+      runtimeError(msg);
   }
   if (sd_viscosity < 0) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{Stokesian Dynamics fluid viscosity not initialized} ");
+      ostringstream msg;
+      msg <<"Stokesian Dynamics fluid viscosity not initialized";
+      runtimeError(msg);
   }
 }
 

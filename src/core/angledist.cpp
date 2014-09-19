@@ -126,6 +126,8 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
         pwdistmin = pwdist[k];
       }
       break;
+    //default://@TODO: handle default case
+      //  break;
     }
   }
 

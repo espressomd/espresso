@@ -68,13 +68,11 @@
 #include "EspressoSystemInterface.hpp"
 #include "statistics_observable.hpp"
 
+using namespace std;
+
 int this_node = -1;
 int n_nodes = -1;
 MPI_Comm comm_cart;
-/**********************************************
- * slave callbacks.
- **********************************************/
-typedef void (SlaveCallback)(int node, int param);
 
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST \
@@ -119,7 +117,6 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_sync_topo_part_info_slave) \
   CB(mpi_send_mass_slave) \
   CB(mpi_send_solvation_slave) \
-  CB(mpi_gather_runtime_errors_slave) \
   CB(mpi_send_exclusion_slave) \
   CB(mpi_bcast_lb_params_slave) \
   CB(mpi_bcast_cuda_global_part_vars_slave) \
@@ -152,6 +149,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_external_potential_tabulated_read_potential_file_slave) \
   CB(mpi_external_potential_sum_energies_slave) \
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
+  CB(mpiParallelRuntimeErrorsGatherSlave)        \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -160,7 +158,7 @@ CALLBACK_LIST
 // create the list of callbacks
 #undef CB
 #define CB(name) name,
-static SlaveCallback *slave_callbacks[] = {
+static const SlaveCallback *slave_callbacks[] = {
   CALLBACK_LIST
 };
 
@@ -176,7 +174,6 @@ const char *names[] = {
 
 // tag which is used by MPI send/recv inside the slave functions
 #define SOME_TAG 42
-
 
 /** The requests are compiled statically here, so that after a crash
     you can get the last issued request from the debugger. */ 
@@ -219,9 +216,12 @@ void mpi_init(int *argc, char ***argv)
   MPI_Comm_create_errhandler((MPI_Handler_function *)mpi_core, &mpi_errh);
   MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
+
+  initRuntimeErrors();
 }
 
-static void mpi_call(SlaveCallback cb, int node, int param) {
+#ifdef HAVE_MPI
+void mpi_call(SlaveCallback cb, int node, int param) {
   // find req number in callback array
   int reqcode;
   for (reqcode = 0; reqcode < N_CALLBACKS; reqcode++) {
@@ -245,6 +245,11 @@ static void mpi_call(SlaveCallback cb, int node, int param) {
   MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
 }
+#else
+
+void mpi_call(SlaveCallback cb, int node, int param) {}
+
+#endif
 
 /**************** REQ_TERM ************/
 
@@ -317,27 +322,25 @@ void mpi_who_has()
   Cell *cell;
   int *sizes = (int*)malloc(sizeof(int)*n_nodes);
   int *pdata = NULL;
-  int pdata_s = 0, i, c;
-  int pnode;
-  int n_part;
+  int pdata_s = 0;
 
   mpi_call(mpi_who_has_slave, -1, 0);
 
-  n_part = cells_get_n_particles();
+  int n_part = cells_get_n_particles();
   /* first collect number of particles on each node */
   MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 
-  for (i = 0; i <= max_seen_particle; i++)
+  for (int i = 0; i <= max_seen_particle; i++)
     particle_node[i] = -1;
 
   /* then fetch particle locations */
-  for (pnode = 0; pnode < n_nodes; pnode++) {
+  for (int pnode = 0; pnode < n_nodes; pnode++) {
     COMM_TRACE(fprintf(stderr, "node %d reports %d particles\n",
 		       pnode, sizes[pnode]));
     if (pnode == this_node) {
-      for (c = 0; c < local_cells.n; c++) {
+      for (int c = 0; c < local_cells.n; c++) {
 	cell = local_cells.cell[c];
-	for (i = 0; i < cell->n; i++)
+	for (int i = 0; i < cell->n; i++)
 	  particle_node[cell->part[i].p.identity] = this_node;
       }
     }
@@ -348,7 +351,7 @@ void mpi_who_has()
       }
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG,
 	       comm_cart, MPI_STATUS_IGNORE);
-      for (i = 0; i < sizes[pnode]; i++)
+      for (int i = 0; i < sizes[pnode]; i++)
 	particle_node[pdata[i]] = pnode;
     }
   }
@@ -2398,56 +2401,6 @@ void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy)
 #endif
 }
 
-
-
-/******************* REQ_GET_ERRS ********************/
-
-int mpi_gather_runtime_errors(char **errors)
-{
-  // Tell other processors to send their erros
-  mpi_call(mpi_gather_runtime_errors_slave, -1, 0);
-
-  // If no processor encountered an error, return
-  if (!check_runtime_errors())
-    return ES_OK;
-
-  // gather the maximum length of the error messages
-  int *errcnt = (int*)malloc(n_nodes*sizeof(int));
-  MPI_Gather(&n_error_msg, 1, MPI_INT, errcnt, 1, MPI_INT, 0, comm_cart);
-
-  for (int node = 0; node < n_nodes; node++) {
-    if (errcnt[node] > 0) {
-      errors[node] = (char *)malloc(errcnt[node]);
-
-      if (node == 0)
-	strcpy(errors[node], error_msg);
-      else 
-	MPI_Recv(errors[node], errcnt[node], MPI_CHAR, node, 0, comm_cart, MPI_STATUS_IGNORE);
-    }
-    else
-      errors[node] = NULL;
-  }
-
-  /* reset error message on master node */
-  error_msg = (char*)realloc(error_msg, n_error_msg = 0);
-
-  free(errcnt);
-
-  return ES_ERROR;
-}
-
-void mpi_gather_runtime_errors_slave(int node, int parm)
-{
-  if (!check_runtime_errors())
-    return;
-
-  MPI_Gather(&n_error_msg, 1, MPI_INT, NULL, 0, MPI_INT, 0, comm_cart);
-  if (n_error_msg > 0) {
-    MPI_Send(error_msg, n_error_msg, MPI_CHAR, 0, 0, comm_cart);
-    /* reset error message on slave node */
-    error_msg = (char*)realloc(error_msg, n_error_msg = 0);
-  }
-}
 
 /********************* REQ_SET_EXCL ********/
 void mpi_send_exclusion(int part1, int part2, int _delete)
