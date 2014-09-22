@@ -3,20 +3,21 @@ language: cpp
 before_install:
  - sudo apt-get update
  - sudo apt-get install tcl-dev #cython python-numpy
- - if [[ $with_fftw = true ]]; then sudo apt-get install libfftw3-dev; fi
- - if [[ $with_mpi = true ]]; then sudo apt-get install libopenmpi-dev openmpi-bin; fi
+ - if [[ x$with_mpi != xfalse ]]; then sudo apt-get install libopenmpi-dev openmpi-bin; fi
+ - if [[ x$with_fftw != xfalse ]]; then sudo apt-get install libfftw3-dev; fi
 
 env:
-  - with_fftw=true with_mpi=true
-  - with_fftw=false with_mpi=false
+  - with_fftw=false with_mpi=false myconfig=maxset
+  - myconfig=default
+  - myconfig=maxset
+
+compiler:
+  - gcc
 
 matrix:
-  exclude:
+  include:
     - compiler: clang
-      env: with_fftw=true with_mpi=true
+      env: with_fftw=true with_mpi=false myconfig=maxset
 
 script: ./maintainer/travis/build.sh
 
-compiler:
-  - clang
-  - gcc
