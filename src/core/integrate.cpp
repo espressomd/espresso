@@ -209,7 +209,6 @@ void integrate_ensemble_init()
 
 void integrate_vv(int n_steps, int reuse_forces)
 {
-    int i;
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -274,7 +273,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 
 #ifdef GHMC
     if(thermo_switch & THERMO_GHMC) {
-      if ((int) fmod(step, ghmc_nmd) == 0)
+      if (step % ghmc_nmd == 0)
         ghmc_momentum_update();
     }
 #endif
@@ -385,7 +384,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 
 #ifdef GHMC
     if(thermo_switch & THERMO_GHMC) {
-      if ((int) fmod(i,ghmc_nmd) == ghmc_nmd-1)
+      if (step % ghmc_nmd == ghmc_nmd-1)
         ghmc_mc();
     }
 #endif
