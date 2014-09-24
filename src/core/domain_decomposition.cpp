@@ -157,7 +157,7 @@ void dd_create_cell_grid()
 	  dd.cell_grid[i] = 1;
 	}
 #ifdef LEES_EDWARDS
-        if ( i == 0 && dd.cell_grid[0] < 2 ) {
+        if ( (i == 0) && (dd.cell_grid[0] < 2) ) {
 	  ostringstream msg;
 	  msg << "interaction range " << max_range << " in direction "
 	      << i << " is larger than the local box size " << local_box_l[i];
