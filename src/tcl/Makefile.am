@@ -52,6 +52,7 @@ libEspressoTcl_la_SOURCES = \
 	interaction_data_tcl.cpp interaction_data_tcl.hpp \
 	lb-boundaries_tcl.cpp lb-boundaries_tcl.hpp \
 	lb_tcl.cpp lb_tcl.hpp \
+	lees_edwards_tcl.cpp lees_edwards_tcl.hpp \
 	metadynamics_tcl.cpp metadynamics_tcl.hpp \
 	nemd_tcl.cpp \
 	mol_cut_tcl.cpp mol_cut_tcl.hpp \

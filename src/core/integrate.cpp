@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include "lees_edwards.hpp"
 #include "utils.hpp"
 #include "integrate.hpp"
 #include "reaction.hpp"
@@ -781,10 +782,46 @@ void propagate_vel_pos()
       propagate_omega_quat_particle(&p[i]);
 #endif
 
-      /* Verlet criterion check */
-      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
+#ifdef LEES_EDWARDS
+      /* test for crossing of a y-pbc: requires adjustment of velocity.*/
+      {
+                    int   b1, delta_box;
+                    b1           = (int)floor( p[i].r.p[1]*box_l_i[1]);
+                    if( b1 != 0 ){
+                         delta_box    = b1 - (int)floor(( p[i].r.p[1] - p[i].m.v[1])*box_l_i[1] );
+                         if( abs(delta_box) > 1 ){
+                             fprintf(stderr, "Error! Particle moved more than one box length in 1 step\n");
+                             exit( 8 );
+                         } 
+                         p[i].m.v[0]     -= delta_box * lees_edwards_rate;   
+                         p[i].r.p[0]     -= delta_box * lees_edwards_offset; 
+                         p[i].r.p[1]     -= delta_box * box_l[1];
+                         p[i].l.i[1]     += delta_box; 
+                         while( p[i].r.p[1] >  box_l[1] ) {p[i].r.p[1] -= box_l[1]; p[i].l.i[1]++;}
+                         while( p[i].r.p[1] <  0.0 )      {p[i].r.p[1] += box_l[1]; p[i].l.i[1]--;}
+                         resort_particles = 1;
+                    }
+                    /* Branch prediction on most systems should mean there is minimal cost here */ 
+                    while( p[i].r.p[0] >  box_l[0] ) {p[i].r.p[0] -= box_l[0]; p[i].l.i[0]++;}
+                    while( p[i].r.p[0] <  0.0 )      {p[i].r.p[0] += box_l[0]; p[i].l.i[0]--;}
+                    while( p[i].r.p[2] >  box_l[2] ) {p[i].r.p[2] -= box_l[2]; p[i].l.i[2]++;}
+                    while( p[i].r.p[2] <  0.0 )      {p[i].r.p[2] += box_l[2]; p[i].l.i[2]--;}
+      }
+#endif
+
+      /* Verlet criterion check*/
+      if(SQR(p[i].r.p[0]-p[i].l.p_old[0]) 
+        +SQR(p[i].r.p[1]-p[i].l.p_old[1])
+        +SQR(p[i].r.p[2]-p[i].l.p_old[2]) > skin2) 
+            resort_particles=1;
+
+
     }
   }
+
+#ifdef LEES_EDWARDS /* would be nice to be more refined about this */
+  resort_particles = 1;
+#endif
 
   announce_resort_particles();
 

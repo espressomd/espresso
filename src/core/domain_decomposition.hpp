@@ -70,6 +70,11 @@ typedef struct {
   ParticleList *pList;
   /** Verlet list for non bonded interactions of a cell with a neighbor cell. */
   PairList vList;
+
+#ifdef CELL_DEBUG
+  double my_pos[3];  /* position of the cell corner, only here for debug */
+#endif
+
 } IA_Neighbor;
 
 
@@ -207,6 +212,25 @@ void calculate_link_cell_energies();
 /** Nonbonded and bonded virials calculation using link-cell method */
 void calculate_link_cell_virials(int v_comp);
 
+/** Fill a communication cell pointer list. Fill the cell pointers of
+    all cells which are inside a rectangular subgrid of the 3D cell
+    grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
+    lower left corner lc up to the high top corner hc. The cell
+    pointer list part_lists must already be large enough.
+    \param part_lists  List of cell pointers to store the result.
+    \param lc          lower left corner of the subgrid.
+    \param hc          high up corner of the subgrid.
+ */
+int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]);
+
+
+/** Returns pointer to the cell which corresponds to the position if
+    the position is in the nodes spatial domain otherwise a NULL
+    pointer. */
+Cell *dd_save_position_to_cell(double pos[3]);
+
+/** Of every two communication rounds, set the first receivers to prefetch and poststore */
+void dd_assign_prefetches(GhostCommunicator *comm);
 /*@}*/
 
 #endif
