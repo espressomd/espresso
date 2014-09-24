@@ -114,7 +114,7 @@ typedef struct {
 #endif
 
 #ifdef VIRTUAL_SITES
-  /** is particle virual
+  /** is particle virtual
       0 = real particle
       else = virual particle */
   int isVirtual;
@@ -284,6 +284,9 @@ typedef struct {
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
+#ifdef LEES_EDWARDS
+  int myIndex[3];
+#endif
 } ParticleList;
 
 /************************************************

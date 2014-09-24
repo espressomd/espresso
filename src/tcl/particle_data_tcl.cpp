@@ -251,7 +251,13 @@ void tclcommand_part_print_position(Particle *part, char *buffer, Tcl_Interp *in
   int img[3];
   memcpy(ppos, part->r.p, 3*sizeof(double));
   memcpy(img, part->l.i, 3*sizeof(int));
+  
+ 
+#ifdef LEES_EDWARDS
+//  do not unfold position by default for LE case.
+#else
   unfold_position(ppos, img);
+#endif
   Tcl_PrintDouble(interp, ppos[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, ppos[1], buffer);
@@ -266,14 +272,33 @@ void tclcommand_part_print_folded_position(Particle *part, char *buffer, Tcl_Int
   int img[3];
   memcpy(ppos, part->r.p, 3*sizeof(double));
   memcpy(img, part->l.i, 3*sizeof(int));
+  
+#ifdef LEES_EDWARDS
+  double pvel[3];
+  memcpy(pvel, part->m.v, 3*sizeof(double));
+  fold_position(ppos, pvel, img);
+#else
   fold_position(ppos, img);
-
+#endif
+  
   Tcl_PrintDouble(interp, ppos[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, ppos[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, ppos[2], buffer);
+#ifdef LEES_EDWARDS
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+#else
   Tcl_AppendResult(interp, buffer, (char *)NULL);
+#endif
+#ifdef LEES_EDWARDS
+  Tcl_PrintDouble(interp, pvel[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, pvel[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, pvel[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+#endif
 }
 
 void tclcommand_part_print_bonding_structure(Particle *part, char *buffer, Tcl_Interp *interp)
@@ -612,7 +637,7 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 		     int part_num)
 {
 
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[6*(TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE)];
   Particle part;
 
   if (part_num > max_seen_particle) {

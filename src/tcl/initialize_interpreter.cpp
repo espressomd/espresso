@@ -36,6 +36,7 @@
 #include "integrate_tcl.hpp"
 #include "interaction_data_tcl.hpp"
 #include "lb_tcl.hpp"
+#include "lees_edwards_tcl.hpp"
 #include "lj_tcl.hpp"
 #include "maggs_tcl.hpp"
 #include "metadynamics_tcl.hpp"
@@ -207,6 +208,10 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
+
+/* #ifdef LEES_EDWARDS Register the command even if not implemented, so it can return an informative error*/ 
+  REGISTER_COMMAND("lees_edwards_offset", tclcommand_lees_edwards_offset);
+/* #endif */
 #ifdef CATALYTIC_REACTIONS
   REGISTER_COMMAND("reaction", tclcommand_reaction);
 #endif

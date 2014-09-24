@@ -21,7 +21,7 @@
 /** \file ghosts.cpp   Ghost particles and particle exchange.
  *
  *  For more information on ghosts,
- *  see \ref ghosts.hpp "ghosts.h" 
+ *  see \ref ghosts.hpp "ghosts.hpp" 
 */
 #include <mpi.h>
 #include <cstdio>
@@ -57,7 +57,7 @@ std::vector<int> r_bondbuffer;
 
 static MPI_Op MPI_FORCES_SUM;
 
-/** wether the ghosts should also have velocity information, e. g. for DPD or RATTLE.
+/** whether the ghosts should also have velocity information, e. g. for DPD or RATTLE.
     You need this whenever you need the relative velocity of two particles.
     NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
 */
@@ -94,7 +94,7 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts)
 {
   int p, n_buffer_new;
 
-  if (data_parts == GHOSTTRANS_PARTNUM)
+  if (data_parts & GHOSTTRANS_PARTNUM)
     n_buffer_new = sizeof(int)*gc->n_part_lists;
   else {
     int count = 0;
@@ -148,7 +148,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
   char *insert = s_buffer;
   for (int pl = 0; pl < gc->n_part_lists; pl++) {
     int np   = gc->part_lists[pl]->n;
-    if (data_parts == GHOSTTRANS_PARTNUM) {
+    if (data_parts & GHOSTTRANS_PARTNUM) {
       *(int *)insert = np;
       insert += sizeof(int);
       GHOST_TRACE(fprintf(stderr, "%d: %d particles assigned\n",
@@ -181,9 +181,11 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
 	  ParticlePosition *pp = (ParticlePosition *)insert;
 	  int i;
 	  memcpy(pp, &pt->r, sizeof(ParticlePosition));
-	  //fprintf(stderr,"%d prep_send_buf: ghost %d shift %f,%f,%f\n",this_node,pt->p.identity,gc->shift[0],gc->shift[1],gc->shift[2]);
 	  for (i = 0; i < 3; i++)
 	    pp->p[i] += gc->shift[i];
+      /* No special wrapping for Lees-Edwards here:
+       * LE wrap-on-receive instead, for convenience in
+       * mapping to local cell geometry. */
 	  insert +=  sizeof(ParticlePosition);
 	}
 	else if (data_parts & GHOSTTRANS_POSITION) {
@@ -279,7 +281,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 
   for (int pl = 0; pl < gc->n_part_lists; pl++) {
     ParticleList *cur_list = gc->part_lists[pl];
-    if (data_parts == GHOSTTRANS_PARTNUM) {
+    if (data_parts & GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
 			  this_node, cur_list, *(int *)retrieve, gc->node));
       prepare_ghost_cell(cur_list, *(int *)retrieve);
@@ -319,10 +321,31 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 	if (data_parts & GHOSTTRANS_POSITION) {
 	  memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
 	  retrieve +=  sizeof(ParticlePosition);
+#ifdef LEES_EDWARDS
+      /* special wrapping conditions for x component of y LE shift */
+      if( gc->shift[1] != 0.0 ){
+               /* LE transforms are wrapped
+                  ---Using this method because its a shortcut to getting a neat-looking verlet list. */
+               if( pt->r.p[0]
+                - (my_left[0] + cur_list->myIndex[0]*dd.cell_size[0]) >  2*dd.cell_size[0] )
+                   pt->r.p[0]-=box_l[0];
+               if( pt->r.p[0]
+                - (my_left[0] + cur_list->myIndex[0]*dd.cell_size[0]) < -2*dd.cell_size[0] )
+                   pt->r.p[0]+=box_l[0];
+      }
+#endif 
 	}
 	if (data_parts & GHOSTTRANS_MOMENTUM) {
 	  memcpy(&pt->m, retrieve, sizeof(ParticleMomentum));
 	  retrieve +=  sizeof(ParticleMomentum);
+#ifdef LEES_EDWARDS
+     /* give ghost particles correct velocity for the main
+      * non-ghost LE reference frame */
+      if( gc->shift[1] > 0.0 )
+                pt->m.v[0] += lees_edwards_rate;
+      else if( gc->shift[1] < 0.0 )
+                pt->m.v[0] -= lees_edwards_rate;
+#endif
 	}
 	if (data_parts & GHOSTTRANS_FORCE) {
 	  memcpy(&pt->f, retrieve, sizeof(ParticleForce));
@@ -394,8 +417,9 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
   for (pl = 0; pl < offset; pl++) {
     Cell *src_list = gc->part_lists[pl];
     Cell *dst_list = gc->part_lists[pl + offset];
-    if (data_parts == GHOSTTRANS_PARTNUM) {
-      prepare_ghost_cell(dst_list, src_list->n);
+
+    if (data_parts & GHOSTTRANS_PARTNUM) {
+        prepare_ghost_cell(dst_list, src_list->n);
     }
     else {
       int np = src_list->n;
@@ -421,11 +445,31 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 	  memcpy(&pt2->r, &pt1->r, sizeof(ParticlePosition));
 	  for (i = 0; i < 3; i++)
 	    pt2->r.p[i] += gc->shift[i];
+#ifdef LEES_EDWARDS
+      /* special wrapping conditions for x component of y LE shift */
+      if( gc->shift[1] != 0.0 ){
+        /* LE transforms are wrapped */
+         if(   pt2->r.p[0]
+            - (my_left[0] + dst_list->myIndex[0]*dd.cell_size[0]) >  2*dd.cell_size[0] ) 
+               pt2->r.p[0]-=box_l[0];
+         if( pt2->r.p[0]
+            - (my_left[0] + dst_list->myIndex[0]*dd.cell_size[0]) < -2*dd.cell_size[0] ) 
+               pt2->r.p[0]+=box_l[0];
+      }
+#endif
 	}
 	else if (data_parts & GHOSTTRANS_POSITION)
 	  memcpy(&pt2->r, &pt1->r, sizeof(ParticlePosition));
-	if (data_parts & GHOSTTRANS_MOMENTUM)
+	if (data_parts & GHOSTTRANS_MOMENTUM) {
 	  memcpy(&pt2->m, &pt1->m, sizeof(ParticleMomentum));
+#ifdef LEES_EDWARDS
+            /* special wrapping conditions for x component of y LE shift */
+            if( gc->shift[1] > 0.0 )
+                pt2->m.v[0] += lees_edwards_rate;
+            else if( gc->shift[1] < 0.0 )
+                pt2->m.v[0] -= lees_edwards_rate;
+#endif
+    }
 	if (data_parts & GHOSTTRANS_FORCE)
 	  add_force(&pt2->f, &pt1->f);
 #ifdef LB
@@ -456,14 +500,14 @@ void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type)
 static int is_send_op(int comm_type, int node)
 {
   return ((comm_type == GHOST_SEND) || (comm_type == GHOST_RDCE) ||
-	  (comm_type == GHOST_BCST && node == this_node));
+          (comm_type == GHOST_BCST && node == this_node));
 }
 
 static int is_recv_op(int comm_type, int node)
 {
   return ((comm_type == GHOST_RECV) ||
-	  (comm_type == GHOST_BCST && node != this_node) ||
-	  (comm_type == GHOST_RDCE && node == this_node));
+          (comm_type == GHOST_BCST && node != this_node) ||
+          (comm_type == GHOST_RDCE && node == this_node));
 }
 
 void ghost_communicator(GhostCommunicator *gc)
@@ -521,7 +565,7 @@ void ghost_communicator(GhostCommunicator *gc)
 
       /* recv buffer for recv and multinode operations to this node */
       if (is_recv_op(comm_type, node))
-	prepare_recv_buffer(gcn, data_parts);
+         prepare_recv_buffer(gcn, data_parts);
 
       /* transfer data */
       switch (comm_type) {

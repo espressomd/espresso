@@ -10,6 +10,7 @@ New user-visible features
 
 * New quartic bonded interaction
 * New bonded coulomb interaction
+* Lees Edwards boundaries for sheer stuff
 
 Known bugs
 ----------

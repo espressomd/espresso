@@ -420,20 +420,25 @@ int Lattice::global_pos_to_lattice_halo_index(double* pos, index_t*  ind) {
 /********************** static Functions **********************/
 
 void Lattice::map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
-    //not sure why I don't have access to agrid here so I make a temp var and pass it to this function
-    int i;
-    double rel[3];
-    // fold the position onto the local box, note here ind is used as a dummy variable
-    for (i=0;i<3;i++) {
-        pos[i] = pos[i]-0.5*tmp_agrid;
-    }
+  //not sure why I don't have access to agrid here so I make a temp var and pass it to this function
+  int i;
+  double rel[3];
+  // fold the position onto the local box, note here ind is used as a dummy variable
+  for (i=0;i<3;i++) {
+    pos[i] = pos[i]-0.5*tmp_agrid;
+  }
 
-    fold_position (pos,ind);
+#ifdef LEES_EDWARDS
+  double tmp[3];
+  fold_position (pos,tmp,ind);
+#else
+  fold_position (pos,ind);
+#endif
 
-    // convert the position into lower left grid point
-    for (i=0;i<3;i++) {
-        rel[i] = (pos[i])/tmp_agrid;
-    }
+  // convert the position into lower left grid point
+  for (i=0;i<3;i++) {
+    rel[i] = (pos[i])/tmp_agrid;
+  }
 
     // calculate the index of the position
     for (i=0;i<3;i++) {
