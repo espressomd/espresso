@@ -160,7 +160,7 @@ cdef class ParticleHandle:
 
       def __get__(self):
         self.updateParticleData()
-        cdef double* x
+        cdef double* x = NULL
         pointer_to_mass(&(self.particleData), x)
         return x[0]
 
