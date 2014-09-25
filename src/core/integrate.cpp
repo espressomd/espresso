@@ -385,11 +385,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 
 #ifdef GHMC
     if(thermo_switch & THERMO_GHMC) {
-<<<<<<< HEAD
-      if ((int) fmod(step,ghmc_nmd) == ghmc_nmd-1)
-=======
       if (step % ghmc_nmd == ghmc_nmd-1)
->>>>>>> upstream/master
         ghmc_mc();
     }
 #endif
