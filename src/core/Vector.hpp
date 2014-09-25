@@ -49,7 +49,13 @@ public:
   Scalar &operator[](int i) {
     return d[i];
   };
-  
+
+  Scalar dot(Vector<n, Scalar> b) {
+    Scalar sum = 0.0;
+    for(int i = 0; i < n; i++)
+      sum += d[i]*b[i];
+    return sum;
+  };  
 };
 
 typedef Vector<3, double> Vector3d;
