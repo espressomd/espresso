@@ -228,7 +228,7 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
   fprintf(outfile,"local_index_offset %d %d %d\n", lattice->local_index_offset[0], lattice->local_index_offset[1], lattice->local_index_offset[2]);
 
 
-  fprintf(outfile, "element_size %d\n", lattice->element_size);
+  fprintf(outfile, "element_size %lu\n", lattice->element_size);
 
   
   for (i=0; i<lattice->halo_grid[0]; i++) 
