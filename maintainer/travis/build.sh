@@ -49,6 +49,7 @@ function cmd {
 [ -z "$myconfig" ] && myconfig="default"
 ! $with_mpi && check_procs=1
 [ -z "$check_procs" ] && check_procs=4
+[ -z "$make_check" ] && make_check="true"
 
 if $insource; then
     builddir=$srcdir
@@ -132,13 +133,15 @@ cmd "make" || exit $?
 end "BUILD"
 
 # CHECK
-start "TEST"
+if $make_check; then
+    start "TEST"
 
-cmd "make check $make_params"
-ec=$?
-if [ $ec != 0 ]; then
-    cat $srcdir/testsuite/runtest.log
-    exit $ec
+    cmd "make check $make_params"
+    ec=$?
+    if [ $ec != 0 ]; then
+        cat $srcdir/testsuite/runtest.log
+        exit $ec
+    fi
+
+    end "TEST"
 fi
-
-end "TEST"
