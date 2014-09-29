@@ -71,43 +71,43 @@
 #define VIRTUAL_SITES_RELATIVE
 
 // DEBUG Switches
-#define LJ_WARN_WHEN_CLOSE
+// #define LJ_WARN_WHEN_CLOSE
 
-#define ADDITIONAL_CHECKS
-#define ASYNC_BARRIER
+// #define ADDITIONAL_CHECKS
+// #define ASYNC_BARRIER
 
-#define COMM_DEBUG
-#define EVENT_DEBUG
-#define INTEG_DEBUG
-#define CELL_DEBUG
-#define GHOST_DEBUG
-#define LATTICE_DEBUG
-#define HALO_DEBUG
-#define GRID_DEBUG
-#define VERLET_DEBUG
-#define PARTICLE_DEBUG
-#define P3M_DEBUG
-#define EWALD_DEBUG
-#define FFT_DEBUG
-#define RANDOM_DEBUG
-#define FORCE_DEBUG
-#define THERMO_DEBUG
-#define LJ_DEBUG
-#define MORSE_DEBUG
-#define ESR_DEBUG
-#define ESK_DEBUG
-#define FENE_DEBUG
-#define GHOST_FORCE_DEBUG
-#define STAT_DEBUG
-#define POLY_DEBUG
-#define MOLFORCES_DEBUG
-#define PTENSOR_DEBUG
-#define MEM_DEBUG
-#define MAGGS_DEBUG
-#define LB_DEBUG
-#define VIRTUAL_SITES_DEBUG
+// #define COMM_DEBUG
+// #define EVENT_DEBUG
+// #define INTEG_DEBUG
+// #define CELL_DEBUG
+// #define GHOST_DEBUG
+// #define LATTICE_DEBUG
+// #define HALO_DEBUG
+// #define GRID_DEBUG
+// #define VERLET_DEBUG
+// #define PARTICLE_DEBUG
+// #define P3M_DEBUG
+// #define EWALD_DEBUG
+// #define FFT_DEBUG
+// #define RANDOM_DEBUG
+// #define FORCE_DEBUG
+// #define THERMO_DEBUG
+// #define LJ_DEBUG
+// #define MORSE_DEBUG
+// #define ESR_DEBUG
+// #define ESK_DEBUG
+// #define FENE_DEBUG
+// #define GHOST_FORCE_DEBUG
+// #define STAT_DEBUG
+// #define POLY_DEBUG
+// #define MOLFORCES_DEBUG
+// #define PTENSOR_DEBUG
+// #define MEM_DEBUG
+// #define MAGGS_DEBUG
+// #define LB_DEBUG
+// #define VIRTUAL_SITES_DEBUG
 
-#define MPI_CORE
-#define FORCE_CORE
+// #define MPI_CORE
+// #define FORCE_CORE
 
-#define ONEPART_DEBUG
+// #define ONEPART_DEBUG

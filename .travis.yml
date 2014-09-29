@@ -7,9 +7,29 @@ before_install:
  - if [[ x$with_fftw != xfalse ]]; then sudo apt-get install libfftw3-dev; fi
 
 env:
+  - with_fftw=true with_mpi=true myconfig=default
+  - with_fftw=false with_mpi=true myconfig=default
+  - with_fftw=false with_mpi=false myconfig=default
+  - with_fftw=true with_mpi=false myconfig=default
+
+  - with_fftw=true with_mpi=true myconfig=maxset
+  - with_fftw=false with_mpi=true myconfig=maxset
   - with_fftw=false with_mpi=false myconfig=maxset
-  - myconfig=default
-  - myconfig=maxset
+  - with_fftw=true with_mpi=false myconfig=maxset
+
+  - with_fftw=true with_mpi=true myconfig=nocheck-maxset
+  - with_fftw=false with_mpi=true myconfig=nocheck-maxset
+  - with_fftw=false with_mpi=false myconfig=nocheck-maxset
+  - with_fftw=true with_mpi=false myconfig=nocheck-maxset
+
+  - with_mpi=true myconfig=molcut
+  - with_mpi=false myconfig=molcut
+
+  - with_mpi=true myconfig=rest1
+  - with_mpi=false myconfig=rest1
+
+  - with_mpi=true myconfig=rest2
+  - with_mpi=false myconfig=rest2
 
 compiler:
   - gcc
@@ -17,7 +37,27 @@ compiler:
 matrix:
   include:
     - compiler: clang
+      env: with_fftw=true with_mpi=false myconfig=default
+    - compiler: clang
+      env: with_fftw=false with_mpi=false myconfig=default
+
+    - compiler: clang
       env: with_fftw=true with_mpi=false myconfig=maxset
+    - compiler: clang
+      env: with_fftw=false with_mpi=false myconfig=maxset
+
+    - compiler: clang
+      env: with_fftw=true with_mpi=false myconfig=nocheck-maxset
+    - compiler: clang
+      env: with_fftw=false with_mpi=false myconfig=nocheck-maxset
+
+    - compiler: clang
+      env: with_mpi=false myconfig=molcut
+
+    - compiler: clang
+      env: with_mpi=false myconfig=rest1
+
+    - compiler: clang
+      env: with_mpi=false myconfig=rest2
 
 script: ./maintainer/travis/build.sh
-
