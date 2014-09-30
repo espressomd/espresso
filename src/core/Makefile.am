@@ -141,6 +141,10 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
 	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
+	
+# Immersed Boundary
+libEspresso_la_SOURCES += \
+	immersedBoundary/ibm_main.cpp	
 
 # Coulomb methods
 libEspresso_la_SOURCES += \

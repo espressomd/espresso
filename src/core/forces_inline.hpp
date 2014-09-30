@@ -130,6 +130,7 @@
 #include "collision.hpp"
 #include "metadynamics.hpp"
 #include "angle.hpp"
+#include "immersedBoundary/ibm_main.hpp"
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)

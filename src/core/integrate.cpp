@@ -59,6 +59,7 @@
 #include "virtual_sites.hpp"
 #include "statistics_correlation.hpp"
 #include "ghmc.hpp"
+#include "immersedBoundary/ibm_main.hpp"
 
 /************************************************
  * DEFINES
@@ -318,6 +319,11 @@ void integrate_vv(int n_steps, int reuse_forces)
 #endif
 
     force_calc();
+    
+#ifdef IMMERSED_BOUNDARY
+    // Now the forces are computed and need to go into the LB fluid
+//    if (lattice_switch & LATTICE_LB) IBM_ForcesIntoFluid();
+#endif
 
 #ifdef CATALYTIC_REACTIONS
     integrate_reaction();
@@ -368,6 +374,20 @@ void integrate_vv(int n_steps, int reuse_forces)
 #endif
     }
 #endif //LB_GPU
+    
+// IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
+    
+    IBM_UpdateParticlePositions();
+    IBM_ResetLBForces();
+    if (check_runtime_errors()) break;
+    
+    // Ghost positions are now out-of-date
+    // We should update.
+    // Actually we seem to get the same results whether we do this here or not, but it is safer to do it
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    
+#endif // IMMERSED_BOUNDARY
 
 #ifdef ELECTROSTATICS
     if(coulomb.method == COULOMB_MAGGS) {
