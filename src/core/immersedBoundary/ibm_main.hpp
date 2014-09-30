@@ -13,10 +13,15 @@ void update_mol_pos_particle(Particle *);
 void update_mol_vel_particle(Particle *);
 void distribute_mol_force();
 
-// Main functions for CPU implementation
-void IBM_ForcesIntoFluid();
+// Main functions for CPU & GPU
 void IBM_UpdateParticlePositions();
-void IBM_ResetLBForces();
+
+// Main functions for CPU implementation
+void IBM_ForcesIntoFluid_CPU();
+void IBM_ResetLBForces_CPU();
+
+// Main functions for GPU implementation
+//void IBM_ResetLBForces_GPU();
 
 #endif
 

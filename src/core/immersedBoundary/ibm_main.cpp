@@ -34,14 +34,14 @@ bool *isHaloCache = NULL;
 extern HaloCommunicator update_halo_comm;
 
 /****************
-  IBM_ForcesIntoFluid
+  IBM_ForcesIntoFluid_CPU
  
  Puts the calculated force stored on the ibm particles into the fluid by updating the lbfields structure
  Calls couple_trace_to_fluid for each node
  Called from the integrate loop right after the forces have been calculated
 *****************/
 
-void IBM_ForcesIntoFluid()
+void IBM_ForcesIntoFluid_CPU()
 {
   // Reset forces was delayed because we needed them for the update
   // Do it now
@@ -98,12 +98,12 @@ void IBM_ForcesIntoFluid()
 }
 
 /***************
-  IBM_ResetLBForces
+  IBM_ResetLBForces_CPU
 Called from the integrate loop directly after the IBM particle update
 Usually the reset would be done by Espresso after the LB update. But we need to keep the forces till after the position update for the f/2 term
 ****************/
 
-void IBM_ResetLBForces()
+void IBM_ResetLBForces_CPU()
 {
   for (int i = 0; i<lblattice.halo_grid_volume; ++i)
   {

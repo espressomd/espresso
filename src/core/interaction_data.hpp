@@ -78,7 +78,9 @@ enum BondedInteraction{
     /** Type of bonded interaction is a global area force. */
     BONDED_IA_AREA_FORCE_GLOBAL,
     /** Type of bonded interaction is a linear stretching force. */
-    BONDED_IA_STRETCHLIN_FORCE
+    BONDED_IA_STRETCHLIN_FORCE,
+    /** Type of bonded interaction is a wall repulsion (immersed boundary). */
+    BONDED_IA_IBM_WALL_REPULSION
 };
 /*
 #define BONDED_IA_NONE     -1
@@ -754,6 +756,11 @@ typedef struct {
       double distmax;
 } Endangledist_bond_parameters;
 
+/** Parameters for IBM wall repulsion */
+typedef struct {
+  double kappaWall;
+} IBM_WallRepulsion_Parameters;
+
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
     Fene_bond_parameters fene;
@@ -775,6 +782,7 @@ typedef union {
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
     Endangledist_bond_parameters endangledist;
+    IBM_WallRepulsion_Parameters ibmWallRepulsionParameters;
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */

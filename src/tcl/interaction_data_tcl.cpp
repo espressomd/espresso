@@ -98,6 +98,8 @@
 #include "tcl/object-in-fluid/stretching_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
+#include "immersedBoundary/ibm_wall_repulsion_tcl.hpp"
+
 
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
@@ -325,6 +327,12 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   case BONDED_IA_VOLUME_FORCE:						
 	return tclprint_to_result_volumeforceIA(interp, params);
 #endif
+      
+#ifdef IMMERSED_BOUNDARY
+  case BONDED_IA_IBM_WALL_REPULSION:
+      return tclprint_to_result_ibm_wall_repulsion(interp, params);
+#endif
+      
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
 #ifdef BOND_ANGLE_OLD
@@ -912,6 +920,11 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef VOLUME_FORCE
   REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);
 #endif
+  // IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
+  REGISTER_BONDED("ibm_wallRep", tclcommand_inter_parse_ibm_wall_repulsion);
+#endif
+  
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
