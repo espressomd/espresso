@@ -7,7 +7,6 @@
 #include "SystemInterface.hpp"
 #include "Actor.hpp"
 #include <math.h>
-#include "cells.hpp"
 
 #ifndef INT64
 #define INT64	long long

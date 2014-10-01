@@ -8,6 +8,7 @@
 #include "integrate.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
+#include "cells.hpp"
 
 typedef ewaldgpu_real real;
 extern Ewaldgpu_params ewaldgpu_params;
@@ -136,7 +137,7 @@ int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 
 	//Test performance time for the diverent (K, rcut, alpha)
 	double int_time_best = 1E30;
-	int K_best;
+	int K_best = Kmax;
 	for(int K = 0; K < Kmax ;K++)
 	{
 		if(alpha_array[K]>0 and rcut_array[K]>0 and rcut_array[K]<(std::min(box_l[0],std::min(box_l[1],box_l[2])))/2.0-skin)

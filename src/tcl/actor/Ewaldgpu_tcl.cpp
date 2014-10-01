@@ -28,6 +28,10 @@ int tclprint_to_result_ewaldgpu(Tcl_Interp *interp)
 }
 int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char ** argv)
 {
+  // TODO: das hier ans Ende der Funktion stellen. Dazu muessen aber erst die drei Funktionen in dieser Datei neu strukturiert werden, damit zuallererst das ewaldGpu-Objekt erstellt wird.
+  coulomb.method = COULOMB_EWALD_GPU;
+  mpi_bcast_coulomb_params();
+
 	double r_cut;
 	int num_kx;
 	int num_ky;
@@ -107,10 +111,8 @@ int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char 
 	  energyActors.add(ewaldgpuForce);
   }
   //Broadcast parameters
-  coulomb.method = COULOMB_EWALD_GPU;
   rebuild_verletlist = 1;
   ewaldgpu_params.isTuned = true;
-	mpi_bcast_coulomb_params();
   return TCL_OK;
 }
 int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
