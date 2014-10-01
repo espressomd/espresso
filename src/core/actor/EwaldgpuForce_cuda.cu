@@ -81,14 +81,14 @@ __global__ void EwaldGPU_Rho_hat_MaxThreads(real *k,real *r_i, real *q_i, real *
 	//Reduction
 	while (i < mTPB)
 	{
-		kr = k[blockId]*r_i[3*i+2*l*mTPB]+k[blockId+num_k]*r_i[3*i+2*l*mTPB+1]+k[blockId+2*num_k]*r_i[3*i+2*l*mTPB+2];
+		kr = k[blockId]*r_i[3*(i+2*l*mTPB)]+k[blockId+num_k]*r_i[3*(i+2*l*mTPB)+1]+k[blockId+2*num_k]*r_i[3*(i+2*l*mTPB)+2];
 		sincos(kr,sin_ptr,cos_ptr);
 		factor = q_i[i+2*l*mTPB];
-
 		sdata[tid]      						+=  factor*cos_kr;
 		sdata[tid+2*blockSize]      += -factor*sin_kr;
+
 		//BECAUSE nIsPow2=True
-		kr = k[blockId]*r_i[3*i+2*l*mTPB+blockSize]+k[blockId+num_k]*r_i[3*i+2*l*mTPB+blockSize+1]+k[blockId+2*num_k]*r_i[3*i+2*l*mTPB+blockSize+2];
+		kr = k[blockId]*r_i[3*(i+2*l*mTPB+blockSize)]+k[blockId+num_k]*r_i[3*(i+2*l*mTPB+blockSize)+1]+k[blockId+2*num_k]*r_i[3*(i+2*l*mTPB+blockSize)+2];
 		sincos(kr,sin_ptr,cos_ptr);
 		factor = q_i[i+2*l*mTPB+blockSize];
 		sdata[tid]      						+=  factor*cos_kr;
@@ -147,7 +147,7 @@ __global__ void EwaldGPU_Rho_hat_LowThreads(real *k,real *r_i, real *q_i, real *
 	//Reduction
 	while (i < N-2*l*mTPB)
 	{
-		kr = k[blockId]*r_i[3*i+2*l*mTPB]+k[blockId+num_k]*r_i[3*i+2*l*mTPB+1]+k[blockId+2*num_k]*r_i[3*i+2*l*mTPB+2];
+		kr = k[blockId]*r_i[3*(i+2*l*mTPB)]+k[blockId+num_k]*r_i[3*(i+2*l*mTPB)+1]+k[blockId+2*num_k]*r_i[3*(i+2*l*mTPB)+2];
 		sincos(kr,sin_ptr,cos_ptr);
 		factor = q_i[i+2*l*mTPB];
 
@@ -155,7 +155,7 @@ __global__ void EwaldGPU_Rho_hat_LowThreads(real *k,real *r_i, real *q_i, real *
 		sdata[tid+2*blockSize]      += -factor*sin_kr;
 		if (nIsPow2 || i + blockSize < N-2*l*mTPB)
 		{
-			kr = k[blockId]*r_i[3*(i+blockSize)+2*l*mTPB]+k[blockId+num_k]*r_i[3*(i+blockSize)+2*l*mTPB+1]+k[blockId+2*num_k]*r_i[3*(i+blockSize)+2*l*mTPB+2];
+			kr = k[blockId]*r_i[3*(i+blockSize+2*l*mTPB)]+k[blockId+num_k]*r_i[3*(i+blockSize+2*l*mTPB)+1]+k[blockId+2*num_k]*r_i[3*(i+blockSize+2*l*mTPB)+2];
 			sincos(kr,sin_ptr,cos_ptr);
 			factor = q_i[i+2*l*mTPB+blockSize];
 			sdata[tid]      						+=  factor*cos_kr;
@@ -539,9 +539,6 @@ EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int nu
 	//Compute the number of k's in k-sphere
 	compute_num_k();
 
-	//Setup
-	//setup(s);xxx
-
 	//Coulomb method
 	coulomb.method = COULOMB_EWALD_GPU;
 	set_params(m_rcut, m_num_kx, m_num_ky, m_num_kz, m_alpha);
@@ -792,7 +789,7 @@ void EwaldgpuForce::GPU_Forces(SystemInterface &s)
 	}
 
 	//Copy the arrays back from the GPU to the CPU
-	HANDLE_ERROR( cudaMemcpyAsync( m_rho_hat, m_dev_rho_hat,2*m_num_k*sizeof(real),cudaMemcpyDeviceToHost, *stream0 ) );
+	HANDLE_ERROR(cudaMemcpy( m_rho_hat, m_dev_rho_hat,2*m_num_k*sizeof(real),cudaMemcpyDeviceToHost));
 
 	/********************************************************************************************
 																			 Forces long range

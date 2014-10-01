@@ -105,7 +105,6 @@ int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 	double alpha_array[Kmax]; //All computed alpha in dependence of K
 	double rcut_array[Kmax]; //All computed r_cut in dependence of all computed alpha
 	double q_sqr = compute_q_sqare(s);
-	printf("XXXXXXXXXXXXX tune qsqr:%f\n",q_sqr);
 	char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
 
   if (skin == -1) {
@@ -117,13 +116,13 @@ int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 	for(int K = 0; K < Kmax ;K++)
 	{
 		alpha_array[K] = tune_alpha(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, K+1, box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
-		printf("K:%i alpha:%f\n",K+1,alpha_array[K]);
+		//printf("K:%i alpha:%f\n",K+1,alpha_array[K]);
 	}
 	//Compute r_cut for all computed alpha
 	for(int K = 0; K < Kmax ;K++)
 	{
 		rcut_array[K] = tune_rcut(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, alpha_array[K], box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
-		printf("K:%i rcut:%f \n",K+1,rcut_array[K]);
+		//printf("K:%i rcut:%f \n",K+1,rcut_array[K]);
 	}
 	//Test if accuracy was reached
 	if(rcut_array[Kmax-1]<0)
@@ -150,7 +149,7 @@ int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 				int_time_best = int_time;
 				K_best = K;
 			}
-			printf("TIME K:%i int_time:%f\n",K+1,int_time);
+			//printf("TIME K:%i int_time:%f\n",K+1,int_time);
 		}
 	}
 

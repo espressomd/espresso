@@ -25,7 +25,7 @@ require_feature "ELECTROSTATICS"
 require_feature "EWALD_GPU"
 
 #cellsystem domain_decomposition
-cellsystem nsquare
+#cellsystem nsquare
 
 puts "---------------------------------------------------------------"
 puts "- Testcase ewaldgpu.tcl running on [format %02d [setmd n_nodes]] nodes"
@@ -34,9 +34,9 @@ puts "---------------------------------------------------------------"
 set epsilon 1e-3
 thermostat off
 setmd skin 0.05
-#msd
+
 set int_steps 10
-setmd time_step 0.0000001
+setmd time_step 0.00001
 
 proc read_data {file} {
     set f [open $file "r"]
@@ -62,16 +62,14 @@ if { [catch {
     }
 
 # INTEGRATION
-inter coulomb 1.0 ewaldgpu 12.145383715391159 6 0.2506565073132515
-#inter coulomb 1.0 ewaldgpu tunealpha 12.145385146141052 6 0.000024
-#inter coulomb 1.0 ewaldgpu tune accuracy 1e-4 K_max 10 precision 0.00001
+#inter coulomb 1.0 ewaldgpu tunealpha 11.431538115739823 6 0.0001
+inter coulomb 1.0 ewaldgpu tune accuracy 1e-4 K_max 15 precision 0.00001
 #inter coulomb 1.0 p3m tune accuracy 1e-4
 
 
 puts "TUNED"
 
 set start_time [expr 1.0*[clock clicks -milliseconds]]
-integrate $int_steps recalc_forces
 integrate $int_steps recalc_forces
 set end_time [expr 1.0*[clock clicks -milliseconds]]
 puts "TIME: [expr $end_time-$start_time] millisec"
