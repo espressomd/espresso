@@ -696,7 +696,7 @@ void EwaldgpuForce::computeEnergy(SystemInterface &s)
 	GPU_Energy(s);
 	//Self energy
 	EwaldCPU_EnergySelf();
-	//Total energy
+	//Total energie
 	m_energy_tot[0] = m_energy_reci[0] +  m_energy_self[0];
 	HANDLE_ERROR( cudaMemcpy(s.eGpu(), m_energy_tot,sizeof(real),cudaMemcpyHostToDevice ) );
 }
