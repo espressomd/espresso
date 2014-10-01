@@ -5,16 +5,13 @@
 
 #include <stdio.h>
 #include <iostream>
-#include "tuning.hpp"
-#include "integrate.hpp"
 
-#include "grid.hpp"
 #include "interaction_data.hpp"
 #include "EspressoSystemInterface.hpp"
 
-//#if defined(OMPI_MPI_H) || defined(_MPI_H)
-//#error CU-file includes mpi.h! This should not happen!
-//#endif
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
 
 typedef ewaldgpu_real real;
 Ewaldgpu_params ewaldgpu_params;
@@ -517,6 +514,7 @@ __global__ void EwaldGPU_q_sqr_LowThreads(real *q_i, real *q_sqr, int N, int max
 
 //Ewaldgpuforce
 EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int num_ky, int num_kz, double alpha)
+:m_dev_k(NULL), m_k(NULL), m_dev_rho_hat(NULL), m_rho_hat(NULL), m_dev_infl_factor(NULL), m_infl_factor(NULL), m_dev_energy_reci(NULL), m_energy_reci(NULL), m_dev_q_sqr(NULL), m_q_sqr(NULL)
 {
 	//Interface sanity checks
 	if(!s.requestFGpu())
@@ -539,11 +537,8 @@ EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int nu
 	//Compute the number of k's in k-sphere
 	compute_num_k();
 
-	//Coulomb method
-	coulomb.method = COULOMB_EWALD_GPU;
 	set_params(m_rcut, m_num_kx, m_num_ky, m_num_kz, m_alpha);
 	if(ewaldgpu_params.time_calc_steps==0) ewaldgpu_params.time_calc_steps = determine_calc_time_steps();
-	mpi_bcast_coulomb_params();
 }
 EwaldgpuForce::~EwaldgpuForce()
 {
@@ -580,35 +575,35 @@ void EwaldgpuForce::setup(SystemInterface &s)
 	//Compute the number of k's in k-sphere
 	compute_num_k();
 
-//	if (m_dev_k)
-//		HANDLE_ERROR(cudaFree(m_dev_k));
+	if (m_dev_k)
+		HANDLE_ERROR(cudaFree(m_dev_k));
 	HANDLE_ERROR(cudaMalloc((void**)&(m_dev_k),3*m_num_k*sizeof(real)));
-//	if (m_k)
-//		HANDLE_ERROR(cudaFree(m_k));
+	if (m_k)
+		HANDLE_ERROR(cudaFreeHost(m_k));
 	HANDLE_ERROR(cudaMallocHost((void**)&(m_k),3*m_num_k*sizeof(real)));
-//	if (m_dev_rho_hat)
-//		HANDLE_ERROR(cudaFree(m_dev_rho_hat));
+	if (m_dev_rho_hat)
+		HANDLE_ERROR(cudaFree(m_dev_rho_hat));
 	HANDLE_ERROR(cudaMalloc((void**)&(m_dev_rho_hat),2*m_num_k*sizeof(real)));
-//	if (m_rho_hat)
-//		HANDLE_ERROR(cudaFree(m_rho_hat));
+	if (m_rho_hat)
+		HANDLE_ERROR(cudaFreeHost(m_rho_hat));
 	HANDLE_ERROR(cudaMallocHost((void**)&(m_rho_hat),2*m_num_k*sizeof(real)));
-//	if (m_dev_infl_factor)
-//		HANDLE_ERROR(cudaFree(m_dev_infl_factor));
+	if (m_dev_infl_factor)
+		HANDLE_ERROR(cudaFree(m_dev_infl_factor));
 	HANDLE_ERROR(cudaMalloc((void**)&(m_dev_infl_factor),m_num_k*sizeof(real)));
-//	if (m_infl_factor)
-//		HANDLE_ERROR(cudaFree(m_infl_factor));
+	if (m_infl_factor)
+		HANDLE_ERROR(cudaFreeHost(m_infl_factor));
 	HANDLE_ERROR(cudaMallocHost((void**)&(m_infl_factor),m_num_k*sizeof(real)));
-//	if (m_dev_energy_reci)
-//		HANDLE_ERROR(cudaFree(m_dev_energy_reci));
+	if (m_dev_energy_reci)
+		HANDLE_ERROR(cudaFree(m_dev_energy_reci));
 	HANDLE_ERROR(cudaMalloc((void**)&(m_dev_energy_reci),sizeof(real)));
-//	if (m_energy_reci)
-//		HANDLE_ERROR(cudaFree(m_energy_reci));
+	if (m_energy_reci)
+		HANDLE_ERROR(cudaFreeHost(m_energy_reci));
 	HANDLE_ERROR(cudaMallocHost((void**)&(m_energy_reci),sizeof(real)));
-	//	if (m_dev_q_sqr)
-	//		HANDLE_ERROR(cudaFree(m_dev_q_sqr));
+	if (m_dev_q_sqr)
+		HANDLE_ERROR(cudaFree(m_dev_q_sqr));
 	HANDLE_ERROR(cudaMalloc((void**)&(m_dev_q_sqr),sizeof(real)));
-	//	if (m_q_sqr)
-	//		HANDLE_ERROR(cudaFree(m_q_sqr));
+	if (m_q_sqr)
+		HANDLE_ERROR(cudaFreeHost(m_q_sqr));
 	HANDLE_ERROR(cudaMallocHost((void**)&(m_q_sqr),sizeof(real)));
 
 	m_energy_self = (real*)malloc(sizeof(real));
@@ -648,7 +643,7 @@ void EwaldgpuForce::setup(SystemInterface &s)
 //Compute forces and energy
 void EwaldgpuForce::computeForces(SystemInterface &s)
 {
-	if (coulomb.method != COULOMB_EWALD_GPU) // MMM1DGPU was disabled. nobody cares about our calculations anymore
+	if (coulomb.method != COULOMB_EWALD_GPU) // EWALDGPU was disabled. nobody cares about our calculations anymore
 	{
 		std::cerr << "EwaldGPU: coulomb.method has been changed, skipping calculation" << std::endl;
 		return;
@@ -676,7 +671,7 @@ void EwaldgpuForce::computeForces(SystemInterface &s)
 }
 void EwaldgpuForce::computeEnergy(SystemInterface &s)
 {
-	if (coulomb.method != COULOMB_EWALD_GPU) // MMM1DGPU was disabled. nobody cares about our calculations anymore
+	if (coulomb.method != COULOMB_EWALD_GPU) // EWALDGPU was disabled. nobody cares about our calculations anymore
 	{
 		std::cerr << "EwaldGPU: coulomb.method has been changed, skipping calculation" << std::endl;
 		return;
