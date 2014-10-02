@@ -4,13 +4,6 @@
 #ifdef EWALD_GPU
 #include "actor/EwaldgpuForce.hpp"
 
-#ifndef INT64
-#define INT64	long long
-#endif
-#ifndef POW2
-#define POW2(val) ((val)*(val))
-#endif
-
 //Add energy
 inline double ewaldgpu_coulomb_pair_energy(double chgfac, double *d,double dist2,double dist)
 {
@@ -29,7 +22,7 @@ inline void add_ewald_gpu_coulomb_pair_force(Particle *p1, Particle *p2, double 
   double rcut=ewaldgpu_params.rcut;
   if(dist < rcut)
   {
-		fac=coulomb.prefactor * p1->p.q * p2->p.q * (  2*ewaldgpu_params.alpha/sqrt(M_PI) * exp(-POW2(ewaldgpu_params.alpha *dist)) + erfc(ewaldgpu_params.alpha*dist)/dist )/POW2(dist);
+		fac=coulomb.prefactor * p1->p.q * p2->p.q * (  2*ewaldgpu_params.alpha/sqrt(M_PI) * exp(-pow(ewaldgpu_params.alpha *dist,2)) + erfc(ewaldgpu_params.alpha*dist)/dist )/pow(dist,2);
 
     for(j=0;j<3;j++)
       force[j] += fac * d[j];

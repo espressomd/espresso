@@ -8,13 +8,6 @@
 #include "Actor.hpp"
 #include <math.h>
 
-#ifndef INT64
-#define INT64	long long
-#endif
-#ifndef POW2
-#define POW2(val) ((val)*(val))
-#endif
-
 typedef float ewaldgpu_real;
 
 void addEwaldgpuForce(double r_cut, int num_kx, int num_ky, int num_kz, double alpha);
@@ -79,7 +72,7 @@ protected:
   ewaldgpu_real *m_q_sqr; //Sum of the squares of the particle charges
   ewaldgpu_real *m_dev_q_sqr; //Sum of the squares of the particle charges
   ewaldgpu_real *m_energy_self; //Energy self
-  ewaldgpu_real *m_energy_tot;//Energy total
+  ewaldgpu_real *m_energy_tot; //Energy total
 	//Parameters
   double m_alpha; //Separation parameter
   double m_rcut; //Cutoff radius

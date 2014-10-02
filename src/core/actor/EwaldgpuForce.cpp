@@ -18,17 +18,17 @@ void EwaldgpuForce::compute_num_k()
 {
 	int Index=0;//Arrayindex
 
-	for (INT64 ix=0; ix<=m_num_kx; ix++)
+	for (long long ix=0; ix<=m_num_kx; ix++)
 	{
-		for (INT64 iy=-m_num_ky; iy<=m_num_ky; iy++)
+		for (long long iy=-m_num_ky; iy<=m_num_ky; iy++)
 		{
-			for (INT64 iz=-m_num_kz; iz<=m_num_kz; iz++)
+			for (long long iz=-m_num_kz; iz<=m_num_kz; iz++)
 			{
 				if(ix*(2*m_num_ky+1)*(2*m_num_kz+1)+iy*(2*m_num_kz+1)+iz >= 0//Half m_k-space
-				   and POW2(ix)*POW2((INT64)m_num_ky)*POW2((INT64)m_num_kz)
-				   	 + POW2(iy)*POW2((INT64)m_num_kx)*POW2((INT64)m_num_kz)
-				   	 + POW2(iz)*POW2((INT64)m_num_kx)*POW2((INT64)m_num_ky)
-				   	 <=POW2((INT64)m_num_kx)*POW2((INT64)m_num_ky)*POW2((INT64)m_num_kz))//m_k-space ellipsoid
+				   and pow(ix,2)*pow((long long)m_num_ky,2)*pow((long long)m_num_kz,2)
+				   	 + pow(iy,2)*pow((long long)m_num_kx,2)*pow((long long)m_num_kz,2)
+				   	 + pow(iz,2)*pow((long long)m_num_kx,2)*pow((long long)m_num_ky,2)
+				   	 <=pow((long long)m_num_kx,2)*pow((long long)m_num_ky,2)*pow((long long)m_num_kz,2))//m_k-space ellipsoid
 				{
 					Index+=1;
 				}
@@ -42,25 +42,25 @@ void EwaldgpuForce::compute_k_AND_influence_factor()
 	real k_sqr;//Absolute square of m_k-vector
 	int Index=0;//Arrayindex
 
-	for (INT64 ix=0; ix<=m_num_kx; ix++)//Half m_k-space
+	for (long long ix=0; ix<=m_num_kx; ix++)//Half m_k-space
 	{
-		for (INT64 iy=-m_num_ky; iy<=m_num_ky; iy++)
+		for (long long iy=-m_num_ky; iy<=m_num_ky; iy++)
 		{
-			for (INT64 iz=-m_num_kz; iz<=m_num_kz; iz++)
+			for (long long iz=-m_num_kz; iz<=m_num_kz; iz++)
 			{
 				if(ix*(2*m_num_ky+1)*(2*m_num_kz+1)+iy*(2*m_num_kz+1)+iz >= 0//Half m_k-space
-				   and POW2(ix)*POW2((INT64)m_num_ky)*POW2((INT64)m_num_kz)
-				   	 + POW2(iy)*POW2((INT64)m_num_kx)*POW2((INT64)m_num_kz)
-				   	 + POW2(iz)*POW2((INT64)m_num_kx)*POW2((INT64)m_num_ky)
-				   	 <=POW2((INT64)m_num_kx)*POW2((INT64)m_num_ky)*POW2((INT64)m_num_kz))//m_k-space ellipsoid
+				   and pow(ix,2)*pow((long long)m_num_ky,2)*pow((long long)m_num_kz,2)
+				   	 + pow(iy,2)*pow((long long)m_num_kx,2)*pow((long long)m_num_kz,2)
+				   	 + pow(iz,2)*pow((long long)m_num_kx,2)*pow((long long)m_num_ky,2)
+				   	 <=pow((long long)m_num_kx,2)*pow((long long)m_num_ky,2)*pow((long long)m_num_kz,2))//m_k-space ellipsoid
 				{
 					//m_k vectors
 					m_k[Index] = 2*M_PI/m_box_l[0]*ix;
 					m_k[Index+m_num_k] = 2*M_PI/m_box_l[1]*iy;
 					m_k[Index+2*m_num_k] = 2*M_PI/m_box_l[2]*iz;
 					//Influence factor
-					k_sqr= POW2(m_k[Index]) + POW2(m_k[Index+m_num_k]) + POW2(m_k[Index+2*m_num_k]);
-					m_infl_factor[Index] = 8*M_PI/m_V*expf(-k_sqr/(4*POW2(m_alpha)))/k_sqr;
+					k_sqr= pow(m_k[Index],2) + pow(m_k[Index+m_num_k],2) + pow(m_k[Index+2*m_num_k],2);
+					m_infl_factor[Index] = 8*M_PI/m_V*expf(-k_sqr/(4*pow(m_alpha,2)))/k_sqr;
 					//Index
 					Index+=1;
 				}
@@ -334,7 +334,7 @@ double EwaldgpuForce::compute_q_sqare(SystemInterface &s)
     np = cell->n;
     for(i = 0; i < np; i++)
     {
-    	q_sqr += POW2(p[i].p.q);
+    	q_sqr += pow(p[i].p.q,2);
     }
   }
   return q_sqr;
