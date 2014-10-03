@@ -62,7 +62,7 @@ if { [catch {
     }
 
 # INTEGRATION
-inter coulomb 1.0 ewaldgpu 9.8812133073806763 7 0.30012248992919915 0.0001
+inter coulomb 1.0 ewaldgpu 9.154877066612244 8 0.33336160153150557
 #inter coulomb 1.0 ewaldgpu tunealpha 9.8812133073806763 7 0.0001
 #inter coulomb 1.0 ewaldgpu tune accuracy 1e-4 K_max 15 precision 0.00001
 #inter coulomb 1.0 p3m tune accuracy 1e-4

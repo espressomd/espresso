@@ -316,14 +316,14 @@ __global__ void EwaldGPU_ForcesReci_LowThreads(real *k,real *r_i, real *q_i, rea
 	//Write result for this block to global memory
 	if (tid == 0)
 	{
-		forces_reci[3*blockId]     += sdata[0]*coulomb_prefactor;
-		forces_reci[3*blockId+1]   += sdata[2*blockSize]*coulomb_prefactor;
+		forces_reci[3*blockId]   += sdata[0]*coulomb_prefactor;
+		forces_reci[3*blockId+1] += sdata[2*blockSize]*coulomb_prefactor;
 		forces_reci[3*blockId+2] += sdata[4*blockSize]*coulomb_prefactor;
 	}
 }
 //Energy in reciprocal space
 template <int blockSize, bool nIsPow2>
-__global__ void EwaldGPU_EnergyReci_MaxThreads(real *rho_hat, real *infl_factor,real *energy_reci, int N, int num_k, real V,int maxThreadsPerBlock,int loops)
+__global__ void EwaldGPU_EnergyReci_MaxThreads(real *rho_hat, real *infl_factor,real *energy_reci, int N, int num_k, real V,int maxThreadsPerBlock,int loops,real coulomb_prefactor)
 {
 	//Variables
 	extern __shared__ real sdata[];
@@ -336,7 +336,7 @@ __global__ void EwaldGPU_EnergyReci_MaxThreads(real *rho_hat, real *infl_factor,
 
 	//Init
 	i = tid;
-	sdata[tid] 						 = 0;
+	sdata[tid] = 0;
 
 	//Reduction
 	while (i < mTPB)
@@ -367,12 +367,12 @@ __global__ void EwaldGPU_EnergyReci_MaxThreads(real *rho_hat, real *infl_factor,
 	//Write result for this block to global memory
 	if (tid == 0)
 	{
-		energy_reci[0] += sdata[0];
+		energy_reci[0] += sdata[0]*coulomb_prefactor;
 	}
 	__syncthreads();
 }
 template <int blockSize, bool nIsPow2>
-__global__ void EwaldGPU_EnergyReci_LowThreads(real *rho_hat, real *infl_factor,real *energy_reci, int N, int num_k, real V,int maxThreadsPerBlock,int elapsedLoops)
+__global__ void EwaldGPU_EnergyReci_LowThreads(real *rho_hat, real *infl_factor,real *energy_reci, int N, int num_k, real V,int maxThreadsPerBlock,int elapsedLoops,real coulomb_prefactor)
 {
 	//Variables
 	extern __shared__ real sdata[];
@@ -385,7 +385,7 @@ __global__ void EwaldGPU_EnergyReci_LowThreads(real *rho_hat, real *infl_factor,
 
 	//Init
 	i = tid;
-	sdata[tid] 						 = 0;
+	sdata[tid] = 0;
 
 	//Reduction
 	while (i < num_k-2*l*mTPB)
@@ -417,7 +417,7 @@ __global__ void EwaldGPU_EnergyReci_LowThreads(real *rho_hat, real *infl_factor,
 	//Write result for this block to global memory
 	if (tid == 0)
 	{
-		energy_reci[0] += sdata[0];
+		energy_reci[0] += sdata[0]*coulomb_prefactor;
 	}
 }
 //q squared
@@ -538,7 +538,7 @@ EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int nu
 	compute_num_k();
 
 	set_params(m_rcut, m_num_kx, m_num_ky, m_num_kz, m_alpha);
-	if(ewaldgpu_params.time_calc_steps==0) ewaldgpu_params.time_calc_steps = determine_calc_time_steps();
+	if(ewaldgpu_params.time_calc_steps==-1) ewaldgpu_params.time_calc_steps = determine_calc_time_steps();
 }
 EwaldgpuForce::~EwaldgpuForce()
 {
@@ -698,6 +698,7 @@ void EwaldgpuForce::computeEnergy(SystemInterface &s)
 	EwaldCPU_EnergySelf();
 	//Total energy
 	m_energy_tot[0] = m_energy_reci[0] +  m_energy_self[0];
+	printf("XXXXXXXXXXXXX m_energy_tot[0]:%f m_energy_reci[0]:%f m_energy_self[0]:%f \n",m_energy_tot[0],m_energy_reci[0],m_energy_self[0]);
 	HANDLE_ERROR( cudaMemcpy(s.eGpu(), m_energy_tot,sizeof(real),cudaMemcpyHostToDevice ) );
 }
 
@@ -905,16 +906,16 @@ void EwaldgpuForce::GPU_Energy(SystemInterface &s)
 	{
 		switch(maxThreadsPerBlockEnergie)
 		{
-			case 1024:	EwaldGPU_EnergyReci_MaxThreads<1024,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
-			case  512:	EwaldGPU_EnergyReci_MaxThreads<512,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
-			case  256:	EwaldGPU_EnergyReci_MaxThreads<256,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
-			case  128:	EwaldGPU_EnergyReci_MaxThreads<128,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
-			case  64:	EwaldGPU_EnergyReci_MaxThreads<64,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
-			case  32:	EwaldGPU_EnergyReci_MaxThreads<32,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
-			case  16:	EwaldGPU_EnergyReci_MaxThreads<16,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
-			case  8:	EwaldGPU_EnergyReci_MaxThreads<8,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
-			case  4:	EwaldGPU_EnergyReci_MaxThreads<4,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
-			case  2:	EwaldGPU_EnergyReci_MaxThreads<2,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case 1024:	EwaldGPU_EnergyReci_MaxThreads<1024,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case  512:	EwaldGPU_EnergyReci_MaxThreads<512,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case  256:	EwaldGPU_EnergyReci_MaxThreads<256,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case  128:	EwaldGPU_EnergyReci_MaxThreads<128,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case  64:	EwaldGPU_EnergyReci_MaxThreads<64,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case  32:	EwaldGPU_EnergyReci_MaxThreads<32,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case  16:	EwaldGPU_EnergyReci_MaxThreads<16,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case  8:	EwaldGPU_EnergyReci_MaxThreads<8,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case  4:	EwaldGPU_EnergyReci_MaxThreads<4,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
+			case  2:	EwaldGPU_EnergyReci_MaxThreads<2,true><<<dimGrid5, dimBlock5, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,l,m_coulomb_prefactor);cuda_check_error(dimBlock5, dimGrid5, 0, __FILE__, __LINE__);break;
 		}
 	}
 
@@ -932,40 +933,39 @@ void EwaldgpuForce::GPU_Energy(SystemInterface &s)
 	{
 		switch (threads)
 		{
-			case 1024: EwaldGPU_EnergyReci_LowThreads<1024,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case  512: EwaldGPU_EnergyReci_LowThreads<512,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case  256: EwaldGPU_EnergyReci_LowThreads<256,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case  128: EwaldGPU_EnergyReci_LowThreads<128,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case   64: EwaldGPU_EnergyReci_LowThreads<64,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case   32: EwaldGPU_EnergyReci_LowThreads<32,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case   16: EwaldGPU_EnergyReci_LowThreads<16,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case    8: EwaldGPU_EnergyReci_LowThreads<8,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case    4: EwaldGPU_EnergyReci_LowThreads<4,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case    2: EwaldGPU_EnergyReci_LowThreads<2,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case    1: EwaldGPU_EnergyReci_LowThreads<1,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case 1024: EwaldGPU_EnergyReci_LowThreads<1024,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case  512: EwaldGPU_EnergyReci_LowThreads<512,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case  256: EwaldGPU_EnergyReci_LowThreads<256,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case  128: EwaldGPU_EnergyReci_LowThreads<128,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case   64: EwaldGPU_EnergyReci_LowThreads<64,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case   32: EwaldGPU_EnergyReci_LowThreads<32,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case   16: EwaldGPU_EnergyReci_LowThreads<16,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case    8: EwaldGPU_EnergyReci_LowThreads<8,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case    4: EwaldGPU_EnergyReci_LowThreads<4,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case    2: EwaldGPU_EnergyReci_LowThreads<2,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case    1: EwaldGPU_EnergyReci_LowThreads<1,true><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
 		}
 	}
 	if (!isPow2(m_num_k-2*loops*maxThreadsPerBlockEnergie) && (m_num_k-2*loops*maxThreadsPerBlockEnergie != 0))
 	{
 		switch (threads)
 		{
-			case 1024: EwaldGPU_EnergyReci_LowThreads<1024,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case  512: EwaldGPU_EnergyReci_LowThreads<512,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case  256: EwaldGPU_EnergyReci_LowThreads<256,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case  128: EwaldGPU_EnergyReci_LowThreads<128,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case   64: EwaldGPU_EnergyReci_LowThreads<64,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case   32: EwaldGPU_EnergyReci_LowThreads<32,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case   16: EwaldGPU_EnergyReci_LowThreads<16,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case    8: EwaldGPU_EnergyReci_LowThreads<8,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case    4: EwaldGPU_EnergyReci_LowThreads<4,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case    2: EwaldGPU_EnergyReci_LowThreads<2,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
-			case    1: EwaldGPU_EnergyReci_LowThreads<1,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case 1024: EwaldGPU_EnergyReci_LowThreads<1024,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case  512: EwaldGPU_EnergyReci_LowThreads<512,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case  256: EwaldGPU_EnergyReci_LowThreads<256,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case  128: EwaldGPU_EnergyReci_LowThreads<128,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case   64: EwaldGPU_EnergyReci_LowThreads<64,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case   32: EwaldGPU_EnergyReci_LowThreads<32,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case   16: EwaldGPU_EnergyReci_LowThreads<16,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case    8: EwaldGPU_EnergyReci_LowThreads<8,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case    4: EwaldGPU_EnergyReci_LowThreads<4,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case    2: EwaldGPU_EnergyReci_LowThreads<2,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
+			case    1: EwaldGPU_EnergyReci_LowThreads<1,false><<<dimGrid6, dimBlock6, smemSize, *stream0>>>(m_dev_rho_hat,m_dev_infl_factor,s.eGpu(),m_N,m_num_k,m_V,maxThreadsPerBlockEnergie,loops,m_coulomb_prefactor); cuda_check_error(dimBlock6, dimGrid6, 0, __FILE__, __LINE__);break;
 		}
 	}
 
 	//Copy the values back from the GPU to the CPU
 	HANDLE_ERROR( cudaMemcpy( m_energy_reci, s.eGpu(),sizeof(real),cudaMemcpyDeviceToHost ) );
-	m_energy_reci[0] = coulomb.prefactor * m_energy_reci[0];
 }
 void EwaldgpuForce::GPU_q_sqr(SystemInterface &s)
 {

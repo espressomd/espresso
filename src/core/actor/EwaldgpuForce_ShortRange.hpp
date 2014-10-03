@@ -9,7 +9,7 @@ inline double ewaldgpu_coulomb_pair_energy(double chgfac, double *d,double dist2
 {
   if (dist < ewaldgpu_params.rcut)
   {
-     return chgfac*erfc(ewaldgpu_params.alpha*dist)/dist;
+     return coulomb.prefactor*chgfac*erfc(ewaldgpu_params.alpha*dist)/dist;
   }
   return 0.0;
 }
