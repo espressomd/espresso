@@ -28,15 +28,11 @@ int tclprint_to_result_ewaldgpu(Tcl_Interp *interp)
 }
 int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char ** argv)
 {
-	//Coulomb method
-	coulomb.method = COULOMB_EWALD_GPU;
-  mpi_bcast_coulomb_params();
-
-	double r_cut;
-	int num_kx;
-	int num_ky;
-	int num_kz;
-	double accuracy;
+	double r_cut=-1;
+	int num_kx=-1;
+	int num_ky=-1;
+	int num_kz=-1;
+	double accuracy=-1;
 	double alpha=-1;
 	IntList il;
 	init_intlist(&il);
@@ -44,7 +40,7 @@ int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char 
   //PARSE EWALD COMMAND LINE
   if (argc < 1)
   {
-  	Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> ewaldgpu <r_cut> (<K_cut> | {<K_cut,x> <K_cut,y><K_cut,z>}) <alpha> \nexpected: inter coulomb <bjerrum> ewaldgpu tune <accuracy> [<precision>] \nexpected: inter coulomb <bjerrum> ewaldgpu tunealpha <r_cut> <K_cut> [<precision>]",(char *) NULL);
+  	Tcl_AppendResult(interp, "\nExpected: inter coulomb <bjerrum> ewaldgpu <r_cut> (<K_cut> | {<K_cut,x> <K_cut,y><K_cut,z>}) <alpha> \nExpected: inter coulomb <bjerrum> ewaldgpu tune <accuracy> [<precision>] \nExpected: inter coulomb <bjerrum> ewaldgpu tunealpha <r_cut> <K_cut> [<precision>]",(char *) NULL);
     return TCL_ERROR;
   }
 
@@ -53,142 +49,142 @@ int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char 
   {
     int status = tclcommand_inter_coulomb_parse_ewaldgpu_tune(interp, argc-1, argv+1, 0);
     if(status==TCL_OK) return TCL_OK;
-    if(status==TCL_ERROR)
-    {
-    	Tcl_AppendResult(interp, "Accuracy could not been reached. Choose higher K_max or lower accuracy",(char *) NULL);
-    	    return TCL_ERROR;
-    }
+    if(status==TCL_ERROR) return TCL_ERROR;
   }
   //Tune alpha
   else if (ARG0_IS_S("tunealpha"))
-    tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(interp, argc-1, argv+1);
+  {
+  	int status = tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(interp, argc-1, argv+1);
+  	if(status==TCL_OK) return TCL_OK;
+  	if(status==TCL_ERROR) return TCL_ERROR;
+  }
   //No tuning
   else
   {
-  	tclcommand_inter_coulomb_parse_ewaldgpu_notune(interp, argc, argv);
+  	int status = tclcommand_inter_coulomb_parse_ewaldgpu_notune(interp, argc, argv);
+  	if(status==TCL_OK) return TCL_OK;
+  	if(status==TCL_ERROR) return TCL_ERROR;
   }
-
-  //Broadcast parameters
-  rebuild_verletlist = 1;
-  mpi_bcast_coulomb_params();
-  return TCL_OK;
-
 }
 int tclcommand_inter_coulomb_parse_ewaldgpu_notune(Tcl_Interp * interp, int argc, char ** argv)
 {
-	double r_cut;
-	int num_kx;
-	int num_ky;
-	int num_kz;
-	double accuracy;
+	double r_cut=-1;
+	int num_kx=-1;
+	int num_ky=-1;
+	int num_kz=-1;
+	double accuracy=-1;
 	double alpha=-1;
 	IntList il;
 	init_intlist(&il);
 
-	if(! ARG0_IS_D(r_cut))
-	      return TCL_ERROR;
-	    if(argc < 3 || argc > 5) {
-	    	Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> ewaldgpu <r_cut> (<K_cut> | {<K_cut,x> <K_cut,y><K_cut,z>}) <alpha> \nexpected: inter coulomb <bjerrum> ewaldgpu tune <accuracy> [<precision>] \nexpected: inter coulomb <bjerrum> ewaldgpu tunealpha <r_cut> <K_cut> [<precision>]",(char *) NULL);
-	      return TCL_ERROR;
-	    }
-	    if(! ARG_IS_I(1, num_kx))
-	    {
-	      if( ! ARG_IS_INTLIST(1, il) || !(il.n == 3) )
-	      {
-	        Tcl_AppendResult(interp, "integer or interger list of length 3 expected", (char *) NULL);
-	        return TCL_ERROR;
-	      }
-	      else
-	      {
-	        num_kx = il.e[0];
-	        num_ky = il.e[1];
-	        num_kz = il.e[2];
-	      }
-	    }
-	    else
-	    {
-	    	num_kz = num_ky = num_kx;
-	    }
-	    if(argc > 2)
-	    {
-	      if(! ARG_IS_D(2, alpha))
-	        return TCL_ERROR;
-	    }
-	    else
-	    {
-	      Tcl_AppendResult(interp, "Automatic ewaldgpu tuning not implemented.",
-	  		     (char *) NULL);
-	      return TCL_ERROR;
-	    }
-	    if(argc > 3)
-	    {
-	      if(! ARG_IS_D(3, accuracy))
-	      {
-	        Tcl_AppendResult(interp, "accuracy double expected", (char *) NULL);
-	        return TCL_ERROR;
-	      }
-	    }
-	    //Turn on ewaldgpu
-	    if (!ewaldgpuForce) // inter coulomb ewaldgpu was never called before
-	    {
-	  	  ewaldgpuForce = new EwaldgpuForce(espressoSystemInterface, r_cut, num_kx, num_ky, num_kz, alpha);
-	  	  forceActors.add(ewaldgpuForce);
-	  	  energyActors.add(ewaldgpuForce);
-	    }
-	    ewaldgpu_params.isTuned = true;
+	if(argc < 3 || argc > 5) {
+		Tcl_AppendResult(interp, "\nExpected: inter coulomb <bjerrum> ewaldgpu <r_cut> (<K_cut> | {<K_cut,x> <K_cut,y><K_cut,z>}) <alpha>",(char *) NULL);
+		return TCL_ERROR;
+	}
+	if(! ARG_IS_D(0,r_cut))
+	{
+		Tcl_AppendResult(interp, "\n<r_cut> double expected", (char *) NULL);
+		return TCL_ERROR;
+	}
+	if(! ARG_IS_I(1, num_kx))
+	{
+		if( ! ARG_IS_INTLIST(1, il) || !(il.n == 3) )
+		{
+			Tcl_AppendResult(interp, "\n(<K_cut> | {<K_cut,x> <K_cut,y><K_cut,z>}) integer or integer list of length 3 expected", (char *) NULL);
+			return TCL_ERROR;
+		}
+		else
+		{
+			num_kx = il.e[0];
+			num_ky = il.e[1];
+			num_kz = il.e[2];
+		}
+	}
+	else
+	{
+		num_kz = num_ky = num_kx;
+	}
+	if(argc > 2)
+	{
+		if(! ARG_IS_D(2, alpha))
+		{
+			Tcl_AppendResult(interp, "\n<alpha> double expected", (char *) NULL);
+			return TCL_ERROR;
+		}
+	}
+	else
+	{
+		Tcl_AppendResult(interp, "\nAutomatic ewaldgpu tuning not implemented.",
+				 (char *) NULL);
+		return TCL_ERROR;
+	}
+
+	//Turn on ewaldgpu
+	if (!ewaldgpuForce) // inter coulomb ewaldgpu was never called before
+	{
+		ewaldgpuForce = new EwaldgpuForce(espressoSystemInterface, r_cut, num_kx, num_ky, num_kz, alpha);
+		forceActors.add(ewaldgpuForce);
+		energyActors.add(ewaldgpuForce);
+	}
+	//Broadcast parameters
+	coulomb.method = COULOMB_EWALD_GPU;
+	ewaldgpu_params.isTuned = true;
+	rebuild_verletlist = 1;
+	mpi_bcast_coulomb_params();
+	return TCL_OK;
 }
 int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
 {
-	double r_cut;
-	double alpha;
-	int num_kx;
-	int num_ky;
-	int num_kz;
+	double r_cut=-1;
+	double alpha=-1;
+	int num_kx=-1;
+	int num_ky=-1;
+	int num_kz=-1;
 	int K_max = 30;
-	int time_calc_steps = 0;
+	int time_calc_steps = -1;
 	double accuracy = 0.0001;
 	double precision = 0.000001;
 
-  //PARSE EWALD COMMAND LINE
-  while(argc > 0)
-  {
-    if(ARG0_IS_S("accuracy"))
-    {
-      if(! (argc > 1 && ARG1_IS_D(accuracy) && accuracy > 0))
-      {
-				Tcl_AppendResult(interp, "accuracy expects a positive double ",(char *) NULL);
+	//PARSE EWALD COMMAND LINE
+	while(argc > 0)
+	{
+		if(ARG0_IS_S("accuracy"))
+		{
+			if(! (argc > 1 && ARG1_IS_D(accuracy) && accuracy > 0))
+			{
+				Tcl_AppendResult(interp, "\n<accuracy> expects a positive double ",(char *) NULL);
 				return TCL_ERROR;
-      }
-    }
-    else if(ARG0_IS_S("precision"))
-    {
-      if(! (argc > 1 && ARG1_IS_D(precision) && precision > 0))
-      {
-				Tcl_AppendResult(interp, "precision expects a positive double ",(char *) NULL);
+			}
+		}
+		else if(ARG0_IS_S("precision"))
+		{
+			if(! (argc > 1 && ARG1_IS_D(precision) && precision > 0))
+			{
+				Tcl_AppendResult(interp, "\n<precision> expects a positive double ",(char *) NULL);
 				return TCL_ERROR;
-      }
-    }
-    else if(ARG0_IS_S("K_max"))
-    {
-      if(! (argc > 1 && ARG1_IS_I(K_max) && K_max > 0))
-      {
-				Tcl_AppendResult(interp, "K_max expects a positive integer ",(char *) NULL);
+			}
+		}
+		else if(ARG0_IS_S("K_max"))
+		{
+			if(! (argc > 1 && ARG1_IS_I(K_max) && K_max > 0))
+			{
+				Tcl_AppendResult(interp, "\n<K_max> expects a positive integer ",(char *) NULL);
 				return TCL_ERROR;
-      }
-    }
-    else if(ARG0_IS_S("time_calc_steps"))
-    {
-      if(! (argc > 1 && ARG1_IS_I(time_calc_steps) && time_calc_steps > 0))
-      {
-				Tcl_AppendResult(interp, "time_calc_steps expects a positive integer ",(char *) NULL);
+			}
+		}
+		else if(ARG0_IS_S("time_calc_steps"))
+		{
+			if(! (argc > 1 && ARG1_IS_I(time_calc_steps) && time_calc_steps > 0))
+			{
+				Tcl_AppendResult(interp, "\n<time_calc_steps> expects a positive integer ",(char *) NULL);
 				return TCL_ERROR;
-      }
-    }
-    else break;
+			}
+		}
+		else break;
 
-    argc -= 2;
-    argv += 2;
-  }
+		argc -= 2;
+		argv += 2;
+	}
 
   //Turn on ewaldgpu
   ewaldgpuForce->set_params_tune(accuracy, precision, K_max, time_calc_steps);
@@ -198,19 +194,22 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, 
 	  forceActors.add(ewaldgpuForce);
 	  energyActors.add(ewaldgpuForce);
   }
-
-  //Tuning
+  //Broadcast parameters
+  coulomb.method = COULOMB_EWALD_GPU;
   rebuild_verletlist = 1;
+  mpi_bcast_coulomb_params();
+  //Tuning
   char *log = NULL;
   if (ewaldgpuForce->adaptive_tune(&log,espressoSystemInterface) == ES_ERROR)
   {
-    Tcl_AppendResult(interp, log, "\nfailed to tune ewaldgpu parameters to required accuracy ", (char *) NULL);
-    if (log) free(log);
+    Tcl_AppendResult(interp,  "\nAccuracy could not been reached. Choose higher K_max or lower accuracy", (char *) NULL);
     return TCL_ERROR;
   }
   //Tell the user about the tuning outcome
   Tcl_AppendResult(interp, log, (char *) NULL);
   if (log) free(log);
+
+  return TCL_OK;
 }
 int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int argc, char ** argv)
 {
@@ -226,18 +225,19 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
   //PARSE EWALD COMMAND LINE
   if (argc < 3)
   {
-    Tcl_AppendResult(interp, "wrong # arguments: <r_cut> <K_cut,x> <K_cut,y><K_cut,z> [<precision>]  ", (char *) NULL);
+    Tcl_AppendResult(interp, "\nWrong # arguments: <r_cut> (<K_cut> | {<K_cut,x> <K_cut,y><K_cut,z>}) <precision>", (char *) NULL);
     return TCL_ERROR;
   }
-  if (! ARG_IS_D(0, r_cut))
+  if (! ARG0_IS_D(r_cut))
   {
-    Tcl_AppendResult(interp, "<r_cut> should be a double",(char *) NULL);
+    Tcl_AppendResult(interp, "\n<r_cut> should be a double",(char *) NULL);
+    return TCL_ERROR;
   }
   if(! ARG_IS_I(1, num_kx))
   {
     if( ! ARG_IS_INTLIST(1, il) || !(il.n == 3) )
     {
-      Tcl_AppendResult(interp, "integer or integer list of length 3 expected", (char *) NULL);
+      Tcl_AppendResult(interp, "\n(<K_cut> | {<K_cut,x> <K_cut,y><K_cut,z>}) integer or integer list of length 3 expected", (char *) NULL);
       return TCL_ERROR;
     }
     else
@@ -253,9 +253,8 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
   }
   if (! ARG_IS_D(2, precision))
   {
-    Tcl_AppendResult(interp, "<precision> should be a double",
-		     (char *) NULL);
-    return 0;
+    Tcl_AppendResult(interp, "\n<precision> should be a double", (char *) NULL);
+    return TCL_ERROR;
   }
 
   //Compute alpha
@@ -269,9 +268,13 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
 	  forceActors.add(ewaldgpuForce);
 	  energyActors.add(ewaldgpuForce);
   }
+  //Broadcast parameters
+  coulomb.method = COULOMB_EWALD_GPU;
   ewaldgpu_params.isTuned = true;
+  rebuild_verletlist = 1;
+  mpi_bcast_coulomb_params();
+  return TCL_OK;
 }
-
 
 #endif
 
