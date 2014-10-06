@@ -87,15 +87,24 @@ typedef float real;
 
 /// stuct for sparse matrix: (blocked version off ELLPACK-R, see \link http://elib.uni-stuttgart.de/opus/volltexte/2010/5033/pdf/DIP_2938.pdf \endlink
 /// for dense matrizes use only data
+struct wavepart{
+  real * vecs;
+  real * matrices;
+  real * cosines;
+  real * sines;
+  int num;
+  int max;
+};
 struct matrix{
   real * data;
   int  * col_idx;
   int  * row_l;
-  real * wavespace;
+  wavepart * wavespace;
   bool is_sparse;
   int size;
   int ldd;
   int ldd_short;
+  int kmax;
 };
 
 
@@ -1620,6 +1629,72 @@ void sd_Rgemv(const real * factor, const matrix A, const real * in, real * out){
   }
 }
 
+ void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix mobility, real a, real * L_h, real xi){
+  int cki[3];
+  real k[3];
+  real ki[3];
+  real xi2=1/xi/xi;
+  for (int i =0 ; i < 3; i++){
+    ki[i]=2*M_PI/L_h[i];
+  }
+  // count how many wave vectors we need
+  int vc = 0;
+  for (cki[0]=-kmax;cki[0]<kmax+1;cki[0]+=1){
+    for (cki[1]=-kmax;cki[1]<kmax+1;cki[1]+=1){
+      for (cki[2]=-kmax;cki[2]<kmax+1;cki[2]+=1){
+	if (cki[0]**2+ cki[1]**2 + cki[2]**2 < kmax2){
+	  vc++;
+	}
+      }
+    }
+  }
+  if (mobility->wavespace == NULL){
+    mobility.wavespace = (wavepart *) malloc(sizeof(wavepart));
+    mobility->wavespace.vecs    =NULL;
+    mobility->wavespace.matrices=NULL;
+    mobility->wavespace.sines   =NULL;
+    mobility->wavespace.cosines =NULL;
+    mobility->wavespace.num     =0;
+    mobility->wavespace.max     =0;
+  }
+  // CONTINUE:
+  // Space management is fucked up
+  // alignement is prop. fucked up
+  mobility->wavespace.num      = vc;
+  int max = vc;
+  if (mobility->wavespace.ldd !=ldd){
+    cuda_safe_mem(cudaMalloc( (void**)&chebyshev_vec_last, size*sizeof(real) ));    assert(chebyshev_vec_last != NULL);
+    cuda_safe_mem(cudaMalloc( (void**)&chebyshev_vec_last, size*sizeof(real) ));    assert(chebyshev_vec_last != NULL);
+  }
+  real vecs_h[3 * ldd];
+  real matrices_h[6 * ldd];
+  vc=0;
+  for (cki[0]=-kmax;cki[0]<kmax+1;cki[0]+=1){
+    k[0]=cki[0]*ki[0];
+    for (cki[1]=-kmax;cki[1]<kmax+1;cki[1]+=1){
+      k[1]=cki[1]*ki[1];
+      for (cki[2]=-kmax;cki[2]<kmax+1;cki[2]+=1){
+	if (cki[0]*cki[0]+ cki[1]*cki[1] + cki[2]*cki[2] < kmax2){
+	  k[2]=cki[2]*ki[2];
+	  real k2=k[0]*k[0]+ k[1]*k[1] + k[2]*k[2];
+	  for (int i = 0;i<3;i++){
+	    vecs_h[vc+i*ldd]=k[i];
+	  }
+	  real scal = (a*1./3.*a*a*a*k2)*(1+0.25*xi2*k2+0.125*xi2*xi2*k2*k2)*6.M_PI/k2*exp(-0.25*xi2*k2);
+	  for (int i = 0 ; i < 3 ; i++ ){
+	    matrices_h[vc+i*ldd] = (1-(k[i]*k[i]/k2))*scal;
+	  }
+	  matrices_h[vc+3*ldd] = (-k[0]*k[1]/k2)*scal;
+	  matrices_h[vc+4*ldd] = (-k[0]*k[2]/k2)*scal;
+	  matrices_h[vc+5*ldd] = (-k[1]*k[2]/k2)*scal;
+	  vc++;
+	}
+      }
+    }
+  }
+  
+}
+
 /* *************************************************************************************************************** *
  * ********************************************      CUDA-KERNELS     ******************************************** *
  * *************************************************************************************************************** */
@@ -1895,32 +1970,50 @@ __global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, 
 // self_mobility is 1./(6.*PI*eta*a)
 // a is the particle radius
 // mobility is the mobility matrix which will be retruned
-// L_d is the boxlength
+// k_g are the wavespace box vektors
 // cutoff the realspace cutoff distance
 // xi the splitting parameter as defined by Beenakker 1986
 // xa  = xi * a
 // xa3 = xa * xa * xa
 #define mydebug(str,...)
 // if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
- __global__ void sd_compute_mobility_matrix_wave(real * r, int N, real self_mobility, real a, real * L_g, real * mobility, real cutoff, real xi, real xa, real xa3){
+ __global__ void sd_compute_mobility_matrix_wave(real * r, int N, real self_mobility, const real a, const real const * k_g, real * mobility_wave, const float kmax, const real kmax2, const real xi){
   real mypos[3];
   const int lda=((3*N+31)/32)*32;
-  __shared__ real L[3];
+  __shared__ real ki[3];
   __shared__ real cachedPos[3*numThreadsPerBlock];
   __shared__ real writeCache[3*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
-  if (threadIdx.x < 3){ // copy L to shared memory
-    L[threadIdx.x]=L_g[threadIdx.x];
+  if (threadIdx.x < 3){ // copy ki to shared memory
+    ki[threadIdx.x]=k_g[threadIdx.x];
   }
   __syncthreads();
   // get data for myposition - using coalscaled memory access
+  #pragma unroll 3
   for (int l=0;l<3;l++){
     cachedPos[numThreadsPerBlock*l+threadIdx.x] = r[numThreadsPerBlock*(l+blockIdx.x*3)+threadIdx.x];
   }
   __syncthreads();
+  #pragma unroll 3
   for (int l=0;l<3;l++){
     mypos[l] = cachedPos[threadIdx.x*3+l];
   }
+  real cki[3];
+  real k[3];
+  for (cki[0]=-kmax;cki[0]<kmax+0.5f;cki[0]+=1){
+    k[0]=cki[0]*ki[0];
+    for (cki[1]=-kmax;cki[1]<kmax+0.5f;cki[1]+=1){
+      k[1]=cki[1]*ki[1];
+      for (cki[2]=-kmax;cki[2]<kmax+0.5f;cki[2]+=1){
+	if (cki[0]**2+ cki[1]**2 + cki[2]**2 < kmax2){
+	  k[2]=cki[2]*ki[2];
+	  
+	}
+      }
+    }
+  }
+  
+
 }
 #undef mydebug
 

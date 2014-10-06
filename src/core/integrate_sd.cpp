@@ -381,6 +381,9 @@ void propagate_pos_sd()
 #else
         memcpy(&pos[3*j], p[i].r.p, 3*sizeof(double));
         memcpy(&force[3*j], p[i].f.f, 3*sizeof(double));
+	for (int d=0;d<3;d++){
+	  pos[3*j+d]        -=rint(pos[3*j+d]/box_l[d])*box_l[d];
+	}
 #endif
 	j++;
       }
@@ -425,7 +428,9 @@ void propagate_pos_sd()
 	//p[i].f.f[d] *= (0.5*time_step*time_step)/PMASS(*part);
       }
 #else
-      memcpy(p[i].r.p, &pos[DIM*j], 3*sizeof(double));
+      for (int d=0;d<3;d++){
+	p[i].r.p[d] = pos[3*j+d]+box_l[d]*rint(p[i].r.p[d]/box_l[d]);
+      }
       memcpy(p[i].m.v, &velocity[DIM*j], 3*sizeof(double));
 #endif
       // somehow this does not effect anything, although it is called ...
