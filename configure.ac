@@ -435,7 +435,7 @@ AS_IF([test .$with_python_interface != .no], [
 		[AC_MSG_FAILURE([Cannot build python interface!])])
    	AC_DEFINE(PYTHON_DEV,[],[Whether Python is available]) 
 ])
-AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
+AM_CONDITIONAL(PYTHON_INTERFACE, [test .$build_python_interface != .no])
 # export libtool objdir, so that we can link the .so files to the dir itself
 AC_SUBST(objdir)
 
