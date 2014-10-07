@@ -158,7 +158,7 @@ CALLBACK_LIST
 // create the list of callbacks
 #undef CB
 #define CB(name) name,
-static const SlaveCallback *slave_callbacks[] = {
+static SlaveCallback * const slave_callbacks[] = {
   CALLBACK_LIST
 };
 

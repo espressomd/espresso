@@ -42,7 +42,7 @@
 #include "random.hpp"
 #include "integrate.hpp"
 #include "constraint.hpp"
-
+#include "global.hpp"
 
 
 
@@ -174,13 +174,9 @@ int constraint_collision(double *p1, double *p2){
       if(d1*d2<0.0)
 	return 1;
       break;
-    case CONSTRAINT_MAZE:
-    case CONSTRAINT_PORE:
-    case CONSTRAINT_PLATE:
-    case CONSTRAINT_RHOMBOID:
+    default:
+      if (warnings) fprintf (stderr, "Warning: Only wall, cylinder and sphere constraints can be excluded from the polymer accessible volume.\n"); 
       break;
-    //default://@TODO: handle default case
-      //  break;
     }
   }
   return 0;

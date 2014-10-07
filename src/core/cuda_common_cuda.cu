@@ -54,7 +54,7 @@ cudaStream_t stream[1];
 
 cudaError_t err;
 
-void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
+void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line){
   if( cudaSuccess != err) {                                             
     fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
     printf("CUDA error: %s\n", cudaGetErrorString(err));
@@ -74,7 +74,7 @@ void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
 }
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
-                        char *function, char *file, unsigned int line) {
+                        const char *function, const char *file, unsigned int line) {
   err=cudaGetLastError();
   if (err!=cudaSuccess) {
     fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n",
