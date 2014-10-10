@@ -12,6 +12,7 @@
 #include "halo.hpp"
 #include "lb-boundaries.hpp"
 #include "immersedBoundary/ibm_main.hpp"
+#include "immersedBoundary/ibm_cuda_interface.hpp"
 
 // Dummy functions. They are required by Espresso, but they don't do anything here.
 // We have our own update functions.
@@ -43,9 +44,6 @@ extern HaloCommunicator update_halo_comm;
 
 void IBM_ForcesIntoFluid_CPU()
 {
-  // Reset forces was delayed because we needed them for the update
-  // Do it now
-//  ResetLBForcesIBM();
   
   // Halo has already been sent. Check for safety
   if (lbpar.resend_halo)
@@ -132,9 +130,9 @@ void IBM_UpdateParticlePositions()
 {
   // Get velocities
   if (lattice_switch & LATTICE_LB) ParticleVelocitiesFromLB_CPU();
-/*#ifdef LB_GPU
+#ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU) ParticleVelocitiesFromLB_GPU();
-#endif*/
+#endif
   
   
   // Do update: Euler
@@ -165,7 +163,7 @@ void IBM_UpdateParticlePositions()
 
 /*************
    CoupleIBMParticleToFluid
-This function puts the momentum of a given particle into the LB fluid
+This function puts the momentum of a given particle into the LB fluid - only for CPU
 **************/
 
 void CoupleIBMParticleToFluid(Particle *p)
@@ -188,7 +186,7 @@ void CoupleIBMParticleToFluid(Particle *p)
     {
       for (int x = 0; x < 2;x++)
       {
-        // Do not force into a halo node
+        // Do not put force into a halo node
         if ( !IsHalo(node_index[(z*2+y)*2+x]) )
         {
           // Indicate that there is a force, probably only necessary for the unusual case of compliing without EXTERNAL_FORCES
@@ -196,6 +194,7 @@ void CoupleIBMParticleToFluid(Particle *p)
 
           // Add force into the lbfields structure
           double *local_f = lbfields[node_index[(z*2+y)*2+x]].force;
+          
           local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
           local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
           local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
@@ -207,7 +206,7 @@ void CoupleIBMParticleToFluid(Particle *p)
 
 /******************
    GetIBMInterpolatedVelocity
-Very similar to the velocity interpolation done in standard Espresso, except that we add the f/2 contribution
+Very similar to the velocity interpolation done in standard Espresso, except that we add the f/2 contribution - only for CPU
 *******************/
 
 void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceAdded)
@@ -238,6 +237,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
     pos[0]=p[0] - distvec[0]+ distvec[0]/lbboundary_mindist*lbpar.agrid/2.;
     pos[1]=p[1] - distvec[1]+ distvec[1]/lbboundary_mindist*lbpar.agrid/2.;
     pos[2]=p[2] - distvec[2]+ distvec[2]/lbboundary_mindist*lbpar.agrid/2.;
+    
   } else {
     boundary_flag=2;
     v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
@@ -331,7 +331,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
 /************
    IsHalo
 Builds a cache structure which contains a flag for each LB node whether that node is a halo node or not
-Checks for halo
+Checks for halo - only for CPU
 *************/
 
 bool IsHalo(const int indexCheck)
@@ -421,6 +421,7 @@ void ParticleVelocitiesFromLB_CPU()
           p[j].f.f[1] = force[1] * lbpar.agrid/lbpar.tau;
           p[j].f.f[2] = force[2] * lbpar.agrid/lbpar.tau;
         }
+        else { p[j].f.f[0] = p[j].f.f[1] = p[j].f.f[2] = 0; }   // Reset, necessary because we add all forces below
         
       }
       else { p[j].f.f[0] = p[j].f.f[1] = p[j].f.f[2] = 0; }   // Reset, necessary because we add all forces below
@@ -428,7 +429,7 @@ void ParticleVelocitiesFromLB_CPU()
   
   
   
-  // Now the real particles contain a velocity (stored in the force field) and the ghosts contain the rest of the velocity in their respective force fields
+  // Now the local particles contain a velocity (stored in the force field) and the ghosts contain the rest of the velocity in their respective force fields
   // We need to add these. Since we have stored them in the force, not the velocity fields, we can use the standard force communicator and then transfer to the velocity afterwards
   // Note that this overwrites the actual force which would be a problem for real particles
   // This could be solved by keeping a backup of the local forces before this operation is attempted
