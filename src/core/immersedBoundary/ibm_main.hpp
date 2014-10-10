@@ -16,12 +16,14 @@ void distribute_mol_force();
 // Main functions for CPU & GPU
 void IBM_UpdateParticlePositions();
 
-// Main functions for CPU implementation
+// Main functions for CPU implementation - called from integrate.cpp
 void IBM_ForcesIntoFluid_CPU();
 void IBM_ResetLBForces_CPU();
 
-// Main functions for GPU implementation
-//void IBM_ResetLBForces_GPU();
+// Main functions for GPU implementation - called from integrate.cpp
+// These are in ibm_cuda.cu
+void IBM_ForcesIntoFluid_GPU();
+void IBM_ResetLBForces_GPU();
 
 #endif
 

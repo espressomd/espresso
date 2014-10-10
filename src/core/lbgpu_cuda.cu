@@ -78,7 +78,9 @@ static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
 
 #ifdef LB_BOUNDARIES_GPU
 static float* lb_boundary_force = NULL;
+
 static float* lb_boundary_velocity = NULL;
+
 /** pointer for bound index array*/
 static int *boundary_node_list;
 static int *boundary_index_list;
@@ -1180,8 +1182,12 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
       mode[9 + ii * LBQ] += C[4];
     
   }
-  
+
+#if !defined(IMMERSED_BOUNDARY)
+  // This must not be done here since we need the forces after LB update for the velocity interpolation
+  // It is done by calling IBM_ResetLBForces_GPU from integrate_vv
   reset_LB_forces(index, node_f);
+#endif
 
 #ifdef SHANCHEN
   for(int ii=0;ii<LB_COMPONENTS;++ii)

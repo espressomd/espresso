@@ -32,6 +32,10 @@ int IBM_WallRepulsion_CalcForce(Particle *p1, Bonded_ia_parameters *iaparams)
       const double dist8 = dist4*dist4;
       const double f = k / dist8;
       
+      // DEBUG
+//      if ( p1->p.identity == 1 )
+//        printf("zDist = %f\n", distVec[2]);
+      
       // Repulsive force
       p1->f.f[0] += distVec[0] * k;
       p1->f.f[1] += distVec[1] * k;

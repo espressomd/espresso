@@ -324,6 +324,9 @@ void integrate_vv(int n_steps, int reuse_forces)
 #ifdef IMMERSED_BOUNDARY
     // Now the forces are computed and need to go into the LB fluid
     if (lattice_switch & LATTICE_LB) IBM_ForcesIntoFluid_CPU();
+#ifdef LB_GPU
+    if (lattice_switch & LATTICE_LB_GPU) IBM_ForcesIntoFluid_GPU();
+#endif
 #endif
 
 #ifdef CATALYTIC_REACTIONS
@@ -380,7 +383,11 @@ void integrate_vv(int n_steps, int reuse_forces)
 #ifdef IMMERSED_BOUNDARY
     
     IBM_UpdateParticlePositions();
-    IBM_ResetLBForces_CPU();
+    if (lattice_switch & LATTICE_LB) IBM_ResetLBForces_CPU();
+#ifdef LB_GPU
+    if (lattice_switch & LATTICE_LB_GPU) IBM_ResetLBForces_GPU();
+#endif
+    
     if (check_runtime_errors()) break;
     
     // Ghost positions are now out-of-date
