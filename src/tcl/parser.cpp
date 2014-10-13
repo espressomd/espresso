@@ -60,9 +60,9 @@ int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl) {
 }
 
 int gather_runtime_errors(Tcl_Interp *interp, int error_code) {
-  list<string> &errorList = runtimeErrors->gather();
+  list<string> errors = mpiRuntimeErrorCollectorGather();
 
-  if (errorList.size() == 0) return TCL_OK;
+  if (errors.size() == 0) return TCL_OK;
 
   /* reset any results of the previous command, since we got an error
      during evaluation, they are at best bogus. But any normal error
@@ -76,10 +76,9 @@ int gather_runtime_errors(Tcl_Interp *interp, int error_code) {
 
   Tcl_AppendResult(interp, "background_errors ", (char *) NULL);
 
-  for (list<string>::const_iterator it = errorList.begin();
-       it != errorList.end(); ++it)
+  for (list<string>::const_iterator it = errors.begin();
+       it != errors.end(); ++it)
     Tcl_AppendResult(interp, it->c_str(), (char*)NULL);
-  runtimeErrors->clear();
 
   return TCL_ERROR;
 }

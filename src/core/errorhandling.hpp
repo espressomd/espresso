@@ -31,20 +31,6 @@
 #include <string>
 #include <sstream>
 #include <list>
-#include <mpi.h>
-
-/** check for runtime errors on all nodes. This has to be called on all nodes synchronously.
-    @return the number of characters in the error messages of all nodes together. */
-int check_runtime_errors();
-
-/** Gather all error messages from all nodes and return them
-
-    @param errors contains the errors from all nodes. This has to point to an array
-    of character pointers, one for each node.
-    @return \ref ES_OK if no error occured, otherwise \ref ES_ERROR
-*/
-int mpi_gather_runtime_errors(char **errors);
-void mpi_gather_runtime_errors_slave(int node, int parm);
 
 /** exit ungracefully, core dump if switched on. */
 void errexit();
@@ -52,45 +38,29 @@ void errexit();
 /** register a handler for sigint that translates it into an runtime error. */
 void register_sigint_handler();
 
-#define runtimeWarning(msg)                                     \
- runtimeErrors->warning(msg, __PRETTYFUNC__, __FILE__, __LINE__)
+/* NEW RUNTIME ERROR HANDLING. */
+
+// Functions to report runtime errors
+void initRuntimeErrorCollector();
+
+void _runtimeWarning(const char* msg, const char* function, const char* file, const int line);
+void _runtimeWarning(const std::string &msg, const char* function, const char* file, const int line);
+void _runtimeWarning(const std::ostringstream &msg, const char* function, const char* file, const int line);
+
+void _runtimeError(const char* msg, const char* function, const char* file, const int line);
+void _runtimeError(const std::string &msg, const char* function, const char* file, const int line);
+void _runtimeError(const std::ostringstream &msg, const char* function, const char* file, const int line);
+
+#define runtimeWarning(msg) \
+ _runtimeWarning(msg, __PRETTYFUNC__, __FILE__, __LINE__)
 #define runtimeError(msg) \
- runtimeErrors->error(msg, __PRETTYFUNC__, __FILE__, __LINE__)
+ _runtimeError(msg, __PRETTYFUNC__, __FILE__, __LINE__)
 
+/** check for runtime errors on all nodes. This has to be called on all nodes synchronously.
+    @return the number of characters in the error messages of all nodes together. */
+int check_runtime_errors();
 
-class ParallelRuntimeErrors {
-  std::list<std::string> errors;
-  MPI_Comm comm;
-
-public:
-  ParallelRuntimeErrors(MPI_Comm comm);
-
-  void warning(const std::string &msg,
-               const char* function, const char* file, const int line);
-  void warning(const char *msg,
-               const char* function, const char* file, const int line);
-  void warning(std::ostringstream &mstr,
-               const char* function, const char* file, const int line);
-
-  void error(const std::string &msg,
-             const char* function, const char* file, const int line);
-  void error(const char *msg,
-             const char* function, const char* file, const int line);
-  void error(std::ostringstream &mstr,
-             const char* function, const char* file, const int line);
-
-  int count();
-  std::list<std::string> &gather();
-  void gatherSlave();
-
-  void clear();
-};
-
-// Function to initialize the global runtimeErrors object
-void initRuntimeErrors();
-
-// callback function for communicator
-void mpiParallelRuntimeErrorsGatherSlave(int node, int parm);
-extern ParallelRuntimeErrors *runtimeErrors;
+std::list<std::string> mpiRuntimeErrorCollectorGather();
+void mpiRuntimeErrorCollectorGatherSlave(int node, int parm);
 
 #endif

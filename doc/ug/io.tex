@@ -340,13 +340,13 @@ blockfile, overwriting the current settings in \es.
 
 Binary files are written using the command
 \begin{essyntax}
-  writemd \var{channel} \opt{posx|posy|posz|vx|vy|vz|fx|fy|fz}
+  writemd \var{channel} \opt{posx|posy|posz|vx|vy|vz|fx|fy|fz}\dots
 \end{essyntax}
 This will write out particle data to the Tcl channel \var{channel} for
 all particles in binary format. Apart from the mandatory particle id,
-only limited information can be stored. The coordinates (\opt{posx},
-\opt{posy} and \opt{posz}), velocities (\opt{vx}, \opt{vy} and
-\opt{vz}) and forces (\opt{fx}, \opt{fy} and \opt{fz}). Other
+only limited information can be stored. The coordinates (\keyword{posx},
+\keyword{posy} and \keyword{posz}), velocities (\keyword{vx}, \keyword{vy} and
+\keyword{vz}) and forces (\keyword{fx}, \keyword{fy} and \keyword{fz}). Other
 information should be stored in a blockfile or reconstructed
 differently. Note that since both \texttt{blockfile} and
 \texttt{writemd} are using a Tcl channel, it is actually possible to

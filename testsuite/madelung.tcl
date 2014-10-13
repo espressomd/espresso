@@ -27,6 +27,7 @@ source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
+require_feature "LEES_EDWARDS" off
 require_max_nodes_per_side 2
 
 puts "----------------------------------------------"

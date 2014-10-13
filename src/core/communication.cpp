@@ -149,7 +149,7 @@ MPI_Comm comm_cart;
   CB(mpi_external_potential_tabulated_read_potential_file_slave) \
   CB(mpi_external_potential_sum_energies_slave) \
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
-  CB(mpiParallelRuntimeErrorsGatherSlave)        \
+  CB(mpiRuntimeErrorCollectorGatherSlave)        \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -158,7 +158,7 @@ CALLBACK_LIST
 // create the list of callbacks
 #undef CB
 #define CB(name) name,
-static const SlaveCallback *slave_callbacks[] = {
+static SlaveCallback * const slave_callbacks[] = {
   CALLBACK_LIST
 };
 
@@ -217,7 +217,7 @@ void mpi_init(int *argc, char ***argv)
   MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
 
-  initRuntimeErrors();
+  initRuntimeErrorCollector();
 }
 
 #ifdef HAVE_MPI

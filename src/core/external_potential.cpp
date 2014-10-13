@@ -228,7 +228,7 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
   fprintf(outfile,"local_index_offset %d %d %d\n", lattice->local_index_offset[0], lattice->local_index_offset[1], lattice->local_index_offset[2]);
 
 
-  fprintf(outfile, "element_size %d\n", lattice->element_size);
+  fprintf(outfile, "element_size %lu\n", lattice->element_size);
 
   
   for (i=0; i<lattice->halo_grid[0]; i++) 
@@ -250,10 +250,17 @@ void add_external_potential_tabulated_forces(ExternalPotential* e, Particle* p) 
   }
   double field[3];
   double ppos[3];
-  int img[3];
+#ifdef LEES_EDWARDS
+  double dummyV[3];
+#endif
+  int    img[3];
   memcpy(ppos, p->r.p, 3*sizeof(double));
   memcpy(img, p->r.p, 3*sizeof(int));
+#ifdef LEES_EDWARDS
+  fold_position(ppos, dummyV, img);
+#else
   fold_position(ppos, img);
+#endif
  
   e->tabulated.potential.interpolate_gradient(p->r.p, field);
   p->f.f[0]-=e->scale[p->p.type]*field[0];
@@ -282,10 +289,17 @@ void add_external_potential_tabulated_energy(ExternalPotential* e, Particle* p) 
   }
   double potential;
   double ppos[3];
+#ifdef LEES_EDWARDS
+  double dummyV[3];
+#endif
   int img[3];
   memcpy(ppos, p->r.p, 3*sizeof(double));
   memcpy(img, p->r.p, 3*sizeof(int));
+#ifdef LEES_EDWARDS
+  fold_position(ppos, dummyV, img);
+#else
   fold_position(ppos, img);
+#endif
  
   e->tabulated.potential.interpolate(p->r.p, &potential);
   e->energy += e->scale[p->p.type] * potential;

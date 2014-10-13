@@ -803,8 +803,8 @@ int interactions_sanity_checks()
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
-  default: break;
 #endif
+  default: break;
   }
 #endif /* ifdef ELECTROSTATICS */
 

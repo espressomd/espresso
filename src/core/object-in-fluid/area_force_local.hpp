@@ -50,19 +50,34 @@ inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 	int k;	
 	double A, aa, h[3], rh[3], hn;
 	double p11[3],p22[3],p33[3];
+#ifdef LEES_EDWARDS
+    double vv[3];
+#endif
 	int img[3];
 	
 	memcpy(p11, p1->r.p, 3*sizeof(double));
 	memcpy(img, p1->l.i, 3*sizeof(int));
-	fold_position(p11, img);
-					
+#ifdef LEES_EDWARDS
+	fold_position(p11, vv, img);
+#else
+    fold_position(p11, img);
+#endif
 	memcpy(p22, p2->r.p, 3*sizeof(double));
 	memcpy(img, p2->l.i, 3*sizeof(int));
-	fold_position(p22, img);
+    
+#ifdef LEES_EDWARDS
+    fold_position(p22, vv, img);
+#else
+    fold_position(p22, img);
+#endif
 
 	memcpy(p33, p3->r.p, 3*sizeof(double));
 	memcpy(img, p3->l.i, 3*sizeof(int));
-	fold_position(p33, img);
+#ifdef LEES_EDWARDS
+    fold_position(p33, vv, img);
+#else
+    fold_position(p33, img);
+#endif
 
 	for(k=0;k<3;k++) h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);
 	//volume+=A * -n[2]/dn * h[2];
