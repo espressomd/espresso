@@ -383,6 +383,8 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
 		     (char *) NULL);
     return (TCL_ERROR);
+  default: // keep the compiler happy if interactions are compiled out
+    break;
   }
   /* if none of the above */
   Tcl_ResetResult(interp);

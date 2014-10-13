@@ -18,8 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef INTEGRATE_SD_H
-#define INTEGRATE_SD_H
+#pragma once
+//#ifndef INTEGRATE_SD_H
+//#define INTEGRATE_SD_H
 
 
 #ifdef CUDA
@@ -110,4 +111,4 @@ int sd_test(int size, int type);
 
 /*@}*/
 
-#endif
+//#endif

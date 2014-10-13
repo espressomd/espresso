@@ -42,7 +42,7 @@
 #include "random.hpp"
 #include "integrate.hpp"
 #include "constraint.hpp"
-
+#include "global.hpp"
 
 
 
@@ -135,12 +135,23 @@ int constraint_collision(double *p1, double *p2){
   double folded_pos1[3];
   double folded_pos2[3];
   int img[3];
-
+#ifdef LEES_EDWARDS
+  double vtmp[3];
+#endif
+  
   memcpy(folded_pos1, p1, 3*sizeof(double));
+#ifdef LEES_EDWARDS
+  fold_position(folded_pos1, vtmp, img);
+#else
   fold_position(folded_pos1, img);
+#endif
 
   memcpy(folded_pos2, p2, 3*sizeof(double));
+#ifdef LEES_EDWARDS
+  fold_position(folded_pos1, vtmp, img);
+#else
   fold_position(folded_pos2, img);
+#endif
 
   for(i=0;i<n_constraints;i++){
     c=&constraints[i];
@@ -163,13 +174,9 @@ int constraint_collision(double *p1, double *p2){
       if(d1*d2<0.0)
 	return 1;
       break;
-    case CONSTRAINT_MAZE:
-    case CONSTRAINT_PORE:
-    case CONSTRAINT_PLATE:
-    case CONSTRAINT_RHOMBOID:
+    default:
+      if (warnings) fprintf (stderr, "Warning: Only wall, cylinder and sphere constraints can be excluded from the polymer accessible volume.\n"); 
       break;
-    //default://@TODO: handle default case
-      //  break;
     }
   }
   return 0;

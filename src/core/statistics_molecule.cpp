@@ -33,6 +33,13 @@ int analyze_fold_molecules(float *coord, double shift[3])
   int mol_size, ind;
   double cm_tmp, com[3];
 
+  #ifdef LEES_EDWARDS
+  if(lees_edwards_offset != 0.0 ){
+    fprintf(stderr, "Error: Folding molecules not supported under Lees-Edwards.\n");
+    exit(8);
+  }
+  #endif
+  
   /* check molecule information */
   if ( n_molecules < 0 ) return ES_ERROR;
 

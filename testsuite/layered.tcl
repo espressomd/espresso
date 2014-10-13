@@ -20,6 +20,7 @@
 source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"
+require_feature "LEES_EDWARDS" off
 
 if { [setmd n_nodes] >= 5 } {
     puts "Testcase layered.tcl does not run on more than 5 nodes -- too many cells"

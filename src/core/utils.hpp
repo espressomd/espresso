@@ -33,6 +33,9 @@
 #include <cstring>
 #include "config.hpp"
 #include "debug.hpp"
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -905,16 +908,27 @@ inline double distance2vec(double pos1[3], double pos2[3], double vec[3])
 inline double unfolded_distance(double pos1[3], int image_box1[3], 
 				  double pos2[3], int image_box2[3], double box_l[3])
 {
-  int i;
   double dist = 0;
   double lpos1[3],lpos2[3];
-  for(i=0;i<3;i++){
-    lpos1[i] = pos1[i];
-    lpos2[i] = pos2[i];
-    lpos1[i] += image_box1[i]*box_l[i];
-    lpos2[i] += image_box2[i]*box_l[i];
-    dist += SQR(lpos1[i]-lpos2[i]);
-  }
+
+  /*unrolling the loop so can neatly add Lees-Edwards: 
+   *compiler probably unrolls anyway*/
+  lpos1[0]  = pos1[0] + image_box1[0]*box_l[0];
+  lpos2[0]  = pos2[0] + image_box2[0]*box_l[0];
+#ifdef LEES_EDWARDS
+  lpos1[0] += image_box1[1] * lees_edwards_offset;
+  lpos2[0] += image_box2[1] * lees_edwards_offset;
+#endif
+  dist      = SQR(lpos1[0]-lpos2[0]);
+
+  lpos1[1]  = pos1[1] + image_box1[1]*box_l[1];
+  lpos2[1]  = pos2[1] + image_box2[1]*box_l[1];
+  dist     += SQR(lpos1[1]-lpos2[1]);
+
+  lpos1[2]  = pos1[2] + image_box1[2]*box_l[2];
+  lpos2[2]  = pos2[2] + image_box2[2]*box_l[2];
+  dist     += SQR(lpos1[2]-lpos2[2]);
+
   return sqrt(dist);
 }
 /*@}*/

@@ -25,6 +25,9 @@
  */
 
 #include "domain_decomposition.hpp"
+#include "lees_edwards_domain_decomposition.hpp"
+#include "lees_edwards_comms_manager.hpp"
+#include "lees_edwards.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
 #include "pressure.hpp"
@@ -48,6 +51,9 @@
 /************************************************/
 /*@{*/
 
+#ifdef LEES_EDWARDS
+le_dd_comms_manager le_mgr;
+#endif
 DomainDecomposition dd = { 1, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, NULL };
 
 int max_num_cells = CELLS_MAX_NUM_CELLS;
@@ -57,7 +63,7 @@ double max_skin   = 0.0;
 /*@}*/
 
 /************************************************************/
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -74,16 +80,30 @@ double max_skin   = 0.0;
       for(m=1; m<dd.cell_grid[0]+1; m++)
 
 /** Convenient replace for inner cell check. usage: if(DD_IS_LOCAL_CELL(m,n,o)) {...} */
+#ifdef LEES_EDWARDS
+#define DD_IS_LOCAL_CELL(m,n,o) \
+  ( m > 0 && m <= dd.cell_grid[0] && \
+    n > 0 && n <= dd.cell_grid[1] && \
+    o > 0 && o <= dd.cell_grid[2] )
+#else
 #define DD_IS_LOCAL_CELL(m,n,o) \
   ( m > 0 && m < dd.ghost_cell_grid[0] - 1 && \
     n > 0 && n < dd.ghost_cell_grid[1] - 1 && \
-    o > 0 && o < dd.ghost_cell_grid[2] - 1 ) 
+    o > 0 && o < dd.ghost_cell_grid[2] - 1 )
+#endif
 
 /** Convenient replace for ghost cell check. usage: if(DD_IS_GHOST_CELL(m,n,o)) {...} */
+#ifdef LEES_EDWARDS
+#define DD_IS_GHOST_CELL(m,n,o) \
+  ( m == 0 ||  m == dd.ghost_cell_grid[0] - 1 || \
+    n == 0 || (n == dd.ghost_cell_grid[1] - 1 || n == dd.ghost_cell_grid[1] - 2) || \
+    o == 0 ||  o == dd.ghost_cell_grid[2] - 1 ) 
+#else
 #define DD_IS_GHOST_CELL(m,n,o) \
   ( m == 0 || m == dd.ghost_cell_grid[0] - 1 || \
-    n == 0 || n == dd.ghost_cell_grid[1] - 1 || \
-    o == 0 || o == dd.ghost_cell_grid[2] - 1 ) 
+    n == 0 || n >= dd.ghost_cell_grid[1] - 1 || \
+    o == 0 || o == dd.ghost_cell_grid[2] - 1 )
+#endif
 
 /** Calculate cell grid dimensions, cell sizes and number of cells.
  *  Calculates the cell grid, based on \ref local_box_l and \ref
@@ -107,7 +127,14 @@ void dd_create_cell_grid()
 
   if (max_range < ROUND_ERROR_PREC*box_l[0]) {
     /* this is the initialization case */
+#ifdef LEES_EDWARDS
+    dd.cell_grid[0] = 2;
+    dd.cell_grid[1] = 1;
+    dd.cell_grid[2] = 1;
+    n_local_cells   = 2;
+#else
     n_local_cells = dd.cell_grid[0] = dd.cell_grid[1] = dd.cell_grid[2]=1;
+#endif
   }
   else {
     /* Calculate initial cell grid */
@@ -122,13 +149,22 @@ void dd_create_cell_grid()
       if ( cell_range[i] < max_range ) {
 	/* ok, too many cells for this direction, set to minimum */
 	dd.cell_grid[i] = (int)floor(local_box_l[i]/max_range);
-    if ( dd.cell_grid[i] < 1 ) {
-        ostringstream msg;
-        msg << "interaction range " << max_range << " in direction "
-            << i << " is larger than the local box size " << local_box_l[i];
-        runtimeError(msg);
+	if ( dd.cell_grid[i] < 1 ) {
+	  ostringstream msg;
+	  msg << "interaction range " << max_range << " in direction "
+	      << i << " is larger than the local box size " << local_box_l[i];
+	  runtimeError(msg);
 	  dd.cell_grid[i] = 1;
 	}
+#ifdef LEES_EDWARDS
+        if ( (i == 0) && (dd.cell_grid[0] < 2) ) {
+	  ostringstream msg;
+	  msg << "interaction range " << max_range << " in direction "
+	      << i << " is larger than the local box size " << local_box_l[i];
+	  runtimeError(msg);
+	  dd.cell_grid[0] = 2;
+        }
+#endif
 	cell_range[i] = local_box_l[i]/dd.cell_grid[i];
       }
     }
@@ -136,22 +172,27 @@ void dd_create_cell_grid()
     /* It may be necessary to asymmetrically assign the scaling to the coordinates, which the above approach will not do.
        For a symmetric box, it gives a symmetric result. Here we correct that. */
     for (;;) {
-      n_local_cells = dd.cell_grid[0];
-      for (i = 1; i < 3; i++)
-	n_local_cells *= dd.cell_grid[i];
+
+      n_local_cells = dd.cell_grid[0] * dd.cell_grid[1] * dd.cell_grid[2];
 
       /* done */
       if (n_local_cells <= max_num_cells)
-	break;
+          break;
 
       /* find coordinate with the smallest cell range */
       min_ind = 0;
       min_size = cell_range[0];
-      for (i = 1; i < 3; i++)
-	if (dd.cell_grid[i] > 1 && cell_range[i] < min_size) {
-	  min_ind = i;
-	  min_size = cell_range[i];
-	}
+
+#ifdef LEES_EDWARDS
+      for (i = 2; i >= 1; i--) {/*preferably have thin slices in z or y... this is more efficient for Lees Edwards*/
+#else
+      for (i = 1; i < 3; i++) {
+#endif       
+          if (dd.cell_grid[i] > 1 && cell_range[i] < min_size) {
+                min_ind = i;
+                min_size = cell_range[i];
+              }
+      }
       CELL_TRACE(fprintf(stderr, "%d: minimal coordinate %d, size %f, grid %d\n", this_node,min_ind, min_size, dd.cell_grid[min_ind]));
 
       dd.cell_grid[min_ind]--;
@@ -178,8 +219,13 @@ void dd_create_cell_grid()
   /* now set all dependent variables */
   new_cells=1;
   for(i=0;i<3;i++) {
-    dd.ghost_cell_grid[i] = dd.cell_grid[i]+2;	
-    new_cells              *= dd.ghost_cell_grid[i];
+    dd.ghost_cell_grid[i] = dd.cell_grid[i]+2;
+#ifdef LEES_EDWARDS
+    //Hack alert: only the boundary y-layers actually need the extra-thick ghost cell grid,
+    //so some memory (and copies) are wasted in the name of simpler code.
+    if( i == 0 ){dd.ghost_cell_grid[i]++;}  
+#endif
+    new_cells            *= dd.ghost_cell_grid[i];
     dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
     dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
   }
@@ -199,10 +245,20 @@ void dd_create_cell_grid()
 void dd_mark_cells()
 {
   int m,n,o,cnt_c=0,cnt_l=0,cnt_g=0;
+  
   DD_CELLS_LOOP(m,n,o) {
+
+#ifdef LEES_EDWARDS
+    /* convenient for LE if a cell knows where it is*/
+    cells[cnt_c].myIndex[0] = m;
+    cells[cnt_c].myIndex[1] = n;
+    cells[cnt_c].myIndex[2] = o;
+#endif      
+
     if(DD_IS_LOCAL_CELL(m,n,o)) local_cells.cell[cnt_l++] = &cells[cnt_c++]; 
     else                        ghost_cells.cell[cnt_g++] = &cells[cnt_c++];
   } 
+
 }
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
@@ -227,10 +283,10 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3])
   for(o=lc[0]; o<=hc[0]; o++) 
     for(n=lc[1]; n<=hc[1]; n++) 
       for(m=lc[2]; m<=hc[2]; m++) {
-	i = get_linear_index(o,n,m,dd.ghost_cell_grid);
-	CELL_TRACE(fprintf(stderr,"%d: dd_fill_comm_cell_list: add cell %d\n",this_node,i));
-	part_lists[c] = &cells[i];
-	c++;
+        i = get_linear_index(o,n,m,dd.ghost_cell_grid);
+        CELL_TRACE(fprintf(stderr,"%d: dd_fill_comm_cell_list: add cell %d\n",this_node,i));
+        part_lists[c] = &cells[i];
+        c++;
       }
   return c;
 }
@@ -249,10 +305,10 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
       /* No communication for border of non periodic direction */
       if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
 #endif
-	{
-	  if(node_grid[dir] == 1 ) num++;
-	  else num += 2;
-	}
+       {
+         if(node_grid[dir] == 1 ) num++;
+         else num += 2;
+       }
     }
   }
 
@@ -278,71 +334,79 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
        value */
     for(lr=0; lr<2; lr++) {
       if(node_grid[dir] == 1) {
-	/* just copy cells on a single node */
+        /* just copy cells on a single node */
 #ifdef PARTIAL_PERIODIC
-	if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) ) 
+      if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) )
 #endif
-	  {
-	    comm->comm[cnt].type          = GHOST_LOCL;
-	    comm->comm[cnt].node          = this_node;
-	    /* Buffer has to contain Send and Recv cells -> factor 2 */
-	    comm->comm[cnt].part_lists    = (ParticleList**)malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
-	    comm->comm[cnt].n_part_lists  = 2*n_comm_cells[dir];
-	    /* prepare folding of ghost positions */
-	    if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
-	      comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-	    /* fill send comm cells */
-	    lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
-	    dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-	    CELL_TRACE(fprintf(stderr,"%d: prep_comm %d copy to          grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
-			       lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
-	    /* fill recv comm cells */
-	    lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
-	    /* place recieve cells after send cells */
-	    dd_fill_comm_cell_lists(&comm->comm[cnt].part_lists[n_comm_cells[dir]],lc,hc);
-	    CELL_TRACE(fprintf(stderr,"%d: prep_comm %d copy from        grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
-	    cnt++;
-	  }
+      {
+        comm->comm[cnt].type          = GHOST_LOCL;
+        comm->comm[cnt].node          = this_node;
+
+        /* Buffer has to contain Send and Recv cells -> factor 2 */
+        comm->comm[cnt].part_lists    = (ParticleList**)malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
+        comm->comm[cnt].n_part_lists  = 2*n_comm_cells[dir];
+        /* prepare folding of ghost positions */
+        if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) {
+             comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+        }        
+
+            /* fill send comm cells */
+        lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir]-1);
+        
+            dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
+            CELL_TRACE(fprintf(stderr,"%d: prep_comm %d copy to          grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
+                               lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
+        
+        /* fill recv comm cells */
+            lc[dir] = hc[dir] = 0 +( 1 - lr ) * ( dd.cell_grid[dir] + 1 );
+        
+            /* place recieve cells after send cells */
+            dd_fill_comm_cell_lists(&comm->comm[cnt].part_lists[n_comm_cells[dir]],lc,hc);
+            CELL_TRACE(fprintf(stderr,"%d: prep_comm %d copy from        grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
+            cnt++;
+          }
       }
       else {
-	/* i: send/recv loop */
-	for(i=0; i<2; i++) {  
+        /* i: send/recv loop */
+        for(i=0; i<2; i++) {
 #ifdef PARTIAL_PERIODIC
-	  if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
+          if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) )
 #endif
-	    if((node_pos[dir]+i)%2==0) {
-	      comm->comm[cnt].type          = GHOST_SEND;
-	      comm->comm[cnt].node          = node_neighbors[2*dir+lr];
-	      comm->comm[cnt].part_lists    = (ParticleList**)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
-	      comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
-	      /* prepare folding of ghost positions */
-	      if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
-		comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-	      
-	      lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
-	      dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-	      
-	      CELL_TRACE(fprintf(stderr,"%d: prep_comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
-				 comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
-	      cnt++;
-	    }
+            if((node_pos[dir]+i)%2==0) {
+              comm->comm[cnt].type          = GHOST_SEND;
+              comm->comm[cnt].node          = node_neighbors[2*dir+lr];
+              comm->comm[cnt].part_lists    = (ParticleList**)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+              comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
+              /* prepare folding of ghost positions */
+              if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) {
+                 comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+          }        
+  
+              lc[dir] = hc[dir] = 1 + lr * ( dd.cell_grid[dir] - 1 );
+          
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
+        
+              CELL_TRACE(fprintf(stderr,"%d: prep_comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
+                                 comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
+              cnt++;
+            }
 #ifdef PARTIAL_PERIODIC
-	  if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) ) 
+          if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) )
 #endif
-	    if((node_pos[dir]+(1-i))%2==0) {
-	      comm->comm[cnt].type          = GHOST_RECV;
-	      comm->comm[cnt].node          = node_neighbors[2*dir+(1-lr)];
-	      comm->comm[cnt].part_lists    = (ParticleList**)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
-	      comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
-	      
-	      lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
-	      dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-	      
-	      CELL_TRACE(fprintf(stderr,"%d: prep_comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
-				 comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
-	      cnt++;
-	    }
-	}
+            if((node_pos[dir]+(1-i))%2==0) {
+              comm->comm[cnt].type          = GHOST_RECV;
+              comm->comm[cnt].node          = node_neighbors[2*dir+(1-lr)];
+              comm->comm[cnt].part_lists    = (ParticleList**)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+              comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
+        
+              lc[dir] = hc[dir] = ( 1 - lr ) * ( dd.cell_grid[dir] + 1 );
+        
+          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
+              CELL_TRACE(fprintf(stderr,"%d: prep_comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
+                                 comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
+              cnt++;
+            }
+        }
       }
       done[dir]=1;
     }
@@ -373,9 +437,9 @@ void dd_revert_comm_order(GhostCommunicator *comm)
     else if(comm->comm[i].type == GHOST_LOCL) {
       nlist2=comm->comm[i].n_part_lists/2;
       for(j=0;j<nlist2;j++) {
-	tmplist = comm->comm[i].part_lists[j];
-	comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j+nlist2];
-	comm->comm[i].part_lists[j+nlist2] = tmplist;
+        tmplist = comm->comm[i].part_lists[j];
+        comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j+nlist2];
+        comm->comm[i].part_lists[j+nlist2] = tmplist;
       }
     }
   }
@@ -402,44 +466,45 @@ void dd_assign_prefetches(GhostCommunicator *comm)
 void dd_update_communicators_w_boxl()
 {
   int cnt=0;
+  
   /* direction loop: x, y, z */
   for(int dir=0; dir<3; dir++) {
     /* lr loop: left right */
     for(int lr=0; lr<2; lr++) {
       if(node_grid[dir] == 1) {
 #ifdef PARTIAL_PERIODIC
-	if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) ) 
+        if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) )
 #endif
-	  {
-	    /* prepare folding of ghost positions */
-	    if(boundary[2*dir+lr] != 0) {
-	      cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
-	      cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
-	    }
-	    cnt++;
-	  }
+          {
+            /* prepare folding of ghost positions */
+            if(boundary[2*dir+lr] != 0) {
+              cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+              cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+            }
+            cnt++;
+          }
       }
       else {
-	/* i: send/recv loop */
-	for(int i=0; i<2; i++) {  
+        /* i: send/recv loop */
+        for(int i=0; i<2; i++) {
 #ifdef PARTIAL_PERIODIC
-	  if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
+          if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) )
 #endif
-	    if((node_pos[dir]+i)%2==0) {
-	      /* prepare folding of ghost positions */
-	      if(boundary[2*dir+lr] != 0) {
-		cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-		cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-	      }
-	      cnt++;
-	    }
+            if((node_pos[dir]+i)%2==0) {
+              /* prepare folding of ghost positions */
+              if(boundary[2*dir+lr] != 0) {
+                cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+                cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+              }
+              cnt++;
+            }
 #ifdef PARTIAL_PERIODIC
-	  if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) ) 
+          if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) )
 #endif
-	    if((node_pos[dir]+(1-i))%2==0) {
-	      cnt++;
-	    }
-	}
+            if((node_pos[dir]+(1-i))%2==0) {
+              cnt++;
+            }
+        }
       }
     }
   }
@@ -464,24 +529,62 @@ void dd_init_cell_interactions()
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m,n,o) {
     dd.cell_inter[c_cnt].nList = (IA_Neighbor *) realloc(dd.cell_inter[c_cnt].nList, CELLS_MAX_NEIGHBORS*sizeof(IA_Neighbor));
-    dd.cell_inter[c_cnt].n_neighbors = CELLS_MAX_NEIGHBORS;
- 
+
     n_cnt=0;
     ind1 = get_linear_index(m,n,o,dd.ghost_cell_grid);
     /* loop all neighbor cells */
-    for(p=o-1; p<=o+1; p++)	
+    for(p=o-1; p<=o+1; p++)        
       for(q=n-1; q<=n+1; q++)
-	for(r=m-1; r<=m+1; r++) {   
-	  ind2 = get_linear_index(r,q,p,dd.ghost_cell_grid);
-	  if(ind2 >= ind1) {
-	    dd.cell_inter[c_cnt].nList[n_cnt].cell_ind = ind2;
-	    dd.cell_inter[c_cnt].nList[n_cnt].pList    = &cells[ind2];
-	    init_pairList(&dd.cell_inter[c_cnt].nList[n_cnt].vList);
-	    n_cnt++;
-	  }
-	}
+        for(r=m-1; r<=m+1; r++) {
+          ind2 = get_linear_index(r,q,p,dd.ghost_cell_grid);
+          if(ind2 >= ind1) {
+            dd.cell_inter[c_cnt].nList[n_cnt].cell_ind = ind2;
+            dd.cell_inter[c_cnt].nList[n_cnt].pList    = &cells[ind2];
+            init_pairList(&dd.cell_inter[c_cnt].nList[n_cnt].vList);
+#ifdef CELL_DEBUG
+    dd.cell_inter[c_cnt].nList[n_cnt].my_pos[0] = my_left[0] + r * dd.cell_size[0];
+    dd.cell_inter[c_cnt].nList[n_cnt].my_pos[1] = my_left[1] + q * dd.cell_size[1];
+    dd.cell_inter[c_cnt].nList[n_cnt].my_pos[2] = my_left[2] + p * dd.cell_size[2];
+#endif
+            n_cnt++;
+          }
+        }
+
+
+    dd.cell_inter[c_cnt].n_neighbors = n_cnt; 
     c_cnt++;
   }
+
+#ifdef CELL_DEBUG
+  FILE *cells_fp;
+  char cLogName[64];
+  int  c,nn,this_n;
+  double myPos[3], nPos[3];
+  sprintf(cLogName, "cells_map%i.dat", this_node);
+  cells_fp = fopen(cLogName,"w");
+
+
+  for(c=0;c<c_cnt;c++){
+     myPos[0] = my_left[0] + dd.cell_size[0] * ( 1 + c % dd.cell_grid[0] );  
+     myPos[1] = my_left[1] + dd.cell_size[1] * ( 1 + (c / dd.cell_grid[0]) % dd.cell_grid[1]);  
+     myPos[2] = my_left[2] + dd.cell_size[2] * ( 1 + (c / (dd.cell_grid[0] * dd.cell_grid[1])));  
+
+     for(nn=0;nn<dd.cell_inter[c].n_neighbors;nn++){
+        
+        this_n = dd.cell_inter[c].nList[nn].cell_ind;
+
+
+        fprintf(cells_fp,"%i %i %f %f %f %f %f %f\n",c,nn,
+            myPos[0], myPos[1], myPos[2], 
+            dd.cell_inter[c].nList[nn].my_pos[0], 
+            dd.cell_inter[c].nList[nn].my_pos[1], 
+            dd.cell_inter[c].nList[nn].my_pos[2]);
+          
+     }
+  }  
+  fclose(cells_fp);
+#endif
+
 }
 
 /*************************************************/
@@ -504,22 +607,22 @@ Cell *dd_save_position_to_cell(double pos[3])
     if (cpos[i] < 1) {
       if (lpos > -ROUND_ERROR_PREC*box_l[i]
 #ifdef PARTIAL_PERIODIC
-	  || (!PERIODIC(i) && boundary[2*i])
+          || (!PERIODIC(i) && boundary[2*i])
 #endif
-	  )
-	cpos[i] = 1;
+          )
+        cpos[i] = 1;
       else
-	return NULL;
+        return NULL;
     }
     else if (cpos[i] > dd.cell_grid[i]) {
       if (lpos < local_box_l[i] + ROUND_ERROR_PREC*box_l[i]
 #ifdef PARTIAL_PERIODIC
-	  || (!PERIODIC(i) && boundary[2*i+1])
+          || (!PERIODIC(i) && boundary[2*i+1])
 #endif
-	  )
-	cpos[i] = dd.cell_grid[i];
+          )
+        cpos[i] = dd.cell_grid[i];
       else
-	return NULL;
+        return NULL;
     }
   }
   i = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid); 
@@ -540,9 +643,9 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = 1;
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC*box_l[i]) {
-      ostringstream msg;
-      msg << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
-      runtimeError(msg);
+	ostringstream msg;
+	msg << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
+	runtimeError(msg);
       }
 #endif
     }
@@ -550,9 +653,9 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = dd.cell_grid[i];
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC*box_l[i]) {
-      ostringstream msg;
-      msg << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
-      runtimeError(msg);
+	ostringstream msg;
+	msg << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
+	runtimeError(msg);
       }
 #endif
     }
@@ -572,31 +675,36 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
   CELL_TRACE(fprintf(stderr, "%d: dd_append_particles %d\n", this_node, pl->n));
 
   for(p=0; p<pl->n; p++) {
-    if(boundary[fold_dir] != 0)
+    if(boundary[fold_dir] != 0){
+#ifdef LEES_EDWARDS
+      fold_coordinate(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i, fold_coord);
+#else
       fold_coordinate(pl->part[p].r.p, pl->part[p].l.i, fold_coord);
-    
+#endif
+    }    
+
     for(dir=0;dir<3;dir++) {
       cpos[dir] = (int)((pl->part[p].r.p[dir]-my_left[dir])*dd.inv_cell_size[dir])+1;
 
       if (cpos[dir] < 1) { 
-	cpos[dir] = 1;
+        cpos[dir] = 1;
 #ifdef PARTIAL_PERIODIC 
-	if( PERIODIC(dir) ) 
+        if( PERIODIC(dir) )
 #endif
-	  {
-	    flag=1;
-	    CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
-	  }
+          {
+            flag=1;
+            CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
+          }
       }
       else if (cpos[dir] > dd.cell_grid[dir]) {
-	cpos[dir] = dd.cell_grid[dir];
+        cpos[dir] = dd.cell_grid[dir];
 #ifdef PARTIAL_PERIODIC 
-	if( PERIODIC(dir) ) 
+        if( PERIODIC(dir) )
 #endif
-	  {
-	    flag=1;
-	    CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
-	  }
+          {
+            flag=1;
+            CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
+          }
       }
     }
     c = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid);
@@ -613,6 +721,39 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 /************************************************************/
 
 void dd_on_geometry_change(int flags) {
+
+  /* Realignment of comms along the periodic y-direction is needed */
+  if (flags & CELL_FLAG_LEES_EDWARDS) {
+    CELL_TRACE(fprintf(stderr,"%d: dd_on_geometry_change responding to Lees-Edwards offset change.\n", this_node);)
+
+#ifdef LEES_EDWARDS
+    le_mgr.update_on_le_offset_change();
+    
+    le_dd_dynamic_update_comm(&le_mgr, &cell_structure.ghost_cells_comm,
+                                        GHOSTTRANS_PARTNUM,
+                                        LE_COMM_FORWARDS);
+    le_dd_dynamic_update_comm(&le_mgr, &cell_structure.exchange_ghosts_comm,
+                                      (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD),
+                                        LE_COMM_FORWARDS);
+    le_dd_dynamic_update_comm(&le_mgr, &cell_structure.update_ghost_pos_comm,
+                                      (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD),
+                                        LE_COMM_FORWARDS);
+    le_dd_dynamic_update_comm(&le_mgr, &cell_structure.collect_ghost_force_comm,
+                                        GHOSTTRANS_FORCE,
+                                        LE_COMM_BACKWARDS);
+#ifdef LB
+    le_dd_dynamic_update_comm(&cell_structure.ghost_lbcoupling_comm, GHOSTTRANS_COUPLING);
+#endif
+    
+    /* prefetch status may have changed? */
+    dd_assign_prefetches(&cell_structure.ghost_cells_comm);
+    dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
+    dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
+    dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
+#endif
+    
+  } 
+
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
@@ -666,9 +807,11 @@ void dd_on_geometry_change(int flags) {
       return;
     }
   }
-
+#ifdef LEES_EDWARDS
+  le_dd_update_communicators_w_boxl(&le_mgr);
+#else
   dd_update_communicators_w_boxl();
-
+#endif
   /* tell other algorithms that the box length might have changed. */
   on_boxl_change();
 }
@@ -693,15 +836,28 @@ void dd_topology_init(CellPList *old)
   dd_create_cell_grid();
   /* mark cells */
   dd_mark_cells();
+
   /* create communicators */
-  dd_prepare_comm(&cell_structure.ghost_cells_comm,         GHOSTTRANS_PARTNUM);
+#ifdef LEES_EDWARDS
+  le_mgr.init(my_neighbor_count);
+  le_dd_prepare_comm(&le_mgr, &cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
+#else
+  dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
+#endif
 
   exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
   update_data   = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
+
+#ifdef LEES_EDWARDS
+  le_dd_prepare_comm(&le_mgr, &cell_structure.exchange_ghosts_comm, exchange_data);
+  le_dd_prepare_comm(&le_mgr, &cell_structure.update_ghost_pos_comm, update_data);
+  le_dd_prepare_comm(&le_mgr, &cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+#else
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm,  exchange_data);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
-
   dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+#endif
+
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
 
@@ -716,7 +872,11 @@ void dd_topology_init(CellPList *old)
 #endif
 
   /* initialize cell neighbor structures */
+#ifdef LEES_EDWARDS
+  le_dd_init_cell_interactions();
+#else
   dd_init_cell_interactions();
+#endif
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
@@ -725,9 +885,9 @@ void dd_topology_init(CellPList *old)
     for (p = 0; p < np; p++) {
       Cell *nc = dd_save_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
-	 somewhere for the moment */
+         somewhere for the moment */
       if (nc == NULL)
-	nc = local_cells.cell[0];
+        nc = local_cells.cell[0];
       append_unindexed_particle(nc, &part[p]);
     }
   }
@@ -835,27 +995,55 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	  }
 	}
 
-	/* Exchange particles */
-	if(node_pos[dir]%2==0) {
-	  send_particles(&send_buf_l, node_neighbors[2*dir]);
-	  recv_particles(&recv_buf_r, node_neighbors[2*dir+1]);
-	  send_particles(&send_buf_r, node_neighbors[2*dir+1]);
-	  recv_particles(&recv_buf_l, node_neighbors[2*dir]);
-	}
-	else {
-	  recv_particles(&recv_buf_r, node_neighbors[2*dir+1]);
-	  send_particles(&send_buf_l, node_neighbors[2*dir]);
-	  recv_particles(&recv_buf_l, node_neighbors[2*dir]);
-	  send_particles(&send_buf_r, node_neighbors[2*dir+1]);
-	}
-	/* sort received particles to cells */
-	if(dd_append_particles(&recv_buf_l, 2*dir  ) && dir == 2) finished = 0;
-	if(dd_append_particles(&recv_buf_r, 2*dir+1) && dir == 2) finished = 0; 
-	/* reset send/recv buffers */
-	send_buf_l.n = 0;
-	send_buf_r.n = 0;
-	recv_buf_l.n = 0;
-	recv_buf_r.n = 0;
+        /* Exchange particles */
+#ifndef LEES_EDWARDS
+        if(node_pos[dir]%2==0) {
+          send_particles(&send_buf_l, node_neighbors[2*dir]);
+          recv_particles(&recv_buf_r, node_neighbors[2*dir+1]);
+          send_particles(&send_buf_r, node_neighbors[2*dir+1]);
+          recv_particles(&recv_buf_l, node_neighbors[2*dir]);
+        }
+        else {
+          recv_particles(&recv_buf_r, node_neighbors[2*dir+1]);
+          send_particles(&send_buf_l, node_neighbors[2*dir]);
+          recv_particles(&recv_buf_l, node_neighbors[2*dir]);
+          send_particles(&send_buf_r, node_neighbors[2*dir+1]);
+        }
+#else
+    int ii, nn, lr;
+    for( ii = 0; ii <2; ii++){
+
+            nn = node_neighbors[2*dir+ii];
+            lr = node_neighbor_lr[2*dir+ii];
+            
+            if( lr == 1 ){
+                if( nn > this_node ){
+                        send_particles(&send_buf_r, nn);
+                        recv_particles(&recv_buf_r, nn);
+                }else{
+                        recv_particles(&recv_buf_r, nn);
+                        send_particles(&send_buf_r, nn);
+                }
+            }else{
+                if( nn > this_node ){
+                        send_particles(&send_buf_l, nn);
+                        recv_particles(&recv_buf_l, nn);
+                }else{
+                        recv_particles(&recv_buf_l, nn);
+                        send_particles(&send_buf_l, nn);
+                }
+            }
+    }
+#endif
+
+        /* sort received particles to cells, folding of coordinates also happens in here. */
+        if(dd_append_particles(&recv_buf_l, 2*dir  ) && dir == 2) finished = 0;
+        if(dd_append_particles(&recv_buf_r, 2*dir+1) && dir == 2) finished = 0;
+        /* reset send/recv buffers */
+        send_buf_l.n = 0;
+        send_buf_r.n = 0;
+        recv_buf_l.n = 0;
+        recv_buf_r.n = 0;
       }
       else {
 	/* Single node direction case (no communication) */
@@ -869,7 +1057,11 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	    if( PERIODIC(dir) ) 
 #endif
 	      {
-		fold_coordinate(part->r.p, part->l.i, dir);
+#ifdef LEES_EDWARDS   
+                fold_coordinate(part->r.p, part->m.v, part->l.i, dir);
+#else
+                fold_coordinate(part->r.p, part->l.i, dir);
+#endif
 	      }
 	    if (dir==2) {
 	      sort_cell = dd_save_position_to_cell(part->r.p);

@@ -105,6 +105,39 @@ box-length \var{L_\mathrm{new}}, and isotropically adjusts the
 particles coordinates as well. The function returns the new volume of
 the deformed simulation box.
 
+\section{\texttt{lees_edwards_offset}: Applying shear between periodic images}
+\newescommand[lees-edwards-offset]{lees_edwards_offset}
+\label{sec:lees-edwards}
+\index{Lees-Edwards Boundaries|mainindex}
+\index{shear boundaries}
+\index{shear viscosity}
+
+
+\begin{essyntax}
+  \variant{1} lees_edwards_offset \var{offset_\mathrm{new}}  
+  \begin{features}
+    \required{LEES_EDWARDS}
+  \end{features}
+
+\end{essyntax}
+
+Lees-Edwards Periodic Boundary Conditions are used to impose a shear flow of speed $\dot{\gamma}$ on the system relative to its periodic images by moving the PBC wrap such that:  $v\_x_{unfolded} =  v\_x_{folded} + \dot{\gamma} y_{img}$ (where $v\_x_{unfolded}$ is the $x$-component of the velocity of an image particle outside the main simulation box, and $y_{img}$ is the count of PBC boundaries crossed in the $y$-direction).  
+The absolute value of the shear offset is set using this command; with the shear flow rate $\dot{\gamma}$ then determined internally as the difference between successive offsets.  
+A typical usage would be to integrate by 1 {MD} timestep and then to increase the offset to a new value using this command; this usage pattern is intended to allow for arbitrary shear flow time profiles, such as an oscillatory shear.  
+A common calculation to make using Lees-Edwards boundary conditions is to find the shear viscosity (or kinematic viscosity) by plotting shear stress (or shear stress/density) against the applied strain for different values of constant $\dot{\gamma}$. 
+
+Lees-Edwards differs from the NEMD approach (see \vref{sec:NEMD}) in that the shear imposed is homogenous across the system (but only on average: symmetry breaking effects are not ruled out) rather than reversing direction with a periodicity of the box length. 
+Accordingly the transport properties  measured using Lees-Edwards are likely to be different to (and arguably more physical than) those measured using NEMD or those from equilibrium simulations by a Green-Kubo type approach.
+
+When the shear flow rate $\dot{\gamma}$ is non-zero, the Langevin thermostat will treat $v\_x_{folded}$ as being relative to a flow field which changes smoothly from $-\dot{\gamma}/2$ at the bottom of the periodic box to $\dot{\gamma}/2$ at the top.  
+This `laminar' thermostatting is provided mostly because it gives quite convenient equilibration of a flowing system.  In order to correctly observe transport properties, symmetry-breaking or entropy production in relation to shear flow is probably better to use the DPD thermostat (see \vref{sec:DPD}) once the initial heat-up has been carried out.  
+The DPD thermostat removes kinetic energy from the system based on a frictional term defined relative to a local reference frame of a given particle-pair, without enforcing any specific flow pattern {\it a priori}.  At high rates of dissipation, this can however lead to an artefactual  shear-banding type effect at the periodic boundaries, such that the bulk fluid is nearly stationary.  
+This effect is removed using the modification proposed to the DPD thermostat by Chatterjee \cite{chatterjee2007} to allow treatment of systems with high dissipation rates, which is applied automatically if \feature{LEES_EDWARDS} is compiled in.  Chatterjee's modification is just to skip calculation of DPD forces (both dissipative and random) for particle pairs which cross a boundary in {\it y}.
+
+The function returns the old value of the offset.
+
+If \feature{LEES_EDWARDS} is compiled in, then coordinates are folded into the primary simulation box as the integration progresses, to prevent a numerical overflow.  
+
 \section{Stopping particles}
 
 Use the following functions, also see Section~\ref{sec:Galilei}:
