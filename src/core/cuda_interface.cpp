@@ -317,8 +317,10 @@ static void cuda_mpi_send_forces_slave(){
 #endif
       MPI_Recv(host_forces_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_CUDAGETFORCES,
         comm_cart, &status);
+#ifdef ROTATION	
       MPI_Recv(host_torques_sl, n_part*sizeof(CUDA_particle_torque), MPI_BYTE, 0, REQ_CUDAGETFORCES,
         comm_cart, &status);
+#endif
 #ifdef SHANCHEN
       host_composition_sl = (CUDA_fluid_composition *) malloc(n_part*sizeof(CUDA_fluid_composition));
       MPI_Recv(host_composition_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_CUDAGETPARTS,
