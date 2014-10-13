@@ -146,6 +146,7 @@ libEspresso_la_SOURCES += \
 libEspresso_la_SOURCES += \
 	immersedBoundary/ibm_main.cpp	\
 	immersedBoundary/ibm_wall_repulsion.cpp\
+	immersedBoundary/ibm_triel.cpp\
 	immersedBoundary/ibm_cuda_interface.cpp	
 
 # Coulomb methods

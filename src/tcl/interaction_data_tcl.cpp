@@ -99,6 +99,7 @@
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
 #include "immersedBoundary/ibm_wall_repulsion_tcl.hpp"
+#include "immersedBoundary/ibm_triel_tcl.hpp"
 
 
 #ifdef DIPOLES
@@ -331,6 +332,8 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #ifdef IMMERSED_BOUNDARY
   case BONDED_IA_IBM_WALL_REPULSION:
       return tclprint_to_result_ibm_wall_repulsion(interp, params);
+    case BONDED_IA_IBM_TRIEL:
+      return tclprint_to_result_ibm_triel(interp, params);
 #endif
       
   case BONDED_IA_HARMONIC:
@@ -923,6 +926,7 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
   REGISTER_BONDED("ibm_wallRep", tclcommand_inter_parse_ibm_wall_repulsion);
+  REGISTER_BONDED("ibm_triel", tclcommand_inter_parse_ibm_triel);
 #endif
   
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);

@@ -421,7 +421,7 @@ void ParticleVelocitiesFromLB_CPU()
           p[j].f.f[1] = force[1] * lbpar.agrid/lbpar.tau;
           p[j].f.f[2] = force[2] * lbpar.agrid/lbpar.tau;
         }
-        else { p[j].f.f[0] = p[j].f.f[1] = p[j].f.f[2] = 0; }   // Reset, necessary because we add all forces below
+        else { p[j].f.f[0] = p[j].f.f[1] = p[j].f.f[2] = 0; }   // Reset, necessary because we add all forces below. Also needs to be done for the real particles!
         
       }
       else { p[j].f.f[0] = p[j].f.f[1] = p[j].f.f[2] = 0; }   // Reset, necessary because we add all forces below

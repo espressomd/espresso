@@ -80,7 +80,9 @@ enum BondedInteraction{
     /** Type of bonded interaction is a linear stretching force. */
     BONDED_IA_STRETCHLIN_FORCE,
     /** Type of bonded interaction is a wall repulsion (immersed boundary). */
-    BONDED_IA_IBM_WALL_REPULSION
+    BONDED_IA_IBM_WALL_REPULSION,
+    /** Type of bonded interaction is elastic triangle force (immersed boundary). */
+    BONDED_IA_IBM_TRIEL
 };
 /*
 #define BONDED_IA_NONE     -1
@@ -761,6 +763,33 @@ typedef struct {
   double kappaWall;
 } IBM_WallRepulsion_Parameters;
 
+typedef enum {NeoHookean, Skalak } tElasticLaw;
+
+/** Parameters for IBM elastic triangle (triel) **/
+typedef struct {
+  // These values encode the reference state
+  double l0;
+  double lp0;
+  double sinPhi0;
+  double cosPhi0;
+  double area0;
+  
+  // These values are cache values to speed up computation
+  double a1;
+  double a2;
+  double b1;
+  double b2;
+  
+  // These are interaction parameters
+  // k1 is used for Neo-Hookean
+  // k1 and k2 are used Skalak
+  double maxdist;
+  tElasticLaw elasticLaw;
+  double k1;
+  double k2;
+  
+} IBM_Triel_Parameters;
+
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
     Fene_bond_parameters fene;
@@ -783,6 +812,7 @@ typedef union {
     Angledist_bond_parameters angledist;
     Endangledist_bond_parameters endangledist;
     IBM_WallRepulsion_Parameters ibmWallRepulsionParameters;
+    IBM_Triel_Parameters ibm_triel;
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */

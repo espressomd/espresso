@@ -132,6 +132,7 @@
 #include "angle.hpp"
 #include "immersedBoundary/ibm_main.hpp"
 #include "immersedBoundary/ibm_wall_repulsion.hpp"
+#include "immersedBoundary/ibm_triel.hpp"
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
@@ -709,6 +710,13 @@ inline void add_bonded_force(Particle *p1)
       case BONDED_IA_IBM_WALL_REPULSION:
         IBM_WallRepulsion_CalcForce(p1, iaparams);
         bond_broken = 0;
+        // These may be added later on, but we set them to zero because the force has already been added in IBM_WallRepulsion_CalcForce
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      case BONDED_IA_IBM_TRIEL:
+        bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
         // These may be added later on, but we set them to zero because the force has already been added in IBM_WallRepulsion_CalcForce
         force[0] = force2[0] = force3[0] = 0;
         force[1] = force2[1] = force3[1] = 0;
