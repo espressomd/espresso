@@ -60,6 +60,7 @@
 #include "statistics_correlation.hpp"
 #include "ghmc.hpp"
 #include "immersedBoundary/ibm_main.hpp"
+#include "immersedBoundary/ibm_volume_conservation.hpp"
 
 /************************************************
  * DEFINES
@@ -210,6 +211,12 @@ void integrate_vv(int n_steps, int reuse_forces)
 
   /* Prepare the Integrator */
   on_integration_start();
+  
+  #ifdef IMMERSED_BOUNDARY
+    // Here we initialize volume conservation
+    // This function checks if the reference volumes have been set and if necessary calculates them
+    IBM_InitVolumeConservation();
+  #endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors())

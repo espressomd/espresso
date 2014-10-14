@@ -136,7 +136,7 @@ int tclcommand_inter_parse_ibm_triel(Tcl_Interp *interp, int bond_type, int argc
       const int status = IBM_Triel_SetParams(bond_type, ind1, ind2, ind3, max, law, k1,k2);
       if (status == ES_ERROR)
       {
-        Tcl_AppendResult(interp, "Unspecified error reading triel", (char *)NULL);
+        Tcl_AppendResult(interp, "Unspecified error reading ibm_triel", (char *)NULL);
         return TCL_ERROR;
       }
       

@@ -82,7 +82,9 @@ enum BondedInteraction{
     /** Type of bonded interaction is a wall repulsion (immersed boundary). */
     BONDED_IA_IBM_WALL_REPULSION,
     /** Type of bonded interaction is elastic triangle force (immersed boundary). */
-    BONDED_IA_IBM_TRIEL
+    BONDED_IA_IBM_TRIEL,
+    /** Type of bonded interaction is volume conservation force (immersed boundary). */
+    BONDED_IA_IBM_VOLUME_CONSERVATION
 };
 /*
 #define BONDED_IA_NONE     -1
@@ -790,6 +792,19 @@ typedef struct {
   
 } IBM_Triel_Parameters;
 
+/** Parameters for IBM volume conservation bond **/
+typedef struct {
+  int softID;     // ID of the large soft particle to which this node belongs
+  // Reference volume
+  double volRef;
+  // Spring constant for volume force
+  double kappaV;
+  // Whether to write out center-of-mass at each time step
+  // Actually this is more of an analysis function and does not strictly belong to volume conservation
+//  bool writeCOM;
+} IBM_VolCons_Parameters;
+
+
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
     Fene_bond_parameters fene;
@@ -813,6 +828,7 @@ typedef union {
     Endangledist_bond_parameters endangledist;
     IBM_WallRepulsion_Parameters ibmWallRepulsionParameters;
     IBM_Triel_Parameters ibm_triel;
+    IBM_VolCons_Parameters ibmVolConsParameters;
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */

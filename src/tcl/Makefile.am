@@ -125,7 +125,9 @@ libEspressoTcl_la_SOURCES += \
 	immersedBoundary/ibm_wall_repulsion_tcl.cpp \
 	immersedBoundary/ibm_wall_repulsion_tcl.hpp \
 	immersedBoundary/ibm_triel_tcl.cpp \
-	immersedBoundary/ibm_triel_tcl.hpp	
+	immersedBoundary/ibm_triel_tcl.hpp \
+	immersedBoundary/ibm_volume_conservation_tcl.cpp \
+	immersedBoundary/ibm_volume_conservation_tcl.hpp		
 
 # Coulomb methods
 libEspressoTcl_la_SOURCES += \
