@@ -384,6 +384,12 @@ static void recalc_maximal_cutoff_bonded()
         max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
       break;
 #endif
+#ifdef IMMERSED_BOUNDARY
+      case BONDED_IA_IBM_TRIEL:
+        if(max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxdist)
+          max_cut_bonded = bonded_ia_params[i].p.ibm_triel.maxdist;
+        break;
+#endif
     default:
      break;
     }
@@ -699,6 +705,12 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "VOLUME_FORCE";
   case BONDED_IA_STRETCHLIN_FORCE:
     return "STRETCHLIN_FORCE";
+  case BONDED_IA_IBM_WALL_REPULSION:
+      return "IBM_WALL_REPULSION";
+  case BONDED_IA_IBM_TRIEL:
+    return "IBM_TRIEL";
+  case BONDED_IA_IBM_VOLUME_CONSERVATION:
+    return "IBM_VOLUME_CONSERVATION";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
         this_node, type);
