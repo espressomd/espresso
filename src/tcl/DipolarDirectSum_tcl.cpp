@@ -1,6 +1,4 @@
 #include "tcl.h"
-#include "core/actor/DipolarDirectSum.hpp"
-#include "actor/DipolarDirectSum.hpp"
 
 
 #ifdef DIPOLAR_DIRECT_SUM

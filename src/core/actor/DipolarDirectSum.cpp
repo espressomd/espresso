@@ -1,7 +1,6 @@
 #include "config.hpp"
 #include "grid.hpp"
 #include "DipolarDirectSum_cuda.hpp"
-#include "DipolarDirectSum.hpp"
 #include "../forces.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "forces.hpp"

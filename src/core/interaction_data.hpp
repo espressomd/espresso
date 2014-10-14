@@ -140,7 +140,7 @@ enum OverlappedBondedInteraction{
    */
   /************************************************************/
   /*@{*/
-enum DipolarInteration{
+enum DipolarInteraction{
   /** dipolar interation switched off (NONE). */
     DIPOLAR_NONE = 0,
    /** dipolar method is P3M. */
@@ -152,12 +152,11 @@ enum DipolarInteration{
    /** Dipolar method is magnetic dipolar direct sum */
     DIPOLAR_DS,
    /** Dipolar method is direct sum plus DLC. */
-    DIPOLAR_MDLC_DS
-   #define DIPOLAR_MDLC_DS  5
+    DIPOLAR_MDLC_DS,
    /** Direct summation on gpu */
-   #define DIPOLAR_DS_GPU 6 
+   DIPOLAR_DS_GPU 
 
-   }
+   };
 #endif 
 
 
@@ -169,7 +168,7 @@ enum DipolarInteration{
 /*@{*/
 enum ConstraintApplied{
 /** No constraint applied */
-    CONSTRAINT_NONE = 0,
+    CONSTRAINT_NONE =0,
 /** wall constraint applied */
     CONSTRAINT_WAL,
 /** spherical constraint applied */
@@ -506,7 +505,7 @@ typedef struct {
  #ifdef DIPOLES
   double Dbjerrum;
   double Dprefactor;
-  DipolarInteration    Dmethod;
+  DipolarInteraction    Dmethod;
  #endif
 
 } Coulomb_parameters;
