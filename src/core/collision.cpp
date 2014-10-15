@@ -22,6 +22,8 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
+using namespace std;
+
 // #define DEBUG
 
 #ifdef DEBUG
@@ -221,8 +223,6 @@ void handle_collisions ()
 
     if (collision_params.mode & (COLLISION_MODE_EXCEPTION)) {
 
-      // if desired, raise a runtime exception (background error) on collision
-      char *exceptiontxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
       int id1, id2;
       if (collision_queue[i].pp1 > collision_queue[i].pp2) {
 	id1 = collision_queue[i].pp2;
@@ -232,8 +232,9 @@ void handle_collisions ()
 	id1 = collision_queue[i].pp1;
 	id2 = collision_queue[i].pp2;
       }
-      ERROR_SPRINTF(exceptiontxt, "{collision between particles %d and %d} ",
-		    id1, id2);
+      ostringstream msg;
+      msg << "collision between particles " << id1 << " and " <<id2;
+      runtimeError(msg);
     }
 
     /* If we don't have virtual_sites_relative, only bonds between centers of 

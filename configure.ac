@@ -117,6 +117,10 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
+# try to find best __FUNCTION__ variant
+AX_CXX_VAR_PRETTYFUNC()
+
+# set the optimization flags
 # never overwrite users CXXFLAGS
 if test "${CXXFLAGS+set}" != set; then
   # test for -O5
@@ -431,7 +435,7 @@ AS_IF([test .$with_python_interface != .no], [
 		[AC_MSG_FAILURE([Cannot build python interface!])])
    	AC_DEFINE(PYTHON_DEV,[],[Whether Python is available]) 
 ])
-AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
+AM_CONDITIONAL(PYTHON_INTERFACE, [test .$build_python_interface = .yes])
 # export libtool objdir, so that we can link the .so files to the dir itself
 AC_SUBST(objdir)
 

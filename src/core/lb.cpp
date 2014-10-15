@@ -369,8 +369,10 @@ int lb_lbfluid_set_agrid(double p_agrid){
     for (int dir=0;dir<3;dir++) {
       /* check if box_l is compatible with lattice spacing */
       if (fabs(box_l[dir]-tmp[dir]*p_agrid) > ROUND_ERROR_PREC) {
-        char *errtxt = runtime_error(128);
-        ERROR_SPRINTF(errtxt, "{097 Lattice spacing p_agrid=%f is incompatible with box_l[%i]=%f, factor=%d err= %g} ",p_agrid,dir,box_l[dir],tmp[dir],fabs(box_l[dir]-tmp[dir]*p_agrid));
+          ostringstream msg;
+          msg <<"Lattice spacing p_agrid= " << p_agrid << " is incompatible with box_l[" << dir << "]="
+                << box_l[dir] << ", factor=" << tmp[dir] << " err= " << fabs(box_l[dir]-tmp[dir]*p_agrid);
+          runtimeError(msg);
       }
     }
     lbpar_gpu.number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
@@ -1001,8 +1003,9 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 #endif // LB
     }
     else {
-        char *errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.}");
+        ostringstream msg;
+        msg <<"To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.";
+        runtimeError(msg);
         return ES_ERROR;
     }
     return ES_OK;
@@ -1655,48 +1658,56 @@ static void halo_push_communication() {
 
 /** Performs basic sanity checks. */
 int lb_sanity_checks() {
-    char *errtext;
+    //char *errtext;
     int ret = 0;
 
     if (lbpar.agrid <= 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+        ostringstream msg;
+        msg <<"Lattice Boltzmann agrid not set";
+        runtimeError(msg);
         ret = 1;
     }
     if (lbpar.tau <= 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+        ostringstream msg;
+        msg <<"Lattice Boltzmann time step not set";
+        runtimeError(msg);
         ret = 1;
     }
     if (lbpar.rho[0] <= 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+        ostringstream msg;
+        msg <<"Lattice Boltzmann fluid density not set";
+        runtimeError(msg);
         ret = 1;
     }
     if (lbpar.viscosity[0] <= 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+        ostringstream msg;
+        msg <<"Lattice Boltzmann fluid viscosity not set";
+        runtimeError(msg);
         ret = 1;
     }
     if (dd.use_vList && skin>=lbpar.agrid/2.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
+        ostringstream msg;
+        msg <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.";
+        runtimeError(msg);
         ret = 1;
     }
     if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext, "{103 LB requires domain-decomposition cellsystem} ");
+        ostringstream msg;
+        msg <<"LB requires domain-decomposition cellsystem";
+        runtimeError(msg);
         ret = -1;
     }
     else if (dd.use_vList && skin>=lbpar.agrid/2.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
+        ostringstream msg;
+        msg <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing";
+        runtimeError(msg);
         ret = -1;
     }
 
     if (thermo_switch & ~THERMO_LB) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext, "{122 LB must not be used with other thermostats} ");
+        ostringstream msg;
+        msg <<"LB must not be used with other thermostats";
+        runtimeError(msg);
         ret = 1;
     }
     return ret;
@@ -1904,8 +1915,9 @@ void lb_init() {
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
   
   if (lbpar.agrid <= 0.0) {
-    char *errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set when initializing fluid} ");
+      ostringstream msg;
+      msg <<"Lattice Boltzmann agrid not set when initializing fluid";
+      runtimeError(msg);
   }
   
   if (check_runtime_errors()) return;
@@ -2899,8 +2911,8 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
         if (lbfields[index].boundary) {
           local_rho=lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
           local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[1];
+          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[2];
         } else {
           lb_calc_modes(index, modes);
           local_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
@@ -3143,9 +3155,9 @@ void lb_calc_average_rho() {
 static int compare_buffers(double *buf1, double *buf2, int size) {
     int ret;
     if (memcmp(buf1,buf2,size)) {
-        char *errtxt;
-        errtxt = runtime_error(128);
-        ERROR_SPRINTF(errtxt,"{102 Halo buffers are not identical} ");
+        ostringstream msg;
+        msg <<"Halo buffers are not identical";
+        runtimeError(msg);
         ret = 1;
     } else {
         ret = 0;

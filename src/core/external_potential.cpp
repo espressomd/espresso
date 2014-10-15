@@ -71,8 +71,9 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   FILE* infile = fopen(filename, "r");
   
   if (!infile)  {
-    char *errtxt = runtime_error(128 + MAX_FILENAME_SIZE);
-    ERROR_SPRINTF(errtxt, "Could not open file %s\n", filename);
+      ostringstream msg;
+      msg <<"Could not open file "<< filename << "\n";
+      runtimeError(msg);
     return ES_ERROR;
   }
   char first_line[100];
@@ -132,18 +133,21 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   int halosize=1;
 
   if (size[0] > 0 && abs(size[0] - box_l[0]) > ROUND_ERROR_PREC) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"Box size in x is wrong %f vs %f\n", size[0], box_l[0]);
+      ostringstream msg;
+      msg <<"Box size in x is wrong "<< size[0] << " vs " << box_l[0] <<"\n";
+      runtimeError(msg);
     return ES_ERROR;
   }
   if (size[1] > 0 && abs(size[1] - box_l[1]) > ROUND_ERROR_PREC) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"Box size in y is wrong %f vs %f\n", size[1], box_l[1]);
+    ostringstream msg;
+    msg <<"Box size in y is wrong "<< size[1] << " vs " << box_l[1] <<"\n";
+    runtimeError(msg);
     return ES_ERROR;
   }
   if (size[2] > 0 && abs(size[2] - box_l[2]) > ROUND_ERROR_PREC) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"Box size in z is wrong %f vs %f\n", size[2], box_l[2]);
+    ostringstream msg;
+    msg <<"Box size in z is wrong "<< size[2] << " vs " << box_l[2] <<"\n";
+    runtimeError(msg);
     return ES_ERROR;
   }
 
@@ -224,7 +228,7 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
   fprintf(outfile,"local_index_offset %d %d %d\n", lattice->local_index_offset[0], lattice->local_index_offset[1], lattice->local_index_offset[2]);
 
 
-  fprintf(outfile, "element_size %d\n", lattice->element_size);
+  fprintf(outfile, "element_size %lu\n", lattice->element_size);
 
   
   for (i=0; i<lattice->halo_grid[0]; i++) 
@@ -246,10 +250,17 @@ void add_external_potential_tabulated_forces(ExternalPotential* e, Particle* p) 
   }
   double field[3];
   double ppos[3];
-  int img[3];
+#ifdef LEES_EDWARDS
+  double dummyV[3];
+#endif
+  int    img[3];
   memcpy(ppos, p->r.p, 3*sizeof(double));
   memcpy(img, p->r.p, 3*sizeof(int));
+#ifdef LEES_EDWARDS
+  fold_position(ppos, dummyV, img);
+#else
   fold_position(ppos, img);
+#endif
  
   e->tabulated.potential.interpolate_gradient(p->r.p, field);
   p->f.f[0]-=e->scale[p->p.type]*field[0];
@@ -263,8 +274,9 @@ void add_external_potential_forces(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_forces(&external_potentials[i], p);
     } else {
-      char* c = runtime_error(128);
-      ERROR_SPRINTF(c, "unknown external potential type");
+        ostringstream msg;
+        msg <<"unknown external potential type";
+        runtimeError(msg);
       return;
     }
   }
@@ -277,10 +289,17 @@ void add_external_potential_tabulated_energy(ExternalPotential* e, Particle* p) 
   }
   double potential;
   double ppos[3];
+#ifdef LEES_EDWARDS
+  double dummyV[3];
+#endif
   int img[3];
   memcpy(ppos, p->r.p, 3*sizeof(double));
   memcpy(img, p->r.p, 3*sizeof(int));
+#ifdef LEES_EDWARDS
+  fold_position(ppos, dummyV, img);
+#else
   fold_position(ppos, img);
+#endif
  
   e->tabulated.potential.interpolate(p->r.p, &potential);
   e->energy += e->scale[p->p.type] * potential;
@@ -291,8 +310,9 @@ void add_external_potential_energy(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_energy(&external_potentials[i], p);
     } else {
-      char* c = runtime_error(128);
-      ERROR_SPRINTF(c, "unknown external potential type");
+        ostringstream msg;
+        msg <<"unknown external potential type";
+        runtimeError(msg);
       return;
     }
   }

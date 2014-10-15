@@ -1722,8 +1722,8 @@ static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, 
         case CONSTRAINT_PLANE:
 	        calculate_plane_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
           break;
-      //default://@TODO: handle default case
-        //  break;
+        default: // rest of constraints just don't have associated distances
+          break;
       }
       mindist = dist<mindist ? dist : mindist;
 
@@ -1809,8 +1809,8 @@ int tclcommand_constraint_mindist_position_vec(Tcl_Interp *interp, int argc, cha
         case CONSTRAINT_PLANE:
 	        calculate_plane_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
           break;
-      //default://@TODO: handle default case
-        //  break;
+        default: // rest of constraints just don't have associated distances
+          break;
       }
       if (dist<mindist) {
         mindist = dist;

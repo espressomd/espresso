@@ -1512,8 +1512,9 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
 
 #ifdef ADDITIONAL_CHECKS
   if (d[2] >box_l[1]/2) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{024 near formula called for too distant particle pair} ");
+      ostringstream msg;
+      msg <<"near formula called for too distant particle pair";
+      runtimeError(msg);
     return;
   }
 #endif
@@ -1593,8 +1594,9 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
       fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
     }
     if (end < 0) {
-      char *errtxt = runtime_error(100);
-      ERROR_SPRINTF(errtxt, "{MMM2D: distance was negative, coordinates probably out of range } ");
+        ostringstream msg;
+        msg <<"MMM2D: distance was negative, coordinates probably out of range";
+        runtimeError(msg);
       end = 0;
     }
     end = complexCutoff[end];
@@ -1893,18 +1895,19 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double
 
 int MMM2D_sanity_checks()
 {
-  char *errtxt;
 
   if (!PERIODIC(0) || !PERIODIC(1) || PERIODIC(2)) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{025 MMM2D requires periodicity 1 1 0} ");
+      ostringstream msg;
+      msg <<"MMM2D requires periodicity 1 1 0";
+      runtimeError(msg);
     return 1;
   }
   
   if (cell_structure.type != CELL_STRUCTURE_LAYERED &&
       cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{026 MMM2D at present requires layered (or n-square) cellsystem} ");
+      ostringstream msg;
+      msg <<"MMM2D at present requires layered (or n-square) cellsystem";
+      runtimeError(msg);
     return 1;
   }
   return 0;
@@ -1913,14 +1916,14 @@ int MMM2D_sanity_checks()
 void MMM2D_init()
 {
   int err;
-  char *errtxt;
 
   if (MMM2D_sanity_checks()) return;
 
   MMM2D_setup_constants();
   if ((err = MMM2D_tune_near(mmm2d_params.maxPWerror))) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{027 MMM2D auto-retuning: %s} ", mmm2d_errors[err]);
+      ostringstream msg;
+      msg <<"MMM2D auto-retuning: " << mmm2d_errors[err];
+      runtimeError(msg);
     coulomb.method = COULOMB_NONE;
     return;
   }
@@ -1928,15 +1931,17 @@ void MMM2D_init()
       (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3)) {
     mmm2d_params.far_cut = 0.0;
     if (mmm2d_params.dielectric_contrast_on) {
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{027 MMM2D auto-retuning: IC requires layered cellsystem with > 3 layers} ");
+        ostringstream msg;
+        msg <<"MMM2D auto-retuning: IC requires layered cellsystem with > 3 layers";
+        runtimeError(msg);
     }
   }
   else {
     if (mmm2d_params.far_calculated) {
       if ((err = MMM2D_tune_far(mmm2d_params.maxPWerror))) {
-	errtxt = runtime_error(128);
-	ERROR_SPRINTF(errtxt, "{028 MMM2D auto-retuning: %s} ", mmm2d_errors[err]);
+      ostringstream msg;
+      msg <<"MMM2D auto-retuning: "<< mmm2d_errors[err];
+      runtimeError(msg);
 	coulomb.method = COULOMB_NONE;
 	return;
       }
