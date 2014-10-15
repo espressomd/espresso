@@ -711,6 +711,9 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "IBM_TRIEL";
   case BONDED_IA_IBM_VOLUME_CONSERVATION:
     return "IBM_VOLUME_CONSERVATION";
+  case BONDED_IA_IBM_TRIBEND:
+    return "IBM_TRIBEND";
+      
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
         this_node, type);

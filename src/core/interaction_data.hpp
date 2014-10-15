@@ -84,7 +84,9 @@ enum BondedInteraction{
     /** Type of bonded interaction is elastic triangle force (immersed boundary). */
     BONDED_IA_IBM_TRIEL,
     /** Type of bonded interaction is volume conservation force (immersed boundary). */
-    BONDED_IA_IBM_VOLUME_CONSERVATION
+    BONDED_IA_IBM_VOLUME_CONSERVATION,
+    /** Type of bonded interaction is bending force (immersed boundary). */
+    BONDED_IA_IBM_TRIBEND
 };
 /*
 #define BONDED_IA_NONE     -1
@@ -804,6 +806,19 @@ typedef struct {
 //  bool writeCOM;
 } IBM_VolCons_Parameters;
 
+typedef enum {Krueger} tBendingMethod;
+
+/** Parameters for IBM tribend **/
+typedef struct {
+  // Interaction data
+  double kb;
+  tBendingMethod method;
+  
+  // Reference angle
+  double theta0;
+  
+} IBM_Tribend_Parameters;
+
 
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
@@ -829,6 +844,7 @@ typedef union {
     IBM_WallRepulsion_Parameters ibmWallRepulsionParameters;
     IBM_Triel_Parameters ibm_triel;
     IBM_VolCons_Parameters ibmVolConsParameters;
+    IBM_Tribend_Parameters ibm_tribend;
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */
