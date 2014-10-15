@@ -636,10 +636,10 @@ inline void add_bonded_force(Particle *p1)
 	p8 = local_particles[p1->bl.e[i++]];
 
 	if(!p4 || !p5 || !p6 || !p7 || !p8) {
-	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtxt,"{080 bond broken between particles %d, %d, %d, %d, %d, %d, %d and %d (particles not stored on the same node)} ",
-		      p1->p.identity, p1->bl.e[i-7], p1->bl.e[i-6], p1->bl.e[i-5], p1->bl.e[i-4], p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
-	return;
+	  ostringstream msg;
+	  msg << "bond broken between particles" <<
+	    p1->p.identity << ", " << p1->bl.e[i-7] << ", " << p1->bl.e[i-6] << ", " << p1->bl.e[i-5] << ", " << p1->bl.e[i-4] << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2] << ", " << p1->bl.e[i-1] << " (particles not stored on the same node)";
+	  return;
 	}
       }
 #endif
@@ -884,10 +884,11 @@ inline void add_bonded_force(Particle *p1)
       break;
     case 7:
       if (bond_broken) {
-      char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
-		    p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
-      continue;
+	ostringstream msg;
+	msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
+	    << ", " << p3->p.identity << " and " << p4->p.identity;
+	runtimeError(msg);	
+	continue;
       }
       switch(type) {
       case BONDED_IA_CG_DNA_STACKING:      
@@ -923,9 +924,9 @@ inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
 inline void check_particle_force(Particle *part) {
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.f[i])) {
-        ostringstream msg;
-        msg << "force on particle "<< part->p.identity << " was NAN.";
-        runtimeError(msg);
+      ostringstream msg;
+      msg << "force on particle "<< part->p.identity << " was NAN.";
+      runtimeError(msg);
     }
   }
 
