@@ -21,6 +21,8 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
+#include "domain_decomposition.hpp"
 
 using namespace std;
 
@@ -48,11 +50,12 @@ static collision_struct *collision_queue;
 // Number of collisions recoreded in the queue
 static int number_of_collisions;
 
+static double vec21[3], dist_betw_part; 
+
 /// Parameters for collision detection
 Collision_parameters collision_params = { 0, };
 
-int collision_detection_set_params(int mode, double d, int bond_centers,
-				   int bond_vs, int t)
+int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t, int bond_three_particles, int angle_resolution)
 {
   if (mode & COLLISION_MODE_VS)
     mode |= COLLISION_MODE_BOND;
@@ -83,12 +86,22 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
 				      bonded_ia_params[bond_vs].num == 2))
     return 5;
 
+  for (int i=collision_params.bond_three_particles;i<collision_params.bond_three_particles+collision_params.three_particle_angle_resolution;i++)
+  {
+
+  if ((mode & COLLISION_MODE_BIND_THREE_PARTICLES) && !(bonded_ia_params[bond_centers].num == 1 &&
+				      		        bonded_ia_params[bond_three_particles].num + collision_params.three_particle_angle_resolution == i))
+    return 6;
+  }
+
   // Set params
   collision_params.mode=mode;
   collision_params.bond_centers=bond_centers;
   collision_params.bond_vs=bond_vs;
   collision_params.distance=d;
   collision_params.vs_particle_type=t;
+  collision_params.bond_three_particles=bond_three_particles;
+  collision_params.three_particle_angle_resolution=angle_resolution;
 
   make_particle_type_exist(t);
 
@@ -103,7 +116,6 @@ void detect_collision(Particle* p1, Particle* p2)
 {
   // The check, whether collision detection is actually turned on is performed in forces.hpp
 
-  double dist_betw_part, vec21[3]; 
   int part1, part2, size;
 
   TRACE(printf("%d: consider particles %d and %d\n", this_node, p1->p.identity, p2->p.identity));
@@ -122,6 +134,12 @@ void detect_collision(Particle* p1, Particle* p2)
   // ghost, and those can't store bonding info.
   p1 = local_particles[part1];
   p2 = local_particles[part2];
+
+#ifdef COLLISION_USE_BROKEN_PARALLELIZATION
+  // Ignore particles too distant to be on the same processor
+  if (!p1 || !p2)
+    return; 
+#endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
@@ -179,8 +197,8 @@ void detect_collision(Particle* p1, Particle* p2)
     local_change_bond(primary, bondG, 0);
   }
 
-  if (collision_params.mode & (COLLISION_MODE_VS | COLLISION_MODE_EXCEPTION)) {
-    /* If we also create virtual sites or throw an exception, we add the collision
+  if (collision_params.mode & (COLLISION_MODE_VS | COLLISION_MODE_EXCEPTION | COLLISION_MODE_BIND_THREE_PARTICLES)) {
+    /* If we also create virtual sites or bind three particles, or throw an exception, we add the collision
        to the queue to process later */
 
     // Point of collision
@@ -212,10 +230,103 @@ void prepare_collision_queue()
 
 }
 
+void coldet_do_three_particle_bond(Particle* p, Particle* p1, Particle* p2)
+// See comments in handle_collsion_queue()
+{
+ // If p1 and p2 are not closer or equal to the cutoff distance, skip
+ // p1:
+ get_mi_vector(vec21,p->r.p,p1->r.p);
+ if (sqrt(sqrlen(vec21)) > collision_params.distance)
+  return;
+ // p2:
+ get_mi_vector(vec21,p->r.p,p2->r.p);
+ if (sqrt(sqrlen(vec21)) > collision_params.distance)
+  return;
+
+  // Check, if there already is a three-particle bond centered on p 
+  // with p1 and p2 as partners. If so, skip this triplet.
+  // Note that the bond partners can appear in any order.
+ 
+ // Iterate over existing bonds of p
+ int b = 0;
+ if (p->bl.e)
+ {
+   while (b < p->bl.n) {
+     int size = bonded_ia_params[p->bl.e[b]].num;
+  
+     // Is this a three particle bond? (2 bond partners)
+     if (size==2) {
+       // Check if the bond type is within the range used by the collision detection,
+       if ((p->bl.e[b] >= collision_params.bond_three_particles) & (p->bl.e[b] <=collision_params.bond_three_particles + collision_params.three_particle_angle_resolution)) {
+         // check, if p1 and p2 are the bond partners, (in any order)
+         // if yes, skip triplet
+         if (
+          ((p->bl.e[b+1]==p1->p.identity) & (p->bl.e[b+2] ==p2->p.identity))
+  	|
+          ((p->bl.e[b+1]==p2->p.identity) & (p->bl.e[b+2] ==p1->p.identity))
+  	)
+  	  return;
+       } // if bond type 
+     } // if size==2
+     
+     // Go to next bond
+     b += size + 1;
+   } // bond loop
+ } // if bond list defined
+
+ // If we are still here, we need to create angular bond
+ // First, find the angle between the particle p, p1 and p2
+ double cosine=0.0;
+
+ double vec1[3],vec2[3];
+ /* vector from p to p1 */
+ get_mi_vector(vec1, p->r.p, p1->r.p);
+ // Normalize
+ double dist2 = sqrlen(vec1);
+ double d1i = 1.0 / sqrt(dist2);
+ for(int j=0;j<3;j++) vec1[j] *= d1i;
+ 
+ /* vector from p to p2 */
+ get_mi_vector(vec2, p->r.p, p2->r.p);
+ // normalize
+ dist2 = sqrlen(vec2);
+ double d2i = 1.0 / sqrt(dist2);
+ for(int j=0;j<3;j++) vec2[j] *= d2i;
+
+ /* scalar produvt of vec1 and vec2 */
+ cosine = scalar(vec1, vec2);
+ 
+ // Handle case where cosine is nearly 1 or nearly -1
+ if ( cosine >  TINY_COS_VALUE)  
+   cosine = TINY_COS_VALUE;
+ if ( cosine < -TINY_COS_VALUE)  
+    cosine = -TINY_COS_VALUE;
+ 
+ // Bond angle
+ double phi =  acos(cosine);
+ 
+ // We find the bond id by dividing the range from 0 to pi in 
+ // three_particle_angle_resolution steps and by adding the id
+ // of the bond for zero degrees.
+ int bond_id =floor(phi/M_PI * (collision_params.three_particle_angle_resolution-1) +0.5) +collision_params.bond_three_particles;
+
+ // Create the bond
+ 
+ // First, fill bond data structure
+ int bondT[3];
+ bondT[0] = bond_id;
+ bondT[1] = p1->p.identity;
+ bondT[2] = p2->p.identity;
+ local_change_bond(p->p.identity, bondT, 0);
+   
+}
+
 // Handle the collisions stored in the queue
 void handle_collisions ()
 {
-  // printf("number of collisions in handle collision are %d\n",number_of_collisions);
+
+  double cosine, vec1[3], vec2[3],  d1i, d2i, dist2;
+  int j;
 
   for (int i = 0; i < number_of_collisions; i++) {
     //  printf("Handling collision of particles %d %d\n", collision_queue[i].pp1, collision_queue[i].pp2);
@@ -278,6 +389,122 @@ void handle_collisions ()
     }
 #endif
   }
+
+  // three-particle-binding part
+
+  if (number_of_collisions>0) {
+   
+
+   if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {  
+
+//printf("THREE PARTICLE BINDING\n");
+
+   // If we don't have domain decomposition, we need to do a full sweep over all
+   // particles in the system. (slow)
+   if (cell_structure.type!=CELL_STRUCTURE_DOMDEC)
+   {
+       Cell *cell;
+       Particle *p, *p1, *p2;
+       // first iterate over cells, get one of the cells and find how many particles in this cell
+       for (int c=0; c<local_cells.n; c++) {
+           cell=local_cells.cell[c];
+           // iterate over particles in the cell
+           for (int a=0; a<cell->n; a++) {
+               p=&cell->part[a];
+               // for all p:
+               for (int ij=0; ij<number_of_collisions; ij++) {
+                   p1=local_particles[collision_queue[ij].pp1];
+                   p2=local_particles[collision_queue[ij].pp2];
+  
+  		 // Check, whether p is equal to one of the particles in the
+  		 // collision. If so, skip
+  		 if ((p->p.identity ==p1->p.identity) || ( p->p.identity == p2->p.identity)) {
+  		   continue;
+  		 }
+  
+                   // The following checks, 
+  		 // if the particle p is closer that the cutoff from p1 and/or p2.
+  		 // If yes, three particle bonds are created on all particles
+  		 // which have two other particles within the cutoff distance,
+  		 // unless such a bond already exists
+  		 
+  		 // We need all cyclical permutations, here 
+  		 // (bond is placed on 1st particle, order of bond partners
+  		 // does not matter, so we don't neet non-cyclic permutations):
+  		 coldet_do_three_particle_bond(p,p1,p2);
+  		 coldet_do_three_particle_bond(p2,p,p1);
+  		 coldet_do_three_particle_bond(p1,p2,p);
+  
+               }
+           }
+       }
+  
+    } // if cell structure = domain decomposition
+    else
+    { // We have domain decomposition
+    
+    // Indices of the cells in which the colliding particles reside
+    int cellIdx[2][3];
+    
+    // Iterate over collision queue
+
+    for (int i=0;i<number_of_collisions;i++) {
+      // Get first cell Idx
+      Particle* p1=local_particles[collision_queue[i].pp1];
+      Particle* p2=local_particles[collision_queue[i].pp2];
+      dd_position_to_cell_indices(p1->r.p,cellIdx[0]);
+      dd_position_to_cell_indices(p2->r.p,cellIdx[1]);
+
+printf("number of collision: %d of particles %d and %d at node:%d\n", number_of_collisions, p1->p.identity, p2->p.identity, this_node);
+
+      // Iterate over the cells + their neighbors
+      // if p1 and p2 are in the same cell, we don't need to consider it 2x
+      int lim=1;
+
+      if ((cellIdx[0][0]==cellIdx[1][0]) && (cellIdx[0][1]==cellIdx[1][1]) && (cellIdx[0][2]==cellIdx[1][2]))
+        lim=0; // Only consider the 1st cell
+
+      for (int j=0;j<=lim;j++)
+      {
+       // Iterate the cell with indices cellIdx[j][] and all its neighbors.
+       // code taken from dd_init_cell_interactions()
+       for(int p=cellIdx[j][0]-1; p<=cellIdx[j][0]+1; p++)	
+         for(int q=cellIdx[j][1]-1; q<=cellIdx[j][1]+1; q++)
+	   for(int r=cellIdx[j][2]-1; r<=cellIdx[j][2]+1; r++) {   
+	    int ind2 = get_linear_index(p,q,r,dd.ghost_cell_grid);
+	    Cell* cell=cells+ind2;
+
+	    // Iterate over particles in this cell
+            for (int a=0; a<cell->n; a++) {
+               Particle* P=&cell->part[a];
+               // for all p:
+  	       // Check, whether p is equal to one of the particles in the
+  	       // collision. If so, skip
+  	       if ((P->p.identity ==p1->p.identity) || ( P->p.identity == p2->p.identity)) {
+  		   continue;
+  	       }
+               // The following checks, 
+               // if the particle p is closer that the cutoff from p1 and/or p2.
+               // If yes, three particle bonds are created on all particles
+  	       // which have two other particles within the cutoff distance,
+               // unless such a bond already exists
+  		 
+  	       // We need all cyclical permutations, here 
+               // (bond is placed on 1st particle, order of bond partners
+  	       // does not matter, so we don't neet non-cyclic permutations):
+  		 coldet_do_three_particle_bond(P,p1,p2);
+  		 coldet_do_three_particle_bond(p2,P,p1);
+  		 coldet_do_three_particle_bond(p1,p2,P);
+             } // loop over particles
+           } // Cell loop
+
+	 } // Loop over 1st and 2nd particle, in case they are in diferent cells
+
+        } // Loop over collision queue
+    
+      } // If domain decomposition
+    } // if three particle binding
+  } // if number of collisions >0 (three particle binding)
 
   // Reset the collision queue
   number_of_collisions = 0;

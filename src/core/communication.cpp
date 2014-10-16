@@ -1806,7 +1806,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 #endif
 }
 
-/*************** REQ_BCAST_COULOMB ************/
+/*************** REQ_BCAST_COLLISION ************/
 void mpi_bcast_collision_params()
 {
 #ifdef COLLISION_DETECTION
