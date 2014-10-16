@@ -51,6 +51,12 @@
 /************************************************************/
 /*@{*/
 
+#ifdef SD_USE_FLOAT
+typedef float real;
+#else
+typedef double real;
+#endif
+
 /** Switch determining which Integrator to use. */
 extern int integ_switch;
 

@@ -30,9 +30,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <assert.h>
 #include "utils.hpp"
 #include "integrate_sd.hpp"
-#include "integrate_sd_cuda_debug.cuh"
+//#include "integrate_sd_cuda.cuh"
 #include "integrate.hpp"
 #include "reaction.hpp"
 #include "electrokinetics.hpp"
@@ -68,6 +69,14 @@
 
 /** Tag for communication in verlet fix: propagate_positions()  */
 #define REQ_INT_VERLET   400
+
+
+/// switch between double and float
+#ifdef SD_USE_FLOAT
+typedef float real;
+#else
+typedef double real;
+#endif
 
 /*******************  variables  *******************/
 

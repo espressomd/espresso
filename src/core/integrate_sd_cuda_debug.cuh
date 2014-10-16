@@ -8,11 +8,7 @@
 #include <iostream>
 #include <iomanip> 
 
-#ifdef SD_USE_FLOAT
-typedef float real;
-#else
-typedef double real;
-#endif
+#include "integrate_sd_cuda.cuh"
 
 
 // template implementation below
@@ -29,7 +25,7 @@ void printVectorDev( real * data, int m, const char * msg);
 //void printVectorDev( float * data, int m);
 void printVectorHost( real * data, int m);
 void printVectorHost( real * data, int m, const char * msg);
-void cudaCheckError(const char *msg);
+//void cudaCheckError(const char *msg);
 bool hasAnyNanDev(const real * data, int length);
 bool isSymmetricDev(const real * data, int lda, int size);
 

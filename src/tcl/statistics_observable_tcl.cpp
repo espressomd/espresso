@@ -507,7 +507,6 @@ int tclcommand_observable_rdf(Tcl_Interp* interp, int argc, char** argv, int* ch
   argc--;
   argv++;
   *change=1;
-  printf("argc:%d  argv[0]: %s, argv[1]:%s\n", argc, argv[0], argv[1]);
   
   if (argc < 2 || (!ARG0_IS_INTLIST(p1)) || (!ARG1_IS_INTLIST(p2))) {
     Tcl_ResetResult(interp);
