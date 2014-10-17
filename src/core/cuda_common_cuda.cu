@@ -230,8 +230,8 @@ void gpu_init_particle_comm() {
       }
     }
   }
-  gpu_change_number_of_part_to_comm(); 
   global_part_vars_host.communication_enabled = 1;
+  gpu_change_number_of_part_to_comm(); 
 }
 
 CUDA_particle_data* gpu_get_particle_pointer() {
