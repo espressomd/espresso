@@ -164,6 +164,8 @@ int tclcommand_inter_parse_ibm_triel(Tcl_Interp *interp, int bond_type, int argc
     }
 
   }
+  
+  return TCL_OK;
 }
 
 /***************

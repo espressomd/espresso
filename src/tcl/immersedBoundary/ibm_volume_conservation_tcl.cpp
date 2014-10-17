@@ -86,6 +86,8 @@ int tclcommand_inter_parse_ibm_volume_conservation(Tcl_Interp *interp, int bond_
       return TCL_ERROR;
     }
   }
+  
+  return TCL_OK;
 }
 
 /***************

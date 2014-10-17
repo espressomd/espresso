@@ -58,6 +58,8 @@ int tclcommand_inter_parse_ibm_wall_repulsion(Tcl_Interp *interp, int bond_type,
     }
 
   }
+  
+  return TCL_OK;
 }
 
 /***************
