@@ -121,7 +121,15 @@ libEspressoTcl_la_SOURCES += \
 	object-in-fluid/stretchlin_force_tcl.cpp \
 	object-in-fluid/stretchlin_force_tcl.hpp \
 	object-in-fluid/volume_force_tcl.cpp \
-	object-in-fluid/volume_force_tcl.hpp
+	object-in-fluid/volume_force_tcl.hpp \
+	immersedBoundary/ibm_wall_repulsion_tcl.cpp \
+	immersedBoundary/ibm_wall_repulsion_tcl.hpp \
+	immersedBoundary/ibm_triel_tcl.cpp \
+	immersedBoundary/ibm_triel_tcl.hpp \
+	immersedBoundary/ibm_volume_conservation_tcl.cpp \
+	immersedBoundary/ibm_volume_conservation_tcl.hpp \
+	immersedBoundary/ibm_tribend_tcl.cpp \
+	immersedBoundary/ibm_tribend_tcl.hpp
 
 # Coulomb methods
 libEspressoTcl_la_SOURCES += \

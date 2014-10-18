@@ -141,7 +141,16 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
 	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
-
+	
+# Immersed Boundary
+libEspresso_la_SOURCES += \
+	immersedBoundary/ibm_main.cpp	\
+	immersedBoundary/ibm_wall_repulsion.cpp \
+	immersedBoundary/ibm_triel.cpp \
+	immersedBoundary/ibm_volume_conservation.cpp \
+	immersedBoundary/ibm_tribend.cpp \
+	immersedBoundary/ibm_cuda_interface.cpp
+	
 # Coulomb methods
 libEspresso_la_SOURCES += \
 	debye_hueckel.cpp debye_hueckel.hpp \
@@ -188,7 +197,8 @@ CUDA_SOURCE_FILES = \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
-	actor/HarmonicWell_cuda.cu
+	actor/HarmonicWell_cuda.cu \
+	immersedBoundary/ibm_cuda.cu 	
 
 # include the dependency tracking files
 include ./$(DEPDIR)/cuda_init_cuda.Plo

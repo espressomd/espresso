@@ -141,6 +141,10 @@ typedef struct {
   /** Communicator for particle data used by lattice Boltzmann */
   GhostCommunicator ghost_lbcoupling_comm;
 #endif
+  
+#ifdef IMMERSED_BOUNDARY
+  GhostCommunicator ibm_ghost_force_comm;
+#endif
 
   /** Cell system dependent function to find the right node for a
       particle at position pos. 
