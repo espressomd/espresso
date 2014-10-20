@@ -122,6 +122,11 @@ BOND_ANGLEDIST_HARMONIC         implies BOND_ANGLEDIST, CONSTRAINTS
 BOND_ENDANGLEDIST
 BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 
+/* Immersed-Boundary Bayreuth version */
+IMMERSED_BOUNDARY               implies VIRTUAL_SITES
+IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
+IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
+
 /* Obsolete features. To be removed. */
 /* Old Bond angle */
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */

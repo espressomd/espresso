@@ -76,6 +76,11 @@
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
 #endif
+#include "immersed_boundary/ibm_main.hpp"
+#include "immersed_boundary/ibm_wall_repulsion.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
+#include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "immersed_boundary/ibm_tribend.hpp"
 
 using namespace std;
 
@@ -257,6 +262,12 @@ inline void force_calc()
         if (area<1e-100) break;
         add_area_global_force(area,i);
     }
+#endif
+  
+#ifdef IMMERSED_BOUNDARY
+  // Must be done here. Forces need to be ghost-communicated
+//  IBM_VolumeConservation(round(sim_time/time_step), sim_time);
+    IBM_VolumeConservation();
 #endif
 
   calc_long_range_forces();
@@ -663,6 +674,41 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = 0;
       break;
 #endif
+      
+// IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
+      case BONDED_IA_IBM_WALL_REPULSION:
+        IBM_WallRepulsion_CalcForce(p1, iaparams);
+        bond_broken = 0;
+        // These may be added later on, but we set them to zero because the force has already been added in IBM_WallRepulsion_CalcForce
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      case BONDED_IA_IBM_TRIEL:
+        bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
+        // These may be added later on, but we set them to zero because the force has already been added in IBM_Triel_CalcForce
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      case BONDED_IA_IBM_VOLUME_CONSERVATION:
+        bond_broken = 0;
+        // Don't do anything here. We calculate and add the global volume forces in IBM_VolumeConservation. They cannot be calculated on a per-bond basis
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      case BONDED_IA_IBM_TRIBEND:
+        IBM_Tribend_CalcForce(p1, p2, p3, p4, iaparams);
+        bond_broken = 0;
+        // These may be added later on, but we set them to zero because the force has already been added in IBM_Tribend_CalcForce
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+#endif
+        
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);

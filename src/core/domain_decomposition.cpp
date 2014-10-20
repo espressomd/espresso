@@ -870,6 +870,14 @@ void dd_topology_init(CellPList *old)
   dd_prepare_comm(&cell_structure.ghost_lbcoupling_comm, GHOSTTRANS_COUPLING) ;
   dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm) ;
 #endif
+  
+#ifdef IMMERSED_BOUNDARY
+  // Immersed boundary needs to communicate the forces from but also to the ghosts
+  // This is different than usual collect_ghost_force_comm (not in reverse order)
+  // Therefore we need our own communicator
+  dd_prepare_comm(&cell_structure.ibm_ghost_force_comm, GHOSTTRANS_FORCE);
+  dd_assign_prefetches(&cell_structure.ibm_ghost_force_comm);
+#endif
 
   /* initialize cell neighbor structures */
 #ifdef LEES_EDWARDS
@@ -919,6 +927,11 @@ void dd_topology_release()
 #ifdef LB
   free_comm(&cell_structure.ghost_lbcoupling_comm);
 #endif
+
+#ifdef IMMERSED_BOUNDARY
+  free_comm(&cell_structure.ibm_ghost_force_comm);
+#endif
+  
 }
 
 /************************************************************/

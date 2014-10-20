@@ -2396,6 +2396,9 @@ inline void lb_apply_forces(index_t index, double* mode) {
     mode[9] += C[4];
 
     /* reset force */
+    // In immersed boundary this needs to be postponed
+    // The forces need to be available for the IBM particle update
+#if !defined(IMMERSED_BOUNDARY)
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
     lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
@@ -2407,6 +2410,7 @@ inline void lb_apply_forces(index_t index, double* mode) {
     lbfields[index].force[2] = 0.0;
     lbfields[index].has_force = 0;
 #endif // EXTERNAL_FORCES
+#endif // !IMMERSED_BOUNDARY
 }
 
 
@@ -3055,21 +3059,22 @@ void calc_particle_lattice_ia() {
       np = cell->n ;
       
       for (int i = 0; i < np; i++) {
-        lb_viscous_coupling(&p[i],force);
         
-        /* add force to the particle */
-        p[i].f.f[0] += force[0];
-        p[i].f.f[1] += force[1];
-        p[i].f.f[2] += force[2];
+#ifdef IMMERSED_BOUNDARY
+        // Virtual particles for IBM must not be coupled
+        if(!ifParticleIsVirtual(&p[i]))
+#endif
+        {
+          lb_viscous_coupling(&p[i],force);
         
-        ONEPART_TRACE(
-                      if (p->p.identity == check_id)
-                        {
-                          fprintf(stderr,
-                                  "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",
-                                  this_node, p->f.f[0], p->f.f[1], p->f.f[2]);
-                        }
-                      );
+          /* add force to the particle */
+          p[i].f.f[0] += force[0];
+          p[i].f.f[1] += force[1];
+          p[i].f.f[2] += force[2];
+        
+          ONEPART_TRACE( if (p->p.identity == check_id)  {
+                          fprintf(stderr, "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n", this_node, p->f.f[0], p->f.f[1], p->f.f[2]);  } );
+        }
       }
     }
       
@@ -3097,8 +3102,13 @@ void calc_particle_lattice_ia() {
                                       this_node);
                             }
                           );
-            
-            lb_viscous_coupling(&p[i],force);
+#ifdef IMMERSED_BOUNDARY
+            // Virtual particles for IBM must not be coupled
+            if(!ifParticleIsVirtual(&p[i]))
+#endif
+            {
+              lb_viscous_coupling(&p[i],force);
+            }
             
             /* ghosts must not have the force added! */
             ONEPART_TRACE(
