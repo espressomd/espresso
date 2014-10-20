@@ -299,6 +299,7 @@ void on_coulomb_change()
   switch (coulomb.method) {
   case COULOMB_DH:
     break;    
+#ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
     if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
@@ -311,7 +312,6 @@ void on_coulomb_change()
     p3m_init();
     break;
 #endif
-#ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
