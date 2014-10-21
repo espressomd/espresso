@@ -119,27 +119,30 @@ int calc_node_neighbors(int node)
   map_node_array(node,node_pos);
   for(dir=0;dir<3;dir++) {
     int buf;
+
+    MPI_Cart_shift(comm_cart, dir, -1, &buf, &(node_neighbors[2*dir]));
+    MPI_Cart_shift(comm_cart, dir, 1, &buf,  &(node_neighbors[2*dir + 1]));
     
+#ifdef LEES_EDWARDS
+    #error this doesn't work for the domain decomposition cell system
     /* Writes to node_neighbors[] the integer rank of that neighbor
      * ... the 'buf' stores own rank, which is discarded. */
     if( node_pos[dir] % 2 == 0 ){
         MPI_Cart_shift(comm_cart, dir, -1, &buf, &(node_neighbors[2*dir]));
         MPI_Cart_shift(comm_cart, dir, 1, &buf,  &(node_neighbors[2*dir + 1]));
 
-#ifdef LEES_EDWARDS
         node_neighbor_lr[2*dir]   = 0;
         node_neighbor_lr[2*dir+1] = 1;
-#endif
 
     }else{
         MPI_Cart_shift(comm_cart, dir, 1, &buf, &(node_neighbors[2*dir]));
         MPI_Cart_shift(comm_cart, dir, -1, &buf,  &(node_neighbors[2*dir + 1]));
 
-#ifdef LEES_EDWARDS
         node_neighbor_lr[2*dir]   = 1;
         node_neighbor_lr[2*dir+1] = 0;
-#endif
     }
+
+#endif
 
     /* left boundary ? */
     if (node_pos[dir] == 0) {
