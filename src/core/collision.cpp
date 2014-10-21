@@ -26,7 +26,7 @@
 
 using namespace std;
 
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define TRACE(a) a
@@ -250,6 +250,9 @@ void coldet_do_three_particle_bond(Particle* p, Particle* p1, Particle* p2)
   if (sqrt(sqrlen(vec21)) > collision_params.distance)
     return;
 
+  TRACE(printf("%d: checking three particle bond %d %d %d\n", this_node,
+               p->p.identity, p1->p.identity, p2->p.identity));
+
   // Check, if there already is a three-particle bond centered on p 
   // with p1 and p2 as partners. If so, skip this triplet.
   // Note that the bond partners can appear in any order.
@@ -259,6 +262,10 @@ void coldet_do_three_particle_bond(Particle* p, Particle* p1, Particle* p2)
   if (p->bl.e) {
     while (b < p->bl.n) {
       int size = bonded_ia_params[p->bl.e[b]].num;
+
+      TRACE(printf("%d: checking bond of type %d and length %d\n", this_node,
+                   p->bl.e[b],
+                   bonded_ia_params[p->bl.e[b]].num));
   
       // Is this a three particle bond? (2 bond partners)
       if (size==2) {
@@ -268,7 +275,7 @@ void coldet_do_three_particle_bond(Particle* p, Particle* p1, Particle* p2)
           // if yes, skip triplet
           if (
               ((p->bl.e[b+1]==p1->p.identity) & (p->bl.e[b+2] ==p2->p.identity))
-              |
+              ||
               ((p->bl.e[b+1]==p2->p.identity) & (p->bl.e[b+2] ==p1->p.identity))
               )
             return;
@@ -279,7 +286,10 @@ void coldet_do_three_particle_bond(Particle* p, Particle* p1, Particle* p2)
       b += size + 1;
     } // bond loop
   } // if bond list defined
-  
+
+  TRACE(printf("%d: proceeding to install three particle bond %d %d %d\n", this_node,
+               p->p.identity, p1->p.identity, p2->p.identity));
+
   // If we are still here, we need to create angular bond
   // First, find the angle between the particle p, p1 and p2
   double cosine=0.0;
