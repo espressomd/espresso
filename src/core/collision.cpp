@@ -50,14 +50,15 @@ static collision_struct *collision_queue;
 // Number of collisions recoreded in the queue
 static int number_of_collisions;
 
-static double vec21[3], dist_betw_part; 
-
 /// Parameters for collision detection
 Collision_parameters collision_params = { 0, };
 
 int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t, int bond_three_particles, int angle_resolution)
 {
   if (mode & COLLISION_MODE_VS)
+    mode |= COLLISION_MODE_BOND;
+
+  if (mode & COLLISION_MODE_BIND_THREE_PARTICLES)
     mode |= COLLISION_MODE_BOND;
 
   // If we don't have virtual sites, virtual site binding isn't possible.
@@ -77,7 +78,8 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
   if ((mode & COLLISION_MODE_VS) &&
       (bond_vs >= n_bonded_ia))
     return 3;
-  
+
+  // Check that the bonds have the right number of partners
   if ((mode & COLLISION_MODE_BOND) &&
       (bonded_ia_params[bond_centers].num != 1))
     return 4;
@@ -85,13 +87,15 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
   if ((mode & COLLISION_MODE_VS) && !(bonded_ia_params[bond_vs].num == 1 ||
 				      bonded_ia_params[bond_vs].num == 2))
     return 5;
-
-  for (int i=collision_params.bond_three_particles;i<collision_params.bond_three_particles+collision_params.three_particle_angle_resolution;i++)
-  {
-
-  if ((mode & COLLISION_MODE_BIND_THREE_PARTICLES) && !(bonded_ia_params[bond_centers].num == 1 &&
-				      		        bonded_ia_params[bond_three_particles].num + collision_params.three_particle_angle_resolution == i))
-    return 6;
+  
+  if (mode & COLLISION_MODE_BIND_THREE_PARTICLES) {
+    if (bond_three_particles + angle_resolution >= n_bonded_ia)
+      return 6;
+    
+    for (int i = bond_three_particles; i <= bond_three_particles + angle_resolution; i++) {
+      if (bonded_ia_params[i].num != 2)
+        return 7;
+    }
   }
 
   // Set params
@@ -103,7 +107,8 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
   collision_params.bond_three_particles=bond_three_particles;
   collision_params.three_particle_angle_resolution=angle_resolution;
 
-  make_particle_type_exist(t);
+  if (mode & COLLISION_MODE_VS)
+    make_particle_type_exist(t);
 
   mpi_bcast_collision_params();
 
@@ -120,8 +125,9 @@ void detect_collision(Particle* p1, Particle* p2)
 
   TRACE(printf("%d: consider particles %d and %d\n", this_node, p1->p.identity, p2->p.identity));
 
+  double vec21[3];
   // Obtain distance between particles
-  dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
+  double dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
   if (dist_betw_part > collision_params.distance)
     return;
 
@@ -230,107 +236,102 @@ void prepare_collision_queue()
 
 }
 
-void coldet_do_three_particle_bond(Particle* p, Particle* p1, Particle* p2)
 // See comments in handle_collsion_queue()
+void coldet_do_three_particle_bond(Particle* p, Particle* p1, Particle* p2)
 {
- // If p1 and p2 are not closer or equal to the cutoff distance, skip
- // p1:
- get_mi_vector(vec21,p->r.p,p1->r.p);
- if (sqrt(sqrlen(vec21)) > collision_params.distance)
-  return;
- // p2:
- get_mi_vector(vec21,p->r.p,p2->r.p);
- if (sqrt(sqrlen(vec21)) > collision_params.distance)
-  return;
+  double vec21[3];
+  // If p1 and p2 are not closer or equal to the cutoff distance, skip
+  // p1:
+  get_mi_vector(vec21,p->r.p,p1->r.p);
+  if (sqrt(sqrlen(vec21)) > collision_params.distance)
+    return;
+  // p2:
+  get_mi_vector(vec21,p->r.p,p2->r.p);
+  if (sqrt(sqrlen(vec21)) > collision_params.distance)
+    return;
 
   // Check, if there already is a three-particle bond centered on p 
   // with p1 and p2 as partners. If so, skip this triplet.
   // Note that the bond partners can appear in any order.
  
- // Iterate over existing bonds of p
- int b = 0;
- if (p->bl.e)
- {
-   while (b < p->bl.n) {
-     int size = bonded_ia_params[p->bl.e[b]].num;
+  // Iterate over existing bonds of p
+  int b = 0;
+  if (p->bl.e) {
+    while (b < p->bl.n) {
+      int size = bonded_ia_params[p->bl.e[b]].num;
   
-     // Is this a three particle bond? (2 bond partners)
-     if (size==2) {
-       // Check if the bond type is within the range used by the collision detection,
-       if ((p->bl.e[b] >= collision_params.bond_three_particles) & (p->bl.e[b] <=collision_params.bond_three_particles + collision_params.three_particle_angle_resolution)) {
-         // check, if p1 and p2 are the bond partners, (in any order)
-         // if yes, skip triplet
-         if (
-          ((p->bl.e[b+1]==p1->p.identity) & (p->bl.e[b+2] ==p2->p.identity))
-  	|
-          ((p->bl.e[b+1]==p2->p.identity) & (p->bl.e[b+2] ==p1->p.identity))
-  	)
-  	  return;
-       } // if bond type 
-     } // if size==2
-     
-     // Go to next bond
-     b += size + 1;
-   } // bond loop
- } // if bond list defined
-
- // If we are still here, we need to create angular bond
- // First, find the angle between the particle p, p1 and p2
- double cosine=0.0;
-
- double vec1[3],vec2[3];
- /* vector from p to p1 */
- get_mi_vector(vec1, p->r.p, p1->r.p);
- // Normalize
- double dist2 = sqrlen(vec1);
- double d1i = 1.0 / sqrt(dist2);
- for(int j=0;j<3;j++) vec1[j] *= d1i;
- 
- /* vector from p to p2 */
- get_mi_vector(vec2, p->r.p, p2->r.p);
- // normalize
- dist2 = sqrlen(vec2);
- double d2i = 1.0 / sqrt(dist2);
- for(int j=0;j<3;j++) vec2[j] *= d2i;
-
- /* scalar produvt of vec1 and vec2 */
- cosine = scalar(vec1, vec2);
- 
- // Handle case where cosine is nearly 1 or nearly -1
- if ( cosine >  TINY_COS_VALUE)  
-   cosine = TINY_COS_VALUE;
- if ( cosine < -TINY_COS_VALUE)  
+      // Is this a three particle bond? (2 bond partners)
+      if (size==2) {
+        // Check if the bond type is within the range used by the collision detection,
+        if ((p->bl.e[b] >= collision_params.bond_three_particles) & (p->bl.e[b] <=collision_params.bond_three_particles + collision_params.three_particle_angle_resolution)) {
+          // check, if p1 and p2 are the bond partners, (in any order)
+          // if yes, skip triplet
+          if (
+              ((p->bl.e[b+1]==p1->p.identity) & (p->bl.e[b+2] ==p2->p.identity))
+              |
+              ((p->bl.e[b+1]==p2->p.identity) & (p->bl.e[b+2] ==p1->p.identity))
+              )
+            return;
+        } // if bond type 
+      } // if size==2
+      
+      // Go to next bond
+      b += size + 1;
+    } // bond loop
+  } // if bond list defined
+  
+  // If we are still here, we need to create angular bond
+  // First, find the angle between the particle p, p1 and p2
+  double cosine=0.0;
+  
+  double vec1[3],vec2[3];
+  /* vector from p to p1 */
+  get_mi_vector(vec1, p->r.p, p1->r.p);
+  // Normalize
+  double dist2 = sqrlen(vec1);
+  double d1i = 1.0 / sqrt(dist2);
+  for(int j=0;j<3;j++) vec1[j] *= d1i;
+  
+  /* vector from p to p2 */
+  get_mi_vector(vec2, p->r.p, p2->r.p);
+  // normalize
+  dist2 = sqrlen(vec2);
+  double d2i = 1.0 / sqrt(dist2);
+  for(int j=0;j<3;j++) vec2[j] *= d2i;
+  
+  /* scalar produvt of vec1 and vec2 */
+  cosine = scalar(vec1, vec2);
+  
+  // Handle case where cosine is nearly 1 or nearly -1
+  if ( cosine >  TINY_COS_VALUE)  
+    cosine = TINY_COS_VALUE;
+  if ( cosine < -TINY_COS_VALUE)  
     cosine = -TINY_COS_VALUE;
- 
- // Bond angle
- double phi =  acos(cosine);
- 
- // We find the bond id by dividing the range from 0 to pi in 
- // three_particle_angle_resolution steps and by adding the id
- // of the bond for zero degrees.
- int bond_id =floor(phi/M_PI * (collision_params.three_particle_angle_resolution-1) +0.5) +collision_params.bond_three_particles;
-
- // Create the bond
- 
- // First, fill bond data structure
- int bondT[3];
- bondT[0] = bond_id;
- bondT[1] = p1->p.identity;
- bondT[2] = p2->p.identity;
- local_change_bond(p->p.identity, bondT, 0);
-   
+  
+  // Bond angle
+  double phi =  acos(cosine);
+  
+  // We find the bond id by dividing the range from 0 to pi in 
+  // three_particle_angle_resolution steps and by adding the id
+  // of the bond for zero degrees.
+  int bond_id =floor(phi/M_PI * (collision_params.three_particle_angle_resolution-1) +0.5) +collision_params.bond_three_particles;
+  
+  // Create the bond
+  
+  // First, fill bond data structure
+  int bondT[3];
+  bondT[0] = bond_id;
+  bondT[1] = p1->p.identity;
+  bondT[2] = p2->p.identity;
+  local_change_bond(p->p.identity, bondT, 0);
+  
 }
 
 // Handle the collisions stored in the queue
 void handle_collisions ()
 {
-
-  double cosine, vec1[3], vec2[3],  d1i, d2i, dist2;
-  int j;
-
   for (int i = 0; i < number_of_collisions; i++) {
-    //  printf("Handling collision of particles %d %d\n", collision_queue[i].pp1, collision_queue[i].pp2);
-    //  fflush(stdout);
+    TRACE(printf("Handling collision of particles %d %d\n", collision_queue[i].pp1, collision_queue[i].pp2));
 
     if (collision_params.mode & (COLLISION_MODE_EXCEPTION)) {
 
@@ -397,8 +398,6 @@ void handle_collisions ()
 
    if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {  
 
-//printf("THREE PARTICLE BINDING\n");
-
    // If we don't have domain decomposition, we need to do a full sweep over all
    // particles in the system. (slow)
    if (cell_structure.type!=CELL_STRUCTURE_DOMDEC)
@@ -454,8 +453,6 @@ void handle_collisions ()
       Particle* p2=local_particles[collision_queue[i].pp2];
       dd_position_to_cell_indices(p1->r.p,cellIdx[0]);
       dd_position_to_cell_indices(p2->r.p,cellIdx[1]);
-
-printf("number of collision: %d of particles %d and %d at node:%d\n", number_of_collisions, p1->p.identity, p2->p.identity, this_node);
 
       // Iterate over the cells + their neighbors
       // if p1 and p2 are in the same cell, we don't need to consider it 2x
