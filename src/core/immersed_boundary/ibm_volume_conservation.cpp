@@ -206,15 +206,19 @@ void CalcVolumes()
             Particle *p2 = local_particles[p1.bl.e[j+1]];
             if (!p2)
             {
-              char* errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-              ERROR_SPRINTF(errtxt,"{IBM_CalcVolumes: 078 bond broken between particles %d and %d (particles not stored on the same node)} ", p1.p.identity, p1.bl.e[j+1]);
+              ostringstream msg;
+              msg << "{IBM_CalcVolumes: 078 bond broken between particles "
+                  << p1.p.identity << " and " << p1.bl.e[j+1] << " (particles not stored on the same node)} ";
+              runtimeError(msg);
               return;
             }
             Particle *p3 = local_particles[p1.bl.e[j+2]];
             if (!p3)
             {
-              char* errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-              ERROR_SPRINTF(errtxt,"{IBM_CalcVolumes: 078 bond broken between particles %d and %d (particles not stored on the same node)} ", p1.p.identity, p1.bl.e[j+2]);
+              ostringstream msg;
+              msg << "{IBM_CalcVolumes: 078 bond broken between particles "
+                  << p1.p.identity << " and " << p1.bl.e[j+2] << " (particles not stored on the same node)} ";
+              runtimeError(msg);
               return;
             }
             
