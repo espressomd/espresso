@@ -236,9 +236,9 @@ AC_ARG_WITH([fftw],
 AC_MSG_RESULT($with_fftw)
 
 AS_IF([test x$with_fftw = xno], [fftw_found=no],
-  [ AC_SEARCH_LIBS(fftw_plan_many_dft, [fftw3], [fftw_found=yes], [fftw_found=no])
+  [ ES_ADDPATH_CHECK_LIB(fftw3, fftw_plan_many_dft, [fftw_found=yes], [fftw_found=no],)
     AS_IF([test x$fftw_found = xyes],
-      [AC_CHECK_HEADER([fftw3.h],, [fftw_found=no])])
+      [ES_ADDPATH_CHECK_HEADER([fftw3.h],, [fftw_found=no],)])
   ])
 
 AS_IF([test x$fftw_found = xno],[
@@ -589,7 +589,8 @@ AC_ARG_WITH(efence,
   AS_HELP_STRING([--with-efence],[use ElectricFence memory debugging for the debug binary]),
     ,with_efence=no)
 if test .$with_efence = .yes; then
-  AC_CHECK_LIB(efence,malloc,,AC_MSG_FAILURE([could not link against the efence library]))
+  ES_ADDPATH_CHECK_LIB(efence,malloc,,AC_MSG_FAILURE([could not link against the efence library]),)
+
   CPPFLAGS="$CPPFLAGS -DEFENCE"
   LDFLAGS="$LDFLAGS -lefence"
 fi
