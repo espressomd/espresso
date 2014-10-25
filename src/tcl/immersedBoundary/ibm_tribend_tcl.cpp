@@ -50,10 +50,13 @@ int tclcommand_inter_parse_ibm_tribend(Tcl_Interp *interp, int bond_type, int ar
     }
     
     // Bending method
-    tBendingMethod method = Krueger;
-    if (strcmp(argv[5], "Krueger") != 0)
+    bool done = false;
+    tBendingMethod method;
+    if (strcmp(argv[5], "Krueger") == 0) { method = Krueger; done = true; }
+    if (strcmp(argv[5], "KruegerAchim") == 0) { method = KruegerAchim; done = true; }
+    if ( !done )
     {
-      Tcl_AppendResult(interp, "Currently only the Krueger method is implemented ", (char *) NULL);
+      Tcl_AppendResult(interp, "Wrong bending method: Krueger or KruegerAchim ", (char *) NULL);
       return TCL_ERROR;
     }
     

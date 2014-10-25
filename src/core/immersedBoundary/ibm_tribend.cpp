@@ -16,9 +16,12 @@ Calculate the bending force and add it to the particles
 
 void IBM_Tribend_CalcForce(Particle *p1,Particle *p2, Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams)
 {
-  if ( iaparams->p.ibm_tribend.method == Krueger )
+  if ( iaparams->p.ibm_tribend.method == Krueger || iaparams->p.ibm_tribend.method == KruegerAchim )
   {
     // ************* This is Wolfgang's code **************
+    // with some modifications by Achim
+    
+    const tBendingMethod method = iaparams->p.ibm_tribend.method;
     
     //Get vectors making up the two triangles
     double dx1[3], dx2[3], dx3[3];
@@ -64,8 +67,18 @@ void IBM_Tribend_CalcForce(Particle *p1,Particle *p2, Particle *p3, Particle *p4
     const double DTh = theta-iaparams->p.ibm_tribend.theta0;
    
     double Pre;
-    if ( theta > 0) Pre = 1.0*iaparams->p.ibm_tribend.kb * sin(DTh);
-    else Pre = -1.0*iaparams->p.ibm_tribend.kb * sin(DTh);
+    // Classical Wolfgang version
+    if ( method == Krueger )
+    {
+      if ( theta > 0) Pre = 1.0*iaparams->p.ibm_tribend.kb * sin(DTh);
+      else Pre = -1.0*iaparams->p.ibm_tribend.kb * sin(DTh);
+    }
+    else if ( method == KruegerAchim)
+    {
+      // Achim's version with linearized sin
+      if ( theta > 0) Pre = 1.0*iaparams->p.ibm_tribend.kb * DTh;
+      else Pre = -1.0*iaparams->p.ibm_tribend.kb * DTh;
+    }
     
     double v1l[3], v2l[3];
     for (int i = 0; i < 3; i++)
@@ -78,7 +91,10 @@ void IBM_Tribend_CalcForce(Particle *p1,Particle *p2, Particle *p3, Particle *p4
     double v1[3], v2[3];
     if (len>0) for ( int i = 0;i <3; i++)  v1[i]=v1l[i]/len;
     
-    len = sqrt(sqrlen(v2l));
+    // Achim normalizes both with the length of v1, Wolfgang uses v1 and v2
+    if ( method == Krueger )
+      len = sqrt(sqrlen(v2l));
+    
     if ( len > 0) for (int i = 0;i <3; i++)  v2[i]=v2l[i]/len;
     
     
@@ -91,7 +107,7 @@ void IBM_Tribend_CalcForce(Particle *p1,Particle *p2, Particle *p3, Particle *p4
     for (int i = 0; i < 3; i++ )
       p1->f.f[i] += Pre*(term1[i]/Ai + term2[i]/Aj);
     
-    // Force for particle 2:
+     // Force for particle 2:
     get_mi_vector(tmp,p3->r.p,p1->r.p);
     vector_product(tmp,v1, term1);
     for (int i = 0; i < 3; i++)
