@@ -1,0 +1,79 @@
+% Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+%  
+% This file is part of ESPResSo.
+%   
+% ESPResSo is free software: you can redistribute it and/or modify it
+% under the terms of the GNU General Public License as published by the
+% Free Software Foundation, either version 3 of the License, or (at your
+% option) any later version.
+%  
+% ESPResSo is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% General Public License for more details.
+%  
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
+
+\chapter{Immersed Boundary Method for soft elastic objects}
+\label{sec:ibm}
+\newescommand{ibm}
+
+\begin{citebox}
+  Please contact the Biofluid Simulation and Modeling Group, University of Bayreuth, Germany if you plan to use this feature. 
+\end{citebox}
+
+This section describes an alternative, yet similar, way to include soft elastic objects as the previous chapter. In the Immersed Boundary Method (IBM), soft particles are considered as an infinitely thin shell filled with liquid (see e.g. ~\citewbibkey{Krueger_thesis, Crowl_2011}). When the shell is deformed by an external flow it responds by elastic restoring forces which are transmitted into the fluid. In the present case, the inner and outer liquid are of the same type. In \es, both liquids are simulated using Lattice-Boltzmann. 
+
+Numerically, the shell is discretized by a set of marker points connected by triangles. The marker points are advected with \textit{exactly} the local fluid velocity, they do not possess a mass nor a friction coefficient (this is different than the Object-in-Fluid method of the previous chapter). We implement these marker points as virtual particles in \es which are not integrated using the usual velocity-verlet scheme, but instead are propagated using a simple Euler algorithm with the local fluid velocity (if the IMMERSED_BOUNDARY feature is turned on).
+
+To compute the elastic forces, four new bonded interactions are defined: ibm\_wallRep, ibm\_triel, ibm\_tribend and ibm\_volCons:
+
+\begin{itemize}
+\item ibm\_wallRep is a simple short-ranged repulsive force to push particles away from any walls. The syntax is
+\begin{verbatim}
+inter <ID>  ibm_wallRep <kappaWall>
+\end{verbatim}
+The exerted force is computed as $\vec{f} = \kappa r^{-8} \hat{r}$, where $\vec{r}$ is the vector between the marker point and the closest wall node. Since \es requiree at least two bonding partners for an interaction, the second bonding partner is ignored when computing ibm\_wallRep and typically the marker point is just bonded to itself, e.g.
+\begin{verbatim}
+part 0 inter 0 0
+\end{verbatim}
+
+\item ibm\_triel is a discretized elastic force with the following syntax
+\begin{verbatim}
+inter <ID> ibm_triel <ind1> <ind2> <ind3> <max>  <law_plus_parameters_string>
+\end{verbatim}
+where ind1, ind2 and ind3 represent the indices of the three marker points making up the triangle. The parameter max specifies the maximum stretch above which the bond is considered broken. The final parameter can be either
+\begin{verbatim}
+NeoHookean <k>
+\end{verbatim}
+or
+\begin{verbatim}
+Skalak <k1> <k2>
+\end{verbatim}
+which specifies the elastic law and its corresponding parameters as detailed in \citewbibkey{Krueger_thesis}. Note the final parameter needs to be passed as a single string, e.g.
+\begin{verbatim}
+inter 0 ibm_triel 1 2 3 3 "Skalak $kb1 $kb2$"
+\end{verbatim}
+
+\item ibm\_tribend is a discretized bending potential with the following syntax
+\begin{verbatim}
+inter <ID>  ibm_tribend <ind1> <ind2> <ind3> <ind4> <method> <kb> <flat/initial>
+\end{verbatim}
+where ind1, ind2, ind3 and ind4 are four marker points corresponding to two neighboring triangles. The indices ind1 and ind3 contain the shared edge. Note that the marker points within a triangle must be labelled such that the normal vector $\vec{n} = (\vec{r}_2 - \vec{r}_1) \times (\vec{r}_3 - \vec{r}_1)$ points outward of the elastic object. 
+
+The parameter <method> allows to specify different numerical ways of computing the bending interaction. Currently, only the one of \citewbibkey{Krueger_thesis} is implemented. <kb> is the bending modulus and <flat/initial> specifies whether the reference shape should be a flat configuration or whether the initial configuration is considered as reference shape.
+
+\item ibm_volCons is a volume-conservation force. Without this correction, the volume tends to shrink over time due to numerical inaccuracies. Therefore, this implements an artificial force intended to keep the volume constant. If volume conservation is to be used for a given soft particle, the interaction must be added to every marker point belonging to that object. The syntax is
+\begin{verbatim}
+inter <ID> ibm_volCons <softID> <kv>
+\end{verbatim}
+where <softID> is an ID assigned to identify the soft particle and <kv> is a volumetric spring constant  \citewbibkey{Krueger_thesis}.
+\end{itemize}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "ibm"
+%%% End:
