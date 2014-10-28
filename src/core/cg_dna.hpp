@@ -29,22 +29,7 @@
 
 #ifdef CG_DNA
 
-// extrema for cos(theta), used for the force calculations that involve angles
-#define COS_MAX (0.99999999)
-#define COS_MIN (-0.99999999)
-
 int cg_dna_basepair_set_params(int bond_type, DoubleList *params);
-int cg_dna_stacking_set_params(int bond_type, DoubleList *params);
-
-int calc_cg_dna_stacking_energy(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
-				      Particle *sj1, Particle *bj1, Particle *bj2, Particle *sj2,
-				Bonded_ia_parameters *iaparams, double *_energy);
-
-int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
-				      Particle *sj1, Particle *bj1, Particle *bj2, Particle *sj2,
-				      Bonded_ia_parameters *iaparams,
-				      double f_si1[3], double f_bi1[3], double f_bi2[3], double f_si2[3],
-			       double f_sj1[3], double f_bj1[3], double f_bj2[3], double f_sj2[3]);
 
 int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double f_s1[3], double f_b1[3], double f_b2[3], double f_s2[3]);
 

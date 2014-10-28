@@ -63,6 +63,7 @@
 #include "morse.hpp"
 #include "elc.hpp"
 #include "cg_dna.hpp"
+#include "twist_stack.hpp"
 
 #include "energy.hpp"
 
