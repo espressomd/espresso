@@ -72,7 +72,7 @@
 #include "collision.hpp"
 #include "metadynamics.hpp"
 #include "angle.hpp"
-#include "cg_dna.hpp"
+#include "hydrogen_bond.hpp"
 #include "twist_stack.hpp"
 #include "quartic.hpp"
 #ifdef ELECTROSTATICS

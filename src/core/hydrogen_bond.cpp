@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "cg_dna.hpp"
+#include "hydrogen_bond.hpp"
 #include "communication.hpp"
 
 #ifdef CG_DNA_DEBUG

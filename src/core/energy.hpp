@@ -33,7 +33,7 @@
 #include "dihedral.hpp"
 #include "mdlc_correction.hpp"
 <<<<<<< HEAD
-#include "cg_dna.hpp"
+#include "hydrogen_bond.hpp"
 =======
 */
 #ifndef _ENERGY_H

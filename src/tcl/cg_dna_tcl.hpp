@@ -26,7 +26,6 @@
 
 #include "parser.hpp"
 #include "interaction_data.hpp"
-#include "cg_dna.hpp"
 
 #ifdef CG_DNA
 

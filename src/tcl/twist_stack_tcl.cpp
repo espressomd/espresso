@@ -20,7 +20,6 @@
 */
 
 #include "twist_stack_tcl.hpp"
-#include "cg_dna.hpp"
 #include "twist_stack.hpp"
 
 #ifdef TWIST_STACK

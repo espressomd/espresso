@@ -20,6 +20,7 @@
 */
 
 #include "hydrogen_bond_tcl.hpp"
+#include "hydrogen_bond.hpp"
 
 #ifdef HYDROGEN_BOND
 

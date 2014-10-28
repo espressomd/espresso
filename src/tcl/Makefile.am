@@ -76,7 +76,6 @@ libEspressoTcl_la_SOURCES = \
 	uwerr_tcl.cpp \
 	virtual_sites_com_tcl.cpp virtual_sites_com_tcl.hpp \
 	ghmc_tcl.cpp ghmc_tcl.hpp \
-	cg_dna_tcl.hpp cg_dna_tcl.cpp \
 	twist_stack_tcl.hpp twist_stack_tcl.cpp \
 	hydrogen_bond_tcl.hpp hydrogen_bond_tcl.cpp
 
