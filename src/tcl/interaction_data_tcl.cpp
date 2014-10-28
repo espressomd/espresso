@@ -100,9 +100,6 @@
 #include "tcl/object-in-fluid/stretching_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
-#ifdef CG_DNA
-#include "cg_dna_tcl.hpp"
-#endif
 #ifdef TWIST_STACK
 #include "twist_stack_tcl.hpp"
 #endif
