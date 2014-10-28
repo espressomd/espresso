@@ -103,6 +103,9 @@
 #ifdef CG_DNA
 #include "cg_dna_tcl.hpp"
 #endif
+#ifdef TWIST_STACK
+#include "twist_stack_tcl.hpp"
+#endif
 
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
@@ -962,7 +965,7 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef CG_DNA
   REGISTER_BONDED("cg_dna_basepair", tclcommand_inter_parse_cg_dna_basepair);
-  REGISTER_BONDED("cg_dna_stacking", tclcommand_inter_parse_cg_dna_stacking);  
+  REGISTER_BONDED("twist_stack", tclcommand_inter_parse_twist_stack);  
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);

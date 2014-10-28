@@ -29,10 +29,6 @@ void cg_dna_basepair_usage(Tcl_Interp *interp) {
   puts("usage: cg_dna_basepair { r0 alpha E0 kd sigma1 sigma2 psi01 psi02 E0sb r0sb alphasb f2 f3 }");
 }
 
-void cg_dna_stacking_usage(Tcl_Interp *interp) { 
-  puts("usage: cg_dna_stacking { rm epsilon a0 a1 a2 a3 a4 a5 a6 a7 b1 b2 b3 b4 b5 b6 b7 }");
-}
-
 int tclcommand_inter_parse_cg_dna_basepair(Tcl_Interp *interp, int bond_type, int argc, char **argv) {   
   DoubleList params;
   
@@ -53,30 +49,6 @@ int tclcommand_inter_parse_cg_dna_basepair(Tcl_Interp *interp, int bond_type, in
   }
 
   cg_dna_basepair_set_params(bond_type, &params);
-
-  return ES_OK; 
-}
-
-int tclcommand_inter_parse_cg_dna_stacking(Tcl_Interp *interp, int bond_type, int argc, char **argv) {
-  DoubleList params;
-  
-  init_doublelist(&params);
-
-  argc--;
-  argv++;
-
-  if(!ARG0_IS_DOUBLELIST(params)) {
-    cg_dna_basepair_usage(interp);
-    return ES_ERROR;
-  }
-
-  if(params.n != 17) {
-    puts("Wrong number of parameters");
-    cg_dna_stacking_usage(interp);
-    return ES_ERROR;
-  }
-
-  cg_dna_stacking_set_params(bond_type, &params);
 
   return ES_OK; 
 }
