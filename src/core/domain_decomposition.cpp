@@ -928,6 +928,9 @@ void  dd_exchange_and_sort_particles(int global_flag)
   ParticleList *cell,*sort_cell, send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
   Particle *part;
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles(%d):\n",this_node,global_flag));
+  CELL_TRACE(fprintf(stderr,"%d: node_neighbors are %d %d %d %d %d %d\n",this_node,
+             node_neighbors[0], node_neighbors[1], node_neighbors[2],
+             node_neighbors[3], node_neighbors[4], node_neighbors[5]));
 
   init_particlelist(&send_buf_l);
   init_particlelist(&send_buf_r);
@@ -997,6 +1000,8 @@ void  dd_exchange_and_sort_particles(int global_flag)
 
         /* Exchange particles */
 #ifndef LEES_EDWARDS
+ 	CELL_TRACE(fprintf(stderr,"%d: send receive %d\n",this_node, dir));
+        
         if(node_pos[dir]%2==0) {
           send_particles(&send_buf_l, node_neighbors[2*dir]);
           recv_particles(&recv_buf_r, node_neighbors[2*dir+1]);
