@@ -28,13 +28,13 @@
 #include "grid.hpp"
 
 #ifdef TWIST_STACK
-int cg_dna_stacking_set_params(int bond_type, DoubleList *params);
+int twist_stack_set_params(int bond_type, DoubleList *params);
 
-int calc_cg_dna_stacking_energy(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
+int calc_twist_stack_energy(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
 				      Particle *sj1, Particle *bj1, Particle *bj2, Particle *sj2,
 				Bonded_ia_parameters *iaparams, double *_energy);
 
-int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
+int calc_twist_stack_force(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
 				      Particle *sj1, Particle *bj1, Particle *bj2, Particle *sj2,
 				      Bonded_ia_parameters *iaparams,
 				      double f_si1[3], double f_bi1[3], double f_bi2[3], double f_si2[3],

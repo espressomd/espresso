@@ -31,7 +31,7 @@
 #ifdef CG_DNA
 
 int tclcommand_inter_parse_cg_dna_basepair(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-int tclcommand_inter_parse_cg_dna_stacking(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+int tclcommand_inter_parse_twist_stack(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 
 #endif
 

@@ -681,7 +681,7 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = calc_cg_dna_basepair_force(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
       break;
     case BONDED_IA_CG_DNA_STACKING:
-      bond_broken = calc_cg_dna_stacking_force(p1, p2, p3, p4, p5, p6, p7, p8, iaparams,
+      bond_broken = calc_twist_stack_force(p1, p2, p3, p4, p5, p6, p7, p8, iaparams,
 					       force, force2, force3, force4, force5, force6, force7, force8);
       break;
 #endif

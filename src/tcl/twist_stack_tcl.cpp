@@ -48,7 +48,7 @@ int tclcommand_inter_parse_twist_stack(Tcl_Interp *interp, int bond_type, int ar
     return ES_ERROR;
   }
 
-  cg_dna_stacking_set_params(bond_type, &params);
+  twist_stack_set_params(bond_type, &params);
 
   return ES_OK; 
 }

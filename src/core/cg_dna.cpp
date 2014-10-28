@@ -497,33 +497,5 @@ int cg_dna_basepair_set_params(int bond_type, DoubleList *params) {
   return ES_OK;
 }
 
-int cg_dna_stacking_set_params(int bond_type, DoubleList *params) {
-  if(bond_type < 0)
-    return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.cg_dna_stacking.rm = params->e[0];
-  bonded_ia_params[bond_type].p.cg_dna_stacking.epsilon = params->e[1];
-
-  for(int i = 0; i < 8; i++)
-    bonded_ia_params[bond_type].p.cg_dna_stacking.a[i] = params->e[2+i];
-
-  for(int i = 0; i < 7; i++)
-    bonded_ia_params[bond_type].p.cg_dna_stacking.b[i] = params->e[10+i];
-  
-  const double dt = PI*36./180.;
-  const double *a = bonded_ia_params[bond_type].p.cg_dna_stacking.a;
-  const double *b = bonded_ia_params[bond_type].p.cg_dna_stacking.b;
-
-  bonded_ia_params[bond_type].p.cg_dna_stacking.ref_pot = a[0] + a[1] * cos(dt) + a[2] * cos(2*dt) + a[3] * cos(3*dt) + a[4] * cos(4*dt) + a[5] * cos(5*dt) + a[6] * cos(6*dt) + a[7] * cos(7*dt) + b[0] * sin(dt) + b[1] * sin(2*dt) + b[2] * sin(3*dt) + b[3] * sin(4*dt) + b[5] * sin(5*dt) + b[6] * sin(6*dt);
-  bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_STACKING;
-  bonded_ia_params[bond_type].num = 7;
-
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-}
-
 #endif
 

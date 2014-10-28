@@ -81,7 +81,7 @@ inline double angle(double *x1, double *x2) {
 #define PS(A)
 #endif /* TWIST_STACK_DEBUG */
 
-int calc_cg_dna_stacking_energy(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
+int calc_twist_stack_energy(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
 				      Particle *sj1, Particle *bj1, Particle *bj2, Particle *sj2,
 				      Bonded_ia_parameters *iaparams, double *_energy) {
 
@@ -164,10 +164,10 @@ int calc_cg_dna_stacking_energy(Particle *si1, Particle *bi1, Particle *bi2, Par
   const double ir5 = ir2*ir2*ir;
   const double ir6 = ir5*ir;
 
-  const double rm = iaparams->p.cg_dna_stacking.rm; 
-  const double epsilon = iaparams->p.cg_dna_stacking.epsilon;
-  const double *a = iaparams->p.cg_dna_stacking.a;
-  const double *b = iaparams->p.cg_dna_stacking.b;
+  const double rm = iaparams->p.twist_stack.rm; 
+  const double epsilon = iaparams->p.twist_stack.epsilon;
+  const double *a = iaparams->p.twist_stack.a;
+  const double *b = iaparams->p.twist_stack.b;
 
   const double rm2 = rm*rm;
   const double rm5 = rm2*rm2*rm;
@@ -218,7 +218,7 @@ int calc_cg_dna_stacking_energy(Particle *si1, Particle *bi1, Particle *bi2, Par
   const double sin6 = 2.*sin5*cos1 - sin4;
   const double sin7 = 2.*sin6*cos1 - sin5;
 
-  const double pot_twist_ref = iaparams->p.cg_dna_stacking.ref_pot;
+  const double pot_twist_ref = iaparams->p.twist_stack.ref_pot;
 
   const double pot_twist = a[0] + a[1]*cos1 + a[2]*cos2 + a[3]*cos3 + a[4]*cos4
     +a[5]*cos5 + a[6]*cos6 + a[7]*cos7 + b[0]*sin1 + b[1]*sin2 + b[2]*sin3 + b[3]*sin4 + b[4]*sin5 + b[5]*sin6 + b[6] *sin7;
@@ -240,7 +240,7 @@ int calc_cg_dna_stacking_energy(Particle *si1, Particle *bi1, Particle *bi2, Par
   return 0;
 }
 
-int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
+int calc_twist_stack_force(Particle *si1, Particle *bi1, Particle *bi2, Particle *si2,
 				      Particle *sj1, Particle *bj1, Particle *bj2, Particle *sj2,
 				      Bonded_ia_parameters *iaparams,
 				      double f_si1[3], double f_bi1[3], double f_bi2[3], double f_si2[3],
@@ -325,10 +325,10 @@ int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Part
   const double ir5 = ir2*ir2*ir;
   const double ir6 = ir5*ir;
 
-  const double rm = iaparams->p.cg_dna_stacking.rm; 
-  const double epsilon = iaparams->p.cg_dna_stacking.epsilon;
-  const double *a = iaparams->p.cg_dna_stacking.a;
-  const double *b = iaparams->p.cg_dna_stacking.b;
+  const double rm = iaparams->p.twist_stack.rm; 
+  const double epsilon = iaparams->p.twist_stack.epsilon;
+  const double *a = iaparams->p.twist_stack.a;
+  const double *b = iaparams->p.twist_stack.b;
 
   const double rm2 = rm*rm;
   const double rm5 = rm2*rm2*rm;
@@ -432,7 +432,7 @@ int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Part
   const double sin6 = 2.*sin5*cos1 - sin4;
   const double sin7 = 2.*sin6*cos1 - sin5;
 
-  const double pot_twist_ref = iaparams->p.cg_dna_stacking.ref_pot;
+  const double pot_twist_ref = iaparams->p.twist_stack.ref_pot;
 
   const double pot_twist = a[0] + a[1]*cos1 + a[2]*cos2 + a[3]*cos3 + a[4]*cos4
     +a[5]*cos5 + a[6]*cos6 + a[7]*cos7 + b[0]*sin1 + b[1]*sin2 + b[2]*sin3 + b[3]*sin4 + b[4]*sin5 + b[5]*sin6 + b[6] *sin7;
@@ -640,5 +640,32 @@ int calc_cg_dna_stacking_force(Particle *si1, Particle *bi1, Particle *bi2, Part
   return 0;
 }
 
+int twist_stack_set_params(int bond_type, DoubleList *params) {
+  if(bond_type < 0)
+    return ES_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.twist_stack.rm = params->e[0];
+  bonded_ia_params[bond_type].p.twist_stack.epsilon = params->e[1];
+
+  for(int i = 0; i < 8; i++)
+    bonded_ia_params[bond_type].p.twist_stack.a[i] = params->e[2+i];
+
+  for(int i = 0; i < 7; i++)
+    bonded_ia_params[bond_type].p.twist_stack.b[i] = params->e[10+i];
+  
+  const double dt = PI*36./180.;
+  const double *a = bonded_ia_params[bond_type].p.twist_stack.a;
+  const double *b = bonded_ia_params[bond_type].p.twist_stack.b;
+
+  bonded_ia_params[bond_type].p.twist_stack.ref_pot = a[0] + a[1] * cos(dt) + a[2] * cos(2*dt) + a[3] * cos(3*dt) + a[4] * cos(4*dt) + a[5] * cos(5*dt) + a[6] * cos(6*dt) + a[7] * cos(7*dt) + b[0] * sin(dt) + b[1] * sin(2*dt) + b[2] * sin(3*dt) + b[3] * sin(4*dt) + b[5] * sin(5*dt) + b[6] * sin(6*dt);
+  bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_STACKING;
+  bonded_ia_params[bond_type].num = 7;
+
+  mpi_bcast_ia_params(bond_type, -1);
+
+  return ES_OK;
+}
 
 #endif /* TWIST_STACK */
