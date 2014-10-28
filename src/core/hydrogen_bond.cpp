@@ -81,7 +81,7 @@ inline double angle(double *x1, double *x2) {
 #define PS(A)
 #endif
 
-int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double f_s1[3], double f_b1[3], double f_b2[3], double f_s2[3]) {
+int calc_hydrogen_bond_force(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double f_s1[3], double f_b1[3], double f_b2[3], double f_s2[3]) {
 
   /* Base-Base and Sugar-Sugar vectors */
   double rhb[3], rcc[3];
@@ -107,10 +107,10 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
   /* helper variables */
   double ra, temp, tau_r, tau_d, tau_flip, tau_rd;
   const Bonded_ia_parameters params = *iaparams;
-  const double E0 = params.p.cg_dna_basepair.E0;
+  const double E0 = params.p.hydrogen_bond.E0;
   
 #ifdef CG_DNA_DEBUG
-  //  puts("calc_cg_dna_basepair_force():");
+  //  puts("calc_hydrogen_bond_force():");
 #endif
 
   /* Calculate geometry variables */
@@ -134,11 +134,11 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
 
   /* Sugar base interaction */
   
-  const double r0sb = params.p.cg_dna_basepair.r0sb;
-  const double alphasb = params.p.cg_dna_basepair.alphasb;
-  const double f2 = params.p.cg_dna_basepair.f2;
-  const double f3 = params.p.cg_dna_basepair.f3;
-  const double E0sb = params.p.cg_dna_basepair.E0sb;
+  const double r0sb = params.p.hydrogen_bond.r0sb;
+  const double alphasb = params.p.hydrogen_bond.alphasb;
+  const double f2 = params.p.hydrogen_bond.f2;
+  const double f3 = params.p.hydrogen_bond.f3;
+  const double E0sb = params.p.hydrogen_bond.E0sb;
   const double c0sb = (1. - 2.*f2)*E0sb*alphasb;
   const double c1sb = (f2-3.*f3)*E0sb*alphasb;
   const double c2sb = f3*E0sb*alphasb;
@@ -153,16 +153,16 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
 
   /* Radial part */
 
-  ra = (rhb_l - params.p.cg_dna_basepair.r0)*params.p.cg_dna_basepair.alpha;
+  ra = (rhb_l - params.p.hydrogen_bond.r0)*params.p.hydrogen_bond.alpha;
   temp = exp(-ra);
   tau_r = temp *(1.+ra);
-  f_r = E0*params.p.cg_dna_basepair.alpha*temp*ra/rhb_l;
+  f_r = E0*params.p.hydrogen_bond.alpha*temp*ra/rhb_l;
 
   /* Dihedral part */
 
   gammad = dot(n1, n2)/(n1_l*n2_l);
-  tau_d = exp(params.p.cg_dna_basepair.kd*(gammad - 1));
-  f_d = -E0*params.p.cg_dna_basepair.kd*tau_d/(n1_l*n2_l);  
+  tau_d = exp(params.p.hydrogen_bond.kd*(gammad - 1));
+  f_d = -E0*params.p.hydrogen_bond.kd*tau_d/(n1_l*n2_l);  
 
   /* Flip part */
 
@@ -180,14 +180,14 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
   psi1 = gamma1 >= 1. ? 0. : (gamma1 <= -1. ? M_PI : acos(gamma1));
   psi2 = gamma2 >= 1. ? 0. : (gamma2 <= -1. ? M_PI : acos(gamma2));  
 
-  dpsi1 = psi1 - params.p.cg_dna_basepair.psi10;
-  dpsi2 = psi2 - params.p.cg_dna_basepair.psi20;
+  dpsi1 = psi1 - params.p.hydrogen_bond.psi10;
+  dpsi2 = psi2 - params.p.hydrogen_bond.psi20;
 
-  const double sigma1sqr = (SQR(params.p.cg_dna_basepair.sigma1));
-  const double sigma2sqr = (SQR(params.p.cg_dna_basepair.sigma2));
+  const double sigma1sqr = (SQR(params.p.hydrogen_bond.sigma1));
+  const double sigma2sqr = (SQR(params.p.hydrogen_bond.sigma2));
 
-  f_f1 = -dpsi1 / sqrt(1. - SQR(gamma1)) * params.p.cg_dna_basepair.E0/sigma1sqr;
-  f_f2 = -dpsi2 / sqrt(1. - SQR(gamma2)) * params.p.cg_dna_basepair.E0/sigma2sqr;
+  f_f1 = -dpsi1 / sqrt(1. - SQR(gamma1)) * params.p.hydrogen_bond.E0/sigma1sqr;
+  f_f2 = -dpsi2 / sqrt(1. - SQR(gamma2)) * params.p.hydrogen_bond.E0/sigma2sqr;
   
   tau_rd = tau_r * tau_d;
 
@@ -340,7 +340,7 @@ int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particl
   return 0;
 }
 
-int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double *_energy) {
+int calc_hydrogen_bond_energy(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double *_energy) {
 
   /* Base-Base and Sugar-Sugar vectors */
   double rhb[3], rcc[3];
@@ -363,10 +363,10 @@ int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Partic
   /* helper variables */
   double ra, temp, tau_r, tau_d, tau_flip;
   const Bonded_ia_parameters params = *iaparams;
-  const double E0 = params.p.cg_dna_basepair.E0;
+  const double E0 = params.p.hydrogen_bond.E0;
   
 #ifdef CG_DNA_DEBUG
-  //  puts("calc_cg_dna_basepair_force():");
+  //  puts("calc_hydrogen_bond_force():");
 #endif
 
   /* Calculate geometry variables */
@@ -390,11 +390,11 @@ int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Partic
 
   /* Sugar base interaction */
   
-  const double r0sb = params.p.cg_dna_basepair.r0sb;
-  const double alphasb = params.p.cg_dna_basepair.alphasb;
-  const double f2 = params.p.cg_dna_basepair.f2;
-  const double f3 = params.p.cg_dna_basepair.f3;
-  const double E0sb = params.p.cg_dna_basepair.E0sb;
+  const double r0sb = params.p.hydrogen_bond.r0sb;
+  const double alphasb = params.p.hydrogen_bond.alphasb;
+  const double f2 = params.p.hydrogen_bond.f2;
+  const double f3 = params.p.hydrogen_bond.f3;
+  const double E0sb = params.p.hydrogen_bond.E0sb;
 
   ra = (rcb1_l - r0sb)*alphasb;
   potential += E0sb * exp(-ra)*(1.+ra+f2*ra*ra+f3*ra*ra*ra);
@@ -407,13 +407,13 @@ int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Partic
 
   /* Radial part */
 
-  ra = (rhb_l - params.p.cg_dna_basepair.r0)*params.p.cg_dna_basepair.alpha;
+  ra = (rhb_l - params.p.hydrogen_bond.r0)*params.p.hydrogen_bond.alpha;
   tau_r = exp(-ra)*(1.+ra);
 
   /* Dihedral part */
 
   gammad = dot(n1, n2);
-  tau_d = exp(params.p.cg_dna_basepair.kd*(gammad - 1));
+  tau_d = exp(params.p.hydrogen_bond.kd*(gammad - 1));
 
   /* Flip part */
 
@@ -431,11 +431,11 @@ int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Partic
   psi1 = gamma1 >= 1. ? 0. : (gamma1 <= -1. ? M_PI : acos(gamma1));
   psi2 = gamma2 >= 1. ? 0. : (gamma2 <= -1. ? M_PI : acos(gamma2));  
 
-  dpsi1 = psi1 - params.p.cg_dna_basepair.psi10;
-  dpsi2 = psi2 - params.p.cg_dna_basepair.psi20;
+  dpsi1 = psi1 - params.p.hydrogen_bond.psi10;
+  dpsi2 = psi2 - params.p.hydrogen_bond.psi20;
 
-  const double sigma1sqr = (SQR(params.p.cg_dna_basepair.sigma1));
-  const double sigma2sqr = (SQR(params.p.cg_dna_basepair.sigma2));
+  const double sigma1sqr = (SQR(params.p.hydrogen_bond.sigma1));
+  const double sigma2sqr = (SQR(params.p.hydrogen_bond.sigma2));
   
   if(dpsi1 > 0 && dpsi2 > 0) {
     tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)+SQR(dpsi2)/(2.*sigma2sqr)));
@@ -469,25 +469,25 @@ int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Partic
   return 0;
 }
 
-int cg_dna_basepair_set_params(int bond_type, DoubleList *params) {
+int hydrogen_bond_set_params(int bond_type, DoubleList *params) {
   if(bond_type < 0)
     return ES_ERROR;
 
   make_bond_type_exist(bond_type);
 
-  bonded_ia_params[bond_type].p.cg_dna_basepair.r0 = params->e[0];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.alpha = params->e[1];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.E0 = params->e[2];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.kd = params->e[3];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.sigma1 = params->e[4];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.sigma2 = params->e[5];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.psi10 = params->e[6];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.psi20 = params->e[7];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.E0sb = params->e[8];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.r0sb = params->e[9];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.alphasb = params->e[10];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.f2 = params->e[11];
-  bonded_ia_params[bond_type].p.cg_dna_basepair.f3 = params->e[12];  
+  bonded_ia_params[bond_type].p.hydrogen_bond.r0 = params->e[0];
+  bonded_ia_params[bond_type].p.hydrogen_bond.alpha = params->e[1];
+  bonded_ia_params[bond_type].p.hydrogen_bond.E0 = params->e[2];
+  bonded_ia_params[bond_type].p.hydrogen_bond.kd = params->e[3];
+  bonded_ia_params[bond_type].p.hydrogen_bond.sigma1 = params->e[4];
+  bonded_ia_params[bond_type].p.hydrogen_bond.sigma2 = params->e[5];
+  bonded_ia_params[bond_type].p.hydrogen_bond.psi10 = params->e[6];
+  bonded_ia_params[bond_type].p.hydrogen_bond.psi20 = params->e[7];
+  bonded_ia_params[bond_type].p.hydrogen_bond.E0sb = params->e[8];
+  bonded_ia_params[bond_type].p.hydrogen_bond.r0sb = params->e[9];
+  bonded_ia_params[bond_type].p.hydrogen_bond.alphasb = params->e[10];
+  bonded_ia_params[bond_type].p.hydrogen_bond.f2 = params->e[11];
+  bonded_ia_params[bond_type].p.hydrogen_bond.f3 = params->e[12];  
 
   bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_BASEPAIR;
   bonded_ia_params[bond_type].num = 3;

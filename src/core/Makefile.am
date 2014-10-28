@@ -148,7 +148,7 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
 	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp \
-	cg_dna.cpp cg_dna.hpp \
+	hydrogen_bond.cpp hydrogen_bond.hpp \
 	twist_stack.cpp twist_stack.hpp
 
 # Coulomb methods

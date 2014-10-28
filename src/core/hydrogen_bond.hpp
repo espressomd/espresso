@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-  Max-Planck-Institute for Polymer Research, Theory Group
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,10 +19,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
+#ifndef CG_DNA_HPP
+#define CG_DNA_HPP
+
 #include "utils.hpp"
-#include "parser.hpp"
-#include "cg_dna_tcl.hpp"
+#include "interaction_data.hpp"
+#include "particle_data.hpp"
+#include "grid.hpp"
 
 #ifdef CG_DNA
 
-#endif
+int hydrogen_bond_set_params(int bond_type, DoubleList *params);
+
+int calc_hydrogen_bond_force(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double f_s1[3], double f_b1[3], double f_b2[3], double f_s2[3]);
+
+int calc_hydrogen_bond_energy(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double *_energy);
+
+#endif /* CG_DNA */
+
+#endif /* CG_DNA_HPP */

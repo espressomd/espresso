@@ -1,7 +1,7 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-  Max-Planck-Institute for Polymer Research, Theory Group
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,10 +19,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "utils.hpp"
+#ifndef __HYDROGEN_BOND_TCL_HPP
+#define __HYDROGEN_BOND_TCL_HPP
+
 #include "parser.hpp"
-#include "cg_dna_tcl.hpp"
+#include "interaction_data.hpp"
 
-#ifdef CG_DNA
+#ifdef HYDROGEN_BOND
 
+int tclcommand_inter_parse_hydrogen_bond(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+int tclcommand_inter_parse_twist_stack(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+
+#endif
 #endif

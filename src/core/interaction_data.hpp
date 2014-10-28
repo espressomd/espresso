@@ -769,7 +769,7 @@ typedef union {
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
 #ifdef CG_DNA
-    Cg_dna_basepair_parameters cg_dna_basepair;
+    Cg_dna_basepair_parameters hydrogen_bond;
     Cg_dna_stacking_parameters twist_stack;
 #endif
     Endangledist_bond_parameters endangledist;

@@ -106,6 +106,9 @@
 #ifdef TWIST_STACK
 #include "twist_stack_tcl.hpp"
 #endif
+#ifdef HYDROGEN_BOND
+#include "hydrogen_bond_tcl.hpp"
+#endif
 
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
@@ -964,7 +967,7 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("virtual_bond", tclcommand_inter_parse_virtual_bonds);
 #endif
 #ifdef CG_DNA
-  REGISTER_BONDED("cg_dna_basepair", tclcommand_inter_parse_cg_dna_basepair);
+  REGISTER_BONDED("hydrogen_bond", tclcommand_inter_parse_hydrogen_bond);
   REGISTER_BONDED("twist_stack", tclcommand_inter_parse_twist_stack);  
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],

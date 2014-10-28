@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -19,22 +19,36 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef CG_DNA_HPP
-#define CG_DNA_HPP
+#include "hydrogen_bond_tcl.hpp"
 
-#include "utils.hpp"
-#include "interaction_data.hpp"
-#include "particle_data.hpp"
-#include "grid.hpp"
+#ifdef HYDROGEN_BOND
 
-#ifdef CG_DNA
+void hydrogen_bond_usage(Tcl_Interp *interp) { 
+  puts("usage: hydrogen_bond { r0 alpha E0 kd sigma1 sigma2 psi01 psi02 E0sb r0sb alphasb f2 f3 }");
+}
 
-int cg_dna_basepair_set_params(int bond_type, DoubleList *params);
+int tclcommand_inter_parse_hydrogen_bond(Tcl_Interp *interp, int bond_type, int argc, char **argv) {   
+  DoubleList params;
+  
+  init_doublelist(&params);
 
-int calc_cg_dna_basepair_force(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double f_s1[3], double f_b1[3], double f_b2[3], double f_s2[3]);
+  argc--;
+  argv++;
 
-int calc_cg_dna_basepair_energy(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double *_energy);
+  if(!ARG0_IS_DOUBLELIST(params)) {
+    hydrogen_bond_usage(interp);
+    return ES_ERROR;
+  }
 
-#endif /* CG_DNA */
+  if(params.n != 13) {
+    puts("Wrong number of parameters");
+    hydrogen_bond_usage(interp);
+    return ES_ERROR;
+  }
 
-#endif /* CG_DNA_HPP */
+  hydrogen_bond_set_params(bond_type, &params);
+
+  return ES_OK; 
+}
+
+#endif /* HYDROGEN_BOND */
