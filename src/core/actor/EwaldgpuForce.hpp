@@ -6,6 +6,7 @@
 
 #include "SystemInterface.hpp"
 #include "Actor.hpp"
+#include "particle_data.hpp"
 #include <math.h>
 
 typedef float ewaldgpu_real;
@@ -51,7 +52,7 @@ public:
 	double compute_E_error_estimate_k(double alpha, int num_kx, int num_ky, int num_kz, double q_sqr, double box_l[3]);
 	double E_estimate_error(double rcut, int num_kx, int num_ky, int num_kz, double alpha, double q_sqr, double box_l[3]);
 	double compute_optimal_alpha(double rcut, int num_kx, int num_ky, int num_kz, double q_sqr, double box_l[3], double precision);
-	double compute_q_sqare(SystemInterface &s);
+	double compute_q_sqare(Particle *particle);
 
 protected:
 	//System

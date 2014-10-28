@@ -258,7 +258,10 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
   }
 
   //Compute alpha
-  double q_sqr = ewaldgpuForce->compute_q_sqare(espressoSystemInterface);
+	Particle *particle;
+	particle = (Particle*)malloc(n_part*sizeof(Particle));
+	mpi_get_particles(particle, NULL);
+	double q_sqr = ewaldgpuForce->compute_q_sqare(particle);
   alpha = ewaldgpuForce->compute_optimal_alpha(r_cut, num_kx, num_ky, num_kz, q_sqr, box_l, precision);
 
   //Turn on ewaldgpu

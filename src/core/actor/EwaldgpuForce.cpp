@@ -105,7 +105,13 @@ int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 	int Kmax = ewaldgpu_params.K_max;
 	double alpha_array[Kmax]; //All computed alpha in dependence of K
 	double rcut_array[Kmax]; //All computed r_cut in dependence of all computed alpha
-	double q_sqr = compute_q_sqare(s);
+
+	//Squared charge
+	Particle *particle;
+	particle = (Particle*)malloc(n_part*sizeof(Particle));
+	mpi_get_particles(particle, NULL);
+	double q_sqr = compute_q_sqare(particle);
+
 	char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
 
   if (skin == -1) {
@@ -320,23 +326,14 @@ double EwaldgpuForce::compute_optimal_alpha(double rcut, int num_kx, int num_ky,
 
   return 0.5 *(alpha_low + alpha_high);
 }
-double EwaldgpuForce::compute_q_sqare(SystemInterface &s)
+double EwaldgpuForce::compute_q_sqare(Particle *particle)
 {
 	double q_sqr=0;
-  Cell *cell;
-  Particle *p;
-  int i,c,np;
 
-  for (c = 0; c < local_cells.n; c++)
-  {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++)
-    {
-    	q_sqr += pow(p[i].p.q,2);
-    }
-  }
+	for(int i = 0; i < n_part; i++)
+	{
+		q_sqr += pow(particle[i].p.q,2);
+	}
   return q_sqr;
 }
 
