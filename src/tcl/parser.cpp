@@ -62,7 +62,7 @@ int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl) {
 int gather_runtime_errors(Tcl_Interp *interp, int error_code) {
   list<string> errors = mpiRuntimeErrorCollectorGather();
 
-  if (errors.size() == 0) return TCL_OK;
+  if (errors.size() == 0) return error_code;
 
   /* reset any results of the previous command, since we got an error
      during evaluation, they are at best bogus. But any normal error
