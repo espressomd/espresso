@@ -72,8 +72,8 @@ protected:
   ewaldgpu_real *m_dev_energy_reci; //Energy k-space
   ewaldgpu_real *m_q_sqr; //Sum of the squares of the particle charges
   ewaldgpu_real *m_dev_q_sqr; //Sum of the squares of the particle charges
-  ewaldgpu_real *m_energy_self; //Energy self
-  ewaldgpu_real *m_energy_tot; //Energy total
+  ewaldgpu_real m_energy_self; //Energy self
+  ewaldgpu_real m_energy_tot; //Energy total
 	//Parameters
   double m_alpha; //Separation parameter
   double m_rcut; //Cutoff radius

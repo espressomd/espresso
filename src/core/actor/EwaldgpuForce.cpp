@@ -72,7 +72,7 @@ void EwaldgpuForce::compute_k_AND_influence_factor()
 //Real space
 void EwaldgpuForce::EwaldCPU_EnergySelf()
 {
-	m_energy_self[0]=coulomb.prefactor * (-m_alpha/sqrt(M_PI) * m_q_sqr[0]);
+	m_energy_self=coulomb.prefactor * (-m_alpha/sqrt(M_PI) * m_q_sqr[0]);
 }
 
 //Parameters
