@@ -53,7 +53,8 @@
 
 
 // global variables for usage in this file
-cublasHandle_t cublas=NULL;
+cublasHandle_t     cublas    = NULL;
+curandGenerator_t  generator = NULL;
 /* *************************************************************************************************************** *
  * ********************************************     implementation    ******************************************** *
  * *************************************************************************************************************** */
@@ -125,7 +126,7 @@ void propagate_pos_sd_cuda(real * box_l_h, int N,real * pos_h, real * force_h, r
   cuda_safe_mem(cudaMalloc((void**)&myInfo_d, 3*sizeof(int)));
   cuda_safe_mem(cudaMemcpy(myInfo_d,myInfo_h,3*sizeof(int),cudaMemcpyHostToDevice));
   
-  sd_compute_displacement(cublas, pos_d, N, viscosity, radius, box_l_d, box_l_h, mobility_d, force_d, disp_d, myInfo_d);
+  sd_compute_displacement( pos_d, N, viscosity, radius, box_l_d, box_l_h, mobility_d, force_d, disp_d, myInfo_d);
   
   int numBlocks = (N+numThreadsPerBlock-1)/numThreadsPerBlock;
   // rescale displacements
@@ -164,8 +165,8 @@ void propagate_pos_sd_cuda(real * box_l_h, int N,real * pos_h, real * force_h, r
 // radius    : Particle radius (in)
 // L_d       : boxsize in x y and z-directions (in)
 // total_mobility_d: matrix of the computed total mobility, size 3*3*N*N (in/out, is overwritten)
-void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real viscosity, real radius, real * L_d, real * L_h,
-			     real * total_mobility_d, real * force_d, real * disp_d, int * myInfo_d)
+void sd_compute_displacement(const real * r_d, int N, real viscosity, real radius,const real * L_d,const real * L_h,
+			     const real * total_mobility_d, const real * force_d, real * disp_d, int * myInfo_d)
 {
 #ifndef SD_FF_ONLY
   real det_prec=1e-3;
@@ -220,7 +221,7 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
     cuda_safe_mem(cudaMalloc((void **) &bucket_num,              sizeof(int) *3));
     cuda_safe_mem(cudaMemcpy(bucket_num,bucket_num_h,            sizeof(int) *3, cudaMemcpyHostToDevice));
     cuda_safe_mem(cudaMalloc((void **) &particle_count,          sizeof(int) *total_bucket_num));
-    sd_set_int<<<32,32>>>(particle_count,total_bucket_num,0);
+    sd_set_value<<<32,32>>>(particle_count,total_bucket_num,0);
     cuda_safe_mem(cudaMalloc((void **) &particle_to_bucket_list, sizeof(int) *N));
     cuda_safe_mem(cudaMalloc((void **) &particle_sorted_list,    sizeof(int) *total_bucket_num*max_particles_per_bucket));
     sd_bucket_sort<<<numBlocks, numThreadsPerBlock >>>(r_d, bucket_size, bucket_num, N, particle_count, particle_sorted_list,
@@ -229,16 +230,16 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
 #endif  
   
   // compute the mobility Matrix
-  matrix mobility={NULL, NULL, NULL, NULL};
+  matrix mobility;
   mobility.size      = N*3;
   mobility.ldd       = ((N*3+31)/32)*32;
   mobility.ldd_short = ((N+31)/32)*32;
   real * &mobility_d=mobility.data;
   cuda_safe_mem(cudaMalloc( (void**)&mobility_d, lda*DIM*N*sizeof(real) ));
   assert(mobility_d);
-  sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(mobility_d,3*N);
+  sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(mobility_d,mobility.size, mobility.ldd);
   cudaThreadSynchronize(); // just for debugging
-  cudaCheckError("sd set zero");
+  cudaCheckError("");
 #ifdef SD_NOT_PERIODIC
   sd_compute_mobility_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,1./(6.*M_PI*viscosity*radius), radius, L_d, mobility_d);
   cudaThreadSynchronize(); // just for debugging
@@ -248,20 +249,113 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
   real L_min=L_h[0];
   L_min=min(L_min,L_h[1]);
   L_min=min(L_min,L_h[2]);
+  real L_max=L_h[0];
+  L_max=max(L_max,L_h[1]);
+  L_max=max(L_max,L_h[2]);
   assert(ew_prec < 1);
-  real xi=-2./L_min*log(ew_prec/2.);
-  //fprintf(stderr,"L_min is %f\n",L_min);
-  //fprintf(stderr,"xi is %f\n",xi);
-  real kmax2=-xi*xi*log(ew_prec);
+  real xi=2./L_min*sqrt(log(1./ew_prec));
+  real kmax2=-4*xi*xi*log(ew_prec);
+  kmax2*=SQR(L_max/2./M_PI);
+  {
+    static int printed=0;
+    if (!printed){
+      fprintf(stderr,"\nL_min is %f\n",L_min);
+      fprintf(stderr,"xi is %f\n",xi);
+      fprintf(stderr,"kmax is %e\n",sqrt(kmax2));
+      printed=1;
+    }
+  }
   //fprintf(stderr,"kmax is %e\n",sqrt(kmax2));
+  //fprintf(stderr,"selfmobility is %e\n",1./(6.*M_PI*viscosity*radius));
   sd_compute_mobility_matrix_real_short<<<numBlocks, numThreadsPerBlock>>>(r_d, N, 1./(6.*M_PI*viscosity*radius), radius, L_d, 
 									   mobility.data, L_min/2., xi, xi*radius, xi*radius*xi*radius*xi*radius);
   //std::cerr << "kmax is " << ceil(sqrt(kmax2)) << std::endl;
-  sd_compute_mobility_matrix_wave_cpu(ceil(sqrt(kmax2)), ceil(kmax2), mobility, radius, L_h, xi, 1./(6.*M_PI*viscosity*radius));
+  sd_compute_mobility_matrix_wave_cpu(ceil(sqrt(kmax2))+1, (ceil(sqrt(kmax2))+1)*(ceil(sqrt(kmax2))+1), mobility,
+				      radius, L_h, xi, 1./(6.*M_PI*viscosity*radius), ew_prec);
+  
+  //cudaCheckError("");
+  //mobility.hash_data();
   if (mobility.wavespace){
     sd_compute_mobility_sines<<<numBlocks, numThreadsPerBlock>>>(r_d, N, mobility.wavespace->vecs, mobility.wavespace->num,
 								 mobility.wavespace->sines, mobility.wavespace->cosines, 
 								 mobility.ldd_short);
+    cudaCheckError("");
+#ifdef SD_DEBUG
+    /*cuda_safe_mem(cudaMalloc( (void**)&mobility.dense,    mobility.ldd*mobility.size*sizeof(real) ));
+    cublasCall(cublasRcopy(cublas, mobility.size*mobility.ldd,mobility.data, 1, mobility.dense,1));
+    sd_wavepart_addto_matrix<<<dim3(numBlocks,N,1), dim3(numThreadsPerBlock,1,1),
+                               numThreadsPerBlock*3*sizeof(real)>>>(mobility.wavespace->num,   mobility.wavespace->matrices,
+								    mobility.wavespace->sines, mobility.wavespace->cosines,
+								    mobility.ldd_short,        N,
+								    mobility.dense,            mobility.ldd);
+    cudaCheckError("");
+    mobility.hash_dense();*/
+    /* *********************************
+     * **   Test to check wavespace   **
+     * *********************************
+    real * testvec=NULL;
+    cuda_safe_mem(cudaMalloc( (void**)&testvec,    mobility.ldd*3*sizeof(real) ));
+    if (true){
+      if (generator == NULL){
+	curandCall(curandCreateGenerator(&generator, CURAND_RNG_PSEUDO_DEFAULT));
+      }
+      curandCall(curandGenerateNormalReal( generator, testvec, ((mobility.size+1)/2)*2, 0, sqrt(2.)));
+    } else {
+      sd_set_zero<<<numBlocks, numThreadsPerBlock>>>(testvec, mobility.size);
+      //real val=1e-20;
+      //for (int i = 0 ; i < mobility.size;i++){
+      //if (i > 30)
+      //sd_set_value<<<1,1>>>(testvec+i,1,val);
+      //val*=10;
+      //}
+      sd_set_value<<<1,1>>>(testvec+6,3,1);
+    }
+    std::cout << "called ";
+    real * testout1 = testvec+mobility.ldd*1;
+    real * testout2 = testvec+mobility.ldd*2;
+    const real one=1;
+    sd_Rgemv(&one, mobility, testvec, testout1);
+    if (warnings > 2){
+      mobility.print();
+      }
+#endif
+    //sd_wavepart_addto_matrix<<<dim3(3,N,1),dim3(2,1,1),numThreadsPerBlock*3*sizeof(real)>>>(mobility.wavespace->num, 
+    sd_wavepart_addto_matrix<<<dim3(numBlocks,N,1), dim3(numThreadsPerBlock,1,1),
+                               numThreadsPerBlock*3*sizeof(real)>>>(mobility.wavespace->num,   mobility.wavespace->matrices,
+								    mobility.wavespace->sines, mobility.wavespace->cosines,
+								    mobility.ldd_short,        N,
+								    mobility.data,             mobility.ldd);
+    
+    cudaCheckError("");
+    mobility._free_wavespace();
+    cudaCheckError("");
+#ifdef SD_DEBUG
+    sd_Rgemv(&one, mobility, testvec, testout2);
+    const real minusone=-1;
+    cublasCall(cublasRaxpy(cublas, mobility.size, &minusone, testout2, 1, testout1, 1));
+    real erg;
+    cublasCall(cublasRnrm2(cublas, mobility.size, testout1, 1, &erg));
+    if (erg > 0.01){
+      printVectorDev(testvec,  mobility.size, "in         ");
+      printVectorDev(testout2, mobility.size, "correct out");
+      printVectorDev(testout1, mobility.size, "difference ");
+      mobility.print();
+      fflush(stdout);
+    }
+    assert(erg < 0.01);
+    */
+#endif
+  }
+  //mobility.printStats();
+  if (!isSymmetricDev(mobility)){
+    if (warnings > 2){
+      printMatrixDev(mobility);
+    }
+  }
+  assert(isSymmetricDev(mobility));
+  if (warnings > 20){
+    //printMatrixDev(mobility);
+    //mobility.printWavespace();
   }
 #endif
     
@@ -292,7 +386,7 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
   } else {
     resistance.is_sparse=false;
     cuda_safe_mem(cudaMalloc( (void**)&resistance_d, lda*N*3*sizeof(real) ));
-    sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(resistance_d,3*N);
+    sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(resistance.data,resistance.size,resistance.ldd);
     cudaThreadSynchronize(); // debug
     cudaCheckError("sd_set_zero");
     sd_compute_resistance_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,-1./(6.*M_PI*viscosity*radius), radius, L_d, resistance_d, myInfo_d);
@@ -307,7 +401,7 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
 #ifndef SD_FF_ONLY
   if (hasAnyNanDev(resistance_d,N*3*lda)){
     printPosDev(r_d,N,"positions");
-    printMatrixDev(resistance_d,lda, 3*N,"Resistance with nans ...");
+    //printMatrixDev(resistance_d,lda, 3*N,"Resistance with nans ...");
   }
   assert(!hasAnyNanDev(resistance_d,N*3*lda));
   assert(isSymmetricDev(resistance_d,lda,N*3));
@@ -334,7 +428,7 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
     printVectorDev(disp_d,N*3,"disp");
     printVectorDev(force_d,N*3,"force");
 #ifndef SD_FF_ONLY
-    printMatrixDev(resistance_d,lda,N*3,"resistance produces nans?");
+    //printMatrixDev(resistance_d,lda,N*3,"resistance produces nans?");
 #endif
   }
   assert(!hasAnyNanDev(disp_d,N*3));
@@ -351,8 +445,14 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
   }
   cublasCall(cublasRcopy(cublas, N*3, disp_d, 1, last_det_disp,1));
   last_N=N;
+  {
+    static int printed=0;
+    if (!printed){
+      ;//printMatrixDev(mobility);
+    }
+  }
   // brownian part
-  if (temperature > 0){
+  if (temperature > 0 ){
 #ifndef SD_FF_ONLY
     int myInfo_h[3];
     cuda_safe_mem(cudaMemcpy(myInfo_h,myInfo_d,3*sizeof(int),cudaMemcpyDeviceToHost));
@@ -374,7 +474,6 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
     cuda_safe_mem(cudaMalloc( (void**)&gaussian, (num_of_rands)*sizeof(real) ));     assert(gaussian != NULL);
     real * gaussian_ff = gaussian;
     real * gaussian_nf = gaussian+N_ldd*DIM;
-    static curandGenerator_t  generator                      = NULL;
     unsigned long long *      sd_random_generator_offset     = (unsigned long long *)sd_random_state;
     unsigned long long *      sd_seed_ull                    = (unsigned long long *)sd_seed;
     static unsigned long long sd_random_generator_offset_last= *sd_random_generator_offset;
@@ -411,7 +510,7 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
       //cublasCall(cublasRnrm2(cublas, size, brownian_force_ff, 1, &bff_nrm));
       if (warnings > 1) fprintf(stderr, "Recalculating the Chebyshev-polynome\n");
     }
-    if ((E_cheby>100*ran_prec && warnings) || (E_cheby > 10*ran_prec &&  warnings > 1)){
+    if ((E_cheby>100*ran_prec && warnings) || (E_cheby > 10*ran_prec &&  warnings > 1) ){
       fprintf(stderr, "The error of the Chebyshev-approximation was %7.3f%%\n",E_cheby*100);
       //printVectorDev(mobility.wavespace->sines,mobility.wavespace->max*mobility.ldd_short,"sines");
       //printVectorDev(mobility.wavespace->matrices,mobility.wavespace->max*6,"matrices");
@@ -455,7 +554,7 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
   
   // free everything
   //cudaFree((void*)mobility_d);
-  mobility._free();
+  //mobility.~matrix();
 #ifndef SD_FF_ONLY
   cudaFree((void*)resistance_d);
   if (use_buckets) {
@@ -476,16 +575,17 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
 /// and returnes \param disp
 /// \param mobility and \param resistance are square matrizes with \param size <size> and ldd <((size+31)/32)*32>
 /// \param force and \param disp are vectors of \param size <size>
-real sd_iterative_solver(cublasHandle_t cublas, const matrix mobility, const matrix resistance, const real * force, int size, real * disp, real rel_tol, real abs_tol, bool recalc)
+real sd_iterative_solver(const matrix& mobility, const matrix& resistance, const real * force, real * disp, real rel_tol, real abs_tol, bool recalc)
 {
+  int size=mobility.size;
   if (abs(abs_tol) > 1e-8){
     if (warnings > 1) fprintf(stderr,"Solving for brownian forces.\n");
   } else {
     if (warnings > 1) fprintf(stderr,"Solving for interparticle forces.\n");
   }
 #ifdef SD_DEBUG
-  assert(!hasAnyNanDev(mobility.data,mobility.size*lda));
-  assert(!hasAnyNanDev(resistance.data,resistance.size*lda));
+  assert(!hasAnyNanDev(mobility.data,mobility.size*mobility.ldd));
+  assert(!hasAnyNanDev(resistance.data,resistance.size*mobility.ldd));
   assert(!hasAnyNanDev(force,size));
   assert(!hasAnyNanDev(disp,size));
 #endif
@@ -496,7 +596,7 @@ real sd_iterative_solver(cublasHandle_t cublas, const matrix mobility, const mat
 	recalc=true;
   }       assert(mat_a != NULL);
   if (recalc){
-    sd_set_zero_matrix<<<32,192>>>(mat_a,size);
+    sd_set_zero_matrix<<<32,192>>>(mat_a,size,lda);
   }
 #endif
   real * mob_force=NULL;
@@ -848,9 +948,9 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, const real * A1, const r
   if (initnorm*1e10 >= normr) { return 2;}				\
   else                        { return 4;}
 #ifdef SD_PC
-int sd_gmres_solver(cublasHandle_t cublas ,int size, const real * A,int lda, real * b, real tol,real abs_tol, int maxit, real * x, real * res){
+int sd_gmres_solver(int size, const real * A,int lda, const real * b, real tol,real abs_tol, int maxit, real * x, real * res){
 #else
-int sd_gmres_solver(const matrix A1, const matrix A2 , real * b, real tol,real abs_tol, int maxit, real * x, real * res){
+int sd_gmres_solver(const matrix & A1, const matrix & A2 , const real * b, real tol,real abs_tol, int maxit, real * x, real * res){
 #endif
   int size=A1.size;
   int lda =A1.ldd;
@@ -1018,7 +1118,7 @@ int sd_gmres_solver(const matrix A1, const matrix A2 , real * b, real tol,real a
 // mobility_d  : handle of the mobility matrix (on the device)  (IN)
 // lambda_min  : smalles eigenvalue                            (OUT)
 // lambda_max  : largest eigenvalue                            (OUT)
-void calculate_maxmin_eigenvalues(const matrix mobility, real * lambda_min, real * lambda_max, real tol){
+void calculate_maxmin_eigenvalues(const matrix & mobility, real * lambda_min, real * lambda_max, real tol){
   int size=mobility.size;
   int lda = ((size+31)/32)*32;
   int maxit=max(500,size);
@@ -1257,7 +1357,7 @@ real calculate_chebyshev_coefficents(real lambda_min, real lambda_max, real tol,
 /// Instead of calculating it directly, its action on the vector
 /// containing the randomnumbers is computed via the chebyshev-polynomials.
 /// In the case of FF_ONLY this computes directly the displacement!
-real sd_compute_brownian_force_farfield(const matrix mobility, real * gaussian_ff,
+real sd_compute_brownian_force_farfield(const matrix & mobility, const real * gaussian_ff,
 					real tol, real * brownian_force_ff ){
 
   int size=mobility.size;
@@ -1279,10 +1379,12 @@ real sd_compute_brownian_force_farfield(const matrix mobility, real * gaussian_f
   }
   if (lambda_min < 0){
     std::cerr << "Mobility has negative eigenvalues!\n" << std::endl;
+    std::cout << "Mobility has negative eigenvalues!\n" << std::endl;
     if (mobility.wavespace != NULL){
-      std::cerr << mobility.wavespace->max;
-      printVectorDev(mobility.wavespace->matrices,mobility.wavespace->max*6, "matrices");
-      printVectorDev(mobility.wavespace->vecs    ,mobility.wavespace->max*3, "vecs");
+      //printMatrixDev(mobility);
+    }
+    if (warnings > 2){
+      //printMatrixDev(mobility);
     }
     //printMatrixDev(mobility.data,mobility.ldd,mobility.size,"Mobility has negative eigenvalues!\n");
     errexit();
@@ -1333,7 +1435,7 @@ real sd_compute_brownian_force_farfield(const matrix mobility, real * gaussian_f
     cublasCall(cublasRaxpy( cublas, size, cheby_coefficents+i, chebyshev_vec_curr, 1, brownian_force_ff, 1 ));
   }
 #ifdef SD_DEBUG
-  assert(isSymmetricDev(mobility_d,lda,size));
+  assert(isSymmetricDev(mobility.data,mobility.ldd,mobility.size));
 #endif
   // errorcheck of chebyshev polynomial
 #ifdef SD_FF_ONLY
@@ -1357,7 +1459,8 @@ real sd_compute_brownian_force_farfield(const matrix mobility, real * gaussian_f
   return E_cheby;
 }
 
-void sd_Rgemv(const real * factor, const matrix A, const real * in, real * out){
+void sd_Rgemv(const real * factor, const matrix & A, const real * in, real * out){
+  A.assert_all();
   if(A.is_sparse){
     int threads=A.size;
     const int tpB = numThreadsPerBlock;
@@ -1382,40 +1485,82 @@ void sd_Rgemv(const real * factor, const matrix A, const real * in, real * out){
     cublasCall(cublasRnrm2(cublas, A.size, in, 1, &insize));
     real before;
     cublasCall(cublasRnrm2(cublas, A.size, out, 1, &before));*/
-    wavepart  wave=* A.wavespace;
+    wavepart  & wave=* A.wavespace;
     const int tpB = numThreadsPerBlock;
     int buf_size = A.wavespace->max*3;
     real * sin_sum=NULL;
     cuda_safe_mem(cudaMalloc( (void**)& sin_sum, buf_size*sizeof(real)));
     real max;
-    sd_nrm1<<<1,numThreadsPerBlock>>>(A.size/3,in,sin_sum);
+    sd_nrm1<<<1,numThreadsPerBlock>>>(A.size,in,sin_sum);
     cuda_safe_mem(cudaMemcpy(&max, sin_sum, sizeof(real), cudaMemcpyDeviceToHost));
     sd_set_zero<<<64,192>>>(sin_sum,buf_size);
+    //fprintf(stderr,"buf_size is %d\n",buf_size);
     real * cos_sum=NULL;
     cuda_safe_mem(cudaMalloc( (void**)& cos_sum, buf_size*sizeof(real)));
     sd_set_zero<<<64,192>>>(cos_sum,buf_size);
     cudaThreadSynchronize();
     cudaCheckError("");
     // thread number has to be a power of two!
-    sd_wavepart_sum<<<wave.num,64,64*3*sizeof(real)>>>(in, wave.vecs, wave.num, wave.matrices, wave.sines, wave.cosines, A.ldd_short, A.size/3, sin_sum, cos_sum, max);
+    //sd_wavepart_sum<<<wave.num,64,64*3*sizeof(real)>>>(in, wave.vecs, wave.num, wave.matrices, wave.sines, wave.cosines, \
+    //fprintf(stderr,"calling sd_wavepart_sum<<<%d,%d,%d>>>\n",wave.num,8,8*3*sizeof(real));
+    //                         ,------ has to be power of two and at least 8
+    //                        \|/
+    //                         v   
+    sd_wavepart_sum<<<wave.num,8,8*3*sizeof(real)>>>(in, wave.vecs, wave.num, wave.matrices, wave.sines, wave.cosines, \
+						       A.ldd_short, A.size/3, sin_sum, cos_sum, max);
     cudaThreadSynchronize();
     cudaCheckError("");
     int blocks = (A.ldd_short)/tpB;
-    sd_wavepart_assemble<<<blocks,tpB>>>(wave.num, wave.sines, wave.cosines, sin_sum, cos_sum, A.ldd_short, out, max);
+    sd_wavepart_assemble<<<blocks,tpB,tpB*3*sizeof(real)>>>(wave.num, wave.sines, wave.cosines, sin_sum, cos_sum, A.ldd_short, out, max, A.size/3, *factor);
     cudaThreadSynchronize();
     cudaCheckError("");
-    //real after;
-    //cublasCall(cublasRnrm2(cublas, A.size, out, 1, &after));
-    //fprintf(stderr,"before: %e, after %e, \n  ",before/insize, after/insize);
-    //printVectorDev(cos_sum, buf_size,"cos_sum");
-    //printVectorDev(sin_sum, buf_size,"sin_sum");
+    /*#ifdef SD_DEBUG
+    if (A.dense){
+      printVectorDev(sin_sum,buf_size,"insin_sum");
+      printVectorDev(cos_sum,buf_size,"incos_sum");
+      real * correct;
+      cuda_safe_mem(cudaMalloc( (void**)&correct,    A.ldd*sizeof(real) ));
+      const real zero=0;
+      #ifdef SD_USE_FLOAT
+      cublasCall(cublasSgemv(cublas, CUBLAS_OP_N, A.size, A.size, factor, A.dense, A.ldd, in,  1, &zero, correct, 1));
+      #else
+      cublasCall(cublasDgemv(cublas, CUBLAS_OP_N, A.size, A.size, factor, A.dense, A.ldd, in,  1, &zero, correct, 1));
+      #endif
+      const real minusone = -1;
+      cublasCall(cublasRaxpy(cublas, A.size, &minusone, out, 1 ,correct, 1));
+      real erg;
+      cublasCall(cublasRnrm2(cublas, A.size, correct, 1 , &erg));
+      if (erg < 1e-3){
+	std::cout << "s";
+	printVectorDev(in     ,A.size,"\nin, worked  ");
+	printVectorDev(correct,A.size,"correct     ");
+	printVectorDev(out    ,A.size,"out         ");
+      } else {
+	A.print();
+	cublasCall(cublasRaxpy(cublas, A.size, &minusone, out, 1 ,correct, 1));
+	printVectorDev(in     ,A.size,"in, failed  ");
+	printVectorDev(correct,A.size,"correct     ");
+	printVectorDev(out    ,A.size,"out         ");
+	
+      }
+      cuda_safe_mem(cudaFree((void*) correct));
+    }
+    if (warnings > 20){
+      printVectorDev(sin_sum,buf_size,"sin_sum");
+      printVectorDev(cos_sum,buf_size,"cos_sum");
+    }
+    #endif*/
     cuda_safe_mem(cudaFree((void*) sin_sum));
     cuda_safe_mem(cudaFree((void*) cos_sum));
   }
 }
 
 
-void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility, real a, real * L_h, real xi, real selfmobility){
+void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility, real a,const real * L_h, real xi, real selfmobility, real ew_prec){
+#ifdef SD_DEBUG
+  //kmax=1;
+  //kmax2=kmax*kmax;
+#endif
   cudaCheckError("");
   real fak=selfmobility;
   for(int k=0;k<3;k++){
@@ -1435,7 +1580,7 @@ void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility
     for (cki[1]=-kmax;cki[1]<kmax+1;cki[1]+=1){
       for (cki[2]=-kmax;cki[2]<kmax+1;cki[2]+=1){
 	int cki2=cki[0]*cki[0]+ cki[1]*cki[1] + cki[2]*cki[2];
-	if (cki2 < kmax2 && cki2 > 0 ){
+	if (cki2 <= kmax2 && cki2 > 0 ){
 	  vc++;
 	}
       }
@@ -1445,13 +1590,9 @@ void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility
     return;
   }
   if (mobility.wavespace == NULL){
-    mobility.wavespace = (wavepart *) malloc(sizeof(wavepart));
-    mobility.wavespace->vecs    =NULL;
-    mobility.wavespace->matrices=NULL;
-    mobility.wavespace->sines   =NULL;
-    mobility.wavespace->cosines =NULL;
-    mobility.wavespace->num     =0;
-    mobility.wavespace->max     =0;
+    mobility.wavespace = new wavepart(mobility.ldd_short);
+    //mobility.wavespace = (wavepart *) malloc(sizeof(wavepart));
+    //mobility.wavespace->wavepart();
   }
   // CONTINUE:
   // Space management is fucked up
@@ -1485,28 +1626,45 @@ void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility
       k[1]=cki[1]*ki[1];
       for (cki[2]=-kmax;cki[2]<kmax+1;cki[2]+=1){
 	int cki2=cki[0]*cki[0]+ cki[1]*cki[1] + cki[2]*cki[2];
-	if (cki2 < kmax2 && cki2 > 0){
+	if (cki2 <= kmax2 && cki2 > 0){
 	  k[2]=cki[2]*ki[2];
 	  real k2=k[0]*k[0]+ k[1]*k[1] + k[2]*k[2];
 	  for (int i = 0;i<3;i++){
 	    vecs_h[vc*3+i]=k[i];
 	  }
 	  real scal = (a-1./3.*a*a*a*k2)*(1+0.25*xi2*k2+0.125*xi2*xi2*k2*k2)*6.*M_PI/k2*exp(-0.25*xi2*k2)*fak;
-	  for (int i = 0 ; i < 3 ; i++ ){
-	    matrices_h[vc*6+i] = (1-(k[i]*k[i]/k2))*scal;
+	  //if (cki[0]==-kmax){
+	  //  printf("scal is %e, exp is %e\n",scal/fak,exp(-0.25*xi2*k2));
+	  //}
+	  if (scal > 1e-3*ew_prec){
+	    for (int i = 0 ; i < 3 ; i++ ){
+	      matrices_h[vc*6+i] = (1-(k[i]*k[i]/k2))*scal;
+	    }
+	    matrices_h[vc*6+3] = (-k[0]*k[1]/k2)*scal;
+	    matrices_h[vc*6+4] = (-k[0]*k[2]/k2)*scal;
+	    matrices_h[vc*6+5] = (-k[1]*k[2]/k2)*scal;
+	    /*if (scal/fak > 1e-5){
+	      printf("scal is %e, k is %e",scal/fak,sqrt(k2));
+	      printf("\tk=[%4.0f, %4.0f, %4.0f]  ",k[0]*L_h[0]/2/M_PI,k[1]*L_h[1]/2/M_PI,k[2]*L_h[2]/2/M_PI);
+	      printf("  m=[%12.4e, %12.4e, %12.4e,%12.4e, %12.4e, %12.4e]  \n",matrices_h[vc*6],matrices_h[vc*6+1],matrices_h[vc*6+2],matrices_h[vc*6+3],matrices_h[vc*6+4],matrices_h[vc*6+5]);
+	      }*/
+	    vc++;
 	  }
-	  matrices_h[vc*6+3] = (-k[0]*k[1]/k2)*scal;
-	  matrices_h[vc*6+4] = (-k[0]*k[2]/k2)*scal;
-	  matrices_h[vc*6+5] = (-k[1]*k[2]/k2)*scal;
-	  vc++;
 	}
       }
     }
+  }
+  mobility.wavespace->num      = vc;
+  static int printed=0;
+  if (!printed){
+    printf("\nwe need %d k vectors\n",vc);
+    printed=1;
   }
   cudaCheckError("");
   //fprintf(stderr,"h: 0x%x d: 0x%x, size: %d",vecs_h,mobility.wavespace->vecs,  ldd*3*sizeof(real));
   cuda_safe_mem(cudaMemcpy(mobility.wavespace->vecs,    vecs_h,    ldd*3*sizeof(real),cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpy(mobility.wavespace->matrices,matrices_h,ldd*6*sizeof(real),cudaMemcpyHostToDevice));
+  //mobility.wavespace->hash_vecs();
 }
 
 void _cuda_check_error(char *file, unsigned int line){

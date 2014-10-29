@@ -409,7 +409,13 @@ void propagate_pos_sd()
 #else
   real * box_size = box_l;
 #endif
+  if (!(thermo_switch & THERMO_SD)){
+    temperature*=-1;
+  }
   propagate_pos_sd_cuda(box_size,N,pos,force, velocity);
+  if (!(thermo_switch & THERMO_SD)){
+    temperature*=-1;
+  }
 #else
   fprintf(stderr, "Warning - CUDA is currently required for SD\n");
   fprintf(stderr, "So i am just sitting here and copying stupidly stuff :'(\n");

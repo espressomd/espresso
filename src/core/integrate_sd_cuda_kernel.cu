@@ -1,4 +1,4 @@
-#define CUDA
+#include "config.hpp"
 
 #include <stdio.h>
 #include <assert.h>
@@ -22,18 +22,12 @@
 // L_d is the boxlength
 #define mydebug(str,...)
 // if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
-__global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, real a, real * L_g, real * mobility){
+__global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobility, real a, real * mobility){
   real mypos[3];
   const int lda=((3*N+31)/32)*32;
-  __shared__ real L[3];
   __shared__ real cachedPos[3*numThreadsPerBlock];
   __shared__ real writeCache[3*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
-  if (threadIdx.x < 3){ // copy L to shared memory
-    //mydebug("0x%08x  \n",L_g + threadIdx.x);
-    L[threadIdx.x]=L_g[threadIdx.x];
-  }
-  __syncthreads();
   // get data for myposition - using coalscaled memory access
   for (int l=0;l<3;l++){
     mydebug(" 0x%08x -> 0x%08x  \n",numThreadsPerBlock*(l+blockIdx.x*3)+threadIdx.x,numThreadsPerBlock*l+threadIdx.x);
@@ -72,7 +66,7 @@ __global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, 
 #pragma unroll 3
 	for (int k=0;k<DIM;k++){
 	  dr[k]=mypos[k]-cachedPos[DIM*(j-offset)+k]; // r_ij
-#warning "Disabled fold back to avoid negative eigenvalues!"
+	  //#warning "Disabled fold back to avoid negative eigenvalues!"
 	  //dr[k]-=rint(dr[k]/L[k])*L[k]; // fold back
 	  dr2+=dr[k]*dr[k];
 	}
@@ -168,7 +162,8 @@ __global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, 
 // xa3 = xa * xa * xa
 #define mydebug(str,...)
 // if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
- __global__ void sd_compute_mobility_matrix_real_short(real * r, int N, real self_mobility, real a, real * L_g, real * mobility, real cutoff, real xi, real xa, real xa3){
+ __global__ void sd_compute_mobility_matrix_real_short(const real * r, int N, real self_mobility, real a, const real * L_g,
+						       real * mobility, real cutoff, real xi, real xa, real xa3){
   real mypos[3];
   const int lda=((3*N+31)/32)*32;
   __shared__ real L[3];
@@ -216,7 +211,7 @@ __global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, 
 	
 	real t,t2;
 	// this also catches the case i == j
-	if (0.5 < ar || drn < cutoff){  // drn < 2*a
+	if (0.5 < ar || drn > cutoff){  // drn < 2*a
 	  t=0;
 	  t2=0;
 	  if (i==j){
@@ -235,9 +230,20 @@ __global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, 
 	  t=(0.75f-1.5f*ar2)*ar*erfcf(xr)+(-4.f*xa3*xr2*xr2-3.f*xa*xr2+16f*xa3*xr2+1.5f*xa-2.f *xa3-3.f*xa*ar2)*0.5641895835477562869480794515607725858440506f*exp(-xr2);
 	  t2=(0.75f+0.5f*ar2)*ar*erfcf(xr)+(4.f*xa3*xr2*xr2+3.f*xa*xr2-20f*xa3*xr2-4.5f*xa+14.f*xa3+    xa*ar2)*0.5641895835477562869480794515607725858440506f*exp(-xr2);
 #else
-	  t=(0.75-1.5*ar2)*ar*erfc(xr)+(-4.*xa3*xr2*xr2-3.*xa*xr2+16.*xa3*xr2+1.5*xa-2. *xa3-3.*xa*ar2)*0.5641895835477562869480794515607725858440506*exp(-xr2);
+	  //assert(erfc(xr)>1e-15);
+	  t=(0.75-1.5*ar2)*ar*erfc(xr);
+	  //assert(t>1e-15);
+	  real tmp1=(-4.*xa3*xr2*xr2-3.*xa*xr2+16.*xa3*xr2+1.5*xa-2. *xa3-3.*xa*ar2);
+	  real tmp2=0.5641895835477562869480794515607725858440506*exp(-xr2);//
+	  //assert(abs(tmp1)>1e-15);
+	  //assert(abs(tmp2)>1e-15);
+	  //assert(abs(tmp1*tmp2)>1e-15);
+	  t+=tmp1*tmp2;
+	  assert(abs(t)>1e-15);
 	  t2=(0.75+0.5*ar2)*ar*erfc(xr)+(4.*xa3*xr2*xr2+3.*xa*xr2-20.*xa3*xr2-4.5*xa+14.*xa3+   xa*ar2)*0.5641895835477562869480794515607725858440506*exp(-xr2);
 #endif
+	  //assert(t>1e-15);
+	  //assert(t2>1e-15);
 	}
 	t*=self_mobility;
 	t2*=self_mobility;
@@ -293,7 +299,7 @@ __global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, 
 // xa3 = xa * xa * xa
 #define mydebug(str,...)
 // if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
-__global__ void sd_compute_mobility_sines(real * r, int N, real * vecs, int num, real * sines, real * cosines, int ldd){
+__global__ void sd_compute_mobility_sines(const real * r, int N, const real * vecs, int num, real * sines, real * cosines, int ldd){
   real mypos[3];
   __shared__ real cache[3*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -417,11 +423,11 @@ __global__ void sd_wavepart_sum_old(const real * const forces, const real * cons
       reduce_sum(cache+numThreadsPerBlock*5);
       if (threadIdx.x < 3){
 	real tmp = atomicAdd(sin_sum+threadIdx.x+j*3,cache[numThreadsPerBlock*threadIdx.x]);
-	assert(abs(tmp) < max);
-	assert(abs(tmp) + cache[numThreadsPerBlock*threadIdx.x] < max);
+	assert(abs(tmp) <= max);
+	assert(abs(tmp) + cache[numThreadsPerBlock*threadIdx.x] <= max);
 	tmp = atomicAdd(cos_sum+threadIdx.x+j*3,cache[numThreadsPerBlock*(threadIdx.x+3)]);
-	assert(abs(tmp) < max);
-	assert(abs(tmp) + cache[numThreadsPerBlock*(threadIdx.x+3)] < max);
+	assert(abs(tmp) <= max);
+	assert(abs(tmp) + cache[numThreadsPerBlock*(threadIdx.x+3)] <= max);
       }
     } // for (j = ...
   }// for offset = ...
@@ -431,6 +437,7 @@ __global__ void sd_wavepart_sum_old(const real * const forces, const real * cons
 /// this kernel computes the sines and cosinus.
 /// The number of threads have to be a power of two! (e.g. 32,64,128 ... )
 // forces is the vector of [fx_1, fy_1, fz_1, fx_2, fy_2, fz_2, ...]
+//#define mydebug(str,...) if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
 __global__ void sd_wavepart_sum(const real * const forces, const real * const vecs,    int num, const  real * const matrices_d,
 				const real * const sines,  const real * const cosines, int ldd, int N, real * sin_sum, real * cos_sum, real max){
   // each block summs over all particles
@@ -448,28 +455,28 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
     real sine;
     real cosine;
     if (offset+threadIdx.x < N){
-      sine   = sines  [blockIdx.x*ldd+threadIdx.x];
-      cosine = cosines[blockIdx.x*ldd+threadIdx.x];
+      sine   = sines  [blockIdx.x*ldd+offset+threadIdx.x];
+      cosine = cosines[blockIdx.x*ldd+offset+threadIdx.x];
       //} else {
       //sine   = 0;
       //cosine = 0;
       //}
-      assert(!isnan(sine));
-      assert(!isnan(cosine));
+      //assert(!isnan(sine));
+      //assert(!isnan(cosine));
       for (int k=0;k<3;k++){
-	assert(abs(cache[threadIdx.x*3+k]) < max);
-	assert(abs(myforcesin[k]) < max);
-	assert(abs(myforcecos[k]) < max);
-	assert(!isnan(myforcesin[k]));
-	assert(!isnan(myforcecos[k]));
-	real tmp=sine*cache[threadIdx.x*3+k];
-	assert(abs(tmp) < max);
+	//assert(abs(cache[threadIdx.x*3+k]) <= max);
+	//assert(abs(myforcesin[k]) <= max);
+	//assert(abs(myforcecos[k]) <= max);
+	//assert(!isnan(myforcesin[k]));
+	//assert(!isnan(myforcecos[k]));
+	real tmp=  sine*cache[threadIdx.x*3+k];
+	//assert(abs(tmp) <= max);
 	myforcesin[k]+=tmp;
-	tmp=cosine*cache[threadIdx.x*3+k];
-	assert(abs(tmp) < max);
+	tmp     =cosine*cache[threadIdx.x*3+k];
+	//assert(abs(tmp) <= max);
 	myforcecos[k]+=tmp;
-	assert(!isnan(myforcesin[k]));
-	assert(!isnan(myforcecos[k]));
+	//assert(!isnan(myforcesin[k]));
+	//assert(!isnan(myforcecos[k]));
       } // for k
     } // if offset + threadIdx.x < N
   }// for offset = ...
@@ -477,31 +484,42 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
   for (int k=0 ; k < 3; k++){
     cache[threadIdx.x+blockDim.x*k]=myforcesin[k];
   }
+  __syncthreads();
   reduce_sum(cache);
+  assert(cache[0] <= max);
   reduce_sum(cache+blockDim.x);
+  assert(cache[blockDim.x] <= max);
   reduce_sum(cache+blockDim.x*2);
+  assert(cache[blockDim.x*2] <= max);
+  __syncthreads();
   if (threadIdx.x < 3){
-    myforcesin[0]=cache[threadIdx.x];
+    myforcesin[0]=cache[threadIdx.x*blockDim.x];
   }
+  __syncthreads();
   for (int k=0 ; k < 3; k++){
     cache[threadIdx.x+blockDim.x*k]=myforcecos[k];
   }
+  __syncthreads();
   reduce_sum(cache);
-  assert(cache[0] < max);
+  assert(cache[0] <= max);
   reduce_sum(cache+blockDim.x);
-  assert(cache[blockDim.x] < max);
+  assert(cache[blockDim.x] <= max);
   reduce_sum(cache+blockDim.x*2);
-  assert(cache[blockDim.x*2] < max);
+  assert(cache[blockDim.x*2] <= max);
+  __syncthreads();
   if (threadIdx.x < 3){
     cache[threadIdx.x]   = cache[threadIdx.x*blockDim.x];
     cache[threadIdx.x+3] = myforcesin[0];
   }
+  __syncthreads();
   real * mat = cache + 6;
   if (threadIdx.x < 6){
-    assert(cache[threadIdx.x] < max);
+    assert(cache[threadIdx.x] <= max);
     mat[threadIdx.x] = matrices_d[blockIdx.x*6+threadIdx.x];
+    __syncthreads();
     cache[threadIdx.x+12]=cache[threadIdx.x]*mat[threadIdx.x%3];
   }
+  __syncthreads();
   if (threadIdx.x < 2){
     cache[threadIdx.x*3+1+12]+=mat[3]*cache[threadIdx.x*3+0];
     cache[threadIdx.x*3+0+12]+=mat[3]*cache[threadIdx.x*3+1];
@@ -510,9 +528,10 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
     cache[threadIdx.x*3+2+12]+=mat[5]*cache[threadIdx.x*3+1];
     cache[threadIdx.x*3+1+12]+=mat[5]*cache[threadIdx.x*3+2];
   }
+  __syncthreads();
   if (threadIdx.x < 3){
-    assert(cache[threadIdx.x+12] < max);
-    assert(cache[threadIdx.x+15] < max);
+    assert(cache[threadIdx.x+12] <= max);
+    assert(cache[threadIdx.x+15] <= max);
     cos_sum[threadIdx.x+blockIdx.x*3]=cache[threadIdx.x+12];
     sin_sum[threadIdx.x+blockIdx.x*3]=cache[threadIdx.x+15];
   }
@@ -527,49 +546,102 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
 // L_d is the boxlength
 // cutoff the wavespace cutoff distance
 __global__ void sd_wavepart_assemble(const int num, const real * const sines, const real * const cosines, const real * const sin_sum,
-				     const real * const cos_sum, const int ldd, real * out, real max){
+				     const real * const cos_sum, const int ldd, real * out, real max, int N, const real factor){
+  // particle index of the particle for which we sum:
   int i = threadIdx.x+blockIdx.x*blockDim.x;
-  real myout[3];
+  real myout[3]={0,0,0};
   real sine;
   real cosine;
-#pragma unroll 3
-  for (int l=0;l<3;l++){
-    myout[l] = 0;
-  }
+  
   int offset_next;
   for (int offset=0;offset<num;offset=offset_next){
-    offset_next=offset+numThreadsPerBlock;
+    offset_next=offset+blockDim.x;
     if (offset_next > num){
       offset_next=num;
     }
-    // copy positions to shared memory
+    // j: wave vector index
     for (int j=offset;j< offset_next ;j++){
       sine   = sines  [i + j*ldd];
 #pragma unroll 3
-      for (int k=0;k<DIM;k++){
-	real tmp = sin_sum[k+3*j];
-	assert(tmp < max);
-	myout[k]=sine*tmp;
+      for (int k=0;k < 3;k++){
+	real tmp = sin_sum[k + j*3];
+	assert(tmp <= max);
+	myout[k]+=sine*tmp;
       }
       cosine = cosines[i + j*ldd];
 #pragma unroll 3
       for (int k=0;k<DIM;k++){
-	real tmp = cos_sum[k+3*j];
-	assert(tmp < max);
+	real tmp = cos_sum[k + j*3];
+	assert(tmp <= max);
 	myout[k]+=cosine*tmp;
       }
     } // for (j = ...
   }// for offset = ...
-  __shared__ real cache[3*numThreadsPerBlock];
+  extern __shared__ real cache[];
 #pragma unroll 3
   for (int k=0;k<3;k++){
-    cache[threadIdx.x*3+k]=myout[k];
+    cache[threadIdx.x*3+k]=myout[k]*factor;;
   }
   __syncthreads();
 #pragma unroll 3
   for (int k=0;k<3;k++){
-    cache[threadIdx.x+k*numThreadsPerBlock]+=out[threadIdx.x+(blockIdx.x*3+k)*numThreadsPerBlock];
-    out[threadIdx.x+(blockIdx.x*3+k)*numThreadsPerBlock]=cache[threadIdx.x+k*numThreadsPerBlock];
+    if (threadIdx.x+(blockIdx.x*3+k)*blockDim.x < 3*N){
+      out[threadIdx.x+(blockIdx.x*3+k)*blockDim.x]+=cache[threadIdx.x + k*blockDim.x];
+    }
+    //cache[threadIdx.x+k*numThreadsPerBlock]+=out[threadIdx.x+(blockIdx.x*3+k)*numThreadsPerBlock];
+    //out[threadIdx.x+(blockIdx.x*3+k)*numThreadsPerBlock]=cache[threadIdx.x+k*numThreadsPerBlock];
+  }
+}
+
+/// Add the wavepart contribution of the mobility to the matrix
+__global__ void sd_wavepart_addto_matrix(const int num, const  real * const matrices_d, const real * const sines,  const real * const cosines,
+					 const int ldd, const int N, real * const mobility_d, const int mat_ldd){
+  const int i= threadIdx.x + blockDim.x*blockIdx.x;
+  const int j= blockIdx.y;
+  
+  real mymat[6]={0,0,0,
+		 0,0,0};
+  if (i < N){
+    for (int k = 0; k < num; k++){
+      real mycos = cosines[i+k*ldd];
+      mycos *= cosines[j+k*ldd];
+      mycos += sines[i+k*ldd] * sines[j+k*ldd];
+      for (int l=0;l<6;l++){
+	mymat[l]+=matrices_d[6*k+l]*mycos;
+      }
+    }
+  }
+  extern __shared__ real share[];//3*blockDim.x
+  #pragma unroll 3
+  for (int d=0;d<3;d++){
+    for (int l=0;l<3;l++){
+      if (threadIdx.x+3*blockDim.x*blockIdx.x+l*blockDim.x<3*N)
+	share[threadIdx.x+l*blockDim.x]=mobility_d[threadIdx.x+3*blockDim.x*blockIdx.x+l*blockDim.x+mat_ldd*(j*3+d)];
+#ifdef SD_DEBUG
+      else
+	share[threadIdx.x+l*blockDim.x]=0;
+#endif
+    }
+    __syncthreads();
+    if (d==0){
+      share[threadIdx.x*3+0]+=mymat[0];
+      share[threadIdx.x*3+1]+=mymat[3];
+      share[threadIdx.x*3+2]+=mymat[4];
+    } else if (d==1){
+      share[threadIdx.x*3+0]+=mymat[3];
+      share[threadIdx.x*3+1]+=mymat[1];
+      share[threadIdx.x*3+2]+=mymat[5];
+    } else {
+      share[threadIdx.x*3+0]+=mymat[4];
+      share[threadIdx.x*3+1]+=mymat[5];
+      share[threadIdx.x*3+2]+=mymat[2];
+    }
+    __syncthreads();
+    for (int l=0;l<3;l++){
+      if (threadIdx.x+3*blockDim.x*blockIdx.x+l*blockDim.x<3*N)
+	mobility_d[threadIdx.x+3*blockDim.x*blockIdx.x+l*blockDim.x+mat_ldd*(j*3+d)]=share[threadIdx.x+l*blockDim.x];
+    }
+    __syncthreads();
   }
 }
 
@@ -588,7 +660,7 @@ __global__ void sd_wavepart_assemble(const int num, const real * const sines, co
 //                myInfo[0] : number of overlapping particles
 //                myInfo[1] : number of interacting particles (via nf)
 //                myInfo[2] : max number of interacting particles per particle
-__global__ void sd_compute_resistance_matrix(real * pos, int N, real self_mobility, real a, real * L_g, real * resistance, int * myInfo){
+__global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_mobility, real a, const real * L_g, real * resistance, int * myInfo){
   //__shared__ real myPos[3*numThreadsPerBlock];
   int interactions=0;
   real mypos[3];
@@ -905,7 +977,8 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * _L, 
 #pragma unroll 3
 	    for (int d=0;d<3;d++){
 	      real dr=cachedPos[threadIdx.x*3+d]-pos[3*j+d];
-	      //dr-=L[d]*rint(dr/L[d]);
+	      dr-=L[d]*rint(dr/L[d]);
+	      //#warning folding back
 	      dr2+=dr*dr;
 	    }
 	    if (dr2<interaction_range_squared){
@@ -1193,7 +1266,8 @@ __global__ void sd_compute_resistance_matrix_sparse(const real * pos, const int 
 #ifndef SD_RESISTANCE_CORRECT
 #warning "SD Brownian motion only support corrected resistance calculation ..."
 #endif
-__global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian,int N,real * L_g, real a, real self_mobility,real * brownian_force_nf){
+__global__ void sd_compute_brownian_force_nearfield(const real * r, const real * gaussian,int N,const real * L_g,
+						    real a, real self_mobility,real * brownian_force_nf){
   const int gaussian_ldd=((N+31)/32)*32;
   int interactions=0;
   real mypos[3];
@@ -1469,9 +1543,10 @@ __global__ void sd_add_identity_matrix(real * matrix, int size, int lda){
 // this sets a block to zero
 // matrix: pointer to the given matrix
 // size  : the size of the matrix (in the example below 3N)
-__global__ void sd_set_zero_matrix(real * matrix, int size){
+// ldd   : the leading dimension of the matrix
+__global__ void sd_set_zero_matrix(real * matrix, int size, int ldd){
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
-  int matsize=((size+31)/32)*32;
+  int matsize=ldd;
   matsize*=size;
   for (int i = idx;i< matsize; i+=blockDim.x*gridDim.x){
     matrix[i]=0;
@@ -1489,11 +1564,22 @@ __global__ void sd_set_zero(real * data, int size){
   }
 }
 
-// this sets a block to zero
+// this sets a block to an given integer
 // data  : pointer to the given data
 // size  : the size of the data
 // value : the value written to the data block
-__global__ void sd_set_int(int * data, int size, int value){
+__global__ void sd_set_value(int * data, int size, int value){
+  int idx = blockIdx.x*blockDim.x + threadIdx.x;
+  for (int i = idx;i< size; i+=blockDim.x*gridDim.x){
+    data[i]=value;
+  }
+}
+
+// this sets a block to an given real
+// data  : pointer to the given data
+// size  : the size of the data
+// value : the value written to the data block
+__global__ void sd_set_value(real * data, int size, real value){
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
   for (int i = idx;i< size; i+=blockDim.x*gridDim.x){
     data[i]=value;
@@ -1506,7 +1592,7 @@ __global__ void sd_set_int(int * data, int size, int value){
 #define DIST (2+1e-1)
 #define DISP_MAX (100)
 
-__global__ void sd_real_integrate_prepare( real * r_d , real * disp_d, real * L, real a, int N){
+__global__ void sd_real_integrate_prepare( const real * r_d , real * disp_d, const real * L, real a, int N){
   int i=blockIdx.x*blockDim.x + threadIdx.x;
   i*=3;
   real disp2;
@@ -1522,7 +1608,7 @@ __global__ void sd_real_integrate_prepare( real * r_d , real * disp_d, real * L,
     }
   }
 }
-__global__ void sd_real_integrate( real * r_d , real * disp_d, real * L, real a, int N)
+__global__ void sd_real_integrate( real * r_d , const real * disp_d, const real * L, real a, int N)
 {
   int idx =  blockIdx.x*blockDim.x + threadIdx.x;
   // t is the factor how far of disp_d we will move.
@@ -1593,7 +1679,7 @@ __global__ void sd_real_integrate( real * r_d , real * disp_d, real * L, real a,
     //pos_d[DIM*N+idx]=t;
 }
 
-__global__ void sd_bucket_sort( real * pos , real * bucketSize, int * bucketNum, int N,	int * particleCount,
+__global__ void sd_bucket_sort( const real * pos , const real * bucketSize, const int * bucketNum, int N, int * particleCount,
 				int * particleList, int maxParticlePerCell, int totalBucketNum, int * particleToBucketList){
   for (int i = blockIdx.x*blockDim.x + threadIdx.x;
        i<N ;
@@ -1651,7 +1737,7 @@ __global__ void sd_bucket_sort( real * pos , real * bucketSize, int * bucketNum,
 // This function reads the diagonal element entries of a matrix
 // and stores them in the vector diag
 // and the inverse of them in diag_i
-__global__ void sd_get_diag(int size,real * mat_a,int lda,real * diag,real * diag_i){
+__global__ void sd_get_diag(int size, const real * mat_a,int lda,real * diag,real * diag_i){
   const int stepw=lda+1;
   for (int l=threadIdx.x+blockDim.x*blockIdx.x;l<size;l+=blockDim.x*gridDim.x){
     real tmp;

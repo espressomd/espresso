@@ -8,7 +8,7 @@
 // a is the particle radius
 // mobility is the mobility matrix which will be retruned
 // L is the boxlength
-__global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, real a, real * L, real * mobility);
+__global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobility, real a, const real * L, real * mobility);
 
 
 
@@ -24,7 +24,8 @@ __global__ void sd_compute_mobility_matrix(real * r, int N, real self_mobility, 
 // xi the splitting parameter as defined by Beenakker 1986
 // xa  = xi * a
 // xa3 = xa * xa * xa
-__global__ void sd_compute_mobility_matrix_real_short(real * r, int N, real self_mobility, real a, real * L_g, real * mobility, real cutoff, real xi, real xa, real xa3);
+__global__ void sd_compute_mobility_matrix_real_short(const real * r, int N, real self_mobility, real a, const real * L_g, real * mobility,
+						      real cutoff, real xi, real xa, real xa3);
 
 /// This computes the farfield contribution of the mobility with ewald summation
 /// this kernel computes the sines and cosinus.
@@ -35,15 +36,16 @@ __global__ void sd_compute_mobility_matrix_real_short(real * r, int N, real self
 // cosines is the pointer where the cosines : cos( position \times k-vector) are saved
 // sines the same for sines
 // ldd the rounded number of particles
-__global__ void sd_compute_mobility_sines(real * r, int N, real * vecs, int num, real * sines, real * cosines, int ldd);
+__global__ void sd_compute_mobility_sines(const real * r, int N, const real * vecs, int num, real * sines, real * cosines, int ldd);
 
 /// adds to each of the diagonal elemnts of the size*size matrix \param matrix
 /// with lda \param lda 1
 __global__ void sd_add_identity_matrix(real * matrix, int size, int lda);
+
 void _cudaCheckError(const char *msg, const char * file, const int line);
 // this computes the near field
 // it calculates the ResistanceMatrix
-__global__ void sd_compute_resistance_matrix(real * r, int N, real self_mobility, real a, real * L, real * resistance, int * myInfo);
+__global__ void sd_compute_resistance_matrix(const real * r, int N, real self_mobility, real a, const real * L, real * resistance, int * myInfo);
 // this computes the near field
 // it calculates the Sparse ResistanceMatrix
 
@@ -51,7 +53,7 @@ __global__ void sd_compute_resistance_matrix_sparse(const real * pos, const int 
   						    real * resistance,const int * col_idx,const int * row_l, int * myInfo);
 // TODO: make the order of arguments uniform (and logical?)
 // TODO: description here
-__global__ void sd_compute_brownian_force_nearfield(real * r,real * gaussian_nf,int N,real * L, real a, real self_mobility,real * brownian_force_nf);
+__global__ void sd_compute_brownian_force_nearfield(const real * r,const real * gaussian_nf,int N,const real * L, real a, real self_mobility,real * brownian_force_nf);
 
 
 /// This computes the farfield contribution of the mobility with ewald summation
@@ -66,18 +68,23 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
 
 
 __global__ void sd_wavepart_assemble(const int num, const real * const sines, const real * const cosines, const real * const sin_sum,
-				     const real * const cos_sum, const int ldd, real * out, real max);
+				     const real * const cos_sum, const int ldd, real * out, real max, int N, const real factor);
+
+
+/// Add the wavepart contribution of the mobility to the matrix
+__global__ void sd_wavepart_addto_matrix(const int num, const  real * const matrices_d, const real * const sines,  const real * const cosines,
+					 const int ldd, const int N, real * const mobility_d, const int mat_ldd);
 
 // make sure to have one thread per particle
-__global__ void sd_real_integrate_prepare( real * r_d , real * disp_d, real * L, real a, int N);
-__global__ void sd_real_integrate( real * r_d , real * disp_d, real * L, real a, int N);
+__global__ void sd_real_integrate_prepare( const real * r_d , real * disp_d, const real * L, real a, int N);
+__global__ void sd_real_integrate( real * r_d , const real * disp_d, const real * L, real a, int N);
 
 
 // this sets a block to zero
 // matrix: pointer to the given matrix
 // size  : the size of the matrix (in the example below 3N)
-__global__ void sd_set_zero_matrix(real * matrix, int size);
-
+// ldd   : the leading dimension of the matrix
+__global__ void sd_set_zero_matrix(real * matrix, int size, int ldd);
 
 
 // this sets a block to zero
@@ -85,16 +92,23 @@ __global__ void sd_set_zero_matrix(real * matrix, int size);
 // size  : the size of the data
 __global__ void sd_set_zero(real * data, int size);
 
-// this sets a block to zero
+// this sets a block to an given integer
 // data  : pointer to the given data
 // size  : the size of the data
 // value : the value written to the data block
-__global__ void sd_set_int(int * data, int size, int value);
+__global__ void sd_set_value(int * data, int size, int value);
+
+// this sets a block to an given real
+// data  : pointer to the given data
+// size  : the size of the data
+// value : the value written to the data block
+__global__ void sd_set_value(real * data, int size, real value);
+
 
 // This function reads the diagonal element entries of a matrix
 // and stores them in the vector diag
 // and the inverse of them in diag_i
-__global__ void sd_get_diag(int size,real * mat_a,int lda,real * diag,real * diag_i);
+__global__ void sd_get_diag(int size, const real * mat_a,int lda,real * diag,real * diag_i);
 
 
 __global__ void sd_nrm1(const int size,const real * const vec, real * erg);
@@ -112,7 +126,7 @@ __global__ void sd_nrm1(const int size,const real * const vec, real * erg);
 // particleList       device array of the partilces in each bucket
 // maxParticlePerCell maximum particles per cell
 // totalBucketNUm     bucketNum[0]*bucketNum[1]*bucketNum[2] - the total number of buckets
-__global__ void sd_bucket_sort( real * pos , real * bucketSize, int * bucketNum, int N, int * particleCount,
+__global__ void sd_bucket_sort( const real * pos , const real * bucketSize, const int * bucketNum, int N, int * particleCount,
 				int * particleList, int maxParticlePerCell, int totalBucketNum, int * particleToBucketList);
 
 

@@ -14,25 +14,27 @@
 // template implementation below
 template<typename T> void printMatrixDev( T * data, int m, int n, const char * msg);
 template<typename T> void printMatrixDev( T * data, int m, int n);
+void printMatrixDev( const matrix& mat);
 template<typename T> void printMatrixHost( T * data, int m, int n, const char * msg);
 
 template<typename T> void printDistances( T * r_h, T, int N, T min, T max);
 template<typename T> void printDistances( T * r_h, T, int N);
 
 void printPosDev( real * data, int m, const char * msg);
-void printVectorDev( real * data, int m);
-void printVectorDev( real * data, int m, const char * msg);
+void printVectorDev( const real * data, const int m);
+void printVectorDev( const real * data, const int m, const char * msg);
 //void printVectorDev( float * data, int m);
-void printVectorHost( real * data, int m);
-void printVectorHost( real * data, int m, const char * msg);
+void printVectorHost( const real * data, const int m);
+void printVectorHost( const real * data, const int m, const char * msg);
 //void cudaCheckError(const char *msg);
 bool hasAnyNanDev(const real * data, int length);
+bool isSymmetricDev(const matrix & mat);
 bool isSymmetricDev(const real * data, int lda, int size);
 
 
-real getAbsMax(real * data, int length);
-real getAbsMaxDev(real * data_d, int length);
-int countMinusDev(real * data_d, int length);
+real getAbsMax(const real * data, int length);
+real getAbsMaxDev(const real * data_d, int length);
+int countMinusDev(const real * data_d, int length);
 
 class myTimer {
 public:
@@ -62,9 +64,15 @@ T mymin(T a, T b){
 template<typename T>
 void printMatrixHost( T * host, int n, int m, const char * msg){
   std::cout << msg;
-  int sym = mymin(m,n);
-  int maxm=mymin(1000,sym);
-  int maxn=mymin(1000,sym);
+  int maxn,maxm;
+  if (false){
+    maxm=mymin(1000,m);
+    maxn=mymin(1000,n);
+  } else {
+    int sym = mymin(m,n);
+    maxm=mymin(1000,sym);
+    maxn=mymin(1000,sym);
+  }
   if ( m<=0 || n<=0){
     return;
   }
@@ -73,7 +81,7 @@ void printMatrixHost( T * host, int n, int m, const char * msg){
     std::cout <<"[";
     std::cout << std::setw(12)<< host[n*j];
     for (int i =1; i<maxn;i++){
-      std::cout << " , " <<std::setw(20) << std::setprecision(15)<< host[n*j+i];
+      std::cout << " , " <<std::setw(12) << std::setprecision(4)<< host[n*j+i];
       //printf(",\t%20.15e",host[j]);
     }
     //std::cerr << j <<" (" <<n<<","<<m<<") " << std::endl;

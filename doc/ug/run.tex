@@ -527,7 +527,7 @@ constants:
 \item[sd_random_state] (int[2]) offset of the random number
   generator. Together with the seed, the state of the random number generator
   is well defined.
-\item[sd_random_precission] (double) precission used for the approximation of
+\item[sd_precision_random] (double) precision used for the approximation of
   the square root of the mobility. Sometimes higher accuracy can speedup the
   simulation.
 \end{globvar}
@@ -550,12 +550,12 @@ cutoff is introduced, which can lead to negative eigenvalues of the
 mobility. This leads to a break down of the code, as it is not possible to
 thermalize such a system.
 
-\subsection{Floatingpoint precission}
+\subsection{Floatingpoint precision}
 It is possible to switch between double and float as datatype in Stokesian
-Dynamics. As GPUs have more single than double precission floating point
-units, the single precission is faster. However this can lead to problems, if
-the eigenvalues are not precisse enough and get negative. Therfore the default
-is double precission. If you want to use single precission, use the feature
+Dynamics. As GPUs have more single than double precision floating point
+units, the single precision is faster. However this can lead to problems, if
+the eigenvalues are not precise enough and get negative. Therfore the default
+is double precision. If you want to use single precision, use the feature
 \feature{SD_USE_FLOAT}.
 
 \subsection{Farfield only}

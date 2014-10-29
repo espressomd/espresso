@@ -199,6 +199,24 @@ int tclcallback_sd_viscosity(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
+int tclcallback_sd_seed(Tcl_Interp *interp, void *_data)
+{
+  int * data = (int *)_data;
+  sd_seed[0]=data[0];
+  sd_seed[1]=data[1];
+  mpi_bcast_parameter(FIELD_SD_SEED);
+  return (TCL_OK);
+}
+
+int tclcallback_sd_random_state(Tcl_Interp *interp, void *_data)
+{
+  int * data = (int *)_data;
+  sd_random_state[0]=data[0];
+  sd_random_state[1]=data[1];
+  mpi_bcast_parameter(FIELD_SD_RANDOM_STATE);
+  return (TCL_OK);
+}
+
 int tclcallback_sd_random_precision(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;

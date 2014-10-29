@@ -188,7 +188,11 @@ CUDA_HEADER_FILES = \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
 	electrokinetics.hpp \
 	integrate_sd_cuda_debug.cuh \
-	integrate_sd_cuda_kernel.cuh
+	integrate_sd_cuda_kernel.cuh \
+	integrate_sd_cuda.cuh \
+	integrate_sd_cuda_device.cu \
+	integrate_sd_matrix.cuh 
+
 
 CUDA_SOURCE_FILES = \
 	cuda_init_cuda.cu \
@@ -200,6 +204,7 @@ CUDA_SOURCE_FILES = \
 	integrate_sd_cuda.cu \
 	integrate_sd_cuda_kernel.cu \
 	integrate_sd_cuda_debug.cu \
+	integrate_sd_matrix.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu
 

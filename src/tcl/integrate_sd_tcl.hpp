@@ -55,7 +55,13 @@ int tclcallback_sd_viscosity(Tcl_Interp *interp, void *_data);
  */
 int tclcallback_sd_random_precision(Tcl_Interp *interp, void *_data);
 
+/** Callback for the sd random state
+ */
+int tclcallback_sd_random_state(Tcl_Interp *interp, void *_data);
 
+/** Callback for the sd random seed
+ */
+int tclcallback_sd_seed(Tcl_Interp *interp, void *_data);
 /*@}*/
 
 #endif

@@ -5,6 +5,8 @@
 
 #include "cuda_utils.hpp"
 #include "integrate_sd.hpp"
+#include "integrate_sd_cuda.cuh"
+#include "integrate_sd_matrix.cuh"
 
 void errexit();
 
@@ -40,65 +42,6 @@ typedef float real;
 #define rnaupd(...)                     snaupd_(__VA_ARGS__)
 #endif //#ifndef SD_USE_FLOAT
 
-
-/// stuct for sparse matrix: (blocked version off ELLPACK-R, see \link http://elib.uni-stuttgart.de/opus/volltexte/2010/5033/pdf/DIP_2938.pdf \endlink
-/// for dense matrizes use only data
-struct wavepart{
-  real * vecs;
-  real * matrices;
-  real * cosines;
-  real * sines;
-  int num;
-  int max;
-  void _free(){
-    if (vecs){
-      cuda_safe_mem(cudaFree((void*)vecs));
-      vecs=NULL;
-    }
-    if (matrices){
-      cuda_safe_mem(cudaFree((void*)matrices));
-      matrices=NULL;
-    }
-    if (cosines){
-      cuda_safe_mem(cudaFree((void*)cosines));
-      cosines=NULL;
-    }
-    if (sines){
-      cuda_safe_mem(cudaFree((void*)sines));
-      sines=NULL;
-    }
-    max=0;
-  }
-};
-struct matrix{
-  real * data;
-  int  * col_idx;
-  int  * row_l;
-  wavepart * wavespace;
-  bool is_sparse;
-  int size;
-  int ldd;
-  int ldd_short;
-  void _free(){
-    if (data){
-      cuda_safe_mem(cudaFree((void*)data));
-      data=NULL;
-    }
-    if (col_idx){
-      cuda_safe_mem(cudaFree((void*)col_idx));
-      col_idx=NULL;
-    }
-    if (row_l){
-      cuda_safe_mem(cudaFree((void*)row_l));
-      row_l=NULL;
-    }
-    if (wavespace){
-      wavespace->_free();
-      free((void*)wavespace);
-    }
-  }
-};
-
 extern cublasHandle_t cublas;
 
 extern double temperature; ///< this is defined in \file thermostat.cpp
@@ -131,8 +74,39 @@ void _cudaCheckError(const char *msg, const char * file, const int line);
       errexit();							\
     }									\
   }
-#define curandCall(call) { curandStatus_t stat =(call);	\
-    assert(stat == CURAND_STATUS_SUCCESS);		\
+#define curandCall(call) { curandStatus_t stat =(call);			\
+    if (stat != CURAND_STATUS_SUCCESS) {				\
+      std::cerr << "CURAND failed in " << __FILE__			\
+		<< " l. " << __LINE__ <<"\n\t"  ;			\
+      if (stat == CURAND_STATUS_NOT_INITIALIZED){			\
+	std::cerr << "the CUDA Runtime initialization failed.\n";	\
+      } else if (stat == CURAND_STATUS_VERSION_MISMATCH) {		\
+	std::cerr << "Header file and linked library version do not match.\n"; \
+      } else if (stat == CURAND_STATUS_ALLOCATION_FAILED) {		\
+	std::cerr << "Memory allocation failed.\n";			\
+      } else if (stat == CURAND_STATUS_TYPE_ERROR) {			\
+	std::cerr << "Generator is wrong type.\n";			\
+      } else if (stat == CURAND_STATUS_OUT_OF_RANGE) {			\
+	std::cerr << "the argument was out of range.\n";		\
+      } else if (stat == CURAND_STATUS_LENGTH_NOT_MULTIPLE) {		\
+	std::cerr << "Length requested is not a multple of dimension.\n"; \
+      } else if (stat == CURAND_STATUS_DOUBLE_PRECISION_REQUIRED) {	\
+	std::cerr << "GPU does not have double precision required by MRG32k3a.\n"; \
+      } else if (stat == CURAND_STATUS_LAUNCH_FAILURE) {		\
+	std::cerr << "Kernel launch failure.\n";			\
+      } else if (stat == CURAND_STATUS_PREEXISTING_FAILURE) {		\
+	std::cerr << "Preexisting failure on library entry.\n";		\
+      } else if (stat == CURAND_STATUS_INITIALIZATION_FAILED) {		\
+	std::cerr << "Initialization of CUDA failed.\n";		\
+      } else if (stat == CURAND_STATUS_ARCH_MISMATCH) {			\
+	std::cerr << "Architecture mismatch, GPU does not support requested feature.\n"; \
+      } else if (stat == CURAND_STATUS_INTERNAL_ERROR) {		\
+	std::cerr << "Internal library error.\n";\
+      } else {								\
+	fprintf(stderr,"unknown error (error number: %d)\n",stat);	\
+      }									\
+      errexit();							\
+    }									\
   }
 
 // headers for ARPACK-NG: http://forge.scilab.org/index.php/p/arpack-ng/
@@ -149,8 +123,8 @@ extern "C"
 /* ************************************* *
  * *******   private functions   ******* *
  * ************************************* */
-void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real viscosity, real radius, real * L_d, real * L_h,
-			     real * total_mobility_d, real * force_d, real * disp_d, int * myInfo);
+void sd_compute_displacement(const real * r_d, int N, real viscosity, real radius, const real * L_d, const real * L_h,
+			     const real * total_mobility_d, const real * force_d, real * disp_d, int * myInfo);
 
 
 // this solves iteratively using CG
@@ -159,16 +133,16 @@ void sd_compute_displacement(cublasHandle_t cublas, real * r_d, int N, real visc
 // mobility and resistance are square matrizes with size <size> and lda <((size+31)/32)*32>
 // force and disp are vectors of size <size>
 // recalc whether to mobility has changed since the last call or not
-real sd_iterative_solver(cublasHandle_t cublas, const real * mobility, const matrix resistance, const real * force, int size, real * disp, real rel_err, real abs_err, bool recalc);
+real sd_iterative_solver(const matrix & mobility, const matrix & resistance, const real * force, real * disp, real rel_err, real abs_err, bool recalc);
 
 // description below
 // in the case of FF_ONLY this computes directly the displacement
-real sd_compute_brownian_force_farfield(const matrix mobility, real * gaussian_ff,
+real sd_compute_brownian_force_farfield(const matrix & mobility, const real * gaussian_ff,
 					real tol, real * brownian_force_ff );
 
 
 /// This computes the k-vectors and the wavespace mobility matrices as defined be Beenakker 1986
-void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility, real a, real * L_h, real xi, real selfmobility);
+void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility, real a, const real * L_h, real xi, real selfmobility, real ew_prec);
 
 
 
@@ -211,11 +185,11 @@ int sd_bicgstab_solver(cublasHandle_t cublas ,int size, const real * A1, const r
 // x      the requested solution with an initial guess (in/out)
 // returns 0 on success, else error code
 #ifdef SD_PC
-int sd_gmres_solver(cublasHandle_t cublas ,int size, const real * A,int lda,
+int sd_gmres_solver(int size, const real * A, int lda,
 		    real * b, real tol,real abs_tol, int maxit, real * x, real * res);
 #else
-int sd_gmres_solver(const matrix A1, const matrix A2,
-		    real * b, real tol,real abs_tol, int maxit, real * x, real * res);
+int sd_gmres_solver(const matrix & A1, const matrix & A2,
+		    const real * b, real tol,real abs_tol, int maxit, real * x, real * res);
 #endif
 
 
@@ -223,14 +197,14 @@ int sd_gmres_solver(const matrix A1, const matrix A2,
 // mobility    : the mobility matrix (data on the device)      (IN)
 // lambda_min  : smalles eigenvalue                            (OUT)
 // lambda_max  : largest eigenvalue                            (OUT)
-void calculate_maxmin_eigenvalues(const matrix mobility, real * lamba_min, real * lambda_max, real tol);
+void calculate_maxmin_eigenvalues(const matrix & mobility, real * lamba_min, real * lambda_max, real tol);
 
 /// matrix vector multiplication
 /// this solves \[ out = factor * A * in \]
 /// where A is a matrix (see struct matrix)
 /// in and out are vectors
 /// factor is a scalar
-void sd_Rgemv(const real * factor,const matrix A,const real * in, real * out);
+void sd_Rgemv(const real * factor,const matrix & A,const real * in, real * out);
 
 
 // this function should be fast, as the data should fit (mostly) in L1
