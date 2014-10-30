@@ -28,14 +28,16 @@ using namespace std;
 namespace PdbParser {
 
   bool PdbParser::parse_pdb_file(string filename) { 
-    ifstream file(filename.c_str());
+    ifstream file;
     string tmp;
     pdb_atom a;
     
     pdb_atoms.clear();
 
-    while(file.good()) {
-      try {
+    try {
+      file.open(filename.c_str());
+      while(file.good()) {
+
 	file >> tmp;
 	if(tmp == "ATOM") {
 	  file.ignore(246,' ');
@@ -45,9 +47,9 @@ namespace PdbParser {
 	  pdb_atoms.push_back(a);
 	}
       } 
-      catch (...) {
-	return false;
-      }
+    }
+    catch (ifstream::failure e) {
+      return false;
     }
 
     return true; 
