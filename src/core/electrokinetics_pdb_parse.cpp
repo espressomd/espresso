@@ -26,6 +26,8 @@
 #include <sstream>
 #include "electrokinetics_pdb_parse.hpp"
 
+#include "PdbParser.hpp"
+
 #ifdef EK_BOUNDARIES
 
 /* Replacements for bool variables */
@@ -36,29 +38,12 @@ float* pdb_charge_lattice = NULL;
 int* pdb_boundary_lattice = NULL;
 
 typedef struct {
-  int i; // index
-  int m; // model index
-  float x,y,z;
-} pdb_ATOM;
-
-typedef struct {
-  int i;
-  char type[2];
-  float charge;
-} itp_atoms;
-
-typedef struct {
-  char type[2];
-  float sigma,epsilon;
-} itp_atomtypes;
-
-typedef struct {
   unsigned int pdb_n_particles;
-  pdb_ATOM* pdb_array_ATOM;
+  PdbParser::pdb_atom* pdb_array_ATOM;
   unsigned int itp_n_particles;
-  itp_atoms* itp_array_atoms;
+  PdbParser::itp_atom* itp_array_atoms;
   unsigned int itp_n_parameters;
-  itp_atomtypes* itp_array_atomtypes;
+  PdbParser::itp_atomtype* itp_array_atomtypes;
 } particle_data;
 
 typedef struct {
@@ -174,6 +159,7 @@ int pdb_parse_files(char* pdb_filename, char* itp_filename, particle_data* atom_
   int model = 0;
   char pdb_line[256];
   FILE* pdb_file;
+  std::string tmp;   
   if ((pdb_file = fopen(pdb_filename,"r")) == NULL) return pdb_ERROR;
 #ifdef DEBUG
   printf("### Reading pdb-file \"%s\" ###\n",pdb_filename);
@@ -188,13 +174,11 @@ int pdb_parse_files(char* pdb_filename, char* itp_filename, particle_data* atom_
     }
     if ( strncmp(pdb_line,"ATOM",4) == 0) {
       // read all ATOMs
-      galloc( (void**) &atom_data->pdb_array_ATOM , (atom_data->pdb_n_particles+1)*sizeof(pdb_ATOM) );
-      pdb_ATOM* a = &atom_data->pdb_array_ATOM[atom_data->pdb_n_particles];
-      // See http://deposit.rcsb.org/adit/docs/pdb_atom_format.html#ATOM for the meaning of the format string
+      galloc( (void**) &atom_data->pdb_array_ATOM , (atom_data->pdb_n_particles+1)*sizeof(PdbParser::pdb_atom) );
+      PdbParser::pdb_atom* a = &atom_data->pdb_array_ATOM[atom_data->pdb_n_particles];
+      // See http://deposit.rcsb.org/adit/docs/pdb_atom_format.html#ATOM for the meaning of the formatW string
       // sscanf(pdb_line,"ATOM %6d %*4s%*c%*4s%*c%*4d%*c %8f %8f %8f %*6f %*6f %*4s%*2s%*2s",&a->i,&a->x,&a->y,&a->z);
       std::istringstream str(pdb_line);
-
-      std::string tmp;   
  
       str.ignore(246,' ');
       str >> a->i;
@@ -229,8 +213,8 @@ int pdb_parse_files(char* pdb_filename, char* itp_filename, particle_data* atom_
     if (itp_line[0] != '[' && itp_line[0] != ';' && itp_line[0] != '\r' && itp_line[0] != '\n') {
       if (strcmp(section,"atoms") == 0) {
         // section [ atoms ]
-        galloc( (void**) &atom_data->itp_array_atoms , (atom_data->itp_n_particles+1)*sizeof(pdb_ATOM) );
-        itp_atoms* a = &atom_data->itp_array_atoms[atom_data->itp_n_particles];
+        galloc( (void**) &atom_data->itp_array_atoms , (atom_data->itp_n_particles+1)*sizeof(PdbParser::pdb_atom) );
+	PdbParser::itp_atom* a = &atom_data->itp_array_atoms[atom_data->itp_n_particles];
         // FIXME: no source :( Reverse engineered from the itp-file
         sscanf(itp_line," %d %2s %*d %*s %*s %*d %f %*f ; %*s %*f",&a->i,a->type,&a->charge);
 #ifdef DEBUG
@@ -241,8 +225,8 @@ int pdb_parse_files(char* pdb_filename, char* itp_filename, particle_data* atom_
       }
       if (strcmp(section,"atomtypes") == 0) {
         // section [ atomtypes ]
-        galloc( (void**) &atom_data->itp_array_atomtypes , (atom_data->itp_n_parameters+1)*sizeof(pdb_ATOM) );
-        itp_atomtypes* a = &atom_data->itp_array_atomtypes[atom_data->itp_n_parameters];
+        galloc( (void**) &atom_data->itp_array_atomtypes , (atom_data->itp_n_parameters+1)*sizeof(PdbParser::pdb_atom) );
+	PdbParser::itp_atomtype* a = &atom_data->itp_array_atomtypes[atom_data->itp_n_parameters];
         // FIXME: no source :( Reverse engineered from the itp-file
         sscanf(itp_line," %2s %*s %*f %*f %*c %f %f ; %*f %*f",a->type,&a->sigma,&a->epsilon);
 #ifdef DEBUG
@@ -262,7 +246,7 @@ int pdb_parse_files(char* pdb_filename, char* itp_filename, particle_data* atom_
 int calculate_bounding_box(bounding_box* bbox, particle_data* atom_data) {
   // prototype for joining the arrays
   if (atom_data->pdb_n_particles-1 == 0) return pdb_ERROR;
-  pdb_ATOM* a = &atom_data->pdb_array_ATOM[0];
+  PdbParser::pdb_atom* a = &atom_data->pdb_array_ATOM[0];
   bbox->max_x = a->x;
   bbox->max_y = a->y;
   bbox->max_z = a->z;
@@ -319,9 +303,9 @@ int populate_lattice(particle_data* atom_data) {
   float a_x_shifted, a_y_shifted, a_z_shifted;
 
   for (unsigned int i = 0; i <= atom_data->pdb_n_particles-1; i++) {
-    pdb_ATOM* a = &atom_data->pdb_array_ATOM[i];
-    itp_atoms* b;
-    itp_atomtypes* c;
+    PdbParser::pdb_atom* a = &atom_data->pdb_array_ATOM[i];
+    PdbParser::itp_atom* b;
+    PdbParser::itp_atomtype* c;
     for (unsigned int j = 0; j <= atom_data->itp_n_particles-1; j++) {
       b = &atom_data->itp_array_atoms[j];
       if (a->i == b->i) {

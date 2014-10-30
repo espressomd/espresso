@@ -1,0 +1,60 @@
+/*
+  Copyright (C) 2014 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
+/* vim: set ts=8 sts=2 sw=2 et: */
+
+#ifndef __PDBPARSER_HPP
+#define __PDBPARSER_HPP
+
+#include <vector>
+#include <iostream>
+#include <string>
+#include <map>
+
+namespace PdbParser {
+
+  typedef struct {
+    int i; // index
+    int m; // model index
+    float x,y,z;
+  } pdb_atom;
+
+  typedef struct {
+    int i;
+    char type[2];
+    float charge;
+  } itp_atom;
+
+  typedef struct {
+    char type[2];
+    float sigma,epsilon;
+  } itp_atomtype;
+
+  class PdbParser {
+  public:
+    bool parse_pdb_file(std::string filename);
+    bool parse_itp_file(std::string filename);
+    bool parse_file(std::string pdb_filename, std::string itp_filename);
+    std::vector<pdb_atom> pdb_atoms;
+    std::vector<itp_atom> itp_atoms;
+    std::map<std::string, itp_atomtype> itp_atomtypes;
+  };
+
+};
+
+#endif
