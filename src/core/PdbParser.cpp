@@ -22,7 +22,6 @@
 
 #include <sstream>
 #include <fstream>
-#include <numeric_limits>
 
 using namespace std;
 
@@ -107,7 +106,7 @@ namespace PdbParser {
 	      std::getline(file, buf);
 	      std::istringstream line(buf);
 	      line >> atom.i >> atom.type >> tmp >> tmp >> tmp >> tmp >> atom.charge;
-	      itp_atoms.push_back(atom);
+	      itp_atoms.insert(std::pair<int, itp_atom>(atom.i, atom));
 	    }
 	  }
 	  if(section == "atomtypes") {
@@ -137,8 +136,6 @@ namespace PdbParser {
 	      std::istringstream line(buf);
 	      line >> type_name >> tmp >> tmp >> tmp >> tmp >> type.sigma >> type.epsilon;
 
-	      type.type[0] = type_name[0];
-	      type.type[1] = type_name[1];
 	      itp_atomtypes.insert(std::pair<std::string, itp_atomtype>(type_name, type));
 	    }
 	  }

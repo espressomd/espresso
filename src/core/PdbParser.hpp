@@ -36,12 +36,11 @@ namespace PdbParser {
 
   typedef struct {
     int i;
-    char type[2];
+    std::string type;
     float charge;
   } itp_atom;
 
   typedef struct {
-    char type[2];
     float sigma,epsilon;
   } itp_atomtype;
 
@@ -51,7 +50,7 @@ namespace PdbParser {
     bool parse_itp_file(std::string filename);
     bool parse_file(std::string pdb_filename, std::string itp_filename);
     std::vector<pdb_atom> pdb_atoms;
-    std::vector<itp_atom> itp_atoms;
+    std::map<int, itp_atom> itp_atoms;
     std::map<std::string, itp_atomtype> itp_atomtypes;
   };
 };
