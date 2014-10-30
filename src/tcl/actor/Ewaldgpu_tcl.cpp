@@ -127,7 +127,9 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_notune(Tcl_Interp * interp, int argc
 		energyActors.add(ewaldgpuForce);
 	}
 	//Broadcast parameters
+	ewaldgpuForce->set_params(r_cut, num_kx, num_ky, num_kz, alpha);
 	coulomb.method = COULOMB_EWALD_GPU;
+	ewaldgpu_params.isTunedFlag = false;
 	ewaldgpu_params.isTuned = true;
 	rebuild_verletlist = 1;
 	mpi_bcast_coulomb_params();
@@ -194,8 +196,10 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, 
 	  forceActors.add(ewaldgpuForce);
 	  energyActors.add(ewaldgpuForce);
   }
+
   //Broadcast parameters
   coulomb.method = COULOMB_EWALD_GPU;
+  ewaldgpu_params.isTunedFlag = false;
   rebuild_verletlist = 1;
   mpi_bcast_coulomb_params();
   //Tuning
@@ -273,6 +277,7 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(Tcl_Interp * interp, int a
   }
   //Broadcast parameters
   coulomb.method = COULOMB_EWALD_GPU;
+  ewaldgpu_params.isTunedFlag = false;
   ewaldgpu_params.isTuned = true;
   rebuild_verletlist = 1;
   mpi_bcast_coulomb_params();

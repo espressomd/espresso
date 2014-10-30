@@ -557,11 +557,11 @@ EwaldgpuForce::~EwaldgpuForce()
 }
 void EwaldgpuForce::setup(SystemInterface &s)
 {
-	if (s.npart_gpu() == m_N and m_isTuned) // unchanged
+	if (s.npart_gpu() == m_N and ewaldgpu_params.isTunedFlag) // unchanged
 	{
 		return;
 	}
-	m_isTuned = ewaldgpu_params.isTuned;
+	ewaldgpu_params.isTunedFlag = ewaldgpu_params.isTuned;
 
 	//Initialization values
 	m_rcut = ewaldgpu_params.rcut;

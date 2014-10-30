@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -16,27 +16,22 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-
-
-# check the charge-charge P3M  algorithm
+# 
 source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "EWALD_GPU"
 
-#cellsystem domain_decomposition
-#cellsystem nsquare
+puts "-------------------------------------------"
+puts "- Testcase ewaldgpu.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "-------------------------------------------"
 
-puts "---------------------------------------------------------------"
-puts "- Testcase ewaldgpu.tcl running on [format %02d [setmd n_nodes]] nodes"
-puts "---------------------------------------------------------------"
 
-set epsilon 1e-3
+set epsilon_energy 1e-2
+set epsilon_force 1e-4
 thermostat off
+setmd time_step 0.01
 setmd skin 0.05
-
-set int_steps 10
-setmd time_step 0.00001
 
 proc read_data {file} {
     set f [open $file "r"]
@@ -44,48 +39,130 @@ proc read_data {file} {
     close $f
 }
 
-proc write_data {file} {
-    set f [open $file "w"]
-    blockfile $f write variable box_l
-    blockfile $f write particles {id pos q f}
-    close $f
-}
-
 if { [catch {
-    puts "START"
-    puts "List:[cuda list]"
-		puts "Device:[cuda getdevice]"
-    read_data "ewaldgpu_system.data"
+    read_data "ewaldgpuTESTSUITE_KURON_system.data"
+    set target_energy -5168.685115780581
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-		set F($i) [part $i pr f]
+	set F($i) [part $i pr f]
     }
 
-# INTEGRATION
-inter coulomb 1.0 ewaldgpu 9.154877066612244 8 0.33336160153150557
-#inter coulomb 1.0 ewaldgpu tunealpha 9.8812133073806763 7 0.0001
-#inter coulomb 1.0 ewaldgpu tune accuracy 1e-4 K_max 15 precision 0.00001
-#inter coulomb 1.0 p3m tune accuracy 1e-4
+    for {set testcase 0} {1} {incr testcase} {
+        set lb 1.0
+        if {$testcase == 0} {
+            set testname "Original ewaldgpu testcase"
+            set should_succeed 1
+            inter coulomb $lb ewaldgpu 11.288055777549744 8 0.2998850205540657
+            set intercoulomb {coulomb 1.0 ewaldgpu 11.288055777549744 8 8 8 0.2998850205540657}
+        } elseif {$testcase == 1} {
+            set testname "Parameter changes"
+            set should_succeed 0
+            inter coulomb $lb ewaldgpu 11.0 8 0.3
+            inter coulomb $lb ewaldgpu 12.0 9 0.5
+            set intercoulomb {coulomb 1.0 ewaldgpu 12.0 9 9 9 0.5}
+        } elseif {$testcase == 2} {
+            set testname "Tuning parameters"
+            set should_succeed 1
+            inter coulomb $lb ewaldgpu tune accuracy 1e-4 K_max 15 precision 0.00001
+            set intercoulomb {coulomb 1.0 ewaldgpu tune accuracy 1e-4 K_max 15 precision 0.00001}
+        } elseif {$testcase == 3} {
+            set testname "Disabling ewaldgpu"
+            set should_succeed 1
+            set lb 0.0
+            inter coulomb $lb
+            set intercoulomb "coulomb 0.0"
+        } elseif {$testcase == 4} {
+            set testname "Turning ewaldgpu back on"
+            set should_succeed 1
+            inter coulomb $lb ewaldgpu 11.288055777549744 8 0.2998850205540657
+            set intercoulomb {coulomb 1.0 ewaldgpu 11.288055777549744 8 8 8 0.2998850205540657}
+        } elseif {$testcase == 5} {
+            set testname "Changing Bjerrum length"
+            set should_succeed 1
+            set lb 2.0
+            inter coulomb $lb ewaldgpu 11.288055777549744 8 0.2998850205540657
+            set intercoulomb {coulomb 2.0 ewaldgpu 11.288055777549744 8 8 8 0.	}
+        } else {
+            break
+        }
 
+        puts "+++ Running $testname +++"
 
-puts "TUNED"
+        # to ensure force recalculation
+        integrate 0 recalc_forces
+        
+        # Only applicable for mmm1dgpu because different tuning results in ewaldgpu possible
+					#set tuning_result [inter coulomb]
+					#if { [string index $tuning_result 0] == "\{" } { 
+					#    set tuning_result [string range $tuning_result 1 end-1]
+					#}
+					#set tuning_result [split $tuning_result]
+					#if { $tuning_result != $intercoulomb } {
+					#    if {[lindex $tuning_result 0] != [lindex $intercoulomb 0] || [lindex $tuning_result 2] != [lindex $intercoulomb 2]} {
+					#        error "Expected tuning result $intercoulomb, got $tuning_result"
+					#    }
+					#    foreach a [list 1	] {
+					#        if { [lindex $intercoulomb $a] == "ignore" } { continue }
+					#        if {abs([lindex $tuning_result $a] - [lindex $intercoulomb $a]) > $epsilon} {
+					#            error "Expected tuning result $intercoulomb, got $tuning_result"
+					#        }
+					#    }
+					#}
 
-set start_time [expr 1.0*[clock clicks -milliseconds]]
-integrate $int_steps recalc_forces
-set end_time [expr 1.0*[clock clicks -milliseconds]]
-puts "TIME: [expr $end_time-$start_time] millisec"
+        set energy [lindex [lindex [analyze energy] 0] 1]
+        set dE [expr abs($energy - [expr $target_energy*$lb])]
 
-write_data "ewaldgpu_system.data.out"
+        set maxdx 0
+        set maxpx 0
+        set maxdy 0
+        set maxpy 0
+        set maxdz 0
+        set maxpz 0
+        for { set i 0 } { $i <= [setmd max_part] } { incr i } {
+        	set resF [part $i pr f]
+        	#set tgtF $F($i)
+          set tgtF [vecscale $lb $F($i)]
+        	set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
+        	set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
+        	set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
 
-puts "E=[analyze energy kinetic]"
-puts "E=[analyze energy coulomb]"
-puts "E=[analyze energy]"
-puts [inter coulomb]
+        	if { $dx > $maxdx} {
+        	    set maxdx $dx
+        	    set maxpx $i
+        	}
+        	if { $dy > $maxdy} {
+        	    set maxdy $dy
+        	    set maxpy $i
+        	}
+        	if { $dz > $maxdz} {
+        	    set maxdz $dz
+        	    set maxpz $i
+        	}
+        }
 
-#end this part of the p3m-checks by cleaning the system .... 
-part deleteall
-inter coulomb 0.0
-
+        set failed 0
+        if { $should_succeed == 1} {
+            puts "maximal force deviation in x $maxdx for particle $maxpx, in y $maxdy for particle $maxpy, in z $maxdz for particle $maxpz"
+            puts "energy deviation $dE"
+        }
+        if { $maxdx > $epsilon_force || $maxdy > $epsilon_force || $maxdz > $epsilon_force || $dE > $epsilon_energy } {
+            if { $should_succeed == 1 } {
+                if { $maxdx > $epsilon_force} {puts "force of particle $maxpx: [part $maxpx pr f] != [vecscale $lb $F($maxpx)]"}
+                if { $maxdy > $epsilon_force} {puts "force of particle $maxpy: [part $maxpy pr f] != [vecscale $lb $F($maxpy)]"}
+                if { $maxdz > $epsilon_force} {puts "force of particle $maxpz: [part $maxpz pr f] != [vecscale $lb $F($maxpz)]"}
+                if { $dE > $epsilon_energy} {puts "Energy: $energy != [expr $lb*$target_energy]"}
+                error "error too large on $testname"
+            } elseif {($maxdx > $epsilon_force || $maxdy > $epsilon_force || $maxdz > $epsilon_force) && $dE > $epsilon_energy} {
+                # if we expect it to fail, both forces and energies have to fail
+                set failed 1
+            }
+        }
+        if { $should_succeed == 0 && $failed == 0 } {
+            error "$testname should have failed"
+        }
+        puts [inter coulomb] 
+        puts "OK"
+    }
 } res ] } {
     error_exit $res
 }

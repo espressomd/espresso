@@ -23,7 +23,8 @@ typedef struct {
 	//Tuning
 	double accuracy;
 	double precision;
-	bool isTuned; // Flag that tuning is over
+	bool isTuned; // Tuning is over
+	bool isTunedFlag; // Flag tuning is over
 	int K_max; // Maximal reciprocal K-vector in tuning
 	int time_calc_steps; // Steps in time_force_calc function
 } Ewaldgpu_params;
