@@ -114,6 +114,9 @@ char *get_default_scriptsdir();
 /** Returns runtime of the integration loop in seconds. From tuning_tcl.cpp **/
 int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
+/** Reads particles from pdb file, see \ref readpdb.cpp */
+int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+
 /****************************************
  * Registration functions
  *****************************************/
@@ -163,6 +166,8 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("constraint", tclcommand_constraint);
   /* in external_potential.hpp */
   REGISTER_COMMAND("external_potential", tclcommand_external_potential);
+  /* in readpdb.cpp */
+  REGISTER_COMMAND("readpdb", tclcommand_readpdb);
   /* in uwerr.c */
   REGISTER_COMMAND("uwerr", tclcommand_uwerr);
   /* in nemd.cpp */

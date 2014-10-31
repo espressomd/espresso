@@ -40,15 +40,6 @@ float* pdb_charge_lattice = NULL;
 int* pdb_boundary_lattice = NULL;
 
 typedef struct {
-  unsigned int pdb_n_particles;
-  PdbParser::pdb_atom* pdb_array_ATOM;
-  unsigned int itp_n_particles;
-  PdbParser::itp_atom* itp_array_atoms;
-  unsigned int itp_n_parameters;
-  PdbParser::itp_atomtype* itp_array_atomtypes;
-} particle_data;
-
-typedef struct {
   float max_x;
   float max_y;
   float max_z;
