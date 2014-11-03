@@ -85,6 +85,7 @@ tests = \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
+	pdb_parser.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
@@ -129,6 +130,8 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
         object_in_fluid_system-nodes.data \
 	object_in_fluid_system-triangles.data \
 	\
+	pdb_parser.itp.dat \
+	pdb_arser.pdb.dat \
 	pe_micelle.tcl pe_micelle.data \
 	\
 	maggs_correct_rdf.data

@@ -41,6 +41,7 @@ namespace PdbParser {
   } itp_atom;
 
   typedef struct {
+    int id;
     float sigma,epsilon;
   } itp_atomtype;
 

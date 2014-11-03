@@ -31,5 +31,6 @@
     @return Number of particles that were added.
  */
 
-int pdb_add_particles_from_file(char *pdb_file, int first_id, int type);
+int pdb_add_particles_from_file(char *pdb_file, int first_id, int type,
+				char *itp_file=NULL, int first_type=0);
 #endif

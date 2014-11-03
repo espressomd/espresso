@@ -35,31 +35,42 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
   char *pdb_file = NULL;
   char *itp_file = NULL;
   int first_id = -1;
+  int first_type = -1;
   int type = -1;
 
   argc--;
   argv++;
 
   while(argc > 1) {
-    printf("argc %d argv[] %s\n", argc, argv[0]);
     if(ARG0_IS_S("pdb_file")) {
       argc--;
       argv++;
       pdb_file = argv[0];
+    } else if (ARG0_IS_S("itp_file")) {
+      argc--;
+      argv++;
+      itp_file = argv[0];
     } else if (ARG0_IS_S("type")) {
       argc--;
       argv++;
       if(!ARG0_IS_I(type)) {
-	Tcl_AppendResult(interp, "type takes exactly one integer argument.", (char *)NULL);
+	Tcl_AppendResult(interp, "type takes exactly one integer argument.\n", (char *)NULL);
 	return TCL_ERROR;
       }
     } else if (ARG0_IS_S("first_id")) {
       argc--;
       argv++;
       if(!ARG0_IS_I(first_id)) {
-	Tcl_AppendResult(interp, "first_id takes exactly one integer argument.", (char *)NULL);
+	Tcl_AppendResult(interp, "first_id takes exactly one integer argument.\n", (char *)NULL);
 	return TCL_ERROR;
       }      
+    } else if (ARG0_IS_S("first_type")) {
+      argc--;
+      argv++;
+      if(!ARG0_IS_I(first_type)) {
+	Tcl_AppendResult(interp, "first_type takes exactly one integer argument.\n", (char *)NULL);
+	return TCL_ERROR;
+      }            
     }
     else {
       usage(interp);
@@ -72,10 +83,11 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
     usage(interp);
     return TCL_ERROR;
   }
-  if(!pdb_add_particles_from_file(pdb_file, first_id, type)) {
+  if(!pdb_add_particles_from_file(pdb_file, first_id, type, itp_file)) {
     Tcl_AppendResult(interp, "Could not parse pdb file.", (char *)NULL);
     return TCL_ERROR;
   }
 
   return TCL_OK;
 }
+

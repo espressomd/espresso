@@ -67,9 +67,15 @@ namespace PdbParser {
     while(file.good()) {
       try {
 	buf = file.get();
-	/* Comment */
-	if(std::isspace(buf[0]) || (buf == ";"))
+	/* Skipp leading whitespace */
+	if(std::isspace(buf[0]))
 	  continue;
+
+	/* Comment, ignore rest of line */
+	if(buf[0] == ';') {
+	  std::getline(file, buf);
+	  continue;
+	}
 
 	/* Section statement */
 	if(buf == "[") {	  
@@ -107,7 +113,7 @@ namespace PdbParser {
 	      /* Parse line */
 	      std::getline(file, buf);
 	      std::istringstream line(buf);
-	      line >> atom.i >> atom.type >> tmp >> tmp >> tmp >> tmp >> atom.charge;
+	      line >> atom.i >> atom.type >> tmp >> tmp >> tmp >> tmp >> atom.charge;	      
 	      itp_atoms.insert(std::pair<int, itp_atom>(atom.i, atom));
 	    }
 	  }
@@ -137,7 +143,8 @@ namespace PdbParser {
 	      std::getline(file, buf);
 	      std::istringstream line(buf);
 	      line >> type_name >> tmp >> tmp >> tmp >> tmp >> type.sigma >> type.epsilon;
-
+	      /* Id is sequential number starting from zero */
+	      type.id = itp_atomtypes.size();
 	      itp_atomtypes.insert(std::pair<std::string, itp_atomtype>(type_name, type));
 	    }
 	  }
