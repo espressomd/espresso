@@ -42,6 +42,24 @@ wavepart::~wavepart(){
     cuda_safe_mem(cudaFree((void*)sines));
     sines=NULL;
   }
+#ifdef SD_DEBUG
+  if (vecs_hash){
+    free(vecs_hash);
+    vecs_hash=NULL;
+  }
+  if (matrices_hash){
+    free(matrices_hash);
+    matrices_hash=NULL;
+  }
+  if (sines_hash){
+    free(sines_hash);
+    sines_hash=NULL;
+  }
+  if (cosines_hash){
+    free(cosines_hash);
+    cosines_hash=NULL;
+  }
+#endif
   max=0;
 }
 
@@ -107,31 +125,39 @@ matrix::~matrix(){
 }
 
 void matrix::printStats() const{
+#ifdef SD_DEBUG
   printf("addr:%p\tsize:%d\tldd:%d\tsparse:%d",this,size,ldd,is_sparse);
+#endif
 }
 
-#ifdef SD_DEBUG
 void getAndHash(const real * data, const int size, unsigned char result[MD5_DIGEST_LENGTH]){
-  real host[size];
-  cuda_safe_mem(cudaMemcpy( host, data, size*sizeof(real), cudaMemcpyDeviceToHost ));
-  MD5((unsigned char*) host, size, result);
+#ifdef SD_DEBUG
+  //real host[size];
+  //cuda_safe_mem(cudaMemcpy( host, data, size*sizeof(real), cudaMemcpyDeviceToHost ));
+  //MD5((unsigned char*) host, size, result);
+#endif
 }
 
 void matrix::hash_data(){
+#ifdef SD_DEBUG
   if (data_hash == NULL){
     data_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(data, size*ldd, data_hash);
+#endif
 }
 
 void matrix::hash_dense(){
+#ifdef SD_DEBUG
   if (dense_hash == NULL){
     dense_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(dense, size*ldd, dense_hash);
+#endif
 }
 
 void matrix::assert_all() const{
+#ifdef SD_DEBUG
   unsigned char tmp[MD5_DIGEST_LENGTH];
   if (data_hash){
     getAndHash(data, size*ldd, tmp);
@@ -150,37 +176,47 @@ void matrix::assert_all() const{
   if (wavespace){
     wavespace->assert_all();
   }
+#endif
 }
 
 
 void wavepart::hash_vecs(){
+#ifdef SD_DEBUG
   fprintf(stderr,"going to allocate %d bytes, vecs_hash is %p\n",MD5_DIGEST_LENGTH, vecs_hash);
   if (vecs_hash == NULL){
     vecs_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
     fprintf(stderr,"allocated %d bytes\n",MD5_DIGEST_LENGTH);
   }
   getAndHash(vecs, num*3 , vecs_hash);
+#endif
 }
 void wavepart::hash_matrices(){
+#ifdef SD_DEBUG
   if (matrices_hash == NULL){
     matrices_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(matrices, num*6, matrices_hash);
+#endif
 }
 void wavepart::hash_cosines(){
+#ifdef SD_DEBUG
   if (cosines_hash == NULL){
     cosines_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(cosines, num*ldd_short, cosines_hash);
+#endif
 }
 void wavepart::hash_sines(){
+#ifdef SD_DEBUG
   if (sines_hash == NULL){
     sines_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(sines, num*ldd_short, sines_hash);
+#endif
 }
 
 void wavepart::assert_all() const{
+#ifdef SD_DEBUG
   unsigned char tmp[MD5_DIGEST_LENGTH];
   if (vecs_hash){
     getAndHash(vecs, 3*num, tmp);
@@ -210,6 +246,6 @@ void wavepart::assert_all() const{
       printf("%02x",tmp[i]);
     }
   }
+#endif
 }
 
-#endif

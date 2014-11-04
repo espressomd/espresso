@@ -239,7 +239,7 @@ __global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobi
 	  //assert(abs(tmp2)>1e-15);
 	  //assert(abs(tmp1*tmp2)>1e-15);
 	  t+=tmp1*tmp2;
-	  assert(abs(t)>1e-15);
+	  //assert(abs(t)>1e-15);
 	  t2=(0.75+0.5*ar2)*ar*erfc(xr)+(4.*xa3*xr2*xr2+3.*xa*xr2-20.*xa3*xr2-4.5*xa+14.*xa3+   xa*ar2)*0.5641895835477562869480794515607725858440506*exp(-xr2);
 #endif
 	  //assert(t>1e-15);
@@ -346,7 +346,7 @@ __global__ void sd_compute_mobility_sines(const real * r, int N, const real * ve
 #undef mydebug
 
 
-// This computes the farfield contribution of the mobility with ewald summation
+/*// This computes the farfield contribution of the mobility with ewald summation
 // this kernel computes the sines and cosinus.
 // forces is the vector of [fx_1, fy_1, fz_1, fx_2, fy_2, fz_2, ...]
 // a is the particle radius
@@ -390,15 +390,15 @@ __global__ void sd_wavepart_sum_old(const real * const forces, const real * cons
       for (int k=0;k<DIM;k++){
 	cache[threadIdx.x+k*numThreadsPerBlock]=matrices[(j-offset)*6+k]*myforce[k];
       }
-      for (int k=0;k<3;k++){
-	assert(!isnan(myforce[k]));
-	assert(!isnan(matrices[(j-offset)*6+k]));
-	assert(!isnan(cache[threadIdx.x+k*numThreadsPerBlock]));
-      }
+      //for (int k=0;k<3;k++){
+	//assert(!isnan(myforce[k]));
+	//assert(!isnan(matrices[(j-offset)*6+k]));
+	//assert(!isnan(cache[threadIdx.x+k*numThreadsPerBlock]));
+      //}
       sine   = sines  [i + j*ldd];
       cosine = cosines[i + j*ldd];
-      assert(!isnan(sine));
-      assert(!isnan(cosine));
+      //assert(!isnan(sine));
+      //assert(!isnan(cosine));
       cache[threadIdx.x+0*numThreadsPerBlock]+=matrices[(j-offset)*6+3]*myforce[1];
       cache[threadIdx.x+1*numThreadsPerBlock]+=matrices[(j-offset)*6+3]*myforce[0];
       cache[threadIdx.x+0*numThreadsPerBlock]+=matrices[(j-offset)*6+4]*myforce[2];
@@ -406,14 +406,14 @@ __global__ void sd_wavepart_sum_old(const real * const forces, const real * cons
       cache[threadIdx.x+2*numThreadsPerBlock]+=matrices[(j-offset)*6+5]*myforce[1];
       cache[threadIdx.x+1*numThreadsPerBlock]+=matrices[(j-offset)*6+5]*myforce[2];
       for (int k=0;k<6;k++){
-	assert(!isnan(cache[threadIdx.x+k*numThreadsPerBlock]));
+	//assert(!isnan(cache[threadIdx.x+k*numThreadsPerBlock]));
       }
       for (int k=0;k<DIM;k++){
 	cache[threadIdx.x+(k+3)*numThreadsPerBlock]=cosine*cache[threadIdx.x+k*numThreadsPerBlock];
 	cache[threadIdx.x+k*numThreadsPerBlock]*=sine;
       }
       for (int k=0;k<6;k++){
-	assert(!isnan(cache[threadIdx.x+k*numThreadsPerBlock]));
+	//assert(!isnan(cache[threadIdx.x+k*numThreadsPerBlock]));
       }
       reduce_sum(cache);
       reduce_sum(cache+numThreadsPerBlock);
@@ -423,15 +423,15 @@ __global__ void sd_wavepart_sum_old(const real * const forces, const real * cons
       reduce_sum(cache+numThreadsPerBlock*5);
       if (threadIdx.x < 3){
 	real tmp = atomicAdd(sin_sum+threadIdx.x+j*3,cache[numThreadsPerBlock*threadIdx.x]);
-	assert(abs(tmp) <= max);
-	assert(abs(tmp) + cache[numThreadsPerBlock*threadIdx.x] <= max);
+	//assert(abs(tmp) <= max);
+	//assert(abs(tmp) + cache[numThreadsPerBlock*threadIdx.x] <= max);
 	tmp = atomicAdd(cos_sum+threadIdx.x+j*3,cache[numThreadsPerBlock*(threadIdx.x+3)]);
-	assert(abs(tmp) <= max);
-	assert(abs(tmp) + cache[numThreadsPerBlock*(threadIdx.x+3)] <= max);
+	//assert(abs(tmp) <= max);
+	//assert(abs(tmp) + cache[numThreadsPerBlock*(threadIdx.x+3)] <= max);
       }
     } // for (j = ...
   }// for offset = ...
-}
+}*/
 
 /// This computes the farfield contribution of the mobility with ewald summation
 /// this kernel computes the sines and cosinus.
@@ -486,11 +486,11 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
   }
   __syncthreads();
   reduce_sum(cache);
-  assert(cache[0] <= max);
+  //assert(cache[0] <= max);
   reduce_sum(cache+blockDim.x);
-  assert(cache[blockDim.x] <= max);
+  //assert(cache[blockDim.x] <= max);
   reduce_sum(cache+blockDim.x*2);
-  assert(cache[blockDim.x*2] <= max);
+  //assert(cache[blockDim.x*2] <= max);
   __syncthreads();
   if (threadIdx.x < 3){
     myforcesin[0]=cache[threadIdx.x*blockDim.x];
@@ -501,11 +501,11 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
   }
   __syncthreads();
   reduce_sum(cache);
-  assert(cache[0] <= max);
+  //assert(cache[0] <= max);
   reduce_sum(cache+blockDim.x);
-  assert(cache[blockDim.x] <= max);
+  //assert(cache[blockDim.x] <= max);
   reduce_sum(cache+blockDim.x*2);
-  assert(cache[blockDim.x*2] <= max);
+  //assert(cache[blockDim.x*2] <= max);
   __syncthreads();
   if (threadIdx.x < 3){
     cache[threadIdx.x]   = cache[threadIdx.x*blockDim.x];
@@ -514,7 +514,7 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
   __syncthreads();
   real * mat = cache + 6;
   if (threadIdx.x < 6){
-    assert(cache[threadIdx.x] <= max);
+    //assert(cache[threadIdx.x] <= max);
     mat[threadIdx.x] = matrices_d[blockIdx.x*6+threadIdx.x];
     __syncthreads();
     cache[threadIdx.x+12]=cache[threadIdx.x]*mat[threadIdx.x%3];
@@ -530,8 +530,8 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
   }
   __syncthreads();
   if (threadIdx.x < 3){
-    assert(cache[threadIdx.x+12] <= max);
-    assert(cache[threadIdx.x+15] <= max);
+    //assert(cache[threadIdx.x+12] <= max);
+    //assert(cache[threadIdx.x+15] <= max);
     cos_sum[threadIdx.x+blockIdx.x*3]=cache[threadIdx.x+12];
     sin_sum[threadIdx.x+blockIdx.x*3]=cache[threadIdx.x+15];
   }
@@ -565,14 +565,14 @@ __global__ void sd_wavepart_assemble(const int num, const real * const sines, co
 #pragma unroll 3
       for (int k=0;k < 3;k++){
 	real tmp = sin_sum[k + j*3];
-	assert(tmp <= max);
+	//assert(tmp <= max);
 	myout[k]+=sine*tmp;
       }
       cosine = cosines[i + j*ldd];
 #pragma unroll 3
       for (int k=0;k<DIM;k++){
 	real tmp = cos_sum[k + j*3];
-	assert(tmp <= max);
+	//assert(tmp <= max);
 	myout[k]+=cosine*tmp;
       }
     } // for (j = ...
@@ -592,6 +592,55 @@ __global__ void sd_wavepart_assemble(const int num, const real * const sines, co
     //out[threadIdx.x+(blockIdx.x*3+k)*numThreadsPerBlock]=cache[threadIdx.x+k*numThreadsPerBlock];
   }
 }
+/* this is slower (if we use a block per particle instead of a thread
+__global__ void sd_wavepart_assemble_block(const int num, const real * const sines, const real * const cosines, const real * const sin_sum,
+				     const real * const cos_sum, const int ldd, real * out, real max, int N, const real factor){
+  // particle index of the particle for which we sum:
+  int i = blockIdx.x;
+  real myout[3]={0,0,0};
+  real sine;
+  real cosine;
+  
+  extern __shared__ real cache[];
+  int offset_next;
+  for (int offset=0;offset<num;offset=offset_next){
+    offset_next=offset+blockDim.x;
+    // j: wave vector index
+    //for (int j=offset;j< offset_next ;j++){
+    int j=offset+threadIdx.x;
+    if (j < num){
+      sine   = sines  [i + j*ldd];
+#pragma unroll 3
+      for (int k=0;k < 3;k++){
+	real tmp = sin_sum[k + j*3];
+	//assert(tmp <= max);
+	myout[k]+=sine*tmp;
+      }
+      cosine = cosines[i + j*ldd];
+#pragma unroll 3
+      for (int k=0;k<DIM;k++){
+	real tmp = cos_sum[k + j*3];
+	//assert(tmp <= max);
+	myout[k]+=cosine*tmp;
+      }
+    } // for (j = ...
+  }// for offset = ...
+#pragma unroll 3
+  for (int k=0;k<3;k++){
+    cache[threadIdx.x]=myout[k]*factor;
+    __syncthreads();
+    reduce_sum(cache);
+    __syncthreads();
+    if (threadIdx.x == k){
+      myout[0]=cache[0];
+    }
+  }
+  if (threadIdx.x < 3){
+    out[blockIdx.x * 3 + threadIdx.x]+= myout[0];
+  }
+}*/
+
+
 
 /// Add the wavepart contribution of the mobility to the matrix
 __global__ void sd_wavepart_addto_matrix(const int num, const  real * const matrices_d, const real * const sines,  const real * const cosines,
@@ -969,7 +1018,7 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * _L, 
 	    current_bucket -= bucket_num[0];
 	  }
 	
-	  assert((current_bucket>=0 && current_bucket < total_bucket_num));
+	  //assert((current_bucket>=0 && current_bucket < total_bucket_num));
 	  int in_loop=particle_count[current_bucket];
 	  for (int j_loop=0;j_loop<in_loop;j_loop++){
 	    int j=particle_sorted_list[current_bucket+j_loop*total_bucket_num];
@@ -1502,7 +1551,7 @@ for (int j=max(offset, blockIdx.x*numThreadsPerBlock+1);j<min(offset+numThreadsP
 #pragma unroll 3
     for (int k=0;k<3;k++){
       real tmp = atomicAdd(brownian_force_nf+i*3+k, writeCache[k]);
-      assert(!isnan(tmp));
+      //assert(!isnan(tmp));
     }
   }
 }
@@ -1751,7 +1800,7 @@ __global__ void sd_get_diag(int size, const real * mat_a,int lda,real * diag,rea
 __global__ void sd_nrm1(const int size, const real * const vec, real * erg){
   __shared__ real cache[numThreadsPerBlock];
   if (blockIdx.x == 0){ // only use one block
-    assert(blockDim.x == numThreadsPerBlock);
+    //assert(blockDim.x == numThreadsPerBlock);
     cache[threadIdx.x]=0;
     for (int i = threadIdx.x; i < size ; i+=blockDim.x){
       cache[threadIdx.x]+=abs(vec[i]);

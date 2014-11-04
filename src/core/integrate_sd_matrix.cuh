@@ -16,7 +16,6 @@ public:
   ~wavepart();
 private:
   wavepart(wavepart & other);
-#ifdef SD_DEBUG
 public:
   void print( int N, int ldd) const;
   void hash_vecs();
@@ -24,6 +23,7 @@ public:
   void hash_cosines();
   void hash_sines();
   void assert_all() const;
+#ifdef SD_DEBUG
 private:
   unsigned char * vecs_hash;
   unsigned char * matrices_hash;
@@ -57,12 +57,12 @@ private:
 #ifdef SD_DEBUG
   unsigned char * data_hash;
   unsigned char * dense_hash;
+#endif
 public:
   real * dense;
   void hash_data();
   void hash_dense();
   void assert_all() const;
-#endif
 };
   
   

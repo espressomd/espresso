@@ -198,7 +198,7 @@ void integrate_sd(int n_steps)
   /* Integration loop */
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
-    sd_set_particles_apart();
+    //sd_set_particles_apart();
 #ifdef BOND_CONSTRAINT
     save_old_pos();
 #endif

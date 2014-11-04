@@ -26,10 +26,6 @@
  *  Here the calculation of the displacements is implemented.
 */
 
-// TODO:
-// * implement matrix-free farfield
-// * add bucket versions
-
 
 #include <stdio.h>
 #include <iostream>
@@ -262,11 +258,11 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
       fprintf(stderr,"\nL_min is %f\n",L_min);
       fprintf(stderr,"xi is %f\n",xi);
       fprintf(stderr,"kmax is %e\n",sqrt(kmax2));
+      fprintf(stderr,"selfmobility is %e\n",1./(6.*M_PI*viscosity*radius));
       printed=1;
     }
   }
   //fprintf(stderr,"kmax is %e\n",sqrt(kmax2));
-  //fprintf(stderr,"selfmobility is %e\n",1./(6.*M_PI*viscosity*radius));
   sd_compute_mobility_matrix_real_short<<<numBlocks, numThreadsPerBlock>>>(r_d, N, 1./(6.*M_PI*viscosity*radius), radius, L_d, 
 									   mobility.data, L_min/2., xi, xi*radius, xi*radius*xi*radius*xi*radius);
   //std::cerr << "kmax is " << ceil(sqrt(kmax2)) << std::endl;
@@ -1486,7 +1482,6 @@ void sd_Rgemv(const real * factor, const matrix & A, const real * in, real * out
     real before;
     cublasCall(cublasRnrm2(cublas, A.size, out, 1, &before));*/
     wavepart  & wave=* A.wavespace;
-    const int tpB = numThreadsPerBlock;
     int buf_size = A.wavespace->max*3;
     real * sin_sum=NULL;
     cuda_safe_mem(cudaMalloc( (void**)& sin_sum, buf_size*sizeof(real)));
@@ -1503,15 +1498,19 @@ void sd_Rgemv(const real * factor, const matrix & A, const real * in, real * out
     // thread number has to be a power of two!
     //sd_wavepart_sum<<<wave.num,64,64*3*sizeof(real)>>>(in, wave.vecs, wave.num, wave.matrices, wave.sines, wave.cosines, \
     //fprintf(stderr,"calling sd_wavepart_sum<<<%d,%d,%d>>>\n",wave.num,8,8*3*sizeof(real));
-    //                         ,------ has to be power of two and at least 8
+    //                         ,------ has to be power of two and at least 8 (and there might be still a bug if larger than 32)
     //                        \|/
     //                         v   
-    sd_wavepart_sum<<<wave.num,8,8*3*sizeof(real)>>>(in, wave.vecs, wave.num, wave.matrices, wave.sines, wave.cosines, \
+    sd_wavepart_sum<<<wave.num,32,32*3*sizeof(real)>>>(in, wave.vecs, wave.num, wave.matrices, wave.sines, wave.cosines, \
 						       A.ldd_short, A.size/3, sin_sum, cos_sum, max);
     cudaThreadSynchronize();
     cudaCheckError("");
+    int tpB = 32;
     int blocks = (A.ldd_short)/tpB;
-    sd_wavepart_assemble<<<blocks,tpB,tpB*3*sizeof(real)>>>(wave.num, wave.sines, wave.cosines, sin_sum, cos_sum, A.ldd_short, out, max, A.size/3, *factor);
+    sd_wavepart_assemble<<<blocks,tpB,tpB*3*sizeof(real)>>>(wave.num, wave.sines, wave.cosines, sin_sum, cos_sum,
+    							    A.ldd_short, out, max, A.size/3, *factor);
+    //sd_wavepart_assemble_block<<<A.size/3,tpB,tpB*3*sizeof(real)>>>(wave.num, wave.sines, wave.cosines, sin_sum, cos_sum,
+    //							              A.ldd_short, out, max, A.size/3, *factor);
     cudaThreadSynchronize();
     cudaCheckError("");
     /*#ifdef SD_DEBUG

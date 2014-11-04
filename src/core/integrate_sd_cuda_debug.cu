@@ -240,6 +240,7 @@ bool isSymmetricDev(const matrix & mat){
 }
 
 bool  isSymmetricDev(const real * data, int lda, int size){
+  #ifdef SD_DEBUG
   real host[lda*size];
   cuda_safe_mem(cudaMemcpy( host, data, size*lda*sizeof(real), cudaMemcpyDeviceToHost ));
   for (int i=0;i<size;i++){
@@ -250,6 +251,7 @@ bool  isSymmetricDev(const real * data, int lda, int size){
       }
     }
   }
+  #endif
   return true;
 }
 
