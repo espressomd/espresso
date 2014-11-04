@@ -56,7 +56,7 @@ AC_DEFUN([ES_ADDPATH_CHECK_HEADER],[
 	])],[es_adp_found=yes],[])
 
 	if test .$es_adp_found = .no; then
-		for path in $4 /sw/include /usr/include /usr/local/include /opt/include; do
+		for path in $4 /sw/include /opt/local/include /usr/include /usr/local/include /opt/include; do
 			CPPFLAGS="$es_save_CPPFLAGS -I$path"
 			AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 				#include <$1>
