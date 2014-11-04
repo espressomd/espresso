@@ -31,7 +31,7 @@
 #include "ghosts.hpp"
 #include "forces.hpp"
 #include "pressure.hpp"
-#include "energy.hpp"
+#include "energy_inline.hpp"
 #include "constraint.hpp"
 
 Cell *local;

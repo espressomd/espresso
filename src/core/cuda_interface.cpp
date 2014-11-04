@@ -77,12 +77,19 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
               int npart;  
               int dummy[3] = {0,0,0};
               double pos[3];
+#ifdef LEES_EDWARDS
+              double dummyV[3];
+#endif
               cell = local_cells.cell[c];
               part = cell->part;
               npart = cell->n;
               for (i=0;i<npart;i++) {
                 memcpy(pos, part[i].r.p, 3*sizeof(double));
+#ifdef LEES_EDWARDS
+                fold_position(pos, dummyV, dummy);
+#else
                 fold_position(pos, dummy);
+#endif
                 particle_data_host[i+g].p[0] = (float)pos[0];
                 particle_data_host[i+g].p[1] = (float)pos[1];
                 particle_data_host[i+g].p[2] = (float)pos[2];
@@ -148,13 +155,20 @@ static void cuda_mpi_get_particles_slave(){
         int npart;
         int dummy[3] = {0,0,0};
         double pos[3];
+#ifdef LEES_EDWARDS
+        double dummyV[3];
+#endif
         cell = local_cells.cell[c];
         part = cell->part;
         npart = cell->n;
 
         for (i=0;i<npart;i++) {
           memcpy(pos, part[i].r.p, 3*sizeof(double));
-          fold_position(pos, dummy);  
+#ifdef LEES_EDWARDS
+          fold_position(pos, dummyV, dummy);
+#else
+          fold_position(pos, dummy);
+#endif
       
           particle_data_host_sl[i+g].p[0] = (float)pos[0];
           particle_data_host_sl[i+g].p[1] = (float)pos[1];

@@ -37,8 +37,8 @@
 /** Bonded overlapped potentials: Reads overlapped parameters from a file.  
     ia_params are then communicated to each node \warning No checking is
     performed for the file read!! */
-int overlapped_bonded_set_params(int bond_type, int overlap_type,
-				 char * filename);
+int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
+                 char * filename);
 
 /** Computes the two body overlapped bonded force.
     Adds this force to the particle forces in forces.hpp (see \ref tclcommand_inter). 

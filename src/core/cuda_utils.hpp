@@ -38,10 +38,10 @@ extern cudaError_t _err;
  * @param line line of the file were the error took place
 */
 
-void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line);
+void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line);
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
-                        char *function, char *file, unsigned int line);
+                        const char *function, const char *file, unsigned int line);
 
 #define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
 

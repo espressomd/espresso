@@ -22,6 +22,7 @@ source "tests_common.tcl"
 
 require_feature "PARTIAL_PERIODIC"
 require_feature "LENNARD_JONES"
+require_feature "LEES_EDWARDS" off
 
 puts "----------------------------------------"
 puts "- Testcase intppbc.tcl running on [format %02d [setmd n_nodes]] nodes: -"

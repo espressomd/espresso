@@ -28,6 +28,7 @@
 #############################################################
 source "tests_common.tcl"
 
+require_cudadevice
 require_feature "LB_GPU"
 require_feature "LENNARD_JONES"
 

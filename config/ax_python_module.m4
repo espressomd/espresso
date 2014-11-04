@@ -26,8 +26,7 @@
 
 AU_ALIAS([AC_PYTHON_MODULE], [AX_PYTHON_MODULE])
 AC_DEFUN([AX_PYTHON_MODULE],[
-    if test -z $PYTHON;
-    then
+    if test -z "$PYTHON"; then
         PYTHON="python"
     fi
     PYTHON_NAME=`basename $PYTHON`

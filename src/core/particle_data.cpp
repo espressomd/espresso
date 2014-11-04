@@ -308,18 +308,24 @@ int updatePartCfg(int bonds_flag)
     mpi_get_particles(partCfg,&partCfg_bl);
 
   for(j=0; j<n_part; j++)
-    unfold_position(partCfg[j].r.p,partCfg[j].l.i);
+#ifdef LEES_EDWARDS
+    unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
+#else
+    unfold_position(partCfg[j].r.p, partCfg[j].l.i);
+#endif
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
 
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return 0;
   }
   if (!updatePartCfg(bonds_flag)) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not update positions of virtual sites in partcfg } ");
+      ostringstream msg;
+      msg <<"could not update positions of virtual sites in partcfg";
+      runtimeError(msg);
     return 0;
   }
 #endif
@@ -1082,8 +1088,9 @@ int change_particle_bond(int part, int *bond, int _delete)
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
-      char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{048 invalid/unknown bonded interaction type %d}", bond[0]);
+        ostringstream msg;
+        msg <<"invalid/unknown bonded interaction type " << bond[0];
+        runtimeError(msg);
       return ES_ERROR;
     }
   }
@@ -1181,7 +1188,13 @@ void local_place_particle(int part, double p[3], int _new)
   pp[0] = p[0];
   pp[1] = p[1];
   pp[2] = p[2];
+
+#ifdef LEES_EDWARDS
+  double vv[3]={0.,0.,0.};
+  fold_position(pp, vv, i);
+#else
   fold_position(pp, i);
+#endif 
   
   if (_new) {
     /* allocate particle anew */
@@ -1206,6 +1219,12 @@ void local_place_particle(int part, double p[3], int _new)
 
   PART_TRACE(fprintf(stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
 		     this_node, part, p[0], p[1], p[2]));
+
+#ifdef LEES_EDWARDS
+  pt->m.v[0] += vv[0];  
+  pt->m.v[1] += vv[1];  
+  pt->m.v[2] += vv[2];  
+#endif
 
   memcpy(pt->r.p, pp, 3*sizeof(double));
   memcpy(pt->l.i, i, 3*sizeof(int));

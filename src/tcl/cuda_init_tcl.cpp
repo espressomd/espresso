@@ -113,6 +113,14 @@ int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
       return TCL_ERROR;
     }
   }
+  else if (ARG0_IS_S("testdevice")) {
+    if(cuda_test_device_access() == ES_ERROR) {
+      Tcl_AppendResult(interp, "Could not access cuda device.", (char *)NULL);
+      return TCL_ERROR;
+    } else {
+      return TCL_OK;
+    }
+  }
   else {
     Tcl_AppendResult(interp, "unknown subcommand \"", argv[0], "\"", (char *)NULL);
     return TCL_ERROR;
