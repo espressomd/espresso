@@ -22,6 +22,7 @@
 #include "lb.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
+#include "assert.h"
 
 observable** observables = 0;
 int n_observables = 0; 
@@ -968,7 +969,7 @@ int observable_calc_structure_factor(observable* self) {
   int order, order2, n;
   double twoPI_L, C_sum, S_sum, qr; 
 //  DoubleList *scattering_length;
-  observable_sf_params* params;
+  observable_sf_params * params;
   params = (observable_sf_params*) self->container;
 //  scattering_length = params->scattering_length;
   const double scattering_length=1.0;
@@ -1000,6 +1001,7 @@ int observable_calc_structure_factor(observable* self) {
 	      C_sum+= scattering_length * cos(qr);
 	      S_sum-= scattering_length * sin(qr);
 	    }
+	    assert(l < self->n);
             A[l]   =C_sum;
             A[l+1] =S_sum;
             l=l+2;
@@ -1007,6 +1009,13 @@ int observable_calc_structure_factor(observable* self) {
 	}
       }
     }
+ l = 0;
+ for(int k=0;k<self->n/2;k++) {
+    //devide by the sqrt(number_of_particle) due to complex product and no k-vector averaging so far
+       A[l] /= sqrt(n_part);
+       A[l+1] /= sqrt(n_part);
+       l=l+2;
+ }
     //printf("finished calculating sf\n"); fflush(stdout);
     return 0;
 }
