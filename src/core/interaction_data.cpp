@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -934,7 +934,7 @@ int virtual_set_params(int bond_type)
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
 
-  return ES_OK; 
+  return ES_OK;
 }
 
 #endif

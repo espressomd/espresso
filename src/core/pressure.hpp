@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -100,7 +100,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
       for(l=0;l<3;l++)
         obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
   }
-
+  
 #ifdef ELECTROSTATICS
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {
