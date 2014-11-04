@@ -65,10 +65,11 @@ void init_random_seed(long seed)
   /* This random generator is bad I know {why, Frank? It's the same as the
      one in l_random!}, thats why its only {no, in l_random as well!} used
      for the seed (see Num. Rec. 7.1.) */
-  if(seed < 1) {
+  if (seed < 1) {
     fprintf(stderr,"The initial seed of the random number generator must be a positive integer!\n");
     fprintf(stderr,"Using 0 will result in a plain 0-sequence, hence it's forbidden (you used: %ld)!\n",seed);
-    fflush(NULL); errexit();
+    fflush(NULL); 
+    errexit();
   }
   idumInit = idum = seed;
   RANDOM_TRACE(fprintf(stderr, "%d: Init random with seed %ld in 'random.c'\n",this_node,idum));

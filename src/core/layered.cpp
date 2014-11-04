@@ -320,8 +320,9 @@ void layered_topology_init(CellPList *old)
 
   /* check node grid. All we can do is 1x1xn. */
   if (node_grid[0] != 1 || node_grid[1] != 1) {
-    char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{016 selected node grid is not suitable for layered cell structure (needs 1x1x%d grid)} ", n_nodes);
+      ostringstream msg;
+      msg <<"selected node grid is not suitable for layered cell structure (needs 1x1x"<< n_nodes << " grid";
+      runtimeError(msg);
     node_grid[0] = node_grid[1] = 1;
     node_grid[2] = n_nodes;
   }
@@ -330,8 +331,9 @@ void layered_topology_init(CellPList *old)
     if (max_range > 0) {
       n_layers = (int)floor(local_box_l[2]/max_range);
       if (n_layers < 1) {
-	char *errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
-	ERROR_SPRINTF(errtxt, "{017 layered: maximal interaction range %g larger than local box length %g} ", max_range, local_box_l[2]);
+      ostringstream msg;
+      msg <<"layered: maximal interaction range " << max_range << " larger than local box length " << local_box_l[2];
+      runtimeError(msg);
 	n_layers = 1;
       }
       if (n_layers > max_num_cells - 2)
@@ -353,8 +355,9 @@ void layered_topology_init(CellPList *old)
   layer_h_i = 1/layer_h;
 
   if (layer_h < max_range) {
-    char *errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
-    ERROR_SPRINTF(errtxt, "{018 layered: maximal interaction range %g larger than layer height %g} ", max_range, layer_h);
+      ostringstream msg;
+      msg <<"layered: maximal interaction range " << max_range << " larger than layer height " << layer_h;
+      runtimeError(msg);
   }
 
   /* check wether node is top and/or bottom */
@@ -409,7 +412,11 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up, Particl
 
   CELL_TRACE(fprintf(stderr, "%d: sorting in %d\n", this_node, pl->n));
   for(p = 0; p < pl->n; p++) {
+#ifdef LEES_EDWARDS
+    fold_position(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i);
+#else
     fold_position(pl->part[p].r.p, pl->part[p].l.i);
+#endif
     if (LAYERED_BTM_NEIGHBOR && pl->part[p].r.p[2] < my_left[2]) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n", this_node, pl->part[p].p.identity));
       move_indexed_particle(dn, pl, p);
@@ -460,7 +467,11 @@ void layered_exchange_and_sort_particles(int global_flag)
       }
       else {
 	/* particle stays here. Fold anyways to get x,y correct */
-	fold_position(part->r.p, part->l.i);
+#ifdef LEES_EDWARDS
+    fold_position(part->r.p, part->m.v, part->l.i);
+#else
+    fold_position(part->r.p, part->l.i);
+#endif
 	nc = layered_position_to_cell(part->r.p);
 	if (nc != oc) {
 	  move_indexed_particle(nc, oc, p);
@@ -534,8 +545,9 @@ void layered_exchange_and_sort_particles(int global_flag)
     }
     else {
       if (flag) {
-	char *errtxt = runtime_error(128 + ES_DOUBLE_SPACE);
-	ERROR_SPRINTF(errtxt,"{019 layered_exchange_and_sort_particles: particle moved more than one cell} ");
+      ostringstream msg;
+      msg <<"layered_exchange_and_sort_particles: particle moved more than one cell";
+      runtimeError(msg);
 
 	/* sort left over particles into border cells */
 	CELL_TRACE(fprintf(stderr, "%d: emergency sort\n", this_node));

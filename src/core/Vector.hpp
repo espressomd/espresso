@@ -24,19 +24,38 @@ private:
   Scalar *d;
 public:
   Vector() : d(new Scalar[n]) {};
+
   Vector(Scalar *a) : d(new Scalar[n]) {
-    for(int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
       d[i] = a[i];
   };
-  ~Vector() { delete[] d; }
-  Vector(const Vector& rhs)    : d(new Scalar[n]) {std::copy(rhs.d,rhs.d+n,d);}
-  void swap(Vector& rhs)       {std::swap(d,rhs.d);}
-  Vector& operator=(Vector& rhs) 
-  {Vector tmp(rhs); swap(rhs); return *this;};
+
+  ~Vector() { 
+    delete[] d; 
+  }
+
+  Vector(const Vector& rhs) : d(new Scalar[n]) {
+    std::copy(rhs.d,rhs.d+n,d);
+  }
+
+  void swap(Vector& rhs) {
+    std::swap(d,rhs.d);
+  }
+
+  Vector& operator=(Vector& rhs) {
+    Vector tmp(rhs); swap(rhs); return *this;
+  };
+
   Scalar &operator[](int i) {
     return d[i];
   };
-  
+
+  Scalar dot(Vector<n, Scalar> b) {
+    Scalar sum = 0.0;
+    for(int i = 0; i < n; i++)
+      sum += d[i]*b[i];
+    return sum;
+  };  
 };
 
 typedef Vector<3, double> Vector3d;

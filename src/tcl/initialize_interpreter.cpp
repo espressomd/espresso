@@ -22,6 +22,7 @@
 #include <cstring>
 #include <cstdio>
 
+#include "initialize_interpreter.hpp"
 #include "global.hpp"
 #include "binary_file_tcl.hpp"
 #include "cells_tcl.hpp"
@@ -35,6 +36,7 @@
 #include "integrate_tcl.hpp"
 #include "interaction_data_tcl.hpp"
 #include "lb_tcl.hpp"
+#include "lees_edwards_tcl.hpp"
 #include "lj_tcl.hpp"
 #include "maggs_tcl.hpp"
 #include "metadynamics_tcl.hpp"
@@ -119,7 +121,7 @@ int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, c
 #define REGISTER_COMMAND(name, routine)					\
   Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
 
-static void register_tcl_commands(Tcl_Interp* interp) {
+static void tcl_register_commands(Tcl_Interp* interp) {
   /* in cells.cpp */
   REGISTER_COMMAND("sort_particles", tclcommand_sort_particles);
   REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
@@ -206,6 +208,10 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
+
+/* #ifdef LEES_EDWARDS Register the command even if not implemented, so it can return an informative error*/ 
+  REGISTER_COMMAND("lees_edwards_offset", tclcommand_lees_edwards_offset);
+/* #endif */
 #ifdef CATALYTIC_REACTIONS
   REGISTER_COMMAND("reaction", tclcommand_reaction);
 #endif
@@ -221,7 +227,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #endif
 }
 
-static void register_global_variables(Tcl_Interp *interp)
+static void tcl_register_global_variables(Tcl_Interp *interp)
 {
   /* register all writeable TCL variables with their callback functions */
   register_global_callback(FIELD_BOXL, tclcallback_box_l);
@@ -239,7 +245,7 @@ static void register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
 }
 
-int appinit(Tcl_Interp *interp)
+int tcl_appinit(Tcl_Interp *interp)
 {
   if (Tcl_Init(interp) == TCL_ERROR)
     return TCL_ERROR;
@@ -252,8 +258,8 @@ int appinit(Tcl_Interp *interp)
   /*
     installation of tcl commands
   */
-  register_tcl_commands(interp);
-  register_global_variables(interp);
+  tcl_register_commands(interp);
+  tcl_register_global_variables(interp);
 
   /* evaluate the Tcl initialization script */
   char *scriptdir = getenv("ESPRESSO_SCRIPTS");

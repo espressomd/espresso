@@ -1687,8 +1687,9 @@ static double dp3m_mc_time(char **log, int mesh, int cao,
 
   /* check whether we are running P3M+DLC, and whether we leave a reasonable gap space */
   if (coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{dipolar P3M: tuning when dlc needs to be fixed} ");
+      ostringstream msg;
+      msg <<"dipolar P3M: tuning when dlc needs to be fixed";
+      runtimeError(msg);
   }
 
   /* check whether this radius is too large, so that we would use less cells than allowed */
@@ -2274,18 +2275,19 @@ void dp3m_calc_local_ca_mesh() {
 
 
 int dp3m_sanity_checks_boxl() {
-  char *errtxt;
   int i, ret = 0;
      for(i=0;i<3;i++) {
     /* check k-space cutoff */
     if(dp3m.params.cao_cut[i] >= 0.5*box_l[i]) {
-      errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
-      ERROR_SPRINTF(errtxt,"{039 dipolar P3M_init: k-space cutoff %g is larger than half of box dimension %g} ",dp3m.params.cao_cut[i],box_l[i]);
+        ostringstream msg;
+        msg <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than half of box dimension " << box_l[i];
+        runtimeError(msg);
       ret = 1;
     }
     if(dp3m.params.cao_cut[i] >= local_box_l[i]) {
-      errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
-      ERROR_SPRINTF(errtxt,"{040 dipolar P3M_init: k-space cutoff %g is larger than local box dimension %g} ",dp3m.params.cao_cut[i],local_box_l[i]);
+        ostringstream msg;
+        msg <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than local box dimension " << local_box_l[i];
+        runtimeError(msg);
       ret = 1;
     }
   }
@@ -2297,53 +2299,60 @@ int dp3m_sanity_checks_boxl() {
 
 int dp3m_sanity_checks()
 {
-  char *errtxt;
   int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{041 dipolar P3M requires periodicity 1 1 1} ");
+      ostringstream msg;
+      msg <<"dipolar P3M requires periodicity 1 1 1";
+      runtimeError(msg);
     ret = 1;
   }
   /*
   if (n_nodes != 1) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{110 dipolar P3M does not run in parallel} ");
+      ostringstream msg;
+      msg <<"dipolar P3M does not run in parallel";
+      runtimeError(msg);
     ret = 1;
   } */
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{042 dipolar P3M at present requires the domain decomposition cell system} ");
+      ostringstream msg;
+      msg <<"dipolar P3M at present requires the domain decomposition cell system";
+      runtimeError(msg);
     ret = 1;
   }
   
   if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{043 dipolar P3M requires a cubic box} ");
+      ostringstream msg;
+      msg <<"dipolar P3M requires a cubic box";
+      runtimeError(msg);
     ret = 1;
   }
 
     if( (dp3m.params.mesh[0] != dp3m.params.mesh[1]) || (dp3m.params.mesh[1] != dp3m.params.mesh[2]) ) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{044 dipolar P3M requires a cubic mesh} ");
+    ostringstream msg;
+    msg <<"dipolar P3M requires a cubic mesh";
+    runtimeError(msg);
     ret = 1;
   }
 
   if (dp3m_sanity_checks_boxl()) ret = 1;
 
   if( dp3m.params.mesh[0] == 0) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{045 dipolar P3M_init: mesh size is not yet set} ");
+      ostringstream msg;
+      msg <<"dipolar P3M_init: mesh size is not yet set";
+      runtimeError(msg);
     ret = 1;
   }
   if( dp3m.params.cao == 0) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{046 dipolar P3M_init: cao is not yet set} ");
+      ostringstream msg;
+      msg <<"dipolar P3M_init: cao is not yet set";
+      runtimeError(msg);
     ret = 1;
   }
   if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{046 dipolar P3M_init: node grid must be sorted, largest first} ");
+      ostringstream msg;
+      msg <<"dipolar P3M_init: node grid must be sorted, largest first";
+      runtimeError(msg);
     ret = 1;
   }
   

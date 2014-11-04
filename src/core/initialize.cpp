@@ -299,6 +299,7 @@ void on_coulomb_change()
   switch (coulomb.method) {
   case COULOMB_DH:
     break;    
+#ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
     if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
@@ -311,7 +312,6 @@ void on_coulomb_change()
     p3m_init();
     break;
 #endif
-#ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
@@ -535,9 +535,6 @@ void on_temperature_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_temperature_change\n", this_node));
 
-#ifdef ELECTROSTATICS
-
-#endif
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
     lb_reinit_parameters();
@@ -584,6 +581,11 @@ void on_parameter_change(int field)
     on_temperature_change();
     reinit_thermo = 1;
     break;
+#ifdef LEES_EDWARDS
+  case FIELD_LEES_EDWARDS_OFFSET:
+    lees_edwards_step_boundaries();
+    break;
+#endif
   case FIELD_TIMESTEP:
 #ifdef LB_GPU
     if(this_node == 0) {

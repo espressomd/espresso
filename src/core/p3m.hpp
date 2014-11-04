@@ -195,6 +195,7 @@ enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLA
 /** assign the physical charges using the tabulated charge assignment function.
     If store_ca_frac is true, then the charge fractions are buffered in cur_ca_fmp and
     cur_ca_frac. */
+
 void p3m_charge_assign();
 
 /** assign a single charge into the current charge grid. cp_cnt gives the a running index,

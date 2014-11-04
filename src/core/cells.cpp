@@ -38,6 +38,7 @@
 #include "verlet.hpp"
 #include "ghosts.hpp"
 #include "domain_decomposition.hpp"
+#include "lees_edwards_domain_decomposition.hpp"
 #include "nsquare.hpp"
 #include "layered.hpp"
 
@@ -464,8 +465,13 @@ void cells_update_ghosts()
     resort_particles = 1;
 
   if (resort_particles) {
+#ifdef LEES_EDWARDS
+    /* Communication step:  number of ghosts and ghost information */
+    cells_resort_particles(CELL_GLOBAL_EXCHANGE);
+#else
     /* Communication step:  number of ghosts and ghost information */
     cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
+#endif
   }
   else
     /* Communication step: ghost information */

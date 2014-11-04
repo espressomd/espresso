@@ -83,7 +83,7 @@ if { [ has_feature "SCAFACOS_P3M" ] } then {
     lappend accuracies 1e-3
 }
 
-if { [ has_feature "CUDA" ] } then {
+if { [ has_feature "CUDA" ] && [ has_feature "P3M" ] } then {
     proc setup_p3m_gpu {} {
         inter coulomb 1.0 p3m gpu 1.001 64 7 2.70746
         inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5 

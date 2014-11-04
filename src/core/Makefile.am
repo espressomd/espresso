@@ -63,6 +63,9 @@ libEspresso_la_SOURCES = \
 	lb-boundaries.cpp lb-boundaries.hpp \
 	lb-d3q18.hpp lb-d3q19.hpp \
 	lbgpu.cpp lbgpu.hpp\
+	lees_edwards.cpp lees_edwards.hpp \
+	lees_edwards_domain_decomposition.cpp lees_edwards_domain_decomposition.hpp \
+	lees_edwards_comms_manager.cpp lees_edwards_comms_manager.hpp \
 	metadynamics.cpp metadynamics.hpp \
 	modes.cpp modes.hpp \
 	molforces.cpp molforces.hpp \
@@ -77,7 +80,9 @@ libEspresso_la_SOURCES = \
 	random.cpp random.hpp \
 	rattle.cpp rattle.hpp \
 	reaction.cpp reaction.hpp \
+	Ringbuffer.hpp \
 	rotation.cpp rotation.hpp \
+	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
 	statistics_chain.cpp statistics_chain.hpp \
@@ -135,6 +140,7 @@ libEspresso_la_SOURCES += \
 	harmonic.cpp harmonic.hpp \
 	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
+	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \

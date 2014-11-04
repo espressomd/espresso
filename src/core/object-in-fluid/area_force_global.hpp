@@ -53,11 +53,13 @@ inline void calc_area_global(double *area, int molType){ //first-fold-then-the-s
 	Cell *cell;
 	Particle *p, *p1, *p2, *p3;
 	double p11[3],p22[3],p33[3];
+#ifdef LEES_EDWARDS
+    double vv[3];
+#endif
 	int img[3];
 	Bonded_ia_parameters *iaparams;
     int type_num, n_partners,id;
     BondedInteraction type;
-	char *errtxt;
 
 	int test=0;
 
@@ -83,32 +85,44 @@ inline void calc_area_global(double *area, int molType){ //first-fold-then-the-s
 					test++;
 					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
-					if (!p2) {
-						errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{area calc 078 bond broken between particles %d and %d (particles not stored on the same node - area_force_global1); n %d max %d} ",
-						  p1->p.identity, p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p2) {
+                        ostringstream msg;
+                        msg <<"area calc: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - area_force_global1); n " << p1->bl.n << " max " << p1->bl.max ;
+                        runtimeError(msg);
 						return;
 					}
 					/* fetch particle 3 */
 					//if(n_partners>2){
 					p3 = local_particles[p1->bl.e[j++]];
-					if (!p3) {
-						errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{area calc 079 bond broken between particles %d, %d and %d (particles not stored on the same node); n %d max %d} ",
-							p1->p.identity, p1->bl.e[j-2], p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p3) {
+                        ostringstream msg;
+                        msg <<"area calc: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - area_force_global1); n " << p1->bl.n << " max " << p1->bl.max ;
+                        runtimeError(msg);
 						return;
 					}
 					memcpy(p11, p1->r.p, 3*sizeof(double));
 					memcpy(img, p1->l.i, 3*sizeof(int));
-					fold_position(p11, img);
-									
+#ifdef LEES_EDWARDS
+					fold_position(p11, vv, img);
+#else
+                    fold_position(p11, img);
+#endif	
+                    
 					memcpy(p22, p2->r.p, 3*sizeof(double));
 					memcpy(img, p2->l.i, 3*sizeof(int));
-					fold_position(p22, img);
+#ifdef LEES_EDWARDS
+                    fold_position(p22, vv, img);
+#else
+                    fold_position(p22, img);
+#endif  
 				
 					memcpy(p33, p3->r.p, 3*sizeof(double));
 					memcpy(img, p3->l.i, 3*sizeof(int));
-					fold_position(p33, img);
+#ifdef LEES_EDWARDS
+                    fold_position(p33, vv, img);
+#else
+                    fold_position(p33, img);
+#endif  
 				
 					
 					get_n_triangle(p11,p22,p33,norm);
@@ -135,12 +149,14 @@ inline void add_area_global_force(double area, int molType){  //first-fold-then-
 	Cell *cell;
 	Particle *p, *p1, *p2, *p3;
 	double p11[3],p22[3],p33[3];
+#ifdef LEES_EDWARDS
+    double vv[3];
+#endif
 	int img[3];
 
 	Bonded_ia_parameters *iaparams;
     int type_num, n_partners,id;
     BondedInteraction type;
-	char *errtxt;
 
 	int test=0;
 	
@@ -168,32 +184,44 @@ inline void add_area_global_force(double area, int molType){  //first-fold-then-
 					test++;
 					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
-					if (!p2) {
-						errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"add area {078 bond broken between particles %d and %d (particles not stored on the same node - area_force_global2)}; n %d max %d ",
-						  p1->p.identity, p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p2) {
+                        ostringstream msg;
+                        msg <<"add area: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - area_force_global2); n " << p1->bl.n << " max " << p1->bl.max ;
+                        runtimeError(msg);
 						return;
 					}
 					/* fetch particle 3 */
 					//if(n_partners>2){
 					p3 = local_particles[p1->bl.e[j++]];
-					if (!p3) {
-						errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"add area {079 bond broken between particles %d, %d and %d (particles not stored on the same node)}; n %d max %d ",
-							p1->p.identity, p1->bl.e[j-2], p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p3) {
+                        ostringstream msg;
+                        msg <<"add area: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node); n " << p1->bl.n << " max " << p1->bl.max;
+                        runtimeError(msg);
 						return;
 					}
 					memcpy(p11, p1->r.p, 3*sizeof(double));
 					memcpy(img, p1->l.i, 3*sizeof(int));
-					fold_position(p11, img);
+#ifdef LEES_EDWARDS
+                    fold_position(p11, vv, img);
+#else
+                    fold_position(p11, img);
+#endif  
 									
 					memcpy(p22, p2->r.p, 3*sizeof(double));
 					memcpy(img, p2->l.i, 3*sizeof(int));
-					fold_position(p22, img);
+#ifdef LEES_EDWARDS
+                    fold_position(p22, vv, img);
+#else
+                    fold_position(p22, img);
+#endif  
 				
 					memcpy(p33, p3->r.p, 3*sizeof(double));
 					memcpy(img, p3->l.i, 3*sizeof(int));
-					fold_position(p33, img);
+#ifdef LEES_EDWARDS
+                    fold_position(p33, vv, img);
+#else
+                    fold_position(p33, img);
+#endif  
 				
 	
 					

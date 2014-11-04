@@ -681,6 +681,8 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "HARMONIC";    
   case BONDED_IA_QUARTIC:
     return "QUARTIC";
+  case BONDED_IA_BONDED_COULOMB:
+    return "BONDED_COULOMB";
   case BONDED_IA_SUBT_LJ:
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:
@@ -801,8 +803,8 @@ int interactions_sanity_checks()
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
-  default: break;
 #endif
+  default: break;
   }
 #endif /* ifdef ELECTROSTATICS */
 
