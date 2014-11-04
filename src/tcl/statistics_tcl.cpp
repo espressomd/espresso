@@ -185,6 +185,9 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
     int i, change;
     double shift[3];
     float *coord;
+#ifdef LEES_EDWARDS
+  double v_le[3], *velocities;
+#endif
 
     enum flag {
         NONE, FOLD_MOLS
@@ -221,24 +224,42 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
     freePartCfg();
     updatePartCfg(WITH_BONDS);
     if (!sortPartCfg()) {
-        char *errtxt = runtime_error(128);
-        ERROR_SPRINTF(errtxt, "{058 could not sort partCfg, particles have to start at 0 and have consecutive identities} ");
+        ostringstream msg;
+        msg <<"could not sort partCfg, particles have to start at 0 and have consecutive identities";
+        runtimeError(msg);
         return TCL_ERROR;
     }
     coord = (float*) malloc(n_part * 3 * sizeof (float));
+#ifdef LEES_EDWARDS
+  velocities = (double *)malloc(n_part*3*sizeof(double));
+#endif
     /* Construct the array coord*/
     for (i = 0; i < n_part; i++) {
         int dummy[3] = {0, 0, 0};
         double tmpCoord[3];
+#ifdef LEES_EDWARDS
+    v_le[0] = partCfg[i].m.v[0];
+    v_le[1] = partCfg[i].m.v[1];
+    v_le[2] = partCfg[i].m.v[2];
+#endif
         tmpCoord[0] = partCfg[i].r.p[0];
         tmpCoord[1] = partCfg[i].r.p[1];
         tmpCoord[2] = partCfg[i].r.p[2];
         if (flag == NONE) { // perform folding by particle
+#ifdef LEES_EDWARDS
+             fold_position(tmpCoord, v_le, dummy);
+#else
             fold_position(tmpCoord, dummy);
+#endif
         }
         coord[i * 3 ] = (float) (tmpCoord[0]);
         coord[i * 3 + 1] = (float) (tmpCoord[1]);
         coord[i * 3 + 2] = (float) (tmpCoord[2]);
+#ifdef LEES_EDWARDS
+    velocities[i*3]   = v_le[0];
+    velocities[i*3+1] = v_le[1];
+    velocities[i*3+2] = v_le[2];
+#endif
     }
 
 
@@ -254,7 +275,13 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
 
     //  Tcl_AppendResult(interp, "{ ", (char *)NULL);
     for (i = 0; i < n_part; i++) {
-        sprintf(buffer, " { %d %f %f %f } ", partCfg[i].p.identity, coord[i * 3], coord[i * 3 + 1], coord[i * 3 + 2]);
+#ifdef LEES_EDWARDS
+    sprintf(buffer, " { %d %f %f %f %f %f %f } ", partCfg[i].p.identity , 
+                                        coord[i*3] , coord[i*3+1] , coord[i*3+2] , 
+                                        velocities[i*3] , velocities[i*3+1] , velocities[i*3+2] );
+#else
+    sprintf(buffer, " { %d %f %f %f } ", partCfg[i].p.identity , coord[i*3] , coord[i*3+1] , coord[i*3+2] );
+#endif
         Tcl_AppendResult(interp, buffer, (char *) NULL);
     }
     //  Tcl_AppendResult(interp, "} ", (char *)NULL);
@@ -2405,8 +2432,9 @@ static int tclcommand_analyze_parse_and_print_dipole(Tcl_Interp *interp, int arg
     double dipole[3], total_q = 0.0;
     updatePartCfg(WITHOUT_BONDS);
     if (!sortPartCfg()) {
-        char *errtxt = runtime_error(128);
-        ERROR_SPRINTF(errtxt, "{059 tclcommand_analyze_parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
+        ostringstream msg;
+        msg <<"tclcommand_analyze_parse_and_print_dipole: could not sort particle config, particle ids not consecutive?";
+        runtimeError(msg);
         return TCL_ERROR;
     }
     for (i = 0; i < 3; i++) {

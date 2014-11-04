@@ -40,7 +40,7 @@ proc read_data {file} {
 }
 
 if { [catch {
-    read_data "ewaldgpuTESTSUITE_KURON_system.data"
+    read_data "ewaldgpu_system.data"
     set target_energy -5168.685115780581
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {

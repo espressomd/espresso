@@ -27,6 +27,11 @@
 #include "particle_data.hpp"
 #include "grid.hpp"
 
+/*use a !locally defined only! macro for the imaging call, just for tidiness.*/
+#ifdef LEES_EDWARDS
+#define fold_position(a, b) fold_position(a, vv, b)
+#endif
+
 /// set bending_force parameters
 int bending_force_set_params(int bond_type, double phi0, double kb);
 
@@ -48,6 +53,9 @@ inline int calc_bending_force(Particle *p2, Particle *p1, Particle *p3, Particle
 	double n1[3],n2[3],dn1,dn2,phi,aa,fac,penal;
 	int k;
 	double fp1[3],fp2[3],fp3[3],fp4[3];
+#ifdef LEES_EDWARDS
+    double vv[3];
+#endif
 	int img[3];
 
 	memcpy(fp1, p1->r.p, 3*sizeof(double));
@@ -90,6 +98,6 @@ inline int calc_bending_force(Particle *p2, Particle *p1, Particle *p3, Particle
 	}	
   return 0;
 }
-
+#undef fold_position
 #endif
 

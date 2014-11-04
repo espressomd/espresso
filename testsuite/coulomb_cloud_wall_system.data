@@ -1,8 +1,4 @@
 {variable  {box_l 10.0 10.0 10.0} }
-{interactions 
-	{coulomb 1.0 p3m gpu 1.001 64 7 2.70746 }
-	{coulomb epsilon  metallic n_interpol 32768 mesh_off 0.5 0.5 0.5}
-}
 {particles {id pos q f} 
 	{0 0.0 0.0 4.5 1.0 0.279738 -0.138254 5.20101}
 	{1 0.0 0.0 5.5 -1.0 0.294625 -0.277312 -4.9072}

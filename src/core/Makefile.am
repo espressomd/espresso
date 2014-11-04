@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -39,14 +39,14 @@ libEspresso_la_SOURCES = \
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
-	energy.cpp energy.hpp \
+	energy.cpp energy_inline.hpp energy.hpp \
 	external_potential.hpp external_potential.cpp \
 	errorhandling.cpp errorhandling.hpp \
 	fft.cpp fft.hpp \
 	fft-common.cpp fft-common.hpp \
 	fft-dipolar.cpp fft-dipolar.hpp \
 	forcecap.cpp forcecap.hpp \
-	forces.cpp forces.hpp \
+	forces.cpp forces_inline.hpp forces.hpp \
 	galilei.cpp galilei.hpp \
 	ghosts.cpp ghosts.hpp \
 	global.cpp global.hpp \
@@ -63,6 +63,9 @@ libEspresso_la_SOURCES = \
 	lb-boundaries.cpp lb-boundaries.hpp \
 	lb-d3q18.hpp lb-d3q19.hpp \
 	lbgpu.cpp lbgpu.hpp\
+	lees_edwards.cpp lees_edwards.hpp \
+	lees_edwards_domain_decomposition.cpp lees_edwards_domain_decomposition.hpp \
+	lees_edwards_comms_manager.cpp lees_edwards_comms_manager.hpp \
 	metadynamics.cpp metadynamics.hpp \
 	modes.cpp modes.hpp \
 	molforces.cpp molforces.hpp \
@@ -77,7 +80,9 @@ libEspresso_la_SOURCES = \
 	random.cpp random.hpp \
 	rattle.cpp rattle.hpp \
 	reaction.cpp reaction.hpp \
+	Ringbuffer.hpp \
 	rotation.cpp rotation.hpp \
+	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
 	statistics_chain.cpp statistics_chain.hpp \
@@ -133,7 +138,9 @@ libEspresso_la_SOURCES += \
 	endangledist.cpp endangledist.hpp \
 	fene.cpp fene.hpp \
 	harmonic.cpp harmonic.hpp \
+	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
+	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
@@ -216,7 +223,8 @@ cuda_verbose_0 = @echo "  NVCC     $@";
 # putting them into DEPDIR ensures configure creates empties dummies
 $(LOFILES): %.lo: %.cu
 	$(cuda_verbose)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -M -o $$depbase.Plo $<; \
+	$(NVCC) $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) \
+	  -M -MT $@ -o $$depbase.Plo $<; \
 	$(LIBTOOL) $(AM_V_lt) --tag=CUDA $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 		--mode=compile $(NVCC) $(DEFS) \
 		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \

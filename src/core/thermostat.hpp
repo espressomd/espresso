@@ -101,6 +101,25 @@ void thermo_heat_up();
 /** pendant to \ref thermo_heat_up */
 void thermo_cool_down();
 
+#ifdef LEES_EDWARDS
+/** locally defined funcion to find Vx relative to the LE shear frame
+    @param i      coordinate index
+    @param vel    velocity vector
+    @param pos    position vector
+    @return       adjusted (or not) i^th velocity coordinate */
+inline double le_frameV(int i, double *vel, double *pos) {
+
+   double relY;
+
+   if( i == 0 ){
+       relY  = pos[1] * box_l_i[1] - 0.5;
+       return( vel[0] - relY * lees_edwards_rate );
+   }
+   else
+       return vel[i];
+}
+#endif
+
 #ifdef NPT
 /** add velocity-dependend noise and friction for NpT-sims to the particle's velocity 
     @param dt_vj  j-component of the velocity scaled by time_step dt 
@@ -190,8 +209,13 @@ inline void friction_thermo_langevin(Particle *p)
           langevin_pref2_temp = sqrt(24.0*p->p.T*p->p.gamma/time_step);
         else
           langevin_pref2_temp = sqrt(24.0*temperature*p->p.gamma/time_step);
-        
+#ifdef LEES_EDWARDS
+        p->f.f[j] = langevin_pref1_temp*
+                       le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
+#else
         p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
+#endif
+
       }
       else {
         if(p->p.T >= 0.)
@@ -199,7 +223,13 @@ inline void friction_thermo_langevin(Particle *p)
         else          
           langevin_pref2_temp = langevin_pref2;
         
+#ifdef LEES_EDWARDS
+        p->f.f[j] = langevin_pref1*
+                  le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
+#else
         p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
+#endif
+
       }
 #elif defined (GAUSSRANDOMCUT)
       if(p->p.gamma >= 0.) {
@@ -210,7 +240,12 @@ inline void friction_thermo_langevin(Particle *p)
         else
           langevin_pref2_temp = sqrt(2.0*temperature*p->p.gamma/time_step);
         
+#ifdef LEES_EDWARDS
+        p->f.f[j] = langevin_pref1_temp*
+                       le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*gaussian_random_cut()*massf;
+#else
         p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*gaussian_random_cut()*massf;
+#endif
       }
       else {
         if(p->p.T >= 0.)
@@ -218,7 +253,12 @@ inline void friction_thermo_langevin(Particle *p)
         else          
           langevin_pref2_temp = langevin_pref2;
         
+#ifdef LEES_EDWARDS
+        p->f.f[j] = langevin_pref1*
+                  le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*gaussian_random_cut()*massf;
+#else
         p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*gaussian_random_cut()*massf;
+#endif
       }
 #elif defined (GAUSSRANDOM)
       if(p->p.gamma >= 0.) {
@@ -229,7 +269,12 @@ inline void friction_thermo_langevin(Particle *p)
         else
           langevin_pref2_temp = sqrt(2.0*temperature*p->p.gamma/time_step);
         
+#ifdef LEES_EDWARDS
+        p->f.f[j] = langevin_pref1_temp*
+                       le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*gaussian_random()*massf;
+#else
         p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*gaussian_random()*massf;
+#endif
       }
       else {
         if(p->p.T >= 0.)
@@ -237,14 +282,38 @@ inline void friction_thermo_langevin(Particle *p)
         else          
           langevin_pref2_temp = langevin_pref2;
         
+#ifdef LEES_EDWARDS
+        p->f.f[j] = langevin_pref1*
+                  le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*gaussian_random()*massf;
+#else
         p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*gaussian_random()*massf;
+#endif
       }
 #else
 #error No Noise defined
 #endif
 
-#else
 
+#else 
+
+#ifdef LEES_EDWARDS
+/*******************different shapes of noise */
+#if defined (FLATNOISE)
+      p->f.f[j] = langevin_pref1*le_frameV(j, p->m.v, p->r.p)
+                  * PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
+#elif defined (GAUSSRANDOMCUT)
+      p->f.f[j] = langevin_pref1*le_frameV(j, p->m.v, p->r.p)
+                  * PMASS(*p) + langevin_pref2*gaussian_random_cut()*massf;
+#elif defined (GAUSSRANDOM)
+      p->f.f[j] = langevin_pref1*le_frameV(j, p->m.v, p->r.p)
+                  * PMASS(*p) + langevin_pref2*gaussian_random()*massf;
+#else
+#error No Noise defined
+#endif
+/*******************end different shapes of noise */
+
+#else //ndef LEES_EDWARDS
+/*******************different shapes of noise */
 #if defined (FLATNOISE)
       p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
 #elif defined (GAUSSRANDOMCUT)
@@ -254,6 +323,8 @@ inline void friction_thermo_langevin(Particle *p)
 #else
 #error No Noise defined
 #endif
+/*******************end different shapes of noise */
+#endif //end ifdef LEES_EDWARDS
 
 #endif
     }

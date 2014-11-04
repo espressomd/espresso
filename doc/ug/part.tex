@@ -185,7 +185,7 @@ set first because of the spatial decomposition.
   deprecated and will be removed in some future version.}
 
 \subsection{Getting particle properties}
-
+\index{Lees-Edwards Boundaries}
 \begin{essyntax}
   \variant{1}
   part \var{pid} print
@@ -264,6 +264,12 @@ a tcl-list with the same format as specified above:
 {3...{{...}...}}
 ...
 \end{tclcode}
+
+By default the particle position returned is {\bf unfolded}, for convenience in diffusion calculations etc. 
+If \feature{LEES_EDWARDS} is turned on then particle positions are output folded by default, 
+to try and avoid the common error that imaged positions and un-imaged velocities (or vice-versa) are saved together.  
+If the unfolded position is requested explicitly in a Lees-Edwards simulation, then the unfolded velocities will also be returned.
+
 
 \subsection{Deleting  particles}
 \label{tcl:part:delete}

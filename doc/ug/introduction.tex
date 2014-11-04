@@ -111,30 +111,81 @@ then perform the actual productive simulation.
 
 \section{Available simulation methods}
 
-\begin{itemize}
-\item Ensembles: 
-  \begin{itemize} 
-  \item NVE
-  \item NVT
-  \item NpT
-  \end{itemize}
-\item Algorithms for charged systems:
-  \begin{itemize}
-  \item P3M for fully periodic systems
-  \item ELC and MMM-family of algorithms for charged systems with
-    non-periodic boundary conditions
-  \item MEMD (Maggs algorithm)
-  \end{itemize}
-\item Hydrodynamics:
-  \begin{itemize}
-  \item DPD (as a thermostat)
-  \item Lattice-Boltzmann
-  \end{itemize}
-\item Non-equilibrium MD to simulate shear flow
-\item Parallel tempering
-\item Metadynamics
-\item Rigid bodies via virtual sites
-\end{itemize}
+\es provides a number of useful methods. The following table shows the
+various methods as well as their status. The table distinguishes
+between the state of the development of a certain feature and the
+state of its use. We distinguish between five levels:
+\begin{description}
+\item[Core] means that the method is part of the core of \es, and that
+  it is extensively developed and used by many people.
+\item[Good] means that the method is developed and used by independent
+  people from different groups.
+\item[Group] means that the method is developed and used in one group.
+\item[Single] means that the method is developed and used by one
+  person only.
+\item[None] means that the method is developed and used by nobody.
+\end{description}
+If you believe that the status of a certain method is wrong, please
+report so to the developers.
+
+\newpage
+\definecolor{supportgrey}{rgb}{0.9,0.9,0.9}
+\rowcolors{1}{supportgrey}{}
+\begin{longtable}{|l|l|l|}
+  \hline
+  \textbf{Feature} & \textbf{Development Status} & \textbf{Usage Status}\\\hline%
+  \multicolumn{3}{|c|}{\textbf{Integrators, Thermostats, Barostats}} \\
+  Velocity-Verlet Integrator          & Core   & Core   \\
+  Langevin Thermostat                 & Core   & Core   \\
+  GHMC Thermostat                     & Single & Single \\
+  DPD Thermostat                      & None   & Good   \\
+  Isotropic NPT                       & None   & Single \\
+  NEMD                                & None   & Group  \\
+  Quarternion Integrator              & None   & Good   \\
+  \multicolumn{3}{|c|}{\textbf{Interactions}} \\
+  Short-range Interactions            & Core   & Core   \\
+  Directional Lennard-Jones           & Single & Single \\
+  Gay-Berne Interaction               & None   & Single \\
+  Constraints                         & Core   & Core   \\
+  Relative Virtual Sites              & Good   & Good   \\
+  Center-of-mass Virtual Sites        & None   & Good   \\
+  RATTLE Rigid Bonds                  & None   & Group  \\
+  \multicolumn{3}{|c|}{\textbf{Coulomb Interaction}} \\
+  P3M                                 & Core   & Core   \\
+  P3M on GPU                          & Single & Single \\
+  Dipolar P3M                         & Group  & Good   \\
+  Ewald on GPU                        & Single & Single \\
+  MMM1D                               & Single & Good   \\
+  MMM2D                               & Single & Good   \\
+  MMM1D on GPU                        & Single & Single \\
+  ELC                                 & Good   & Good   \\
+  MEMD                                & Single & Group  \\
+  ICC*                                & Group  & Group  \\
+  \multicolumn{3}{|c|}{\textbf{Hydrodynamic Interaction}} \\
+  Lattice-Boltzmann                   & Core   & Core   \\
+  Lattice-Boltzmann on GPU            & Group  & Core   \\
+  DPD                                 & None   & Good   \\
+  Shan-Chen Multicomponent Fluid      & Group  & Group  \\
+  Tunable Slip Boundary               & Single & Single \\
+  \multicolumn{3}{|c|}{\textbf{Analysis}} \\
+  uwerr                               & None   & Good   \\
+  \multicolumn{3}{|c|}{\textbf{Input/Output}} \\
+  Blockfiles                          & Core   & Core   \\
+  VTF output                          & Core   & Core   \\
+  VTK output                          & Group  & Group  \\
+  PDB output                          & Good   & Good   \\
+  Online visulation with VMD          & Good   & Good   \\
+  \multicolumn{3}{|c|}{\textbf{Miscellaneous}} \\
+  Grand canonical feature             & Single & Single \\
+  Metadynamics                        & Single & Single \\
+  Parallel Tempering                  & Single & Single \\
+  Electrokinetics                     & Group  & Group  \\
+  Object-in-fluid                     & Group  & Group  \\
+  Collision Detection                 & Group  & Group  \\
+  Catalytic Reactions                 & Single & Single \\
+  mbtools package                     & Group  & Group  \\
+  \hline
+\end{longtable}
 
 \section{Basic program structure}
 \label{sec:structure}

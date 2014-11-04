@@ -22,7 +22,8 @@ AM_DEFAULT_SOURCE_EXT = .cpp
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
 	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
-LIBS =  $(top_builddir)/src/core/libEspresso.la @LIBS@
+LIBS =  $(top_builddir)/src/core/libEspresso.la \
+	@LIBS@
 
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
@@ -32,18 +33,19 @@ endif
 SUFFIXES = .pyx
 
 EXTRA_DIST = gen_pxiconfig.py
-PYFILES = __init__.py
+PYFILES = __init__.py \
+	  system.py \
+	  highlander.py
 
 PYXFILES =  \
-	System.pyx \
+	_init.pyx \
+	_system.pyx \
 	particle_data.pyx \
 	analyze.pyx \
-	cellsystem.pyx \
 	changeVolume.pyx \
 	code_info.pyx \
 	cuda_init.pyx \
 	debye_hueckel.pyx \
-	global_variables.pyx \
 	integrate.pyx \
 	interactions.pyx \
 	invalidateSystem.pyx \
@@ -51,22 +53,24 @@ PYXFILES =  \
 	utils.pyx
 
 PXDFILES = \
-	System.pxd \
+	c_analyze.pxd \
+	_espresso.pxd \
 	particle_data.pxd \
 	analyze.pxd \
-	c_analyze.pxd \
-	cellsystem.pxd \
 	changeVolume.pxd \
 	code_info.pxd \
 	cuda_init.pxd \
 	debye_hueckel.pxd \
-	global_variables.pxd \
 	integrate.pxd \
 	interactions.pxd \
 	invalidateSystem.pxd \
 	thermostat.pxd \
 	utils.pxd
-# lb has not been updated yet
+
+if TCL
+LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
+PYXFILES += _tcl.pyx
+endif
 
 # Python files have to be copied to the build dir
 python-all:
@@ -95,8 +99,9 @@ cython_verbose = $(cython_verbose_@AM_V@)
 cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
 cython_verbose_0 = @echo "  CYTHON   $@";
 
-$(CPPFILES): %.cpp: %.pyx %.pxd myconfig.pxi
-	$(cython_verbose)cython -I $(builddir) $< -o $@
+$(CPPFILES): %.cpp: %.pyx myconfig.pxi
+	$(cython_verbose)cython \
+	  -I $(builddir) $< -o $@
 
 CLEANFILES += $(CPPFILES)
 

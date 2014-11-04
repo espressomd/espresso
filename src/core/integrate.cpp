@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include "lees_edwards.hpp"
 #include "utils.hpp"
 #include "integrate.hpp"
 #include "reaction.hpp"
@@ -126,11 +127,12 @@ void finalize_p_inst_npt();
 
 void integrator_sanity_checks()
 {
-  char *errtext;
+  //char *errtext;
 
   if ( time_step < 0.0 ) {
-    errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext, "{010 time_step not set} ");
+      ostringstream msg;
+      msg <<"time_step not set";
+      runtimeError(msg);
   }
 }
 
@@ -140,8 +142,9 @@ void integrator_npt_sanity_checks()
 {  
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     if (nptiso.piston <= 0.0) {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
+        ostringstream msg;
+        msg <<"npt on, but piston mass not set";
+        runtimeError(msg);
     }
 
 #ifdef ELECTROSTATICS
@@ -154,8 +157,9 @@ void integrator_npt_sanity_checks()
       case COULOMB_P3M:   break;
 #endif /*P3M*/
       default: {
-        char *errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{014 npt only works with P3M, Debye-Huckel or reaction field} ");
+        ostringstream msg;
+        msg <<"npt only works with P3M, Debye-Huckel or reaction field";
+        runtimeError(msg);
       }
     }
 #endif /*ELECTROSTATICS*/
@@ -168,8 +172,9 @@ void integrator_npt_sanity_checks()
       case DIPOLAR_P3M: break;
 #endif /* DP3M */
       default: {
-        char *errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
+        ostringstream msg;
+        msg <<"NpT does not work with your dipolar method, please use P3M.";
+        runtimeError(msg);
       }
     }
 #endif  /* ifdef DIPOLES */
@@ -205,8 +210,6 @@ void integrate_ensemble_init()
 
 void integrate_vv(int n_steps, int reuse_forces)
 {
-  int i;
-
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -262,8 +265,8 @@ void integrate_vv(int n_steps, int reuse_forces)
   n_verlet_updates = 0;
 
   /* Integration loop */
-  for(i=0;i<n_steps;i++) {
-    INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
+  for (int step=0; step<n_steps; step++) {
+    INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
     save_old_pos();
@@ -271,7 +274,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 
 #ifdef GHMC
     if(thermo_switch & THERMO_GHMC) {
-      if ((int) fmod(i,ghmc_nmd) == 0)
+      if (step % ghmc_nmd == 0)
         ghmc_momentum_update();
     }
 #endif
@@ -284,10 +287,10 @@ void integrate_vv(int n_steps, int reuse_forces)
        NOTE 2: Depending on the integration method Step 1 and Step 2 
        cannot be combined for the translation. 
     */
-    if(integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
-      propagate_vel();  propagate_pos(); }
-    else
-      propagate_vel_pos();
+    if (integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
+      propagate_vel();
+      propagate_pos(); 
+    } else propagate_vel_pos();
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained bond */
@@ -382,7 +385,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 
 #ifdef GHMC
     if(thermo_switch & THERMO_GHMC) {
-      if ((int) fmod(i,ghmc_nmd) == ghmc_nmd-1)
+      if (step % ghmc_nmd == ghmc_nmd-1)
         ghmc_mc();
     }
 #endif
@@ -562,9 +565,10 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
-	char *errtxt = runtime_error(128 + 3*ES_DOUBLE_SPACE);
-        ERROR_SPRINTF(errtxt, "{015 your choice of piston=%g, dt=%g, p_diff=%g just caused the volume to become negative, decrease dt} ",
-                nptiso.piston,time_step,nptiso.p_diff);
+          ostringstream msg;
+          msg << "your choice of piston= "<< nptiso.piston << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
+                 << " just caused the volume to become negative, decrease dt";
+          runtimeError(msg);
 	nptiso.volume = box_l[0]*box_l[1]*box_l[2];
 	scal[2] = 1;
       }
@@ -778,10 +782,46 @@ void propagate_vel_pos()
       propagate_omega_quat_particle(&p[i]);
 #endif
 
-      /* Verlet criterion check */
-      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
+#ifdef LEES_EDWARDS
+      /* test for crossing of a y-pbc: requires adjustment of velocity.*/
+      {
+                    int   b1, delta_box;
+                    b1           = (int)floor( p[i].r.p[1]*box_l_i[1]);
+                    if( b1 != 0 ){
+                         delta_box    = b1 - (int)floor(( p[i].r.p[1] - p[i].m.v[1])*box_l_i[1] );
+                         if( abs(delta_box) > 1 ){
+                             fprintf(stderr, "Error! Particle moved more than one box length in 1 step\n");
+                             exit( 8 );
+                         } 
+                         p[i].m.v[0]     -= delta_box * lees_edwards_rate;   
+                         p[i].r.p[0]     -= delta_box * lees_edwards_offset; 
+                         p[i].r.p[1]     -= delta_box * box_l[1];
+                         p[i].l.i[1]     += delta_box; 
+                         while( p[i].r.p[1] >  box_l[1] ) {p[i].r.p[1] -= box_l[1]; p[i].l.i[1]++;}
+                         while( p[i].r.p[1] <  0.0 )      {p[i].r.p[1] += box_l[1]; p[i].l.i[1]--;}
+                         resort_particles = 1;
+                    }
+                    /* Branch prediction on most systems should mean there is minimal cost here */ 
+                    while( p[i].r.p[0] >  box_l[0] ) {p[i].r.p[0] -= box_l[0]; p[i].l.i[0]++;}
+                    while( p[i].r.p[0] <  0.0 )      {p[i].r.p[0] += box_l[0]; p[i].l.i[0]--;}
+                    while( p[i].r.p[2] >  box_l[2] ) {p[i].r.p[2] -= box_l[2]; p[i].l.i[2]++;}
+                    while( p[i].r.p[2] <  0.0 )      {p[i].r.p[2] += box_l[2]; p[i].l.i[2]--;}
+      }
+#endif
+
+      /* Verlet criterion check*/
+      if(SQR(p[i].r.p[0]-p[i].l.p_old[0]) 
+        +SQR(p[i].r.p[1]-p[i].l.p_old[1])
+        +SQR(p[i].r.p[2]-p[i].l.p_old[2]) > skin2) 
+            resort_particles=1;
+
+
     }
   }
+
+#ifdef LEES_EDWARDS /* would be nice to be more refined about this */
+  resort_particles = 1;
+#endif
 
   announce_resort_particles();
 

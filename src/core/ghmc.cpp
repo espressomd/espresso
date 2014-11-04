@@ -24,6 +24,8 @@
 
 #include <cmath>
 #include "utils.hpp"
+#include "integrate.hpp"
+#include "thermostat.hpp"
 
 #include "ghmc.hpp"
 #include "random.hpp"
