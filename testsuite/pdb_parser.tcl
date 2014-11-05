@@ -23,6 +23,6 @@ puts "----------------------------------------------"
 puts "- Testcase pdb_parser.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------------"
 
-readpdb pdb_file pdb_parser.pdb.data type 10 first_id 0 itp_file pdb_parser.itp.data
+readpdb pdb_file pdb_parser.pdb.data type 10 first_id 0 itp_file pdb_parser.itp.data fit_to_box
 
 puts [part]

@@ -24,13 +24,20 @@
 #include "PdbParser.hpp"
 #include "particle_data.hpp"
 
+struct PdbLJInteraction {
+  int other_type;
+  double epsilon,sigma;
+};
+
 /** Call only on the master node: Parse pdb file and add contained particles.
     @param pdb_file Filename of the pdb file.
     @first_id Id of the first particle to add.
     @type Type for the particles.
+    @lennard_jones Should lj iteractions be added from the itp file.
+    @fit Should particles be rescaled to box.
     @return Number of particles that were added.
  */
 
-int pdb_add_particles_from_file(char *pdb_file, int first_id, int type,
-				char *itp_file=NULL, int first_type=0);
+int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions,
+				char *itp_file=NULL, int first_type=0, bool fit = false);
 #endif
