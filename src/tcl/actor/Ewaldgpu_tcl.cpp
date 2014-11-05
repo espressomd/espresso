@@ -28,15 +28,6 @@ int tclprint_to_result_ewaldgpu(Tcl_Interp *interp)
 }
 int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char ** argv)
 {
-	double r_cut=-1;
-	int num_kx=-1;
-	int num_ky=-1;
-	int num_kz=-1;
-	double accuracy=-1;
-	double alpha=-1;
-	IntList il;
-	init_intlist(&il);
-
   //PARSE EWALD COMMAND LINE
   if (argc < 1)
   {
@@ -67,7 +58,6 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_notune(Tcl_Interp * interp, int argc
 	int num_kx=-1;
 	int num_ky=-1;
 	int num_kz=-1;
-	double accuracy=-1;
 	double alpha=-1;
 	IntList il;
 	init_intlist(&il);
