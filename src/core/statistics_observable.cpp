@@ -1009,10 +1009,6 @@ int observable_calc_structure_factor(observable* self) {
   int l;
   int order, order2, n;
   double twoPI_L, C_sum, S_sum, qr; 
-//  DoubleList *scattering_length;
-  //observable_sf_params* params;
-  //params = (observable_sf_params*) self->container;
-//  scattering_length = params->scattering_length;
   const double scattering_length=1.0;
   int* tmp = (int*)self->container;
   order = *tmp;
