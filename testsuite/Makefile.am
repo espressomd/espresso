@@ -74,6 +74,7 @@ tests = \
 	mdlc.tcl \
 	mmm1d.tcl \
 	mmm1dgpu.tcl \
+	ewaldgpu.tcl \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \

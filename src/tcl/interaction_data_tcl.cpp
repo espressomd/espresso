@@ -74,6 +74,7 @@
 #include "p3m_tcl.hpp"
 #include "reaction_field_tcl.hpp"
 #include "actor/Mmm1dgpu_tcl.hpp"
+#include "actor/Ewaldgpu_tcl.hpp"
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -192,6 +193,10 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 
   #ifdef MMM1D_GPU
   REGISTER_COULOMB("mmm1dgpu", tclcommand_inter_coulomb_parse_mmm1dgpu);
+  #endif
+
+  #ifdef EWALD_GPU
+  REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
   #endif
 
   /* fallback */
@@ -526,6 +531,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
 #endif
   case COULOMB_MMM2D: tclprint_to_result_MMM2D(interp); break;
   case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU: tclprint_to_result_ewaldgpu(interp); break;
+#endif
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);

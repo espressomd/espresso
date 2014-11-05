@@ -37,6 +37,7 @@
 #include "mmm2d.hpp"
 #include "maggs.hpp"
 #include "elc.hpp"
+#include "actor/EwaldgpuForce.hpp"
 #include "lj.hpp"
 #include "ljgen.hpp"
 #include "ljangle.hpp"
@@ -449,6 +450,12 @@ static void recalc_global_maximal_nonbonded_cutoff()
       max_cut_global = r_cut;
     break;
   }
+#endif
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU:
+    if (max_cut_global < ewaldgpu_params.rcut)
+        max_cut_global = ewaldgpu_params.rcut;
+  break;
 #endif
   case COULOMB_DH:
     if (max_cut_global < dh_params.r_cut)

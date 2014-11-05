@@ -170,6 +170,7 @@ libEspresso_la_SOURCES += \
 	actor/ActorList.cpp actor/ActorList.hpp \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
+	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
@@ -195,6 +196,7 @@ CUDA_SOURCE_FILES = \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
+	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu
 
 # include the dependency tracking files
@@ -205,7 +207,10 @@ include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
+include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
+include ./actor/$(DEPDIR)/EwaldgpuForce.Plo
+include ./actor/$(DEPDIR)/EwaldgpuForce_cuda.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 

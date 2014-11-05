@@ -142,6 +142,7 @@ libEspressoTcl_la_SOURCES += \
 # Generic actors
 libEspressoTcl_la_SOURCES += \
 	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
+	actor/Ewaldgpu_tcl.cpp actor/Ewaldgpu_tcl.hpp \
 	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
 
 if CUDA

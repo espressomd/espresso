@@ -1466,6 +1466,61 @@ have the following meaning:
 \end{description}
 
 
+\subsection{Coulomb Ewald GPU}
+\label{sec:coulombewald}
+\index{EwaldGPU method|mainindex}
+\index{interactions!EwaldGPU|mainindex}
+
+\begin{essyntax}
+  inter coulomb \var{l_B} ewaldgpu 
+  \var{r_\mathrm{cut}} \alt{\var{K_\mathrm{cut}} \asep \{\var{K_\mathrm{cut,x}} \var{K_\mathrm{cut,y}} \var{K_\mathrm{cut,x}}\}} \var{alpha}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+This command activates the Ewald method to compute the electrostatic
+interactions between charged particles.  The far field is computed by the GPU with single precision and the near field by the CPU with double precision. It only works for the case of cubic boxes.
+\begin{description}
+\item[\var{l_B}] Bjerrum length as positive floating point number
+\item[\var{r_\mathrm{cut}}] Real space cutoff as positive floating point number
+\item[\var{K_\mathrm{cut}}] Reciprocal space cutoff as single positive integer
+\item[\var{K_\mathrm{cut,xyz}}] Reciprocal space cutoff in x, y and z direction  (relevant for noncubic boxes)
+\item[\var{alpha}] Ewald parameter as positive floating point number
+\end{description}
+
+\subsubsection{Tuning Ewald GPU}
+\label{ssec:tuneewaldgpu}
+\begin{essyntax}
+  inter coulomb \var{l_B} ewaldgpu tune
+  accuracy \var{accuracy} precision \var{precision}
+  K_max \var{K_\mathrm{max}}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+The tuning algorithm first computes the optimal \var{r_\mathrm{cut}} and \var{alpha} for every \var{K_\mathrm{cut}} between one and \var{K_\mathrm{max}} as described in \cite{kolafa92}. Then the performance for all those (\var{K_\mathrm{cut}}, \var{r_\mathrm{cut}}, \var{alpha})-triplets will be measured via a short test simulation and the fastest will be chosen. 
+
+\begin{description}
+\item[\var{accuracy}] Maximal allowed root mean square error regarding the forces
+\item[\var{precision}] Determines how precise alpha will be computed
+\item[\var{K_\mathrm{max}}] Maximal reciprocal space cutoff \var{K_\mathrm{cut}} to be tested in the tuning algorithm
+\end{description}
+
+\subsubsection{Tuning Alpha Ewald GPU}
+\label{ssec:tunealphaewaldgpu}
+\begin{essyntax}
+  inter coulomb \var{l_B} ewaldgpu tunealpha
+  \var{r_\mathrm{cut}} \alt{\var{K_\mathrm{cut}} \asep \{\var{K_\mathrm{cut,x}} \var{K_\mathrm{cut,y}} \var{K_\mathrm{cut,x}}\}} \var{precision}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+If \var{K_\mathrm{cut}} and \var{r_\mathrm{cut}} are given by the user, then \keyword{tunealpha} computes the optimal \var{alpha} with the chosen \var{precision} as described in \cite{kolafa92}. But in general \keyword{tune} should be chosen for tuning. 
+
+
 \subsection{Debye-H\"uckel potential}
 \index{Debye-H\"uckel potential|mainindex}
 \index{interactions!Debye-H\"uckel|mainindex}
