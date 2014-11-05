@@ -20,7 +20,7 @@ Ewaldgpu_params ewaldgpu_params;
 cudaEvent_t *start, *stop;
 cudaStream_t    *stream0;
 
-void cuda_check_error(const dim3 &block, const dim3 &grid,char *function, char *file, unsigned int line);
+void cuda_check_error(const dim3 &block, const dim3 &grid,const char *function, const char *file, unsigned int line);
 
 //Error handler
 static void HandleError(cudaError_t err,const char *file,int line)
@@ -1056,7 +1056,7 @@ void EwaldgpuForce::GPU_q_sqr(SystemInterface &s)
 	//Copy the values back from the GPU to the CPU
 	HANDLE_ERROR( cudaMemcpy( m_q_sqr, m_dev_q_sqr,sizeof(real),cudaMemcpyDeviceToHost) );
 }
-void cuda_check_error(const dim3 &block, const dim3 &grid, char *function, char *file, unsigned int line)
+void cuda_check_error(const dim3 &block, const dim3 &grid, const char *function, const char *file, unsigned int line)
 {
   err=cudaGetLastError();
   if (err!=cudaSuccess)

@@ -47,25 +47,20 @@ int tclcommand_inter_coulomb_parse_ewaldgpu(Tcl_Interp * interp, int argc, char 
   //Tune
   if (ARG0_IS_S("tune"))
   {
-    int status = tclcommand_inter_coulomb_parse_ewaldgpu_tune(interp, argc-1, argv+1, 0);
-    if(status==TCL_OK) return TCL_OK;
-    if(status==TCL_ERROR) return TCL_ERROR;
+    return tclcommand_inter_coulomb_parse_ewaldgpu_tune(interp, argc-1, argv+1, 0);
   }
   //Tune alpha
   else if (ARG0_IS_S("tunealpha"))
   {
-  	int status = tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(interp, argc-1, argv+1);
-  	if(status==TCL_OK) return TCL_OK;
-  	if(status==TCL_ERROR) return TCL_ERROR;
+  	return tclcommand_inter_coulomb_parse_ewaldgpu_tunealpha(interp, argc-1, argv+1);
   }
   //No tuning
   else
   {
-  	int status = tclcommand_inter_coulomb_parse_ewaldgpu_notune(interp, argc, argv);
-  	if(status==TCL_OK) return TCL_OK;
-  	if(status==TCL_ERROR) return TCL_ERROR;
+  	return tclcommand_inter_coulomb_parse_ewaldgpu_notune(interp, argc, argv);
   }
 }
+
 int tclcommand_inter_coulomb_parse_ewaldgpu_notune(Tcl_Interp * interp, int argc, char ** argv)
 {
 	double r_cut=-1;
