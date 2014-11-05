@@ -25,10 +25,10 @@ void EwaldgpuForce::compute_num_k()
 			for (long long iz=-m_num_kz; iz<=m_num_kz; iz++)
 			{
 				if(ix*(2*m_num_ky+1)*(2*m_num_kz+1)+iy*(2*m_num_kz+1)+iz >= 0//Half m_k-space
-				   and pow(ix,2)*pow((long long)m_num_ky,2)*pow((long long)m_num_kz,2)
-				   	 + pow(iy,2)*pow((long long)m_num_kx,2)*pow((long long)m_num_kz,2)
-				   	 + pow(iz,2)*pow((long long)m_num_kx,2)*pow((long long)m_num_ky,2)
-				   	 <=pow((long long)m_num_kx,2)*pow((long long)m_num_ky,2)*pow((long long)m_num_kz,2))//m_k-space ellipsoid
+				   and SQR(ix)*SQR(m_num_ky)*SQR(m_num_kz)
+				   	 + SQR(iy)*SQR(m_num_kx)*SQR(m_num_kz)
+				   	 + SQR(iz)*SQR(m_num_kx)*SQR(m_num_ky)
+				   	 <=SQR(m_num_kx)*SQR(m_num_ky)*SQR(m_num_kz))//m_k-space ellipsoid
 				{
 					Index+=1;
 				}
@@ -49,18 +49,18 @@ void EwaldgpuForce::compute_k_AND_influence_factor()
 			for (long long iz=-m_num_kz; iz<=m_num_kz; iz++)
 			{
 				if(ix*(2*m_num_ky+1)*(2*m_num_kz+1)+iy*(2*m_num_kz+1)+iz >= 0//Half m_k-space
-				   and pow(ix,2)*pow((long long)m_num_ky,2)*pow((long long)m_num_kz,2)
-				   	 + pow(iy,2)*pow((long long)m_num_kx,2)*pow((long long)m_num_kz,2)
-				   	 + pow(iz,2)*pow((long long)m_num_kx,2)*pow((long long)m_num_ky,2)
-				   	 <=pow((long long)m_num_kx,2)*pow((long long)m_num_ky,2)*pow((long long)m_num_kz,2))//m_k-space ellipsoid
+				   and SQR(ix)*SQR(m_num_ky)*SQR(m_num_kz)
+				   	 + SQR(iy)*SQR(m_num_kx)*SQR(m_num_kz)
+				   	 + SQR(iz)*SQR(m_num_kx)*SQR(m_num_ky)
+				   	 <=SQR(m_num_kx)*SQR(m_num_ky)*SQR(m_num_kz))//m_k-space ellipsoid
 				{
 					//m_k vectors
 					m_k[Index] = 2*M_PI/m_box_l[0]*ix;
 					m_k[Index+m_num_k] = 2*M_PI/m_box_l[1]*iy;
 					m_k[Index+2*m_num_k] = 2*M_PI/m_box_l[2]*iz;
 					//Influence factor
-					k_sqr= pow(m_k[Index],2) + pow(m_k[Index+m_num_k],2) + pow(m_k[Index+2*m_num_k],2);
-					m_infl_factor[Index] = 8*M_PI/m_V*expf(-k_sqr/(4*pow(m_alpha,2)))/k_sqr;
+					k_sqr= SQR(m_k[Index]) + SQR(m_k[Index+m_num_k]) + SQR(m_k[Index+2*m_num_k]);
+					m_infl_factor[Index] = 8*M_PI/m_V*expf(-k_sqr/(4*SQR(m_alpha)))/k_sqr;
 					//Index
 					Index+=1;
 				}
@@ -275,7 +275,7 @@ double EwaldgpuForce::compute_E_error_estimate_r(double alpha, double rcut, doub
 {
 	//Compute the r space part of the force error estimate
   double std_deviation;
-  std_deviation = q_sqr*pow(rcut/(2.0*box_l[0]*box_l[1]*box_l[2]),0.5) * exp(-pow(alpha,2)*pow(rcut,2)) / (pow(alpha*rcut,2));  // Kolafa-Perram, eq. 18
+  std_deviation = q_sqr*pow(rcut/(2.0*box_l[0]*box_l[1]*box_l[2]),0.5) * exp(-SQR(alpha)*SQR(rcut)) / (SQR(alpha*rcut));  // Kolafa-Perram, eq. 18
 
   return std_deviation;
 }
@@ -283,7 +283,7 @@ double EwaldgpuForce::compute_E_error_estimate_k(double alpha, int num_kx, int n
 {
   //Compute the r space part of the force error estimate
   double std_deviation;
-	std_deviation = q_sqr * alpha * pow(M_PI,-2.0) * pow(num_kx,-1.5) * exp(-(pow(M_PI*num_kx/(alpha*(box_l[0]+box_l[1]+box_l[2])/3.0),2))); //Kolafa Perram, eq. 32
+	std_deviation = q_sqr * alpha * pow(M_PI,-2.0) * pow(num_kx,-1.5) * exp(-(SQR(M_PI*num_kx/(alpha*(box_l[0]+box_l[1]+box_l[2])/3.0)))); //Kolafa Perram, eq. 32
   return std_deviation;
 }
 double EwaldgpuForce::E_estimate_error(double rcut, int num_kx, int num_ky, int num_kz, double alpha, double q_sqr, double box_l[3])
@@ -332,7 +332,7 @@ double EwaldgpuForce::compute_q_sqare(Particle *particle)
 
 	for(int i = 0; i < n_part; i++)
 	{
-		q_sqr += pow(particle[i].p.q,2);
+		q_sqr += SQR(particle[i].p.q);
 	}
   return q_sqr;
 }
