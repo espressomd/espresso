@@ -245,7 +245,7 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
 }
 
 void add_external_potential_tabulated_forces(ExternalPotential* e, Particle* p) {
-  if (p->p.type >= e->n_particle_types) {
+  if (p->p.type >= e->n_particle_types || e->scale[p->p.type] == 0 ) {
     return;
   }
   double field[3];
