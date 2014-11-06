@@ -21,6 +21,8 @@ source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "EWALD_GPU"
+# for more than 2 nodes, the cutoff will become too large
+require_max_nodes_per_side 2
 
 puts "-------------------------------------------"
 puts "- Testcase ewaldgpu.tcl running on [format %02d [setmd n_nodes]] nodes: -"
