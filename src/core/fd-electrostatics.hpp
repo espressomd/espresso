@@ -1,3 +1,7 @@
+#ifndef _FD-ELECTROSTATICS_HPP
+#define _FD-ELECTROSTATICS_HPP
+
+
 #ifdef __CUDACC__
 #include <cuda.h>
 #include <cufft.h>
@@ -49,3 +53,6 @@ class FdElectrostatics {
     cufftHandle plan_ifft;
     bool initialized;
 };
+
+
+#endif
