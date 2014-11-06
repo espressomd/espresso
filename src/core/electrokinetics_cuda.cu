@@ -21,8 +21,10 @@
 
 #include <cuda.h>
 #include <cufft.h>
+#include <iostream>
 #include <stdio.h>
 #include <sstream>
+#include <string>
 #include "constraint.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -1710,18 +1712,16 @@ int ek_init() {
     if(electrostatics != NULL)
       delete electrostatics;
 
-    FdElectrostatics::InputParameters es_parameters;
-    es_parameters.bjerrum_length = ek_parameters.bjerrumlength;
-    es_parameters.kT = ek_parameters.T;
-    es_parameters.dim_x = ek_parameters.dim_x;
-    es_parameters.dim_y = ek_parameters.dim_y;
-    es_parameters.dim_z = ek_parameters.dim_z;
-    es_parameters.agrid = ek_parameters.agrid;
-
-    electrostatics = new FdElectrostatics(es_parameters, stream[0]);
+    FdElectrostatics::InputParameters es_parameters = {ek_parameters.bjerrumlength, ek_parameters.T, ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z, ek_parameters.agrid};
+    try {
+      electrostatics = new FdElectrostatics(es_parameters, stream[0]);
+    }
+    catch(std::string e) {
+      std::cout << "Error in initialization of electrokinetics electrostatics solver: " << e << std::endl;
+      return 1;
+    }
 
     ek_parameters.charge_potential = electrostatics->getGrid().grid;
-
     cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
 
     //clear initial LB force and finish up

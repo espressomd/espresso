@@ -4,6 +4,7 @@
 #include <cufft.h>
 #include <fd-electrostatics.hpp>
 #include <cuda_utils.hpp>
+#include <string>
 //#include <cuda_interface.hpp>
 
 
@@ -49,8 +50,7 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters, cudaStream_t
   
   if( cudaGetLastError() != cudaSuccess ) 
   {
-    fprintf(stderr, "ERROR: Failed to allocate\n");
-    return;
+    throw "Failed to allocate\n";
   }
 
   cuda_safe_mem( cudaMemcpyToSymbol( fde_parameters_gpu, &parameters, sizeof( Parameters ) ) );
@@ -72,20 +72,17 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters, cudaStream_t
                    parameters.dim_x,
                    CUFFT_R2C ) != CUFFT_SUCCESS ) 
   {
-    fprintf(stderr, "ERROR: Unable to create fft plan\n");
-    return;
+    throw std::string("Unable to create fft plan");
   }
   
   if( cufftSetCompatibilityMode( plan_fft, CUFFT_COMPATIBILITY_NATIVE ) != CUFFT_SUCCESS ) 
   {    
-    fprintf(stderr, "ERROR: Unable to set fft compatibility mode to native\n");
-    return;
+    throw std::string("Unable to set fft compatibility mode to native");
   }
   
   if( cufftSetStream( plan_fft, cuda_stream) != CUFFT_SUCCESS ) 
   {
-    fprintf(stderr, "ERROR: Unable to assign FFT to cuda stream\n");
-    return;
+    throw std::string("Unable to assign FFT to cuda stream");
   }
 
   if( cufftPlan3d( &plan_ifft,
@@ -94,20 +91,17 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters, cudaStream_t
                    parameters.dim_x,
                    CUFFT_C2R ) != CUFFT_SUCCESS ) 
   {   
-    fprintf(stderr, "ERROR: Unable to create ifft plan\n");
-    return;
+    throw std::string("Unable to create ifft plan");
   }
   
   if( cufftSetCompatibilityMode( plan_ifft, CUFFT_COMPATIBILITY_NATIVE ) != CUFFT_SUCCESS) 
   {   
-    fprintf(stderr, "ERROR: Unable to set ifft compatibility mode to native\n");
-    return;
+    throw std::string("Unable to set ifft compatibility mode to native");
   }
   
   if( cufftSetStream( plan_ifft, cuda_stream ) != CUFFT_SUCCESS )
   {    
-    fprintf(stderr, "ERROR: Unable to assign FFT to cuda stream\n");
-    return;
+    throw std::string("Unable to assign FFT to cuda stream");
   }
 
   initialized = true;
@@ -198,13 +192,6 @@ void FdElectrostatics::calculatePotential() {
 
 FdElectrostatics::Grid FdElectrostatics::getGrid()
 {
-  Grid g;
-  //g.grid = static_cast<float*>(parameters.charge_potential);
-  g.grid = (float*) parameters.charge_potential;
-  g.dim_x = parameters.dim_x;
-  g.dim_y = parameters.dim_y;
-  g.dim_z = parameters.dim_z;
-  g.agrid = parameters.agrid;
+  Grid g = {(float*) parameters.charge_potential, parameters.dim_x, parameters.dim_y, parameters.dim_z, parameters.agrid};
   return g;
-  //return Grid((float*) parameters.charge_potential, parameters.dim_x, parameters.dim_y, parameters.dim_z, agrid);
 }
