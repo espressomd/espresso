@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -19,13 +19,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file ljgen.c Routines to calculate the generalized lennard jones
+/** \file ljgen.cpp Routines to calculate the generalized lennard jones
  *  energy and/or force for a particle pair. "Generalized" here means
  *  that the LJ energy is of the form
  *
  *  eps * [ b1 * (sigma/(r-r_offset))^a1 - b2 * (sigma/(r-r_offset))^a2 + shift]
  *
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "config.hpp"

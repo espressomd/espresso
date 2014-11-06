@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file domain_decomposition.c
+/** \file domain_decomposition.cpp
  *
  *  This file contains everything related to the cell system: domain decomposition.
- *  See also \ref domain_decomposition.h
+ *  See also \ref domain_decomposition.hpp
  */
 #include "utils.hpp"
 #include "parser.hpp"

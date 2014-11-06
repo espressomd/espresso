@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 # Copyright (C) 2011 Olaf Lenz
 # Copyright 2008 Marcus D. Hanwell <marcus@cryos.org>
 #
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function
 import string, re, os
 
 # Execute git log with the desired command line options.
@@ -106,7 +107,7 @@ for line in fin:
         elif authorLine == prevAuthorLine:
             pass
         else:
-            print("\n" + authorLine)
+            print(("\n" + authorLine))
 
         # Assemble the actual commit message line(s) and limit the line length
         # to 80 characters.

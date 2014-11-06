@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file reaction_tcl.c
+/** \file reaction_tcl.cpp
  *
 */
 
@@ -124,6 +124,9 @@ int tclcommand_kill_particle_forces(ClientData data, Tcl_Interp * interp, int ar
 int tclcommand_system_CMS(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
   char buffer[256];
   double cmspos[3];
+#ifdef LEES_EDWARDS
+  double v_le[3];
+#endif
   int box[3];
 
   if (argc != 1 && argc != 2  ) { 
@@ -136,8 +139,12 @@ int tclcommand_system_CMS(ClientData data, Tcl_Interp * interp, int argc, char *
 
           memcpy(cmspos, gal.cms, 3*sizeof(double));
           box[0] = 0; box[1] = 0; box[2] = 0;
+#ifdef LEES_EDWARDS
+          fold_position(cmspos,v_le, box);
+#else
           fold_position(cmspos, box);
-
+#endif
+          
           Tcl_PrintDouble(interp, cmspos[0], buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
           Tcl_PrintDouble(interp, cmspos[1], buffer);

@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -90,7 +90,7 @@ if { abs($dv) > $tolerance } {
  error "Relative deviation in translational energy too large: $dv"
 }
 if { abs($do) > $tolerance } {
- error "Relative deviation in translational energy too large: $dv"
+ error "Relative deviation in rotational energy too large: $do"
 }
 
 exit 0

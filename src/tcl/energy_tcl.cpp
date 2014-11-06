@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,13 +18,14 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file energy_tcl.c
+/** \file energy_tcl.cpp
  *
  *  Implements the analyze energy command.
  */
 #include "utils.hpp"
 #include "parser.hpp"
 #include "energy.hpp"
+#include "external_potential.hpp"
 
 /**********************************************************************
  *                                 parser
@@ -39,6 +40,10 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
   value = total_energy.data.e[0];
   for (i = 1; i < total_energy.data.n; i++)
     value += total_energy.data.e[i];
+  
+  for (i = 0; i < n_external_potentials; i++) {
+    value+=external_potentials[i].energy;
+  }
 
   Tcl_PrintDouble(interp, value, buffer);
   Tcl_AppendResult(interp, "{ energy ", buffer, " } ", (char *)NULL);
@@ -103,6 +108,7 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
     }
+    Tcl_AppendResult(interp, " }", (char *)NULL);
 #endif
 
 #ifdef DIPOLES
@@ -113,9 +119,17 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
       }
     }
 #endif
-    Tcl_AppendResult(interp, " }", (char *)NULL);
   }
+
 #endif
+  if (n_external_potentials > 0) {
+	  Tcl_AppendResult(interp, " { external_potential", (char *)NULL);
+    for (i = 0; i < n_external_potentials; i++) {
+ 	    Tcl_PrintDouble(interp, external_potentials[i].energy, buffer);
+	    Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
+    }
+  }
+
 }
 
 /************************************************************/
@@ -127,7 +141,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
   int i, j;
   double value;
   value = 0.0;
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -189,7 +203,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       for (i = 0; i < total_energy.n_coulomb; i++)
 	value += total_energy.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see myconfig.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see myconfig.hpp)\n", (char *)NULL);
 #endif
     }    
     else if( ARG0_IS_S("magnetic")) {
@@ -198,7 +212,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       for (i = 0; i < total_energy.n_dipolar; i++)
 	value += total_energy.dipolar[i];
 #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see myconfig.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see myconfig.hpp)\n", (char *)NULL);
 #endif
     }
     
@@ -206,6 +220,10 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       value = total_energy.data.e[0];
       for (i = 1; i < total_energy.data.n; i++)
 	value += total_energy.data.e[i];
+      for (i = 0; i < n_external_potentials; i++) {
+        value += external_potentials[i].energy;
+      }
+
     }
     else {
       Tcl_AppendResult(interp, "unknown feature of: analyze energy",

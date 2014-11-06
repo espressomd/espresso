@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file pressure.c
-    Implementation of \ref pressure.h "pressure.h".
+/** \file pressure.cpp
+    Implementation of \ref pressure.hpp "pressure.h".
 */
 #include "pressure.hpp"
 #include "parser.hpp"
@@ -203,7 +203,7 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
   double value, p_vel[3];
   value = 0.0;
 
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -325,7 +325,7 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
       for (i = 0; i < total_pressure.n_coulomb; i++)
 	value += total_pressure.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)\n", (char *)NULL);
 #endif
     }
     else if( ARG0_IS_S("dipolar")) {
@@ -334,7 +334,7 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
       for (i = total_pressure.n_coulomb-1; i < total_pressure.n_coulomb; i++)  /*when DLC will be installed this has to be changed */
         value += total_pressure.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.hpp)\n", (char *)NULL);
 #endif
     }
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -493,7 +493,7 @@ static void tclcommand_analyze_print_stress_tensor_all(Tcl_Interp *interp)
 
 #ifdef DIPOLES
   if(coulomb.Dmethod != DIPOLAR_NONE) {
-    fprintf(stderr,"tensor magnetostatics, something should go here, file pressure.c ... \n");
+    fprintf(stderr,"tensor magnetostatics, something should go here, file pressure.cpp ... \n");
   }  
 #endif
 
@@ -520,7 +520,7 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
   double p_vel[3], tvalue[9];
   for(j=0; j<9; j++)  tvalue[j] = 0.0;
 
-  if (n_total_particles == 0) {
+  if (n_part == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);
@@ -641,15 +641,15 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
 #ifdef ELECTROSTATICS
       for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];
 #else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)\n", (char *)NULL);
 #endif
     }
     else if( ARG0_IS_S("dipolar")) {
 #ifdef DIPOLES
       /* for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];*/
-      fprintf(stderr," stress tensor, magnetostatics, something should go here, file pressure.c ");
+      fprintf(stderr," stress tensor, magnetostatics, something should go here, file pressure.cpp ");
 #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.hpp)\n", (char *)NULL);
 #endif
     }
 #ifdef VIRTUAL_SITES_RELATIVE

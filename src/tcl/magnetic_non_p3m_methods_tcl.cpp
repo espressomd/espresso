@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file magnetic_non_p3m_methods.c  All 3d non P3M methods to deal with the magnetic dipoles
+/** \file magnetic_non_p3m_methods.cpp  All 3d non P3M methods to deal with the magnetic dipoles
  *   
  *  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
  *   Handling of a system of dipoles where no replicas 

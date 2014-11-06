@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -21,7 +21,7 @@
 #ifndef DEBYE_HUECKEL_TCL_H
 #define DEBYE_HUECKEL_TCL_H
 /** \file debye_hueckel_tcl.hpp
- * Tcl interface for \ref debye_hueckel.h
+ * Tcl interface for \ref debye_hueckel.hpp
  */
 
 #include "parser.hpp"

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,15 +18,16 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file grid.c   Domain decomposition for parallel computing.
+/** \file grid.cpp   Domain decomposition for parallel computing.
  *
  *  For more information on the domain decomposition, 
- *  see \ref grid.h "grid.h". 
+ *  see \ref grid.hpp "grid.h". 
 */
 #include "utils.hpp"
 #include "parser.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
+#include "global.hpp"
 
 int tclcallback_node_grid(Tcl_Interp *interp, void *_data)
 {

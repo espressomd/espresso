@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file ljangle.h
+/** \file ljangle.hpp
  *  Routines to calculate the lennard-jones 12-10 with angular dependance.
  *  The potential is a product of a 12-10 LJ potential with two cos^2.
  *  The potential actually relies on 6 particles: the 2 primary beads
@@ -34,7 +34,7 @@
  *  interaction strength in this medium. The interaction strengh of the second
  *  environment must be *stronger* than of the first one.
  *
- *  \ref forces.c
+ *  \ref forces.cpp
  */
 
 #include "utils.hpp"
@@ -60,26 +60,29 @@ int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
   Tcl_PrintDouble(interp, data->LJANGLE_cut, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   // Who are the bonded partners?
-  Tcl_PrintDouble(interp, data->LJANGLE_bonded1pos, buffer);
+  sprintf(buffer,"%d ",data->LJANGLE_bonded1pos);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJANGLE_bonded1neg, buffer);
+  sprintf(buffer,"%d ",data->LJANGLE_bonded1neg);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJANGLE_bonded2pos, buffer);
+  sprintf(buffer,"%d ",data->LJANGLE_bonded2pos);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJANGLE_bonded2neg, buffer);
+  sprintf(buffer,"%d ",data->LJANGLE_bonded2neg);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   // Optional argument: cap radius
   Tcl_PrintDouble(interp, data->LJANGLE_capradius, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
   // Optional arguments: simulate two different interaction strengths
-  Tcl_PrintDouble(interp, data->LJANGLE_z0, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJANGLE_dz, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJANGLE_kappa, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJANGLE_epsprime, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  if ( data->LJANGLE_dz > 0 ) { 
+     /* LJANGLE_dz is set to -1 by default if no optional parameter is set. */
+     Tcl_PrintDouble(interp, data->LJANGLE_z0, buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+     Tcl_PrintDouble(interp, data->LJANGLE_dz, buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+     Tcl_PrintDouble(interp, data->LJANGLE_kappa, buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+     Tcl_PrintDouble(interp, data->LJANGLE_epsprime, buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
 
   
   return TCL_OK;

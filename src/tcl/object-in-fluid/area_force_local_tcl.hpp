@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -18,10 +18,10 @@
 */
 #ifndef _OBJECT_IN_FLUID_AREA_FORCE_LOCAL_TCL_H
 #define _OBJECT_IN_FLUID_AREA_FORCE_LOCAL_TCL_H
-/** \file area_force_local.h
+/** \file area_force_local.hpp
  *  Routines to calculate the AREA_FORCE_LOCAL energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "tcl/parser.hpp"

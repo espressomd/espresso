@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file imd.c
-    Implementation of \ref imd.h "imd.h".
+/** \file imd.cpp
+    Implementation of \ref imd.hpp "imd.h".
  */
 #include <unistd.h>
 #include <cstdlib>
@@ -238,23 +238,30 @@ int tclcommand_imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
 
-  if (n_total_particles != max_seen_particle + 1) {
+  if (n_part != max_seen_particle + 1) {
     Tcl_AppendResult(interp, "for IMD, store particles consecutively starting with 0.",
 		     (char *) NULL);
     return (TCL_ERROR);      
   }
 
   updatePartCfg(WITH_BONDS);
-  coord = (float*)malloc(n_total_particles*3*sizeof(float));
+  coord = (float*)malloc(n_part*3*sizeof(float));
   /* sort partcles according to identities */
-  for (i = 0; i < n_total_particles; i++) {
+  for (i = 0; i < n_part; i++) {
     int dummy[3] = {0,0,0};
     double tmpCoord[3];
+#ifdef LEES_EDWARDS
+    double v_le[3];
+#endif
     tmpCoord[0] = partCfg[i].r.p[0];
     tmpCoord[1] = partCfg[i].r.p[1];
     tmpCoord[2] = partCfg[i].r.p[2];
     if (flag == NONE)  {   // perform folding by particle
+#ifdef LEES_EDWARDS
+      fold_position(tmpCoord, v_le, dummy);
+#else
       fold_position(tmpCoord, dummy);
+#endif
     }
     j = 3*partCfg[i].p.identity;
     coord[j    ] = tmpCoord[0];
@@ -273,7 +280,7 @@ int tclcommand_imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
   }
 
  
-  if (imd_send_fcoords(sock, n_total_particles, coord)) {
+  if (imd_send_fcoords(sock, n_part, coord)) {
     Tcl_AppendResult(interp, "could not write to IMD socket.",
 		     (char *) NULL);
     return (TCL_ERROR);      

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -19,13 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file integrate.c   Molecular dynamics integrator.
+/** \file integrate.cpp   Molecular dynamics integrator.
  *
  *  For more information about the integrator 
- *  see \ref integrate.h "integrate.h".
+ *  see \ref integrate.hpp "integrate.h".
 */
 
 #include "integrate.hpp"
+#include "global.hpp"
 #include "npt.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
@@ -33,17 +34,21 @@
 #include "communication.hpp"
 #include "parser.hpp"
 #include "statistics_correlation.hpp"
+#include "statistics_observable.hpp"
 
 int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  mpi_bcast_event(INVALIDATE_SYSTEM);
-  return TCL_OK;
+  Tcl_AppendResult(interp, "invalidate_system is no longer supported ",
+                   "as it's behavior is actually undefined.\n",
+                   "For consistency after reading a checkpoint, use sort_particles.\n",
+                   "For timing purposes, use the recalc_forces flag of integrate\n", (char *)NULL);
+  return TCL_ERROR;
 }
 
 /**  Hand over integrate usage information to tcl interpreter. */
 int tclcommand_integrate_print_usage(Tcl_Interp *interp) 
 {
   Tcl_AppendResult(interp, "Usage of tcl-command integrate:\n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate <INT n steps>' for integrating n steps \n", (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate <INT n steps> [reuse_forces|recalc_forces]' for integrating n steps\n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate set' for printing integrator status \n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate set nvt' for enabling NVT integration or \n" , (char *)NULL);
 #ifdef NPT
@@ -194,7 +199,7 @@ int tclcommand_integrate_set_npt_isotropic(Tcl_Interp *interp, int argc, char **
 
 int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
-  int  n_steps;
+  int  n_steps, reuse_forces = 0;
   
   INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
 
@@ -213,16 +218,51 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
       Tcl_AppendResult(interp, "unknown integrator method:\n", (char *)NULL);
       return tclcommand_integrate_print_usage(interp);
     }
-  } else if ( !ARG_IS_I(1,n_steps) ) return tclcommand_integrate_print_usage(interp);
+  } else {
+    if ( !ARG_IS_I(1,n_steps) ) return tclcommand_integrate_print_usage(interp);
 
+    // actual integration
+    if ((argc == 3) && ARG_IS_S(2, "reuse_forces")) {
+      reuse_forces = 1;
+    }
+    else if ((argc == 3) && ARG_IS_S(2, "recalc_forces")) {
+      reuse_forces = -1;
+    }
+    else if (argc != 2) return tclcommand_integrate_print_usage(interp);
+  }
   /* go on with integrate <n_steps> */
   if(n_steps < 0) {
     Tcl_AppendResult(interp, "illegal number of steps (must be >0) \n", (char *) NULL);
     return tclcommand_integrate_print_usage(interp);;
   }
+
+  /* if skin wasn't set, do an educated guess now */
+  if (!skin_set) {
+    if (max_cut == 0.0) {
+      Tcl_AppendResult(interp, "cannot automatically determine skin, please set it manually via \"setmd kin\"\n", (char *) NULL);
+      return TCL_ERROR;
+    }
+    skin = 0.4*max_cut;
+    mpi_bcast_parameter(FIELD_SKIN);
+  }
+
   /* perform integration */
-  if (mpi_integrate(n_steps))
-    return gather_runtime_errors(interp, TCL_OK);
+  if (!correlations_autoupdate && !observables_autoupdate) {
+    if (mpi_integrate(n_steps, reuse_forces))
+      return gather_runtime_errors(interp, TCL_OK);
+  } else  {
+    for (int i=0; i<n_steps; i++) {
+      if (mpi_integrate(1, reuse_forces))
+        return gather_runtime_errors(interp, TCL_OK);
+      reuse_forces=1;
+      autoupdate_observables();
+      autoupdate_correlations();
+    }
+    if (n_steps == 0){
+      if (mpi_integrate(0, reuse_forces))
+        return gather_runtime_errors(interp, TCL_OK);
+    }
+  }
   return TCL_OK;
 }
 
@@ -236,6 +276,7 @@ int tclcallback_skin(Tcl_Interp *interp, void *_data)
     Tcl_AppendResult(interp, "skin must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
+  skin_set = true;
   skin = data;
   mpi_bcast_parameter(FIELD_SKIN);
   return (TCL_OK);

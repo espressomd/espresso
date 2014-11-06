@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -111,6 +111,14 @@ int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
     else {
       Tcl_AppendResult(interp, cuda_error, (char *)NULL);
       return TCL_ERROR;
+    }
+  }
+  else if (ARG0_IS_S("testdevice")) {
+    if(cuda_test_device_access() == ES_ERROR) {
+      Tcl_AppendResult(interp, "Could not access cuda device.", (char *)NULL);
+      return TCL_ERROR;
+    } else {
+      return TCL_OK;
     }
   }
   else {

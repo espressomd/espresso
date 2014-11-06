@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,14 +18,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file interaction_data.c
-    Implementation of interaction_data.h
+/** \file interaction_data.cpp
+    Implementation of interaction_data.hpp
  */
 #include <cstring>
 #include <cstdlib>
 #include "interaction_data_tcl.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
+#include "global.hpp"
 
 #include "comforce_tcl.hpp"
 #include "comfixed_tcl.hpp"
@@ -39,12 +40,18 @@
 #include "tab.hpp"
 #include "buckingham.hpp"
 
-// nonbonded
+//for surface charge output
+#include "mmm2d.hpp"
+#include "mmm-common.hpp"
+#include "elc.hpp"
+
+// Nonbonded
 #include "bmhtf-nacl_tcl.hpp"
 #include "buckingham_tcl.hpp"
 #include "gb_tcl.hpp"
 #include "gaussian_tcl.hpp"
 #include "hat_tcl.hpp"
+#include "lb_tcl.hpp"
 #include "lj_tcl.hpp"
 #include "ljangle_tcl.hpp"
 #include "ljcos_tcl.hpp"
@@ -66,6 +73,8 @@
 #include "mmm2d_tcl.hpp"
 #include "p3m_tcl.hpp"
 #include "reaction_field_tcl.hpp"
+#include "actor/Mmm1dgpu_tcl.hpp"
+#include "actor/Ewaldgpu_tcl.hpp"
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -83,6 +92,8 @@
 #include "fene_tcl.hpp"
 #include "overlap_tcl.hpp"
 #include "harmonic_tcl.hpp"
+#include "quartic_tcl.hpp"
+#include "bonded_coulomb_tcl.hpp"
 #include "subt_lj_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
@@ -91,13 +102,12 @@
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
 
-int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
-
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
 #endif
 
 #ifdef ELECTROSTATICS
+int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 
 /********************************************************************************/
 /*                                 electrostatics                               */
@@ -180,6 +190,14 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("maggs", tclcommand_inter_coulomb_parse_maggs);
 
   REGISTER_COULOMB("memd", tclcommand_inter_coulomb_parse_maggs);
+
+  #ifdef MMM1D_GPU
+  REGISTER_COULOMB("mmm1dgpu", tclcommand_inter_coulomb_parse_mmm1dgpu);
+  #endif
+
+  #ifdef EWALD_GPU
+  REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
+  #endif
 
   /* fallback */
   coulomb.method  = COULOMB_NONE;
@@ -316,6 +334,12 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #endif
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
+  case BONDED_IA_QUARTIC:
+    return tclprint_to_result_quarticIA(interp, params);
+#ifdef ELECTROSTATICS
+  case BONDED_IA_BONDED_COULOMB:
+    return tclprint_to_result_bonded_coulombIA(interp, params);
+#endif
 #ifdef BOND_ANGLE_OLD
   case BONDED_IA_ANGLE_OLD:
     return tclprint_to_result_angleIA(interp, params);
@@ -364,36 +388,14 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
 		     (char *) NULL);
     return (TCL_ERROR);
+  default: // keep the compiler happy if interactions are compiled out
+    break;
   }
   /* if none of the above */
   Tcl_ResetResult(interp);
   Tcl_AppendResult(interp, "unknown bonded interaction type",(char *) NULL);
   return (TCL_ERROR);
 }
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-int tclprint_to_result_TF(Tcl_Interp *interp, int i)
-{
-  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
-  TF_parameters *data = get_tf_param(i);
-  
-  if (!data) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "thermodynamic force does not exist",
-		     (char *) NULL);
-    return (TCL_ERROR);
-  }
-  sprintf(buffer, "%d ", i);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-  
-  if(data->TF_TAB_maxval !=0)
-    Tcl_AppendResult(interp, "thermodynamic_force \"", data->TF_TAB_filename,"\"", (char *) NULL);
-  
-  return(TCL_OK);
-}
-/* #endif */
-#endif
 
 int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 {
@@ -471,11 +473,6 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
     Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
 #endif
 
-#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
-  if(data->ADRESS_TAB_maxval > 0.0)
-    Tcl_AppendResult(interp, "adress \"", data->ADRESS_TAB_filename,"\"", (char *) NULL);
-#endif
-
 #ifdef COMFORCE
   if (data->COMFORCE_flag > 0.0) tclprint_to_result_comforceIA(interp,i,j);
 #endif
@@ -498,6 +495,9 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 
 #ifdef TUNABLE_SLIP
   if (data->TUNABLE_SLIP_r_cut > 0.0) tclprint_to_result_tunable_slipIA(interp,i,j);
+#endif
+#ifdef SHANCHEN
+  if (data->affinity_on == 1 ) tclprint_to_result_affinityIA(interp,i,j);
 #endif
 
   return (TCL_OK);
@@ -526,14 +526,20 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   case COULOMB_RF: tclprint_to_result_rf(interp,"rf"); break;
   case COULOMB_INTER_RF: tclprint_to_result_rf(interp,"inter_rf"); break;
   case COULOMB_MMM1D: tclprint_to_result_MMM1D(interp); break;
+#ifdef MMM1D_GPU
+  case COULOMB_MMM1D_GPU: tclprint_to_result_MMM1DGPU(interp); break;
+#endif
   case COULOMB_MMM2D: tclprint_to_result_MMM2D(interp); break;
   case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU: tclprint_to_result_ewaldgpu(interp); break;
+#endif
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
 
 #else
-  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
+  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)",(char *) NULL);
 #endif
   return (TCL_OK);
 }
@@ -695,24 +701,6 @@ int tclcommand_inter_print_non_bonded(Tcl_Interp * interp,
   return tclprint_to_result_NonbondedIA(interp, part_type_a, part_type_b);
 }
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-/* TODO: This function is not used anywhere. To be removed?  */
-int tf_print(Tcl_Interp * interp, int part_type)
-{
-  //TF_parameters *data;
-  Tcl_ResetResult(interp);
-    
-    make_particle_type_exist(part_type);
-    
-    //data = get_tf_param(part_type);
-    
-    return tclprint_to_result_TF(interp, part_type);
-}
-/* #endif */
-#endif
-
-
 int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b,
 			   int argc, char ** argv)
@@ -821,12 +809,11 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef MOL_CUT
     REGISTER_NONBONDED("molcut", tclcommand_inter_parse_molcut);
 #endif
-    
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-    REGISTER_NONBONDED("adress_tab_ic", tclcommand_inter_parse_adress_tab);
+  
+#ifdef SHANCHEN
+    REGISTER_NONBONDED("affinity",tclcommand_inter_parse_affinity);
 #endif
-#endif
+ 
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],
 		       "\" in parsing non bonded interaction",
@@ -866,6 +853,43 @@ int tclcommand_inter_print_partner_num(Tcl_Interp *interp, int bond_type)
 		   (char *) NULL);
   return TCL_ERROR;
 }
+
+#ifdef ELECTROSTATICS
+/* print applied/induced efields for capacitor feature in ic-mmm2d and ic-elc */
+int tclcommand_print_efield_capacitors(ClientData data, Tcl_Interp * interp, int argc, char ** argv)
+{
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
+  double value=0;
+
+  if (!(
+        (coulomb.method == COULOMB_MMM2D   && mmm2d_params.const_pot_on)
+#ifdef P3M
+     || (coulomb.method == COULOMB_ELC_P3M && elc_params.const_pot_on)
+#endif
+     )) {
+    Tcl_AppendResult(interp, "Electric field output only available for mmm2d or p3m+elc with capacitor feature", (char *) NULL);
+    return TCL_ERROR;
+  }
+  else if (argc > 2) {
+    Tcl_AppendResult(interp, "wrong # arguments: efield_caps <{total} | {induced} | {applied}>", (char *) NULL);
+    return TCL_ERROR;
+  }
+  else if (argc == 1 || ARG1_IS_S("total")) {
+	  value = field_induced + field_applied;
+  }
+  else if (ARG1_IS_S("induced")) {
+	  value = field_induced;
+  }
+  else if (ARG1_IS_S("applied")) {
+	  value = field_applied;
+  }
+
+  Tcl_PrintDouble(interp, value, buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+
+  return TCL_OK;
+}
+#endif
 
 /********************************************************************************/
 /*                                       parsing                                */
@@ -907,6 +931,10 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);
 #endif
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
+  REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
+#ifdef ELECTROSTATICS
+  REGISTER_BONDED("bonded_coulomb", tclcommand_inter_parse_bonded_coulomb);  
+#endif
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
 #endif
@@ -977,7 +1005,7 @@ int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
     #ifdef ELECTROSTATICS
       return tclcommand_inter_parse_coulomb(interp, argc-1, argv+1);
    #else
-       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)", (char *) NULL);
+       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)", (char *) NULL);
     #endif
   }
   
@@ -985,7 +1013,7 @@ int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
    #ifdef DIPOLES
       return tclcommand_inter_parse_magnetic(interp, argc-1, argv+1);
     #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)", (char *) NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.hpp)", (char *) NULL);
     #endif
   }
   

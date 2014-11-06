@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file binary_file_tcl.c
+/** \file binary_file_tcl.cpp
     Implementation of \ref binary_file_tcl.hpp "binary_file_tcl.h".
 */
 #include <cstdio>
@@ -148,8 +148,12 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
 
   for (p = 0; p <= max_seen_particle; p++) {
     Particle data;
-    if (get_particle_data(p, &data)) {
+    if (get_particle_data(p, &data) == ES_OK) {
+#ifdef LEES_EDWARDS
+      unfold_position(data.r.p, data.m.v, data.l.i);
+#else
       unfold_position(data.r.p, data.l.i);
+#endif
 
       /* write particle index */
       Tcl_Write(channel, (char *)&p, sizeof(int));

@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -82,7 +82,19 @@ proc ::mbtools::utils::warmup { steps times args } {
 
 	# Write out configuration files and pdb files
 	if { $i%$params(cfgs)==0 && ($params(cfgs) > 0 ) } {
-	    polyBlockWrite "$params(outputdir)/warm.[format %04d $warmcfg].gz" {time box_l npt_p_diff } {id pos type v f molecule} 
+	    #polyBlockWrite "$params(outputdir)/warm.[format %04d $warmcfg].gz" {time box_l npt_p_diff } {id pos type v f molecule} 
+	    
+	    set out [open "|gzip -c - > $params(outputdir)/warm.[format %04d $warmcfg].gz" "w"]
+	    blockfile $out write variable all
+	    blockfile $out write tclvariable all
+	    blockfile $out write interactions
+	    blockfile $out write random
+	    blockfile $out write bitrandom
+	    blockfile $out write particles "id pos type p v f" all
+	    blockfile $out write bonds all
+	    blockfile $out write configs
+	    close $out
+
 	    mmsg::send [namespace current] "wrote file $params(outputdir)/warm.[format %04d $warmcfg].gz " 
 
 	    flush stdout
@@ -161,7 +173,20 @@ proc ::mbtools::utils::nptwarmup { steps times iparms fparms args } {
 	
 	# Write out configuration files and pdb files
 	if { $i%$params(cfgs)==0 && ($params(cfgs) > 0 ) } {
-	    polyBlockWrite "$params(outputdir)/warm.[format %04d $warmcfg].gz" {time box_l npt_p_diff } {id pos type v f molecule} 
+	    #polyBlockWrite "$params(outputdir)/warm.[format %04d $warmcfg].gz" {time box_l npt_p_diff } {id pos type v f molecule} 
+	    
+   		set out [open "|gzip -c - > $params(outputdir)/warm.[format %04d $warmcfg].gz" "w"]
+	    blockfile $out write variable all
+	    blockfile $out write tclvariable all
+	    blockfile $out write interactions
+	    blockfile $out write random
+	    blockfile $out write bitrandom
+	    blockfile $out write particles "id pos type p v f" all
+	    blockfile $out write bonds all
+	    blockfile $out write configs
+	    close $out
+
+
 	    mmsg::send [namespace current] "wrote file $params(outputdir)/warm.[format %04d $warmcfg].gz " 
 	    
 	    flush stdout

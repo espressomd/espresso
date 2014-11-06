@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,12 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_cluster.c
+/** \file statistics_cluster.cpp
  *
  *  This file contains the necklace cluster algorithm. It can be used
  *  to identify the substructures 'pearls' and 'strings' on a linear
  *  chain.
- *  See also \ref statistics_cluster.h
+ *  See also \ref statistics_cluster.hpp
  */
 
 
@@ -83,7 +83,7 @@ int tclcommand_analyze_parse_necklace(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "analyze necklace: identity of first particle can not be negative", (char *)NULL);
     return TCL_ERROR;
   }
-  if( first+length > n_total_particles+1) {
+  if( first+length > n_part+1) {
     Tcl_AppendResult(interp, "analyze necklace: identity of last particle out of partCfg array", (char *)NULL);
     return TCL_ERROR;
   }

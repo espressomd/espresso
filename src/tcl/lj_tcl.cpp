@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -68,12 +68,17 @@ int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** arg
   return tclcommand_inter_parse_forcecap(interp, argc, argv);
 }
 
+
+
 int tclcommand_inter_parse_lj(Tcl_Interp * interp,
 			      int part_type_a, int part_type_b,
 			      int argc, char ** argv)
 {
   /* parameters needed for LJ */
   double eps, sig, cut, shift, offset, cap_radius, min;
+#ifdef SHANCHEN
+  double *affinity=NULL;
+#endif
   int compute_auto_shift, change;
 
   /* get lennard-jones interaction type */

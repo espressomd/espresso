@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -25,7 +25,7 @@
 /** \file stretchlin_force.hpp
  *  Routines to calculate the STRETCHLIN_FORCE Energy or/and STRETCHLIN_FORCE force 
  *  for a particle pair. (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 /************************************************************/

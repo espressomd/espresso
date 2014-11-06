@@ -6,7 +6,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -311,7 +311,7 @@ mol modmaterial 1 0 Glass2
 # start vmd
 if { $vmd_online == "yes" } then {
     set vtf_file [open "espresso_logo_online.vtf" w]
-    writevsf $vtf_file ignore_charges
+    writevsf $vtf_file
     puts $vtf_file $vtf_bonds
     writevcf $vtf_file
     close $vtf_file
@@ -326,7 +326,7 @@ if { $vmd_online == "yes" } then {
 # create vtf-file
 if { $vmd_offline == "yes" } then {
     set vtf_file [open "espresso_logo.vtf" w]
-    writevsf $vtf_file ignore_charges
+    writevsf $vtf_file
     # connect cup
     puts $vtf_file $vtf_bonds
     writevcf $vtf_file

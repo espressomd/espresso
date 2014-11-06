@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -62,7 +62,7 @@ int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc,
 
     The function returns a log of the performed tuning.
 
-    The function is based on routines of the program HE_Q.c written by M. Deserno.
+    The function is based on routines of the program HE_Q.cpp written by M. Deserno.
  */
 int tclcommand_inter_coulomb_p3m_print_tune_parameters(Tcl_Interp *interp);
 

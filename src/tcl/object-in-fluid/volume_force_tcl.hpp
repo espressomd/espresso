@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -18,10 +18,10 @@
 */
 #ifndef _OBJECT_IN_FLUID_VOLUME_FORCE_TCL_H
 #define _OBJECT_IN_FLUID_VOLUME_FORCE_TCL_H
-/** \file volume_force.h
+/** \file volume_force.hpp
  *  Routines to calculate the VOLUME_FORCE energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.c
+ *  \ref forces.cpp
 */
 
 #include "tcl/parser.hpp"

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -26,7 +26,7 @@
 The functions in this file are no longer supported by the Espresso
 team. Use them at your own risk!
 
-    It is the header file for \ref binary_file_tcl.c "binary_file_tcl.c" and provides
+    It is the header file for \ref binary_file_tcl.cpp "binary_file_tcl.c" and provides
     functions to read and write binary particle data to Tcl channels.
     It also defines the structures and constants necessary to interprete/
     generate particle data files in this format. THE FILE FORMAT IS HARDWARE

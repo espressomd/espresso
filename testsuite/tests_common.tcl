@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #  Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -69,5 +69,22 @@ proc require_max_nodes_per_side {n} {
 	if {$s > $n} {
 	    ignore_exit "Testcase cannot run on [setmd n_nodes] processors, \n\tsince max number of nodes per side is $n,\n\tbut node grid is [setmd node_grid]"
 	}
+    }
+}
+
+# test whether a cuda device exists and can be used
+proc has_cudadevice {} {
+    puts [ has_feature "CUDA" ]
+    puts [ catch {cuda testdevice} ]
+    if { [ has_feature "CUDA" ] && ! [ catch {cuda testdevice} ] } then {
+        return 1
+    } else  {
+        return 0
+    } 
+}
+
+proc require_cudadevice {} {
+    if { ! [ has_cudadevice ] } then {
+        ignore_exit "CUDA not available or cuda device not accessible."
     }
 }

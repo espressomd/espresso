@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -45,8 +45,6 @@ puts [ part 0 print f ]
 set f1 [ lindex [part 0 print f] 0 ]
 
 setmd box_l 20 10 10
-
-invalidate_system 
 
 part 0 pos 4 5 5 q +1 v 0 0 0
 part 1 pos 6 5 5 q -1 v 0 0 0

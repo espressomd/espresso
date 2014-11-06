@@ -5,7 +5,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -228,7 +228,8 @@ for {set ia1 0} { $ia1 < 2 } { incr ia1 } {
 	inter $ia1 $ia2 lennard-jones $lj2_epsilon 1.0 $lj2_cut $lj2_shift 0.0
     }
 }
-puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy mesh 16]"
+#puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy mesh 16]"
+puts "[inter coulomb $bjerrum scafacos_p3m]"
 puts "Interactions are now: {[inter]}"
 
 #      Write blockfiles for restart

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -21,7 +21,7 @@
 #ifndef _ANGLE_COSSQUARE_TCL_H
 #define _ANGLE_COSSQUARE_TCL_H
 /** \file angle_cossquare_tcl.hpp
- * Tcl interface for \ref angle_cossquare.h
+ * Tcl interface for \ref angle_cossquare.hpp
  */
 
 #include "parser.hpp"

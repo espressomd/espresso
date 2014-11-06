@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -22,7 +22,6 @@ source "tests_common.tcl"
 
 require_feature "COMFIXED"
 require_feature "PARTIAL_PERIODIC"
-require_feature "ADRESS" off
 require_max_nodes_per_side 1
 
 puts "----------------------------------------"
@@ -53,9 +52,6 @@ proc write_data {file} {
 
 
 if { [catch {
-    # to ensure force recalculation
-    invalidate_system
-
     ############## comfixed-specific part
 
     setmd box_l 10. 10. 10.

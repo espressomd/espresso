@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -24,11 +24,9 @@
 source "tests_common.tcl"
 
 require_feature "COLLISION_DETECTION"
-require_feature "ADRESS" off
-require_max_nodes_per_side {1 1 1}
 
 puts "---------------------------------------------------------------"
-puts "- Testcase collision-detection-centers.tcl running on 1 nodes"
+puts "- Testcase collision-detection-centers.tcl running on [setmd n_nodes] nodes"
 puts "---------------------------------------------------------------"
 
 # Setup
@@ -40,9 +38,10 @@ inter 3 harmonic 2 2
 inter 0 0 lennard-jones 0.0001 2 2.1 auto
 inter 7 harmonic 1 1
 setmd skin 0
-part 0 pos 0 0 0 
-part 1 pos 2 0 0
-part 2 pos 5 0 0
+part 0 pos 9   0 0 
+# place close to boundary to check pbc and processor boundaries
+part 1 pos 0.5 0 0
+part 2 pos 3.0 0 0
 
 # analyze the bonding structure for pair bonds
 proc analyze_topology {bond_type {check_others 0}} {
@@ -96,6 +95,7 @@ if { ! ( ([lindex $res 0] == "bind_centers") && (abs([lindex $res 1]-2) <1E-5) &
 
 # Check the actual collision detection
 integrate 0
+
 # Check, whether the bonds are correct
 set bonds [analyze_topology 7 1]
 if {$bonds != "{0 1}"} {
@@ -103,18 +103,29 @@ if {$bonds != "{0 1}"} {
 }
 
 # Integrate again and make sure, no extra bonds are added
-# enforce force recalculation
-invalidate_system
+integrate 0 recalc_forces
+
+# Check, whether the bonds are still correct, not doubled
+set bonds [analyze_topology 7 1]
+if {$bonds != "{0 1}"} {
+    error_exit "bond doubled: bonds are $bonds"
+}
+
+# Exchange particles 1 and 0 in positions and make sure, no extra bonds are added
+part 1 pos 9   0 0 
+part 0 pos 0.5 0 0
+
 integrate 0
 
 # Check, whether the bonds are still correct, not doubled
 set bonds [analyze_topology 7 1]
 if {$bonds != "{0 1}"} {
-    error_exit "bond not created as it should or doubled: bonds are $bonds"
+    error_exit "bond double on exchange: bonds are $bonds"
 }
 
+
 # test exception, generating another collision
-part 2 pos 8 0 0
+part 2 pos 7 0 0
 on_collision exception bind_centers 2.0 3
 
 if {![catch {integrate 0} err]} {
@@ -122,16 +133,18 @@ if {![catch {integrate 0} err]} {
 }
 
 set bonds ""
-foreach exception [lrange $err 2 end] {
-    if {[lrange $exception 0 2] != "collision between particles"} {
+foreach exception [lrange $err 1 end] {
+    if {[regexp {collision between particles (\d+) and (\d+)} $exception -> id1 id2]} {
+        lappend bonds "$id1 $id2"
+    } else {
 	error_exit "unexpected exception $exception"
     }
-    lappend bonds "[lindex $exception 3] [lindex $exception 5]"
+    
 }
 set bonds [lsort $bonds]
 
-if {$bonds != "{0 1} {0 2}"} {
-    error_exit "exception bonds $bonds wrong"
+if {$bonds != "{0 1} {1 2}"} {
+    error_exit "exception bonds $bonds wrong, expected {0 1} {1 2}"
 }
 
 # Check, whether the bonds are correct
@@ -142,7 +155,7 @@ if {$bonds != "{0 1}"} {
 }
 
 set bonds [analyze_topology 3]
-if {$bonds != "{0 1} {0 2}"} {
+if {$bonds != "{0 1} {1 2}"} {
     error_exit "bonds not correctly created: bonds are $bonds"
 }
 
