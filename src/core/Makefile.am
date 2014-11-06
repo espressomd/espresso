@@ -186,12 +186,14 @@ CUDA_HEADER_FILES = \
 	p3m_gpu.hpp \
 	cuda_init.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
-	electrokinetics.hpp
+	electrokinetics.hpp \
+	fd-electrostatics.hpp
 
 CUDA_SOURCE_FILES = \
 	cuda_init_cuda.cu \
 	cuda_common_cuda.cu \
 	electrokinetics_cuda.cu \
+	fd-electrostatics_cuda.cu \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
