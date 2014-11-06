@@ -35,7 +35,7 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
     /* determine the number of local lattice nodes */
     for (int d=0; d<3; d++) {
         this->agrid[d] = agrid[d];
-        this->global_grid[d] = (int)floor(box_l[d]/agrid[d]+ROUND_ERROR_PREC);
+        this->global_grid[d] = (int)dround(box_l[d]/agrid[d]);
         this->offset[d]=offset[d];
         this->local_index_offset[d]=(int) ceil((my_left[d]-this->offset[d])/this->agrid[d]);
         this->local_offset[d] = this->offset[d] +
@@ -252,12 +252,12 @@ void Lattice::set_data_for_global_position_with_periodic_image(double* pos, void
 
 
     for (int i = 0; i<3; i++) {
-        global_index[i] = (int) floor((pos[i]-this->offset[i])/this->agrid[i]+ROUND_ERROR_PREC);
+        global_index[i] = (int)dround((pos[i]-this->offset[i])/this->agrid[i]);
     }
 
-    for (int i=-2; i<=2; i++) {
-        for (int j=-2; j<=2; j++) {
-            for (int k=-2; k<=2; k++) {
+    for (int i=-this->halo_size; i<=this->halo_size; i++) {
+        for (int j=-this->halo_size; j<=this->halo_size; j++) {
+            for (int k=-this->halo_size; k<=this->halo_size; k++) {
                 replica[0]=global_index[0]+i*this->global_grid[0];
                 replica[1]=global_index[1]+j*this->global_grid[1];
                 replica[2]=global_index[2]+k*this->global_grid[2];
@@ -410,7 +410,7 @@ void Lattice::set_data_for_local_grid_index(index_t* ind, void* data) {
 
 int Lattice::global_pos_to_lattice_halo_index(double* pos, index_t*  ind) {
     for (int i = 0; i<3; i++) {
-        ind[i] = (int) floor((pos[i]-this->local_offset[i])/this->agrid[i]+ROUND_ERROR_PREC)+this->halo_size;
+        ind[i] = (int)dround((pos[i]-this->local_offset[i])/this->agrid[i])+this->halo_size;
         if (ind[i] < 0 || ind[i] >= this->halo_grid[i])
             return 0;
     }

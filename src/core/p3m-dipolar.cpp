@@ -441,7 +441,7 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
       
   MPI_Reduce(&node_phi, &phi, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);   
      
-  phi*=PI/3./box_l/pow(mesh,3);
+  phi*=PI/3./box_l/pow(mesh,3.0);
      
 
   return phi ;

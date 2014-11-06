@@ -1685,25 +1685,24 @@ int lb_sanity_checks() {
         runtimeError(msg);
         ret = 1;
     }
-    if (dd.use_vList && skin>=lbpar.agrid/2.0) {
-        ostringstream msg;
-        msg <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.";
-        runtimeError(msg);
-        ret = 1;
-    }
     if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
         ostringstream msg;
         msg <<"LB requires domain-decomposition cellsystem";
         runtimeError(msg);
         ret = -1;
     }
-    else if (dd.use_vList && skin>=lbpar.agrid/2.0) {
+    if (skin == 0.0) {
+        ostringstream msg;
+        msg <<"LB requires a positive skin";
+        runtimeError(msg);
+        ret = 1;
+    }
+    if (dd.use_vList && skin>=lbpar.agrid/2.0) {
         ostringstream msg;
         msg <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing";
         runtimeError(msg);
         ret = -1;
     }
-
     if (thermo_switch & ~THERMO_LB) {
         ostringstream msg;
         msg <<"LB must not be used with other thermostats";

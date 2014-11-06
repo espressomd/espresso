@@ -51,6 +51,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "maggs.hpp"
+#include "actor/EwaldgpuForce.hpp"
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "statistics_chain.hpp"
@@ -1767,6 +1768,11 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case COULOMB_MAGGS:
     MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart); 
     break;
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU:
+    MPI_Bcast(&ewaldgpu_params, sizeof(Ewaldgpu_params), MPI_BYTE, 0, comm_cart);
+    break;
+#endif
   case COULOMB_RF:
   case COULOMB_INTER_RF:
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0, comm_cart);

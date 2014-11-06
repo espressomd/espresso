@@ -37,8 +37,8 @@ CATALYTIC_REACTIONS
 /* Rotation */
 ROTATION
 ROTATIONAL_INERTIA              implies ROTATION
-BOND_CONSTRAINT	                requires not ROTATION
-ROTATION_PER_PARTICLE	        implies ROTATION
+BOND_CONSTRAINT                 requires not ROTATION
+ROTATION_PER_PARTICLE           implies ROTATION
 
 /* Adress */
 MOL_CUT                         implies VIRTUAL_SITES_COM
@@ -47,8 +47,8 @@ MOL_CUT                         implies VIRTUAL_SITES_COM
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
 INTER_RF                        implies ELECTROSTATICS
-MMM1D_GPU                       implies PARTIAL_PERIODIC, ELECTROSTATICS
-MMM1D_GPU                       requires CUDA
+MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
+EWALD_GPU                       requires CUDA and ELECTROSTATICS
 
 /* Magnetostatics */
 DIPOLES
@@ -58,7 +58,7 @@ DP3M                            equals DIPOLES and FFTW
 VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
 VIRTUAL_SITES_RELATIVE          requires not VIRTUAL_SITES_COM
 VIRTUAL_SITES_RELATIVE          implies ROTATION
-VIRTUAL_SITES	                equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
+VIRTUAL_SITES                   equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
 VIRTUAL_SITES_NO_VELOCITY       require VIRTUAL_SITES_RELATIVE
 VIRTUAL_SITES_THERMOSTAT        require VIRTUAL_SITES_RELATIVE
 THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
@@ -85,7 +85,6 @@ ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
 EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 LATTICE	                        equals LB or LB_GPU
-USE_TEMPORARY	                equals LB or LB_GPU
 SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
@@ -125,12 +124,12 @@ BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 /* Obsolete features. To be removed. */
 /* Old Bond angle */
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
-BOND_ANGLE_HARMONIC	        	requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
-BOND_ANGLE_COSINE	        	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_HARMONIC             requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_COSINE               requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
 BOND_ANGLE_COSSQUARE            requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
 BOND_ANGLE_OLD                  equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
-BOND_ANGLE_HARMONIC	            notest
-BOND_ANGLE_COSINE	            notest
+BOND_ANGLE_HARMONIC             notest
+BOND_ANGLE_COSINE               notest
 BOND_ANGLE_COSSQUARE            notest
 BOND_ANGLE_OLD                  notest
 
@@ -140,9 +139,9 @@ OLD_DIHEDRAL                    notest
 /* turn off nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
 /* add an int to the particle marking ghosts. Only visible on C level */
-GHOST_FLAG						notest
+GHOST_FLAG                      notest
 /* ghost particles also have the bond information. */
-GHOSTS_HAVE_BONDS				notest
+GHOSTS_HAVE_BONDS               notest
 
 
 /* Debugging */

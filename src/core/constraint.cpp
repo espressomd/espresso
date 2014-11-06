@@ -2569,6 +2569,8 @@ void add_constraints_forces(Particle *p1)
       }
       break;
   default:
+      fprintf(stderr, "ERROR: encountered unknown constraint during force computation\n");
+      errexit();
       break;
 
     }
@@ -2804,26 +2806,19 @@ double add_constraints_energy(Particle *p1)
       //@TODO: implement energy of Plane, Slitpore
   case CONSTRAINT_PLANE:
     {
-        ostringstream msg;
-        msg << "energy computation for PLANE not implemented";
-        runtimeError(msg);
+        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
     }
       break;
   case CONSTRAINT_SLITPORE:
     {
-        ostringstream msg;
-        msg << "energy computation for SLITPORE not implemented";
-        runtimeError(msg);
+        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
     }
       break;
   case CONSTRAINT_NONE:
       break;
   default:
-    {
-        ostringstream msg;
-        msg << "trying to compute energy for unknown constraint";
-        runtimeError(msg);
-    }
+      fprintf(stderr, "ERROR: encountered unknown constraint during energy computation\n");
+      errexit();
       break;
     }
 

@@ -213,7 +213,7 @@ void calc_scaling(double *g, int bin, int boxes, double rclocal)
   // char buffer[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 2];
   double rclocal2=rclocal*rclocal, neigh[wallstuff_part_in_bin[bin].n];
   // 12  was set up in initialization as max neighbours in 2d
-  int limit=pow(2,boxes);
+  int limit= 1L << boxes;
   double sum_sai_r[limit][limit], sum_sai_m[limit][limit], sai_r, sai_m;
   int division[limit][limit] ;
   double ystep=box_l[1]/(double)limit, zstep=box_l[2]/(double)limit;
@@ -309,7 +309,7 @@ void calc_scaling2 (double *g, int bin, int boxes, double rclocal)
   // char buffer[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 2];
   double rclocal2=rclocal*rclocal, neigh[wallstuff_part_in_bin[bin].n];
  
-  int limit=pow(2,boxes);
+  int limit= 1L << boxes;
   double sum_sai_r[limit][limit], sum_sai_m[limit][limit], sai_r, sai_m;
   // 12  was set up in initialization as max neighbours in 2d
   int division[limit][limit],neighbour[limit][limit][13] ;
