@@ -677,13 +677,13 @@ int mdlc_tune(double error)
 
   if(h > lz) {
     fprintf(stderr,"tune DLC dipolar: Slab is larger than the box size !!! \n");
-    exit(1);
+    errexit();
   }
  
   if(fabs(box_l[0]-box_l[1])>0.001) {
     fprintf(stderr,"tune DLC dipolar: box size in x direction is different from y direction !!! \n");
     fprintf(stderr,"The tuning formula requires both to be equal. \n");
-    exit(1);
+    errexit();
   }
 
   lx=box_l[0];
