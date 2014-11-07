@@ -719,14 +719,12 @@ int mdlc_tune(double error)
 
 int mdlc_sanity_checks()
 {
-#ifdef PARTIAL_PERIODIC
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
       ostringstream msg;
       msg <<"mdlc requires periodicity 1 1 1";
       runtimeError(msg);
     return 1;
   }
-#endif  
 
   // It will be desirable to have a  checking function that check that the slab geometry is such that 
   // the short direction is along the z component.

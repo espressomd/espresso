@@ -298,9 +298,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
 	 
     for(i=0;i<3;i++){
       NCUT[i]=Ncut_off_magnetic_dipolar_direct_sum;
-#ifdef PARTIAL_PERIODIC
       if(PERIODIC(i) == 0)  {NCUT[i]=0;}  
-#endif            
     }
     NCUT2=Ncut_off_magnetic_dipolar_direct_sum*Ncut_off_magnetic_dipolar_direct_sum;
 	     

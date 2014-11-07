@@ -33,9 +33,7 @@
 #include <cstring>
 #include "config.hpp"
 #include "debug.hpp"
-#ifdef LEES_EDWARDS
 #include "lees_edwards.hpp"
-#endif
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */

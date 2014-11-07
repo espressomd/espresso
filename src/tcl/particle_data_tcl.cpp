@@ -251,13 +251,9 @@ void tclcommand_part_print_position(Particle *part, char *buffer, Tcl_Interp *in
   int img[3];
   memcpy(ppos, part->r.p, 3*sizeof(double));
   memcpy(img, part->l.i, 3*sizeof(int));
-  
  
-#ifdef LEES_EDWARDS
-//  do not unfold position by default for LE case.
-#else
   unfold_position(ppos, img);
-#endif
+
   Tcl_PrintDouble(interp, ppos[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, ppos[1], buffer);
@@ -269,31 +265,23 @@ void tclcommand_part_print_position(Particle *part, char *buffer, Tcl_Interp *in
 void tclcommand_part_print_folded_position(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   double ppos[3];
-  int img[3];
+  int    img[3];
+  double pvel[3];
   memcpy(ppos, part->r.p, 3*sizeof(double));
   memcpy(img, part->l.i, 3*sizeof(int));
-  
-#ifdef LEES_EDWARDS
-  double pvel[3];
   memcpy(pvel, part->m.v, 3*sizeof(double));
+
   fold_position(ppos, pvel, img);
-#else
-  fold_position(ppos, img);
-#endif
   
   Tcl_PrintDouble(interp, ppos[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, ppos[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, ppos[2], buffer);
-#ifdef LEES_EDWARDS
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-#else
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-#endif
 #ifdef LEES_EDWARDS
   Tcl_PrintDouble(interp, pvel[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_AppendResult(interp, " ", buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, pvel[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, pvel[2], buffer);
@@ -472,8 +460,13 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 
   sprintf(buffer, "%d", part.p.identity);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
+#ifndef LEES_EDWARDS
   Tcl_AppendResult(interp, " pos ", (char *)NULL);
   tclcommand_part_print_position(&part, buffer, interp);
+#else
+  Tcl_AppendResult(interp, " folded ", (char *)NULL);
+  tclcommand_part_print_folded_position(&part, buffer, interp);
+#endif
   sprintf(buffer, "%d", part.p.type);
   Tcl_AppendResult(interp, " type ", buffer, (char *)NULL);
 
@@ -658,10 +651,12 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
     else if (ARG0_IS_S("position"))
       tclcommand_part_print_position(&part, buffer, interp);
-    else if (ARG0_IS_S("force"))
-      tclcommand_part_print_f(&part, buffer, interp);
+    else if (ARG0_IS_S("unfolded_position"))
+      tclcommand_part_print_position(&part, buffer, interp);
     else if (ARG0_IS_S("folded_position"))
       tclcommand_part_print_folded_position(&part, buffer, interp);
+    else if (ARG0_IS_S("force"))
+      tclcommand_part_print_f(&part, buffer, interp);
     else if (ARG0_IS_S("type")) {
       sprintf(buffer, "%d", part.p.type);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
