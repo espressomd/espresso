@@ -653,10 +653,11 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_position(&part, buffer, interp);
     else if (ARG0_IS_S("unfolded_position"))
       tclcommand_part_print_position(&part, buffer, interp);
-    else if (ARG0_IS_S("folded_position"))
-      tclcommand_part_print_folded_position(&part, buffer, interp);
     else if (ARG0_IS_S("force"))
       tclcommand_part_print_f(&part, buffer, interp);
+    /* after force, so that part print f gives the force, and not folded position */
+    else if (ARG0_IS_S("folded_position"))
+      tclcommand_part_print_folded_position(&part, buffer, interp);
     else if (ARG0_IS_S("type")) {
       sprintf(buffer, "%d", part.p.type);
       Tcl_AppendResult(interp, buffer, (char *)NULL);

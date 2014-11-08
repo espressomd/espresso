@@ -1,4 +1,3 @@
-#error master currently doesn't work, please revert to 0607dfa2dde4d9c67675428dc146b7d2c6313c5d
 /*
   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
