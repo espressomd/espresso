@@ -2877,19 +2877,15 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #ifdef ENGINE
   if ( p->swim.swimming )
   {
-    // TODO: Fix LB mapping
-    if ( lattice_switch & LATTICE_LB )
-    {
-      fprintf(stderr,"ERROR: Swimming is not yet compatible with CPU LB. Please use LB_GPU instead.\n");
-      errexit();
-    }
-
     // calculate source position
     double source_position[3];
     double direction = double(p->swim.push_pull) * p->swim.dipole_length;
     source_position[0] = p->r.p[0] + direction * p->r.quatu[0];
     source_position[1] = p->r.p[1] + direction * p->r.quatu[1];
     source_position[2] = p->r.p[2] + direction * p->r.quatu[2];
+
+    int corner[3] = {0,0,0};
+    fold_position( source_position , corner );
 
     // get lattice cell corresponding to source position and interpolate velocity
     lblattice.map_position_to_lattice(source_position,node_index,delta);
