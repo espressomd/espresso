@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <limits>
+#include <cmath>
 
 struct BoundingBox {
   float llx, lly, llz;
@@ -10,9 +11,16 @@ struct BoundingBox {
 };
 
 #ifdef LENNARD_JONES
-static void  add_lj_interaction(PdbParser::PdbParser &parser, std::vector<PdbLJInteraction> interactions) {
+static void  add_lj_interaction(PdbParser::PdbParser &parser, std::vector<PdbLJInteraction> interactions, const double rel_cutoff) {
   for(std::vector<PdbLJInteraction>::const_iterator it = interactions.begin(); it != interactions.end(); ++it) {
-    ;
+    for(std::map<std::string, PdbParser::itp_atomtype> jt = parser.itp_atomtypes.begin(); jt != parser.itp_atomtypes.end(); ++jt) {
+      if(it->other_type == jt->id)
+	continue;
+      const double epsilon_ij = sqrt(it->epsilon * jt->second.epsilon);
+      const double sigma_ij = 0.5*(it->sigma+jt->second.epsilon);
+      lennard_jones_set_params(it->other_type, jt->second.id, epsilon_ij, sigma_ij,
+			       rel_cutoff*sigma_ij);
+    }
   }
 }
 #endif
@@ -44,6 +52,7 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
   int id = first_id;
   int stat;
   int type;
+  double q;
   BoundingBox bb;
   bb.llx = bb.lly = bb.llz = 0.0;
   double scalex = 1.0, scaley = 1.0, scalez = 1.0;
@@ -80,11 +89,16 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
     case ES_PART_CREATED:
       /* See if we have a type from itp file, otherwise set default type */      
       if(entry != parser.itp_atoms.end()) {
-	type = parser.itp_atomtypes[entry->second.type].id;
+	const PdbParser::itp_atom itp_atom = parser.itp_atomtypes[entry->second.type];
+	type = itp_atom.id;
+	charge = itp_atom.charge;
       } else {	
 	type = default_type;
       }
       set_particle_type(id, first_type + type);
+      #ifdef ELECTROSTATICS
+      set_particle_q(id, charge);
+      #enfif
       id++;
       break;
     case ES_PART_ERROR:
