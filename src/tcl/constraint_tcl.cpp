@@ -1622,6 +1622,8 @@ int tclcommand_constraint_parse_ext_magn_field(Constraint *con, Tcl_Interp *inte
 static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *interp,
                       int argc, char **argv)
 {
+  Tcl_AppendResult(interp, "constraint plane cell deprecated, use constraint wall instead!", (char *) NULL);
+  return (TCL_ERROR);
   con->type = CONSTRAINT_PLANE;
 
   /* invalid entries to start of */
