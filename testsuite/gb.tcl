@@ -22,6 +22,8 @@ source "tests_common.tcl"
 
 require_feature "ROTATION"
 require_feature "GAY_BERNE"
+# our box is too small for LEES_EDWARDS
+require_feature "LEES_EDWARDS" off
 
 puts "----------------------------------------"
 puts "- Testcase gb.tcl running on [format %02d [setmd n_nodes]] nodes: -"

@@ -106,6 +106,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	analysis_system.data.06.gz analysis_system.data.07.gz \
 	analysis_system.data.08.gz analysis_system.data.09.gz \
 	analysis_system.data.10.gz \
+	angle_cosine.data angle_cossquare.data angle_harmonic.data \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
 	coulomb_cloud_wall_system.data \

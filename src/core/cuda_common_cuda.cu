@@ -60,7 +60,7 @@ void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line){
     printf("CUDA error: %s\n", cudaGetErrorString(err));
     if ( err == cudaErrorInvalidValue )
       fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n", file, line);
-    exit(EXIT_FAILURE);
+    errexit();
   } else {
     err=cudaGetLastError();
     if (err != cudaSuccess) {
@@ -68,7 +68,7 @@ void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line){
       printf("CUDA error: %s\n", cudaGetErrorString(err));
       if ( err == cudaErrorInvalidValue )
 	fprintf(stderr, "You may have tried to allocate zero memory before %s:%u.\n", file, line);
-      exit(EXIT_FAILURE);
+      errexit();
     }
   }
 }
@@ -80,7 +80,7 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
     fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n",
             this_node, cudaGetErrorString(err), function, block.x, block.y, block.z, grid.x, grid.y, grid.z,
             file, line);
-    exit(EXIT_FAILURE);
+    errexit();
   }
 }
 
@@ -218,7 +218,7 @@ void gpu_init_particle_comm() {
   if ( this_node == 0  && global_part_vars_host.communication_enabled == 0 ) {
     if( cuda_get_n_gpus() == -1 ) {
       fprintf(stderr, "Unable to initialize CUDA as no sufficient GPU is available.\n");
-      exit(0);
+      errexit();
     }
     if (cuda_get_n_gpus()>1) {
       fprintf (stderr, "More than one GPU detected, please note Espresso uses device 0 by default regardless of usage or capability\n");

@@ -137,12 +137,12 @@ test_catch {
 	if { $maxdx > $epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
 	if { $maxdy > $epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
 	if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
-	error "force error too large"
+	error_exit "force error too large"
     }
 
     puts "verlet reuse is [setmd verlet_reuse], should be $verlet_reuse"
     if { [expr abs([setmd verlet_reuse] - $verlet_reuse)] > $epsilon } {
-	error "verlet reuse frequency differs."
+	error_exit "verlet reuse frequency differs."
     }
 }
 

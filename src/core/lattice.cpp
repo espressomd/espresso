@@ -428,12 +428,7 @@ void Lattice::map_position_to_lattice_global (double pos[3], int ind[3], double 
     pos[i] = pos[i]-0.5*tmp_agrid;
   }
 
-#ifdef LEES_EDWARDS
-  double tmp[3];
-  fold_position (pos,tmp,ind);
-#else
   fold_position (pos,ind);
-#endif
 
   // convert the position into lower left grid point
   for (i=0;i<3;i++) {

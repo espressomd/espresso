@@ -265,11 +265,12 @@ a tcl-list with the same format as specified above:
 ...
 \end{tclcode}
 
-By default the particle position returned is {\bf unfolded}, for convenience in diffusion calculations etc. 
-If \feature{LEES_EDWARDS} is turned on then particle positions are output folded by default, 
-to try and avoid the common error that imaged positions and un-imaged velocities (or vice-versa) are saved together.  
-If the unfolded position is requested explicitly in a Lees-Edwards simulation, then the unfolded velocities will also be returned.
-
+When using \texttt{pos}, the particle position returned is {\bf
+  unfolded}, for convenience in diffusion calculations etc.  Note that
+therefore blockfiles will contain imaged positions, but un-imaged
+velocities, which should not be interpreted together. However, that is
+fine for restoring the simulation, since the particled data is loaded
+the same way.
 
 \subsection{Deleting  particles}
 \label{tcl:part:delete}

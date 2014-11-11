@@ -532,7 +532,8 @@ int lb_lbfluid_get_agrid(double* p_agrid){
 
 int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
 #ifdef SHANCHEN
-  exit(printf("Not implemented yet (%s:%d) ",__FILE__,__LINE__));
+  fprintf(stderr, "Not implemented yet (%s:%d) ",__FILE__,__LINE__);
+  errexit();
 #endif // SHANCHEN
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -651,7 +652,8 @@ int lb_lbfluid_print_vtk_density(char** filename) {
         }
         else {
 #ifdef LB
-            exit(printf("Not implemented yet (%s:%d) ",__FILE__,__LINE__));
+          fprintf(stderr, "Not implemented yet (%s:%d) ",__FILE__,__LINE__);
+          errexit();
 #endif // LB
         }
         fclose(fp);
@@ -796,8 +798,8 @@ int lb_lbfluid_print_velocity(char* filename) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
 #ifdef SHANCHEN
-        printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
-        exit(1);
+        fprintf(stderr, "TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
+        errexit();
 #endif // SHANCHEN
         size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
         host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
@@ -831,8 +833,8 @@ int lb_lbfluid_print_velocity(char* filename) {
             {
                 for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
 #ifdef SHANCHEN
-                    printf("SHANCHEN not implemented for the CPU LB\n",__FILE__,__LINE__);
-                    exit(1);
+                    fprintf(stderr, "SHANCHEN not implemented for the CPU LB\n",__FILE__,__LINE__);
+                    errexit();
 #endif // SHANCHEN
                     lb_lbnode_get_u(pos, u);
                     fprintf(fp, "%f %f %f %f %f %f\n",
@@ -1128,8 +1130,8 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
                 }
 #ifdef SHANCHEN
                 //printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
-                printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
-                exit(1);
+                fprintf(stderr, "TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
+                errexit();
 #endif // SHANCHEN
 				lb_lbnode_get_u(tmpind, local_v);
 
