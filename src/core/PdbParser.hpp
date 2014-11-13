@@ -25,8 +25,15 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <algorithm>
+#include <limits>
 
 namespace PdbParser {
+
+  struct BoundingBox {
+    float llx, lly, llz;
+    float urx, ury, urz;
+  };
 
   typedef struct {
     int i; // index
@@ -50,6 +57,7 @@ namespace PdbParser {
     bool parse_pdb_file(std::string filename);
     bool parse_itp_file(std::string filename);
     bool parse_file(std::string pdb_filename, std::string itp_filename);
+    BoundingBox calc_bounding_box() const;
     std::vector<pdb_atom> pdb_atoms;
     std::map<int, itp_atom> itp_atoms;
     std::map<std::string, itp_atomtype> itp_atomtypes;

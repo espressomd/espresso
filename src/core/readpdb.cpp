@@ -3,14 +3,8 @@
 #include "lj.hpp"
 
 #include <iostream>
-#include <limits>
 #include <cmath>
-#include <algorithm>
 
-struct BoundingBox {
-  float llx, lly, llz;
-  float urx, ury, urz;
-};
 
 #ifdef LENNARD_JONES
 static void  add_lj_interaction(PdbParser::PdbParser &parser, std::vector<PdbLJInteraction> interactions, const double rel_cutoff, const int first_type) {
@@ -30,39 +24,18 @@ static void  add_lj_interaction(PdbParser::PdbParser &parser, std::vector<PdbLJI
 }
 #endif
 
-static BoundingBox calc_bounding_box(PdbParser::PdbParser &parser) {
-  BoundingBox bb;
-
-  bb.llx = std::numeric_limits<float>::max();
-  bb.lly = std::numeric_limits<float>::max();
-  bb.llz = std::numeric_limits<float>::max();
-  bb.urx = -std::numeric_limits<float>::max();
-  bb.ury = -std::numeric_limits<float>::max();
-  bb.urz = -std::numeric_limits<float>::max();
-
-  for(std::vector<PdbParser::pdb_atom>::const_iterator it = parser.pdb_atoms.begin(); it != parser.pdb_atoms.end(); ++it) {
-    bb.llx = std::min(it->x, bb.llx);
-    bb.lly = std::min(it->y, bb.lly);
-    bb.llz = std::min(it->z, bb.llz);
-    bb.urx = std::max(it->x, bb.urx);
-    bb.ury = std::max(it->y, bb.ury);
-    bb.urz = std::max(it->z, bb.urz);
-  }  
-  return bb;
-}
-
 static int add_particles(PdbParser::PdbParser &parser, int first_id, int default_type, int first_type = 0, bool fit = false) {
   double pos[3];
   int id = first_id;
   int stat;
   int type;
   double q;
-  BoundingBox bb;
+  PdbParser::BoundingBox bb;
   bb.llx = bb.lly = bb.llz = 0.0;
   double scale = 1;
 
   if(fit) {
-    bb = calc_bounding_box(parser);
+    bb = parser.calc_bounding_box();
     scale = std::min(box_l[0] / (bb.urx - bb.llx), std::min(box_l[1] / (bb.ury - bb.lly), box_l[2] / (bb.urz - bb.llz)));
     std::cout << "llx " << bb.llx << std::endl;
     std::cout << "lly " << bb.lly << std::endl;

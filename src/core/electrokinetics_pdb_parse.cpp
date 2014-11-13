@@ -142,34 +142,6 @@ LOOKUP_TABLE default\n",
   return pdb_SUCCESS;
 }
 
-
-int calculate_bounding_box(bounding_box* bbox, PdbParser::PdbParser &parser) {
-  // prototype for joining the arrays
-  if (parser.pdb_atoms.size() == 0) return pdb_ERROR;
-
-  bbox->max_x = -std::numeric_limits<float>::max();
-  bbox->max_y = -std::numeric_limits<float>::max();
-  bbox->max_z = -std::numeric_limits<float>::max();
-  bbox->min_x = std::numeric_limits<float>::max();
-  bbox->min_y = std::numeric_limits<float>::max();
-  bbox->min_z = std::numeric_limits<float>::max();
-
-  for (std::vector<PdbParser::pdb_atom>::const_iterator a = parser.pdb_atoms.begin(); a != parser.pdb_atoms.end(); ++a) {
-    if (bbox->max_x < a->x) bbox->max_x = a->x;
-    if (bbox->max_y < a->y) bbox->max_y = a->y;
-    if (bbox->max_z < a->z) bbox->max_z = a->z;
-    if (bbox->min_x > a->x) bbox->min_x = a->x;
-    if (bbox->min_y > a->y) bbox->min_y = a->y;
-    if (bbox->min_z > a->z) bbox->min_z = a->z;
-  }
-
-  bbox->center[0] = ( bbox->max_x + bbox->min_x )/2;
-  bbox->center[1] = ( bbox->max_y + bbox->min_y )/2;
-  bbox->center[2] = ( bbox->max_z + bbox->min_z )/2;
-
-  return pdb_SUCCESS;
-}
-
 int populate_lattice(PdbParser::PdbParser &parser) {
   /*
    * This routine will populate the lattice using the
@@ -180,17 +152,20 @@ int populate_lattice(PdbParser::PdbParser &parser) {
   printf("pdb_n_particles=%u, itp_n_particles=%u, itp_n_parameters=%u\n",atom_data->pdb_n_particles,atom_data->itp_n_particles,atom_data->itp_n_parameters);
 #endif
   // TODO: Check if bounding box fits into simbox
-  bounding_box bbox;
-  calculate_bounding_box(&bbox, parser);
+  const PdbParser::BoundingBox bbox = parser.calc_bounding_box();
+  float center[3];
+  
+  center[0] = ( bbox.urx + bbox.llx )/2;
+  center[1] = ( bbox.ury + bbox.lly )/2;
+  center[2] = ( bbox.urz + bbox.llz )/2;
 
   // calculate the shift of the bounding box
   float shift[3];
-  shift[0] = ek_parameters.agrid / 2.0 * ek_parameters.dim_x - bbox.center[0];
-  shift[1] = ek_parameters.agrid / 2.0 * ek_parameters.dim_y - bbox.center[1];
-  shift[2] = ek_parameters.agrid / 2.0 * ek_parameters.dim_z - bbox.center[2];
+  shift[0] = ek_parameters.agrid / 2.0 * ek_parameters.dim_x - center[0];
+  shift[1] = ek_parameters.agrid / 2.0 * ek_parameters.dim_y - center[1];
+  shift[2] = ek_parameters.agrid / 2.0 * ek_parameters.dim_z - center[2];
 
 #ifdef DEBUG
-  printf("bbox.max_x=%f, bbox.max_y=%f, bbox.max_z=%f, bbox.min_x=%f, bbox.min_y=%f, bbox.min_z=%f, bbox->center=[%f; %f; %f]\n", bbox.max_x, bbox.max_y, bbox.max_z, bbox.min_x, bbox.min_y, bbox.min_z, bbox.center[0], bbox.center[1], bbox.center[2]);
   printf("agrid=%f, dim_x=%d, dim_y=%d, dim_z=%d\n",ek_parameters.agrid, ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z);
   printf("shift=[%f; %f; %f]\n",shift[0], shift[1], shift[2]);
 #endif

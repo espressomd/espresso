@@ -27,6 +27,27 @@ using namespace std;
 
 namespace PdbParser {
 
+  BoundingBox PdbParser::calc_bounding_box() const {
+    BoundingBox bb;
+
+    bb.llx = std::numeric_limits<float>::max();
+    bb.lly = std::numeric_limits<float>::max();
+    bb.llz = std::numeric_limits<float>::max();
+    bb.urx = -std::numeric_limits<float>::max();
+    bb.ury = -std::numeric_limits<float>::max();
+    bb.urz = -std::numeric_limits<float>::max();
+
+    for(std::vector<pdb_atom>::const_iterator it = pdb_atoms.begin(); it != pdb_atoms.end(); ++it) {
+      bb.llx = std::min(it->x, bb.llx);
+      bb.lly = std::min(it->y, bb.lly);
+      bb.llz = std::min(it->z, bb.llz);
+      bb.urx = std::max(it->x, bb.urx);
+      bb.ury = std::max(it->y, bb.ury);
+      bb.urz = std::max(it->z, bb.urz);
+    }  
+    return bb;
+  }
+
   bool PdbParser::parse_pdb_file(string filename) { 
     ifstream file;
     string tmp;
