@@ -38,6 +38,6 @@ struct PdbLJInteraction {
     @return Number of particles that were added.
  */
 
-int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions,
+int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions, double lj_rel_cutoff=2.5,
 				char *itp_file=NULL, int first_type=0, bool fit = false);
 #endif

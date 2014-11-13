@@ -39,6 +39,7 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
   int first_type = 0;
   int type = -1;
   bool fit = false;
+  double lj_rel_cutoff = 2.5;
 
   std::vector<PdbLJInteraction> ljinteractions;
 
@@ -75,11 +76,19 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
 	Tcl_AppendResult(interp, "first_type takes exactly one integer argument.\n", (char *)NULL);
 	return TCL_ERROR;
       }            
+    } else if (ARG0_IS_S("lj_rel_cutoff")) {
+      argc--;
+      argv++;
+      if(!ARG0_IS_D(lj_rel_cutoff)) {
+	return TCL_ERROR;
+      }
     } else if (ARG0_IS_S("fit_to_box")) {
       fit = true;
     } else if (ARG0_IS_S("lj_with")) {
       argc--;
       argv++;
+      if(argc < 3)
+	return TCL_ERROR;
       struct PdbLJInteraction ljia;
       if(!ARG0_IS_I(ljia.other_type)) {
 	return TCL_ERROR;
@@ -95,6 +104,7 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
 	return TCL_ERROR;
       }
       ljinteractions.push_back(ljia);
+    }
     else {
       usage(interp);
       return TCL_ERROR;
@@ -106,7 +116,7 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
     usage(interp);
     return TCL_ERROR;
   }
-  if(!pdb_add_particles_from_file(pdb_file, first_id, type, itp_file, first_type,ljinteractions,fit)) {
+  if(!pdb_add_particles_from_file(pdb_file, first_id, type, ljinteractions, lj_rel_cutoff, itp_file, first_type,fit)) {
     Tcl_AppendResult(interp, "Could not parse pdb file.", (char *)NULL);
     return TCL_ERROR;
   }

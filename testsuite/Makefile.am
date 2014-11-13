@@ -130,11 +130,9 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	object_in_fluid_system-init.data \
         object_in_fluid_system-nodes.data \
 	object_in_fluid_system-triangles.data \
-	\
 	pdb_parser.itp.dat \
-	pdb_arser.pdb.dat \
+	pdb_parser.pdb.dat \
 	pe_micelle.tcl pe_micelle.data \
-	\
 	maggs_correct_rdf.data
 
 # run the testsuite

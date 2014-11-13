@@ -147,9 +147,9 @@ int calculate_bounding_box(bounding_box* bbox, PdbParser::PdbParser &parser) {
   // prototype for joining the arrays
   if (parser.pdb_atoms.size() == 0) return pdb_ERROR;
 
-  bbox->max_x = std::numeric_limits<float>::min();
-  bbox->max_y = std::numeric_limits<float>::min();
-  bbox->max_z = std::numeric_limits<float>::min();
+  bbox->max_x = -std::numeric_limits<float>::max();
+  bbox->max_y = -std::numeric_limits<float>::max();
+  bbox->max_z = -std::numeric_limits<float>::max();
   bbox->min_x = std::numeric_limits<float>::max();
   bbox->min_y = std::numeric_limits<float>::max();
   bbox->min_z = std::numeric_limits<float>::max();
