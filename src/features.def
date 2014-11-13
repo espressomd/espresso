@@ -27,7 +27,8 @@ MODES                           requires FFTW
 BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
 COLLISION_DETECTION             implies GHOST_FLAG, GHOSTS_HAVE_BONDS
-LEES_EDWARDS                    requires not ELECTROSTATICS, not LB
+LEES_EDWARDS                    implies DPD
+LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
 METADYNAMICS
 NEMD
 NPT 

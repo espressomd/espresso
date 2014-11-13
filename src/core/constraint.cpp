@@ -2295,6 +2295,11 @@ void add_constraints_forces(Particle *p1)
 	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
 				     ia_params,vec,dist,dist*dist, force,
 				     torque1, torque2);
+#ifdef TUNABLE_SLIP
+	  if (constraints[n].c.wal.tunable_slip == 1 ) {
+		  add_tunable_slip_pair_force(p1, &constraints[n].part_rep,ia_params,vec,dist,force);
+	  }
+#endif
 	}
 	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
 	  if ( (constraints[n].c.wal.only_positive != 1) && ( dist < 0 ) ) {

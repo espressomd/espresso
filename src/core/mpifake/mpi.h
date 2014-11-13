@@ -127,6 +127,7 @@ int MPI_Type_create_hvector(int count, int length, int stride, MPI_Datatype oldt
 
 inline int MPI_Init(int *a, char ***b) { return MPI_SUCCESS; }
 inline int MPI_Finalize(void) { return MPI_SUCCESS; }
+inline int MPI_Abort(MPI_Comm comm, int status) { return MPI_SUCCESS; }
 inline int MPI_Comm_size(MPI_Comm comm, int *psize) { *psize = 1; return MPI_SUCCESS; }
 inline int MPI_Comm_rank(MPI_Comm comm, int *rank) { *rank = 0; return MPI_SUCCESS; }
 inline int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) { *rank = 0; return MPI_SUCCESS; }

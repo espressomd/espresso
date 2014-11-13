@@ -762,6 +762,8 @@ typedef struct {
   int penetrable; 
   int reflecting;
   int only_positive;
+  /** whether to calculate tunable slip forces 1 or not 0 */
+  int tunable_slip;
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */

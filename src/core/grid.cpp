@@ -88,12 +88,7 @@ int map_position_node_array(double pos[3])
   for (i = 0; i < 3; i++)
     f_pos[i] = pos[i];
 
-#ifdef LEES_EDWARDS  
-  double vel_scratch[3]={0.,0.,0.};  
-  fold_position(f_pos, vel_scratch, im);
-#else
   fold_position(f_pos, im);
-#endif
 
   for (i = 0; i < 3; i++) {
     im[i] = (int)floor(node_grid[i]*f_pos[i]*box_l_i[i]);

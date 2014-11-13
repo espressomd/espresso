@@ -36,7 +36,7 @@ proc WriteNewConfig {in out} {
   } elseif { 
     [file exists "$in"] } { set chk [open "$in" "r"] 
   } else { 
-    puts "ERROR: Could not find checkpoint-list $in!\nAborting..."; exit 
+    error_exit "could not find checkpoint-list $in!\nAborting..." 
   }
   set i 0; 
   set sys_obs [list box_l gamma periodicity skin temperature time time_step]

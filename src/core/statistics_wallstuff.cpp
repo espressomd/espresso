@@ -266,11 +266,8 @@ void calc_scaling(double *g, int bin, int boxes, double rclocal)
       sai_r = sai_m = 0.0;
     }
     //printf("bin %d   nb %d  i %d  sin %e cos %e\n", bin,nb, i, sinus, cosinus);
-#ifdef LEES_EDWARDS
     fold_position(partCfg[p].r.p,partCfg[p].m.v,partCfg[p].l.i);
-#else
-    fold_position(partCfg[p].r.p, partCfg[p].l.i);
-#endif
+
     double y=partCfg[p].r.p[1];
     double z=partCfg[p].r.p[2];
     int line=(int)(y/ystep);
@@ -373,11 +370,8 @@ void calc_scaling2 (double *g, int bin, int boxes, double rclocal)
     }
     //printf("bin %d   nb %d  i %d  sin %e cos %e\n", bin,nb, i, sinus, cosinus);
     
-#ifdef LEES_EDWARDS
     fold_position(partCfg[p].r.p,partCfg[p].m.v,partCfg[p].l.i);
-#else
-    fold_position(partCfg[p].r.p, partCfg[p].l.i);
-#endif
+
     double y=partCfg[p].r.p[1];
     double z=partCfg[p].r.p[2];
     int line=(int)(y/ystep);
