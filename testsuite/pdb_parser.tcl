@@ -33,8 +33,4 @@ if { $n_part != 31 } {
     error_exit "Wrong number of particles"
 }
 
-puts [part]
-
-puts "Box is [setmd box_l]"
-
 exit 0
