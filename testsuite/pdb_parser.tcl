@@ -27,8 +27,8 @@ setmd box_l 10. 10. 10.
 
 part 0 pos 0 0 0 type 0
 
-readpdb pdb_file pdb_parser.pdb.dat type 10 first_id 1 itp_file pdb_parser.itp.dat fit_to_box lj_rel_cutoff 2.5 first_type 3 lj_with 0 1.0 1.0
-
+set bla [readpdb pdb_file pdb_parser.pdb.dat type 10 first_id 1 itp_file pdb_parser.itp.dat fit_to_box lj_rel_cutoff 2.5 first_type 3 lj_with 0 1.0 1.0]
+puts "Return value of readpdb is $bla"
 puts [part]
 puts [inter]
 

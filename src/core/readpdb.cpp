@@ -5,6 +5,11 @@
 #include <iostream>
 #include <cmath>
 
+#ifdef READPDB_DEBUG
+#define READPDB_TRACE(A) A
+#else
+#define READPDB_TRACE(A)
+#endif
 
 #ifdef LENNARD_JONES
 static void  add_lj_interaction(PdbParser::PdbParser &parser, std::vector<PdbLJInteraction> interactions, const double rel_cutoff, const int first_type) {
@@ -15,8 +20,8 @@ static void  add_lj_interaction(PdbParser::PdbParser &parser, std::vector<PdbLJI
       const double sigma_ij = 0.5*(it->sigma+jt->second.epsilon);
       const double cutoff_ij = rel_cutoff*sigma_ij;
       const double shift_ij = -pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6);
-      printf("adding lj interaction types %d %d eps %e sig %e cut %e shift %e\n", it->other_type, first_type + jt->second.id, epsilon_ij, sigma_ij,
-	     cutoff_ij, shift_ij);
+      READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e cut %e shift %e\n", it->other_type, first_type + jt->second.id, epsilon_ij, sigma_ij,
+			   cutoff_ij, shift_ij););
       lennard_jones_set_params(it->other_type, first_type + jt->second.id, epsilon_ij, sigma_ij,
 			       cutoff_ij, shift_ij, 0.0, -1.0, 0.0);
     }
@@ -37,16 +42,16 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
   if(fit) {
     bb = parser.calc_bounding_box();
     scale = std::min(box_l[0] / (bb.urx - bb.llx), std::min(box_l[1] / (bb.ury - bb.lly), box_l[2] / (bb.urz - bb.llz)));
-    std::cout << "llx " << bb.llx << std::endl;
-    std::cout << "lly " << bb.lly << std::endl;
-    std::cout << "llz " << bb.llz << std::endl;
-    std::cout << "urx " << bb.urx << std::endl;
-    std::cout << "ury " << bb.ury << std::endl;
-    std::cout << "urz " << bb.urz << std::endl;
-    std::cout << "scale " << scale << std::endl;
-    std::cout << "bb.urx - bb.llx " << bb.urx - bb.llx << std::endl;
-    std::cout << "bb.ury - bb.lly " << bb.ury - bb.lly << std::endl;
-    std::cout << "bb.urz - bb.llz " << bb.urz - bb.llz << std::endl;
+    READPDB_TRACE(std::cout << "llx " << bb.llx << std::endl;);
+    READPDB_TRACE(std::cout << "lly " << bb.lly << std::endl;);
+    READPDB_TRACE(std::cout << "llz " << bb.llz << std::endl;);
+    READPDB_TRACE(std::cout << "urx " << bb.urx << std::endl;);
+    READPDB_TRACE(std::cout << "ury " << bb.ury << std::endl;);
+    READPDB_TRACE(std::cout << "urz " << bb.urz << std::endl;);
+    READPDB_TRACE(std::cout << "scale " << scale << std::endl;);
+    READPDB_TRACE(std::cout << "bb.urx - bb.llx " << bb.urx - bb.llx << std::endl;);
+    READPDB_TRACE(std::cout << "bb.ury - bb.lly " << bb.ury - bb.lly << std::endl;);
+    READPDB_TRACE(std::cout << "bb.urz - bb.llz " << bb.urz - bb.llz << std::endl;);
   }
 
   for(std::vector<PdbParser::pdb_atom>::const_iterator it = parser.pdb_atoms.begin(); it != parser.pdb_atoms.end(); ++it) {
@@ -101,7 +106,6 @@ int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vec
   n_part = add_particles(parser, first_id, type, first_type,fit);
 
 #ifdef LENNARD_JONES
-  std::cerr << "Adding LJ ia." << std::endl;
   add_lj_interaction(parser, ljInteractions, lj_rel_cutoff, first_type);
 #endif
 

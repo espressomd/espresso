@@ -116,11 +116,14 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
     usage(interp);
     return TCL_ERROR;
   }
-  if(!pdb_add_particles_from_file(pdb_file, first_id, type, ljinteractions, lj_rel_cutoff, itp_file, first_type,fit)) {
+  const int n_part = pdb_add_particles_from_file(pdb_file, first_id, type, ljinteractions, lj_rel_cutoff, itp_file, first_type,fit);
+  if(!n_part) {
     Tcl_AppendResult(interp, "Could not parse pdb file.", (char *)NULL);
     return TCL_ERROR;
   }
-
+  char buffer[32];
+  snprintf(buffer, sizeof(buffer), "%d", n_part);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
 
