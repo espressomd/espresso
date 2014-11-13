@@ -37,27 +37,26 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
   double q;
   PdbParser::BoundingBox bb;
   bb.llx = bb.lly = bb.llz = 0.0;
-  double scale = 1;
+  double bb_l[3] = { box_l[0], box_l[1], box_l[2] };
+
+  bb = parser.calc_bounding_box();
 
   if(fit) {
-    bb = parser.calc_bounding_box();
-    scale = std::min(box_l[0] / (bb.urx - bb.llx), std::min(box_l[1] / (bb.ury - bb.lly), box_l[2] / (bb.urz - bb.llz)));
-    READPDB_TRACE(std::cout << "llx " << bb.llx << std::endl;);
-    READPDB_TRACE(std::cout << "lly " << bb.lly << std::endl;);
-    READPDB_TRACE(std::cout << "llz " << bb.llz << std::endl;);
-    READPDB_TRACE(std::cout << "urx " << bb.urx << std::endl;);
-    READPDB_TRACE(std::cout << "ury " << bb.ury << std::endl;);
-    READPDB_TRACE(std::cout << "urz " << bb.urz << std::endl;);
-    READPDB_TRACE(std::cout << "scale " << scale << std::endl;);
-    READPDB_TRACE(std::cout << "bb.urx - bb.llx " << bb.urx - bb.llx << std::endl;);
-    READPDB_TRACE(std::cout << "bb.ury - bb.lly " << bb.ury - bb.lly << std::endl;);
-    READPDB_TRACE(std::cout << "bb.urz - bb.llz " << bb.urz - bb.llz << std::endl;);
+    bb_l[0] = (bb.urx - bb.llx);
+    bb_l[1] = (bb.ury - bb.lly);
+    bb_l[2] = (bb.urz - bb.llz);
+    
+    for(int i = 0; i < 3; i++) {
+      if(bb_l[i] > box_l[i]) {
+	rescale_boxl(i, bb_l[i]);
+      }
+    }
   }
 
   for(std::vector<PdbParser::pdb_atom>::const_iterator it = parser.pdb_atoms.begin(); it != parser.pdb_atoms.end(); ++it) {
-    pos[0] = scale * (it->x - bb.llx);
-    pos[1] = scale * (it->y - bb.lly);
-    pos[2] = scale * (it->z - bb.llz);
+    pos[0] = (it->x - bb.llx);
+    pos[1] = (it->y - bb.lly);
+    pos[2] = (it->z - bb.llz);
     stat = place_particle(id, pos);
 
     const std::map<int, PdbParser::itp_atom>::const_iterator entry = parser.itp_atoms.find(it->i);

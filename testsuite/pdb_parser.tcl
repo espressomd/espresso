@@ -23,14 +23,18 @@ puts "----------------------------------------------"
 puts "- Testcase pdb_parser.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------------"
 
-setmd box_l 10. 10. 10.
+setmd box_l 1. 1. 1.
 
 part 0 pos 0 0 0 type 0
 
-set n_part [readpdb pdb_file pdb_parser.pdb.dat type 10 first_id 1 itp_file pdb_parser.itp.dat fit_to_box lj_rel_cutoff 2.5 first_type 3 lj_with 0 1.0 1.0]
+set n_part [readpdb pdb_file pdb_parser.pdb.dat type 10 first_id 1 itp_file pdb_parser.itp.dat rescale_box lj_rel_cutoff 2.5 first_type 3 lj_with 0 1.0 1.0]
 
 if { $n_part != 31 } {
     error_exit "Wrong number of particles"
 }
+
+puts [part]
+
+puts "Box is [setmd box_l]"
 
 exit 0

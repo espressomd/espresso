@@ -82,7 +82,7 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
       if(!ARG0_IS_D(lj_rel_cutoff)) {
 	return TCL_ERROR;
       }
-    } else if (ARG0_IS_S("fit_to_box")) {
+    } else if (ARG0_IS_S("rescale_box")) {
       fit = true;
     } else if (ARG0_IS_S("lj_with")) {
       argc--;
