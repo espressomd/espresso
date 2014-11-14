@@ -80,7 +80,7 @@ typedef double real;
 
 /*******************  variables  *******************/
 
-double sd_viscosity=-1;
+double sd_viscosity=1;
 double sd_radius=-1;
 
 int sd_seed[]={0,('E'+'S'+'P'+'R'+'e'+'s'+'S'+'o')};
