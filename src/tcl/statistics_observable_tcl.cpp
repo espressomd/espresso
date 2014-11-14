@@ -507,11 +507,10 @@ int tclcommand_observable_rdf(Tcl_Interp* interp, int argc, char** argv, int* ch
   argc--;
   argv++;
   *change=1;
-  printf("argc:%d  argv[0]: %s, argv[1]:%s\n", argc, argv[0], argv[1]);
   
   if (argc < 2 || (!ARG0_IS_INTLIST(p1)) || (!ARG1_IS_INTLIST(p2))) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze rdf <type_list> <type_list> [<r_min> [<r_max> [<n_bins>]]]", (char *) NULL);
+    Tcl_AppendResult(interp, "usage: observable rdf <type_list> <type_list> [<r_min> [<r_max> [<n_bins>]]]", (char *) NULL);
     return (TCL_ERROR);
   }
   argc -= 2;
@@ -745,6 +744,104 @@ int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** 
    sf_print_usage(interp);
    return TCL_ERROR; 
  }
+}
+
+int tclcommand_observable_print_structure_factor_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
+  observable_sf_params* params= (observable_sf_params*) obs->container;
+  int order=params->order;
+  int order2=order*order;
+  char buffer[5 * TCL_DOUBLE_SPACE + 7];
+  double qfak = 2.0 * PI / box_l[0];
+  double* data = obs->last_value;
+  int l=0;
+  for(int i=-order; i<=order; i++) {
+    for(int j=-order; j<=order; j++) {
+      for(int k=-order; k<=order; k++) {
+	int n = i*i + j*j + k*k;
+	if (( n<=order2 ) && ( n>0 )) {
+	  sprintf(buffer, "{%f %f %f %f %f} ", qfak * i, qfak*j, qfak*k, data[l],data[l+1]);
+	  //sprintf(buffer, "%f %f %f %f %f\n", qfak * i, qfak*j, qfak*k, data[l],data[l+1]);
+	  Tcl_AppendResult(interp, buffer, (char *) NULL);
+	  l=l+2;
+	}
+      }
+    }
+  }
+}
+
+int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  //Tcl_AppendResult(interp, "Structure Factor not available yet!!", (char *)NULL);
+  //return TCL_ERROR;
+  int order;
+  if (argc > 1 && ARG1_IS_I(order)) {
+    obs->calculate=&observable_calc_structure_factor_fast;
+    //order_p=(int * )malloc(sizeof(int));
+    observable_sf_params* params =(observable_sf_params*) malloc(sizeof(observable_sf_params));
+    params->order=order;
+    obs->container=(void*) params;
+    params->num_k_vecs=order;
+    *change=2;
+    argc-=2;
+    argv+=2;
+    if (argc > 0) {
+      if (!ARG0_IS_I(params->num_k_vecs)) return (TCL_ERROR);
+      argc--;
+      argv++;
+      (*change)++;
+    }
+    int k_density = params->num_k_vecs/params->order;
+    int vecs_per_k=-1;
+    switch (k_density){
+    case 1:
+      vecs_per_k=3;
+      break;
+    case 2:
+      vecs_per_k=3+6;
+      break;
+    case 3:
+      vecs_per_k=3+6+4;
+      break;
+    default:
+      Tcl_AppendResult(interp, "so many samples per order not yet implemented", (char*)NULL);
+      return TCL_ERROR; 
+    }
+    obs->n=params->num_k_vecs*vecs_per_k*2;
+    obs->last_value=(double*)malloc(obs->n*sizeof(double));
+    return TCL_OK;
+  } else { 
+    sf_print_usage(interp);
+    return TCL_ERROR; 
+  }
+}
+
+int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
+  observable_sf_params* params= (observable_sf_params*) obs->container;
+  int k_max = params->num_k_vecs;
+  int k_density = k_max/params->order;
+  char buffer[2 * TCL_DOUBLE_SPACE + 4];
+  double qfak = 2.0 * PI / box_l[0];
+  //double* data = obs->last_value;
+  double* data = values;
+  int l=0;
+  for (int i = 0; i < k_max; i++) {
+    int order=i/k_density + 1;
+    double tfac;
+    int average;
+    switch (i%k_density){
+    case 0: tfac=1;       average=3; break;
+    case 1: tfac=sqrt(2); average=6; break;
+    case 2: tfac=sqrt(3); average=4; break;
+    default:
+      Tcl_AppendResult(interp, "so many samples per order not yet implemented", (char*)NULL);
+      return TCL_ERROR; 
+    }
+    //sprintf(buffer, "{%f %f} ", qfak * (order) *tfac, data[i]);
+    for (int t=0;t<average;t++){
+      sprintf(buffer, "%f %f %f\n", qfak * (order) *tfac, data[l], data[l+1]);
+      l+=2;
+      Tcl_AppendResult(interp, buffer, (char *) NULL);
+    }
+  }
 }
 
 // FIXME this is the old implementation of structure factor (before observables and correlations were strictly separated)
@@ -1030,6 +1127,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(currents, tclcommand_observable_currents,id);
     REGISTER_OBSERVABLE(dipole_moment, tclcommand_observable_dipole_moment,id);
     REGISTER_OBSERVABLE(structure_factor, tclcommand_observable_structure_factor,id);
+    REGISTER_OBSERVABLE(structure_factor_fast, tclcommand_observable_structure_factor_fast,id);
     REGISTER_OBSERVABLE(interacts_with, tclcommand_observable_interacts_with,id);
   //  REGISTER_OBSERVABLE(obs_nothing, tclcommand_observable_obs_nothing,id);
   //  REGISTER_OBSERVABLE(flux_profile, tclcommand_observable_flux_profile,id);
@@ -1476,7 +1574,7 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
     return TCL_OK;
 }
 
-int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable * obs) {
   char buffer[TCL_DOUBLE_SPACE];
   if ( observable_calculate(obs) ) {
     Tcl_AppendResult(interp, "\nFailed to compute observable ", obs->obs_name, "\n", (char *)NULL );
@@ -1518,6 +1616,10 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
   } else if (obs->calculate == (&observable_calc_flux_density_profile)) {
     return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
+  } else if (obs->calculate == (&observable_calc_structure_factor_fast)) {
+    return tclcommand_observable_print_structure_factor_fast_formatted(interp, argc, argv, change, obs, values, 3, 1);
+  } else if (obs->calculate == (&observable_calc_structure_factor)) {
+    return tclcommand_observable_print_structure_factor_formatted(interp, argc, argv, change, obs, values, 3, 1);
   } else { 
     Tcl_AppendResult(interp, "Observable can not be printed formatted\n", (char *)NULL );
     return TCL_ERROR;

@@ -40,6 +40,9 @@ struct s_observable {
   double last_update;
   int autoupdate;
   double autoupdate_dt;
+  s_observable(){
+    last_update=-1;
+  }
 };
 
 typedef struct s_observable observable;
@@ -94,6 +97,8 @@ typedef struct {
 
 /** Calculate structure factor from positions and scattering length */
 int observable_calc_structure_factor(observable* self);
+/** Calculate structure factor from positions and scattering length */
+int observable_calc_structure_factor_fast(observable* self);
 typedef struct {
 // FIXME finish the implementation of scattering length
   IntList* id_list;
@@ -102,7 +107,8 @@ typedef struct {
   int dim_sf; // number of q vectors
   int *q_vals; // values of q vectors
   double *q_density; // number of q vectors per bin
-  // entries for spherical averaging
+  // entries for fast version
+  int num_k_vecs;
 } observable_sf_params;
 
 /** See if particles from idList1 interact with any of the particles in idList2 
