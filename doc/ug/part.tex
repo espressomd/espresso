@@ -720,11 +720,7 @@ All these examples do the same - making exact copies of particles 1 through 4.
     constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
   }
   
-  \variant{12} 
-  constraint plane cell \var{x} \var{y} \var{z} 
-  type \var{id}
-
-  \variant{13}
+  \variant{12}
   constraint mindist_position \var{x} \var{y} \var{z} 
 
   \begin{features}
@@ -735,31 +731,39 @@ All these examples do the same - making exact copies of particles 1 through 4.
   \end{features}
 \end{essyntax}
 
-The \codebox{constraint} command offers a variety of surfaces that can be
-defined to interact with desired particles. Variants \variant{1} to \variant{7}
-create interactions via a non-bonded interaction potential, where the distance
-between the two particles is replaced by the
-distance of the center of the particle to the surface. The constraints are
-identified like a particle via its type for the non-bonded interaction. 
-After a type is defined for each constraint one has
-to define
-the interaction of all different particle types with the constraint using
-the \codebox{inter} command. In variants \variant{1} to \variant{7}, constraints
- are able to be penetrated if \var{flag} is set to 1. Otherwise, when the
- penetrable option is ignored or \var{flag} is set to 0, the constraint
- cannot be violated, i.e. no particle can go through the constraint surface.
- In variants \variant{1} to \variant{4} and \variant{7} it is also possible to specify a flag 
- indicating if the constraints should be reflecting. The flags can equal 1 or 2.
- The flag 1 corresponds to a reflection process where the normal component of the 
- velocity is reflected and the tangential component remains unchanged. If the
- flag is 2, also the tangential component is turned around, so that a bounce back
- motion is performed. The second variant is useful for boundaries of DPD.
- The reflection property is only activated if an interaction is defined between
- a particular particle and the constraint! This will usually be a lennard-jones
- interaction with $\epsilon=0$, but finite interaction range.
- In variant \variant{1} if the \codebox{only_positive} flag is set to 1, interactions are
- only calculated if the particle is on the side of the wall in which the normal
- vector is pointing. This has only an effect for penetrable walls.
+The \codebox{constraint} command offers a variety of surfaces that can
+be defined to interact with desired particles. Variants \variant{1} to
+\variant{7} create interactions via a non-bonded interaction
+potential, where the distance between the two particles is replaced by
+the distance of the center of the particle to the surface. The
+constraints are identified like a particle via its type for the
+non-bonded interaction.  After a type is defined for each constraint
+one has to define the interaction of all different particle types with
+the constraint using the \codebox{inter} command. In variants
+\variant{1} to \variant{7}, constraints are able to be penetrated if
+\var{flag} is set to 1. Otherwise, when the penetrable option is
+ignored or \var{flag} is set to 0, the constraint cannot be violated,
+i.e. no particle can go through the constraint surface.  In variants
+\variant{1} to \variant{4} and \variant{7} it is also possible to
+specify a flag indicating if the constraints should be reflecting. The
+flags can equal 1 or 2.  The flag 1 corresponds to a reflection
+process where the normal component of the velocity is reflected and
+the tangential component remains unchanged. If the flag is 2, also the
+tangential component is turned around, so that a bounce back motion is
+performed. The second variant is useful for boundaries of DPD.  The
+reflection property is only activated if an interaction is defined
+between a particular particle and the constraint! This will usually be
+a lennard-jones interaction with $\epsilon=0$, but finite interaction
+range.
+
+In variant \variant{1} if the \codebox{only_positive} flag is set to
+1, interactions are only calculated if the particle is on the side of
+the wall in which the normal vector is pointing. This has only an
+effect for penetrable walls. If the \codebox{tunable_slip} flag is set
+to 1, then slip boundary interactions apply that are essential for
+microchannel flows like the Plane Poiseuille or Plane Couette
+Flow. You also need to use the tunable_slip interaction (see
+\ref{sec:tunableSlip}) for this too work.
 
 Variants \variant{9} and \variant{10} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the
@@ -769,11 +773,7 @@ Variant \variant{11} does not define a surface but is based on magnetic
 dipolar interaction with an external magnetic field. It applies to all particles
 with a dipole moment.
 
-Variant \variant{12} is essential for the use of tunable-slip boundary
-interactions for microchannel flows like the Plane Poiseuille or Plane Couette
-Flow.
-
-Variant \variant{13} calculates the smallest distance to all non-penetrable
+Variant \variant{12} calculates the smallest distance to all non-penetrable
 constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore, slitpore).
 Negative distances mean that the position is ``within'' the area that
 particles should not access. Helpful to find initial configurations.) 
@@ -863,18 +863,6 @@ the x-y-plane at height \var{h}. The plate carries a charge density of
   
 Variant \variant{10} specifies the dipolar coupling of particles with a
 dipolar moment to an external field \var{f_x} \var{f_y} \var{f_z}.
-
-Variant \variant{11} creates an infinite plane at a fixed position. For
-non-initializing a direction of the constraint values of the positions
-have to be negative. For the tunable-slip boundary interactions you
-have to set \emph{two} constraints.
-
-\minisec{Example}
-To create an infinite plane in $z$-direction at $z=20.0$ of type id 1,
-use:
-\begin{code}
-  constraint plane cell -10 -10 20 type 1
-\end{code}
 
 \subsection{Deleting a constraint}
 \begin{essyntax}
