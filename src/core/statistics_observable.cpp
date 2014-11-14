@@ -41,8 +41,9 @@ void observable_init(observable* self) {
 
 int observable_calculate(observable* self) {
   int temp = 0;
-  if (self->calculate!=0)
-    temp=(self->calculate)(self);
+  if (sim_time != self->last_update)
+    if (self->calculate!=0)
+      temp=(self->calculate)(self);
   self->last_update = sim_time;
   return temp;
 }
@@ -1019,48 +1020,152 @@ int observable_calc_structure_factor(observable* self) {
   order2=order*order;
   twoPI_L = 2*PI/box_l[0];
   
-    if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
-      return -1;
-    }
-  
-    for(int p=0; p<self->n; p++) {
-       A[p]   = 0.0;
-    }
+  if (!sortPartCfg()) {
+    ostringstream msg;
+    msg <<"could not sort partCfg";
+    runtimeError(msg);
+    return -1;
+  }
 
-    l=0;
-    //printf("self->n: %d, dim_sf: %d\n",n_A, params.dim_sf); fflush(stdout);
-    for(int i=-order; i<=order; i++) {
-      for(int j=-order; j<=order; j++) {
-        for(int k=-order; k<=order; k++) {
-	  n = i*i + j*j + k*k;
-	  if ((n<=order2) && (n>=1)) {
-	    C_sum = S_sum = 0.0;
-            //printf("l: %d, n: %d %d %d\n",l,i,j,k); fflush(stdout);
-	    for(int p=0; p<n_part; p++) {
-	      qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-	      C_sum+= scattering_length * cos(qr);
-	      S_sum-= scattering_length * sin(qr);
-	    }
-	    assert(l < self->n);
-            A[l]   =C_sum;
-            A[l+1] =S_sum;
-            l=l+2;
+  
+  l=0;
+  float partCache[n_part*3];
+  for(int p=0; p<n_part; p++) {
+    for (int i=0;i<3;i++){
+      partCache[3*p+i]=partCfg[p].r.p[i];
+    }
+  }
+  //printf("self->n: %d, dim_sf: %d\n",n_A, params.dim_sf); fflush(stdout);
+  for(int i=-order; i<=order; i++) {
+    for(int j=-order; j<=order; j++) {
+      for(int k=-order; k<=order; k++) {
+	n = i*i + j*j + k*k;
+	if ((n<=order2) && (n>=1)) {
+	  C_sum = S_sum = 0.0;
+	  //printf("l: %d, n: %d %d %d\n",l,i,j,k); fflush(stdout);
+	  for(int p=0; p<n_part; p++) {
+	    //qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+	    qr = twoPI_L * ( i*partCache[3*p+0] + j*partCache[3*p+1] + k*partCache[3*p+2] );
+	    C_sum+= scattering_length * cos(qr);
+	    S_sum-= scattering_length * sin(qr);
 	  }
+	  assert(l < self->n);
+	  A[l]   =C_sum;
+	  A[l+1] =S_sum;
+	  l=l+2;
 	}
       }
     }
- l = 0;
- for(int k=0;k<self->n/2;k++) {
+  }
+  l = 0;
+  for(int k=0;k<self->n/2;k++) {
     //devide by the sqrt(number_of_particle) due to complex product and no k-vector averaging so far
-       A[l] /= sqrt(n_part);
-       A[l+1] /= sqrt(n_part);
-       l=l+2;
- }
-    //printf("finished calculating sf\n"); fflush(stdout);
-    return 0;
+    A[l] /= sqrt(n_part);
+    A[l+1] /= sqrt(n_part);
+    l=l+2;
+  }
+  //printf("finished calculating sf\n"); fflush(stdout);
+  return 0;
+}
+
+
+int observable_calc_structure_factor_fast(observable* self) {
+  //printf("calculating\n");
+  double* A = self->last_value;
+  // FIXME Currently scattering length is hardcoded as 1.0
+  observable_sf_params * params = (observable_sf_params*) self->container;
+  const int k_max = params->num_k_vecs;
+  const double scattering_length=1.0;
+  const double twoPI_L = 2*PI/box_l[0];
+  
+  if (!sortPartCfg()) {
+    ostringstream msg;
+    msg <<"could not sort partCfg";
+    runtimeError(msg);
+    return -1;
+  }
+  
+  for(int p=0; p<self->n; p++) {
+    A[p]   = 0.0;
+  }
+  
+  float partCache[n_part*3];
+  for(int p=0; p<n_part; p++) {
+    for (int i=0;i<3;i++){
+      partCache[3*p+i]=partCfg[p].r.p[i];
+    }
+  }
+  int k_density = k_max/params->order;
+  int l=0;
+  for(int k=0; k<k_max; k++) {
+    int order=k/k_density+1;
+    switch (k % k_density){
+    case 0:
+      for (int dir=0;dir<3;dir++){
+	double C_sum = 0;
+	double S_sum = 0;
+	for(int p=0; p<n_part; p++) {
+	//double qr = twoPI_L * k  * ( ix*partCache[3*p+0] + iy*partCache[3*p+1] + iz*partCache[3*p+2] );
+	  double qr = twoPI_L * order * ( partCache[3*p+dir]);
+	  C_sum+= scattering_length * cos(qr);
+	  S_sum+= scattering_length * sin(qr);
+	}
+	A[l]   =C_sum;
+	A[l+1] =S_sum;
+	l+=2;
+      }
+      break;
+    case 1:
+      for (int dir=0;dir<6;dir++){
+	int fac1,fac2,off1,off2;
+	switch (dir){
+	case 0: fac1= 1; off1=0; fac2= 1; off2=1; break;
+	case 1: fac1= 1; off1=0; fac2= 1; off2=2; break;
+	case 2: fac1= 1; off1=1; fac2= 1; off2=2; break;
+	case 3: fac1=-1; off1=0; fac2= 1; off2=1; break;
+	case 4: fac1=-1; off1=0; fac2= 1; off2=2; break;
+	case 5: fac1=-1; off1=1; fac2= 1; off2=2; break;
+	}
+	double C_sum = 0;
+	double S_sum = 0;
+	for(int p=0; p<n_part; p++) {
+	  double qr = twoPI_L * order * ( partCache[3*p+off1]*fac1+ partCache[3*p+off2]*fac2);
+	  C_sum+= scattering_length * cos(qr);
+	  S_sum+= scattering_length * sin(qr);
+	}
+	A[l]   =C_sum;
+	A[l+1] =S_sum;
+	l+=2;
+      }
+      break;
+    case 2:
+      for (int dir=0;dir<4;dir++){
+	double C_sum = 0;
+	double S_sum = 0;
+	int fac1=(1-2*(dir%2));
+	int fac2=(1-2*(dir/2));
+	for(int p=0; p<n_part; p++) {
+	  double qr = twoPI_L * order * ( partCache[3*p+0]*fac1 + partCache[3*p+1]*fac2 + partCache[3*p+2]);
+	  C_sum+= scattering_length * cos(qr);
+	  S_sum+= scattering_length * sin(qr);
+	}
+	A[l]   =C_sum;
+	A[l+1] =S_sum;
+	l+=2;
+      }
+      break;
+    default:
+      ostringstream msg;
+      msg <<"so many samples per order not yet implemented";
+      runtimeError(msg);
+      return -1;
+    }
+  }
+  for(int l=0;l<self->n;l++) {
+    //devide by the sqrt of number_of_particle, average later
+    A[l] /= sqrt(n_part);
+  }
+  return 0;
 }
 
 int observable_calc_interacts_with (observable* self) {
