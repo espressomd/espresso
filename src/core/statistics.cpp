@@ -44,13 +44,6 @@
 #include "virtual_sites.hpp"
 #include "initialize.hpp"
 
-#ifdef LEES_EDWARDS
-/** Macro to fold vels as well as posns if Lees Edwards is on*/
-#define fold_coordinate(x,i,d) fold_coordinate(x,v_le,i,d)
-#endif
-
-
-
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -869,9 +862,6 @@ void density_profile_av(int n_conf, int n_bin, double density, int dir, double *
   double r_bin;
   double pos[3];
   int  image_box[3];
-#ifdef LEES_EDWARDS
-  double v_le[3];
-#endif
   
   //calculation over last n_conf configurations  
   
@@ -920,9 +910,6 @@ void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_
   double xpos;
   double tpos[3];
   int img_box[3] = {0,0,0};
-#ifdef LEES_EDWARDS
-  double v_le[3];
-#endif
   //double delta_x = (box_l[0])/((double) nbins);
   
   /* create and initialize the array of bins */
@@ -978,11 +965,6 @@ void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_
   free(label);
 }
 
-//cancel a macro that we don't need anymore
-#ifdef LEES_EDWARDS
-#undef fold_coordinate
-#endif
-
 int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
   int i,j,t;
   int pi,bi;
@@ -1005,15 +987,9 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
 
   /*Make sure particles are folded  */
   for (i = 0 ; i < n_part ; i++) {
-#ifdef LEES_EDWARDS
     fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,0);
     fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,1);
     fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,2);
-#else
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,0);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,1);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,2);
-#endif
   }
 
   beadcount = 0;

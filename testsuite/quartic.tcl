@@ -19,6 +19,10 @@
 
 source "tests_common.tcl"
 
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
+
 puts "------------------------------------------"
 puts "- Testcase quartic.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------"

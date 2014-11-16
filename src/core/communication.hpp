@@ -67,8 +67,8 @@
 extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
-/*@}*/
 extern MPI_Comm comm_cart;
+/*@}*/
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -94,6 +94,9 @@ void mpi_loop();
 
 /** Stop Espresso, all slave nodes exit. */
 void mpi_stop();
+
+/** Abort Espresso using MPI_Abort. */
+void mpi_abort();
 
 /** Finalize MPI. Called by all nodes upon exit */
 void mpi_finalize();

@@ -112,5 +112,10 @@ mpiRuntimeErrorCollectorGatherSlave(int node, int parm) {
   runtimeErrorCollector->gatherSlave();
 }
 
-
-
+void errexit() {
+#ifdef FORCE_CORE
+  core();
+#endif
+  mpi_abort();
+  exit(1);
+}

@@ -66,8 +66,7 @@ typedef struct {
   float mass_reactant;
   float mass_product0;
   float mass_product1;
-  cufftReal* greensfcn;
-  cufftComplex* charge_potential;
+  float* charge_potential;
   float* j;
   float* lb_force_previous;
   float* rho[MAX_NUMBER_OF_SPECIES];

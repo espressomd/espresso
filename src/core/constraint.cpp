@@ -2295,6 +2295,11 @@ void add_constraints_forces(Particle *p1)
 	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
 				     ia_params,vec,dist,dist*dist, force,
 				     torque1, torque2);
+#ifdef TUNABLE_SLIP
+	  if (constraints[n].c.wal.tunable_slip == 1 ) {
+		  add_tunable_slip_pair_force(p1, &constraints[n].part_rep,ia_params,vec,dist,force);
+	  }
+#endif
 	}
 	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
 	  if ( (constraints[n].c.wal.only_positive != 1) && ( dist < 0 ) ) {
@@ -2569,6 +2574,8 @@ void add_constraints_forces(Particle *p1)
       }
       break;
   default:
+      fprintf(stderr, "ERROR: encountered unknown constraint during force computation\n");
+      errexit();
       break;
 
     }
@@ -2804,26 +2811,19 @@ double add_constraints_energy(Particle *p1)
       //@TODO: implement energy of Plane, Slitpore
   case CONSTRAINT_PLANE:
     {
-        ostringstream msg;
-        msg << "energy computation for PLANE not implemented";
-        runtimeError(msg);
+        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
     }
       break;
   case CONSTRAINT_SLITPORE:
     {
-        ostringstream msg;
-        msg << "energy computation for SLITPORE not implemented";
-        runtimeError(msg);
+        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
     }
       break;
   case CONSTRAINT_NONE:
       break;
   default:
-    {
-        ostringstream msg;
-        msg << "trying to compute energy for unknown constraint";
-        runtimeError(msg);
-    }
+      fprintf(stderr, "ERROR: encountered unknown constraint during energy computation\n");
+      errexit();
       break;
     }
 

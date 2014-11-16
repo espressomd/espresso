@@ -244,5 +244,4 @@ if { abs( $mean_z2 - 0.68) > 0.05 } {
     error "Lees Edwards Test failed"
 }
 
-exit
-
+exit 0

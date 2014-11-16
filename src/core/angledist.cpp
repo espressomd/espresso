@@ -101,8 +101,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
     pwdist[k]=0.0;
   }
   for(k=0;k<n_constraints;k++) {
-    switch(constraints[k].type) {
-      case CONSTRAINT_WAL: 
+    if (constraints[k].type == CONSTRAINT_WAL) {
 
       /* dist is distance of wall from origin */
       wall=constraints[k].c.wal;
@@ -125,9 +124,6 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
       if (pwdist[k] <= pwdistmin) {
         pwdistmin = pwdist[k];
       }
-      break;
-    //default://@TODO: handle default case
-      //  break;
     }
   }
 

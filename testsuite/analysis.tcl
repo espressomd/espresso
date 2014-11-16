@@ -21,6 +21,9 @@
 source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
 
 puts "----------------------------------------------"
 puts "- Testcase analysis.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -36,7 +39,7 @@ proc WriteNewConfig {in out} {
   } elseif { 
     [file exists "$in"] } { set chk [open "$in" "r"] 
   } else { 
-    puts "ERROR: Could not find checkpoint-list $in!\nAborting..."; exit 
+    error_exit "could not find checkpoint-list $in!\nAborting..." 
   }
   set i 0; 
   set sys_obs [list box_l gamma periodicity skin temperature time time_step]

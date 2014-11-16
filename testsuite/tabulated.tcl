@@ -20,6 +20,9 @@
 source "tests_common.tcl"
 
 require_feature "TABULATED"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
 
 puts "----------------------------------------"
 puts "- Testcase tabulated.tcl running on [format %02d [setmd n_nodes]] nodes: -"

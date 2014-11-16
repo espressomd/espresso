@@ -21,6 +21,9 @@ source "tests_common.tcl"
 
 require_feature "ROTATION"
 require_feature "GAY_BERNE"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 1
+}
 
 puts "----------------------------------------------"
 puts "- Testcase rotation.tcl running on [format %02d [setmd n_nodes]] nodes: -"

@@ -23,11 +23,6 @@
 #include "pressure.hpp"
 #include "rotation.hpp"
 
-#ifdef LEES_EDWARDS
-#define fold_position(x,i)     fold_position(x,v_le,i)
-#define unfold_position(x,i) unfold_position(x,v_le,i)
-#endif
-
 observable** observables = 0;
 int n_observables = 0; 
 int observables_autoupdate = 0;
@@ -454,9 +449,6 @@ int observable_calc_density_profile(observable* self) {
   int img[3];
   IntList* ids;
   profile_data* pdata;
-#ifdef LEES_EDWARDS
-  double v_le[3];
-#endif
 
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -714,9 +706,6 @@ int observable_calc_radial_density_profile(observable* self) {
   int img[3];
   double bin_volume;
   IntList* ids;
-#ifdef LEES_EDWARDS
-  double v_le[3];
-#endif
   
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -764,9 +753,6 @@ int observable_calc_radial_flux_density_profile(observable* self) {
   int img[3];
   double bin_volume;
   IntList* ids;
-#ifdef LEES_EDWARDS
-  double v_le[3];
-#endif
 
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -854,9 +840,6 @@ int observable_calc_flux_density_profile(observable* self) {
   int img[3];
   double bin_volume;
   IntList* ids;
-#ifdef LEES_EDWARDS
-  double v_le[3];
-#endif
 
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -1009,12 +992,9 @@ int observable_calc_structure_factor(observable* self) {
   int l;
   int order, order2, n;
   double twoPI_L, C_sum, S_sum, qr; 
-//  DoubleList *scattering_length;
-  observable_sf_params* params;
-  params = (observable_sf_params*) self->container;
-//  scattering_length = params->scattering_length;
   const double scattering_length=1.0;
-  order = params->order;
+  int* tmp = (int*)self->container;
+  order = *tmp;
   order2=order*order;
   twoPI_L = 2*PI/box_l[0];
   
@@ -1034,22 +1014,30 @@ int observable_calc_structure_factor(observable* self) {
     for(int i=-order; i<=order; i++) {
       for(int j=-order; j<=order; j++) {
         for(int k=-order; k<=order; k++) {
-	  n = i*i + j*j + k*k;
-	  if ((n<=order2) && (n>=1)) {
-	    C_sum = S_sum = 0.0;
-            //printf("l: %d, n: %d %d %d\n",l,i,j,k); fflush(stdout);
-	    for(int p=0; p<n_part; p++) {
-	      qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-	      C_sum+= scattering_length * cos(qr);
-	      S_sum-= scattering_length * sin(qr);
-	    }
+	        n = i*i + j*j + k*k;
+	        if (n<=order2) {
+	        C_sum = S_sum = 0.0;
+          //printf("l: %d, n: %d %d %d\n",l,i,j,k); fflush(stdout);
+	          for(int p=0; p<n_part; p++) {
+	            qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+	            C_sum+= scattering_length * cos(qr);
+	            S_sum-= scattering_length * sin(qr);
+	          }
             A[l]   =C_sum;
             A[l+1] =S_sum;
             l=l+2;
-	  }
-	}
-      }
+    //printf("current l %i\n", l);
+	        }
+	      }
+      } 
     }
+ l = 0;
+ for(int k=0;k<self->n/2;k++) {
+    //devide by the sqrt(number_of_particle) due to complex product and no k-vector averaging so far
+       A[l] /= sqrt(n_part);
+       A[l+1] /= sqrt(n_part);
+       l=l+2;
+ }
     //printf("finished calculating sf\n"); fflush(stdout);
     return 0;
 }
