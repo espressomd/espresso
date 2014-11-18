@@ -509,12 +509,12 @@ void mpi_send_swimming(int pnode, int part, ParticleParametersSwimming swim)
 #ifdef ENGINE
   mpi_call(mpi_send_swimming_slave, pnode, part);
 
-  Particle *p = local_particles[part];
   if (pnode == this_node) {
+    Particle *p = local_particles[part];
     p->swim = swim;
   }
   else {
-    MPI_Send(&p->swim, sizeof(ParticleParametersSwimming), MPI_BYTE, 0, SOME_TAG, comm_cart);
+    MPI_Send(&swim, sizeof(ParticleParametersSwimming), MPI_BYTE, pnode, SOME_TAG, comm_cart);
   }
 
   on_particle_change();

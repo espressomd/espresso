@@ -39,6 +39,7 @@ tests = \
 	ek_reaction.tcl \
 	el2d.tcl \
 	el2d_nonneutral.tcl \
+	engine_langevin.tcl \
 	exclusions.tcl \
 	external_potential.tcl \
 	fene.tcl \
