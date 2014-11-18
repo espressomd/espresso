@@ -199,6 +199,7 @@ inline void friction_thermo_langevin(Particle *p)
   for ( j = 0 ; j < 3 ; j++) 
   {
     double velocity = p->m.v[j];
+    (void)velocity; // silence unused warning
 #ifdef ENGINE
     velocity -= p->swim.v_swim*p->r.quatu[j];
 #endif

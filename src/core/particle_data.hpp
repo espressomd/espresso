@@ -250,8 +250,9 @@ typedef struct {
 } ParticleLatticeCoupling;
 #endif
 
-#ifdef ENGINE
 typedef struct {
+// ifdef inside because we need this type for some MPI prototypes
+#ifdef ENGINE
   bool swimming;
   double f_swim;
   double v_swim;
@@ -262,8 +263,8 @@ typedef struct {
   double v_source[3];
   double rotational_friction;
 #endif
-} ParticleParametersSwimming;
 #endif
+} ParticleParametersSwimming;
 
 /** Struct holding all information for one particle. */
 typedef struct {
