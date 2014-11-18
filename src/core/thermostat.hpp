@@ -196,14 +196,16 @@ inline void friction_thermo_langevin(Particle *p)
 #endif
 #endif	  
 
+  double velocity[3];
+  for (int i = 0; i < 3; i++) {
+    velocity[i] = p->m.v[i];
+#ifdef ENGINE
+    velocity[i] -= p->swim.v_swim*p->r.quatu[i];
+#endif
+  }
+
   for ( j = 0 ; j < 3 ; j++) 
   {
-    double velocity = p->m.v[j];
-    (void)velocity; // silence unused warning
-#ifdef ENGINE
-    velocity -= p->swim.v_swim*p->r.quatu[j];
-#endif
-
 #ifdef EXTERNAL_FORCES
     if (!(p->l.ext_flag & COORD_FIXED(j)))
 #endif
@@ -288,13 +290,13 @@ inline void friction_thermo_langevin(Particle *p)
 
 /*******************different shapes of noise */
 #if defined (FLATNOISE)
-      p->f.f[j] = langevin_pref1*le_frameV(j, p->m.v, p->r.p)
+      p->f.f[j] = langevin_pref1*le_frameV(j, velocity, p->r.p)
                   * PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
 #elif defined (GAUSSRANDOMCUT)
-      p->f.f[j] = langevin_pref1*le_frameV(j, p->m.v, p->r.p)
+      p->f.f[j] = langevin_pref1*le_frameV(j, velocity, p->r.p)
                   * PMASS(*p) + langevin_pref2*gaussian_random_cut()*massf;
 #elif defined (GAUSSRANDOM)
-      p->f.f[j] = langevin_pref1*le_frameV(j, p->m.v, p->r.p)
+      p->f.f[j] = langevin_pref1*le_frameV(j, velocity, p->r.p)
                   * PMASS(*p) + langevin_pref2*gaussian_random()*massf;
 #else
 #error No Noise defined
