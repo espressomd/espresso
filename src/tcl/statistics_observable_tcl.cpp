@@ -819,7 +819,7 @@ int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* inte
   observable_sf_params* params= (observable_sf_params*) obs->container;
   int k_max = params->num_k_vecs;
   int k_density = k_max/params->order;
-  char buffer[2 * TCL_DOUBLE_SPACE + 4];
+  char buffer[3 * TCL_DOUBLE_SPACE + 5];
   double qfak = 2.0 * PI / box_l[0];
   //double* data = obs->last_value;
   double* data = values;
@@ -838,7 +838,8 @@ int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* inte
     }
     //sprintf(buffer, "{%f %f} ", qfak * (order) *tfac, data[i]);
     for (int t=0;t<average;t++){
-      sprintf(buffer, "%f %f %f\n", qfak * (order) *tfac, data[l], data[l+1]);
+      sprintf(buffer, "{%f %f %f} ", qfak * (order) *tfac, data[l], data[l+1]);
+      //sprintf(buffer, "%f %f %f\n", qfak * (order) *tfac, data[l], data[l+1]);
       l+=2;
       Tcl_AppendResult(interp, buffer, (char *) NULL);
     }

@@ -33,9 +33,8 @@
 #include <cstring>
 #include "config.hpp"
 #include "debug.hpp"
-#ifdef LEES_EDWARDS
 #include "lees_edwards.hpp"
-#endif
+#include "errorhandling.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -94,13 +93,6 @@ typedef struct {
       in the routines specified in list operations ! */
   int max;
 } DoubleList;
-
-inline void errexit() {
-#ifdef FORCE_CORE
-  core();
-#endif
-  exit(1);
-}
 
 /*************************************************************/
 /** \name Dynamic memory allocation.                         */

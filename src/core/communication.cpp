@@ -51,6 +51,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "maggs.hpp"
+#include "actor/EwaldgpuForce.hpp"
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "statistics_chain.hpp"
@@ -73,6 +74,9 @@ using namespace std;
 int this_node = -1;
 int n_nodes = -1;
 MPI_Comm comm_cart;
+int graceful_exit = 0;
+/* whether there is already a termination going on. */
+static int terminated = 0;
 
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST \
@@ -252,8 +256,6 @@ void mpi_call(SlaveCallback cb, int node, int param) {}
 #endif
 
 /**************** REQ_TERM ************/
-
-static int terminated = 0;
 
 void mpi_stop()
 {
@@ -1767,6 +1769,11 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case COULOMB_MAGGS:
     MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart); 
     break;
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU:
+    MPI_Bcast(&ewaldgpu_params, sizeof(Ewaldgpu_params), MPI_BYTE, 0, comm_cart);
+    break;
+#endif
   case COULOMB_RF:
   case COULOMB_INTER_RF:
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0, comm_cart);
@@ -2875,6 +2882,18 @@ void mpi_loop()
   
   }
 }
+
+/*********************** error abort ****************/
+
+void mpi_abort()
+{
+  if (terminated) return;
+
+  terminated = 1;
+  MPI_Abort(comm_cart, -1);
+}
+
+/*********************** other stuff ****************/
 
 void mpi_external_potential_broadcast(int number) {
   mpi_call(mpi_external_potential_broadcast_slave, 0, number);

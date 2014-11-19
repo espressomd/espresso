@@ -540,7 +540,7 @@ filenames including a running index (\texttt{data_0.vtk},
   size).
 \end{arguments}
 
-\section{Writing PDB/PSF files}
+\section{Reading and Writing PDB/PSF files}
 The PDB (Brookhaven Protein DataBase) format is a widely used format
 for describing atomistic configurations. PSF is a format that is used
 to describe the topology of a PDB file. 
@@ -596,6 +596,52 @@ espresso. If you wish to shift particles prior to folding then supply
 the optional shift information. \var{shift} should be a three member
 tcl list consisting of x, y, and z shifts respectively and each number
 should be a floating point (ie with decimal point).
+
+\subsection{\lit{readpdb}: Reading the coordinates and interactions}
+\newescommand{readpdb}
+
+\begin{essyntax}
+  readpdb pdb_file \var{pdbfile} type \var{type} first_id \var{firstid} \opt{
+  itp_file \var{itpfile} first_type \var{fisttype}} \\
+  \opt{\require{1}{lj_with \var{othertype} \var{epsilon} \var{sigma}}}
+  \opt{\require{1}{lj_rel_cutoff \var{cutoff}} } \opt{fit_to_box}
+\begin{features}
+  \required[1]{LENNARD_JONES}
+\end{features}
+\end{essyntax}
+Reads the positions and possibly charges, types and Lennard-Jones interactions
+from the file \var{pdbfile} and a corresponding Gromacs topology file \var{itpfile}.
+The topology file must contain the \verb|atoms| and \verb|atomtypes| sections,
+it may be necessary to use the Gromacs preprocessor to obtain a complete file
+from a system configuration and a force field.
+
+Any offset of the particle positions if removed, such that the lower left
+corner bounding box of the particles is in the origin. If \verb|fit_to_box| is
+given, the box size if increased to hold the particles if necessary. If it is
+not set and the particles do not fit into the box, the behavior is undefined.
+
+\var{type} sets the particle type for the added particles. 
+If there is a topology file give that contains a types for the particles, 
+the particles get types by the order in the topology file plus \var{firstype}.
+If the corresponding type in the topology file has a charge, it is used,
+otherwise the particle charge defaults to zero.
+
+The particles get consecutive id's in the order of the pdb file, starting at
+\var{firstid}. Please be aware that existing particles get overwritten by
+values from the file.
+
+The \verb|lj_with| section produces Lennard-Jones interactions between the
+type \var{othertype} and the types defined by the topology file. The
+interaction parameters are calculated as $\epsilon_{\text{othertype},j} =
+\sqrt{\epsilon_{\text{othertype}} \epsilon_j}$ and $\sigma_{\text{othertype},j}
+=\frac{1}{2}\left( \sigma_{\text{othertype}} + \sigma_j \right)$, where $j$
+runs over the atomtypes defined in the topology file. This corresponds to the
+combination rule 2 of Gromacs. There may be multiple such sections.
+The cutoff is determined by \var{cutoff} as $\text{cutoff}\times \sigma_{ij}$ in a
+relative fashion. The potential is shifted so that it vanishes at the cutoff.
+The command returns the number of particles that were successfully added.
+
+Reading bonded interactions and dihedrals is currently not supported.
 
 \section{Online-visualisation with VMD}
 \label{sec:IMD}

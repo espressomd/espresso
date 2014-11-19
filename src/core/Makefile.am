@@ -80,6 +80,7 @@ libEspresso_la_SOURCES = \
 	random.cpp random.hpp \
 	rattle.cpp rattle.hpp \
 	reaction.cpp reaction.hpp \
+	readpdb.cpp readpdb.hpp \
 	Ringbuffer.hpp \
 	rotation.cpp rotation.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
@@ -105,8 +106,9 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
+	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
-	integrate_sd.hpp integrate_sd.cpp
+	PdbParser.cpp PdbParser.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -171,6 +173,7 @@ libEspresso_la_SOURCES += \
 	actor/ActorList.cpp actor/ActorList.hpp \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
+	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
@@ -191,13 +194,14 @@ CUDA_HEADER_FILES = \
 	integrate_sd_cuda_kernel.cuh \
 	integrate_sd_cuda.cuh \
 	integrate_sd_cuda_device.cu \
-	integrate_sd_matrix.cuh 
-
+	integrate_sd_matrix.cuh \
+	fd-electrostatics.hpp
 
 CUDA_SOURCE_FILES = \
 	cuda_init_cuda.cu \
 	cuda_common_cuda.cu \
 	electrokinetics_cuda.cu \
+	fd-electrostatics_cuda.cu \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
@@ -206,6 +210,7 @@ CUDA_SOURCE_FILES = \
 	integrate_sd_cuda_debug.cu \
 	integrate_sd_matrix.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
+	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu
 
 # include the dependency tracking files
@@ -216,7 +221,10 @@ include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
+include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
+include ./actor/$(DEPDIR)/EwaldgpuForce.Plo
+include ./actor/$(DEPDIR)/EwaldgpuForce_cuda.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 

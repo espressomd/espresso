@@ -125,7 +125,7 @@ double dawaanr_calculations(int force_flag, int energy_flag)
   double u; 
   int i,j,c,cc;
   
-  if(n_nodes!=1) {fprintf(stderr,"error:  DAWAANR is just for one cpu .... \n"); exit(1);}
+  if(n_nodes!=1) {fprintf(stderr,"error:  DAWAANR is just for one cpu .... \n"); errexit();}
   if(!(force_flag) && !(energy_flag) ) {fprintf(stderr," I don't know why you call dawaanr_caclulations with all flags zero \n"); return 0;}
   
   // Variable to sum up the energy
@@ -215,7 +215,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
   double u;
 
   
-  if(n_nodes!=1) {fprintf(stderr,"error: magnetic Direct Sum is just for one cpu .... \n"); exit(1);}
+  if(n_nodes!=1) {fprintf(stderr,"error: magnetic Direct Sum is just for one cpu .... \n"); errexit();}
   if(!(force_flag) && !(energy_flag) ) {fprintf(stderr," I don't know why you call dawaanr_caclulations with all flags zero \n"); return 0;}
 
   x = (double *) malloc(sizeof(double)*n_part);
@@ -298,9 +298,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
 	 
     for(i=0;i<3;i++){
       NCUT[i]=Ncut_off_magnetic_dipolar_direct_sum;
-#ifdef PARTIAL_PERIODIC
       if(PERIODIC(i) == 0)  {NCUT[i]=0;}  
-#endif            
     }
     NCUT2=Ncut_off_magnetic_dipolar_direct_sum*Ncut_off_magnetic_dipolar_direct_sum;
 	     
@@ -419,7 +417,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
     }
    
     /* small checking */
-    if(dip_particles != dip_particles2) { fprintf(stderr,"magnetic direct sum calculations: error mismatch of particles \n"); exit(1);}
+    if(dip_particles != dip_particles2) { fprintf(stderr,"magnetic direct sum calculations: error mismatch of particles \n"); errexit();}
   } /*of if force_flag */
   
   /* free memory used */

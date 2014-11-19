@@ -40,9 +40,6 @@ struct s_observable {
   double last_update;
   int autoupdate;
   double autoupdate_dt;
-  s_observable(){
-    last_update=-1;
-  }
 };
 
 typedef struct s_observable observable;

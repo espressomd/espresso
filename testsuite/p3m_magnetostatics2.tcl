@@ -20,6 +20,9 @@ source "tests_common.tcl"
 require_feature "DIPOLES" 
 require_feature "FFTW"
 require_feature "ROTATION"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 1
+}
 
 set tcl_precision 15
 

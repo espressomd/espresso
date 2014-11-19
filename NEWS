@@ -11,6 +11,7 @@ New user-visible features
 * New quartic bonded interaction
 * New bonded coulomb interaction
 * Lees Edwards boundaries for sheer stuff
+* Espresso can now read pdb and gromacs topology files.
 
 Known bugs
 ----------
