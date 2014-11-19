@@ -211,7 +211,11 @@ system:
     \item \lit{lb_radial_velocity_profile} \\
         Compute the Lattice-Boltzmann velocity profile in cylindrical coordinates.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
-  \end{itemize}
+    \item \lit{rdf} \var{type\_list type\_list [r\_min [r\_max [n\_bins]]]}\\
+        Compute the radial distribution function, see \ref{analyze:rdf}.
+    \item \lit{structure_factor} \var{order}\\
+        Compute the structure factor. Remember it scales as order$^3$, see \ref{analyze:structurefactor}.
+      \end{itemize}
 The tclcommand observable is a helpful tool, that allows to make the 
 analysis framework much more versatile, by allowing
 the evaluation of arbitrary tcl commands.
