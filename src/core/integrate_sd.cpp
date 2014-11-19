@@ -70,6 +70,7 @@
 /** Tag for communication in verlet fix: propagate_positions()  */
 #define REQ_INT_VERLET   400
 
+/*******************  variables  *******************/
 
 /// switch between double and float
 #ifdef SD_USE_FLOAT
@@ -102,6 +103,8 @@ void propagate_pos_sd();
 #ifdef CUDA
 void propagate_pos_sd_cuda(real * box_l, int N,real * pos_h, real * force_h, real * velo_h);
 #endif
+
+void propagate_pos_bd(int N, real * pos, real * force, real * velocity);
 
 int sd_get_particle_num();
 /*@}*/
@@ -274,7 +277,7 @@ void integrate_sd(int n_steps)
 
 #ifdef GHMC
     if(thermo_switch & THERMO_GHMC) {
-      if ((int) fmod(i,ghmc_nmd) == ghmc_nmd-1)
+      if (step % ghmc_nmd == ghmc_nmd-1)
         ghmc_mc();
     }
 #endif
@@ -398,20 +401,23 @@ void propagate_pos_sd()
       }
     }
   }
-  // cuda part
+  if (!(thermo_switch & THERMO_SD) && thermo_switch & THERMO_BD){
+    propagate_pos_bd(N,pos,force, velocity);
+  } else {
+    // cuda part
 #ifdef CUDA
-  //void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * force_h, double * velo_h){
+    //void propagate_pos_sd_cuda(double * box_l_h, int N,double * pos_h, double * force_h, double * velo_h){
 #ifdef SD_USE_FLOAT
-  real box_size[3];
-  for (int d=0;d<3;d++){
-    box_size[d]=box_l[d];
-  }
+    real box_size[3];
+    for (int d=0;d<3;d++){
+      box_size[d]=box_l[d];
+    }
 #else
-  real * box_size = box_l;
+    real * box_size = box_l;
 #endif
-  if (!(thermo_switch & THERMO_SD)){
-    temperature*=-1;
-  }
+    if (!(thermo_switch & THERMO_SD)){
+      temperature*=-1;
+    }
   propagate_pos_sd_cuda(box_size,N,pos,force, velocity);
   if (!(thermo_switch & THERMO_SD)){
     temperature*=-1;
@@ -420,6 +426,7 @@ void propagate_pos_sd()
   fprintf(stderr, "Warning - CUDA is currently required for SD\n");
   fprintf(stderr, "So i am just sitting here and copying stupidly stuff :'(\n");
 #endif
+}
   
 
 #ifdef NEMD
@@ -629,4 +636,14 @@ int sd_get_particle_num(){
 #endif
   }
   return N;
+}
+
+void propagate_pos_bd(int N, real * pos, real * force, real * velocity){
+  real self_mobility=1/(6*M_PI*sd_viscosity*sd_radius);
+  real scal_f = time_step*self_mobility;
+  real scal_r=sqrt(2*temperature*time_step*self_mobility);
+  for (int i=0;i<3*N;i++){
+    pos[i]+=scal_f * force[i]
+          + scal_r * gaussian_random();
+  }
 }

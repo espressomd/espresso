@@ -767,6 +767,7 @@ int tclcommand_observable_print_structure_factor_formatted(Tcl_Interp* interp, i
       }
     }
   }
+  return 0;
 }
 
 int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
@@ -842,6 +843,7 @@ int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* inte
       Tcl_AppendResult(interp, buffer, (char *) NULL);
     }
   }
+  return 0;
 }
 
 // FIXME this is the old implementation of structure factor (before observables and correlations were strictly separated)

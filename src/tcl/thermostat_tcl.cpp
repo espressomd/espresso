@@ -144,6 +144,37 @@ int tclcommand_thermostat_parse_sd(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
+
+int tclcommand_thermostat_parse_bd(Tcl_Interp *interp, int argc, char **argv) 
+{
+  double temp;
+
+  /* check number of arguments */
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
+		     argv[0]," ",argv[1]," <temp>\"", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  /* check argument types */
+  if ( !ARG_IS_D(2, temp) ) {
+    Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs a  DOUBLE", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (temp < 0) {
+    Tcl_AppendResult(interp, "temperature must be positive", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  /* broadcast parameters */
+  temperature = temp;
+  thermo_switch = ( thermo_switch | THERMO_BD );
+  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
+  return (TCL_OK);
+}
+
 #ifdef NPT
 int tclcommand_thermostat_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv) 
 {
@@ -332,6 +363,11 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
     Tcl_AppendResult(interp,"{ sd ",buffer, " } ", (char *)NULL);
     
   }
+  if (thermo_switch & THERMO_BD){
+    Tcl_PrintDouble(interp, temperature, buffer);
+    Tcl_AppendResult(interp,"{ bd ",buffer, " } ", (char *)NULL);
+    
+  }
 #endif
   return (TCL_OK);
 }
@@ -356,6 +392,7 @@ int tclcommand_thermostat_print_usage(Tcl_Interp *interp, int argc, char **argv)
 #endif
 #ifdef SD
   Tcl_AppendResult(interp, "'", argv[0], " set sd <temperature>" , (char *)NULL);
+  Tcl_AppendResult(interp, "'", argv[0], " set bd <temperature>" , (char *)NULL);
 #endif
   return (TCL_ERROR);
 }
@@ -404,6 +441,8 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
 #ifdef SD
   else if ( ARG1_IS_S("sd") )
     err = tclcommand_thermostat_parse_sd(interp, argc, argv);
+  else if ( ARG1_IS_S("bd") )
+    err = tclcommand_thermostat_parse_bd(interp, argc, argv);
 #endif
   else {
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
