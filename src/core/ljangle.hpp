@@ -156,9 +156,7 @@ inline void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 	  z2  = p2->r.p[2];
 	  z_middle  = z1 + z2;
 	  z_middle /= 2.;
-#ifdef PARTIAL_PERIODIC
 	  if (PERIODIC(2))
-#endif
 	    if (z_middle > box_l[2] || z_middle < 0.) 
 	      z_middle -= dround(z_middle *box_l_i[2])*box_l[2];
 
@@ -334,9 +332,7 @@ inline double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
 	  z2  = p2->r.p[2];
 	  z_middle  = z1 + z2;
 	  z_middle /= 2.;
-#ifdef PARTIAL_PERIODIC
 	  if (PERIODIC(2))
-#endif
 	    if (z_middle > box_l[2] || z_middle < 0.) 
 	      z_middle -= dround(z_middle *box_l_i[2])*box_l[2];
 

@@ -20,6 +20,10 @@
 source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
+
 
 puts "----------------------------------------"
 puts "- Testcase lj.tcl running on [format %02d [setmd n_nodes]] nodes: -"

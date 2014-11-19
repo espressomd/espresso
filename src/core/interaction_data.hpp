@@ -126,7 +126,8 @@ enum OverlappedBondedInteraction{
 		COULOMB_RF, //< Coulomb method is Reaction-Field
 		COULOMB_INTER_RF, //< Coulomb method is Reaction-Field BUT as interaction
 		COULOMB_P3M_GPU, //< Coulomb method is P3M with GPU based long range part calculation
-		COULOMB_MMM1D_GPU, //< Coulomb method is on-dimensional MMM running on GPU
+		COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
+		COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
 	};
 
 #endif
@@ -761,6 +762,8 @@ typedef struct {
   int penetrable; 
   int reflecting;
   int only_positive;
+  /** whether to calculate tunable slip forces 1 or not 0 */
+  int tunable_slip;
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */

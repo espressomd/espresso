@@ -391,7 +391,7 @@ void fft_perform_back(double *data)
     //Vincent:
     if (data[2*i+1]>1e-5) {
       printf("Complex value is not zero (i=%d,data=%g)!!!\n",i,data[2*i+1]);
-      if (i>100) exit(-1);
+      if (i>100) errexit();
       } 
   }
   /* communicate (in is fft.data_buf) */

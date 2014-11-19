@@ -2899,8 +2899,8 @@ __global__ void lb_get_boundary_flag(int single_nodeindex, unsigned int *device_
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress) {
   if(cudaGetSymbolAddress((void**) pointeradress, para) != cudaSuccess)
   {
-    printf("Trouble getting address of LB parameters.\n"); //TODO give proper error message
-    exit(1);
+    fprintf(stderr, "Trouble getting address of LB parameters.\n"); //TODO give proper error message
+    errexit();
   }
 }
 

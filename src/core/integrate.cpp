@@ -791,7 +791,7 @@ void propagate_vel_pos()
                          delta_box    = b1 - (int)floor(( p[i].r.p[1] - p[i].m.v[1])*box_l_i[1] );
                          if( abs(delta_box) > 1 ){
                              fprintf(stderr, "Error! Particle moved more than one box length in 1 step\n");
-                             exit( 8 );
+                             errexit();
                          } 
                          p[i].m.v[0]     -= delta_box * lees_edwards_rate;   
                          p[i].r.p[0]     -= delta_box * lees_edwards_offset; 
