@@ -22,7 +22,6 @@
 #include "lb.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
-#include "assert.h"
 
 #ifdef LEES_EDWARDS
 #define fold_position(x,i)     fold_position(x,v_le,i)
@@ -1049,7 +1048,6 @@ int observable_calc_structure_factor(observable* self) {
 	    C_sum+= scattering_length * cos(qr);
 	    S_sum-= scattering_length * sin(qr);
 	  }
-	  assert(l < self->n);
 	  A[l]   =C_sum;
 	  A[l+1] =S_sum;
 	  l=l+2;
