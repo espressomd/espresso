@@ -491,6 +491,75 @@ int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** a
   return TCL_OK;
 }
 
+int tclcommand_observable_rdf(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+  rdf_profile_data* pdata = (rdf_profile_data*) malloc(sizeof(rdf_profile_data));
+  obs->calculate=&observable_calc_rdf;
+  obs->update=0;
+  
+  pdata->r_bins=100;
+  pdata->r_min=0;
+  pdata->r_max=-1;
+  IntList p1, p2;
+  
+  init_intlist(&p1);
+  init_intlist(&p2);
+  
+  argc--;
+  argv++;
+  *change=1;
+  
+  if (argc < 2 || (!ARG0_IS_INTLIST(p1)) || (!ARG1_IS_INTLIST(p2))) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: observable rdf <type_list> <type_list> [<r_min> [<r_max> [<n_bins>]]]", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  argc -= 2;
+  argv += 2;
+  *change+=2;
+  
+  if (argc > 0) {
+    if (!ARG0_IS_D(pdata->r_min)) return (TCL_ERROR);
+    argc--;
+    argv++;
+    (*change)++;
+  }
+  if (argc > 0) {
+    if (!ARG0_IS_D(pdata->r_max)) return (TCL_ERROR);
+    argc--;
+    argv++;
+    (*change)++;
+  }
+  if (argc > 0) {
+    if (!ARG0_IS_I(pdata->r_bins)) return (TCL_ERROR);
+    argc--;
+    argv++;
+    (*change)++;
+  }
+  
+  /* if not given use default */
+  if (pdata->r_max < 0) pdata->r_max = min_box_l / 2.0;
+
+  
+  if (!sortPartCfg()) {
+    Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  
+  //calc_rdf(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf);
+  
+  pdata->p1_types = (int *) malloc(p1.n * sizeof(int));
+  memcpy(pdata->p1_types, p1.e,p1.n*sizeof(int));
+  pdata->n_p1     = p1.n;
+  pdata->p2_types = (int *) malloc(p2.n * sizeof(int));
+  memcpy(pdata->p2_types, p2.e,p2.n*sizeof(int));
+  pdata->n_p2     = p2.n;
+  
+  obs->container=(void*)pdata;
+  obs->n=pdata->r_bins;
+  obs->last_value= (double*) malloc(obs->n * sizeof (double));
+  return TCL_OK;
+}
+
 int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
 #ifndef LB
   return TCL_ERROR;
@@ -644,35 +713,135 @@ int tclcommand_observable_dipole_moment(Tcl_Interp* interp, int argc, char** arg
 }
 
 int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  //Tcl_AppendResult(interp, "Structure Factor not available yet!!", (char *)NULL);
+  //return TCL_ERROR;
   int order;
-  int* order_p;
-
-//  Tcl_AppendResult(interp, "Structure Factor not available yet!!", (char *)NULL);
-//  return TCL_ERROR;
   if (argc > 1 && ARG1_IS_I(order)) {
     obs->calculate=&observable_calc_structure_factor;
-    order_p=(int*)malloc(sizeof(int));
-    *order_p=order;
-    obs->container=(void*) order_p;
-    int order2,i,j,k,l,n ; 
-    order2=order*order;
-    l=0;
-    // lets counter the number of entries for the DSF
-    for(i=-order; i<=order; i++) 
-      for(j=-order; j<=order; j++) 
-        for(k=-order; k<=order; k++) {
-          n = i*i + j*j + k*k;
-          if (n<=order2){ 
-            l=l+2;
-          }
-        }
-    obs->n=l;
-    obs->last_value=(double*)malloc(obs->n*sizeof(double));
+    //order_p=(int * )malloc(sizeof(int));
+    observable_sf_params* params =(observable_sf_params*) malloc(sizeof(observable_sf_params));
+    params->order=order;
+   obs->container=(void*) params;
+   int order2,i,j,k,l,n ; 
+   order2=order*order;
+   l=0;
+   // lets counter the number of entries for the DSF
+   for(i=-order; i<=order; i++) {
+     for(j=-order; j<=order; j++) {
+       for(k=-order; k<=order; k++) {
+         n = i*i + j*j + k*k;
+         if (( n<=order2 ) && (n >= 1)) {
+           l=l+2;
+	 }
+       }
+     }
+   }
+   obs->n=l;
+   obs->last_value=(double*)malloc(obs->n*sizeof(double));
+   *change=2;
+   return TCL_OK;
+ } else { 
+   sf_print_usage(interp);
+   return TCL_ERROR; 
+ }
+}
+
+int tclcommand_observable_print_structure_factor_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
+  observable_sf_params* params= (observable_sf_params*) obs->container;
+  int order=params->order;
+  int order2=order*order;
+  char buffer[5 * TCL_DOUBLE_SPACE + 7];
+  double qfak = 2.0 * PI / box_l[0];
+  double* data = obs->last_value;
+  int l=0;
+  for(int i=-order; i<=order; i++) {
+    for(int j=-order; j<=order; j++) {
+      for(int k=-order; k<=order; k++) {
+	int n = i*i + j*j + k*k;
+	if (( n<=order2 ) && ( n>0 )) {
+	  sprintf(buffer, "{%f %f %f %f %f} ", qfak * i, qfak*j, qfak*k, data[l],data[l+1]);
+	  //sprintf(buffer, "%f %f %f %f %f\n", qfak * i, qfak*j, qfak*k, data[l],data[l+1]);
+	  Tcl_AppendResult(interp, buffer, (char *) NULL);
+	  l=l+2;
+	}
+      }
+    }
+  }
+}
+
+int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  //Tcl_AppendResult(interp, "Structure Factor not available yet!!", (char *)NULL);
+  //return TCL_ERROR;
+  int order;
+  if (argc > 1 && ARG1_IS_I(order)) {
+    obs->calculate=&observable_calc_structure_factor_fast;
+    //order_p=(int * )malloc(sizeof(int));
+    observable_sf_params* params =(observable_sf_params*) malloc(sizeof(observable_sf_params));
+    params->order=order;
+    obs->container=(void*) params;
+    params->num_k_vecs=order;
     *change=2;
+    argc-=2;
+    argv+=2;
+    if (argc > 0) {
+      if (!ARG0_IS_I(params->num_k_vecs)) return (TCL_ERROR);
+      argc--;
+      argv++;
+      (*change)++;
+    }
+    int k_density = params->num_k_vecs/params->order;
+    int vecs_per_k=-1;
+    switch (k_density){
+    case 1:
+      vecs_per_k=3;
+      break;
+    case 2:
+      vecs_per_k=3+6;
+      break;
+    case 3:
+      vecs_per_k=3+6+4;
+      break;
+    default:
+      Tcl_AppendResult(interp, "so many samples per order not yet implemented", (char*)NULL);
+      return TCL_ERROR; 
+    }
+    obs->n=params->num_k_vecs*vecs_per_k*2;
+    obs->last_value=(double*)malloc(obs->n*sizeof(double));
     return TCL_OK;
   } else { 
     sf_print_usage(interp);
     return TCL_ERROR; 
+  }
+}
+
+int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
+  observable_sf_params* params= (observable_sf_params*) obs->container;
+  int k_max = params->num_k_vecs;
+  int k_density = k_max/params->order;
+  char buffer[3 * TCL_DOUBLE_SPACE + 5];
+  double qfak = 2.0 * PI / box_l[0];
+  //double* data = obs->last_value;
+  double* data = values;
+  int l=0;
+  for (int i = 0; i < k_max; i++) {
+    int order=i/k_density + 1;
+    double tfac;
+    int average;
+    switch (i%k_density){
+    case 0: tfac=1;       average=3; break;
+    case 1: tfac=sqrt(2); average=6; break;
+    case 2: tfac=sqrt(3); average=4; break;
+    default:
+      Tcl_AppendResult(interp, "so many samples per order not yet implemented", (char*)NULL);
+      return TCL_ERROR; 
+    }
+    //sprintf(buffer, "{%f %f} ", qfak * (order) *tfac, data[i]);
+    for (int t=0;t<average;t++){
+      sprintf(buffer, "{%f %f %f} ", qfak * (order) *tfac, data[l], data[l+1]);
+      //sprintf(buffer, "%f %f %f\n", qfak * (order) *tfac, data[l], data[l+1]);
+      l+=2;
+      Tcl_AppendResult(interp, buffer, (char *) NULL);
+    }
   }
 }
 
@@ -959,6 +1128,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(currents, tclcommand_observable_currents,id);
     REGISTER_OBSERVABLE(dipole_moment, tclcommand_observable_dipole_moment,id);
     REGISTER_OBSERVABLE(structure_factor, tclcommand_observable_structure_factor,id);
+    REGISTER_OBSERVABLE(structure_factor_fast, tclcommand_observable_structure_factor_fast,id);
     REGISTER_OBSERVABLE(interacts_with, tclcommand_observable_interacts_with,id);
   //  REGISTER_OBSERVABLE(obs_nothing, tclcommand_observable_obs_nothing,id);
   //  REGISTER_OBSERVABLE(flux_profile, tclcommand_observable_flux_profile,id);
@@ -968,6 +1138,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(radial_flux_density_profile, tclcommand_observable_radial_flux_density_profile,id);
     REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile,id);
     REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile,id);
+    REGISTER_OBSERVABLE(rdf, tclcommand_observable_rdf,id);
     REGISTER_OBSERVABLE(tclcommand, tclcommand_observable_tclcommand,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
@@ -1404,7 +1575,7 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
     return TCL_OK;
 }
 
-int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable * obs) {
   char buffer[TCL_DOUBLE_SPACE];
   if ( observable_calculate(obs) ) {
     Tcl_AppendResult(interp, "\nFailed to compute observable ", obs->obs_name, "\n", (char *)NULL );
@@ -1446,6 +1617,10 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
   } else if (obs->calculate == (&observable_calc_flux_density_profile)) {
     return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
+  } else if (obs->calculate == (&observable_calc_structure_factor_fast)) {
+    return tclcommand_observable_print_structure_factor_fast_formatted(interp, argc, argv, change, obs, values, 3, 1);
+  } else if (obs->calculate == (&observable_calc_structure_factor)) {
+    return tclcommand_observable_print_structure_factor_formatted(interp, argc, argv, change, obs, values, 3, 1);
   } else { 
     Tcl_AppendResult(interp, "Observable can not be printed formatted\n", (char *)NULL );
     return TCL_ERROR;

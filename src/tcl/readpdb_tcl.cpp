@@ -33,6 +33,7 @@ static void usage(Tcl_Interp *interp) {
 }
 
 int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv[]) {
+#warning getting compiled
   char *pdb_file = NULL;
   char *itp_file = NULL;
   int first_id = -1;

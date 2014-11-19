@@ -94,6 +94,8 @@ typedef struct {
 
 /** Calculate structure factor from positions and scattering length */
 int observable_calc_structure_factor(observable* self);
+/** Calculate structure factor from positions and scattering length */
+int observable_calc_structure_factor_fast(observable* self);
 typedef struct {
 // FIXME finish the implementation of scattering length
   IntList* id_list;
@@ -102,7 +104,8 @@ typedef struct {
   int dim_sf; // number of q vectors
   int *q_vals; // values of q vectors
   double *q_density; // number of q vectors per bin
-  // entries for spherical averaging
+  // entries for fast version
+  int num_k_vecs;
 } observable_sf_params;
 
 /** See if particles from idList1 interact with any of the particles in idList2 
@@ -157,7 +160,22 @@ typedef struct {
   void* container;
 } radial_profile_data;
 
+
 void mpi_observable_lb_radial_velocity_profile_slave_implementation();
+
+
+
+
+int observable_calc_rdf(observable* self);
+typedef struct {
+  int *p1_types;
+  int n_p1;
+  int *p2_types;
+  int n_p2;
+  double r_min;
+  double r_max;
+  int r_bins;
+} rdf_profile_data;
 
 
 #endif
