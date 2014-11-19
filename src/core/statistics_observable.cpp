@@ -35,9 +35,8 @@ void observable_init(observable* self) {
 
 int observable_calculate(observable* self) {
   int temp = 0;
-  if (sim_time != self->last_update)
-    if (self->calculate!=0)
-      temp=(self->calculate)(self);
+  if (self->calculate!=0)
+    temp=(self->calculate)(self);
   self->last_update = sim_time;
   return temp;
 }
