@@ -111,10 +111,10 @@ for { set i 0 } { $i < 100 } { incr i } {
 set pos [ part 0 print pos ]
 puts "position after the bounce back $pos"
 if { abs([ lindex $pos 0 ] - $refx ) > $prec } {
-  error "The x position of the particle is wrong"
+  error "The x position of the particle is wrong: [ lindex $pos 0 ] vs $refx"
 }
 if { abs([ lindex $pos 1 ] - $refy ) > $prec } {
-  error "The y position of the particle is wrong"
+  error "The y position of the particle is wrong: [ lindex $pos 1 ] vs $refy"
 }
 puts "The bounce back test was passed!"
 

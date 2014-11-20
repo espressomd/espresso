@@ -308,11 +308,8 @@ int updatePartCfg(int bonds_flag)
     mpi_get_particles(partCfg,&partCfg_bl);
 
   for(j=0; j<n_part; j++)
-#ifdef LEES_EDWARDS
     unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
-#else
-    unfold_position(partCfg[j].r.p, partCfg[j].l.i);
-#endif
+
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
 
@@ -1189,12 +1186,8 @@ void local_place_particle(int part, double p[3], int _new)
   pp[1] = p[1];
   pp[2] = p[2];
 
-#ifdef LEES_EDWARDS
   double vv[3]={0.,0.,0.};
   fold_position(pp, vv, i);
-#else
-  fold_position(pp, i);
-#endif 
   
   if (_new) {
     /* allocate particle anew */

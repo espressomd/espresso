@@ -37,6 +37,7 @@
 #define EK_BOUNDARIES
 #define EK_REACTION
 #define MMM1D_GPU
+#define EWALD_GPU
 #endif
 
 #define AREA_FORCE_GLOBAL   

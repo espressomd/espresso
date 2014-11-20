@@ -30,6 +30,7 @@ libEspressoTcl_la_SOURCES = \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
+	readpdb_tcl.cpp \
 	cells_tcl.cpp \
 	cells_tcl.hpp \
 	channels_tcl.cpp \
@@ -150,6 +151,7 @@ libEspressoTcl_la_SOURCES += \
 # Generic actors
 libEspressoTcl_la_SOURCES += \
 	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
+	actor/Ewaldgpu_tcl.cpp actor/Ewaldgpu_tcl.hpp \
 	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
 
 if CUDA

@@ -204,11 +204,7 @@ void calc_local_mol_info (IntList *local_trapped_mols)
       if (fixed) {
 	topology[mol].mass += PMASS(p[i]);
 	/* Unfold the particle */
-#ifdef LEES_EDWARDS
-    unfold_position(p[i].r.p, p[i].m.v, p[i].l.i);
-#else
-	unfold_position(p[i].r.p,p[i].l.i);
-#endif
+        unfold_position(p[i].r.p, p[i].m.v, p[i].l.i);
 
 	for ( j = 0 ; j < 3 ; j++ ) {
 	  topology[mol].f[j] += p[i].f.f[j];

@@ -36,7 +36,7 @@ int analyze_fold_molecules(float *coord, double shift[3])
   #ifdef LEES_EDWARDS
   if(lees_edwards_offset != 0.0 ){
     fprintf(stderr, "Error: Folding molecules not supported under Lees-Edwards.\n");
-    exit(8);
+    errexit();
   }
   #endif
   
