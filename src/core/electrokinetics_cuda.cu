@@ -2062,7 +2062,6 @@ void ek_integrate() {
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge( float* wallcharge_species_density,
                                          int wallcharge_species             ) {
-  
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x =
@@ -2107,13 +2106,12 @@ void ek_init_species( int species ) {
     ek_parameters.ext_force[1][ ek_parameters.species_index[ species ] ] = 0.0;
     ek_parameters.ext_force[2][ ek_parameters.species_index[ species ] ] = 0.0;
     ek_parameters.d[            ek_parameters.species_index[ species ] ] =
-      ek_parameters.D[          ek_parameters.species_index[ species ] ] / ( 1.0 + 2.0 * sqrt( 2.0 ) );
+    ek_parameters.D[            ek_parameters.species_index[ species ] ] / ( 1.0 + 2.0 * sqrt( 2.0 ) );
   }
 }
 
 
 int ek_init() {
-
   if( ek_parameters.agrid < 0.0 ||
       ek_parameters.viscosity < 0.0 ||
       ek_parameters.T < 0.0 ||
@@ -2308,13 +2306,8 @@ int ek_init() {
       cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
 
 #ifdef EK_BOUNDARIES
-      if ( old_number_of_boundaries != n_lb_boundaries || old_number_of_species != ek_parameters.number_of_species)
-      {
-        lb_init_boundaries();
-        lb_get_boundary_force_pointer( &ek_lb_boundary_force );
-        old_number_of_boundaries = n_lb_boundaries;
-        old_number_of_species = ek_parameters.number_of_species;
-      }
+      lb_init_boundaries();
+      lb_get_boundary_force_pointer( &ek_lb_boundary_force );
       
       cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
 #else
@@ -2322,13 +2315,8 @@ int ek_init() {
         ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
         / (threads_per_block * blocks_per_grid_y );
       dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
-      
 
-      if ( old_number_of_species != ek_parameters.number_of_species )
-      {
-        KERNELCALL( ek_init_species_density_homogeneous, dim_grid, threads_per_block, () );
-        old_number_of_species = ek_parameters.number_of_species;
-      }
+      KERNELCALL( ek_init_species_density_homogeneous, dim_grid, threads_per_block, () );
 #endif
 
 #ifdef EK_REACTION
@@ -3178,6 +3166,33 @@ int ek_set_ext_force( int species,
   ek_parameters.ext_force[1][ ek_parameters.species_index[ species ] ] = ext_force_y;
   ek_parameters.ext_force[2][ ek_parameters.species_index[ species ] ] = ext_force_z;
   
+  return 0;
+}
+
+
+int ek_neutralize_system(int species) {
+  int species_index = ek_parameters.species_index[species];
+
+  if(species_index == -1)
+    return 1;
+
+  if(ek_parameters.valency[species_index] == 0.0f)
+    return 2;
+
+#ifndef EK_BOUNDARIES
+  float charge_density = 0.0f;
+
+  for(int i = 0; i < ek_parameters.number_of_species; i++)
+    charge_density += ek_parameters.density[i] * ek_parameters.valency[i];
+
+  charge_density = ek_parameters.density[species_index] - charge_density / ek_parameters.valency[species_index];
+
+  if(charge_density < 0.0f)
+    return 3;
+
+  ek_parameters.density[species_index] = charge_density;
+#endif
+
   return 0;
 }
 

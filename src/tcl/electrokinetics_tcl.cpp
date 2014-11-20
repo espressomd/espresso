@@ -101,6 +101,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                     [ext_force #float #float #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print flux vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                     [neutralize_system]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int print density\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics pdb-parse #string #string\n", (char *)NULL);
     return TCL_ERROR;
@@ -442,6 +443,36 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             Tcl_AppendResult(interp, "Unknown error in electrokinetics #int print flux vtk #string\n", (char *)NULL);
             return TCL_ERROR;
           }
+        }
+      }
+      else if(ARG0_IS_S("neutralize_system"))
+      {
+        err = ek_neutralize_system(species);
+
+        if(err == 0) 
+        {
+          argc --;
+          argv ++;
+        }
+        else if(err == 1)
+        {
+          Tcl_AppendResult(interp, "Species used for neutralization must exist in electrokinetics #int neutralize_system\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else if(err == 2)
+        {
+          Tcl_AppendResult(interp, "Species used for neutralization must be charged in electrokinetics #int neutralize_system\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else if(err == 3)
+        {
+          Tcl_AppendResult(interp, "Neutralization with specified species would result in negative density in electrokinetics #int neutralize_system\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else 
+        {
+          Tcl_AppendResult(interp, "Unknown error in electrokinetics #int neutralize_system\n", (char *)NULL);
+          return TCL_ERROR;
         }
       }
       else 
