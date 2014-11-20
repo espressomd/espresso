@@ -76,10 +76,12 @@ extern EK_parameters* lb_ek_parameters_gpu;
                                   { -1,   -1,  -1},
                                   -1.0, -1.0, -1.0,
                                   -1.0, -1.0, -1.0,
-                                  -1.0, -1.0, -1.0
+                                  -1.0, -1.0, -1.0,
+                                  0, -1
                                 };
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
+  __device__ float charge_gpu = 0.0f;
   EK_parameters *ek_parameters_gpu_pointer;
   LB_parameters_gpu *ek_lbparameters_gpu;
   CUDA_particle_data *particle_data_gpu;
@@ -1856,6 +1858,20 @@ __global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
 }
 
 
+__global__ void ek_calculate_system_charge() {
+
+  unsigned int index = ek_getThreadIndex();
+
+  if( index < ek_parameters_gpu.number_of_nodes ) 
+  {
+    for(int i = 0; i < ek_parameters_gpu.number_of_species; i++)
+    {
+      atomicadd(&charge_gpu, ek_parameters_gpu.rho[i][index] * ek_parameters_gpu.valency[i]);
+    }
+  }
+}
+
+
 //TODO delete ?? (it has the previous step setting now)
 __global__ void ek_clear_node_force( LB_node_force_gpu node_f ) {
 
@@ -3170,7 +3186,7 @@ int ek_set_ext_force( int species,
 }
 
 
-int ek_neutralize_system(int species) {
+int ek_neutralize_system(int species) { //TODO return info about changes to TCL
   int species_index = ek_parameters.species_index[species];
 
   if(species_index == -1)
@@ -3179,19 +3195,36 @@ int ek_neutralize_system(int species) {
   if(ek_parameters.valency[species_index] == 0.0f)
     return 2;
 
+  float compensating_species_density = 0.0f;
+
 #ifndef EK_BOUNDARIES
-  float charge_density = 0.0f;
-
   for(int i = 0; i < ek_parameters.number_of_species; i++)
-    charge_density += ek_parameters.density[i] * ek_parameters.valency[i];
+    compensating_species_density += ek_parameters.density[i] * ek_parameters.valency[i];
 
-  charge_density = ek_parameters.density[species_index] - charge_density / ek_parameters.valency[species_index];
+  compensating_species_density = ek_parameters.density[species_index] - compensating_species_density / ek_parameters.valency[species_index];
+#else
+  float charge = 0.0f;
+  cuda_safe_mem( cudaMemcpyToSymbol(charge_gpu, &charge, sizeof(float), 0, cudaMemcpyHostToDevice) );
 
-  if(charge_density < 0.0f)
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x =
+    ( ek_parameters.number_of_nodes +
+      threads_per_block * blocks_per_grid_y - 1
+    ) / ( threads_per_block * blocks_per_grid_y );
+  dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+
+  KERNELCALL( ek_calculate_system_charge, dim_grid, threads_per_block, () );
+
+  cuda_safe_mem( cudaMemcpyFromSymbol(&charge, charge_gpu, sizeof(float), 0, cudaMemcpyDeviceToHost ) );
+
+  compensating_species_density = ek_parameters.density[species_index] - (charge / ek_parameters.valency[species_index]) / (ek_parameters.agrid * ek_parameters.agrid * ek_parameters.agrid * double(ek_parameters.number_of_nodes-ek_parameters.number_of_boundary_nodes));
+#endif
+
+  if(compensating_species_density < 0.0f)
     return 3;
 
-  ek_parameters.density[species_index] = charge_density;
-#endif
+  ek_parameters.density[species_index] = compensating_species_density;
 
   return 0;
 }

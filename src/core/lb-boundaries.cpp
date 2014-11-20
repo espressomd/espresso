@@ -234,6 +234,8 @@ void lb_init_boundaries() {
 #ifdef EK_BOUNDARIES
           if (ek_initialized)
           {
+            ek_parameters.number_of_boundary_nodes = number_of_boundnodes;
+
             if(wallcharge_species != -1) {
               if(pdb_charge_lattice &&
                  pdb_charge_lattice[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] != 0.0f) {
