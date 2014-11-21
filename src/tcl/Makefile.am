@@ -126,8 +126,6 @@ libEspressoTcl_la_SOURCES += \
 	object-in-fluid/stretchlin_force_tcl.hpp \
 	object-in-fluid/volume_force_tcl.cpp \
 	object-in-fluid/volume_force_tcl.hpp \
-	immersed_boundary/ibm_wall_repulsion_tcl.cpp \
-	immersed_boundary/ibm_wall_repulsion_tcl.hpp \
 	immersed_boundary/ibm_triel_tcl.cpp \
 	immersed_boundary/ibm_triel_tcl.hpp \
 	immersed_boundary/ibm_volume_conservation_tcl.cpp \

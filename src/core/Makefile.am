@@ -154,7 +154,6 @@ libEspresso_la_SOURCES += \
 # Immersed Boundary
 libEspresso_la_SOURCES += \
 	immersed_boundary/ibm_main.cpp	\
-	immersed_boundary/ibm_wall_repulsion.cpp \
 	immersed_boundary/ibm_triel.cpp \
 	immersed_boundary/ibm_volume_conservation.cpp \
 	immersed_boundary/ibm_tribend.cpp \

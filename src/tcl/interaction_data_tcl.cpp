@@ -101,7 +101,6 @@
 #include "tcl/object-in-fluid/stretching_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
-#include "immersed_boundary/ibm_wall_repulsion_tcl.hpp"
 #include "immersed_boundary/ibm_triel_tcl.hpp"
 #include "immersed_boundary/ibm_volume_conservation_tcl.hpp"
 #include "immersed_boundary/ibm_tribend_tcl.hpp"
@@ -339,8 +338,6 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #endif
       
 #ifdef IMMERSED_BOUNDARY
-  case BONDED_IA_IBM_WALL_REPULSION:
-      return tclprint_to_result_ibm_wall_repulsion(interp, params);
     case BONDED_IA_IBM_TRIEL:
       return tclprint_to_result_ibm_triel(interp, params);
     case BONDED_IA_IBM_VOLUME_CONSERVATION:
@@ -950,7 +947,6 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
   // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
-  REGISTER_BONDED("ibm_wallRep", tclcommand_inter_parse_ibm_wall_repulsion);
   REGISTER_BONDED("ibm_triel", tclcommand_inter_parse_ibm_triel);
   REGISTER_BONDED("ibm_volcons", tclcommand_inter_parse_ibm_volume_conservation);
   REGISTER_BONDED("ibm_tribend", tclcommand_inter_parse_ibm_tribend);
