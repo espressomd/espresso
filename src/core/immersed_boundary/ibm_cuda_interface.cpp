@@ -15,7 +15,7 @@
 #include "communication.hpp"
 #include "particle_data.hpp"
 #include "integrate.hpp"
-#include "ibm_cuda_interface.hpp"
+#include "immersed_boundary/ibm_cuda_interface.hpp"
 
 /// MPI tags for sending velocities and receiving particles
 #define REQ_CUDAIBMSENDVEL 0xcc03
