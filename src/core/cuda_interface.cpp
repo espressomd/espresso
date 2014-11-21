@@ -92,6 +92,9 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
                 particle_data_host[i+g].v[0] = (float)part[i].m.v[0];
                 particle_data_host[i+g].v[1] = (float)part[i].m.v[1];
                 particle_data_host[i+g].v[2] = (float)part[i].m.v[2];
+#ifdef IMMERSED_BOUNDARY
+                particle_data_host[i+g].isVirtual = part[i].p.isVirtual;
+#endif
 #ifdef SHANCHEN
               // SAW TODO: does this really need to be copied every time?
               int ii;
@@ -166,6 +169,9 @@ static void cuda_mpi_get_particles_slave(){
           particle_data_host_sl[i+g].v[0] = (float)part[i].m.v[0];
           particle_data_host_sl[i+g].v[1] = (float)part[i].m.v[1];
           particle_data_host_sl[i+g].v[2] = (float)part[i].m.v[2];
+#ifdef IMMERSED_BOUNDARY
+          particle_data_host_sl[i+g].isVirtual = part[i].p.isVirtual;
+#endif
           
 #ifdef SHANCHEN
         // SAW TODO: does this really need to be copied every time?
