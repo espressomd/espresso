@@ -266,7 +266,6 @@ inline void force_calc()
   
 #ifdef IMMERSED_BOUNDARY
   // Must be done here. Forces need to be ghost-communicated
-//  IBM_VolumeConservation(round(sim_time/time_step), sim_time);
     IBM_VolumeConservation();
 #endif
 
@@ -705,13 +704,30 @@ inline void add_bonded_force(Particle *p1)
         force[2] = force2[2] = force3[2] = 0;
         break;
       case BONDED_IA_IBM_TRIBEND:
-        IBM_Tribend_CalcForce(p1, p2, p3, p4, iaparams);
+      {
+        // First build neighbor list. This includes all nodes around the central node.
+        const int numNeighbors = iaparams->num;
+        Particle **neighbors = new Particle *[numNeighbors];
+        // Three are already there
+        neighbors[0] = p2;
+        neighbors[1] = p3;
+        neighbors[2] = p4;
+        // Get rest
+        for (int j=3; j < numNeighbors; j++)
+          neighbors[j] = local_particles[p1->bl.e[i++]];
+        
+        IBM_Tribend_CalcForce(p1, numNeighbors, neighbors, *iaparams);
         bond_broken = 0;
-        // These may be added later on, but we set them to zero because the force has already been added in IBM_Tribend_CalcForce
+        
+        // Clean up
+        delete []neighbors;
+        
+        // These may be added later on, but we set them to zero because the force has
         force[0] = force2[0] = force3[0] = 0;
         force[1] = force2[1] = force3[1] = 0;
         force[2] = force2[2] = force3[2] = 0;
         break;
+      }
 #endif
         
 #ifdef LENNARD_JONES

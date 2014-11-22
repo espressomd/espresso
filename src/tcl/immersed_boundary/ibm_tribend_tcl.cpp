@@ -26,26 +26,28 @@ int tclcommand_inter_parse_ibm_tribend(Tcl_Interp *interp, int bond_type, int ar
       return TCL_ERROR;
     }
     
+    // PARTNER LIST ONLY REQUIRED FOR KRUEGER BENDING
+    
     int ind1, ind2, ind3, ind4;
     double kb;
     
     if (! ARG_IS_I(1, ind1)) {
-      Tcl_AppendResult(interp, "Triangle index must be int.", (char *) NULL);
+      Tcl_AppendResult(interp, "Node index must be int.", (char *) NULL);
       return TCL_ERROR;
     }
     
     if (! ARG_IS_I(2, ind2)) {
-      Tcl_AppendResult(interp, "Triangle index must be int.", (char *) NULL);
+      Tcl_AppendResult(interp, "Node index must be int.", (char *) NULL);
       return TCL_ERROR;
     }
     
     if (! ARG_IS_I(3, ind3)) {
-      Tcl_AppendResult(interp, "Triangle index must be int.", (char *) NULL);
+      Tcl_AppendResult(interp, "Node index must be int.", (char *) NULL);
       return TCL_ERROR;
     }
     
     if (! ARG_IS_I(4, ind4)) {
-      Tcl_AppendResult(interp, "Triangle index must be int.", (char *) NULL);
+      Tcl_AppendResult(interp, "Node index must be int.", (char *) NULL);
       return TCL_ERROR;
     }
     
@@ -53,10 +55,11 @@ int tclcommand_inter_parse_ibm_tribend(Tcl_Interp *interp, int bond_type, int ar
     bool done = false;
     tBendingMethod method;
     if (strcmp(argv[5], "Krueger") == 0) { method = Krueger; done = true; }
-    if (strcmp(argv[5], "KruegerAchim") == 0) { method = KruegerAchim; done = true; }
+    if (strcmp(argv[5], "KruegerAchim") == 0) { method = Krueger; done = true; }    // This is a legacy for backward compatibility
+    if (strcmp(argv[5], "Gompper") == 0) { method = Gompper; done = true; }
     if ( !done )
     {
-      Tcl_AppendResult(interp, "Wrong bending method: Krueger or KruegerAchim ", (char *) NULL);
+      Tcl_AppendResult(interp, "Wrong bending method: Krueger or Gompper ", (char *) NULL);
       return TCL_ERROR;
     }
     
