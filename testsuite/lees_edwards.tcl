@@ -64,10 +64,7 @@ setmd time_step $time_step
 setmd skin      $skin
 
 # Seed the Random Number Generator
-set ran_seed [exec date +%N];#time in nanoseconds, on unix machines.
-set ran_seed [scan $ran_seed %d];#tidy up output from syscall
-puts "Using seed : $ran_seed"
-#set ran_seed 1902
+set ran_seed 1902
 set cmd "t_random seed"
 for {set i 0} {$i < [setmd n_nodes]} { incr i } { 
    lappend cmd [expr $ran_seed + $i] 
@@ -131,7 +128,7 @@ for { set step 0 } { $step < $shear_equil } { incr step $shear_per } {
         set vy2 0.0
         set vz2 0.0
         for { set i 0 } { $i < $n_part } { incr i } {
-            set pos [ part $i print pos ] 
+            set pos [ part $i print folded ] 
             set vel [ part $i print v ] 
             set vx2 [expr $vx2 + [expr [lindex $vel 0] * [lindex $vel 0]]] 
             set vy2 [expr $vy2 + [expr [lindex $vel 1] * [lindex $vel 1]]] 
@@ -212,7 +209,7 @@ for { set step 0 } { $step < $max_step_shear } { incr step $shear_per } {
         set vy2 0.0
         set vz2 0.0
         for { set i 0 } { $i < $n_part } { incr i } {
-            set pos [ part $i print pos ] 
+            set pos [ part $i print folded ] 
             set vel [ part $i print v ] 
             set vx2 [expr $vx2 + [expr [lindex $vel 0] * [lindex $vel 0]]] 
             set vy2 [expr $vy2 + [expr [lindex $vel 1] * [lindex $vel 1]]] 
