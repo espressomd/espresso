@@ -19,11 +19,11 @@ int tclcommand_inter_parse_ibm_triel(Tcl_Interp *interp, int bond_type, int argc
     // ****** Setting up a new interaction *********
     
     // Number of arguments
-    if ( argc != 6  )
+    if ( argc != 7 && argc != 8 )
     {
       printf("ibm_triel has %d arguments.\n", argc-1);
-      Tcl_AppendResult(interp, "Triel for IBM needs five parameters:\n "
-                       "<ind1> <ind2> <ind3> <maxdist> <law_plus_parameters_string>", (char *) NULL);
+      Tcl_AppendResult(interp, "Triel for IBM needs six or seven parameters:\n "
+                       "<ind1> <ind2> <ind3> <maxdist> <elastic_law> <elastic constant(s)>", (char *) NULL);
       return TCL_ERROR;
     }
     
@@ -35,34 +35,96 @@ int tclcommand_inter_parse_ibm_triel(Tcl_Interp *interp, int bond_type, int argc
     
     // Check correctness of numeric parameters
     if (! ARG_IS_I(1, ind1)) {
-      Tcl_AppendResult(interp, "Triangle index must be int: "
-                       "<ind1> ", (char *) NULL);
+      Tcl_AppendResult(interp, "Triangle index 1 must be int", (char *) NULL);
       return TCL_ERROR;
     }
     
     if (! ARG_IS_I(2, ind2)) {
-      Tcl_AppendResult(interp, "Triangle index must be int: "
-                       "<ind2> ", (char *) NULL);
+      Tcl_AppendResult(interp, "Triangle index 2 must be int.", (char *) NULL);
       return TCL_ERROR;
     }
     
     if (! ARG_IS_I(3, ind3)) {
-      Tcl_AppendResult(interp, "Triangle index must be int: "
-                       "<ind3> ", (char *) NULL);
+      Tcl_AppendResult(interp, "Triangle index 3 must be int.", (char *) NULL);
       return TCL_ERROR;
     }
     
     if (! ARG_IS_D(4, max)) {
-      Tcl_AppendResult(interp, "Triangle needs max stretch : "
-                       "<maxdist> ", (char *) NULL);
+      Tcl_AppendResult(interp, "Triangle needs max stretch", (char *) NULL);
       return TCL_ERROR;
     }
+   
+    // Check elastic law
+    tElasticLaw law = NeoHookean;
+    bool done = false;
+    if ( strcmp(argv[5], "NeoHookean") == 0) { law = NeoHookean; done = true; }
+    if ( strcmp(argv[5], "Skalak") == 0) { law = Skalak; done = true; }
+    if ( !done )
+    {
+      Tcl_AppendResult(interp, "Law must be NeoHookean or Skalak", (char *) NULL);
+      return TCL_ERROR;
+    }
+    
+    // Elastic constants
+    double k1=0, k2 = 0;
+    if ( law == NeoHookean )
+    {
+      if ( argc != 7 )
+      {
+        Tcl_AppendResult(interp, "NeoHookean needs one elastic constant", (char *) NULL);
+        return TCL_ERROR;
+      }
+      else
+      {
+        if (! ARG_IS_D(6, k1))
+        {
+          Tcl_AppendResult(interp, "Spring constant must be a double", (char *) NULL);
+          return TCL_ERROR;
+        }
+      }
+    }
+    
+    if ( law == Skalak )
+    {
+      if ( argc != 8 )
+      {
+        Tcl_AppendResult(interp, "Skalak needs two elastic constants", (char *) NULL);
+        return TCL_ERROR;
+      }
+      else
+      {
+        if (! ARG_IS_D(6, k1))
+        {
+          Tcl_AppendResult(interp, "Spring constant must be a double", (char *) NULL);
+          return TCL_ERROR;
+        }
+        if (! ARG_IS_D(7, k2))
+        {
+          Tcl_AppendResult(interp, "Spring constant must be a double", (char *) NULL);
+          return TCL_ERROR;
+        }
+      }
+    }
+    
+    // Set values
+    const int status = IBM_Triel_SetParams(bond_type, ind1, ind2, ind3, max, law, k1,k2);
+    if (status == ES_ERROR)
+    {
+      Tcl_AppendResult(interp, "Unspecified error reading ibm_triel", (char *)NULL);
+      return TCL_ERROR;
+    }
+    
+    // Everyting ok
+    return TCL_OK;
+
+    
+
     
     
     // Argument 5 is passed as a single string to allow flexibility
     // Copy and tokenize argument 5
     // Needs to be copied, otherwise the original tcl strign is modified
-    char elasticLawString[400];
+/*    char elasticLawString[400];
     strcpy(elasticLawString, argv[5]);
     char *tok = strtok(elasticLawString, " ");
     
@@ -128,7 +190,7 @@ int tclcommand_inter_parse_ibm_triel(Tcl_Interp *interp, int bond_type, int argc
     {
       Tcl_AppendResult(interp, "Too many parameters reading triel", (char *)NULL);
       return TCL_ERROR;
-    }
+    }*/
   }
   else
   {
