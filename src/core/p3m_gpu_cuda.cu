@@ -544,6 +544,9 @@ void assign_charges(int n_part, const CUDA_particle_data * const pdata, CUFFT_TY
   block.y = cao;
   block.z = cao;
 
+  printf("n_part %d, parts_per_block %d, n_blocks %d\n", n_part, parts_per_block, n_blocks);
+  printf("grid %d %d %d block %d %d %d\n", grid.x, grid.y, grid.z, block.x, block.y, block.z);
+
   switch(cao) {
   case 1:
     assign_charge_kernel<1><<<grid, block>>>(pdata, mesh, m_size, pos_shift, hi, n_part, parts_per_block);
