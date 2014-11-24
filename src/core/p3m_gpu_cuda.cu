@@ -294,6 +294,36 @@ __device__ inline void atomicAdd(float* address, float value){
 #error I need at least compute capability 1.1
 #endif
 
+__global__ void apply_diff_op( CUFFT_TYPE_COMPLEX *mesh, const int mesh_size, 
+			       CUFFT_TYPE_COMPLEX *force_mesh_x,  CUFFT_TYPE_COMPLEX *force_mesh_y, CUFFT_TYPE_COMPLEX *force_mesh_z, 
+			       const REAL_TYPE box ) {
+  const int linear_index = mesh_size*mesh_size*blockIdx.x + mesh_size * blockIdx.y + threadIdx.x;
+
+  if(threadIdx.x < mesh_size) {
+    int n;
+    n = ( threadIdx.x == mesh_size/2 ) ? 0.0 : threadIdx.x;
+    n = ( n > mesh_size/2) ? n - mesh_size : n;
+    weights[threadIdx.x] = n;
+  }
+
+  __syncthreads();
+
+  const int n[3] = { weights[blockIdx.x], weights[blockIdx.y], weights[threadIdx.x] };
+  const CUFFT_TYPE_COMPLEX meshw = mesh[linear_index];
+  CUFFT_TYPE_COMPLEX buf;
+  buf.x = -2.0 * PI * meshw.y / box;
+  buf.y =  2.0 * PI * meshw.x / box;
+
+  force_mesh_x[linear_index].x =  n[0] * buf.x;
+  force_mesh_x[linear_index].y =  n[0] * buf.y;
+
+  force_mesh_y[linear_index].x =  n[1] * buf.x;
+  force_mesh_y[linear_index].y =  n[1] * buf.y;
+
+  force_mesh_z[linear_index].x =  n[2] * buf.x;
+  force_mesh_z[linear_index].y =  n[2] * buf.y;
+}
+
 template<int dim>
 __global__ void apply_diff_op( CUFFT_TYPE_COMPLEX *mesh, const int mesh_size, CUFFT_TYPE_COMPLEX *force_mesh,  const REAL_TYPE box ) {
   int linear_index = mesh_size*mesh_size*blockIdx.x + mesh_size * blockIdx.y + threadIdx.x;
@@ -840,19 +870,20 @@ extern "C" {
       }
     }
 
-    KERNELCALL(apply_diff_op<0>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh_x, box));
+    KERNELCALL_shared(apply_diff_op, gridConv, threadsConv, mesh*sizeof(REAL_TYPE), (p3m_gpu_data.charge_mesh, mesh, 
+    										     p3m_gpu_data.force_mesh_x, p3m_gpu_data.force_mesh_y, p3m_gpu_data.force_mesh_z, box));
+
+    // KERNELCALL(apply_diff_op<0>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh_x, box));
+    // KERNELCALL(apply_diff_op<1>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh_y, box));
+    // KERNELCALL(apply_diff_op<2>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh_z, box));
   
     CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh_x, p3m_gpu_data.force_mesh_x, CUFFT_INVERSE);
 
     KERNELCALL(assign_forces_2, gridAssignment2, threadsAssignment2, (lb_particle_gpu, p3m_gpu_data.force_mesh_x, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 0, p3m_gpu_data.npart));
 
-    KERNELCALL(apply_diff_op<1>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh_y, box));
-
     CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh_y, p3m_gpu_data.force_mesh_y, CUFFT_INVERSE);
   
     KERNELCALL(assign_forces_2, gridAssignment2, threadsAssignment2, (lb_particle_gpu, p3m_gpu_data.force_mesh_y, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 1, p3m_gpu_data.npart));
-
-    KERNELCALL(apply_diff_op<2>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh_z, box));
 
     CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh_z, p3m_gpu_data.force_mesh_z, CUFFT_INVERSE);
   
