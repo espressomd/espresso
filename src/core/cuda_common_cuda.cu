@@ -312,7 +312,7 @@ void copy_forces_from_GPU() {
 }
 
 
-#ifdef ENGINE
+#if defined(ENGINE) && defined(LB_GPU)
 // setup and call kernel to copy v_cs to host
 void copy_v_cs_from_GPU() {
   if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles )

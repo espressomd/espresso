@@ -1342,6 +1342,7 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
   get_particle_data(part_num, &p);
   p.swim.swimming = true;
 
+  char err[256];
   *change = 0;
   bool parse = true;
   while ( parse ) {
@@ -1350,9 +1351,11 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
       p.swim.swimming = false;
       p.swim.v_swim = 0.0;
       p.swim.f_swim = 0.0;
+#if defined(LB) || defined(LB_GPU)
       p.swim.push_pull = 0;
       p.swim.dipole_length = 0.0;
       p.swim.rotational_friction = 0.0;
+#endif
     } else if ( ARG_IS_S(*change,"v_swim") ) {
       if ( !ARG_IS_D(++(*change),p.swim.v_swim) ) {
         return TCL_ERROR;
@@ -1369,7 +1372,9 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
         printf("You can't set v_swim and f_swim at the same time!\n");
         return TCL_ERROR;
       }
-    } else if ( ARG_IS_S(*change,"pusher") ) {
+    }
+#if defined(LB) || defined(LB_GPU)
+    else if ( ARG_IS_S(*change,"pusher") ) {
       p.swim.push_pull = -1;
     } else if ( ARG_IS_S(*change,"puller") ) {
       p.swim.push_pull = 1;
@@ -1381,7 +1386,17 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
       if ( !ARG_IS_D(++(*change),p.swim.rotational_friction) ) {
         return TCL_ERROR;
       }
-    } else {
+    }
+#else
+    else if ( ARG_IS_S(*change,strcpy(err,"pusher"))
+	      || ARG_IS_S(*change,strcpy(err,"puller"))
+	      || ARG_IS_S(*change,strcpy(err,"dipole_length"))
+	      || ARG_IS_S(*change,strcpy(err,"rotational_friction")) ) {
+      fprintf(stderr,"ERROR: The parameter \"%s\" cannot be used when LB is not compiled in!\n",err);
+      return TCL_ERROR;
+    }
+#endif
+    else {
       parse = false;
       break;
     }

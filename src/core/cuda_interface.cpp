@@ -121,8 +121,10 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
                 particle_data_host[i+g].swim.quatu[0]      = (float)part[i].r.quatu[0];
                 particle_data_host[i+g].swim.quatu[1]      = (float)part[i].r.quatu[1];
                 particle_data_host[i+g].swim.quatu[2]      = (float)part[i].r.quatu[2];
+#if defined(LB) || defined(LB_GPU)
                 particle_data_host[i+g].swim.push_pull     =        part[i].swim.push_pull;
                 particle_data_host[i+g].swim.dipole_length = (float)part[i].swim.dipole_length;
+#endif
                 particle_data_host[i+g].swim.swimming      =        part[i].swim.swimming;
 #endif
               }  
@@ -209,8 +211,10 @@ static void cuda_mpi_get_particles_slave(){
           particle_data_host_sl[i+g].swim.quatu[0]      = (float)part[i].r.quatu[0];
           particle_data_host_sl[i+g].swim.quatu[1]      = (float)part[i].r.quatu[1];
           particle_data_host_sl[i+g].swim.quatu[2]      = (float)part[i].r.quatu[2];
+#if defined(LB) || defined(LB_GPU)
           particle_data_host_sl[i+g].swim.push_pull     =        part[i].swim.push_pull;
           particle_data_host_sl[i+g].swim.dipole_length = (float)part[i].swim.dipole_length;
+#endif
           particle_data_host_sl[i+g].swim.swimming      =        part[i].swim.swimming;
 #endif
         }
@@ -328,7 +332,7 @@ static void cuda_mpi_send_forces_slave(){
     } 
 }
 
-#ifdef ENGINE
+#if defined(ENGINE) && defined(LB_GPU)
 void cuda_mpi_send_v_cs(CUDA_v_cs *host_v_cs){
   int n_part;
   int g;
