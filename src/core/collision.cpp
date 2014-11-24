@@ -476,7 +476,7 @@ part2=gathered_queue[k].pp2;
 //TRACE(printf("%d: collisions of %d %d\n", this_node, part1, part2));
 }
 
-  //if (number_of_collisions>0) {
+  if (counts[this_node]>0) {
 
    if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {
 
@@ -611,7 +611,7 @@ continue;
     
       } // If domain decomposition
     } // if three particle binding
-  //} // if number of collisions >0 (three particle binding)
+  } // if number of collisions >0 (three particle binding)
 
   // Reset the collision queue
   number_of_collisions = 0;
