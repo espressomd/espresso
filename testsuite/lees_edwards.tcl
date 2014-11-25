@@ -1,4 +1,3 @@
-
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
@@ -70,7 +69,6 @@ for {set i 0} {$i < [setmd n_nodes]} { incr i } {
    lappend cmd [expr $ran_seed + $i] 
 }
 eval $cmd
-expr srand($ran_seed)
 
 
 #############################################################
@@ -81,7 +79,7 @@ inter 0 0 lennard-jones $lj_epsilon $lj1_sig $lj1_cut auto 0
 
 # Place particles randomly
 for { set i 0 } { $i < $n_part } { incr i } {
-    part $i pos [expr rand()*$L] [expr rand()*$L] [expr rand()*$L]
+    part $i pos [expr [t_random]*$L] [expr [t_random]*$L] [expr [t_random]*$L]
     part $i type 0
 }
 
@@ -93,14 +91,9 @@ set shear_equil         5000
 set mean_from           5000
 set shear_per              1
 set write_per           1000
-set write_vcf_per       1000
 set shear_rate             0.005
 set offset                 0.0
 set cap_until           5000
-
-#write a trajectory
-set f [open "lees_edwards_thermalising.vtf" w]
-writevsf $f
 
 #modified Langevin thermostat assumes a linear flow profile
 thermostat langevin $temperature 5.0
@@ -111,11 +104,7 @@ set mean_z2 0.0
 set count   0.0
 set fCap 0
 for { set step 0 } { $step < $shear_equil } { incr step $shear_per } {
-    if { [expr $step % $write_vcf_per] == 0 } then {
-        writevcf $f ;#folded
-    }
-
-    if { $step % 200 == 0 && $fCap < 5.0 } then { 
+    if { $step % 200 == 0 && $fCap < 500 } then { 
        incr fCap 10
        inter forcecap  $fCap
     }
@@ -128,7 +117,6 @@ for { set step 0 } { $step < $shear_equil } { incr step $shear_per } {
         set vy2 0.0
         set vz2 0.0
         for { set i 0 } { $i < $n_part } { incr i } {
-            set pos [ part $i print folded ] 
             set vel [ part $i print v ] 
             set vx2 [expr $vx2 + [expr [lindex $vel 0] * [lindex $vel 0]]] 
             set vy2 [expr $vy2 + [expr [lindex $vel 1] * [lindex $vel 1]]] 
@@ -154,7 +142,6 @@ for { set step 0 } { $step < $shear_equil } { incr step $shear_per } {
 
     set offset [expr $offset + $shear_rate * $shear_per]
 }
-close $f
 
 ##Below is the loop for an extended test, use this to
 ##see if the code is stable without a forcecap for a long time.
@@ -168,23 +155,10 @@ set mean_x2 0.0
 set mean_y2 0.0
 set mean_z2 0.0
 set count   0.0
-set f [open "lees_edwards_noCap.vtf" w]
-writevsf $f
+
 for { set step 0 } { $step < $max_step_shear } { incr step $shear_per } {
-    if { [expr $step % $write_vcf_per] == 0 } then {
-        writevcf $f folded
-    }
     lees_edwards_offset  $offset
     integrate            $shear_per
-
-    #for { set i 0 } { $i < $n_part } { incr i } {
-    #   set pv [ part $i print folded_position ]  
-      # if { $i % 1000 == 0 } then {  
-      #     puts "$pv"
-      # }
-    #   part $i pos [lindex $pv 0] [lindex $pv 1] [lindex $pv 2]
-    #   part $i v   [lindex $pv 3] [lindex $pv 4] [lindex $pv 5]
-    #}
 
     if { $step == $cap_until } then { 
 	puts "Removing forcecap"
@@ -202,14 +176,11 @@ for { set step 0 } { $step < $max_step_shear } { incr step $shear_per } {
     set mean_z2 [expr $mean_z2 + $KEz ]
     set count   [expr $count + 1.0 ]
 
-
-
     if { [expr $step % $write_per] == 0 } then {
         set vx2 0.0
         set vy2 0.0
         set vz2 0.0
         for { set i 0 } { $i < $n_part } { incr i } {
-            set pos [ part $i print folded ] 
             set vel [ part $i print v ] 
             set vx2 [expr $vx2 + [expr [lindex $vel 0] * [lindex $vel 0]]] 
             set vy2 [expr $vy2 + [expr [lindex $vel 1] * [lindex $vel 1]]] 
