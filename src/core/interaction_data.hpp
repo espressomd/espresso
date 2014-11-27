@@ -84,8 +84,6 @@ enum BondedInteraction{
     /** Type of bonded interaction is a linear stretching force. */
     BONDED_IA_STRETCHLIN_FORCE,
     /** Type of bonded interaction is a wall repulsion (immersed boundary). */
-    BONDED_IA_IBM_WALL_REPULSION,
-    /** Type of bonded interaction is elastic triangle force (immersed boundary). */
     BONDED_IA_IBM_TRIEL,
     /** Type of bonded interaction is volume conservation force (immersed boundary). */
     BONDED_IA_IBM_VOLUME_CONSERVATION,
@@ -720,11 +718,6 @@ typedef struct {
       double distmax;
 } Endangledist_bond_parameters;
 
-/** Parameters for IBM wall repulsion */
-typedef struct {
-  double kappaWall;
-} IBM_WallRepulsion_Parameters;
-
 typedef enum {NeoHookean, Skalak } tElasticLaw;
 
 /** Parameters for IBM elastic triangle (triel) **/
@@ -764,7 +757,7 @@ typedef struct {
 //  bool writeCOM;
 } IBM_VolCons_Parameters;
 
-typedef enum {Krueger, KruegerAchim} tBendingMethod;
+typedef enum {Krueger, Gompper} tBendingMethod;
 
 /** Parameters for IBM tribend **/
 typedef struct {
@@ -801,7 +794,6 @@ typedef union {
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
     Endangledist_bond_parameters endangledist;
-    IBM_WallRepulsion_Parameters ibmWallRepulsionParameters;
     IBM_Triel_Parameters ibm_triel;
     IBM_VolCons_Parameters ibmVolConsParameters;
     IBM_Tribend_Parameters ibm_tribend;

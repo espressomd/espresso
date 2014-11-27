@@ -11,6 +11,9 @@ aclocal.m4
 autom4te.cache
 .deps/
 myconfig.h
+build/
+
+*.*~
 
 # created by configure
 src/myconfig-final.h

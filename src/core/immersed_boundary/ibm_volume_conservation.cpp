@@ -45,7 +45,7 @@ void IBM_InitVolumeConservation()
   
   // Check since this function is called at the start of every integrate loop
   // Also check if volume has been set due to reading of a checkpoint
-  if ( !VolumeInitDone && VolumesCurrent[0] == 0 )
+  if ( !VolumeInitDone /*&& VolumesCurrent[0] == 0 */)
   {
     
     // Calculate volumes
@@ -59,34 +59,16 @@ void IBM_InitVolumeConservation()
       if ( bonded_ia_params[i].type == BONDED_IA_IBM_VOLUME_CONSERVATION )
       {
         // This check is important because InitVolumeConservation may be called accidentally
-        // during the integration. Then we must not reset the reference volume.
-        //                if ( bonded_ia_params[i].p.volume_conservation_ibm.volRef == 0 )
+        // during the integration. Then we must not reset the reference
+        if ( bonded_ia_params[i].p.ibmVolConsParameters.volRef == 0 )
         {
           const int softID =bonded_ia_params[i].p.ibmVolConsParameters.softID;
           bonded_ia_params[i].p.ibmVolConsParameters.volRef = VolumesCurrent[softID];
           mpi_bcast_ia_params(i, -1);
-          // Check if we need to open the COM file
-//          if ( bonded_ia_params[i].p.volume_conservation_ibm.writeCOM ) numWriteCOM++;
         }
       }
       
     }
-    
-    // For outputting centroids
-    /*    if ( numWriteCOM > 0 && this_node == 0)
-     {
-     // Again this check is important since init is called at the start of every integrate loop
-     //            if ( IBMOutputCOMfile == NULL )
-     {
-     IBMOutputCOMfile = new ofstream("softCOM.dat");
-     (*IBMOutputCOMfile) << "#VectorSequence" << endl;
-     (*IBMOutputCOMfile) << "#NumValues: " << numWriteCOM << endl;
-     (*IBMOutputCOMfile) << "#Names: ";
-     for (int i=0; i<numWriteCOM; i++)
-     (*IBMOutputCOMfile) << "cell" << i << " ";
-     (*IBMOutputCOMfile) << endl;
-     }
-     }*/
     
   }
   
@@ -208,7 +190,7 @@ void CalcVolumes()
             {
               ostringstream msg;
               msg << "{IBM_CalcVolumes: 078 bond broken between particles "
-                  << p1.p.identity << " and " << p1.bl.e[j+1] << " (particles not stored on the same node)} ";
+                << p1.p.identity << " and " << p1.bl.e[j+1] << " (particles not stored on the same node)} ";
               runtimeError(msg);
               return;
             }
@@ -217,7 +199,7 @@ void CalcVolumes()
             {
               ostringstream msg;
               msg << "{IBM_CalcVolumes: 078 bond broken between particles "
-                  << p1.p.identity << " and " << p1.bl.e[j+2] << " (particles not stored on the same node)} ";
+                << p1.p.identity << " and " << p1.bl.e[j+2] << " (particles not stored on the same node)} ";
               runtimeError(msg);
               return;
             }
@@ -346,7 +328,14 @@ void CalcVolumeForce()
             double a13[3];
             get_mi_vector(a13, p3->r.p, x1);
             
-            double x2[3];
+
+            
+            // Now we have the true and good coordinates
+            // Compute force according to eq. C.46 Krüger thesis
+            // It is the same as deriving Achim's equation w.r.t x
+            /*                        const double fact = kappaV * 1/6. * (IBMVolumesCurrent[softID] - volRef) / IBMVolumesCurrent[softID];
+             
+             double x2[3];
             double x3[3];
             
             for (int i=0; i < 3; i++)
@@ -354,11 +343,6 @@ void CalcVolumeForce()
               x2[i] = x1[i] + a12[i];
               x3[i] = x1[i] + a13[i];
             }
-            
-            // Now we have the true and good coordinates
-            // Compute force according to eq. C.46 Krüger thesis
-            // It is the same as deriving Achim's equation w.r.t x
-            /*                        const double fact = kappaV * 1/6. * (IBMVolumesCurrent[softID] - volRef) / IBMVolumesCurrent[softID];
              
              double n[3];
              vector_product(x3, x2, n);

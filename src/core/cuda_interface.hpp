@@ -58,6 +58,10 @@ typedef struct {
   float q;
 #endif
   unsigned int fixed;
+  
+#ifdef IMMERSED_BOUNDARY
+  bool isVirtual;
+#endif
 
 } CUDA_particle_data;
 

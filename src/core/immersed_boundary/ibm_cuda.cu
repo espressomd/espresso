@@ -82,7 +82,7 @@ void IBM_ForcesIntoFluid_GPU()
 
 
   // ***** GPU stuff only on master *****
-  if ( this_node == 0 )
+  if ( this_node == 0 && numParticles > 0)
   {
 
     // Copy data to device
@@ -124,6 +124,7 @@ void InitCUDA_IBM(const int numParticles)
 
     // Copy boundary velocities to the GPU
     // First put them into correct format
+#ifdef LB_BOUNDARIES_GPU
     float* host_lb_boundary_velocity = new float[3*(n_lb_boundaries+1)];
 
     for (int n=0; n<n_lb_boundaries; n++)
@@ -139,6 +140,7 @@ void InitCUDA_IBM(const int numParticles)
     cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*n_lb_boundaries*sizeof(float)));
     cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
     delete[] host_lb_boundary_velocity;
+#endif
   }
 }
 
@@ -203,7 +205,7 @@ void ParticleVelocitiesFromLB_GPU()
   const int numParticles = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
   // **** GPU stuff only on master ****
-  if (this_node == 0 )
+  if (this_node == 0 && numParticles > 0)
   {
     // Kernel call
     int threads_per_block_particles = 64;
@@ -357,10 +359,6 @@ __global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_
         const int boundary_index= n_curr.boundary[node_index[i]];
 
         // lb_boundary_velocity is given in MD units --> convert to LB and reconvert back at the end of this function
-        //v[0] += lb_boundary_velocity[3*(boundary_index-1)+0]*delta[i] * para.tau / para.agrid;
-//        v[1] += lb_boundary_velocity[3*(boundary_index-1)+1]*delta[i] * para.tau / para.agrid;
-//        v[2] += lb_boundary_velocity[3*(boundary_index-1)+2]*delta[i] * para.tau / para.agrid;
-
         local_rho = para.rho[0]*para.agrid*para.agrid*para.agrid;
         local_j[0] = para.rho[0]*para.agrid*para.agrid*para.agrid*lb_boundary_velocity[3*(boundary_index-1)+0];
         local_j[1] = para.rho[0]*para.agrid*para.agrid*para.agrid*lb_boundary_velocity[3*(boundary_index-1)+1];
@@ -385,29 +383,6 @@ __global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_
       v[0] += delta[i]*local_j[0]/(local_rho);
       v[1] += delta[i]*local_j[1]/(local_rho);
       v[2] += delta[i]*local_j[2]/(local_rho);
-
-
-
-// Old version: remove
-/*      {
-        // Normal bulk node
-        Calc_m_from_n_IBM(n_curr,node_index[i],mode, paraP);
-
-        // Add force correction, see Guo et al. Phys. Rev. E (2002)
-        mode[1] += 0.5f*node_f.force[0*para.number_of_nodes + node_index[i]];
-        mode[2] += 0.5f*node_f.force[1*para.number_of_nodes + node_index[i]];
-        mode[3] += 0.5f*node_f.force[2*para.number_of_nodes + node_index[i]];
-
-
-
-        // On CPU this is called rho. Is it mass or density??
-        const float totmass = mode[0]+para.rho[0]*para.agrid*para.agrid*para.agrid;
-
-        v[0] += (mode[1]/totmass)*delta[i];
-        v[1] += (mode[2]/totmass)*delta[i];
-        v[2] += (mode[3]/totmass)*delta[i];
-      }*/
-
     }
 
 

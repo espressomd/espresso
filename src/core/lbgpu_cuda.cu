@@ -2691,14 +2691,19 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
   LB_randomnr_gpu rng_part;
   if(part_index<para.number_of_particles)
   {
-    rng_part.seed = part[part_index].seed;
+#if defined(IMMERSED_BOUNDARY) || defined(VIRTUAL_SITES_COM)
+    if ( !particle_data[part_index].isVirtual )
+#endif
+    {
+      rng_part.seed = part[part_index].seed;
 
-    /**force acting on the particle. delta_j will be used later to compute the force that acts back onto the fluid. */
-    calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index,d_v);
-    calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f); 
+      /**force acting on the particle. delta_j will be used later to compute the force that acts back onto the fluid. */
+      calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index,d_v);
+      calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f);
 
-    /**force which acts back to the fluid node */
-    part[part_index].seed = rng_part.seed;
+      /**force which acts back to the fluid node */
+      part[part_index].seed = rng_part.seed;
+    }
   }
 }
 
