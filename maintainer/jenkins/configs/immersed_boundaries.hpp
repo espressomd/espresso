@@ -1,4 +1,5 @@
 /* test configuration without relative/com virtual sites for immersed boundaries */
+#define IMMERSED_BOUNDARY
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
