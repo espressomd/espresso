@@ -226,6 +226,8 @@ inline void force_calc()
 #endif
   init_forces();
 
+  calc_long_range_forces();
+
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_ia();
@@ -270,8 +272,6 @@ inline void force_calc()
 //  IBM_VolumeConservation(round(sim_time/time_step), sim_time);
     IBM_VolumeConservation();
 #endif
-
-  calc_long_range_forces();
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;

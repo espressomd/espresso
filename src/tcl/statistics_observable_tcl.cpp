@@ -767,11 +767,10 @@ int tclcommand_observable_print_structure_factor_formatted(Tcl_Interp* interp, i
       }
     }
   }
+  return TCL_OK;
 }
 
 int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
-  //Tcl_AppendResult(interp, "Structure Factor not available yet!!", (char *)NULL);
-  //return TCL_ERROR;
   int order;
   if (argc > 1 && ARG1_IS_I(order)) {
     obs->calculate=&observable_calc_structure_factor_fast;
@@ -832,6 +831,7 @@ int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* inte
     case 1: tfac=sqrt(2); average=6; break;
     case 2: tfac=sqrt(3); average=4; break;
     default:
+      Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "so many samples per order not yet implemented", (char*)NULL);
       return TCL_ERROR; 
     }
@@ -843,109 +843,8 @@ int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* inte
       Tcl_AppendResult(interp, buffer, (char *) NULL);
     }
   }
+  return TCL_OK;
 }
-
-// FIXME this is the old implementation of structure factor (before observables and correlations were strictly separated)
-//int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p) {
-//  observable_sf_params* params;
-//  int order,order2,tau_lin;
-//  int i,j,k,l,n;
-//  double delta_t,tau_max;
-//  char ibuffer[TCL_INTEGER_SPACE + 2];
-//  char dbuffer[TCL_DOUBLE_SPACE];
-////  int *vals;
-//  double *q_density;
-//  params=(observable_sf_params*)malloc(sizeof(observable_sf_params));
-//  
-//  if(argc!=5) { 
-//    sprintf(ibuffer, "%d ", argc);
-//    Tcl_AppendResult(interp, "structure_factor  needs 5 arguments, got ", ibuffer, (char*)NULL);
-//    sf_print_usage(interp);
-//    return TCL_ERROR;
-//  }
-//  if (ARG_IS_I(1,order)) {
-//    sprintf(ibuffer, "%d ", order);
-//    if(order>1) {
-//      params->order=order;
-//      order2=order*order;
-//    } else {
-//      Tcl_AppendResult(interp, "order must be > 1, got ", ibuffer, (char*)NULL);
-//      sf_print_usage(interp);
-//      return TCL_ERROR;
-//    }
-//  } else {
-//    Tcl_AppendResult(interp, "problem reading order",(char*)NULL);
-//    return TCL_ERROR; 
-//  }
-//  if (ARG_IS_D(2,delta_t)) {
-//    if (delta_t > 0.0) *delta_t_p=delta_t;
-//    else {
-//      Tcl_PrintDouble(interp,delta_t,dbuffer);
-//      Tcl_AppendResult(interp, "delta_t must be > 0.0, got ", dbuffer,(char*)NULL);
-//      return TCL_ERROR;
-//    }
-//  } else {
-//    Tcl_AppendResult(interp, "problem reading delta_t, got ",argv[2],(char*)NULL);
-//    return TCL_ERROR; 
-//  }
-//  if (ARG_IS_D(3,tau_max)) {
-//    if (tau_max > 2.0*delta_t) *tau_max_p=tau_max;
-//    else {
-//      Tcl_PrintDouble(interp,tau_max,dbuffer);
-//      Tcl_AppendResult(interp, "tau_max must be > 2.0*delta_t, got ", dbuffer,(char*)NULL);
-//      return TCL_ERROR;
-//    }
-//  } else {
-//    Tcl_AppendResult(interp, "problem reading tau_max, got",argv[3],(char*)NULL);
-//    return TCL_ERROR; 
-//  }
-//  if (ARG_IS_I(4,tau_lin)) {
-//    if (tau_lin > 2 && tau_lin < (tau_max/delta_t+1)) *tau_lin_p=tau_lin;
-//    else {
-//      sprintf(ibuffer, "%d", tau_lin);
-//      Tcl_AppendResult(interp, "tau_lin must be < tau_max/delta_t+1, got ", ibuffer,(char*)NULL);
-//      return TCL_ERROR;
-//    }
-//  } else {
-//    Tcl_AppendResult(interp, "problem reading tau_lin, got",argv[4],(char*)NULL);
-//    sf_print_usage(interp);
-//    return TCL_ERROR; 
-//  }
-//  // compute the number of vectors
-//  l=0;
-//  for(i=-order; i<=order; i++) 
-//      for(j=-order; j<=order; j++) 
-//        for(k=-order; k<=order; k++) {
-//          n = i*i + j*j + k*k;
-//          if ((n<=order2) && (n>0)) {
-//            l++;
-//	  }
-//        }
-//  params->dim_sf=l;
-//  params->q_vals=(int*)malloc(3*l*sizeof(double));
-//  q_density=(double*)malloc(order2*sizeof(double));
-//  for(i=0;i<order2;i++) q_density[i]=0.0;
-//  l=0;
-//  // Store their values and density
-//  for(i=-order; i<=order; i++) 
-//      for(j=-order; j<=order; j++) 
-//        for(k=-order; k<=order; k++) {
-//          n = i*i + j*j + k*k;
-//          if ((n<=order2) && (n>0)) {
-//	    params->q_vals[3*l  ]=i;
-//	    params->q_vals[3*l+1]=j;
-//	    params->q_vals[3*l+2]=k;
-//	    q_density[n-1]+=1.0;
-//            l++;
-//	  }
-//        }
-//  for(i=0;i<order2;i++) q_density[i]/=(double)l;
-//  params->q_density=q_density;
-//  *A_args=(void*)params;
-//  *change=5; // if we reach this point, we have parsed 5 arguments, if not, error is returned anyway
-//  return 0;
-//}
-//
 
 int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   IntList *ids1, *ids2;
