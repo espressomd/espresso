@@ -393,7 +393,9 @@ void integrate_vv(int n_steps, int reuse_forces)
 #ifdef IMMERSED_BOUNDARY
     
     IBM_UpdateParticlePositions();
-    if (lattice_switch & LATTICE_LB) IBM_ResetLBForces_CPU();
+    // We reset all since otherwise the halo nodes may not be reset
+    // NB: the normal Espresso reset is also done after applying the forces
+//    if (lattice_switch & LATTICE_LB) IBM_ResetLBForces_CPU();
 #ifdef LB_GPU
     //if (lattice_switch & LATTICE_LB_GPU) IBM_ResetLBForces_GPU();
 #endif

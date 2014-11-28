@@ -105,7 +105,6 @@ void IBM_ResetLBForces_CPU()
 {
   for (int i = 0; i<lblattice.halo_grid_volume; ++i)
   {
-    
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
     lbfields[i].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
@@ -270,7 +269,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
       for (x=0;x<2;x++) {
         
         index = node_index[(z*2+y)*2+x];
-        f = lbfields[index].force;
+        f = lbfields[index].force_buf;
         
         // This can be done easier withouth copying the code twice
         // We probably can even set the boundary velocity directly
