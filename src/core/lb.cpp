@@ -39,6 +39,7 @@
 #include "lb-d3q19.hpp"
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
+#include "immersed_boundary/ibm_main.hpp"
 
 #include "cuda_interface.hpp"
 
@@ -2397,9 +2398,6 @@ inline void lb_apply_forces(index_t index, double* mode) {
     mode[9] += C[4];
 
     /* reset force */
-    // In immersed boundary this needs to be postponed
-    // The forces need to be available for the IBM particle update
-#if !defined(IMMERSED_BOUNDARY)
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
     lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
@@ -2411,7 +2409,7 @@ inline void lb_apply_forces(index_t index, double* mode) {
     lbfields[index].force[2] = 0.0;
     lbfields[index].has_force = 0;
 #endif // EXTERNAL_FORCES
-#endif // !IMMERSED_BOUNDARY
+ 
 }
 
 
@@ -2579,6 +2577,21 @@ inline void lb_collide_stream() {
         lb_boundaries[i].force[2]=0.;
     }
 #endif // LB_BOUNDARIES
+  
+  
+#ifdef IMMERSED_BOUNDARY
+// Safeguard the node forces so that we can later use them for the IBM particle update
+// In the following loop the lbfields[XX].force are reset to zero
+  for (int i = 0; i<lblattice.halo_grid_volume; ++i)
+  {
+    lbfields[i].force_buf[0] = lbfields[i].force[0];
+    lbfields[i].force_buf[1] = lbfields[i].force[1];
+    lbfields[i].force_buf[2] = lbfields[i].force[2];
+  }
+#endif
+  
+  
+  
 
     index = lblattice.halo_offset;
     for (z = 1; z <= lblattice.grid[2]; z++) {
@@ -2706,6 +2719,11 @@ inline void lb_stream_collide() {
 
     /* halo region is invalid after update */
     lbpar.resend_halo = 1;
+  
+  // Re-reset the node forces to include also the halo nodes
+#ifdef IMMERSED_BOUNDARY
+  IBM_ResetLBForces_CPU();
+#endif
 }
 
 
