@@ -157,7 +157,7 @@ libEspresso_la_SOURCES += \
 	immersed_boundary/ibm_triel.cpp               immersed_boundary/ibm_triel.hpp \
 	immersed_boundary/ibm_volume_conservation.cpp immersed_boundary/ibm_volume_conservation.hpp \
 	immersed_boundary/ibm_tribend.cpp             immersed_boundary/ibm_tribend.hpp \
-	mmersed_boundary/ibm_tribend_helpers.hpp \
+	immersed_boundary/ibm_tribend_helpers.hpp \
 	immersed_boundary/ibm_cuda_interface.cpp      immersed_boundary/ibm_cuda_interface.hpp 
 
 
