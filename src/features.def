@@ -126,6 +126,8 @@ BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 IMMERSED_BOUNDARY               
 IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
 IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
+IMMERSED_BOUNDARY               requires not SHANCHEN
+IMMERSED_BOUNDARY               requires not ELECTROKINETICS
 
 /* Obsolete features. To be removed. */
 /* Old Bond angle */
