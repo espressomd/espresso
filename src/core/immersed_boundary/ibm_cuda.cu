@@ -372,9 +372,9 @@ __global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_
         local_rho = para.rho[0]*para.agrid*para.agrid*para.agrid + mode[0];
 
         // Add the +f/2 contribution!!
-        local_j[0] = mode[1] + node_f.force[0*para.number_of_nodes + node_index[i]]/2.f;
-        local_j[1] = mode[2] + node_f.force[1*para.number_of_nodes + node_index[i]]/2.f;
-        local_j[2] = mode[3] + node_f.force[2*para.number_of_nodes + node_index[i]]/2.f;
+        local_j[0] = mode[1] + node_f.force_buf[0*para.number_of_nodes + node_index[i]]/2.f;
+        local_j[1] = mode[2] + node_f.force_buf[1*para.number_of_nodes + node_index[i]]/2.f;
+        local_j[2] = mode[3] + node_f.force_buf[2*para.number_of_nodes + node_index[i]]/2.f;
 
       }
 

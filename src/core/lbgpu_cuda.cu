@@ -492,7 +492,15 @@ __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
 
   float force_factor=powf(para.agrid,4)*para.tau*para.tau;
   for(int ii=0;ii<LB_COMPONENTS;++ii)
-  {  
+  {
+
+#ifdef IMMERSED_BOUNDARY
+// Store backup of the node forces
+  node_f.force_buf[(0 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(0 + ii*3 ) * para.number_of_nodes + index];
+  node_f.force_buf[(1 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(1 + ii*3 ) * para.number_of_nodes + index];
+  node_f.force_buf[(2 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(2 + ii*3 ) * para.number_of_nodes + index];
+#endif
+
 #ifdef EXTERNAL_FORCES
       if(para.external_force)
       {
@@ -1183,11 +1191,11 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
     
   }
 
-#if !defined(IMMERSED_BOUNDARY)
+//#if !defined(IMMERSED_BOUNDARY)
   // This must not be done here since we need the forces after LB update for the velocity interpolation
   // It is done by calling IBM_ResetLBForces_GPU from integrate_vv
   reset_LB_forces(index, node_f);
-#endif
+//#endif
 
 #ifdef SHANCHEN
   for(int ii=0;ii<LB_COMPONENTS;++ii)
@@ -2957,6 +2965,9 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   free_and_realloc(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
   free_and_realloc(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
   free_and_realloc(node_f.force    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
+#ifdef IMMERSED_BOUNDARY
+  free_and_realloc(node_f.force_buf    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
+#endif
 #ifdef SHANCHEN
   free_and_realloc(node_f.scforce  , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
 #endif

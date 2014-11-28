@@ -395,7 +395,7 @@ void integrate_vv(int n_steps, int reuse_forces)
     IBM_UpdateParticlePositions();
     if (lattice_switch & LATTICE_LB) IBM_ResetLBForces_CPU();
 #ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU) IBM_ResetLBForces_GPU();
+    //if (lattice_switch & LATTICE_LB_GPU) IBM_ResetLBForces_GPU();
 #endif
     
     if (check_runtime_errors()) break;
