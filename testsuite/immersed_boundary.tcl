@@ -10,8 +10,8 @@ puts "----------------------------------------"
 
 if { [catch {
   ###### Setup #########
-  set boxX 10
-  set boxY 10
+  set boxX 12
+  set boxY 12
   set boxZ 20
   setmd box_l $boxX $boxY $boxZ
 
