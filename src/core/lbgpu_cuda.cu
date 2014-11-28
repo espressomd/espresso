@@ -1503,11 +1503,9 @@ __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a,
     /** the +0.5 is to turn the floorf into a round function */
     my_center[i] = (int)(floorf(scaledpos+0.5f));
     scaledpos = scaledpos-1.0f*my_center[i];
-    temp_delta[0+3*i] = ( 5.0f - 3.0f*abs(scaledpos-1.0f)
-        - sqrt( -2.0f + 6.0f*abs(scaledpos-1.0f) - 3.0f*pow(scaledpos-1.0f,2) ) )/6.0f;
+    temp_delta[0+3*i] = ( 5.0f - 3.0f*abs(scaledpos+1.0f) - sqrt( -2.0f + 6.0f*abs(scaledpos+1.0f) - 3.0f*pow(scaledpos+1.0f,2) ) )/6.0f;
     temp_delta[1+3*i] = ( 1.0f + sqrt( 1.0f - 3.0f*pow(scaledpos,2) ) )/3.0f;
-    temp_delta[2+3*i] = ( 5.0f - 3.0f*abs(scaledpos+1.0f)
-        - sqrt( -2.0f + 6.0f*abs(scaledpos+1.0f) - 3*pow(scaledpos+1.0f,2) ) )/6.0f;
+    temp_delta[2+3*i] = ( 5.0f - 3.0f*abs(scaledpos-1.0f) - sqrt( -2.0f + 6.0f*abs(scaledpos-1.0f) - 3.0f*pow(scaledpos-1.0f,2) ) )/6.0f;
 
     /**TODO: add special case for boundaries? */
   }
