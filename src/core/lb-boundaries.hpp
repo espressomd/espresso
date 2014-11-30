@@ -85,6 +85,7 @@ typedef struct {
   double velocity[3];
 #ifdef EK_BOUNDARIES
   float charge_density;
+  float net_charge;
 #endif
 } LB_Boundary;
 

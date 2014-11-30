@@ -143,12 +143,19 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     argc--;
     argv++;
     
-    if(!ARG0_IS_S("charge_density") || !ARG1_IS_D(floatarg)) 
+    if((!ARG0_IS_S("charge_density") && !ARG0_IS_S("net_charge")) || !ARG1_IS_D(floatarg)) 
     {
-      Tcl_AppendResult(interp, "You need to specify the boundary charge density using\n", (char *) NULL);
-      Tcl_AppendResult(interp, "electrokinetics boundary charge_density #float ...\n", (char *)NULL);
+      Tcl_AppendResult(interp, "You need to specify the boundary charge using\n", (char *) NULL);
+      Tcl_AppendResult(interp, "electrokinetics boundary <charge_density|net_charge> #float ...\n", (char *)NULL);
       return (TCL_ERROR);
     }
+
+    bool net_charge_specified;
+
+    if(ARG0_IS_S("charge_density"))
+      net_charge_specified = 0;
+    else
+      net_charge_specified = 1;
     
     argc -= 2;
     argv += 2;
@@ -250,6 +257,12 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     }
         
     on_lbboundary_change();
+
+    if(net_charge_specified && floatarg != 0.0)
+    {
+      lbboundary_tmp->charge_density *= floatarg / lbboundary_tmp->net_charge;
+      on_lbboundary_change();
+    }
 #endif /* EK_BOUNDARIES */
   }
   else if(ARG0_IS_I(species)) 
