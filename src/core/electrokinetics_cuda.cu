@@ -3185,8 +3185,26 @@ int ek_set_ext_force( int species,
   return 0;
 }
 
+float ek_calculate_net_charge() {
+  float charge = 0.0f;
+  cuda_safe_mem( cudaMemcpyToSymbol(charge_gpu, &charge, sizeof(float), 0, cudaMemcpyHostToDevice) );
 
-int ek_neutralize_system(int species) { //TODO return info about changes to TCL
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x =
+    ( ek_parameters.number_of_nodes +
+      threads_per_block * blocks_per_grid_y - 1
+    ) / ( threads_per_block * blocks_per_grid_y );
+  dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+
+  KERNELCALL( ek_calculate_system_charge, dim_grid, threads_per_block, () );
+
+  cuda_safe_mem( cudaMemcpyFromSymbol(&charge, charge_gpu, sizeof(float), 0, cudaMemcpyDeviceToHost ) );
+
+  return charge;
+}
+
+int ek_neutralize_system(int species) {
   int species_index = ek_parameters.species_index[species];
 
   if(species_index == -1)
@@ -3203,20 +3221,7 @@ int ek_neutralize_system(int species) { //TODO return info about changes to TCL
 
   compensating_species_density = ek_parameters.density[species_index] - compensating_species_density / ek_parameters.valency[species_index];
 #else
-  float charge = 0.0f;
-  cuda_safe_mem( cudaMemcpyToSymbol(charge_gpu, &charge, sizeof(float), 0, cudaMemcpyHostToDevice) );
-
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
-    ( ek_parameters.number_of_nodes +
-      threads_per_block * blocks_per_grid_y - 1
-    ) / ( threads_per_block * blocks_per_grid_y );
-  dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
-
-  KERNELCALL( ek_calculate_system_charge, dim_grid, threads_per_block, () );
-
-  cuda_safe_mem( cudaMemcpyFromSymbol(&charge, charge_gpu, sizeof(float), 0, cudaMemcpyDeviceToHost ) );
+  float charge = ek_calculate_net_charge();
 
   compensating_species_density = ek_parameters.density[species_index] - (charge / ek_parameters.valency[species_index]) / (ek_parameters.agrid * ek_parameters.agrid * ek_parameters.agrid * double(ek_parameters.number_of_nodes-ek_parameters.number_of_boundary_nodes));
 #endif

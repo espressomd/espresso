@@ -67,7 +67,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "Usage of \"electrokinetics\":\n\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [lb_density #float] [viscosity #float] [friction #float] [use_nonlinear_stencil]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float] [T #float] [bjerrum_length #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags> vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags> vtk #string\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics print net_charge\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics node #int #int #int print <velocity>\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics reaction [reactant_index #int]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [product0_index #int]\n", (char *)NULL);
@@ -186,48 +187,56 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_wall(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("sphere")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_sphere(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("cylinder")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_cylinder(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("rhomboid")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_rhomboid(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("pore")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_pore(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("stomatocyte")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_stomatocyte(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("hollow_cone")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_hollow_cone(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("spherocylinder")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_spherocylinder(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("delete")) 
     {
@@ -505,7 +514,18 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       {
         argc--;
         argv++;
-        
+       
+        if(argc == 1 && ARG0_IS_S("net_charge"))
+        {
+          argc--;
+          argv++;
+
+          float net_charge = ek_calculate_net_charge();
+          Tcl_PrintDouble(interp, net_charge, double_buffer);
+          Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+          return TCL_OK;
+        }
+
         if (
              argc != 3 || !ARG1_IS_S("vtk") || 
              ( !ARG0_IS_S("velocity") && !ARG0_IS_S("density") &&
@@ -515,7 +535,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
              )
            ) 
         {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics print <velocity|density|potential|pressure|reaction_tags> vtk #string\n", (char *)NULL);
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics print <net_charge | <velocity|density|potential|pressure|reaction_tags> vtk #string>\n", (char *)NULL);
           return TCL_ERROR;
         }
         
