@@ -496,7 +496,7 @@ void rescale_forces_propagate_vel()
 #endif
       for(j = 0; j < 3 ; j++) {
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
+	if (!(p[i].p.ext_flag & COORD_FIXED(j))) {
 #endif
 #ifdef NPT
 	  if(integ_switch == INTEG_METHOD_NPT_ISO && ( nptiso.geometry & nptiso.nptgeom_dir[j] )) {
@@ -587,7 +587,7 @@ void propagate_press_box_pos_and_rescale_npt()
 #endif
 	for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	  if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
+	  if (!(p[i].p.ext_flag & COORD_FIXED(j))) {
 #endif	    
 	    if(nptiso.geometry & nptiso.nptgeom_dir[j]) {
 	      p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
@@ -652,7 +652,7 @@ void propagate_vel()
 #endif
       for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
+	if (!(p[i].p.ext_flag & COORD_FIXED(j)))	
 #endif
 	  {
 #ifdef NPT
@@ -715,7 +715,7 @@ void propagate_pos()
 #endif
 	for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	  if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+	  if (!(p[i].p.ext_flag & COORD_FIXED(j)))
 #endif
 	    {
 #ifdef NEMD
@@ -757,7 +757,7 @@ void propagate_vel_pos()
 #endif
      for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+	if (!(p[i].p.ext_flag & COORD_FIXED(j)))
 #endif
 	  {
 	    /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */

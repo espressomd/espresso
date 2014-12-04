@@ -177,7 +177,7 @@ inline void friction_thermo_langevin(Particle *p)
 
   for ( j = 0 ; j < 3 ; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->l.ext_flag & COORD_FIXED(j)))
+    if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
     {
 #ifdef LANGEVIN_PER_PARTICLE  

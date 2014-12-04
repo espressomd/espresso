@@ -2737,8 +2737,8 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   double *local_f, interpolated_u[3],delta_j[3];
   
 #ifdef EXTERNAL_FORCES
-  if (!(p->l.ext_flag & COORD_FIXED(0)) 
-      && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2)))
+  if (!(p->p.ext_flag & COORD_FIXED(0)) 
+      && !(p->p.ext_flag & COORD_FIXED(1)) && !(p->p.ext_flag & COORD_FIXED(2)))
     {
       ONEPART_TRACE(
                     if(p->p.identity == check_id) 

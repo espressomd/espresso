@@ -168,10 +168,10 @@ inline void init_local_particle_force(Particle *part) {
   }
 
 #ifdef EXTERNAL_FORCES
-  if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
-    part->f.f[0] += part->l.ext_force[0];
-    part->f.f[1] += part->l.ext_force[1];
-    part->f.f[2] += part->l.ext_force[2];
+  if(part->p.ext_flag & PARTICLE_EXT_FORCE) {
+    part->f.f[0] += part->p.ext_force[0];
+    part->f.f[1] += part->p.ext_force[1];
+    part->f.f[2] += part->p.ext_force[2];
   }
 #endif
 
@@ -184,10 +184,10 @@ inline void init_local_particle_force(Particle *part) {
     part->f.torque[2] = 0;
 
     #ifdef EXTERNAL_FORCES
-      if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
-        part->f.torque[0] += part->l.ext_torque[0];
-        part->f.torque[1] += part->l.ext_torque[1];
-        part->f.torque[2] += part->l.ext_torque[2];
+      if(part->p.ext_flag & PARTICLE_EXT_TORQUE) {
+        part->f.torque[0] += part->p.ext_torque[0];
+        part->f.torque[1] += part->p.ext_torque[1];
+        part->f.torque[2] += part->p.ext_torque[2];
       }
     #endif
 
