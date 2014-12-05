@@ -198,6 +198,9 @@ typedef struct {
 #ifdef ROTATION
   /** torque */
   double torque[3];
+
+
+
 #endif
 
 } ParticleForce;
@@ -213,6 +216,8 @@ typedef struct {
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
+
+
 #endif
 } ParticleMomentum;
 
@@ -245,6 +250,22 @@ typedef struct {
 } ParticleLatticeCoupling;
 #endif
 
+typedef struct {
+// ifdef inside because we need this type for some MPI prototypes
+#ifdef ENGINE
+  bool swimming;
+  double f_swim;
+  double v_swim;
+#if defined(LB) || defined(LB_GPU)
+  int push_pull;
+  double dipole_length;
+  double v_center[3];
+  double v_source[3];
+  double rotational_friction;
+#endif
+#endif
+} ParticleParametersSwimming;
+
 /** Struct holding all information for one particle. */
 typedef struct {
   ///
@@ -269,6 +290,10 @@ typedef struct {
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded interactions */
   IntList el;
+#endif
+
+#ifdef ENGINE
+  ParticleParametersSwimming swim;
 #endif
 
 } Particle;
@@ -455,6 +480,15 @@ int place_particle(int part, double p[3]);
     @return ES_OK if particle existed
 */
 int set_particle_v(int part, double v[3]);
+
+#ifdef ENGINE
+/** Call only on the master node: set particle velocity.
+    @param part the particle.
+    @param swim struct containing swimming parameters
+    @return ES_OK if particle existed
+*/
+int set_particle_swimming(int part, ParticleParametersSwimming swim);
+#endif
 
 /** Call only on the master node: set particle force.
     @param part the particle.

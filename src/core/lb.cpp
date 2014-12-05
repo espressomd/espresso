@@ -150,28 +150,29 @@ static int failcounter=0;
 #ifdef SHANCHEN
 int lb_lbfluid_set_shanchen_coupling(double *p_coupling) {
 #ifdef LB_GPU
-    int ii,jj,n=0;
-    switch(LB_COMPONENTS){
-    case 1:
-        lbpar_gpu.coupling[0] = (float)p_coupling[0];
-        lbpar_gpu.coupling[1] = (float)p_coupling[1];
-        break;
+  int ii,jj,n=0;
+  switch(LB_COMPONENTS){
+    case 1: 
+      lbpar_gpu.coupling[0] = (float)p_coupling[0];
+      lbpar_gpu.coupling[1] = (float)p_coupling[1];
+      break;
     default:
-        for(ii=0;ii<LB_COMPONENTS;ii++){
-            for(jj=ii;jj<LB_COMPONENTS;jj++){
-                lbpar_gpu.coupling[LB_COMPONENTS*ii+jj] = (float)p_coupling[n];
-                lbpar_gpu.coupling[LB_COMPONENTS*jj+ii] = (float)p_coupling[n];
-                n++;
-            }
+      for(ii=0;ii<LB_COMPONENTS;ii++){
+        for(jj=ii;jj<LB_COMPONENTS;jj++){
+          lbpar_gpu.coupling[LB_COMPONENTS*ii+jj] = (float)p_coupling[n]; 
+          lbpar_gpu.coupling[LB_COMPONENTS*jj+ii] = (float)p_coupling[n]; 
+          n++;
         }
-        break;
-    }
-    on_lb_params_change_gpu(LBPAR_COUPLING);
+      }
+      break;
+
+  }
+  on_lb_params_change_gpu(LBPAR_COUPLING);
 #endif // LB_GPU
 #ifdef LB
 #error not implemented
 #endif // LB
-    return 0;
+  return 0;
 }
 
 
@@ -1096,54 +1097,57 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
     // convert the position into lower left grid point
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-        Lattice::map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
+    Lattice::map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
 #endif // LB_GPU
-    } else {
+  } else {  
 #ifdef LB
-        Lattice::map_position_to_lattice_global(p, ind, delta, lbpar.agrid);
+    Lattice::map_position_to_lattice_global(p, ind, delta, lbpar.agrid);
 #endif // LB
-    }
+  }
 
-    //set the initial velocity to zero in all directions
-    v[0] = 0;
-    v[1] = 0;
-    v[2] = 0;
-    for (z=0;z<2;z++) {
-        for (y=0;y<2;y++) {
-            for (x=0;x<2;x++) {
-				//give the index of the neighbouring nodes
-                tmpind[0] = ind[0]+x;
-                tmpind[1] = ind[1]+y;
-                tmpind[2] = ind[2]+z;
+  //set the initial velocity to zero in all directions
+  v[0] = 0;
+  v[1] = 0;
+  v[2] = 0;
 
-                if (lattice_switch & LATTICE_LB_GPU) {
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+        //give the index of the neighbouring nodes
+        tmpind[0] = ind[0]+x;
+        tmpind[1] = ind[1]+y;
+        tmpind[2] = ind[2]+z;
+
+        if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-					if (tmpind[0] == int(lbpar_gpu.dim_x)) tmpind[0] = 0;
-					if (tmpind[1] == int(lbpar_gpu.dim_y)) tmpind[1] = 0;
-					if (tmpind[2] == int(lbpar_gpu.dim_z)) tmpind[2] = 0;
+          if (tmpind[0] == int(lbpar_gpu.dim_x)) tmpind[0] = 0;
+          if (tmpind[1] == int(lbpar_gpu.dim_y)) tmpind[1] = 0;
+          if (tmpind[2] == int(lbpar_gpu.dim_z)) tmpind[2] = 0;
 #endif // LB_GPU
-                } else {
+        } else {  
 #ifdef LB
-                    if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] = 0;
-                    if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] = 0;
-                    if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] = 0;
+          if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] = 0;
+          if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] = 0;
+          if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] = 0;
 #endif // LB
-                }
-#ifdef SHANCHEN
-                //printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
-                fprintf(stderr, "TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
-                errexit();
-#endif // SHANCHEN
-				lb_lbnode_get_u(tmpind, local_v);
-
-                v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
-                v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];
-                v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
-            }
         }
-    }
 
-    return 0;
+#ifdef SHANCHEN
+        //printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
+        fprintf(stderr, "TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__);
+        errexit();
+#endif // SHANCHEN
+
+        lb_lbnode_get_u(tmpind, local_v);
+
+        v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
+        v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
+        v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
+      }
+    }
+  }
+
+  return 0;
 }
 
 
@@ -2818,15 +2822,34 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  double velocity[3];
+  velocity[0] = p->m.v[0];
+  velocity[1] = p->m.v[1];
+  velocity[2] = p->m.v[2];
+
+/*
+#ifdef ENGINE
+  if ( p->swim.swimming )
+  {
+    velocity[0] -= p->swim.v_swim*p->r.quatu[0];
+    velocity[1] -= p->swim.v_swim*p->r.quatu[1];
+    velocity[2] -= p->swim.v_swim*p->r.quatu[2];
+    p->swim.v_center[0] = interpolated_u[0];
+    p->swim.v_center[1] = interpolated_u[1];
+    p->swim.v_center[2] = interpolated_u[2];
+  }
+#endif
+*/
+
 #ifdef LB_ELECTROHYDRODYNAMICS
-  force[0] = - lbpar.friction[0] * (p->m.v[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
-  force[1] = - lbpar.friction[0] * (p->m.v[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
-  force[2] = - lbpar.friction[0] * (p->m.v[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
-#else // LB_ELECTROHYDRODYNAMICS
-  force[0] = - lbpar.friction[0] * (p->m.v[0]/time_step - interpolated_u[0]);
-  force[1] = - lbpar.friction[0] * (p->m.v[1]/time_step - interpolated_u[1]);
-  force[2] = - lbpar.friction[0] * (p->m.v[2]/time_step - interpolated_u[2]);
-#endif // LB_ELECTROHYDRODYNAMICS
+  force[0] = - lbpar.friction[0] * (velocity[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
+  force[1] = - lbpar.friction[0] * (velocity[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
+  force[2] = - lbpar.friction[0] * (velocity[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
+#else
+  force[0] = - lbpar.friction[0] * (velocity[0]/time_step - interpolated_u[0]);
+  force[1] = - lbpar.friction[0] * (velocity[1]/time_step - interpolated_u[1]);
+  force[2] = - lbpar.friction[0] * (velocity[2]/time_step - interpolated_u[2]);
+#endif
 
   ONEPART_TRACE(
                 if (p->p.identity == check_id)
@@ -2876,6 +2899,53 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
       }
     }
   }
+
+  /* map_position_to_lattice: position ... not inside a local plaquette in ...
+
+#ifdef ENGINE
+  if ( p->swim.swimming )
+  {
+    // TODO: Fix LB mapping
+    if ( lattice_switch & LATTICE_LB )
+    {
+      fprintf(stderr,"ERROR: Swimming is not compatible with CPU LB. Please use LB_GPU instead.\n");
+      errexit();
+    }
+
+    // calculate source position
+    double source_position[3];
+    double direction = double(p->swim.push_pull) * p->swim.dipole_length;
+    source_position[0] = p->r.p[0] + direction * p->r.quatu[0];
+    source_position[1] = p->r.p[1] + direction * p->r.quatu[1];
+    source_position[2] = p->r.p[2] + direction * p->r.quatu[2];
+
+    int corner[3] = {0,0,0};
+    fold_position( source_position , corner );
+
+    // get lattice cell corresponding to source position and interpolate velocity
+    lblattice.map_position_to_lattice(source_position,node_index,delta);
+    lb_lbfluid_get_interpolated_velocity(source_position, p->swim.v_source);
+
+    // calculate and set force at source position
+    delta_j[0] = - p->swim.f_swim*p->r.quatu[0]*time_step*lbpar.tau/lbpar.agrid;
+    delta_j[1] = - p->swim.f_swim*p->r.quatu[1]*time_step*lbpar.tau/lbpar.agrid;
+    delta_j[2] = - p->swim.f_swim*p->r.quatu[2]*time_step*lbpar.tau/lbpar.agrid;
+
+    for (z=0;z<2;z++) {
+      for (y=0;y<2;y++) {
+        for (x=0;x<2;x++) {
+          local_f = lbfields[node_index[(z*2+y)*2+x]].force;
+
+          local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
+          local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
+          local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
+        }
+      }
+    }
+  }
+#endif
+
+  */
 }
 
 
@@ -3069,8 +3139,13 @@ void calc_particle_lattice_ia() {
       }
       
     /* communicate the random numbers */
-    ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
-      
+    ghost_communicator(&cell_structure.ghost_lbcoupling_comm);
+/*
+#ifdef ENGINE
+    ghost_communicator(&cell_structure.ghost_swimming_comm);
+#endif
+*/
+
     /* local cells */
     for (int c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c] ;

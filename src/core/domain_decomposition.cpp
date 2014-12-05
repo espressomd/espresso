@@ -853,6 +853,11 @@ void dd_topology_init(CellPList *old)
   dd_assign_prefetches(&cell_structure.ibm_ghost_force_comm);
 #endif
 
+#ifdef ENGINE
+  dd_prepare_comm(&cell_structure.ghost_swimming_comm, GHOSTTRANS_SWIMMING) ;
+  dd_assign_prefetches(&cell_structure.ghost_swimming_comm) ;
+#endif
+
   /* initialize cell neighbor structures */
 #ifdef LEES_EDWARDS
   le_dd_init_cell_interactions();
@@ -901,11 +906,12 @@ void dd_topology_release()
 #ifdef LB
   free_comm(&cell_structure.ghost_lbcoupling_comm);
 #endif
-
+#ifdef ENGINE
+  free_comm(&cell_structure.ghost_swimming_comm);
+#endif
 #ifdef IMMERSED_BOUNDARY
   free_comm(&cell_structure.ibm_ghost_force_comm);
 #endif
-  
 }
 
 /************************************************************/

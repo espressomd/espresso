@@ -34,6 +34,7 @@ NEMD
 NPT 
 GHMC
 CATALYTIC_REACTIONS
+ENGINE                          implies ROTATION
 
 /* Rotation */
 ROTATION
