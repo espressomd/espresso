@@ -1342,7 +1342,6 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
   get_particle_data(part_num, &p);
   p.swim.swimming = true;
 
-  char err[25];
   *change = 0;
   bool parse = true;
   while ( parse ) {
@@ -1388,13 +1387,16 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
       }
     }
 #else
-    else if ( ARG_IS_S(*change,strncpy(err,"pusher",25))
-	      || ARG_IS_S(*change,strncpy(err,"puller",25))
-	      || ARG_IS_S(*change,strncpy(err,"dipole_length",25))
-	      || ARG_IS_S(*change,strncpy(err,"rotational_friction",25)) ) {
-      fprintf(stderr,"ERROR: The parameter \"%s\" cannot be used when LB is not compiled in!\n",err);
-      return TCL_ERROR;
-    }
+    else {
+      char err[25];
+      if ( ARG_IS_S(*change,strncpy(err,"pusher",25))
+	 || ARG_IS_S(*change,strncpy(err,"puller",25))
+	 || ARG_IS_S(*change,strncpy(err,"dipole_length",25))
+	 || ARG_IS_S(*change,strncpy(err,"rotational_friction",25)) ) {
+        fprintf(stderr,"ERROR: The parameter \"%s\" cannot be used when LB is not compiled in!\n",err);
+        return TCL_ERROR;
+      }
+   }
 #endif
     else {
       parse = false;
