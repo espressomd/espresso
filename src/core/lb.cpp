@@ -2827,6 +2827,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   velocity[1] = p->m.v[1];
   velocity[2] = p->m.v[2];
 
+/*
 #ifdef ENGINE
   if ( p->swim.swimming )
   {
@@ -2838,6 +2839,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     p->swim.v_center[2] = interpolated_u[2];
   }
 #endif
+*/
 
 #ifdef LB_ELECTROHYDRODYNAMICS
   force[0] = - lbpar.friction[0] * (velocity[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
@@ -2898,9 +2900,18 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     }
   }
 
+  /* map_position_to_lattice: position ... not inside a local plaquette in ...
+
 #ifdef ENGINE
   if ( p->swim.swimming )
   {
+    // TODO: Fix LB mapping
+    if ( lattice_switch & LATTICE_LB )
+    {
+      fprintf(stderr,"ERROR: Swimming is not compatible with CPU LB. Please use LB_GPU instead.\n");
+      errexit();
+    }
+
     // calculate source position
     double source_position[3];
     double direction = double(p->swim.push_pull) * p->swim.dipole_length;
@@ -2933,6 +2944,8 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     }
   }
 #endif
+
+  */
 }
 
 
@@ -3127,10 +3140,12 @@ void calc_particle_lattice_ia() {
       
     /* communicate the random numbers */
     ghost_communicator(&cell_structure.ghost_lbcoupling_comm);
+/*
 #ifdef ENGINE
     ghost_communicator(&cell_structure.ghost_swimming_comm);
 #endif
-      
+*/
+
     /* local cells */
     for (int c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c] ;
