@@ -6,7 +6,7 @@
 #include <cuda_utils.hpp>
 #include <string>
 //#include <cuda_interface.hpp>
-
+#include <cstdio>
 
 __global__ void createGreensfcn();
 __global__ void multiplyGreensfcn();

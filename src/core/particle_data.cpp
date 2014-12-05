@@ -259,14 +259,14 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef EXTERNAL_FORCES
-  part->l.ext_flag   = 0;
-  part->l.ext_force[0] = 0.0;
-  part->l.ext_force[1] = 0.0;
-  part->l.ext_force[2] = 0.0;
+  part->p.ext_flag   = 0;
+  part->p.ext_force[0] = 0.0;
+  part->p.ext_force[1] = 0.0;
+  part->p.ext_force[2] = 0.0;
   #ifdef ROTATION
-    part->l.ext_torque[0] = 0.0;
-    part->l.ext_torque[1] = 0.0;
-    part->l.ext_torque[2] = 0.0;
+    part->p.ext_torque[0] = 0.0;
+    part->p.ext_torque[1] = 0.0;
+    part->p.ext_torque[2] = 0.0;
   #endif
 #endif
 

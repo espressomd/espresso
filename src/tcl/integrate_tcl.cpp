@@ -239,7 +239,7 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
     if (max_cut == 0.0) {
-      Tcl_AppendResult(interp, "cannot automatically determine skin, please set it manually via \"setmd kin\"\n", (char *) NULL);
+      Tcl_AppendResult(interp, "cannot automatically determine skin, please set it manually via \"setmd skin\"\n", (char *) NULL);
       return TCL_ERROR;
     }
     skin = 0.4*max_cut;

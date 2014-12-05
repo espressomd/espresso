@@ -422,7 +422,7 @@ void tclcommand_part_print_fix(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   int i;
   for (i = 0; i < 3; i++) {
-    if (part->l.ext_flag & COORD_FIXED(i))
+    if (part->p.ext_flag & COORD_FIXED(i))
       Tcl_AppendResult(interp, "1 ", (char *)NULL);
     else
 	    Tcl_AppendResult(interp, "0 ", (char *)NULL);
@@ -431,12 +431,12 @@ void tclcommand_part_print_fix(Particle *part, char *buffer, Tcl_Interp *interp)
 
 void tclcommand_part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
-    Tcl_PrintDouble(interp, part->l.ext_force[0], buffer);
+  if(part->p.ext_flag & PARTICLE_EXT_FORCE) {
+    Tcl_PrintDouble(interp, part->p.ext_force[0], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part->l.ext_force[1], buffer);
+    Tcl_PrintDouble(interp, part->p.ext_force[1], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part->l.ext_force[2], buffer);
+    Tcl_PrintDouble(interp, part->p.ext_force[2], buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
   else {
@@ -447,12 +447,12 @@ void tclcommand_part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *i
 #ifdef ROTATION
 void tclcommand_part_print_ext_torque(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
-    Tcl_PrintDouble(interp, part->l.ext_torque[0], buffer);
+  if(part->p.ext_flag & PARTICLE_EXT_TORQUE) {
+    Tcl_PrintDouble(interp, part->p.ext_torque[0], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part->l.ext_torque[1], buffer);
+    Tcl_PrintDouble(interp, part->p.ext_torque[1], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part->l.ext_torque[2], buffer);
+    Tcl_PrintDouble(interp, part->p.ext_torque[2], buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
   else {
@@ -592,20 +592,20 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
-  if (part.l.ext_flag & PARTICLE_EXT_TORQUE) {
+  if (part.p.ext_flag & PARTICLE_EXT_TORQUE) {
     Tcl_AppendResult(interp, " ext_torque ", (char *)NULL);
     tclcommand_part_print_ext_torque(&part, buffer, interp);
   }
 #endif
 
   /* print external force information. */
-  if (part.l.ext_flag & PARTICLE_EXT_FORCE) {
+  if (part.p.ext_flag & PARTICLE_EXT_FORCE) {
     Tcl_AppendResult(interp, " ext_force ", (char *)NULL);
     tclcommand_part_print_ext_force(&part, buffer, interp);
   }
 
   /* print fix information. */
-  if (part.l.ext_flag & COORDS_FIX_MASK) {
+  if (part.p.ext_flag & COORDS_FIX_MASK) {
     Tcl_AppendResult(interp, " fix ", (char *)NULL);
     tclcommand_part_print_fix(&part, buffer, interp);
   }

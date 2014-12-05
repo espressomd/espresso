@@ -82,7 +82,13 @@ enum BondedInteraction{
     /** Type of bonded interaction is a global area force. */
     BONDED_IA_AREA_FORCE_GLOBAL,
     /** Type of bonded interaction is a linear stretching force. */
-    BONDED_IA_STRETCHLIN_FORCE
+    BONDED_IA_STRETCHLIN_FORCE,
+    /** Type of bonded interaction is a wall repulsion (immersed boundary). */
+    BONDED_IA_IBM_TRIEL,
+    /** Type of bonded interaction is volume conservation force (immersed boundary). */
+    BONDED_IA_IBM_VOLUME_CONSERVATION,
+    /** Type of bonded interaction is bending force (immersed boundary). */
+    BONDED_IA_IBM_TRIBEND
 };
 
 /** Specify tabulated bonded interactions  */
@@ -712,6 +718,59 @@ typedef struct {
       double distmax;
 } Endangledist_bond_parameters;
 
+typedef enum {NeoHookean, Skalak } tElasticLaw;
+
+/** Parameters for IBM elastic triangle (triel) **/
+typedef struct {
+  // These values encode the reference state
+  double l0;
+  double lp0;
+  double sinPhi0;
+  double cosPhi0;
+  double area0;
+  
+  // These values are cache values to speed up computation
+  double a1;
+  double a2;
+  double b1;
+  double b2;
+  
+  // These are interaction parameters
+  // k1 is used for Neo-Hookean
+  // k1 and k2 are used Skalak
+  double maxdist;
+  tElasticLaw elasticLaw;
+  double k1;
+  double k2;
+  
+} IBM_Triel_Parameters;
+
+/** Parameters for IBM volume conservation bond **/
+typedef struct {
+  int softID;     // ID of the large soft particle to which this node belongs
+  // Reference volume
+  double volRef;
+  // Spring constant for volume force
+  double kappaV;
+  // Whether to write out center-of-mass at each time step
+  // Actually this is more of an analysis function and does not strictly belong to volume conservation
+//  bool writeCOM;
+} IBM_VolCons_Parameters;
+
+typedef enum {Krueger, Gompper} tBendingMethod;
+
+/** Parameters for IBM tribend **/
+typedef struct {
+  // Interaction data
+  double kb;
+  tBendingMethod method;
+  
+  // Reference angle
+  double theta0;
+  
+} IBM_Tribend_Parameters;
+
+
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
     Fene_bond_parameters fene;
@@ -735,7 +794,9 @@ typedef union {
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
     Endangledist_bond_parameters endangledist;
-    
+    IBM_Triel_Parameters ibm_triel;
+    IBM_VolCons_Parameters ibmVolConsParameters;
+    IBM_Tribend_Parameters ibm_tribend;
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */

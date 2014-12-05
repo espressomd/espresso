@@ -48,6 +48,8 @@ tests = \
 	harm.tcl \
 	quartic.tcl \
 	iccp3m.tcl \
+	immersed_boundary.tcl \
+	immersed_boundary_gpu.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \

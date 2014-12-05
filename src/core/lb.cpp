@@ -39,6 +39,7 @@
 #include "lb-d3q19.hpp"
 #include "lb-boundaries.hpp"
 #include "lb.hpp"
+#include "immersed_boundary/ibm_main.hpp"
 
 #include "cuda_interface.hpp"
 
@@ -2412,6 +2413,7 @@ inline void lb_apply_forces(index_t index, double* mode) {
     lbfields[index].force[2] = 0.0;
     lbfields[index].has_force = 0;
 #endif // EXTERNAL_FORCES
+ 
 }
 
 
@@ -2579,6 +2581,21 @@ inline void lb_collide_stream() {
         lb_boundaries[i].force[2]=0.;
     }
 #endif // LB_BOUNDARIES
+  
+  
+#ifdef IMMERSED_BOUNDARY
+// Safeguard the node forces so that we can later use them for the IBM particle update
+// In the following loop the lbfields[XX].force are reset to zero
+  for (int i = 0; i<lblattice.halo_grid_volume; ++i)
+  {
+    lbfields[i].force_buf[0] = lbfields[i].force[0];
+    lbfields[i].force_buf[1] = lbfields[i].force[1];
+    lbfields[i].force_buf[2] = lbfields[i].force[2];
+  }
+#endif
+  
+  
+  
 
     index = lblattice.halo_offset;
     for (z = 1; z <= lblattice.grid[2]; z++) {
@@ -2706,6 +2723,11 @@ inline void lb_stream_collide() {
 
     /* halo region is invalid after update */
     lbpar.resend_halo = 1;
+  
+  // Re-reset the node forces to include also the halo nodes
+#ifdef IMMERSED_BOUNDARY
+  IBM_ResetLBForces_CPU();
+#endif
 }
 
 
@@ -2754,8 +2776,8 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   double *local_f, interpolated_u[3],delta_j[3];
   
 #ifdef EXTERNAL_FORCES
-  if (!(p->l.ext_flag & COORD_FIXED(0)) 
-      && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2)))
+  if (!(p->p.ext_flag & COORD_FIXED(0)) 
+      && !(p->p.ext_flag & COORD_FIXED(1)) && !(p->p.ext_flag & COORD_FIXED(2)))
     {
       ONEPART_TRACE(
                     if(p->p.identity == check_id) 
@@ -3116,21 +3138,22 @@ void calc_particle_lattice_ia() {
       np = cell->n ;
       
       for (int i = 0; i < np; i++) {
-        lb_viscous_coupling(&p[i],force);
         
-        /* add force to the particle */
-        p[i].f.f[0] += force[0];
-        p[i].f.f[1] += force[1];
-        p[i].f.f[2] += force[2];
+#ifdef IMMERSED_BOUNDARY
+        // Virtual particles for IBM must not be coupled
+        if(!ifParticleIsVirtual(&p[i]))
+#endif
+        {
+          lb_viscous_coupling(&p[i],force);
         
-        ONEPART_TRACE(
-                      if (p->p.identity == check_id)
-                        {
-                          fprintf(stderr,
-                                  "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",
-                                  this_node, p->f.f[0], p->f.f[1], p->f.f[2]);
-                        }
-                      );
+          /* add force to the particle */
+          p[i].f.f[0] += force[0];
+          p[i].f.f[1] += force[1];
+          p[i].f.f[2] += force[2];
+        
+          ONEPART_TRACE( if (p->p.identity == check_id)  {
+                          fprintf(stderr, "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n", this_node, p->f.f[0], p->f.f[1], p->f.f[2]);  } );
+        }
       }
     }
       
@@ -3158,8 +3181,13 @@ void calc_particle_lattice_ia() {
                                       this_node);
                             }
                           );
-            
-            lb_viscous_coupling(&p[i],force);
+#ifdef IMMERSED_BOUNDARY
+            // Virtual particles for IBM must not be coupled
+            if(!ifParticleIsVirtual(&p[i]))
+#endif
+            {
+              lb_viscous_coupling(&p[i],force);
+            }
             
             /* ghosts must not have the force added! */
             ONEPART_TRACE(
