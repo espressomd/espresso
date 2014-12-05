@@ -247,6 +247,13 @@ void convert_torques_propagate_omega()
   double tx, ty, tz;
 
   INTEG_TRACE(fprintf(stderr,"%d: convert_torques_propagate_omega:\n",this_node));
+
+#ifdef LB_GPU
+  if (lattice_switch & LATTICE_LB_GPU) {
+    copy_v_cs_from_GPU();
+  }
+#endif
+
   for (int c = 0; c < local_cells.n; c++)
   {
     cell = local_cells.cell[c];
@@ -290,11 +297,6 @@ void convert_torques_propagate_omega()
       double omega_swim_body[3] = {0, 0, 0};
       if ( p[i].swim.swimming && lattice_switch != 0 )
       {
-#ifdef LB_GPU
-        if (lattice_switch & LATTICE_LB_GPU) {
-          copy_v_cs_from_GPU();
-        }
-#endif
         double dip[3];
         double diff[3];
         double cross[3];

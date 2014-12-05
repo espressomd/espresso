@@ -385,7 +385,7 @@ void cuda_mpi_send_v_cs(CUDA_v_cs *host_v_cs){
         else
         {
           // and send it back to the slave node
-          MPI_Send(&host_v_cs[g], sizes[pnode]*sizeof(CUDA_v_cs), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);      
+          MPI_Send(&host_v_cs[g], sizes[pnode]*sizeof(CUDA_v_cs), MPI_BYTE, pnode, 73, comm_cart);      
           g += sizes[pnode];
         }
       }
@@ -413,7 +413,7 @@ static void cuda_mpi_send_v_cs_slave(){
     // get (unsorted) particle informations as an array of type 'particle'
     // then get the particle information
     host_v_cs_slave = (CUDA_v_cs *) malloc(n_part*sizeof(CUDA_v_cs));
-    MPI_Recv(host_v_cs_slave, n_part*sizeof(CUDA_v_cs), MPI_BYTE, 0, REQ_CUDAGETFORCES,
+    MPI_Recv(host_v_cs_slave, n_part*sizeof(CUDA_v_cs), MPI_BYTE, 0, 73,
         comm_cart, &status);
 
     for (int c = 0; c < local_cells.n; c++)
