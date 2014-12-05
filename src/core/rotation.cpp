@@ -248,7 +248,7 @@ void convert_torques_propagate_omega()
 
   INTEG_TRACE(fprintf(stderr,"%d: convert_torques_propagate_omega:\n",this_node));
 
-#ifdef LB_GPU
+#if defined(LB_GPU) && defined(ENGINE)
   if (lattice_switch & LATTICE_LB_GPU) {
     copy_v_cs_from_GPU();
   }
