@@ -545,7 +545,7 @@ void dd_init_cell_interactions()
   FILE *cells_fp;
   char cLogName[64];
   int  c,nn,this_n;
-  double myPos[3], nPos[3];
+  double myPos[3];
   sprintf(cLogName, "cells_map%i.dat", this_node);
   cells_fp = fopen(cLogName,"w");
 
