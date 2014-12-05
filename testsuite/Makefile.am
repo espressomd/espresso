@@ -39,6 +39,8 @@ tests = \
 	ek_reaction.tcl \
 	el2d.tcl \
 	el2d_nonneutral.tcl \
+	engine_langevin.tcl \
+	engine_lbgpu.tcl \
 	exclusions.tcl \
 	external_potential.tcl \
 	fene.tcl \
@@ -136,7 +138,10 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	pdb_parser.itp.dat \
 	pdb_parser.pdb.dat \
 	pe_micelle.tcl pe_micelle.data \
-	maggs_correct_rdf.data
+	maggs_correct_rdf.data \
+	ek_reaction_density.vtk \
+	engine_lbgpu_2pt.vtk \
+	engine_lbgpu_3pt.vtk
 
 # run the testsuite
 check-local: runtest.sh

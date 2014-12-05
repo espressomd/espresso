@@ -806,6 +806,7 @@ void propagate_vel_pos()
 
 	    /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
 	    p[i].r.p[j] += p[i].m.v[j];
+
 	  }
       }
 
