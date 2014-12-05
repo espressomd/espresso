@@ -1520,8 +1520,6 @@ __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a,
     temp_delta[0+3*i] = ( 5.0f - 3.0f*abs(scaledpos+1.0f) - sqrt( -2.0f + 6.0f*abs(scaledpos+1.0f) - 3.0f*pow(scaledpos+1.0f,2) ) )/6.0f;
     temp_delta[1+3*i] = ( 1.0f + sqrt( 1.0f - 3.0f*pow(scaledpos,2) ) )/3.0f;
     temp_delta[2+3*i] = ( 5.0f - 3.0f*abs(scaledpos-1.0f) - sqrt( -2.0f + 6.0f*abs(scaledpos-1.0f) - 3.0f*pow(scaledpos-1.0f,2) ) )/6.0f;
-
-    /**TODO: add special case for boundaries? */
   }
 
   for (int i=-1; i<=1; i++) {
@@ -1556,9 +1554,16 @@ __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a,
     for(int ii=0;ii<LB_COMPONENTS;ii++){
       totmass+=mode[0]+para.rho[ii]*para.agrid*para.agrid*para.agrid;
     } 
-    interpolated_u[0] += (mode[1]/totmass)*delta[i];
-    interpolated_u[1] += (mode[2]/totmass)*delta[i];
-    interpolated_u[2] += (mode[3]/totmass)*delta[i];
+    /* The boolean expression (n_a.boundary[node_index[i]] == 0) causes boundary nodes
+       to couple with velocity 0 to particles. This is necessary, since boundary nodes
+       undergo the same LB dynamics as fluid nodes do. The flow within the boundaries
+       does not interact with the physical fluid, since these populations are overwritten
+       by the bounce back kernel. Particles close to walls can couple to this unphysical
+       flow, though.
+    */
+    interpolated_u[0] += (mode[1]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
+    interpolated_u[1] += (mode[2]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
+    interpolated_u[2] += (mode[3]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
   }
 }
 
@@ -1818,13 +1823,20 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
     } 
 
 #ifdef SHANCHEN
-    interpolated_u[0] += d_v[node_index[i]].v[0]/8.0f;  
-    interpolated_u[1] += d_v[node_index[i]].v[1]/8.0f;
-    interpolated_u[2] += d_v[node_index[i]].v[2]/8.0f;
+    interpolated_u[0] += d_v[node_index[i]].v[0]/8.0f * (n_a.boundary[node_index[i]] == 0);  
+    interpolated_u[1] += d_v[node_index[i]].v[1]/8.0f * (n_a.boundary[node_index[i]] == 0);
+    interpolated_u[2] += d_v[node_index[i]].v[2]/8.0f * (n_a.boundary[node_index[i]] == 0);
 #else
-    interpolated_u[0] += (mode[1]/totmass)*delta[i];
-    interpolated_u[1] += (mode[2]/totmass)*delta[i];
-    interpolated_u[2] += (mode[3]/totmass)*delta[i];
+    /* The boolean expression (n_a.boundary[node_index[i]] == 0) causes boundary nodes
+       to couple with velocity 0 to particles. This is necessary, since boundary nodes
+       undergo the same LB dynamics as fluid nodes do. The flow within the boundaries
+       does not interact with the physical fluid, since these populations are overwritten
+       by the bounce back kernel. Particles close to walls can couple to this unphysical
+       flow, though.
+    */
+    interpolated_u[0] += (mode[1]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
+    interpolated_u[1] += (mode[2]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
+    interpolated_u[2] += (mode[3]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
 #endif
   }
 }
