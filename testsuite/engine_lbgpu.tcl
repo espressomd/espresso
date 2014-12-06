@@ -24,7 +24,7 @@ puts "- Testcase engine_lbgpu.tcl running on [format %02d [setmd n_nodes]] nodes
 puts "------------------------------------------------"
 
 require_feature "ENGINE"
-require_feature "LB"
+require_feature "LB_GPU"
 
 # Macro to compare two vtk files
 
