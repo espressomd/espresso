@@ -46,6 +46,18 @@ void add_link(IntList *il, IntList *link, int l, int p, int size)
   il->e[il->n++] = p;
 }
 
+#ifdef LANGEVIN_PER_PARTICLE
+void tclcommand_part_print_gamma(Particle *part, char *buffer, Tcl_Interp *interp) {
+  Tcl_PrintDouble(interp, part->p.gamma, buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+
+void tclcommand_part_print_T(Particle *part, char *buffer, Tcl_Interp *interp) {
+  Tcl_PrintDouble(interp, part->p.T, buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 #ifdef ROTATIONAL_INERTIA
 void tclcommand_part_print_rotational_inertia(Particle *part, char *buffer, Tcl_Interp *interp)
   {double rinertia[3];
@@ -495,6 +507,13 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   tclcommand_part_print_swimming(&part, buffer, interp);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 #endif
+#ifdef LANGEVIN_PER_PARTICLE
+ Tcl_AppendResult(interp, " gamma ", (char *)NULL);
+ tclcommand_part_print_gamma(&part, buffer, interp);
+ Tcl_AppendResult(interp, " temp ", (char *)NULL);
+ tclcommand_part_print_T(&part, buffer, interp);
+#endif
+ 
 #ifdef MASS
   Tcl_PrintDouble(interp, part.p.mass, buffer);
   Tcl_AppendResult(interp, " mass ", buffer, (char *)NULL);
@@ -695,6 +714,16 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_swimming(&part, buffer, interp);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
+#endif
+#ifdef LANGEVIN_PER_PARTICLE
+  else if (ARG0_IS_S("gamma")) { 
+ Tcl_AppendResult(interp, (char *)NULL);
+ tclcommand_part_print_gamma(&part, buffer, interp);
+  }
+  else if(ARG0_IS_S("temp")) {
+ Tcl_AppendResult(interp, (char *)NULL);
+ tclcommand_part_print_T(&part, buffer, interp);
+  }
 #endif
 #ifdef MASS
     else if (ARG0_IS_S("mass")) {
