@@ -171,8 +171,8 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   
   if ( tau_lin == 1 ) { // use the default
     tau_lin=(int)ceil(tau_max/dt);
-    printf("tau_lin: %d\n", tau_lin);
     if (tau_lin%2) tau_lin+=1;
+    printf("tau_lin: %d\n", tau_lin);
   }
 
   if (tau_lin<2) {
@@ -499,6 +499,130 @@ int double_correlation_get_data( double_correlation* self ) {
   free(temp);
   return 0;
 }
+
+static void write_double(FILE * fp, const double * data, unsigned int n, bool binary){
+  if (binary){
+    fwrite(data,sizeof(double),n,fp);
+  } else {
+    for(unsigned int i=0;i<n-1;i++){
+      fprintf(fp,"%e\t",data[i]);
+    }
+    fprintf(fp,"%e\n",data[n-1]);
+  }
+}
+static void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binary){
+  if (binary){
+    fwrite(data,sizeof(unsigned int),n,fp);
+  } else {
+    for(unsigned int i=0;i<n-1;i++){
+      fprintf(fp,"%u\t",data[i]);
+    }
+    fprintf(fp,"%u\n",data[n-1]);
+  }
+}
+int double_correlation_write_data_to_file(const double_correlation* self, const char * filename, bool binary){
+  FILE* fp=0;
+  fp=fopen(filename, "w");
+  if (!fp) {
+    return 1;
+  }
+  for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+    for (unsigned int j=0; j<self->tau_lin+1; j++) {
+      write_double(fp,self->A[i][j],self->dim_A,binary);
+    }
+  }
+  if (!self->autocorrelation){
+    for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+      for (unsigned int j=0; j<self->tau_lin+1; j++) {
+	write_double(fp,self->B[i][j],self->dim_B,binary);
+      }
+    } 
+  }
+  for (unsigned int i=0; i<self->n_result; i++) {
+    write_double(fp,self->result[i],self->dim_corr,binary);
+  }
+  write_uint(fp,self->n_sweeps,self->n_result       ,binary);
+  write_uint(fp,self->n_vals  ,self->hierarchy_depth,binary);
+  write_uint(fp,self->newest  ,self->hierarchy_depth,binary);
+  
+  write_double(fp,self->A_accumulated_average ,self->dim_A,binary);
+  write_double(fp,self->A_accumulated_variance,self->dim_A,binary);
+  if (!self->autocorrelation){
+    write_double(fp,self->B_accumulated_average ,self->dim_B,binary);
+    write_double(fp,self->B_accumulated_variance,self->dim_B,binary);
+  }
+  write_uint(fp,&(self->n_data),1,binary);
+  write_uint(fp,&(self->t     ),1,binary);
+  write_double(fp,&(self->last_update),1,binary);
+  fclose(fp);
+  return 0;
+}
+
+static int read_double(FILE * fp, double * data, unsigned int n, bool binary){
+  if (binary){
+    size_t tmp = fread(data,sizeof(double),n,fp);
+    if (tmp < n){
+      return 1;
+    }
+  } else {
+    for(unsigned int i=0;i<n;i++){
+      if (fscanf(fp,"%le",data+i) == 0 ) return 1;
+    }
+  }
+  return 0;
+}
+static int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary){
+  if (binary){
+    size_t tmp = fread(data,sizeof(unsigned int),n,fp);
+    if (tmp < n){
+      return 1;
+    }
+  } else {
+    for(unsigned int i=0;i<n;i++){
+      if (fscanf(fp,"%u",data+i) == 0)
+	return 1;
+    }
+  }
+  return 0;
+}
+int double_correlation_read_data_from_file(double_correlation* self, const char * filename, bool binary){
+  FILE* fp=0;
+  fp=fopen(filename, "r");
+  if (!fp) {
+    return 2;
+  }
+  for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+    for (unsigned int j=0; j<self->tau_lin+1; j++) {
+      if (read_double(fp,self->A[i][j],self->dim_A,binary)) return 1;
+    }
+  }
+  if (!self->autocorrelation){
+    for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+      for (unsigned int j=0; j<self->tau_lin+1; j++) {
+	if (read_double(fp,self->B[i][j],self->dim_B,binary)) return 1;
+      }
+    } 
+  }
+  for (unsigned int i=0; i<self->n_result; i++) {
+    if (read_double(fp,self->result[i],self->dim_corr,binary))return 1;
+  }
+  if (read_uint(fp,self->n_sweeps,self->n_result       ,binary))return 1;
+  if (read_uint(fp,self->n_vals  ,self->hierarchy_depth,binary))return 1;
+  if (read_uint(fp,self->newest  ,self->hierarchy_depth,binary))return 1;
+  
+  if (read_double(fp,self->A_accumulated_average ,self->dim_A,binary))return 1;
+  if (read_double(fp,self->A_accumulated_variance,self->dim_A,binary))return 1;
+  if (!self->autocorrelation){
+    if (read_double(fp,self->B_accumulated_average ,self->dim_B,binary))return 1;
+    if (read_double(fp,self->B_accumulated_variance,self->dim_B,binary))return 1;
+  }
+  if (read_uint(fp,&(self->n_data),1,binary))return 1;
+  if (read_uint(fp,&(self->t     ),1,binary))return 1;
+  if (read_double(fp,&(self->last_update),1,binary))return 1;
+  fclose(fp);
+  return 0;
+}
+
 
 int double_correlation_finalize( double_correlation* self ) {
   // We must now go through the hierarchy and make sure there is space for the new 
