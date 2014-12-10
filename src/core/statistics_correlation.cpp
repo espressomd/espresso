@@ -500,21 +500,21 @@ int double_correlation_get_data( double_correlation* self ) {
   return 0;
 }
 
-static void write_double(FILE * fp, const double * data, int n, bool binary){
+static void write_double(FILE * fp, const double * data, unsigned int n, bool binary){
   if (binary){
     fwrite(data,sizeof(double),n,fp);
   } else {
-    for(int i=0;i<n-1;i++){
+    for(unsigned int i=0;i<n-1;i++){
       fprintf(fp,"%e\t",data[i]);
     }
     fprintf(fp,"%e\n",data[n-1]);
   }
 }
-static void write_uint(FILE * fp, const unsigned int * data, int n, bool binary){
+static void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binary){
   if (binary){
     fwrite(data,sizeof(unsigned int),n,fp);
   } else {
-    for(int i=0;i<n-1;i++){
+    for(unsigned int i=0;i<n-1;i++){
       fprintf(fp,"%u\t",data[i]);
     }
     fprintf(fp,"%u\n",data[n-1]);
@@ -526,19 +526,19 @@ int double_correlation_write_data_to_file(const double_correlation* self, const 
   if (!fp) {
     return 1;
   }
-  for (int i=0; i<self->hierarchy_depth; i++) {
-    for (int j=0; j<self->tau_lin+1; j++) {
+  for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+    for (unsigned int j=0; j<self->tau_lin+1; j++) {
       write_double(fp,self->A[i][j],self->dim_A,binary);
     }
   }
   if (!self->autocorrelation){
-    for (int i=0; i<self->hierarchy_depth; i++) {
-      for (int j=0; j<self->tau_lin+1; j++) {
+    for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+      for (unsigned int j=0; j<self->tau_lin+1; j++) {
 	write_double(fp,self->B[i][j],self->dim_B,binary);
       }
     } 
   }
-  for (int i=0; i<self->n_result; i++) {
+  for (unsigned int i=0; i<self->n_result; i++) {
     write_double(fp,self->result[i],self->dim_corr,binary);
   }
   write_uint(fp,self->n_sweeps,self->n_result       ,binary);
@@ -555,29 +555,30 @@ int double_correlation_write_data_to_file(const double_correlation* self, const 
   write_uint(fp,&(self->t     ),1,binary);
   write_double(fp,&(self->last_update),1,binary);
   fclose(fp);
+  return 0;
 }
 
-static int read_double(FILE * fp, double * data, int n, bool binary){
+static int read_double(FILE * fp, double * data, unsigned int n, bool binary){
   if (binary){
     size_t tmp = fread(data,sizeof(double),n,fp);
     if (tmp < n){
       return 1;
     }
   } else {
-    for(int i=0;i<n;i++){
+    for(unsigned int i=0;i<n;i++){
       if (fscanf(fp,"%le",data+i) == 0 ) return 1;
     }
   }
   return 0;
 }
-static int read_uint(FILE * fp, unsigned int * data, int n, bool binary){
+static int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary){
   if (binary){
     size_t tmp = fread(data,sizeof(unsigned int),n,fp);
     if (tmp < n){
       return 1;
     }
   } else {
-    for(int i=0;i<n;i++){
+    for(unsigned int i=0;i<n;i++){
       if (fscanf(fp,"%u",data+i) == 0)
 	return 1;
     }
@@ -590,19 +591,19 @@ int double_correlation_read_data_from_file(double_correlation* self, const char 
   if (!fp) {
     return 2;
   }
-  for (int i=0; i<self->hierarchy_depth; i++) {
-    for (int j=0; j<self->tau_lin+1; j++) {
+  for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+    for (unsigned int j=0; j<self->tau_lin+1; j++) {
       if (read_double(fp,self->A[i][j],self->dim_A,binary)) return 1;
     }
   }
   if (!self->autocorrelation){
-    for (int i=0; i<self->hierarchy_depth; i++) {
-      for (int j=0; j<self->tau_lin+1; j++) {
+    for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+      for (unsigned int j=0; j<self->tau_lin+1; j++) {
 	if (read_double(fp,self->B[i][j],self->dim_B,binary)) return 1;
       }
     } 
   }
-  for (int i=0; i<self->n_result; i++) {
+  for (unsigned int i=0; i<self->n_result; i++) {
     if (read_double(fp,self->result[i],self->dim_corr,binary))return 1;
   }
   if (read_uint(fp,self->n_sweeps,self->n_result       ,binary))return 1;
@@ -619,6 +620,7 @@ int double_correlation_read_data_from_file(double_correlation* self, const char 
   if (read_uint(fp,&(self->t     ),1,binary))return 1;
   if (read_double(fp,&(self->last_update),1,binary))return 1;
   fclose(fp);
+  return 0;
 }
 
 
