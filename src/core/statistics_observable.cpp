@@ -1207,8 +1207,9 @@ int observable_calc_rdf(observable* self){
 
 int observable_radial_density_distribution(observable* self){
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    ostringstream errtxt; // = runtime_error(128);
+    errtxt << "{094 could not sort partCfg} ";
+	runtimeError(errtxt);
     return -1;
   }
 
@@ -1356,8 +1357,9 @@ int observable_radial_density_distribution(observable* self){
 
 int observable_spatial_polymer_properties(observable* self){
     if (!sortPartCfg()) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream errtxt ; //= runtime_error(128);
+	  errtxt << "{094 could not sort partCfg}";
+	  runtimeError(errtxt);
       return -1;
     }
 	double* A = self->last_value;
@@ -1375,8 +1377,9 @@ int observable_spatial_polymer_properties(observable* self){
 
 int observable_persistence_length(observable* self){
     if (!sortPartCfg()) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream errtxt; // = runtimeError(128);
+      errtxt << "{094 could not sort partCfg}";
+	  runtimeError(errtxt);
       return -1;
     }
 	double* A = self->last_value;
