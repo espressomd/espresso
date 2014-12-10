@@ -545,7 +545,7 @@ void dd_init_cell_interactions()
   FILE *cells_fp;
   char cLogName[64];
   int  c,nn,this_n;
-  double myPos[3], nPos[3];
+  double myPos[3];
   sprintf(cLogName, "cells_map%i.dat", this_node);
   cells_fp = fopen(cLogName,"w");
 
@@ -844,6 +844,19 @@ void dd_topology_init(CellPList *old)
   dd_prepare_comm(&cell_structure.ghost_lbcoupling_comm, GHOSTTRANS_COUPLING) ;
   dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm) ;
 #endif
+  
+#ifdef IMMERSED_BOUNDARY
+  // Immersed boundary needs to communicate the forces from but also to the ghosts
+  // This is different than usual collect_ghost_force_comm (not in reverse order)
+  // Therefore we need our own communicator
+  dd_prepare_comm(&cell_structure.ibm_ghost_force_comm, GHOSTTRANS_FORCE);
+  dd_assign_prefetches(&cell_structure.ibm_ghost_force_comm);
+#endif
+
+#ifdef ENGINE
+  dd_prepare_comm(&cell_structure.ghost_swimming_comm, GHOSTTRANS_SWIMMING) ;
+  dd_assign_prefetches(&cell_structure.ghost_swimming_comm) ;
+#endif
 
   /* initialize cell neighbor structures */
 #ifdef LEES_EDWARDS
@@ -892,6 +905,12 @@ void dd_topology_release()
   free_comm(&cell_structure.collect_ghost_force_comm);
 #ifdef LB
   free_comm(&cell_structure.ghost_lbcoupling_comm);
+#endif
+#ifdef ENGINE
+  free_comm(&cell_structure.ghost_swimming_comm);
+#endif
+#ifdef IMMERSED_BOUNDARY
+  free_comm(&cell_structure.ibm_ghost_force_comm);
 #endif
 }
 

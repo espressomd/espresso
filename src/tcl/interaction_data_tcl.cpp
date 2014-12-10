@@ -101,6 +101,10 @@
 #include "tcl/object-in-fluid/stretching_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
+#include "immersed_boundary/ibm_triel_tcl.hpp"
+#include "immersed_boundary/ibm_volume_conservation_tcl.hpp"
+#include "immersed_boundary/ibm_tribend_tcl.hpp"
+
 
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
@@ -332,6 +336,17 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   case BONDED_IA_VOLUME_FORCE:						
 	return tclprint_to_result_volumeforceIA(interp, params);
 #endif
+      
+#ifdef IMMERSED_BOUNDARY
+    case BONDED_IA_IBM_TRIEL:
+      return tclprint_to_result_ibm_triel(interp, params);
+    case BONDED_IA_IBM_VOLUME_CONSERVATION:
+      return tclprint_to_result_ibm_volume_conservation(interp, params);
+    case BONDED_IA_IBM_TRIBEND:
+      return tclprint_to_result_ibm_tribend(interp, params);
+      
+#endif
+      
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
   case BONDED_IA_QUARTIC:
@@ -930,6 +945,13 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef VOLUME_FORCE
   REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);
 #endif
+  // IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
+  REGISTER_BONDED("ibm_triel", tclcommand_inter_parse_ibm_triel);
+  REGISTER_BONDED("ibm_volcons", tclcommand_inter_parse_ibm_volume_conservation);
+  REGISTER_BONDED("ibm_tribend", tclcommand_inter_parse_ibm_tribend);
+#endif
+  
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
   REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
 #ifdef ELECTROSTATICS

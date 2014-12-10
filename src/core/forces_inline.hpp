@@ -77,6 +77,10 @@
 #include "bonded_coulomb.hpp"
 #endif
 #include "actor/EwaldgpuForce_ShortRange.hpp"
+#include "immersed_boundary/ibm_main.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
+#include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "immersed_boundary/ibm_tribend.hpp"
 
 using namespace std;
 
@@ -117,10 +121,10 @@ inline void init_local_particle_force(Particle *part) {
   }
 
 #ifdef EXTERNAL_FORCES
-  if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
-    part->f.f[0] += part->l.ext_force[0];
-    part->f.f[1] += part->l.ext_force[1];
-    part->f.f[2] += part->l.ext_force[2];
+  if(part->p.ext_flag & PARTICLE_EXT_FORCE) {
+    part->f.f[0] += part->p.ext_force[0];
+    part->f.f[1] += part->p.ext_force[1];
+    part->f.f[2] += part->p.ext_force[2];
   }
 #endif
 
@@ -132,13 +136,25 @@ inline void init_local_particle_force(Particle *part) {
     part->f.torque[1] = 0;
     part->f.torque[2] = 0;
 
-    #ifdef EXTERNAL_FORCES
-      if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
-        part->f.torque[0] += part->l.ext_torque[0];
-        part->f.torque[1] += part->l.ext_torque[1];
-        part->f.torque[2] += part->l.ext_torque[2];
-      }
-    #endif
+#ifdef EXTERNAL_FORCES
+    if(part->p.ext_flag & PARTICLE_EXT_TORQUE) 
+    {
+      part->f.torque[0] += part->p.ext_torque[0];
+      part->f.torque[1] += part->p.ext_torque[1];
+      part->f.torque[2] += part->p.ext_torque[2];
+    }
+#endif
+
+#ifdef ENGINE
+    // apply a swimming force in the direction of
+    // the particle's orientation axis
+    if ( part->swim.swimming )
+    {
+      part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
+      part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
+      part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+    }
+#endif
 
     /* and rescale quaternion, so it is exactly of unit length */
     scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
@@ -221,6 +237,8 @@ inline void force_calc()
 #endif
   init_forces();
 
+  calc_long_range_forces();
+
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_ia();
@@ -259,8 +277,11 @@ inline void force_calc()
         add_area_global_force(area,i);
     }
 #endif
-
-  calc_long_range_forces();
+  
+#ifdef IMMERSED_BOUNDARY
+  // Must be done here. Forces need to be ghost-communicated
+    IBM_VolumeConservation();
+#endif
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
@@ -669,6 +690,58 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = 0;
       break;
 #endif
+      
+// IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
+/*      case BONDED_IA_IBM_WALL_REPULSION:
+        IBM_WallRepulsion_CalcForce(p1, iaparams);
+        bond_broken = 0;
+        // These may be added later on, but we set them to zero because the force has already been added in IBM_WallRepulsion_CalcForce
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;*/
+      case BONDED_IA_IBM_TRIEL:
+        bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
+        // These may be added later on, but we set them to zero because the force has already been added in IBM_Triel_CalcForce
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      case BONDED_IA_IBM_VOLUME_CONSERVATION:
+        bond_broken = 0;
+        // Don't do anything here. We calculate and add the global volume forces in IBM_VolumeConservation. They cannot be calculated on a per-bond basis
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      case BONDED_IA_IBM_TRIBEND:
+      {
+        // First build neighbor list. This includes all nodes around the central node.
+        const int numNeighbors = iaparams->num;
+        Particle **neighbors = new Particle *[numNeighbors];
+        // Three are already there
+        neighbors[0] = p2;
+        neighbors[1] = p3;
+        neighbors[2] = p4;
+        // Get rest
+        for (int j=3; j < numNeighbors; j++)
+          neighbors[j] = local_particles[p1->bl.e[i++]];
+        
+        IBM_Tribend_CalcForce(p1, numNeighbors, neighbors, *iaparams);
+        bond_broken = 0;
+        
+        // Clean up
+        delete []neighbors;
+        
+        // These may be added later on, but we set them to zero because the force has
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      }
+#endif
+        
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);

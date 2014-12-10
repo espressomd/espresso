@@ -36,6 +36,9 @@
 
 static void cuda_mpi_get_particles_slave();
 static void cuda_mpi_send_forces_slave();
+#ifdef ENGINE
+static void cuda_mpi_send_v_cs_slave();
+#endif
 
 void cuda_bcast_global_part_params() {
   COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params\n", this_node));
@@ -88,32 +91,48 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
                 particle_data_host[i+g].p[0] = (float)pos[0];
                 particle_data_host[i+g].p[1] = (float)pos[1];
                 particle_data_host[i+g].p[2] = (float)pos[2];
-                
+
                 particle_data_host[i+g].v[0] = (float)part[i].m.v[0];
                 particle_data_host[i+g].v[1] = (float)part[i].m.v[1];
                 particle_data_host[i+g].v[2] = (float)part[i].m.v[2];
-#ifdef SHANCHEN
-              // SAW TODO: does this really need to be copied every time?
-              int ii;
-              for(ii=0;ii<2*LB_COMPONENTS;ii++){
-                 particle_data_host[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
-              }
+#ifdef IMMERSED_BOUNDARY
+                particle_data_host[i+g].isVirtual = part[i].p.isVirtual;
 #endif
-   
-  #ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef SHANCHEN
+                // SAW TODO: does this really need to be copied every time?
+                int ii;
+                for(ii=0;ii<2*LB_COMPONENTS;ii++){
+                  particle_data_host[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
+                }
+#endif
+
+#ifdef LB_ELECTROHYDRODYNAMICS
                 particle_data_host[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
                 particle_data_host[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
                 particle_data_host[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
-  #endif
+#endif
 
   #ifdef ELECTROSTATICS
                 if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU || coulomb.method == COULOMB_EWALD_GPU) { // TODO: this defeats the purpose of needsQ in the interface...
                   particle_data_host[i+g].q = (float)part[i].p.q;
                 }
-  #endif
+#endif
+
+#ifdef ENGINE
+                particle_data_host[i+g].swim.v_swim        = (float)part[i].swim.v_swim;
+                particle_data_host[i+g].swim.f_swim        = (float)part[i].swim.f_swim;
+                particle_data_host[i+g].swim.quatu[0]      = (float)part[i].r.quatu[0];
+                particle_data_host[i+g].swim.quatu[1]      = (float)part[i].r.quatu[1];
+                particle_data_host[i+g].swim.quatu[2]      = (float)part[i].r.quatu[2];
+#if defined(LB) || defined(LB_GPU)
+                particle_data_host[i+g].swim.push_pull     =        part[i].swim.push_pull;
+                particle_data_host[i+g].swim.dipole_length = (float)part[i].swim.dipole_length;
+#endif
+                particle_data_host[i+g].swim.swimming      =        part[i].swim.swimming;
+#endif
               }  
               g += npart;
-            }  
+            }
           }
           else {
             MPI_Recv(&particle_data_host[g], sizes[pnode]*sizeof(CUDA_particle_data), MPI_BYTE, pnode, REQ_CUDAGETPARTS,
@@ -166,6 +185,9 @@ static void cuda_mpi_get_particles_slave(){
           particle_data_host_sl[i+g].v[0] = (float)part[i].m.v[0];
           particle_data_host_sl[i+g].v[1] = (float)part[i].m.v[1];
           particle_data_host_sl[i+g].v[2] = (float)part[i].m.v[2];
+#ifdef IMMERSED_BOUNDARY
+          particle_data_host_sl[i+g].isVirtual = part[i].p.isVirtual;
+#endif
           
 #ifdef SHANCHEN
         // SAW TODO: does this really need to be copied every time?
@@ -188,6 +210,19 @@ static void cuda_mpi_get_particles_slave(){
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
           }
   #endif
+
+#ifdef ENGINE
+          particle_data_host_sl[i+g].swim.v_swim        = (float)part[i].swim.v_swim;
+          particle_data_host_sl[i+g].swim.f_swim        = (float)part[i].swim.f_swim;
+          particle_data_host_sl[i+g].swim.quatu[0]      = (float)part[i].r.quatu[0];
+          particle_data_host_sl[i+g].swim.quatu[1]      = (float)part[i].r.quatu[1];
+          particle_data_host_sl[i+g].swim.quatu[2]      = (float)part[i].r.quatu[2];
+#if defined(LB) || defined(LB_GPU)
+          particle_data_host_sl[i+g].swim.push_pull     =        part[i].swim.push_pull;
+          particle_data_host_sl[i+g].swim.dipole_length = (float)part[i].swim.dipole_length;
+#endif
+          particle_data_host_sl[i+g].swim.swimming      =        part[i].swim.swimming;
+#endif
         }
         g+=npart;
       }
@@ -197,59 +232,59 @@ static void cuda_mpi_get_particles_slave(){
     }
 }
 
-  void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_composition){
-    int n_part;
-    int g, pnode;
-    Cell *cell;
-    int c;
-    int i;  
-    int *sizes;
-    sizes = (int *) malloc(sizeof(int)*n_nodes);
-    n_part = cells_get_n_particles();
-    /* first collect number of particles on each node */
-    MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
+void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_composition){
+  int n_part;
+  int g, pnode;
+  Cell *cell;
+  int c;
+  int i;  
+  int *sizes;
+  sizes = (int *) malloc(sizeof(int)*n_nodes);
+  n_part = cells_get_n_particles();
+  /* first collect number of particles on each node */
+  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 
-    /* call slave functions to provide the slave datas */
-    if(this_node > 0) {
-      cuda_mpi_send_forces_slave();
-    }
-    else{
+  /* call slave functions to provide the slave data */
+  if(this_node > 0) {
+    cuda_mpi_send_forces_slave();
+  }
+  else{
     /* fetch particle informations into 'result' */
     g = 0;
-      for (pnode = 0; pnode < n_nodes; pnode++) {
-        if (sizes[pnode] > 0) {
-          if (pnode == 0) {
-            for (c = 0; c < local_cells.n; c++) {
-              int npart;  
-              cell = local_cells.cell[c];
-              npart = cell->n;
-              for (i=0;i<npart;i++) {
-                cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
-                cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
-                cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
+    for (pnode = 0; pnode < n_nodes; pnode++) {
+      if (sizes[pnode] > 0) {
+        if (pnode == 0) {
+          for (c = 0; c < local_cells.n; c++) {
+            int npart;  
+            cell = local_cells.cell[c];
+            npart = cell->n;
+            for (i=0;i<npart;i++) {
+              cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
+              cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
+              cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
 #ifdef SHANCHEN
-                for (int ii=0;ii<LB_COMPONENTS;ii++) {
-                   cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
-                }
-#endif
+              for (int ii=0;ii<LB_COMPONENTS;ii++) {
+                cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
               }
-        g += npart;
+#endif
             }
+            g += npart;
           }
-          else {
+        }
+        else {
           /* and send it back to the slave node */
           MPI_Send(&host_forces[g], sizes[pnode]*sizeof(CUDA_particle_force), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);      
 #ifdef SHANCHEN
           MPI_Send(&host_composition[g], sizes[pnode]*sizeof(CUDA_fluid_composition), MPI_BYTE, pnode, REQ_CUDAGETPARTS, comm_cart);      
 #endif
           g += sizes[pnode];
-          }
         }
       }
     }
-    COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
+  }
+  COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
 
-    free(sizes);
+  free(sizes);
 }
 
 static void cuda_mpi_send_forces_slave(){
@@ -302,6 +337,105 @@ static void cuda_mpi_send_forces_slave(){
 #endif 
     } 
 }
+
+#if defined(ENGINE) && defined(LB_GPU)
+void cuda_mpi_send_v_cs(CUDA_v_cs *host_v_cs){
+  int n_part;
+  int g;
+  Cell *cell;
+  int *sizes;
+
+  // first collect number of particles on each node
+  sizes = (int *) malloc(sizeof(int)*n_nodes);
+  n_part = cells_get_n_particles();
+  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
+
+  // call slave functions to provide the slave data
+  if(this_node > 0)
+  {
+    cuda_mpi_send_v_cs_slave();
+  }
+  else
+  {
+    // fetch particle informations into 'result'
+    g = 0;
+    for (int pnode = 0; pnode < n_nodes; pnode++)
+    {
+      if (sizes[pnode] > 0)
+      {
+        if (pnode == 0)
+        {
+          for (int c = 0; c < local_cells.n; c++)
+          {
+            int npart;  
+            cell = local_cells.cell[c];
+            npart = cell->n;
+            for (int i = 0; i < npart; i++)
+            {
+              cell->part[i].swim.v_center[0] = (double)host_v_cs[i+g].v_cs[0];
+              cell->part[i].swim.v_center[1] = (double)host_v_cs[i+g].v_cs[1];
+              cell->part[i].swim.v_center[2] = (double)host_v_cs[i+g].v_cs[2];
+              cell->part[i].swim.v_source[0] = (double)host_v_cs[i+g].v_cs[3];
+              cell->part[i].swim.v_source[1] = (double)host_v_cs[i+g].v_cs[4];
+              cell->part[i].swim.v_source[2] = (double)host_v_cs[i+g].v_cs[5];
+            }
+            g += npart;
+          }
+        }
+        else
+        {
+          // and send it back to the slave node
+          MPI_Send(&host_v_cs[g], sizes[pnode]*sizeof(CUDA_v_cs), MPI_BYTE, pnode, 73, comm_cart);      
+          g += sizes[pnode];
+        }
+      }
+    }
+  }
+  COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
+
+  free(sizes);
+}
+
+static void cuda_mpi_send_v_cs_slave(){
+  int n_part;
+  CUDA_v_cs *host_v_cs_slave = NULL;
+  Cell *cell;
+  MPI_Status status;
+
+  n_part = cells_get_n_particles();
+
+  COMM_TRACE(fprintf(stderr, "%d: send_particles_slave, %d particles\n", this_node, n_part));
+
+
+  if (n_part > 0)
+  {
+    int g = 0;
+    // get (unsorted) particle informations as an array of type 'particle'
+    // then get the particle information
+    host_v_cs_slave = (CUDA_v_cs *) malloc(n_part*sizeof(CUDA_v_cs));
+    MPI_Recv(host_v_cs_slave, n_part*sizeof(CUDA_v_cs), MPI_BYTE, 0, 73,
+        comm_cart, &status);
+
+    for (int c = 0; c < local_cells.n; c++)
+    {
+      int npart;  
+      cell = local_cells.cell[c];
+      npart = cell->n;
+      for (int i = 0; i < npart; i++)
+      {
+        cell->part[i].swim.v_center[0] = (double)host_v_cs_slave[i+g].v_cs[0];
+        cell->part[i].swim.v_center[1] = (double)host_v_cs_slave[i+g].v_cs[1];
+        cell->part[i].swim.v_center[2] = (double)host_v_cs_slave[i+g].v_cs[2];
+        cell->part[i].swim.v_source[0] = (double)host_v_cs_slave[i+g].v_cs[3];
+        cell->part[i].swim.v_source[1] = (double)host_v_cs_slave[i+g].v_cs[4];
+        cell->part[i].swim.v_source[2] = (double)host_v_cs_slave[i+g].v_cs[5];
+      }
+      g += npart;
+    }
+    free(host_v_cs_slave);
+  } 
+}
+#endif // ifdef ENGINE
 
 /** Takes a CUDA_energy struct and adds it to the core energy struct.
 This cannot be done from inside cuda_common_cuda.cu:copy_energy_from_GPU() because energy.hpp indirectly includes on mpi.h while .cu files may not depend on mpi.h.*/
