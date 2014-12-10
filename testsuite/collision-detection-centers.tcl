@@ -24,6 +24,9 @@
 source "tests_common.tcl"
 
 require_feature "COLLISION_DETECTION"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
 
 puts "---------------------------------------------------------------"
 puts "- Testcase collision-detection-centers.tcl running on [setmd n_nodes] nodes"
@@ -133,17 +136,18 @@ if {![catch {integrate 0} err]} {
 }
 
 set bonds ""
-foreach exception [lrange $err 2 end] {
-    if {[string is integer $exception]} { continue }
-    if {[lrange $exception 0 2] != "collision between particles"} {
+foreach exception [lrange $err 1 end] {
+    if {[regexp {collision between particles (\d+) and (\d+)} $exception -> id1 id2]} {
+        lappend bonds "$id1 $id2"
+    } else {
 	error_exit "unexpected exception $exception"
     }
-    lappend bonds "[lindex $exception 3] [lindex $exception 5]"
+    
 }
 set bonds [lsort $bonds]
 
 if {$bonds != "{0 1} {1 2}"} {
-    error_exit "exception bonds $bonds wrong"
+    error_exit "exception bonds $bonds wrong, expected {0 1} {1 2}"
 }
 
 # Check, whether the bonds are correct

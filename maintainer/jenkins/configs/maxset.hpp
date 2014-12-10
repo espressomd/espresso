@@ -30,6 +30,8 @@
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
+#define ENGINE
+
 #ifdef CUDA
 #define LB_GPU
 #define LB_BOUNDARIES_GPU
@@ -37,6 +39,7 @@
 #define EK_BOUNDARIES
 #define EK_REACTION
 #define MMM1D_GPU
+#define EWALD_GPU
 #endif
 
 #define AREA_FORCE_GLOBAL   

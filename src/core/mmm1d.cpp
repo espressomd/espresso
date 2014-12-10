@@ -150,16 +150,18 @@ int MMM1D_set_params(double switch_rad, double maxPWerror)
 
 int MMM1D_sanity_checks()
 {
-  char *errtxt;
+  //char *errtxt;
   if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{022 MMM1D requires periodicity 0 0 1} ");
+      ostringstream msg;
+      msg <<"MMM1D requires periodicity 0 0 1";
+      runtimeError(msg);
     return 1;
   }
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{023 MMM1D requires n-square cellsystem} ");
+      ostringstream msg;
+      msg <<"MMM1D requires n-square cellsystem";
+      runtimeError(msg);
     return 1;
   }
   return 0;

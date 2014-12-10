@@ -34,7 +34,9 @@ require_feature "FFTW"
 require_feature "CONSTRAINTS"
 require_feature "ROTATION"
 
-#require_max_nodes_per_side 1
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 1
+}
 
 puts "--------------------------------------------------------------------"
 puts "- Testcase p3m_magnetostatics.tcl for magnetic dipoles running on [format %02d [setmd n_nodes]] nodes: -"

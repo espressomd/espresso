@@ -31,7 +31,6 @@
 #include "lb.hpp"
 #include "grid.hpp"
 
-
 /** set parameters for the VOLUME_FORCE potential. 
 */
 int volume_force_set_params(int bond_type, double V0, double kv);
@@ -58,8 +57,8 @@ inline void calc_volume(double *volume, int molType){ //first-fold-then-the-same
 	int img[3];
 	
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners, id;
-	char *errtxt;
+    int type_num, n_partners, id;
+    BondedInteraction type;
 
 	//int test=0;
 	//printf("rank%d, molType2: %d\n", rank,molType);
@@ -83,18 +82,18 @@ inline void calc_volume(double *volume, int molType){ //first-fold-then-the-same
 				if(type == BONDED_IA_VOLUME_FORCE && id == molType){ // BONDED_IA_VOLUME_FORCE with correct molType   !!!!!!!!!!!!! needs area force local !!!!!!!!!!!!!!!!!!
 					p2 = local_particles[p1->bl.e[j++]];
 					if (!p2) {
-						printf("broken: particles sum %d, id %d, partn %d, bond %d\n", np,id,n_partners,type_num); 
-						errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{volume calc 078 bond broken between particles %d and %d (particles not stored on the same node - volume_force1)} ",
-						  p1->p.identity, p1->bl.e[j-1]);
+                        printf("broken: particles sum %d, id %d, partn %d, bond %d\n", np,id,n_partners,type_num);
+                        ostringstream msg;
+                        msg <<"volume calc: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - volume_force1)";
+                        runtimeError(msg);
 						return;
 					}
 					/* fetch particle 3 */
 					p3 = local_particles[p1->bl.e[j++]];
-					if (!p3) {
-						errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{volume calc 079 bond broken between particles %d, %d and %d (particles not stored on the same node); n %d max %d} ",
-							p1->p.identity, p1->bl.e[j-2], p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p3) {
+                        ostringstream msg;
+                        msg <<"volume calc: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node); n " << p1->bl.n << " max " << p1->bl.max;
+                        runtimeError(msg);
 						return;
 					}
 					memcpy(p11, p1->r.p, 3*sizeof(double));
@@ -137,8 +136,8 @@ inline void add_volume_force(double volume, int molType){  //first-fold-then-the
 	Particle *p, *p1, *p2, *p3;
 	double p11[3],p22[3],p33[3];
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners, id;
-	char *errtxt;
+    int type_num, n_partners, id;
+    BondedInteraction type;
 
 	int test=0;
 	
@@ -164,18 +163,18 @@ inline void add_volume_force(double volume, int molType){  //first-fold-then-the
 					test++;
 					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
-					if (!p2) {
-						errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{volume add 078 bond broken between particles %d and %d (particles not stored on the same node - volume_force2)} ",
-						  p1->p.identity, p1->bl.e[j-1]);
+                    if (!p2) {
+                        ostringstream msg;
+                        msg <<"volume add: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - volume_force2)";
+                        runtimeError(msg);
 						return;
 					}
 					/* fetch particle 3 */
 					p3 = local_particles[p1->bl.e[j++]];
-					if (!p3) {
-						errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{volume add 079 bond broken between particles %d, %d and %d (particles not stored on the same node); n %d max %d} ",
-							p1->p.identity, p1->bl.e[j-2], p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p3) {
+                        ostringstream msg;
+                        msg <<"volume calc: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node); n " << p1->bl.n << " max " << p1->bl.max;
+                        runtimeError(msg);
 						return;
 					}
 					memcpy(p11, p1->r.p, 3*sizeof(double));
@@ -217,5 +216,6 @@ inline void add_volume_force(double volume, int molType){  //first-fold-then-the
 	
 }
 
+#undef fold_position
 
 #endif

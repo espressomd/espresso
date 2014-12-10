@@ -22,7 +22,7 @@
 #include "Vector.hpp"
 #include <vector>
 
-/** @TODO: Turn needsXY in getter/setter **/
+/** @todo: Turn needsXY in getter/setter **/
 
 class SystemInterface {
 public:
