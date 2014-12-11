@@ -1033,4 +1033,52 @@ int observable_persistence_length(void *params, double *A, unsigned int n_A){
 	return 0;
 }	
 
+<<<<<<< Updated upstream:src/statistics_observable.cpp
 	
+=======
+int observable_polymer_k_distribution(observable *self){
+	if (!sortPartCfg()) {
+		ostringstream errtxt;
+		errtxt << "{094 could not sort partCfg}";
+		runtimeError(errtxt);
+		return -1;
+	}
+	double* A = self->last_value;
+	for (int i = 0; i < self->n; i++) {
+		A[i] = 0.0;
+	}
+	k_dist_data *data = (k_dist_data *) self->container;
+	IntList *ids = data->id_list;
+	int npoly = data->npoly;
+	int poly_len = data-> poly_len;
+	int k = data->k;
+	double dist_vec[3];
+	double dist;
+	double r_min = data->r_min;
+	double r_max = data->r_max;
+	int n_bins   = data->n_bins;
+	int bin_id =0;
+	double bin_size = (r_max - r_min) / n_bins;
+	int number_of_pairs =(int) ( floor(poly_len / (k +1 ) ) + ( (poly_len - 1)%(k+1) == 0 ? 1 : 0 ) - 1);
+	for (int i = 0; i < npoly; i++) 
+		for (int j = 0; j < poly_len - k; j+= k) {
+			get_mi_vector(dist_vec, partCfg[ids->e[i*poly_len + j]].r.p, partCfg[ids->e[i*poly_len + j + k]].r.p);
+			dist = normr(dist_vec);
+			bin_id = (int) floor( (dist - r_min)/bin_size );
+			if (bin_id < n_bins) {
+				A[bin_id] += 1.0/(npoly * number_of_pairs);
+			}
+		}
+	return 0;
+}	
+void autoupdate_observables() {
+  int i;
+  for (i=0; i<n_observables; i++) {
+//    printf("checking observable %d autoupdate is %d \n", i, observables[i]->autoupdate);
+    if (observables[i]->autoupdate && sim_time-observables[i]->last_update>observables[i]->autoupdate_dt*0.99999) {
+//      printf("updating %d\n", i);
+      observable_update(observables[i]);
+    }
+  }
+}
+>>>>>>> Stashed changes:src/core/statistics_observable.cpp

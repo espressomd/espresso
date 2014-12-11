@@ -956,6 +956,83 @@ int tcl_command_persistence_length(Tcl_Interp* interp, int argc, char** argv, in
 	return TCL_OK;
 }
 
+int tcl_parse_k_dist(Tcl_Interp* interp, int argc, char** argv, int *change, int* dim_obs, k_dist_data* k_data){
+	*change = 0;
+	while (argc > 0 ) {
+		if ( ARG0_IS_S("ids") ) {
+			if (! parse_id_list(interp, argc, argv, change, &k_data->id_list) == TCL_OK ) {
+				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
+				return TCL_ERROR;
+			}
+			argc -= *change;
+			argv += *change;
+			continue;
+		}
+		if ( ARG0_IS_S("max_r") ) {
+			k_data->r_max = atof(argv[1]);
+			argc-=2;
+			argv+=2;
+			continue;
+		}
+		if ( ARG0_IS_S("min_r") ) {
+			k_data->r_min = atof(argv[1]);
+			argc-=2;
+			argv+=2;
+			continue;
+		}
+		if ( ARG0_IS_S("n_bins") ) {
+			k_data->n_bins = atoi(argv[1]);
+			*dim_obs = atoi(argv[1]);
+			argc-=2;
+			argv+=2;
+			continue;
+		}
+		if ( ARG0_IS_S("k") ) {
+			k_data->k = atoi(argv[1]);
+			argc-=2;
+			argv+=2;
+			continue;
+		}
+		if ( ARG0_IS_S("npoly") ) {
+			k_data->npoly = atoi(argv[1]);
+			argc-=2;
+			argv+=2;
+			continue;
+		}
+		if ( ARG0_IS_S("poly_len") ) {
+			k_data->poly_len = atoi(argv[1]);
+			argc-=2;
+			argv+=2;
+			continue;
+		}
+	}
+	return TCL_OK;
+}
+
+
+int tcl_command_k_dist(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+	*change = 0;
+	k_dist_data *k_data = (k_dist_data *) malloc(sizeof(k_dist_data));
+	k_data->npoly = 1;
+	k_data->poly_len = 1;
+	k_data->r_min = 0;
+	k_data->r_max = -1;
+	k_data->n_bins = 1;
+	k_data->k = 0;
+	if ( ! tcl_parse_k_dist(interp, argc-1, argv+1, change, &obs->n, k_data) == TCL_OK ) {
+		Tcl_AppendResult(interp, "Usage: polymer_k_distripution ids $id_list max_r $max_r min_r $min_r n_bins $n_bins k $k npoly $npoly poly_len $poly_len\n", (char *) NULL) ;
+		return TCL_ERROR;
+	}
+	obs->calculate = &observable_polymer_k_distribution;
+	obs->container = (void *) k_data;
+	obs->last_value = (double *) malloc(sizeof(double) * obs->n);
+	for (int i = 0; i< obs->n; i++) 
+		obs->last_value[i] = 0.0;
+	return TCL_OK;
+}
+
+
+
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
     observables[id]=(observable*)malloc(sizeof(observable));            \
@@ -1030,6 +1107,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
 	REGISTER_OBSERVABLE(radial_density_distribution, tcl_command_radial_density_distribution, id);
 	REGISTER_OBSERVABLE(spatial_polymer_property, tcl_command_spatial_polymer_properties, id);
 	REGISTER_OBSERVABLE(persistence_length, tcl_command_persistence_length, id);
+	REGISTER_OBSERVABLE(polymer_k_distribution, tcl_command_k_dist, id);
     REGISTER_OBSERVABLE(tclcommand, tclcommand_observable_tclcommand,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
