@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -25,11 +25,10 @@ source "tests_common.tcl"
 
 require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "COLLISION_DETECTION"
-require_feature "ADRESS" off
 require_max_nodes_per_side {1 1 1}
 
 puts "---------------------------------------------------------------"
-puts "- Testcase collision-detection-poc.tcl running on 1 nodes"
+puts "- Testcase collision-detection-poc.tcl running on [setmd n_nodes] nodes"
 puts "---------------------------------------------------------------"
 
 # Setup
@@ -105,9 +104,7 @@ if {$bonds != "{0 1}"} {
 }
 
 # Integrate again and make sure, no extra bonds are added
-# enforce force recalculation
-invalidate_system
-integrate 0
+integrate 0 recalc_forces
 
 # Check, whether the bonds are still correct, not doubled
 set bonds [analyze_topology 2]
@@ -142,11 +139,12 @@ if {![catch {integrate 0} err]} {
 }
 
 set bonds ""
-foreach exception [lrange $err 2 end] {
-    if {[lrange $exception 0 2] != "collision between particles"} {
+foreach exception [lrange $err 1 end] {
+    if {[regexp {collision between particles (\d+) and (\d+)} $exception -> id1 id2]} {
+        lappend bonds "$id1 $id2"
+    } else {
 	error_exit "unexpected exception $exception"
     }
-    lappend bonds "[lindex $exception 3] [lindex $exception 5]"
 }
 set bonds [lsort $bonds]
 

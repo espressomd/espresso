@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -23,8 +23,6 @@
 #ifdef P3M
 #include "p3m_tcl.hpp"
 #include "p3m.hpp"
-
-
 
 int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
 {
@@ -134,7 +132,6 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   }
 
   if (ARG0_IS_S("gpu")) {
-    puts("Setting coulomb method to COULOMB_P3M_GPU");
     coulomb.method = COULOMB_P3M_GPU;
     
     argc--;

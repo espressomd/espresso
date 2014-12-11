@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -157,8 +157,8 @@ cellsystem domain_decomposition -no_verlet_list
 set wall_left_id 1
 set wall_right_id 2
 
-constraint plane cell -10.0 -10.0 0.0 type $wall_left_id
-constraint plane cell -10.0 -10.0 10.0 type $wall_right_id
+constraint wall normal 0 0  1 dist   0 type $wall_left_id
+constraint wall normal 0 0 -1 dist -10 type $wall_right_id
 
 # DPD-Thermostat
 thermostat dpd $dpd_temperature $dpd_gamma $dpd_r_cut

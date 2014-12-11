@@ -1,3 +1,22 @@
+#
+# Copyright (C) 2013,2014 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#  
+from __future__ import print_function
 import ctypes
 import sys
 sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
@@ -11,7 +30,7 @@ es._espressoHandle.Tcl_Eval("thermostat langevin 1. 1.")
 N=10
 VarId=0;
 
-print "\nTest global variables: set them (if not RO) and compare the Tcl and python output:\n"
+print("\nTest global variables: set them (if not RO) and compare the Tcl and python output:\n")
 
 es.glob.skin=1.
 varname="skin";
@@ -24,7 +43,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd skin"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="box_l";
@@ -39,7 +58,7 @@ VarId=VarId+1;
 for i in range(py_val.size):
   if py_val[i] != tcl_val[i]:
     raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="cell_grid";
 # get it
@@ -51,7 +70,7 @@ VarId=VarId+1;
 for i in range(py_val.size):
   if py_val[i] != tcl_val[i]:
     raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="cell_size";
@@ -64,7 +83,7 @@ VarId=VarId+1;
 for i in range(py_val.size):
   if py_val[i] != tcl_val[i]:
     raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="dpd_gamma";
@@ -75,7 +94,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd dpd_gamma"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="dpd_r_cut";
 # get it
@@ -85,7 +104,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd dpd_r_cut"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="gamma";
 # get it
@@ -95,7 +114,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd gamma"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="integ_switch";
 # get it
@@ -105,7 +124,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd integ_switch"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="local_box_l";
@@ -118,7 +137,7 @@ tcl_val=numpy.array([ float(tcl_val[0]), float(tcl_val[1]), float(tcl_val[2]) ])
 for i in range(py_val.size):
   if py_val[i] != tcl_val[i]:
     raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="max_cut";
@@ -129,7 +148,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd max_cut"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="max_num_cells";
@@ -142,7 +161,7 @@ tcl_val=int(es._espressoHandle.Tcl_Eval("setmd max_num_cells"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="min_num_cells";
@@ -155,7 +174,7 @@ tcl_val=int(es._espressoHandle.Tcl_Eval("setmd min_num_cells"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="max_part";
@@ -166,7 +185,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd max_part"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="max_range";
@@ -177,7 +196,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd max_range"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="max_skin";
@@ -188,7 +207,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd max_skin"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="n_layers";
@@ -199,7 +218,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd n_layers"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="n_nodes";
 # get it
@@ -209,7 +228,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd n_nodes"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="n_part";
 # get it
@@ -219,7 +238,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd n_part"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="n_part_types";
 # get it
@@ -229,7 +248,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd n_part_types"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="n_rigidbonds";
 # get it
@@ -239,7 +258,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd n_rigidbonds"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="node_grid";
 # set the global variable 
@@ -253,7 +272,7 @@ VarId=VarId+1;
 for i in range(py_val.size):
   if py_val[i] != tcl_val[i]:
     raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="nptiso_gamma0";
 # get it
@@ -263,7 +282,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd nptiso_gamma0"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="nptiso_gammav";
 # get it
@@ -273,7 +292,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd nptiso_gammav"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="npt_p_ext";
@@ -284,7 +303,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd npt_p_ext"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="npt_p_inst";
@@ -295,7 +314,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd npt_p_inst"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="npt_p_inst_av";
@@ -306,7 +325,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd npt_p_inst_av"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="npt_p_diff";
@@ -319,7 +338,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd npt_p_diff"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="npt_piston";
@@ -332,7 +351,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd npt_piston"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="periodicity";
 # set the global variable 
@@ -346,7 +365,7 @@ VarId=VarId+1;
 for i in range(py_val.size):
   if py_val[i] != tcl_val[i]:
     raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="temperature";
@@ -357,7 +376,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd temperature"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="thermo_switch";
 # get it
@@ -367,7 +386,7 @@ tcl_val=int(es._espressoHandle.Tcl_Eval("setmd thermo_switch"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="time";
@@ -380,7 +399,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd time"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="time_step";
@@ -393,7 +412,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd time_step"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
   
 varname="timings";
 # set the global variable 
@@ -404,7 +423,7 @@ py_val=es.glob.timings;
 tcl_val=es._espressoHandle.Tcl_Eval("setmd timings");
 if str(py_val) != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
   
 varname="transfer_rate";
 # get it
@@ -414,7 +433,7 @@ tcl_val=int(es._espressoHandle.Tcl_Eval("setmd transfer_rate"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="max_cut_nonbonded";
 # get it
@@ -424,7 +443,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd max_cut_nonbonded"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 varname="verlet_reuse";
@@ -435,7 +454,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd verlet_reuse"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="lattice_switch";
 # get it
@@ -445,7 +464,7 @@ tcl_val=int(es._espressoHandle.Tcl_Eval("setmd lattice_switch"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="dpd_tgamma";
 # get it
@@ -455,7 +474,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd dpd_tgamma"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="dpd_tr_cut";
 # get it
@@ -465,7 +484,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd dpd_tr_cut"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="dpd_twf";
 # get it
@@ -475,7 +494,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd dpd_twf"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="dpd_wf";
 # get it
@@ -485,7 +504,7 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd dpd_wf"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="adress_vars";
 # get it
@@ -503,7 +522,7 @@ VarId=VarId+1;
 for i in range(py_val.size):
   if py_val[i] != tcl_val[i]:
     raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 varname="max_cut_bonded";
 # get it
@@ -513,13 +532,13 @@ tcl_val=float(es._espressoHandle.Tcl_Eval("setmd max_cut_bonded"));
 VarId=VarId+1;
 if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-print (str(VarId)+" "+varname).ljust(20), "OK";
+print((str(VarId)+" "+varname).ljust(20), "OK");
 
 
 # print the last varuable if desired
 # print("\n" + varname + ":\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
 
-print "Everything OK"
+print("Everything OK")
 
 es._espressoHandle.die()
 

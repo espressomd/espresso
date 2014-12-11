@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2012,2013 The ESPResSo project
+% Copyright (C) 2010,2012,2013,2014 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -24,15 +24,42 @@
 \newescommand{integrate}
 
 \begin{essyntax}
-  \variant{1} integrate \var{steps}
+  \variant{1} integrate \var{steps} \opt{recalc_forces} \opt{reuse_forces}
   \variant{2} integrate set \opt{nvt}
-  \variant{3} integrate set npt_isotropic \var{p_{ext}} \var{piston} \opt{\var{x\: y\: z}} \opt{-cubic_box}
+  \variant{3} integrate set npt_isotropic \var{p_{ext}} \var{piston} \opt{\var{x\; y\; z}} \opt{-cubic_box}
 \end{essyntax}
 
 \es uses the Velocity Verlet algorithm for the integration of the
 equations of motion. The command \texttt{integrate} with an integer
 \texttt{steps} as parameter integrates the system for \texttt{steps}
 time steps.
+
+Note that this implementation of the Velocity Verlet algorithm reuses forces,
+that is, they are computed once in the middle of the time step, but used twice,
+at the beginning and end. However, in the first time step after setting up,
+there are no forces present yet. Therefore, \es{} has to compute them before the
+first time step. That has two consequences: first, random forces are redrawn,
+resulting in a narrower distribution of the random forces, which we compensate
+by stretching. Second, coupling forces of e.\,g. the Lattice Boltzmann fluid cannot
+be computed and are therefore lacking in the first half time step. In order to
+minimize these effects, \es{} has a quite conservative heuristics to decide whether
+a change makes it necessary to recompute forces before the first time step. Therefore,
+calling hundred times \texttt{integrate 1} does the same as \texttt{integrate 100},
+apart from some small calling overhead.
+
+However, for checkpointing, there is no way for \es{} to tell that the forces that you
+read back in actually match the parameters that are set. Therefore, \es{} would recompute
+the forces before the first time step, which makes it essentially impossible to checkpoint
+LB simulations, where it is vital to keep the coupling forces. To work
+around this, \texttt{integrate}
+has an additional parameter \opt{reuse_forces}, which tells integrate to not recalculate
+the forces for the first time step, but use that the values still stored with the particles.
+Use this only if you are absolutely sure that the forces stored match your current setup!
+
+The opposite problem occurs when timing interactions: In this case,
+one would like to recompute the forces, despite the fact that they are
+already correctly calculated. To this aim, the option
+\opt{recalc_forces} can be used to enforce force recalculation.
 
 Two methods for the integration can be set: For an NVT ensemble
 (thermostat) and for an NPT isotropic ensemble (barostat). The current
@@ -78,6 +105,39 @@ box-length \var{L_\mathrm{new}}, and isotropically adjusts the
 particles coordinates as well. The function returns the new volume of
 the deformed simulation box.
 
+\section{\texttt{lees_edwards_offset}: Applying shear between periodic images}
+\newescommand[lees-edwards-offset]{lees_edwards_offset}
+\label{sec:lees-edwards}
+\index{Lees-Edwards Boundaries|mainindex}
+\index{shear boundaries}
+\index{shear viscosity}
+
+
+\begin{essyntax}
+  \variant{1} lees_edwards_offset \var{offset_\mathrm{new}}  
+  \begin{features}
+    \required{LEES_EDWARDS}
+  \end{features}
+
+\end{essyntax}
+
+Lees-Edwards Periodic Boundary Conditions are used to impose a shear flow of speed $\dot{\gamma}$ on the system relative to its periodic images by moving the PBC wrap such that:  $v\_x_{unfolded} =  v\_x_{folded} + \dot{\gamma} y_{img}$ (where $v\_x_{unfolded}$ is the $x$-component of the velocity of an image particle outside the main simulation box, and $y_{img}$ is the count of PBC boundaries crossed in the $y$-direction).  
+The absolute value of the shear offset is set using this command; with the shear flow rate $\dot{\gamma}$ then determined internally as the difference between successive offsets.  
+A typical usage would be to integrate by 1 {MD} timestep and then to increase the offset to a new value using this command; this usage pattern is intended to allow for arbitrary shear flow time profiles, such as an oscillatory shear.  
+A common calculation to make using Lees-Edwards boundary conditions is to find the shear viscosity (or kinematic viscosity) by plotting shear stress (or shear stress/density) against the applied strain for different values of constant $\dot{\gamma}$. 
+
+Lees-Edwards differs from the NEMD approach (see \vref{sec:NEMD}) in that the shear imposed is homogenous across the system (but only on average: symmetry breaking effects are not ruled out) rather than reversing direction with a periodicity of the box length. 
+Accordingly the transport properties  measured using Lees-Edwards are likely to be different to (and arguably more physical than) those measured using NEMD or those from equilibrium simulations by a Green-Kubo type approach.
+
+When the shear flow rate $\dot{\gamma}$ is non-zero, the Langevin thermostat will treat $v\_x_{folded}$ as being relative to a flow field which changes smoothly from $-\dot{\gamma}/2$ at the bottom of the periodic box to $\dot{\gamma}/2$ at the top.  
+This `laminar' thermostatting is provided mostly because it gives quite convenient equilibration of a flowing system.  In order to correctly observe transport properties, symmetry-breaking or entropy production in relation to shear flow is probably better to use the DPD thermostat (see \vref{sec:DPD}) once the initial heat-up has been carried out.  
+The DPD thermostat removes kinetic energy from the system based on a frictional term defined relative to a local reference frame of a given particle-pair, without enforcing any specific flow pattern {\it a priori}.  At high rates of dissipation, this can however lead to an artefactual  shear-banding type effect at the periodic boundaries, such that the bulk fluid is nearly stationary.  
+This effect is removed using the modification proposed to the DPD thermostat by Chatterjee \cite{chatterjee2007} to allow treatment of systems with high dissipation rates, which is applied automatically if \feature{LEES_EDWARDS} is compiled in.  Chatterjee's modification is just to skip calculation of DPD forces (both dissipative and random) for particle pairs which cross a boundary in {\it y}.
+
+The function returns the old value of the offset.
+
+If \feature{LEES_EDWARDS} is compiled in, then coordinates are folded into the primary simulation box as the integration progresses, to prevent a numerical overflow.  
+
 \section{Stopping particles}
 
 Use the following functions, also see Section~\ref{sec:Galilei}:
@@ -102,33 +162,24 @@ Sets the velocities of the particles with particle IDs between
 less than \var{v_\mathrm{max}}, and returns the absolute value of the
 total velocity assigned. By default, all particles are affected.
 
-\section{\texttt{invalidate_system}}
-\newescommand[invalidate-system]{invalidate_system}
+\section{Fixing the particle sorting}
+\newescommand[sort-particles]{sort_particles}
 \begin{essyntax}
-  invalidate_system
+  sort_particles
 \end{essyntax}
 
-Forces a system re-init which, among others, causes the integrator to
-also update the forces at its beginning (instead of re-using the
-values from the previous integration step).  This is particularly
-necessary to ensure continuity after setting a checkpoint:
-\texttt{integrate} - \texttt{set_checkpoint} - \texttt{integrate} has
-only one call to the force calculation routine, while
-\texttt{read_checkpoint} - \texttt{integrate} has two at the beginning
-of the \texttt{integrate} command (because loading a new system from
-disk typically requires re-initializing the system), and since the
-forces routine also uses the thermostat which in turn draws random
-numbers, the two situations do not end up at the same segment of the
-random number sequence, all random events will therefore slightly
-differ.  To prevent this, simply include a call to
-\texttt{invalidate_system} upon setting the checkpoint, because in
-that case both scenarios will call the forces routine twice at the
-beginning of the second integration phase thus having their random
-number sequences in total sync.
-
-Without applying this command directly before or after writing a
-checkpoint, you will run into a different state of the random number
-generator when reading the checkpoint to start again later!
+Resorts the particles, making sure that
+\begin{itemize}
+\item the domain decomposition is strictly fullfilled, \ie{} each
+   particle is on the processor and in the cell that its
+   position belongs to
+\item the particles within each cell are ordered with ascending
+identity.
+\end{itemize}
+Both conditions together form a unique particle ordering. This is
+important when doing checkpointing, because this makes sure that
+random numbers are applied in a specific order. Therefore, after
+writing or reading a checkpoint, you should call \texttt{sort_particles}.
 
 \section{Parallel tempering}
 \newescommand[parallel-tempering]{parallel_tempering}

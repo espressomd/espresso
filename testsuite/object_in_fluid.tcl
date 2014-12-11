@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -48,7 +48,7 @@ puts "------------------------------------------------"
 set vmd "n"
 
 set tcl_precision 15
-set tolerance 1e-8
+set tolerance 1e-5
 
 setmd time_step 0.1
 setmd skin 0.2
@@ -78,7 +78,6 @@ proc write_data_final {file} {
 if { [catch {
 
   read_data "object_in_fluid_system-init.data"
-  invalidate_system
 	
 	lbfluid cpu grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
 		                           

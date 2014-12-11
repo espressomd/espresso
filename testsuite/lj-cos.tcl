@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -19,8 +19,10 @@
 # 
 source "tests_common.tcl"
 
-require_feature "ADRESS" off
 require_feature "LJCOS"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
 
 puts "--------------------------------------------"
 puts "- Testcase lj-cos.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -54,8 +56,6 @@ if { [catch {
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
     }
-    # to ensure force recalculation
-    invalidate_system
 
     ############## lj-specific part
 

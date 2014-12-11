@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz
 #  
 # This file is part of ESPResSo.
@@ -98,7 +98,6 @@ proc writevsf { file args } {
     set typedesc {}
     set radius {}
     set short 0
-    set no_charges 0
 
     # Parse options
     for { set argnum 0 } { $argnum < [llength $args] } { incr argnum } {
@@ -195,8 +194,20 @@ proc writevsf { file args } {
             lappend aids "$from:$to"
         }
         unset from
-        
-        puts $file "atom [join $aids ,] $desc"
+        # let's group atom ranges, so that there are no more than 8 per line
+        # This fixes a problem with the vmd plugin, and makes the vtf more 
+        # readable anyway.
+        set start 0
+        set maxlen 8
+        set ll  [llength [lrange $aids $start end ]]
+        while { $ll >= $maxlen } {
+              puts $file "atom [join [lrange $aids $start [expr $start + $maxlen -1]] ,] $desc"
+              incr start $maxlen
+              set ll  [llength [lrange $aids $start end ]]
+        }
+        if { $start < [llength $aids ] } { 
+          puts $file "atom [join [lrange $aids  $start  end] ,] $desc"
+        }
     }
     
     # Print bond data

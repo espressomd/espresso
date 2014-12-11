@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -63,29 +63,28 @@ thermostat lb 0.0
 set initialx [expr [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] ] 
 set initialy [expr [lindex [analyze momentum] 1 ] +  [ lindex [analyze fluid momentum] 1 ] ] 
 set initialz [expr [lindex [analyze momentum] 2 ] +  [ lindex [analyze fluid momentum] 2 ] ] 
-
 integrate 500
 set delta [expr abs($initialx - ( [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] )) ] 
 if { $delta > 1e-4 } {
 
-     error_exit "linear momentum not conserved"
+     error_exit "linear momentum not conserved, delta = $delta"
 }
 set delta [expr abs($initialy - ( [lindex [analyze momentum] 1 ] +  [ lindex [analyze fluid momentum] 1 ] )) ] 
 if { $delta > 1e-4 } {
 
-     error_exit "linear momentum not conserved"
+     error_exit "linear momentum not conserved, delta = $delta"
 }
 set delta [expr abs($initialz - ( [lindex [analyze momentum] 2 ] +  [ lindex [analyze fluid momentum] 2 ] )) ] 
 if { $delta > 1e-4 } {
 
-     error_exit "linear momentum not conserved"
+     error_exit "linear momentum not conserved, delta = $delta"
 }
 
 
 if { $components == 1 }  { 
 lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0
 } else {
-lbfluid gpu agrid 1 dens 0.5 0.5 visc 3.0 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0 10.0
+lbfluid gpu agrid 1 dens 0.5 0.5 visc 3.0 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz $fdragx $fdragy $fdragz friction 10.0 10.0
 }
 part 0 pos [expr 0.5*$length] [expr 0.5*$length] [expr 0.5*$length] v 0.0 0.0 0.0 f 0.0 0.0 0.0 ext_force $dragx $dragy $dragz 
 
@@ -149,7 +148,7 @@ if { $components == 1 }  {
 
   #note that the linear interpolation in SC is different from LB, hence the different terminal velocity
   if { $components == 1 }  { 
-    set vel_works 0.1092247459
+    set vel_works 0.1094909892; # 0.1092247459 value for incorrect 3pt coupling
   }
 
   # check for the right terminal velocity

@@ -2,19 +2,45 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 3.4
+============
+
+New user-visible features
+-------------------------
+
+* New quartic bonded interaction
+* New bonded coulomb interaction
+* Lees Edwards boundaries for sheer stuff
+* Espresso can now read pdb and gromacs topology files.
+
+Known bugs
+----------
+
+User-visible changes
+--------------------
+
+Changes visible for developers
+------------------------------
+
+
 ESPResSo 3.3
 ============
 
 New user-visible features
 -------------------------
 
+* SHANCHEN: a bicomponent lattice Boltzmann fluid, with support for rigid 
+  boundaries and coupling to particle dynamics.
+
 * ELECTROKINETICS: An algorithm to treat species of ions on a mean-field
   level. Implementation takes advantage of a GPU.
 
-* Provide the preliminary Python interface. Configure with
-  --with-python-interface.
+* MMM1D_GPU: The mmm1d electrostatics algorithm is now available as GPU version.
 
 * Support of P3M on GPU.
+
+* Provide the preliminary Python interface. Configure with
+  --with-python-interface.
 
 * Allow the p3m to dump the mesh in x, y, and z (before it only dumped
   the mesh in x). This allows for the dumping of the p3m in blockfile
@@ -26,20 +52,45 @@ New user-visible features
 * MEMD electrostatics can now handle spatially varying dielectrc
   constants.
 
+* Pore constraint / lbboundary can have a two outer radii now to create nozzles.
+
+* Slitpore constraint and dielectric for IL based supercaps implemented.
+
 * New command time_integration to get the runtime of the integration
   loop.
 
+* New harmonic well that runs on the GPU.
+
+Known bugs
+----------
+
+* The implementation of dielectric contrasts in conjunction with ELC
+  seems to have an error. Please do not use it if you do not know
+  exactly what you are doing until we have fixe the problem.
+
 User-visible changes
 --------------------
+
+* Added new arguments "recalc_forces" and "reuse_forces" to the
+  command "integrate". These arguments can be used to enforce or
+  suppress the recalculation of the forces at the beginning of the
+  call to "integrate". This is important for doing checkpoints, where
+  the forces have to be stored and reloaded.
+
+* Removed command "invalidate_system".
+
+* Comfixed now works with periodic boundary conditions.
+
 * The pressure contribution due to rigid bodies constructed by means of the 
   virtual sites relative mechanism is included, both for pressure and stress 
-  tensor. Note that the corresponding contribution for rigid bonds is still not implemented.
+  tensor. Note that the corresponding contribution for rigid bonds is still 
+  not implemented.
  
 * The configure option "--with-myconfig" has been removed. Instead,
   the configure variable "MYCONFIG" can be set to give the name of a
   myconfig file.
 
-* Generic LJ can now be turned into an soft potential.
+* Generic LJ can now be turned into a soft potential.
 
 * Renamed torque to torque_{lab,body}, improved torque handling in
   blockfiles.  Clearer distinction between the reference frames for
@@ -47,16 +98,37 @@ User-visible changes
 
 * Lattice-Boltzmann now has a additional 3-point coupling scheme.
 
-* The noise type in thermalized Lattice-Boltzmann is now choosable via tcl.
+* The noise type in thermalized Lattice-Boltzmann is now selectable via Tcl.
 
-* Interaction with a wall can be restricted to the inside.
+* Interaction with a wall can be restricted to the outside.
 
 * Removed compiler switch GRANDCANONICAL.
+
+* Removed outdated ADRESS code.
+
+* external_potential tabulated to include arbitrary potentials applied to all 
+  particles.
+
+* thermostat inter_dpd ignore_fixed_particles 1 allows the user to swith on DPD 
+  with fixed particles.
+
+* New Observable concept that includes running averages and other observables 
+  with history
+
 
 Changes visible for developers
 ------------------------------
 
+* Feature GHOSTS_HAVE_BONDS allows for ghost particles to also store the bonds.
+
 * The code has been switched to using a C++ compiler.
+
+* Introduced object-oriented interfaces for forces/constraints/external fields: 
+  SystemInterface and Actor. 
+
+* Improved Lattice structure
+
+* Generic TclAppend function
 
 ESPResSo 3.2
 ============
@@ -424,7 +496,7 @@ Changes visible for developers
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

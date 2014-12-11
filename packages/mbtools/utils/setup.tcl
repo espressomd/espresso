@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -144,7 +144,10 @@ proc ::mbtools::utils::readcheckpoint { checkpointdir } {
 	return 0
     }
     ::mmsg::send [namespace current] "reading Checkpoint $checkpointdir/checkpoint.latest.gz"
-    checkpoint_read "$checkpointdir/checkpoint" 0
+    #checkpoint_read "$checkpointdir/checkpoint" 0
+    set in [open "|gzip -cd $checkpointdir/checkpoint.latest.gz" "r"]
+    while { [blockfile $in read auto] != "eof" } {}
+    close $in
     return 1
 }
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #    Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -21,7 +21,9 @@
 source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"
-require_feature "ADRESS" off
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
 
 puts "----------------------------------------------"
 puts "- Testcase analysis.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -37,7 +39,7 @@ proc WriteNewConfig {in out} {
   } elseif { 
     [file exists "$in"] } { set chk [open "$in" "r"] 
   } else { 
-    puts "ERROR: Could not find checkpoint-list $in!\nAborting..."; exit 
+    error_exit "could not find checkpoint-list $in!\nAborting..." 
   }
   set i 0; 
   set sys_obs [list box_l gamma periodicity skin temperature time time_step]
@@ -232,10 +234,7 @@ test_catch {
     set F($i) [part $i pr f]
   }
 
-  
-  # to ensure force recalculation
-  invalidate_system
-  integrate 0
+  integrate 0 recalc_forces
 
   foreach obs $observables get_obs $get_observables {
     set rel_error [expr abs(([eval $get_obs] - $obs)/$obs)]

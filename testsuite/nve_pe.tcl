@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -29,7 +29,6 @@ require_feature "ELECTROSTATICS"
 require_feature "FFTW"
 require_feature "BOND_ANGLE_COSINE"
 require_feature "EXTERNAL_FORCES"
-require_feature "ADRESS" off
 
 puts "----------------------------------------------"
 puts "- Testcase nve_pe.tcl running on [format %02d [setmd n_nodes]] nodes: -"

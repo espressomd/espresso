@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -17,6 +17,9 @@
 #
 
 source "tests_common.tcl"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
 
 setmd box_l 10.0 10.0 10.0
 setmd time_step 0.1
