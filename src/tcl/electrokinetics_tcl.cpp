@@ -103,7 +103,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print flux vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [neutralize_system]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int print density\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int <set|print> density\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics pdb-parse #string #string\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -384,38 +384,82 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
         
-        if(
-            argc != 5 || !ARG_IS_I(0, coord[0]) ||
+        if( (argc != 5 && argc != 6) || !ARG_IS_I(0, coord[0]) ||
             !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
-            !ARG_IS_S(3, "print") || !ARG_IS_S(4, "density") 
+            (!ARG_IS_S(3, "print") && !ARG_IS_S(3, "set")) ||
+            !ARG_IS_S(4, "density") 
           ) 
         {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int print density\n", (char *)NULL);
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int <set|print> density\n", (char *)NULL);
           return TCL_ERROR;
         }
         
-        argc -= 4;
-        argv += 4;
+        argc -= 3;
+        argv += 3;
         
-        if(ARG0_IS_S("density")) 
+        if(ARG0_IS_S("set"))
         {
-          if(ek_node_print_density(species, coord[0], coord[1], coord[2], &floatarg) == 0) 
-          {
-            argc --;
-            argv ++;
-            
-            Tcl_PrintDouble(interp, floatarg, double_buffer);
-            Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+          argc--;
+          argv++;
 
-            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+          if(ARG0_IS_S("density")) 
+          {
+            argc--;
+            argv++;
+
+            if(!ARG0_IS_D(floatarg))
+            {
+              Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int set density #float\n", (char *)NULL);
               return TCL_ERROR;
+            }
+            
+            argc--;
+            argv++;
+
+            if(ek_node_set_density(species, coord[0], coord[1], coord[2], floatarg) != 0) 
+            {
+              Tcl_AppendResult(interp, "Unknown error in electrokinetics #int node #int #int #int set density\n", (char *)NULL);
+              return TCL_ERROR;
+            }
             else
               return TCL_OK;
           }
-          else 
+          else
           {
-            Tcl_AppendResult(interp, "Unknown error in electrokinetics #int node #int #int #int print density\n", (char *)NULL);
-            return TCL_ERROR;
+              Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int <set|print> density\n", (char *)NULL);
+              return TCL_ERROR;
+          }
+        }
+        else if(ARG0_IS_S("print"))
+        {
+          argc--;
+          argv++;
+
+          if(ARG0_IS_S("density")) 
+          {
+            if(ek_node_print_density(species, coord[0], coord[1], coord[2], &floatarg) == 0) 
+            {
+              argc --;
+              argv ++;
+              
+              Tcl_PrintDouble(interp, floatarg, double_buffer);
+              Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+
+              if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+                return TCL_ERROR;
+              else
+                return TCL_OK;
+            }
+            else 
+            {
+              Tcl_AppendResult(interp, "Unknown error in electrokinetics #int node #int #int #int print density\n", (char *)NULL);
+              return TCL_ERROR;
+            }
+          }
+          else
+          {
+              Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int <set|print> density\n", (char *)NULL);
+              return TCL_ERROR;
           }
         }
       }

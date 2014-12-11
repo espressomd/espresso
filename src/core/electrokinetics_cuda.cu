@@ -1213,6 +1213,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     }
 
     /* advective contribution to flux */
+    return;  //TODO: if enable the advective contribution, make sure advective flux contribution into wall is zero. (better put zeroing into block at the end).
 
     ek_displacement( dx, lb_node, index, ek_lbparameters_gpu );
 
@@ -1220,9 +1221,9 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     di[1] = 1 - signbit(dx[1]);
     di[2] = 1 - signbit(dx[2]);
 
-    dx[0] = 0.0; //fabs(dx[0]);
-    dx[1] = 0.0; //fabs(dx[1]);
-    dx[2] = 0.0; //fabs(dx[2]);
+    dx[0] = fabs(dx[0]);
+    dx[1] = fabs(dx[1]);
+    dx[2] = fabs(dx[2]);
 
     //face in x
     node =
@@ -2600,6 +2601,25 @@ int ek_node_print_density( int species, int x, int y, int z, double* density ) {
   *density = densities[z * ek_parameters.dim_y * ek_parameters.dim_x + y * ek_parameters.dim_x + x] / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid);
   
   free( densities );
+  
+  return 0;
+}
+
+
+int ek_node_set_density(int species, int x, int y, int z, double density) {
+  if(ek_parameters.species_index[species] != -1) 
+  {  
+    int index = z * ek_parameters.dim_y * ek_parameters.dim_x + y * ek_parameters.dim_x + x;
+    float num_particles = density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
+
+    cuda_safe_mem( cudaMemcpy( &ek_parameters.rho[ek_parameters.species_index[species]][index],
+                               &num_particles,
+                               sizeof(float),
+                               cudaMemcpyHostToDevice )
+                 );
+  }
+  else
+    return 1;
   
   return 0;
 }
