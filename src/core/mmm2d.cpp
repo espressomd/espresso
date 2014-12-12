@@ -435,7 +435,7 @@ void distribute(int e_size, double fac)
 {
   int c, node, inv_node;
   double sendbuf[8];
-  double recvbuf[8];
+  double recvbuf[8] = { 0, 0, 0, 0, 0, 0, 0, 0};
   MPI_Status status;
 
   /* send/recv to/from other nodes. Also builds up the gblcblk. */
