@@ -54,6 +54,7 @@ typedef struct {
   float friction;
   float T;
   float bjerrumlength;
+  float lb_force[3];
   unsigned int number_of_species;
   int reaction_species[3];
   float rho_reactant_reservoir;
@@ -155,6 +156,7 @@ int ek_set_bjerrumlength(double bjerrumlength);
 int ek_set_bulk_viscosity(double bulk_viscosity);
 int ek_set_gamma_odd(double gamma_odd);
 int ek_set_gamma_even(double gamma_even);
+int ek_set_lb_force(double* ext_force);
 int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
