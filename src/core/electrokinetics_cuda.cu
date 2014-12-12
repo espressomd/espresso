@@ -72,6 +72,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
                                   -1.0, -1.0,  0.0,
                                    0.0,  0.0, -1.0,
                                   -1.0,
+                                  {0.0,  0.0,  0.0},
                                      0,
                                   { -1,   -1,  -1},
                                   -1.0, -1.0, -1.0,
@@ -2177,13 +2178,24 @@ int ek_init() {
 
     lbpar_gpu.rho[0] = ( ek_parameters.lb_density < 0.0 ? 1.0 : ek_parameters.lb_density );
     lb_reinit_parameters_gpu();
-
-    lbpar_gpu.external_force = 0;
-    lbpar_gpu.ext_force[0] = 0.0;
-    lbpar_gpu.ext_force[1] = 0.0;
-    lbpar_gpu.ext_force[2] = 0.0;
     
     lb_init_gpu();
+
+    if (ek_parameters.lb_force[0] != 0 || ek_parameters.lb_force[1] != 0 || ek_parameters.lb_force[2] != 0)
+    {
+      lbpar_gpu.external_force = 1;
+      lbpar_gpu.ext_force[0] = ek_parameters.lb_force[0];
+      lbpar_gpu.ext_force[1] = ek_parameters.lb_force[1];
+      lbpar_gpu.ext_force[2] = ek_parameters.lb_force[2];
+      lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
+    }
+    else
+    {
+      lbpar_gpu.external_force = 0;
+      lbpar_gpu.ext_force[0] = 0;
+      lbpar_gpu.ext_force[1] = 0;
+      lbpar_gpu.ext_force[2] = 0;
+    }
 
     ek_parameters.dim_x = lbpar_gpu.dim_x;
     ek_parameters.dim_y = lbpar_gpu.dim_y;
@@ -3092,6 +3104,12 @@ void ek_print_lbpar() {
 int ek_set_agrid( double agrid ) {  
 
   ek_parameters.agrid = agrid;    
+  return 0;
+}
+
+int ek_set_lb_force(double* ext_force) {
+  for (int i = 0; i < 3; i++)
+    ek_parameters.lb_force[i] = ext_force[i];
   return 0;
 }
 

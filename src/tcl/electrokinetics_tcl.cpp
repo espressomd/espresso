@@ -881,6 +881,30 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
         }
       }
+      else if(ARG0_IS_S("lb_force")) 
+      {
+        argc--;
+        argv++;
+      
+        if(argc < 3 || !ARG_IS_D(0,vectarg[0]) || !ARG_IS_D(1,vectarg[1]) || !ARG_IS_D(2,vectarg[2])) 
+        {
+          Tcl_AppendResult(interp, "electrokinetics lb_force requires three floating point numbers as arguments\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else 
+        {
+          if(ek_set_lb_force(vectarg) == 0) 
+          {
+            argc-=3;
+            argv+=3;
+          }
+          else 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics lb_force\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+      }
       else if(ARG0_IS_S("lb_density")) 
       {
         argc--;
