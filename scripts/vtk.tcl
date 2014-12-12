@@ -49,6 +49,18 @@ proc writevtk {filename {type "all"}} {
 		}
 	}
 
+	puts $fp "POINT_DATA $n"
+        puts $fp "SCALARS velocity float 3"
+        puts $fp "LOOKUP_TABLE default"
+	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
+			set xvel [expr [lindex [part $pid print v] 0]]
+			set yvel [expr [lindex [part $pid print v] 1]]
+			set zvel [expr [lindex [part $pid print v] 2]]
+			puts $fp "$xvel $yvel $zvel"
+		}
+	}
+
 	close $fp
 }
 
