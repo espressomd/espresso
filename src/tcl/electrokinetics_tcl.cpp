@@ -885,7 +885,12 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       {
         argc--;
         argv++;
-      
+        
+#ifndef EXTERNAL_FORCES
+        Tcl_AppendResult(interp, "External Forces not compiled in!", (char *)NULL);
+        return TCL_ERROR;
+#endif
+
         if(argc < 3 || !ARG_IS_D(0,vectarg[0]) || !ARG_IS_D(1,vectarg[1]) || !ARG_IS_D(2,vectarg[2])) 
         {
           Tcl_AppendResult(interp, "electrokinetics lb_force requires three floating point numbers as arguments\n", (char *)NULL);
