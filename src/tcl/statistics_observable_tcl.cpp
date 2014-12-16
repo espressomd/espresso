@@ -1526,6 +1526,8 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
 #endif
   } else if (obs->calculate == (&observable_calc_density_profile)) {
     return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
+  } else if (obs->calculate == (&observable_calc_force_density_profile)) {
+    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
 #ifdef LB
   } else if (obs->calculate == (&observable_calc_lb_radial_velocity_profile)) {
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
