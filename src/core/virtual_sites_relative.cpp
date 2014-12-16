@@ -72,9 +72,7 @@ void update_mol_pos_particle(Particle *p)
   new_pos[i] =p_real->r.p[i] +director[i]/l*p->p.vs_relative_distance;
   // Handle the case that one of the particles had gone over the periodic
   // boundary and its coordinate has been folded
-  #ifdef PARTIAL_PERIODIC
-   if (PERIODIC(i)) 
-  #endif
+  if (PERIODIC(i)) 
   {
     tmp =p->r.p[i] -new_pos[i];
     //printf("%f\n",tmp);
@@ -88,11 +86,7 @@ void update_mol_pos_particle(Particle *p)
     }
     else p->r.p[i] =new_pos[i];
    }
-   #ifdef PARTIAL_PERIODIC
-    else p->r.p[i] =new_pos[i];
-   #endif
-//   fold_coordinate(p->r.p,p->l.i,i);
-
+   else p->r.p[i] =new_pos[i];
  }
 }
 

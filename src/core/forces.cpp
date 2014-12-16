@@ -63,7 +63,6 @@
 #include "forces_inline.hpp"
 ActorList forceActors;
 
-
 void init_forces()
 {
   Cell *cell;

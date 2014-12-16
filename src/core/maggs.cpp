@@ -472,7 +472,7 @@ int maggs_sanity_checks()
     Particle *p  = cell->part;
     int np = cell->n;
     for(int i = 0; i < np; i++) {
-      if ( (p[i].p.q != 0.0) & p[i].l.ext_flag & COORDS_FIX_MASK) {
+      if ( (p[i].p.q != 0.0) & p[i].p.ext_flag & COORDS_FIX_MASK) {
       ostringstream msg;
       msg <<"MEMD does not work with fixed particles.";
       runtimeError(msg);

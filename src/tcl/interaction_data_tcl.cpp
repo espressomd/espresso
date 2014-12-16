@@ -74,6 +74,7 @@
 #include "p3m_tcl.hpp"
 #include "reaction_field_tcl.hpp"
 #include "actor/Mmm1dgpu_tcl.hpp"
+#include "actor/Ewaldgpu_tcl.hpp"
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -106,6 +107,9 @@
 #ifdef HYDROGEN_BOND
 #include "hydrogen_bond_tcl.hpp"
 #endif
+#include "immersed_boundary/ibm_triel_tcl.hpp"
+#include "immersed_boundary/ibm_volume_conservation_tcl.hpp"
+#include "immersed_boundary/ibm_tribend_tcl.hpp"
 
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
@@ -198,6 +202,10 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 
   #ifdef MMM1D_GPU
   REGISTER_COULOMB("mmm1dgpu", tclcommand_inter_coulomb_parse_mmm1dgpu);
+  #endif
+
+  #ifdef EWALD_GPU
+  REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
   #endif
 
   /* fallback */
@@ -333,6 +341,17 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   case BONDED_IA_VOLUME_FORCE:						
 	return tclprint_to_result_volumeforceIA(interp, params);
 #endif
+      
+#ifdef IMMERSED_BOUNDARY
+    case BONDED_IA_IBM_TRIEL:
+      return tclprint_to_result_ibm_triel(interp, params);
+    case BONDED_IA_IBM_VOLUME_CONSERVATION:
+      return tclprint_to_result_ibm_volume_conservation(interp, params);
+    case BONDED_IA_IBM_TRIBEND:
+      return tclprint_to_result_ibm_tribend(interp, params);
+      
+#endif
+      
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
   case BONDED_IA_QUARTIC:
@@ -532,6 +551,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
 #endif
   case COULOMB_MMM2D: tclprint_to_result_MMM2D(interp); break;
   case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU: tclprint_to_result_ewaldgpu(interp); break;
+#endif
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
@@ -928,6 +950,13 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef VOLUME_FORCE
   REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);
 #endif
+  // IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
+  REGISTER_BONDED("ibm_triel", tclcommand_inter_parse_ibm_triel);
+  REGISTER_BONDED("ibm_volcons", tclcommand_inter_parse_ibm_volume_conservation);
+  REGISTER_BONDED("ibm_tribend", tclcommand_inter_parse_ibm_tribend);
+#endif
+  
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
   REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
 #ifdef ELECTROSTATICS

@@ -51,6 +51,8 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->c.wal.only_positive);
     Tcl_AppendResult(interp, " only_positive ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.wal.tunable_slip);
+    Tcl_AppendResult(interp, " tunable_slip ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_SPH:
     Tcl_PrintDouble(interp, con->c.sph.pos[0], buffer);
@@ -364,6 +366,15 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
       }
       if (Tcl_GetInt(interp, argv[1], &(con->c.wal.only_positive)) == TCL_ERROR)
 	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "tunable_slip", strlen(argv[0]))) {
+      if (argc < 1) {
+  	Tcl_AppendResult(interp, "constraint wall tunable_slip {0|1} expected", (char *) NULL);
+   	return (TCL_ERROR);
+      }
+    if (Tcl_GetInt(interp, argv[1], &(con->c.wal.tunable_slip)) == TCL_ERROR)
+   	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
     else
@@ -1611,6 +1622,8 @@ int tclcommand_constraint_parse_ext_magn_field(Constraint *con, Tcl_Interp *inte
 static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *interp,
                       int argc, char **argv)
 {
+  Tcl_AppendResult(interp, "constraint plane cell deprecated, use constraint wall instead!", (char *) NULL);
+  return (TCL_ERROR);
   con->type = CONSTRAINT_PLANE;
 
   /* invalid entries to start of */

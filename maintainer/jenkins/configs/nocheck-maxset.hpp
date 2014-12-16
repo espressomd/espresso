@@ -106,6 +106,7 @@
 #define MAGGS_DEBUG
 #define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
+#define LE_DEBUG
 
 #define MPI_CORE
 #define FORCE_CORE

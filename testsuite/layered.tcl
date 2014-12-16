@@ -20,7 +20,6 @@
 source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"
-require_feature "LEES_EDWARDS" off
 
 if { [setmd n_nodes] >= 5 } {
     puts "Testcase layered.tcl does not run on more than 5 nodes -- too many cells"
@@ -137,12 +136,15 @@ test_catch {
 	if { $maxdx > $epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
 	if { $maxdy > $epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
 	if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
-	error "force error too large"
+	error_exit "force error too large"
     }
 
-    puts "verlet reuse is [setmd verlet_reuse], should be $verlet_reuse"
-    if { [expr abs([setmd verlet_reuse] - $verlet_reuse)] > $epsilon } {
-	error "verlet reuse frequency differs."
+    # LEES-EDWARDS needs to rebuild more frequently
+    if {![has_feature "LEES_EDWARDS"]} {
+        puts "verlet reuse is [setmd verlet_reuse], should be $verlet_reuse"
+        if { [expr abs([setmd verlet_reuse] - $verlet_reuse)] > $epsilon } {
+            error_exit "verlet reuse frequency differs."
+        }
     }
 }
 

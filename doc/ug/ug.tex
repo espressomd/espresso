@@ -156,7 +156,7 @@ index=totoc,                    % add the index to the TOC
 \newcommand{\opt}[1]{\mbox{\textrm{[}#1\textrm{]}}}
 \newcommand{\optlong}[1]{\textrm{[}#1\textrm{]}}
 % alternatives
-\newcommand{\alt}[1]{\textrm{(} #1 \textrm{)}}
+\newcommand{\alt}[1]{\textrm{(}~#1~\textrm{)}}
 \newcommand{\asep}{$|$\xspace}
 % variant
 % \rawvariant is required, as the command is changed during the
@@ -173,6 +173,9 @@ index=totoc,                    % add the index to the TOC
 
 \newcommand{\require}[2]{%
   \mbox{#2\,\fmark{#1}}%
+}
+\newcommand{\requirelong}[2]{%
+  #2\,\fmark{#1}%
 }
 \newcommand{\required}[2][]{%
   \ifthenelse{\equal{#1}{}}{#2}{%
@@ -195,6 +198,7 @@ index=totoc,                    % add the index to the TOC
  \begin{lrbox}{\theessyntaxbox}%
    \begin{minipage}{\linewidth-5em}%
      \ttfamily%
+     \hyphenpenalty=10000% prevent hyphenation
      \setlength{\parindent}{-3em}%
    }{%
    \end{minipage}%
@@ -322,6 +326,7 @@ index=totoc,                    % add the index to the TOC
 \include{lb}
 \include{electrokinetics}
 \include{fsi}
+\include{ibm}
 \include{mbtools}
 
 \include{internal}

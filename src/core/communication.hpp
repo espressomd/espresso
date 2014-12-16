@@ -67,8 +67,8 @@
 extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
-/*@}*/
 extern MPI_Comm comm_cart;
+/*@}*/
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -94,6 +94,9 @@ void mpi_loop();
 
 /** Stop Espresso, all slave nodes exit. */
 void mpi_stop();
+
+/** Abort Espresso using MPI_Abort. */
+void mpi_abort();
 
 /** Finalize MPI. Called by all nodes upon exit */
 void mpi_finalize();
@@ -142,6 +145,14 @@ void mpi_place_new_particle(int node, int id, double pos[3]);
     \param v its new velocity.
 */
 void mpi_send_v(int node, int part, double v[3]);
+
+/** Issue REQ_SET_SWIMMING: send particle swimming properties.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param swim struct containing swimming parameters
+*/
+void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
 
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.

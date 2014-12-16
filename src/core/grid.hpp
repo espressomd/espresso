@@ -42,7 +42,6 @@
  *
  *  For more information on the domain decomposition, see \ref grid.cpp "grid.c". 
 */
-#include "lees_edwards.hpp"
 #include "utils.hpp"
 #include <climits>
 #include "communication.hpp"
@@ -194,17 +193,13 @@ inline void get_mi_vector(double res[3], double a[3], double b[3])
 
   for(i=0;i<3;i++) {
     res[i] = a[i] - b[i];
-#ifdef PARTIAL_PERIODIC
     if (PERIODIC(i))
-#endif
       res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
   }
 }
 
-
-
-#ifdef LEES_EDWARDS
-/** fold a coordinate to primary simulation box.
+/** fold a coordinate to primary simulation box, including velocity (in case of LEES_EDWARDS,
+    the velocity depends on the image we are in).
     \param pos         the position...
     \param vel         the velocity...
     \param image_box   and the box
@@ -215,42 +210,39 @@ inline void get_mi_vector(double res[3], double a[3], double b[3])
 */
 inline void fold_coordinate(double pos[3], double vel[3], int image_box[3], int dir)
 {
-      if( dir != 1 ){ 
-        int tmp;
+  if (PERIODIC(dir)) {
+    int img_count   = (int)floor(pos[dir]*box_l_i[dir]);
+    image_box[dir] += img_count;
+    pos[dir]        = pos[dir] - img_count*box_l[dir];    
 
-        image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
-        pos[dir]        = pos[dir] - tmp*box_l[dir];    
-        if(pos[dir] < 0 || pos[dir] >= box_l[dir]) {
-                /* slow but safe */
-                if (fabs(pos[dir]*box_l_i[dir]) >= INT_MAX/2) {
-		    ostringstream msg;
-		    msg << "particle coordinate out of range, pos = " << pos[dir] << ", image box = " << image_box[dir];
-		    runtimeError(msg);
-                    image_box[dir] = 0;
-                    pos[dir] = 0;
-                }
-        }
-      }else{
-      /* must image y and v_x at same time as x */
-          int img_count;
-          img_count     = (int)floor(pos[1]*box_l_i[1]);
-          pos[0]       -= (lees_edwards_offset * img_count); 
-          vel[0]       -= (lees_edwards_rate   * img_count);       
-   
-          /* image y */
-          image_box[1] += img_count;
-          pos[1]        = pos[1] - img_count*box_l[1];    
-          
-          /* (re)-image x */
-          img_count     = (int)floor(pos[0]*box_l_i[0]);
-          image_box[0] += img_count;
-          pos[0]        = pos[0] - img_count*box_l[0];    
-      
+    if(pos[dir]*box_l_i[dir] < -ROUND_ERROR_PREC || pos[dir]*box_l_i[dir] >= 1 + ROUND_ERROR_PREC) {
+      ostringstream msg;
+      msg << "particle coordinate out of range, pos = " << pos[dir] << ", image box = " << image_box[dir];
+      runtimeError(msg);
+      image_box[dir] = 0;
+      pos[dir] = 0;
+      return;
     }
-}
-#else
 
-/** fold a coordinate to primary simulation box.
+#ifdef LEES_EDWARDS
+
+    if (dir == 1) {
+      /* must image y and v_x at same time as x */
+      pos[0]       -= (lees_edwards_offset * img_count); 
+      vel[0]       -= (lees_edwards_rate   * img_count);       
+
+      /* (re)-image x */
+      img_count     = (int)floor(pos[0]*box_l_i[0]);
+      image_box[0] += img_count;
+      pos[0]        = pos[0] - img_count*box_l[0];
+    }
+
+#endif
+
+  }
+}
+
+/** fold a coordinate to primary simulation box, not caring about velocities.
     \param pos         the position...
     \param image_box   and the box
     \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z coordinate.
@@ -260,27 +252,10 @@ inline void fold_coordinate(double pos[3], double vel[3], int image_box[3], int 
 */
 inline void fold_coordinate(double pos[3], int image_box[3], int dir)
 {
-  int tmp;
-#ifdef PARTIAL_PERIODIC
-  if (PERIODIC(dir))
-#endif
-    {
-      image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
-      pos[dir]        = pos[dir] - tmp*box_l[dir];    
-      if(pos[dir]*box_l_i[dir] < -ROUND_ERROR_PREC || pos[dir]*box_l_i[dir] >= 1 + ROUND_ERROR_PREC) {
-          ostringstream msg;
-          msg << "particle coordinate out of range, pos = " << pos[dir] << ", image box = " << image_box[dir];
-          runtimeError(msg);
-        image_box[dir] = 0;
-        pos[dir] = 0;
-        return;
-      }
-    }
+  double v[3];
+  fold_coordinate(pos, v, image_box, dir);
 }
-#endif
 
-
-#ifdef LEES_EDWARDS
 /** fold particle coordinates to primary simulation box.
     \param pos the position...
     \param vel the velocity...
@@ -296,7 +271,7 @@ inline void fold_position(double pos[3], double vel[3], int image_box[3])
   for(i=0;i<3;i++)
     fold_coordinate(pos, vel, image_box, i);
 }
-#else
+
 /** fold particle coordinates to primary simulation box.
     \param pos the position...
     \param image_box and the box
@@ -310,9 +285,7 @@ inline void fold_position(double pos[3],int image_box[3])
   for(i=0;i<3;i++)
     fold_coordinate(pos, image_box, i);
 }
-#endif
 
-#ifdef LEES_EDWARDS
 /** unfold coordinates to physical position.
     \param pos the position
     \param pos the velocity
@@ -323,6 +296,8 @@ inline void fold_position(double pos[3],int image_box[3])
 */
 inline void unfold_position(double pos[3], double vel[3], int image_box[3])
 {
+#ifdef LEES_EDWARDS
+
   int y_img_count;
   y_img_count   = (int)floor( pos[1]*box_l_i[1] + image_box[1] );
 
@@ -333,10 +308,18 @@ inline void unfold_position(double pos[3], double vel[3], int image_box[3])
   vel[0] += y_img_count * lees_edwards_rate;
 
   image_box[0] = image_box[1] = image_box[2] = 0;
-
-
-}
+  
 #else
+
+  int i;
+  for(i=0;i<3;i++) {
+    pos[i]       = pos[i] + image_box[i]*box_l[i];    
+    image_box[i] = 0;
+  }
+
+#endif
+}
+
 /** unfold coordinates to physical position.
     \param pos the position...
     \param image_box and the box
@@ -344,15 +327,11 @@ inline void unfold_position(double pos[3], double vel[3], int image_box[3])
     Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
     afterwards.
 */
-inline void unfold_position(double pos[3],int image_box[3])
+inline void unfold_position(double pos[3], int image_box[3])
 {
-  int i;
-  for(i=0;i<3;i++) {
-    pos[i]       = pos[i] + image_box[i]*box_l[i];    
-    image_box[i] = 0;
-  }
+  double v[3];
+  unfold_position(pos, v, image_box);
 }
-#endif
 
 /*@}*/
 #endif

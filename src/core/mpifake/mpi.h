@@ -127,6 +127,7 @@ int MPI_Type_create_hvector(int count, int length, int stride, MPI_Datatype oldt
 
 inline int MPI_Init(int *a, char ***b) { return MPI_SUCCESS; }
 inline int MPI_Finalize(void) { return MPI_SUCCESS; }
+inline int MPI_Abort(MPI_Comm comm, int status) { return MPI_SUCCESS; }
 inline int MPI_Comm_size(MPI_Comm comm, int *psize) { *psize = 1; return MPI_SUCCESS; }
 inline int MPI_Comm_rank(MPI_Comm comm, int *rank) { *rank = 0; return MPI_SUCCESS; }
 inline int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) { *rank = 0; return MPI_SUCCESS; }
@@ -153,7 +154,7 @@ inline int MPI_Comm_create_errhandler(MPI_Handler_function *errfunc, MPI_Errhand
 inline int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhdl) { return MPI_SUCCESS; }
 inline int MPI_Bcast(void *buff, int count, MPI_Datatype datatype, int root, MPI_Comm comm) { return MPI_SUCCESS; }
 inline int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status) { return MPI_SUCCESS; }
-inline int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count) { count = 0; return MPI_SUCCESS; }
+inline int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count) { *count = 0; return MPI_SUCCESS; }
 
 
 #ifndef GNU_MPIFAKE_DEBUG

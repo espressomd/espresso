@@ -32,9 +32,7 @@
 #include "object-in-fluid/volume_force.hpp"
 #include "dihedral.hpp"
 #include "mdlc_correction.hpp"
-<<<<<<< HEAD
 #include "hydrogen_bond.hpp"
-=======
 */
 #ifndef _ENERGY_H
 #define _ENERGY_H

@@ -29,6 +29,7 @@ tests = \
 	constraints.tcl \
 	constraints_reflecting.tcl \
 	correlation.tcl \
+	correlation_checkpoint.tcl \
 	constraints_rhomboid.tcl \
 	coulomb_cloud_wall.tcl \
 	dh.tcl \
@@ -39,6 +40,9 @@ tests = \
 	ek_reaction.tcl \
 	el2d.tcl \
 	el2d_nonneutral.tcl \
+	engine_langevin.tcl \
+	engine_lb.tcl \
+	engine_lbgpu.tcl \
 	exclusions.tcl \
 	external_potential.tcl \
 	fene.tcl \
@@ -47,6 +51,8 @@ tests = \
 	harm.tcl \
 	quartic.tcl \
 	iccp3m.tcl \
+	immersed_boundary.tcl \
+	immersed_boundary_gpu.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \
@@ -74,6 +80,7 @@ tests = \
 	mdlc.tcl \
 	mmm1d.tcl \
 	mmm1dgpu.tcl \
+	ewaldgpu.tcl \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
@@ -85,6 +92,7 @@ tests = \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
+	pdb_parser.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
@@ -105,6 +113,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	analysis_system.data.06.gz analysis_system.data.07.gz \
 	analysis_system.data.08.gz analysis_system.data.09.gz \
 	analysis_system.data.10.gz \
+	angle_cosine.data angle_cossquare.data angle_harmonic.data \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
 	coulomb_cloud_wall_system.data \
@@ -128,10 +137,14 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	object_in_fluid_system-init.data \
         object_in_fluid_system-nodes.data \
 	object_in_fluid_system-triangles.data \
-	\
+	pdb_parser.itp.dat \
+	pdb_parser.pdb.dat \
 	pe_micelle.tcl pe_micelle.data \
-	\
-	maggs_correct_rdf.data
+	maggs_correct_rdf.data \
+	ek_reaction_density.vtk \
+	engine_lb.vtk \
+	engine_lbgpu_2pt.vtk \
+	engine_lbgpu_3pt.vtk
 
 # run the testsuite
 check-local: runtest.sh
@@ -146,4 +159,6 @@ CLEANFILES = runtest.log
 DISTCLEANFILES = \
 	fftw3_1d_wisdom_*.file \
 	dfftw3_1d_wisdom_*.file \
-	lattice_*.dat
+	lattice_*.dat \
+	correlation_checkpoint_c?.bin \
+	correlation_checkpoint_c?.txt 

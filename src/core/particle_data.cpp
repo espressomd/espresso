@@ -192,6 +192,19 @@ void init_particle(Particle *part)
   part->f.torque[0] = 0.0;
   part->f.torque[1] = 0.0;
   part->f.torque[2] = 0.0;
+
+  // Swimming parameters
+#ifdef ENGINE
+  part->swim.swimming            = false;
+  part->swim.v_swim              = 0.0;
+  part->swim.f_swim              = 0.0;
+#if defined(LB) || defined(LB_GPU)
+  part->swim.push_pull           = 0;
+  part->swim.dipole_length       = 0.0;
+  part->swim.rotational_friction = 0.0;
+#endif
+#endif
+
 #endif
 
   /* ParticleLocal */
@@ -246,14 +259,14 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef EXTERNAL_FORCES
-  part->l.ext_flag   = 0;
-  part->l.ext_force[0] = 0.0;
-  part->l.ext_force[1] = 0.0;
-  part->l.ext_force[2] = 0.0;
+  part->p.ext_flag   = 0;
+  part->p.ext_force[0] = 0.0;
+  part->p.ext_force[1] = 0.0;
+  part->p.ext_force[2] = 0.0;
   #ifdef ROTATION
-    part->l.ext_torque[0] = 0.0;
-    part->l.ext_torque[1] = 0.0;
-    part->l.ext_torque[2] = 0.0;
+    part->p.ext_torque[0] = 0.0;
+    part->p.ext_torque[1] = 0.0;
+    part->p.ext_torque[2] = 0.0;
   #endif
 #endif
 
@@ -308,11 +321,8 @@ int updatePartCfg(int bonds_flag)
     mpi_get_particles(partCfg,&partCfg_bl);
 
   for(j=0; j<n_part; j++)
-#ifdef LEES_EDWARDS
     unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
-#else
-    unfold_position(partCfg[j].r.p, partCfg[j].l.i);
-#endif
+
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
 
@@ -596,6 +606,24 @@ int set_particle_v(int part, double v[3])
   mpi_send_v(pnode, part, v);
   return ES_OK;
 }
+
+#ifdef ENGINE
+int set_particle_swimming(int part, ParticleParametersSwimming swim)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_swimming(pnode, part, swim);
+  return ES_OK;
+}
+#endif
 
 int set_particle_f(int part, double F[3])
 {
@@ -1189,12 +1217,8 @@ void local_place_particle(int part, double p[3], int _new)
   pp[1] = p[1];
   pp[2] = p[2];
 
-#ifdef LEES_EDWARDS
   double vv[3]={0.,0.,0.};
   fold_position(pp, vv, i);
-#else
-  fold_position(pp, i);
-#endif 
   
   if (_new) {
     /* allocate particle anew */

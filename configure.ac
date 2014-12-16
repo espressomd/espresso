@@ -123,26 +123,15 @@ AX_CXX_VAR_PRETTYFUNC()
 # set the optimization flags
 # never overwrite users CXXFLAGS
 if test "${CXXFLAGS+set}" != set; then
-  # test for -O5
-  AC_MSG_CHECKING([whether the compiler accepts -O5])
+  # test for -O3
+  AC_MSG_CHECKING([whether the compiler accepts -O3])
   saved_CXXFLAGS=$CXXFLAGS
-  CXXFLAGS="-O5 $CXXFLAGS"
+  CXXFLAGS="-O3 $CXXFLAGS"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
     AC_MSG_RESULT(yes);try_add_flag_res=yes
   ],[
     AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
   ])
-  # if not, try O3 (e.g. llvm does not support O5)
-  AS_IF([test x$try_add_flag_res = xno], [
-    AC_MSG_CHECKING([whether the compiler accepts -O3])
-    saved_CXXFLAGS=$CXXFLAGS
-    CXXFLAGS="-O3 $CXXFLAGS"
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
-      AC_MSG_RESULT(yes);try_add_flag_res=yes
-    ],[
-      AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
-    ])
-   ],[])
 
   ##################################
   # test for -Wall
@@ -375,6 +364,16 @@ AS_IF([test x$with_cuda != xno],[
     LIBS=$save_noncuda_LIBS
     
     AS_IF([test x$cuda_ok == xyes], [
+        # NVCC doesn't work with llvm's libc++ so we need to also
+        # compile the rest with libstdc++, if nvcc-compiled code is
+        # used
+        AC_MSG_CHECKING([whether the compiler accepts -stdlib=libstdc++])
+        saved_CXXFLAGS=$CXXFLAGS
+        CXXFLAGS="-stdlib=libstdc++ $CXXFLAGS"
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[ AC_MSG_RESULT(yes) ],[
+                AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS
+        ])
+        
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
         # reset standard compiler options
@@ -539,7 +538,7 @@ if test .$with_tk != .no; then
 	fi
 	# now test whether Tk can be found
 	if test .$with_tk = .yes; then
-		for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk; do
+		for version in $TK_VERSION tk8.6 tk8.5 tk8.4 tk8.3 tk8.2 tk; do
 			ES_ADDPATH_CHECK_LIB($version, Tk_Init, [use_tk=$version], [])
 			if test .$use_tk != .; then break; fi
 		done

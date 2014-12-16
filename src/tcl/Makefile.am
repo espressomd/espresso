@@ -30,6 +30,7 @@ libEspressoTcl_la_SOURCES = \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
+	readpdb_tcl.cpp \
 	cells_tcl.cpp \
 	cells_tcl.hpp \
 	channels_tcl.cpp \
@@ -126,7 +127,13 @@ libEspressoTcl_la_SOURCES += \
 	object-in-fluid/stretchlin_force_tcl.cpp \
 	object-in-fluid/stretchlin_force_tcl.hpp \
 	object-in-fluid/volume_force_tcl.cpp \
-	object-in-fluid/volume_force_tcl.hpp
+	object-in-fluid/volume_force_tcl.hpp \
+	immersed_boundary/ibm_triel_tcl.cpp \
+	immersed_boundary/ibm_triel_tcl.hpp \
+	immersed_boundary/ibm_volume_conservation_tcl.cpp \
+	immersed_boundary/ibm_volume_conservation_tcl.hpp \
+	immersed_boundary/ibm_tribend_tcl.cpp \
+	immersed_boundary/ibm_tribend_tcl.hpp
 
 # Coulomb methods
 libEspressoTcl_la_SOURCES += \
@@ -144,6 +151,7 @@ libEspressoTcl_la_SOURCES += \
 # Generic actors
 libEspressoTcl_la_SOURCES += \
 	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
+	actor/Ewaldgpu_tcl.cpp actor/Ewaldgpu_tcl.hpp \
 	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
 
 if CUDA

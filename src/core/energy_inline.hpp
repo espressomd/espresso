@@ -64,6 +64,7 @@
 #include "elc.hpp"
 #include "hydrogen_bond.hpp"
 #include "twist_stack.hpp"
+#include "actor/EwaldgpuForce_ShortRange.hpp"
 
 #include "energy.hpp"
 
@@ -223,6 +224,11 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
     case COULOMB_MMM2D:
       ret = mmm2d_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
+#ifdef EWALD_GPU
+    case COULOMB_EWALD_GPU:
+      ret = ewaldgpu_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      break;
+#endif
     default :
       ret = 0.;
     }
