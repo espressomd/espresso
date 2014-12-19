@@ -30,6 +30,8 @@
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
+#define ENGINE
+
 #ifdef CUDA
 #define LB_GPU
 #define LB_BOUNDARIES_GPU

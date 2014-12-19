@@ -86,6 +86,7 @@ static int terminated = 0;
   CB(mpi_bcast_event_slave) \
   CB(mpi_place_particle_slave) \
   CB(mpi_send_v_slave) \
+  CB(mpi_send_swimming_slave) \
   CB(mpi_send_f_slave) \
   CB(mpi_send_q_slave) \
   CB(mpi_send_type_slave) \
@@ -500,6 +501,37 @@ void mpi_send_v_slave(int pnode, int part)
   }
 
   on_particle_change();
+}
+
+/****************** REQ_SET_SWIMMING ************/
+void mpi_send_swimming(int pnode, int part, ParticleParametersSwimming swim)
+{
+#ifdef ENGINE
+  mpi_call(mpi_send_swimming_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->swim = swim;
+  }
+  else {
+    MPI_Send(&swim, sizeof(ParticleParametersSwimming), MPI_BYTE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_swimming_slave(int pnode, int part)
+{
+#ifdef ENGINE
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+        MPI_Recv(&p->swim, sizeof(ParticleParametersSwimming), MPI_BYTE, 0, SOME_TAG,
+            comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
 }
 
 /****************** REQ_SET_F ************/
@@ -1843,12 +1875,12 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask, double torque[
     if (pnode == this_node) {
       Particle *p = local_particles[part];
       /* mask out old flags */
-      p->l.ext_flag &= ~mask;
+      p->p.ext_flag &= ~mask;
       /* set new values */
-      p->l.ext_flag |= flag;
+      p->p.ext_flag |= flag;
 
       if (mask & PARTICLE_EXT_TORQUE) 
-        memcpy(p->l.ext_torque, torque, 3*sizeof(double));
+        memcpy(p->p.ext_torque, torque, 3*sizeof(double));
     }
     else {
       s_buf[0] = flag; s_buf[1] = mask;
@@ -1871,12 +1903,12 @@ void mpi_send_ext_torque_slave(int pnode, int part)
       Particle *p = local_particles[part];
           MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
       /* mask out old flags */
-      p->l.ext_flag &= ~s_buf[1];
+      p->p.ext_flag &= ~s_buf[1];
       /* set new values */
-      p->l.ext_flag |= s_buf[0];
+      p->p.ext_flag |= s_buf[0];
       
       if (s_buf[1] & PARTICLE_EXT_TORQUE)
-        MPI_Recv(p->l.ext_torque, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+        MPI_Recv(p->p.ext_torque, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     }
 
     on_particle_change();
@@ -1893,11 +1925,11 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3]
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     /* mask out old flags */
-    p->l.ext_flag &= ~mask;
+    p->p.ext_flag &= ~mask;
     /* set new values */
-    p->l.ext_flag |= flag;
+    p->p.ext_flag |= flag;
     if (mask & PARTICLE_EXT_FORCE)
-      memcpy(p->l.ext_force, force, 3*sizeof(double));
+      memcpy(p->p.ext_force, force, 3*sizeof(double));
   }
   else {
     s_buf[0] = flag; s_buf[1] = mask;
@@ -1918,12 +1950,12 @@ void mpi_send_ext_force_slave(int pnode, int part)
     Particle *p = local_particles[part];
         MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     /* mask out old flags */
-    p->l.ext_flag &= ~s_buf[1];
+    p->p.ext_flag &= ~s_buf[1];
     /* set new values */
-    p->l.ext_flag |= s_buf[0];
+    p->p.ext_flag |= s_buf[0];
     
     if (s_buf[1] & PARTICLE_EXT_FORCE)
-      MPI_Recv(p->l.ext_force, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+      MPI_Recv(p->p.ext_force, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
   on_particle_change();

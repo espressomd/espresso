@@ -192,6 +192,19 @@ void init_particle(Particle *part)
   part->f.torque[0] = 0.0;
   part->f.torque[1] = 0.0;
   part->f.torque[2] = 0.0;
+
+  // Swimming parameters
+#ifdef ENGINE
+  part->swim.swimming            = false;
+  part->swim.v_swim              = 0.0;
+  part->swim.f_swim              = 0.0;
+#if defined(LB) || defined(LB_GPU)
+  part->swim.push_pull           = 0;
+  part->swim.dipole_length       = 0.0;
+  part->swim.rotational_friction = 0.0;
+#endif
+#endif
+
 #endif
 
   /* ParticleLocal */
@@ -246,14 +259,14 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef EXTERNAL_FORCES
-  part->l.ext_flag   = 0;
-  part->l.ext_force[0] = 0.0;
-  part->l.ext_force[1] = 0.0;
-  part->l.ext_force[2] = 0.0;
+  part->p.ext_flag   = 0;
+  part->p.ext_force[0] = 0.0;
+  part->p.ext_force[1] = 0.0;
+  part->p.ext_force[2] = 0.0;
   #ifdef ROTATION
-    part->l.ext_torque[0] = 0.0;
-    part->l.ext_torque[1] = 0.0;
-    part->l.ext_torque[2] = 0.0;
+    part->p.ext_torque[0] = 0.0;
+    part->p.ext_torque[1] = 0.0;
+    part->p.ext_torque[2] = 0.0;
   #endif
 #endif
 
@@ -593,6 +606,24 @@ int set_particle_v(int part, double v[3])
   mpi_send_v(pnode, part, v);
   return ES_OK;
 }
+
+#ifdef ENGINE
+int set_particle_swimming(int part, ParticleParametersSwimming swim)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_swimming(pnode, part, swim);
+  return ES_OK;
+}
+#endif
 
 int set_particle_f(int part, double F[3])
 {

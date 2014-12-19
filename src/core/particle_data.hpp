@@ -138,6 +138,26 @@ typedef struct {
 #ifdef CATALYTIC_REACTIONS
   int catalyzer_count;
 #endif
+
+#ifdef EXTERNAL_FORCES
+  /** flag whether to fix a particle in space.
+      Values:
+      <ul> <li> 0 no external influence
+           <li> 1 apply external force \ref ParticleLocal::ext_force
+           <li> 2,3,4 fix particle coordinate 0,1,2
+           <li> 5 apply external torque \ref ParticleLocal::ext_torque
+      </ul>
+  */
+  int ext_flag;
+  /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
+  double ext_force[3];
+
+  #ifdef ROTATION
+  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
+  double ext_torque[3];
+  #endif
+
+#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is
@@ -178,6 +198,9 @@ typedef struct {
 #ifdef ROTATION
   /** torque */
   double torque[3];
+
+
+
 #endif
 
 } ParticleForce;
@@ -193,6 +216,8 @@ typedef struct {
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
+
+
 #endif
 } ParticleMomentum;
 
@@ -203,26 +228,6 @@ typedef struct {
   double p_old[3];
   /** index of the simulation box image where the particle really sits. */
   int    i[3];
-
-#ifdef EXTERNAL_FORCES
-  /** flag whether to fix a particle in space.
-      Values:
-      <ul> <li> 0 no external influence
-           <li> 1 apply external force \ref ParticleLocal::ext_force
-           <li> 2,3,4 fix particle coordinate 0,1,2
-           <li> 5 apply external torque \ref ParticleLocal::ext_torque
-      </ul>
-  */
-  int ext_flag;
-  /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
-  double ext_force[3];
-
-  #ifdef ROTATION
-  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
-  double ext_torque[3];
-  #endif
-
-#endif
 
 #ifdef GHOST_FLAG
   /** check whether a particle is a ghost or not */
@@ -244,6 +249,22 @@ typedef struct {
   double f_random[3];
 } ParticleLatticeCoupling;
 #endif
+
+typedef struct {
+// ifdef inside because we need this type for some MPI prototypes
+#ifdef ENGINE
+  bool swimming;
+  double f_swim;
+  double v_swim;
+#if defined(LB) || defined(LB_GPU)
+  int push_pull;
+  double dipole_length;
+  double v_center[3];
+  double v_source[3];
+  double rotational_friction;
+#endif
+#endif
+} ParticleParametersSwimming;
 
 /** Struct holding all information for one particle. */
 typedef struct {
@@ -269,6 +290,10 @@ typedef struct {
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded interactions */
   IntList el;
+#endif
+
+#ifdef ENGINE
+  ParticleParametersSwimming swim;
 #endif
 
 } Particle;
@@ -455,6 +480,15 @@ int place_particle(int part, double p[3]);
     @return ES_OK if particle existed
 */
 int set_particle_v(int part, double v[3]);
+
+#ifdef ENGINE
+/** Call only on the master node: set particle velocity.
+    @param part the particle.
+    @param swim struct containing swimming parameters
+    @return ES_OK if particle existed
+*/
+int set_particle_swimming(int part, ParticleParametersSwimming swim);
+#endif
 
 /** Call only on the master node: set particle force.
     @param part the particle.

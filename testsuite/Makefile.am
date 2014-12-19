@@ -29,6 +29,7 @@ tests = \
 	constraints.tcl \
 	constraints_reflecting.tcl \
 	correlation.tcl \
+	correlation_checkpoint.tcl \
 	constraints_rhomboid.tcl \
 	coulomb_cloud_wall.tcl \
 	dh.tcl \
@@ -39,6 +40,8 @@ tests = \
 	ek_reaction.tcl \
 	el2d.tcl \
 	el2d_nonneutral.tcl \
+	engine_langevin.tcl \
+	engine_lbgpu.tcl \
 	exclusions.tcl \
 	external_potential.tcl \
 	fene.tcl \
@@ -47,6 +50,8 @@ tests = \
 	harm.tcl \
 	quartic.tcl \
 	iccp3m.tcl \
+	immersed_boundary.tcl \
+	immersed_boundary_gpu.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \
@@ -134,7 +139,10 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	pdb_parser.itp.dat \
 	pdb_parser.pdb.dat \
 	pe_micelle.tcl pe_micelle.data \
-	maggs_correct_rdf.data
+	maggs_correct_rdf.data \
+	ek_reaction_density.vtk \
+	engine_lbgpu_2pt.vtk \
+	engine_lbgpu_3pt.vtk
 
 # run the testsuite
 check-local: runtest.sh
@@ -149,4 +157,6 @@ CLEANFILES = runtest.log
 DISTCLEANFILES = \
 	fftw3_1d_wisdom_*.file \
 	dfftw3_1d_wisdom_*.file \
-	lattice_*.dat
+	lattice_*.dat \
+	correlation_checkpoint_c?.bin \
+	correlation_checkpoint_c?.txt 
