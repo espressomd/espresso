@@ -545,8 +545,9 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
 // mobility is the mobility matrix which will be retruned (in/out)
 // L_d is the boxlength
 // cutoff the wavespace cutoff distance
-__global__ void sd_wavepart_assemble(const int num, const real * const sines, const real * const cosines, const real * const sin_sum,
-				     const real * const cos_sum, const int ldd, real * out, real max, int N, const real factor){
+__global__ void sd_wavepart_assemble(const int num, const real * const __restrict__ sines, const real * const __restrict__ cosines,
+				     const real * const __restrict__ sin_sum, const real * const __restrict__ cos_sum, 
+				     const int ldd, real * __restrict__ out, const real max, const int N, const real factor){
   // particle index of the particle for which we sum:
   int i = threadIdx.x+blockIdx.x*blockDim.x;
   real myout[3]={0,0,0};
@@ -562,6 +563,7 @@ __global__ void sd_wavepart_assemble(const int num, const real * const sines, co
     // j: wave vector index
     for (int j=offset;j< offset_next ;j++){
       sine   = sines  [i + j*ldd];
+      //sine = read_without_caching(sines + i+j*ldd);
 #pragma unroll 3
       for (int k=0;k < 3;k++){
 	real tmp = sin_sum[k + j*3];
@@ -569,6 +571,7 @@ __global__ void sd_wavepart_assemble(const int num, const real * const sines, co
 	myout[k]+=sine*tmp;
       }
       cosine = cosines[i + j*ldd];
+      //cosine = read_without_caching(cosines + i+j*ldd);
 #pragma unroll 3
       for (int k=0;k<DIM;k++){
 	real tmp = cos_sum[k + j*3];
