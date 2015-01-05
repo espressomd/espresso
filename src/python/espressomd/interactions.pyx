@@ -19,6 +19,9 @@
 include "myconfig.pxi"
 # Non-bonded interactions
 
+include "myconfig.pxi"
+
+
 cdef class NonBondedInteraction(object):
   
   cdef public object _partTypes
@@ -138,67 +141,75 @@ cdef class NonBondedInteraction(object):
     raise Exception("Subclasses of NonBondedInteraction must define the requiredKeys() method.")
 
 # Lennard Jones
-
-cdef class LennardJonesInteraction(NonBondedInteraction):
-  if LENNARD_JONES == 1:
-      def validateParams(self):
-        if self._params["epsilon"]<0:
-          raise ValueError("Lennard-Jones eps has to be >=0")
-        if self._params["sigma"]<0:
-          raise ValueError("Lennard-Jones sigma has to be >=0")
-        if self._params["cutoff"]<0:
-          raise ValueError("Lennard-Jones cutoff has to be >=0")
-        return True
+IF LENNARD_JONES == 1:
+  cdef class LennardJonesInteraction(NonBondedInteraction):
+    def validateParams(self):
+      if self._params["epsilon"]<0:
+        raise ValueError("Lennard-Jones eps has to be >=0")
+      if self._params["sigma"]<0:
+        raise ValueError("Lennard-Jones sigma has to be >=0")
+      if self._params["cutoff"]<0:
+        raise ValueError("Lennard-Jones cutoff has to be >=0")
+      return True
+  
+    def _getParamsFromEsCore(self):
+      cdef IA_parameters* iaParams
+      iaParams =  get_ia_param(self._partTypes[0],self._partTypes[1]) 
+      return {\
+        "epsilon":iaParams.LJ_eps,\
+        "sigma":iaParams.LJ_sig,\
+        "cutoff":iaParams.LJ_cut,\
+        "shift":iaParams.LJ_shift,\
+        "offset":iaParams.LJ_offset,\
+        "min":iaParams.LJ_min}
+         
+  
+    def isActive(self):
+      return (self._params["epsilon"] >0)
     
-      def _getParamsFromEsCore(self):
-        cdef IA_parameters* iaParams
-        iaParams =  get_ia_param(self._partTypes[0],self._partTypes[1]) 
-        return { \
-          "epsilon": iaParams.LJ_eps, \
-          "sigma": iaParams.LJ_sig, \
-          "cutoff": iaParams.LJ_cut, \
-          "shift": iaParams.LJ_shift, \
-          "offset": iaParams.LJ_offset, \
-          "min": iaParams.LJ_min }
-           
+    def _setParamsInEsCore(self):
+      # Handle the case of shift="auto"
+      if self._params["shift"]=="auto": 
+        # Calc shift
+        self._params["shift"]= -( (self._params["sigma"]/self._params["cutoff"])**12 - (self._params["sigma"]/self._params["cutoff"])**6 )
+      
+      if lennard_jones_set_params(self._partTypes[0],self._partTypes[1],\
+                                          self._params["epsilon"], \
+                                          self._params["sigma"], \
+                                          self._params["cutoff"], \
+                                          self._params["shift"], \
+                                          self._params["offset"], \
+  					0.0, \
+                                          self._params["min"]):
+        raise Exception("Could not set Lennard Jones parameters")					
     
-      def isActive(self):
-        return (self._params["epsilon"] >0)
-      
-      def _setParamsInEsCore(self):
-        # Handle the case of shift="auto"
-        if self._params["shift"]=="auto": 
-          # Calc shift
-          self._params["shift"]= -( (self._params["sigma"]/self._params["cutoff"])**12 - (self._params["sigma"]/self._params["cutoff"])**6 )
-        
-        if lennard_jones_set_params(self._partTypes[0],self._partTypes[1],\
-                                            self._params["epsilon"], \
-                                            self._params["sigma"], \
-                                            self._params["cutoff"], \
-                                            self._params["shift"], \
-                                            self._params["offset"], \
-    					0.0, \
-                                            self._params["min"]):
-          raise Exception("Could not set Lennard Jones parameters")					
-      
-      def defaultParams(self):
-        self._params={\
-          "epsilon":0.,\
-          "sigma":0.,\
-          "cutoff":0.,\
-          "shift":0.,\
-          "offset":0.,\
-          "min":0.}
+    def defaultParams(self):
+      self._params={\
+        "epsilon":0.,\
+        "sigma":0.,\
+        "cutoff":0.,\
+        "shift":0.,\
+        "offset":0.,\
+        "min":0.}
+  
+    def typeName(self): 
+      return "LennardJones" 
     
-      def typeName(self): 
-        return "LennardJones" 
-      
-      def validKeys(self): 
-        return "epsilon","sigma","cutoff","shift","offset","min"
-      
-      def requiredKeys(self): 
-        return "epsilon","sigma","cutoff","shift" 
-
+    def validKeys(self): 
+      return "epsilon","sigma","cutoff","shift","offset","min"
+    
+    def requiredKeys(self): 
+      return "epsilon","sigma","cutoff","shift" 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
 class NonBondedInteractionHandle(object):
   """Provides access to all Non-bonded interactions between 
@@ -207,8 +218,9 @@ class NonBondedInteractionHandle(object):
   type1=-1
   type2=-1
 
-  # Here, one line per non-bonded ia
-  lennardJones=None
+  # Here, the individual nonbonded interactions have to be added
+  IF LENNARD_JONES == 1:
+    lennardJones=None
 
 
   def __init__(self, _type1, _type2):
@@ -219,11 +231,13 @@ class NonBondedInteractionHandle(object):
     self.type2=_type2
     
     
-    # Here, add one line for each nonbonded ia
-    self.lennardJones =LennardJonesInteraction(_type1,_type2)
+    # Here, add all nonbonded ia
+    IF LENNARD_JONES ==1:
+      self.lennardJones =LennardJonesInteraction(_type1,_type2)
 
-  
-  
+
+
+
 
 
 cdef class NonBondedInteractions:
