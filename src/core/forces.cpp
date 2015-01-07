@@ -63,7 +63,6 @@
 #include "forces_inline.hpp"
 ActorList forceActors;
 
-
 void init_forces()
 {
   Cell *cell;
@@ -151,7 +150,6 @@ void check_forces()
 
 void calc_long_range_forces()
 {
-    char *errtxt;
 #ifdef ELECTROSTATICS  
 	/* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
@@ -239,8 +237,9 @@ void calc_long_range_forces()
   case DIPOLAR_NONE:
       break;
   default:
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{999 unknown dipolar method} ");
+      ostringstream msg;
+      msg <<"unknown dipolar method";
+      runtimeError(msg);
       break;
   }
 #endif  /*ifdef DIPOLES */

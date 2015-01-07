@@ -27,27 +27,40 @@
 #ifndef _ERRORHANDLING_HPP
 #define _ERRORHANDLING_HPP
 
-/** buffer for error messages during the integration process. */
-extern char *error_msg;
-extern int n_error_msg;
+#include "config.hpp"
+#include <string>
+#include <sstream>
+#include <list>
 
-/* request space for leaving an error message to be passed to the master node.
-   Also takes care of the error counter.
-   @param errlen maximal length of the error message. If you use sprintf to create the error
-   message, remember to use ES_INTEGER/DOUBLE_SPACE as usual
-   @return where to put the (null-terminated) string */
-char *runtime_error(int errlen);
+/** exit ungracefully, core dump if switched on. */
+void errexit();
 
-#define ERROR_SPRINTF sprintf
+/** register a handler for sigint that translates it into an runtime error. */
+void register_sigint_handler();
+
+/* NEW RUNTIME ERROR HANDLING. */
+
+// Functions to report runtime errors
+void initRuntimeErrorCollector();
+
+void _runtimeWarning(const char* msg, const char* function, const char* file, const int line);
+void _runtimeWarning(const std::string &msg, const char* function, const char* file, const int line);
+void _runtimeWarning(const std::ostringstream &msg, const char* function, const char* file, const int line);
+
+void _runtimeError(const char* msg, const char* function, const char* file, const int line);
+void _runtimeError(const std::string &msg, const char* function, const char* file, const int line);
+void _runtimeError(const std::ostringstream &msg, const char* function, const char* file, const int line);
+
+#define runtimeWarning(msg) \
+ _runtimeWarning(msg, __PRETTYFUNC__, __FILE__, __LINE__)
+#define runtimeError(msg) \
+ _runtimeError(msg, __PRETTYFUNC__, __FILE__, __LINE__)
 
 /** check for runtime errors on all nodes. This has to be called on all nodes synchronously.
     @return the number of characters in the error messages of all nodes together. */
 int check_runtime_errors();
 
-/** exit ungracefully, core dump if switched on. */
-void errexit();
-
-/** register a handler for sigint that translates it into an background error. */
-void register_sigint_handler();
+std::list<std::string> mpiRuntimeErrorCollectorGather();
+void mpiRuntimeErrorCollectorGatherSlave(int node, int parm);
 
 #endif

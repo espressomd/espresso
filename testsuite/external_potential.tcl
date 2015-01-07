@@ -25,7 +25,7 @@ require_max_nodes_per_side 1
 
 setmd box_l 6. 6. 6.
 thermostat off
-setmd skin 1.00
+setmd skin 1.0
 setmd time_step 0.05
 cellsystem domain_decomposition -no_verlet_list
 #cellsystem nsquare
@@ -33,7 +33,7 @@ cellsystem domain_decomposition -no_verlet_list
 external_potential tabulated file "harmonic_potential.dat" scale "1." 
 part 0 pos 4.100  3.000  3.000
 set initial_energy [ analyze energy total ] 
-for { set i 0 } { $i < 100 } { incr i } {
+for { set i 0 } { $i < 1000 } { incr i } {
   integrate 100
   set current_energy [ analyze energy total  ] 
   puts "$current_energy [ expr $current_energy - $initial_energy ]"

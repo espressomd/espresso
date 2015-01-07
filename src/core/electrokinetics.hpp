@@ -68,8 +68,7 @@ typedef struct {
   float mass_product1;
   int use_nonlinear_stencil;
   int number_of_boundary_nodes;
-  cufftReal* greensfcn;
-  cufftComplex* charge_potential;
+  float* charge_potential;
   float* j;
   float* lb_force_previous;
   float* rho[MAX_NUMBER_OF_SPECIES];

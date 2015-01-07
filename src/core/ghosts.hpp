@@ -34,7 +34,7 @@ the contents of the other cell will be overwritten. This communication is invoke
 at four different times in an integration step. These steps are reflected in \ref cell_structure structure,
 since they are treated differently by different cell systems:
 <ul>
-<li> ghost_cells is used to transfer the cell sizes, i. e. makes sure that for all later transfers
+<li> ghost_cells are used to transfer the cell sizes, i.e., make sure that for all later transfers
       the target cell has the same size as the source cell.
 <li> exchange_ghosts sets up all information on the ghosts that is necessary. Normally transfers the
       (shifted) position and particle properties.
@@ -43,7 +43,7 @@ since they are treated differently by different cell systems:
       exchange_ghosts.
 <li> collect_ghost_forces finally is used to transfer back forces that were exerted on a ghost particle. They
       are simply added again to the force of the real particle. The communication process is therefore inverted
-      with respect to exchange_ghosts and update_ghosts, i. e. sending is replaced by receiving and the other way
+      with respect to exchange_ghosts and update_ghosts, i.e., sending is replaced by receiving and the other way
       round.
 </ul>
 The particle data that has to be transferred, and especially from where to where, heavily depends on the cell system.
@@ -134,6 +134,11 @@ The ghost communicators are created in the init routines of the cell systems, th
 
 /// resize the receiver particle arrays to the size of the senders
 #define GHOSTTRANS_PARTNUM  64
+
+#ifdef ENGINE
+/// transfer \ref ParticleParametersSwimming
+#define GHOSTTRANS_SWIMMING 128
+#endif
 /*@}*/
 
 /** \name Data Types */

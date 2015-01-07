@@ -16,5 +16,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
-import particle_data
+import sys
 
+cdef extern from "communication.hpp":
+  void mpi_init(int* argc = NULL, char ***argv = NULL)
+  int this_node
+
+cdef extern from "initialize.hpp":
+  void on_program_start()
+  void mpi_loop()
+
+### Here we make a minimalistic Tcl_Interp available
+# Main code
+mpi_init()
+
+# Main slave loop
+if this_node != 0:
+    on_program_start()
+    mpi_loop()
+    sys.exit()
+
+def setup():
+    on_program_start()
+    

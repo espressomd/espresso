@@ -98,7 +98,7 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
 void lb_init_boundaries() {
 
   int n, x, y, z;
-  char *errtxt;
+  //char *errtxt;
   double pos[3], dist, dist_tmp=0.0, dist_vec[3];
   
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -138,8 +138,9 @@ void lb_init_boundaries() {
         }
       
       if(wallcharge_species == -1 && charged_boundaries) {
-        errtxt = runtime_error(9999); //TODO make right
-        ERROR_SPRINTF(errtxt, "{9999 no charged species available to create wall charge\n");
+          ostringstream msg;
+          msg <<"no charged species available to create wall charge\n";
+          runtimeError(msg);
       }
     }
 #endif
@@ -197,8 +198,9 @@ void lb_init_boundaries() {
                 break;
 
               default:
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
+                ostringstream msg;
+                msg <<"lbboundary type "<< lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
+                runtimeError(msg);
             }
             
             if (dist > dist_tmp || n == 0) {
@@ -345,8 +347,9 @@ void lb_init_boundaries() {
                 break;
                 
               default:
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
+                ostringstream msg;
+                msg <<"lbboundary type " << lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
+                runtimeError(msg);
             }
             
             if (dist_tmp<dist || n == 0) {

@@ -37,6 +37,7 @@
 #include "mmm2d.hpp"
 #include "maggs.hpp"
 #include "elc.hpp"
+#include "actor/EwaldgpuForce.hpp"
 #include "lj.hpp"
 #include "ljgen.hpp"
 #include "ljangle.hpp"
@@ -384,6 +385,12 @@ static void recalc_maximal_cutoff_bonded()
         max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
       break;
 #endif
+#ifdef IMMERSED_BOUNDARY
+      case BONDED_IA_IBM_TRIEL:
+        if(max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxdist)
+          max_cut_bonded = bonded_ia_params[i].p.ibm_triel.maxdist;
+        break;
+#endif
     default:
      break;
     }
@@ -449,6 +456,12 @@ static void recalc_global_maximal_nonbonded_cutoff()
       max_cut_global = r_cut;
     break;
   }
+#endif
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU:
+    if (max_cut_global < ewaldgpu_params.rcut)
+        max_cut_global = ewaldgpu_params.rcut;
+  break;
 #endif
   case COULOMB_DH:
     if (max_cut_global < dh_params.r_cut)
@@ -681,6 +694,8 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "HARMONIC";    
   case BONDED_IA_QUARTIC:
     return "QUARTIC";
+  case BONDED_IA_BONDED_COULOMB:
+    return "BONDED_COULOMB";
   case BONDED_IA_SUBT_LJ:
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:
@@ -703,6 +718,13 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "VOLUME_FORCE";
   case BONDED_IA_STRETCHLIN_FORCE:
     return "STRETCHLIN_FORCE";
+  case BONDED_IA_IBM_TRIEL:
+    return "IBM_TRIEL";
+  case BONDED_IA_IBM_VOLUME_CONSERVATION:
+    return "IBM_VOLUME_CONSERVATION";
+  case BONDED_IA_IBM_TRIBEND:
+    return "IBM_TRIBEND";
+      
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
         this_node, type);
@@ -801,8 +823,8 @@ int interactions_sanity_checks()
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
-  default: break;
 #endif
+  default: break;
   }
 #endif /* ifdef ELECTROSTATICS */
 

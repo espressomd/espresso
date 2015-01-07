@@ -148,7 +148,7 @@ if { $components == 1 }  {
 
   #note that the linear interpolation in SC is different from LB, hence the different terminal velocity
   if { $components == 1 }  { 
-    set vel_works 0.1092247459
+    set vel_works 0.1094909892; # 0.1092247459 value for incorrect 3pt coupling
   }
 
   # check for the right terminal velocity

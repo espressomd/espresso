@@ -63,6 +63,9 @@ libEspresso_la_SOURCES = \
 	lb-boundaries.cpp lb-boundaries.hpp \
 	lb-d3q18.hpp lb-d3q19.hpp \
 	lbgpu.cpp lbgpu.hpp\
+	lees_edwards.cpp lees_edwards.hpp \
+	lees_edwards_domain_decomposition.cpp lees_edwards_domain_decomposition.hpp \
+	lees_edwards_comms_manager.cpp lees_edwards_comms_manager.hpp \
 	metadynamics.cpp metadynamics.hpp \
 	modes.cpp modes.hpp \
 	molforces.cpp molforces.hpp \
@@ -77,7 +80,10 @@ libEspresso_la_SOURCES = \
 	random.cpp random.hpp \
 	rattle.cpp rattle.hpp \
 	reaction.cpp reaction.hpp \
+	readpdb.cpp readpdb.hpp \
+	Ringbuffer.hpp \
 	rotation.cpp rotation.hpp \
+	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
 	statistics_chain.cpp statistics_chain.hpp \
@@ -100,7 +106,8 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
-	EspressoSystemInterface.hpp EspressoSystemInterface.cpp
+	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
+	PdbParser.cpp PdbParser.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -135,6 +142,7 @@ libEspresso_la_SOURCES += \
 	harmonic.cpp harmonic.hpp \
 	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
+	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
@@ -142,6 +150,16 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
 	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
+
+# Immersed Boundary
+libEspresso_la_SOURCES += \
+	immersed_boundary/ibm_main.cpp                immersed_boundary/ibm_main.hpp \
+	immersed_boundary/ibm_triel.cpp               immersed_boundary/ibm_triel.hpp \
+	immersed_boundary/ibm_volume_conservation.cpp immersed_boundary/ibm_volume_conservation.hpp \
+	immersed_boundary/ibm_tribend.cpp             immersed_boundary/ibm_tribend.hpp \
+	immersed_boundary/ibm_tribend_helpers.hpp \
+	immersed_boundary/ibm_cuda_interface.cpp      immersed_boundary/ibm_cuda_interface.hpp 
+
 
 # Coulomb methods
 libEspresso_la_SOURCES += \
@@ -164,6 +182,7 @@ libEspresso_la_SOURCES += \
 	actor/ActorList.cpp actor/ActorList.hpp \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
+	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
@@ -179,17 +198,21 @@ CUDA_HEADER_FILES = \
 	p3m_gpu.hpp \
 	cuda_init.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
-	electrokinetics.hpp
+	electrokinetics.hpp \
+	fd-electrostatics.hpp
 
 CUDA_SOURCE_FILES = \
 	cuda_init_cuda.cu \
 	cuda_common_cuda.cu \
 	electrokinetics_cuda.cu \
+	fd-electrostatics_cuda.cu \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
-	actor/HarmonicWell_cuda.cu
+	actor/EwaldgpuForce_cuda.cu \
+	actor/HarmonicWell_cuda.cu \
+	immersed_boundary/ibm_cuda.cu 	
 
 # include the dependency tracking files
 include ./$(DEPDIR)/cuda_init_cuda.Plo
@@ -199,7 +222,10 @@ include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
+include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
+include ./actor/$(DEPDIR)/EwaldgpuForce.Plo
+include ./actor/$(DEPDIR)/EwaldgpuForce_cuda.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 

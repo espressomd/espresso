@@ -125,7 +125,7 @@ double dawaanr_calculations(int force_flag, int energy_flag)
   double u; 
   int i,j,c,cc;
   
-  if(n_nodes!=1) {fprintf(stderr,"error:  DAWAANR is just for one cpu .... \n"); exit(1);}
+  if(n_nodes!=1) {fprintf(stderr,"error:  DAWAANR is just for one cpu .... \n"); errexit();}
   if(!(force_flag) && !(energy_flag) ) {fprintf(stderr," I don't know why you call dawaanr_caclulations with all flags zero \n"); return 0;}
   
   // Variable to sum up the energy
@@ -136,13 +136,13 @@ double dawaanr_calculations(int force_flag, int energy_flag)
     // Iterate over all particles in this cell
     for(i=0;i<local_cells.cell[c]->n;i++) {
       // If the particle has no dipole moment, ignore it
-      if( local_cells.cell[c]->part[i].p.dipm < 1.e-11 ) 
+      if( local_cells.cell[c]->part[i].p.dipm == 0.0 ) 
         continue;
       
       // Consider interaction of this particle with the others in the same cell
       for (j=i+1;j<local_cells.cell[c]->n; j++)	{
         // If the particle has no dipole moment, ignore it
-        if( local_cells.cell[c]->part[j].p.dipm < 1.e-11 ) 
+        if( local_cells.cell[c]->part[j].p.dipm == 0.0 ) 
           continue;
         // Calculate energy and/or force between the particles
 	u+=calc_dipole_dipole_ia(&local_cells.cell[c]->part[i],&local_cells.cell[c]->part[j],force_flag);
@@ -155,7 +155,7 @@ double dawaanr_calculations(int force_flag, int energy_flag)
 	// Iterate over the particles in this cell
 	for (j=0;j<local_cells.cell[cc]->n;j++) {
 	  // If it doesn't have dipole moment, ignore
-	  if( local_cells.cell[cc]->part[j].p.dipm < 1.e-11 ) 
+	  if( local_cells.cell[cc]->part[j].p.dipm == 0.0 ) 
 	    continue;
         
 	  // Calculate energy and/or force between the particles
@@ -215,7 +215,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
   double u;
 
   
-  if(n_nodes!=1) {fprintf(stderr,"error: magnetic Direct Sum is just for one cpu .... \n"); exit(1);}
+  if(n_nodes!=1) {fprintf(stderr,"error: magnetic Direct Sum is just for one cpu .... \n"); errexit();}
   if(!(force_flag) && !(energy_flag) ) {fprintf(stderr," I don't know why you call dawaanr_caclulations with all flags zero \n"); return 0;}
 
   x = (double *) malloc(sizeof(double)*n_part);
@@ -244,7 +244,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
     part = cell->part;
     np   = cell->n;
     for(i=0;i<np;i++) {
-      if( part[i].p.dipm > 1.e-11 ) {
+      if( part[i].p.dipm != 0.0 ) {
        
 	mx[dip_particles]=part[i].r.dip[0];
 	my[dip_particles]=part[i].r.dip[1];
@@ -298,9 +298,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
 	 
     for(i=0;i<3;i++){
       NCUT[i]=Ncut_off_magnetic_dipolar_direct_sum;
-#ifdef PARTIAL_PERIODIC
       if(PERIODIC(i) == 0)  {NCUT[i]=0;}  
-#endif            
     }
     NCUT2=Ncut_off_magnetic_dipolar_direct_sum*Ncut_off_magnetic_dipolar_direct_sum;
 	     
@@ -401,7 +399,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
       part = cell->part;
       np   = cell->n;
       for(i=0;i<np;i++) {
-	if( part[i].p.dipm  > 1.e-11 ) {
+	if( part[i].p.dipm != 0.0 ) {
 	 
 	  part[i].f.f[0]+=coulomb.Dprefactor*fx[dip_particles2];
 	  part[i].f.f[1]+=coulomb.Dprefactor*fy[dip_particles2];
@@ -419,7 +417,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
     }
    
     /* small checking */
-    if(dip_particles != dip_particles2) { fprintf(stderr,"magnetic direct sum calculations: error mismatch of particles \n"); exit(1);}
+    if(dip_particles != dip_particles2) { fprintf(stderr,"magnetic direct sum calculations: error mismatch of particles \n"); errexit();}
   } /*of if force_flag */
   
   /* free memory used */
@@ -442,7 +440,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
 #endif
   }
  
-  return 0.5*u;
+  return 0.5*coulomb.Dprefactor*u;
 } 
  
 int dawaanr_set_params()

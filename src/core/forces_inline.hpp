@@ -21,64 +21,6 @@
 #ifndef _FORCES_INLINE_HPP
 #define _FORCES_INLINE_HPP
 
-/*#include "forces.hpp"
-
-#include <vector>
-#include "utils.hpp"
-#include "thermostat.hpp"
-#ifdef MOLFORCES
-#include "topology.hpp"
-#endif
-#include "npt.hpp"
-#include "virtual_sites.hpp"
-
-#include "p3m.hpp"
-#include "p3m-dipolar.hpp"
-#include "lj.hpp"
-#include "ljgen.hpp"
-#include "steppot.hpp"
-#include "hertzian.hpp"
-#include "gaussian.hpp"
-#include "bmhtf-nacl.hpp"
-#include "buckingham.hpp"
-#include "soft_sphere.hpp"
-#include "hat.hpp"
-#include "maggs.hpp"
-#include "tab.hpp"
-#include "overlap.hpp"
-#include "ljcos.hpp"
-#include "ljcos2.hpp"
-#include "ljangle.hpp"
-#include "gb.hpp"
-#include "fene.hpp"
-#include "object-in-fluid/stretching_force.hpp"
-#include "object-in-fluid/stretchlin_force.hpp"
-#include "object-in-fluid/area_force_local.hpp"
-#include "object-in-fluid/area_force_global.hpp"
-#include "object-in-fluid/bending_force.hpp"
-#include "object-in-fluid/volume_force.hpp"
-#include "harmonic.hpp"
-#include "subt_lj.hpp"
-#include "angle.hpp"
-#include "angle_harmonic.hpp"
-#include "angle_cosine.hpp"
-#include "angle_cossquare.hpp"
-#include "angledist.hpp"
-#include "dihedral.hpp"
-#include "debye_hueckel.hpp"
-#include "endangledist.hpp"
-#include "reaction_field.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "comforce.hpp"
-#include "comfixed.hpp"
-#include "molforces.hpp"
-#include "morse.hpp"
-#include "elc.hpp"
-#include "iccp3m.hpp"
-#include "collision.hpp" 
-#include "external_potential.hpp"*/
-
 #ifdef MOLFORCES
 #include "topology.hpp"
 #endif
@@ -131,6 +73,16 @@
 #include "metadynamics.hpp"
 #include "angle.hpp"
 #include "quartic.hpp"
+#ifdef ELECTROSTATICS
+#include "bonded_coulomb.hpp"
+#endif
+#include "actor/EwaldgpuForce_ShortRange.hpp"
+#include "immersed_boundary/ibm_main.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
+#include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "immersed_boundary/ibm_tribend.hpp"
+
+using namespace std;
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
@@ -169,10 +121,10 @@ inline void init_local_particle_force(Particle *part) {
   }
 
 #ifdef EXTERNAL_FORCES
-  if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
-    part->f.f[0] += part->l.ext_force[0];
-    part->f.f[1] += part->l.ext_force[1];
-    part->f.f[2] += part->l.ext_force[2];
+  if(part->p.ext_flag & PARTICLE_EXT_FORCE) {
+    part->f.f[0] += part->p.ext_force[0];
+    part->f.f[1] += part->p.ext_force[1];
+    part->f.f[2] += part->p.ext_force[2];
   }
 #endif
 
@@ -184,13 +136,25 @@ inline void init_local_particle_force(Particle *part) {
     part->f.torque[1] = 0;
     part->f.torque[2] = 0;
 
-    #ifdef EXTERNAL_FORCES
-      if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
-        part->f.torque[0] += part->l.ext_torque[0];
-        part->f.torque[1] += part->l.ext_torque[1];
-        part->f.torque[2] += part->l.ext_torque[2];
-      }
-    #endif
+#ifdef EXTERNAL_FORCES
+    if(part->p.ext_flag & PARTICLE_EXT_TORQUE) 
+    {
+      part->f.torque[0] += part->p.ext_torque[0];
+      part->f.torque[1] += part->p.ext_torque[1];
+      part->f.torque[2] += part->p.ext_torque[2];
+    }
+#endif
+
+#ifdef ENGINE
+    // apply a swimming force in the direction of
+    // the particle's orientation axis
+    if ( part->swim.swimming )
+    {
+      part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
+      part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
+      part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+    }
+#endif
 
     /* and rescale quaternion, so it is exactly of unit length */
     scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
@@ -273,6 +237,8 @@ inline void force_calc()
 #endif
   init_forces();
 
+  calc_long_range_forces();
+
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_ia();
@@ -311,8 +277,11 @@ inline void force_calc()
         add_area_global_force(area,i);
     }
 #endif
-
-  calc_long_range_forces();
+  
+#ifdef IMMERSED_BOUNDARY
+  // Must be done here. Forces need to be ghost-communicated
+    IBM_VolumeConservation();
+#endif
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
@@ -563,6 +532,11 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   case COULOMB_MMM2D:
 	  if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
 	  break;
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU:
+	  if (q1q2) add_ewald_gpu_coulomb_pair_force(p1,p2,d,dist,force);
+	  break;
+#endif
   default:
 	  break;
   }
@@ -624,14 +598,13 @@ inline void add_bonded_force(Particle *p1)
   double torque1[3] = { 0., 0., 0. };
   double torque2[3] = { 0., 0., 0. };
 #endif
-  char *errtxt;
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
   int i, j, type_num, n_partners, bond_broken;
   BondedInteraction type;
 
   i = 0;
-  while(i<p1->bl.n) {
+  while (i<p1->bl.n) {
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
@@ -640,9 +613,10 @@ inline void add_bonded_force(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"{078 bond broken between particles %d and %d (particles not stored on the same node)} ",
-	      p1->p.identity, p1->bl.e[i-1]);
+      ostringstream msg;
+      msg << "bond broken between particles " << p1->p.identity << " and " 
+          << p1->bl.e[i-1] << " (particles are not stored on the same node)";
+      runtimeError(msg);
       return;
     }
 
@@ -650,9 +624,12 @@ inline void add_bonded_force(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-	errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtxt,"{079 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
+        ostringstream msg;
+        msg << "bond broken between particles " 
+            << p1->p.identity << ", " 
+            << p1->bl.e[i-2] << " and "
+            << p1->bl.e[i-1] << " (particles are not stored on the same node)";
+        runtimeError(msg);
 	return;
       }
     }
@@ -661,9 +638,10 @@ inline void add_bonded_force(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtxt,"{080 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
+      ostringstream msg;
+      msg <<"bond broken between particles "<< p1->p.identity << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2]
+            << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
+      runtimeError(msg);
 	return;
       }
     }
@@ -685,6 +663,11 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_QUARTIC:
       bond_broken = calc_quartic_pair_force(p1, p2,  iaparams, dx, force);
       break;
+#ifdef ELECTROSTATICS
+    case BONDED_IA_BONDED_COULOMB:
+      bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
     case BONDED_IA_STRETCHING_FORCE:
       bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);
       break;
@@ -707,6 +690,58 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = 0;
       break;
 #endif
+      
+// IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
+/*      case BONDED_IA_IBM_WALL_REPULSION:
+        IBM_WallRepulsion_CalcForce(p1, iaparams);
+        bond_broken = 0;
+        // These may be added later on, but we set them to zero because the force has already been added in IBM_WallRepulsion_CalcForce
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;*/
+      case BONDED_IA_IBM_TRIEL:
+        bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
+        // These may be added later on, but we set them to zero because the force has already been added in IBM_Triel_CalcForce
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      case BONDED_IA_IBM_VOLUME_CONSERVATION:
+        bond_broken = 0;
+        // Don't do anything here. We calculate and add the global volume forces in IBM_VolumeConservation. They cannot be calculated on a per-bond basis
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      case BONDED_IA_IBM_TRIBEND:
+      {
+        // First build neighbor list. This includes all nodes around the central node.
+        const int numNeighbors = iaparams->num;
+        Particle **neighbors = new Particle *[numNeighbors];
+        // Three are already there
+        neighbors[0] = p2;
+        neighbors[1] = p3;
+        neighbors[2] = p4;
+        // Get rest
+        for (int j=3; j < numNeighbors; j++)
+          neighbors[j] = local_particles[p1->bl.e[i++]];
+        
+        IBM_Tribend_CalcForce(p1, numNeighbors, neighbors, *iaparams);
+        bond_broken = 0;
+        
+        // Clean up
+        delete []neighbors;
+        
+        // These may be added later on, but we set them to zero because the force has
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+      }
+#endif
+        
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
@@ -762,8 +797,9 @@ inline void add_bonded_force(Particle *p1)
 	bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
 	break;
       default:
-	errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtxt,"{081 add_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
+      ostringstream msg;
+      msg << "add_bonded_force: tabulated bond type of atom "<< p1->p.identity << " unknown\n";
+      runtimeError(msg);
 	return;
       }
       break;
@@ -781,8 +817,9 @@ inline void add_bonded_force(Particle *p1)
         bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
         break;
       default:
-        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-        ERROR_SPRINTF(errtxt,"{081 add_bonded_force: overlapped bond type of atom %d unknown\n", p1->p.identity);
+          ostringstream msg;
+          msg <<"add_bonded_force: overlapped bond type of atom "<< p1->p.identity << " unknown\n";
+          runtimeError(msg);
         return;
       }
       break;
@@ -794,17 +831,18 @@ inline void add_bonded_force(Particle *p1)
       break;
 #endif
     default :
-      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"{082 add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);
+        ostringstream msg;
+        msg <<"add_bonded_force: bond type of atom "<< p1->p.identity << " unknown\n";
+        runtimeError(msg);
       return;
     }
 
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-        char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-        ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
-          p1->p.identity, p2->p.identity);
+          ostringstream msg;
+          msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity<<". Distnace vecotr: "<<dx[0]<<" "<<dx[1]<<" "<<dx[2];
+          runtimeError(msg);
         continue;
       }
       
@@ -833,9 +871,10 @@ inline void add_bonded_force(Particle *p1)
       break;
     case 2:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity); 
+      ostringstream msg;
+      msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and "
+          << p3->p.identity;
+      runtimeError(msg);
 	continue;
       }
       
@@ -863,9 +902,10 @@ switch (type) {
       break;
     case 3:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+      ostringstream msg;
+      msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
+          << ", " << p3->p.identity << " and " << p4->p.identity;
+      runtimeError(msg);
 	continue;
       }
       for (j = 0; j < 3; j++) {
@@ -902,18 +942,18 @@ inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
 inline void check_particle_force(Particle *part) {
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.f[i])) {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle %d was NAN.} ",
-		    part->p.identity);
+        ostringstream msg;
+        msg << "force on particle "<< part->p.identity << " was NAN.";
+        runtimeError(msg);
     }
   }
 
 #ifdef ROTATION
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.torque[i])) {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle %d was NAN.} ",
-		    part->p.identity);
+        ostringstream msg;
+        msg << "force on particle "<< part->p.identity << " was NAN.";
+        runtimeError(msg);
     }
   }
 #endif

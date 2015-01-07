@@ -19,22 +19,20 @@
 #include "config.hpp"
 #ifdef CUDA /* Terminates at end of file */
 
-
-
 #include <cuda.h>
 #include <cufft.h>
-
-
-
+#include <iostream>
 #include <stdio.h>
-#include "lb-boundaries.hpp"
-#include "electrokinetics.hpp"
+#include <sstream>
+#include <string>
+#include "constraint.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
+#include "electrokinetics.hpp"
+#include "errorhandling.hpp"
+#include "fd-electrostatics.hpp"
+#include "lb-boundaries.hpp"
 #include "lbgpu.hpp"
-#include "constraint.hpp"
-
-
 
 #ifdef ELECTROKINETICS /* Terminates at end of file */
 
@@ -91,9 +89,8 @@ extern EK_parameters* lb_ek_parameters_gpu;
   unsigned int old_number_of_species = 0;
   unsigned int old_number_of_boundaries = 0;
 
-  cufftHandle plan_fft;
-  cufftHandle plan_ifft;
-  
+  FdElectrostatics* electrostatics = NULL;
+
   bool initialized = false;
   
   extern LB_parameters_gpu lbpar_gpu;
@@ -1664,20 +1661,6 @@ __global__ void ek_init_species_density_homogeneous() {
 }
 
 
-__global__ void ek_multiply_greensfcn() {
-
-  unsigned int index = ek_getThreadIndex();
-  
-  if( index < ek_parameters_gpu.dim_z *
-              ek_parameters_gpu.dim_y *
-              (ek_parameters_gpu.dim_x / 2 + 1) ) 
-  {
-    ek_parameters_gpu.charge_potential[ index ].x *= ek_parameters_gpu.greensfcn[ index ];
-    ek_parameters_gpu.charge_potential[ index ].y *= ek_parameters_gpu.greensfcn[ index ];
-  }
-}
-
-
 __global__ void ek_gather_species_charge_density() {
 
   unsigned int index = ek_getThreadIndex();
@@ -1802,47 +1785,6 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
 }
 
 
-__global__ void ek_create_greensfcn() {
-
-  unsigned int index = ek_getThreadIndex();
-  unsigned int tmp;
-  unsigned int coord[3];
-  
-  coord[0] = index % ( ek_parameters_gpu.dim_x / 2 + 1 );
-  tmp      = index / ( ek_parameters_gpu.dim_x / 2 + 1 );
-  coord[1] = tmp % ek_parameters_gpu.dim_y;
-  coord[2] = tmp / ek_parameters_gpu.dim_y;
-  
-  if( index < ek_parameters_gpu.dim_z *
-              ek_parameters_gpu.dim_y *
-              ( ek_parameters_gpu.dim_x / 2 + 1 ) ) 
-  {
-              
-    if( index == 0 ) 
-    {
-      //setting 0th fourier mode to 0 enforces charge neutrality
-      ek_parameters_gpu.greensfcn[index] = 0.0f;
-    }
-    else 
-    {
-      ek_parameters_gpu.greensfcn[ index ] =
-        -4.0f * PI_FLOAT * ek_parameters_gpu.bjerrumlength *
-        ek_parameters_gpu.T * ek_parameters_gpu.agrid * ek_parameters_gpu.agrid *
-        0.5f /
-        ( cos( 2.0f * PI_FLOAT * coord[0] / (cufftReal) ek_parameters_gpu.dim_x ) +
-          cos( 2.0f * PI_FLOAT * coord[1] / (cufftReal) ek_parameters_gpu.dim_y ) +
-          cos( 2.0f * PI_FLOAT * coord[2] / (cufftReal) ek_parameters_gpu.dim_z ) -
-          3.0f
-        ) /
-        ( ek_parameters_gpu.dim_x *
-          ek_parameters_gpu.dim_y *
-          ek_parameters_gpu.dim_z
-        );
-    }
-  }
-}
-
-
 __global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
 
   unsigned int index = ek_getThreadIndex();
@@ -1959,29 +1901,7 @@ void ek_integrate_electrostatics() {
                 ( particle_data_gpu, ek_lbparameters_gpu ) );
   }
   
-  if( cufftExecR2C( plan_fft,
-                    (cufftReal*) ek_parameters.charge_potential,
-                    ek_parameters.charge_potential               ) != CUFFT_SUCCESS ) 
-  {
-                    
-    fprintf(stderr, "ERROR: Unable to execute FFT plan\n");
-  }
-  
-  blocks_per_grid_x =
-    ( ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) +
-      threads_per_block * blocks_per_grid_y - 1) / 
-    ( threads_per_block * blocks_per_grid_y );
-  dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
-  
-  KERNELCALL( ek_multiply_greensfcn, dim_grid, threads_per_block, () );
-    
-  if( cufftExecC2R( plan_ifft,
-                    ek_parameters.charge_potential,
-                    (cufftReal*) ek_parameters.charge_potential ) != CUFFT_SUCCESS )
-  {
-                    
-    fprintf(stderr, "ERROR: Unable to execute iFFT plan\n");
-  }
+  electrostatics->calculatePotential();
 }
 
 
@@ -2227,16 +2147,6 @@ int ek_init() {
       return 1;
     }
     
-    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.greensfcn,
-                             sizeof( cufftReal ) * 
-                ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) ) );
-    
-    if( cudaGetLastError() != cudaSuccess ) 
-    {
-      fprintf(stderr, "ERROR: Failed to allocate\n");
-      return 1;
-    }
-
     cudaMallocHost((void**) &ek_parameters.node_is_catalyst,
                              sizeof( char ) * 
                 ek_parameters.dim_z*ek_parameters.dim_y*ek_parameters.dim_x );
@@ -2246,76 +2156,32 @@ int ek_init() {
       fprintf(stderr, "ERROR: Failed to allocate\n");
       return 1;
     }
-    
+   
+    //initialize electrostatics
+    if(electrostatics != NULL)
+      delete electrostatics;
+
+    FdElectrostatics::InputParameters es_parameters = {ek_parameters.bjerrumlength, ek_parameters.T, ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z, ek_parameters.agrid};
+    try {
+      electrostatics = new FdElectrostatics(es_parameters, stream[0]);
+    }
+    catch(std::string e) {
+      std::cout << "Error in initialization of electrokinetics electrostatics solver: " << e << std::endl;
+      return 1;
+    }
+
+    ek_parameters.charge_potential = electrostatics->getGrid().grid;
     cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
-    
-    blocks_per_grid_x =
-      ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1) +
-        threads_per_block * blocks_per_grid_y - 1
-      ) / ( threads_per_block * blocks_per_grid_y );
-    dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
-    KERNELCALL( ek_create_greensfcn, dim_grid, threads_per_block, () );
 
-    /* create 3D FFT plans */
-    
-    if( cufftPlan3d( &plan_fft,
-                     ek_parameters.dim_z,
-                     ek_parameters.dim_y,
-                     ek_parameters.dim_x,
-                     CUFFT_R2C            ) != CUFFT_SUCCESS ) 
-    {
-      fprintf(stderr, "ERROR: Unable to create fft plan\n");
-      return 1;
-    }
-    
-    if( cufftSetCompatibilityMode( plan_fft, CUFFT_COMPATIBILITY_NATIVE ) != CUFFT_SUCCESS ) 
-    {    
-      fprintf(stderr, "ERROR: Unable to set fft compatibility mode to native\n");
-      return 1;
-    }
-    
-    if( cufftSetStream( plan_fft, stream[0]) != CUFFT_SUCCESS ) 
-    {
-        fprintf(stderr, "ERROR: Unable to assign FFT to cuda stream\n");
-        return 1;
-    }
-
-    if( cufftPlan3d( &plan_ifft,
-                     ek_parameters.dim_z,
-                     ek_parameters.dim_y,
-                     ek_parameters.dim_x,
-                     CUFFT_C2R            ) != CUFFT_SUCCESS ) 
-    {   
-      fprintf(stderr, "ERROR: Unable to create ifft plan\n");
-      return 1;
-    }
-    
-    if( cufftSetCompatibilityMode( plan_ifft, CUFFT_COMPATIBILITY_NATIVE ) != CUFFT_SUCCESS) 
-    {   
-      fprintf(stderr, "ERROR: Unable to set ifft compatibility mode to native\n");
-      return 1;
-    }
-    
-    if( cufftSetStream( plan_ifft, stream[0] ) != CUFFT_SUCCESS )
-    {    
-      fprintf(stderr, "ERROR: Unable to assign FFT to cuda stream\n");
-      return 1;
-    }
-    
+    //clear initial LB force and finish up
     blocks_per_grid_x =
       ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x ) +
         threads_per_block * blocks_per_grid_y - 1
       ) / ( threads_per_block * blocks_per_grid_y );
     dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
     KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
-    
-    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.charge_potential,
-                             sizeof( cufftComplex ) *
-                             ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) ) );
 
     initialized = true;
-
-    cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
   }
   else
   {
@@ -3307,7 +3173,6 @@ int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
 {
 
 #ifdef EK_BOUNDARIES
-  char *errtxt;
   double pos[3], dist, dist_vec[3];
 
   for(int z=0; z<int(ek_parameters.dim_z); z++) {
@@ -3353,8 +3218,9 @@ int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
         break;
                 
       default:
-        errtxt = runtime_error(128);
-        ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in ek_tag_reaction_nodes()\n", boundary->type);
+        std::ostringstream msg;
+        msg << "lbboundary type " << boundary->type << " not implemented";
+        runtimeError(msg);
     }
 
     if( dist <= 0.0 )

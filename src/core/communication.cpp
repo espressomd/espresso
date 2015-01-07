@@ -51,6 +51,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "maggs.hpp"
+#include "actor/EwaldgpuForce.hpp"
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "statistics_chain.hpp"
@@ -68,13 +69,14 @@
 #include "EspressoSystemInterface.hpp"
 #include "statistics_observable.hpp"
 
+using namespace std;
+
 int this_node = -1;
 int n_nodes = -1;
 MPI_Comm comm_cart;
-/**********************************************
- * slave callbacks.
- **********************************************/
-typedef void (SlaveCallback)(int node, int param);
+int graceful_exit = 0;
+/* whether there is already a termination going on. */
+static int terminated = 0;
 
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST \
@@ -84,6 +86,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_bcast_event_slave) \
   CB(mpi_place_particle_slave) \
   CB(mpi_send_v_slave) \
+  CB(mpi_send_swimming_slave) \
   CB(mpi_send_f_slave) \
   CB(mpi_send_q_slave) \
   CB(mpi_send_type_slave) \
@@ -119,7 +122,6 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_sync_topo_part_info_slave) \
   CB(mpi_send_mass_slave) \
   CB(mpi_send_solvation_slave) \
-  CB(mpi_gather_runtime_errors_slave) \
   CB(mpi_send_exclusion_slave) \
   CB(mpi_bcast_lb_params_slave) \
   CB(mpi_bcast_cuda_global_part_vars_slave) \
@@ -152,6 +154,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_external_potential_tabulated_read_potential_file_slave) \
   CB(mpi_external_potential_sum_energies_slave) \
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
+  CB(mpiRuntimeErrorCollectorGatherSlave)        \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -160,7 +163,7 @@ CALLBACK_LIST
 // create the list of callbacks
 #undef CB
 #define CB(name) name,
-static SlaveCallback *slave_callbacks[] = {
+static SlaveCallback * const slave_callbacks[] = {
   CALLBACK_LIST
 };
 
@@ -176,7 +179,6 @@ const char *names[] = {
 
 // tag which is used by MPI send/recv inside the slave functions
 #define SOME_TAG 42
-
 
 /** The requests are compiled statically here, so that after a crash
     you can get the last issued request from the debugger. */ 
@@ -219,9 +221,12 @@ void mpi_init(int *argc, char ***argv)
   MPI_Comm_create_errhandler((MPI_Handler_function *)mpi_core, &mpi_errh);
   MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
+
+  initRuntimeErrorCollector();
 }
 
-static void mpi_call(SlaveCallback cb, int node, int param) {
+#ifdef HAVE_MPI
+void mpi_call(SlaveCallback cb, int node, int param) {
   // find req number in callback array
   int reqcode;
   for (reqcode = 0; reqcode < N_CALLBACKS; reqcode++) {
@@ -245,10 +250,13 @@ static void mpi_call(SlaveCallback cb, int node, int param) {
   MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
 }
+#else
+
+void mpi_call(SlaveCallback cb, int node, int param) {}
+
+#endif
 
 /**************** REQ_TERM ************/
-
-static int terminated = 0;
 
 void mpi_stop()
 {
@@ -317,27 +325,25 @@ void mpi_who_has()
   Cell *cell;
   int *sizes = (int*)malloc(sizeof(int)*n_nodes);
   int *pdata = NULL;
-  int pdata_s = 0, i, c;
-  int pnode;
-  int n_part;
+  int pdata_s = 0;
 
   mpi_call(mpi_who_has_slave, -1, 0);
 
-  n_part = cells_get_n_particles();
+  int n_part = cells_get_n_particles();
   /* first collect number of particles on each node */
   MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 
-  for (i = 0; i <= max_seen_particle; i++)
+  for (int i = 0; i <= max_seen_particle; i++)
     particle_node[i] = -1;
 
   /* then fetch particle locations */
-  for (pnode = 0; pnode < n_nodes; pnode++) {
+  for (int pnode = 0; pnode < n_nodes; pnode++) {
     COMM_TRACE(fprintf(stderr, "node %d reports %d particles\n",
 		       pnode, sizes[pnode]));
     if (pnode == this_node) {
-      for (c = 0; c < local_cells.n; c++) {
+      for (int c = 0; c < local_cells.n; c++) {
 	cell = local_cells.cell[c];
-	for (i = 0; i < cell->n; i++)
+	for (int i = 0; i < cell->n; i++)
 	  particle_node[cell->part[i].p.identity] = this_node;
       }
     }
@@ -348,7 +354,7 @@ void mpi_who_has()
       }
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG,
 	       comm_cart, MPI_STATUS_IGNORE);
-      for (i = 0; i < sizes[pnode]; i++)
+      for (int i = 0; i < sizes[pnode]; i++)
 	particle_node[pdata[i]] = pnode;
     }
   }
@@ -495,6 +501,37 @@ void mpi_send_v_slave(int pnode, int part)
   }
 
   on_particle_change();
+}
+
+/****************** REQ_SET_SWIMMING ************/
+void mpi_send_swimming(int pnode, int part, ParticleParametersSwimming swim)
+{
+#ifdef ENGINE
+  mpi_call(mpi_send_swimming_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->swim = swim;
+  }
+  else {
+    MPI_Send(&swim, sizeof(ParticleParametersSwimming), MPI_BYTE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_swimming_slave(int pnode, int part)
+{
+#ifdef ENGINE
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+        MPI_Recv(&p->swim, sizeof(ParticleParametersSwimming), MPI_BYTE, 0, SOME_TAG,
+            comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
 }
 
 /****************** REQ_SET_F ************/
@@ -1764,6 +1801,11 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case COULOMB_MAGGS:
     MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart); 
     break;
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU:
+    MPI_Bcast(&ewaldgpu_params, sizeof(Ewaldgpu_params), MPI_BYTE, 0, comm_cart);
+    break;
+#endif
   case COULOMB_RF:
   case COULOMB_INTER_RF:
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0, comm_cart);
@@ -1833,12 +1875,12 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask, double torque[
     if (pnode == this_node) {
       Particle *p = local_particles[part];
       /* mask out old flags */
-      p->l.ext_flag &= ~mask;
+      p->p.ext_flag &= ~mask;
       /* set new values */
-      p->l.ext_flag |= flag;
+      p->p.ext_flag |= flag;
 
       if (mask & PARTICLE_EXT_TORQUE) 
-        memcpy(p->l.ext_torque, torque, 3*sizeof(double));
+        memcpy(p->p.ext_torque, torque, 3*sizeof(double));
     }
     else {
       s_buf[0] = flag; s_buf[1] = mask;
@@ -1861,12 +1903,12 @@ void mpi_send_ext_torque_slave(int pnode, int part)
       Particle *p = local_particles[part];
           MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
       /* mask out old flags */
-      p->l.ext_flag &= ~s_buf[1];
+      p->p.ext_flag &= ~s_buf[1];
       /* set new values */
-      p->l.ext_flag |= s_buf[0];
+      p->p.ext_flag |= s_buf[0];
       
       if (s_buf[1] & PARTICLE_EXT_TORQUE)
-        MPI_Recv(p->l.ext_torque, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+        MPI_Recv(p->p.ext_torque, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     }
 
     on_particle_change();
@@ -1883,11 +1925,11 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3]
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     /* mask out old flags */
-    p->l.ext_flag &= ~mask;
+    p->p.ext_flag &= ~mask;
     /* set new values */
-    p->l.ext_flag |= flag;
+    p->p.ext_flag |= flag;
     if (mask & PARTICLE_EXT_FORCE)
-      memcpy(p->l.ext_force, force, 3*sizeof(double));
+      memcpy(p->p.ext_force, force, 3*sizeof(double));
   }
   else {
     s_buf[0] = flag; s_buf[1] = mask;
@@ -1908,12 +1950,12 @@ void mpi_send_ext_force_slave(int pnode, int part)
     Particle *p = local_particles[part];
         MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     /* mask out old flags */
-    p->l.ext_flag &= ~s_buf[1];
+    p->p.ext_flag &= ~s_buf[1];
     /* set new values */
-    p->l.ext_flag |= s_buf[0];
+    p->p.ext_flag |= s_buf[0];
     
     if (s_buf[1] & PARTICLE_EXT_FORCE)
-      MPI_Recv(p->l.ext_force, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+      MPI_Recv(p->p.ext_force, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
   on_particle_change();
@@ -2399,56 +2441,6 @@ void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy)
 }
 
 
-
-/******************* REQ_GET_ERRS ********************/
-
-int mpi_gather_runtime_errors(char **errors)
-{
-  // Tell other processors to send their erros
-  mpi_call(mpi_gather_runtime_errors_slave, -1, 0);
-
-  // If no processor encountered an error, return
-  if (!check_runtime_errors())
-    return ES_OK;
-
-  // gather the maximum length of the error messages
-  int *errcnt = (int*)malloc(n_nodes*sizeof(int));
-  MPI_Gather(&n_error_msg, 1, MPI_INT, errcnt, 1, MPI_INT, 0, comm_cart);
-
-  for (int node = 0; node < n_nodes; node++) {
-    if (errcnt[node] > 0) {
-      errors[node] = (char *)malloc(errcnt[node]);
-
-      if (node == 0)
-	strcpy(errors[node], error_msg);
-      else 
-	MPI_Recv(errors[node], errcnt[node], MPI_CHAR, node, 0, comm_cart, MPI_STATUS_IGNORE);
-    }
-    else
-      errors[node] = NULL;
-  }
-
-  /* reset error message on master node */
-  error_msg = (char*)realloc(error_msg, n_error_msg = 0);
-
-  free(errcnt);
-
-  return ES_ERROR;
-}
-
-void mpi_gather_runtime_errors_slave(int node, int parm)
-{
-  if (!check_runtime_errors())
-    return;
-
-  MPI_Gather(&n_error_msg, 1, MPI_INT, NULL, 0, MPI_INT, 0, comm_cart);
-  if (n_error_msg > 0) {
-    MPI_Send(error_msg, n_error_msg, MPI_CHAR, 0, 0, comm_cart);
-    /* reset error message on slave node */
-    error_msg = (char*)realloc(error_msg, n_error_msg = 0);
-  }
-}
-
 /********************* REQ_SET_EXCL ********/
 void mpi_send_exclusion(int part1, int part2, int _delete)
 {
@@ -2922,6 +2914,18 @@ void mpi_loop()
   
   }
 }
+
+/*********************** error abort ****************/
+
+void mpi_abort()
+{
+  if (terminated) return;
+
+  terminated = 1;
+  MPI_Abort(comm_cart, -1);
+}
+
+/*********************** other stuff ****************/
 
 void mpi_external_potential_broadcast(int number) {
   mpi_call(mpi_external_potential_broadcast_slave, 0, number);

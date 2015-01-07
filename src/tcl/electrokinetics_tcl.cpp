@@ -244,7 +244,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       {
         /* delete all */
         Tcl_AppendResult(interp, "Can only delete individual electrokinetics boundaries", (char *) NULL);
-        err = TCL_ERROR;
+        return (TCL_ERROR);
       }
       else 
       {
@@ -256,6 +256,9 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
 	        Tcl_AppendResult(interp, "Can not delete non existing electrokinetics boundary", (char *) NULL);
 	        return (TCL_ERROR);
         }
+
+        Tcl_AppendResult(interp, "electrokinetics boundary delete not implemented", (char *) NULL);
+        return (TCL_ERROR);
       }
     }
     else 

@@ -192,6 +192,19 @@ void init_particle(Particle *part)
   part->f.torque[0] = 0.0;
   part->f.torque[1] = 0.0;
   part->f.torque[2] = 0.0;
+
+  // Swimming parameters
+#ifdef ENGINE
+  part->swim.swimming            = false;
+  part->swim.v_swim              = 0.0;
+  part->swim.f_swim              = 0.0;
+#if defined(LB) || defined(LB_GPU)
+  part->swim.push_pull           = 0;
+  part->swim.dipole_length       = 0.0;
+  part->swim.rotational_friction = 0.0;
+#endif
+#endif
+
 #endif
 
   /* ParticleLocal */
@@ -246,14 +259,14 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef EXTERNAL_FORCES
-  part->l.ext_flag   = 0;
-  part->l.ext_force[0] = 0.0;
-  part->l.ext_force[1] = 0.0;
-  part->l.ext_force[2] = 0.0;
+  part->p.ext_flag   = 0;
+  part->p.ext_force[0] = 0.0;
+  part->p.ext_force[1] = 0.0;
+  part->p.ext_force[2] = 0.0;
   #ifdef ROTATION
-    part->l.ext_torque[0] = 0.0;
-    part->l.ext_torque[1] = 0.0;
-    part->l.ext_torque[2] = 0.0;
+    part->p.ext_torque[0] = 0.0;
+    part->p.ext_torque[1] = 0.0;
+    part->p.ext_torque[2] = 0.0;
   #endif
 #endif
 
@@ -308,18 +321,21 @@ int updatePartCfg(int bonds_flag)
     mpi_get_particles(partCfg,&partCfg_bl);
 
   for(j=0; j<n_part; j++)
-    unfold_position(partCfg[j].r.p,partCfg[j].l.i);
+    unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
+
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
 
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return 0;
   }
   if (!updatePartCfg(bonds_flag)) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not update positions of virtual sites in partcfg } ");
+      ostringstream msg;
+      msg <<"could not update positions of virtual sites in partcfg";
+      runtimeError(msg);
     return 0;
   }
 #endif
@@ -590,6 +606,24 @@ int set_particle_v(int part, double v[3])
   mpi_send_v(pnode, part, v);
   return ES_OK;
 }
+
+#ifdef ENGINE
+int set_particle_swimming(int part, ParticleParametersSwimming swim)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_swimming(pnode, part, swim);
+  return ES_OK;
+}
+#endif
 
 int set_particle_f(int part, double F[3])
 {
@@ -1082,8 +1116,9 @@ int change_particle_bond(int part, int *bond, int _delete)
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
-      char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{048 invalid/unknown bonded interaction type %d}", bond[0]);
+        ostringstream msg;
+        msg <<"invalid/unknown bonded interaction type " << bond[0];
+        runtimeError(msg);
       return ES_ERROR;
     }
   }
@@ -1181,7 +1216,9 @@ void local_place_particle(int part, double p[3], int _new)
   pp[0] = p[0];
   pp[1] = p[1];
   pp[2] = p[2];
-  fold_position(pp, i);
+
+  double vv[3]={0.,0.,0.};
+  fold_position(pp, vv, i);
   
   if (_new) {
     /* allocate particle anew */
@@ -1206,6 +1243,12 @@ void local_place_particle(int part, double p[3], int _new)
 
   PART_TRACE(fprintf(stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
 		     this_node, part, p[0], p[1], p[2]));
+
+#ifdef LEES_EDWARDS
+  pt->m.v[0] += vv[0];  
+  pt->m.v[1] += vv[1];  
+  pt->m.v[2] += vv[2];  
+#endif
 
   memcpy(pt->r.p, pp, 3*sizeof(double));
   memcpy(pt->l.i, i, 3*sizeof(int));

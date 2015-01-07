@@ -96,7 +96,7 @@ void local_system_CMS( double *sdata ) {
          y = 0.0, 
          z = 0.0;
   double ppos[3];
-  int img[3];
+  int    img[3];
 
 #ifdef MASS
 

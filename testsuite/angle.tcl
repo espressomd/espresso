@@ -60,7 +60,7 @@ foreach type { harmonic cosine cossquare }  {
 
   # load files for comparison
   if { [file exists "angle_$type.data"] } { set infile [open "angle_$type.data"]
-  } else { puts "Error: Could not find file \"angle_$type.data\".Aborting..."; exit }
+  } else { error_exit "could not find file \"angle_$type.data\"" }
   set infile_data [read $infile]
 
   # initialize i/o and temporary variables
@@ -110,10 +110,10 @@ foreach type { harmonic cosine cossquare }  {
 
   # Check if all deltas are smaller than the allowed error
   for { set i 0 } { $i <= $asteps } {incr i} {
-    if { [expr abs($delta_e($i))] > $epsilon } { error "Error: energy deviation too large" ; exit }
-    if { [expr abs($delta_fx($i))] > $epsilon } { puts "Error: force deviation too large"  ; exit}
-    if { [expr abs($delta_fy($i))] > $epsilon } { puts "Error: force deviation too large"  ; exit}
-    if { [expr abs($delta_fz($i))] > $epsilon } { puts "Error: force deviation too large"  ; exit}
+    if { [expr abs($delta_e($i))] > $epsilon } { error_exit "energy deviation too large" }
+    if { [expr abs($delta_fx($i))] > $epsilon } { error_exit "force deviation too large" }
+    if { [expr abs($delta_fy($i))] > $epsilon } { error_exit "force deviation too large" }
+    if { [expr abs($delta_fz($i))] > $epsilon } { error_exit "force deviation too large" }
   }
 
   puts ""

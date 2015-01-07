@@ -42,7 +42,7 @@
 #include "random.hpp"
 #include "integrate.hpp"
 #include "constraint.hpp"
-
+#include "global.hpp"
 
 
 
@@ -64,8 +64,9 @@ int mindist3(int part_id, double r_catch, int *ids) {
 	      --> prevent that! */
   for(i=0; i<n_part; i++) if (partCfgMD[i].p.identity == part_id) me = i; 
   if (me == -1) {
-    char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{049 failed to find desired particle %d} ",part_id);
+      ostringstream msg;
+      msg <<"failed to find desired particle " << part_id;
+      runtimeError(msg);
     return 0;
   }
   for (i=0; i<n_part; i++) {
@@ -134,7 +135,7 @@ int constraint_collision(double *p1, double *p2){
   double folded_pos1[3];
   double folded_pos2[3];
   int img[3];
-
+  
   memcpy(folded_pos1, p1, 3*sizeof(double));
   fold_position(folded_pos1, img);
 
@@ -162,13 +163,9 @@ int constraint_collision(double *p1, double *p2){
       if(d1*d2<0.0)
 	return 1;
       break;
-    case CONSTRAINT_MAZE:
-    case CONSTRAINT_PORE:
-    case CONSTRAINT_PLATE:
-    case CONSTRAINT_RHOMBOID:
+    default:
+      if (warnings) fprintf (stderr, "Warning: Only wall, cylinder and sphere constraints can be excluded from the polymer accessible volume.\n"); 
       break;
-    //default://@TODO: handle default case
-      //  break;
     }
   }
   return 0;

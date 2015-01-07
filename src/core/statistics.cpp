@@ -965,7 +965,6 @@ void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_
   free(label);
 }
 
-
 int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
   int i,j,t;
   int pi,bi;
@@ -988,9 +987,9 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
 
   /*Make sure particles are folded  */
   for (i = 0 ; i < n_part ; i++) {
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,0);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,1);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,2);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,0);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,1);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,2);
   }
 
   beadcount = 0;
@@ -1245,8 +1244,9 @@ void analyze_activate(int ind) {
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
     if (place_particle(i, pos)==ES_ERROR) {
-      char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{057 failed upon replacing particle %d in Espresso} ", i); 
+        ostringstream msg;
+        msg <<"failed upon replacing particle " << i << "  in Espresso";
+        runtimeError(msg);
     }
   }
 }

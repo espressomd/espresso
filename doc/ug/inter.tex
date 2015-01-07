@@ -826,6 +826,24 @@ radius.  Whenever a quartic bond gets longer than
 \var{r_\mathrm{cut}}, the bond will be reported as broken, and a
 background error will be raised.
 
+\subsection{Bonded coulomb}
+\index{bonded coulomb bond|mainindex}
+\index{interactions!bonded_coulomb|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  bonded_coulomb \var{\alpha}
+\end{essyntax}
+This creates a bond type with identificator \var{bondid} with a
+coulomb pair potential.
+It is given by
+\begin{equation}
+  V(r) = \frac{\alpha q_1 q_2}{r},
+\end{equation}
+where \var{q_1} and \var{q_2} are the charges of the bound particles.
+There is no cutoff, the bejerrum length of other coulomb interactions
+is not taken into account.
+
 \subsection{Subtracted Lennard-Jones bond}
 \index{subtracted Lennard-Jones bond|mainindex}
 \index{interactions!subtracted Lennard-Jones|mainindex}
@@ -1446,6 +1464,61 @@ have the following meaning:
   from the lower left corner of the simulation box in units of the
   mesh constant. Defaults to \codebox{{0.5 0.5 0.5}}.
 \end{description}
+
+
+\subsection{Coulomb Ewald GPU}
+\label{sec:coulombewald}
+\index{EwaldGPU method|mainindex}
+\index{interactions!EwaldGPU|mainindex}
+
+\begin{essyntax}
+  inter coulomb \var{l_B} ewaldgpu 
+  \var{r_\mathrm{cut}} \alt{\var{K_\mathrm{cut}} \asep \{\var{K_\mathrm{cut,x}} \var{K_\mathrm{cut,y}} \var{K_\mathrm{cut,x}}\}} \var{alpha}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+This command activates the Ewald method to compute the electrostatic
+interactions between charged particles.  The far field is computed by the GPU with single precision and the near field by the CPU with double precision. It only works for the case of cubic boxes.
+\begin{description}
+\item[\var{l_B}] Bjerrum length as positive floating point number
+\item[\var{r_\mathrm{cut}}] Real space cutoff as positive floating point number
+\item[\var{K_\mathrm{cut}}] Reciprocal space cutoff as single positive integer
+\item[\var{K_\mathrm{cut,xyz}}] Reciprocal space cutoff in x, y and z direction  (relevant for noncubic boxes)
+\item[\var{alpha}] Ewald parameter as positive floating point number
+\end{description}
+
+\subsubsection{Tuning Ewald GPU}
+\label{ssec:tuneewaldgpu}
+\begin{essyntax}
+  inter coulomb \var{l_B} ewaldgpu tune
+  accuracy \var{accuracy} precision \var{precision}
+  K_max \var{K_\mathrm{max}}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+The tuning algorithm first computes the optimal \var{r_\mathrm{cut}} and \var{alpha} for every \var{K_\mathrm{cut}} between one and \var{K_\mathrm{max}} as described in \cite{kolafa92}. Then the performance for all those (\var{K_\mathrm{cut}}, \var{r_\mathrm{cut}}, \var{alpha})-triplets will be measured via a short test simulation and the fastest will be chosen. 
+
+\begin{description}
+\item[\var{accuracy}] Maximal allowed root mean square error regarding the forces
+\item[\var{precision}] Determines how precise alpha will be computed
+\item[\var{K_\mathrm{max}}] Maximal reciprocal space cutoff \var{K_\mathrm{cut}} to be tested in the tuning algorithm
+\end{description}
+
+\subsubsection{Tuning Alpha Ewald GPU}
+\label{ssec:tunealphaewaldgpu}
+\begin{essyntax}
+  inter coulomb \var{l_B} ewaldgpu tunealpha
+  \var{r_\mathrm{cut}} \alt{\var{K_\mathrm{cut}} \asep \{\var{K_\mathrm{cut,x}} \var{K_\mathrm{cut,y}} \var{K_\mathrm{cut,x}}\}} \var{precision}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+If \var{K_\mathrm{cut}} and \var{r_\mathrm{cut}} are given by the user, then \keyword{tunealpha} computes the optimal \var{alpha} with the chosen \var{precision} as described in \cite{kolafa92}. But in general \keyword{tune} should be chosen for tuning. 
 
 
 \subsection{Debye-H\"uckel potential}
@@ -2114,7 +2187,7 @@ feel the viscous layer.
 This method was tested for Dissipative Particle Dynamics but it is
 intended for mesoscopic simulation methods in general. Note, that to
 use tunable-slip boundary interactions you have to apply \textbf{two}
-plane cell constraints with Lennard-Jones in addition to the
+wall constraints with Lennard-Jones in addition to the
 tunable-slip interaction. Make sure that the cutoff radius
 \var{r_\mathrm{cut}} is larger than the cutoff radius of the
 constraint Lennard-Jones interactions. Otherwise there is no
