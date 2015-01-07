@@ -1334,23 +1334,33 @@ int try_delete_bond(Particle *part, int *bond)
   IntList *bl = &part->bl;
   int i, j, type, partners;
 
+  // Empty bond means: delete all bonds
   if (!bond) {
     realloc_intlist(bl, bl->n = 0);
     return ES_OK;
   }
 
+  // Go over the bond list to find the bond to delete
   for (i = 0; i < bl->n;) {
     type = bl->e[i];
     partners = bonded_ia_params[type].num;
+    
+    // If the bond type does not match the one, we want to delete, skip 
     if (type != bond[0])
       i += 1 + partners;
     else {
+      // Go over the bond partners
       for(j = 1; j <= partners; j++)
       { 
+        // Leave the loop early, if the bond to delete and the bond with in the particle
+	// don't match
 	if (bond[j] != bl->e[i + j])
 	  break;
       }
+      // If we did not exit from the loop early, all parameters matched
+      // and we go on with deleting
       if (j > partners) {
+	// New length of bond list
 	bl->n -= 1 + partners;
 	memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
 	realloc_intlist(bl, bl->n);
