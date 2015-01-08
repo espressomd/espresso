@@ -82,6 +82,7 @@ libEspresso_la_SOURCES = \
 	reaction.cpp reaction.hpp \
 	readpdb.cpp readpdb.hpp \
 	Ringbuffer.hpp \
+	rotate_system.cpp rotate_system.hpp \
 	rotation.cpp rotation.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	specfunc.cpp specfunc.hpp \
