@@ -428,6 +428,9 @@ int lb_lbfluid_set_remove_momentum(void){
 int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_fz) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
+    if (lbpar_gpu.tau < 0.0)
+      return 2;
+
     /* external force density is stored in MD units */
     lbpar_gpu.ext_force[3*component+0] = (float)p_fx;
     lbpar_gpu.ext_force[3*component+1] = (float)p_fy;
@@ -437,6 +440,9 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_f
 #endif // LB_GPU
   } else {
 #ifdef LB
+    if (lbpar.tau < 0.0)
+      return 2;
+
     lbpar.ext_force[0] = p_fx;
     lbpar.ext_force[1] = p_fy;
     lbpar.ext_force[2] = p_fz;
