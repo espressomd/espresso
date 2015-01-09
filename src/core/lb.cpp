@@ -431,6 +431,9 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_f
     if (lbpar_gpu.tau < 0.0)
       return 2;
 
+    if (lbpar_gpu.rho[component] <= 0.0)
+      return 3;
+
     /* external force density is stored in MD units */
     lbpar_gpu.ext_force[3*component+0] = (float)p_fx;
     lbpar_gpu.ext_force[3*component+1] = (float)p_fy;
@@ -442,6 +445,9 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_f
 #ifdef LB
     if (lbpar.tau < 0.0)
       return 2;
+
+    if (lbpar.rho[0] <= 0.0)
+      return 3;
 
     lbpar.ext_force[0] = p_fx;
     lbpar.ext_force[1] = p_fy;

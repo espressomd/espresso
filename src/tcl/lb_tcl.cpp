@@ -686,6 +686,11 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
               Tcl_AppendResult(interp, "tau has to be set before ext_force in lbfluid", (char *)NULL);
               return TCL_ERROR;
             }
+            else if (intarg == 3)
+            {
+              Tcl_AppendResult(interp, "density has to be set before ext_force in lbfluid", (char *)NULL);
+              return TCL_ERROR;
+            }
             else 
             {
               Tcl_AppendResult(interp, "Unknown Error setting ext_force", (char *)NULL);
