@@ -24,6 +24,7 @@
 #include "statistics.hpp"
 #include "parser.hpp"
 #include "statistics_chain.hpp"
+#include "tcl/topology_tcl.hpp"
 
 
 /****************************************************************************************
@@ -54,6 +55,7 @@ int tclcommand_analyze_set_parse_chain_topology(Tcl_Interp *interp, int argc, ch
   }
  
   return TCL_OK;
+  return tclcommand_analyze_set_parse_topo_part_sync(interp); 
 }
 
 

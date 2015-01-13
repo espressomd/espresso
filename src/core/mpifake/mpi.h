@@ -154,7 +154,7 @@ inline int MPI_Comm_create_errhandler(MPI_Handler_function *errfunc, MPI_Errhand
 inline int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhdl) { return MPI_SUCCESS; }
 inline int MPI_Bcast(void *buff, int count, MPI_Datatype datatype, int root, MPI_Comm comm) { return MPI_SUCCESS; }
 inline int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status) { return MPI_SUCCESS; }
-inline int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count) { count = 0; return MPI_SUCCESS; }
+inline int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count) { *count = 0; return MPI_SUCCESS; }
 
 
 #ifndef GNU_MPIFAKE_DEBUG

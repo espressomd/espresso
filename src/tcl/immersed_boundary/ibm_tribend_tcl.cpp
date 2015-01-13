@@ -54,12 +54,11 @@ int tclcommand_inter_parse_ibm_tribend(Tcl_Interp *interp, int bond_type, int ar
     // Bending method
     bool done = false;
     tBendingMethod method;
-    if (strcmp(argv[5], "Krueger") == 0) { method = Krueger; done = true; }
-    if (strcmp(argv[5], "KruegerAchim") == 0) { method = Krueger; done = true; }    // This is a legacy for backward compatibility
-    if (strcmp(argv[5], "Gompper") == 0) { method = Gompper; done = true; }
+    if (strcmp(argv[5], "TriangleNormals") == 0) { method = TriangleNormals; done = true; }
+    if (strcmp(argv[5], "NodeNeighbors") == 0) { method = NodeNeighbors; done = true; }
     if ( !done )
     {
-      Tcl_AppendResult(interp, "Wrong bending method: Krueger or Gompper ", (char *) NULL);
+      Tcl_AppendResult(interp, "Wrong bending method: TriangleNormals or NodeNeighbors ", (char *) NULL);
       return TCL_ERROR;
     }
     

@@ -27,11 +27,11 @@ void IBM_Tribend_CalcForce(Particle *p1, const int numPartners, Particle **const
 {
 
   const tBendingMethod method = iaparams.p.ibm_tribend.method;
-  if ( method == Gompper ) CalcForceGompper(p1, numPartners, partners, iaparams.p.ibm_tribend.kb);
-  if ( method == Krueger )
+  if ( method == NodeNeighbors ) CalcForceGompper(p1, numPartners, partners, iaparams.p.ibm_tribend.kb);
+  if ( method == TriangleNormals )
   {
     // move to separate function
-    if ( numPartners != 3 ) { printf("Error. Krueger bending with != 3 partners!\n"); exit(1); }
+    if ( numPartners != 3 ) { printf("Error. TriangleNormals bending with != 3 partners!\n"); exit(1); }
     Particle *p2 = partners[0];
     Particle *p3 = partners[1];
     Particle *p4 = partners[2];
@@ -175,7 +175,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
   bonded_ia_params[bond_type].p.ibm_tribend.method = method;
   
   // Distinguish bending methods
-  if ( method == Krueger )
+  if ( method == TriangleNormals )
   {
     double theta0;
   
@@ -234,7 +234,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
   }
   
   // Gompper
-  if ( method == Gompper )
+  if ( method == NodeNeighbors )
   {
     // Interpret ind2 as number of partners
     // Note: the actual partners are not set here, but must be set using the part command on the tcl level
