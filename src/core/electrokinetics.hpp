@@ -163,6 +163,7 @@ int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double
 int ek_set_use_nonlinear_stencil(int use_nonlinear_stencil);
 int ek_node_print_velocity(int x, int y, int z, double* velocity);
 int ek_node_print_density(int species, int x, int y, int z, double* density);
+int ek_node_print_flux(int species, int x, int y, int z, double* flux);
 int ek_node_set_density(int species, int x, int y, int z, double density);
 float ek_calculate_net_charge(); 
 int ek_neutralize_system(int species); 

@@ -103,7 +103,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print flux vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [neutralize_system]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int <set|print> density\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int set density\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int print <density|flux>\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics pdb-parse #string #string\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -387,13 +388,18 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
         
-        if( (argc != 5 && argc != 6) || !ARG_IS_I(0, coord[0]) ||
-            !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
-            (!ARG_IS_S(3, "print") && !ARG_IS_S(3, "set")) ||
-            !ARG_IS_S(4, "density") 
+        //if( (argc != 5 && argc != 6) || !ARG_IS_I(0, coord[0]) ||
+        //    !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
+        //    (!ARG_IS_S(3, "print") && !ARG_IS_S(3, "set")) ||
+        //    !ARG_IS_S(4, "density") 
+        //  ) 
+        if( (argc != 5 && argc != 6) ||
+            !ARG_IS_I(0, coord[0]) || !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
+            (ARG_IS_S(3, "print") && (!ARG_IS_S(4, "density") && !ARG_IS_S(4, "flux"))) ||
+            (ARG_IS_S(3, "set") && (!ARG_IS_S(4, "density")))
           ) 
         {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int <set|print> density\n", (char *)NULL);
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int <set density #int|print <density|flux>>\n", (char *)NULL);
           return TCL_ERROR;
         }
         
@@ -459,6 +465,31 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
               return TCL_ERROR;
             }
           }
+          else if(ARG0_IS_S("flux")) 
+          {
+            if(ek_node_print_flux(species, coord[0], coord[1], coord[2], vectarg) == 0) 
+            {
+              argc --;
+              argv ++;
+              
+              Tcl_PrintDouble(interp, vectarg[0], double_buffer);
+              Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+              Tcl_PrintDouble(interp, vectarg[1], double_buffer);
+              Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+              Tcl_PrintDouble(interp, vectarg[2], double_buffer);
+              Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+
+              if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+                return TCL_ERROR;
+              else
+                return TCL_OK;
+            }
+            else 
+            {
+              Tcl_AppendResult(interp, "Unknown error in electrokinetics #int node #int #int #int print flux\n", (char *)NULL);
+              return TCL_ERROR;
+            }
+          } 
           else
           {
               Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int <set|print> density\n", (char *)NULL);
@@ -761,10 +792,10 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         if ( 
              argc != 5 || !ARG_IS_I(0, coord[0]) ||
              !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
-             !ARG_IS_S(3, "print") ||  !ARG_IS_S(4, "velocity") 
+             !ARG_IS_S(3, "print") || !ARG_IS_S(4, "velocity")
            ) 
         {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics node print <velocity>\n", (char *)NULL);
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics node print <velocity|flux>\n", (char *)NULL);
           return TCL_ERROR;
         }
         
