@@ -1063,8 +1063,11 @@ int tclcommand_part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
   /* convenience error message, dipm is not used otherwise. */
   dipm = dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2];
   if (dipm < ROUND_ERROR_PREC) {
-    Tcl_AppendResult(interp, "cannot set dipole with zero length", (char *)NULL);
-    return TCL_ERROR;
+    if (set_particle_dipm(part_num, dipm) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+      return TCL_ERROR;
+    }
+    return TCL_OK;
   }
 
   if (set_particle_dip(part_num, dip) == TCL_ERROR) {
