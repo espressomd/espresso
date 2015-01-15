@@ -522,7 +522,9 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
     cuda_safe_mem(cudaMalloc( (void**)&brownian_disp, size*sizeof(real) ));    assert(brownian_disp != NULL);
     sd_set_zero<<<32,32>>>(brownian_disp,size);
     const real one=1;
-    cublasCall(cublasRaxpy(cublas, size, &one, brownian_force_nf, 1, brownian_force_ff, 1 ));
+    if (myInfo_h[2]){
+      cublasCall(cublasRaxpy(cublas, size, &one, brownian_force_nf, 1, brownian_force_ff, 1 ));
+    }
     sd_iterative_solver(mobility, resistance, brownian_force_ff, brownian_disp, ran_prec,0, false);//(E_cheby/2+err_force/2)*1e-3
 #else
     //real one=1, zero=0;
@@ -543,7 +545,9 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
     cuda_safe_mem(cudaFree((void*)brownian_disp));
 #endif
     cuda_safe_mem(cudaFree((void*)brownian_force_ff));
-    cuda_safe_mem(cudaFree((void*)brownian_force_nf));
+    if (myInfo_h[2]){
+      cuda_safe_mem(cudaFree((void*)brownian_force_nf));
+    }
     cuda_safe_mem(cudaFree((void*)gaussian));
   }// end of brownian motion
   cudaCheckError("brownian motion error");
@@ -1351,6 +1355,7 @@ real calculate_chebyshev_coefficents(real lambda_min, real lambda_max, real tol,
 real sd_compute_brownian_force_farfield(const matrix & mobility, const real * gaussian_ff,
 					real tol, real * brownian_force_ff ){
 
+  cudaCheckError("Unknown Error");
   int size=mobility.size;
   static real * cheby_coefficents=NULL;
   static int N_chebyshev;
@@ -1359,6 +1364,7 @@ real sd_compute_brownian_force_farfield(const matrix & mobility, const real * ga
   static int count_recalc=0;
   static int count_total=0;
   count_total++;
+  cudaCheckError("Unknown Error");
   if (recalc_ew){
     count_recalc++;
     calculate_maxmin_eigenvalues(mobility,&lambda_min, &lambda_max, tol);

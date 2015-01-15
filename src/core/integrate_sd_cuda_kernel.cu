@@ -341,92 +341,6 @@ __global__ void sd_compute_mobility_sines(const real * r, int N, const real * ve
 #undef mydebug
 
 
-/*// This computes the farfield contribution of the mobility with ewald summation
-// this kernel computes the sines and cosinus.
-// forces is the vector of [fx_1, fy_1, fz_1, fx_2, fy_2, fz_2, ...]
-// a is the particle radius
-// mobility is the mobility matrix which will be retruned (in/out)
-// L_d is the boxlength
-// cutoff the wavespace cutoff distance
-__global__ void sd_wavepart_sum_old(const real * const forces, const real * const vecs,    int num, const  real * const matrices_d,
-				const real * const sines,  const real * const cosines, int ldd, int N, real * sin_sum, real * cos_sum, real max){
-  // particle index i
-  int i = numThreadsPerBlock*(blockIdx.x)+threadIdx.x;
-  // in vector on this particle
-  real myforce[3];
-  real sine;
-  real cosine;
-  __shared__ real cache[6*numThreadsPerBlock];
-  __shared__ real matrices[3*numThreadsPerBlock];
-  // get data for myforce - using coalscaled memory access
-  for (int l=0;l<3;l++){
-    cache[numThreadsPerBlock*l+threadIdx.x] = forces[numThreadsPerBlock*(l+blockIdx.x*3)+threadIdx.x];
-  }
-  __syncthreads();
-  for (int l=0;l<3;l++){
-    myforce[l] = cache[threadIdx.x*3+l];
-  }
-  if (i >= N){
-    for (int l=0;l<3;l++){
-      myforce[l] = 0;
-    }
-  }
-  int offset_next;
-  for (int offset=0;offset<num;offset=offset_next){
-    offset_next=offset+numThreadsPerBlock/2;
-    // copy matrices to shared memory
-#pragma unroll
-    for (int l=0;l<3;l++){
-      matrices[numThreadsPerBlock*l+threadIdx.x] = matrices_d[offset*6+numThreadsPerBlock*l+threadIdx.x];
-    }
-    __syncthreads();
-    for (int j=offset;j< offset_next && j < num;j++){
-#pragma unroll 3
-      for (int k=0;k<DIM;k++){
-	cache[threadIdx.x+k*numThreadsPerBlock]=matrices[(j-offset)*6+k]*myforce[k];
-      }
-      //for (int k=0;k<3;k++){
-	//assert(!isnan(myforce[k]));
-	//assert(!isnan(matrices[(j-offset)*6+k]));
-	//assert(!isnan(cache[threadIdx.x+k*numThreadsPerBlock]));
-      //}
-      sine   = sines  [i + j*ldd];
-      cosine = cosines[i + j*ldd];
-      //assert(!isnan(sine));
-      //assert(!isnan(cosine));
-      cache[threadIdx.x+0*numThreadsPerBlock]+=matrices[(j-offset)*6+3]*myforce[1];
-      cache[threadIdx.x+1*numThreadsPerBlock]+=matrices[(j-offset)*6+3]*myforce[0];
-      cache[threadIdx.x+0*numThreadsPerBlock]+=matrices[(j-offset)*6+4]*myforce[2];
-      cache[threadIdx.x+2*numThreadsPerBlock]+=matrices[(j-offset)*6+4]*myforce[0];
-      cache[threadIdx.x+2*numThreadsPerBlock]+=matrices[(j-offset)*6+5]*myforce[1];
-      cache[threadIdx.x+1*numThreadsPerBlock]+=matrices[(j-offset)*6+5]*myforce[2];
-      for (int k=0;k<6;k++){
-	//assert(!isnan(cache[threadIdx.x+k*numThreadsPerBlock]));
-      }
-      for (int k=0;k<DIM;k++){
-	cache[threadIdx.x+(k+3)*numThreadsPerBlock]=cosine*cache[threadIdx.x+k*numThreadsPerBlock];
-	cache[threadIdx.x+k*numThreadsPerBlock]*=sine;
-      }
-      for (int k=0;k<6;k++){
-	//assert(!isnan(cache[threadIdx.x+k*numThreadsPerBlock]));
-      }
-      reduce_sum(cache);
-      reduce_sum(cache+numThreadsPerBlock);
-      reduce_sum(cache+numThreadsPerBlock*2);
-      reduce_sum(cache+numThreadsPerBlock*3);
-      reduce_sum(cache+numThreadsPerBlock*4);
-      reduce_sum(cache+numThreadsPerBlock*5);
-      if (threadIdx.x < 3){
-	real tmp = atomicAdd(sin_sum+threadIdx.x+j*3,cache[numThreadsPerBlock*threadIdx.x]);
-	//assert(abs(tmp) <= max);
-	//assert(abs(tmp) + cache[numThreadsPerBlock*threadIdx.x] <= max);
-	tmp = atomicAdd(cos_sum+threadIdx.x+j*3,cache[numThreadsPerBlock*(threadIdx.x+3)]);
-	//assert(abs(tmp) <= max);
-	//assert(abs(tmp) + cache[numThreadsPerBlock*(threadIdx.x+3)] <= max);
-      }
-    } // for (j = ...
-  }// for offset = ...
-}*/
 
 /// This computes the farfield contribution of the mobility with ewald summation
 /// this kernel computes the sines and cosinus.
@@ -1352,6 +1266,7 @@ for (int j=max(offset, blockIdx.x*numThreadsPerBlock+1);j<min(offset+numThreadsP
 #ifndef SD_NOT_PERIODIC
 	dr[k]-=L[k]*rint(dr[k]/L[k]); // fold back
 #endif
+	dr[k]/=a;
 	dr2+=dr[k]*dr[k];
       }
       real r2bcorr_diag_self     = 0;
@@ -1371,11 +1286,11 @@ for (int j=max(offset, blockIdx.x*numThreadsPerBlock+1);j<min(offset+numThreadsP
 	writeCache[5]=0;
       }
       // j > i
-      else if (dr2 < 4*a*4*a  && 2*a*2*a < dr2 ){// 2*a < drn < 4*a 
+      else if (dr2 < 16  && 4 < dr2 ){// 2*a < drn < 4*a 
 	wasInLoop = 1;
 	{
 	  real drn= sqrt(dr2); // length of dr
-	  real s = drn/a-2;
+	  real s = drn-2;
 	  real ls = log(s);
 	  
 	  real const para_fac_c=-0.125+(9./40.)*log(2.)+3./112.*2.*log(2.);
