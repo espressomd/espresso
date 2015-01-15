@@ -182,8 +182,8 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   bool _use_buckets=false;
   for (int d=0;d<3;d++){
     if (L_h[d] > 4*4*radius){ // check if we can make at least 4 boxes in any direction
-      _use_buckets=true;
-      //#warning "bug"
+      //_use_buckets=true;
+      //#warning "buckets disabled - they are still buggy"
     }
   }
   const bool use_buckets=_use_buckets;
@@ -237,7 +237,7 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   cudaThreadSynchronize(); // just for debugging
   cudaCheckError("");
 #ifdef SD_NOT_PERIODIC
-  sd_compute_mobility_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,1./(6.*M_PI*viscosity*radius), radius, L_d, mobility_d);
+  sd_compute_mobility_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,1./(6.*M_PI*viscosity*radius), radius, mobility_d);
   cudaThreadSynchronize(); // just for debugging
   cudaCheckError("compute mobility error");
 #else
@@ -357,7 +357,7 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
     
 #ifndef SD_FF_ONLY
   // compute the resistance matrix
-  matrix resistance={NULL, NULL, NULL, NULL};
+  matrix resistance;
   resistance.size      = N*3;
   resistance.ldd       = ((N*3+31)/32)*32;
   resistance.ldd_short = ((N+31)/32)*32;
@@ -417,7 +417,7 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   //cublasCall(cublasRgemv(cublas, CUBLAS_OP_N, 3*N, 3*N, &one, mobility_d, lda, force_d, 1, &zero, disp_d, 1));
   sd_Rgemv(&one, mobility,force_d,disp_d);
 #else
-  real err_force = sd_iterative_solver(cublas, mobility_d, resistance, force_d, 3*N,disp_d,det_prec,0, true);
+  real err_force = sd_iterative_solver(mobility, resistance, force_d, disp_d,det_prec,0, true);
 #endif
 #ifdef SD_DEBUG
   if (hasAnyNanDev(disp_d,N*3)){
@@ -523,7 +523,7 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
     sd_set_zero<<<32,32>>>(brownian_disp,size);
     const real one=1;
     cublasCall(cublasRaxpy(cublas, size, &one, brownian_force_nf, 1, brownian_force_ff, 1 ));
-    sd_iterative_solver(cublas, mobility_d, resistance, brownian_force_ff, size,brownian_disp, ran_prec,0, false);//(E_cheby/2+err_force/2)*1e-3
+    sd_iterative_solver(mobility, resistance, brownian_force_ff, brownian_disp, ran_prec,0, false);//(E_cheby/2+err_force/2)*1e-3
 #else
     //real one=1, zero=0;
     //cuda_safe_mem(cudaMalloc( (void**)&brownian_disp, size*sizeof(real) ));    assert(brownian_disp != NULL);
@@ -549,18 +549,13 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   cudaCheckError("brownian motion error");
   
   // free everything
-  //cudaFree((void*)mobility_d);
-  //mobility.~matrix();
 #ifndef SD_FF_ONLY
-  cudaFree((void*)resistance_d);
   if (use_buckets) {
     cuda_safe_mem(cudaFree((void*)bucket_size));
     cuda_safe_mem(cudaFree((void*)bucket_num));
     cuda_safe_mem(cudaFree((void*)particle_count));
     cuda_safe_mem(cudaFree((void*)particle_to_bucket_list));
     cuda_safe_mem(cudaFree((void*)particle_sorted_list));
-    cuda_safe_mem(cudaFree((void*)resistance.col_idx));
-    cuda_safe_mem(cudaFree((void*)resistance.row_l));
   }
 #endif
   cudaCheckError("in mobility");
@@ -1386,13 +1381,13 @@ real sd_compute_brownian_force_farfield(const matrix & mobility, const real * ga
     errexit();
   }
   real * chebyshev_vec_curr, * chebyshev_vec_last, * chebyshev_vec_next;
-  const real one  =1;
   sd_set_zero<<<64,192>>>(brownian_force_ff,size);
   cudaThreadSynchronize();
   cudaCheckError("set zero");
   chebyshev_vec_curr=NULL;
   cuda_safe_mem(cudaMalloc( (void**)&chebyshev_vec_curr, size*sizeof(real) ));    assert(chebyshev_vec_curr != NULL);
 #ifdef SD_FF_ONLY
+  const real one  =1;
   real gMg;
   //cublasCall(cublasRgemv(cublas, CUBLAS_OP_N, size, size, &one, mobility_d, lda, gaussian_ff, 1, &zero,  chebyshev_vec_curr, 1));
   sd_Rgemv(&one, mobility, gaussian_ff, chebyshev_vec_curr);

@@ -33,7 +33,6 @@
 #include <assert.h>
 #include "utils.hpp"
 #include "integrate_sd.hpp"
-//#include "integrate_sd_cuda.cuh"
 #include "integrate.hpp"
 #include "reaction.hpp"
 #include "electrokinetics.hpp"
@@ -375,7 +374,7 @@ void propagate_pos_sd()
     np   = cell->n;
     for (i = 0; i < np; i++) { // only count nonVirtual Particles
 #ifdef EXTERNAL_FORCES
-      if (p[i].l.ext_flag & COORD_ALL)
+      if (p[i].p.ext_flag & COORD_ALL)
 	{
 	  fprintf (stderr, "Warning: Fixing particle in StokesDynamics this way with EXTERNAL_FORCES is not possible (and will be ignored). Please try to bind them e.g. harmonicaly.\n");
 	}

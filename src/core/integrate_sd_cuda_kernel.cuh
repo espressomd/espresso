@@ -8,7 +8,7 @@
 // a is the particle radius
 // mobility is the mobility matrix which will be retruned
 // L is the boxlength
-__global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobility, real a, const real * L, real * mobility);
+__global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobility, real a, real * mobility);
 
 
 

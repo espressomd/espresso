@@ -106,13 +106,12 @@ int tclcommand_sd_test(ClientData data, Tcl_Interp *interp, int argc, char **arg
   ARG_IS_I(1,size);
   ARG_IS_I(2,type);
   printf("size: %d  type: %d\n", size, type);
-  
+#ifdef SD
   status = sd_test(size, type);
   printf("test returned: %d\n", status);
-    //}else {
-    //Tcl_AppendResult(interp, "wrong args: :-( \n\"", (char *) NULL);
-    //return TCL_ERROR;
-    //}
+#else
+  fprintf(stderr,"I didn't find SD - not compiled in\n");
+#endif
   return status;
 }
 

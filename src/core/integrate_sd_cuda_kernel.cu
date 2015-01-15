@@ -66,8 +66,6 @@ __global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobi
 #pragma unroll 3
 	for (int k=0;k<DIM;k++){
 	  dr[k]=mypos[k]-cachedPos[DIM*(j-offset)+k]; // r_ij
-	  //#warning "Disabled fold back to avoid negative eigenvalues!"
-	  //dr[k]-=rint(dr[k]/L[k])*L[k]; // fold back
 	  dr2+=dr[k]*dr[k];
 	}
 	dr2=max(dr2,0.01);
@@ -83,9 +81,6 @@ __global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobi
 	  }
 	  mobility[myindex(DIM*i+k,DIM*j+k)]+=t2;
 	  }*/ // this should not happen ...
-	// python implementation:
-	//T=one*(1-9./32.*drn/a)+3./32.*dr*drt/drn/a;
-	//}
 	real t,t2;
 	// this also catches the case i == j
 	if (0.5 < b ){  // drn < 2*a
@@ -227,8 +222,8 @@ __global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobi
 	  real xr2=xr*xr;
 	  real ar2=ar*ar;
 #ifdef SD_USE_FLOAT
-	  t=(0.75f-1.5f*ar2)*ar*erfcf(xr)+(-4.f*xa3*xr2*xr2-3.f*xa*xr2+16f*xa3*xr2+1.5f*xa-2.f *xa3-3.f*xa*ar2)*0.5641895835477562869480794515607725858440506f*exp(-xr2);
-	  t2=(0.75f+0.5f*ar2)*ar*erfcf(xr)+(4.f*xa3*xr2*xr2+3.f*xa*xr2-20f*xa3*xr2-4.5f*xa+14.f*xa3+    xa*ar2)*0.5641895835477562869480794515607725858440506f*exp(-xr2);
+	  t=(0.75f-1.5f*ar2)*ar*erfcf(xr)+(-4.f*xa3*xr2*xr2-3.f*xa*xr2+16.f*xa3*xr2+1.5f*xa-2.f *xa3-3.f*xa*ar2)*0.5641895835477562869480794515607725858440506f*exp(-xr2);
+	  t2=(0.75f+0.5f*ar2)*ar*erfcf(xr)+(4.f*xa3*xr2*xr2+3.f*xa*xr2-20.f*xa3*xr2-4.5f*xa+14.f*xa3+    xa*ar2)*0.5641895835477562869480794515607725858440506f*exp(-xr2);
 #else
 	  //assert(erfc(xr)>1e-15);
 	  t=(0.75-1.5*ar2)*ar*erfc(xr);
@@ -716,7 +711,6 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
   //__shared__ real myPos[3*numThreadsPerBlock];
   int interactions=0;
   real mypos[3];
-  __shared__ real L[3];
 #ifdef SD_USE_FLOAT
   __shared__ real cachedPos[4*numThreadsPerBlock];
 #else
@@ -727,9 +721,12 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
   real myresistance[6]={0,0,0,0,0,0};
   //__shared__ real otherresistance[6*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
+#ifndef SD_NOT_PERIODIC
+  __shared__ real L[3];
   if (threadIdx.x < 3){ // copy L to shared memory
     L[threadIdx.x]=L_g[threadIdx.x];
   }
+#endif
   //__syncthreads();
   // get data for myposition - but coalscaled
   /*for (int l=0;l<3;l++){
@@ -767,7 +764,9 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
 #pragma unroll
       for (int k=0;k<DIM;k++){
 	dr[k]=mypos[k]-cachedPos[3*(j-offset)+k]; // r_ij
+#ifndef SD_NOT_PERIODIC
 	dr[k]-=L[k]*rint(dr[k]/L[k]); // fold back
+#endif
 	dr2+=dr[k]*dr[k];
 	mydebug("dr[%d]: %f\n",k,dr[k]);
       }
@@ -941,7 +940,6 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * _L, 
 					      const int total_bucket_num){
   const int lda_short=((N+31)/32)*32;
   const real interaction_range_squared=SQR(interaction_range);
-  __shared__ real L[3];
   __shared__ real bucket_size[3];
   __shared__ int bucket_num[6];
 #ifdef SD_USE_FLOAT
@@ -950,28 +948,13 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * _L, 
   __shared__ real cachedPos[3*numThreadsPerBlock];
 #endif
   // copy small vectors to shared memory
-  /*{
-    const real * tmp;
-    if (threadIdx.x < 3){
-      tmp=_L;
-    } else if (threadIdx.x < 6){
-      tmp=bucket_size_-3;
-    } else if (threadIdx.x < 9){
-      tmp=(real *)bucket_num_;
-      tmp-=6;
-    }
-    if (threadIdx.x < 9){ // wait only once for data
-      cachedPos[threadIdx.x]=tmp[threadIdx.x];
-    }
-    if (threadIdx.x < 3){
-      L[threadIdx.x]=cachedPos[threadIdx.x];
-      bucket_size[threadIdx.x]=cachedPos[threadIdx.x+3];
-      int * tmp2=(int *)(cachedPos+6);
-      bucket_num[threadIdx.x]=tmp2[threadIdx.x];
-    }
-    }*/
+#ifndef SD_NOT_PERIODIC
+  __shared__ real L[3];
   if (threadIdx.x < 3){
     L[threadIdx.x]=_L[threadIdx.x];
+  }
+#endif
+  if (threadIdx.x < 3){
     bucket_size[threadIdx.x]=bucket_size_[threadIdx.x];
     bucket_num[threadIdx.x]=bucket_num_[threadIdx.x];
   }
@@ -1029,7 +1012,9 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * _L, 
 #pragma unroll 3
 	    for (int d=0;d<3;d++){
 	      real dr=cachedPos[threadIdx.x*3+d]-pos[3*j+d];
+#ifndef SD_NOT_PERIODIC
 	      dr-=L[d]*rint(dr/L[d]);
+#endif
 	      //#warning folding back
 	      dr2+=dr*dr;
 	    }
@@ -1118,16 +1103,18 @@ __global__ void sd_compute_resistance_matrix_sparse(const real * pos, const int 
   						    real * resistance,const int * col_idx,const int * row_l, int * myInfo){
    const int lda_short=((N+31)/32)*32;
    const int lda = ((N*3+31)/32)*32;
-  __shared__ real L[3];
 #ifdef SD_USE_FLOAT
   __shared__ real cachedPos[4*numThreadsPerBlock];
 #else
   __shared__ real cachedPos[3*numThreadsPerBlock];
 #endif
   // copy small vectors to shared memory
+#ifndef SD_NOT_PERIODIC
+  __shared__ real L[3];
   if (threadIdx.x < 3){
     L[threadIdx.x]=_L[threadIdx.x];
   }
+#endif
   real myresistance[6]={0,0,0,0,0,0};
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   // get data for myposition - but coalscaled
@@ -1147,7 +1134,9 @@ __global__ void sd_compute_resistance_matrix_sparse(const real * pos, const int 
 #pragma unroll
     for (int d=0;d<DIM;d++){
       dr[d]=cachedPos[threadIdx.x*3+d]-pos[3*j+d]; // r_ij
+#ifndef SD_NOT_PERIODIC
       dr[d]-=L[d]*rint(dr[d]/L[d]); // fold back
+#endif
       dr2+=dr[d]*dr[d];
       mydebug("dr[%d]: %f\n",d,dr[d]);
     }
@@ -1325,7 +1314,6 @@ __global__ void sd_compute_brownian_force_nearfield(const real * r, const real *
   real mypos[3];
   real writeCache[6];
   //real otherWriteCache[3];
-  __shared__ real L[3];
   __shared__ real cachedPos[3*numThreadsPerBlock];
   __shared__ real choleskyCache[12*numThreadsPerBlock];
   //const int lda=(((N*3)+31)/32)*32;
@@ -1333,9 +1321,12 @@ __global__ void sd_compute_brownian_force_nearfield(const real * r, const real *
   //real myresistance[6];
   //__shared__ real otherresistance[6*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
+#ifndef SD_NOT_PERIODIC
+  __shared__ real L[3];
   if (threadIdx.x < 3){ // copy L to shared memory
     L[threadIdx.x]=L_g[threadIdx.x];
   }
+#endif
   for (int l=0;l<3;l++){
     cachedPos[threadIdx.x+l*numThreadsPerBlock] = r[threadIdx.x+l*numThreadsPerBlock+blockIdx.x*blockDim.x*3];
     writeCache[l]= 0;
@@ -1358,7 +1349,9 @@ for (int j=max(offset, blockIdx.x*numThreadsPerBlock+1);j<min(offset+numThreadsP
 #pragma unroll
       for (int k=0;k<DIM;k++){
 	dr[k]=mypos[k]-cachedPos[3*(j-offset)+k]; // r_ij
+#ifndef SD_NOT_PERIODIC
 	dr[k]-=L[k]*rint(dr[k]/L[k]); // fold back
+#endif
 	dr2+=dr[k]*dr[k];
       }
       real r2bcorr_diag_self     = 0;
@@ -1683,7 +1676,9 @@ __global__ void sd_real_integrate( real * r_d , const real * disp_d, const real 
     real dr2=0;
     for (int d=0;d<DIM;d++){
       real tmp=r_d[i*DIM+d]-rnew[d];
+#ifndef SD_NOT_PERIODIC
       tmp-=L[d]*rint(tmp/L[d]);
+#endif
       dr2+=tmp*tmp;
     }
     if (dr2 <distmin){ // possible colision - check better
@@ -1691,7 +1686,9 @@ __global__ void sd_real_integrate( real * r_d , const real * disp_d, const real 
       //real dr2o=0; // or do we need old distance?
       for (int d=0;d<DIM;d++){
 	real tmp=r_d[i*DIM+d]+disp_d[i*DIM+d]-rnew[d];
+#ifndef SD_NOT_PERIODIC
 	tmp-=L[d]*rint(tmp/L[d]);
+#endif
 	dr2+=tmp*tmp;
 	//tmp=r_d[i*DIM+d]-r_d[idx*DIM+d];
 	//tmp-=L*rint(tmp/L);
@@ -1706,7 +1703,9 @@ __global__ void sd_real_integrate( real * r_d , const real * disp_d, const real 
 	real alpha=0,beta=0,gamma=0;
 	for (int d=0;d<DIM;d++){
 	  real t1=r_d[i*DIM+d]-r_d[idx*DIM+d];
+#ifndef SD_NOT_PERIODIC
 	  t1-=L[d]*rint(t1/L[d]);
+#endif
 	  real t2=disp_d[i*DIM+d]-disp_d[idx*DIM+d];
 	  //t2-=L*rint(t2/L); // we would have a problem if we would need to fold back these ...
 	  alpha +=t2*t2;

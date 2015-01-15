@@ -438,12 +438,14 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
   else if ( ARG1_IS_S("ghmc") )
     err = tclcommand_thermostat_parse_ghmc(interp, argc, argv);
 #endif
+#if defined(SD) || defined(BD)
 #ifdef SD
   else if ( ARG1_IS_S("sd") )
     err = tclcommand_thermostat_parse_sd(interp, argc, argv);
+#endif // SD
   else if ( ARG1_IS_S("bd") )
     err = tclcommand_thermostat_parse_bd(interp, argc, argv);
-#endif
+#endif //SD || BD
   else {
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
     return tclcommand_thermostat_print_usage(interp, argc, argv);

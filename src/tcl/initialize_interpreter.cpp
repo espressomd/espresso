@@ -225,7 +225,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
-#ifdef SD
+#if defined(SD) || defined(BD)
   /* from integrate_sd_tcl.cpp */
   REGISTER_COMMAND("integrate_sd", tclcommand_integrate_sd);
   REGISTER_COMMAND("sd_set_particles_apart", tclcommand_sd_set_particles_apart);
