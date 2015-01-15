@@ -105,7 +105,8 @@ typedef struct {
   int *q_vals; // values of q vectors
   double *q_density; // number of q vectors per bin
   // entries for fast version
-  int num_k_vecs;
+  //int num_k_vecs;
+  int k_density;
 } observable_sf_params;
 
 /** See if particles from idList1 interact with any of the particles in idList2 
