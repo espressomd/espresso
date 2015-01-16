@@ -33,6 +33,7 @@
 #include "fd-electrostatics.hpp"
 #include "lb-boundaries.hpp"
 #include "lbgpu.hpp"
+#include "interaction_data.hpp"
 
 #ifdef ELECTROKINETICS /* Terminates at end of file */
 
