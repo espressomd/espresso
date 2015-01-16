@@ -531,7 +531,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                ((cufftReal*)ek_parameters_gpu.charge_potential)[index]
              ) / ek_parameters_gpu.agrid;
 
-    force *= powf(ek_parameters_gpu.agrid, 1) *
+    force *= ek_parameters_gpu.agrid *
              ek_parameters_gpu.time_step *
              ek_parameters_gpu.time_step;
              
@@ -541,7 +541,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  force / 2.0f +
                  ek_parameters_gpu.ext_force[0][species_index] *
                  (
-                   powf(ek_parameters_gpu.agrid, 1) *
+                   ek_parameters_gpu.agrid *
                    ek_parameters_gpu.time_step *
                    ek_parameters_gpu.time_step
                  )
@@ -579,7 +579,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
              ) / ek_parameters_gpu.agrid;
 
-    force *= powf(ek_parameters_gpu.agrid, 1) *
+    force *= ek_parameters_gpu.agrid *
              ek_parameters_gpu.time_step *
              ek_parameters_gpu.time_step;
 
@@ -589,7 +589,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  force / 2.0f +
                  ek_parameters_gpu.ext_force[1][species_index] *
                  (
-                   powf(ek_parameters_gpu.agrid, 1) *
+                   ek_parameters_gpu.agrid *
                    ek_parameters_gpu.time_step *
                    ek_parameters_gpu.time_step
                  )
@@ -628,7 +628,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
              ) / ek_parameters_gpu.agrid;
 
-    force *= powf(ek_parameters_gpu.agrid, 1) *
+    force *= ek_parameters_gpu.agrid *
              ek_parameters_gpu.time_step *
              ek_parameters_gpu.time_step;
 
@@ -638,7 +638,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  force / 2.0f +
                  ek_parameters_gpu.ext_force[2][species_index] *
                  (
-                   powf(ek_parameters_gpu.agrid, 1) *
+                   ek_parameters_gpu.agrid *
                    ek_parameters_gpu.time_step *
                    ek_parameters_gpu.time_step
                  )
@@ -2283,11 +2283,11 @@ LOOKUP_TABLE default\n",
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) 
   {
     fprintf( fp, "%e %e %e\n", lbforce[ i ] / 
-                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
+                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2 ) * powf( ek_parameters.agrid, 4 ) ),
                                lbforce[ i + ek_parameters.number_of_nodes ] /
-                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
+                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2 ) * powf( ek_parameters.agrid, 4 ) ),
                                lbforce[ i + 2 * ek_parameters.number_of_nodes ] /
-                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ) );
+                                 ( 2.0 * lbpar_gpu.rho[0] * powf( ek_parameters.time_step , 2 ) * powf( ek_parameters.agrid, 4 ) ) );
   }
   
   free( lbforce );
