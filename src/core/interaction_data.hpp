@@ -757,7 +757,7 @@ typedef struct {
 //  bool writeCOM;
 } IBM_VolCons_Parameters;
 
-typedef enum {Krueger, Gompper} tBendingMethod;
+typedef enum {TriangleNormals, NodeNeighbors} tBendingMethod;
 
 /** Parameters for IBM tribend **/
 typedef struct {

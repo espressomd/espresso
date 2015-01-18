@@ -72,7 +72,7 @@ libEspressoTcl_la_SOURCES = \
 	statistics_wallstuff_tcl.cpp statistics_wallstuff_tcl.hpp \
 	statistics_tcl.cpp statistics_tcl.hpp \
 	thermostat_tcl.cpp thermostat_tcl.hpp \
-	topology_tcl.cpp \
+	topology_tcl.cpp topology_tcl.hpp \
 	tuning_tcl.cpp \
 	uwerr_tcl.cpp \
 	virtual_sites_com_tcl.cpp virtual_sites_com_tcl.hpp \

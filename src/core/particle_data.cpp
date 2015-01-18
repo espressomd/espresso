@@ -1354,7 +1354,7 @@ int try_delete_bond(Particle *part, int *bond)
       }
       if (j > partners) {
 	bl->n -= 1 + partners;
-	memcpy(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
+	memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
 	realloc_intlist(bl, bl->n);
 	return ES_OK;
       }
@@ -1385,8 +1385,8 @@ void remove_all_bonds_to(int identity)
 	    break;
 	if (j <= partners) {
 	  bl->n -= 1 + partners;
-	  memcpy(bl->e + i, bl->e + i + 1 + partners,
-		 sizeof(int)*(bl->n - i));
+	  memmove(bl->e + i, bl->e + i + 1 + partners,
+		  sizeof(int)*(bl->n - i));
 	  realloc_intlist(bl, bl->n);
 	}
 	else
@@ -1458,7 +1458,7 @@ void try_delete_exclusion(Particle *part, int part2)
   for (i = 0; i < el->n;) {
     if (el->e[i] == part2) {
       el->n--;
-      memcpy(el->e + i, el->e + i + 1, sizeof(int)*(el->n - i));
+      memmove(el->e + i, el->e + i + 1, sizeof(int)*(el->n - i));
       realloc_intlist(el, el->n);
       break;
     }

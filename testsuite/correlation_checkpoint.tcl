@@ -18,7 +18,7 @@
 source "tests_common.tcl"
 
 puts "---------------------------------------------------------------"
-puts "- Testcase external_potential.tcl running on [format %02d [setmd n_nodes]] nodes"
+puts "- Testcase correlation_checkpoint.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
 setmd box_l 6. 6. 6.

@@ -79,7 +79,7 @@
     \required[10]{ROTATION\_PER\_PARTICLE}
     \required[11]{SHANCHEN}
     \required[12]{ENGINE}
-    \required[13]{LB_GPU}
+    \required[13]{LB \MakeLowercase{\textrm{or}} LB_GPU}
   \end{features}
 \end{essyntax}
 
@@ -253,6 +253,13 @@ set first because of the spatial decomposition.
   flow field is zero! In contrast, \var{f\_swim} always, i.e., while
   accelerating \emph{and} while swimming at constant force possesses a
   dipolar flow field.
+
+  \noindent
+  \fbox{\parbox{\linewidth-2\fboxsep-2\fboxrule}{%
+      Please note that even though swimming is interoperable with the
+      CPU version of LB it is only supported on \emph{less than three}
+      Open MPI nodes, i.e.\ $\text{\keyword{n_nodes}} \leq 1$.%
+    }}
 \end{arguments}
 
 \warning{The options \opt{omega}, \opt{torque}, and \opt{tbf} are
