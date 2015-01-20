@@ -1300,7 +1300,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
 	REGISTER_OBSERVABLE(radial_density_distribution, tcl_command_radial_density_distribution, id);
 	REGISTER_OBSERVABLE(spatial_polymer_property, tcl_command_spatial_polymer_properties, id);
 	REGISTER_OBSERVABLE(persistence_length, tcl_command_persistence_length, id);
-	REGISTER_OBSERVABLE(polymer_k_distribution, tcl_command_k_dist, id);
+	REGISTER_OBSERVABLE(polymer_pair_correlation, tcl_command_k_dist, id);
     REGISTER_OBSERVABLE(tclcommand, tclcommand_observable_tclcommand,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
