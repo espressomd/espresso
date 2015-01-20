@@ -1298,7 +1298,7 @@ int observable_radial_density_distribution(observable* self){
   unit_vector(AB, AB);
   unit_vector(BA, BA);
 
-  for (unsigned int i=0; i<n_A; i++)
+  for (int i=0; i<n_A; i++)
 	  A[i] = 0.0;
 
   for (int i=0; i < ids->n; i++){
@@ -1366,7 +1366,7 @@ int observable_spatial_polymer_properties(observable* self){
 	spatial_polym_data *p_data = (spatial_polym_data *) self->container;
 	IntList *ids=p_data->id_list;
 	int poly_len = self->n;
-	for (unsigned int i = 0; i<poly_len; i++ )
+	for (int i = 0; i<poly_len; i++ )
 		A[i]=0.0;
 
 	for (int i = 0; i<ids->n; i++){
@@ -1393,7 +1393,7 @@ int observable_persistence_length(observable* self){
 	int cut_off = p_data->cut_off;
 	int n_A = self->n;
 
-	for (unsigned int i = 0; i<n_A; i++ )
+	for (int i = 0; i<n_A; i++ )
 		A[i]=0.0;
 
 	for (int i = 0; i<n_A; i++) {
@@ -1440,7 +1440,7 @@ int observable_polymer_k_distribution(observable *self){
 			get_mi_vector(dist_vec, partCfg[ids->e[i*poly_len + j]].r.p, partCfg[ids->e[i*poly_len + j + k]].r.p);
 			dist = normr(dist_vec);
 			bin_id = (int) floor( (dist - r_min)/bin_size );
-			if (bin_id < n_bins) {
+			if (bin_id < n_bins && bin_id >= 0) {
 				A[bin_id] += 1.0/(npoly * number_of_pairs);
 			}
 		}
