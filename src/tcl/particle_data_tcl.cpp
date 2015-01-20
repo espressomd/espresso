@@ -1414,6 +1414,9 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
       if ( !ARG_IS_D(++(*change),p.swim.rotational_friction) ) {
         return TCL_ERROR;
       }
+    } else {
+      parse = false;
+      break;
     }
 #else
     else {
@@ -1425,12 +1428,10 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
         fprintf(stderr,"ERROR: The parameter \"%s\" cannot be used when LB is not compiled in!\n",err);
         return TCL_ERROR;
       }
-   }
-#endif
-    else {
       parse = false;
       break;
-    }
+   }
+#endif
 
     if ( ++(*change) >= argc ) {
       parse = false;
