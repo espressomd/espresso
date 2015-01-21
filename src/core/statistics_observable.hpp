@@ -138,6 +138,7 @@ typedef struct {
 } profile_data;
 
 int observable_calc_density_profile(observable* self);
+int observable_calc_force_density_profile(observable* self);
 
 int observable_calc_lb_velocity_profile(observable* self);
 

@@ -63,7 +63,7 @@ namespace PdbParser {
 	if(tmp == "ATOM") {
 	  file.ignore(246,' ');
 	  file >> a.i;
-	  file >> tmp >> tmp >> tmp;
+	  file >> tmp >> tmp >> tmp >> tmp;
 	  file >> a.x >> a.y >> a.z;
 	  pdb_atoms.push_back(a);
 	}

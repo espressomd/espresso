@@ -134,6 +134,7 @@ enum OverlappedBondedInteraction{
 		COULOMB_P3M_GPU, //< Coulomb method is P3M with GPU based long range part calculation
 		COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
 		COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
+                COULOMB_EK, //< Coulomb method is electrokinetics
 	};
 
 #endif
@@ -757,7 +758,7 @@ typedef struct {
 //  bool writeCOM;
 } IBM_VolCons_Parameters;
 
-typedef enum {Krueger, Gompper} tBendingMethod;
+typedef enum {TriangleNormals, NodeNeighbors} tBendingMethod;
 
 /** Parameters for IBM tribend **/
 typedef struct {

@@ -841,7 +841,7 @@ inline void add_bonded_force(Particle *p1)
     case 1:
       if (bond_broken) {
           ostringstream msg;
-          msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity;
+          msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity<<". Distnace vecotr: "<<dx[0]<<" "<<dx[1]<<" "<<dx[2];
           runtimeError(msg);
         continue;
       }

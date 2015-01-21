@@ -194,7 +194,9 @@ system:
     \item \lit{density_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
           Compute the density profile within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
-
+\item \lit{force_density_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
+          Compute the force density profile within the specified cube.
+          For profile specifications, see section~\ref{sec:DensProfSpec}.
     \item \lit{lb_velocity_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
           Compute the Lattice-Boltzmann velocity profile within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
@@ -658,3 +660,42 @@ different contributions cancel each other. On the other hand, in the
 of the case of mean square displacement the difference is always positive,
 resulting in a non-negligible systematic error. A more general
 discussion is presented in Ref.~\cite{ramirez10a}.
+
+
+\subsection{Checkpointing the correlator}
+It is possible to checkpoint the correlator. Therby the data is written
+directly to a file. It is probably usefull to write to a binary file, as this
+is more precise.
+The accuracy of the ascii files is not high.
+\begin{essyntax}
+\variant{1} correlation \var{id} write_checkpoint_binary \var{filename}
+\variant{2} correlation \var{id} write_checkpoint_ascii \var{filename}
+\end{essyntax}
+
+In order to load a checkpoint, the correlator has to be initialized. Therefore
+the observable(s) have to be created. Make sure that the correlator is exactly
+initilized as it was when the checkpoint was created. If this is not
+fullfilled, and e.g. the size of an observable has changed, loading the
+checkpoint failes.
+\begin{essyntax}
+\variant{1} correlation \var{id} read_checkpoint_binary \var{filename}
+\variant{2} correlation \var{id} read_checkpoint_ascii \var{filename}
+\end{essyntax}
+Depending on whether the checkpoint was written as binary or as text, the
+corresponding variant for reading the checkpoint has to be used.
+
+An simple example for checkpointing:
+\begin{tclcode}
+set pp  [observable new particle_positions all]
+set cor1 [correlation new obs1 $pp corr_operation square_distance_componentwise \
+dt 0.01 tau_max 1000 tau_lin 16]
+integrate 1000
+correlation $cor1 write_checkpoint_binary "cor1.bin"
+\end{tclcode}
+And then to continue the simulation:
+\begin{tclcode}
+set pp  [observable new particle_positions all]
+set cor1 [correlation new obs1 $pp corr_operation square_distance_componentwise \
+dt 0.01 tau_max 1000 tau_lin 16]
+correlation $cor1 read_checkpoint_binary "cor1.bin"
+\end{tclcode}

@@ -52,10 +52,10 @@ set v_swim 0.3
 set f_swim 0.1
 
 part 0 pos [lindex $pos_0 0] [lindex $pos_0 1] [lindex $pos_0 2] \
-   q 0 swimming puller v_swim $v_swim
+   q 0 swimming v_swim $v_swim
 
 part 1 pos [lindex $pos_1 0] [lindex $pos_1 1] [lindex $pos_1 2] \
-   q 0 swimming puller f_swim $f_swim
+   q 0 swimming f_swim $f_swim
 
 set temp 0
 set gamma 1
