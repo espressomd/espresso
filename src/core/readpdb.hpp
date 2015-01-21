@@ -34,10 +34,11 @@ struct PdbLJInteraction {
     @first_id Id of the first particle to add.
     @type Type for the particles.
     @lennard_jones Should lj iteractions be added from the itp file.
-    @fit Should particles be rescaled to box.
+    @fit Should the box be rescaled to hold the particles.
+    @lj_internal Should LJ interactions within the molecule be added.
     @return Number of particles that were added.
  */
 
 int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions, double lj_rel_cutoff=2.5,
-				char *itp_file=NULL, int first_type=0, bool fit = false);
+				char *itp_file=NULL, int first_type=0, bool fit = false, bool lj_internal = false);
 #endif

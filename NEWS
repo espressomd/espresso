@@ -12,6 +12,7 @@ New user-visible features
 * New bonded coulomb interaction
 * Lees Edwards boundaries for sheer stuff
 * Espresso can now read pdb and gromacs topology files.
+* Checkpointing for the correlator
 
 Known bugs
 ----------

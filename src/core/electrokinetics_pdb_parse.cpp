@@ -142,7 +142,7 @@ LOOKUP_TABLE default\n",
   return pdb_SUCCESS;
 }
 
-int populate_lattice(PdbParser::PdbParser &parser) {
+int populate_lattice(PdbParser::PdbParser &parser, double scale) {
   /*
    * This routine will populate the lattice using the
    * values read from the pdb and itp files.
@@ -155,9 +155,9 @@ int populate_lattice(PdbParser::PdbParser &parser) {
   const PdbParser::BoundingBox bbox = parser.calc_bounding_box();
   float center[3];
   
-  center[0] = ( bbox.urx + bbox.llx )/2;
-  center[1] = ( bbox.ury + bbox.lly )/2;
-  center[2] = ( bbox.urz + bbox.llz )/2;
+  center[0] = ( bbox.urx + bbox.llx )/2 / scale;
+  center[1] = ( bbox.ury + bbox.lly )/2 / scale;
+  center[2] = ( bbox.urz + bbox.llz )/2 / scale;
 
   // calculate the shift of the bounding box
   float shift[3];
@@ -175,6 +175,7 @@ int populate_lattice(PdbParser::PdbParser &parser) {
   float cellpos[3];
   float gridpos;
   float a_x_shifted, a_y_shifted, a_z_shifted;
+  float a_x_scaled, a_y_scaled, a_z_scaled;
 
   for (std::vector<PdbParser::pdb_atom>::const_iterator a = parser.pdb_atoms.begin(); a != parser.pdb_atoms.end(); ++a) {
     PdbParser::itp_atom b = parser.itp_atoms[a->i];
@@ -183,16 +184,20 @@ int populate_lattice(PdbParser::PdbParser &parser) {
     printf("i=%d x=%f y=%f z=%f type=%s charge=%f sigma=%f epsilon=%f\n",a->i,a->x,a->y,a->z,b.type,b.charge,c.sigma,c.epsilon);
 #endif
 
+    a_x_scaled = a->x / scale;
+    a_y_scaled = a->y / scale;
+    a_z_scaled = a->z / scale;
+
     // Interpolate the charge to the lattice
-    gridpos      = (a->x + shift[0]) / ek_parameters.agrid - 0.5f;
+    gridpos      = (a_x_scaled + shift[0]) / ek_parameters.agrid - 0.5f;
     lowernode[0] = (int) floorf( gridpos );
     cellpos[0]   = gridpos - lowernode[0];
                                                 
-    gridpos      = (a->y + shift[1]) / ek_parameters.agrid - 0.5f;
+    gridpos      = (a_y_scaled + shift[1]) / ek_parameters.agrid - 0.5f;
     lowernode[1] = (int) floorf( gridpos );
     cellpos[1]   = gridpos - lowernode[1];
                                                 
-    gridpos      = (a->z + shift[2]) / ek_parameters.agrid - 0.5f;
+    gridpos      = (a_z_scaled + shift[2]) / ek_parameters.agrid - 0.5f;
     lowernode[2] = (int) floorf( gridpos );
     cellpos[2]   = gridpos - lowernode[2];
                                                 
@@ -224,15 +229,15 @@ int populate_lattice(PdbParser::PdbParser &parser) {
     pdb_charge_lattice[pdb_rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters.dim_x,( lowernode[1] + 1 ) % ek_parameters.dim_y,( lowernode[2] + 1 ) % ek_parameters.dim_z )]
       += b.charge * cellpos[0] * cellpos[1] * cellpos[2];
     // Interpolate lennard-jones parameters to boundary
-    float r = pow(2,1./6.)*c.sigma;
+    float r = pow(2,1./6.)*c.sigma * 10 / scale;
 
-    a_x_shifted = (a->x + shift[0]) / ek_parameters.agrid - 0.5f;
-    a_y_shifted = (a->y + shift[1]) / ek_parameters.agrid - 0.5f;
-    a_z_shifted = (a->z + shift[2]) / ek_parameters.agrid - 0.5f;
+    a_x_shifted = (a_x_scaled + shift[0]) / ek_parameters.agrid - 0.5f;
+    a_y_shifted = (a_y_scaled + shift[1]) / ek_parameters.agrid - 0.5f;
+    a_z_shifted = (a_z_scaled + shift[2]) / ek_parameters.agrid - 0.5f;
 
-    for (float z = a->z - r; z <= a->z + r + ek_parameters.agrid; z += ek_parameters.agrid) {
-      for (float y = a->y - r; y <= a->y + r + ek_parameters.agrid; y += ek_parameters.agrid) {
-	for (float x = a->x - r; x <= a->x + r + ek_parameters.agrid; x += ek_parameters.agrid) {
+    for (float z = a_z_scaled - r; z <= a_z_scaled + r + ek_parameters.agrid; z += ek_parameters.agrid) {
+      for (float y = a_y_scaled - r; y <= a_y_scaled + r + ek_parameters.agrid; y += ek_parameters.agrid) {
+	for (float x = a_x_scaled - r; x <= a_x_scaled + r + ek_parameters.agrid; x += ek_parameters.agrid) {
 	  gridpos      = (x + shift[0]) / ek_parameters.agrid - 0.5f;
 	  lowernode[0] = (int) floorf( gridpos );
 
@@ -263,7 +268,7 @@ int populate_lattice(PdbParser::PdbParser &parser) {
   return pdb_SUCCESS;
 }
 
-int pdb_parse(char* pdb_filename, char* itp_filename) {
+int pdb_parse(char* pdb_filename, char* itp_filename, double scale) {
   /*
    * This is the main parsing routine, which is visible to the outside
    * through the header electrokinetics_pdb_parse.h. It doesn't contain any logic and just
@@ -282,7 +287,7 @@ int pdb_parse(char* pdb_filename, char* itp_filename) {
   if(!parser.parse_file(pdb_filename, itp_filename))
     return pdb_ERROR;
 
-  return populate_lattice(parser);
+  return populate_lattice(parser, scale);
 }
 
 #endif

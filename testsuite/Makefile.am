@@ -29,6 +29,7 @@ tests = \
 	constraints.tcl \
 	constraints_reflecting.tcl \
 	correlation.tcl \
+	correlation_checkpoint.tcl \
 	constraints_rhomboid.tcl \
 	coulomb_cloud_wall.tcl \
 	dh.tcl \
@@ -40,6 +41,7 @@ tests = \
 	el2d.tcl \
 	el2d_nonneutral.tcl \
 	engine_langevin.tcl \
+	engine_lb.tcl \
 	engine_lbgpu.tcl \
 	exclusions.tcl \
 	external_potential.tcl \
@@ -140,6 +142,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	pe_micelle.tcl pe_micelle.data \
 	maggs_correct_rdf.data \
 	ek_reaction_density.vtk \
+	engine_lb.vtk \
 	engine_lbgpu_2pt.vtk \
 	engine_lbgpu_3pt.vtk
 
@@ -156,4 +159,6 @@ CLEANFILES = runtest.log
 DISTCLEANFILES = \
 	fftw3_1d_wisdom_*.file \
 	dfftw3_1d_wisdom_*.file \
-	lattice_*.dat
+	lattice_*.dat \
+	correlation_checkpoint_c?.bin \
+	correlation_checkpoint_c?.txt 
