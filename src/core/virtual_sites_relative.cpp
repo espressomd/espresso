@@ -233,45 +233,57 @@ int vs_relate_to(int part_num, int relate_to)
 
     //Normalize desired director
     int i;
-    for (i=0;i<3;i++)
-     d[i]/=l;
-
-    // Obtain quaternions from desired director
-    double quat_director[4];
-    convert_quatu_to_quat(d, quat_director);
-
-    // Define quat as described above:
-    double x=0;
-    for (i=0;i<4;i++)
-     x+=p_relate_to.r.quat[i]*p_relate_to.r.quat[i];
-
-    quat[0]=0;
-    for (i=0;i<4;i++)
-     quat[0] +=p_relate_to.r.quat[i]*quat_director[i];
     
-    quat[1] =-quat_director[0] *p_relate_to.r.quat[1] 
-       +quat_director[1] *p_relate_to.r.quat[0]
-       +quat_director[2] *p_relate_to.r.quat[3]
-       -quat_director[3] *p_relate_to.r.quat[2];
-    quat[2] =p_relate_to.r.quat[1] *quat_director[3] 
-      + p_relate_to.r.quat[0] *quat_director[2] 
-      - p_relate_to.r.quat[3] *quat_director[1] 
-      - p_relate_to.r.quat[2] * quat_director[0];
-    quat[3] =quat_director[3] *p_relate_to.r.quat[0]
-      - p_relate_to.r.quat[3] *quat_director[0] 
-      + p_relate_to.r.quat[2] * quat_director[1] 
-      - p_relate_to.r.quat[1] *quat_director[2];
-    for (i=0;i<4;i++)
-     quat[i]/=x;
-   
-   
-   // Verify result
-   double qtemp[4];
-   multiply_quaternions(p_relate_to.r.quat,quat,qtemp);
-   for (i=0;i<4;i++)
-     if (fabs(qtemp[i]-quat_director[i])>1E-9)
-       fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n",
-	       i, qtemp[i], quat_director[i]);
+    // If the distance between real & virtual particle is 0
+    // we just set the relative orientation to 1 0 0 0, as it is irrelevant but
+    // needs to be a valid quaternion
+    if (l!=0)
+    {
+      for (i=0;i<3;i++)
+        d[i]/=l;
+
+      // Obtain quaternions from desired director
+      double quat_director[4];
+      convert_quatu_to_quat(d, quat_director);
+  
+      // Define quat as described above:
+      double x=0;
+      for (i=0;i<4;i++)
+       x+=p_relate_to.r.quat[i]*p_relate_to.r.quat[i];
+  
+      quat[0]=0;
+      for (i=0;i<4;i++)
+       quat[0] +=p_relate_to.r.quat[i]*quat_director[i];
+      
+      quat[1] =-quat_director[0] *p_relate_to.r.quat[1] 
+         +quat_director[1] *p_relate_to.r.quat[0]
+         +quat_director[2] *p_relate_to.r.quat[3]
+         -quat_director[3] *p_relate_to.r.quat[2];
+      quat[2] =p_relate_to.r.quat[1] *quat_director[3] 
+        + p_relate_to.r.quat[0] *quat_director[2] 
+        - p_relate_to.r.quat[3] *quat_director[1] 
+        - p_relate_to.r.quat[2] * quat_director[0];
+      quat[3] =quat_director[3] *p_relate_to.r.quat[0]
+        - p_relate_to.r.quat[3] *quat_director[0] 
+        + p_relate_to.r.quat[2] * quat_director[1] 
+        - p_relate_to.r.quat[1] *quat_director[2];
+      for (i=0;i<4;i++)
+       quat[i]/=x;
+     
+     
+     // Verify result
+     double qtemp[4];
+     multiply_quaternions(p_relate_to.r.quat,quat,qtemp);
+     for (i=0;i<4;i++)
+       if (fabs(qtemp[i]-quat_director[i])>1E-9)
+         fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n",
+  	       i, qtemp[i], quat_director[i]);
+    }
+    else
+    { 
+     quat[0]=1;
+     quat[1]=quat[2]=quat[3]=0;
+    }
 
     // Set the particle id of the particle we want to relate to, the distnace
     // and the relative orientation
