@@ -1077,19 +1077,21 @@ int tcl_parse_spatial_polymer_properties(Tcl_Interp* interp, int argc, char **ar
 	*change = 0;
 	while ( argc > 0 ) {
 	
-		if (ARG0_IS_S("ids") ) {
+		if (ARG0_IS_S("ids") || ARG0_IS_S("types") ) {
 			if (! parse_id_list(interp, argc, argv, change, &p_data->id_list) == TCL_OK){
 				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
 				return TCL_ERROR;
 			}
 			argc-=*change;
 			argv+=*change;
+			continue;
 		}
 		
 		if ( argc > 0 && ARG0_IS_S("N") ) {
 			p_data->npoly = atoi(argv[1]);
 			argc-=2;
 			argv+=2;
+			continue;
 		}
 	
 	}	
@@ -1170,19 +1172,19 @@ int tcl_parse_k_dist(Tcl_Interp* interp, int argc, char** argv, int *change, int
 			argv += *change;
 			continue;
 		}
-		if ( ARG0_IS_S("max_r") ) {
+		if ( ARG0_IS_S("maxr") ) {
 			k_data->r_max = atof(argv[1]);
 			argc-=2;
 			argv+=2;
 			continue;
 		}
-		if ( ARG0_IS_S("min_r") ) {
+		if ( ARG0_IS_S("minr") ) {
 			k_data->r_min = atof(argv[1]);
 			argc-=2;
 			argv+=2;
 			continue;
 		}
-		if ( ARG0_IS_S("n_bins") ) {
+		if ( ARG0_IS_S("rbins") ) {
 			k_data->n_bins = atoi(argv[1]);
 			*dim_obs = atoi(argv[1]);
 			argc-=2;
@@ -1195,7 +1197,7 @@ int tcl_parse_k_dist(Tcl_Interp* interp, int argc, char** argv, int *change, int
 			argv+=2;
 			continue;
 		}
-		if ( ARG0_IS_S("npoly") ) {
+		if ( ARG0_IS_S("N") ) {
 			k_data->npoly = atoi(argv[1]);
 			argc-=2;
 			argv+=2;
@@ -1222,7 +1224,7 @@ int tcl_command_k_dist(Tcl_Interp* interp, int argc, char** argv, int* change, o
 	k_data->n_bins = 1;
 	k_data->k = 0;
 	if ( ! tcl_parse_k_dist(interp, argc-1, argv+1, change, &obs->n, k_data) == TCL_OK ) {
-		Tcl_AppendResult(interp, "Usage: polymer_k_distripution ids $id_list max_r $max_r min_r $min_r n_bins $n_bins k $k npoly $npoly poly_len $poly_len\n", (char *) NULL) ;
+		Tcl_AppendResult(interp, "Usage: polymer_pair_correltion ids $id_list maxr $maxr minr $minr rbins $rbins k $k N $Npoly poly_len $poly_len\n", (char *) NULL) ;
 		return TCL_ERROR;
 	}
 	obs->calculate = &observable_polymer_k_distribution;
