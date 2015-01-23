@@ -984,6 +984,11 @@ int tclcommand_part_parse_rotation(Tcl_Interp *interp, int argc, char **argv,
     /* set rotation flag */
     if (! ARG0_IS_I(rot))
       return TCL_ERROR;
+    
+    if (rot == 1) {
+      Tcl_AppendResult(interp, "1 is no longer an allowed value for rotation. See documentation.", (char *) NULL);
+      return TCL_ERROR;
+    }
 
     if (set_particle_rotation(part_num, rot) == TCL_ERROR) {
       Tcl_AppendResult(interp, "set particle position first", (char *)NULL);

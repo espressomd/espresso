@@ -187,9 +187,11 @@ set first because of the spatial decomposition.
   different diffusion constants. Caution: this has no influence on any
   other thermostat then the Langevin thermostat.
 \item[\opt{rotation \var{rot}}] Specifies whether a particle's
-  rotational degrees of freedom are integrated (value of 1) or not
-  (0). If set to zero, the content of the torque and omega variables
-  are meaningless. The default is 1.
+  rotational degrees of freedom along the different axes in the particle's body-fixed frame are integrated or not.
+  If set to zero, rotation is disabled entirely, and the content of the torque and omega variables
+  are meaningless. 
+  Rotation of a particular axis is turned on by adding up the corresponding flags: x=2, y=4, z=8.
+  To enable rotation around all axis, use a value of 2+4+8=14. This is also the default.
 \item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the
   four solvation coupling constants for the two components of a
   Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.

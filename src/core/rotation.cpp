@@ -292,6 +292,21 @@ void convert_torques_propagate_omega()
         p[i].f.torque[2] = tz;
       }
 
+#ifdef ROTATION_PER_PARTICLE
+      if (!(p[i].p.rotation & 2))
+        p[i].f.torque[0]=0;
+      
+      if (!(p[i].p.rotation & 4))
+        p[i].f.torque[1]=0;
+      
+      if (!(p[i].p.rotation & 8))
+        p[i].f.torque[2]=0;
+      
+#endif
+
+        
+
+
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
       double omega_swim[3] = {0, 0, 0};
       double omega_swim_body[3] = {0, 0, 0};
@@ -408,6 +423,18 @@ void convert_initial_torques()
 	p[i].f.torque[1] = ty;
 	p[i].f.torque[2] = tz;
       }
+
+#ifdef ROTATION_PER_PARTICLE
+      if (!(p[i].p.rotation & 2))
+        p[i].f.torque[0]=0;
+      
+      if (!(p[i].p.rotation & 4))
+        p[i].f.torque[1]=0;
+      
+      if (!(p[i].p.rotation & 8))
+        p[i].f.torque[2]=0;
+      
+#endif
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
     }
