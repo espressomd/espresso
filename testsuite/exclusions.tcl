@@ -26,6 +26,9 @@
 source "tests_common.tcl"
 
 require_feature "EXCLUSIONS"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
 
 setmd skin 0.1
 setmd time_step 0.01

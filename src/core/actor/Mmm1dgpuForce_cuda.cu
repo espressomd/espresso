@@ -21,8 +21,6 @@
 
 #ifdef MMM1D_GPU
 
-Mmm1dgpuForce *mmm1dgpuForce = NULL;
-
 // the code is mostly multi-GPU capable, but Espresso is not yet
 const int deviceCount = 1;
 float multigpu_factors[] = {1.0};
@@ -144,12 +142,9 @@ unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s)
 	return b;
 }
 
-Mmm1dgpuForce::~Mmm1dgpuForce()
-{
+Mmm1dgpuForce::~Mmm1dgpuForce() {
 	modpsi_destroy();
 	cudaFree(dev_forcePairs);
-
-	disable();
 }
 
 __forceinline__ __device__ mmm1dgpu_real sqpow(mmm1dgpu_real x)

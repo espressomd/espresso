@@ -50,31 +50,31 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
   
   for(n=0;n<n_lb_boundaries;n++) {
     switch(lb_boundaries[n].type) {
-      case CONSTRAINT_WAL: 
+      case LB_BOUNDARY_WAL:
 	      calculate_wall_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist, vec); 
         break;
         
-      case CONSTRAINT_SPH:
+      case LB_BOUNDARY_SPH:
 	      calculate_sphere_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.sph, &dist, vec); 
         break;
         
-      case CONSTRAINT_CYL: 
+      case LB_BOUNDARY_CYL:
 	      calculate_cylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.cyl, &dist, vec); 
         break;
         
-      case CONSTRAINT_RHOMBOID: 
+      case LB_BOUNDARY_RHOMBOID:
 	      calculate_rhomboid_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.rhomboid, &dist, vec); 
         break;
         
-      case CONSTRAINT_PORE: 
+      case LB_BOUNDARY_POR:
 	      calculate_pore_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.pore, &dist, vec); 
         break;
 
-      case CONSTRAINT_STOMATOCYTE:
+      case LB_BOUNDARY_STOMATOCYTE:
 	      calculate_stomatocyte_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.stomatocyte, &dist, vec); 
         break;
 
-      case CONSTRAINT_HOLLOW_CONE:
+      case LB_BOUNDARY_HOLLOW_CONE:
 	      calculate_hollow_cone_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist, vec); 
         break;
     }
@@ -94,7 +94,7 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
 void lb_init_boundaries() {
 
   int n, x, y, z;
-  char *errtxt;
+  //char *errtxt;
   double pos[3], dist, dist_tmp=0.0, dist_vec[3];
   
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -132,8 +132,9 @@ void lb_init_boundaries() {
         }
       
       if(wallcharge_species == -1 && charged_boundaries) {
-        errtxt = runtime_error(9999); //TODO make right
-        ERROR_SPRINTF(errtxt, "{9999 no charged species available to create wall charge\n");
+          ostringstream msg;
+          msg <<"no charged species available to create wall charge\n";
+          runtimeError(msg);
       }
     }
 #endif
@@ -188,8 +189,9 @@ void lb_init_boundaries() {
                 break;
                 
               default:
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
+                ostringstream msg;
+                msg <<"lbboundary type "<< lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
+                runtimeError(msg);
             }
             
             if (dist > dist_tmp || n == 0) {
@@ -333,8 +335,9 @@ void lb_init_boundaries() {
                 break;
                 
               default:
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
+                ostringstream msg;
+                msg <<"lbboundary type " << lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
+                runtimeError(msg);
             }
             
             if (dist_tmp<dist || n == 0) {

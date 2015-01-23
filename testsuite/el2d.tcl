@@ -222,8 +222,6 @@ if { [catch {
 	set cureng [lindex [analyze energy coulomb] 0]
 	set toteng [analyze energy total]
 
-	puts [analyze energy]
-
 	if { [expr abs($toteng - $cureng)] > $epsilon } {
 	    error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
 	}

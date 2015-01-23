@@ -137,7 +137,7 @@ int tclcommand_system_CMS(ClientData data, Tcl_Interp * interp, int argc, char *
           memcpy(cmspos, gal.cms, 3*sizeof(double));
           box[0] = 0; box[1] = 0; box[2] = 0;
           fold_position(cmspos, box);
-
+          
           Tcl_PrintDouble(interp, cmspos[0], buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
           Tcl_PrintDouble(interp, cmspos[1], buffer);

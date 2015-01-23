@@ -62,7 +62,7 @@ IndexOfType Index;
 TypeList *type_array;
 int number_of_type_lists;
 int GC_init;
-int Type_array_init = 0;
+int Type_array_init;
 
 int max_seen_particle = -1;
 int n_part = 0;
@@ -192,6 +192,19 @@ void init_particle(Particle *part)
   part->f.torque[0] = 0.0;
   part->f.torque[1] = 0.0;
   part->f.torque[2] = 0.0;
+
+  // Swimming parameters
+#ifdef ENGINE
+  part->swim.swimming            = false;
+  part->swim.v_swim              = 0.0;
+  part->swim.f_swim              = 0.0;
+#if defined(LB) || defined(LB_GPU)
+  part->swim.push_pull           = 0;
+  part->swim.dipole_length       = 0.0;
+  part->swim.rotational_friction = 0.0;
+#endif
+#endif
+
 #endif
 
   /* ParticleLocal */
@@ -246,14 +259,14 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef EXTERNAL_FORCES
-  part->l.ext_flag   = 0;
-  part->l.ext_force[0] = 0.0;
-  part->l.ext_force[1] = 0.0;
-  part->l.ext_force[2] = 0.0;
+  part->p.ext_flag   = 0;
+  part->p.ext_force[0] = 0.0;
+  part->p.ext_force[1] = 0.0;
+  part->p.ext_force[2] = 0.0;
   #ifdef ROTATION
-    part->l.ext_torque[0] = 0.0;
-    part->l.ext_torque[1] = 0.0;
-    part->l.ext_torque[2] = 0.0;
+    part->p.ext_torque[0] = 0.0;
+    part->p.ext_torque[1] = 0.0;
+    part->p.ext_torque[2] = 0.0;
   #endif
 #endif
 
@@ -308,18 +321,21 @@ int updatePartCfg(int bonds_flag)
     mpi_get_particles(partCfg,&partCfg_bl);
 
   for(j=0; j<n_part; j++)
-    unfold_position(partCfg[j].r.p,partCfg[j].l.i);
+    unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
+
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
 
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return 0;
   }
   if (!updatePartCfg(bonds_flag)) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not update positions of virtual sites in partcfg } ");
+      ostringstream msg;
+      msg <<"could not update positions of virtual sites in partcfg";
+      runtimeError(msg);
     return 0;
   }
 #endif
@@ -591,6 +607,24 @@ int set_particle_v(int part, double v[3])
   return ES_OK;
 }
 
+#ifdef ENGINE
+int set_particle_swimming(int part, ParticleParametersSwimming swim)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_swimming(pnode, part, swim);
+  return ES_OK;
+}
+#endif
+
 int set_particle_f(int part, double F[3])
 {
   int pnode;
@@ -808,9 +842,9 @@ int set_particle_type(int part, int type)
   if (pnode == -1)
     return ES_ERROR;
 
-// check if the particle exists already and the type is changed, then remove it from the list which contains it
-  Particle *cur_par = (Particle *) malloc( sizeof(Particle) );
   if ( Type_array_init ) {
+	// check if the particle exists already and the type is changed, then remove it from the list which contains it
+	  Particle *cur_par = (Particle *) malloc( sizeof(Particle) );
 	  if ( cur_par != (Particle *) 0 ) {
 		  if ( get_particle_data(part, cur_par) != ES_ERROR ) {
 			  int prev_type = cur_par->p.type;
@@ -821,16 +855,14 @@ int set_particle_type(int part, int type)
 		  }
 	  }
 	  free(cur_par);
-  }
 
-  mpi_send_type(pnode, part, type);
-
-  if ( Type_array_init ) { 
 	  if ( add_particle_to_list(part, type) ==  ES_ERROR ){
 		  //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
 		  return ES_ERROR;
 	  }
   }
+
+  mpi_send_type(pnode, part, type);
 
   return ES_OK;
 }
@@ -1082,8 +1114,9 @@ int change_particle_bond(int part, int *bond, int _delete)
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
-      char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{048 invalid/unknown bonded interaction type %d}", bond[0]);
+        ostringstream msg;
+        msg <<"invalid/unknown bonded interaction type " << bond[0];
+        runtimeError(msg);
       return ES_ERROR;
     }
   }
@@ -1181,7 +1214,9 @@ void local_place_particle(int part, double p[3], int _new)
   pp[0] = p[0];
   pp[1] = p[1];
   pp[2] = p[2];
-  fold_position(pp, i);
+
+  double vv[3]={0.,0.,0.};
+  fold_position(pp, vv, i);
   
   if (_new) {
     /* allocate particle anew */
@@ -1206,6 +1241,12 @@ void local_place_particle(int part, double p[3], int _new)
 
   PART_TRACE(fprintf(stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
 		     this_node, part, p[0], p[1], p[2]));
+
+#ifdef LEES_EDWARDS
+  pt->m.v[0] += vv[0];  
+  pt->m.v[1] += vv[1];  
+  pt->m.v[2] += vv[2];  
+#endif
 
   memcpy(pt->r.p, pp, 3*sizeof(double));
   memcpy(pt->l.i, i, 3*sizeof(int));
@@ -1311,7 +1352,7 @@ int try_delete_bond(Particle *part, int *bond)
       }
       if (j > partners) {
 	bl->n -= 1 + partners;
-	memcpy(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
+	memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
 	realloc_intlist(bl, bl->n);
 	return ES_OK;
       }
@@ -1342,8 +1383,8 @@ void remove_all_bonds_to(int identity)
 	    break;
 	if (j <= partners) {
 	  bl->n -= 1 + partners;
-	  memcpy(bl->e + i, bl->e + i + 1 + partners,
-		 sizeof(int)*(bl->n - i));
+	  memmove(bl->e + i, bl->e + i + 1 + partners,
+		  sizeof(int)*(bl->n - i));
 	  realloc_intlist(bl, bl->n);
 	}
 	else
@@ -1415,7 +1456,7 @@ void try_delete_exclusion(Particle *part, int part2)
   for (i = 0; i < el->n;) {
     if (el->e[i] == part2) {
       el->n--;
-      memcpy(el->e + i, el->e + i + 1, sizeof(int)*(el->n - i));
+      memmove(el->e + i, el->e + i + 1, sizeof(int)*(el->n - i));
       realloc_intlist(el, el->n);
       break;
     }
@@ -1493,10 +1534,12 @@ void recv_particles(ParticleList *particles, int node)
 #endif
 
     PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n", this_node, p->p.identity));
+#ifdef ADDITIONAL_CHECKS
     if (local_particles[p->p.identity] != NULL) {
       fprintf(stderr, "%d: transmitted particle %d is already here...\n", this_node, p->p.identity);
       errexit();
     }
+#endif
   }
 
   update_local_particles(particles);

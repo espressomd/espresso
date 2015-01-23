@@ -28,7 +28,7 @@
 #define LB_H
 
 #include "utils.hpp"
-#include "lattice.hpp"
+#include "lattice_inline.hpp"
 
 extern int lb_components ; // global variable holding the number of fluid components
 
@@ -53,7 +53,7 @@ extern int lb_components ; // global variable holding the number of fluid compon
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
 
-/** Note these are usef for binary logic so should be powers of 2 */
+/** Note these are used for binary logic so should be powers of 2 */
 #define LB_COUPLE_NULL        1
 #define LB_COUPLE_TWO_POINT   2
 #define LB_COUPLE_THREE_POINT 4
@@ -124,6 +124,12 @@ typedef struct {
 
   /** local force density */
   double force[3];
+#ifdef IMMERSED_BOUNDARY
+// For particle update, we need the force on the nodes in LBM
+// Yet, Espresso resets the force immediately after the LBM update
+// Therefore we save it here
+  double force_buf[3];
+#endif
 
 #ifdef LB_BOUNDARIES
    /** flag indicating whether this site belongs to a boundary */
@@ -131,7 +137,7 @@ typedef struct {
 
   /** normal vector of the boundary surface */
   double *nvec; //doesn't work like that any more, I think (georg, 17.08.10)
-#endif
+#endif // LB_BOUNDARIES
 
 } LB_FluidNode;
 
@@ -301,8 +307,9 @@ inline void lb_calc_local_rho(index_t index, double *rho) {
 
   // unit conversion: mass density
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_rho in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_rho in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     *rho =0;
     return;
   }
@@ -334,8 +341,9 @@ inline void lb_calc_local_j(index_t index, double *j) {
 #error Only D3Q19 is implemened!
 #endif
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_j in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_j in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     j[0]=j[1]=j[2]=0;
     return;
   }
@@ -369,8 +377,9 @@ inline void lb_calc_local_pi(index_t index, double *pi) {
   double j[3];
   
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_pi in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_pi in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     j[0] = j[1] = j[2] = 0;
     return;
   }
@@ -389,8 +398,9 @@ inline void lb_calc_local_pi(index_t index, double *pi) {
 inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi) {
 
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_fields in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_fields in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     *rho=0; j[0]=j[1]=j[2]=0; pi[0]=pi[1]=pi[2]=pi[3]=pi[4]=pi[5]=0;
     return;
   }
@@ -400,8 +410,9 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
 #endif
   
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_calc_local_pi in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_calc_local_pi in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     j[0] = j[1] = j[2] = 0;
     return;
   }
@@ -471,8 +482,9 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
 inline void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
   
   if (!(lattice_switch & LATTICE_LB)) {
-    ERROR_SPRINTF(runtime_error(128), 
-        "{ Error in lb_local_fields_get_boundary_flag in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+      ostringstream msg;
+      msg <<"Error in lb_local_fields_get_boundary_flag in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
+      runtimeError(msg);
     *boundary = 0;
     return;
   }

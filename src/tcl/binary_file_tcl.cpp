@@ -149,7 +149,7 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
   for (p = 0; p <= max_seen_particle; p++) {
     Particle data;
     if (get_particle_data(p, &data) == ES_OK) {
-      unfold_position(data.r.p, data.l.i);
+      unfold_position(data.r.p, data.m.v, data.l.i);
 
       /* write particle index */
       Tcl_Write(channel, (char *)&p, sizeof(int));

@@ -32,7 +32,7 @@ EOF
 }
 
 # list of tests that are not supported by this version
-BLACKLIST=
+BLACKLIST=el2d_die.tcl
 
 TESTLOG=runtest.log
 

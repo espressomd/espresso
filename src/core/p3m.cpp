@@ -222,6 +222,16 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz,
 			    int mesh[3], double mesh_i[3], int cao, double alpha_L_i, 
 			    double *alias1, double *alias2);
 
+/** Template parameterized calculation of the charge assignment to be called by wrapper. 
+    \param cao      charge assignment order.
+*/
+template<int cao>
+static void p3m_do_charge_assign();
+
+template<int cao>
+void p3m_do_assign_charge(double q,
+		       double real_pos[3],
+			  int cp_cnt);
 /*@}*/
 
 
@@ -505,8 +515,37 @@ void p3m_interpolate_charge_assignment_function()
   
 }
 
+/* Template wrapper for p3m_do_charge_assign() */
+void p3m_charge_assign() {
+  switch(p3m.params.cao) 
+    {
+    case 1:
+      p3m_do_charge_assign<1>();
+      break;
+    case 2:
+      p3m_do_charge_assign<2>();
+      break;
+    case 3:
+      p3m_do_charge_assign<3>();
+      break;
+    case 4:
+      p3m_do_charge_assign<4>();
+      break;
+    case 5:
+      p3m_do_charge_assign<5>();
+      break;
+    case 6:
+      p3m_do_charge_assign<6>();
+      break;
+    case 7:
+      p3m_do_charge_assign<7>();
+      break;
+    }
+}
+
 /* assign the charges */
-void p3m_charge_assign()
+template<int cao>
+void p3m_do_charge_assign()
 {
   Cell *cell;
   Particle *p;
@@ -523,7 +562,7 @@ void p3m_charge_assign()
     for(i = 0; i < np; i++) {
       if( p[i].p.q != 0.0
 	  ) {
-	p3m_assign_charge(p[i].p.q, p[i].r.p, cp_cnt);
+	p3m_do_assign_charge<cao>(p[i].p.q, p[i].r.p, cp_cnt);
 	cp_cnt++;
       }
     }
@@ -533,7 +572,36 @@ void p3m_charge_assign()
 #endif
 }
 
-void p3m_assign_charge(double q,
+/* Template wrapper for p3m_do_assign_charge() */
+void p3m_assign_charge(double q, double real_pos[3], int cp_cnt) {
+  switch(p3m.params.cao) {
+  case 1:
+    p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
+    break;
+  case 2:
+    p3m_do_assign_charge<2>(q, real_pos, cp_cnt);
+    break;
+  case 3:
+    p3m_do_assign_charge<3>(q, real_pos, cp_cnt);
+    break;
+  case 4:
+    p3m_do_assign_charge<4>(q, real_pos, cp_cnt);
+    break;
+  case 5:
+    p3m_do_assign_charge<5>(q, real_pos, cp_cnt);
+    break;
+  case 6:
+    p3m_do_assign_charge<6>(q, real_pos, cp_cnt);
+    break;
+  case 7:
+    p3m_do_assign_charge<7>(q, real_pos, cp_cnt);
+    break;
+  }
+}  
+
+
+template<int cao>
+void p3m_do_assign_charge(double q,
 		       double real_pos[3],
 		       int cp_cnt)
 {
@@ -556,7 +624,7 @@ void p3m_assign_charge(double q,
   // make sure we have enough space
   if (cp_cnt >= p3m.ca_num) p3m_realloc_ca_fields(cp_cnt + 1);
   // do it here, since p3m_realloc_ca_fields may change the address of p3m.ca_frac
-  cur_ca_frac = p3m.ca_frac + p3m.params.cao3*cp_cnt;
+  cur_ca_frac = p3m.ca_frac + cao*cao*cao*cp_cnt;
 #endif
 
   for(d=0;d<3;d++) {
@@ -580,7 +648,7 @@ void p3m_assign_charge(double q,
       fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
 	      this_node,my_left[d] - skin, my_right[d] + skin);	    
     }
-    if( (nmp + p3m.params.cao) > p3m.local_mesh.dim[d] ) {
+    if( (nmp + cao) > p3m.local_mesh.dim[d] ) {
       fprintf(stderr,"%d: rs_mesh overflow! (pos %f, nmp=%d)\n", this_node, real_pos[d],nmp);
       fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
 	      this_node, my_left[d] - skin, my_right[d] + skin);
@@ -593,12 +661,12 @@ void p3m_assign_charge(double q,
 #endif
   
   if (p3m.params.inter == 0) {
-    for(i0=0; i0<p3m.params.cao; i0++) {
-      tmp0 = p3m_caf(i0, dist[0],p3m.params.cao);
-      for(i1=0; i1<p3m.params.cao; i1++) {
-	tmp1 = tmp0 * p3m_caf(i1, dist[1],p3m.params.cao);
-	for(i2=0; i2<p3m.params.cao; i2++) {
-	  cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], p3m.params.cao);
+    for(i0=0; i0<cao; i0++) {
+      tmp0 = p3m_caf(i0, dist[0],cao);
+      for(i1=0; i1<cao; i1++) {
+	tmp1 = tmp0 * p3m_caf(i1, dist[1],cao);
+	for(i2=0; i2<cao; i2++) {
+	  cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
 	  p3m.rs_mesh[q_ind] += cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
 	  /* store current ca frac */
@@ -611,11 +679,11 @@ void p3m_assign_charge(double q,
       q_ind += p3m.local_mesh.q_21_off;
     }
   } else {
-    for(i0=0; i0<p3m.params.cao; i0++) {
+    for(i0=0; i0<cao; i0++) {
       tmp0 = p3m.int_caf[i0][arg[0]];
-      for(i1=0; i1<p3m.params.cao; i1++) {
+      for(i1=0; i1<cao; i1++) {
 	tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-	for(i2=0; i2<p3m.params.cao; i2++) {
+	for(i2=0; i2<cao; i2++) {
 	  cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
 	  p3m.rs_mesh[q_ind] += cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
@@ -640,6 +708,7 @@ void p3m_shrink_wrap_charge_grid(int n_charges) {
 #endif
 
 /* assign the forces obtained from k-space */
+template<int cao>
 static void P3M_assign_forces(double force_prefac, int d_rs) 
 {
   Cell *cell;
@@ -670,9 +739,9 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
       if( (q=p[i].p.q) != 0.0 ) {
 #ifdef P3M_STORE_CA_FRAC
 	q_ind = p3m.ca_fmp[cp_cnt];
-	for(i0=0; i0<p3m.params.cao; i0++) {
-	  for(i1=0; i1<p3m.params.cao; i1++) {
-	    for(i2=0; i2<p3m.params.cao; i2++) {
+	for(i0=0; i0<cao; i0++) {
+	  for(i1=0; i1<cao; i1++) {
+	    for(i2=0; i2<cao; i2++) {
 	      p[i].f.f[d_rs] -= force_prefac*p3m.ca_frac[cf_cnt]*p3m.rs_mesh[q_ind]; 
 	      q_ind++;
 	      cf_cnt++;
@@ -704,12 +773,12 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
 	}
 
 	if (p3m.params.inter == 0) {
-	  for(i0=0; i0<p3m.params.cao; i0++) {
-	    tmp0 = p3m_caf(i0, dist[0],p3m.params.cao);
-	    for(i1=0; i1<p3m.params.cao; i1++) {
-	      tmp1 = tmp0 * p3m_caf(i1, dist[1],p3m.params.cao);
-	      for(i2=0; i2<p3m.params.cao; i2++) {
-		cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], p3m.params.cao);
+	  for(i0=0; i0<cao; i0++) {
+	    tmp0 = p3m_caf(i0, dist[0],cao);
+	    for(i1=0; i1<cao; i1++) {
+	      tmp1 = tmp0 * p3m_caf(i1, dist[1],cao);
+	      for(i2=0; i2<cao; i2++) {
+		cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
 		p[i].f.f[d_rs] -= force_prefac*cur_ca_frac_val*p3m.rs_mesh[q_ind];
 		q_ind++;
 	      }
@@ -718,11 +787,11 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
 	    q_ind += p3m.local_mesh.q_21_off;
 	  }
 	} else {
-	  for(i0=0; i0<p3m.params.cao; i0++) {
+	  for(i0=0; i0<cao; i0++) {
 	    tmp0 = p3m.int_caf[i0][arg[0]];
-	    for(i1=0; i1<p3m.params.cao; i1++) {
+	    for(i1=0; i1<cao; i1++) {
 	      tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-	      for(i2=0; i2<p3m.params.cao; i2++) {
+	      for(i2=0; i2<cao; i2++) {
 		cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
 		p[i].f.f[d_rs] -= force_prefac*cur_ca_frac_val*p3m.rs_mesh[q_ind];
 		q_ind++;
@@ -832,9 +901,35 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag)
                     }
                 }
             }
-            fft_perform_back(p3m.rs_mesh);              /* Back FFT force component mesh */
-            p3m_spread_force_grid(p3m.rs_mesh);             /* redistribute force component mesh */
-            P3M_assign_forces(force_prefac, d_rs);  /* Assign force component from mesh to particle */
+	    /* Back FFT force component mesh */
+            fft_perform_back(p3m.rs_mesh);
+	    /* redistribute force component mesh */
+            p3m_spread_force_grid(p3m.rs_mesh);
+	    /* Assign force component from mesh to particle */
+	    switch(p3m.params.cao) 
+	      {
+	      case 1:
+		P3M_assign_forces<1>(force_prefac, d_rs); 
+		break;
+	      case 2:
+		P3M_assign_forces<2>(force_prefac, d_rs); 
+		break;
+	      case 3:
+		P3M_assign_forces<3>(force_prefac, d_rs); 
+		break;
+	      case 4:
+		P3M_assign_forces<4>(force_prefac, d_rs); 
+		break;
+	      case 5:
+		P3M_assign_forces<5>(force_prefac, d_rs); 
+		break;
+	      case 6:
+		P3M_assign_forces<6>(force_prefac, d_rs); 
+		break;
+	      case 7:
+		P3M_assign_forces<7>(force_prefac, d_rs); 
+		break;
+	      }
         }
     } /* if(force_flag) */
 
@@ -1818,18 +1913,20 @@ void p3m_init_a_ai_cao_cut() {
 
 
 int p3m_sanity_checks_boxl() {
-  char *errtxt;
+  //char *errtxt;
   int i, ret = 0;
   for(i=0;i<3;i++) {
     /* check k-space cutoff */
     if(p3m.params.cao_cut[i] >= 0.5*box_l[i]) {
-      errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
-      ERROR_SPRINTF(errtxt,"{039 P3M_init: k-space cutoff %g is larger than half of box dimension %g} ",p3m.params.cao_cut[i],box_l[i]);
+        ostringstream msg;
+        msg <<"P3M_init: k-space cutoff " << p3m.params.cao_cut[i] << " is larger than half of box dimension " << box_l[i];
+        runtimeError(msg);
       ret = 1;
     }
     if(p3m.params.cao_cut[i] >= local_box_l[i]) {
-      errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
-      ERROR_SPRINTF(errtxt,"{040 P3M_init: k-space cutoff %g is larger than local box dimension %g} ",p3m.params.cao_cut[i],local_box_l[i]);
+        ostringstream msg;
+        msg <<"P3M_init: k-space cutoff " << p3m.params.cao_cut[i] << " is larger than local box dimension " << local_box_l[i];
+        runtimeError(msg);
       ret = 1;
     }
   }
@@ -1843,49 +1940,55 @@ int p3m_sanity_checks_boxl() {
 
 int p3m_sanity_checks()
 {
-  char *errtxt;
   int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{041 P3M requires periodicity 1 1 1} ");
+      ostringstream msg;
+      msg <<"P3M requires periodicity 1 1 1";
+      runtimeError(msg);
     ret = 1;
   }
   
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{042 P3M at present requires the domain decomposition cell system} ");
+      ostringstream msg;
+      msg << "P3M at present requires the domain decomposition cell system";
+      runtimeError(msg);
     ret = 1;
   }
 
   if (p3m_sanity_checks_boxl()) ret = 1;
 
   if( p3m.params.mesh[0] == 0) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{045 P3M_init: mesh size is not yet set} ");
+      ostringstream msg;
+      msg <<"P3M_init: mesh size is not yet set";
+      runtimeError(msg);
     ret = 1;
   }
   if( p3m.params.cao == 0) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{046 P3M_init: cao is not yet set} ");
+      ostringstream msg;
+      msg <<"P3M_init: cao is not yet set";
+      runtimeError(msg);
     ret = 1;
   }
   if (p3m.params.alpha < 0.0 ) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{048 P3M_init: alpha must be >0} ");
+      ostringstream msg;
+      msg <<"P3M_init: alpha must be >0";
+      runtimeError(msg);
     ret = 1;
   }
   if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{048a P3M_init: node grid must be sorted, largest first} ");
+      ostringstream msg;
+      msg <<"P3M_init: node grid must be sorted, largest first";
+      runtimeError(msg);
     ret = 1;
   }
   
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
-	  (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-	  errtxt = runtime_error(128);
-	  ERROR_SPRINTF(errtxt,"{049 P3M_init: Nonmetallic epsilon requires cubic box} ");
+      (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
+        ostringstream msg;
+        msg <<"P3M_init: Nonmetallic epsilon requires cubic box";
+        runtimeError(msg);
 	  ret = 1;
 	}
   }

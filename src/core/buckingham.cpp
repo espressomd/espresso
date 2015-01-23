@@ -102,7 +102,7 @@ void calc_buck_cap_radii()
          {
            fprintf(stderr,"%d: ERROR@buckingham.h: Failed to converge while determining Buckingham cap radius!!",this_node);
            fprintf(stderr,"%d: tolerance = %f",this_node, diff);
-                 exit (0);
+           errexit();
          }
             }
       frac2 = SQR(r1);

@@ -22,7 +22,6 @@
 #define LANGEVIN_PER_PARTICLE
 #define ROTATION_PER_PARTICLE
 #define CATALYTIC_REACTIONS
-#define GRANDCANONCIAL
 
 #define NEMD
 #define NPT 
@@ -47,6 +46,7 @@
 #define TABULATED
 #define LENNARD_JONES
 #define LENNARD_JONES_GENERIC
+#define LJGEN_SOFTCORE
 #define LJCOS
 #define LJCOS2
 #define GAUSSIAN
@@ -106,6 +106,7 @@
 #define MAGGS_DEBUG
 #define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
+#define LE_DEBUG
 
 #define MPI_CORE
 #define FORCE_CORE

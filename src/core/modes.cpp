@@ -109,19 +109,19 @@ void map_to_2dgrid() {
   /* Find the grid normal */
   for ( i = 0 ; i < 3 ; i++) {
     if ( mode_grid_3d[i] == 0 ) {
-      if (zdir != -1 ) { /* grid normal must be unique */ 
-	char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtxt, "{029 fft_modes_init: grid dimensions are <%d,%d,%d>, but one and only one must be = 0} ",
-		mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
+      if (zdir != -1 ) { /* grid normal must be unique */
+      ostringstream msg;
+      msg <<"fft_modes_init: grid dimensions are <" << mode_grid_3d[0] << "," << mode_grid_3d[1] << "," << mode_grid_3d[2] << ">, but one and only one must be = 0";
+      runtimeError(msg);
 	return;
       } else {
 	zdir = i;
       }
     } 
     else if ( mode_grid_3d[i] < 0 ) {
-      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{030 fft_modes_init: grid dimensions are <%d,%d,%d>, but all must be >= 0} ",
-	      mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
+        ostringstream msg;
+        msg <<"fft_modes_init: grid dimensions are <" << mode_grid_3d[0] << "," << mode_grid_3d[1] << "," << mode_grid_3d[2] << ">, but all must be >= 0";
+        runtimeError(msg);
       return;
     }
     else {
@@ -131,9 +131,9 @@ void map_to_2dgrid() {
   }
   /* Check that grid normal was found */
   if ( zdir == -1 ) {
-    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{031 fft_modes_init: grid dimensions are <%d,%d,%d>, but one and only one must be = 0} ",
-	    mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
+      ostringstream msg;
+      msg <<"fft_modes_init: grid dimensions are <" << mode_grid_3d[0] << "," << mode_grid_3d[1] << "," << mode_grid_3d[2] << ">, but one and only one must be = 0";
+      runtimeError(msg);
     return;
   }
   STAT_TRACE(fprintf(stderr,
@@ -143,17 +143,17 @@ void map_to_2dgrid() {
 
   /* Now that we know the grid normal check that the other two dimensions are equal and multiples of 2 */
   if ( mode_grid_3d[xdir] != mode_grid_3d[ydir] ) {
-    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{032 fft_modes_init: grid dimensions are <%d,%d,%d>, but two must be equal and the other 0} ",
-	    mode_grid_3d[xdir],mode_grid_3d[ydir],mode_grid_3d[zdir]);
+      ostringstream msg;
+      msg <<"fft_modes_init: grid dimensions are <" << mode_grid_3d[xdir] << "," << mode_grid_3d[ydir] << "," << mode_grid_3d[zdir] << ">, but two must be equal and the other 0";
+      runtimeError(msg);
     return;
   }
 
   if ( (mode_grid_3d[xdir]/2.0 - floor(mode_grid_3d[xdir]/2.0) > MODES2D_NUM_TOL) 
        || (mode_grid_3d[ydir]/2.0 - floor(mode_grid_3d[ydir]/2.0) > MODES2D_NUM_TOL) ) {
-    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{033 fft_modes_init: grid dimensions are <%d,%d,%d>. All non zero values must be integer multiples of 2} ",
-	    mode_grid_3d[xdir],mode_grid_3d[ydir],mode_grid_3d[zdir]);
+      ostringstream msg;
+      msg <<"fft_modes_init: grid dimensions are <" << mode_grid_3d[xdir] << "," << mode_grid_3d[ydir] << "," << mode_grid_3d[zdir] << ">, All non zero values must be integer multiples of 2";
+      runtimeError(msg);
     return;
   }
 }
@@ -194,8 +194,9 @@ int orient_order(double* result, double* stored_dirs)
   updatePartCfg(WITHOUT_BONDS);
   /* Make sure particles are sorted */
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{035 could not sort partCfg, particles have to start at 0 and have consecutive identities} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg, particles have to start at 0 and have consecutive identities";
+      runtimeError(msg);
     return ES_ERROR;
   }
 
@@ -352,8 +353,9 @@ int get_lipid_orients(IntList* l_orient) {
   double* height_grid;
 
   if ( xdir + ydir + zdir == -3 || mode_grid_3d[xdir] <= 0 || mode_grid_3d[ydir] <= 0 ) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{036 cannot calculate lipid orientations with uninitialized grid} ");
+      ostringstream msg;
+      msg <<"cannot calculate lipid orientations with uninitialized grid";
+      runtimeError(msg);
     return ES_ERROR;
   }
 
@@ -371,13 +373,15 @@ int get_lipid_orients(IntList* l_orient) {
   //Make sure particles are sorted
   
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   if ( !calc_fluctuations(height_grid, 1) ) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
+      ostringstream msg;
+      msg <<"calculation of height grid failed";
+      runtimeError(msg);
     return -1;
   }
 
@@ -427,8 +431,9 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
   if ( mode_grid_changed ) {
     STAT_TRACE(fprintf(stderr,"%d,initializing fftw for mode analysis \n",this_node));
     if ( xdir + ydir + zdir == -3 ) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt,"{092 attempt to perform mode analysis with uninitialized grid} ");
+        ostringstream msg;
+        msg <<"attempt to perform mode analysis with uninitialized grid";
+        runtimeError(msg);
       return -1;
     }
 
@@ -455,13 +460,15 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
   //Make sure particles are sorted
   
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   if ( !calc_fluctuations(height_grid, switch_fluc)) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
+      ostringstream msg;
+      msg <<"calculation of height grid failed";
+      runtimeError(msg);
     return -1;
   }
 
@@ -512,14 +519,16 @@ int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList
   updatePartCfg(WITHOUT_BONDS);
   //Make sure particles are sorted
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
 
   if ( density_profile == NULL ) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{095 density_profile not initialized in calc_bilayer_density_profile } ");
+      ostringstream msg;
+      msg <<"density_profile not initialized in calc_bilayer_density_profile";
+      runtimeError(msg);
     return -1;
   }
 
@@ -537,9 +546,10 @@ int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList
 	/* If the particle is within our zrange then add it to the profile */
 	if ( ( -rrange < relativeradius) && ( relativeradius < rrange) ) {
 	  thisbin = (int)(floor((relativeradius+rrange)/binwidth));
-	  if ( thisbin < 0 || thisbin >= density_profile[j].max ) {
-	        char *errtxt = runtime_error(128);
-		ERROR_SPRINTF(errtxt,"{095 bin is outside range } ");
+      if ( thisbin < 0 || thisbin >= density_profile[j].max ) {
+          ostringstream msg;
+          msg <<"bin is outside range ";
+          runtimeError(msg);
 		return -1;
 	  }
 
@@ -601,8 +611,9 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
 
   /*        Check to see that there is a mode grid to work with    */
   if ( xdir + ydir + zdir == -3 ) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{092 attempt to perform mode analysis with uninitialized grid} ");
+      ostringstream msg;
+      msg <<"attempt to perform mode analysis with uninitialized grid";
+      runtimeError(msg);
     return -1;
   }
   
@@ -615,8 +626,9 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
   
   /* Calculate the height grid which also ensures that particle config is updated */
   if ( !calc_fluctuations(tmp_height_grid, 1) ) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
+      ostringstream msg;
+      msg <<"calculation of height grid failed";
+      runtimeError(msg);
     return -1;
   } 
   
@@ -626,8 +638,9 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
   binwidth = hrange*2.0/(double)(nbins);
 
   if ( density_profile == NULL ) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{095 density_profile not initialized in calc_bilayer_density_profile } ");
+      ostringstream msg;
+      msg <<"density_profile not initialized in calc_bilayer_density_profile";
+      runtimeError(msg);
     return -1;
   }
 
@@ -703,8 +716,9 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   } else { if (switch_fluc == 0) {
     STAT_TRACE(fprintf(stderr,"%d,calculating thickness \n",this_node));
     } else {
-       char *errtxt = runtime_error(128);
-       ERROR_SPRINTF(errtxt,"{097 Wrong argument in calc_fluctuations function} ");
+          ostringstream msg;
+          msg <<"Wrong argument in calc_fluctuations function";
+          runtimeError(msg);
        return -1;
     }
   }
@@ -735,15 +749,17 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
 
 
   if ( xdir + ydir + zdir == -3 ) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt,"{092 attempt to calculate height grid / thickness with uninitialized grid} ");
+      ostringstream msg;
+      msg <<"attempt to calculate height grid / thickness with uninitialized grid";
+      runtimeError(msg);
       return -1;
   }
   
 
   if ( height_grid == NULL ) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{093 you must allocate memory for the height grid / thickness first} ");
+      ostringstream msg;
+      msg <<"you must allocate memory for the height grid / thickness first";
+      runtimeError(msg);
     return -1;
   }
 
@@ -775,8 +791,9 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   updatePartCfg(WITHOUT_BONDS);
   //Make sure particles are sorted
   if (!sortPartCfg()) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
     return -1;
   }
   
@@ -903,9 +920,10 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
 	    }
 	  }
 	}
-	if ( nonzerocnt == 0 ) { 
-	  char *errtxt = runtime_error(128);
-	  ERROR_SPRINTF(errtxt,"{095 hole in membrane} ");
+    if ( nonzerocnt == 0 ) {
+        ostringstream msg;
+        msg <<"hole in membrane";
+        runtimeError(msg);
 	  return -1;
 	}
 	gapcnt++;

@@ -90,6 +90,6 @@ inline int calc_bending_force(Particle *p2, Particle *p1, Particle *p3, Particle
 	}	
   return 0;
 }
-
+#undef fold_position
 #endif
 

@@ -33,7 +33,7 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "forces.hpp"
-#include "energy.hpp"
+#include "energy_inline.hpp"
 #include "pressure.hpp"
 #include "domain_decomposition.hpp"
 #include "constraint.hpp"
