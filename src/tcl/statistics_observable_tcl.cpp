@@ -984,8 +984,9 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 	temp[0] = 0.0; temp[1] = 0.0; temp[2] = 0.0;
 	memcpy(r_data->start_point, temp, 3*sizeof(double));
 	memcpy(r_data->end_point, temp, 3*sizeof(double));
-	int security = 0;
+	int cur_argc = argc;
 	while (argc > 0) {
+		cur_argc = argc;
 		//printf("%d %s\n", argc, argv[0]);
 		if (ARG0_IS_S("type")){
 			if ( !parse_id_list(interp, argc, argv, change, &r_data->id_list) == TCL_OK ) {
@@ -995,6 +996,7 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 			r_data->type = atoi(argv[1]);
 			argc-=*change;
 			argv+=*change;
+			continue;
 		}
 		if (ARG0_IS_S("rbins")){
 			r_data->rbins = atoi(argv[1]);
@@ -1002,18 +1004,21 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 			argc-=2;
 			argv+=2;
 			*change+=2;
+			continue;
 		}
 		if (ARG0_IS_S("maxr")){
 			r_data->maxr = atof(argv[1]);
 			argc-=2;
 			argv+=2;
 			*change+=2;
+			continue;
 		}
 		if (ARG0_IS_S("minr")){
 			r_data->minr = atof(argv[1]);
 			argc-=2;
 			argv+=2;
 			*change+=2;
+			continue;
 		}
 		if (ARG0_IS_S("id_start_point")){
 			r_data->start_point_id = atoi(argv[1]);
@@ -1021,6 +1026,7 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 			argc-=2;
 			argv+=2;
 			*change += 2;
+			continue;
 		}
 		if (ARG0_IS_S("id_end_point")){
 			r_data->end_point_id = atoi(argv[1]);
@@ -1028,6 +1034,7 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 			argc -= 2;
 			argv += 2;
 			*change += 2;			
+			continue;
 		}
 		if ( argc > 0 && ARG0_IS_S("start_point")){
 			r_data->start_point[0] = atof(argv[1]);
@@ -1037,6 +1044,7 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 			argc-=4;
 			argv+=4;
 			*change += 4;
+			continue;
 						
 		}
 		if ( argc > 0 && ARG0_IS_S("end_point")){
@@ -1047,9 +1055,10 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 			argc-=4;
 			argv+=4;
 			*change += 4;
+			continue;
 		}
-		security ++;
-		if ( security > argc + *change + 1 ) {
+		if ( argc > 0 && cur_argc == argc ) {
+			printf("Error parsing arguments\n");
 			return TCL_ERROR;
 		}
 
@@ -1075,8 +1084,9 @@ int tcl_command_radial_density_distribution(Tcl_Interp* interp, int argc, char**
 
 int tcl_parse_spatial_polymer_properties(Tcl_Interp* interp, int argc, char **argv, int *change, int *dim_A, spatial_polym_data *p_data){
 	*change = 0;
+	int cur_argc = argc;
 	while ( argc > 0 ) {
-	
+		cur_argc = argc;	
 		if (ARG0_IS_S("ids") || ARG0_IS_S("types") ) {
 			if (! parse_id_list(interp, argc, argv, change, &p_data->id_list) == TCL_OK){
 				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
@@ -1094,6 +1104,10 @@ int tcl_parse_spatial_polymer_properties(Tcl_Interp* interp, int argc, char **ar
 			continue;
 		}
 	
+		if ( argc > 0 && cur_argc == argc ) {
+			printf("Error parsing arguments\n");
+			return TCL_ERROR;
+		}
 	}	
 	*dim_A = p_data->id_list->n / p_data->npoly;
 	return TCL_OK;
@@ -1117,8 +1131,10 @@ int tcl_command_spatial_polymer_properties(Tcl_Interp* interp, int argc, char** 
 
 int tcl_parse_persistence_length(Tcl_Interp* interp, int argc, char** argv, int *change, int* dim_A, spatial_polym_data *p_data){
 	*change = 0;
+	int cur_argc = argc;
 	while (argc > 0) {
-		if ( ARG0_IS_S("ids") ) {
+		cur_argc = argc;
+		if ( ARG0_IS_S("ids") || ARG0_IS_S("type") ) {
 			if (! parse_id_list(interp, argc, argv, change, &p_data->id_list) == TCL_OK ) {
 				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
 				return TCL_ERROR;
@@ -1126,16 +1142,23 @@ int tcl_parse_persistence_length(Tcl_Interp* interp, int argc, char** argv, int 
 			p_data->npoly = p_data->id_list->n;
 			argc -= *change;
 			argv += *change;
+			continue;
 		}
 		if (argc > 0 && ARG0_IS_S("max_d") ) {
 			*dim_A = atoi(argv[1]);
 			argc -=2;
 			argv +=2;
+			continue;
 		}
 		if (argc > 0 && ARG0_IS_S("cut_off") ) {
 			p_data->cut_off = atoi(argv[1]);
 			argc -=2;
 			argv +=2;
+			continue;
+		}
+		if ( argc > 0 && cur_argc == argc ) {
+			printf("Error parsing arguments\n");
+			return TCL_ERROR;
 		}
 	}
 	return TCL_OK;
@@ -1162,8 +1185,10 @@ int tcl_command_persistence_length(Tcl_Interp* interp, int argc, char** argv, in
 
 int tcl_parse_k_dist(Tcl_Interp* interp, int argc, char** argv, int *change, int* dim_obs, k_dist_data* k_data){
 	*change = 0;
+	int cur_argc = argc;
 	while (argc > 0 ) {
-		if ( ARG0_IS_S("ids") ) {
+		cur_argc=argc;
+		if ( ARG0_IS_S("ids") || ARG0_IS_S("type") ) {
 			if (! parse_id_list(interp, argc, argv, change, &k_data->id_list) == TCL_OK ) {
 				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
 				return TCL_ERROR;
@@ -1208,6 +1233,10 @@ int tcl_parse_k_dist(Tcl_Interp* interp, int argc, char** argv, int *change, int
 			argc-=2;
 			argv+=2;
 			continue;
+		}
+		if ( argc > 0 && cur_argc == argc ) {
+			printf("Error parsing arguments\n");
+			return TCL_ERROR;
 		}
 	}
 	return TCL_OK;
