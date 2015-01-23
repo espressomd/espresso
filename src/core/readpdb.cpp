@@ -17,12 +17,16 @@ static void  add_lj_interaction(PdbParser::PdbParser &parser, std::vector<PdbLJI
     for(std::map<std::string, PdbParser::itp_atomtype>::const_iterator jt = parser.itp_atomtypes.begin(); jt != parser.itp_atomtypes.end(); ++jt) {
 
       const double epsilon_ij = sqrt(it->epsilon * jt->second.epsilon);
-      const double sigma_ij = 0.5*(it->sigma+jt->second.epsilon);
+      const double sigma_ij = 0.5*(it->sigma+10.*jt->second.sigma);
       const double cutoff_ij = rel_cutoff*sigma_ij;
       const double shift_ij = -pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6);
       READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e cut %e shift %e\n", it->other_type, first_type + jt->second.id, epsilon_ij, sigma_ij,
 			   cutoff_ij, shift_ij););
-      lennard_jones_set_params(it->other_type, first_type + jt->second.id, epsilon_ij, sigma_ij,
+      if((epsilon_ij <= 0) || (sigma_ij <= 0)) {
+	continue;
+      }
+      else
+	lennard_jones_set_params(it->other_type, first_type + jt->second.id, epsilon_ij, sigma_ij,
 			       cutoff_ij, shift_ij, 0.0, -1.0, 0.0);
     }
   }
@@ -34,12 +38,14 @@ static void add_lj_internal(PdbParser::PdbParser &parser, const double rel_cutof
       if(it->second.id > jt->second.id)
 	continue;
       const double epsilon_ij = sqrt(it->second.epsilon * jt->second.epsilon);
-      const double sigma_ij = 0.5*(it->second.sigma+jt->second.epsilon);
+      const double sigma_i = 10.*it->second.sigma;
+      const double sigma_j = 10.*jt->second.sigma;      
+      const double sigma_ij = 0.5*(10.*it->second.sigma+10.*jt->second.sigma);
       const double cutoff_ij = rel_cutoff*sigma_ij;
       const double shift_ij = -pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6);
-      READPDB_TRACE(printf("adding internal lj interaction types %d %d eps %e sig %e cut %e shift %e\n", first_type + it->second.id, first_type + jt->second.id, epsilon_ij, sigma_ij,
-			   cutoff_ij, shift_ij););
-      lennard_jones_set_params(it->second.id, first_type + jt->second.id, epsilon_ij, sigma_ij,
+      READPDB_TRACE(printf("adding internal lj interaction types %d %d eps %e sig %e cut %e shift %e sigma_i %e sigma_j %e\n", first_type + it->second.id, first_type + jt->second.id, epsilon_ij, sigma_ij,
+			   cutoff_ij, shift_ij, sigma_i, sigma_j););
+      lennard_jones_set_params(first_type + it->second.id, first_type + jt->second.id, epsilon_ij, sigma_ij,
 			       cutoff_ij, shift_ij, 0.0, -1.0, 0.0);      
     }
   }
