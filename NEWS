@@ -13,6 +13,7 @@ New user-visible features
 * Lees Edwards boundaries for sheer stuff
 * Espresso can now read pdb and gromacs topology files.
 * Checkpointing for the correlator
+* New polymer observables
 
 Known bugs
 ----------

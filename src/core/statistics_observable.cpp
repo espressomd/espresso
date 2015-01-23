@@ -1402,15 +1402,17 @@ int observable_spatial_polymer_properties(observable* self){
       return -1;
     }
 	double* A = self->last_value;
-	spatial_polym_data *p_data = (spatial_polym_data *) self->container;
-	IntList *ids=p_data->id_list;
 	int poly_len = self->n;
 	for (int i = 0; i<poly_len; i++ )
 		A[i]=0.0;
 
+#ifdef ELECTROSTATICS
+	spatial_polym_data *p_data = (spatial_polym_data *) self->container;
+	IntList *ids=p_data->id_list;
 	for (int i = 0; i<ids->n; i++){
 		A[i%poly_len] += partCfg[ids->e[i]].p.q/( (double) p_data->npoly);
 	}
+#endif
 	return 0;
 }
 
