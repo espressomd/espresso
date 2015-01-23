@@ -127,7 +127,7 @@ void init_particle(Particle *part)
   part->p.rinertia[2] = 1.0;
 #endif
 #ifdef ROTATION_PER_PARTICLE
-  part->p.rotation =1;
+  part->p.rotation =14;
 #endif
 
 

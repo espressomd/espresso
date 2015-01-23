@@ -95,7 +95,7 @@ typedef struct {
 #ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
-  int rotation;
+  short int rotation;
 #endif
 
 #ifdef ELECTROSTATICS

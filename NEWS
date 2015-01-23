@@ -14,6 +14,8 @@ New user-visible features
 * Espresso can now read pdb and gromacs topology files.
 * Checkpointing for the correlator
 * New polymer observables
+* Using the rotation_per_particle feature, it is now possible to switch the integration of the rotational degrees of freedom per individual axis in the particle's body-fixed frame.
+
 
 Known bugs
 ----------
