@@ -27,7 +27,6 @@
 source "tests_common.tcl"
 
 require_feature "VIRTUAL_SITES_RELATIVE"
-require_feature "VIRTUAL_SITES_NO_VELOCITY" off
 require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
 require_feature "ROTATIONAL_INERTIA"
 
@@ -36,7 +35,7 @@ puts "- Testcase virtual-sites-rotation.tcl running on 1 nodes"
 puts "---------------------------------------------------------------"
 cellsystem nsquare -no_verlet_list
 part 0 pos 0 0 0
-part 1 pos 5 0 0 vs_auto_relate_to 0
+part 1 pos 5 0 0 vs_auto_relate_to 0 virtual 1
 
 
 set kT 1.5
@@ -60,7 +59,7 @@ set oy2 0.
 set oz2 0.
 
 
-set loops 3000
+set loops 9000
 puts "Checking rotation of virtual sites..."
 integrate 30000
 puts "Measuring..."
@@ -68,7 +67,7 @@ puts "Measuring..."
 for {set i 0} {$i <$loops} {incr i} {
  integrate 100
  # Get kinetic energy in each degree of freedom 
- set o [part 1 print omega_lab]
+ set o [part 1 print omega_body]
  set ox2 [expr $ox2 +pow([lindex $o 0],2)]
  set oy2 [expr $oy2 +pow([lindex $o 1],2)]
  set oz2 [expr $oz2 +pow([lindex $o 2],2)]
@@ -80,7 +79,10 @@ set Eox [expr 0.5 * $j1 *$ox2/$n/$loops]
 set Eoy [expr 0.5 * $j2 *$oy2/$n/$loops]
 set Eoz [expr 0.5 * $j3 *$oz2/$n/$loops]
 
+puts "$Eox $Eoy $Eoz"
+
 set do [expr 1./3. *($Eox +$Eoy +$Eoz)/$halfkT-1.]
+
 
 puts "Rel. deviation of rotational kinetic energy: $do" 
 if { abs($do) > $tolerance } {
