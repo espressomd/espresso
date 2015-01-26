@@ -688,6 +688,11 @@ void propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef ROTATION
+     propagate_omega_quat_particle(&p[i]);
+#endif
+
+        // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
@@ -715,9 +720,6 @@ void propagate_vel()
 	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
-#endif
-#ifdef ROTATION
-     propagate_omega_quat_particle(&p[i]);
 #endif
       }
     }
@@ -793,7 +795,13 @@ void propagate_vel_pos()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
- #ifdef VIRTUAL_SITES
+
+#ifdef ROTATION
+      propagate_omega_quat_particle(&p[i]);
+#endif
+
+       // Don't propagate translational degrees of freedom of vs
+#ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
      for(j=0; j < 3; j++){
@@ -815,9 +823,6 @@ void propagate_vel_pos()
 
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
-#endif
-#ifdef ROTATION
-      propagate_omega_quat_particle(&p[i]);
 #endif
 
 #ifdef LEES_EDWARDS

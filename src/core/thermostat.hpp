@@ -323,18 +323,9 @@ inline void friction_thermo_langevin(Particle *p)
 inline void friction_thermo_langevin_rotation(Particle *p)
 {
   extern double langevin_pref2;
-
   int j;
-#ifdef VIRTUAL_SITES
-#ifndef VIRTUAL_SITES_THERMOSTAT
-  if (ifParticleIsVirtual(p))
-  {
-    for (j=0;j<3;j++)
-    p->f.torque[j]=0;
 
-    return;
-  }
-#endif
+
 
 #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
   if (!ifParticleIsVirtual(p))
@@ -345,7 +336,6 @@ inline void friction_thermo_langevin_rotation(Particle *p)
     return;
   }
 #endif
-#endif	
   
   for ( j = 0 ; j < 3 ; j++) 
   {
