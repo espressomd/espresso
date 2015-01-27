@@ -21,7 +21,7 @@ static void  add_lj_interaction(std::set<PdbParser::itp_atomtype, PdbParser::itp
       const double epsilon_ij = sqrt(it->epsilon * jt->epsilon);
       const double sigma_ij = 0.5*(it->sigma+10.*jt->sigma);
       const double cutoff_ij = rel_cutoff*sigma_ij;
-      const double shift_ij = -pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6);
+      const double shift_ij = -(pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6));
       READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e cut %e shift %e\n", it->other_type, first_type + jt.id, epsilon_ij, sigma_ij,
 			   cutoff_ij, shift_ij););
       if((epsilon_ij <= 0) || (sigma_ij <= 0)) {
@@ -46,7 +46,11 @@ static void add_lj_internal(std::set<PdbParser::itp_atomtype, PdbParser::itp_ato
       const double shift_ij = -pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6);
       READPDB_TRACE(printf("adding internal lj interaction types %d %d eps %e sig %e cut %e shift %e sigma_i %e sigma_j %e\n", first_type + it->id, first_type + jt->id, epsilon_ij, sigma_ij,
 			   cutoff_ij, shift_ij););
-      lennard_jones_set_params(first_type + it->id, first_type + jt->id, epsilon_ij, sigma_ij,
+      if((epsilon_ij <= 0) || (sigma_ij <= 0)) {
+	continue;
+      }
+      else
+	lennard_jones_set_params(first_type + it->id, first_type + jt->id, epsilon_ij, sigma_ij,
 			       cutoff_ij, shift_ij, 0.0, -1.0, 0.0);      
     }
   }
@@ -85,6 +89,7 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
     pos[0] = (it->x - bb.llx);
     pos[1] = (it->y - bb.lly);
     pos[2] = (it->z - bb.llz);
+
     stat = place_particle(id, pos);
 
     const std::map<int, PdbParser::itp_atom>::const_iterator entry = parser.itp_atoms.find(it->i);
