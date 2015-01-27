@@ -83,6 +83,8 @@ proc blockfile_read_auto_particles {channel read auto} {
                 set vs_relative $idx; incr idx 6 }
             "^rot"       { if {![regexp "^$i" "rotation"]} { error " $i is not a particle property" }
                 set rotation $idx; incr idx 1 }
+            "^dipm"       { if {![regexp "^$i" "dipm"]} { error " $i is not a particle property" }
+                set dipm $idx; incr idx 1 }
             "^q$"       { set q $idx; incr idx }
             "^v"        { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
                 set v $idx; incr idx 3 }
@@ -146,6 +148,8 @@ proc blockfile_read_auto_particles {channel read auto} {
     }
     if {[info exists rotation]} { set cmd "$cmd \
            rotation \[lindex \$line $rotation\]" }
+    if {[info exists dipm]} { set cmd "$cmd \
+           dipm \[lindex \$line $dipm\]" }
     if {[info exists gamma]} { set cmd "$cmd \
            gamma \[lindex \$line $gamma\]" }
     if {[info exists temp]} { set cmd "$cmd \
