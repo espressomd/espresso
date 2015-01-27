@@ -102,8 +102,11 @@ inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 	for(k=0;k<3;k++) h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);
 	//volume+=A * -n[2]/dn * h[2];
 	A=area_triangle(p11,p22,p33);
-	aa=(A - iaparams->p.area_force_local.A0_l)/iaparams->p.area_force_local.A0_l;
-	
+
+	//aa=(A - iaparams->p.area_force_local.A0_l)/iaparams->p.area_force_local.A0_l;
+	//corrected with square root of the triangle's area, see "R.Tothova: Comparison of Different Formulas for Local Area Conservation Modulus in Spring Network Models"
+	aa=(A - iaparams->p.area_force_local.A0_l)/sqrt(iaparams->p.area_force_local.A0_l);
+		
 	//aminusb(3,h,p11,rh);				// area_forces for each triangle node
 	vecsub(h,p11,rh);				// area_forces for each triangle node
 	hn=normr(rh);
