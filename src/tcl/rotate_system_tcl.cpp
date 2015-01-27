@@ -26,16 +26,30 @@
 
 int tclcommand_rotate_system(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
   double alpha,theta,phi;
-  if (argc != 3) { 
+  if (argc != 4) { 
     fprintf(stderr,"needs 3 angles\n");
     return ES_ERROR;
   }
-  if (! 
-    (ARG_IS_D(0,phi)) && (ARG_IS_D(1,theta)) && (ARG_IS_D(2,alpha))
-    ) {
+  if (! (ARG_IS_D(1,phi)))
+  {
       fprintf(stderr,"Expects 3 floats\n");
       return ES_ERROR;
   }
+
+  if (!(ARG_IS_D(2,theta)))
+  {
+      fprintf(stderr,"Expects 3 floats\n");
+      return ES_ERROR;
+  }
+  if (! (ARG_IS_D(3,alpha)))
+  {
+      fprintf(stderr,"Expects 3 floats\n");
+      return ES_ERROR;
+  }
+  
+  printf("phi=%g,theta=%g alpha=%g\n",phi,theta,alpha);
+
+  rotate_system(phi,theta,alpha);
 
   return ES_OK;
 }

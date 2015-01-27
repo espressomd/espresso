@@ -8,6 +8,7 @@
 
 void local_rotate_system(double phi, double theta, double alpha)
 {
+  printf("local_rotate_system %g %g %g\n",phi,theta,alpha);
   // Culculate center of mass
   double com[3];
   int N=0; // Num of particles
