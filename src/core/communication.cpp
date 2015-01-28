@@ -68,6 +68,7 @@
 #include "cuda_interface.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "statistics_observable.hpp"
+#include "minimize_energy.hpp"
 
 using namespace std;
 
@@ -155,6 +156,7 @@ static int terminated = 0;
   CB(mpi_external_potential_sum_energies_slave) \
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
   CB(mpiRuntimeErrorCollectorGatherSlave)        \
+  CB(mpi_minimize_energy_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -1224,6 +1226,17 @@ void mpi_remove_particle_slave(int pnode, int part)
     local_remove_all_particles();
 
   on_particle_change();
+}
+
+/********************* REQ_MIN_ENERGY ********/
+
+int mpi_minimize_energy(const double f_max, const double gamma, const int max_steps) {
+  mpi_call(mpi_minimize_energy_slave,0,0);
+  return minimize_energy();
+}
+
+void mpi_minimize_energy_slave(int a, int b) {
+  minimize_energy();
 }
 
 /********************* REQ_INTEGRATE ********/

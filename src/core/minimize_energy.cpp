@@ -56,14 +56,36 @@ static double steepest_descent_step(double gamma) {
   return f_max;
 }
 
-bool minimize_energy(const double f_max, const double gamma, const int max_steps) {
-  double f_max_local = 2*f_max;
+struct MinimizeEnergyParameters {
+  double f_max;
+  double gamma;
+  int max_steps;
+};
+
+static MinimizeEnergyParameters *params = 0;
+
+void minimize_energy_init(const double f_max, const double gamma, const int max_steps) {
+  if(!params)
+    params = new MinimizeEnergyParameters;
+
+  params->f_max = f_max;
+  params->gamma = gamma;
+  params->max_steps = max_steps;
+}
+
+bool minimize_energy(void) {
+  MPI_Bcast(params, sizeof(MinimizeEnergyParameters), MPI_BYTE, 0, comm_cart);
+  double f_max_local = 2*params->f_max;
   double f_max_global;
-  for(int i = 0; i < max_steps; ++i) {
-    f_max_local = steepest_descent_step(gamma);
+  for(int i = 0; i < params->max_steps; ++i) {
+    f_max_local = steepest_descent_step(params->gamma);
     MPI_Allreduce(&f_max_local, &f_max_global, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
-    if(f_max_global < f_max)
+    if(this_node == 0)
+      printf("minimize_energy(): step %d, f_max %e\n", i, f_max_global);
+    if(f_max_global < params->f_max)
       return true;
   }
   return false;
+
 }
+

@@ -25,6 +25,6 @@
 #include "forces_inline.hpp"
 #include "communication.hpp"
 
-bool minimize_energy(const double f_max, const double gamma, const int max_steps);
+bool minimize_energy(void);
 
 #endif /* __MINIMIZE_ENERGY */
