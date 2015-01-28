@@ -171,7 +171,7 @@ Using a previously defined template \var{tid}, this command creates a new object
 \item[\var{tid}] object will be created using nodes, triangle incidences, elasticity parameters and initial stretching saved in this template.
 \item[origin \var{x} \var{y} \var{z}] center of the object will be at this point.
 \item[part-type \var{type}] can be any integer starting at 0. All particles of one object have the same \verb|part-type|. One can have more objects with the same type of particles, but this is not recommended, because the interactions between objects are set up using these types.
-\item[\opt{rotate \var{x} \var{y} \var{z}}] angles in radians, by which the object is initially rotated about the $x, y, z$ axis. Default values are 0.0 0.0 0.0.
+\item[\opt{rotate \var{x} \var{y} \var{z}}] angles in radians, by which the object is initially rotated around the $x, y, z$ axis. Default values are 0.0 0.0 0.0.
 \item[\opt{mass \var{m}}] mass of one particle. Default value is 1.0
 \end{arguments}
 
@@ -202,8 +202,9 @@ This command is useful for some preparatory work with mesh before it is used for
   \require{1,2, possibly 3 or 4}{oif_object_output}
   object-id  \var{oid}
   \opt{vtk-pos \var{output\_file1.dat}}
-  \opt{vtk-aff \var{output\_file2.dat}}
-  \opt{mesh-nodes \var{output\_file3.dat}}
+  \opt{vtk-pos-folded \var{output\_file2.dat}}
+  \opt{vtk-aff \var{output\_file3.dat}}
+  \opt{mesh-nodes \var{output\_file4.dat}}
   \begin{features}
   \required[1]{MASS}
   \required[2]{EXTERNAL_FORCES}
@@ -217,8 +218,10 @@ This command is used to output information about the object that can be used for
 \begin{arguments}
 \item[\var{oid}] - the id of the object
 \item[\opt{vtk-pos \var{output\_file1.dat}}] outputs the mesh of the object to the desired \var{output\_file1.dat}. Paraview can directly visualize this file.
-\item[\opt{vtk-aff \var{output\_file2.dat}}] outputs affinity bonds that are currently activated. If no bonds are present, the file will be generated anyway with no bonds to visualize. Paraview can directly visualize this file.
-\item[\opt{mesh-nodes \var{output\_file3.dat}}] outputs the positions of the mesh nodes to \var{output\_file3.dat}. In fact, this command creates a new \var{nodes.dat} file that can be used by \verb|oif_object_set|. The center of the object is located at point (0,0,0). This command is aimed to store the deformed shape in order to be loaded later.
+\item[\opt{vtk-pos-folded \var{output\_file2.dat}}] the same as the previous option, however the whole object is shift such that it is visualized within the simulation box. 
+This option is useful for simulating periodical processes when objects flowing out on one side of simulation box are transferred to the opoosite side.
+\item[\opt{vtk-aff \var{output\_file3.dat}}] outputs affinity bonds that are currently activated. If no bonds are present, the file will be generated anyway with no bonds to visualize. Paraview can directly visualize this file.
+\item[\opt{mesh-nodes \var{output\_file4.dat}}] outputs the positions of the mesh nodes to \var{output\_file4.dat}. In fact, this command creates a new \var{nodes.dat} file that can be used by \verb|oif_object_set|. The center of the object is located at point (0,0,0). This command is aimed to store the deformed shape in order to be loaded later.
 \end{arguments}
 
 \subsection{\label{ssec:oif-object-analyze}Descriptive information about specific object}
@@ -234,7 +237,7 @@ This command is used to output information about the object that can be used for
   \opt{velocity}
   \opt{elastic-forces \var{name(s)} \var{output\_file.dat}}
   \opt{f-metric \var{name}}
-  \opt{affinity \var{name}}
+  %\opt{affinity \var{name}}
   \begin{features}
   \required[1]{MASS}
   \required[2]{EXTERNAL_FORCES}
@@ -248,14 +251,14 @@ This command is used to output information about the properties of the object. S
 \begin{arguments}
 \item[\var{oid}] - the id of the object
 \item[\opt{origin}] - outputs the location of the center of the object
-\item[\opt{pos-bounds \var{bname}}] computes six extremal coordinates of the object. More precisely, runs through the all mesh points and remembers the minimal and maximal $x$-coordinate, $y$-coordinate and $z$-coordinate. If \var{bname} is one of these: \textit{z-min, z-max, x-min, x-max, y-min, y-max} then the procedure returns one number according to the value of \var{bname}. If \var{bname} is \var{all}, then the procedure returns a list of six numbers, namely \textit{z-min, z-max, x-min, x-max, y-min, y-max}.
+\item[\opt{pos-bounds \var{bname}}] computes six extremal coordinates of the object. More precisely, runs through the all mesh points and remembers the minimal and maximal $x$-coordinate, $y$-coordinate and $z$-coordinate. If \var{bname} is one of these: \textit{z-min, z-max, x-min, x-max, y-min, y-max} then the procedure returns one number according to the value of \var{bname}. If \var{bname} is \var{all}, then the procedure returns a list of six numbers, namely \textit{x-min, x-max, y-min, y-max, z-min, z-max}.
 \item[\opt{approx-pos}] - outputs the approximate location of the center of the object. It is computed as average of 6 mesh points that have extremal $x$, $y$ and $z$ coordinates at the time of object loading.
 \item[\opt{volume}] - outputs the current volume of the object
 \item[\opt{surface-area}] - outputs the current surface of the object
 \item[\opt{velocity}] - outputs the current average velocity of the object. Runs over all mesh points and calculates their average velocity.
-\item[\opt{elastic-forces \var{name(s)} \var{output\_file.dat}}] (example \verb|elastic-forces| \var{kv} \var{kb} \var {ks} var {out.vtk}) - name(s) can be one to five of the following: \var{ks, kb, kal, kag, kv}, in any order. Arguments cannot repeat. Corresponding forces are computed for each node by summing up all contributions.  This computation can be considered as a simple approach to elastic energy evaluation. If the output file has an extension .vtk, a vtk file is written with a scalar data fields that can be visualized in ParaView to show the color coded force magnitudes on the surface of the object. If more than one options were given, one can switch between the visualizations in ParaView. If the file has any other extension (.txt, .dat, \dots) a data file is written with magnitudes of resulting forces in each node (five columns - some of them will be zero, if not all arguments were given).
+\item[\opt{elastic-forces \var{name(s)} \var{output\_file.dat}}] (example \verb|elastic-forces| \var{kv} \var{kb} \var {ks} \var {out.vtk}) - name(s) can be one to five of the following: \var{ks, kb, kal, kag, kv}, in any order. Arguments cannot repeat. Corresponding forces are computed for each node by summing up all contributions.  This computation can be considered as a simple approach to elastic energy evaluation. If the output file has an extension .vtk, a vtk file is written with a scalar data fields that can be visualized in ParaView to show the color coded force magnitudes on the surface of the object. If more than one options were given, one can switch between the visualizations in ParaView. If the file has any other extension (.txt, .dat, \dots) a data file is written with magnitudes of resulting forces in each node (five columns - some of them will be zero, if not all arguments were given).
 \item[\opt{f-metric \var{name}}] name can be one of the following: \var{ks, kb, kal, kag, kv}. There is no \var{output\_file} as a second argument for these, because the output is just one number - fmetric/"naive energy" computed as a sum of magnitudes of respective elastic forces over all nodes of the object.
-\item[\opt{affinity \var{name}}] analyzes the affinity-related features: \var{all} prints all following information; \var{nbonds} prints number of currently existing bonds, \textit{aver-bond-length} prints the average bond length of existing bonds; \textit{min-bond-length} prints the length of the minimal bond; \textit{max-bond-length} prints the length of the maximal bond, \textit{min-x-bond} detects the bond with the minimal $x$-coordinate of its bond site and prints this $x$-coordinate; \textit{max-x-bond} - detects the bond with the maximal $x$-coordinate of its bond site and prints this $x$-coordinate.
+%\item[\opt{affinity \var{name}}] analyzes the affinity-related features: \var{all} prints all following information; \var{nbonds} prints number of currently existing bonds, \textit{aver-bond-length} prints the average bond length of existing bonds; \textit{min-bond-length} prints the length of the minimal bond; \textit{max-bond-length} prints the length of the maximal bond, \textit{min-x-bond} detects the bond with the minimal $x$-coordinate of its bond site and prints this $x$-coordinate; \textit{max-x-bond} - detects the bond with the maximal $x$-coordinate of its bond site and prints this $x$-coordinate.
 \end{arguments} 
 
 \subsection{\label{ssec:oif-object-set}Setting properties for specific object}
@@ -267,6 +270,7 @@ This command is used to output information about the properties of the object. S
   \opt{origin \var{x} \var{y} \var{z}}
   \opt{mesh-nodes \var{mesh\_nodes.dat}}
   \opt{kill-motion}
+  \opt{un-kill-motion}
   \begin{features}
   \required[1]{MASS}
   \required[2]{EXTERNAL_FORCES}
@@ -282,7 +286,8 @@ This command sets some properties of the object.
 \item[\opt{force \var{x} \var{y} \var{z}}] - sets the force vector (\var{x, y, z}) to all mesh nodes of the object. Setting is done using \es command \verb|part $i set ext_force| \var{\$x} \var{\$y} \var{\$z}. Note, that this command sets the external force in each integrate step. So if you want to use the external force only in one iteration, you need to set zero external force in the following integrate step
 \item[\opt{origin \var{x} \var{y} \var{z}}] - moves the object so that the origin has coordinates \var{(x, y, z)}
 \item[\opt{mesh-nodes \var{mesh\_nodes.dat}}] - deforms the object such that its origin stays unchanged, however the relative positions of the mesh points are taken from file \var{mesh\_nodes.dat}. The file \var{mesh\_nodes.dat} should contain the coordinates of the mesh points with the origin's location at (0,0,0). The procedure also checks whether number of lines in the \var{mesh\_nodes.dat} file is the same as the number of triangulation nodes of the object.
-\item[kill-motion] - stops all the particles in the object (analogue to the \verb|kill-motion| command for single particles).
+\item[kill-motion] - stops all the particles in the object (analogue to the \verb|part | \var{pid} \verb|fix 1 1 1| command for single particles).
+\item[un-kill-motion] - releases the particles in the object (analogue to the \verb|part | \var{pid} \verb| unfix| command for single particles).
 \end{arguments} 
 
 
