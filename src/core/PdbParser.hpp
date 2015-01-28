@@ -52,6 +52,10 @@ namespace PdbParser {
     float sigma,epsilon;
   } itp_atomtype;
 
+  struct itp_atomtype_compare {
+    bool operator() (const itp_atomtype &a, const itp_atomtype &b) { return a.id < b.id; }
+  };
+
   class PdbParser {
   public:
     bool parse_pdb_file(std::string filename);

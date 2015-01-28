@@ -1094,7 +1094,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     }
 
     /* advective contribution to flux */
-    //return;  //TODO: if enable the advective contribution, make sure advective flux contribution into wall is zero. (better put zeroing into block at the end).
+    return;  //TODO: if enable the advective contribution, make sure advective flux contribution into wall is zero. (better put zeroing into block at the end).
 
     ek_displacement( dx, lb_node, index, ek_lbparameters_gpu );
 

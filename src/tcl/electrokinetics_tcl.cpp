@@ -105,7 +105,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                     [neutralize_system]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int set density\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int print <density|flux>\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics pdb-parse #string #string\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics pdb-parse #string #string #double\n", (char *)NULL);
     return TCL_ERROR;
   }
   else if(ARG0_IS_S("pdb-parse"))
@@ -117,18 +117,18 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     argc--;
     argv++;
 
-    if (argc != 2)
+    if ((argc != 3) || !ARG_IS_D(2, floatarg))
     {
       Tcl_AppendResult(interp, "You need to specify two filenames.\n", (char *) NULL);
-      Tcl_AppendResult(interp, "electrokinetics pdb-parse #string1 #string2\n", (char *)NULL);
-      Tcl_AppendResult(interp, "#string1 is the pdb-filename, #string2 is the itp-filename.\n", (char *)NULL);
+      Tcl_AppendResult(interp, "electrokinetics pdb-parse #string1 #string2 #double\n", (char *)NULL);
+      Tcl_AppendResult(interp, "#string1 is the pdb-filename, #string2 is the itp-filename #double is the length unit used in you simulation.\n", (char *)NULL);
     }
     if (!ek_initialized)
     {
       Tcl_AppendResult(interp, "Please initialize EK before you attempt parsing.", (char *) NULL);
       return (TCL_ERROR);
     }
-    if(pdb_parse(argv[0], argv[1]) != 0)
+    if(pdb_parse(argv[0], argv[1], floatarg) != 0)
     {
       Tcl_AppendResult(interp, "Could not parse pdb- or itp-file. Please, check your format and filenames.", (char *) NULL);
       return (TCL_ERROR);
@@ -388,11 +388,6 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
         
-        //if( (argc != 5 && argc != 6) || !ARG_IS_I(0, coord[0]) ||
-        //    !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
-        //    (!ARG_IS_S(3, "print") && !ARG_IS_S(3, "set")) ||
-        //    !ARG_IS_S(4, "density") 
-        //  ) 
         if( (argc != 5 && argc != 6) ||
             !ARG_IS_I(0, coord[0]) || !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
             (ARG_IS_S(3, "print") && (!ARG_IS_S(4, "density") && !ARG_IS_S(4, "flux"))) ||
