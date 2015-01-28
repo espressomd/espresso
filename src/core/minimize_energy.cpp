@@ -19,8 +19,51 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
+#include <limits>
+#include <algorithm>
 #include "minimize_energy.hpp"
 
-void minimize_energy(double gamma) {
+static double steepest_descent_step(double gamma) {
+  Cell *cell;
+  Particle *p;
+  int c, i, j, np;
+  double f_max = -std::numeric_limits<double>::max();
+  double f;
+
   force_calc();
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      f = 0.0;
+#ifdef VIRTUAL_SITES
+      if (ifParticleIsVirtual(&p[i])) continue;
+#endif
+      for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+        if (!(p[i].p.ext_flag & COORD_FIXED(j)))
+#endif
+          {
+            f += SQR(p[i].f.f[j]);
+            p[i].r.p[j] += gamma * p[i].f.f[j];
+          }
+      }
+      f_max = std::max(f_max, f);
+    }
+  }
+  return f_max;
+}
+
+bool minimize_energy(const double f_max, const double gamma, const int max_steps) {
+  double f_max_local = 2*f_max;
+  double f_max_global;
+  for(int i = 0; i < max_steps; ++i) {
+    f_max_local = steepest_descent_step(gamma);
+    MPI_Allreduce(&f_max_local, &f_max_global, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
+    if(f_max_global < f_max)
+      return true;
+  }
+  return false;
 }
