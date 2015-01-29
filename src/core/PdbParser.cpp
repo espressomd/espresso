@@ -115,8 +115,8 @@ namespace PdbParser {
 	    while(file.good()) {
 	      buf = file.get();
 
-	      /* Ignore leading whitespace */
-	      if(std::isspace(buf[0])) {
+	      /* Ignore leading whitespace, check for end of file (standard says EOF is "generaly" -1) */
+	      if(std::isspace(buf[0]) || (buf[0] == -1)) {
 		continue;
 	      }
 	      /* End of atoms section */
@@ -132,10 +132,12 @@ namespace PdbParser {
 	      /* Push back first char */
 	      file.unget();
 	      /* Parse line */
-	      std::getline(file, buf);
+	      std::getline(file, buf);	      
+	      std::cout << "atoms line '" << buf << "' len(" << buf.length() << ")" << std::endl;
 	      std::istringstream line(buf);
 	      line >> atom.i >> atom.type >> tmp >> tmp >> tmp >> tmp >> atom.charge;	      
 	      itp_atoms.insert(std::pair<int, itp_atom>(atom.i, atom));
+	      std::cout << "parsed to id " << atom.i << " type '" << atom.type << "'" << std::endl;
 	    }
 	  }
 	  if(section == "atomtypes") {
@@ -153,11 +155,12 @@ namespace PdbParser {
 		file.unget();
 		break;
 	      }
-	      /* Comment, ignore line */
-	      if(buf[0] == ';') {
-		std::getline(file, buf);
+
+	      /* Ignore leading whitespace, check for end of file (standard says EOF is "generaly" -1) */
+	      if(std::isspace(buf[0]) || (buf[0] == -1)) {
 		continue;
 	      }
+
 	      /* Push back first char */
 	      file.unget();
 	      /* Parse line */
