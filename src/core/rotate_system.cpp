@@ -8,7 +8,6 @@
 
 void local_rotate_system(double phi, double theta, double alpha)
 {
-  printf("local_rotate_system %g %g %g\n",phi,theta,alpha);
   // Culculate center of mass
   double com[3];
   int N=0; // Num of particles
@@ -25,8 +24,8 @@ void local_rotate_system(double phi, double theta, double alpha)
     for(i = 0; i < np; i++) {
       for (int j=0;j<3;j++){
         com[j]+=part[i].r.p[j];
-        N++;
       }
+      N++;
     }
   }
   for (int j=0;j<3;j++) com[j]/=N;
@@ -34,8 +33,8 @@ void local_rotate_system(double phi, double theta, double alpha)
   
   // Rotation axis in carthesian coordinates
   double axis[3];
-  axis[0]=sin(theta)*sin(phi);
-  axis[1]=sin(theta)*cos(phi);
+  axis[0]=sin(theta)*cos(phi);
+  axis[1]=sin(theta)*sin(phi);
   axis[2]=cos(theta);
 
   // Rotate particle coordinates

@@ -47,7 +47,6 @@ int tclcommand_rotate_system(ClientData data, Tcl_Interp * interp, int argc, cha
       return ES_ERROR;
   }
   
-  printf("phi=%g,theta=%g alpha=%g\n",phi,theta,alpha);
 
   rotate_system(phi,theta,alpha);
 

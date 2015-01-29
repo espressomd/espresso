@@ -93,6 +93,7 @@ tests = \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
 	pdb_parser.tcl \
+	rotate-system.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
