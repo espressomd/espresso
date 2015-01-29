@@ -1230,7 +1230,7 @@ void mpi_remove_particle_slave(int pnode, int part)
 
 /********************* REQ_MIN_ENERGY ********/
 
-int mpi_minimize_energy(const double f_max, const double gamma, const int max_steps) {
+int mpi_minimize_energy(void) {
   mpi_call(mpi_minimize_energy_slave,0,0);
   return minimize_energy();
 }

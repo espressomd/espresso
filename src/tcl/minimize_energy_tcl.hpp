@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -18,14 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#ifndef _MINIMIZE_ENERGY_TCL_H
+#define _MINIMIZE_ENERGY_TCL_H
+#include "parser.hpp"
 
-#ifndef __MINIMIZE_ENERGY_HPP
-#define __MINIMIZE_ENERGY_HPP
+int tclcommand_minimize_energy(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-#include "forces_inline.hpp"
-#include "communication.hpp"
-
-bool minimize_energy(void);
-void minimize_energy_init(const double f_max, const double gamma, const int max_steps);
-
-#endif /* __MINIMIZE_ENERGY */
+#endif

@@ -333,13 +333,10 @@ void mpi_recv_part(int node, int part, Particle *part_data);
 */
 int mpi_integrate(int n_steps, int reuse_forces);
 
-/** Issue REQ_MIN_ENERGY: start energy minimization.
-    @param f_max Reduce force below this value
-    @param gamma Relaxation factor
-    @param max_steps Maximum number of steps
+/** Issue REQ_MIN_ENERGY: start energy minimization.    
     @return nonzero on error
  */
-int mpi_minimize_energy(const double f_max, const double gamma, const int max_steps);
+int mpi_minimize_energy(void);
 
 /** Issue REQ_BCAST_IA: send new ia params.
     Also calls \ref on_short_range_ia_change.
