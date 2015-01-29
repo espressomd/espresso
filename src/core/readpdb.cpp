@@ -21,12 +21,12 @@ static void  add_lj_interaction(std::set<PdbParser::itp_atomtype, PdbParser::itp
       const double sigma_ij = 0.5*(it->sigma+10.*jt->sigma);
       const double cutoff_ij = rel_cutoff*sigma_ij;
       const double shift_ij = -(pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6));
-      READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e cut %e shift %e\n", 
-			   it->other_type, jt->espresso_id, epsilon_ij, sigma_ij, cutoff_ij, shift_ij););
       if((epsilon_ij <= 0) || (sigma_ij <= 0)) {
 	continue;
       }
       else
+	READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e cut %e shift %e\n", 
+			   it->other_type, jt->espresso_id, epsilon_ij, sigma_ij, cutoff_ij, shift_ij););
 	lennard_jones_set_params(it->other_type, jt->espresso_id, epsilon_ij, sigma_ij,
 			       cutoff_ij, shift_ij, 0.0, -1.0, 0.0);
     }
@@ -43,12 +43,12 @@ static void add_lj_internal(std::set<PdbParser::itp_atomtype, PdbParser::itp_ato
       const double sigma_ij = 0.5*(10.*it->sigma+10.*jt->sigma);
       const double cutoff_ij = rel_cutoff*sigma_ij;
       const double shift_ij = -pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6);
-      READPDB_TRACE(printf("adding internal lj interaction types %d %d eps %e sig %e cut %e shift %e\n", 
-			   it->espresso_id, jt->espresso_id, epsilon_ij, sigma_ij, cutoff_ij, shift_ij););
       if((epsilon_ij <= 0) || (sigma_ij <= 0)) {
 	continue;
       }
       else
+	READPDB_TRACE(printf("adding internal lj interaction types %d %d eps %e sig %e cut %e shift %e epsilon_i %e\n", 
+			   it->espresso_id, jt->espresso_id, epsilon_ij, sigma_ij, cutoff_ij, shift_ij, it->epsilon););
 	lennard_jones_set_params(it->espresso_id, jt->espresso_id, epsilon_ij, sigma_ij,
 			       cutoff_ij, shift_ij, 0.0, -1.0, 0.0);      
     }
@@ -110,7 +110,7 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
 	itp_atomtype = *type_iterator;
 	q = entry->second.charge;
 	type = itp_atomtype.espresso_id;
-	READPDB_TRACE(printf("pdb-id %d es-id %d itp-type-id %d q %f es-type %d", it->i, id, type, q, itp_atomtype.espresso_id));
+	READPDB_TRACE(printf("pdb-id %d es-id %d itp-type-id %d q %f es-type %d", it->i, id, itp_atomtype.id, q, itp_atomtype.espresso_id));
 	READPDB_TRACE(std::cout << " res " << entry->second.type << std::endl);
       } else {	
 	type = default_type;
@@ -143,10 +143,25 @@ int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vec
       return 0;
   }
 
+#ifdef READPDB_DEBUG
+  for(std::map<int, PdbParser::itp_atom>::const_iterator it = parser.itp_atoms.begin(); it != parser.itp_atoms.end(); ++it) {
+    printf("itp_atom id %d name '%s' q %e\n", it->second.i, it->second.type.c_str(), it->second.charge);
+  }
+#endif
+
   /* Unique set of types that actually have particles */
   std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare> seen_types;
   
   n_part = add_particles(parser, first_id, type, seen_types, first_type,fit);
+
+#ifdef READPDB_DEBUG
+  for(std::map<std::string, PdbParser::itp_atomtype>::const_iterator it = parser.itp_atomtypes.begin(); it != parser.itp_atomtypes.end(); ++it) {
+    printf("itp_atomtype id %d es_id %d name '%s' epsilon %e sigma %e\n", it->second.id, it->second.espresso_id, it->first.c_str(), it->second.epsilon, it->second.sigma);
+  }
+  for(std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare>::const_iterator it = seen_types.begin(); it != seen_types.end(); ++it) {
+    printf("atomtype %d espresso_type %d epsilon %e sigma %e\n", it->id, it->espresso_id, it->epsilon, it->sigma);
+  }
+#endif
 
 #ifdef LENNARD_JONES
   add_lj_interaction(seen_types, ljInteractions, lj_rel_cutoff);
