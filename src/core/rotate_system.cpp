@@ -3,7 +3,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "cells.hpp"
-
+#include "initialize.hpp" 
 
 
 void local_rotate_system(double phi, double theta, double alpha)
@@ -57,6 +57,9 @@ void local_rotate_system(double phi, double theta, double alpha)
       }
     }
   }
+
+
+  on_particle_change();
 
 }
 
