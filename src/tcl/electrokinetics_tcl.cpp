@@ -40,6 +40,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
 
   int err = TCL_OK;
   int species;
+  int intarg;
   double floatarg;
   double vectarg[3];
   int coord[3];
@@ -64,9 +65,10 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
   if(argc < 2) 
   {
     Tcl_AppendResult(interp, "Usage of \"electrokinetics\":\n\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics [agrid #float] [lb_density #float] [viscosity #float] [friction #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics [agrid #float] [lb_density #float] [viscosity #float] [friction #float] [use_nonlinear_stencil]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float] [T #float] [bjerrum_length #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags> vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags> vtk #string\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics print net_charge\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics node #int #int #int print <velocity>\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics reaction [reactant_index #int]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                         [product0_index #int]\n", (char *)NULL);
@@ -95,11 +97,14 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                                               [pore ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                               [stomatocyte ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                               [hollow_cone ... (c.f. constraint command)]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [spherocylinder ... (c.f. constraint command)]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [valency #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [ext_force #float #float #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print flux vtk #string]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int print density\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                     [neutralize_system]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int set density\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int print <density|flux>\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics pdb-parse #string #string #double\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -140,12 +145,19 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     argc--;
     argv++;
     
-    if(!ARG0_IS_S("charge_density") || !ARG1_IS_D(floatarg)) 
+    if((!ARG0_IS_S("charge_density") && !ARG0_IS_S("net_charge")) || !ARG1_IS_D(floatarg)) 
     {
-      Tcl_AppendResult(interp, "You need to specify the boundary charge density using\n", (char *) NULL);
-      Tcl_AppendResult(interp, "electrokinetics boundary charge_density #float ...\n", (char *)NULL);
+      Tcl_AppendResult(interp, "You need to specify the boundary charge using\n", (char *) NULL);
+      Tcl_AppendResult(interp, "electrokinetics boundary <charge_density|net_charge> #float ...\n", (char *)NULL);
       return (TCL_ERROR);
     }
+
+    bool net_charge_specified;
+
+    if(ARG0_IS_S("charge_density"))
+      net_charge_specified = 0;
+    else
+      net_charge_specified = 1;
     
     argc -= 2;
     argv += 2;
@@ -176,42 +188,56 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_wall(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("sphere")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_sphere(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("cylinder")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_cylinder(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("rhomboid")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_rhomboid(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("pore")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_pore(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("stomatocyte")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_stomatocyte(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("hollow_cone")) 
     {
       lbboundary_tmp = generate_lbboundary();
       err = tclcommand_lbboundary_hollow_cone(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
+    }
+    else if(ARG0_IS_S("spherocylinder")) 
+    {
+      lbboundary_tmp = generate_lbboundary();
+      err = tclcommand_lbboundary_spherocylinder(lbboundary_tmp, interp, argc - 1, argv + 1);
+      lbboundary_tmp->charge_density = floatarg;
+      lbboundary_tmp->net_charge = 0.0;
     }
     else if(ARG0_IS_S("delete")) 
     {
@@ -219,7 +245,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       {
         /* delete all */
         Tcl_AppendResult(interp, "Can only delete individual electrokinetics boundaries", (char *) NULL);
-        err = TCL_ERROR;
+        return (TCL_ERROR);
       }
       else 
       {
@@ -231,16 +257,25 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
 	        Tcl_AppendResult(interp, "Can not delete non existing electrokinetics boundary", (char *) NULL);
 	        return (TCL_ERROR);
         }
+
+        Tcl_AppendResult(interp, "electrokinetics boundary delete not implemented", (char *) NULL);
+        return (TCL_ERROR);
       }
     }
     else 
     {
       Tcl_AppendResult(interp, "possible electrokinetics boundary charge_density #float parameters:", (char *) NULL); 
-      Tcl_AppendResult(interp, "wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, delete {c} to delete a boundary", (char *) NULL);
+      Tcl_AppendResult(interp, "wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, spherocylinder, delete {c} to delete a boundary", (char *) NULL);
       return (TCL_ERROR);
     }
         
     on_lbboundary_change();
+
+    if(net_charge_specified && floatarg != 0.0)
+    {
+      lbboundary_tmp->charge_density *= floatarg / lbboundary_tmp->net_charge;
+      on_lbboundary_change();
+    }
 #endif /* EK_BOUNDARIES */
   }
   else if(ARG0_IS_I(species)) 
@@ -353,38 +388,107 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
         
-        if(
-            argc != 5 || !ARG_IS_I(0, coord[0]) ||
-            !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
-            !ARG_IS_S(3, "print") || !ARG_IS_S(4, "density") 
+        if( (argc != 5 && argc != 6) ||
+            !ARG_IS_I(0, coord[0]) || !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
+            (ARG_IS_S(3, "print") && (!ARG_IS_S(4, "density") && !ARG_IS_S(4, "flux"))) ||
+            (ARG_IS_S(3, "set") && (!ARG_IS_S(4, "density")))
           ) 
         {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int print density\n", (char *)NULL);
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int <set density #int|print <density|flux>>\n", (char *)NULL);
           return TCL_ERROR;
         }
         
-        argc -= 4;
-        argv += 4;
+        argc -= 3;
+        argv += 3;
         
-        if(ARG0_IS_S("density")) 
+        if(ARG0_IS_S("set"))
         {
-          if(ek_node_print_density(species, coord[0], coord[1], coord[2], &floatarg) == 0) 
-          {
-            argc --;
-            argv ++;
-            
-            Tcl_PrintDouble(interp, floatarg, double_buffer);
-            Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+          argc--;
+          argv++;
 
-            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+          if(ARG0_IS_S("density")) 
+          {
+            argc--;
+            argv++;
+
+            if(!ARG0_IS_D(floatarg))
+            {
+              Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int set density #float\n", (char *)NULL);
               return TCL_ERROR;
+            }
+            
+            argc--;
+            argv++;
+
+            if(ek_node_set_density(species, coord[0], coord[1], coord[2], floatarg) != 0) 
+            {
+              Tcl_AppendResult(interp, "Unknown error in electrokinetics #int node #int #int #int set density\n", (char *)NULL);
+              return TCL_ERROR;
+            }
             else
               return TCL_OK;
           }
-          else 
+          else
           {
-            Tcl_AppendResult(interp, "Unknown error in electrokinetics #int node #int #int #int print density\n", (char *)NULL);
-            return TCL_ERROR;
+              Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int <set|print> density\n", (char *)NULL);
+              return TCL_ERROR;
+          }
+        }
+        else if(ARG0_IS_S("print"))
+        {
+          argc--;
+          argv++;
+
+          if(ARG0_IS_S("density")) 
+          {
+            if(ek_node_print_density(species, coord[0], coord[1], coord[2], &floatarg) == 0) 
+            {
+              argc --;
+              argv ++;
+              
+              Tcl_PrintDouble(interp, floatarg, double_buffer);
+              Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+
+              if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+                return TCL_ERROR;
+              else
+                return TCL_OK;
+            }
+            else 
+            {
+              Tcl_AppendResult(interp, "Unknown error in electrokinetics #int node #int #int #int print density\n", (char *)NULL);
+              return TCL_ERROR;
+            }
+          }
+          else if(ARG0_IS_S("flux")) 
+          {
+            if(ek_node_print_flux(species, coord[0], coord[1], coord[2], vectarg) == 0) 
+            {
+              argc --;
+              argv ++;
+              
+              Tcl_PrintDouble(interp, vectarg[0], double_buffer);
+              Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+              Tcl_PrintDouble(interp, vectarg[1], double_buffer);
+              Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+              Tcl_PrintDouble(interp, vectarg[2], double_buffer);
+              Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+
+              if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+                return TCL_ERROR;
+              else
+                return TCL_OK;
+            }
+            else 
+            {
+              Tcl_AppendResult(interp, "Unknown error in electrokinetics #int node #int #int #int print flux\n", (char *)NULL);
+              return TCL_ERROR;
+            }
+          } 
+          else
+          {
+              Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int node #int #int #int <set|print> density\n", (char *)NULL);
+              return TCL_ERROR;
           }
         }
       }
@@ -436,6 +540,36 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
         }
       }
+      else if(ARG0_IS_S("neutralize_system"))
+      {
+        err = ek_neutralize_system(species);
+
+        if(err == 0) 
+        {
+          argc --;
+          argv ++;
+        }
+        else if(err == 1)
+        {
+          Tcl_AppendResult(interp, "Species used for neutralization must exist in electrokinetics #int neutralize_system\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else if(err == 2)
+        {
+          Tcl_AppendResult(interp, "Species used for neutralization must be charged in electrokinetics #int neutralize_system\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else if(err == 3)
+        {
+          Tcl_AppendResult(interp, "Neutralization with specified species would result in negative density in electrokinetics #int neutralize_system\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else 
+        {
+          Tcl_AppendResult(interp, "Unknown error in electrokinetics #int neutralize_system\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+      }
       else 
       {
     	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of electrokinetics #int\n", (char *)NULL);
@@ -453,7 +587,18 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       {
         argc--;
         argv++;
-        
+       
+        if(argc == 1 && ARG0_IS_S("net_charge"))
+        {
+          argc--;
+          argv++;
+
+          float net_charge = ek_calculate_net_charge();
+          Tcl_PrintDouble(interp, net_charge, double_buffer);
+          Tcl_AppendResult(interp, double_buffer, " ", (char *) NULL);
+          return TCL_OK;
+        }
+
         if (
              argc != 3 || !ARG1_IS_S("vtk") || 
              ( !ARG0_IS_S("velocity") && !ARG0_IS_S("density") &&
@@ -463,7 +608,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
              )
            ) 
         {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics print <velocity|density|potential|pressure|reaction_tags> vtk #string\n", (char *)NULL);
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics print <net_charge | <velocity|density|potential|pressure|reaction_tags> vtk #string>\n", (char *)NULL);
           return TCL_ERROR;
         }
         
@@ -642,10 +787,10 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         if ( 
              argc != 5 || !ARG_IS_I(0, coord[0]) ||
              !ARG_IS_I(1, coord[1]) || !ARG_IS_I(2, coord[2]) ||
-             !ARG_IS_S(3, "print") ||  !ARG_IS_S(4, "velocity") 
+             !ARG_IS_S(3, "print") || !ARG_IS_S(4, "velocity")
            ) 
         {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics node print <velocity>\n", (char *)NULL);
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics node print <velocity|flux>\n", (char *)NULL);
           return TCL_ERROR;
         }
         
@@ -761,6 +906,35 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           else 
           {
             Tcl_AppendResult(interp, "Unknown error setting electrokinetics agrid\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+      }
+      else if(ARG0_IS_S("lb_force")) 
+      {
+        argc--;
+        argv++;
+        
+#ifndef EXTERNAL_FORCES
+        Tcl_AppendResult(interp, "External Forces not compiled in!", (char *)NULL);
+        return TCL_ERROR;
+#endif
+
+        if(argc < 3 || !ARG_IS_D(0,vectarg[0]) || !ARG_IS_D(1,vectarg[1]) || !ARG_IS_D(2,vectarg[2])) 
+        {
+          Tcl_AppendResult(interp, "electrokinetics lb_force requires three floating point numbers as arguments\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else 
+        {
+          if(ek_set_lb_force(vectarg) == 0) 
+          {
+            argc-=3;
+            argv+=3;
+          }
+          else 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics lb_force\n", (char *)NULL);
             return TCL_ERROR;
           }
         }
@@ -1011,10 +1185,14 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           {
             err = tclcommand_lbboundary_hollow_cone(&lbboundary_tmp, interp, argc - 1, argv + 1);
           }
+          else if(ARG0_IS_S("spherocylinder")) 
+          {
+            err = tclcommand_lbboundary_spherocylinder(&lbboundary_tmp, interp, argc - 1, argv + 1);
+          }
           else 
           {
             Tcl_AppendResult(interp, "possible electrokinetics reaction region #int parameters:\n", (char *) NULL);
-            Tcl_AppendResult(interp, "box, wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone", (char *) NULL);
+            Tcl_AppendResult(interp, "box, wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, spherocylinder", (char *) NULL);
             return (TCL_ERROR);
           }
 
@@ -1310,6 +1488,27 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
         }     
 #endif 
+      }
+      else if(ARG0_IS_S("use_nonlinear_stencil")) {
+        if(argc < 2 || !ARG1_IS_I(intarg) || (intarg != 0 && intarg != 1) ) 
+        {
+          Tcl_AppendResult(interp, "electrokinetics use_nonlinear_stencil requires 0 or 1 as argument\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else 
+        {
+          if(ek_set_use_nonlinear_stencil(intarg) == 0) 
+          {
+            argc -= 2;
+            argv += 2;
+          }
+          else 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics use_nonlinear_stencil\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+      
       }
       else 
       {

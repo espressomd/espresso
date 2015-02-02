@@ -202,7 +202,9 @@ enum ConstraintApplied{
 /** slitpore constraint applied */
     CONSTRAINT_SLITPORE,
 /** Constraint for a hollow cone boundary */
-    CONSTRAINT_HOLLOW_CONE
+    CONSTRAINT_HOLLOW_CONE,
+/** Constraint for spherocylinder boundary */
+    CONSTRAINT_SPHEROCYLINDER
 };
 /*@}*/
 
@@ -858,6 +860,23 @@ typedef struct {
   int reflecting;
 } Constraint_cylinder;
 
+/** Parameters for a SPHEROCYLINDER constraint. */
+typedef struct {
+  /** center of the cylinder. */
+  double pos[3];
+  /** Axis of the cylinder .*/
+  double axis[3];
+  /** cylinder radius. */
+  double rad;
+  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  double length;
+  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
+  double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
+  int reflecting;
+} Constraint_spherocylinder;
+
 /** Parameters for a RHOMBOID constraint. */
 typedef struct {
   /** corner of the rhomboid */
@@ -1035,6 +1054,7 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_spherocylinder spherocyl;
     Constraint_rhomboid rhomboid;
     Constraint_rod rod;
     Constraint_plate plate;

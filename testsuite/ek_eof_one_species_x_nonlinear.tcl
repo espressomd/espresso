@@ -72,7 +72,7 @@ set valency 1.0
 
 # Set up the (LB) electrokinetics fluid
 
-electrokinetics agrid $agrid lb_density [expr $density_neutral + $density_charged] viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length use_nonlinear_stencil 0
+electrokinetics agrid $agrid lb_density [expr $density_neutral + $density_charged] viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length use_nonlinear_stencil 1
 
 electrokinetics 1 density $density_charged D 0.3 valency $valency ext_force $force 0 0
 electrokinetics 2 density $density_neutral D 0.3 valency 0
@@ -240,9 +240,9 @@ for {set i 0} {$i < [expr $box_z/$agrid]} {incr i} {
     set measured_stress_0 [lindex [lbnode [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] $i print pi_neq] 0]
     set measured_stress_2 [lindex [lbnode [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] $i print pi_neq] 2]
     set measured_stress_5 [lindex [lbnode [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] $i print pi_neq] 5]
-    set stress_difference_xx_yy [expr abs($measured_stress_0 - $measured_stress_2)]
-    set stress_difference_yy_zz [expr abs($measured_stress_5 - $measured_stress_2)]
-    set stress_difference_xx_zz [expr abs($measured_stress_0 - $measured_stress_5)]
+    set stress_difference_xx_yy [expr 2.0*abs($measured_stress_0 - $measured_stress_2)/(abs($measured_stress_0) + abs($measured_stress_2))]
+    set stress_difference_yy_zz [expr 2.0*abs($measured_stress_5 - $measured_stress_2)/(abs($measured_stress_5) + abs($measured_stress_2))]
+    set stress_difference_xx_zz [expr 2.0*abs($measured_stress_0 - $measured_stress_5)/(abs($measured_stress_0) + abs($measured_stress_5))]
     set total_stress_difference_xx_yy [expr $total_stress_difference_xx_yy + $stress_difference_xx_yy ]
     set total_stress_difference_yy_zz [expr $total_stress_difference_yy_zz + $stress_difference_yy_zz ]
     set total_stress_difference_xx_zz [expr $total_stress_difference_xx_zz + $stress_difference_xx_zz ]
@@ -302,13 +302,13 @@ if { $total_density_difference > 2.5e-03 } {
 if { $total_velocity_difference > 7.5e-03 } {
   error_exit "Velocity accuracy not achieved"
 }
-if { $total_stress_difference_xx > 1.5e-02 } {
+if { $total_stress_difference_xx > 1.0e-02 } {
   error_exit "Difference xx component too large"
 }
-if { $total_stress_difference_yy > 1.5e-02 } {
+if { $total_stress_difference_yy > 1.0e-02 } {
   error_exit "Difference yy component too large"
 }
-if { $total_stress_difference_zz > 1.5e-02 } {
+if { $total_stress_difference_zz > 1.0e-02 } {
   error_exit "Difference zz component too large"
 }
 if { $total_stress_difference_xy > 5.0e-06 } {
@@ -320,19 +320,19 @@ if { $total_stress_difference_yz > 5.0e-06 } {
 if { $total_stress_difference_xz > 5.0e-03 } {
   error_exit "Pressure accuracy xz component not achieved"
 }
-if { $total_stress_difference_xx_yy > 1.0e-05 } {
+if { $total_stress_difference_xx_yy > 7.5e-03 } {
   error_exit "Difference xx to yy component too large"
 }
-if { $total_stress_difference_xx_yy < 1.0e-06 } {
+if { $total_stress_difference_xx_yy < 2.5e-03 } {
   error_exit "Difference xx to yy component too small"
 }
-if { $total_stress_difference_yy_zz > 1.0e-08 } {
+if { $total_stress_difference_yy_zz > 5.0e-06 } {
   error_exit "Difference yy to zz component too large"
 }
-if { $total_stress_difference_xx_zz > 1.0e-05 } {
+if { $total_stress_difference_xx_zz > 7.5e-03 } {
   error_exit "Difference xx to zz component too large"
 }
-if { $total_stress_difference_xx_zz < 1.0e-06 } {
+if { $total_stress_difference_xx_zz < 2.5e-03 } {
   error_exit "Difference xx to zz component too small"
 }
 
