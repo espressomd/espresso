@@ -28,6 +28,7 @@
 
 #define INTEG_METHOD_NPT_ISO   0
 #define INTEG_METHOD_NVT       1
+#define INTEG_METHOD_STEEPEST_DESCENT 2
 
 /************************************************************/
 /** \name Exported Variables */

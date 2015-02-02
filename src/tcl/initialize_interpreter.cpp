@@ -59,7 +59,7 @@
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
 #include "actor/HarmonicWell_tcl.hpp"
-
+#include "minimize_energy_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -227,6 +227,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #ifdef CUDA
   REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);
 #endif
+  REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)
