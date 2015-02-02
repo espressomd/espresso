@@ -14,6 +14,7 @@ New user-visible features
 * Espresso can now read pdb and gromacs topology files.
 * Checkpointing for the correlator
 * New polymer observables
+* Steepest descent energy minimization
 
 Known bugs
 ----------
