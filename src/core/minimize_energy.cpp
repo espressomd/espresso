@@ -101,6 +101,9 @@ void minimize_energy_init(const double f_max, const double gamma, const int max_
 }
 
 bool minimize_energy(void) {
+  if(!params)
+    params = new MinimizeEnergyParameters;
+
   MPI_Bcast(params, sizeof(MinimizeEnergyParameters), MPI_BYTE, 0, comm_cart);
   int integ_switch_old = integ_switch;
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;

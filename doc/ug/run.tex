@@ -92,6 +92,21 @@ can be added are:
 This command runs the integration as would the \texttt{integrate} command and
 returns the wall runtime in seconds.
 
+\section{\texttt{minimize_energy}: Run steepest descent minimization}
+\newescommand[minimize-energy]{minimize_energy}
+
+\begin{essyntax}
+  \variant{1} minimize_energy \var{f_max} \var{n_steps} \var{gamma} \var{max_displacement}
+\end{essyntax}
+
+This command runs a steepest descent energy minimization on the system.
+Please note that the behaviour is undefined if either a thermostat, Maggs electrostatics or Lattice-Boltzmann is activated.
+It runs a simplet steepest descent algorithm:
+
+$$p_i = p_i + \min(\gamma F_i, max_displacement).$$
+while the maximal force is bigger than f_max or for at most n_steps times.
+The combination of gamma and max_displacement can be used to get an poor man's adaptive update.
+
 \section{\texttt{change_volume}: Changing the box volume}
 \newescommand[change-volume]{change_volume}
 
