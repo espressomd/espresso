@@ -26,6 +26,8 @@
 
 source "tests_common.tcl"
 
+require_feature "LENNARD_JONES"
+
 # System parameters
 #############################################################
 
