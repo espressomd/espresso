@@ -24,16 +24,16 @@
 #include "communication.hpp"
 
 static int usage(Tcl_Interp *interp) {
-  Tcl_AppendResult(interp, "minimize_energy <f_max> <n_steps> <gamma>\"\n", (char *)NULL);
+  Tcl_AppendResult(interp, "minimize_energy <f_max> <n_steps> <gamma> <max_displacement>\"\n", (char *)NULL);
   return TCL_ERROR;
 }
 
 int tclcommand_minimize_energy(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
   int  max_steps;
-  double f_max, gamma;
+  double f_max, gamma, max_displacement;
   
-  if (argc != 4) {
+  if (argc != 5) {
     Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
     return usage(interp);
   }
@@ -47,9 +47,12 @@ int tclcommand_minimize_energy(ClientData data, Tcl_Interp *interp, int argc, ch
     if(!ARG_IS_D(3,gamma)) {
       return usage(interp);      
     }
+    if(!ARG_IS_D(4,max_displacement)) {
+      return usage(interp);      
+    }
   }
 
-  minimize_energy_init(f_max, gamma, max_steps);
+  minimize_energy_init(f_max, gamma, max_steps, max_displacement);
   mpi_minimize_energy();
 
   return TCL_OK;

@@ -26,6 +26,7 @@
 #include "communication.hpp"
 
 bool minimize_energy(void);
-void minimize_energy_init(const double f_max, const double gamma, const int max_steps);
+void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement);
+bool steepest_descent_step(void);
 
 #endif /* __MINIMIZE_ENERGY */

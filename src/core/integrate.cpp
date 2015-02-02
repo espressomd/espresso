@@ -62,6 +62,7 @@
 #include "ghmc.hpp"
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "minimize_energy.hpp"
 
 /************************************************
  * DEFINES
@@ -214,7 +215,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 {
   /* Prepare the Integrator */
   on_integration_start();
-  
+ 
   #ifdef IMMERSED_BOUNDARY
     // Here we initialize volume conservation
     // This function checks if the reference volumes have been set and if necessary calculates them
@@ -254,11 +255,13 @@ void integrate_vv(int n_steps, int reuse_forces)
 
     force_calc();
 
-    rescale_forces();
+    if(integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      rescale_forces();
 #ifdef ROTATION
-    convert_initial_torques();
+      convert_initial_torques();
 #endif
-    
+    }
+
     thermo_cool_down();
   }
 
@@ -298,7 +301,12 @@ void integrate_vv(int n_steps, int reuse_forces)
     if (integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
       propagate_vel();
       propagate_pos(); 
-    } else propagate_vel_pos();
+    } else if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
+      if(steepest_descent_step())
+	break;
+    } else { 
+      propagate_vel_pos();
+    }
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained bond */
@@ -348,10 +356,12 @@ void integrate_vv(int n_steps, int reuse_forces)
 
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-    rescale_forces_propagate_vel();
+    if(integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      rescale_forces_propagate_vel();
 #ifdef ROTATION
     convert_torques_propagate_omega();
 #endif
+    }
     // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
@@ -427,8 +437,10 @@ void integrate_vv(int n_steps, int reuse_forces)
     }
 #endif
 
-    /* Propagate time: t = t+dt */
-    sim_time += time_step;
+    if(integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
+    }
   }
 
   /* verlet list statistics */
