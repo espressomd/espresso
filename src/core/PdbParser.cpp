@@ -133,11 +133,9 @@ namespace PdbParser {
 	      file.unget();
 	      /* Parse line */
 	      std::getline(file, buf);	      
-	      std::cout << "atoms line '" << buf << "' len(" << buf.length() << ")" << std::endl;
 	      std::istringstream line(buf);
 	      line >> atom.i >> atom.type >> tmp >> tmp >> tmp >> tmp >> atom.charge;	      
 	      itp_atoms.insert(std::pair<int, itp_atom>(atom.i, atom));
-	      std::cout << "parsed to id " << atom.i << " type '" << atom.type << "'" << std::endl;
 	    }
 	  }
 	  if(section == "atomtypes") {

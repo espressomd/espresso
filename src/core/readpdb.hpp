@@ -36,9 +36,10 @@ struct PdbLJInteraction {
     @lennard_jones Should lj iteractions be added from the itp file.
     @fit Should the box be rescaled to hold the particles.
     @lj_internal Should LJ interactions within the molecule be added.
+    @lj_diagonal Just the diagonal interaction terms oh lj_internal.
     @return Number of particles that were added.
  */
 
 int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions, double lj_rel_cutoff=2.5,
-				char *itp_file=NULL, int first_type=0, bool fit = false, bool lj_internal = false);
+				char *itp_file=NULL, int first_type=0, bool fit = false, bool lj_internal = false, bool lj_diagonal = false);
 #endif
