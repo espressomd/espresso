@@ -135,10 +135,6 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
       }
       argc -= 5; argv += 5;
     }
-<<<<<<< HEAD
-/// three particle binding
-=======
->>>>>>> ed9b5a8115ba368fc98b3f7af6ea36c824e6ec80
     else if (ARG0_IS_S("bind_three_particles")) {
       mode |= COLLISION_MODE_BIND_THREE_PARTICLES | COLLISION_MODE_BOND;
       if (argc != 5) {
@@ -186,17 +182,11 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
     case 5:
       Tcl_AppendResult(interp, "Virtual particles need a pair bond or triple bond.", (char*) NULL);
       return TCL_ERROR;
-<<<<<<< HEAD
-    /// Gizem: do i need this?
-    case 6:
-      Tcl_AppendResult(interp, "bond_three_particles need a triple bond.", (char*) NULL);
-=======
     case 6:
       Tcl_AppendResult(interp, "Not enough angular bonds.", (char*) NULL);
       return TCL_ERROR;
     case 7:
       Tcl_AppendResult(interp, "bond_three_particles needs triple bonds.", (char*) NULL);
->>>>>>> ed9b5a8115ba368fc98b3f7af6ea36c824e6ec80
       return TCL_ERROR;
     }
 
