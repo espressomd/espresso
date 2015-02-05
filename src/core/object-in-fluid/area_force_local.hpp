@@ -51,30 +51,67 @@ inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 	double A, aa, h[3], rh[3], hn;
 	double p11[3],p22[3],p33[3];
 	int img[3];
-	
-	memcpy(p11, p1->r.p, 3*sizeof(double));
-	memcpy(img, p1->l.i, 3*sizeof(int));
-        fold_position(p11, img);
-
-	memcpy(p22, p2->r.p, 3*sizeof(double));
-	memcpy(img, p2->l.i, 3*sizeof(int));
-        fold_position(p22, img);
-
-	memcpy(p33, p3->r.p, 3*sizeof(double));
-	memcpy(img, p3->l.i, 3*sizeof(int));
-        fold_position(p33, img);
+	double AA[3],BB[3];
+	#ifdef GHOST_FLAG
+	// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p1, however, it might be other one. we call this particle reference particle.
+	if (p1->l.ghost != 1) {
+		//unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
+		memcpy(p11, p1->r.p, 3*sizeof(double));
+		memcpy(img, p1->l.i, 3*sizeof(int));
+		unfold_position(p11,img);
+		// other coordinates are obtained from its relative positions to the reference particle
+		get_mi_vector(AA, p2->r.p, p11);
+		get_mi_vector(BB, p3->r.p, p11);
+		for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+	} else {
+		// in case the first particle is a ghost particle
+		if (p2->l.ghost != 1) {
+			memcpy(p22, p2->r.p, 3*sizeof(double));
+			memcpy(img, p2->l.i, 3*sizeof(int));
+			unfold_position(p22,img);
+			get_mi_vector(AA, p1->r.p, p22);
+			get_mi_vector(BB, p3->r.p, p22);
+			for (int i=0; i < 3; i++) { p11[i] = p22[i] + AA[i]; p33[i] = p22[i] + BB[i]; }
+		} else {
+			// in case the first and the second particle are ghost particles
+			if (p3->l.ghost != 1) {
+				memcpy(p33, p3->r.p, 3*sizeof(double));
+				memcpy(img, p3->l.i, 3*sizeof(int));
+				unfold_position(p33,img);
+				get_mi_vector(AA, p1->r.p, p33);
+				get_mi_vector(BB, p2->r.p, p33);
+				for (int i=0; i < 3; i++) { p11[i] = p33[i] + AA[i]; p22[i] = p33[i] + BB[i]; }
+			} else {
+				printf("Something wrong in area_force_local.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
+				return 0;
+			}
+		}
+	}
+	#endif
+	#ifndef GHOST_FLAG
+		// if ghost flag was not defined we have no other option than to assume the first particle is a physical one.
+		memcpy(p11, p1->r.p, 3*sizeof(double));
+		memcpy(img, p1->l.i, 3*sizeof(int));
+		unfold_position(p11,img);
+		// other coordinates are obtained from its relative positions to the reference particle
+		get_mi_vector(AA, p2->r.p, p11);
+		get_mi_vector(BB, p3->r.p, p11);
+		for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+	#endif
 
 	for(k=0;k<3;k++) h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);
 	//volume+=A * -n[2]/dn * h[2];
 	A=area_triangle(p11,p22,p33);
-	aa=(A - iaparams->p.area_force_local.A0_l)/iaparams->p.area_force_local.A0_l;
-	
+
+	//aa=(A - iaparams->p.area_force_local.A0_l)/iaparams->p.area_force_local.A0_l;
+	//corrected with square root of the triangle's area, see "R.Tothova: Comparison of Different Formulas for Local Area Conservation Modulus in Spring Network Models"
+	aa=(A - iaparams->p.area_force_local.A0_l)/sqrt(iaparams->p.area_force_local.A0_l);
+		
 	//aminusb(3,h,p11,rh);				// area_forces for each triangle node
 	vecsub(h,p11,rh);				// area_forces for each triangle node
 	hn=normr(rh);
 	for(k=0;k<3;k++) {
 		force1[k] =  iaparams->p.area_force_local.ka_l * aa * rh[k]/hn;
-		//(&part1)->f.f[k]+=force[k];
 	}
 	//aminusb(3,h,p22,rh);				// area_forces for each triangle node
 	vecsub(h,p22,rh);				// area_forces for each triangle node
@@ -90,43 +127,8 @@ inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 		force3[k] =  iaparams->p.area_force_local.ka_l * aa * rh[k]/hn;
 		//(&part3)->f.f[k]+=force[k];
 	}
+	
   return 0;
 }
-
-
-inline int calc_area_force_local_complicated(Particle *p1, Particle *p2, Particle *p3,
-         Bonded_ia_parameters *iaparams, double force1[3], double force2[3], double force3[3]) // more complicated approach
-{
- int k; 
- double A, aa, uh[3], vh[3], rh[3], hn;
- double uu[3],vv[3];
-
- get_mi_vector(uu, p2->r.p, p1->r.p);
- get_mi_vector(vv, p3->r.p, p1->r.p);
-
- for(k=0;k<3;k++) rh[k]=1.0/3.0 *(uu[k]+vv[k]);
- for(k=0;k<3;k++) uh[k]=rh[k]-uu[k];
- for(k=0;k<3;k++) vh[k]=rh[k]-vv[k];
-
- A=area_triangle_new(uu,vv);
- //printf("area %e uu %e %e %e vv %e %e %e\n", A, uu[0], uu[1], uu[2], vv[0], vv[1], vv[2]);
- aa=(A - iaparams->p.area_force_local.A0_l)/iaparams->p.area_force_local.A0_l;
-
- hn=normr(rh);
- for(k=0;k<3;k++) {
-  force1[k] =  iaparams->p.area_force_local.ka_l * aa * rh[k]/hn;
- }
- hn=normr(uh);
- for(k=0;k<3;k++) {
-  force2[k] =  iaparams->p.area_force_local.ka_l * aa * uh[k]/hn;
- }
- hn=normr(vh);
- for(k=0;k<3;k++) {
-  force3[k] =  iaparams->p.area_force_local.ka_l * aa * vh[k]/hn;
- }
-  return 0;
-}
-
-
 #endif
 
