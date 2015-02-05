@@ -60,7 +60,7 @@
 #include "electrokinetics_tcl.hpp"
 #include "actor/HarmonicWell_tcl.hpp"
 #include "rotate_system_tcl.hpp"
-
+#include "minimize_energy_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -230,6 +230,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("rotate_system", tclcommand_rotate_system);
   
 #endif
+  REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

@@ -67,6 +67,7 @@ libEspresso_la_SOURCES = \
 	lees_edwards_domain_decomposition.cpp lees_edwards_domain_decomposition.hpp \
 	lees_edwards_comms_manager.cpp lees_edwards_comms_manager.hpp \
 	metadynamics.cpp metadynamics.hpp \
+	minimize_energy.cpp minimize_energy.hpp \
 	modes.cpp modes.hpp \
 	molforces.cpp molforces.hpp \
 	mol_cut.cpp mol_cut.hpp \

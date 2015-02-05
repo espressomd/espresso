@@ -81,6 +81,7 @@ tests = \
 	mass.tcl \
 	mass-and-rinertia.tcl \
 	mdlc.tcl \
+	minimize_energy.tcl \
 	mmm1d.tcl \
 	mmm1dgpu.tcl \
 	ewaldgpu.tcl \
@@ -104,7 +105,7 @@ tests = \
         tunable_slip.tcl \
         uwerr.tcl \
 	virtual-sites.tcl \
-	virtual-sites-rotation.tcl 
+	virtual-sites-rotation.tcl \
 # please keep the alphabetic ordering of the above list!
 
 deactivated_tests =
