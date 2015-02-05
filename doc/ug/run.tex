@@ -512,6 +512,18 @@ the biased force are not gaussian function (as in many metadynamics
 codes) but so-called Lucy functions. See \cite{marsili09} for more
 details. These avoid the calculation of exponentials.
 
+\section{Multi-timestepping}
+\newescommand[multitimestepping]{multitimestepping}
+
+\begin{essyntax}
+  set smaller\_time\_step 0.001
+  part $i$ smaller\_timestep 1
+
+  Required features: MULTI\_TIMESTEPPING
+\end{essyntax}
+
+\var{smaller\_time\_step} turns on the multi-timestepping algorithm. 
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"
