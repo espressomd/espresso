@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef FENE_H
-#define FENE_H
+#ifndef _FENE_HPP
+#define _FENE_HPP
 /** \file fene.hpp
  *  Routines to calculate the FENE Energy or/and FENE force 
  *  for a particle pair.
@@ -30,6 +30,9 @@
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
+#include "errorhandling.hpp"
+
+using namespace std;
 
 /************************************************************/
 
@@ -45,24 +48,23 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
     @param force     returns force of particle 1
     @return true if the bond is broken
 */
-inline int calc_fene_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
-{
+inline int calc_fene_pair_force(Particle *p1, Particle *p2, 
+                                Bonded_ia_parameters *iaparams, 
+                                double dx[3], double force[3]) {
   int i;
-  double fac, dr, len2, len;
  
-  len2 = sqrlen(dx);
-  len = sqrt(len2);
-  dr = len - iaparams->p.fene.r0;
+  const double len2 = sqrlen(dx);
+  const double len = sqrt(len2);
+  const double dr = len - iaparams->p.fene.r0;
 
-  if(dr >= iaparams->p.fene.drmax)
-    return 1;
+  if (dr >= iaparams->p.fene.drmax) return 1;
 
-  fac = -iaparams->p.fene.k * dr / ((1.0 - dr*dr*iaparams->p.fene.drmax2i));
+  double fac = -iaparams->p.fene.k * dr / ((1.0 - dr*dr*iaparams->p.fene.drmax2i));
   if (fabs(dr) > ROUND_ERROR_PREC) {
      if(len > ROUND_ERROR_PREC) {  /* Regular case */
 	fac /= len ; 
      } else { /* dx[] == 0: the force is undefined. Let's use a random direction */
-        for(i=0;i<3;i++) dx[i] = d_random()-0.5;
+        for(int i = 0;i < 3;i++) dx[i] = d_random()-0.5;
         fac /= sqrt(sqrlen(dx));
      }
   } else { 
@@ -80,21 +82,21 @@ inline int calc_fene_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters
   return 0;
 }
 
-inline int fene_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
-{
-  double energy, dr;
-
+inline int fene_pair_energy(Particle *p1, Particle *p2, 
+                            Bonded_ia_parameters *iaparams, 
+                            double dx[3], double *_energy) {
   /* compute bond stretching (r-r0) */
-  dr = sqrt(sqrlen(dx))-iaparams->p.fene.r0;
+  double dr = sqrt(sqrlen(dx))-iaparams->p.fene.r0;
 
   /* check bond stretching */
   if(dr >= iaparams->p.fene.drmax) {
-    char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtext,"{077 FENE bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
+      ostringstream msg;
+      msg <<"FENE bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
+      runtimeError(msg);
     return 1;
   }
 
-  energy = -0.5*iaparams->p.fene.k*iaparams->p.fene.drmax2;
+  double energy = -0.5*iaparams->p.fene.k*iaparams->p.fene.drmax2;
   energy *= log((1.0 - dr*dr*iaparams->p.fene.drmax2i));
   *_energy = energy;
   return 0;

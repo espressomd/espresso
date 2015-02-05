@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2013 The ESPResSo project
+  Copyright (C) 2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -33,6 +33,15 @@ typedef struct {
 
 } CUDA_particle_force;
 
+#ifdef ENGINE
+// velocities which need to be copied from the GPU to the CPU to calculate a torque
+typedef struct {
+
+  // center and source velocity of the md part
+  float v_cs[6];
+
+} CUDA_v_cs;
+#endif
 
 typedef struct {
   /** fluid composition at the particle given to md part */
@@ -40,26 +49,57 @@ typedef struct {
 
 } CUDA_fluid_composition;
 
+// Parameters for swimmers
+#ifdef ENGINE
+typedef struct {
+  // v_cs has to stay in the front for memcpy reasons
+  float v_cs[6];
+  float v_swim;
+  float f_swim;
+  float quatu[3];
+  int push_pull;
+  float dipole_length;
+  bool swimming;
+} CUDA_ParticleParametersSwimming;
+#endif
 
 /** data structure which must be copied to the GPU at each step run on the GPU */
 typedef struct {
+
+  // This has to stay in front of the struct for memcpy reasons
+#ifdef ENGINE
+  CUDA_ParticleParametersSwimming swim;
+#endif
+  
   /** particle position given from md part*/
   float p[3];
   /** particle momentum struct velocity p.m->v*/
   float v[3];
-  
+
 #ifdef SHANCHEN
   float solvation[2*LB_COMPONENTS];
 #endif 
+
 #ifdef LB_ELECTROHYDRODYNAMICS
   float mu_E[3];
 #endif
+
 #ifdef ELECTROSTATICS
   float q;
 #endif
+
   unsigned int fixed;
+  
+#ifdef IMMERSED_BOUNDARY
+  bool isVirtual;
+#endif
 
 } CUDA_particle_data;
+
+/** data structure for the different kinds of energies */
+typedef struct {
+  float bonded, non_bonded, coulomb, dipolar;
+} CUDA_energy;
 
 /** Note the particle's seed gets its own struct since it doesn't get copied back and forth from the GPU */
 typedef struct {
@@ -83,11 +123,15 @@ typedef struct {
 } CUDA_global_part_vars;
 
 void copy_forces_from_GPU();
+void copy_energy_from_GPU();
+void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
+void clear_energy_on_GPU();
 void copy_composition_from_GPU();
 CUDA_global_part_vars* gpu_get_global_particle_vars_pointer_host();
 CUDA_global_part_vars* gpu_get_global_particle_vars_pointer();
 CUDA_particle_data* gpu_get_particle_pointer();
 CUDA_particle_force* gpu_get_particle_force_pointer();
+CUDA_energy* gpu_get_energy_pointer();
 CUDA_fluid_composition* gpu_get_fluid_composition_pointer();
 CUDA_particle_seed* gpu_get_particle_seed_pointer();
 void gpu_change_number_of_part_to_comm();
@@ -98,6 +142,12 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_compositio
 void cuda_bcast_global_part_params();
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
+
+#ifdef ENGINE
+void copy_v_cs_from_GPU();
+void cuda_mpi_send_v_cs(CUDA_v_cs *host_v_cs);
+#endif
+
 #endif /* ifdef CUDA */
 
 #endif /* ifdef CUDA_INTERFACE_HPP */

@@ -35,7 +35,4 @@ HarmonicWell(float x1, float x2, float x3, float _k, SystemInterface &s) {
     std::cerr << "HarmonicWell needs access to positions on GPU!" << std::endl;
 }
 
-void addHarmonicWell(float x1, float x2, float x3, float _k) {
-  potentials.push_back(new HarmonicWell(x1, x2, x3, _k, espressoSystemInterface));
-}
 #endif

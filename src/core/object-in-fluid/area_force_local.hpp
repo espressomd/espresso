@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -54,15 +54,15 @@ inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 	
 	memcpy(p11, p1->r.p, 3*sizeof(double));
 	memcpy(img, p1->l.i, 3*sizeof(int));
-	fold_position(p11, img);
-					
+        fold_position(p11, img);
+
 	memcpy(p22, p2->r.p, 3*sizeof(double));
 	memcpy(img, p2->l.i, 3*sizeof(int));
-	fold_position(p22, img);
+        fold_position(p22, img);
 
 	memcpy(p33, p3->r.p, 3*sizeof(double));
 	memcpy(img, p3->l.i, 3*sizeof(int));
-	fold_position(p33, img);
+        fold_position(p33, img);
 
 	for(k=0;k<3;k++) h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);
 	//volume+=A * -n[2]/dn * h[2];

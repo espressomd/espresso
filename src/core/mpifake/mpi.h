@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -98,6 +98,7 @@ int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
 #define MPI_REQUEST_NULL NULL
 
 #define MPI_ANY_SOURCE 0
+#define MPI_ANY_TAG 0
 
 #define MPI_IN_PLACE (void*)0x1
 
@@ -126,6 +127,7 @@ int MPI_Type_create_hvector(int count, int length, int stride, MPI_Datatype oldt
 
 inline int MPI_Init(int *a, char ***b) { return MPI_SUCCESS; }
 inline int MPI_Finalize(void) { return MPI_SUCCESS; }
+inline int MPI_Abort(MPI_Comm comm, int status) { return MPI_SUCCESS; }
 inline int MPI_Comm_size(MPI_Comm comm, int *psize) { *psize = 1; return MPI_SUCCESS; }
 inline int MPI_Comm_rank(MPI_Comm comm, int *rank) { *rank = 0; return MPI_SUCCESS; }
 inline int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) { *rank = 0; return MPI_SUCCESS; }
@@ -151,6 +153,9 @@ inline int MPI_Wait(MPI_Request *reqs, MPI_Status *stats) { return MPI_SUCCESS; 
 inline int MPI_Comm_create_errhandler(MPI_Handler_function *errfunc, MPI_Errhandler *errhdl) { return MPI_SUCCESS; }
 inline int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhdl) { return MPI_SUCCESS; }
 inline int MPI_Bcast(void *buff, int count, MPI_Datatype datatype, int root, MPI_Comm comm) { return MPI_SUCCESS; }
+inline int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status) { return MPI_SUCCESS; }
+inline int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count) { *count = 0; return MPI_SUCCESS; }
+
 
 #ifndef GNU_MPIFAKE_DEBUG
 

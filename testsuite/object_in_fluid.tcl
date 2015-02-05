@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -48,7 +48,7 @@ puts "------------------------------------------------"
 set vmd "n"
 
 set tcl_precision 15
-set tolerance 1e-8
+set tolerance 1e-5
 
 setmd time_step 0.1
 setmd skin 0.2

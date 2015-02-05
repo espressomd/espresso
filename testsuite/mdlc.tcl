@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -21,7 +21,11 @@ require_feature "DIPOLES"
 require_feature "FFTW"
 require_feature "ROTATION"
 require_feature "CONSTRAINTS"
-require_max_nodes_per_side 2
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 1
+} {
+    require_max_nodes_per_side 2
+}
 
 set tcl_precision 15
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -195,6 +195,7 @@ enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLA
 /** assign the physical charges using the tabulated charge assignment function.
     If store_ca_frac is true, then the charge fractions are buffered in cur_ca_fmp and
     cur_ca_frac. */
+
 void p3m_charge_assign();
 
 /** assign a single charge into the current charge grid. cp_cnt gives the a running index,

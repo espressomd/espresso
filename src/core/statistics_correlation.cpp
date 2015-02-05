@@ -1,5 +1,5 @@
  /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -142,8 +142,10 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   unsigned int i,j,k;
   unsigned int hierarchy_depth=0;
 
-  if (self==0)
+  if (self==0) {
     return 1;
+  }
+
   // first input-independent values
   self->t = 0;
   self->finalized=0;
@@ -151,64 +153,83 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   self->autocorrelation=1; // the default may change later if dim_B != 0
   
   // then input-dependent ones
-  if (dt <= 0)
+  if (dt <= 0) {
     return 2;
+  }
+
   if ((dt-time_step)<-1e-6*time_step) {
     return 15;
   }
+
   // check if dt is a multiple of the md timestep
-  if ( abs(dt/time_step - round(dt/time_step)) >1e-6 ) 
+  if ( abs(dt/time_step - round(dt/time_step)) > 1e-6 ) {
     return 16;
+  }
+
   self->dt = dt;
   self->update_frequency = (int) floor(dt/time_step);
   
   if ( tau_lin == 1 ) { // use the default
     tau_lin=(int)ceil(tau_max/dt);
-    printf("tau_lin: %d\n", tau_lin);
     if (tau_lin%2) tau_lin+=1;
+    printf("tau_lin: %d\n", tau_lin);
   }
-  if (tau_lin<2)
+
+  if (tau_lin<2) {
     return 3;
-  if (tau_lin%2)
+  }
+
+  if (tau_lin%2) {
     return 14;
+  }
+
   self->tau_lin=tau_lin;
   
   if (tau_max <= dt) { 
     return 4;
   } else { //set hierarchy depth which can  accomodate at least tau_max
-    if ( (tau_max/dt) < tau_lin ) 
+    if ( (tau_max/dt) < tau_lin ) {
       hierarchy_depth = 1;
-    else 
+    } else {
       hierarchy_depth=(unsigned int)ceil( 1 + log( (tau_max/dt)/(tau_lin-1) ) / log(2.0) );
+    }
   }
+
   self->tau_max=tau_max;
   self->hierarchy_depth = hierarchy_depth;
   
-  if (window_distance<1)
+  if (window_distance<1) {
     return 5;
+  }
+
   self->window_distance = window_distance;
   
-  if (dim_A<1)
+  if (dim_A<1) {
     return 6;
+  }
+
   self->dim_A = dim_A;
   
-  if (dim_B==0)
-    dim_B = dim_A;
-  else if (dim_B>0)
+  if (dim_B==0) {
+    dim_B = dim_A; 
+  } else if (dim_B>0) {
     self->autocorrelation=0;
-  else if (dim_A != dim_B) 
-    return 8;
-    // currently there is no correlation function able to handel observables of different dimensionalities
-  else 
+  } else {
     return 7;
+  }
+
   self->dim_B = dim_B;
 
-  if (A == 0)
+  if (A == 0) {
     return 9;
+  }
+
   self->A_obs = A;
   
-  if (B == 0 && !self->autocorrelation)
+  if (B == 0 && !self->autocorrelation) {
     return 10;
+  }
+
   self->B_obs = B;
   
 
@@ -222,6 +243,10 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   } else if ( strcmp(corr_operation_name,"complex_conjugate_product") == 0 ) {
     dim_corr = dim_A;
     self->corr_operation = &complex_conjugate_product;
+    self->args = NULL;
+  } else if ( strcmp(corr_operation_name,"tensor_product") == 0 ) {
+    dim_corr = dim_A*dim_B;
+    self->corr_operation = &tensor_product;
     self->args = NULL;
   } else if ( strcmp(corr_operation_name,"square_distance_componentwise") == 0 ) {
     dim_corr = dim_A;
@@ -475,6 +500,130 @@ int double_correlation_get_data( double_correlation* self ) {
   return 0;
 }
 
+static void write_double(FILE * fp, const double * data, unsigned int n, bool binary){
+  if (binary){
+    fwrite(data,sizeof(double),n,fp);
+  } else {
+    for(unsigned int i=0;i<n-1;i++){
+      fprintf(fp,"%e\t",data[i]);
+    }
+    fprintf(fp,"%e\n",data[n-1]);
+  }
+}
+static void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binary){
+  if (binary){
+    fwrite(data,sizeof(unsigned int),n,fp);
+  } else {
+    for(unsigned int i=0;i<n-1;i++){
+      fprintf(fp,"%u\t",data[i]);
+    }
+    fprintf(fp,"%u\n",data[n-1]);
+  }
+}
+int double_correlation_write_data_to_file(const double_correlation* self, const char * filename, bool binary){
+  FILE* fp=0;
+  fp=fopen(filename, "w");
+  if (!fp) {
+    return 1;
+  }
+  for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+    for (unsigned int j=0; j<self->tau_lin+1; j++) {
+      write_double(fp,self->A[i][j],self->dim_A,binary);
+    }
+  }
+  if (!self->autocorrelation){
+    for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+      for (unsigned int j=0; j<self->tau_lin+1; j++) {
+	write_double(fp,self->B[i][j],self->dim_B,binary);
+      }
+    } 
+  }
+  for (unsigned int i=0; i<self->n_result; i++) {
+    write_double(fp,self->result[i],self->dim_corr,binary);
+  }
+  write_uint(fp,self->n_sweeps,self->n_result       ,binary);
+  write_uint(fp,self->n_vals  ,self->hierarchy_depth,binary);
+  write_uint(fp,self->newest  ,self->hierarchy_depth,binary);
+  
+  write_double(fp,self->A_accumulated_average ,self->dim_A,binary);
+  write_double(fp,self->A_accumulated_variance,self->dim_A,binary);
+  if (!self->autocorrelation){
+    write_double(fp,self->B_accumulated_average ,self->dim_B,binary);
+    write_double(fp,self->B_accumulated_variance,self->dim_B,binary);
+  }
+  write_uint(fp,&(self->n_data),1,binary);
+  write_uint(fp,&(self->t     ),1,binary);
+  write_double(fp,&(self->last_update),1,binary);
+  fclose(fp);
+  return 0;
+}
+
+static int read_double(FILE * fp, double * data, unsigned int n, bool binary){
+  if (binary){
+    size_t tmp = fread(data,sizeof(double),n,fp);
+    if (tmp < n){
+      return 1;
+    }
+  } else {
+    for(unsigned int i=0;i<n;i++){
+      if (fscanf(fp,"%le",data+i) == 0 ) return 1;
+    }
+  }
+  return 0;
+}
+static int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary){
+  if (binary){
+    size_t tmp = fread(data,sizeof(unsigned int),n,fp);
+    if (tmp < n){
+      return 1;
+    }
+  } else {
+    for(unsigned int i=0;i<n;i++){
+      if (fscanf(fp,"%u",data+i) == 0)
+	return 1;
+    }
+  }
+  return 0;
+}
+int double_correlation_read_data_from_file(double_correlation* self, const char * filename, bool binary){
+  FILE* fp=0;
+  fp=fopen(filename, "r");
+  if (!fp) {
+    return 2;
+  }
+  for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+    for (unsigned int j=0; j<self->tau_lin+1; j++) {
+      if (read_double(fp,self->A[i][j],self->dim_A,binary)) return 1;
+    }
+  }
+  if (!self->autocorrelation){
+    for (unsigned int i=0; i<self->hierarchy_depth; i++) {
+      for (unsigned int j=0; j<self->tau_lin+1; j++) {
+	if (read_double(fp,self->B[i][j],self->dim_B,binary)) return 1;
+      }
+    } 
+  }
+  for (unsigned int i=0; i<self->n_result; i++) {
+    if (read_double(fp,self->result[i],self->dim_corr,binary))return 1;
+  }
+  if (read_uint(fp,self->n_sweeps,self->n_result       ,binary))return 1;
+  if (read_uint(fp,self->n_vals  ,self->hierarchy_depth,binary))return 1;
+  if (read_uint(fp,self->newest  ,self->hierarchy_depth,binary))return 1;
+  
+  if (read_double(fp,self->A_accumulated_average ,self->dim_A,binary))return 1;
+  if (read_double(fp,self->A_accumulated_variance,self->dim_A,binary))return 1;
+  if (!self->autocorrelation){
+    if (read_double(fp,self->B_accumulated_average ,self->dim_B,binary))return 1;
+    if (read_double(fp,self->B_accumulated_variance,self->dim_B,binary))return 1;
+  }
+  if (read_uint(fp,&(self->n_data),1,binary))return 1;
+  if (read_uint(fp,&(self->t     ),1,binary))return 1;
+  if (read_double(fp,&(self->last_update),1,binary))return 1;
+  fclose(fp);
+  return 0;
+}
+
+
 int double_correlation_finalize( double_correlation* self ) {
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
@@ -643,8 +792,9 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
     printf("Error in componentwise product: The vector sizes do not match");
     return 5;
   }
-  for ( i = 0; i < dim_A; i++ )
+  for ( i = 0; i < dim_A; i++ ) {
     C[i] = A[i]*B[i];
+  }
   return 0;
 }
 
@@ -663,6 +813,17 @@ int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsign
   return 0;
 }
 
+int tensor_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
+  unsigned int i,j;
+  for ( i = 0; i < dim_A; i++ )
+  {
+    for ( j = 0; j < dim_B; j++ )
+    {
+      C[i*dim_B + j] = A[i]*B[j];
+    }
+  }
+  return 0;
+}
 
 int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   unsigned int i;
@@ -675,7 +836,6 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
   }
   return 0;
 }
-
 
 int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   DoubleList *wsquare = (DoubleList*)args;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -677,13 +677,13 @@ int mdlc_tune(double error)
 
   if(h > lz) {
     fprintf(stderr,"tune DLC dipolar: Slab is larger than the box size !!! \n");
-    exit(1);
+    errexit();
   }
  
   if(fabs(box_l[0]-box_l[1])>0.001) {
     fprintf(stderr,"tune DLC dipolar: box size in x direction is different from y direction !!! \n");
     fprintf(stderr,"The tuning formula requires both to be equal. \n");
-    exit(1);
+    errexit();
   }
 
   lx=box_l[0];
@@ -719,14 +719,12 @@ int mdlc_tune(double error)
 
 int mdlc_sanity_checks()
 {
-#ifdef PARTIAL_PERIODIC  
-  char *errtxt;
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{006 mdlc requires periodicity 1 1 1} ");
+      ostringstream msg;
+      msg <<"mdlc requires periodicity 1 1 1";
+      runtimeError(msg);
     return 1;
   }
-#endif  
 
   // It will be desirable to have a  checking function that check that the slab geometry is such that 
   // the short direction is along the z component.
@@ -765,8 +763,9 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
   else {
     dlc_params.far_calculated = 1;
     if (mdlc_tune(dlc_params.maxPWerror) == ES_ERROR) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{009 mdlc tuning failed, gap size too small} ");
+        ostringstream msg;
+        msg <<"mdlc tuning failed, gap size too small";
+        runtimeError(msg);
     }
   }
   mpi_bcast_coulomb_params();

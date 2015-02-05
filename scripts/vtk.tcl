@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz
 #  
 # This file is part of ESPResSo.
@@ -46,6 +46,18 @@ proc writevtk {filename {type "all"}} {
 			set ypos [expr [lindex [part $pid print folded_pos] 1]]
 			set zpos [expr [lindex [part $pid print folded_pos] 2]]
 			puts $fp "$xpos $ypos $zpos"
+		}
+	}
+
+	puts $fp "POINT_DATA $n"
+        puts $fp "SCALARS velocity float 3"
+        puts $fp "LOOKUP_TABLE default"
+	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
+			set xvel [expr [lindex [part $pid print v] 0]]
+			set yvel [expr [lindex [part $pid print v] 1]]
+			set zvel [expr [lindex [part $pid print v] 2]]
+			puts $fp "$xvel $yvel $zvel"
 		}
 	}
 

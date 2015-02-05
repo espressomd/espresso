@@ -7,9 +7,13 @@ config.status
 src/acconfig.h.in
 src/acconfig.h
 aclocal.m4
+*.m4
 autom4te.cache
 .deps/
 myconfig.h
+build/
+
+*.*~
 
 # created by configure
 src/myconfig-final.h
@@ -18,6 +22,7 @@ doc/latexit.sh
 myconfig-sample.h
 testsuite/runtest.sh
 tools/es_mpiexec
+config/ltmain.sh
 
 # object files and executable
 *.o
@@ -26,6 +31,8 @@ src/libEspresso.a
 Espresso
 Espresso.install
 build.eclipse
+src/featuredefs.pyc
+src/acconfig.hpp.in
 
 # Espresso output
 *.end

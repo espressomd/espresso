@@ -1,5 +1,5 @@
  /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -368,7 +368,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
           return double_correlation_finalize(&correlations[no]);
         } else {
           Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize\n", buffer, (char *)NULL);
-    	    return TCL_ERROR;
+	  return TCL_ERROR;
         }
 //      } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input ) {
 //        correlations[no].A_args = &tcl_input_d;
@@ -411,6 +411,14 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
 //        } else {
 //          return TCL_OK;
 //        }
+      } else if (ARG0_IS_S("write_checkpoint_binary")) {
+	return double_correlation_write_data_to_file( correlations+no,argv[1],true);
+      } else if (ARG0_IS_S("write_checkpoint_ascii")) {
+	return double_correlation_write_data_to_file( correlations+no,argv[1],false);
+      } else if (ARG0_IS_S("read_checkpoint_binary")) {
+	return double_correlation_read_data_from_file(correlations+no,argv[1],true);
+      } else if (ARG0_IS_S("read_checkpoint_ascii")) {
+	return double_correlation_read_data_from_file(correlations+no,argv[1],false);
       } else {
         Tcl_AppendResult(interp, "Usage for an already existing correlation:", (char *)NULL);
         Tcl_AppendResult(interp, "analyze correlation $ID [ print | update ]", (char *)NULL);
@@ -428,7 +436,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
     // Else we must parse the other arguments and see if we can construct a fully
     // working correlation class instance from that.
     while (argc > 0) {
-      if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
+      if ( ARG0_IS_S("first_obs") || ARG0_IS_S_EXACT("obs1") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
           if (temp>=n_observables) {
              Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
@@ -441,7 +449,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
           tclcommand_correlation_print_usage(interp);
           return TCL_ERROR;
         }
-      } else if ( ARG0_IS_S("second_obs") || ARG0_IS_S("obs2") ) {
+      } else if ( ARG0_IS_S("second_obs") || ARG0_IS_S_EXACT("obs2") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
           if (temp>=n_observables) {
              Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
@@ -576,6 +584,9 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
     *change=1;
     return TCL_OK;
   } else if (ARG_IS_S_EXACT(0,"complex_conjugate_product")) {
+    *change=1;
+    return TCL_OK;
+  } else if (ARG_IS_S_EXACT(0,"tensor_product")) {
     *change=1;
     return TCL_OK;
   } else if (ARG_IS_S_EXACT(0,"square_distance_componentwise")) {

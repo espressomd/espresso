@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -139,11 +139,12 @@ if {![catch {integrate 0} err]} {
 }
 
 set bonds ""
-foreach exception [lrange $err 2 end] {
-    if {[lrange $exception 0 2] != "collision between particles"} {
+foreach exception [lrange $err 1 end] {
+    if {[regexp {collision between particles (\d+) and (\d+)} $exception -> id1 id2]} {
+        lappend bonds "$id1 $id2"
+    } else {
 	error_exit "unexpected exception $exception"
     }
-    lappend bonds "[lindex $exception 3] [lindex $exception 5]"
 }
 set bonds [lsort $bonds]
 

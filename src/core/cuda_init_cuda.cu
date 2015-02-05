@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -20,6 +20,7 @@
 
 #include "utils.hpp"
 #include "cuda_init.hpp"
+#include "cuda_utils.hpp"
 
 
 #ifdef CUDA
@@ -33,6 +34,11 @@ static const int computeCapabilityMinMinor = 1;
 /*@}*/
 
 const char *cuda_error;
+
+void cuda_init()
+{
+  cudaStreamCreate(&stream[0]);
+}
 
 /// get the number of CUDA devices.
 int cuda_get_n_gpus()
@@ -78,13 +84,16 @@ void cuda_get_gpu_name(int dev, char name[64])
 
 int cuda_set_device(int dev)
 {
-  cudaError_t error = cudaSetDevice(dev);
+  cudaSetDevice(dev);
+  cudaStreamDestroy(stream[0]);
+  cudaError_t error = cudaStreamCreate(&stream[0]);
+  
   if (error != cudaSuccess) {
     cuda_error = cudaGetErrorString(error);
     return ES_ERROR;
   }
-  else
-    return ES_OK;
+  
+  return ES_OK;
 }
 
 int cuda_get_device()
@@ -97,6 +106,32 @@ int cuda_get_device()
   }
   else
     return dev;
+}
+
+int cuda_test_device_access() {
+  int *d = 0;
+  int h = 42;
+  cudaError_t err;
+
+  err = cudaMalloc((void **)&d, sizeof(int));
+  if(err != cudaSuccess) {
+    cuda_error = cudaGetErrorString(err);
+    return ES_ERROR;
+  }
+  err = cudaMemcpy(d, &h, sizeof(int), cudaMemcpyHostToDevice);
+  if(err != cudaSuccess) {
+    cuda_error = cudaGetErrorString(err);
+    return ES_ERROR;
+  }
+  h = 0;
+  err = cudaMemcpy(&h, d, sizeof(int), cudaMemcpyDeviceToHost);
+
+  if((h == 42) && (err == cudaSuccess))
+    return ES_OK;
+  else {
+    cuda_error = cudaGetErrorString(err);
+    return ES_ERROR;
+  }
 }
 
 #endif /* defined(CUDA) */

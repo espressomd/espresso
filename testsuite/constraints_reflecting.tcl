@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -111,10 +111,10 @@ for { set i 0 } { $i < 100 } { incr i } {
 set pos [ part 0 print pos ]
 puts "position after the bounce back $pos"
 if { abs([ lindex $pos 0 ] - $refx ) > $prec } {
-  error "The x position of the particle is wrong"
+  error "The x position of the particle is wrong: [ lindex $pos 0 ] vs $refx"
 }
 if { abs([ lindex $pos 1 ] - $refy ) > $prec } {
-  error "The y position of the particle is wrong"
+  error "The y position of the particle is wrong: [ lindex $pos 1 ] vs $refy"
 }
 puts "The bounce back test was passed!"
 

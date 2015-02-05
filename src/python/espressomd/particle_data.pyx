@@ -1,3 +1,21 @@
+#
+# Copyright (C) 2013,2014 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#  
 include "myconfig.pxi"
 cimport numpy as np
 import numpy as np
@@ -142,7 +160,7 @@ cdef class ParticleHandle:
 
       def __get__(self):
         self.updateParticleData()
-        cdef double* x
+        cdef double* x = NULL
         pointer_to_mass(&(self.particleData), x)
         return x[0]
 
@@ -176,7 +194,7 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.updateParticleData()
-        cdef double* o
+        cdef double* o = NULL
         pointer_to_omega_body(&(self.particleData), o)
         return np.array([o[0],o[1],o[2]])
   
@@ -209,7 +227,7 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.updateParticleData()
-        cdef double* x
+        cdef double* x = NULL
         pointer_to_quat(&(self.particleData),x)
         return np.array([x[0],x[1],x[2],x[3]])
 # Director ( z-axis in body fixed frame)
@@ -226,7 +244,7 @@ cdef class ParticleHandle:
 
       def __get__(self):
         self.updateParticleData()
-        cdef double* x
+        cdef double* x = NULL
         pointer_to_quatu(&(self.particleData),x)
         return np.array([x[0],x[1],x[2]])
   
@@ -242,7 +260,7 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.updateParticleData()
-        cdef double* x
+        cdef double* x = NULL
         pointer_to_q(&(self.particleData),x)
         return x[0]
 
@@ -266,7 +284,7 @@ cdef class ParticleHandle:
           raise ValueError("virtual must be an integer >= 0")
       def __get__(self):
         self.updateParticleData()
-        cdef int* x
+        cdef int* x = NULL
         pointer_to_virtual(&(self.particleData),x)
         return x[0]
 
@@ -286,8 +304,8 @@ cdef class ParticleHandle:
           raise ValueError("vs_relative takes one int and one float as parameters.")
       def __get__(self):
         self.updateParticleData()
-        cdef int* rel_to
-        cdef double* dist
+        cdef int* rel_to = NULL
+        cdef double* dist = NULL
         pointer_to_vs_relative(&(self.particleData),rel_to,dist)
         return (rel_to[0],dist[0])
 
@@ -339,7 +357,7 @@ cdef class ParticleHandle:
     del self
 
 
-  IF VIRTUAL_SITES ==1:
+  IF VIRTUAL_SITES_RELATIVE == 1:
     # vs_auto_relate_to
     def vs_auto_relate_to(self,_relto):
       """Setup this particle as virtual site relative to the particle with the given id"""

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -45,7 +45,7 @@ typedef struct {
 
   /** number of coulomb interactions */
   int n_coulomb;
-  /** number of coulomb interactions */
+  /** number of dipolar interactions */
   int n_dipolar;
   /** number of non bonded interactions */
   int n_non_bonded;

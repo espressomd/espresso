@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -90,6 +90,6 @@ inline int calc_bending_force(Particle *p2, Particle *p1, Particle *p3, Particle
 	}	
   return 0;
 }
-
+#undef fold_position
 #endif
 

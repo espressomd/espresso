@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -146,10 +146,10 @@ void compute_pos_corr_vec(int *repeat_)
 	if( ia_params->type == BONDED_IA_RIGID_BOND ) {
 	  cnt++;
 	  p2 = local_particles[p1->bl.e[k++]];
-	  if (!p2) {
-	    char *errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	    ERROR_SPRINTF(errtxt,"{051 rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
-		    p1->p.identity, p1->bl.e[k-1]);
+      if (!p2) {
+          ostringstream msg;
+          msg <<"rigid bond broken between particles " << p1->p.identity << " and " << p1->bl.e[k-1] << " (particles not stored on the same node)";
+          runtimeError(msg);
 	    return;
 	  }
 
@@ -230,8 +230,9 @@ void correct_pos_shake()
        cnt++;
    }// while(repeat) loop
    if (cnt >= SHAKE_MAX_ITERATIONS) {
-     char *errtxt = runtime_error(100 + ES_INTEGER_SPACE);
-     ERROR_SPRINTF(errtxt, "{053 RATTLE failed to converge after %d iterations} ", cnt);
+       ostringstream msg;
+       msg <<"RATTLE failed to converge after " << cnt << " iterations";
+       runtimeError(msg);
    }
 
    check_resort_particles();
@@ -299,10 +300,10 @@ void compute_vel_corr_vec(int *repeat_)
 	    if( ia_params->type == BONDED_IA_RIGID_BOND )
 	      {
 		p2 = local_particles[p1->bl.e[k++]];
-		if (!p2) {
-		  char *errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-		  ERROR_SPRINTF(errtxt,"{054 rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
-			  p1->p.identity, p1->bl.e[k-1]);
+        if (!p2) {
+            ostringstream msg;
+            msg <<"rigid bond broken between particles " << p1->p.identity << " and " << p1->bl.e[k-1] << " (particles not stored on the same node)";
+            runtimeError(msg);
 		  return;
 		}
 
@@ -443,9 +444,10 @@ void print_bond_len()
 	     if(b_ia->type == BONDED_IA_RIGID_BOND)
              {
 	       Particle *p2 = local_particles[p[i].bl.e[k++]];
-	       if (!p2) {
-		 char *errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-		 ERROR_SPRINTF(errtxt,"{056 rigid bond broken between particles %d and %d (particles not stored on the same node)} ", p[i].p.identity, p[i].bl.e[k-1]);
+           if (!p2) {
+           ostringstream msg;
+           msg <<"rigid bond broken between particles " << p[i].p.identity << " and " << p[i].bl.e[k-1] << " (particles not stored on the same node)";
+           runtimeError(msg);
 		 return;
 	       }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -257,13 +257,13 @@ int double_correlation_init(double_correlation* self, double dt,
 			    void *args);
 
 
-/** Restore a correlation from a checkpoint
+/** Restore a correlation from a checkpoint - the observable has to be created first ordinary
 */
-int double_correlation_init_from_checkpoint(double_correlation* self, char* filename, int dim_A, int dim_B, observable *A, observable *B, void *args);
+int double_correlation_read_data_from_file(double_correlation* self, const char * filename, bool binary);
 
 /** Write a checkpoint, saving all history buffers and other important variables of a correlation in a file
 */
-int double_correlation_write_checkpoint( double_correlation* self, char* filename);
+int double_correlation_write_data_to_file(const double_correlation* self, const char * filename, bool binary);
 
 /** The function to process a new datapoint of A and B
  *  
@@ -324,6 +324,8 @@ int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_
 int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ); 
 
 int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ); 
+
+int tensor_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ); 
 
 int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
 

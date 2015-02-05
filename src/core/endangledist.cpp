@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -74,22 +74,19 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clc
 
   /* Gets and tests wall data */
   for(k=0;k<n_constraints;k++) {
-    switch(constraints[k].type) {
-      case CONSTRAINT_WAL: 
+    if (constraints[k].type == CONSTRAINT_WAL) {
       wall=constraints[k].c.wal;
       /* check that constraint wall normal is normalised */
       for(j=0;j<3;j++) normal += wall.n[j] * wall.n[j];
       if (sqrt(normal) != 1.0) {
         for(j=0;j<3;j++) wall.n[j]=wall.n[j]/normal;
       }
-      break;
     }
   }
 
   /* Calculate distance of end particle from closest wall */
   for(k=0;k<n_constraints;k++) {
-    switch(constraints[k].type) {
-      case CONSTRAINT_WAL:
+    if (constraints[k].type == CONSTRAINT_WAL) {
       wall=constraints[k].c.wal;
       /* distwallmin is distance of closest wall from p1 */
       pwdist[k]=-1.0 * wall.d;
@@ -105,7 +102,6 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clc
         }
       }
       /*fprintf(stdout,"  k=%d  clconstr=%d\n",k,*clconstr);*/
-      break;
     }
   }
   /*
@@ -237,8 +233,8 @@ int calc_endangledist_pair_force(Particle *p1, Particle *p2,
                           p2->p.identity,dist,fac_a,fac_b)                   \
                 );
   ONEPART_TRACE(if(p2->p.identity==check_id)                            \
-                  fprintf(stderr,"%d: OPT: ENDANGLEDIST f = (%.3e,%.3e,%.3e)" \
-                          " with part id=%d at dist %f fac %.3e\n",     \
+                  fprintf(stderr,"%d: OPT: ENDANGLEDIST f = (%.3e,%.3e,%.3e) " \
+                          "with part id=%d at dist %f fac %.3e %.3e\n",     \
                           this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],   \
                           p1->p.identity,dist,fac_a,fac_b));
 

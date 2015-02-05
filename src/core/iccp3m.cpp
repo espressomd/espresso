@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -148,7 +148,6 @@ int iccp3m_iteration() {
    int c,np;
    Particle *part;
    int i, j,id;
-   char* errtxt;
    double globalmax;
    double f1, f2 = 0;
 
@@ -156,8 +155,9 @@ int iccp3m_iteration() {
    
    l_b = coulomb.bjerrum;
    if((iccp3m_cfg.eout <= 0)) {
-     errtxt = runtime_error(128);
-     ERROR_SPRINTF(errtxt, "ICCP3M: nonpositive dielectric constant is not allowed. Put a decent tcl error here\n");
+       ostringstream msg;
+       msg <<"ICCP3M: nonpositive dielectric constant is not allowed. Put a decent tcl error here\n";
+       runtimeError(msg);
    }
    
    
@@ -186,8 +186,9 @@ int iccp3m_iteration() {
            ez += iccp3m_cfg.extz;
            
            if (ex == 0 && ey == 0 && ez == 0) {
-             errtxt = runtime_error(128);
-             ERROR_SPRINTF(errtxt, "ICCP3M found zero electric field on a charge. This must never happen");
+             ostringstream msg;
+             msg <<"ICCP3M found zero electric field on a charge. This must never happen";
+             runtimeError(msg);
            }
            /* the dot product   */
            fdot = ex*iccp3m_cfg.nvectorx[id]+
@@ -216,10 +217,10 @@ int iccp3m_iteration() {
                       part[i].p.q = hnew * iccp3m_cfg.areas[id];
          /* check if the charge now is more than 1e6, to determine if ICC still leads to reasonable results */
          /* this is kind a arbitrary measure but, does a good job spotting divergence !*/
-                      if(fabs(part[i].p.q) > 1e6) { 
-                        errtxt = runtime_error(128);
-            	          ERROR_SPRINTF(errtxt, "{error occured 990 : too big charge assignment in iccp3m! q >1e6 , \
-                               assigned charge= %f } \n",part[i].p.q);
+                      if(fabs(part[i].p.q) > 1e6) {
+                          ostringstream msg;
+                          msg <<"too big charge assignment in iccp3m! q >1e6 , assigned charge= " << part[i].p.q << "\n";
+                          runtimeError(msg);
                         diff = 1e90; /* A very high value is used as error code */
                         break;
                       }
@@ -532,11 +533,11 @@ void init_forces_iccp3m()
      thermodynamic ensemble */
 
 #ifdef NPT
-  char* errtxt;
   /* reset virial part of instantaneous pressure */
   if(integ_switch == INTEG_METHOD_NPT_ISO){
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{ICCP3M cannot be used with pressure coupling} ");
+      ostringstream msg;
+      msg << "ICCP3M cannot be used with pressure coupling";
+      runtimeError(msg);
   }
 #endif
 
@@ -568,40 +569,44 @@ void init_forces_iccp3m()
 void calc_long_range_forces_iccp3m()
 {
 #ifdef ELECTROSTATICS
-  char* errtxt;
-  /* calculate k-space part of electrostatic interaction. */
-  if (!(coulomb.method == COULOMB_ELC_P3M || 
-        coulomb.method == COULOMB_P3M     || 
-        coulomb.method == COULOMB_MMM2D   ||
-        coulomb.method == COULOMB_MMM1D)  ) { 
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ");
-     }
-  switch (coulomb.method) {
+	/* calculate k-space part of electrostatic interaction. */
+	if (!(coulomb.method == COULOMB_ELC_P3M ||
+			coulomb.method == COULOMB_P3M     ||
+			coulomb.method == COULOMB_MMM2D   ||
+            coulomb.method == COULOMB_MMM1D)  ) {
+        ostringstream msg;
+        msg <<"ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
+        runtimeError(msg);
+	}
+	switch (coulomb.method) {
 #ifdef P3M
-    case COULOMB_ELC_P3M:
-       if (elc_params.dielectric_contrast_on) {
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{ICCP3M conflicts with ELC dielectric constrast");
-       }
-       p3m_charge_assign();
-       p3m_calc_kspace_forces(1,0);
-       ELC_add_force(); 
-    break;
+	case COULOMB_ELC_P3M:
+        if (elc_params.dielectric_contrast_on) {
+            ostringstream msg;
+            msg << "ICCP3M conflicts with ELC dielectric constrast";
+            runtimeError(msg);
+		}
+		p3m_charge_assign();
+		p3m_calc_kspace_forces(1,0);
+		ELC_add_force();
+		break;
 
-    case COULOMB_P3M:
-       p3m_charge_assign();
-       p3m_calc_kspace_forces(1,0);
-    break;
+	case COULOMB_P3M:
+		p3m_charge_assign();
+		p3m_calc_kspace_forces(1,0);
+		break;
 #endif
-    case COULOMB_MMM2D:
-       MMM2D_add_far_force();
-       MMM2D_dielectric_layers_force_contribution();
-  }
+	case COULOMB_MMM2D:
+		MMM2D_add_far_force();
+		MMM2D_dielectric_layers_force_contribution();
+		break;
+	default: break;
+	}
 
 #endif
 }
-/** \name Privat Functions */
+
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -726,33 +731,39 @@ void iccp3m_store_forces() {
 
 int iccp3m_sanity_check()
 {
-  switch (coulomb.method) {
+	switch (coulomb.method) {
 #ifdef P3M
-    case COULOMB_ELC_P3M: {
-      if (elc_params.dielectric_contrast_on) {
-	char *errtxt = runtime_error(128);
-	ERROR_SPRINTF(errtxt, "ICCP3M conflicts with ELC dielectric constrast");
-	return 1;
-      }
-      break;
-    }
+	case COULOMB_ELC_P3M: {
+        if (elc_params.dielectric_contrast_on) {
+            ostringstream msg;
+            msg << "ICCP3M conflicts with ELC dielectric constrast";
+            runtimeError(msg);
+			return 1;
+		}
+		break;
+	}
 #endif
     case COULOMB_DH: {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "ICCP3M does not work with Debye-Hueckel iccp3m.h");
-      return 1;
-    }
+        ostringstream msg;
+        msg <<"ICCP3M does not work with Debye-Hueckel iccp3m.h";
+        runtimeError(msg);
+		return 1;
+	}
     case COULOMB_RF: {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "ICCP3M does not work with COULOMB_RF iccp3m.h");
-      return 1;
-    }
-  }
+        ostringstream msg;
+        msg <<"ICCP3M does not work with COULOMB_RF iccp3m.h";
+        runtimeError(msg);
+		return 1;
+	}
+	default:
+		break;
+	}
   
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "ICCP3M does not work in the NPT ensemble");
+      ostringstream msg;
+      msg <<"ICCP3M does not work in the NPT ensemble";
+      runtimeError(msg);
     return 1;
   }
 #endif

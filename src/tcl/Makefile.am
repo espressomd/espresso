@@ -30,6 +30,7 @@ libEspressoTcl_la_SOURCES = \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
+	readpdb_tcl.cpp \
 	cells_tcl.cpp \
 	cells_tcl.hpp \
 	channels_tcl.cpp \
@@ -47,11 +48,12 @@ libEspressoTcl_la_SOURCES = \
 	grid_tcl.cpp grid_tcl.hpp \
 	iccp3m_tcl.cpp iccp3m_tcl.hpp \
 	imd_tcl.cpp \
-	initialize_interpreter.cpp \
+	initialize_interpreter.cpp initialize_interpreter.hpp \
 	integrate_tcl.cpp integrate_tcl.hpp \
 	interaction_data_tcl.cpp interaction_data_tcl.hpp \
 	lb-boundaries_tcl.cpp lb-boundaries_tcl.hpp \
 	lb_tcl.cpp lb_tcl.hpp \
+	lees_edwards_tcl.cpp lees_edwards_tcl.hpp \
 	metadynamics_tcl.cpp metadynamics_tcl.hpp \
 	nemd_tcl.cpp \
 	mol_cut_tcl.cpp mol_cut_tcl.hpp \
@@ -70,11 +72,12 @@ libEspressoTcl_la_SOURCES = \
 	statistics_wallstuff_tcl.cpp statistics_wallstuff_tcl.hpp \
 	statistics_tcl.cpp statistics_tcl.hpp \
 	thermostat_tcl.cpp thermostat_tcl.hpp \
-	topology_tcl.cpp \
+	topology_tcl.cpp topology_tcl.hpp \
 	tuning_tcl.cpp \
 	uwerr_tcl.cpp \
 	virtual_sites_com_tcl.cpp virtual_sites_com_tcl.hpp \
-	ghmc_tcl.cpp ghmc_tcl.hpp
+	ghmc_tcl.cpp ghmc_tcl.hpp \
+	minimize_energy_tcl.cpp minimize_energy_tcl.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \
@@ -109,6 +112,8 @@ libEspressoTcl_la_SOURCES += \
 	endangledist_tcl.cpp endangledist_tcl.hpp \
 	fene_tcl.cpp fene_tcl.hpp \
 	harmonic_tcl.cpp harmonic_tcl.hpp \
+	quartic_tcl.cpp quartic_tcl.hpp \
+	bonded_coulomb_tcl.cpp bonded_coulomb_tcl.hpp \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
 	umbrella_tcl.cpp umbrella_tcl.hpp \
@@ -123,7 +128,13 @@ libEspressoTcl_la_SOURCES += \
 	object-in-fluid/stretchlin_force_tcl.cpp \
 	object-in-fluid/stretchlin_force_tcl.hpp \
 	object-in-fluid/volume_force_tcl.cpp \
-	object-in-fluid/volume_force_tcl.hpp
+	object-in-fluid/volume_force_tcl.hpp \
+	immersed_boundary/ibm_triel_tcl.cpp \
+	immersed_boundary/ibm_triel_tcl.hpp \
+	immersed_boundary/ibm_volume_conservation_tcl.cpp \
+	immersed_boundary/ibm_volume_conservation_tcl.hpp \
+	immersed_boundary/ibm_tribend_tcl.cpp \
+	immersed_boundary/ibm_tribend_tcl.hpp
 
 # Coulomb methods
 libEspressoTcl_la_SOURCES += \
@@ -140,6 +151,8 @@ libEspressoTcl_la_SOURCES += \
 
 # Generic actors
 libEspressoTcl_la_SOURCES += \
+	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
+	actor/Ewaldgpu_tcl.cpp actor/Ewaldgpu_tcl.hpp \
 	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
 
 if CUDA
@@ -162,6 +175,14 @@ bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\" $(AM_CPPFLAGS)
 Espresso_install_SOURCES = scriptsdir.cpp main.cpp
 Espresso_install_LDADD = libEspressoTcl.la ../core/libEspresso.la 
+
+# generate the Tcl library for the python interpreter
+if PYTHON_INTERFACE
+noinst_LTLIBRARIES += libEspressoTcl4Py.la
+libEspressoTcl4Py_la_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
+libEspressoTcl4Py_la_SOURCES = scriptsdir.cpp
+libEspressoTcl4Py_la_LIBADD = libEspressoTcl.la
+endif
 
 ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
 ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
