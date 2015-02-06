@@ -52,7 +52,7 @@ bool steepest_descent_step(void) {
   double f_max = -std::numeric_limits<double>::max();
   double f;
   double dp, dp2, dp2_max = -std::numeric_limits<double>::max();
-  const double skin2 = SQR(skin);
+  //const double skin2 = SQR(skin);
   double f_max_global;
 
   for (c = 0; c < local_cells.n; c++) {
