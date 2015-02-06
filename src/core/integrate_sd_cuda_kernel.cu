@@ -848,6 +848,53 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
 }
 
 
+__global__ void sd_find_interacting_particles(const real * pos,const real * L_g, const int N, int * interacting, int * num_interacting,
+					      const real interaction_range){
+  const int lda_short=((N+31)/32)*32;
+  const real interaction_range_squared=SQR(interaction_range);
+  __shared__ real cachedPos[3*numThreadsPerBlock];
+#ifndef SD_NOT_PERIODIC
+  __shared__ real L[3];
+  if (threadIdx.x < 3){
+    L[threadIdx.x]=L_g[threadIdx.x];
+  }
+#endif
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
+  for (int l=0;l<3;l++){
+    cachedPos[threadIdx.x+l*blockDim.x] = pos[threadIdx.x+l*numThreadsPerBlock+blockIdx.x*blockDim.x*3];
+  }
+  __syncthreads();
+  real mypos[3];
+  for (int l=0;l<3;l++){
+    mypos[l]=cachedPos[threadIdx.x*3+l];
+  }
+  if (i < N){
+    int interactions=0;
+    int j0next;
+    for (int j0=0;j0<N;j0+=j0next){
+      j0next=min(j0+blockDim.x,N);
+      j0next-=j0;
+      for (int l=0;l<3;l++){
+	cachedPos[threadIdx.x+l*numThreadsPerBlock] = pos[threadIdx.x+l*blockDim.x+j0*3];
+      }
+      for (int j=0;j<j0next;j++){
+	real dr2=0;
+	for (int l=0;l<3;l++){
+	  real dr=mypos[l]-cachedPos[j*3+l];
+#ifndef SD_NOT_PERIODIC
+	  dr-=L[d]*rint(dr/L[d]);
+#endif
+	  dr2+=dr*dr;
+	}
+	if (dr2 < interaction_range_squared && i != j+j0) {
+	  interacting[i+interactions*lda_short]=j+j0;
+	  interactions++;
+	}
+      }
+    }
+    num_interacting[i]=interactions;
+  }
+}
 __global__ void sd_find_interacting_particles(const real * pos,const real * _L, const int N, int * interacting, int * num_interacting,
 					      const int * particle_count, const int * particle_sorted_list, const real * bucket_size_,
 					      const int * bucket_num_, const int * particle_to_bucket_list, const real interaction_range,

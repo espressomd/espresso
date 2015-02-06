@@ -107,16 +107,16 @@ void propagate_pos_sd_cuda(real * box_l_h, int N,real * pos_h, real * force_h, r
   cuda_safe_mem(cudaMalloc((void**)&box_l_d, 3*sizeof(real)));
   cuda_safe_mem(cudaMemcpy(box_l_d,box_l_h,3*sizeof(real),cudaMemcpyHostToDevice));
   real * pos_d=NULL;
-  cuda_safe_mem(cudaMalloc((void**)&pos_d, (DIM)*N*sizeof(real)));
+  cuda_safe_mem(cudaMalloc((void**)&pos_d, (DIM)*(((N+31)/32)*32)*sizeof(real)));
   cuda_safe_mem(cudaMemcpy(pos_d,pos_h,N*DIM*sizeof(real),cudaMemcpyHostToDevice));
   //printVectorDev(pos_d,3*N,"pos after copy");
   real * force_d=NULL;
-  cuda_safe_mem(cudaMalloc((void**)&force_d, DIM*N*sizeof(real)));
+  cuda_safe_mem(cudaMalloc((void**)&force_d, DIM*(((N+31)/32)*32)*sizeof(real)));
   cuda_safe_mem(cudaMemcpy(force_d,force_h,N*DIM*sizeof(real),cudaMemcpyHostToDevice));
   real * mobility_d=NULL;
   cuda_safe_mem(cudaMalloc((void**)&mobility_d, lda*N*3*sizeof(real)));
   real * disp_d=NULL;
-  cuda_safe_mem(cudaMalloc((void**)&disp_d, DIM*N*sizeof(real)));
+  cuda_safe_mem(cudaMalloc((void**)&disp_d, DIM*(((N+31)/32)*32)*sizeof(real)));
   int myInfo_h[]={0,0,0};
   int * myInfo_d=NULL;
   cuda_safe_mem(cudaMalloc((void**)&myInfo_d, 3*sizeof(int)));
@@ -361,33 +361,40 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   resistance.size      = N*3;
   resistance.ldd       = ((N*3+31)/32)*32;
   resistance.ldd_short = ((N+31)/32)*32;
-  //printMatrixDev(mobility_d,resistance.ldd,resistance.size,"mobi");
-  real * & resistance_d=resistance.data;
+  int lda_short=resistance.ldd_short;
+  resistance.is_sparse=true;
+  cuda_safe_mem(cudaMalloc( (void**)&resistance.data,    lda*80*3*sizeof(real) ));
+  cuda_safe_mem(cudaMalloc( (void**)&resistance.col_idx, lda_short*80*sizeof(int) ));
+  cuda_safe_mem(cudaMalloc( (void**)&resistance.row_l,   lda_short*sizeof(int) ));
+  
   if (use_buckets){
-    int lda_short=resistance.ldd_short;
-    resistance.is_sparse=true;
-    cuda_safe_mem(cudaMalloc( (void**)&resistance.data,    lda*80*3*sizeof(real) ));
-    cuda_safe_mem(cudaMalloc( (void**)&resistance.col_idx, lda_short*80*sizeof(int) ));
-    cuda_safe_mem(cudaMalloc( (void**)&resistance.row_l,   lda_short*sizeof(int) ));
-    
-    cudaThreadSynchronize(); // we need both matrices to continue;
+    cudaThreadSynchronize(); 
     cudaCheckError("finding interaction error");
     sd_find_interacting_particles<<<numBlocks, numThreadsPerBlock>>>(r_d, L_d, N, resistance.col_idx, resistance.row_l, 
 								     particle_count, particle_sorted_list, bucket_size,
 								     bucket_num, particle_to_bucket_list, 4*radius,total_bucket_num);
     cudaThreadSynchronize(); 
     cudaCheckError("finding interaction error");
-    sd_compute_resistance_matrix_sparse<<<numBlocks, numThreadsPerBlock>>>(r_d, N, -1./(6.*M_PI*viscosity*radius), radius, L_d,
-									   resistance.data, resistance.col_idx, resistance.row_l, myInfo_d);
   } else {
-    resistance.is_sparse=false;
+    cudaThreadSynchronize(); 
+    cudaCheckError("finding interaction error");
+    sd_find_interacting_particles<<<numBlocks, numThreadsPerBlock>>>(r_d, L_d, N, resistance.col_idx, resistance.row_l, 
+								     4*radius);
+    cudaThreadSynchronize(); 
+    cudaCheckError("finding interaction error");
+    
+  }
+  sd_compute_resistance_matrix_sparse<<<numBlocks, numThreadsPerBlock>>>(r_d, N, -1./(6.*M_PI*viscosity*radius), radius, L_d,
+									   resistance.data, resistance.col_idx, resistance.row_l, myInfo_d);
+    /*} else {
+  resistance.is_sparse=false;
     cuda_safe_mem(cudaMalloc( (void**)&resistance_d, lda*N*3*sizeof(real) ));
     sd_set_zero_matrix<<<numBlocks, numThreadsPerBlock >>>(resistance.data,resistance.size,resistance.ldd);
     cudaThreadSynchronize(); // debug
     cudaCheckError("sd_set_zero");
     sd_compute_resistance_matrix<<< numBlocks , numThreadsPerBlock  >>>(r_d,N,-1./(6.*M_PI*viscosity*radius), radius, L_d, resistance_d, myInfo_d);
     //#warning "bug"
-  }
+    }*/
   cudaThreadSynchronize(); // we need both matrices to continue;
   cudaCheckError("compute resistance error");
 #endif

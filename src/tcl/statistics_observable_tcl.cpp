@@ -806,8 +806,9 @@ int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, ch
       argc--;
       argv++;
       (*change)++;
-    }
-    //int k_density = params->num_k_vecs/params->order;
+    } else {
+		return (TCL_ERROR);
+	}
     int vecs_per_k=-1;
     switch (params->k_density){
     case 1:

@@ -143,3 +143,8 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * _L, 
 					      const int * particle_count, const int * particle_sorted_list, const real * bucket_size_,
 					      const int * bucket_num_, const int * particle_to_bucket_list, const real interaction_range,
 					      const int total_bucket_num);
+
+// finding all interacting particles, given a certain iteraction range.
+// this works without bucket sort and is O(N^2)
+__global__ void sd_find_interacting_particles(const real * pos,const real * L_g, const int N, int * interacting, int * num_interacting,
+					      const real interaction_range);
