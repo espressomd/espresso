@@ -44,31 +44,31 @@ extern int reflection_happened;
 
 Constraint *generate_constraint();
 
-void calculate_wall_dist(Particle *p1, double ppos[3], 
+void calculate_dist(Particle *p1, double ppos[3], 
 			 Particle *c_p, Constraint_wall *c, 
 			 double *dist, double *vec);
 
-void calculate_sphere_dist(Particle *p1, double ppos[3], 
+void calculate_dist(Particle *p1, double ppos[3], 
 			   Particle *c_p, Constraint_sphere *c, 
 			   double *dist, double *vec);
 
-void calculate_maze_dist(Particle *p1, double ppos[3], 
+void calculate_dist(Particle *p1, double ppos[3], 
 			 Particle *c_p, Constraint_maze *c, 
 			 double *dist, double *vec);
 
-void calculate_cylinder_dist(Particle *p1, double ppos[3], 
+void calculate_dist(Particle *p1, double ppos[3], 
 			     Particle *c_p, Constraint_cylinder *c, 
 			     double *dist, double *vec);
 
-void calculate_spherocylinder_dist(Particle *p1, double ppos[3], 
+void calculate_dist(Particle *p1, double ppos[3], 
 			     Particle *c_p, Constraint_spherocylinder *c, 
 			     double *dist, double *vec);
 
-void calculate_rhomboid_dist(Particle *p1, double ppos[3], 
+void calculate_dist(Particle *p1, double ppos[3], 
 			     Particle *c_p, Constraint_rhomboid *c, 
 			     double *dist, double *vec);
 
-void calculate_pore_dist(Particle *p1, double ppos[3], 
+void calculate_dist(Particle *p1, double ppos[3], 
 			 Particle *c_p, Constraint_pore *c, 
 			 double *dist, double *vec);
 
@@ -76,15 +76,15 @@ void calculate_slitpore_dist(Particle *p1, double ppos[3],
 			 Particle *c_p, Constraint_slitpore *c, 
 			 double *dist, double *vec);
 
-void calculate_plane_dist(Particle *p1, double ppos[3], 
+void calculate_dist(Particle *p1, double ppos[3], 
 			  Particle *c_p, Constraint_plane *c, 
 			  double *dist, double *vec);
 
-void calculate_stomatocyte_dist( Particle *p1, double ppos [3], 
+void calculate_dist( Particle *p1, double ppos [3], 
         Particle *c_p, Constraint_stomatocyte *cons, 
         double *dist, double *vec );
 
-void calculate_hollow_cone_dist( Particle *p1, double ppos [3], 
+void calculate_dist( Particle *p1, double ppos [3], 
         Particle *c_p, Constraint_hollow_cone *cons, 
         double *dist, double *vec );
 
