@@ -347,7 +347,11 @@ inline void calc_angle_3body_tabulated_forces(Particle *p_mid, Particle *p_left,
 
   if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
   if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
+#ifdef TABANGLEMINUS
+  phi = acos(-cos_phi);
+#else
   phi = acos(cos_phi);
+#endif
 
   dU = bonded_tab_force_lookup(phi, iaparams);
 
@@ -386,7 +390,11 @@ inline int tab_angle_energy(Particle *p_mid, Particle *p_left,
   get_mi_vector(vec2, p_right->r.p, p_mid->r.p);
   vl2 = sqrt(sqrlen(vec2));
   /* calculate phi */
+#ifdef TABANGLEMINUS
+  phi = acos( -scalar(vec1, vec2) / (vl1*vl2) );
+#else 
   phi = acos( scalar(vec1, vec2) / (vl1*vl2) );
+#endif
 
   *_energy = bonded_tab_energy_lookup(phi, iaparams);
 
