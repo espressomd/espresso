@@ -845,18 +845,21 @@ public:
 	virtual int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
 	virtual void add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params);
 	virtual void add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params);
+	virtual size_t SizeOfShape()=0;
 	/** whether the constraint is penetrable 1 or not 0*/
 	int penetrable;
 	int reflecting;
 	int only_positive;
 	int tunable_slip;
 };
+
 /** Parameters for a WALL constraint (or a plane if you like that more). */
 class Constraint_wall:public Shape{
 public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_wall(){}
+  size_t SizeOfShape(){return (sizeof(Constraint_wall));}
 
   /** normal vector on the plane. */
   double n[3];
@@ -874,6 +877,8 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_sphere(){}
+  size_t SizeOfShape(){return (sizeof(Constraint_sphere));}
+
   /** sphere center. */
   double pos[3];
   /** sphere radius. */
@@ -889,6 +894,7 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_cylinder(){}
+  size_t SizeOfShape(){return (sizeof(Constraint_cylinder));}
   /** center of the cylinder. */
   double pos[3];
   /** Axis of the cylinder .*/
@@ -908,6 +914,7 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_spherocylinder(){}
+  size_t SizeOfShape(){return (sizeof(Constraint_spherocylinder));}
   /** center of the cylinder. */
   double pos[3];
   /** Axis of the cylinder .*/
@@ -927,6 +934,7 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_rhomboid(){}
+  size_t SizeOfShape(){return (sizeof(Constraint_rhomboid));}
   /** corner of the rhomboid */
   double pos[3];
   /** edges adjacent to the corner */
@@ -944,6 +952,7 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_pore(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_pore));}
   /** center of the cylinder. */
   double pos[3];
   /** Axis of the cylinder .*/
@@ -966,6 +975,7 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_slitpore(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_slitpore));}
   /** center of the cylinder. */
   double pore_mouth;
   /** Axis of the cylinder .*/
@@ -982,10 +992,10 @@ public:
 class Constraint_rod:public Shape {
 public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
-  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   void add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params);
   void add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params);
   ~Constraint_rod(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_rod));}
 
   /** center of the cylinder in the x-y plane. */
   double pos[2];
@@ -998,10 +1008,10 @@ public:
 class Constraint_plate:public Shape {
 public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
-  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   void add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params);
   void add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params);
   ~Constraint_plate(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_plate));}
 
   /** height of plane in z-axis. */
   double pos;
@@ -1016,6 +1026,7 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_maze(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_maze));}
 
   /** number of spheres. */
   double nsphere;
@@ -1033,6 +1044,7 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_stomatocyte(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_stomatocyte));}
 
   /** Stomatocyte position. */
 
@@ -1066,6 +1078,7 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_hollow_cone(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_hollow_cone));}
 
   /** Hollow cone position. */
 
@@ -1098,6 +1111,7 @@ public:
 class Constraint_box:public Shape {
 public:
   ~Constraint_box(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_box));}
   int value;
 };
 
@@ -1109,6 +1123,7 @@ public:
   void add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params);
   void add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params);
   ~Constraint_ext_magn_field() {}
+  size_t SizeOfShape(){return(sizeof(Constraint_ext_magn_field));}
 
 
   /** vector (direction and magnitude) of the external magnetic field */
@@ -1122,6 +1137,7 @@ public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_plane() {}
+  size_t SizeOfShape(){return(sizeof(Constraint_plane));}
 
   /** Position of the plain. Negative values mean non-existing in that direction. */
   double pos[3];

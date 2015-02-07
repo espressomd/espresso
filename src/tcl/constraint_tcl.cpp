@@ -170,6 +170,25 @@ void Constraint_pore::Write_Shape_Tcl (Tcl_Interp *interp){
     Tcl_PrintDouble(interp, this->length, buffer);
     Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
 }
+void Constraint_slitpore::Write_Shape_Tcl (Tcl_Interp *interp){
+    char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+    Tcl_PrintDouble(interp, this->channel_width, buffer);
+    Tcl_AppendResult(interp, "channel width ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, this->lower_smoothing_radius, buffer);
+    Tcl_AppendResult(interp, "lower smoothing radius ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, this->pore_length, buffer);
+    Tcl_AppendResult(interp, "pore length ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, this->pore_mouth, buffer);
+    Tcl_AppendResult(interp, "pore mouth ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, this->pore_width, buffer);
+    Tcl_AppendResult(interp, "pore width ", buffer, " ", (char *) NULL);
+
+    Tcl_AppendResult(interp, "Slit pore output not properly implemented ", buffer, " ", (char *) NULL); //TODO OWEN FIX
+}
+void Constraint_spherocylinder::Write_Shape_Tcl (Tcl_Interp *interp){
+    char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+    Tcl_AppendResult(interp, "Spherocylinder output not properly implemented ", buffer, " ", (char *) NULL); //TODO OWEN FIX
+}
 void Constraint_stomatocyte::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
     Tcl_PrintDouble(interp, this->position_x, buffer);
@@ -299,7 +318,9 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
   con->type = CONSTRAINT_WAL;
   /* create a new wall constraint */
   Constraint_wall* new_wall_constraint = new Constraint_wall;
+
   con->_shape = new_wall_constraint;
+
   /* invalid entries to start of */
   new_wall_constraint->n[0] =
     new_wall_constraint->n[1] =
@@ -308,6 +329,7 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
   new_wall_constraint->penetrable = 0;
   new_wall_constraint->only_positive = 0;
   con->part_rep.p.type = -1;
+
   while (argc > 0) {
     if(!strncmp(argv[0], "normal", strlen(argv[0]))) {
       if(argc < 4) {
@@ -352,7 +374,7 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint wall reflecting {0|1} expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_wall_constraint->reflecting)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->reflecting)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -406,7 +428,7 @@ static int tclcommand_constraint_parse_sphere(Constraint *con, Tcl_Interp *inter
   new_sphere_constraint->rad = 0;
   new_sphere_constraint->direction = -1;
   new_sphere_constraint->penetrable = 0;
-  new_sphere_constraint->reflecting = 0;
+  con->_shape->reflecting = 0;
   con->part_rep.p.type = -1;
 
   while (argc > 0) {
@@ -466,7 +488,7 @@ static int tclcommand_constraint_parse_sphere(Constraint *con, Tcl_Interp *inter
 	Tcl_AppendResult(interp, "constraint sphere reflecting {0|1} expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_sphere_constraint->reflecting)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->reflecting)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -507,7 +529,7 @@ static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *int
   new_cylinder_constraint->direction = 0;
   new_cylinder_constraint->penetrable = 0;
   con->part_rep.p.type = -1;
-  new_cylinder_constraint->reflecting = 0;
+  con->_shape->reflecting = 0;
 
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
@@ -587,7 +609,7 @@ static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *int
 	Tcl_AppendResult(interp, "constraint cylinder reflecting {0|1} expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_cylinder_constraint->reflecting)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->reflecting)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -650,7 +672,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
   
   con->part_rep.p.type = -1;
   
-  new_rhomboid_constraint->reflecting = 0;
+  con->_shape->reflecting = 0;
   
   while (argc > 0) {
     if(!strncmp(argv[0], "a", strlen(argv[0]))) {
@@ -748,7 +770,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				return TCL_ERROR;
       }
       
-      if (Tcl_GetInt(interp, argv[1], &(new_rhomboid_constraint->reflecting)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->reflecting)) == TCL_ERROR)
 				return TCL_ERROR;
 				
       argc -= 2; argv += 2;
@@ -816,7 +838,7 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
   new_pore_constraint->outer_rad_left = 1e99;
   new_pore_constraint->outer_rad_right = 1e99;
   new_pore_constraint->length = 0;
-  new_pore_constraint->reflecting = 0;
+  con->_shape->reflecting = 0;
   con->part_rep.p.type = -1;
   new_pore_constraint->smoothing_radius = 1.;
   new_pore_constraint->outer_rad_left = std::numeric_limits<double>::max();
@@ -921,7 +943,7 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint pore reflecting {0|1} expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_pore_constraint->reflecting)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->reflecting)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -968,7 +990,7 @@ static int tclcommand_constraint_parse_slitpore(Constraint *con, Tcl_Interp *int
   new_slitpore_constraint->pore_length = 0;
   new_slitpore_constraint->upper_smoothing_radius = 0;
   new_slitpore_constraint->lower_smoothing_radius = 0;
-  new_slitpore_constraint->reflecting = 0;
+  con->_shape->reflecting = 0;
   con->part_rep.p.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "pore_mouth", strlen(argv[0]))) {
@@ -1039,7 +1061,7 @@ static int tclcommand_constraint_parse_slitpore(Constraint *con, Tcl_Interp *int
 	Tcl_AppendResult(interp, "constraint pore reflecting {0|1} expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_slitpore_constraint->reflecting)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->reflecting)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -1180,7 +1202,7 @@ static int tclcommand_constraint_parse_stomatocyte(Constraint *con, Tcl_Interp *
   new_stomatocyte_constraint->layer_width = -1.0;
   new_stomatocyte_constraint->direction = 0;
   new_stomatocyte_constraint->penetrable = 0;
-  new_stomatocyte_constraint->reflecting = 0;
+  con->_shape->reflecting = 0;
   con->part_rep.p.type = -1;
 
   /* read the data */
@@ -1311,7 +1333,7 @@ static int tclcommand_constraint_parse_stomatocyte(Constraint *con, Tcl_Interp *
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_I( 1, new_stomatocyte_constraint->reflecting ) )
+      if ( !ARG_IS_I( 1, con->_shape->reflecting ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1365,7 +1387,7 @@ static int tclcommand_constraint_parse_hollow_cone(Constraint *con, Tcl_Interp *
   new_hollow_cone_constraint->opening_angle = -1.0;
   new_hollow_cone_constraint->direction = 0;
   new_hollow_cone_constraint->penetrable = 0;
-  new_hollow_cone_constraint->reflecting = 0;
+  con->_shape->reflecting = 0;
   con->part_rep.p.type = -1;
 
   /* read the data */
@@ -1509,7 +1531,7 @@ static int tclcommand_constraint_parse_hollow_cone(Constraint *con, Tcl_Interp *
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_I( 1, new_hollow_cone_constraint->reflecting ) )
+      if ( !ARG_IS_I( 1, con->_shape->reflecting ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;

@@ -248,7 +248,7 @@ void lb_init_boundaries() {
 				  dist = 1e99;
 
 				  for (n=0;n<n_lb_boundaries;n++) {
-					  if (!(lb_boundaries[n]._shape->calculate_dist((Particle*) NULL, pos, (Particle*) NULL, &dist_tmp, dist_vec))) {
+					  if (lb_boundaries[n]._shape->calculate_dist((Particle*) NULL, pos, (Particle*) NULL, &dist_tmp, dist_vec)) {
 						  ostringstream msg;
 						  msg <<"lbboundary type " << lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
 						  runtimeError(msg);

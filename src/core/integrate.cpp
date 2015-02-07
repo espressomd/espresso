@@ -244,12 +244,12 @@ void integrate_vv(int n_steps, int reuse_forces)
 
 #ifdef LB
     transfer_momentum = 0;
-    if (lattice_switch & LATTICE_LB && this_node == 0)
+    if ( (lattice_switch & LATTICE_LB) && this_node == 0)
       if (warnings) fprintf (stderr, "Warning: Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
-    if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
+    if ( (lattice_switch & LATTICE_LB_GPU) && this_node == 0)
       if (warnings) fprintf (stderr, "Warning: Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
 
