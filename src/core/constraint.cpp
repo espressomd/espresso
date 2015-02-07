@@ -44,6 +44,7 @@ Constraint *generate_constraint()
   constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   constraints[n_constraints-1].type = CONSTRAINT_NONE;
   constraints[n_constraints-1].part_rep.p.identity = -n_constraints;
+  constraints[n_constraints-1].constraint_number = n_constraints-1;
   
   return &constraints[n_constraints-1];
 }
@@ -272,8 +273,8 @@ int Constraint_spherocylinder::calculate_dist(Particle *p1, double ppos[3], Part
 
     *dist *= this->direction;
   }
-//  else
-//	  dynamic_cast<Constraint_cylinder*> (this)->calculate_dist(p1, ppos, c_p, dist, vec);//TODO OWEN THIS MAY NOT WORK
+  else
+	  dynamic_cast<Constraint_cylinder*> (this)->calculate_dist(p1, ppos, c_p, dist, vec);
   return 0;
 }
 
@@ -2326,8 +2327,8 @@ void Shape::add_constraint_force_default (Constraint* current_constraint, Partic
 						ia_params,vec,dist,dist*dist, force,
 						torque1, torque2);
 #ifdef TUNABLE_SLIP
-				if (current_constraint._shape.tunable_slip == 1 ) {
-					add_tunable_slip_pair_force(p1, &current_constraint.part_rep,ia_params,vec,dist,force);
+				if (current_constraint->_shape->tunable_slip == 1 ) {
+					add_tunable_slip_pair_force(p1, &current_constraint->part_rep,ia_params,vec,dist,force);
 				}
 #endif
 			}
@@ -2344,7 +2345,7 @@ void Shape::add_constraint_force_default (Constraint* current_constraint, Partic
 					printf("reflecting particle %d\n", p1->p.identity);
 				} else {
 					ostringstream msg;
-					msg <<"constraint "<< current_constraint->constraint_number<<" violated by particle "<<p1->p.identity; //TODO OWEN SET THIS VARIABLE
+					msg <<"constraint "<< current_constraint->constraint_number<<" violated by particle "<<p1->p.identity;
 					runtimeError(msg);
 				}
 			}

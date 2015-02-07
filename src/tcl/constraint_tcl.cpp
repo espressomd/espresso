@@ -32,6 +32,10 @@ void Constraint::Write_Constraint_Tcl (Tcl_Interp *interp){
 	char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
     sprintf(buffer, "%d", this->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", this->_shape->penetrable);
+    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", this->_shape->reflecting);
+    Tcl_AppendResult(interp, " reflecting flag ", buffer, (char *) NULL);
     this->_shape->Write_Shape_Tcl(interp);
 }
 void Constraint_wall::Write_Shape_Tcl (Tcl_Interp *interp){
@@ -44,8 +48,6 @@ void Constraint_wall::Write_Shape_Tcl (Tcl_Interp *interp){
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, this->d, buffer);
     Tcl_AppendResult(interp, " dist ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", this->penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
     sprintf(buffer, "%d", this->only_positive);
     Tcl_AppendResult(interp, " only_positive ", buffer, (char *) NULL);
     sprintf(buffer, "%d", this->tunable_slip);
@@ -63,8 +65,6 @@ void Constraint_sphere::Write_Shape_Tcl (Tcl_Interp *interp){
     Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, this->direction, buffer);
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", this->penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
 }
 void Constraint_cylinder::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -86,8 +86,6 @@ void Constraint_cylinder::Write_Shape_Tcl (Tcl_Interp *interp){
     Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, this->direction, buffer);
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", this->penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
 }
 void Constraint_rhomboid::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -117,8 +115,6 @@ void Constraint_rhomboid::Write_Shape_Tcl (Tcl_Interp *interp){
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, this->direction, buffer);
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", this->penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
 }
 void Constraint_rod::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -146,8 +142,6 @@ void Constraint_maze::Write_Shape_Tcl (Tcl_Interp *interp){
     Tcl_AppendResult(interp, " sphrad ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, this->cylrad, buffer);
     Tcl_AppendResult(interp, " cylrad ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", this->penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
 }
 void Constraint_pore::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -164,30 +158,47 @@ void Constraint_pore::Write_Shape_Tcl (Tcl_Interp *interp){
     Tcl_PrintDouble(interp, this->axis[2], buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, this->outer_rad_left, buffer);
-    Tcl_AppendResult(interp, "outer radius left", buffer, (char *) NULL);
+    Tcl_AppendResult(interp, " outer radius left", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, this->outer_rad_right, buffer);
-    Tcl_AppendResult(interp, "outer radius right", buffer, (char *) NULL);
+    Tcl_AppendResult(interp, " outer radius right", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, this->length, buffer);
     Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
 }
 void Constraint_slitpore::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
     Tcl_PrintDouble(interp, this->channel_width, buffer);
-    Tcl_AppendResult(interp, "channel width ", buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, " channel width ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, this->lower_smoothing_radius, buffer);
-    Tcl_AppendResult(interp, "lower smoothing radius ", buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, " lower smoothing radius ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, this->pore_length, buffer);
-    Tcl_AppendResult(interp, "pore length ", buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, " pore length ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, this->pore_mouth, buffer);
-    Tcl_AppendResult(interp, "pore mouth ", buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, " pore mouth ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, this->pore_width, buffer);
-    Tcl_AppendResult(interp, "pore width ", buffer, " ", (char *) NULL);
-
-    Tcl_AppendResult(interp, "Slit pore output not properly implemented ", buffer, " ", (char *) NULL); //TODO OWEN FIX
+    Tcl_AppendResult(interp, " pore width ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, this->upper_smoothing_radius, buffer);
+    Tcl_AppendResult(interp, " upper_smoothing_radius ", buffer, " ", (char *) NULL);
 }
 void Constraint_spherocylinder::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-    Tcl_AppendResult(interp, "Spherocylinder output not properly implemented ", buffer, " ", (char *) NULL); //TODO OWEN FIX
+    Tcl_PrintDouble(interp, this->pos[0], buffer);
+    Tcl_AppendResult(interp, "cylinder center ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, this->pos[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, this->pos[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, this->axis[0], buffer);
+    Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, this->axis[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, this->axis[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, this->rad, buffer);
+    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, this->length, buffer);
+    Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, this->direction, buffer);
+    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
 }
 void Constraint_stomatocyte::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -211,10 +222,6 @@ void Constraint_stomatocyte::Write_Shape_Tcl (Tcl_Interp *interp){
     Tcl_AppendResult(interp, " layer width ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, this->direction, buffer);
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", this->penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, this->reflecting, buffer);
-    Tcl_AppendResult(interp, " reflecting ", buffer, (char *) NULL);
 }
 void Constraint_hollow_cone::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -240,10 +247,6 @@ void Constraint_hollow_cone::Write_Shape_Tcl (Tcl_Interp *interp){
     Tcl_AppendResult(interp, " opening angle ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, this->direction, buffer);
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", this->penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, this->reflecting, buffer);
-    Tcl_AppendResult(interp, " reflecting ", buffer, (char *) NULL);
 }
 void Constraint_ext_magn_field::Write_Shape_Tcl (Tcl_Interp *interp){
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -326,8 +329,8 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
     new_wall_constraint->n[1] =
     new_wall_constraint->n[2] = 0;
   new_wall_constraint->d = 0;
-  new_wall_constraint->penetrable = 0;
-  new_wall_constraint->only_positive = 0;
+  con->_shape->penetrable = 0;
+  con->_shape->only_positive = 0;
   con->part_rep.p.type = -1;
 
   while (argc > 0) {
@@ -365,7 +368,7 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_wall_constraint->penetrable)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->penetrable)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -383,7 +386,7 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint wall only_positive {0|1} expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_wall_constraint->only_positive)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->only_positive)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -392,7 +395,7 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
   	Tcl_AppendResult(interp, "constraint wall tunable_slip {0|1} expected", (char *) NULL);
    	return (TCL_ERROR);
       }
-    if (Tcl_GetInt(interp, argv[1], &(new_wall_constraint->tunable_slip)) == TCL_ERROR)
+    if (Tcl_GetInt(interp, argv[1], &(con->_shape->tunable_slip)) == TCL_ERROR)
    	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -427,7 +430,7 @@ static int tclcommand_constraint_parse_sphere(Constraint *con, Tcl_Interp *inter
     new_sphere_constraint->pos[2] = 0;
   new_sphere_constraint->rad = 0;
   new_sphere_constraint->direction = -1;
-  new_sphere_constraint->penetrable = 0;
+  con->_shape->penetrable = 0;
   con->_shape->reflecting = 0;
   con->part_rep.p.type = -1;
 
@@ -479,7 +482,7 @@ static int tclcommand_constraint_parse_sphere(Constraint *con, Tcl_Interp *inter
 	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_sphere_constraint->penetrable)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->penetrable)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -527,7 +530,7 @@ static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *int
   new_cylinder_constraint->rad = 0;
   new_cylinder_constraint->length = 0;
   new_cylinder_constraint->direction = 0;
-  new_cylinder_constraint->penetrable = 0;
+  con->_shape->penetrable = 0;
   con->part_rep.p.type = -1;
   con->_shape->reflecting = 0;
 
@@ -600,7 +603,7 @@ static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *int
 	Tcl_AppendResult(interp, "constraint cylinder penetrable <0/1> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_cylinder_constraint->penetrable)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->penetrable)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -668,7 +671,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
   
   new_rhomboid_constraint->direction = 0;
   
-  new_rhomboid_constraint->penetrable = 0;
+  con->_shape->penetrable = 0;
   
   con->part_rep.p.type = -1;
   
@@ -759,7 +762,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				return TCL_ERROR;
       }
       
-      if (Tcl_GetInt(interp, argv[1], &(new_rhomboid_constraint->penetrable)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->penetrable)) == TCL_ERROR)
 				return TCL_ERROR;
 				
       argc -= 2; argv += 2;
@@ -1201,7 +1204,7 @@ static int tclcommand_constraint_parse_stomatocyte(Constraint *con, Tcl_Interp *
   new_stomatocyte_constraint->inner_radius = -1.0;
   new_stomatocyte_constraint->layer_width = -1.0;
   new_stomatocyte_constraint->direction = 0;
-  new_stomatocyte_constraint->penetrable = 0;
+  con->_shape->penetrable = 0;
   con->_shape->reflecting = 0;
   con->part_rep.p.type = -1;
 
@@ -1320,7 +1323,7 @@ static int tclcommand_constraint_parse_stomatocyte(Constraint *con, Tcl_Interp *
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_I( 1, new_stomatocyte_constraint->penetrable ) )
+      if ( !ARG_IS_I( 1, con->_shape->penetrable ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1386,7 +1389,7 @@ static int tclcommand_constraint_parse_hollow_cone(Constraint *con, Tcl_Interp *
   new_hollow_cone_constraint->width = -1.0;
   new_hollow_cone_constraint->opening_angle = -1.0;
   new_hollow_cone_constraint->direction = 0;
-  new_hollow_cone_constraint->penetrable = 0;
+  con->_shape->penetrable = 0;
   con->_shape->reflecting = 0;
   con->part_rep.p.type = -1;
 
@@ -1518,7 +1521,7 @@ static int tclcommand_constraint_parse_hollow_cone(Constraint *con, Tcl_Interp *
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_I( 1, new_hollow_cone_constraint->penetrable ) )
+      if ( !ARG_IS_I( 1, con->_shape->penetrable ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1576,7 +1579,7 @@ static int tclcommand_constraint_parse_maze(Constraint *con, Tcl_Interp *interp,
   new_maze_constraint->dim = -1.;
   new_maze_constraint->sphrad = 0.;
   new_maze_constraint->cylrad = -1.;
-  new_maze_constraint->penetrable = 0;
+  con->_shape->penetrable = 0;
   con->part_rep.p.type = -1;
 
   while (argc > 0) {
@@ -1630,7 +1633,7 @@ static int tclcommand_constraint_parse_maze(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(new_maze_constraint->penetrable)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->_shape->penetrable)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }

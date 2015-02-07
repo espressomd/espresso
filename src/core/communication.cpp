@@ -2005,6 +2005,9 @@ void mpi_bcast_constraint(int del_num)
     memcpy(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
     n_constraints--;
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+    for (int i=0; i<n_constraints; i++) {
+    	constraints[i].constraint_number=i;
+    }
   }
 
   on_constraint_change();
@@ -2038,6 +2041,10 @@ void mpi_bcast_constraint_slave(int node, int parm)
     delete constraints[n_constraints-1]._shape;
     n_constraints--;
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+    for (int i=0; i<n_constraints; i++) {
+    	constraints[i].constraint_number=i;
+    }
+
   }
 
   on_constraint_change();

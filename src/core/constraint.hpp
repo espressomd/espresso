@@ -44,67 +44,6 @@ extern int reflection_happened;
 
 Constraint *generate_constraint();
 
-void calculate_dist(Particle *p1, double ppos[3], 
-			 Particle *c_p, Constraint_wall *c, 
-			 double *dist, double *vec);
-
-void calculate_dist(Particle *p1, double ppos[3], 
-			   Particle *c_p, Constraint_sphere *c, 
-			   double *dist, double *vec);
-
-void calculate_dist(Particle *p1, double ppos[3], 
-			 Particle *c_p, Constraint_maze *c, 
-			 double *dist, double *vec);
-
-void calculate_dist(Particle *p1, double ppos[3], 
-			     Particle *c_p, Constraint_cylinder *c, 
-			     double *dist, double *vec);
-
-void calculate_dist(Particle *p1, double ppos[3], 
-			     Particle *c_p, Constraint_spherocylinder *c, 
-			     double *dist, double *vec);
-
-void calculate_dist(Particle *p1, double ppos[3], 
-			     Particle *c_p, Constraint_rhomboid *c, 
-			     double *dist, double *vec);
-
-void calculate_dist(Particle *p1, double ppos[3], 
-			 Particle *c_p, Constraint_pore *c, 
-			 double *dist, double *vec);
-
-void calculate_slitpore_dist(Particle *p1, double ppos[3], 
-			 Particle *c_p, Constraint_slitpore *c, 
-			 double *dist, double *vec);
-
-void calculate_dist(Particle *p1, double ppos[3], 
-			  Particle *c_p, Constraint_plane *c, 
-			  double *dist, double *vec);
-
-void calculate_dist( Particle *p1, double ppos [3], 
-        Particle *c_p, Constraint_stomatocyte *cons, 
-        double *dist, double *vec );
-
-void calculate_dist( Particle *p1, double ppos [3], 
-        Particle *c_p, Constraint_hollow_cone *cons, 
-        double *dist, double *vec );
-
-void add_rod_force(Particle *p1, double ppos[3], 
-		   Particle *c_p, Constraint_rod *c);
-
-double rod_energy(Particle *p1, double ppos[3], 
-		  Particle *c_p, Constraint_rod *c);
-
-void add_plate_force(Particle *p1, double ppos[3], 
-		     Particle *c_p, Constraint_plate *c);
-
-double plate_energy(Particle *p1, double ppos[3], 
-		    Particle *c_p, Constraint_plate *c);
-
-void add_ext_magn_field_force(Particle *p1, 
-			      Constraint_ext_magn_field *c);
-
-double ext_magn_field_energy(Particle *p1, 
-			     Constraint_ext_magn_field *c);
 
 void reflect_particle(Particle *p1, double *distance_vec, 
 		      int reflecting);

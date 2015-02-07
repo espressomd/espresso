@@ -65,11 +65,11 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   //  double pwdist=0.0, pwdist0=0.0, pwdist1=0.0;
   double normal, folded_pos[3], phimn=0.0, distmn=0.0, phimx=0.0, distmx=0.0, drange=0.0;
   double pwdist[n_constraints],pwdistmin=0.0;
-  Constraint_wall wall;
+  Constraint_wall* wall;
   int j, k;
   int img[3];
 
-  wall.d = 0;
+  wall->d = 0;
 
   /* vector from p_left to p_mid */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
@@ -104,19 +104,19 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
     if (constraints[k].type == CONSTRAINT_WAL) {
 
       /* dist is distance of wall from origin */
-      wall=constraints[k].c.wal;
+      wall=(Constraint_wall*)constraints[k]._shape;
 
       /* check that constraint vector is normalised */
       normal=0.0;
-      for(j=0;j<3;j++) normal += wall.n[j] * wall.n[j];
+      for(j=0;j<3;j++) normal += wall->n[j] * wall->n[j];
       if (sqrt(normal) != 1.0) {
-        for(j=0;j<3;j++) wall.n[j]=wall.n[j]/normal;
+        for(j=0;j<3;j++) wall->n[j]=wall->n[j]/normal;
       }
 
       /* pwdist is distance of wall from p_mid */
-      pwdist[k]=-1.0 * constraints[k].c.wal.d;
+      pwdist[k]=-1.0 * wall->d;
       for(j=0;j<3;j++) {
-        pwdist[k] += folded_pos[j] * constraints[k].c.wal.n[j];
+        pwdist[k] += folded_pos[j] * wall->n[j];
       }
       if (k==0) {
         pwdistmin=pwdist[k];
@@ -133,7 +133,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
     //    fprintf(stdout,"\nIn angledist_set_params:  z_p_mid=%f  pwdistmin=%f  distmn=%f  ",folded_pos[2],pwdistmin,distmn);
     //    fprintf(stdout,"  phi0=%f\n",phi0*180.0/PI);
   }
-  else if (pwdistmin >= distmx && pwdistmin <= box_l[2]-wall.d-distmx) {
+  else if (pwdistmin >= distmx && pwdistmin <= box_l[2]-wall->d-distmx) {
     phi0 = phimx;
   }
   else {

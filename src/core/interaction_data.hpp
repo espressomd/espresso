@@ -822,10 +822,8 @@ class Shape; //define Shape so that it can be used in class Constraint
 /** Class to specify a constraint. */
 class Constraint {
 public:
-  ~Constraint() {
-	  //delete this->_shape; TODO Free shape!
-  }
   void Write_Constraint_Tcl(Tcl_Interp *interp);
+  ~Constraint();
   /** type of the constraint. */
   ConstraintApplied type;
 
@@ -839,7 +837,7 @@ public:
 
 class Shape {
 public:
-	Shape(){penetrable=0;reflecting=0;only_positive=1;tunable_slip=0;}
+	Shape(): penetrable(0), reflecting(0), only_positive(1), tunable_slip(0){};
 	virtual ~Shape() {}
 	virtual void Write_Shape_Tcl (Tcl_Interp *interp) {}
 	virtual int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);

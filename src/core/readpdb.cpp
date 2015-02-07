@@ -61,7 +61,9 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
   int id = first_id;
   int stat;
   int type;
+#ifdef ELECTROSTATICS
   double q;
+#endif
   PdbParser::BoundingBox bb;
   bb.llx = bb.lly = bb.llz = 0.0;
   double bb_l[3] = { box_l[0], box_l[1], box_l[2] };
@@ -108,13 +110,17 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
 	  type_iterator = seen_types.insert(itp_atomtype).first;
 	}	
 	itp_atomtype = *type_iterator;
+#ifdef ELECTROSTATICS
 	q = entry->second.charge;
+#endif
 	type = itp_atomtype.espresso_id;
 	READPDB_TRACE(printf("pdb-id %d es-id %d itp-type-id %d q %f es-type %d", it->i, id, itp_atomtype.id, q, itp_atomtype.espresso_id));
 	READPDB_TRACE(std::cout << " res " << entry->second.type << std::endl);
       } else {	
 	type = default_type;
+#ifdef ELECTROSTATICS
 	q = 0;
+#endif
       }
       set_particle_type(id, type);
 #ifdef ELECTROSTATICS

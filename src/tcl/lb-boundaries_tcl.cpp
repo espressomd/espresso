@@ -45,6 +45,19 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
 
 void LB_Boundary::Write_LB_Boundary_Tcl (Tcl_Interp *interp){
+	char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+    sprintf(buffer, "%d", this->type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%E", this->slip_pref);
+    Tcl_AppendResult(interp, " slip_pref ", buffer, (char *) NULL);
+    for (int i=0; i<3; i++) {
+			sprintf(buffer, "%E", this->force[i]);
+    }
+    Tcl_AppendResult(interp, " Force on Boundary ", buffer, (char *) NULL);
+    for (int i=0; i<3; i++) {
+			sprintf(buffer, "%E", this->velocity[i]);
+    }
+    Tcl_AppendResult(interp, " Surface Velocity ", buffer, (char *) NULL);
     this->_shape->Write_Shape_Tcl(interp);
 }
 
