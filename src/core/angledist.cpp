@@ -68,8 +68,8 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   Constraint_wall* wall;
   int j, k;
   int img[3];
+  double d=0; //Note that this variable an its initial value are only necessary to prevent uninitialized warnings
 
-  wall->d = 0;
 
   /* vector from p_left to p_mid */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
@@ -105,6 +105,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
 
       /* dist is distance of wall from origin */
       wall=(Constraint_wall*)constraints[k]._shape;
+      d = wall->d;
 
       /* check that constraint vector is normalised */
       normal=0.0;
@@ -133,7 +134,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
     //    fprintf(stdout,"\nIn angledist_set_params:  z_p_mid=%f  pwdistmin=%f  distmn=%f  ",folded_pos[2],pwdistmin,distmn);
     //    fprintf(stdout,"  phi0=%f\n",phi0*180.0/PI);
   }
-  else if (pwdistmin >= distmx && pwdistmin <= box_l[2]-wall->d-distmx) {
+  else if (pwdistmin >= distmx && pwdistmin <= box_l[2]-d-distmx) {
     phi0 = phimx;
   }
   else {

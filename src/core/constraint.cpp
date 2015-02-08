@@ -2259,7 +2259,7 @@ void Constraint_ext_magn_field::add_constraint_force_default (Constraint* curren
 void Constraint_ext_magn_field::add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params)
 {
 #ifdef DIPOLES
-     *magnetic_en = -1.0 * scalar(c->ext_magn_field,p1->r.dip);
+     *magnetic_en = -1.0 * scalar(this->ext_magn_field,p1->r.dip);
 #endif
 }
 //end ER

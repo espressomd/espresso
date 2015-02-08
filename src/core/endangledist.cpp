@@ -206,7 +206,8 @@ int calc_endangledist_pair_force(Particle *p1, Particle *p2,
     fac_a = bend*(phi-phieq)/sinphi;
     fac_b = 0.5*bend*SQR(phi-phieq);
     for(i=0;i<3;i++) {
-      gradharm1 = -1.0*fac_a*(cosphi*vec[i]-constraints[clconstr]->_shape.n[i])*di;
+      Constraint_wall* wall = (Constraint_wall*)constraints[clconstr]._shape;
+      gradharm1 = -1.0*fac_a*(cosphi*vec[i]-wall->n[i])*di;
       gradharm2 = -1.0*gradharm1;
       f1a[i] = smooth*gradharm1;
       f1b[i] = dsmooth[i]*fac_b;
