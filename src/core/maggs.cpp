@@ -801,7 +801,7 @@ double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction,
     int node_index = maggs_get_linear_index(node_x, node_y, node_z, lparams.dim);
     int dim, on_this_node = 0;
     double position;
-    double node[3] = {node_x, node_y, node_z};
+    double node[3] = {(double)node_x, (double)node_y, (double)node_z};
     
     FOR3D(dim) {
         position = (double)node[dim]/(double)lparams.dim[dim] * box_l[dim];
