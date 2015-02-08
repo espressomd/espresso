@@ -64,7 +64,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   double cosine=0.0, vec1[3], vec2[3], d1i=0.0, d2i=0.0, dist1=0.0, dist2=0.0, phi0=0.0;
   //  double pwdist=0.0, pwdist0=0.0, pwdist1=0.0;
   double normal, folded_pos[3], phimn=0.0, distmn=0.0, phimx=0.0, distmx=0.0, drange=0.0;
-  double pwdist[n_constraints],pwdistmin=0.0;
+  double pwdist[Constraint::n_constraints],pwdistmin=0.0;
   Constraint_wall* wall;
   int j, k;
   int img[3];
@@ -97,14 +97,14 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   fold_position(folded_pos, img);
 
   /* Calculates distance between p_mid and constraint */
-  for(k=0;k<n_constraints;k++) {
+  for(k=0;k<Constraint::n_constraints;k++) {
     pwdist[k]=0.0;
   }
-  for(k=0;k<n_constraints;k++) {
-    if (constraints[k].type == CONSTRAINT_WAL) {
+  for(k=0;k<Constraint::n_constraints;k++) {
+    if (Constraint::constraints[k].type == CONSTRAINT_WAL) {
 
       /* dist is distance of wall from origin */
-      wall=(Constraint_wall*)constraints[k]._shape;
+      wall=(Constraint_wall*)Constraint::constraints[k]._shape;
       d = wall->d;
 
       /* check that constraint vector is normalised */

@@ -123,13 +123,13 @@ void lb_calc_fluid_temp(double *result) {
 
 void lb_collect_boundary_forces(double *result) {
 #ifdef LB_BOUNDARIES
-  double* boundary_forces = (double*) malloc(3*n_lb_boundaries*sizeof(double));
+  double* boundary_forces = (double*) malloc(3*LB_Boundary::n_lb_boundaries*sizeof(double));
 
-  for (int i = 0; i < n_lb_boundaries; i++) 
+  for (int i = 0; i < LB_Boundary::n_lb_boundaries; i++) 
     for (int j = 0; j < 3; j++)
-      boundary_forces[3*i+j]=lb_boundaries[i].force[j];
+      boundary_forces[3*i+j]=LB_Boundary::lb_boundaries[i].force[j];
 
-  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, 
+  MPI_Reduce(boundary_forces, result, 3*LB_Boundary::n_lb_boundaries, 
              MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   free(boundary_forces);
 #endif

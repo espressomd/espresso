@@ -61,7 +61,7 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clc
   int j,k,img[3];
   double distwallmin=0.0, normal=0.0;
   double folded_pos_p1[3];
-  double pwdist[n_constraints];
+  double pwdist[Constraint::n_constraints];
   Constraint_wall* wall;
 
   /*fprintf(stdout,"  Entering calc_pwdist:\n");*/
@@ -73,9 +73,9 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clc
   /*fprintf(stdout,"        p1= %9.6f %9.6f %9.6f\n",p1->r.p[0],p1->r.p[1],p1->r.p[2]);*/
 
   /* Gets and tests wall data */
-  for(k=0;k<n_constraints;k++) {
-    if (constraints[k].type == CONSTRAINT_WAL) {
-      wall=(Constraint_wall*)constraints[k]._shape;
+  for(k=0;k<Constraint::n_constraints;k++) {
+    if (Constraint::constraints[k].type == CONSTRAINT_WAL) {
+      wall=(Constraint_wall*)Constraint::constraints[k]._shape;
       /* check that constraint wall normal is normalised */
       for(j=0;j<3;j++) normal += wall->n[j] * wall->n[j];
       if (sqrt(normal) != 1.0) {
@@ -85,9 +85,9 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clc
   }
 
   /* Calculate distance of end particle from closest wall */
-  for(k=0;k<n_constraints;k++) {
-    if (constraints[k].type == CONSTRAINT_WAL) {
-      wall=(Constraint_wall*)constraints[k]._shape;
+  for(k=0;k<Constraint::n_constraints;k++) {
+    if (Constraint::constraints[k].type == CONSTRAINT_WAL) {
+      wall=(Constraint_wall*)Constraint::constraints[k]._shape;
       /* distwallmin is distance of closest wall from p1 */
       pwdist[k]=-1.0 * wall->d;
       for(j=0;j<3;j++) {
@@ -118,7 +118,7 @@ static double calc_pwangle(Particle *p1, Particle *p2, Bonded_ia_parameters *iap
   int j;
   double dist,di,cosine,phi;
   double vec[3];
-  Constraint_wall* wall = (Constraint_wall*)constraints[*constr]._shape;
+  Constraint_wall* wall = (Constraint_wall*)Constraint::constraints[*constr]._shape;
 
   /* vector from p1 to p2 */
   get_mi_vector(vec, p2->r.p, p1->r.p);
@@ -138,10 +138,10 @@ static double calc_pwangle(Particle *p1, Particle *p2, Bonded_ia_parameters *iap
   phi=acos(cosine);
 
   /*
-  fprintf(stdout,"Angle with wall 0=%f  ",(acos(scalar(vec, constraints[0].c.wal.n)))*180.0/PI);
-  fprintf(stdout,"Angle with wall 1=%f  ",(acos(scalar(vec, constraints[1].c.wal.n)))*180.0/PI);
+  fprintf(stdout,"Angle with wall 0=%f  ",(acos(scalar(vec, Constraint::constraints[0].c.wal.n)))*180.0/PI);
+  fprintf(stdout,"Angle with wall 1=%f  ",(acos(scalar(vec, Constraint::constraints[1].c.wal.n)))*180.0/PI);
   fprintf(stdout,"dxy=%f  dz=%f  angle=%f\n",sqrt(vec[0]*vec[0]+vec[1]*vec[1]),vec[2],atan(sqrt(vec[0]*vec[0]+vec[1]*vec[1])/vec[2])*180.0/PI);
-  fprintf(stdout,"Angle with closest wall %d=%f  ",*constr,(acos(scalar(vec, constraints[*constr].c.wal.n)))*180.0/PI);
+  fprintf(stdout,"Angle with closest wall %d=%f  ",*constr,(acos(scalar(vec, Constraint::constraints[*constr].c.wal.n)))*180.0/PI);
   */
   return phi;
 }
@@ -175,7 +175,7 @@ int calc_endangledist_pair_force(Particle *p1, Particle *p2,
       }
     } else {
       smooth = 0.5*(cos((distwallmin-distmn)/(distmx-distmn)*PI)+1.0);
-      Constraint_wall* wall = (Constraint_wall*)constraints[clconstr]._shape;
+      Constraint_wall* wall = (Constraint_wall*)Constraint::constraints[clconstr]._shape;
       for(i=0;i<3;i++) {
         dsmooth[i] = -0.5*PI/(distmx-distmn)*sin((distwallmin-distmn)/(distmx-distmn)*PI)*wall->n[i];
       }
@@ -206,7 +206,7 @@ int calc_endangledist_pair_force(Particle *p1, Particle *p2,
     fac_a = bend*(phi-phieq)/sinphi;
     fac_b = 0.5*bend*SQR(phi-phieq);
     for(i=0;i<3;i++) {
-      Constraint_wall* wall = (Constraint_wall*)constraints[clconstr]._shape;
+      Constraint_wall* wall = (Constraint_wall*)Constraint::constraints[clconstr]._shape;
       gradharm1 = -1.0*fac_a*(cosphi*vec[i]-wall->n[i])*di;
       gradharm2 = -1.0*gradharm1;
       f1a[i] = smooth*gradharm1;

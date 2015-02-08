@@ -142,8 +142,8 @@ int constraint_collision(double *p1, double *p2){
   memcpy(folded_pos2, p2, 3*sizeof(double));
   fold_position(folded_pos2, img);
 
-  for(i=0;i<n_constraints;i++){
-    c=&constraints[i];
+  for(i=0;i<Constraint::n_constraints;i++){
+    c=&Constraint::constraints[i];
     if ( !(c->_shape->calculate_dist(&part1,folded_pos1,&part1,&d1,v)) && !(c->_shape->calculate_dist(&part2,folded_pos2,&part2,&d2,v)) ) {
     	if(d1*d2<=0.0)
     		return 1;

@@ -81,10 +81,9 @@ public:
   float charge_density;
   float net_charge;
 #endif
+  static int n_lb_boundaries;
+  static LB_Boundary *lb_boundaries;
 };
-
-extern int n_lb_boundaries;
-extern LB_Boundary *lb_boundaries;
 
 /*@}*/
 

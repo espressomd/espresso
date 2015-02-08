@@ -63,7 +63,7 @@ void LB_Boundary::Write_LB_Boundary_Tcl (Tcl_Interp *interp){
 
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 {
-  LB_Boundary *lbb = &lb_boundaries[i];
+  LB_Boundary *lbb = &LB_Boundary::lb_boundaries[i];
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   sprintf(buffer, "%d ", i);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -77,10 +77,10 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 {
   int i;
   
-  if(n_lb_boundaries>0)
+  if(LB_Boundary::n_lb_boundaries>0)
   	Tcl_AppendResult(interp, "{", (char *)NULL);
   	
-  for (i = 0; i < n_lb_boundaries; i++) {
+  for (i = 0; i < LB_Boundary::n_lb_boundaries; i++) {
     if(i>0) Tcl_AppendResult(interp, " {", (char *)NULL);
     	tclcommand_printLbBoundaryToResult(interp, i);
     	
@@ -92,28 +92,28 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 
 LB_Boundary *generate_lbboundary()
 {
-  n_lb_boundaries++;
+  LB_Boundary::n_lb_boundaries++;
 
-  lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+  LB_Boundary::lb_boundaries = (LB_Boundary*) realloc(LB_Boundary::lb_boundaries,LB_Boundary::n_lb_boundaries*sizeof(LB_Boundary));
 
-  lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
   
-  lb_boundaries[n_lb_boundaries-1].velocity[0]=
-  lb_boundaries[n_lb_boundaries-1].velocity[1]=
-  lb_boundaries[n_lb_boundaries-1].velocity[2]=0;
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].velocity[0]=
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].velocity[1]=
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].velocity[2]=0;
   
-  lb_boundaries[n_lb_boundaries-1].force[0]=
-  lb_boundaries[n_lb_boundaries-1].force[1]=
-  lb_boundaries[n_lb_boundaries-1].force[2]=0;
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].force[0]=
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].force[1]=
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].force[2]=0;
   
 #ifdef EK_BOUNDARIES
   if (ek_initialized)
   {
-    lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
+    LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].charge_density = 0.0;
   }  
 #endif
   
-  return &lb_boundaries[n_lb_boundaries-1];
+  return &LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1];
 }
 
 int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
@@ -1292,7 +1292,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
       return (TCL_ERROR);
     }
     
-    if(c_num < 0 || c_num >= n_lb_boundaries) {
+    if(c_num < 0 || c_num >= LB_Boundary::n_lb_boundaries) {
       Tcl_AppendResult(interp, "Error in lbboundary force: The selected boundary does not exist",(char *) NULL);
       return (TCL_ERROR);
     }
@@ -1322,7 +1322,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
       } 
 
       if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-      if(c_num < 0 || c_num >= n_lb_boundaries) {
+      if(c_num < 0 || c_num >= LB_Boundary::n_lb_boundaries) {
 	Tcl_AppendResult(interp, "Can not delete non existing lbboundary",(char *) NULL);
 	return (TCL_ERROR);
       }

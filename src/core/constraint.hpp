@@ -32,11 +32,6 @@
 
 #ifdef CONSTRAINTS
 
-/** number of constraints. */
-extern int n_constraints;
-/** field containing constraints. */
-extern Constraint *constraints;
-
 extern int reflection_happened;
 
 /** Exported functions

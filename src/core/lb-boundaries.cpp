@@ -37,8 +37,8 @@
 
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
-int n_lb_boundaries = 0;
-LB_Boundary *lb_boundaries = NULL;
+int LB_Boundary::n_lb_boundaries = 0;
+LB_Boundary *LB_Boundary::lb_boundaries = NULL;
 
 void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no) {
   double vec[3] = {1e100, 1e100, 1e100};
@@ -48,8 +48,8 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
 
   Particle* p1=0;
   
-  for(n=0;n<n_lb_boundaries;n++) {
-    lb_boundaries[n]._shape->calculate_dist(p1, pos, (Particle*) NULL, &dist, vec);
+  for(n=0;n<LB_Boundary::n_lb_boundaries;n++) {
+    LB_Boundary::lb_boundaries[n]._shape->calculate_dist(p1, pos, (Particle*) NULL, &dist, vec);
     
     if (dist<*mindist || n == 0) {
       *no=n;
@@ -83,14 +83,14 @@ void lb_init_boundaries() {
     int wallcharge_species = -1, charged_boundaries = 0;
     int node_charged = 0;
 
-    for(n = 0; n < int(n_lb_boundaries); n++)
-      lb_boundaries[n].net_charge = 0.0;
+    for(n = 0; n < int(LB_Boundary::n_lb_boundaries); n++)
+      LB_Boundary::lb_boundaries[n].net_charge = 0.0;
 
     if (ek_initialized)
     {
       host_wallcharge_species_density = (float*) malloc(ek_parameters.number_of_nodes * sizeof(float));
-      for(n = 0; n < int(n_lb_boundaries); n++) {
-        if(lb_boundaries[n].charge_density != 0.0) {
+      for(n = 0; n < int(LB_Boundary::n_lb_boundaries); n++) {
+        if(LB_Boundary::lb_boundaries[n].charge_density != 0.0) {
           charged_boundaries = 1;
           break;
         }
@@ -131,8 +131,8 @@ void lb_init_boundaries() {
           }
 #endif
 
-          for (n=0; n < n_lb_boundaries; n++) {
-            lb_boundaries[n]._shape->calculate_dist((Particle*) NULL, pos, (Particle*) NULL, &dist_tmp, dist_vec);
+          for (n=0; n < LB_Boundary::n_lb_boundaries; n++) {
+            LB_Boundary::lb_boundaries[n]._shape->calculate_dist((Particle*) NULL, pos, (Particle*) NULL, &dist_tmp, dist_vec);
             
             if (dist > dist_tmp || n == 0) {
               dist = dist_tmp;
@@ -141,10 +141,10 @@ void lb_init_boundaries() {
 #ifdef EK_BOUNDARIES
             if (ek_initialized)
             {
-              if(dist_tmp <= 0 && lb_boundaries[n].charge_density != 0.0f) {
+              if(dist_tmp <= 0 && LB_Boundary::lb_boundaries[n].charge_density != 0.0f) {
                 node_charged = 1;
-                node_wallcharge += lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
-                lb_boundaries[n].net_charge += lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
+                node_wallcharge += LB_Boundary::lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
+                LB_Boundary::lb_boundaries[n].net_charge += LB_Boundary::lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
               }
             }
 #endif
@@ -154,10 +154,10 @@ void lb_init_boundaries() {
           if(pdb_boundary_lattice && 
              pdb_boundary_lattice[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x]) {
             dist = -1;
-            boundary_number = n_lb_boundaries; // Makes sure that boundary_number is not used by a constraint
+            boundary_number = LB_Boundary::n_lb_boundaries; // Makes sure that boundary_number is not used by a constraint
           }
 #endif
-          if (dist <= 0 && boundary_number >= 0 && (n_lb_boundaries > 0 || pdb_boundary_lattice)) {
+          if (dist <= 0 && boundary_number >= 0 && (LB_Boundary::n_lb_boundaries > 0 || pdb_boundary_lattice)) {
             size_of_index = (number_of_boundnodes+1)*sizeof(int);
             host_boundary_node_list = (int *) realloc(host_boundary_node_list, size_of_index);
             host_boundary_index_list = (int *) realloc(host_boundary_index_list, size_of_index);
@@ -192,20 +192,20 @@ void lb_init_boundaries() {
     }
 
     /**call of cuda fkt*/
-    float* boundary_velocity = (float *) malloc(3*(n_lb_boundaries+1)*sizeof(float));
+    float* boundary_velocity = (float *) malloc(3*(LB_Boundary::n_lb_boundaries+1)*sizeof(float));
 
-    for (n=0; n<n_lb_boundaries; n++) {
-      boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
-      boundary_velocity[3*n+1]=lb_boundaries[n].velocity[1];
-      boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];
+    for (n=0; n<LB_Boundary::n_lb_boundaries; n++) {
+      boundary_velocity[3*n+0]=LB_Boundary::lb_boundaries[n].velocity[0];
+      boundary_velocity[3*n+1]=LB_Boundary::lb_boundaries[n].velocity[1];
+      boundary_velocity[3*n+2]=LB_Boundary::lb_boundaries[n].velocity[2];
     }
 
-    boundary_velocity[3*n_lb_boundaries+0] = 0.0f;
-    boundary_velocity[3*n_lb_boundaries+1] = 0.0f;
-    boundary_velocity[3*n_lb_boundaries+2] = 0.0f;
+    boundary_velocity[3*LB_Boundary::n_lb_boundaries+0] = 0.0f;
+    boundary_velocity[3*LB_Boundary::n_lb_boundaries+1] = 0.0f;
+    boundary_velocity[3*LB_Boundary::n_lb_boundaries+2] = 0.0f;
 
-    if (n_lb_boundaries || pdb_boundary_lattice)
-      lb_init_boundaries_GPU(n_lb_boundaries, number_of_boundnodes, host_boundary_node_list, host_boundary_index_list, boundary_velocity);
+    if (LB_Boundary::n_lb_boundaries || pdb_boundary_lattice)
+      lb_init_boundaries_GPU(LB_Boundary::n_lb_boundaries, number_of_boundnodes, host_boundary_node_list, host_boundary_index_list, boundary_velocity);
 
     free(boundary_velocity);
     free(host_boundary_node_list);
@@ -247,10 +247,10 @@ void lb_init_boundaries() {
 
 				  dist = 1e99;
 
-				  for (n=0;n<n_lb_boundaries;n++) {
-					  if (lb_boundaries[n]._shape->calculate_dist((Particle*) NULL, pos, (Particle*) NULL, &dist_tmp, dist_vec)) {
+				  for (n=0;n<LB_Boundary::n_lb_boundaries;n++) {
+					  if (LB_Boundary::lb_boundaries[n]._shape->calculate_dist((Particle*) NULL, pos, (Particle*) NULL, &dist_tmp, dist_vec)) {
 						  ostringstream msg;
-						  msg <<"lbboundary type " << lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
+						  msg <<"lbboundary type " << LB_Boundary::lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
 						  runtimeError(msg);
 					  }
 
@@ -260,7 +260,7 @@ void lb_init_boundaries() {
 					  }
 				  }
 
-				  if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
+				  if (dist <= 0 && the_boundary >= 0 && LB_Boundary::n_lb_boundaries > 0) {
 					  lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;
 					  //printf("boundindex %i: \n", get_linear_index(x,y,z,lblattice.halo_grid));
 				  }
@@ -277,7 +277,7 @@ void lb_init_boundaries() {
 int lbboundary_get_force(int no, double* f) {
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
-  double* forces = (double *) malloc(3*n_lb_boundaries*sizeof(double));
+  double* forces = (double *) malloc(3*LB_Boundary::n_lb_boundaries*sizeof(double));
   
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined (LB_BOUNDARIES_GPU) && defined (LB_GPU)
@@ -356,14 +356,14 @@ void lb_bounce_back() {
           for (i=0; i<19; i++) {
             population_shift=0;
             for (l=0; l<3; l++) {
-              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho[0]*2*lbmodel.c[i][l]*lbmodel.w[i]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq;
+              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho[0]*2*lbmodel.c[i][l]*lbmodel.w[i]*LB_Boundary::lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq;
             }
             if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
                  y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
                  z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
               if ( !lbfields[k-next[i]].boundary ) {
                 for (l=0; l<3; l++) {
-                  lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
+                  LB_Boundary::lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
                 }
                 lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
               }

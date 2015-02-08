@@ -833,6 +833,10 @@ public:
       the type and the force. */
   Particle part_rep;
   int constraint_number;
+
+  static int n_constraints;
+  static Constraint* constraints;
+
 };
 
 class Shape {
@@ -1109,6 +1113,7 @@ public:
 class Constraint_box:public Shape {
 public:
   ~Constraint_box(){}
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   size_t SizeOfShape(){return(sizeof(Constraint_box));}
   int value;
 };

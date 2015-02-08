@@ -35,27 +35,27 @@ int reflection_happened;
 
 #ifdef CONSTRAINTS
 
-int n_constraints       = 0;
-Constraint *constraints = NULL;
+int Constraint::n_constraints       = 0;
+Constraint *Constraint::constraints = NULL;
 
 Constraint *generate_constraint()
 {
-  n_constraints++;
-  constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
-  constraints[n_constraints-1].type = CONSTRAINT_NONE;
-  constraints[n_constraints-1].part_rep.p.identity = -n_constraints;
-  constraints[n_constraints-1].constraint_number = n_constraints-1;
+  Constraint::n_constraints++;
+  Constraint::constraints = (Constraint*)realloc(Constraint::constraints,Constraint::n_constraints*sizeof(Constraint));
+  Constraint::constraints[Constraint::n_constraints-1].type = CONSTRAINT_NONE;
+  Constraint::constraints[Constraint::n_constraints-1].part_rep.p.identity = -Constraint::n_constraints;
+  Constraint::constraints[Constraint::n_constraints-1].constraint_number = Constraint::n_constraints-1;
   
-  return &constraints[n_constraints-1];
+  return &Constraint::constraints[Constraint::n_constraints-1];
 }
 
 void init_constraint_forces()
 {
   int n, i;
   
-  for (n = 0; n < n_constraints; n++)
+  for (n = 0; n < Constraint::n_constraints; n++)
     for (i = 0; i < 3; i++)
-      constraints[n].part_rep.f.f[i] = 0;
+      Constraint::constraints[n].part_rep.f.f[i] = 0;
 }
 
 
@@ -69,6 +69,12 @@ static double sign(double x) {
 int Shape::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
 {
   return 1; //if calculate_dist not implemented in derived class, calculate_dist fails
+}
+
+int Constraint_box::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
+{
+  *dist = -1;
+  return 0;
 }
 
 int Constraint_wall::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
@@ -1037,21 +1043,6 @@ int Constraint_pore::calculate_dist(Particle *p1, double* ppos, Particle *c_p, d
   double dist_vector_z_o = p2_z-z;
 
   if ( p1_z>=c1_z && p1_z<=c2_z && dist_vector_r >= 0 ) {
- //   if ( dist_vector_r <= 0  ) {
- //     if (z<0) {
- //       dist_vector_z=-z - this->length;
- //       dist_vector_r=0;
- //       *dist = -z - this->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
- //       return;
- //     } else {
- //       dist_vector_z=-z + this->length;
- //       dist_vector_r=0;
- //       *dist = +z - this->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
- //       return;
- //     }
- //   }
     temp=sqrt( dist_vector_r*dist_vector_r + dist_vector_z*dist_vector_z );
     *dist=temp-this->smoothing_radius;
     dist_vector_r-=dist_vector_r/temp*this->smoothing_radius;
@@ -1062,21 +1053,6 @@ int Constraint_pore::calculate_dist(Particle *p1, double* ppos, Particle *c_p, d
 
 
   if ( p2_z>=c1_z && p2_z<=c2_z && dist_vector_r_o <= 0 ) {
- //   if ( dist_vector_r <= 0  ) {
- //     if (z<0) {
- //       dist_vector_z=-z - this->length;
- //       dist_vector_r=0;
- //       *dist = -z - this->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
- //       return;
- //     } else {
- //       dist_vector_z=-z + this->length;
- //       dist_vector_r=0;
- //       *dist = +z - this->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - 2ist_vector_z*e_z[i];
- //       return;
- //     }
- //   }
     temp=sqrt( dist_vector_r_o*dist_vector_r_o + dist_vector_z_o*dist_vector_z_o );
     *dist=temp-this->smoothing_radius;
     dist_vector_r_o-=dist_vector_r_o/temp*this->smoothing_radius;
@@ -2317,8 +2293,6 @@ void reflect_particle(Particle *p1, double *distance_vec, int reflecting) {
 
 void Shape::add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params)
 {
-	printf("adding force to particle %d\n", p1->p.identity);
-	printf("constraint %d reflect %d\n", current_constraint->constraint_number, current_constraint->_shape->reflecting);
 	double dist, vec[3];
 	if(checkIfInteraction(ia_params)) {
 		if (!(current_constraint->_shape->calculate_dist(p1, folded_pos, &current_constraint->part_rep, &dist, vec))) {
@@ -2342,7 +2316,6 @@ void Shape::add_constraint_force_default (Constraint* current_constraint, Partic
 			else {
 				if(current_constraint->_shape->reflecting){
 					reflect_particle(p1, &(vec[0]), current_constraint->_shape->reflecting);
-					printf("reflecting particle %d\n", p1->p.identity);
 				} else {
 					ostringstream msg;
 					msg <<"constraint "<< current_constraint->constraint_number<<" violated by particle "<<p1->p.identity;
@@ -2359,7 +2332,7 @@ void Shape::add_constraint_force_default (Constraint* current_constraint, Partic
 
 void add_constraints_forces(Particle *p1)
 {
-	if (n_constraints==0)
+	if (Constraint::n_constraints==0)
 		return;
 	int n, j;
 	double force[3], torque1[3], torque2[3];
@@ -2373,22 +2346,22 @@ void add_constraints_forces(Particle *p1)
 	memcpy(img, p1->l.i, 3*sizeof(int));
 	fold_position(folded_pos, img);
 
-	for(n=0;n<n_constraints;n++) {
-		ia_params=get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
+	for(n=0;n<Constraint::n_constraints;n++) {
+		ia_params=get_ia_param(p1->p.type, (&Constraint::constraints[n].part_rep)->p.type);
 		for (j = 0; j < 3; j++) {
 			force[j] = 0;
 #ifdef ROTATION
 			torque1[j] = torque2[j] = 0;
 #endif
 		}
-		constraints[n]._shape->add_constraint_force_default(&constraints[n],p1,folded_pos,force,torque1,torque2, ia_params);
+		Constraint::constraints[n]._shape->add_constraint_force_default(&Constraint::constraints[n],p1,folded_pos,force,torque1,torque2, ia_params);
 
 		for (j = 0; j < 3; j++) {
 			p1->f.f[j] += force[j];
-			constraints[n].part_rep.f.f[j] -= force[j];
+			Constraint::constraints[n].part_rep.f.f[j] -= force[j];
 #ifdef ROTATION
 			p1->f.torque[j] += torque1[j];
-			constraints[n].part_rep.f.torque[j] += torque2[j];
+			Constraint::constraints[n].part_rep.f.torque[j] += torque2[j];
 #endif
 		}
 	}
@@ -2433,20 +2406,20 @@ double add_constraints_energy(Particle *p1)
 	memcpy(folded_pos, p1->r.p, 3*sizeof(double));
 	memcpy(img, p1->l.i, 3*sizeof(int));
 	fold_position(folded_pos, img);
-	for(n=0;n<n_constraints;n++) {
-		ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
+	for(n=0;n<Constraint::n_constraints;n++) {
+		ia_params = get_ia_param(p1->p.type, (&Constraint::constraints[n].part_rep)->p.type);
 		nonbonded_en = 0.;
 		coulomb_en   = 0.;
 		magnetic_en = 0.;
 
-		constraints[n]._shape->add_constraint_energy_default (&constraints[n], p1, folded_pos, &nonbonded_en, &coulomb_en, &magnetic_en, ia_params);
+		Constraint::constraints[n]._shape->add_constraint_energy_default (&Constraint::constraints[n], p1, folded_pos, &nonbonded_en, &coulomb_en, &magnetic_en, ia_params);
 		if (energy.n_coulomb > 0)
 			energy.coulomb[0] += coulomb_en;
 
 		if (energy.n_dipolar > 0)
 			energy.dipolar[0] += magnetic_en;
 
-		type = (&constraints[n].part_rep)->p.type;
+		type = (&Constraint::constraints[n].part_rep)->p.type;
 		if (type >= 0)
 			*obsstat_nonbonded(&energy, p1->p.type, type) += nonbonded_en;
 	}

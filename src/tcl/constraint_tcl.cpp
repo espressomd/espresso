@@ -268,7 +268,7 @@ void Constraint_plane::Write_Shape_Tcl (Tcl_Interp *interp){
 }
 static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
 {
-  Constraint *con = &constraints[i];
+  Constraint *con = &Constraint::constraints[i];
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   sprintf(buffer, "%d ", i);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -281,8 +281,8 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
 int tclcommand_constraint_print(Tcl_Interp *interp)
 {
   int i;
-  if(n_constraints>0) Tcl_AppendResult(interp, "{", (char *)NULL);
-  for (i = 0; i < n_constraints; i++) {
+  if(Constraint::n_constraints>0) Tcl_AppendResult(interp, "{", (char *)NULL);
+  for (i = 0; i < Constraint::n_constraints; i++) {
     if(i>0) Tcl_AppendResult(interp, " {", (char *)NULL);
     tclprint_to_result_Constraint(interp, i);
     Tcl_AppendResult(interp, "}", (char *)NULL);
@@ -309,7 +309,7 @@ static void tclprint_to_result_ConstraintForce(Tcl_Interp *interp, int con)
 static void tclprint_to_result_n_constraints(Tcl_Interp *interp)
 {
   char buffer[TCL_INTEGER_SPACE];
-  sprintf(buffer, "%d", n_constraints);
+  sprintf(buffer, "%d", Constraint::n_constraints);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
 }
 
@@ -1740,17 +1740,17 @@ static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, 
 	double mindist = 1e100;
 	int n;
 	char buffer[TCL_DOUBLE_SPACE];
-	if (n_constraints==0) {
+	if (Constraint::n_constraints==0) {
 		Tcl_AppendResult(interp, "Error in constraint mindist_position: no constraints defined\n", (char*) NULL);
 		return TCL_ERROR;
 	}
 
 	Particle* p1=0;
 	if (ARG_IS_D(0, pos[0]) && ARG_IS_D(1, pos[1]) && ARG_IS_D(2, pos[2])) {
-		for(n=0;n<n_constraints;n++) {
+		for(n=0;n<Constraint::n_constraints;n++) {
 			double dist=1e100;
-			if ( !constraints[n]._shape->penetrable )
-				constraints[n]._shape->calculate_dist(p1, pos, &constraints[n].part_rep, &dist, vec);
+			if ( !Constraint::constraints[n]._shape->penetrable )
+				Constraint::constraints[n]._shape->calculate_dist(p1, pos, &Constraint::constraints[n].part_rep, &dist, vec);
 			mindist = dist<mindist ? dist : mindist;
 		}
 		Tcl_PrintDouble(interp, mindist, buffer);
@@ -1769,7 +1769,7 @@ int tclcommand_constraint_mindist_position_vec(Tcl_Interp *interp, int argc, cha
 	double minvec[3] = { 1e100, 1e100, 1e100};
 	int n;
 	char buffer[TCL_DOUBLE_SPACE];
-	if (n_constraints==0) {
+	if (Constraint::n_constraints==0) {
 		Tcl_AppendResult(interp, "Error in constraint mindist_position: no constraints defined\n", (char*) NULL);
 		return TCL_ERROR;
 	}
@@ -1780,10 +1780,10 @@ int tclcommand_constraint_mindist_position_vec(Tcl_Interp *interp, int argc, cha
 
 	Particle* p1=0;
 	if (ARG_IS_D(0, pos[0]) && ARG_IS_D(1, pos[1]) && ARG_IS_D(2, pos[2])) {
-		for(n=0;n<n_constraints;n++) {
+		for(n=0;n<Constraint::n_constraints;n++) {
 			double dist=1e100;
-			if ( !constraints[n]._shape->penetrable )
-				constraints[n]._shape->calculate_dist(p1, pos, &constraints[n].part_rep, &dist, vec);
+			if ( !Constraint::constraints[n]._shape->penetrable )
+				Constraint::constraints[n]._shape->calculate_dist(p1, pos, &Constraint::constraints[n].part_rep, &dist, vec);
 
 			if (dist<mindist) {
 				mindist = dist;
@@ -1881,7 +1881,7 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
       return (TCL_ERROR);
     }
     if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-    if(c_num < 0 || c_num >= n_constraints) {
+    if(c_num < 0 || c_num >= Constraint::n_constraints) {
       Tcl_AppendResult(interp, "constraint does not exist",(char *) NULL);
       return (TCL_ERROR);
     }
@@ -1900,7 +1900,7 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
     }
     else {
       if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-      if(c_num < 0 || c_num >= n_constraints) {
+      if(c_num < 0 || c_num >= Constraint::n_constraints) {
 	Tcl_AppendResult(interp, "Can not delete non existing constraint",(char *) NULL);
 	return (TCL_ERROR);
       }

@@ -55,9 +55,6 @@ extern EK_parameters* lb_ek_parameters_gpu;
 #define EK_LINK_00D_pressure 5
      
 #ifdef EK_BOUNDARIES
-  extern int n_lb_boundaries;
-  extern LB_Boundary *lb_boundaries;
-
   void lb_init_boundaries();
 #endif
   /* end of code duplication */
@@ -3236,41 +3233,8 @@ int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
     pos[1] = (y + 0.5)*lbpar_gpu.agrid;
     pos[2] = (z + 0.5)*lbpar_gpu.agrid;
 
-    switch (boundary->type)
+    if (&boundary->c.wal->calculate_dist((Particle*) NULL, pos, (Particle*) NULL, &dist, dist_vec))
     {
-      case LB_BOUNDARY_WAL:
-        calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.wal, &dist, dist_vec);
-        break;
-                
-      case LB_BOUNDARY_SPH:
-        calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.sph, &dist, dist_vec);
-        break;
-                
-      case LB_BOUNDARY_CYL:
-        calculate_cylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.cyl, &dist, dist_vec);
-        break;
-                
-      case LB_BOUNDARY_RHOMBOID:
-        calculate_rhomboid_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.rhomboid, &dist, dist_vec);
-        break;
-                
-      case LB_BOUNDARY_POR:
-        calculate_pore_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.pore, &dist, dist_vec);
-        break;
-                
-      case LB_BOUNDARY_STOMATOCYTE:
-        calculate_stomatocyte_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.stomatocyte, &dist, dist_vec);
-        break;
-
-      case LB_BOUNDARY_BOX:
-        dist = -1.0;
-        break;
-                
-      case LB_BOUNDARY_HOLLOW_CONE:
-        calculate_hollow_cone_dist((Particle*) NULL, pos, (Particle*) NULL, &boundary->c.hollow_cone, &dist, dist_vec);
-        break;
-                
-      default:
         std::ostringstream msg;
         msg << "lbboundary type " << boundary->type << " not implemented";
         runtimeError(msg);
