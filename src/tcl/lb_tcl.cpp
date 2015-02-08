@@ -227,6 +227,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 #endif
 
   int err = TCL_OK;
+  int intarg;
   double floatarg;
   double vectarg[3+LB_COMPONENTS + (LB_COMPONENTS*(LB_COMPONENTS-1))/2];
 
@@ -672,10 +673,24 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
               Tcl_AppendResult(interp, "ext_force requires 3 real numbers per component", (char *)NULL);
               return TCL_ERROR;
             } 
-            else if (lb_lbfluid_set_ext_force(i,vectarg[0], vectarg[1], vectarg[2]) == 0) 
+            
+            intarg = lb_lbfluid_set_ext_force(i,vectarg[0], vectarg[1], vectarg[2]);
+            
+            if (intarg == 0)
             {
-              argc-=3; argv+=3;
-            } 
+              argc-=3;
+              argv+=3;
+            }
+            else if (intarg == 2)
+            {
+              Tcl_AppendResult(interp, "tau has to be set before ext_force in lbfluid", (char *)NULL);
+              return TCL_ERROR;
+            }
+            else if (intarg == 3)
+            {
+              Tcl_AppendResult(interp, "density has to be set before ext_force in lbfluid", (char *)NULL);
+              return TCL_ERROR;
+            }
             else 
             {
               Tcl_AppendResult(interp, "Unknown Error setting ext_force", (char *)NULL);

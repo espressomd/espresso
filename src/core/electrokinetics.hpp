@@ -54,8 +54,8 @@ typedef struct {
   float friction;
   float T;
   float bjerrumlength;
+  float lb_force[3];
   unsigned int number_of_species;
-  float ext_acceleration_force[3];
   int reaction_species[3];
   float rho_reactant_reservoir;
   float rho_product0_reservoir;
@@ -66,6 +66,8 @@ typedef struct {
   float mass_reactant;
   float mass_product0;
   float mass_product1;
+  int use_nonlinear_stencil;
+  int number_of_boundary_nodes;
   float* charge_potential;
   float* j;
   float* lb_force_previous;
@@ -153,13 +155,19 @@ int ek_set_bjerrumlength(double bjerrumlength);
 int ek_set_bulk_viscosity(double bulk_viscosity);
 int ek_set_gamma_odd(double gamma_odd);
 int ek_set_gamma_even(double gamma_even);
+int ek_set_lb_force(double* ext_force);
 int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
-int ek_node_print_velocity( int x, int y, int z, double* velocity );
-int ek_node_print_density( int species, int x, int y, int z, double* density );
-
+int ek_set_use_nonlinear_stencil(int use_nonlinear_stencil);
+int ek_node_print_velocity(int x, int y, int z, double* velocity);
+int ek_node_print_density(int species, int x, int y, int z, double* density);
+int ek_node_print_flux(int species, int x, int y, int z, double* flux);
+int ek_node_set_density(int species, int x, int y, int z, double density);
+float ek_calculate_net_charge(); 
+int ek_neutralize_system(int species); 
+  
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
 #endif

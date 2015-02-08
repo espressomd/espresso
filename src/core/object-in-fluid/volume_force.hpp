@@ -30,6 +30,8 @@
 #include "cells.hpp"
 #include "lb.hpp"
 #include "grid.hpp"
+#include "errorhandling.hpp"
+
 
 /** set parameters for the VOLUME_FORCE potential. 
 */
@@ -55,6 +57,7 @@ inline void calc_volume(double *volume, int molType){ //first-fold-then-the-same
 	Particle *p, *p1, *p2, *p3;
 	double p11[3],p22[3],p33[3];
 	int img[3];
+	double AA[3],BB[3];
 	
 	Bonded_ia_parameters *iaparams;
     int type_num, n_partners, id;
@@ -96,18 +99,55 @@ inline void calc_volume(double *volume, int molType){ //first-fold-then-the-same
                         runtimeError(msg);
 						return;
 					}
-					memcpy(p11, p1->r.p, 3*sizeof(double));
-					memcpy(img, p1->l.i, 3*sizeof(int));
-					fold_position(p11, img);
-									
-					memcpy(p22, p2->r.p, 3*sizeof(double));
-					memcpy(img, p2->l.i, 3*sizeof(int));
-					fold_position(p22, img);
-				
-					memcpy(p33, p3->r.p, 3*sizeof(double));
-					memcpy(img, p3->l.i, 3*sizeof(int));
-					fold_position(p33, img);
-				
+					// particles fetched
+
+					#ifdef GHOST_FLAG
+					// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p1, however, it might be other one. we call this particle reference particle.
+					if (p1->l.ghost != 1) {
+						//unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
+						memcpy(p11, p1->r.p, 3*sizeof(double));
+						memcpy(img, p1->l.i, 3*sizeof(int));
+						unfold_position(p11,img);
+						// other coordinates are obtained from its relative positions to the reference particle
+						get_mi_vector(AA, p2->r.p, p11);
+						get_mi_vector(BB, p3->r.p, p11);
+						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+					} else {
+						// in case the first particle is a ghost particle
+						if (p2->l.ghost != 1) {
+							memcpy(p22, p2->r.p, 3*sizeof(double));
+							memcpy(img, p2->l.i, 3*sizeof(int));
+							unfold_position(p22,img);
+							get_mi_vector(AA, p1->r.p, p22);
+							get_mi_vector(BB, p3->r.p, p22);
+							for (int i=0; i < 3; i++) { p11[i] = p22[i] + AA[i]; p33[i] = p22[i] + BB[i]; }
+						} else {
+							// in case the first and the second particle are ghost particles
+							if (p3->l.ghost != 1) {
+								memcpy(p33, p3->r.p, 3*sizeof(double));
+								memcpy(img, p3->l.i, 3*sizeof(int));
+								unfold_position(p33,img);
+								get_mi_vector(AA, p1->r.p, p33);
+								get_mi_vector(BB, p2->r.p, p33);
+								for (int i=0; i < 3; i++) { p11[i] = p33[i] + AA[i]; p22[i] = p33[i] + BB[i]; }
+							} else {
+								printf("Something wrong in area_force_local.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
+								return;
+							}
+						}
+					}
+					#endif
+					#ifndef GHOST_FLAG
+						// if ghost flag was not defined we have no other option than to assume the first particle is a physical one.
+						memcpy(p11, p1->r.p, 3*sizeof(double));
+						memcpy(img, p1->l.i, 3*sizeof(int));
+						unfold_position(p11,img);
+						// other coordinates are obtained from its relative positions to the reference particle
+						get_mi_vector(AA, p2->r.p, p11);
+						get_mi_vector(BB, p3->r.p, p11);
+						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+					#endif
+
 					get_n_triangle(p11,p22,p33,norm);
 					dn=normr(norm);
 					A=area_triangle(p11,p22,p33);
@@ -139,6 +179,8 @@ inline void add_volume_force(double volume, int molType){  //first-fold-then-the
     int type_num, n_partners, id;
     BondedInteraction type;
 
+	double AA[3],BB[3];
+	
 	int test=0;
 	
 	/* Loop local cells */
@@ -177,27 +219,61 @@ inline void add_volume_force(double volume, int molType){  //first-fold-then-the
                         runtimeError(msg);
 						return;
 					}
-					memcpy(p11, p1->r.p, 3*sizeof(double));
-					memcpy(img, p1->l.i, 3*sizeof(int));
-					fold_position(p11, img);
-									
-					memcpy(p22, p2->r.p, 3*sizeof(double));
-					memcpy(img, p2->l.i, 3*sizeof(int));
-					fold_position(p22, img);
-				
-					memcpy(p33, p3->r.p, 3*sizeof(double));
-					memcpy(img, p3->l.i, 3*sizeof(int));
-					fold_position(p33, img);
-				
+					// particles fetched
 
-					
+					#ifdef GHOST_FLAG
+					// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p1, however, it might be other one. we call this particle reference particle.
+					if (p1->l.ghost != 1) {
+						//unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
+						memcpy(p11, p1->r.p, 3*sizeof(double));
+						memcpy(img, p1->l.i, 3*sizeof(int));
+						unfold_position(p11,img);
+						// other coordinates are obtained from its relative positions to the reference particle
+						get_mi_vector(AA, p2->r.p, p11);
+						get_mi_vector(BB, p3->r.p, p11);
+						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+					} else {
+						// in case the first particle is a ghost particle
+						if (p2->l.ghost != 1) {
+							memcpy(p22, p2->r.p, 3*sizeof(double));
+							memcpy(img, p2->l.i, 3*sizeof(int));
+							unfold_position(p22,img);
+							get_mi_vector(AA, p1->r.p, p22);
+							get_mi_vector(BB, p3->r.p, p22);
+							for (int i=0; i < 3; i++) { p11[i] = p22[i] + AA[i]; p33[i] = p22[i] + BB[i]; }
+						} else {
+							// in case the first and the second particle are ghost particles
+							if (p3->l.ghost != 1) {
+								memcpy(p33, p3->r.p, 3*sizeof(double));
+								memcpy(img, p3->l.i, 3*sizeof(int));
+								unfold_position(p33,img);
+								get_mi_vector(AA, p1->r.p, p33);
+								get_mi_vector(BB, p2->r.p, p33);
+								for (int i=0; i < 3; i++) { p11[i] = p33[i] + AA[i]; p22[i] = p33[i] + BB[i]; }
+							} else {
+								printf("Something wrong in area_force_local.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
+								return;
+							}
+						}
+					}
+					#endif
+					#ifndef GHOST_FLAG
+						// if ghost flag was not defined we have no other option than to assume the first particle is a physical one.
+						memcpy(p11, p1->r.p, 3*sizeof(double));
+						memcpy(img, p1->l.i, 3*sizeof(int));
+						unfold_position(p11,img);
+						// other coordinates are obtained from its relative positions to the reference particle
+						get_mi_vector(AA, p2->r.p, p11);
+						get_mi_vector(BB, p3->r.p, p11);
+						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+					#endif
+
 					get_n_triangle(p11,p22,p33,norm);
 					dn=normr(norm);
 					A=area_triangle(p11,p22,p33);
 					{
 				}
-					vv=(volume - iaparams->p.volume_force.V0)/iaparams->p.volume_force.V0;
-					
+					vv=(volume - iaparams->p.volume_force.V0)/iaparams->p.volume_force.V0;					
 					for(k=0;k<3;k++) {
 						force[k]=iaparams->p.volume_force.kv * vv * A * norm[k]/dn * 1.0 / 3.0;
 						//printf("%e ",force[k]);
