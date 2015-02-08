@@ -56,7 +56,8 @@ inline int calc_stretchlin_force_pair_force(Particle *p1, Particle *p2, Bonded_i
   dr = len - iaparams->p.stretchlin_force.r0;
 
 //  lambda = 1.0*len/iaparams->p.stretchlin_force.r0;
-  fac = -iaparams->p.stretchlin_force.kslin * dr / iaparams->p.stretchlin_force.r0;
+  //fac = -iaparams->p.stretchlin_force.kslin * dr / iaparams->p.stretchlin_force.r0;
+  fac = -iaparams->p.stretchlin_force.kslin * dr ; // no normalization
   
   for(i=0;i<3;i++)
     force[i] = fac*dx[i]/len;
