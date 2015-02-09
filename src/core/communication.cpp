@@ -1388,14 +1388,19 @@ void mpi_bcast_ia_params_slave(int i, int j)
 
 void mpi_bcast_n_particle_types(int ns)
 {
+	printf ("head node enter func\n");// TODO delete OWEN
   mpi_call(mpi_bcast_n_particle_types_slave, -1, ns);
+	printf ("head node mid func\n");// TODO delete OWEN
   mpi_bcast_n_particle_types_slave(-1, ns);
+	printf ("head node end func\n");// TODO delete OWEN
 
 }
 
 void mpi_bcast_n_particle_types_slave(int pnode, int ns)
 {
+	printf("slave start\n");// TODO delete OWEN
   realloc_ia_params(ns);
+  printf("slave end\n");// TODO delete OWEN
 }
 
 /*************** REQ_GATHER ************/
@@ -2043,6 +2048,7 @@ void mpi_bcast_constraint_slave(int node, int parm)
     Constraint::constraints = (Constraint*)realloc(Constraint::constraints,Constraint::n_constraints*sizeof(Constraint));
     for (int i=0; i<Constraint::n_constraints; i++) {
     	Constraint::constraints[i].constraint_number=i;
+    	Constraint::constraints[i].part_rep.p.identity = -(Constraint::n_constraints+1);
     }
 
   }
@@ -2095,9 +2101,9 @@ void mpi_bcast_lbboundary(int del_num)
 void mpi_bcast_lbboundary_slave(int node, int parm)
 {   
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-  size_t sizeofShape;
 
 #if defined(LB_BOUNDARIES)
+  size_t sizeofShape;
   if(parm == -1) {
     LB_Boundary::n_lb_boundaries++;
     LB_Boundary::lb_boundaries = (LB_Boundary*) realloc(LB_Boundary::lb_boundaries,LB_Boundary::n_lb_boundaries*sizeof(LB_Boundary));

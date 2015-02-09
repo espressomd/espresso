@@ -3233,7 +3233,7 @@ int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
     pos[1] = (y + 0.5)*lbpar_gpu.agrid;
     pos[2] = (z + 0.5)*lbpar_gpu.agrid;
 
-    if (&boundary->c.wal->calculate_dist((Particle*) NULL, pos, (Particle*) NULL, &dist, dist_vec))
+    if (boundary->_shape->calculate_dist((Particle*) NULL, pos, (Particle*) NULL, &dist, dist_vec))
     {
         std::ostringstream msg;
         msg << "lbboundary type " << boundary->type << " not implemented";

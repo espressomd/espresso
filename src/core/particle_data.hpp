@@ -207,7 +207,7 @@ typedef struct {
 
 /** Momentum information on a particle. Information not contained in
     communication of ghost particles so far, but a communication would
-    be necessary for velocity dependend potentials. */
+    be necessary for velocity dependent potentials. */
 typedef struct {
   /** velocity. */
   double v[3];
@@ -224,7 +224,7 @@ typedef struct {
 /** Information on a particle that is needed only on the
     node the particle belongs to */
 typedef struct {
-  /** position in the last time step befor last Verlet list update. */
+  /** position in the last time step before last Verlet list update. */
   double p_old[3];
   /** index of the simulation box image where the particle really sits. */
   int    i[3];

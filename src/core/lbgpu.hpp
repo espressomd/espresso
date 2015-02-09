@@ -266,7 +266,7 @@ void lb_free_GPU();
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
 void lb_print_node_GPU(int single_nodeindex, LB_rho_v_pi_gpu *host_print_values);
 #ifdef LB_BOUNDARIES_GPU
-void lb_init_boundaries_GPU(int LB_Boundary::n_lb_boundaries, int number_of_boundnodes, int* host_boundary_node_list, int* host_boundary_index_list, float* lb_bounday_velocity);
+void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* host_boundary_node_list, int* host_boundary_index_list, float* lb_bounday_velocity);
 #endif
 void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu);
 

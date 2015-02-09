@@ -242,9 +242,9 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
     
   } else {
     boundary_flag=2;
-    v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
-    v[1]= lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
-    v[2]= lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
+    v[0]= LB_Boundary::lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
+    v[1]= LB_Boundary::lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
+    v[2]= LB_Boundary::lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
     return; // we can return without interpolating
   }
 #else
@@ -271,14 +271,14 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
         index = node_index[(z*2+y)*2+x];
         f = lbfields[index].force_buf;
         
-        // This can be done easier withouth copying the code twice
+        // This can be done easier without copying the code twice
         // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_rho=lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
-          local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[1];
-          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[2];
+          local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*LB_Boundary::lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*LB_Boundary::lb_boundaries[lbfields[index].boundary-1].velocity[1];
+          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*LB_Boundary::lb_boundaries[lbfields[index].boundary-1].velocity[2];
         } else
 #endif
         {
@@ -311,9 +311,9 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
   }
 #ifdef LB_BOUNDARIES
   if (boundary_flag==1) {
-    v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[0];
-    v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[1];
-    v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[2];
+    v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*LB_Boundary::lb_boundaries[boundary_no].velocity[0];
+    v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*LB_Boundary::lb_boundaries[boundary_no].velocity[1];
+    v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*LB_Boundary::lb_boundaries[boundary_no].velocity[2];
     
   } else {
     v[0] = interpolated_u[0];

@@ -84,7 +84,7 @@ static float* lb_boundary_velocity = NULL;
 /** pointer for bound index array*/
 static int *boundary_node_list;
 static int *boundary_index_list;
-static __device__ __constant__ int LB_Boundary::n_lb_boundaries_gpu = 0;
+static __device__ __constant__ int n_lb_boundaries_gpu = 0;
 static size_t size_of_boundindex;
 #endif
 
@@ -3207,24 +3207,24 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
 
 #ifdef LB_BOUNDARIES_GPU
 /** setup and call boundaries from the host
- * @param host_LB_Boundary::n_lb_boundaries  number of LB boundaries
+ * @param n_lb_boundaries  number of LB boundaries
  * @param number_of_boundnodes  number of boundnodes
  * @param host_boundary_node_list     The indices of the boundary nodes
  * @param host_boundary_index_list    The flag representing the corresponding boundary
  * @param host_lb_boundary_velocity   The constant velocity at the boundary, set by the user (Input)
 */
-void lb_init_boundaries_GPU(int host_LB_Boundary::n_lb_boundaries, int number_of_boundnodes, int *host_boundary_node_list, int* host_boundary_index_list, float* host_lb_boundary_velocity){
-  int temp = host_LB_Boundary::n_lb_boundaries;
+void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int *host_boundary_node_list, int* host_boundary_index_list, float* host_lb_boundary_velocity){
+  int temp = n_lb_boundaries;
 
   size_of_boundindex = number_of_boundnodes*sizeof(int);
   cuda_safe_mem(cudaMalloc((void**)&boundary_node_list, size_of_boundindex));
   cuda_safe_mem(cudaMalloc((void**)&boundary_index_list, size_of_boundindex));
   cuda_safe_mem(cudaMemcpy(boundary_index_list, host_boundary_index_list, size_of_boundindex, cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpy(boundary_node_list, host_boundary_node_list, size_of_boundindex, cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMalloc((void**)&lb_boundary_force   , 3*host_LB_Boundary::n_lb_boundaries*sizeof(float)));
-  cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity, 3*host_LB_Boundary::n_lb_boundaries*sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(lb_boundary_velocity, host_lb_boundary_velocity, 3*LB_Boundary::n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(LB_Boundary::n_lb_boundaries_gpu, &temp, sizeof(int)));
+  cuda_safe_mem(cudaMalloc((void**)&lb_boundary_force   , 3*n_lb_boundaries*sizeof(float)));
+  cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity, 3*n_lb_boundaries*sizeof(float)));
+  cuda_safe_mem(cudaMemcpy(lb_boundary_velocity, host_lb_boundary_velocity, 3*n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpyToSymbol(n_lb_boundaries_gpu, &temp, sizeof(int)));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -3234,7 +3234,7 @@ void lb_init_boundaries_GPU(int host_LB_Boundary::n_lb_boundaries, int number_of
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
-  if (LB_Boundary::n_lb_boundaries == 0 && !pdb_boundary_lattice)
+  if (n_lb_boundaries == 0 && !pdb_boundary_lattice)
   {
     cudaThreadSynchronize();
     return;
@@ -3676,7 +3676,6 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
 
   /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
   float temp_delta[6];
-  float delta[8];
   int my_left[3];
   int node_index[8];
   float mode[4];
@@ -3689,6 +3688,9 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
     temp_delta[i] = 1.f - temp_delta[3+i];
   }
 
+#ifndef SHANCHEN
+  float delta[8];
+
   delta[0] = temp_delta[0] * temp_delta[1] * temp_delta[2];
   delta[1] = temp_delta[3] * temp_delta[1] * temp_delta[2];
   delta[2] = temp_delta[0] * temp_delta[4] * temp_delta[2];
@@ -3697,6 +3699,7 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
   delta[5] = temp_delta[3] * temp_delta[1] * temp_delta[5];
   delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
   delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
+#endif
 
   // modulo for negative numbers is strange at best, shift to make sure we are positive
   int x = my_left[0] + para.dim_x;
