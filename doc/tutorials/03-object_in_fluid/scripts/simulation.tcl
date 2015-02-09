@@ -33,10 +33,8 @@ set boxY 22
 set boxZ 20
 setmd box_l $boxX $boxY $boxZ
 
-source boundaries.tcl
-
 # initialization of the object-in-fluid mechanisms
-oif_init	
+oif_init
 
 # creating templates
 oif_create_template template-id 0 nodes-file $fileNodes triangles-file $fileTriangles stretch 3.0 3.0 3.0 ks 0.07 kb 0.01 kal 0.01 kag 0.01 kv 10.0
@@ -55,6 +53,8 @@ inter 0 10 soft-sphere 0.0001 1.2 0.1 0.0
 
 # set up fluid
 lbfluid grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
+
+source boundaries.tcl
 
 # setting the constant velocity
 # of the fluid on the left side of the md_box

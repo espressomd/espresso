@@ -164,7 +164,43 @@ typedef struct {
 
 void mpi_observable_lb_radial_velocity_profile_slave_implementation();
 
+int observable_radial_density_distribution(observable* self);
 
+typedef struct { 
+	IntList *id_list;
+	int type;
+	double minr;
+	double maxr;
+	int rbins;
+	int start_point_id;
+	int end_point_id;
+	// id_flag == 0 : actual positions given, otherwise two particle ids for the start- and 
+	// end-point are given
+	int id_flag;
+	double start_point[3];
+	double end_point[3];
+} radial_density_data;
+
+int observable_spatial_polymer_properties(observable* self);
+typedef struct { 
+	IntList *id_list;
+	int npoly;
+	int cut_off;
+} spatial_polym_data;
+
+int observable_persistence_length(observable* self);
+// uses the same data as spatial_polymer_properties
+
+typedef struct {
+	IntList *id_list;
+	int poly_len;
+	int npoly;
+	int k;
+	int n_bins;
+	double r_min;
+	double r_max;
+} k_dist_data;
+int observable_polymer_k_distribution(observable* self);
 
 
 int observable_calc_rdf(observable* self);

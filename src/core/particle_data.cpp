@@ -62,7 +62,7 @@ IndexOfType Index;
 TypeList *type_array;
 int number_of_type_lists;
 int GC_init;
-int Type_array_init = 0;
+int Type_array_init;
 
 int max_seen_particle = -1;
 int n_part = 0;
@@ -842,9 +842,9 @@ int set_particle_type(int part, int type)
   if (pnode == -1)
     return ES_ERROR;
 
-// check if the particle exists already and the type is changed, then remove it from the list which contains it
-  Particle *cur_par = (Particle *) malloc( sizeof(Particle) );
   if ( Type_array_init ) {
+	// check if the particle exists already and the type is changed, then remove it from the list which contains it
+	  Particle *cur_par = (Particle *) malloc( sizeof(Particle) );
 	  if ( cur_par != (Particle *) 0 ) {
 		  if ( get_particle_data(part, cur_par) != ES_ERROR ) {
 			  int prev_type = cur_par->p.type;
@@ -855,16 +855,14 @@ int set_particle_type(int part, int type)
 		  }
 	  }
 	  free(cur_par);
-  }
 
-  mpi_send_type(pnode, part, type);
-
-  if ( Type_array_init ) { 
 	  if ( add_particle_to_list(part, type) ==  ES_ERROR ){
 		  //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
 		  return ES_ERROR;
 	  }
   }
+
+  mpi_send_type(pnode, part, type);
 
   return ES_OK;
 }
@@ -1536,10 +1534,12 @@ void recv_particles(ParticleList *particles, int node)
 #endif
 
     PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n", this_node, p->p.identity));
+#ifdef ADDITIONAL_CHECKS
     if (local_particles[p->p.identity] != NULL) {
       fprintf(stderr, "%d: transmitted particle %d is already here...\n", this_node, p->p.identity);
       errexit();
     }
+#endif
   }
 
   update_local_particles(particles);

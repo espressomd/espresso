@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -1244,6 +1244,250 @@ int observable_calc_rdf(observable* self){
 }
 
 
+int observable_radial_density_distribution(observable* self){
+  if (!sortPartCfg()) {
+    ostringstream errtxt; // = runtime_error(128);
+    errtxt << "{094 could not sort partCfg} ";
+	runtimeError(errtxt);
+    return -1;
+  }
+
+  radial_density_data *r_data = (radial_density_data *) self->container;
+  IntList *ids;  
+  if ( GC_init && Type_array_init ) {
+	  ids = (IntList *) malloc(sizeof(IntList));
+
+	  //using the grandcanonical scheme, always update the particle id list
+	  ids->e = (int *) malloc(sizeof(int)*type_array[Index.type[r_data->type]].max_entry);
+	  memcpy(ids->e, type_array[Index.type[r_data->type]].id_list, type_array[Index.type[r_data->type]].max_entry*sizeof(int));
+	  ids->n = type_array[Index.type[r_data->type]].max_entry;
+	  ids->max = type_array[Index.type[r_data->type]].cur_size;
+  } else { 
+	  ids = r_data->id_list;
+  }
+  //r_data->id_list = ids;
+  //ids = r_data->id_list;
+
+  double* A = self->last_value;
+  int n_A   = self->n;
+  double start_point[3];
+  double end_point[3];
+  int image_box[3];
+  if ( r_data->id_flag ) {
+	  // Using particle_ids to specify the start and endpoints
+	  memcpy(start_point, partCfg[r_data->start_point_id].r.p, 3*sizeof(double));
+	  memcpy(image_box, partCfg[r_data->start_point_id].l.i, 3*sizeof(int));
+	  unfold_position(start_point, image_box);
+	  memcpy(end_point, partCfg[r_data->end_point_id].r.p, 3*sizeof(double));
+	  memcpy(image_box, partCfg[r_data->end_point_id].l.i, 3*sizeof(int));
+	  unfold_position(end_point, image_box);
+  } else {
+	  memcpy(start_point, r_data->start_point, 3*sizeof(double));
+	  memcpy(end_point, r_data->end_point, 3*sizeof(double));
+  }
+
+  double *bin_volume = (double *) malloc(sizeof(double)*r_data->rbins);
+ 
+  double part_pos[3];
+  double AB[3];		// normalized normal vector pointing to start point
+  double BA[3];		// ...									end point
+  double Apart[3];	// vector difference start_point - part_pos
+  double norm_Apart;
+  double normAB;
+  double dist;
+  double angle;
+  double r_dist;
+  double tmp[3];
+  double tmp2[3];
+  char periodic_points = 0;
+  int frac = 0;
+  double epsilon = 1e-9;
+
+  double rbin_size = (r_data->maxr - r_data->minr)/(r_data->rbins);
+  int rbin_id;
+
+  if ( r_data->id_flag ) {
+	  // in the case of particles use minimal image convention for axis definition
+	  get_mi_vector(AB, start_point, end_point);
+	  get_mi_vector(BA, end_point, start_point);
+	  if ( normr(AB) < epsilon )  {
+		  //start and end point are periodic images of one another
+		  periodic_points = 1;
+	  }
+	  end_point[0] = start_point[0] - AB[0];
+	  end_point[1] = start_point[1] - AB[1];
+	  end_point[2] = start_point[2] - AB[2];
+  } else {
+	  // otherwise use the given absolute positions but check whether those points are too close
+	  get_mi_vector(AB, start_point, end_point);
+	  if ( normr(AB) < epsilon )  {
+		  //start and end point are periodic images of one another
+		  periodic_points = 1;
+	  }
+	  vecsub(start_point, end_point, AB);
+	  vecsub(end_point, start_point, BA);
+  }
+
+  //printf("id: %d, lenAB: %1.3e, lenBA: %1.3e, %f %f %f, %f %f %f\n", r_data->id_flag, normr(AB), normr(BA), start_point[0], start_point[1], start_point[2], end_point[0], end_point[1], end_point[2]);
+  normAB = normr(AB); 
+  for (int i=0; i<r_data->rbins; i++) {
+	  bin_volume[i] = normAB*( pow(r_data->minr + (i+1)*rbin_size, 2) - pow(r_data->minr + i*rbin_size, 2) ) * PI;
+  }
+
+  unit_vector(AB, AB);
+  unit_vector(BA, BA);
+
+  for (int i=0; i<n_A; i++)
+	  A[i] = 0.0;
+
+  for (int i=0; i < ids->n; i++){
+	  part_pos[0]=partCfg[ids->e[i]].r.p[0];
+	  part_pos[1]=partCfg[ids->e[i]].r.p[1];
+	  part_pos[2]=partCfg[ids->e[i]].r.p[2];
+	  // that might seem weird, but this ensures that the used particle position is the
+	  // closest image to one of the two points that define the axis
+	  get_mi_vector(tmp, part_pos, start_point);
+	  get_mi_vector(tmp2, part_pos, end_point);
+
+	  if ( periodic_points ) { 
+		  // the axis spans the whole box, so any particle is in 
+		  // scope
+		  dist = -1;
+	  } else if ( normr(tmp) < normr(tmp2) ) {
+		  part_pos[0] = start_point[0] + tmp[0];
+		  part_pos[1] = start_point[1] + tmp[1];
+		  part_pos[2] = start_point[2] + tmp[2];
+		  dist = scalar(AB, tmp);
+	  } else {
+		  part_pos[0] = end_point[0] + tmp2[0];
+		  part_pos[1] = end_point[1] + tmp2[1];
+		  part_pos[2] = end_point[2] + tmp2[2];
+		  dist =  scalar(BA, tmp2);
+	  }
+
+	  if (dist > 0 ) { 
+
+		  continue;
+	  }
+
+	  // particle in scope
+	  // now calculate the distance from the given axis using simple geometry
+	  vecsub(start_point, part_pos, Apart);
+
+	  norm_Apart = normr(Apart);
+	  angle = acos(scalar(Apart, AB)/norm_Apart);
+	  r_dist= sin(angle)*norm_Apart;
+
+	  rbin_id = (int) floor( (r_dist - r_data->minr)/rbin_size );
+	  if ( rbin_id >= r_data->rbins || rbin_id < 0 )
+		  continue;
+
+	  A[rbin_id]+=1.0/bin_volume[rbin_id];
+	  frac++;
+  }
+//  printf("fraction of parts: %d %d\n", frac, ids->n);
+  free(bin_volume);
+  if ( GC_init && Type_array_init ) {
+	  free(ids->e);
+	  free(ids);
+	}
+  return 0;
+}
+
+int observable_spatial_polymer_properties(observable* self){
+    if (!sortPartCfg()) {
+      ostringstream errtxt ; //= runtime_error(128);
+	  errtxt << "{094 could not sort partCfg}";
+	  runtimeError(errtxt);
+      return -1;
+    }
+	double* A = self->last_value;
+	int poly_len = self->n;
+	for (int i = 0; i<poly_len; i++ )
+		A[i]=0.0;
+
+#ifdef ELECTROSTATICS
+	spatial_polym_data *p_data = (spatial_polym_data *) self->container;
+	IntList *ids=p_data->id_list;
+	for (int i = 0; i<ids->n; i++){
+		A[i%poly_len] += partCfg[ids->e[i]].p.q/( (double) p_data->npoly);
+	}
+#endif
+	return 0;
+}
+
+int observable_persistence_length(observable* self){
+    if (!sortPartCfg()) {
+      ostringstream errtxt; // = runtimeError(128);
+      errtxt << "{094 could not sort partCfg}";
+	  runtimeError(errtxt);
+      return -1;
+    }
+	double* A = self->last_value;
+	spatial_polym_data *p_data = (spatial_polym_data *) self->container;
+	IntList *ids=p_data->id_list;
+
+	double v1[3];
+	double v2[3];
+	double abs1, abs2;
+	int num_parts = ids->n;
+	int cut_off = p_data->cut_off;
+	int n_A = self->n;
+
+	for (int i = 0; i<n_A; i++ )
+		A[i]=0.0;
+
+	for (int i = 0; i<n_A; i++) {
+		// i : distance between polymer segments
+		for ( int j=cut_off; j<num_parts - i -cut_off; j++ ) {
+			vecsub(partCfg[ids->e[j]].r.p, partCfg[ids->e[j+1]].r.p, v1);
+			abs1 = normr(v1);
+			vecsub(partCfg[ids->e[i+j]].r.p, partCfg[ids->e[i+j+1]].r.p, v2);
+			abs2 = normr(v2);
+			A[i] += scalar(v1, v2)/(abs1*abs2 * (double) (num_parts - i - 2*cut_off) );
+		}
+	}
+	return 0;
+}	
+
+	
+
+int observable_polymer_k_distribution(observable *self){
+	if (!sortPartCfg()) {
+		ostringstream errtxt;
+		errtxt << "{094 could not sort partCfg}";
+		runtimeError(errtxt);
+		return -1;
+	}
+	double* A = self->last_value;
+	for (int i = 0; i < self->n; i++) {
+		A[i] = 0.0;
+	}
+	k_dist_data *data = (k_dist_data *) self->container;
+	IntList *ids = data->id_list;
+	int npoly = data->npoly;
+	int poly_len = data-> poly_len;
+	int k = data->k;
+	double dist_vec[3];
+	double dist;
+	double r_min = data->r_min;
+	double r_max = data->r_max;
+	int n_bins   = data->n_bins;
+	int bin_id =0;
+	double bin_size = (r_max - r_min) / n_bins;
+	int number_of_pairs =(int) ( floor(poly_len / (k +1 ) ) + ( (poly_len - 1)%(k+1) == 0 ? 1 : 0 ) - 1);
+	for (int i = 0; i < npoly; i++) 
+		for (int j = 0; j < poly_len - k; j+= k) {
+			get_mi_vector(dist_vec, partCfg[ids->e[i*poly_len + j]].r.p, partCfg[ids->e[i*poly_len + j + k]].r.p);
+			dist = normr(dist_vec);
+			bin_id = (int) floor( (dist - r_min)/bin_size );
+			if (bin_id < n_bins && bin_id >= 0) {
+				A[bin_id] += 1.0/(npoly * number_of_pairs);
+			}
+		}
+	return 0;
+}	
+
 void autoupdate_observables() {
   int i;
   for (i=0; i<n_observables; i++) {
@@ -1254,7 +1498,3 @@ void autoupdate_observables() {
     }
   }
 }
-
-
-
-

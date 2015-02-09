@@ -1,5 +1,7 @@
 /*
-  Copyright (C) 2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+  Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -16,30 +18,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/* vim: set ts=8 sts=2 sw=2 et: */
-#ifndef _ELECTROKINETICS_PDB_PARSE_HPP
-#define _ELECTROKINETICS_PDB_PARSE_HPP
 
-#include "electrokinetics.hpp"
+#ifndef __MINIMIZE_ENERGY_HPP
+#define __MINIMIZE_ENERGY_HPP
 
-#ifdef ELECTROKINETICS
+#include "forces_inline.hpp"
+#include "communication.hpp"
 
-extern float* pdb_charge_lattice;
-extern int* pdb_boundary_lattice;
+bool minimize_energy(void);
+void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement);
+bool steepest_descent_step(void);
 
-/* Returns 0/1 if reading the files was successful/unsuccessful */
-int pdb_parse(char* pdb_filename, char* itp_filename, double scale);
-
-int print_charge_field(char* filename);
-
-int print_boundary_lattice(char* filename);
-
-#else
-/* that is tested for in a number of places, make sure that pdb
-   appears disabled if not compiled in.
- */
-#define pdb_boundary_lattice 0
-
-#endif
-
-#endif
+#endif /* __MINIMIZE_ENERGY */
