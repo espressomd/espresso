@@ -18,6 +18,8 @@
 #  
 # Handling of interactions
 
+include "myconfig.pxi"
+from _system cimport *
 cimport numpy as np
 from utils cimport *
 
@@ -204,22 +206,22 @@ cdef extern from "interaction_data.hpp":
 
 #* Union in which to store the parameters of an individual bonded interaction */
   ctypedef union Bond_parameters:
-    Fene_bond_parameters fene
-    Stretchlin_force_bond_parameters stretchlin_force
-    Stretching_force_bond_parameters stretching_force
-    Area_force_local_bond_parameters area_force_local
-    Area_force_global_bond_parameters area_force_global
-    Bending_force_bond_parameters bending_force
-    Volume_force_bond_parameters volume_force
-    Harmonic_bond_parameters harmonic
+    Fene_bond_parameters fene #
+    Stretchlin_force_bond_parameters stretchlin_force #
+    Stretching_force_bond_parameters stretching_force #
+    Area_force_local_bond_parameters area_force_local #
+    Area_force_global_bond_parameters area_force_global #
+    Bending_force_bond_parameters bending_force #
+    Volume_force_bond_parameters volume_force #
+    Harmonic_bond_parameters harmonic #
     Angle_bond_parameters angle
-    Angle_harmonic_bond_parameters angle_harmonic
-    Angle_cosine_bond_parameters angle_cosine
-    Angle_cossquare_bond_parameters angle_cossquare
-    Dihedral_bond_parameters dihedral
+    Angle_harmonic_bond_parameters angle_harmonic #
+    Angle_cosine_bond_parameters angle_cosine #
+    Angle_cossquare_bond_parameters angle_cossquare #
+    Dihedral_bond_parameters dihedral # 
     Tabulated_bond_parameters tab
     Overlap_bond_parameters overlap
-    Subt_lj_bond_parameters subt_lj
+    Subt_lj_bond_parameters subt_lj #
     Rigid_bond_parameters rigid_bond
     Angledist_bond_parameters angledist
     Endangledist_bond_parameters endangledist
@@ -240,3 +242,47 @@ cdef extern from "fene.hpp":
   int fene_set_params(int bond_type, double k, double drmax, double r0)
 cdef extern from "harmonic.hpp":
   int harmonic_set_params(int bond_type, double k, double r,double r_cut)
+cdef extern from "dihedral.hpp":
+  int dihedral_set_params(int bond_type, int mult, double bend, double phase)
+cdef extern from "angle_harmonic.hpp":
+  int angle_harmonic_set_params(int bond_type, double bend, double phi0)
+cdef extern from "angle_cosine.hpp":
+  int angle_cosine_set_params(int bond_type, double bend, double phi0)
+cdef extern from "angle_cossquare.hpp":
+  int angle_cossquare_set_params(int bond_type, double bend, double phi0)
+cdef extern from "subt_lj.hpp":
+  int subt_lj_set_params(int bond_type, double k, double r)
+cdef extern from "object-in-fluid/stretching_force.hpp":
+  int stretching_force_set_params(int bond_type, double r0, double ks)
+cdef extern from "object-in-fluid/area_force_local.hpp":
+  int area_force_local_set_params(int bond_type, double A0_l, double ka_l)
+cdef extern from "object-in-fluid/bending_force.hpp":
+  int bending_force_set_params(int bond_type, double phi0, double kb)
+cdef extern from "object-in-fluid/volume_force.hpp":
+  int volume_force_set_params(int bond_type, double V0, double kv)
+cdef extern from "object-in-fluid/area_force_global.hpp":
+  int area_force_global_set_params(int bond_type, double A0_g, double ka_g)
+cdef extern from "object-in-fluid/stretchlin_force.hpp":
+  int stretchlin_force_set_params(int bond_type, double r0, double kslin)
+    
+IF TABULATED == 1:
+  cdef extern from "interaction_data.hpp":
+    cdef enum TabulatedBondedInteraction: TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
+  cdef extern from "tab.hpp":
+    int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename)
+    
+IF BOND_ENDANGLEDIST == 1:
+  cdef extern from "endangledist.hpp":
+    int endangledist_set_params(int bond_type, double bend, double phi0, double distmin, double distmax)
+    
+IF OVERLAPPED == 1:
+  cdef extern from "interaction_data.hpp":
+    cdef enum OverlappedBondedInteraction: OVERLAP_UNKNOWN = 0, OVERLAP_BOND_LENGTH, OVERLAP_BOND_ANGLE,\
+      OVERLAP_BOND_DIHEDRAL
+  cdef extern from "overlap.hpp":
+    int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,\
+      char * filename);
+
+IF BOND_VIRTUAL == 1:
+  cdef extern from "interaction_data.hpp":
+    int virtual_set_params(int bond_type);

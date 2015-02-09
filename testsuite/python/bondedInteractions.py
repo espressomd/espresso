@@ -18,15 +18,22 @@
 #  
 # Tests particle property setters/getters
 import unittest as ut
-import espresso.System as es
+import espressomd
+import espressomd._system as es
+from espressomd import code_info
 import numpy as np
-from espresso.interactions import FeneBond, HarmonicBond
+from espressomd.interactions import FeneBond, HarmonicBond, Dihedral, Angle_Harmonic, Angle_Cosine,\
+       Angle_Cossquare, Subt_Lj, Stretching_Force, Area_Force_Local, Bending_Force, Volume_Force,\
+       Area_Force_Global, Stretchlin_Force
+
 
 
 
 class ParticleProperties(ut.TestCase):
 #  def __init__(self,particleId):
 #    self.pid=particleId
+  # the system which will be tested
+  system = espressomd.System()
   
   # Particle id to work on
   pid=17
@@ -54,7 +61,7 @@ class ParticleProperties(ut.TestCase):
 
 
   def setUp(self):
-    es.part[self.pid].pos =0,0,0
+      self.system.part[self.pid].pos =0,0,0
 
   def generateTestForBondParams(_bondId,_bondClass,_params):
     """Generates test cases for checking bond parameters set and gotten back
@@ -69,30 +76,41 @@ class ParticleProperties(ut.TestCase):
 
 
     def func(self):
-      # This code is run at the execution of the generated function.
-      # It will use the state of the variables in the outer function, 
-      # which was there, when the outer function was called
-      es.bondedInter[bondId]=bondClass(**params)
-      outBond=es.bondedInter[bondId]
-      tnIn=bondClass(**params).typeNumber()
-      tnOut=outBond.typeNumber()
-      outParams=outBond.params
-      self.assertTrue(self.bondsMatch(tnIn,tnOut,params,outParams), bondClass(**params).typeName()+": value set and value gotten back differ for bond id "+str(bondId)+": "+params.__str__()+" vs. "+outParams.__str__())
+        # This code is run at the execution of the generated function.
+        # It will use the state of the variables in the outer function, 
+        # which was there, when the outer function was called
+        self.system.bondedInter[bondId]=bondClass(**params)
+        outBond=self.system.bondedInter[bondId]
+        tnIn=bondClass(**params).typeNumber()
+        tnOut=outBond.typeNumber()
+        outParams=outBond.params
+        self.assertTrue(self.bondsMatch(tnIn,tnOut,params,outParams), bondClass(**params).typeName()+": value set and value gotten back differ for bond id "+str(bondId)+": "+params.__str__()+" vs. "+outParams.__str__())
 
     return func
   
 
   def test_aa_bondedInterSetterGetter(self):
-    es.bondedInter[0]=HarmonicBond(k=0,r_0=0)
-    bond=es.bondedInter[0]
+    self.system.bondedInter[0]=HarmonicBond(k=0,r_0=0)
+    bond=self.system.bondedInter[0]
     self.assertTrue(isinstance(bond,HarmonicBond),"The bond was created as harmonic bond but the instance gotten back is of different type.")
   
-  test_harmonic=generateTestForBondParams(0,HarmonicBond,{"r_0":1.1, "k":5.2})
-  test_harmonic2=generateTestForBondParams(0,HarmonicBond,{"r_0":1.1, "k":5.2,"r_cut":1.3})
-  test_fene=generateTestForBondParams(0,FeneBond,{"r_0":1.1, "k":5.2,"d_r_max":3.})
-  test_fene2=generateTestForBondParams(1,FeneBond,{"r_0":1.1, "k":5.2,"d_r_max":3.})
+  test_fene = generateTestForBondParams(0,FeneBond,{"r_0":1.1, "k":5.2, "d_r_max":3.})
+  test_fene2 = generateTestForBondParams(1,FeneBond,{"r_0":1.1, "k":5.2, "d_r_max":3.})
+  test_harmonic = generateTestForBondParams(0,HarmonicBond,{"r_0":1.1, "k":5.2})
+  test_harmonic2 = generateTestForBondParams(0,HarmonicBond,{"r_0":1.1, "k":5.2, "r_cut":1.3})
+  test_dihedral = generateTestForBondParams(0,Dihedral,{"mult":3.0, "bend":5.2,"phase":3.})
+  test_angle_harm = generateTestForBondParams(0,Angle_Harmonic,{"bend":5.2, "phi0":3.2})
+  test_angle_cos = generateTestForBondParams(0,Angle_Cosine,{"bend":5.2, "phi0":3.2})
+  test_angle_cossquare = generateTestForBondParams(0,Angle_Cossquare,{"bend":5.2, "phi0":0.})
+  test_subt_lj = generateTestForBondParams(0,Subt_Lj,{"k":5.2, "r":3.2})
+  test_stretching_force = generateTestForBondParams(0,Stretching_Force,{"r0":5.2, "ks":3.2})
+  test_area_force_local = generateTestForBondParams(0,Area_Force_Local,{"A0_l":5.2, "ka_l":3.2})
+  test_bending_force = generateTestForBondParams(0,Bending_Force,{"phi0":5.2, "kb":3.2})
+  test_volume_force = generateTestForBondParams(0,Volume_Force,{"V0":5.2, "kv":3.2})
+  test_area_force_global = generateTestForBondParams(0,Area_Force_Global,{"A0_g":5.2, "ka_g":3.2})
+  test_stretchlin_force = generateTestForBondParams(0,Stretchlin_Force,{"r0":5.2, "kslin":3.2})
 
 
 if __name__ == "__main__":
- print("Features: ",es.code_info.features())
+ print("Features: ",code_info.features())
  ut.main()
