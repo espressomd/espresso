@@ -2324,8 +2324,10 @@ void Shape::add_constraint_force_default (Constraint* current_constraint, Partic
 			}
 		}
 		else {
-			fprintf (stderr,"ERROR: encountered unknown constraint during force computation\n");
-			errexit();
+			ostringstream msg;
+			msg <<"ERROR: encountered unknown constraint during force computation for constraint"<< current_constraint->constraint_number;
+			runtimeError(msg);
+
 		}
 	}
 }
