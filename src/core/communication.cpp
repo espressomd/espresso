@@ -1388,19 +1388,14 @@ void mpi_bcast_ia_params_slave(int i, int j)
 
 void mpi_bcast_n_particle_types(int ns)
 {
-	printf ("head node enter func\n");// TODO delete OWEN
   mpi_call(mpi_bcast_n_particle_types_slave, -1, ns);
-	printf ("head node mid func\n");// TODO delete OWEN
   mpi_bcast_n_particle_types_slave(-1, ns);
-	printf ("head node end func\n");// TODO delete OWEN
 
 }
 
 void mpi_bcast_n_particle_types_slave(int pnode, int ns)
 {
-	printf("slave start\n");// TODO delete OWEN
   realloc_ia_params(ns);
-  printf("slave end\n");// TODO delete OWEN
 }
 
 /*************** REQ_GATHER ************/

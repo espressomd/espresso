@@ -39,19 +39,15 @@ int main(int argc, char **argv)
 
   if (this_node == 0) {
     /* master node */
-	    printf("head node start\n"); //TODO DELTE OWEN
 #ifdef TK
     Tk_Main(argc, argv, tcl_appinit);
 #else
     Tcl_Main(argc, argv, tcl_appinit);
 #endif
-    printf("head node made it through\n"); //TODO DELTE OWEN
   }
   else {
     /* slave node */
-	    printf ("slave start \n");//TODO DELETE OWEN
     mpi_loop();
-    printf ("slave made it \n");//TODO DELETE OWEN
   }
 
   return 0;
