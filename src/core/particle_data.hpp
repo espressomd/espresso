@@ -521,6 +521,7 @@ int set_particle_solvation(int part, double* solvation);
     @return ES_OK if particle existed
 */
 int set_particle_rotational_inertia(int part, double rinertia[3]);
+double* pointer_to_rotational_inertia(Particle* p, double rinertia[3]);
 #endif
 
 #ifdef ROTATION_PER_PARTICLE

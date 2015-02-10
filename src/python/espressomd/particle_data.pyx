@@ -188,13 +188,16 @@ cdef class ParticleHandle:
       """Rotational inertia"""
       def __set__(self, _rinertia):
         checkTypeOrExcept(_rinertia,3,float,"Rotation_inertia has to be 3 floats")
-        if set_particle_rotational_inertia(self.id, _rinertia) == 1:
+        cdef double fix_rinertia[3]
+        for i in range(3):
+          fix_rinertia[i] = _rinertia[i]
+        if set_particle_rotational_inertia(self.id, fix_rinertia) == 1:
           raise Exception("set particle position first")
 
       def __get__(self):
         self.updateParticleData()
-        cdef double rinertia[3]
-        pointer_to_rotational_inertia(&(self.particleData), rinertia)
+        cdef double* rinertia
+        rinertia = pointer_to_rotational_inertia(&(self.particleData), rinertia)
         return np.array([ rinertia[0], rinertia[1], rinertia[2]])
 
 # Omega (angular velocity) body frame
