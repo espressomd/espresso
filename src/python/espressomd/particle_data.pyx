@@ -160,7 +160,7 @@ cdef class ParticleHandle:
 
       def __get__(self):
         self.updateParticleData()
-        cdef double* x = NULL
+        cdef double* x
         pointer_to_mass(&(self.particleData), x)
         return x[0]
 
@@ -182,6 +182,21 @@ cdef class ParticleHandle:
         convert_omega_body_to_space(&(self.particleData), o);
         return np.array([ o[0], o[1],o[2]])
 
+  # ROTATIONAL_INERTIA
+  IF ROTATIONAL_INERTIA == 1:
+    property rinertia:
+      """Rotational inertia"""
+      def __set__(self, _rinertia):
+        checkTypeOrExcept(_rinertia,3,float,"Rotation_inertia has to be 3 floats")
+        if set_particle_rotational_inertia(self.id, _rinertia) == 1:
+          raise Exception("set particle position first")
+
+      def __get__(self):
+        self.updateParticleData()
+        cdef double rinertia[3]
+        pointer_to_rotational_inertia(&(self.particleData), rinertia)
+        return np.array([ rinertia[0], rinertia[1], rinertia[2]])
+
 # Omega (angular velocity) body frame
     property omega_body:
       """Angular velocity in body frame""" 
@@ -194,7 +209,7 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.updateParticleData()
-        cdef double* o = NULL
+        cdef double* o
         pointer_to_omega_body(&(self.particleData), o)
         return np.array([o[0],o[1],o[2]])
   
@@ -227,7 +242,7 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.updateParticleData()
-        cdef double* x = NULL
+        cdef double* x
         pointer_to_quat(&(self.particleData),x)
         return np.array([x[0],x[1],x[2],x[3]])
 # Director ( z-axis in body fixed frame)
@@ -244,7 +259,7 @@ cdef class ParticleHandle:
 
       def __get__(self):
         self.updateParticleData()
-        cdef double* x = NULL
+        cdef double* x
         pointer_to_quatu(&(self.particleData),x)
         return np.array([x[0],x[1],x[2]])
   
@@ -260,7 +275,7 @@ cdef class ParticleHandle:
           raise Exception("set particle position first")
       def __get__(self):
         self.updateParticleData()
-        cdef double* x = NULL
+        cdef double* x
         pointer_to_q(&(self.particleData),x)
         return x[0]
 
@@ -284,7 +299,7 @@ cdef class ParticleHandle:
           raise ValueError("virtual must be an integer >= 0")
       def __get__(self):
         self.updateParticleData()
-        cdef int* x = NULL
+        cdef int* x
         pointer_to_virtual(&(self.particleData),x)
         return x[0]
 
@@ -304,8 +319,8 @@ cdef class ParticleHandle:
           raise ValueError("vs_relative takes one int and one float as parameters.")
       def __get__(self):
         self.updateParticleData()
-        cdef int* rel_to = NULL
-        cdef double* dist = NULL
+        cdef int* rel_to
+        cdef double* dist
         pointer_to_vs_relative(&(self.particleData),rel_to,dist)
         return (rel_to[0],dist[0])
 

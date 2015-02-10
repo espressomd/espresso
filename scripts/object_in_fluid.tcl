@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #
 
-proc oif_init {} {	
+proc oif_init {} {
     # define oif variables
         
     global oif_n_objects   
@@ -28,12 +28,15 @@ proc oif_init {} {
     # variable that denotes the number of templates of objects in the simulation
 
     global list oif_nparticles
+    set oif_nparticles { } 
     # list of the numbers of nodes for each oif object
 
     global list oif_ntriangles
+    set oif_ntriangles { }
     # list of the numbers of triangles for each oif object
 
     global list oif_nedges
+    set oif_nedges { } 
     # list with the numbers of edges for each oif object
 
     global oif_first_bond_id 
@@ -47,31 +50,42 @@ proc oif_init {} {
     global oif_first_inter_id 
     set oif_first_inter_id 0
     # denotes the ID of interaction, that can be used for the next oif_template
-	
+
     global list oif_templates
-    # 2D list of existing templates of oif objects containing rows with data. One row describes parameters of one object template. One row consists of X elements. The order of the elements is crucial. Structure of one row: num_of_particles, num_of_edges, num_of_triangles, ks, start_id_of_ks_interaction, kb, start_id_of_kb_interaction, kal, start_id_of_kal_interaction, kag, start_id_of_kag_interaction, kv, start_id_of_kv_interaction
+    set oif_templates { }
+    # 2D list of existing templates of oif objects containing rows with data. One row describes parameters of one object template. One row consists of X elements. The order of the elements is crucial. Structure of one row: num_of_particles, num_of_edges, num_of_triangles, ks, start_id_of_ks_interaction, kb, start_id_of_kb_interaction, kal, start_id_of_kal_interaction, kag, start_id_of_kag_interaction, kv, start_id_of_kv_interaction, initial_surface, initial_volume
 
     global list oif_objects
+    set oif_objects { }
     # 2D list of existing objects containing rows with data. One row describes parameters of one object. One row consists of X elements. The order of the elements is crucial. Structure of one row: template_id, part_type, part_mass
 
-    global list oif_template_particles
-    # list containing triplets of coordinates of all particles of all templates that will be used when creating objects. First num_of_particles of them belong to the first template. Next num_of_particles belong to the second template, etc. Note: these are not actual espresso particles, but rather node coordinates that will serve as template for the actual objects. 
+    global list oif_template_nodes
+    set oif_template_nodes { }
+    # list containing triplets of coordinates of all nodes of all templates that will be used when creating objects. First num_of_nodes of them belong to the first template. Next num_of_nodes belong to the second template, etc. Note: these are not actual espresso particles, but rather node coordinates that will serve as template for the actual objects. 
 
     global list oif_template_edges
+    set oif_template_edges { }
     # list containing pairs of particle IDs. The ordering works the same way as for particles. First num_of_edges edges belong to the first template, next num_of_edges belong to the second template, etc.
 
     global list oif_template_triangles
+    set oif_template_triangles { }
     # list containing triplets of particle IDs. Again, in this list, triangles of all templates are arranged consequently and oif_template element num_of_triangles is used to determine which triangles belong to which template.
-	
+
     global list oif_template_bending_incidences
-    # a list of bending incidences (4 particle IDs in each row; number of rows equals number of rows in oif_template_edges). These are used so that during the creation of bending bonds one does not have to recalculate the bending incidences repeatedly. Number of bending bonds of a given template is equal to number of edges of this template, so oif_template element num_of_edges is used to determine which incidences belong to which object.
+    set oif_template_bending_incidences { }
+    # a list of bending incidences (4 particle IDs in each row; number of rows equals number of rows in oif_template_edges). These are used so that during the creation of bending bonds one does not have to recalculate the bending incidences repeatedly. Number of bending interactions of a given template is equal to number of edges of this template.
 
     global list oif_object_starting_particles
+    set oif_object_starting_particles { }
     # a list of particle indices denoting where each object's particles start in the whole list of particles
 
     global list oif_template_starting_triangles
+    set oif_template_starting_triangles { }
     # a list of triangle indices denoting where each object's triangles start in the whole list of triangles
 
+	global list oif_object_object_interactions
+	set oif_object_object_interactions { }
+	# a list indicating whether a non-bonded interaction has been set between objects. 
 }
 
 proc oif_info { } {
@@ -84,7 +98,7 @@ proc oif_info { } {
 	global oif_first_part_id
 	global oif_first_inter_id
 	global oif_templates
-	global oif_template_particles
+	global oif_template_nodes
 	global oif_template_edges
 	global oif_template_triangles
 	global oif_template_bending_incidences
@@ -97,55 +111,55 @@ proc oif_info { } {
 	puts "*       Info about oif objects      *"
 	puts "*                                   *"
 	puts "*************************************"
-	
+
 	puts "oif_n_objects: $oif_n_objects"
         puts "oif_n_templates: $oif_n_templates"
 
 	puts "oif_nparticles"
 	foreach item $oif_nparticles {
-		puts "$item"	
+		puts "$item"
 	}
 	puts "oif_ntriangles"
 	foreach item $oif_ntriangles {
-		puts "$item"	
+		puts "$item"
 	}
 	puts "oif_nedges"
 	foreach item $oif_nedges {
-		puts "$item"	
+		puts "$item"
 	}
-	
+
 	puts "oif_first_bond_id: $oif_first_bond_id"
 	puts "oif_first_part_id: $oif_first_part_id"
         puts "oif_first_inter_id: $oif_first_inter_id"
 
 	puts "oif_templates"
 	foreach item $oif_templates {
-		puts "$item"	
+		puts "$item"
 	}
 
-        puts "oif_template_particles"
-	foreach item $oif_template_particles {
-		puts "$item"	
+        puts "oif_template_nodes"
+	foreach item $oif_template_nodes {
+		puts "$item"
 	}
 
         puts "oif_template_edges"
 	foreach item $oif_template_edges {
-		puts "$item"	
+		puts "$item"
 	}
 
         puts "oif_template_triangles"
 	foreach item $oif_template_triangles {
-		puts "$item"	
+		puts "$item"
 	}
 
         puts "oif_template_bending_incidences"
 	foreach item $oif_template_bending_incidences {
-		puts "$item"	
+		puts "$item"
 	}
-	
+
         puts "oif_object_starting_particles"
 	foreach item $oif_object_starting_particles {
-		puts "$item"	
+		puts "$item"
 	}
 
         puts " "
@@ -185,7 +199,7 @@ proc area_triangle {a b c} {
 
 	set area 0
 	set n {0 0 0} 
-	
+
 	get_n_triangle ga gb gc n
 	set nx [lindex $n 0]
 	set ny [lindex $n 1]
@@ -194,6 +208,17 @@ proc area_triangle {a b c} {
 	set area [expr 0.5*sqrt($nx*$nx + $ny*$ny + $nz*$nz)]
 	return $area
 }
+
+proc norm {v} {
+    # computes the norm of a 3-component vector
+    upvar $v gv
+    set vx [lindex $gv 0]
+    set vy [lindex $gv 1]
+    set vz [lindex $gv 2]
+    set norm [expr sqrt($vx*$vx + $vy*$vy + $vz*$vz)]
+    return $norm
+}
+
 
 proc angle_btw_triangles {P1 P2 P3 P4 phi} {
 	upvar $P1 gP1
@@ -204,17 +229,17 @@ proc angle_btw_triangles {P1 P2 P3 P4 phi} {
 	set n1 {-1 -1 -1}
 	set n2 {-1 -1 -1}
 	set pi 3.1415926535897931
-	
+
 	get_n_triangle gP1 gP2 gP3 n1
 	get_n_triangle gP3 gP2 gP4 n2
-	
+
 	set n1x [lindex $n1 0]
 	set n1y [lindex $n1 1]
 	set n1z [lindex $n1 2]
 	set n2x [lindex $n2 0]
 	set n2y [lindex $n2 1]
 	set n2z [lindex $n2 2]
-	
+
 	set tmp11 [expr $n1x*$n2x + $n1y*$n2y + $n1z*$n2z]
 	set tmp11 [expr $tmp11*abs($tmp11)]
 	set tmp22 [expr $n1x*$n1x + $n1y*$n1y + $n1z*$n1z]
@@ -225,10 +250,10 @@ proc angle_btw_triangles {P1 P2 P3 P4 phi} {
 		set tmp11 [expr sqrt($tmp11)]
 		} else {
 		set tmp11 [expr - sqrt(- $tmp11)]
-	}		
+	}
 
 	if {$tmp11 >= 1.} { set tmp11 0.0 } elseif { $tmp11 <= -1.} { set tmp11 $pi }
-	
+
 	set gphi [expr $pi - acos($tmp11)]
 
 	set P1x [lindex $gP1 0]
@@ -237,7 +262,7 @@ proc angle_btw_triangles {P1 P2 P3 P4 phi} {
 	set P4x [lindex $gP4 0]
 	set P4y [lindex $gP4 1]
 	set P4z [lindex $gP4 2]
-	
+
 	set tmp11 [expr -($n1x*$P1x + $n1y*$P1y + $n1z*$P1z)]
 	if { [expr $n1x*$P4x + $n1y*$P4y + $n1z*$P4z + $tmp11] < 0 } { set gphi [expr 2*$pi - $gphi] }
 }
@@ -252,13 +277,309 @@ proc discard_epsilon {x} {
 	return $res
 }
 
+#---------------------------------------------------------------------------
+# calculation of stretching force
+
+proc KS {lambda} {
+    # Defined by (19) from Dupin2007
+    set res [expr (pow($lambda,0.5) + pow($lambda,-2.5))/($lambda + pow($lambda,-3.))]
+    return $res
+}
+
+proc calc_stretching_force { args } {
+    # non-normalized stretching force
+    set n_args 0
+    foreach arg $args {
+	incr n_args
+    }
+    if { $n_args != 9 } {
+	puts "9 arguments are expected for calculation of stretching force"
+	puts "ks, aX, aY, aZ, bX, bY, bZ, dist0, dist"
+	return 0
+    }
+
+    set ks [lindex $args 0]
+    set aX [lindex $args 1]
+    set aY [lindex $args 2]
+    set aZ [lindex $args 3]
+    set bX [lindex $args 4]
+    set bY [lindex $args 5]
+    set bZ [lindex $args 6]
+    set dist0 [lindex $args 7]
+    set dist [lindex $args 8]
+    
+    set dr [expr $dist - $dist0]
+    # two types of stretching:
+    # nonlinear strething:
+    # set lambda [expr 1.0*$dist/$dist0]
+    # set fac [expr (-$ks * [ KS $lambda ] * $dr )]
+    # linear stretching: 
+    set fac [expr (-$ks * $dr)]
+    
+    set fX [expr ($fac*($bX-$aX)/$dist)]
+    set fY [expr ($fac*($bY-$aY)/$dist)]
+    set fZ [expr ($fac*($bZ-$aZ)/$dist)]
+    
+    set f [list $fX $fY $fZ]
+    return $f
+}
+#---------------------------------------------------------------------------
+# calculation of bending force
+
+proc calc_bending_force { args } {
+    set n_args 0
+    foreach arg $args {
+	incr n_args
+    }
+    if { $n_args != 15 } {
+	puts "15 arguments are expected for calculation of bending force"
+	puts "kb, aX, aY, aZ, bX, bY, bZ, cX, cY, cZ, dX, dY, dZ, phi0, phi"
+	return 0
+    }
+
+    set kb [lindex $args 0]
+    set aX [lindex $args 1]
+    set aY [lindex $args 2]
+    set aZ [lindex $args 3]
+    set bX [lindex $args 4]
+    set bY [lindex $args 5]
+    set bZ [lindex $args 6]
+    set cX [lindex $args 7]
+    set cY [lindex $args 8]
+    set cZ [lindex $args 9]
+    set dX [lindex $args 10]
+    set dY [lindex $args 11]
+    set dZ [lindex $args 12]
+    set phi0 [lindex $args 13]
+    set phi [lindex $args 14]
+
+    set pA [list $aX $aY $aZ]
+    set pB [list $bX $bY $bZ]
+    set pC [list $cX $cY $cZ]
+    set pD [list $dX $dY $dZ]
+    
+    set n1 {0 0 0} 
+    get_n_triangle pB pA pC n1
+    set n1x [lindex $n1 0]
+    set n1y [lindex $n1 1]
+    set n1z [lindex $n1 2]
+    set dn1 [norm n1]
+
+    set n2 {0 0 0} 
+    get_n_triangle pB pC pD n2
+    set n2x [lindex $n2 0]
+    set n2y [lindex $n2 1]
+    set n2z [lindex $n2 2]
+    set dn2 [norm n2]
+
+    set angles [expr ($phi-$phi0)/$phi0]
+    set fac [expr $kb * $angles]
+
+    set f1x [expr $fac*$n1x/$dn1]
+    set f1y [expr $fac*$n1y/$dn1]
+    set f1z [expr $fac*$n1z/$dn1]
+    set f2x [expr $fac*$n2x/$dn2]
+    set f2y [expr $fac*$n2y/$dn2]
+    set f2z [expr $fac*$n2z/$dn2]
+    
+    set f [list $f1x $f1y $f1z $f2x $f2y $f2z]
+    return $f
+}
+
+#---------------------------------------------------------------------------
+# calculation of non-normalized local area force
+
+proc calc_local_area_force { args } {
+    set n_args 0
+    foreach arg $args {
+	incr n_args
+    }
+    if { $n_args != 12 } {
+	puts "12 arguments are expected for calculation of local area force"
+	puts "kal, aX, aY, aZ, bX, bY, bZ, cX, cY, cZ, A0, A"
+	return 0
+    }
+
+    set kal [lindex $args 0]
+    set a(0) [lindex $args 1]
+    set a(1) [lindex $args 2]
+    set a(2) [lindex $args 3]
+    set b(0) [lindex $args 4]
+    set b(1) [lindex $args 5]
+    set b(2) [lindex $args 6]
+    set c(0) [lindex $args 7]
+    set c(1) [lindex $args 8]
+    set c(2) [lindex $args 9]
+    set A0 [lindex $args 10]
+    set A [lindex $args 11]
+    
+    for {set i 0} {$i < 3} {incr i} {
+	set h($i) [expr 1.0/3.0 *($a($i)+$b($i)+$c($i))]
+    }
+    
+    set aa [expr ($A - $A0)]
+
+    # local area force for first node
+    for {set i 0} {$i < 3} {incr i} {
+	set rh($i) [expr $h($i)-$a($i)]
+    }
+    set rhv [list $rh(0) $rh(1) $rh(2)]
+    set hn [norm rhv]
+    for {set i 0} {$i < 3} {incr i} {
+	set f1($i) [expr $kal * $aa * $rh($i)/$hn]
+    }
+
+    # local area force for second node
+    for {set i 0} {$i < 3} {incr i} {
+	set rh($i) [expr $h($i)-$b($i)]
+    }
+    set rhv [list $rh(0) $rh(1) $rh(2)]
+    set hn [norm rhv]
+    for {set i 0} {$i < 3} {incr i} {
+	set f2($i) [expr $kal * $aa * $rh($i)/$hn]
+    }
+
+    # local area force for third node
+    for {set i 0} {$i < 3} {incr i} {
+	set rh($i) [expr $h($i)-$c($i)]
+    }
+    set rhv [list $rh(0) $rh(1) $rh(2)]
+    set hn [norm rhv]
+    for {set i 0} {$i < 3} {incr i} {
+	set f3($i) [expr $kal * $aa * $rh($i)/$hn]
+    }
+    
+    set f [list $f1(0) $f1(1) $f1(2) $f2(0) $f2(1) $f2(2) $f3(0) $f3(1) $f3(2)]
+    return $f
+}
+
+#---------------------------------------------------------------------------
+# calculation of global area force
+
+proc calc_global_area_force { args } {
+    set n_args 0
+    foreach arg $args {
+	incr n_args
+    }
+    if { $n_args != 12 } {
+	puts "12 arguments are expected for calculation of global area force"
+	puts "kag, aX, aY, aZ, bX, bY, bZ, cX, cY, cZ, Ag0, Ag"
+	return 0
+    }
+
+    set kag [lindex $args 0]
+    set a(0) [lindex $args 1]
+    set a(1) [lindex $args 2]
+    set a(2) [lindex $args 3]
+    set b(0) [lindex $args 4]
+    set b(1) [lindex $args 5]
+    set b(2) [lindex $args 6]
+    set c(0) [lindex $args 7]
+    set c(1) [lindex $args 8]
+    set c(2) [lindex $args 9]
+    set Ag0 [lindex $args 10]
+    set Ag [lindex $args 11]
+    
+    for {set i 0} {$i < 3} {incr i} {
+	set h($i) [expr 1.0/3.0 *($a($i)+$b($i)+$c($i))]
+    }
+    
+    set aa [expr ($Ag - $Ag0)/$Ag0]
+
+    # global area force for first node
+    for {set i 0} {$i < 3} {incr i} {
+	set rh($i) [expr $h($i)-$a($i)]
+    }
+    set rhv [list $rh(0) $rh(1) $rh(2)]
+    set hn [norm rhv]
+    for {set i 0} {$i < 3} {incr i} {
+	set f1($i) [expr $kag * $aa * $rh($i)/$hn]
+    }
+
+    # global area force for second node
+    for {set i 0} {$i < 3} {incr i} {
+	set rh($i) [expr $h($i)-$b($i)]
+    }
+    set rhv [list $rh(0) $rh(1) $rh(2)]
+    set hn [norm rhv]
+    for {set i 0} {$i < 3} {incr i} {
+	set f2($i) [expr $kag * $aa * $rh($i)/$hn]
+    }
+
+    # global area force for third node
+    for {set i 0} {$i < 3} {incr i} {
+	set rh($i) [expr $h($i)-$c($i)]
+    }
+    set rhv [list $rh(0) $rh(1) $rh(2)]
+    set hn [norm rhv]
+    for {set i 0} {$i < 3} {incr i} {
+	set f3($i) [expr $kag * $aa * $rh($i)/$hn]
+    }
+    
+    set f [list $f1(0) $f1(1) $f1(2) $f2(0) $f2(1) $f2(2) $f3(0) $f3(1) $f3(2)]
+    return $f
+}
+
+#---------------------------------------------------------------------------
+# calculation of volume force
+
+proc calc_volume_force { args } {
+    set n_args 0
+    foreach arg $args {
+	incr n_args
+    }
+    if { $n_args != 12 } {
+	puts "12 arguments are expected for calculation of volume force"
+	puts "kv, aX, aY, aZ, bX, bY, bZ, cX, cY, cZ, V0, V"
+	return 0
+    }
+
+    set kv [lindex $args 0]
+    set a(0) [lindex $args 1]
+    set a(1) [lindex $args 2]
+    set a(2) [lindex $args 3]
+    set b(0) [lindex $args 4]
+    set b(1) [lindex $args 5]
+    set b(2) [lindex $args 6]
+    set c(0) [lindex $args 7]
+    set c(1) [lindex $args 8]
+    set c(2) [lindex $args 9]
+    set V0 [lindex $args 10]
+    set V [lindex $args 11]
+    
+    set pA [list $a(0) $a(1) $a(2)]
+    set pB [list $b(0) $b(1) $b(2)]
+    set pC [list $c(0) $c(1) $c(2)]
+    
+    set n {0 0 0} 
+    get_n_triangle pA pB pC n
+    set nn(0) [lindex $n 0]
+    set nn(1) [lindex $n 1]
+    set nn(2) [lindex $n 2]
+    set dn [norm n]
+
+    set vv [expr ($V - $V0)/$V0]
+    set A [area_triangle pA pB pC]    
+   
+    for {set i 0} {$i < 3} {incr i} {
+	set f($i) [expr $kv * $vv * $A * $nn($i)/$dn / 3.0]
+    }
+    
+    set fv [list $f(0) $f(1) $f(2)]
+ 
+    return $fv
+}
+
+
+
+#-----------------------------------------------------------------------------
 proc oif_create_template { args } {
 
 # access global variables defined in oif_init
 	global oif_first_inter_id
-	global oif_n_templates	
+	global oif_n_templates
 	global oif_templates
-	global oif_template_particles
+	global oif_template_nodes
 	global oif_template_edges
 	global oif_template_triangles
 	global oif_template_bending_incidences
@@ -281,8 +602,17 @@ proc oif_create_template { args } {
 	set filenamenodes ""
 	set filenametriangles ""
 	set ks 0.0
+	set ks_min 0.0
+	set ks_max 0.0
+	set ks_file ""
 	set kb 0.0
+	set kb_min 0.0
+	set kb_max 0.0
+	set kb_file ""
 	set kal 0.0
+	set kal_min 0.0
+	set kal_max 0.0
+	set kal_file ""
 	set kag 0.0
 	set kv 0.0
 	set check_output 0
@@ -296,7 +626,7 @@ proc oif_create_template { args } {
 			"nodes-file" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: missing nodes-file"
 					break
 				}
 				set filenamenodes [lindex $args $pos]
@@ -305,34 +635,70 @@ proc oif_create_template { args } {
 			"ks" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: missing value of stretching coefficient ks"
 					break
 				}
-				set ks [lindex $args $pos]
-				incr pos
+				set val [lindex $args $pos]
+				if {[string is double $val] == 1} { 
+					# uniform ks for all edges
+					set ks $val
+					incr pos
+				} else { 
+					set ks_file $val
+					incr pos
+					set ks_min [lindex $args $pos]
+					incr pos
+					set ks_max [lindex $args $pos]
+					incr pos
+					puts "ks_file $ks_file ks_min $ks_min ks_max $ks_max"
+				}
 			}
 			"kb" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: missing value of bending coefficient kb"
 					break
 				}
-				set kb [lindex $args $pos]
-				incr pos
+				set val [lindex $args $pos]
+				if {[string is double $val] == 1} { 
+					# uniform kb for all edges
+					set kb $val
+					incr pos
+				} else { 
+					set kb_file $val
+					incr pos
+					set kb_min [lindex $args $pos]
+					incr pos
+					set kb_max [lindex $args $pos]
+					incr pos
+					puts "kb_file $kb_file kb_min $kb_min kb_max $kb_max"
+				}
 			}
 			"kal" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: missing value of local area coefficient kal"
 					break
 				}
-				set kal [lindex $args $pos]
-				incr pos
+				set val [lindex $args $pos]
+				if {[string is double $val] == 1} { 
+					# uniform kb for all edges
+					set kal $val
+					incr pos
+				} else { 
+					set kal_file $val
+					incr pos
+					set kal_min [lindex $args $pos]
+					incr pos
+					set kal_max [lindex $args $pos]
+					incr pos
+					puts "kal_file $kal_file kal_min $kal_min kal_max $kal_max"
+				}
 			}
 			"kag" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: missing value of global area coefficient kag"
 					break
 				}
 				set kag [lindex $args $pos]
@@ -341,7 +707,7 @@ proc oif_create_template { args } {
 			"kv" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: missing value of volume coefficient kv"
 					break
 				}
 				set kv [lindex $args $pos]
@@ -350,7 +716,7 @@ proc oif_create_template { args } {
 			"triangles-file" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: missing triangles-file"
 					break
 				}
 				set filenametriangles [lindex $args $pos]
@@ -359,19 +725,19 @@ proc oif_create_template { args } {
 			"stretch" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: expecting 3 coefficients for stretching of the object"
 					break
 				}
 				set stretch_X [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: expecting 3 coefficients for stretching of the object"
 					break
 				}
 				set stretch_Y [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: expecting 3 coefficients for stretching of the object"
 					break
 				}
 				set stretch_Z [lindex $args $pos]
@@ -380,7 +746,7 @@ proc oif_create_template { args } {
 		        "check" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: missing value for check_output"
 					break
 				}
 				set check_output [lindex $args $pos]
@@ -389,14 +755,14 @@ proc oif_create_template { args } {
 		        "template-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_create_template: missing template id"
 					break
 				}
 				set template_id [lindex $args $pos]
 				incr pos
 			}
 			default { 
-				puts "error" 
+				puts "error in oif_create_template: unknown keyword" 
 				set pos $n_args
 			}
 		}  
@@ -408,19 +774,19 @@ proc oif_create_template { args } {
 	if { $filenamenodes == "" } { set mandatory 0 }
 	if { $filenametriangles == "" } { set mandatory 0 }
 	if { $template_id == -1 } { set mandatory 0 }
-	
+
 	if { $mandatory == 0 } { 
 		puts "Something went wrong with mandatory arguments for template creator"  
 		return
 	}
-	
-#--------------------------------------------------------------------------------------------	
+
+#--------------------------------------------------------------------------------------------
 # checking whether correct template-id was given
 	if { $template_id != $oif_n_templates } {
 		puts "error: Cannot create a template with template_id $template_id,"
 		puts "	because either one such template already exists or the template_id does not follow consecutively."
 		puts "	The next available template_id is $oif_n_templates."
-		exit	
+		exit
 	}
 
 #--------------------------------------------------------------------------------------------
@@ -437,6 +803,7 @@ proc oif_create_template { args } {
 #--------------------------------------------------------------------------------------------
 # check: output all parameters:
 	puts "The following oif_template will be created:"
+	puts "	template-id: 	$template_id"
 	puts "	nodes-file: 	$filenamenodes"
 	puts "	triangles-file: $filenametriangles"
 	puts "	ks:		$ks"
@@ -461,19 +828,21 @@ proc oif_create_template { args } {
 			set mesh_nodes($mesh_nnodes,0) [expr $stretch_X*[lindex $line 0]]
 			set mesh_nodes($mesh_nnodes,1) [expr $stretch_Y*[lindex $line 1]]
 			set mesh_nodes($mesh_nnodes,2) [expr $stretch_Z*[lindex $line 2]]
-			
+
 			# mesh_nodes is a 2D-array with three coordinates for each node (each node is one line) 
 		        # node $X coordinate y is accessed by $mesh_nodes($X,1)
 			incr mesh_nnodes
 		        
-	        list temp_particle
-	        lappend temp_particle [expr $stretch_X*[lindex $line 0]]
-			lappend temp_particle [expr $stretch_Y*[lindex $line 1]]
-			lappend temp_particle [expr $stretch_Z*[lindex $line 2]]
-	        lappend oif_template_particles $temp_particle
-	        # update global variable
-	        set temp_particle [lreplace $temp_particle 0 2]
+	        list temp_node
+	        lappend temp_node [expr $stretch_X*[lindex $line 0]]
+		lappend temp_node [expr $stretch_Y*[lindex $line 1]]
+		lappend temp_node [expr $stretch_Z*[lindex $line 2]]
+	        
+		# update global variable
+		lappend oif_template_nodes $temp_node
+	        
 	        # clear list
+		set temp_node [lreplace $temp_node 0 2]
 		}	    
 	}
 
@@ -500,15 +869,15 @@ proc oif_create_template { args } {
 		        
 	        list temp_triangle
 	        lappend temp_triangle [lindex $line 0]
-			lappend temp_triangle [lindex $line 1]
-			lappend temp_triangle [lindex $line 2]
+		lappend temp_triangle [lindex $line 1]
+		lappend temp_triangle [lindex $line 2]
 	        lappend oif_template_triangles $temp_triangle
 	        # update global variable
 	        set temp_triangle [lreplace $temp_triangle 0 2]
 	        # clear list
 		}
 	}
-	
+
 #--------------------------------------------------------------------------------------------
 # check data extracted from input files:
 	puts "Data extracted from the input files:"
@@ -516,16 +885,16 @@ proc oif_create_template { args } {
 	puts "	ntriangles: 	$mesh_ntriangles"
 
 #--------------------------------------------------------------------------------------------
-# creating the list of edges	
+# creating the list of edges
 
 	set mesh_nedges 0
-	
+
 	for {set i 0} {$i < $mesh_ntriangles} {incr i} {
 	    # take a triangle and copy the nodes of the triangle to pa,pb,pc (point A, point B, point C)
 	    set pa $mesh_triangles($i,0)
 	    set pb $mesh_triangles($i,1)
 	    set pc $mesh_triangles($i,2)
-	    set is 0	
+	    set is 0
 
 	    for {set j 0} {$j < $mesh_nedges} {incr j} {
 		# Check if the edge AB or BA is in the current list of edges
@@ -589,8 +958,8 @@ proc oif_create_template { args } {
 	lappend template $mesh_ntriangles
 #-----------------------------------------------------------------------------------------
 # generating stretching force interactions 
-	lappend template $ks
-	if { $ks == 0.0} {
+	if { $ks_file != "" } { lappend template 1.0 } else { lappend template $ks }
+	if { $ks == 0.0 && $ks_file == "" } {
 	    set start_id_of_ks_interaction -1 
 	} else {
 	    set start_id_of_ks_interaction $oif_first_inter_id
@@ -598,7 +967,7 @@ proc oif_create_template { args } {
 	lappend template $start_id_of_ks_interaction
 
 	if { $ks != 0.0} {
-
+		# ks is uniform for all edges
 	    if {$check_output == 1} { 
 	       	set fpart [open $bondS "w"]
 	    }
@@ -610,13 +979,13 @@ proc oif_create_template { args } {
 
 	    set dist 0
 	    for {set i 0} {$i < $n_StrInter} {incr i} {
-		for {set k 0} {$k < 3} {incr k} {		
+		for {set k 0} {$k < 3} {incr k} {
 		    set p1($k) [expr $mesh_nodes($mesh_edges($i,0),$k)]
 		    set p2($k) [expr $mesh_nodes($mesh_edges($i,1),$k)]
 		}
 		# We need to compute the distance btw the vertices
 		set dist [expr sqrt(($p1(0)-$p2(0))*($p1(0)-$p2(0)) + ($p1(1)-$p2(1))*($p1(1)-$p2(1)) + ($p1(2)-$p2(2))*($p1(2)-$p2(2)))] 
-		inter [expr $start_id_of_ks_interaction + $i] stretching_force [format %e $dist] [format %e $ks]
+		inter [expr $start_id_of_ks_interaction + $i] stretchlin_force [format %e $dist] [format %e $ks]
 		if {$check_output == 1} { 
 		    puts $fpart "inter [expr $start_id_of_ks_interaction + $i] stretching_force [format %e $dist] [format %e $ks]"
 		}
@@ -624,12 +993,59 @@ proc oif_create_template { args } {
 	    if {$check_output == 1} { 
 		close $fpart	   
 	    }
-	}	
+	}
+	if { $ks_file != ""} {	
+		# ks is nonuniform
+	    if {$check_output == 1} { 
+	       	set fpart [open $bondS "w"]
+	    }
+
+	    puts "generating nonuniform stretching force interactions"
+	    #reading file containing edges weights
+		set fp [open $ks_file r]
+		set file_data [read $fp]
+		close $fp
+		set data [split $file_data "\n"]
+		set counter 0
+		foreach line $data {
+			if { [llength $line] == 1 } {
+				set ks_weight($counter) [lindex $line 0]
+				incr counter
+			}
+		}
+		if { $counter != $mesh_nedges } { 
+			puts "Error in creating interactions for ks-nonuniform. Number of lines in $ks_file not equal to number of edges. Exiting."
+			exit
+		}
+
+	    # Stretching is coupled to the edges   
+	    set n_StrInter $mesh_nedges
+	    set oif_first_inter_id [expr $oif_first_inter_id+$n_StrInter]
+
+	    set dist 0
+	    for {set i 0} {$i < $n_StrInter} {incr i} {
+			for {set k 0} {$k < 3} {incr k} {
+			    set p1($k) [expr $mesh_nodes($mesh_edges($i,0),$k)]
+			    set p2($k) [expr $mesh_nodes($mesh_edges($i,1),$k)]
+			}
+			# We need to compute the distance btw the vertices
+			set dist [expr sqrt(($p1(0)-$p2(0))*($p1(0)-$p2(0)) + ($p1(1)-$p2(1))*($p1(1)-$p2(1)) + ($p1(2)-$p2(2))*($p1(2)-$p2(2)))] 
+			set ks_coeff [expr $ks_min*(1 - $ks_weight($i)) + $ks_max*$ks_weight($i)]
+			inter [expr $start_id_of_ks_interaction + $i] stretchlin_force [format %e $dist] [format %e $ks_coeff]
+			if {$check_output == 1} { 
+			    puts $fpart "inter [expr $start_id_of_ks_interaction + $i] stretching_force [format %e $dist] [format %e $ks_coeff]"
+			}
+	    }
+	    if {$check_output == 1} { 
+		close $fpart	   
+	    }
+	}
 
 #-----------------------------------------------------------------------------------------
 # generating bending force interactions 
-	lappend template $kb
-	if { $kb == 0.0} {
+
+	if { $kb_file != "" } { lappend template 1.0 } else { lappend template $kb }
+	if { $kb == 0.0 && $kb_file == ""} {
 	    set start_id_of_kb_interaction -1 
 	} else {
 	    set start_id_of_kb_interaction $oif_first_inter_id
@@ -637,7 +1053,7 @@ proc oif_create_template { args } {
 	lappend template $start_id_of_kb_interaction
 
 	if { $kb != 0.0} {
-	
+
 	    if {$check_output == 1} { 
 	       	set fpart [open $bondB "w"]
 	    }
@@ -645,28 +1061,28 @@ proc oif_create_template { args } {
 	    set n_BenInter $mesh_nedges
 	    # Bending is coupled to the angles between triangles sharing the same edge
 	    set oif_first_inter_id [expr $oif_first_inter_id + $n_BenInter]
-	
+
 	    set phi 0.0
 	    for { set i 0} { $i < $n_BenInter} {incr i} { 
 			#Run over all edges
 			set p2id $mesh_edges($i,0)
 			#Put IDs of points to p2id,p3id
 			set p3id $mesh_edges($i,1) 
-			for { set k 0} {$k < 3} {incr k} {	
+			for { set k 0} {$k < 3} {incr k} {
 				#Put coordinates of the edges' points
 				set p2($k) $mesh_nodes($p2id,$k)
 				set p3($k) $mesh_nodes($p3id,$k)
 			}
-			
+
 			set detected 0
 				#Number of detected triangles with current edge common
 				# Algorithm is as follows: we run over all triangles and check whether two vertices are those from current edge. If we find such triangle, we put the ID of the third vertex to p1id and moreover we check if the orientation p1id, p2id p3id is the same as was in the triangle list (meaning, that we found one of the following three triples in the triangle list: p1id, p2id, p3id or p2id, p3id, p1id or p3id, p1id, p2id). If we have the same orientation, we set orient = 1, otherwise orient = -1.
 				# Then we go further looking for the second triangle. The second triangle should have the opposite orientation.
 				# The normal of the first triangle will be P1P2 x P1P3, of the second triangle will be P2P4 x P2P3
-			
+
 			set orient 0
 				# We have two different orientations. I set orientation to 1 if the first triangle is oriented p1id
-	
+
 			for { set k 0} { $k < $mesh_ntriangles} {incr k} { 
 				# Run over all triangles and determine the two triangles with the common current edge
 				if {$k < $mesh_ntriangles && $mesh_triangles($k,0) == $p2id && $mesh_triangles($k,1) == $p3id} {  
@@ -754,7 +1170,7 @@ proc oif_create_template { args } {
 			lappend P4 $mesh_nodes($p4id,0)
 			lappend P4 $mesh_nodes($p4id,1)
 			lappend P4 $mesh_nodes($p4id,2)
-	
+
 			list temp_incidence
 		        lappend temp_incidence $p1id
 			lappend temp_incidence $p2id
@@ -778,15 +1194,181 @@ proc oif_create_template { args } {
 			    puts $fpart "inter [expr $start_id_of_kb_interaction + $i] bending_force [format %e $phi] [format %e $kb]"
 			}
 		}
-	
+
 	    if {$check_output == 1} { 
 		close $fpart	   
 	    }
 	}
+	
+	if { $kb_file != ""} {
+
+	    if {$check_output == 1} { 
+	       	set fpart [open $bondB "w"]
+	    }
+	    puts "generating non-uniform bending force interactions"
+	    #reading file containing edges weights
+		set fp [open $kb_file r]
+		set file_data [read $fp]
+		close $fp
+		set data [split $file_data "\n"]
+		set counter 0
+		foreach line $data {
+			if { [llength $line] == 1 } {
+				set kb_weight($counter) [lindex $line 0]
+				incr counter
+			}
+		}
+		if { $counter != $mesh_nedges } { 
+			puts "Error in creating interactions for kb-nonuniform. Number of lines in $ks_file not equal to number of edges. Exiting."
+			exit
+		}
+	    set n_BenInter $mesh_nedges
+	    # Bending is coupled to the angles between triangles sharing the same edge
+	    set oif_first_inter_id [expr $oif_first_inter_id + $n_BenInter]
+
+	    set phi 0.0
+	    for { set i 0} { $i < $n_BenInter} {incr i} { 
+			#Run over all edges
+			set p2id $mesh_edges($i,0)
+			#Put IDs of points to p2id,p3id
+			set p3id $mesh_edges($i,1) 
+			for { set k 0} {$k < 3} {incr k} {
+				#Put coordinates of the edges' points
+				set p2($k) $mesh_nodes($p2id,$k)
+				set p3($k) $mesh_nodes($p3id,$k)
+			}
+
+			set detected 0
+				#Number of detected triangles with current edge common
+				# Algorithm is as follows: we run over all triangles and check whether two vertices are those from current edge. If we find such triangle, we put the ID of the third vertex to p1id and moreover we check if the orientation p1id, p2id p3id is the same as was in the triangle list (meaning, that we found one of the following three triples in the triangle list: p1id, p2id, p3id or p2id, p3id, p1id or p3id, p1id, p2id). If we have the same orientation, we set orient = 1, otherwise orient = -1.
+				# Then we go further looking for the second triangle. The second triangle should have the opposite orientation.
+				# The normal of the first triangle will be P1P2 x P1P3, of the second triangle will be P2P4 x P2P3
+
+			set orient 0
+				# We have two different orientations. I set orientation to 1 if the first triangle is oriented p1id
+
+			for { set k 0} { $k < $mesh_ntriangles} {incr k} { 
+				# Run over all triangles and determine the two triangles with the common current edge
+				if {$k < $mesh_ntriangles && $mesh_triangles($k,0) == $p2id && $mesh_triangles($k,1) == $p3id} {  
+					if {$detected == 0} { 
+							#if no triangle was detected
+						set p1id $mesh_triangles($k,2) 
+						set detected 1 
+						set orient 1
+					} else { 
+							# if already one triangle was detected - then also quit the k-loop
+						set p4id $mesh_triangles($k,2) 
+						set k $mesh_ntriangles
+					} 
+				}
+				if {$k < $mesh_ntriangles && $mesh_triangles($k,1) == $p2id && $mesh_triangles($k,2) == $p3id} {
+					 if {$detected == 0} {
+						 set p1id $mesh_triangles($k,0)
+						 set detected 1
+						 set orient 1
+					} else {
+						set p4id $mesh_triangles($k,0)
+						set k $mesh_ntriangles
+					}
+				}
+				if {$k < $mesh_ntriangles && $mesh_triangles($k,2) == $p2id && $mesh_triangles($k,0) == $p3id} {
+					 if {$detected == 0} {
+						 set p1id $mesh_triangles($k,1)
+						 set detected 1 
+						 set orient 1
+					} else {
+						set p4id $mesh_triangles($k,1)
+						set k $mesh_ntriangles
+					} 
+				}
+				if {$k < $mesh_ntriangles && $mesh_triangles($k,1) == $p2id && $mesh_triangles($k,0) == $p3id} {
+					 if {$detected == 0} {
+						 set p1id $mesh_triangles($k,2)
+						 set detected 1 
+						 set orient -1
+					 } else {
+						set p4id $mesh_triangles($k,2)
+						set k $mesh_ntriangles
+					}
+				}
+				if {$k < $mesh_ntriangles && $mesh_triangles($k,2) == $p2id && $mesh_triangles($k,1) == $p3id} {
+					 if {$detected == 0} {
+						 set p1id $mesh_triangles($k,0)
+						 set detected 1 
+						 set orient -1
+					} else {
+						set p4id $mesh_triangles($k,0)
+						set k $mesh_ntriangles
+					}
+				}
+				if {$k < $mesh_ntriangles && $mesh_triangles($k,0) == $p2id && $mesh_triangles($k,2) == $p3id} {
+					 if {$detected == 0} {
+						 set p1id $mesh_triangles($k,1)
+						 set detected 1 
+						 set orient -1
+					} else {
+						set p4id $mesh_triangles($k,1)
+						set k $mesh_ntriangles
+					}
+				}
+			}
+			if {$orient == 1} {
+				set tmp22 $p1id
+				set p1id $p4id
+				set p4id $tmp22
+			} 
+				#This is to have the correct orientation
+			list P1
+			lappend P1 $mesh_nodes($p1id,0)
+			lappend P1 $mesh_nodes($p1id,1)
+			lappend P1 $mesh_nodes($p1id,2)
+			list P2
+			lappend P2 $mesh_nodes($p2id,0)
+			lappend P2 $mesh_nodes($p2id,1)
+			lappend P2 $mesh_nodes($p2id,2)
+			list P3
+			lappend P3 $mesh_nodes($p3id,0)
+			lappend P3 $mesh_nodes($p3id,1)
+			lappend P3 $mesh_nodes($p3id,2)
+			list P4
+			lappend P4 $mesh_nodes($p4id,0)
+			lappend P4 $mesh_nodes($p4id,1)
+			lappend P4 $mesh_nodes($p4id,2)
+
+			list temp_incidence
+		        lappend temp_incidence $p1id
+			lappend temp_incidence $p2id
+			lappend temp_incidence $p3id
+			lappend temp_incidence $p4id
+		        lappend oif_template_bending_incidences $temp_incidence
+		        # update global variable
+		        set temp_incidence [lreplace $temp_incidence 0 3] 
+		        # clear list
+
+			angle_btw_triangles P1 P2 P3 P4 phi
+
+			# to replace lists with empty lists so they do not grow
+			set P1 [lreplace $P1 0 2]
+			set P2 [lreplace $P2 0 2]
+			set P3 [lreplace $P3 0 2]
+			set P4 [lreplace $P4 0 2]
+			
+			set kb_coeff [expr $kb_min*(1 - $kb_weight($i)) + $kb_max*$kb_weight($i)]
+			inter [expr $start_id_of_kb_interaction + $i] bending_force [format %e $phi] [format %e $kb_coeff]
+			if {$check_output == 1} { 
+			    puts $fpart "inter [expr $start_id_of_kb_interaction + $i] bending_force [format %e $phi] [format %e $kb_coeff]"
+			}
+		}
+
+	    if {$check_output == 1} { 
+		close $fpart	   
+	    }
+	}
+	
 #-----------------------------------------------------------------------------------------------
 # generation of local area force interactions
-	lappend template $kal
-	if { $kal == 0.0} {
+	if { $kal_file != "" } { lappend template 1.0 } else { lappend template $kal }
+	if { $kal == 0.0 && $kal_file == "" } {
 	    set start_id_of_kal_interaction -1 
 	} else {
 	    set start_id_of_kal_interaction $oif_first_inter_id
@@ -803,7 +1385,7 @@ proc oif_create_template { args } {
 	    set n_localAreaInter $mesh_ntriangles
 	    # Area is coupled to the triangles
 	    set oif_first_inter_id [expr $oif_first_inter_id + $n_localAreaInter]
-	
+
 	    set area 0.0
 	    for {set i 0} {$i < $n_localAreaInter} {incr i} {
 		for {set k 0} {$k < 3} {incr k} {
@@ -819,7 +1401,7 @@ proc oif_create_template { args } {
 		set P1 [lreplace $P1 0 2]
 		set P2 [lreplace $P2 0 2]
 		set P3 [lreplace $P3 0 2]
-			
+
 		inter [expr $start_id_of_kal_interaction + $i] area_force_local $area $kal
 		if {$check_output == 1} { 
 		    puts $fpart "inter [expr $start_id_of_kal_interaction + $i] area_force_local $area $kal"
@@ -829,11 +1411,67 @@ proc oif_create_template { args } {
 		close $fpart	   
 	    }
 	}
+	if {$kal_file != ""} {
+
+	    if {$check_output == 1} { 
+	       	set fpart [open $bondAlocal "w"]
+	    }
+
+	    puts "generating local area force interactions"
+	    #reading file containing edges weights
+		set fp [open $kal_file r]
+		set file_data [read $fp]
+		close $fp
+		set data [split $file_data "\n"]
+		set counter 0
+		foreach line $data {
+			if { [llength $line] == 1 } {
+				set kal_weight($counter) [lindex $line 0]
+				incr counter
+			}
+		}
+		if { $counter != $mesh_ntriangles } { 
+			puts "Error in creating interactions for kal-nonuniform. Number of lines in $kal_file not equal to number of triangles. Exiting."
+			exit
+		}
+
+	    set n_localAreaInter $mesh_ntriangles
+	    # Area is coupled to the triangles
+	    set oif_first_inter_id [expr $oif_first_inter_id + $n_localAreaInter]
+
+	    set area 0.0
+	    for {set i 0} {$i < $n_localAreaInter} {incr i} {
+		for {set k 0} {$k < 3} {incr k} {
+		    list P1
+		    lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
+		    list P2
+		    lappend P2 $mesh_nodes($mesh_triangles($i,1),$k)
+		    list P3
+		    lappend P3 $mesh_nodes($mesh_triangles($i,2),$k)
+		}
+		set area [area_triangle P1 P2 P3]
+		# to replace lists with empty lists so they do not grow
+		set P1 [lreplace $P1 0 2]
+		set P2 [lreplace $P2 0 2]
+		set P3 [lreplace $P3 0 2]
+
+		set kal_coeff [expr $kal_min*(1 - $kal_weight($i)) + $kal_max*$kal_weight($i)]
+		inter [expr $start_id_of_kal_interaction + $i] area_force_local $area $kal_coeff
+		if {$check_output == 1} { 
+		    puts $fpart "inter [expr $start_id_of_kal_interaction + $i] area_force_local $area $kal_coeff"
+		}
+	    }
+	    if {$check_output == 1} { 
+		close $fpart	   
+	    }
+	}
+
 #--------------------------------------------------------------------------------------------
 # generation of global area force interactions
 	lappend template $kag
 	if { $kag == 0.0} {
-	    set start_id_of_kag_interaction -1 
+	    set start_id_of_kag_interaction -1
+	    set gl_area -1
 	} else {
 	    set start_id_of_kag_interaction $oif_first_inter_id
 	}
@@ -848,12 +1486,12 @@ proc oif_create_template { args } {
 	    puts "generating global area force interactions"
 	    set n_globalAreaInter 1
 	    set oif_first_inter_id [expr $oif_first_inter_id + $n_globalAreaInter]
-	
+
 	    set area 0.0
 	    set gl_area 0.0
 
 	    for {set i 0} {$i < $mesh_ntriangles} {incr i} {
-		for {set k 0} {$k < 3} {incr k} {		
+		for {set k 0} {$k < 3} {incr k} {
 		    list P1
 		    lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
 		    list P2
@@ -874,11 +1512,12 @@ proc oif_create_template { args } {
 		close $fpart
 	    }
 	}
-#--------------------------------------------------------------------------------------------	
+#--------------------------------------------------------------------------------------------
 # generation of volume force interactions
 	lappend template $kv
 	if { $kv == 0.0} {
-	    set start_id_of_kv_interaction -1 
+	    set start_id_of_kv_interaction -1
+	    set volume -1
 	} else {
 	    set start_id_of_kv_interaction $oif_first_inter_id
 	}
@@ -893,7 +1532,7 @@ proc oif_create_template { args } {
 	    puts "generating volume force interactions"
 	    set n_VolumeInter 1
 	    set oif_first_inter_id [expr $oif_first_inter_id + $n_VolumeInter]
-	
+
 	    set area 0.0
 	    set volume 0.0 
 	    set hz 0.0
@@ -901,9 +1540,9 @@ proc oif_create_template { args } {
 	    set dn 0.0
 	    set drmax 0.0
 	    set drtemp 0.0
-		
+
 	    for {set i 0} {$i < $mesh_ntriangles} {incr i} {
-		for {set k 0} {$k < 3} {incr k} {		
+		for {set k 0} {$k < 3} {incr k} {
 		    list P1
 		    lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
 		    list P2
@@ -926,7 +1565,7 @@ proc oif_create_template { args } {
 		set drtemp [expr sqrt(($P10 - $P30)*($P10 - $P30) + ($P11 - $P31)*($P11 - $P31) + ($P12 - $P32)*($P12 - $P32))]
 		# distance P1P3
 		if {$drmax < $drtemp} { set drmax $drtemp }
-			
+
 		set area [area_triangle P1 P2 P3]
 		get_n_triangle P1 P2 P3 norm
 		set norm0 [lindex $norm 0]
@@ -948,16 +1587,19 @@ proc oif_create_template { args } {
 	    }
 	}
 
+
 #--------------------------------------------------------------------------------------------
-# update global oif-variables        
+# update global oif-variables
+	lappend template $gl_area
+	lappend template $volume
 	lappend oif_templates $template
 	incr oif_n_templates
 } 
 
 #--------------------------------------------------------------------------------------------
 proc oif_add_object { args } {
-	
-# access global variables defined in init_objects_in_fluid
+
+# access global variables
 	global oif_n_objects
 	global oif_n_templates
 	global oif_first_bond_id
@@ -967,7 +1609,7 @@ proc oif_add_object { args } {
 	global oif_nparticles
 	global oif_ntriangles
 	global oif_nedges
-	global oif_template_particles
+	global oif_template_nodes
 	global oif_template_edges
 	global oif_template_triangles
 	global oif_template_bending_incidences
@@ -981,7 +1623,7 @@ proc oif_add_object { args } {
 		incr n_args
 	}
 	if { $n_args == 0 } {
-		puts "Mandatory arguments are object template, origin, particle type, particle mol"
+		puts "Mandatory arguments are object-id, object template, origin, particle type"
 		return 0
 	}
 
@@ -1006,7 +1648,7 @@ proc oif_add_object { args } {
 			"mass" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_add_object: missing particle mass"
 					break
 				}
 				set part_mass [lindex $args $pos]
@@ -1015,7 +1657,7 @@ proc oif_add_object { args } {
 			"object-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_add_object: missing object-id"
 					break
 				}
 				set object_id [lindex $args $pos]
@@ -1025,7 +1667,7 @@ proc oif_add_object { args } {
 			"part-type" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_add_object: missing part-type"
 					break
 				}
 				set part_type [lindex $args $pos]
@@ -1034,7 +1676,7 @@ proc oif_add_object { args } {
 			"template-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_add_object: missing template-id"
 					break
 				}
 				set template_id [lindex $args $pos]
@@ -1043,19 +1685,19 @@ proc oif_add_object { args } {
 			"rotate" {
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error rot 1"
+					puts "error in oif_add_object: rotation input incorrect - 3 angles in radians expected"
 					break
 				}
 				set rotate_X [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error rot 2"
+					puts "error in oif_add_object: rotation input incorrect - 3 angles in radians expected"
 					break
 				}
 				set rotate_Y [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error rot 3"
+					puts "error in oif_add_object: rotation input incorrect - 3 angles in radians expected"
 					break
 				}
 				set rotate_Z [lindex $args $pos]
@@ -1064,19 +1706,19 @@ proc oif_add_object { args } {
 			"origin" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error origin 1"
+					puts "error in oif_add_object: origin input incorrect - 3 coordinates expected"
 					break
 				}
 				set origin_X [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error  origin 1"
+					puts "error in oif_add_object: origin input incorrect - 3 coordinates expected"
 					break
 				}
 				set origin_Y [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error  origin 1"
+					puts "error in oif_add_object: origin input incorrect - 3 coordinates expected"
 					break
 				}
 				set origin_Z [lindex $args $pos]
@@ -1085,14 +1727,14 @@ proc oif_add_object { args } {
 			"check" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error check"
+					puts "error in oif_add_object: output file name expected for check"
 					break
 				}
 				set check_output [lindex $args $pos]
 				incr pos
 			}
 			default { 
-				puts "error default" 
+				puts "error in oif_add_object: incorrect option" 
 				set pos $n_args
 			}
 		}  
@@ -1102,25 +1744,25 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # checking wheter all mandatory arguments have been given
 	set mandatory 1
-	if { $origin_X == 0 &&  $origin_Y == 0 &&  $origin_Z == 0 } { set mandatory 0 }
+	if { $origin_X == 0 && $origin_Y == 0 && $origin_Z == 0 } { set mandatory 0 }
 	if { $part_type == "-1" } { set mandatory 0 }
 	if { $template_id == "-1" } { set mandatory 0 }
 	if { $object_id == "-1" } { set mandatory 0 }
-	
+
 	if { $mandatory == 0 } { 
 		puts "Something went wrong with mandatory arguments for creating object" 
 		return
 	}
-	
-#--------------------------------------------------------------------------------------------	
+
+#--------------------------------------------------------------------------------------------
 # checking whether correct object-id has been given
 	if { $object_id != $oif_n_objects } {
 		puts "error: Cannot create an object with object_id $object_id,"
 		puts "	because either one such object already exists or the object_id does not follow consecutively."
 		puts "	The next available object_id is $oif_n_objects."
-		exit	
+		exit
 	}
-	
+
 #--------------------------------------------------------------------------------------------
 # set files for output check
 	if {$check_output == 1} {
@@ -1135,6 +1777,7 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # Check: output all parameters:
 	puts "The following oif_object will be created:"
+	puts "	object_id       $object_id"
 	puts "	template_id:	$template_id"
 	puts "	mass:	 	$part_mass"
 	puts "	particle_type: 	$part_type"
@@ -1151,14 +1794,14 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # find and read the template for the given object
 
- 	# there are 13 elements in one row of oif_templates:
-	# nnodes, nparticles, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter
+ 	# there are 15 elements in one row of oif_templates:
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
 	# get the data form oif_templates list
 	set template [lindex $oif_templates $template_id]
-	
+
 	set mesh_nnodes [lindex $template 0]
 	set mesh_nedges [lindex $template 1]
-	set mesh_ntriangles [lindex $template 2]	
+	set mesh_ntriangles [lindex $template 2]
 
 	set start_id_of_ks_interactions [lindex $template 4]
 	set start_id_of_kb_interactions [lindex $template 6]
@@ -1169,23 +1812,25 @@ proc oif_add_object { args } {
 	set start_id_of_particles 0
 	set start_id_of_edges 0
 	set start_id_of_triangles 0
+	set start_id_of_bending_incidences 0
 	for {set i 0} {$i < $template_id} {incr i} {
 	    set start_id_of_particles [expr $start_id_of_particles + [lindex [lindex $oif_templates $i] 0]]
 	    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
 	    set start_id_of_triangles [expr $start_id_of_triangles + [lindex [lindex $oif_templates $i] 2]]
+	    if { [lindex [lindex $oif_templates $i] 5] != 0.0 } {
+		set start_id_of_bending_incidences [expr $start_id_of_bending_incidences + [lindex [lindex $oif_templates $i] 1]]
+	    }
 	}
-	set start_id_of_bending_incidences $start_id_of_edges
 	 
  	# recover particles of the given template  
 	for {set i 0} {$i < $mesh_nnodes} {incr i} {
-	    set node_triplet [lindex $oif_template_particles [expr $start_id_of_particles+$i]]
+	    set node_triplet [lindex $oif_template_nodes [expr $start_id_of_particles+$i]]
 	    set mesh_nodes($i,0) [lindex $node_triplet 0] 
 	    set mesh_nodes($i,1) [lindex $node_triplet 1]
 	    set mesh_nodes($i,2) [lindex $node_triplet 2]	    
 	}
 
 	# recover triangles of the given template
-
 	for {set i 0} {$i < $mesh_ntriangles} {incr i} {
 	    set triangle_triplet [lindex $oif_template_triangles [expr $start_id_of_triangles+$i]]
 	    set mesh_triangles($i,0) [lindex $triangle_triplet 0]
@@ -1200,10 +1845,11 @@ proc oif_add_object { args } {
 	    set mesh_edges($i,1) [lindex $edge_pair 1]
 	}
 
-	# recover bending incidences of the given template	
+	# recover bending incidences of the given template
 	# template data:
-	# nnodes, nparticles, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
 	set kb_from_template [lindex $template 5]
+
 	if { $kb_from_template != 0.0 } {
 		for {set i 0} {$i < $mesh_nedges} {incr i} {
 		    set bending_quartet [lindex $oif_template_bending_incidences [expr $start_id_of_bending_incidences+$i]]
@@ -1213,6 +1859,50 @@ proc oif_add_object { args } {
 		    set bending_incidences($i,3) [lindex $bending_quartet 3]
 		}
 	}
+#--------------------------------------------------------------------------------------------
+# determination of indices of mesh points that are extremal. Basically, this serves for approximate position of an object
+
+	set xmin 100000
+	set xmax -100000
+	set ymin 100000
+	set ymax -100000
+	set zmin 100000
+	set zmax -100000
+	set xminID -1
+	set xmaxID -1
+	set yminID -1
+	set ymaxID -1
+	set zminID -1
+	set zmaxID -1
+	
+	for {set ii 0 } { $ii < $mesh_nnodes } { incr ii } {
+		if { $mesh_nodes($ii,0) > $xmax } { 
+			set xmax $mesh_nodes($ii,0) 
+			set xmaxID $ii
+		}
+		if { $mesh_nodes($ii,0) < $xmin } { 
+			set xmin $mesh_nodes($ii,0) 
+			set xminID $ii
+		}
+		if { $mesh_nodes($ii,1) > $ymax } { 
+			set ymax $mesh_nodes($ii,1) 
+			set ymaxID $ii
+		}
+		if { $mesh_nodes($ii,1) < $ymin } { 
+			set ymin $mesh_nodes($ii,1) 
+			set yminID $ii
+		}
+		if { $mesh_nodes($ii,2) > $zmax } { 
+			set zmax $mesh_nodes($ii,2) 
+			set zmaxID $ii
+		}
+		if { $mesh_nodes($ii,2) < $zmin } { 
+			set zmin $mesh_nodes($ii,2) 
+			set zminID $ii
+		}
+	}
+	lappend object_data [list $xminID $xmaxID $yminID $ymaxID $zminID $zmaxID]
+
 #--------------------------------------------------------------------------------------------
 # some variables for rotation
 	set ca [expr cos($rotate_X)];
@@ -1225,12 +1915,12 @@ proc oif_add_object { args } {
 	set rotation(0,1) [expr $sa * $sb * $cc - $ca * $sc]
 	set rotation(0,2) [expr $sc * $sa + $cc * $sb * $ca]
 	set rotation(1,0) [expr $cb * $sc]
-	set rotation(1,1) [expr $ca * $cc - $sa * $sb * $sc ]
+	set rotation(1,1) [expr $ca * $cc + $sa * $sb * $sc ]
 	set rotation(1,2) [expr $sc * $sb * $ca - $cc * $sa]
 	set rotation(2,0) [expr -$sb]
 	set rotation(2,1) [expr $cb * $sa ]
 	set rotation(2,2) [expr $ca * $cb  ]
-	
+
 # rotation of nodes:
  	for {set i 0} {$i < $mesh_nnodes} {incr i} {
 		set xx [discard_epsilon [expr $rotation(0,0)*$mesh_nodes($i,0) + $rotation(0,1)*$mesh_nodes($i,1) + $rotation(0,2)*$mesh_nodes($i,2)]]
@@ -1241,6 +1931,7 @@ proc oif_add_object { args } {
 		set mesh_nodes($i,1) $yy;
 		set mesh_nodes($i,2) $zz;
 	}
+
 #--------------------------------------------------------------------------------------------
 # shift to origin:
 	for {set i 0} {$i < $mesh_nnodes} {incr i} {
@@ -1249,18 +1940,20 @@ proc oif_add_object { args } {
 		set mesh_nodes($i,2) [expr $mesh_nodes($i,2) + $origin_Z]
 	}
 
-#--------------------------------------------------------------------------------------------  	
+#--------------------------------------------------------------------------------------------  
+
+#--------------------------------------------------------------------------------------------  
 #
 #
 #         ESPRESSO object creation
-#	
-# 	
+#
+# 
 #--------------------------------------------------------------------------------------------
 # generating particles:
 	puts "generating particles"
 	if {$check_output == 1} { set f [open $createPart "w"] }
 	set i $oif_first_part_id
-	
+
 	# remember where this object's particles start:
 	lappend oif_object_starting_particles $oif_first_part_id
 
@@ -1274,7 +1967,7 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # generation of stretching force bonds:
 	# template data
-	# nnodes, nparticles, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
 	set ks_from_template [lindex $template 3]
 	if { $ks_from_template != 0.0 } {
 		if {$check_output == 1} { 
@@ -1298,43 +1991,43 @@ proc oif_add_object { args } {
 	    }
 	}
 
-#--------------------------------------------------------------------------------------------		
+#--------------------------------------------------------------------------------------------
 # generation of bending force bonds:
 	# template data
-	# nnodes, nparticles, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
 	set kb_from_template [lindex $template 5]
 	if { $kb_from_template != 0.0 } {
 		if {$check_output == 1} { 
 		    set fpart [open $partB "w"]
 		}
-			
+
 		puts "generating bending force bonds"
 		set firstID_BenInter $start_id_of_kb_interactions
 		set n_BenBond $mesh_nedges
 		# Bending is coupled to the angles between triangles sharing the same edge
 		set oif_first_bond_id [expr $oif_first_bond_id + $n_BenBond]
-		
+
 		for {set i 0} {$i < $n_BenBond} {incr i} {
-	
+
 		    set firstPartId [expr $oif_first_part_id - $mesh_nnodes]
-	
+
 		    part [expr $bending_incidences($i,1) + $firstPartId] bond [expr $firstID_BenInter + $i] [expr $bending_incidences($i,0) + $firstPartId] [expr $bending_incidences($i,2) + $firstPartId] [expr $bending_incidences($i,3) + $firstPartId]
-	
+
 		    if {$check_output == 1} { 
 			puts $fpart "part [expr $bending_incidences($i,1) + $firstPartId] bond [expr $firstID_BenInter + $i] [expr $bending_incidences($i,0) + $firstPartId] [expr $bending_incidences($i,2) + $firstPartId] [expr $bending_incidences($i,3) + $firstPartId]"
 		    }
 		}
 		if {$check_output == 1} { 
-		    close $fpart	
+		    close $fpart
 		}
 	}
 #--------------------------------------------------------------------------------------------
 # generation of local area force bonds
 	# template data
-	# nnodes, nparticles, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
 	set kal_from_template [lindex $template 7]
 	if { $kal_from_template != 0.0 } {
-	
+
 		if {$check_output == 1} { 
 			set fpart [open $partAlocal "w"]
 		}
@@ -1343,7 +2036,7 @@ proc oif_add_object { args } {
 		set n_localAreaBond $mesh_ntriangles
 		# Area is coupled to the triangles
 		set oif_first_bond_id [expr $oif_first_bond_id + $n_localAreaBond]
-		
+
 	       	for {set i 0} {$i < $n_localAreaBond} {incr i} {
 		    set firstPartId [expr $oif_first_part_id - $mesh_nnodes]
 		    part [expr $mesh_triangles($i,0) + $firstPartId] bond [expr $firstID_localAreaInter + $i] [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) + $firstPartId]
@@ -1358,10 +2051,10 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # generation of global area force bonds
 	# template data
-	# nnodes, nparticles, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
 	set kag_from_template [lindex $template 9]
 	if { $kag_from_template != 0.0 } {
-	
+
 		if {$check_output == 1} { 
 		    set fpart [open $partAglobal "w"]
 	       	}
@@ -1369,7 +2062,7 @@ proc oif_add_object { args } {
 		set firstID_globalAreaInter $start_id_of_kag_interactions
 		set n_globalAreaBond 1
 		set oif_first_bond_id [expr $oif_first_bond_id + $n_globalAreaBond]
-	
+
 		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
 		    set firstPartId [expr $oif_first_part_id - $mesh_nnodes]
 		    if {$check_output == 1} { 
@@ -1381,10 +2074,10 @@ proc oif_add_object { args } {
 		    close $fpart
 	       	}
 	}
-#--------------------------------------------------------------------------------------------	
+#--------------------------------------------------------------------------------------------
 # generation of volume force bonds
 	# template data
-	# nnodes, nparticles, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
 	set kv_from_template [lindex $template 11]
 	if { $kv_from_template != 0.0 } {
 		if {$check_output == 1} { 
@@ -1394,7 +2087,7 @@ proc oif_add_object { args } {
 		set firstID_VolumeInter $start_id_of_kv_interactions
 		set n_VolumeBond 1
 		set oif_first_bond_id [expr $oif_first_bond_id + $n_VolumeBond]
-		
+
 		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
 		    set firstPartId [expr $oif_first_part_id - $mesh_nnodes]
 		    if {$check_output == 1} { 
@@ -1403,26 +2096,249 @@ proc oif_add_object { args } {
 		    part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_VolumeInter [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) +$firstPartId]
 		}
 		if {$check_output == 1} { 
-		    close $fpart		
+		    close $fpart
 		}
 	}
-#--------------------------------------------------------------------------------------------	
+
+#--------------------------------------------------------------------------------------------
 # update global oif-variables
 	incr oif_n_objects
 	lappend oif_nparticles $mesh_nnodes
 	lappend oif_ntriangles $mesh_ntriangles
 	lappend oif_nedges $mesh_nedges
 	lappend oif_objects $object_data
+}
+
+proc oif_template_change { args } {
+	# access global variables
+	global oif_templates
 	
+	set n_args 0
+		# counts the number of arguments
+	foreach arg $args {
+		incr n_args
+	}
+	if { $n_args == 0 } {
+		puts "Mandatory argument is: template ID"
+		return 0
+	}
+
+	set template_id -1
+	set surface_perc 0
+	set ks_perc 0
+	set kal_perc 0
+	set kag_perc 0
+	set kv_perc 0
+	
+	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
+	set pos 0
+	while { $pos < $n_args } {
+		switch [lindex $args $pos] {
+			"surface" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error: oif_template_change expects a value for change of surface"
+					break
+				}
+				set surface_perc [lindex $args $pos]
+				incr pos
+			}
+			"ks-length" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error: oif_template_change expects a value for change of stretching interactions"
+					break
+				}
+				set ks_perc [lindex $args $pos]
+				incr pos
+			}
+			"kal-area" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error: oif_template_change expects a value for change of local area interactions"
+					break
+				}
+				set kal_perc [lindex $args $pos]
+				incr pos
+			}
+			"kag-area" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error: oif_template_change expects a value for change of global area interaction"
+					break
+				}
+				set kag_perc [lindex $args $pos]
+				incr pos
+			}
+			"kv-volume" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error: oif_template_change expects a value for change of volume interaction"
+					break
+				}
+				set kv_perc [lindex $args $pos]
+				incr pos
+			}
+			"template-id" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error: oif_template_change expects template-id"
+					break
+				}
+				set template_id [lindex $args $pos]
+				incr pos
+			}
+			default { 
+				puts "error: unknown keyword for oif_template_change" 
+				set pos $n_args
+			}
+		}  
+	}
+
+# checking whether all mandatory arguments have been given
+	set mandatory 1
+	if { $template_id == -1 } { set mandatory 0 }
+
+	if { $mandatory == 0 } { 
+		puts "Something went wrong with mandatory arguments for oif_template_change" 
+		return
+	}
+	
+	set template [lindex $oif_templates $template_id]
+	
+	# changing the stretching interactions for the given template
+	if { $ks_perc != 0 } {
+# template data
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	    # change cannot be too large (biological cells break at ~4% surface change) 
+	    if { [expr abs($ks_perc) > 2] } {
+		puts "oif_template_change: warning: change of stretching interactions might be too large"
+	    }
+	    set nedges [lindex $template 1]
+	    set start_id_of_ks_interaction [lindex $template 4]
+	    puts "	changing stretching interactions of template $template_id"
+	    for {set i 0} {$i < $nedges} {incr i} {
+		# read existing stretching interaction
+		set old_inter [inter [expr $start_id_of_ks_interaction + $i]]
+		set ks [lindex $old_inter 3]
+		set old_dist [lindex $old_inter 2]
+		# compute new relaxed length
+		set dist [expr (1+0.01*$ks_perc)*$old_dist]
+		# write new stretching interaction
+		inter [expr $start_id_of_ks_interaction + $i] stretching_force [format %e $dist] [format %e $ks]
+	    }
+	}
+	
+	# changing the local area interactions for the given template
+	if { $kal_perc != 0 } {
+# template data
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	    if { [expr abs($kal_perc) > 4] } {
+		puts "oif_template_change: warning: change of local area interactions might be too large"
+	    }
+	    set ntriangles [lindex $template 2]
+	    set start_id_of_kal_interaction [lindex $template 8]
+	    puts "	changing local area interactions of template $template_id"
+	    for {set i 0} {$i < $ntriangles} {incr i} {
+		# read existing stretching interaction
+		set old_inter [inter [expr $start_id_of_kal_interaction + $i]]
+		set kal [lindex $old_inter 3]
+		set old_area [lindex $old_inter 2]
+		# compute new relaxed area
+		set area [expr (1+0.01*$kal_perc)*$old_area]
+		# write new local area interaction
+		inter [expr $start_id_of_kal_interaction + $i] area_force_local [format %e $area] [format %e $kal]
+	    }
+	}
+	
+	# changing the global area interaction for the given template
+	if { $kag_perc != 0 } {
+# template data
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	    if { [expr abs($kag_perc) > 4] } {
+		puts "oif_template_change: warning: change of global area might be too large"
+	    }
+	    set kag [lindex $template 9]
+	    set kag_inter_id [lindex $template 10]
+	    set orig_surface [lindex $template 13]
+
+	    puts "	changing global area interaction of template $template_id"
+	    set new_surface [expr (1+0.01*$kag_perc)*$orig_surface]
+	    inter $kag_inter_id area_force_global $new_surface $kag
+	    lset oif_templates $template_id 13 $new_surface
+	}
+	
+	# changing the volume for the given template
+	if { $kv_perc != 0 } {
+# template data
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	    if { [expr abs($kv_perc) > 8] } {
+		puts "oif_template_change: warning: change of global volume might be too large"
+	    }
+	    set kv [lindex $template 11]
+	    set kv_inter_id [lindex $template 12]
+	    set orig_volume [lindex $template 14]
+		
+	    puts "	changing volume interaction of template $template_id"
+	    set new_volume [expr (1+0.01*$kv_perc)*$orig_volume]
+	    inter $kv_inter_id volume_force $new_volume $kv
+	    lset oif_templates $template_id 14 $new_volume
+	}
+	
+# changing the surface for the given template (includes change of stretching, local area and global area)
+	if { $surface_perc != 0 } {
+# template data
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	    set kag [lindex $template 9]
+	    set kag_inter_id [lindex $template 10]
+	    set orig_surface [lindex $template 13]
+		
+	    # surface change cannot be too large (biological cells break at ~4% surface change) 
+	    if { [expr abs($surface_perc) > 3] } {
+		puts "oif_template_change: warning: new surface should not differ by more than 3% from the old"
+	    }
+		
+	    puts "	changing surface interaction of template $template_id"
+	    set new_surface [expr (1+0.01*$surface_perc)*$orig_surface]
+	    inter $kag_inter_id area_force_global $new_surface $kag
+		
+	    # also stretching and local area interactions will be changed
+	    set stretching_factor [expr sqrt(1+0.01*$surface_perc)]
+	    set nedges [lindex $template 1]
+	    set start_id_of_ks_interaction [lindex $template 4]
+	    puts "	changing stretching interactions of template $template_id"
+	    for {set i 0} {$i < $nedges} {incr i} {
+		# read existing stretching interaction
+		set old_inter [inter [expr $start_id_of_ks_interaction + $i]]
+		set ks [lindex $old_inter 3]
+		set old_dist [lindex $old_inter 2]
+		# compute new relaxed length
+		set dist [expr $stretching_factor*$old_dist]
+		# write new stretching interaction
+		inter [expr $start_id_of_ks_interaction + $i] stretching_force [format %e $dist] [format %e $ks]
+	    }
+	    set ntriangles [lindex $template 2]
+	    set start_id_of_kal_interaction [lindex $template 8]
+	    puts "	changing local area interactions of template $template_id"
+	    for {set i 0} {$i < $ntriangles} {incr i} {
+		# read existing local area interaction
+		set old_inter [inter [expr $start_id_of_kal_interaction + $i]]
+		set kal [lindex $old_inter 3]
+		set old_area [lindex $old_inter 2]
+		# compute new relaxed local area
+		set area [expr (1+0.01*$surface_perc)*$old_area]
+		# write new local area interaction
+		inter [expr $start_id_of_kal_interaction + $i] area_force_local [format %e $area] [format %e $kal]
+	    } 
+	}
 }
 
 proc oif_object_set { args } {
-	# acces global variables defined in init_objects_in_fluid.tcl:
+	# access global variables
 	global oif_n_objects
 	global oif_nparticles
 	global oif_ntriangles
 	global oif_nedges
-	global oif_triangles
 	global oif_firstBondId
 	global oif_firstPartId
 	global oif_objects
@@ -1435,15 +2351,17 @@ proc oif_object_set { args } {
 		incr n_args
     }
 	if { $n_args == 0 } {
-		puts "Mandatory arguments are: object's ID (id)"
+		puts "Mandatory arguments are: object's ID"
 		return 0
 	}
-	
+
 	set objectID -1
 	set force 0
+	set velocity 0
 	set mesh_nodes_file ""
 	set origin 0
 	set kill_motion 0
+	set un_kill_motion 1
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
     while { $pos < $n_args } {
@@ -1469,6 +2387,28 @@ proc oif_object_set { args } {
 				set forceZ [lindex $args $pos]
 				incr pos
 				set force 1
+			}
+			"velocity" {
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error"
+					break
+				}
+				set velX [lindex $args $pos]
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error"
+					break
+				}
+				set velY [lindex $args $pos]
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error"
+					break
+				}
+				set velZ [lindex $args $pos]
+				incr pos
+				set velocity 1
 			}
 			"origin" {
 				incr pos
@@ -1505,6 +2445,10 @@ proc oif_object_set { args } {
 				incr pos
 				set kill_motion 1
 			}
+			"un-kill-motion" {  
+				incr pos
+				set un_kill_motion 1
+			}
 			"object-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
@@ -1524,9 +2468,9 @@ proc oif_object_set { args } {
 # checking whether all mandatory arguments have been given
 	set mandatory 1
 	if { $objectID == -1 } { set mandatory 0 }
-	
+
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for print_oif_object" 
+		puts "Something went wrong with mandatory arguments for oif_object_set" 
 		return
 	}
 
@@ -1539,15 +2483,31 @@ proc oif_object_set { args } {
 		}
 	}
 
+	if { $velocity == 1} {
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			part $iii v $velX $velY $velZ
+		}
+	}
+
 	if { $kill_motion == 1} {
 		set firstPartId [lindex $oif_object_starting_particles $objectID]
 		set nnode [lindex $oif_nparticles $objectID]
 		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
-			part $iii fix
+			part $iii fix 1 1 1
 		}
 	}
 
-	
+	if { $un_kill_motion == 1} {
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			part $iii unfix
+		}
+	}
+
+
 	if { $mesh_nodes_file != ""} {
 		# first find the current center of the object
 		set centerX 0
@@ -1570,14 +2530,14 @@ proc oif_object_set { args } {
 		set file_data [read $fp]
 		close $fp
 		set data [split $file_data "\n"]
-		
+
 		set n_lines 0
 		foreach line $data {
 			if { [llength $line] == 3 } {
 				incr n_lines
 			}
 		}
-		
+
 		if { $n_lines == $nnode } {
 			set iii $firstPartId
 			foreach line $data {
@@ -1620,19 +2580,15 @@ proc oif_object_set { args } {
 			part $iii pos $newposX $newposY $newposZ
 		}
 	}
-
-
-	
 }
 
 
 proc oif_object_output { args } {
-	# acces global variables defined in init_objects_in_fluid.tcl:
+	# acces global variables:
 	global oif_n_objects
 	global oif_nparticles
 	global oif_ntriangles
 	global oif_nedges
-	global oif_triangles
 	global oif_object_starting_particles
 	global oif_firstBondId
 	global oif_firstPartId
@@ -1640,7 +2596,7 @@ proc oif_object_output { args } {
 	global oif_objects
 	global oif_template_starting_triangles
 	global oif_template_triangles
-	
+
 	set n_args 0
 		# counts the number of arguments
 	foreach arg $args {
@@ -1650,9 +2606,10 @@ proc oif_object_output { args } {
 		puts "Mandatory arguments are: object's ID (id)"
 		return 0
 	}
-	
+
 	set objectID -1
 	set vtk_pos_file ""
+	set vtk_pos_folded_file ""
 	set vtk_aff_file ""
 	set mesh_nodes_file ""
 
@@ -1663,16 +2620,34 @@ proc oif_object_output { args } {
 			"vtk-pos" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_object_output: missing output file for writing current positions"
 					break
 				}
 				set vtk_pos_file [lindex $args $pos]
 				incr pos
 			}
+			"vtk-pos-folded" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_object_output: missing output file for writing current positions"
+					break
+				}
+				set vtk_pos_folded_file [lindex $args $pos]
+				incr pos
+			}
+			"vtk-aff" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_object_output: missing output file for writing affinity bonds"
+					break
+				}
+				set vtk_aff_file [lindex $args $pos]
+				incr pos
+			}
 			"mesh-nodes" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_object_output: missing output file for writing mesh nodes"
 					break
 				}
 				set mesh_nodes_file [lindex $args $pos]
@@ -1681,14 +2656,14 @@ proc oif_object_output { args } {
 			"object-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_object_output: missing object-id"
 					break
 				}
 				set objectID [lindex $args $pos]
 				incr pos
 			}
 			default { 
-				puts "error rets" 
+				puts "error in oif_object_output: incorrect keyword" 
 				set pos $n_args
 			}
 		}  
@@ -1697,9 +2672,9 @@ proc oif_object_output { args } {
 # checking whether all mandatory arguments have been given
 	set mandatory 1
 	if { $objectID == -1 } { set mandatory 0 }
-	
+
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for oif_object_print" 
+		puts "Something went wrong with mandatory arguments for oif_object_output" 
 		return
 	}
 
@@ -1726,6 +2701,91 @@ proc oif_object_output { args } {
 			puts $part "3 [lindex $oif_template_triangles $iii]"
 		}
 		close $part
+	}
+
+	if { $vtk_pos_folded_file != ""} {
+		set centerX 0
+		set centerY 0
+		set centerZ 0
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			set coords [part $iii print pos]
+			set centerX [expr $centerX + [lindex $coords 0]]
+			set centerY [expr $centerY + [lindex $coords 1]]
+			set centerZ [expr $centerZ + [lindex $coords 2]]
+		}
+		set centerX [expr $centerX/$nnode]
+		set centerY [expr $centerY/$nnode]
+		set centerZ [expr $centerZ/$nnode]
+		set coords [list $centerX $centerY $centerZ]
+		set foldX [expr floor(1.0*[lindex $coords 0]/(1.0*[lindex [setmd box_l] 0]))]
+		set foldY [expr floor(1.0*[lindex $coords 1]/(1.0*[lindex [setmd box_l] 1]))]
+		set foldZ [expr floor(1.0*[lindex $coords 2]/(1.0*[lindex [setmd box_l] 2]))]
+		# these gives how many times is the origin folded in all three directions
+
+		set part [open $vtk_pos_folded_file "w"]
+		puts $part "# vtk DataFile Version 3.0"
+		puts $part "Data"
+		puts $part "ASCII"
+		puts $part "DATASET POLYDATA"
+		puts $part "POINTS [lindex $oif_nparticles $objectID] float"
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			set cpos [part $iii print pos]
+			set posX [expr [lindex $cpos 0] - $foldX*[lindex [setmd box_l] 0]]
+			set posY [expr [lindex $cpos 1] - $foldY*[lindex [setmd box_l] 1]]
+			set posZ [expr [lindex $cpos 2] - $foldZ*[lindex [setmd box_l] 2]]
+			puts $part "$posX $posY $posZ"
+		}
+		puts $part "TRIANGLE_STRIPS [lindex $oif_ntriangles $objectID] [expr 4*[lindex $oif_ntriangles $objectID]]"
+		# gets info about the current object
+		set object_data [lindex $oif_objects $objectID] 
+		# extracts the id of the object's template
+		set object_template_id [lindex $object_data 0]
+		# extracts the starting position of the triangles for the template_id
+		set firstTriangleId [lindex $oif_template_starting_triangles $object_template_id]
+		for { set iii $firstTriangleId } { $iii < [expr $firstTriangleId + [lindex $oif_ntriangles $objectID]] } { incr iii } {
+			puts $part "3 [lindex $oif_template_triangles $iii]"
+		}
+		close $part
+	}
+
+
+	if { $vtk_aff_file != ""} {
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		set aff_nbonds 0
+
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			set tmppos [part $iii print pos]
+			set tmpdata [part $iii print affinity]
+			if { [lindex $tmpdata 0] != -1 } { 
+				set aff_bondsA($aff_nbonds) $tmpdata 
+				set aff_bondsB($aff_nbonds) $tmppos
+				incr aff_nbonds
+			}
+		}
+		
+		if { $aff_nbonds > -1} {
+
+			set part [open $vtk_aff_file "w"]
+			puts $part "# vtk DataFile Version 3.0"
+			puts $part "Data"
+			puts $part "ASCII"
+			puts $part "DATASET POLYDATA"
+			puts $part "POINTS [expr 2*$aff_nbonds] float"
+			for { set iii 0 } { $iii < $aff_nbonds } { incr iii } {
+				puts $part "$aff_bondsA($iii)"
+				puts $part "$aff_bondsB($iii)"
+			}
+			puts $part "LINES $aff_nbonds [expr 3*$aff_nbonds]"
+			for { set iii 0 } { $iii < $aff_nbonds } { incr iii } {
+				puts $part "2 [expr 2*$iii] [expr 2*$iii + 1]"
+			}
+			close $part
+		}
 	}
 
 	if { $mesh_nodes_file != ""} {
@@ -1761,7 +2821,7 @@ proc oif_object_output { args } {
 
 
 proc oif_object_analyze { args } {
-	# acces global variables defined in init_objects_in_fluid.tcl:
+	# access global variables 
 	global oif_n_objects
 	global oif_nparticles
 	global oif_ntriangles
@@ -1772,8 +2832,12 @@ proc oif_object_analyze { args } {
 	global oif_firstPartId
 	global oif_firstTriangleId
 	global oif_objects
+	global oif_templates
 	global oif_template_starting_triangles
+	global oif_template_bending_incidences
+	global oif_template_nodes
 	global oif_template_triangles
+	global oif_template_edges
 
 	set n_args 0
 		# counts the number of arguments
@@ -1781,18 +2845,20 @@ proc oif_object_analyze { args } {
 		incr n_args
     }
 	if { $n_args == 0 } {
-		puts "Mandatory arguments are: object's ID (id)"
+		puts "Mandatory arguments are: object's ID"
 		return 0
 	}
-	
+
 	set objectID -1
 	set center_location 0
 	set pos_bounds ""
 	set volume -1
 	set surface -1
-	set energy ""
+	set elastic_forces ""
+	set output_file ""
 	set velocity 0
 	set affinity ""
+	set approx_pos -1
 
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
@@ -1801,6 +2867,10 @@ proc oif_object_analyze { args } {
 			"origin" {  
 				incr pos
 				set center_location 1
+			}
+			"approx-pos" {  
+				incr pos
+				set approx_pos 1
 			}
 			"velocity" {  
 				incr pos
@@ -1814,28 +2884,48 @@ proc oif_object_analyze { args } {
 				incr pos
 				set surface 0.0
 			}
+			"affinity" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_object_analyze: type of output for affinity missing (possible choices: nbonds, aver-bond-length, all)"
+					break
+				}
+				set affinity [lindex $args $pos]
+				incr pos
+			}
 			"pos-bounds" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_object_analyze: type of pos-bounds is missing"
+					puts "pos-bounds options: all, x-min, x-max, y-min, y-max, z-min, z-max"
 					break
 				}
 				set pos_bounds [lindex $args $pos]
 				incr pos
 			}
-			"energy" {  
+			"elastic-forces" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_object_analyze: type of elastic-forces or f-metric is missing"
+					puts "elastic-forces options: ks, kb, kal, kag, kv, total, ks-fmetric, kb-fmetric, kal-fmetric, kag-fmetric, kv-fmetric"
 					break
 				}
-				set energy [lindex $args $pos]
+				set elastic_forces [lindex $args $pos]
 				incr pos
+				if { $elastic_forces == "ks" || $elastic_forces == "kb" || $elastic_forces == "kal" || \
+				    $elastic_forces == "kag" || $elastic_forces == "kv" || $elastic_forces == "total"} {
+				    if { $pos >= $n_args } { 
+					puts "error in oif_object_analyze: output file for elastic-forces is missing"
+					break
+				    }
+				    set output_file [lindex $args $pos]
+				    incr pos
+				}
 			}
 			"object-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_object_analyze: object-id is missing"
 					break
 				}
 				set objectID [lindex $args $pos]
@@ -1851,9 +2941,9 @@ proc oif_object_analyze { args } {
 # checking whether all mandatory arguments have been given
 	set mandatory 1
 	if { $objectID == -1 } { set mandatory 0 }
-	
+
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for oif_object_print" 
+		puts "Something went wrong with mandatory arguments for oif_object_analyze" 
 		return
 	}
 
@@ -1876,6 +2966,58 @@ proc oif_object_analyze { args } {
 		return $coords
 	}
 
+	if { $approx_pos == 1 } {
+		set appX 0
+		set appY 0
+		set appZ 0
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set object_data [lindex $oif_objects $objectID] 
+		set extremal_indices [lindex $object_data 3]
+		set xminID [expr $firstPartId + [lindex $extremal_indices 0]]
+		set xmaxID [expr $firstPartId + [lindex $extremal_indices 1]]
+		set yminID [expr $firstPartId + [lindex $extremal_indices 2]]
+		set ymaxID [expr $firstPartId + [lindex $extremal_indices 3]]
+		set zminID [expr $firstPartId + [lindex $extremal_indices 4]]
+		set zmaxID [expr $firstPartId + [lindex $extremal_indices 5]]
+
+		set coords [part $xminID print pos]
+		set appX [expr $appX + [lindex $coords 0]]
+		set appY [expr $appY + [lindex $coords 1]]
+		set appZ [expr $appZ + [lindex $coords 2]]
+
+		set coords [part $xmaxID print pos]
+		set appX [expr $appX + [lindex $coords 0]]
+		set appY [expr $appY + [lindex $coords 1]]
+		set appZ [expr $appZ + [lindex $coords 2]]
+
+		set coords [part $yminID print pos]
+		set appX [expr $appX + [lindex $coords 0]]
+		set appY [expr $appY + [lindex $coords 1]]
+		set appZ [expr $appZ + [lindex $coords 2]]
+
+		set coords [part $ymaxID print pos]
+		set appX [expr $appX + [lindex $coords 0]]
+		set appY [expr $appY + [lindex $coords 1]]
+		set appZ [expr $appZ + [lindex $coords 2]]
+
+		set coords [part $zminID print pos]
+		set appX [expr $appX + [lindex $coords 0]]
+		set appY [expr $appY + [lindex $coords 1]]
+		set appZ [expr $appZ + [lindex $coords 2]]
+
+		set coords [part $zmaxID print pos]
+		set appX [expr $appX + [lindex $coords 0]]
+		set appY [expr $appY + [lindex $coords 1]]
+		set appZ [expr $appZ + [lindex $coords 2]]
+
+		set appX [expr $appX/6]
+		set appY [expr $appY/6]
+		set appZ [expr $appZ/6]
+		set coords [list $appX $appY $appZ]
+		return $coords
+	}
+
+
 	if { $velocity == 1 } {
 		set velX 0
 		set velY 0
@@ -1895,7 +3037,57 @@ proc oif_object_analyze { args } {
 		return $vel
 	}
 
-
+	if { $affinity != "" } {
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		set n_bonds 0
+		set total_length 0
+		set min_bond_length 10000000
+		set max_bond_length -10000000
+		set min_x_bond 10000000
+		set max_x_bond -10000000
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			set bond_site [part $iii print affinity]
+			set bsiteX [lindex $bond_site 0]
+			set bsiteY [lindex $bond_site 1]
+			set bsiteZ [lindex $bond_site 2]
+			if { $bsiteX != -1 || $bsiteY != -1 || $bsiteZ != -1 } {
+				incr n_bonds
+				set part_pos [part $iii print pos]
+				set posX [lindex $part_pos 0]
+				set posY [lindex $part_pos 1]
+				set posZ [lindex $part_pos 2]
+				set curr_bond_length [expr sqrt(($posX - $bsiteX)*($posX - $bsiteX) + ($posY - $bsiteY)*($posY - $bsiteY) + ($posZ - $bsiteZ)*($posZ - $bsiteZ))]
+				set total_length [expr $total_length + $curr_bond_length] 
+				if { $curr_bond_length < $min_bond_length } { set min_bond_length $curr_bond_length}
+				if { $curr_bond_length > $max_bond_length } { set max_bond_length $curr_bond_length}
+				if { $bsiteX < $min_x_bond } { set min_x_bond $bsiteX}
+				if { $bsiteX > $max_x_bond } { set max_x_bond $bsiteX}
+			}
+		}
+		if { $n_bonds > 0 } { set total_length [expr 1.0*$total_length / (1.0*$n_bonds)] }
+		if { $affinity == "nbonds" } { return $n_bonds }
+		if { $affinity == "aver-bond-length" } { 
+			return $total_length 
+		}
+		if { $affinity == "min-bond-length" } { 
+			return $min_bond_length 
+		}
+		if { $affinity == "max-bond-length" } { 
+			return $max_bond_length 
+		}
+		if { $affinity == "min-x-bond" } { 
+			return $min_x_bond 
+		}
+		if { $affinity == "max-x-bond" } { 
+			return $max_x_bond 
+		}
+		if { $affinity == "all" } { 
+			set answer [list "nbonds" $n_bonds "bond-length" $total_length "min-bond-length" $min_bond_length "max-bond-length" $max_bond_length "min-x-bond" $min_x_bond "max-x-bond" $max_x_bond]
+			return $answer 
+		}
+		
+	}
 
 	if {$volume != -1} {
 		set firstPartId [lindex $oif_object_starting_particles $objectID]
@@ -1930,9 +3122,9 @@ proc oif_object_analyze { args } {
 		set dn 0.0
 		set drmax 0.0
 		set drtemp 0.0
-		
+
 		for {set i 0} {$i < $ntriangles} {incr i} {
-			for {set k 0} {$k < 3} {incr k} {		
+			for {set k 0} {$k < 3} {incr k} {
 				list P1
 				lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
 				list P2
@@ -1955,7 +3147,7 @@ proc oif_object_analyze { args } {
 			set drtemp [expr sqrt(($P10 - $P30)*($P10 - $P30) + ($P11 - $P31)*($P11 - $P31) + ($P12 - $P32)*($P12 - $P32))]
 				# distance P1P3
 			if {$drmax < $drtemp} { set drmax $drtemp }
-			
+
 			set area [area_triangle P1 P2 P3]
 			get_n_triangle P1 P2 P3 norm
 			set norm0 [lindex $norm 0]
@@ -1971,7 +3163,7 @@ proc oif_object_analyze { args } {
 		}
 		return $volume
 	}
-	
+
 	if {$surface != -1} {
 		set firstPartId [lindex $oif_object_starting_particles $objectID]
 		set nnode [lindex $oif_nparticles $objectID]
@@ -2000,7 +3192,7 @@ proc oif_object_analyze { args } {
 		}
 		set area 0.0
 		for {set i 0} {$i < $ntriangles} {incr i} {
-			for {set k 0} {$k < 3} {incr k} {		
+			for {set k 0} {$k < 3} {incr k} {
 				list P1
 				lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
 				list P2
@@ -2017,7 +3209,7 @@ proc oif_object_analyze { args } {
 		}
 		return $area
 	}
-	
+
 	if { $pos_bounds != ""} {
 		set Zmin 10000000
 		set Zmax -10000000
@@ -2054,39 +3246,862 @@ proc oif_object_analyze { args } {
 		return $result
 	}
 
-	if { $energy != ""} {
-		# TO BE IMPLEMENTED ......
+	if { $elastic_forces != ""} {
 		set result -1
-		if { $energy == "ks" } {
+		if { $elastic_forces == "ks" || $elastic_forces == "total" || $elastic_forces == "ks-fmetric" } {
 			set result 0
+
+			# recover data of this object
+			set object [lindex $oif_objects $objectID]
+			set template_id [lindex $object 0]
+			set template [lindex $oif_templates $template_id]
+			set nnodes [lindex $template 0]
+			set nedges [lindex $template 1]
+			set ks [lindex $template 3]
+
+			set start_id_of_nodes 0
+			set start_id_of_edges 0
+			for {set i 0} {$i < $template_id} {incr i} {
+			    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+			    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
+			}
+
+			# recover particles from this object's template  
+			for {set i 0} {$i < $nnodes} {incr i} {
+			    set node_triplet [lindex $oif_template_nodes [expr $start_id_of_nodes+$i]]
+			    set mesh_nodes($i,0) [lindex $node_triplet 0] 
+			    set mesh_nodes($i,1) [lindex $node_triplet 1]
+			    set mesh_nodes($i,2) [lindex $node_triplet 2]
+			}
+
+			# recover edges from this object's template
+			for {set i 0} {$i < $nedges} {incr i} {
+			    set edge_pair [lindex $oif_template_edges [expr $start_id_of_edges+$i]]
+			    set mesh_edges($i,0) [lindex $edge_pair 0]
+			    set mesh_edges($i,1) [lindex $edge_pair 1]
+			}
+
+			# initialize the mesh_stretching list
+			for { set i 0 } { $i < $nnodes } { incr i } {
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_stretching($i,$j) 0.0
+			    }
+			}
+			  
+			set start_id_of_particles [lindex $oif_object_starting_particles $objectID]  
+			    
+			for { set i 0 } { $i < $nedges } { incr i } {
+			    # Take an edge and copy the nodes of the edge to pA, pB (point A, point B)
+			    set pA $mesh_edges($i,0)
+			    set pB $mesh_edges($i,1)
+			    
+			    # Get the current position of the same two points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+
+			    # Calculate stretching force between point A and point B
+			    set orig_dist 0.0
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set orig_dist [expr ($orig_dist + ($mesh_nodes($pB,$j) - $mesh_nodes($pA,$j))*($mesh_nodes($pB,$j) - $mesh_nodes($pA,$j)))]
+			    }
+			    set orig_dist [expr sqrt($orig_dist)]
+			    
+			    set curr_dist 0.0
+			    set curr_dist [expr ($curr_dist + ($currBx - $currAx)*($currBx - $currAx))]
+			    set curr_dist [expr ($curr_dist + ($currBy - $currAy)*($currBy - $currAy))]
+			    set curr_dist [expr ($curr_dist + ($currBz - $currAz)*($currBz - $currAz))]
+			    set curr_dist [expr sqrt($curr_dist)]
+			    
+			    set fTemp [calc_stretching_force $ks $currAx $currAy $currAz $currBx $currBy $currBz $orig_dist $curr_dist]
+			    set f(0) [lindex $fTemp 0]
+			    set f(1) [lindex $fTemp 1]
+			    set f(2) [lindex $fTemp 2]
+			      
+			    # Save this stretching force into the array of stretching forces 
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_stretching($pA,$j) [expr $mesh_stretching($pA,$j) + $f($j)]
+				set mesh_stretching($pB,$j) [expr $mesh_stretching($pB,$j) - $f($j)]
+			    }
+			    
+			}
+
+			# output here only if elastic forces are set to ks
+			if { $elastic_forces == "ks" } {
+			    # determine whether .vtk or other file type will be written
+			    if { [ string first ".vtk" $output_file ] > -1 } {
+			        # write stretching forces into a .vtk file for visualization
+			        set out_f [open $output_file "w"]
+			        puts $out_f "# vtk DataFile Version 3.0"
+			        puts $out_f "Data"
+			        puts $out_f "ASCII"
+			        puts $out_f "DATASET POLYDATA"
+			        puts $out_f "POINTS $nnodes float"
+			        # writing points
+			        for { set i $start_id_of_particles } { $i < [expr $start_id_of_particles + $nnodes] } { incr i } {
+					puts $out_f "[part $i print pos]"
+			        }
+			        set ntriangles [lindex $template 2]
+			        puts $out_f "TRIANGLE_STRIPS $ntriangles [expr 4*$ntriangles]"
+			        # extracts the starting position of the triangles for the template_id
+			        set start_id_of_triangles [lindex $oif_template_starting_triangles $template_id]
+			        # writing triangles
+			        for { set i $start_id_of_triangles } { $i < [expr $start_id_of_triangles + $ntriangles] } { incr i } {
+					puts $out_f "3 [lindex $oif_template_triangles $i]"
+			        }
+			        # writing stretching forces
+			        puts $out_f "POINT_DATA $nnodes"
+			        puts $out_f "SCALARS sample_scalars float 1"
+			        puts $out_f "LOOKUP_TABLE default"
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+			        	set total_stretching 0
+					for { set j 0 } { $j < 3 } { incr j } {
+						# compute the magnitude of the resultant force to be written
+						set total_stretching [expr $total_stretching + $mesh_stretching($i,$j)*$mesh_stretching($i,$j)]
+					}
+					set total_stretching [expr sqrt($total_stretching)]
+					puts $out_f "$total_stretching"
+				}
+				close $out_f
+			    } else {
+			        # write stretching forces into a text file
+			        set out_f [open $output_file "w"]
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+					set total_stretching 0
+					for { set j 0 } { $j < 3 } { incr j } {
+						# compute the magnitude of the resultant force to be written
+						set total_stretching [expr $total_stretching + $mesh_stretching($i,$j)*$mesh_stretching($i,$j)]
+					}
+					set total_stretching [expr sqrt($total_stretching)]
+					puts $out_f "$total_stretching"
+				}
+				close $out_f
+			    }
+			}
+			if { $elastic_forces == "ks-fmetric" } {
+			    set ks_fmetric 0.0 
+			    for { set i 0 } { $i < $nnodes } { incr i } {
+				set total_stretching 0.0
+				for { set j 0 } { $j < 3 } { incr j } {
+				    # compute the magnitude of the resultant force in one node 
+				    set total_stretching [expr $total_stretching + $mesh_stretching($i,$j)*$mesh_stretching($i,$j)]
+				}
+				set total_stretching [expr sqrt($total_stretching)]
+				set ks_fmetric [expr $ks_fmetric + $total_stretching]
+			    }
+			    set result $ks_fmetric
+			}
 		}
-		if { $energy == "kb" } {
+		if { $elastic_forces == "kb" || $elastic_forces == "total" || $elastic_forces == "kb-fmetric" } {
 			set result 0
+
+			# recover data of this object
+			set object [lindex $oif_objects $objectID]
+			set template_id [lindex $object 0]
+			set template [lindex $oif_templates $template_id]
+			set nnodes [lindex $template 0]
+			set nedges [lindex $template 1]
+			set kb [lindex $template 5]
+
+			set start_id_of_nodes 0
+			set start_id_of_edges 0
+			set start_id_of_bending_incidences 0
+			for {set i 0} {$i < $template_id} {incr i} {
+			    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+			    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
+			    if { [lindex [lindex $oif_templates $i] 5] != 0.0 } {
+				set start_id_of_bending_incidences [expr $start_id_of_bending_incidences + [lindex [lindex $oif_templates $i] 1]]
+			    }
+			}
+
+			# recover particles from this object's template  
+			for {set i 0} {$i < $nnodes} {incr i} {
+			    set node_triplet [lindex $oif_template_nodes [expr $start_id_of_nodes+$i]]
+			    set mesh_nodes($i,0) [lindex $node_triplet 0] 
+			    set mesh_nodes($i,1) [lindex $node_triplet 1]
+			    set mesh_nodes($i,2) [lindex $node_triplet 2]
+			}
+
+			# recover bending incidences from this object's template
+			for {set i 0} {$i < $nedges} {incr i} {
+			    set incidence [lindex $oif_template_bending_incidences [expr $start_id_of_bending_incidences + $i]]
+			    set mesh_incidences($i,0) [lindex $incidence 0]
+			    set mesh_incidences($i,1) [lindex $incidence 1]
+			    set mesh_incidences($i,2) [lindex $incidence 2]
+			    set mesh_incidences($i,3) [lindex $incidence 3]
+			}
+
+			# initialize the mesh_bending list
+			for { set i 0 } { $i < $nnodes } { incr i } {
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_bending($i,$j) 0.0
+			    }
+			}
+			  
+			set start_id_of_particles [lindex $oif_object_starting_particles $objectID]    
+			  
+			set orig_phi 0.0
+			set curr_phi 0.0
+			for { set i 0 } { $i < $nedges } { incr i } {
+			    # Take an edge and copy the bending incidences to pA, pB, pC, pD
+			    set pA $mesh_incidences($i,0)
+			    set pB $mesh_incidences($i,1)
+			    set pC $mesh_incidences($i,2)
+			    set pD $mesh_incidences($i,3)
+			   
+			    set origA [list $mesh_nodes($pA,0) $mesh_nodes($pA,1) $mesh_nodes($pA,2)]
+			    set origB [list $mesh_nodes($pB,0) $mesh_nodes($pB,1) $mesh_nodes($pB,2)]
+			    set origC [list $mesh_nodes($pC,0) $mesh_nodes($pC,1) $mesh_nodes($pC,2)]
+			    set origD [list $mesh_nodes($pD,0) $mesh_nodes($pD,1) $mesh_nodes($pD,2)]
+			    
+			    # Get the current position of the same four points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+			    set currC [part [expr $start_id_of_particles + $pC] print pos]
+			    set currCx [lindex $currC 0]
+			    set currCy [lindex $currC 1]
+			    set currCz [lindex $currC 2]
+			    set currD [part [expr $start_id_of_particles + $pD] print pos]
+			    set currDx [lindex $currD 0]
+			    set currDy [lindex $currD 1]
+			    set currDz [lindex $currD 2]
+			    
+			    angle_btw_triangles origA origB origC origD orig_phi
+			    angle_btw_triangles currA currB currC currD curr_phi
+			    
+			    # Calculate bending force among these four points
+			    set fTemp [calc_bending_force $kb $currAx $currAy $currAz $currBx $currBy $currBz \
+				       $currCx $currCy $currCz $currDx $currDy $currDz $orig_phi $curr_phi]
+			    # first three components of fTemp are force on triangle 1, last three components are force on triangle 2
+			    set f(0) [lindex $fTemp 0]
+			    set f(1) [lindex $fTemp 1]
+			    set f(2) [lindex $fTemp 2]
+			    set f(3) [lindex $fTemp 3]
+			    set f(4) [lindex $fTemp 4]
+			    set f(5) [lindex $fTemp 5]
+			    
+			    # Save these bending forces into the array of bending forces 
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_bending($pA,$j) [expr $mesh_bending($pA,$j) + $f($j)]
+				set mesh_bending($pB,$j) [expr $mesh_bending($pB,$j) + 0.5*$f($j) + 0.5*$f([expr $j+3])]
+				set mesh_bending($pC,$j) [expr $mesh_bending($pC,$j) + 0.5*$f($j) + 0.5*$f([expr $j+3])]
+				set mesh_bending($pD,$j) [expr $mesh_bending($pD,$j) + $f([expr $j+3])]
+			    }
+			    
+			}
+
+			# output here only if elastic forces are set to kb
+			if { $elastic_forces == "kb" } {
+			    # determine whether .vtk or other file type will be written
+			    if { [ string first ".vtk" $output_file ] > -1 } {
+			        # write bending forces into a .vtk file for visualization
+			        set out_f [open $output_file "w"]
+			        puts $out_f "# vtk DataFile Version 3.0"
+			        puts $out_f "Data"
+			        puts $out_f "ASCII"
+			        puts $out_f "DATASET POLYDATA"
+			        puts $out_f "POINTS $nnodes float"
+			        # writing points
+			        for { set i $start_id_of_particles } { $i < [expr $start_id_of_particles + $nnodes] } { incr i } {
+					puts $out_f "[part $i print pos]"
+			        }
+			        set ntriangles [lindex $template 2]
+			        puts $out_f "TRIANGLE_STRIPS $ntriangles [expr 4*$ntriangles]"
+			        # extracts the starting position of the triangles for the template_id
+			        set start_id_of_triangles [lindex $oif_template_starting_triangles $template_id]
+			        # writing triangles
+			        for { set i $start_id_of_triangles } { $i < [expr $start_id_of_triangles + $ntriangles] } { incr i } {
+					puts $out_f "3 [lindex $oif_template_triangles $i]"
+			        }
+			        # writing bending forces
+			        puts $out_f "POINT_DATA $nnodes"
+			        puts $out_f "SCALARS sample_scalars float 1"
+			        puts $out_f "LOOKUP_TABLE default"
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+			        	set total_bending 0
+					for { set j 0 } { $j < 3 } { incr j } {
+						# compute the magnitude of the resultant force to be written
+						set total_bending [expr $total_bending + $mesh_bending($i,$j)*$mesh_bending($i,$j)]
+					}
+					set total_bending [expr sqrt($total_bending)]
+					puts $out_f "$total_bending"
+			        }
+			        close $out_f
+			    } else {
+			        # write bending forces into a text file
+			        set out_f [open $output_file "w"]
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+					set total_bending 0.0
+					for { set j 0 } { $j < 3 } { incr j } {
+						# compute the magnitude of the resultant force to be written
+						set total_bending [expr $total_bending + $mesh_bending($i,$j)*$mesh_bending($i,$j)]
+					}
+					set total_bending [expr sqrt($total_bending)]
+					puts $out_f "$total_bending"
+			        }
+			        close $out_f
+			    }
+			}
+			if { $elastic_forces == "kb-fmetric" } {
+			    set kb_fmetric 0.0 
+			    for { set i 0 } { $i < $nnodes } { incr i } {
+				set total_bending 0.0
+				for { set j 0 } { $j < 3 } { incr j } {
+				    # compute the magnitude of the resultant force in one node 
+				    set total_bending [expr $total_bending + $mesh_bending($i,$j)*$mesh_bending($i,$j)]
+				}
+				set total_bending [expr sqrt($total_bending)]
+				set kb_fmetric [expr $kb_fmetric + $total_bending]
+			    }
+			    set result $kb_fmetric
+			}
 		}
-		if { $energy == "kal" } {
+		if { $elastic_forces == "kal" || $elastic_forces == "total" || $elastic_forces == "kal-fmetric" } {
 			set result 0
+
+			# recover data of this object
+			set object [lindex $oif_objects $objectID]
+			set template_id [lindex $object 0]
+			set template [lindex $oif_templates $template_id]
+			set nnodes [lindex $template 0]
+			set ntriangles [lindex $template 2]
+			set kal [lindex $template 7]
+
+			set start_id_of_nodes 0
+			set start_id_of_triangles 0
+			for {set i 0} {$i < $template_id} {incr i} {
+			    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+			    set start_id_of_triangles [expr $start_id_of_triangles + [lindex [lindex $oif_templates $i] 2]]
+			}
+
+			# recover particles from this object's template  
+			for {set i 0} {$i < $nnodes} {incr i} {
+			    set node_triplet [lindex $oif_template_nodes [expr $start_id_of_nodes+$i]]
+			    set mesh_nodes($i,0) [lindex $node_triplet 0] 
+			    set mesh_nodes($i,1) [lindex $node_triplet 1]
+			    set mesh_nodes($i,2) [lindex $node_triplet 2]
+			}
+
+			# recover triangles from this object's template
+			for {set i 0} {$i < $ntriangles} {incr i} {
+			    set triangle [lindex $oif_template_triangles [expr $start_id_of_triangles+$i]]
+			    set mesh_triangles($i,0) [lindex $triangle 0]
+			    set mesh_triangles($i,1) [lindex $triangle 1]
+			    set mesh_triangles($i,2) [lindex $triangle 2]
+			}
+
+			# initialize the mesh_local_area list
+			for { set i 0 } { $i < $nnodes } { incr i } {
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_local_area($i,$j) 0.0
+			    }
+			}
+
+			set start_id_of_particles [lindex $oif_object_starting_particles $objectID] 
+			    
+			for { set i 0 } { $i < $ntriangles } { incr i } {
+			    # Take a triangle and copy the nodes of the triangle to pA, pB, pC
+			    set pA $mesh_triangles($i,0)
+			    set pB $mesh_triangles($i,1)
+			    set pC $mesh_triangles($i,2)
+			    
+			    set origA [list $mesh_nodes($pA,0) $mesh_nodes($pA,1) $mesh_nodes($pA,2)]
+			    set origB [list $mesh_nodes($pB,0) $mesh_nodes($pB,1) $mesh_nodes($pB,2)]
+			    set origC [list $mesh_nodes($pC,0) $mesh_nodes($pC,1) $mesh_nodes($pC,2)]
+			    
+			    # Get the current position of the same three points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+			    set currC [part [expr $start_id_of_particles + $pC] print pos]
+			    set currCx [lindex $currC 0]
+			    set currCy [lindex $currC 1]
+			    set currCz [lindex $currC 2]
+			    
+			    # Calculate local area force for these three points
+			    set orig_area [area_triangle origA origB origC]
+			    set curr_area [area_triangle currA currB currC]
+			    
+			    set fTemp [calc_local_area_force $kal $currAx $currAy $currAz $currBx $currBy $currBz \
+				       $currCx $currCy $currCz $orig_area $curr_area]
+			    # first three numbers are force for point A, second three for point B, last three for point C
+			    set f(0) [lindex $fTemp 0]
+			    set f(1) [lindex $fTemp 1]
+			    set f(2) [lindex $fTemp 2]
+			    set f(3) [lindex $fTemp 3]
+			    set f(4) [lindex $fTemp 4]
+			    set f(5) [lindex $fTemp 5]
+			    set f(6) [lindex $fTemp 6]
+			    set f(7) [lindex $fTemp 7]
+			    set f(8) [lindex $fTemp 8]
+			      
+			    # Save this local area force into the array of local area forces 
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_local_area($pA,$j) [expr $mesh_local_area($pA,$j) + $f([expr 0+$j])]
+				set mesh_local_area($pB,$j) [expr $mesh_local_area($pB,$j) + $f([expr 3+$j])]
+				set mesh_local_area($pC,$j) [expr $mesh_local_area($pC,$j) + $f([expr 6+$j])]
+			    }
+			    
+			}
+			# output here only if elastic forces are set to kal
+			if { $elastic_forces == "kal" } {
+			    # determine whether .vtk or other file type will be written
+			    if { [ string first ".vtk" $output_file ] > -1 } {
+			        # write local area forces into a .vtk file for visualization
+				set out_f [open $output_file "w"]
+			        puts $out_f "# vtk DataFile Version 3.0"
+			        puts $out_f "Data"
+			        puts $out_f "ASCII"
+			        puts $out_f "DATASET POLYDATA"
+			        puts $out_f "POINTS $nnodes float"
+			        # writing points
+			        for { set i $start_id_of_particles } { $i < [expr $start_id_of_particles + $nnodes] } { incr i } {
+					puts $out_f "[part $i print pos]"
+			        }
+			        set ntriangles [lindex $template 2]
+			        puts $out_f "TRIANGLE_STRIPS $ntriangles [expr 4*$ntriangles]"
+			        # extracts the starting position of the triangles for the template_id
+			        set start_id_of_triangles [lindex $oif_template_starting_triangles $template_id]
+			        # writing triangles
+			        for { set i $start_id_of_triangles } { $i < [expr $start_id_of_triangles + $ntriangles] } { incr i } {
+					puts $out_f "3 [lindex $oif_template_triangles $i]"
+			        }
+			        # writing local area forces
+			        puts $out_f "POINT_DATA $nnodes"
+			        puts $out_f "SCALARS sample_scalars float 1"
+			        puts $out_f "LOOKUP_TABLE default"
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+					set total_local_area 0.0
+			        	for { set j 0 } { $j < 3 } { incr j } {
+			        		# compute the magnitude of the resultant force to be written
+						set total_local_area [expr $total_local_area + $mesh_local_area($i,$j)*$mesh_local_area($i,$j)]
+					}
+					set total_local_area [expr sqrt($total_local_area)]
+					puts $out_f "$total_local_area"
+			        }
+			        close $out_f
+			    } else {
+			        # write local area forces into a text file
+			        set out_f [open $output_file "w"]
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+					set total_local_area 0.0
+					for { set j 0 } { $j < 3 } { incr j } {
+						# compute the magnitude of the resultant force to be written
+						set total_local_area [expr $total_local_area + $mesh_local_area($i,$j)*$mesh_local_area($i,$j)]
+					}
+					set total_local_area [expr sqrt($total_local_area)]
+					puts $out_f "$total_local_area"
+			        }
+			        close $out_f
+			    }
+			}
+			if { $elastic_forces == "kal-fmetric" } {
+			    set kal_fmetric 0.0 
+			    for { set i 0 } { $i < $nnodes } { incr i } {
+				set total_local_area 0.0
+				for { set j 0 } { $j < 3 } { incr j } {
+				    # compute the magnitude of the resultant force in one node 
+				    set total_local_area [expr $total_local_area + $mesh_local_area($i,$j)*$mesh_local_area($i,$j)]
+				}
+				set total_local_area [expr sqrt($total_local_area)]
+				set kal_fmetric [expr $kal_fmetric + $total_local_area]
+			    }
+			    set result $kal_fmetric
+			}
 		}
-		if { $energy == "kag" } {
+		if { $elastic_forces == "kag" || $elastic_forces == "total" || $elastic_forces == "kag-fmetric" } {
 			set result 0
+
+			# recover data of this object
+			set object [lindex $oif_objects $objectID]
+			set template_id [lindex $object 0]
+			set template [lindex $oif_templates $template_id]
+			set nnodes [lindex $template 0]
+			set ntriangles [lindex $template 2]
+			set kag [lindex $template 9]
+
+			set start_id_of_nodes 0
+			set start_id_of_triangles 0
+			for {set i 0} {$i < $template_id} {incr i} {
+			    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+			    set start_id_of_triangles [expr $start_id_of_triangles + [lindex [lindex $oif_templates $i] 2]]
+			}
+
+			# recover particles from this object's template  
+			for {set i 0} {$i < $nnodes} {incr i} {
+			    set node_triplet [lindex $oif_template_nodes [expr $start_id_of_nodes+$i]]
+			    set mesh_nodes($i,0) [lindex $node_triplet 0] 
+			    set mesh_nodes($i,1) [lindex $node_triplet 1]
+			    set mesh_nodes($i,2) [lindex $node_triplet 2]
+			}
+
+			# recover triangles from this object's template
+			for {set i 0} {$i < $ntriangles} {incr i} {
+			    set triangle [lindex $oif_template_triangles [expr $start_id_of_triangles+$i]]
+			    set mesh_triangles($i,0) [lindex $triangle 0]
+			    set mesh_triangles($i,1) [lindex $triangle 1]
+			    set mesh_triangles($i,2) [lindex $triangle 2]
+			}
+
+			# initialize the mesh_global_area list
+			for { set i 0 } { $i < $nnodes } { incr i } {
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_global_area($i,$j) 0.0
+			    }
+			}
+			    
+			# get the current and original global area
+			set curr_gl_area [oif_object_analyze object-id $objectID surface-area]
+			set orig_gl_area [lindex $template 13]
+
+			set start_id_of_particles [lindex $oif_object_starting_particles $objectID] 
+
+			for { set i 0 } { $i < $ntriangles } { incr i } {
+			    # Take a triangle and copy the nodes of the triangle to pA, pB, pC
+			    set pA $mesh_triangles($i,0)
+			    set pB $mesh_triangles($i,1)
+			    set pC $mesh_triangles($i,2)
+			    
+			    set origA [list $mesh_nodes($pA,0) $mesh_nodes($pA,1) $mesh_nodes($pA,2)]
+			    set origB [list $mesh_nodes($pB,0) $mesh_nodes($pB,1) $mesh_nodes($pB,2)]
+			    set origC [list $mesh_nodes($pC,0) $mesh_nodes($pC,1) $mesh_nodes($pC,2)]
+			    
+			    # Get the current position of the same three points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+			    set currC [part [expr $start_id_of_particles + $pC] print pos]
+			    set currCx [lindex $currC 0]
+			    set currCy [lindex $currC 1]
+			    set currCz [lindex $currC 2]
+			    
+			    # Calculate global area force for these three points
+			    set fTemp [calc_global_area_force $kag $currAx $currAy $currAz $currBx $currBy $currBz \
+				       $currCx $currCy $currCz $orig_gl_area $curr_gl_area]
+			    # first three numbers are force for point A, second three for point B, last three for point C
+			    set f(0) [lindex $fTemp 0]
+			    set f(1) [lindex $fTemp 1]
+			    set f(2) [lindex $fTemp 2]
+			    set f(3) [lindex $fTemp 3]
+			    set f(4) [lindex $fTemp 4]
+			    set f(5) [lindex $fTemp 5]
+			    set f(6) [lindex $fTemp 6]
+			    set f(7) [lindex $fTemp 7]
+			    set f(8) [lindex $fTemp 8]
+			      
+			    # Save this global area force into the array of global area forces 
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_global_area($pA,$j) [expr $mesh_global_area($pA,$j) + $f([expr 0+$j])]
+				set mesh_global_area($pB,$j) [expr $mesh_global_area($pB,$j) + $f([expr 3+$j])]
+				set mesh_global_area($pC,$j) [expr $mesh_global_area($pC,$j) + $f([expr 6+$j])]
+			    }
+			    
+			}
+			# output here only if elastic forces are set to kag
+			if { $elastic_forces == "kag" } {
+			    # determine whether .vtk or other file type will be written
+			    if { [ string first ".vtk" $output_file ] > -1 } {
+			        # write global area forces into a .vtk file for visualization
+			        set out_f [open $output_file "w"]
+			        puts $out_f "# vtk DataFile Version 3.0"
+			        puts $out_f "Data"
+			        puts $out_f "ASCII"
+			        puts $out_f "DATASET POLYDATA"
+			        puts $out_f "POINTS $nnodes float"
+			        # writing points
+			        for { set i $start_id_of_particles } { $i < [expr $start_id_of_particles + $nnodes] } { incr i } {
+					puts $out_f "[part $i print pos]"
+			        }
+			        set ntriangles [lindex $template 2]
+			        puts $out_f "TRIANGLE_STRIPS $ntriangles [expr 4*$ntriangles]"
+			        # extracts the starting position of the triangles for the template_id
+			        set start_id_of_triangles [lindex $oif_template_starting_triangles $template_id]
+			        # writing triangles
+			        for { set i $start_id_of_triangles } { $i < [expr $start_id_of_triangles + $ntriangles] } { incr i } {
+					puts $out_f "3 [lindex $oif_template_triangles $i]"
+			        }
+			        # writing global area forces
+			        puts $out_f "POINT_DATA $nnodes"
+			        puts $out_f "SCALARS sample_scalars float 1"
+			        puts $out_f "LOOKUP_TABLE default"
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+					set total_global_area 0.0
+					for { set j 0 } { $j < 3 } { incr j } {
+						# compute the magnitude of the resultant force to be written
+						set total_global_area [expr $total_global_area + $mesh_global_area($i,$j)*$mesh_global_area($i,$j)]
+					}
+					set total_global_area [expr sqrt($total_global_area)]
+					puts $out_f "$total_global_area"
+			        }
+			        close $out_f
+			    } else {
+			        # write global area forces into a text file
+			        set out_f [open $output_file "w"]
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+					set total_global_area 0.0
+					for { set j 0 } { $j < 3 } { incr j } {
+						# compute the magnitude of the resultant force to be written
+						set total_global_area [expr $total_global_area + $mesh_global_area($i,$j)*$mesh_global_area($i,$j)]
+					}
+					set total_global_area [expr sqrt($total_global_area)]
+					puts $out_f "$total_global_area"
+			        }
+			        close $out_f
+			    }
+			}
+			if { $elastic_forces == "kag-fmetric" } {
+			    set kag_fmetric 0.0 
+			    for { set i 0 } { $i < $nnodes } { incr i } {
+				set total_global_area 0.0
+				for { set j 0 } { $j < 3 } { incr j } {
+				    # compute the magnitude of the resultant force in one node 
+				    set total_global_area [expr $total_global_area + $mesh_global_area($i,$j)*$mesh_global_area($i,$j)]
+				}
+				set total_global_area [expr sqrt($total_global_area)]
+				set kag_fmetric [expr $kag_fmetric + $total_global_area]
+			    }
+			    set result $kag_fmetric
+			}
 		}
-		if { $energy == "kv" } {
+		if { $elastic_forces == "kv" || $elastic_forces == "total" || $elastic_forces == "kv-fmetric" } {
 			set result 0
+
+			# recover data of this object
+			set object [lindex $oif_objects $objectID]
+			set template_id [lindex $object 0]
+			set template [lindex $oif_templates $template_id]
+			set nnodes [lindex $template 0]
+			set ntriangles [lindex $template 2]
+			set kv [lindex $template 11]
+
+			set start_id_of_nodes 0
+			set start_id_of_triangles 0
+			for {set i 0} {$i < $template_id} {incr i} {
+			    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+			    set start_id_of_triangles [expr $start_id_of_triangles + [lindex [lindex $oif_templates $i] 2]]
+			}
+
+			# recover particles from this object's template  
+			for {set i 0} {$i < $nnodes} {incr i} {
+			    set node_triplet [lindex $oif_template_nodes [expr $start_id_of_nodes+$i]]
+			    set mesh_nodes($i,0) [lindex $node_triplet 0] 
+			    set mesh_nodes($i,1) [lindex $node_triplet 1]
+			    set mesh_nodes($i,2) [lindex $node_triplet 2]
+			}
+
+			# recover triangles from this object's template
+			for {set i 0} {$i < $ntriangles} {incr i} {
+			    set triangle [lindex $oif_template_triangles [expr $start_id_of_triangles+$i]]
+			    set mesh_triangles($i,0) [lindex $triangle 0]
+			    set mesh_triangles($i,1) [lindex $triangle 1]
+			    set mesh_triangles($i,2) [lindex $triangle 2]
+			}
+
+			# initialize the mesh_volume list
+			for { set i 0 } { $i < $nnodes } { incr i } {
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_volume($i,$j) 0.0
+			    }
+			}
+			    
+			# compute the current and original volume
+			set curr_volume [oif_object_analyze object-id $objectID volume]
+			set orig_volume [lindex $template 14]
+
+			set start_id_of_particles [lindex $oif_object_starting_particles $objectID] 
+
+			for { set i 0 } { $i < $ntriangles } { incr i } {
+			    # Take a triangle and copy the nodes of the triangle to pA, pB, pC
+			    set pA $mesh_triangles($i,0)
+			    set pB $mesh_triangles($i,1)
+			    set pC $mesh_triangles($i,2)
+			    
+			    set origA [list $mesh_nodes($pA,0) $mesh_nodes($pA,1) $mesh_nodes($pA,2)]
+			    set origB [list $mesh_nodes($pB,0) $mesh_nodes($pB,1) $mesh_nodes($pB,2)]
+			    set origC [list $mesh_nodes($pC,0) $mesh_nodes($pC,1) $mesh_nodes($pC,2)]
+			    
+			    # Get the current position of the same three points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+			    set currC [part [expr $start_id_of_particles + $pC] print pos]
+			    set currCx [lindex $currC 0]
+			    set currCy [lindex $currC 1]
+			    set currCz [lindex $currC 2]
+			    
+			    # Calculate volume force for these three points
+			    set fTemp [calc_volume_force $kv $currAx $currAy $currAz $currBx $currBy $currBz \
+				       $currCx $currCy $currCz $orig_volume $curr_volume]
+			    set f(0) [lindex $fTemp 0]
+			    set f(1) [lindex $fTemp 1]
+			    set f(2) [lindex $fTemp 2]
+			    
+			    # Save this global area force into the array of volume forces 
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set mesh_volume($pA,$j) [expr $mesh_volume($pA,$j) + $f($j)]
+				set mesh_volume($pB,$j) [expr $mesh_volume($pB,$j) + $f($j)]
+				set mesh_volume($pC,$j) [expr $mesh_volume($pC,$j) + $f($j)]
+			    }
+			    
+			}
+			# output here only if elastic forces are set to kv
+			if { $elastic_forces == "kv" } {
+			    # determine whether .vtk or other file type will be written
+			    if { [ string first ".vtk" $output_file ] > -1 } {
+			        # write volume forces into a .vtk file for visualization
+			        set out_f [open $output_file "w"]
+			        puts $out_f "# vtk DataFile Version 3.0"
+			        puts $out_f "Data"
+			        puts $out_f "ASCII"
+			        puts $out_f "DATASET POLYDATA"
+			        puts $out_f "POINTS $nnodes float"
+			        # writing points
+			        for { set i $start_id_of_particles } { $i < [expr $start_id_of_particles + $nnodes] } { incr i } {
+					puts $out_f "[part $i print pos]"
+			        }
+			        set ntriangles [lindex $template 2]
+			        puts $out_f "TRIANGLE_STRIPS $ntriangles [expr 4*$ntriangles]"
+			        # extracts the starting position of the triangles for the template_id
+			        set start_id_of_triangles [lindex $oif_template_starting_triangles $template_id]
+			        # writing triangles
+			        for { set i $start_id_of_triangles } { $i < [expr $start_id_of_triangles + $ntriangles] } { incr i } {
+					puts $out_f "3 [lindex $oif_template_triangles $i]"
+			        }
+			        # writing volume forces
+			        puts $out_f "POINT_DATA $nnodes"
+			        puts $out_f "SCALARS sample_scalars float 1"
+			        puts $out_f "LOOKUP_TABLE default"
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+					set total_volume 0.0
+					for { set j 0 } { $j < 3 } { incr j } {
+						# compute the magnitude of the resultant force to be written
+						set total_volume [expr $total_volume + $mesh_volume($i,$j)*$mesh_volume($i,$j)]
+					}
+					set total_volume [expr sqrt($total_volume)]
+					puts $out_f "$total_volume"
+			        }
+			        close $out_f
+			    } else {
+			        # write volume forces into a text file
+			        set out_f [open $output_file "w"]
+			        for { set i 0 } { $i < $nnodes } { incr i } {
+					set total_volume 0.0
+					for { set j 0 } { $j < 3 } { incr j } {
+						# compute the magnitude of the resultant force to be written
+						set total_volume [expr $total_volume + $mesh_volume($i,$j)*$mesh_volume($i,$j)]
+					}
+					set total_volume [expr sqrt($total_volume)]
+					puts $out_f "$total_volume"
+			        }
+			        close $out_f
+			    }
+			}
+			if { $elastic_forces == "kv-fmetric" } {
+			    set kv_fmetric 0.0 
+			    for { set i 0 } { $i < $nnodes } { incr i } {
+				set total_volume 0.0
+				for { set j 0 } { $j < 3 } { incr j } {
+				    # compute the magnitude of the resultant force in one node 
+				    set total_volume [expr $total_volume + $mesh_volume($i,$j)*$mesh_volume($i,$j)]
+				}
+				set total_volume [expr sqrt($total_volume)]
+				set kv_fmetric [expr $kv_fmetric + $total_volume]
+			    }
+			    set result $kv_fmetric
+			}
 		}
-		if { $energy == "aff" } {
-			set result 0
+		if { $elastic_forces == "total" } {
+		    # everything has already been computed, it will be just put together here
+		    # determine whether .vtk or other file type will be written
+		    if { [ string first ".vtk" $output_file ] > -1 } {
+			# write total elastic forces into a .vtk file for visualization
+			set out_f [open $output_file "w"]
+			puts $out_f "# vtk DataFile Version 3.0"
+			puts $out_f "Data"
+			puts $out_f "ASCII"
+			puts $out_f "DATASET POLYDATA"
+			puts $out_f "POINTS $nnodes float"
+			# writing points
+			for { set i $start_id_of_particles } { $i < [expr $start_id_of_particles + $nnodes] } { incr i } {
+			    puts $out_f "[part $i print pos]"
+			}
+			set ntriangles [lindex $template 2]
+			puts $out_f "TRIANGLE_STRIPS $ntriangles [expr 4*$ntriangles]"
+			# extracts the starting position of the triangles for the template_id
+			set start_id_of_triangles [lindex $oif_template_starting_triangles $template_id]
+			# writing triangles
+			for { set i $start_id_of_triangles } { $i < [expr $start_id_of_triangles + $ntriangles] } { incr i } {
+			    puts $out_f "3 [lindex $oif_template_triangles $i]"
+			}
+			# writing total elastic forces
+			puts $out_f "POINT_DATA $nnodes"
+			puts $out_f "SCALARS sample_scalars float 1"
+			puts $out_f "LOOKUP_TABLE default"
+			for { set i 0 } { $i < $nnodes } { incr i } {
+			    # adding up all alastic forces in each node
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set el($j) [expr $mesh_stretching($i,$j) + $mesh_bending($i,$j) + $mesh_local_area($i,$j) \
+					    + $mesh_global_area($i,$j) + $mesh_volume($i,$j)]
+			    }
+			    # compute the magnitude of the resultant force to be written
+			    set total_elasticity [expr sqrt($el(0)*$el(0)+$el(1)*$el(1)+$el(2)*$el(2))]
+			    puts $out_f "$total_elasticity"
+			}
+			close $out_f
+		    } else {
+			# write elastic forces into a text file
+			set out_f [open $output_file "w"]
+			for { set i 0 } { $i < $nnodes } { incr i } {
+			    # adding up all alastic forces in each node
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set el($j) [expr $mesh_stretching($i,$j) + $mesh_bending($i,$j) + $mesh_local_area($i,$j) \
+					    + $mesh_global_area($i,$j) + $mesh_volume($i,$j)]
+			    }
+			    # compute the magnitude of the resultant force to be written
+			    set total_elasticity [expr sqrt($el(0)*$el(0)+$el(1)*$el(1)+$el(2)*$el(2))]
+			    puts $out_f "$total_elasticity"
+			}
+			close $out_f
+		    }
+		    set result 1
 		}
+
 		if { $result == -1 } {
-			puts "Argument of energy computation must be one of these: ks, kb, kal, kag, kv, aff"
+			puts "Argument of elastic-forces computation must be one of these: ks, kb, kal, kag, kv, total, \
+			ks-fmetric, kb-fmetric, kal-fmetric, kag-fmetric, kv-fmetric"
 		}
 		return $result
-	}
-
-   
+	} 
 }
 
-
 proc oif_mesh_analyze { args } {
-	# acces global variables defined in init_objects_in_fluid.tcl:
+	# acces global variables defined in oif_init:
 	global oif_n_objects
 	global oif_nparticles
 	global oif_ntriangles
@@ -2105,14 +4120,17 @@ proc oif_mesh_analyze { args } {
 		puts "Mandatory arguments are: nodes-file, triangles-file"
 		return 0
 	}
-	
+
 	set mesh_nodes_file ""
 	set mesh_triangles_file ""
 	set orientation 0
+	set repair 0
 	set corr_file ""
 	set method -1
 	set flip -1
-	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
+	set shift_node_ids -1
+
+	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments at the end of this section
     set pos 0
     while { $pos < $n_args } {
 		switch [lindex $args $pos] {
@@ -2144,6 +4162,7 @@ proc oif_mesh_analyze { args } {
 					puts "error"
 					break
 				}
+				set repair 1
 				set corr_file [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
@@ -2163,8 +4182,18 @@ proc oif_mesh_analyze { args } {
 				set flip 1
 				incr pos
 			}
+			"shift-node-ids" {
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error"
+					break
+				}
+				set corr_file [lindex $args $pos]
+				set shift_node_ids 1
+				incr pos
+			}
 			default { 
-				puts "error s" 
+				puts "oif_mesh_analyze: unknown or missing keyword" 
 				set pos $n_args
 			}
 		}  
@@ -2174,7 +4203,7 @@ proc oif_mesh_analyze { args } {
 	set mandatory 1
 	if { $mesh_nodes_file == "" } { set mandatory 0 }
 	if { $mesh_triangles_file == "" } { set mandatory 0 }
-	
+
 	if { $mandatory == 0 } { 
 		puts "Something went wrong with mandatory arguments for oif_check_mesh" 
 		return
@@ -2197,7 +4226,7 @@ proc oif_mesh_analyze { args } {
 				incr mesh_nnodes
 			}
 		}
-		
+
 		set fp [open $mesh_triangles_file r]
 		set file_data [read $fp]
 		close $fp
@@ -2212,9 +4241,9 @@ proc oif_mesh_analyze { args } {
 				incr mesh_ntriangles
 			}
 		}
-		
+
 		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
-			for {set k 0} {$k < 3} {incr k} {		
+			for {set k 0} {$k < 3} {incr k} {
 				list P1
 				lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
 				list P2
@@ -2237,14 +4266,14 @@ proc oif_mesh_analyze { args } {
 			#set drtemp [expr sqrt(($P10 - $P30)*($P10 - $P30) + ($P11 - $P31)*($P11 - $P31) + ($P12 - $P32)*($P12 - $P32))]
 				## distance P1P3
 			#if {$drmax < $drtemp} { set drmax $drtemp }
-			
+
 			#set area [area_triangle P1 P2 P3]
-	
+
 			get_n_triangle P1 P2 P3 norm
 			set norm0 [lindex $norm 0]
 			set norm1 [lindex $norm 1]
 			set norm2 [lindex $norm 2]
-			
+
 			# first compute "d" from the normal equation of the triangle plane
 			set tmp_d [expr -($P10*$norm0 + $P11*$norm1 + $P12*$norm2)]
 			# when coordinates of the origin are placed into the normal equation of the triangle plane, you should always get a positive number.
@@ -2258,13 +4287,13 @@ proc oif_mesh_analyze { args } {
 			set P3 [lreplace $P3 0 2]
 
 		}
-		
+
 		# Method 2: Second check controls whether all couples of triangles with the same edge have the same orientation. Not implementedn yet
 
 	}
-	
-	
-	if { $method == 1} {
+
+	if { $repair == 1} {
+	    if { $method == 1} {
 		# Method 1: First method runs through all triangles and checks whether point (0,0,0) is on the same side of all planes given by the triangles. This check is not applicable for non-convex objects.
 		set fp [open $mesh_nodes_file r]
 		set file_data [read $fp]
@@ -2280,7 +4309,7 @@ proc oif_mesh_analyze { args } {
 				incr mesh_nnodes
 			}
 		}
-		
+
 		set fp [open $mesh_triangles_file r]
 		set file_data [read $fp]
 		close $fp
@@ -2295,9 +4324,9 @@ proc oif_mesh_analyze { args } {
 				incr mesh_ntriangles
 			}
 		}
-		
+
 		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
-			for {set k 0} {$k < 3} {incr k} {		
+			for {set k 0} {$k < 3} {incr k} {
 				list P1
 				lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
 				list P2
@@ -2312,12 +4341,12 @@ proc oif_mesh_analyze { args } {
 			set norm0 [lindex $norm 0]
 			set norm1 [lindex $norm 1]
 			set norm2 [lindex $norm 2]
-			
+
 			# first compute "d" from the normal equation of the triangle plane
 			set tmp_d [expr -($P10*$norm0 + $P11*$norm1 + $P12*$norm2)]
 			# when coordinates of the origin are placed into the normal equation of the triangle plane, you should always get a positive number.
-			#set tmp_res [expr $origin_X*$norm0 + $origin_Y*$norm1 + $origin_Z*$norm2 + $tmp_d]
-#			puts "tmp_d: $tmp_d"
+			# set tmp_res [expr $origin_X*$norm0 + $origin_Y*$norm1 + $origin_Z*$norm2 + $tmp_d]
+			# puts "tmp_d: $tmp_d"
 			if { $tmp_d >= 0 } {
 				set tmp_id $mesh_triangles($i,1) 
 				set mesh_triangles($i,1) $mesh_triangles($i,2) 
@@ -2331,14 +4360,14 @@ proc oif_mesh_analyze { args } {
 		set fp [open $corr_file w]
 		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
 			puts $fp "$mesh_triangles($i,0) $mesh_triangles($i,1) $mesh_triangles($i,2)"
-		}		
+		}
 		close $fp
-	}
+	    }
 
-
-	if { $method == 2} {
-		# Method 2: Second check controls whether all couples of triangles with the same edge have the same orientation. Not implementedn yet
+	    if { $method == 2} {
+		# Method 2: Second check controls whether all couples of triangles with the same edge have the same orientation. Not implemented yet
 		# TO BE IMPLEMENTED
+	    }
 	}
 
 	if { $flip == 1} {
@@ -2357,8 +4386,174 @@ proc oif_mesh_analyze { args } {
 		}
 		close $fcorr
 	}
+	
+	if { $shift_node_ids == 1} {
+		set fcorr [open $corr_file w]
+		set fp [open $mesh_triangles_file r]
+		set file_data [read $fp]
+		close $fp
+		set data [split $file_data "\n"]
+		foreach line $data {
+			if { [llength $line] == 3 } {
+				set v0 [expr [lindex $line 0]-1]
+				set v1 [expr [lindex $line 1]-1]
+				set v2 [expr [lindex $line 2]-1]
+				puts $fcorr "$v0 $v1 $v2"
+			}
+		}
+		close $fcorr
+	}
 
 	
+}
+
+
+
+
+
+proc oif_obj_obj_interactions { args } {
+	# access global variables
+	global oif_n_objects
+	global oif_nparticles
+	global oif_ntriangles
+	global oif_nedges
+	global oif_firstBondId
+	global oif_firstPartId
+	global oif_objects
+	global oif_object_starting_particles
+	global oif_template_starting_triangles
+	global oif_object_object_interactions
+	set n_args 0
+		# counts the number of arguments
+	foreach arg $args {
+		incr n_args
+    }
+	#if { $n_args == 0 } {
+		#puts "Mandatory arguments are: object's ID" ;# TODO dopisat hlasku
+		#return 0
+	#}
+
+	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
+    set pos 0
+    set cut_off -1
+    set output_file ""
+    while { $pos < $n_args } {
+		switch [lindex $args $pos] {
+			"cut-off" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error 4"
+					break
+				}
+				set cut_off [lindex $args $pos]
+				incr pos
+			}
+			"output-file" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error 4"
+					break
+				}
+				set output_file [lindex $args $pos]
+				incr pos
+			}
+
+			default { 
+				puts "error s" 
+				set pos $n_args
+			}
+		}  
+	}
+
+# checking whether all mandatory arguments have been given
+	set mandatory 1
+	if { $cut_off == -1 } { set mandatory 0 }
+
+	if { $mandatory == 0 } { 
+		puts "Something went wrong with mandatory arguments for print_oif_object" 
+		return
+	}
+# gets coordinates of all objects
+	for { set obj 0 } { $obj < $oif_n_objects } {incr obj } {
+		set orig [ oif_object_analyze object-id $obj approx-pos]
+		set origX($obj) [lindex $orig 0]
+		set origY($obj) [lindex $orig 1]
+		set origZ($obj) [lindex $orig 2]
+		
+	}
+#set pairwise distances between all objects
+	puts "setting pairwise"
+	set min_dist 1000000
+	for { set objA 0 } { $objA < [expr $oif_n_objects ] } {incr objA } {
+		for { set objB [expr $objA + 1] } { $objB < [expr $oif_n_objects] } {incr objB } {
+			set dx [expr $origX($objA) - $origX($objB)]
+			set dy [expr $origY($objA) - $origY($objB)]
+			set dz [expr $origZ($objA) - $origZ($objB)]
+			set mut_dist [expr sqrt($dx*$dx + $dy*$dy + $dz*$dz)]
+			set obj_mutual_distances($objA,$objB) $mut_dist
+			if { $mut_dist < $min_dist } { set min_dist $mut_dist } 
+		}
+	}
+	
+	if {$output_file != "" } {
+		puts "printing pairwise"
+		set fout [open $output_file w]
+		for { set objA 0 } { $objA < [expr $oif_n_objects ] } {incr objA } {
+			for { set objB [expr $objA + 1] } { $objB < [expr $oif_n_objects ] } {incr objB } {
+				puts $fout "$objA - $objB $obj_mutual_distances($objA,$objB)"
+			}
+		}
+		close $fout
+	}
+	puts "Before"
+	puts "$oif_object_object_interactions"
+	
+	for { set objA 0 } { $objA < [expr $oif_n_objects ] } {incr objA } {
+		if {$output_file != "" } {
+			set fout [open "state-$output_file" a]
+			puts $fout "checking $objA out of $oif_n_objects"
+			close $fout
+		}
+		for { set objB [expr $objA + 1] } { $objB < [expr $oif_n_objects] } {incr objB } {
+#			puts "[lsearch $oif_object_object_interactions { $objA $objB }]"
+#			puts "$obj_mutual_distances($objA,$objB), $cut_off"
+			if { $obj_mutual_distances($objA,$objB) < $cut_off } {
+				if { [lsearch $oif_object_object_interactions [list $objA $objB]] == -1 } {
+#					puts "[lsearch $oif_object_object_interactions [list $objA $objB]]"
+					lappend oif_object_object_interactions [list $objA $objB]
+#					puts "[lsearch $oif_object_object_interactions [list $objA $objB]]"
+					#add interaction
+					inter $objA $objB soft-sphere 0.01 1.2 0.2 0.0
+					#puts "Adding soft sphere $objA $objB"
+				}
+			}
+		}
+	}
+	
+	puts "Zoznam:"
+	puts "$oif_object_object_interactions"
+
+	foreach line $oif_object_object_interactions {
+		incr n_obj_inter([lindex $line 0])
+		incr n_obj_inter([lindex $line 1])
+    }
+	set n_obj_obj_inter 0
+	if {$output_file != "" } {
+		set fout [open "list-$output_file" a]
+
+		puts $fout "Number of non-bonded interactions for each object"
+		if { [llength $oif_object_object_interactions] > 0 } {
+			for { set obj 0 } { $obj < $oif_n_objects } { incr obj } {
+				puts $fout "$n_obj_inter($obj)"
+				set n_obj_obj_inter [expr $n_obj_obj_inter + $n_obj_inter($obj)]
+			}	
+			set n_obj_obj_inter [expr $n_obj_obj_inter/2]
+		}
+		puts $fout "Number of all pairs of non-bonded interactions: $n_obj_obj_inter"
+		puts $fout "All possible pairwise interactions: [expr $oif_n_objects * ($oif_n_objects - 1)/2]"
+		close $fout
+	}
+
 }
 
 

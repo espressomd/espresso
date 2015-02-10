@@ -33,8 +33,8 @@ type and the charge are both defined using the \lit{part} command.
 
 A bonded interaction defines an interaction between a number of
 specific particles; it only applies to the set of particles for which
-it has been explicitely set.  A bonded interaction between a set of
-particles has to be specified explicitely by the \lit{part bond}
+it has been explicitly set.  A bonded interaction between a set of
+particles has to be specified explicitly by the \lit{part bond}
 command, while the \lit{inter} command is used to define the
 interaction parameters.
 
@@ -590,7 +590,7 @@ from the two bonded partners) and the vector $\mathbf{r_{ik}}$. Note that the
 potential is turned off if one of the angle is more than $\pi/2$. This way we
 don't end up creating a minimum for an anti-parallel configuration.
 
-Unfortunately, the bonded partners are not seeked dynamically. One has to keep
+Unfortunately, the bonded partners are not sought dynamically. One has to keep
 track of the relative positions of the particle IDs. This can be done by
 setting the parameters \var{b1_a}, \var{b1_b}, \var{b2_a}, and \var{b2_b}. Say
 the first bead \var{type1} has particle ID \var{n}, then one should set the
@@ -743,7 +743,7 @@ interaction.
 by their \emph{bonded interaction type identificator} \var{bondid},
 which is a non-negative integer.  The \lit{inter} \var{bondid} command
 is used to specify the type and parameters of a bonded interaction,
-which applies to all particles connected explicitely by this bond
+which applies to all particles connected explicitly by this bond
 using the \keyword{part} command (see section \vref{tcl:part}).
 Therefore, defining a bond between two particles always involves two
 steps: defining the interaction and applying it. Assuming that two
@@ -754,7 +754,7 @@ FENE-bond between them using
   part 42 bond 1 43
 \end{tclcode}
 If a FENE-bond with the same interaction parameters is required between several
-particles (\eg in a simple chain molecule), one can use the sampe type \var{id}:
+particles (\eg in a simple chain molecule), one can use the same type \var{id}:
 \begin{tclcode}
   inter 1 fene 10.0 2.0
   part 42 bond 1 43; part 43 bond 1 44 
@@ -777,7 +777,7 @@ important, is nevertheless specified here for completeness.
 \end{essyntax}
 This creates a bond type with identificator \var{bondid} with a
 FENE (finite extension nonlinear expander) interaction. This is a
-rubber-band-like, symmetric interaction betweeen two particles with
+rubber-band-like, symmetric interaction between two particles with
 prefactor \var{K}, maximal stretching \var{\Delta r_\mathrm{max}} and
 equilibrium bond length \var{r_0}.  The bond potential diverges at a
 particle distance $r=\var{r_0}-\var{\Delta r_\mathrm{max}}$ and
@@ -853,7 +853,7 @@ is not taken into account.
   subt_lj
   \var{reserved} \var{R}
 \end{essyntax}
-This creates a ``bond'' type with identificator \var{bondid}, which
+This creates a "bond'' type with identificator \var{bondid}, which
 acts between two particles and actually subtracts the Lennard-Jones interaction
 between the involved particles.  The first parameter, \var{reserved} is a dummy
 just kept for compatibility reasons. The second parameter, \var{R}, is used as a
@@ -937,20 +937,20 @@ topologies and for some analysis that rely on bonds, or \eg for bonds that
 should be displayed in VMD.
 
 \section{Object-in-fluid interactions}
-\label{sec:inter-bonded-fsi}
-\index{bonded interactions fsi|mainindex}
-\index{interactions!bonded fsi|mainindex}
+\label{sec:inter-bonded-oif}
+\index{bonded interactions oif|mainindex}
+\index{interactions!bonded oif|mainindex}
 
 \begin{citebox}
   Please cite~\citewbibkey{cimrak} when using the interactions
   in this section in order to simulate extended objects embedded in a
-  LB fluid.
+  LB fluid. For more details also see the documentation at cell-in-fluid.fri.uniza.sk/oif-documentation
 \end{citebox}
 
 The following interactions are implemented in order to mimic the mechanics of 
 elastic or rigid objects immersed in the LB fluid flow. Their mathematical formulations 
-have been taken from \cite{dupin07}. Details on how the bonds with fluid-structure-interactions 
-can be used and automated are described in section \ref{sec:fsi}.
+were inspired by \cite{dupin07}. Details on how the bonds 
+can be used for modeling objects are described in section \ref{sec:oif}.
 
 \subsection{Stretching force}
 \index{stretching force|mainindex}
@@ -969,10 +969,9 @@ and point B. \var{L_{AB}^0} is the distance between these points in the relaxed
 state, that is if the current edge has the length exactly \var{L_{AB}^0}, then 
 no forces are added. $\Delta \var{L_{AB}}$ is the deviation from the relaxed 
 state, that is $\Delta \var{L_{AB}} = \var{L_{AB}} - \var{L_{AB}^0}$. The 
-stretching force between A and B is computed using 
+stretching force between A and B is calculated using 
 \begin{equation}
-\var{F_s(A,B)} = \var{k_s}\kappa(\lambda_{AB})\frac{\Delta \var{L_{AB}}}
-{\var{L^0_{AB}}}\var{n_{AB}}.
+\var{F_s(A,B)} = \var{k_s}\kappa(\lambda_{AB})\Delta \var{L_{AB}}\var{n_{AB}}.
 \end{equation}
 Here, \var{n_{AB}} is the unit vector pointing from \var{A} to \var{B}, \var{k_s} 
 is the stretching constant, $\lambda_{AB} = \var{L_{AB}}/\var{L_{AB}^0}$, and 
@@ -985,7 +984,7 @@ $\kappa$ is a nonlinear function that resembles neo-Hookean behaviour
 \begin{center}
   \includegraphics[width=8cm]{figures/stretching.png}
 \end{center}
-The stretching force acts between two particles and is symmetric. Therefore if an interaction is defined by
+The stretching force acts between two particles and is symmetric. Therefore, if an interaction is defined by
 \begin{verbatim} 
 inter 1 stretching_force 2.0 4.0
 \end{verbatim}
@@ -996,20 +995,20 @@ part 43 bond 1 42
 \end{verbatim}
 are equivalent.
 
-\subsection{Linear stretching force}
-\index{linear stretching force|mainindex}
-\index{interactions!linear stretching force|mainindex}
+%\subsection{Linear stretching force}
+%\index{linear stretching force|mainindex}
+%\index{interactions!linear stretching force|mainindex}
 
-\begin{essyntax}
-  inter \var{bondid}
-  stretchlin_force
-  \var{L^0_{AB}} \var{k_slin}
-\end{essyntax}
-This type of interaction is available for closed 3D immersed objects as well as 
-for 2D sheet flowing in the 3D flow. 
+%\begin{essyntax}
+  %inter \var{bondid}
+  %stretchlin_force
+  %\var{L^0_{AB}} \var{k_slin}
+%\end{essyntax}
+%This type of interaction is available for closed 3D immersed objects as well as 
+%for 2D sheet flowing in the 3D flow. 
 
-This type of interaction is the linear equivalent of stretching_force. The expressions for the forces are 
-the same except $\kappa(\lambda_{AB}) = 1$. 
+%This type of interaction is the linear equivalent of stretching_force. The expressions for the forces are 
+%the same except $\kappa(\lambda_{AB}) = 1$. 
 
 
 \subsection{Bending force}
@@ -1022,15 +1021,15 @@ the same except $\kappa(\lambda_{AB}) = 1$.
   \var{\theta^0} \var{k_b}
 \end{essyntax}
 
-The tendency of an elastic object to maintain the resting shape is governed by 
-prescribing the prefered angles between the neighbouring triangles of the mesh. 
+The tendency of an elastic object to maintain the resting shape is achieved by 
+prescribing the preferred angles between the neighbouring triangles of the mesh. 
 This type of interaction is available for closed 3D immersed objects as well as 
 for 2D sheet flowing in the 3D flow.
 
 
-Denote by $\theta^0$ the angle between two triangles in the resting shape. For 
-closed immersed objects, you always have to set the inner angle. The deviation 
-of this angle $\Delta \theta = \theta - \theta^0$ is computed and defines two 
+Denote the angle between two triangles in the resting shape by $\theta^0$. For 
+closed immersed objects, one always has to set the inner angle. The deviation 
+of this angle $\Delta \theta = \theta - \theta^0$ defines two 
 bending forces for two triangles \var{A_1BC} and \var{A_2BC}
 \begin{equation}
 \var{F_{bi}(A_iBC)} = \var{k_b}\frac{\Delta \theta}{\theta^0} \var{n_{A_iBC}}
@@ -1045,10 +1044,10 @@ $\var{i}=2$.
   \includegraphics[width=8cm]{figures/bending.png}
 \end{center}
 
-Unlike the stretching force the bending force is strictly asymmetric. After 
-creating an interaction
+Unlike the stretching force, the bending force is strictly asymmetric. After 
+creating the interaction
 \begin{verbatim} 
-inter 33 bending_force 0.7 4.0
+inter 33 bending_force 0.7 4.0,
 \end{verbatim}
 it is important how the bond is created. Particles need to be mentioned in the 
 correct order. Command
@@ -1082,9 +1081,9 @@ sheet flowing in the 3D flow.
 
 The deviation of the triangle surface \var{S_{ABC}} is computed from the triangle 
 surface in the resting shape $\Delta \var{S_{ABC}} = \var{S_{ABC}} - \var{S_{ABC}^0}$. 
-The area constraint assigns the following  shrinking/expanding force to every vertex 
+The area constraint assigns the following shrinking/expanding force to every vertex 
 \begin{equation}
- \var{F_{al}(A)} = -\var{k_{al}}\frac{\Delta \var{S_{ABC}}}{\var{S_{ABC}}}\var{w_{A}}
+ \var{F_{al}(A)} = -\var{k_{al}}\frac{\Delta \var{S_{ABC}}}{\var{\sqrt{S_{ABC}}}}\var{w_{A}}
 \end{equation}
 where \var{k_{al}}  is the area constraint coefficient, and \var{w_{A}} is the unit 
 vector pointing from the centroid of triangle \var{ABC} to the vertex \var{A}. 
