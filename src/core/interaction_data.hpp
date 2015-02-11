@@ -867,10 +867,6 @@ public:
   double n[3];
   /** distance of the wall from the origin. */
   double d;
-  int reflecting;
-  int only_positive;
-  /** whether to calculate tunable slip forces 1 or not 0 */
-  int tunable_slip;
 };
 
 /** Parameters for a SPHERE constraint. */
@@ -887,16 +883,15 @@ public:
   double rad;  
   /** sphere direction. (+1 outside -1 inside interaction direction)*/
   double direction;
-  int reflecting;
 };
 
 /** Parameters for a CYLINDER constraint. */
 class Constraint_cylinder:public Shape {
 public:
-  void Write_Shape_Tcl (Tcl_Interp *interp);
-  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
-  ~Constraint_cylinder(){}
-  size_t SizeOfShape(){return (sizeof(Constraint_cylinder));}
+  virtual void Write_Shape_Tcl (Tcl_Interp *interp);
+  virtual int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  virtual ~Constraint_cylinder(){}
+  virtual size_t SizeOfShape(){return (sizeof(Constraint_cylinder));}
   /** center of the cylinder. */
   double pos[3];
   /** Axis of the cylinder .*/
@@ -907,27 +902,15 @@ public:
   double length;
   /** cylinder direction. (+1 outside -1 inside interaction direction)*/
   double direction;
-  int reflecting;
 };
 
 /** Parameters for a SPHEROCYLINDER constraint. */
-class Constraint_spherocylinder:public Shape {
+class Constraint_spherocylinder:public Constraint_cylinder {
 public:
   void Write_Shape_Tcl (Tcl_Interp *interp);
   int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
   ~Constraint_spherocylinder(){}
   size_t SizeOfShape(){return (sizeof(Constraint_spherocylinder));}
-  /** center of the cylinder. */
-  double pos[3];
-  /** Axis of the cylinder .*/
-  double axis[3];
-  /** cylinder radius. */
-  double rad;
-  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
-  double length;
-  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
-  double direction;
-  int reflecting;
 };
 
 /** Parameters for a RHOMBOID constraint. */
@@ -945,7 +928,6 @@ public:
   double c[3];
   /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
   double direction;
-  int reflecting;
 };
 
 /** Parameters for a PORE constraint. */
@@ -965,7 +947,6 @@ public:
   double smoothing_radius;
   /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
   double length;
-  int reflecting;
   double outer_rad_left;
   double outer_rad_right;
 };
@@ -987,7 +968,6 @@ public:
   double channel_width;
   double pore_width;
   double pore_length;
-  int reflecting;
 };
 
 /** Parameters for a ROD constraint. */
@@ -1070,8 +1050,6 @@ public:
 
   double direction;
 
-  int reflecting;
-
 };
 
 /** Parameters for a HOLLOW_CONE constraint. */
@@ -1104,8 +1082,6 @@ public:
   /** Inside/Outside (+1 outside -1 inside interaction direction)*/
 
   double direction;
-
-  int reflecting;
 
 };
 
