@@ -179,7 +179,8 @@ typedef struct {
 
   float *force;
   float *scforce;
-#ifdef IMMERSED_BOUNDARY
+#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
+
   // We need the node forces for the velocity interpolation at the virtual particles' position
   // However, LBM wants to reset them immediately after the LBM update
   // This variable keeps a backup

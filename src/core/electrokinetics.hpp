@@ -141,6 +141,9 @@ unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char* filename);
 int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
+#ifdef EK_DEBUG
+int ek_print_vtk_lbforce_buf(char* filename);
+#endif
 int ek_print_vtk_lbforce(char* filename);
 int ek_print_vtk_reaction_tags(char* filename);
 int ek_lb_print_vtk_density(char* filename);

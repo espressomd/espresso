@@ -494,7 +494,7 @@ __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
   for(int ii=0;ii<LB_COMPONENTS;++ii)
   {
 
-#ifdef IMMERSED_BOUNDARY
+#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
 // Store backup of the node forces
   node_f.force_buf[(0 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(0 + ii*3 ) * para.number_of_nodes + index];
   node_f.force_buf[(1 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(1 + ii*3 ) * para.number_of_nodes + index];
@@ -3119,7 +3119,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   free_and_realloc(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
   free_and_realloc(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
   free_and_realloc(node_f.force    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
-#ifdef IMMERSED_BOUNDARY
+#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
   free_and_realloc(node_f.force_buf    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
 #endif
 #ifdef SHANCHEN

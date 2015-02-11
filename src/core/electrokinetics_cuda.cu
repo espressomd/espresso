@@ -94,7 +94,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
   bool initialized = false;
   
   extern LB_parameters_gpu lbpar_gpu;
-  extern LB_node_force_gpu node_f;
+  extern LB_node_force_gpu node_f, node_f_buf;
   extern LB_nodes_gpu *current_nodes;
   extern EK_parameters *lb_ek_parameters;
   
@@ -2754,9 +2754,60 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
+#ifdef EK_DEBUG
+int ek_print_vtk_lbforce_buf( char* filename ) {
+  FILE* fp = fopen( filename, "w" );
+
+  if( fp == NULL ) 
+  {
+    return 1;
+  }
+
+  float* lbforce = (float*) malloc( ek_parameters.number_of_nodes * 3 *sizeof( float ) );
+  
+  cuda_safe_mem( cudaMemcpy( lbforce, 
+                             node_f.force_buf,
+                             ek_parameters.number_of_nodes * 3 * sizeof( float ),
+                             cudaMemcpyDeviceToHost )
+               );
+  
+  fprintf( fp, "\
+# vtk DataFile Version 2.0\n\
+lbforce\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS lbforce float 3\n\
+LOOKUP_TABLE default\n",
+           ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+           ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
+           ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+           ek_parameters.number_of_nodes                                              );
+
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) 
+  {
+    fprintf( fp, "%e %e %e\n", lbforce[ i ] / 
+                                 ( powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
+                               lbforce[ i + ek_parameters.number_of_nodes ] /
+                                 ( powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ),
+                               lbforce[ i + 2 * ek_parameters.number_of_nodes ] /
+                                 ( powf( ek_parameters.time_step , 2.0 ) * powf( ek_parameters.agrid, 4.0 ) ) );
+  }
+  
+  free( lbforce );
+  fclose( fp );
+  
+  return 0;
+}
+#endif
+
 
 int ek_print_vtk_lbforce( char* filename ) {
-
   FILE* fp = fopen( filename, "w" );
 
   if( fp == NULL ) 
