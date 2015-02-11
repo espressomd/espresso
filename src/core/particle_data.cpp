@@ -695,15 +695,11 @@ int set_particle_rotational_inertia(int part, double rinertia[3])
   mpi_send_rotational_inertia(pnode, part, rinertia);
   return ES_OK;
 }
-int get_particle_rotational_inertia(int part, double rinertia[3]) {
-  Particle partStruct;
 
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  get_particle_data(part, &partStruct);
-  rinertia = partStruct.p.rinertia;
-
-  return ES_OK;
+double* pointer_to_rotational_inertia(Particle* p, double rinertia[3]) {
+	double* justTryingToFixBuild;
+	return justTryingToFixBuild;
+	//TODO WRITE A FUNCTION THAT ACTUALLY RETURNS SOMETHING!!!
 }
 #endif
 

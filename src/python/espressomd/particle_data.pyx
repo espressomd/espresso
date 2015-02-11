@@ -197,7 +197,7 @@ cdef class ParticleHandle:
       def __get__(self):
         self.updateParticleData()
         cdef double* rinertia
-        rinertia = get_particle_rotational_inertia(&(self.particleData), rinertia)
+        rinertia = pointer_to_rotational_inertia(&(self.particleData), rinertia)
         return np.array([ rinertia[0], rinertia[1], rinertia[2]])
 
 # Omega (angular velocity) body frame
