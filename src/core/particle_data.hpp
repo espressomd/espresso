@@ -51,6 +51,8 @@
 #define COORD_FIXED(coord) (2L << coord)
 /** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether any of the coordinates is fixed. */
 #define COORDS_FIX_MASK     (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
+/** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether all of the coordinates are fixed. */
+#define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
 /** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external torque. */

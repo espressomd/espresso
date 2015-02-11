@@ -42,6 +42,7 @@ PYXFILES =  \
 	_system.pyx \
 	particle_data.pyx \
 	analyze.pyx \
+	cellsystem.pyx \
 	changeVolume.pyx \
 	code_info.pyx \
 	cuda_init.pyx \
@@ -53,19 +54,9 @@ PYXFILES =  \
 	utils.pyx
 
 PXDFILES = \
+	_espresso/globals.pxd \
 	c_analyze.pxd \
-	_espresso.pxd \
-	particle_data.pxd \
-	analyze.pxd \
-	changeVolume.pxd \
-	code_info.pxd \
-	cuda_init.pxd \
-	debye_hueckel.pxd \
-	integrate.pxd \
-	interactions.pxd \
-	invalidateSystem.pxd \
-	thermostat.pxd \
-	utils.pxd
+	$(PYXFILES:.pyx=.pxd)
 
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
@@ -101,7 +92,7 @@ cython_verbose_0 = @echo "  CYTHON   $@";
 
 $(CPPFILES): %.cpp: %.pyx myconfig.pxi
 	$(cython_verbose)cython \
-	  -I $(builddir) $< -o $@
+	  -I $(builddir) -I $(srcdir)/_espresso $< -o $@
 
 CLEANFILES += $(CPPFILES)
 
