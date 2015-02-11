@@ -282,16 +282,13 @@ __global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobi
 
 /// This computes the farfield contribution of the mobility with ewald summation
 /// this kernel computes the sines and cosinus.
-// r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
-// N is the number of particles
-// self_mobility is 1./(6.*PI*eta*a)
-// a is the particle radius
-// mobility is the mobility matrix which will be retruned (in/out)
-// L_d is the boxlength
-// cutoff the wavespace cutoff distance
-// xi the splitting parameter as defined by Beenakker 1986
-// xa  = xi * a
-// xa3 = xa * xa * xa
+/// r        : the vector of positions [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+/// N        : the number of particles
+/// vecs *   : a pointer to the k-vectors
+/// num      : number of k-vectors
+/// sines    : the values for sin(pos_i k_j)
+/// cosines  : the values for cos(pos_i k_j)
+/// ldd      : the leading dimension of the sines and cosines array
 #define mydebug(str,...)
 // if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
 __global__ void sd_compute_mobility_sines(const real * r, int N, const real * vecs, int num, real * sines, real * cosines, int ldd){
@@ -343,7 +340,7 @@ __global__ void sd_compute_mobility_sines(const real * r, int N, const real * ve
 
 
 /// This computes the farfield contribution of the mobility with ewald summation
-/// this kernel computes the sines and cosinus.
+/// this kernel computes the sum 
 /// The number of threads have to be a power of two! (e.g. 32,64,128 ... )
 // forces is the vector of [fx_1, fy_1, fz_1, fx_2, fy_2, fz_2, ...]
 //#define mydebug(str,...) if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
@@ -882,7 +879,7 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * L_g,
 	for (int l=0;l<3;l++){
 	  real dr=mypos[l]-cachedPos[j*3+l];
 #ifndef SD_NOT_PERIODIC
-	  dr-=L[d]*rint(dr/L[d]);
+	  dr-=L[l]*rint(dr/L[l]);
 #endif
 	  dr2+=dr*dr;
 	}
