@@ -18,120 +18,26 @@
 #  
 include "myconfig.pxi"
 
-cimport _espresso
-
+from globals cimport *
 import numpy as np
-cimport cuda_init
+
 import interactions
+cimport cuda_init
 import particle_data
 import cuda_init
+import code_info
 
-cdef class System
-cdef class CellSystem
-
-cdef extern from "global.hpp":
-    int FIELD_NPTISO_PISTON
-    int FIELD_NPTISO_PDIFF
-    int FIELD_PERIODIC
-    int FIELD_SIMTIME
-    int FIELD_SKIN
-
-cdef extern from "communication.hpp":
-    extern int n_nodes
-    void mpi_set_time_step(double time_step)
-
-cdef extern from "domain_decomposition.hpp":
-    extern double max_skin
-    
-cdef extern from "integrate.hpp":
-    double time_step
-    extern int integ_switch
-    extern double sim_time
-    extern double verlet_reuse
-
-cdef extern from "verlet.hpp":
-    double skin
-
-cdef extern from "lattice.hpp":
-    extern int lattice_switch
-  
-cdef extern from "particle_data.hpp":
-    extern int n_part
-
-cdef extern from "interaction_data.hpp":
-    double dpd_gamma
-    double dpd_r_cut
-    extern double max_cut
-    extern int max_seen_particle
-    extern int n_particle_types
-    extern double max_cut_nonbonded
-    extern double max_cut_bonded
-
-cdef extern from "thermostat.hpp":
-    double langevin_gamma
-    extern double nptiso_gamma0
-    extern double nptiso_gammav
-    extern double temperature 
-    extern int thermo_switch   
-
-cdef extern from "dpd.hpp":
-    extern int dpd_wf
-    extern double dpd_tgamma
-    extern double dpd_tr_cut
-    extern int dpd_twf
-
-IF LB:
-    cdef extern from "lb.hpp":
-        ctypedef struct LB_Parameters:
-           double tau
-        extern LB_Parameters lbpar
-
-IF LB_GPU:
-    cdef extern from "lbgpu.hpp":
-        ctypedef struct LB_parameters_gpu:
-            double tau
-        extern LB_parameters_gpu lbpar_gpu
-
-cdef extern from "cells.hpp":
-    extern double max_range
-
-cdef extern from "layered.hpp":
-    extern int n_layers
-
-cdef extern from "rattle.hpp":
-    extern int n_rigidbonds
-
-cdef extern from "tuning.hpp":
-    extern int timing_samples
-
-cdef extern from "imd.hpp":
-    extern int transfer_rate
-
-cdef extern from "grid.hpp":
-    double box_l[3]
-    double local_box_l[3]
-    extern int periodic
-
-cdef extern from "npt.hpp":
-    ctypedef struct nptiso_struct:
-        double p_ext
-        double p_inst
-        double p_inst_av
-        double p_diff
-        double piston
-    extern nptiso_struct nptiso
 
 cdef class System:
-    def __init__(self):
-        self.part = particle_data.particleList()
-        self.nonBondedInter = interactions.NonBondedInteractions()
-        self.bondedInter = interactions.BondedInteractions()
-        self.cellsystem = CellSystem(self)
+    doge = 1
+    part = particle_data.particleList()
+    nonBondedInter = interactions.NonBondedInteractions()
+    bondedInter = interactions.BondedInteractions()
+#    def __init__(self):
+#        self.part = particle_data.particleList()
+#        self.nonBondedInter = interactions.NonBondedInteractions()
+#        self.bondedInter = interactions.BondedInteractions()
 
-    property n_nodes:
-        def __get__(self):
-            return n_nodes
-  
     property box_l:
         def __set__(self, _box_l):
             if len(_box_l) != 3:
@@ -141,11 +47,19 @@ cdef class System:
                     raise ValueError("Box length must be > 0 in all directions")
                 box_l[i]=_box_l[i]
       
-            _espresso.mpi_bcast_parameter(0)
+            mpi_bcast_parameter(0)
     
         def __get__(self):
             return np.array([box_l[0], box_l[1], box_l[2]])
 
+    property cell_grid:
+        def __get__(self):
+            return np.array( [ dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]  ] )
+  
+    property cell_size:
+        def __get__(self):
+            return np.array( [ dd.cell_size[0], dd.cell_size[1], dd.cell_size[2] ] )
+    
     property dpd_gamma:
         def __get__(self):
             return dpd_gamma
@@ -170,6 +84,28 @@ cdef class System:
         def __get__(self):
             return max_cut
       
+    property max_num_cells:
+        def __set__(self, int _max_num_cells):
+            global max_num_cells
+            if _max_num_cells < min_num_cells:
+                raise ValueError("max_num_cells must be >= min_num_cells (currently "+str(min_num_cells)+")")
+            max_num_cells=_max_num_cells
+            mpi_bcast_parameter(FIELD_MAXNUMCELLS)
+        def __get__(self):
+            return max_num_cells
+
+    property min_num_cells:
+        def __set__(self, int _min_num_cells): 
+            global min_num_cells 
+            min = calc_processor_min_num_cells()
+            if _min_num_cells < min:
+                raise ValueError("min_num_cells must be >= processor_min_num_cells (currently "+str(min)+")")
+            if _min_num_cells > max_num_cells:
+                raise ValueError("min_num_cells must be <= max_num_cells (currently "+str(max_num_cells)+")")
+            min_num_cells=_min_num_cells
+            mpi_bcast_parameter(FIELD_MINNUMCELLS)
+        def __get__(self):
+            return min_num_cells
     
     property max_part:
         def __get__(self):
@@ -187,6 +123,10 @@ cdef class System:
         def __get__(self):
             return n_layers
   
+    property n_nodes:
+        def __get__(self):
+            return n_nodes
+  
     property n_part:
         def __get__(self):
             return n_part
@@ -199,6 +139,22 @@ cdef class System:
         def __get__(self):
             return n_rigidbonds
   
+    property node_grid:
+        def __set__(self, _node_grid):
+            global node_grid
+            if len(_node_grid) != 3:
+                raise ValueError("node_grid must be of length 3")
+            for i in range(3):
+                if _node_grid[i] <= 0:
+                    raise ValueError("node_grid must be > 0 in all directions")
+                node_grid[i]=_node_grid[i]
+            if _node_grid[0]*_node_grid[1]*_node_grid[2] != n_nodes:
+                raise ValueError("node_grid does not fit n_nodes ("+str(n_nodes)+")")
+            for i in range(3):
+                node_grid[i]=_node_grid[i]
+            mpi_bcast_parameter(FIELD_NODEGRID)
+        def __get__(self):
+            return np.array([node_grid[0], node_grid[1], node_grid[2]])
   
     property nptiso_gamma0:
         def __get__(self):
@@ -226,7 +182,7 @@ cdef class System:
             if _npt_piston < 0:
                 raise ValueError("npt_piston must be > 0")
             nptiso.piston=_npt_piston
-            _espresso.mpi_bcast_parameter(FIELD_NPTISO_PISTON)
+            mpi_bcast_parameter(FIELD_NPTISO_PISTON)
         def __get__(self):
             global npt_piston
             return nptiso.piston
@@ -235,7 +191,7 @@ cdef class System:
         def __set__(self, _npt_p_diff):
             global npt_p_diff
             nptiso.p_diff=_npt_p_diff
-            _espresso.mpi_bcast_parameter(FIELD_NPTISO_PDIFF)
+            mpi_bcast_parameter(FIELD_NPTISO_PDIFF)
         def __get__(self):
             global npt_p_diff
             return nptiso.p_diff
@@ -254,7 +210,7 @@ cdef class System:
             periodic=4*_periodic[2] + 2*_periodic[1] + _periodic[0] 
             # first 3 bits of periodic determine the periodicity
             # until we can handle contitional compilatio, periodic=7 is the only value which makes sense
-            _espresso.mpi_bcast_parameter(FIELD_PERIODIC)
+            mpi_bcast_parameter(FIELD_PERIODIC)
         def __get__(self):
             global periodic 
             periodicity=np.zeros(3)
@@ -269,7 +225,7 @@ cdef class System:
                 raise ValueError("Skin must be >= 0")
             global skin
             skin=_skin
-            _espresso.mpi_bcast_parameter(FIELD_SKIN)
+            mpi_bcast_parameter(28)
         def __get__(self): 
             global skin
             return skin
@@ -290,7 +246,7 @@ cdef class System:
                 raise ValueError("Simulation time must be >= 0")
             global sim_time
             sim_time=_time
-            _espresso.mpi_bcast_parameter(FIELD_SIMTIME)
+            mpi_bcast_parameter(FIELD_SIMTIME)
         def __get__(self): 
             global sim_time
             return sim_time
@@ -384,146 +340,6 @@ cdef class System:
             global max_cut_bonded
             return max_cut_bonded
 
-
-cdef extern from "global.hpp":
-    int FIELD_MAXNUMCELLS
-    int FIELD_MINNUMCELLS
-    int FIELD_NODEGRID
-
-cdef extern from "cells.hpp":
-    int CELL_STRUCTURE_CURRENT
-    int CELL_STRUCTURE_DOMDEC
-    int CELL_STRUCTURE_NSQUARE
-    int CELL_STRUCTURE_LAYERED
-
-cdef extern from "layered.hpp":
-    int determine_n_layers
-    int n_layers
-    int determine_n_layers
-
-cdef extern from "grid.hpp":
-    int node_grid[3]
-
-cdef extern from "communication.hpp":
-    void mpi_bcast_cell_structure(int cs)
-    
-cdef extern from "domain_decomposition.hpp":
-    ctypedef struct IA_Neighbor:
-        pass
-    ctypedef struct IA_Neighbor_List:
-        pass
-    ctypedef struct  DomainDecomposition:
-        int use_vList
-        int cell_grid[3]
-        double cell_size[3]
-  
-    extern DomainDecomposition dd
-    extern int max_num_cells
-    extern int min_num_cells
-    extern double max_skin
-    int calc_processor_min_num_cells()
-
-cdef class CellSystem:
-    cdef System system
-
-    def __init__(self, system):
-        self.system = system
-    
-    property node_grid:
-        def __set__(self, _node_grid):
-            global node_grid
-            if len(_node_grid) != 3:
-                raise ValueError("node_grid must be of length 3")
-            for i in range(3):
-                if _node_grid[i] <= 0:
-                    raise ValueError("node_grid must be > 0 in all directions")
-                node_grid[i]=_node_grid[i]
-            n_nodes = self.system.n_nodes
-            if _node_grid[0]*_node_grid[1]*_node_grid[2] != n_nodes:
-                raise ValueError("node_grid does not fit n_nodes ("+str(n_nodes)+")")
-            for i in range(3):
-                node_grid[i]=_node_grid[i]
-            _espresso.mpi_bcast_parameter(FIELD_NODEGRID)
-        def __get__(self):
-            return np.array([node_grid[0], node_grid[1], node_grid[2]])
-
-    property cell_grid:
-        def __get__(self):
-            return np.array( [ dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]  ] )
-  
-    property cell_size:
-        def __get__(self):
-            return np.array( [ dd.cell_size[0], dd.cell_size[1], dd.cell_size[2] ] )
-        
-    property max_num_cells:
-        def __set__(self, int _max_num_cells):
-            global max_num_cells
-            if _max_num_cells < min_num_cells:
-                raise ValueError("max_num_cells must be >= min_num_cells (currently "+str(min_num_cells)+")")
-            max_num_cells=_max_num_cells
-            _espresso.mpi_bcast_parameter(FIELD_MAXNUMCELLS)
-        def __get__(self):
-            return max_num_cells
-
-    property min_num_cells:
-        def __set__(self, int _min_num_cells): 
-            global min_num_cells 
-            min = calc_processor_min_num_cells()
-            if _min_num_cells < min:
-                raise ValueError("min_num_cells must be >= processor_min_num_cells (currently "+str(min)+")")
-            if _min_num_cells > max_num_cells:
-                raise ValueError("min_num_cells must be <= max_num_cells (currently "+str(max_num_cells)+")")
-            min_num_cells=_min_num_cells
-            _espresso.mpi_bcast_parameter(FIELD_MINNUMCELLS)
-        def __get__(self):
-            return min_num_cells
-
-    def setDomainDecomposition(self, useVerletList=True):
-        useVerletList=bool(useVerletList)
-        
-        ### should work with global_variables.dd
-        if useVerletList:
-            dd.use_vList = 1
-        else :
-            dd.use_vList = 0
-        
-        # grid.h::node_grid
-        mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
-        
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
-        return True
-    
-    def setNsquare(self):
-        mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
-        return True
-    
-    def setLayered(self, nLayers=""):
-        if nLayers!="":
-            if not isinstance(nLayers, int):
-                raise ValueError("layer height should be positive")
-            global n_layers
-            n_layers=int(nLayers)
-            global determine_n_layers
-            determine_n_layers=0
-        
-        if (node_grid[0] != 1 or node_grid[1] != 1):
-            node_grid[0] = node_grid[1] = 1
-            node_grid[2] = self.system.n_nodes
-            err = _espresso.mpi_bcast_parameter(FIELD_NODEGRID)
-        else:
-            err = 0
-
-        if not err:
-            mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED)
-        
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
-        return True
-            
-     
 #lbfluid=lb.DeviceList()
 IF CUDA == 1:
     cu=cuda_init.CudaInitHandle()

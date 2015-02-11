@@ -19,9 +19,6 @@
 include "myconfig.pxi"
 # Non-bonded interactions
 
-include "myconfig.pxi"
-
-
 cdef class NonBondedInteraction(object):
   
   cdef public object _partTypes
@@ -141,75 +138,67 @@ cdef class NonBondedInteraction(object):
     raise Exception("Subclasses of NonBondedInteraction must define the requiredKeys() method.")
 
 # Lennard Jones
-IF LENNARD_JONES == 1:
-  cdef class LennardJonesInteraction(NonBondedInteraction):
-    def validateParams(self):
-      if self._params["epsilon"]<0:
-        raise ValueError("Lennard-Jones eps has to be >=0")
-      if self._params["sigma"]<0:
-        raise ValueError("Lennard-Jones sigma has to be >=0")
-      if self._params["cutoff"]<0:
-        raise ValueError("Lennard-Jones cutoff has to be >=0")
-      return True
-  
-    def _getParamsFromEsCore(self):
-      cdef IA_parameters* iaParams
-      iaParams =  get_ia_param(self._partTypes[0],self._partTypes[1]) 
-      return {\
-        "epsilon":iaParams.LJ_eps,\
-        "sigma":iaParams.LJ_sig,\
-        "cutoff":iaParams.LJ_cut,\
-        "shift":iaParams.LJ_shift,\
-        "offset":iaParams.LJ_offset,\
-        "min":iaParams.LJ_min}
-         
-  
-    def isActive(self):
-      return (self._params["epsilon"] >0)
+
+cdef class LennardJonesInteraction(NonBondedInteraction):
+  if LENNARD_JONES == 1:
+      def validateParams(self):
+        if self._params["epsilon"]<0:
+          raise ValueError("Lennard-Jones eps has to be >=0")
+        if self._params["sigma"]<0:
+          raise ValueError("Lennard-Jones sigma has to be >=0")
+        if self._params["cutoff"]<0:
+          raise ValueError("Lennard-Jones cutoff has to be >=0")
+        return True
     
-    def _setParamsInEsCore(self):
-      # Handle the case of shift="auto"
-      if self._params["shift"]=="auto": 
-        # Calc shift
-        self._params["shift"]= -( (self._params["sigma"]/self._params["cutoff"])**12 - (self._params["sigma"]/self._params["cutoff"])**6 )
+      def _getParamsFromEsCore(self):
+        cdef IA_parameters* iaParams
+        iaParams =  get_ia_param(self._partTypes[0],self._partTypes[1]) 
+        return { \
+          "epsilon": iaParams.LJ_eps, \
+          "sigma": iaParams.LJ_sig, \
+          "cutoff": iaParams.LJ_cut, \
+          "shift": iaParams.LJ_shift, \
+          "offset": iaParams.LJ_offset, \
+          "min": iaParams.LJ_min }
+           
+    
+      def isActive(self):
+        return (self._params["epsilon"] >0)
       
-      if lennard_jones_set_params(self._partTypes[0],self._partTypes[1],\
-                                          self._params["epsilon"], \
-                                          self._params["sigma"], \
-                                          self._params["cutoff"], \
-                                          self._params["shift"], \
-                                          self._params["offset"], \
-  					0.0, \
-                                          self._params["min"]):
-        raise Exception("Could not set Lennard Jones parameters")					
+      def _setParamsInEsCore(self):
+        # Handle the case of shift="auto"
+        if self._params["shift"]=="auto": 
+          # Calc shift
+          self._params["shift"]= -( (self._params["sigma"]/self._params["cutoff"])**12 - (self._params["sigma"]/self._params["cutoff"])**6 )
+        
+        if lennard_jones_set_params(self._partTypes[0],self._partTypes[1],\
+                                            self._params["epsilon"], \
+                                            self._params["sigma"], \
+                                            self._params["cutoff"], \
+                                            self._params["shift"], \
+                                            self._params["offset"], \
+    					0.0, \
+                                            self._params["min"]):
+          raise Exception("Could not set Lennard Jones parameters")					
+      
+      def defaultParams(self):
+        self._params={\
+          "epsilon":0.,\
+          "sigma":0.,\
+          "cutoff":0.,\
+          "shift":0.,\
+          "offset":0.,\
+          "min":0.}
     
-    def defaultParams(self):
-      self._params={\
-        "epsilon":0.,\
-        "sigma":0.,\
-        "cutoff":0.,\
-        "shift":0.,\
-        "offset":0.,\
-        "min":0.}
-  
-    def typeName(self): 
-      return "LennardJones" 
-    
-    def validKeys(self): 
-      return "epsilon","sigma","cutoff","shift","offset","min"
-    
-    def requiredKeys(self): 
-      return "epsilon","sigma","cutoff","shift" 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+      def typeName(self): 
+        return "LennardJones" 
+      
+      def validKeys(self): 
+        return "epsilon","sigma","cutoff","shift","offset","min"
+      
+      def requiredKeys(self): 
+        return "epsilon","sigma","cutoff","shift" 
+
 
 class NonBondedInteractionHandle(object):
   """Provides access to all Non-bonded interactions between 
@@ -218,9 +207,8 @@ class NonBondedInteractionHandle(object):
   type1=-1
   type2=-1
 
-  # Here, the individual nonbonded interactions have to be added
-  IF LENNARD_JONES == 1:
-    lennardJones=None
+  # Here, one line per non-bonded ia
+  lennardJones=None
 
 
   def __init__(self, _type1, _type2):
@@ -231,13 +219,11 @@ class NonBondedInteractionHandle(object):
     self.type2=_type2
     
     
-    # Here, add all nonbonded ia
-    IF LENNARD_JONES ==1:
-      self.lennardJones =LennardJonesInteraction(_type1,_type2)
+    # Here, add one line for each nonbonded ia
+    self.lennardJones =LennardJonesInteraction(_type1,_type2)
 
-
-
-
+  
+  
 
 
 cdef class NonBondedInteractions:
@@ -275,8 +261,9 @@ cdef class BondedInteraction(object):
       # Check, if the bond in Espresso core is really defined as a FENE bond
       if bonded_ia_params[bondId].type != self.typeNumber():
         raise Exception("The bond with this id is not defined as a "+self.typeName()+" bond in the Espresso core.")
-      
+ 
       self._bondId=bondId
+
       # Load the parameters currently set in the Espresso core
       self._params=self._getParamsFromEsCore()
       self._bondId=bondId
@@ -360,7 +347,6 @@ cdef class BondedInteraction(object):
 
 
 
-# Fene bond
 
 class FeneBond(BondedInteraction):
 
@@ -387,7 +373,8 @@ class FeneBond(BondedInteraction):
        "r_0":bonded_ia_params[self._bondId].p.fene.r0}
 
   def _setParamsInEsCore(self):
-   fene_set_params(self._bondId,self._params["k"],self._params["d_r_max"],self._params["r_0"])
+    fene_set_params(self._bondId,self._params["k"],self._params["d_r_max"],self._params["r_0"])
+
 
 class HarmonicBond(BondedInteraction):
   def typeNumber(self):
@@ -412,12 +399,497 @@ class HarmonicBond(BondedInteraction):
        "r_cut":bonded_ia_params[self._bondId].p.harmonic.r_cut}
 
   def _setParamsInEsCore(self):
-   harmonic_set_params(self._bondId,self._params["k"],self._params["r_0"],self._params["r_cut"])
+    harmonic_set_params(self._bondId,self._params["k"],self._params["r_0"],self._params["r_cut"])
+   
+
+class Dihedral(BondedInteraction):
+  def typeNumber(self):
+    return 5
+
+  def typeName(self): 
+    return "DIHEDRAL"
+
+  def validKeys(self):
+    return "mult","bend","phase"
+
+  def requiredKeys(self): 
+    return "mult","bend", "phase"
+
+  def setDefaultParams(self):
+    self._params = {"mult'":1.,"bend":0.,"phase":0.} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"mult":bonded_ia_params[self._bondId].p.dihedral.mult,\
+       "bend":bonded_ia_params[self._bondId].p.dihedral.bend,\
+       "phase":bonded_ia_params[self._bondId].p.dihedral.phase}
+
+  def _setParamsInEsCore(self):
+    dihedral_set_params(self._bondId,self._params["mult"],self._params["bend"],self._params["phase"])
+    
+
+IF TABULATED == 1:
+  class Tabulated(BondedInteraction):
+    def typeNumber(self):
+      return 6
+
+    def typeName(self): 
+      return "TABULATED"
+
+    def validKeys(self):
+      return "type", "filename", "npoints", "minval", "maxval", "invstepsize"
+
+    def requiredKeys(self): 
+      return "type", "filename", "npoints", "minval", "maxval", "invstepsize"
+
+    def setDefaultParams(self):
+      self._params = {"type":1, "filename":"", "npoints":0, "minval":0, "maxval":1, \
+        "invstepsize":1} 
+
+    def _getParamsFromEsCore(self):
+      return \
+        {"type":bonded_ia_params[self._bondId].p.tab.type,\
+         "filename":bonded_ia_params[self.bondID].p.tab.filename,\
+         "npoints":bonded_ia_params[self._bondId].p.tab.npoints,\
+         "minval":bonded_ia_params[self._bondId].p.tab.minval,\
+         "maxval":bonded_ia_params[self._bondId].p.tab.maxval,\
+         "invstepsize":bonded_ia_params[self._bondId].p.tab.invstepsize}
+
+    def _setParamsInEsCore(self):
+      tabulated_bonded_set_params(self._bondId, self._params["type"], self._params["filename"])
+
+   
+IF TABULATED != 1:
+  class Tabulated(BondedInteraction):
+    def typeNumber(self):
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
+
+    def typeName(self): 
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
+
+    def validKeys(self):
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
+
+    def requiredKeys(self):
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
+
+    def setDefaultParams(self):
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
+
+    def _getParamsFromEsCore(self):
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
+
+    def _setParamsInEsCore(self):
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
+   
+   
+class Subt_Lj(BondedInteraction):
+  def typeNumber(self):
+    return 7
+
+  def typeName(self): 
+    return "SUBT_LJ"
+
+  def validKeys(self):
+    return "r", "k"
+
+  def requiredKeys(self): 
+    return "r", "k"
+
+  def setDefaultParams(self):
+    self._params = {"k":0, "r":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"k":bonded_ia_params[self._bondId].p.subt_lj.k,\
+       "r":bonded_ia_params[self._bondId].p.subt_lj.r}
+
+  def _setParamsInEsCore(self):
+    subt_lj_set_params(self._bondId,self._params["k"],self._params["r"])
+
+
+IF BOND_VIRTUAL == 1:
+  class Virtual(BondedInteraction):
+    def typeNumber(self):
+      return 9
+
+    def typeName(self): 
+      return "VIRTUAL"
+
+    def validKeys(self):
+      return
+
+    def requiredKeys(self):
+      return
+
+    def setDefaultParams(self):
+      pass
+
+    def _getParamsFromEsCore(self):
+      pass
+
+    def _setParamsInEsCore(self):
+      virtual_set_params(self._bondId)
+      
+   
+IF BOND_VIRTUAL != 1:
+  class Virtual(BondedInteraction):
+    def typeNumber(self):
+      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
+
+    def typeName(self): 
+      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
+
+    def validKeys(self):
+      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
+
+    def requiredKeys(self):
+      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
+
+    def setDefaultParams(self):
+      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
+
+    def _getParamsFromEsCore(self):
+      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
+
+    def _setParamsInEsCore(self):
+      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
+   
+   
+IF BOND_ENDANGLEDIST == 1:
+  class Endangledist(BondedInteraction):
+    def typeNumber(self):
+      return 11
+
+    def typeName(self): 
+      return "ENDANGLEDIST"
+
+    def validKeys(self):
+      return "bend", "phi0", "distmin", "distmax"
+
+    def requiredKeys(self):
+      return "bend", "phi0", "distmin", "distmax"
+
+    def setDefaultParams(self):
+      self._params = {"bend":0, "phi0":0, "distmin":0, "distmax":1}
+
+    def _getParamsFromEsCore(self):
+      return \
+        {"bend":bonded_ia_params[self._bondId].p.endangledist.bend,\
+         "phi0":bonded_ia_params[self._bondId].p.endangledist.phi0,\
+         "distmin":bonded_ia_params[self._bondId].p.endangledist.distmin,\
+         "distmax":bonded_ia_params[self._bondId].p.endangledist.distmax}
+
+    def _setParamsInEsCore(self):
+      endangledist_set_params(self._bondId, self._params["bend"], self._params["phi0"], self._params["distmin"],\
+      self._params["distmax"])
+      
+   
+IF BOND_ENDANGLEDIST != 1:
+  class Endangledist(BondedInteraction):
+    def typeNumber(self):
+      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
+
+    def typeName(self): 
+      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
+
+    def validKeys(self):
+      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
+
+    def requiredKeys(self):
+      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
+
+    def setDefaultParams(self):
+      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
+
+    def _getParamsFromEsCore(self):
+      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
+
+    def _setParamsInEsCore(self):
+      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
+
+
+IF OVERLAPPED == 1:
+  class Overlapped(BondedInteraction):
+    def typeNumber(self):
+      return 12
+
+    def typeName(self): 
+      return "OVERLAPPED"
+
+    def validKeys(self):
+      return "overlap_type", "filename"
+
+    def requiredKeys(self):
+      return "overlap_type", "filename"
+
+    def setDefaultParams(self):
+      self._params = {"overlap_type":0, "filename":""}
+
+    def _getParamsFromEsCore(self):
+      return \
+        {"bend":bonded_ia_params[self._bondId].p.overlap.type,\
+         "phi0":bonded_ia_params[self._bondId].p.overlap.filename}
+
+    def _setParamsInEsCore(self):
+      overlapped_bonded_set_params(self._bondId, self._params["overlap_type"], self._params["filename"])
+      
+   
+IF OVERLAPPED != 1:
+  class Overlapped(BondedInteraction):
+    def typeNumber(self):
+      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
+
+    def typeName(self): 
+      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
+
+    def validKeys(self):
+      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
+
+    def requiredKeys(self):
+      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
+
+    def setDefaultParams(self):
+      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
+
+    def _getParamsFromEsCore(self):
+      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
+
+    def _setParamsInEsCore(self):
+      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
+   
+   
+class Angle_Harmonic(BondedInteraction):
+  def typeNumber(self):
+    return 13
+
+  def typeName(self): 
+    return "ANGLE_HARMONIC"
+
+  def validKeys(self):
+    return "bend", "phi0"
+
+  def requiredKeys(self): 
+    return "bend", "phi0"
+
+  def setDefaultParams(self):
+    self._params = {"bend":0, "phi0":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"bend":bonded_ia_params[self._bondId].p.angle_harmonic.bend,\
+       "phi0":bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
+
+  def _setParamsInEsCore(self):
+    angle_harmonic_set_params(self._bondId,self._params["bend"],self._params["phi0"])
+   
+   
+class Angle_Cosine(BondedInteraction):
+  def typeNumber(self):
+    return 14
+
+  def typeName(self): 
+    return "ANGLE_COSINE"
+
+  def validKeys(self):
+    return "bend", "phi0"
+
+  def requiredKeys(self): 
+    return "bend", "phi0"
+
+  def setDefaultParams(self):
+    self._params = {"bend":0, "phi0":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"bend":bonded_ia_params[self._bondId].p.angle_cosine.bend,\
+       "phi0":bonded_ia_params[self._bondId].p.angle_cosine.phi0}
+
+  def _setParamsInEsCore(self):
+    angle_cosine_set_params(self._bondId,self._params["bend"],self._params["phi0"])
+   
+   
+class Angle_Cossquare(BondedInteraction):
+  def typeNumber(self):
+    return 15
+
+  def typeName(self): 
+    return "ANGLE_COSSQUARE"
+
+  def validKeys(self):
+    return "bend", "phi0"
+
+  def requiredKeys(self): 
+    return "bend", "phi0"
+
+  def setDefaultParams(self):
+    self._params = {"bend":0, "phi0":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"bend":bonded_ia_params[self._bondId].p.angle_cossquare.bend,\
+       "phi0":bonded_ia_params[self._bondId].p.angle_cossquare.phi0}
+
+  def _setParamsInEsCore(self):
+    angle_cossquare_set_params(self._bondId,self._params["bend"],self._params["phi0"])
+   
+   
+class Stretching_Force(BondedInteraction):
+  def typeNumber(self):
+    return 16
+
+  def typeName(self): 
+    return "STRETCHING_FORCE"
+
+  def validKeys(self):
+    return "r0", "ks"
+
+  def requiredKeys(self): 
+    return "r0", "ks"
+
+  def setDefaultParams(self):
+    self._params = {"r0":1., "ks":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"r0":bonded_ia_params[self._bondId].p.stretching_force.r0,\
+       "ks":bonded_ia_params[self._bondId].p.stretching_force.ks}
+
+  def _setParamsInEsCore(self):
+    stretching_force_set_params(self._bondId,self._params["r0"],self._params["ks"])
+   
+   
+class Area_Force_Local(BondedInteraction):
+  def typeNumber(self):
+    return 17
+
+  def typeName(self): 
+    return "AREA_FORCE_LOCAL"
+
+  def validKeys(self):
+    return "A0_l", "ka_l"
+
+  def requiredKeys(self): 
+    return "A0_l", "ka_l"
+
+  def setDefaultParams(self):
+    self._params = {"A0_l":1., "ka_l":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"A0_l":bonded_ia_params[self._bondId].p.area_force_local.A0_l,\
+       "ka_l":bonded_ia_params[self._bondId].p.area_force_local.ka_l}
+
+  def _setParamsInEsCore(self):
+    area_force_local_set_params(self._bondId,self._params["A0_l"],self._params["ka_l"])
+   
+   
+class Bending_Force(BondedInteraction):
+  def typeNumber(self):
+    return 18
+
+  def typeName(self): 
+    return "BENDING_FORCE"
+
+  def validKeys(self):
+    return "phi0", "kb"
+
+  def requiredKeys(self): 
+    return "phi0", "kb"
+
+  def setDefaultParams(self):
+    self._params = {"phi0":1., "kb":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"phi0":bonded_ia_params[self._bondId].p.bending_force.phi0,\
+       "kb":bonded_ia_params[self._bondId].p.bending_force.kb}
+
+  def _setParamsInEsCore(self):
+    bending_force_set_params(self._bondId,self._params["phi0"],self._params["kb"])
+   
+   
+class Volume_Force(BondedInteraction):
+  def typeNumber(self):
+    return 19
+
+  def typeName(self): 
+    return "VOLUME_FORCE"
+
+  def validKeys(self):
+    return "V0", "kv"
+
+  def requiredKeys(self): 
+    return "V0", "kv"
+
+  def setDefaultParams(self):
+    self._params = {"V0":1., "kv":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"V0":bonded_ia_params[self._bondId].p.volume_force.V0,\
+       "kv":bonded_ia_params[self._bondId].p.volume_force.kv}
+
+  def _setParamsInEsCore(self):
+    volume_force_set_params(self._bondId,self._params["V0"],self._params["kv"])
+   
+   
+class Area_Force_Global(BondedInteraction):
+  def typeNumber(self):
+    return 20
+
+  def typeName(self): 
+    return "AREA_FORCE_GLOBAL"
+
+  def validKeys(self):
+    return "A0_g", "ka_g"
+
+  def requiredKeys(self): 
+    return "A0_g", "ka_g"
+
+  def setDefaultParams(self):
+    self._params = {"A0_g":1., "ka_g":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"A0_g":bonded_ia_params[self._bondId].p.area_force_global.A0_g,\
+       "ka_g":bonded_ia_params[self._bondId].p.area_force_global.ka_g}
+
+  def _setParamsInEsCore(self):
+    area_force_global_set_params(self._bondId,self._params["A0_g"],self._params["ka_g"])
+   
+   
+class Stretchlin_Force(BondedInteraction):
+  def typeNumber(self):
+    return 21
+
+  def typeName(self): 
+    return "STRETCHLIN_FORCE"
+
+  def validKeys(self):
+    return "r0", "kslin"
+
+  def requiredKeys(self): 
+    return "r0", "kslin"
+
+  def setDefaultParams(self):
+    self._params = {"r0":1., "kslin":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"r0":bonded_ia_params[self._bondId].p.stretchlin_force.r0,\
+       "kslin":bonded_ia_params[self._bondId].p.stretchlin_force.kslin}
+
+  def _setParamsInEsCore(self):
+    stretchlin_force_set_params(self._bondId,self._params["r0"],self._params["kslin"])
 
     
 
 
-bondedInteractionClasses = {0:FeneBond, 1:HarmonicBond}
+bondedInteractionClasses = {0:FeneBond, 1:HarmonicBond, 5:Dihedral, 6:Tabulated, 7:Subt_Lj,\
+    9:Virtual, 11:Endangledist, 12:Overlapped,\
+    13:Angle_Harmonic, 14:Angle_Cosine, 15:Angle_Cossquare, 16:Stretching_Force, 17:Area_Force_Local,\
+    18:Bending_Force, 19:Volume_Force, 20:Area_Force_Global, 21:Stretchlin_Force}
 
 
 
@@ -440,7 +912,9 @@ class BondedInteractions:
       raise ValueError("The bonded interaction with the id "+str(key)+" is not yet defined.")
 
     # Find the appropriate class representing such a bond
-    bondClass =bondedInteractionClasses[bondType]
+    bondClass = bondedInteractionClasses[bondType]
+    print bondType
+    print "  "
 
     # And return an instance of it, which refers to the bonded interaction id in Espresso
     return bondClass(key)
