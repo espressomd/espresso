@@ -280,7 +280,7 @@ int Constraint_spherocylinder::calculate_dist(Particle *p1, double ppos[3], Part
     *dist *= this->direction;
   }
   else
-	  dynamic_cast<Constraint_cylinder*> (this)->calculate_dist(p1, ppos, c_p, dist, vec);
+	  (this)->Constraint_cylinder::calculate_dist(p1, ppos, c_p, dist, vec);
   return 0;
 }
 
