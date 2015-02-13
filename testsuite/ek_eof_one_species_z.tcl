@@ -72,7 +72,7 @@ set valency 1.0
 
 # Set up the (LB) electrokinetics fluid
 
-electrokinetics agrid $agrid lb_density [expr $density_neutral + $density_charged] viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length stencil linkcentered
+electrokinetics agrid $agrid lb_density [expr $density_neutral + $density_charged] viscosity $viscosity_dynamic friction $friction T $temperature bjerrum_length $bjerrum_length stencil nodecentered
 
 electrokinetics 1 density $density_charged D 0.3 valency $valency ext_force 0 0 $force
 electrokinetics 2 density $density_neutral D 0.3 valency 0
