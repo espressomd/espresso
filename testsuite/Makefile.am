@@ -106,7 +106,7 @@ tests = \
         tunable_slip.tcl \
         uwerr.tcl \
 	virtual-sites.tcl \
-	virtual-sites-rotation.tcl \
+	virtual-sites-rotation.tcl 
 # please keep the alphabetic ordering of the above list!
 
 deactivated_tests =
