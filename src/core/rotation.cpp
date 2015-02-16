@@ -473,6 +473,16 @@ void convert_vel_space_to_body(Particle *p, double *vel_body)
   vel_body[2] = A[2 + 3*0]*p->m.v[0] + A[2 + 3*1]*p->m.v[1] + A[2 + 3*2]*p->m.v[2];
 }
 
+void convert_vec_space_to_body(Particle *p, double *v,double* res)
+{
+  double A[9];
+  define_rotation_matrix(p, A);
+
+  res[0] = A[0 + 3*0]*v[0] + A[0 + 3*1]*v[1] + A[0 + 3*2]*v[2];
+  res[1] = A[1 + 3*0]*v[0] + A[1 + 3*1]*v[1] + A[1 + 3*2]*v[2];
+  res[2] = A[2 + 3*0]*v[0] + A[2 + 3*1]*v[1] + A[2 + 3*2]*v[2];
+}
+
 
 /** Multiply two quaternions */
 void multiply_quaternions(double a[4], double b[4], double result[4])
@@ -483,6 +493,40 @@ void multiply_quaternions(double a[4], double b[4], double result[4])
  result[2] = a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3]; 
  result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
 }
+
+
+/** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi */
+void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
+{
+  // Convert rotation axis to body-fixed frame
+  double a[3];
+  convert_vec_space_to_body(p,aSpaceFrame,a);
+
+  double q[4];
+  q[0]=cos(phi/2);
+  double tmp=sin(phi/2);
+  q[1]=tmp*a[0];
+  q[2]=tmp*a[1];
+  q[3]=tmp*a[2];
+  
+  // Normalize
+  normalize_quaternion(q);
+
+  // Rotate the particle
+  double qn[4]; // Resulting quaternion
+//  printf("rotate by %g %g %g %g\n",q[0],q[1],q[2],q[3]);
+//  printf("q=%g %g %g %g\n",p->r.quat[0],p->r.quat[1],p->r.quat[2],p->r.quat[3]);
+  multiply_quaternions(p->r.quat,q,qn);
+  for (int k=0; k<4; k++)
+    p->r.quat[k]=qn[k];
+//  printf("q'=%g %g %g %g\n",p->r.quat[0],p->r.quat[1],p->r.quat[2],p->r.quat[3]);
+  convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#ifdef DIPOLES
+  // When dipoles are enabled, update dipole moment
+  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
+}
+
 
 
 #endif

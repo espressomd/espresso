@@ -82,6 +82,7 @@ tests = \
 	mass-and-rinertia.tcl \
 	mdlc.tcl \
 	minimize_energy.tcl \
+	minimize_energy_rotation.tcl \
 	mmm1d.tcl \
 	mmm1dgpu.tcl \
 	ewaldgpu.tcl \

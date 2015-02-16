@@ -108,7 +108,9 @@ $$p_i = p_i + \min(\text{\var{gamma}} \times F_i, \text{\var{maxdisplacement}}),
 while the maximal force is bigger than \var{f_\mathrm{max}} or for at most \var{steps} times.
 The energy is relaxed by \var{gamma}, while the change per coordinate per step is limited to \var{maxdisplacement}.
 The combination of \var{gamma} and \var{maxdisplacement} can be used to get an poor man's adaptive update.
+Rotational degrees of freedom are treated similarly: each particle is rotated around an axis parallel to the torque acting on the particle.
 Please be aware of the fact that this needs not to converge to a local minimum in periodic boundary conditions.
+Translational and rotational coordinates that are fixed using the ``fix`` command or the ROTATION\_PER\_PARTICLE feature are not altered.
 
 \section{\texttt{change_volume}: Changing the box volume}
 \newescommand[change-volume]{change_volume}
