@@ -20,10 +20,10 @@ require_feature "EK_BOUNDARIES"
 
 set nn [format %02d [setmd n_nodes]]
 
-#puts "###############################################################" ;#TODO put back in
-#puts "#         Testcase ek_eof_one_species_y.tcl running on        #"
-#puts "#                           $nn nodes                          #"
-#puts "###############################################################\n"
+puts "###############################################################"
+puts "#         Testcase ek_eof_one_species_y.tcl running on        #"
+puts "#                           $nn nodes                          #"
+puts "###############################################################\n"
 
 ################################################################################
 #                              Set up the System                               # 
@@ -47,7 +47,7 @@ set agrid 1.0
 set dt [expr 1.0/3.0]
 set force 0.13
 set sigma -0.03
-set viscosity_kinematic 3.05
+set viscosity_kinematic 1.0
 set friction 1.0
 set temperature 2.3
 set bjerrum_length 0.7
@@ -89,13 +89,6 @@ electrokinetics boundary charge_density 0.0 wall normal -1 0 0 d -[expr $padding
 
 integrate $integration_length
 
-#for {set i 0} {$i < $integration_length} {incr i} {
-#  puts stderr $i
-#  integrate 1
-#  #puts "$i [electrokinetics print net_charge]"
-#  electrokinetics 1 print density vtk "data/dens1_$i.vtk"
-#}
-#exit
 ################################################################################
 #                              Analyze the system                              # 
 ################################################################################
@@ -158,7 +151,6 @@ while { $size > $tol } {
 # obtain the desired xi value
 
 set xi $pntm
-puts stderr "xi=$xi"
 
 # function to calculate the density
 
@@ -212,38 +204,41 @@ for {set i 0} {$i < [expr $box_x/$agrid]} {incr i} {
     set total_velocity_difference [expr $total_velocity_difference + $velocity_difference ]
 
     # diagonal stress tensor
-    set measured_stress_0 [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 0]
-    set measured_stress_2 [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 2]
-    set measured_stress_5 [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 5]
+    set measured_stress_xx [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 0]
+    set calculated_stress_xx 0.0
+    set measured_stress_yy [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 2]
+    set calculated_stress_yy 0.0
+    set measured_stress_zz [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 5]
+    set calculated_stress_zz 0.0
 
-    set stress_difference_xx [expr abs($measured_stress_0 - 0.0)]
-    set stress_difference_yy [expr abs($measured_stress_2 - 0.0)]
-    set stress_difference_zz [expr abs($measured_stress_5 - 0.0)]
+    set stress_difference_xx [expr abs($measured_stress_xx - $calculated_stress_xx)]
+    set stress_difference_yy [expr abs($measured_stress_yy - $calculated_stress_yy)]
+    set stress_difference_zz [expr abs($measured_stress_zz - $calculated_stress_zz)]
+
     set total_stress_difference_xx [expr $total_stress_difference_xx + $stress_difference_xx ]
     set total_stress_difference_yy [expr $total_stress_difference_yy + $stress_difference_yy ]
     set total_stress_difference_zz [expr $total_stress_difference_zz + $stress_difference_zz ]
 
     # xy component stress tensor
-    set measured_stress [expr [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 1] / 2]
-    set calculated_stress [stress_tensor $position $xi $bjerrum_length $force]
-    set stress_difference_xy [expr abs($measured_stress - $calculated_stress)]
+    set measured_stress_xy [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 1]
+    set calculated_stress_xy [stress_tensor $position $xi $bjerrum_length $force]
+    set stress_difference_xy [expr abs($measured_stress_xy - $calculated_stress_xy)]
     set total_stress_difference_xy [expr $total_stress_difference_xy + $stress_difference_xy ]
 
-puts "[expr $i*$agrid-$width/2.0-$padding+$agrid/2.0] [electrokinetics 1 node $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print density] [density $position $xi $bjerrum_length] [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print u] 1] [velocity $position $xi $width $bjerrum_length $force $viscosity_kinematic $density_water] [expr [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 1] / 2] [stress_tensor $position $xi $bjerrum_length $force] $measured_stress_0 $measured_stress_2 $measured_stress_5" ;#TODO delete
     # yz component stress tensor
-    set measured_stress [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 4]
-    set calculated_stress 0.0
-    set stress_difference_yz [expr abs($measured_stress - $calculated_stress)]
+    set measured_stress_yz [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 4]
+    set calculated_stress_yz 0.0
+    set stress_difference_yz [expr abs($measured_stress_yz - $calculated_stress_yz)]
     set total_stress_difference_yz [expr $total_stress_difference_yz + $stress_difference_yz ]
 
     # xz component stress tensor
-    set measured_stress [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 3]
-    set calculated_stress 0.0
-    set stress_difference_xz [expr abs($measured_stress - $calculated_stress)]
+    set measured_stress_xz [lindex [lbnode $i [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] 3]
+    set calculated_stress_xz 0.0
+    set stress_difference_xz [expr abs($measured_stress_xz - $calculated_stress_xz)]
     set total_stress_difference_xz [expr $total_stress_difference_xz + $stress_difference_xz ]
   }
 }
-#exit ;#TODO delete
+
 set total_density_difference [expr $agrid*$total_density_difference/$box_x]
 set total_velocity_difference [expr $agrid*$total_velocity_difference/$box_x]
 set total_stress_difference_xx [expr $agrid*$total_stress_difference_xx/$box_x]
@@ -267,28 +262,28 @@ puts "    The anisotropic part relaxes towards isotropic, but it"
 puts "    is not instantaneously isotropic. The elements on the"
 puts "    diagonal must therefore be different.\n"
 
-if { $total_density_difference > 5.0e-04 } {
+if { $total_density_difference > 5.0e-06 } {
   error_exit "Density accuracy not achieved"
 }
-if { $total_velocity_difference > 7.5e-03 } {
+if { $total_velocity_difference > 2.5e-06 } {
   error_exit "Velocity accuracy not achieved"
 }
-if { $total_stress_difference_xx > 1.0e-04 } {
+if { $total_stress_difference_xx > 7.5e-07 } {
   error_exit "Difference xx component too large"
 }
-if { $total_stress_difference_yy > 1.0e-04 } {
+if { $total_stress_difference_yy > 7.5e-05 } {
   error_exit "Difference yy component too large"
 }
-if { $total_stress_difference_zz > 1.0e-04 } {
+if { $total_stress_difference_zz > 7.5e-07 } {
   error_exit "Difference zz component too large"
 }
-if { $total_stress_difference_xy > 7.5e-04 } {
+if { $total_stress_difference_xy > 7.5e-06 } {
   error_exit "Stress accuracy xy component not achieved"
 }
-if { $total_stress_difference_yz > 5.0e-06 } {
+if { $total_stress_difference_yz > 2.5e-11 } {
   error_exit "Stress accuracy yz component not achieved"
 }
-if { $total_stress_difference_xz > 5.0e-06 } {
+if { $total_stress_difference_xz > 2.5e-11 } {
   error_exit "Stress accuracy xz component not achieved"
 }
 
