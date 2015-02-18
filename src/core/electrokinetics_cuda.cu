@@ -1905,7 +1905,6 @@ __global__ void ek_apply_boundaries( unsigned int species_index,
 }
 
 
-//TODO maybe make this obsolete by a multiplication in the advective fluxes, just as it's done for the diffusive ones
 __global__ void ek_clear_fluxes() {
 
   unsigned int index = ek_getThreadIndex();
@@ -2061,7 +2060,6 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
                cellpos[0] * cellpos[1] * cellpos[2]
     );
     
-    //((cufftReal*) ek_parameters_gpu.charge_potential)[ index ] = 0.0f;
     //printf("particle %d (%d):\n  charge %f\n  pos %f %f %f\n  lowernode %d %d %d\n  cellpos %f %f %f\n\n", index, ek_lbparameters_gpu->number_of_particles, particle_data[index].q, particle_data[index].p[0], particle_data[index].p[1], particle_data[index].p[2], lowernode[0], lowernode[1], lowernode[2], cellpos[0], cellpos[1], cellpos[2]); //TODO delete
   }
 }
