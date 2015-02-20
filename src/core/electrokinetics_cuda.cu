@@ -1475,7 +1475,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     target_node[1] = coord[1];
     target_node[2] = coord[2];
     target_node_index = rhoindex_cartesian2linear(target_node[0], target_node[1], target_node[2]);
-    not_boundary = lb_node.boundary[index] + lb_node.boundary[target_node_index] == 0;
+    not_boundary = (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
 
     //if(!not_boundary)
     //  printf("[%d,%d,%d]=%d\n", coord[0], coord[1], coord[2], not_boundary); //TODO delete
@@ -1496,12 +1496,12 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     target_node[1] = (coord[1] + 2*di[1]-1 + ek_parameters_gpu.dim_y) % ek_parameters_gpu.dim_y;
     target_node[2] = coord[2];
     target_node_index = rhoindex_cartesian2linear(target_node[0], target_node[1], target_node[2]);
-    not_boundary = lb_node.boundary[index] + lb_node.boundary[target_node_index] == 0;
+    not_boundary = (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
     
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_0U0 )],
               (2 * di[1] - 1) * ek_parameters_gpu.rho[species_index][index] *
               (1.0f - dx[0]) * dx[1] * (1.0f - dx[2]) * not_boundary );
-    
+
     //face in z
     node =
       rhoindex_cartesian2linear(
@@ -1514,7 +1514,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     target_node[1] = coord[1];
     target_node[2] = (coord[2] + 2*di[2]-1 + ek_parameters_gpu.dim_z) % ek_parameters_gpu.dim_z;
     target_node_index = rhoindex_cartesian2linear(target_node[0], target_node[1], target_node[2]);
-    not_boundary = lb_node.boundary[index] + lb_node.boundary[target_node_index] == 0;
+    not_boundary = (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
     
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_00U )],
                (2 * di[2] - 1) * ek_parameters_gpu.rho[species_index][index] *
@@ -1532,7 +1532,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     target_node[1] = (coord[1] + 2*di[1]-1 + ek_parameters_gpu.dim_y) % ek_parameters_gpu.dim_y;
     target_node[2] = (coord[2] + 2*di[2]-1 + ek_parameters_gpu.dim_z) % ek_parameters_gpu.dim_z;
     target_node_index = rhoindex_cartesian2linear(target_node[0], target_node[1], target_node[2]);
-    not_boundary = lb_node.boundary[index] + lb_node.boundary[target_node_index] == 0;
+    not_boundary = (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
            
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_0UU + (di[1] + di[2] == 1) )],
                (2 * di[1] - 1) * ek_parameters_gpu.rho[species_index][index] *
@@ -1550,7 +1550,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     target_node[1] = coord[1];
     target_node[2] = (coord[2] + 2*di[2]-1 + ek_parameters_gpu.dim_z) % ek_parameters_gpu.dim_z;
     target_node_index = rhoindex_cartesian2linear(target_node[0], target_node[1], target_node[2]);
-    not_boundary = lb_node.boundary[index] + lb_node.boundary[target_node_index] == 0;
+    not_boundary = (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
       
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_U0U + (di[0] + di[2] == 1) )],
                (2 * di[0] - 1) * ek_parameters_gpu.rho[species_index][index] *
@@ -1568,7 +1568,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     target_node[1] = (coord[1] + 2*di[1]-1 + ek_parameters_gpu.dim_y) % ek_parameters_gpu.dim_y;
     target_node[2] = coord[2];
     target_node_index = rhoindex_cartesian2linear(target_node[0], target_node[1], target_node[2]);
-    not_boundary = lb_node.boundary[index] + lb_node.boundary[target_node_index] == 0;
+    not_boundary = (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
       
     atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, EK_LINK_UU0 + (di[0] + di[1] == 1) )],
                (2 * di[0] - 1) * ek_parameters_gpu.rho[species_index][index] *
@@ -1586,7 +1586,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     target_node[1] = (coord[1] + 2*di[1]-1 + ek_parameters_gpu.dim_y) % ek_parameters_gpu.dim_y;
     target_node[2] = (coord[2] + 2*di[2]-1 + ek_parameters_gpu.dim_z) % ek_parameters_gpu.dim_z;
     target_node_index = rhoindex_cartesian2linear(target_node[0], target_node[1], target_node[2]);
-    not_boundary = lb_node.boundary[index] + lb_node.boundary[target_node_index] == 0;
+    not_boundary = (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
       
     atomicadd( &ek_parameters_gpu.j[
                 jindex_getByRhoLinear( node, (1 - di[0]) *

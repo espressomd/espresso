@@ -214,9 +214,9 @@ for {set i 0} {$i < [expr $box_y/$agrid]} {incr i} {
 
     # diagonal stress tensor
     set measured_stress_xx [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 0]
-    set calculated_stress_xx 0.0
+    set calculated_stress_xx [pressure $position $xi $bjerrum_length]
     set measured_stress_yy [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 2]
-    set calculated_stress_yy 0.0
+    set calculated_stress_yy [pressure $position $xi $bjerrum_length]
     set measured_stress_zz [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 5]
     set calculated_stress_zz [pressure $position $xi $bjerrum_length]
 
@@ -277,10 +277,10 @@ if { $total_density_difference > 1.0e-06 } {
 if { $total_velocity_difference > 5.0e-07 } {
   error_exit "Velocity accuracy not achieved"
 }
-if { $total_stress_difference_xx > 5.0e-03 } {
+if { $total_stress_difference_xx > 2.5e-04 } {
   error_exit "Difference xx component too large"
 }
-if { $total_stress_difference_yy > 5.0e-03 } {
+if { $total_stress_difference_yy > 2.5e-04 } {
   error_exit "Difference yy component too large"
 }
 if { $total_stress_difference_zz > 2.5e-04 } {

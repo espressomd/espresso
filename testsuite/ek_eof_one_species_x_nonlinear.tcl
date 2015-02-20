@@ -216,9 +216,9 @@ for {set i 0} {$i < [expr $box_z/$agrid]} {incr i} {
     set measured_stress_xx [lindex [lbnode [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] $i print pi_neq] 0]
     set calculated_stress_xx [pressure $position $xi $bjerrum_length]
     set measured_stress_yy [lindex [lbnode [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] $i print pi_neq] 2]
-    set calculated_stress_yy 0.0
+    set calculated_stress_yy [pressure $position $xi $bjerrum_length]
     set measured_stress_zz [lindex [lbnode [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] $i print pi_neq] 5]
-    set calculated_stress_zz 0.0
+    set calculated_stress_zz [pressure $position $xi $bjerrum_length]
 
     set stress_difference_xx [expr abs($measured_stress_xx - $calculated_stress_xx)]
     set stress_difference_yy [expr abs($measured_stress_yy - $calculated_stress_yy)]
@@ -280,10 +280,10 @@ if { $total_velocity_difference > 2.5e-06 } {
 if { $total_stress_difference_xx > 2.5e-04 } {
   error_exit "Difference xx component too large"
 }
-if { $total_stress_difference_yy > 7.5e-03 } {
+if { $total_stress_difference_yy > 2.5e-04 } {
   error_exit "Difference yy component too large"
 }
-if { $total_stress_difference_zz > 7.5e-03 } {
+if { $total_stress_difference_zz > 2.5e-04 } {
   error_exit "Difference zz component too large"
 }
 if { $total_stress_difference_xy > 2.5e-11 } {
