@@ -40,7 +40,6 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
 
   int err = TCL_OK;
   int species;
-  int intarg;
   double floatarg;
   double vectarg[3];
   int coord[3];
