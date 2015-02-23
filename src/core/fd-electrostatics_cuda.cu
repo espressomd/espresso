@@ -144,6 +144,8 @@ __global__ void createGreensfcn() {
           fde_parameters_gpu.dim_z
         );
     }
+
+    //fde_parameters_gpu.greensfcn[index] = 0.0f; //TODO delete
   }
 }
 

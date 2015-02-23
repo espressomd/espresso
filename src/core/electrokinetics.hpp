@@ -66,7 +66,7 @@ typedef struct {
   float mass_reactant;
   float mass_product0;
   float mass_product1;
-  int use_nonlinear_stencil;
+  int stencil;
   int number_of_boundary_nodes;
   float* charge_potential;
   float* j;
@@ -141,6 +141,9 @@ unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char* filename);
 int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
+#ifdef EK_DEBUG
+int ek_print_vtk_lbforce_buf(char* filename);
+#endif
 int ek_print_vtk_lbforce(char* filename);
 int ek_print_vtk_reaction_tags(char* filename);
 int ek_lb_print_vtk_density(char* filename);
@@ -160,7 +163,7 @@ int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
-int ek_set_use_nonlinear_stencil(int use_nonlinear_stencil);
+int ek_set_stencil(int stencil);
 int ek_node_print_velocity(int x, int y, int z, double* velocity);
 int ek_node_print_density(int species, int x, int y, int z, double* density);
 int ek_node_print_flux(int species, int x, int y, int z, double* flux);
