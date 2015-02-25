@@ -33,11 +33,11 @@ int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char *
 int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_slitpore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv); //An edit for slitpore here
 int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
 
