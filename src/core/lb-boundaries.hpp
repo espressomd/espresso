@@ -58,8 +58,8 @@
 #define LB_BOUNDARY_BOX 7
 /** hollow cone shaped constraint (for electrokinetics reaction code) */
 #define LB_BOUNDARY_HOLLOW_CONE 8
-/** spherocylinder constraint **/
-#define LB_BOUNDARY_SPHEROCYLINDER 9
+/** SlitPore constraint (This part of code is edited from master-HS) */
+#define LB_BOUNDARY_SLITPORE 9
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
@@ -74,18 +74,17 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
-    Constraint_spherocylinder spherocyl;
     Constraint_rhomboid rhomboid;
     Constraint_pore pore;
     Constraint_stomatocyte stomatocyte;
     Constraint_box box;
     Constraint_hollow_cone hollow_cone;
+    Constraint_slitpore slitpore; //An edit for slitpore here
   } c;
   double force[3];
   double velocity[3];
 #ifdef EK_BOUNDARIES
   float charge_density;
-  float net_charge;
 #endif
 } LB_Boundary;
 
