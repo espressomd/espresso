@@ -42,6 +42,7 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_slitpore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv); //An edit for slitpore here
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
 
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
@@ -82,32 +83,6 @@ int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 		case LB_BOUNDARY_CYL:
 		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[0], buffer);
 		  Tcl_AppendResult(interp, "cylinder center ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[0], buffer);
-		  Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.rad, buffer);
-		  Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.length, buffer);
-		  Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.direction, buffer);
-		  Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-		  
-		  break;
-		  
-		case LB_BOUNDARY_SPHEROCYLINDER:
-		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[0], buffer);
-		  Tcl_AppendResult(interp, "spherocylinder center ", buffer, " ", (char *) NULL);
 		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[1], buffer);
 		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
 		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[2], buffer);
@@ -249,6 +224,8 @@ int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
       Tcl_PrintDouble(interp, lbb->c.hollow_cone.direction, buffer);
       Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
       break;
+
+
 
 		default:
 		  sprintf(buffer, "%d", lbb->type);
@@ -600,150 +577,6 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
   
   for (i=0;i<3;i++) {
     lbb->c.cyl.axis[i] /= axis_len;
-  }
-      
-  return (TCL_OK);
-}
-
-int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
-{
-  double axis_len;
-  int i;
-
-  lbb->type = LB_BOUNDARY_SPHEROCYLINDER;
-  
-  /* invalid entries to start of */
-  lbb->c.spherocyl.pos[0] = 
-  lbb->c.spherocyl.pos[1] = 
-  lbb->c.spherocyl.pos[2] = 0;
-  
-  lbb->c.spherocyl.axis[0] = 
-  lbb->c.spherocyl.axis[1] = 
-  lbb->c.spherocyl.axis[2] = 0;
-  
-  lbb->c.spherocyl.rad = 0;
-  
-  lbb->c.spherocyl.length = 0;
-  
-  lbb->c.spherocyl.direction = 0;
-  
-  while (argc > 0) {
-    if(ARG_IS_S(0, "center")) {
-      if(argc < 4) {
-	      Tcl_AppendResult(interp, "lbboundary spherocylinder center <x> <y> <z> expected", (char *) NULL);
-	      return (TCL_ERROR);
-      }
-      
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.pos[0])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[2], &(lbb->c.spherocyl.pos[1])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[3], &(lbb->c.spherocyl.pos[2])) == TCL_ERROR)
-	      return (TCL_ERROR);
-	      
-      argc -= 4; argv += 4;
-    }
-    else if(ARG_IS_S(0, "axis")) {
-      if(argc < 4) {
-	      Tcl_AppendResult(interp, "lbboundary spherocylinder axis <rx> <ry> <rz> expected", (char *) NULL);
-	      return (TCL_ERROR);
-      }
-      
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.axis[0])) == TCL_ERROR ||
-  	     Tcl_GetDouble(interp, argv[2], &(lbb->c.spherocyl.axis[1])) == TCL_ERROR ||
-    	   Tcl_GetDouble(interp, argv[3], &(lbb->c.spherocyl.axis[2])) == TCL_ERROR)
-	      return (TCL_ERROR);
-
-      argc -= 4; argv += 4;    
-    }
-    else if(ARG_IS_S(0, "radius")) {
-      if(argc < 1) {
-	      Tcl_AppendResult(interp, "lbboundary spherocylinder radius <rad> expected", (char *) NULL);
-	      return (TCL_ERROR);
-      }
-      
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.rad)) == TCL_ERROR)
-	      return (TCL_ERROR);
-	      
-      argc -= 2; argv += 2;
-    }
-    else if(ARG_IS_S(0, "length")) {
-      if(argc < 1) {
-	      Tcl_AppendResult(interp, "lbboundary spherocylinder length <len> expected", (char *) NULL);
-	      return (TCL_ERROR);
-      }
-      
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.length)) == TCL_ERROR)
-	      return (TCL_ERROR);
-	      
-      argc -= 2; argv += 2;
-    }
-    else if(ARG_IS_S(0, "direction")) {
-      if(argc < 1) {
-	      Tcl_AppendResult(interp, "lbboundary spherocylinder direction <dir> expected", (char *) NULL);
-	      return (TCL_ERROR);
-      }
-      
-      if (ARG_IS_S(1, "inside"))
-	      lbb->c.spherocyl.direction = -1;
-      else if (ARG_IS_S(1, "outside"))
-	      lbb->c.spherocyl.direction = 1;
-      else if (Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.direction)) == TCL_ERROR)
-	      return (TCL_ERROR);
-	      
-      argc -= 2; argv += 2;
-    }
-    else if(ARG_IS_S(0, "type")) {
-      if (argc < 1) {
-	      Tcl_AppendResult(interp, "lbboundary spherocylinder type <t> expected", (char *) NULL);
-	      return (TCL_ERROR);
-      }
-      
-      argc -= 2; argv += 2;
-    }
-    else if(ARG_IS_S(0, "velocity")) {
-      if(argc < 4) {
-	      Tcl_AppendResult(interp, "lbboundary spherocylinder velocity <vx> <vy> <vz> expected", (char *) NULL);
-	      return (TCL_ERROR);
-      }
-      
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->velocity[0])) == TCL_ERROR ||
-      	 Tcl_GetDouble(interp, argv[2], &(lbb->velocity[1])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[3], &(lbb->velocity[2])) == TCL_ERROR)
-	      return (TCL_ERROR);
-
-      if (lattice_switch & LATTICE_LB_GPU) {	
-#ifdef LB_GPU
-        /* No velocity rescaling is required */
-#endif
-      } else {	
-#ifdef LB
-        lbb->velocity[0]*=lbpar.tau/lbpar.agrid;
-        lbb->velocity[1]*=lbpar.tau/lbpar.agrid;
-        lbb->velocity[2]*=lbpar.tau/lbpar.agrid;
-#endif
-			}
-      
-      argc -= 4; argv += 4;
-    }
-    else
-      break;
-  }
-
-  axis_len=0.;
-  
-  for (i=0;i<3;i++)
-    axis_len += SQR(lbb->c.spherocyl.axis[i]);
-
-  if(lbb->c.spherocyl.rad < 0. || axis_len < 1e-30 ||
-     lbb->c.spherocyl.direction == 0 || lbb->c.spherocyl.length <= 0) {
-    Tcl_AppendResult(interp, "usage: lbboundary spherocylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>", (char *) NULL);
-    return (TCL_ERROR);    
-  }
-
-  /*normalize the axis vector */
-  axis_len = sqrt (axis_len);
-  
-  for (i=0;i<3;i++) {
-    lbb->c.spherocyl.axis[i] /= axis_len;
   }
       
   return (TCL_OK);
@@ -1360,6 +1193,128 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
   return (TCL_OK);
 }
 
+/*This is a code snippet to extend lbboundaries capabilities to include slitpore
+Start_ By HS*///An edit for slitpore here
+
+/*#########################################################################################################*/
+int tclcommand_lbboundary_slitpore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
+{
+
+  lbb->type = LB_BOUNDARY_SLITPORE;
+  /* invalid entries to start of */
+  lbb->c.slitpore.pore_mouth = 0; 
+  lbb->c.slitpore.channel_width = 0;
+  lbb->c.slitpore.pore_width = 0;
+  lbb->c.slitpore.pore_length = 0;
+  lbb->c.slitpore.upper_smoothing_radius = 0;
+  lbb->c.slitpore.lower_smoothing_radius = 0;
+//  lbb->c.slitpore.reflecting = 0;
+//  lbb->part_rep.p.type = -1;
+  while (argc > 0) {
+    if(ARG_IS_S(0, "pore_mouth")) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary slitpore mouth <mouth> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.slitpore.pore_mouth)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "pore_width")) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary slitpore pore_width <pore_width> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.slitpore.pore_width)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "pore_length")) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary slitpore pore_width <pore_length> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.slitpore.pore_length)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "channel_width")) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary slitpore channel_width <channel_width> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.slitpore.channel_width)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "upper_smoothing_radius")) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary slitpore upper_smoothing_radius <r> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.slitpore.upper_smoothing_radius)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "lower_smoothing_radius")) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary slitpore lower_smoothing_radius <r> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.slitpore.lower_smoothing_radius)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+/*    else if(ARG_IS_S(argv[0], "type", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary pore type <t> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(lbb->part_rep.p.type)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(argv[0], "reflecting", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary pore reflecting {0|1} expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(lbb->c.slitpore.reflecting)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }*/
+    else
+      break;
+  }
+
+  int error = 0;
+  if (lbb->c.slitpore.channel_width <= 0.)  {
+    Tcl_AppendResult(interp, "Error in lbboundary slitpore: Channel with must be > 0", (char *) NULL);
+    error=1;
+  }
+  if ( lbb->c.slitpore.pore_width <= 0. ) {
+    Tcl_AppendResult(interp, "Error in lbboundary slitpore: Pore width must be > 0", (char *) NULL);
+    error=1;
+  }
+  if (  lbb->c.slitpore.pore_length < 0. ) {
+    Tcl_AppendResult(interp, "Error in lbboundary slitpore: Pore length must be > 0", (char *) NULL);
+    error=1;
+  }
+/*  if ( lbb->part_rep.p.type < 0 ) {
+    Tcl_AppendResult(interp, "Error in lbboundary slitpore: Type not set", (char *) NULL);
+    error=1;
+  }*/
+ 
+  if (error)
+    return (TCL_ERROR);
+
+//  make_particle_type_exist(lbb->part_rep.p.type);
+
+  return (TCL_OK);
+}
+/*##################################################################################################*/
+/*This was a code snippet to extend lbboundaries capabilities to include slitpore
+Stop_ by HS*/
 
 int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
 {  
@@ -1405,13 +1360,6 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
     } else 
         mpi_bcast_lbboundary(-1);
   }
-  else if(ARG_IS_S(1, "spherocylinder")) {
-    status = tclcommand_lbboundary_spherocylinder(generate_lbboundary(),interp, argc - 2, argv + 2);
-    if (lattice_switch & LATTICE_LB_GPU) {
-        mpi_bcast_lbboundary(-3);
-    } else 
-        mpi_bcast_lbboundary(-1);
-  }
   else if(ARG_IS_S(1, "rhomboid")) {
     status = tclcommand_lbboundary_rhomboid(generate_lbboundary(),interp, argc - 2, argv + 2);
     if (lattice_switch & LATTICE_LB_GPU) {
@@ -1435,6 +1383,14 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
   }
   else if(ARG_IS_S(1, "hollow_cone")) {
     status = tclcommand_lbboundary_hollow_cone(generate_lbboundary(),interp, argc - 2, argv + 2);
+    if (lattice_switch & LATTICE_LB_GPU) {
+        mpi_bcast_lbboundary(-3);
+    } else 
+        mpi_bcast_lbboundary(-1);
+  }
+//An edit for slitpore here
+  else if(ARG_IS_S(1, "slitpore")) {
+    status = tclcommand_lbboundary_slitpore(generate_lbboundary(),interp, argc - 2, argv + 2);
     if (lattice_switch & LATTICE_LB_GPU) {
         mpi_bcast_lbboundary(-3);
     } else 
@@ -1488,8 +1444,9 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
     tclcommand_printLbBoundaryToResult(interp, c_num);
     status = TCL_OK;
   }
+//An edit for slitpore here
   else {
-    Tcl_AppendResult(interp, "possible lbboundary parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, delete {c} to delete lbboundary",(char *) NULL);
+    Tcl_AppendResult(interp, "possible lbboundary parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, slitpore, delete {c} to delete lbboundary",(char *) NULL);
     return (TCL_ERROR);
   }
 
@@ -1500,4 +1457,3 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
   return (TCL_ERROR);
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 }
-
