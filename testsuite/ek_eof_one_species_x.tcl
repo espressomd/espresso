@@ -236,9 +236,11 @@ for {set i 0} {$i < [expr $box_z/$agrid]} {incr i} {
     set calculated_stress_xz [stress_tensor $position $xi $bjerrum_length $force]
     set stress_difference_xz [expr abs($measured_stress_xz - $calculated_stress_xz)]
     set total_stress_difference_xz [expr $total_stress_difference_xz + $stress_difference_xz ]
+
+    puts "$position $measured_density $calculated_density $measured_velocity $calculated_velocity $measured_stress_xy $calculated_stress_xy $measured_stress_yz $calculated_stress_yz $measured_stress_xz $calculated_stress_xz $measured_stress_xx $calculated_stress_xx $measured_stress_yy $calculated_stress_yy $measured_stress_zz $calculated_stress_zz"
   }
 }
-
+exit
 set total_density_difference [expr $agrid*$total_density_difference/$box_z]
 set total_velocity_difference [expr $agrid*$total_velocity_difference/$box_z]
 set total_stress_difference_xx [expr $agrid*$total_stress_difference_xx/$box_z]
