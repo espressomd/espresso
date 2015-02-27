@@ -51,10 +51,12 @@ bool steepest_descent_step(void) {
   int c, i, j, np;
   double f_max = -std::numeric_limits<double>::max();
   double f;
-  const double skin2 = SQR(skin);
+  /* Verlet list criterion */
+  const double skin2 = SQR(0.5*skin);
   double f_max_global;
   double dx[3], dx2;
   const double max_dx2 = SQR(params->max_displacement);
+  double max_displacement = 0;
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -84,17 +86,24 @@ bool steepest_descent_step(void) {
 	p[i].r.p[0] += dx[0];
 	p[i].r.p[1] += dx[1];
 	p[i].r.p[2] += dx[2];
+	max_displacement = std::max(max_displacement, std::sqrt(dx2));
       } else {
 	const double c = params->max_displacement/std::sqrt(dx2);
 	p[i].r.p[0] += c*dx[0];
 	p[i].r.p[1] += c*dx[1];
 	p[i].r.p[2] += c*dx[2];
+	max_displacement = std::max(max_displacement, params->max_displacement);
       }
       f_max = std::max(f_max, f);
-      resort_particles = 1;
     }
   }
   MINIMIZE_ENERGY_TRACE(printf("f_max %e resort_particles %d\n", f_max, resort_particles));
+
+  if(max_displacement >= skin2)
+    resort_particles = 1;
+  else 
+    resort_particles = 0;
+
   announce_resort_particles();
   MPI_Allreduce(&f_max, &f_max_global, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
   return (sqrt(f_max_global) < params->f_max);
