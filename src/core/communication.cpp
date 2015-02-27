@@ -543,6 +543,9 @@ void mpi_send_f(int pnode, int part, double F[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+    F[0] /= PMASS(*p);
+    F[1] /= PMASS(*p);
+    F[2] /= PMASS(*p);
     memcpy(p->f.f, F, 3*sizeof(double));
   }
   else
@@ -557,6 +560,9 @@ void mpi_send_f_slave(int pnode, int part)
     Particle *p = local_particles[part];
         MPI_Recv(p->f.f, 3, MPI_DOUBLE, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
+    p->f.f[0] /= PMASS(*p);
+    p->f.f[1] /= PMASS(*p);
+    p->f.f[2] /= PMASS(*p);
   }
 
   on_particle_change();
