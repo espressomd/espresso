@@ -345,6 +345,27 @@ cdef class BondedInteraction(object):
 
 
 
+class BondedInteractionNotDefined(BondedInteraction):
+  def typeNumber(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def typeName(self): 
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def validKeys(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def requiredKeys(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def setDefaultParams(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def _getParamsFromEsCore(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def _setParamsInEsCore(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
 
 
 
@@ -530,31 +551,10 @@ IF BOND_VIRTUAL == 1:
 
     def _setParamsInEsCore(self):
       virtual_set_params(self._bondId)
-      
-   
-IF BOND_VIRTUAL != 1:
-  class Virtual(BondedInteraction):
-    def typeNumber(self):
-      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
 
-    def typeName(self): 
-      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
-
-    def validKeys(self):
-      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
-
-    def requiredKeys(self):
-      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
-
-    def setDefaultParams(self):
-      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
-
-    def _getParamsFromEsCore(self):
-      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
-
-    def _setParamsInEsCore(self):
-      raise Exception("BOND_VIRTUAL has to be defined in myconfig.hpp.")
-   
+ELSE:
+  class Virtual(BondedInteractionNotDefined):
+    name="BOND_VIRTUAL"      
    
 IF BOND_ENDANGLEDIST == 1:
   class Endangledist(BondedInteraction):
@@ -583,32 +583,11 @@ IF BOND_ENDANGLEDIST == 1:
     def _setParamsInEsCore(self):
       endangledist_set_params(self._bondId, self._params["bend"], self._params["phi0"], self._params["distmin"],\
       self._params["distmax"])
-      
-   
-IF BOND_ENDANGLEDIST != 1:
-  class Endangledist(BondedInteraction):
-    def typeNumber(self):
-      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
 
-    def typeName(self): 
-      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
-
-    def validKeys(self):
-      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
-
-    def requiredKeys(self):
-      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
-
-    def setDefaultParams(self):
-      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
-
-    def _getParamsFromEsCore(self):
-      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
-
-    def _setParamsInEsCore(self):
-      raise Exception("BOND_ENDANGLEDIST has to be defined in myconfig.hpp.")
-
-
+ELSE:
+  class Endangledist(BondedInteractionNotDefined):
+    name="BOND_ENDANGLEDIST"
+         
 IF OVERLAPPED == 1:
   class Overlapped(BondedInteraction):
     def typeNumber(self):
@@ -634,34 +613,14 @@ IF OVERLAPPED == 1:
     def _setParamsInEsCore(self):
       overlapped_bonded_set_params(self._bondId, self._params["overlap_type"], self._params["filename"])
       
+ELSE:
+  class Overlapped(BondedInteractionNotDefined):
+    name="OVERLAPPED"
    
-IF OVERLAPPED != 1:
-  class Overlapped(BondedInteraction):
+IF BOND_ANGLE == 1:   
+  class Angle_Harmonic(BondedInteraction):
     def typeNumber(self):
-      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
-
-    def typeName(self): 
-      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
-
-    def validKeys(self):
-      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
-
-    def requiredKeys(self):
-      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
-
-    def setDefaultParams(self):
-      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
-
-    def _getParamsFromEsCore(self):
-      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
-
-    def _setParamsInEsCore(self):
-      raise Exception("OVERLAPPED has to be defined in myconfig.hpp.")
-   
-   
-class Angle_Harmonic(BondedInteraction):
-  def typeNumber(self):
-    return 13
+      return 13
 
   def typeName(self): 
     return "ANGLE_HARMONIC"
@@ -682,11 +641,14 @@ class Angle_Harmonic(BondedInteraction):
 
   def _setParamsInEsCore(self):
     angle_harmonic_set_params(self._bondId,self._params["bend"],self._params["phi0"])
-   
-   
-class Angle_Cosine(BondedInteraction):
-  def typeNumber(self):
-    return 14
+ELSE:
+  class Angle_Harmonic(BondedInteractionNotDefined):
+    name="BOND_ANGLE"
+ 
+IF BOND_ANGLE == 1:   
+  class Angle_Cosine(BondedInteraction):
+    def typeNumber(self):
+      return 14
 
   def typeName(self): 
     return "ANGLE_COSINE"
@@ -707,11 +669,14 @@ class Angle_Cosine(BondedInteraction):
 
   def _setParamsInEsCore(self):
     angle_cosine_set_params(self._bondId,self._params["bend"],self._params["phi0"])
+ELSE:
+  class Angle_Cosine(BondedInteractionNotDefined):
+    name="BOND_ANGLE"
    
-   
-class Angle_Cossquare(BondedInteraction):
-  def typeNumber(self):
-    return 15
+IF BOND_ANGLE == 1:      
+  class Angle_Cossquare(BondedInteraction):
+    def typeNumber(self):
+      return 15
 
   def typeName(self): 
     return "ANGLE_COSSQUARE"
@@ -732,8 +697,10 @@ class Angle_Cossquare(BondedInteraction):
 
   def _setParamsInEsCore(self):
     angle_cossquare_set_params(self._bondId,self._params["bend"],self._params["phi0"])
-   
-   
+ELSE:
+  class Angle_Cossquare(BondedInteractionNotDefined):
+    name="BOND_ANGLE"
+      
 class Stretching_Force(BondedInteraction):
   def typeNumber(self):
     return 16
