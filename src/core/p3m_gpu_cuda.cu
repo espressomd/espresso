@@ -34,6 +34,7 @@
 #include "p3m_gpu.hpp"
 #include "utils.hpp"
 #include "EspressoSystemInterface.hpp"
+#include "interaction_data.hpp"
 
 #ifdef ELECTROSTATICS
 
