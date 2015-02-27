@@ -171,7 +171,7 @@ proc velocity {x xi d bjerrum_length force viscosity_kinematic density_water} {
   return [expr ($force)*log(cos($xi*$x)/cos($xi*$d/2.0))/(2.0*$pi*$bjerrum_length*$viscosity_kinematic*$density_water) ]
 }
 
-# function to calculate the xz component of the pressure tensor
+# function to calculate the nonzero component of the pressure tensor
 
 proc pressure_tensor_offdiagonal {x xi bjerrum_length force} {
   set pi [expr {acos(-1.0)}]
@@ -281,12 +281,12 @@ set total_pressure_difference_xz [expr $agrid*$total_pressure_difference_xz/$box
 
 puts "Density deviation: $total_density_difference"
 puts "Velocity deviation: $total_velocity_difference\n"
-puts "Stress deviation xx component: $total_pressure_difference_xx"
-puts "Stress deviation yy component: $total_pressure_difference_yy"
-puts "Stress deviation zz component: $total_pressure_difference_zz"
-puts "Stress deviation xy component: $total_pressure_difference_xy"
-puts "Stress deviation yz component: $total_pressure_difference_yz"
-puts "Stress deviation xz component: $total_pressure_difference_xz\n"
+puts "Pressure deviation xx component: $total_pressure_difference_xx"
+puts "Pressure deviation yy component: $total_pressure_difference_yy"
+puts "Pressure deviation zz component: $total_pressure_difference_zz"
+puts "Pressure deviation xy component: $total_pressure_difference_xy"
+puts "Pressure deviation yz component: $total_pressure_difference_yz"
+puts "Pressure deviation xz component: $total_pressure_difference_xz\n"
 
 if { $total_density_difference > 7.5e-06 } {
   error_exit "Density accuracy not achieved"
@@ -295,22 +295,22 @@ if { $total_velocity_difference > 3.0e-06 } {
   error_exit "Velocity accuracy not achieved"
 }
 if { $total_pressure_difference_xx > 5.0e-05 } {
-  error_exit "Difference xx component too large"
+  error_exit "Pressure accuracy xx component not achieved"
 }
 if { $total_pressure_difference_yy > 6.0e-05 } {
-  error_exit "Difference yy component too large"
+  error_exit "Pressure accuracy xx component not achieved"
 }
 if { $total_pressure_difference_zz > 6.0e-05 } {
-  error_exit "Difference zz component too large"
+  error_exit "Pressure accuracy xx component not achieved"
 }
 if { $total_pressure_difference_xy > 2.5e-11 } {
-  error_exit "Stress accuracy xy component not achieved"
+  error_exit "Pressure accuracy xy component not achieved"
 }
 if { $total_pressure_difference_yz > 2.5e-11 } {
-  error_exit "Stress accuracy yz component not achieved"
+  error_exit "Pressure accuracy yz component not achieved"
 }
 if { $total_pressure_difference_xz > 1.0e-05 } {
-  error_exit "Stress accuracy xz component not achieved"
+  error_exit "Pressure accuracy xz component not achieved"
 }
 
 exit 0

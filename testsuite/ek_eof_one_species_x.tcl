@@ -168,10 +168,10 @@ proc density {x xi bjerrum_length} {
 
 proc velocity {x xi d bjerrum_length force viscosity_kinematic density_water} {
   set pi [expr {acos(-1.0)}]
-  return [expr ($force)*log(cos($xi*$x)/cos($xi*$d/2.0))/(2.0*$pi*$bjerrum_length*$viscosity_kinematic*$density_water) ]
+  return [expr ($force)*log(cos($xi*$x)/cos($xi*$d/2.0))/(2.0*$pi*$bjerrum_length*$viscosity_kinematic*$density_water)]
 }
 
-# function to calculate the xz component of the pressure tensor
+# function to calculate the nonzero component of the pressure tensor
 
 proc pressure_tensor_offdiagonal {x xi bjerrum_length force} {
   set pi [expr {acos(-1.0)}]
@@ -295,13 +295,13 @@ if { $total_velocity_difference > 5.0e-06 } {
   error_exit "Velocity accuracy not achieved"
 }
 if { $total_pressure_difference_xx > 5.0e-05 } {
-  error_exit "Difference xx component too large"
+  error_exit "Pressure accuracy xx component not achieved"
 }
 if { $total_pressure_difference_yy > 5.0e-07 } {
-  error_exit "Difference yy component too large"
+  error_exit "Pressure accuracy yy component not achieved"
 }
 if { $total_pressure_difference_zz > 5.0e-07 } {
-  error_exit "Difference zz component too large"
+  error_exit "Pressure accuracy zz component not achieved"
 }
 if { $total_pressure_difference_xy > 2.5e-11 } {
   error_exit "Pressure accuracy xy component not achieved"
