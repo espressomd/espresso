@@ -345,6 +345,27 @@ cdef class BondedInteraction(object):
 
 
 
+class BondedInteractionNotDefined(BondedInteraction):
+  def typeNumber(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def typeName(self): 
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def validKeys(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def requiredKeys(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def setDefaultParams(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def _getParamsFromEsCore(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+
+  def _setParamsInEsCore(self):
+    raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
 
 
 
@@ -460,34 +481,52 @@ IF TABULATED == 1:
 
    
 IF TABULATED != 1:
-  class Tabulated(UncompiledInteraction):
-    def typeName(self):
-      return TABULATED
-
-IF LENNARD_JONES == 1:
-  class Subt_Lj(BondedInteraction):
+  class Tabulated(BondedInteraction):
     def typeNumber(self):
-      return 7
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
     def typeName(self): 
-      return "SUBT_LJ"
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
     def validKeys(self):
-      return "r", "k"
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
-    def requiredKeys(self): 
-      return "r", "k"
+    def requiredKeys(self):
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
     def setDefaultParams(self):
-      self._params = {"k":0.0, "r":0.0} 
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
     def _getParamsFromEsCore(self):
-      return \
-        {"k":bonded_ia_params[self._bondId].p.subt_lj.k,\
-        "r":bonded_ia_params[self._bondId].p.subt_lj.r}
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
     def _setParamsInEsCore(self):
-      subt_lj_set_params(self._bondId,self._params["k"],self._params["r"])
+      raise Exception("TABULATED has to be defined in myconfig.hpp.")
+   
+   
+class Subt_Lj(BondedInteraction):
+  def typeNumber(self):
+    return 7
+
+  def typeName(self): 
+    return "SUBT_LJ"
+
+  def validKeys(self):
+    return "r", "k"
+
+  def requiredKeys(self): 
+    return "r", "k"
+
+  def setDefaultParams(self):
+    self._params = {"k":0, "r":0} 
+
+  def _getParamsFromEsCore(self):
+    return \
+      {"k":bonded_ia_params[self._bondId].p.subt_lj.k,\
+       "r":bonded_ia_params[self._bondId].p.subt_lj.r}
+
+  def _setParamsInEsCore(self):
+    subt_lj_set_params(self._bondId,self._params["k"],self._params["r"])
 
 
 IF BOND_VIRTUAL == 1:
@@ -512,14 +551,10 @@ IF BOND_VIRTUAL == 1:
 
     def _setParamsInEsCore(self):
       virtual_set_params(self._bondId)
-      
-   
 
-IF BOND_VIRTUAL != 1:
-  class Virtual(UncompiledInteraction):
-    def typeName(self):
-      return BOND_VIRTUAL
-   
+ELSE:
+  class Virtual(BondedInteractionNotDefined):
+    name="BOND_VIRTUAL"      
    
 IF BOND_ENDANGLEDIST == 1:
   class Endangledist(BondedInteraction):
@@ -548,14 +583,11 @@ IF BOND_ENDANGLEDIST == 1:
     def _setParamsInEsCore(self):
       endangledist_set_params(self._bondId, self._params["bend"], self._params["phi0"], self._params["distmin"],\
       self._params["distmax"])
-      
-   
-IF BOND_ENDANGLEDIST != 1:
-  class Endangledist(UncompiledInteraction):
-    def typeName(self):
-      return BOND_ENDANGLEDIST
 
-
+ELSE:
+  class Endangledist(BondedInteractionNotDefined):
+    name="BOND_ENDANGLEDIST"
+         
 IF OVERLAPPED == 1:
   class Overlapped(BondedInteraction):
     def typeNumber(self):
@@ -581,98 +613,94 @@ IF OVERLAPPED == 1:
     def _setParamsInEsCore(self):
       overlapped_bonded_set_params(self._bondId, self._params["overlap_type"], self._params["filename"])
       
+ELSE:
+  class Overlapped(BondedInteractionNotDefined):
+    name="OVERLAPPED"
    
-IF OVERLAPPED != 1:
-  class Overlapped(UncompiledInteraction):
-    def typeName(self):
-      return OVERLAPPED
-
-IF BOND_ANGLE != 1:
-  class Angle_Harmonic(UncompiledInteraction):
-    def typeName(self):
-      return BOND_ANGLE
-  class Angle_Cosine(UncompiledInteraction):
-    def typeName(self):
-      return BOND_ANGLE
-  class Angle_Cossquare(UncompiledInteraction):
-    def typeName(self):
-      return BOND_ANGLE
-
-IF BOND_ANGLE == 1:
+IF BOND_ANGLE == 1:   
   class Angle_Harmonic(BondedInteraction):
     def typeNumber(self):
       return 13
 
-    def typeName(self): 
-      return "ANGLE_HARMONIC"
+  def typeName(self): 
+    return "ANGLE_HARMONIC"
 
-    def validKeys(self):
-      return "bend", "phi0"
+  def validKeys(self):
+    return "bend", "phi0"
 
-    def requiredKeys(self): 
-      return "bend", "phi0"
+  def requiredKeys(self): 
+    return "bend", "phi0"
 
-    def setDefaultParams(self):
-      self._params = {"bend":0, "phi0":0} 
+  def setDefaultParams(self):
+    self._params = {"bend":0, "phi0":0} 
 
-    def _getParamsFromEsCore(self):
-      return \
-        {"bend":bonded_ia_params[self._bondId].p.angle_harmonic.bend,\
-        "phi0":bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
+  def _getParamsFromEsCore(self):
+    return \
+      {"bend":bonded_ia_params[self._bondId].p.angle_harmonic.bend,\
+       "phi0":bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
 
-    def _setParamsInEsCore(self):
-      angle_harmonic_set_params(self._bondId,self._params["bend"],self._params["phi0"])
-    
+  def _setParamsInEsCore(self):
+    angle_harmonic_set_params(self._bondId,self._params["bend"],self._params["phi0"])
+ELSE:
+  class Angle_Harmonic(BondedInteractionNotDefined):
+    name="BOND_ANGLE"
+ 
+IF BOND_ANGLE == 1:   
   class Angle_Cosine(BondedInteraction):
     def typeNumber(self):
       return 14
 
-    def typeName(self): 
-      return "ANGLE_COSINE"
+  def typeName(self): 
+    return "ANGLE_COSINE"
 
-    def validKeys(self):
-      return "bend", "phi0"
+  def validKeys(self):
+    return "bend", "phi0"
 
-    def requiredKeys(self): 
-      return "bend", "phi0"
+  def requiredKeys(self): 
+    return "bend", "phi0"
 
-    def setDefaultParams(self):
-      self._params = {"bend":0, "phi0":0} 
+  def setDefaultParams(self):
+    self._params = {"bend":0, "phi0":0} 
 
-    def _getParamsFromEsCore(self):
-      return \
-        {"bend":bonded_ia_params[self._bondId].p.angle_cosine.bend,\
-        "phi0":bonded_ia_params[self._bondId].p.angle_cosine.phi0}
+  def _getParamsFromEsCore(self):
+    return \
+      {"bend":bonded_ia_params[self._bondId].p.angle_cosine.bend,\
+       "phi0":bonded_ia_params[self._bondId].p.angle_cosine.phi0}
 
-    def _setParamsInEsCore(self):
-      angle_cosine_set_params(self._bondId,self._params["bend"],self._params["phi0"])
-    
-    
+  def _setParamsInEsCore(self):
+    angle_cosine_set_params(self._bondId,self._params["bend"],self._params["phi0"])
+ELSE:
+  class Angle_Cosine(BondedInteractionNotDefined):
+    name="BOND_ANGLE"
+   
+IF BOND_ANGLE == 1:      
   class Angle_Cossquare(BondedInteraction):
     def typeNumber(self):
       return 15
 
-    def typeName(self): 
-      return "ANGLE_COSSQUARE"
+  def typeName(self): 
+    return "ANGLE_COSSQUARE"
 
-    def validKeys(self):
-      return "bend", "phi0"
+  def validKeys(self):
+    return "bend", "phi0"
 
-    def requiredKeys(self): 
-      return "bend", "phi0"
+  def requiredKeys(self): 
+    return "bend", "phi0"
 
-    def setDefaultParams(self):
-      self._params = {"bend":0, "phi0":0} 
+  def setDefaultParams(self):
+    self._params = {"bend":0, "phi0":0} 
 
-    def _getParamsFromEsCore(self):
-      return \
-        {"bend":bonded_ia_params[self._bondId].p.angle_cossquare.bend,\
-        "phi0":bonded_ia_params[self._bondId].p.angle_cossquare.phi0}
+  def _getParamsFromEsCore(self):
+    return \
+      {"bend":bonded_ia_params[self._bondId].p.angle_cossquare.bend,\
+       "phi0":bonded_ia_params[self._bondId].p.angle_cossquare.phi0}
 
-    def _setParamsInEsCore(self):
-      angle_cossquare_set_params(self._bondId,self._params["bend"],self._params["phi0"])
-  
-   
+  def _setParamsInEsCore(self):
+    angle_cossquare_set_params(self._bondId,self._params["bend"],self._params["phi0"])
+ELSE:
+  class Angle_Cossquare(BondedInteractionNotDefined):
+    name="BOND_ANGLE"
+      
 class Stretching_Force(BondedInteraction):
   def typeNumber(self):
     return 16
@@ -874,28 +902,6 @@ class BondedInteractions:
 
     # Set the parameters of the BondedInteraction instance in the Es core
     value._setParamsInEsCore()
-
-class UncompiledInteraction(BondedInteraction):
-  def typeNumber(self):
-    raise Exception(type(self).__name__ + " not defined include "+ self.typeName() +" in myconfig.hpp.")
-
-  def typeName(self): 
-    raise Exception("Subclasses of UncompiledInteraction must define the typeName() method.")
-
-  def validKeys(self):
-    raise Exception(type(self).__name__ + " not defined include "+ self.typeName() +" in myconfig.hpp.")
-
-  def requiredKeys(self):
-    raise Exception(type(self).__name__ + " not defined include "+ self.typeName() +" in myconfig.hpp.")
-
-  def setDefaultParams(self):
-    raise Exception(type(self).__name__ + " not defined include "+ self.typeName() +" in myconfig.hpp.")
-
-  def _getParamsFromEsCore(self):
-    raise Exception(type(self).__name__ + " not defined include "+ self.typeName() +" in myconfig.hpp.")
-
-  def _setParamsInEsCore(self):
-    raise Exception(type(self).__name__ + " not defined include "+ self.typeName() +" in myconfig.hpp.")
 
 
 

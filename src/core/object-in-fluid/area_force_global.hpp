@@ -48,7 +48,6 @@ int area_force_global_set_params(int bond_type, double A0_g, double ka_g);
 
 inline void calc_area_global(double *area, int molType){ //first-fold-then-the-same approach
 	double partArea=0.;
-	//double norm[3];
 
 	/** loop over particles */
 	int c, np, i ,j;
