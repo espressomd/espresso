@@ -77,9 +77,12 @@ bool steepest_descent_step(void) {
 	    dx[j] = params->gamma * p[i].f.f[j];	    
 	    dx2 += SQR(dx[j]);
 	    MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dx %e gamma*f %e\n", i, j, dx[j], params->gamma * p[i].f.f[j]));
-          } else {
+	  }
+#ifdef EXTERNAL_FORCES
+	else {
 	  dx[j] = 0.0;	  
 	}
+#endif
       }
 
       if(dx2 <= max_dx2) {
