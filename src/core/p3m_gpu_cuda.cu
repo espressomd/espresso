@@ -897,7 +897,7 @@ extern "C" {
 
     REAL_TYPE pos_shift = (REAL_TYPE)((cao-1)/2);
     REAL_TYPE hi = mesh/box;
-    REAL_TYPE prefactor = 1.0/(box*box*box*2.0);
+    REAL_TYPE prefactor = coulomb.prefactor/(box*box*box*2.0);
 
     cuda_safe_mem(cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(CUFFT_TYPE_COMPLEX)));
 
