@@ -1283,12 +1283,12 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
       /* We immediately average pre- and post-collision.  */
       /* TODO: need a reference for this.   */
 
-      mode[4 + ii * LBQ ] = modes_from_pi_eq[0] + 0.5f * (0.5 + 0.5*para.gamma_bulk[ii]) * (mode[4 + ii * LBQ] - modes_from_pi_eq[0]);
-      mode[5 + ii * LBQ ] = modes_from_pi_eq[1] + 0.5f * (0.5 + 0.5*para.gamma_shear[ii]) * (mode[5 + ii * LBQ] - modes_from_pi_eq[1]);
-      mode[6 + ii * LBQ ] = modes_from_pi_eq[2] + 0.5f * (0.5 + 0.5*para.gamma_shear[ii]) * (mode[6 + ii * LBQ] - modes_from_pi_eq[2]);
-      mode[7 + ii * LBQ ] = modes_from_pi_eq[3] + 0.5f * (0.5 + 0.5*para.gamma_shear[ii]) * (mode[7 + ii * LBQ] - modes_from_pi_eq[3]);
-      mode[8 + ii * LBQ ] = modes_from_pi_eq[4] + 0.5f * (0.5 + 0.5*para.gamma_shear[ii]) * (mode[8 + ii * LBQ] - modes_from_pi_eq[4]);
-      mode[9 + ii * LBQ ] = modes_from_pi_eq[5] + 0.5f * (0.5 + 0.5*para.gamma_shear[ii]) * (mode[9 + ii * LBQ] - modes_from_pi_eq[5]);
+      mode[4 + ii * LBQ ] = modes_from_pi_eq[0] + (0.5 + 0.5*para.gamma_bulk[ii]) * (mode[4 + ii * LBQ] - modes_from_pi_eq[0]);
+      mode[5 + ii * LBQ ] = modes_from_pi_eq[1] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[5 + ii * LBQ] - modes_from_pi_eq[1]);
+      mode[6 + ii * LBQ ] = modes_from_pi_eq[2] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[6 + ii * LBQ] - modes_from_pi_eq[2]);
+      mode[7 + ii * LBQ ] = modes_from_pi_eq[3] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[7 + ii * LBQ] - modes_from_pi_eq[3]);
+      mode[8 + ii * LBQ ] = modes_from_pi_eq[4] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[8 + ii * LBQ] - modes_from_pi_eq[4]);
+      mode[9 + ii * LBQ ] = modes_from_pi_eq[5] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[9 + ii * LBQ] - modes_from_pi_eq[5]);
 
       // Transform the stress tensor components according to the modes that
       // correspond to those used by U. Schiller. In terms of populations this

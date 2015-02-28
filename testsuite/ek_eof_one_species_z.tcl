@@ -49,7 +49,7 @@ set force 0.07
 set sigma -0.04
 set viscosity_kinematic 1.7
 set friction 1.9
-set temperature 3.1
+set temperature 1.1
 set bjerrum_length 0.8
 
 set temperature_LB [expr $agrid*$agrid/(3.0*$dt*$dt)]
@@ -62,6 +62,10 @@ setmd time_step $dt
 setmd skin 0.1
 thermostat off
 set integration_length 20000
+
+# Output density, velocity, and pressure tensor profiles
+
+set output_profiles 0
 
 # Set up the charged and neutral species
 
@@ -157,33 +161,52 @@ set xi $pntm
 proc density {x xi bjerrum_length} {
   set pi [expr {acos(-1.0)}]
   set kb 1.0
-  return [expr ($xi*$xi)/(2.0*$pi*$bjerrum_length*cos($xi*$x)*cos($xi*$x)) ]
+  return [expr ($xi*$xi)/(2.0*$pi*$bjerrum_length*cos($xi*$x)*cos($xi*$x))]
 }
 
 # function to calculate the velocity
 
 proc velocity {x xi d bjerrum_length force viscosity_kinematic density_water} {
   set pi [expr {acos(-1.0)}]
-  return [expr ($force)*log(cos($xi*$x)/cos($xi*$d/2.0))/(2.0*$pi*$bjerrum_length*$viscosity_kinematic*$density_water) ]
+  return [expr ($force)*log(cos($xi*$x)/cos($xi*$d/2.0))/(2.0*$pi*$bjerrum_length*$viscosity_kinematic*$density_water)]
 }
 
-# function to calculate the xz component of the stress tensor
+# function to calculate the nonzero component of the pressure tensor
 
-proc stress_tensor {x xi bjerrum_length force} {
+proc pressure_tensor_offdiagonal {x xi bjerrum_length force} {
   set pi [expr {acos(-1.0)}]
-  return [expr $force*$xi*tan($xi*$x)/(4.0*$pi*$bjerrum_length) ]
+  return [expr $force*$xi*tan($xi*$x)/(2.0*$pi*$bjerrum_length)]
+}
+
+# function to calculate the hydrostatic pressure
+
+# Technically, the LB simulates a compressible fluid, whiches pressure
+# tensor contains an additional term on the diagonal, proportional to 
+# the divergence of the velocity. We neglect this contribution, which
+# creates a small error in the direction normal to the wall, which
+# should decay with the simulation time.
+
+proc hydrostatic_pressure {x xi bjerrum_length tensor_entry} {
+  global box_x box_y box_z agrid temperature
+  set pi [expr {acos(-1)}]
+  set offset [lindex [lbnode [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] [expr int($box_z/(2*$agrid))] print pi_neq] $tensor_entry]
+  return [expr 0.0 + $offset]
 }
 
 # compare the various quantities to the analytic results
 
 set total_velocity_difference 0.0
 set total_density_difference 0.0
-set total_stress_difference_xx 0.0
-set total_stress_difference_yy 0.0
-set total_stress_difference_zz 0.0
-set total_stress_difference_xy 0.0
-set total_stress_difference_yz 0.0
-set total_stress_difference_xz 0.0
+set total_pressure_difference_xx 0.0
+set total_pressure_difference_yy 0.0
+set total_pressure_difference_zz 0.0
+set total_pressure_difference_xy 0.0
+set total_pressure_difference_yz 0.0
+set total_pressure_difference_xz 0.0
+
+if {$output_profiles} {
+  set fp [open "ek_eof_profile.dat" "w"]
+}
 
 for {set i 0} {$i < [expr $box_y/$agrid]} {incr i} {
 
@@ -203,88 +226,91 @@ for {set i 0} {$i < [expr $box_y/$agrid]} {incr i} {
     set velocity_difference [expr abs($measured_velocity - $calculated_velocity)]
     set total_velocity_difference [expr $total_velocity_difference + $velocity_difference ]
 
-    # diagonal stress tensor
-    set measured_stress_xx [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 0]
-    set calculated_stress_xx 0.0
-    set measured_stress_yy [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 2]
-    set calculated_stress_yy 0.0
-    set measured_stress_zz [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 5]
-    set calculated_stress_zz 0.0
+    # diagonal pressure tensor
+    set measured_pressure_xx [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 0]
+    set calculated_pressure_xx [hydrostatic_pressure $position $xi $bjerrum_length 0]
+    set measured_pressure_yy [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 2]
+    set calculated_pressure_yy [hydrostatic_pressure $position $xi $bjerrum_length 2]
+    set measured_pressure_zz [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 5]
+    set calculated_pressure_zz [hydrostatic_pressure $position $xi $bjerrum_length 5]
 
-    set stress_difference_xx [expr abs($measured_stress_xx - $calculated_stress_xx)]
-    set stress_difference_yy [expr abs($measured_stress_yy - $calculated_stress_yy)]
-    set stress_difference_zz [expr abs($measured_stress_zz - $calculated_stress_zz)]
+    set pressure_difference_xx [expr abs($measured_pressure_xx - $calculated_pressure_xx)]
+    set pressure_difference_yy [expr abs($measured_pressure_yy - $calculated_pressure_yy)]
+    set pressure_difference_zz [expr abs($measured_pressure_zz - $calculated_pressure_zz)]
 
-    set total_stress_difference_xx [expr $total_stress_difference_xx + $stress_difference_xx ]
-    set total_stress_difference_yy [expr $total_stress_difference_yy + $stress_difference_yy ]
-    set total_stress_difference_zz [expr $total_stress_difference_zz + $stress_difference_zz ]
+    set total_pressure_difference_xx [expr $total_pressure_difference_xx + $pressure_difference_xx ]
+    set total_pressure_difference_yy [expr $total_pressure_difference_yy + $pressure_difference_yy ]
+    set total_pressure_difference_zz [expr $total_pressure_difference_zz + $pressure_difference_zz ]
 
-    # xy component stress tensor
-    set measured_stress_xy [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 1]
-    set calculated_stress_xy 0.0
-    set stress_difference_xy [expr abs($measured_stress_xy - $calculated_stress_xy)]
-    set total_stress_difference_xy [expr $total_stress_difference_xy + $stress_difference_xy ]
+    # xy component pressure tensor
+    set measured_pressure_xy [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 1]
+    set calculated_pressure_xy 0.0
+    set pressure_difference_xy [expr abs($measured_pressure_xy - $calculated_pressure_xy)]
+    set total_pressure_difference_xy [expr $total_pressure_difference_xy + $pressure_difference_xy ]
 
-    # yz component stress tensor
-    set measured_stress_yz [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 4]
-    set calculated_stress_yz [stress_tensor $position $xi $bjerrum_length $force]
-    set stress_difference_yz [expr abs($measured_stress_yz - $calculated_stress_yz)]
-    set total_stress_difference_yz [expr $total_stress_difference_yz + $stress_difference_yz ]
+    # yz component pressure tensor
+    set measured_pressure_yz [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 4]
+    set calculated_pressure_yz [pressure_tensor_offdiagonal $position $xi $bjerrum_length $force]
+    set pressure_difference_yz [expr abs($measured_pressure_yz - $calculated_pressure_yz)]
+    set total_pressure_difference_yz [expr $total_pressure_difference_yz + $pressure_difference_yz ]
 
-    # xz component stress tensor
-    set measured_stress_xz [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 3]
-    set calculated_stress_xz 0.0
-    set stress_difference_xz [expr abs($measured_stress_xz - $calculated_stress_xz)]
-    set total_stress_difference_xz [expr $total_stress_difference_xz + $stress_difference_xz ]
+    # xz component pressure tensor
+    set measured_pressure_xz [lindex [lbnode [expr int($box_x/(2*$agrid))] $i [expr int($box_z/(2*$agrid))] print pi_neq] 3]
+    set calculated_pressure_xz 0.0
+    set pressure_difference_xz [expr abs($measured_pressure_xz - $calculated_pressure_xz)]
+    set total_pressure_difference_xz [expr $total_pressure_difference_xz + $pressure_difference_xz ]
+
+    if {$output_profiles} {
+      puts $fp "$position $measured_density $calculated_density $measured_velocity $calculated_velocity $measured_pressure_xy $calculated_pressure_xy $measured_pressure_yz $calculated_pressure_yz $measured_pressure_xz $calculated_pressure_xz $measured_pressure_xx $calculated_pressure_xx $measured_pressure_yy $calculated_pressure_yy $measured_pressure_zz $calculated_pressure_zz"
+    }
   }
 }
 
-set total_density_difference [expr $agrid*$total_density_difference/$box_y]
-set total_velocity_difference [expr $agrid*$total_velocity_difference/$box_y]
-set total_stress_difference_xx [expr $agrid*$total_stress_difference_xx/$box_y]
-set total_stress_difference_yy [expr $agrid*$total_stress_difference_yy/$box_y]
-set total_stress_difference_zz [expr $agrid*$total_stress_difference_zz/$box_y]
-set total_stress_difference_xy [expr $agrid*$total_stress_difference_xy/$box_y]
-set total_stress_difference_yz [expr $agrid*$total_stress_difference_yz/$box_y]
-set total_stress_difference_xz [expr $agrid*$total_stress_difference_xz/$box_y]
+if {$output_profiles} {
+  close $fp
+}
+
+set total_density_difference [expr $agrid*$total_density_difference/$box_z]
+set total_velocity_difference [expr $agrid*$total_velocity_difference/$box_z]
+set total_pressure_difference_xx [expr $agrid*$total_pressure_difference_xx/$box_z]
+set total_pressure_difference_yy [expr $agrid*$total_pressure_difference_yy/$box_z]
+set total_pressure_difference_zz [expr $agrid*$total_pressure_difference_zz/$box_z]
+set total_pressure_difference_xy [expr $agrid*$total_pressure_difference_xy/$box_z]
+set total_pressure_difference_yz [expr $agrid*$total_pressure_difference_yz/$box_z]
+set total_pressure_difference_xz [expr $agrid*$total_pressure_difference_xz/$box_z]
 
 puts "Density deviation: $total_density_difference"
 puts "Velocity deviation: $total_velocity_difference\n"
-puts "Stress deviation xx component: $total_stress_difference_xx"
-puts "Stress deviation yy component: $total_stress_difference_yy"
-puts "Stress deviation zz component: $total_stress_difference_zz"
-puts "Stress deviation xy component: $total_stress_difference_xy"
-puts "Stress deviation yz component: $total_stress_difference_yz"
-puts "Stress deviation xz component: $total_stress_difference_xz\n"
-puts "NB. The stress on the diagonal of the tensor is only isotropic"
-puts "    in equilibrium. However, it is not isotropic for the LB."
-puts "    The anisotropic part relaxes towards isotropic, but it"
-puts "    is not instantaneously isotropic. The elements on the"
-puts "    diagonal must therefore be different.\n"
+puts "Pressure deviation xx component: $total_pressure_difference_xx"
+puts "Pressure deviation yy component: $total_pressure_difference_yy"
+puts "Pressure deviation zz component: $total_pressure_difference_zz"
+puts "Pressure deviation xy component: $total_pressure_difference_xy"
+puts "Pressure deviation yz component: $total_pressure_difference_yz"
+puts "Pressure deviation xz component: $total_pressure_difference_xz\n"
 
-if { $total_density_difference > 1.0e-06 } {
+if { $total_density_difference > 9.0e-06 } {
   error_exit "Density accuracy not achieved"
 }
-if { $total_velocity_difference > 5.0e-07 } {
+if { $total_velocity_difference > 4.0e-06 } {
   error_exit "Velocity accuracy not achieved"
 }
-if { $total_stress_difference_xx > 5.0e-07 } {
-  error_exit "Difference xx component too large"
+if { $total_pressure_difference_xx > 1.5e-06 } {
+  error_exit "Pressure accuracy xx component not achieved"
 }
-if { $total_stress_difference_yy > 5.0e-07 } {
-  error_exit "Difference yy component too large"
+if { $total_pressure_difference_yy > 1.5e-06 } {
+  error_exit "Pressure accuracy yy component not achieved"
 }
-if { $total_stress_difference_zz > 2.5e-07 } {
-  error_exit "Difference zz component too large"
+if { $total_pressure_difference_zz > 2.0e-06 } {
+  error_exit "Pressure accuracy zz component not achieved"
 }
-if { $total_stress_difference_xy > 1.0e-10 } {
-  error_exit "Stress accuracy xy component not achieved"
+if { $total_pressure_difference_xy > 2.0e-09 } {
+  error_exit "Pressure accuracy xy component not achieved"
 }
-if { $total_stress_difference_yz > 7.5e-07 } {
-  error_exit "Stress accuracy yz component not achieved"
+if { $total_pressure_difference_yz > 1.5e-05 } {
+  error_exit "Pressure accuracy yz component not achieved"
 }
-if { $total_stress_difference_xz > 2.5e-10 } {
-  error_exit "Stress accuracy xz component not achieved"
+if { $total_pressure_difference_xz > 3.5e-09 } {
+  error_exit "Pressure accuracy xz component not achieved"
 }
 
 exit 0
