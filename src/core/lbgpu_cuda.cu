@@ -644,12 +644,12 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
   c = (mode[0 + 0 * LBQ]+ para.rho[0]*para.agrid*para.agrid*para.agrid ) / Rho_tot;
   random_wrapper(rn);
   for(int ii=0;ii<LB_COMPONENTS;++ii) { 
-      mode[1 + ii * LBQ] +=  sqrt(c*(1-c)*Rho_tot*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
-      mode[2 + ii * LBQ] +=  sqrt(c*(1-c)*Rho_tot*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[1];
+      mode[1 + ii * LBQ] +=  sqrtf(c*(1-c)*Rho_tot*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
+      mode[2 + ii * LBQ] +=  sqrtf(c*(1-c)*Rho_tot*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[1];
   }                                      
   random_wrapper(rn);                    
   for(int ii=0;ii<LB_COMPONENTS;++ii)    
-      mode[3 + ii * LBQ] +=  sqrt(c*(1-c)*Rho_tot*(para.mu[ii]*(2.0f/3.0f)*(1.0f-( para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
+      mode[3 + ii * LBQ] +=  sqrtf(c*(1-c)*Rho_tot*(para.mu[ii]*(2.0f/3.0f)*(1.0f-( para.gamma_mobility[0]*para.gamma_mobility[0])))) * (2*ii-1) * rn->randomnr[0];
 #endif
   
   
@@ -663,36 +663,36 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
 
     /** stress modes */
     random_wrapper(rn);
-    mode[4 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(2.0f/3.0f)*(1.0f-( para.gamma_bulk[ii]* para.gamma_bulk[ii])))) * rn->randomnr[0];
-    mode[5 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(4.0f/9.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[1];
+    mode[4 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f)*(1.0f-( para.gamma_bulk[ii]* para.gamma_bulk[ii])))) * rn->randomnr[0];
+    mode[5 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/9.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[6 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(4.0f/3.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[0];
-    mode[7 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(1.0f/9.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[1];
+    mode[6 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/3.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[0];
+    mode[7 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(1.0f/9.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[8 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(1.0f/9.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[0];
-    mode[9 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(1.0f/9.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[1];
+    mode[8 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(1.0f/9.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[0];
+    mode[9 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(1.0f/9.0f)*(1.0f-(para.gamma_shear[ii]*para.gamma_shear[ii])))) * rn->randomnr[1];
 
     /** ghost modes */
     random_wrapper(rn);
-    mode[10 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[0];
-    mode[11 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[1];
+    mode[10 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[0];
+    mode[11 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[12 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[0];
-    mode[13 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[1];
+    mode[12 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[0];
+    mode[13 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[14 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[0];
-    mode[15 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[1];
+    mode[14 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[0];
+    mode[15 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[16 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(2.0f)))     * rn->randomnr[0];
-    mode[17 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(4.0f/9.0f))) * rn->randomnr[1];
+    mode[16 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f)))     * rn->randomnr[0];
+    mode[17 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/9.0f))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[18 + ii * LBQ] += sqrt(Rho*(para.mu[ii]*(4.0f/3.0f))) * rn->randomnr[0];
+    mode[18 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/3.0f))) * rn->randomnr[0];
   }
 }
 
@@ -1274,7 +1274,7 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
 
       modes_from_pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
       modes_from_pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
-      modes_from_pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0*j[2]*j[2] ) / Rho;
+      modes_from_pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0f*j[2]*j[2] ) / Rho;
       modes_from_pi_eq[3] = j[0]*j[1] / Rho;
       modes_from_pi_eq[4] = j[0]*j[2] / Rho;
       modes_from_pi_eq[5] = j[1]*j[2] / Rho;
@@ -1283,12 +1283,12 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
       /* We immediately average pre- and post-collision.  */
       /* TODO: need a reference for this.   */
 
-      mode[4 + ii * LBQ ] = modes_from_pi_eq[0] + (0.5 + 0.5*para.gamma_bulk[ii]) * (mode[4 + ii * LBQ] - modes_from_pi_eq[0]);
-      mode[5 + ii * LBQ ] = modes_from_pi_eq[1] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[5 + ii * LBQ] - modes_from_pi_eq[1]);
-      mode[6 + ii * LBQ ] = modes_from_pi_eq[2] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[6 + ii * LBQ] - modes_from_pi_eq[2]);
-      mode[7 + ii * LBQ ] = modes_from_pi_eq[3] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[7 + ii * LBQ] - modes_from_pi_eq[3]);
-      mode[8 + ii * LBQ ] = modes_from_pi_eq[4] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[8 + ii * LBQ] - modes_from_pi_eq[4]);
-      mode[9 + ii * LBQ ] = modes_from_pi_eq[5] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[9 + ii * LBQ] - modes_from_pi_eq[5]);
+      mode[4 + ii * LBQ ] = modes_from_pi_eq[0] + (0.5f + 0.5f*para.gamma_bulk[ii]) * (mode[4 + ii * LBQ] - modes_from_pi_eq[0]);
+      mode[5 + ii * LBQ ] = modes_from_pi_eq[1] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode[5 + ii * LBQ] - modes_from_pi_eq[1]);
+      mode[6 + ii * LBQ ] = modes_from_pi_eq[2] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode[6 + ii * LBQ] - modes_from_pi_eq[2]);
+      mode[7 + ii * LBQ ] = modes_from_pi_eq[3] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode[7 + ii * LBQ] - modes_from_pi_eq[3]);
+      mode[8 + ii * LBQ ] = modes_from_pi_eq[4] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode[8 + ii * LBQ] - modes_from_pi_eq[4]);
+      mode[9 + ii * LBQ ] = modes_from_pi_eq[5] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode[9 + ii * LBQ] - modes_from_pi_eq[5]);
 
       // Transform the stress tensor components according to the modes that
       // correspond to those used by U. Schiller. In terms of populations this
@@ -1368,7 +1368,7 @@ __device__ void calc_values_from_m_in_LB_units(float *mode_single, LB_rho_v_gpu 
 
     modes_from_pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
     modes_from_pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
-    modes_from_pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0*j[2]*j[2] ) / Rho;
+    modes_from_pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0f*j[2]*j[2] ) / Rho;
     modes_from_pi_eq[3] = j[0]*j[1] / Rho;
     modes_from_pi_eq[4] = j[0]*j[2] / Rho;
     modes_from_pi_eq[5] = j[1]*j[2] / Rho;
@@ -1376,12 +1376,12 @@ __device__ void calc_values_from_m_in_LB_units(float *mode_single, LB_rho_v_gpu 
     // Now we must predict the outcome of the next collision
     // We immediately average pre- and post-collision.
 
-    mode_single[4 + ii * LBQ ] = modes_from_pi_eq[0] + (0.5 + 0.5* para.gamma_bulk[ii]) * (mode_single[4 + ii * LBQ] - modes_from_pi_eq[0]);
-    mode_single[5 + ii * LBQ ] = modes_from_pi_eq[1] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[5 + ii * LBQ] - modes_from_pi_eq[1]);
-    mode_single[6 + ii * LBQ ] = modes_from_pi_eq[2] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[6 + ii * LBQ] - modes_from_pi_eq[2]);
-    mode_single[7 + ii * LBQ ] = modes_from_pi_eq[3] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[7 + ii * LBQ] - modes_from_pi_eq[3]);
-    mode_single[8 + ii * LBQ ] = modes_from_pi_eq[4] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[8 + ii * LBQ] - modes_from_pi_eq[4]);
-    mode_single[9 + ii * LBQ ] = modes_from_pi_eq[5] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode_single[9 + ii * LBQ] - modes_from_pi_eq[5]);
+    mode_single[4 + ii * LBQ ] = modes_from_pi_eq[0] + (0.5f + 0.5f* para.gamma_bulk[ii]) * (mode_single[4 + ii * LBQ] - modes_from_pi_eq[0]);
+    mode_single[5 + ii * LBQ ] = modes_from_pi_eq[1] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode_single[5 + ii * LBQ] - modes_from_pi_eq[1]);
+    mode_single[6 + ii * LBQ ] = modes_from_pi_eq[2] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode_single[6 + ii * LBQ] - modes_from_pi_eq[2]);
+    mode_single[7 + ii * LBQ ] = modes_from_pi_eq[3] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode_single[7 + ii * LBQ] - modes_from_pi_eq[3]);
+    mode_single[8 + ii * LBQ ] = modes_from_pi_eq[4] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode_single[8 + ii * LBQ] - modes_from_pi_eq[4]);
+    mode_single[9 + ii * LBQ ] = modes_from_pi_eq[5] + (0.5f + 0.5f*para.gamma_shear[ii]) * (mode_single[9 + ii * LBQ] - modes_from_pi_eq[5]);
 
     // Transform the stress tensor components according to the mode_singles.
 
@@ -1517,9 +1517,9 @@ __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a,
     /** the +0.5 is to turn the floorf into a round function */
     my_center[i] = (int)(floorf(scaledpos+0.5f));
     scaledpos = scaledpos-1.0f*my_center[i];
-    temp_delta[0+3*i] = ( 5.0f - 3.0f*abs(scaledpos+1.0f) - sqrt( -2.0f + 6.0f*abs(scaledpos+1.0f) - 3.0f*pow(scaledpos+1.0f,2) ) )/6.0f;
-    temp_delta[1+3*i] = ( 1.0f + sqrt( 1.0f - 3.0f*pow(scaledpos,2) ) )/3.0f;
-    temp_delta[2+3*i] = ( 5.0f - 3.0f*abs(scaledpos-1.0f) - sqrt( -2.0f + 6.0f*abs(scaledpos-1.0f) - 3.0f*pow(scaledpos-1.0f,2) ) )/6.0f;
+    temp_delta[0+3*i] = ( 5.0f - 3.0f*abs(scaledpos+1.0f) - sqrtf( -2.0f + 6.0f*abs(scaledpos+1.0f) - 3.0f*pow(scaledpos+1.0f,2) ) )/6.0f;
+    temp_delta[1+3*i] = ( 1.0f + sqrtf( 1.0f - 3.0f*powf(scaledpos,2) ) )/3.0f;
+    temp_delta[2+3*i] = ( 5.0f - 3.0f*abs(scaledpos-1.0f) - sqrtf( -2.0f + 6.0f*abs(scaledpos-1.0f) - 3.0f*pow(scaledpos-1.0f,2) ) )/6.0f;
   }
 
   for (int i=-1; i<=1; i++) {
@@ -3767,9 +3767,9 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   unsigned int maxj;
   float phioffset, phi_incr;
   if ( pdata->phibins == 1 ) {
-    maxj = (int)floor( 2*3.1415*pdata->maxr/para.agrid ) ; 
+    maxj = (int)floorf( 2*3.1415f*pdata->maxr/para.agrid ) ; 
     phioffset=0;
-    phi_incr=2*3.1415/maxj;
+    phi_incr=2*3.1415f/maxj;
   } else {
     maxj = pdata->phibins;
     phioffset=pdata->minphi;
@@ -3828,7 +3828,7 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
   unsigned int maxi=pdata->rbins;
   
   if ( pdata->phibins == 1 ) {
-    maxj = (int)floor( 2*3.1415*pdata->maxr/lbpar_gpu.agrid ) ; 
+    maxj = (int)floorf( 2*3.1415f*pdata->maxr/lbpar_gpu.agrid ) ; 
     normalization_factor/=maxj;
   } else {
     maxj = pdata->phibins;

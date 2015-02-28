@@ -1137,8 +1137,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               );
              
       flux += force * 
-              ( (force >= 0.0) * ek_parameters_gpu.rho[species_index][index] +
-                (force <  0.0) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U00]]
+              ( (force >= 0.0f) * ek_parameters_gpu.rho[species_index][index] +
+                (force <  0.0f) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U00]]
               ) / ek_parameters_gpu.T;
 
       flux *= ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid;
@@ -1171,8 +1171,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               );             
              
       flux += force * 
-              ( (force >= 0.0) * ek_parameters_gpu.rho[species_index][index] +
-                (force <  0.0) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0U0]]
+              ( (force >= 0.0f) * ek_parameters_gpu.rho[species_index][index] +
+                (force <  0.0f) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0U0]]
               ) / ek_parameters_gpu.T;
 
       flux *= ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid;
@@ -1205,8 +1205,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               );             
              
       flux += force * 
-              ( (force >= 0.0) * ek_parameters_gpu.rho[species_index][index] +
-                (force <  0.0) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_00U]]
+              ( (force >= 0.0f) * ek_parameters_gpu.rho[species_index][index] +
+                (force <  0.0f) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_00U]]
               ) / ek_parameters_gpu.T;
 
       flux *= ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid;
@@ -1240,8 +1240,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               );
              
       flux += force *
-              ( (force >= 0.0) * ek_parameters_gpu.rho[species_index][index] +
-                (force <  0.0) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UU0]]
+              ( (force >= 0.0f) * ek_parameters_gpu.rho[species_index][index] +
+                (force <  0.0f) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UU0]]
               ) / ek_parameters_gpu.T;
 
       flux *= ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid;
@@ -1277,8 +1277,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               );
              
       flux += force *
-              ( (force >= 0.0) * ek_parameters_gpu.rho[species_index][index] +
-                (force <  0.0) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UD0]]
+              ( (force >= 0.0f) * ek_parameters_gpu.rho[species_index][index] +
+                (force <  0.0f) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UD0]]
               ) / ek_parameters_gpu.T;
 
       flux *= ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid;
@@ -1314,8 +1314,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               );
              
       flux += force *
-              ( (force >= 0.0) * ek_parameters_gpu.rho[species_index][index] +
-                (force <  0.0) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0U]]
+              ( (force >= 0.0f) * ek_parameters_gpu.rho[species_index][index] +
+                (force <  0.0f) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0U]]
               ) / ek_parameters_gpu.T;
 
       flux *= ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid;
@@ -1350,8 +1350,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               );
              
       flux += force *
-              ( (force >= 0.0) * ek_parameters_gpu.rho[species_index][index] +
-                (force <  0.0) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0D]]
+              ( (force >= 0.0f) * ek_parameters_gpu.rho[species_index][index] +
+                (force <  0.0f) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0D]]
               ) / ek_parameters_gpu.T;
 
       flux *= ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid;
@@ -1387,8 +1387,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               );
              
       flux += force *
-              ( (force >= 0.0) * ek_parameters_gpu.rho[species_index][index] +
-                (force <  0.0) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UU]]
+              ( (force >= 0.0f) * ek_parameters_gpu.rho[species_index][index] +
+                (force <  0.0f) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UU]]
               ) / ek_parameters_gpu.T;
 
       flux *= ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid;
@@ -1423,8 +1423,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               );
              
       flux += force *
-              ( (force >= 0.0) * ek_parameters_gpu.rho[species_index][index] +
-                (force <  0.0) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UD]]
+              ( (force >= 0.0f) * ek_parameters_gpu.rho[species_index][index] +
+                (force <  0.0f) * ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UD]]
               ) / ek_parameters_gpu.T;
 
       flux *= ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid;
