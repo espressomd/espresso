@@ -436,11 +436,11 @@ __global__ void calculate_influence_function_device ( int cao, int mesh, REAL_TY
   int ind = 0;
   REAL_TYPE Leni = 1.0/box;
 
-  ind = NX*mesh*mesh + NY * mesh + NZ;
-  
-  if(ind >= mesh*mesh*mesh)
+  if((NX >= mesh) || (NY >= mesh) || (NZ >= mesh))
     return;
-	  
+
+  ind = NX*mesh*mesh + NY * mesh + NZ;
+  	  
   if ( ( NX==0 ) && ( NY==0 ) && ( NZ==0 ) )
     G_hat[ind]=0.0;
   else if ( ( NX% ( mesh/2 ) == 0 ) && ( NY% ( mesh/2 ) == 0 ) && ( NZ% ( mesh/2 ) == 0 ) )
