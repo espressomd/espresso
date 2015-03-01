@@ -649,7 +649,7 @@ void ghost_communicator(GhostCommunicator *gc)
 	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	break;
       }
-      GHOST_TRACE(MPI_Barrier(comm_cart));
+      //GHOST_TRACE(MPI_Barrier(comm_cart)); TODO FIX AND REINSERT? Removed because causes certain scripts to freeze with an uneven number of cores
       GHOST_TRACE(fprintf(stderr, "%d: ghost_comm done\n", this_node));
 
       /* recv op; write back data directly, if no PSTSTORE delay is requested. */
@@ -714,7 +714,7 @@ void invalidate_ghosts()
     np   = ghost_cells.cell[c]->n;
     for(p=0 ; p<np; p++) {
       /* Particle is stored as ghost in the local_particles array,
-	 if the pointer stored there belongs to a ghost celll
+	 if the pointer stored there belongs to a ghost cell
 	 particle array. */
       if( &(part[p]) == local_particles[part[p].p.identity] ) 
 	local_particles[part[p].p.identity] = NULL;

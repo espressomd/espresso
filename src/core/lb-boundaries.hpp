@@ -39,6 +39,7 @@
 
 #include "utils.hpp"
 #include "constraint.hpp"
+#include <tcl.h> // needed for Tcl_Interp to define write function for LB_Boundary
 
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
@@ -64,33 +65,25 @@
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
 
-/** Structure to specify a boundary. */
-typedef struct {
+/** Class to specify a boundary. */
+class LB_Boundary {
+public:
+  void Write_LB_Boundary_Tcl (Tcl_Interp *interp);
+
   /** type of the boundary. */
   int type;
   double slip_pref;
 
-  union {
-    Constraint_wall wal;
-    Constraint_sphere sph;
-    Constraint_cylinder cyl;
-    Constraint_spherocylinder spherocyl;
-    Constraint_rhomboid rhomboid;
-    Constraint_pore pore;
-    Constraint_stomatocyte stomatocyte;
-    Constraint_box box;
-    Constraint_hollow_cone hollow_cone;
-  } c;
+  Shape* _shape;
   double force[3];
   double velocity[3];
 #ifdef EK_BOUNDARIES
   float charge_density;
   float net_charge;
 #endif
-} LB_Boundary;
-
-extern int n_lb_boundaries;
-extern LB_Boundary *lb_boundaries;
+  static int n_lb_boundaries;
+  static LB_Boundary *lb_boundaries;
+};
 
 /*@}*/
 

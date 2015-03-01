@@ -26,6 +26,7 @@
 
 #include "utils.hpp"
 #include "particle_data.hpp" /* needed for constraints */
+#include <tcl.h> // Needed for Tcl_Interp definition for constraints
 
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
@@ -816,35 +817,81 @@ typedef struct {
 /** \name Compounds for constraints */
 /*@{*/
 
+class Shape; //define Shape so that it can be used in class Constraint
+
+/** Class to specify a constraint. */
+class Constraint {
+public:
+  void Write_Constraint_Tcl(Tcl_Interp *interp);
+  ~Constraint();
+  /** type of the constraint. */
+  ConstraintApplied type;
+
+  Shape* _shape;
+
+  /** particle representation of this constraint. Actually needed are only the identity,
+      the type and the force. */
+  Particle part_rep;
+  int constraint_number;
+
+  static int n_constraints;
+  static Constraint* constraints;
+
+};
+
+class Shape {
+public:
+	Shape(): penetrable(0), reflecting(0), only_positive(1), tunable_slip(0){};
+	virtual ~Shape() {}
+	virtual void Write_Shape_Tcl (Tcl_Interp *interp) {}
+	virtual int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+	virtual void add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params);
+	virtual void add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params);
+	virtual size_t SizeOfShape()=0;
+	/** whether the constraint is penetrable 1 or not 0*/
+	int penetrable;
+	int reflecting;
+	int only_positive;
+	int tunable_slip;
+};
+
 /** Parameters for a WALL constraint (or a plane if you like that more). */
-typedef struct {
+class Constraint_wall:public Shape{
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_wall(){}
+  size_t SizeOfShape(){return (sizeof(Constraint_wall));}
+
   /** normal vector on the plane. */
   double n[3];
   /** distance of the wall from the origin. */
   double d;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable; 
-  int reflecting;
-  int only_positive;
-  /** whether to calculate tunable slip forces 1 or not 0 */
-  int tunable_slip;
-} Constraint_wall;
+};
 
 /** Parameters for a SPHERE constraint. */
-typedef struct {
+class Constraint_sphere:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_sphere(){}
+  size_t SizeOfShape(){return (sizeof(Constraint_sphere));}
+
   /** sphere center. */
   double pos[3];
   /** sphere radius. */
   double rad;  
   /** sphere direction. (+1 outside -1 inside interaction direction)*/
   double direction;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable; 
-  int reflecting;
-} Constraint_sphere;
+};
 
 /** Parameters for a CYLINDER constraint. */
-typedef struct {
+class Constraint_cylinder:public Shape {
+public:
+  virtual void Write_Shape_Tcl (Tcl_Interp *interp);
+  virtual int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  virtual ~Constraint_cylinder(){}
+  virtual size_t SizeOfShape(){return (sizeof(Constraint_cylinder));}
   /** center of the cylinder. */
   double pos[3];
   /** Axis of the cylinder .*/
@@ -855,30 +902,24 @@ typedef struct {
   double length;
   /** cylinder direction. (+1 outside -1 inside interaction direction)*/
   double direction;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable; 
-  int reflecting;
-} Constraint_cylinder;
+};
 
 /** Parameters for a SPHEROCYLINDER constraint. */
-typedef struct {
-  /** center of the cylinder. */
-  double pos[3];
-  /** Axis of the cylinder .*/
-  double axis[3];
-  /** cylinder radius. */
-  double rad;
-  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
-  double length;
-  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
-  double direction;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable; 
-  int reflecting;
-} Constraint_spherocylinder;
+class Constraint_spherocylinder:public Constraint_cylinder {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_spherocylinder(){}
+  size_t SizeOfShape(){return (sizeof(Constraint_spherocylinder));}
+};
 
 /** Parameters for a RHOMBOID constraint. */
-typedef struct {
+class Constraint_rhomboid:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_rhomboid(){}
+  size_t SizeOfShape(){return (sizeof(Constraint_rhomboid));}
   /** corner of the rhomboid */
   double pos[3];
   /** edges adjacent to the corner */
@@ -887,13 +928,15 @@ typedef struct {
   double c[3];
   /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
   double direction;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable; 
-  int reflecting;
-} Constraint_rhomboid;
+};
 
 /** Parameters for a PORE constraint. */
-typedef struct {
+class Constraint_pore:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_pore(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_pore));}
   /** center of the cylinder. */
   double pos[3];
   /** Axis of the cylinder .*/
@@ -904,14 +947,18 @@ typedef struct {
   double smoothing_radius;
   /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
   double length;
-  int reflecting;
   double outer_rad_left;
   double outer_rad_right;
-} Constraint_pore;
+};
 
 
 /** Parameters for a SLITPORE constraint. */
-typedef struct {
+class Constraint_slitpore:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_slitpore(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_slitpore));}
   /** center of the cylinder. */
   double pore_mouth;
   /** Axis of the cylinder .*/
@@ -921,29 +968,48 @@ typedef struct {
   double channel_width;
   double pore_width;
   double pore_length;
-  int reflecting;
-} Constraint_slitpore;
+};
 
 /** Parameters for a ROD constraint. */
-typedef struct {
+class Constraint_rod:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  void add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params);
+  void add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params);
+  ~Constraint_rod(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_rod));}
+
   /** center of the cylinder in the x-y plane. */
   double pos[2];
   /** line charge density. Only makes sense if the axis along the rod is
       periodically replicated and only with MMM1D. */
   double lambda;
-} Constraint_rod;
+};
 
 /** Parameters for a PLATE constraint. */
-typedef struct {
+class Constraint_plate:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  void add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params);
+  void add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params);
+  ~Constraint_plate(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_plate));}
+
   /** height of plane in z-axis. */
   double pos;
   /** charge density. Only makes sense if the axis along the rod is
       periodically replicated and only with MMM2D. */
   double sigma;
-} Constraint_plate;
+};
 
 /** Parameters for a MAZE constraint. */
-typedef struct {
+class Constraint_maze:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_maze(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_maze));}
+
   /** number of spheres. */
   double nsphere;
   /** dimension of the maze. */
@@ -952,12 +1018,15 @@ typedef struct {
   double sphrad;
   /** cylinder (connecting the spheres) radius*/
   double cylrad;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable; 
-} Constraint_maze;
+};
 
 /** Parameters for a STOMATOCYTE constraint. */
-typedef struct {
+class Constraint_stomatocyte:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_stomatocyte(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_stomatocyte));}
 
   /** Stomatocyte position. */
 
@@ -981,15 +1050,15 @@ typedef struct {
 
   double direction;
 
-  /** whether the constraint is penetrable 1 or not 0*/
-
-  int penetrable; 
-  int reflecting;
-
-} Constraint_stomatocyte;
+};
 
 /** Parameters for a HOLLOW_CONE constraint. */
-typedef struct {
+class Constraint_hollow_cone:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_hollow_cone(){}
+  size_t SizeOfShape(){return(sizeof(Constraint_hollow_cone));}
 
   /** Hollow cone position. */
 
@@ -1014,65 +1083,51 @@ typedef struct {
 
   double direction;
 
-  /** whether the constraint is penetrable 1 or not 0*/
-
-  int penetrable; 
-  int reflecting;
-
-} Constraint_hollow_cone;
+};
 
 /** Parameters for a BOX constraint. */
-typedef struct {
+class Constraint_box:public Shape {
+public:
+  ~Constraint_box(){}
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  size_t SizeOfShape(){return(sizeof(Constraint_box));}
   int value;
-} Constraint_box;
+};
 
 //ER
 /** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
-typedef struct{
+class Constraint_ext_magn_field:public Shape{
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  void add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params);
+  void add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params);
+  ~Constraint_ext_magn_field() {}
+  size_t SizeOfShape(){return(sizeof(Constraint_ext_magn_field));}
+
+
   /** vector (direction and magnitude) of the external magnetic field */
   double ext_magn_field[3];
-} Constraint_ext_magn_field;
+};
 //end ER
 
 /** Parameters for a plane constraint which is needed for tunable-slip boundary conditions. */
-typedef struct {
+class Constraint_plane:public Shape {
+public:
+  void Write_Shape_Tcl (Tcl_Interp *interp);
+  int calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec);
+  ~Constraint_plane() {}
+  size_t SizeOfShape(){return(sizeof(Constraint_plane));}
+
   /** Position of the plain. Negative values mean non-existing in that direction. */
   double pos[3];
-} Constraint_plane;
+};
 
 typedef struct {
   double omega;
   double Prefactor;
 } SinusoidalField;
 
-/** Structure to specify a constraint. */
-typedef struct {
-  /** type of the constraint. */
-  ConstraintApplied type;
 
-  union {
-    Constraint_wall wal;
-    Constraint_sphere sph;
-    Constraint_cylinder cyl;
-    Constraint_spherocylinder spherocyl;
-    Constraint_rhomboid rhomboid;
-    Constraint_rod rod;
-    Constraint_plate plate;
-    Constraint_maze maze;
-    Constraint_pore pore;
-    Constraint_slitpore slitpore;
-    Constraint_stomatocyte stomatocyte;
-    Constraint_hollow_cone hollow_cone;
-    //ER
-    Constraint_ext_magn_field emfield;
-    //end ER
-    Constraint_plane plane;
-  } c;
-
-  /** particle representation of this constraint. Actually needed are only the identity,
-      the type and the force. */
-  Particle part_rep;
-} Constraint;
 /*@}*/
 #endif
 

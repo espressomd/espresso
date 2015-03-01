@@ -125,20 +125,20 @@ void InitCUDA_IBM(const int numParticles)
     // Copy boundary velocities to the GPU
     // First put them into correct format
 #ifdef LB_BOUNDARIES_GPU
-    float* host_lb_boundary_velocity = new float[3*(n_lb_boundaries+1)];
+    float* host_lb_boundary_velocity = new float[3*(LB_Boundary::n_lb_boundaries+1)];
 
-    for (int n=0; n<n_lb_boundaries; n++)
+    for (int n=0; n<LB_Boundary::n_lb_boundaries; n++)
     {
-      host_lb_boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
-      host_lb_boundary_velocity[3*n+1]=lb_boundaries[n].velocity[1];
-      host_lb_boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];
+      host_lb_boundary_velocity[3*n+0]=LB_Boundary::lb_boundaries[n].velocity[0];
+      host_lb_boundary_velocity[3*n+1]=LB_Boundary::lb_boundaries[n].velocity[1];
+      host_lb_boundary_velocity[3*n+2]=LB_Boundary::lb_boundaries[n].velocity[2];
     }
 
-    host_lb_boundary_velocity[3*n_lb_boundaries+0] = 0.0f;
-    host_lb_boundary_velocity[3*n_lb_boundaries+1] = 0.0f;
-    host_lb_boundary_velocity[3*n_lb_boundaries+2] = 0.0f;
-    cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*n_lb_boundaries*sizeof(float)));
-    cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
+    host_lb_boundary_velocity[3*LB_Boundary::n_lb_boundaries+0] = 0.0f;
+    host_lb_boundary_velocity[3*LB_Boundary::n_lb_boundaries+1] = 0.0f;
+    host_lb_boundary_velocity[3*LB_Boundary::n_lb_boundaries+2] = 0.0f;
+    cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*LB_Boundary::n_lb_boundaries*sizeof(float)));
+    cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*LB_Boundary::n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
     delete[] host_lb_boundary_velocity;
 #endif
   }

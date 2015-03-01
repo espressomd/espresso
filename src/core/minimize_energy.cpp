@@ -51,6 +51,7 @@ bool steepest_descent_step(void) {
   int c, i, j, np;
   double f_max = -std::numeric_limits<double>::max();
   double f;
+
   /* Verlet list criterion */
   const double skin2 = SQR(0.5*skin);
   double f_max_global;

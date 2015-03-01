@@ -252,7 +252,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR)
           return (TCL_ERROR);
           
-        if(c_num < 0 || c_num >= n_lb_boundaries) 
+        if(c_num < 0 || c_num >= LB_Boundary::n_lb_boundaries)
         {
 	        Tcl_AppendResult(interp, "Can not delete non existing electrokinetics boundary", (char *) NULL);
 	        return (TCL_ERROR);

@@ -1985,47 +1985,77 @@ void mpi_send_ext_force_slave(int pnode, int part)
 void mpi_bcast_constraint(int del_num)
 {
 #ifdef CONSTRAINTS
+
+  size_t sizeofShape;
   mpi_call(mpi_bcast_constraint_slave, 0, del_num);
 
   if (del_num == -1) {
     /* bcast new constraint */
-    MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(&Constraint::constraints[Constraint::n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
+    sizeofShape = Constraint::constraints[Constraint::n_constraints-1]._shape->SizeOfShape();
+
+    MPI_Bcast(&sizeofShape, sizeof(size_t), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(Constraint::constraints[Constraint::n_constraints-1]._shape, sizeofShape, MPI_BYTE, 0, comm_cart);
+
   }
   else if (del_num == -2) {
     /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+    for (int i=0; i<Constraint::n_constraints; i++) {
+    	delete Constraint::constraints[i]._shape;
+    }
+    Constraint::n_constraints = 0;
+    Constraint::constraints = (Constraint*)realloc(Constraint::constraints,Constraint::n_constraints*sizeof(Constraint));
   }
   else {
-    memcpy(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+    delete Constraint::constraints[del_num]._shape;
+    memcpy(&Constraint::constraints[del_num],&Constraint::constraints[Constraint::n_constraints-1],sizeof(Constraint));
+    Constraint::n_constraints--;
+    Constraint::constraints = (Constraint*)realloc(Constraint::constraints,Constraint::n_constraints*sizeof(Constraint));
+    for (int i=0; i<Constraint::n_constraints; i++) {
+    	Constraint::constraints[i].constraint_number=i;
+    }
   }
 
   on_constraint_change();
+
 #endif
 }
 
 void mpi_bcast_constraint_slave(int node, int parm)
 {   
 #ifdef CONSTRAINTS
+
+  size_t sizeofShape;
   if(parm == -1) {
-    n_constraints++;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
-    MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
+    Constraint::n_constraints++;
+    Constraint::constraints = (Constraint*)realloc(Constraint::constraints,Constraint::n_constraints*sizeof(Constraint));
+    MPI_Bcast(&Constraint::constraints[Constraint::n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(&sizeofShape, sizeof(size_t), MPI_BYTE, 0, comm_cart);
+    Constraint::constraints[Constraint::n_constraints-1]._shape = (Shape*)malloc(sizeofShape);
+    MPI_Bcast(Constraint::constraints[Constraint::n_constraints-1]._shape, sizeofShape, MPI_BYTE, 0, comm_cart);
   }
   else if (parm == -2) {
     /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+    for (int i=0; i<Constraint::n_constraints; i++) {
+    	delete Constraint::constraints[i]._shape;
+    }
+    Constraint::n_constraints = 0;
+    Constraint::constraints = (Constraint*)realloc(Constraint::constraints,Constraint::n_constraints*sizeof(Constraint));
   }
   else {
-    memcpy(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));    
+    memcpy(&Constraint::constraints[parm],&Constraint::constraints[Constraint::n_constraints-1],sizeof(Constraint));
+    delete Constraint::constraints[Constraint::n_constraints-1]._shape;
+    Constraint::n_constraints--;
+    Constraint::constraints = (Constraint*)realloc(Constraint::constraints,Constraint::n_constraints*sizeof(Constraint));
+    for (int i=0; i<Constraint::n_constraints; i++) {
+    	Constraint::constraints[i].constraint_number=i;
+    	Constraint::constraints[i].part_rep.p.identity = -(Constraint::n_constraints+1);
+    }
+
   }
 
   on_constraint_change();
+
 #endif
 }
 
@@ -2033,16 +2063,25 @@ void mpi_bcast_constraint_slave(int node, int parm)
 void mpi_bcast_lbboundary(int del_num)
 {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+  size_t sizeofShape;
   mpi_call(mpi_bcast_lbboundary_slave, 0, del_num);
   
   if (del_num == -1) {
     /* bcast new boundaries */
-    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(&LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, comm_cart);
+    sizeofShape = LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1]._shape->SizeOfShape();
+
+    MPI_Bcast(&sizeofShape, sizeof(size_t), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1]._shape, sizeofShape, MPI_BYTE, 0, comm_cart);
+
   }
   else if (del_num == -2) {
     /* delete all boundaries */
-    n_lb_boundaries = 0;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    for (int i=0; i<LB_Boundary::n_lb_boundaries; i++) {
+    	delete LB_Boundary::lb_boundaries[i]._shape;
+    }
+    LB_Boundary::n_lb_boundaries = 0;
+    LB_Boundary::lb_boundaries = (LB_Boundary*) realloc(LB_Boundary::lb_boundaries,LB_Boundary::n_lb_boundaries*sizeof(LB_Boundary));
   }
 #if defined(LB_BOUNDARIES_GPU)
   else if (del_num == -3) {
@@ -2050,9 +2089,10 @@ void mpi_bcast_lbboundary(int del_num)
   }
 #endif
   else {
-    memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
-    n_lb_boundaries--;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    delete LB_Boundary::lb_boundaries[del_num]._shape;
+    memcpy(&LB_Boundary::lb_boundaries[del_num],&LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1],sizeof(LB_Boundary));
+    LB_Boundary::n_lb_boundaries--;
+    LB_Boundary::lb_boundaries = (LB_Boundary*) realloc(LB_Boundary::lb_boundaries,LB_Boundary::n_lb_boundaries*sizeof(LB_Boundary));
   }
 
   on_lbboundary_change();
@@ -2064,15 +2104,22 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 #if defined(LB_BOUNDARIES)
+  size_t sizeofShape;
   if(parm == -1) {
-    n_lb_boundaries++;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
-    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, comm_cart);
+    LB_Boundary::n_lb_boundaries++;
+    LB_Boundary::lb_boundaries = (LB_Boundary*) realloc(LB_Boundary::lb_boundaries,LB_Boundary::n_lb_boundaries*sizeof(LB_Boundary));
+    MPI_Bcast(&LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(&sizeofShape, sizeof(size_t), MPI_BYTE, 0, comm_cart);
+    LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1]._shape = (Shape*)malloc(sizeofShape);
+    MPI_Bcast(LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1]._shape, sizeofShape, MPI_BYTE, 0, comm_cart);
   }
   else if (parm == -2) {
     /* delete all boundaries */
-    n_lb_boundaries = 0;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    for (int i=0; i<LB_Boundary::n_lb_boundaries; i++) {
+    	delete LB_Boundary::lb_boundaries[i]._shape;
+    }
+    LB_Boundary::n_lb_boundaries = 0;
+    LB_Boundary::lb_boundaries = (LB_Boundary*) realloc(LB_Boundary::lb_boundaries,LB_Boundary::n_lb_boundaries*sizeof(LB_Boundary));
   }
 #if defined(LB_BOUNDARIES_GPU)
   else if (parm == -3) {
@@ -2080,13 +2127,15 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
   }
 #endif
   else {
-    memcpy(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
-    n_lb_boundaries--;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
+    delete LB_Boundary::lb_boundaries[parm]._shape;
+    memcpy(&LB_Boundary::lb_boundaries[parm],&LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1],sizeof(LB_Boundary));
+    LB_Boundary::n_lb_boundaries--;
+    LB_Boundary::lb_boundaries = (LB_Boundary*) realloc(LB_Boundary::lb_boundaries,LB_Boundary::n_lb_boundaries*sizeof(LB_Boundary));    
   }
 #endif
 
   on_lbboundary_change();
+
 #endif
 }
 
@@ -2204,14 +2253,14 @@ void mpi_get_constraint_force(int cons, double force[3])
 {
 #ifdef CONSTRAINTS
   mpi_call(mpi_get_constraint_force_slave, -1, cons);
-  MPI_Reduce(constraints[cons].part_rep.f.f, force, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(Constraint::constraints[cons].part_rep.f.f, force, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 #endif
 }
 
 void mpi_get_constraint_force_slave(int node, int parm)
 {
 #ifdef CONSTRAINTS
-  MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(Constraint::constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 #endif
 }
 

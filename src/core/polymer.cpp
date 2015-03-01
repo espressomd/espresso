@@ -142,30 +142,14 @@ int constraint_collision(double *p1, double *p2){
   memcpy(folded_pos2, p2, 3*sizeof(double));
   fold_position(folded_pos2, img);
 
-  for(i=0;i<n_constraints;i++){
-    c=&constraints[i];
-    switch(c->type){
-    case CONSTRAINT_WAL:
-      calculate_wall_dist(&part1,folded_pos1,&part1,&c->c.wal,&d1,v);
-      calculate_wall_dist(&part2,folded_pos2,&part2,&c->c.wal,&d2,v);
-      if(d1*d2<=0.0)
-	return 1;
-      break;
-    case CONSTRAINT_SPH:
-      calculate_sphere_dist(&part1,folded_pos1,&part1,&c->c.sph,&d1,v);
-      calculate_sphere_dist(&part2,folded_pos2,&part2,&c->c.sph,&d2,v);
-      if(d1*d2<0.0)
-	return 1;
-      break;
-    case CONSTRAINT_CYL:
-      calculate_cylinder_dist(&part1,folded_pos1,&part1,&c->c.cyl,&d1,v);
-      calculate_cylinder_dist(&part2,folded_pos2,&part2,&c->c.cyl,&d2,v);
-      if(d1*d2<0.0)
-	return 1;
-      break;
-    default:
-      if (warnings) fprintf (stderr, "Warning: Only wall, cylinder and sphere constraints can be excluded from the polymer accessible volume.\n"); 
-      break;
+  for(i=0;i<Constraint::n_constraints;i++){
+    c=&Constraint::constraints[i];
+    if ( !(c->_shape->calculate_dist(&part1,folded_pos1,&part1,&d1,v)) && !(c->_shape->calculate_dist(&part2,folded_pos2,&part2,&d2,v)) ) {
+    	if(d1*d2<=0.0)
+    		return 1;
+    }
+    else {
+        if (warnings) fprintf (stderr, "Warning: A defined constraint cannot be used to restrict the placement of a polymer.\n");
     }
   }
   return 0;

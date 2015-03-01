@@ -135,8 +135,6 @@ static double fluidstep=0.0;
 #ifdef ADDITIONAL_CHECKS
 /** counts the random numbers drawn for fluctuating LB and the coupling */
 static int rancounter=0;
-/** counts the occurences of negative populations due to fluctuations */
-static int failcounter=0;
 #endif // ADDITIONAL_CHECKS
 
 /***********************************************************************/
@@ -1892,10 +1890,10 @@ void lb_reinit_forces() {
 #endif // EXTERNAL_FORCES
     }
 #ifdef LB_BOUNDARIES
-    for (int i = 0; i < n_lb_boundaries; i++) {
-      lb_boundaries[i].force[0]=0.;
-      lb_boundaries[i].force[1]=0.;
-      lb_boundaries[i].force[2]=0.;
+    for (int i = 0; i < LB_Boundary::n_lb_boundaries; i++) {
+      LB_Boundary::lb_boundaries[i].force[0]=0.;
+      LB_Boundary::lb_boundaries[i].force[1]=0.;
+      LB_Boundary::lb_boundaries[i].force[2]=0.;
     }
 #endif // LB_BOUNDARIES
 }
@@ -2590,10 +2588,10 @@ inline void lb_collide_stream() {
 
     /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
-    for (int i = 0; i < n_lb_boundaries; i++) {
-        lb_boundaries[i].force[0]=0.;
-        lb_boundaries[i].force[1]=0.;
-        lb_boundaries[i].force[2]=0.;
+    for (int i = 0; i < LB_Boundary::n_lb_boundaries; i++) {
+        LB_Boundary::lb_boundaries[i].force[0]=0.;
+        LB_Boundary::lb_boundaries[i].force[1]=0.;
+        LB_Boundary::lb_boundaries[i].force[2]=0.;
     }
 #endif // LB_BOUNDARIES
   
@@ -2990,9 +2988,9 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
     pos[2] = p[2] - distvec[2] + distvec[2]/lbboundary_mindist * lbpar.agrid/2.;
   } else {
     boundary_flag=2;
-    v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
-    v[1]= lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
-    v[2]= lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
+    v[0]= LB_Boundary::lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
+    v[1]= LB_Boundary::lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
+    v[2]= LB_Boundary::lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
     return 0; // we can return without interpolating
   }
 #else // LB_BOUNDARIES
@@ -3018,9 +3016,9 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_rho=lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
-          local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[1];
-          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[2];
+          local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*LB_Boundary::lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*LB_Boundary::lb_boundaries[lbfields[index].boundary-1].velocity[1];
+          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*LB_Boundary::lb_boundaries[lbfields[index].boundary-1].velocity[2];
         } else {
           lb_calc_modes(index, modes);
           local_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
@@ -3044,11 +3042,11 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
 #ifdef LB_BOUNDARIES
   if (boundary_flag==1) {
     v[0] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[0] 
-      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * lb_boundaries[boundary_no].velocity[0];
+      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * LB_Boundary::lb_boundaries[boundary_no].velocity[0];
     v[1] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[1]
-      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * lb_boundaries[boundary_no].velocity[1];
+      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * LB_Boundary::lb_boundaries[boundary_no].velocity[1];
     v[2] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[2]
-      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * lb_boundaries[boundary_no].velocity[2];
+      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * LB_Boundary::lb_boundaries[boundary_no].velocity[2];
   } else {
     v[0] = interpolated_u[0];
     v[1] = interpolated_u[1];
@@ -3461,6 +3459,9 @@ static void lb_check_halo_regions() {
          lb_check_negative_n
       */
 #ifdef ADDITIONAL_CHECKS
+/** counts the occurences of negative populations due to fluctuations */
+static int failcounter=0;
+
 static void lb_lattice_sum() {
 
     double *w   = lbmodel.w;

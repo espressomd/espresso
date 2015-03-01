@@ -35,26 +35,27 @@ int reflection_happened;
 
 #ifdef CONSTRAINTS
 
-int n_constraints       = 0;
-Constraint *constraints = NULL;
+int Constraint::n_constraints       = 0;
+Constraint *Constraint::constraints = NULL;
 
 Constraint *generate_constraint()
 {
-  n_constraints++;
-  constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
-  constraints[n_constraints-1].type = CONSTRAINT_NONE;
-  constraints[n_constraints-1].part_rep.p.identity = -n_constraints;
+  Constraint::n_constraints++;
+  Constraint::constraints = (Constraint*)realloc(Constraint::constraints,Constraint::n_constraints*sizeof(Constraint));
+  Constraint::constraints[Constraint::n_constraints-1].type = CONSTRAINT_NONE;
+  Constraint::constraints[Constraint::n_constraints-1].part_rep.p.identity = -Constraint::n_constraints;
+  Constraint::constraints[Constraint::n_constraints-1].constraint_number = Constraint::n_constraints-1;
   
-  return &constraints[n_constraints-1];
+  return &Constraint::constraints[Constraint::n_constraints-1];
 }
 
 void init_constraint_forces()
 {
   int n, i;
   
-  for (n = 0; n < n_constraints; n++)
+  for (n = 0; n < Constraint::n_constraints; n++)
     for (i = 0; i < 3; i++)
-      constraints[n].part_rep.f.f[i] = 0;
+      Constraint::constraints[n].part_rep.f.f[i] = 0;
 }
 
 
@@ -65,52 +66,64 @@ static double sign(double x) {
     return -1;
 }
 
-void calculate_wall_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_wall *c, double *dist, double *vec)
+int Shape::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
+{
+  return 1; //if calculate_dist not implemented in derived class, calculate_dist fails
+}
+
+int Constraint_box::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
+{
+  *dist = -1;
+  return 0;
+}
+
+int Constraint_wall::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
 {
   int i;
 
-  *dist = -c->d;
-  for(i=0;i<3;i++) *dist += ppos[i]*c->n[i];
+  *dist = -this->d;
+  for(i=0;i<3;i++) *dist += ppos[i]*this->n[i];
   
-  for(i=0;i<3;i++) vec[i] = c->n[i] * *dist;
-  
+  for(i=0;i<3;i++) vec[i] = this->n[i] * *dist;
+  return 0;
 }
 
 
-void calculate_sphere_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_sphere *c, double *dist, double *vec)
+int Constraint_sphere::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
 {
   int i;
   double fac,  c_dist;
 
   c_dist=0.0;
   for(i=0;i<3;i++) {
-    vec[i] = c->pos[i] - ppos[i];
+    vec[i] = this->pos[i] - ppos[i];
     c_dist += SQR(vec[i]);
   }
   c_dist = sqrt(c_dist);
   
-  if ( c->direction == -1 ) {
+  if ( this->direction == -1 ) {
   /* apply force towards inside the sphere */
-    *dist = c->rad - c_dist;
+    *dist = this->rad - c_dist;
     fac = *dist / c_dist;
     for(i=0;i<3;i++) vec[i] *= fac;
   } else {
    /* apply force towards outside the sphere */
-    *dist = c_dist - c->rad;
+    *dist = c_dist - this->rad;
     fac = *dist / c_dist;
     for(i=0;i<3;i++) vec[i] *= -fac;
   }
+  return 0;
 }
 
 
-void calculate_maze_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_maze *c, double *dist, double *vec)
+int Constraint_maze::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
 {
   int i,min_axis,cursph[3],dim;
   double diasph,fac,c_dist,sph_dist,cyl_dist,temp_dis;
   double sph_vec[3],cyl_vec[3];
 
-  dim=(int) c->dim;
-  diasph = box_l[0]/c->nsphere;
+  dim=(int) this->dim;
+  diasph = box_l[0]/this->nsphere;
 
   /* First determine the distance to the sphere */
   c_dist=0.0;
@@ -120,7 +133,7 @@ void calculate_maze_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     c_dist += SQR(sph_vec[i]);
   }
   c_dist = sqrt(c_dist);
-  sph_dist = c->sphrad - c_dist;
+  sph_dist = this->sphrad - c_dist;
   fac = sph_dist / c_dist;
   for(i=0;i<3;i++) cyl_vec[i] = sph_vec[i];
   for(i=0;i<3;i++) sph_vec[i] *= fac;
@@ -148,7 +161,7 @@ void calculate_maze_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   cyl_vec[min_axis]=0.;
   
   c_dist=cyl_dist;
-  cyl_dist = c->cylrad - c_dist;
+  cyl_dist = this->cylrad - c_dist;
   fac = cyl_dist / c_dist;
   for(i=0;i<3;i++) cyl_vec[i] *= fac;
   
@@ -165,89 +178,91 @@ void calculate_maze_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     *dist = cyl_dist;
     for(i=0;i<3;i++) vec[i] = cyl_vec[i];  
   }
+  return 0;
 }
 
-void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_cylinder *c, double *dist, double *vec)
+int Constraint_cylinder::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
 {
   int i;
   double d_per,d_par,d_real,d_per_vec[3],d_par_vec[3],d_real_vec[3];
 
   d_real = 0.0;
   for(i=0;i<3;i++) {
-    d_real_vec[i] = ppos[i] - c->pos[i];
+    d_real_vec[i] = ppos[i] - this->pos[i];
     d_real += SQR(d_real_vec[i]);
   }
   d_real = sqrt(d_real);
     
   d_par=0.;
   for(i=0;i<3;i++) {
-    d_par += (d_real_vec[i] * c->axis[i]);
+    d_par += (d_real_vec[i] * this->axis[i]);
   }
     
   for(i=0;i<3;i++) {
-    d_par_vec[i] = d_par * c->axis[i] ;
-    d_per_vec[i] = ppos[i] - (c->pos[i] + d_par_vec[i]) ;
+    d_par_vec[i] = d_par * this->axis[i] ;
+    d_per_vec[i] = ppos[i] - (this->pos[i] + d_par_vec[i]) ;
   }
 		
   d_per=sqrt(SQR(d_real)-SQR(d_par));
   d_par = fabs(d_par) ;
 
-  if ( c->direction == -1 ) {
+  if ( this->direction == -1 ) {
     /*apply force towards inside cylinder */
-    d_per = c->rad - d_per ;
-    d_par = c->length - d_par;
+    d_per = this->rad - d_per ;
+    d_par = this->length - d_par;
     if (d_per < d_par )  {
       *dist = d_per ;   
       for (i=0; i<3;i++) {
-	vec[i]= -d_per_vec[i] * d_per /  (c->rad - d_per) ;
+	vec[i]= -d_per_vec[i] * d_per /  (this->rad - d_per) ;
       }
     } else {
       *dist = d_par ;
       for (i=0; i<3;i++) {
-	vec[i]= -d_par_vec[i] * d_par /  (c->length - d_par) ;
+	vec[i]= -d_par_vec[i] * d_par /  (this->length - d_par) ;
       }
     }
   } else {
     /*apply force towards outside cylinder */
-    d_per = d_per - c->rad ;
-    d_par = d_par - c->length ;
+    d_per = d_per - this->rad ;
+    d_par = d_par - this->length ;
     if (d_par < 0 )  {
       *dist = d_per ;   
       for (i=0; i<3;i++) {
-	vec[i]= d_per_vec[i] * d_per /  (d_per + c->rad) ;
+	vec[i]= d_per_vec[i] * d_per /  (d_per + this->rad) ;
       }
     } else if ( d_per < 0) {
       *dist = d_par ;
       for (i=0; i<3;i++) {
-	vec[i]= d_par_vec[i] * d_par /  (d_par + c->length) ;
+	vec[i]= d_par_vec[i] * d_par /  (d_par + this->length) ;
       }
     } else {
       *dist = sqrt( SQR(d_par) + SQR(d_per)) ;
       for (i=0; i<3;i++) {
 	vec[i]=
-	  d_per_vec[i] * d_per /  (d_per + c->rad) +
-	  d_par_vec[i] * d_par /  (d_par + c->length) ;
+	  d_per_vec[i] * d_per /  (d_per + this->rad) +
+	  d_par_vec[i] * d_par /  (d_par + this->length) ;
       }	
     }
   }
+  return 0;
 }
 
-void calculate_spherocylinder_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_spherocylinder *c, double *dist, double *vec)
+int Constraint_spherocylinder::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
 {
   int i;
   double d = 0.0;
   double ppos_local[3];
 
   for(i = 0; i < 3; i++) {
-    ppos_local[i] = ppos[i] - c->pos[i];
-    d += ppos_local[i] * c->axis[i];
+    ppos_local[i] = ppos[i] - this->pos[i];
+    d += ppos_local[i] * this->axis[i];
   }
 
-  if(abs(d) >= c->length) {
+  if(abs(d) >= this->length) {
     *dist = 0.0;
     
     for(i = 0; i < 3; i++) {
-      vec[i] = ppos_local[i] - c->length * c->axis[i] * sign(d);
+      vec[i] = ppos_local[i] - this->length * this->axis[i] * sign(d);
       *dist += vec[i]*vec[i];
     }
 
@@ -257,18 +272,19 @@ void calculate_spherocylinder_dist(Particle *p1, double ppos[3], Particle *c_p, 
       for(i = 0; i < 3; i++)
         vec[i] /= *dist;
     
-    *dist -= c->rad;
+    *dist -= this->rad;
 
     for(i = 0; i < 3; i++)
       vec[i] *= *dist;
 
-    *dist *= c->direction;
+    *dist *= this->direction;
   }
   else
-    calculate_cylinder_dist(p1, ppos, c_p, (Constraint_cylinder*) c, dist, vec);
+	  (this)->Constraint_cylinder::calculate_dist(p1, ppos, c_p, dist, vec);
+  return 0;
 }
 
-void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
+int Constraint_rhomboid::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec)
 {	
 	double axb[3], bxc[3], axc[3];
 	double A, B, C;
@@ -278,439 +294,439 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 	
 	//calculate a couple of vectors and scalars that are going to be used frequently
 	
-	axb[0] = c->a[1]*c->b[2] - c->a[2]*c->b[1];
-	axb[1] = c->a[2]*c->b[0] - c->a[0]*c->b[2];
-	axb[2] = c->a[0]*c->b[1] - c->a[1]*c->b[0];
+	axb[0] = this->a[1]*this->b[2] - this->a[2]*this->b[1];
+	axb[1] = this->a[2]*this->b[0] - this->a[0]*this->b[2];
+	axb[2] = this->a[0]*this->b[1] - this->a[1]*this->b[0];
 	
-	bxc[0] = c->b[1]*c->c[2] - c->b[2]*c->c[1];
-	bxc[1] = c->b[2]*c->c[0] - c->b[0]*c->c[2];
-	bxc[2] = c->b[0]*c->c[1] - c->b[1]*c->c[0];
+	bxc[0] = this->b[1]*this->c[2] - this->b[2]*this->c[1];
+	bxc[1] = this->b[2]*this->c[0] - this->b[0]*this->c[2];
+	bxc[2] = this->b[0]*this->c[1] - this->b[1]*this->c[0];
 	
-	axc[0] = c->a[1]*c->c[2] - c->a[2]*c->c[1];
-	axc[1] = c->a[2]*c->c[0] - c->a[0]*c->c[2];
-	axc[2] = c->a[0]*c->c[1] - c->a[1]*c->c[0];
+	axc[0] = this->a[1]*this->c[2] - this->a[2]*this->c[1];
+	axc[1] = this->a[2]*this->c[0] - this->a[0]*this->c[2];
+	axc[2] = this->a[0]*this->c[1] - this->a[1]*this->c[0];
 	
-	a_dot_bxc = c->a[0]*bxc[0] + c->a[1]*bxc[1] + c->a[2]*bxc[2];
-	b_dot_axc = c->b[0]*axc[0] + c->b[1]*axc[1] + c->b[2]*axc[2];
-	c_dot_axb = c->c[0]*axb[0] + c->c[1]*axb[1] + c->c[2]*axb[2];
+	a_dot_bxc = this->a[0]*bxc[0] + this->a[1]*bxc[1] + this->a[2]*bxc[2];
+	b_dot_axc = this->b[0]*axc[0] + this->b[1]*axc[1] + this->b[2]*axc[2];
+	c_dot_axb = this->c[0]*axb[0] + this->c[1]*axb[1] + this->c[2]*axb[2];
 	
 	//represent the distance from pos to ppos as a linear combination of the edge vectors.
 	
-	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A = (ppos[0]-this->pos[0])*bxc[0] + (ppos[1]-this->pos[1])*bxc[1] + (ppos[2]-this->pos[2])*bxc[2];
 	A /= a_dot_bxc;	
-	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B = (ppos[0]-this->pos[0])*axc[0] + (ppos[1]-this->pos[1])*axc[1] + (ppos[2]-this->pos[2])*axc[2];
 	B /= b_dot_axc;	
-	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C = (ppos[0]-this->pos[0])*axb[0] + (ppos[1]-this->pos[1])*axb[1] + (ppos[2]-this->pos[2])*axb[2];
 	C /= c_dot_axb;
 	
 	//the coefficients tell whether ppos lies within the cone defined by pos and the adjacent edges
 	
 	if(A <= 0 && B <= 0 && C <= 0)
 	{
-		vec[0] = ppos[0]-c->pos[0];
-		vec[1] = ppos[1]-c->pos[1];
-		vec[2] = ppos[2]-c->pos[2];
+		vec[0] = ppos[0]-this->pos[0];
+		vec[1] = ppos[1]-this->pos[1];
+		vec[2] = ppos[2]-this->pos[2];
 		
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 		
-	  return;
+	  return  0;
 	}
 	
 	//check for cone at pos+a
 
-	A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->a[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2])*bxc[2];
 	A /= a_dot_bxc;	
-	B = (ppos[0]-c->pos[0]-c->a[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->a[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2])*axc[2];
 	B /= b_dot_axc;	
-	C = (ppos[0]-c->pos[0]-c->a[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->a[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A >= 0 && B <= 0 && C <= 0)
 	{
-		vec[0] = ppos[0]-c->pos[0]-c->a[0];
-		vec[1] = ppos[1]-c->pos[1]-c->a[1];
-		vec[2] = ppos[2]-c->pos[2]-c->a[2];
+		vec[0] = ppos[0]-this->pos[0]-this->a[0];
+		vec[1] = ppos[1]-this->pos[1]-this->a[1];
+		vec[2] = ppos[2]-this->pos[2]-this->a[2];
 		
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 		
-	  return;
+	  return  0;
 	}
 	
 	//check for cone at pos+b
 
-	A = (ppos[0]-c->pos[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->b[0])*bxc[0] + (ppos[1]-this->pos[1]-this->b[1])*bxc[1] + (ppos[2]-this->pos[2]-this->b[2])*bxc[2];
 	A /= a_dot_bxc;	
-	B = (ppos[0]-c->pos[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->b[0])*axc[0] + (ppos[1]-this->pos[1]-this->b[1])*axc[1] + (ppos[2]-this->pos[2]-this->b[2])*axc[2];
 	B /= b_dot_axc;	
-	C = (ppos[0]-c->pos[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->b[0])*axb[0] + (ppos[1]-this->pos[1]-this->b[1])*axb[1] + (ppos[2]-this->pos[2]-this->b[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A <= 0 && B >= 0 && C <= 0)
 	{
-		vec[0] = ppos[0]-c->pos[0]-c->b[0];
-		vec[1] = ppos[1]-c->pos[1]-c->b[1];
-		vec[2] = ppos[2]-c->pos[2]-c->b[2];
+		vec[0] = ppos[0]-this->pos[0]-this->b[0];
+		vec[1] = ppos[1]-this->pos[1]-this->b[1];
+		vec[2] = ppos[2]-this->pos[2]-this->b[2];
 		
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 		
-		return;
+		return  0;
 	}
 	
 	//check for cone at pos+c
 
-	A = (ppos[0]-c->pos[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->c[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->c[0])*bxc[0] + (ppos[1]-this->pos[1]-this->c[1])*bxc[1] + (ppos[2]-this->pos[2]-this->c[2])*bxc[2];
 	A /= a_dot_bxc;	
-	B = (ppos[0]-c->pos[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->c[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->c[0])*axc[0] + (ppos[1]-this->pos[1]-this->c[1])*axc[1] + (ppos[2]-this->pos[2]-this->c[2])*axc[2];
 	B /= b_dot_axc;	
-	C = (ppos[0]-c->pos[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->c[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->c[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A <= 0 && B <= 0 && C >= 0)
 	{
-		vec[0] = ppos[0]-c->pos[0]-c->c[0];
-		vec[1] = ppos[1]-c->pos[1]-c->c[1];
-		vec[2] = ppos[2]-c->pos[2]-c->c[2];
+		vec[0] = ppos[0]-this->pos[0]-this->c[0];
+		vec[1] = ppos[1]-this->pos[1]-this->c[1];
+		vec[2] = ppos[2]-this->pos[2]-this->c[2];
 		
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 	
-	  return;
+	  return  0;
 	}
 	
 	//check for cone at pos+a+b
 
-	A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->a[0]-this->b[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2])*bxc[2];
 	A /= a_dot_bxc;	
-	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->a[0]-this->b[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2])*axc[2];
 	B /= b_dot_axc;	
-	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->a[0]-this->b[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A >= 0 && B >= 0 && C <= 0)
 	{
-		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0];
-		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1];
-		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2];
+		vec[0] = ppos[0]-this->pos[0]-this->a[0]-this->b[0];
+		vec[1] = ppos[1]-this->pos[1]-this->a[1]-this->b[1];
+		vec[2] = ppos[2]-this->pos[2]-this->a[2]-this->b[2];
 		
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for cone at pos+a+c
 
-	A = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->a[0]-this->c[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->c[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->c[2])*bxc[2];
 	A /= a_dot_bxc;	
-	B = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->a[0]-this->c[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->c[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->c[2])*axc[2];
 	B /= b_dot_axc;	
-	C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->a[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2]-this->c[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A >= 0 && B <= 0 && C >= 0)
 	{
-		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0];
-		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1];
-		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2];
+		vec[0] = ppos[0]-this->pos[0]-this->a[0]-this->c[0];
+		vec[1] = ppos[1]-this->pos[1]-this->a[1]-this->c[1];
+		vec[2] = ppos[2]-this->pos[2]-this->a[2]-this->c[2];
 		
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for cone at pos+a+c
 
-	A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*bxc[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*bxc[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*bxc[2];
 	A /= a_dot_bxc;	
-	B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*axc[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*axc[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*axc[2];
 	B /= b_dot_axc;	
-	C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A <= 0 && B >= 0 && C >= 0)
 	{
-		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0];
-		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1];
-		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2];
+		vec[0] = ppos[0]-this->pos[0]-this->b[0]-this->c[0];
+		vec[1] = ppos[1]-this->pos[1]-this->b[1]-this->c[1];
+		vec[2] = ppos[2]-this->pos[2]-this->b[2]-this->c[2];
 		
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for cone at pos+a+b+c
 
-	A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2])*bxc[2];
 	A /= a_dot_bxc;	
-	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2])*axc[2];
 	B /= b_dot_axc;	
-	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A >= 0 && B >= 0 && C >= 0)
 	{
-		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0];
-		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1];
-		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2];
+		vec[0] = ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0];
+		vec[1] = ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1];
+		vec[2] = ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2];
 		
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos, a
 	
-	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B = (ppos[0]-this->pos[0])*axc[0] + (ppos[1]-this->pos[1])*axc[1] + (ppos[2]-this->pos[2])*axc[2];
 	B /= b_dot_axc;
-	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C = (ppos[0]-this->pos[0])*axb[0] + (ppos[1]-this->pos[1])*axb[1] + (ppos[2]-this->pos[2])*axb[2];
 	C /= c_dot_axb;
 	
 	if(B <= 0 && C <= 0)
 	{
-		tmp = (ppos[0]-c->pos[0])*c->a[0] + (ppos[1]-c->pos[1])*c->a[1] + (ppos[2]-c->pos[2])*c->a[2];
-		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+		tmp = (ppos[0]-this->pos[0])*this->a[0] + (ppos[1]-this->pos[1])*this->a[1] + (ppos[2]-this->pos[2])*this->a[2];
+		tmp /= this->a[0]*this->a[0] + this->a[1]*this->a[1] + this->a[2]*this->a[2];
 		
-		vec[0] = ppos[0]-c->pos[0] - c->a[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1] - c->a[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2] - c->a[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0] - this->a[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1] - this->a[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2] - this->a[2]*tmp;
 		
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 		
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos, b
 
-	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A = (ppos[0]-this->pos[0])*bxc[0] + (ppos[1]-this->pos[1])*bxc[1] + (ppos[2]-this->pos[2])*bxc[2];
 	A /= a_dot_bxc;
-	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C = (ppos[0]-this->pos[0])*axb[0] + (ppos[1]-this->pos[1])*axb[1] + (ppos[2]-this->pos[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A <= 0 && C <= 0)
 	{
-		tmp = (ppos[0]-c->pos[0])*c->b[0] + (ppos[1]-c->pos[1])*c->b[1] + (ppos[2]-c->pos[2])*c->b[2];
-		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+		tmp = (ppos[0]-this->pos[0])*this->b[0] + (ppos[1]-this->pos[1])*this->b[1] + (ppos[2]-this->pos[2])*this->b[2];
+		tmp /= this->b[0]*this->b[0] + this->b[1]*this->b[1] + this->b[2]*this->b[2];
 	
-		vec[0] = ppos[0]-c->pos[0] - c->b[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1] - c->b[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2] - c->b[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0] - this->b[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1] - this->b[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2] - this->b[2]*tmp;
 	
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 	
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos, c
 
-	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A = (ppos[0]-this->pos[0])*bxc[0] + (ppos[1]-this->pos[1])*bxc[1] + (ppos[2]-this->pos[2])*bxc[2];
 	A /= a_dot_bxc;
-	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B = (ppos[0]-this->pos[0])*axc[0] + (ppos[1]-this->pos[1])*axc[1] + (ppos[2]-this->pos[2])*axc[2];
 	B /= b_dot_axc;
 
 	if(A <= 0 && B <= 0)
 	{
-		tmp = (ppos[0]-c->pos[0])*c->c[0] + (ppos[1]-c->pos[1])*c->c[1] + (ppos[2]-c->pos[2])*c->c[2];
-		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+		tmp = (ppos[0]-this->pos[0])*this->c[0] + (ppos[1]-this->pos[1])*this->c[1] + (ppos[2]-this->pos[2])*this->c[2];
+		tmp /= this->c[0]*this->c[0] + this->c[1]*this->c[1] + this->c[2]*this->c[2];
 
-		vec[0] = ppos[0]-c->pos[0] - c->c[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1] - c->c[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2] - c->c[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0] - this->c[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1] - this->c[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2] - this->c[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos+a, b
 
-	A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->a[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2])*bxc[2];
 	A /= a_dot_bxc;
-	C = (ppos[0]-c->pos[0]-c->a[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->a[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A >= 0 && C <= 0)
 	{
-		tmp = (ppos[0]-c->pos[0]-c->a[0])*c->b[0] + (ppos[1]-c->pos[1]-c->a[1])*c->b[1] + (ppos[2]-c->pos[2]-c->a[2])*c->b[2];
-		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+		tmp = (ppos[0]-this->pos[0]-this->a[0])*this->b[0] + (ppos[1]-this->pos[1]-this->a[1])*this->b[1] + (ppos[2]-this->pos[2]-this->a[2])*this->b[2];
+		tmp /= this->b[0]*this->b[0] + this->b[1]*this->b[1] + this->b[2]*this->b[2];
 
-		vec[0] = ppos[0]-c->pos[0]-c->a[0] - c->b[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->b[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->b[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0]-this->a[0] - this->b[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1]-this->a[1] - this->b[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2]-this->a[2] - this->b[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos+a, c
 
-	A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->a[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2])*bxc[2];
 	A /= a_dot_bxc;
-	B = (ppos[0]-c->pos[0]-c->a[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->a[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2])*axc[2];
 	B /= b_dot_axc;
 
 	if(A >= 0 && B <= 0)
 	{
-		tmp = (ppos[0]-c->pos[0]-c->a[0])*c->c[0] + (ppos[1]-c->pos[1]-c->a[1])*c->c[1] + (ppos[2]-c->pos[2]-c->a[2])*c->c[2];
-		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+		tmp = (ppos[0]-this->pos[0]-this->a[0])*this->c[0] + (ppos[1]-this->pos[1]-this->a[1])*this->c[1] + (ppos[2]-this->pos[2]-this->a[2])*this->c[2];
+		tmp /= this->c[0]*this->c[0] + this->c[1]*this->c[1] + this->c[2]*this->c[2];
 
-		vec[0] = ppos[0]-c->pos[0]-c->a[0] - c->c[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->c[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->c[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0]-this->a[0] - this->c[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1]-this->a[1] - this->c[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2]-this->a[2] - this->c[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos+b+c, c
 
-	A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*bxc[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*bxc[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*bxc[2];
 	A /= a_dot_bxc;
-	B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*axc[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*axc[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*axc[2];
 	B /= b_dot_axc;
 
 	if(A <= 0 && B >= 0)
 	{
-		tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->c[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->c[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->c[2];
-		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+		tmp = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*this->c[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*this->c[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*this->c[2];
+		tmp /= this->c[0]*this->c[0] + this->c[1]*this->c[1] + this->c[2]*this->c[2];
 
-		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->c[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->c[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->c[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0]-this->b[0]-this->c[0] - this->c[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1]-this->b[1]-this->c[1] - this->c[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2]-this->b[2]-this->c[2] - this->c[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos+b+c, b
 
-	A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*bxc[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*bxc[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*bxc[2];
 	A /= a_dot_bxc;
-	C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A <= 0 && C >= 0)
 	{
-		tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->b[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->b[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->b[2];
-		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+		tmp = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*this->b[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*this->b[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*this->b[2];
+		tmp /= this->b[0]*this->b[0] + this->b[1]*this->b[1] + this->b[2]*this->b[2];
 
-		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->b[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->b[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->b[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0]-this->b[0]-this->c[0] - this->b[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1]-this->b[1]-this->c[1] - this->b[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2]-this->b[2]-this->c[2] - this->b[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos+b+c, a
 
-	B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*axc[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*axc[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*axc[2];
 	B /= b_dot_axc;
-	C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*axb[2];
 	C /= c_dot_axb;
 																
 	if(B >= 0 && C >= 0)
 	{
-		tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->a[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->a[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->a[2];
-		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+		tmp = (ppos[0]-this->pos[0]-this->b[0]-this->c[0])*this->a[0] + (ppos[1]-this->pos[1]-this->b[1]-this->c[1])*this->a[1] + (ppos[2]-this->pos[2]-this->b[2]-this->c[2])*this->a[2];
+		tmp /= this->a[0]*this->a[0] + this->a[1]*this->a[1] + this->a[2]*this->a[2];
 
-		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->a[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->a[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->a[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0]-this->b[0]-this->c[0] - this->a[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1]-this->b[1]-this->c[1] - this->a[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2]-this->b[2]-this->c[2] - this->a[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos+a+b, a
 
-	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->a[0]-this->b[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2])*axc[2];
 	B /= b_dot_axc;
-	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->a[0]-this->b[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(B >= 0 && C <= 0)
 	{
-		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*c->a[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*c->a[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*c->a[2];
-		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+		tmp = (ppos[0]-this->pos[0]-this->a[0]-this->b[0])*this->a[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1])*this->a[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2])*this->a[2];
+		tmp /= this->a[0]*this->a[0] + this->a[1]*this->a[1] + this->a[2]*this->a[2];
 
-		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->a[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->a[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->a[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0]-this->a[0]-this->b[0] - this->a[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1]-this->a[1]-this->b[1] - this->a[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2]-this->a[2]-this->b[2] - this->a[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos+a+b, c
 
-	A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->a[0]-this->b[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2])*bxc[2];
 	A /= a_dot_bxc;
-	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->a[0]-this->b[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2])*axc[2];
 	B /= b_dot_axc;
 
 	if(A >= 0 && B >= 0)
 	{
-		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*c->c[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*c->c[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*c->c[2];
-		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+		tmp = (ppos[0]-this->pos[0]-this->a[0]-this->b[0])*this->c[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1])*this->c[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2])*this->c[2];
+		tmp /= this->c[0]*this->c[0] + this->c[1]*this->c[1] + this->c[2]*this->c[2];
 
-		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->c[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->c[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->c[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0]-this->a[0]-this->b[0] - this->c[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1]-this->a[1]-this->b[1] - this->c[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2]-this->a[2]-this->b[2] - this->c[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos+a+c, a
 
-	B = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axc[2];
+	B = (ppos[0]-this->pos[0]-this->a[0]-this->c[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->c[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->c[2])*axc[2];
 	B /= b_dot_axc;
-	C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->a[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2]-this->c[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(B <= 0 && C >= 0)
 	{
-		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->a[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->a[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->a[2];
-		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+		tmp = (ppos[0]-this->pos[0]-this->a[0]-this->c[0])*this->a[0] + (ppos[1]-this->pos[1]-this->a[1]-this->c[1])*this->a[1] + (ppos[2]-this->pos[2]-this->a[2]-this->c[2])*this->a[2];
+		tmp /= this->a[0]*this->a[0] + this->a[1]*this->a[1] + this->a[2]*this->a[2];
 
-		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0] - c->a[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1] - c->a[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2] - c->a[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0]-this->a[0]-this->c[0] - this->a[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1]-this->a[1]-this->c[1] - this->a[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2]-this->a[2]-this->c[2] - this->a[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for prism at edge pos+a+c, b
 
-	A = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*bxc[2];
+	A = (ppos[0]-this->pos[0]-this->a[0]-this->c[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->c[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->c[2])*bxc[2];
 	A /= a_dot_bxc;
-	C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+	C = (ppos[0]-this->pos[0]-this->a[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2]-this->c[2])*axb[2];
 	C /= c_dot_axb;
 
 	if(A >= 0 && C >= 0)
 	{
-		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->b[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->b[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->b[2];
-		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+		tmp = (ppos[0]-this->pos[0]-this->a[0]-this->c[0])*this->b[0] + (ppos[1]-this->pos[1]-this->a[1]-this->c[1])*this->b[1] + (ppos[2]-this->pos[2]-this->a[2]-this->c[2])*this->b[2];
+		tmp /= this->b[0]*this->b[0] + this->b[1]*this->b[1] + this->b[2]*this->b[2];
 
-		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0] - c->b[0]*tmp;
-		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1] - c->b[1]*tmp;
-		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2] - c->b[2]*tmp;
+		vec[0] = ppos[0]-this->pos[0]-this->a[0]-this->c[0] - this->b[0]*tmp;
+		vec[1] = ppos[1]-this->pos[1]-this->a[1]-this->c[1] - this->b[1]*tmp;
+		vec[2] = ppos[2]-this->pos[2]-this->a[2]-this->c[2] - this->b[2]*tmp;
 
-		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		*dist = this->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-    return;
+    return  0;
 	}
 	
 	//check for face with normal -axb
 	
-	*dist = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	*dist = (ppos[0]-this->pos[0])*axb[0] + (ppos[1]-this->pos[1])*axb[1] + (ppos[2]-this->pos[2])*axb[2];
 	*dist *= -1.;
 	
 	if(*dist >= 0)
@@ -722,14 +738,14 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = -*dist * axb[1]/tmp;
 		vec[2] = -*dist * axb[2]/tmp;
 	
-		*dist *= c->direction;
+		*dist *= this->direction;
 
-    return;
+    return  0;
 	}
 	
 	//calculate distance to face with normal axc
 
-	*dist = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	*dist = (ppos[0]-this->pos[0])*axc[0] + (ppos[1]-this->pos[1])*axc[1] + (ppos[2]-this->pos[2])*axc[2];
 	
 	if(*dist >= 0)
 	{
@@ -740,14 +756,14 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = *dist * axc[1]/tmp;
 		vec[2] = *dist * axc[2]/tmp;
 
-		*dist *= c->direction;
+		*dist *= this->direction;
 
-    return;
+    return  0;
 	}
 	
 	//calculate distance to face with normal -bxc
 
-	*dist = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	*dist = (ppos[0]-this->pos[0])*bxc[0] + (ppos[1]-this->pos[1])*bxc[1] + (ppos[2]-this->pos[2])*bxc[2];
 	*dist *= -1.;
 	
 	if(*dist >= 0)
@@ -759,14 +775,14 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = -*dist * bxc[1]/tmp;
 		vec[2] = -*dist * bxc[2]/tmp;
 		
-		*dist *= c->direction;
+		*dist *= this->direction;
 
-    return;
+    return  0;
 	}
 	
 	//calculate distance to face with normal axb
 	
-	*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+	*dist = (ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2])*axb[2];
 	
 	if(*dist >= 0)
 	{
@@ -777,14 +793,14 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = *dist * axb[1]/tmp;
 		vec[2] = *dist * axb[2]/tmp;
 	
-		*dist *= c->direction;
+		*dist *= this->direction;
 
-    return;
+    return  0;
 	}
 																					
 	//calculate distance to face with normal -axc
 
-	*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+	*dist = (ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2])*axc[2];
 	*dist *= -1.;
 	
 	if(*dist >= 0)
@@ -796,14 +812,14 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = -*dist * axc[1]/tmp;
 		vec[2] = -*dist * axc[2]/tmp;
 		
-		*dist *= c->direction;
+		*dist *= this->direction;
 
-    return;
+    return  0;
 	}
 																		
 	//calculate distance to face with normal bxc
 
-	*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+	*dist = (ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2])*bxc[2];
 	
 	if(*dist >= 0)
 	{
@@ -814,16 +830,16 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = *dist * bxc[1]/tmp;
 		vec[2] = *dist * bxc[2]/tmp;
 		
-		*dist *= c->direction;
+		*dist *= this->direction;
 
-    return;
+    return  0;
 	}
 	
 	//ppos lies within rhomboid. Find nearest wall for interaction.
 	 
 	//check for face with normal -axb
 	
-	*dist = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	*dist = (ppos[0]-this->pos[0])*axb[0] + (ppos[1]-this->pos[1])*axb[1] + (ppos[2]-this->pos[2])*axb[2];
 	*dist *= -1.;
 	tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
 	*dist /= tmp;
@@ -832,11 +848,11 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 	vec[1] = -*dist * axb[1]/tmp;
 	vec[2] = -*dist * axb[2]/tmp;
 	
-	*dist *= c->direction;
+	*dist *= this->direction;
 
 	//calculate distance to face with normal axc
 
-	d = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	d = (ppos[0]-this->pos[0])*axc[0] + (ppos[1]-this->pos[1])*axc[1] + (ppos[2]-this->pos[2])*axc[2];
 	tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
 	d /= tmp;
 	
@@ -846,12 +862,12 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = d * axc[1]/tmp;
 		vec[2] = d * axc[2]/tmp;
 	
-		*dist = c->direction * d;
+		*dist = this->direction * d;
 	}
 
 	//calculate distance to face with normal -bxc
 
-	d = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	d = (ppos[0]-this->pos[0])*bxc[0] + (ppos[1]-this->pos[1])*bxc[1] + (ppos[2]-this->pos[2])*bxc[2];
 	d *= -1.;
 	tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
 	d /= tmp;
@@ -862,12 +878,12 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = -d * bxc[1]/tmp;
 		vec[2] = -d * bxc[2]/tmp;
 
-		*dist = c->direction * d;
+		*dist = this->direction * d;
 	}
 	
 	//calculate distance to face with normal axb
 
-	d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+	d = (ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0])*axb[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1])*axb[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2])*axb[2];
 	tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
 	d /= tmp;
 	
@@ -877,12 +893,12 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = d * axb[1]/tmp;
 		vec[2] = d * axb[2]/tmp;
 
-		*dist = c->direction * d;
+		*dist = this->direction * d;
 	}
 	
 	//calculate distance to face with normal -axc
 
-	d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+	d = (ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0])*axc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1])*axc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2])*axc[2];
 	d *= -1.;
 	tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
 	d /= tmp;
@@ -893,12 +909,12 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = -d * axc[1]/tmp;
 		vec[2] = -d * axc[2]/tmp;
 
-		*dist = c->direction * d;
+		*dist = this->direction * d;
 	}
 																		
 	//calculate distance to face with normal bxc
 
-	d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+	d = (ppos[0]-this->pos[0]-this->a[0]-this->b[0]-this->c[0])*bxc[0] + (ppos[1]-this->pos[1]-this->a[1]-this->b[1]-this->c[1])*bxc[1] + (ppos[2]-this->pos[2]-this->a[2]-this->b[2]-this->c[2])*bxc[2];
 	tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
 	d /= tmp;
 
@@ -908,11 +924,12 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 		vec[1] = d * bxc[1]/tmp;
 		vec[2] = d * bxc[2]/tmp;
 	
-		*dist = c->direction * d;
+		*dist = this->direction * d;
 	}
+	return 0;
 }
 
-void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_pore *c, double *dist, double *vec)
+int Constraint_pore::calculate_dist(Particle *p1, double* ppos, Particle *c_p, double *dist, double *vec)
 {
   int i;
   double c_dist[3];           /* cartesian distance from pore center */
@@ -929,24 +946,24 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
      double cone_vector_r, cone_vector_z, p1_r, p1_z, dist_vector_z, dist_vector_r, temp;
 
      
-     slope = (c->rad_right - c->rad_left)/2./(c->length-c->smoothing_radius);
-     slope2 = (c->outer_rad_right - c->outer_rad_left)/2./(c->length-c->smoothing_radius);
+     slope = (this->rad_right - this->rad_left)/2./(this->length-this->smoothing_radius);
+     slope2 = (this->outer_rad_right - this->outer_rad_left)/2./(this->length-this->smoothing_radius);
 
   /* compute the position relative to the center of the pore */
   for(i=0;i<3;i++) {
-    c_dist[i] = ppos[i] - c->pos[i]; 
+    c_dist[i] = ppos[i] - this->pos[i];
   } 
   
   /* compute the component parallel to the pore axis */
   z =0.; 
   for(i=0;i<3;i++) {
-    z += (c_dist[i] * c->axis[i]);
+    z += (c_dist[i] * this->axis[i]);
   }
   
   /* decompose the position into parallel and perpendicular to the axis */
   r = 0.;
   for(i=0;i<3;i++) {
-    z_vec[i] = z * c->axis[i]; 
+    z_vec[i] = z * this->axis[i];
     r_vec[i] = c_dist[i] - z_vec[i];
     r += r_vec[i]*r_vec[i];
   }
@@ -959,7 +976,7 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
     norm += z_vec[i]*z_vec[i]; 
   norm = sqrt(norm);
   for(i=0;i<3;i++) 
-    e_z[i] = c->axis[i];
+    e_z[i] = this->axis[i];
   norm = 0;
   for(i=0;i<3;i++) 
     norm += r_vec[i]*r_vec[i]; 
@@ -969,36 +986,36 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   
   /* c?_r/z and are the centers of the circles that are used to smooth 
    * the entrance of the pore in cylindrical coordinates*/
-  c1_z = - (c->length - c->smoothing_radius);
-  c2_z = + (c->length - c->smoothing_radius);
-  z_left = c1_z - sign(slope) * sqrt(slope*slope/(1+slope*slope))*c->smoothing_radius;
-  z_right = c2_z + sign(slope) * sqrt(slope*slope/(1+slope*slope))*c->smoothing_radius;
+  c1_z = - (this->length - this->smoothing_radius);
+  c2_z = + (this->length - this->smoothing_radius);
+  z_left = c1_z - sign(slope) * sqrt(slope*slope/(1+slope*slope))*this->smoothing_radius;
+  z_right = c2_z + sign(slope) * sqrt(slope*slope/(1+slope*slope))*this->smoothing_radius;
 
-  c1_r = c->rad_left + slope * ( z_left + c->length ) +
-      sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_left - c1_z ) );
-  c2_r = c->rad_left + slope * ( z_right + c->length ) +
-      sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_right - c2_z ) );
-  c1_r = c->rad_left+c->smoothing_radius;
-  c2_r = c->rad_right+c->smoothing_radius;
+  c1_r = this->rad_left + slope * ( z_left + this->length ) +
+      sqrt( this->smoothing_radius * this->smoothing_radius  - SQR( z_left - c1_z ) );
+  c2_r = this->rad_left + slope * ( z_right + this->length ) +
+      sqrt( this->smoothing_radius * this->smoothing_radius  - SQR( z_right - c2_z ) );
+  c1_r = this->rad_left+this->smoothing_radius;
+  c2_r = this->rad_right+this->smoothing_radius;
 
-  double c1_or = c->outer_rad_left-c->smoothing_radius;
-  double c2_or = c->outer_rad_right-c->smoothing_radius;
+  double c1_or = this->outer_rad_left-this->smoothing_radius;
+  double c2_or = this->outer_rad_right-this->smoothing_radius;
  
   /* Check if we are in the region of the left wall */
   if (( (r >= c1_r) && (r <= c1_or) && (z <= c1_z) )) {
-    dist_vector_z=-z - c->length;
+    dist_vector_z=-z - this->length;
     dist_vector_r=0;
-    *dist = -z - c->length;
+    *dist = -z - this->length;
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-    return;
+    return 0;
   }
   /* Check if we are in the region of the right wall */
   if (( (r >= c2_r) && (r<c2_or) && (z >= c2_z) ) ) {
-    dist_vector_z=-z + c->length;
+    dist_vector_z=-z + this->length;
     dist_vector_r=0;
-    *dist = +z - c->length;
+    *dist = +z - this->length;
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-    return;
+    return 0;
   }
 
   /* check if the particle should feel the smoothed ends or the middle of the pore */
@@ -1026,52 +1043,22 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   double dist_vector_z_o = p2_z-z;
 
   if ( p1_z>=c1_z && p1_z<=c2_z && dist_vector_r >= 0 ) {
- //   if ( dist_vector_r <= 0  ) {
- //     if (z<0) {
- //       dist_vector_z=-z - c->length;
- //       dist_vector_r=0;
- //       *dist = -z - c->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
- //       return;
- //     } else {
- //       dist_vector_z=-z + c->length;
- //       dist_vector_r=0;
- //       *dist = +z - c->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
- //       return;
- //     }
- //   }
     temp=sqrt( dist_vector_r*dist_vector_r + dist_vector_z*dist_vector_z );
-    *dist=temp-c->smoothing_radius;
-    dist_vector_r-=dist_vector_r/temp*c->smoothing_radius;
-    dist_vector_z-=dist_vector_z/temp*c->smoothing_radius;
+    *dist=temp-this->smoothing_radius;
+    dist_vector_r-=dist_vector_r/temp*this->smoothing_radius;
+    dist_vector_z-=dist_vector_z/temp*this->smoothing_radius;
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-    return;
+    return 0;
   }
 
 
   if ( p2_z>=c1_z && p2_z<=c2_z && dist_vector_r_o <= 0 ) {
- //   if ( dist_vector_r <= 0  ) {
- //     if (z<0) {
- //       dist_vector_z=-z - c->length;
- //       dist_vector_r=0;
- //       *dist = -z - c->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
- //       return;
- //     } else {
- //       dist_vector_z=-z + c->length;
- //       dist_vector_r=0;
- //       *dist = +z - c->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - 2ist_vector_z*e_z[i];
- //       return;
- //     }
- //   }
     temp=sqrt( dist_vector_r_o*dist_vector_r_o + dist_vector_z_o*dist_vector_z_o );
-    *dist=temp-c->smoothing_radius;
-    dist_vector_r_o-=dist_vector_r_o/temp*c->smoothing_radius;
-    dist_vector_z_o-=dist_vector_z_o/temp*c->smoothing_radius;
+    *dist=temp-this->smoothing_radius;
+    dist_vector_r_o-=dist_vector_r_o/temp*this->smoothing_radius;
+    dist_vector_z_o-=dist_vector_z_o/temp*this->smoothing_radius;
     for (i=0; i<3; i++) vec[i]=-dist_vector_r_o*e_r[i] - dist_vector_z_o*e_z[i];
-    return;
+    return 0;
   }
 
 
@@ -1079,54 +1066,55 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   if (p1_z <= c1_z && r <= c1_r ) {
     /* distance from the smoothing center */
     norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_r)*(r - c1_r) );
-    *dist = norm - c->smoothing_radius;
-    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c1_r);
-    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c1_z);
+    *dist = norm - this->smoothing_radius;
+    dist_vector_r=(this->smoothing_radius/norm -1)*(r - c1_r);
+    dist_vector_z=(this->smoothing_radius/norm - 1)*(z - c1_z);
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-    return;
+    return 0;
   }
   /* upper left smoothing circle */
   if (p2_z <= c1_z && r >= c1_or ) {
     /* distance from the smoothing center */
     norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_or)*(r - c1_or) );
-    *dist = norm - c->smoothing_radius;
-    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c1_or);
-    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c1_z);
+    *dist = norm - this->smoothing_radius;
+    dist_vector_r=(this->smoothing_radius/norm -1)*(r - c1_or);
+    dist_vector_z=(this->smoothing_radius/norm - 1)*(z - c1_z);
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-    return;
+    return  0;
   }
   /* Check if we are in the range of the right smoothing circle */
   if (p1_z >= c2_z && r <= c2_r ) {
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_r)*(r - c2_r) );
-    *dist = norm - c->smoothing_radius;
-    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_or);
-    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c2_z);
+    *dist = norm - this->smoothing_radius;
+    dist_vector_r=(this->smoothing_radius/norm -1)*(r - c2_or);
+    dist_vector_z=(this->smoothing_radius/norm - 1)*(z - c2_z);
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-    return;
+    return  0;
   }
   /* Check if we are in the range of the upper right smoothing circle */
   if (p2_z >= c2_z && r >= c2_or ) {
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_or)*(r - c2_or) );
-    *dist = norm - c->smoothing_radius;
-    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_or);
-    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c2_z);
+    *dist = norm - this->smoothing_radius;
+    dist_vector_r=(this->smoothing_radius/norm -1)*(r - c2_or);
+    dist_vector_z=(this->smoothing_radius/norm - 1)*(z - c2_z);
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
-    return;
+    return  0;
   }
   *dist=-1e99;
   vec[0] = vec[1] = vec[2] = 1e99;
+  return 0;
 //  exit(printf("should never be reached, z %f, r%f\n",z, r));
 }
 
-void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_plane *c, double *dist, double *vec)
+int Constraint_plane::calculate_dist(Particle *p1, double* ppos, Particle *c_p, double *dist, double *vec)
 {
   int i;
   double c_dist_sqr,c_dist;
   
   c_dist_sqr=0.0;
   for(i=0;i<3;i++) {
-    if(c->pos[i] >= 0) {
-      vec[i] = c->pos[i] - ppos[i];
+    if(this->pos[i] >= 0) {
+      vec[i] = this->pos[i] - ppos[i];
       c_dist_sqr += SQR(vec[i]);
     }else{
       vec[i] = 0.0;
@@ -1140,10 +1128,11 @@ void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constrain
   for(i=0;i<3;i++) {
     vec[i] *= -1;
   }
+  return 0;
 }
 
-void calculate_stomatocyte_dist( Particle *p1, double ppos [3], 
-                                 Particle *c_p, Constraint_stomatocyte *cons, 
+int Constraint_stomatocyte::calculate_dist( Particle *p1, double* ppos,
+                                 Particle *c_p,
                                  double *dist, double *vec )
 {
   // Parameters
@@ -1171,21 +1160,21 @@ void calculate_stomatocyte_dist( Particle *p1, double ppos [3],
 
   // Set the three dimensions of the stomatocyte
 
-  a = cons->outer_radius;
-  b = cons->inner_radius;
-  c = cons->layer_width;
+  a = this->outer_radius;
+  b = this->inner_radius;
+  c = this->layer_width;
   a = a*c;
   b = b*c;
 
   // Set the position and orientation of the stomatocyte 
 
-  double stomatocyte_3D_position [3] = { cons->position_x,
-                                         cons->position_y,
-                                         cons->position_z };
+  double stomatocyte_3D_position [3] = { this->position_x,
+                                         this->position_y,
+                                         this->position_z };
 
-  double stomatocyte_3D_orientation [3] = { cons->orientation_x,
-                                            cons->orientation_y,
-                                            cons->orientation_z };
+  double stomatocyte_3D_orientation [3] = { this->orientation_x,
+                                            this->orientation_y,
+                                            this->orientation_z };
 
   // Set the point for which we want to know the distance
 
@@ -1659,7 +1648,7 @@ void calculate_stomatocyte_dist( Particle *p1, double ppos [3],
 
   // Pass the values we obtained to ESPResSo
 
-  if ( cons->direction == -1 ) 
+  if ( this->direction == -1 )
   {
     // Apply force towards inside stomatocyte
 
@@ -1685,10 +1674,11 @@ void calculate_stomatocyte_dist( Particle *p1, double ppos [3],
   vec[0] *= *dist;
   vec[1] *= *dist;
   vec[2] *= *dist;
+  return 0;
 }
 
-void calculate_hollow_cone_dist( Particle *p1, double ppos [3], 
-                                 Particle *c_p, Constraint_hollow_cone *cons, 
+int Constraint_hollow_cone::calculate_dist( Particle *p1, double ppos [3],
+                                 Particle *c_p,
                                  double *dist, double *vec )
 {
   // Parameters
@@ -1708,20 +1698,20 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
 
   // Set the dimensions of the hollow cone
 
-  r0 = cons->inner_radius;
-  r1 = cons->outer_radius;
-  w = cons->width;
-  alpha = cons->opening_angle;
+  r0 = this->inner_radius;
+  r1 = this->outer_radius;
+  w = this->width;
+  alpha = this->opening_angle;
 
   // Set the position and orientation of the hollow cone
 
-  double hollow_cone_3D_position [3] = { cons->position_x,
-                                         cons->position_y,
-                                         cons->position_z };
+  double hollow_cone_3D_position [3] = { this->position_x,
+                                         this->position_y,
+                                         this->position_z };
 
-  double hollow_cone_3D_orientation [3] = { cons->orientation_x,
-                                            cons->orientation_y,
-                                            cons->orientation_z };
+  double hollow_cone_3D_orientation [3] = { this->orientation_x,
+                                            this->orientation_y,
+                                            this->orientation_z };
 
   // Set the point for which we want to know the distance
 
@@ -2140,7 +2130,7 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
 
   // Pass the values we obtained to ESPResSo
 
-  if ( cons->direction == -1 ) 
+  if ( this->direction == -1 )
   {
     // Apply force towards inside hollow cone
 
@@ -2166,23 +2156,24 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
   vec[0] *= *dist;
   vec[1] *= *dist;
   vec[2] *= *dist;
+  return 0;
 }
 
-
-void add_rod_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c)
+void Constraint_rod::add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params)
 {
 #ifdef ELECTROSTATICS
   int i;
   double fac, vec[2], c_dist_2;
+  Particle* c_p = &current_constraint->part_rep;
 
   c_dist_2 = 0.0;
   for(i=0;i<2;i++) {
-    vec[i] = ppos[i] - c->pos[i];
+    vec[i] = folded_pos[i] - this->pos[i];
     c_dist_2 += SQR(vec[i]);
   }
 
-  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->lambda != 0.0) {
-    fac = 2*coulomb.prefactor*c->lambda*p1->p.q/c_dist_2;
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && this->lambda != 0.0) {
+    fac = 2*coulomb.prefactor*this->lambda*p1->p.q/c_dist_2;
     p1->f.f[0]  += fac*vec[0];
     p1->f.f[1]  += fac*vec[1];
     c_p->f.f[0] -= fac*vec[0];
@@ -2191,7 +2182,7 @@ void add_rod_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *
 #endif
 }
 
-double rod_energy(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c)
+void Constraint_rod::add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params)
 {
 #ifdef ELECTROSTATICS
   int i;
@@ -2199,58 +2190,53 @@ double rod_energy(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c
 
   c_dist_2 = 0.0;
   for(i=0;i<2;i++) {
-    vec[i] = ppos[i] - c->pos[i];
+    vec[i] = folded_pos[i] - this->pos[i];
     c_dist_2 += SQR(vec[i]);
   }
 
-  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->lambda != 0.0)
-    return coulomb.prefactor*p1->p.q*c->lambda*(-log(c_dist_2*SQR(box_l_i[2])) + 2*(M_LN2 - C_GAMMA));
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && this->lambda != 0.0)
+    *coulomb_en = coulomb.prefactor*p1->p.q*this->lambda*(-log(c_dist_2*SQR(box_l_i[2])) + 2*(M_LN2 - C_GAMMA));
 #endif
-  return 0;
 }
 
-void add_plate_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_plate *c)
+void Constraint_plate::add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params)
 {
 #ifdef ELECTROSTATICS
-  double f;
 
-  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0) {
-    f = 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q;
-    if (ppos[2] < c->pos)
-      f = -f;
-    p1->f.f[2]  += f;
-    c_p->f.f[2] -= f;
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && this->sigma != 0.0) {
+    *force = 2*M_PI*coulomb.prefactor*this->sigma*p1->p.q;
+    if (folded_pos[2] < this->pos)
+      *force = -*force;
   }
 #endif
 }
 
-double plate_energy(Particle *p1, double ppos[3], Particle *c_p, Constraint_plate *c)
+void Constraint_plate::add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params)
 {
 #ifdef ELECTROSTATICS
-  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0)
-    return -2*M_PI*coulomb.prefactor*c->sigma*p1->p.q*fabs(ppos[2] - c->pos);
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && this->sigma != 0.0)
+    *coulomb_en = -2*M_PI*coulomb.prefactor*this->sigma*p1->p.q*fabs(folded_pos[2] - this->pos);
 #endif
-  return 0;
+
 }
 
 //ER
-void add_ext_magn_field_force(Particle *p1, Constraint_ext_magn_field *c)
+void Constraint_ext_magn_field::add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params)
 {
 #ifdef ROTATION
 #ifdef DIPOLES
-  p1->f.torque[0] += p1->r.dip[1]*c->ext_magn_field[2]-p1->r.dip[2]*c->ext_magn_field[1];
-  p1->f.torque[1] += p1->r.dip[2]*c->ext_magn_field[0]-p1->r.dip[0]*c->ext_magn_field[2];
-  p1->f.torque[2] += p1->r.dip[0]*c->ext_magn_field[1]-p1->r.dip[1]*c->ext_magn_field[0];
+  p1->f.torque[0] += p1->r.dip[1]*this->ext_magn_field[2]-p1->r.dip[2]*this->ext_magn_field[1];
+  p1->f.torque[1] += p1->r.dip[2]*this->ext_magn_field[0]-p1->r.dip[0]*this->ext_magn_field[2];
+  p1->f.torque[2] += p1->r.dip[0]*this->ext_magn_field[1]-p1->r.dip[1]*this->ext_magn_field[0];
 #endif
 #endif
 }
 
-double ext_magn_field_energy(Particle *p1, Constraint_ext_magn_field *c)
+void Constraint_ext_magn_field::add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params)
 {
 #ifdef DIPOLES
-     return -1.0 * scalar(c->ext_magn_field,p1->r.dip);
+     *magnetic_en = -1.0 * scalar(this->ext_magn_field,p1->r.dip);
 #endif
-  return 0;
 }
 //end ER
 
@@ -2305,593 +2291,151 @@ void reflect_particle(Particle *p1, double *distance_vec, int reflecting) {
 
 }
 
+void Shape::add_constraint_force_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* force, double* torque1, double* torque2, IA_parameters* ia_params)
+{
+	double dist, vec[3];
+	if(checkIfInteraction(ia_params)) {
+		if (!(current_constraint->_shape->calculate_dist(p1, folded_pos, &current_constraint->part_rep, &dist, vec))) {
+			if ( dist > 0 ) {
+				calc_non_bonded_pair_force(p1, &current_constraint->part_rep,
+						ia_params,vec,dist,dist*dist, force,
+						torque1, torque2);
+#ifdef TUNABLE_SLIP
+				if (current_constraint->_shape->tunable_slip == 1 ) {
+					add_tunable_slip_pair_force(p1, &current_constraint->part_rep,ia_params,vec,dist,force);
+				}
+#endif
+			}
+			else if ( dist <= 0 && current_constraint->_shape->penetrable == 1 ) {
+				if ( (current_constraint->_shape->only_positive != 1) && ( dist < 0 ) ) {
+					calc_non_bonded_pair_force(p1, &current_constraint->part_rep,
+							ia_params,vec,-1.0*dist,dist*dist, force,
+							torque1, torque2);
+				}
+			}
+			else {
+				if(current_constraint->_shape->reflecting){
+					reflect_particle(p1, &(vec[0]), current_constraint->_shape->reflecting);
+				} else {
+					ostringstream msg;
+					msg <<"constraint "<< current_constraint->constraint_number<<" violated by particle "<<p1->p.identity;
+					runtimeError(msg);
+				}
+			}
+		}
+		else {
+			ostringstream msg;
+			msg <<"ERROR: encountered unknown constraint during force computation for constraint"<< current_constraint->constraint_number;
+			runtimeError(msg);
+
+		}
+	}
+}
+
 void add_constraints_forces(Particle *p1)
 {
-  if (n_constraints==0)
-   return;
-  int n, j;
-  double dist, vec[3], force[3], torque1[3], torque2[3];
+	if (Constraint::n_constraints==0)
+		return;
+	int n, j;
+	double force[3], torque1[3], torque2[3];
 
-  IA_parameters *ia_params;
-  double folded_pos[3];
-  int img[3];
+	IA_parameters *ia_params;
+	double folded_pos[3];
+	int img[3];
 
-  /* fold the coordinate[2] of the particle */
-  memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-  memcpy(img, p1->l.i, 3*sizeof(int));
-  fold_position(folded_pos, img);
+	/* fold the coordinate[2] of the particle */
+	memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+	memcpy(img, p1->l.i, 3*sizeof(int));
+	fold_position(folded_pos, img);
 
-  for(n=0;n<n_constraints;n++) {
-    ia_params=get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
-    dist=0.;
-    for (j = 0; j < 3; j++) {
-      force[j] = 0;
+	for(n=0;n<Constraint::n_constraints;n++) {
+		ia_params=get_ia_param(p1->p.type, (&Constraint::constraints[n].part_rep)->p.type);
+		for (j = 0; j < 3; j++) {
+			force[j] = 0;
 #ifdef ROTATION
-      torque1[j] = torque2[j] = 0;
+			torque1[j] = torque2[j] = 0;
 #endif
-    }
+		}
+		Constraint::constraints[n]._shape->add_constraint_force_default(&Constraint::constraints[n],p1,folded_pos,force,torque1,torque2, ia_params);
 
-    switch(constraints[n].type) {
-    case CONSTRAINT_WAL: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_wall_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
-	if ( dist > 0 ) {
-	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,dist,dist*dist, force,
-				     torque1, torque2);
-#ifdef TUNABLE_SLIP
-	  if (constraints[n].c.wal.tunable_slip == 1 ) {
-		  add_tunable_slip_pair_force(p1, &constraints[n].part_rep,ia_params,vec,dist,force);
-	  }
-#endif
-	}
-	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
-	  if ( (constraints[n].c.wal.only_positive != 1) && ( dist < 0 ) ) {
-	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				       ia_params,vec,-1.0*dist,dist*dist, force,
-				       torque1, torque2);
-	  }
-	}
-	else {
-	  if(constraints[n].c.wal.reflecting){
-	    reflect_particle(p1, &(vec[0]), constraints[n].c.wal.reflecting);
-      } else {
-        ostringstream msg;
-        msg <<"wall constraint "<< n<<" violated by particle "<<p1->p.identity;
-        runtimeError(msg);
-	  }
-	}
-      }
-      break;
-
-    case CONSTRAINT_SPH:
-      if(checkIfInteraction(ia_params)) {
-	calculate_sphere_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
-	if ( dist > 0 ) {
-	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,dist,dist*dist, force,
-				     torque1, torque2);
-	}
-	else if ( dist <= 0 && constraints[n].c.sph.penetrable == 1 ) {
-	  if ( dist < 0 ) {
-	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				       ia_params,vec,-1.0*dist,dist*dist, force,
-				       torque1, torque2);
-	  }
-	}
-	else {
-	  if(constraints[n].c.sph.reflecting){
-	    reflect_particle(p1, &(vec[0]), constraints[n].c.sph.reflecting);
-      } else {
-        ostringstream msg;
-        msg << "sphere constraint "<< n <<" violated by particle "<<p1->p.identity;
-        runtimeError(msg);
-	  }
-	}
-      }
-      break;
-    
-    case CONSTRAINT_CYL: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_cylinder_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist, vec); 
-	if ( dist > 0 ) {
-	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,dist,dist*dist, force,
-				     torque1, torque2);
-	}
-	else if ( dist <= 0 && constraints[n].c.cyl.penetrable == 1 ) {
-	  if ( dist < 0 ) {
-	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,-1.0*dist,dist*dist, force,
-				     torque1, torque2);
-	  }
-	}
-	else {
-    if(constraints[n].c.cyl.reflecting){
-      reflect_particle(p1, &(vec[0]), constraints[n].c.cyl.reflecting);
-    } else {
-      ostringstream msg;
-      msg << "cylinder constraint "<< n << " violated by particle "<< p1->p.identity;
-      runtimeError(msg);
-    }
-        }
-      }
-      break;
-    
-    case CONSTRAINT_RHOMBOID: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_rhomboid_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist, vec); 
-	if ( dist > 0 ) {
-	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,dist,dist*dist, force,
-				     torque1, torque2);
-	}
-	else if ( dist <= 0 && constraints[n].c.rhomboid.penetrable == 1 ) {
-	  if ( dist < 0 ) {
-	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,-1.0*dist,dist*dist, force,
-				     torque1, torque2);
-	  }
-	}
-	else {
-    if(constraints[n].c.rhomboid.reflecting){
-      reflect_particle(p1, &(vec[0]), constraints[n].c.rhomboid.reflecting);
-    } else {
-      ostringstream msg;
-      msg << "rhomboid constraint " << n << " violated by particle " << p1->p.identity;
-      runtimeError(msg);
-    }
-        }
-      }
-      break;
-	
-    case CONSTRAINT_MAZE: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_maze_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
-	if ( dist > 0 ) {
-	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,dist,dist*dist, force,
-				     torque1, torque2);
-	}
-	else if ( dist <= 0 && constraints[n].c.maze.penetrable == 1 ) {
-	  if ( dist < 0 ) {
-	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,-1.0*dist,dist*dist, force,
-				     torque1, torque2);
-	  }
-	}
-    else {
-      ostringstream msg;
-      msg <<"maze constraint " << n << " violated by particle "<< p1->p.identity;
-      runtimeError(msg);
-	}
-      }
-      break;
-
-    case CONSTRAINT_PORE: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_pore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
-	if ( dist >= 0 ) {
-	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,dist,dist*dist, force,
-				     torque1, torque2);
-	}
-	else {
-    if(constraints[n].c.pore.reflecting){
-      reflect_particle(p1, &(vec[0]), constraints[n].c.pore.reflecting);
-    } else {
-      ostringstream msg;
-      msg <<"pore constraint " << n << " violated by particle "<< p1->p.identity;
-      runtimeError(msg);
-        }
-      }
-      }
-      break;
-    case CONSTRAINT_SLITPORE: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_slitpore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.slitpore, &dist, vec); 
-	if ( dist >= 0 ) {
-	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				     ia_params,vec,dist,dist*dist, force,
-				     torque1, torque2);
-	}
-	else {
-    if(constraints[n].c.pore.reflecting){
-      reflect_particle(p1, &(vec[0]), constraints[n].c.pore.reflecting);
-    } else {
-      ostringstream msg;
-      msg <<"pore constraint " << n << " violated by particle  "<< p1->p.identity;
-      runtimeError(msg);
-        }
-      }
-      }
-      break;
-    case CONSTRAINT_STOMATOCYTE:
-      if( checkIfInteraction(ia_params) ) 
-      {
-
-        calculate_stomatocyte_dist( p1, folded_pos, &constraints[n].part_rep, 
-                                    &constraints[n].c.stomatocyte, &dist, vec );
-
-	      if ( dist > 0 ) 
-        {
-	        calc_non_bonded_pair_force( p1, &constraints[n].part_rep,
-				                              ia_params, vec, dist, dist*dist,
-                                      force, torque1, torque2 );
-	      }
-	      else if ( dist <= 0 && constraints[n].c.stomatocyte.penetrable == 1 )
-        {
-	        if ( dist < 0 ) 
-          {
-	          calc_non_bonded_pair_force( p1, &constraints[n].part_rep,
-				                                ia_params, vec, -1.0*dist, dist*dist,
-                                        force, torque1, torque2 );
-	        }
-	      }
-	      else
-        {
-          if( constraints[n].c.stomatocyte.reflecting )
-          {
-            reflect_particle( p1, &(vec[0]), 
-                              constraints[n].c.stomatocyte.reflecting );
-          } 
-          else
-          {
-              ostringstream msg;
-              msg <<"stomatocyte constraint "<< n << " violated by particle " << p1->p.identity;
-              runtimeError(msg);
-          }
-	      }
-      }
-    break;
-
-    case CONSTRAINT_HOLLOW_CONE:
-      if( checkIfInteraction(ia_params) ) 
-      {
-
-        calculate_hollow_cone_dist( p1, folded_pos, &constraints[n].part_rep, 
-                                    &constraints[n].c.hollow_cone, &dist, vec );
-
-	      if ( dist > 0 ) 
-        {
-	        calc_non_bonded_pair_force( p1, &constraints[n].part_rep,
-				                              ia_params, vec, dist, dist*dist,
-                                      force, torque1, torque2 );
-	      }
-	      else if ( dist <= 0 && constraints[n].c.hollow_cone.penetrable == 1 )
-        {
-	        if ( dist < 0 ) 
-          {
-	          calc_non_bonded_pair_force( p1, &constraints[n].part_rep,
-				                                ia_params, vec, -1.0*dist, dist*dist,
-                                        force, torque1, torque2 );
-	        }
-	      }
-	      else
-        {
-          if( constraints[n].c.hollow_cone.reflecting )
-          {
-            reflect_particle( p1, &(vec[0]), 
-                              constraints[n].c.hollow_cone.reflecting );
-          } 
-          else
-          {
-              ostringstream msg;
-              msg <<"hollow_cone constraint "<< n << " violated by particle " << p1->p.identity;
-              runtimeError(msg);
-          }
-	      }
-      }
-    break;
-
-      /* electrostatic "constraints" */
-    case CONSTRAINT_ROD:
-      add_rod_force(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rod);
-      break;
-
-    case CONSTRAINT_PLATE:
-      add_plate_force(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
-      break;
-      
-#ifdef DIPOLES
-    case CONSTRAINT_EXT_MAGN_FIELD:
-      add_ext_magn_field_force(p1, &constraints[n].c.emfield);
-      break;
-#endif
-    
-    case CONSTRAINT_PLANE:
-     if(checkIfInteraction(ia_params)) {
-	calculate_plane_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
-	if (dist > 0) {
-	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				       ia_params,vec,dist,dist*dist, force,
-				       torque1, torque2);
-#ifdef TUNABLE_SLIP
-	    add_tunable_slip_pair_force(p1, &constraints[n].part_rep,ia_params,vec,dist,force);
-#endif
-	}
-    else {
-        ostringstream msg;
-        msg <<"plane constraint " << n << " violated by particle " << p1->p.identity;
-        runtimeError(msg);
-	}
-      }
-      break;
-  default:
-      fprintf(stderr, "ERROR: encountered unknown constraint during force computation\n");
-      errexit();
-      break;
-
-    }
-    for (j = 0; j < 3; j++) {
-      p1->f.f[j] += force[j];
-      constraints[n].part_rep.f.f[j] -= force[j];
+		for (j = 0; j < 3; j++) {
+			p1->f.f[j] += force[j];
+			Constraint::constraints[n].part_rep.f.f[j] -= force[j];
 #ifdef ROTATION
-      p1->f.torque[j] += torque1[j];
-      constraints[n].part_rep.f.torque[j] += torque2[j];
+			p1->f.torque[j] += torque1[j];
+			Constraint::constraints[n].part_rep.f.torque[j] += torque2[j];
 #endif
-    }
-  }
+		}
+	}
 }
-
+void Shape::add_constraint_energy_default (Constraint* current_constraint, Particle *p1, double* folded_pos, double* nonbonded_en, double* coulomb_en, double* magnetic_en, IA_parameters* ia_params)
+{
+	double dist, vec[3];
+	magnetic_en = 0;
+	coulomb_en = 0;
+	if(checkIfInteraction(ia_params)) {
+		if (!(current_constraint->_shape->calculate_dist(p1, folded_pos, &current_constraint->part_rep, &dist, vec))) {
+			if ( dist > 0 ) {
+				*nonbonded_en = calc_non_bonded_pair_energy(p1, &current_constraint->part_rep,
+						ia_params,vec,dist,dist*dist);
+			}
+			else if ( dist <= 0 && current_constraint->_shape->penetrable == 1 ) {
+				if ( (current_constraint->_shape->only_positive != 1) && ( dist < 0 ) ) {
+					*nonbonded_en = calc_non_bonded_pair_energy(p1, &current_constraint->part_rep,
+							ia_params,vec,-1.0*dist,dist*dist);
+				}
+			}
+			else {
+					ostringstream msg;
+					msg <<"constraint "<< current_constraint->constraint_number<<" violated by particle making the energy not calculable"<<p1->p.identity;
+					runtimeError(msg);
+			}
+		}
+		else {
+			fprintf (stderr,"Warning:encountered a constraint for which the energy cannot be computed\n");
+		}
+	}
+}
 double add_constraints_energy(Particle *p1)
 {
-  int n, type;
-  double dist, vec[3];
-  double nonbonded_en, coulomb_en, magnetic_en;
-  IA_parameters *ia_params;
-  double folded_pos[3];
-  int img[3];
+	int n, type;
+	double nonbonded_en, coulomb_en, magnetic_en;
+	IA_parameters *ia_params;
+	double folded_pos[3];
+	int img[3];
 
-  /* fold the coordinate[2] of the particle */
-  memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-  memcpy(img, p1->l.i, 3*sizeof(int));
-  fold_position(folded_pos, img);
-  for(n=0;n<n_constraints;n++) { 
-    ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
-    nonbonded_en = 0.;
-    coulomb_en   = 0.;
-    magnetic_en = 0.;
+	/* fold the coordinate[2] of the particle */
+	memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+	memcpy(img, p1->l.i, 3*sizeof(int));
+	fold_position(folded_pos, img);
+	for(n=0;n<Constraint::n_constraints;n++) {
+		ia_params = get_ia_param(p1->p.type, (&Constraint::constraints[n].part_rep)->p.type);
+		nonbonded_en = 0.;
+		coulomb_en   = 0.;
+		magnetic_en = 0.;
 
-    dist=0.;
-    switch(constraints[n].type) {
-    case CONSTRAINT_WAL: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_wall_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
-	if ( dist > 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, dist, dist*dist);
-	}
-	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
-	  if ( dist < 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, -1.0*dist, dist*dist);
-	  }
-	}
-    else {
-        ostringstream msg;
-        msg <<"wall constraint "<< n << " violated by particle "<< p1->p.identity;
-        runtimeError(msg);
-	}
-      }
-      break;
-	
-    case CONSTRAINT_SPH: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_sphere_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
-	if ( dist > 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, dist, dist*dist);
-	}
-	else if ( dist <= 0 && constraints[n].c.sph.penetrable == 1 ) {
-	  if ( dist < 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, -1.0*dist, dist*dist);
-	  }
-	}
-    else {
-        ostringstream msg;
-        msg << "sphere constraint "<< n << " violated by particle " << p1->p.identity;
-        runtimeError(msg);
-	}
-      }
-      break;
-	
-    case CONSTRAINT_CYL: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_cylinder_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist , vec); 
-	if ( dist > 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, dist, dist*dist);
+		Constraint::constraints[n]._shape->add_constraint_energy_default (&Constraint::constraints[n], p1, folded_pos, &nonbonded_en, &coulomb_en, &magnetic_en, ia_params);
+		if (energy.n_coulomb > 0)
+			energy.coulomb[0] += coulomb_en;
 
+		if (energy.n_dipolar > 0)
+			energy.dipolar[0] += magnetic_en;
+
+		type = (&Constraint::constraints[n].part_rep)->p.type;
+		if (type >= 0)
+			*obsstat_nonbonded(&energy, p1->p.type, type) += nonbonded_en;
 	}
-	else if ( dist <= 0 && constraints[n].c.cyl.penetrable == 1 ) {
-	  if ( dist < 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, -1.0*dist, dist*dist);
-	  }
-	}
-    else {
-        ostringstream msg;
-        msg <<"cylinder constraint "<< n << " violated by particle " << p1->p.identity;
-        runtimeError(msg);
-	}
-      }
-      break;
-	
-    case CONSTRAINT_RHOMBOID: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_rhomboid_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist , vec); 
-	if ( dist > 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, dist, dist*dist);
-
-	}
-	else if ( dist <= 0 && constraints[n].c.rhomboid.penetrable == 1 ) {
-	  if ( dist < 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, -1.0*dist, dist*dist);
-	  }
-	}
-    else {
-        ostringstream msg;
-        msg <<"cylinder constraint  " << n << " violated by particle " << p1->p.identity;
-        runtimeError(msg);
-	}
-      }
-      break;
-
-    case CONSTRAINT_MAZE: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_maze_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
-	if ( dist > 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, dist, dist*dist);
-	}
-	else if ( dist <= 0 && constraints[n].c.maze.penetrable == 1 ) {
-	  if ( dist < 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, -1.0*dist, dist*dist);
-	  }
-	}
-    else {
-        ostringstream msg;
-        msg <<"maze constraint " << n << " violated by particle " << p1->p.identity;
-        runtimeError(msg);
-	}
-      }
-      break;
-
-    case CONSTRAINT_PORE: 
-      if(checkIfInteraction(ia_params)) {
-	calculate_pore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist , vec); 
-	if ( dist > 0 ) {
-	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
-						     ia_params, vec, dist, dist*dist);
-
-	}
-    else {
-        ostringstream msg;
-        msg <<"pore constraint " << n << " violated by particle " << p1->p.identity;
-        runtimeError(msg);
-	}
-      }
-      break;
-
-    case CONSTRAINT_STOMATOCYTE: 
-      if( checkIfInteraction(ia_params) ) 
-      {
-	      calculate_stomatocyte_dist( p1, folded_pos, &constraints[n].part_rep,
-                                    &constraints[n].c.stomatocyte, &dist, vec ); 
-
-	      if ( dist > 0 )
-        {
-	        nonbonded_en = calc_non_bonded_pair_energy( p1, 
-                                                      &constraints[n].part_rep,
-						                                          ia_params, vec, dist,
-                                                      dist*dist );
-	      }
-	      else if ( dist <= 0 && constraints[n].c.stomatocyte.penetrable == 1 )
-        {
-	        if ( dist < 0 )
-          {
-	          nonbonded_en = calc_non_bonded_pair_energy(p1,
-                                                       &constraints[n].part_rep,
-						                                           ia_params, vec, 
-                                                       -1.0*dist, dist*dist);
-	        }
-	      }
-	      else
-        {
-              ostringstream msg;
-              msg <<"stomatocyte constraint "<< n << " violated by particle " << p1->p.identity;
-              runtimeError(msg);
-	      }
-      }
-    break;
-
-    case CONSTRAINT_HOLLOW_CONE: 
-      if( checkIfInteraction(ia_params) ) 
-      {
-	      calculate_hollow_cone_dist( p1, folded_pos, &constraints[n].part_rep,
-                                    &constraints[n].c.hollow_cone, &dist, vec ); 
-
-	      if ( dist > 0 )
-        {
-	        nonbonded_en = calc_non_bonded_pair_energy( p1, 
-                                                      &constraints[n].part_rep,
-						                                          ia_params, vec, dist,
-                                                      dist*dist );
-	      }
-	      else if ( dist <= 0 && constraints[n].c.hollow_cone.penetrable == 1 )
-        {
-	        if ( dist < 0 )
-          {
-	          nonbonded_en = calc_non_bonded_pair_energy(p1,
-                                                       &constraints[n].part_rep,
-						                                           ia_params, vec, 
-                                                       -1.0*dist, dist*dist);
-	        }
-	      }
-	      else
-        {
-              ostringstream msg;
-              msg <<"hollow_cone constraint " << n << " violated by particle " << p1->p.identity;
-              runtimeError(msg);
-	      }
-      }
-    break;
-
-    case CONSTRAINT_ROD:
-      coulomb_en = rod_energy(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rod);
-      break;
-
-    case CONSTRAINT_PLATE:
-      coulomb_en = plate_energy(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
-      break;
-    case CONSTRAINT_EXT_MAGN_FIELD:
-      magnetic_en = ext_magn_field_energy(p1, &constraints[n].c.emfield);
-      break;
-      //@TODO: implement energy of Plane, Slitpore
-  case CONSTRAINT_PLANE:
-    {
-        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
-    }
-      break;
-  case CONSTRAINT_SLITPORE:
-    {
-        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
-    }
-      break;
-  case CONSTRAINT_NONE:
-      break;
-  default:
-      fprintf(stderr, "ERROR: encountered unknown constraint during energy computation\n");
-      errexit();
-      break;
-    }
-
-    if (energy.n_coulomb > 0)
-      energy.coulomb[0] += coulomb_en;
-    
-    if (energy.n_dipolar > 0)
-      energy.dipolar[0] += magnetic_en;
-
-    type = (&constraints[n].part_rep)->p.type;
-    if (type >= 0)
-      *obsstat_nonbonded(&energy, p1->p.type, type) += nonbonded_en;
-  }
-  return 0.;
+	return 0.;
 }
 
-void calculate_slitpore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_slitpore *c, double *dist, double *vec) {
+int Constraint_slitpore::calculate_dist(Particle *p1, double ppos[3], Particle *c_p, double *dist, double *vec) {
   // the left circles
   double box_l_x = box_l[0];
-  double c11[2] = { box_l_x/2-c->pore_width/2-c->upper_smoothing_radius, c->pore_mouth - c->upper_smoothing_radius };
-  double c12[2] = { box_l_x/2-c->pore_width/2+c->lower_smoothing_radius, c->pore_mouth - c->pore_length  + c->lower_smoothing_radius };
+  double c11[2] = { box_l_x/2-this->pore_width/2-this->upper_smoothing_radius, this->pore_mouth - this->upper_smoothing_radius };
+  double c12[2] = { box_l_x/2-this->pore_width/2+this->lower_smoothing_radius, this->pore_mouth - this->pore_length  + this->lower_smoothing_radius };
   // the right circles
-  double c21[2] = { box_l_x/2+c->pore_width/2+c->upper_smoothing_radius, c->pore_mouth - c->upper_smoothing_radius };
-  double c22[2] = { box_l_x/2+c->pore_width/2-c->lower_smoothing_radius, c->pore_mouth - c->pore_length  + c->lower_smoothing_radius };
+  double c21[2] = { box_l_x/2+this->pore_width/2+this->upper_smoothing_radius, this->pore_mouth - this->upper_smoothing_radius };
+  double c22[2] = { box_l_x/2+this->pore_width/2-this->lower_smoothing_radius, this->pore_mouth - this->pore_length  + this->lower_smoothing_radius };
 
 //  printf("c11 %f %f\n", c11[0], c11[1]);
 //  printf("c12 %f %f\n", c12[0], c12[1]);
@@ -2899,40 +2443,40 @@ void calculate_slitpore_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 //  printf("c22 %f %f\n", c22[0], c22[1]);
 
 
-  if (ppos[2] > c->pore_mouth + c->channel_width/2) {
+  if (ppos[2] > this->pore_mouth + this->channel_width/2) {
 //    printf("upper wall\n");
     // Feel the upper wall
-    *dist = c->pore_mouth + c->channel_width - ppos[2];
+    *dist = this->pore_mouth + this->channel_width - ppos[2];
     vec[0] = vec[1] = 0;
     vec[2] = -*dist;
-    return;
+    return 0;
   }
 
   if (ppos[0]<c11[0] || ppos[0] > c21[0]) {
     // Feel the lower wall of the channel
 //    printf("lower wall\n");
-    *dist = ppos[2] - c->pore_mouth;
+    *dist = ppos[2] - this->pore_mouth;
     vec[0] = vec[1] = 0;
     vec[2] = *dist;
-    return;
+    return 0;
   }
 
   if (ppos[2] > c11[1]) {
     // Feel the upper smoothing
     if (ppos[0] < box_l_x/2) {
 //    printf("upper smoothing left\n");
-      *dist = sqrt( SQR(c11[0] - ppos[0]) + SQR(c11[1] - ppos[2])) - c->upper_smoothing_radius;
-      vec[0] = -( c11[0] - ppos[0] ) * (*dist)/(*dist+c->upper_smoothing_radius);
+      *dist = sqrt( SQR(c11[0] - ppos[0]) + SQR(c11[1] - ppos[2])) - this->upper_smoothing_radius;
+      vec[0] = -( c11[0] - ppos[0] ) * (*dist)/(*dist+this->upper_smoothing_radius);
       vec[1] = 0;
-      vec[2] = -( c11[1] - ppos[2] ) * (*dist)/(*dist+c->upper_smoothing_radius);
-      return;
+      vec[2] = -( c11[1] - ppos[2] ) * (*dist)/(*dist+this->upper_smoothing_radius);
+      return 0;
     } else {
 //    printf("upper smoothing right\n");
-      *dist = sqrt( SQR(c21[0] - ppos[0]) + SQR(c21[1] - ppos[2])) - c->upper_smoothing_radius;
-      vec[0] = -( c21[0] - ppos[0] ) * (*dist)/(*dist+c->upper_smoothing_radius);
+      *dist = sqrt( SQR(c21[0] - ppos[0]) + SQR(c21[1] - ppos[2])) - this->upper_smoothing_radius;
+      vec[0] = -( c21[0] - ppos[0] ) * (*dist)/(*dist+this->upper_smoothing_radius);
       vec[1] = 0;
-      vec[2] = -( c21[1] - ppos[2] ) * (*dist)/(*dist+c->upper_smoothing_radius);
-      return;
+      vec[2] = -( c21[1] - ppos[2] ) * (*dist)/(*dist+this->upper_smoothing_radius);
+      return 0;
     }
   }
   
@@ -2940,46 +2484,46 @@ void calculate_slitpore_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
     // Feel the pore wall
     if (ppos[0] < box_l_x/2) {
 //    printf("pore left\n");
-      *dist = ppos[0] - (box_l_x/2-c->pore_width/2);
+      *dist = ppos[0] - (box_l_x/2-this->pore_width/2);
       vec[0]=*dist;
       vec[1]=vec[2]=0;
-      return;
+      return 0;
     } else {
 //    printf("pore right\n");
-      *dist =  (box_l_x/2+c->pore_width/2) - ppos[0];
+      *dist =  (box_l_x/2+this->pore_width/2) - ppos[0];
       vec[0]=-*dist;
       vec[1]=vec[2]=0;
-      return;
+      return 0;
     }
   }
 
   if (ppos[0]>c12[0] && ppos[0] < c22[0]) {
 //    printf("pore end\n");
     // Feel the pore end wall
-    *dist = ppos[2] - (c->pore_mouth-c->pore_length);
+    *dist = ppos[2] - (this->pore_mouth-this->pore_length);
     vec[0]=vec[1]=0;
     vec[2]=*dist;
-    return;
+    return 0;
   }
   // Else
   // Feel the lower smoothing
     if (ppos[0] < box_l_x/2) {
 //    printf("lower smoothing left\n");
-      *dist = -sqrt( SQR(c12[0] - ppos[0]) + SQR(c12[1] - ppos[2])) + c->lower_smoothing_radius;
-      vec[0] = ( c12[0] - ppos[0] ) * (*dist)/(-*dist+c->lower_smoothing_radius);
+      *dist = -sqrt( SQR(c12[0] - ppos[0]) + SQR(c12[1] - ppos[2])) + this->lower_smoothing_radius;
+      vec[0] = ( c12[0] - ppos[0] ) * (*dist)/(-*dist+this->lower_smoothing_radius);
       vec[1] = 0;
-      vec[2] = ( c12[1] - ppos[2] ) * (*dist)/(-*dist+c->lower_smoothing_radius);
-      return;
+      vec[2] = ( c12[1] - ppos[2] ) * (*dist)/(-*dist+this->lower_smoothing_radius);
+      return 0;
     } else {
 //    printf("lower smoothing right\n");
-      *dist = -sqrt( SQR(c22[0] - ppos[0]) + SQR(c22[1] - ppos[2])) + c->lower_smoothing_radius;
-      vec[0] = ( c22[0] - ppos[0] ) * (*dist)/(-*dist+c->lower_smoothing_radius);
+      *dist = -sqrt( SQR(c22[0] - ppos[0]) + SQR(c22[1] - ppos[2])) + this->lower_smoothing_radius;
+      vec[0] = ( c22[0] - ppos[0] ) * (*dist)/(-*dist+this->lower_smoothing_radius);
       vec[1] = 0;
-      vec[2] = ( c22[1] - ppos[2] ) * (*dist)/(-*dist+c->lower_smoothing_radius);
-      return;
+      vec[2] = ( c22[1] - ppos[2] ) * (*dist)/(-*dist+this->lower_smoothing_radius);
+      return 0;
     }
 
-
+    return 0;
 }
 #endif
 

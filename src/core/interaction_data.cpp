@@ -69,6 +69,12 @@ int n_particle_types = 0;
 int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
+#ifdef CONSTRAINTS
+Constraint::~Constraint() {
+	  delete this->_shape; //Free shape!
+}
+#endif
+
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 Coulomb_parameters coulomb = { 
 #ifdef ELECTROSTATICS

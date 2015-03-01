@@ -220,8 +220,8 @@ int tclcommand_polymer (ClientData data, Tcl_Interp *interp, int argc, char **ar
 #else
       constr=1;
       tmp_try=0;
-      for(j=0;j<n_constraints;j++){
-	if(constraints[j].type==CONSTRAINT_MAZE || constraints[j].type==CONSTRAINT_PORE || constraints[j].type==CONSTRAINT_PLATE || constraints[j].type==CONSTRAINT_RHOMBOID)
+      for(j=0;j<Constraint::n_constraints;j++){
+	if(Constraint::constraints[j].type==CONSTRAINT_MAZE || Constraint::constraints[j].type==CONSTRAINT_PORE || Constraint::constraints[j].type==CONSTRAINT_PLATE || Constraint::constraints[j].type==CONSTRAINT_RHOMBOID)
 	  tmp_try++;
       }
       if (tmp_try>0) {

@@ -175,11 +175,11 @@ typedef struct {
           
 } LB_Parameters;
 
+/** Struct holding the Lattice Boltzmann parameters */
+extern LB_Parameters lbpar;
+
 /** The DnQm model to be used. */
 extern LB_Model lbmodel;
-
-/** Struct holding the Lattice Boltzmann parameters */
-extern LB_Parameters lbpar; 
 
 /** The underlying lattice */
 extern Lattice lblattice;

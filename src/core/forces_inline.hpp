@@ -194,7 +194,6 @@ inline void force_calc()
 {
   // Communication step: distribute ghost positions
   cells_update_ghosts();
-
   // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
   update_mol_vel_pos();
@@ -215,7 +214,6 @@ inline void force_calc()
 #endif
 
   espressoSystemInterface.update();
-
   // Compute the forces from the force objects
   for (ActorList::iterator actor = forceActors.begin();
           actor != forceActors.end(); ++actor)
@@ -228,13 +226,14 @@ inline void force_calc()
 
   // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
   // this_node==0 makes sure it is the master node where the gpu exists
-  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
+  if ( (lattice_switch & LATTICE_LB_GPU) && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
   if (iccp3m_initialized && iccp3m_cfg.set_flag)
     iccp3m_iteration();
 #endif
+
   init_forces();
 
   calc_long_range_forces();

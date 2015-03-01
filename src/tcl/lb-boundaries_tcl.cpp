@@ -44,216 +44,31 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
 int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
 
+void LB_Boundary::Write_LB_Boundary_Tcl (Tcl_Interp *interp){
+	char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+    sprintf(buffer, "%d", this->type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%E", this->slip_pref);
+    Tcl_AppendResult(interp, " slip_pref ", buffer, (char *) NULL);
+    for (int i=0; i<3; i++) {
+			sprintf(buffer, "%E", this->force[i]);
+    }
+    Tcl_AppendResult(interp, " Force on Boundary ", buffer, (char *) NULL);
+    for (int i=0; i<3; i++) {
+			sprintf(buffer, "%E", this->velocity[i]);
+    }
+    Tcl_AppendResult(interp, " Surface Velocity ", buffer, (char *) NULL);
+    this->_shape->Write_Shape_Tcl(interp);
+}
+
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 {
-  LB_Boundary *lbb = &lb_boundaries[i];
+  LB_Boundary *lbb = &LB_Boundary::lb_boundaries[i];
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   sprintf(buffer, "%d ", i);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   
-  switch (lbb->type) {
-		case LB_BOUNDARY_WAL:
-		  Tcl_PrintDouble(interp, lbb->c.wal.n[0], buffer);
-		  Tcl_AppendResult(interp, "wall normal ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.wal.n[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.wal.n[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.wal.d, buffer);
-		  Tcl_AppendResult(interp, " dist ", buffer, (char *) NULL);
-		  break;
-		  
-		case LB_BOUNDARY_SPH:
-		  Tcl_PrintDouble(interp, lbb->c.sph.pos[0], buffer);
-		  Tcl_AppendResult(interp, "sphere center ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.sph.pos[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.sph.pos[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.sph.rad, buffer);
-		  Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.sph.direction, buffer);
-		  Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-		  
-		  break;
-		  
-		case LB_BOUNDARY_CYL:
-		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[0], buffer);
-		  Tcl_AppendResult(interp, "cylinder center ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[0], buffer);
-		  Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.rad, buffer);
-		  Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.length, buffer);
-		  Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.direction, buffer);
-		  Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-		  
-		  break;
-		  
-		case LB_BOUNDARY_SPHEROCYLINDER:
-		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[0], buffer);
-		  Tcl_AppendResult(interp, "spherocylinder center ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[0], buffer);
-		  Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.rad, buffer);
-		  Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.length, buffer);
-		  Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.cyl.direction, buffer);
-		  Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-		  
-		  break;
-		  
-		case LB_BOUNDARY_RHOMBOID:
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.pos[0], buffer);
-		  Tcl_AppendResult(interp, "rhomboid corner ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.pos[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.pos[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.a[0], buffer);
-		  Tcl_AppendResult(interp, " a ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.a[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.a[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.b[0], buffer);
-		  Tcl_AppendResult(interp, " b ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.b[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.b[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.c[0], buffer);
-		  Tcl_AppendResult(interp, " c ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.c[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.c[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.rhomboid.direction, buffer);
-		  Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-		  
-		  break;
-		  
-		case LB_BOUNDARY_POR:
-		  Tcl_PrintDouble(interp, lbb->c.pore.pos[0], buffer);
-		  Tcl_AppendResult(interp, "pore center ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.pore.pos[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.pore.pos[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.pore.axis[0], buffer);
-		  Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.pore.axis[1], buffer);
-		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-		  Tcl_PrintDouble(interp, lbb->c.pore.axis[2], buffer);
-		  Tcl_AppendResult(interp, buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.pore.rad_left, buffer);
-		  Tcl_AppendResult(interp, " rad_left ", buffer, (char *) NULL);
-		  
-		  Tcl_PrintDouble(interp, lbb->c.pore.rad_right, buffer);    
-		  Tcl_AppendResult(interp, " rad_right ", buffer, (char *) NULL);
-	 
-		  Tcl_PrintDouble(interp, lbb->c.pore.length, buffer);
-		  Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
-		  
-		  break;
-
-    case LB_BOUNDARY_STOMATOCYTE:
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.position_x, buffer);
-      Tcl_AppendResult(interp, "stomatocyte center ", buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.position_y, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.position_z, buffer);
-      Tcl_AppendResult(interp, buffer, (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.orientation_x, buffer);
-      Tcl_AppendResult(interp, " orientation ", buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.orientation_y, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.orientation_z, buffer);
-      Tcl_AppendResult(interp, buffer, (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.outer_radius, buffer);
-      Tcl_AppendResult(interp, " outer radius ", buffer, " ", (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.inner_radius, buffer);
-      Tcl_AppendResult(interp, " inner radius ", buffer, " ", (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.layer_width, buffer);
-      Tcl_AppendResult(interp, " layer width ", buffer, " ", (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.stomatocyte.direction, buffer);
-      Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-      break;
-
-    case LB_BOUNDARY_HOLLOW_CONE:
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.position_x, buffer);
-      Tcl_AppendResult(interp, "hollow_cone center ", buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.position_y, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.position_z, buffer);
-      Tcl_AppendResult(interp, buffer, (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.orientation_x, buffer);
-      Tcl_AppendResult(interp, " orientation ", buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.orientation_y, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.orientation_z, buffer);
-      Tcl_AppendResult(interp, buffer, (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.outer_radius, buffer);
-      Tcl_AppendResult(interp, " outer radius ", buffer, " ", (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.inner_radius, buffer);
-      Tcl_AppendResult(interp, " inner radius ", buffer, " ", (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.width, buffer);
-      Tcl_AppendResult(interp, " width ", buffer, " ", (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.opening_angle, buffer);
-      Tcl_AppendResult(interp, " opening angle ", buffer, " ", (char *) NULL);
-
-      Tcl_PrintDouble(interp, lbb->c.hollow_cone.direction, buffer);
-      Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-      break;
-
-		default:
-		  sprintf(buffer, "%d", lbb->type);
-		  Tcl_AppendResult(interp, "unknown lbboundary type ", buffer, ".", (char *) NULL);
-  }
+  lbb->Write_LB_Boundary_Tcl(interp);
 
   return (TCL_OK);
 }
@@ -262,10 +77,10 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 {
   int i;
   
-  if(n_lb_boundaries>0)
+  if(LB_Boundary::n_lb_boundaries>0)
   	Tcl_AppendResult(interp, "{", (char *)NULL);
   	
-  for (i = 0; i < n_lb_boundaries; i++) {
+  for (i = 0; i < LB_Boundary::n_lb_boundaries; i++) {
     if(i>0) Tcl_AppendResult(interp, " {", (char *)NULL);
     	tclcommand_printLbBoundaryToResult(interp, i);
     	
@@ -277,28 +92,28 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 
 LB_Boundary *generate_lbboundary()
 {
-  n_lb_boundaries++;
+  LB_Boundary::n_lb_boundaries++;
 
-  lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+  LB_Boundary::lb_boundaries = (LB_Boundary*) realloc(LB_Boundary::lb_boundaries,LB_Boundary::n_lb_boundaries*sizeof(LB_Boundary));
 
-  lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
   
-  lb_boundaries[n_lb_boundaries-1].velocity[0]=
-  lb_boundaries[n_lb_boundaries-1].velocity[1]=
-  lb_boundaries[n_lb_boundaries-1].velocity[2]=0;
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].velocity[0]=
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].velocity[1]=
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].velocity[2]=0;
   
-  lb_boundaries[n_lb_boundaries-1].force[0]=
-  lb_boundaries[n_lb_boundaries-1].force[1]=
-  lb_boundaries[n_lb_boundaries-1].force[2]=0;
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].force[0]=
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].force[1]=
+  LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].force[2]=0;
   
 #ifdef EK_BOUNDARIES
   if (ek_initialized)
   {
-    lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
+    LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1].charge_density = 0.0;
   }  
 #endif
   
-  return &lb_boundaries[n_lb_boundaries-1];
+  return &LB_Boundary::lb_boundaries[LB_Boundary::n_lb_boundaries-1];
 }
 
 int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
@@ -307,13 +122,17 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   double norm;
 
   lbb->type = LB_BOUNDARY_WAL;
+  /* create a new wall constraint */
+  Constraint_wall* new_wall_constraint = new Constraint_wall;
+  lbb->_shape = new_wall_constraint;
+
   
   /* invalid entries to start of */
-  lbb->c.wal.n[0] = 
-  lbb->c.wal.n[1] = 
-  lbb->c.wal.n[2] = 0;
+  new_wall_constraint->n[0] =
+  new_wall_constraint->n[1] =
+  new_wall_constraint->n[2] = 0;
   
-  lbb->c.wal.d = 0;
+  new_wall_constraint->d = 0;
   
   while(argc > 0) {
     if(ARG_IS_S(0, "normal")) {
@@ -322,9 +141,9 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 			  return (TCL_ERROR);
       }
     
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.wal.n[0])) == TCL_ERROR ||
-	    	 Tcl_GetDouble(interp, argv[2], &(lbb->c.wal.n[1])) == TCL_ERROR ||
-	    	 Tcl_GetDouble(interp, argv[3], &(lbb->c.wal.n[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_wall_constraint->n[0])) == TCL_ERROR ||
+	    	 Tcl_GetDouble(interp, argv[2], &(new_wall_constraint->n[1])) == TCL_ERROR ||
+	    	 Tcl_GetDouble(interp, argv[3], &(new_wall_constraint->n[2])) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 4; argv += 4;
@@ -335,7 +154,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
       }
       
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.wal.d)) == TCL_ERROR)
+      if (Tcl_GetDouble(interp, argv[1], &(new_wall_constraint->d)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -378,7 +197,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   }
   
   /* length of the normal vector */
-  norm = SQR(lbb->c.wal.n[0])+SQR(lbb->c.wal.n[1])+SQR(lbb->c.wal.n[2]);
+  norm = SQR(new_wall_constraint->n[0])+SQR(new_wall_constraint->n[1])+SQR(new_wall_constraint->n[2]);
   
   if (norm < 1e-10) {
     Tcl_AppendResult(interp, "usage: lbboundary wall normal <nx> <ny> <nz> dist <d> type <t>", (char *) NULL);
@@ -386,7 +205,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   }
   
   /* normalize the normal vector */
-  for (i=0;i<3;i++) lbb->c.wal.n[i] /= sqrt(norm);
+  for (i=0;i<3;i++) new_wall_constraint->n[i] /= sqrt(norm);
 
   return (TCL_OK);
 }
@@ -394,13 +213,16 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
 {
   lbb->type = LB_BOUNDARY_SPH;
+  /* create a new sphere constraint */
+  Constraint_sphere* new_sphere_constraint = new Constraint_sphere;
+  lbb->_shape = new_sphere_constraint;
 
   /* invalid entries to start of */
-  lbb->c.sph.pos[0] = 
-  lbb->c.sph.pos[1] = 
-  lbb->c.sph.pos[2] = 0;
-  lbb->c.sph.rad = 0;
-  lbb->c.sph.direction = -1;
+  new_sphere_constraint->pos[0] =
+  new_sphere_constraint->pos[1] =
+  new_sphere_constraint->pos[2] = 0;
+  new_sphere_constraint->rad = 0;
+  new_sphere_constraint->direction = -1;
 
   while (argc > 0) {
     if(ARG_IS_S(0, "center")) {
@@ -408,9 +230,9 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
 	      Tcl_AppendResult(interp, "lbboundary sphere center <x> <y> <z> expected", (char *) NULL);
 	      return (TCL_ERROR);
       }
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.pos[0])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[2], &(lbb->c.sph.pos[1])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[3], &(lbb->c.sph.pos[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_sphere_constraint->pos[0])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[2], &(new_sphere_constraint->pos[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(new_sphere_constraint->pos[2])) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
         argc -= 4; argv += 4;
@@ -421,7 +243,7 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
 	      return (TCL_ERROR);
       }
       
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.rad)) == TCL_ERROR)
+      if (Tcl_GetDouble(interp, argv[1], &(new_sphere_constraint->rad)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -433,10 +255,10 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
       }
       
       if(ARG_IS_S(1, "inside"))
-	      lbb->c.sph.direction = -1;
+	      new_sphere_constraint->direction = -1;
       else if(ARG_IS_S(1, "outside"))
-	      lbb->c.sph.direction = 1;
-      else if(Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.direction)) == TCL_ERROR)
+	      new_sphere_constraint->direction = 1;
+      else if(Tcl_GetDouble(interp, argv[1], &(new_sphere_constraint->direction)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -453,7 +275,7 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
       break;
   }
 
-  if(lbb->c.sph.rad < 0.) {
+  if(new_sphere_constraint->rad < 0.) {
     Tcl_AppendResult(interp, "usage: lbboundary sphere center <x> <y> <z> radius <d> direction <direction> type <t>", (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -467,21 +289,24 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
   int i;
 
   lbb->type = LB_BOUNDARY_CYL;
-  
+  /* create a new cylinder constraint */
+  Constraint_cylinder* new_cylinder_constraint = new Constraint_cylinder;
+  lbb->_shape = new_cylinder_constraint;
+
   /* invalid entries to start of */
-  lbb->c.cyl.pos[0] = 
-  lbb->c.cyl.pos[1] = 
-  lbb->c.cyl.pos[2] = 0;
+  new_cylinder_constraint->pos[0] =
+  new_cylinder_constraint->pos[1] =
+  new_cylinder_constraint->pos[2] = 0;
   
-  lbb->c.cyl.axis[0] = 
-  lbb->c.cyl.axis[1] = 
-  lbb->c.cyl.axis[2] = 0;
+  new_cylinder_constraint->axis[0] =
+  new_cylinder_constraint->axis[1] =
+  new_cylinder_constraint->axis[2] = 0;
   
-  lbb->c.cyl.rad = 0;
+  new_cylinder_constraint->rad = 0;
   
-  lbb->c.cyl.length = 0;
+  new_cylinder_constraint->length = 0;
   
-  lbb->c.cyl.direction = 0;
+  new_cylinder_constraint->direction = 0;
   
   while (argc > 0) {
     if(ARG_IS_S(0, "center")) {
@@ -490,9 +315,9 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.pos[0])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[2], &(lbb->c.cyl.pos[1])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[3], &(lbb->c.cyl.pos[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_cylinder_constraint->pos[0])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[2], &(new_cylinder_constraint->pos[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(new_cylinder_constraint->pos[2])) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 4; argv += 4;
@@ -503,9 +328,9 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.axis[0])) == TCL_ERROR ||
-  	     Tcl_GetDouble(interp, argv[2], &(lbb->c.cyl.axis[1])) == TCL_ERROR ||
-    	   Tcl_GetDouble(interp, argv[3], &(lbb->c.cyl.axis[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_cylinder_constraint->axis[0])) == TCL_ERROR ||
+  	     Tcl_GetDouble(interp, argv[2], &(new_cylinder_constraint->axis[1])) == TCL_ERROR ||
+    	   Tcl_GetDouble(interp, argv[3], &(new_cylinder_constraint->axis[2])) == TCL_ERROR)
 	      return (TCL_ERROR);
 
       argc -= 4; argv += 4;    
@@ -516,7 +341,7 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.rad)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_cylinder_constraint->rad)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -527,7 +352,7 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.length)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_cylinder_constraint->length)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -539,10 +364,10 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
       }
       
       if (ARG_IS_S(1, "inside"))
-	      lbb->c.cyl.direction = -1;
+	      new_cylinder_constraint->direction = -1;
       else if (ARG_IS_S(1, "outside"))
-	      lbb->c.cyl.direction = 1;
-      else if (Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.direction)) == TCL_ERROR)
+	      new_cylinder_constraint->direction = 1;
+      else if (Tcl_GetDouble(interp, argv[1], &(new_cylinder_constraint->direction)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -587,10 +412,10 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
   axis_len=0.;
   
   for (i=0;i<3;i++)
-    axis_len += SQR(lbb->c.cyl.axis[i]);
+    axis_len += SQR(new_cylinder_constraint->axis[i]);
 
-  if(lbb->c.cyl.rad < 0. || axis_len < 1e-30 ||
-     lbb->c.cyl.direction == 0 || lbb->c.cyl.length <= 0) {
+  if(new_cylinder_constraint->rad < 0. || axis_len < 1e-30 ||
+     new_cylinder_constraint->direction == 0 || new_cylinder_constraint->length <= 0) {
     Tcl_AppendResult(interp, "usage: lbboundary cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>", (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -599,7 +424,7 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
   axis_len = sqrt (axis_len);
   
   for (i=0;i<3;i++) {
-    lbb->c.cyl.axis[i] /= axis_len;
+    new_cylinder_constraint->axis[i] /= axis_len;
   }
       
   return (TCL_OK);
@@ -611,21 +436,25 @@ int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, i
   int i;
 
   lbb->type = LB_BOUNDARY_SPHEROCYLINDER;
+  /* create a new wall constraint */
+  Constraint_spherocylinder* new_spherocylinder_constraint = new Constraint_spherocylinder;
+  lbb->_shape = new_spherocylinder_constraint;
+
   
   /* invalid entries to start of */
-  lbb->c.spherocyl.pos[0] = 
-  lbb->c.spherocyl.pos[1] = 
-  lbb->c.spherocyl.pos[2] = 0;
+  new_spherocylinder_constraint->pos[0] =
+  new_spherocylinder_constraint->pos[1] =
+  new_spherocylinder_constraint->pos[2] = 0;
   
-  lbb->c.spherocyl.axis[0] = 
-  lbb->c.spherocyl.axis[1] = 
-  lbb->c.spherocyl.axis[2] = 0;
+  new_spherocylinder_constraint->axis[0] =
+  new_spherocylinder_constraint->axis[1] =
+  new_spherocylinder_constraint->axis[2] = 0;
   
-  lbb->c.spherocyl.rad = 0;
+  new_spherocylinder_constraint->rad = 0;
   
-  lbb->c.spherocyl.length = 0;
+  new_spherocylinder_constraint->length = 0;
   
-  lbb->c.spherocyl.direction = 0;
+  new_spherocylinder_constraint->direction = 0;
   
   while (argc > 0) {
     if(ARG_IS_S(0, "center")) {
@@ -634,9 +463,9 @@ int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, i
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.pos[0])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[2], &(lbb->c.spherocyl.pos[1])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[3], &(lbb->c.spherocyl.pos[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_spherocylinder_constraint->pos[0])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[2], &(new_spherocylinder_constraint->pos[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(new_spherocylinder_constraint->pos[2])) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 4; argv += 4;
@@ -647,9 +476,9 @@ int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, i
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.axis[0])) == TCL_ERROR ||
-  	     Tcl_GetDouble(interp, argv[2], &(lbb->c.spherocyl.axis[1])) == TCL_ERROR ||
-    	   Tcl_GetDouble(interp, argv[3], &(lbb->c.spherocyl.axis[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_spherocylinder_constraint->axis[0])) == TCL_ERROR ||
+  	     Tcl_GetDouble(interp, argv[2], &(new_spherocylinder_constraint->axis[1])) == TCL_ERROR ||
+    	   Tcl_GetDouble(interp, argv[3], &(new_spherocylinder_constraint->axis[2])) == TCL_ERROR)
 	      return (TCL_ERROR);
 
       argc -= 4; argv += 4;    
@@ -660,7 +489,7 @@ int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, i
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.rad)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_spherocylinder_constraint->rad)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -671,7 +500,7 @@ int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, i
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.length)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_spherocylinder_constraint->length)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -683,10 +512,10 @@ int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, i
       }
       
       if (ARG_IS_S(1, "inside"))
-	      lbb->c.spherocyl.direction = -1;
+	      new_spherocylinder_constraint->direction = -1;
       else if (ARG_IS_S(1, "outside"))
-	      lbb->c.spherocyl.direction = 1;
-      else if (Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.direction)) == TCL_ERROR)
+	      new_spherocylinder_constraint->direction = 1;
+      else if (Tcl_GetDouble(interp, argv[1], &(new_spherocylinder_constraint->direction)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -731,10 +560,10 @@ int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, i
   axis_len=0.;
   
   for (i=0;i<3;i++)
-    axis_len += SQR(lbb->c.spherocyl.axis[i]);
+    axis_len += SQR(new_spherocylinder_constraint->axis[i]);
 
-  if(lbb->c.spherocyl.rad < 0. || axis_len < 1e-30 ||
-     lbb->c.spherocyl.direction == 0 || lbb->c.spherocyl.length <= 0) {
+  if(new_spherocylinder_constraint->rad < 0. || axis_len < 1e-30 ||
+     new_spherocylinder_constraint->direction == 0 || new_spherocylinder_constraint->length <= 0) {
     Tcl_AppendResult(interp, "usage: lbboundary spherocylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>", (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -743,7 +572,7 @@ int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, i
   axis_len = sqrt (axis_len);
   
   for (i=0;i<3;i++) {
-    lbb->c.spherocyl.axis[i] /= axis_len;
+    new_spherocylinder_constraint->axis[i] /= axis_len;
   }
       
   return (TCL_OK);
@@ -755,24 +584,28 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
   double tmp[3];
   
   lbb->type = LB_BOUNDARY_RHOMBOID;
+  /* create a new rhomboid constraint */
+  Constraint_rhomboid* new_rhomboid_constraint = new Constraint_rhomboid;
+  lbb->_shape = new_rhomboid_constraint;
+
   
-  lbb->c.rhomboid.pos[0] = 
-  lbb->c.rhomboid.pos[1] = 
-  lbb->c.rhomboid.pos[2] = 0;
+  new_rhomboid_constraint->pos[0] =
+  new_rhomboid_constraint->pos[1] =
+  new_rhomboid_constraint->pos[2] = 0;
   
-  lbb->c.rhomboid.a[0] = 
-  lbb->c.rhomboid.a[1] = 
-  lbb->c.rhomboid.a[2] = 0;
+  new_rhomboid_constraint->a[0] =
+  new_rhomboid_constraint->a[1] =
+  new_rhomboid_constraint->a[2] = 0;
   
-  lbb->c.rhomboid.b[0] = 
-  lbb->c.rhomboid.b[1] = 
-  lbb->c.rhomboid.b[2] = 0;
+  new_rhomboid_constraint->b[0] =
+  new_rhomboid_constraint->b[1] =
+  new_rhomboid_constraint->b[2] = 0;
   
-  lbb->c.rhomboid.c[0] = 
-  lbb->c.rhomboid.c[1] = 
-  lbb->c.rhomboid.c[2] = 0;
+  new_rhomboid_constraint->c[0] =
+  new_rhomboid_constraint->c[1] =
+  new_rhomboid_constraint->c[2] = 0;
   
-  lbb->c.rhomboid.direction = 0;
+  new_rhomboid_constraint->direction = 0;
   
   while (argc > 0) {
     if(ARG_IS_S(0, "a")) {
@@ -781,9 +614,9 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				return TCL_ERROR;
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.rhomboid.a[0])) == TCL_ERROR ||
-	 			 Tcl_GetDouble(interp, argv[2], &(lbb->c.rhomboid.a[1])) == TCL_ERROR ||
-	  		 Tcl_GetDouble(interp, argv[3], &(lbb->c.rhomboid.a[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_rhomboid_constraint->a[0])) == TCL_ERROR ||
+	 			 Tcl_GetDouble(interp, argv[2], &(new_rhomboid_constraint->a[1])) == TCL_ERROR ||
+	  		 Tcl_GetDouble(interp, argv[3], &(new_rhomboid_constraint->a[2])) == TCL_ERROR)
 				return TCL_ERROR;
 				
 			argc -= 4; argv += 4;    
@@ -794,9 +627,9 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				return TCL_ERROR;
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.rhomboid.b[0])) == TCL_ERROR ||
-	 			 Tcl_GetDouble(interp, argv[2], &(lbb->c.rhomboid.b[1])) == TCL_ERROR ||
-	  		 Tcl_GetDouble(interp, argv[3], &(lbb->c.rhomboid.b[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_rhomboid_constraint->b[0])) == TCL_ERROR ||
+	 			 Tcl_GetDouble(interp, argv[2], &(new_rhomboid_constraint->b[1])) == TCL_ERROR ||
+	  		 Tcl_GetDouble(interp, argv[3], &(new_rhomboid_constraint->b[2])) == TCL_ERROR)
 				return TCL_ERROR;
 				
 			argc -= 4; argv += 4;    
@@ -807,9 +640,9 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				return TCL_ERROR;
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.rhomboid.c[0])) == TCL_ERROR ||
-	 			 Tcl_GetDouble(interp, argv[2], &(lbb->c.rhomboid.c[1])) == TCL_ERROR ||
-	  		 Tcl_GetDouble(interp, argv[3], &(lbb->c.rhomboid.c[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_rhomboid_constraint->c[0])) == TCL_ERROR ||
+	 			 Tcl_GetDouble(interp, argv[2], &(new_rhomboid_constraint->c[1])) == TCL_ERROR ||
+	  		 Tcl_GetDouble(interp, argv[3], &(new_rhomboid_constraint->c[2])) == TCL_ERROR)
 				return TCL_ERROR;
 				
 			argc -= 4; argv += 4;    
@@ -820,9 +653,9 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				return TCL_ERROR;
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.rhomboid.pos[0])) == TCL_ERROR ||
-				 Tcl_GetDouble(interp, argv[2], &(lbb->c.rhomboid.pos[1])) == TCL_ERROR ||
-	  		 Tcl_GetDouble(interp, argv[3], &(lbb->c.rhomboid.pos[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_rhomboid_constraint->pos[0])) == TCL_ERROR ||
+				 Tcl_GetDouble(interp, argv[2], &(new_rhomboid_constraint->pos[1])) == TCL_ERROR ||
+	  		 Tcl_GetDouble(interp, argv[3], &(new_rhomboid_constraint->pos[2])) == TCL_ERROR)
 				return TCL_ERROR;
 				
       argc -= 4; argv += 4;
@@ -859,10 +692,10 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
       }
       
       if(ARG_IS_S(1, "inside"))
-				lbb->c.rhomboid.direction = -1;
+				new_rhomboid_constraint->direction = -1;
       else if(ARG_IS_S(1, "outside"))
-				lbb->c.rhomboid.direction = 1;
-      else if(Tcl_GetDouble(interp, argv[1], &(lbb->c.rhomboid.direction)) == TCL_ERROR)
+				new_rhomboid_constraint->direction = 1;
+      else if(Tcl_GetDouble(interp, argv[1], &(new_rhomboid_constraint->direction)) == TCL_ERROR)
 				return TCL_ERROR;
 				
       argc -= 2; argv += 2;
@@ -873,32 +706,32 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
     }
   }
 
-  if( (lbb->c.rhomboid.a[0] == 0. && lbb->c.rhomboid.a[1] == 0. && lbb->c.rhomboid.a[2] == 0.) ||
-  		(lbb->c.rhomboid.b[0] == 0. && lbb->c.rhomboid.b[1] == 0. && lbb->c.rhomboid.b[2] == 0.) ||
-  		(lbb->c.rhomboid.c[0] == 0. && lbb->c.rhomboid.c[1] == 0. && lbb->c.rhomboid.c[2] == 0.) ||
-  		lbb->c.rhomboid.direction == 0) {
+  if( (new_rhomboid_constraint->a[0] == 0. && new_rhomboid_constraint->a[1] == 0. && new_rhomboid_constraint->a[2] == 0.) ||
+  		(new_rhomboid_constraint->b[0] == 0. && new_rhomboid_constraint->b[1] == 0. && new_rhomboid_constraint->b[2] == 0.) ||
+  		(new_rhomboid_constraint->c[0] == 0. && new_rhomboid_constraint->c[1] == 0. && new_rhomboid_constraint->c[2] == 0.) ||
+  		new_rhomboid_constraint->direction == 0) {
     Tcl_AppendResult(interp, "usage: lbboundary rhomboid corner <x> <y> <z> a <ax> <ay> <az> b <bx> <by> <bz> c <cx> <cy> <cz> direction {inside|outside} type <t> [penetrable <0|1>] [reflecting <1|2>]", (char *) NULL);
     return TCL_ERROR;    
   }
                      
   //If the trihedron a, b, c is left handed, then inside and outside will be exchanged since all normals will be reversed. This compensates  for that, so that the user doesn't have to take care of the handedness.
-  triple_product = lbb->c.rhomboid.a[0]*( lbb->c.rhomboid.b[1]*lbb->c.rhomboid.c[2] - lbb->c.rhomboid.b[2]*lbb->c.rhomboid.c[1] ) +
-                lbb->c.rhomboid.a[1]*( lbb->c.rhomboid.b[2]*lbb->c.rhomboid.c[0] - lbb->c.rhomboid.b[0]*lbb->c.rhomboid.c[2] ) + 
-                lbb->c.rhomboid.a[2]*( lbb->c.rhomboid.b[0]*lbb->c.rhomboid.c[1] - lbb->c.rhomboid.b[1]*lbb->c.rhomboid.c[0] );
+  triple_product = new_rhomboid_constraint->a[0]*( new_rhomboid_constraint->b[1]*new_rhomboid_constraint->c[2] - new_rhomboid_constraint->b[2]*new_rhomboid_constraint->c[1] ) +
+                new_rhomboid_constraint->a[1]*( new_rhomboid_constraint->b[2]*new_rhomboid_constraint->c[0] - new_rhomboid_constraint->b[0]*new_rhomboid_constraint->c[2] ) +
+                new_rhomboid_constraint->a[2]*( new_rhomboid_constraint->b[0]*new_rhomboid_constraint->c[1] - new_rhomboid_constraint->b[1]*new_rhomboid_constraint->c[0] );
                 
   if(triple_product < 0.)
   {    
-    tmp[0] = lbb->c.rhomboid.a[0];
-    tmp[1] = lbb->c.rhomboid.a[1];
-    tmp[2] = lbb->c.rhomboid.a[2];
+    tmp[0] = new_rhomboid_constraint->a[0];
+    tmp[1] = new_rhomboid_constraint->a[1];
+    tmp[2] = new_rhomboid_constraint->a[2];
     
-    lbb->c.rhomboid.a[0] = lbb->c.rhomboid.b[0];
-    lbb->c.rhomboid.a[1] = lbb->c.rhomboid.b[1];
-    lbb->c.rhomboid.a[2] = lbb->c.rhomboid.b[2];
+    new_rhomboid_constraint->a[0] = new_rhomboid_constraint->b[0];
+    new_rhomboid_constraint->a[1] = new_rhomboid_constraint->b[1];
+    new_rhomboid_constraint->a[2] = new_rhomboid_constraint->b[2];
     
-    lbb->c.rhomboid.b[0] = tmp[0];
-    lbb->c.rhomboid.b[1] = tmp[1];
-    lbb->c.rhomboid.b[2] = tmp[2];
+    new_rhomboid_constraint->b[0] = tmp[0];
+    new_rhomboid_constraint->b[1] = tmp[1];
+    new_rhomboid_constraint->b[2] = tmp[2];
   }
 
   return TCL_OK;
@@ -910,28 +743,31 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   int i;
 
   lbb->type = LB_BOUNDARY_POR;
-  
+  /* create a new pore constraint */
+  Constraint_pore* new_pore_constraint = new Constraint_pore;
+  lbb->_shape = new_pore_constraint;
+
   /* invalid entries to start of */
-  lbb->c.pore.pos[0] = 
-  lbb->c.pore.pos[1] = 
-  lbb->c.pore.pos[2] = 0;
+  new_pore_constraint->pos[0] =
+  new_pore_constraint->pos[1] =
+  new_pore_constraint->pos[2] = 0;
   
-  lbb->c.pore.axis[0] = 
-  lbb->c.pore.axis[1] = 
-  lbb->c.pore.axis[2] = 0;
+  new_pore_constraint->axis[0] =
+  new_pore_constraint->axis[1] =
+  new_pore_constraint->axis[2] = 0;
   
-  lbb->c.pore.rad_left = 0;
+  new_pore_constraint->rad_left = 0;
   
-  lbb->c.pore.rad_right = 0;
+  new_pore_constraint->rad_right = 0;
   
-  lbb->c.pore.length = 0;
+  new_pore_constraint->length = 0;
   
-  lbb->c.pore.reflecting = 0;
+  new_pore_constraint->reflecting = 0;
   
-  lbb->c.pore.smoothing_radius = 1.;
+  new_pore_constraint->smoothing_radius = 1.;
   
-  lbb->c.pore.outer_rad_left = std::numeric_limits<double>::max();
-  lbb->c.pore.outer_rad_right = std::numeric_limits<double>::max();
+  new_pore_constraint->outer_rad_left = std::numeric_limits<double>::max();
+  new_pore_constraint->outer_rad_right = std::numeric_limits<double>::max();
   
   while (argc > 0) {
     if(ARG_IS_S(0, "center")) {
@@ -940,9 +776,9 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.pos[0])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.pos[1])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[3], &(lbb->c.pore.pos[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_pore_constraint->pos[0])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[2], &(new_pore_constraint->pos[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(new_pore_constraint->pos[2])) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 4; argv += 4;
@@ -953,9 +789,9 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.axis[0])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.axis[1])) == TCL_ERROR ||
-	       Tcl_GetDouble(interp, argv[3], &(lbb->c.pore.axis[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_pore_constraint->axis[0])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[2], &(new_pore_constraint->axis[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(new_pore_constraint->axis[2])) == TCL_ERROR)
 	      return (TCL_ERROR);
 
       argc -= 4; argv += 4;    
@@ -966,10 +802,10 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.rad_left)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_pore_constraint->rad_left)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
-      lbb->c.pore.rad_right =  lbb->c.pore.rad_left; 
+      new_pore_constraint->rad_right =  new_pore_constraint->rad_left;
       argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "outer_radius", strlen(argv[0]))) {
@@ -978,10 +814,10 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
       }
       
-      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(new_pore_constraint->outer_rad_left)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
-      lbb->c.pore.outer_rad_right =  lbb->c.pore.outer_rad_left; 
+      new_pore_constraint->outer_rad_right =  new_pore_constraint->outer_rad_left;
       argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
@@ -990,7 +826,7 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
       }
       
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.smoothing_radius)) == TCL_ERROR)
+      if (Tcl_GetDouble(interp, argv[1], &(new_pore_constraint->smoothing_radius)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
@@ -1001,10 +837,10 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
       }
       
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.rad_left)) == TCL_ERROR)
+      if (Tcl_GetDouble(interp, argv[1], &(new_pore_constraint->rad_left)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
-      if (Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.rad_right)) == TCL_ERROR)
+      if (Tcl_GetDouble(interp, argv[2], &(new_pore_constraint->rad_right)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 3; argv += 3;
@@ -1015,10 +851,10 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
       }
       
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+      if (Tcl_GetDouble(interp, argv[1], &(new_pore_constraint->outer_rad_left)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
-      if (Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.outer_rad_right)) == TCL_ERROR)
+      if (Tcl_GetDouble(interp, argv[2], &(new_pore_constraint->outer_rad_right)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 3; argv += 3;
@@ -1029,7 +865,7 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
       }
       
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.length)) == TCL_ERROR)
+      if (Tcl_GetDouble(interp, argv[1], &(new_pore_constraint->length)) == TCL_ERROR)
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1041,9 +877,9 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   axis_len=0.;
   
   for(i=0;i<3;i++)
-    axis_len += SQR(lbb->c.pore.axis[i]);
+    axis_len += SQR(new_pore_constraint->axis[i]);
 
-  if(lbb->c.pore.rad_left < 0. || lbb->c.pore.rad_right < 0. || axis_len < 1e-30 || lbb->c.pore.length <= 0) {
+  if(new_pore_constraint->rad_left < 0. || new_pore_constraint->rad_right < 0. || axis_len < 1e-30 || new_pore_constraint->length <= 0) {
     Tcl_AppendResult(interp, "usage: lbboundary pore center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length/2>", (char *) NULL);
     return (TCL_ERROR);
   }
@@ -1052,7 +888,7 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   axis_len = sqrt (axis_len);
   
   for (i=0;i<3;i++) {
-    lbb->c.pore.axis[i] /= axis_len;
+    new_pore_constraint->axis[i] /= axis_len;
   }
   
   return (TCL_OK);
@@ -1064,19 +900,22 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
      YOU KNOW WHAT IT IS THAT YOU ARE DOING */
 
   lbb->type = LB_BOUNDARY_STOMATOCYTE;
+  /* create a new stomatocyte constraint */
+  Constraint_stomatocyte* new_stomatocyte_constraint = new Constraint_stomatocyte;
+  lbb->_shape = new_stomatocyte_constraint;
 
   /* invalid entries to start of */
 
-  lbb->c.stomatocyte.position_x = -M_PI;
-  lbb->c.stomatocyte.position_y = -M_PI;
-  lbb->c.stomatocyte.position_z = -M_PI;
-  lbb->c.stomatocyte.orientation_x = -M_PI;
-  lbb->c.stomatocyte.orientation_y = -M_PI;
-  lbb->c.stomatocyte.orientation_z = -M_PI;
-  lbb->c.stomatocyte.outer_radius = -1.0;
-  lbb->c.stomatocyte.inner_radius = -1.0;
-  lbb->c.stomatocyte.layer_width = -1.0;
-  lbb->c.stomatocyte.direction = 0;
+  new_stomatocyte_constraint->position_x = -M_PI;
+  new_stomatocyte_constraint->position_y = -M_PI;
+  new_stomatocyte_constraint->position_z = -M_PI;
+  new_stomatocyte_constraint->orientation_x = -M_PI;
+  new_stomatocyte_constraint->orientation_y = -M_PI;
+  new_stomatocyte_constraint->orientation_z = -M_PI;
+  new_stomatocyte_constraint->outer_radius = -1.0;
+  new_stomatocyte_constraint->inner_radius = -1.0;
+  new_stomatocyte_constraint->layer_width = -1.0;
+  new_stomatocyte_constraint->direction = 0;
 
   /* read the data */
 
@@ -1090,9 +929,9 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D( 1, lbb->c.stomatocyte.position_x ) ||
-	         !ARG_IS_D( 2, lbb->c.stomatocyte.position_y ) ||
-	         !ARG_IS_D( 3, lbb->c.stomatocyte.position_z ) )
+      if ( !ARG_IS_D( 1, new_stomatocyte_constraint->position_x ) ||
+	         !ARG_IS_D( 2, new_stomatocyte_constraint->position_y ) ||
+	         !ARG_IS_D( 3, new_stomatocyte_constraint->position_z ) )
       {
 	      return (TCL_ERROR);
       }
@@ -1107,9 +946,9 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D( 1, lbb->c.stomatocyte.orientation_x ) ||
-	         !ARG_IS_D( 2, lbb->c.stomatocyte.orientation_y ) ||
-	         !ARG_IS_D( 3, lbb->c.stomatocyte.orientation_z ) )
+      if ( !ARG_IS_D( 1, new_stomatocyte_constraint->orientation_x ) ||
+	         !ARG_IS_D( 2, new_stomatocyte_constraint->orientation_y ) ||
+	         !ARG_IS_D( 3, new_stomatocyte_constraint->orientation_z ) )
       {
 	      return (TCL_ERROR);
       }
@@ -1124,7 +963,7 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D(1, lbb->c.stomatocyte.outer_radius ) )
+      if ( !ARG_IS_D(1, new_stomatocyte_constraint->outer_radius ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1137,7 +976,7 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D( 1, lbb->c.stomatocyte.inner_radius ) )
+      if ( !ARG_IS_D( 1, new_stomatocyte_constraint->inner_radius ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1150,7 +989,7 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D( 1, lbb->c.stomatocyte.layer_width ) )
+      if ( !ARG_IS_D( 1, new_stomatocyte_constraint->layer_width ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1164,10 +1003,10 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
       }
 
       if ( ARG_IS_S( 1, "inside" ) )
-	      lbb->c.stomatocyte.direction = -1;
+	      new_stomatocyte_constraint->direction = -1;
       else if ( ARG_IS_S( 1, "outside" ) )
-	      lbb->c.stomatocyte.direction = 1;
-      else if ( !ARG_IS_D( 1, lbb->c.stomatocyte.direction ) )
+	      new_stomatocyte_constraint->direction = 1;
+      else if ( !ARG_IS_D( 1, new_stomatocyte_constraint->direction ) )
 	      return (TCL_ERROR); 
       argc -= 2; argv += 2;
     }
@@ -1175,18 +1014,18 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
       break;
   }
 
-  if ( lbb->c.stomatocyte.outer_radius < 0.0 || 
-       lbb->c.stomatocyte.inner_radius < 0.0 || 
-       lbb->c.stomatocyte.layer_width < 0.0 ) 
+  if ( new_stomatocyte_constraint->outer_radius < 0.0 ||
+       new_stomatocyte_constraint->inner_radius < 0.0 ||
+       new_stomatocyte_constraint->layer_width < 0.0 )
   {
     Tcl_AppendResult(interp, "stomatocyte radii and width have to be greater than zero",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
 
-  if ( lbb->c.stomatocyte.outer_radius < lbb->c.stomatocyte.inner_radius || 
-       lbb->c.stomatocyte.inner_radius < lbb->c.stomatocyte.layer_width ||
-       lbb->c.stomatocyte.outer_radius < lbb->c.stomatocyte.layer_width ) 
+  if ( new_stomatocyte_constraint->outer_radius < new_stomatocyte_constraint->inner_radius ||
+       new_stomatocyte_constraint->inner_radius < new_stomatocyte_constraint->layer_width ||
+       new_stomatocyte_constraint->outer_radius < new_stomatocyte_constraint->layer_width )
   {
     Tcl_AppendResult(interp, "stomatocyte requires layer_width < inner_radius < outer_radius",
 		     (char *) NULL);
@@ -1203,20 +1042,23 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
      YOU KNOW WHAT IT IS THAT YOU ARE DOING */
 
   lbb->type = LB_BOUNDARY_HOLLOW_CONE;
+  /* create a new hollow cone constraint */
+  Constraint_hollow_cone* new_hollow_cone_constraint = new Constraint_hollow_cone;
+  lbb->_shape = new_hollow_cone_constraint;
 
   /* invalid entries to start of */
 
-  lbb->c.hollow_cone.position_x = -M_PI;
-  lbb->c.hollow_cone.position_y = -M_PI;
-  lbb->c.hollow_cone.position_z = -M_PI;
-  lbb->c.hollow_cone.orientation_x = -M_PI;
-  lbb->c.hollow_cone.orientation_y = -M_PI;
-  lbb->c.hollow_cone.orientation_z = -M_PI;
-  lbb->c.hollow_cone.outer_radius = -1.0;
-  lbb->c.hollow_cone.inner_radius = -1.0;
-  lbb->c.hollow_cone.width = -1.0;
-  lbb->c.hollow_cone.opening_angle = -1.0;
-  lbb->c.hollow_cone.direction = 0;
+  new_hollow_cone_constraint->position_x = -M_PI;
+  new_hollow_cone_constraint->position_y = -M_PI;
+  new_hollow_cone_constraint->position_z = -M_PI;
+  new_hollow_cone_constraint->orientation_x = -M_PI;
+  new_hollow_cone_constraint->orientation_y = -M_PI;
+  new_hollow_cone_constraint->orientation_z = -M_PI;
+  new_hollow_cone_constraint->outer_radius = -1.0;
+  new_hollow_cone_constraint->inner_radius = -1.0;
+  new_hollow_cone_constraint->width = -1.0;
+  new_hollow_cone_constraint->opening_angle = -1.0;
+  new_hollow_cone_constraint->direction = 0;
 
   /* read the data */
 
@@ -1230,9 +1072,9 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.position_x ) ||
-	         !ARG_IS_D( 2, lbb->c.hollow_cone.position_y ) ||
-	         !ARG_IS_D( 3, lbb->c.hollow_cone.position_z ) )
+      if ( !ARG_IS_D( 1, new_hollow_cone_constraint->position_x ) ||
+	         !ARG_IS_D( 2, new_hollow_cone_constraint->position_y ) ||
+	         !ARG_IS_D( 3, new_hollow_cone_constraint->position_z ) )
       {
 	      return (TCL_ERROR);
       }
@@ -1247,9 +1089,9 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.orientation_x ) ||
-	         !ARG_IS_D( 2, lbb->c.hollow_cone.orientation_y ) ||
-	         !ARG_IS_D( 3, lbb->c.hollow_cone.orientation_z ) )
+      if ( !ARG_IS_D( 1, new_hollow_cone_constraint->orientation_x ) ||
+	         !ARG_IS_D( 2, new_hollow_cone_constraint->orientation_y ) ||
+	         !ARG_IS_D( 3, new_hollow_cone_constraint->orientation_z ) )
       {
 	      return (TCL_ERROR);
       }
@@ -1264,7 +1106,7 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D(1, lbb->c.hollow_cone.outer_radius ) )
+      if ( !ARG_IS_D(1, new_hollow_cone_constraint->outer_radius ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1277,7 +1119,7 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.inner_radius ) )
+      if ( !ARG_IS_D( 1, new_hollow_cone_constraint->inner_radius ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1290,7 +1132,7 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.width ) )
+      if ( !ARG_IS_D( 1, new_hollow_cone_constraint->width ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1303,7 +1145,7 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR);
       }
 
-      if ( !ARG_IS_D( 1, lbb->c.hollow_cone.opening_angle ) )
+      if ( !ARG_IS_D( 1, new_hollow_cone_constraint->opening_angle ) )
 	      return (TCL_ERROR);
 
       argc -= 2; argv += 2;
@@ -1317,10 +1159,10 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
       }
 
       if ( ARG_IS_S( 1, "inside" ) )
-	      lbb->c.hollow_cone.direction = -1;
+	      new_hollow_cone_constraint->direction = -1;
       else if ( ARG_IS_S( 1, "outside" ) )
-	      lbb->c.hollow_cone.direction = 1;
-      else if ( !ARG_IS_D( 1, lbb->c.hollow_cone.direction ) )
+	      new_hollow_cone_constraint->direction = 1;
+      else if ( !ARG_IS_D( 1, new_hollow_cone_constraint->direction ) )
 	      return (TCL_ERROR); 
       argc -= 2; argv += 2;
     }
@@ -1328,26 +1170,26 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
       break;
   }
 
-  if ( lbb->c.hollow_cone.outer_radius < 0.0 || 
-       lbb->c.hollow_cone.inner_radius < 0.0 || 
-       lbb->c.hollow_cone.width < 0.0 ) 
+  if ( new_hollow_cone_constraint->outer_radius < 0.0 ||
+       new_hollow_cone_constraint->inner_radius < 0.0 ||
+       new_hollow_cone_constraint->width < 0.0 )
   {
     Tcl_AppendResult(interp, "hollow_cone radii and width have to be greater than zero",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
 
-  if ( lbb->c.hollow_cone.opening_angle < 0.0 || 
-       lbb->c.hollow_cone.opening_angle > M_PI ) 
+  if ( new_hollow_cone_constraint->opening_angle < 0.0 ||
+       new_hollow_cone_constraint->opening_angle > M_PI )
   {
     Tcl_AppendResult(interp, "hollow_cone requires 0.0 <= opening_angle <= Pi",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
 
-  if ( fabs( fmod( lbb->c.hollow_cone.outer_radius , 1.0 ) ) < 1.0e-05 || 
-       fabs( fmod( lbb->c.hollow_cone.inner_radius , 1.0 ) ) < 1.0e-05 || 
-       fabs( fmod( lbb->c.hollow_cone.width , 1.0 ) ) < 1.0e-05 )
+  if ( fabs( fmod( new_hollow_cone_constraint->outer_radius , 1.0 ) ) < 1.0e-05 ||
+       fabs( fmod( new_hollow_cone_constraint->inner_radius , 1.0 ) ) < 1.0e-05 ||
+       fabs( fmod( new_hollow_cone_constraint->width , 1.0 ) ) < 1.0e-05 )
   {
       fprintf( stderr, "Warning: Using (almost) exact integer values for the radii or width.\n");
       fprintf( stderr, "         can lead to numerical problems when the LB grid points coincide\n");
@@ -1364,7 +1206,11 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
 int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
 {  
   lbb->type = LB_BOUNDARY_BOX;
-  lbb->c.box.value = 0;
+  /* create a new boundary box constraint */
+  Constraint_box* new_box_constraint = new Constraint_box;
+  lbb->_shape = new_box_constraint;
+
+  new_box_constraint->value = 0;
 
   return (TCL_OK);
 }
@@ -1446,7 +1292,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
       return (TCL_ERROR);
     }
     
-    if(c_num < 0 || c_num >= n_lb_boundaries) {
+    if(c_num < 0 || c_num >= LB_Boundary::n_lb_boundaries) {
       Tcl_AppendResult(interp, "Error in lbboundary force: The selected boundary does not exist",(char *) NULL);
       return (TCL_ERROR);
     }
@@ -1476,7 +1322,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
       } 
 
       if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-      if(c_num < 0 || c_num >= n_lb_boundaries) {
+      if(c_num < 0 || c_num >= LB_Boundary::n_lb_boundaries) {
 	Tcl_AppendResult(interp, "Can not delete non existing lbboundary",(char *) NULL);
 	return (TCL_ERROR);
       }
