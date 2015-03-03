@@ -21,13 +21,13 @@
 
 #include "config.hpp"
 
-#ifdef ROTATION
+#ifdef CUDA
 
 #include "Actor.hpp"
 #include "SystemInterface.hpp"
 #include <iostream>
 
-void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k, int n, float *quatu, float *torque);
+void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k, int n, float *quatu, CUDA_particle_force *torque);
 
 class HarmonicOrientationWell : public Actor {
 public:
@@ -35,7 +35,7 @@ public:
 
 #ifdef ROTATION
   virtual void computeTorques(SystemInterface &s) {
-    HarmonicOrientationWell_kernel_wrapper(x,y,z,k,s.npart_gpu(), s.quatuGpuBegin(), s.torqueGpuBegin());
+    HarmonicOrientationWell_kernel_wrapper(x,y,z,k,s.npart_gpu(), s.quatuGpuBegin(), s.fGpuBegin());
   };
 #endif
 

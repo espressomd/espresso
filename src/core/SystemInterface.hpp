@@ -20,6 +20,7 @@
 #define SYSTEMINTERFACE_H
 
 #include "Vector.hpp"
+#include "cuda_interface.hpp"
 #include <vector>
 
 /** @todo: Turn needsXY in getter/setter **/
@@ -127,16 +128,11 @@ public:
   virtual bool hasQGpu() { return false; };
   virtual bool requestQGpu() { m_needsQGpu = hasQGpu(); return m_needsQGpu; }
 
-  virtual float *fGpuBegin() { return 0; };
-  virtual float *fGpuEnd() { return 0; };
+  virtual CUDA_particle_force *fGpuBegin() { return 0; };
+  virtual CUDA_particle_force *fGpuEnd() { return 0; };
   virtual float *eGpu() { return 0; };
   virtual bool hasFGpu() { return false; };
   virtual bool requestFGpu() { m_needsFGpu = hasFGpu(); return m_needsFGpu; }
-
-  virtual float *torqueGpuBegin() { return 0; };
-  virtual float *torqueGpuEnd() { return 0; };
-  virtual bool hasTorqueGpu() { return false; };
-  virtual bool requestTorqueGpu() { m_needsTorqueGpu = hasTorqueGpu(); return m_needsTorqueGpu; }
 
   virtual const_real_iterator &qBegin() { return null_scalar; };
   virtual const const_real_iterator &qEnd() { return null_scalar; };
@@ -164,8 +160,6 @@ public:
   virtual bool needsQuatuGpu() { return m_needsQuatuGpu;};
   virtual bool needsQuatu() { return m_needsQuatu;};
   virtual bool needsFGpu() { return m_needsFGpu; };
-  virtual bool needsTorqueGpu() { return m_needsTorqueGpu; };
-  
   
 protected:
   bool m_needsR;
@@ -177,7 +171,6 @@ protected:
   bool m_needsQGpu;
   bool m_needsQuatuGpu;
   bool m_needsFGpu;
-  bool m_needsTorqueGpu;
 };
 
 #endif

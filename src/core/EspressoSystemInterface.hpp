@@ -129,8 +129,8 @@ public:
     return true;
   }
 
-  float *fGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
-  float *fGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
+  CUDA_particle_force *fGpuBegin() { return gpu_get_particle_force_pointer(); };
+  CUDA_particle_force *fGpuEnd() { return gpu_get_particle_force_pointer() + m_gpu_npart; };
   float *eGpu() { return (float *)gpu_get_energy_pointer(); };
   bool hasFGpu() { return true; };
   bool requestFGpu() {
@@ -141,18 +141,6 @@ public:
     return m_needsFGpu;
   };
 
-#ifdef ROTATION
-  float *torqueGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
-  float *torqueGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
-  bool hasTorqueGpu() { return true; };
-  bool requestTorqueGpu() {
-    m_needsTorqueGpu = hasTorqueGpu();
-    m_gpu |= m_needsTorqueGpu;
-    if(m_gpu)
-      enableParticleCommunication();
-    return m_needsTorqueGpu;
-  };
-#endif
 
 #endif
 

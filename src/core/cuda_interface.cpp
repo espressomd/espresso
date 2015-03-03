@@ -274,11 +274,19 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_compositio
               cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
               cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
               cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
+
+#ifdef ROTATION
+              cell->part[i].f.torque[0] += (double)host_forces[i+g].torque[0];
+              cell->part[i].f.torque[1] += (double)host_forces[i+g].torque[1];
+              cell->part[i].f.torque[2] += (double)host_forces[i+g].torque[2];
+#endif
+
 #ifdef SHANCHEN
               for (int ii=0;ii<LB_COMPONENTS;ii++) {
                 cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
               }
 #endif
+
             }
             g += npart;
           }
@@ -335,6 +343,13 @@ static void cuda_mpi_send_forces_slave(){
           cell->part[i].f.f[0] += (double)host_forces_sl[i+g].f[0];
           cell->part[i].f.f[1] += (double)host_forces_sl[i+g].f[1];
           cell->part[i].f.f[2] += (double)host_forces_sl[i+g].f[2];
+
+#ifdef ROTATION
+              cell->part[i].f.torque[0] += (double)host_forces_sl[i+g].torque[0];
+              cell->part[i].f.torque[1] += (double)host_forces_sl[i+g].torque[1];
+              cell->part[i].f.torque[2] += (double)host_forces_sl[i+g].torque[2];
+#endif
+
 #ifdef SHANCHEN
           for (int ii=0;ii<LB_COMPONENTS;ii++) {
              cell->part[i].r.composition[ii] = (double)host_composition_sl[i+g].weight[ii];
