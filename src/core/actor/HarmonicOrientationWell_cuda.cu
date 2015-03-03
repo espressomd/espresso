@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 __global__ void HarmonicOrientationWell_kernel(float x, float y, float z, float k,
-				     int n, float *quatu, float *torque) {
+				     int n, float *quatu, CUDA_particle_force *torque) {
 
   int id = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -42,19 +42,19 @@ __global__ void HarmonicOrientationWell_kernel(float x, float y, float z, float 
   float rn = quatu[3*id + 1]*normori;
   float sn = quatu[3*id + 2]*normori;
 
-  float sgndir = signbit(xn*qn + yn*rn + zn*sn);
+  float sgndir = 1.0f - 2.0f*signbit(xn*qn + yn*rn + zn*sn);
 
   xn *= sgndir;
   yn *= sgndir;
   zn *= sgndir;
 
-  torque[3*id + 0] += k*( -sn*yn + rn*zn );
-  torque[3*id + 1] += k*( -qn*zn + sn*xn );
-  torque[3*id + 2] += k*( -rn*xn + qn*yn );
+  torque[id].torque[0] += k*( -sn*yn + rn*zn );
+  torque[id].torque[1] += k*( -qn*zn + sn*xn );
+  torque[id].torque[2] += k*( -rn*xn + qn*yn );
 }
 
 
-void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k, int n, float *quatu, float *torque) {
+void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k, int n, float *quatu, CUDA_particle_force *torque) {
   dim3 grid(1,1,1);
   dim3 block(1,1,1);
 
