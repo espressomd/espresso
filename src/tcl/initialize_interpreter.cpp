@@ -59,6 +59,7 @@
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
 #include "actor/HarmonicWell_tcl.hpp"
+#include "actor/HarmonicOrientationWell_tcl.hpp"
 #include "minimize_energy_tcl.hpp"
 
 #ifdef TK
@@ -226,6 +227,9 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
 #ifdef CUDA
   REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);
+#ifdef ROTATION
+  REGISTER_COMMAND("harmonic_orientation_well", tclcommand_HarmonicOrientationWell);
+#endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 }

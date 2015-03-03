@@ -31,6 +31,11 @@ typedef struct {
   /** force on the particle given to md part */
   float f[3];
 
+#ifdef ROTATION
+  /** torque on the particle given to md part */
+  float torque[3];
+#endif
+
 } CUDA_particle_force;
 
 #ifdef ENGINE
@@ -75,6 +80,10 @@ typedef struct {
   float p[3];
   /** particle momentum struct velocity p.m->v*/
   float v[3];
+
+#ifdef ROTATION
+  float quatu[3];
+#endif
 
 #ifdef SHANCHEN
   float solvation[2*LB_COMPONENTS];
