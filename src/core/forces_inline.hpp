@@ -213,16 +213,11 @@ inline void force_calc()
     cells_update_ghosts();
 #endif
 
+espressoSystemInterface.update();
+
 #ifdef COLLISION_DETECTION
   prepare_collision_queue();
 #endif
-
-  espressoSystemInterface.update();
-
-  // Compute the forces from the force objects
-  for (ActorList::iterator actor = forceActors.begin();
-          actor != forceActors.end(); ++actor)
-      (*actor)->computeForces(espressoSystemInterface);
 
 #ifdef LB_GPU
 #ifdef SHANCHEN
@@ -239,6 +234,15 @@ inline void force_calc()
     iccp3m_iteration();
 #endif
   init_forces();
+
+  for (ActorList::iterator actor = forceActors.begin();
+          actor != forceActors.end(); ++actor)
+  {
+    (*actor)->computeForces(espressoSystemInterface);
+#ifdef ROTATION
+    (*actor)->computeTorques(espressoSystemInterface);
+#endif
+  }
 
   calc_long_range_forces();
 

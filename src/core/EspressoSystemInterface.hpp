@@ -26,7 +26,7 @@
 
 class EspressoSystemInterface : public SystemInterface {
 public:
-  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
+  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
   virtual ~EspressoSystemInterface() {}
 
   void init();
@@ -66,6 +66,12 @@ public:
   bool hasQ() { return true; };
 #endif
 
+#ifdef ROTATION
+  SystemInterface::const_vec_iterator &quatuBegin();
+  const SystemInterface::const_vec_iterator &quatuEnd();
+  bool hasQuatu() { return true; };
+#endif
+
 #ifdef CUDA
   float *rGpuBegin() { return m_r_gpu_begin; };
   float *rGpuEnd() { return m_r_gpu_end; };
@@ -103,6 +109,18 @@ public:
     return m_needsQGpu; 
   };
 
+  float *quatuGpuBegin() { return m_quatu_gpu_begin; };
+  float *quatuGpuEnd() { return m_quatu_gpu_end; };
+  bool hasQuatuGpu() { return true; };
+  bool requestQuatuGpu() { 
+    m_needsQuatuGpu = hasQuatuGpu(); 
+    m_splitParticleStructGpu |= m_needsQuatuGpu;
+    m_gpu |= m_needsQuatuGpu;
+    if(m_gpu)
+      enableParticleCommunication();
+    return m_needsQuatuGpu; 
+  };
+
   bool requestParticleStructGpu() {
     m_needsParticleStructGpu = true;
     m_gpu |= m_needsParticleStructGpu;
@@ -122,6 +140,20 @@ public:
       enableParticleCommunication();
     return m_needsFGpu;
   };
+
+#ifdef ROTATION
+  float *torqueGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
+  float *torqueGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
+  bool hasTorqueGpu() { return true; };
+  bool requestTorqueGpu() {
+    m_needsTorqueGpu = hasTorqueGpu();
+    m_gpu |= m_needsTorqueGpu;
+    if(m_gpu)
+      enableParticleCommunication();
+    return m_needsTorqueGpu;
+  };
+#endif
+
 #endif
 
   unsigned int npart_gpu() {
@@ -149,8 +181,13 @@ protected:
 #endif
 
   Vector3Container R;
+
   #ifdef ELECTROSTATICS
   RealContainer Q;
+  #endif
+
+  #ifdef ROTATION
+  Vector3Container Quatu;
   #endif
 
   const_vec_iterator m_r_begin;
@@ -158,6 +195,9 @@ protected:
 
   const_real_iterator m_q_begin;
   const_real_iterator m_q_end;
+
+  const_vec_iterator m_quatu_begin;
+  const_vec_iterator m_quatu_end;
 
   int m_gpu_npart;
   bool m_gpu;
@@ -170,6 +210,9 @@ protected:
 
   float *m_q_gpu_begin;
   float *m_q_gpu_end;
+
+  float *m_quatu_gpu_begin;
+  float *m_quatu_gpu_end;
 
   unsigned int m_npart;
   Vector3 m_box;

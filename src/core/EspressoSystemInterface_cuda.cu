@@ -76,6 +76,22 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   v[idx + 2] = p.v[2];
 }
 
+__global__ void split_kernel_quatu(CUDA_particle_data *particles, float *quatu, int n) {
+  int idx = blockDim.x*blockIdx.x + threadIdx.x;
+  if(idx >= n)
+    return;
+
+#ifdef ROTATION
+  CUDA_particle_data p = particles[idx];
+
+  idx *= 3;
+
+  quatu[idx + 0] = p.quatu[0];
+  quatu[idx + 1] = p.quatu[1];
+  quatu[idx + 2] = p.quatu[2];
+#endif
+}
+
 void EspressoSystemInterface::reallocDeviceMemory(int n) {
 
   if(m_needsRGpu && ((n != m_gpu_npart) || (m_r_gpu_begin == 0))) {
@@ -99,6 +115,13 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
     m_q_gpu_end = m_q_gpu_begin + 3*n;
   }
 
+  if(m_needsQuatuGpu && ((n != m_gpu_npart) || (m_quatu_gpu_begin == 0))) {
+    if(m_quatu_gpu_begin != 0)
+      cuda_safe_mem(cudaFree(m_quatu_gpu_begin));
+    cuda_safe_mem(cudaMalloc(&m_quatu_gpu_begin, 3*n*sizeof(float)));
+    m_quatu_gpu_end = m_quatu_gpu_begin + 3*n;
+  }
+
   m_gpu_npart = n;
 }
 
@@ -120,4 +143,6 @@ void EspressoSystemInterface::split_particle_struct() {
     split_kernel_r<<<grid,block>>>(gpu_get_particle_pointer(), m_r_gpu_begin,n);
   if(m_needsVGpu)
     split_kernel_v<<<grid,block>>>(gpu_get_particle_pointer(), m_v_gpu_begin,n);
+  if(m_needsQuatuGpu)
+    split_kernel_quatu<<<grid,block>>>(gpu_get_particle_pointer(), m_quatu_gpu_begin,n);
 }
