@@ -55,6 +55,8 @@ EWALD_GPU                       requires CUDA and ELECTROSTATICS
 /* Magnetostatics */
 DIPOLES
 DP3M                            equals DIPOLES and FFTW
+DIPOLAR_DIRECT_SUM		requires CUDA
+DIPOLAR_DIRECT_SUM		equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
 VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE

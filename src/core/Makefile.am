@@ -185,6 +185,8 @@ libEspresso_la_SOURCES += \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
 	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
+	actor/DipolarDirectSum.cpp actor/DipolarDirectSum.hpp \
+	actor/DipolarDirectSum_cuda.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
@@ -200,6 +202,7 @@ CUDA_HEADER_FILES = \
 	p3m_gpu.hpp \
 	cuda_init.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
+	DipolarDirectSum_cuda.hpp \
 	electrokinetics.hpp \
 	fd-electrostatics.hpp
 
@@ -214,7 +217,8 @@ CUDA_SOURCE_FILES = \
 	actor/Mmm1dgpuForce_cuda.cu \
 	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu \
-	immersed_boundary/ibm_cuda.cu 	
+	immersed_boundary/ibm_cuda.cu \
+	actor/DipolarDirectSum_cuda.cu 
 
 # include the dependency tracking files
 include ./$(DEPDIR)/cuda_init_cuda.Plo

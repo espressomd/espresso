@@ -144,6 +144,7 @@ libEspressoTcl_la_SOURCES += \
 	mmm1d_tcl.cpp mmm1d_tcl.hpp \
 	mmm2d_tcl.cpp mmm2d_tcl.hpp \
 	p3m-dipolar_tcl.cpp p3m-dipolar_tcl.hpp \
+	DipolarDirectSum_tcl.cpp DipolarDirectSum_tcl.hpp \
 	p3m_tcl.cpp p3m_tcl.hpp \
 	reaction_field_tcl.cpp reaction_field_tcl.hpp \
 	mdlc_correction_tcl.cpp mdlc_correction_tcl.hpp	
