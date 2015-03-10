@@ -5,6 +5,7 @@
 #include "../forces.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "forces.hpp"
+#include "energy.hpp"
 
 
 
@@ -18,6 +19,7 @@ if (dipolarDirectSum)
 
 dipolarDirectSum =new DipolarDirectSum(espressoSystemInterface);
 forceActors.push_back(dipolarDirectSum);
+energyActors.push_back(dipolarDirectSum);
 
 coulomb.Dmethod = DIPOLAR_DS_GPU;
 
@@ -28,6 +30,7 @@ void deactivate_dipolar_direct_sum_gpu()
 if (dipolarDirectSum)
 {
   forceActors.remove(dipolarDirectSum);
+  energyActors.remove(dipolarDirectSum);
   free(dipolarDirectSum);
   coulomb.Dmethod = DIPOLAR_NONE;
  }

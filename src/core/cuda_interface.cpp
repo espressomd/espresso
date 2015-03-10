@@ -491,7 +491,7 @@ void copy_CUDA_energy_to_energy(CUDA_energy energy_host)
   energy.bonded[0] += energy_host.bonded;
   energy.non_bonded[0] += energy_host.non_bonded;
   energy.coulomb[0] += energy_host.coulomb;
-  energy.dipolar[0] += energy_host.dipolar;
+  energy.dipolar[1] += energy_host.dipolar;
 }
 
 #endif /* ifdef CUDA */

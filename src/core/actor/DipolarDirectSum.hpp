@@ -7,6 +7,7 @@
 #include "Actor.hpp"
 #include "DipolarDirectSum_cuda.hpp"
 #include "grid.hpp" 
+#include "cuda_interface.hpp"
 
 #ifndef ACTOR_DIPOLARDIRECTSUM_HPP
 #define ACTOR_DIPOLARDIRECTSUM_HPP
@@ -35,7 +36,7 @@ public:
      box[i]=s.box()[i];
      per[i] = (PERIODIC(i));
     }
-    DipolarDirectSum_kernel_wrapper(k,s.npart_gpu(),
+    DipolarDirectSum_kernel_wrapper_force(k,s.npart_gpu(),
 					 s.rGpuBegin(), s.dipGpuBegin(), s.fGpuBegin(),s.torqueGpuBegin(),box,per);
   };
   void computeEnergy(SystemInterface &s) {
@@ -46,9 +47,9 @@ public:
      box[i]=s.box()[i];
      per[i] = (PERIODIC(i));
     }
-//    DipolarDirectSum_kernel_wrapper(k,s.npart_gpu(),
-//					 s.rGpuBegin(), s.dipGpuBegin(), s.fGpuBegin(),s.torqueGpuBegin(),box,per);
-  };
+    DipolarDirectSum_kernel_wrapper_energy(k,s.npart_gpu(),
+					 s.rGpuBegin(), s.dipGpuBegin(), box,per,(&(((CUDA_energy*)s.eGpu())->dipolar)));
+ };
 protected:
   float k;
 };
