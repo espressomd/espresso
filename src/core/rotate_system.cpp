@@ -4,6 +4,7 @@
 #include "grid.hpp"
 #include "cells.hpp"
 #include "initialize.hpp" 
+#include "integrate.hpp" 
 
 
 void local_rotate_system(double phi, double theta, double alpha)
@@ -59,7 +60,8 @@ void local_rotate_system(double phi, double theta, double alpha)
   }
 
 
-  on_particle_change();
+  resort_particles =1;
+  announce_resort_particles();
 
 }
 
