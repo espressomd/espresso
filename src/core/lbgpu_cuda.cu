@@ -490,7 +490,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
 
 __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
 
-  float force_factor=powf(para.agrid,4)*para.tau*para.tau;
+  float force_factor=powf(para.agrid,2)*para.tau*para.tau;
   for(int ii=0;ii<LB_COMPONENTS;++ii)
   {
 
@@ -1233,9 +1233,9 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
       d_p_v[print_index].rho[ii] = d_v[index].rho[ii] / para.agrid / para.agrid / para.agrid;
     }
       
-    d_p_v[print_index].v[0] = d_v[index].v[0] / para.tau / para.agrid;
-    d_p_v[print_index].v[1] = d_v[index].v[1] / para.tau / para.agrid;
-    d_p_v[print_index].v[2] = d_v[index].v[2] / para.tau / para.agrid;
+    d_p_v[print_index].v[0] = d_v[index].v[0] * para.agrid / para.tau;
+    d_p_v[print_index].v[1] = d_v[index].v[1] * para.agrid / para.tau;
+    d_p_v[print_index].v[2] = d_v[index].v[2] * para.agrid / para.tau;
 
     /* stress calculation */ 
     for(int ii = 0; ii < LB_COMPONENTS; ii++)
@@ -2500,7 +2500,7 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
 __global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodeforce_gpu *extern_nodeforces, LB_node_force_gpu node_f){
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
-  float factor=powf(para.agrid,4)*para.tau*para.tau;
+  float factor=powf(para.agrid,2)*para.tau*para.tau;
   if(index<n_extern_nodeforces)
   {
     #pragma unroll
