@@ -51,9 +51,11 @@ bool steepest_descent_step(void) {
   int c, i, j, np;
   double f_max = -std::numeric_limits<double>::max();
   double f;
-  double dp, dp2, dp2_max = -std::numeric_limits<double>::max();
-  const double skin2 = SQR(skin);
+  /* Verlet list criterion */
+  const double skin2 = SQR(0.5*skin);
   double f_max_global;
+  double dx[3], dx2;
+  const double max_dx2 = SQR(params->max_displacement);
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -61,7 +63,7 @@ bool steepest_descent_step(void) {
     np = cell->n;
     for(i = 0; i < np; i++) {
       f = 0.0;
-      dp2 = 0.0;
+      dx2 = 0.0;
 #ifdef VIRTUAL_SITES
       if (ifParticleIsVirtual(&p[i])) continue;
 #endif
@@ -71,20 +73,32 @@ bool steepest_descent_step(void) {
 #endif
           {
             f += SQR(p[i].f.f[j]);	    	    
-	    dp = params->gamma * p[i].f.f[j];
-	    if(fabs(dp) > params->max_displacement)
-	      dp = sgn<double>(dp)*params->max_displacement;
-	    dp2 += SQR(dp);
-            p[i].r.p[j] += dp;
-	    MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dp %e gamma*f %e\n", i, j, dp, params->gamma * p[i].f.f[j]));
-          }
+	    dx[j] = params->gamma * p[i].f.f[j];	    
+	    dx2 += SQR(dx[j]);
+	    MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dx %e gamma*f %e\n", i, j, dx[j], params->gamma * p[i].f.f[j]));
+	  }
+#ifdef EXTERNAL_FORCES
+	else {
+	  dx[j] = 0.0;	  
+	}
+#endif
       }
+
+      if(dx2 <= max_dx2) {
+	p[i].r.p[0] += dx[0];
+	p[i].r.p[1] += dx[1];
+	p[i].r.p[2] += dx[2];
+      } else {
+	const double c = params->max_displacement/std::sqrt(dx2);
+	p[i].r.p[0] += c*dx[0];
+	p[i].r.p[1] += c*dx[1];
+	p[i].r.p[2] += c*dx[2];
+      }
+      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
       f_max = std::max(f_max, f);
-      dp2_max = std::max(dp2_max, dp2);
-      resort_particles = 1;
     }
   }
-  MINIMIZE_ENERGY_TRACE(printf("dp_max %e f_max %e resort_particles %d\n", sqrt(dp2_max), f_max, resort_particles));
+  MINIMIZE_ENERGY_TRACE(printf("f_max %e resort_particles %d\n", f_max, resort_particles));
   announce_resort_particles();
   MPI_Allreduce(&f_max, &f_max_global, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
   return (sqrt(f_max_global) < params->f_max);
