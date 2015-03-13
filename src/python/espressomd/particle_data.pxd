@@ -185,5 +185,5 @@ cdef class ParticleHandle(object):
   cdef public int id
   cdef bint valid
   cdef Particle particleData
-  cdef int updateParticleData(self)
+  cdef int updateParticleData(self) except -1
 
