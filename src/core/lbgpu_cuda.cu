@@ -1016,7 +1016,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index, 
 #ifndef SHANCHEN
 
 #define BOUNCEBACK()  \
-  shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[0]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
+  shift = 2.0f*para.agrid*para.agrid*para.rho[0]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
   pop_to_bounce_back =  n_curr.vd[population*para.number_of_nodes + index ]; \
   to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
   to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
@@ -1033,7 +1033,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index, 
 
 #define BOUNCEBACK()  \
   for(int component=0; component<LB_COMPONENTS;component++){\
-     shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[component]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
+     shift = 2.0f*para.agrid*para.agrid*para.rho[component]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
      pop_to_bounce_back =  n_curr.vd[(population+component*LBQ)*para.number_of_nodes + index ]; \
      to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
      to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
@@ -1312,8 +1312,6 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
     {
       d_p_v[print_index].pi[i] = pi[i] / para.tau
                                        / para.tau
-                                       / para.agrid
-                                       / para.agrid
                                        / para.agrid;
     }
   }
@@ -2472,9 +2470,9 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
 #ifdef EXTERNAL_FORCES
       if(para.external_force)
       {
-        node_f.force[(0+ii*3)*para.number_of_nodes + index] = para.ext_force[0+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
-        node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
-        node_f.force[(2+ii*3)*para.number_of_nodes + index] = para.ext_force[2+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
+        node_f.force[(0+ii*3)*para.number_of_nodes + index] = para.ext_force[0+ii*3]*para.agrid*para.agrid*para.tau*para.tau;
+        node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1+ii*3]*para.agrid*para.agrid*para.tau*para.tau;
+        node_f.force[(2+ii*3)*para.number_of_nodes + index] = para.ext_force[2+ii*3]*para.agrid*para.agrid*para.tau*para.tau;
       }
       else
       {
