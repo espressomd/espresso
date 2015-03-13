@@ -186,7 +186,6 @@ libEspresso_la_SOURCES += \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
 	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
 	actor/DipolarDirectSum.cpp actor/DipolarDirectSum.hpp \
-	actor/DipolarDirectSum_cuda.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
@@ -202,7 +201,6 @@ CUDA_HEADER_FILES = \
 	p3m_gpu.hpp \
 	cuda_init.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
-	DipolarDirectSum_cuda.hpp \
 	electrokinetics.hpp \
 	fd-electrostatics.hpp
 

@@ -7,11 +7,14 @@
 #include <stdio.h>
 
 
+//This needs to be done in the .cu file too!!!!!
+typedef float dds_float ;
+
 
 
 //typedef float float;
 
-__device__ inline void get_mi_vector_float(float res[3], float a[3], float b[3],float box_l[3],int periodic[3])
+__device__ inline void get_mi_vector_dds(dds_float res[3], dds_float a[3], dds_float b[3],dds_float box_l[3],int periodic[3])
 {
   int i;
 
@@ -37,26 +40,27 @@ __device__ inline void get_mi_vector_float(float res[3], float a[3], float b[3],
 
 
 
-__device__ void dipole_ia_force(int id,float pf, float* r1, float *r2, float* dip1, float* dip2, float* f1, float* torque1, float* torque2, int force_flag, float box_l[3], int periodic[3])
+__device__ void dipole_ia_force(int id,dds_float pf, float* r1, float *r2, float* dip1, float* dip2, dds_float* f1, dds_float* torque1, dds_float* torque2, int force_flag, dds_float box_l[3], int periodic[3])
 {
-//float dip1[3],dip2[3],r1[3],r2[3];
-//for (int i=0;i<3;i++)
-//{
-// dip1[i]=_dip1[i];
-// dip2[i]=_dip2[i];
-// r1[i]=_r1[i];
-// r2[i]=_r2[i];
-//
-//}
-  float r_inv,pe1,pe2,pe3,pe4,r_sq,r3_inv,r5_inv,r_sq_inv,r7_inv,a,b,cc,d,ab;
+  dds_float r_inv,pe1,pe2,pe3,pe4,r_sq,r3_inv,r5_inv,r_sq_inv,r7_inv,a,b,cc,d,ab;
 #ifdef ROTATION
-  float bx,by,bz,ax,ay,az; 
+  dds_float bx,by,bz,ax,ay,az; 
 #endif
-  float dr[3];
+
+dds_float dr[3];
+dds_float _r1[3],_r2[3],_dip1[3],_dip2[3];
+
+for (int i=i=0;i<3;i++)
+{
+ _r1[i]=r1[i];
+ _r2[i]=r2[i];
+ _dip1[i]=dip1[i];
+ _dip2[i]=dip2[i];
+}
  
 	
   // Distance between particles
-  get_mi_vector_float(dr,r1,r2,box_l,periodic);
+  get_mi_vector_dds(dr,_r1,_r2,box_l,periodic);
 
   // Powers of distance
   r_sq=scalar(dr,dr);
@@ -71,9 +75,9 @@ __device__ void dipole_ia_force(int id,float pf, float* r1, float *r2, float* di
   r7_inv=r5_inv*r_sq_inv;
  
   // Dot products
-  pe1=scalar(dip1,dip2);
-  pe2=scalar(dip1,dr);
-  pe3=scalar(dip2,dr);
+  pe1=scalar(_dip1,_dip2);
+  pe2=scalar(_dip1,dr);
+  pe3=scalar(_dip2,dr);
   pe4=3.0f*r5_inv;
 
   // Energy, if requested
@@ -88,28 +92,28 @@ __device__ void dipole_ia_force(int id,float pf, float* r1, float *r2, float* di
     d=pe4*pe2;
     
     //  Result
-    f1[0]=(pf*(ab*dr[0]+cc*dip1[0]+d*dip2[0]));
-    f1[1]=(pf*(ab*dr[1]+cc*dip1[1]+d*dip2[1]));
-    f1[2]=(pf*(ab*dr[2]+cc*dip1[2]+d*dip2[2]));
+    f1[0]=(pf*(ab*dr[0]+cc*_dip1[0]+d*_dip2[0]));
+    f1[1]=(pf*(ab*dr[1]+cc*_dip1[1]+d*_dip2[1]));
+    f1[2]=(pf*(ab*dr[2]+cc*_dip1[2]+d*_dip2[2]));
     
 // Torques
 #ifdef ROTATION
-    ax=dip1[1]*dip2[2]-dip2[1]*dip1[2];
-    ay=dip2[0]*dip1[2]-dip1[0]*dip2[2];
-    az=dip1[0]*dip2[1]-dip2[0]*dip1[1];
+    ax=_dip1[1]*_dip2[2]-_dip2[1]*_dip1[2];
+    ay=_dip2[0]*_dip1[2]-_dip1[0]*_dip2[2];
+    az=_dip1[0]*_dip2[1]-_dip2[0]*_dip1[1];
     
-    bx=dip1[1]*dr[2]-dr[1]*dip1[2];
-    by=dr[0]*dip1[2]-dip1[0]*dr[2];
-    bz=dip1[0]*dr[1]-dr[0]*dip1[1];
+    bx=_dip1[1]*dr[2]-dr[1]*_dip1[2];
+    by=dr[0]*_dip1[2]-_dip1[0]*dr[2];
+    bz=_dip1[0]*dr[1]-dr[0]*_dip1[1];
     
     torque1[0]=(pf*(-ax*r3_inv+bx*cc));
     torque1[1]=(pf *(-ay*r3_inv+by*cc));
     torque1[2]=(pf *(-az*r3_inv+bz*cc));
     
     
-    bx=dip2[1]*dr[2]-dr[1]*dip2[2];
-    by=dr[0]*dip2[2]-dip2[0]*dr[2];
-    bz=dip2[0]*dr[1]-dr[0]*dip2[1];
+    bx=_dip2[1]*dr[2]-dr[1]*_dip2[2];
+    by=dr[0]*_dip2[2]-_dip2[0]*dr[2];
+    bz=_dip2[0]*dr[1]-dr[0]*_dip2[1];
 	     
     torque2[0] =pf * (ax*r3_inv+bx*d);
     torque2[1] =pf * (ay*r3_inv+by*d);
@@ -123,23 +127,23 @@ __device__ void dipole_ia_force(int id,float pf, float* r1, float *r2, float* di
 }
 
 
-__device__ float dipole_ia_energy(int id,float pf, float* r1, float *r2, float* dip1, float* dip2, float box_l[3], int periodic[3])
+__device__ dds_float dipole_ia_energy(int id,dds_float pf, float* r1, float *r2, float* dip1, float* dip2, dds_float box_l[3], int periodic[3])
 {
-//float dip1[3],dip2[3],r1[3],r2[3];
-//for (int i=0;i<3;i++)
-//{
-// dip1[i]=_dip1[i];
-// dip2[i]=_dip2[i];
-// r1[i]=_r1[i];
-// r2[i]=_r2[i];
-//
-//}
-  float r_inv,pe1,pe2,pe3,pe4,r_sq,r3_inv,r5_inv,r_sq_inv;
-  float dr[3];
+  dds_float r_inv,pe1,pe2,pe3,pe4,r_sq,r3_inv,r5_inv,r_sq_inv;
+  dds_float dr[3];
+dds_float _r1[3],_r2[3],_dip1[3],_dip2[3];
+
+for (int i=i=0;i<3;i++)
+{
+ _r1[i]=r1[i];
+ _r2[i]=r2[i];
+ _dip1[i]=dip1[i];
+ _dip2[i]=dip2[i];
+}
  
 	
   // Distance between particles
-  get_mi_vector_float(dr,r1,r2,box_l,periodic);
+  get_mi_vector_dds(dr,_r1,_r2,box_l,periodic);
 
   // Powers of distance
   r_sq=scalar(dr,dr);
@@ -153,9 +157,9 @@ __device__ float dipole_ia_energy(int id,float pf, float* r1, float *r2, float* 
   r5_inv=r3_inv*r_sq_inv;
  
   // Dot products
-  pe1=scalar(dip1,dip2);
-  pe2=scalar(dip1,dr);
-  pe3=scalar(dip2,dr);
+  pe1=scalar(_dip1,_dip2);
+  pe2=scalar(_dip1,dr);
+  pe3=scalar(_dip2,dr);
   pe4=3.0f*r5_inv;
 
   // Energy, if requested
@@ -163,8 +167,8 @@ __device__ float dipole_ia_energy(int id,float pf, float* r1, float *r2, float* 
 }
 
 
-__global__ void DipolarDirectSum_kernel_force(float pf,
-				     int n, float *pos, float* dip, float *f, float* torque, float box_l[3], int periodic[3]) {
+__global__ void DipolarDirectSum_kernel_force(dds_float pf,
+				     int n, float *pos, float* dip, float *f, float* torque, dds_float box_l[3], int periodic[3]) {
 
   int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -174,10 +178,10 @@ __global__ void DipolarDirectSum_kernel_force(float pf,
 
   // Kahan summation based on the wikipedia article
   // Force
-  float fi[3],fsum[3],tj[3];
+  dds_float fi[3],fsum[3],tj[3];
   
   // Torque
-  float ti[3],tsum[3];
+  dds_float ti[3],tsum[3];
 
 
 
@@ -238,7 +242,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf,
 
 
 
-__device__ void sumReduction(float *input, float *sum)
+__device__ void sumReduction(dds_float *input, dds_float *sum)
 {
 	int tid = threadIdx.x;
 	for (int i = blockDim.x/2; i > 0; i /= 2)
@@ -248,43 +252,33 @@ __device__ void sumReduction(float *input, float *sum)
 			input[tid] += input[i+tid];
 	}
 	__syncthreads();
-	if (tid == 0)
-		sum[0] = input[0];
-}
-
-__global__ void sumKernel(float *data, int N)
-{
-    //printf("Begin sum kernel\n");
-	extern __shared__ float partialsums[];
-	if (blockIdx.x != 0) return;
-	int tid = threadIdx.x;
-	float result = 0;
-	
-	for (int i = 0; i < N; i += blockDim.x)
+	if (threadIdx.x==0)
 	{
-		if (i+tid >= N)
-			partialsums[tid] = 0;
-		else
-			partialsums[tid] = data[i+tid];
-		
-    //printf("sum kernel before reduction\n");
-		sumReduction(partialsums, &result);
-		if (tid == 0)
-		{
-			if (i == 0) data[0] = 0;
-			data[0] += result;
-		}
-	}
-	//printf("Sum: %f\n",data[0]);
+ 	  sum[0] = input[0];
+        }
+
+}
+
+__global__ void sumKernel(dds_float *data, int N,float* final)
+{
+if (threadIdx.x==0)
+{
+ dds_float sum=0;
+ for (int i=0;i<N;i++)
+  sum+=data[i];
+
+*final=sum;
+}
 }
 
 
-__global__ void DipolarDirectSum_kernel_energy(float pf,
-				     int n, float *pos, float* dip, float box_l[3], int periodic[3],float* energySum) {
+__global__ void DipolarDirectSum_kernel_energy(dds_float pf,
+				     int n, float *pos, float* dip, dds_float box_l[3], int periodic[3],dds_float* energySum) {
+
 
   int i = blockIdx.x * blockDim.x + threadIdx.x;
-  double sum=0.0;
-  extern __shared__ float res[];
+  dds_float sum=0.0;
+  extern __shared__ dds_float res[];
   
 
   // There is one thread per particle. Each thread computes interactions
@@ -302,14 +296,18 @@ __global__ void DipolarDirectSum_kernel_energy(float pf,
 
   // Save per thread result into block shared mem
   res[threadIdx.x] =sum;
+  //globalRes[i]=sum;
 
   // Sum results within a block
   __syncthreads(); // Wait til all threads in block are done
-   sumReduction(res,&(energySum[blockIdx.x]));
+  sumReduction(res,&(energySum[blockIdx.x]));
+//  if (threadIdx.x==0)
+//   printf("Block sum %d %f\n",blockIdx.x,energySum[blockIdx.x]);
+
 }
 
 
-void DipolarDirectSum_kernel_wrapper_force(float k, int n, float *pos, float *dip, float* f, float* torque, float box_l[3],int periodic[3]) {
+void DipolarDirectSum_kernel_wrapper_force(dds_float k, int n, float *pos, float *dip, float* f, float* torque, dds_float box_l[3],int periodic[3]) {
 
   const int bs=64;
   dim3 grid(1,1,1);
@@ -326,11 +324,11 @@ void DipolarDirectSum_kernel_wrapper_force(float k, int n, float *pos, float *di
     block.x = bs;
   }
 
-  float* box_l_gpu;
+  dds_float* box_l_gpu;
   int* periodic_gpu;
-  cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(float)));
+  cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
   cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
-  cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(float),cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(dds_float),cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
 
 
@@ -342,7 +340,7 @@ void DipolarDirectSum_kernel_wrapper_force(float k, int n, float *pos, float *di
 
 }
 
-void DipolarDirectSum_kernel_wrapper_energy(float k, int n, float *pos, float *dip, float box_l[3],int periodic[3],float* E) {
+void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos, float *dip, dds_float box_l[3],int periodic[3],float* E) {
 
   const int bs=512;
   dim3 grid(1,1,1);
@@ -359,32 +357,31 @@ void DipolarDirectSum_kernel_wrapper_energy(float k, int n, float *pos, float *d
     block.x = bs;
   }
 
-  float* box_l_gpu;
+  dds_float* box_l_gpu;
   int* periodic_gpu;
-  cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(float)));
+  cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
   cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
   cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(float),cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
 
 
-  float* energySum;
-  cuda_safe_mem(cudaMalloc(&energySum,(int)(sizeof(float)*grid.x)));
+  dds_float *energySum;
+  cuda_safe_mem(cudaMalloc(&energySum,(int)(sizeof(dds_float)*grid.x)));
 
   //printf("box_l: %f %f %f\n",box_l[0],box_l[1],box_l[2]);
   
   // This will sum the energies up to the block level
-  KERNELCALL_shared(DipolarDirectSum_kernel_energy,grid,block,bs*sizeof(float), (k, n, pos, dip,box_l_gpu, periodic_gpu,energySum));
+  KERNELCALL_shared(DipolarDirectSum_kernel_energy,grid,block,bs*sizeof(dds_float), (k, n, pos, dip,box_l_gpu, periodic_gpu,energySum));
 
   //printf(" Still here after energy kernel\n");
   // Sum the results of all blocks
   // One thread per block in the prev kernel
   block.x=grid.x;
   grid.x=1;
-  KERNELCALL_shared(sumKernel,grid,block,block.x*sizeof(float), (energySum,block.x));
-  //printf(" Still here after summation kernel\n");
-  cuda_safe_mem(cudaMemcpy(E,energySum,sizeof(float),cudaMemcpyDeviceToDevice));
+  KERNELCALL_shared(sumKernel,grid,block,block.x*sizeof(dds_float), (energySum,block.x,E));
   //printf(" Still here after memcpy\n");
-  
+
+
   cudaFree(energySum);
   cudaFree(box_l_gpu);
   cudaFree(periodic_gpu);

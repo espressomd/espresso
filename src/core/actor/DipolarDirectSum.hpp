@@ -12,6 +12,12 @@
 #ifndef ACTOR_DIPOLARDIRECTSUM_HPP
 #define ACTOR_DIPOLARDIRECTSUM_HPP
 
+//This needs to be done in the .cu file too!!!!!
+typedef float dds_float;
+
+
+void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos, float *dip, dds_float box_l[3],int periodic[3],float* E); 
+void DipolarDirectSum_kernel_wrapper_force(dds_float k, int n, float *pos, float *dip, float* f, float* torque, dds_float box_l[3],int periodic[3]); 
 
 
 
@@ -29,7 +35,7 @@ public:
 
   }; 
   void computeForces(SystemInterface &s) {
-    float box[3];
+    dds_float box[3];
     int per[3];
     for (int i=0;i<3;i++)
     {
@@ -40,7 +46,7 @@ public:
 					 s.rGpuBegin(), s.dipGpuBegin(), s.fGpuBegin(),s.torqueGpuBegin(),box,per);
   };
   void computeEnergy(SystemInterface &s) {
-    float box[3];
+    dds_float box[3];
     int per[3];
     for (int i=0;i<3;i++)
     {
