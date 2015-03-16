@@ -17,6 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
+#include <mpi.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include "collision.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
