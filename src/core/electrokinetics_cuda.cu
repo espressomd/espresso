@@ -360,7 +360,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
                           - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_U00_pressure] ] )/
                         ( 2.0f * ek_parameters_gpu.agrid );
 
-    pressure_gradient *= powf(ek_parameters_gpu.agrid, 3) *
+    pressure_gradient *= powf(ek_parameters_gpu.agrid, 2) * //TODO CHANGE THIS SCALING AND THE FOLLOWING TWO?
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
@@ -376,7 +376,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
                           - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0U0_pressure] ] )/
                         ( 2.0f * ek_parameters_gpu.agrid );
 
-    pressure_gradient *= powf(ek_parameters_gpu.agrid, 3) *
+    pressure_gradient *= powf(ek_parameters_gpu.agrid, 2) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
@@ -392,7 +392,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
                           - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00U_pressure] ] )/
                         ( 2.0f * ek_parameters_gpu.agrid );
 
-    pressure_gradient *= powf(ek_parameters_gpu.agrid, 3) *
+    pressure_gradient *= powf(ek_parameters_gpu.agrid, 2) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
@@ -532,7 +532,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ((cufftReal*)ek_parameters_gpu.charge_potential)[index]
                ) / ek_parameters_gpu.agrid;
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
                
@@ -542,7 +542,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                    force / 2.0f +
                    ek_parameters_gpu.ext_force[0][species_index] *
                    (
-                     powf(ek_parameters_gpu.agrid, 1) *
+                     powf(ek_parameters_gpu.agrid, -1) *
                      ek_parameters_gpu.time_step *
                      ek_parameters_gpu.time_step
                    )
@@ -580,7 +580,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
                ) / ek_parameters_gpu.agrid;
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
   
@@ -590,7 +590,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                    force / 2.0f +
                    ek_parameters_gpu.ext_force[1][species_index] *
                    (
-                     powf(ek_parameters_gpu.agrid, 1) *
+                     powf(ek_parameters_gpu.agrid, -1) *
                      ek_parameters_gpu.time_step *
                      ek_parameters_gpu.time_step
                    )
@@ -629,7 +629,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                  ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
                ) / ek_parameters_gpu.agrid;
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
   
@@ -639,7 +639,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                    force / 2.0f +
                    ek_parameters_gpu.ext_force[2][species_index] *
                    (
-                     powf(ek_parameters_gpu.agrid, 1) *
+                     powf(ek_parameters_gpu.agrid, -1) *
                      ek_parameters_gpu.time_step *
                      ek_parameters_gpu.time_step
                    )
@@ -826,7 +826,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
   
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -860,7 +860,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                 
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -894,7 +894,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
   
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -930,7 +930,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -966,7 +966,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
    
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1003,7 +1003,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
    
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1039,7 +1039,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
    
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
 
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1076,7 +1076,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
    
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1112,7 +1112,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
  
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1150,7 +1150,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
   
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1184,7 +1184,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                 
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1218,7 +1218,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
   
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1254,7 +1254,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1290,7 +1290,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
    
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1327,7 +1327,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
    
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1363,7 +1363,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
    
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
 
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1400,7 +1400,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
    
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 
@@ -1436,7 +1436,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
  
       force = flux * ek_parameters_gpu.T * ek_parameters_gpu.agrid / ek_parameters_gpu.D[species_index];
   
-      force *= powf(ek_parameters_gpu.agrid, 1) *
+      force *= powf(ek_parameters_gpu.agrid, -1) *
                ek_parameters_gpu.time_step *
                ek_parameters_gpu.time_step;
 

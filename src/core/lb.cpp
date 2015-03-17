@@ -1085,9 +1085,9 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
 
         mpi_recv_fluid(node,index,&rho,j,pi);
         // unit conversion
-        p_u[0] = j[0]/rho/lbpar.tau/lbpar.agrid;
-        p_u[1] = j[1]/rho/lbpar.tau/lbpar.agrid;
-        p_u[2] = j[2]/rho/lbpar.tau/lbpar.agrid;
+        p_u[0] = j[0]/rho*lbpar.agrid/lbpar.tau;
+        p_u[1] = j[1]/rho*lbpar.agrid/lbpar.tau;
+        p_u[2] = j[2]/rho*lbpar.agrid/lbpar.tau;
 #endif // LB
     }
     return 0;
@@ -1881,9 +1881,9 @@ void lb_reinit_forces() {
     for (index_t index=0; index < lblattice.halo_grid_volume; index++) {
 #ifdef EXTERNAL_FORCES
         // unit conversion: force density
-        lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-        lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-        lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
+        lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+        lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+        lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
 #else // EXTERNAL_FORCES
         lbfields[index].force[0] = 0.0;
         lbfields[index].force[1] = 0.0;
@@ -2419,9 +2419,9 @@ inline void lb_apply_forces(index_t index, double* mode) {
     /* reset force */
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
-    lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-    lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-    lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
+    lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
 #else // EXTERNAL_FORCES
     lbfields[index].force[0] = 0.0;
     lbfields[index].force[1] = 0.0;

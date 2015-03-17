@@ -490,7 +490,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
 
 __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
 
-  float force_factor=powf(para.agrid,4)*para.tau*para.tau;
+  float force_factor=powf(para.agrid,2)*para.tau*para.tau;
   for(int ii=0;ii<LB_COMPONENTS;++ii)
   {
 
@@ -1016,7 +1016,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index, 
 #ifndef SHANCHEN
 
 #define BOUNCEBACK()  \
-  shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[0]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
+  shift = 2.0f*para.agrid*para.agrid*para.rho[0]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
   pop_to_bounce_back =  n_curr.vd[population*para.number_of_nodes + index ]; \
   to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
   to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
@@ -1033,7 +1033,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index, 
 
 #define BOUNCEBACK()  \
   for(int component=0; component<LB_COMPONENTS;component++){\
-     shift = 2.0f*para.agrid*para.agrid*para.agrid*para.agrid*para.rho[component]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
+     shift = 2.0f*para.agrid*para.agrid*para.rho[component]*3.0f*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
      pop_to_bounce_back =  n_curr.vd[(population+component*LBQ)*para.number_of_nodes + index ]; \
      to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
      to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
@@ -1233,9 +1233,9 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
       d_p_v[print_index].rho[ii] = d_v[index].rho[ii] / para.agrid / para.agrid / para.agrid;
     }
       
-    d_p_v[print_index].v[0] = d_v[index].v[0] / para.tau / para.agrid;
-    d_p_v[print_index].v[1] = d_v[index].v[1] / para.tau / para.agrid;
-    d_p_v[print_index].v[2] = d_v[index].v[2] / para.tau / para.agrid;
+    d_p_v[print_index].v[0] = d_v[index].v[0] * para.agrid / para.tau;
+    d_p_v[print_index].v[1] = d_v[index].v[1] * para.agrid / para.tau;
+    d_p_v[print_index].v[2] = d_v[index].v[2] * para.agrid / para.tau;
 
     /* stress calculation */ 
     for(int ii = 0; ii < LB_COMPONENTS; ii++)
@@ -1312,8 +1312,6 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_
     {
       d_p_v[print_index].pi[i] = pi[i] / para.tau
                                        / para.tau
-                                       / para.agrid
-                                       / para.agrid
                                        / para.agrid;
     }
   }
@@ -2472,9 +2470,9 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
 #ifdef EXTERNAL_FORCES
       if(para.external_force)
       {
-        node_f.force[(0+ii*3)*para.number_of_nodes + index] = para.ext_force[0+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
-        node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
-        node_f.force[(2+ii*3)*para.number_of_nodes + index] = para.ext_force[2+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
+        node_f.force[(0+ii*3)*para.number_of_nodes + index] = para.ext_force[0+ii*3]*para.agrid*para.agrid*para.tau*para.tau;
+        node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1+ii*3]*para.agrid*para.agrid*para.tau*para.tau;
+        node_f.force[(2+ii*3)*para.number_of_nodes + index] = para.ext_force[2+ii*3]*para.agrid*para.agrid*para.tau*para.tau;
       }
       else
       {
@@ -2500,7 +2498,7 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
 __global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodeforce_gpu *extern_nodeforces, LB_node_force_gpu node_f){
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
-  float factor=powf(para.agrid,4)*para.tau*para.tau;
+  float factor=powf(para.agrid,2)*para.tau*para.tau;
   if(index<n_extern_nodeforces)
   {
     #pragma unroll

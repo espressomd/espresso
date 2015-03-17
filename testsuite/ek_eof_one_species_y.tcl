@@ -297,7 +297,7 @@ if { $total_velocity_difference > 3.0e-06 } {
 if { $total_pressure_difference_xx > 6.0e-07 } {
   error_exit "Difference xx component too large"
 }
-if { $total_pressure_difference_yy > 6.0e-05 } {
+if { $total_pressure_difference_yy > 2.0e-04 } {
   error_exit "Difference yy component too large"
 }
 if { $total_pressure_difference_zz > 6.0e-07 } {
