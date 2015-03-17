@@ -505,29 +505,29 @@ IF TABULATED != 1:
    
    
 class Subt_Lj(BondedInteraction):
-  def typeNumber(self):
-    return 7
+  IF LENNARD_JONES == 1:
+    def typeNumber(self):
+      return 7
 
-  def typeName(self): 
-    return "SUBT_LJ"
+    def typeName(self): 
+      return "SUBT_LJ"
 
-  def validKeys(self):
-    return "r", "k"
+    def validKeys(self):
+      return "r", "k"
 
-  def requiredKeys(self): 
-    return "r", "k"
+    def requiredKeys(self): 
+      return "r", "k"
 
-  def setDefaultParams(self):
-    self._params = {"k":0, "r":0} 
+    def setDefaultParams(self):
+      self._params = {"k":0, "r":0} 
 
-  def _getParamsFromEsCore(self):
-    return \
-      {"k":bonded_ia_params[self._bondId].p.subt_lj.k,\
-       "r":bonded_ia_params[self._bondId].p.subt_lj.r}
+    def _getParamsFromEsCore(self):
+      return \
+        {"k":bonded_ia_params[self._bondId].p.subt_lj.k,\
+         "r":bonded_ia_params[self._bondId].p.subt_lj.r}
 
-  def _setParamsInEsCore(self):
-    subt_lj_set_params(self._bondId,self._params["k"],self._params["r"])
-
+    def _setParamsInEsCore(self):
+      subt_lj_set_params(self._bondId,self._params["k"],self._params["r"])
 
 IF BOND_VIRTUAL == 1:
   class Virtual(BondedInteraction):
