@@ -2202,7 +2202,7 @@ void ek_integrate() {
      since in the reaction set up the previous-step LB force is added to the flux
      (in ek_calculate_quantities / ek_displacement), which is copied in this routine */
 
-  KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
+  //KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
 
 
 
