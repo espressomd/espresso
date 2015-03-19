@@ -207,4 +207,8 @@ inline int MPI_Allreduce(void *sbuf, void *rbuf, int count, MPI_Datatype dtype, 
   op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
 inline int MPI_Error_string(int errcode, char *string, int *len) { *string = 0; *len = 0; return MPI_SUCCESS; }
 
+inline int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, const int *recvcounts, const int *displs,
+                   MPI_Datatype recvtype, MPI_Comm comm)
+{ return MPI_SUCCESS; }
 #endif
