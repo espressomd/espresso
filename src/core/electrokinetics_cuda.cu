@@ -408,31 +408,36 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
 __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int index, unsigned int *neighborindex, unsigned int species_index, LB_node_force_gpu node_f) {
   float flux, force;
   float boltzmannfactor_local, boltzmannfactor_neighbor;
+
+  float agrid_inv = 1.0f / ek_parameters_gpu.agrid;
+  float sqrt2agrid_inv = 1.0f / (sqrtf(2.0f) * ek_parameters_gpu.agrid);
+  float T_inv =  1.0f / ek_parameters_gpu.T;
+  float force_conv = agrid_inv * ek_parameters_gpu.time_step * ek_parameters_gpu.time_step;
   
   boltzmannfactor_local = 
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ek_parameters_gpu.valency[species_index] *
          ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
        );
 
   //face in x
   boltzmannfactor_neighbor =
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ( ek_parameters_gpu.valency[species_index] *
            ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_U00]] -
            ek_parameters_gpu.ext_force[0][species_index] * ek_parameters_gpu.agrid
          )
        );
        
-  flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
+  flux = ( ek_parameters_gpu.d[species_index] * agrid_inv ) *
          ( 1.0f / boltzmannfactor_local +
            1.0f / boltzmannfactor_neighbor
-         ) / 2.0f *
+         ) * 0.5f *
          ( ek_parameters_gpu.rho[species_index][index] *
            boltzmannfactor_local -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U00]] *
            boltzmannfactor_neighbor
-         ) / ek_parameters_gpu.agrid;
+         ) * agrid_inv;
          
   atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U00)],
              flux * ek_parameters_gpu.time_step );
@@ -440,47 +445,40 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
   force  = -1.0f * ek_parameters_gpu.valency[species_index] *
            ( ((cufftReal*)ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_U00]] -
              ((cufftReal*)ek_parameters_gpu.charge_potential)[index]
-           ) / ek_parameters_gpu.agrid;
+           ) * agrid_inv;
 
-  force *= powf(ek_parameters_gpu.agrid, -1) *
-           ek_parameters_gpu.time_step *
-           ek_parameters_gpu.time_step;
+  force *= force_conv;
            
   atomicadd( &node_f.force[index],
              ek_parameters_gpu.rho[species_index][index] *
              (
-               force / 2.0f +
-               ek_parameters_gpu.ext_force[0][species_index] *
-               (
-                 powf(ek_parameters_gpu.agrid, -1) *
-                 ek_parameters_gpu.time_step *
-                 ek_parameters_gpu.time_step
-               )
+               force * 0.5f +
+               ek_parameters_gpu.ext_force[0][species_index] * force_conv
              )
            );
 
   atomicadd( &node_f.force[neighborindex[EK_LINK_U00]],
               ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U00]] *
-              force / 2.0f );
+              force * 0.5f );
   
   //face in y
   boltzmannfactor_neighbor =
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ( ek_parameters_gpu.valency[species_index] *
            ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_0U0]] -
            ek_parameters_gpu.ext_force[1][species_index] * ek_parameters_gpu.agrid
          )
        );
        
-  flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
+  flux = ( ek_parameters_gpu.d[species_index] * agrid_inv ) *
          ( 1.0f / boltzmannfactor_local +
            1.0f / boltzmannfactor_neighbor
-         ) / 2.0f *
+         ) * 0.5f *
          ( ek_parameters_gpu.rho[species_index][index] *
            boltzmannfactor_local -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0U0]] *
            boltzmannfactor_neighbor
-         ) / ek_parameters_gpu.agrid;
+         ) * agrid_inv;
          
   atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0U0)],
              flux * ek_parameters_gpu.time_step );
@@ -488,32 +486,25 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
   force  = -1.0f * ek_parameters_gpu.valency[species_index] *
            ( ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_0U0]] -
              ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
-           ) / ek_parameters_gpu.agrid;
+           ) * agrid_inv;
 
-  force *= powf(ek_parameters_gpu.agrid, -1) *
-           ek_parameters_gpu.time_step *
-           ek_parameters_gpu.time_step;
+  force *= force_conv;
 
   atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index],
              ek_parameters_gpu.rho[species_index][index] *
              (
-               force / 2.0f +
-               ek_parameters_gpu.ext_force[1][species_index] *
-               (
-                 powf(ek_parameters_gpu.agrid, -1) *
-                 ek_parameters_gpu.time_step *
-                 ek_parameters_gpu.time_step
-               )
+               force * 0.5f +
+               ek_parameters_gpu.ext_force[1][species_index] * force_conv
              )
            );
 
   atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0U0]],
               ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0U0]] *
-              force / 2.0f );
+              force * 0.5f );
 
   //face in z
   boltzmannfactor_neighbor =
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ( ek_parameters_gpu.valency[species_index] *
            ( (cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_00U]] -
              ek_parameters_gpu.ext_force[2][species_index] *
@@ -521,15 +512,15 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
            )
          );
          
-  flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
+  flux = ( ek_parameters_gpu.d[species_index] * agrid_inv ) *
          ( 1.0f / boltzmannfactor_local +
            1.0f / boltzmannfactor_neighbor
-         ) / 2.0f *
+         ) * 0.5f *
          ( ek_parameters_gpu.rho[species_index][index] *
            boltzmannfactor_local -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_00U]] *
            boltzmannfactor_neighbor
-         ) / ek_parameters_gpu.agrid;
+         ) * agrid_inv;
 
   atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_00U)],
              flux * ek_parameters_gpu.time_step );
@@ -537,32 +528,25 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
   force  = -1.0f * ek_parameters_gpu.valency[species_index] *
            ( ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_00U]] -
              ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
-           ) / ek_parameters_gpu.agrid;
+           ) * agrid_inv;
 
-  force *= powf(ek_parameters_gpu.agrid, -1) *
-           ek_parameters_gpu.time_step *
-           ek_parameters_gpu.time_step;
+  force *= force_conv;
 
   atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index],
              ek_parameters_gpu.rho[species_index][index] *
              (
-               force / 2.0f +
-               ek_parameters_gpu.ext_force[2][species_index] *
-               (
-                 powf(ek_parameters_gpu.agrid, -1) *
-                 ek_parameters_gpu.time_step *
-                 ek_parameters_gpu.time_step
-               )
+               force * 0.5f +
+               ek_parameters_gpu.ext_force[2][species_index] * force_conv
              )
            );
 
   atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_00U]],
               ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_00U]] *
-              force / 2.0f );
+              force * 0.5f );
 
   //edge in z
   boltzmannfactor_neighbor =
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ( ek_parameters_gpu.valency[species_index] *
            ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_UU0]] -
            ( ek_parameters_gpu.ext_force[0][species_index] +
@@ -571,23 +555,22 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
          )
        );
            
-  flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
+  flux = ( ek_parameters_gpu.d[species_index] * agrid_inv ) *
          ( 1.0f / boltzmannfactor_local +
-           1.0f/boltzmannfactor_neighbor
-         ) / 2.0f *
+           1.0f / boltzmannfactor_neighbor
+         ) * 0.5f *
          ( ek_parameters_gpu.rho[species_index][index] *
            boltzmannfactor_local -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UU0]] *
            boltzmannfactor_neighbor
-         ) /
-         ( sqrt(2.0f) * ek_parameters_gpu.agrid );
+         ) * sqrt2agrid_inv;
         
   atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_UU0)],
              flux * ek_parameters_gpu.time_step
            );
 
   boltzmannfactor_neighbor =
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ( ek_parameters_gpu.valency[species_index] *
            ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_UD0]] -
            ( ek_parameters_gpu.ext_force[0][species_index] -
@@ -596,23 +579,22 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
          )
        );
   
-  flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
+  flux = ( ek_parameters_gpu.d[species_index] * agrid_inv ) *
          ( 1.0f / boltzmannfactor_local +
            1.0f / boltzmannfactor_neighbor
-         ) / 2.0f *
+         ) * 0.5f *
          ( ek_parameters_gpu.rho[species_index][index] *
            boltzmannfactor_local -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UD0]] *
            boltzmannfactor_neighbor
-         ) /
-         ( sqrt(2.0f) * ek_parameters_gpu.agrid );
+         ) * sqrt2agrid_inv;
 
   atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_UD0)],
              flux * ek_parameters_gpu.time_step );
 
   //edge in y
   boltzmannfactor_neighbor =
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ( ek_parameters_gpu.valency[species_index] *
            ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_U0U]] -
            ( ek_parameters_gpu.ext_force[0][species_index] +
@@ -621,22 +603,21 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
          )
        );
   
-  flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
+  flux = ( ek_parameters_gpu.d[species_index] * agrid_inv ) *
          ( 1.0f / boltzmannfactor_local +
            1.0f / boltzmannfactor_neighbor
-         ) / 2.0f *
+         ) * 0.5f *
          ( ek_parameters_gpu.rho[species_index][index] *
            boltzmannfactor_local -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0U]]
            * boltzmannfactor_neighbor
-         ) /
-         ( sqrt(2.0f) * ek_parameters_gpu.agrid );
+         ) * sqrt2agrid_inv;
   
   atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U0U)],
              flux * ek_parameters_gpu.time_step );
 
   boltzmannfactor_neighbor =
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ( ek_parameters_gpu.valency[species_index] *
            ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_U0D]] -
            ( ek_parameters_gpu.ext_force[0][species_index] -
@@ -645,23 +626,22 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
          )
        );
   
-  flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
+  flux = ( ek_parameters_gpu.d[species_index] * agrid_inv ) *
          ( 1.0f / boltzmannfactor_local +
            1.0f / boltzmannfactor_neighbor
-         ) / 2.0f *
+         ) * 0.5f *
          ( ek_parameters_gpu.rho[species_index][index] *
            boltzmannfactor_local -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0D]] *
            boltzmannfactor_neighbor
-         ) /
-         ( sqrt(2.0f) * ek_parameters_gpu.agrid );
+         ) * sqrt2agrid_inv;
 
   atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_U0D)],
              flux * ek_parameters_gpu.time_step );
 
   //edge in x
   boltzmannfactor_neighbor =
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ( ek_parameters_gpu.valency[species_index] *
            ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_0UU]] -
            ( ek_parameters_gpu.ext_force[1][species_index] +
@@ -670,21 +650,20 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
          )
        );
   
-  flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
+  flux = ( ek_parameters_gpu.d[species_index] * agrid_inv ) *
          ( 1.0f / boltzmannfactor_local +
            1.0f / boltzmannfactor_neighbor
-         ) / 2.0f *
+         ) * 0.5f *
          ( ek_parameters_gpu.rho[species_index][index] * boltzmannfactor_local -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UU]] *
            boltzmannfactor_neighbor
-         ) /
-         ( sqrt(2.0f) * ek_parameters_gpu.agrid );
+         ) * sqrt2agrid_inv;
 
   atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0UU)],
              flux * ek_parameters_gpu.time_step );
 
   boltzmannfactor_neighbor =
-    exp( 1.0f / ek_parameters_gpu.T *
+    exp( T_inv *
          ( ek_parameters_gpu.valency[species_index] *
            ((cufftReal*) ek_parameters_gpu.charge_potential)[neighborindex[EK_LINK_0UD]] -
            ( ek_parameters_gpu.ext_force[1][species_index] -
@@ -693,16 +672,15 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
          )
        );
   
-  flux = ( ek_parameters_gpu.d[species_index] / ek_parameters_gpu.agrid ) *
+  flux = ( ek_parameters_gpu.d[species_index] * agrid_inv ) *
          ( 1.0f / boltzmannfactor_local +
            1.0f / boltzmannfactor_neighbor
-         ) / 2.0f *
+         ) * 0.5f *
          ( ek_parameters_gpu.rho[species_index][index] *
            boltzmannfactor_local -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UD]] *
            boltzmannfactor_neighbor
-         ) /
-         ( sqrt(2.0f) * ek_parameters_gpu.agrid );
+         ) * sqrt2agrid_inv;
        
   atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear(index, EK_LINK_0UD)],
              flux * ek_parameters_gpu.time_step );
