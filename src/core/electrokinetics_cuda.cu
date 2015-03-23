@@ -2137,7 +2137,13 @@ void ek_integrate_electrostatics() {
   dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
   
   KERNELCALL( ek_gather_species_charge_density, dim_grid, threads_per_block, () );
-  
+
+#ifdef EK_ELECTROSTATICS_COUPLING
+    if(ek_parameters.es_coupling) {
+      cuda_safe_mem( cudaMemcpy(ek_parameters.charge_potential_buffer, ek_parameters.charge_potential, ek_parameters.number_of_nodes * sizeof(cufftReal), cudaMemcpyDeviceToDevice));
+    }
+#endif
+
   if ( lbpar_gpu.number_of_particles != 0 ) //TODO make it an if number_of_charged_particles != 0
   { 
   
@@ -2389,6 +2395,13 @@ int ek_init() {
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.pressure,
                              ek_parameters.number_of_nodes * sizeof( float ) ) );
     ek_node_is_catalyst = (char*) calloc( ek_parameters.number_of_nodes , sizeof( char ) );
+#endif
+
+#ifdef EK_ELECTROSTATICS_COUPLING
+    if(ek_parameters.es_coupling) {
+    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.charge_potential_buffer,
+      ek_parameters.number_of_nodes * sizeof( cufftComplex ) ) );
+  }
 #endif
 
     lb_get_device_values_pointer( &ek_lb_device_values );

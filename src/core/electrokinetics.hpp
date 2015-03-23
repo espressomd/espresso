@@ -82,6 +82,10 @@ typedef struct {
 #ifdef EK_REACTION
   float* pressure;
 #endif
+#ifdef EK_ELECTROSTATICS_COUPLING
+  bool es_coupling;
+  float *charge_potential_buffer;
+#endif
 } EK_parameters;
 
 #endif
