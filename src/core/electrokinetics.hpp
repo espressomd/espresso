@@ -68,6 +68,11 @@ typedef struct {
   float mass_product1;
   int stencil;
   int number_of_boundary_nodes;
+#ifdef EK_ELECTROSTATICS_COUPLING
+  bool es_coupling;
+  float *charge_potential_buffer;
+  float *electric_field;
+#endif
   float* charge_potential;
   float* j;
   float* lb_force_previous;
@@ -81,11 +86,6 @@ typedef struct {
   char* node_is_catalyst;
 #ifdef EK_REACTION
   float* pressure;
-#endif
-#ifdef EK_ELECTROSTATICS_COUPLING
-  bool es_coupling;
-  float *charge_potential_buffer;
-  float *electric_field;
 #endif
 } EK_parameters;
 
@@ -160,6 +160,9 @@ int ek_set_viscosity(double viscosity);
 int ek_set_friction(double friction);
 int ek_set_T(double T);
 int ek_set_bjerrumlength(double bjerrumlength);
+#ifdef EK_ELECTROSTATICS_COUPLING
+int ek_set_electrostatics_coupling( bool electrostatics_coupling );
+#endif
 int ek_set_bulk_viscosity(double bulk_viscosity);
 int ek_set_gamma_odd(double gamma_odd);
 int ek_set_gamma_even(double gamma_even);

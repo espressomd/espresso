@@ -76,7 +76,10 @@ extern EK_parameters* lb_ek_parameters_gpu;
                                   -1.0, -1.0, -1.0,
                                   -1.0, -1.0, -1.0,
                                   -1.0, -1.0, -1.0,
-                                  0, -1
+                                  0, -1,
+#ifdef EK_ELECTROSTATICS_COUPLING
+                                  false
+#endif                                 
                                 };
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
@@ -3552,6 +3555,10 @@ int ek_set_bjerrumlength( double bjerrumlength ) {
   return 0;
 }
 
+int ek_set_electrostatics_coupling( bool electrostatics_coupling ) {
+  ek_parameters.es_coupling = electrostatics_coupling;
+  return 0;
+}
 
 int ek_set_viscosity( double viscosity ) {
 
