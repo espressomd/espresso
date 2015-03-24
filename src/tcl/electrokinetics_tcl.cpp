@@ -904,7 +904,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
         }
       }
-#ifdef EK_ELECTROSTATICS_COUPLING
+#ifdef EK_ELECTROSTATIC_COUPLING
       else if(ARG0_IS_S("electrostatics_coupling"))
         {
           argc--;
