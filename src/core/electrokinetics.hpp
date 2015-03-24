@@ -85,6 +85,7 @@ typedef struct {
 #ifdef EK_ELECTROSTATICS_COUPLING
   bool es_coupling;
   float *charge_potential_buffer;
+  float *electric_field;
 #endif
 } EK_parameters;
 
