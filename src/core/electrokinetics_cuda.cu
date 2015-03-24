@@ -2036,6 +2036,33 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
   }
 }
 
+#ifdef EK_ELECTROSTATICS_COUPLING
+__global__ void ek_calc_electric_field(const float *potential) {
+  unsigned int coord[3];
+  const unsigned int index = ek_getThreadIndex();
+
+  if( index < ek_parameters_gpu.number_of_nodes ) {
+    rhoindex_linear2cartesian(index, coord);
+    const float agrid_inv = 1.0f / ek_parameters_gpu.agrid;
+
+    ek_parameters_gpu.electric_field[3*index + 0] = 0.5f * agrid_inv *
+      (
+         potential[rhoindex_cartesian2linear((coord[0] + 1) % ek_parameters_gpu.dim_x, coord[1], coord[2])]
+       - potential[rhoindex_cartesian2linear((coord[0] - 1 + ek_parameters_gpu.dim_x) % ek_parameters_gpu.dim_x, coord[1], coord[2])]
+       );
+    ek_parameters_gpu.electric_field[3*index + 1] = 0.5f * agrid_inv *
+      (
+         potential[rhoindex_cartesian2linear(coord[0], (coord[1] + 1) % ek_parameters_gpu.dim_y, coord[2])]
+       - potential[rhoindex_cartesian2linear(coord[0], (coord[1] - 1 + ek_parameters_gpu.dim_y) % ek_parameters_gpu.dim_y, coord[2])]
+       );
+    ek_parameters_gpu.electric_field[3*index + 2] = 0.5f * agrid_inv *
+      (
+         potential[rhoindex_cartesian2linear(coord[0], coord[1], (coord[2] + 1) % ek_parameters_gpu.dim_z)]
+       - potential[rhoindex_cartesian2linear(coord[0], coord[1], (coord[2] - 1 + ek_parameters_gpu.dim_z) % ek_parameters_gpu.dim_z)]
+      );
+  }
+}
+#endif
 
 __global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
 
@@ -2141,6 +2168,7 @@ void ek_integrate_electrostatics() {
 #ifdef EK_ELECTROSTATICS_COUPLING
     if(ek_parameters.es_coupling) {
       cuda_safe_mem( cudaMemcpy(ek_parameters.charge_potential_buffer, ek_parameters.charge_potential, ek_parameters.number_of_nodes * sizeof(cufftReal), cudaMemcpyDeviceToDevice));
+      electrostatics->calculatePotential((cufftComplex *)ek_parameters.charge_potential_buffer);
     }
 #endif
 
