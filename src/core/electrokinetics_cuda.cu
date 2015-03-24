@@ -77,7 +77,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
                                   -1.0, -1.0, -1.0,
                                   -1.0, -1.0, -1.0,
                                   0, -1,
-#ifdef EK_ELECTROSTATICS_COUPLING
+#ifdef EK_ELECTROSTATIC_COUPLING
                                   false
 #endif                                 
                                 };
@@ -2123,7 +2123,7 @@ __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
     }  
 }
 
-#ifdef EK_ELECTROSTATICS_COUPLING
+#ifdef EK_ELECTROSTATIC_COUPLING
 __global__ void ek_calc_electric_field(const float *potential) {
   unsigned int coord[3];
   const unsigned int index = ek_getThreadIndex();
@@ -2252,7 +2252,7 @@ void ek_integrate_electrostatics() {
   
   KERNELCALL( ek_gather_species_charge_density, dim_grid, threads_per_block, () );
 
-#ifdef EK_ELECTROSTATICS_COUPLING
+#ifdef EK_ELECTROSTATIC_COUPLING
     if(ek_parameters.es_coupling) {
       cuda_safe_mem( cudaMemcpy(ek_parameters.charge_potential_buffer, ek_parameters.charge_potential, ek_parameters.number_of_nodes * sizeof(cufftReal), cudaMemcpyDeviceToDevice));
       electrostatics->calculatePotential((cufftComplex *)ek_parameters.charge_potential_buffer);
@@ -2272,7 +2272,7 @@ void ek_integrate_electrostatics() {
     KERNELCALL( ek_gather_particle_charge_density,
                 dim_grid, threads_per_block,
                 ( particle_data_gpu, ek_lbparameters_gpu ) );
-    #ifdef EK_ELECTROSTATICS_COUPLING
+    #ifdef EK_ELECTROSTATIC_COUPLING
     if(ek_parameters.es_coupling) {
       KERNELCALL( ek_spread_particle_force, dim_grid, threads_per_block, (particle_data_gpu, gpu_get_particle_force_pointer(), ek_lbparameters_gpu));
     }
@@ -2517,7 +2517,7 @@ int ek_init() {
     ek_node_is_catalyst = (char*) calloc( ek_parameters.number_of_nodes , sizeof( char ) );
 #endif
 
-#ifdef EK_ELECTROSTATICS_COUPLING
+#ifdef EK_ELECTROSTATIC_COUPLING
     if(ek_parameters.es_coupling) {
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.charge_potential_buffer,
                                ek_parameters.number_of_nodes * sizeof( cufftComplex ) ) );
@@ -3554,11 +3554,12 @@ int ek_set_bjerrumlength( double bjerrumlength ) {
   ek_parameters.bjerrumlength = bjerrumlength;
   return 0;
 }
-
+#ifdef EK_ELECTROSTATIC_COUPLING
 int ek_set_electrostatics_coupling( bool electrostatics_coupling ) {
   ek_parameters.es_coupling = electrostatics_coupling;
   return 0;
 }
+#endif
 
 int ek_set_viscosity( double viscosity ) {
 

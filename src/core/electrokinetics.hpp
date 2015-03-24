@@ -68,7 +68,7 @@ typedef struct {
   float mass_product1;
   int stencil;
   int number_of_boundary_nodes;
-#ifdef EK_ELECTROSTATICS_COUPLING
+#ifdef EK_ELECTROSTATIC_COUPLING
   bool es_coupling;
   float *charge_potential_buffer;
   float *electric_field;
@@ -160,7 +160,7 @@ int ek_set_viscosity(double viscosity);
 int ek_set_friction(double friction);
 int ek_set_T(double T);
 int ek_set_bjerrumlength(double bjerrumlength);
-#ifdef EK_ELECTROSTATICS_COUPLING
+#ifdef EK_ELECTROSTATIC_COUPLING
 int ek_set_electrostatics_coupling( bool electrostatics_coupling );
 #endif
 int ek_set_bulk_viscosity(double bulk_viscosity);
