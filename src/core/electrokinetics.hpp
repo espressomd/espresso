@@ -162,6 +162,7 @@ int ek_set_T(double T);
 int ek_set_bjerrumlength(double bjerrumlength);
 #ifdef EK_ELECTROSTATIC_COUPLING
 int ek_set_electrostatics_coupling( bool electrostatics_coupling );
+void ek_calculate_electrostatic_coupling();
 #endif
 int ek_set_bulk_viscosity(double bulk_viscosity);
 int ek_set_gamma_odd(double gamma_odd);

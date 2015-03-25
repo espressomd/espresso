@@ -2067,7 +2067,7 @@ __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
       lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim_z) % ek_lbparameters_gpu->dim_z;
 
       float force[3] = { 0., 0., 0. };
-#pragma unroll
+#pragma unroll 3
       for(unsigned int dim = 0; dim < 3; ++dim) {
         // 0 0 0
         force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
@@ -2079,7 +2079,7 @@ __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
         force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
                                                                                   lowernode[1],
                                                                                   (lowernode[2] + 1 ) % ek_lbparameters_gpu->dim_z ) + dim]
-          * particle_data[ index ].q * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+          * particle_data[ index ].q * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2];
 
         // 0 1 0
         force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
@@ -2103,7 +2103,7 @@ __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
         force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
                                                                                   lowernode[1],
                                                                                   (lowernode[2] + 1 ) % ek_lbparameters_gpu->dim_z ) + dim]
-          * particle_data[ index ].q * cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+          * particle_data[ index ].q * cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2];
 
         // 1 1 0
         force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
@@ -2240,6 +2240,25 @@ __global__ void ek_reaction( ) {
 }
 #endif
 
+#ifdef EK_ELECTROSTATIC_COUPLING
+void ek_calculate_electrostatic_coupling() {
+  int blocks_per_grid_x;
+  int blocks_per_grid_y = 4;
+  int threads_per_block = 64;
+  dim3 dim_grid;
+
+if((!ek_parameters.es_coupling) || (!initialized))
+    return;
+
+  blocks_per_grid_x =
+    ( lbpar_gpu.number_of_particles + threads_per_block * blocks_per_grid_y - 1 ) /
+    ( threads_per_block * blocks_per_grid_y );
+  dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+
+  KERNELCALL( ek_spread_particle_force, dim_grid, threads_per_block, 
+		(gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), ek_lbparameters_gpu ));
+}
+#endif
 
 void ek_integrate_electrostatics() {
 
@@ -2272,11 +2291,6 @@ void ek_integrate_electrostatics() {
     KERNELCALL( ek_gather_particle_charge_density,
                 dim_grid, threads_per_block,
                 ( particle_data_gpu, ek_lbparameters_gpu ) );
-    #ifdef EK_ELECTROSTATIC_COUPLING
-    if(ek_parameters.es_coupling) {
-      KERNELCALL( ek_spread_particle_force, dim_grid, threads_per_block, (particle_data_gpu, gpu_get_particle_force_pointer(), ek_lbparameters_gpu));
-    }
-    #endif
   }
   
   electrostatics->calculatePotential();
@@ -2284,7 +2298,6 @@ void ek_integrate_electrostatics() {
 
 
 void ek_integrate() {
-
   /** values for the kernel call */
   
   int threads_per_block = 64;
