@@ -2066,60 +2066,60 @@ __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
       lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim_y) % ek_lbparameters_gpu->dim_y;
       lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim_z) % ek_lbparameters_gpu->dim_z;
 
-      float force[3] = { 0., 0., 0. };
+      float efield[3] = { 0., 0., 0. };
 #pragma unroll 3
       for(unsigned int dim = 0; dim < 3; ++dim) {
         // 0 0 0
-        force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
+        efield[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
                                                                                   lowernode[1],
                                                                                     lowernode[2]) + dim]
-          * particle_data[ index ].q * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+          * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
 
         // 0 0 1
-        force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
+        efield[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
                                                                                   lowernode[1],
                                                                                   (lowernode[2] + 1 ) % ek_lbparameters_gpu->dim_z ) + dim]
-          * particle_data[ index ].q * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2];
+          * ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2];
 
         // 0 1 0
-        force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
+        efield[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
                                                                                   (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
                                                                                   lowernode[2]  ) + dim]
-          * particle_data[ index ].q * ( 1 - cellpos[0] ) * cellpos[1] * ( 1 - cellpos[2] );
+          * ( 1 - cellpos[0] ) * cellpos[1] * ( 1 - cellpos[2] );
 
         // 0 1 1
-        force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
+        efield[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( lowernode[0],
                                                                                   (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
                                                                                   (lowernode[2] + 1 ) % ek_lbparameters_gpu->dim_z ) + dim]
-          * particle_data[ index ].q * ( 1 - cellpos[0] ) * cellpos[1] * cellpos[2];
+          * ( 1 - cellpos[0] ) * cellpos[1] * cellpos[2];
 
         // 1 0 0
-        force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
+        efield[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
                                                                                   lowernode[1],
                                                                                   lowernode[2]  ) + dim]
-          * particle_data[ index ].q * cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
+          * cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] );
 
         // 1 0 1
-        force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
+        efield[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
                                                                                   lowernode[1],
                                                                                   (lowernode[2] + 1 ) % ek_lbparameters_gpu->dim_z ) + dim]
-          * particle_data[ index ].q * cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2];
+          * cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2];
 
         // 1 1 0
-        force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
+        efield[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
                                                                                   (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
                                                                                   lowernode[2]  ) + dim]
-          * particle_data[ index ].q * cellpos[0] * cellpos[1] * ( 1 - cellpos[2] );
+          * cellpos[0] * cellpos[1] * ( 1 - cellpos[2] );
 
         // 1 1 1
-        force[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
+        efield[dim] += ek_parameters_gpu.electric_field[3*rhoindex_cartesian2linear( (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
                                                                                   (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
                                                                                   (lowernode[2] + 1 ) % ek_lbparameters_gpu->dim_z ) + dim]
-          * particle_data[ index ].q * cellpos[0] * cellpos[1] * cellpos[2];
+          * cellpos[0] * cellpos[1] * cellpos[2];
       }
-      particle_forces[index].f[0] += force[0];
-      particle_forces[index].f[1] += force[1];
-      particle_forces[index].f[2] += force[2];
+      particle_forces[index].f[0] += particle_data[ index ].q * efield[0];
+      particle_forces[index].f[1] += particle_data[ index ].q * efield[1];
+      particle_forces[index].f[2] += particle_data[ index ].q * efield[2];
     }  
 }
 
@@ -2132,17 +2132,17 @@ __global__ void ek_calc_electric_field(const float *potential) {
     rhoindex_linear2cartesian(index, coord);
     const float agrid_inv = 1.0f / ek_parameters_gpu.agrid;
 
-    ek_parameters_gpu.electric_field[3*index + 0] = 0.5f * agrid_inv *
+    ek_parameters_gpu.electric_field[3*index + 0] = -0.5f * agrid_inv *
       (
          potential[rhoindex_cartesian2linear((coord[0] + 1) % ek_parameters_gpu.dim_x, coord[1], coord[2])]
        - potential[rhoindex_cartesian2linear((coord[0] - 1 + ek_parameters_gpu.dim_x) % ek_parameters_gpu.dim_x, coord[1], coord[2])]
        );
-    ek_parameters_gpu.electric_field[3*index + 1] = 0.5f * agrid_inv *
+    ek_parameters_gpu.electric_field[3*index + 1] = -0.5f * agrid_inv *
       (
          potential[rhoindex_cartesian2linear(coord[0], (coord[1] + 1) % ek_parameters_gpu.dim_y, coord[2])]
        - potential[rhoindex_cartesian2linear(coord[0], (coord[1] - 1 + ek_parameters_gpu.dim_y) % ek_parameters_gpu.dim_y, coord[2])]
        );
-    ek_parameters_gpu.electric_field[3*index + 2] = 0.5f * agrid_inv *
+    ek_parameters_gpu.electric_field[3*index + 2] = -0.5f * agrid_inv *
       (
          potential[rhoindex_cartesian2linear(coord[0], coord[1], (coord[2] + 1) % ek_parameters_gpu.dim_z)]
        - potential[rhoindex_cartesian2linear(coord[0], coord[1], (coord[2] - 1 + ek_parameters_gpu.dim_z) % ek_parameters_gpu.dim_z)]

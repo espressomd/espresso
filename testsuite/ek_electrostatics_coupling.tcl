@@ -36,9 +36,9 @@ puts "###############################################################\n"
 
 set box_x 6
 set box_y 6
-set width 50
+set width 40
 
-set padding 6
+set padding 10
 set box_z [expr $width+2*$padding]
 
 setmd box_l $box_x $box_y $box_z
@@ -46,8 +46,7 @@ setmd box_l $box_x $box_y $box_z
 # Set the electrokinetic parameters
 
 set agrid 1.0
-set dt [expr 1.0/7.0]
-set force 0.13
+set dt [expr 1e-15]
 set sigma -0.05
 set viscosity_kinematic 2.3
 set friction 4.3
@@ -72,19 +71,23 @@ set valency 1.0
 
 # Set up the (LB) electrokinetics fluid
 
-electrokinetics agrid $agrid lb_density $density_water viscosity $viscosity_kinematic friction $friction T $temperature bjerrum_length $bjerrum_length stencil linkcentered
+electrokinetics agrid $agrid lb_density $density_water viscosity $viscosity_kinematic friction $friction T $temperature bjerrum_length $bjerrum_length stencil linkcentered electrostatics_coupling
 
-electrokinetics 1 density 0.0 D 0.0 valency $valency 0 0
+electrokinetics 1 density 0.0 D 1.0 valency $valency
 
 # Set up the charged boundaries 
 
 electrokinetics boundary charge_density [expr $sigma/$agrid] wall normal 0 0 1 d $padding 0 0 direction outside
-electrokinetics boundary charge_density [expr $sigma/$agrid] wall normal 0 0 -1 d -[expr $padding+$width] 0 0 direction outside
+electrokinetics boundary charge_density [expr -$sigma/$agrid] wall normal 0 0 -1 d -[expr $padding+$width] 0 0 direction outside
 
 # Integrate the system
 
-for { set i 0 } { i < 100 } { incr i } {
-    part 0 pos [expr $padding + 0.01*$i * $width] 0 0 q 1.0
+set chen [open "forces.dat" "w"]
+
+for { set i 10 } { $i < 90 } { incr i } {
+    part 0 pos 3. 3. [expr $padding + 0.01*$i * $width] q 1.0
     integrate 0
-    puts [part 0 pr pos f]
+    puts $chen [part 0 pr pos f]
 }
+
+close $chen
