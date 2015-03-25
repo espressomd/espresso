@@ -1889,10 +1889,6 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
       partgrad3[jj+ii*8]=0.0f;
     }
   }
-  // Zero out only if we are at the centre of the particle <=> flag_cs = 0
-  particle_force[part_index].f[0] = flag_cs * particle_force[part_index].f[0];
-  particle_force[part_index].f[1] = flag_cs * particle_force[part_index].f[1];
-  particle_force[part_index].f[2] = flag_cs * particle_force[part_index].f[2];
 
   float position[3];
   position[0] = particle_data[part_index].p[0];
