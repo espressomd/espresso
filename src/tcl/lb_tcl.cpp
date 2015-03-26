@@ -32,7 +32,6 @@
 #include "parser.hpp"
 #include "electrokinetics.hpp"
 
-#ifdef LB_GPU
 
 #ifdef SHANCHEN
 int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j)
@@ -82,6 +81,7 @@ int tclcommand_inter_parse_affinity(Tcl_Interp * interp,int part_type_a,int part
 }
 #endif
 
+#ifdef LB_GPU
 static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
 {
   double f[3];
@@ -204,6 +204,14 @@ int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc,
 /** TCL Interface: The \ref lbfluid command. */
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
+#ifdef PARTIAL_PERIODIC
+#ifdef SHANCHEN
+	if(!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) { 
+        	printf("ERROR: SHANCHEN does not support (yet) partial periodicity, please use [setmd periodic 1 1 1]\n");
+		errexit();
+	}
+#endif
+#endif
 
 #ifdef ELECTROKINETICS
   if ( ek_initialized ) 
@@ -960,7 +968,6 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
       else if (ARG0_IS_S_EXACT("u") || ARG0_IS_S_EXACT("v") || ARG0_IS_S_EXACT("velocity")) 
       {
         lb_lbnode_get_u(coord, double_return);
-
         for (counter = 0; counter < 3; counter++) 
         {
           Tcl_PrintDouble(interp, double_return[counter], double_buffer);

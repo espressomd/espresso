@@ -637,6 +637,14 @@ void mpi_send_solvation(int pnode, int part, double* solvation)
 {
 #ifdef SHANCHEN
   int ii;
+#ifdef LB
+  for(ii=0;ii<LB_COMPONENTS;ii++){
+	if(fabs(solvation[2*ii+1]*solvation[2*ii+1]) > 1e-20 ) {
+		printf("Warning, the second solvation is not implemented in the cpu code\n");
+		break;
+	}
+  }
+#endif
   mpi_call(mpi_send_solvation_slave, pnode, part);
 
   if (pnode == this_node) {
@@ -2483,25 +2491,44 @@ void mpi_send_exclusion_slave(int part1, int part2)
 }
 
 /************** REQ_SET_FLUID **************/
-void mpi_send_fluid(int node, int index, double rho, double *j, double *pi) {
+void mpi_send_fluid(int node, int index, double *rho, double *j, double *pi) {
 #ifdef LB
   if (node==this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
   } else {
-    double data[10] = { rho, j[0], j[1], j[2], pi[0], pi[1], pi[2], pi[3], pi[4], pi[5] };
+#if (LB_COMPONENTS==1)
+    double data[10] = { rho[0], j[0], j[1], j[2], pi[0], pi[1], pi[2], pi[3], pi[4], pi[5] };
     mpi_call(mpi_send_fluid_slave, node, index);
     MPI_Send(data, 10, MPI_DOUBLE, node, SOME_TAG, comm_cart);
-  }
+#else 
+#if (LB_COMPONENTS==2)
+    double data[11] = { rho[0], rho[1], j[0], j[1], j[2], pi[0], pi[1], pi[2], pi[3], pi[4], pi[5] };
+    mpi_call(mpi_send_fluid_slave, node, index);
+    MPI_Send(data, 11, MPI_DOUBLE, node, SOME_TAG, comm_cart);
+#else
+    errexit();
+#endif
+#endif
+}
 #endif
 }
 
 void mpi_send_fluid_slave(int node, int index) {
 #ifdef LB
   if (node==this_node) {
-    double data[10];
-    MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    double data[11];
 
-    lb_calc_n_from_rho_j_pi(index, data[0], &data[1], &data[4]);
+#if (LB_COMPONENTS==1)
+    MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    lb_calc_n_from_rho_j_pi(index, &data[0], &data[1], &data[4]);
+#else
+#if (LB_COMPONENTS==2)
+    MPI_Recv(data, 11, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    lb_calc_n_from_rho_j_pi(index, &data[0], &data[2], &data[5]);
+#else
+    errexit();
+#endif
+#endif
   }
 #endif
 }
@@ -2509,22 +2536,31 @@ void mpi_send_fluid_slave(int node, int index) {
 /************** REQ_GET_FLUID **************/
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
 #ifdef LB
+  int iter=0;
   if (node==this_node) {
     lb_calc_local_fields(index, rho, j, pi);
   } else {
-    double data[10];
+    double data[11]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
     mpi_call(mpi_recv_fluid_slave, node, index);
+#if (LB_COMPONENTS==1)
         MPI_Recv(data, 10, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    *rho = data[0];
-    j[0] = data[1];
-    j[1] = data[2];
-    j[2] = data[3];
-    pi[0] = data[4];
-    pi[1] = data[5];
-    pi[2] = data[6];
-    pi[3] = data[7];
-    pi[4] = data[8];
-    pi[5] = data[9];
+#endif
+#if (LB_COMPONENTS==2)
+        MPI_Recv(data, 11, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+#endif
+    rho[0] = data[iter++];
+#if (LB_COMPONENTS==2)
+    rho[1] = data[iter++];
+#endif
+    j[0] = data[iter++];
+    j[1] = data[iter++];
+    j[2] = data[iter++];
+    pi[0] = data[iter++];
+    pi[1] = data[iter++];
+    pi[2] = data[iter++];
+    pi[3] = data[iter++];
+    pi[4] = data[iter++];
+    pi[5] = data[iter++];
 
   }
 #endif
@@ -2533,9 +2569,17 @@ void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
 void mpi_recv_fluid_slave(int node, int index) {
 #ifdef LB
   if (node==this_node) {
+#if (LB_COMPONENTS==1)
     double data[10];
     lb_calc_local_fields(index, &data[0], &data[1], &data[4]);
     MPI_Send(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+#endif
+
+#if (LB_COMPONENTS==2)
+    double data[11];
+    lb_calc_local_fields(index, &data[0], &data[2], &data[5]);
+    MPI_Send(data, 11, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+#endif
   }
 #endif
 }
@@ -2634,7 +2678,7 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
     lb_get_populations(index, pop);
   } else {
     mpi_call(mpi_recv_fluid_populations_slave, node, index);
-    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(pop, 19*LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
   lbpar.resend_halo=1;
 #endif
@@ -2643,9 +2687,9 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
 void mpi_recv_fluid_populations_slave(int node, int index) {
 #ifdef LB
   if (node==this_node) {
-    double data[19];
+    double data[19*LB_COMPONENTS];
     lb_get_populations(index, data);
-    MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+    MPI_Send(data, 19*LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
   }
   lbpar.resend_halo=1;
 #endif

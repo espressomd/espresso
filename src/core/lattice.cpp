@@ -352,7 +352,6 @@ void Lattice::map_position_to_lattice(const double pos[3], index_t node_index[8]
         lpos = pos[dir] - my_left[dir];
         rel = lpos/this->agrid[dir] + 0.5; // +1 for halo offset
         ind[dir] = (int)floor(rel);
-
         /* surrounding elementary cell is not completely inside this box,
            adjust if this is due to round off errors */
         if (ind[dir] < 0) {

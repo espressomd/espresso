@@ -63,7 +63,7 @@
 #define LBPAR_MOBILITY 9
 #endif
 /*@}*/
-
+extern int fluidstep;
 /**-------------------------------------------------------------------------*/
 /** Data structure holding the parameters for the Lattice Boltzmann system for gpu. */
 typedef struct {

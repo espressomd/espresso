@@ -221,7 +221,7 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn){
 __device__ void random_wrapper(LB_randomnr_gpu *rn) { 
 
 #if defined(FLATNOISE)
-#define sqrt12 3.46410161514f
+#define sqrt12 3.46410161514f 
   random_01(rn);
   rn->randomnr[0]-=0.5f;
   rn->randomnr[0]*=sqrt12;
@@ -488,7 +488,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
   }
 }
 
-__device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
+__device__ void reset_LB_forces_gpu(unsigned int index, LB_node_force_gpu node_f) {
 
   float force_factor=powf(para.agrid,4)*para.tau*para.tau;
   for(int ii=0;ii<LB_COMPONENTS;++ii)
@@ -501,6 +501,9 @@ __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
   node_f.force_buf[(2 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(2 + ii*3 ) * para.number_of_nodes + index];
 #endif
 
+      node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+      node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+      node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
 #ifdef EXTERNAL_FORCES
       if(para.external_force)
       {
@@ -508,18 +511,7 @@ __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
         node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[1 + ii*3 ]*force_factor;
         node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2 + ii*3 ]*force_factor;
       }
-      else
-      {
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-      }
-#else
-      /** reset force */
-      node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-      node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-      node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-#endif
+#endif //  EXTERNAL_FORCES
   }
 }
 
@@ -1045,7 +1037,6 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index, 
        boundary_force[1] += (2.0f*pop_to_bounce_back+shift)*c[1]/para.tau/para.tau/para.agrid; \
        boundary_force[2] += (2.0f*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
        n_curr.vd[(inverse+component*LBQ)*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
-       n_curr.vd[(inverse+component*LBQ)*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
      } \
   }
 #endif
@@ -1194,7 +1185,7 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
 //#if !defined(IMMERSED_BOUNDARY)
   // This must not be done here since we need the forces after LB update for the velocity interpolation
   // It is done by calling IBM_ResetLBForces_GPU from integrate_vv
-  reset_LB_forces(index, node_f);
+  reset_LB_forces_gpu(index, node_f);
 //#endif
 
 #ifdef SHANCHEN
@@ -1735,6 +1726,7 @@ __device__ void calc_node_force_three_point_couple(float *delta, float *delta_j,
 __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_of_non_boundary_nodes ) {
   float mode[4];
   float jsquared = 0.0f;
+  float rho_tot = 0.0f;
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes)
@@ -1744,10 +1736,11 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
       for(int ii=0;ii<LB_COMPONENTS;++ii)
       {  
          calc_mode(mode, n_a, index,ii);
-         jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
-         atomicadd(cpu_jsquared, jsquared);
-         atomicAdd(number_of_non_boundary_nodes, 1);
+         jsquared += mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
+         rho_tot  += mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;
       }
+      atomicadd(cpu_jsquared, jsquared/rho_tot);
+      atomicAdd(number_of_non_boundary_nodes, 1);
     }
   }
 }
@@ -2076,22 +2069,22 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
 #ifdef FLATNOISE
     random_01(rn_part);
-    viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-    viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
+    viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f)*sqrtf(interpolated_rho[ii]/rhotot);
+    viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f)*sqrtf(interpolated_rho[ii]/rhotot);
     random_01(rn_part);
-    viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+    viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f)*sqrtf(interpolated_rho[ii]/rhotot);
 #elif defined(GAUSSRANDOMCUT)
     gaussian_random_cut(rn_part);
-    viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
-    viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
+    viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0]*sqrtf(interpolated_rho[ii]/rhotot);
+    viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1]*sqrtf(interpolated_rho[ii]/rhotot);
     gaussian_random_cut(rn_part);
-    viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+    viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0]*sqrtf(interpolated_rho[ii]/rhotot);
 #elif defined(GAUSSRANDOM)
     gaussian_random(rn_part);
-    viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
-    viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
+    viscforce[0+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0]*sqrtf(interpolated_rho[ii]/rhotot);
+    viscforce[1+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1]*sqrtf(interpolated_rho[ii]/rhotot);
     gaussian_random(rn_part);
-    viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+    viscforce[2+ii*3] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0]*sqrtf(interpolated_rho[ii]/rhotot);
 #else
 #error No noise type defined for the GPU LB
 #endif 
@@ -2469,6 +2462,14 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
     #pragma unroll
     for(int ii=0;ii<LB_COMPONENTS;++ii)
     {
+      node_f.force[(0+ii*3)*para.number_of_nodes + index] = 0.0f;
+      node_f.force[(1+ii*3)*para.number_of_nodes + index] = 0.0f;
+      node_f.force[(2+ii*3)*para.number_of_nodes + index] = 0.0f;
+#ifdef SHANCHEN
+       node_f.scforce[(0+ii*3)*para.number_of_nodes + index] = 0.0f;
+       node_f.scforce[(1+ii*3)*para.number_of_nodes + index] = 0.0f;
+       node_f.scforce[(2+ii*3)*para.number_of_nodes + index] = 0.0f;
+#endif // SHANCHEN
 #ifdef EXTERNAL_FORCES
       if(para.external_force)
       {
@@ -2476,17 +2477,7 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
         node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
         node_f.force[(2+ii*3)*para.number_of_nodes + index] = para.ext_force[2+ii*3]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
       }
-      else
-      {
-        node_f.force[(0+ii*3)*para.number_of_nodes + index] = 0.0f;
-        node_f.force[(1+ii*3)*para.number_of_nodes + index] = 0.0f;
-        node_f.force[(2+ii*3)*para.number_of_nodes + index] = 0.0f;
-      }
-#else
-      node_f.force[(0+ii*3)*para.number_of_nodes + index] = 0.0f;
-      node_f.force[(1+ii*3)*para.number_of_nodes + index] = 0.0f;
-      node_f.force[(2+ii*3)*para.number_of_nodes + index] = 0.0f;
-#endif
+#endif // EXTERNAL_FORCES
     }
   }
 }
@@ -2635,6 +2626,18 @@ __device__ __inline__ void calc_shanchen_contribution(LB_nodes_gpu n_a,int compo
   p[2]=tmp_p[2];
 }
 
+
+__device__ void remove_SC_forces_gpu(unsigned int index, LB_node_force_gpu node_f) { 
+#ifdef SHANCHEN
+  for(int ii=0;ii<LB_COMPONENTS;++ii)
+  {  
+     node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] -=node_f.scforce[(0+ii*3)*para.number_of_nodes + index];
+     node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] -=node_f.scforce[(1+ii*3)*para.number_of_nodes + index];
+     node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] -=node_f.scforce[(2+ii*3)*para.number_of_nodes + index];
+  }
+#endif
+}
+
 /** function to calc shanchen forces 
  * @param n_a     Pointer to local node residing in array a(Input)
  * @param node_f  Pointer to local node force (Input)
@@ -2658,7 +2661,7 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
     /* ShanChen forces are not reset at the end of the integration cycle, 
        in order to compute properly the hydrodynamic fields, so we have
        to reset them here. For the standard LB this is not needed */
-     reset_LB_forces(index, node_f) ;
+     remove_SC_forces_gpu(index, node_f) ;
      /*Let's first identify the neighboring nodes */
      index_to_xyz(index, xyz);
      int x = xyz[0];
@@ -3476,6 +3479,7 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
 
   float host_jsquared = 0.0f;
   float* device_jsquared;
+  float rho_tot=0.0f;
   cuda_safe_mem(cudaMalloc((void**)&device_jsquared, sizeof(float)));
   cuda_safe_mem(cudaMemcpy(device_jsquared, &host_jsquared, sizeof(float), cudaMemcpyHostToDevice));
 
@@ -3490,14 +3494,7 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
   cuda_safe_mem(cudaMemcpy(&host_number_of_non_boundary_nodes, device_number_of_non_boundary_nodes, sizeof(int), cudaMemcpyDeviceToHost));
   cuda_safe_mem(cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float), cudaMemcpyDeviceToHost));
 
-  // TODO: check that temperature calculation is properly implemented for shanchen
-  *host_temp=0;
-
-  #pragma unroll
-  for(int ii=0;ii<LB_COMPONENTS;++ii)
-  { 
-      *host_temp += (double)(host_jsquared*1./(3.0f*lbpar_gpu.rho[ii]*host_number_of_non_boundary_nodes*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
-  }
+  *host_temp = (double)(host_jsquared*1./(3.0f*host_number_of_non_boundary_nodes*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
 }
 
 

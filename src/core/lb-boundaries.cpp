@@ -419,7 +419,7 @@ void lb_bounce_back() {
   int next[19];
   int x,y,z;
   double population_shift;
-  double modes[19];
+  double modes[19*LBQ];
   next[0]  =   0;                       // ( 0, 0, 0) =
   next[1]  =   1;                       // ( 1, 0, 0) +
   next[2]  = - 1;                       // (-1, 0, 0)
@@ -442,33 +442,38 @@ void lb_bounce_back() {
   int reverse[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17 };
 
   /* bottom-up sweep */
-//  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
+//  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) 
   for (z=0; z<lblattice.grid[2]+2; z++) {
     for (y=0; y<lblattice.grid[1]+2; y++) {
-	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
+      for (x=0; x<lblattice.grid[0]+2; x++) {	    
         k= get_linear_index(x,y,z,lblattice.halo_grid);
     
         if (lbfields[k].boundary) {
-          lb_calc_modes(k, modes);
+             double factor = 2.*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid/lbmodel.c_sound_sq;
+             lb_calc_modes(k, modes);
     
-          for (i=0; i<19; i++) {
-            population_shift=0;
-            for (l=0; l<3; l++) {
-              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho[0]*2*lbmodel.c[i][l]*lbmodel.w[i]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq;
-            }
-            if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
-                 y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
-                 z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
-              if ( !lbfields[k-next[i]].boundary ) {
-                for (l=0; l<3; l++) {
-                  lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
-                }
-                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
-              }
-              else
-                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
-            }
-          }
+             for (i=0; i<19; i++) {
+               population_shift=0;
+               for (l=0; l<3; l++) {
+                // population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho[0]*2*lbmodel.c[i][l]*lbmodel.w[i]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq;
+                   population_shift-=lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]; // the rho factor is applied below 
+               }
+	       population_shift *= factor * lbmodel.w[i] ;
+               if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
+                    y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
+                    z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
+                 for(int ii=0 ; ii < LB_COMPONENTS ; ii++) {
+                    if ( !lbfields[k-next[i]].boundary ) {
+                      for (l=0; l<3; l++) {
+                          lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i+ii*LBQ][k]+population_shift*lbpar.rho[ii])*lbmodel.c[i][l];
+                      }
+                      lbfluid[1][reverse[i]+ii*LBQ][k-next[i]]   = lbfluid[1][i+ii*LBQ][k] + population_shift * lbpar.rho[ii];
+                    }
+                    else
+                      lbfluid[1][reverse[i]+ii*LBQ][k-next[i]]   = lbfluid[1][i+ii*LBQ][k];
+                 }
+               }
+             }
         }
       }
     }

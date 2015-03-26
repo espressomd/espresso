@@ -121,9 +121,8 @@ if {$components==1} {
               friction $friction
 }
 if {$components==2} {
-  lbfluid gpu agrid $agrid dens $dens $dens visc $viscosity $viscosity agrid $agrid tau $tau sc_coupling 0.0 0.0 0.0 \
+  lbfluid gpu agrid $agrid dens [expr $dens/2.] [expr $dens/2.] visc $viscosity $viscosity agrid $agrid tau $tau sc_coupling 0.0 0.0 0.0 \
               friction $friction $friction
-  exit 0
 }
 
 

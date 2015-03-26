@@ -74,8 +74,6 @@ proc require_max_nodes_per_side {n} {
 
 # test whether a cuda device exists and can be used
 proc has_cudadevice {} {
-    puts [ has_feature "CUDA" ]
-    puts [ catch {cuda testdevice} ]
     if { [ has_feature "CUDA" ] && ! [ catch {cuda testdevice} ] } then {
         return 1
     } else  {

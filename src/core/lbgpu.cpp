@@ -151,9 +151,6 @@ static int max_ran = 1000000;
 /*@}*/
 //static double tau;
 
-/** measures the MD time since the last fluid update */
-static int fluidstep = 0;
-
 /** c_sound_square in LB units*/
 static float c_sound_sq = 1.0f/3.0f;
 
