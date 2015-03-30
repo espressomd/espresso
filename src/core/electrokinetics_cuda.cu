@@ -1941,7 +1941,7 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
                                                  ) {
 
   unsigned int index = ek_getThreadIndex();
-  unsigned int lowernode[3];
+  int lowernode[3];
   float cellpos[3];
   float gridpos;
 
@@ -2044,7 +2044,7 @@ __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
                                           LB_parameters_gpu * ek_lbparameters_gpu ) {
 
   unsigned int index = ek_getThreadIndex();
-  unsigned int lowernode[3];
+  int lowernode[3];
   float cellpos[3];
   float gridpos;
 
@@ -2052,15 +2052,15 @@ __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
     {  
       gridpos      = particle_data[ index ].p[0] / ek_parameters_gpu.agrid - 0.5f;
       lowernode[0] = (int) floorf( gridpos );
-      cellpos[0]   = gridpos - lowernode[0];
+      cellpos[0]   = gridpos - (float)(lowernode[0]);
   
       gridpos      = particle_data[ index ].p[1] / ek_parameters_gpu.agrid - 0.5f;
       lowernode[1] = (int) floorf( gridpos );
-      cellpos[1]   = gridpos - lowernode[1];
+      cellpos[1]   = gridpos - (float)(lowernode[1]);
   
       gridpos      = particle_data[ index ].p[2] / ek_parameters_gpu.agrid - 0.5f;
       lowernode[2] = (int) floorf( gridpos );
-      cellpos[2]   = gridpos - lowernode[2];
+      cellpos[2]   = gridpos - (float)(lowernode[2]);
 
       lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim_x) % ek_lbparameters_gpu->dim_x;
       lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim_y) % ek_lbparameters_gpu->dim_y;
