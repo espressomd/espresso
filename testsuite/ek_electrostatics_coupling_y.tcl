@@ -19,6 +19,10 @@ require_feature "ELECTROKINETICS"
 require_feature "EK_BOUNDARIES"
 require_feature "EK_ELECTROSTATIC_COUPLING"
 
+# Reference field calculated as gradient of the potential for this system
+set ref_field -0.85645
+# Tolerance for the field
+set field_tol 1e-4
 
 set nn [format %02d [setmd n_nodes]]
 
@@ -34,12 +38,12 @@ puts "###############################################################\n"
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field inside outside the slit
 
-set box_x 6
-set box_y 6
-set width 40
-
+set width 80
 set padding 10
-set box_z [expr $width+2*$padding]
+
+set box_x 6
+set box_y [expr $width+2*$padding]
+set box_z 6
 
 setmd box_l $box_x $box_y $box_z
 
@@ -66,7 +70,6 @@ thermostat off
 # Set up the charged and neutral species
 
 set density_water 26.15
-set density_counterions [expr -2.0*double($sigma)/double($width)]
 set valency 1.0
 
 # Set up the (LB) electrokinetics fluid
@@ -77,17 +80,20 @@ electrokinetics 1 density 0.0 D 1.0 valency $valency
 
 # Set up the charged boundaries 
 
-electrokinetics boundary charge_density [expr $sigma/$agrid] wall normal 0 0 1 d $padding 0 0 direction outside
-electrokinetics boundary charge_density [expr -$sigma/$agrid] wall normal 0 0 -1 d -[expr $padding+$width] 0 0 direction outside
+electrokinetics boundary charge_density [expr $sigma/$agrid] wall normal 0 1 0 d $padding direction outside
+electrokinetics boundary charge_density [expr -$sigma/$agrid] wall normal 0 -1 0 d -[expr $padding+$width] direction outside
 
 # Integrate the system
 
-set chen [open "forces.dat" "w"]
-
 for { set i 10 } { $i < 90 } { incr i } {
-    part 0 pos 3. 3. [expr $padding + 0.01*$i * $width] q 1.0
+    set l [expr ($padding + 0.01*$i * $width)]
+    part 0 pos 0 $l 0 q 1.0
     integrate 0
-    puts $chen [part 0 pr pos f]
+    set E_i [lindex [part 0 pr f] 1]
+    set tol [expr sqrt(($E_i - $ref_field)**2)]
+    if { $tol >= $field_tol } {
+	error_exit "Force deviation $tol bigger than tolerance $field_tol"
+    }
 }
 
-close $chen
+exit 0

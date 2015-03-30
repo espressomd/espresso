@@ -40,6 +40,9 @@ tests = \
 	ek_eof_one_species_x_nonlinear.tcl \
 	ek_eof_one_species_y_nonlinear.tcl \
 	ek_eof_one_species_z_nonlinear.tcl \
+	ek_electrostatics_coupling_x.tcl \
+	ek_electrostatics_coupling_y.tcl \
+	ek_electrostatics_coupling_z.tcl \
 	ek_reaction.tcl \
 	el2d.tcl \
 	el2d_nonneutral.tcl \
