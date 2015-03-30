@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -506,6 +506,7 @@ computed via
 where $F$ is the mean force (momentum transfer per unit time) acting
 on the slab, $L_x L_y$ is the area of the slab and $\dot{\gamma}$ is the shearrate. 
 
+NEMD as implemented generates a Pouseille flow, with shear flow rate varying over a finite wavelength determined by the box. For a planar Couette flow (constant shear, infinite wavelength), consider using Lees-Edwards boundary conditions (see \vref{sec:lees-edwards}) to drive the shear.
 
 \section{\texttt{cellsystem}: Setting up the cell system}
 \label{sec:cell-systems}

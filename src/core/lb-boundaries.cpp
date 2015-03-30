@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group,
   
@@ -50,32 +50,36 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
   
   for(n=0;n<n_lb_boundaries;n++) {
     switch(lb_boundaries[n].type) {
-      case CONSTRAINT_WAL: 
+      case LB_BOUNDARY_WAL:
 	      calculate_wall_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist, vec); 
         break;
         
-      case CONSTRAINT_SPH:
+      case LB_BOUNDARY_SPH:
 	      calculate_sphere_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.sph, &dist, vec); 
         break;
         
-      case CONSTRAINT_CYL: 
+      case LB_BOUNDARY_CYL:
 	      calculate_cylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.cyl, &dist, vec); 
         break;
         
-      case CONSTRAINT_RHOMBOID: 
+      case LB_BOUNDARY_RHOMBOID:
 	      calculate_rhomboid_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.rhomboid, &dist, vec); 
         break;
         
-      case CONSTRAINT_PORE: 
+      case LB_BOUNDARY_POR:
 	      calculate_pore_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.pore, &dist, vec); 
         break;
 
-      case CONSTRAINT_STOMATOCYTE:
+      case LB_BOUNDARY_STOMATOCYTE:
 	      calculate_stomatocyte_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.stomatocyte, &dist, vec); 
         break;
 
-      case CONSTRAINT_HOLLOW_CONE:
+      case LB_BOUNDARY_HOLLOW_CONE:
 	      calculate_hollow_cone_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist, vec); 
+        break;
+      
+      case CONSTRAINT_SPHEROCYLINDER: 
+	      calculate_spherocylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.spherocyl, &dist, vec); 
         break;
     }
     
@@ -94,7 +98,7 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
 void lb_init_boundaries() {
 
   int n, x, y, z;
-  char *errtxt;
+  //char *errtxt;
   double pos[3], dist, dist_tmp=0.0, dist_vec[3];
   
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -106,16 +110,18 @@ void lb_init_boundaries() {
     int boundary_number = -1; // the number the boundary will actually belong to.
   
 #ifdef EK_BOUNDARIES
-      float *host_wallcharge_species_density = NULL;
-      float node_wallcharge = 0.0f;
-      int wallcharge_species = -1, charged_boundaries = 0;
-      int node_charged = 0;
+    float *host_wallcharge_species_density = NULL;
+    float node_wallcharge = 0.0f;
+    int wallcharge_species = -1, charged_boundaries = 0;
+    int node_charged = 0;
+
+    for(n = 0; n < int(n_lb_boundaries); n++)
+      lb_boundaries[n].net_charge = 0.0;
 
     if (ek_initialized)
     {
       host_wallcharge_species_density = (float*) malloc(ek_parameters.number_of_nodes * sizeof(float));
       for(n = 0; n < int(n_lb_boundaries); n++) {
-
         if(lb_boundaries[n].charge_density != 0.0) {
           charged_boundaries = 1;
           break;
@@ -132,12 +138,12 @@ void lb_init_boundaries() {
         }
       
       if(wallcharge_species == -1 && charged_boundaries) {
-        errtxt = runtime_error(9999); //TODO make right
-        ERROR_SPRINTF(errtxt, "{9999 no charged species available to create wall charge\n");
+          ostringstream msg;
+          msg <<"no charged species available to create wall charge\n";
+          runtimeError(msg);
       }
     }
 #endif
-
 
     for(z=0; z<int(lbpar_gpu.dim_z); z++) {
       for(y=0; y<int(lbpar_gpu.dim_y); y++) {
@@ -187,9 +193,14 @@ void lb_init_boundaries() {
                 calculate_hollow_cone_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist_tmp, dist_vec);
                 break;
                 
+              case LB_BOUNDARY_SPHEROCYLINDER:
+                calculate_spherocylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.spherocyl, &dist_tmp, dist_vec);
+                break;
+
               default:
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
+                ostringstream msg;
+                msg <<"lbboundary type "<< lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
+                runtimeError(msg);
             }
             
             if (dist > dist_tmp || n == 0) {
@@ -202,6 +213,7 @@ void lb_init_boundaries() {
               if(dist_tmp <= 0 && lb_boundaries[n].charge_density != 0.0f) {
                 node_charged = 1;
                 node_wallcharge += lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
+                lb_boundaries[n].net_charge += lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
               }
             }
 #endif
@@ -227,6 +239,8 @@ void lb_init_boundaries() {
 #ifdef EK_BOUNDARIES
           if (ek_initialized)
           {
+            ek_parameters.number_of_boundary_nodes = number_of_boundnodes;
+
             if(wallcharge_species != -1) {
               if(pdb_charge_lattice &&
                  pdb_charge_lattice[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] != 0.0f) {
@@ -333,8 +347,9 @@ void lb_init_boundaries() {
                 break;
                 
               default:
-                errtxt = runtime_error(128);
-                ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
+                ostringstream msg;
+                msg <<"lbboundary type " << lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
+                runtimeError(msg);
             }
             
             if (dist_tmp<dist || n == 0) {

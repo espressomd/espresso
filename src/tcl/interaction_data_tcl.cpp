@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -40,6 +40,11 @@
 #include "tab.hpp"
 #include "buckingham.hpp"
 
+//for surface charge output
+#include "mmm2d.hpp"
+#include "mmm-common.hpp"
+#include "elc.hpp"
+
 // Nonbonded
 #include "bmhtf-nacl_tcl.hpp"
 #include "buckingham_tcl.hpp"
@@ -69,6 +74,7 @@
 #include "p3m_tcl.hpp"
 #include "reaction_field_tcl.hpp"
 #include "actor/Mmm1dgpu_tcl.hpp"
+#include "actor/Ewaldgpu_tcl.hpp"
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -86,6 +92,8 @@
 #include "fene_tcl.hpp"
 #include "overlap_tcl.hpp"
 #include "harmonic_tcl.hpp"
+#include "quartic_tcl.hpp"
+#include "bonded_coulomb_tcl.hpp"
 #include "subt_lj_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
@@ -93,6 +101,10 @@
 #include "tcl/object-in-fluid/stretching_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
+#include "immersed_boundary/ibm_triel_tcl.hpp"
+#include "immersed_boundary/ibm_volume_conservation_tcl.hpp"
+#include "immersed_boundary/ibm_tribend_tcl.hpp"
+
 
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
@@ -185,6 +197,10 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 
   #ifdef MMM1D_GPU
   REGISTER_COULOMB("mmm1dgpu", tclcommand_inter_coulomb_parse_mmm1dgpu);
+  #endif
+
+  #ifdef EWALD_GPU
+  REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
   #endif
 
   /* fallback */
@@ -320,8 +336,25 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   case BONDED_IA_VOLUME_FORCE:						
 	return tclprint_to_result_volumeforceIA(interp, params);
 #endif
+      
+#ifdef IMMERSED_BOUNDARY
+    case BONDED_IA_IBM_TRIEL:
+      return tclprint_to_result_ibm_triel(interp, params);
+    case BONDED_IA_IBM_VOLUME_CONSERVATION:
+      return tclprint_to_result_ibm_volume_conservation(interp, params);
+    case BONDED_IA_IBM_TRIBEND:
+      return tclprint_to_result_ibm_tribend(interp, params);
+      
+#endif
+      
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
+  case BONDED_IA_QUARTIC:
+    return tclprint_to_result_quarticIA(interp, params);
+#ifdef ELECTROSTATICS
+  case BONDED_IA_BONDED_COULOMB:
+    return tclprint_to_result_bonded_coulombIA(interp, params);
+#endif
 #ifdef BOND_ANGLE_OLD
   case BONDED_IA_ANGLE_OLD:
     return tclprint_to_result_angleIA(interp, params);
@@ -370,6 +403,8 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
 		     (char *) NULL);
     return (TCL_ERROR);
+  default: // keep the compiler happy if interactions are compiled out
+    break;
   }
   /* if none of the above */
   Tcl_ResetResult(interp);
@@ -511,6 +546,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
 #endif
   case COULOMB_MMM2D: tclprint_to_result_MMM2D(interp); break;
   case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU: tclprint_to_result_ewaldgpu(interp); break;
+#endif
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
@@ -831,6 +869,43 @@ int tclcommand_inter_print_partner_num(Tcl_Interp *interp, int bond_type)
   return TCL_ERROR;
 }
 
+#ifdef ELECTROSTATICS
+/* print applied/induced efields for capacitor feature in ic-mmm2d and ic-elc */
+int tclcommand_print_efield_capacitors(ClientData data, Tcl_Interp * interp, int argc, char ** argv)
+{
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
+  double value=0;
+
+  if (!(
+        (coulomb.method == COULOMB_MMM2D   && mmm2d_params.const_pot_on)
+#ifdef P3M
+     || (coulomb.method == COULOMB_ELC_P3M && elc_params.const_pot_on)
+#endif
+     )) {
+    Tcl_AppendResult(interp, "Electric field output only available for mmm2d or p3m+elc with capacitor feature", (char *) NULL);
+    return TCL_ERROR;
+  }
+  else if (argc > 2) {
+    Tcl_AppendResult(interp, "wrong # arguments: efield_caps <{total} | {induced} | {applied}>", (char *) NULL);
+    return TCL_ERROR;
+  }
+  else if (argc == 1 || ARG1_IS_S("total")) {
+	  value = field_induced + field_applied;
+  }
+  else if (ARG1_IS_S("induced")) {
+	  value = field_induced;
+  }
+  else if (ARG1_IS_S("applied")) {
+	  value = field_applied;
+  }
+
+  Tcl_PrintDouble(interp, value, buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+
+  return TCL_OK;
+}
+#endif
+
 /********************************************************************************/
 /*                                       parsing                                */
 /********************************************************************************/
@@ -870,7 +945,18 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef VOLUME_FORCE
   REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);
 #endif
+  // IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
+  REGISTER_BONDED("ibm_triel", tclcommand_inter_parse_ibm_triel);
+  REGISTER_BONDED("ibm_volcons", tclcommand_inter_parse_ibm_volume_conservation);
+  REGISTER_BONDED("ibm_tribend", tclcommand_inter_parse_ibm_tribend);
+#endif
+  
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
+  REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
+#ifdef ELECTROSTATICS
+  REGISTER_BONDED("bonded_coulomb", tclcommand_inter_parse_bonded_coulomb);  
+#endif
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
 #endif

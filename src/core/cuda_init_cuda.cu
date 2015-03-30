@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -106,6 +106,32 @@ int cuda_get_device()
   }
   else
     return dev;
+}
+
+int cuda_test_device_access() {
+  int *d = 0;
+  int h = 42;
+  cudaError_t err;
+
+  err = cudaMalloc((void **)&d, sizeof(int));
+  if(err != cudaSuccess) {
+    cuda_error = cudaGetErrorString(err);
+    return ES_ERROR;
+  }
+  err = cudaMemcpy(d, &h, sizeof(int), cudaMemcpyHostToDevice);
+  if(err != cudaSuccess) {
+    cuda_error = cudaGetErrorString(err);
+    return ES_ERROR;
+  }
+  h = 0;
+  err = cudaMemcpy(&h, d, sizeof(int), cudaMemcpyDeviceToHost);
+
+  if((h == 42) && (err == cudaSuccess))
+    return ES_OK;
+  else {
+    cuda_error = cudaGetErrorString(err);
+    return ES_ERROR;
+  }
 }
 
 #endif /* defined(CUDA) */

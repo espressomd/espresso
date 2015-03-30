@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -62,7 +62,8 @@ inline int calc_stretching_force_pair_force(Particle *p1, Particle *p2, Bonded_i
   dr = len - iaparams->p.stretching_force.r0;
 
   lambda = 1.0*len/iaparams->p.stretching_force.r0;
-  fac = -iaparams->p.stretching_force.ks * KS(lambda) * dr / iaparams->p.stretching_force.r0;
+  //fac = -iaparams->p.stretching_force.ks * KS(lambda) * dr / iaparams->p.stretching_force.r0;
+  fac = -iaparams->p.stretching_force.ks * KS(lambda) * dr ; // no normalization
   
   for(i=0;i<3;i++)
     force[i] = fac*dx[i]/len;

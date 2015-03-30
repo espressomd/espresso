@@ -1,10 +1,31 @@
+/*
+  Copyright (C) 2014 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #include "Mmm1dgpu_tcl.hpp"
 #include "forces.hpp"
+#include "energy.hpp"
 #include "actor/Mmm1dgpuForce.hpp"
 #include "mmm1d.hpp"
 #include "EspressoSystemInterface.hpp"
 
 #ifdef MMM1D_GPU
+
+Mmm1dgpuForce *mmm1dgpuForce;
 
 int tclprint_to_result_MMM1DGPU (Tcl_Interp * interp)
 {
@@ -19,6 +40,17 @@ int tclprint_to_result_MMM1DGPU (Tcl_Interp * interp)
 
   return TCL_OK;
 }
+
+//void Mmm1dgpuForce::disable()
+//{
+//	if (!mmm1dgpuForce) {
+//		forceActors.remove(mmm1dgpuForce);
+//		if (coulomb.method == COULOMB_MMM1D_GPU) {
+//			coulomb.method = COULOMB_NONE;
+//			mpi_bcast_coulomb_params();
+//		}
+//	}
+//}
 
 int tclcommand_inter_coulomb_parse_mmm1dgpu (Tcl_Interp * interp, int argc, char **argv)
 {
@@ -74,7 +106,22 @@ int tclcommand_inter_coulomb_parse_mmm1dgpu (Tcl_Interp * interp, int argc, char
   	}
   }
 
-  addMmm1dgpuForce (maxPWerror, switch_rad, bessel_cutoff);	// if this command is run multiple times, subsequent runs will only update parameters
+  // turn on MMM1DGPU
+
+  /* coulomb.prefactor apparently is not available yet at this point */
+  if (!mmm1dgpuForce) // inter coulomb mmm1dgpu was never called before
+  {
+	  mmm1dgpuForce = new Mmm1dgpuForce(espressoSystemInterface, 0, maxPWerror,
+			  switch_rad, bessel_cutoff);
+	  forceActors.add(mmm1dgpuForce);
+	  energyActors.add(mmm1dgpuForce);
+  }
+  /* set_params needs to be called both upon create and upon update because it is responsible for writing
+		to the struct from which the TCL command "inter coulomb" retrieves the current parameter set */
+  mmm1dgpuForce->set_params(0, 0, maxPWerror, switch_rad, bessel_cutoff, true);
+
+  coulomb.method = COULOMB_MMM1D_GPU;
+  mpi_bcast_coulomb_params();
 
   return TCL_OK;
 }

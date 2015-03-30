@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,6 +24,8 @@
 
 #include "galilei.hpp"
 #include "utils.hpp"
+#include "cells.hpp"
+#include "grid.hpp"
 #include "initialize.hpp"
 #include "forces.hpp"
 
@@ -94,7 +96,7 @@ void local_system_CMS( double *sdata ) {
          y = 0.0, 
          z = 0.0;
   double ppos[3];
-  int img[3];
+  int    img[3];
 
 #ifdef MASS
 

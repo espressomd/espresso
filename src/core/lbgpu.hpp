@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -179,6 +179,13 @@ typedef struct {
 
   float *force;
   float *scforce;
+#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
+
+  // We need the node forces for the velocity interpolation at the virtual particles' position
+  // However, LBM wants to reset them immediately after the LBM update
+  // This variable keeps a backup
+  float *force_buf;
+#endif
 
 } LB_node_force_gpu;
 

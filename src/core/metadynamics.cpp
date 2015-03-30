@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2010,2012,2013 The ESPResSo project
+Copyright (C) 2010,2012,2013,2014 The ESPResSo project
 Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -88,8 +88,9 @@ void meta_init(){
    /* Check that the simulation uses onle a single processor. Otherwise exit. 
    *  MPI interface *not* implemented. */
    if (n_nodes != 1) {
-      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"Can't use metadynamics on more than one processor.\n");
+       ostringstream msg;
+       msg <<"Can't use metadynamics on more than one processor.\n";
+       runtimeError(msg);
       return;
    }
    
@@ -122,6 +123,7 @@ void meta_perform()
             memcpy(ppos1, p[i].r.p, 3*sizeof(double));
             memcpy(img1, p[i].l.i, 3*sizeof(int));
             unfold_position(ppos1, img1);
+
             if (flag1 && flag2) {
                /* vector r2-r1 - Not a minimal image! Unfolded position */
                vector_subt(meta_cur_xi,ppos2,ppos1);
@@ -134,6 +136,7 @@ void meta_perform()
             memcpy(ppos2, p[i].r.p, 3*sizeof(double));
             memcpy(img2, p[i].l.i, 3*sizeof(int));
             unfold_position(ppos2, img2);
+
             if (flag1 && flag2) {
                /* vector r2-r1 - Not a minimal image! Unfolded position */
                vector_subt(meta_cur_xi,ppos2,ppos1);
@@ -144,8 +147,9 @@ void meta_perform()
    }
    
    if (flag1 == 0 || flag2 == 0) {
-      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"Metadynamics: can't find pid1 or pid2.\n");
+       ostringstream msg;
+       msg <<"Metadynamics: can't find pid1 or pid2.\n";
+       runtimeError(msg);
       return;
    }
    
@@ -175,8 +179,9 @@ void meta_perform()
          meta_apply_direction[0] = meta_apply_direction[1] = 0.;
          meta_apply_direction[2] = -1.;
       } else {
-         char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-         ERROR_SPRINTF(errtxt,"Undefined metadynamics scheme.\n");
+          ostringstream msg;
+          msg <<"Undefined metadynamics scheme.\n";
+          runtimeError(msg);
          return;      
       }
    }

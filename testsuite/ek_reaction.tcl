@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -259,14 +259,14 @@ if { $new_configuration != 0 } {
 } else {
   electrokinetics 2 print density vtk "ek_reaction_density_tmp.vtk"
   set difference [calculate_vtk_max_pointwise_difference "./ek_reaction_density.vtk" "./ek_reaction_density_tmp.vtk"]
-  file delete "./mass_flux_tmp.vtk"
+  file delete "./ek_reaction_density_tmp.vtk"
 
   puts "Maximum deviation to the reference point is: $difference\n"
   puts "Minor deviations are to be expected due to the sensitive"
   puts "dependence of the value of the mass flux for this system"
   puts "on the numerical precision that is attainable on the GPU."
 
-  if { abs($difference) > 1.0e-05 } {
+  if { abs($difference) > 1.0e-02 } {
     error_exit "There is a significant difference with a previous result.\nPlease verify if this is correct."
   }
 }

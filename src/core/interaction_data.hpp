@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -33,63 +33,79 @@
 /************************************************************/
 /*@{*/
 
-/** This bonded interaction was not set. */
-#define BONDED_IA_NONE     -1
-/** Type of bonded interaction is a FENE potential 
-    (to be combined with Lennard Jones). */
-#define BONDED_IA_FENE      0
-/** Type of bonded interaction is a HARMONIC potential. */
-#define BONDED_IA_HARMONIC  1
-/** Type of bonded interaction is a bond angle potential. */
-#define BONDED_IA_ANGLE_OLD     2
-/** Type of bonded interaction is a dihedral potential. */
-#define BONDED_IA_DIHEDRAL  3
-/** Type of tabulated bonded interaction potential, 
-    may be of bond length, of bond angle or of dihedral type. */
-#define BONDED_IA_TABULATED 4
-/** Type of bonded interaction is a (-LJ) potential. */
-#define BONDED_IA_SUBT_LJ   5
-/** Type of a Rigid/Constrained bond*/
-#define BONDED_IA_RIGID_BOND  6
-/** Type of a virtual bond*/
-#define BONDED_IA_VIRTUAL_BOND  7
-/** Type of bonded interaction is a bond angle -- constraint distance potential. */
-#define BONDED_IA_ANGLEDIST     8
-/** Type of bonded interaction is a bond angle -- chain ends have angle with wall constraint */
-#define BONDED_IA_ENDANGLEDIST    9
-/** Type of overlapped bonded interaction potential, 
-    may be of bond length, of bond angle or of dihedral type. */
-#define BONDED_IA_OVERLAPPED 10
-/** Type of bonded interaction is a bond angle cosine potential. */ 
-#define BONDED_IA_ANGLE_HARMONIC 11
-/** Type of bonded interaction is a bond angle cosine potential. */ 
-#define BONDED_IA_ANGLE_COSINE 12
-/** Type of bonded interaction is a bond angle cosine potential. */ 
-#define BONDED_IA_ANGLE_COSSQUARE 13
-/** Type of bonded interaction is a hyperelastic stretching force. */
-#define BONDED_IA_STRETCHING_FORCE 14
-/** Type of bonded interaction is a local area force. */
-#define BONDED_IA_AREA_FORCE_LOCAL 15 
-/** Type of bonded interaction is a bending force. */
-#define BONDED_IA_BENDING_FORCE 16 
-/** Type of bonded interaction is a bending force. */
-#define BONDED_IA_VOLUME_FORCE 17 
-/** Type of bonded interaction is a global area force. */
-#define BONDED_IA_AREA_FORCE_GLOBAL 18 
-/** Type of bonded interaction is a linear stretching force. */
-#define BONDED_IA_STRETCHLIN_FORCE 19 
+enum BondedInteraction{
+    /** This bonded interaction was not set. */
+    BONDED_IA_NONE = -1,
+    /** Type of bonded interaction is a FENE potential
+        (to be combined with Lennard Jones). */
+    BONDED_IA_FENE,
+    /** Type of bonded interaction is a HARMONIC potential. */
+    BONDED_IA_HARMONIC,
+    /** Type of bonded interaction is a QUARTIC potential. */
+    BONDED_IA_QUARTIC,
+    /** Type of bonded interaction is a BONDED_COULOMB */
+    BONDED_IA_BONDED_COULOMB,
+    /** Type of bonded interaction is a bond angle potential. */
+    BONDED_IA_ANGLE_OLD,
+    /** Type of bonded interaction is a dihedral potential. */
+    BONDED_IA_DIHEDRAL,
+    /** Type of tabulated bonded interaction potential,
+        may be of bond length, of bond angle or of dihedral type. */
+    BONDED_IA_TABULATED,
+    /** Type of bonded interaction is a (-LJ) potential. */
+    BONDED_IA_SUBT_LJ,
+    /** Type of a Rigid/Constrained bond*/
+    BONDED_IA_RIGID_BOND,
+    /** Type of a virtual bond*/
+    BONDED_IA_VIRTUAL_BOND,
+    /** Type of bonded interaction is a bond angle -- constraint distance potential. */
+    BONDED_IA_ANGLEDIST,
+    /** Type of bonded interaction is a bond angle -- chain ends have angle with wall constraint */
+    BONDED_IA_ENDANGLEDIST,
+    /** Type of overlapped bonded interaction potential,
+        may be of bond length, of bond angle or of dihedral type. */
+    BONDED_IA_OVERLAPPED,
+    /** Type of bonded interaction is a bond angle cosine potential. */
+    BONDED_IA_ANGLE_HARMONIC,
+    /** Type of bonded interaction is a bond angle cosine potential. */
+    BONDED_IA_ANGLE_COSINE,
+    /** Type of bonded interaction is a bond angle cosine potential. */
+    BONDED_IA_ANGLE_COSSQUARE,
+    /** Type of bonded interaction is a hyperelastic stretching force. */
+    BONDED_IA_STRETCHING_FORCE,
+    /** Type of bonded interaction is a local area force. */
+    BONDED_IA_AREA_FORCE_LOCAL,
+    /** Type of bonded interaction is a bending force. */
+    BONDED_IA_BENDING_FORCE,
+    /** Type of bonded interaction is a bending force. */
+    BONDED_IA_VOLUME_FORCE,
+    /** Type of bonded interaction is a global area force. */
+    BONDED_IA_AREA_FORCE_GLOBAL,
+    /** Type of bonded interaction is a linear stretching force. */
+    BONDED_IA_STRETCHLIN_FORCE,
+    /** Type of bonded interaction is a wall repulsion (immersed boundary). */
+    BONDED_IA_IBM_TRIEL,
+    /** Type of bonded interaction is volume conservation force (immersed boundary). */
+    BONDED_IA_IBM_VOLUME_CONSERVATION,
+    /** Type of bonded interaction is bending force (immersed boundary). */
+    BONDED_IA_IBM_TRIBEND
+};
 
 /** Specify tabulated bonded interactions  */
-#define TAB_UNKNOWN          0
-#define TAB_BOND_LENGTH      1
-#define TAB_BOND_ANGLE       2
-#define TAB_BOND_DIHEDRAL    3
+enum TabulatedBondedInteraction{
+    TAB_UNKNOWN = 0,
+    TAB_BOND_LENGTH,
+    TAB_BOND_ANGLE,
+    TAB_BOND_DIHEDRAL
+};
 
 /** Specify overlapped bonded interactions  */
-#define OVERLAP_UNKNOWN          0
-#define OVERLAP_BOND_LENGTH      1
-#define OVERLAP_BOND_ANGLE       2
-#define OVERLAP_BOND_DIHEDRAL    3
+enum OverlappedBondedInteraction{
+    OVERLAP_UNKNOWN = 0,
+    OVERLAP_BOND_LENGTH,
+    OVERLAP_BOND_ANGLE,
+    OVERLAP_BOND_DIHEDRAL
+};
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
@@ -116,7 +132,9 @@
 		COULOMB_RF, //< Coulomb method is Reaction-Field
 		COULOMB_INTER_RF, //< Coulomb method is Reaction-Field BUT as interaction
 		COULOMB_P3M_GPU, //< Coulomb method is P3M with GPU based long range part calculation
-		COULOMB_MMM1D_GPU, //< Coulomb method is on-dimensional MMM running on GPU
+		COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
+		COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
+                COULOMB_EK, //< Coulomb method is electrokinetics
 	};
 
 #endif
@@ -130,20 +148,20 @@
    */
   /************************************************************/
   /*@{*/
-
+enum DipolarInteration{
   /** dipolar interation switched off (NONE). */
-   #define DIPOLAR_NONE       0
+    DIPOLAR_NONE = 0,
    /** dipolar method is P3M. */
-   #define DIPOLAR_P3M        1
+    DIPOLAR_P3M,
    /** Dipolar method is P3M plus DLC. */
-   #define DIPOLAR_MDLC_P3M    2
+    DIPOLAR_MDLC_P3M,
    /** Dipolar method is all with all and no replicas */
-   #define DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA  3
+    DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
    /** Dipolar method is magnetic dipolar direct sum */
-   #define DIPOLAR_DS  4
+    DIPOLAR_DS,
    /** Dipolar method is direct sum plus DLC. */
-   #define DIPOLAR_MDLC_DS  5
-
+    DIPOLAR_MDLC_DS
+};
    /*@}*/
 #endif 
 
@@ -154,37 +172,40 @@
 */
 /************************************************************/
 /*@{*/
-
+enum ConstraintApplied{
 /** No constraint applied */
-#define CONSTRAINT_NONE 0
+    CONSTRAINT_NONE = 0,
 /** wall constraint applied */
-#define CONSTRAINT_WAL 1
+    CONSTRAINT_WAL,
 /** spherical constraint applied */
-#define CONSTRAINT_SPH 2
+    CONSTRAINT_SPH,
 /** (finite) cylinder shaped constraint applied */
-#define CONSTRAINT_CYL 3
+    CONSTRAINT_CYL,
 /** Rod-like charge. */
-#define CONSTRAINT_ROD 4
+    CONSTRAINT_ROD,
 /** Plate-like charge. */
-#define CONSTRAINT_PLATE 5
+    CONSTRAINT_PLATE,
 /** maze-like constraint applied */
-#define CONSTRAINT_MAZE 6
+    CONSTRAINT_MAZE,
 /** pore constraint applied */
-#define CONSTRAINT_PORE 7
+    CONSTRAINT_PORE,
 //ER
 /** External magnetic field constraint applied */
-#define CONSTRAINT_EXT_MAGN_FIELD 8
+    CONSTRAINT_EXT_MAGN_FIELD,
 //end ER
 /** Constraint for tunable-lsip boundary conditions */
-#define CONSTRAINT_PLANE 9
+    CONSTRAINT_PLANE,
 /** Constraint for tunable-lsip boundary conditions */
-#define CONSTRAINT_RHOMBOID 10
+    CONSTRAINT_RHOMBOID,
 /** Constraint for a stomatocyte boundary */
-#define CONSTRAINT_STOMATOCYTE 11
+    CONSTRAINT_STOMATOCYTE,
 /** slitpore constraint applied */
-#define CONSTRAINT_SLITPORE 12
+    CONSTRAINT_SLITPORE,
 /** Constraint for a hollow cone boundary */
-#define CONSTRAINT_HOLLOW_CONE 13
+    CONSTRAINT_HOLLOW_CONE,
+/** Constraint for spherocylinder boundary */
+    CONSTRAINT_SPHEROCYLINDER
+};
 /*@}*/
 
 /* Data Types */
@@ -492,10 +513,19 @@ typedef struct {
  #ifdef DIPOLES
   double Dbjerrum;
   double Dprefactor;
-  int    Dmethod;
+  DipolarInteration    Dmethod;
  #endif
 
 } Coulomb_parameters;
+
+#ifdef ELECTROSTATICS
+
+/** Induced field (for const. potential feature). **/
+extern double field_induced;
+/** Applied field (for const. potential feature) **/
+extern double field_applied;
+
+#endif
 
 /*@}*/
 /** Parameters for FENE bond Potential.
@@ -557,6 +587,18 @@ typedef struct {
       double r_cut;
 } Harmonic_bond_parameters;
 
+/** Parameters for quartic bond Potential */
+typedef struct {
+      double k0, k1;
+      double r;
+      double r_cut;
+} Quartic_bond_parameters;
+
+/** Parameters for coulomb bond Potential */
+typedef struct {
+      double prefactor;
+} Bonded_coulomb_bond_parameters;
+
 /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
 	potential which you may chose with a compiler flag in the file \ref config.hpp !
@@ -611,7 +653,7 @@ typedef struct {
 /** Parameters for n-body tabulated potential (n=2,3,4). */
 typedef struct {
       char   *filename;
-      int    type;
+      TabulatedBondedInteraction    type;
       int    npoints;
       double minval;
       double maxval;
@@ -623,7 +665,7 @@ typedef struct {
 /** Parameters for n-body overlapped potential (n=2,3,4). */
 typedef struct {
       char   *filename;
-      int    type;
+      OverlappedBondedInteraction    type;
       double maxval;
       int    noverlaps;
       double *para_a;
@@ -679,6 +721,59 @@ typedef struct {
       double distmax;
 } Endangledist_bond_parameters;
 
+typedef enum {NeoHookean, Skalak } tElasticLaw;
+
+/** Parameters for IBM elastic triangle (triel) **/
+typedef struct {
+  // These values encode the reference state
+  double l0;
+  double lp0;
+  double sinPhi0;
+  double cosPhi0;
+  double area0;
+  
+  // These values are cache values to speed up computation
+  double a1;
+  double a2;
+  double b1;
+  double b2;
+  
+  // These are interaction parameters
+  // k1 is used for Neo-Hookean
+  // k1 and k2 are used Skalak
+  double maxdist;
+  tElasticLaw elasticLaw;
+  double k1;
+  double k2;
+  
+} IBM_Triel_Parameters;
+
+/** Parameters for IBM volume conservation bond **/
+typedef struct {
+  int softID;     // ID of the large soft particle to which this node belongs
+  // Reference volume
+  double volRef;
+  // Spring constant for volume force
+  double kappaV;
+  // Whether to write out center-of-mass at each time step
+  // Actually this is more of an analysis function and does not strictly belong to volume conservation
+//  bool writeCOM;
+} IBM_VolCons_Parameters;
+
+typedef enum {TriangleNormals, NodeNeighbors} tBendingMethod;
+
+/** Parameters for IBM tribend **/
+typedef struct {
+  // Interaction data
+  double kb;
+  tBendingMethod method;
+  
+  // Reference angle
+  double theta0;
+  
+} IBM_Tribend_Parameters;
+
+
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
     Fene_bond_parameters fene;
@@ -689,6 +784,8 @@ typedef union {
     Bending_force_bond_parameters bending_force;
     Volume_force_bond_parameters volume_force;
     Harmonic_bond_parameters harmonic;
+    Quartic_bond_parameters quartic;
+    Bonded_coulomb_bond_parameters bonded_coulomb;
     Angle_bond_parameters angle;
     Angle_harmonic_bond_parameters angle_harmonic;
     Angle_cosine_bond_parameters angle_cosine;
@@ -700,12 +797,15 @@ typedef union {
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
     Endangledist_bond_parameters endangledist;
+    IBM_Triel_Parameters ibm_triel;
+    IBM_VolCons_Parameters ibmVolConsParameters;
+    IBM_Tribend_Parameters ibm_tribend;
   } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */
 typedef struct {
   /** bonded interaction type. See \ref BONDED_IA_FENE "Type code for bonded" */
-  int type;
+  BondedInteraction type;
   /** (Number of particles - 1) interacting for that type */ 
   int num;
   /** union to store the different bonded interaction parameters. */
@@ -726,6 +826,8 @@ typedef struct {
   int penetrable; 
   int reflecting;
   int only_positive;
+  /** whether to calculate tunable slip forces 1 or not 0 */
+  int tunable_slip;
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */
@@ -757,6 +859,23 @@ typedef struct {
   int penetrable; 
   int reflecting;
 } Constraint_cylinder;
+
+/** Parameters for a SPHEROCYLINDER constraint. */
+typedef struct {
+  /** center of the cylinder. */
+  double pos[3];
+  /** Axis of the cylinder .*/
+  double axis[3];
+  /** cylinder radius. */
+  double rad;
+  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  double length;
+  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
+  double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
+  int reflecting;
+} Constraint_spherocylinder;
 
 /** Parameters for a RHOMBOID constraint. */
 typedef struct {
@@ -929,12 +1048,13 @@ typedef struct {
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */
-  int type;
+  ConstraintApplied type;
 
   union {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_spherocylinder spherocyl;
     Constraint_rhomboid rhomboid;
     Constraint_rod rod;
     Constraint_plate plate;
@@ -1066,7 +1186,7 @@ inline int checkIfParticlesInteract(int i, int j) {
 }
 
 ///
-const char *get_name_of_bonded_ia(int i);
+const char *get_name_of_bonded_ia(BondedInteraction type);
 
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);

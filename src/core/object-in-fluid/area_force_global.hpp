@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -30,6 +30,7 @@
 #include "cells.hpp"
 #include "lb.hpp"
 #include "grid.hpp"
+#include "errorhandling.hpp"
 
 /** set parameters for the AREA_FORCE_GLOBAL potential. 
 */
@@ -46,7 +47,7 @@ int area_force_global_set_params(int bond_type, double A0_g, double ka_g);
  */  
 
 inline void calc_area_global(double *area, int molType){ //first-fold-then-the-same approach
-	double partArea=0.,norm[3];
+	double partArea=0.;
 
 	/** loop over particles */
 	int c, np, i ,j;
@@ -54,9 +55,10 @@ inline void calc_area_global(double *area, int molType){ //first-fold-then-the-s
 	Particle *p, *p1, *p2, *p3;
 	double p11[3],p22[3],p33[3];
 	int img[3];
+	double AA[3],BB[3];
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners,id;
-	char *errtxt;
+    int type_num, n_partners,id;
+    BondedInteraction type;
 
 	int test=0;
 
@@ -82,36 +84,71 @@ inline void calc_area_global(double *area, int molType){ //first-fold-then-the-s
 					test++;
 					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
-					if (!p2) {
-						errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{area calc 078 bond broken between particles %d and %d (particles not stored on the same node - area_force_global1); n %d max %d} ",
-						  p1->p.identity, p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p2) {
+                        ostringstream msg;
+                        msg <<"area calc: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - area_force_global1); n " << p1->bl.n << " max " << p1->bl.max ;
+                        runtimeError(msg);
 						return;
 					}
 					/* fetch particle 3 */
 					//if(n_partners>2){
 					p3 = local_particles[p1->bl.e[j++]];
-					if (!p3) {
-						errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{area calc 079 bond broken between particles %d, %d and %d (particles not stored on the same node); n %d max %d} ",
-							p1->p.identity, p1->bl.e[j-2], p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p3) {
+                        ostringstream msg;
+                        msg <<"area calc: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - area_force_global1); n " << p1->bl.n << " max " << p1->bl.max ;
+                        runtimeError(msg);
 						return;
 					}
-					memcpy(p11, p1->r.p, 3*sizeof(double));
-					memcpy(img, p1->l.i, 3*sizeof(int));
-					fold_position(p11, img);
-									
-					memcpy(p22, p2->r.p, 3*sizeof(double));
-					memcpy(img, p2->l.i, 3*sizeof(int));
-					fold_position(p22, img);
-				
-					memcpy(p33, p3->r.p, 3*sizeof(double));
-					memcpy(img, p3->l.i, 3*sizeof(int));
-					fold_position(p33, img);
-				
+					// remaining neighbors fetched
 					
-					get_n_triangle(p11,p22,p33,norm);
-					//dn=normr(norm);
+					// getting unfolded positions of all particles
+					#ifdef GHOST_FLAG
+					// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p1, however, it might be other one. we call this particle reference particle.
+					if (p1->l.ghost != 1) {
+						//unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
+						memcpy(p11, p1->r.p, 3*sizeof(double));
+						memcpy(img, p1->l.i, 3*sizeof(int));
+						unfold_position(p11,img);
+						// other coordinates are obtained from its relative positions to the reference particle
+						get_mi_vector(AA, p2->r.p, p11);
+						get_mi_vector(BB, p3->r.p, p11);
+						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+					} else {
+						// in case the first particle is a ghost particle
+						if (p2->l.ghost != 1) {
+							memcpy(p22, p2->r.p, 3*sizeof(double));
+							memcpy(img, p2->l.i, 3*sizeof(int));
+							unfold_position(p22,img);
+							get_mi_vector(AA, p1->r.p, p22);
+							get_mi_vector(BB, p3->r.p, p22);
+							for (int i=0; i < 3; i++) { p11[i] = p22[i] + AA[i]; p33[i] = p22[i] + BB[i]; }
+						} else {
+							// in case the first and the second particle are ghost particles
+							if (p3->l.ghost != 1) {
+								memcpy(p33, p3->r.p, 3*sizeof(double));
+								memcpy(img, p3->l.i, 3*sizeof(int));
+								unfold_position(p33,img);
+								get_mi_vector(AA, p1->r.p, p33);
+								get_mi_vector(BB, p2->r.p, p33);
+								for (int i=0; i < 3; i++) { p11[i] = p33[i] + AA[i]; p22[i] = p33[i] + BB[i]; }
+							} else {
+								printf("Something wrong in area_force_local.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
+								return;
+							}
+						}
+					}
+					#endif
+					#ifndef GHOST_FLAG
+						// if ghost flag was not defined we have no other option than to assume the first particle is a physical one.
+						memcpy(p11, p1->r.p, 3*sizeof(double));
+						memcpy(img, p1->l.i, 3*sizeof(int));
+						unfold_position(p11,img);
+						// other coordinates are obtained from its relative positions to the reference particle
+						get_mi_vector(AA, p2->r.p, p11);
+						get_mi_vector(BB, p3->r.p, p11);
+						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+					#endif
+					// unfolded positions correct
 					partArea += area_triangle(p11,p22,p33);
 				}
 				else{
@@ -134,11 +171,12 @@ inline void add_area_global_force(double area, int molType){  //first-fold-then-
 	Cell *cell;
 	Particle *p, *p1, *p2, *p3;
 	double p11[3],p22[3],p33[3];
+	double AA[3],BB[3];
 	int img[3];
 
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners,id;
-	char *errtxt;
+    int type_num, n_partners,id;
+    BondedInteraction type;
 
 	int test=0;
 	
@@ -166,34 +204,70 @@ inline void add_area_global_force(double area, int molType){  //first-fold-then-
 					test++;
 					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
-					if (!p2) {
-						errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"add area {078 bond broken between particles %d and %d (particles not stored on the same node - area_force_global2)}; n %d max %d ",
-						  p1->p.identity, p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p2) {
+                        ostringstream msg;
+                        msg <<"add area: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - area_force_global2); n " << p1->bl.n << " max " << p1->bl.max ;
+                        runtimeError(msg);
 						return;
 					}
 					/* fetch particle 3 */
 					//if(n_partners>2){
 					p3 = local_particles[p1->bl.e[j++]];
-					if (!p3) {
-						errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"add area {079 bond broken between particles %d, %d and %d (particles not stored on the same node)}; n %d max %d ",
-							p1->p.identity, p1->bl.e[j-2], p1->bl.e[j-1],p1->bl.n,p1->bl.max);
+                    if (!p3) {
+                        ostringstream msg;
+                        msg <<"add area: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node); n " << p1->bl.n << " max " << p1->bl.max;
+                        runtimeError(msg);
 						return;
 					}
-					memcpy(p11, p1->r.p, 3*sizeof(double));
-					memcpy(img, p1->l.i, 3*sizeof(int));
-					fold_position(p11, img);
-									
-					memcpy(p22, p2->r.p, 3*sizeof(double));
-					memcpy(img, p2->l.i, 3*sizeof(int));
-					fold_position(p22, img);
-				
-					memcpy(p33, p3->r.p, 3*sizeof(double));
-					memcpy(img, p3->l.i, 3*sizeof(int));
-					fold_position(p33, img);
-				
-	
+					
+					// getting unfolded positions of all particles
+					#ifdef GHOST_FLAG
+					// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p1, however, it might be other one. we call this particle reference particle.
+					if (p1->l.ghost != 1) {
+						//unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
+						memcpy(p11, p1->r.p, 3*sizeof(double));
+						memcpy(img, p1->l.i, 3*sizeof(int));
+						unfold_position(p11,img);
+						// other coordinates are obtained from its relative positions to the reference particle
+						get_mi_vector(AA, p2->r.p, p11);
+						get_mi_vector(BB, p3->r.p, p11);
+						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+					} else {
+						// in case the first particle is a ghost particle
+						if (p2->l.ghost != 1) {
+							memcpy(p22, p2->r.p, 3*sizeof(double));
+							memcpy(img, p2->l.i, 3*sizeof(int));
+							unfold_position(p22,img);
+							get_mi_vector(AA, p1->r.p, p22);
+							get_mi_vector(BB, p3->r.p, p22);
+							for (int i=0; i < 3; i++) { p11[i] = p22[i] + AA[i]; p33[i] = p22[i] + BB[i]; }
+						} else {
+							// in case the first and the second particle are ghost particles
+							if (p3->l.ghost != 1) {
+								memcpy(p33, p3->r.p, 3*sizeof(double));
+								memcpy(img, p3->l.i, 3*sizeof(int));
+								unfold_position(p33,img);
+								get_mi_vector(AA, p1->r.p, p33);
+								get_mi_vector(BB, p2->r.p, p33);
+								for (int i=0; i < 3; i++) { p11[i] = p33[i] + AA[i]; p22[i] = p33[i] + BB[i]; }
+							} else {
+								printf("Something wrong in area_force_local.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
+								return;
+							}
+						}
+					}
+					#endif
+					#ifndef GHOST_FLAG
+						// if ghost flag was not defined we have no other option than to assume the first particle is a physical one.
+						memcpy(p11, p1->r.p, 3*sizeof(double));
+						memcpy(img, p1->l.i, 3*sizeof(int));
+						unfold_position(p11,img);
+						// other coordinates are obtained from its relative positions to the reference particle
+						get_mi_vector(AA, p2->r.p, p11);
+						get_mi_vector(BB, p3->r.p, p11);
+						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
+					#endif
+					// unfolded positions correct
 					
 					for(k=0;k<3;k++){
 						h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -23,6 +23,9 @@
 
 #include "forces.hpp"
 #include "actor/HarmonicWell.hpp"
+#include "EspressoSystemInterface.hpp"
+
+HarmonicWell *harmonicWell;
 
 int tclcommand_HarmonicWell(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   DoubleList dl;
@@ -44,8 +47,13 @@ int tclcommand_HarmonicWell(ClientData data, Tcl_Interp *interp, int argc, char 
 
   // printf("x %e %e %e, k %e\n", dl.e[0], dl.e[1],dl.e[2],dl.e[3]);
 
-  addHarmonicWell(dl.e[0], dl.e[1], dl.e[2], dl.e[3]);
+  if (harmonicWell != NULL)
+	  delete harmonicWell;
 
+  harmonicWell = new HarmonicWell(dl.e[0], dl.e[1], dl.e[2], dl.e[3],
+		  espressoSystemInterface);
+
+  forceActors.push_back(harmonicWell);
   return TCL_OK;
 }
 

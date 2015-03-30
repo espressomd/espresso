@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -34,6 +34,7 @@
 //#include "cells.hpp"
 #include "communication.hpp"
 //#include "molforces.hpp"
+#include "tcl/topology_tcl.hpp"
 
 int tclcommand_analyze_set_print_all(Tcl_Interp *interp)
 {
@@ -70,8 +71,9 @@ int tclcommand_analyze_parse_generic_structure(Tcl_Interp *interp, int argc, cha
     memcpy(topology[arg].part.e, &il.e[1], (il.n - 1)*sizeof(int));
   }
   realloc_intlist(&il, 0);
-
-  return TCL_OK;
+  
+  
+  return tclcommand_analyze_set_parse_topo_part_sync(interp);
 }
 
 int tclcommand_analyze_set_parse_topo_part_sync(Tcl_Interp *interp) {
@@ -238,7 +240,7 @@ int tclcommand_analyze_set_parse_trapmol(Tcl_Interp *interp, int argc, char **ar
   realloc_doublelist(&trap_center,0);
   realloc_intlist(&trap_coords,0);
   realloc_intlist(&noforce_coords,0);
-  return TCL_OK;
+  return tclcommand_analyze_set_parse_topo_part_sync(interp);
   
 }
 

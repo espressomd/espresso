@@ -1,3 +1,20 @@
+% Copyright (C) 2013,2014 The ESPResSo project
+%  
+% This file is part of ESPResSo.
+%   
+% ESPResSo is free software: you can redistribute it and/or modify it
+% under the terms of the GNU General Public License as published by the
+% Free Software Foundation, either version 3 of the License, or (at your
+% option) any later version.
+%  
+% ESPResSo is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% General Public License for more details.
+%  
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
 \newcommand{\lb}{l_\mathrm{B}}
 \newcommand{\kT}{k_\mathrm{B}T}
 
@@ -210,7 +227,7 @@ with a volume charge density. To create a surface charge density, a combination
 of two oppositely charged boundaries, one inside the other, can be used. 
 However, care should be taken to maintain the surface charge density when the
 value of \var{agrid} is changed. Currently, the following \var{shape}s are 
-available: wall, sphere, cylinder, rhomboid, pore, and stomatocyte. We refer to 
+available: wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, and spherocylinder. We refer to 
 the documentation of the \lit{lbboundary} command (Chapter~\ref{sec:lb}) for
 information on the options \var{shape\_args} associated to these shapes. In
 order to properly set up the boundaries, the \var{charge\_density} and relevant
@@ -439,7 +456,7 @@ place for this region, 1 the catalytic reaction takes place in this region, and
 to their initial (or reservoir) concentrations. The rest of the command follows 
 the same format of the \lit{electrokinetics boundary} command. Currently, the 
 following \var{shape}s are available: box, wall, sphere, cylinder, rhomboid, 
-pore, and stomatocyte. The box shape is a \lit{region} specific command, which
+pore, stomatocyte, hollow_cone, and spherocylinder. The box shape is a \lit{region} specific command, which
 can be used to set the entire simulation box to a specific reaction value. To
 use the \lit{electrokinetics reaction region} command, one must first set up
 a reaction, as described above. To successfully specify a region all the 

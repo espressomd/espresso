@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -66,6 +66,13 @@ int cuda_set_device(int dev);
     message from CUDA can be found in \ref cuda_error.
 */
 int cuda_get_device();
+
+/** Test if actual CUDA device works.
+    @return \ref ES_OK on sucess, \ref ES_ERROR else.
+    The error message from CUDA can be found in \ref cuda_error.
+*/
+
+int cuda_test_device_access();
 
 /** current error message of CUDA. */
 extern const char *cuda_error;

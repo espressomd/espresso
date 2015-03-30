@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _HARMONICPOTENTIAL_TCL_HPP
-#define _HARMONICPOTENTIAL_TCL_HPP
+#ifndef _ACTOR_HARMONICWELL_TCL_HPP
+#define _ACTOR_HARMONICWELL_TCL_HPP
 
 #include "parser.hpp"
 

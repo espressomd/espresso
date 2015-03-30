@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -117,28 +117,21 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
+# try to find best __FUNCTION__ variant
+AX_CXX_VAR_PRETTYFUNC()
+
+# set the optimization flags
 # never overwrite users CXXFLAGS
 if test "${CXXFLAGS+set}" != set; then
-  # test for -O5
-  AC_MSG_CHECKING([whether the compiler accepts -O5])
+  # test for -O3
+  AC_MSG_CHECKING([whether the compiler accepts -O3])
   saved_CXXFLAGS=$CXXFLAGS
-  CXXFLAGS="-O5 $CXXFLAGS"
+  CXXFLAGS="-O3 $CXXFLAGS"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
     AC_MSG_RESULT(yes);try_add_flag_res=yes
   ],[
     AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
   ])
-  # if not, try O3 (e.g. llvm does not support O5)
-  AS_IF([test x$try_add_flag_res = xno], [
-    AC_MSG_CHECKING([whether the compiler accepts -O3])
-    saved_CXXFLAGS=$CXXFLAGS
-    CXXFLAGS="-O3 $CXXFLAGS"
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
-      AC_MSG_RESULT(yes);try_add_flag_res=yes
-    ],[
-      AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
-    ])
-   ],[])
 
   ##################################
   # test for -Wall
@@ -191,8 +184,8 @@ EOF
 ##################################
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h limits.h netdb.h\
- netinet/in.h stddef.h stdlib.h string.h strings.h sys/file.h sys/socket.h\
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h limits.h netdb.h \
+ netinet/in.h stddef.h stdlib.h string.h strings.h sys/file.h sys/socket.h \
  sys/time.h unistd.h])
 
 
@@ -232,9 +225,9 @@ AC_ARG_WITH([fftw],
 AC_MSG_RESULT($with_fftw)
 
 AS_IF([test x$with_fftw = xno], [fftw_found=no],
-  [ AC_SEARCH_LIBS(fftw_plan_many_dft, [fftw3], [fftw_found=yes], [fftw_found=no])
+  [ ES_ADDPATH_CHECK_LIB(fftw3, fftw_plan_many_dft, [fftw_found=yes], [fftw_found=no],)
     AS_IF([test x$fftw_found = xyes],
-      [AC_CHECK_HEADER([fftw3.h],, [fftw_found=no])])
+      [ES_ADDPATH_CHECK_HEADER([fftw3.h],, [fftw_found=no],)])
   ])
 
 AS_IF([test x$fftw_found = xno],[
@@ -346,7 +339,11 @@ AS_IF([test x$with_cuda != xno],[
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA runs])
     
-    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[int no; cudaGetDeviceCount(&no);])], [
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[
+    int no; 
+    cudaGetDeviceCount(&no);
+    if (no == 0) return 1;
+    ])], [
         AC_MSG_RESULT(yes)
     ],[
         AC_MSG_RESULT(no)
@@ -367,6 +364,16 @@ AS_IF([test x$with_cuda != xno],[
     LIBS=$save_noncuda_LIBS
     
     AS_IF([test x$cuda_ok == xyes], [
+        # NVCC doesn't work with llvm's libc++ so we need to also
+        # compile the rest with libstdc++, if nvcc-compiled code is
+        # used
+        AC_MSG_CHECKING([whether the compiler accepts -stdlib=libstdc++])
+        saved_CXXFLAGS=$CXXFLAGS
+        CXXFLAGS="-stdlib=libstdc++ $CXXFLAGS"
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[ AC_MSG_RESULT(yes) ],[
+                AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS
+        ])
+        
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
         # reset standard compiler options
@@ -411,8 +418,11 @@ dnl with_python_interface=no   do not use python interface
 AS_IF([test .$with_python_interface != .no], [
 	AX_PYTHON_DEVEL([>= '2.5'])
 
+        AC_ARG_VAR(CYTHON,[Specify the cython tool to use])
    	AC_PATH_PROG(CYTHON,cython,no)
-   	AS_IF([test .$CYTHON = .no],[build_python_interface=no],[build_python_interface=yes])
+   	AS_IF([test .$CYTHON = .no],
+                    [build_python_interface=no],
+                    [build_python_interface=yes])
 
    	AX_PYTHON_MODULE(numpy, required)
    	AC_MSG_CHECKING([for numpy include path])
@@ -424,7 +434,7 @@ AS_IF([test .$with_python_interface != .no], [
 		[AC_MSG_FAILURE([Cannot build python interface!])])
    	AC_DEFINE(PYTHON_DEV,[],[Whether Python is available]) 
 ])
-AM_CONDITIONAL(PYTHON_INTERFACE, [test .$with_python_interface != .no])
+AM_CONDITIONAL(PYTHON_INTERFACE, [test .$build_python_interface = .yes])
 # export libtool objdir, so that we can link the .so files to the dir itself
 AC_SUBST(objdir)
 
@@ -528,7 +538,7 @@ if test .$with_tk != .no; then
 	fi
 	# now test whether Tk can be found
 	if test .$with_tk = .yes; then
-		for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk; do
+		for version in $TK_VERSION tk8.6 tk8.5 tk8.4 tk8.3 tk8.2 tk; do
 			ES_ADDPATH_CHECK_LIB($version, Tk_Init, [use_tk=$version], [])
 			if test .$use_tk != .; then break; fi
 		done
@@ -578,7 +588,8 @@ AC_ARG_WITH(efence,
   AS_HELP_STRING([--with-efence],[use ElectricFence memory debugging for the debug binary]),
     ,with_efence=no)
 if test .$with_efence = .yes; then
-  AC_CHECK_LIB(efence,malloc,,AC_MSG_FAILURE([could not link against the efence library]))
+  ES_ADDPATH_CHECK_LIB(efence,malloc,,AC_MSG_FAILURE([could not link against the efence library]),)
+
   CPPFLAGS="$CPPFLAGS -DEFENCE"
   LDFLAGS="$LDFLAGS -lefence"
 fi
@@ -670,25 +681,25 @@ cat <<EOF
 ****************************************************************
 *                   Configuration summary                      *
 ****************************************************************
-platform detected	= $target
-package version		= $PACKAGE_VERSION
+platform detected       = $target
+package version         = $PACKAGE_VERSION
 development sources     = $devel_src
 
 Compiler
 --------
-compiler		= $CXX
-linker			= $LD
-c++ compiler flags	= $CXXFLAGS
-c++ preprocessor flags	= $CPPFLAGS
-linker flags		= $LDFLAGS
-libraries		= $LIBS
-using debug flags	= $enable_debug
-using profiling flags	= $enable_profiling
+compiler                = $CXX
+linker                  = $LD
+c++ compiler flags      = $CXXFLAGS
+c++ preprocessor flags  = $CPPFLAGS
+linker flags            = $LDFLAGS
+libraries               = $LIBS
+using debug flags       = $enable_debug
+using profiling flags   = $enable_profiling
 
 Libraries
 ---------
-FFTW 			= $fftw_found
-efence			= $with_efence
+FFTW                    = $fftw_found
+efence                  = $with_efence
 
 EOF
 
@@ -696,8 +707,8 @@ if test x$cuda_ok = xyes; then
 cat <<EOF
 Cuda
 ----
-CUDA compiler		= $NVCC
-CUDA flags		= $NVCCFLAGS
+CUDA compiler           = $NVCC
+CUDA flags              = $NVCCFLAGS
 EOF
 fi
 
@@ -705,12 +716,12 @@ cat  <<EOF
 
 Tcl/Tk
 ------
-Tcl version		= $use_tcl
-Tk version		= $use_tk
+Tcl version             = $use_tcl
+Tk version              = $use_tk
 
 Python
 ------
-python			= $PYTHON
+python                  = $PYTHON
 build python interface  = $build_python_interface
 EOF
 
@@ -728,15 +739,15 @@ cat <<EOF
 Other settings
 --------------
 config                  = $MYCONFIG
-installation prefix	= $prefix
+installation prefix     = $prefix
 number of test tasks    = $CPU_COUNT
 mympiexec               = $MYMPIEXEC
-mpiexec	     		= $MPIEXEC
-pdflatex		= $PDFLATEX
-makeindex		= $MAKEINDEX
-bibtex			= $BIBTEX
-doxygen			= $DOXYGEN
-dot			= $DOT
+mpiexec                 = $MPIEXEC
+pdflatex                = $PDFLATEX
+makeindex               = $MAKEINDEX
+bibtex                  = $BIBTEX
+doxygen                 = $DOXYGEN
+dot                     = $DOT
 
 EOF
 

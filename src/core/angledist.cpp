@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -101,8 +101,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
     pwdist[k]=0.0;
   }
   for(k=0;k<n_constraints;k++) {
-    switch(constraints[k].type) {
-      case CONSTRAINT_WAL: 
+    if (constraints[k].type == CONSTRAINT_WAL) {
 
       /* dist is distance of wall from origin */
       wall=constraints[k].c.wal;
@@ -125,7 +124,6 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
       if (pwdist[k] <= pwdistmin) {
         pwdistmin = pwdist[k];
       }
-      break;
     }
   }
 

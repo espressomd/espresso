@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -47,6 +47,8 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
+using namespace std;
+
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
 #define PERIODIC(coord) (periodic & (1L << coord))
@@ -62,8 +64,17 @@
 extern int node_grid[3];
 /** position of node in node grid */
 extern int node_pos[3];
+#ifdef LEES_EDWARDS
+/** the nearest neighbors of a node in the node grid. */
+extern int *node_neighbors;
+extern int *node_neighbor_lr;
+extern int *node_neighbor_wrap;
+/** the number of nearest neighbors of a node in the node grid. */
+extern int  my_neighbor_count;
+#else
 /** the six nearest neighbors of a node in the node grid. */
 extern int node_neighbors[6];
+#endif
 /** where to fold particles that leave local box in direction i. */
 extern int boundary[6];
 /** Flags for all three dimensions wether pbc are applied (default).
@@ -129,11 +140,12 @@ int map_position_node_array(double pos[3]);
 
 /** fill neighbor lists of node. 
  *
- * Calculates the numbers of the 6 nearest neighbors for a node and
- * stors them in \ref node_neighbors.
+ * Calculates the numbers of the nearest neighbors for a node and
+ * stores them in \ref node_neighbors.
  *
+ * \return     the number of neighbors
  * \param node number of the node.  */
-void calc_node_neighbors(int node);
+int calc_node_neighbors(int node);
 
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_n_nodes();
@@ -169,9 +181,11 @@ int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3]);
 void rescale_boxl(int dir, double d_new);
 
 /** get the minimal distance vector of two vectors in the current bc.
-    @param a the vector to subtract from
-    @param b the vector to subtract
-    @param res where to store the result
+  *  \ref LEES_EDWARDS note: there is no need to add the le_offset here, 
+  *  any offset should already have been added when the image particle was prepared.
+  *  @param a the vector to subtract from
+  *  @param b the vector to subtract
+  *  @param res where to store the result
 */
 inline void get_mi_vector(double res[3], double a[3], double b[3])
 {
@@ -179,14 +193,56 @@ inline void get_mi_vector(double res[3], double a[3], double b[3])
 
   for(i=0;i<3;i++) {
     res[i] = a[i] - b[i];
-#ifdef PARTIAL_PERIODIC
     if (PERIODIC(i))
-#endif
       res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
   }
 }
 
-/** fold a coordinate to primary simulation box.
+/** fold a coordinate to primary simulation box, including velocity (in case of LEES_EDWARDS,
+    the velocity depends on the image we are in).
+    \param pos         the position...
+    \param vel         the velocity...
+    \param image_box   and the box
+    \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z coordinate.
+
+    Both pos and image_box are I/O,
+    i. e. a previously folded position will be folded correctly.
+*/
+inline void fold_coordinate(double pos[3], double vel[3], int image_box[3], int dir)
+{
+  if (PERIODIC(dir)) {
+    int img_count   = (int)floor(pos[dir]*box_l_i[dir]);
+    image_box[dir] += img_count;
+    pos[dir]        = pos[dir] - img_count*box_l[dir];    
+
+    if(pos[dir]*box_l_i[dir] < -ROUND_ERROR_PREC || pos[dir]*box_l_i[dir] >= 1 + ROUND_ERROR_PREC) {
+      ostringstream msg;
+      msg << "particle coordinate out of range, pos = " << pos[dir] << ", image box = " << image_box[dir];
+      runtimeError(msg);
+      image_box[dir] = 0;
+      pos[dir] = 0;
+      return;
+    }
+
+#ifdef LEES_EDWARDS
+
+    if (dir == 1) {
+      /* must image y and v_x at same time as x */
+      pos[0]       -= (lees_edwards_offset * img_count); 
+      vel[0]       -= (lees_edwards_rate   * img_count);       
+
+      /* (re)-image x */
+      img_count     = (int)floor(pos[0]*box_l_i[0]);
+      image_box[0] += img_count;
+      pos[0]        = pos[0] - img_count*box_l[0];
+    }
+
+#endif
+
+  }
+}
+
+/** fold a coordinate to primary simulation box, not caring about velocities.
     \param pos         the position...
     \param image_box   and the box
     \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z coordinate.
@@ -196,21 +252,24 @@ inline void get_mi_vector(double res[3], double a[3], double b[3])
 */
 inline void fold_coordinate(double pos[3], int image_box[3], int dir)
 {
-  int tmp;
-#ifdef PARTIAL_PERIODIC
-  if (PERIODIC(dir))
-#endif
-    {
-      image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
-      pos[dir]        = pos[dir] - tmp*box_l[dir];    
-      if(pos[dir]*box_l_i[dir] < -ROUND_ERROR_PREC || pos[dir]*box_l_i[dir] >= 1 + ROUND_ERROR_PREC) {
-        char *errtext = runtime_error(128 + ES_INTEGER_SPACE + ES_DOUBLE_SPACE);
-        ERROR_SPRINTF(errtext,"{086 particle coordinate out of range, pos = %g, image box = %d} ", pos[dir], image_box[dir]);
-        image_box[dir] = 0;
-        pos[dir] = 0;
-        return;
-      }
-    }
+  double v[3];
+  fold_coordinate(pos, v, image_box, dir);
+}
+
+/** fold particle coordinates to primary simulation box.
+    \param pos the position...
+    \param vel the velocity...
+    \param image_box and the box
+
+    Pos, vel and image_box are I/O,
+    i. e. a previously folded position will be folded correctly.
+*/
+inline void fold_position(double pos[3], double vel[3], int image_box[3])
+{
+
+  int i;
+  for(i=0;i<3;i++)
+    fold_coordinate(pos, vel, image_box, i);
 }
 
 /** fold particle coordinates to primary simulation box.
@@ -228,19 +287,50 @@ inline void fold_position(double pos[3],int image_box[3])
 }
 
 /** unfold coordinates to physical position.
+    \param pos the position
+    \param pos the velocity
+    \param image_box and the box
+
+    Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
+    afterwards.
+*/
+inline void unfold_position(double pos[3], double vel[3], int image_box[3])
+{
+#ifdef LEES_EDWARDS
+
+  int y_img_count;
+  y_img_count   = (int)floor( pos[1]*box_l_i[1] + image_box[1] );
+
+  pos[0] += image_box[0]*box_l[0] + y_img_count*lees_edwards_offset;
+  pos[1] += image_box[1]*box_l[1];
+  pos[2] += image_box[2]*box_l[2];
+
+  vel[0] += y_img_count * lees_edwards_rate;
+
+  image_box[0] = image_box[1] = image_box[2] = 0;
+  
+#else
+
+  int i;
+  for(i=0;i<3;i++) {
+    pos[i]       = pos[i] + image_box[i]*box_l[i];    
+    image_box[i] = 0;
+  }
+
+#endif
+}
+
+/** unfold coordinates to physical position.
     \param pos the position...
     \param image_box and the box
 
     Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
     afterwards.
 */
-inline void unfold_position(double pos[3],int image_box[3])
+inline void unfold_position(double pos[3], int image_box[3])
 {
-  int i;
-  for(i=0;i<3;i++) {
-    pos[i]       = pos[i] + image_box[i]*box_l[i];    
-    image_box[i] = 0;
-  }
+  double v[3];
+  unfold_position(pos, v, image_box);
 }
 
 /*@}*/

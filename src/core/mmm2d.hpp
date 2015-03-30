@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -50,6 +50,9 @@ typedef struct {
   int far_calculated;
   /// whether there is dielectric contrast
   int dielectric_contrast_on;
+  /// cont. potential parameters
+  int const_pot_on;
+  double pot_diff;
   /** dielectric contrasts at the bottom and top of the simulation cell */
   double delta_mid_top, delta_mid_bot, delta_mult;
 } MMM2D_struct;
@@ -67,7 +70,7 @@ extern MMM2D_struct mmm2d_params;
     @param delta_top    dielectric contrast at top of the simulation box
     @param delta_mid    dielectric contrast in the middle of the simulation box
 */
-int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_mid);
+int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, int const_pot_on, double pot_diff);
 
 /** the general long range force/energy calculation */
 double MMM2D_add_far(int f, int e);

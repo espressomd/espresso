@@ -1,3 +1,21 @@
+#
+# Copyright (C) 2013,2014 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#  
 # For C-extern Analysis
 
 cimport c_analyze
@@ -5,13 +23,12 @@ cimport utils
 cimport particle_data
 import utils
 import code_info
-import global_variables
 import particle_data
 
 #
 # Minimal distance between particles
 #
-def mindist(p1 = 'default', p2 = 'default'):
+def mindist(system, p1 = 'default', p2 = 'default'):
 
   cdef IntList* set1
   cdef IntList* set2
@@ -52,9 +69,9 @@ def mindist(p1 = 'default', p2 = 'default'):
 #
 # Distance to particle or point
 #
-def distto(id_or_pos):
+def distto(system, id_or_pos):
   cdef double cpos[3]
-  if global_variables.GlobalsHandle().n_part == 0:
+  if system.n_part == 0:
     print  'no particles'
     return 'no particles'
 
@@ -73,9 +90,8 @@ def distto(id_or_pos):
 #
 # Energy analysis
 #
-def energy(etype = 'all', id1 = 'default', id2 = 'default'):
-
-  if global_variables.GlobalsHandle().n_part == 0:
+def energy(system, etype = 'all', id1 = 'default', id2 = 'default'):
+  if system.n_part == 0:
     print  'no particles'
     return 'no particles'
 
@@ -85,8 +101,8 @@ def energy(etype = 'all', id1 = 'default', id2 = 'default'):
   _value = 0.0
 
   if etype == 'all':
-    _result = energy('total') + ' ' + energy('kinetic')
-    _result += energy('nonbonded',0,0)
+    _result = energy(system, 'total') + ' ' + energy(system, 'kinetic')
+    _result += energy(system, 'nonbonded',0,0)
     # todo: check for existing particle and bond types
     # and add those to _result
     return _result

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013 The ESPResSo project
+  Copyright (C) 2012,2013,2014 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -22,6 +22,7 @@
 #include <cstring>
 #include <cstdio>
 
+#include "initialize_interpreter.hpp"
 #include "global.hpp"
 #include "binary_file_tcl.hpp"
 #include "cells_tcl.hpp"
@@ -35,6 +36,7 @@
 #include "integrate_tcl.hpp"
 #include "interaction_data_tcl.hpp"
 #include "lb_tcl.hpp"
+#include "lees_edwards_tcl.hpp"
 #include "lj_tcl.hpp"
 #include "maggs_tcl.hpp"
 #include "metadynamics_tcl.hpp"
@@ -57,7 +59,7 @@
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
 #include "actor/HarmonicWell_tcl.hpp"
-
+#include "minimize_energy_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -112,6 +114,9 @@ char *get_default_scriptsdir();
 /** Returns runtime of the integration loop in seconds. From tuning_tcl.cpp **/
 int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
+/** Reads particles from pdb file, see \ref readpdb.cpp */
+int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+
 /****************************************
  * Registration functions
  *****************************************/
@@ -119,7 +124,7 @@ int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, c
 #define REGISTER_COMMAND(name, routine)					\
   Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
 
-static void register_tcl_commands(Tcl_Interp* interp) {
+static void tcl_register_commands(Tcl_Interp* interp) {
   /* in cells.cpp */
   REGISTER_COMMAND("sort_particles", tclcommand_sort_particles);
   REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
@@ -161,6 +166,8 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("constraint", tclcommand_constraint);
   /* in external_potential.hpp */
   REGISTER_COMMAND("external_potential", tclcommand_external_potential);
+  /* in readpdb.cpp */
+  REGISTER_COMMAND("readpdb", tclcommand_readpdb);
   /* in uwerr.c */
   REGISTER_COMMAND("uwerr", tclcommand_uwerr);
   /* in nemd.cpp */
@@ -188,8 +195,9 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef ELECTROSTATICS
 #ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
-#endif 
-#endif 
+#endif
+  REGISTER_COMMAND("efield_caps", tclcommand_print_efield_capacitors);
+#endif
 #ifdef METADYNAMICS
   /* in metadynamics.cpp */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
@@ -205,6 +213,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
+  REGISTER_COMMAND("lees_edwards_offset", tclcommand_lees_edwards_offset);
 #ifdef CATALYTIC_REACTIONS
   REGISTER_COMMAND("reaction", tclcommand_reaction);
 #endif
@@ -218,9 +227,10 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef CUDA
   REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);
 #endif
+  REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 }
 
-static void register_global_variables(Tcl_Interp *interp)
+static void tcl_register_global_variables(Tcl_Interp *interp)
 {
   /* register all writeable TCL variables with their callback functions */
   register_global_callback(FIELD_BOXL, tclcallback_box_l);
@@ -238,7 +248,7 @@ static void register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
 }
 
-int appinit(Tcl_Interp *interp)
+int tcl_appinit(Tcl_Interp *interp)
 {
   if (Tcl_Init(interp) == TCL_ERROR)
     return TCL_ERROR;
@@ -251,8 +261,8 @@ int appinit(Tcl_Interp *interp)
   /*
     installation of tcl commands
   */
-  register_tcl_commands(interp);
-  register_global_variables(interp);
+  tcl_register_commands(interp);
+  tcl_register_global_variables(interp);
 
   /* evaluate the Tcl initialization script */
   char *scriptdir = getenv("ESPRESSO_SCRIPTS");

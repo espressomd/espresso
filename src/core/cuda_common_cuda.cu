@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -48,19 +48,22 @@ CUDA_particle_data *particle_data_host = NULL;
 CUDA_particle_force *particle_forces_host = NULL;
 CUDA_energy energy_host;
 CUDA_fluid_composition *fluid_composition_host = NULL;
+#ifdef ENGINE
+CUDA_v_cs *host_v_cs = NULL;
+#endif
 
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
 cudaError_t err;
 
-void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
+void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line){
   if( cudaSuccess != err) {                                             
     fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
     printf("CUDA error: %s\n", cudaGetErrorString(err));
     if ( err == cudaErrorInvalidValue )
       fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n", file, line);
-    exit(EXIT_FAILURE);
+    errexit();
   } else {
     err=cudaGetLastError();
     if (err != cudaSuccess) {
@@ -68,19 +71,19 @@ void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
       printf("CUDA error: %s\n", cudaGetErrorString(err));
       if ( err == cudaErrorInvalidValue )
 	fprintf(stderr, "You may have tried to allocate zero memory before %s:%u.\n", file, line);
-      exit(EXIT_FAILURE);
+      errexit();
     }
   }
 }
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
-                        char *function, char *file, unsigned int line) {
+                        const char *function, const char *file, unsigned int line) {
   err=cudaGetLastError();
   if (err!=cudaSuccess) {
     fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n",
             this_node, cudaGetErrorString(err), function, block.x, block.y, block.z, grid.x, grid.y, grid.z,
             file, line);
-    exit(EXIT_FAILURE);
+    errexit();
   }
 }
 
@@ -159,13 +162,17 @@ void gpu_change_number_of_part_to_comm() {
 
     cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
 
-    if ( particle_forces_host )    cudaFreeHost(particle_forces_host); //if the arrays exists free them to prevent memory leaks
+    //if the arrays exists free them to prevent memory leaks
+    if ( particle_forces_host )    cudaFreeHost(particle_forces_host);
     if ( particle_data_host )      cudaFreeHost(particle_data_host);
     if ( particle_forces_device )  cudaFree(particle_forces_device);
     if ( particle_data_device )    cudaFree(particle_data_device);
     if ( particle_seeds_device )   cudaFree(particle_seeds_device);
+#ifdef ENGINE
+    if ( host_v_cs )               cudaFreeHost(host_v_cs);
+#endif
 #ifdef SHANCHEN
-      if ( fluid_composition_host )  cudaFreeHost(fluid_composition_host); 
+    if ( fluid_composition_host )  cudaFreeHost(fluid_composition_host); 
 #endif
 
     if ( global_part_vars_host.number_of_particles ) {
@@ -174,16 +181,22 @@ void gpu_change_number_of_part_to_comm() {
       /**pinned memory mode - use special function to get OS-pinned memory*/
       cudaHostAlloc((void**)&particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data), cudaHostAllocWriteCombined);
       cudaHostAlloc((void**)&particle_forces_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force), cudaHostAllocWriteCombined);
+#ifdef ENGINE
+      cudaHostAlloc((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs), cudaHostAllocWriteCombined);
+#endif
 #ifdef SHANCHEN
       cudaHostAlloc((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition), cudaHostAllocWriteCombined);
 #endif
-#else
+#else // __CUDA_ARCH__
       cudaMallocHost((void**)&particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data));
       cudaMallocHost((void**)&particle_forces_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force));
+#ifdef ENGINE
+      cudaMallocHost((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs));
+#endif
 #ifdef SHANCHEN
       cudaMallocHost((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition));
 #endif
-#endif
+#endif // __CUDA_ARCH__
       
       cuda_safe_mem(cudaMalloc((void**)&particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force)));
 
@@ -218,7 +231,7 @@ void gpu_init_particle_comm() {
   if ( this_node == 0  && global_part_vars_host.communication_enabled == 0 ) {
     if( cuda_get_n_gpus() == -1 ) {
       fprintf(stderr, "Unable to initialize CUDA as no sufficient GPU is available.\n");
-      exit(0);
+      errexit();
     }
     if (cuda_get_n_gpus()>1) {
       fprintf (stderr, "More than one GPU detected, please note Espresso uses device 0 by default regardless of usage or capability\n");
@@ -230,8 +243,8 @@ void gpu_init_particle_comm() {
       }
     }
   }
-  gpu_change_number_of_part_to_comm(); 
   global_part_vars_host.communication_enabled = 1;
+  gpu_change_number_of_part_to_comm(); 
 }
 
 CUDA_particle_data* gpu_get_particle_pointer() {
@@ -277,9 +290,9 @@ void copy_forces_from_GPU() {
 
     /** Copy result from device memory to host memory*/
     if ( this_node == 0 ) {
-      cuda_safe_mem (cudaMemcpy(particle_forces_host, particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force), cudaMemcpyDeviceToHost));
+      cuda_safe_mem(cudaMemcpy(particle_forces_host, particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force), cudaMemcpyDeviceToHost));
 #ifdef SHANCHEN
-      cuda_safe_mem (cudaMemcpy(fluid_composition_host, fluid_composition_device, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition), cudaMemcpyDeviceToHost));
+      cuda_safe_mem(cudaMemcpy(fluid_composition_host, fluid_composition_device, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition), cudaMemcpyDeviceToHost));
 #endif
       
       
@@ -298,13 +311,33 @@ void copy_forces_from_GPU() {
   }
 }
 
+
+#if defined(ENGINE) && defined(LB_GPU)
+// setup and call kernel to copy v_cs to host
+void copy_v_cs_from_GPU() {
+  if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles )
+  {
+    // Copy result from device memory to host memory
+    if ( this_node == 0 )
+    {
+      cuda_safe_mem(cudaMemcpy2D(host_v_cs, sizeof(CUDA_v_cs), particle_data_device, sizeof(CUDA_particle_data), sizeof(CUDA_v_cs), global_part_vars_host.number_of_particles, cudaMemcpyDeviceToHost));
+    }
+    cuda_mpi_send_v_cs(host_v_cs);
+  }
+}
+#endif
+
 void clear_energy_on_GPU() {
+  if ( !global_part_vars_host.communication_enabled || !global_part_vars_host.number_of_particles )
+    return;
   if (energy_device == NULL)
     cuda_safe_mem( cudaMalloc((void**) &energy_device, sizeof(CUDA_energy)) );
  cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)) );
 }
 
 void copy_energy_from_GPU() {
+  if ( !global_part_vars_host.communication_enabled || !global_part_vars_host.number_of_particles )
+    return;
   cuda_safe_mem (cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy), cudaMemcpyDeviceToHost));
   copy_CUDA_energy_to_energy(energy_host);
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -51,6 +51,8 @@
 #define COORD_FIXED(coord) (2L << coord)
 /** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether any of the coordinates is fixed. */
 #define COORDS_FIX_MASK     (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
+/** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether all of the coordinates are fixed. */
+#define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
 /** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external torque. */
@@ -114,7 +116,7 @@ typedef struct {
 #endif
 
 #ifdef VIRTUAL_SITES
-  /** is particle virual
+  /** is particle virtual
       0 = real particle
       else = virual particle */
   int isVirtual;
@@ -137,6 +139,26 @@ typedef struct {
 
 #ifdef CATALYTIC_REACTIONS
   int catalyzer_count;
+#endif
+
+#ifdef EXTERNAL_FORCES
+  /** flag whether to fix a particle in space.
+      Values:
+      <ul> <li> 0 no external influence
+           <li> 1 apply external force \ref ParticleLocal::ext_force
+           <li> 2,3,4 fix particle coordinate 0,1,2
+           <li> 5 apply external torque \ref ParticleLocal::ext_torque
+      </ul>
+  */
+  int ext_flag;
+  /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
+  double ext_force[3];
+
+  #ifdef ROTATION
+  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
+  double ext_torque[3];
+  #endif
+
 #endif
 } ParticleProperties;
 
@@ -178,6 +200,9 @@ typedef struct {
 #ifdef ROTATION
   /** torque */
   double torque[3];
+
+
+
 #endif
 
 } ParticleForce;
@@ -193,6 +218,8 @@ typedef struct {
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
+
+
 #endif
 } ParticleMomentum;
 
@@ -203,26 +230,6 @@ typedef struct {
   double p_old[3];
   /** index of the simulation box image where the particle really sits. */
   int    i[3];
-
-#ifdef EXTERNAL_FORCES
-  /** flag whether to fix a particle in space.
-      Values:
-      <ul> <li> 0 no external influence
-           <li> 1 apply external force \ref ParticleLocal::ext_force
-           <li> 2,3,4 fix particle coordinate 0,1,2
-           <li> 5 apply external torque \ref ParticleLocal::ext_torque
-      </ul>
-  */
-  int ext_flag;
-  /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
-  double ext_force[3];
-
-  #ifdef ROTATION
-  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
-  double ext_torque[3];
-  #endif
-
-#endif
 
 #ifdef GHOST_FLAG
   /** check whether a particle is a ghost or not */
@@ -244,6 +251,22 @@ typedef struct {
   double f_random[3];
 } ParticleLatticeCoupling;
 #endif
+
+typedef struct {
+// ifdef inside because we need this type for some MPI prototypes
+#ifdef ENGINE
+  bool swimming;
+  double f_swim;
+  double v_swim;
+#if defined(LB) || defined(LB_GPU)
+  int push_pull;
+  double dipole_length;
+  double v_center[3];
+  double v_source[3];
+  double rotational_friction;
+#endif
+#endif
+} ParticleParametersSwimming;
 
 /** Struct holding all information for one particle. */
 typedef struct {
@@ -271,6 +294,10 @@ typedef struct {
   IntList el;
 #endif
 
+#ifdef ENGINE
+  ParticleParametersSwimming swim;
+#endif
+
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
@@ -284,6 +311,9 @@ typedef struct {
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
+#ifdef LEES_EDWARDS
+  int myIndex[3];
+#endif
 } ParticleList;
 
 /************************************************
@@ -452,6 +482,15 @@ int place_particle(int part, double p[3]);
     @return ES_OK if particle existed
 */
 int set_particle_v(int part, double v[3]);
+
+#ifdef ENGINE
+/** Call only on the master node: set particle velocity.
+    @param part the particle.
+    @param swim struct containing swimming parameters
+    @return ES_OK if particle existed
+*/
+int set_particle_swimming(int part, ParticleParametersSwimming swim);
+#endif
 
 /** Call only on the master node: set particle force.
     @param part the particle.

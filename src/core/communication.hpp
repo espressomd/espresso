@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _COMMUNICATION_H
-#define _COMMUNICATION_H
+#ifndef _COMMUNICATION_HPP
+#define _COMMUNICATION_HPP
 /** \file communication.hpp
     This file contains the asynchronous MPI communication.
  
@@ -67,8 +67,8 @@
 extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
-/*@}*/
 extern MPI_Comm comm_cart;
+/*@}*/
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -76,16 +76,27 @@ extern MPI_Comm comm_cart;
  * the slave nodes. It is denoted by *_slave.
  **************************************************/
 
+/**********************************************
+ * slave callbacks.
+ **********************************************/
+typedef void (SlaveCallback)(int node, int param);
+
 /** \name Exported Functions */
 /*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
-void mpi_init(int *argc, char ***argv);
+void mpi_init(int *argc = NULL, char ***argv = NULL);
+
+/* Call a slave function. */
+void mpi_call(SlaveCallback cb, int node, int param);
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Issue REQ_TERM: stop Espresso, all slave nodes exit. */
+/** Stop Espresso, all slave nodes exit. */
 void mpi_stop();
+
+/** Abort Espresso using MPI_Abort. */
+void mpi_abort();
 
 /** Finalize MPI. Called by all nodes upon exit */
 void mpi_finalize();
@@ -134,6 +145,14 @@ void mpi_place_new_particle(int node, int id, double pos[3]);
     \param v its new velocity.
 */
 void mpi_send_v(int node, int part, double v[3]);
+
+/** Issue REQ_SET_SWIMMING: send particle swimming properties.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param swim struct containing swimming parameters
+*/
+void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
 
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.
@@ -313,6 +332,11 @@ void mpi_recv_part(int node, int part, Particle *part_data);
     @return nonzero on error
 */
 int mpi_integrate(int n_steps, int reuse_forces);
+
+/** Issue REQ_MIN_ENERGY: start energy minimization.    
+    @return nonzero on error
+ */
+int mpi_minimize_energy(void);
 
 /** Issue REQ_BCAST_IA: send new ia params.
     Also calls \ref on_short_range_ia_change.
@@ -532,14 +556,6 @@ void mpi_send_fluid_populations(int node, int index, double *pop);
 /** Part of MDLC
  */
 void mpi_bcast_max_mu();
-
-/** Issue REQ_GET_ERRS: gather all error messages from all nodes and return them
-
-    @param errors contains the errors from all nodes. This has to point to an array
-    of character pointers, one for each node.
-    @return \ref ES_OK if no error occured, otherwise \ref ES_ERROR
-*/
-int mpi_gather_runtime_errors(char **errors);
 
 /** Galilei and other: set all particle velocities and rotational inertias to zero. 
                        set all forces and torques on the particles to zero 
