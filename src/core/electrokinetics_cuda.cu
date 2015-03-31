@@ -2038,7 +2038,7 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
     //printf("particle %d (%d):\n  charge %f\n  pos %f %f %f\n  lowernode %d %d %d\n  cellpos %f %f %f\n\n", index, ek_lbparameters_gpu->number_of_particles, particle_data[index].q, particle_data[index].p[0], particle_data[index].p[1], particle_data[index].p[2], lowernode[0], lowernode[1], lowernode[2], cellpos[0], cellpos[1], cellpos[2]); //TODO delete
   }
 }
-
+#ifdef EK_ELECTROSTATIC_COUPLING
 __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
                                           CUDA_particle_force *particle_forces,
                                           LB_parameters_gpu * ek_lbparameters_gpu ) {
@@ -2123,7 +2123,6 @@ __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
     }  
 }
 
-#ifdef EK_ELECTROSTATIC_COUPLING
 __global__ void ek_calc_electric_field(const float *potential) {
   unsigned int coord[3];
   const unsigned int index = ek_getThreadIndex();
