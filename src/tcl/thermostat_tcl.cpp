@@ -216,6 +216,11 @@ int tclcommand_thermostat_parse_cpu(Tcl_Interp *interp, int argc, char **argv)
 {
   int temp;
 
+  #ifndef __linux__
+  Tcl_AppendResult(interp, "This feature is currently only supported on Linux platforms.", (char *)NULL)
+  return (TCL_ERROR);
+  #endif
+
   /* check number of arguments */
   if (argc < 3) {
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",

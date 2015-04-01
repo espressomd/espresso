@@ -199,6 +199,5 @@ void set_cpu_temp(int temp)
         count += i;
       }
     }
-
   }
 }
