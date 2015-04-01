@@ -177,26 +177,29 @@ int get_cpu_temp()
   std::ifstream f("/sys/class/thermal/thermal_zone0/temp");
   int temp;
   f >> temp;
-  temp = (temp + 273150)/1000;
-  return temp;
+  f.close();
+  return (temp + 273150)/1000;
 }
 
+static int volatile cpu_temp_count = 0;
 void set_cpu_temp(int temp)
 {
-  while (true)
+  while (temp != get_cpu_temp())
   {
     if (temp < get_cpu_temp())
     {
-      // pause for 1 second
-      usleep(1e9);
+      //printf("Cooling down CPU from %dK to %dK\n", get_cpu_temp(), temp);
+      // pause for 1 second to give the CPU time to cool down
+      usleep(1e6);
     }
     else
     {
-      // crunch some numbers
-      int count = 0;
+      //printf("Heating up CPU from %dK to %dK\n", get_cpu_temp(), temp);
+      // crunch some numbers to heat up the CPU
+      cpu_temp_count = 0;
       for (int i = 0; i < 1e9; ++i)
       {
-        count += i;
+        cpu_temp_count += i;
       }
     }
   }

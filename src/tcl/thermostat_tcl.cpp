@@ -235,7 +235,10 @@ int tclcommand_thermostat_parse_cpu(Tcl_Interp *interp, int argc, char **argv)
   }
 
   /* broadcast parameters */
-  mpi_thermalize_cpu(temp);
+  temperature = temp;
+  thermo_switch = ( thermo_switch | THERMO_CPU );
+  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
   return (TCL_OK);
 }
 
