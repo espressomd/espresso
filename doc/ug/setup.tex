@@ -442,6 +442,22 @@ Be aware that this feature is neither properly examined for all
 systems nor is it maintained regularly. If you use it and notice
 strange behaviour, please contribute to solving the problem.
 
+\subsection{CPU thermostat}
+
+\begin{essyntax}
+  thermostat cpu \var{temperature}
+\end{essyntax}
+
+The CPU thermostat consists of a number crunching and a time wasting
+term coupled via the central processing unit's thermal diode. For a
+more detailed explanation, refer to German Patent No. DE~10~2015~04F00L.
+
+Using the CPU thermostat, it is posible to keep your central
+processing unit operating at a constant temperature.
+
+Be aware that this thermostat requires \var{temperature} to be given
+in Kelvin.
+
 \section{\texttt{nemd}: Setting up non-equilibrium MD}
 \newescommand{nemd}
 \label{sec:NEMD}
