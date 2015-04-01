@@ -177,7 +177,7 @@ int get_cpu_temp()
   std::ifstream f("/sys/class/thermal/thermal_zone0/temp");
   int temp;
   f >> temp;
-  temp /= 1000;
+  temp = (temp + 273150)/1000;
   return temp;
 }
 
