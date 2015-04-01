@@ -157,6 +157,7 @@ static int terminated = 0;
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
   CB(mpiRuntimeErrorCollectorGatherSlave)        \
   CB(mpi_minimize_energy_slave) \
+  CB(mpi_thermalize_cpu_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2910,6 +2911,18 @@ void mpi_setup_reaction_slave(int pnode, int i)
 #ifdef CATALYTIC_REACTIONS
   local_setup_reaction();
 #endif
+}
+
+/*********************** CPU Thermostat **********************/
+void mpi_thermalize_cpu(int temp)
+{
+  mpi_call(mpi_thermalize_cpu_slave, -1, temp);
+  set_cpu_temp(temp);
+}
+
+void mpi_thermalize_cpu_slave(int node, int temp)
+{
+  set_cpu_temp(temp);
 }
 
 /*********************** MAIN LOOP for slaves ****************/

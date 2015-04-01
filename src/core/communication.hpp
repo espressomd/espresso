@@ -580,6 +580,9 @@ void mpi_external_potential_tabulated_read_potential_file(int number);
 void mpi_external_potential_sum_energies(); 
 void mpi_external_potential_sum_energies_slave(); 
 
+/** CPU Thermostat */
+void mpi_thermalize_cpu(int temp);
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event
