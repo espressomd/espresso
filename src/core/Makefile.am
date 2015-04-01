@@ -35,7 +35,7 @@ libEspresso_la_SOURCES = \
 	config.hpp \
 	constraint.cpp constraint.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
-	cuda_init.hpp \
+	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \

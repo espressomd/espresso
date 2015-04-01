@@ -604,7 +604,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
              ( !ARG0_IS_S("velocity") && !ARG0_IS_S("density") &&
                !ARG0_IS_S("boundary") && !ARG0_IS_S("potential") &&
                !ARG0_IS_S("pressure") && !ARG0_IS_S("lbforce") &&
-               !ARG0_IS_S("lbforce_buf") && !ARG0_IS_S("reaction_tags")
+               !ARG0_IS_S("lbforce_buf") && !ARG0_IS_S("reaction_tags") &&
+	       !ARG0_IS_S("particle_potential")
              )
            ) 
         {
@@ -671,6 +672,24 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
 #endif /* EK_BOUNDARIES */
         }
+        else if(ARG0_IS_S("particle_potential")) 
+        {
+#ifndef EK_ELECTROSTATIC_COUPLING
+          Tcl_AppendResult(interp, "Feature EK_ELECTROSTATIC_COUPLING required", (char *) NULL);
+          return (TCL_ERROR);
+#else
+          if(ek_print_vtk_particle_potential(argv[2]) == 0) 
+          {
+            argc -= 3;
+            argv += 3;
+
+            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+              return TCL_ERROR;
+            else
+              return TCL_OK;
+          }
+#endif
+	}
         else if(ARG0_IS_S("potential")) 
         {
           if(ek_print_vtk_potential(argv[2]) == 0) 

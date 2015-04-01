@@ -3224,6 +3224,54 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
+#ifdef EK_ELECTROSTATIC_COUPLING
+int ek_print_vtk_particle_potential( char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
+
+  if( fp == NULL ) 
+  {  
+    return 1;
+  }
+
+  float* potential = (float*) malloc( ek_parameters.number_of_nodes * sizeof( cufftReal ) );
+  
+  cuda_safe_mem( cudaMemcpy( potential, 
+                             ek_parameters.charge_potential_buffer,
+                             ek_parameters.number_of_nodes * sizeof( cufftReal ),
+                             cudaMemcpyDeviceToHost )                          
+               );
+  
+  fprintf(fp, "\
+# vtk DataFile Version 2.0\n\
+potential\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS potential float 1\n\
+LOOKUP_TABLE default\n",
+          ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+          ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
+          ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+          ek_parameters.number_of_nodes                                              );
+
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) 
+  {  
+    fprintf( fp, "%e\n", potential[ i ] );
+  }
+  
+  free( potential );
+  fclose( fp );
+  
+  return 0;
+}
+#endif
+
 #ifdef EK_DEBUG
 int ek_print_vtk_lbforce_buf( char* filename ) {
   FILE* fp = fopen( filename, "w" );
