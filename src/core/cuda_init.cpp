@@ -27,6 +27,8 @@
 #include <set>
 #include <iterator>
 
+#ifdef CUDA
+
 /** Helper class force device set 
  */
 
@@ -108,3 +110,6 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
   }  
   return g_devices;
 }
+
+#endif /* CUDA */
+

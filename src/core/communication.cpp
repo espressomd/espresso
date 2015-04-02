@@ -3010,11 +3010,16 @@ void mpi_external_potential_sum_energies_slave(int dummy1, int dummy2) {
   free(energies);
 }
 
+#ifdef CUDA
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices() {
   mpi_call(mpi_gather_cuda_devices_slave, 0, 0);
   return cuda_gather_gpus();
 }
+#endif
 
 void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
+#ifdef CUDA
   cuda_gather_gpus();
+#endif
 }
+

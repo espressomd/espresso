@@ -581,8 +581,10 @@ void mpi_external_potential_tabulated_read_potential_file(int number);
 void mpi_external_potential_sum_energies(); 
 void mpi_external_potential_sum_energies_slave(); 
 
+#ifdef CUDA
 /** Gather CUDA devices from all nodes */
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
+#endif
 
 /** CPU Thermostat */
 void mpi_thermalize_cpu(int temp);
