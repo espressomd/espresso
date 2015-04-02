@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -219,5 +219,6 @@ inline int MPI_Get_processor_name(char *proc_name, int *proc_name_len) {
   proc_name[5] = 'r';
   proc_name[6] = 0;
   *proc_name_len = 6;
+  return MPI_SUCCESS;
 }
 #endif
