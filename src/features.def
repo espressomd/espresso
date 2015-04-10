@@ -92,6 +92,7 @@ SHANCHEN                        requires not ELECTROKINETICS
 
 /* Stokesian-Dynamics features */
 SD 		      	        requires CUDA
+SD 		      	        requires ARPACK
 SD_FF_ONLY			requires SD
 SD_USE_FLOAT			requires SD
 SD_NOT_PERIODIC			requires SD
