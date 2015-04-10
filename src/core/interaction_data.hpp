@@ -41,6 +41,10 @@ enum BondedInteraction{
     BONDED_IA_FENE,
     /** Type of bonded interaction is a HARMONIC potential. */
     BONDED_IA_HARMONIC,
+#ifdef ROTATION
+    /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
+    BONDED_IA_HARMONIC_DUMBBELL,
+#endif
     /** Type of bonded interaction is a QUARTIC potential. */
     BONDED_IA_QUARTIC,
     /** Type of bonded interaction is a BONDED_COULOMB */
@@ -587,6 +591,16 @@ typedef struct {
       double r_cut;
 } Harmonic_bond_parameters;
 
+#ifdef ROTATION
+/** Parameters for harmonic dumbbell bond Potential */
+typedef struct {
+      double k1;
+      double k2;
+      double r;
+      double r_cut;
+} Harmonic_dumbbell_bond_parameters;
+#endif
+
 /** Parameters for quartic bond Potential */
 typedef struct {
       double k0, k1;
@@ -784,6 +798,9 @@ typedef union {
     Bending_force_bond_parameters bending_force;
     Volume_force_bond_parameters volume_force;
     Harmonic_bond_parameters harmonic;
+#ifdef ROTATION
+    Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
+#endif
     Quartic_bond_parameters quartic;
     Bonded_coulomb_bond_parameters bonded_coulomb;
     Angle_bond_parameters angle;
