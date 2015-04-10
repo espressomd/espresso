@@ -32,13 +32,13 @@ int tclcommand_inter_parse_harmonic_dumbbell(Tcl_Interp *interp, int bond_type, 
   double k1, k2, r, r_cut;
 
   if (argc < 4) {
-    Tcl_AppendResult(interp, "harmonic needs at least 3 parameters: "
+    Tcl_AppendResult(interp, "harmonic dumbbell needs at least 3 parameters: "
 		     "<k1> <k2> <r> [<r_cut>]", (char *) NULL);
     return TCL_ERROR;
   }
 
   if ((! ARG_IS_D(1, k1)) || (! ARG_IS_D(2, k2)) || (! ARG_IS_D(3, r))) {
-    Tcl_AppendResult(interp, "harmonic needs at least 3 DOUBLE parameters: "
+    Tcl_AppendResult(interp, "harmonic dumbbell needs at least 3 DOUBLE parameters: "
 		     "<k1> <k2> <r> [<r_cut>]", (char *) NULL);
     return TCL_ERROR;
   }

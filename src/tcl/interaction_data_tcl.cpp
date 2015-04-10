@@ -957,10 +957,10 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("ibm_tribend", tclcommand_inter_parse_ibm_tribend);
 #endif
   
+  REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
 #ifdef ROTATION
   REGISTER_BONDED("harmonic_dumbbell", tclcommand_inter_parse_harmonic_dumbbell);
 #endif
-  REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
   REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
 #ifdef ELECTROSTATICS
   REGISTER_BONDED("bonded_coulomb", tclcommand_inter_parse_bonded_coulomb);  
