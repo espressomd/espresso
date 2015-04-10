@@ -495,7 +495,7 @@ codes) but so-called Lucy functions. See \cite{marsili09} for more
 details. These avoid the calculation of exponentials.
 
 \section{\texttt{integrate_sd}: Running a stokesian dynamics simulation}
-\newescommand{integrate_sd}
+\newescommand[integrate-sd]{integrate_sd}
 
 \begin{essyntax}
   \variant{1} integrate_sd \var{steps}
@@ -506,8 +506,8 @@ equations of motion. The motion are overdamped. The velocities of the
 particles are related to the displacement in the last timestep. This are, at
 least if the system is thermalized, however not usefull, as the displacements
 don't scale linear with the timestep. The command \texttt{integrate_sd} with
-an integer \texttt{steps} as parameter integrates the system for
-\texttt{steps} time steps. This is implemented using CUDA, so \required{CUDA}
+an integer \var{steps} as parameter integrates the system for
+\var{steps} time steps. This is implemented using CUDA, so \required{CUDA}
 has to be available in the system.
 
 Currently there is no parallel implementation of this integrator, so all

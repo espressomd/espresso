@@ -10,6 +10,8 @@
 
 #include <openssl/md5.h>
 
+/// constructor for wave part
+/// _ldd_short : ldd_short of the matrix
 wavepart::wavepart(int _ldd_short):ldd_short(_ldd_short){
   vecs          = NULL;
   matrices      = NULL;
@@ -25,6 +27,7 @@ wavepart::wavepart(int _ldd_short):ldd_short(_ldd_short){
 #endif
 }
 
+/// destructor of the wave part
 wavepart::~wavepart(){
   if (vecs){
     cuda_safe_mem(cudaFree((void*)vecs));
@@ -64,7 +67,7 @@ wavepart::~wavepart(){
 }
 
 
-
+/// free the wave part of the matrix
 void matrix::_free_wavespace(){
   if (wavespace){
     //wavespace->~wavepart();
@@ -74,7 +77,7 @@ void matrix::_free_wavespace(){
   }
 }
 
-
+/// constructor of the matrix
 matrix::matrix(){
   data=NULL;
   col_idx=NULL;
@@ -88,11 +91,10 @@ matrix::matrix(){
   dense=NULL;
   data_hash=NULL;
   dense_hash=NULL;
-  //fprintf(stderr,"matrix %p is generated\n",this);
 #endif
 }
 
-
+/// destructor of the matrix
 matrix::~matrix(){
   if (data){
     cuda_safe_mem(cudaFree((void*)data));
@@ -121,9 +123,10 @@ matrix::~matrix(){
   }
 #endif
   _free_wavespace();
-  //fprintf(stderr,"matrix %p is getting destroid\n",this);
 }
 
+
+/// print some basic properties of the matrix, if SD_DEBUG is enabled
 void matrix::printStats() const{
 #ifdef SD_DEBUG
   printf("addr:%p\tsize:%d\tldd:%d\tsparse:%d",this,size,ldd,is_sparse);
@@ -132,9 +135,9 @@ void matrix::printStats() const{
 
 void getAndHash(const real * data, const int size, unsigned char result[MD5_DIGEST_LENGTH]){
 #ifdef SD_DEBUG
-  //real host[size];
-  //cuda_safe_mem(cudaMemcpy( host, data, size*sizeof(real), cudaMemcpyDeviceToHost ));
-  //MD5((unsigned char*) host, size, result);
+  real host[size];
+  cuda_safe_mem(cudaMemcpy( host, data, size*sizeof(real), cudaMemcpyDeviceToHost ));
+  MD5((unsigned char*) host, size, result);
 #endif
 }
 

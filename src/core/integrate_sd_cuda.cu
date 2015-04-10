@@ -51,6 +51,7 @@
 // global variables for usage in this file
 cublasHandle_t     cublas    = NULL;
 curandGenerator_t  generator = NULL;
+int reprint=-1;
 /* *************************************************************************************************************** *
  * ********************************************     implementation    ******************************************** *
  * *************************************************************************************************************** */
@@ -125,6 +126,9 @@ void propagate_pos_sd_cuda(real * box_l_h, int N,real * pos_h, real * force_h, r
   sd_compute_displacement( pos_d, N, viscosity, radius, box_l_d, box_l_h, mobility_d, force_d, disp_d, myInfo_d);
   
   int numBlocks = (N+numThreadsPerBlock-1)/numThreadsPerBlock;
+
+  // copy before rescaling to get velocities
+  cuda_safe_mem(cudaMemcpy(velo_h,disp_d,N*DIM*sizeof(real),cudaMemcpyDeviceToHost));
   // rescale displacements
   real alpha=time_step;
   cublasCall(cublasRscal( cublas, 3*N, &alpha, disp_d, 1));  
@@ -138,7 +142,6 @@ void propagate_pos_sd_cuda(real * box_l_h, int N,real * pos_h, real * force_h, r
   // save the displacements as velocities (maybe somebody is interested)
   //alpha=1/time_step;
   //cublasCall(cublasRscal(cublas, DIM*N, &alpha, disp_d, 1));
-  cuda_safe_mem(cudaMemcpy(velo_h,disp_d,N*DIM*sizeof(real),cudaMemcpyDeviceToHost));
   
   
   cuda_safe_mem(cudaFree((void*)box_l_d));
@@ -168,15 +171,15 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   real det_prec=1e-3;
 #endif
   real ran_prec=sd_random_precision;
-  static real ran_prec_last=-1;
+  static real ran_prec_last=1e-3;
   if ( ran_prec_last != ran_prec){
     ran_prec_last=ran_prec;
     printf("\nSetting the precision for the random part to %e\n",ran_prec);
   }
   cudaThreadSynchronize(); // just for debugging
   cudaCheckError("START");
-  int lda=((3*N+31)/32)*32;
-  int numBlocks = (N+numThreadsPerBlock-1)/numThreadsPerBlock;
+  const int lda=((3*N+31)/32)*32;
+  const int numBlocks = (N+numThreadsPerBlock-1)/numThreadsPerBlock;
   // sort particles in buckets
 #ifndef SD_FF_ONLY
   bool _use_buckets=false;
@@ -241,7 +244,7 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   cudaThreadSynchronize(); // just for debugging
   cudaCheckError("compute mobility error");
 #else
-  real ew_prec=1e-5;
+  real ew_prec=1e-8;
   real L_min=L_h[0];
   L_min=min(L_min,L_h[1]);
   L_min=min(L_min,L_h[2]);
@@ -254,13 +257,14 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   kmax2*=SQR(L_max/2./M_PI);
   {
     static int printed=0;
-    if (!printed){
+    if ((printed%reprint == 1)){
       fprintf(stderr,"\nL_min is %f\n",L_min);
       fprintf(stderr,"xi is %f\n",xi);
       fprintf(stderr,"kmax is %e\n",sqrt(kmax2));
       fprintf(stderr,"selfmobility is %e\n",1./(6.*M_PI*viscosity*radius));
-      printed=1;
+      //printed=1;
     }
+    printed++;
   }
   //fprintf(stderr,"kmax is %e\n",sqrt(kmax2));
   sd_compute_mobility_matrix_real_short<<<numBlocks, numThreadsPerBlock>>>(r_d, N, 1./(6.*M_PI*viscosity*radius), radius, L_d, 
@@ -272,23 +276,30 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   //cudaCheckError("");
   //mobility.hash_data();
   if (mobility.wavespace){
+    cudaThreadSynchronize(); 
+    cudaCheckError("sd_compute_mobility_matrix_real_short");
     sd_compute_mobility_sines<<<numBlocks, numThreadsPerBlock>>>(r_d, N, mobility.wavespace->vecs, mobility.wavespace->num,
 								 mobility.wavespace->sines, mobility.wavespace->cosines, 
 								 mobility.ldd_short);
-    cudaCheckError("");
-#ifdef SD_DEBUG
-    /*cuda_safe_mem(cudaMalloc( (void**)&mobility.dense,    mobility.ldd*mobility.size*sizeof(real) ));
-    cublasCall(cublasRcopy(cublas, mobility.size*mobility.ldd,mobility.data, 1, mobility.dense,1));
-    sd_wavepart_addto_matrix<<<dim3(numBlocks,N,1), dim3(numThreadsPerBlock,1,1),
-                               numThreadsPerBlock*3*sizeof(real)>>>(mobility.wavespace->num,   mobility.wavespace->matrices,
-								    mobility.wavespace->sines, mobility.wavespace->cosines,
-								    mobility.ldd_short,        N,
-								    mobility.dense,            mobility.ldd);
-    cudaCheckError("");
-    mobility.hash_dense();*/
+    cudaThreadSynchronize(); 
+    cudaCheckError("sd_compute_mobility_sines");
+
+    //cuda_safe_mem(cudaMalloc( (void**)&mobility.dense,    mobility.ldd*mobility.size*sizeof(real) ));
+    //cublasCall(cublasRcopy(cublas, mobility.size*mobility.ldd,mobility.data, 1, mobility.dense,1));
+    if (false) {
+      sd_wavepart_addto_matrix<<<dim3(numBlocks,N,1), dim3(numThreadsPerBlock,1,1),
+                                 numThreadsPerBlock*3*sizeof(real)>>>(mobility.wavespace->num,   mobility.wavespace->matrices,
+								      mobility.wavespace->sines, mobility.wavespace->cosines,
+								      mobility.ldd_short,        N,
+								      mobility.data,            mobility.ldd);
+      cudaThreadSynchronize(); 
+      cudaCheckError("add wavepart to matrix");
+      mobility._free_wavespace();
+    }
+#ifdef SD_DEBUG    
     /* *********************************
      * **   Test to check wavespace   **
-     * *********************************
+     * ********************************* *
     real * testvec=NULL;
     cuda_safe_mem(cudaMalloc( (void**)&testvec,    mobility.ldd*3*sizeof(real) ));
     if (true){
@@ -363,8 +374,9 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
   resistance.ldd_short = ((N+31)/32)*32;
   int lda_short=resistance.ldd_short;
   resistance.is_sparse=true;
-  cuda_safe_mem(cudaMalloc( (void**)&resistance.data,    lda*80*3*sizeof(real) ));
-  cuda_safe_mem(cudaMalloc( (void**)&resistance.col_idx, lda_short*80*sizeof(int) ));
+  const int max_part_in_lc=125;
+  cuda_safe_mem(cudaMalloc( (void**)&resistance.data,    lda* 3*    max_part_in_lc* sizeof(real) ));
+  cuda_safe_mem(cudaMalloc( (void**)&resistance.col_idx, lda_short* max_part_in_lc* sizeof(int) ));
   cuda_safe_mem(cudaMalloc( (void**)&resistance.row_l,   lda_short*sizeof(int) ));
   
   if (use_buckets){
@@ -384,6 +396,11 @@ void sd_compute_displacement(const real * r_d, int N, real viscosity, real radiu
     cudaCheckError("finding interaction error");
     
   }
+  //#ifdef SD_DEBUG
+  {
+    assert(sd_find_max(resistance.row_l,N) < max_part_in_lc );
+  }
+  //#endif // SD_DEBUG
   sd_compute_resistance_matrix_sparse<<<numBlocks, numThreadsPerBlock>>>(r_d, N, -1./(6.*M_PI*viscosity*radius), radius, L_d,
 									   resistance.data, resistance.col_idx, resistance.row_l, myInfo_d);
     /*} else {
@@ -1578,8 +1595,10 @@ void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility
   real k[3];
   real ki[3];
   real xi2=1/xi/xi;
+  real kvol=1;
   for (int i =0 ; i < 3; i++){
     ki[i]=2*M_PI/L_h[i];
+    kvol*=ki[i];
   }
   // count how many wave vectors we need
   int vc = 0;
@@ -1601,9 +1620,6 @@ void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility
     //mobility.wavespace = (wavepart *) malloc(sizeof(wavepart));
     //mobility.wavespace->wavepart();
   }
-  // CONTINUE:
-  // Space management is fucked up
-  // alignement is prop. fucked up
   mobility.wavespace->num      = vc;
   int max = vc;
   if (max !=  mobility.wavespace->num){
@@ -1643,7 +1659,7 @@ void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility
 	  //if (cki[0]==-kmax){
 	  //  printf("scal is %e, exp is %e\n",scal/fak,exp(-0.25*xi2*k2));
 	  //}
-	  if (scal > 1e-3*ew_prec){
+	  //if (scal/kvol > 1e-6*ew_prec){
 	    for (int i = 0 ; i < 3 ; i++ ){
 	      matrices_h[vc*6+i] = (1-(k[i]*k[i]/k2))*scal;
 	    }
@@ -1656,16 +1672,18 @@ void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility
 	      printf("  m=[%12.4e, %12.4e, %12.4e,%12.4e, %12.4e, %12.4e]  \n",matrices_h[vc*6],matrices_h[vc*6+1],matrices_h[vc*6+2],matrices_h[vc*6+3],matrices_h[vc*6+4],matrices_h[vc*6+5]);
 	      }*/
 	    vc++;
-	  }
+	    //}
 	}
       }
     }
   }
   mobility.wavespace->num      = vc;
-  static int printed=0;
-  if (!printed){
-    printf("\nwe need %d k vectors\n",vc);
-    printed=1;
+  {
+    static int printed=0;
+    if ((printed%reprint)==1){
+      printf("\nwe need %d k vectors\n",vc);
+    }
+    printed++;
   }
   cudaCheckError("");
   //fprintf(stderr,"h: 0x%x d: 0x%x, size: %d",vecs_h,mobility.wavespace->vecs,  ldd*3*sizeof(real));
@@ -1687,6 +1705,34 @@ void _cuda_check_error(char *file, unsigned int line){
 
 
 
+int sd_find_max(int * data, int length){
+  int tlength=length;
+  int * tdata=data;
+  if (tlength >= 512){
+    int bs=32;
+    if (tlength > 4*1024){
+      bs=128;
+    } else if (tlength > 1024){
+      bs=64;
+    }
+    tlength = (length+bs-1)/bs;
+    cuda_safe_mem(cudaMalloc((void **) &tdata,tlength*sizeof(int)));
+    sd_nrm_inf<<<tlength,bs,bs*sizeof(int)>>>(length,data,tdata);
+  }
+  //if (length < 64){ // copy to host and compare
+  int tmp[tlength];
+  cuda_safe_mem(cudaMemcpy(tmp,tdata,tlength*sizeof(int),cudaMemcpyDeviceToHost));
+  int result=tmp[0];
+  for (int i=1;i<tlength;i++){
+    if (tmp[i] > result){
+      result=tmp[i];
+    }
+  }
+  if (length>=512) {
+    cuda_safe_mem(cudaFree((void*)tdata));
+  }
+  return result;
+}
 
 
 

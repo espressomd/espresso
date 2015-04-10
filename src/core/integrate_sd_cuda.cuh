@@ -207,13 +207,17 @@ void calculate_maxmin_eigenvalues(const matrix & mobility, real * lamba_min, rea
 void sd_Rgemv(const real * factor,const matrix & A,const real * in, real * out);
 
 
-// this function should be fast, as the data should fit (mostly) in L1
+// compute the chebyshev coeffeicents which are needed to achieve a given accuracy.
 // lambda_min   : the lower boundery
 // lambda_max   : the upper boundery of the interval
 // tol          : the given tollerance which should be achieved
 // coefficents  : the pointer where the data will be stored
 real calculate_chebyshev_coefficents(real lambda_min, real lambda_max, real tol,real ** coefficents);
 
-
+// find the maximal value of an array on the GPU
+// data         : the array
+// length       : number of elements
+// return value : the maximal value
+int sd_find_max(int * data, int length);
 
 #endif

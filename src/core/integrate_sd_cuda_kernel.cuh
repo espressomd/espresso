@@ -111,7 +111,6 @@ __global__ void sd_set_value(real * data, int size, real value);
 __global__ void sd_get_diag(int size, const real * mat_a,int lda,real * diag,real * diag_i);
 
 
-__global__ void sd_nrm1(const int size,const real * const vec, real * erg);
 
 // implementation of a bucket sort algorithm
 // puts all the N particles with given position pos 
@@ -148,3 +147,16 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * _L, 
 // this works without bucket sort and is O(N^2)
 __global__ void sd_find_interacting_particles(const real * pos,const real * L_g, const int N, int * interacting, int * num_interacting,
 					      const real interaction_range);
+
+
+
+/// computing the inf norm of a given vector (or in other words the largest value)
+/// if more than one block is used, this kernel does not perform the final reduction
+/// size     : size of the vector
+/// vec      : data of the vector
+/// res      : the 1 norm (OUT)
+__global__ void sd_nrm_inf(const int size, const int * const vec, int * res);
+
+
+
+__global__ void sd_nrm1(const int size,const real * const vec, real * erg);

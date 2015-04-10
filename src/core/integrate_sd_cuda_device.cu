@@ -6,6 +6,9 @@
  * ********************************************    DEVICE-Functions   ******************************************** *
  * *************************************************************************************************************** */
 
+/// atomic add for doubles
+/// address  : pointer to which the value should be added
+/// inc      : value which should be added
 __device__ double atomicAdd(double * address, double inc){
 
   ull *addressUll = (ull*) address;
@@ -21,6 +24,9 @@ __device__ double atomicAdd(double * address, double inc){
   return __longlong_as_double(oldValue);
 }
 
+/// modulo function for integers as implemented in python
+/// returns value % max 
+/// which is always positive
 __device__ __inline__ int fold_back_up(int value, int max){
   while (value < 0){
     value+=max;
@@ -31,12 +37,16 @@ __device__ __inline__ int fold_back_up(int value, int max){
   return value;
 }
 
-__device__ int reduce_max(int * shared_cache, int value){
-  shared_cache[threadIdx.x]=value;
-  shared_cache[threadIdx.x+blockDim.x]=0;
+/// reduction function returning maximum of all value.
+/// has to be called by all threads
+/// shared_cache should be a pointer to shared memory of at least size blockDim.x
+/// blockDim.x has to be an even number
+__device__ int reduce_max(int * shared_cache){
   for (int t=(blockDim.x+1)/2;t>1;t=(t+1)/2){
     if (threadIdx.x < t){
-      shared_cache[threadIdx.x]=shared_cache[threadIdx.x]>shared_cache[threadIdx.x+t]?shared_cache[threadIdx.x]:shared_cache[threadIdx.x+t];
+      if (shared_cache[threadIdx.x]<shared_cache[threadIdx.x+t]){
+	shared_cache[threadIdx.x]=shared_cache[threadIdx.x+t];
+      }
     }
     __syncthreads();
   }
@@ -45,6 +55,25 @@ __device__ int reduce_max(int * shared_cache, int value){
   }
   return shared_cache[0];
 }
+
+
+__device__ int reduce_max(int * shared_cache, int value){
+  shared_cache[threadIdx.x]=value;
+  /*if (threadIdx.x == 0){
+    if ((((blockDim.x+1)/2)*2) > blockDim.x){
+      shared_cache[blockDim.x+1]=0;
+    }
+  }*/
+  //shared_cache[threadIdx.x+blockDim.x]=0;
+  __syncthreads();
+  return reduce_max(shared_cache);
+}
+
+
+
+/// reduction function returning sum of all values in shared_cache[0:blockDim.x-1]
+/// has to be called by all threads
+/// shared_cache should be a pointer to shared memory of at least size blockDim.x
 __device__ void reduce_sum(real * shared_cache){
 #ifndef numThreadsPerBlock_is_power_of_two
 #error numThreadsPerBlock has to be a power of two for effective reduction
@@ -58,6 +87,8 @@ __device__ void reduce_sum(real * shared_cache){
   }
 }
 
+/// function to avoid caching if reading from global memory
+/// addr     : address from which the value should be read
 __device__ __inline__ real read_without_caching( const real * addr){
    real tmp;
 #ifdef SD_USE_FLOAT

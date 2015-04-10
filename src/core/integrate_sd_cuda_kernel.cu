@@ -13,13 +13,13 @@
  * *************************************************************************************************************** */
 
 
-// This computes the farfield contribution of the mobility
-// r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
-// N is the number of particles
-// self_mobility is 1./(6.*PI*eta*a)
-// a is the particle radius
-// mobility is the mobility matrix which will be retruned
-// L_d is the boxlength
+/// This computes the farfield contribution of the mobility in the case of no
+/// periodic boundary conditions.
+/// r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+/// N is the number of particles
+/// self_mobility is 1./(6.*PI*eta*a)
+/// a is the particle radius
+/// mobility is the mobility matrix which will be retruned
 #define mydebug(str,...)
 // if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
 __global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobility, real a, real * mobility){
@@ -145,16 +145,16 @@ __global__ void sd_compute_mobility_matrix(const real * r, int N, real self_mobi
 
 /// This computes the farfield contribution of the mobility with ewald summation
 /// this version assumes that the real-space cutoff is smaller than the boxlength
-// r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
-// N is the number of particles
-// self_mobility is 1./(6.*PI*eta*a)
-// a is the particle radius
-// mobility is the mobility matrix which will be retruned
-// L_d is the boxlength
-// cutoff the realspace cutoff distance
-// xi the splitting parameter as defined by Beenakker 1986
-// xa  = xi * a
-// xa3 = xa * xa * xa
+/// r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+/// N is the number of particles
+/// self_mobility is 1./(6.*PI*eta*a)
+/// a is the particle radius
+/// L_g is the boxlength
+/// mobility is the mobility matrix which will be retruned
+/// cutoff the realspace cutoff distance
+/// xi the splitting parameter as defined by Beenakker 1986
+/// xa  = xi * a
+/// xa3 = xa * xa * xa
 #define mydebug(str,...)
 // if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
  __global__ void sd_compute_mobility_matrix_real_short(const real * r, int N, real self_mobility, real a, const real * L_g,
@@ -340,10 +340,10 @@ __global__ void sd_compute_mobility_sines(const real * r, int N, const real * ve
 
 
 /// This computes the farfield contribution of the mobility with ewald summation
-/// this kernel computes the sum 
-/// The number of threads have to be a power of two! (e.g. 32,64,128 ... )
-// forces is the vector of [fx_1, fy_1, fz_1, fx_2, fy_2, fz_2, ...]
-//#define mydebug(str,...) if (threadIdx.x < 3 && (blockIdx.x == 0 || blockIdx.x == 1)){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
+/// this kernel computes the sum in eq. (3.34) and (3.35) in the master thesis 
+/// "rotne-prager based hydrodynamics" by D. Schwoerer: M^{wave} \sum F_i cos / sin.
+/// The number of threads have to be a power of two e.g. 32, 64 or 128.
+/// forces is the input vector of form [fx_1, fy_1, fz_1, fx_2, fy_2, fz_2, ...]
 __global__ void sd_wavepart_sum(const real * const forces, const real * const vecs,    int num, const  real * const matrices_d,
 				const real * const sines,  const real * const cosines, int ldd, int N, real * sin_sum, real * cos_sum, real max){
   // each block summs over all particles
@@ -445,12 +445,19 @@ __global__ void sd_wavepart_sum(const real * const forces, const real * const ve
 
 
 
-/// This computes the 
-// forces is the vector of [fx_1, fy_1, fz_1, fx_2, fy_2, fz_2, ...]
-// a is the particle radius
-// mobility is the mobility matrix which will be retruned (in/out)
-// L_d is the boxlength
-// cutoff the wavespace cutoff distance
+/// This computes the wave space contribution of the matrix vector product of
+/// the farfield. This uses the pre computed values from the kernel
+/// sd_wavepart_sum
+/// num      : number of wave vectors
+/// sines    : sinus of the scalar product of position and wave vector
+/// cosines  : cosines of the scalar product of position and wave vector
+/// sin_sum  : precomputed sum for sinus
+/// cos_sum  : precomputed sum for cosinus
+/// ldd      : leading dimension of the sin_sum and cos_sum arrays
+/// out      : out vector upon which the result gets added
+/// max      : maximal value of which the sin_sum and cos_sum can have
+/// N        : number of particles
+/// factor   : the scalar factor c of the matrix product c A \cdot x
 __global__ void sd_wavepart_assemble(const int num, const real * const __restrict__ sines, const real * const __restrict__ cosines,
 				     const real * const __restrict__ sin_sum, const real * const __restrict__ cos_sum, 
 				     const int ldd, real * __restrict__ out, const real max, const int N, const real factor){
@@ -552,6 +559,17 @@ __global__ void sd_wavepart_assemble_block(const int num, const real * const sin
 
 
 /// Add the wavepart contribution of the mobility to the matrix
+/// num      : number of wave space vectors
+/// matrices_d : pointer to the matrices of the wave space contribution in the
+///            ewald sum
+/// sines    : sines of the scalar product of wave space vector and particle
+///            positions
+/// cosines  : cosines of the scalar product of wave space vector and
+///            particle positions
+/// ldd      : leading dimension of sines/cosines
+/// N        : number of particles
+/// mobility_d : mobility matrix to which the wave space contribution is added
+/// mat_ldd  : leading dimension of the mobility matrix
 __global__ void sd_wavepart_addto_matrix(const int num, const  real * const matrices_d, const real * const sines,  const real * const cosines,
 					 const int ldd, const int N, real * const mobility_d, const int mat_ldd){
   const int i= threadIdx.x + blockDim.x*blockIdx.x;
@@ -607,19 +625,18 @@ __global__ void sd_wavepart_addto_matrix(const int num, const  real * const matr
 
 #define mydebug(str,...)
 // if (threadIdx.x < 3 && blockIdx.x < 2){printf("line: %d thread: %2d, block: %2d "str,__LINE__,threadIdx.x,blockIdx.x,__VA_ARGS__);}
-// this computes the near field as a  ResistanceMatrix
-// r             : is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
-// N             : is the number of particles
-// self_mobility : is 1./(6.*PI*eta*a)
-// a             : is the particle radius
-// L_d           : is the boxlength
-// resistance    : is the resistance matrix which will be retruned
-// myInfo        : contains infos about the operation:
-//                myInfo[0] : number of overlapping particles
-//                myInfo[1] : number of interacting particles (via nf)
-//                myInfo[2] : max number of interacting particles per particle
+/// this computes the near field as a  ResistanceMatrix
+/// pos           : is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+/// N             : is the number of particles
+/// self_mobility : is 1./(6.*PI*eta*a)
+/// a             : is the particle radius
+/// L_g           : is the boxlength
+/// resistance    : is the resistance matrix which will be retruned
+/// myInfo        : contains infos about the operation:
+///                myInfo[0] : number of overlapping particles
+///                myInfo[1] : number of interacting particles (via nf)
+///                myInfo[2] : max number of interacting particles per particle
 __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_mobility, real a, const real * L_g, real * resistance, int * myInfo){
-  //__shared__ real myPos[3*numThreadsPerBlock];
   int interactions=0;
   real mypos[3];
 #ifdef SD_USE_FLOAT
@@ -628,9 +645,7 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
   __shared__ real cachedPos[3*numThreadsPerBlock];
 #endif
   const int lda=(((N*3)+31)/32)*32;
-  //__shared__ real myresistance[6*numThreadsPerBlock];
   real myresistance[6]={0,0,0,0,0,0};
-  //__shared__ real otherresistance[6*numThreadsPerBlock];
   int i = blockIdx.x*blockDim.x + threadIdx.x;
 #ifndef SD_NOT_PERIODIC
   __shared__ real L[3];
@@ -638,11 +653,6 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
     L[threadIdx.x]=L_g[threadIdx.x];
   }
 #endif
-  //__syncthreads();
-  // get data for myposition - but coalscaled
-  /*for (int l=0;l<3;l++){
-    myPos[threadIdx.x+l*numThreadsPerBlock] = r[threadIdx.x+l*numThreadsPerBlock+blockIdx.x*blockDim.x*3];
-    }*/
   for (int l=0;l<3;l++){
     cachedPos[threadIdx.x+l*numThreadsPerBlock] = pos[threadIdx.x+l*numThreadsPerBlock+blockIdx.x*blockDim.x*3];
   }
@@ -652,16 +662,6 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
     mypos[d] = cachedPos[threadIdx.x*3+d];
   }
   
-  //for (int i = idx; i < N; i+=blockDim.x*gridDim.x){
-  /*if (i < N){
-#pragma unroll 3
-    for (int k=0; k < DIM; k++){
-#pragma unroll 3
-      for (int l=0;l < DIM; l++){
-	resistance[myindex(DIM*i+k,DIM*i+l)]=0; // we will add some terms on the diagonal, so set it to zero before
-      }
-    }
-  }*/
   for (int offset=0;offset<N;offset+=numThreadsPerBlock){
     // copy positions to shared memory
 #pragma unroll
@@ -732,24 +732,16 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
 	  const real dr_c4 = 4*4*4*4;
 	  const real dr_c5 = 4*4*4*4*4;
 	  const real dr_c6 = 4*4*4*4*4*4;
-	  const real safety_fac=0.666; /* this should be one.
-					* but setting it to one will result in negative eigenvalues.
-					* The Problem is that the correction for the perpendicular
-					* entries is larger then the actual value.
-					* Reducing the correction is not good - but solves the Problem.
-					* This comes mainly from the colesky-decomposition, but is
-					* also here to be at least selfconsitant ...
-					*/
 	  const real r2bcorr_para_self_c  =                  1./(1.-9./4./dr_c2+3./dr_c4-1./dr_c6) + para_fac_c;
 	  const real r2bcorr_para_mix_c   = (6.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)   + para_fac_c;
-	  const real r2bcorr_perp_self_c  =                  1./(1.-25./16./dr_c2)            *safety_fac     + 1./6.*log(2.);
-	  const real r2bcorr_perp_mix_c   =                  1./(16./20.*dr_c1-25./20./dr_c1) *safety_fac     + 1./6.*log(2.);
+	  const real r2bcorr_perp_self_c  =                  1./(1.-25./16./dr_c2)                 + 1./6.*log(2.);
+	  const real r2bcorr_perp_mix_c   =                  1./(16./20.*dr_c1-25./20./dr_c1)      + 1./6.*log(2.);
 	  // TODO: Make sure to use (real) and not double ...
 	  // real computation
 	  real r2bcorr_para_self     =-( para_fac  + (                      1./(1.-9./4./dr2+3./dr4-1./dr6)  - r2bcorr_para_self_c ));
 	  real r2bcorr_para_mix      = ( para_fac  + ( (6.*dr4*drn-4.*dr2*drn)/(4.*dr6-9.*dr4+12.*dr2-4.)    - r2bcorr_para_mix_c  ));
-	  real r2bcorr_perp_self     =-( perp_fac  + (                      1./(1.-((real)25./16.)/dr2)   * safety_fac   - r2bcorr_perp_self_c ));
-	  real r2bcorr_perp_mix      = ( perp_fac  + (                      1./(16./20.*drn-25./20./drn)  * safety_fac   - r2bcorr_perp_mix_c  ));
+	  real r2bcorr_perp_self     =-( perp_fac  + (                      1./(1.-((real)25./16.)/dr2)      - r2bcorr_perp_self_c ));
+	  real r2bcorr_perp_mix      = ( perp_fac  + (                      1./(16./20.*drn-25./20./drn)     - r2bcorr_perp_mix_c  ));
 	  //printf("%d %d   show  [ %e, %e,  %e, %e ]\n",i,j,r2bcorr_para_self,r2bcorr_perp_self,r2bcorr_para_mix,r2bcorr_perp_mix);
 	    
 	  r2bcorr_diag_self     = (r2bcorr_perp_self)/self_mobility;
@@ -769,8 +761,6 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
 #else
 	    resistance[myindex(DIM*i+k,DIM*j+l)]=dr[k]*dr[l]*offdiag_fac;
 #endif
-	    
-	    //resistance[myindex(DIM*i+k,DIM*i+l)]-=dr[k]*dr[l]*t;
 	  }
 #ifdef SD_RESISTANCE_CORRECT
 	  myresistance[k]-=dr[k]*dr[k]*r2bcorr_offdiag_self;
@@ -795,19 +785,6 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
       // python implementation:
       //T=one*(1-9./32.*drn/a)+3./32.*dr*drt/drn/a;
     }
-    
-    /*else{ // set the block to zero
-    // it might be faster to set everything in the beginning to zero ...
-    // or use sparse matrices ...
-#pragma unroll 3
-	  for (int k=0; k < DIM; k++){
-#pragma unroll 3
-	    for (int l=0;l < DIM; l++){
-	      resistance[myindex(DIM*i+k,DIM*j+l)]=0;
-	    }
-	    }  
-	  }*/
-    
   }
   if ( i < N){
 #pragma unroll
@@ -844,7 +821,18 @@ __global__ void sd_compute_resistance_matrix(const real * pos, int N, real self_
   }
 }
 
-
+/// Find particle pairs which are within a certain cutoff range
+/// pos           : is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+/// L_g           : is the boxlength
+/// N             : is the number of particles
+/// interacting   : list of interaction particles. First entry is the first
+///                 particle close enough to particle 1. Followed by the first
+///                 one close enough to the second and so on.
+///                 The second interaction particle of the first is at
+///                 lda_short=((N+31)/32)*32 stored.
+/// num_interacting : for each particle the number of interacting particles.
+/// interaction_range : the cutoff range for interaction. Has to be smaller
+///                 than half the boxlength.
 __global__ void sd_find_interacting_particles(const real * pos,const real * L_g, const int N, int * interacting, int * num_interacting,
 					      const real interaction_range){
   const int lda_short=((N+31)/32)*32;
@@ -892,6 +880,26 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * L_g,
     num_interacting[i]=interactions;
   }
 }
+
+
+/// Find particle pairs which are within a certain cutoff range using buckets
+/// pos           : the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+/// _L            : the boxlength
+/// N             : the number of particles
+/// interacting   : list of interaction particles. First entry is the first
+///                 particle close enough to particle 1. Followed by the first
+///                 one close enough to the second and so on.
+///                 The second interaction particle of the first is at
+///                 lda_short=((N+31)/32)*32 stored.
+/// num_interacting : for each particle the number of interacting particles.
+/// particle_count : the number of particles within a certain bucket
+/// particle_sorted_list : the list of the particles in the buckets
+/// bucket_size_  : real[3] array of the dimensions of a bucket
+/// bucket_num_   : int[3] array of the number of buckets in each direction
+/// particle_to_bucket_list : lookup table what particle is in what bucket
+/// interaction_range : the cutoff range for interaction. Has to be smaller
+///                 than half the boxlength.
+/// total_bucket_num : number of buckets
 __global__ void sd_find_interacting_particles(const real * pos,const real * _L, const int N, int * interacting, int * num_interacting,
 					      const int * particle_count, const int * particle_sorted_list, const real * bucket_size_,
 					      const int * bucket_num_, const int * particle_to_bucket_list, const real interaction_range,
@@ -1056,7 +1064,19 @@ __global__ void sd_find_interacting_particles(const real * pos,const real * _L, 
   
 }
 
-
+/// Compute the lubrication correction in the resistance formulation.
+/// pos           : is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
+/// N             : is the number of particles
+/// self_mobility : is 1./(6.*PI*eta*a)
+/// a             : is the particle radius
+/// _L            : is the boxlength
+/// resistance    : is the sparse resistance matrix which will be returned
+/// col_idx       : list of interacting partilces
+/// row_l         : number of col_idx entries per particle
+/// myInfo        : contains infos about the operation:
+///                myInfo[0] : number of overlapping particles
+///                myInfo[1] : number of interacting particles (via nf)
+///                myInfo[2] : max number of interacting particles per particle
 __global__ void sd_compute_resistance_matrix_sparse(const real * pos, const int N, const real self_mobility,const real a,const real * _L,
   						    real * resistance,const int * col_idx,const int * row_l, int * myInfo){
    const int lda_short=((N+31)/32)*32;
@@ -1152,24 +1172,17 @@ __global__ void sd_compute_resistance_matrix_sparse(const real * pos, const int 
 	const real dr_c4 = 4*4*4*4;
 	const real dr_c5 = 4*4*4*4*4;
 	const real dr_c6 = 4*4*4*4*4*4;
-	const real safety_fac=0.666; /* this should be one.
-				      * but setting it to one will result in negative eigenvalues.
-				      * The Problem is that the correction for the perpendicular
-				      * entries is larger then the actual value.
-				      * Reducing the correction is not good - but solves the Problem.
-				      * This comes mainly from the colesky-decomposition, but is
-				      * also here to be at least selfconsitant ...
-				      */
+	
 	const real r2bcorr_para_self_c  =                  1./(1.-9./4./dr_c2+3./dr_c4-1./dr_c6) + para_fac_c;
 	const real r2bcorr_para_mix_c   = (6.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)   + para_fac_c;
-	const real r2bcorr_perp_self_c  =                  1./(1.-25./16./dr_c2)            *safety_fac     + 1./6.*log(2.);
-	const real r2bcorr_perp_mix_c   =                  1./(16./20.*dr_c1-25./20./dr_c1) *safety_fac     + 1./6.*log(2.);
+	const real r2bcorr_perp_self_c  =                  1./(1.-25./16./dr_c2)                 + 1./6.*log(2.);
+	const real r2bcorr_perp_mix_c   =                  1./(16./20.*dr_c1-25./20./dr_c1)      + 1./6.*log(2.);
 	// TODO: Make sure to use (real) and not double ...
 	// real computation
 	real r2bcorr_para_self     =-( para_fac  + (                      1./(1.-9./4./dr2+3./dr4-1./dr6)  - r2bcorr_para_self_c ));
 	real r2bcorr_para_mix      = ( para_fac  + ( (6.*dr4*drn-4.*dr2*drn)/(4.*dr6-9.*dr4+12.*dr2-4.)    - r2bcorr_para_mix_c  ));
-	real r2bcorr_perp_self     =-( perp_fac  + (                      1./(1.-((real)25./16.)/dr2)   * safety_fac   - r2bcorr_perp_self_c ));
-	real r2bcorr_perp_mix      = ( perp_fac  + (                      1./(16./20.*drn-25./20./drn)  * safety_fac   - r2bcorr_perp_mix_c  ));
+	real r2bcorr_perp_self     =-( perp_fac  + (                      1./(1.-((real)25./16.)/dr2)      - r2bcorr_perp_self_c ));
+	real r2bcorr_perp_mix      = ( perp_fac  + (                      1./(16./20.*drn-25./20./drn)     - r2bcorr_perp_mix_c  ));
 	//printf("%d %d   show  [ %e, %e,  %e, %e ]\n",i,j,r2bcorr_para_self,r2bcorr_perp_self,r2bcorr_para_mix,r2bcorr_perp_mix);
 	
 	r2bcorr_diag_self     = (r2bcorr_perp_self)/self_mobility;
@@ -1265,6 +1278,16 @@ __global__ void sd_compute_resistance_matrix_sparse(const real * pos, const int 
 #ifndef SD_RESISTANCE_CORRECT
 #warning "SD Brownian motion only support corrected resistance calculation ..."
 #endif
+/// Computing the brownian forces which arise from the nearfield contribution
+/// of the mobility matrix
+/// r        : position of the particles
+/// gaussian : pointer to a sufficent amount of gaussian distributed random
+///            numbers 
+/// N        : number of particles
+/// L_g      : size of periodic box
+/// a        : hydrodynamic particle radius
+/// self_mobility : is 1./(6.*PI*eta*a)
+/// brownian_force_nf : computed brownian force
 __global__ void sd_compute_brownian_force_nearfield(const real * r, const real * gaussian,int N,const real * L_g,
 						    real a, real self_mobility,real * brownian_force_nf){
   const int gaussian_ldd=((N+31)/32)*32;
@@ -1350,22 +1373,17 @@ for (int j=max(offset, blockIdx.x*numThreadsPerBlock+1);j<min(offset+numThreadsP
 	  const real dr_c4 = 4*4*4*4;
 	  const real dr_c5 = 4*4*4*4*4;
 	  const real dr_c6 = 4*4*4*4*4*4;
-	  const real safety_fac=0.666; /* this should be one.
-					* but setting it to one will result in negative eigenvalues.
-					* The Problem is that the correction for the perpendicular
-					* entries is larger then the actual value.
-					* Reducing the correction is not good - but solves the Problem
-					*/
+	  
 	  const real r2bcorr_para_self_c  =                  1./(1.-9./4./dr_c2+3./dr_c4-1./dr_c6) + para_fac_c;
 	  const real r2bcorr_para_mix_c   = (6.*dr_c5-4.*dr_c3)/(4.*dr_c6-9.*dr_c4+12.*dr_c2-4.)   + para_fac_c;
-	  const real r2bcorr_perp_self_c  =                  1./(1.-25./16./dr_c2)            *safety_fac     + 1./6.*log(2.);
-	  const real r2bcorr_perp_mix_c   =                  1./(16./20.*dr_c1-25./20./dr_c1) *safety_fac     + 1./6.*log(2.);
+	  const real r2bcorr_perp_self_c  =                  1./(1.-25./16./dr_c2)                 + 1./6.*log(2.);
+	  const real r2bcorr_perp_mix_c   =                  1./(16./20.*dr_c1-25./20./dr_c1)      + 1./6.*log(2.);
 	  // TODO: Make sure to use (real) and not double ...
 	  // real computation
 	  real r2bcorr_para_self     =-( para_fac  + (                      1./(1.-9./4./dr2+3./dr4-1./dr6)  - r2bcorr_para_self_c ));
 	  real r2bcorr_para_mix      = ( para_fac  + ( (6.*dr4*drn-4.*dr2*drn)/(4.*dr6-9.*dr4+12.*dr2-4.)    - r2bcorr_para_mix_c  ));
-	  real r2bcorr_perp_self     =-( perp_fac  + (                      1./(1.-((real)25./16.)/dr2)   * safety_fac   - r2bcorr_perp_self_c ));
-	  real r2bcorr_perp_mix      = ( perp_fac  + (                      1./(16./20.*drn-25./20./drn)  * safety_fac   - r2bcorr_perp_mix_c  ));
+	  real r2bcorr_perp_self     =-( perp_fac  + (                      1./(1.-((real)25./16.)/dr2)      - r2bcorr_perp_self_c ));
+	  real r2bcorr_perp_mix      = ( perp_fac  + (                      1./(16./20.*drn-25./20./drn)     - r2bcorr_perp_mix_c  ));
 	  //printf("%d %d   show  [ %e, %e,  %e, %e ]\n",i,j,r2bcorr_para_self,r2bcorr_perp_self,r2bcorr_para_mix,r2bcorr_perp_mix);
 	  
 	  r2bcorr_diag_self     = (r2bcorr_perp_self)/self_mobility;
@@ -1511,6 +1529,17 @@ for (int j=max(offset, blockIdx.x*numThreadsPerBlock+1);j<min(offset+numThreadsP
   }
 }
 
+/// computing the matrix vector y = c * A * x product with a square sparse
+/// matrix A and a scalar factor c
+/// size     : size of the matrix and of the input and output vectors
+/// factor   : factor $c$ is the given prefactor
+/// matrix   : data of the sparse matrix
+/// ldd      : leading dimension of the matrix
+/// ldd_short : leading dimension of col_idx
+/// col_idx  : indices of the entries in the matrix
+/// row_l    : number of entris per row
+/// vec_in   : the input vecor $x$
+/// vec_out  : the output vector $y$
 __global__ void sd_multiply_sparse_matrix_vector(const int size, const real factor, const real * matrix, const int ldd, const int ldd_short,
 						 const int * col_idx, const int * row_l, const real * vec_in, real * vec_out ){
   int id = threadIdx.x + blockIdx.x*blockDim.x;
@@ -1530,11 +1559,12 @@ __global__ void sd_multiply_sparse_matrix_vector(const int size, const real fact
   }
 }
 
-// this adds the identity matrix to a given matrix of ld=size
-// matrix: pointer to the given matrix
-// size  : the size of the matrix (in the example below 3N)
-// block : (ignored) the number of elements to process per thread
-//         if this is e.g. 3 and the matrix is 3Nx3N, than N threads have to be started
+/// this adds the identity matrix to a given matrix of ld=size
+/// matrix   : pointer to the given matrix
+/// size     : the size of the matrix (in the example below 3N)
+/// block    : (ignored) the number of elements to process per thread
+///            if this is e.g. 3 and the matrix is 3Nx3N, than N threads have
+///            to be started 
 __global__ void sd_add_identity_matrix(real * matrix, int size, int lda){
   //int lda=((size+31)/32)*32;
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -1544,10 +1574,10 @@ __global__ void sd_add_identity_matrix(real * matrix, int size, int lda){
   }
 }
 
-// this sets a block to zero
-// matrix: pointer to the given matrix
-// size  : the size of the matrix (in the example below 3N)
-// ldd   : the leading dimension of the matrix
+/// this sets a block to zero
+/// matrix   : pointer to the given matrix
+/// size     : the size of the matrix (in the example below 3N)
+/// ldd      : the leading dimension of the matrix
 __global__ void sd_set_zero_matrix(real * matrix, int size, int ldd){
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
   int matsize=ldd;
@@ -1558,9 +1588,9 @@ __global__ void sd_set_zero_matrix(real * matrix, int size, int ldd){
 }
 
 
-// this sets a block to zero
-// data  : pointer to the given data
-// size  : the size of the data
+/// this sets a block to zero
+/// data     : pointer to the given data
+/// size     : the size of the data
 __global__ void sd_set_zero(real * data, int size){
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
   for (int i = idx;i< size; i+=blockDim.x*gridDim.x){
@@ -1568,10 +1598,10 @@ __global__ void sd_set_zero(real * data, int size){
   }
 }
 
-// this sets a block to an given integer
-// data  : pointer to the given data
-// size  : the size of the data
-// value : the value written to the data block
+/// this sets a block to an given integer
+/// data     : pointer to the given data
+/// size     : the size of the data
+/// value    : the value written to the data block
 __global__ void sd_set_value(int * data, int size, int value){
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
   for (int i = idx;i< size; i+=blockDim.x*gridDim.x){
@@ -1579,10 +1609,10 @@ __global__ void sd_set_value(int * data, int size, int value){
   }
 }
 
-// this sets a block to an given real
-// data  : pointer to the given data
-// size  : the size of the data
-// value : the value written to the data block
+/// this sets a block to an given real
+/// data     : pointer to the given data
+/// size     : the size of the data
+/// value    : the value written to the data block
 __global__ void sd_set_value(real * data, int size, real value){
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
   for (int i = idx;i< size; i+=blockDim.x*gridDim.x){
@@ -1594,8 +1624,14 @@ __global__ void sd_set_value(real * data, int size, real value){
 
 
 #define DIST (2+1e-1)
-#define DISP_MAX (100)
-
+#define DISP_MAX (1000)
+/// Checking before the actual integration whether any particles moves more
+/// than DISP_MAX and if so, reducing the displacement to DISP_MAX
+/// r_d      : position of the particles
+/// disp_d   : displacements of the particles
+/// L        : box dimension
+/// a        : particle radius
+/// N        : number of particles
 __global__ void sd_real_integrate_prepare( const real * r_d , real * disp_d, const real * L, real a, int N){
   int i=blockIdx.x*blockDim.x + threadIdx.x;
   i*=3;
@@ -1612,6 +1648,14 @@ __global__ void sd_real_integrate_prepare( const real * r_d , real * disp_d, con
     }
   }
 }
+
+/// if SD_AVOID_COLLISION is set avoid that particles are overlapping after
+/// the displacement, else only perform the integration step
+/// r_d      : position of the particles
+/// disp_d   : displacement of the particles
+/// L        : box dimensions
+/// a        : particle radius
+/// N        : number of particles
 __global__ void sd_real_integrate( real * r_d , const real * disp_d, const real * L, real a, int N)
 {
   int idx =  blockIdx.x*blockDim.x + threadIdx.x;
@@ -1689,6 +1733,16 @@ __global__ void sd_real_integrate( real * r_d , const real * disp_d, const real 
     //pos_d[DIM*N+idx]=t;
 }
 
+/// sorting the particles in buckets
+/// pos      : position of the particles
+/// bucketSize : dimension of bucket
+/// bucketNum : number of buckets in each direction
+/// N        : number of particles
+/// particleCount : number of particles within a bucket
+/// particleList : list of the particles within a given bucket
+/// totalBucketNum : number of buckets, product of the three values of
+///            bucketNum
+/// particleToBucketList : array containg the bucket number for each particle
 __global__ void sd_bucket_sort( const real * pos , const real * bucketSize, const int * bucketNum, int N, int * particleCount,
 				int * particleList, int maxParticlePerCell, int totalBucketNum, int * particleToBucketList){
   for (int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -1744,9 +1798,13 @@ __global__ void sd_bucket_sort( const real * pos , const real * bucketSize, cons
   }
 }
 
-// This function reads the diagonal element entries of a matrix
-// and stores them in the vector diag
-// and the inverse of them in diag_i
+/// This function reads the diagonal element entries of a square matrix
+/// and stores them in the vector diag and the inverse of them in diag_i
+/// size     : size of the matrix
+/// mat_a    : the matrix
+/// lda      : leading dimension of the matrix mat_a
+/// diag     : the diagonal (OUT)
+/// diag_i   : the inverse of the diagonal (OUT)
 __global__ void sd_get_diag(int size, const real * mat_a,int lda,real * diag,real * diag_i){
   const int stepw=lda+1;
   for (int l=threadIdx.x+blockDim.x*blockIdx.x;l<size;l+=blockDim.x*gridDim.x){
@@ -1757,8 +1815,11 @@ __global__ void sd_get_diag(int size, const real * mat_a,int lda,real * diag,rea
   }
 }
 
-
-__global__ void sd_nrm1(const int size, const real * const vec, real * erg){
+/// computing the 1 norm of a given vector
+/// size     : size of the vector
+/// vec      : data of the vector
+/// res      : the 1 norm (OUT)
+__global__ void sd_nrm1(const int size, const real * const vec, real * res){
   __shared__ real cache[numThreadsPerBlock];
   if (blockIdx.x == 0){ // only use one block
     //assert(blockDim.x == numThreadsPerBlock);
@@ -1768,8 +1829,29 @@ __global__ void sd_nrm1(const int size, const real * const vec, real * erg){
     }
     reduce_sum(cache);
     if (threadIdx.x == 0 ){
-      erg[0]=cache[0];
+      res[0]=cache[0];
     }
   }
 }
+
+/// computing the 1 norm of a given vector
+/// size     : size of the vector
+/// vec      : data of the vector
+/// res      : the 1 norm (OUT)
+__global__ void sd_nrm_inf(const int size, const int * const vec, int * res){
+  extern __shared__ int cache2[]; // blockDim.x * sizeof(int)
+  //if (blockIdx.x == 0){ // only use one block
+  cache2[threadIdx.x]=vec[threadIdx.x];
+  for (int i = threadIdx.x+blockDim.x; i < size ; i+=blockDim.x){
+    if ( cache2[threadIdx.x] < vec[i])
+      cache2[threadIdx.x]=vec[i];
+  }
+  __syncthreads();
+  reduce_max(cache2);
+  if (threadIdx.x == 0 ){
+    res[blockIdx.x]=cache2[0];
+  }
+  //}
+}
+
 
