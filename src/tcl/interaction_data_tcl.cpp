@@ -91,6 +91,7 @@
 #include "endangledist_tcl.hpp"
 #include "fene_tcl.hpp"
 #include "overlap_tcl.hpp"
+#include "harmonic_dumbbell_tcl.hpp"
 #include "harmonic_tcl.hpp"
 #include "quartic_tcl.hpp"
 #include "bonded_coulomb_tcl.hpp"
@@ -347,6 +348,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
       
 #endif
       
+#ifdef ROTATION
+  case BONDED_IA_HARMONIC_DUMBBELL:
+    return tclprint_to_result_harmonic_dumbbellIA(interp, params);
+#endif
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
   case BONDED_IA_QUARTIC:
@@ -953,6 +958,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
   
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
+#ifdef ROTATION
+  REGISTER_BONDED("harmonic_dumbbell", tclcommand_inter_parse_harmonic_dumbbell);
+#endif
   REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
 #ifdef ELECTROSTATICS
   REGISTER_BONDED("bonded_coulomb", tclcommand_inter_parse_bonded_coulomb);  

@@ -41,6 +41,8 @@ double dpd_tr_cut = 0.0;
 /* trans DPD weightfunction */
 int dpd_twf = 0;
 
+#ifdef DPD
+
 /** Chatterjee 2007 proposes that for DPD with Lees Edwards BCs,
  *  it is better not to count interactions with Ghost particles. */
 static bool le_chatterjee_test_pair(Particle *p1, Particle *p2){
@@ -57,7 +59,6 @@ static bool le_chatterjee_test_pair(Particle *p1, Particle *p2){
     return false;
 }
 
-#ifdef DPD
 /* inverse off DPD thermostat cutoff */
 double dpd_r_cut_inv = 0.0;
 double dpd_pref1;

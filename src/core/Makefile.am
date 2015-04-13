@@ -140,6 +140,7 @@ libEspresso_la_SOURCES += \
 	dihedral.cpp dihedral.hpp \
 	endangledist.cpp endangledist.hpp \
 	fene.cpp fene.hpp \
+	harmonic_dumbbell.cpp harmonic_dumbbell.hpp \
 	harmonic.cpp harmonic.hpp \
 	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \

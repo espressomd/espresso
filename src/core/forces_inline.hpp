@@ -55,6 +55,7 @@
 #include "object-in-fluid/area_force_global.hpp"
 #include "object-in-fluid/bending_force.hpp"
 #include "object-in-fluid/volume_force.hpp"
+#include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
 #include "angle_harmonic.hpp"
@@ -657,6 +658,11 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_FENE:
       bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
       break;
+#ifdef ROTATION
+    case BONDED_IA_HARMONIC_DUMBBELL:
+      bond_broken = calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
     case BONDED_IA_HARMONIC:
       bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
       break;
