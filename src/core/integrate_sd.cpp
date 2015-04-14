@@ -628,10 +628,10 @@ int sd_get_particle_num(){
   int N=0;
   for (int c = 0; c < local_cells.n; c++){
 #ifdef VIRTUAL_SITES
-    cell = local_cells.cell[c];
-    p    = cell->part;
-    np   = cell->n;
-    for (i = 0; i < np; i++) { // only count nonVirtual Particles
+    Cell * cell = local_cells.cell[c];
+    Particle * p    = cell->part;
+    int np   = cell->n;
+    for (int i = 0; i < np; i++) { // only count nonVirtual Particles
       if (!ifParticleIsVirtual(&p[i])) ++N;
     } 
 #else
