@@ -17,7 +17,7 @@
   
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-*/
+0*/
 
 /** \file integrate_sd.cpp   Stokesian dynamics integrator.
  *
@@ -207,7 +207,7 @@ void integrate_sd(int n_steps)
 
 #ifdef GHMC
     if(thermo_switch & THERMO_GHMC) {
-      if ((int) fmod(i,ghmc_nmd) == 0)
+      if (step % ghmc_nmd == 0)
         ghmc_momentum_update();
     }
 #endif
