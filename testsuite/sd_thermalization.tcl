@@ -21,15 +21,16 @@
 source "tests_common.tcl"
 
 require_feature "SD"
+require_feature "SD_NOT_PERIODIC" "off"
 #require_feature "BD"
 
 
 #############################################################
 # Parameters                                                #
 #############################################################
-set int_steps     100
-set int_times  	  100
-set warmup        1000
+set int_steps     1
+set int_times  	  13
+set warmup        100
 
 set time_step     0.01
 
@@ -47,7 +48,7 @@ set thermo "sd"
 set kappa_t 3.0
 set temp 1
 set pdens 0.1
-set box_l 10.0
+set box_l 20.0
 set seed [pid]
 set radius 0.3
 set viscosity 1
@@ -124,13 +125,25 @@ if { 1 } {
 	    inter coulomb $bjerrum dh [expr 1.0/$lambda_t] $cutoff
     }
 
-setmd skin 0.5
+setmd skin 0.08
+#setmd cell_grid 4 4 4
+#puts "Tuning cells .."
+#tune_cells
+#puts [setmd skin]
+#puts [setmd cell_grid]
 
 ################warmup######################################
 setmd time_step 0.01
 thermostat bd $temp
+
+
+set logname "sd_thermalization.log"
+set log [open $logname w]
+
 for {set i 0} {$i < $warmup} {incr i} {
-   integrate_sd $int_steps
+   integrate_sd [expr $int_steps*100]
+   set tmp [analyze energy coulomb]
+   puts $log $tmp
 }
 
 
@@ -138,14 +151,10 @@ for {set i 0} {$i < $warmup} {incr i} {
 # start measurement for bd                                  #
 #############################################################
 
-set logname "sd_thermalization.log"
-set log [open $logname w]
 
 set energy_bd 0
 for {set i 0} {$i < $int_times} {incr i} {
    integrate_sd $int_steps
-   set tmp [analyze energy coulomb]
-   puts $log $tmp
    set energy_bd [expr $energy_bd + $tmp ]
 }
 flush $log
@@ -172,8 +181,10 @@ set energy_sd [expr $energy_sd / $int_times]
 #puts $energy_bd
 
 set error [expr abs(($energy_sd - $energy_bd) / ($energy_sd + $energy_bd )*2)]
-if {$error > 0.01} {
-    puts "Error to big in thermalization. This can happen sometimes as this is a stochastic test, but if it happens often, there is probably something wrong."
+set prec 0.01
+if {$error > $prec} {
+    puts "Error was $error. This is bigger than $prec, which is the limit. It can happen sometimes that this fails as this is a stochastic test.
+If it happens often, there is probably something wrong."
     puts "You can also increase the \$int_times variable to increase the accuracy of the test, or check the log file $logname for trends."
     error_exit
 }
