@@ -44,6 +44,7 @@ class FdElectrostatics {
     ~FdElectrostatics();
     FdElectrostatics(InputParameters inputParameters, cudaStream_t stream);
     void calculatePotential();
+    void calculatePotential(cufftComplex *charge_potential);
     Grid getGrid();
 
   private:

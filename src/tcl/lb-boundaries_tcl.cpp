@@ -105,6 +105,32 @@ int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 		  
 		  break;
 		  
+		case LB_BOUNDARY_SPHEROCYLINDER:
+		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[0], buffer);
+		  Tcl_AppendResult(interp, "spherocylinder center ", buffer, " ", (char *) NULL);
+		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[1], buffer);
+		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+		  Tcl_PrintDouble(interp, lbb->c.cyl.pos[2], buffer);
+		  Tcl_AppendResult(interp, buffer, (char *) NULL);
+		  
+		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[0], buffer);
+		  Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
+		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[1], buffer);
+		  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+		  Tcl_PrintDouble(interp, lbb->c.cyl.axis[2], buffer);
+		  Tcl_AppendResult(interp, buffer, (char *) NULL);
+		  
+		  Tcl_PrintDouble(interp, lbb->c.cyl.rad, buffer);
+		  Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
+		  
+		  Tcl_PrintDouble(interp, lbb->c.cyl.length, buffer);
+		  Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
+		  
+		  Tcl_PrintDouble(interp, lbb->c.cyl.direction, buffer);
+		  Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
+		  
+		  break;
+		  
 		case LB_BOUNDARY_RHOMBOID:
 		  Tcl_PrintDouble(interp, lbb->c.rhomboid.pos[0], buffer);
 		  Tcl_AppendResult(interp, "rhomboid corner ", buffer, " ", (char *) NULL);
@@ -574,6 +600,150 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
   
   for (i=0;i<3;i++) {
     lbb->c.cyl.axis[i] /= axis_len;
+  }
+      
+  return (TCL_OK);
+}
+
+int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
+{
+  double axis_len;
+  int i;
+
+  lbb->type = LB_BOUNDARY_SPHEROCYLINDER;
+  
+  /* invalid entries to start of */
+  lbb->c.spherocyl.pos[0] = 
+  lbb->c.spherocyl.pos[1] = 
+  lbb->c.spherocyl.pos[2] = 0;
+  
+  lbb->c.spherocyl.axis[0] = 
+  lbb->c.spherocyl.axis[1] = 
+  lbb->c.spherocyl.axis[2] = 0;
+  
+  lbb->c.spherocyl.rad = 0;
+  
+  lbb->c.spherocyl.length = 0;
+  
+  lbb->c.spherocyl.direction = 0;
+  
+  while (argc > 0) {
+    if(ARG_IS_S(0, "center")) {
+      if(argc < 4) {
+	      Tcl_AppendResult(interp, "lbboundary spherocylinder center <x> <y> <z> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.pos[0])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[2], &(lbb->c.spherocyl.pos[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(lbb->c.spherocyl.pos[2])) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      argc -= 4; argv += 4;
+    }
+    else if(ARG_IS_S(0, "axis")) {
+      if(argc < 4) {
+	      Tcl_AppendResult(interp, "lbboundary spherocylinder axis <rx> <ry> <rz> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.axis[0])) == TCL_ERROR ||
+  	     Tcl_GetDouble(interp, argv[2], &(lbb->c.spherocyl.axis[1])) == TCL_ERROR ||
+    	   Tcl_GetDouble(interp, argv[3], &(lbb->c.spherocyl.axis[2])) == TCL_ERROR)
+	      return (TCL_ERROR);
+
+      argc -= 4; argv += 4;    
+    }
+    else if(ARG_IS_S(0, "radius")) {
+      if(argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary spherocylinder radius <rad> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.rad)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "length")) {
+      if(argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary spherocylinder length <len> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.length)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "direction")) {
+      if(argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary spherocylinder direction <dir> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if (ARG_IS_S(1, "inside"))
+	      lbb->c.spherocyl.direction = -1;
+      else if (ARG_IS_S(1, "outside"))
+	      lbb->c.spherocyl.direction = 1;
+      else if (Tcl_GetDouble(interp, argv[1], &(lbb->c.spherocyl.direction)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "type")) {
+      if (argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary spherocylinder type <t> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "velocity")) {
+      if(argc < 4) {
+	      Tcl_AppendResult(interp, "lbboundary spherocylinder velocity <vx> <vy> <vz> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->velocity[0])) == TCL_ERROR ||
+      	 Tcl_GetDouble(interp, argv[2], &(lbb->velocity[1])) == TCL_ERROR ||
+	       Tcl_GetDouble(interp, argv[3], &(lbb->velocity[2])) == TCL_ERROR)
+	      return (TCL_ERROR);
+
+      if (lattice_switch & LATTICE_LB_GPU) {	
+#ifdef LB_GPU
+        /* No velocity rescaling is required */
+#endif
+      } else {	
+#ifdef LB
+        lbb->velocity[0]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[1]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[2]*=lbpar.tau/lbpar.agrid;
+#endif
+			}
+      
+      argc -= 4; argv += 4;
+    }
+    else
+      break;
+  }
+
+  axis_len=0.;
+  
+  for (i=0;i<3;i++)
+    axis_len += SQR(lbb->c.spherocyl.axis[i]);
+
+  if(lbb->c.spherocyl.rad < 0. || axis_len < 1e-30 ||
+     lbb->c.spherocyl.direction == 0 || lbb->c.spherocyl.length <= 0) {
+    Tcl_AppendResult(interp, "usage: lbboundary spherocylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>", (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  /*normalize the axis vector */
+  axis_len = sqrt (axis_len);
+  
+  for (i=0;i<3;i++) {
+    lbb->c.spherocyl.axis[i] /= axis_len;
   }
       
   return (TCL_OK);
@@ -1230,6 +1400,13 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
   }
   else if(ARG_IS_S(1, "cylinder")) {
     status = tclcommand_lbboundary_cylinder(generate_lbboundary(),interp, argc - 2, argv + 2);
+    if (lattice_switch & LATTICE_LB_GPU) {
+        mpi_bcast_lbboundary(-3);
+    } else 
+        mpi_bcast_lbboundary(-1);
+  }
+  else if(ARG_IS_S(1, "spherocylinder")) {
+    status = tclcommand_lbboundary_spherocylinder(generate_lbboundary(),interp, argc - 2, argv + 2);
     if (lattice_switch & LATTICE_LB_GPU) {
         mpi_bcast_lbboundary(-3);
     } else 

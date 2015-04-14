@@ -217,6 +217,35 @@ system:
         Compute the radial distribution function, see \ref{analyze:rdf}.
     \item \lit{structure_factor} \var{order}\\
         Compute the structure factor. Remember it scales as order$^3$, see \ref{analyze:structurefactor}.
+	\item \lit{radial_density_distribution} \var{type <type> minr <minr>}\verb!\! \\
+		\var{maxr <maxr> rbins <rbins> ( start\_point <X> <Y> <Z>}\verb!\!\\
+		\var{end\_point <X> <Y> <Z> | id\_start\_point <id> id\_end\_point <id> )} \\
+		Computes the radial density distribution for particles of the given type around the axis
+		given either as fixed positions or as particle ids. The binning is done
+		between \verb!minr! and \verb!maxr! with \verb!rbins!. 
+	\item \lit{spatial_polymer_property} \var{(ids <id\_list> | type <type>) N
+		<Npoly>} \\
+		Calculates the mean charge along \verb!Npoly! weak polyelectrolytes of the \emph{same}
+		length. The particles can be specified as a list of particle ids or through
+		the particle type. 
+	\item \lit{persistence_length} \var{ids <id\_list> max\_d <max\_d> cut\_off
+		<cut\_off>} \\
+		Calculates the persistence length of the given polymer specified through the
+		\verb!id_list!. \verb!max_d! is the maximum distance (in terms of particles) for
+		which the correlation is computed. With \verb!cut_off! the number of
+		particles at the polymer ends that are ignored for the calculation, can be
+		specified. 
+	\item \lit{polymer_pair_correlation} \var{ids <id\_list> maxr <maxr> minr <minr>
+		k <k>}\verb!\!\\
+		\var{rbins <rbins> N <Npoly> poly\_len <poly\_len>} \\
+		Computes the pair correlation of particles on a polymer chain given through
+		the \verb!id_list!, here \verb!k! is the distance (in terms of particles) between
+		the mononers on the chain for which the pair correlation is computed. This
+		is averaged over the whole chain and all the given chains. The number of
+		polymers for which this distribution is computed has to be given as
+		\verb!Npoly! and their length through \verb!poly_len!. The distribution is
+		calculated for distances between \verb!minr! and \verb!maxr! with
+		\verb!rbins!. 
       \end{itemize}
 The tclcommand observable is a helpful tool, that allows to make the 
 analysis framework much more versatile, by allowing

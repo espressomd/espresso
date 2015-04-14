@@ -162,6 +162,11 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
     case BONDED_IA_FENE:
       calc_fene_pair_force(p1,p2,iaparams,dx,force);
       break;
+#ifdef ROTATION
+    case BONDED_IA_HARMONIC_DUMBBELL:
+      calc_harmonic_dumbbell_pair_force(p1,p2,iaparams,dx,force);
+      break;
+#endif
     case BONDED_IA_HARMONIC:
       calc_harmonic_pair_force(p1,p2,iaparams,dx,force);
       break;

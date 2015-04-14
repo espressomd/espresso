@@ -41,6 +41,10 @@ enum BondedInteraction{
     BONDED_IA_FENE,
     /** Type of bonded interaction is a HARMONIC potential. */
     BONDED_IA_HARMONIC,
+#ifdef ROTATION
+    /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
+    BONDED_IA_HARMONIC_DUMBBELL,
+#endif
     /** Type of bonded interaction is a QUARTIC potential. */
     BONDED_IA_QUARTIC,
     /** Type of bonded interaction is a BONDED_COULOMB */
@@ -134,6 +138,7 @@ enum OverlappedBondedInteraction{
 		COULOMB_P3M_GPU, //< Coulomb method is P3M with GPU based long range part calculation
 		COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
 		COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
+                COULOMB_EK, //< Coulomb method is electrokinetics
 	};
 
 #endif
@@ -201,7 +206,9 @@ enum ConstraintApplied{
 /** slitpore constraint applied */
     CONSTRAINT_SLITPORE,
 /** Constraint for a hollow cone boundary */
-    CONSTRAINT_HOLLOW_CONE
+    CONSTRAINT_HOLLOW_CONE,
+/** Constraint for spherocylinder boundary */
+    CONSTRAINT_SPHEROCYLINDER
 };
 /*@}*/
 
@@ -584,6 +591,16 @@ typedef struct {
       double r_cut;
 } Harmonic_bond_parameters;
 
+#ifdef ROTATION
+/** Parameters for harmonic dumbbell bond Potential */
+typedef struct {
+      double k1;
+      double k2;
+      double r;
+      double r_cut;
+} Harmonic_dumbbell_bond_parameters;
+#endif
+
 /** Parameters for quartic bond Potential */
 typedef struct {
       double k0, k1;
@@ -781,6 +798,9 @@ typedef union {
     Bending_force_bond_parameters bending_force;
     Volume_force_bond_parameters volume_force;
     Harmonic_bond_parameters harmonic;
+#ifdef ROTATION
+    Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
+#endif
     Quartic_bond_parameters quartic;
     Bonded_coulomb_bond_parameters bonded_coulomb;
     Angle_bond_parameters angle;
@@ -856,6 +876,23 @@ typedef struct {
   int penetrable; 
   int reflecting;
 } Constraint_cylinder;
+
+/** Parameters for a SPHEROCYLINDER constraint. */
+typedef struct {
+  /** center of the cylinder. */
+  double pos[3];
+  /** Axis of the cylinder .*/
+  double axis[3];
+  /** cylinder radius. */
+  double rad;
+  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  double length;
+  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
+  double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
+  int reflecting;
+} Constraint_spherocylinder;
 
 /** Parameters for a RHOMBOID constraint. */
 typedef struct {
@@ -1034,6 +1071,7 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_spherocylinder spherocyl;
     Constraint_rhomboid rhomboid;
     Constraint_rod rod;
     Constraint_plate plate;

@@ -48,9 +48,13 @@ namespace PdbParser {
   } itp_atom;
 
   typedef struct {
-    int id;
+    int id, espresso_id;
     float sigma,epsilon;
   } itp_atomtype;
+
+  struct itp_atomtype_compare {
+    bool operator() (const itp_atomtype &a, const itp_atomtype &b) { return a.id < b.id; }
+  };
 
   class PdbParser {
   public:

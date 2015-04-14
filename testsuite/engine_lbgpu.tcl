@@ -160,7 +160,7 @@ if { $new_configuration != 0 } {
 
   puts "Maximum deviation to the reference point is: $difference\n"
 
-  if { abs($difference) > 1.0e-07 } {
+  if { abs($difference) > 2.0e-07 } {
     error_exit "There is a significant difference with a previous result.\nPlease verify if this is correct."
   }
 }
