@@ -35,7 +35,7 @@ libEspresso_la_SOURCES = \
 	config.hpp \
 	constraint.cpp constraint.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
-	cuda_init.hpp \
+	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
@@ -140,6 +140,7 @@ libEspresso_la_SOURCES += \
 	dihedral.cpp dihedral.hpp \
 	endangledist.cpp endangledist.hpp \
 	fene.cpp fene.hpp \
+	harmonic_dumbbell.cpp harmonic_dumbbell.hpp \
 	harmonic.cpp harmonic.hpp \
 	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \

@@ -986,81 +986,81 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 	memcpy(r_data->end_point, temp, 3*sizeof(double));
 	int cur_argc = argc;
 	while (argc > 0) {
-		cur_argc = argc;
-		//printf("%d %s\n", argc, argv[0]);
-		if (ARG0_IS_S("type")){
-			if ( !parse_id_list(interp, argc, argv, change, &r_data->id_list) == TCL_OK ) {
-					Tcl_AppendResult(interp, "Parsing particles went wrong!\n", (char *) NULL);
-					return TCL_ERROR;
-				}
-			r_data->type = atoi(argv[1]);
-			argc-=*change;
-			argv+=*change;
-			continue;
-		}
-		if (ARG0_IS_S("rbins")){
-			r_data->rbins = atoi(argv[1]);
-			*dim_A = r_data->rbins;
-			argc-=2;
-			argv+=2;
-			*change+=2;
-			continue;
-		}
-		if (ARG0_IS_S("maxr")){
-			r_data->maxr = atof(argv[1]);
-			argc-=2;
-			argv+=2;
-			*change+=2;
-			continue;
-		}
-		if (ARG0_IS_S("minr")){
-			r_data->minr = atof(argv[1]);
-			argc-=2;
-			argv+=2;
-			*change+=2;
-			continue;
-		}
-		if (ARG0_IS_S("id_start_point")){
-			r_data->start_point_id = atoi(argv[1]);
-			r_data->id_flag = 1;
-			argc-=2;
-			argv+=2;
-			*change += 2;
-			continue;
-		}
-		if (ARG0_IS_S("id_end_point")){
-			r_data->end_point_id = atoi(argv[1]);
-			r_data->id_flag = 1;
-			argc -= 2;
-			argv += 2;
-			*change += 2;			
-			continue;
-		}
-		if ( argc > 0 && ARG0_IS_S("start_point")){
-			r_data->start_point[0] = atof(argv[1]);
-			r_data->start_point[1] = atof(argv[2]);
-			r_data->start_point[2] = atof(argv[3]);
-			r_data->id_flag = 0;
-			argc-=4;
-			argv+=4;
-			*change += 4;
-			continue;
+	  cur_argc = argc;
+	  //printf("%d %s\n", argc, argv[0]);
+	  if (ARG0_IS_S("type")){
+	    if ( !(parse_id_list(interp, argc, argv, change, &r_data->id_list) == TCL_OK)) {
+	      Tcl_AppendResult(interp, "Parsing particles went wrong!\n", (char *) NULL);
+	      return TCL_ERROR;
+	    }
+	    r_data->type = atoi(argv[1]);
+	    argc-=*change;
+	    argv+=*change;
+	    continue;
+	  }
+	  if (ARG0_IS_S("rbins")){
+	    r_data->rbins = atoi(argv[1]);
+	    *dim_A = r_data->rbins;
+	    argc-=2;
+	    argv+=2;
+	    *change+=2;
+	    continue;
+	  }
+	  if (ARG0_IS_S("maxr")){
+	    r_data->maxr = atof(argv[1]);
+	    argc-=2;
+	    argv+=2;
+	    *change+=2;
+	    continue;
+	  }
+	  if (ARG0_IS_S("minr")){
+	    r_data->minr = atof(argv[1]);
+	    argc-=2;
+	    argv+=2;
+	    *change+=2;
+	    continue;
+	  }
+	  if (ARG0_IS_S("id_start_point")){
+	    r_data->start_point_id = atoi(argv[1]);
+	    r_data->id_flag = 1;
+	    argc-=2;
+	    argv+=2;
+	    *change += 2;
+	    continue;
+	  }
+	  if (ARG0_IS_S("id_end_point")){
+	    r_data->end_point_id = atoi(argv[1]);
+	    r_data->id_flag = 1;
+	    argc -= 2;
+	    argv += 2;
+	    *change += 2;			
+	    continue;
+	  }
+	  if ( argc > 0 && ARG0_IS_S("start_point")){
+	    r_data->start_point[0] = atof(argv[1]);
+	    r_data->start_point[1] = atof(argv[2]);
+	    r_data->start_point[2] = atof(argv[3]);
+	    r_data->id_flag = 0;
+	    argc-=4;
+	    argv+=4;
+	    *change += 4;
+	    continue;
 						
-		}
-		if ( argc > 0 && ARG0_IS_S("end_point")){
-			r_data->end_point[0] = atof(argv[1]);
-			r_data->end_point[1] = atof(argv[2]);
-			r_data->end_point[2] = atof(argv[3]);
-			r_data->id_flag = 0;
-			argc-=4;
-			argv+=4;
-			*change += 4;
-			continue;
-		}
-		if ( argc > 0 && cur_argc == argc ) {
-			printf("Error parsing arguments\n");
-			return TCL_ERROR;
-		}
+	  }
+	  if ( argc > 0 && ARG0_IS_S("end_point")){
+	    r_data->end_point[0] = atof(argv[1]);
+	    r_data->end_point[1] = atof(argv[2]);
+	    r_data->end_point[2] = atof(argv[3]);
+	    r_data->id_flag = 0;
+	    argc-=4;
+	    argv+=4;
+	    *change += 4;
+	    continue;
+	  }
+	  if ( argc > 0 && cur_argc == argc ) {
+	    printf("Error parsing arguments\n");
+	    return TCL_ERROR;
+	  }
 
 	}
 	return TCL_OK;
@@ -1072,7 +1072,7 @@ int tcl_command_radial_density_distribution(Tcl_Interp* interp, int argc, char**
   *change = 0;
   radial_density_data *r_data = (radial_density_data *) malloc(sizeof(radial_density_data));
 	
-  if (! tcl_parse_radial_density_distribution(interp, argc-1, argv+1, &temp, &obs->n,  r_data) == TCL_OK ) {
+  if (!(tcl_parse_radial_density_distribution(interp, argc-1, argv+1, &temp, &obs->n,  r_data) == TCL_OK)) {
 		Tcl_AppendResult(interp, "Usage: radial_density_distribution type $type minr $minr maxr $maxr rbins $rbins ( start_point $X $Y $Z end_point $X $Y $Z | id_start_point $id id_end_point $id ) \n", (char *) NULL);
     return TCL_ERROR;
   }
@@ -1083,188 +1083,186 @@ int tcl_command_radial_density_distribution(Tcl_Interp* interp, int argc, char**
 }
 
 int tcl_parse_spatial_polymer_properties(Tcl_Interp* interp, int argc, char **argv, int *change, int *dim_A, spatial_polym_data *p_data){
-	*change = 0;
-	int cur_argc = argc;
-	while ( argc > 0 ) {
-		cur_argc = argc;	
-		if (ARG0_IS_S("ids") || ARG0_IS_S("types") ) {
-			if (! parse_id_list(interp, argc, argv, change, &p_data->id_list) == TCL_OK){
-				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
-				return TCL_ERROR;
-			}
-			argc-=*change;
-			argv+=*change;
-			continue;
-		}
+  *change = 0;
+  int cur_argc = argc;
+  while ( argc > 0 ) {
+    cur_argc = argc;	
+    if (ARG0_IS_S("ids") || ARG0_IS_S("types") ) {
+      if (!(parse_id_list(interp, argc, argv, change, &p_data->id_list) == TCL_OK)){
+	Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
+	return TCL_ERROR;
+      }
+      argc-=*change;
+      argv+=*change;
+      continue;
+    }
 		
-		if ( argc > 0 && ARG0_IS_S("N") ) {
-			p_data->npoly = atoi(argv[1]);
-			argc-=2;
-			argv+=2;
-			continue;
-		}
+    if ( argc > 0 && ARG0_IS_S("N") ) {
+      p_data->npoly = atoi(argv[1]);
+      argc-=2;
+      argv+=2;
+      continue;
+    }
 	
-		if ( argc > 0 && cur_argc == argc ) {
-			printf("Error parsing arguments\n");
-			return TCL_ERROR;
-		}
-	}	
-	*dim_A = p_data->id_list->n / p_data->npoly;
-	return TCL_OK;
+    if ( argc > 0 && cur_argc == argc ) {
+      printf("Error parsing arguments\n");
+      return TCL_ERROR;
+    }
+  }	
+  *dim_A = p_data->id_list->n / p_data->npoly;
+  return TCL_OK;
 }
 
 int tcl_command_spatial_polymer_properties(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
-	int temp;
-	*change = 0;
-	spatial_polym_data *p_data = (spatial_polym_data *) malloc(sizeof(spatial_polym_data));
-	p_data->npoly = 1;
+  int temp;
+  *change = 0;
+  spatial_polym_data *p_data = (spatial_polym_data *) malloc(sizeof(spatial_polym_data));
+  p_data->npoly = 1;
 	
-	if (! tcl_parse_spatial_polymer_properties(interp, argc-1, argv+1, &temp, &obs->n, p_data) == TCL_OK){
-		Tcl_AppendResult(interp, "Usage: spatial_polymer_property (ids $id_list | types $type) N $Npoly\n", (char *) NULL);
-		return TCL_ERROR;
-	}
-	obs->calculate = &observable_spatial_polymer_properties;
-	obs->container = (void *) p_data;
-	obs->last_value= (double *) malloc(sizeof(double)*obs->n);
-	return TCL_OK;
+  if (!(tcl_parse_spatial_polymer_properties(interp, argc-1, argv+1, &temp, &obs->n, p_data) == TCL_OK)){
+    Tcl_AppendResult(interp, "Usage: spatial_polymer_property (ids $id_list | types $type) N $Npoly\n", (char *) NULL);
+    return TCL_ERROR;
+  }
+  obs->calculate = &observable_spatial_polymer_properties;
+  obs->container = (void *) p_data;
+  obs->last_value= (double *) malloc(sizeof(double)*obs->n);
+  return TCL_OK;
 }
 
 int tcl_parse_persistence_length(Tcl_Interp* interp, int argc, char** argv, int *change, int* dim_A, spatial_polym_data *p_data){
-	*change = 0;
-	int cur_argc = argc;
-	while (argc > 0) {
-		cur_argc = argc;
-		if ( ARG0_IS_S("ids") || ARG0_IS_S("type") ) {
-			if (! parse_id_list(interp, argc, argv, change, &p_data->id_list) == TCL_OK ) {
-				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
-				return TCL_ERROR;
-			}
-			p_data->npoly = p_data->id_list->n;
-			argc -= *change;
-			argv += *change;
-			continue;
-		}
-		if (argc > 0 && ARG0_IS_S("max_d") ) {
-			*dim_A = atoi(argv[1]);
-			argc -=2;
-			argv +=2;
-			continue;
-		}
-		if (argc > 0 && ARG0_IS_S("cut_off") ) {
-			p_data->cut_off = atoi(argv[1]);
-			argc -=2;
-			argv +=2;
-			continue;
-		}
-		if ( argc > 0 && cur_argc == argc ) {
-			printf("Error parsing arguments\n");
-			return TCL_ERROR;
-		}
-	}
-	return TCL_OK;
+  *change = 0;
+  int cur_argc = argc;
+  while (argc > 0) {
+    cur_argc = argc;
+    if ( ARG0_IS_S("ids") || ARG0_IS_S("type") ) {
+      if (!(parse_id_list(interp, argc, argv, change, &p_data->id_list) == TCL_OK)) {
+	Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
+	return TCL_ERROR;
+      }
+      p_data->npoly = p_data->id_list->n;
+      argc -= *change;
+      argv += *change;
+      continue;
+    }
+    if (argc > 0 && ARG0_IS_S("max_d") ) {
+      *dim_A = atoi(argv[1]);
+      argc -=2;
+      argv +=2;
+      continue;
+    }
+    if (argc > 0 && ARG0_IS_S("cut_off") ) {
+      p_data->cut_off = atoi(argv[1]);
+      argc -=2;
+      argv +=2;
+      continue;
+    }
+    if ( argc > 0 && cur_argc == argc ) {
+      printf("Error parsing arguments\n");
+      return TCL_ERROR;
+    }
+  }
+  return TCL_OK;
 }
 
 int tcl_command_persistence_length(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
-	*change = 0;
-	spatial_polym_data *p_data = (spatial_polym_data *) malloc(sizeof(spatial_polym_data));
-	p_data->npoly = 1;
-	p_data->cut_off = 0;
-	if (! tcl_parse_persistence_length(interp, argc-1, argv+1, change, &obs->n, p_data) == TCL_OK){
-		Tcl_AppendResult(interp, "Usage: persistence_length ids $id_list max_d $max_d cut_off $cut_off\n", (char *) NULL);
-		return TCL_ERROR;
-	}
-	if ( p_data->npoly - 2*p_data->cut_off < obs->n ) {
-		Tcl_AppendResult(interp, "Error using persistence length, can't compute the bond vector correlation for this set of Parameters!\n", (char *) NULL);
-		return TCL_ERROR;
-	}
-	obs->calculate = &observable_persistence_length;
-	obs->container = (void *) p_data;
-	obs->last_value= (double *) malloc(sizeof(double) * obs->n);
-	return TCL_OK;
+  *change = 0;
+  spatial_polym_data *p_data = (spatial_polym_data *) malloc(sizeof(spatial_polym_data));
+  p_data->npoly = 1;
+  p_data->cut_off = 0;
+  if (!(tcl_parse_persistence_length(interp, argc-1, argv+1, change, &obs->n, p_data) == TCL_OK)){
+    Tcl_AppendResult(interp, "Usage: persistence_length ids $id_list max_d $max_d cut_off $cut_off\n", (char *) NULL);
+    return TCL_ERROR;
+  }
+  if ( p_data->npoly - 2*p_data->cut_off < obs->n ) {
+    Tcl_AppendResult(interp, "Error using persistence length, can't compute the bond vector correlation for this set of Parameters!\n", (char *) NULL);
+    return TCL_ERROR;
+  }
+  obs->calculate = &observable_persistence_length;
+  obs->container = (void *) p_data;
+  obs->last_value= (double *) malloc(sizeof(double) * obs->n);
+  return TCL_OK;
 }
 
 int tcl_parse_k_dist(Tcl_Interp* interp, int argc, char** argv, int *change, int* dim_obs, k_dist_data* k_data){
-	*change = 0;
-	int cur_argc = argc;
-	while (argc > 0 ) {
-		cur_argc=argc;
-		if ( ARG0_IS_S("ids") || ARG0_IS_S("type") ) {
-			if (! parse_id_list(interp, argc, argv, change, &k_data->id_list) == TCL_OK ) {
-				Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
-				return TCL_ERROR;
-			}
-			argc -= *change;
-			argv += *change;
-			continue;
-		}
-		if ( ARG0_IS_S("maxr") ) {
-			k_data->r_max = atof(argv[1]);
-			argc-=2;
-			argv+=2;
-			continue;
-		}
-		if ( ARG0_IS_S("minr") ) {
-			k_data->r_min = atof(argv[1]);
-			argc-=2;
-			argv+=2;
-			continue;
-		}
-		if ( ARG0_IS_S("rbins") ) {
-			k_data->n_bins = atoi(argv[1]);
-			*dim_obs = atoi(argv[1]);
-			argc-=2;
-			argv+=2;
-			continue;
-		}
-		if ( ARG0_IS_S("k") ) {
-			k_data->k = atoi(argv[1]);
-			argc-=2;
-			argv+=2;
-			continue;
-		}
-		if ( ARG0_IS_S("N") ) {
-			k_data->npoly = atoi(argv[1]);
-			argc-=2;
-			argv+=2;
-			continue;
-		}
-		if ( ARG0_IS_S("poly_len") ) {
-			k_data->poly_len = atoi(argv[1]);
-			argc-=2;
-			argv+=2;
-			continue;
-		}
-		if ( argc > 0 && cur_argc == argc ) {
-			printf("Error parsing arguments\n");
-			return TCL_ERROR;
-		}
-	}
-	return TCL_OK;
+  *change = 0;
+  int cur_argc = argc;
+  while (argc > 0 ) {
+    cur_argc=argc;
+    if ( ARG0_IS_S("ids") || ARG0_IS_S("type") ) {
+      if (!(parse_id_list(interp, argc, argv, change, &k_data->id_list) == TCL_OK)) {
+	Tcl_AppendResult(interp, "Failed parsing id list\n", (char *) NULL);
+	return TCL_ERROR;
+      }
+      argc -= *change;
+      argv += *change;
+      continue;
+    }
+    if ( ARG0_IS_S("maxr") ) {
+      k_data->r_max = atof(argv[1]);
+      argc-=2;
+      argv+=2;
+      continue;
+    }
+    if ( ARG0_IS_S("minr") ) {
+      k_data->r_min = atof(argv[1]);
+      argc-=2;
+      argv+=2;
+      continue;
+    }
+    if ( ARG0_IS_S("rbins") ) {
+      k_data->n_bins = atoi(argv[1]);
+      *dim_obs = atoi(argv[1]);
+      argc-=2;
+      argv+=2;
+      continue;
+    }
+    if ( ARG0_IS_S("k") ) {
+      k_data->k = atoi(argv[1]);
+      argc-=2;
+      argv+=2;
+      continue;
+    }
+    if ( ARG0_IS_S("N") ) {
+      k_data->npoly = atoi(argv[1]);
+      argc-=2;
+      argv+=2;
+      continue;
+    }
+    if ( ARG0_IS_S("poly_len") ) {
+      k_data->poly_len = atoi(argv[1]);
+      argc-=2;
+      argv+=2;
+      continue;
+    }
+    if ( argc > 0 && cur_argc == argc ) {
+      printf("Error parsing arguments\n");
+      return TCL_ERROR;
+    }
+  }
+  return TCL_OK;
 }
 
 
 int tcl_command_k_dist(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
-	*change = 0;
-	k_dist_data *k_data = (k_dist_data *) malloc(sizeof(k_dist_data));
-	k_data->npoly = 1;
-	k_data->poly_len = 1;
-	k_data->r_min = 0;
-	k_data->r_max = -1;
-	k_data->n_bins = 1;
-	k_data->k = 0;
-	if ( ! tcl_parse_k_dist(interp, argc-1, argv+1, change, &obs->n, k_data) == TCL_OK ) {
-		Tcl_AppendResult(interp, "Usage: polymer_pair_correltion ids $id_list maxr $maxr minr $minr rbins $rbins k $k N $Npoly poly_len $poly_len\n", (char *) NULL) ;
-		return TCL_ERROR;
-	}
-	obs->calculate = &observable_polymer_k_distribution;
-	obs->container = (void *) k_data;
-	obs->last_value = (double *) malloc(sizeof(double) * obs->n);
-	for (int i = 0; i< obs->n; i++) 
-		obs->last_value[i] = 0.0;
-	return TCL_OK;
+  *change = 0;
+  k_dist_data *k_data = (k_dist_data *) malloc(sizeof(k_dist_data));
+  k_data->npoly = 1;
+  k_data->poly_len = 1;
+  k_data->r_min = 0;
+  k_data->r_max = -1;
+  k_data->n_bins = 1;
+  k_data->k = 0;
+  if ( !(tcl_parse_k_dist(interp, argc-1, argv+1, change, &obs->n, k_data) == TCL_OK)) {
+    Tcl_AppendResult(interp, "Usage: polymer_pair_correltion ids $id_list maxr $maxr minr $minr rbins $rbins k $k N $Npoly poly_len $poly_len\n", (char *) NULL) ;
+    return TCL_ERROR;
+  }
+  obs->calculate = &observable_polymer_k_distribution;
+  obs->container = (void *) k_data;
+  obs->last_value = (double *) malloc(sizeof(double) * obs->n);
+  for (int i = 0; i< obs->n; i++) 
+    obs->last_value[i] = 0.0;
+  return TCL_OK;
 }
-
-
 
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
@@ -1450,7 +1448,7 @@ static int convert_types_to_ids(IntList * type_list, IntList * id_list){
 //  return 0;
 //}
 
-int file_data_source_readline(void* xargs, double* A, int dim_A) {
+//int file_data_source_readline(void* xargs, double* A, int dim_A) {
 //  file_data_source* self = xargs;
 //  int counter=0;
 //  char* token;
@@ -1498,8 +1496,8 @@ int file_data_source_readline(void* xargs, double* A, int dim_A) {
 //      return 1;
 //    }
 //  }
-  return 0;
-}
+//  return 0;
+//}
 
 
 int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data** pdata_) {

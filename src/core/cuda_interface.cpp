@@ -46,6 +46,11 @@ void cuda_bcast_global_part_params() {
   COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params finished\n", this_node));
 }
 
+/* TODO: We should only transfer data for enabled methods,
+         not for those that are barely compiled in. (fw)
+	 Remove code duplication with cuda_mpi_get_particles_slave. (fw)
+*/
+
 /*************** REQ_GETPARTS ************/
 void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
 {
@@ -112,10 +117,8 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
                 particle_data_host[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
 #endif
 
-  #ifdef ELECTROSTATICS
-                if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU || coulomb.method == COULOMB_EWALD_GPU) { // TODO: this defeats the purpose of needsQ in the interface...
-                  particle_data_host[i+g].q = (float)part[i].p.q;
-                }
+#ifdef ELECTROSTATICS
+		particle_data_host[i+g].q = (float)part[i].p.q;
 #endif
 
 #ifdef ENGINE
@@ -145,6 +148,10 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
     COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
     free(sizes);
 }
+
+/* TODO: We should only transfer data for enabled methods,
+         not for those that are barely compiled in. (fw)
+*/
 
 static void cuda_mpi_get_particles_slave(){
    
@@ -205,10 +212,8 @@ static void cuda_mpi_get_particles_slave(){
           particle_data_host_sl[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
   #endif
 
-  #ifdef ELECTROSTATICS
-          if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU || coulomb.method == COULOMB_EWALD_GPU) {
+  #ifdef ELECTROSTATICS	 
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
-          }
   #endif
 
 #ifdef ENGINE
@@ -258,7 +263,7 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_compositio
             int npart;  
             cell = local_cells.cell[c];
             npart = cell->n;
-            for (i=0;i<npart;i++) {
+            for (i=0;i<npart;i++) { 
               cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
               cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
               cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];

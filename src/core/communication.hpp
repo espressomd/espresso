@@ -56,6 +56,7 @@
 #include "random.hpp"
 #include "topology.hpp"
 #include <mpi.h>
+#include "cuda_init.hpp"
 
 /**************************************************
  * exported variables
@@ -579,6 +580,14 @@ void mpi_external_potential_broadcast_slave(int node, int number);
 void mpi_external_potential_tabulated_read_potential_file(int number);
 void mpi_external_potential_sum_energies(); 
 void mpi_external_potential_sum_energies_slave(); 
+
+#ifdef CUDA
+/** Gather CUDA devices from all nodes */
+std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
+#endif
+
+/** CPU Thermostat */
+void mpi_thermalize_cpu(int temp);
 
 /*@}*/
 

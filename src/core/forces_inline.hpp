@@ -55,6 +55,7 @@
 #include "object-in-fluid/area_force_global.hpp"
 #include "object-in-fluid/bending_force.hpp"
 #include "object-in-fluid/volume_force.hpp"
+#include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
 #include "angle_harmonic.hpp"
@@ -657,6 +658,11 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_FENE:
       bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
       break;
+#ifdef ROTATION
+    case BONDED_IA_HARMONIC_DUMBBELL:
+      bond_broken = calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
     case BONDED_IA_HARMONIC:
       bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
       break;
@@ -841,7 +847,7 @@ inline void add_bonded_force(Particle *p1)
     case 1:
       if (bond_broken) {
           ostringstream msg;
-          msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity<<". Distnace vecotr: "<<dx[0]<<" "<<dx[1]<<" "<<dx[2];
+          msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity<<". Distance vector: "<<dx[0]<<" "<<dx[1]<<" "<<dx[2];
           runtimeError(msg);
         continue;
       }
