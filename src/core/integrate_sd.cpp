@@ -191,7 +191,7 @@ void integrate_sd(int n_steps)
   if(thermo_switch & THERMO_GHMC)
     ghmc_init();
 #endif
-
+  
   if (check_runtime_errors())
     return;
 
@@ -211,12 +211,16 @@ void integrate_sd(int n_steps)
         ghmc_momentum_update();
     }
 #endif
-    if(thermo_switch & ~THERMO_SD){
+    if(thermo_switch & ~(THERMO_SD|THERMO_BD) ){
       static bool warned_thermo_sd_other=false;
       if (!warned_thermo_sd_other){
 	fprintf (stderr, "Warning, using another thermo than the one provided by StokesDynamics breaks (most likely) StokesDynamics.\n");
 	warned_thermo_sd_other=true;
       }
+    }
+    if (thermo_switch & THERMO_SD && thermo_switch &THERMO_BD) {
+      fprintf (stderr, "Warning: cannot use BD and SD. Disabeling BD!\n");
+      thermo_switch &= ~THERMO_BD;
     }
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:
