@@ -266,7 +266,7 @@ if { $new_configuration != 0 } {
   puts "dependence of the value of the mass flux for this system"
   puts "on the numerical precision that is attainable on the GPU."
 
-  if { abs($difference) > 1.0e-05 } {
+  if { abs($difference) > 1.0e-02 } {
     error_exit "There is a significant difference with a previous result.\nPlease verify if this is correct."
   }
 }

@@ -35,7 +35,7 @@ libEspresso_la_SOURCES = \
 	config.hpp \
 	constraint.cpp constraint.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
-	cuda_init.hpp \
+	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
@@ -67,6 +67,7 @@ libEspresso_la_SOURCES = \
 	lees_edwards_domain_decomposition.cpp lees_edwards_domain_decomposition.hpp \
 	lees_edwards_comms_manager.cpp lees_edwards_comms_manager.hpp \
 	metadynamics.cpp metadynamics.hpp \
+	minimize_energy.cpp minimize_energy.hpp \
 	modes.cpp modes.hpp \
 	molforces.cpp molforces.hpp \
 	mol_cut.cpp mol_cut.hpp \
@@ -139,6 +140,7 @@ libEspresso_la_SOURCES += \
 	dihedral.cpp dihedral.hpp \
 	endangledist.cpp endangledist.hpp \
 	fene.cpp fene.hpp \
+	harmonic_dumbbell.cpp harmonic_dumbbell.hpp \
 	harmonic.cpp harmonic.hpp \
 	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \

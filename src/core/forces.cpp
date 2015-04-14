@@ -61,6 +61,7 @@
 #include "p3m_gpu.hpp"
 #include "maggs.hpp"
 #include "forces_inline.hpp"
+#include "electrokinetics.hpp"
 ActorList forceActors;
 
 void init_forces()
@@ -204,8 +205,14 @@ void calc_long_range_forces()
   default:
     break;
   }
+
+/* If enabled, calculate electrostatics contribution from electrokinetics species. */ 
+#ifdef EK_ELECTROSTATIC_COUPLING
+  ek_calculate_electrostatic_coupling();
+#endif
+
 #endif  /*ifdef ELECTROSTATICS */
-  
+ 
 #ifdef DIPOLES  
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {

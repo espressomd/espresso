@@ -77,6 +77,10 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
       case LB_BOUNDARY_HOLLOW_CONE:
 	      calculate_hollow_cone_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist, vec); 
         break;
+      
+      case CONSTRAINT_SPHEROCYLINDER: 
+	      calculate_spherocylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.spherocyl, &dist, vec); 
+        break;
     }
     
     if (dist<*mindist || n == 0) {
@@ -106,16 +110,18 @@ void lb_init_boundaries() {
     int boundary_number = -1; // the number the boundary will actually belong to.
   
 #ifdef EK_BOUNDARIES
-      float *host_wallcharge_species_density = NULL;
-      float node_wallcharge = 0.0f;
-      int wallcharge_species = -1, charged_boundaries = 0;
-      int node_charged = 0;
+    float *host_wallcharge_species_density = NULL;
+    float node_wallcharge = 0.0f;
+    int wallcharge_species = -1, charged_boundaries = 0;
+    int node_charged = 0;
+
+    for(n = 0; n < int(n_lb_boundaries); n++)
+      lb_boundaries[n].net_charge = 0.0;
 
     if (ek_initialized)
     {
       host_wallcharge_species_density = (float*) malloc(ek_parameters.number_of_nodes * sizeof(float));
       for(n = 0; n < int(n_lb_boundaries); n++) {
-
         if(lb_boundaries[n].charge_density != 0.0) {
           charged_boundaries = 1;
           break;
@@ -138,7 +144,6 @@ void lb_init_boundaries() {
       }
     }
 #endif
-
 
     for(z=0; z<int(lbpar_gpu.dim_z); z++) {
       for(y=0; y<int(lbpar_gpu.dim_y); y++) {
@@ -188,6 +193,10 @@ void lb_init_boundaries() {
                 calculate_hollow_cone_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist_tmp, dist_vec);
                 break;
                 
+              case LB_BOUNDARY_SPHEROCYLINDER:
+                calculate_spherocylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.spherocyl, &dist_tmp, dist_vec);
+                break;
+
               default:
                 ostringstream msg;
                 msg <<"lbboundary type "<< lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
@@ -204,6 +213,7 @@ void lb_init_boundaries() {
               if(dist_tmp <= 0 && lb_boundaries[n].charge_density != 0.0f) {
                 node_charged = 1;
                 node_wallcharge += lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
+                lb_boundaries[n].net_charge += lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
               }
             }
 #endif
@@ -229,6 +239,8 @@ void lb_init_boundaries() {
 #ifdef EK_BOUNDARIES
           if (ek_initialized)
           {
+            ek_parameters.number_of_boundary_nodes = number_of_boundnodes;
+
             if(wallcharge_species != -1) {
               if(pdb_charge_lattice &&
                  pdb_charge_lattice[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] != 0.0f) {

@@ -44,7 +44,7 @@ pagesize,                       % set the pagesize in a DVI document
 
 \section{Introduction}
 
-This tutorial introduces some of the features of \es\ module Object in fluid (OIF). Even though \es\ was not primarily intended to work with closed objects, it appears very suitable when one wants to model closed objects with elastic properties, especially if they are immersed in a moving fluid. Here we offer a step by step Tcl tutorial that will show you how to use this module. The resulting code can be run using \verb|Espresso <file>| from the \es source directory. It produces .vtk files that can then be visualized using Paraview.\\
+This tutorial introduces some of the features of \es module Object in fluid (OIF). Even though \es was not primarily intended to work with closed objects, it appears very suitable when one wants to model closed objects with elastic properties, especially if they are immersed in a moving fluid. Here we offer a step by step Tcl tutorial that will show you how to use this module. The resulting code can be run using \verb|Espresso <file>| from the \es source directory. It produces .vtk files that can then be visualized using Paraview.\\
 
 The OIF module was developed for simulations of red blood cells flowing through microfluidic devices and therefore the elasticity features were designed with this application in mind. However, they are completely tunable and can be modified easily to allow the user model any elastic object moving in fluid flow.  
 
@@ -78,13 +78,13 @@ In order to be able to work with elastic objects, one needs to configure \es wit
 \#define EXTERNAL\_FORCES\\
 \#define MASS\\
 \#define CONSTRAINTS\\
-\#define BOND\_ANGLE\\
 \#define VOLUME\_FORCE\\
 \#define AREA\_FORCE\_GLOBAL\\
+\#define SOFT\_SPHERE\\
 
 To create an elastic object, we also need a triangulation of the surface of this object. Sample sphere and red blood cell are provided in the directory scripts/input. User can create her own in gmsh, salome or any other meshing software. The required format is as follows:\\
 
-The file \verb|some_nodes.dat| should contain triplets of floats (one triplet per line), where each triplet represents the x, y and z coordinates of one node of the surface triangulation. No additional information should be written in this file, so this means that the number of lines equals the number of surface nodes. The coordinates of the nodes should be specified in such a way that the approximate center of mass of the object corresponds to the origin (0,0,0). This is for convenience when placing the objects at desired locations later.\\
+The file \verb|some_nodes.dat| should contain triplets of floats (one triplet per line), where each triplet represents the $x$, $y$ and $z$ coordinates of one node of the surface triangulation. No additional information should be written in this file, so this means that the number of lines equals the number of surface nodes. The coordinates of the nodes should be specified in such a way that the approximate center of mass of the object corresponds to the origin (0,0,0). This is for convenience when placing the objects at desired locations later.\\
 
 The file \verb|some_triangles.dat| should also contain triplets of numbers, this time integers. These refer to the IDs of the nodes in the \verb|some_nodes.dat| file and specify which three nodes form a triangle together. Please, note that the nodes' IDs start at 0, i.e. the node written in the first line of \verb|some_nodes.dat| has ID 0, the node in the second line, has ID 1, etc.\\     
 
@@ -113,14 +113,6 @@ Next we need to specify the simulation box:\\
   setmd box_l $boxX $boxY $boxZ
 \end{tclcode}
 \vspace{0 mm}
-
-and define the walls and boundaries. For clarity, these have been placed in a separate file \verb|boundaries.tcl|, which we'll go over in the next subsection. The source code of this boundaries script is included using the command\\
-\begin{tclcode}
-  source boundaries.tcl
-\end{tclcode}
-\vspace{0 mm}
-
-but note, that the boundaries could have been specified directly at this point.\\
 
 Now comes the initialization of OIF module using\\ 
 \begin{tclcode}
@@ -176,14 +168,22 @@ or\\
 \end{tclcode}
 \vspace{0 mm}
 
-depending on the available computational resources. (The GPU computation can be two orders of magnitude faster than the CPU.)\\  
+depending on the available computational resources. (The GPU computation can be two orders of magnitude faster than the CPU.)\\
+
+And finally we define the walls and boundaries. For clarity, these have been placed in a separate file \verb|boundaries.tcl|, which we'll go over in the next subsection. The source code of this boundaries script is included using the command\\
+\begin{tclcode}
+  source boundaries.tcl
+\end{tclcode}
+\vspace{0 mm}
+
+but note, that the boundaries could have been specified directly at this point.\\  
 
 \subsection*{Specification of boundaries}
-As was previously mentioned, all the boundaries and obstacles are conveniently grouped in separate file \verb|boundaries.tcl|. This file contains two output procedures - one writes a rhomboid, another a cylinder into a .vtk file for later visualization. Below these procedures, one can specify the geometry of the channel. Here we only go over rhomboids and cylinders, but note that other boundary types are available in \es.\\
+As was previously mentioned, all the boundaries and obstacles are conveniently grouped in separate file \verb|boundaries.tcl|. Here we only go over rhomboids and cylinders, but note that other boundary types are available in \es.\\
 
 The rhomboid is a 3D structure specified by one corner and three vectors originating from this corner. It can be a box and in that case the three vectors give the length, width and height. However, there is no requirement that the vectors are perpendicular (to each other or to the walls). It is a standard \es command.\\
 
-Cylinder is specified by its center, radius, normal vector, and length. The length is the distance from center to either base, therefore it is only half the total "height". Note: the included \verb|boundaries.tcl| script can only output cylinder with (0,0,1) normal. \\ 
+Cylinder is specified by its center, radius, normal vector, and length. The length is the distance from center to either base, therefore it is only half the total "height". Note: the vtk-output is only available for cylinders with (0,0,1) normal, for now. \\ 
 
 \begin{figure}[htbp]
   \hfill
@@ -282,7 +282,7 @@ We have already discussed how to output the walls and obstacles for later visual
  \end{tclcode}
  \vspace{0 mm}
  
- and for object output we have\\ 
+ and one of the options for for object output is\\ 
  \begin{tclcode}
   oif_object_output object-id 0 vtk-pos "output/output_file.vtk"
   \end{tclcode}
@@ -324,15 +324,16 @@ oif_object_output
  \end{tclcode}
  \vspace{0 mm}
  
-Here we want to describe the rest of the currently available OIF commands and note that there are more still being added. We would be pleased to hear from you about any suggestions on further functionality.\\
+Other available OIF commands are\\
+\begin{tclcode}
+oif_info
+oif_mesh_analyze
+oif_object_analyze
+oif_object_set
+\end{tclcode}
+ \vspace{0 mm}
 
-\verb|oif_info| prints out information about all global variables, currently available templates and added objects.\\
+and there are more still being added. Details about all the OIF commands can be found in the official \es User Guide and at our website\\ http://cell-in-fluid.fri.uniza.sk/sites/default/files/document/oif\_documentation.pdf\\ 
+And we would be pleased to hear from you about any suggestions on further functionality and improvements.
 
-\verb|oif_mesh_analyze| takes two mandatory arguments: \verb|nodes-file nodes.dat| and \verb|triangles-file triangles.dat|. Their required format is discussed at the beginning of this document, in Basic set up section. The three optional arguments:  \verb|orientation|, \verb|repair| and \verb|flip| determine what will be done with the mesh. \verb|orientation| checks whether all triangles of the surface mesh are properly oriented, \verb|repair| corrects the orientation of those that are not and \verb|flip| flips the orientation of all triangles in the triangulation.\\
-
-\verb|oif_object_analyze| has only one mandatory argument, \verb|object-id 0|, and the optional arguments specify what function will be performed. \verb|origin| outputs the location of the center of the object, \verb|pos-bounds b-name| computes the six extremal coordinates of the object. More precisely, runs through the all mesh points and remembers the minimal and maximal x-coordinate, y-coordinate and z-coordinate. If \verb|b-name| is the name of one of these: \verb|z-min, z-max, x-min, x-max, y-min, y-max| then the procedure returns one number according to the value of \verb|b-name|. If b-name is \verb|all|, then the procedure returns a list of six numbers, namely Xmin, Xmax, Ymin, Ymax, Zmin, Zmax. \verb|volume| outputs the volume of the object, \verb|surface-area| outputs the surface of the object and \verb|velocity| outputs the average velocity of the object by calculating the average velocity of object's mesh points.\\
-
-\verb|oif_object_set| also has only one mandatory argument \verb|object-id 0|. The optional arguments are: \verb|force valX valY valZ|, which sets the force vector (valX,valY,valZ) to all mesh nodes of the object. Setting is done using \es command \verb|part $i set| \verb|ext_force $valX $valY $valZ|. Note, that this command sets the external force in each integration step. So if you want to use the external force only in one iteration, you need to set zero external force in the following integration step. \verb|origin posX posY posZ| moves the object in such a way that the origin has coordinates posX posY posZ. \verb|mesh-nodes "mesh-nodes.dat"| deforms the object in such a way that its origin stays unchanged, however the relative positions of the mesh points are taken from file mesh-nodes.dat. (The file mesh-nodes.dat should contain the coordinates of the mesh points with the origin's location at (0,0,0).) The command also checks whether number of lines in the mesh-nodes.dat file is the same as the corresponding value from oif\_nparticles. \verb|kill-motion| stops all the particles in the object (analogue to the \verb|kill_motion| command in \es).\\
-
-More information can be found in the OIF documentation and on our website www.cell-in-fluid.weebly.com.
 \end{document}

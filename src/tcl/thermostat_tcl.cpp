@@ -212,6 +212,36 @@ int tclcommand_thermostat_parse_ghmc(Tcl_Interp *interp, int argc, char **argv)
 }
 #endif
 
+int tclcommand_thermostat_parse_cpu(Tcl_Interp *interp, int argc, char **argv) 
+{
+  int temp;
+
+  #ifndef __linux__
+  Tcl_AppendResult(interp, "This feature is currently only supported on Linux platforms.", (char *)NULL);
+  return (TCL_ERROR);
+  #endif
+
+  /* check number of arguments */
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
+         argv[0]," ",argv[1]," <temp>\"", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  /* check argument types */
+  if ( !ARG_IS_I(2, temp) ) {
+    Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs one INT", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  /* broadcast parameters */
+  temperature = temp;
+  thermo_switch = ( thermo_switch | THERMO_CPU );
+  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
+  return (TCL_OK);
+}
+
 int tclcommand_thermostat_print_all(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
@@ -359,6 +389,8 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
   else if ( ARG1_IS_S("ghmc") )
     err = tclcommand_thermostat_parse_ghmc(interp, argc, argv);
 #endif
+  else if ( ARG1_IS_S("cpu"))
+    err = tclcommand_thermostat_parse_cpu(interp, argc, argv);
   else {
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
     return tclcommand_thermostat_print_usage(interp, argc, argv);

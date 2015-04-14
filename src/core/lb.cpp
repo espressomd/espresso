@@ -428,6 +428,12 @@ int lb_lbfluid_set_remove_momentum(void){
 int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_fz) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
+    if (lbpar_gpu.tau < 0.0)
+      return 2;
+
+    if (lbpar_gpu.rho[component] <= 0.0)
+      return 3;
+
     /* external force density is stored in MD units */
     lbpar_gpu.ext_force[3*component+0] = (float)p_fx;
     lbpar_gpu.ext_force[3*component+1] = (float)p_fy;
@@ -437,6 +443,12 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_f
 #endif // LB_GPU
   } else {
 #ifdef LB
+    if (lbpar.tau < 0.0)
+      return 2;
+
+    if (lbpar.rho[0] <= 0.0)
+      return 3;
+
     lbpar.ext_force[0] = p_fx;
     lbpar.ext_force[1] = p_fy;
     lbpar.ext_force[2] = p_fz;
@@ -1073,9 +1085,9 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
 
         mpi_recv_fluid(node,index,&rho,j,pi);
         // unit conversion
-        p_u[0] = j[0]/rho/lbpar.tau/lbpar.agrid;
-        p_u[1] = j[1]/rho/lbpar.tau/lbpar.agrid;
-        p_u[2] = j[2]/rho/lbpar.tau/lbpar.agrid;
+        p_u[0] = j[0]/rho*lbpar.agrid/lbpar.tau;
+        p_u[1] = j[1]/rho*lbpar.agrid/lbpar.tau;
+        p_u[2] = j[2]/rho*lbpar.agrid/lbpar.tau;
 #endif // LB
     }
     return 0;
@@ -1095,15 +1107,18 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
     int		 x, y, z; //counters
 
     // convert the position into lower left grid point
-    if (lattice_switch & LATTICE_LB_GPU) {
+    if (lattice_switch & LATTICE_LB_GPU)
+    {
 #ifdef LB_GPU
-    Lattice::map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
+      Lattice::map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
 #endif // LB_GPU
-  } else {  
+    }
+    else
+    {
 #ifdef LB
-    Lattice::map_position_to_lattice_global(p, ind, delta, lbpar.agrid);
+      Lattice::map_position_to_lattice_global(p, ind, delta, lbpar.agrid);
 #endif // LB
-  }
+    }
 
   //set the initial velocity to zero in all directions
   v[0] = 0;
@@ -1866,9 +1881,9 @@ void lb_reinit_forces() {
     for (index_t index=0; index < lblattice.halo_grid_volume; index++) {
 #ifdef EXTERNAL_FORCES
         // unit conversion: force density
-        lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-        lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-        lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
+        lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+        lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+        lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
 #else // EXTERNAL_FORCES
         lbfields[index].force[0] = 0.0;
         lbfields[index].force[1] = 0.0;
@@ -2404,9 +2419,9 @@ inline void lb_apply_forces(index_t index, double* mode) {
     /* reset force */
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
-    lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-    lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-    lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
+    lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
 #else // EXTERNAL_FORCES
     lbfields[index].force[0] = 0.0;
     lbfields[index].force[1] = 0.0;

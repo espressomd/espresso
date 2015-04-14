@@ -690,6 +690,10 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "dihedral";
   case BONDED_IA_ENDANGLEDIST:
     return "endangledist";
+#ifdef ROTATION
+  case BONDED_IA_HARMONIC_DUMBBELL:
+    return "HARMONIC_DUMBBELL";
+#endif
   case BONDED_IA_HARMONIC:
     return "HARMONIC";    
   case BONDED_IA_QUARTIC:

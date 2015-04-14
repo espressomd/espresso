@@ -56,6 +56,7 @@
 #include "random.hpp"
 #include "topology.hpp"
 #include <mpi.h>
+#include "cuda_init.hpp"
 
 /**************************************************
  * exported variables
@@ -333,6 +334,11 @@ void mpi_recv_part(int node, int part, Particle *part_data);
 */
 int mpi_integrate(int n_steps, int reuse_forces);
 
+/** Issue REQ_MIN_ENERGY: start energy minimization.    
+    @return nonzero on error
+ */
+int mpi_minimize_energy(void);
+
 /** Issue REQ_BCAST_IA: send new ia params.
     Also calls \ref on_short_range_ia_change.
 
@@ -574,6 +580,14 @@ void mpi_external_potential_broadcast_slave(int node, int number);
 void mpi_external_potential_tabulated_read_potential_file(int number);
 void mpi_external_potential_sum_energies(); 
 void mpi_external_potential_sum_energies_slave(); 
+
+#ifdef CUDA
+/** Gather CUDA devices from all nodes */
+std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
+#endif
+
+/** CPU Thermostat */
+void mpi_thermalize_cpu(int temp);
 
 /*@}*/
 

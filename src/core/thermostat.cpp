@@ -26,6 +26,9 @@
 #include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
@@ -169,3 +172,35 @@ void thermo_cool_down()
 #endif
 }
 
+int get_cpu_temp()
+{
+  std::ifstream f("/sys/class/thermal/thermal_zone0/temp");
+  int temp;
+  f >> temp;
+  f.close();
+  return (temp + 273150)/1000;
+}
+
+static int volatile cpu_temp_count = 0;
+void set_cpu_temp(int temp)
+{
+  while (temp != get_cpu_temp())
+  {
+    if (temp < get_cpu_temp())
+    {
+      //printf("Cooling down CPU from %dK to %dK\n", get_cpu_temp(), temp);
+      // pause for 1 second to give the CPU time to cool down
+      usleep(1e6);
+    }
+    else
+    {
+      //printf("Heating up CPU from %dK to %dK\n", get_cpu_temp(), temp);
+      // crunch some numbers to heat up the CPU
+      cpu_temp_count = 0;
+      for (int i = 0; i < 1e9; ++i)
+      {
+        cpu_temp_count += i;
+      }
+    }
+  }
+}
