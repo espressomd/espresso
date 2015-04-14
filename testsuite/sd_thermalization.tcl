@@ -21,6 +21,8 @@
 source "tests_common.tcl"
 
 require_feature "SD"
+require_max_nodes_per_side 1
+require_cudadevice
 require_feature "SD_NOT_PERIODIC" "off"
 #require_feature "BD"
 

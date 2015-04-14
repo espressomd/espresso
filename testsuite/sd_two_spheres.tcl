@@ -20,6 +20,8 @@
 source "tests_common.tcl"
 
 require_feature "SD" 
+require_max_nodes_per_side 1
+require_cudadevice
 require_feature "EXTERNAL_FORCES"
 require_feature "SD_NOT_PERIODIC"
 require_feature "SD_FF_ONLY"

@@ -19,7 +19,9 @@
 
 source "tests_common.tcl"
 
-require_feature "SD" 
+require_feature "SD"
+require_max_nodes_per_side 1
+require_cudadevice
 require_feature "EXTERNAL_FORCES"
 require_feature "SD_NOT_PERIODIC" "off"
 
@@ -71,7 +73,7 @@ setmd sd_visc 1
 setmd sd_radius 0.5
 setmd time_step 0.01
 set boxl 4
-set steps 50
+set steps 5
 setmd periodic 1 1 1
 setmd skin 0.1
 
@@ -84,7 +86,7 @@ set pos0 [part 0 print pos]
 set pos1 [part 1 print pos]
 
 
-#check non cubic boxes
+puts "check non cubic boxes"
 set_pos 1 1 2 $boxl
 integrate_sd $steps
 check_pos 1 1 2 $boxl $pos0 $pos1
@@ -97,7 +99,7 @@ set_pos 2 1 1 $boxl
 integrate_sd $steps
 check_pos 2 1 1 $boxl $pos0 $pos1
 
-#check cubic boxes
+puts "check cubic boxes"
 set_pos 2 2 2 $boxl
 integrate_sd $steps
 check_pos 2 2 2 $boxl $pos0 $pos1

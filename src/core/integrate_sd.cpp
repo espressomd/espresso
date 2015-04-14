@@ -139,8 +139,6 @@ void integrator_sanity_checks_sd()
 
 void integrate_sd(int n_steps)
 {
-  int i;
-
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -198,7 +196,7 @@ void integrate_sd(int n_steps)
   n_verlet_updates = 0;
 
   /* Integration loop */
-  for(i=0;i<n_steps;i++) {
+  for(int step=0;step<n_steps;step++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     //sd_set_particles_apart();
 #ifdef BOND_CONSTRAINT
