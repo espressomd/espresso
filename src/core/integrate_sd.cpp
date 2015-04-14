@@ -197,7 +197,7 @@ void integrate_sd(int n_steps)
 
   /* Integration loop */
   for(int step=0;step<n_steps;step++) {
-    INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
+    INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,step));
     //sd_set_particles_apart();
 #ifdef BOND_CONSTRAINT
     save_old_pos();
@@ -467,9 +467,7 @@ void propagate_pos_sd()
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
    
-#ifdef ADDITIONAL_CHECKS
-      force_and_velocity_check(&p[i]);
-#endif
+
 #ifdef ROTATION
       propagate_omega_quat_particle(&p[i]);
 #endif
@@ -482,10 +480,6 @@ void propagate_pos_sd()
   free(force);
   free(velocity);
   announce_resort_particles();
-
-#ifdef ADDITIONAL_CHECKS
-  force_and_velocity_display();
-#endif  
 }
 
 
