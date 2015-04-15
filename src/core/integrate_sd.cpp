@@ -86,10 +86,6 @@ double sd_radius=-1;
 int sd_seed[]={0,('E'+'S'+'P'+'R'+'e'+'s'+'S'+'o')};
 int sd_random_state[]={0,0};
 double sd_random_precision=1e-3;
-#ifdef ADDITIONAL_CHECKS
-double db_max_force = 0.0, db_max_vel = 0.0;
-int    db_maxf_id   = 0,   db_maxv_id = 0;
-#endif
 
 /** \name Privat Functions */
 /************************************************************/
