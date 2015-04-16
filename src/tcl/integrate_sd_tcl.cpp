@@ -139,15 +139,6 @@ int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char 
       
   } else if ( !ARG_IS_I(1,n_steps) ) return tclcommand_integrate_sd_print_usage(interp);
   
-  if (sd_radius < 0){
-    Tcl_AppendResult(interp, "The particle radius for SD was not set\n (set with setmd sd_radius <value>).\n", (char *)NULL);
-    return tclcommand_integrate_sd_print_usage(interp);
-  }
-  if (sd_viscosity < 0){
-    Tcl_AppendResult(interp, "The viscosity for SD was not set\n (set with setmd sd_viscosity <value>).\n", (char *)NULL);
-    return tclcommand_integrate_sd_print_usage(interp);
-  }
-
   /* go on with integrate <n_steps> */
   if(n_steps <= 0) {
     Tcl_AppendResult(interp, "illegal number of steps (must be >0) \n", (char *) NULL);
