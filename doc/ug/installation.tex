@@ -154,6 +154,9 @@ configure --help
   i.e. everything with a Fermi chip or newer.  Note that we require at
   least compute model 1.1, that is G90. However, to use G90 (e.\,g.~Tesla
   C1060), you need to manually specificy compute model 1.1.
+\item[\texttt{--with-arpack=path} / \texttt{--without-arpack}] This switch
+  enables ARPACK support. \texttt{path} should be the path to the ARPACK
+  directory. ARPACK is currently only needed for Stokesian Dynamics support.
 \item[\texttt{LDFLAGS=\textit{linker-flags}}] This variable can be
   used to change the flags that the linker will get when linking the
   \es binaries.  This variable can be used to modify the path where
