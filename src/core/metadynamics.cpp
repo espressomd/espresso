@@ -74,8 +74,6 @@ double *meta_cur_xi      =     NULL;
 double meta_val_xi       =       0.;
 double *meta_apply_direction = NULL;
 
-int steps_between_modification_of_metadynamics_potential = 1000; //used for relaxation to local equilibrium
-
 void meta_init(){
    if(meta_switch == META_OFF)   return;
    
