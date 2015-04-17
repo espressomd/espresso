@@ -3,11 +3,6 @@
 #ifdef CUDA
 #include <cublas_v2.h>
 
-#include "cuda_utils.hpp"
-#include "integrate_sd.hpp"
-#include "integrate_sd_cuda.cuh"
-#include "integrate_sd_matrix.cuh"
-
 void errexit();
 
 #ifndef SD_USE_FLOAT
@@ -41,6 +36,11 @@ typedef float real;
 #define __real2int_ru(...)              __float2int_ru(__VA_ARGS__)
 #define rnaupd(...)                     snaupd_(__VA_ARGS__)
 #endif //#ifndef SD_USE_FLOAT
+
+#include "cuda_utils.hpp"
+#include "integrate_sd.hpp"
+#include "integrate_sd_cuda.cuh"
+#include "integrate_sd_matrix.cuh"
 
 extern cublasHandle_t cublas;
 
