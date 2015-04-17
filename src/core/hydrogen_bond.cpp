@@ -26,7 +26,7 @@
 #include "integrate.hpp"
 #endif
 
-#ifdef CG_DNA
+#ifdef HYDROGEN_BOND
 
 // extrema for cos(theta), used for the force calculations that involve angles
 #define COS_MAX (0.99999999)

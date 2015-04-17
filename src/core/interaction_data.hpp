@@ -552,7 +552,7 @@ typedef struct {
   double drmax2i;
 } Fene_bond_parameters;
 
-#ifdef CG_DNA
+#ifdef HYDROGEN_BOND
     /** Parameters for the cg_dna potential
 	Insert documentation here.
     **/
@@ -572,7 +572,8 @@ typedef struct {
       double f2;
       double f3;
     } Cg_dna_basepair_parameters;
-
+#endif
+#ifdef TWIST_STACK
 typedef struct {
       double rm;
       double epsilon;
@@ -848,8 +849,10 @@ typedef union {
     Subt_lj_bond_parameters subt_lj;
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
-#ifdef CG_DNA
+#if defined(CG_DNA) || defined(HYDROGEN_BOND)
     Cg_dna_basepair_parameters hydrogen_bond;
+#endif
+#if defined(CG_DNA) || defined(TWIST_STACK)
     Cg_dna_stacking_parameters twist_stack;
 #endif
     Endangledist_bond_parameters endangledist;

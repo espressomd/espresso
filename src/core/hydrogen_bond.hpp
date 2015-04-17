@@ -27,7 +27,7 @@
 #include "particle_data.hpp"
 #include "grid.hpp"
 
-#ifdef CG_DNA
+#ifdef HYRDOGEN_BOND
 
 int hydrogen_bond_set_params(int bond_type, DoubleList *params);
 
@@ -35,6 +35,6 @@ int calc_hydrogen_bond_force(Particle *s1, Particle *b1, Particle *b2, Particle 
 
 int calc_hydrogen_bond_energy(Particle *s1, Particle *b1, Particle *b2, Particle *s2, Bonded_ia_parameters *iaparams, double *_energy);
 
-#endif /* CG_DNA */
+#endif /* HYDROGEN_BOND */
 
 #endif /* CG_DNA_HPP */
