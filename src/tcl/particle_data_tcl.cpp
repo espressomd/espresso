@@ -230,7 +230,6 @@ void tclcommand_part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 #ifdef LB_ELECTROHYDRODYNAMICS
 void tclcommand_part_print_mu_E(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  /* unscale velocities ! */
   Tcl_PrintDouble(interp, part->p.mu_E[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, part->p.mu_E[1], buffer);
@@ -1288,6 +1287,7 @@ int tclcommand_part_parse_f(Tcl_Interp *interp, int argc, char **argv,
     return TCL_ERROR;
 
   /* rescale forces */
+  ///\todo{scale with particle mass}
   f[0] *= (0.5*time_step*time_step);
   f[1] *= (0.5*time_step*time_step);
   f[2] *= (0.5*time_step*time_step);

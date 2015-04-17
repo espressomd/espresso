@@ -22,7 +22,7 @@
 /** \file integrate.cpp   Molecular dynamics integrator.
  *
  *  For more information about the integrator 
- *  see \ref integrate.hpp "integrate.h".
+ *  see \ref integrate.hpp "integrate.hpp".
 */
 
 #include <mpi.h>
@@ -290,6 +290,15 @@ void integrate_vv(int n_steps, int reuse_forces)
     if(thermo_switch & THERMO_GHMC) {
       if (step % ghmc_nmd == 0)
         ghmc_momentum_update();
+    }
+#endif
+
+#ifdef SD
+    if (thermo_switch & THERMO_SD) {
+      fprintf(stderr,"Warning: Use integrate_sd to use Stokesian Dynamics Thermalizer.");
+    }
+    if (thermo_switch & THERMO_BD) {
+      fprintf(stderr,"Warning: Use integrate_sd to use Brownian Dynamics Thermalizer.");
     }
 #endif
 

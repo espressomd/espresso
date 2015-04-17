@@ -797,19 +797,20 @@ int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, ch
     observable_sf_params* params =(observable_sf_params*) malloc(sizeof(observable_sf_params));
     params->order=order;
     obs->container=(void*) params;
-    params->num_k_vecs=order;
+    //params->num_k_vecs=order;
     *change=2;
     argc-=2;
     argv+=2;
     if (argc > 0) {
-      if (!ARG0_IS_I(params->num_k_vecs)) return (TCL_ERROR);
+      if (!ARG0_IS_I(params->k_density)) return (TCL_ERROR);
       argc--;
       argv++;
       (*change)++;
-    }
-    int k_density = params->num_k_vecs/params->order;
+    } else {
+		return (TCL_ERROR);
+	}
     int vecs_per_k=-1;
-    switch (k_density){
+    switch (params->k_density){
     case 1:
       vecs_per_k=3;
       break;
@@ -819,11 +820,20 @@ int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, ch
     case 3:
       vecs_per_k=3+6+4;
       break;
+    case 4:
+      vecs_per_k=3+6+4+6;
+      break;
+    case 5:
+      vecs_per_k=3+6+4+6+6;
+      break;
+    case 6:
+      vecs_per_k=3+6+4+6+6+6;
+      break;
     default:
       Tcl_AppendResult(interp, "so many samples per order not yet implemented", (char*)NULL);
       return TCL_ERROR; 
     }
-    obs->n=params->num_k_vecs*vecs_per_k*2;
+    obs->n=params->order*vecs_per_k*2;
     obs->last_value=(double*)malloc(obs->n*sizeof(double));
     return TCL_OK;
   } else { 
@@ -834,27 +844,27 @@ int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, ch
 
 int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
   observable_sf_params* params= (observable_sf_params*) obs->container;
-  int k_max = params->num_k_vecs;
-  int k_density = k_max/params->order;
+  int k_max = params->order * params->k_density;
   char buffer[3 * TCL_DOUBLE_SPACE + 5];
   double qfak = 2.0 * PI / box_l[0];
-  //double* data = obs->last_value;
   double* data = values;
   int l=0;
   for (int i = 0; i < k_max; i++) {
-    int order=i/k_density + 1;
+    int order=i/params->k_density + 1;
     double tfac;
     int average;
-    switch (i%k_density){
+    switch (i%params->k_density){
     case 0: tfac=1;       average=3; break;
     case 1: tfac=sqrt(2); average=6; break;
     case 2: tfac=sqrt(3); average=4; break;
+    case 3: tfac=sqrt(5); average=6; break;
+    case 4: tfac=sqrt(6); average=6; break;
+    case 5: tfac=sqrt(9); average=6; break;
     default:
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "so many samples per order not yet implemented", (char*)NULL);
       return TCL_ERROR; 
     }
-    //sprintf(buffer, "{%f %f} ", qfak * (order) *tfac, data[i]);
     for (int t=0;t<average;t++){
       sprintf(buffer, "{%f %f %f} ", qfak * (order) *tfac, data[l], data[l+1]);
       //sprintf(buffer, "%f %f %f\n", qfak * (order) *tfac, data[l], data[l+1]);

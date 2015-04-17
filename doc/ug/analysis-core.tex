@@ -445,7 +445,7 @@ Its further arguments are described below.
     Tensor product of $A$ and $B$, \ie $C_{i \cdot l_B + j} = A_i B_j$, with $l_B$ the length of $B$.
     \item \lit{complex_conjugate_product}
     \todo{Complex conjugate product must be defined.}
-    \item \lit{fcs_acf} \var{w_x}\var{w_y} \var{w_z} \\
+    \item \lit{fcs_acf} \var{w_x} \var{w_y} \var{w_z} \\
     Fluorescence Correlation Spectroscopy (FCS) autocorrelation function, \ie
     \begin{equation}
     G_i(\tau) = \frac{1}{N} \Bigl< \exp \Bigl( - \frac{\Delta x_i^2(\tau) }{w_x^2} - \frac{\Delta y_i^2(\tau)}{w_y^2} - \frac{\Delta z_i^2(\tau)}{w_z^2} \Bigr) \Bigr>\,,
@@ -457,7 +457,7 @@ Its further arguments are described below.
     \begin{equation}
     W(x,y,z) = I_0 \exp \Bigl( - \frac{2x^2}{w_x^2} - \frac{2y^2}{w_y^2} - \frac{2z^2}{w_z^2} \Bigr)\,.
     \end{equation}
-    Equation~\ref{eq:Gtau} is a generalization of the formula presented by 
+    Equation~\eqref{eq:Gtau} is a generalization of the formula presented by 
     H\"ofling \etal~\cite{hofling11a}. For more information, see references therein.
     Per each 3 dimensions of the observable, one dimension of the correlation output
     is produced. If \lit{fcs_acf} is used with other observables than 
@@ -481,7 +481,7 @@ Its further arguments are described below.
   in tau.  This is a parameter of the multiple tau correlator. If you
   want to use it, make sure that you know how it works. By default, it
   is set equal to \var{tau\_max} which results in the trivial linear
-  correlator. By setting \var{tau\_lin} < \var{tau\_max} the multiple
+  correlator. By setting \var{tau\_lin} $<$ \var{tau\_max} the multiple
   tau correlator is switched on. In many cases, \var{tau\_lin}=16 is a
   good choice but this may strongly depend on the observables you are
   correlating.  For more information, we recommend to read
@@ -549,7 +549,7 @@ is updated immediately. Higher levels are
 updated only when the lower level buffers are filled and
 there is a need to push some values one level up. When the
 updating is stopped, a number of observable values have not
-reached the higher level, especially when \var{tau_max} 
+reached the higher level, especially when \var{tau\_max} 
 is comparable to the total simulation time
 and if there are many compression levels. In such case,
 variant \variant{3} is very useful. If \var{tau\_max} 
@@ -620,9 +620,9 @@ for the special case of the velocity autocorrelation function.
 \end{figure}
 
 Let us consider a set of $N$ observable values as schematically shown
-in Figures~\ref{fig:dataSet}, where a value of index $i$ was measured
+in figure~\ref{fig:dataSet}, where a value of index $i$ was measured
 in time $i\delta t$. We are interested in computing the correlation 
-function according to Equation~\ref{eq:CtauDef} for a range lag times
+function according to equation~\eqref{eq:corr.def} for a range lag times
 $\tau = (i-j)\delta t$ between the measurements $i$ and $j$.
 To simplify the notation, we further drop $\delta t$
 when referring to observables and lag times. 

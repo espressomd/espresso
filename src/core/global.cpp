@@ -34,6 +34,7 @@
 #include "imd.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
+#include "integrate_sd.hpp"
 
 /** This array contains the description of all global variables.
 
@@ -93,7 +94,12 @@ const Datafield fields[] = {
   {&ghmc_tscale,        TYPE_INT, 1, "ghmc_tscale",       6 },         /* 50 from ghmc.cpp */
   {&lb_components,      TYPE_INT, 1, "lb_components",     2 },         /* 51 from ghmc.cpp */
   {&warnings,           TYPE_INT, 1, "warnings",          1 },         /* 52 from global.cpp */
-  {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles",          1 },         /* 53 from global.cpp */
+  {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles", 1 },         /* 53 from global.cpp */
+  {&sd_viscosity,            TYPE_DOUBLE, 1, "sd_viscosoity",              4 },         /* 54 from integrate_sd.cpp */
+  {&sd_radius,               TYPE_DOUBLE, 1, "sd_radius",                  4 },         /* 55 from integrate_sd.cpp */
+  {&sd_seed,                    TYPE_INT, 2, "sd_seed",                    4 },         /* 56 from integrate_sd.cpp */
+  {&sd_random_state,            TYPE_INT, 2, "sd_random_state",            4 },         /* 57 from integrate_sd.cpp */
+  {&sd_random_precision,     TYPE_DOUBLE, 1, "sd_precision_random",        4 },         /* 58 from integrate_sd.cpp */
   { NULL, 0, 0, NULL, 0 }
 };
 

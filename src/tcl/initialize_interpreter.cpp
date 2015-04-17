@@ -34,6 +34,7 @@
 #include "grid_tcl.hpp"
 #include "iccp3m_tcl.hpp"
 #include "integrate_tcl.hpp"
+#include "integrate_sd_tcl.hpp"
 #include "interaction_data_tcl.hpp"
 #include "lb_tcl.hpp"
 #include "lees_edwards_tcl.hpp"
@@ -224,6 +225,12 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
+#if defined(SD) || defined(BD)
+  /* from integrate_sd_tcl.cpp */
+  REGISTER_COMMAND("integrate_sd", tclcommand_integrate_sd);
+  REGISTER_COMMAND("sd_set_particles_apart", tclcommand_sd_set_particles_apart);
+  REGISTER_COMMAND("sd_test", tclcommand_sd_test);
+#endif
 #ifdef CUDA
   REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);
 #endif
@@ -245,6 +252,11 @@ static void tcl_register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_TIMESTEP, tclcallback_time_step);
   register_global_callback(FIELD_TIMINGSAMP, tclcallback_timings);
   register_global_callback(FIELD_MIN_GLOBAL_CUT, tclcallback_min_global_cut);
+  register_global_callback(FIELD_SD_VISCOSITY, tclcallback_sd_viscosity);
+  register_global_callback(FIELD_SD_RADIUS, tclcallback_sd_radius);
+  register_global_callback(FIELD_SD_SEED, tclcallback_sd_seed);
+  register_global_callback(FIELD_SD_RANDOM_STATE, tclcallback_sd_random_state);
+  register_global_callback(FIELD_SD_RANDOM_PRECISION, tclcallback_sd_random_precision);
   register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
 }
 

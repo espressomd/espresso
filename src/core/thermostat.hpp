@@ -46,8 +46,9 @@
 #define THERMO_LB         8
 #define THERMO_INTER_DPD  16
 #define THERMO_GHMC       32
-#define THERMO_CPU       64
-
+#define THERMO_CPU        64
+#define THERMO_SD         128
+#define THERMO_BD         256
 /*@}*/
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
@@ -101,7 +102,6 @@ void thermo_heat_up();
 
 /** pendant to \ref thermo_heat_up */
 void thermo_cool_down();
-
 /** Get current temperature for CPU thermostat */
 int get_cpu_temp();
 

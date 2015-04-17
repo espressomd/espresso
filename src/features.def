@@ -91,6 +91,14 @@ LATTICE	                        equals LB or LB_GPU
 SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
+/* Stokesian-Dynamics features */
+SD 		      	        requires CUDA
+SD 		      	        requires ARPACK
+SD				implies BD
+SD_FF_ONLY			requires SD
+SD_USE_FLOAT			requires SD
+SD_NOT_PERIODIC			requires SD
+
 /* Interaction features */
 TABULATED
 LENNARD_JONES
@@ -188,6 +196,7 @@ MEM_DEBUG
 MAGGS_DEBUG
 LB_DEBUG
 VIRTUAL_SITES_DEBUG
+SD_DEBUG
 
 MPI_CORE
 FORCE_CORE
