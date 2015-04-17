@@ -67,6 +67,9 @@ int tclcommand_integrate_sd_print_status(Tcl_Interp *interp)
 
 int tclcommand_sd_set_particles_apart(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
+  #ifndef SD
+  return TCL_ERROR;
+  #else
   if (argc != 1){
     Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
     return tclcommand_sd_set_particle_apart_print_usage(interp);
@@ -93,6 +96,7 @@ Therefore this function will not suceed ...\n", (char *) NULL);
     //Tcl_AppendResult(interp, "Unknown return code.\n", (char *) NULL);
     return (TCL_ERROR);
   }
+  #endif
 }
 
 int tclcommand_sd_test(ClientData data, Tcl_Interp *interp, int argc, char **argv)
@@ -117,6 +121,7 @@ int tclcommand_sd_test(ClientData data, Tcl_Interp *interp, int argc, char **arg
 
 int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
+  #ifdef SD
   int  n_steps;
   
   INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
@@ -159,6 +164,9 @@ int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char 
   }
   ;
   return gather_runtime_errors(interp, TCL_OK);
+  #else
+  return TCL_ERROR;
+  #endif
 }
 
 /************************************************************/

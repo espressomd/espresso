@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "config.hpp"
-#ifdef CUDA /* Terminates at end of file */
+#ifdef SD /* Terminates at end of file */
 //#define SD_PC
 
 /** \file integrate_sd_cuda.cu    Stokes dynamics integrator.

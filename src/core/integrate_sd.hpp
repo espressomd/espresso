@@ -18,10 +18,23 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#pragma once
-//#ifndef INTEGRATE_SD_H
-//#define INTEGRATE_SD_H
+#ifndef __INTEGRATE_SD_H
+#define __INTEGRATE_SD_H
 
+/** Average number of integration steps the verlet list has been re
+    used. */
+extern double verlet_reuse;
+
+extern double sd_viscosity;
+
+extern double sd_radius;
+
+extern int sd_seed[2];
+extern int sd_random_state[2];
+
+extern double sd_random_precision;
+
+#ifdef SD
 
 #ifdef CUDA
 #  define HAVE_CUBLAS
@@ -82,18 +95,6 @@ extern double skin;
 extern int    resort_particles;
 /** If non-zero, the forces will be recalculated before the next integration. */
 extern int    recalc_forces;
-/** Average number of integration steps the verlet list has been re
-    used. */
-extern double verlet_reuse;
-
-extern double sd_viscosity;
-
-extern double sd_radius;
-
-extern int sd_seed[2];
-extern int sd_random_state[2];
-
-extern double sd_random_precision;
 
 /*@}*/
 
@@ -116,5 +117,5 @@ int sd_set_particles_apart();
 int sd_test(int size, int type);
 
 /*@}*/
-
-//#endif
+#endif /* SD */
+#endif

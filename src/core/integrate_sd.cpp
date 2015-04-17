@@ -133,6 +133,8 @@ void integrator_sanity_checks_sd()
 
 /************************************************************/
 
+#ifdef SD
+
 void integrate_sd(int n_steps)
 {
   /* Prepare the Integrator */
@@ -336,10 +338,12 @@ void integrate_sd(int n_steps)
 
 }
 
+#endif /* SD */
 
 /* Privat functions */
 /************************************************************/
 
+#ifdef SD
 
 void propagate_pos_sd()
 {
@@ -638,3 +642,5 @@ void propagate_pos_bd(int N, real * pos, real * force, real * velocity){
           + scal_r * gaussian_random();
   }
 }
+
+#endif /* SD */
