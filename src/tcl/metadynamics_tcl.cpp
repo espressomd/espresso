@@ -131,7 +131,7 @@ int tclcommand_metadynamics_parse_distance(Tcl_Interp *interp, int argc, char **
     return (TCL_ERROR);
   }
   
-  if (dmin < 0 || dmax < 0 || dmax < dmin || bheight < 0 || bwidth < 0 || fbound < 0 || dbins < 0) {
+  if (dmin < 0 || dmax < 0 || dmax < dmin || bheight < 0 || bwidth < 0 || fbound < 0 || dbins < 0 || numrelaxationsteps <0) {
     Tcl_AppendResult(interp, "check parameters: inconcistency somewhere", (char *)NULL);
     return (TCL_ERROR);
   }
@@ -198,6 +198,7 @@ int tclcommand_metadynamics_parse_relative_z(Tcl_Interp *interp, int argc, char 
   meta_xi_num_bins  = dbins;
 
   meta_switch = META_REL_Z;
+  meta_num_relaxation_steps = numrelaxationsteps;
 
   return (TCL_OK);
 }

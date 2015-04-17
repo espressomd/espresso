@@ -49,6 +49,8 @@ int    meta_pid2         =       -1;
 double meta_bias_height  =    0.001;
 /** bias width */
 double meta_bias_width   =      0.5;
+/** number of relaxation steps **/
+int meta_num_relaxation_steps =	-1;
 
 /** REACTION COORDINATE */
 /** RC min */
