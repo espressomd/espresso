@@ -72,6 +72,8 @@ double *meta_cur_xi      =     NULL;
 double meta_val_xi       =       0.;
 double *meta_apply_direction = NULL;
 
+int steps_between_modification_of_metadynamics_potential = 1000; //used for relaxation to local equilibrium
+
 void meta_init(){
    if(meta_switch == META_OFF)   return;
    
@@ -163,8 +165,10 @@ void meta_perform()
          // reaction coordinate value
          meta_val_xi = sqrt(sqrlen(meta_cur_xi));
          // Update free energy profile and biased force
-         meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
-         meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+         if(int(sim_time/time_step)%meta_num_relaxation_steps==0){
+		 meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+		 meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+         }
          
          // direction of the bias force
          unit_vector(meta_cur_xi,meta_apply_direction);
@@ -172,9 +176,10 @@ void meta_perform()
          // reaction coordinate value: relative height of z_pid1 with respect to z_pid2
          meta_val_xi = -1.*meta_cur_xi[2];
          // Update free energy profile and biased force
-         meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
-         meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
-         
+         if(int(sim_time/time_step)%meta_num_relaxation_steps==0){
+		 meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+		 meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+         }
          // direction of the bias force (-1 to be consistent with META_DIST: from 1 to 2)
          meta_apply_direction[0] = meta_apply_direction[1] = 0.;
          meta_apply_direction[2] = -1.;

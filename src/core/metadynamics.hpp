@@ -53,9 +53,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define META_REL_Z   2
 
 /**********************************
+* needed global variables
+**********************************/
+extern double sim_time;
+extern double time_step;
+
+/**********************************
 * exported variables
 **********************************/
-
 /** Flag - turn metadynamics on */
 extern int    meta_switch;
 /** pid of particle 1 */
@@ -66,6 +71,8 @@ extern int    meta_pid2;
 extern double meta_bias_height;
 /** bias width */
 extern double meta_bias_width;
+/** number of relaxation steps before a new potential is set **/
+extern int meta_num_relaxation_steps;
 
 /** REACTION COORDINATE */
 /** RC min */
