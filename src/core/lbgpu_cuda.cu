@@ -488,7 +488,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
   }
 }
 
-__device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
+__device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f, bool buffer = true) {
 
   float force_factor=powf(para.agrid,2)*para.tau*para.tau;
   for(int ii=0;ii<LB_COMPONENTS;++ii)
@@ -496,9 +496,12 @@ __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
 
 #if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
 // Store backup of the node forces
-  node_f.force_buf[(0 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(0 + ii*3 ) * para.number_of_nodes + index];
-  node_f.force_buf[(1 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(1 + ii*3 ) * para.number_of_nodes + index];
-  node_f.force_buf[(2 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(2 + ii*3 ) * para.number_of_nodes + index];
+    if (buffer)
+    {
+      node_f.force_buf[(0 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(0 + ii*3 ) * para.number_of_nodes + index];
+      node_f.force_buf[(1 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(1 + ii*3 ) * para.number_of_nodes + index];
+      node_f.force_buf[(2 + ii*3 ) * para.number_of_nodes + index] = node_f.force[(2 + ii*3 ) * para.number_of_nodes + index];
+    }
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -521,6 +524,22 @@ __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f) {
       node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
 #endif
   }
+}
+
+__global__ void reset_LB_forces_kernel(LB_node_force_gpu node_f, bool buffer = true) {
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+
+  if( index < para.number_of_nodes )
+    reset_LB_forces(index, node_f, buffer);
+}
+
+void reset_LB_forces_GPU(bool buffer) {
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
+  KERNELCALL(reset_LB_forces_kernel, dim_grid, threads_per_block, (node_f, buffer));
 }
 
 
