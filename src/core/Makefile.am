@@ -204,11 +204,11 @@ CUDA_HEADER_FILES = \
 	cuda_init.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
 	electrokinetics.hpp \
-	integrate_sd_cuda_debug.cuh \
-	integrate_sd_cuda_kernel.cuh \
-	integrate_sd_cuda.cuh \
+	integrate_sd_cuda_debug.hpp \
+	integrate_sd_cuda_kernel.hpp \
+	integrate_sd_cuda.hpp \
 	integrate_sd_cuda_device.cu \
-	integrate_sd_matrix.cuh \
+	integrate_sd_matrix.hpp \
 	fd-electrostatics.hpp
 
 CUDA_SOURCE_FILES = \

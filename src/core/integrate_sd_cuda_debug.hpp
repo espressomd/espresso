@@ -1,5 +1,5 @@
-#ifndef __helper_functions_cuh__
-#define __helper_functions_cuh__
+#ifndef __helper_functions_hpp__
+#define __helper_functions_hpp__
 
 #include "config.hpp"
 
@@ -8,7 +8,7 @@
 #include <iostream>
 #include <iomanip> 
 
-#include "integrate_sd_cuda.cuh"
+#include "integrate_sd_cuda.hpp"
 
 
 // template implementation below

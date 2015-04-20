@@ -1,6 +1,6 @@
 
-#include "integrate_sd_cuda.cuh"
-#include "integrate_sd_cuda_device.cuh"
+#include "integrate_sd_cuda.hpp"
+#include "integrate_sd_cuda_device.hpp"
 
 /* *************************************************************************************************************** *
  * ********************************************    DEVICE-Functions   ******************************************** *

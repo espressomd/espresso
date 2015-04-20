@@ -5,8 +5,8 @@
 #include "cuda_runtime.h"
 
 #include "integrate_sd.hpp"
-#include "integrate_sd_cuda.cuh"
-#include "integrate_sd_matrix.cuh"
+#include "integrate_sd_cuda.hpp"
+#include "integrate_sd_matrix.hpp"
 
 #include <openssl/md5.h>
 

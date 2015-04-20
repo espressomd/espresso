@@ -5,7 +5,7 @@
 #include "cuda_runtime.h"
 #include <device_functions.h>
 
-#include "integrate_sd_cuda.cuh"
+#include "integrate_sd_cuda.hpp"
 #include "integrate_sd_cuda_device.cu"
 
 #ifdef SD

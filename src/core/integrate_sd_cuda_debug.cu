@@ -6,9 +6,9 @@
 #include <cublas_v2.h>
 #include <curand.h>
 
-#include "integrate_sd_cuda.cuh"
-#include "integrate_sd_cuda_debug.cuh"
-#include "integrate_sd_cuda_kernel.cuh"
+#include "integrate_sd_cuda.hpp"
+#include "integrate_sd_cuda_debug.hpp"
+#include "integrate_sd_cuda_kernel.hpp"
 //#include "errorhandling.hpp"
 #include "cuda_utils.hpp"
 
