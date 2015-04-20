@@ -107,7 +107,7 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
-	integrate_sd.hpp integrate_sd.cpp \
+	integrate_sd.hpp integrate_sd.cpp \	
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp
 
@@ -207,7 +207,7 @@ CUDA_HEADER_FILES = \
 	integrate_sd_cuda_debug.hpp \
 	integrate_sd_cuda_kernel.hpp \
 	integrate_sd_cuda.hpp \
-	integrate_sd_cuda_device.cu \
+	integrate_sd_cuda_device.hpp \
 	integrate_sd_matrix.hpp \
 	fd-electrostatics.hpp
 
@@ -223,6 +223,7 @@ CUDA_SOURCE_FILES = \
 	integrate_sd_cuda_kernel.cu \
 	integrate_sd_cuda_debug.cu \
 	integrate_sd_matrix.cu \
+	integrate_sd_cuda_device.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
 	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu \
