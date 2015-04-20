@@ -164,7 +164,7 @@ cdef extern from "interaction_data.hpp":
       double *para_c
 
 #* Parameters for one-directional harmonic potential */
-  ctypedef structu Umbrella_bond_parameters:
+  ctypedef struct Umbrella_bond_parameters:
       double k
       int    dir
       double r
