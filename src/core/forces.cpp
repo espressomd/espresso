@@ -75,7 +75,7 @@ void init_forces()
 
 #ifdef NPT
   /* reset virial part of instantaneous pressure */
-  if(integ_switch == INTEG_METHOD_NPT_ISO)
+  if(integ_switch == INTEG_METHOD_NPT_ISO) 
     nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
 #endif
 

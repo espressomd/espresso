@@ -84,6 +84,7 @@ libEspressoTcl_la_SOURCES = \
 libEspressoTcl_la_SOURCES += \
 	bmhtf-nacl_tcl.cpp bmhtf-nacl_tcl.hpp \
 	buckingham_tcl.cpp buckingham_tcl.hpp \
+	cos2_tcl.cpp cos2_tcl.hpp \
 	dpd_tcl.cpp dpd_tcl.hpp \
 	forcecap_tcl.cpp forcecap_tcl.hpp \
 	gaussian_tcl.cpp gaussian_tcl.hpp \
@@ -117,6 +118,7 @@ libEspressoTcl_la_SOURCES += \
 	bonded_coulomb_tcl.cpp bonded_coulomb_tcl.hpp \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
+	umbrella_tcl.cpp umbrella_tcl.hpp \
 	object-in-fluid/area_force_local_tcl.cpp \
 	object-in-fluid/area_force_local_tcl.hpp \
 	object-in-fluid/area_force_global_tcl.cpp \

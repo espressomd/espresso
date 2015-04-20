@@ -47,10 +47,12 @@
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
 #include "hat.hpp"
+#include "umbrella.hpp"
 #include "tab.hpp"
 #include "overlap.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
+#include "cos2.hpp"
 #include "gb.hpp"
 #include "cells.hpp"
 #include "comforce.hpp"
@@ -260,6 +262,13 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS2_rchange = 
     params->LJCOS2_capradius = 0.0;
   params->LJCOS2_cut = INACTIVE_CUTOFF;
+#endif
+
+#ifdef COS2
+  params->COS2_eps =
+    params->COS2_offset =
+    params->COS2_w =
+  params->COS2_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef GAY_BERNE
@@ -609,6 +618,14 @@ static void recalc_maximal_cutoff_nonbonded()
       }
 #endif
 
+#ifdef COS2
+      {
+  double max_cut_tmp = data->COS2_cut + data->COS2_offset;
+  if (max_cut_current < max_cut_tmp)
+    max_cut_current = max_cut_tmp;
+      }
+#endif
+
 #ifdef GAY_BERNE
       if (max_cut_current < data->GB_cut)
 	max_cut_current = data->GB_cut;
@@ -704,6 +721,8 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:
     return "tabulated";
+  case BONDED_IA_UMBRELLA:
+    return "umbrella";
   case BONDED_IA_OVERLAPPED:
     return "overlapped";
   case BONDED_IA_RIGID_BOND:

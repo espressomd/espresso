@@ -98,6 +98,9 @@ static int terminated = 0;
   CB(mpi_bcast_n_particle_types_slave) \
   CB(mpi_gather_stats_slave) \
   CB(mpi_set_time_step_slave) \
+  CB(mpi_set_smaller_time_step_slave) \
+  CB(mpi_send_smaller_timestep_flag_slave) \
+  CB(mpi_send_configtemp_flag_slave) \
   CB(mpi_get_particles_slave) \
   CB(mpi_bcast_coulomb_params_slave) \
   CB(mpi_bcast_collision_params_slave) \
@@ -112,6 +115,7 @@ static int terminated = 0;
   CB(mpi_bit_random_seed_slave) \
   CB(mpi_bit_random_stat_slave) \
   CB(mpi_get_constraint_force_slave) \
+  CB(mpi_get_configtemp_slave) \
   CB(mpi_rescale_particles_slave) \
   CB(mpi_bcast_cell_structure_slave) \
   CB(mpi_send_quat_slave) \
@@ -1782,6 +1786,89 @@ void mpi_set_time_step_slave(int node, int i)
   time_step_half= time_step / 2.;
 }
 
+/************ REQ_SET_SMALLER_TIME_STEP ************/
+void mpi_set_smaller_time_step(double time_s)
+{
+#ifdef MULTI_TIMESTEP
+  mpi_call(mpi_set_smaller_time_step_slave, -1, 0);
+
+  smaller_time_step = time_s;
+  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
+  on_parameter_change(FIELD_SMALLERTIMESTEP);
+#endif
+}
+
+void mpi_set_smaller_time_step_slave(int node, int i)
+{
+#ifdef MULTI_TIMESTEP
+  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
+  on_parameter_change(FIELD_SMALLERTIMESTEP);
+#endif
+}
+
+void mpi_send_smaller_timestep_flag(int pnode, int part, int smaller_timestep)
+{
+#ifdef MULTI_TIMESTEP
+  mpi_call(mpi_send_smaller_timestep_flag_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.smaller_timestep = smaller_timestep;
+  }
+  else {
+    MPI_Send(&smaller_timestep, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_smaller_timestep_flag_slave(int pnode, int part)
+{
+#ifdef MULTI_TIMESTEP
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
+       comm_cart, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_configtemp_flag(int pnode, int part, int configtemp)
+{
+#ifdef CONFIGTEMP
+  mpi_call(mpi_send_configtemp_flag_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.configtemp = configtemp;
+  }
+  else {
+    MPI_Send(&configtemp, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_configtemp_flag_slave(int pnode, int part)
+{
+#ifdef CONFIGTEMP
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.configtemp, 1, MPI_INT, 0, SOME_TAG,
+       comm_cart, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
+
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params()
 {
@@ -2214,6 +2301,24 @@ void mpi_get_constraint_force_slave(int node, int parm)
 {
 #ifdef CONSTRAINTS
   MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+#endif
+}
+
+/*************** REQ_GET_CONFIGTEMP ************/
+void mpi_get_configtemp(double cfgtmp[2])
+{
+#ifdef CONFIGTEMP
+  extern double configtemp[2];
+  mpi_call(mpi_get_configtemp_slave, -1, 0);
+  MPI_Reduce(configtemp, cfgtmp, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+#endif
+}
+
+void mpi_get_configtemp_slave(int node, int cnt)
+{
+#ifdef CONFIGTEMP
+  extern double configtemp[2];  
+  MPI_Reduce(configtemp, NULL, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 #endif
 }
 

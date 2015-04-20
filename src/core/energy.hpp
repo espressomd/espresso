@@ -24,6 +24,7 @@
 /*
 #include "utils.hpp"
 #include "integrate.hpp"
+
 #include "object-in-fluid/stretching_force.hpp"
 #include "object-in-fluid/stretchlin_force.hpp"
 #include "object-in-fluid/area_force_local.hpp"
@@ -63,8 +64,10 @@ void master_energy_calc();
     @param result non-zero only on master node; will contain the cumulative over all nodes. */
 void energy_calc(double *result);
 
+
 /** Calculate long range energies (P3M, MMM2d...). */
 void calc_long_range_energies();
+
 
 /*@}*/
 

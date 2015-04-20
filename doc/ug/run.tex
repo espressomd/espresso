@@ -585,6 +585,29 @@ used.
 This should speedup the simulation, as the nearfield doesn't need to be
 inverted. Additional the thermal displacements can be directly calculated.
 
+\section{Multi-timestepping}
+\newescommand[multitimestepping]{multitimestepping}
+
+\begin{essyntax}
+  setmd smaller\_time\_step 0.001 \\
+  part $i$ smaller\_timestep 1
+
+  Required features: MULTI\_TIMESTEP
+\end{essyntax}
+
+The multi-timestepping integrator allows to run two concurrent integration time
+steps within a simulation, associating beads with either the large
+\var{time\_step} or the other \var{smaller\_time\_step}.  Setting
+\var{smaller\_time\_step} to a positive value turns on the multi-timestepping
+algorithm.  The ratio \var{time\_step}/\var{smaller\_time\_step} \emph{must} be
+an integer.  Beads are by default associated with \var{time\_step},
+corresponding to the particle property \var{smaller\_timestep} 0.  Setting
+\var{smaller\_timestep} to 1 associate the particle to the
+\var{smaller\_time\_step} integration.  The integrator can be used in the NVE
+ensemble, as well as with the Langevin thermostat and the modified Andersen
+barostat for NVT and NPT simulations, respectively.  See \cite{bereau15} for
+more details.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"

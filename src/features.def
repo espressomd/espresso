@@ -34,6 +34,7 @@ NEMD
 NPT 
 GHMC
 CATALYTIC_REACTIONS
+MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
 ENGINE                          implies ROTATION
 
 /* Rotation */
@@ -109,6 +110,7 @@ LJCOS
 LJCOS2
 LJ_ANGLE
 LJGEN_SOFTCORE
+COS2
 GAY_BERNE
 SMOOTH_STEP
 HERTZIAN
@@ -118,7 +120,8 @@ MORSE
 BUCKINGHAM
 SOFT_SPHERE
 HAT
-GAY_BERNE                       implies ROTATION
+UMBRELLA
+GAY_BERNE	            implies ROTATION
 OVERLAPPED
 
 /* Fluid-Structure Interactions (object in fluid) */

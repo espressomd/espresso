@@ -466,6 +466,16 @@ inline void add_kinetic_energy(Particle *p1)
 #endif
 
   /* kinetic energy */
+  
+// #ifdef MULTI_TIMESTEP
+//   if (p1->p.smaller_timestep==1) {
+//     ostringstream msg;
+//     msg << "SMALL TIME STEP";
+//     energy.data.e[0] += SQR(smaller_time_step/time_step) * 
+//       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+//   }
+//   else
+// #endif  
   energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
 #ifdef ROTATION

@@ -115,6 +115,7 @@ libEspresso_la_SOURCES = \
 libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
 	buckingham.cpp buckingham.hpp \
+	cos2.cpp cos2.hpp \
 	dpd.cpp dpd.hpp \
 	gaussian.cpp gaussian.hpp \
 	gb.cpp gb.hpp \
@@ -145,6 +146,7 @@ libEspresso_la_SOURCES += \
 	harmonic.cpp harmonic.hpp \
 	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
+	umbrella.cpp umbrella.hpp \
 	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
