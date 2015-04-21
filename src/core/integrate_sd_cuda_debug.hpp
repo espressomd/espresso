@@ -10,6 +10,7 @@
 
 #include "integrate_sd_cuda.hpp"
 
+#ifdef SD
 
 // template implementation below
 template<typename T> void printMatrixDev( T * data, int m, int n, const char * msg);
@@ -137,5 +138,6 @@ template<typename T> void printDistances( T * r_h, T L, int N){
 }
 
 
+#endif /* SD */
 
 #endif

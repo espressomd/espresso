@@ -22,6 +22,8 @@
 #ifndef __INTEGRATE_SD_CUDA_HPP
 #define __INTEGRATE_SD_CUDA_HPP
 
+#include "integrate_sd.hpp"
+
 #ifdef SD
 #ifdef CUDA
 #include <cublas_v2.h>

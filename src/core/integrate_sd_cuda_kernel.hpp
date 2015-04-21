@@ -22,6 +22,10 @@
 #ifndef __INTEGRATE_SD_CUDA_KERNEL_HPP
 #define __INTEGRATE_SD_CUDA_KERNEL_HPP
 
+#include "integrate_sd.hpp"
+
+#ifdef SD
+
 // This computes the farfield contribution.
 // r is the vector of [x_1, y_1, z_1, x_2, y_2, z_2, ...]
 // N is the number of particles
@@ -181,5 +185,7 @@ __global__ void sd_nrm_inf(const int size, const int * const vec, int * res);
 
 
 __global__ void sd_nrm1(const int size,const real * const vec, real * erg);
+
+#endif /* SD */
 
 #endif
