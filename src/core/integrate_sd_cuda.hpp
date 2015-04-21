@@ -39,8 +39,8 @@ typedef float real;
 
 #include "cuda_utils.hpp"
 #include "integrate_sd.hpp"
-#include "integrate_sd_cuda.cuh"
-#include "integrate_sd_matrix.cuh"
+#include "integrate_sd_cuda.hpp"
+#include "integrate_sd_matrix.hpp"
 
 extern cublasHandle_t cublas;
 
