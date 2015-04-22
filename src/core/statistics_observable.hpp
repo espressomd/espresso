@@ -28,9 +28,12 @@
 
 #define CONST_UNITITIALIZED 1e-23
 
+enum ObservableType { OBSERVABLE, AVERAGE, VARIANCE };
+
 struct s_observable;
 
 struct s_observable {
+  ObservableType type;
   char* obs_name;
   void* container;
   int n;
@@ -55,6 +58,10 @@ void autoupdate_observables();
 void observable_init(observable* self);
 int observable_calculate(observable* self);
 int observable_update(observable* self);
+
+/* IO functions for observables */
+int observable_write(char *filename, observable *self, bool binary);
+int observable_read(char *filename, observable *self, bool binary);
 
 /* Here we have the particular observables listed */
 int observable_calc_particle_velocities(observable* self_);
