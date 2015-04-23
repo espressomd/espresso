@@ -1307,7 +1307,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
   //int no;
 
   if (argc<2) {
-    Tcl_AppendResult(interp, "Usage!!!\n", (char *)NULL);
+    Tcl_AppendResult(interp, "Usage!\n", (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -1384,8 +1384,14 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
       bool binary = false;
       if((argc > 4) && ARG_IS_S(4, "binary"))
 	binary = true;
-      puts("writing observable");
       observable_write(argv[3], observables[n], binary);
+      return TCL_OK;
+    }
+    if (argc > 3 && ARG_IS_S(2, "read_checkpoint")) {
+      bool binary = false;
+      if((argc > 4) && ARG_IS_S(4, "binary"))
+	binary = true;
+      observable_read(argv[3], observables[n], binary);
       return TCL_OK;
     }
     if (argc > 2 && ARG_IS_S(2,"autoupdate") ) {
@@ -1720,11 +1726,16 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
 
 int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable * obs) {
   char buffer[TCL_DOUBLE_SPACE];
-  if ( observable_calculate(obs) ) {
+  bool calculate = true;
+  if((argc > 0) && (ARG0_IS_S("no_calculation"))) {
+    calculate = false;
+    argv++;
+    argc--;
+  }
+  if ( calculate && observable_calculate(obs) ) {
     Tcl_AppendResult(interp, "\nFailed to compute observable ", obs->obs_name, "\n", (char *)NULL );
     return TCL_ERROR;
   }
-  printf("observable type %d\n", obs->type);
   if (argc==0) {
     for (int i = 0; i<obs->n; i++) {
       Tcl_PrintDouble(interp, obs->last_value[i], buffer);

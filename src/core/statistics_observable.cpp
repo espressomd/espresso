@@ -57,10 +57,12 @@ int observable_write(char *filename, observable *self, bool binary) {
   FILE *f = fopen(filename, "w");
   if(f) {
     unsigned int un;
+    /* For stateless observables only the current value is meaningful. */
+    if(self->type == OBSERVABLE)
+      observable_calculate(self);
     switch(self->type) {
     case AVERAGE:
       write_uint(f, &((observable_average_container*)self->container)->n_sweeps, 1, binary);
-      self = ((observable_average_container*)self->container)->reference_observable;
     case OBSERVABLE:
       un = self->n;
       write_uint(f, &un, 1, binary);
@@ -82,13 +84,13 @@ int observable_read(char *filename, observable *self, bool binary) {
     switch(self->type) {
     case AVERAGE:
       read_uint(f, &((observable_average_container*)self->container)->n_sweeps, 1, binary);
-      self = ((observable_average_container*)self->container)->reference_observable;
     case OBSERVABLE:
       read_uint(f, &un, 1, binary);
       if(self->n != (int)(un))
 	return ES_ERROR;
       read_double(f, (double *)self->last_value, self->n, binary);
       fclose(f);
+      return ES_OK;
       break;
     default:
       fclose(f);
