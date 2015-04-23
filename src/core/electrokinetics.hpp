@@ -28,6 +28,12 @@
 //ifdeffing multiple versions of the kernel integrate.
 #ifdef CUDA
 
+#if defined(EK_DOUBLE_PREC)
+typedef double ekfloat;
+#else
+typedef float ekfloat;
+#endif
+
 #define MAX_NUMBER_OF_SPECIES 10
 
 #ifdef __CUDACC__
@@ -74,9 +80,9 @@ typedef struct {
   float *electric_field;
 #endif
   float* charge_potential;
-  float* j;
+  ekfloat* j;
   float* lb_force_previous;
-  float* rho[MAX_NUMBER_OF_SPECIES];
+  ekfloat* rho[MAX_NUMBER_OF_SPECIES];
   int species_index[MAX_NUMBER_OF_SPECIES];
   float density[MAX_NUMBER_OF_SPECIES];
   float D[MAX_NUMBER_OF_SPECIES];
@@ -181,7 +187,7 @@ float ek_calculate_net_charge();
 int ek_neutralize_system(int species); 
   
 #ifdef EK_BOUNDARIES
-void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
+void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int wallcharge_species);
 #endif
 
 #ifdef EK_REACTION
