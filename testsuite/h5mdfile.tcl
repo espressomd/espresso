@@ -23,7 +23,18 @@ puts "Testcase h5mdfile.tcl"
 puts "-------------------------------------------"
 
 
-set f [open "half_complete_vmd_structure.h5" "w"]
-h5mdfile "h5mdfile.h5" h5_open "\position" 5
-h5mdfile "h5mdfile.h5" h5_close "\position" 5
+#Create dataset
+h5mdfile H5Fcreate "h5mdfile.h5" 
+h5mdfile H5Screate_simple dims 10 10
+h5mdfile H5Dcreate2 "/dset" int
+h5mdfile Value_to_Dset_int value 7777777 index 8 8
+h5mdfile H5Dwrite int
+h5mdfile H5Dclose
+h5mdfile H5Sclose
+h5mdfile H5Fclose
+
+# #Write to dataset
+# h5mdfile H5Fopen "h5mdfile.h5"
+# h5mdfile H5Dopen2 "/dset"
+
 exit 0
