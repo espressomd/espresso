@@ -23,18 +23,29 @@ puts "Testcase h5mdfile.tcl"
 puts "-------------------------------------------"
 
 
-#Create dataset
-h5mdfile H5Fcreate "h5mdfile.h5" 
-h5mdfile H5Screate_simple dims 10 10
-h5mdfile H5Dcreate2 "/dset" int
-h5mdfile Value_to_Dset_int value 7777777 index 8 8
-h5mdfile H5Dwrite int
+# #Create new dataset and write values
+# h5mdfile H5Fcreate "h5mdfile.h5" 
+# h5mdfile H5Screate_simple int dims 10 5
+# h5mdfile H5Dcreate2 "/dset"
+# h5mdfile H5_write_value value 100 index 8 3
+# h5mdfile H5Dwrite
+# h5mdfile H5Dclose
+# h5mdfile H5Sclose
+# h5mdfile H5Fclose
+
+#Write to exisiting dataset
+h5mdfile H5Fopen "h5mdfile.h5"
+h5mdfile H5Dopen2 "/dset"
+h5mdfile H5Dread
+h5mdfile H5_write_value value 111 index 7 2
+set E [expr [h5mdfile H5_read_value value 111 index 7 2]]
+h5mdfile H5Dwrite
 h5mdfile H5Dclose
-h5mdfile H5Sclose
 h5mdfile H5Fclose
+puts $E
 
-# #Write to dataset
-# h5mdfile H5Fopen "h5mdfile.h5"
-# h5mdfile H5Dopen2 "/dset"
-
+# set E 12
+# set E [expr [h5mdfile Test]]
+# puts [h5mdfile Test]
+# puts $E
 exit 0
