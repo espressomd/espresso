@@ -973,9 +973,25 @@ for a more detailed description check the reference.
 
 \subsubsection{DNA basepair interaction}
 
+\begin{center}
+  \includegraphics[width=8cm]{figures/basepair.pdf}
+\end{center}
+
 This is a four body potential that describes the interaction between the
 sugar and its base as well as the hydrogend bond between the bases.
 
+\begin{equation}
+  V\left(r_{hb}, \theta_{d}, \phi_{hb}^{(1)}, \phi_{hb}^{(2)}\right) = V_r(r_{hb})\tau_d(\theta)\prod_{i=1}^2
+  \tau_f\left(\phi_{hb}^{(i)}\right) + \sum_{i=1}^2 \left[ V_f\left(\phi_{hb}^{(i)}\right) + V_{cn}(r_{cn}^{(i)})\right]
+\end{equation}
+where
+\begin{equation}
+  V_r(r) = V_0\left(1+\frac{r - r_0}{l}\right)e^{-\frac{r - r_0}{l}},
+\end{equation}
+
+\begin{equation}
+  V_{sb} =
+\end{equation}
 
 \subsubsection{DNA stacking interaction}
 
