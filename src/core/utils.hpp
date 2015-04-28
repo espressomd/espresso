@@ -418,7 +418,7 @@ inline int calc_factors(int n, int *factors, int max)
 /*************************************************************/
 /*@{*/
 
-/** Subtracts vector v2 from vector v1 and stores resuld in vector dv */
+/** Subtracts vector v2 from vector v1 and stores result in vector dv */
 inline void vecsub(double v1[3], double v2[3], double dv[3])
 {
   dv[0] = v1[0] - v2[0];

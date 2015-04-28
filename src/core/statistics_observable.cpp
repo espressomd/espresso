@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 #include "statistics_observable.hpp"
+#include "statistics_correlation.hpp"
 #include "particle_data.hpp"
 #include "integrate.hpp"
 #include "lb.hpp"
@@ -28,6 +29,7 @@ int n_observables = 0;
 int observables_autoupdate = 0;
 
 void observable_init(observable* self) {
+  self->type = OBSERVABLE;
   self->last_update = 0;
   self->autoupdate = 0;
   self->autoupdate_dt = 0;
@@ -47,6 +49,55 @@ int observable_update(observable* self) {
     temp=(self->update)(self);
   self->last_update = sim_time;
   return temp;
+}
+
+//void write_double(FILE * fp, const double * data, unsigned int n, bool binary)
+
+int observable_write(char *filename, observable *self, bool binary) {
+  FILE *f = fopen(filename, "w");
+  if(f) {
+    unsigned int un;
+    /* For stateless observables only the current value is meaningful. */
+    if(self->type == OBSERVABLE)
+      observable_calculate(self);
+    switch(self->type) {
+    case AVERAGE:
+      write_uint(f, &((observable_average_container*)self->container)->n_sweeps, 1, binary);
+    case OBSERVABLE:
+      un = self->n;
+      write_uint(f, &un, 1, binary);
+      write_double(f, self->last_value, self->n, binary);
+      fclose(f);
+      break;
+    default:
+      fclose(f);
+      return ES_ERROR;
+    }
+  }
+  return ES_ERROR;
+}
+
+int observable_read(char *filename, observable *self, bool binary) {
+  FILE *f = fopen(filename, "r");
+  if(f && !feof(f)) {
+    unsigned int un;
+    switch(self->type) {
+    case AVERAGE:
+      read_uint(f, &((observable_average_container*)self->container)->n_sweeps, 1, binary);
+    case OBSERVABLE:
+      read_uint(f, &un, 1, binary);
+      if(self->n != (int)(un))
+	return ES_ERROR;
+      read_double(f, (double *)self->last_value, self->n, binary);
+      fclose(f);
+      return ES_OK;
+      break;
+    default:
+      fclose(f);
+      return ES_ERROR;
+    }
+  }
+  return ES_ERROR;
 }
 
 int observable_calc_particle_velocities(observable* self) {
@@ -1091,7 +1142,7 @@ int observable_calc_structure_factor_fast(observable* self) {
   double* A = self->last_value;
   // FIXME Currently scattering length is hardcoded as 1.0
   observable_sf_params * params = (observable_sf_params*) self->container;
-  const int k_max = params->num_k_vecs;
+  const int k_max = params->order * params->k_density;
   const double scattering_length=1.0;
   const double twoPI_L = 2*PI/box_l[0];
   
@@ -1112,12 +1163,12 @@ int observable_calc_structure_factor_fast(observable* self) {
       partCache[3*p+i]=partCfg[p].r.p[i];
     }
   }
-  int k_density = k_max/params->order;
+  int k_density = params->k_density;
   int l=0;
   for(int k=0; k<k_max; k++) {
     int order=k/k_density+1;
     switch (k % k_density){
-    case 0:
+    case 0: // length sqrt(1)
       for (int dir=0;dir<3;dir++){
 	double C_sum = 0;
 	double S_sum = 0;
@@ -1132,7 +1183,7 @@ int observable_calc_structure_factor_fast(observable* self) {
 	l+=2;
       }
       break;
-    case 1:
+    case 1: // length sqrt(2)
       for (int dir=0;dir<6;dir++){
 	int fac1,fac2,off1,off2;
 	switch (dir){
@@ -1155,7 +1206,7 @@ int observable_calc_structure_factor_fast(observable* self) {
 	l+=2;
       }
       break;
-    case 2:
+    case 2: // length sqrt(3)
       for (int dir=0;dir<4;dir++){
 	double C_sum = 0;
 	double S_sum = 0;
@@ -1163,6 +1214,54 @@ int observable_calc_structure_factor_fast(observable* self) {
 	int fac2=(1-2*(dir/2));
 	for(int p=0; p<n_part; p++) {
 	  double qr = twoPI_L * order * ( partCache[3*p+0]*fac1 + partCache[3*p+1]*fac2 + partCache[3*p+2]);
+	  C_sum+= scattering_length * cos(qr);
+	  S_sum+= scattering_length * sin(qr);
+	}
+	A[l]   =C_sum;
+	A[l+1] =S_sum;
+	l+=2;
+      }
+      break;
+    case 3: // length sqrt(5) 
+      for (int dir=0;dir<6;dir++){
+	double C_sum = 0;
+	double S_sum = 0;
+	// pick 6 random vectors
+	int fac1=(1-2*(dir/3));
+	for(int p=0; p<n_part; p++) {
+	  double qr = twoPI_L * order * ( partCache[3*p+(dir%3)]*fac1 + partCache[3*p+((dir+1)%3)]*2);
+	  C_sum+= scattering_length * cos(qr);
+	  S_sum+= scattering_length * sin(qr);
+	}
+	A[l]   =C_sum;
+	A[l+1] =S_sum;
+	l+=2;
+      }
+      break;
+    case 4: // length sqrt(6) 
+      for (int dir=0;dir<6;dir++){
+	double C_sum = 0;
+	double S_sum = 0;
+	// pick 6 random vectors
+	int fac1=(1-2*(dir/3))*2;
+	for(int p=0; p<n_part; p++) {
+	  double qr = twoPI_L * order * ( partCache[3*p+(dir%3)] + partCache[3*p+((dir+1)%3)]*fac1 + partCache[3*p+((dir+2)%3)]);
+	  C_sum+= scattering_length * cos(qr);
+	  S_sum+= scattering_length * sin(qr);
+	}
+	A[l]   =C_sum;
+	A[l+1] =S_sum;
+	l+=2;
+      }
+      break;
+    case 5: // length sqrt(9)
+      for (int dir=0;dir<6;dir++){
+	double C_sum = 0;
+	double S_sum = 0;
+	// pick 6 random vectors
+	int fac1=(1-2*(dir/3))*2;
+	for(int p=0; p<n_part; p++) {
+	  double qr = twoPI_L * order * ( partCache[3*p+(dir%3)]*fac1 + partCache[3*p+((dir+1)%3)]*2 + partCache[3*p+((dir+2)%3)]);
 	  C_sum+= scattering_length * cos(qr);
 	  S_sum+= scattering_length * sin(qr);
 	}

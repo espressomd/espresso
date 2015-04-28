@@ -44,7 +44,7 @@ typedef struct {
 // During force calculation, colliding particles are recorded in thequeue
 // The queue is processed after force calculation, when it is save to add
 // particles
-static collision_struct *collision_queue;
+static collision_struct *collision_queue = 0;
 // Number of collisions recoreded in the queue
 static int number_of_collisions;
 
@@ -280,8 +280,11 @@ void handle_collisions ()
   }
 
   // Reset the collision queue
-  number_of_collisions = 0;
-  free(collision_queue);
+  if(collision_queue && (number_of_collisions > 0)) {
+    free(collision_queue);
+    collision_queue = 0;
+    number_of_collisions = 0;
+  }
 
   announce_resort_particles();
 }

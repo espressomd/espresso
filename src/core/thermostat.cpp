@@ -59,6 +59,11 @@ int ghmc_nmd = 1;
 double ghmc_phi = 0;
 
 double langevin_pref1, langevin_pref2, langevin_pref2_rotation;
+#ifdef MULTI_TIMESTEP
+  double langevin_pref1_small, langevin_pref2_small;
+  static double langevin_pref2_small_buffer;
+#endif
+
 /** buffers for the work around for the correlated random values which cool the system,
     and require a magical heat up whenever reentering the integrator. */
 static double langevin_pref2_buffer, langevin_pref2_rotation_buffer;
@@ -81,6 +86,19 @@ void thermo_init_langevin()
 #else
 #error No Noise defined
 #endif
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0.) {
+    langevin_pref1_small = -langevin_gamma/smaller_time_step;
+ #ifndef LANGEVIN_PER_PARTICLE
+    langevin_pref2_small = sqrt(24.0*temperature*langevin_gamma/smaller_time_step);
+ #endif
+  } else {
+    langevin_pref1_small = -langevin_gamma/time_step;
+ #ifndef LANGEVIN_PER_PARTICLE
+    langevin_pref2_small = sqrt(24.0*temperature*langevin_gamma/time_step);
+ #endif
+  }
+#endif
   
 #ifdef ROTATION 
   langevin_gamma_rotation = langevin_gamma/3;
@@ -102,7 +120,12 @@ void thermo_init_npt_isotropic()
   if (nptiso.piston != 0.0) {
 #if defined (FLATNOISE)
     nptiso_pref1 = -nptiso_gamma0*0.5 * time_step;
-    nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * time_step;
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step > 0.) 
+      nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * smaller_time_step;
+    else
+#endif
+      nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * time_step;
     nptiso_pref3 = -nptiso_gammav*(1.0/nptiso.piston)*0.5*time_step;
     nptiso_pref4 = sqrt(12.0*temperature*nptiso_gammav*time_step);
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
@@ -149,6 +172,10 @@ void thermo_heat_up()
     langevin_pref2_rotation_buffer = langevin_pref2_rotation;
     langevin_pref2 *= sqrt(3);
     langevin_pref2_rotation *= sqrt(3);
+#ifdef MULTI_TIMESTEP
+    langevin_pref2_small_buffer    = langevin_pref2_small;
+    langevin_pref2_small          *= sqrt(3);
+#endif
   }
 #ifdef DPD
   else if (thermo_switch & THERMO_DPD){dpd_heat_up();}
@@ -163,6 +190,9 @@ void thermo_cool_down()
   if(thermo_switch & THERMO_LANGEVIN) {
     langevin_pref2          = langevin_pref2_buffer;
     langevin_pref2_rotation = langevin_pref2_rotation_buffer;
+#ifdef MULTI_TIMESTEP
+    langevin_pref2_small    = langevin_pref2_small_buffer;
+#endif
   }
 #ifdef DPD
   else if (thermo_switch & THERMO_DPD){dpd_cool_down();}

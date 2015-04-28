@@ -28,7 +28,6 @@
  *  For more information see forces.cpp .
  */
 
-/* @TODO: iccp3m.hpp necessary? */
 #include "iccp3m.hpp"
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"

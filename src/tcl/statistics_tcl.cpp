@@ -2517,7 +2517,12 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
     updatePartCfg(WITHOUT_BONDS);
     for (i = 0; i < n_part; i++) {
         if (partCfg[i].p.type == type) {
-            E_kin += PMASS(partCfg[i]) * sqrlen(partCfg[i].m.v);
+#ifdef MULTI_TIMESTEP
+            if (smaller_time_step > 0.)
+                E_kin += PMASS(partCfg[i]) * SQR(time_step/smaller_time_step) * sqrlen(partCfg[i].m.v);
+            else
+#endif
+                E_kin += PMASS(partCfg[i]) * sqrlen(partCfg[i].m.v);
         }
     }
     E_kin *= 0.5 / time_step / time_step;
@@ -2526,6 +2531,28 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return TCL_OK;
 }
+
+#ifdef CONFIGTEMP
+static int tclcommand_analyze_parse_and_print_configtemp(Tcl_Interp *interp, int argc, char **argv) {
+    char buffer[TCL_DOUBLE_SPACE];
+    double cfgtmp1 = 0.;
+    double cfgtmp2 = 0.;
+    double cfgtmp[2];
+
+    mpi_get_configtemp(cfgtmp);
+
+    /* parse arguments */
+    if (argc > 0) {
+        Tcl_AppendResult(interp, "usage: analyze configtemp", (char *) NULL);
+        return (TCL_ERROR);
+    }
+    cfgtmp1 = cfgtmp[0];
+    cfgtmp2 = cfgtmp[1];    
+    sprintf(buffer, "%f %f", cfgtmp1, cfgtmp2);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return TCL_OK;
+}
+#endif
 
 /****************************************************************************************
  *                                 main parser for analyze
@@ -2643,6 +2670,9 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
     REGISTER_ANALYZE_STORAGE("remove", tclcommand_analyze_parse_remove);
     REGISTER_ANALYZE_STORAGE("stored", tclcommand_analyze_parse_stored);
     REGISTER_ANALYZE_STORAGE("configs", tclcommand_analyze_parse_configs);
+#ifdef CONFIGTEMP
+    REGISTER_ANALYSIS("configtemp", tclcommand_analyze_parse_and_print_configtemp);
+#endif
     else {
         /* the default */
         /***************/

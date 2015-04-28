@@ -33,6 +33,7 @@
 /************************************************************/
 /*@{*/
 
+
 enum BondedInteraction{
     /** This bonded interaction was not set. */
     BONDED_IA_NONE = -1,
@@ -98,7 +99,9 @@ enum BondedInteraction{
     /** Type of bonded interaction is volume conservation force (immersed boundary). */
     BONDED_IA_IBM_VOLUME_CONSERVATION,
     /** Type of bonded interaction is bending force (immersed boundary). */
-    BONDED_IA_IBM_TRIBEND
+    BONDED_IA_IBM_TRIBEND,
+    /** Type of bonded interaction is umbrella. */
+    BONDED_IA_UMBRELLA
 };
 
 /** Specify tabulated bonded interactions  */
@@ -405,6 +408,16 @@ typedef struct {
   double LJCOS2_w;
   double LJCOS2_rchange;
   double LJCOS2_capradius;
+  /*@}*/
+#endif
+
+#ifdef COS2
+  /** \name Cos2 potential */
+  /*@{*/
+  double COS2_eps;
+  double COS2_cut;
+  double COS2_offset;
+  double COS2_w;
   /*@}*/
 #endif
   
@@ -723,6 +736,14 @@ typedef struct {
       double *para_c;
 } Overlap_bond_parameters;
 
+#ifdef UMBRELLA
+    /** Parameters for umbrella potential */
+typedef struct {
+      double k;
+      int    dir;
+      double r;
+} Umbrella_bond_parameters;
+#endif
 
 /** Dummy parameters for -LJ Potential */
 typedef struct {
@@ -846,6 +867,9 @@ typedef union {
     Dihedral_bond_parameters dihedral;
     Tabulated_bond_parameters tab;
     Overlap_bond_parameters overlap;
+#ifdef UMBRELLA
+    Umbrella_bond_parameters umbrella;
+#endif
     Subt_lj_bond_parameters subt_lj;
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;

@@ -776,7 +776,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         }
         else if(ARG0_IS_S("lbforce")) 
         {
-          if(ek_print_vtk_lbforce(argv[2]) == 0) 
+          int ret = ek_print_vtk_lbforce(argv[2]);
+          if(ret == 0) 
           {
             argc -= 3;
             argv += 3;
@@ -786,34 +787,16 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             else
               return TCL_OK;
           }
-          else 
+          else if (ret == 1)
+          {
+            Tcl_AppendResult(interp, "Feature EK_DEBUG required\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+          else
           {
             Tcl_AppendResult(interp, "Unknown error in electrokinetics print lbforce vtk #string\n", (char *)NULL);
             return TCL_ERROR;
           }
-        }
-        else if(ARG0_IS_S("lbforce_buf")) 
-        {
-#ifndef EK_DEBUG
-            Tcl_AppendResult(interp, "Feature EK_DEBUG required\n", (char *)NULL);
-            return TCL_ERROR;
-#else
-          if(ek_print_vtk_lbforce_buf(argv[2]) == 0) 
-          {
-            argc -= 3;
-            argv += 3;
-
-            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
-              return TCL_ERROR;
-            else
-              return TCL_OK;
-          }
-          else 
-          {
-            Tcl_AppendResult(interp, "Unknown error in electrokinetics print lbforce_buf vtk #string\n", (char *)NULL);
-            return TCL_ERROR;
-          }
-#endif
         }
         else 
         {

@@ -136,6 +136,11 @@ void energy_calc(double *result)
     nsq_calculate_energies();
   }
   /* rescale kinetic energy */
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0.)
+    energy.data.e[0] /= (2.0*smaller_time_step*smaller_time_step);
+  else
+#endif   
   energy.data.e[0] /= (2.0*time_step*time_step);
 
   calc_long_range_energies();

@@ -261,6 +261,10 @@ int double_correlation_init(double_correlation* self, double dt,
 */
 int double_correlation_read_data_from_file(double_correlation* self, const char * filename, bool binary);
 
+void write_double(FILE * fp, const double * data, unsigned int n, bool binary);
+void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binary);
+int read_double(FILE * fp, double * data, unsigned int n, bool binary);
+int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary);
 /** Write a checkpoint, saving all history buffers and other important variables of a correlation in a file
 */
 int double_correlation_write_data_to_file(const double_correlation* self, const char * filename, bool binary);

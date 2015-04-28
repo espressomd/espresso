@@ -79,12 +79,14 @@ libEspressoTcl_la_SOURCES = \
 	ghmc_tcl.cpp ghmc_tcl.hpp \
 	twist_stack_tcl.hpp twist_stack_tcl.cpp \
 	hydrogen_bond_tcl.hpp hydrogen_bond_tcl.cpp \
-	minimize_energy_tcl.cpp minimize_energy_tcl.hpp
+	minimize_energy_tcl.cpp minimize_energy_tcl.hpp \
+	integrate_sd_tcl.cpp integrate_sd_tcl.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \
 	bmhtf-nacl_tcl.cpp bmhtf-nacl_tcl.hpp \
 	buckingham_tcl.cpp buckingham_tcl.hpp \
+	cos2_tcl.cpp cos2_tcl.hpp \
 	dpd_tcl.cpp dpd_tcl.hpp \
 	forcecap_tcl.cpp forcecap_tcl.hpp \
 	gaussian_tcl.cpp gaussian_tcl.hpp \
@@ -118,6 +120,7 @@ libEspressoTcl_la_SOURCES += \
 	bonded_coulomb_tcl.cpp bonded_coulomb_tcl.hpp \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
+	umbrella_tcl.cpp umbrella_tcl.hpp \
 	object-in-fluid/area_force_local_tcl.cpp \
 	object-in-fluid/area_force_local_tcl.hpp \
 	object-in-fluid/area_force_global_tcl.cpp \
