@@ -64,21 +64,48 @@ inter 0 0 lennard-jones 1.0 1.0 1.12246
 
 #create h5 file
 h5mdfile H5Fcreate "h5mdfile.h5" 
-h5mdfile H5Gcreate2 "group1"
-h5mdfile H5Screate_simple type double dims 1 600 3
-h5mdfile H5Pset_chunk dims 2 2 2
-h5mdfile H5Dcreate2 "/group1/dset1"
 
 h5mdfile H5Gcreate2 "group1"
 h5mdfile H5Screate_simple type double dims 1 600 3
-h5mdfile H5Pset_chunk dims 2 2 2
+h5mdfile H5Pset_chunk dims 1 600 3
+h5mdfile H5Dcreate2 "/group1/dset1"
+h5mdfile H5Screate_simple type double dims 1 600 3
+h5mdfile H5Pset_chunk dims 1 600 3
 h5mdfile H5Dcreate2 "/group1/dset2"
 
+h5mdfile H5Gcreate2 "group2"
+h5mdfile H5Screate_simple type double dims 1 1
+h5mdfile H5Pset_chunk dims 1 1
+h5mdfile H5Dcreate2 "/group2/dset3"
+
+#Start value
+integrate 0
+h5mdfile H5Dopen2 "/group1/dset1"
+for { set j 0 } { $j <= [setmd max_part] } { incr j } {
+    set pos [part $j pr p]
+    h5mdfile H5_write_value value [lindex $pos 0] index 0 $j 0
+    h5mdfile H5_write_value value [lindex $pos 1] index 0 $j 1
+    h5mdfile H5_write_value value [lindex $pos 2] index 0 $j 2
+}
+puts kat
+h5mdfile H5Dwrite
+
+h5mdfile H5Dopen2 "/group1/dset2"
+for { set j 0 } { $j <= [setmd max_part] } { incr j } {
+    set force [part $j pr f]
+    h5mdfile H5_write_value value [expr [lindex $force 0]] index 0 $j 0
+    h5mdfile H5_write_value value [expr [lindex $force 1]] index 0 $j 1
+    h5mdfile H5_write_value value [expr [lindex $force 2]] index 0 $j 2
+}
+h5mdfile H5Dwrite
+
+
+
 #integrate
-for { set i 0 } { $i <= $time_steps } { incr i } {
+for { set i 0 } { $i < $time_steps } { incr i } {
     integrate 10
     h5mdfile H5Dopen2 "/group1/dset1"
-    h5mdfile H5Dextend double dims [expr $i+2] 600 3
+    h5mdfile H5Dextend dims [expr $i+2] 600 3
     h5mdfile H5Sselect_hyperslab offset [expr $i+1] 0 0
     h5mdfile H5Screate_simple type double dims 1 600 3
     for { set j 0 } { $j <= [setmd max_part] } { incr j } {
@@ -90,19 +117,26 @@ for { set i 0 } { $i <= $time_steps } { incr i } {
     h5mdfile H5Dwrite
     
     h5mdfile H5Dopen2 "/group1/dset2"
-    h5mdfile H5Dextend double dims [expr $i+2] 600 3
+    h5mdfile H5Dextend dims [expr $i+2] 600 3
     h5mdfile H5Sselect_hyperslab offset [expr $i+1] 0 0
     h5mdfile H5Screate_simple type double dims 1 600 3
     for { set j 0 } { $j <= [setmd max_part] } { incr j } {
 	set force [part $j pr f]
-	h5mdfile H5_write_value value [expr 2*[lindex $force 0]] index 0 $j 0
-	h5mdfile H5_write_value value [expr 2*[lindex $force 1]] index 0 $j 1
-	h5mdfile H5_write_value value [expr 2*[lindex $force 2]] index 0 $j 2
+	h5mdfile H5_write_value value [expr [lindex $force 0]] index 0 $j 0
+	h5mdfile H5_write_value value [expr [lindex $force 1]] index 0 $j 1
+	h5mdfile H5_write_value value [expr [lindex $force 2]] index 0 $j 2
     }
+    h5mdfile H5Dwrite
+    
+    h5mdfile H5Dopen2 "/group2/dset3"
+    h5mdfile H5Dextend dims [expr $i+2] 1
+    h5mdfile H5Sselect_hyperslab offset [expr $i+1] 0
+    h5mdfile H5Screate_simple type double dims 1 1
+    h5mdfile H5_write_value value $i index 0 0
     h5mdfile H5Dwrite
 }
 
-
+write_data "h5_lj_time.out"
 
 #close file
 h5mdfile H5Dclose
