@@ -25,6 +25,7 @@ puts "-------------------------------------------"
 
 
 #CREATE NEW DATASET AND WRITE VALUES
+puts "CREATE NEW DATASET AND WRITE VALUES"
 h5mdfile H5Fcreate "h5mdfile.h5" 
 
 h5mdfile H5Gcreate2 "group1"
@@ -54,61 +55,65 @@ h5mdfile H5Fclose
 
 
 
-# #WRITE TO EXISITNG DATASET
-# h5mdfile H5Fopen "h5mdfile.h5"
-# h5mdfile H5Gopen2 "/group1"
-# h5mdfile H5Dopen2 "/group1/dset"
-# h5mdfile H5Dread
-# h5mdfile H5_write_value value 111 index 9 3 0
-# set E [expr [h5mdfile H5_read_value index 9 3 0]]
-# puts $E
-# h5mdfile H5Dwrite
-# 
-# h5mdfile H5Gopen2 "/group2"
-# h5mdfile H5Dopen2 "/group2/dset"
-# h5mdfile H5Dread
-# h5mdfile H5_write_value value 222 index 9 4 0
-# set E [expr [h5mdfile H5_read_value index 9 3 0]]
-# puts $E
-# h5mdfile H5Dwrite
-# 
-# h5mdfile H5Dclose
-# h5mdfile H5Gclose
-# h5mdfile H5Fclose
+#WRITE TO EXISITNG DATASET
+puts "WRITE TO EXISITNG DATASET"
+h5mdfile H5Fopen "h5mdfile.h5"
+h5mdfile H5Gopen2 "/group1"
+h5mdfile H5Dopen2 "/group1/dset"
+h5mdfile H5Dread
+h5mdfile H5_write_value value 111 index 9 3 0
+set E [expr [h5mdfile H5_read_value index 9 3 0]]
+puts $E
+h5mdfile H5Dwrite
+
+h5mdfile H5Gopen2 "/group2"
+h5mdfile H5Dopen2 "/group2/dset"
+h5mdfile H5Dread
+h5mdfile H5_write_value value 222 index 9 4 0
+set E [expr [h5mdfile H5_read_value index 9 4 0]]
+puts $E
+h5mdfile H5Dwrite
+
+h5mdfile H5Pclose
+h5mdfile H5Dclose
+h5mdfile H5Gclose
+h5mdfile H5Fclose
 
 
 
-# #EXTEND DATASET
-# h5mdfile H5Fcreate "h5mdfile.h5" 
-# h5mdfile H5Gcreate2 "group1"
-# h5mdfile H5Screate_simple type int dims 10 3
-# h5mdfile H5Pset_chunk dims 2 5
-# h5mdfile H5Dcreate2 "/group1/dset"
-# h5mdfile H5_write_value value 111 index 5 1
-# set E [expr [h5mdfile H5_read_value index 5 1]]
-# puts $E
-# h5mdfile H5Dwrite
-# 
-# h5mdfile H5Dextend dims 20 3
-# h5mdfile H5Sselect_hyperslab offset 10 0
-# h5mdfile H5Screate_simple type int dims 10 3
-# h5mdfile H5_write_value value 222 index 5 1	
-# set E [expr [h5mdfile H5_read_value index 5 1]]
-# puts $E
-# h5mdfile H5Dwrite
-# 
-# h5mdfile H5Dextend dims 30 3
-# h5mdfile H5Sselect_hyperslab offset 20 0
-# h5mdfile H5Screate_simple type int dims 10 3
-# h5mdfile H5_write_value value 333 index 5 1	
-# set E [expr [h5mdfile H5_read_value index 5 1]]
-# puts $E
-# h5mdfile H5Dwrite
-# 
-# h5mdfile H5Pclose
-# h5mdfile H5Dclose
-# h5mdfile H5Sclose
-# h5mdfile H5Gclose
-# h5mdfile H5Fclose
+#EXTEND DATASET
+puts "EXTEND DATASET"
+h5mdfile H5Fcreate "h5mdfile2.h5" 
+h5mdfile H5Gcreate2 "group1"
+h5mdfile H5Screate_simple type int dims 10 3 3
+h5mdfile H5Pset_chunk dims 2 5 3
+h5mdfile H5Dcreate2 "/group1/dset"
+h5mdfile H5Dopen2 "/group1/dset"
+h5mdfile H5_write_value value 111 index 5 1 0
+set E [expr [h5mdfile H5_read_value index 5 1 0]]
+puts $E
+h5mdfile H5Dwrite
+
+h5mdfile H5Dextend dims 20 3 3
+h5mdfile H5Sselect_hyperslab offset 10 0 0
+h5mdfile H5Screate_simple type int dims 10 3 3
+h5mdfile H5_write_value value 222 index 5 1 0	
+set E [expr [h5mdfile H5_read_value index 5 1 0]]
+puts $E
+h5mdfile H5Dwrite
+
+h5mdfile H5Dextend dims 30 3 3
+h5mdfile H5Sselect_hyperslab offset 20 0 0
+h5mdfile H5Screate_simple type int dims 10 3 3
+h5mdfile H5_write_value value 333 index 5 1 0	
+set E [expr [h5mdfile H5_read_value index 5 1 0]]
+puts $E
+h5mdfile H5Dwrite
+
+h5mdfile H5Pclose
+h5mdfile H5Dclose
+h5mdfile H5Sclose
+h5mdfile H5Gclose
+h5mdfile H5Fclose
 
 exit 0

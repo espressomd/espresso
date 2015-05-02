@@ -17,13 +17,11 @@ public:
    hid_t    dataset_id; // Dataset id returned from H5Dopen2 or H5Dcreate2
    hid_t    dataspace_id; // Dataspace id returned from H5Dget_space
    hid_t    dataspace_simple_id; // Dataspace id returned from H5_Screate_simple
-   hid_t    dataspace_simple_ext_id; // Dataspace id returned from H5_Screate_simple for extended dataset
    hid_t    dataset_type_id; // Dataset data type id
    hid_t    group_id; // Group id
    hid_t  	prop_id; // Property id returned from H5Pcreate and H5Dget_create_plist
 
    hsize_t*  dims, *maxdims; // Array of dimensions and maximum dimensions for basic dataset
-   hsize_t*  dimsext; // Array of dimensions for extended dataset
    hsize_t*  dimstotal; // Array of dimensions for basic plus extended dataset
    hsize_t*  offset; // Offset for extended dataset in accordance to basic dataset
    hsize_t*  chunk_dims; //  Array of dimensions for chunked dataset
@@ -48,7 +46,7 @@ public:
    double 	dset_data_singlevalue_double; // Single value from basic dataset array (type: double)
    char*	dset_data_singlevalue_string; // Single value from basic dataset array (type: string)
 
-
+   H5mdfile();
    int H5_Dclose(int argc, char **argv, Tcl_Interp *interp);
    int H5_Dcreate2(int argc, char **argv, Tcl_Interp *interp);
    int H5_Dextend(int argc, char **argv, Tcl_Interp *interp);
@@ -249,10 +247,19 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 	}
 }
 
+H5mdfile::H5mdfile()
+{
+	dims = new hsize_t[32];
+	maxdims = new hsize_t[32];
+    dimstotal = new hsize_t[32];
+	chunk_dims = new hsize_t[32];
+	offset = new hsize_t[32];
+}
 int H5mdfile::H5_Dclose(int argc, char **argv, Tcl_Interp *interp)
 {
 	// End access to the dataset and release resources used by it
 	status = H5Dclose(dataset_id);
+	printf("H5Dclose \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	return TCL_OK;
 }
 int H5mdfile::H5_Dcreate2(int argc, char **argv, Tcl_Interp *interp)
@@ -260,39 +267,25 @@ int H5mdfile::H5_Dcreate2(int argc, char **argv, Tcl_Interp *interp)
    // Create the dataset
 	dataset_id = H5Dcreate2(file_id, argv[2], dataset_type_id, dataspace_simple_id, H5P_DEFAULT, prop_id, H5P_DEFAULT);
 	dataspace_id = H5Dget_space (dataset_id);
+	printf("H5Dcreate2 \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	return TCL_OK;
 }
 int H5mdfile::H5_Dextend(int argc, char **argv, Tcl_Interp *interp)
 {
 	//Extend dataset to higher dimensions
-   dataset_rank=0;
-   dset_data_size_ext=1;
-
-   while(!(argv[3+dataset_rank]==NULL))
-   {
-	   dset_data_size_ext*=atoi(argv[3+dataset_rank]);
-	   dataset_rank++;
-   }
-
-   dimstotal = new hsize_t[atoi(argv[dataset_rank])];
-   dimsext = new hsize_t[atoi(argv[dataset_rank])];
-
    for(int i=0;i<dataset_rank;i++)
    {
+
+	   if(atoi(argv[3+i])>dims[i])
+	   {
+		   dims[i]=atoi(argv[3+i])-dimstotal[i];
+	   }
 	   dimstotal[i] = atoi(argv[3+i]);
-	   if(dimstotal[i]>dims[i])
-	   {
-		   dimsext[i]=dimstotal[i]-dims[i];
-		   dims[i]=dimstotal[i];
-	   }
-	   else
-	   {
-		   dimsext[i]=dims[i];
-		   dims[i]=dimstotal[i];
-	   }
    }
 
    status = H5Dextend(dataset_id, dimstotal);
+
+   printf("H5Dextend \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
    return TCL_OK;
 }
 int H5mdfile::H5_Dopen2(int argc, char **argv, Tcl_Interp *interp)
@@ -303,48 +296,49 @@ int H5mdfile::H5_Dopen2(int argc, char **argv, Tcl_Interp *interp)
 	// Dataset properties
 	dataspace_id = H5Dget_space(dataset_id);
 	dataset_type_id = H5Dget_type(dataset_id);
+	dataspace_simple_id = H5S_ALL;
 	datatype_size = H5Tget_size(dataset_type_id);
-	dims = new hsize_t[32];
-	maxdims = new hsize_t[32];
 	dataset_rank = H5Sget_simple_extent_dims(dataspace_id,dims,maxdims);
+	dataset_rank = H5Sget_simple_extent_dims(dataspace_id,dimstotal,maxdims);
 	prop_id = H5Dget_create_plist (dataset_id);
 	if (H5D_CHUNKED == H5Pget_layout (prop_id))
 	  chunk_rank = H5Pget_chunk (prop_id, dataset_rank, chunk_dims);
 
 	// Total length of dataset array as the product of all dimensions
-	dset_data_size=1;
-	for(int i=0;i<dataset_rank;i++)
-	{
-	   dset_data_size*=dims[i];
-	}
-
-    //Reserve memeory
-	if(H5Tequal(dataset_type_id, H5T_NATIVE_FLOAT))
-	{
-	   dset_data=(float*) malloc(dset_data_size*sizeof(float));
-	   memset(dset_data,0,dset_data_size*sizeof(float));
-	}
-	else if(H5Tequal(dataset_type_id, H5T_NATIVE_DOUBLE))
-	{
-	   dset_data=(double*) malloc(dset_data_size*sizeof(double));
-	   memset(dset_data,0,dset_data_size*sizeof(double));
-	}
-	else if(H5Tequal(dataset_type_id, H5T_NATIVE_INT))
-	{
-	   dset_data=(int*) malloc(dset_data_size*sizeof(int));
-	   memset(dset_data,0,dset_data_size*sizeof(int));
-	}
-	else if(H5Tequal(dataset_type_id, H5T_C_S1))
-	{
-	   dset_data = (char**) malloc(dset_data_size * sizeof(char*));
-	   //for (int i = 0; i < dset_data_size; i++)
-		   //dset_data[i] = malloc((string_maxlength) * sizeof(char));
-	}
-	else
-	{
-		Tcl_AppendResult(interp, "\nh5mdfile: No data type in H5_Dopen2 given\n",(char *) NULL);
-		return TCL_ERROR;
-	}
+//	dset_data_size=1;
+//	for(int i=0;i<dataset_rank;i++)
+//	{
+//	   dset_data_size*=dims[i];
+//	}
+//
+//    //Reserve memeory
+//	if(H5Tequal(dataset_type_id, H5T_NATIVE_FLOAT))
+//	{
+//	   dset_data=(float*) malloc(dset_data_size*sizeof(float));
+//	   memset(dset_data,0,dset_data_size*sizeof(float));
+//	}
+//	else if(H5Tequal(dataset_type_id, H5T_NATIVE_DOUBLE))
+//	{
+//	   dset_data=(double*) malloc(dset_data_size*sizeof(double));
+//	   memset(dset_data,0,dset_data_size*sizeof(double));
+//	}
+//	else if(H5Tequal(dataset_type_id, H5T_NATIVE_INT))
+//	{
+//	   dset_data=(int*) malloc(dset_data_size*sizeof(int));
+//	   memset(dset_data,0,dset_data_size*sizeof(int));
+//	}
+//	else if(H5Tequal(dataset_type_id, H5T_C_S1))
+//	{
+//	   dset_data = (char**) malloc(dset_data_size * sizeof(char*));
+//	   //for (int i = 0; i < dset_data_size; i++)
+//		   //dset_data[i] = malloc((string_maxlength) * sizeof(char));
+//	}
+//	else
+//	{
+//		Tcl_AppendResult(interp, "\nh5mdfile: No data type in H5_Dopen2 given\n",(char *) NULL);
+//		return TCL_ERROR;
+//	}
+	printf("H5Dopen2 \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
    return TCL_OK;
 }
 int H5mdfile::H5_Dread(int argc, char **argv, Tcl_Interp *interp)
@@ -378,65 +372,63 @@ int H5mdfile::H5_Dread(int argc, char **argv, Tcl_Interp *interp)
 	}
    /* Read the dataset. */
    status = H5Dread(dataset_id, dataset_type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT,dset_data);
+   printf("H5Dread \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
    return TCL_OK;
 }
 int H5mdfile::H5_Dwrite(int argc, char **argv, Tcl_Interp *interp)
 {
 	// Write dataset array to h5-file dataset
-	hsize_t* testdims = new hsize_t[32];
-	hsize_t* testmaxdims = new hsize_t[32];
-	int testdataset_rank = H5Sget_simple_extent_dims(dataspace_id,testdims,testmaxdims);
-
-	if(dimsext==NULL) // No dimension extension used
-	{
-		status = H5Dwrite(dataset_id, dataset_type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, dset_data);
-	}
-	else // Dimension extension used
-	{
-		status = H5Dwrite(dataset_id, dataset_type_id, dataspace_simple_ext_id, dataspace_id, H5P_DEFAULT, dset_data);
-	}
+	status = H5Dwrite(dataset_id, dataset_type_id, dataspace_simple_id, dataspace_id, H5P_DEFAULT, dset_data);
+	printf("H5Dwrite \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	return TCL_OK;
 }
 int H5mdfile::H5_Fclose(int argc, char **argv, Tcl_Interp *interp)
 {
 	// Close the file
 	status = H5Fclose(file_id);
+	printf("H5Fclose \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
     return TCL_OK;
 }
 int H5mdfile::H5_Fcreate(int argc, char **argv, Tcl_Interp *interp)
 {
    // Create a new file using default properties
    file_id = H5Fcreate(argv[2], H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+   printf("H5Fcreate \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
    return TCL_OK;
 }
 int H5mdfile::H5_Fopen(int argc, char **argv, Tcl_Interp *interp)
 {
    // Open an existing file
    file_id = H5Fopen(argv[2], H5F_ACC_RDWR, H5P_DEFAULT);
+   printf("H5Fopen \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
    return TCL_OK;
 }
 int H5mdfile::H5_Gclose(int argc, char **argv, Tcl_Interp *interp)
 {
 	// Close the group
 	status = H5Gclose(group_id);
+	printf("H5Gclose \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
     return TCL_OK;
 }
 int H5mdfile::H5_Gcreate2(int argc, char **argv, Tcl_Interp *interp)
 {
    // Create a new group using default properties
    group_id = H5Gcreate2(file_id, argv[2], H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+   printf("H5Gcreate2 \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
    return TCL_OK;
 }
 int H5mdfile::H5_Gopen2(int argc, char **argv, Tcl_Interp *interp)
 {
    // Open an existing group
    group_id = H5Gopen2(file_id, argv[2], H5P_DEFAULT);
+   printf("H5Gopen2 \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
    return TCL_OK;
 }
 int H5mdfile::H5_Pclose(int argc, char **argv, Tcl_Interp *interp)
 {
 	// Terminate access to the data space
 	status = H5Pclose(prop_id);
+	printf("H5Pclose \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
     return TCL_OK;
 }
 int H5mdfile::H5_Pset_chunk(int argc, char **argv, Tcl_Interp *interp)
@@ -448,19 +440,21 @@ int H5mdfile::H5_Pset_chunk(int argc, char **argv, Tcl_Interp *interp)
 	}
 	prop_id = H5Pcreate (H5P_DATASET_CREATE);
 	status = H5Pset_chunk (prop_id, dataset_rank, chunk_dims);
+	printf("H5Pset_chunk \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	return TCL_OK;
 }
 int H5mdfile::H5_read_value(int argc, char **argv,Tcl_Interp *interp)
 {
 	// Read value from dataset array and print it to Tcl
 	int index;
+
 	if(dataset_rank==1) index=atoi(argv[3]);
 	else if(dataset_rank==2) index=atoi(argv[3])*dims[1] + atoi(argv[4]);
 	else if(dataset_rank==3) index=atoi(argv[3])*dims[1]*dims[2] + atoi(argv[4])*dims[2] + atoi(argv[5]);
 	else if(dataset_rank==4) index=atoi(argv[3])*dims[1]*dims[2]*dims[3] + atoi(argv[4])*dims[2]*dims[3] + atoi(argv[5])*dims[3] + atoi(argv[6]);
 	else if(dataset_rank==5) index=atoi(argv[3])*dims[1]*dims[2]*dims[3]*dims[4] + atoi(argv[4])*dims[2]*dims[3]*dims[4] + atoi(argv[5])*dims[3]*dims[4] + atoi(argv[6])*dims[4] + atoi(argv[7]);
 
-
+	printf("H5read_value \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	if(H5Tequal(dataset_type_id, H5T_NATIVE_FLOAT))
 	{
 		dset_data_float = static_cast<float*>(dset_data);
@@ -505,116 +499,75 @@ int H5mdfile::H5_Sclose(int argc, char **argv, Tcl_Interp *interp)
 {
 	// Terminate access to the data space
 	status = H5Sclose(dataspace_simple_id);
+	printf("H5Sclose \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
     return TCL_OK;
 }
 int H5mdfile::H5_Screate_simple(int argc, char **argv, Tcl_Interp *interp)
 {
     // Create the data space for the dataset
-	if(dimsext==NULL) // No dimension extension used
-	{
-		dataset_rank=0;
-		dset_data_size=1;
+	dataset_rank=0;
+	dset_data_size=1;
 
-		while(!(argv[5+dataset_rank]==NULL))
-		{
-		   dset_data_size*=atoi(argv[5+dataset_rank]);
-		   dataset_rank++;
-		}
-		dims = new hsize_t[atoi(argv[dataset_rank])];
-		maxdims = new hsize_t[atoi(argv[dataset_rank])];
-		chunk_dims = new hsize_t[atoi(argv[dataset_rank])];
-		for(int i=0;i<dataset_rank;i++)
-		{
-		   dims[i] = atoi(argv[5+i]);
-		   maxdims[i] = H5S_UNLIMITED;
-		   chunk_dims[i] = 1;
-		}
-		dataspace_simple_id = H5Screate_simple(dataset_rank, dims, maxdims);
-
-		/* Data set array*/
-		if(!strncmp(argv[3], "float", strlen(argv[3])))
-		{
-		   dataset_type_id = H5T_NATIVE_FLOAT;
-		   dset_data=(float*) malloc(dset_data_size*sizeof(float));
-		   memset(dset_data,0,dset_data_size*sizeof(float));
-		}
-		else if(!strncmp(argv[3], "double", strlen(argv[3])))
-		{
-		   dataset_type_id = H5T_NATIVE_DOUBLE;
-		   dset_data=(double*) malloc(dset_data_size*sizeof(double));
-		   memset(dset_data,0,dset_data_size*sizeof(double));
-		}
-		else if(!strncmp(argv[3], "int", strlen(argv[3])))
-		{
-		   dataset_type_id = H5T_NATIVE_INT;
-		   dset_data=(int*) malloc(dset_data_size*sizeof(int));
-		   memset(dset_data,0,dset_data_size*sizeof(int));
-		}
-		else if(!strncmp(argv[3], "str", strlen(argv[3])))
-		{
-		   dataset_type_id = H5T_C_S1;
-		   dset_data = (char**) malloc(dset_data_size * sizeof(char*));
-			//		   for (int i = 0; i < dset_data_size; i++)
-			//			   dset_data[i] = malloc((string_maxlength) * sizeof(char));
-		}
-		else
-		{
-			Tcl_AppendResult(interp, "\nh5mdfile: Wrong type in H5_Screate_simple chosen\n",(char *) NULL);
-			return TCL_ERROR;
-		}
-	}
-	else // Dimension extension used
+	while(!(argv[5+dataset_rank]==NULL))
 	{
-		dataspace_simple_ext_id = H5Screate_simple(dataset_rank, dimsext, NULL);
-		/* Data set array*/
-		if(!strncmp(argv[3], "float", strlen(argv[3])))
-		{
-		   dataset_type_id = H5T_NATIVE_FLOAT;
-		   dset_data=(float*) malloc(dset_data_size_ext*sizeof(float));
-		   memset(dset_data,0,dset_data_size_ext*sizeof(float));
-		}
-		else if(!strncmp(argv[3], "double", strlen(argv[3])))
-		{
-		   dataset_type_id = H5T_NATIVE_DOUBLE;
-		   dset_data=(double*) malloc(dset_data_size_ext*sizeof(double));
-		   memset(dset_data,0,dset_data_size_ext*sizeof(double));
-		}
-		else if(!strncmp(argv[3], "int", strlen(argv[3])))
-		{
-		   dataset_type_id = H5T_NATIVE_INT;
-		   dset_data=(int*) malloc(dset_data_size_ext*sizeof(int));
-		   memset(dset_data,0,dset_data_size_ext*sizeof(int));
-		}
-		else if(!strncmp(argv[3], "str", strlen(argv[3])))
-		{
-			   dataset_type_id = H5T_C_S1;
-			   dset_data = (char**) malloc(dset_data_size_ext * sizeof(char*));
-				//			   for (int i = 0; i < dset_data_size_ext; i++)
-				//				   dset_data[i] = malloc((string_maxlength) * sizeof(char));
-		}
-		else
-		{
-			Tcl_AppendResult(interp, "\nh5mdfile: Wrong type in H5_Screate_simple chosen\n",(char *) NULL);
-			return TCL_ERROR;
-		}
+	   dset_data_size*=atoi(argv[5+dataset_rank]);
+	   dataset_rank++;
 	}
+
+	for(int i=0;i<dataset_rank;i++)
+	{
+	   dims[i] = atoi(argv[5+i]);
+	   maxdims[i] = H5S_UNLIMITED;
+	   if(dims[i]>dimstotal[i]) dimstotal[i] = dims[i];
+	}
+
+	dataspace_simple_id = H5Screate_simple(dataset_rank, dims, maxdims);
+
+	/* Data set array*/
+	if(!strncmp(argv[3], "float", strlen(argv[3])))
+	{
+	   dataset_type_id = H5T_NATIVE_FLOAT;
+	   dset_data=(float*) malloc(dset_data_size*sizeof(float));
+	   memset(dset_data,0,dset_data_size*sizeof(float));
+	}
+	else if(!strncmp(argv[3], "double", strlen(argv[3])))
+	{
+	   dataset_type_id = H5T_NATIVE_DOUBLE;
+	   dset_data=(double*) malloc(dset_data_size*sizeof(double));
+	   memset(dset_data,0,dset_data_size*sizeof(double));
+	}
+	else if(!strncmp(argv[3], "int", strlen(argv[3])))
+	{
+	   dataset_type_id = H5T_NATIVE_INT;
+	   dset_data=(int*) malloc(dset_data_size*sizeof(int));
+	   memset(dset_data,0,dset_data_size*sizeof(int));
+	}
+	else if(!strncmp(argv[3], "str", strlen(argv[3])))
+	{
+	   dataset_type_id = H5T_C_S1;
+	   dset_data = (char**) malloc(dset_data_size * sizeof(char*));
+		//		   for (int i = 0; i < dset_data_size; i++)
+		//			   dset_data[i] = malloc((string_maxlength) * sizeof(char));
+	}
+	else
+	{
+		Tcl_AppendResult(interp, "\nh5mdfile: Wrong type in H5_Screate_simple chosen\n",(char *) NULL);
+		return TCL_ERROR;
+	}
+
+	printf("H5Screate_simple \tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
    return TCL_OK;
 }
 int H5mdfile::H5_Sselect_hyperslab(int argc, char **argv, Tcl_Interp *interp)
 {
     // Selects a hyperslab region to extend to the current selected region
-	int rank=0;
-	while(!(argv[3+rank]==NULL))
-	{
-		rank++;
-	}
-	offset = new hsize_t[atoi(argv[rank])];
-	for(int i=0;i<rank;i++)
+	for(int i=0;i<dataset_rank;i++)
 	{
 		offset[i] = atoi(argv[3+i]);
 	}
 	dataspace_id = H5Dget_space (dataset_id);
-	status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL,dimsext, NULL);
+	status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL,dims, NULL);
+	printf("H5Sselect_hyperslab \tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	return TCL_OK;
 }
 int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
@@ -622,24 +575,11 @@ int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
 	// Read value from Tcl and write it to dataset array
 	int index;
 
-	if(dimsext==NULL) // No dimension extension used
-	{
-		if(dataset_rank==1) index=atoi(argv[5]);
-		else if(dataset_rank==2) index=atoi(argv[5])*dims[1] + atoi(argv[6]);
-		else if(dataset_rank==3) index=atoi(argv[5])*dims[1]*dims[2] + atoi(argv[6])*dims[2] + atoi(argv[7]);
-		else if(dataset_rank==4) index=atoi(argv[5])*dims[1]*dims[2]*dims[3] + atoi(argv[6])*dims[2]*dims[3] + atoi(argv[7])*dims[3] + atoi(argv[8]);
-		else if(dataset_rank==5) index=atoi(argv[5])*dims[1]*dims[2]*dims[3]*dims[4] + atoi(argv[6])*dims[2]*dims[3]*dims[4] + atoi(argv[7])*dims[3]*dims[4] + atoi(argv[8])*dims[4] + atoi(argv[9]);
-
-	}
-	else // Dimension extension used
-	{
-		if(dataset_rank==1) index=atoi(argv[5]);
-		else if(dataset_rank==2) index=atoi(argv[5])*dimsext[1] + atoi(argv[6]);
-		else if(dataset_rank==3) index=atoi(argv[5])*dimsext[1]*dimsext[2] + atoi(argv[6])*dimsext[2] + atoi(argv[7]);
-		else if(dataset_rank==4) index=atoi(argv[5])*dimsext[1]*dimsext[2]*dimsext[3] + atoi(argv[6])*dimsext[2]*dimsext[3] + atoi(argv[7])*dimsext[3] + atoi(argv[8]);
-		else if(dataset_rank==5) index=atoi(argv[5])*dimsext[1]*dimsext[2]*dimsext[3]*dimsext[4] + atoi(argv[6])*dimsext[2]*dimsext[3]*dimsext[4] + atoi(argv[7])*dimsext[3]*dimsext[4] + atoi(argv[8])*dimsext[4] + atoi(argv[9]);
-	}
-
+	if(dataset_rank==1) index=atoi(argv[5]);
+	else if(dataset_rank==2) index=atoi(argv[5])*dims[1] + atoi(argv[6]);
+	else if(dataset_rank==3) index=atoi(argv[5])*dims[1]*dims[2] + atoi(argv[6])*dims[2] + atoi(argv[7]);
+	else if(dataset_rank==4) index=atoi(argv[5])*dims[1]*dims[2]*dims[3] + atoi(argv[6])*dims[2]*dims[3] + atoi(argv[7])*dims[3] + atoi(argv[8]);
+	else if(dataset_rank==5) index=atoi(argv[5])*dims[1]*dims[2]*dims[3]*dims[4] + atoi(argv[6])*dims[2]*dims[3]*dims[4] + atoi(argv[7])*dims[3]*dims[4] + atoi(argv[8])*dims[4] + atoi(argv[9]);
 
 	if(H5Tequal(dataset_type_id, H5T_NATIVE_FLOAT))
 	{
@@ -661,10 +601,9 @@ int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
 		dset_data_string = static_cast<char**>(dset_data);
 		dset_data_string[index]=argv[3];
 	}
-
+	printf("H5write_value \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	return TCL_OK;
 }
 
 
 #endif
-
