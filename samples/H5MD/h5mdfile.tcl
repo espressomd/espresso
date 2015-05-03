@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 # 
-source "tests_common.tcl"
+
 puts "-------------------------------------------"
 puts "Testcase h5mdfile.tcl"
 puts "-------------------------------------------"
@@ -51,7 +51,7 @@ h5mdfile H5Dclose
 h5mdfile H5Sclose
 h5mdfile H5Gclose
 h5mdfile H5Fclose
-
+h5mdfile H5_free_memeory
 
 
 
@@ -78,7 +78,7 @@ h5mdfile H5Pclose
 h5mdfile H5Dclose
 h5mdfile H5Gclose
 h5mdfile H5Fclose
-
+h5mdfile H5_free_memeory
 
 
 #EXTEND DATASET
@@ -115,5 +115,6 @@ h5mdfile H5Dclose
 h5mdfile H5Sclose
 h5mdfile H5Gclose
 h5mdfile H5Fclose
+h5mdfile H5_free_memeory
 
 exit 0

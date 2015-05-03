@@ -34,25 +34,28 @@ puts " "
 #  Parameters                                               #
 #############################################################
 set name  "lj_liquid"
-set ident "_s1"
+
+set n_part 500
 set box_l   10.7437
-set density 0.7
+setmd box_l $box_l $box_l $box_l
+
+
+set int_n_times  500
+set int_steps    10
+setmd time_step 0.01
+
+set warm_steps   100
+set warm_n_times 30
+
+setmd skin      0.4
+set min_dist     0.9
+
 set lj1_eps     1.0
 set lj1_sig     1.0
 set lj1_cut     1.12246
-setmd time_step 0.01
-setmd skin      0.4
-thermostat langevin 1.0 1.0
-set warm_steps   100
-set warm_n_times 30
-set min_dist     0.9
-set int_steps    5
-set int_n_times  5
-set tcl_precision 6
-setmd box_l $box_l $box_l $box_l
 inter 0 0 lennard-jones $lj1_eps $lj1_sig $lj1_cut auto
-set volume [expr $box_l*$box_l*$box_l]
-set n_part 5
+thermostat langevin 1.0 1.0
+
 
 #############################################################
 #  Start positions                                          #
@@ -97,16 +100,13 @@ h5mdfile H5Fcreate "h5mdfile.h5"
 #Groups
 h5mdfile H5Gcreate2 "particles"
 h5mdfile H5Gcreate2 "observables"
+
+
+
 #Dataset positions
 h5mdfile H5Screate_simple type double dims 1 $n_part 3
 h5mdfile H5Pset_chunk dims 5 $n_part 3
 h5mdfile H5Dcreate2 "/particles/pos"
-#Dataset energy
-h5mdfile H5Screate_simple type double dims 1 1
-h5mdfile H5Pset_chunk dims 5 1
-h5mdfile H5Dcreate2 "/observables/energy"
-
-#Write start values
 h5mdfile H5Dopen2 "/particles/pos"
 for { set k 0 } { $k < $n_part } { incr k } {
     set pos [part $k pr p]
@@ -115,8 +115,12 @@ for { set k 0 } { $k < $n_part } { incr k } {
     h5mdfile H5_write_value value [lindex $pos 2] index 0 $k 2
 }
 h5mdfile H5Dwrite
-set E [analyze energy kinetic]
+#Dataset energy
+h5mdfile H5Screate_simple type double dims 1 1
+h5mdfile H5Pset_chunk dims 5 1
+h5mdfile H5Dcreate2 "/observables/energy"
 h5mdfile H5Dopen2 "/observables/energy"
+set E [analyze energy kinetic]
 h5mdfile H5_write_value value $E index 0 0
 h5mdfile H5Dwrite
 
@@ -160,7 +164,7 @@ h5mdfile H5Dclose
 h5mdfile H5Sclose
 h5mdfile H5Gclose
 h5mdfile H5Fclose
-
+h5mdfile H5_free_memeory
 # terminate program
 puts "\n\nFinished"
 exit
