@@ -16,37 +16,35 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _ACTOR_HARMONICWELL_HPP
-#define _ACTOR_HARMONICWELL_HPP
+#ifndef _ACTOR_HARMONICORIENTATIONWELL_HPP
+#define _ACTOR_HARMONICORIENTATIONWELL_HPP
 
 #include "config.hpp"
 
-#ifdef CUDA
+#if defined(CUDA) && defined(ROTATION)
 
 #include "Actor.hpp"
 #include "SystemInterface.hpp"
 #include <iostream>
 
-void HarmonicWell_kernel_wrapper(float x, float y, float z, float k,
-		     int n, float *pos, CUDA_particle_force *f);
+void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k,
+                                            int n, float *quatu, CUDA_particle_force *torque,
+                                            int flag);
 
-class HarmonicWell : public Actor {
+class HarmonicOrientationWell : public Actor {
 public:
-  HarmonicWell(float x1, float x2, float x3, float _k, SystemInterface &s);
+  HarmonicOrientationWell(float x1, float x2, float x3, float k, int flag, SystemInterface &s);
 
-  virtual void computeForces(SystemInterface &s) {
-    HarmonicWell_kernel_wrapper(x,y,z,k,s.npart_gpu(), s.rGpuBegin(), s.fGpuBegin());
+  virtual void computeTorques(SystemInterface &s) {
+    HarmonicOrientationWell_kernel_wrapper(x,y,z,k,s.npart_gpu(), s.quatuGpuBegin(), s.fGpuBegin(), flag);
   };
 
-  virtual void computeEnergy(SystemInterface &s) {
-    std::cout << "HarmonicWell does not currently support energies" << std::endl;
-  };
-
-  virtual ~HarmonicWell() {}
-protected:
+  virtual ~HarmonicOrientationWell() {}
+private:
   float x,y,z;
   float k;
+  int flag;
 };
 
-#endif
+#endif // CUDA && ROTATION
 #endif

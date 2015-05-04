@@ -20,13 +20,14 @@
 #define SYSTEMINTERFACE_H
 
 #include "Vector.hpp"
+#include "cuda_interface.hpp"
 #include <vector>
 
 /** @todo: Turn needsXY in getter/setter **/
 
 class SystemInterface {
 public:
-  SystemInterface() : m_needsR(false), m_needsV(false), m_needsQ(false), m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false) {};
+  SystemInterface() : m_needsR(false), m_needsV(false), m_needsQ(false), m_needsQuatu(false), m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false), m_needsQuatuGpu(false) {};
   typedef Vector3d Vector3;
   typedef double Real;
 
@@ -127,8 +128,8 @@ public:
   virtual bool hasQGpu() { return false; };
   virtual bool requestQGpu() { m_needsQGpu = hasQGpu(); return m_needsQGpu; }
 
-  virtual float *fGpuBegin() { return 0; };
-  virtual float *fGpuEnd() { return 0; };
+  virtual CUDA_particle_force *fGpuBegin() { return 0; };
+  virtual CUDA_particle_force *fGpuEnd() { return 0; };
   virtual float *eGpu() { return 0; };
   virtual bool hasFGpu() { return false; };
   virtual bool requestFGpu() { m_needsFGpu = hasFGpu(); return m_needsFGpu; }
@@ -138,6 +139,16 @@ public:
   virtual bool hasQ() { return false; };
   virtual bool requestQ() { m_needsQ = hasQ(); return m_needsQ; }
 
+  virtual const_vec_iterator &quatuBegin() { return SystemInterface::null_vector; };
+  virtual const const_vec_iterator &quatuEnd() { return SystemInterface::null_vector; };
+  virtual bool hasQuatu() { return false; };
+  virtual bool requestQuatu() { m_needsQuatu = hasQuatu(); return m_needsQuatu; }
+
+  virtual float *quatuGpuBegin() { return 0; };
+  virtual float *quatuGpuEnd() { return 0; };
+  virtual bool hasQuatuGpu() { return false; };
+  virtual bool requestQuatuGpu() { m_needsQuatuGpu = hasQuatuGpu(); return m_needsQuatuGpu; }
+
   virtual unsigned int npart() = 0;
   virtual unsigned int npart_gpu() { return 0; };
   virtual Vector3 box() = 0;
@@ -146,15 +157,19 @@ public:
   virtual bool needsRGpu() { return m_needsRGpu;};
   virtual bool needsQGpu() { return m_needsQGpu;};
   virtual bool needsQ() { return m_needsQ;};
+  virtual bool needsQuatuGpu() { return m_needsQuatuGpu;};
+  virtual bool needsQuatu() { return m_needsQuatu;};
   virtual bool needsFGpu() { return m_needsFGpu; };
   
 protected:
   bool m_needsR;
   bool m_needsV;
   bool m_needsQ;
+  bool m_needsQuatu;
   bool m_needsRGpu;
   bool m_needsVGpu;
   bool m_needsQGpu;
+  bool m_needsQuatuGpu;
   bool m_needsFGpu;
 };
 
