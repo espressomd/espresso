@@ -96,7 +96,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 #  H5MD file and datasets                                   #
 #############################################################
 #File
-h5mdfile H5Fcreate "h5mdfile.h5" 
+h5mdfile H5Fcreate "h5_lj.h5" 
 #Groups
 h5mdfile H5Gcreate2 "particles"
 h5mdfile H5Gcreate2 "observables"
