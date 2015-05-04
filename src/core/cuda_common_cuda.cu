@@ -109,6 +109,12 @@ __global__ void init_particle_force(CUDA_particle_force *particle_forces_device,
     particle_forces_device[part_index].f[1] = 0.0f;
     particle_forces_device[part_index].f[2] = 0.0f;
 
+#ifdef ROTATION
+    particle_forces_device[part_index].torque[0] = 0.0f;
+    particle_forces_device[part_index].torque[1] = 0.0f;
+    particle_forces_device[part_index].torque[2] = 0.0f;
+#endif
+
     particle_seeds_device[part_index].seed = global_part_vars_device.seed + part_index;
   }
 
@@ -130,9 +136,6 @@ __global__ void init_fluid_composition(CUDA_fluid_composition *fluid_composition
   }
 }
 
-
-
-
 /** kernel for the initalisation of the partikel force array
  * @param *particle_forces_device	pointer to local particle force (Input)
 */
@@ -144,6 +147,12 @@ __global__ void reset_particle_force(CUDA_particle_force *particle_forces_device
     particle_forces_device[part_index].f[0] = 0.0f;
     particle_forces_device[part_index].f[1] = 0.0f;
     particle_forces_device[part_index].f[2] = 0.0f;
+
+#ifdef ROTATION
+    particle_forces_device[part_index].torque[0] = 0.0f;
+    particle_forces_device[part_index].torque[1] = 0.0f;
+    particle_forces_device[part_index].torque[2] = 0.0f;
+#endif
   }			
 }
 

@@ -22,20 +22,20 @@
 #include <stdio.h>
 
 __global__ void HarmonicWell_kernel(float x, float y, float z, float k,
-				     int n, float *pos, float *f) {
+				     int n, float *pos, CUDA_particle_force *f) {
 
   int id = blockIdx.x * blockDim.x + threadIdx.x;
 
   if(id >= n)
     return;
 
-  f[3*id + 0] += k*(x - pos[3*id + 0]);
-  f[3*id + 1] += k*(y - pos[3*id + 1]);
-  f[3*id + 2] += k*(z - pos[3*id + 2]);
+  f[id].f[0] += k*(x - pos[3*id + 0]);
+  f[id].f[1] += k*(y - pos[3*id + 1]);
+  f[id].f[2] += k*(z - pos[3*id + 2]);
 }
 
 
-void HarmonicWell_kernel_wrapper(float x, float y, float z, float k, int n, float *pos, float *f) {
+void HarmonicWell_kernel_wrapper(float x, float y, float z, float k, int n, float *pos, CUDA_particle_force *f) {
   dim3 grid(1,1,1);
   dim3 block(1,1,1);
 

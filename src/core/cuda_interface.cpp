@@ -118,7 +118,15 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
 #endif
 
 #ifdef ELECTROSTATICS
-		particle_data_host[i+g].q = (float)part[i].p.q;
+                if (coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_MMM1D_GPU || coulomb.method == COULOMB_EWALD_GPU) { // TODO: this defeats the purpose of needsQ in the interface...
+                  particle_data_host[i+g].q = (float)part[i].p.q;
+                }
+#endif
+
+#ifdef ROTATION
+                particle_data_host[i+g].quatu[0] = (float)part[i].r.quatu[0];
+                particle_data_host[i+g].quatu[1] = (float)part[i].r.quatu[1];
+                particle_data_host[i+g].quatu[2] = (float)part[i].r.quatu[2];
 #endif
 
 #ifdef ENGINE
@@ -216,6 +224,12 @@ static void cuda_mpi_get_particles_slave(){
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
   #endif
 
+#ifdef ROTATION
+          particle_data_host_sl[i+g].quatu[0] = (float)part[i].r.quatu[0];
+          particle_data_host_sl[i+g].quatu[1] = (float)part[i].r.quatu[1];
+          particle_data_host_sl[i+g].quatu[2] = (float)part[i].r.quatu[2];
+#endif
+
 #ifdef ENGINE
           particle_data_host_sl[i+g].swim.v_swim        = (float)part[i].swim.v_swim;
           particle_data_host_sl[i+g].swim.f_swim        = (float)part[i].swim.f_swim;
@@ -267,11 +281,19 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_compositio
               cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
               cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
               cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
+
+#ifdef ROTATION
+              cell->part[i].f.torque[0] += (double)host_forces[i+g].torque[0];
+              cell->part[i].f.torque[1] += (double)host_forces[i+g].torque[1];
+              cell->part[i].f.torque[2] += (double)host_forces[i+g].torque[2];
+#endif
+
 #ifdef SHANCHEN
               for (int ii=0;ii<LB_COMPONENTS;ii++) {
                 cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
               }
 #endif
+
             }
             g += npart;
           }
@@ -328,6 +350,13 @@ static void cuda_mpi_send_forces_slave(){
           cell->part[i].f.f[0] += (double)host_forces_sl[i+g].f[0];
           cell->part[i].f.f[1] += (double)host_forces_sl[i+g].f[1];
           cell->part[i].f.f[2] += (double)host_forces_sl[i+g].f[2];
+
+#ifdef ROTATION
+              cell->part[i].f.torque[0] += (double)host_forces_sl[i+g].torque[0];
+              cell->part[i].f.torque[1] += (double)host_forces_sl[i+g].torque[1];
+              cell->part[i].f.torque[2] += (double)host_forces_sl[i+g].torque[2];
+#endif
+
 #ifdef SHANCHEN
           for (int ii=0;ii<LB_COMPONENTS;ii++) {
              cell->part[i].r.composition[ii] = (double)host_composition_sl[i+g].weight[ii];

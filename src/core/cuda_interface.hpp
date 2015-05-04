@@ -21,7 +21,7 @@
 
 #include "config.hpp" //this is required so that the ifdefs are actually defined
 
-#include "SystemInterface.hpp"
+
 
 #ifdef CUDA
 
@@ -31,7 +31,18 @@ typedef struct {
   /** force on the particle given to md part */
   float f[3];
 
+#ifdef ROTATION
+  /** torque on the particle given to md part */
+  float torque[3];
+#endif   
+
 } CUDA_particle_force;
+
+
+// TODO: THERE IS AN ORDER/CIRCULAR DEFINE ISSUE
+#include "SystemInterface.hpp"
+
+
 
 #ifdef ENGINE
 // velocities which need to be copied from the GPU to the CPU to calculate a torque
@@ -75,6 +86,10 @@ typedef struct {
   float p[3];
   /** particle momentum struct velocity p.m->v*/
   float v[3];
+
+#ifdef ROTATION
+  float quatu[3];
+#endif
 
 #ifdef SHANCHEN
   float solvation[2*LB_COMPONENTS];
