@@ -24,7 +24,8 @@
 #ifdef ROTATION
 
 __global__ void HarmonicOrientationWell_kernel(float x, float y, float z, float k,
-				     int n, float *quatu, CUDA_particle_force *torque) {
+                                               int n, float *quatu, CUDA_particle_force *torque,
+                                               int flag) {
 
   int id = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -44,7 +45,7 @@ __global__ void HarmonicOrientationWell_kernel(float x, float y, float z, float 
   float rn = quatu[3*id + 1]*normori;
   float sn = quatu[3*id + 2]*normori;
 
-  float sgndir = 1.0f - 2.0f*signbit(xn*qn + yn*rn + zn*sn);
+  float sgndir = 1.0f - 2.0f*flag*signbit(xn*qn + yn*rn + zn*sn);
 
   xn *= sgndir;
   yn *= sgndir;
@@ -56,7 +57,9 @@ __global__ void HarmonicOrientationWell_kernel(float x, float y, float z, float 
 }
 
 
-void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k, int n, float *quatu, CUDA_particle_force *torque) {
+void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k,
+                                            int n, float *quatu, CUDA_particle_force *torque,
+                                            int flag) {
   dim3 grid(1,1,1);
   dim3 block(1,1,1);
 
@@ -71,7 +74,7 @@ void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k, 
     block.x = 512;
   }
 
-  KERNELCALL(HarmonicOrientationWell_kernel,grid,block,(x, y, z, k, n, quatu, torque))
+  KERNELCALL(HarmonicOrientationWell_kernel,grid,block,(x, y, z, k, n, quatu, torque, flag))
 }
 
-#endif
+#endif // ROTATION

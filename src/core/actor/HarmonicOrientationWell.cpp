@@ -20,15 +20,11 @@
 #include "EspressoSystemInterface.hpp"
 #include "forces.hpp"
 
-#ifdef CUDA
+#if defined(CUDA) && defined(ROTATION)
 
 HarmonicOrientationWell::
-HarmonicOrientationWell(float x1, float x2, float x3, float _k, SystemInterface &s) {
-  x = x1;
-  y = x2;
-  z = x3;
-  k = _k;
-
+HarmonicOrientationWell(float x1, float x2, float x3, float k, int flag, SystemInterface &s)
+  : x(x1), y(x2), z(x3), k(k), flag(flag) {
   if(!s.requestFGpu())
     std::cerr << "HarmonicOrientationWell needs access to forces on GPU!" << std::endl;
 
@@ -36,4 +32,4 @@ HarmonicOrientationWell(float x1, float x2, float x3, float _k, SystemInterface 
     std::cerr << "HarmonicOrientationWell needs access to positions on GPU!" << std::endl;
 }
 
-#endif
+#endif // CUDA && ROTATION

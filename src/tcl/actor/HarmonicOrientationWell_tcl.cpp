@@ -29,13 +29,17 @@ HarmonicOrientationWell *harmonicOrientationWell;
 
 int tclcommand_HarmonicOrientationWell(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   DoubleList dl;
+  int flag = 1;
 
   init_doublelist(&dl);
 
-  if(!ARG1_IS_DOUBLELIST(dl)) {
+  if(!ARG_IS_DOUBLELIST(1,dl)) {
     puts("Expected double list");
     return TCL_ERROR;
   }
+
+  if (argc < 2 && !ARG_IS_I(2,flag))
+    flag = 1;
 
   if(dl.n != 4) {
     puts("Wrong # of args");
@@ -45,11 +49,15 @@ int tclcommand_HarmonicOrientationWell(ClientData data, Tcl_Interp *interp, int 
     return TCL_ERROR;
   }
 
-  if (harmonicOrientationWell != NULL)
-	  delete harmonicOrientationWell;
+  if (flag != 1 && flag != 0) {
+    puts("The flag must be either 0 or 1");
+    return TCL_ERROR;
+  }
 
-  harmonicOrientationWell = new HarmonicOrientationWell(dl.e[0], dl.e[1], dl.e[2], dl.e[3],
-		  espressoSystemInterface);
+  if (harmonicOrientationWell != NULL)
+    delete harmonicOrientationWell;
+
+  harmonicOrientationWell = new HarmonicOrientationWell(dl.e[0], dl.e[1], dl.e[2], dl.e[3], flag, espressoSystemInterface);
 
   forceActors.push_back(harmonicOrientationWell);
   return TCL_OK;
