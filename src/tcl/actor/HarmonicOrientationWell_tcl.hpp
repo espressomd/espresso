@@ -22,10 +22,10 @@
 
 #include "parser.hpp"
 
-#ifdef ROTATION
+#if defined(CUDA) && defined(ROTATION)
 
 int tclcommand_HarmonicOrientationWell(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-#endif
+#endif // CUDA && ROTATION
 
 #endif
