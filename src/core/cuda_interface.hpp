@@ -21,10 +21,6 @@
 
 #include "config.hpp" //this is required so that the ifdefs are actually defined
 
-
-
-#ifdef CUDA
-
 /** data which must be copied from the GPU at each step run on the GPU */
 typedef struct {
 
@@ -38,11 +34,10 @@ typedef struct {
 
 } CUDA_particle_force;
 
+#ifdef CUDA
 
 // TODO: THERE IS AN ORDER/CIRCULAR DEFINE ISSUE
 #include "SystemInterface.hpp"
-
-
 
 #ifdef ENGINE
 // velocities which need to be copied from the GPU to the CPU to calculate a torque
