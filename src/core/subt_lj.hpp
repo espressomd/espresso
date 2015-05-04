@@ -69,11 +69,23 @@ inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2, Bonded_ia_paramet
       frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
       frac6 = frac2*frac2*frac2;
       fac_lj = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / (ia_params->LJ_capradius * dist);
+
+// #ifdef CONFIGTEMP
+//       extern double configtemp[2];
+//       int numfac = 0;
+//       if (p1->p.configtemp) numfac+=1;
+//       if (p2->p.configtemp) numfac+=1;
+//       configtemp[0] -= numfac*SQR(48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / r_off);
+//       configtemp[1] -= numfac*24.0 * ia_params->LJ_eps * frac6*(-22.0*frac6+5.0) / (SQR(r_off));
+// #endif
+
     }
   } 
 
   for(i=0;i<3;i++)
     force[i] = -fac_lj*dx[i];
+
+
 
   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: SUBT_LJ f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac_lj %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,sqrt(dist2),fac_lj));
   ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: SUBT_LJ f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac_lj %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,sqrt(dist2),fac_lj));

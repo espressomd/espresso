@@ -35,7 +35,7 @@ libEspresso_la_SOURCES = \
 	config.hpp \
 	constraint.cpp constraint.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
-	cuda_init.hpp \
+	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
@@ -107,6 +107,7 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
+	integrate_sd.hpp integrate_sd.cpp \	
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp
 
@@ -114,6 +115,7 @@ libEspresso_la_SOURCES = \
 libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
 	buckingham.cpp buckingham.hpp \
+	cos2.cpp cos2.hpp \
 	dpd.cpp dpd.hpp \
 	gaussian.cpp gaussian.hpp \
 	gb.cpp gb.hpp \
@@ -140,9 +142,11 @@ libEspresso_la_SOURCES += \
 	dihedral.cpp dihedral.hpp \
 	endangledist.cpp endangledist.hpp \
 	fene.cpp fene.hpp \
+	harmonic_dumbbell.cpp harmonic_dumbbell.hpp \
 	harmonic.cpp harmonic.hpp \
 	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
+	umbrella.cpp umbrella.hpp \
 	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
@@ -200,6 +204,11 @@ CUDA_HEADER_FILES = \
 	cuda_init.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
 	electrokinetics.hpp \
+	integrate_sd_cuda_debug.hpp \
+	integrate_sd_cuda_kernel.hpp \
+	integrate_sd_cuda.hpp \
+	integrate_sd_cuda_device.hpp \
+	integrate_sd_matrix.hpp \
 	fd-electrostatics.hpp
 
 CUDA_SOURCE_FILES = \
@@ -210,6 +219,11 @@ CUDA_SOURCE_FILES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
+	integrate_sd_cuda.cu \
+	integrate_sd_cuda_kernel.cu \
+	integrate_sd_cuda_debug.cu \
+	integrate_sd_matrix.cu \
+	integrate_sd_cuda_device.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
 	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu \

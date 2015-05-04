@@ -140,10 +140,12 @@ The electrokinetic equations have the following properties:
   \opt{gamma_even  \var{gamma\_even}}
   \opt{T  \var{T}}
   \opt{bjerrum_length  \var{bjerrum\_length}}
+  \opt{\require{4}{electrostatics_coupling}}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
   \required[3]{EK_REACTIONS}
+  \required[4]{EK_ELECTROSTATIC_COUPLING}
   \end{features}
 \end{essyntax}
 The \lit{electrokinetics} command initializes the LB fluid with a given
@@ -175,6 +177,14 @@ and \var{bjerrum\_length} the Bjerrum length associated with the electrostatic
 properties of the medium. See the above description of the electrokinetic 
 equations for an explanation of the introduction of a temperature, which does 
 not come in directly via a thermostat that produces thermal fluctuations.
+
+\lit{electrostatics_coupling} enables the action of the electrostatic potential
+due to the electrokinetics species and charged boundaries on the MD particles.
+The forces on the particles are calculated by interpolation from the electric
+field which is in turn calculated from the potential via finite differences.
+This only includes interactions between the species and boundaries and MD
+particles, not between MD particles and MD particles. To get complete electrostatic
+interactions a particles Coulomb method like Ewald or P3M has to be activate too.
 
 \subsection{\label{ssec:ek-diff-species}Diffusive Species}
 

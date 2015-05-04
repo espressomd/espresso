@@ -44,6 +44,7 @@
 #include "overlap.hpp"
 #include "gb.hpp"
 #include "fene.hpp"
+#include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "quartic.hpp"
 #ifdef ELECTROSTATICS
@@ -315,6 +316,11 @@ inline void add_bonded_energy(Particle *p1)
     case BONDED_IA_FENE:
       bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
+#ifdef ROTATION
+    case BONDED_IA_HARMONIC_DUMBBELL:
+      bond_broken = harmonic_dumbbell_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
     case BONDED_IA_HARMONIC:
       bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
@@ -460,6 +466,16 @@ inline void add_kinetic_energy(Particle *p1)
 #endif
 
   /* kinetic energy */
+  
+// #ifdef MULTI_TIMESTEP
+//   if (p1->p.smaller_timestep==1) {
+//     ostringstream msg;
+//     msg << "SMALL TIME STEP";
+//     energy.data.e[0] += SQR(smaller_time_step/time_step) * 
+//       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+//   }
+//   else
+// #endif  
   energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
 #ifdef ROTATION

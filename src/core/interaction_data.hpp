@@ -33,6 +33,7 @@
 /************************************************************/
 /*@{*/
 
+
 enum BondedInteraction{
     /** This bonded interaction was not set. */
     BONDED_IA_NONE = -1,
@@ -41,6 +42,10 @@ enum BondedInteraction{
     BONDED_IA_FENE,
     /** Type of bonded interaction is a HARMONIC potential. */
     BONDED_IA_HARMONIC,
+#ifdef ROTATION
+    /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
+    BONDED_IA_HARMONIC_DUMBBELL,
+#endif
     /** Type of bonded interaction is a QUARTIC potential. */
     BONDED_IA_QUARTIC,
     /** Type of bonded interaction is a BONDED_COULOMB */
@@ -88,7 +93,9 @@ enum BondedInteraction{
     /** Type of bonded interaction is volume conservation force (immersed boundary). */
     BONDED_IA_IBM_VOLUME_CONSERVATION,
     /** Type of bonded interaction is bending force (immersed boundary). */
-    BONDED_IA_IBM_TRIBEND
+    BONDED_IA_IBM_TRIBEND,
+    /** Type of bonded interaction is umbrella. */
+    BONDED_IA_UMBRELLA
 };
 
 /** Specify tabulated bonded interactions  */
@@ -397,6 +404,16 @@ typedef struct {
   double LJCOS2_capradius;
   /*@}*/
 #endif
+
+#ifdef COS2
+  /** \name Cos2 potential */
+  /*@{*/
+  double COS2_eps;
+  double COS2_cut;
+  double COS2_offset;
+  double COS2_w;
+  /*@}*/
+#endif
   
 #ifdef GAY_BERNE
   /** \name Gay-Berne potential */
@@ -587,6 +604,16 @@ typedef struct {
       double r_cut;
 } Harmonic_bond_parameters;
 
+#ifdef ROTATION
+/** Parameters for harmonic dumbbell bond Potential */
+typedef struct {
+      double k1;
+      double k2;
+      double r;
+      double r_cut;
+} Harmonic_dumbbell_bond_parameters;
+#endif
+
 /** Parameters for quartic bond Potential */
 typedef struct {
       double k0, k1;
@@ -673,6 +700,14 @@ typedef struct {
       double *para_c;
 } Overlap_bond_parameters;
 
+#ifdef UMBRELLA
+    /** Parameters for umbrella potential */
+typedef struct {
+      double k;
+      int    dir;
+      double r;
+} Umbrella_bond_parameters;
+#endif
 
 /** Dummy parameters for -LJ Potential */
 typedef struct {
@@ -784,6 +819,9 @@ typedef union {
     Bending_force_bond_parameters bending_force;
     Volume_force_bond_parameters volume_force;
     Harmonic_bond_parameters harmonic;
+#ifdef ROTATION
+    Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
+#endif
     Quartic_bond_parameters quartic;
     Bonded_coulomb_bond_parameters bonded_coulomb;
     Angle_bond_parameters angle;
@@ -793,6 +831,9 @@ typedef union {
     Dihedral_bond_parameters dihedral;
     Tabulated_bond_parameters tab;
     Overlap_bond_parameters overlap;
+#ifdef UMBRELLA
+    Umbrella_bond_parameters umbrella;
+#endif
     Subt_lj_bond_parameters subt_lj;
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;

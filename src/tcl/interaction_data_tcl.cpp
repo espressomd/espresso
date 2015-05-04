@@ -56,6 +56,7 @@
 #include "ljangle_tcl.hpp"
 #include "ljcos_tcl.hpp"
 #include "ljcos2_tcl.hpp"
+#include "cos2_tcl.hpp"
 #include "ljgen_tcl.hpp"
 #include "hertzian_tcl.hpp"
 #include "morse_tcl.hpp"
@@ -91,10 +92,12 @@
 #include "endangledist_tcl.hpp"
 #include "fene_tcl.hpp"
 #include "overlap_tcl.hpp"
+#include "harmonic_dumbbell_tcl.hpp"
 #include "harmonic_tcl.hpp"
 #include "quartic_tcl.hpp"
 #include "bonded_coulomb_tcl.hpp"
 #include "subt_lj_tcl.hpp"
+#include "umbrella_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
 #include "tcl/object-in-fluid/volume_force_tcl.hpp"
@@ -347,6 +350,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
       
 #endif
       
+#ifdef ROTATION
+  case BONDED_IA_HARMONIC_DUMBBELL:
+    return tclprint_to_result_harmonic_dumbbellIA(interp, params);
+#endif
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
   case BONDED_IA_QUARTIC:
@@ -384,6 +391,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #ifdef OVERLAPPED
   case BONDED_IA_OVERLAPPED:
     return tclprint_to_result_overlapIA(interp, params);
+#endif
+#ifdef UMBRELLA
+  case BONDED_IA_UMBRELLA:
+    return tclprint_to_result_umbrellaIA(interp, params);
 #endif
 #ifdef BOND_CONSTRAINT
   case BONDED_IA_RIGID_BOND:
@@ -477,6 +488,10 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 
 #ifdef LJCOS2
   if (data->LJCOS2_cut > 0.0) tclprint_to_result_ljcos2IA(interp,i,j);
+#endif
+
+#ifdef COS2
+  if (data->COS2_cut > 0.0) tclprint_to_result_cos2IA(interp,i,j);
 #endif
 
 #ifdef GAY_BERNE
@@ -801,6 +816,11 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("lj-cos2", tclcommand_inter_parse_ljcos2);
 #endif
 
+#ifdef COS2
+    REGISTER_NONBONDED("cos2", tclcommand_inter_parse_cos2);
+#endif
+
+
 #ifdef COMFIXED
     REGISTER_NONBONDED("comfixed", tclcommand_inter_parse_comfixed);
 #endif
@@ -953,6 +973,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
   
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
+#ifdef ROTATION
+  REGISTER_BONDED("harmonic_dumbbell", tclcommand_inter_parse_harmonic_dumbbell);
+#endif
   REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
 #ifdef ELECTROSTATICS
   REGISTER_BONDED("bonded_coulomb", tclcommand_inter_parse_bonded_coulomb);  
@@ -980,6 +1003,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef OVERLAPPED
   REGISTER_BONDED("overlapped", tclcommand_inter_parse_overlapped_bonded);
+#endif
+#ifdef UMBRELLA
+  REGISTER_BONDED("umbrella", tclcommand_inter_parse_umbrella);
 #endif
 #ifdef BOND_CONSTRAINT
   REGISTER_BONDED("rigid_bond", tclcommand_inter_parse_rigid_bond);

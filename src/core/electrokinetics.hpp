@@ -68,6 +68,11 @@ typedef struct {
   float mass_product1;
   int stencil;
   int number_of_boundary_nodes;
+#ifdef EK_ELECTROSTATIC_COUPLING
+  bool es_coupling;
+  float *charge_potential_buffer;
+  float *electric_field;
+#endif
   float* charge_potential;
   float* j;
   float* lb_force_previous;
@@ -141,8 +146,8 @@ unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char* filename);
 int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
-#ifdef EK_DEBUG
-int ek_print_vtk_lbforce_buf(char* filename);
+#ifdef EK_ELECTROSTATIC_COUPLING
+int ek_print_vtk_particle_potential( char* filename );
 #endif
 int ek_print_vtk_lbforce(char* filename);
 int ek_print_vtk_reaction_tags(char* filename);
@@ -155,6 +160,10 @@ int ek_set_viscosity(double viscosity);
 int ek_set_friction(double friction);
 int ek_set_T(double T);
 int ek_set_bjerrumlength(double bjerrumlength);
+#ifdef EK_ELECTROSTATIC_COUPLING
+int ek_set_electrostatics_coupling( bool electrostatics_coupling );
+void ek_calculate_electrostatic_coupling();
+#endif
 int ek_set_bulk_viscosity(double bulk_viscosity);
 int ek_set_gamma_odd(double gamma_odd);
 int ek_set_gamma_even(double gamma_even);

@@ -27,7 +27,7 @@ if possible, it is not recommended to activate all features, because
 this will negatively effect \es's performance.
 
 Features can be activated in the configuration header
-\texttt{myconfig.h} (see section \vref{sec:myconfig}). Too activate
+\texttt{myconfig.hpp} (see section \vref{sec:myconfig}). Too activate
 \texttt{FEATURE}, add the following line to the header file:
 \begin{verbatim}
 #define FEATURE
@@ -145,6 +145,14 @@ integrator or thermostat:
 \item \newfeature{LB_ELECTROHYDRODYNAMICS} Enables the implicit
   calculation of electro-hydrodynamics for charged particles and salt
   ions in an electric field.
+\item \newfeature{SD} enable Stokesian Dynamics.
+\item \newfeature{SD_NOT_PERIODIC} disable periodic boundary conditions in
+  Stokesian Dynamics.
+\item \newfeature{SD_USE_FLOAT} use float instead of double in Stokesian
+  Dynamics.
+\item \newfeature{SD_FF_ONLY} disable nearfield of Stokesian Dynamics.
+\item \newfeature{SD_DEBUG} enable debug Stokesian Dynamics.
+  
 \end{itemize}
 
 \section{Interactions}
@@ -255,6 +263,8 @@ looking directly at the code.
 \item \newfeature{FORCE\_CORE} Causes \es{} to try to provoke a core dump
   when exiting unexpectedly.
 \item \newfeature{MPI\_CORE} Causes \es{} to try this even with MPI errors.
+\item \newfeature{SD_DEBUG} Causes \es{} to check more things in the Stokesian
+  Dynamics code. If \var{warnings} is larger 1, SD prints more informations.
 \end{itemize}
 
 %%% Local Variables: 

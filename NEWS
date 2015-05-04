@@ -15,9 +15,12 @@ New user-visible features
 * Checkpointing for the correlator
 * New polymer observables
 * Steepest descent energy minimization
+* Multiple time step integration that allows one of two time steps per particle
+* Stokesian Dynamics support (GPU only)
 
 Known bugs
 ----------
+* The electrostatics part of the pressure tensor is wrong
 
 User-visible changes
 --------------------

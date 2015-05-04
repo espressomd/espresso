@@ -9,7 +9,7 @@
 #include <cstdio>
 
 __global__ void createGreensfcn();
-__global__ void multiplyGreensfcn();
+__global__ void multiplyGreensfcn(cufftComplex *charge_potential);
 
 
 static __device__ __constant__ FdElectrostatics::Parameters fde_parameters_gpu;
@@ -150,23 +150,26 @@ __global__ void createGreensfcn() {
 }
 
 
-__global__ void multiplyGreensfcn() {
+__global__ void multiplyGreensfcn(cufftComplex *charge_potential) {
 
   unsigned int index = fde_getThreadIndex();
   
   if( index < fde_parameters_gpu.dim_z * fde_parameters_gpu.dim_y * (fde_parameters_gpu.dim_x / 2 + 1) ) 
   {
-    fde_parameters_gpu.charge_potential[ index ].x *= fde_parameters_gpu.greensfcn[ index ];
-    fde_parameters_gpu.charge_potential[ index ].y *= fde_parameters_gpu.greensfcn[ index ];
+    charge_potential[ index ].x *= fde_parameters_gpu.greensfcn[ index ];
+    charge_potential[ index ].y *= fde_parameters_gpu.greensfcn[ index ];
   }
 }
 
-
 void FdElectrostatics::calculatePotential() {
+  calculatePotential(parameters.charge_potential);
+}
+
+void FdElectrostatics::calculatePotential(cufftComplex *charge_potential) {
   
   if( cufftExecR2C( plan_fft,
-                    (cufftReal*) parameters.charge_potential,
-                    parameters.charge_potential               ) != CUFFT_SUCCESS ) 
+                    (cufftReal*) charge_potential,
+                    charge_potential               ) != CUFFT_SUCCESS ) 
   {
                     
     fprintf(stderr, "ERROR: Unable to execute FFT plan\n");
@@ -180,11 +183,11 @@ void FdElectrostatics::calculatePotential() {
     ( threads_per_block * blocks_per_grid_y );
   dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
 
-  KERNELCALL( multiplyGreensfcn, dim_grid, threads_per_block, () );
+  KERNELCALL( multiplyGreensfcn, dim_grid, threads_per_block, (charge_potential) );
     
   if( cufftExecC2R( plan_ifft,
-                    parameters.charge_potential,
-                    (cufftReal*) parameters.charge_potential ) != CUFFT_SUCCESS )
+                    charge_potential,
+                    (cufftReal*) charge_potential ) != CUFFT_SUCCESS )
   {
                     
     fprintf(stderr, "ERROR: Unable to execute iFFT plan\n");

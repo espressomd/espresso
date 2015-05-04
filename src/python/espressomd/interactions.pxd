@@ -163,6 +163,11 @@ cdef extern from "interaction_data.hpp":
       double *para_b
       double *para_c
 
+#* Parameters for one-directional harmonic potential */
+  ctypedef struct Umbrella_bond_parameters:
+      double k
+      int    dir
+      double r
 
 #* Dummy parameters for -LJ Potential */
   ctypedef struct Subt_lj_bond_parameters:
