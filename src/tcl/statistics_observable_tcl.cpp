@@ -941,6 +941,7 @@ int tclcommand_observable_average(Tcl_Interp* interp, int argc, char** argv, int
   obs->container=container;
   obs->update=&observable_update_average;
   obs->calculate=0;
+  obs->type = AVERAGE;
 
   return TCL_OK;
 }
@@ -1306,7 +1307,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
   //int no;
 
   if (argc<2) {
-    Tcl_AppendResult(interp, "Usage!!!\n", (char *)NULL);
+    Tcl_AppendResult(interp, "Usage!\n", (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -1315,10 +1316,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     Tcl_AppendResult(interp, buffer, (char *)NULL );
     return TCL_OK;
   }
-
   
-//  if (argc > 1 && ARG1_IS_I(no)) {
-// }
   if (argc > 2 && ARG1_IS_S("new") ) {
 
     // find the next free observable id
@@ -1382,6 +1380,20 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
       observable_reset_average(observables[n]);
       return TCL_OK;
     }
+    if (argc > 3 && ARG_IS_S(2, "write_checkpoint")) {
+      bool binary = false;
+      if((argc > 4) && ARG_IS_S(4, "binary"))
+	binary = true;
+      observable_write(argv[3], observables[n], binary);
+      return TCL_OK;
+    }
+    if (argc > 3 && ARG_IS_S(2, "read_checkpoint")) {
+      bool binary = false;
+      if((argc > 4) && ARG_IS_S(4, "binary"))
+	binary = true;
+      observable_read(argv[3], observables[n], binary);
+      return TCL_OK;
+    }
     if (argc > 2 && ARG_IS_S(2,"autoupdate") ) {
       if (argc > 3 && ARG_IS_D(3, observables[n]->autoupdate_dt) ) {
         if (observables[n]->autoupdate_dt < 1e-5) {
@@ -1425,90 +1437,6 @@ static int convert_types_to_ids(IntList * type_list, IntList * id_list){
       }
       return n_ids;
 }
-
-
-//int file_data_source_init(file_data_source* self, char* filename, IntList* columns) {
-//  int counter=1;
-//  char* token;
-//  if (filename==0)
-//    return 1;
-//  self->f = fopen(filename, "r");
-//  if (! self->f )
-//    return 2;
-//  fgets(self->last_line, MAXLINELENGTH, self->f);
-//  while (self->last_line && self->last_line[0] == 35) {
-//    fgets(self->last_line, MAXLINELENGTH, self->f);
-//  }
-//  if (!self->last_line)
-//    return 3;
-//// Now lets count the tokens in the first line
-//  token=strtok(self->last_line, " \t\n");
-//  while (token) {
-////    printf("reading token **%s**\n", token);
-//    token=strtok(NULL, " \t\n");
-//    counter++;
-//  }
-//  self->n_columns = counter;
-//  rewind(self->f);
-//  self->data_left=1;
-////  printf("I found out that your file has %d columns\n", self->n_columns);
-//  if (columns !=0)
-//    /// Here we would like to check if we can handle the desired columns, but this has to be implemented!
-//    return -1;
-//  return 0;
-//}
-
-//int file_data_source_readline(void* xargs, double* A, int dim_A) {
-//  file_data_source* self = xargs;
-//  int counter=0;
-//  char* token;
-//  char* temp;
-//
-//  temp=fgets(self->last_line, MAXLINELENGTH, self->f);
-//  while (temp!= NULL && self->last_line && self->last_line[0] == 35) {
-//    temp=fgets(self->last_line, MAXLINELENGTH, self->f);
-//  }
-//  if (!self->last_line || temp==NULL) {
-////    printf("nothing left\n");
-//    self->data_left=0;
-//    return 3;
-//  }
-//  token=strtok(self->last_line, " \t\n");
-//  while (token) {
-////    printf("reading token: ");
-//    A[counter]=atof(token);
-////    printf("%f ", A[counter]);
-//    token=strtok(NULL, " \t\n");
-//    counter++;
-//    if (counter >= dim_A) {
-////      printf("urgs\n");
-//      return 4;
-//    }
-//  }
-////  printf("\n");
-//  return 0;
-//}
-//
-//int tcl_input(void* data, double* A, unsigned int n_A) {
-//  tcl_input_data* input_data = (tcl_input_data*) data;
-//  int i, tmp_argc;
-//  const char  **tmp_argv;
-//  Tcl_SplitList(input_data->interp, input_data->argv[0], &tmp_argc, &tmp_argv);
-//  // function prototype from man page:
-//  // int Tcl_SplitList(interp, list, argcPtr, argvPtr)
-//  if (tmp_argc < n_A) {
-//    Tcl_AppendResult(input_data->interp, "Not enough arguments passed to analyze correlation update", (char *)NULL);
-//    return 1;
-//  }
-//  for (i = 0; i < n_A; i++) {
-//    if (Tcl_GetDouble(input_data->interp, tmp_argv[i], &A[i]) != TCL_OK) {
-//      Tcl_AppendResult(input_data->interp, "error parsing argument ", input_data->argv[i],"\n", (char *)NULL);
-//      return 1;
-//    }
-//  }
-//  return 0;
-//}
-
 
 int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data** pdata_) {
   int temp;
@@ -1798,7 +1726,13 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
 
 int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable * obs) {
   char buffer[TCL_DOUBLE_SPACE];
-  if ( observable_calculate(obs) ) {
+  bool calculate = true;
+  if((argc > 0) && (ARG0_IS_S("no_calculation"))) {
+    calculate = false;
+    argv++;
+    argc--;
+  }
+  if ( calculate && observable_calculate(obs) ) {
     Tcl_AppendResult(interp, "\nFailed to compute observable ", obs->obs_name, "\n", (char *)NULL );
     return TCL_ERROR;
   }

@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 #include "statistics_observable.hpp"
+#include "statistics_correlation.hpp"
 #include "particle_data.hpp"
 #include "integrate.hpp"
 #include "lb.hpp"
@@ -28,6 +29,7 @@ int n_observables = 0;
 int observables_autoupdate = 0;
 
 void observable_init(observable* self) {
+  self->type = OBSERVABLE;
   self->last_update = 0;
   self->autoupdate = 0;
   self->autoupdate_dt = 0;
@@ -47,6 +49,55 @@ int observable_update(observable* self) {
     temp=(self->update)(self);
   self->last_update = sim_time;
   return temp;
+}
+
+//void write_double(FILE * fp, const double * data, unsigned int n, bool binary)
+
+int observable_write(char *filename, observable *self, bool binary) {
+  FILE *f = fopen(filename, "w");
+  if(f) {
+    unsigned int un;
+    /* For stateless observables only the current value is meaningful. */
+    if(self->type == OBSERVABLE)
+      observable_calculate(self);
+    switch(self->type) {
+    case AVERAGE:
+      write_uint(f, &((observable_average_container*)self->container)->n_sweeps, 1, binary);
+    case OBSERVABLE:
+      un = self->n;
+      write_uint(f, &un, 1, binary);
+      write_double(f, self->last_value, self->n, binary);
+      fclose(f);
+      break;
+    default:
+      fclose(f);
+      return ES_ERROR;
+    }
+  }
+  return ES_ERROR;
+}
+
+int observable_read(char *filename, observable *self, bool binary) {
+  FILE *f = fopen(filename, "r");
+  if(f && !feof(f)) {
+    unsigned int un;
+    switch(self->type) {
+    case AVERAGE:
+      read_uint(f, &((observable_average_container*)self->container)->n_sweeps, 1, binary);
+    case OBSERVABLE:
+      read_uint(f, &un, 1, binary);
+      if(self->n != (int)(un))
+	return ES_ERROR;
+      read_double(f, (double *)self->last_value, self->n, binary);
+      fclose(f);
+      return ES_OK;
+      break;
+    default:
+      fclose(f);
+      return ES_ERROR;
+    }
+  }
+  return ES_ERROR;
 }
 
 int observable_calc_particle_velocities(observable* self) {

@@ -1201,28 +1201,27 @@ switches in \texttt{myconfig.hpp} (sec. \ref{sec:myconfig})
 \section{Grand canonical feature}
 For using \es conveniently for simulations in the grand canonical ensemble, or
 other purposes, when particles of certain types are created and deleted frequently.
+Particle ids can be stored in lists for each individual type and so random ids of
+particles of a certain type can be drawn. 
 
 \begin{essyntax}
 part gc
 \alt{\var{type} \asep \alt{\alt{find \asep delete \asep
 status \asep number} \var{type}}}
-\begin{features}
-\required{GRANDCANONICAL}
-\end{features}
-
 \end{essyntax}
-By giving only a particle type as an argument, \es will initialize
-arrays on the c-level which will keep track of particles of the given
-type. When using the keyword \texttt{find} and a particle type, the
+
+If you want \es to keep track of particle ids of a certain type you have to
+initialize the method by calling 
+\begin{essyntax}
+	part gc \var{type}
+\end{essyntax}
+After that \es will keep track of particle ids of that type. 
+When using the keyword \texttt{find} and a particle type, the
 command will return a randomly chosen particle id, for a particle of
-the given type. Similarly using the \texttt{delete} variant will
-delete a randomly chosen particle of the given type.  Notice however,
-that changing the type of an existing particle will not change the
-arrays. If the change is permanent, then re-initializing the arrays of
-the involved types will remove this inconsistency.  The keyword
-\texttt{status} will return a list with all particles with the given
-type, similarly giving \texttt{number} as argument will return the
-number of particles which sharing the given type.
+the given type. 
+The keyword \texttt{status} will return a list with all particles with the given
+type, similarly giving \texttt{number} as argument will return the number of
+particles which share the given type.
 
 %%% Local Variables: 
 %%% mode: latex

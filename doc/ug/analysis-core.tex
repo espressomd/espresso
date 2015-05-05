@@ -267,11 +267,32 @@ once their autoupdate feature is enabled.
   \end{itemize}
 \subsection{Printing an observable}
 \begin{essyntax}
-observable \var{id} print \opt{formatted}
+observable \var{id} print \opt{no_calculation} \opt{formatted}
 \end{essyntax}
 Prints the value of the observable with a given $id$. If the observable
-refers to the current state of the system, its value is updated before printing.
+refers to the current state of the system, its value is updated before printing, except
+if \lit{no_calculation} is given.
 \todo{Formatted printing is not fully supported yet.}
+
+\subsection{Checkpointing observables}
+\begin{essyntax}
+observable \var{id} write_checkpoint \var{filename} \opt{binary}
+\end{essyntax}
+Writes the current state of the observable to \lit{filename}.
+If \lit{binary} is given then it does so in binary form. This is useful
+to save the state of statful observables as the average.
+This checkpoing mechanism is not portable, rereading is only guaranteed to work
+on the same system with the same Espresso binary.
+
+\begin{essyntax}
+observable \var{id} read_checkpoint \var{filename} \opt{binary}
+\end{essyntax}
+Reads the state of the observable from a checkpoint file. The observable
+has to be configured beforehand in the script in exactly the same way
+as it was when the checkpoint was written. That means that the configuration
+of the observable -- including possible particle and profile specifications -- is not saved in the file
+but has to be provided by the user. Please be aware that the value of observables that refer to the
+current state of the system are overwritten by the \lit{print} command except if the option \lit{no_calculation} is given.
 
 \subsection{Passing an observable to an analysis function}
 Currently the only analysis function which uses the core observables
@@ -692,10 +713,11 @@ discussion is presented in Ref.~\cite{ramirez10a}.
 
 
 \subsection{Checkpointing the correlator}
-It is possible to checkpoint the correlator. Therby the data is written
-directly to a file. It is probably usefull to write to a binary file, as this
-is more precise.
-The accuracy of the ascii files is not high.
+It is possible to checkpoint the correlator. Thereby the data is written
+directly to a file. It may be usefull to write to a binary file, as this
+preserves the full bit-value of the variables, whereas the text file 
+representation has a lower accuracy.
+
 \begin{essyntax}
 \variant{1} correlation \var{id} write_checkpoint_binary \var{filename}
 \variant{2} correlation \var{id} write_checkpoint_ascii \var{filename}
