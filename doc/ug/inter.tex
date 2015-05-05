@@ -959,47 +959,6 @@ a pair bond without associated potential or force. It can used to specify
 topologies and for some analysis that rely on bonds, or \eg for bonds that
 should be displayed in VMD.
 
-\subsection{Coarse grained DNA model}
-
-\begin{citebox}
-  Please cite~\citewbibkey{hsu12a} when using the DNA model in this subsection.
-\end{citebox}
-
-The following interactions are those that are specific to the DNA model
-described in \cite{hsu12a}. Please be aware that these two interactions
-are not the complete model, please see the paper.
-The DNA model is a coarse grained DNA model with four beads per nucleotide,
-for a more detailed description check the reference.
-
-\subsubsection{DNA basepair interaction}
-
-\begin{center}
-  \includegraphics[width=8cm]{figures/basepair.pdf}
-\end{center}
-
-This is a four body potential that describes the interaction between the
-sugar and its base as well as the hydrogend bond between the bases.
-
-\begin{equation}
-  V\left(r_{hb}, \theta_{d}, \phi_{hb}^{(1)}, \phi_{hb}^{(2)}\right) = V_r(r_{hb})\tau_d(\theta)\prod_{i=1}^2
-  \tau_f\left(\phi_{hb}^{(i)}\right) + \sum_{i=1}^2 \left[ V_f\left(\phi_{hb}^{(i)}\right) + V_{cn}(r_{cn}^{(i)})\right]
-\end{equation}
-where
-\begin{equation}
-  V_r(r) = V_0\left(1+\frac{r - r_0}{l}\right)e^{-\frac{r - r_0}{l}},
-\end{equation}
-
-\begin{equation}
-  V_{sb} =
-\end{equation}
-
-\subsubsection{DNA stacking interaction}
-
-This 8-body potential describes the interaction between neighboring
-basepairs.
-
-
-
 \section{Object-in-fluid interactions}
 \label{sec:inter-bonded-oif}
 \index{bonded interactions oif|mainindex}
@@ -1619,7 +1578,7 @@ The second variant combines the coulomb interaction for charges that are closer 
   \begin{cases} 
     \frac{l_B k_B T q_1 q_2}{\varepsilon_{\text{int}} r} & \text{if } r < r_0, \\ 
     \frac{l_B k_B T q_1 q_2 e^{-\alpha (r - r_0)}}{\varepsilon_{\text{int}} r} & \text{if } r_0 < r < r_1,  \\
-    \frac{l_B k_B T q_1 q_2 e^{-\kappa r}}{\varepsilon_{\text{ext}} r} & \text{if } r > r_1 \\
+    \frac{l_B k_B T q_1 q_2 e^{-\kappa r}}{\varepsilon_{\text{ext}} r} & \text{if } r_{\text{cut}} > r > r_1,  \\
     0 & \text{if } r > r_{\text{cut}}.
   \end{cases}
 \end{equation}
