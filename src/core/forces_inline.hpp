@@ -598,7 +598,7 @@ inline void add_bonded_force(Particle *p1)
   double force[3]  = { 0., 0., 0. };
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
-#ifdef CG_DNA
+#ifdef TWIST_STACK
   double force4[3] = { 0., 0., 0. };
   double force5[3] = { 0., 0., 0. };
   double force6[3] = { 0., 0., 0. };
@@ -657,7 +657,7 @@ inline void add_bonded_force(Particle *p1)
 	return;
       }
     }    
-#ifdef CG_DNA
+#ifdef TWIST_STACK
       if(n_partners >= 7) {
 	p5 = local_particles[p1->bl.e[i++]];
 	p6 = local_particles[p1->bl.e[i++]];
@@ -709,10 +709,12 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_AREA_FORCE_LOCAL:
       bond_broken = calc_area_force_local(p1, p2, p3, iaparams, force, force2, force3);
       break;
-#ifdef CG_DNA
+#ifdef HYDROGEN_BOND
     case BONDED_IA_CG_DNA_BASEPAIR:
       bond_broken = calc_hydrogen_bond_force(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
       break;
+#endif
+#ifdef TWIST_STACK
     case BONDED_IA_CG_DNA_STACKING:
       bond_broken = calc_twist_stack_force(p1, p2, p3, p4, p5, p6, p7, p8, iaparams,
 					       force, force2, force3, force4, force5, force6, force7, force8);

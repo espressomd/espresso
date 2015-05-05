@@ -19,15 +19,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef CG_DNA_HPP
-#define CG_DNA_HPP
+#ifndef __HYDROGEN_BOND_HPP
+#define __HYDROGEN_BOND_HPP
 
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "grid.hpp"
 
-#ifdef HYRDOGEN_BOND
+#ifdef HYDROGEN_BOND
 
 int hydrogen_bond_set_params(int bond_type, DoubleList *params);
 

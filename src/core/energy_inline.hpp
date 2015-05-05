@@ -264,7 +264,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 inline void add_bonded_energy(Particle *p1)
 {
   Particle *p2, *p3 = NULL, *p4 = NULL;
-#ifdef CG_DNA
+#ifdef TWIST_STACK
   Particle *p5 = NULL,*p6 = NULL,*p7 = NULL,*p8 = NULL;
 #endif
   Bonded_ia_parameters *iaparams;
@@ -311,7 +311,7 @@ inline void add_bonded_energy(Particle *p1)
     return;
       }
     }
-#ifdef CG_DNA
+#ifdef TWIST_STACK
     if(n_partners >= 7) {
       p5 = local_particles[p1->bl.e[i++]];
       p6 = local_particles[p1->bl.e[i++]];
@@ -361,10 +361,12 @@ inline void add_bonded_energy(Particle *p1)
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
       break; 
 #endif
-#ifdef CG_DNA
+#ifdef TWIST_STACK
     case BONDED_IA_CG_DNA_STACKING:
       bond_broken = calc_twist_stack_energy(p1, p2, p3, p4, p5, p6, p7, p8, iaparams, &ret);
       break;
+#endif
+#ifdef HYDROGEN_BOND
     case BONDED_IA_CG_DNA_BASEPAIR:
       bond_broken = calc_hydrogen_bond_energy(p1, p2, p3, p4, iaparams, &ret);
       break;

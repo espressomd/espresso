@@ -1018,8 +1018,10 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef BOND_VIRTUAL
   REGISTER_BONDED("virtual_bond", tclcommand_inter_parse_virtual_bonds);
 #endif
-#ifdef CG_DNA
+#ifdef HYDROGEN_BOND
   REGISTER_BONDED("hydrogen_bond", tclcommand_inter_parse_hydrogen_bond);
+#endif
+#ifdef TWIST_STACK
   REGISTER_BONDED("twist_stack", tclcommand_inter_parse_twist_stack);  
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
