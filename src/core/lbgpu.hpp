@@ -64,6 +64,12 @@
 #endif
 /*@}*/
 
+#if defined(LB_DOUBLE_PREC) || defined(EK_DOUBLE_PREC)
+typedef double lbForceFloat;
+#else
+typedef float lbForceFloat;
+#endif
+
 /**-------------------------------------------------------------------------*/
 /** Data structure holding the parameters for the Lattice Boltzmann system for gpu. */
 typedef struct {
@@ -177,14 +183,14 @@ typedef struct {
 
 typedef struct {
 
-  float *force;
+  lbForceFloat *force;
   float *scforce;
 #if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual particles' position
   // However, LBM wants to reset them immediately after the LBM update
   // This variable keeps a backup
-  float *force_buf;
+  lbForceFloat *force_buf;
 #endif
 
 } LB_node_force_gpu;
@@ -289,8 +295,8 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 int lb_lbnode_set_extforce_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double* forces);
-void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force);
-void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force);
+void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, lbForceFloat *host_checkpoint_force);
+void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, lbForceFloat *host_checkpoint_force);
 
 int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
 
