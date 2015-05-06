@@ -288,7 +288,7 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 		}
 		return h5mdfile.H5_write_value(argc, argv, interp);
 	}
-	int H5_free_memory(int argc, char **argv, Tcl_Interp *interp);
+	if (!strncmp(argv[1], "H5_free_memory", strlen(argv[1])))
 	{
 		if(argc!=2)
 		{
