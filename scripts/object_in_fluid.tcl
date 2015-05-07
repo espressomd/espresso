@@ -53,7 +53,7 @@ proc oif_init {} {
 
     global list oif_templates
     set oif_templates { }
-    # 2D list of existing templates of oif objects containing rows with data. One row describes parameters of one object template. One row consists of X elements. The order of the elements is crucial. Structure of one row: num_of_particles, num_of_edges, num_of_triangles, ks, start_id_of_ks_interaction, kb, start_id_of_kb_interaction, kal, start_id_of_kal_interaction, kag, start_id_of_kag_interaction, kv, start_id_of_kv_interaction, initial_surface, initial_volume
+    # 2D list of existing templates of oif objects containing rows with data. One row describes parameters of one object template. One row consists of X elements. The order of the elements is crucial. Structure of one row: num_of_particles, num_of_edges, num_of_triangles, ks, start_id_of_ks_interaction, kb, start_id_of_kb_interaction, kal, start_id_of_kal_interaction, kag, kv, start_id_of_global_interaction, initial_surface, initial_volume
 
     global list oif_objects
     set oif_objects { }
@@ -1467,131 +1467,98 @@ proc oif_create_template { args } {
 	}
 
 #--------------------------------------------------------------------------------------------
-# generation of global area force interactions
+# generation of oif global force interactions
 	lappend template $kag
-	if { $kag == 0.0} {
-	    set start_id_of_kag_interaction -1
+	lappend template $kv
+	if { $kag == 0.0 && $kv == 0.0} {
+	    set start_id_of_global_interaction -1
 	    set gl_area -1
+	    set gl_volume -1
 	} else {
-	    set start_id_of_kag_interaction $oif_first_inter_id
+	    set start_id_of_global_interaction $oif_first_inter_id
 	}
-	lappend template $start_id_of_kag_interaction
+	lappend template $start_id_of_global_interaction
 
-	if {$kag != 0.0} {
+	if {$kag != 0.0 || $kv != 0.0} {
 	    
 	    if {$check_output == 1} { 
 	       	set fpart [open $bondAglobal "w"]
 	    }
 	    
-	    puts "generating global area force interactions"
-	    set n_globalAreaInter 1
-	    set oif_first_inter_id [expr $oif_first_inter_id + $n_globalAreaInter]
+	    puts "generating global force interactions"
+	    set n_globalInter 1
+	    set oif_first_inter_id [expr $oif_first_inter_id + $n_globalInter]
 
 	    set area 0.0
 	    set gl_area 0.0
 
-	    for {set i 0} {$i < $mesh_ntriangles} {incr i} {
-		for {set k 0} {$k < 3} {incr k} {
-		    list P1
-		    lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
-		    list P2
-		    lappend P2 $mesh_nodes($mesh_triangles($i,1),$k)
-		    list P3
-		    lappend P3 $mesh_nodes($mesh_triangles($i,2),$k)
-		}
-		set area [area_triangle P1 P2 P3]
-		# to replace lists with empty lists so they do not grow
-		set P1 [lreplace $P1 0 2]
-		set P2 [lreplace $P2 0 2]
-		set P3 [lreplace $P3 0 2]
-		set gl_area [expr $gl_area + $area]
+	    set VOL_volume 0.0 
+	    set VOL_hz 0.0
+	    list VOL_norm
+	    set VOL_dn 0.0
+	    set VOL_drmax 0.0
+	    set VOL_drtemp 0.0
+
+
+		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
+			for {set k 0} {$k < 3} {incr k} {
+			    list P1
+			    lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
+			    list P2
+			    lappend P2 $mesh_nodes($mesh_triangles($i,1),$k)
+			    list P3
+			    lappend P3 $mesh_nodes($mesh_triangles($i,2),$k)
+			}
+			
+		# from volume
+			set P10 [lindex $P1 0]
+			set P11 [lindex $P1 1]
+			set P12 [lindex $P1 2]
+			set P20 [lindex $P2 0]
+			set P21 [lindex $P2 1]
+			set P22 [lindex $P2 2]
+			set P30 [lindex $P3 0]
+			set P31 [lindex $P3 1]
+			set P32 [lindex $P3 2]
+			set VOL_drtemp [expr sqrt(($P10 - $P20)*($P10 - $P20) + ($P11 - $P21)*($P11 - $P21) + ($P12 - $P22)*($P12 - $P22))]
+			# distance P1P2
+			if {$VOL_drmax < $VOL_drtemp} { set VOL_drmax $VOL_drtemp }
+			set VOL_drtemp [expr sqrt(($P10 - $P30)*($P10 - $P30) + ($P11 - $P31)*($P11 - $P31) + ($P12 - $P32)*($P12 - $P32))]
+			# distance P1P3
+			if {$VOL_drmax < $VOL_drtemp} { set VOL_drmax $VOL_drtemp }
+		#end from volume
+			
+			set area [area_triangle P1 P2 P3]
+			set gl_area [expr $gl_area + $area]
+		# from volume
+			get_n_triangle P1 P2 P3 VOL_norm
+			set VOL_norm0 [lindex $VOL_norm 0]
+			set VOL_norm1 [lindex $VOL_norm 1]
+			set VOL_norm2 [lindex $VOL_norm 2]
+			set VOL_dn [expr sqrt($VOL_norm0*$VOL_norm0 + $VOL_norm1*$VOL_norm1 + $VOL_norm2*$VOL_norm2)]
+			set VOL_hz [expr 1.0/3.0*($P12 + $P22 + $P32)]
+			set VOL_volume [expr $VOL_volume + $area*$VOL_norm2/$VOL_dn*$VOL_hz]
+		# from volume
+			# to replace lists with empty lists so they do not grow
+			set P1 [lreplace $P1 0 2]
+			set P2 [lreplace $P2 0 2]
+			set P3 [lreplace $P3 0 2]
 	    }
-	    inter $start_id_of_kag_interaction area_force_global $gl_area $kag
+
+
+
+	    inter $start_id_of_global_interaction oif_global_forces $gl_area $kag $VOL_volume $kv
 	    if {$check_output == 1} { 
-		puts $fpart "inter $start_id_of_kag_interaction area_force_global $gl_area $kag"
+		puts $fpart "inter $start_id_of_global_interaction oif_global_forces $gl_area $kag $VOL_volume $kv"
 		close $fpart
-	    }
-	}
-#--------------------------------------------------------------------------------------------
-# generation of volume force interactions
-	lappend template $kv
-	if { $kv == 0.0} {
-	    set start_id_of_kv_interaction -1
-	    set volume -1
-	} else {
-	    set start_id_of_kv_interaction $oif_first_inter_id
-	}
-	lappend template $start_id_of_kv_interaction
-
-	if {$kv != 0.0} {
-
-	    if {$check_output == 1} { 
-	       	set fpart [open $bondV "w"]
 	    }
 	    
-	    puts "generating volume force interactions"
-	    set n_VolumeInter 1
-	    set oif_first_inter_id [expr $oif_first_inter_id + $n_VolumeInter]
-
-	    set area 0.0
-	    set volume 0.0 
-	    set hz 0.0
-	    list norm
-	    set dn 0.0
-	    set drmax 0.0
-	    set drtemp 0.0
-
-	    for {set i 0} {$i < $mesh_ntriangles} {incr i} {
-		for {set k 0} {$k < 3} {incr k} {
-		    list P1
-		    lappend P1 $mesh_nodes($mesh_triangles($i,0),$k)
-		    list P2
-		    lappend P2 $mesh_nodes($mesh_triangles($i,1),$k)
-		    list P3
-		    lappend P3 $mesh_nodes($mesh_triangles($i,2),$k)
-		}
-		set P10 [lindex $P1 0]
-		set P11 [lindex $P1 1]
-		set P12 [lindex $P1 2]
-		set P20 [lindex $P2 0]
-		set P21 [lindex $P2 1]
-		set P22 [lindex $P2 2]
-		set P30 [lindex $P3 0]
-		set P31 [lindex $P3 1]
-		set P32 [lindex $P3 2]
-		set drtemp [expr sqrt(($P10 - $P20)*($P10 - $P20) + ($P11 - $P21)*($P11 - $P21) + ($P12 - $P22)*($P12 - $P22))]
-		# distance P1P2
-		if {$drmax < $drtemp} { set drmax $drtemp }
-		set drtemp [expr sqrt(($P10 - $P30)*($P10 - $P30) + ($P11 - $P31)*($P11 - $P31) + ($P12 - $P32)*($P12 - $P32))]
-		# distance P1P3
-		if {$drmax < $drtemp} { set drmax $drtemp }
-
-		set area [area_triangle P1 P2 P3]
-		get_n_triangle P1 P2 P3 norm
-		set norm0 [lindex $norm 0]
-		set norm1 [lindex $norm 1]
-		set norm2 [lindex $norm 2]
-		set dn [expr sqrt($norm0*$norm0 + $norm1*$norm1 + $norm2*$norm2)]
-		set hz [expr 1.0/3.0*($P12 + $P22 + $P32)]
-		set volume [expr $volume + $area*$norm2/$dn*$hz]
-
-		# to replace lists with empty lists so they do not grow
-		set P1 [lreplace $P1 0 2]
-	       	set P2 [lreplace $P2 0 2]
-		set P3 [lreplace $P3 0 2]
-	    }
-	    inter $start_id_of_kv_interaction volume_force $volume $kv
-	    if {$check_output == 1} { 
-		puts $fpart "inter $start_id_of_kv_interaction volume_force $volume $kv"
-		close $fpart
-	    }
 	}
-
 
 #--------------------------------------------------------------------------------------------
 # update global oif-variables
 	lappend template $gl_area
-	lappend template $volume
+	lappend template $VOL_volume
 	lappend oif_templates $template
 	incr oif_n_templates
 } 
@@ -1794,8 +1761,8 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # find and read the template for the given object
 
- 	# there are 15 elements in one row of oif_templates:
-	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+ 	# there are 14 elements in one row of oif_templates:
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, kv, start_id_of_global_inter, S_0, V_0
 	# get the data form oif_templates list
 	set template [lindex $oif_templates $template_id]
 
@@ -1806,8 +1773,7 @@ proc oif_add_object { args } {
 	set start_id_of_ks_interactions [lindex $template 4]
 	set start_id_of_kb_interactions [lindex $template 6]
 	set start_id_of_kal_interactions [lindex $template 8]
-	set start_id_of_kag_interactions [lindex $template 10]
-	set start_id_of_kv_interactions [lindex $template 12]
+	set start_id_of_global_interactions [lindex $template 11]
 
 	set start_id_of_particles 0
 	set start_id_of_edges 0
@@ -1847,7 +1813,7 @@ proc oif_add_object { args } {
 
 	# recover bending incidences of the given template
 	# template data:
-	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, kv, start_id_of_global_inter, S_0, V_0
 	set kb_from_template [lindex $template 5]
 
 	if { $kb_from_template != 0.0 } {
@@ -1967,7 +1933,7 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # generation of stretching force bonds:
 	# template data
-	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, kv, start_id_of_global_inter, S_0, V_0
 	set ks_from_template [lindex $template 3]
 	if { $ks_from_template != 0.0 } {
 		if {$check_output == 1} { 
@@ -1994,7 +1960,7 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # generation of bending force bonds:
 	# template data
-	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, kv, start_id_of_global_inter, S_0, V_0
 	set kb_from_template [lindex $template 5]
 	if { $kb_from_template != 0.0 } {
 		if {$check_output == 1} { 
@@ -2024,7 +1990,7 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # generation of local area force bonds
 	# template data
-	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, kv, start_id_of_global_inter, S_0, V_0
 	set kal_from_template [lindex $template 7]
 	if { $kal_from_template != 0.0 } {
 
@@ -2049,57 +2015,32 @@ proc oif_add_object { args } {
 		}
 	}
 #--------------------------------------------------------------------------------------------
-# generation of global area force bonds
+# generation of global force bonds
 	# template data
-	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, kv, start_id_of_global_inter, S_0, V_0
 	set kag_from_template [lindex $template 9]
-	if { $kag_from_template != 0.0 } {
+	set kv_from_template [lindex $template 10]
+	if { $kag_from_template != 0.0 || $kv_from_template != 0.0} {
 
 		if {$check_output == 1} { 
 		    set fpart [open $partAglobal "w"]
 	       	}
-		puts "generating global area force bonds"
-		set firstID_globalAreaInter $start_id_of_kag_interactions
-		set n_globalAreaBond 1
-		set oif_first_bond_id [expr $oif_first_bond_id + $n_globalAreaBond]
+		puts "generating global force bonds"
+		set firstID_globalInter $start_id_of_global_interactions
+		set n_globalBond 1
+		set oif_first_bond_id [expr $oif_first_bond_id + $n_globalBond]
 
 		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
 		    set firstPartId [expr $oif_first_part_id - $mesh_nnodes]
 		    if {$check_output == 1} { 
-			puts $fpart "part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_globalAreaInter [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) + $firstPartId]" 
+			puts $fpart "part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_globalInter [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) + $firstPartId]" 
 		    }
-		    part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_globalAreaInter [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) + $firstPartId]
+		    part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_globalInter [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) + $firstPartId]
 		}
 		if {$check_output == 1} { 
 		    close $fpart
 	       	}
 	}
-#--------------------------------------------------------------------------------------------
-# generation of volume force bonds
-	# template data
-	# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
-	set kv_from_template [lindex $template 11]
-	if { $kv_from_template != 0.0 } {
-		if {$check_output == 1} { 
-		    set fpart [open $partV "w"]
-	       	}
-		puts "generating volume force bonds"
-		set firstID_VolumeInter $start_id_of_kv_interactions
-		set n_VolumeBond 1
-		set oif_first_bond_id [expr $oif_first_bond_id + $n_VolumeBond]
-
-		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
-		    set firstPartId [expr $oif_first_part_id - $mesh_nnodes]
-		    if {$check_output == 1} { 
-			puts $fpart "part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_VolumeInter [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) +$firstPartId]" 
-		    }
-		    part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_VolumeInter [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) +$firstPartId]
-		}
-		if {$check_output == 1} { 
-		    close $fpart
-		}
-	}
-
 #--------------------------------------------------------------------------------------------
 # update global oif-variables
 	incr oif_n_objects

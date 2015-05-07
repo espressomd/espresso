@@ -42,7 +42,7 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double
   bonded_ia_params[bond_type].p.oif_global_forces.kv = kv;
 
   bonded_ia_params[bond_type].type = BONDED_IA_OIF_GLOBAL_FORCES;
-  bonded_ia_params[bond_type].num = 4;				
+  bonded_ia_params[bond_type].num = 2;				
  
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 

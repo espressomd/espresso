@@ -181,10 +181,6 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 	double VOL_force[3];
 	double VOL_A, VOL_norm[3], VOL_dn, VOL_vv; 
 
-	/******    !!!!!!!!!!!!!!!!!             **********************/
-	double VOL_kv = 1.0; // this is to be hardcoded into C.
-	double VOL_object_relaxed_volume = 263.811; // this is to be hardcoded into C, it is the volume of the object in relaxed shape
-	/******    !!!!!!!!!!!!!!!!!             **********************/
 	double aa, force1[3], force2[3], force3[3], rh[3], hn, h[3];
 	int k;
 	
@@ -222,7 +218,7 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 				id=p1->p.mol_id;
 				//printf("neigh=%d, type=%d type_num=%d\n", p1->bl.n-1, type, type_num);
 				//printf("id %d molType %d\n", id, molType); 
-				if(type == BONDED_IA_OIF_GLOBAL_FORCES && id == molType){ // BONDED_IA_VOLUME_FORCE with correct molType
+				if(type == BONDED_IA_OIF_GLOBAL_FORCES && id == molType){ // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
 					test++;
 					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
@@ -294,9 +290,9 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 					get_n_triangle(p11,p22,p33,VOL_norm);
 					VOL_dn=normr(VOL_norm);
 					VOL_A=area_triangle(p11,p22,p33);
-					VOL_vv=(VOL_volume - VOL_object_relaxed_volume)/VOL_object_relaxed_volume;					
+					VOL_vv=(VOL_volume - iaparams->p.oif_global_forces.V0)/iaparams->p.oif_global_forces.V0;					
 					for(k=0;k<3;k++) {
-						VOL_force[k]=VOL_kv * VOL_vv * VOL_A * VOL_norm[k]/VOL_dn * 1.0 / 3.0;
+						VOL_force[k]=iaparams->p.oif_global_forces.kv * VOL_vv * VOL_A * VOL_norm[k]/VOL_dn * 1.0 / 3.0;
 						//printf("%e ",force[k]);
 						p1->f.f[k] += VOL_force[k]; 
 						p2->f.f[k] += VOL_force[k];

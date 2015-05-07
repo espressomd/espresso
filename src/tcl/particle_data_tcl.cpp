@@ -2175,7 +2175,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
       printf("bonded_ia_params[%d].type=%d  ",type_num,bonded_ia_params[type_num].type);
       printf("n_partners=%d  ",n_partners);
       printf("argc=%d\n",argc);
-      sprintf(buffer, "bond type %d requires %d arguments.",
+      sprintf(buffer, "bond type A %d requires %d arguments.",
 	      type_num, n_partners+1);
       Tcl_AppendResult(interp, buffer, (char *) NULL);
       return TCL_ERROR;

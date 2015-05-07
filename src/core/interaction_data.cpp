@@ -737,8 +737,6 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "OIF_GLOBAL_FORCES";
   case BONDED_IA_BENDING_FORCE:
     return "BENDING_FORCE";
-  case BONDED_IA_VOLUME_FORCE:
-    return "VOLUME_FORCE";
   case BONDED_IA_STRETCHLIN_FORCE:
     return "STRETCHLIN_FORCE";
   case BONDED_IA_CG_DNA_BASEPAIR:

@@ -54,7 +54,6 @@
 #include "object-in-fluid/area_force_local.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/bending_force.hpp"
-#include "object-in-fluid/volume_force.hpp"
 #include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
@@ -260,16 +259,6 @@ inline void force_calc()
     nsq_calculate_ia();
 
   }
-
-#ifdef VOLUME_FORCE
-    double volume=0.;
-
-    for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
-        calc_volume(&volume,i);
-        if (volume<1e-100) break;
-        add_volume_force(volume,i);
-    }
-#endif
 
 #ifdef OIF_GLOBAL_FORCES
     double area_volume[2]; //There are two global quantities that need to be evaluated: object's surface and object's volume. One can add another quantity.
@@ -729,11 +718,6 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_BENDING_FORCE:
       bond_broken = calc_bending_force(p1, p2, p3, p4, iaparams, force, force2);
       break;
-#ifdef VOLUME_FORCE
-    case BONDED_IA_VOLUME_FORCE:
-      bond_broken = 0;
-      break;
-#endif
       
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
@@ -931,10 +915,6 @@ inline void add_bonded_force(Particle *p1)
 	  break;
 #ifdef OIF_GLOBAL_FORCES
 	case BONDED_IA_OIF_GLOBAL_FORCES:
-	  break;
-#endif
-#ifdef VOLUME_FORCE
-	case BONDED_IA_VOLUME_FORCE:
 	  break;
 #endif
 	default:

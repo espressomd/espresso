@@ -91,14 +91,6 @@ cdef extern from "interaction_data.hpp":
   ctypedef struct Bending_force_bond_parameters:
     double phi0
     double kb
- 
-
-#* Parameters for volume_force */
-  ctypedef struct Volume_force_bond_parameters:
-    double V0
-    double kv
- 
-    
     
 #* Parameters for harmonic bond Potential */
   ctypedef struct Harmonic_bond_parameters:
@@ -219,7 +211,6 @@ cdef extern from "interaction_data.hpp":
     Area_force_local_bond_parameters area_force_local #
     Oif_global_forces_bond_parameters oif_global_forces #
     Bending_force_bond_parameters bending_force #
-    Volume_force_bond_parameters volume_force #
     Harmonic_bond_parameters harmonic #
     Angle_bond_parameters angle
     Angle_harmonic_bond_parameters angle_harmonic #
@@ -265,8 +256,6 @@ cdef extern from "object-in-fluid/area_force_local.hpp":
   int area_force_local_set_params(int bond_type, double A0_l, double ka_l)
 cdef extern from "object-in-fluid/bending_force.hpp":
   int bending_force_set_params(int bond_type, double phi0, double kb)
-cdef extern from "object-in-fluid/volume_force.hpp":
-  int volume_force_set_params(int bond_type, double V0, double kv)
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
   int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/stretchlin_force.hpp":

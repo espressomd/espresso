@@ -154,7 +154,6 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
-	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp \
 	hydrogen_bond.cpp hydrogen_bond.hpp \
 	twist_stack.cpp twist_stack.hpp
 

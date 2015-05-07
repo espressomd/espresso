@@ -776,31 +776,6 @@ class Bending_Force(BondedInteraction):
     bending_force_set_params(self._bondId,self._params["phi0"],self._params["kb"])
    
    
-class Volume_Force(BondedInteraction):
-  def typeNumber(self):
-    return 19
-
-  def typeName(self): 
-    return "VOLUME_FORCE"
-
-  def validKeys(self):
-    return "V0", "kv"
-
-  def requiredKeys(self): 
-    return "V0", "kv"
-
-  def setDefaultParams(self):
-    self._params = {"V0":1., "kv":0} 
-
-  def _getParamsFromEsCore(self):
-    return \
-      {"V0":bonded_ia_params[self._bondId].p.volume_force.V0,\
-       "kv":bonded_ia_params[self._bondId].p.volume_force.kv}
-
-  def _setParamsInEsCore(self):
-    volume_force_set_params(self._bondId,self._params["V0"],self._params["kv"])
-   
-   
 class Oif_Global_Forces(BondedInteraction):
   def typeNumber(self):
     return 20
@@ -858,7 +833,7 @@ class Stretchlin_Force(BondedInteraction):
 bondedInteractionClasses = {0:FeneBond, 1:HarmonicBond, 5:Dihedral, 6:Tabulated, 7:Subt_Lj,\
     9:Virtual, 11:Endangledist, 12:Overlapped,\
     13:Angle_Harmonic, 14:Angle_Cosine, 15:Angle_Cossquare, 16:Stretching_Force, 17:Area_Force_Local,\
-    18:Bending_Force, 19:Volume_Force, 20:Oif_Global_Forces, 21:Stretchlin_Force}
+    18:Bending_Force, 20:Oif_Global_Forces, 21:Stretchlin_Force}
 
 
 
