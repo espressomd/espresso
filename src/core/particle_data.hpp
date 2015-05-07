@@ -51,6 +51,8 @@
 #define COORD_FIXED(coord) (2L << coord)
 /** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether any of the coordinates is fixed. */
 #define COORDS_FIX_MASK     (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
+/** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether all of the coordinates are fixed. */
+#define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
 /** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external torque. */
@@ -139,6 +141,19 @@ typedef struct {
   int catalyzer_count;
 #endif
 
+#ifdef MULTI_TIMESTEP
+  /** does the particle need a small timestep? 
+   * 1= yes
+   * 0 = no (default) */
+  int smaller_timestep;
+#endif
+
+#ifdef CONFIGTEMP
+  /** is the particle included in the configurational temperature?
+  * 1 = yes
+  * 0 = no (Default) */
+  int configtemp;
+#endif
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space.
       Values:
@@ -532,6 +547,23 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 int set_particle_rotation(int part, int rot);
 #endif
 
+#ifdef MULTI_TIMESTEP
+/** Call only on the master node: set particle smaller time step flag.
+    @param part the particle.
+    @param small_timestep its new smaller time step.
+    @return TCL_OK if particle existed
+*/
+int set_particle_smaller_timestep(int part,int small_timestep);
+#endif
+
+#ifdef CONFIGTEMP
+/** Call only on the master node: include particle in configurational T.
+    @param part the particle.
+    @param configtemp flag for configurational temperature inclusion.
+    @return TCL_OK if particle existed
+*/
+int set_particle_configtemp(int part, int configtemp);
+#endif
 
 /** Call only on the master node: set particle charge.
     @param part the particle.

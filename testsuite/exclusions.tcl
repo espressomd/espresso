@@ -26,6 +26,7 @@
 source "tests_common.tcl"
 
 require_feature "EXCLUSIONS"
+require_feature "LENNARD_JONES"
 if {[has_feature "LEES_EDWARDS"]} {
     require_max_nodes_per_side 2
 }

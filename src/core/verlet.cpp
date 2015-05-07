@@ -129,27 +129,27 @@ void build_verlet_lists()
 
       /* no interaction set, Verlet list stays empty */
       if (max_cut_nonbonded == 0.0)
-	continue;
+        continue;
 
       /* Loop cell particles */
       for(i=0; i < np1; i++) {
-	j_start = 0;
-	/* Tasks within cell: store old position, avoid double counting */
-	if(n == 0) {
-	   memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
-	   j_start = i+1;
-	}
-	/* Loop neighbor cell particles */
-	for(j = j_start; j < np2; j++) {
+        j_start = 0;
+        /* Tasks within cell: store old position, avoid double counting */
+        if(n == 0) {
+           memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+           j_start = i+1;
+        }
+        /* Loop neighbor cell particles */
+        for(j = j_start; j < np2; j++) {
 #ifdef EXCLUSIONS
           if(do_nonbonded(&p1[i], &p2[j]))
 #endif
-	  {
-	    dist2 = distance2(p1[i].r.p, p2[j].r.p);
-	    if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin))
-	      add_pair(pl, &p1[i], &p2[j]);
-	  }
-	}
+          {
+            dist2 = distance2(p1[i].r.p, p2[j].r.p);
+            if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin))
+              add_pair(pl, &p1[i], &p2[j]);
+          }
+        }
       }
       resize_verlet_list(pl);
       VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d particles\n",this_node,n,pl->n));
@@ -176,11 +176,16 @@ void calculate_verlet_ia()
     np  = cell->n;
     /* calculate bonded interactions (loop local particles) */
     for(i = 0; i < np; i++)  {
-      add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-      add_constraints_forces(&p1[i]);
+#ifdef MULTI_TIMESTEP
+      if (p1[i].p.smaller_timestep==current_time_step_is_small || smaller_time_step < 0.)
 #endif
-      add_external_potential_forces(&p1[i]);
+      {
+        add_bonded_force(&p1[i]);
+#ifdef CONSTRAINTS
+        add_constraints_forces(&p1[i]);
+#endif
+        add_external_potential_forces(&p1[i]);
+      }
     }
 
     /* Loop cell neighbors */
@@ -189,10 +194,17 @@ void calculate_verlet_ia()
       np    = dd.cell_inter[c].nList[n].vList.n;
       /* verlet list loop */
       for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    /* pointer to particle 1 */
-	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
-	add_non_bonded_pair_force(p1, p2, vec21, sqrt(dist2), dist2);
+        p1 = pairs[i];                    /* pointer to particle 1 */
+        p2 = pairs[i+1];                  /* pointer to particle 2 */
+#ifdef MULTI_TIMESTEP
+        if (smaller_time_step < 0. 
+            || (p1->p.smaller_timestep==0 && p2->p.smaller_timestep==0 && current_time_step_is_small==0)
+            || (!(p1->p.smaller_timestep==0 && p2->p.smaller_timestep==0) && current_time_step_is_small==1))
+#endif 
+        {
+          dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
+          add_non_bonded_pair_force(p1, p2, vec21, sqrt(dist2), dist2);
+        }
       }
     }
   }
@@ -237,42 +249,53 @@ void build_verlet_lists_and_calc_verlet_ia()
       pl->n = 0;
       /* Loop cell particles */
       for(i=0; i < np1; i++) {
-	j_start = 0;
-	/* Tasks within cell: bonded forces, store old position, avoid double counting */
-	if(n == 0) {
-	  add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-	  add_constraints_forces(&p1[i]);
+        j_start = 0;
+        /* Tasks within cell: bonded forces, store old position, avoid double counting */
+        if(n == 0) {
+#ifdef MULTI_TIMESTEP
+          if (p1[i].p.smaller_timestep==current_time_step_is_small || smaller_time_step < 0.)
 #endif
-    add_external_potential_forces(&p1[i]);
-	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
-	  j_start = i+1;
-	}
-	
-	/* no interaction set, no need for particle pairs */
-	if (max_cut_nonbonded == 0.0)
-	  continue;
+          {
+            add_bonded_force(&p1[i]);
+#ifdef CONSTRAINTS
+            add_constraints_forces(&p1[i]);
+#endif
+            add_external_potential_forces(&p1[i]);
+            memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+            j_start = i+1;
+          }
+        }
+        
+        /* no interaction set, no need for particle pairs */
+        if (max_cut_nonbonded == 0.0)
+          continue;
 
-	/* Loop neighbor cell particles */
-	for(j = j_start; j < np2; j++) {
+        /* Loop neighbor cell particles */
+        for(j = j_start; j < np2; j++) {
 #ifdef EXCLUSIONS
           if(do_nonbonded(&p1[i], &p2[j]))
 #endif
-	  {
-	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
+          {
+          dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 
-	  VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
+          VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
 
-	  if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
-	    ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
-	    ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
-
-	    add_pair(pl, &p1[i], &p2[j]);
-	    /* calc non bonded interactions */
-	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-	  }
-	 }
-	}
+          if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
+            ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
+            ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
+            add_pair(pl, &p1[i], &p2[j]);
+#ifdef MULTI_TIMESTEP
+      if (smaller_time_step < 0.
+        || (p1[i].p.smaller_timestep==0 && p2[j].p.smaller_timestep==0 && current_time_step_is_small==0)
+        || (!(p1[i].p.smaller_timestep==0 && p2[j].p.smaller_timestep==0) && current_time_step_is_small==1))
+#endif      
+      {
+              /* calc non bonded interactions */
+              add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+      }
+          }
+         }
+        }
       }
       resize_verlet_list(pl);
       VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d pairs\n",this_node,n,pl->n));
@@ -324,11 +347,11 @@ void calculate_verlet_energies()
 
       /* verlet list loop */
       for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    /* pointer to particle 1 */
-	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
-	VERLET_TRACE(fprintf(stderr, "%d: %d <-> %d: dist2 dist2\n",this_node,p1->p.identity,p2->p.identity));
-	add_non_bonded_pair_energy(p1, p2, vec21, sqrt(dist2), dist2);
+        p1 = pairs[i];                    /* pointer to particle 1 */
+        p2 = pairs[i+1];                  /* pointer to particle 2 */
+        dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
+        VERLET_TRACE(fprintf(stderr, "%d: %d <-> %d: dist2 dist2\n",this_node,p1->p.identity,p2->p.identity));
+        add_non_bonded_pair_energy(p1, p2, vec21, sqrt(dist2), dist2);
       }
     }
   }
@@ -375,10 +398,10 @@ void calculate_verlet_virials(int v_comp)
 
       /* verlet list loop */
       for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    /* pointer to particle 1 */
-	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
-	add_non_bonded_pair_virials(p1, p2, vec21, sqrt(dist2), dist2);
+        p1 = pairs[i];                    /* pointer to particle 1 */
+        p2 = pairs[i+1];                  /* pointer to particle 2 */
+        dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
+        add_non_bonded_pair_virials(p1, p2, vec21, sqrt(dist2), dist2);
       }
     }
   }

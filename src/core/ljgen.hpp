@@ -77,9 +77,22 @@ inline void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_p
       for(j=0;j<3;j++)
 	force[j] += fac * d[j];
       
+      
+
 #ifdef LJ_WARN_WHEN_CLOSE
       if(fac*dist > 1000) fprintf(stderr,"%d: LJ-Gen-Warning: Pair (%d-%d) force=%f dist=%f\n",
 				  this_node,p1->p.identity,p2->p.identity,fac*dist,dist);
+#endif
+
+#ifdef CONFIGTEMP
+      extern double configtemp[2];
+      int numfac = 0;
+      if (p1->p.configtemp) numfac+=1;
+      if (p2->p.configtemp) numfac+=1;
+      configtemp[0] += numfac*SQR(ia_params->LJGEN_eps * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+        - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2)) / r_off);
+      configtemp[1] += numfac* ia_params->LJGEN_eps * (-ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * (ia_params->LJGEN_a1-1) * pow(frac, ia_params->LJGEN_a1) 
+        + ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * (ia_params->LJGEN_a2-1) * pow(frac, ia_params->LJGEN_a2)) / (SQR(r_off));
 #endif
     }
     /* capped part of lj potential. */

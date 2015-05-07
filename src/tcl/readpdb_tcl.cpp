@@ -41,6 +41,7 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
   bool fit = false;
   bool lj_internal = false;
   double lj_rel_cutoff = 2.5;
+  bool lj_diagonal = false;
 
   std::vector<PdbLJInteraction> ljinteractions;
 
@@ -87,6 +88,10 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
       fit = true;
     } else if (ARG0_IS_S("lj_internal")) {
       lj_internal = true;
+      lj_diagonal = false;
+    } else if (ARG0_IS_S("lj_diagonal")) {
+      lj_internal = true;
+      lj_diagonal = true;
     } else if (ARG0_IS_S("lj_with")) {
       argc--;
       argv++;
@@ -119,7 +124,7 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
     usage(interp);
     return TCL_ERROR;
   }
-  const int n_part = pdb_add_particles_from_file(pdb_file, first_id, type, ljinteractions, lj_rel_cutoff, itp_file, first_type, fit, lj_internal);
+  const int n_part = pdb_add_particles_from_file(pdb_file, first_id, type, ljinteractions, lj_rel_cutoff, itp_file, first_type, fit, lj_internal, lj_diagonal);
   if(!n_part) {
     Tcl_AppendResult(interp, "Could not parse pdb file.", (char *)NULL);
     return TCL_ERROR;

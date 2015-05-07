@@ -243,6 +243,7 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
 	     ARG0_IS_S("subt_lj_fene") ||
 	     ARG0_IS_S("subt_lj") ||
 	     ARG0_IS_S("harmonic") ||
+       ARG0_IS_S("umbrella") ||
 	     ARG0_IS_S("endangledist")) {
       if(argc<2 || ! ARG1_IS_I(i)) {
 	Tcl_ResetResult(interp);
@@ -263,6 +264,7 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
              ARG0_IS_S("soft-sphere") ||
 	     ARG0_IS_S("lj-cos") ||
 	     ARG0_IS_S("lj-cos2") ||
+       ARG0_IS_S("cos2") ||
 	     ARG0_IS_S("tabulated") ||
 	     ARG0_IS_S("gb")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {

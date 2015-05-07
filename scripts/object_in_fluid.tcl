@@ -776,7 +776,7 @@ proc oif_create_template { args } {
 	if { $template_id == -1 } { set mandatory 0 }
 
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for template creator"  
+		puts "error in oif_create_template: mandatory argument(s) missing"  
 		return
 	}
 
@@ -1734,7 +1734,7 @@ proc oif_add_object { args } {
 				incr pos
 			}
 			default { 
-				puts "error in oif_add_object: incorrect option" 
+				puts "error in oif_add_object: unknown keyword" 
 				set pos $n_args
 			}
 		}  
@@ -1750,7 +1750,7 @@ proc oif_add_object { args } {
 	if { $object_id == "-1" } { set mandatory 0 }
 
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for creating object" 
+		puts "error in oif_add_object: mandatory argument(s) missing" 
 		return
 	}
 
@@ -2189,7 +2189,7 @@ proc oif_template_change { args } {
 				incr pos
 			}
 			default { 
-				puts "error: unknown keyword for oif_template_change" 
+				puts "error in oif_template_change: unknown keyword" 
 				set pos $n_args
 			}
 		}  
@@ -2200,7 +2200,7 @@ proc oif_template_change { args } {
 	if { $template_id == -1 } { set mandatory 0 }
 
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for oif_template_change" 
+		puts "error in oif_template_change: mandatory argument(s) missing" 
 		return
 	}
 	
@@ -2369,19 +2369,19 @@ proc oif_object_set { args } {
 			"force" {
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_object_set: force should be a 3d vector"
 					break
 				}
 				set forceX [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_object_set: force should be a 3d vector"
 					break
 				}
 				set forceY [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_object_set: force should be a 3d vector"
 					break
 				}
 				set forceZ [lindex $args $pos]
@@ -2391,19 +2391,19 @@ proc oif_object_set { args } {
 			"velocity" {
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_object_set: velocity should be a 3d vector"
 					break
 				}
 				set velX [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_object_set: velocity should be a 3d vector"
 					break
 				}
 				set velY [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_object_set: velocity should be a 3d vector"
 					break
 				}
 				set velZ [lindex $args $pos]
@@ -2413,19 +2413,19 @@ proc oif_object_set { args } {
 			"origin" {
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_object_set: origin should be a 3d vector"
 					break
 				}
 				set originX [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_object_set: origin should be a 3d vector"
 					break
 				}
 				set originY [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_object_set: origin should be a 3d vector"
 					break
 				}
 				set originZ [lindex $args $pos]
@@ -2435,7 +2435,7 @@ proc oif_object_set { args } {
 			"mesh-nodes" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_object_set: mesh-nodes file missing"
 					break
 				}
 				set mesh_nodes_file [lindex $args $pos]
@@ -2452,14 +2452,14 @@ proc oif_object_set { args } {
 			"object-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_object_set: object-id missing"
 					break
 				}
 				set objectID [lindex $args $pos]
 				incr pos
 			}
 			default { 
-				puts "error s" 
+				puts "error in oif_object_set: incorrect keyword" 
 				set pos $n_args
 			}
 		}  
@@ -2470,7 +2470,7 @@ proc oif_object_set { args } {
 	if { $objectID == -1 } { set mandatory 0 }
 
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for oif_object_set" 
+		puts "error in oif_object_set: mandatory argument(s) missing" 
 		return
 	}
 
@@ -2674,7 +2674,7 @@ proc oif_object_output { args } {
 	if { $objectID == -1 } { set mandatory 0 }
 
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for oif_object_output" 
+		puts "error in oif_object_output: missing mandatory arguments" 
 		return
 	}
 
@@ -2819,7 +2819,6 @@ proc oif_object_output { args } {
 
 }
 
-
 proc oif_object_analyze { args } {
 	# access global variables 
 	global oif_n_objects
@@ -2932,7 +2931,7 @@ proc oif_object_analyze { args } {
 				incr pos
 			}
 			default { 
-				puts "error in reading the arguments of oif_object_analyze" 
+				puts "error in oif_object_analyze: incorrect keyword" 
 				set pos $n_args
 			}
 		}  
@@ -2943,7 +2942,7 @@ proc oif_object_analyze { args } {
 	if { $objectID == -1 } { set mandatory 0 }
 
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for oif_object_analyze" 
+		puts "error in oif_object_analyze: mandatory argument(s) missing" 
 		return
 	}
 
@@ -4137,7 +4136,7 @@ proc oif_mesh_analyze { args } {
 			"nodes-file" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_mesh_analyze: nodes-file missing"
 					break
 				}
 				set mesh_nodes_file [lindex $args $pos]
@@ -4146,7 +4145,7 @@ proc oif_mesh_analyze { args } {
 			"triangles-file" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_mesh_analyze: triangles-file missing"
 					break
 				}
 				set mesh_triangles_file [lindex $args $pos]
@@ -4159,14 +4158,14 @@ proc oif_mesh_analyze { args } {
 			"repair" {
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_mesh_analyze: output file for repaired triangulation missing"
 					break
 				}
 				set repair 1
 				set corr_file [lindex $args $pos]
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_mesh_analyze: method id for repair missing"
 					break
 				}
 				set method [lindex $args $pos]
@@ -4175,7 +4174,7 @@ proc oif_mesh_analyze { args } {
 			"flip" {
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_mesh_analyze: output file for flipped triangulation missing"
 					break
 				}
 				set corr_file [lindex $args $pos]
@@ -4185,7 +4184,7 @@ proc oif_mesh_analyze { args } {
 			"shift-node-ids" {
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error"
+					puts "error in oif_mesh_analyze: output file for shifted nodes missing"
 					break
 				}
 				set corr_file [lindex $args $pos]
@@ -4193,7 +4192,7 @@ proc oif_mesh_analyze { args } {
 				incr pos
 			}
 			default { 
-				puts "oif_mesh_analyze: unknown or missing keyword" 
+				puts "error in oif_mesh_analyze: incorrect keyword" 
 				set pos $n_args
 			}
 		}  
@@ -4205,7 +4204,7 @@ proc oif_mesh_analyze { args } {
 	if { $mesh_triangles_file == "" } { set mandatory 0 }
 
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for oif_check_mesh" 
+		puts "error in oif_mesh_analyze: mandatory argument(s) missing" 
 		return
 	}
 
@@ -4280,7 +4279,7 @@ proc oif_mesh_analyze { args } {
 			#set tmp_res [expr $origin_X*$norm0 + $origin_Y*$norm1 + $origin_Z*$norm2 + $tmp_d]
 #			puts "tmp_d: $tmp_d"
 			if { $tmp_d >= 0 } {
-				puts "something is wrong with the orientation of the triangles!!! at line $i"
+				puts "wrong orientation of triangle at line $i"
 			}
 			set P1 [lreplace $P1 0 2]
 			set P2 [lreplace $P2 0 2]
@@ -4407,10 +4406,6 @@ proc oif_mesh_analyze { args } {
 	
 }
 
-
-
-
-
 proc oif_obj_obj_interactions { args } {
 	# access global variables
 	global oif_n_objects
@@ -4428,10 +4423,10 @@ proc oif_obj_obj_interactions { args } {
 	foreach arg $args {
 		incr n_args
     }
-	#if { $n_args == 0 } {
-		#puts "Mandatory arguments are: object's ID" ;# TODO dopisat hlasku
-		#return 0
-	#}
+	if { $n_args == 0 } {
+		puts "oif_obj_obj_interactions: Mandatory arguments are: cut-off value" 
+		return 0
+	}
 
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
@@ -4442,7 +4437,7 @@ proc oif_obj_obj_interactions { args } {
 			"cut-off" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_obj_obj_interactions: missing cut-off value"
 					break
 				}
 				set cut_off [lindex $args $pos]
@@ -4451,15 +4446,14 @@ proc oif_obj_obj_interactions { args } {
 			"output-file" {  
 				incr pos
 				if { $pos >= $n_args } { 
-					puts "error 4"
+					puts "error in oif_obj_obj_interactions: missing output filename"
 					break
 				}
 				set output_file [lindex $args $pos]
 				incr pos
 			}
-
 			default { 
-				puts "error s" 
+				puts "error in oif_obj_obj_interactions: incorrect keyword" 
 				set pos $n_args
 			}
 		}  
@@ -4470,7 +4464,7 @@ proc oif_obj_obj_interactions { args } {
 	if { $cut_off == -1 } { set mandatory 0 }
 
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for print_oif_object" 
+		puts "error in oif_obj_obj_interactions: mandatory argument(s) missing" 
 		return
 	}
 # gets coordinates of all objects
@@ -4482,7 +4476,7 @@ proc oif_obj_obj_interactions { args } {
 		
 	}
 #set pairwise distances between all objects
-	puts "setting pairwise"
+	puts "setting pairwise distances between objects"
 	set min_dist 1000000
 	for { set objA 0 } { $objA < [expr $oif_n_objects ] } {incr objA } {
 		for { set objB [expr $objA + 1] } { $objB < [expr $oif_n_objects] } {incr objB } {
@@ -4496,7 +4490,7 @@ proc oif_obj_obj_interactions { args } {
 	}
 	
 	if {$output_file != "" } {
-		puts "printing pairwise"
+		puts "saving pairwise distances into file"
 		set fout [open $output_file w]
 		for { set objA 0 } { $objA < [expr $oif_n_objects ] } {incr objA } {
 			for { set objB [expr $objA + 1] } { $objB < [expr $oif_n_objects ] } {incr objB } {
@@ -4530,7 +4524,7 @@ proc oif_obj_obj_interactions { args } {
 		}
 	}
 	
-	puts "Zoznam:"
+	puts "After:"
 	puts "$oif_object_object_interactions"
 
 	foreach line $oif_object_object_interactions {
@@ -4553,7 +4547,4 @@ proc oif_obj_obj_interactions { args } {
 		puts $fout "All possible pairwise interactions: [expr $oif_n_objects * ($oif_n_objects - 1)/2]"
 		close $fout
 	}
-
 }
-
-

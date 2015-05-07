@@ -33,6 +33,7 @@
 /************************************************************/
 /*@{*/
 
+
 enum BondedInteraction{
     /** This bonded interaction was not set. */
     BONDED_IA_NONE = -1,
@@ -41,6 +42,10 @@ enum BondedInteraction{
     BONDED_IA_FENE,
     /** Type of bonded interaction is a HARMONIC potential. */
     BONDED_IA_HARMONIC,
+#ifdef ROTATION
+    /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
+    BONDED_IA_HARMONIC_DUMBBELL,
+#endif
     /** Type of bonded interaction is a QUARTIC potential. */
     BONDED_IA_QUARTIC,
     /** Type of bonded interaction is a BONDED_COULOMB */
@@ -83,12 +88,20 @@ enum BondedInteraction{
     BONDED_IA_AREA_FORCE_GLOBAL,
     /** Type of bonded interaction is a linear stretching force. */
     BONDED_IA_STRETCHLIN_FORCE,
+    /** Type of bonded interaction for cg DNA */
+    BONDED_IA_CG_DNA_BASEPAIR,
+    /** Type of bonded interaction for cg DNA */
+    BONDED_IA_CG_DNA_STACKING,
+    /** Type of bonded interaction for cg DNA */
+    BONDED_IA_CG_DNA_BACKBONE,
     /** Type of bonded interaction is a wall repulsion (immersed boundary). */
     BONDED_IA_IBM_TRIEL,
     /** Type of bonded interaction is volume conservation force (immersed boundary). */
     BONDED_IA_IBM_VOLUME_CONSERVATION,
     /** Type of bonded interaction is bending force (immersed boundary). */
-    BONDED_IA_IBM_TRIBEND
+    BONDED_IA_IBM_TRIBEND,
+    /** Type of bonded interaction is umbrella. */
+    BONDED_IA_UMBRELLA
 };
 
 /** Specify tabulated bonded interactions  */
@@ -202,7 +215,9 @@ enum ConstraintApplied{
 /** slitpore constraint applied */
     CONSTRAINT_SLITPORE,
 /** Constraint for a hollow cone boundary */
-    CONSTRAINT_HOLLOW_CONE
+    CONSTRAINT_HOLLOW_CONE,
+/** Constraint for spherocylinder boundary */
+    CONSTRAINT_SPHEROCYLINDER
 };
 /*@}*/
 
@@ -395,6 +410,16 @@ typedef struct {
   double LJCOS2_capradius;
   /*@}*/
 #endif
+
+#ifdef COS2
+  /** \name Cos2 potential */
+  /*@{*/
+  double COS2_eps;
+  double COS2_cut;
+  double COS2_offset;
+  double COS2_w;
+  /*@}*/
+#endif
   
 #ifdef GAY_BERNE
   /** \name Gay-Berne potential */
@@ -533,13 +558,43 @@ r0 - equilibrium bond length.
 drmax2 - square of drmax (internal parameter). 
 */
 typedef struct {
-      double k;
-      double drmax;
-      double r0;
-      double drmax2;
-      double drmax2i;
-    } Fene_bond_parameters;
+  double k;
+  double drmax;
+  double r0;
+  double drmax2;
+  double drmax2i;
+} Fene_bond_parameters;
 
+#ifdef HYDROGEN_BOND
+    /** Parameters for the cg_dna potential
+	Insert documentation here.
+    **/
+typedef struct {
+      double r0;
+      double alpha;
+      double E0;
+      double kd;
+      double sigma1;
+      double sigma2;
+      double psi10;
+      double psi20;
+      /* Parameters for the sugar base interaction */
+      double E0sb;
+      double r0sb;
+      double alphasb;
+      double f2;
+      double f3;
+    } Cg_dna_basepair_parameters;
+#endif
+#ifdef TWIST_STACK
+typedef struct {
+      double rm;
+      double epsilon;
+      double ref_pot;
+      double a[8];
+      double b[7];
+    } Cg_dna_stacking_parameters;
+#endif
 
 /** Parameters for hyperelastic stretching_force */
 typedef struct {
@@ -584,6 +639,16 @@ typedef struct {
       double r;
       double r_cut;
 } Harmonic_bond_parameters;
+
+#ifdef ROTATION
+/** Parameters for harmonic dumbbell bond Potential */
+typedef struct {
+      double k1;
+      double k2;
+      double r;
+      double r_cut;
+} Harmonic_dumbbell_bond_parameters;
+#endif
 
 /** Parameters for quartic bond Potential */
 typedef struct {
@@ -671,6 +736,14 @@ typedef struct {
       double *para_c;
 } Overlap_bond_parameters;
 
+#ifdef UMBRELLA
+    /** Parameters for umbrella potential */
+typedef struct {
+      double k;
+      int    dir;
+      double r;
+} Umbrella_bond_parameters;
+#endif
 
 /** Dummy parameters for -LJ Potential */
 typedef struct {
@@ -782,6 +855,9 @@ typedef union {
     Bending_force_bond_parameters bending_force;
     Volume_force_bond_parameters volume_force;
     Harmonic_bond_parameters harmonic;
+#ifdef ROTATION
+    Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
+#endif
     Quartic_bond_parameters quartic;
     Bonded_coulomb_bond_parameters bonded_coulomb;
     Angle_bond_parameters angle;
@@ -791,9 +867,18 @@ typedef union {
     Dihedral_bond_parameters dihedral;
     Tabulated_bond_parameters tab;
     Overlap_bond_parameters overlap;
+#ifdef UMBRELLA
+    Umbrella_bond_parameters umbrella;
+#endif
     Subt_lj_bond_parameters subt_lj;
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
+#if defined(CG_DNA) || defined(HYDROGEN_BOND)
+    Cg_dna_basepair_parameters hydrogen_bond;
+#endif
+#if defined(CG_DNA) || defined(TWIST_STACK)
+    Cg_dna_stacking_parameters twist_stack;
+#endif
     Endangledist_bond_parameters endangledist;
     IBM_Triel_Parameters ibm_triel;
     IBM_VolCons_Parameters ibmVolConsParameters;
@@ -857,6 +942,23 @@ typedef struct {
   int penetrable; 
   int reflecting;
 } Constraint_cylinder;
+
+/** Parameters for a SPHEROCYLINDER constraint. */
+typedef struct {
+  /** center of the cylinder. */
+  double pos[3];
+  /** Axis of the cylinder .*/
+  double axis[3];
+  /** cylinder radius. */
+  double rad;
+  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  double length;
+  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
+  double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
+  int reflecting;
+} Constraint_spherocylinder;
 
 /** Parameters for a RHOMBOID constraint. */
 typedef struct {
@@ -1035,6 +1137,7 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_spherocylinder spherocyl;
     Constraint_rhomboid rhomboid;
     Constraint_rod rod;
     Constraint_plate plate;
