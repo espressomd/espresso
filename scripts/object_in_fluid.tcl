@@ -743,7 +743,7 @@ proc oif_create_template { args } {
 				set stretch_Z [lindex $args $pos]
 				incr pos
 			}
-		        "check" {  
+		    "check" {  
 				incr pos
 				if { $pos >= $n_args } { 
 					puts "error in oif_create_template: missing value for check_output"
@@ -752,7 +752,7 @@ proc oif_create_template { args } {
 				set check_output [lindex $args $pos]
 				incr pos
 			}
-		        "template-id" {  
+	        "template-id" {  
 				incr pos
 				if { $pos >= $n_args } { 
 					puts "error in oif_create_template: missing template id"
