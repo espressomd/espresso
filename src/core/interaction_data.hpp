@@ -85,7 +85,7 @@ enum BondedInteraction{
     /** Type of bonded interaction is a bending force. */
     BONDED_IA_VOLUME_FORCE,
     /** Type of bonded interaction is a global area force. */
-    BONDED_IA_AREA_FORCE_GLOBAL,
+    BONDED_IA_OIF_GLOBAL_FORCES,
     /** Type of bonded interaction is a linear stretching force. */
     BONDED_IA_STRETCHLIN_FORCE,
     /** Type of bonded interaction for cg DNA */
@@ -614,11 +614,13 @@ typedef struct {
   double A0_l;
   double ka_l;
 } Area_force_local_bond_parameters;
-/** Parameters for area_force_global */
+/** Parameters for oif_global_forces */
 typedef struct {
   double A0_g;
   double ka_g;
-} Area_force_global_bond_parameters;
+  double V0;
+  double kv;
+} Oif_global_forces_bond_parameters;
 
 /** Parameters for bending_force */
 typedef struct {
@@ -851,7 +853,7 @@ typedef union {
     Stretchlin_force_bond_parameters stretchlin_force;
     Stretching_force_bond_parameters stretching_force;
     Area_force_local_bond_parameters area_force_local;
-    Area_force_global_bond_parameters area_force_global;
+    Oif_global_forces_bond_parameters oif_global_forces;
     Bending_force_bond_parameters bending_force;
     Volume_force_bond_parameters volume_force;
     Harmonic_bond_parameters harmonic;

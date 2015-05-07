@@ -28,7 +28,7 @@
 #include "object-in-fluid/stretching_force.hpp"
 #include "object-in-fluid/stretchlin_force.hpp"
 #include "object-in-fluid/area_force_local.hpp"
-#include "object-in-fluid/area_force_global.hpp"
+#include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/bending_force.hpp"
 #include "object-in-fluid/volume_force.hpp"
 #include "dihedral.hpp"

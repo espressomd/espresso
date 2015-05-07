@@ -99,7 +99,7 @@
 #include "subt_lj_tcl.hpp"
 #include "umbrella_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
-#include "tcl/object-in-fluid/area_force_global_tcl.hpp"
+#include "tcl/object-in-fluid/oif_global_forces_tcl.hpp"
 #include "tcl/object-in-fluid/volume_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretching_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
@@ -336,9 +336,9 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 	return tclprint_to_result_areaforcelocalIA(interp, params);
   case BONDED_IA_BENDING_FORCE:						
 	return tclprint_to_result_bendingforceIA(interp, params);
-#ifdef AREA_FORCE_GLOBAL
-  case BONDED_IA_AREA_FORCE_GLOBAL:						
-	return tclprint_to_result_areaforceglobalIA(interp, params);
+#ifdef OIF_GLOBAL_FORCES
+  case BONDED_IA_OIF_GLOBAL_FORCES:						
+	return tclprint_to_result_oifglobalforcesIA(interp, params);
 #endif
 #ifdef VOLUME_FORCE
   case BONDED_IA_VOLUME_FORCE:						
@@ -964,8 +964,8 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("stretchlin_force", tclcommand_inter_parse_stretchlin_force);
   REGISTER_BONDED("area_force_local", tclcommand_inter_parse_area_force_local);
   REGISTER_BONDED("bending_force", tclcommand_inter_parse_bending_force);
-#ifdef AREA_FORCE_GLOBAL
-  REGISTER_BONDED("area_force_global", tclcommand_inter_parse_area_force_global);
+#ifdef OIF_GLOBAL_FORCES
+  REGISTER_BONDED("oif_global_forces", tclcommand_inter_parse_oif_global_forces);
 #endif
 #ifdef VOLUME_FORCE
   REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);

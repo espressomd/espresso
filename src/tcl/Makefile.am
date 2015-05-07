@@ -123,8 +123,8 @@ libEspressoTcl_la_SOURCES += \
 	umbrella_tcl.cpp umbrella_tcl.hpp \
 	object-in-fluid/area_force_local_tcl.cpp \
 	object-in-fluid/area_force_local_tcl.hpp \
-	object-in-fluid/area_force_global_tcl.cpp \
-	object-in-fluid/area_force_global_tcl.hpp \
+	object-in-fluid/oif_global_forces_tcl.cpp \
+	object-in-fluid/oif_global_forces_tcl.hpp \
 	object-in-fluid/bending_force_tcl.cpp \
 	object-in-fluid/bending_force_tcl.hpp \
 	object-in-fluid/stretching_force_tcl.cpp \

@@ -801,29 +801,31 @@ class Volume_Force(BondedInteraction):
     volume_force_set_params(self._bondId,self._params["V0"],self._params["kv"])
    
    
-class Area_Force_Global(BondedInteraction):
+class Oif_Global_Forces(BondedInteraction):
   def typeNumber(self):
     return 20
 
   def typeName(self): 
-    return "AREA_FORCE_GLOBAL"
+    return "OIF_GLOBAL_FORCES"
 
   def validKeys(self):
-    return "A0_g", "ka_g"
+    return "A0_g", "ka_g", "V0", "kv"
 
   def requiredKeys(self): 
-    return "A0_g", "ka_g"
+    return "A0_g", "ka_g", "V0", "kv"
 
   def setDefaultParams(self):
-    self._params = {"A0_g":1., "ka_g":0} 
+    self._params = {"A0_g":1., "ka_g":0, "V0":1., "kv":0} 
 
   def _getParamsFromEsCore(self):
     return \
-      {"A0_g":bonded_ia_params[self._bondId].p.area_force_global.A0_g,\
-       "ka_g":bonded_ia_params[self._bondId].p.area_force_global.ka_g}
+      {"A0_g":bonded_ia_params[self._bondId].p.oif_global_forces.A0_g,\
+	   "ka_g":bonded_ia_params[self._bondId].p.oif_global_forces.ka_g,\
+       "V0":bonded_ia_params[self._bondId].p.oif_global_forces.V0,\
+       "kv":bonded_ia_params[self._bondId].p.oif_global_forces.kv}
 
   def _setParamsInEsCore(self):
-    area_force_global_set_params(self._bondId,self._params["A0_g"],self._params["ka_g"])
+    oif_global_forces_set_params(self._bondId,self._params["A0_g"],self._params["ka_g"],self._params["V0"],self._params["kv"])
    
    
 class Stretchlin_Force(BondedInteraction):
@@ -856,7 +858,7 @@ class Stretchlin_Force(BondedInteraction):
 bondedInteractionClasses = {0:FeneBond, 1:HarmonicBond, 5:Dihedral, 6:Tabulated, 7:Subt_Lj,\
     9:Virtual, 11:Endangledist, 12:Overlapped,\
     13:Angle_Harmonic, 14:Angle_Cosine, 15:Angle_Cossquare, 16:Stretching_Force, 17:Area_Force_Local,\
-    18:Bending_Force, 19:Volume_Force, 20:Area_Force_Global, 21:Stretchlin_Force}
+    18:Bending_Force, 19:Volume_Force, 20:Oif_Global_Forces, 21:Stretchlin_Force}
 
 
 

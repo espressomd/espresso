@@ -733,8 +733,8 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "STRETCHING_FORCE";
   case BONDED_IA_AREA_FORCE_LOCAL:
     return "AREA_FORCE_LOCAL";
-  case BONDED_IA_AREA_FORCE_GLOBAL:
-    return "AREA_FORCE_GLOBAL";
+  case BONDED_IA_OIF_GLOBAL_FORCES:
+    return "OIF_GLOBAL_FORCES";
   case BONDED_IA_BENDING_FORCE:
     return "BENDING_FORCE";
   case BONDED_IA_VOLUME_FORCE:

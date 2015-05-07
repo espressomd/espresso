@@ -52,7 +52,7 @@
 #include "object-in-fluid/stretching_force.hpp"
 #include "object-in-fluid/stretchlin_force.hpp"
 #include "object-in-fluid/area_force_local.hpp"
-#include "object-in-fluid/area_force_global.hpp"
+#include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/bending_force.hpp"
 #include "object-in-fluid/volume_force.hpp"
 #include "harmonic_dumbbell.hpp"
@@ -271,13 +271,14 @@ inline void force_calc()
     }
 #endif
 
-#ifdef AREA_FORCE_GLOBAL
-    double area=0.;
-
+#ifdef OIF_GLOBAL_FORCES
+    double area_volume[2]; //There are two global quantities that need to be evaluated: object's surface and object's volume. One can add another quantity.
+	area_volume[0] = 0.0; 
+	area_volume[1] = 0.0; 
     for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
-        calc_area_global(&area,i);
-        if (area<1e-100) break;
-        add_area_global_force(area,i);
+        calc_oif_global(area_volume,i);
+        if (area_volume[0]<1e-100 && area_volume[1]<1e-100) break;
+        add_oif_global_forces(area_volume,i);
     }
 #endif
   
@@ -720,8 +721,8 @@ inline void add_bonded_force(Particle *p1)
 					       force, force2, force3, force4, force5, force6, force7, force8);
       break;
 #endif
-#ifdef AREA_FORCE_GLOBAL
-    case BONDED_IA_AREA_FORCE_GLOBAL:
+#ifdef OIF_GLOBAL_FORCES
+    case BONDED_IA_OIF_GLOBAL_FORCES:
       bond_broken = 0;
       break;
 #endif
@@ -928,8 +929,8 @@ inline void add_bonded_force(Particle *p1)
 	  p2->f.f[j] += force2[j];
 	  p3->f.f[j] += force3[j];
 	  break;
-#ifdef AREA_FORCE_GLOBAL
-	case BONDED_IA_AREA_FORCE_GLOBAL:
+#ifdef OIF_GLOBAL_FORCES
+	case BONDED_IA_OIF_GLOBAL_FORCES:
 	  break;
 #endif
 #ifdef VOLUME_FORCE
