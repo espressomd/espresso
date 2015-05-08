@@ -164,7 +164,7 @@ h5mdfile H5Dclose
 h5mdfile H5Sclose
 h5mdfile H5Gclose
 h5mdfile H5Fclose
-h5mdfile H5_free_memeory
+h5mdfile H5_free_memory
 # terminate program
 puts "\n\nFinished"
 exit

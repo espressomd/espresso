@@ -322,6 +322,7 @@ H5mdfile::H5mdfile()
   	dimstotal = new hsize_t[32];
 	chunk_dims = new hsize_t[32];
 	offset = new hsize_t[32];
+	dset_data=NULL;
 }
 int H5mdfile::H5_Dclose(int argc, char **argv, Tcl_Interp *interp)
 {
@@ -370,6 +371,12 @@ int H5mdfile::H5_Dopen2(int argc, char **argv, Tcl_Interp *interp)
 	prop_id = H5Dget_create_plist (dataset_id);
 	if (H5D_CHUNKED == H5Pget_layout (prop_id))
 	  chunk_rank = H5Pget_chunk (prop_id, dataset_rank, chunk_dims);
+	// Dataset size
+	dset_data_size=1;
+	for(int i=0;i<dataset_rank;i++)
+	{
+	   dset_data_size*=dims[i];
+	}
 	//printf("H5Dopen2 \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
   return TCL_OK;
 }
@@ -377,6 +384,8 @@ int H5mdfile::H5_Dread(int argc, char **argv, Tcl_Interp *interp)
 {
 	/* Read h5-dataset and write to dataset array values */
 	// Allocate memeory
+	if(dset_data!=NULL) free(dset_data);
+
 	if(H5Tequal(dataset_type_id, H5T_NATIVE_FLOAT))
 	{
 	   dset_data=(float*) malloc(dset_data_size*sizeof(float));
@@ -562,6 +571,8 @@ int H5mdfile::H5_Screate_simple(int argc, char **argv, Tcl_Interp *interp)
 	dataspace_simple_id = H5Screate_simple(dataset_rank, dims, maxdims);
 
 	// Allocate memory for dataset array
+	if(dset_data!=NULL) free(dset_data);
+
 	if(!strncmp(argv[3], "float", strlen(argv[3])))
 	{
 	   dataset_type_id = H5T_NATIVE_FLOAT;
@@ -650,6 +661,7 @@ int H5mdfile::H5_free_memory(int argc, char **argv, Tcl_Interp *interp)
 {
 	/* Free allocated memory from dataset array */
 	free(dset_data);
+	dset_data=NULL;
 	return TCL_OK;
 }
 int H5mdfile::get_dataset_dims(int argc, char **argv, Tcl_Interp *interp)

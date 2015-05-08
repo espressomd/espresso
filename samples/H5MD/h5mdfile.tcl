@@ -45,7 +45,6 @@ puts "-------------------------------------------"
 
 #CREATE NEW DATASET AND WRITE VALUES
 puts "CREATE NEW DATASET AND WRITE VALUES"
-
 h5mdfile H5Fcreate "h5mdfile.h5" 
 h5mdfile H5Gcreate2 "group1"
 h5mdfile H5Screate_simple type int dims 10 5 3
@@ -71,7 +70,7 @@ h5mdfile H5Pclose
 h5mdfile H5Dclose
 h5mdfile H5Gclose
 h5mdfile H5Fclose
-h5mdfile H5_free_memeory
+h5mdfile H5_free_memory
 
 
 
@@ -98,7 +97,7 @@ h5mdfile H5Pclose
 h5mdfile H5Dclose
 h5mdfile H5Gclose
 h5mdfile H5Fclose
-h5mdfile H5_free_memeory
+h5mdfile H5_free_memory
 
 
 #EXTEND DATASET
@@ -135,6 +134,6 @@ h5mdfile H5Dclose
 h5mdfile H5Sclose
 h5mdfile H5Gclose
 h5mdfile H5Fclose
-h5mdfile H5_free_memeory
+h5mdfile H5_free_memory
 
 exit 0
