@@ -109,12 +109,16 @@ class H5mdfile
 	// Free dataset memory
 	int H5_free_memory(int argc, char **argv, Tcl_Interp *interp);
 
+	// Get dataset dimensions
+	int get_dataset_dims(int argc, char **argv, Tcl_Interp *interp);
+
 };
 
 H5mdfile h5mdfile;
 
 int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
+	
 	/* Parse Tcl commands */
 	if (!strncmp(argv[1], "H5Dclose", strlen(argv[1])))
 	{
@@ -288,7 +292,7 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 		}
 		return h5mdfile.H5_write_value(argc, argv, interp);
 	}
-	int H5_free_memory(int argc, char **argv, Tcl_Interp *interp);
+	if (!strncmp(argv[1], "H5_free_memory", strlen(argv[1])))
 	{
 		if(argc!=2)
 		{
@@ -297,6 +301,17 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 		}
 		return h5mdfile.H5_free_memory(argc, argv, interp);
 	}
+
+	if (!strncmp(argv[1], "get_dataset_dims", strlen(argv[1])))
+	{
+		if(argc!=2)
+		{
+			Tcl_AppendResult(interp, "\nExpected: h5mdfile get_dataset_dims\n",(char *) NULL);
+			return TCL_ERROR;
+		}
+		return h5mdfile.get_dataset_dims(argc, argv, interp);
+	}
+	
 }
 
 H5mdfile::H5mdfile()
@@ -304,7 +319,7 @@ H5mdfile::H5mdfile()
 	/* Constructor */
 	dims = new hsize_t[32];
 	maxdims = new hsize_t[32];
-  dimstotal = new hsize_t[32];
+  	dimstotal = new hsize_t[32];
 	chunk_dims = new hsize_t[32];
 	offset = new hsize_t[32];
 }
@@ -637,5 +652,17 @@ int H5mdfile::H5_free_memory(int argc, char **argv, Tcl_Interp *interp)
 	free(dset_data);
 	return TCL_OK;
 }
-
+int H5mdfile::get_dataset_dims(int argc, char **argv, Tcl_Interp *interp)
+{
+	hid_t new_dataspace = H5Dget_space(dataset_id);	//dataspace handle
+	int new_rank_dataset = H5Sget_simple_extent_ndims(new_dataspace);
+	hsize_t dims_out[new_rank_dataset];
+	H5Sget_simple_extent_dims(new_dataspace, dims_out, NULL);
+	char buffer[32+TCL_INTEGER_SPACE];
+	for(int i =0;i<new_rank_dataset;i++){
+		sprintf(buffer, "%d ", (int)dims_out[i]);
+		Tcl_AppendResult(interp, buffer, (char *)NULL);
+	}
+	return TCL_OK;
+}
 #endif
