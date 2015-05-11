@@ -21,7 +21,7 @@
 
 #include "config.hpp" //this is required so that the ifdefs are actually defined
 
-
+#include "SystemInterface.hpp"
 
 #ifdef CUDA
 

@@ -284,7 +284,6 @@ void cuda_mpi_send_forces(float *host_forces,CUDA_fluid_composition * host_compo
                 cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
               }
 #endif
-
             }
             g += npart;
           }

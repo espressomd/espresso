@@ -28,18 +28,19 @@
 #include <iostream>
 
 void HarmonicWell_kernel_wrapper(float x, float y, float z, float k,
-		     int n, float *pos, CUDA_particle_force *f);
+		     int n, float *pos, float *f);
 
 class HarmonicWell : public Actor {
 public:
   HarmonicWell(float x1, float x2, float x3, float _k, SystemInterface &s);
 
   virtual void computeForces(SystemInterface &s) {
-    HarmonicWell_kernel_wrapper(x,y,z,k,s.npart_gpu(), s.rGpuBegin(), s.fGpuBegin());
+    HarmonicWell_kernel_wrapper(x,y,z,k,s.npart_gpu(),
+					 s.rGpuBegin(), s.fGpuBegin());
   };
 
   virtual void computeEnergy(SystemInterface &s) {
-    std::cout << "HarmonicWell does not currently support energies" << std::endl;
+    std::cout << "HarmonidWell does not currently support energies" << std::endl;
   };
 
   virtual ~HarmonicWell() {}

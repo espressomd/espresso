@@ -141,6 +141,18 @@ public:
     return m_needsFGpu;
   };
 
+#ifdef ROTATION
+  float *torqueGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
+  float *torqueGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
+  bool hasTorqueGpu() { return true; };
+  bool requestTorqueGpu() {
+    m_needsTorqueGpu = hasTorqueGpu();
+    m_gpu |= m_needsTorqueGpu;
+    if(m_gpu)
+      enableParticleCommunication();
+    return m_needsTorqueGpu;
+  };
+#endif
 
 #endif
 
