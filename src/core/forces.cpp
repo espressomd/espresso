@@ -267,7 +267,10 @@ calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameter
    }
 }
 
-void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+void
+calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1, Particle *p2,
+                                               double d[3], double dist,
+                                               double dist2, double force[3]){
    IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
    double torque1[3],torque2[3];
    calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,

@@ -68,6 +68,10 @@ typedef struct {
   /** particle momentum struct velocity p.m->v*/
   float v[3];
 
+#ifdef ROTATION
+  float quatu[3];
+#endif
+
 #ifdef SHANCHEN
   float solvation[2*LB_COMPONENTS];
 #endif 
