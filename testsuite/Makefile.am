@@ -40,6 +40,9 @@ tests = \
 	ek_eof_one_species_x_nonlinear.tcl \
 	ek_eof_one_species_y_nonlinear.tcl \
 	ek_eof_one_species_z_nonlinear.tcl \
+	ek_electrostatics_coupling_x.tcl \
+	ek_electrostatics_coupling_y.tcl \
+	ek_electrostatics_coupling_z.tcl \
 	ek_reaction.tcl \
 	el2d.tcl \
 	el2d_nonneutral.tcl \
@@ -102,6 +105,9 @@ tests = \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
+	sd_ewald.tcl \
+	sd_two_spheres.tcl \
+	sd_thermalization.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
         uwerr.tcl \
@@ -168,4 +174,5 @@ DISTCLEANFILES = \
 	dfftw3_1d_wisdom_*.file \
 	lattice_*.dat \
 	correlation_checkpoint_c?.bin \
-	correlation_checkpoint_c?.txt 
+	correlation_checkpoint_c?.txt \
+	sd_thermalization.log

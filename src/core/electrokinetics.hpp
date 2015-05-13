@@ -28,6 +28,12 @@
 //ifdeffing multiple versions of the kernel integrate.
 #ifdef CUDA
 
+#if defined(EK_DOUBLE_PREC)
+typedef double ekfloat;
+#else
+typedef float ekfloat;
+#endif
+
 #define MAX_NUMBER_OF_SPECIES 10
 
 #ifdef __CUDACC__
@@ -68,10 +74,15 @@ typedef struct {
   float mass_product1;
   int stencil;
   int number_of_boundary_nodes;
+#ifdef EK_ELECTROSTATIC_COUPLING
+  bool es_coupling;
+  float *charge_potential_buffer;
+  float *electric_field;
+#endif
   float* charge_potential;
-  float* j;
+  ekfloat* j;
   float* lb_force_previous;
-  float* rho[MAX_NUMBER_OF_SPECIES];
+  ekfloat* rho[MAX_NUMBER_OF_SPECIES];
   int species_index[MAX_NUMBER_OF_SPECIES];
   float density[MAX_NUMBER_OF_SPECIES];
   float D[MAX_NUMBER_OF_SPECIES];
@@ -141,8 +152,8 @@ unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char* filename);
 int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
-#ifdef EK_DEBUG
-int ek_print_vtk_lbforce_buf(char* filename);
+#ifdef EK_ELECTROSTATIC_COUPLING
+int ek_print_vtk_particle_potential( char* filename );
 #endif
 int ek_print_vtk_lbforce(char* filename);
 int ek_print_vtk_reaction_tags(char* filename);
@@ -155,6 +166,10 @@ int ek_set_viscosity(double viscosity);
 int ek_set_friction(double friction);
 int ek_set_T(double T);
 int ek_set_bjerrumlength(double bjerrumlength);
+#ifdef EK_ELECTROSTATIC_COUPLING
+int ek_set_electrostatics_coupling( bool electrostatics_coupling );
+void ek_calculate_electrostatic_coupling();
+#endif
 int ek_set_bulk_viscosity(double bulk_viscosity);
 int ek_set_gamma_odd(double gamma_odd);
 int ek_set_gamma_even(double gamma_even);
@@ -172,7 +187,7 @@ float ek_calculate_net_charge();
 int ek_neutralize_system(int species); 
   
 #ifdef EK_BOUNDARIES
-void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
+void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int wallcharge_species);
 #endif
 
 #ifdef EK_REACTION

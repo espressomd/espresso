@@ -604,7 +604,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
              ( !ARG0_IS_S("velocity") && !ARG0_IS_S("density") &&
                !ARG0_IS_S("boundary") && !ARG0_IS_S("potential") &&
                !ARG0_IS_S("pressure") && !ARG0_IS_S("lbforce") &&
-               !ARG0_IS_S("lbforce_buf") && !ARG0_IS_S("reaction_tags")
+               !ARG0_IS_S("lbforce_buf") && !ARG0_IS_S("reaction_tags") &&
+	       !ARG0_IS_S("particle_potential")
              )
            ) 
         {
@@ -671,6 +672,24 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
 #endif /* EK_BOUNDARIES */
         }
+        else if(ARG0_IS_S("particle_potential")) 
+        {
+#ifndef EK_ELECTROSTATIC_COUPLING
+          Tcl_AppendResult(interp, "Feature EK_ELECTROSTATIC_COUPLING required", (char *) NULL);
+          return (TCL_ERROR);
+#else
+          if(ek_print_vtk_particle_potential(argv[2]) == 0) 
+          {
+            argc -= 3;
+            argv += 3;
+
+            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+              return TCL_ERROR;
+            else
+              return TCL_OK;
+          }
+#endif
+	}
         else if(ARG0_IS_S("potential")) 
         {
           if(ek_print_vtk_potential(argv[2]) == 0) 
@@ -757,7 +776,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         }
         else if(ARG0_IS_S("lbforce")) 
         {
-          if(ek_print_vtk_lbforce(argv[2]) == 0) 
+          int ret = ek_print_vtk_lbforce(argv[2]);
+          if(ret == 0) 
           {
             argc -= 3;
             argv += 3;
@@ -767,34 +787,16 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             else
               return TCL_OK;
           }
-          else 
+          else if (ret == 1)
+          {
+            Tcl_AppendResult(interp, "Feature EK_DEBUG required\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+          else
           {
             Tcl_AppendResult(interp, "Unknown error in electrokinetics print lbforce vtk #string\n", (char *)NULL);
             return TCL_ERROR;
           }
-        }
-        else if(ARG0_IS_S("lbforce_buf")) 
-        {
-#ifndef EK_DEBUG
-            Tcl_AppendResult(interp, "Feature EK_DEBUG required\n", (char *)NULL);
-            return TCL_ERROR;
-#else
-          if(ek_print_vtk_lbforce_buf(argv[2]) == 0) 
-          {
-            argc -= 3;
-            argv += 3;
-
-            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
-              return TCL_ERROR;
-            else
-              return TCL_OK;
-          }
-          else 
-          {
-            Tcl_AppendResult(interp, "Unknown error in electrokinetics print lbforce_buf vtk #string\n", (char *)NULL);
-            return TCL_ERROR;
-          }
-#endif
         }
         else 
         {
@@ -904,6 +906,14 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
         }
       }
+#ifdef EK_ELECTROSTATIC_COUPLING
+      else if(ARG0_IS_S("electrostatics_coupling"))
+        {
+          argc--;
+          argv++;
+          ek_set_electrostatics_coupling(true);
+        }
+#endif
       else if(ARG0_IS_S("agrid")) 
       {
         argc--;

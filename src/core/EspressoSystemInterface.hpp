@@ -146,8 +146,8 @@ public:
     return true;
   }
 
-  float *fGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
-  float *fGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
+  float *fGpuBegin() { return gpu_get_particle_force_pointer(); };
+  float *fGpuEnd() { return gpu_get_particle_force_pointer() + 3*m_gpu_npart; };
   float *eGpu() { return (float *)gpu_get_energy_pointer(); };
   float *torqueGpuBegin() { return (float *)gpu_get_particle_torque_pointer(); };
   float *torqueGpuEnd() { return (float *)(gpu_get_particle_torque_pointer()) + 3*m_gpu_npart; };

@@ -242,7 +242,7 @@ __global__ void DipolarDirectSum_kernel_force(dds_float pf,
 
 
 
-__device__ void sumReduction(dds_float *input, dds_float *sum)
+__device__ void dds_sumReduction(dds_float *input, dds_float *sum)
 {
 	int tid = threadIdx.x;
 	for (int i = blockDim.x/2; i > 0; i /= 2)
@@ -300,7 +300,7 @@ __global__ void DipolarDirectSum_kernel_energy(dds_float pf,
 
   // Sum results within a block
   __syncthreads(); // Wait til all threads in block are done
-  sumReduction(res,&(energySum[blockIdx.x]));
+  dds_sumReduction(res,&(energySum[blockIdx.x]));
 //  if (threadIdx.x==0)
 //   printf("Block sum %d %f\n",blockIdx.x,energySum[blockIdx.x]);
 

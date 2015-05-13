@@ -148,7 +148,7 @@ bool steepest_descent_step(void) {
       resort_particles = 1;
     }
   }
-  MINIMIZE_ENERGY_TRACE(printf("dp_max %e f_max %e resort_particles %d\n", sqrt(dp2_max), f_max, resort_particles));
+  MINIMIZE_ENERGY_TRACE(printf("f_max %e resort_particles %d\n", f_max, resort_particles));
   announce_resort_particles();
   
   // Synchronize maximum force/torque encountered

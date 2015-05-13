@@ -18,9 +18,12 @@ New user-visible features
 * The rotational degrees of freedom of virtual sites is now integrated. Virtual sites no longer use the quaternion attributes to store their relative orientation
 * A rotate_system command was added, which rotates the particle positions around the system's center of mass
 * Steepest descent energy minimization for translational and rotational degrees of freedom
+* Multiple time step integration that allows one of two time steps per particle
+* Stokesian Dynamics support (GPU only)
 
 Known bugs
 ----------
+* The electrostatics part of the pressure tensor is wrong
 
 User-visible changes
 --------------------

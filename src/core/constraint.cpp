@@ -2615,13 +2615,15 @@ void add_constraints_forces(Particle *p1)
         msg <<"plane constraint " << n << " violated by particle " << p1->p.identity;
         runtimeError(msg);
 	}
-      }
+     }
+      break;
+    case CONSTRAINT_NONE:
+      force[0] = force[1] = force[2] = 0.0;
       break;
   default:
       fprintf(stderr, "ERROR: encountered unknown constraint during force computation\n");
       errexit();
       break;
-
     }
     for (j = 0; j < 3; j++) {
       p1->f.f[j] += force[j];

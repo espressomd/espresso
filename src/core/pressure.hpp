@@ -162,6 +162,11 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
     case BONDED_IA_FENE:
       calc_fene_pair_force(p1,p2,iaparams,dx,force);
       break;
+#ifdef ROTATION
+    case BONDED_IA_HARMONIC_DUMBBELL:
+      calc_harmonic_dumbbell_pair_force(p1,p2,iaparams,dx,force);
+      break;
+#endif
     case BONDED_IA_HARMONIC:
       calc_harmonic_pair_force(p1,p2,iaparams,dx,force);
       break;
@@ -501,16 +506,30 @@ inline void add_kinetic_virials(Particle *p1,int v_comp)
 {
   int k, l;
   /* kinetic energy */
-  if(v_comp)
-    virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
-  else
-    virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
-
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0.) {
+    if(v_comp)
+      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
+    else
+      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+  } else
+#endif
+  {
+    if(v_comp) 
+      virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
+    else
+      virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+  }
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
   for(k=0;k<3;k++)
     for(l=0;l<3;l++)
-      p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
+#ifdef MULTI_TIMESTEP
+      if (smaller_time_step > 0.) 
+        p_tensor.data.e[k*3 + l] += SQR(time_step/smaller_time_step)*(p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
+      else
+#endif
+        p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
 
 }
 

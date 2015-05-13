@@ -21,6 +21,8 @@
 
 source "tests_common.tcl"
 
+set tcl_precision 14
+
 proc vectorsTheSame {a b} {
  set tol 1E-4
  set diff [vecsub $a $b]
@@ -62,7 +64,7 @@ puts "Center of mass berfore rotation: $oldCom"
 rotate_system $phi $theta $alpha
 
 set newCom [analyze centermass 0]
-puts "Center of mass iafter rotation: $newCom"
+puts "Center of mass after rotation: $newCom"
 
 if { ! [vectorsTheSame $oldCom $newCom] } {
  error "Center of mass changed during rotation"

@@ -649,7 +649,7 @@ void ghost_communicator(GhostCommunicator *gc)
 	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	break;
       }
-      GHOST_TRACE(MPI_Barrier(comm_cart));
+      //GHOST_TRACE(MPI_Barrier(comm_cart));
       GHOST_TRACE(fprintf(stderr, "%d: ghost_comm done\n", this_node));
 
       /* recv op; write back data directly, if no PSTSTORE delay is requested. */
