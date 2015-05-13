@@ -303,7 +303,7 @@ static void cuda_mpi_get_particles_slave(){
 
           MPI_Send(&host_forces[3*g], 3*sizes[pnode]*sizeof(float), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);
 #ifdef ROTATION          
-          MPI_Send(&host_torques[3*g], 3*sizes[pnode]*sizeof(float), MPI_BYTE, pnode, REQ_CUDAGETtorqueS, comm_cart);
+          MPI_Send(&host_torques[3*g], 3*sizes[pnode]*sizeof(float), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);
 #endif
 #ifdef SHANCHEN
           MPI_Send(&host_composition[g], sizes[pnode]*sizeof(CUDA_fluid_composition), MPI_BYTE, pnode, REQ_CUDAGETPARTS, comm_cart);      
@@ -341,7 +341,6 @@ static void cuda_mpi_send_forces_slave(){
       int g = 0;
       /* get (unsorted) particle informations as an array of type 'particle' */
       /* then get the particle information */
-=======
       host_forces_sl = (float *) malloc(3*n_part*sizeof(float));
 #ifdef ROTATION
       host_torques_sl = (float *) malloc(3*n_part*sizeof(float));
@@ -350,7 +349,7 @@ static void cuda_mpi_send_forces_slave(){
       MPI_Recv(host_forces_sl, 3*n_part*sizeof(float), MPI_BYTE, 0, REQ_CUDAGETFORCES,
         comm_cart, &status);
 #ifdef ROTATION	
-      MPI_Recv(host_torques_sl, 3*n_part*sizeof(float), MPI_BYTE, 0, REQ_CUDAGETtorqueS,
+      MPI_Recv(host_torques_sl, 3*n_part*sizeof(float), MPI_BYTE, 0, REQ_CUDAGETFORCES,
         comm_cart, &status);
 #endif
 #ifdef SHANCHEN

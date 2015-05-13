@@ -137,7 +137,7 @@ float* gpu_get_particle_torque_pointer();
 #endif
 
 CUDA_energy* gpu_get_energy_pointer();
-CUDA_particle_torque* gpu_get_particle_torque_pointer();
+float* gpu_get_particle_torque_pointer();
 CUDA_fluid_composition* gpu_get_fluid_composition_pointer();
 CUDA_particle_seed* gpu_get_particle_seed_pointer();
 void gpu_change_number_of_part_to_comm();
