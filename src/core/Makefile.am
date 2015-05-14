@@ -128,6 +128,7 @@ libEspresso_la_SOURCES += \
 	ljgen.cpp ljgen.hpp \
 	morse.cpp morse.hpp \
 	soft_sphere.cpp soft_sphere.hpp \
+	object-in-fluid/affinity.cpp object-in-fluid/affinity.hpp \
 	steppot.cpp steppot.hpp \
 	tab.cpp tab.hpp \
 	tunable_slip.cpp tunable_slip.hpp

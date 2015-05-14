@@ -41,6 +41,7 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
+#include "object-in-fluid/affinity.hpp"
 #include "hat.hpp"
 #include "tab.hpp"
 #include "overlap.hpp"
@@ -370,6 +371,10 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
  /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
   add_soft_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+ /*affinity potential*/
+#ifdef AFFINITY
+  add_affinity_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
  /*hat potential*/
 #ifdef HAT

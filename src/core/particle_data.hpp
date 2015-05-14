@@ -94,6 +94,11 @@ typedef struct {
   double rinertia[3];
 #endif
 
+#ifdef AFFINITY
+  /** parameters fond affinity mechanisms */
+  double bond_site[3];
+#endif
+
 #ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
@@ -545,6 +550,15 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
     @return ES_OK if particle existed
 */
 int set_particle_rotation(int part, int rot);
+#endif
+
+#ifdef AFFINITY
+/** Call only on the master node: set particle affinity.
+    @param part the particle.
+    @param bond_site its new site of the affinity bond.
+    @return ES_OK if particle existed
+*/
+int set_particle_affinity(int part, double bond_site[3]);
 #endif
 
 #ifdef MULTI_TIMESTEP

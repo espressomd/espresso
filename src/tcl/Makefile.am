@@ -100,6 +100,8 @@ libEspressoTcl_la_SOURCES += \
 	ljgen_tcl.cpp ljgen_tcl.hpp \
 	morse_tcl.cpp morse_tcl.hpp \
 	soft_sphere_tcl.cpp soft_sphere_tcl.hpp \
+	object-in-fluid/affinity_tcl.cpp \
+	object-in-fluid/affinity_tcl.hpp \
 	steppot_tcl.cpp steppot_tcl.hpp \
 	tab_tcl.cpp tab_tcl.hpp \
 	tunable_slip_tcl.cpp tunable_slip_tcl.hpp

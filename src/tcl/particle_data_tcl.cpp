@@ -75,6 +75,23 @@ void tclcommand_part_print_rotational_inertia(Particle *part, char *buffer, Tcl_
 }
 #endif
 
+#ifdef AFFINITY
+void tclcommand_part_print_affinity(Particle *part, char *buffer, Tcl_Interp *interp)
+  {double bond_site[3];
+
+  bond_site[0]=part->p.bond_site[0];
+  bond_site[1]=part->p.bond_site[1];
+  bond_site[2]=part->p.bond_site[2];
+
+  Tcl_PrintDouble(interp, bond_site[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, bond_site[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, bond_site[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 #ifdef ROTATION
 
 /* tclcommand_part_print_*_body_frame: function to have the possiblility of
@@ -593,6 +610,13 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   tclcommand_part_print_rotational_inertia(&part, buffer, interp);
 #endif
 
+#ifdef AFFINITY
+  /* print information about affinity */
+  Tcl_AppendResult(interp, " affinity ", (char *)NULL);
+  tclcommand_part_print_affinity(&part, buffer, interp);
+#endif
+
+
 #ifdef DIPOLES
 #ifndef ROTATION
   /* print full information about dipoles, no quaternions to keep
@@ -817,6 +841,12 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("rinertia"))
       tclcommand_part_print_rotational_inertia(&part, buffer, interp);
 #endif
+
+#ifdef AFFINITY
+    else if (ARG0_IS_S("affinity"))
+      tclcommand_part_print_affinity(&part, buffer, interp);
+#endif
+
 
 #ifdef DIPOLES
     else if (ARG0_IS_S("dip"))
@@ -1061,6 +1091,34 @@ int tclcommand_part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char 
   return TCL_OK;
 }
 #endif
+
+#ifdef  AFFINITY
+int tclcommand_part_parse_affinity(Tcl_Interp *interp, int argc, char **argv,
+				  int part_num, int * change)
+{
+  double bond_site[3];
+
+  *change = 3;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "affinity requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* set affinity */
+  if (! ARG_IS_D(0, bond_site[0]) || ! ARG_IS_D(1, bond_site[1]) || ! ARG_IS_D(2, bond_site[2]))
+    return TCL_ERROR;
+
+  if (set_particle_affinity(part_num, bond_site) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+#endif
+
 
 #ifdef DIPOLES
 int tclcommand_part_parse_dipm(Tcl_Interp *interp, int argc, char **argv,
@@ -2389,6 +2447,10 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = tclcommand_part_parse_rotation(interp, argc-1, argv+1, part_num, &change);
 #endif
 
+#ifdef AFFINITY
+    else if (ARG0_IS_S("affinity"))
+      err = tclcommand_part_parse_affinity(interp, argc-1, argv+1, part_num, &change);
+#endif
 
 #ifdef DIPOLES
     else if (ARG0_IS_S("dip")) {

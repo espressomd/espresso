@@ -127,6 +127,8 @@ OVERLAPPED
 
 /* Fluid-Structure Interactions (object in fluid) */
 OIF_GLOBAL_FORCES
+AFFINITY
+
 
 BOND_ANGLE                      requires not BOND_ANGLE_OLD
 

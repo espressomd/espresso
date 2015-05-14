@@ -206,6 +206,16 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 #endif
 
+#ifdef AFFINITY
+/** Issue REQ_SET_AFFINITY: send particle affinity.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param bond_site its new site of the affinity bond.
+*/
+void mpi_send_affinity(int node, int part, double bond_site[3]);
+#endif
+
 #ifdef ROTATION
 /** Issue REQ_SET_QUAT: send particle orientation.
     Also calls \ref on_particle_change.
