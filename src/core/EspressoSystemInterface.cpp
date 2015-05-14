@@ -86,28 +86,48 @@ void EspressoSystemInterface::gatherParticles() {
   }
 #endif
 
-  if (needsQ() || needsR()) {
+  if (needsQ() || needsR() || needsQuatu()) {
     R.clear();
+
     #ifdef ELECTROSTATICS
     Q.clear();
+    #endif
+
+    #ifdef ROTATION
+    Quatu.clear();
     #endif
 
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c];
       p  = cell->part;
       np = cell->n;
+
       if(needsR())
 	R.reserve(R.size()+np);
+
 #ifdef ELECTROSTATICS
       if(needsQ())
 	Q.reserve(Q.size()+np);
 #endif
+
+#ifdef ROTATION
+      if(needsQuatu())
+	Quatu.reserve(Quatu.size()+np);
+#endif
+
       for(i = 0; i < np; i++) {
+
 	if(needsR())
 	  R.push_back(Vector3(p[i].r.p));
+
 #ifdef ELECTROSTATICS
 	if(needsQ())
 	  Q.push_back(p[i].p.q);
+#endif
+
+#ifdef ROTATION
+	if(needsQuatu())
+	  Quatu.push_back(Vector3(p[i].r.quatu));
 #endif
       }
     }
@@ -142,7 +162,18 @@ const SystemInterface::const_real_iterator &EspressoSystemInterface::qEnd() {
   m_q_end = Q.end();
   return m_q_end;
 }
+#endif
 
+#ifdef ROTATION
+SystemInterface::const_vec_iterator &EspressoSystemInterface::quatuBegin() {
+  m_quatu_begin = Quatu.begin();
+  return m_quatu_begin;
+}
+
+const SystemInterface::const_vec_iterator &EspressoSystemInterface::quatuEnd() {
+  m_quatu_end = Quatu.end();
+  return m_quatu_end;
+}
 #endif
 
 unsigned int EspressoSystemInterface::npart() {
