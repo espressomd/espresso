@@ -32,16 +32,21 @@ int tclprint_to_result_affinityIA(Tcl_Interp *interp, int i, int j)
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
 
-  Tcl_PrintDouble(interp, data->affinity_kappa, buffer);
+  sprintf(buffer, "%d", data->affinity_type);
   Tcl_AppendResult(interp, "affinity ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->affinity_kappa, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->affinity_r0, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->affinity_Kon, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->affinity_Koff, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->affinity_maxBond, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->affinity_cut, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+
   return TCL_OK;
 }
 
@@ -50,34 +55,46 @@ int tclcommand_inter_parse_affinity(Tcl_Interp * interp,
 				int argc, char ** argv)
 {
   /* parameters needed for affinity */
-  double kappa, r0, Kon, Koff, cut;
+  double kappa, r0, Kon, Koff, maxBond, cut;
   int change;
+  int type;
 
   /* get affinity interaction type */
-  if (argc < 6) {
-    Tcl_AppendResult(interp, "affinity potential needs 5 parameters: "
-		     "<affinity_kappa> <affinity_r0> <affinity_Kon> <affinity_Koff> <affinity_cut>",
+  if (argc < 8) {
+    Tcl_AppendResult(interp, "affinity potential needs 7 parameters: "
+		     "<affinity_type> <affinity_kappa> <affinity_r0> <affinity_Kon> <affinity_Koff> <affinity_maxBond> <affinity_cut>",
 		     (char *) NULL);
     return 0;
   }
 
   /* copy affinity parameters */
-  if ((! ARG_IS_D(1, kappa))	||
-      (! ARG_IS_D(2, r0))		||
-      (! ARG_IS_D(3, Kon))		||
-      (! ARG_IS_D(4, Koff))		||
-      (! ARG_IS_D(5, cut)   )) {
-    Tcl_AppendResult(interp, "affinity potential needs 5 parameters: "
-		     "<affinity_kappa> <affinity_r0> <affinity_Kon> <affinity_Koff> <affinity_cut>",
+  if ((! ARG_IS_I(1, type))	||
+      (! ARG_IS_D(2, kappa))		||
+      (! ARG_IS_D(3, r0))		||
+      (! ARG_IS_D(4, Kon))		||
+      (! ARG_IS_D(5, Koff))		||
+      (! ARG_IS_D(6, maxBond))	||
+      (! ARG_IS_D(7, cut)   )) {
+    Tcl_AppendResult(interp, "affinity potential needs 7 parameters: "
+		     "<affinity_type> <affinity_kappa> <affinity_r0> <affinity_Kon> <affinity_Koff> <affinity_maxBond> <affinity_cut>",
 		     (char *) NULL);
     return 0;
   }
-  change = 6;
-	
-  
+  change = 8;
+
   Tcl_ResetResult(interp);
+  if ( maxBond <= r0 ) {
+    Tcl_AppendResult(interp, "tcl affinity parser: affinity_maxBond must be greater than affinity_r0", (char *) NULL);
+    return 0;
+  }
+
+  if ( cut <= maxBond ) {
+    Tcl_AppendResult(interp, "tcl affinity parser: affinity_cut must be greater than affinity_maxBond. It is reccommended to use cut >= maxBond + epsilon, epsilon depends on the spead of the system, 0.5 should be ok.", (char *) NULL);
+    return 0;
+  }
+
   if (affinity_set_params(part_type_a, part_type_b,
-                             kappa, r0, Kon, Koff, cut) == ES_ERROR) {
+                             type, kappa, r0, Kon, Koff, maxBond, cut) == ES_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }

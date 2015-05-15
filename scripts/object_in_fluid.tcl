@@ -1538,6 +1538,7 @@ proc oif_create_template { args } {
 			set VOL_dn [expr sqrt($VOL_norm0*$VOL_norm0 + $VOL_norm1*$VOL_norm1 + $VOL_norm2*$VOL_norm2)]
 			set VOL_hz [expr 1.0/3.0*($P12 + $P22 + $P32)]
 			set VOL_volume [expr $VOL_volume + $area*$VOL_norm2/$VOL_dn*$VOL_hz]
+			set gl_volume $VOL_volume
 		# from volume
 			# to replace lists with empty lists so they do not grow
 			set P1 [lreplace $P1 0 2]
@@ -1558,7 +1559,7 @@ proc oif_create_template { args } {
 #--------------------------------------------------------------------------------------------
 # update global oif-variables
 	lappend template $gl_area
-	lappend template $VOL_volume
+	lappend template $gl_volume
 	lappend oif_templates $template
 	incr oif_n_templates
 } 

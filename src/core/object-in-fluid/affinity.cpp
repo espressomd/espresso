@@ -28,16 +28,18 @@
 #ifdef AFFINITY
 
 int affinity_set_params(int part_type_a, int part_type_b,
-			   double kappa, double r0, double Kon, double Koff, double cut)
+			   int type, double kappa, double r0, double Kon, double Koff, double maxBond, double cut)
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   if (!data) return ES_ERROR;
 
+  data->affinity_type    = type;
   data->affinity_kappa    = kappa;
   data->affinity_r0    = r0;
   data->affinity_Kon    = Kon;
   data->affinity_Koff    = Koff;
+  data->affinity_maxBond    = maxBond;
   data->affinity_cut    = cut;
  
   /* broadcast interaction parameters */

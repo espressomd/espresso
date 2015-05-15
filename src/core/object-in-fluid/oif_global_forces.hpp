@@ -72,11 +72,10 @@ inline void calc_oif_global(double *area_volume, int molType){ //first-fold-then
 		cell = local_cells.cell[c];
 		p   = cell->part;
 		np  = cell->n;
-		
 		/* Loop cell particles */
 		for(i=0; i < np; i++) {				
 			j = 0;
-			p1=&p[i];
+			p1 = &p[i];
 			while(j<p1->bl.n){
 				/* bond type */
 				type_num = p1->bl.e[j++];
@@ -84,7 +83,6 @@ inline void calc_oif_global(double *area_volume, int molType){ //first-fold-then
 				type = iaparams->type;
 				n_partners = iaparams->num;
 				id=p1->p.mol_id;
-				//printf("neigh=%d, type=%d type_num=%d\n", p1->bl.n-1, type, type_num);
 				if(type == BONDED_IA_OIF_GLOBAL_FORCES && id == molType){ // BONDED_IA_OIF_GLOBAL_FORCES with correct molType  
 					test++;
 					/* fetch particle 2 */
