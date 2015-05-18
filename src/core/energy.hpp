@@ -25,11 +25,8 @@
 #include "utils.hpp"
 #include "integrate.hpp"
 
-#include "object-in-fluid/stretching_force.hpp"
-#include "object-in-fluid/stretchlin_force.hpp"
-#include "object-in-fluid/area_force_local.hpp"
+#include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
-#include "object-in-fluid/bending_force.hpp"
 #include "dihedral.hpp"
 #include "mdlc_correction.hpp"
 #include "hydrogen_bond.hpp"

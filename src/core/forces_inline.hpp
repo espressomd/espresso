@@ -50,11 +50,8 @@
 #include "ljangle.hpp"
 #include "gb.hpp"
 #include "fene.hpp"
-#include "object-in-fluid/stretching_force.hpp"
-#include "object-in-fluid/stretchlin_force.hpp"
-#include "object-in-fluid/area_force_local.hpp"
+#include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
-#include "object-in-fluid/bending_force.hpp"
 #include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
@@ -597,8 +594,8 @@ inline void add_bonded_force(Particle *p1)
   double force[3]  = { 0., 0., 0. };
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
-#ifdef TWIST_STACK
   double force4[3] = { 0., 0., 0. };
+#ifdef TWIST_STACK
   double force5[3] = { 0., 0., 0. };
   double force6[3] = { 0., 0., 0. };
   double force7[3] = { 0., 0., 0. };
@@ -699,15 +696,6 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-    case BONDED_IA_STRETCHING_FORCE:
-      bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);
-      break;
-    case BONDED_IA_STRETCHLIN_FORCE:
-      bond_broken = calc_stretchlin_force_pair_force(p1, p2, iaparams, dx, force);
-      break;
-    case BONDED_IA_AREA_FORCE_LOCAL:
-      bond_broken = calc_area_force_local(p1, p2, p3, iaparams, force, force2, force3);
-      break;
 #ifdef HYDROGEN_BOND
     case BONDED_IA_CG_DNA_BASEPAIR:
       bond_broken = calc_hydrogen_bond_force(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
@@ -724,8 +712,8 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = 0;
       break;
 #endif
-    case BONDED_IA_BENDING_FORCE:
-      bond_broken = calc_bending_force(p1, p2, p3, p4, iaparams, force, force2);
+    case BONDED_IA_OIF_LOCAL_FORCES:
+      bond_broken = calc_oif_local(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
       break;
       
 // IMMERSED_BOUNDARY
@@ -917,11 +905,6 @@ inline void add_bonded_force(Particle *p1)
       
       for (j = 0; j < 3; j++) {
 	switch (type) {
-	case BONDED_IA_AREA_FORCE_LOCAL:
-	  p1->f.f[j] += force[j];
-	  p2->f.f[j] += force2[j];
-	  p3->f.f[j] += force3[j];
-	  break;
 #ifdef OIF_GLOBAL_FORCES
 	case BONDED_IA_OIF_GLOBAL_FORCES:
 	  break;
@@ -941,23 +924,27 @@ inline void add_bonded_force(Particle *p1)
 	runtimeError(msg);
 	continue;
       }
-      for (j = 0; j < 3; j++) {
+
 	switch (type) {
-	case BONDED_IA_BENDING_FORCE:
-	  p1->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
-	  p2->f.f[j] += force[j];
-	  p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
-	  p4->f.f[j] += force2[j];
-	  break;
+        case BONDED_IA_OIF_LOCAL_FORCES:
+            for (j = 0; j < 3; j++) {
+                p1->f.f[j] += force2[j];
+                p2->f.f[j] += force[j];
+                p3->f.f[j] += force3[j];
+                p4->f.f[j] += force4[j];
+            }
+        break;
 #ifdef CG_DNA
-	default:
-	  p1->f.f[j] += force[j];
-	  p2->f.f[j] += force2[j];
-	  p3->f.f[j] += force3[j];
-	  p4->f.f[j] += force4[j];
-	  break;
+        default:
+            for (j = 0; j < 3; j++) {
+                p1->f.f[j] += force[j];
+                p2->f.f[j] += force2[j];
+                p3->f.f[j] += force3[j];
+                p4->f.f[j] += force4[j];
+            }
+        break;
 #endif
-	}
+	
       }
       break;
     case 7:

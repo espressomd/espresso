@@ -99,11 +99,8 @@
 #include "bonded_coulomb_tcl.hpp"
 #include "subt_lj_tcl.hpp"
 #include "umbrella_tcl.hpp"
-#include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/oif_global_forces_tcl.hpp"
-#include "tcl/object-in-fluid/stretching_force_tcl.hpp"
-#include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
-#include "tcl/object-in-fluid/bending_force_tcl.hpp"
+#include "tcl/object-in-fluid/oif_local_forces_tcl.hpp"
 #ifdef TWIST_STACK
 #include "twist_stack_tcl.hpp"
 #endif
@@ -328,14 +325,8 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   switch (params->type) {
   case BONDED_IA_FENE:
     return tclprint_to_result_feneIA(interp, params);
-  case BONDED_IA_STRETCHING_FORCE:						
-    return tclprint_to_result_stretchingforceIA(interp, params);
-  case BONDED_IA_STRETCHLIN_FORCE:						
-    return tclprint_to_result_stretchlinforceIA(interp, params);
-  case BONDED_IA_AREA_FORCE_LOCAL:					
-	return tclprint_to_result_areaforcelocalIA(interp, params);
-  case BONDED_IA_BENDING_FORCE:						
-	return tclprint_to_result_bendingforceIA(interp, params);
+  case BONDED_IA_OIF_LOCAL_FORCES:
+	return tclprint_to_result_oiflocalforcesIA(interp, params);
 #ifdef OIF_GLOBAL_FORCES
   case BONDED_IA_OIF_GLOBAL_FORCES:						
 	return tclprint_to_result_oifglobalforcesIA(interp, params);
@@ -964,10 +955,7 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   if (ARG0_IS_S(name)) return parser(interp, bond_type, argc, argv);
   
   REGISTER_BONDED("fene", tclcommand_inter_parse_fene);
-  REGISTER_BONDED("stretching_force", tclcommand_inter_parse_stretching_force);
-  REGISTER_BONDED("stretchlin_force", tclcommand_inter_parse_stretchlin_force);
-  REGISTER_BONDED("area_force_local", tclcommand_inter_parse_area_force_local);
-  REGISTER_BONDED("bending_force", tclcommand_inter_parse_bending_force);
+  REGISTER_BONDED("oif_local_forces", tclcommand_inter_parse_oif_local_forces);
 #ifdef OIF_GLOBAL_FORCES
   REGISTER_BONDED("oif_global_forces", tclcommand_inter_parse_oif_global_forces);
 #endif

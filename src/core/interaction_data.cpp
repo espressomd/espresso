@@ -745,16 +745,10 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "RIGID_BOND";
   case BONDED_IA_VIRTUAL_BOND:
     return "VIRTUAL_BOND";
-  case BONDED_IA_STRETCHING_FORCE:
-    return "STRETCHING_FORCE";
-  case BONDED_IA_AREA_FORCE_LOCAL:
-    return "AREA_FORCE_LOCAL";
   case BONDED_IA_OIF_GLOBAL_FORCES:
     return "OIF_GLOBAL_FORCES";
-  case BONDED_IA_BENDING_FORCE:
-    return "BENDING_FORCE";
-  case BONDED_IA_STRETCHLIN_FORCE:
-    return "STRETCHLIN_FORCE";
+  case BONDED_IA_OIF_LOCAL_FORCES:
+    return "OIF_LOCAL_FORCES";
   case BONDED_IA_CG_DNA_BASEPAIR:
     return "CG_DNA_BASEPAIR";
   case BONDED_IA_CG_DNA_STACKING:

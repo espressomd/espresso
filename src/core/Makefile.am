@@ -150,11 +150,8 @@ libEspresso_la_SOURCES += \
 	umbrella.cpp umbrella.hpp \
 	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
-	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
 	object-in-fluid/oif_global_forces.cpp object-in-fluid/oif_global_forces.hpp \
-	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
-	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
-	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
+	object-in-fluid/oif_local_forces.cpp object-in-fluid/oif_local_forces.hpp \
 	hydrogen_bond.cpp hydrogen_bond.hpp \
 	twist_stack.cpp twist_stack.hpp
 

@@ -1,5 +1,6 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2013,2014 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
   
@@ -16,16 +17,19 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _OBJECT_IN_FLUID_STRETCHING_FORCE_TCL_H
-#define _OBJECT_IN_FLUID_STRETCHING_FORCE_TCL_H
+#ifndef _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_TCL_H
+#define _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_TCL_H
+/** \file oif_local_forces.hpp routines to calculate the local elastic forces
+    for a particle quadruple (two triangles that have 1 edge in common)
+*/
 
 #include "tcl/parser.hpp"
 #include "interaction_data.hpp"
 
-/************************************************************/
-/// parse parameters for the stretching_force potential
-int tclcommand_inter_parse_stretching_force(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-int tclprint_to_result_stretchingforceIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
+
+/// parse parameters for the oif_local_forces potential
+int tclcommand_inter_parse_oif_local_forces(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+
+int tclprint_to_result_oiflocalforcesIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
 
 #endif
-//#endif
