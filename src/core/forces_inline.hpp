@@ -598,8 +598,8 @@ inline void add_bonded_force(Particle *p1)
   double force[3]  = { 0., 0., 0. };
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
-#ifdef TWIST_STACK
   double force4[3] = { 0., 0., 0. };
+#if TWIST_STACK
   double force5[3] = { 0., 0., 0. };
   double force6[3] = { 0., 0., 0. };
   double force7[3] = { 0., 0., 0. };
