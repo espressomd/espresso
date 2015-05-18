@@ -271,7 +271,7 @@ espressoSystemInterface.update();
 	area_volume[1] = 0.0; 
     for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
         calc_oif_global(area_volume,i);
-        if (area_volume[0]<1e-100 && area_volume[1]<1e-100) break;
+        if (fabs(area_volume[0])<1e-100 && fabs(area_volume[1])<1e-100) break;
         add_oif_global_forces(area_volume,i);
     }
 #endif

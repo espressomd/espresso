@@ -985,7 +985,7 @@ proc oif_create_template { args } {
 		}
 		# We need to compute the distance btw the vertices
 		set dist [expr sqrt(($p1(0)-$p2(0))*($p1(0)-$p2(0)) + ($p1(1)-$p2(1))*($p1(1)-$p2(1)) + ($p1(2)-$p2(2))*($p1(2)-$p2(2)))] 
-		inter [expr $start_id_of_ks_interaction + $i] stretchlin_force [format %e $dist] [format %e $ks]
+		inter [expr $start_id_of_ks_interaction + $i] stretching_force [format %e $dist] [format %e $ks]
 		if {$check_output == 1} { 
 		    puts $fpart "inter [expr $start_id_of_ks_interaction + $i] stretching_force [format %e $dist] [format %e $ks]"
 		}
