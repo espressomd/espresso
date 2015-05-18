@@ -16,21 +16,18 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _ACTOR_ACTOR_HPP
-#define _ACTOR_ACTOR_HPP
+#include "HarmonicOrientationWell.hpp"
+#include "EspressoSystemInterface.hpp"
+#include "forces.hpp"
 
-#include "SystemInterface.hpp"
+#ifdef ROTATION
 
-/**
- * Generic abstract potential class.
- * All potentials should be derived from this one.
- */
-class Actor {
-public:
-	virtual void computeForces(SystemInterface &s) { };
-	virtual void computeTorques(SystemInterface &s) { };
-  virtual void computeEnergy(SystemInterface &s) { };
-	virtual ~Actor() {}
-};
+HarmonicOrientationWell::
+HarmonicOrientationWell(float x1, float x2, float x3, float _k, SystemInterface &s) {
+  x = x1;
+  y = x2;
+  z = x3;
+  k = _k;
+}
 
-#endif /* _ACTOR_ACTOR_HPP */
+#endif

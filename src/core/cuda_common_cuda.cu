@@ -144,7 +144,7 @@ __global__ void reset_particle_force(float *particle_forces_device){
     particle_forces_device[3*part_index+0] = 0.0f;
     particle_forces_device[3*part_index+1] = 0.0f;
     particle_forces_device[3*part_index+2] = 0.0f;
-  }			
+ }			
 }
 
 /** change number of particles to be communicated to the GPU

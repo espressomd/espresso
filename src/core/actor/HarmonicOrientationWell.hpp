@@ -16,21 +16,34 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _ACTOR_ACTOR_HPP
-#define _ACTOR_ACTOR_HPP
+#ifndef _ACTOR_HARMONICORIENTATIONWELL_HPP
+#define _ACTOR_HARMONICORIENTATIONWELL_HPP
 
+#include "config.hpp"
+
+#ifdef ROTATION
+
+#include "Actor.hpp"
 #include "SystemInterface.hpp"
+#include <iostream>
 
-/**
- * Generic abstract potential class.
- * All potentials should be derived from this one.
- */
-class Actor {
+void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k, int n, float *quatu, float *torque);
+
+class HarmonicOrientationWell : public Actor {
 public:
-	virtual void computeForces(SystemInterface &s) { };
-	virtual void computeTorques(SystemInterface &s) { };
-  virtual void computeEnergy(SystemInterface &s) { };
-	virtual ~Actor() {}
+  HarmonicOrientationWell(float x1, float x2, float x3, float _k, SystemInterface &s);
+
+#ifdef ROTATION
+  virtual void computeTorques(SystemInterface &s) {
+    HarmonicOrientationWell_kernel_wrapper(x,y,z,k,s.npart_gpu(), s.quatuGpuBegin(), s.torqueGpuBegin());
+  };
+#endif
+
+  virtual ~HarmonicOrientationWell() {}
+protected:
+  float x,y,z;
+  float k;
 };
 
-#endif /* _ACTOR_ACTOR_HPP */
+#endif
+#endif
