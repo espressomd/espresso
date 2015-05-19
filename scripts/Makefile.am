@@ -29,6 +29,7 @@ ESSCRIPTS = \
 	countBonds.tcl \
 	dielectrics.tcl \
 	gibbs_ghmc.tcl \
+	h5md.tcl \
 	object_in_fluid.tcl \
 	parallel_tempering.tcl \
 	pdb.tcl \
