@@ -250,8 +250,8 @@ __global__ void EwaldGPU_ForcesReci_MaxThreads(real *k,real *r_i, real *q_i, rea
       forces_reci[3*blockId+1]   += sdata[2*blockSize]*coulomb_prefactor;
       forces_reci[3*blockId+2] += sdata[4*blockSize]*coulomb_prefactor;
     }
-  __syncthreads();
 }
+
 template <int blockSize, bool nIsPow2>
 __global__ void EwaldGPU_ForcesReci_LowThreads(real *k,real *r_i, real *q_i, real *rho_hat, real *infl_factor, real *forces_reci, int N, int num_k, real V, real coulomb_prefactor, int maxThreadsPerBlock,int elapsedLoops)
 {
@@ -321,6 +321,7 @@ __global__ void EwaldGPU_ForcesReci_LowThreads(real *k,real *r_i, real *q_i, rea
       forces_reci[3*blockId+2] += sdata[4*blockSize]*coulomb_prefactor;
     }
 }
+
 //Energy in reciprocal space
 template <int blockSize, bool nIsPow2>
 __global__ void EwaldGPU_EnergyReci_MaxThreads(real *rho_hat, real *infl_factor,real *energy_reci, int N, int num_k, real V,int maxThreadsPerBlock,int loops,real coulomb_prefactor)
@@ -542,18 +543,26 @@ EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int nu
 }
 EwaldgpuForce::~EwaldgpuForce()
 {
-  HANDLE_ERROR(cudaFree(m_k));
+  if(m_k)
+    HANDLE_ERROR(cudaFree(m_k));
   HANDLE_ERROR(cudaFree(m_dev_k));
-  HANDLE_ERROR(cudaFree(m_forces_reci));
+  if(m_forces_reci)
+    HANDLE_ERROR(cudaFree(m_forces_reci));
   HANDLE_ERROR(cudaFree(m_dev_forces_reci));
-  HANDLE_ERROR(cudaFree(m_infl_factor));
+  if(m_infl_factor)
+    HANDLE_ERROR(cudaFree(m_infl_factor));
   HANDLE_ERROR(cudaFree(m_dev_infl_factor));
-  HANDLE_ERROR(cudaFree(m_rho_hat));
+  if(m_rho_hat)
+    HANDLE_ERROR(cudaFree(m_rho_hat));
   HANDLE_ERROR(cudaFree(m_dev_rho_hat));
-  HANDLE_ERROR(cudaFree(m_energy_reci));
-  HANDLE_ERROR(cudaFree(m_dev_energy_reci));
-  HANDLE_ERROR(cudaFree(m_q_sqr));
-  HANDLE_ERROR(cudaFree(m_dev_q_sqr));
+  if(m_energy_reci)
+    HANDLE_ERROR(cudaFree(m_energy_reci));
+  if(m_dev_energy_reci)
+    HANDLE_ERROR(cudaFree(m_dev_energy_reci));
+  if(m_q_sqr)
+    HANDLE_ERROR(cudaFree(m_q_sqr));
+  if(m_dev_q_sqr)
+    HANDLE_ERROR(cudaFree(m_dev_q_sqr));
 }
 void EwaldgpuForce::setup(SystemInterface &s)
 {
@@ -561,6 +570,7 @@ void EwaldgpuForce::setup(SystemInterface &s)
     {
       return;
     }
+
   ewaldgpu_params.isTunedFlag = ewaldgpu_params.isTuned;
 
   //Initialization values
@@ -622,9 +632,9 @@ void EwaldgpuForce::setup(SystemInterface &s)
   stream0 = (cudaStream_t *) malloc (1 * sizeof(cudaStream_t));
   start = (cudaEvent_t *) malloc (1 * sizeof(cudaEvent_t));
   stop = (cudaEvent_t *) malloc (1 * sizeof(cudaEvent_t));
-  HANDLE_ERROR(cudaEventCreate(&(*start)));
-  HANDLE_ERROR(cudaEventCreate(&(*stop)));
-  HANDLE_ERROR(cudaStreamCreate(&(*stream0)));
+  HANDLE_ERROR(cudaEventCreate(start));
+  HANDLE_ERROR(cudaEventCreate(stop));
+  HANDLE_ERROR(cudaStreamCreate(stream0));
   HANDLE_ERROR(cudaDeviceSynchronize());
   HANDLE_ERROR(cudaEventRecord(*start, 0));
 
@@ -632,9 +642,13 @@ void EwaldgpuForce::setup(SystemInterface &s)
   set_params(m_rcut, m_num_kx, m_num_ky, m_num_kz, m_alpha);
 
   //q squared
-  memset(m_q_sqr,0,sizeof(real));
-  HANDLE_ERROR( cudaMemcpyAsync( m_dev_q_sqr, m_q_sqr, sizeof(real), cudaMemcpyHostToDevice, 0  ) );
+  *m_q_sqr = 0;
+  HANDLE_ERROR(cudaMemcpyAsync( m_dev_q_sqr, m_q_sqr, sizeof(real), cudaMemcpyHostToDevice));
   GPU_q_sqr(s);
+
+  //Copy arrays on the GPU
+  HANDLE_ERROR( cudaMemcpyAsync( m_dev_k, m_k, 3*m_num_k*sizeof(real), cudaMemcpyHostToDevice, 0 ));
+  HANDLE_ERROR( cudaMemcpyAsync( m_dev_infl_factor, m_infl_factor, m_num_k*sizeof(real), cudaMemcpyHostToDevice, 0  ) );
 }
 
 //Compute forces and energy
@@ -652,13 +666,8 @@ void EwaldgpuForce::computeForces(SystemInterface &s)
 
   //Set to NULL
   memset(m_rho_hat,0,2*m_num_k*sizeof(real));
-  memset(m_energy_reci,0,sizeof(real));
 
-  //Copy arrays on the GPU
-  HANDLE_ERROR( cudaMemcpyAsync( m_dev_k, m_k, 3*m_num_k*sizeof(real), cudaMemcpyHostToDevice, 0 ));
-  HANDLE_ERROR( cudaMemcpyAsync( m_dev_rho_hat, m_rho_hat, 2*m_num_k*sizeof(real), cudaMemcpyHostToDevice, 0  ) );
-  HANDLE_ERROR( cudaMemcpyAsync( m_dev_infl_factor, m_infl_factor, m_num_k*sizeof(real), cudaMemcpyHostToDevice, 0  ) );
-  HANDLE_ERROR( cudaMemcpyAsync( m_dev_energy_reci, m_energy_reci, sizeof(real), cudaMemcpyHostToDevice, 0  ) );
+  HANDLE_ERROR( cudaMemset(m_dev_rho_hat, 0, 2*m_num_k*sizeof(real) ) );
 
   //Start GPU calculation
   GPU_Forces(s);
@@ -667,23 +676,18 @@ void EwaldgpuForce::computeForces(SystemInterface &s)
 void EwaldgpuForce::computeEnergy(SystemInterface &s)
 {
   if (coulomb.method != COULOMB_EWALD_GPU) // EWALDGPU was disabled. nobody cares about our calculations anymore
-    {
-      std::cerr << "EwaldGPU: coulomb.method has been changed, skipping calculation" << std::endl;
       return;
-    }
+
   setup(s);
 
   //Resize box
   m_box_l[0] = s.box()[0];
   m_box_l[1] = s.box()[1];
   m_box_l[2] = s.box()[2];
-  //Set to NULL
+  //Set to 0
   memset(m_energy_reci,0,sizeof(real));
   //Copy arrays on the GPU
-  HANDLE_ERROR( cudaMemcpyAsync( m_dev_k, m_k, 3*m_num_k*sizeof(real), cudaMemcpyHostToDevice, 0 ));
-  HANDLE_ERROR( cudaMemcpyAsync( m_dev_rho_hat, m_rho_hat, 2*m_num_k*sizeof(real), cudaMemcpyHostToDevice, 0  ) );
-  HANDLE_ERROR( cudaMemcpyAsync( m_dev_infl_factor, m_infl_factor, m_num_k*sizeof(real), cudaMemcpyHostToDevice, 0  ) );
-  HANDLE_ERROR( cudaMemcpyAsync( m_dev_energy_reci, m_energy_reci, sizeof(real), cudaMemcpyHostToDevice, 0  ) );
+  HANDLE_ERROR( cudaMemset(m_dev_energy_reci, 0, sizeof(real)));
 
   //Start GPU calculation
   GPU_Energy(s);
@@ -960,6 +964,14 @@ void EwaldgpuForce::GPU_Energy(SystemInterface &s)
   //Copy the values back from the GPU to the CPU
   HANDLE_ERROR( cudaMemcpy( m_energy_reci, &(((CUDA_energy*)s.eGpu())->coulomb),sizeof(real),cudaMemcpyDeviceToHost ) );
 }
+
+struct square {
+  __host__ __device__ 
+  real operator()(const real &x) const {
+    return x*x;
+  }
+};
+
 void EwaldgpuForce::GPU_q_sqr(SystemInterface &s)
 {
   //Maximum Blocks/Threads
