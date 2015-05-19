@@ -38,8 +38,8 @@ proc h5md_init { data_path } {
 	h5mdfile H5Pset_chunk dims 1 
 	h5mdfile H5Dcreate2 "particles/atoms/position/time"
 	h5mdfile H5Screate_simple type double dims 0 [setmd n_part] 3
-    h5mdfile H5Pset_chunk dims 5 [setmd n_part] 3
-    h5mdfile H5Dcreate2 "particles/atoms/position/value"
+	h5mdfile H5Pset_chunk dims 5 [setmd n_part] 3
+	h5mdfile H5Dcreate2 "particles/atoms/position/value"
 	h5mdfile H5Screate_simple type int dims [setmd n_part] 
 	h5mdfile H5Pset_chunk dims [setmd n_part] 
 	h5mdfile H5Dcreate2 "particles/atoms/species"
@@ -50,8 +50,8 @@ proc h5md_init { data_path } {
 	h5mdfile H5Pset_chunk dims 1 
 	h5mdfile H5Dcreate2 "particles/atoms/velocity/time"
 	h5mdfile H5Screate_simple type double dims 0 [setmd n_part] 3
-    h5mdfile H5Pset_chunk dims 5 [setmd n_part] 3
-    h5mdfile H5Dcreate2 "particles/atoms/velocity/value"
+	h5mdfile H5Pset_chunk dims 5 [setmd n_part] 3
+	h5mdfile H5Dcreate2 "particles/atoms/velocity/value"
 	h5mdfile H5Screate_simple type int dims [setmd n_part_types]
 	h5mdfile H5Pset_chunk dims [setmd n_part_types]
 	h5mdfile H5Dcreate2 "parameters/vmd_structure/indexOfSpecies"
@@ -66,9 +66,9 @@ proc h5md_write_positions { args } {
 	h5mdfile H5Dopen2 "particles/atoms/position/value"
 	set offset [h5mdfile get_dataset_dims]
 	# write positions of all particles
-    h5mdfile H5Dextend dims [expr [lindex $offset 0]+1 ] [setmd n_part] 3
-    h5mdfile H5Sselect_hyperslab offset [expr [lindex $offset 0]] 0 0
-    h5mdfile H5Screate_simple type double dims 1 [setmd n_part] 3
+	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1 ] [setmd n_part] 3
+	h5mdfile H5Sselect_hyperslab offset [expr [lindex $offset 0]] 0 0
+	h5mdfile H5Screate_simple type double dims 1 [setmd n_part] 3
 	for { set i 0 } { $i < [setmd n_part] } { incr i } {
 		if { [lindex $args 0 ] == "folded" } {
 			set pos [part $i print pos folded]
@@ -111,7 +111,7 @@ proc h5md_write_velocities {} {
 		h5mdfile H5_write_value value [lindex $vel 1] index 0 $i 1
 		h5mdfile H5_write_value value [lindex $vel 2] index 0 $i 2
 	}
-    h5mdfile H5Dwrite
+	h5mdfile H5Dwrite
 	# write simulation step (assumes that time_step hasnt changed)
 	h5mdfile H5Dopen2 "particles/atoms/velocity/step"
 	set offset [h5mdfile get_dataset_dims]
@@ -150,8 +150,8 @@ proc h5md_observable0D_init { args } {
 	h5mdfile H5Pset_chunk dims 1 
 	h5mdfile H5Dcreate2 "observables/[lindex $args 0]/time"
 	h5mdfile H5Screate_simple type double dims 0 
-    h5mdfile H5Pset_chunk dims 1
-    h5mdfile H5Dcreate2 "observables/[lindex $args 0]/value"
+	h5mdfile H5Pset_chunk dims 1
+	h5mdfile H5Dcreate2 "observables/[lindex $args 0]/value"
 }
 
 # writes to a user defined zero dimensional observable dataset
