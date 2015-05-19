@@ -11,6 +11,7 @@
 
 #ifdef H5MD
 
+typedef char h5string[1000];
 class H5mdfile
 {
 	public:
@@ -40,7 +41,7 @@ class H5mdfile
 	int*				dset_data_int; // Dataset array (type: integer)
 	float*			dset_data_float; // Dataset array (type: float)
 	double*			dset_data_double; // Dataset array (type: double)
-	char**			dset_data_string; // Dataset array (type: string)
+	h5string*		dset_data_string; // Dataset array (type: string)
 	int 				dset_data_singlevalue_int; // Single value of complete respectively extended dataset array (type: int)
 	float 			dset_data_singlevalue_float; // Single value of complete respectively extended dataset array (type: float)
 	double 			dset_data_singlevalue_double; // Single value of complete respectively extended dataset array (type: double)
@@ -388,9 +389,7 @@ int H5mdfile::H5_Dread(int argc, char **argv, Tcl_Interp *interp)
 	}
 	else if(H5Tequal(dataset_type_id, H5T_C_S1))
 	{
-	   dset_data = (char**) malloc(dset_data_size * sizeof(char*));
-	   //for (int i = 0; i < dset_data_size; i++)
-		   //dset_data[i] = malloc((string_maxlength) * sizeof(char));
+	   dset_data = (h5string*) malloc(dset_data_size * sizeof(h5string));
 	}
 	else
 	{
@@ -511,17 +510,16 @@ int H5mdfile::H5_read_value(int argc, char **argv,Tcl_Interp *interp)
 		dset_data_int = static_cast<int*>(dset_data);
 		dset_data_singlevalue_int = dset_data_int[index];
 
-		char buffer[string_maxlength];
+		char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
 		Tcl_PrintDouble(interp, (double)dset_data_singlevalue_int, buffer);
 		Tcl_AppendResult(interp, buffer, (char *)NULL);
 		return TCL_OK;
 	}
 	if(H5Tequal(dataset_type_id, H5T_C_S1))
 	{
-		dset_data_string = static_cast<char**>(dset_data);
+		dset_data_string = static_cast<h5string*>(dset_data);
 		dset_data_singlevalue_string = dset_data_string[index];
-		//		char* buffer[string_maxlength];
-		//		buffer=dset_data_singlevalue_string;
+
 		Tcl_AppendResult(interp, dset_data_singlevalue_string, (char *)NULL);
 		return TCL_OK;
 	}
@@ -579,9 +577,7 @@ int H5mdfile::H5_Screate_simple(int argc, char **argv, Tcl_Interp *interp)
 	else if(!strncmp(argv[3], "str", strlen(argv[3])))
 	{
 	   dataset_type_id = H5T_C_S1;
-	   dset_data = (char**) malloc(dset_data_size * sizeof(char*));
-		//		   for (int i = 0; i < dset_data_size; i++)
-		//			   dset_data[i] = malloc((string_maxlength) * sizeof(char));
+	   dset_data = (h5string*) malloc(dset_data_size * sizeof(h5string));
 	}
 	else
 	{
@@ -636,8 +632,8 @@ int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
 	}
 	if(H5Tequal(dataset_type_id, H5T_C_S1))
 	{
-		dset_data_string = static_cast<char**>(dset_data);
-		dset_data_string[index]=argv[3];
+		dset_data_string = static_cast<h5string*>(dset_data);
+		strcpy(dset_data_string[index], argv[3]);
 	}
 	//printf("H5write_value \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	return TCL_OK;
