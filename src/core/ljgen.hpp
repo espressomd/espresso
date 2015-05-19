@@ -77,6 +77,8 @@ inline void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_p
       for(j=0;j<3;j++)
 	force[j] += fac * d[j];
       
+      
+
 #ifdef LJ_WARN_WHEN_CLOSE
       if(fac*dist > 1000) fprintf(stderr,"%d: LJ-Gen-Warning: Pair (%d-%d) force=%f dist=%f\n",
 				  this_node,p1->p.identity,p2->p.identity,fac*dist,dist);

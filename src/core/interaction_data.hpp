@@ -88,6 +88,12 @@ enum BondedInteraction{
     BONDED_IA_AREA_FORCE_GLOBAL,
     /** Type of bonded interaction is a linear stretching force. */
     BONDED_IA_STRETCHLIN_FORCE,
+    /** Type of bonded interaction for cg DNA */
+    BONDED_IA_CG_DNA_BASEPAIR,
+    /** Type of bonded interaction for cg DNA */
+    BONDED_IA_CG_DNA_STACKING,
+    /** Type of bonded interaction for cg DNA */
+    BONDED_IA_CG_DNA_BACKBONE,
     /** Type of bonded interaction is a wall repulsion (immersed boundary). */
     BONDED_IA_IBM_TRIEL,
     /** Type of bonded interaction is volume conservation force (immersed boundary). */
@@ -552,13 +558,43 @@ r0 - equilibrium bond length.
 drmax2 - square of drmax (internal parameter). 
 */
 typedef struct {
-      double k;
-      double drmax;
-      double r0;
-      double drmax2;
-      double drmax2i;
-    } Fene_bond_parameters;
+  double k;
+  double drmax;
+  double r0;
+  double drmax2;
+  double drmax2i;
+} Fene_bond_parameters;
 
+#ifdef HYDROGEN_BOND
+    /** Parameters for the cg_dna potential
+	Insert documentation here.
+    **/
+typedef struct {
+      double r0;
+      double alpha;
+      double E0;
+      double kd;
+      double sigma1;
+      double sigma2;
+      double psi10;
+      double psi20;
+      /* Parameters for the sugar base interaction */
+      double E0sb;
+      double r0sb;
+      double alphasb;
+      double f2;
+      double f3;
+    } Cg_dna_basepair_parameters;
+#endif
+#ifdef TWIST_STACK
+typedef struct {
+      double rm;
+      double epsilon;
+      double ref_pot;
+      double a[8];
+      double b[7];
+    } Cg_dna_stacking_parameters;
+#endif
 
 /** Parameters for hyperelastic stretching_force */
 typedef struct {
@@ -837,6 +873,12 @@ typedef union {
     Subt_lj_bond_parameters subt_lj;
     Rigid_bond_parameters rigid_bond;
     Angledist_bond_parameters angledist;
+#if defined(CG_DNA) || defined(HYDROGEN_BOND)
+    Cg_dna_basepair_parameters hydrogen_bond;
+#endif
+#if defined(CG_DNA) || defined(TWIST_STACK)
+    Cg_dna_stacking_parameters twist_stack;
+#endif
     Endangledist_bond_parameters endangledist;
     IBM_Triel_Parameters ibm_triel;
     IBM_VolCons_Parameters ibmVolConsParameters;

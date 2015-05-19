@@ -104,10 +104,15 @@
 #include "tcl/object-in-fluid/stretching_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
+#ifdef TWIST_STACK
+#include "twist_stack_tcl.hpp"
+#endif
+#ifdef HYDROGEN_BOND
+#include "hydrogen_bond_tcl.hpp"
+#endif
 #include "immersed_boundary/ibm_triel_tcl.hpp"
 #include "immersed_boundary/ibm_volume_conservation_tcl.hpp"
 #include "immersed_boundary/ibm_tribend_tcl.hpp"
-
 
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
@@ -1012,6 +1017,12 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef BOND_VIRTUAL
   REGISTER_BONDED("virtual_bond", tclcommand_inter_parse_virtual_bonds);
+#endif
+#ifdef HYDROGEN_BOND
+  REGISTER_BONDED("hydrogen_bond", tclcommand_inter_parse_hydrogen_bond);
+#endif
+#ifdef TWIST_STACK
+  REGISTER_BONDED("twist_stack", tclcommand_inter_parse_twist_stack);  
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);

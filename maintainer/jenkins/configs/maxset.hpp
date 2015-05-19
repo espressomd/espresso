@@ -65,6 +65,9 @@
 #define INTER_RF
 #define OVERLAPPED
 
+#define TWIST_STACK
+#define HYDROGEN_BOND
+
 #define BOND_ANGLE
 #define BOND_ANGLEDIST
 #define BOND_ANGLEDIST_HARMONIC

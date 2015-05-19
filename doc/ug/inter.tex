@@ -1548,7 +1548,11 @@ If \var{K_\mathrm{cut}} and \var{r_\mathrm{cut}} are given by the user, then \ke
 \index{interactions!Debye-H\"uckel|mainindex}
 
 \begin{essyntax}
+  \variant{1}
   inter coulomb \var{l_B} dh \var{\kappa} \var{r_\mathrm{cut}}
+  \variant{2}
+  inter coulomb \var{l_B} dh \var{\kappa} \var{r_{\text{cut}}}
+  \var{\varepsilon_{\text{int}}} \var{r_0} \var{r_1} \var{\alpha}    
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1566,6 +1570,20 @@ to zero which introduces a step in energy. Therefore, it introduces
 fluctuations in energy.
 
 For $\kappa = 0$, this corresponds to the plain coulomb potential.
+
+The second variant combines the coulomb interaction for charges that are closer than $r_0$ with the Debye-Hueckel approximation for charges that are further apart than $r_1$ in a continous way. The used potential is 
+
+\begin{equation}
+  U(r)^{C-DHC} = 
+  \begin{cases} 
+    \frac{l_B k_B T q_1 q_2}{\varepsilon_{\text{int}} r} & \text{if } r < r_0, \\ 
+    \frac{l_B k_B T q_1 q_2 e^{-\alpha (r - r_0)}}{\varepsilon_{\text{int}} r} & \text{if } r_0 < r < r_1,  \\
+    \frac{l_B k_B T q_1 q_2 e^{-\kappa r}}{\varepsilon_{\text{ext}} r} & \text{if } r_{\text{cut}} > r > r_1,  \\
+    0 & \text{if } r > r_{\text{cut}}.
+  \end{cases}
+\end{equation}
+
+The parameter $\alpha$ that controlls the transition from Coulomb- to Debye-H\"uckel potential should be chosen such that the force is continous.
 
 \subsection{MMM2D}
 \index{MMM2D method|mainindex}

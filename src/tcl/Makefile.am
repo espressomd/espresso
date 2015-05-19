@@ -78,6 +78,8 @@ libEspressoTcl_la_SOURCES = \
 	uwerr_tcl.cpp \
 	virtual_sites_com_tcl.cpp virtual_sites_com_tcl.hpp \
 	ghmc_tcl.cpp ghmc_tcl.hpp \
+	twist_stack_tcl.hpp twist_stack_tcl.cpp \
+	hydrogen_bond_tcl.hpp hydrogen_bond_tcl.cpp \
 	minimize_energy_tcl.cpp minimize_energy_tcl.hpp \
 	integrate_sd_tcl.cpp integrate_sd_tcl.hpp
 
@@ -156,7 +158,8 @@ libEspressoTcl_la_SOURCES += \
 libEspressoTcl_la_SOURCES += \
 	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
 	actor/Ewaldgpu_tcl.cpp actor/Ewaldgpu_tcl.hpp \
-	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
+	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp \
+	actor/HarmonicOrientationWell_tcl.cpp actor/HarmonicOrientationWell_tcl.hpp
 
 if CUDA
 libEspressoTcl_la_SOURCES += cuda_init_tcl.cpp

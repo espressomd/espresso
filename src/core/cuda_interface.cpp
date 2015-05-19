@@ -121,6 +121,12 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
 		particle_data_host[i+g].q = (float)part[i].p.q;
 #endif
 
+#ifdef ROTATION
+                particle_data_host[i+g].quatu[0] = (float)part[i].r.quatu[0];
+                particle_data_host[i+g].quatu[1] = (float)part[i].r.quatu[1];
+                particle_data_host[i+g].quatu[2] = (float)part[i].r.quatu[2];
+#endif
+
 #ifdef ENGINE
                 particle_data_host[i+g].swim.v_swim        = (float)part[i].swim.v_swim;
                 particle_data_host[i+g].swim.f_swim        = (float)part[i].swim.f_swim;
@@ -216,6 +222,12 @@ static void cuda_mpi_get_particles_slave(){
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
   #endif
 
+#ifdef ROTATION
+          particle_data_host_sl[i+g].quatu[0] = (float)part[i].r.quatu[0];
+          particle_data_host_sl[i+g].quatu[1] = (float)part[i].r.quatu[1];
+          particle_data_host_sl[i+g].quatu[2] = (float)part[i].r.quatu[2];
+#endif
+
 #ifdef ENGINE
           particle_data_host_sl[i+g].swim.v_swim        = (float)part[i].swim.v_swim;
           particle_data_host_sl[i+g].swim.f_swim        = (float)part[i].swim.f_swim;
@@ -237,7 +249,7 @@ static void cuda_mpi_get_particles_slave(){
     }
 }
 
-void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_composition * host_composition){
+void cuda_mpi_send_forces(float *host_forces,CUDA_fluid_composition * host_composition){
   int n_part;
   int g, pnode;
   Cell *cell;
@@ -264,9 +276,9 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_compositio
             cell = local_cells.cell[c];
             npart = cell->n;
             for (i=0;i<npart;i++) { 
-              cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
-              cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
-              cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
+              cell->part[i].f.f[0] += (double)host_forces[(i+g)*3+0];
+              cell->part[i].f.f[1] += (double)host_forces[(i+g)*3+1];
+              cell->part[i].f.f[2] += (double)host_forces[(i+g)*3+2];
 #ifdef SHANCHEN
               for (int ii=0;ii<LB_COMPONENTS;ii++) {
                 cell->part[i].r.composition[ii] = (double)host_composition[i+g].weight[ii];
@@ -278,7 +290,7 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_compositio
         }
         else {
           /* and send it back to the slave node */
-          MPI_Send(&host_forces[g], sizes[pnode]*sizeof(CUDA_particle_force), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);      
+          MPI_Send(&host_forces[3*g], 3*sizes[pnode]*sizeof(float), MPI_BYTE, pnode, REQ_CUDAGETFORCES, comm_cart);
 #ifdef SHANCHEN
           MPI_Send(&host_composition[g], sizes[pnode]*sizeof(CUDA_fluid_composition), MPI_BYTE, pnode, REQ_CUDAGETPARTS, comm_cart);      
 #endif
@@ -295,7 +307,7 @@ void cuda_mpi_send_forces(CUDA_particle_force *host_forces,CUDA_fluid_compositio
 static void cuda_mpi_send_forces_slave(){
 
     int n_part;
-    CUDA_particle_force *host_forces_sl=NULL;
+    float *host_forces_sl=NULL;
 #ifdef SHANCHEN
     CUDA_fluid_composition *host_composition_sl=NULL;
 #endif
@@ -312,12 +324,12 @@ static void cuda_mpi_send_forces_slave(){
       int g = 0;
       /* get (unsorted) particle informations as an array of type 'particle' */
       /* then get the particle information */
-      host_forces_sl = (CUDA_particle_force *) malloc(n_part*sizeof(CUDA_particle_force));
-      MPI_Recv(host_forces_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_CUDAGETFORCES,
+      host_forces_sl = (float *) malloc(3*n_part*sizeof(float));
+      MPI_Recv(host_forces_sl, 3*n_part*sizeof(float), MPI_BYTE, 0, REQ_CUDAGETFORCES,
         comm_cart, &status);
 #ifdef SHANCHEN
       host_composition_sl = (CUDA_fluid_composition *) malloc(n_part*sizeof(CUDA_fluid_composition));
-      MPI_Recv(host_composition_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_CUDAGETPARTS,
+      MPI_Recv(host_composition_sl, 3*n_part*sizeof(float), MPI_BYTE, 0, REQ_CUDAGETPARTS,
         comm_cart, &status);
 #endif
       for (c = 0; c < local_cells.n; c++) {
@@ -325,9 +337,9 @@ static void cuda_mpi_send_forces_slave(){
         cell = local_cells.cell[c];
         npart = cell->n;
         for (i=0;i<npart;i++) {
-          cell->part[i].f.f[0] += (double)host_forces_sl[i+g].f[0];
-          cell->part[i].f.f[1] += (double)host_forces_sl[i+g].f[1];
-          cell->part[i].f.f[2] += (double)host_forces_sl[i+g].f[2];
+          cell->part[i].f.f[0] += (double)host_forces_sl[(i+g)*3+0];
+          cell->part[i].f.f[1] += (double)host_forces_sl[(i+g)*3+1];
+          cell->part[i].f.f[2] += (double)host_forces_sl[(i+g)*3+2];
 #ifdef SHANCHEN
           for (int ii=0;ii<LB_COMPONENTS;ii++) {
              cell->part[i].r.composition[ii] = (double)host_composition_sl[i+g].weight[ii];

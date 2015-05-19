@@ -878,7 +878,7 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
         float* host_checkpoint_vd = (float *) malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
         unsigned int* host_checkpoint_seed = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
         unsigned int* host_checkpoint_boundary = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        float* host_checkpoint_force = (float *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
+        lbForceFloat* host_checkpoint_force = (lbForceFloat *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
         lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
         for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
             fprintf(cpfile, "%.8E \n", host_checkpoint_vd[n]);
@@ -953,7 +953,7 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         float* host_checkpoint_vd = (float *) malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
         unsigned int* host_checkpoint_seed = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
         unsigned int* host_checkpoint_boundary = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        float* host_checkpoint_force = (float *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
+        lbForceFloat* host_checkpoint_force = (lbForceFloat *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
 
         if (!binary) {
             for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
@@ -966,7 +966,10 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
                 fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
             }
             for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
+              if (sizeof(lbForceFloat) == sizeof(float))
                 fscanf(cpfile, "%f", &host_checkpoint_force[n]);
+              else
+                fscanf(cpfile, "%lf", &host_checkpoint_force[n]);
             }
             lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
         }

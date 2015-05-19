@@ -126,6 +126,17 @@ __device__ inline void atomicadd( float* address,
 #endif
 }
 
+__device__ inline void atomicadd (double* address, double value) {
+  unsigned long long oldval, newval, readback;
+  oldval = __double_as_longlong(*address);
+  newval = __double_as_longlong(__longlong_as_double(oldval) + value);
+  while ((readback=atomicCAS((unsigned long long *)address, oldval, newval)) != oldval)
+  {
+    oldval = readback;
+    newval = __double_as_longlong(__longlong_as_double(oldval) + value);
+  }
+}
+
 
 __device__ unsigned int ek_getThreadIndex() {
 
@@ -409,7 +420,7 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
 #endif
 
 __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int index, unsigned int *neighborindex, unsigned int species_index, LB_node_force_gpu node_f) {
-  float flux, force;
+  ekfloat flux, force;
   float boltzmannfactor_local, boltzmannfactor_neighbor;
 
   float agrid_inv = 1.0f / ek_parameters_gpu.agrid;
@@ -690,7 +701,7 @@ __device__ void ek_diffusion_migration_lbforce_nonlinear_stencil(unsigned int in
 }
 
 __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(unsigned int index, unsigned int *neighborindex, unsigned int species_index, LB_node_force_gpu node_f, LB_nodes_gpu lb_node) {
-  float flux, force;
+  ekfloat flux, force;
 
   float agrid_inv = 1.0f / ek_parameters_gpu.agrid;
   float sqrt2agrid_inv = 1.0f / (sqrtf(2.0f) * ek_parameters_gpu.agrid);
@@ -996,7 +1007,7 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(unsigned int
 }
 
 __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(unsigned int index, unsigned int *neighborindex, unsigned int species_index, LB_node_force_gpu node_f, LB_nodes_gpu lb_node) {
-  float flux, force;
+  ekfloat flux, force;
 
   //face in x
   flux = ( ek_parameters_gpu.rho[species_index][index] -
@@ -2040,7 +2051,7 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
 }
 #ifdef EK_ELECTROSTATIC_COUPLING
 __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
-                                          CUDA_particle_force *particle_forces,
+                                          float *particle_forces,
                                           LB_parameters_gpu * ek_lbparameters_gpu ) {
 
   unsigned int index = ek_getThreadIndex();
@@ -2117,9 +2128,9 @@ __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
                                                                                   (lowernode[2] + 1 ) % ek_lbparameters_gpu->dim_z ) + dim]
           * cellpos[0] * cellpos[1] * cellpos[2];
       }
-      particle_forces[index].f[0] += particle_data[ index ].q * efield[0];
-      particle_forces[index].f[1] += particle_data[ index ].q * efield[1];
-      particle_forces[index].f[2] += particle_data[ index ].q * efield[2];
+      particle_forces[3*index + 0] += particle_data[ index ].q * efield[0];
+      particle_forces[3*index + 1] += particle_data[ index ].q * efield[1];
+      particle_forces[3*index + 2] += particle_data[ index ].q * efield[2];
     }  
 }
 
@@ -2389,7 +2400,7 @@ void ek_integrate() {
 
 
 #ifdef EK_BOUNDARIES
-void ek_init_species_density_wallcharge( float* wallcharge_species_density,
+void ek_init_species_density_wallcharge( ekfloat* wallcharge_species_density,
                                          int wallcharge_species             ) {
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
@@ -2405,7 +2416,7 @@ void ek_init_species_density_wallcharge( float* wallcharge_species_density,
   {  
     cuda_safe_mem( cudaMemcpy( ek_parameters.rho[wallcharge_species], 
                                wallcharge_species_density,
-                               ek_parameters.number_of_nodes * sizeof( float ),
+                               ek_parameters.number_of_nodes * sizeof( ekfloat ),
                                cudaMemcpyHostToDevice )
                  );
   }
@@ -2426,7 +2437,7 @@ void ek_init_species( int species ) {
     ek_parameters.number_of_species++;
     
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.rho[ ek_parameters.species_index[ species ] ],
-                               ek_parameters.number_of_nodes * sizeof( float )                        ) );
+                               ek_parameters.number_of_nodes * sizeof( ekfloat )                        ) );
     
     ek_parameters.density[      ek_parameters.species_index[ species ] ] = 0.0;
     ek_parameters.D[            ek_parameters.species_index[ species ] ] = 0.0;
@@ -2515,7 +2526,7 @@ int ek_init() {
     ek_parameters.number_of_nodes = ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
 
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.j,
-                             ek_parameters.number_of_nodes * 13 * sizeof( float ) ) );
+                             ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) ) );
     cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
     
     lb_get_para_pointer( &ek_lbparameters_gpu );
@@ -2814,14 +2825,14 @@ int ek_print_vtk_density( int species, char* filename ) {
     return 1;
   }
 
-  float* densities = (float*) malloc( ek_parameters.number_of_nodes *
-                                      sizeof( float )                 );
+  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+                                      sizeof( ekfloat )                 );
   
   if( ek_parameters.species_index[ species ] != -1 ) 
   {  
     cuda_safe_mem( cudaMemcpy( densities, 
                                ek_parameters.rho[ ek_parameters.species_index[ species ] ],
-                               ek_parameters.number_of_nodes * sizeof( float ),
+                               ek_parameters.number_of_nodes * sizeof( ekfloat ),
                                cudaMemcpyDeviceToHost )
                  );
   }
@@ -2862,14 +2873,14 @@ LOOKUP_TABLE default\n",
 
 int ek_node_print_density( int species, int x, int y, int z, double* density ) {
 
-  float* densities = (float*) malloc( ek_parameters.number_of_nodes *
-                                      sizeof( float )                 );
+  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+                                      sizeof( ekfloat )                 );
   
   if( ek_parameters.species_index[ species ] != -1 ) 
   {  
     cuda_safe_mem( cudaMemcpy( densities, 
                                ek_parameters.rho[ ek_parameters.species_index[ species ] ],
-                               ek_parameters.number_of_nodes * sizeof( float ),
+                               ek_parameters.number_of_nodes * sizeof( ekfloat ),
                                cudaMemcpyDeviceToHost )
                  );
   }
@@ -2886,14 +2897,14 @@ int ek_node_print_density( int species, int x, int y, int z, double* density ) {
 
 int ek_node_print_flux( int species, int x, int y, int z, double* flux ) {
 
-  float flux_local_cartesian[3]; //temporary variable for converting fluxes into cartesian coordinates for output
+  ekfloat flux_local_cartesian[3]; //temporary variable for converting fluxes into cartesian coordinates for output
   unsigned int coord[3];
 
   coord[0] = x;
   coord[1] = y;
   coord[2] = z;
 
-  float* fluxes = (float*) malloc( ek_parameters.number_of_nodes * 13 * sizeof( float ) );
+  ekfloat* fluxes = (ekfloat*) malloc( ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) );
   
   if( ek_parameters.species_index[ species ] != -1 ) 
   {  
@@ -2916,7 +2927,7 @@ int ek_node_print_flux( int species, int x, int y, int z, double* flux ) {
   
     cuda_safe_mem( cudaMemcpy( fluxes, 
                                ek_parameters.j,
-                               ek_parameters.number_of_nodes * 13*sizeof( float ),
+                               ek_parameters.number_of_nodes * 13*sizeof( ekfloat ),
                                cudaMemcpyDeviceToHost )
                  );
   }
@@ -3013,11 +3024,11 @@ int ek_node_set_density(int species, int x, int y, int z, double density) {
   if(ek_parameters.species_index[species] != -1) 
   {  
     int index = z * ek_parameters.dim_y * ek_parameters.dim_x + y * ek_parameters.dim_x + x;
-    float num_particles = density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
+    ekfloat num_particles = density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
 
     cuda_safe_mem( cudaMemcpy( &ek_parameters.rho[ek_parameters.species_index[species]][index],
                                &num_particles,
-                               sizeof(float),
+                               sizeof(ekfloat),
                                cudaMemcpyHostToDevice )
                  );
   }
@@ -3031,7 +3042,7 @@ int ek_node_set_density(int species, int x, int y, int z, double density) {
 int ek_print_vtk_flux( int species, char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
-  float flux_local_cartesian[3]; //temporary variable for converting fluxes into cartesian coordinates for output
+  ekfloat flux_local_cartesian[3]; //temporary variable for converting fluxes into cartesian coordinates for output
 
   unsigned int coord[3];
 
@@ -3039,7 +3050,7 @@ int ek_print_vtk_flux( int species, char* filename ) {
     return 1;
   }
 
-  float* fluxes = (float*) malloc( ek_parameters.number_of_nodes * 13 * sizeof( float ) );
+  ekfloat* fluxes = (ekfloat*) malloc( ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) );
   
   if( ek_parameters.species_index[ species ] != -1 ) 
   {  
@@ -3062,7 +3073,7 @@ int ek_print_vtk_flux( int species, char* filename ) {
   
     cuda_safe_mem( cudaMemcpy( fluxes, 
                                ek_parameters.j,
-                               ek_parameters.number_of_nodes * 13*sizeof( float ),
+                               ek_parameters.number_of_nodes * 13*sizeof( ekfloat ),
                                cudaMemcpyDeviceToHost )
                  );
   }
@@ -3287,11 +3298,11 @@ int ek_print_vtk_lbforce( char* filename ) {
     return 1;
   }
 
-  float* lbforce = (float*) malloc( ek_parameters.number_of_nodes * 3 *sizeof( float ) );
+  lbForceFloat* lbforce = (lbForceFloat*) malloc( ek_parameters.number_of_nodes * 3 *sizeof( lbForceFloat ) );
   
   cuda_safe_mem( cudaMemcpy( lbforce, 
                              node_f.force_buf,
-                             ek_parameters.number_of_nodes * 3 * sizeof( float ),
+                             ek_parameters.number_of_nodes * 3 * sizeof( lbForceFloat ),
                              cudaMemcpyDeviceToHost )
                );
   

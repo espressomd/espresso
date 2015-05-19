@@ -1749,6 +1749,13 @@ int init_type_array(int type){
 	if (init_gc() == ES_ERROR)
 		return ES_ERROR;
 
+
+for ( int i = 0; i<Index.max_entry; i++ )
+	if (type == Type.index[i]) {
+		// already indexed
+		return ES_OK;
+	}
+
 	updatePartCfg(WITHOUT_BONDS);
 
 	if (!partCfg)

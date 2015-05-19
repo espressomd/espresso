@@ -154,7 +154,9 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
-	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
+	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp \
+	hydrogen_bond.cpp hydrogen_bond.hpp \
+	twist_stack.cpp twist_stack.hpp
 
 # Immersed Boundary
 libEspresso_la_SOURCES += \
@@ -186,6 +188,7 @@ libEspresso_la_SOURCES += \
 	actor/Actor.hpp \
 	actor/ActorList.cpp actor/ActorList.hpp \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
+	actor/HarmonicOrientationWell.cpp actor/HarmonicOrientationWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
 	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
@@ -227,6 +230,7 @@ CUDA_SOURCE_FILES = \
 	actor/Mmm1dgpuForce_cuda.cu \
 	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu \
+	actor/HarmonicOrientationWell_cuda.cu \
 	immersed_boundary/ibm_cuda.cu 	
 
 # include the dependency tracking files
@@ -237,6 +241,7 @@ include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
+include ./actor/$(DEPDIR)/HarmonicOrientationWell_cuda.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
 include ./actor/$(DEPDIR)/EwaldgpuForce.Plo

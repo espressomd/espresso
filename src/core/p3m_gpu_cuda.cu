@@ -723,7 +723,7 @@ void assign_charges(int n_part, const CUDA_particle_data * const pdata, CUFFT_TY
 
 template<int cao>
 __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata, CUFFT_TYPE_COMPLEX *mesh_x, CUFFT_TYPE_COMPLEX *mesh_y, CUFFT_TYPE_COMPLEX *mesh_z, const int m_size, const REAL_TYPE pos_shift, const
-				     REAL_TYPE hi, CUDA_particle_force * lb_particle_force_gpu, REAL_TYPE prefactor,int n_part, int parts_per_block) {
+				     REAL_TYPE hi, float * lb_particle_force_gpu, REAL_TYPE prefactor,int n_part, int parts_per_block) {
   const int part_in_block = threadIdx.x / cao;
   const int cao_id_x = threadIdx.x % cao;
   /** id of the particle **/
@@ -756,14 +756,14 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata, CUF
   const int index = m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z;
   const float c = -prefactor*caf<cao>(cao_id_x, m_pos[0])*caf<cao>(threadIdx.y, m_pos[1])*caf<cao>(threadIdx.z, m_pos[2])*p.q;
 
-  atomicAdd( &(lb_particle_force_gpu[id].f[0]), c*mesh_x[index].x);      
-  atomicAdd( &(lb_particle_force_gpu[id].f[1]), c*mesh_y[index].x);      
-  atomicAdd( &(lb_particle_force_gpu[id].f[2]), c*mesh_z[index].x);      
+  atomicAdd( &(lb_particle_force_gpu[3*id+0]), c*mesh_x[index].x);      
+  atomicAdd( &(lb_particle_force_gpu[3*id+1]), c*mesh_y[index].x);      
+  atomicAdd( &(lb_particle_force_gpu[3*id+2]), c*mesh_z[index].x);      
 }
 
 template<int cao>
 __global__ void assign_forces_kernel_shared(const CUDA_particle_data * const pdata, CUFFT_TYPE_COMPLEX *mesh_x, CUFFT_TYPE_COMPLEX *mesh_y, CUFFT_TYPE_COMPLEX *mesh_z, const int m_size, const REAL_TYPE pos_shift, const
-				     REAL_TYPE hi, CUDA_particle_force * lb_particle_force_gpu, REAL_TYPE prefactor, int n_part, int parts_per_block) {
+				     REAL_TYPE hi, float * lb_particle_force_gpu, REAL_TYPE prefactor, int n_part, int parts_per_block) {
   const int part_in_block = threadIdx.x / cao;
   const int cao_id_x = threadIdx.x % cao;
   /** id of the particle **/
@@ -802,15 +802,15 @@ __global__ void assign_forces_kernel_shared(const CUDA_particle_data * const pda
   const int index = m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z;
   const float c = -prefactor*weights[3*cao*part_in_block + 3*cao_id_x + 0]*weights[3*cao*part_in_block + 3*threadIdx.y + 1]*weights[3*cao*part_in_block + 3*threadIdx.z + 2]*p.q;
  
-  atomicAdd( &(lb_particle_force_gpu[id].f[0]), c*mesh_x[index].x);      
-  atomicAdd( &(lb_particle_force_gpu[id].f[1]), c*mesh_y[index].x);      
-  atomicAdd( &(lb_particle_force_gpu[id].f[2]), c*mesh_z[index].x);      
+  atomicAdd( &(lb_particle_force_gpu[3*id+0]), c*mesh_x[index].x);      
+  atomicAdd( &(lb_particle_force_gpu[3*id+1]), c*mesh_y[index].x);      
+  atomicAdd( &(lb_particle_force_gpu[3*id+2]), c*mesh_z[index].x);      
 
 }
 
 void assign_forces(int n_part, const CUDA_particle_data * const pdata, 
 		   CUFFT_TYPE_COMPLEX *mesh_x, CUFFT_TYPE_COMPLEX *mesh_y, CUFFT_TYPE_COMPLEX *mesh_z, const int m_size, 
-		   const REAL_TYPE pos_shift, const REAL_TYPE hi, CUDA_particle_force * lb_particle_force_gpu, REAL_TYPE prefactor, int cao) {
+		   const REAL_TYPE pos_shift, const REAL_TYPE hi, float * lb_particle_force_gpu, REAL_TYPE prefactor, int cao) {
   dim3 grid, block;
   grid.z = 1;
 
@@ -961,7 +961,7 @@ extern "C" {
   void p3m_gpu_add_farfield_force() {
 
     CUDA_particle_data* lb_particle_gpu;
-    CUDA_particle_force* lb_particle_force_gpu;
+    float* lb_particle_force_gpu;
   
     int mesh = p3m_gpu_data.mesh;
     int mesh3 = mesh*mesh*mesh;
