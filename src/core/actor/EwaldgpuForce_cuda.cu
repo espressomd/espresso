@@ -664,9 +664,6 @@ void EwaldgpuForce::computeForces(SystemInterface &s)
   m_box_l[1] = s.box()[1];
   m_box_l[2] = s.box()[2];
 
-  //Set to NULL
-  memset(m_rho_hat,0,2*m_num_k*sizeof(real));
-
   HANDLE_ERROR( cudaMemset(m_dev_rho_hat, 0, 2*m_num_k*sizeof(real) ) );
 
   //Start GPU calculation
