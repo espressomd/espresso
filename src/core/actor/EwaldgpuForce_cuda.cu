@@ -641,10 +641,7 @@ void EwaldgpuForce::setup(SystemInterface &s)
 void EwaldgpuForce::computeForces(SystemInterface &s)
 {
 	if (coulomb.method != COULOMB_EWALD_GPU) // EWALDGPU was disabled. nobody cares about our calculations anymore
-	{
-		std::cerr << "EwaldGPU: coulomb.method has been changed, skipping calculation" << std::endl;
 		return;
-	}
 
 	setup(s);
 
