@@ -102,6 +102,7 @@ libEspressoTcl_la_SOURCES += \
 	soft_sphere_tcl.cpp soft_sphere_tcl.hpp \
 	object-in-fluid/affinity_tcl.cpp \
 	object-in-fluid/affinity_tcl.hpp \
+	object-in-fluid/membrane_collision_tcl.cpp object-in-fluid/membrane_collision_tcl.hpp \
 	steppot_tcl.cpp steppot_tcl.hpp \
 	tab_tcl.cpp tab_tcl.hpp \
 	tunable_slip_tcl.cpp tunable_slip_tcl.hpp
@@ -127,6 +128,8 @@ libEspressoTcl_la_SOURCES += \
 	object-in-fluid/oif_global_forces_tcl.hpp \
 	object-in-fluid/oif_local_forces_tcl.cpp \
 	object-in-fluid/oif_local_forces_tcl.hpp \
+	object-in-fluid/out_direction_tcl.cpp \
+	object-in-fluid/out_direction_tcl.hpp \
 	immersed_boundary/ibm_triel_tcl.cpp \
 	immersed_boundary/ibm_triel_tcl.hpp \
 	immersed_boundary/ibm_volume_conservation_tcl.cpp \

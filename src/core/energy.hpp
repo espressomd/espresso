@@ -27,6 +27,7 @@
 
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
+#include "object-in-fluid/out_direction.hpp"
 #include "dihedral.hpp"
 #include "mdlc_correction.hpp"
 #include "hydrogen_bond.hpp"

@@ -216,6 +216,16 @@ void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 void mpi_send_affinity(int node, int part, double bond_site[3]);
 #endif
 
+#ifdef MEMBRANE_COLLISION
+/** Issue REQ_SET_MEMBRANE_COLLISION: send outward direction of the particle.
+ Also calls \ref on_particle_change.
+ \param part the particle.
+ \param node the node it is attached to.
+ \param out_direction its new outward direction.
+ */
+void mpi_send_out_direction(int node, int part, double out_direction[3]);
+#endif
+
 #ifdef ROTATION
 /** Issue REQ_SET_QUAT: send particle orientation.
     Also calls \ref on_particle_change.

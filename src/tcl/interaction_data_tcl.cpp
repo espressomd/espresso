@@ -63,6 +63,7 @@
 #include "dpd_tcl.hpp"
 #include "soft_sphere_tcl.hpp"
 #include "object-in-fluid/affinity_tcl.hpp"
+#include "object-in-fluid/membrane_collision_tcl.hpp"
 #include "steppot_tcl.hpp"
 #include "tab_tcl.hpp"
 #include "tunable_slip_tcl.hpp"
@@ -101,6 +102,7 @@
 #include "umbrella_tcl.hpp"
 #include "tcl/object-in-fluid/oif_global_forces_tcl.hpp"
 #include "tcl/object-in-fluid/oif_local_forces_tcl.hpp"
+#include "tcl/object-in-fluid/out_direction_tcl.hpp"
 #ifdef TWIST_STACK
 #include "twist_stack_tcl.hpp"
 #endif
@@ -327,6 +329,8 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
     return tclprint_to_result_feneIA(interp, params);
   case BONDED_IA_OIF_LOCAL_FORCES:
 	return tclprint_to_result_oiflocalforcesIA(interp, params);
+  case BONDED_IA_OIF_OUT_DIRECTION:
+    return tclprint_to_result_oifoutdirectionIA(interp, params);
 #ifdef OIF_GLOBAL_FORCES
   case BONDED_IA_OIF_GLOBAL_FORCES:						
 	return tclprint_to_result_oifglobalforcesIA(interp, params);
@@ -476,6 +480,10 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 
 #ifdef AFFINITY
   if (data->affinity_cut > 0.0) tclprint_to_result_affinityIA(interp,i,j);
+#endif
+    
+#ifdef MEMBRANE_COLLISION
+    if (data->membrane_cut > 0.0) tclprint_to_result_membraneIA(interp,i,j);
 #endif
 
 #ifdef HAT
@@ -803,6 +811,10 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef AFFINITY
     REGISTER_NONBONDED("affinity", tclcommand_inter_parse_affinity);
 #endif
+      
+#ifdef MEMBRANE_COLLISION
+    REGISTER_NONBONDED("membrane", tclcommand_inter_parse_membrane);
+#endif
 
 #ifdef HAT
     REGISTER_NONBONDED("hat", tclcommand_inter_parse_hat);
@@ -958,6 +970,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("oif_local_forces", tclcommand_inter_parse_oif_local_forces);
 #ifdef OIF_GLOBAL_FORCES
   REGISTER_BONDED("oif_global_forces", tclcommand_inter_parse_oif_global_forces);
+#endif
+#ifdef MEMBRANE_COLLISION
+  REGISTER_BONDED("oif_out_direction", tclcommand_inter_parse_oif_out_direction);
 #endif
   // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY

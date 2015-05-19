@@ -95,8 +95,13 @@ typedef struct {
 #endif
 
 #ifdef AFFINITY
-  /** parameters fond affinity mechanisms */
+  /** parameters for affinity mechanisms */
   double bond_site[3];
+#endif
+
+#ifdef MEMBRANE_COLLISION
+  /** parameters for membrane collision mechanisms */
+  double out_direction[3];
 #endif
 
 #ifdef ROTATION_PER_PARTICLE
@@ -559,6 +564,15 @@ int set_particle_rotation(int part, int rot);
     @return ES_OK if particle existed
 */
 int set_particle_affinity(int part, double bond_site[3]);
+#endif
+
+#ifdef MEMBRANE_COLLISION
+/** Call only on the master node: set particle out_direction.
+ @param part the particle.
+ @param out_direction its new outward direction with respect to membrane.
+ @return ES_OK if particle existed
+ */
+int set_particle_out_direction(int part, double out_direction[3]);
 #endif
 
 #ifdef MULTI_TIMESTEP

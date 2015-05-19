@@ -94,7 +94,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				// Decision whether I should break the bond:
 				// The random decicion algorithm is much more complicated with Fd detachment force etc. Here, I use much simpler rule, the same as with Kon, except that the probability of bond breakage increases with prolongation of the bond. If the bond reaches 
 				double Poff = 1.0 - exp( - ia_params->affinity_Koff*0.000001*time_step);
-				double difr = 1.0 - Poff;
+				//double difr = 1.0 - Poff;
 				if (len < ia_params->affinity_maxBond) {
 					//printf("Poff = %lf ",Poff);
 					//Poff = Poff + (1.0*len/ia_params->affinity_r0 - 1.0)*difr;

@@ -92,6 +92,23 @@ void tclcommand_part_print_affinity(Particle *part, char *buffer, Tcl_Interp *in
 }
 #endif
 
+#ifdef MEMBRANE_COLLISION
+void tclcommand_part_print_out_direction(Particle *part, char *buffer, Tcl_Interp *interp)
+{double out_direction[3];
+    
+    out_direction[0]=part->p.out_direction[0];
+    out_direction[1]=part->p.out_direction[1];
+    out_direction[2]=part->p.out_direction[2];
+    
+    Tcl_PrintDouble(interp, out_direction[0], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, out_direction[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, out_direction[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 #ifdef ROTATION
 
 /* tclcommand_part_print_*_body_frame: function to have the possiblility of
@@ -615,7 +632,12 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, " affinity ", (char *)NULL);
   tclcommand_part_print_affinity(&part, buffer, interp);
 #endif
-
+    
+#ifdef MEMBRANE_COLLISION
+    /* print information about membrane collision */
+    Tcl_AppendResult(interp, " out_direction ", (char *)NULL);
+    tclcommand_part_print_out_direction(&part, buffer, interp);
+#endif
 
 #ifdef DIPOLES
 #ifndef ROTATION
@@ -847,7 +869,11 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_affinity(&part, buffer, interp);
 #endif
 
-
+#ifdef MEMBRANE_COLLISION
+    else if (ARG0_IS_S("out_direction"))
+        tclcommand_part_print_out_direction(&part, buffer, interp);
+#endif
+      
 #ifdef DIPOLES
     else if (ARG0_IS_S("dip"))
       tclcommand_part_print_dip(&part, buffer, interp);
@@ -1116,6 +1142,33 @@ int tclcommand_part_parse_affinity(Tcl_Interp *interp, int argc, char **argv,
   }
 
   return TCL_OK;
+}
+#endif
+
+#ifdef  MEMBRANE_COLLISION
+int tclcommand_part_parse_oif_out_direction(Tcl_Interp *interp, int argc, char **argv,
+                                   int part_num, int * change)
+{
+    double out_direction[3];
+    
+    *change = 3;
+    
+    if (argc < 3) {
+        Tcl_AppendResult(interp, "outward direction of membrane requires 3 arguments", (char *) NULL);
+        return TCL_ERROR;
+    }
+    
+    /* set out_direction */
+    if (! ARG_IS_D(0, out_direction[0]) || ! ARG_IS_D(1, out_direction[1]) || ! ARG_IS_D(2, out_direction[2]))
+        return TCL_ERROR;
+    
+    if (set_particle_out_direction(part_num, out_direction) == TCL_ERROR) {
+        Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+        
+        return TCL_ERROR;
+    }
+    
+    return TCL_OK;
 }
 #endif
 
@@ -2450,6 +2503,11 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 #ifdef AFFINITY
     else if (ARG0_IS_S("affinity"))
       err = tclcommand_part_parse_affinity(interp, argc-1, argv+1, part_num, &change);
+#endif
+      
+#ifdef MEMBRANE_COLLISION
+    else if (ARG0_IS_S("membrane"))
+        err = tclcommand_part_parse_oif_out_direction(interp, argc-1, argv+1, part_num, &change);
 #endif
 
 #ifdef DIPOLES

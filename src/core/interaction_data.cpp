@@ -47,6 +47,7 @@
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
 #include "object-in-fluid/affinity.hpp"
+#include "object-in-fluid/membrane_collision.hpp"
 #include "hat.hpp"
 #include "umbrella.hpp"
 #include "tab.hpp"
@@ -248,6 +249,13 @@ void initialize_ia_params(IA_parameters *params) {
   params->affinity_Koff =
   params->affinity_maxBond =
   params->affinity_cut = INACTIVE_CUTOFF;
+#endif
+    
+#ifdef MEMBRANE_COLLISION
+    params->membrane_a =
+    params->membrane_n =
+    params->membrane_offset = 0.0;
+    params->membrane_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef HAT
@@ -612,6 +620,11 @@ static void recalc_maximal_cutoff_nonbonded()
       if (max_cut_current < data->affinity_cut)
 	max_cut_current = data->affinity_cut;
 #endif
+        
+#ifdef MEMBRANE_COLLISION
+      if (max_cut_current < data->membrane_cut)
+    max_cut_current = data->membrane_cut;
+#endif
 
 #ifdef HAT
       if (max_cut_current < data->HAT_r)
@@ -749,6 +762,8 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "OIF_GLOBAL_FORCES";
   case BONDED_IA_OIF_LOCAL_FORCES:
     return "OIF_LOCAL_FORCES";
+  case BONDED_IA_OIF_OUT_DIRECTION:
+    return "oif_out_direction";
   case BONDED_IA_CG_DNA_BASEPAIR:
     return "CG_DNA_BASEPAIR";
   case BONDED_IA_CG_DNA_STACKING:

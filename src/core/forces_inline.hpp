@@ -42,6 +42,7 @@
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
 #include "object-in-fluid/affinity.hpp"
+#include "object-in-fluid/membrane_collision.hpp"
 #include "hat.hpp"
 #include "tab.hpp"
 #include "overlap.hpp"
@@ -52,6 +53,7 @@
 #include "fene.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
+#include "object-in-fluid/out_direction.hpp"
 #include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
@@ -376,6 +378,10 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
  /*affinity potential*/
 #ifdef AFFINITY
   add_affinity_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+ /*repulsive membrane potential*/
+#ifdef MEMBRANE_COLLISION
+    add_membrane_collision_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
  /*hat potential*/
 #ifdef HAT
@@ -706,6 +712,11 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = calc_twist_stack_force(p1, p2, p3, p4, p5, p6, p7, p8, iaparams,
 					       force, force2, force3, force4, force5, force6, force7, force8);
       break;
+#endif
+#ifdef MEMBRANE_COLLISION
+        case BONDED_IA_OIF_OUT_DIRECTION:
+            bond_broken = calc_out_direction(p1, p2, p3, p4, iaparams);
+            break;
 #endif
 #ifdef OIF_GLOBAL_FORCES
     case BONDED_IA_OIF_GLOBAL_FORCES:

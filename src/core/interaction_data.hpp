@@ -76,10 +76,12 @@ enum BondedInteraction{
     BONDED_IA_ANGLE_COSINE,
     /** Type of bonded interaction is a bond angle cosine potential. */
     BONDED_IA_ANGLE_COSSQUARE,
-    /** Type of bonded interaction is oif local forces. */
+    /** Type of bonded interaction: oif local forces. */
     BONDED_IA_OIF_LOCAL_FORCES,
-    /** Type of bonded interaction is oif global forces. */
+    /** Type of bonded interaction: oif global forces. */
     BONDED_IA_OIF_GLOBAL_FORCES,
+    /** Type of bonded interaction: determining outward direction of oif membrane. */
+	BONDED_IA_OIF_OUT_DIRECTION,
     /** Type of bonded interaction for cg DNA */
     BONDED_IA_CG_DNA_BASEPAIR,
     /** Type of bonded interaction for cg DNA */
@@ -381,6 +383,16 @@ typedef struct {
   double affinity_cut;
   /*@}*/
 #endif
+    
+#ifdef MEMBRANE_COLLISION
+    /** \name membrane collision potential */
+    /*@{*/
+    double membrane_a;
+    double membrane_n;
+    double membrane_cut;
+    double membrane_offset;
+    /*@}*/
+#endif
 
 #ifdef HAT
   /** \name hat potential */
@@ -621,6 +633,11 @@ typedef struct {
     double kal;
 } Oif_local_forces_bond_parameters;
 
+/** Parameters for oif_out_direction */
+typedef struct {
+
+} Oif_out_direction_bond_parameters;
+
 /** Parameters for harmonic bond Potential */
 typedef struct {
       double k;
@@ -838,6 +855,7 @@ typedef union {
     Fene_bond_parameters fene;
     Oif_global_forces_bond_parameters oif_global_forces;
     Oif_local_forces_bond_parameters oif_local_forces;
+    Oif_out_direction_bond_parameters oif_out_direction;
     Harmonic_bond_parameters harmonic;
 #ifdef ROTATION
     Harmonic_dumbbell_bond_parameters harmonic_dumbbell;

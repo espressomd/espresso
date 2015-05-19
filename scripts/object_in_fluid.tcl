@@ -53,7 +53,7 @@ proc oif_init {} {
 
     global list oif_templates
     set oif_templates { }
-    # 2D list of existing templates of oif objects containing rows with data. One row describes parameters of one object template. One row consists of X elements. The order of the elements is crucial. Structure of one row: num_of_particles, num_of_edges, num_of_triangles, ks, kslin, kb, kal, start_id_of_local_interaction, kag, kv, start_id_of_global_interaction, initial_surface, initial_volume
+    # 2D list of existing templates of oif objects containing rows with data. One row describes parameters of one object template. One row consists of X elements. The order of the elements is crucial. Structure of one row: num_of_particles, num_of_edges, num_of_triangles, ks, kslin, kb, kal, start_id_of_local_interaction, kag, kv, start_id_of_global_interaction, initial_surface, initial_volume, normal
 
     global list oif_objects
     set oif_objects { }
@@ -75,6 +75,10 @@ proc oif_init {} {
     set oif_template_bending_incidences { }
     # a list of bending incidences (4 particle IDs in each row; number of rows equals number of rows in oif_template_edges). These are used so that during the creation of bending bonds one does not have to recalculate the bending incidences repeatedly. Number of bending interactions of a given template is equal to number of edges of this template.
 
+    global list oif_template_3neighbors
+    set oif_template_3neighbors { }
+    # a list of 3 selected neighbors for each node (3 particle IDs in each row; number of rows equals number of rows in oif_template_nodes). These are used to compute the outward direction of object membrane. They are selected during creation of template, so that they do not have to be selected repeatedly for individual objects. Later they are used for cell-cell interactions.
+    
     global list oif_object_starting_particles
     set oif_object_starting_particles { }
     # a list of particle indices denoting where each object's particles start in the whole list of particles
@@ -102,6 +106,7 @@ proc oif_info { } {
 	global oif_template_edges
 	global oif_template_triangles
 	global oif_template_bending_incidences
+	global oif_template_3neighbors
 	global oif_object_starting_particles
 	global oif_template_starting_triangles
 
@@ -157,6 +162,11 @@ proc oif_info { } {
 		puts "$item"
 	}
 
+	puts "oif_template_3neighbors"
+	foreach item $oif_template_3neighbors {
+		puts "$item"
+	}
+	
         puts "oif_object_starting_particles"
 	foreach item $oif_object_starting_particles {
 		puts "$item"
@@ -326,7 +336,7 @@ proc calc_stretching_force { args } {
     
     set dr [expr $dist - $dist0]
     # two types of stretching:
-    # nonlinear strething:
+    # nonlinear stretching:
     set lambda [expr 1.0*$dist/$dist0]
     set fac [expr (-$ks * [ KS $lambda ] * $dr )]
     # linear stretching: 
@@ -586,8 +596,6 @@ proc calc_volume_force { args } {
     return $fv
 }
 
-
-
 #-----------------------------------------------------------------------------
 proc oif_create_template { args } {
 
@@ -599,6 +607,7 @@ proc oif_create_template { args } {
 	global oif_template_edges
 	global oif_template_triangles
 	global oif_template_bending_incidences
+	global oif_template_3neighbors
 	global oif_template_starting_triangles
 
 #--------------------------------------------------------------------------------------------
@@ -634,6 +643,7 @@ proc oif_create_template { args } {
 	set kv 0.0
 	set check_output 0
 	set template_id -1
+	set normal -1
 
 #--------------------------------------------------------------------------------------------
 # reading the arguments. some of them are mandatory. we check for the mandatory arguments at the end of this section
@@ -778,7 +788,11 @@ proc oif_create_template { args } {
 				set check_output [lindex $args $pos]
 				incr pos
 			}
-	        "template-id" {  
+			"normal" {  
+				incr pos
+				set normal 1
+			}
+            "template-id" {
 				incr pos
 				if { $pos >= $n_args } { 
 					puts "error in oif_create_template: missing template id"
@@ -970,6 +984,131 @@ proc oif_create_template { args } {
 		        # update global variable
 		        set temp_edge [lreplace $temp_edge 0 2]
 		        # clear list
+	}
+
+#--------------------------------------------------------------------------------------------
+	if { $normal != -1 } {
+
+	# creating the list of neighbors
+	# for each node we collect all its neighbors
+	# and then we select three of them that are "best distributed around" the given node
+	# we order them so that the normal of the triangle defined by them is pointing outward
+	# these three are then saved in this order into the global list
+
+	    puts "generating list of neighbors"
+	    for {set i 0} {$i < $mesh_nnodes} {incr i} {
+	    
+	        set nneighbors 0
+	        # cycle through edges and select those that contain node $i
+	        for {set j 0} {$j < $mesh_nedges} {incr j} {
+	        	# take an edge and copy the nodes of the edge to pa, pb
+			set pa $mesh_edges($j,0)
+			set pb $mesh_edges($j,1)
+			# save neighbor if edge contains current node
+			if {$pa == $i} {
+			    set temp_neighbors($nneighbors) $pb
+			    incr nneighbors
+			}
+			if {$pb == $i} {
+			    set temp_neighbors($nneighbors) $pa
+			    incr nneighbors
+			}
+	        }
+	    
+	        # create vectors to all neighbors and normalize them
+	        for {set j 0} {$j < $nneighbors} {incr j} {
+			for {set k 0} {$k < 3} {incr k} {
+			    set vec_neighbor($j,$k) [expr $mesh_nodes($temp_neighbors($j),$k)-$mesh_nodes($i,$k)]
+			}
+			set temp_length [expr sqrt($vec_neighbor($j,0)*$vec_neighbor($j,0)+$vec_neighbor($j,1)*$vec_neighbor($j,1)+$vec_neighbor($j,2)*$vec_neighbor($j,2))]
+			for {set k 0} {$k < 3} {incr k} {
+			    set vec_neighbor($j,$k) [expr $vec_neighbor($j,$k)/$temp_length]
+			}
+	        }
+	
+	        # check all triplets of neighbors and select the one that is best spatially distributed
+	        # by adding the corresponding three normalized vectors
+	        # and selecting the one with smallest resultant vector
+	        set best_neighbor(0) -1
+	        set best_neighbor(1) -1
+	        set best_neighbor(2) -1
+	        set min_length 10000
+	        for {set j 0} {$j < $nneighbors} {incr j} {
+	        	for {set m [expr $j+1]} {$m < $nneighbors} {incr m} {
+			    for {set n [expr $m+1]} {$n < $nneighbors} {incr n} {
+				for {set k 0} {$k < 3} {incr k} {
+				    set res($k) [expr $vec_neighbor($j,$k)+$vec_neighbor($m,$k)+$vec_neighbor($n,$k)]
+				}
+				set temp_length [expr sqrt($res(0)*$res(0)+$res(1)*$res(1)+$res(2)*$res(2))]
+				if {$temp_length < $min_length} {
+				    set min_length $temp_length
+				    set best_neighbor(0) $temp_neighbors($j)
+				    set best_neighbor(1) $temp_neighbors($m)
+				    set best_neighbor(2) $temp_neighbors($n)
+				}
+			    }
+			}
+	        }
+        
+		# find one triangle that contains node $i and compute its normal vector - normal1
+		for {set j 0} {$j < $mesh_ntriangles} {incr j} {
+		    set pa $mesh_triangles($j,0)
+		    set pb $mesh_triangles($j,1)
+		    set pc $mesh_triangles($j,2)
+		    if { $pa == $i || $pb == $i || $pc == $i} {
+	                set normal1 [list 0.0 0.0 0.0]
+		        set A [list $mesh_nodes($pa,0) $mesh_nodes($pa,1) $mesh_nodes($pa,2)]
+		        set B [list $mesh_nodes($pb,0) $mesh_nodes($pb,1) $mesh_nodes($pb,2)]
+		        set C [list $mesh_nodes($pc,0) $mesh_nodes($pc,1) $mesh_nodes($pc,2)]
+		        get_n_triangle A B C normal1
+		        set n1(0) [lindex $normal1 0]
+		        set n1(1) [lindex $normal1 1]
+		        set n1(2) [lindex $normal1 2]
+		        set j $mesh_ntriangles
+		    }
+		}
+	    
+		# properly orient selected neighbors and update global list
+		set normal2 [list 0.0 0.0 0.0]
+		set A [list $mesh_nodes($best_neighbor(0),0) $mesh_nodes($best_neighbor(0),1) $mesh_nodes($best_neighbor(0),2)]
+		set B [list $mesh_nodes($best_neighbor(1),0) $mesh_nodes($best_neighbor(1),1) $mesh_nodes($best_neighbor(1),2)]
+		set C [list $mesh_nodes($best_neighbor(2),0) $mesh_nodes($best_neighbor(2),1) $mesh_nodes($best_neighbor(2),2)]
+		get_n_triangle A B C normal2
+		set n2(0) [lindex $normal2 0]
+		set n2(1) [lindex $normal2 1]
+		set n2(2) [lindex $normal2 2]
+		set normn1 [expr sqrt($n1(0)*$n1(0) + $n1(1)*$n1(1) + $n1(2)*$n1(2))]
+		set normn2 [expr sqrt($n2(0)*$n2(0) + $n2(1)*$n2(1) + $n2(2)*$n2(2))]
+		set product [expr ($n1(0)*$n2(0)+$n1(1)*$n2(1)+$n1(2)*$n2(2))/($normn1 * $normn2)]
+		set angle [expr acos($product)]
+		list selected_neighbors
+		lappend selected_neighbors $best_neighbor(0)
+		set pi 3.1415926535897931
+		if { $angle > $pi/2.0 } {
+		    lappend selected_neighbors $best_neighbor(1)
+		    lappend selected_neighbors $best_neighbor(2)
+		} else {
+		    lappend selected_neighbors $best_neighbor(2)
+		    lappend selected_neighbors $best_neighbor(1)
+		}
+	        lappend oif_template_3neighbors $selected_neighbors
+	    	        
+	        # clean up
+	        set selected_neighbors [lreplace $selected_neighbors 0 2]
+	        for {set j 0} {$j < $nneighbors} {incr j} {
+			set temp_neighbors($j) -1
+	        }
+	    }
+	} else {
+	    # note the nodes for which we do not want neighbors
+	    list selected_neighbors
+	    lappend selected_neighbors -1
+	    lappend selected_neighbors -1
+	    lappend selected_neighbors -1
+	    for {set i 0} {$i < $mesh_nnodes} {incr i} {
+		lappend oif_template_3neighbors $selected_neighbors
+	    }
+	    set selected_neighbors [lreplace $selected_neighbors 0 2]
 	}
 
 #----------------------------------------------------------------------------------------
@@ -1311,6 +1450,11 @@ proc oif_create_template { args } {
 # update global oif-variables
 	lappend template $gl_area
 	lappend template $gl_volume
+	if {$normal == -1} {
+	    lappend template 0
+	} else {
+	    lappend template 1
+	}
 	lappend oif_templates $template
 	incr oif_n_templates
 } 
@@ -1332,6 +1476,7 @@ proc oif_add_object { args } {
 	global oif_template_edges
 	global oif_template_triangles
 	global oif_template_bending_incidences
+	global oif_template_3neighbors
 	global oif_object_starting_particles
 	global oif_objects
 
@@ -1510,8 +1655,8 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # find and read the template for the given object
 
- 	# there are 13 elements in one row of oif_templates:
-	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0
+ 	# there are 14 elements in one row of oif_templates:
+	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0, normal
 	# get the data form oif_templates list
 	set template [lindex $oif_templates $template_id]
 
@@ -1608,6 +1753,14 @@ proc oif_add_object { args } {
 	}
 	lappend object_data [list $xminID $xmaxID $yminID $ymaxID $zminID $zmaxID]
 
+# recover list of neighbors of the given template
+for {set i 0} {$i < $mesh_nnodes} {incr i} {
+    set neighbors_triplet [lindex $oif_template_3neighbors [expr $start_id_of_particles+$i]]
+    set mesh_3neighbors($i,0) [lindex $neighbors_triplet 0]
+    set mesh_3neighbors($i,1) [lindex $neighbors_triplet 1]
+    set mesh_3neighbors($i,2) [lindex $neighbors_triplet 2]
+}
+
 #--------------------------------------------------------------------------------------------
 # some variables for rotation
 	set ca [expr cos($rotate_X)];
@@ -1672,7 +1825,7 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # generating local force bonds
 	# template data
-	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0
+	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0, normal
 	set ks_from_template [lindex $template 3]
     set kslin_from_template [lindex $template 4]
     set kb_from_template [lindex $template 5]
@@ -1705,7 +1858,7 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # generating global force bonds
 	# template data
-	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0
+	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0, normal
 	set kag_from_template [lindex $template 8]
 	set kv_from_template [lindex $template 9]
 	if { $kag_from_template != 0.0 || $kv_from_template != 0.0} {
@@ -1731,6 +1884,20 @@ proc oif_add_object { args } {
 		    close $out_file
         }
 	}
+#--------------------------------------------------------------------------------------------
+# computation of local outward direction of the membrane using the out_direction interaction and list of neighbors
+    set normal_from_template [lindex $template 13]
+    if { $normal_from_template == 1 } {
+        puts "calculating outward directions"
+        inter $oif_first_inter_id oif_out_direction
+        
+        set firstPartId [expr $oif_first_part_id - $mesh_nnodes]
+        for {set i 0} {$i < $mesh_nnodes} {incr i} {
+            part [expr $i + $firstPartId] bond $oif_first_inter_id [expr $mesh_3neighbors($i,0) + $firstPartId] [expr $mesh_3neighbors($i,1) + $firstPartId] [expr $mesh_3neighbors($i,2) + $firstPartId]
+        }
+        set oif_first_bond_id [expr $oif_first_bond_id + $mesh_nnodes]
+        incr oif_first_inter_id
+    }
 #--------------------------------------------------------------------------------------------
 # update global oif-variables
 	incr oif_n_objects
