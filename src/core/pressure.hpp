@@ -539,6 +539,18 @@ int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic
 /** function to calculate stress tensor for the observables */
 int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A);
 
+void update_pressure(int v_comp);
+void analyze_pressure_all(std::vector<std::string> & pressure_labels, std::vector<double> & pressures, int v_comp);
+double analyze_pressure(std::string pressure_to_calc, int v_comp);
+double analyze_pressure_pair(std::string pressure_to_calc, int type1, int type2, int v_comp);
+double analyze_pressure_single(std::string pressure_to_calc, int bond_or_type, int v_comp);
+
+void update_stress_tensor(int v_comp);
+void analyze_stress_tensor_all(std::vector<std::string> & stressTensorLabel, std::vector<double> & stressTensorValues, int v_comp);
+int analyze_stress_tensor(std::string pressure_to_calc, int v_comp, std::vector<double> & stress);
+int analyze_stress_pair(std::string pressure_to_calc, int type1, int type2, int v_comp, std::vector<double> & stress);
+int analyze_stress_single(std::string pressure_to_calc, int bond_or_type, int v_comp, std::vector<double> & stress);
+int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* local_stress_tensor);
 
 /*@}*/
 
