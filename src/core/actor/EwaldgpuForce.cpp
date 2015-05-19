@@ -16,31 +16,31 @@ extern Ewaldgpu_params ewaldgpu_params;
 //Compute reciprocal space vectors k
 void EwaldgpuForce::compute_num_k()
 {
-	int Index=0;//Arrayindex
+  int Index=0;//Arrayindex
 
-	for (long long ix=0; ix<=m_num_kx; ix++)
+  for (long long ix=0; ix<=m_num_kx; ix++)
+    {
+      for (long long iy=-m_num_ky; iy<=m_num_ky; iy++)
 	{
-		for (long long iy=-m_num_ky; iy<=m_num_ky; iy++)
+	  for (long long iz=-m_num_kz; iz<=m_num_kz; iz++)
+	    {
+	      if(ix*(2*m_num_ky+1)*(2*m_num_kz+1)+iy*(2*m_num_kz+1)+iz >= 0//Half m_k-space
+		 and SQR(ix)*SQR(m_num_ky)*SQR(m_num_kz)
+		 + SQR(iy)*SQR(m_num_kx)*SQR(m_num_kz)
+		 + SQR(iz)*SQR(m_num_kx)*SQR(m_num_ky)
+		 <=SQR(m_num_kx)*SQR(m_num_ky)*SQR(m_num_kz))//m_k-space ellipsoid
 		{
-			for (long long iz=-m_num_kz; iz<=m_num_kz; iz++)
-			{
-				if(ix*(2*m_num_ky+1)*(2*m_num_kz+1)+iy*(2*m_num_kz+1)+iz >= 0//Half m_k-space
-				   and SQR(ix)*SQR(m_num_ky)*SQR(m_num_kz)
-				   	 + SQR(iy)*SQR(m_num_kx)*SQR(m_num_kz)
-				   	 + SQR(iz)*SQR(m_num_kx)*SQR(m_num_ky)
-				   	 <=SQR(m_num_kx)*SQR(m_num_ky)*SQR(m_num_kz))//m_k-space ellipsoid
-				{
-					Index+=1;
-				}
-			}
+		  Index+=1;
 		}
+	    }
 	}
-	m_num_k=Index;
+    }
+  m_num_k=Index;
 }
 void EwaldgpuForce::compute_k_AND_influence_factor()
 {
-	real k_sqr;//Absolute square of m_k-vector
-	int Index=0;//Arrayindex
+  real k_sqr;//Absolute square of m_k-vector
+  int Index=0;//Arrayindex
 
 	for (long long ix=0; ix<=m_num_kx; ix++)//Half m_k-space
 	{
