@@ -24,10 +24,17 @@
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 
+/** Syntactic sugar */
+#define espressoSystemInterface EspressoSystemInterface::Instance()
+
 class EspressoSystemInterface : public SystemInterface {
 public:
-  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
-  virtual ~EspressoSystemInterface() {}
+  static EspressoSystemInterface &Instance() {
+    if(!m_instance)
+      m_instance = new EspressoSystemInterface;
+
+    return *m_instance;
+  };
 
   void init();
   void update();
@@ -165,6 +172,10 @@ public:
   };
 
 protected:
+  static EspressoSystemInterface *m_instance;
+  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
+  virtual ~EspressoSystemInterface() {}
+
   void gatherParticles();
   void split_particle_struct();
 #ifdef CUDA
@@ -220,7 +231,5 @@ protected:
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;
 };
-
-extern EspressoSystemInterface espressoSystemInterface;
 
 #endif

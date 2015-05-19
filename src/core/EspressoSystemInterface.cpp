@@ -24,6 +24,9 @@
 
 #include <iostream>
 
+/* Initialize instance pointer */
+EspressoSystemInterface *EspressoSystemInterface::m_instance = 0;
+
 /* Need explicite specialization, otherwise some compilers do not produce the objects. */
 
 template class EspressoSystemInterface::const_iterator<SystemInterface::Real>;
@@ -184,6 +187,3 @@ SystemInterface::Vector3 EspressoSystemInterface::box() {
   return Vector3(box_l);
 }
 
-
-
-EspressoSystemInterface espressoSystemInterface;
