@@ -1116,3 +1116,150 @@ void force_and_velocity_display()
             local_particles[db_maxv_id]->m.v[1],local_particles[db_maxv_id]->m.v[2]);
 #endif
 }
+
+int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces)
+{
+
+
+  INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
+
+  if ( recalc_forces ) {
+  	if ( reuse_forces ) {
+      std::ostringstream msg;
+      msg <<"cannot reuse old forces and recalculate forces";
+      runtimeError(msg);
+  	}
+  	reuse_forces = -1;
+  }
+
+  /* go on with integrate <n_steps> */
+  if(n_steps < 0) {
+    std::ostringstream msg;
+    msg <<"illegal number of steps (must be >0)";
+    runtimeError(msg);
+    return ES_ERROR;
+  }
+
+  /* if skin wasn't set, do an educated guess now */
+  if (!skin_set) {
+    if (max_cut == 0.0) {
+      std::ostringstream msg;
+      msg <<"cannot automatically determine skin, please set it manually";
+      runtimeError(msg);
+      return ES_ERROR;
+    }
+    skin = 0.4*max_cut;
+    mpi_bcast_parameter(FIELD_SKIN);
+  }
+
+  /* perform integration */
+  if (!correlations_autoupdate && !observables_autoupdate) {
+    if (mpi_integrate(n_steps, reuse_forces))
+      return ES_ERROR;
+  } else  {
+    for (int i=0; i<n_steps; i++) {
+      if (mpi_integrate(1, reuse_forces))
+        return ES_ERROR;
+      reuse_forces=1;
+      autoupdate_observables();
+      autoupdate_correlations();
+    }
+    if (n_steps == 0){
+      if (mpi_integrate(0, reuse_forces))
+        return ES_ERROR;
+    }
+  }
+  return ES_OK;
+}
+
+void integrate_set_nvt()
+{
+  integ_switch = INTEG_METHOD_NVT;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+}
+
+/** Parse integrate npt_isotropic command */
+int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, bool cubic_box)
+{
+  nptiso.cubic_box = 0;
+  nptiso.p_ext = ext_pressure;
+  nptiso.piston = piston;
+
+  if ( nptiso.piston <= 0.0 ) {
+    std::ostringstream msg;
+    msg <<"You must set <piston> as well before you can use this integrator!\n";
+    runtimeError(msg);
+    return ES_ERROR;
+  }
+  if ( xdir || ydir || zdir ) {
+  		/* set the geometry to include rescaling specified directions only*/
+  		nptiso.geometry = 0; nptiso.dimension = 0; nptiso.non_const_dim = -1;
+  		if ( xdir ) {
+  			nptiso.geometry = ( nptiso.geometry | NPTGEOM_XDIR );
+  			nptiso.dimension += 1;
+  			nptiso.non_const_dim = 0;
+  		}
+  		if ( ydir ) {
+  			nptiso.geometry = ( nptiso.geometry | NPTGEOM_YDIR );
+  			nptiso.dimension += 1;
+  			nptiso.non_const_dim = 1;
+  		}
+  		if ( zdir ) {
+  			nptiso.geometry = ( nptiso.geometry | NPTGEOM_ZDIR );
+  			nptiso.dimension += 1;
+  			nptiso.non_const_dim = 2;
+  		}
+  }
+  else {
+  	/* set the geometry to include rescaling in all directions; the default*/
+  	nptiso.geometry = 0;
+  	nptiso.geometry = ( nptiso.geometry | NPTGEOM_XDIR );
+  	nptiso.geometry = ( nptiso.geometry | NPTGEOM_YDIR );
+  	nptiso.geometry = ( nptiso.geometry | NPTGEOM_ZDIR );
+  	nptiso.dimension = 3; nptiso.non_const_dim = 2;
+  }
+
+  if ( cubic_box ) {
+  	/* enable if the volume fluctuations should also apply to dimensions which are switched off by the above flags
+       and which do not contribute to the pressure (3D) / tension (2D, 1D) */
+  	nptiso.cubic_box = 1;
+  }
+
+  /* Sanity Checks */
+#ifdef ELECTROSTATICS
+  if ( nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.bjerrum > 0 ){
+  	fprintf(stderr,"WARNING: If electrostatics is being used you must use the -cubic_box option!\n");
+  	fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
+  	fprintf(stderr,"Be aware though that all of the coulombic pressure is added to the x-direction only!\n");
+  	nptiso.cubic_box = 1;
+  }
+#endif
+
+#ifdef DIPOLES
+  if ( nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dbjerrum > 0 ){
+  	fprintf(stderr,"WARNING: If magnetostatics is being used you must use the -cubic_box option!\n");
+  	fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
+  	fprintf(stderr,"Be aware though that all of the magnetostatic pressure is added to the x-direction only!\n");
+  	nptiso.cubic_box = 1;
+  }
+#endif
+
+
+  if( nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
+    std::ostringstream msg;
+    msg <<"You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!";
+    msg <<"Cannot proceed with npt_isotropic, reverting to nvt integration... \n";
+    runtimeError(msg);
+    integ_switch = INTEG_METHOD_NVT;
+  	mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  	return (ES_ERROR);
+  }
+
+  /* set integrator switch */
+  integ_switch = INTEG_METHOD_NPT_ISO;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+
+  /* broadcast npt geometry information to all nodes */
+  mpi_bcast_nptiso_geom();
+  return (ES_OK);
+}
