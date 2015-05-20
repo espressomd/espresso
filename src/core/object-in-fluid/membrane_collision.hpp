@@ -64,7 +64,7 @@ inline void add_membrane_collision_pair_force(Particle *p1, Particle *p2, IA_par
     *********************/
 	
     int j;
-    double r_off, fac=0.0, product, angle, epsilon, ndir;
+    double r_off, fac=0.0, product, angle, ndir;
     double out1[3],out2[3],dir[3];
     
     if(CUTOFF_CHECK(dist < ia_params->membrane_cut+ia_params->membrane_offset)) {
@@ -85,9 +85,7 @@ inline void add_membrane_collision_pair_force(Particle *p1, Particle *p2, IA_par
             product = scalar(out1,out2);
             angle = acos(product);
             
-            epsilon = 0.05;
-            
-            if (fabs(angle)>epsilon){
+            if (fabs(angle)>SMALL_OIF_MEMBRANE_CUTOFF){
                 fac = sigmoid_force_r(ia_params->membrane_a, ia_params->membrane_n, r_off)/dist;
                 for(j=0;j<3;j++)
                     force[j] -= fac * dir[j]/ndir;
