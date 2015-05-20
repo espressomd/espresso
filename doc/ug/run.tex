@@ -408,10 +408,10 @@ all processes of the parallel_tempering simulation. The data is accessible from 
   \variant{2} metadynamics set off
   \variant{3} metadynamics set distance \var{pid_1} \var{pid_2} \
   \var{d_\mathrm{min}} \var{d_\mathrm{max}} \var{b_\mathrm{height}} \
-  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{d_\mathrm{bins}}
+  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{d_\mathrm{bins}} \var{numrelaxationsteps}
   \variant{4} metadynamics set relative_z \var{pid_1} \var{pid_2} \
   \var{z_\mathrm{min}} \var{z_\mathrm{max}} \var{b_\mathrm{height}} \
-  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{z_\mathrm{bins}}
+  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{z_\mathrm{bins}} \var{numrelaxationsteps}
   \variant{5} metadynamics print_stat current_coord
   \variant{6} metadynamics print_stat coord_values
   \variant{7} metadynamics print_stat profile
@@ -451,11 +451,11 @@ force (or free energy profile) can be extracted by reading the
 \item[\var{f_\mathrm{bound}}] strength of the ramping force at the
   boundaries of the reaction coordinate interval.
 \item[\var{d_\mathrm{bins}}, \var{z_\mathrm{bins}}]: number of bins of
-  the reaction coordinate. This is only used for the numerical evaluation of the bias function. 
+  the reaction coordinate. This is only used for the numerical evaluation of the bias function.
+\item[\var{numrelaxationsteps}] number of relaxation steps before setting a new hill. 
 \item[\var{profile\_list}] Tcl list of a previous metadynamics
   profile.
 \item[\var{force\_list}] Tcl list of a previous metadynamics force.
-\item[\var{numrelaxationsteps}] number of relaxation steps before setting a new hill.
 \end{arguments}
 
 \subsubsection{Details on usage}

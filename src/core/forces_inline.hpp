@@ -213,7 +213,7 @@ inline void force_calc()
     cells_update_ghosts();
 #endif
 
-espressoSystemInterface.update();
+  espressoSystemInterface.update();
 
 #ifdef COLLISION_DETECTION
   prepare_collision_queue();

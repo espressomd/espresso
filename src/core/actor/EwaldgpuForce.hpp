@@ -33,7 +33,7 @@ extern Ewaldgpu_params ewaldgpu_params;
 
 class EwaldgpuForce : public Actor {
 public:
-	EwaldgpuForce(SystemInterface &s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha);
+  EwaldgpuForce(SystemInterface &s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha);
 	~EwaldgpuForce();
 	void setup(SystemInterface &s);
 	void computeForces(SystemInterface &s);
@@ -43,8 +43,8 @@ public:
 	int set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps);
 	//Tuning
 	int adaptive_tune(char **log, SystemInterface &s);
-	double error_estimate_r(double q_sqr, int N, double r_cut, double V, double alpha, double accuracy);
-	double error_estimate_k(double q_sqr, int N, int K, double V, double alpha, double accuracy);
+	double error_estimate_r(double q_sqr, int N, double r_cut, double V, double alpha, double accuracy) const ;
+	double error_estimate_k(double q_sqr, int N, int K, double V, double alpha, double accuracy) const;
 	double tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N);
 	double tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N);
 	int determine_calc_time_steps();
