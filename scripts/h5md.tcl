@@ -194,6 +194,7 @@ proc h5mdutil_get_types {} {
 	set type_list ""
 	for { set i 0 } { $i < [setmd n_part] } { incr i } {
 		if { [expr [lsearch $type_list [part $i print type]] == -1] } {
+			puts "adding [part $i print type]"; flush stdout
 			lappend type_list [part $i print type]
 		}
 	}

@@ -701,7 +701,7 @@ AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport
     [], [with_h5md=yes])
 AC_MSG_RESULT($with_h5md)
 if test .$with_h5md = .yes; then
-  ES_ADDPATH_CHECK_LIB(hdf5,H5open,,AC_MSG_FAILURE([could not link against the h5md library]),)
+  ES_ADDPATH_CHECK_LIB(hdf5,H5open,,AC_MSG_FAILURE([could not link against the hdf5 library]),)
 fi
 ES_ADDPATH_CHECK_HEADER(hdf5.h, [], 
 		[AC_MSG_ERROR([hdf5 headers not found. Please add the include path to
