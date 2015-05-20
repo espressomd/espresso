@@ -21,6 +21,17 @@ cdef extern from "stdlib.h":
   void* malloc(size_t size)
   void* realloc(void* ptr, size_t size)
             
+cdef np.ndarray create_nparray_from_IntList(IntList* il):
+  numpyArray = np.zeros(il.n)
+  for i in range(il.n):
+    numpyArray[i] = il.e[i]
+
+  return numpyArray
+
+cdef np.ndarray create_nparray_from_DoubleList(DoubleList* dl):
+  numpyArray = np.zeros(dl.n)
+  for i in range(dl.n):
+    numpyArray[i] = dl.e[i]
 
 cdef IntList* create_IntList_from_python_object(obj):
   cdef IntList* il

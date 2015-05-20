@@ -24,6 +24,8 @@ cimport particle_data
 import utils
 import code_info
 import particle_data
+from libcpp.string cimport string #import std::string as string
+from libcpp.vector cimport vector #import std::vector as vector
 
 #
 # Minimal distance between particles
