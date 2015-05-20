@@ -133,7 +133,7 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 	{
 		if(argc!=3)
 		{
-			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Dcreate2 \"\path_to_dset\"\n",(char *) NULL);
+			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Dcreate2 \"path_to_dset\"\n",(char *) NULL);
 			return TCL_ERROR;
 		}
 		return h5mdfile.H5_Dcreate2(argc, argv, interp);
@@ -151,7 +151,7 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 	{
 		if(argc!=3)
 		{
-			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Dopen2 \"\path_to_dset\"\n",(char *) NULL);
+			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Dopen2 \"path_to_dset\"\n",(char *) NULL);
 			return TCL_ERROR;
 		}
 		return h5mdfile.H5_Dopen2(argc, argv, interp);
@@ -187,7 +187,7 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 	{
 		if(argc!=3)
 		{
-			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Fcreate \"\path_to_file\"\n",(char *) NULL);
+			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Fcreate \"path_to_file\"\n",(char *) NULL);
 			return TCL_ERROR;
 		}
 		return h5mdfile.H5_Fcreate(argc, argv, interp);
@@ -196,7 +196,7 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 	{
 		if(argc!=3)
 		{
-			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Fopen \"\path_to_file\"\n",(char *) NULL);
+			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Fopen \"path_to_file\"\n",(char *) NULL);
 			return TCL_ERROR;
 		}
 		return h5mdfile.H5_Fopen(argc, argv, interp);
@@ -214,7 +214,7 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 	{
 		if(argc!=3)
 		{
-			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Gcreate2 \"\path_to_group\"\n",(char *) NULL);
+			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Gcreate2 \"path_to_group\"\n",(char *) NULL);
 			return TCL_ERROR;
 		}
 		return h5mdfile.H5_Gcreate2(argc, argv, interp);
@@ -223,7 +223,7 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 	{
 		if(argc!=3)
 		{
-			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Gopen2 \"\path_to_group\"\n",(char *) NULL);
+			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5Gopen2 \"path_to_group\"\n",(char *) NULL);
 			return TCL_ERROR;
 		}
 		return h5mdfile.H5_Gopen2(argc, argv, interp);
@@ -311,7 +311,7 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 		}
 		return h5mdfile.get_dataset_dims(argc, argv, interp);
 	}
-	
+	return TCL_ERROR;
 }
 
 H5mdfile::H5mdfile()
@@ -345,7 +345,7 @@ int H5mdfile::H5_Dextend(int argc, char **argv, Tcl_Interp *interp)
 	for(int i=0;i<dataset_rank;i++)
 	{
 
-	 if(atoi(argv[3+i])>dims[i])
+	 if(atoi(argv[3+i])>(int)dims[i])
 	 {
 		 dims[i]=atoi(argv[3+i])-dimstotal[i];
 	 }
@@ -540,6 +540,7 @@ int H5mdfile::H5_read_value(int argc, char **argv,Tcl_Interp *interp)
 		Tcl_AppendResult(interp, dset_data_singlevalue_string, (char *)NULL);
 		return TCL_OK;
 	}
+	return TCL_ERROR;
 }
 int H5mdfile::H5_Sclose(int argc, char **argv, Tcl_Interp *interp)
 {
@@ -603,7 +604,6 @@ int H5mdfile::H5_Screate_simple(int argc, char **argv, Tcl_Interp *interp)
 		Tcl_AppendResult(interp, "\nh5mdfile: Wrong type in H5_Screate_simple chosen\n",(char *) NULL);
 		return TCL_ERROR;
 	}
-	//printf("H5Screate_simple \tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
   return TCL_OK;
 }
 int H5mdfile::H5_Sselect_hyperslab(int argc, char **argv, Tcl_Interp *interp)
@@ -615,7 +615,6 @@ int H5mdfile::H5_Sselect_hyperslab(int argc, char **argv, Tcl_Interp *interp)
 	}
 	dataspace_id = H5Dget_space (dataset_id);
 	status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL,dims, NULL);
-	//printf("H5Sselect_hyperslab \tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	return TCL_OK;
 }
 int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
@@ -632,7 +631,6 @@ int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
 	if(dataset_rank>=7) index+=atoi(argv[4+dataset_rank-6])*dims[dataset_rank-1]*dims[dataset_rank-2]*dims[dataset_rank-3]*dims[dataset_rank-4]*dims[dataset_rank-5]*dims[dataset_rank-6];else goto label_index;
 	if(dataset_rank>=8) index+=atoi(argv[4+dataset_rank-7])*dims[dataset_rank-1]*dims[dataset_rank-2]*dims[dataset_rank-3]*dims[dataset_rank-4]*dims[dataset_rank-5]*dims[dataset_rank-6]*dims[dataset_rank-7];else goto label_index;
 	label_index:
-	//printf("H5_write_value \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	// Write single single value from Tcl to dataset array
 	if(H5Tequal(dataset_type_id, H5T_NATIVE_FLOAT))
 	{
@@ -654,7 +652,6 @@ int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
 		dset_data_string = static_cast<char**>(dset_data);
 		dset_data_string[index]=argv[3];
 	}
-	//printf("H5write_value \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
 	return TCL_OK;
 }
 int H5mdfile::H5_free_memory(int argc, char **argv, Tcl_Interp *interp)
