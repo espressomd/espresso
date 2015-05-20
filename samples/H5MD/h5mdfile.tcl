@@ -136,4 +136,23 @@ h5mdfile H5Gclose
 h5mdfile H5Fclose
 h5mdfile H5_free_memory
 
+#WRITE STRING
+puts "CREATE NEW DATASET AND WRITE STRING"
+h5mdfile H5Fcreate "h5mdfile3.h5" 
+h5mdfile H5Gcreate2 "group1"
+h5mdfile H5Screate_simple type str dims 10
+h5mdfile H5Pset_chunk dims 2
+h5mdfile H5Dcreate2 "/group1/dset"
+h5mdfile H5Dopen2 "/group1/dset"
+h5mdfile H5_write_value value "Katze" index 5
+set strval [h5mdfile H5_read_value index 5]
+puts $strval
+h5mdfile H5Dwrite
+
+h5mdfile H5Pclose
+h5mdfile H5Dclose
+h5mdfile H5Gclose
+h5mdfile H5Fclose
+h5mdfile H5_free_memory
+
 exit 0
