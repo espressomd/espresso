@@ -492,7 +492,7 @@ __global__ void EwaldGPU_q_sqr_LowThreads(real *q_i, real *q_sqr, int N, int max
 
 //Ewaldgpuforce
 EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int num_ky, int num_kz, double alpha)
-  :m_dev_k(NULL), m_k(NULL), m_dev_rho_hat(NULL), m_rho_hat(NULL), m_dev_infl_factor(NULL), m_infl_factor(NULL), m_dev_energy_reci(NULL), m_energy_reci(NULL), m_dev_q_sqr(NULL), m_q_sqr(NULL)
+  :m_dev_k(NULL), m_k(NULL), m_dev_rho_hat(NULL), m_dev_infl_factor(NULL), m_infl_factor(NULL), m_dev_energy_reci(NULL), m_energy_reci(NULL), m_dev_q_sqr(NULL), m_q_sqr(NULL)
 {
   //Interface sanity checks
   if(!s.requestFGpu())
@@ -515,6 +515,11 @@ EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int nu
   //Compute the number of k's in k-sphere
   compute_num_k();
 
+  //Determine Device Props
+  cudaDeviceProp prop;
+  cuda_safe_mem( cudaGetDeviceProperties( &prop, 0 ) );
+  shared_mem_per_block = prop.sharedMemPerBlock;
+
   set_params(m_rcut, m_num_kx, m_num_ky, m_num_kz, m_alpha);
   if(ewaldgpu_params.time_calc_steps==-1)
     ewaldgpu_params.time_calc_steps = determine_calc_time_steps();
@@ -530,9 +535,6 @@ EwaldgpuForce::~EwaldgpuForce()
   if(m_infl_factor)
     cuda_safe_mem(cudaFree(m_infl_factor));
   cuda_safe_mem(cudaFree(m_dev_infl_factor));
-  if(m_rho_hat)
-    cuda_safe_mem(cudaFree(m_rho_hat));
-  cuda_safe_mem(cudaFree(m_dev_rho_hat));
   if(m_energy_reci)
     cuda_safe_mem(cudaFree(m_energy_reci));
   if(m_dev_energy_reci)
@@ -573,9 +575,6 @@ void EwaldgpuForce::setup(SystemInterface &s)
   if (m_dev_rho_hat)
     cuda_safe_mem(cudaFree(m_dev_rho_hat));
   cuda_safe_mem(cudaMalloc((void**)&(m_dev_rho_hat),2*m_num_k*sizeof(real)));
-  if (m_rho_hat)
-    cuda_safe_mem(cudaFreeHost(m_rho_hat));
-  cuda_safe_mem(cudaMallocHost((void**)&(m_rho_hat),2*m_num_k*sizeof(real)));
   if (m_dev_infl_factor)
     cuda_safe_mem(cudaFree(m_dev_infl_factor));
   cuda_safe_mem(cudaMalloc((void**)&(m_dev_infl_factor),m_num_k*sizeof(real)));
@@ -687,15 +686,13 @@ void EwaldgpuForce::GPU_Forces(SystemInterface &s)
   //Blocks, threads
   int threads;
   int blocks;
-  cudaDeviceProp prop;
-  cuda_safe_mem( cudaGetDeviceProperties( &prop, 0 ) );
 
   /********************************************************************************************
 		 	 	 	 	 	 	 	 	 	 	 	 	 	 	Structure factor / Rho_hat
   ********************************************************************************************/
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_N,  prop.sharedMemPerBlock,  maxThreadsPerBlockStructurFactor,  blocks,  threads);
+  getNumBlocksAndThreads(m_N,  shared_mem_per_block,  maxThreadsPerBlockStructurFactor,  blocks,  threads);
   blocks=(int)ceil(sqrt(m_num_k));
   dim3 dimBlock1(threads, 1, 1);
   dim3 dimGrid1(blocks, blocks, 1);
@@ -724,7 +721,7 @@ void EwaldgpuForce::GPU_Forces(SystemInterface &s)
     }
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_N-2*loops*maxThreadsPerBlockStructurFactor,  prop.sharedMemPerBlock,  maxThreadsPerBlockStructurFactor,  blocks,  threads);
+  getNumBlocksAndThreads(m_N-2*loops*maxThreadsPerBlockStructurFactor,  shared_mem_per_block,  maxThreadsPerBlockStructurFactor,  blocks,  threads);
   blocks=(int)ceil(sqrt(m_num_k));
   dim3 dimBlock2(threads, 1, 1);
   dim3 dimGrid2(blocks, blocks, 1);
@@ -765,15 +762,12 @@ void EwaldgpuForce::GPU_Forces(SystemInterface &s)
 	}
     }
 
-  //Copy the arrays back from the GPU to the CPU
-  cuda_safe_mem(cudaMemcpy( m_rho_hat, m_dev_rho_hat,2*m_num_k*sizeof(real),cudaMemcpyDeviceToHost));
-
   /********************************************************************************************
 																			 Forces long range
   ********************************************************************************************/
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_num_k,  prop.sharedMemPerBlock,  maxThreadsPerBlockForce,  blocks,  threads);
+  getNumBlocksAndThreads(m_num_k,  shared_mem_per_block,  maxThreadsPerBlockForce,  blocks,  threads);
   blocks=(int)ceil(sqrt(m_N));
   dim3 dimBlock3(threads, 1, 1);
   dim3 dimGrid3(blocks, blocks, 1);
@@ -803,7 +797,7 @@ void EwaldgpuForce::GPU_Forces(SystemInterface &s)
     }
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_num_k-2*loops*maxThreadsPerBlockForce,  prop.sharedMemPerBlock,  maxThreadsPerBlockForce,  blocks,  threads);
+  getNumBlocksAndThreads(m_num_k-2*loops*maxThreadsPerBlockForce,  shared_mem_per_block,  maxThreadsPerBlockForce,  blocks,  threads);
   blocks=(int)ceil(sqrt(m_N));
   dim3 dimBlock4(threads, 1, 1);
   dim3 dimGrid4(blocks, blocks, 1);
@@ -856,15 +850,13 @@ void EwaldgpuForce::GPU_Energy(SystemInterface &s)
   //Blocks, threads
   int threads;
   int blocks;
-  cudaDeviceProp prop;
-  cuda_safe_mem( cudaGetDeviceProperties( &prop, 0 ) );
 
   /********************************************************************************************
 																					 Energy
   ********************************************************************************************/
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_num_k,  prop.sharedMemPerBlock,  maxThreadsPerBlockEnergie,  blocks,  threads);
+  getNumBlocksAndThreads(m_num_k,  shared_mem_per_block,  maxThreadsPerBlockEnergie,  blocks,  threads);
   blocks=1;
   dim3 dimBlock1(threads, 1, 1);
   dim3 dimGrid1(blocks, 1, 1);
@@ -894,7 +886,7 @@ void EwaldgpuForce::GPU_Energy(SystemInterface &s)
     }
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_num_k-2*loops*maxThreadsPerBlockEnergie,  prop.sharedMemPerBlock,  maxThreadsPerBlockEnergie,  blocks,  threads);
+  getNumBlocksAndThreads(m_num_k-2*loops*maxThreadsPerBlockEnergie,  shared_mem_per_block,  maxThreadsPerBlockEnergie,  blocks,  threads);
   blocks=1;
   dim3 dimBlock2(threads, 1, 1);
   dim3 dimGrid2(blocks, 1, 1);
@@ -958,15 +950,13 @@ void EwaldgpuForce::GPU_q_sqr(SystemInterface &s)
   //Blocks, threads
   int threads;
   int blocks;
-  cudaDeviceProp prop;
-  cuda_safe_mem( cudaGetDeviceProperties( &prop, 0 ) );
 
   /********************************************************************************************
 																					 q squared
   ********************************************************************************************/
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_N,  prop.sharedMemPerBlock,  maxThreadsPerBlock_q_sqr,  blocks,  threads);
+  getNumBlocksAndThreads(m_N,  shared_mem_per_block,  maxThreadsPerBlock_q_sqr,  blocks,  threads);
   blocks=1;
   dim3 dimBlock1(threads, 1, 1);
   dim3 dimGrid1(blocks, 1, 1);
@@ -996,7 +986,7 @@ void EwaldgpuForce::GPU_q_sqr(SystemInterface &s)
     }
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_N-2*loops*maxThreadsPerBlock_q_sqr,  prop.sharedMemPerBlock,  maxThreadsPerBlock_q_sqr,  blocks,  threads);
+  getNumBlocksAndThreads(m_N-2*loops*maxThreadsPerBlock_q_sqr,  shared_mem_per_block,  maxThreadsPerBlock_q_sqr,  blocks,  threads);
   blocks=1;
   dim3 dimBlock2(threads, 1, 1);
   dim3 dimGrid2(blocks, 1, 1);
@@ -1072,13 +1062,6 @@ bool EwaldgpuForce::isPow2(int x)
 }
 void EwaldgpuForce::getNumBlocksAndThreads(int Size, int maxBlocks, int maxThreads, int &blocks, int &threads)
 {
-  //Get device capability, to avoid block/grid size exceed the upbound
-  cudaDeviceProp prop;
-  int device;
-
-  cuda_safe_mem(cudaGetDevice(&device));
-  cuda_safe_mem(cudaGetDeviceProperties(&prop,device));
-
   threads = (Size < maxThreads*2) ? nextPow2((Size + 1)/ 2) : maxThreads;
 }
 
