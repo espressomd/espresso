@@ -1,15 +1,16 @@
 proc h5md_init { data_path } {
-	if { [file exists ${data_path}] == 1 } {
-		h5md_open ${data_path}
-	} else {
-		# create hdf5 file
-		h5mdfile H5Fcreate "${data_path}"
-	}
 	if { [setmd n_part] == 0 } {
 		puts "Please set your particles before h5md initialisation\n"; flush stdout
 		return
 	}
-	# create data groups
+	if { [file exists ${data_path}] == 1 } {
+		h5mdfile H5Fopen "${data_path}"
+		return
+	} elseif { [file exists ${data_path}] == 0 } {
+		# Create hdf5 file
+		h5mdfile H5Fcreate "${data_path}"
+	}
+	# Create data groups
 	h5mdfile H5Gcreate2 "particles"
 	h5mdfile H5Gcreate2 "particles/atoms"
 	h5mdfile H5Gcreate2 "particles/atoms/box"
@@ -21,7 +22,7 @@ proc h5md_init { data_path } {
 	h5mdfile H5Gcreate2 "observables" 
 	h5mdfile H5Gcreate2 "files"
 	h5mdfile H5Gcreate2 "files/scripts"
-	# create datasets
+	# Create datasets
 	h5mdfile H5Screate_simple type double dims 3 3
 	h5mdfile H5Pset_chunk dims 3 3
 	h5mdfile H5Dcreate2 "particles/atoms/box/edges"
@@ -70,7 +71,7 @@ proc h5md_init { data_path } {
 proc h5md_write_positions { args } {
 	h5mdfile H5Dopen2 "particles/atoms/position/value"
 	set offset [h5mdfile get_dataset_dims]
-	# write positions of all particles
+	# Write positions of all particles
 	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1 ] [setmd n_part] 3
 	h5mdfile H5Sselect_hyperslab offset [expr [lindex $offset 0]] 0 0
 	h5mdfile H5Screate_simple type double dims 1 [setmd n_part] 3
@@ -85,7 +86,7 @@ proc h5md_write_positions { args } {
 		h5mdfile H5_write_value value [lindex $pos 2] index 0 $i 2
 	}
 	h5mdfile H5Dwrite
-	# write simulation step (assumes that time_step hasnt changed)
+	# Write simulation step (assumes that time_step hasnt changed)
 	h5mdfile H5Dopen2 "particles/atoms/position/step"
 	set offset [h5mdfile get_dataset_dims]
 	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] 
@@ -93,7 +94,7 @@ proc h5md_write_positions { args } {
 	h5mdfile H5Screate_simple type int dims 1 
 	h5mdfile H5_write_value value [expr int([setmd time]/[setmd time_step])] index 0 
 	h5mdfile H5Dwrite
-	# write simulation time
+	# Write simulation time
 	h5mdfile H5Dopen2 "particles/atoms/position/time"
 	set offset [h5mdfile get_dataset_dims]
 	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] 
@@ -106,7 +107,7 @@ proc h5md_write_positions { args } {
 proc h5md_write_velocities {} {
 	h5mdfile H5Dopen2 "particles/atoms/velocity/value"
 	set offset [h5mdfile get_dataset_dims]
-	# write velocities of all particles
+	# Write velocities of all particles
 	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] [setmd n_part] 3
 	h5mdfile H5Sselect_hyperslab offset [expr [lindex $offset 0]] 0 0
 	h5mdfile H5Screate_simple type double dims 1 [setmd n_part] 3
@@ -117,7 +118,7 @@ proc h5md_write_velocities {} {
 		h5mdfile H5_write_value value [lindex $vel 2] index 0 $i 2
 	}
 	h5mdfile H5Dwrite
-	# write simulation step (assumes that time_step hasnt changed)
+	# Write simulation step (assumes that time_step hasnt changed)
 	h5mdfile H5Dopen2 "particles/atoms/velocity/step"
 	set offset [h5mdfile get_dataset_dims]
 	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] 
@@ -125,7 +126,7 @@ proc h5md_write_velocities {} {
 	h5mdfile H5Screate_simple type int dims 1 
 	h5mdfile H5_write_value value [expr int([setmd time]/[setmd time_step])] index 0 
 	h5mdfile H5Dwrite
-	# write simulation time
+	# Write simulation time
 	h5mdfile H5Dopen2 "particles/atoms/velocity/time"
 	set offset [h5mdfile get_dataset_dims]
 	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] 
@@ -136,7 +137,7 @@ proc h5md_write_velocities {} {
 }
 
 proc h5md_write_species {} {
-	# write particle type of all particles in the system
+	# Write particle type of all particles in the system
 	h5mdfile H5Dopen2 "particles/atoms/species"
 	h5mdfile H5Screate_simple type double dims [setmd n_part] 
 	for { set i 0 } { $i < [setmd n_part] } { incr i } {
@@ -145,8 +146,8 @@ proc h5md_write_species {} {
 	h5mdfile H5Dwrite
 }
 
-# initialize a user defined zero dimensional observable, first argument is name of observable
-proc h5md_observable0D_init { args } {
+# Initialize a user defined one dimensional observable, first argument is name of observable
+proc h5md_observable1D_init { args } {
 	h5mdfile H5Gcreate2 "observables/[lindex $args 0]"
 	h5mdfile H5Screate_simple type int dims 0 
 	h5mdfile H5Pset_chunk dims 1 
@@ -159,9 +160,9 @@ proc h5md_observable0D_init { args } {
 	h5mdfile H5Dcreate2 "observables/[lindex $args 0]/value"
 }
 
-# writes to a user defined zero dimensional observable dataset
-proc h5md_write_observable0D { args } {
-	# write simulation step (assumes that time_step hasnt changed)
+# Writes to a user defined zero dimensional observable dataset
+proc h5md_observable1D_write { args } {
+	# Write simulation step (assumes that time_step hasnt changed)
 	h5mdfile H5Dopen2 "observables/[lindex $args 0]/step"
 	set offset [h5mdfile get_dataset_dims]
 	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] 
@@ -169,7 +170,7 @@ proc h5md_write_observable0D { args } {
 	h5mdfile H5Screate_simple type int dims 1 
 	h5mdfile H5_write_value value [expr int([setmd time]/[setmd time_step])] index 0 
 	h5mdfile H5Dwrite
-	# write simulation time
+	# Write simulation time
 	h5mdfile H5Dopen2 "observables/[lindex $args 0]/time"
 	set offset [h5mdfile get_dataset_dims]
 	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] 
@@ -186,16 +187,9 @@ proc h5md_write_observable0D { args } {
 	h5mdfile H5Dwrite
 }
 
-proc h5md_open { args } {
-	h5mdfile H5Fopen "[lindex $args 0]"
-}
-
-# close all h5md groups and datasets and free memory at the end
+# Close all h5md groups and datasets and free memory at the end
 proc h5md_close {} {
-	#h5mdfile H5Pclose
 	h5mdfile H5Dclose
-	#h5mdfile H5Sclose
-	#h5mdfile H5Gclose
 	h5mdfile H5Fclose
 	h5mdfile H5_free_memory
 }
@@ -204,7 +198,6 @@ proc h5mdutil_get_types {} {
 	set type_list ""
 	for { set i 0 } { $i < [setmd n_part] } { incr i } {
 		if { [expr [lsearch $type_list [part $i print type]] == -1] } {
-			puts "adding [part $i print type]"; flush stdout
 			lappend type_list [part $i print type]
 		}
 	}

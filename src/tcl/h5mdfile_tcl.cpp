@@ -530,7 +530,6 @@ int H5mdfile::H5_Sclose(int argc, char **argv, Tcl_Interp *interp)
 {
 	/* Terminate access to the data space */
 	status = H5Sclose(dataspace_simple_id);
-	//printf("H5Sclose \t\tdimstotal %i %i \tdims %i %i  \tdataset_id:%i \tdataspace_simple_id:%i \tdataspace_id:%i\n",dimstotal[0],dimstotal[1],dims[0],dims[1],dataset_id,dataspace_simple_id,dataspace_id);
   return TCL_OK;
 }
 int H5mdfile::H5_Screate_simple(int argc, char **argv, Tcl_Interp *interp)

@@ -85,7 +85,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
     set act_min_dist [analyze mindist]
     puts "run $i at time=[setmd time] (LJ cap=$cap) min dist = $act_min_dist\r"
     flush stdout
-#   Increase LJ cap
+	# Increase LJ cap
     set cap [expr $cap+10]
     inter forcecap $cap
     incr i
@@ -95,35 +95,12 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 #############################################################
 #  H5MD file and datasets                                   #
 #############################################################
-#File
-h5mdfile H5Fcreate "h5_lj.h5" 
-#Groups
-h5mdfile H5Gcreate2 "particles"
-h5mdfile H5Gcreate2 "observables"
-
-
-
-#Dataset positions
-h5mdfile H5Screate_simple type double dims 1 $n_part 3
-h5mdfile H5Pset_chunk dims 5 $n_part 3
-h5mdfile H5Dcreate2 "/particles/pos"
-h5mdfile H5Dopen2 "/particles/pos"
-for { set k 0 } { $k < $n_part } { incr k } {
-    set pos [part $k pr p]
-    h5mdfile H5_write_value value [lindex $pos 0] index 0 $k 0
-    h5mdfile H5_write_value value [lindex $pos 1] index 0 $k 1
-    h5mdfile H5_write_value value [lindex $pos 2] index 0 $k 2
+# Intitialize H5MD dataset. If it already exists it will be opened and extended
+h5md_init "h5_lj.h5" 
+# Initialize user defined H5MD 1D-observable e.g. energy
+if { [file exists "h5_lj.h5"] != 1 } {
+	h5md_observable1D_init "energy"
 }
-h5mdfile H5Dwrite
-#Dataset energy
-h5mdfile H5Screate_simple type double dims 1 1
-h5mdfile H5Pset_chunk dims 5 1
-h5mdfile H5Dcreate2 "/observables/energy"
-h5mdfile H5Dopen2 "/observables/energy"
-set E [analyze energy kinetic]
-h5mdfile H5_write_value value $E index 0 0
-h5mdfile H5Dwrite
-
 #############################################################
 #      Integration                                          #
 #############################################################
@@ -131,40 +108,16 @@ puts "\nStart integration: run $int_n_times times $int_steps steps"
 inter forcecap 0
 
 for {set i 0} { $i < $int_n_times } { incr i} {
-    #puts -nonewline "run $i at time=[setmd time] "
+    puts -nonewline "run $i at time=[setmd time]\r"
     integrate $int_steps
     set E [analyze energy kinetic]
-    
-    #WRITE H5MD
-    #Positions
-    h5mdfile H5Dopen2 "/particles/pos"
-    h5mdfile H5Dextend dims [expr $i+2] $n_part 3
-    h5mdfile H5Sselect_hyperslab offset [expr $i+1] 0 0
-    h5mdfile H5Screate_simple type double dims 1 $n_part 3
-    for { set k 0 } { $k <= [setmd max_part] } { incr k } {
-	set pos [part $k pr p]
-	h5mdfile H5_write_value value [lindex $pos 0] index 0 $k 0
-	h5mdfile H5_write_value value [lindex $pos 1] index 0 $k 1
-	h5mdfile H5_write_value value [lindex $pos 2] index 0 $k 2
-	
-    }
-    h5mdfile H5Dwrite
-    #Energy
-    h5mdfile H5Dopen2 "/observables/energy"
-    h5mdfile H5Dextend dims [expr $i+2] 1
-    h5mdfile H5Sselect_hyperslab offset [expr $i+1] 0
-    h5mdfile H5Screate_simple type double dims 1 1
-    h5mdfile H5_write_value value $E index 0 0
-    h5mdfile H5Dwrite
-
+	# write to user defined H5MD observable
+    h5md_observable1D_write "energy" $E
+	# write all particle positions to H5MD dataset
+	h5md_write_positions folded
 }
-
-h5mdfile H5Pclose
-h5mdfile H5Dclose
-h5mdfile H5Sclose
-h5mdfile H5Gclose
-h5mdfile H5Fclose
-h5mdfile H5_free_memory
-# terminate program
+# Terminate program
 puts "\n\nFinished"
+# Close H5MD-dataset
+h5md_close
 exit
