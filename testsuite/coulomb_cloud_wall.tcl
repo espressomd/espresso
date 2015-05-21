@@ -93,7 +93,7 @@ if { [ has_feature "CUDA" ] && [ has_feature "P3M" ] } then {
     lappend accuracies 1e-3
 }
 
-if { [ has_feature "CUDA" ] && [ has_feature "ELECTROSTATICS" ] } then {
+if { [ has_feature "CUDA" ] && [ has_feature "EWALD_GPU" ] } then {
     proc setup_ewald_gpu {} {
 	inter coulomb 1.0 ewaldgpu 3.50433349609375 6 0.7396786117553711
     }
