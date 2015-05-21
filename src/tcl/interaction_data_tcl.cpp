@@ -329,8 +329,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
     return tclprint_to_result_feneIA(interp, params);
   case BONDED_IA_OIF_LOCAL_FORCES:
 	return tclprint_to_result_oiflocalforcesIA(interp, params);
+#ifdef MEMBRANE_COLLISION
   case BONDED_IA_OIF_OUT_DIRECTION:
     return tclprint_to_result_oifoutdirectionIA(interp, params);
+#endif
 #ifdef OIF_GLOBAL_FORCES
   case BONDED_IA_OIF_GLOBAL_FORCES:						
 	return tclprint_to_result_oifglobalforcesIA(interp, params);
