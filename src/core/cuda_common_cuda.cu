@@ -78,6 +78,10 @@ void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line){
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
                         const char *function, const char *file, unsigned int line) {
+  /** If debugging is enabled, wait for Kernels to terminate before checking for errors. This removes parallelism between host and device and should only be enabled while debugging. */
+#ifdef CUDA_DEBUG
+  cudaThreadSynchronize();
+#endif
   CU_err=cudaGetLastError();
   if (CU_err!=cudaSuccess) {
     fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n",
