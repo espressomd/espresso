@@ -22,8 +22,6 @@ cudaStream_t    *stream0;
 
 void cuda_check_error(const dim3 &block, const dim3 &grid,const char *function, const char *file, unsigned int line);
 
-#define HANDLE_NULL( a ) {if (a == NULL) {printf( "Host memory failed in %s at line %d\n", __FILE__, __LINE__ ); exit( EXIT_FAILURE );}}
-
 //Kernels
 /*Here MaxThreads/LowThreads means that, if for example 10000 Particles/k-Vectors are given and the GPU uses 256 Threads the first 19*(2*256)=9728 will be
   reduced by the MaxThread function and the remaining 272 Particles will be reduced by the LowThread function*/
@@ -518,7 +516,8 @@ EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int nu
   compute_num_k();
 
   set_params(m_rcut, m_num_kx, m_num_ky, m_num_kz, m_alpha);
-  if(ewaldgpu_params.time_calc_steps==-1) ewaldgpu_params.time_calc_steps = determine_calc_time_steps();
+  if(ewaldgpu_params.time_calc_steps==-1)
+    ewaldgpu_params.time_calc_steps = determine_calc_time_steps();
 }
 EwaldgpuForce::~EwaldgpuForce()
 {
@@ -654,7 +653,7 @@ void EwaldgpuForce::computeForces(SystemInterface &s)
 void EwaldgpuForce::computeEnergy(SystemInterface &s)
 {
   if (coulomb.method != COULOMB_EWALD_GPU) // EWALDGPU was disabled. nobody cares about our calculations anymore
-      return;
+    return;
 
   setup(s);
 
