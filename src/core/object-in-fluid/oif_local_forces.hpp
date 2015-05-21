@@ -199,6 +199,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
     /* local area
        for both triangles
        only 1/3 of calculated forces are added, because each triangle will enter this calculation 3 times (one time per edge)
+     test
        normalisation by square root of the triangle's area, see "R.Tothova: Comparison of Different Formulas for Local Area Conservation Modulus in Spring Network Models"
     */
     if (iaparams->p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
@@ -208,7 +209,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
             h[i]=1.0/3.0 *(fp1[i]+fp2[i]+fp3[i]);
         }
         A=area_triangle(fp1,fp2,fp3);
-        aa=(A - iaparams->p.oif_local_forces.A01)/sqrt(iaparams->p.oif_local_forces.A01);
+        aa=(A - iaparams->p.oif_local_forces.A01)/sqrt(A);
         vecsub(h,fp1,rh);
         hn=normr(rh);
         for(i=0; i<3; i++) {          // local area force for p1
@@ -230,7 +231,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
             h[i]=1.0/3.0 *(fp2[i]+fp3[i]+fp4[i]);
         }
         A=area_triangle(fp2,fp3,fp4);
-        aa=(A - iaparams->p.oif_local_forces.A02)/sqrt(iaparams->p.oif_local_forces.A02);
+        aa=(A - iaparams->p.oif_local_forces.A02)/sqrt(A);
         vecsub(h,fp4,rh);
         hn=normr(rh);
         for(i=0; i<3; i++) {          // local area force for p4
