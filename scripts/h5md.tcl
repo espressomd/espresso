@@ -1,6 +1,10 @@
 proc h5md_init { data_path } {
-	# create hdf5 file
-	h5mdfile H5Fcreate "${data_path}"
+	if { [file exists ${data_path}] == 1 } {
+		h5md_open ${data_path}
+	} else {
+		# create hdf5 file
+		h5mdfile H5Fcreate "${data_path}"
+	}
 	if { [setmd n_part] == 0 } {
 		puts "Please set your particles before h5md initialisation\n"; flush stdout
 		return
@@ -60,6 +64,7 @@ proc h5md_init { data_path } {
 		h5mdfile H5_write_value value [expr [lindex [h5mdutil_get_types] $i]] index $i
 	}
 	h5mdfile H5Dwrite
+	h5md_write_species
 }
 
 proc h5md_write_positions { args } {
@@ -180,6 +185,11 @@ proc h5md_write_observable0D { args } {
 	h5mdfile H5_write_value value [lindex $args 1] index 0
 	h5mdfile H5Dwrite
 }
+
+proc h5md_open { args } {
+	h5mdfile H5Fopen "[lindex $args 0]"
+}
+
 # close all h5md groups and datasets and free memory at the end
 proc h5md_close {} {
 	#h5mdfile H5Pclose

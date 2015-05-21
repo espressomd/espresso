@@ -519,7 +519,8 @@ int H5mdfile::H5_read_value(int argc, char **argv,Tcl_Interp *interp)
 	{
 		dset_data_string = static_cast<h5string*>(dset_data);
 		dset_data_singlevalue_string = dset_data_string[index];
-
+		dataspace_simple_id = H5S_ALL;
+		dataspace_id = H5S_ALL;
 		Tcl_AppendResult(interp, dset_data_singlevalue_string, (char *)NULL);
 		return TCL_OK;
 	}
@@ -577,7 +578,7 @@ int H5mdfile::H5_Screate_simple(int argc, char **argv, Tcl_Interp *interp)
 	}
 	else if(!strncmp(argv[3], "str", strlen(argv[3])))
 	{
-	   dataset_type_id = H5T_C_S1;
+	   dataset_type_id = H5Tcopy(H5T_C_S1);
 	   dset_data = (h5string*) malloc(dset_data_size * sizeof(h5string));
 	}
 	else
@@ -612,7 +613,7 @@ int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
 	if(dataset_rank>=7) index+=atoi(argv[4+dataset_rank-6])*dims[dataset_rank-1]*dims[dataset_rank-2]*dims[dataset_rank-3]*dims[dataset_rank-4]*dims[dataset_rank-5]*dims[dataset_rank-6];else goto label_index;
 	if(dataset_rank>=8) index+=atoi(argv[4+dataset_rank-7])*dims[dataset_rank-1]*dims[dataset_rank-2]*dims[dataset_rank-3]*dims[dataset_rank-4]*dims[dataset_rank-5]*dims[dataset_rank-6]*dims[dataset_rank-7];else goto label_index;
 	label_index:
-	// Write single single value from Tcl to dataset array
+	// Write single value from Tcl to dataset array
 	if(H5Tequal(dataset_type_id, H5T_NATIVE_FLOAT))
 	{
 		dset_data_float = static_cast<float*>(dset_data);
