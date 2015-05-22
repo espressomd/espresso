@@ -30,29 +30,30 @@ from libcpp.vector cimport vector #import std::vector as vector
 #
 # Minimal distance between particles
 #
+
 def mindist(system, p1 = 'default', p2 = 'default'):
+  """Minimal distance between particles
+    mindist(p1="default",p2="default")
+    
+    p1, p2: lists of particle types
+  """
 
   cdef IntList* set1
   cdef IntList* set2
 
   if p1 == 'default' and p2 == 'default':
     result = c_analyze.mindist(NULL,NULL)
-  elif p1 == 'default' and not p2 == 'default':
-    print 'usage: mindist([typelist],[typelist])'
-    return 0
-  elif not p1 == 'default' and p2 == 'default':
-    print 'usage: mindist([typelist],[typelist])'
-    return 0
+  elif (p1 == 'default' and not p2 == 'default') or \
+       (not p1 == 'default' and p2 == 'default'):
+    raise Exception("Both, p1 and p2 have to be specified\n"+__doc__)
   else:
     for i in range(len(p1)):
       if not isinstance(p1[i],int):
-        print 'usage: mindist([typelist],[typelist])'
-        return 0
+        raise ValueError("Particle types in p1 and p2 have to be of type int: "+str(p1[i]))
 
     for i in range(len(p2)):
       if not isinstance(p2[i],int):
-        print 'usage: mindist([typelist],[typelist])'
-        return 0
+        raise ValueError("Particle types in p1 and p2 have to be of type int"+str(p2[i]))
   
     set1 = create_IntList_from_python_object(p1)
     set2 = create_IntList_from_python_object(p2)
@@ -71,21 +72,36 @@ def mindist(system, p1 = 'default', p2 = 'default'):
 #
 # Distance to particle or point
 #
-def distto(system, id_or_pos):
+def distto(system, id=None,pos=None):
+  """"Distance to particle or point
+      distto(id=None,pos=None)
+      id: id of the particle
+      pos: position as array
+  """
+
+  if id==None and pos==None:
+    raise Exception("Either id or pos have to be specified\n"+__doc__)
+  
+  if id !=None and pos != None:
+    raise Exception("Only one of id or pos may be specified\n"+__doc__)
+
+
   cdef double cpos[3]
   if system.n_part == 0:
-    print  'no particles'
-    return 'no particles'
+    raise Exception("no particles")
 
-  # check if id_or_pos is position or particle id
-  if isinstance(id_or_pos,int):
-    _id = id_or_pos
-    _pos = particle_data.ParticleHandle(id_or_pos).pos
+  
+  # Get position 
+  # If particle id specified
+  if id !=None:
+    if not isinstance(id,int):
+      raise ValueError("Id has to be an integer")
+    _pos = system.part[id].pos
     for i in range(3):
       cpos[i] = _pos[i]
   else:
     for i in range(3):
-      cpos[i] = id_or_pos[i]
+      cpos[i] = pos[i]
       _id = -1
   return c_analyze.distto(cpos,_id)
 
@@ -93,6 +109,13 @@ def distto(system, id_or_pos):
 # in il. plane can be used to specify the distance in the xy, xz or yz
 # plane
 def nbhood(self, pos=None, r_catch=None, plane = '3d'):
+  """nbhood(pos=None, r_catch=None, plane = '3d'):
+     get all particles in neighborhood r_catch of pos and return their ids
+     in il. plane can be used to specify the distance in the xy, xz or yz
+     plane
+     nbhood(pos=None, r_catch=None, plane = '3d'):
+  """
+     
   cdef int planedims[3]
   cdef IntList* il=NULL
   cdef double c_pos[3]
@@ -124,10 +147,15 @@ def nbhood(self, pos=None, r_catch=None, plane = '3d'):
   free(il)
   return result
 
+
+
 #
 # Pressure analysis
 #
 def pressure(self, pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
+  """Pewaauew
+     pressure(pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)
+  """
   cdef vector[string] pressure_labels
   cdef vector[double] pressures
 
@@ -135,7 +163,7 @@ def pressure(self, pressure_type = 'all', id1 = 'default', id2 = 'default', v_co
 
   if pressure_type=='all':
     c_analyze.analyze_pressure_all(pressure_labels, pressures, v_comp)
-    return pressure_labels, pressures
+    return dict(zip(pressure_labels, pressures))
   elif id1 == 'default' and id2 == 'default':
     pressure = c_analyze.analyze_pressure(pressure_type, v_comp)
     return pressure
@@ -150,6 +178,7 @@ def pressure(self, pressure_type = 'all', id1 = 'default', id2 = 'default', v_co
     return pressure
 
 def stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
+  """stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)"""
   cdef vector[string] stress_labels
   cdef vector[double] stresses
 
@@ -157,7 +186,7 @@ def stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v
   
   if stress_type=='all':
     c_analyze.analyze_stress_tensor_all(stress_labels, stresses, v_comp)
-    return stress_labels, stresses
+    return dict(zip(stress_labels, stresses))
   elif id1 == 'default' and id2 == 'default':
     if (c_analyze.analyze_stress_tensor(stress_type, v_comp, stresses)):
       raise Exception("Error while calculating stress tensor")
@@ -175,6 +204,9 @@ def stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v
     return stresses
     
 def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
+  """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
+  """
+
   cdef DoubleList* local_stress_tensor=NULL
   cdef int[3] c_periodicity, c_bins
   cdef double[3] c_range_start, c_stress_range
@@ -195,9 +227,9 @@ def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0)
 # Energy analysis
 #
 def energy(system, etype = 'all', id1 = 'default', id2 = 'default'):
+  """energy(system, etype = 'all', id1 = 'default', id2 = 'default')"""
   if system.n_part == 0:
-    print  'no particles'
-    return 'no particles'
+    raise Exception('no particles')
 
   if c_analyze.total_energy.init_status == 0:
     c_analyze.init_energies(&c_analyze.total_energy)

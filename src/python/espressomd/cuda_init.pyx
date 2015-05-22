@@ -25,6 +25,8 @@ cdef class CudaInitHandle:
       raise Exception("Cuda is not compiled in")
   
   property device:
+    """cuda device to use"""
+    
     IF CUDA == 1:
       def __set__(self, int _dev):
         if cuda_set_device(_dev):

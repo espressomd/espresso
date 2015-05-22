@@ -43,13 +43,11 @@ PYXFILES =  \
 	particle_data.pyx \
 	analyze.pyx \
 	cellsystem.pyx \
-	changeVolume.pyx \
 	code_info.pyx \
 	cuda_init.pyx \
 	debye_hueckel.pyx \
 	integrate.pyx \
 	interactions.pyx \
-	invalidateSystem.pyx \
 	thermostat.pyx \
 	utils.pyx
 
