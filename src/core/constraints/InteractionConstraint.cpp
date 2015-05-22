@@ -2,7 +2,7 @@
 #include "forces_inline.hpp"
 #include "energy_inline.hpp"
 
-namespace ConstraintClass {
+namespace Constraints {
   void InteractionConstraint::add_force(Particle *p, const double *folded_pos) {
     int j;
     double dist, vec[3], force[3], torque1[3], torque2[3];
@@ -49,7 +49,7 @@ namespace ConstraintClass {
     }
     for (j = 0; j < 3; j++) {
       p->f.f[j] += force[j];
-      part_rep.f.f[j] -= force[j];
+      total_force[j] -= force[j];
 #ifdef ROTATION
       p->f.torque[j] += torque1[j];
       part_rep.f.torque[j] += torque2[j];

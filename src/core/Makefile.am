@@ -117,10 +117,11 @@ libEspresso_la_SOURCES = \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
 	Shape.cpp Shape.hpp \
-	Constraint.cpp Constraint.hpp \
-	GeometryConstraint.hpp GeometryConstraint.cpp \
-	InteractionConstraint.hpp InteractionConstraint.cpp \
-	ConstraintContainer.hpp ConstraintContainer.cpp
+	constraints/Constraint.cpp constraints/Constraint.hpp \
+	constraints/GeometryConstraint.hpp constraints/GeometryConstraint.cpp \
+	constraints/InteractionConstraint.hpp constraints/InteractionConstraint.cpp \
+	constraints/ConstraintContainer.hpp constraints/ConstraintContainer.cpp \
+	constraints/ChargedRod.hpp constraints/ChargedRod.cpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \

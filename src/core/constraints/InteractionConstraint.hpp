@@ -5,8 +5,7 @@
 
 #include "interaction_data.hpp"
 
-namespace ConstraintClass {
-
+namespace Constraints {
   struct InteractionConstraint : public GeometryConstraint {
     InteractionConstraint(ConstraintType _type, Shape *shape, bool _penetrable, ReflectionType _reflection_type, bool _only_positive, int ia_type) : GeometryConstraint(_type, shape, _penetrable, _reflection_type), only_positive(_only_positive) {
       part_rep.p.type = ia_type;

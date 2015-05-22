@@ -6,7 +6,7 @@
 #include "energy.hpp"
 #include "interaction_data.hpp"
 
-namespace ConstraintClass {
+namespace Constraints {
 
   enum ConstraintType { CONSTRAINT_NONE };
 
@@ -16,6 +16,8 @@ namespace ConstraintClass {
     ConstraintType type;
     virtual void add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy) { }
     virtual void add_force(Particle *p, const double *folded_pos) { }
+    /* Accumulated force excerted by the constraint */
+    double total_force[3];
     /* Numerical id for interface binding */
     int id;
     /* Human readable name */

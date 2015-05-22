@@ -4,7 +4,7 @@
 #include "Constraint.hpp"
 #include "Shape.hpp"
 
-namespace ConstraintClass {
+namespace Constraints {
 
   enum ReflectionType { REFLECTION_NONE, REFLECTION_NORMAL, REFLECTION_NORMAL_TANGENTIAL };
 

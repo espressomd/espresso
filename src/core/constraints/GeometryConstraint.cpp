@@ -1,6 +1,6 @@
 #include "GeometryConstraint.hpp"
 
-namespace ConstraintClass {
+namespace Constraints {
 
   void GeometryConstraint::reflect_particle(Particle *p, const double *distance_vector, const double *folded_pos) {
     double vec[3];
