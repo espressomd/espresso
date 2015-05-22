@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
-# Handling of interactions
+# Handling of electrostatics
 
 include "myconfig.pxi"
 from _system cimport *

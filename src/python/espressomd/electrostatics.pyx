@@ -19,9 +19,6 @@
 include "myconfig.pxi"
 import numpy as np
 from actors import Actor
-# Non-bonded interactions
-
-
 
 class ElectrostaticInteraction(Actor):
   def _tune(self):
