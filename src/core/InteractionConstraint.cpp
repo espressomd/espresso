@@ -19,7 +19,7 @@ namespace ConstraintClass {
     }
 
     if(checkIfInteraction(ia_params)) {
-      m_shape.calculate_dist(folded_pos, &dist, vec);
+      m_shape->calculate_dist(folded_pos, &dist, vec);
       if ( dist > 0 ) {
 	calc_non_bonded_pair_force(p, &part_rep,
 				   ia_params,vec,dist,dist*dist, force,
@@ -66,7 +66,7 @@ namespace ConstraintClass {
 
     dist=0.;
     if(checkIfInteraction(ia_params)) {
-      m_shape.calculate_dist(folded_pos, &dist, vec);
+      m_shape->calculate_dist(folded_pos, &dist, vec);
       if ( dist > 0 ) {
         nonbonded_en = calc_non_bonded_pair_energy(p, &part_rep, ia_params, vec, dist, dist*dist);
       }
