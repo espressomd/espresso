@@ -116,7 +116,8 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	Shape.cpp Shape.hpp
+	Shape.cpp Shape.hpp \
+	Constraint.cpp Constraint.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
