@@ -57,12 +57,14 @@ proc h5md_init { data_path } {
 	h5mdfile H5Screate_simple type double dims 0 [setmd n_part] 3
 	h5mdfile H5Pset_chunk dims 5 [setmd n_part] 3
 	h5mdfile H5Dcreate2 "particles/atoms/velocity/value"
-	h5mdfile H5Screate_simple type int dims [setmd n_part_types]
-	h5mdfile H5Pset_chunk dims [setmd n_part_types]
+	h5mdfile H5Screate_simple type int dims 100
+	h5mdfile H5Pset_chunk dims 100
 	h5mdfile H5Dcreate2 "parameters/vmd_structure/indexOfSpecies"
 	h5mdfile H5Dopen2 "parameters/vmd_structure/indexOfSpecies"
-	for { set i 0 } { $i < [setmd n_part_types] } { incr i } {
-		h5mdfile H5_write_value value [expr [lindex [h5mdutil_get_types] $i]] index $i
+	set i 0
+	foreach type [h5mdutil_get_types] {
+		h5mdfile H5_write_value value $type index $i
+		incr i
 	}
 	h5mdfile H5Dwrite
 	h5md_write_species
