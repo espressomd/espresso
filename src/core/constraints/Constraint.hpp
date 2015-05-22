@@ -21,7 +21,7 @@ namespace Constraints {
     /* Numerical id for interface binding */
     int id;
     /* Human readable name */
-    virtual std::string name() { return std::string("constraint_unnamed"); }
+    static std::string name() { return std::string("Constraint::"); }
   };
 };
 

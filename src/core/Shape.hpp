@@ -31,7 +31,7 @@ using namespace std;
 struct Shape {
   virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
   /* Human readable name of the shape. */
-  virtual std::string name() { return std::string("unname"); }
+  static std::string name() { return std::string("Shape::"); }
 };
 
 struct Wall : public Shape {
@@ -40,7 +40,7 @@ struct Wall : public Shape {
     n[1] = _n[1];
     n[2] = _n[2];
   }
-  std::string name() { return std::string("wall"); }
+  static std::string name() { return std::string("Wall"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);  
 
   /** normal vector on the plane. */
@@ -56,7 +56,7 @@ struct Sphere : public Shape {
     pos[1] = _pos[1];
     pos[2] = _pos[2];
   }
-  std::string name() { return std::string("sphere"); }
+  std::string name() { return std::string("Sphere"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
 
   double pos[3];
@@ -75,7 +75,7 @@ struct Cylinder : public Shape {
     axis[1] = _axis[1];
     axis[2] = _axis[2];
   }
-  std::string name() { return std::string("cylinder"); }
+  static std::string name() { return std::string("Cylinder"); }
   virtual int calculate_dist(const double *ppos, double *dist, double *vec);
 
   /** center of the cylinder. */
@@ -92,7 +92,7 @@ struct Cylinder : public Shape {
 
 struct SpheroCylinder : public Cylinder {
   SpheroCylinder(double *_pos, double *_axis, double _rad, double _length, double _direction) : Cylinder(_pos, _axis, _rad, _length, _direction) {}
-  std::string name() { return std::string("spherocylinder"); }
+  static std::string name() { return std::string("spherocylinder"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
 };
 
@@ -107,7 +107,7 @@ struct Pore : public Shape {
     axis[1] = _axis[1];
     axis[2] = _axis[2];
   }
-  std::string name() { return std::string("pore"); }
+  static std::string name() { return std::string("Pore"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
 
   /** center of the cylinder. */
@@ -132,7 +132,7 @@ struct Slitpore : public Shape {
            double _pore_width,
            double _pore_length
            ) : pore_mouth(_pore_mouth), upper_smoothing_radius(_upper_smoothing_radius), lower_smoothing_radius(_lower_smoothing_radius), channel_width(_channel_width), pore_width(_pore_width), pore_length(_pore_length) {};
-  std::string name() { return std::string("slitpore"); }
+  static std::string name() { return std::string("Slitpore"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
 
   double pore_mouth;
@@ -145,7 +145,7 @@ struct Slitpore : public Shape {
 
 struct Maze : public Shape {
   Maze(double _nsphere, double _dim, double _sphrad, double _cylrad) : nsphere(_nsphere), dim(_dim), sphrad(_sphrad), cylrad(_cylrad) {}
-  std::string name() { return std::string("maze"); }
+  static std::string name() { return std::string("Maze"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
 
   /** number of spheres. */
@@ -172,7 +172,7 @@ struct Stomatocyte : public Shape {
     position_x(_position_x), position_y(_position_y), position_z(_position_z),
     orientation_x(_orientation_x), orientation_y(_orientation_y), orientation_z(_orientation_z),
     outer_radius(_outer_radius), inner_radius(_inner_radius), layer_width(_layer_width), direction(_direction) {}
-  std::string name() { return std::string("stomatocyte"); }
+  static std::string name() { return std::string("Stomatocyte"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
 
   /** Stomatocyte position. */
@@ -209,7 +209,7 @@ struct HollowCone : public Shape {
     position_x(_position_x), position_y(_position_y), position_z(_position_z),
     orientation_x(_orientation_x), orientation_y(_orientation_y), orientation_z(_orientation_z),
     outer_radius(_outer_radius), inner_radius(_inner_radius), width(_width), opening_angle(_opening_angle), direction(_direction) {}
-  std::string name() { return std::string("hollow_cone"); }
+  static std::string name() { return std::string("HollowCone"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
 
   /** Hollow cone position. */
@@ -234,7 +234,7 @@ struct HollowCone : public Shape {
 
 struct Box : public Shape {
   Box(double _value) : value(_value) {}
-  std::string name() { return std::string("box"); }
+  static std::string name() { return std::string("Box"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
 
   double value;
@@ -255,7 +255,7 @@ struct Rhomboid : public Shape {
     c[1] = _c[1];
     c[2] = _c[2];
   }
-  std::string name() { return std::string("rhomboid"); }
+  static std::string name() { return std::string("Rhomboid"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
   /** corner of the rhomboid */
   double pos[3];
@@ -273,7 +273,7 @@ struct Plane : public Shape {
     pos[1] =_pos[1];
     pos[2] =_pos[2];
   }
-  std::string name() { return std::string("plane"); }
+  static std::string name() { return std::string("Plane"); }
   int calculate_dist(const double *ppos, double *dist, double *vec);
 
   double pos[3];

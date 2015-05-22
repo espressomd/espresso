@@ -11,6 +11,7 @@ namespace Constraints {
     }
     void add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy);
     void add_force(Particle *p, const double *folded_pos);
+    static std::string name() { return Constraint::name() + std::string("ChargedRod"); }
     double center[2];
     double lambda;
   };
