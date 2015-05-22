@@ -110,12 +110,13 @@ libEspresso_la_SOURCES = \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
-	Vector.cpp Vector.hpp \
-	SystemInterface.cpp SystemInterface.hpp \
+	RunningAverage.cpp RunningAverage.hpp
+	Vector.hpp \
+	SystemInterface.hpp \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	RunningAverage.cpp RunningAverage.hpp
+	Shape.cpp Shape.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
