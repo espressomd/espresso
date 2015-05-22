@@ -24,7 +24,7 @@
 
 #define SQR(A) ((A)*(A))
 
-int Wall::calculate_dist(double *ppos, double *dist, double *vec)
+int Wall::calculate_dist(const double *ppos, double *dist, double *vec)
 {
   int i;
 
@@ -35,7 +35,7 @@ int Wall::calculate_dist(double *ppos, double *dist, double *vec)
   return 0;
 }
 
-int Sphere::calculate_dist(double *ppos, double *dist, double *vec)
+int Sphere::calculate_dist(const double *ppos, double *dist, double *vec)
 {
   int i;
   double fac,  c_dist;
@@ -61,7 +61,7 @@ int Sphere::calculate_dist(double *ppos, double *dist, double *vec)
   return 0;
 }
 
-int Rhomboid::calculate_dist(double *ppos, double *dist, double *vec)
+int Rhomboid::calculate_dist(const double *ppos, double *dist, double *vec)
 {	
   double axb[3], bxc[3], axc[3];
   double A, B, C;
@@ -713,7 +713,7 @@ static double sign(double x) {
     return -1;
 }
 
-int Pore::calculate_dist(double* ppos, double *dist, double *vec)
+int Pore::calculate_dist(const double* ppos, double *dist, double *vec)
 {
   int i;
   double c_dist[3];           /* cartesian distance from pore center */
@@ -890,7 +890,7 @@ int Pore::calculate_dist(double* ppos, double *dist, double *vec)
 //  exit(printf("should never be reached, z %f, r%f\n",z, r));
 }
 
-int Maze::calculate_dist(double *ppos, double *dist, double *vec)
+int Maze::calculate_dist(const double *ppos, double *dist, double *vec)
 {
   int i,min_axis,cursph[3],dim;
   double diasph,fac,c_dist,sph_dist,cyl_dist,temp_dis;
@@ -955,7 +955,7 @@ int Maze::calculate_dist(double *ppos, double *dist, double *vec)
   return 0;
 }
 
-int Cylinder::calculate_dist(double *ppos, double *dist, double *vec)
+int Cylinder::calculate_dist(const double *ppos, double *dist, double *vec)
 {
   int i;
   double d_per,d_par,d_real,d_per_vec[3],d_par_vec[3],d_real_vec[3];
@@ -1021,7 +1021,7 @@ int Cylinder::calculate_dist(double *ppos, double *dist, double *vec)
   return 0;
 }
 
-int SpheroCylinder::calculate_dist(double *ppos, double *dist, double *vec)
+int SpheroCylinder::calculate_dist(const double *ppos, double *dist, double *vec)
 {
   int i;
   double d = 0.0;
@@ -1058,7 +1058,7 @@ int SpheroCylinder::calculate_dist(double *ppos, double *dist, double *vec)
   return 0;
 }
 
-int Plane::calculate_dist(double* ppos, double *dist, double *vec)
+int Plane::calculate_dist(const double* ppos, double *dist, double *vec)
 {
   int i;
   double c_dist_sqr,c_dist;
