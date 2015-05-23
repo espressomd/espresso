@@ -10,6 +10,12 @@ void ConstraintContainer::init_forces() {
 }
 
 int ConstraintContainer::add_constraint(Constraints::Constraint *c) {
+  /* Add c to local list */
+  push_back(c);
+
+  /* c is now the last element */
+  c->id = size() - 1;
+
   /* Check if c is a GeometryConstraint in which case we have
      to do a deep copy of the Shape object. */
   if(dynamic_cast<Constraints::GeometryConstraint *>(c)) {
@@ -17,4 +23,15 @@ int ConstraintContainer::add_constraint(Constraints::Constraint *c) {
   } else {
     ;
   }
+
+  return c->id;
+}
+
+void ConstraintContainer::remove_constraint(int i) {
+  if(i < size()) {
+    Constraints::Constraint *c = operator[](i);
+      if(c)
+        delete c;
+
+    }
 }

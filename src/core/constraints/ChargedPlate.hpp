@@ -1,5 +1,5 @@
-#ifndef __CHARGED_ROD_HPP
-#define __CHARGED_ROD_HPP
+#ifndef __CHARGED_PLATE_HPP
+#define __CHARGED_PLATE_HPP
 
 #include "Constraint.hpp"
 
@@ -9,6 +9,7 @@ namespace Constraints {
     void add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy);
     void add_force(Particle *p, const double *folded_pos);
     virtual std::string name() { return Constraint::name() + std::string("ChargedPlate"); }
+    ConstraintType type() { return CONSTRAINT_CHARGED_PLATE; }
     double pos;
     double sigma;
   };

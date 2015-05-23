@@ -122,7 +122,8 @@ libEspresso_la_SOURCES = \
 	constraints/InteractionConstraint.hpp constraints/InteractionConstraint.cpp \
 	constraints/ConstraintContainer.hpp constraints/ConstraintContainer.cpp \
 	constraints/ChargedRod.hpp constraints/ChargedRod.cpp \
-	constraints/ChargedPlate.hpp constraints/ChargedPlate.cpp
+	constraints/ChargedPlate.hpp constraints/ChargedPlate.cpp \
+	constraints/ExternalMagneticField.hpp constraints/ExternalMagneticField.cpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
