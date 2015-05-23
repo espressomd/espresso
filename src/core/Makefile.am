@@ -121,7 +121,8 @@ libEspresso_la_SOURCES = \
 	constraints/GeometryConstraint.hpp constraints/GeometryConstraint.cpp \
 	constraints/InteractionConstraint.hpp constraints/InteractionConstraint.cpp \
 	constraints/ConstraintContainer.hpp constraints/ConstraintContainer.cpp \
-	constraints/ChargedRod.hpp constraints/ChargedRod.cpp
+	constraints/ChargedRod.hpp constraints/ChargedRod.cpp \
+	constraints/ChargedPlate.hpp constraints/ChargedPlate.cpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \

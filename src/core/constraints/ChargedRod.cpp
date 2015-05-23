@@ -7,6 +7,7 @@
 namespace Constraints {
 
   void ChargedRod::add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy) {
+#ifdef ELECTROSTATICS
     int i;
     double vec[2], c_dist_2;
 
@@ -19,6 +20,7 @@ namespace Constraints {
     if ((coulomb.prefactor != 0.0) && (p->p.q != 0.0) && (lambda != 0.0)) {
       energy.coulomb[0] += coulomb.prefactor*p->p.q*lambda*(-log(c_dist_2*SQR(box_l_i[2])) + 2*(M_LN2 - C_GAMMA));
     }
+#endif
   }
 
   void ChargedRod::add_force(Particle *p, const double *folded_pos) {

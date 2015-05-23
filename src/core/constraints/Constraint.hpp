@@ -8,12 +8,12 @@
 
 namespace Constraints {
 
-  enum ConstraintType { CONSTRAINT_NONE };
+  enum ConstraintType { CONSTRAINT_NONE, CONSTRAINT_GEOMETRY, CONSTRAINT_INTERACTION };
 
   struct Constraint {
   public:
-    Constraint(ConstraintType _type) : id(-1) { type = _type; };
-    ConstraintType type;
+    Constraint() : id(-1) { };
+    virtual ConstraintType type() { return CONSTRAINT_NONE; }
     virtual void add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy) { }
     virtual void add_force(Particle *p, const double *folded_pos) { }
     /* Accumulated force excerted by the constraint */
@@ -21,7 +21,7 @@ namespace Constraints {
     /* Numerical id for interface binding */
     int id;
     /* Human readable name */
-    static std::string name() { return std::string("Constraint::"); }
+    virtual std::string name() { return std::string("Constraint::"); }
   };
 };
 

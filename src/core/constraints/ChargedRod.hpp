@@ -5,13 +5,13 @@
 
 namespace Constraints {
   struct ChargedRod : public Constraint {
-    ChargedRod(ConstraintType _type, double center_x, double center_y, double _lambda) : Constraint(_type), lambda(_lambda) {
+    ChargedRod(double center_x, double center_y, double _lambda) : lambda(_lambda) {
       center[0] = center_x;
       center[1] = center_y;
     }
     void add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy);
     void add_force(Particle *p, const double *folded_pos);
-    static std::string name() { return Constraint::name() + std::string("ChargedRod"); }
+    virtual std::string name() { return Constraint::name() + std::string("ChargedRod"); }
     double center[2];
     double lambda;
   };
