@@ -114,4 +114,10 @@ void rescale_velocities(double scale);
 
 /*@}*/
 
+int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
+
+void integrate_set_nvt();
+int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, bool cubic_box);
+
+
 #endif

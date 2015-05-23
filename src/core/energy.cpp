@@ -110,7 +110,7 @@ void energy_calc(double *result)
   clear_energy_on_GPU();
 #endif
 
-  espressoSystemInterface.update();
+  EspressoSystemInterface::Instance().update();
 
   // Compute the energies from the energyActors
   for (ActorList::iterator actor= energyActors.begin();

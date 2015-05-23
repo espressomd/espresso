@@ -165,7 +165,7 @@ libEspresso_la_SOURCES += \
 	immersed_boundary/ibm_volume_conservation.cpp immersed_boundary/ibm_volume_conservation.hpp \
 	immersed_boundary/ibm_tribend.cpp             immersed_boundary/ibm_tribend.hpp \
 	immersed_boundary/ibm_tribend_helpers.hpp \
-	immersed_boundary/ibm_cuda_interface.cpp      immersed_boundary/ibm_cuda_interface.hpp 
+	immersed_boundary/ibm_cuda_interface.cpp      immersed_boundary/ibm_cuda_interface.hpp
 
 
 # Coulomb methods
@@ -253,7 +253,7 @@ cuda_verbose = $(cuda_verbose_@AM_V@)
 cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
 cuda_verbose_0 = @echo "  NVCC     $@";
 
-# nvcc does not allow for option MF for dependency generation, 
+# nvcc does not allow for option MF for dependency generation,
 # therefore make a separate run to generate dependencies
 # putting them into DEPDIR ensures configure creates empties dummies
 $(LOFILES): %.lo: %.cu

@@ -18,16 +18,20 @@
 #  
 # Tests particle property setters/getters
 import unittest as ut
-import espresso.System as es
+import espressomd
 import numpy as np
-from espresso.interactions import LennardJonesInteraction
+from espressomd.interactions import LennardJonesInteraction
 
 
 class NonBondedInteractionsTests(ut.TestCase):
 #  def __init__(self,particleId):
 #    self.pid=particleId
   
- 
+
+
+  # Handle to espresso system
+  es=espressomd.System()
+
   def intersMatch(self,inType,outType,inParams,outParams):
     """Check, if the interaction type set and gotten back as well as the bond 
     parameters set and gotten back match. Only check keys present in
@@ -72,10 +76,10 @@ class NonBondedInteractionsTests(ut.TestCase):
       # which was there, when the outer function was called
       
       # Set parameters
-      getattr(es.nonBondedInter[partType1,partType2],interName).setParams(**params)
+      getattr(self.es.nonBondedInter[partType1,partType2],interName).setParams(**params)
       
       # Read them out again
-      outInter=getattr(es.nonBondedInter[partType1,partType2],interName)
+      outInter=getattr(self.es.nonBondedInter[partType1,partType2],interName)
       outParams=outInter.getParams()
       
       
@@ -98,11 +102,11 @@ class NonBondedInteractionsTests(ut.TestCase):
     
 
   def test_forcecap(self):
-    es.nonBondedInter.setForceCap(17.5)
-    self.assertEqual(es.nonBondedInter.getForceCap(),17.5)
+    self.es.nonBondedInter.setForceCap(17.5)
+    self.assertEqual(self.es.nonBondedInter.getForceCap(),17.5)
 
 
 if __name__ == "__main__":
- print("Features: ",es.code_info.features())
+ print("Features: ",espressomd.features())
  ut.main()
 

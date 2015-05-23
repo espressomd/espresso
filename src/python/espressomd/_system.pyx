@@ -22,6 +22,7 @@ from globals cimport *
 import numpy as np
 
 import interactions
+import actors
 cimport cuda_init
 import particle_data
 import cuda_init
@@ -33,6 +34,8 @@ cdef class System:
     part = particle_data.particleList()
     nonBondedInter = interactions.NonBondedInteractions()
     bondedInter = interactions.BondedInteractions()
+    Actors = actors.Actors()
+
 #    def __init__(self):
 #        self.part = particle_data.particleList()
 #        self.nonBondedInter = interactions.NonBondedInteractions()
@@ -340,7 +343,31 @@ cdef class System:
             global max_cut_bonded
             return max_cut_bonded
 
+
+    def changeVolumeAndRescaleParticles(dNew, dir="xyz"):
+      """Change box size and rescale particle coordinates
+         changeVolumeAndRescaleParticles(dNew, dir="xyz")
+	 dNew: new length, dir=coordinate tow work on, "xyz" for isotropic
+      """
+      if dNew<0:
+        raise ValueError("No negative lengths")
+      if dir=="xyz":
+        dNew=dNew**(1./3.)
+        rescale_boxl(3, dNew)
+      elif dir=="x":
+        rescale_boxl(0, dNew)
+      elif dir=="y":
+        rescale_boxl(1, dNew)
+      elif dir=="z":
+        rescale_boxl(2, dNew)
+      else:
+        raise ValueError('Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
+
+
+    
+
 #lbfluid=lb.DeviceList()
 IF CUDA == 1:
     cu=cuda_init.CudaInitHandle()
+
 

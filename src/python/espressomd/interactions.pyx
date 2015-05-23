@@ -345,7 +345,9 @@ cdef class BondedInteraction(object):
 
 
 
-class BondedInteractionNotDefined(BondedInteraction):
+class BondedInteractionNotDefined(object):
+  def __init__(self,*args,**kwargs):
+    raise Exception(self.__class_s__.__name__+" not compiled into Espresso core")
   def typeNumber(self):
     raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
 
@@ -470,7 +472,7 @@ IF TABULATED == 1:
     def _getParamsFromEsCore(self):
       return \
         {"type":bonded_ia_params[self._bondId].p.tab.type,\
-         "filename":bonded_ia_params[self.bondID].p.tab.filename,\
+         "filename":bonded_ia_params[self.bondId].p.tab.filename,\
          "npoints":bonded_ia_params[self._bondId].p.tab.npoints,\
          "minval":bonded_ia_params[self._bondId].p.tab.minval,\
          "maxval":bonded_ia_params[self._bondId].p.tab.maxval,\
@@ -669,9 +671,9 @@ IF BOND_ANGLE == 1:
 
   def _setParamsInEsCore(self):
     angle_cosine_set_params(self._bondId,self._params["bend"],self._params["phi0"])
-ELSE:
-  class Angle_Cosine(BondedInteractionNotDefined):
-    name="BOND_ANGLE"
+#ELSE:
+#  class Angle_Cosine(BondedInteractionNotDefined):
+#    name="BOND_ANGLE"
    
 IF BOND_ANGLE == 1:      
   class Angle_Cossquare(BondedInteraction):
