@@ -690,6 +690,24 @@ Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
 else
 	use_tk=none
 fi
+# check for h5md library
+cat <<EOF
+****************************************************************
+*                          h5md                                *
+****************************************************************
+EOF
+AC_MSG_CHECKING([whether to build with h5md support])
+AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport]),
+    [], [with_h5md=yes])
+AC_MSG_RESULT($with_h5md)
+if test .$with_h5md = .yes; then
+  ES_ADDPATH_CHECK_LIB(hdf5,H5open,,AC_MSG_FAILURE([could not link against the hdf5 library]),)
+fi
+ES_ADDPATH_CHECK_HEADER(hdf5.h, [], 
+		[AC_MSG_ERROR([hdf5 headers not found. Please add the include path to
+CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/hdf5).])
+		]
+		,$extrapaths)
 
 cat <<EOF
 ****************************************************************

@@ -221,3 +221,6 @@ ONEPART_DEBUG
 CUDA external
 FFTW external
 TK   external
+
+/*Else*/
+H5MD

@@ -112,3 +112,4 @@ source vtf.tcl
 source vtk.tcl
 source dielectrics.tcl
 source object_in_fluid.tcl
+source h5md.tcl
