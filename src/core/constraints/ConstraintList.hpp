@@ -3,16 +3,18 @@
 
 #include "Constraint.hpp"
 
-#include <vector>
+#include <map>
 
-class ConstraintContainer : public std::vector<Constraints::Constraint *> {
+class ConstraintList : public std::map<int, Constraints::Constraint *> {
 public:
-  ConstraintContainer() : n_constraints(0) {}
+  ConstraintList() : n_constraints(0), m_next_id(0) {}
   int add_constraint(Constraints::Constraint *c);
   void remove_constraint(int i);
   void add_forces(Particle *p);
   void add_energies(Particle *p);
   void init_forces();
   int n_constraints;
+private:
+  int m_next_id;
 };
 #endif
