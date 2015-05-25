@@ -7,7 +7,7 @@
 
 namespace Constraints {
   struct InteractionConstraint : public GeometryConstraint {
-    InteractionConstraint(Shape *shape, bool _penetrable, ReflectionType _reflection_type, bool _only_positive, int ia_type) : GeometryConstraint(shape, _penetrable, _reflection_type), only_positive(_only_positive) {
+    InteractionConstraint(Shape::Shape *shape, bool _penetrable, ReflectionType _reflection_type, bool _only_positive, int ia_type) : GeometryConstraint(shape, _penetrable, _reflection_type), only_positive(_only_positive) {
       part_rep.p.type = ia_type;
     }
     virtual ConstraintType type() { return CONSTRAINT_INTERACTION; }

@@ -27,6 +27,10 @@
 #include "parser.hpp"
 #include "TclOutputHelper.hpp"
 
+#include "constraints/ConstraintList.hpp"
+#include "constraints/InteractionConstraint.hpp"
+#include "Shape.hpp"
+
 #ifdef CONSTRAINTS
 static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
 {
@@ -312,6 +316,10 @@ static void tclprint_to_result_n_constraints(Tcl_Interp *interp)
 static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 		    int argc, char **argv)
 {
+  Shape::Wall *s = new Shape::Wall();
+  Constraints::GeometryConstraint *c = new Constraints::GeometryConstraint;
+  c->m_shape = s;
+  constraintList.add_constraint(c);
   int i;
   double norm;
   con->type = CONSTRAINT_WAL;
@@ -320,6 +328,7 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
     con->c.wal.n[1] = 
     con->c.wal.n[2] = 0;
   con->c.wal.d = 0;
+  s->n[0] = s->n[1] = s->n[2] = 0.0;
   con->c.wal.penetrable = 0;
   con->c.wal.only_positive = 0;
   con->part_rep.p.type = -1;

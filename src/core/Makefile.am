@@ -120,7 +120,7 @@ libEspresso_la_SOURCES = \
 	constraints/Constraint.cpp constraints/Constraint.hpp \
 	constraints/GeometryConstraint.hpp constraints/GeometryConstraint.cpp \
 	constraints/InteractionConstraint.hpp constraints/InteractionConstraint.cpp \
-	constraints/ConstraintContainer.hpp constraints/ConstraintContainer.cpp \
+	constraints/ConstraintList.hpp constraints/ConstraintList.cpp \
 	constraints/ChargedRod.hpp constraints/ChargedRod.cpp \
 	constraints/ChargedPlate.hpp constraints/ChargedPlate.cpp \
 	constraints/ExternalMagneticField.hpp constraints/ExternalMagneticField.cpp

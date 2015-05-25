@@ -4,7 +4,7 @@
 
 namespace Constraints {
 
-  void ExternalMagneticField::add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy) {
+  void ExternalMagneticField::add_energy(Particle *p, const double *folded_pos, Observable_stat &energy) {
 #ifdef DIPOLES
     energy.dipolar[0] += -1.0 * scalar(ext_magn_field,p->r.dip);
 #endif

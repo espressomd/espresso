@@ -2,6 +2,9 @@
 #include "GeometryConstraint.hpp"
 
 #include "energy.hpp"
+#include "errorhandling.hpp"
+
+ConstraintList constraintList;
 
 void ConstraintList::init_forces() {
   for(iterator it = begin(); it != end(); ++it) {

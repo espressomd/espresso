@@ -17,4 +17,7 @@ public:
 private:
   int m_next_id;
 };
+
+extern ConstraintList constraintList;
+
 #endif
