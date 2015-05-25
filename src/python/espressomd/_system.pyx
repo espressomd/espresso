@@ -26,6 +26,7 @@ cimport cuda_init
 import particle_data
 import cuda_init
 import code_info
+from thermostat import Thermostat
 
 
 cdef class System:
@@ -33,6 +34,7 @@ cdef class System:
     part = particle_data.particleList()
     nonBondedInter = interactions.NonBondedInteractions()
     bondedInter = interactions.BondedInteractions()
+    thermostat = Thermostat()
 #    def __init__(self):
 #        self.part = particle_data.particleList()
 #        self.nonBondedInter = interactions.NonBondedInteractions()
