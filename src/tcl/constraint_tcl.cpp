@@ -22,6 +22,7 @@
     Implementation of \ref constraint.hpp "constraint.h", here it's just the parsing stuff.
 */
 #include <limits>
+#include <list>
 #include "constraint.hpp"
 #include "communication.hpp"
 #include "parser.hpp"
@@ -30,6 +31,7 @@
 #include "constraints/ConstraintList.hpp"
 #include "constraints/InteractionConstraint.hpp"
 #include "Shape.hpp"
+#include "shape_tcl.hpp"
 
 #ifdef CONSTRAINTS
 static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
@@ -313,6 +315,15 @@ static void tclprint_to_result_n_constraints(Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *) NULL);
 }
 
+static int constraint_parse_geometry_constraint(Constraints::GeometryConstraint *c, Tcl_Interp *interp,
+                                                int argc, char **argv) {
+  return TCL_OK;
+}
+
+static int constraint_parse_interaction_constraint(Constraints::InteractionConstraint *c, Tcl_Interp *interp, int argc, char **argv) {
+  return TCL_OK;
+}
+
 static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 		    int argc, char **argv)
 {
@@ -320,15 +331,15 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
   Constraints::GeometryConstraint *c = new Constraints::GeometryConstraint;
   c->m_shape = s;
   constraintList.add_constraint(c);
+  std::cout << c->name() << std::endl;
   int i;
   double norm;
   con->type = CONSTRAINT_WAL;
   /* invalid entries to start of */
   con->c.wal.n[0] = 
-    con->c.wal.n[1] = 
+    con->c.wal.n[1] =
     con->c.wal.n[2] = 0;
   con->c.wal.d = 0;
-  s->n[0] = s->n[1] = s->n[2] = 0.0;
   con->c.wal.penetrable = 0;
   con->c.wal.only_positive = 0;
   con->part_rep.p.type = -1;
@@ -1837,8 +1848,8 @@ static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, 
           break;
       }
       mindist = dist<mindist ? dist : mindist;
-
     }
+
     Tcl_PrintDouble(interp, mindist, buffer);
     Tcl_AppendResult(interp, " ", buffer, " ", (char *) NULL);
     return TCL_OK;
@@ -1948,11 +1959,46 @@ int tclcommand_constraint_mindist_position_vec(Tcl_Interp *interp, int argc, cha
 }
 #endif
 
+static int print_mindist_position(Tcl_Interp *interp, std::list<std::string> &args) {
+  double pos[3];
+  char buffer[TCL_DOUBLE_SPACE];
+
+  for(int i = 0; i < 3; i++) {
+    if(!STR_IS_D(args.front(), pos[i])) {
+      Tcl_AppendResult(interp, "usage: constraint mindist_position <posx> <posy> <posz>\n", (char*) NULL);
+      return TCL_ERROR;
+    } else {
+      args.pop_front();
+    }
+  }
+
+  if(constraintList.size() == 0) {
+    Tcl_AppendResult(interp, "Error in constraint mindist_position: no constraints defined\n", (char*) NULL);
+    return TCL_ERROR;
+  }
+  Tcl_PrintDouble(interp, constraintList.min_dist(pos), buffer);
+  return TCL_OK;
+}
+
+static int parse_constraint(Tcl_Interp *interp, int argc, char **argv) {
+  std::list<std::string> args;
+  args.insert(args.begin(), argv, argv + argc);
+
+  while(!args.empty()) {
+    if(args.front() == "mindist_position") {
+      args.pop_front();
+      return print_mindist_position(interp, args);      
+    }
+  }
+}
+
 int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv)
 {
 #ifdef CONSTRAINTS
   int status, c_num;
+
+  parse_constraint(interp, argc, argv);
 
   if (argc < 2) return tclcommand_constraint_print(interp);
 
@@ -2006,7 +2052,6 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
     status = tclcommand_constraint_parse_hollow_cone(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
-  //ER
   else if(!strncmp(argv[1], "ext_magn_field", strlen(argv[1]))) {
     status = tclcommand_constraint_parse_ext_magn_field(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);

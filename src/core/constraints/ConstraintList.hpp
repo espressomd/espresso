@@ -13,6 +13,7 @@ public:
   void add_forces(Particle *p);
   void add_energies(Particle *p);
   void init_forces();
+  double min_dist(double pos[3]);
   int n_constraints;
 private:
   int m_next_id;

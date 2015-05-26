@@ -32,7 +32,7 @@ namespace Shape {
   struct Shape {
     virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
     /* Human readable name of the shape. */
-    static std::string name() { return std::string("Shape::"); }
+    static std::string name() { return std::string("Shape"); }
   };
 
   struct Wall : public Shape {
@@ -165,13 +165,6 @@ namespace Shape {
 
     /** Inside/Outside (+1 outside -1 inside interaction direction)*/
     double direction;
-  };
-
-  struct Box : public Shape {
-    static std::string name() { return std::string("Box"); }
-    int calculate_dist(const double *ppos, double *dist, double *vec);
-
-    double value;
   };
 
   struct Rhomboid : public Shape {
