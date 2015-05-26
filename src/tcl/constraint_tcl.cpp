@@ -315,15 +315,6 @@ static void tclprint_to_result_n_constraints(Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *) NULL);
 }
 
-static int constraint_parse_geometry_constraint(Constraints::GeometryConstraint *c, Tcl_Interp *interp,
-                                                int argc, char **argv) {
-  return TCL_OK;
-}
-
-static int constraint_parse_interaction_constraint(Constraints::InteractionConstraint *c, Tcl_Interp *interp, int argc, char **argv) {
-  return TCL_OK;
-}
-
 static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 		    int argc, char **argv)
 {
@@ -1787,7 +1778,7 @@ static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, 
   }
 
   Particle* p1=0;
-  if (ARG_IS_D(0, pos[0]) && ARG_IS_D(1, pos[1]) && ARG_IS_D(2, pos[2])) {
+  if ((argc >= 3) && ARG_IS_D(0, pos[0]) && ARG_IS_D(1, pos[1]) && ARG_IS_D(2, pos[2])) {
     for(n=0;n<n_constraints;n++) {
       switch(constraints[n].type) {
         case CONSTRAINT_WAL: 
@@ -1959,12 +1950,31 @@ int tclcommand_constraint_mindist_position_vec(Tcl_Interp *interp, int argc, cha
 }
 #endif
 
+#define DEBUG_FUNC std::cout << __FILE__ ":" << __LINE__ << " " << __PRETTYFUNC__ << "()" << std::endl;
+
+#define DEBUG_VAR(A) std::cout << #A << " = " << (A) << std::endl;
+
+#define PUTS(A) std::cout << (A) << std::endl;
+
+static int constraint_parse_geometry_constraint(Tcl_Interp *interp, Constraints::GeometryConstraint *c, 
+                                                int argc, char **argv) {
+  DEBUG_FUNC;
+  return TCL_OK;
+}
+
+static int constraint_parse_interaction_constraint(Constraints::InteractionConstraint *c, Tcl_Interp *interp, int argc, char **argv) {
+  DEBUG_FUNC;
+  return TCL_OK;
+}
+
+
 static int print_mindist_position(Tcl_Interp *interp, std::list<std::string> &args) {
+  DEBUG_FUNC;
   double pos[3];
   char buffer[TCL_DOUBLE_SPACE];
 
-  for(int i = 0; i < 3; i++) {
-    if(!STR_IS_D(args.front(), pos[i])) {
+  for(int i = 0; (i < 3); i++) {
+    if(args.empty() || !STR_IS_D(args.front(), pos[i])) {      
       Tcl_AppendResult(interp, "usage: constraint mindist_position <posx> <posy> <posz>\n", (char*) NULL);
       return TCL_ERROR;
     } else {
@@ -1981,14 +1991,14 @@ static int print_mindist_position(Tcl_Interp *interp, std::list<std::string> &ar
 }
 
 static int parse_constraint(Tcl_Interp *interp, int argc, char **argv) {
+  DEBUG_FUNC;
   std::list<std::string> args;
-  args.insert(args.begin(), argv, argv + argc);
+/* Make a vector from argv and drop 'constraint' from the front */
+  args.insert(args.begin(), argv + 1, argv + argc);
 
-  while(!args.empty()) {
-    if(args.front() == "mindist_position") {
-      args.pop_front();
-      return print_mindist_position(interp, args);      
-    }
+  if(args.front() == "mindist_position") {
+    args.pop_front();
+    return print_mindist_position(interp, args);      
   }
 }
 
