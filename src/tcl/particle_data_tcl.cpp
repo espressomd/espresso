@@ -176,13 +176,13 @@ void tclcommand_part_print_swimming(Particle *part, char *buffer, Tcl_Interp *in
 #if defined(LB) || defined(LB_GPU)
   sprintf(buffer, " swimming %s %f %f %d %f %f",
       part->swim.swimming?"on":"off",
-      part->swim.v_swim/time_step, part->swim.f_swim,
+      part->swim.v_swim, part->swim.f_swim,
       part->swim.push_pull, part->swim.dipole_length,
       part->swim.rotational_friction);
 #else
   sprintf(buffer, " swimming %s %f %f %s %s %s",
       part->swim.swimming?"on":"off",
-      part->swim.v_swim/time_step, part->swim.f_swim,
+      part->swim.v_swim, part->swim.f_swim,
       "n/a", "n/a", "n/a");
 #endif
 }
@@ -1493,8 +1493,6 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
       } else if ( p.swim.f_swim > 0.0 || p.swim.f_swim < 0.0 ) {
         printf("You can't set v_swim and f_swim at the same time!\n");
         return TCL_ERROR;
-      } else {
-        p.swim.v_swim *= time_step;
       }
     } else if ( ARG_IS_S(*change,"f_swim") ) {
       if ( !ARG_IS_D(++(*change),p.swim.f_swim) ) {
