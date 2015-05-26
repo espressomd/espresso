@@ -17,6 +17,7 @@ New user-visible features
 * Steepest descent energy minimization
 * Multiple time step integration that allows one of two time steps per particle
 * Stokesian Dynamics support (GPU only)
+* Extended python interface
 
 Known bugs
 ----------
