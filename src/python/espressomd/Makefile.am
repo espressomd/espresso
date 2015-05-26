@@ -40,14 +40,17 @@ PYFILES = __init__.py \
 PYXFILES =  \
 	_init.pyx \
 	_system.pyx \
-	particle_data.pyx \
+  actors.pyx \ 
 	analyze.pyx \
 	cellsystem.pyx \
 	code_info.pyx \
 	cuda_init.pyx \
 	debye_hueckel.pyx \
+  electrostatics.pyx
 	integrate.pyx \
 	interactions.pyx \
+  lb.pyx \
+	particle_data.pyx \
 	thermostat.pyx \
 	utils.pyx
 
