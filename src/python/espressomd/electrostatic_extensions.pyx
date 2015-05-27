@@ -22,43 +22,44 @@ include "myconfig.pxi"
 from actors import Actor
 
 IF ELECTROSTATICS==1:
-  class ElectrostaticExtension(Actor):
-  
-    class ELC(ElectrostaticExtension):
-  
-      def validateParams(self):
-        default_params=self.defaultParams()
-        checkTypeOrExcept(self._params["maxPWerror"],1,float,"")
-        checkRangeOrExcept(self._params["maxPWerror"],0,False,"inf",True)
-        checkTypeOrExcept(self._params["gap_size"],1,float,"")
-        checkRangeOrExcept(self._params["gap_size"],0,False,"inf",True)
-        checkTypeOrExcept(self._params["far_cut"],1,float,"")
-        checkTypeOrExcept(self._params["neutralize"],1,type(True),"")
-  
-      def validKeys(self):
-        return "maxPWerror","gap_size","far_cut","neutralize" 
-  
-      def requiredKeys(self): 
-        return ["maxPWerror","gap_size"]
-  
-      def defaultParams(self):
-        return {"maxPWerror":-1,\
-                "gap_size":-1,\
-                "far_cut":-1,\
-                "neutralize":True}
-  
-      def _getParamsFromEsCore(self):
-        params = {}
-        params.update(elc_params)
-        return params
-  
-      def _setParamsInEsCore(self):
-        if ELC_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(self._params["neutralize"]), 0, 0, 0, 0):
-          raise ValueError("Choose a 3d electrostatics method prior to ELC")
-  
-      def _activateMethod(self):
-        self._setParamsInEsCore()
-      
-      def _deactivateMethod(self):
-        pass
-  
+  class ElectrostaticExtensions(Actor):
+    pass
+
+  class ELC(ElectrostaticExtensions):
+
+    def validateParams(self):
+      default_params=self.defaultParams()
+      checkTypeOrExcept(self._params["maxPWerror"],1,float,"")
+      checkRangeOrExcept(self._params["maxPWerror"],0,False,"inf",True)
+      checkTypeOrExcept(self._params["gap_size"],1,float,"")
+      checkRangeOrExcept(self._params["gap_size"],0,False,"inf",True)
+      checkTypeOrExcept(self._params["far_cut"],1,float,"")
+      checkTypeOrExcept(self._params["neutralize"],1,type(True),"")
+
+    def validKeys(self):
+      return "maxPWerror","gap_size","far_cut","neutralize" 
+
+    def requiredKeys(self): 
+      return ["maxPWerror","gap_size"]
+
+    def defaultParams(self):
+      return {"maxPWerror":-1,\
+              "gap_size":-1,\
+              "far_cut":-1,\
+              "neutralize":True}
+
+    def _getParamsFromEsCore(self):
+      params = {}
+      params.update(elc_params)
+      return params
+
+    def _setParamsInEsCore(self):
+      if ELC_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(self._params["neutralize"]), 0, 0, 0, 0):
+        raise ValueError("Choose a 3d electrostatics method prior to ELC")
+
+    def _activateMethod(self):
+      self._setParamsInEsCore()
+    
+    def _deactivateMethod(self):
+      pass
+
