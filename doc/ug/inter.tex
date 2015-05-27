@@ -120,6 +120,21 @@ the file are ignored and only included for human readability.
 
 \index{Lennard-Jones interaction|mainindex}
 \index{interactions!Lennard-Jones|mainindex}
+\PythonSyntaxOn
+\begin{pysyntax}
+  \object{
+    espressomd.System().nonBondedInter[\arg{type},\arg{type}].lennardJones
+  }{
+    setParams
+  }{
+    epsilon=\arg{double},
+    sigma=\arg{double},
+    cutoff=\arg{double}
+  }[
+    shift=\arg{double or ``auto''}
+  ]
+\end{pysyntax}
+\PythonSyntaxOff
 \begin{essyntax}
   inter \var{type1} 
   \var{type2}
@@ -1365,6 +1380,23 @@ requires assigning charges to the particles.  This is done using the
 \label{sec:coulomb}
 \index{P3M method|mainindex}
 \index{interactions!P3M|mainindex}
+
+\PythonSyntaxOn
+\begin{pysyntax}
+  \object{
+    espressomd.electrostatics
+  }{
+    P3M
+  }{
+    bjerrum_length=\arg{double},
+    accuracy=\arg{double},
+  }[
+    mesh=\arg{int} or \arg{tuple},
+    cao=\arg{int},
+    alpha=\arg{double},
+  ]
+\end{pysyntax}
+\PythonSyntaxOff
 
 \begin{essyntax}
   inter coulomb \var{l_B} p3m [gpu] 
