@@ -423,31 +423,32 @@ class HarmonicBond(BondedInteraction):
 
   def _setParamsInEsCore(self):
     harmonic_set_params(self._bondId,self._params["k"],self._params["r_0"],self._params["r_cut"])
+    
+IF BOND_CONSTRAINT==1:
+    class RigidBond(BondedInteraction):
+      def typeNumber(self):
+        return 3
 
-class RigidBond(BondedInteraction):
-  def typeNumber(self):
-    return 3
+      def typeName(self): 
+        return "RIGID"
 
-  def typeName(self): 
-    return "RIGID"
+      def validKeys(self):
+        return "r", "ptol", "vtol"
 
-  def validKeys(self):
-    return "r", "ptol", "vtol"
+      def requiredKeys(self): 
+        return "r"
 
-  def requiredKeys(self): 
-    return "r"
+      def setDefaultParams(self):
+        #TODO rationality of Default Parameters has to be checked
+        self._params = {"r":0.,\
+        		    "ptol":0.001,\
+        		    "vtol":0.001} 
 
-  def setDefaultParams(self):
-    #TODO rationality of Default Parameters has to be checked
-    self._params = {"r":0.,\
-    		    "ptol":0.001,\
-    		    "vtol":0.001} 
+      def _getParamsFromEsCore(self):
+        return {"r":bonded_ia_params[self._bondId].p.rigid_bond.r, "ptol":bonded_ia_params[self._bondId].p.rigid_bond.ptol, "vtol":bonded_ia_params[self._bondId].p.rigid_bond.vtol}
 
-  def _getParamsFromEsCore(self):
-    return {"r":bonded_ia_params[self._bondId].p.rigid_bond.r, "ptol":bonded_ia_params[self._bondId].p.rigid_bond.ptol, "vtol":bonded_ia_params[self._bondId].p.rigid_bond.vtol}
-
-  def _setParamsInEsCore(self):
-    rigid_bond_set_params(self._bondId,self._params["r"],self._params["ptol"],self._params["vtol"])
+      def _setParamsInEsCore(self):
+        rigid_bond_set_params(self._bondId,self._params["r"],self._params["ptol"],self._params["vtol"])
    
 
 
