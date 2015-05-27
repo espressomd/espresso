@@ -872,9 +872,6 @@ class BondedInteractions:
   BondedInteractionHandle"""
   lastId = -1
 
-  def getID(self):
-    return self.lastId
-
 
   def __getitem__(self, key):
     if not isinstance(key,int):
