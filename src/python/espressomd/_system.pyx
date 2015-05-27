@@ -27,6 +27,7 @@ cimport cuda_init
 import particle_data
 import cuda_init
 import code_info
+from cellsystem import CellSystem
 
 
 cdef class System:
@@ -35,6 +36,7 @@ cdef class System:
     nonBondedInter = interactions.NonBondedInteractions()
     bondedInter = interactions.BondedInteractions()
     Actors = actors.Actors()
+    cellSystem=CellSystem()
 
 #    def __init__(self):
 #        self.part = particle_data.particleList()
