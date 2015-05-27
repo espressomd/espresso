@@ -332,13 +332,18 @@ cdef class ParticleHandle:
         return (rel_to[0],dist[0])
 
     # vs_auto_relate_to
-    def vs_auto_relate_to(self,_relto):
+    property vs_auto_relate_to:
       """Setup this particle as virtual site relative to the particle with the given id"""
-      if isinstance(_relto,int):
-          if vs_relate_to(self.id,_relto):
-            raise Exception("Vs_relative setup failed.")
-      else:
-            raise ValueError("Argument of vs_auto_relate_to has to be of type int")
+      def __set__(self,_relto):
+        checkTypeOrExcept(_relto,1,int, "Argument of vs_auto_relate_to has to be of type int")
+        if vs_relate_to(self.id,_relto):
+          raise Exception("vs_relative setup failed.")
+      def __get__(self):
+        self.updateParticleData()
+        cdef int* rel_to = NULL
+        cdef double* dist = NULL
+        pointer_to_vs_relative(&(self.particleData),rel_to,dist)
+        return (rel_to[0],dist[0])
 
 
   IF DIPOLES:
@@ -575,6 +580,7 @@ cdef class ParticleHandle:
             'f_swim' : _swim.f_swim,
           }
         return swim
+
 
   def delete(self):
     """Delete the particle"""
