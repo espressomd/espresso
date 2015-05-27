@@ -671,9 +671,9 @@ IF BOND_ANGLE == 1:
 
   def _setParamsInEsCore(self):
     angle_cosine_set_params(self._bondId,self._params["bend"],self._params["phi0"])
-#ELSE:
-#  class Angle_Cosine(BondedInteractionNotDefined):
-#    name="BOND_ANGLE"
+ELSE:
+  class Angle_Cosine(BondedInteractionNotDefined):
+    name="BOND_ANGLE"
    
 IF BOND_ANGLE == 1:      
   class Angle_Cossquare(BondedInteraction):
