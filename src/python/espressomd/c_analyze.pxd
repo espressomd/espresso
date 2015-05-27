@@ -37,6 +37,7 @@ cdef extern from "statistics.hpp":
 
 cdef extern from "statistics.hpp":
   cdef double mindist(IntList *set1, IntList *set2)
+  cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
   cdef void nbhood(double pos[3], double r_catch, IntList *il, int planedims[3])
   cdef double distto(double pos[3], int pid)
   cdef double *obsstat_bonded(Observable_stat *stat, int j)
@@ -59,3 +60,4 @@ cdef extern from "energy.hpp":
 cdef extern from "energy.hpp":
   cdef void master_energy_calc()
   cdef void init_energies(Observable_stat *stat)
+

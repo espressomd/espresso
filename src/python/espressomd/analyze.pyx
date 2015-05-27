@@ -105,10 +105,21 @@ def distto(system, id=None,pos=None):
       _id = -1
   return c_analyze.distto(cpos,_id)
 
+#
+# Analyze Linear Momentum
+#
+def analyze_linear_momentum(system, include_particles=True, include_lbfluid=True):
+  """"Analyze the system's linear momentum
+      analyze_linear_momentum(system, include_particles=True, include_lbfluid=True)
+      one can calculate the linear momentum of particles and the lbfluid with this command
+  """
+  momentum = c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
+  return momentum
+
 # get all particles in neighborhood r_catch of pos and return their ids
 # in il. plane can be used to specify the distance in the xy, xz or yz
 # plane
-def nbhood(self, pos=None, r_catch=None, plane = '3d'):
+def nbhood(system, pos=None, r_catch=None, plane = '3d'):
   """nbhood(pos=None, r_catch=None, plane = '3d'):
      get all particles in neighborhood r_catch of pos and return their ids
      in il. plane can be used to specify the distance in the xy, xz or yz
@@ -152,8 +163,8 @@ def nbhood(self, pos=None, r_catch=None, plane = '3d'):
 #
 # Pressure analysis
 #
-def pressure(self, pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
-  """Pewaauew
+def pressure(system, pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
+  """
      pressure(pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)
   """
   cdef vector[string] pressure_labels
@@ -177,8 +188,8 @@ def pressure(self, pressure_type = 'all', id1 = 'default', id2 = 'default', v_co
     pressure = c_analyze.analyze_pressure_pair(pressure_type, id1, id2, v_comp)
     return pressure
 
-def stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
-  """stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)"""
+def stress_tensor(system, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
+  """stress_tensor(system, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)"""
   cdef vector[string] stress_labels
   cdef vector[double] stresses
 
@@ -203,7 +214,7 @@ def stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v
       raise Exception("Error while calculating stress tensor")
     return stresses
     
-def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
+def local_stress_tensor(system, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
   """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
   """
 
