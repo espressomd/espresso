@@ -424,32 +424,35 @@ class HarmonicBond(BondedInteraction):
   def _setParamsInEsCore(self):
     harmonic_set_params(self._bondId,self._params["k"],self._params["r_0"],self._params["r_cut"])
    
-if ROTATION == 1:
-    class HarmonicDumbbellBond(BondedInteraction):
-      def typeNumber(self):
-        return 2
+IF ROTATION == 1:
+  class HarmonicDumbbellBond(BondedInteraction):
+    def typeNumber(self):
+      return 2
     
-      def typeName(self): 
-        return "HARMONIC_DUMBBELL"
+    def typeName(self): 
+      return "HARMONIC_DUMBBELL"
     
-      def validKeys(self):
-        return "k_1","k_2","r","r_cut"
+    def validKeys(self):
+      return "k_1","k_2","r","r_cut"
     
-      def requiredKeys(self): 
-        return "k_1","k_2","r"
+    def requiredKeys(self): 
+      return "k_1","k_2","r"
     
-      def setDefaultParams(self):
-        self._params = {"k_1":0.,"k_2":0.,"r":0,"r_cut":0.} 
+    def setDefaultParams(self):
+      self._params = {"k_1":0.,"k_2":0.,"r":0,"r_cut":0.} 
     
-      def _getParamsFromEsCore(self):
-        return \
-          {"k_1":bonded_ia_params[self._bondId].p.harmonic_dumbbell.k1,\
-           "k_2":bonded_ia_params[self._bondId].p.harmonic_dumbbell.k2,\
-           "r":bonded_ia_params[self._bondId].p.harmonic_dumbbell.r,\
-           "r_cut":bonded_ia_params[self._bondId].p.harmonic_dumbbell.r_cut}
+    def _getParamsFromEsCore(self):
+      return \
+        {"k_1":bonded_ia_params[self._bondId].p.harmonic_dumbbell.k1,\
+         "k_2":bonded_ia_params[self._bondId].p.harmonic_dumbbell.k2,\
+         "r":bonded_ia_params[self._bondId].p.harmonic_dumbbell.r,\
+         "r_cut":bonded_ia_params[self._bondId].p.harmonic_dumbbell.r_cut}
     
-      def _setParamsInEsCore(self):
+    def _setParamsInEsCore(self):
         harmonic_dumbbell_set_params(self._bondId,self._params["k_1"],self._params["k_2"],self.params["r"],self._params["r_cut"])
+ELSE:
+  class HarmonicDumbbellBond(BondedInteractionNotDefined):
+    name="HARMONIC_DUMBBELL"
 
 class Dihedral(BondedInteraction):
   def typeNumber(self):
