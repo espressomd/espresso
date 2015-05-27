@@ -33,6 +33,20 @@ cdef extern from "interaction_data.hpp":
     double LJ_capradius
     double LJ_min
 
+    
+    double LJGEN_eps
+    double LJGEN_sig
+    double LJGEN_cut
+    double LJGEN_shift
+    double LJGEN_offset
+    double LJGEN_capradius
+    int LJGEN_a1
+    int LJGEN_a2
+    double LJGEN_b1
+    double LJGEN_b2
+    double LJGEN_lambda
+    double LJGEN_softrad
+
   cdef IA_parameters *get_ia_param(int i, int j)
 
 cdef extern from "lj.hpp":
@@ -48,6 +62,20 @@ cdef extern from "forcecap.hpp":
   double force_cap
   int forcecap_set_params(double forcecap)
 
+cdef extern from "ljgen.hpp":
+    IF LJGEN_SOFTCORE:
+        cdef int ljgen_set_params(int part_type_a, int part_type_b,
+		     double eps, double sig, double cut,
+		     double shift, double offset,
+		     int a1, int a2, double b1, double b2,
+		     double cap_radius,
+                     double genlj_lambda, double softrad)
+    ELSE:
+        cdef int ljgen_set_params(int part_type_a, int part_type_b,
+                double eps, double sig, double cut,
+                double shift, double offset,
+                int a1, int a2, double b1, double b2,
+                double cap_radius)
 
 
 
