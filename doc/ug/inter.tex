@@ -120,21 +120,6 @@ the file are ignored and only included for human readability.
 
 \index{Lennard-Jones interaction|mainindex}
 \index{interactions!Lennard-Jones|mainindex}
-\PythonSyntaxOn
-\begin{pysyntax}
-  \object{
-    espressomd.System().nonBondedInter[\arg{type},\arg{type}].lennardJones
-  }{
-    setParams
-  }{
-    epsilon=\arg{double},
-    sigma=\arg{double},
-    cutoff=\arg{double}
-  }[
-    shift=\arg{double or ``auto''}
-  ]
-\end{pysyntax}
-\PythonSyntaxOff
 \begin{essyntax}
   inter \var{type1} 
   \var{type2}
@@ -910,6 +895,19 @@ general tabulated potentials.
 \index{Rattle Shake algorithm}
 \label{sec:rattle}
 
+\PythonSyntaxOn
+\begin{pysyntax}
+\object{espressomd.interactions}{
+	RigidBond
+}{
+	r=\arg{double},
+}[
+	ptol=\arg{double},
+	vtol=\arg{double}
+]
+\end{pysyntax}
+ \PythonSyntaxOff
+
 \begin{essyntax}
   inter \var{bondid}
   rigid_bond
@@ -923,6 +921,7 @@ general tabulated potentials.
 To simulate rigid bonds, \es uses the Rattle Shake algorithm which
 satisfies internal constraints for molecular models with internal
 constraints, using Lagrange multipliers.\cite{andersen83a}
+In the python implementation the constrained bond distance is named r, the positional tolerance is named ptol and the velocity tolerance is named vtol.
 
 \subsection{Tabulated bond interactions}
 \index{tabulated bond interactions|mainindex}
@@ -1383,23 +1382,6 @@ requires assigning charges to the particles.  This is done using the
 \label{sec:coulomb}
 \index{P3M method|mainindex}
 \index{interactions!P3M|mainindex}
-
-\PythonSyntaxOn
-\begin{pysyntax}
-  \object{
-    espressomd.electrostatics
-  }{
-    P3M
-  }{
-    bjerrum_length=\arg{double},
-    accuracy=\arg{double},
-  }[
-    mesh=\arg{int} or \arg{tuple},
-    cao=\arg{int},
-    alpha=\arg{double},
-  ]
-\end{pysyntax}
-\PythonSyntaxOff
 
 \begin{essyntax}
   inter coulomb \var{l_B} p3m [gpu] 

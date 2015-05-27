@@ -449,7 +449,9 @@ IF BOND_CONSTRAINT==1:
 
       def _setParamsInEsCore(self):
         rigid_bond_set_params(self._bondId,self._params["r"],self._params["ptol"],self._params["vtol"])
-   
+ELSE:
+    class RigidBond(BondedInteractionNotDefined):
+      name="RIGID"
 
 
 class Dihedral(BondedInteraction):
