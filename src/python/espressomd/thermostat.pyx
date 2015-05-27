@@ -47,17 +47,17 @@ cdef class Thermostat:
         # here other thermostats stuff
         return True
     
-    def setLangevin(self, _temperature="", _gamma=""):
+    def setLangevin(self, kT="", gamma=""):
         """Sets the Langevin thermostat with required parameters 'temperature' 'gamma'"""
         
-        if _temperature=="" or _gamma=="":
-            raise ValueError("wrong # args:  should be\n\"thermostat langevin <temp> <gamma>\"")
-        if not isinstance(_temperature, float) or not isinstance(_gamma, float) or float(_temperature)<0. or float(_gamma)<0.:
+        if kT=="" or gamma=="":
+            raise ValueError("Both, kT and gamma have to be given as keyword args")
+        if not isinstance(kT, float) or not isinstance(gamma, float) or float(kT)<0. or float(gamma)<0.:
             raise ValueError("temperature and gamma must be positive numbers")
         global temperature
-        temperature=float(_temperature)
+        temperature=float(kT)
         global langevin_gamma
-        langevin_gamma=float(_gamma)
+        langevin_gamma=float(gamma)
         global thermo_switch
         thermo_switch = ( thermo_switch or THERMO_LANGEVIN )
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)

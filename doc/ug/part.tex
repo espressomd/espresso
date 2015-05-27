@@ -26,6 +26,18 @@
 \subsection{Defining particle properties}
 \label{ssec:particleproperties}
 
+\PythonSyntaxOn
+\begin{pysyntax}
+  \property{
+    espressomd.System()
+  }{
+    part[\arg{pid}]
+  }{
+    pos=\arg{array-like},
+    type=\arg{int},
+  }
+\end{pysyntax}
+\PythonSyntaxOff
 \begin{essyntax}
   part
   \var{pid}
