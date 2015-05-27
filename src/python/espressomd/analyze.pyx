@@ -153,7 +153,7 @@ def nbhood(self, pos=None, r_catch=None, plane = '3d'):
 # Pressure analysis
 #
 def pressure(self, pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
-  """Pewaauew
+  """Pressure
      pressure(pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)
   """
   cdef vector[string] pressure_labels
@@ -307,3 +307,26 @@ def energy(system, etype = 'all', id1 = 'default', id2 = 'default'):
       return '{ %d %d nonbonded: %f }' % (id1,id2,_value)
 
   return 'error: unknown feature of analyze energy: \'%s\'' % etype
+
+#
+# Structure factor
+#
+def structure_factor(self, type = 'default', order = 'default' ):
+  """Structure Factor
+     structure_factor(type = 'default', order = 'default' )
+  """
+  cdef double *sf;
+
+  if type=='default':
+
+    checkTypeOrExcept(type, 1, int, "type must be an int")
+
+    if order == 'default':
+
+      checkTypeOrExcept(order, 1, int, "order must be an int")
+
+      # Used to take the WITHOUT_BONDS define
+      c_analyze.updatePartCfg(0);
+      c_analyze.calc_structurefactor(type, order, &sf);
+      
+      return c_analyze.modify_stucturefactor(order, sf);
