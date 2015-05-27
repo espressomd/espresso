@@ -317,3 +317,46 @@ def energy(system=None, etype = 'all', id1 = 'default', id2 = 'default'):
       return '{ %d %d nonbonded: %f }' % (id1,id2,_value)
 
   return 'error: unknown feature of analyze energy: \'%s\'' % etype
+
+def calc_re(system=None, chain_start=None, number_of_chains=None, chain_length=None):
+  cdef double* re=NULL
+  check_topology(system, chain_start, number_of_chains, chain_length)
+  c_analyze.calc_re(re)
+  tuple_re = (re[0],re[1],re[2])
+  free(re)
+  return tuple_re
+
+def calc_rg(system=None, chain_start=None, number_of_chains=None, chain_length=None):
+  cdef double* rg=NULL
+  check_topology(system, chain_start, number_of_chains, chain_length)
+  c_analyze.calc_rg(rg)
+  tuple_rg = (rg[0],rg[1],rg[2])
+  free(rg)
+  return tuple_rg
+
+def calc_rh(system=None, chain_start=None, number_of_chains=None, chain_length=None):
+  cdef double* rh=NULL
+  check_topology(system, chain_start, number_of_chains, chain_length)
+  c_analyze.calc_rh(rh)
+  tuple_rh = (rh[0],rh[1],rh[2])
+  free(rh)
+  return tuple_rh
+
+def check_topology(system=None, chain_start=None, number_of_chains=None, chain_length=None):
+  checkTypeOrExcept(chain_start, 1, int, "chain_start=int is a required argument")
+  checkTypeOrExcept(number_of_chains, 1, int, "number_of_chains=int is a required argument")
+  checkTypeOrExcept(chain_length, 1, int, "chain_length=int is a required argument")
+  if not system:
+    raise ValueError('Must pass an instance of ESPResSo to thi function')
+  if chain_start < 0:
+    raise ValueError('chain_start must be greater than zero')
+  if chain_length < 0:
+    raise ValueError('chain_length must be greater than zero')
+  if number_of_chains < 0:
+    raise ValueError('number_of_chains must be greater than zero')
+  c_analyze.sortPartCfg()
+  if chain_start+chain_length*number_of_chains >= system.n_part:
+    raise ValueError('start+number_of_chains*chain_length cannot be greater than the total number of particles.')
+  c_analyze.chain_start = chain_start
+  c_analyze.chain_n_chains = number_of_chains
+  c_analyze.chain_length = chain_length

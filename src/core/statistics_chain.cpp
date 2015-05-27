@@ -58,13 +58,13 @@ void update_mol_ids_setchains() {
 
 
 
-void calc_re(double **_re)
+void calc_re(double *re)
 {
   int i;
   double dx,dy,dz;
   double dist=0.0,dist2=0.0,dist4=0.0;
-  double *re=NULL, tmp;
-  *_re = re = (double*)realloc(re,4*sizeof(double));
+  double tmp;
+  re = (double*)realloc(re,4*sizeof(double));
 
   for (i=0; i<chain_n_chains; i++) {
     dx = partCfg[chain_start+i*chain_length + chain_length-1].r.p[0]
@@ -85,13 +85,13 @@ void calc_re(double **_re)
   re[3] = sqrt(dist4/tmp - re[2]*re[2]);
 }
 
-void calc_re_av(double **_re)
+void calc_re_av(double *re)
 {
   int i,j;
   double dx,dy,dz;
   double dist=0.0,dist2=0.0,dist4=0.0;
-  double *re=NULL, tmp;
-  *_re = re = (double*)realloc(re,4*sizeof(double));
+  double tmp;
+  re = (double*)realloc(re,4*sizeof(double));
 
   for (j=0; j<n_configs; j++) {
     for (i=0; i<chain_n_chains; i++) {
@@ -114,14 +114,14 @@ void calc_re_av(double **_re)
   re[3] = sqrt(dist4/tmp - re[2]*re[2]);
 }
 
-void calc_rg(double **_rg)
+void calc_rg(double *rg)
 {
   int i, j, p;
   double dx,dy,dz, r_CM_x,r_CM_y,r_CM_z;
   double r_G=0.0,r_G2=0.0,r_G4=0.0;
-  double *rg=NULL,IdoubMPC, tmp;
+  double IdoubMPC, tmp;
   double M;
-  *_rg = rg = (double*)realloc(rg,4*sizeof(double));
+  rg = (double*)realloc(rg,4*sizeof(double));
 
 
   for (i=0; i<chain_n_chains; i++) {
@@ -158,14 +158,14 @@ void calc_rg(double **_rg)
   rg[3] = sqrt(r_G4/tmp - rg[2]*rg[2]);
 }
 
-void calc_rg_av(double **_rg)
+void calc_rg_av(double *rg)
 {
   int i, j, k, p;
   double dx,dy,dz, r_CM_x,r_CM_y,r_CM_z;
   double r_G=0.0,r_G2=0.0, r_G4=0.0;
-  double *rg=NULL, IdoubMPC, tmp;
+  double IdoubMPC, tmp;
   double M;
-  *_rg = rg = (double*)realloc(rg,4*sizeof(double));
+  rg = (double*)realloc(rg,4*sizeof(double));
 
   IdoubMPC = 1./(double)chain_length;
   for (k=0; k<n_configs; k++) {
@@ -201,11 +201,11 @@ void calc_rg_av(double **_rg)
   rg[3] = sqrt(r_G4/tmp - rg[2]*rg[2]);
 }
 
-void calc_rh(double **_rh)
+void calc_rh(double *rh)
 {
   int i, j, p;
-  double dx,dy,dz, r_H=0.0,r_H2=0.0, *rh=NULL, ri=0.0, prefac, tmp;
-  *_rh = rh = (double*)realloc(rh,2*sizeof(double));
+  double dx,dy,dz, r_H=0.0,r_H2=0.0, ri=0.0, prefac, tmp;
+  rh = (double*)realloc(rh,2*sizeof(double));
 
   prefac = 0.5*chain_length*chain_length; /* 1/N^2 is not a normalization factor */
   for(p=0;p<chain_n_chains;p++) {
@@ -227,11 +227,11 @@ void calc_rh(double **_rh)
   rh[1] = sqrt(r_H2/tmp - rh[0]*rh[0]);
 }
 
-void calc_rh_av(double **_rh)
+void calc_rh_av(double *rh)
 {
   int i, j, p, k;
-  double dx,dy,dz, r_H=0.0,r_H2=0.0, *rh=NULL, ri=0.0, prefac, tmp;
-  *_rh = rh = (double*)realloc(rh,2*sizeof(double));
+  double dx,dy,dz, r_H=0.0,r_H2=0.0, ri=0.0, prefac, tmp;
+  rh = (double*)realloc(rh,2*sizeof(double));
 
   prefac = 0.5*chain_length*chain_length;
   for(k=0; k<n_configs; k++) {

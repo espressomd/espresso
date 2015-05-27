@@ -84,7 +84,7 @@ int tclcommand_analyze_parse_re(Tcl_Interp *interp, int average, int argc, char 
 {
   /* 'analyze { re | <re> } [<chain_start> <n_chains> <chain_length>]' */
   char buffer[4*TCL_DOUBLE_SPACE+4];
-  double *re;
+  double *re=NULL;
 
   if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
@@ -94,14 +94,14 @@ int tclcommand_analyze_parse_re(Tcl_Interp *interp, int average, int argc, char 
   }
 
   if (!average)
-    calc_re(&re); 
+    calc_re(re);
   else {
     if (n_configs == 0) {
       Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
       Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze re' to only look at current state!", (char *)NULL);
       return TCL_ERROR;
     }
-    calc_re_av(&re);
+    calc_re_av(re);
   }
 
   sprintf(buffer,"%f %f %f %f",re[0],re[1],re[2],re[3]);
@@ -116,7 +116,7 @@ int tclcommand_analyze_parse_rg(Tcl_Interp *interp, int average, int argc, char 
 {
   /* 'analyze { rg | <rg> } [<chain_start> <n_chains> <chain_length>]' */
   char buffer[4*TCL_DOUBLE_SPACE+4];
-  double *rg;
+  double *rg=NULL;
   if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) {
@@ -124,14 +124,14 @@ int tclcommand_analyze_parse_rg(Tcl_Interp *interp, int average, int argc, char 
     return TCL_ERROR;
   }
   if (!average)
-    calc_rg(&rg); 
+    calc_rg(rg);
   else {
     if (n_configs == 0) {
       Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
       Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze rg' to only look at current state!", (char *)NULL);
       return TCL_ERROR;
     }
-    calc_rg_av(&rg);
+    calc_rg_av(rg);
   }
 
   sprintf(buffer,"%f %f %f %f",rg[0],rg[1],rg[2],rg[3]);
@@ -145,7 +145,7 @@ int tclcommand_analyze_parse_rh(Tcl_Interp *interp, int average, int argc, char 
 {
   /* 'analyze { rh | <rh> } [<chain_start> <n_chains> <chain_length>]' */
   char buffer[2*TCL_DOUBLE_SPACE+2];
-  double *rh;
+  double *rh=NULL;
   if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) {
@@ -153,7 +153,7 @@ int tclcommand_analyze_parse_rh(Tcl_Interp *interp, int average, int argc, char 
     return TCL_ERROR;
   }
   if (!average)
-    calc_rh(&rh); 
+    calc_rh(rh);
   else {
     if (n_configs == 0) {
       Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
@@ -161,7 +161,7 @@ int tclcommand_analyze_parse_rh(Tcl_Interp *interp, int average, int argc, char 
       return TCL_ERROR;
     }
     else
-      calc_rh_av(&rh);
+      calc_rh_av(rh);
   }
 
   sprintf(buffer,"%f %f",rh[0],rh[1]);
