@@ -20,9 +20,11 @@ from utils cimport *
 
 
 def integrate(nSteps, recalc_forces=False, reuse_forces=False):
-  checkTypeOrExcept(nSteps,1,int,"Integrate requires a positive integer")
-  checkTypeOrExcept(recalc_forces,1,bool,"Integrate requires a positive integer")
-  checkTypeOrExcept(nSteps,1,int,"Integrate requires a positive integer")
+  """integrate(nSteps, recalc_forces=False, reuse_forces=False)"""
+  
+  checkTypeOrExcept(nSteps,1,int,"Integrate requires a positive integer for the number of steps")
+  checkTypeOrExcept(recalc_forces,1,bool,"recalc_forces has to be a bool")
+  checkTypeOrExcept(reuse_forces,1,bool,"reuse_forces has to be a bool")
 
   if (python_integrate(nSteps, recalc_forces, reuse_forces)):
     print ( mpiRuntimeErrorCollectorGather() )

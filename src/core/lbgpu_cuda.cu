@@ -1653,9 +1653,9 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
   interpolation_three_point_coupling(n_a, position, node_index, d_v, delta, interpolated_u);
 
 #ifdef ENGINE
-  velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
-  velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
-  velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
+  velocity[0] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[0];
+  velocity[1] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[1];
+  velocity[2] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[2];
 
   // The first three components are v_center, the last three v_source
   // Do not use within LB, because these have already been converted back to MD units
@@ -1948,9 +1948,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, interpolated_u);
 
 #ifdef ENGINE
-  velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
-  velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
-  velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
+  velocity[0] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[0];
+  velocity[1] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[1];
+  velocity[2] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[2];
 
   // The first three components are v_center, the last three v_source
   // Do not use within LB, because these have already been converted back to MD units

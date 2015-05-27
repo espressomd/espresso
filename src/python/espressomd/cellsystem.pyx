@@ -19,10 +19,13 @@
 cimport cellsystem
 
 cdef class Cellsystem:
-    def __init__(self):
-        pass
+
     
     def setDomainDecomposition(self, useVerletList=True):
+        """Activates domain decomposition cell system
+        setDomainDecomposition(useVerletList=True)
+        """
+      
         useVerletList=bool(useVerletList)
         
         ### should work with global_variables.dd
@@ -41,12 +44,16 @@ cdef class Cellsystem:
         return True
     
     def setNsquare(self):
+        """Activates the nsquare force calculation
+        """
         mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
         # @TODO: gathering should be interface independent
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
     
     def setLayered(self, nLayers=""):
+        """setLayered(nLayers="")
+        Set the layerd cell system with nLayers layers"""
         if nLayers!="":
             if not isinstance(nLayers, int):
                 raise ValueError("layer height should be positive")

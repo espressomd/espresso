@@ -62,6 +62,7 @@
 #include "actor/HarmonicWell_tcl.hpp"
 #include "actor/HarmonicOrientationWell_tcl.hpp"
 #include "minimize_energy_tcl.hpp"
+#include "h5mdfile_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -79,6 +80,10 @@ int tclcommand_bin(ClientData data, Tcl_Interp *interp,
 /** Implementation of the Tcl command blockfile. Allows to read and write
     blockfile comfortably from Tcl. See \ref blockfile_tcl.cpp */
 int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
+/** Implementation of the Tcl command h5mdfile. Allows to read and write
+    h5mdfile comfortably from Tcl. See \ref h5mdfile_tcl.cpp */
+int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
 /** replaces one of TCLs standart channels with a named pipe. See \ref channels_tcl.cpp */
 int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -164,6 +169,10 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("bit_random", tclcommand_bit_random);
   /* in file blockfile_tcl.cpp */
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
+  /* in file h5mdfile_tcl.cpp */
+  #ifdef H5MD
+	REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
+  #endif
   /* in constraint.cpp */
   REGISTER_COMMAND("constraint", tclcommand_constraint);
   /* in external_potential.hpp */
