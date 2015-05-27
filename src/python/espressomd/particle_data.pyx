@@ -404,11 +404,10 @@ cdef class ParticleHandle:
     property fix:
       """Fix the particle at current position"""
       def __set__(self, _fixed_coord_flag):
-        cdef int fixed_coord_flag[3]
         cdef int ext_flag
-        checkTypeOrExcept(_fixed_coord_flag,3,float,"Fix has to be 3 floats")
+        checkTypeOrExcept(_fixed_coord_flag,3,int,"Fix has to be 3 ints")
         for i in map(long, range(3)):
-          if (fixed_coord_flag[i]):
+          if (_fixed_coord_flag[i]):
             ext_flag |= COORD_FIXED(i);
         if set_particle_fix(self.id, ext_flag) == 1:
           raise Exception("set particle position first")
@@ -542,17 +541,23 @@ cdef class ParticleHandle:
             swim.v_swim = _params['v_swim']
   
           IF LB or LB_GPU:
-            if _params['mode'] == "pusher":
-              swim.push_pull = -1
-            elif _params['mode'] == "puller":
-              swim.push_pull = 1
-            else:
-              raise Exception("'mode' has to be either 'pusher' or 'puller'")
+            if 'mode' in _params:
+              if _params['mode'] == "pusher":
+                swim.push_pull = -1
+              elif _params['mode'] == "puller":
+                swim.push_pull = 1
+              elif _params['mode'] == "N/A":
+                swim.push_pull = 0
+              else:
+                raise Exception("'mode' has to be either 'pusher' or 'puller'")
   
-            checkTypeOrExcept(_params['dipole_length'],1,float,"dipole_length has to be a float")
-            swim.dipole_length = _params['dipole_length']
-            checkTypeOrExcept(_params['rotational_friction'],1,float,"rotational_friction has to be a float")
-            swim.rotational_friction = _params['rotational_friction']
+            if 'dipole_length' in _params:
+              checkTypeOrExcept(_params['dipole_length'],1,float,"dipole_length has to be a float")
+              swim.dipole_length = _params['dipole_length']
+
+            if 'rotational_friction' in _params:
+              checkTypeOrExcept(_params['rotational_friction'],1,float,"rotational_friction has to be a float")
+              swim.rotational_friction = _params['rotational_friction']
 
         if set_particle_swimming(self.id, swim) == 1:
           raise Exception("set particle position first")
