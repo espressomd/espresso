@@ -34,6 +34,10 @@ cdef extern from "statistics.hpp":
     double *non_bonded
     double *coulomb
     double *dipolar
+    double *vs_relative
+  
+  ctypedef struct Observable_stat_non_bonded:
+    pass
 
 cdef extern from "statistics.hpp":
   cdef double mindist(IntList *set1, IntList *set2)
@@ -41,6 +45,8 @@ cdef extern from "statistics.hpp":
   cdef double distto(double pos[3], int pid)
   cdef double *obsstat_bonded(Observable_stat *stat, int j)
   cdef double *obsstat_nonbonded(Observable_stat *stat, int i, int j)
+  cdef double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int i, int j)
+  cdef double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int i, int j)
 
 cdef extern from "pressure.hpp":
   cdef void analyze_pressure_all(vector[string] & pressure_labels, vector[double] & pressures, int v_comp)
@@ -59,3 +65,16 @@ cdef extern from "energy.hpp":
 cdef extern from "energy.hpp":
   cdef void master_energy_calc()
   cdef void init_energies(Observable_stat *stat)
+
+cdef extern from "pressure.hpp":
+  cdef Observable_stat total_pressure
+  cdef Observable_stat_non_bonded total_pressure_non_bonded
+  cdef void update_pressure(int)
+
+
+cdef extern from "interaction_data.hpp":
+  int n_bonded_ia
+
+
+cdef extern from "particle_data.hpp":
+  int n_particle_types

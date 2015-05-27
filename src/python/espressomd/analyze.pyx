@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
 # For C-extern Analysis
-
+include "myconfig.pxi"
 cimport c_analyze
 cimport utils
 cimport particle_data
@@ -26,6 +26,8 @@ import code_info
 import particle_data
 from libcpp.string cimport string #import std::string as string
 from libcpp.vector cimport vector #import std::vector as vector
+from interactions import *
+from interactions cimport *
 
 #
 # Minimal distance between particles
@@ -152,30 +154,90 @@ def nbhood(self, pos=None, r_catch=None, plane = '3d'):
 #
 # Pressure analysis
 #
-def pressure(self, pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
+def pressure(self,v_comp=0):
   """Pewaauew
      pressure(pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)
   """
-  cdef vector[string] pressure_labels
-  cdef vector[double] pressures
+#
+  checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
+#
+  # Dict to store the results
+  p={}
 
-  checkTypeOrExcept(v_comp, 1, bool, "v_comp must be a boolean")
+  # Update in espresso core if necessary
+  if (c_analyze.total_pressure.init_status != 1+v_comp):
+    c_analyze.update_pressure(v_comp)
+#
+  # Individual components of the pressure
 
-  if pressure_type=='all':
-    c_analyze.analyze_pressure_all(pressure_labels, pressures, v_comp)
-    return dict(zip(pressure_labels, pressures))
-  elif id1 == 'default' and id2 == 'default':
-    pressure = c_analyze.analyze_pressure(pressure_type, v_comp)
-    return pressure
-  elif id1 != 'default' and id2 == 'default':
-    checkTypeOrExcept(id1, 1, int, "id1 must be an int")
-    pressure = c_analyze.analyze_pressure_single(pressure_type, id1, v_comp)
-    return pressure
-  else:
-    checkTypeOrExcept(id1, 1, int, "id1 must be an int")
-    checkTypeOrExcept(id2, 1, int, "id2 must be an int")
-    pressure = c_analyze.analyze_pressure_pair(pressure_type, id1, id2, v_comp)
-    return pressure
+  # Total pressure
+  cdef int i
+  cdef double tmp
+  tmp=0
+  for i in range(c_analyze.total_pressure.data.n):
+    tmp+=c_analyze.total_pressure.data.e[i]
+
+  p["total"]=tmp
+
+  # Ideal
+  p["ideal"] =c_analyze.total_pressure.data.e[0]
+
+  # Nonbonded
+  cdef double total_bonded
+  total_bonded=0
+  for i in range(c_analyze.n_bonded_ia):
+    if (bonded_ia_params[i].type != 0): 
+     p["bonded",i] = c_analyze.obsstat_bonded(&c_analyze.total_pressure, i)[0]
+     total_bonded += c_analyze.obsstat_bonded(&c_analyze.total_pressure, i)[0]
+  p["bonded"] = total_bonded
+
+  # Non-Bonded interactions, total as well as intra and inter molecular
+  cdef int j
+  cdef double total_intra
+  cdef double total_inter
+  cdef double total_non_bonded
+  total_inter=0
+  total_intra=0
+  total_non_bonded=0
+
+  for i in range(c_analyze.n_particle_types):
+    for j in range(c_analyze.n_particle_types):
+#      if checkIfParticlesInteract(i, j):
+        p["nonBonded",i,j] =c_analyze.obsstat_nonbonded(&c_analyze.total_pressure, i, j)[0]
+        total_non_bonded =c_analyze.obsstat_nonbonded(&c_analyze.total_pressure, i, j)[0]
+        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_pressure_non_bonded, i, j)[0]
+        p["nonBondedIntra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_pressure_non_bonded, i, j)[0]
+        p["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_pressure_non_bonded, i, j)[0]
+        total_inter+= c_analyze.obsstat_nonbonded_inter(&c_analyze.total_pressure_non_bonded, i, j)[0]
+  p["nonBondedIntra"]=total_intra
+  p["nonBondedInter"]=total_inter
+  p["nonBondedInter"]=total_inter
+  p["nonBonded"]=total_non_bonded
+
+  # Electrostatics
+  IF ELECTROSTATICS == 1:
+    cdef double total_coulomb
+    total_coulomb=0
+    for i in range(c_analyze.total_pressure.n_coulomb):
+      total_coulomb+=c_analyze.total_pressure.coulomb[i]
+      p["coulomb",i]=c_analyze.total_pressure.coulomb[i]
+    p["coulomb"]=total_coulomb
+
+  # Dipoles
+  IF DIPOLES == 1:
+    cdef double total_dipolar
+    total_dipolar=0
+    for i in range(c_analyze.total_pressure.n_dipolar):
+      total_dipolar+=c_analyze.total_pressure.dipolar[i]
+      p["dipolar",i]=c_analyze.total_pressure.coulomb[i]
+    p["dipolar"]=total_dipolar
+
+  # virtual sites
+  IF VIRTUAL_SITES_RELATIVE ==1:
+    p["vs_relative"]=c_analyze.total_pressure.vs_relative[0]
+
+  return p
+
 
 def stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
   """stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)"""
