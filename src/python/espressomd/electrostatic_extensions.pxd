@@ -23,6 +23,7 @@ from _system cimport *
 from utils cimport *
 
 IF ELECTROSTATICS == 1:
+
   cdef extern from "elc.hpp":
     ctypedef struct ELC_struct:
       double maxPWerror
