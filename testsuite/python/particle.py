@@ -18,9 +18,9 @@
 #  
 # Tests particle property setters/getters
 import unittest as ut
-import espresso.System as es
+import espressomd
 import numpy as np
-from espresso.interactions import FeneBond
+from espressomd.interactions import FeneBond
 
 
 
@@ -33,6 +33,9 @@ class ParticleProperties(ut.TestCase):
   
   # Error tolerance when comparing arrays/tuples...
   tol=1E-9
+  
+  # Handle for espresso system
+  es=espressomd.System()
 
   def arraysNearlyEqual(self,a,b):
     """Test, if the magnitude of the difference between two arrays is smaller than the tolerance"""
@@ -56,9 +59,9 @@ class ParticleProperties(ut.TestCase):
 
 
   def setUp(self):
-    es.part[self.pid].pos =0,0,0
-    es.bondedInter[0]=FeneBond(k=1,d_r_max=5)
-    es.bondedInter[1]=FeneBond(k=1,d_r_max=5)
+    self.es.part[self.pid].pos =0,0,0
+    self.es.bondedInter[0]=FeneBond(k=1,d_r_max=5)
+    self.es.bondedInter[1]=FeneBond(k=1,d_r_max=5)
 
   def generateTestForVectorProperty(_propName,_value):
     """Generates test cases for vectorial particle properties such as
@@ -74,9 +77,9 @@ class ParticleProperties(ut.TestCase):
       # This code is run at the execution of the generated function.
       # It will use the state of the variables in the outer function, 
       # which was there, when the outer function was called
-      setattr(es.part[self.pid],propName,value)
-      print(propName,value,getattr(es.part[self.pid],propName))
-      self.assertTrue(self.arraysNearlyEqual(getattr(es.part[self.pid],propName), value),propName+": value set and value gotten back differ.")
+      setattr(self.es.part[self.pid],propName,value)
+      print(propName,value,getattr(self.es.part[self.pid],propName))
+      self.assertTrue(self.arraysNearlyEqual(getattr(self.es.part[self.pid],propName), value),propName+": value set and value gotten back differ.")
 
     return func
   
@@ -94,9 +97,9 @@ class ParticleProperties(ut.TestCase):
       # This code is run at the execution of the generated function.
       # It will use the state of the variables in the outer function, 
       # which was there, when the outer function was called
-      setattr(es.part[self.pid],propName,value)
-      print(propName,value,getattr(es.part[self.pid],propName))
-      self.assertTrue(getattr(es.part[self.pid],propName)==value,propName+": value set and value gotten back differ.")
+      setattr(self.es.part[self.pid],propName,value)
+      print(propName,value,getattr(self.es.part[self.pid],propName))
+      self.assertTrue(getattr(self.es.part[self.pid],propName)==value,propName+": value set and value gotten back differ.")
 
     return func
 
@@ -108,10 +111,10 @@ class ParticleProperties(ut.TestCase):
   test_bonds_property=generateTestForScalarProperty("bonds", ((0,1),(1,2)))
 
 
-  if "MASS" in es.code_info.features(): 
+  if "MASS" in espressomd.features(): 
     test_mass=generateTestForScalarProperty("mass",1.3)
 
-  if "ROTATION" in es.code_info.features(): 
+  if "ROTATION" in espressomd.features(): 
     test_omega_lab=generateTestForVectorProperty("omega_lab",np.array([4.,2.,1.]))
     test_omega_body=generateTestForVectorProperty("omega_body",np.array([4.,72.,1.]))
     test_torque_lab=generateTestForVectorProperty("torque_lab",np.array([4.,72.,3.7]))
@@ -120,19 +123,19 @@ class ParticleProperties(ut.TestCase):
 #    test_director=generateTestForVectorProperty("director",np.array([0.5,0.4,0.3]))
 
 
-  if "ELECTROSTATICS" in es.code_info.features():
+  if "ELECTROSTATICS" in espressomd.features():
     test_charge=generateTestForScalarProperty("q",-19.7)
 
-  if "DIPOLES" in es.code_info.features():
+  if "DIPOLES" in espressomd.features():
     test_dip=generateTestForVectorProperty("dip",np.array([0.5,-0.5,3]))
     test_dipm=generateTestForScalarProperty("dipm",-9.7)
 
-  if "VIRTUAL_SITES" in es.code_info.features():
+  if "VIRTUAL_SITES" in espressomd.features():
     test_virtual=generateTestForScalarProperty("virtual",1)
-  if "VIRTUAL_SITES_RELATIVE" in es.code_info.features():
+  if "VIRTUAL_SITES_RELATIVE" in espressomd.features():
     test_zz_vs_relative=generateTestForScalarProperty("vs_relative",((0,5.0)))
     
 
 if __name__ == "__main__":
- print("Features: ",es.code_info.features())
+ print("Features: ",espressomd.features())
  ut.main()

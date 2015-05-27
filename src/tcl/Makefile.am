@@ -30,6 +30,7 @@ libEspressoTcl_la_SOURCES = \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
+	h5mdfile_tcl.cpp h5mdfile_tcl.hpp \
 	readpdb_tcl.cpp \
 	cells_tcl.cpp \
 	cells_tcl.hpp \
