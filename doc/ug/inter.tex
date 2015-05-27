@@ -825,6 +825,22 @@ background error will be raised.
 \subsection{Harmonic Dumbbell Bond}
 \index{harmonic dumbbell bond|mainindex}
 \index{interactions!harmonic dumbbell|mainindex}
+\PythonSyntaxOn
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    HarmonicDumbbellBond   
+  }{
+    k_1=\arg{double},
+    k_2=\arg{double},
+    r=\arg{double}
+  }[
+    r_cut=\arg{double}
+  ]
+  
+\end{pysyntax}
+\PythonSyntaxOff
 
 \begin{essyntax}
   inter \var{bondid}
