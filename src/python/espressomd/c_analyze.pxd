@@ -61,6 +61,7 @@ cdef extern from "pressure.hpp":
 
 cdef extern from "energy.hpp":
   cdef Observable_stat total_energy
+  cdef Observable_stat_non_bonded total_energy_non_bonded
 
 cdef extern from "energy.hpp":
   cdef void master_energy_calc()
