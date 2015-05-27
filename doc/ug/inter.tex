@@ -806,6 +806,21 @@ $r=\var{r_0}+\var{\Delta r_\mathrm{max}}$. It is given by
 \index{harmonic bond|mainindex}
 \index{interactions!harmonic|mainindex}
 
+\PythonSyntaxOn
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    HarmonicBond
+  }{
+    k=\arg{double},
+    r_0=\arg{double},
+  }[
+    r_cut=\arg{double}
+  ]
+\end{pysyntax}
+\PythonSyntaxOff
+
 \begin{essyntax}
   inter \var{bondid}
   harmonic \var{K} \var{R} \opt{\var{r_\mathrm{cut}}}
