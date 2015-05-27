@@ -413,7 +413,7 @@ class HarmonicBond(BondedInteraction):
     return "k","r_0"
 
   def setDefaultParams(self):
-    self._params = {"k'":0.,"r_0":0.,"r_cut":0.} 
+    self._params = {"k":0.,"r_0":0.,"r_cut":0.} 
 
   def _getParamsFromEsCore(self):
     return \
@@ -424,6 +424,35 @@ class HarmonicBond(BondedInteraction):
   def _setParamsInEsCore(self):
     harmonic_set_params(self._bondId,self._params["k"],self._params["r_0"],self._params["r_cut"])
    
+IF ROTATION == 1:
+  class HarmonicDumbbellBond(BondedInteraction):
+    def typeNumber(self):
+      return 2
+    
+    def typeName(self): 
+      return "HARMONIC_DUMBBELL"
+    
+    def validKeys(self):
+      return "k_1","k_2","r","r_cut"
+    
+    def requiredKeys(self): 
+      return "k_1","k_2","r"
+    
+    def setDefaultParams(self):
+      self._params = {"k_1":0.,"k_2":0.,"r":0,"r_cut":0.} 
+    
+    def _getParamsFromEsCore(self):
+      return \
+        {"k_1":bonded_ia_params[self._bondId].p.harmonic_dumbbell.k1,\
+         "k_2":bonded_ia_params[self._bondId].p.harmonic_dumbbell.k2,\
+         "r":bonded_ia_params[self._bondId].p.harmonic_dumbbell.r,\
+         "r_cut":bonded_ia_params[self._bondId].p.harmonic_dumbbell.r_cut}
+    
+    def _setParamsInEsCore(self):
+        harmonic_dumbbell_set_params(self._bondId,self._params["k_1"],self._params["k_2"],self.params["r"],self._params["r_cut"])
+ELSE:
+  class HarmonicDumbbellBond(BondedInteractionNotDefined):
+    name="HARMONIC_DUMBBELL"
 
 class Dihedral(BondedInteraction):
   def typeNumber(self):
@@ -855,7 +884,7 @@ class Stretchlin_Force(BondedInteraction):
     
 
 
-bondedInteractionClasses = {0:FeneBond, 1:HarmonicBond, 5:Dihedral, 6:Tabulated, 7:Subt_Lj,\
+bondedInteractionClasses = {0:FeneBond, 1:HarmonicBond, 2:HarmonicDumbbellBond, 5:Dihedral, 6:Tabulated, 7:Subt_Lj,\
     9:Virtual, 11:Endangledist, 12:Overlapped,\
     13:Angle_Harmonic, 14:Angle_Cosine, 15:Angle_Cossquare, 16:Stretching_Force, 17:Area_Force_Local,\
     18:Bending_Force, 19:Volume_Force, 20:Area_Force_Global, 21:Stretchlin_Force}

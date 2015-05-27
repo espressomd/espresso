@@ -104,6 +104,13 @@ cdef extern from "interaction_data.hpp":
       double r
       double r_cut
 
+#* Parameters for harmonic dumbbell bond Potential */
+  ctypedef struct Harmonic_dumbbell_bond_parameters:
+      double k1
+      double k2
+      double r
+      double r_cut
+
 #* Parameters for three body angular potential (bond-angle potentials). 
   ctypedef struct Angle_bond_parameters:
       double bend
@@ -219,6 +226,7 @@ cdef extern from "interaction_data.hpp":
     Bending_force_bond_parameters bending_force #
     Volume_force_bond_parameters volume_force #
     Harmonic_bond_parameters harmonic #
+    Harmonic_dumbbell_bond_parameters harmonic_dumbbell
     Angle_bond_parameters angle
     Angle_harmonic_bond_parameters angle_harmonic #
     Angle_cosine_bond_parameters angle_cosine #
@@ -247,6 +255,8 @@ cdef extern from "fene.hpp":
   int fene_set_params(int bond_type, double k, double drmax, double r0)
 cdef extern from "harmonic.hpp":
   int harmonic_set_params(int bond_type, double k, double r,double r_cut)
+cdef extern from "harmonic_dumbbell.hpp":
+  int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, double r_cut)
 cdef extern from "dihedral.hpp":
   int dihedral_set_params(int bond_type, int mult, double bend, double phase)
 cdef extern from "angle_harmonic.hpp":
