@@ -174,9 +174,7 @@ cdef extern from "interaction_data.hpp":
       double k
       double r
       double r2
- 
-    
-    
+
 #*Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
   ctypedef struct Rigid_bond_parameters:
       #*Length of rigid bond/Constrained Bond*/
@@ -187,8 +185,6 @@ cdef extern from "interaction_data.hpp":
       double p_tol
       #*Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
       double v_tol
- 
-
 
 #* Parameters for three body angular potential (bond-angle potentials) that 
   ctypedef struct Angledist_bond_parameters:
@@ -251,6 +247,8 @@ cdef extern from "dihedral.hpp":
   int dihedral_set_params(int bond_type, int mult, double bend, double phase)
 cdef extern from "angle_harmonic.hpp":
   int angle_harmonic_set_params(int bond_type, double bend, double phi0)
+cdef extern from "rattle.hpp":
+  int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol)
 cdef extern from "angle_cosine.hpp":
   int angle_cosine_set_params(int bond_type, double bend, double phi0)
 cdef extern from "angle_cossquare.hpp":
