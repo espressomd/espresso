@@ -24,10 +24,12 @@
     This file contains the code for statistics on the data.
 */
 
+#include "grid.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "utils.hpp"
 #include "topology.hpp"
+#include <vector>
 
 /** \name Data Types */
 /************************************************************/
@@ -311,7 +313,8 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, do
 */
 
 void calc_structurefactor(int type, int order, double **sf);
-	  
+
+std::vector< std::vector<double> > modify_stucturefactor( int order, double *sf);
 
 /** Calculates the density profile in dir direction */
 void density_profile_av(int n_conf, int n_bin, double density, int dir, double *rho_ave, int type);
