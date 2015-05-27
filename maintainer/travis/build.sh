@@ -45,7 +45,7 @@ function cmd {
 [ -z "$with_mpi" ] && with_mpi="true"
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_tcl" ] && with_tcl="true"
-[ -z "$with_python_interface" ] && with_python_interface="false"
+[ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$myconfig" ] && myconfig="default"
 ! $with_mpi && check_procs=1
 [ -z "$check_procs" ] && check_procs=4
