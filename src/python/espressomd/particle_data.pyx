@@ -22,6 +22,7 @@ import numpy as np
 cimport utils
 from utils cimport *
 cimport particle_data
+from interactions import BondedInteraction
 
 cdef class ParticleHandle:
   def __cinit__(self, _id):
@@ -383,55 +384,57 @@ cdef class ParticleHandle:
             raise ValueError("Argument of vs_auto_relate_to has to be of type int")
 
   # Bond related methods
-  def addVerifiedBond(self,bond):
+  def addVerifiedBond(self,bond,partner):
     """Add a bond, the validity of which has already been verified"""
     # If someone adds bond types with more than four partners, this has to be changed
     cdef int bondInfo[5] 
-    for i in range(len(bond)):
-       bondInfo[i]=bond[i]
+    bondInfo[0] = bond._bondId
+#    for i in range(len(bond)):
+#       bondInfo[i]=bond[i]
     if change_particle_bond(self.id,bondInfo,0): 
       raise Exception("Adding the bond failed.")
 
-  def deleteVerifiedBond(self,bond):
+  def deleteVerifiedBond(self,bond,partner):
     """Delete a bond, the validity of which has already been verified"""
     # If someone adds bond types with more than four partners, this has to be changed
     cdef int bondInfo[5] 
-    for i in range(len(bond)):
-       bondInfo[i]=bond[i]
+    bondInfo[0] = bond._bondId
+#    for i in range(len(bond)):
+#      bondInfo[i]=bond[i]
     if change_particle_bond(self.id,bondInfo,1):
       raise Exception("Deleting the bond failed.")
 
-  def checkBondOrThrowException(self,bond)      :
+  def checkBondOrThrowException(self,bond,partner)      :
     """Checks the validity of the given bond:
-    * if the bond is given as a tuple
-    * if it contains at least two values.
-    * if all elements are of type int
+    * if the bond is given as an object
+    * if all partners are of type int
+    * if the number of partners satisfies the bond
     * If the bond type used exists (is lower than n_bonded_ia)
     * If the number of bond partners fits the bond type
     Throw an exception if any of these are not met"""
-    if not hasattr(bond,"__getitem__"):
-       raise ValueError("Elements of the bond list have to be tuples of the form (bondType,bondPartner)")
-    if len(bond) <2:
-      raise ValueError("Elements of the bond list have to be tuples of the form (bondType,bondPartner)")
-      
-    for y in bond:
+
+    if not isinstance(bond,BondedInteraction):
+      raise Exception("Bond argument has to be of type BondedInteraction.")
+    if bond._bondId >= n_bonded_ia:
+      raise ValueError("The bond type",bond._bondId, "does not exist.")
+    if not hasattr(partner,"__getitem"):
+      partner = (partner,)
+    if bonded_ia_params[bond._bondId].num != len(partner):
+      raise ValueError("Bond of type",bond._bondId,"needs",bonded_ia_params[bond._bondId],"partners.")
+
+    for y in partner:
       if not isinstance(y,int):
-        raise ValueError("The bond type and bond partners have to be integers.")
-    if bond[0] >= n_bonded_ia:
-      raise ValueError("The bond type",bond[0], "does not exist.")
-    
-    if bonded_ia_params[bond[0]].num != len(bond)-1:
-      raise ValueError("Bond of type",bond[0],"needs",bonded_ia_params[bond[0]],"partners.")
+        raise ValueError("Partners have to be integer.")      
       
-  def addBond(self,bond):
+  def addBond(self,bond,partner):
     """Add a single bond to the particle"""
-    self.checkBondOrThrowException(bond)
-    self.addVerifiedBond(bond)
+    self.checkBondOrThrowException(bond,partner)
+    self.addVerifiedBond(bond,partner)
     
-  def deleteBond(self, bond):
+  def deleteBond(self, bond,partner):
     """Delete a single bond from the particle"""
-    self.checkBondOrThrowException(bond)
-    self.deleteVerifiedBond(bond)
+    self.checkBondOrThrowException(bond,partner)
+    self.deleteVerifiedBond(bond,partner)
 
   def deleteAllBonds(self):
     if change_particle_bond(self.id,NULL,1):
