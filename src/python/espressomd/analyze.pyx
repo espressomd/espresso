@@ -311,22 +311,18 @@ def energy(system, etype = 'all', id1 = 'default', id2 = 'default'):
 #
 # Structure factor
 #
-def structure_factor(self, type = 'default', order = 'default' ):
+def structure_factor(system = None, sf_type = 'default', sf_order = 'default' ):
   """Structure Factor
-     structure_factor(type = 'default', order = 'default' )
+     structure_factor(system = None, sf_type = 'default', sf_order = 'default' )
   """
   cdef double *sf;
 
-  if type=='default':
+  checkTypeOrExcept(sf_type, 1, int, "sf_type must be an int")
+  checkTypeOrExcept(sf_order, 1, int, "sf_order must be an int")
 
-    checkTypeOrExcept(type, 1, int, "type must be an int")
+  # Used to take the WITHOUT_BONDS define
+  c_analyze.updatePartCfg(0);
+  c_analyze.calc_structurefactor(sf_type, sf_order, &sf);
+  
+  return c_analyze.modify_stucturefactor(sf_order, sf);
 
-    if order == 'default':
-
-      checkTypeOrExcept(order, 1, int, "order must be an int")
-
-      # Used to take the WITHOUT_BONDS define
-      c_analyze.updatePartCfg(0);
-      c_analyze.calc_structurefactor(type, order, &sf);
-      
-      return c_analyze.modify_stucturefactor(order, sf);
