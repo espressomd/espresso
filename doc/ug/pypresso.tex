@@ -24,18 +24,23 @@
   \bool_set_false:N \l_pypresso_enable_bool
  }
 
-\cs_new_protected:Npn \pypresso_object:nnnn #1#2#3#4
+\cs_new_protected:Npn \pypresso_object:nnnnn #1#2#3#4#5
  {
-  \seq_set_from_clist:Nn \l_tmpa_seq { #3 }
-  \seq_set_from_clist:Nn \l_tmpb_seq { #4 }
-  \tl_set:Nn \l_tmpa_tl { #1 }
+  \seq_set_from_clist:Nn \l_tmpa_seq { #4 }
+  \seq_set_from_clist:Nn \l_tmpb_seq { #5 }
+  \tl_set:Nn \l_tmpa_tl { #2 }
   \tl_replace_all:Nnn \l_tmpa_tl { . } { \hyphendot }
   \tl_trim_spaces:N \l_tmpa_tl
+  \tl_if_blank:nF { #1 }
+   {
+    from ~ \textcolor{ parcolor } { espressomd } ~
+    import ~ \textcolor { objcolor } { #1 }\par
+   }
   \textcolor{ parcolor }{ \tl_use:N \l_tmpa_tl \hyphendot }
-  \textcolor{ objcolor }{ \tl_trim_spaces:n { #2 }  }
+  \textcolor{ objcolor }{ \tl_trim_spaces:n { #3 }  }
   (\par
    \seq_use:Nnnn \l_tmpa_seq { ,\par } { ,\par } { ,\par }
-   \tl_if_blank:nF { #4 } { ,\par }
+   \tl_if_blank:nF { #5 } { ,\par }
    \group_begin:
     \color{ optcolor }
     \seq_use:Nnnn \l_tmpb_seq { ,\par } { ,\par } { ,\par }
@@ -78,13 +83,17 @@
 
 \NewDocumentEnvironment { pysyntax } { }
  {
-  \def \arg ##1
+  \protected \def \arg ##1
    {
-    \textnormal{$\langle$##1$\rangle$}
+    \tl_set:Nn \l_tmpa_tl { ##1 }
+    \tl_replace_all:Nnn \l_tmpa_tl { | } { \ensuremath{\vert} }
+    \textnormal{ $\langle$ \tl_use:N \l_tmpa_tl $\rangle$ }
    }
-  \NewDocumentCommand \object { m m m O{} }
+  \def \{ { \char`\{ }
+  \def \} { \char`\} }
+  \NewDocumentCommand \object { O{} m m m O{} }
    {
-    \pypresso_object:nnnn { ##1 } { ##2 } { ##3 } { ##4 }
+    \pypresso_object:nnnnn { ##1 } { ##2 } { ##3 } { ##4 } { ##5 }
    }
   \NewDocumentCommand \property { m m m }
    {
