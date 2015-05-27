@@ -195,7 +195,9 @@ for i in range(0,int_n_times):
   obs_file.write('{ time %s } %s\n' % (system.time,energies))
   linear_momentum = analyze.analyze_linear_momentum(system=system)
   print(linear_momentum)
-  print(analyze.calc_rg(system,0,3,5))
+  #print(analyze.calc_rh(system,0,3,5))
+  #print(analyze.calc_rg(system,0,3,5))
+  #print(analyze.calc_re(system,0,3,5))
 
 #   write observables
 #    set energies [analyze energy]

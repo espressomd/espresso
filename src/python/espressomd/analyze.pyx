@@ -321,7 +321,7 @@ def energy(system=None, etype = 'all', id1 = 'default', id2 = 'default'):
 def calc_re(system=None, chain_start=None, number_of_chains=None, chain_length=None):
   cdef double* re=NULL
   check_topology(system, chain_start, number_of_chains, chain_length)
-  c_analyze.calc_re(re)
+  c_analyze.calc_re(&re)
   tuple_re = (re[0],re[1],re[2])
   free(re)
   return tuple_re
@@ -329,7 +329,7 @@ def calc_re(system=None, chain_start=None, number_of_chains=None, chain_length=N
 def calc_rg(system=None, chain_start=None, number_of_chains=None, chain_length=None):
   cdef double* rg=NULL
   check_topology(system, chain_start, number_of_chains, chain_length)
-  c_analyze.calc_rg(rg)
+  c_analyze.calc_rg(&rg)
   tuple_rg = (rg[0],rg[1],rg[2])
   free(rg)
   return tuple_rg
@@ -337,7 +337,7 @@ def calc_rg(system=None, chain_start=None, number_of_chains=None, chain_length=N
 def calc_rh(system=None, chain_start=None, number_of_chains=None, chain_length=None):
   cdef double* rh=NULL
   check_topology(system, chain_start, number_of_chains, chain_length)
-  c_analyze.calc_rh(rh)
+  c_analyze.calc_rh(&rh)
   tuple_rh = (rh[0],rh[1],rh[2])
   free(rh)
   return tuple_rh

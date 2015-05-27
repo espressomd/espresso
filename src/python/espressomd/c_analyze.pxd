@@ -68,7 +68,7 @@ cdef extern from "statistics_chain.hpp":
   int chain_start
   int chain_n_chains
   int chain_length
-  void calc_re(double *re)
-  void calc_rg(double *rg)
-  void calc_rh(double *rh)
+  void calc_re(double **re)
+  void calc_rg(double **rg)
+  void calc_rh(double **rh)
 
