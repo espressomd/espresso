@@ -2181,3 +2181,10 @@ void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim)
   swim = &(p->swim);
 }
 #endif
+
+#ifdef ROTATIONAL_INERTIA
+void pointer_to_rotational_inertia(Particle *p, double*& res)
+{
+  res = p->p.rinertia;
+}
+#endif

@@ -983,4 +983,8 @@ void pointer_to_exclusions(Particle *p, int*& res1, int*& res2);
 void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim);
 #endif
 
+#ifdef ROTATIONAL_INERTIA
+void pointer_to_rotational_inertia(Particle *p, double*& res);
+#endif
+
 #endif
