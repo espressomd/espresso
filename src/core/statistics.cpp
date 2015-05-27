@@ -258,7 +258,7 @@ void momentum_calc(double *momentum)
  * inputs are bools to include particles and fluid in the linear momentum calculation
  * @param momentum Result for this processor (Output)
  */
-std::vector<double> calc_linear_momentum(bool include_particles, bool include_lbfluid)
+std::vector<double> calc_linear_momentum(int include_particles, int include_lbfluid)
 {
     double momentum_fluid[3] = { 0., 0., 0. };
     double momentum_particles[3] = { 0., 0., 0. };

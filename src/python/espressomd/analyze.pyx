@@ -31,7 +31,7 @@ from libcpp.vector cimport vector #import std::vector as vector
 # Minimal distance between particles
 #
 
-def mindist(system, p1 = 'default', p2 = 'default'):
+def mindist(system=None, p1 = 'default', p2 = 'default'):
   """Minimal distance between particles
     mindist(p1="default",p2="default")
     
@@ -72,7 +72,7 @@ def mindist(system, p1 = 'default', p2 = 'default'):
 #
 # Distance to particle or point
 #
-def distto(system, id=None,pos=None):
+def distto(system=None, id=None,pos=None):
   """"Distance to particle or point
       distto(id=None,pos=None)
       id: id of the particle
@@ -108,18 +108,17 @@ def distto(system, id=None,pos=None):
 #
 # Analyze Linear Momentum
 #
-def analyze_linear_momentum(system, include_particles=True, include_lbfluid=True):
+def analyze_linear_momentum(system=None, include_particles=True, include_lbfluid=True):
   """"Analyze the system's linear momentum
       analyze_linear_momentum(system, include_particles=True, include_lbfluid=True)
       one can calculate the linear momentum of particles and the lbfluid with this command
   """
-  momentum = c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
-  return momentum
+  return c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
 
 # get all particles in neighborhood r_catch of pos and return their ids
 # in il. plane can be used to specify the distance in the xy, xz or yz
 # plane
-def nbhood(system, pos=None, r_catch=None, plane = '3d'):
+def nbhood(system=None, pos=None, r_catch=None, plane = '3d'):
   """nbhood(pos=None, r_catch=None, plane = '3d'):
      get all particles in neighborhood r_catch of pos and return their ids
      in il. plane can be used to specify the distance in the xy, xz or yz
@@ -163,7 +162,7 @@ def nbhood(system, pos=None, r_catch=None, plane = '3d'):
 #
 # Pressure analysis
 #
-def pressure(system, pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
+def pressure(system=None, pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
   """
      pressure(pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)
   """
@@ -188,7 +187,7 @@ def pressure(system, pressure_type = 'all', id1 = 'default', id2 = 'default', v_
     pressure = c_analyze.analyze_pressure_pair(pressure_type, id1, id2, v_comp)
     return pressure
 
-def stress_tensor(system, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
+def stress_tensor(system=None, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
   """stress_tensor(system, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)"""
   cdef vector[string] stress_labels
   cdef vector[double] stresses
@@ -214,7 +213,7 @@ def stress_tensor(system, stress_type = 'all', id1 = 'default', id2 = 'default',
       raise Exception("Error while calculating stress tensor")
     return stresses
     
-def local_stress_tensor(system, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
+def local_stress_tensor(system=None, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
   """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
   """
 
@@ -237,7 +236,7 @@ def local_stress_tensor(system, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.
 #
 # Energy analysis
 #
-def energy(system, etype = 'all', id1 = 'default', id2 = 'default'):
+def energy(system=None, etype = 'all', id1 = 'default', id2 = 'default'):
   """energy(system, etype = 'all', id1 = 'default', id2 = 'default')"""
   if system.n_part == 0:
     raise Exception('no particles')
