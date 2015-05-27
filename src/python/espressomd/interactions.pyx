@@ -543,13 +543,13 @@ IF BOND_VIRTUAL == 1:
       return
 
     def requiredKeys(self):
-     eckBondorThrowreturn
+     return
 
     def setDefaultParams(self):
       pass
 
     def _getParamsFromEsCore(self):
-      passbondClass
+      pass
 
     def _setParamsInEsCore(self):
       virtual_set_params(self._bondId)
@@ -591,7 +591,7 @@ ELSE:
     name="BOND_ENDANGLEDIST"
          
 IF OVERLAPPED == 1:
-  class Overlapped(bondClassBondedInteraction):
+  class Overlapped(BondedInteraction):
     def typeNumber(self):
       return 12
 
@@ -662,7 +662,7 @@ IF BOND_ANGLE == 1:
     return "bend", "phi0"
 
   def setDefaultParams(self):
-    self._params = {"bend":0, "phi0":0}
+    self._params = {"bend":0, "phi0":0} 
 
   def _getParamsFromEsCore(self):
     return \
