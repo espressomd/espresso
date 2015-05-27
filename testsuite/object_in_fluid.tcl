@@ -36,8 +36,7 @@
 
 source "tests_common.tcl"
 
-require_feature "AREA_FORCE_GLOBAL"
-require_feature "VOLUME_FORCE"
+require_feature "OIF_GLOBAL_FORCES"
 require_feature "LB"
 require_max_nodes_per_side 2
 

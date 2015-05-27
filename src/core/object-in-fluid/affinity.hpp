@@ -73,47 +73,40 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 			{ // Bond exists
 				double folded_pos[3], vec[3], len2, len;
 				int img[3];
-	
 				/* fold the coordinates of the particle */
 				memcpy(folded_pos, p1->r.p, 3*sizeof(double));
 				memcpy(img, p1->l.i, 3*sizeof(int));
-				fold_position(folded_pos, img);
+				unfold_position(folded_pos, img);
 				//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 				for(j=0;j<3;j++)
 					vec[j] = p1->p.bond_site[j] - folded_pos[j]; // Shouldn't be the vec vector normalized? Yes, but with affinity_r0 and not by len!!!
 				len2 = sqrlen(vec);
 				len = sqrt(len2);
-				fac = ia_params->affinity_kappa;
+				if (len > ia_params->affinity_r0) {
+					fac = ia_params->affinity_kappa*(len - ia_params->affinity_r0)/len;
+					//printf("len %f r0 %f\n",len, ia_params->affinity_r0);
+				}
+				else fac = 0.0;
 //				double ftemp = 0;
 				for(j=0;j<3;j++)
 				{
-//					ftemp += fabs(fac * vec[j]/ia_params->affinity_r0);
-					force[j] += fac * vec[j]/ia_params->affinity_r0;
+					force[j] += fac * vec[j];
 				}
 //				printf("%f ",ftemp);
 				// Decision whether I should break the bond:
 				// The random decicion algorithm is much more complicated with Fd detachment force etc. Here, I use much simpler rule, the same as with Kon, except that the probability of bond breakage increases with prolongation of the bond. If the bond reaches 
 				double Poff = 1.0 - exp( - ia_params->affinity_Koff*0.000001*time_step);
-				//double difr = 1.0 - Poff;
 				if (len < ia_params->affinity_maxBond) {
-					//printf("Poff = %lf ",Poff);
-					//Poff = Poff + (1.0*len/ia_params->affinity_r0 - 1.0)*difr;
 					double decide = d_random();
-					if ( decide < Poff ) 
-					{
-							for(j=0;j<3;j++) p1->p.bond_site[j] = -1;
-							//printf("breaking: Poff = %f, decide = %f", Poff, decide);
-					}
+					//if ( decide < Poff ) 
+					//{
+							//for(j=0;j<3;j++) p1->p.bond_site[j] = -1;
+					//}
 	
 				} else {
 					for(j=0;j<3;j++) p1->p.bond_site[j] = -1;
 						//printf("breaking: out of cut");
 				}
-	
-				// The random probability mechanism should be implemented, for now I just decide that bond breaks whenever it is longer than 1.5*r0.
-				//if (dist > 1.5*ia_params->affinity_r0) {
-					//for(j=0;j<3;j++) p1->p.bond_site[j] = -1;
-				//}
 			}
 			else if (dist < ia_params->affinity_r0)
 			{ // Bond does not exist, we are inside of possible bond creation area, lets talk about creating a bond
@@ -124,6 +117,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				// Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63	| 	0.77	|	0.84	| 	0.95	|	0.99	
 				 
 				double decide = d_random();
+				decide = -1.0; // Bond will be always created
 				if ( decide < Pon ) 
 				{ // the bond will be created only with probability Pon.
 					//printf("Creating: Pon = %f, decide = %f", Pon, decide);
@@ -132,19 +126,16 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 					/* fold the coordinates of the particle */
 					memcpy(folded_pos, p1->r.p, 3*sizeof(double));
 					memcpy(img, p1->l.i, 3*sizeof(int));
-					fold_position(folded_pos, img);
+					unfold_position(folded_pos, img);
 					//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 					//printf("d: %f %f %f\n",d[0],d[1],d[2]);
 					for(j=0;j<3;j++)
 						p1->p.bond_site[j] = folded_pos[j] - d[j];
 				} else {
 					//printf("In range, not creating: Pon = %f, decide = %f", Pon, decide);
-	
 				}
 			}
 		}
-	    //ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: affinity   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
-	    //ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: affinity   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
 	  }
   }
   if ( ia_params->affinity_type == 2 ) { //prepared fot the second implementation
