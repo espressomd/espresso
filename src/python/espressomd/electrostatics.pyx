@@ -57,7 +57,7 @@ IF P3M == 1:
       if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
           raise ValueError("inter should be a positive integer")
 
-      if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) == 3):
+      if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params["mesh_off"]) == 3):
           raise ValueError("mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
 
