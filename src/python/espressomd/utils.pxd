@@ -34,7 +34,7 @@ cdef extern from "utils.hpp":
   cdef void realloc_intlist(IntList *il, int size)
 
   ctypedef struct DoubleList:
-    int *e
+    double *e
     int n
   cdef void init_intlist(IntList *il)
   cdef void alloc_intlist(IntList *il, int size)
@@ -43,4 +43,5 @@ cdef extern from "utils.hpp":
 cdef IntList* create_IntList_from_python_object(obj)
 cdef np.ndarray create_nparray_from_IntList(IntList *il)
 cdef np.ndarray create_nparray_from_DoubleList(DoubleList* dl)
+cdef np.ndarray create_nparray_from_double_array(double* x, int n)
 cdef checkTypeOrExcept(x,n,t,msg)
