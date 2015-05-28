@@ -32,7 +32,7 @@ cdef extern from "interaction_data.hpp":
     double LJ_offset
     double LJ_capradius
     double LJ_min
-
+	
   cdef IA_parameters *get_ia_param(int i, int j)
 
 cdef extern from "lj.hpp":
@@ -40,8 +40,6 @@ cdef extern from "lj.hpp":
                                         double eps, double sig, double cut,
                                         double shift, double offset,
                                         double cap_radius, double min)
-
-
 
 
 cdef extern from "forcecap.hpp":

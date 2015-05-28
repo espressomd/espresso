@@ -102,7 +102,7 @@ for i in range(n_part/2-1):
   system.part[2*i+1].q = 1.0
 
 p3m=electrostatics.P3M(bjerrum_length=1.0,mesh=24,accuracy=1e-2)
-system.Actors.add(p3m)
+zzsystem.Actors.add(p3m)
 print(system.Actors)
 
 analyze.distto(system, 0)
