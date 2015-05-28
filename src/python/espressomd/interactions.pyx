@@ -199,6 +199,96 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
       def requiredKeys(self): 
         return "epsilon","sigma","cutoff","shift" 
 
+# Generic Lennard Jones
+
+cdef class GenericLennardJonesInteraction(NonBondedInteraction):
+  if LENNARD_JONES_GENERIC == 1:
+      def validateParams(self):
+        if self._params["epsilon"]<0:
+          raise ValueError("Generic Lennard-Jones eps has to be >=0")
+        if self._params["sigma"]<0:
+          raise ValueError("Generic Lennard-Jones sigma has to be >=0")
+        if self._params["cutoff"]<0:
+          raise ValueError("Generic Lennard-Jones cutoff has to be >=0")
+        return True
+    
+      def _getParamsFromEsCore(self):
+        cdef IA_parameters* iaParams
+        iaParams =  get_ia_param(self._partTypes[0],self._partTypes[1]) 
+        return { \
+          "epsilon": iaParams.LJGEN_eps, \
+          "sigma": iaParams.LJGEN_sig, \
+          "cutoff": iaParams.LJGEN_cut, \
+          "shift": iaParams.LJGEN_shift, \
+          "offset": iaParams.LJGEN_offset, \
+          "e1": iaParams.LJGEN_a1,\
+          "e2": iaParams.LJGEN_a2,\
+          "b1": iaParams.LJGEN_b1,\
+          "b2": iaParams.LJGEN_b2,\
+          "lambda": iaParams.LJGEN_lambda,\
+          "delta": iaParams.LJGEN_softrad
+          }
+           
+    
+      def isActive(self):
+        return (self._params["epsilon"] >0)
+      
+      def _setParamsInEsCore(self):
+        # Handle the case of shift="auto"
+        if self._params["shift"]=="auto": 
+          # Calc shift
+          self._params["shift"]= -( self._params["b1"]*(self._params["sigma"]/self._params["cutoff"])**self._params["e1"] - self._params["b2"]*(self._params["sigma"]/self._params["cutoff"])**self._params["e2"] )
+        IF LJGEN_SOFTCORE:
+            if ljgen_set_params(self._partTypes[0],self._partTypes[1],\
+                    self._params["epsilon"], \
+                    self._params["sigma"], \
+                    self._params["cutoff"], \
+                    self._params["shift"], \
+                    self._params["offset"], \
+                    self._params["e1"], \
+                    self._params["e2"], \
+                    self._params["b1"], \
+                    self._params["b2"], \
+                    0.0, \
+                    self._params["labmda"], \
+                    self._params["delta"]):
+                raise Exception("Could not set Generic Lennard Jones parameters")					
+        ELSE:
+            if ljgen_set_params(self._partTypes[0],self._partTypes[1],\
+                    self._params["epsilon"], \
+                    self._params["sigma"], \
+                    self._params["cutoff"], \
+                    self._params["shift"], \
+                    self._params["offset"], \
+                    self._params["e1"], \
+                    self._params["e2"], \
+                    self._params["b1"], \
+                    self._params["b2"], \
+                    0.0):
+                raise Exception("Could not set Generic Lennard Jones parameters")					
+
+      def defaultParams(self):
+        self._params={\
+          "epsilon":0.,\
+          "sigma":0.,\
+          "cutoff":0.,\
+          "shift":0.,\
+          "offset":0.,\
+          "e1":0,\
+          "e2":0,\
+          "b1":0.,\
+          "b2":0.,\
+          "delta":0.,\
+          "lambda":0.}
+    
+      def typeName(self): 
+        return "GenericLennardJones" 
+      
+      def validKeys(self): 
+        return "epsilon","sigma","cutoff","shift","offset","e1","e2","b1","b2","delta","lambda"
+      
+      def requiredKeys(self): 
+        return "epsilon","sigma","cutoff","shift","offset","e1","e2","b1","b2"
 
 class NonBondedInteractionHandle(object):
   """Provides access to all Non-bonded interactions between 
@@ -209,6 +299,7 @@ class NonBondedInteractionHandle(object):
 
   # Here, one line per non-bonded ia
   lennardJones=None
+  genericLennardJones=None
 
 
   def __init__(self, _type1, _type2):
@@ -221,6 +312,7 @@ class NonBondedInteractionHandle(object):
     
     # Here, add one line for each nonbonded ia
     self.lennardJones =LennardJonesInteraction(_type1,_type2)
+    self.genericLennardJones =LennardJonesInteraction(_type1,_type2)
 
   
   
