@@ -24,6 +24,7 @@ from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
 from espressomd import electrostatics
+from espressomd import visualization
 import numpy
 
 print("""
@@ -115,6 +116,8 @@ print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
 
+mayavi = visualization.mayavi_live(system)
+
 #############################################################
 #  Warmup Integration                                       #
 #############################################################
@@ -152,6 +155,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 #   Increase LJ cap
   lj_cap = lj_cap + 10
   system.nonBondedInter.setForceCap(lj_cap)
+mayavi.update()
 
 # Just to see what else we may get from the c code
 print("""
@@ -198,6 +202,7 @@ for i in range(0,int_n_times):
 
 #  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
   integrate.integrate(int_steps)
+  mayavi.update()
   
 #  energies = es._espressoHandle.Tcl_Eval('analyze energy')
   energies = analyze.energy(system=system)
