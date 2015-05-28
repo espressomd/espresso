@@ -600,7 +600,9 @@ inline void add_bonded_force(Particle *p1)
   double force[3]  = { 0., 0., 0. };
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
+#if defined(HYDROGEN_BOND) || defined(TWIST_STACK) || defined(OIF_LOCAL_FORCES)
   double force4[3] = { 0., 0., 0. };
+#endif 
 #ifdef TWIST_STACK
   double force5[3] = { 0., 0., 0. };
   double force6[3] = { 0., 0., 0. };
