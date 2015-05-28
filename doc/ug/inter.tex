@@ -781,6 +781,24 @@ applying the bond using the \keyword{bond} particle, the number of involved
 particles plays a role. The number of involved particles and their order, if
 important, is nevertheless specified here for completeness.
 
+In the python interface you don't have to worry about bond ids.
+A minimalistic example how to set up bonded harmonic interactions between two particles (particle ids 0 and 1) follows:
+
+\PythonSyntaxOn
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    HarmonicBond
+  }{
+    r_0=\arg{double},
+    k=\arg{double}
+  }[
+    r_cut=\arg{double}
+  ]
+\end{pysyntax}
+\PythonSyntaxOff
+
 \subsection{FENE bond}
 \index{FENE bond|mainindex}
 \index{interactions!FENE|mainindex}
@@ -790,6 +808,21 @@ important, is nevertheless specified here for completeness.
   fene
   \var{K} \var{\Delta r_\mathrm{max}} \opt{\var{r_0}}
 \end{essyntax}
+\PythonSyntaxOn
+\begin{pysyntax}
+ \object{
+	 espressomd.System().bondedInter.add(FeneBond)
+  }{
+    setParams
+  }{
+    k=\arg{double},
+    drmax=\arg{double},
+  }[
+    r_0=\arg{double=0.}
+  ]
+\end{pysyntax}
+\PythonSyntaxOff
+
 This creates a bond type with identificator \var{bondid} with a
 FENE (finite extension nonlinear expander) interaction. This is a
 rubber-band-like, symmetric interaction between two particles with

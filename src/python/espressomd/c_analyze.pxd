@@ -23,6 +23,13 @@ from utils cimport *
 from libcpp.string cimport string #import std::string as string
 from libcpp.vector cimport vector #import std::vector as vector
 
+cdef extern from "particle_data.hpp":
+  cdef int updatePartCfg( int bonds_flag )
+
+cdef extern from "statistics.hpp":
+  cdef void calc_structurefactor(int type, int order, double **sf)
+  cdef vector[vector[double]] modify_stucturefactor( int order, double *sf)
+
 cdef extern from "statistics.hpp":
   ctypedef struct Observable_stat:
     int init_status

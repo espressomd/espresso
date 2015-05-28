@@ -543,7 +543,7 @@ IF BOND_VIRTUAL == 1:
       return
 
     def requiredKeys(self):
-      return
+     return
 
     def setDefaultParams(self):
       pass
@@ -777,7 +777,7 @@ class Bending_Force(BondedInteraction):
   def _setParamsInEsCore(self):
     bending_force_set_params(self._bondId,self._params["phi0"],self._params["kb"])
    
-   
+
 class Volume_Force(BondedInteraction):
   def typeNumber(self):
     return 19
@@ -852,9 +852,10 @@ class Stretchlin_Force(BondedInteraction):
   def _setParamsInEsCore(self):
     stretchlin_force_set_params(self._bondId,self._params["r0"],self._params["kslin"])
 
+
+
+
     
-
-
 bondedInteractionClasses = {0:FeneBond, 1:HarmonicBond, 5:Dihedral, 6:Tabulated, 7:Subt_Lj,\
     9:Virtual, 11:Endangledist, 12:Overlapped,\
     13:Angle_Harmonic, 14:Angle_Cosine, 15:Angle_Cossquare, 16:Stretching_Force, 17:Area_Force_Local,\
@@ -866,12 +867,15 @@ bondedInteractionClasses = {0:FeneBond, 1:HarmonicBond, 5:Dihedral, 6:Tabulated,
 
 
 class BondedInteractions:
-  """Represents the non-bonded interactions. Individual interactions can be accessed using
-  NonBondedInteractions[i], where i is the bond id. Will return an instance o
+  """Represents the bonded interactions. Individual interactions can be accessed using
+  BondedInteractions[i], where i is the bond id. Will return an instance o
   BondedInteractionHandle"""
+  lastId = -1
+
+
   def __getitem__(self, key):
     if not isinstance(key,int):
-      raise ValueError("Index to BondedInteractions[] hast to ba an integer referring to a bond id")
+      raise ValueError("Index to BondedInteractions[] has to be an integer referring to a bond id")
 
     # Find out the type of the interaction from Espresso
     bondType = bonded_ia_params[key].type
@@ -893,18 +897,28 @@ class BondedInteractions:
    
     # type of key must be int
     if not isinstance(key,int):
-      raise ValueError("Index to BondedInteractions[] has to ba an integer referring to a bond id")
+      raise ValueError("Index to BondedInteractions[] has to be an integer referring to a bond id")
 
     # Value must be subclass off BondedInteraction
     if not isinstance(value,BondedInteraction):
       raise ValueError("Only subclasses of BondedInteraction can be assigned.")
 
+    BondedInteractions.lastId += 1
     # Save the bond id in the BondedInteraction instance
     value._bondId=key
 
     # Set the parameters of the BondedInteraction instance in the Es core
     value._setParamsInEsCore()
 
+  def add(self, interaction):
+    """Adds a bonded interaction and asigns a bond id.
+    """
+    if not isinstance(interaction,BondedInteraction):
+      raise Exception("Only subclasses of BondedInteraction can be added.")
+
+    self.lastId += 1
+    interaction._bondId = self.lastId
+    interaction._setParamsInEsCore()
 
 
 

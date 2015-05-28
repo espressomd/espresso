@@ -156,9 +156,15 @@ def nbhood(self, pos=None, r_catch=None, plane = '3d'):
 #
 # Pressure analysis
 #
+<<<<<<< HEAD
 def pressure(self,v_comp=0):
   """Pressure calculation
      pressure(v_comp=False)
+=======
+def pressure(self, pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
+  """Pressure
+     pressure(pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)
+>>>>>>> e5736ab0a6e4be3bfe7a9204f503044f50be8ebc
   """
 #
   checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
@@ -415,4 +421,21 @@ def energy(system, etype = 'all', id1 = 'default', id2 = 'default'):
   return e 
 
 
+#
+# Structure factor
+#
+def structure_factor(system = None, sf_type = 'default', sf_order = 'default' ):
+  """Structure Factor
+     structure_factor(system = None, sf_type = 'default', sf_order = 'default' )
+  """
+  cdef double *sf;
+
+  checkTypeOrExcept(sf_type, 1, int, "sf_type must be an int")
+  checkTypeOrExcept(sf_order, 1, int, "sf_order must be an int")
+
+  # Used to take the WITHOUT_BONDS define
+  c_analyze.updatePartCfg(0);
+  c_analyze.calc_structurefactor(sf_type, sf_order, &sf);
+  
+  return c_analyze.modify_stucturefactor(sf_order, sf);
 
