@@ -156,15 +156,9 @@ def nbhood(self, pos=None, r_catch=None, plane = '3d'):
 #
 # Pressure analysis
 #
-<<<<<<< HEAD
-def pressure(self,v_comp=0):
-  """Pressure calculation
-     pressure(v_comp=False)
-=======
 def pressure(self, pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
   """Pressure
      pressure(pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)
->>>>>>> e5736ab0a6e4be3bfe7a9204f503044f50be8ebc
   """
 #
   checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
