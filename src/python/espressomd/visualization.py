@@ -1,5 +1,6 @@
 import numpy
 from mayavi import mlab
+from tvtk.tools import visual
 from multiprocessing import Process, Queue
 import atexit
 
@@ -12,21 +13,31 @@ output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
 def mayavi_render(queue):
-	points = mlab.points3d([0],[0],[0])
+	points = mlab.quiver3d([0],[0],[0], [0],[0],[0], scalars=[0], mode="sphere", scale_factor=1)
+	points.glyph.color_mode = 'color_by_scalar'
+	points.glyph.glyph_source.glyph_source.center = [0, 0, 0]
 	arrows = mlab.quiver3d([0],[0],[0], [0],[0],[0])
 
 	@mlab.show
 	@mlab.animate(delay=10, ui=True)
 	def animate():
 		f = mlab.gcf()
+		visual.set_viewer(f)
+
+		box = visual.box(x=0, y=0, z=0, length=0, height=0, width=0, color=visual.color.red)
+
 		running = False
 		while True:
-			coords, types, radii, N_changed, bonds, Nbonds_changed, boxl = queue.get()
+			coords, types, radii, N_changed, bonds, Nbonds_changed, boxl, box_changed = queue.get()
+
+			if box_changed or not running:
+				box.x, box.y, box.z = boxl/2
+				box.length, box.height, box.width = boxl
 
 			if not N_changed:
-				points.mlab_source.set(x=coords[:,0], y=coords[:,1], z=coords[:,2])
+				points.mlab_source.set(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
 			else:
-				points.mlab_source.reset(x=coords[:,0], y=coords[:,1], z=coords[:,2])
+				points.mlab_source.reset(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
 			if not running:
 				f.scene.reset_zoom()
 				running = True
@@ -49,6 +60,7 @@ class mayavi_live:
 		self.process.start()
 		self.last_N = 1
 		self.last_Nbonds = 1
+		self.last_boxl = [0,0,0]
 		atexit.register(self.process.terminate)
 
 	def __del__(self):
@@ -84,13 +96,13 @@ class mayavi_live:
 		boxl = self.system.box_l
 		print boxl, type(boxl)
 
-		self.queue.put((coords, types, radii, (self.last_N != N), 
-		                bond_coords, (self.last_Nbonds != Nbonds),
-		                boxl))
+		self.queue.put(( coords, types, radii, (self.last_N != N), 
+		                 bond_coords, (self.last_Nbonds != Nbonds),
+		                 boxl, (self.last_boxl != boxl).any() ))
 		self.last_N = N
 		self.last_Nbonds = Nbonds
+		self.last_boxl = boxl
 
-# TODO: show simulation box: http://docs.enthought.com/mayavi/mayavi/auto/example_mlab_visual.html
-# TODO: color particles by id and set their radius to sigma/2: http://docs.enthought.com/mayavi/mayavi/mlab_changing_object_looks.html
+# TODO: simulation box should be line-only
 # TODO: constraints
-# CHECK: bonds
+# TODO CHECK: bonds
