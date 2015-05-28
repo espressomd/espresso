@@ -28,6 +28,8 @@ from libcpp.string cimport string #import std::string as string
 from libcpp.vector cimport vector #import std::vector as vector
 from interactions import *
 from interactions cimport *
+import numpy as np
+cimport numpy as np
 
 #
 # Minimal distance between particles
@@ -239,51 +241,96 @@ def pressure(self,v_comp=0):
   return p
 
 
+
+
+
+
 def stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
   """stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)"""
-  cdef vector[string] stress_labels
-  cdef vector[double] stresses
-
-  checkTypeOrExcept(v_comp, 1, bool, "v_comp must be a boolean")
+  checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
   
-  if stress_type=='all':
-    c_analyze.analyze_stress_tensor_all(stress_labels, stresses, v_comp)
-    return dict(zip(stress_labels, stresses))
-  elif id1 == 'default' and id2 == 'default':
-    if (c_analyze.analyze_stress_tensor(stress_type, v_comp, stresses)):
-      raise Exception("Error while calculating stress tensor")
-    return stresses
-  elif id1 != 'default' and id2 == 'default':
-    checkTypeOrExcept(id1, 1, int, "id1 must be an int")
-    if (c_analyze.analyze_stress_single(stress_type, id1, v_comp, stresses)):
-      raise Exception("Error while calculating stress tensor")
-    return stresses
-  else:
-    checkTypeOrExcept(id1, 1, int, "id1 must be an int")
-    checkTypeOrExcept(id2, 1, int, "id2 must be an int")
-    if (c_analyze.analyze_stress_pair(stress_type, id1, id2, v_comp, stresses)):
-      raise Exception("Error while calculating stress tensor")
-    return stresses
-    
-def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
-  """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
-  """
+  # Dict to store the results
+  p={}
 
-  cdef DoubleList* local_stress_tensor=NULL
-  cdef int[3] c_periodicity, c_bins
-  cdef double[3] c_range_start, c_stress_range
+  # Update in espresso core if necessary
+  if (c_analyze.total_p_tensor.init_status != 1+v_comp):
+    c_analyze.update_pressure(v_comp)
+#
+  # Individual components of the pressure
 
-  for i in range(3):
-    c_bins[i]=bins[i]
-    c_periodicity[i]=periodicity[i]
-    c_range_start[i]=range_start[i]
-    c_stress_range[i]=stress_range[i]
+  # Total pressure
+  cdef int i
+  cdef double tmp
+  tmp=0
+  for i in range(c_analyze.total_p_tensor.data.n):
+    tmp+=c_analyze.total_p_tensor.data.e[i]
+
+  p["total"]=tmp
+
+  # Ideal
+  p["ideal"] =create_nparray_from_double_array(c_analyze.total_p_tensor.data.e,9)
+
+  # Nonbonded
+  total_bonded =np.zeros((3,3))
+  for i in range(c_analyze.n_bonded_ia):
+    if (bonded_ia_params[i].type != 0): 
+     p["bonded",i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded(&c_analyze.total_p_tensor, i),9),(3,3))
+     total_bonded += p["bonded",i]
+  p["bonded"] = total_bonded
+
+  # Non-Bonded interactions, total as well as intra and inter molecular
+  cdef int j
+  total_non_bonded =np.zeros((3,3))
+  total_non_bonded_intra =np.zeros((3,3))
+  total_non_bonded_inter =np.zeros((3,3))
+
+  for i in range(c_analyze.n_particle_types):
+    for j in range(c_analyze.n_particle_types):
+#      if checkIfParticlesInteract(i, j):
+        
+        p["nonBonded",i,j] =np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded(&c_analyze.total_p_tensor, i, j),9),(3,3))
+        total_non_bonded +=p["nonBonded",i,j]
+        
+        p["nonBondedIntra",i,j] =np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra(&c_analyze.total_p_tensor_non_bonded, i, j),9),(3,3))
+        total_non_bonded_intra +=p["nonBondedIntra",i,j]
+        
+        p["nonBondedInter",i,j] =np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter(&c_analyze.total_p_tensor_non_bonded, i, j),9),(3,3))
+        total_non_bonded_inter +=p["nonBondedInter",i,j]
   
-  if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, local_stress_tensor):
-    raise Exception("Error while calculating local stress tensor")
-  stress_tensor =  create_nparray_from_DoubleList(local_stress_tensor)
-  free (local_stress_tensor)
-  return stress_tensor
+  p["nonBondedIntra"]=total_non_bonded_intra
+  p["nonBondedInter"]=total_non_bonded_inter
+  p["nonBonded"]=total_non_bonded
+
+  # Electrostatics
+  IF ELECTROSTATICS == 1:
+    total_coulomb=np.zeros(9)
+    for i in range(c_analyze.total_p_tensor.n_coulomb):
+      p["coulomb",i]=np.reshape(create_nparray_from_double_array(c_analyze.total_p_tensor.coulomb,9),(3,3))
+      total_coulomb =p["coulomb",i]
+    p["coulomb"]=total_coulomb
+
+  # Dipoles
+  IF DIPOLES == 1:
+    total_dipolar=np.zeros(9)
+    for i in range(c_analyze.total_p_tensor.n_dipolar):
+      p["dipolar",i]=np.reshape(create_nparray_from_double_array(c_analyze.total_p_tensor.dipolar,9),(3,3))
+      total_dipolar =p["dipolar",i]
+    p["dipolar"]=total_dipolar
+
+  # virtual sites
+  IF VIRTUAL_SITES_RELATIVE ==1:
+    p["vs_relative"]=np.reshape(create_nparray_from_double_array(c_analyze.total_p_tensor.vs_relative,9),(3,3))
+
+  return p
+  
+
+
+
+
+
+
+
+  
 
 #
 # Energy analysis
