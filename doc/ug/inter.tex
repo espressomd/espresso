@@ -803,6 +803,20 @@ A minimalistic example how to set up bonded harmonic interactions between two pa
 \index{FENE bond|mainindex}
 \index{interactions!FENE|mainindex}
 
+\PythonSyntaxOn
+\begin{pysyntax}
+  \object{
+    espressomd.interaction
+  }{
+    FeneBond
+  }{
+    k=\arg{double},
+    d_r_max=\arg{double}
+  }[
+  ]
+\end{pysyntax}
+\PythonSyntaxOff
+
 \begin{essyntax}
   inter \var{bondid}
   fene
