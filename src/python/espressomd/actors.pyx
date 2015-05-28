@@ -7,7 +7,8 @@ from highlander import ThereCanOnlyBeOne
 cdef class Actor(object):
     activeList = dict(ElectrostaticInteraction = False,\
                       MagnetostaticInteraction = False,\
-                      HydrodynamicInteraction = False)
+                      HydrodynamicInteraction = False,\
+					  ElectrostaticExtensions = False)
 
     def __init__(self, *args, **kwargs):
         self._isactive = False
@@ -114,8 +115,11 @@ class Actors:
     activeActors = []
 
     def add(self,actor):
-        Actors.activeActors.append(actor)
-        actor._activate()
+        if not actor in Actors.activeActors:
+            Actors.activeActors.append(actor)
+            actor._activate()
+        else:
+            raise ThereCanOnlyBeOne(actor)
 
     def __str__(self):
         print "Active Actors:"

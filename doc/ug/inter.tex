@@ -1945,6 +1945,22 @@ default.
   \citewbibkey{icelc} if you use dielectric interfaces.
 \end{citebox}
 
+\PythonSyntaxOn
+\begin{pysyntax}
+  \object{
+    espressomd.electrostatic_extensions
+  }{
+    ELC
+  }{
+    gap_size=\arg{double},
+    maxPWerror=\arg{double},
+  }[
+    neutralize=\arg{bool},
+    far_cut=\arg{double}
+  ]
+\end{pysyntax}
+\PythonSyntaxOff
+
 \begin{essyntax}
   inter coulomb elc \var{maximal\_pairwise\_error} \var{gap\_size}
   \opt{\var{far\_cutoff}}

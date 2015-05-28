@@ -46,6 +46,8 @@ PYXFILES =  \
 	code_info.pyx \
 	cuda_init.pyx \
 	debye_hueckel.pyx \
+	electrostatic_extensions.pyx \
+	electrostatics.pyx \
 	integrate.pyx \
 	interactions.pyx \
 	particle_data.pyx \
