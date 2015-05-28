@@ -32,8 +32,7 @@ cdef extern from "interaction_data.hpp":
     double LJ_offset
     double LJ_capradius
     double LJ_min
-
-    
+  
     double LJGEN_eps
     double LJGEN_sig
     double LJGEN_cut
