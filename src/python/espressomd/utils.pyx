@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
+
+cimport numpy as np
+import numpy as np
+
+
 cdef extern from "stdlib.h":
   void free(void* ptr)
   void* malloc(size_t size)
