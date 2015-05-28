@@ -157,8 +157,8 @@ def nbhood(self, pos=None, r_catch=None, plane = '3d'):
 # Pressure analysis
 #
 def pressure(self,v_comp=0):
-  """Pewaauew
-     pressure(pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)
+  """Pressure calculation
+     pressure(v_comp=False)
   """
 #
   checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
@@ -245,8 +245,9 @@ def pressure(self,v_comp=0):
 
 
 
-def stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False):
-  """stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)"""
+def stress_tensor(self, v_comp=0):
+  """stress_tensor(v_comp=0)
+  """
   checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
   
   # Dict to store the results
@@ -336,7 +337,8 @@ def stress_tensor(self, stress_type = 'all', id1 = 'default', id2 = 'default', v
 # Energy analysis
 #
 def energy(system, etype = 'all', id1 = 'default', id2 = 'default'):
-  """energy(system, etype = 'all', id1 = 'default', id2 = 'default')"""
+  """energy()
+  """
 #  if system.n_part == 0:
 #    raise Exception('no particles')
 
