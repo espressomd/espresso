@@ -32,6 +32,14 @@ cdef np.ndarray create_nparray_from_DoubleList(DoubleList* dl):
   numpyArray = np.zeros(dl.n)
   for i in range(dl.n):
     numpyArray[i] = dl.e[i]
+  return numpyArray
+
+
+cdef np.ndarray create_nparray_from_double_array(double* x, int n):
+  numpyArray = np.zeros(n)
+  for i in range(n):
+    numpyArray[i] = x[i]
+  return numpyArray
 
 cdef IntList* create_IntList_from_python_object(obj):
   cdef IntList* il
