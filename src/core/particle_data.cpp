@@ -1496,7 +1496,7 @@ void try_delete_exclusion(Particle *part, int part2)
   IntList *el = &part->el;
   int i;
 
-  for (i = 0; i < el->n;) {
+  for (i = 0; i < el->n; i++) {
     if (el->e[i] == part2) {
       el->n--;
       memmove(el->e + i, el->e + i + 1, sizeof(int)*(el->n - i));
