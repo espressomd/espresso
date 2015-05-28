@@ -624,25 +624,25 @@ IF BOND_ANGLE == 1:
     def typeNumber(self):
       return 13
 
-  def typeName(self): 
-    return "ANGLE_HARMONIC"
-
-  def validKeys(self):
-    return "bend", "phi0"
-
-  def requiredKeys(self): 
-    return "bend", "phi0"
-
-  def setDefaultParams(self):
-    self._params = {"bend":0, "phi0":0} 
-
-  def _getParamsFromEsCore(self):
-    return \
-      {"bend":bonded_ia_params[self._bondId].p.angle_harmonic.bend,\
-       "phi0":bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
-
-  def _setParamsInEsCore(self):
-    angle_harmonic_set_params(self._bondId,self._params["bend"],self._params["phi0"])
+    def typeName(self): 
+      return "ANGLE_HARMONIC"
+  
+    def validKeys(self):
+      return "K", "phi_0"
+  
+    def requiredKeys(self): 
+      return "K", "phi_0"
+  
+    def setDefaultParams(self):
+      self._params = {"K":0, "phi_0":0} 
+  
+    def _getParamsFromEsCore(self):
+      return \
+        {"K":bonded_ia_params[self._bondId].p.angle_harmonic.bend,\
+         "phi_0":bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
+  
+    def _setParamsInEsCore(self):
+      angle_harmonic_set_params(self._bondId,self._params["K"],self._params["phi_0"])
 ELSE:
   class Angle_Harmonic(BondedInteractionNotDefined):
     name="BOND_ANGLE"

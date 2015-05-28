@@ -1242,6 +1242,20 @@ vector product $01\times02$. The orientation must point inside the immersed obje
 \index{interactions!bond-angle|mainindex}
 \label{sec:angle}
 
+\PythonSyntaxOn
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    Angle_Harmonic
+  }{
+    K=\arg{double}
+  }[
+    phi_0=\arg{double},
+  ]
+\end{pysyntax}
+\PythonSyntaxOff
+
 \begin{essyntax}
   \variant{1} inter \var{bondid} angle\_harmonic \var{K} \opt{\var{\phi_0}}
   \variant{2} inter \var{bondid} angle\_cosine \var{K} \opt{\var{\phi_0}}
