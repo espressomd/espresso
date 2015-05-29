@@ -33,11 +33,9 @@ class HarmonicOrientationWell : public Actor {
 public:
   HarmonicOrientationWell(float x1, float x2, float x3, float _k, SystemInterface &s);
 
-#ifdef ROTATION
   virtual void computeTorques(SystemInterface &s) {
     HarmonicOrientationWell_kernel_wrapper(x,y,z,k,s.npart_gpu(), s.quatuGpuBegin(), s.torqueGpuBegin());
   };
-#endif
 
   virtual ~HarmonicOrientationWell() {}
 protected:

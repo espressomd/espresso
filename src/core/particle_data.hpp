@@ -957,4 +957,34 @@ void pointer_to_mass(Particle* p, double*&  res);
 void pointer_to_dip(Particle* P, double*& res);
 
 void pointer_to_dipm(Particle* P, double*& res);
+
+#ifdef EXTERNAL_FORCES
+void pointer_to_ext_force(Particle *p, int*& res1, double*& res2);
+#ifdef ROTATION
+void pointer_to_ext_torque(Particle *p, int*& res1, double*& res2);
+#endif
+void pointer_to_fix(Particle *p, int*& res);
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+void pointer_to_gamma(Particle *p, double*& res);
+void pointer_to_temperature(Particle *p, double*& res);
+#endif
+
+#ifdef ROTATION_PER_PARTICLE
+void pointer_to_rotation(Particle *p, int*& res);
+#endif
+
+#ifdef EXCLUSIONS
+void pointer_to_exclusions(Particle *p, int*& res1, int*& res2);
+#endif
+
+#ifdef ENGINE
+void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim);
+#endif
+
+#ifdef ROTATIONAL_INERTIA
+void pointer_to_rotational_inertia(Particle *p, double*& res);
+#endif
+
 #endif

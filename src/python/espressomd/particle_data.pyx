@@ -24,6 +24,13 @@ from utils cimport *
 cimport particle_data
 from interactions import BondedInteraction
 
+PARTICLE_EXT_FORCE = 1
+def COORD_FIXED(coord):
+    return 2L << coord
+COORDS_FIX_MASK = COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2)
+COORDS_ALL_FIXED = COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2)
+PARTICLE_EXT_TORQUE = 16
+
 cdef class ParticleHandle:
   def __cinit__(self, _id):
 #    utils.init_intlist(self.particleData.el)
@@ -151,7 +158,7 @@ cdef class ParticleHandle:
 
   # Properties that exist only when certain features are activated
   # MASS
-  IF MASS == 1:
+  IF MASS:
     property mass:
       """Particle mass"""
       def __set__(self, _mass):
@@ -165,7 +172,7 @@ cdef class ParticleHandle:
         pointer_to_mass(&(self.particleData), x)
         return x[0]
 
-  IF ROTATION == 1:
+  IF ROTATION:
     # Omega (angular velocity) lab frame
     property omega_lab:
       """Angular velocity in lab frame""" 
@@ -184,19 +191,23 @@ cdef class ParticleHandle:
         return np.array([ o[0], o[1],o[2]])
 
   # ROTATIONAL_INERTIA
-  IF ROTATIONAL_INERTIA == 1:
+  IF ROTATIONAL_INERTIA:
     property rinertia:
       """Rotational inertia"""
       def __set__(self, _rinertia):
+        cdef double rinertia[3]
         checkTypeOrExcept(_rinertia,3,float,"Rotation_inertia has to be 3 floats")
-#         if set_particle_rotational_inertia(self.id, _rinertia) == 1:
-#           raise Exception("set particle position first")
+        for i in range(3):
+          rinertia[i] = _rinertia[i]
+        if set_particle_rotational_inertia(self.id, rinertia) == 1:
+          raise Exception("set particle position first")
 
       def __get__(self):
         self.updateParticleData()
-        cdef double rinertia[3]
-#         pointer_to_rotational_inertia(&(self.particleData), rinertia)
-#         return np.array([ rinertia[0], rinertia[1], rinertia[2]])
+        cdef double* rinertia = NULL
+        pointer_to_rotational_inertia(&(self.particleData), rinertia)
+        return np.array([rinertia[0], rinertia[1], rinertia[2]])
+
 
 # Omega (angular velocity) body frame
     property omega_body:
@@ -265,7 +276,7 @@ cdef class ParticleHandle:
         return np.array([x[0],x[1],x[2]])
   
 # Charge
-  IF ELECTROSTATICS == 1:
+  IF ELECTROSTATICS:
     property q:
       """particle charge"""
       def __set__(self, _q):
@@ -304,7 +315,7 @@ cdef class ParticleHandle:
         pointer_to_virtual(&(self.particleData),x)
         return x[0]
 
-  IF VIRTUAL_SITES_RELATIVE == 1:
+  IF VIRTUAL_SITES_RELATIVE:
     # Virtual sites relative parameters
     property vs_relative:
       """virtual sites relative parameters"""
@@ -326,16 +337,21 @@ cdef class ParticleHandle:
         return (rel_to[0],dist[0])
 
     # vs_auto_relate_to
-    def vs_auto_relate_to(self,_relto):
+    property vs_auto_relate_to:
       """Setup this particle as virtual site relative to the particle with the given id"""
-      if isinstance(_relto,int):
-          if vs_relate_to(self.id,_relto):
-            raise Exception("Vs_relative setup failed.")
-      else:
-            raise ValueError("Argument of vs_auto_relate_to has to be of type int")
+      def __set__(self,_relto):
+        checkTypeOrExcept(_relto,1,int, "Argument of vs_auto_relate_to has to be of type int")
+        if vs_relate_to(self.id,_relto):
+          raise Exception("vs_relative setup failed.")
+      def __get__(self):
+        self.updateParticleData()
+        cdef int* rel_to = NULL
+        cdef double* dist = NULL
+        pointer_to_vs_relative(&(self.particleData),rel_to,dist)
+        return (rel_to[0],dist[0])
 
 
-  IF DIPOLES == 1:
+  IF DIPOLES:
     # Vector dipole moment
     property dip:
       """Dipole moment as vector""" 
@@ -364,7 +380,217 @@ cdef class ParticleHandle:
         cdef double* x = NULL
         pointer_to_dipm(&(self.particleData),x)
         return x[0]
+
+  IF EXTERNAL_FORCES:
+    property ext_force:
+      """External force on a particle defined by a vector""" 
+      def __set__(self, _ext_f):
+        cdef double ext_f[3]
+        cdef int ext_flag
+        checkTypeOrExcept(_ext_f,3,float,"External force vector has to be 3 floats")
+        for i in range(3):
+            ext_f[i]=_ext_f[i]
+        if ( ext_f[0] == 0 and ext_f[1] == 0 and ext_f[2] == 0 ):
+            ext_flag = 0
+        else:
+            ext_flag = PARTICLE_EXT_FORCE
+        if set_particle_ext_force(self.id, ext_flag, ext_f) == 1:
+          raise Exception("set particle position first")
+      def __get__(self):
+        self.updateParticleData()
+        cdef double* ext_f = NULL
+        cdef int* ext_flag = NULL
+        pointer_to_ext_force(&(self.particleData),ext_flag,ext_f)
+        if (ext_flag[0] & PARTICLE_EXT_FORCE):
+          return np.array([ext_f[0],ext_f[1],ext_f[2]])
+        else:
+          return np.array([0.0,0.0,0.0])
+
+    property fix:
+      """Fix the particle at current position"""
+      def __set__(self, _fixed_coord_flag):
+        cdef int ext_flag
+        checkTypeOrExcept(_fixed_coord_flag,3,int,"Fix has to be 3 ints")
+        for i in map(long, range(3)):
+          if (_fixed_coord_flag[i]):
+            ext_flag |= COORD_FIXED(i);
+        if set_particle_fix(self.id, ext_flag) == 1:
+          raise Exception("set particle position first")
+      def __get__(self):
+        self.updateParticleData()
+        fixed_coord_flag = np.array([0,0,0],dtype=int)
+        cdef int* ext_flag = NULL
+        pointer_to_fix(&(self.particleData),ext_flag)
+        for i in map(long, range(3)):
+          if (ext_flag[0] & COORD_FIXED(i)):
+            fixed_coord_flag[i] = 1;
+        return fixed_coord_flag
+
+    IF ROTATION:
+      property ext_torque:
+        """External torque on a particle defined by a vector""" 
+        def __set__(self, _ext_t):
+          cdef double ext_t[3]
+          cdef int ext_flag
+          checkTypeOrExcept(_ext_t,3,float,"External force vector has to be 3 floats")
+          for i in range(3):
+              ext_t[i]=_ext_t[i]
+          if ( ext_t[0] == 0 and ext_t[1] == 0 and ext_t[2] == 0 ):
+              ext_flag = 0
+          else:
+              ext_flag = PARTICLE_EXT_TORQUE
+          if set_particle_ext_torque(self.id, ext_flag, ext_t) == 1:
+            raise Exception("set particle position first")
+        def __get__(self):
+          self.updateParticleData()
+          cdef double* ext_t = NULL
+          cdef int* ext_flag = NULL
+          pointer_to_ext_torque(&(self.particleData),ext_flag,ext_t)
+          if (ext_flag[0] & PARTICLE_EXT_TORQUE):
+            return np.array([ext_t[0],ext_t[1],ext_t[2]])
+          else:
+            return np.array([0.0,0.0,0.0])
   
+  IF LANGEVIN_PER_PARTICLE:
+    property gamma:
+      """Friction coefficient per particle in Langevin""" 
+      def __set__(self, _gamma):
+        checkTypeOrExcept(_gamma,1,float,"gamma has to be a float")
+        if set_particle_gamma(self.id, _gamma) == 1:
+          raise Exception("set particle position first")
+      def __get__(self):
+        self.updateParticleData()
+        cdef double* gamma = NULL
+        pointer_to_gamma(&(self.particleData),gamma)
+        return gamma[0]
+
+    property temp:
+      """Temperature per particle in Langevin""" 
+      def __set__(self, _temp):
+        checkTypeOrExcept(_temp,1,float,"temp has to be a float")
+        if set_particle_temperature(self.id, _temp) == 1:
+          raise Exception("set particle position first")
+      def __get__(self):
+        self.updateParticleData()
+        cdef double* temp = NULL
+        pointer_to_temperature(&(self.particleData),temp)
+        return temp[0]
+
+  IF ROTATION_PER_PARTICLE:
+    property rotation:
+      """Friction coefficient per particle in Langevin""" 
+      def __set__(self, _rot):
+        cdef int rot
+        if _rot:
+          rot = 1
+        else:
+          rot = 0
+        if set_particle_rotation(self.id, rot) == 1:
+          raise Exception("set particle position first")
+      def __get__(self):
+        self.updateParticleData()
+        cdef int* _rot = NULL
+        pointer_to_rotation(&(self.particleData),_rot)
+        if _rot[0] == 1:
+          rot = True
+        else:
+          rot = False
+        return rot
+
+  IF EXCLUSIONS:
+    property exclude:
+      """Exclude particle from interaction"""
+      def __set__(self, _partners):
+        delete = 0
+        if type(_partners[0]) == str:
+          if _partners.pop(0) == "delete":
+            delete = 1
+        for partner in _partners:
+          checkTypeOrExcept(partner,1,int,"PID of partner has to be an int")
+          if change_exclusion(self.id, partner, delete) == 1:
+            raise Exception("set particle position first")
+      def __get__(self):
+        self.updateParticleData()
+        cdef int* num_partners = NULL
+        cdef int* partners = NULL
+        py_partners = []
+        pointer_to_exclusions(&(self.particleData), num_partners, partners)
+        for i in range(num_partners[0]):
+          py_partners.append(partners[i])
+        return np.array(py_partners)
+
+  IF ENGINE:
+    property swimming:
+      """Set swimming parameters"""
+      def __set__(self, _params):
+        cdef ParticleParametersSwimming swim
+        swim.swimming = True
+        swim.v_swim = 0.0
+        swim.f_swim = 0.0
+        IF LB or LB_GPU:
+          swim.push_pull = 0
+          swim.dipole_length = 0.0
+          swim.rotational_friction = 0.0
+
+        if type(_params) == type(True):
+          if _params == True:
+            raise Exception("To enable swimming supply a dictionary of parameters")
+        else:
+          if 'f_swim' in _params and 'v_swim' in _params:
+            raise Exception("You can't set v_swim and f_swim at the same time")
+          if 'f_swim' in _params:
+            checkTypeOrExcept(_params['f_swim'],1,float,"f_swim has to be a float")
+            swim.f_swim = _params['f_swim']
+          if 'v_swim' in _params:
+            checkTypeOrExcept(_params['v_swim'],1,float,"v_swim has to be a float")
+            swim.v_swim = _params['v_swim']
+  
+          IF LB or LB_GPU:
+            if 'mode' in _params:
+              if _params['mode'] == "pusher":
+                swim.push_pull = -1
+              elif _params['mode'] == "puller":
+                swim.push_pull = 1
+              elif _params['mode'] == "N/A":
+                swim.push_pull = 0
+              else:
+                raise Exception("'mode' has to be either 'pusher' or 'puller'")
+  
+            if 'dipole_length' in _params:
+              checkTypeOrExcept(_params['dipole_length'],1,float,"dipole_length has to be a float")
+              swim.dipole_length = _params['dipole_length']
+
+            if 'rotational_friction' in _params:
+              checkTypeOrExcept(_params['rotational_friction'],1,float,"rotational_friction has to be a float")
+              swim.rotational_friction = _params['rotational_friction']
+
+        if set_particle_swimming(self.id, swim) == 1:
+          raise Exception("set particle position first")
+      def __get__(self):
+        self.updateParticleData()
+        swim = {}
+        mode = "N/A"
+        cdef ParticleParametersSwimming* _swim = NULL
+        pointer_to_swimming(&(self.particleData), _swim)
+        IF LB or LB_GPU:
+          if _swim.push_pull == -1:
+            mode = 'pusher'
+          elif _swim.push_pull == 1:
+            mode = 'puller'
+          swim = {
+            'v_swim' : _swim.v_swim,
+            'f_swim' : _swim.f_swim,
+            'mode'   : mode,
+            'dipole_length' : _swim.dipole_length,
+            'rotational_friction' : _swim.rotational_friction
+          }
+        ELSE:
+          swim = {
+            'v_swim' : _swim.v_swim,
+            'f_swim' : _swim.f_swim,
+          }
+        return swim
+
 
   def delete(self):
     """Delete the particle"""
@@ -372,16 +598,6 @@ cdef class ParticleHandle:
       raise Exception("Could not delete particle")
     del self
 
-
-  IF VIRTUAL_SITES_RELATIVE == 1:
-    # vs_auto_relate_to
-    def vs_auto_relate_to(self,_relto):
-      """Setup this particle as virtual site relative to the particle with the given id"""
-      if isinstance(_relto,int):
-          if vs_relate_to(self.id,_relto):
-            raise Exception("Vs_relative setup failed.")
-      else:
-            raise ValueError("Argument of vs_auto_relate_to has to be of type int")
 
   # Bond related methods
   def addVerifiedBond(self,bond,partner):
