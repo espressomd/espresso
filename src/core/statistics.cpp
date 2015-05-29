@@ -854,6 +854,38 @@ void calc_structurefactor(int type, int order, double **_ff) {
   }
 }
 
+std::vector< std::vector<double> > modify_stucturefactor( int order, double *sf)
+{
+  int length = 0;
+
+  for (int i = 0; i < order * order; i++) 
+  {
+    if (sf[2 * i + 1] > 0)
+    {
+      length++;
+    }
+  }
+
+  double qfak = 2.0 * PI / box_l[0];
+  std::vector<double> intern;
+  intern.assign( 2, 0.0);
+  std::vector< std::vector<double> > structure_factor;
+  structure_factor.assign( length, intern);
+
+  int cnt = 0;
+  for (int i = 0; i < order * order; i++) 
+  {
+    if (sf[2 * i + 1] > 0)
+    {
+      structure_factor[cnt][0] = qfak * sqrt(i + 1);
+      structure_factor[cnt][1] = sf[2 * i];
+      cnt++;
+    }
+  }
+
+  return structure_factor;
+}
+
 //calculates average density profile in dir direction over last n_conf configurations
 void density_profile_av(int n_conf, int n_bin, double density, int dir, double *rho_ave, int type)
 {

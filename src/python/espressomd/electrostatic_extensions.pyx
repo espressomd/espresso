@@ -21,7 +21,7 @@ cimport utils
 include "myconfig.pxi"
 from actors import Actor
 
-IF ELECTROSTATICS==1:
+IF ELECTROSTATICS and P3M:
   class ElectrostaticExtensions(Actor):
     pass
 

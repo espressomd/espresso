@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
+
+cimport numpy as np
+import numpy as np
+
+
 cdef extern from "stdlib.h":
   void free(void* ptr)
   void* malloc(size_t size)
@@ -32,6 +37,14 @@ cdef np.ndarray create_nparray_from_DoubleList(DoubleList* dl):
   numpyArray = np.zeros(dl.n)
   for i in range(dl.n):
     numpyArray[i] = dl.e[i]
+  return numpyArray
+
+
+cdef np.ndarray create_nparray_from_double_array(double* x, int n):
+  numpyArray = np.zeros(n)
+  for i in range(n):
+    numpyArray[i] = x[i]
+  return numpyArray
 
 cdef IntList* create_IntList_from_python_object(obj):
   cdef IntList* il
