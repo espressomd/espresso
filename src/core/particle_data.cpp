@@ -2129,3 +2129,62 @@ res=&(p->p.dipm);
 }
 #endif
 
+#ifdef EXTERNAL_FORCES
+void pointer_to_ext_force(Particle *p, int*& res1, double*& res2)
+{
+  res1=&(p->p.ext_flag);
+  res2=p->p.ext_force;
+}
+#ifdef ROTATION
+void pointer_to_ext_torque(Particle *p, int*& res1, double*& res2)
+{
+  res1=&(p->p.ext_flag);
+  res2=p->p.ext_torque;
+}
+#endif
+void pointer_to_fix(Particle *p, int*& res)
+{
+  res=&(p->p.ext_flag);
+}
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+void pointer_to_gamma(Particle *p, double*& res)
+{
+  res=&(p->p.gamma);
+}
+
+void pointer_to_temperature(Particle *p, double*& res)
+{
+  res=&(p->p.T);
+}
+#endif
+
+#ifdef ROTATION_PER_PARTICLE
+void pointer_to_rotation(Particle *p, int*& res)
+{
+  res=&(p->p.rotation);
+}
+#endif
+
+#ifdef EXCLUSIONS
+void pointer_to_exclusions(Particle *p, int*& res1, int*& res2)
+{
+  res1=&(p->el.n);
+  res2=p->el.e;
+}
+#endif
+
+#ifdef ENGINE
+void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim)
+{
+  swim = &(p->swim);
+}
+#endif
+
+#ifdef ROTATIONAL_INERTIA
+void pointer_to_rotational_inertia(Particle *p, double*& res)
+{
+  res = p->p.rinertia;
+}
+#endif
