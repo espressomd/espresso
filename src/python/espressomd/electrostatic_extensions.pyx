@@ -30,9 +30,9 @@ IF ELECTROSTATICS==1:
     def validateParams(self):
       default_params=self.defaultParams()
       checkTypeOrExcept(self._params["maxPWerror"],1,float,"")
-      checkRangeOrExcept(self._params["maxPWerror"],0,False,"inf",True)
+      checkRangeOrExcept(self._params,"maxPWerror",0,False,"inf",True)
       checkTypeOrExcept(self._params["gap_size"],1,float,"")
-      checkRangeOrExcept(self._params["gap_size"],0,False,"inf",True)
+      checkRangeOrExcept(self._params,"gap_size",0,False,"inf",True)
       checkTypeOrExcept(self._params["far_cut"],1,float,"")
       checkTypeOrExcept(self._params["neutralize"],1,type(True),"")
 
