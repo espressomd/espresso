@@ -50,6 +50,7 @@ PYXFILES =  \
 	electrostatics.pyx \
 	integrate.pyx \
 	interactions.pyx \
+	lb.pyx \
 	particle_data.pyx \
 	thermostat.pyx \
 	utils.pyx

@@ -20,16 +20,27 @@ include "myconfig.pxi"
 
 
 
-IF LB_GPU==1:
-  
-  
-  cdef extern from "../src/config.hpp":
-    pass
-  
-  #cdef extern from "../src/lattice.hpp":
-  #  int lattice_switch
+IF LB_GPU or LB:
   
   cdef extern from "lb.hpp":
+
+    ctypedef struct LB_parameters:
+      double rho[2]
+      double viscosity[2]
+      double bulk_viscosity[2]
+      double agrid
+      double tau
+      double friction[2]
+      double ext_force[3]
+      double rho_lb_units[2]
+      double gamma_odd[2]
+      double gamma_even[2]
+      int resent_halo
+
+    ctypedef struct LB_parameters:
+      LB_parameters lb_params
+
+
     int lb_lbfluid_set_tau(double p_tau)
     int lb_lbfluid_set_density(double p_dens)
     int lb_lbfluid_get_density(double* p_dens)
@@ -53,4 +64,4 @@ IF LB_GPU==1:
     int lb_lbfluid_print_boundary(char* filename)
     int lb_lbfluid_save_checkpoint(char* filename, int binary)
     int lb_lbfluid_load_checkpoint(char* filename, int binary)
-    void cython_lb_init(int switch)
+#    void cython_lb_init(int switch)
