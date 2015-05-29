@@ -47,6 +47,10 @@
 #include "initialize.hpp"
 #include "statistics_chain_tcl.hpp"
 
+#include <vector>
+#include <string>
+#include <map>
+
 /** Set the topology. See \ref topology_tcl.cpp */
 int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
 
@@ -415,6 +419,95 @@ static int tclcommand_analyze_parse_bilayer_set(Tcl_Interp *interp, int argc, ch
     }
     return TCL_OK;
 }
+
+static int tclcommand_analyze_parse_cylindrical_average(Tcl_Interp *interp, int argc, char **argv) {
+  DoubleList direction_dl;
+  DoubleList center_dl;
+  IntList types_il;
+  init_doublelist(&direction_dl);
+  init_doublelist(&center_dl);
+  init_intlist(&types_il);
+
+  std::vector<double> direction(3);
+  std::vector<double> center(3);
+  double length, radius;
+  int bins_axial, bins_radial;
+  std::vector<int> types;
+  std::map<std::string, std::vector<std::vector<std::vector<double> > > > distribution;
+
+  if ( argc < 7 ) {
+    puts("Too few arguments");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_DOUBLELIST(0,center_dl) ) {
+    puts("Argument 1: Center has to be a double list");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_DOUBLELIST(1,direction_dl) ) {
+    puts("Argument 2: Direction has to be a double list");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_D(2,length) ) {
+    puts("Argument 3: Length has to be a double");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_D(3,radius) ) {
+    puts("Argument 4: Radius has to be a double");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_I(4,bins_axial) ) {
+    puts("Argument 5: Axial bins has to be an int");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_I(5,bins_radial) ) {
+    puts("Argument 6: Radial bins has to be an int");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_INTLIST(6,types_il) ) {
+    puts("Argument 7: Types has to be an int list");
+    return TCL_ERROR;
+  }
+
+  // Convert double list and int list to std::vector
+  if ( center_dl.n != 3 ) {
+    puts("Center must have exactly 3 components");
+    return TCL_ERROR;
+  }
+
+  if ( direction_dl.n != 3 ) {
+    puts("Direction must have exactly 3 components");
+    return TCL_ERROR;
+  }
+
+  if ( types_il.n == 0 ) {
+    puts("The type list must not be empty");
+    return TCL_ERROR;
+  }
+
+  for (int i = 0; i < center_dl.n; i++ )
+    center[i] = center_dl.e[i];
+
+  for (int i = 0; i < direction_dl.n; i++ )
+    direction[i] = direction_dl.e[i];
+
+  for (int i = 0; i < types_il.n; i++ )
+    types.push_back(types_il.e[i]);
+
+  if (calc_cylindrical_average(center, direction, length, radius, bins_axial, bins_radial, types, distribution) != TCL_OK) {
+    Tcl_AppendResult(interp, "Error calculating the cylindrical average ", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
 
 static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int argc, char **argv) {
     /* 'analyze radial density profile ' */
@@ -2592,6 +2685,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
     REGISTER_ANALYZE_OPTION("set_bilayer", tclcommand_analyze_parse_bilayer_set);
     REGISTER_ANALYSIS("modes2d", tclcommand_analyze_parse_modes2d);
     REGISTER_ANALYSIS("bilayer_density_profile", tclcommand_analyze_parse_bilayer_density_profile);
+    REGISTER_ANALYSIS("cylindrical_average", tclcommand_analyze_parse_cylindrical_average);
     REGISTER_ANALYSIS("radial_density_map", tclcommand_analyze_parse_radial_density_map);
     REGISTER_ANALYSIS("get_lipid_orients", tclcommand_analyze_parse_get_lipid_orients);
     REGISTER_ANALYSIS("lipid_orient_order", tclcommand_analyze_parse_lipid_orient_order);

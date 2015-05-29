@@ -29,7 +29,10 @@
 #include "interaction_data.hpp"
 #include "utils.hpp"
 #include "topology.hpp"
+
 #include <vector>
+#include <string>
+#include <map>
 
 /** \name Data Types */
 /************************************************************/
@@ -318,6 +321,10 @@ std::vector< std::vector<double> > modify_stucturefactor( int order, double *sf)
 
 /** Calculates the density profile in dir direction */
 void density_profile_av(int n_conf, int n_bin, double density, int dir, double *rho_ave, int type);
+
+int calc_cylindrical_average(std::vector<double> center, std::vector<double> direction, double length,
+                             double radius, int bins_axial, int bins_radial, std::vector<int> types,
+                             std::map<std::string, std::vector<std::vector<std::vector<double> > > > &distribution);
 
 int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile);
 

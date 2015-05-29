@@ -131,9 +131,6 @@ The output corresponds to the blockfile format (see section
 
 Returns the radial density of particles around a given
 axis. Parameters are:
-
-\todo{Someone who knows or wrote this command should check this.}
-
 \begin{itemize}
 \item \var{xbins} histogram bins in x direction.
 \item \var{ybins} histogram bins in y direction.
@@ -144,6 +141,23 @@ axis. Parameters are:
 \item \var{beadtypelist} only analyze beads of given types.
 \item \var{thetabins} histogram bins in angle theta.
 \end{itemize}
+
+\minisec{Caveat}
+
+This command does not do what you might expect.  Here is an overview
+of the currently identified properties.
+\begin{enumerate}
+\item \var{xbins} is the number of bins along the axis of rotation.
+\item \var{ybins} is the number of bins in the radial direction.
+\item The centre point (\var{centerofrotation}) of the cylinder is
+  located in the lower cap, i.e., \var{xrange} is the height of the
+  cylinder with respect to this centre point.
+\item The bins are distributed along \var{axisofrotation} starting
+  from 0 (\var{centerofrotation}).
+\item The \var{thetabins} seem to average with respect to the centre
+  of mass of the particles in the individual bins rather than with
+  respect to the central axis, which one would think is natural.
+\end{enumerate}
 
 \subsection{Modes}
 \label{analyze:modes2d}
