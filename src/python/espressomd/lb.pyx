@@ -68,7 +68,8 @@ IF LB_GPU or LB:
       if lb_lbfluid_set_tau(self._lb_params["tau"]):
         raise Exception("lb_lbfluid_set_tau error")
 
-      if lb_lbfluid_set_density(&(self._lb_params["dens"])):
+      #if lb_lbfluid_set_density(&(self._lb_params["dens"])):
+      if lb_lbfluid_set_density(pointer):
         raise Exception("lb_lbfluid_set_density error")
 
       if lb_lbfluid_set_visc(self._lb_params["visc"]):
