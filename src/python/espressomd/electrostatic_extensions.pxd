@@ -22,7 +22,7 @@ include "myconfig.pxi"
 from _system cimport *
 from utils cimport *
 
-IF ELECTROSTATICS == 1:
+IF ELECTROSTATICS and P3M:
 
   cdef extern from "elc.hpp":
     ctypedef struct ELC_struct:
