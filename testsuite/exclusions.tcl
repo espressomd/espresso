@@ -67,4 +67,6 @@ if { $E >0.001 } {
  error_exit "Energy found for a pair with an exclusion."
 }
 
+part 0 exclude delete 1
+
 exit 0
