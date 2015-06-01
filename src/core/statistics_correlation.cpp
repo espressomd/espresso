@@ -162,7 +162,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   }
 
   // check if dt is a multiple of the md timestep
-  if ( abs(dt/time_step - round(dt/time_step)) > 1e-6 ) {
+  if ( std::abs(dt/time_step - round(dt/time_step)) > 1e-6 ) {
     return 16;
   }
 
