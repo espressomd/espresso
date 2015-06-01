@@ -70,6 +70,11 @@ IF LB_GPU or LB:
 
       if python_lbfluid_set_density(self._lb_params["dens"]):
         raise Exception("lb_lbfluid_set_density error")
+  
+  
+    def _lb_init(self):
+      print "test"
+      _dev = 0
 
       #if lb_lbfluid_set_visc(self._lb_params["visc"]):
       #  raise Exception("lb_lbfluid_set_visc error")

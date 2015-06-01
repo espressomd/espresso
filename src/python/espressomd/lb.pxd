@@ -19,10 +19,10 @@
 include "myconfig.pxi"
 
 
-IF LB_GPU == 1:
+#IF LB_GPU == 1:
 
-    cdef extern from "../src/config.hpp":
-        pass
+    #cdef extern from "../src/config.hpp":
+    #    pass
 
     # cdef extern from "../src/lattice.hpp":
     #  int lattice_switch
@@ -38,13 +38,30 @@ IF LB_GPU or LB:
 
     cdef double c_dens[2]
     #get pointers
-    if isinstance(p_dens,float):
-      c_dens[0]=p_dens
-      c_dens[1]=p_dens
+    if isinstance(p_dens,float) or isinstance(p_dens,int):
+      c_dens[0]=<float>p_dens
+      c_dens[1]=<float>p_dens
     else:
       return 1 
     #call c-function
     if(lb_lbfluid_set_density(c_dens)):
+      raise Exception("lb_fluid_set_density error at C-level interface")
+
+    return 0
+
+###############################################
+
+  cdef inline python_lbfluid_set_viscosity(p_visc):
+
+    cdef double c_visc[2]
+    #get pointers
+    if isinstance(p_visc,float):
+      c_visc[0]=p_visc
+      c_visc[1]=p_visc
+    else:
+      return 1 
+    #call c-function
+    if(lb_lbfluid_set_density(c_visc)):
       raise Exception("lb_fluid_set_density error at C-level interface")
 
     return 0
