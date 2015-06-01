@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # For C-extern Analysis
-
+include "myconfig.pxi"
 cimport c_analyze
 cimport utils
 cimport particle_data
@@ -26,7 +26,10 @@ import code_info
 import particle_data
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
-
+from interactions import *
+from interactions cimport *
+import numpy as np
+cimport numpy as np
 #
 # Minimal distance between particles
 #
@@ -246,10 +249,93 @@ def local_stress_tensor(system=None, periodicity=(1, 1, 1), range_start=(0.0, 0.
     free(local_stress_tensor)
     return stress_tensor
 
+
+def stress_tensor(self, v_comp=0):
+    """stress_tensor(v_comp=0)
+    """
+    checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
+
+    # Dict to store the results
+    p = {}
+
+    # Update in espresso core if necessary
+    if (c_analyze.total_p_tensor.init_status != 1 + v_comp):
+        c_analyze.update_pressure(v_comp)
+#
+    # Individual components of the pressure
+
+    # Total pressure
+    cdef int i
+    cdef double tmp
+    tmp = 0
+    for i in range(c_analyze.total_p_tensor.data.n):
+        tmp += c_analyze.total_p_tensor.data.e[i]
+
+    p["total"] = tmp
+
+    # Ideal
+    p["ideal"] = create_nparray_from_double_array(
+        c_analyze.total_p_tensor.data.e, 9)
+
+    # Nonbonded
+    total_bonded = np.zeros((3, 3))
+    for i in range(c_analyze.n_bonded_ia):
+        if (bonded_ia_params[i].type != 0):
+            p["bonded", i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9), (3, 3))
+            total_bonded += p["bonded", i]
+    p["bonded"] = total_bonded
+
+    # Non-Bonded interactions, total as well as intra and inter molecular
+    cdef int j
+    total_non_bonded = np.zeros((3, 3))
+    total_non_bonded_intra = np.zeros((3, 3))
+    total_non_bonded_inter = np.zeros((3, 3))
+
+    for i in range(c_analyze.n_particle_types):
+        for j in range(c_analyze.n_particle_types):
+            #      if checkIfParticlesInteract(i, j):
+
+            p["nonBonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
+            total_non_bonded += p["nonBonded", i, j]
+
+            p["nonBondedIntra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+            total_non_bonded_intra += p["nonBondedIntra", i, j]
+
+            p["nonBondedInter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+            total_non_bonded_inter += p["nonBondedInter", i, j]
+
+    p["nonBondedIntra"] = total_non_bonded_intra
+    p["nonBondedInter"] = total_non_bonded_inter
+    p["nonBonded"] = total_non_bonded
+
+    # Electrostatics
+    IF ELECTROSTATICS == 1:
+        total_coulomb = np.zeros(9)
+        for i in range(c_analyze.total_p_tensor.n_coulomb):
+            p["coulomb", i] = np.reshape(
+                create_nparray_from_double_array(c_analyze.total_p_tensor.coulomb, 9), (3, 3))
+            total_coulomb = p["coulomb", i]
+        p["coulomb"] = total_coulomb
+
+    # Dipoles
+    IF DIPOLES == 1:
+        total_dipolar = np.zeros(9)
+        for i in range(c_analyze.total_p_tensor.n_dipolar):
+            p["dipolar", i] = np.reshape(
+                create_nparray_from_double_array(c_analyze.total_p_tensor.dipolar, 9), (3, 3))
+            total_dipolar = p["dipolar", i]
+        p["dipolar"] = total_dipolar
+
+    # virtual sites
+    IF VIRTUAL_SITES_RELATIVE == 1:
+        p["vs_relative"] = np.reshape(create_nparray_from_double_array(
+            c_analyze.total_p_tensor.vs_relative, 9), (3, 3))
+
+    return p
+
 #
 # Energy analysis
 #
-
 
 def energy(system=None, etype='all', id1='default', id2='default'):
     """energy(system, etype = 'all', id1 = 'default', id2 = 'default')"""
@@ -383,3 +469,22 @@ def check_topology(system=None, chain_start=None, number_of_chains=None, chain_l
     c_analyze.chain_start = chain_start
     c_analyze.chain_n_chains = number_of_chains
     c_analyze.chain_length = chain_length
+
+#
+# Structure factor
+#
+def structure_factor(system=None, sf_type='default', sf_order='default'):
+    """Structure Factor
+       structure_factor(system = None, sf_type = 'default', sf_order = 'default' )
+    """
+    cdef double * sf
+
+    checkTypeOrExcept(sf_type, 1, int, "sf_type must be an int")
+    checkTypeOrExcept(sf_order, 1, int, "sf_order must be an int")
+
+    # Used to take the WITHOUT_BONDS define
+    c_analyze.updatePartCfg(0)
+    c_analyze.calc_structurefactor(sf_type, sf_order, & sf)
+
+    return c_analyze.modify_stucturefactor(sf_order, sf)
+

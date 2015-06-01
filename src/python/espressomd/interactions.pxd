@@ -33,6 +33,19 @@ cdef extern from "interaction_data.hpp":
         double LJ_capradius
         double LJ_min
 
+        double LJGEN_eps
+        double LJGEN_sig
+        double LJGEN_cut
+        double LJGEN_shift
+        double LJGEN_offset
+        double LJGEN_capradius
+        int LJGEN_a1
+        int LJGEN_a2
+        double LJGEN_b1
+        double LJGEN_b2
+        double LJGEN_lambda
+        double LJGEN_softrad
+
     cdef IA_parameters * get_ia_param(int i, int j)
 
 cdef extern from "lj.hpp":
@@ -46,6 +59,20 @@ cdef extern from "forcecap.hpp":
     double force_cap
     int forcecap_set_params(double forcecap)
 
+cdef extern from "ljgen.hpp":
+    IF LJGEN_SOFTCORE:
+        cdef int ljgen_set_params(int part_type_a, int part_type_b,
+                                  double eps, double sig, double cut,
+                                  double shift, double offset,
+                                  int a1, int a2, double b1, double b2,
+                                  double cap_radius,
+                                  double genlj_lambda, double softrad)
+    ELSE:
+        cdef int ljgen_set_params(int part_type_a, int part_type_b,
+                                  double eps, double sig, double cut,
+                                  double shift, double offset,
+                                  int a1, int a2, double b1, double b2,
+                                  double cap_radius)
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:
@@ -165,7 +192,6 @@ cdef extern from "interaction_data.hpp":
         double r
         double r2
 
-
 #*Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
     ctypedef struct Rigid_bond_parameters:
         #*Length of rigid bond/Constrained Bond*/
@@ -176,7 +202,6 @@ cdef extern from "interaction_data.hpp":
         double p_tol
         #*Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
         double v_tol
-
 
 #* Parameters for three body angular potential (bond-angle potentials) that
     ctypedef struct Angledist_bond_parameters:
@@ -235,6 +260,8 @@ cdef extern from "dihedral.hpp":
     int dihedral_set_params(int bond_type, int mult, double bend, double phase)
 cdef extern from "angle_harmonic.hpp":
     int angle_harmonic_set_params(int bond_type, double bend, double phi0)
+cdef extern from "rattle.hpp":
+    int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol)
 cdef extern from "angle_cosine.hpp":
     int angle_cosine_set_params(int bond_type, double bend, double phi0)
 cdef extern from "angle_cossquare.hpp":
