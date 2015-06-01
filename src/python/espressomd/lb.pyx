@@ -65,27 +65,26 @@ IF LB_GPU or LB:
               "tau":-1}
 
     def _setParamsInEsCore(self):
-      if lb_lbfluid_set_tau(self._lb_params["tau"]):
-        raise Exception("lb_lbfluid_set_tau error")
+      #if lb_lbfluid_set_tau(self._lb_params["tau"]):
+      #  raise Exception("lb_lbfluid_set_tau error")
 
-      #if lb_lbfluid_set_density(&(self._lb_params["dens"])):
-      if lb_lbfluid_set_density(pointer):
+      if python_lbfluid_set_density(self._lb_params["dens"]):
         raise Exception("lb_lbfluid_set_density error")
 
-      if lb_lbfluid_set_visc(self._lb_params["visc"]):
-        raise Exception("lb_lbfluid_set_visc error")
+      #if lb_lbfluid_set_visc(self._lb_params["visc"]):
+      #  raise Exception("lb_lbfluid_set_visc error")
 
-      if lb_lbfluid_set_agrid(self._lb_params["agrid"]):
-        raise Exception("lb_lbfluid_set_agrid error")
+      #if lb_lbfluid_set_agrid(self._lb_params["agrid"]):
+      #  raise Exception("lb_lbfluid_set_agrid error")
 
-      if lb_lbfluid_set_friction(self._lb_params["friction"]):
-        raise Exception("lb_lbfluid_set_friction error")
+      #if lb_lbfluid_set_friction(self._lb_params["friction"]):
+      #  raise Exception("lb_lbfluid_set_friction error")
   
       #if lb_lbfluid_set_ext_force(1, self._params["ext_force",0], self._params["ext_force",1], self._params["ext_force",2]):
       #   raise Exception("lb_lbfluid_set_ext_force error")
 
-      if lb_lbfluid_set_bulk_visc(self._lb_params["bulk_visc"]):
-        raise Exception("lb_lbfluid_set_bulk_visc error")
+      #if lb_lbfluid_set_bulk_visc(self._lb_params["bulk_visc"]):
+      #  raise Exception("lb_lbfluid_set_bulk_visc error")
     
 #    property print_vtk_velocity:
 #      def __set__(self, char* _filename):
