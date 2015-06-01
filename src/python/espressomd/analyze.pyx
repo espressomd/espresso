@@ -337,6 +337,7 @@ def stress_tensor(self, v_comp=0):
 # Energy analysis
 #
 
+
 def energy(system=None, etype='all', id1='default', id2='default'):
     """energy(system, etype = 'all', id1 = 'default', id2 = 'default')"""
     if system.n_part == 0:
@@ -473,6 +474,8 @@ def check_topology(system=None, chain_start=None, number_of_chains=None, chain_l
 #
 # Structure factor
 #
+
+
 def structure_factor(system=None, sf_type='default', sf_order='default'):
     """Structure Factor
        structure_factor(system = None, sf_type = 'default', sf_order = 'default' )
@@ -487,4 +490,3 @@ def structure_factor(system=None, sf_type='default', sf_order='default'):
     c_analyze.calc_structurefactor(sf_type, sf_order, & sf)
 
     return c_analyze.modify_stucturefactor(sf_order, sf)
-

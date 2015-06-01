@@ -296,6 +296,7 @@ cdef class GenericLennardJonesInteraction(NonBondedInteraction):
         def requiredKeys(self):
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
+
 class NonBondedInteractionHandle(object):
 
     """Provides access to all Non-bonded interactions between 
@@ -561,6 +562,7 @@ ELSE:
 
 
 class Dihedral(BondedInteraction):
+
     def typeNumber(self):
         return 5
 
@@ -1124,6 +1126,7 @@ bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 3: RigidBond, 5: Dihed
                             9: Virtual, 11: Endangledist, 12: Overlapped,
                             13: Angle_Harmonic, 14: Angle_Cosine, 15: Angle_Cossquare, 16: Stretching_Force, 17: Area_Force_Local,
                             18: Bending_Force, 19: Volume_Force, 20: Area_Force_Global, 21: Stretchlin_Force}
+
 
 class BondedInteractions:
 

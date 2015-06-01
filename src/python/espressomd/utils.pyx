@@ -99,4 +99,3 @@ cdef checkRangeOrExcept(x, v_min, incl_min, v_max, incl_max):
                                 or not x < v_max)):
             raise ValueError("Value " + str(x) + "is out of range " + "[" if incl_min else "]" + str(
                 v_min) + "," + str(v_max) + "]" if incl_max else "[")
-

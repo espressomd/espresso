@@ -128,6 +128,7 @@ class Actors:
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
+
     def __str__(self):
         print "Active Actors:"
         for actor in Actors.activeActors:
