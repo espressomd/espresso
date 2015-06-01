@@ -52,7 +52,8 @@ PYXFILES =  \
 	interactions.pyx \
 	particle_data.pyx \
 	thermostat.pyx \
-	utils.pyx
+	utils.pyx \ 
+	electrostatics.pyx
 
 PXDFILES = \
 	_espresso/globals.pxd \
