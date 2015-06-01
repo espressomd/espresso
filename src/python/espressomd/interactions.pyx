@@ -26,7 +26,7 @@ cdef class NonBondedInteraction(object):
 
     def __init__(self, *args, **kwargs):
         """Represents an instance of a non-bonded interaction, such as lennard jones
-        Either called with two particle type id, in which case, the interaction 
+        Either called with two particle type id, in which case, the interaction
         will represent the bonded interaction as it is defined in Espresso core
         Or called with keyword arguments describing a new interaction."""
 
@@ -300,7 +300,7 @@ cdef class GenericLennardJonesInteraction(NonBondedInteraction):
 
 class NonBondedInteractionHandle(object):
 
-    """Provides access to all Non-bonded interactions between 
+    """Provides access to all Non-bonded interactions between
     two particle types."""
 
     type1 = -1
@@ -529,6 +529,37 @@ class HarmonicBond(BondedInteraction):
     def _setParamsInEsCore(self):
         harmonic_set_params(
             self._bondId, self._params["k"], self._params["r_0"], self._params["r_cut"])
+
+IF ROTATION:
+    class HarmonicDumbbellBond(BondedInteraction):
+
+        def typeNumber(self):
+            return 2
+
+        def typeName(self):
+            return "HARMONIC_DUMBBELL"
+
+        def validKeys(self):
+            return "k1", "k2", "r_0", "r_cut"
+
+        def requiredKeys(self):
+            return "k1", "k2", "r_0"
+
+        def setDefaultParams(self):
+            self._params = {"r_cut": 0.}
+
+        def _getParamsFromEsCore(self):
+            return \
+                {"k1": bonded_ia_params[self._bondId].p.harmonic_dumbbell.k1,
+                 "k2": bonded_ia_params[self._bondId].p.harmonic_dumbbell.k2,
+                 "r_0": bonded_ia_params[self._bondId].p.harmonic_dumbbell.r,
+                 "r_cut": bonded_ia_params[self._bondId].p.harmonic_dumbbell.r_cut}
+
+        def _setParamsInEsCore(self):
+            harmonic_dumbbell_set_params(
+                self._bondId, self._params["k1"], self._params["k2"],
+                self._params["r_0"], self._params["r_cut"])
+
 
 IF BOND_CONSTRAINT == 1:
     class RigidBond(BondedInteraction):
@@ -1021,10 +1052,15 @@ class Stretchlin_Force(BondedInteraction):
             self._bondId, self._params["r0"], self._params["kslin"])
 
 
-bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 3: RigidBond, 5: Dihedral, 6: Tabulated, 7: Subt_Lj,
-                            9: Virtual, 11: Endangledist, 12: Overlapped,
-                            13: Angle_Harmonic, 14: Angle_Cosine, 15: Angle_Cossquare, 16: Stretching_Force, 17: Area_Force_Local,
-                            18: Bending_Force, 19: Volume_Force, 20: Area_Force_Global, 21: Stretchlin_Force}
+bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 2:
+                            HarmonicDumbbellBond, 3: RigidBond, 5:
+                            Dihedral, 6: Tabulated, 7: Subt_Lj, 9:
+                            Virtual, 11: Endangledist, 12: Overlapped,
+                            13: Angle_Harmonic, 14: Angle_Cosine, 15:
+                            Angle_Cossquare, 16: Stretching_Force, 17:
+                            Area_Force_Local, 18: Bending_Force, 19:
+                            Volume_Force, 20: Area_Force_Global, 21:
+                            Stretchlin_Force}
 
 
 class BondedInteractions:
