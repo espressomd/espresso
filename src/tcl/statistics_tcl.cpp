@@ -47,6 +47,7 @@
 #include "initialize.hpp"
 #include "statistics_chain_tcl.hpp"
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <map>
@@ -435,6 +436,8 @@ static int tclcommand_analyze_parse_cylindrical_average(Tcl_Interp *interp, int 
   std::vector<int> types;
   std::map<std::string, std::vector<std::vector<std::vector<double> > > > distribution;
 
+  // Parse the arguments
+
   if ( argc < 7 ) {
     puts("Too few arguments");
     return TCL_ERROR;
@@ -491,6 +494,8 @@ static int tclcommand_analyze_parse_cylindrical_average(Tcl_Interp *interp, int 
     return TCL_ERROR;
   }
 
+  // Convert the TCL lists into C++ vectors
+
   for (int i = 0; i < center_dl.n; i++ )
     center[i] = center_dl.e[i];
 
@@ -500,9 +505,31 @@ static int tclcommand_analyze_parse_cylindrical_average(Tcl_Interp *interp, int 
   for (int i = 0; i < types_il.n; i++ )
     types.push_back(types_il.e[i]);
 
+  // Calculate the cylindrical average
+
   if (calc_cylindrical_average(center, direction, length, radius, bins_axial, bins_radial, types, distribution) != TCL_OK) {
     Tcl_AppendResult(interp, "Error calculating the cylindrical average ", (char *) NULL);
     return TCL_ERROR;
+  }
+
+  // Output
+  std::vector<std::string> names(3);
+  names[0] = "density";
+  names[1] = "v_r";
+  names[2] = "v_t";
+  for (unsigned int name = 0; name < names.size(); name++) {
+    for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
+      for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
+        for (int index_axial = 0; index_axial < bins_axial; index_axial++) {
+          std::cout << names[name] << " "
+                    << types[type_id] << " "
+                    << index_radial << " "
+                    << index_axial << " "
+                    << distribution[names[name]][type_id][index_radial][index_axial]
+                    << std::endl;
+        }
+      }
+    }
   }
 
   return TCL_OK;
