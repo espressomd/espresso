@@ -17,10 +17,11 @@
 #
 #
 # Define the espressomd package
-import sys, ctypes
+import sys
+import ctypes
 
 # OpenMPI magic
-sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
+sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL))
 
 # Initialize MPI, start the main loop on the slaves
 import espressomd._init
