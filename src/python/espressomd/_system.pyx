@@ -34,7 +34,8 @@ cdef class System:
     part = particle_data.particleList()
     nonBondedInter = interactions.NonBondedInteractions()
     bondedInter = interactions.BondedInteractions()
-    Actors = actors.Actors()
+    def __init__(self):
+        self.Actors = actors.Actors(self)
 
 #    def __init__(self):
 #        self.part = particle_data.particleList()
