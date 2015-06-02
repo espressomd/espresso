@@ -2656,6 +2656,8 @@ proc oif_object_analyze { args } {
 	set velocity 0
 	set affinity ""
 	set approx_pos -1
+	set get_first_part_id 0
+	set n_nodes 0
 
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
@@ -2680,6 +2682,14 @@ proc oif_object_analyze { args } {
 			"surface-area" {  
 				incr pos
 				set surface 0.0
+			}
+			"first-particle-id" {  
+				incr pos
+				set get_first_part_id 1
+			}
+			"n-nodes" {  
+				incr pos
+				set n_nodes 1
 			}
 			"affinity" {  
 				incr pos
@@ -2742,6 +2752,16 @@ proc oif_object_analyze { args } {
 	if { $mandatory == 0 } { 
 		puts "error in oif_object_analyze: mandatory argument(s) missing" 
 		return
+	}
+
+	if { $get_first_particle_id == 1 } {
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		return $firstPartId
+	}
+
+	if { $n_nodes == 1 } {
+		set nnode [lindex $oif_nparticles $objectID]
+		return $nnode
 	}
 
 	if { $center_location == 1 } {
