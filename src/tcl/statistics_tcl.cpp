@@ -255,7 +255,7 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
     }
 
 
-    // Use information from the analyse set command to fold chain molecules
+    // Use information from the analyze set command to fold chain molecules
     if (flag == FOLD_MOLS) {
         if (analyze_fold_molecules(coord, shift) != TCL_OK) {
             Tcl_AppendResult(interp, "could not fold chains: \"analyze set chains <chain_start> <n_chains> <chain_length>\" must be used first",

@@ -969,7 +969,7 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
               if (sizeof(lbForceFloat) == sizeof(float))
                 fscanf(cpfile, "%f", &host_checkpoint_force[n]);
               else
-                fscanf(cpfile, "%lf", &host_checkpoint_force[n]);
+                fscanf(cpfile, "%f", &host_checkpoint_force[n]);
             }
             lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
         }
