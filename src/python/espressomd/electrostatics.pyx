@@ -143,8 +143,6 @@ class DH(ElectrostaticInteraction):
         self._setParamsInEsCore()
 
 
-
-
 IF COULOMB_DEBYE_HUECKEL:
     class CDH(ElectrostaticInteraction):
         def validateParams(self):
