@@ -36,52 +36,56 @@ class DH(ElectrostaticInteraction):
         if ("r_cut" <0):
             raise ValueError("r_cut should be a non-negative double")
         
-       
     def validKeys(self):
-        return "bjerrum_length,kappa,r_cut"
+        return "bjerrum_length","kappa","r_cut"
     
     def requiredKeys(self):   
-        return "bjerrum_length,kappa,r_cut"
+        return "bjerrum_length","kappa","r_cut"
     
     def _setParamsInEsCore(self):
         coulomb_set_bjerrum(self._params["bjerrum_length"])
-        dh_set_params(self._param["kappa"], self._param["r_cut"])
+        dh_set_params(self._params["kappa"], self._params["r_cut"])
         
     def _getParamsFromEsCore(self):
         params = {}
-        params.update(dh.params)
+        params.update(dh_params)
         return params
         
     def _activateMethod(self):
         coulomb.method = COULOMB_DH
         self._setParamsInEsCore()
 
+    def defaultParams(self):
+        return {"bjerrum_length": -1,
+                "kappa": -1,
+                "r_cut": -1}
+
 
 IF COULOMB_DEBYE_HUECKEL:
     class CDH(ElectrostaticInteraction):
         def validateParams(self):
-        if ("bjerrum_length" <= 0):
-            raise ValueError("Bjerrum_length should be a positive double")
-        if ("kappa" < 0):
-            raise ValueError("kappa should be a non-negative double")
-        if ("r_cut" < 0):
-            raise ValueError("r_cut should be a non-negative double")
-        if ("eps_int" <= 0):
-            raise ValueError("eps_int should be a positive double")
-        if ("eps_ext" <= 0):
-            raise ValueError("eps_ext should be a positive double")
-        if ("r0" <= 0 or "r0" <= "r1"):
-            raise ValueError("r0 should be a positive double larger than r1")
-        if ("r1" <= 0 or "r1" >= "r_cut"):
-            raise ValueError("r1 should be a positive double smaller than r_cut")
-        if ("alpha" < 0):
-            raise ValueError("alpha should be a non-negative double")
+            if ("bjerrum_length" <= 0):
+                raise ValueError("Bjerrum_length should be a positive double")
+            if ("kappa" < 0):
+                raise ValueError("kappa should be a non-negative double")
+            if ("r_cut" < 0):
+                raise ValueError("r_cut should be a non-negative double")
+            if ("eps_int" <= 0):
+                raise ValueError("eps_int should be a positive double")
+            if ("eps_ext" <= 0):
+                raise ValueError("eps_ext should be a positive double")
+            if ("r0" <= 0 or "r0" <= "r1"):
+                raise ValueError("r0 should be a positive double larger than r1")
+            if ("r1" <= 0 or "r1" >= "r_cut"):
+                raise ValueError("r1 should be a positive double smaller than r_cut")
+            if ("alpha" < 0):
+                raise ValueError("alpha should be a non-negative double")
         
         def validKeys(self):
-            return "bjerrum_length,kappa,r_cut,eps_int,eps_ext,r0,r1,alpha"
+            return "bjerrum_length","kappa","r_cut","eps_int","eps_ext","r0","r1","alpha"
         
         def requiredKeys(self):
-            return "bjerrum_length,kappa,r_cut,eps_int,eps_ext,r0,r1,alpha"
+            return "bjerrum_length","kappa","r_cut","eps_int","eps_ext","r0","r1","alpha"
         
         def _setParamsInEsCore(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
@@ -89,11 +93,24 @@ IF COULOMB_DEBYE_HUECKEL:
         
         def _getParamsFromEsCore(self):
             params = {}
-            params.update(cdh.params)
+            params.update(dh_params)
             return params
         
         def _activateMethod(self):
             coulomb.method = COULOMB_DH
+
+        def defaultParams(self):
+            return {"bjerrum_length": -1,
+                    "kappa": -1,
+                    "r_cut": -1,
+                    "eps_int": -1,
+                    "eps_ext": -1,
+                    "r0": -1,
+                    "r1": -1,
+                    "alpha": -1}
+
+
+
 IF P3M == 1:
     class P3M(ElectrostaticInteraction):
 
