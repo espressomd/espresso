@@ -147,6 +147,32 @@ static int failcounter=0;
 /* *********************** C Interface part *************************************/
 /* ******************************************************************************/
 
+/*
+ * set lattice switch on C-level
+*/
+int set_lattice_switch(int py_switch){
+
+  if(py_switch == 1){
+#ifdef LB
+    if( !(lattice_switch & LATTICE_LB_GPU) ) 
+      lattice_switch = lattice_switch | LATTICE_LB;
+#else
+  }else if(py_switch == 2){
+    lattice_switch = lattice_switch | LATTICE_LB_GPU;
+#endif
+    return 0;
+  }else{
+    return 1;
+  }
+}
+
+/*
+ * get lattice switch on py-level
+*/
+int get_lattice_switch(int* py_switch){
+  *py_switch = lattice_switch;
+}
+
 #ifdef SHANCHEN
 int lb_lbfluid_set_shanchen_coupling(double *p_coupling) {
 #ifdef LB_GPU

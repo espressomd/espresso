@@ -127,4 +127,5 @@ IF LB_GPU or LB:
     int lb_lbfluid_print_boundary(char* filename)
     int lb_lbfluid_save_checkpoint(char* filename, int binary)
     int lb_lbfluid_load_checkpoint(char* filename, int binary)
-#    void cython_lb_init(int switch)
+    int lb_set_lattice_switch(int py_switch)
+    int lb_get_lattice_switch(int* py_switch)

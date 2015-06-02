@@ -19,28 +19,32 @@
 include "myconfig.pxi"
 import numpy as np
 from actors import Actor
-#cimport cuda_init
-#import cuda_init
+cimport cuda_init
+import cuda_init
 #cimport lb
-#cimport global_variables
+from globals cimport *
 
 class HydrodynamicInteraction(Actor):
   def _lb_init(self):
     raise Exception("Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
 IF LB_GPU or LB:
-  class LB(HydrodynamicInteraction):
+  class LB_FLUID(HydrodynamicInteraction):
 
     #int switch
     #char* checkpoint_filename
 
-    def __init__(self, _dev):
-      if _dev == "gpu":
-        switch=1
-        #cython_lb_init(switch)
+
+    def __init__(self, key):
+      if key == "gpu":
+        lattice_switch = 2
+        print "LB GPU on"
+        if lb_set_lattice_switch(lattice_switch):
+          raise Exception("lb_set_lattice_switch error")
+
       else: 
-        switch=0
-        #cython_lb_init(switch)
+        lattice_switch = 1
+        print "LB CPU on"
 
     def validateParams(self):
       default_lb_params=self.defaultParams()
@@ -125,13 +129,13 @@ IF LB_GPU or LB:
 #        self.checkpoint_binary=_binary
 #      def __get__(self):
 #        return self.checkpoint_binary
-    def _activateMethod(self):
+  #  def _activateMethod(self):
 
-      self._setParamsInEsCore()
+  #    self._setParamsInEsCore()
               
-  class DeviceList:
-    def __getitem__(self, _dev):
-      return _dev
+  #class DeviceList:
+  #  def __getitem__(self, _dev):
+  #    return _dev
       
     
 #    property gamma_odd:
