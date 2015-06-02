@@ -30,7 +30,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
 
 #CYTHON compile options e.g. debug
-AM_CYFLAGS = $(CYFLAGS) 
+AM_CYFLAGS = $(CYFLAGS)
 
 # Build rules for cython
 SUFFIXES = .pyx
