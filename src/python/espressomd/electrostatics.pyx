@@ -45,7 +45,7 @@ IF COULOMB_DEBYE_HUECKEL:
             if (self._params["r0"] <= 0 or self._params["r0"] >= self._params["r1"]):
                 raise ValueError("r0 should be a positive double smaller than r1")
             if (self._params["r1"] <= 0 or self._params["r1"] >= self._params["r_cut"]):
-                raise ValueError("r1 should be a positive double larger than r1 and smaller than r_cut")
+                raise ValueError("r1 should be a positive double larger than r0 and smaller than r_cut")
             if (self._params["alpha"] < 0):
                 raise ValueError("alpha should be a non-negative double")
         
