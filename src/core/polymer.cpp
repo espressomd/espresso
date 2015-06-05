@@ -136,10 +136,10 @@ int constraint_collision(double *p1, double *p2){
   double folded_pos2[3];
   int img[3];
   
-  memcpy(folded_pos1, p1, 3*sizeof(double));
+  memmove(folded_pos1, p1, 3*sizeof(double));
   fold_position(folded_pos1, img);
 
-  memcpy(folded_pos2, p2, 3*sizeof(double));
+  memmove(folded_pos2, p2, 3*sizeof(double));
   fold_position(folded_pos2, img);
 
   for(i=0;i<n_constraints;i++){
@@ -555,7 +555,7 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **b
   /* Sort the received informations. */
   sorted = (Particle*)malloc(n_part*sizeof(Particle));
   for(i = 0; i < n_part; i++)
-    memcpy(&sorted[prt[i].p.identity], &prt[i], sizeof(Particle));
+    memmove(&sorted[prt[i].p.identity], &prt[i], sizeof(Particle));
   free(prt);
   prt = sorted;
   
