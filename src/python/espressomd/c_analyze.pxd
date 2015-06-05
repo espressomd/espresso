@@ -42,6 +42,7 @@ cdef extern from "statistics.hpp":
         double * non_bonded
         double * coulomb
         double * dipolar
+        double * vs_relative
 
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
