@@ -56,7 +56,7 @@ cdef extern from "statistics.hpp":
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef double mindist(IntList * set1, IntList * set2)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
-    double * vs_relative
+
 
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure
@@ -93,3 +93,4 @@ cdef extern from "statistics_chain.hpp":
 
 cdef extern from "interaction_data.hpp":
     int n_bonded_ia
+

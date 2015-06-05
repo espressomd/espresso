@@ -19,7 +19,6 @@
 cimport numpy as np
 import numpy as np
 
-
 cdef extern from "stdlib.h":
     void free(void * ptr)
     void * malloc(size_t size)
@@ -46,7 +45,6 @@ cdef IntList * create_IntList_from_python_object(obj):
     for i in range(len(obj)):
         il.e[i] = obj[i]
         print il.e[i]
-
     return il
 
 cdef checkTypeOrExcept(x, n, t, msg):

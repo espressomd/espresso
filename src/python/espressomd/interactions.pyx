@@ -203,6 +203,7 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
 
         def requiredKeys(self):
             return "epsilon", "sigma", "cutoff", "shift"
+
 # Generic Lennard Jones
 
 cdef class GenericLennardJonesInteraction(NonBondedInteraction):
@@ -297,6 +298,7 @@ cdef class GenericLennardJonesInteraction(NonBondedInteraction):
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
 
+
 class NonBondedInteractionHandle(object):
 
     """Provides access to all Non-bonded interactions between 
@@ -307,7 +309,6 @@ class NonBondedInteractionHandle(object):
 
     # Here, one line per non-bonded ia
     lennardJones = None
-    genericLennardJones = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -319,6 +320,7 @@ class NonBondedInteractionHandle(object):
         # Here, add one line for each nonbonded ia
         self.lennardJones = LennardJonesInteraction(_type1, _type2)
         self.genericLennardJones = LennardJonesInteraction(_type1, _type2)
+
 
 cdef class NonBondedInteractions:
     """Access to non-bonded interaction parameters via [i,j], where i,j are particle 
@@ -771,26 +773,26 @@ IF BOND_ANGLE == 1:
         def typeNumber(self):
             return 13
 
-        def typeName(self):
-            return "ANGLE_HARMONIC"
+    def typeName(self):
+        return "ANGLE_HARMONIC"
 
-        def validKeys(self):
-            return "bend", "phi0"
+    def validKeys(self):
+        return "bend", "phi0"
 
-        def requiredKeys(self):
-            return "bend", "phi0"
+    def requiredKeys(self):
+        return "bend", "phi0"
 
-        def setDefaultParams(self):
-            self._params = {"bend": 0, "phi0": 0}
+    def setDefaultParams(self):
+        self._params = {"bend": 0, "phi0": 0}
 
-        def _getParamsFromEsCore(self):
-            return \
-                {"bend": bonded_ia_params[self._bondId].p.angle_harmonic.bend,
-                 "phi0": bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
+    def _getParamsFromEsCore(self):
+        return \
+            {"bend": bonded_ia_params[self._bondId].p.angle_harmonic.bend,
+             "phi0": bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
 
-        def _setParamsInEsCore(self):
-            angle_harmonic_set_params(
-                self._bondId, self._params["bend"], self._params["phi0"])
+    def _setParamsInEsCore(self):
+        angle_harmonic_set_params(
+            self._bondId, self._params["bend"], self._params["phi0"])
 ELSE:
     class Angle_Harmonic(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
@@ -1129,8 +1131,7 @@ bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 3: RigidBond, 5: Dihed
 
 
 class BondedInteractions:
-
-    """Represents the non-bonded interactions. Individual interactions can be accessed using
+    """Represents the bonded interactions. Individual interactions can be accessed using
     NonBondedInteractions[i], where i is the bond id. Will return an instance o
     BondedInteractionHandle"""
 
@@ -1158,6 +1159,11 @@ class BondedInteractions:
 
     def __setitem__(self, key, value):
         # Validate arguments
+
+        # type of key must be int
+        if not isinstance(key, int):
+            raise ValueError(
+                "Index to BondedInteractions[] has to ba an integer referring to a bond id")
 
         # Value must be subclass off BondedInteraction
         if not isinstance(value, BondedInteraction):
