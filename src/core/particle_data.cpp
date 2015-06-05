@@ -365,7 +365,7 @@ int sortPartCfg()
 
   sorted = (Particle*)malloc(n_part*sizeof(Particle));
   for(i = 0; i < n_part; i++)
-    memcpy(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
+    memmove(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
   free(partCfg);
   partCfg = sorted;
 
