@@ -581,7 +581,7 @@ void layered_calculate_ia()
       p1 = &pl[i];
 
       if (rebuild_verletlist)
-	memmove(p1->l.p_old, p1->r.p, 3*sizeof(double));
+	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
       add_bonded_force(p1);
 #ifdef CONSTRAINTS
@@ -636,7 +636,7 @@ void layered_calculate_energies()
       p1 = &pl[i];
 
       if (rebuild_verletlist)
-	memmove(p1->l.p_old, p1->r.p, 3*sizeof(double));
+	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
       add_kinetic_energy(p1);
 
@@ -691,7 +691,7 @@ void layered_calculate_virials(int v_comp)
       p1 = &pl[i];
 
       if (rebuild_verletlist)
-	memmove(p1->l.p_old, p1->r.p, 3*sizeof(double));
+	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
       add_kinetic_virials(p1,v_comp);
 

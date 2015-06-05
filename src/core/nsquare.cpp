@@ -214,7 +214,7 @@ void nsq_balance_particles(int global_flag)
       init_particlelist(&send_buf);
       realloc_particlelist(&send_buf, send_buf.n = transfer);
       for (i = 0; i < transfer; i++) {
-	memmove(&send_buf.part[i], &local->part[--local->n], sizeof(Particle));
+	memcpy(&send_buf.part[i], &local->part[--local->n], sizeof(Particle));
       }
       realloc_particlelist(local, local->n);
       update_local_particles(local);
@@ -259,7 +259,7 @@ void nsq_calculate_ia()
     add_external_potential_forces(pt1);
 
     if (rebuild_verletlist)
-      memmove(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
+      memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {
@@ -314,7 +314,7 @@ void nsq_calculate_energies()
     add_external_potential_energy(pt1);
 
     if (rebuild_verletlist)
-      memmove(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
+      memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {
@@ -371,7 +371,7 @@ void nsq_calculate_virials(int v_comp)
 #endif
 
     if (rebuild_verletlist)
-      memmove(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
+      memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {
