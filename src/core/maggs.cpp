@@ -931,7 +931,7 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
       nblocks = surface_patch[s_dir].nblocks;
 			
       for(l=0; l<nblocks; l++){
-	memcpy(&(field[doffset]), &(field[offset]), stride);
+	memmove(&(field[doffset]), &(field[offset]), stride);
 	offset  += skip;
 	doffset += skip;
       }

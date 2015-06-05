@@ -567,10 +567,10 @@ int tclcommand_observable_rdf(Tcl_Interp* interp, int argc, char** argv, int* ch
   //calc_rdf(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf);
   
   pdata->p1_types = (int *) malloc(p1.n * sizeof(int));
-  memcpy(pdata->p1_types, p1.e,p1.n*sizeof(int));
+  memmove(pdata->p1_types, p1.e,p1.n*sizeof(int));
   pdata->n_p1     = p1.n;
   pdata->p2_types = (int *) malloc(p2.n * sizeof(int));
-  memcpy(pdata->p2_types, p2.e,p2.n*sizeof(int));
+  memmove(pdata->p2_types, p2.e,p2.n*sizeof(int));
   pdata->n_p2     = p2.n;
   
   obs->container=(void*)pdata;
@@ -993,8 +993,8 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 	r_data->minr	= 0;
 	double temp[3];
 	temp[0] = 0.0; temp[1] = 0.0; temp[2] = 0.0;
-	memcpy(r_data->start_point, temp, 3*sizeof(double));
-	memcpy(r_data->end_point, temp, 3*sizeof(double));
+	memmove(r_data->start_point, temp, 3*sizeof(double));
+	memmove(r_data->end_point, temp, 3*sizeof(double));
 	int cur_argc = argc;
 	while (argc > 0) {
 	  cur_argc = argc;

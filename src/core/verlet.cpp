@@ -136,7 +136,7 @@ void build_verlet_lists()
         j_start = 0;
         /* Tasks within cell: store old position, avoid double counting */
         if(n == 0) {
-           memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+           memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
            j_start = i+1;
         }
         /* Loop neighbor cell particles */
@@ -261,7 +261,7 @@ void build_verlet_lists_and_calc_verlet_ia()
             add_constraints_forces(&p1[i]);
 #endif
             add_external_potential_forces(&p1[i]);
-            memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+            memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
             j_start = i+1;
           }
         }

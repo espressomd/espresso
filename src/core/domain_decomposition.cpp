@@ -1163,7 +1163,7 @@ void calc_link_cell()
 #endif
 	  add_external_potential_forces(&p1[i]);
 	  if (rebuild_verletlist)
-	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+	    memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 
 	  j_start = i+1;
 	}
@@ -1210,7 +1210,7 @@ void calculate_link_cell_energies()
       add_external_potential_energy(&p1[i]);
 
       if (rebuild_verletlist)
-        memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+        memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
     }
 
     CELL_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
@@ -1267,7 +1267,7 @@ void calculate_link_cell_virials(int v_comp)
       add_three_body_bonded_stress(&p1[i]);
 #endif
       if (rebuild_verletlist)
-        memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+        memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
     }
 
     CELL_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
