@@ -251,8 +251,8 @@ void add_external_potential_tabulated_forces(ExternalPotential* e, Particle* p) 
   double field[3];
   double ppos[3];
   int    img[3];
-  memcpy(ppos, p->r.p, 3*sizeof(double));
-  memcpy(img, p->r.p, 3*sizeof(int));
+  memmove(ppos, p->r.p, 3*sizeof(double));
+  memmove(img, p->r.p, 3*sizeof(int));
   fold_position(ppos, img);
  
   e->tabulated.potential.interpolate_gradient(p->r.p, field);
@@ -283,8 +283,8 @@ void add_external_potential_tabulated_energy(ExternalPotential* e, Particle* p) 
   double potential;
   double ppos[3];
   int img[3];
-  memcpy(ppos, p->r.p, 3*sizeof(double));
-  memcpy(img, p->r.p, 3*sizeof(int));
+  memmove(ppos, p->r.p, 3*sizeof(double));
+  memmove(img, p->r.p, 3*sizeof(int));
   fold_position(ppos, img);
  
   e->tabulated.potential.interpolate(p->r.p, &potential);

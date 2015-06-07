@@ -268,7 +268,7 @@ The output corresponds to the blockfile format (see section
 \PythonSyntaxOn
 \begin{pysyntax}
   \object{
-    analyze
+    espressomd.analyze
   }{
     structure_factor
   }{
@@ -487,6 +487,27 @@ fluid, see Chapter~\ref{sec:lb}, by averaging over the fluid nodes. In
 case \feature{LB_BOUNDARIES} or \feature{LB_BOUNDARIES_GPU} are
 compiled in and boundaries are defined, only the available fluid
 volume is taken into account.
+
+\subsection{Momentum of the System}
+\label{analyze:momentum}
+\analyzeindex{system momentum}
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    calc_re
+  }{
+    system = \arg{system},
+    include_particles = \arg{bool},
+    include_lbfluid = \arg{bool},
+  }
+\end{pysyntax}
+\begin{essyntax}
+  analyze momentum \opt{particles}
+\end{essyntax}
+This command returns the total linear momentum of the particles and the lattice-Boltzmann (LB) fluid, if one exists. Giving the optional parameter particles
+causes the command to ignore the contribution of LB. In the Python interface both particles and fluid can be toggled on and off using the include_particles and
+include_lbfluid flags respectively.
 
 \subsection{Energies}
 \label{analyze:energy}
@@ -731,7 +752,18 @@ required once.
 
 \subsubsection{End-to-end distance}
 \analyzeindex{end-to-end distance of a chain}
-
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    calc_re
+  }{
+    system=\arg{system},
+    chain_start=\arg{int},
+    n_chains=\arg{int},
+    chain_length=\arg{int}
+  }
+\end{pysyntax}
 \begin{essyntax}
   analyze \alt{re \asep <re>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
@@ -747,11 +779,23 @@ stored configurations (see section \vref{sec:stored-configs}).
 
 \subsubsection{Radius of gyration}
 \analyzeindex{radius of gyration of a chain}
-
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    calc_rg
+  }{
+    system = \arg{system},
+    chain_start = \arg{int},
+    n_chains = \arg{int},
+    chain_length = \arg{int}
+  }
+\end{pysyntax}
 \begin{essyntax}
   analyze \alt{rg \asep <rg>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
+
 Returns the radius of gyration averaged over all chains. It is a radius
 of a sphere, which would have the same moment of inertia as the molecule, 
 defined as
@@ -773,6 +817,18 @@ configurations (see section \vref{sec:stored-configs}).
 
 \subsubsection{Hydrodynamic radius}
 \analyzeindex{hydrodynamic radius of a chain}
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    calc_rh
+  }{
+    system = \arg{system},
+    chain_start = \arg{int},
+    n_chains = \arg{int},
+    chain_length = \arg{int}
+  }
+\end{pysyntax}
 \begin{essyntax}
   analyze \alt{rh \asep <rh>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}

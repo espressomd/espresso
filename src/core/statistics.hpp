@@ -24,6 +24,8 @@
     This file contains the code for statistics on the data.
 */
 
+#include <vector>
+
 #include "grid.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
@@ -385,6 +387,7 @@ void predict_momentum_particles(double *result);
 \todo Docs missing
 */
 void momentum_calc(double *momentum);
+std::vector<double> calc_linear_momentum(int include_particles, int include_lbfluid);
 
 inline double *obsstat_bonded(Observable_stat *stat, int j)
 {

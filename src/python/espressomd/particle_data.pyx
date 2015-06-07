@@ -166,7 +166,7 @@ cdef class ParticleHandle:
 
     # Properties that exist only when certain features are activated
     # MASS
-    IF MASS:
+    IF MASS == 1:
         property mass:
             """Particle mass"""
 
@@ -181,7 +181,7 @@ cdef class ParticleHandle:
                 pointer_to_mass(& (self.particleData), x)
                 return x[0]
 
-    IF ROTATION:
+    IF ROTATION == 1:
         # Omega (angular velocity) lab frame
         property omega_lab:
             """Angular velocity in lab frame"""
@@ -201,7 +201,7 @@ cdef class ParticleHandle:
                 return np.array([o[0], o[1], o[2]])
 
     # ROTATIONAL_INERTIA
-    IF ROTATIONAL_INERTIA:
+    IF ROTATIONAL_INERTIA == 1:
         property rinertia:
             """Rotational inertia"""
 
@@ -219,7 +219,6 @@ cdef class ParticleHandle:
                 cdef double * rinertia = NULL
                 pointer_to_rotational_inertia(& (self.particleData), rinertia)
                 return np.array([rinertia[0], rinertia[1], rinertia[2]])
-
 
 # Omega (angular velocity) body frame
         property omega_body:
@@ -298,7 +297,7 @@ cdef class ParticleHandle:
                 return np.array([x[0], x[1], x[2]])
 
 # Charge
-    IF ELECTROSTATICS:
+    IF ELECTROSTATICS == 1:
         property q:
             """particle charge"""
 
@@ -340,7 +339,7 @@ cdef class ParticleHandle:
                 pointer_to_virtual( & (self.particleData), x)
                 return x[0]
 
-    IF VIRTUAL_SITES_RELATIVE:
+    IF VIRTUAL_SITES_RELATIVE == 1:
         # Virtual sites relative parameters
         property vs_relative:
             """virtual sites relative parameters"""
@@ -674,9 +673,6 @@ cdef class ParticleHandle:
             raise Exception("Adding the bond failed.")
 
     def deleteVerifiedBond(self, bond, partner):
-        """Delete a bond, the validity of which has already been verified"""
-        # If someone adds bond types with more than four partners, this has to
-        # be changed
         cdef int bondInfo[5]
         bondInfo[0] = bond._bondId
 #    for i in range(len(bond)):
@@ -722,6 +718,9 @@ cdef class ParticleHandle:
         if change_particle_bond(self.id, NULL, 1):
             raise Exception("Deleting all bonds failed.")
 
+    def deleteAllBonds(self):
+        if change_particle_bond(self.id, NULL, 1):
+            raise Exception("Deleting all bonds failed.")
 
 cdef class particleList:
     """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """

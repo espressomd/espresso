@@ -68,7 +68,7 @@ int tclcommand_analyze_parse_generic_structure(Tcl_Interp *interp, int argc, cha
     }
     topology[arg].type = il.e[0];
     realloc_intlist(&topology[arg].part, topology[arg].part.n = il.n - 1);
-    memcpy(topology[arg].part.e, &il.e[1], (il.n - 1)*sizeof(int));
+    memmove(topology[arg].part.e, &il.e[1], (il.n - 1)*sizeof(int));
   }
   realloc_intlist(&il, 0);
   
