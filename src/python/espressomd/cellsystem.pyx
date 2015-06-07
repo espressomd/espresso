@@ -17,23 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 cimport cellsystem
+from globals cimport *
 
-cdef class Cellsystem:
-
-    def setDomainDecomposition(self, useVerletList=True):
+cdef class CellSystem(object):
+    def setDomainDecomposition(self, useVerletLists=True):
         """Activates domain decomposition cell system
-        setDomainDecomposition(useVerletList=True)
         """
-
-        useVerletList = bool(useVerletList)
-
-        # should work with global_variables.dd
-        if useVerletList:
-            # global_variables.dd.use_vList = 1
-            pass
+        if useVerletLists:
+            dd.use_vList = 1
         else:
-            # global_variables.dd.use_vList = 0
-            pass
+            dd.use_vList = 0
 
         # grid.h::node_grid
         mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
@@ -42,9 +35,13 @@ cdef class Cellsystem:
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def setNsquare(self):
+    def setNsquare(self, useVerletLists=True):
         """Activates the nsquare force calculation
         """
+        if useVerletLists:
+            dd.use_vList = 1
+        else:
+            dd.use_vList = 0
         mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
         # @TODO: gathering should be interface independent
         # return mpi_gather_runtime_errors(interp, TCL_OK)
@@ -56,6 +53,10 @@ cdef class Cellsystem:
         if nLayers != "":
             if not isinstance(nLayers, int):
                 raise ValueError("layer height should be positive")
+
+            if not nLayers > 0:
+                raise ValueError("the number of layers has to be >0")
+
             global n_layers
             n_layers = int(nLayers)
             global determine_n_layers
@@ -70,7 +71,24 @@ cdef class Cellsystem:
 
         if not err:
             mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED)
-
+        
         # @TODO: gathering should be interface independent
         # return mpi_gather_runtime_errors(interp, TCL_OK)
+
+        if err:
+            raise Exception("Broadcasting the node grid failed")
         return True
+
+    def getState(self):
+        s = {}
+        if cell_structure.type == CELL_STRUCTURE_LAYERED:
+            s["type"] = "layered"
+            s["nLayers"] = n_layers
+        if cell_structure.type == CELL_STRUCTURE_DOMDEC:
+            s["type"] = "domainDecomposition"
+            s["useVerletLists"] = dd.use_vList
+        if cell_structure.type == CELL_STRUCTURE_NSQUARE:
+            s["type"] = "nsquare"
+            s["useVerletLists"] = dd.use_vList
+
+        return s

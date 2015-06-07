@@ -74,7 +74,6 @@ cdef extern from "ljgen.hpp":
                                   int a1, int a2, double b1, double b2,
                                   double cap_radius)
 
-
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:
         double k
