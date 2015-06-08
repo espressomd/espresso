@@ -75,7 +75,7 @@ cdef class CellSystem(object):
         # @TODO: gathering should be interface independent
         # return mpi_gather_runtime_errors(interp, TCL_OK)
 
-        if err:
+        if MPI_err:
             raise Exception("Broadcasting the node grid failed")
         return True
 
