@@ -1081,9 +1081,6 @@ struct vector_size_unequal : public std::exception {
 //
 
 template<typename T>
-void cross_product(void);
-
-template<typename T>
 std::vector<T> cross_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
   if ( a.size() != 3 && b.size() != 3 )
     throw vector_size_unequal();
@@ -1105,9 +1102,6 @@ void cross_product(T const * const a, T const * const b, T* c) {
 //
 // dot_product: Calculate the dot product of two vectors
 //
-
-template<typename T>
-void dot_product(void);
 
 template<typename T>
 double dot_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
@@ -1133,9 +1127,6 @@ double dot_product(T const * const a, T const * const b) {
 //
 
 template<typename T>
-void sqrlen(void);
-
-template<typename T>
 double sqrlen(const std::vector<T> &a) {
   double c = 0;
   typename std::vector<T>::const_iterator i;
@@ -1154,9 +1145,6 @@ double sqrlen(T const * const a) {
 
 
 template<typename T>
-void veclen(void);
-
-template<typename T>
 double veclen(const std::vector<T> &a) {
   return sqrt(sqrlen(a));
 }
@@ -1169,9 +1157,6 @@ double veclen(T const * const a) {
 //
 // vecsub: Subtract two vectors
 //
-
-template<typename T>
-void vecsub(void);
 
 template<typename T>
 std::vector<T> vecsub(const std::vector<T> &a, const std::vector<T> &b) throw() {
