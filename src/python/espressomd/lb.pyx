@@ -24,76 +24,160 @@ import cuda_init
 #cimport lb
 from globals cimport *
 
+####################################################
+#
+# Actor class 
+#
+####################################################
 class HydrodynamicInteraction(Actor):
   def _lb_init(self):
     raise Exception("Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
+####################################################
+#
+# LB_FLUID main class
+#
+####################################################
 IF LB_GPU or LB:
   class LB_FLUID(HydrodynamicInteraction):
 
-    #int switch
-    #char* checkpoint_filename
-
-
-    def __init__(self, key):
-      if key == "gpu":
-        py_lattice_switch = lattice_switch
-        print "LB GPU on"
-        if lb_set_lattice_switch(py_lattice_switch):
-          raise Exception("lb_set_lattice_switch error")
-
-      else: 
-        py_lattice_switch = 1
-        print "LB CPU on"
-
+    ####################################################
+    #
+    # validate the given parameters on actor initalization
+    #
+    ####################################################
     def validateParams(self):
-      default_lb_params=self.defaultParams()
+      default_params=self.defaultParams()
 
-      if not (self._lb_params["agrid"] > 0.0):
-        raise ValueError("Grid spacing should be a positive double")
+      IF SHANCHEN:
+        if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
+          raise ValueError("Density must be two positive double (ShanChen)")
+      ELSE:
+        if self._params["dens"] == default_params["dens"]:
+          raise Exception("LB_FLUID density not set")
+        else:
+          if not (self._params["dens"] > 0.0 and (isinstance(self._params["dens"],float) or isinstance(self._params["dens"],int))):
+            raise ValueError("Density must be one positive double")
 
+
+
+    ####################################################
+    #
+    # list of valid keys for parameters
+    #
+    ####################################################
     def validKeys(self):
       return "gpu", "agrid","dens","fric","ext_force","visc","tau"
 
+    ####################################################
+    #
+    # list of esential keys required for the fluid
+    #
+    ####################################################
     def requiredKeys(self):
-      return ["agrid","visc", "tau"]
+      init = 0
+      if init:
+        init = 1
+        return ["dens", "agrid","visc", "tau"]
+      else:
+        return []
 
+    ####################################################
+    #
+    # list of default parameters
+    #
+    ####################################################
     def defaultParams(self):
-      return {"gpu":0,\
-              "agrid":-1,\
-              "dens":[-1,-1],\
-              "fric":[-1,-1],\
-              "ext_force":[-1,-1,-1],\
-              "visc":[-1,-1],\
-              "bulk_visc":[-1,-1],\
-              "tau":-1}
-
+      IF SHANCHEN:
+        return {"gpu":0,\
+                "agrid":-1.0,\
+                "dens":[-1.0,-1.0],\
+                "fric":[-1.0,-1.0],\
+                "ext_force":[0.0,0.0,0.0],\
+                "visc":[-1.0,-1.0],\
+                "bulk_visc":[-1.0,-1.0],\
+                "tau":-1.0}
+      ELSE:
+        return {"gpu":0,\
+                "agrid":-1.0,\
+                "dens":-1.0,\
+                "fric":-1.0,\
+                "ext_force":[0.0,0.0,0.0],\
+                "visc":-1.0,\
+                "bulk_visc":-1.0,\
+                "tau":-1.0}
+  
+    ####################################################
+    #
+    # function that calls wrapper functions which set the parameters at C-Level
+    #
+    ####################################################
     def _setParamsInEsCore(self):
-      #if lb_lbfluid_set_tau(self._lb_params["tau"]):
-      #  raise Exception("lb_lbfluid_set_tau error")
+      default_params=self.defaultParams()
 
-      if python_lbfluid_set_density(self._lb_params["dens"]):
+      #Check if GPU code should be used
+      if not (self._params["gpu"]):
+        py_lattice_switch = 1
+        print "Using LB CPU code"
+      else:
+        py_lattice_switch = 2
+        print "Using LB GPU code"
+      if lb_set_lattice_switch(py_lattice_switch):
+        raise Exception("lb_set_lattice_switch error")
+
+      if python_lbfluid_set_density(self._params["dens"]):
         raise Exception("lb_lbfluid_set_density error")
-  
-  
-    def _lb_init(self):
-      print "test"
-      _dev = 0
 
-      #if lb_lbfluid_set_visc(self._lb_params["visc"]):
-      #  raise Exception("lb_lbfluid_set_visc error")
+      if python_lbfluid_set_tau(self._params["tau"]):
+        raise Exception("lb_lbfluid_set_tau error")
 
-      #if lb_lbfluid_set_agrid(self._lb_params["agrid"]):
-      #  raise Exception("lb_lbfluid_set_agrid error")
+      if python_lbfluid_set_visc(self._params["visc"]):
+        raise Exception("lb_lbfluid_set_visc error")
 
-      #if lb_lbfluid_set_friction(self._lb_params["friction"]):
+      if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+        if python_lbfluid_set_bulk_visc(self._params["bulk_visc"]):
+          raise Exception("lb_lbfluid_set_bulk_visc error")
+
+      if python_lbfluid_set_agrid(self._params["agrid"]):
+        raise Exception("lb_lbfluid_set_agrid error")
+
+      #if lb_lbfluid_set_friction(self._params["friction"]):
       #  raise Exception("lb_lbfluid_set_friction error")
   
-      #if lb_lbfluid_set_ext_force(1, self._params["ext_force",0], self._params["ext_force",1], self._params["ext_force",2]):
+      #if python_lbfluid_set_ext_force(1, self._params["ext_force",0], self._params["ext_force",1], self._params["ext_force",2]):
       #   raise Exception("lb_lbfluid_set_ext_force error")
 
-      #if lb_lbfluid_set_bulk_visc(self._lb_params["bulk_visc"]):
-      #  raise Exception("lb_lbfluid_set_bulk_visc error")
+    ####################################################
+    #
+    # function that calls wrapper functions which get the parameters from C-Level
+    #
+    ####################################################
+    def _getParamsFromEsCore(self):
+      params = self._params
+
+      if python_lbfluid_get_density(self._params["dens"]):
+        raise Exception("lb_lbfluid_get_density error")
+
+      if python_lbfluid_get_tau(self._params["tau"]):
+        raise Exception("lb_lbfluid_set_tau error")
+
+      if python_lbfluid_get_visc(self._params["visc"]):
+        raise Exception("lb_lbfluid_set_visc error")
+
+      if python_lbfluid_get_bulk_visc(self._params["bulk_visc"]):
+        raise Exception("lb_lbfluid_set_bulk_visc error")
+
+      if python_lbfluid_get_agrid(self._params["agrid"]):
+        raise Exception("lb_lbfluid_set_agrid error")
+
+      #if lb_lbfluid_get_friction(self._params["friction"]):
+      #  raise Exception("lb_lbfluid_set_friction error")
+  
+      #if python_lbfluid_get_ext_force(1, self._params["ext_force",0], self._params["ext_force",1], self._params["ext_force",2]):
+      #   raise Exception("lb_lbfluid_set_ext_force error")
+
+
+      return params
     
 #    property print_vtk_velocity:
 #      def __set__(self, char* _filename):
@@ -157,3 +241,12 @@ IF LB_GPU or LB:
 #        if lb_lbfluid_get_gamma_even(&_p_gamma_even):
 #          raise Exception("lb_lbfluid_get_gamma_even error")
 #        return _p_gamma_even
+
+    ####################################################
+    #
+    # Activate Actor
+    #
+    ####################################################
+    def _activateMethod(self):
+
+       self._setParamsInEsCore()

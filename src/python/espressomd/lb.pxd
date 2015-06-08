@@ -31,18 +31,21 @@ IF LB_GPU or LB:
 
 ###############################################
 #
-# Wrapper-functions for access to C-pointer
+# Wrapper-functions for access to C-pointer: Set params
 #
 ###############################################
   cdef inline python_lbfluid_set_density(p_dens):
 
-    cdef double c_dens[2]
+    IF SHANCHEN:
+      cdef double c_dens[2]
+    ELSE:
+      cdef double c_dens[1]
+
     #get pointers
     if isinstance(p_dens,float) or isinstance(p_dens,int):
-      c_dens[0]=<float>p_dens
-      c_dens[1]=<float>p_dens
+      c_dens[0] = <float>p_dens
     else:
-      return 1 
+      c_dens = p_dens 
     #call c-function
     if(lb_lbfluid_set_density(c_dens)):
       raise Exception("lb_fluid_set_density error at C-level interface")
@@ -51,20 +54,148 @@ IF LB_GPU or LB:
 
 ###############################################
 
-  cdef inline python_lbfluid_set_viscosity(p_visc):
+  cdef inline python_lbfluid_set_tau(p_tau):
 
-    cdef double c_visc[2]
+    cdef double c_tau
     #get pointers
-    if isinstance(p_visc,float):
-      c_visc[0]=p_visc
-      c_visc[1]=p_visc
-    else:
-      return 1 
+    c_tau = p_tau
     #call c-function
-    if(lb_lbfluid_set_density(c_visc)):
-      raise Exception("lb_fluid_set_density error at C-level interface")
+    if(lb_lbfluid_set_tau(c_tau)):
+      raise Exception("lb_fluid_set_tau error at C-level interface")
 
     return 0
+
+###############################################
+
+  cdef inline python_lbfluid_set_visc(p_visc):
+
+    IF SHANCHEN:
+      cdef double c_visc[2]
+    ELSE:
+      cdef double c_visc[1]
+    #get pointers
+    if isinstance(p_visc,float) or isinstance(p_visc,int):
+      c_visc[0] = <float>p_visc
+    else:
+      c_visc = p_visc 
+    #call c-function
+    if(lb_lbfluid_set_visc(c_visc)):
+      raise Exception("lb_fluid_set_visc error at C-level interface")
+
+    return 0
+
+###############################################
+
+  cdef inline python_lbfluid_set_agrid(p_agrid):
+
+    cdef double c_agrid
+    #get pointers
+    c_agrid = p_agrid
+    #call c-function
+    if(lb_lbfluid_set_tau(c_agrid)):
+      raise Exception("lb_fluid_set_agrid error at C-level interface")
+
+    return 0
+
+###############################################
+
+  cdef inline python_lbfluid_set_bulk_visc(p_bvisc):
+
+    IF SHANCHEN:
+      cdef double c_bvisc[2]
+    ELSE:
+      cdef double c_bvisc[1]
+    #get pointers
+    if isinstance(p_bvisc,float) or isinstance(p_bvisc,int):
+      c_bvisc[0] = <float>p_bvisc
+    else:
+      c_bvisc = p_bvisc 
+    #call c-function
+    if(lb_lbfluid_set_bulk_visc(c_bvisc)):
+      raise Exception("lb_fluid_set_bulk_visc error at C-level interface")
+
+    return 0
+
+###############################################
+
+###############################################
+#
+# Wrapper-functions for access to C-pointer: Get params
+#
+###############################################
+  cdef inline python_lbfluid_get_density(p_dens):
+
+    IF SHANCHEN:
+      cdef double c_dens[2]
+    ELSE:
+      cdef double c_dens[1]
+    #call c-function
+    if(lb_lbfluid_get_density(c_dens)):
+      raise Exception("lb_fluid_get_density error at C-level interface")
+    if isinstance(p_dens,float) or isinstance(p_dens,int):
+      p_dens = <double>c_dens[0]
+    else:
+      p_dens = c_dens
+
+    return 0
+
+###############################################
+  cdef inline python_lbfluid_get_tau(p_tau):
+
+    cdef double c_tau[1]
+    #call c-function
+    if(lb_lbfluid_get_tau(c_tau)):
+      raise Exception("lb_fluid_get_tau error at C-level interface")
+    p_tau = <double>c_tau[0]
+
+    return 0
+
+###############################################
+  cdef inline python_lbfluid_get_visc(p_visc):
+
+    IF SHANCHEN:
+      cdef double c_visc[2]
+    ELSE:
+      cdef double c_visc[1]
+    #call c-function
+    if(lb_lbfluid_get_visc(c_visc)):
+      raise Exception("lb_fluid_get_viscosity error at C-level interface")
+    if isinstance(p_visc,float) or isinstance(p_visc,int):
+      p_visc = <double>c_visc[0]
+    else:
+      p_visc = c_visc
+
+    return 0
+
+###############################################
+  cdef inline python_lbfluid_get_agrid(p_agrid):
+
+    cdef double c_agrid[1]
+    #call c-function
+    if(lb_lbfluid_get_agrid(c_agrid)):
+      raise Exception("lb_fluid_get_agrid error at C-level interface")
+    p_agrid = <double>c_agrid[0]
+
+    return 0
+
+###############################################
+  cdef inline python_lbfluid_get_bulk_visc(p_bvisc):
+
+    IF SHANCHEN:
+      cdef double c_bvisc[2]
+    ELSE:
+      cdef double c_bvisc[1]
+    #call c-function
+    if(lb_lbfluid_get_bulk_visc(c_bvisc)):
+      raise Exception("lb_fluid_get_bulk_viscosity error at C-level interface")
+    if isinstance(p_bvisc,float) or isinstance(p_bvisc,int):
+      p_bvisc = <double>c_bvisc[0]
+    else:
+      p_bvisc = c_bvisc
+
+    return 0
+
+###############################################
 
 ##############################################
 #
@@ -105,6 +236,7 @@ IF LB_GPU or LB:
 #
 ##############################################
     int lb_lbfluid_set_tau(double c_tau)
+    int lb_lbfluid_get_tau(double* c_tau)
     int lb_lbfluid_set_density(double* c_dens)
     int lb_lbfluid_get_density(double* c_dens)
     int lb_lbfluid_set_visc(double* c_visc)

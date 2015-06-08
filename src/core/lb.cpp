@@ -150,7 +150,7 @@ static int failcounter=0;
 /*
  * set lattice switch on C-level
 */
-int set_lattice_switch(int py_switch){
+int lb_set_lattice_switch(int py_switch){
 
   if(py_switch == 1){
 #ifdef LB
@@ -169,7 +169,7 @@ int set_lattice_switch(int py_switch){
 /*
  * get lattice switch on py-level
 */
-int get_lattice_switch(int* py_switch){
+int lb_get_lattice_switch(int* py_switch){
   *py_switch = lattice_switch;
 }
 
@@ -485,20 +485,22 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_f
 }
 
 
-int lb_lbfluid_get_density(double* p_dens){
-// TODO: implement all lb_lbfluid_get_*() correctly for all components!!
-  if (lattice_switch & LATTICE_LB_GPU) {
+int lb_lbfluid_get_density(double *p_dens) {
+  for (int ii=0;ii<LB_COMPONENTS;ii++){
+    if ( p_dens[ii] <= 0 )
+      return -1;
+    if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    *p_dens = lbpar_gpu.rho[0];
+      p_dens[ii] = (double)lbpar_gpu.rho[ii];
 #endif // LB_GPU
-  } else {
+    } else {
 #ifdef LB
-    *p_dens = lbpar.rho[0];
+      p_dens[ii] = lbpar.rho[ii];
 #endif // LB
+    }
   }
   return 0;
 }
-
 
 int lb_lbfluid_get_visc(double* p_visc){
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -569,6 +571,18 @@ int lb_lbfluid_get_agrid(double* p_agrid){
   return 0;
 }
 
+int lb_lbfluid_get_tau(double* p_tau){
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    *p_tau = lbpar_gpu.tau;
+#endif // LB_GPU
+  } else {
+#ifdef LB
+    *p_tau = lbpar.tau;
+#endif // LB
+  }
+  return 0;
+}
 
 int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
 #ifdef SHANCHEN
