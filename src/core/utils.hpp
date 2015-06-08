@@ -1070,12 +1070,18 @@ struct vector_size_unequal : public std::exception {
   }
 };
 
+// Below you will find some routines for handling vectors.  Note that
+// all the pointer-type overloads assume a pointer of length 3!  Due
+// to restrictions on the C-level there is no error checking available
+// for the pointer-type overloads, i.e. you won't trigger an exception
+// in out-of-memory situations but will receive a segfault right away.
+
 //
 // cross_product: Calculate the cross product of two vectors
 //
 
-template<typename T, typename A>
-T cross_product(A a);
+template<typename T>
+void cross_product(void);
 
 template<typename T>
 std::vector<T> cross_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
@@ -1100,8 +1106,8 @@ void cross_product(T const * const a, T const * const b, T* c) {
 // dot_product: Calculate the dot product of two vectors
 //
 
-template<typename T, typename A>
-T dot_product(A a, A b);
+template<typename T>
+void dot_product(void);
 
 template<typename T>
 double dot_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
@@ -1123,36 +1129,49 @@ double dot_product(T const * const a, T const * const b) {
 }
 
 //
-// veclen: Calculate the length of a vector
+// veclen and sqrlen: Calculate the length and length squared of a vector
 //
 
-template<typename T, typename A>
-T veclen(A a);
+template<typename T>
+void sqrlen(void);
 
 template<typename T>
-double veclen(const std::vector<T> &a) {
+double sqrlen(const std::vector<T> &a) {
   double c = 0;
   typename std::vector<T>::const_iterator i;
   for (i = a.begin(); i != a.end(); i++)
     c += (*i) * (*i);
-  return sqrt(c);
+  return c;
+}
+
+template<typename T>
+double sqrlen(T const * const a) {
+  double c = 0;
+  for (int i = 0; i < 3; i++)
+    c += a[i] * a[i];
+  return c;
+}
+
+
+template<typename T>
+void veclen(void);
+
+template<typename T>
+double veclen(const std::vector<T> &a) {
+  return sqrt(sqrlen(a));
 }
 
 template<typename T>
 double veclen(T const * const a) {
-  // The pointer overload assumes a pointer of length 3
-  double c = 0;
-  for (int i = 0; i < 3; i++)
-    c += a[i] * a[i];
-  return sqrt(c);
+  return sqrt(sqrlen(a));
 }
 
 //
 // vecsub: Subtract two vectors
 //
 
-template<typename T, typename A>
-T vecsub(A a);
+template<typename T>
+void vecsub(void);
 
 template<typename T>
 std::vector<T> vecsub(const std::vector<T> &a, const std::vector<T> &b) throw() {
@@ -1173,6 +1192,7 @@ void vecsub(T const * const a, T const * const b, T* c) {
 }
 
 }
+
 
 /*@}*/
 
