@@ -561,6 +561,30 @@ IF ROTATION:
                 self._bondId, self._params["k1"], self._params["k2"],
                 self._params["r_0"], self._params["r_cut"])
 
+IF ROTATION != 1:
+    class HarmonicDumbbellBond(BondedInteraction):
+
+        def typeNumber(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def typeName(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def validKeys(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def requiredKeys(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def setDefaultParams(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def _getParamsFromEsCore(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def _setParamsInEsCore(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
 
 IF BOND_CONSTRAINT == 1:
     class RigidBond(BondedInteraction):
