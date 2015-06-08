@@ -44,7 +44,7 @@ typedef struct {
 // Parameters for swimmers
 #ifdef ENGINE
 typedef struct {
-  // v_cs has to stay in the front for memcpy reasons
+  // v_cs has to stay in the front for memmove reasons
   float v_cs[6];
   float v_swim;
   float f_swim;
@@ -58,7 +58,7 @@ typedef struct {
 /** data structure which must be copied to the GPU at each step run on the GPU */
 typedef struct {
 
-  // This has to stay in front of the struct for memcpy reasons
+//   // This has to stay in front of the struct for memmove reasons
 #ifdef ENGINE
   CUDA_ParticleParametersSwimming swim;
 #endif

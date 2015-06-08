@@ -16,10 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
 cimport numpy as np
 import numpy as np
-
 
 cdef extern from "stdlib.h":
     void free(void * ptr)
@@ -37,14 +35,6 @@ cdef np.ndarray create_nparray_from_DoubleList(DoubleList * dl):
     numpyArray = np.zeros(dl.n)
     for i in range(dl.n):
         numpyArray[i] = dl.e[i]
-    return numpyArray
-
-
-cdef np.ndarray create_nparray_from_double_array(double * x, int n):
-    numpyArray = np.zeros(n)
-    for i in range(n):
-        numpyArray[i] = x[i]
-    return numpyArray
 
 cdef IntList * create_IntList_from_python_object(obj):
     cdef IntList * il
@@ -55,7 +45,6 @@ cdef IntList * create_IntList_from_python_object(obj):
     for i in range(len(obj)):
         il.e[i] = obj[i]
         print il.e[i]
-
     return il
 
 cdef checkTypeOrExcept(x, n, t, msg):
@@ -81,6 +70,13 @@ cdef checkTypeOrExcept(x, n, t, msg):
         if not isinstance(x, t):
             if not (t == float and isinstance(x, int)):
                 raise ValueError(msg + " -- Got an " + type(x).__name__)
+
+
+cdef np.ndarray create_nparray_from_double_array(double * x, int n):
+    numpyArray = np.zeros(n)
+    for i in range(n):
+        numpyArray[i] = x[i]
+    return numpyArray
 
 cdef checkRangeOrExcept(x, v_min, incl_min, v_max, incl_max):
     """Checks that x is in range [v_min,v_max] (inlude boundaries via inlc_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to disable limit """

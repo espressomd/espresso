@@ -122,8 +122,8 @@ void meta_perform()
          if (p[i].p.identity == meta_pid1) {
             flag1 = 1;
             p1 = &p[i];
-            memcpy(ppos1, p[i].r.p, 3*sizeof(double));
-            memcpy(img1, p[i].l.i, 3*sizeof(int));
+            memmove(ppos1, p[i].r.p, 3*sizeof(double));
+            memmove(img1, p[i].l.i, 3*sizeof(int));
             unfold_position(ppos1, img1);
 
             if (flag1 && flag2) {
@@ -135,8 +135,8 @@ void meta_perform()
          if (p[i].p.identity == meta_pid2) {
             flag2 = 1;
             p2 = &p[i];
-            memcpy(ppos2, p[i].r.p, 3*sizeof(double));
-            memcpy(img2, p[i].l.i, 3*sizeof(int));
+            memmove(ppos2, p[i].r.p, 3*sizeof(double));
+            memmove(img2, p[i].l.i, 3*sizeof(int));
             unfold_position(ppos2, img2);
 
             if (flag1 && flag2) {

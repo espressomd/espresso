@@ -90,7 +90,7 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
               part = cell->part;
               npart = cell->n;
               for (i=0;i<npart;i++) {
-                memcpy(pos, part[i].r.p, 3*sizeof(double));
+                memmove(pos, part[i].r.p, 3*sizeof(double));
                 fold_position(pos, dummy);
 
                 particle_data_host[i+g].p[0] = (float)pos[0];
@@ -188,7 +188,7 @@ static void cuda_mpi_get_particles_slave(){
         npart = cell->n;
 
         for (i=0;i<npart;i++) {
-          memcpy(pos, part[i].r.p, 3*sizeof(double));
+          memmove(pos, part[i].r.p, 3*sizeof(double));
           fold_position(pos, dummy);
       
           particle_data_host_sl[i+g].p[0] = (float)pos[0];

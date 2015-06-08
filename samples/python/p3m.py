@@ -28,7 +28,7 @@ import numpy
 
 print("""
 =======================================================
-=                    lj_liquid.py                     =
+=                      p3m.py                         =
 =======================================================
 
 Program Information:""")
@@ -49,7 +49,7 @@ density = 0.7
 lj_eps   =  1.0
 lj_sig   =  1.0
 lj_cut   =  1.12246
-lj_cap   = 20 
+lj_cap   =  20 
 
 # Integration parameters
 #############################################################
@@ -97,14 +97,6 @@ n_part = int(volume*density)
 for i in range(n_part):
   system.part[i].pos=numpy.random.random(3)*system.box_l
 
-for i in range(n_part/2-1):
-  system.part[2*i].q = -1.0
-  system.part[2*i+1].q = 1.0
-
-p3m=electrostatics.P3M(bjerrum_length=1.0,mesh=24,accuracy=1e-2)
-system.Actors.add(p3m)
-print(system.Actors)
-
 analyze.distto(system, 0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
@@ -115,6 +107,22 @@ print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
 
+
+# Assingn charge to particles
+for i in range(n_part/2-1):
+  system.part[2*i].q = -1.0
+  system.part[2*i+1].q = 1.0
+# P3M setup after charge assigned
+#############################################################
+p3m=electrostatics.P3M(bjerrum_length=1.0,mesh=24,accuracy=1e-2)
+system.actors.add(p3m)
+print(system.actors)
+
+print("P3M parameter:\n")
+p3m_params=p3m.getParams()
+for key in p3m_params.keys():
+  print("{} = {}".format(key,p3m_params[key]))
+
 #############################################################
 #  Warmup Integration                                       #
 #############################################################
@@ -122,9 +130,6 @@ system.max_num_cells = 2744
 #open Observable file
 obs_file = open("pylj_liquid.obs", "w")
 obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
-#set obs_file [open "$name$ident.obs" "w"]
-#puts $obs_file "\# System: $name$ident"
-#puts $obs_file "\# Time\tE_tot\tE_kin\t..."
 
 print("""
 Start warmup integration:
@@ -143,11 +148,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
   integrate.integrate(warm_steps)
   # Warmup criterion
   act_min_dist = analyze.mindist(es) 
-#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
   i += 1
-
-#   write observables
-#    puts $obs_file "{ time [setmd time] } [analyze energy]"
 
 #   Increase LJ cap
   lj_cap = lj_cap + 10
@@ -172,8 +173,6 @@ verlet_reuse  {0.verlet_reuse}
 """.format(system))
 
 # write parameter file
-
-#polyBlockWrite "$name$ident.set" {box_l time_step skin} "" 
 set_file = open("pylj_liquid.set", "w")
 set_file.write("box_l %s\ntime_step %s\nskin %s\n" % (box_l, system.time_step, system.skin))
 
@@ -188,7 +187,6 @@ system.nonBondedInter.setForceCap(lj_cap)
 print(system.nonBondedInter[0,0].lennardJones)
 
 # print initial energies
-#energies = es._espressoHandle.Tcl_Eval('analyze energy')
 energies = analyze.energy(system=system)
 print(energies)
 
@@ -196,25 +194,12 @@ j = 0
 for i in range(0,int_n_times):
   print("run %d at time=%f " % (i,system.time))
 
-#  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
   integrate.integrate(int_steps)
   
-#  energies = es._espressoHandle.Tcl_Eval('analyze energy')
   energies = analyze.energy(system=system)
   print(energies)
   obs_file.write('{ time %s } %s\n' % (system.time,energies))
 
-#   write observables
-#    set energies [analyze energy]
-#    puts $obs_file "{ time [setmd time] } $energies"
-#    puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
-#    flush stdout
-
-#   write intermediate configuration
-#    if { $i%10==0 } {
-#	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
-#	incr j
-#    }
 
 # write end configuration
 end_file = open("pylj_liquid.end", "w")
@@ -222,12 +207,11 @@ end_file.write("{ time %f } \n { box_l %f }\n" % (system.time, box_l) )
 end_file.write("{ particles {id pos type} }")
 for i in range(n_part):
 	end_file.write("%s\n" % system.part[i].pos)
-	# id & type not working yet
+
 
 obs_file.close()
 set_file.close()
 end_file.close()
-#es._espressoHandle.die()
 
 # terminate program
 print("\nFinished.")

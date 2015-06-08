@@ -87,6 +87,18 @@ cdef extern from "particle_data.hpp":
 
     int set_particle_f(int part, double F[3])
 
+    int set_particle_mass(int part, double mass)
+
+    int set_particle_solvation(int part, double * solvation)
+
+    IF ROTATIONAL_INERTIA == 1:
+        int set_particle_rotational_inertia(int part, double rinertia[3])
+
+        pointer_to_rotational_inertia(Particle * p, double & res[3])
+
+    IF ROTATION_PER_PARTICLE == 1:
+        int set_particle_rotation(int part, int rot)
+
     IF MASS:
         int set_particle_mass(int part, double mass)
         void pointer_to_mass(Particle * p, double * & res)
@@ -103,7 +115,8 @@ cdef extern from "particle_data.hpp":
         int set_particle_rotation(int part, int rot)
         void pointer_to_rotation(Particle * p, int * & res)
 
-    int set_particle_q(int part, double q)
+    IF ELECTROSTATICS:
+        int set_particle_q(int part, double q)
 
     int set_particle_mu_E(int part, double mu_E[3])
 
@@ -114,18 +127,16 @@ cdef extern from "particle_data.hpp":
     IF ROTATION:
         int set_particle_quat(int part, double quat[4])
         void pointer_to_quat(Particle * p, double * & res)
-        # int set_particle_quatu(int part, double quat[4])
         void pointer_to_quatu(Particle * p, double * & res)
-
         int set_particle_omega_lab(int part, double omega[3])
-
         int set_particle_omega_body(int part, double omega[3])
-        void pointer_to_omega_body(Particle * p, double * & res)
-
         int set_particle_torque_lab(int part, double torque[3])
+        int set_particle_torque_body(int part, double torque[3])
+        void pointer_to_omega_body(Particle * p, double * & res)
         void pointer_to_torque_lab(Particle * p, double * & res)
 
-        int set_particle_torque_body(int part, double torque[3])
+    IF MASS == 1:
+        void pointer_to_mass(Particle * p, double * & res)
 
     IF DIPOLES:
         int set_particle_dip(int part, double dip[3])
@@ -181,7 +192,7 @@ cdef extern from "particle_data.hpp":
     void remove_all_bonds_to(int part)
 
 cdef extern from "virtual_sites_relative.hpp":
-    IF VIRTUAL_SITES_RELATIVE:
+    IF VIRTUAL_SITES_RELATIVE == 1:
         int vs_relate_to(int part_num, int relate_to)
         int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
 

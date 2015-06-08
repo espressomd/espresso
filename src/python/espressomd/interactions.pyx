@@ -298,6 +298,7 @@ cdef class GenericLennardJonesInteraction(NonBondedInteraction):
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
 
+
 class NonBondedInteractionHandle(object):
 
     """Provides access to all Non-bonded interactions between 
@@ -308,7 +309,6 @@ class NonBondedInteractionHandle(object):
 
     # Here, one line per non-bonded ia
     lennardJones = None
-    genericLennardJones = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -529,6 +529,7 @@ class HarmonicBond(BondedInteraction):
     def _setParamsInEsCore(self):
         harmonic_set_params(
             self._bondId, self._params["k"], self._params["r_0"], self._params["r_cut"])
+
 
 IF BOND_CONSTRAINT == 1:
     class RigidBond(BondedInteraction):
@@ -796,37 +797,35 @@ ELSE:
     class Angle_Harmonic(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
 
-
 IF BOND_ANGLE == 1:
     class Angle_Cosine(BondedInteraction):
 
         def typeNumber(self):
             return 14
 
-        def typeName(self):
-            return "ANGLE_COSINE"
+    def typeName(self):
+        return "ANGLE_COSINE"
 
-        def validKeys(self):
-            return "K", "phi_0"
+    def validKeys(self):
+        return "bend", "phi0"
 
-        def requiredKeys(self):
-            return "K", "phi_0"
+    def requiredKeys(self):
+        return "bend", "phi0"
 
-        def setDefaultParams(self):
-            self._params = {"K": 0, "phi_0": 0}
+    def setDefaultParams(self):
+        self._params = {"bend": 0, "phi0": 0}
 
-        def _getParamsFromEsCore(self):
-            return \
-                {"K": bonded_ia_params[self._bondId].p.angle_cosine.bend,
-                 "phi_0": bonded_ia_params[self._bondId].p.angle_cosine.phi0}
+    def _getParamsFromEsCore(self):
+        return \
+            {"bend": bonded_ia_params[self._bondId].p.angle_cosine.bend,
+             "phi0": bonded_ia_params[self._bondId].p.angle_cosine.phi0}
 
-        def _setParamsInEsCore(self):
-            angle_cosine_set_params(
-                self._bondId, self._params["K"], self._params["phi_0"])
+    def _setParamsInEsCore(self):
+        angle_cosine_set_params(
+            self._bondId, self._params["bend"], self._params["phi0"])
 ELSE:
     class Angle_Cosine(BondedInteractionNotDefined):
-        name = "BOND_ANGLE_COSINE"
-
+        name = "BOND_ANGLE"
 
 IF BOND_ANGLE == 1:
     class Angle_Cossquare(BondedInteraction):
@@ -1021,6 +1020,110 @@ class Stretchlin_Force(BondedInteraction):
             self._bondId, self._params["r0"], self._params["kslin"])
 
 
+class Area_Force_Local(BondedInteraction):
+
+    def typeNumber(self):
+        return 17
+
+    def typeName(self):
+        return "AREA_FORCE_LOCAL"
+
+    def validKeys(self):
+        return "A0_l", "ka_l"
+
+    def requiredKeys(self):
+        return "A0_l", "ka_l"
+
+    def setDefaultParams(self):
+        self._params = {"A0_l": 1., "ka_l": 0}
+
+    def _getParamsFromEsCore(self):
+        return \
+            {"A0_l": bonded_ia_params[self._bondId].p.area_force_local.A0_l,
+             "ka_l": bonded_ia_params[self._bondId].p.area_force_local.ka_l}
+
+    def _setParamsInEsCore(self):
+        area_force_local_set_params(
+            self._bondId, self._params["A0_l"], self._params["ka_l"])
+
+
+class Bending_Force(BondedInteraction):
+
+    def typeNumber(self):
+        return 18
+
+    def typeName(self):
+        return "BENDING_FORCE"
+
+    def validKeys(self):
+        return "phi0", "kb"
+
+    def requiredKeys(self):
+        return "phi0", "kb"
+
+    def setDefaultParams(self):
+        self._params = {"phi0": 1., "kb": 0}
+
+    def _getParamsFromEsCore(self):
+        return \
+            {"phi0": bonded_ia_params[self._bondId].p.bending_force.phi0,
+             "kb": bonded_ia_params[self._bondId].p.bending_force.kb}
+
+    def _setParamsInEsCore(self):
+        bending_force_set_params(
+            self._bondId, self._params["phi0"], self._params["kb"])
+
+
+class Volume_Force(BondedInteraction):
+
+    def typeNumber(self):
+        return 19
+
+    def typeName(self):
+        return "VOLUME_FORCE"
+
+    def validKeys(self):
+        return "V0", "kv"
+
+    def requiredKeys(self):
+        return "V0", "kv"
+
+    def setDefaultParams(self):
+        self._params = {"V0": 1., "kv": 0}
+
+    def _getParamsFromEsCore(self):
+        return \
+            {"V0": bonded_ia_params[self._bondId].p.volume_force.V0,
+             "kv": bonded_ia_params[self._bondId].p.volume_force.kv}
+
+    def _setParamsInEsCore(self):
+        volume_force_set_params(
+            self._bondId, self._params["V0"], self._params["kv"])
+
+
+class Area_Force_Global(BondedInteraction):
+
+    def typeNumber(self):
+        return 20
+
+    def typeName(self):
+        return "AREA_FORCE_GLOBAL"
+
+    def validKeys(self):
+        return "A0_g", "ka_g"
+
+    def requiredKeys(self):
+        return "A0_g", "ka_g"
+
+    def setDefaultParams(self):
+        self._params = {"A0_g": 1., "ka_g": 0}
+
+    def _getParamsFromEsCore(self):
+        return \
+            {"A0_g": bonded_ia_params[self._bondId].p.area_force_global.A0_g,
+             "ka_g": bonded_ia_params[self._bondId].p.area_force_global.ka_g}
+
+
 bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 3: RigidBond, 5: Dihedral, 6: Tabulated, 7: Subt_Lj,
                             9: Virtual, 11: Endangledist, 12: Overlapped,
                             13: Angle_Harmonic, 14: Angle_Cosine, 15: Angle_Cossquare, 16: Stretching_Force, 17: Area_Force_Local,
@@ -1028,16 +1131,14 @@ bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 3: RigidBond, 5: Dihed
 
 
 class BondedInteractions:
-
     """Represents the bonded interactions. Individual interactions can be accessed using
-    BondedInteractions[i], where i is the bond id. Will return an instance o
+    NonBondedInteractions[i], where i is the bond id. Will return an instance o
     BondedInteractionHandle"""
-    lastId = -1
 
     def __getitem__(self, key):
         if not isinstance(key, int):
             raise ValueError(
-                "Index to BondedInteractions[] has to be an integer referring to a bond id")
+                "Index to BondedInteractions[] hast to ba an integer referring to a bond id")
 
         # Find out the type of the interaction from Espresso
         bondType = bonded_ia_params[key].type
@@ -1062,27 +1163,15 @@ class BondedInteractions:
         # type of key must be int
         if not isinstance(key, int):
             raise ValueError(
-                "Index to BondedInteractions[] has to be an integer referring to a bond id")
+                "Index to BondedInteractions[] has to ba an integer referring to a bond id")
 
         # Value must be subclass off BondedInteraction
         if not isinstance(value, BondedInteraction):
             raise ValueError(
                 "Only subclasses of BondedInteraction can be assigned.")
 
-        BondedInteractions.lastId += 1
         # Save the bond id in the BondedInteraction instance
         value._bondId = key
 
         # Set the parameters of the BondedInteraction instance in the Es core
         value._setParamsInEsCore()
-
-    def add(self, interaction):
-        """Adds a bonded interaction and asigns a bond id.
-        """
-        if not isinstance(interaction, BondedInteraction):
-            raise Exception(
-                "Only subclasses of BondedInteraction can be added.")
-
-        self.lastId += 1
-        interaction._bondId = self.lastId
-        interaction._setParamsInEsCore()

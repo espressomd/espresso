@@ -236,7 +236,7 @@ void predict_momentum_particles(double *result)
 }
 
 /** Calculate total momentum of the system (particles & LB fluid)
- * @param momentum Rsult for this processor (Output)
+ * @param momentum Result for this processor (Output)
  */
 void momentum_calc(double *momentum) 
 {
@@ -252,6 +252,32 @@ void momentum_calc(double *momentum)
     momentum[1] = momentum_fluid[1] + momentum_particles[1];
     momentum[2] = momentum_fluid[2] + momentum_particles[2];
 
+}
+
+/** Calculate total momentum of the system (particles & LB fluid)
+ * inputs are bools to include particles and fluid in the linear momentum calculation
+ * @param momentum Result for this processor (Output)
+ */
+std::vector<double> calc_linear_momentum(int include_particles, int include_lbfluid)
+{
+    double momentum_fluid[3] = { 0., 0., 0. };
+    double momentum_particles[3] = { 0., 0., 0. };
+    std::vector<double> linear_momentum(3,0.0);
+    if (include_particles) {
+      mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
+      linear_momentum[0] += momentum_particles[0];
+      linear_momentum[1] += momentum_particles[1];
+      linear_momentum[2] += momentum_particles[2];
+    }
+    if (include_lbfluid) {
+#ifdef LB
+      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      linear_momentum[0] += momentum_fluid[0];
+      linear_momentum[1] += momentum_fluid[1];
+      linear_momentum[2] += momentum_fluid[2];
+#endif
+    }
+    return linear_momentum;
 }
 
 void centermass(int type, double *com)

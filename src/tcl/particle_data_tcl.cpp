@@ -305,8 +305,8 @@ void tclcommand_part_print_position(Particle *part, char *buffer, Tcl_Interp *in
 {
   double ppos[3];
   int img[3];
-  memcpy(ppos, part->r.p, 3*sizeof(double));
-  memcpy(img, part->l.i, 3*sizeof(int));
+  memmove(ppos, part->r.p, 3*sizeof(double));
+  memmove(img, part->l.i, 3*sizeof(int));
  
   unfold_position(ppos, img);
 
@@ -323,9 +323,9 @@ void tclcommand_part_print_folded_position(Particle *part, char *buffer, Tcl_Int
   double ppos[3];
   int    img[3];
   double pvel[3];
-  memcpy(ppos, part->r.p, 3*sizeof(double));
-  memcpy(img, part->l.i, 3*sizeof(int));
-  memcpy(pvel, part->m.v, 3*sizeof(double));
+  memmove(ppos, part->r.p, 3*sizeof(double));
+  memmove(img, part->l.i, 3*sizeof(int));
+  memmove(pvel, part->m.v, 3*sizeof(double));
 
   fold_position(ppos, pvel, img);
   
