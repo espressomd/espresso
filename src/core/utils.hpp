@@ -1070,6 +1070,13 @@ struct vector_size_unequal : public std::exception {
   }
 };
 
+//
+// cross_product: Calculate the cross product of two vectors
+//
+
+template<typename T, typename A>
+T cross_product(A a);
+
 template<typename T>
 std::vector<T> cross_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
   if ( a.size() != 3 && b.size() != 3 )
@@ -1083,24 +1090,69 @@ std::vector<T> cross_product(const std::vector<T> &a, const std::vector<T> &b) t
 }
 
 template<typename T>
-T dot_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
+void cross_product(T const * const a, T const * const b, T* c) {
+  c[0] = a[1]*b[2] - a[2]*b[1];
+  c[1] = a[2]*b[0] - a[0]*b[2];
+  c[2] = a[0]*b[1] - a[1]*b[0];
+}
+
+//
+// dot_product: Calculate the dot product of two vectors
+//
+
+template<typename T, typename A>
+T dot_product(A a, A b);
+
+template<typename T>
+double dot_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
   if ( a.size() != b.size() )
     throw vector_size_unequal();
 
-  T c = 0;
+  double c = 0;
   for (unsigned int i = 0; i < a.size(); i++)
     c += a[i] * b[i];
   return c;
 }
 
 template<typename T>
-T veclen(const std::vector<T> &a) {
-  T c = 0;
+double dot_product(T const * const a, T const * const b) {
+  double c = 0;
+  for (unsigned int i = 0; i < 3; i++)
+    c += a[i] * b[i];
+  return c;
+}
+
+//
+// veclen: Calculate the length of a vector
+//
+
+template<typename T, typename A>
+T veclen(A a);
+
+template<typename T>
+double veclen(const std::vector<T> &a) {
+  double c = 0;
   typename std::vector<T>::const_iterator i;
   for (i = a.begin(); i != a.end(); i++)
     c += (*i) * (*i);
   return sqrt(c);
 }
+
+template<typename T>
+double veclen(T const * const a) {
+  // The pointer overload assumes a pointer of length 3
+  double c = 0;
+  for (int i = 0; i < 3; i++)
+    c += a[i] * a[i];
+  return sqrt(c);
+}
+
+//
+// vecsub: Subtract two vectors
+//
+
+template<typename T, typename A>
+T vecsub(A a);
 
 template<typename T>
 std::vector<T> vecsub(const std::vector<T> &a, const std::vector<T> &b) throw() {
@@ -1111,6 +1163,13 @@ std::vector<T> vecsub(const std::vector<T> &a, const std::vector<T> &b) throw() 
   for (unsigned int i = 0; i < a.size(); i++)
     c[i] = a[i] - b[i];
   return c;
+}
+
+template<typename T>
+void vecsub(T const * const a, T const * const b, T* c) {
+  // Note the different signature for pointers here!
+  for (unsigned int i = 0; i < 3; i++)
+    c[i] = a[i] - b[i];
 }
 
 }
