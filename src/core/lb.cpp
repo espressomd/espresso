@@ -156,11 +156,13 @@ int lb_set_lattice_switch(int py_switch){
 #ifdef LB
     if( !(lattice_switch & LATTICE_LB_GPU) ) 
       lattice_switch = lattice_switch | LATTICE_LB;
-#else
+      return 0;
+#endif
+#ifdef LB_GPU
   }else if(py_switch == 2){
     lattice_switch = lattice_switch | LATTICE_LB_GPU;
-#endif
     return 0;
+#endif
   }else{
     return 1;
   }

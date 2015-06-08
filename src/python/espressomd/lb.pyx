@@ -89,7 +89,7 @@ IF LB_GPU or LB:
     ####################################################
     def defaultParams(self):
       IF SHANCHEN:
-        return {"gpu":0,\
+        return {"gpu":"yes",\
                 "agrid":-1.0,\
                 "dens":[-1.0,-1.0],\
                 "fric":[-1.0,-1.0],\
@@ -98,7 +98,7 @@ IF LB_GPU or LB:
                 "bulk_visc":[-1.0,-1.0],\
                 "tau":-1.0}
       ELSE:
-        return {"gpu":0,\
+        return {"gpu":"no",\
                 "agrid":-1.0,\
                 "dens":-1.0,\
                 "fric":-1.0,\
@@ -116,12 +116,13 @@ IF LB_GPU or LB:
       default_params=self.defaultParams()
 
       #Check if GPU code should be used
-      if not (self._params["gpu"]):
-        py_lattice_switch = 1
-        print "Using LB CPU code"
-      else:
+      if (self._params["gpu"] == "yes"):
         py_lattice_switch = 2
         print "Using LB GPU code"
+      else:
+        py_lattice_switch = 1
+        print "Using LB CPU code"
+
       if lb_set_lattice_switch(py_lattice_switch):
         raise Exception("lb_set_lattice_switch error")
 
@@ -250,3 +251,12 @@ IF LB_GPU or LB:
     def _activateMethod(self):
 
        self._setParamsInEsCore()
+
+    ####################################################
+    #
+    # Deactivate Actor
+    #
+    ####################################################
+    #def _deactivateMethod(self):
+
+    #   self._setParamsInEsCore()

@@ -49,6 +49,7 @@ IF LB_GPU or LB:
     #call c-function
     if(lb_lbfluid_set_density(c_dens)):
       raise Exception("lb_fluid_set_density error at C-level interface")
+    print "set dens"
 
     return 0
 
@@ -63,6 +64,7 @@ IF LB_GPU or LB:
     if(lb_lbfluid_set_tau(c_tau)):
       raise Exception("lb_fluid_set_tau error at C-level interface")
 
+    print "set tau"
     return 0
 
 ###############################################
@@ -82,6 +84,7 @@ IF LB_GPU or LB:
     if(lb_lbfluid_set_visc(c_visc)):
       raise Exception("lb_fluid_set_visc error at C-level interface")
 
+    print "set visc"
     return 0
 
 ###############################################
@@ -95,6 +98,7 @@ IF LB_GPU or LB:
     if(lb_lbfluid_set_tau(c_agrid)):
       raise Exception("lb_fluid_set_agrid error at C-level interface")
 
+    print "set agrid"
     return 0
 
 ###############################################
