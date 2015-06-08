@@ -49,7 +49,6 @@ IF LB_GPU or LB:
     #call c-function
     if(lb_lbfluid_set_density(c_dens)):
       raise Exception("lb_fluid_set_density error at C-level interface")
-    print "set dens"
 
     return 0
 
@@ -64,7 +63,6 @@ IF LB_GPU or LB:
     if(lb_lbfluid_set_tau(c_tau)):
       raise Exception("lb_fluid_set_tau error at C-level interface")
 
-    print "set tau"
     return 0
 
 ###############################################
@@ -84,7 +82,6 @@ IF LB_GPU or LB:
     if(lb_lbfluid_set_visc(c_visc)):
       raise Exception("lb_fluid_set_visc error at C-level interface")
 
-    print "set visc"
     return 0
 
 ###############################################
@@ -98,7 +95,6 @@ IF LB_GPU or LB:
     if(lb_lbfluid_set_tau(c_agrid)):
       raise Exception("lb_fluid_set_agrid error at C-level interface")
 
-    print "set agrid"
     return 0
 
 ###############################################
@@ -121,6 +117,39 @@ IF LB_GPU or LB:
     return 0
 
 ###############################################
+
+  cdef inline python_lbfluid_set_friction(p_friction):
+
+    IF SHANCHEN:
+      cdef double c_friction[2]
+    ELSE:
+      cdef double c_friction[1]
+    #get pointers
+    if isinstance(p_friction,float) or isinstance(p_friction,int):
+      c_friction[0] = <float>p_friction
+    else:
+      c_friction = p_friction
+    #call c-function
+    if(lb_lbfluid_set_friction(c_friction)):
+      raise Exception("lb_fluid_set_friction error at C-level interface")
+
+    return 0
+
+###############################################
+
+  cdef inline python_lbfluid_set_ext_force(p_ext_force):
+
+    cdef double c_ext_force[3]
+    #get pointers
+    c_ext_force = p_ext_force 
+    #call c-function
+    if(lb_lbfluid_set_ext_force(1, c_ext_force[0], c_ext_force[1], c_ext_force[2])):
+      raise Exception("lb_fluid_set_ext_force error at C-level interface")
+
+    return 0
+
+###############################################
+
 
 ###############################################
 #
@@ -200,6 +229,36 @@ IF LB_GPU or LB:
     return 0
 
 ###############################################
+  cdef inline python_lbfluid_get_friction(p_friction):
+
+    IF SHANCHEN:
+      cdef double c_friction[2]
+    ELSE:
+      cdef double c_friction[1]
+    #call c-function
+    if(lb_lbfluid_get_friction(c_friction)):
+      raise Exception("lb_fluid_get_friction error at C-level interface")
+    if isinstance(p_friction,float) or isinstance(p_friction,int):
+      p_fricition = <double>c_friction[0]
+    else:
+      p_friction = c_friction
+
+    return 0
+
+###############################################
+
+  cdef inline python_lbfluid_get_ext_force(p_ext_force):
+
+    cdef double c_ext_force[3]
+    #call c-function
+    if(lb_lbfluid_get_ext_force(c_ext_force)):
+      raise Exception("lb_fluid_get_ext_force error at C-level interface")
+    p_ext_force = c_ext_force
+
+    return 0
+
+###############################################
+
 
 ##############################################
 #
@@ -254,7 +313,7 @@ IF LB_GPU or LB:
     int lb_lbfluid_set_gamma_even(double* c_gamma_even)
     int lb_lbfluid_get_gamma_even(double* c_gamma_even)
     int lb_lbfluid_set_ext_force(int component, double c_fx, double c_fy, double c_fz)
-    int lb_lbfluid_get_ext_force(int component, double* c_fx, double* c_fy, double* c_fz)
+    int lb_lbfluid_get_ext_force(double* c_f)
     int lb_lbfluid_set_bulk_visc(double* c_bulk_visc)
     int lb_lbfluid_get_bulk_visc(double* c_bulk_visc)
     int lb_lbfluid_print_vtk_velocity(char* filename)

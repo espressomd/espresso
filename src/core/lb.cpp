@@ -362,6 +362,25 @@ int lb_lbfluid_set_friction(double * p_friction)
 }
 
 
+int lb_lbfluid_get_friction(double * p_friction)
+{
+  for (int ii=0;ii<LB_COMPONENTS;ii++){
+    if ( p_friction[ii] <= 0 )
+            return -1;
+    if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+      p_friction[ii] = (double)lbpar_gpu.friction[ii];
+#endif // LB_GPU
+    } else {
+#ifdef LB
+       p_friction[ii] = lbpar.friction[ii];
+#endif // LB
+    }
+  }
+  return 0;
+}
+
+
 int lb_lbfluid_set_couple_flag(int couple_flag) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -505,14 +524,18 @@ int lb_lbfluid_get_density(double *p_dens) {
 }
 
 int lb_lbfluid_get_visc(double* p_visc){
-  if (lattice_switch & LATTICE_LB_GPU) {
+  for (int ii=0;ii<LB_COMPONENTS;ii++){
+    if ( p_visc[ii] <= 0 )
+      return -1;
+    if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    *p_visc = lbpar_gpu.viscosity[0];
+      p_visc[ii] = (double)lbpar_gpu.viscosity[ii];
 #endif // LB_GPU
-  } else {
+    } else {
 #ifdef LB
-    *p_visc = lbpar.viscosity[0];
+      p_visc[ii] = lbpar.viscosity[ii];
 #endif // LB
+     }
   }
   return 0;
 }
@@ -586,22 +609,22 @@ int lb_lbfluid_get_tau(double* p_tau){
   return 0;
 }
 
-int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
+int lb_lbfluid_get_ext_force(double* p_f){
 #ifdef SHANCHEN
   fprintf(stderr, "Not implemented yet (%s:%d) ",__FILE__,__LINE__);
   errexit();
 #endif // SHANCHEN
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    *p_fx = lbpar_gpu.ext_force[0];
-    *p_fy = lbpar_gpu.ext_force[1];
-    *p_fz = lbpar_gpu.ext_force[2];
+    p_f[0] = lbpar_gpu.ext_force[0];
+    p_f[1] = lbpar_gpu.ext_force[1];
+    p_f[2] = lbpar_gpu.ext_force[2];
 #endif // LB_GPU
   } else {
 #ifdef LB
-    *p_fx = lbpar.ext_force[0];
-    *p_fy = lbpar.ext_force[1];
-    *p_fz = lbpar.ext_force[2];
+    p_f[0] = lbpar.ext_force[0];
+    p_f[1] = lbpar.ext_force[1];
+    p_f[2] = lbpar.ext_force[2];
 #endif // LB
   }
   return 0;

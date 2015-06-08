@@ -142,11 +142,13 @@ IF LB_GPU or LB:
       if python_lbfluid_set_agrid(self._params["agrid"]):
         raise Exception("lb_lbfluid_set_agrid error")
 
-      #if lb_lbfluid_set_friction(self._params["friction"]):
-      #  raise Exception("lb_lbfluid_set_friction error")
+      if not self._params["fric"] == default_params["fric"]:
+        if python_lbfluid_set_friction(self._params["fric"]):
+          raise Exception("lb_lbfluid_set_friction error")
   
-      #if python_lbfluid_set_ext_force(1, self._params["ext_force",0], self._params["ext_force",1], self._params["ext_force",2]):
-      #   raise Exception("lb_lbfluid_set_ext_force error")
+      if not self._params["ext_force"] == default_params["ext_force"]:
+        if python_lbfluid_set_ext_force(self._params["ext_force"]):
+           raise Exception("lb_lbfluid_set_ext_force error")
 
     ####################################################
     #
@@ -154,6 +156,7 @@ IF LB_GPU or LB:
     #
     ####################################################
     def _getParamsFromEsCore(self):
+      default_params=self.defaultParams()
       params = self._params
 
       if python_lbfluid_get_density(self._params["dens"]):
@@ -165,17 +168,20 @@ IF LB_GPU or LB:
       if python_lbfluid_get_visc(self._params["visc"]):
         raise Exception("lb_lbfluid_set_visc error")
 
-      if python_lbfluid_get_bulk_visc(self._params["bulk_visc"]):
-        raise Exception("lb_lbfluid_set_bulk_visc error")
+      if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+        if python_lbfluid_get_bulk_visc(self._params["bulk_visc"]):
+          raise Exception("lb_lbfluid_set_bulk_visc error")
 
       if python_lbfluid_get_agrid(self._params["agrid"]):
         raise Exception("lb_lbfluid_set_agrid error")
 
-      #if lb_lbfluid_get_friction(self._params["friction"]):
-      #  raise Exception("lb_lbfluid_set_friction error")
+      if not self._params["fric"] == default_params["fric"]:
+        if python_lbfluid_get_friction(self._params["fric"]):
+          raise Exception("lb_lbfluid_set_friction error")
   
-      #if python_lbfluid_get_ext_force(1, self._params["ext_force",0], self._params["ext_force",1], self._params["ext_force",2]):
-      #   raise Exception("lb_lbfluid_set_ext_force error")
+      if not self._params["ext_force"] == default_params["ext_force"]:
+        if python_lbfluid_get_ext_force(self._params["ext_force"]):
+          raise Exception("lb_lbfluid_set_ext_force error")
 
 
       return params
