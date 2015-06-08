@@ -64,11 +64,11 @@ cdef class Cellsystem:
         if (node_grid[0] != 1 or node_grid[1] != 1):
             node_grid[0] = node_grid[1] = 1
             node_grid[2] = n_nodes
-            err = mpi_bcast_parameter(FIELD_NODEGRID)
+            MPI_err = mpi_bcast_parameter(FIELD_NODEGRID)
         else:
-            err = 0
+            MPI_err = 0
 
-        if not err:
+        if not MPI_err:
             mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED)
 
         # @TODO: gathering should be interface independent

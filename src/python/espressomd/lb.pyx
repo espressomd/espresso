@@ -37,13 +37,13 @@ IF LB_GPU or LB:
 
     def __init__(self, key):
       if key == "gpu":
-        lattice_switch = 2
+        py_lattice_switch = lattice_switch
         print "LB GPU on"
-        if lb_set_lattice_switch(lattice_switch):
+        if lb_set_lattice_switch(py_lattice_switch):
           raise Exception("lb_set_lattice_switch error")
 
       else: 
-        lattice_switch = 1
+        py_lattice_switch = 1
         print "LB CPU on"
 
     def validateParams(self):
