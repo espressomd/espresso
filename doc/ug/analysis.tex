@@ -162,6 +162,23 @@ of the currently identified properties.
 \subsection{Cylindrical Average}
 \label{analyze:cylindricalaverage}
 
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    cylindrical_average
+  }{
+    system = \arg{system},
+    center = \arg{3 floats},
+    direction = \arg{3 floats},
+    length = \arg{float},
+    radius = \arg{float},
+    bins_axial = \arg{int},
+    bins_radial = \arg{int},
+    types = \arg{list of ints}
+  }
+\end{pysyntax}
+
 \begin{essyntax}
   analyze cylindrical_average \var{center} \var{direction}
   \var{length} \var{radius} \var{bins\_axial} \var{bins\_radial}
