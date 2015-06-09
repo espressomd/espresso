@@ -120,7 +120,7 @@ class Actors:
         if not actor in Actors.activeActors:
             Actors.activeActors.append(actor)
             actor._activate()
-			actor.system=self.system
+            actor.system=self.system
         else:
             raise ThereCanOnlyBeOne(actor)
 

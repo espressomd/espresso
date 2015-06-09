@@ -36,7 +36,7 @@ cdef class System:
     part = particle_data.particleList()
     nonBondedInter = interactions.NonBondedInteractions()
     bondedInter = interactions.BondedInteractions()
-	cellSystem = CellSystem()
+    cellSystem = CellSystem()
     def __init__(self):
         self.Actors = actors.Actors(self)
 
@@ -113,39 +113,39 @@ cdef class System:
             mpi_bcast_parameter(FIELD_MINNUMCELLS)
         def __get__(self):
             return min_num_cells
-    
+
     property max_part:
         def __get__(self):
             return max_seen_particle
-  
+
     property max_range:
         def __get__(self):
             return max_range
-  
+
     property max_skin:
         def __get__(self):
             return max_skin
-  
+
     property n_layers:
         def __get__(self):
             return n_layers
-  
+
     property n_nodes:
         def __get__(self):
             return n_nodes
-  
+
     property n_part:
         def __get__(self):
             return n_part
-  
+
     property n_part_types:
         def __get__(self):
             return n_particle_types
-  
+
     property n_rigidbonds:
         def __get__(self):
             return n_rigidbonds
-  
+
     property node_grid:
         def __set__(self, _node_grid):
             global node_grid
@@ -162,27 +162,27 @@ cdef class System:
             mpi_bcast_parameter(FIELD_NODEGRID)
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])
-  
+
     property nptiso_gamma0:
         def __get__(self):
             return nptiso_gamma0
-  
+
     property nptiso_gammav:
         def __get__(self):
             return nptiso_gammav
-  
+
     property npt_p_ext:
         def __get__(self):
             return nptiso.p_ext
-  
+
     property npt_p_inst:
         def __get__(self):
             return nptiso.p_inst
-  
+
     property npt_p_inst_av:
         def __get__(self):
             return nptiso.p_inst_av
-  
+
     property npt_piston:
         def __set__(self, _npt_piston):
             global npt_piston
@@ -351,7 +351,7 @@ cdef class System:
     def changeVolumeAndRescaleParticles(dNew, dir="xyz"):
       """Change box size and rescale particle coordinates
          changeVolumeAndRescaleParticles(dNew, dir="xyz")
-	 dNew: new length, dir=coordinate tow work on, "xyz" for isotropic
+         dNew: new length, dir=coordinate tow work on, "xyz" for isotropic
       """
       if dNew<0:
         raise ValueError("No negative lengths")
