@@ -766,15 +766,56 @@ applying the bond using the \keyword{bond} particle, the number of involved
 particles plays a role. The number of involved particles and their order, if
 important, is nevertheless specified here for completeness.
 
+In the python interface you don't have to worry about bond ids.
+A minimalistic example how to set up bonded harmonic interactions between two particles (particle ids 0 and 1) follows:
+
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    HarmonicBond
+  }{
+    r_0=\arg{double},
+    k=\arg{double}
+  }[
+    r_cut=\arg{double}
+  ]
+\end{pysyntax}
+
 \subsection{FENE bond}
 \index{FENE bond|mainindex}
 \index{interactions!FENE|mainindex}
+
+\begin{pysyntax}
+  \object{
+    espressomd.interaction
+  }{
+    FeneBond
+  }{
+    k=\arg{double},
+    d_r_max=\arg{double}
+  }[
+  ]
+\end{pysyntax}
 
 \begin{essyntax}
   inter \var{bondid}
   fene
   \var{K} \var{\Delta r_\mathrm{max}} \opt{\var{r_0}}
 \end{essyntax}
+\begin{pysyntax}
+ \object{
+	 espressomd.System().bondedInter.add(FeneBond)
+  }{
+    setParams
+  }{
+    k=\arg{double},
+    drmax=\arg{double},
+  }[
+    r_0=\arg{double=0.}
+  ]
+\end{pysyntax}
+
 This creates a bond type with identificator \var{bondid} with a
 FENE (finite extension nonlinear expander) interaction. This is a
 rubber-band-like, symmetric interaction between two particles with
@@ -790,6 +831,19 @@ $r=\var{r_0}+\var{\Delta r_\mathrm{max}}$. It is given by
 \subsection{Harmonic bond}
 \index{harmonic bond|mainindex}
 \index{interactions!harmonic|mainindex}
+
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    HarmonicBond
+  }{
+    k=\arg{double},
+    r_0=\arg{double},
+  }[
+    r_cut=\arg{double}
+  ]
+\end{pysyntax}
 
 \begin{essyntax}
   inter \var{bondid}
@@ -810,6 +864,20 @@ background error will be raised.
 \subsection{Harmonic Dumbbell Bond}
 \index{harmonic dumbbell bond|mainindex}
 \index{interactions!harmonic dumbbell|mainindex}
+
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    HarmonicDumbbellBond
+  }{
+    k1=\arg{double},
+    k2=\arg{double},
+    r_0=\arg{double},
+  }[
+    r_cut=\arg{double}
+  ]
+\end{pysyntax}
 
 \begin{essyntax}
   inter \var{bondid}
@@ -895,16 +963,32 @@ general tabulated potentials.
 \index{Rattle Shake algorithm}
 \label{sec:rattle}
 
+\begin{pysyntax}
+\object{espressomd.interactions}{
+	RigidBond
+}{
+	r=\arg{double},
+}[
+	ptol=\arg{double},
+	vtol=\arg{double}
+]
+\end{pysyntax}
+ \PythonSyntaxOff
+
 \begin{essyntax}
   inter \var{bondid}
   rigid_bond
   \var{constrained\_bond\_distance} \var{positional\_tolerance} 
   \var{velocity\_tolerance}
+  \begin{features}
+    \required{BOND_CONSTRAINT}
+  \end{features}
 \end{essyntax}
 
 To simulate rigid bonds, \es uses the Rattle Shake algorithm which
 satisfies internal constraints for molecular models with internal
 constraints, using Lagrange multipliers.\cite{andersen83a}
+In the python implementation the constrained bond distance is named r, the positional tolerance is named ptol and the velocity tolerance is named vtol.
 
 \subsection{Tabulated bond interactions}
 \index{tabulated bond interactions|mainindex}
@@ -950,6 +1034,15 @@ The potential is calculated as follows:
 \end{itemize}
 
 \subsection{Virtual bonds}
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    Virtual
+  }{
+  }[
+  ]
+\end{pysyntax}
 \begin{essyntax}
   inter \var{bondid} virtual_bond
 \end{essyntax}
@@ -1193,6 +1286,18 @@ vector product $01\times02$. The orientation must point inside the immersed obje
 \index{bond-angle interactions|mainindex}
 \index{interactions!bond-angle|mainindex}
 \label{sec:angle}
+
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    Angle_Cosine
+  }{
+    K=\arg{double}
+  }[
+    phi_0=\arg{double}
+  ]
+\end{pysyntax}
 
 \begin{essyntax}
   \variant{1} inter \var{bondid} angle\_harmonic \var{K} \opt{\var{\phi_0}}
@@ -1854,6 +1959,20 @@ default.
   Please cite~\citewbibkey{elc} when using ELC, and in addition
   \citewbibkey{icelc} if you use dielectric interfaces.
 \end{citebox}
+
+\begin{pysyntax}
+  \object{
+    espressomd.electrostatic_extensions
+  }{
+    ELC
+  }{
+    gap_size=\arg{double},
+    maxPWerror=\arg{double},
+  }[
+    neutralize=\arg{bool},
+    far_cut=\arg{double}
+  ]
+\end{pysyntax}
 
 \begin{essyntax}
   inter coulomb elc \var{maximal\_pairwise\_error} \var{gap\_size}

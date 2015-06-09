@@ -361,7 +361,7 @@ int calc_hydrogen_bond_energy(Particle *s1, Particle *b1, Particle *b2, Particle
   double potential = 0.0;
 
   /* helper variables */
-  double ra, temp, tau_r, tau_d, tau_flip;
+  double ra, tau_r, tau_d, tau_flip;
   const Bonded_ia_parameters params = *iaparams;
   const double E0 = params.p.hydrogen_bond.E0;
   

@@ -969,7 +969,7 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
               if (sizeof(lbForceFloat) == sizeof(float))
                 fscanf(cpfile, "%f", &host_checkpoint_force[n]);
               else
-                fscanf(cpfile, "%lf", &host_checkpoint_force[n]);
+                fscanf(cpfile, "%f", &host_checkpoint_force[n]);
             }
             lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
         }
@@ -1418,7 +1418,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1462,7 +1462,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1514,7 +1514,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1560,7 +1560,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1612,7 +1612,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1656,7 +1656,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;

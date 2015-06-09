@@ -40,24 +40,41 @@ PYFILES = __init__.py \
 PYXFILES =  \
 	_init.pyx \
 	_system.pyx \
-  actors.pyx \ 
+	actors.pyx \
 	analyze.pyx \
 	cellsystem.pyx \
 	code_info.pyx \
 	cuda_init.pyx \
 	debye_hueckel.pyx \
-  electrostatics.pyx \
+	electrostatic_extensions.pyx \
+	electrostatics.pyx \
 	integrate.pyx \
 	interactions.pyx \
-  lb.pyx \
 	particle_data.pyx \
 	thermostat.pyx \
-	utils.pyx
+	utils.pyx \ 
+	electrostatics.pyx
 
 PXDFILES = \
 	_espresso/globals.pxd \
+	analyze.pxd \
 	c_analyze.pxd \
-	$(PYXFILES:.pyx=.pxd)
+	cellsystem.pxd \
+	code_info.pxd \
+	cuda_init.pxd \
+	debye_hueckel.pxd \
+	electrostatic_extensions.pxd \
+	electrostatics.pxd \
+	_espresso.pxd \
+	_init.pxd \
+	integrate.pxd \
+	interactions.pxd \
+	lb.pxd \
+	particle_data.pxd \
+	_system.pxd \
+	_tcl.pxd \
+	thermostat.pxd \
+	utils.pxd
 
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la

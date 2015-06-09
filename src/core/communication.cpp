@@ -492,7 +492,7 @@ void mpi_send_v(int pnode, int part, double v[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    memcpy(p->m.v, v, 3*sizeof(double));
+    memmove(p->m.v, v, 3*sizeof(double));
   }
   else
     MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -552,7 +552,7 @@ void mpi_send_f(int pnode, int part, double F[3])
     F[0] /= PMASS(*p);
     F[1] /= PMASS(*p);
     F[2] /= PMASS(*p);
-    memcpy(p->f.f, F, 3*sizeof(double));
+    memmove(p->f.f, F, 3*sizeof(double));
   }
   else
     MPI_Send(F, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -841,7 +841,7 @@ void mpi_send_omega(int pnode, int part, double omega[3])
 
   if (pnode == this_node) {
    Particle *p = local_particles[part];
-/*  memcpy(p->omega, omega, 3*sizeof(double));*/
+/*  memmove(p->omega, omega, 3*sizeof(double));*/
     p->m.omega[0] = omega[0];
     p->m.omega[1] = omega[1];
     p->m.omega[2] = omega[2];
@@ -1160,7 +1160,7 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   
   /* fetch fixed data */
   if (pnode == this_node)
-    memcpy(pdata, local_particles[part], sizeof(Particle));
+    memmove(pdata, local_particles[part], sizeof(Particle));
   else {
     mpi_call(mpi_recv_part_slave, pnode, part);
     MPI_Recv(pdata, sizeof(Particle), MPI_BYTE, pnode,
@@ -1173,7 +1173,7 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   if (bl->n > 0) {
     alloc_intlist(bl, bl->n);
     if (pnode == this_node)
-      memcpy(bl->e, local_particles[part]->bl.e, sizeof(int)*bl->n);
+      memmove(bl->e, local_particles[part]->bl.e, sizeof(int)*bl->n);
     else
       MPI_Recv(bl->e, bl->n, MPI_INT, pnode,
                SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
@@ -1187,7 +1187,7 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   if (el->n > 0) {
     alloc_intlist(el, el->n);
     if (pnode == this_node)
-      memcpy(el->e, local_particles[part]->el.e, sizeof(int)*el->n);
+      memmove(el->e, local_particles[part]->el.e, sizeof(int)*el->n);
     else
       MPI_Recv(el->e, el->n, MPI_INT, pnode,
                SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
@@ -1613,14 +1613,14 @@ void mpi_get_particles(Particle *result, IntList *bi)
 	  cell = local_cells.cell[c];
 	  part = cell->part;
 	  npart = cell->n;
-	  memcpy(&result[g], part, npart*sizeof(Particle));
+	  memmove(&result[g], part, npart*sizeof(Particle));
 	  g += npart;
 	  if (bi) {
 	    int pc;
 	    for (pc = 0; pc < npart; pc++) {
 	      Particle *p = &part[pc];
 	      realloc_intlist(&local_bi, local_bi.n + p->bl.n);
-	      memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
+	      memmove(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
 	      local_bi.n += p->bl.n;
 	    }
 	  }
@@ -1661,7 +1661,7 @@ void mpi_get_particles(Particle *result, IntList *bi)
 	realloc_intlist(bi, bi->n + sizes[pnode]);
 
 	if (pnode == this_node)
-	  memcpy(&bi->e[bi->n], local_bi.e, sizes[pnode]*sizeof(int));
+	  memmove(&bi->e[bi->n], local_bi.e, sizes[pnode]*sizeof(int));
 	else
 	  MPI_Recv(&bi->e[bi->n], sizes[pnode], MPI_INT, pnode, SOME_TAG,
 		   comm_cart, MPI_STATUS_IGNORE);
@@ -1721,14 +1721,14 @@ void mpi_get_particles_slave(int pnode, int bi)
       cell = local_cells.cell[c];
       part = cell->part;
       npart = cell->n;
-      memcpy(&result[g],part,npart*sizeof(Particle));
+      memmove(&result[g],part,npart*sizeof(Particle));
       g+=cell->n;
       if (bi) {
 	int pc;
 	for (pc = 0; pc < npart; pc++) {
 	  Particle *p = &part[pc];
 	  realloc_intlist(&local_bi, local_bi.n + p->bl.n);
-	  memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
+	  memmove(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
 	  local_bi.n += p->bl.n;
 	}
       }
@@ -1988,7 +1988,7 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask, double torque[
       p->p.ext_flag |= flag;
 
       if (mask & PARTICLE_EXT_TORQUE) 
-        memcpy(p->p.ext_torque, torque, 3*sizeof(double));
+        memmove(p->p.ext_torque, torque, 3*sizeof(double));
     }
     else {
       s_buf[0] = flag; s_buf[1] = mask;
@@ -2037,7 +2037,7 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3]
     /* set new values */
     p->p.ext_flag |= flag;
     if (mask & PARTICLE_EXT_FORCE)
-      memcpy(p->p.ext_force, force, 3*sizeof(double));
+      memmove(p->p.ext_force, force, 3*sizeof(double));
   }
   else {
     s_buf[0] = flag; s_buf[1] = mask;
@@ -2086,7 +2086,7 @@ void mpi_bcast_constraint(int del_num)
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
-    memcpy(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
+    memmove(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
     n_constraints--;
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   }
@@ -2109,7 +2109,7 @@ void mpi_bcast_constraint_slave(int node, int parm)
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
-    memcpy(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));
+    memmove(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));
     n_constraints--;
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));    
   }
@@ -2139,7 +2139,7 @@ void mpi_bcast_lbboundary(int del_num)
   }
 #endif
   else {
-    memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
+    memmove(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
     lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
@@ -2169,7 +2169,7 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
   }
 #endif
   else {
-    memcpy(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
+    memmove(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
     lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
   }
@@ -2983,7 +2983,7 @@ void mpi_galilei_transform()
   double cmsvel[3];
 
   mpi_system_CMS_velocity();
-  memcpy(cmsvel, gal.cms_vel, 3*sizeof(double));
+  memmove(cmsvel, gal.cms_vel, 3*sizeof(double));
 
   mpi_call(mpi_galilei_transform_slave, -1, 0);
   MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);

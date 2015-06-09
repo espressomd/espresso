@@ -236,7 +236,7 @@ void predict_momentum_particles(double *result)
 }
 
 /** Calculate total momentum of the system (particles & LB fluid)
- * @param momentum Rsult for this processor (Output)
+ * @param momentum Result for this processor (Output)
  */
 void momentum_calc(double *momentum) 
 {
@@ -252,6 +252,32 @@ void momentum_calc(double *momentum)
     momentum[1] = momentum_fluid[1] + momentum_particles[1];
     momentum[2] = momentum_fluid[2] + momentum_particles[2];
 
+}
+
+/** Calculate total momentum of the system (particles & LB fluid)
+ * inputs are bools to include particles and fluid in the linear momentum calculation
+ * @param momentum Result for this processor (Output)
+ */
+std::vector<double> calc_linear_momentum(int include_particles, int include_lbfluid)
+{
+    double momentum_fluid[3] = { 0., 0., 0. };
+    double momentum_particles[3] = { 0., 0., 0. };
+    std::vector<double> linear_momentum(3,0.0);
+    if (include_particles) {
+      mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
+      linear_momentum[0] += momentum_particles[0];
+      linear_momentum[1] += momentum_particles[1];
+      linear_momentum[2] += momentum_particles[2];
+    }
+    if (include_lbfluid) {
+#ifdef LB
+      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      linear_momentum[0] += momentum_fluid[0];
+      linear_momentum[1] += momentum_fluid[1];
+      linear_momentum[2] += momentum_fluid[2];
+#endif
+    }
+    return linear_momentum;
 }
 
 void centermass(int type, double *com)
@@ -852,6 +878,38 @@ void calc_structurefactor(int type, int order, double **_ff) {
     for(qi=0; qi<order2; qi++) 
       if (ff[2*qi+1]!=0) ff[2*qi]/= n*ff[2*qi+1];
   }
+}
+
+std::vector< std::vector<double> > modify_stucturefactor( int order, double *sf)
+{
+  int length = 0;
+
+  for (int i = 0; i < order * order; i++) 
+  {
+    if (sf[2 * i + 1] > 0)
+    {
+      length++;
+    }
+  }
+
+  double qfak = 2.0 * PI / box_l[0];
+  std::vector<double> intern;
+  intern.assign( 2, 0.0);
+  std::vector< std::vector<double> > structure_factor;
+  structure_factor.assign( length, intern);
+
+  int cnt = 0;
+  for (int i = 0; i < order * order; i++) 
+  {
+    if (sf[2 * i + 1] > 0)
+    {
+      structure_factor[cnt][0] = qfak * sqrt(i + 1);
+      structure_factor[cnt][1] = sf[2 * i];
+      cnt++;
+    }
+  }
+
+  return structure_factor;
 }
 
 //calculates average density profile in dir direction over last n_conf configurations
