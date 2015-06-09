@@ -48,6 +48,7 @@
 #include "statistics_chain_tcl.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <map>
@@ -508,29 +509,61 @@ static int tclcommand_analyze_parse_cylindrical_average(Tcl_Interp *interp, int 
   // Calculate the cylindrical average
 
   if (calc_cylindrical_average(center, direction, length, radius, bins_axial, bins_radial, types, distribution) != TCL_OK) {
-    Tcl_AppendResult(interp, "Error calculating the cylindrical average ", (char *) NULL);
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Error calculating the cylindrical average", (char *) NULL);
     return TCL_ERROR;
   }
 
   // Output
+
+  std::stringstream buffer;
+  double binwd_axial  = length / bins_axial;
+  double binwd_radial = radius / bins_radial;
+  double binvolume, pos_radial, pos_axial;
+
   std::vector<std::string> names(3);
   names[0] = "density";
   names[1] = "v_r";
   names[2] = "v_t";
-  for (unsigned int name = 0; name < names.size(); name++) {
-    for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
-      for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
-        for (int index_axial = 0; index_axial < bins_axial; index_axial++) {
-          std::cout << names[name] << " "
-                    << types[type_id] << " "
-                    << index_radial << " "
-                    << index_axial << " "
-                    << distribution[names[name]][type_id][index_radial][index_axial]
-                    << std::endl;
-        }
+
+  // The buffer will contain a list of lists
+  buffer << "{";
+
+  for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
+    for (int index_axial = 0; index_axial < bins_axial; index_axial++) {
+      // From the indices we calculate the centre point of the bin
+      pos_radial = (index_radial + .5) * binwd_radial;
+      pos_axial  = (index_axial  + .5) * binwd_axial - .5*length;
+
+      // To make conversion between densities and particle numbers
+      // easy we also save the binvolume
+      if ( index_radial == 0 )
+        binvolume = M_PI * binwd_radial*binwd_radial * length;
+      else
+        binvolume = M_PI * (index_radial*index_radial + 2*index_radial) * binwd_radial*binwd_radial * length;
+
+      // We pipe all data to the buffer
+      buffer << "{ "
+             << index_radial << " "
+             << index_axial  << " "
+             << pos_radial   << " "
+             << pos_axial    << " "
+             << binvolume    << " ";
+      for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
+        for (unsigned int name = 0; name < names.size(); name++)
+          buffer << distribution[names[name]][type_id][index_radial][index_axial] << " ";
       }
+      buffer << "} ";
     }
   }
+  buffer << "}";
+
+  // Because buffer is a std::stringstream we need to convert it to a
+  // const char * for the Tcl function.  This is done by converting it
+  // to a string using str() and then getting the C string
+  // represenation from that temporary by c_str().
+  Tcl_ResetResult(interp);
+  Tcl_AppendResult(interp, buffer.str().c_str(), (char *) NULL);
 
   return TCL_OK;
 }

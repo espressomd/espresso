@@ -1093,7 +1093,7 @@ std::vector<T> cross_product(const std::vector<T> &a, const std::vector<T> &b) t
 }
 
 template<typename T>
-void cross_product(T const * const a, T const * const b, T* c) {
+void cross_product(T const * const a, T const * const b, T * const c) {
   c[0] = a[1]*b[2] - a[2]*b[1];
   c[1] = a[2]*b[0] - a[0]*b[2];
   c[2] = a[0]*b[1] - a[1]*b[0];
@@ -1170,7 +1170,7 @@ std::vector<T> vecsub(const std::vector<T> &a, const std::vector<T> &b) throw() 
 }
 
 template<typename T>
-void vecsub(T const * const a, T const * const b, T* c) {
+void vecsub(T const * const a, T const * const b, T * const c) {
   // Note the different signature for pointers here!
   for (unsigned int i = 0; i < 3; i++)
     c[i] = a[i] - b[i];

@@ -1082,7 +1082,7 @@ int calc_cylindrical_average(std::vector<double> center, std::vector<double> dir
         vel[2] = partCfg[part_id].m.v[2];
 
         // Find the vector from center to the current particle
-        diff = utils::vecsub(center,pos);
+        diff = utils::vecsub(pos,center);
 
         // Find the height of the particle above the axis (height) and
         // the distance from the center point (dist)
@@ -1090,15 +1090,20 @@ int calc_cylindrical_average(std::vector<double> center, std::vector<double> dir
         height = utils::veclen(hat);
         dist   = utils::dot_product(direction,diff) / norm_direction;
 
-        v_radial = utils::dot_product(vel,diff) / utils::veclen(diff);
+        // Determine the components of the velocity parallel and
+        // perpendicular to the direction vector
+        if ( height == 0 )
+          v_radial = utils::veclen(utils::cross_product(vel,direction)) / norm_direction;
+        else
+          v_radial = utils::dot_product(vel,hat) / height;
         v_axial  = utils::dot_product(vel,direction) / norm_direction;
         
         // Work out relevant indices for x and y
         index_radial = static_cast<int>( floor(height / binwd_radial) );
         index_axial  = static_cast<int>( floor((dist + 0.5*length) / binwd_axial) );
 
-        if ( (index_radial < bins_radial && index_radial > 0) &&
-             (index_axial  < bins_axial  && index_axial  > 0) ) {
+        if ( (index_radial < bins_radial && index_radial >= 0) &&
+             (index_axial  < bins_axial  && index_axial  >= 0) ) {
           distribution["density"][type_id][index_radial][index_axial] += 1;
           distribution["v_r"][type_id][index_radial][index_axial] += v_radial;
           distribution["v_t"][type_id][index_radial][index_axial] += v_axial;
@@ -1111,14 +1116,17 @@ int calc_cylindrical_average(std::vector<double> center, std::vector<double> dir
   // bin (binvolume).  We also divide the velocites by the counts.
   double binvolume;
   for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
-    for (int index_radial = 1 ; index_radial < bins_radial ; index_radial++) {
-      // All bins are cylinder shells of thickness binwd_radial.  The volume is thus
-      // binvolume = pi*(r_outer - r_inner)^2 * length
-      binvolume = M_PI * (index_radial*index_radial + 2*index_radial) * binwd_radial*binwd_radial * length;
+    for (int index_radial = 0 ; index_radial < bins_radial ; index_radial++) {
+      // All bins are cylindrical shells of thickness binwd_radial.
+      // The volume is thus: binvolume = pi*(r_outer - r_inner)^2 * length
+      if ( index_radial == 0 )
+        binvolume = M_PI * binwd_radial*binwd_radial * length;
+      else
+        binvolume = M_PI * (index_radial*index_radial + 2*index_radial) * binwd_radial*binwd_radial * length;
       for (int index_axial = 0 ; index_axial < bins_axial ; index_axial++) {
         if ( distribution["density"][type_id][index_radial][index_axial] != 0 ) {
           distribution["v_r"][type_id][index_radial][index_axial] /= distribution["density"][type_id][index_radial][index_axial];
-          distribution["v_r"][type_id][index_radial][index_axial] /= distribution["density"][type_id][index_radial][index_axial];
+          distribution["v_t"][type_id][index_radial][index_axial] /= distribution["density"][type_id][index_radial][index_axial];
           distribution["density"][type_id][index_radial][index_axial] /= binvolume;
         }
       }
