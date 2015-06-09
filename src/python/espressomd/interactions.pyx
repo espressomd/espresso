@@ -26,7 +26,7 @@ cdef class NonBondedInteraction(object):
 
     def __init__(self, *args, **kwargs):
         """Represents an instance of a non-bonded interaction, such as lennard jones
-        Either called with two particle type id, in which case, the interaction 
+        Either called with two particle type id, in which case, the interaction
         will represent the bonded interaction as it is defined in Espresso core
         Or called with keyword arguments describing a new interaction."""
 
@@ -301,7 +301,7 @@ cdef class GenericLennardJonesInteraction(NonBondedInteraction):
 
 class NonBondedInteractionHandle(object):
 
-    """Provides access to all Non-bonded interactions between 
+    """Provides access to all Non-bonded interactions between
     two particle types."""
 
     type1 = -1
@@ -529,6 +529,61 @@ class HarmonicBond(BondedInteraction):
     def _setParamsInEsCore(self):
         harmonic_set_params(
             self._bondId, self._params["k"], self._params["r_0"], self._params["r_cut"])
+
+
+IF ROTATION:
+    class HarmonicDumbbellBond(BondedInteraction):
+
+        def typeNumber(self):
+            return 2
+
+        def typeName(self):
+            return "HARMONIC_DUMBBELL"
+
+        def validKeys(self):
+            return "k1", "k2", "r_0", "r_cut"
+
+        def requiredKeys(self):
+            return "k1", "k2", "r_0"
+
+        def setDefaultParams(self):
+            self._params = {"r_cut": 0.}
+
+        def _getParamsFromEsCore(self):
+            return \
+                {"k1": bonded_ia_params[self._bondId].p.harmonic_dumbbell.k1,
+                 "k2": bonded_ia_params[self._bondId].p.harmonic_dumbbell.k2,
+                 "r_0": bonded_ia_params[self._bondId].p.harmonic_dumbbell.r,
+                 "r_cut": bonded_ia_params[self._bondId].p.harmonic_dumbbell.r_cut}
+
+        def _setParamsInEsCore(self):
+            harmonic_dumbbell_set_params(
+                self._bondId, self._params["k1"], self._params["k2"],
+                self._params["r_0"], self._params["r_cut"])
+
+IF ROTATION != 1:
+    class HarmonicDumbbellBond(BondedInteraction):
+
+        def typeNumber(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def typeName(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def validKeys(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def requiredKeys(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def setDefaultParams(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def _getParamsFromEsCore(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
+        def _setParamsInEsCore(self):
+            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
 
 
 IF BOND_CONSTRAINT == 1:
@@ -1020,114 +1075,15 @@ class Stretchlin_Force(BondedInteraction):
             self._bondId, self._params["r0"], self._params["kslin"])
 
 
-class Area_Force_Local(BondedInteraction):
-
-    def typeNumber(self):
-        return 17
-
-    def typeName(self):
-        return "AREA_FORCE_LOCAL"
-
-    def validKeys(self):
-        return "A0_l", "ka_l"
-
-    def requiredKeys(self):
-        return "A0_l", "ka_l"
-
-    def setDefaultParams(self):
-        self._params = {"A0_l": 1., "ka_l": 0}
-
-    def _getParamsFromEsCore(self):
-        return \
-            {"A0_l": bonded_ia_params[self._bondId].p.area_force_local.A0_l,
-             "ka_l": bonded_ia_params[self._bondId].p.area_force_local.ka_l}
-
-    def _setParamsInEsCore(self):
-        area_force_local_set_params(
-            self._bondId, self._params["A0_l"], self._params["ka_l"])
-
-
-class Bending_Force(BondedInteraction):
-
-    def typeNumber(self):
-        return 18
-
-    def typeName(self):
-        return "BENDING_FORCE"
-
-    def validKeys(self):
-        return "phi0", "kb"
-
-    def requiredKeys(self):
-        return "phi0", "kb"
-
-    def setDefaultParams(self):
-        self._params = {"phi0": 1., "kb": 0}
-
-    def _getParamsFromEsCore(self):
-        return \
-            {"phi0": bonded_ia_params[self._bondId].p.bending_force.phi0,
-             "kb": bonded_ia_params[self._bondId].p.bending_force.kb}
-
-    def _setParamsInEsCore(self):
-        bending_force_set_params(
-            self._bondId, self._params["phi0"], self._params["kb"])
-
-
-class Volume_Force(BondedInteraction):
-
-    def typeNumber(self):
-        return 19
-
-    def typeName(self):
-        return "VOLUME_FORCE"
-
-    def validKeys(self):
-        return "V0", "kv"
-
-    def requiredKeys(self):
-        return "V0", "kv"
-
-    def setDefaultParams(self):
-        self._params = {"V0": 1., "kv": 0}
-
-    def _getParamsFromEsCore(self):
-        return \
-            {"V0": bonded_ia_params[self._bondId].p.volume_force.V0,
-             "kv": bonded_ia_params[self._bondId].p.volume_force.kv}
-
-    def _setParamsInEsCore(self):
-        volume_force_set_params(
-            self._bondId, self._params["V0"], self._params["kv"])
-
-
-class Area_Force_Global(BondedInteraction):
-
-    def typeNumber(self):
-        return 20
-
-    def typeName(self):
-        return "AREA_FORCE_GLOBAL"
-
-    def validKeys(self):
-        return "A0_g", "ka_g"
-
-    def requiredKeys(self):
-        return "A0_g", "ka_g"
-
-    def setDefaultParams(self):
-        self._params = {"A0_g": 1., "ka_g": 0}
-
-    def _getParamsFromEsCore(self):
-        return \
-            {"A0_g": bonded_ia_params[self._bondId].p.area_force_global.A0_g,
-             "ka_g": bonded_ia_params[self._bondId].p.area_force_global.ka_g}
-
-
-bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 3: RigidBond, 5: Dihedral, 6: Tabulated, 7: Subt_Lj,
-                            9: Virtual, 11: Endangledist, 12: Overlapped,
-                            13: Angle_Harmonic, 14: Angle_Cosine, 15: Angle_Cossquare, 16: Stretching_Force, 17: Area_Force_Local,
-                            18: Bending_Force, 19: Volume_Force, 20: Area_Force_Global, 21: Stretchlin_Force}
+bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 2:
+                            HarmonicDumbbellBond, 3: RigidBond, 5:
+                            Dihedral, 6: Tabulated, 7: Subt_Lj, 9:
+                            Virtual, 11: Endangledist, 12: Overlapped,
+                            13: Angle_Harmonic, 14: Angle_Cosine, 15:
+                            Angle_Cossquare, 16: Stretching_Force, 17:
+                            Area_Force_Local, 18: Bending_Force, 19:
+                            Volume_Force, 20: Area_Force_Global, 21:
+                            Stretchlin_Force}
 
 
 class BondedInteractions:
