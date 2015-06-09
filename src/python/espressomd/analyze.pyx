@@ -26,6 +26,7 @@ import code_info
 import particle_data
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
+from libcpp.map cimport map  # import std::map as map
 from interactions import *
 from interactions cimport *
 import numpy as np
@@ -166,6 +167,64 @@ def nbhood(system=None, pos=None, r_catch=None, plane='3d'):
     free(il)
     return result
 
+def cylindrical_average(system=None, center=None, direction=None,
+                        length=None, radius=None,
+                        bins_axial=None, bins_radial=None,
+                        types=None):
+
+    # Check the input types
+    checkTypeOrExcept(center,      3, float, "center has to be 3 floats"   )
+    checkTypeOrExcept(direction,   3, float, "direction has to be 3 floats")
+    checkTypeOrExcept(length,      1, float, "length has to be a float"    )
+    checkTypeOrExcept(radius,      1, float, "radius has to be a floats"   )
+    checkTypeOrExcept(bins_axial,  1, int,   "bins_axial has to be an int" )
+    checkTypeOrExcept(bins_radial, 1, int,   "bins_radial has to be an int")
+
+    # Convert Python types to C++ types
+    cdef vector[double] c_center    = center
+    cdef vector[double] c_direction = direction
+    cdef double c_length            = length
+    cdef double c_radius            = radius
+    cdef int c_bins_axial           = bins_axial
+    cdef int c_bins_radial          = bins_radial
+    cdef vector[int] c_types        = types
+
+    cdef map[string, vector[vector[vector[double]]]] distribution
+    c_analyze.calc_cylindrical_average(c_center, c_direction, c_length,
+                                       c_radius, c_bins_axial, c_bins_radial, c_types,
+                                       distribution)
+
+    cdef double binwd_axial  = c_length / c_bins_axial
+    cdef double binwd_radial = c_radius / c_bins_radial
+    cdef double binvolume, pos_radial, pos_axial
+
+    cdef vector[string] names = ["density", "v_r", "v_t"]
+
+    buffer = np.empty([bins_radial * bins_axial, 5 + c_types.size() * names.size()])
+
+    cdef int index_radial, index_axial
+    cdef unsigned int type_id, name
+    for index_radial in range(0,bins_radial):
+        for index_axial in range(0,bins_axial):
+            pos_radial = (index_radial + .5) * binwd_radial
+            pos_axial  = (index_axial  + .5) * binwd_axial - .5*c_length
+
+            if ( index_radial == 0 ):
+                binvolume = np.pi * binwd_radial*binwd_radial * c_length
+            else:
+                binvolume = np.pi * (index_radial*index_radial + 2*index_radial) * binwd_radial*binwd_radial * c_length
+
+            buffer[index_axial + bins_axial*index_radial,0] = index_radial
+            buffer[index_axial + bins_axial*index_radial,1] = index_axial
+            buffer[index_axial + bins_axial*index_radial,2] = pos_radial
+            buffer[index_axial + bins_axial*index_radial,3] = pos_axial
+            buffer[index_axial + bins_axial*index_radial,4] = binvolume
+            for type_id in range(0,c_types.size()):
+                for name in range(0,names.size()):
+                    buffer[index_axial + bins_axial*index_radial,5 + name + type_id*names.size()] \
+                        = distribution[names[name]][type_id][index_radial][index_axial]
+
+    return buffer
 
 #
 # Pressure analysis
