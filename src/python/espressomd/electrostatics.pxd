@@ -93,16 +93,15 @@ IF ELECTROSTATICS == 1:
         void p3m_gpu_init(int cao, int mesh, double alpha, double box)
 
     IF _P3M_GPU_FLOAT:
-      cdef inline python_p3m_gpu_init(params):
+      cdef inline python_p3m_gpu_init(_params):
         cdef int cao
         cdef int mesh
         cdef float alpha
         cdef float box
-        cao = params["cao"]
-        mesh=params["mesh"][0]
-        alpha = params["alpha"]
-        box = params["box"][0]
-        print cao, mesh, alpha, box
+        cao = _params["cao"]
+        mesh= _params["mesh"][0]
+        alpha = _params["alpha"]
+        box = _params["box"][0]
         p3m_gpu_init(cao, mesh, alpha, box)
 
     IF _P3M_GPU_DOUBLE:
@@ -115,7 +114,6 @@ IF ELECTROSTATICS == 1:
         mesh = params["mesh"][0]
         alpha = params["alpha"]
         box = params["box"][0]
-        print cao, mesh, alpha, box
         p3m_gpu_init(cao, mesh, alpha, box)
 
     # Convert C arguments into numpy array

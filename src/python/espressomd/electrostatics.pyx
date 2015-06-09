@@ -57,7 +57,7 @@ IF P3M == 1:
       if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
           raise ValueError("inter should be a positive integer")
 
-      if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) == 3):
+      if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
           raise ValueError("mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
 
@@ -88,10 +88,10 @@ IF P3M == 1:
 
     def _setParamsInEsCore(self):
       coulomb_set_bjerrum(self._params["bjerrum_length"])
-      p3m_set_eps(self._params["epsilon"])
       p3m_set_ninterpol(self._params["inter"])
       python_p3m_set_mesh_offset(self._params["mesh_off"])
       python_p3m_set_params(self._params["r_cut"],self._params["mesh"],self._params["cao"],self._params["alpha"],self._params["accuracy"])
+      p3m_set_eps(self._params["epsilon"])
 
 
     def _tune(self):
@@ -134,8 +134,8 @@ IF P3M == 1:
         if not (self._params["accuracy"] > 0):
           raise ValueError("P3M accuracy has to be positive")
 
-        if self._params["epsilon"] == "metallic":
-          self._params = 0.0
+        #if self._params["epsilon"] == "metallic":
+        #  self._params = 0.0
 
         if not (isinstance(self._params["epsilon"],float) or self._params["epsilon"] == "metallic"):
           raise ValueError("epsilon should be a double or 'metallic'")
@@ -143,7 +143,7 @@ IF P3M == 1:
         if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
             raise ValueError("inter should be a positive integer")
 
-        if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) == 3):
+        if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
             raise ValueError("mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
 
@@ -175,8 +175,6 @@ IF P3M == 1:
         return params
 
       def _tune(self):
-        coulomb_set_bjerrum(self._params["bjerrum_length"])
-        p3m_set_eps(self._params["epsilon"])
         python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params["cao"], -1.0, self._params["accuracy"], self._params["inter"])
         resp,log=python_p3m_adaptive_tune()
         if resp:
@@ -187,12 +185,18 @@ IF P3M == 1:
 
       def _activateMethod(self):
         coulomb.method=COULOMB_P3M_GPU
-        print "before Tune"
         if self._params["tune"]:
+          coulomb_set_bjerrum(self._params["bjerrum_length"])
           self._tune()
 
-        print "hello"
-        print self._params
+        coulomb_set_bjerrum(self._params["bjerrum_length"])
+        self._setParamsInEsCore()
         python_p3m_gpu_init(self._params)
 
+      def _setParamsInEsCore(self):
+        python_p3m_set_params(self._params["r_cut"],self._params["mesh"],self._params["cao"],self._params["alpha"],self._params["accuracy"])
+        p3m_set_eps(self._params["epsilon"])
+        coulomb_set_bjerrum(self._params["bjerrum_length"])
+        p3m_set_ninterpol(self._params["inter"])
+        python_p3m_set_mesh_offset(self._params["mesh_off"])
 

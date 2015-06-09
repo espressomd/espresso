@@ -80,6 +80,12 @@ extern int regular_exit;
 /** Identity of the particle to check extensively if ONEPART_DEBUG is defined. */
 extern int check_id;
 
+#ifdef ESIF_DEBUG
+#define ESIF_TRACE(cmd) {cmd; }
+#else
+#define ESIF_TRACE(cmd)
+#endif
+
 #ifdef COMM_DEBUG
 #define COMM_TRACE(cmd) { cmd; }
 #else
