@@ -170,59 +170,174 @@ def nbhood(system=None, pos=None, r_catch=None, plane='3d'):
 #
 # Pressure analysis
 #
-def pressure(system=None, pressure_type='all', id1='default', id2='default', v_comp=False):
-    """
-       pressure(pressure_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)
-    """
-    cdef vector[string] pressure_labels
-    cdef vector[double] pressures
+def pressure(self,v_comp=0):
+  """Pressure calculation
+     pressure(v_comp=False)
+     """
+  checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
+#
+  # Dict to store the results
+  p={}
 
-    checkTypeOrExcept(v_comp, 1, bool, "v_comp must be a boolean")
+  # Update in espresso core if necessary
+  if (c_analyze.total_pressure.init_status != 1+v_comp):
+    c_analyze.update_pressure(v_comp)
+#
+  # Individual components of the pressure
 
-    if pressure_type == 'all':
-        c_analyze.analyze_pressure_all(pressure_labels, pressures, v_comp)
-        return dict(zip(pressure_labels, pressures))
-    elif id1 == 'default' and id2 == 'default':
-        pressure = c_analyze.analyze_pressure(pressure_type, v_comp)
-        return pressure
-    elif id1 != 'default' and id2 == 'default':
-        checkTypeOrExcept(id1, 1, int, "id1 must be an int")
-        pressure = c_analyze.analyze_pressure_single(
-            pressure_type, id1, v_comp)
-        return pressure
-    else:
-        checkTypeOrExcept(id1, 1, int, "id1 must be an int")
-        checkTypeOrExcept(id2, 1, int, "id2 must be an int")
-        pressure = c_analyze.analyze_pressure_pair(
-            pressure_type, id1, id2, v_comp)
-        return pressure
+  # Total pressure
+  cdef int i
+  cdef double tmp
+  tmp=0
+  for i in range(c_analyze.total_pressure.data.n):
+    tmp+=c_analyze.total_pressure.data.e[i]
+
+  p["total"]=tmp
+
+  # Ideal
+  p["ideal"] =c_analyze.total_pressure.data.e[0]
+
+  # Nonbonded
+  cdef double total_bonded
+  total_bonded=0
+  for i in range(c_analyze.n_bonded_ia):
+    if (bonded_ia_params[i].type != 0): 
+     p["bonded",i] = c_analyze.obsstat_bonded(&c_analyze.total_pressure, i)[0]
+     total_bonded += c_analyze.obsstat_bonded(&c_analyze.total_pressure, i)[0]
+  p["bonded"] = total_bonded
+
+  # Non-Bonded interactions, total as well as intra and inter molecular
+  cdef int j
+  cdef double total_intra
+  cdef double total_inter
+  cdef double total_non_bonded
+  total_inter=0
+  total_intra=0
+  total_non_bonded=0
+
+  for i in range(c_analyze.n_particle_types):
+    for j in range(c_analyze.n_particle_types):
+#      if checkIfParticlesInteract(i, j):
+        p["nonBonded",i,j] =c_analyze.obsstat_nonbonded(&c_analyze.total_pressure, i, j)[0]
+        total_non_bonded =c_analyze.obsstat_nonbonded(&c_analyze.total_pressure, i, j)[0]
+        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_pressure_non_bonded, i, j)[0]
+        p["nonBondedIntra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_pressure_non_bonded, i, j)[0]
+        p["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_pressure_non_bonded, i, j)[0]
+        total_inter+= c_analyze.obsstat_nonbonded_inter(&c_analyze.total_pressure_non_bonded, i, j)[0]
+  p["nonBondedIntra"]=total_intra
+  p["nonBondedInter"]=total_inter
+  p["nonBondedInter"]=total_inter
+  p["nonBonded"]=total_non_bonded
+
+  # Electrostatics
+  IF ELECTROSTATICS == 1:
+    cdef double total_coulomb
+    total_coulomb=0
+    for i in range(c_analyze.total_pressure.n_coulomb):
+      total_coulomb+=c_analyze.total_pressure.coulomb[i]
+      p["coulomb",i]=c_analyze.total_pressure.coulomb[i]
+    p["coulomb"]=total_coulomb
+
+  # Dipoles
+  IF DIPOLES == 1:
+    cdef double total_dipolar
+    total_dipolar=0
+    for i in range(c_analyze.total_pressure.n_dipolar):
+      total_dipolar+=c_analyze.total_pressure.dipolar[i]
+      p["dipolar",i]=c_analyze.total_pressure.coulomb[i]
+    p["dipolar"]=total_dipolar
+
+  # virtual sites
+  IF VIRTUAL_SITES_RELATIVE ==1:
+    p["vs_relative"]=c_analyze.total_pressure.vs_relative[0]
+
+  return p
 
 
-def stress_tensor(system=None, stress_type='all', id1='default', id2='default', v_comp=False):
-    """stress_tensor(system, stress_type = 'all', id1 = 'default', id2 = 'default', v_comp=False)"""
-    cdef vector[string] stress_labels
-    cdef vector[double] stresses
 
-    checkTypeOrExcept(v_comp, 1, bool, "v_comp must be a boolean")
 
-    if stress_type == 'all':
-        c_analyze.analyze_stress_tensor_all(stress_labels, stresses, v_comp)
-        return dict(zip(stress_labels, stresses))
-    elif id1 == 'default' and id2 == 'default':
-        if (c_analyze.analyze_stress_tensor(stress_type, v_comp, stresses)):
-            raise Exception("Error while calculating stress tensor")
-        return stresses
-    elif id1 != 'default' and id2 == 'default':
-        checkTypeOrExcept(id1, 1, int, "id1 must be an int")
-        if (c_analyze.analyze_stress_single(stress_type, id1, v_comp, stresses)):
-            raise Exception("Error while calculating stress tensor")
-        return stresses
-    else:
-        checkTypeOrExcept(id1, 1, int, "id1 must be an int")
-        checkTypeOrExcept(id2, 1, int, "id2 must be an int")
-        if (c_analyze.analyze_stress_pair(stress_type, id1, id2, v_comp, stresses)):
-            raise Exception("Error while calculating stress tensor")
-        return stresses
+
+
+def stress_tensor(self, v_comp=0):
+  """stress_tensor(v_comp=0)
+  """
+  checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
+  
+  # Dict to store the results
+  p={}
+
+  # Update in espresso core if necessary
+  if (c_analyze.total_p_tensor.init_status != 1+v_comp):
+    c_analyze.update_pressure(v_comp)
+#
+  # Individual components of the pressure
+
+  # Total pressure
+  cdef int i
+  cdef double tmp
+  tmp=0
+  for i in range(c_analyze.total_p_tensor.data.n):
+    tmp+=c_analyze.total_p_tensor.data.e[i]
+
+  p["total"]=tmp
+
+  # Ideal
+  p["ideal"] =create_nparray_from_double_array(c_analyze.total_p_tensor.data.e,9)
+
+  # Nonbonded
+  total_bonded =np.zeros((3,3))
+  for i in range(c_analyze.n_bonded_ia):
+    if (bonded_ia_params[i].type != 0): 
+     p["bonded",i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded(&c_analyze.total_p_tensor, i),9),(3,3))
+     total_bonded += p["bonded",i]
+  p["bonded"] = total_bonded
+
+  # Non-Bonded interactions, total as well as intra and inter molecular
+  cdef int j
+  total_non_bonded =np.zeros((3,3))
+  total_non_bonded_intra =np.zeros((3,3))
+  total_non_bonded_inter =np.zeros((3,3))
+
+  for i in range(c_analyze.n_particle_types):
+    for j in range(c_analyze.n_particle_types):
+#      if checkIfParticlesInteract(i, j):
+        
+        p["nonBonded",i,j] =np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded(&c_analyze.total_p_tensor, i, j),9),(3,3))
+        total_non_bonded +=p["nonBonded",i,j]
+        
+        p["nonBondedIntra",i,j] =np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra(&c_analyze.total_p_tensor_non_bonded, i, j),9),(3,3))
+        total_non_bonded_intra +=p["nonBondedIntra",i,j]
+        
+        p["nonBondedInter",i,j] =np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter(&c_analyze.total_p_tensor_non_bonded, i, j),9),(3,3))
+        total_non_bonded_inter +=p["nonBondedInter",i,j]
+  
+  p["nonBondedIntra"]=total_non_bonded_intra
+  p["nonBondedInter"]=total_non_bonded_inter
+  p["nonBonded"]=total_non_bonded
+
+  # Electrostatics
+  IF ELECTROSTATICS == 1:
+    total_coulomb=np.zeros(9)
+    for i in range(c_analyze.total_p_tensor.n_coulomb):
+      p["coulomb",i]=np.reshape(create_nparray_from_double_array(c_analyze.total_p_tensor.coulomb,9),(3,3))
+      total_coulomb =p["coulomb",i]
+    p["coulomb"]=total_coulomb
+
+  # Dipoles
+  IF DIPOLES == 1:
+    total_dipolar=np.zeros(9)
+    for i in range(c_analyze.total_p_tensor.n_dipolar):
+      p["dipolar",i]=np.reshape(create_nparray_from_double_array(c_analyze.total_p_tensor.dipolar,9),(3,3))
+      total_dipolar =p["dipolar",i]
+    p["dipolar"]=total_dipolar
+
+  # virtual sites
+  IF VIRTUAL_SITES_RELATIVE ==1:
+    p["vs_relative"]=np.reshape(create_nparray_from_double_array(c_analyze.total_p_tensor.vs_relative,9),(3,3))
+
+  return p
+  
+
 
 
 def local_stress_tensor(system=None, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
@@ -248,89 +363,84 @@ def local_stress_tensor(system=None, periodicity=(1, 1, 1), range_start=(0.0, 0.
 #
 # Energy analysis
 #
+def energy(system, etype = 'all', id1 = 'default', id2 = 'default'):
+  """energy()
+  """
+#  if system.n_part == 0:
+#    raise Exception('no particles')
 
+  e={}
 
-def energy(system=None, etype='all', id1='default', id2='default'):
-    """energy(system, etype = 'all', id1 = 'default', id2 = 'default')"""
-    if system.n_part == 0:
-        raise Exception('no particles')
+  if c_analyze.total_energy.init_status == 0:
+    c_analyze.init_energies(&c_analyze.total_energy)
+    c_analyze.master_energy_calc()
+  
+ 
+  # Individual components of the pressur
 
-    if c_analyze.total_energy.init_status == 0:
-        c_analyze.init_energies( & c_analyze.total_energy)
-        c_analyze.master_energy_calc()
-    _value = 0.0
+  # Total energy 
+  cdef int i
+  cdef double tmp
+  tmp=0
+  for i in range(c_analyze.total_energy.data.n):
+    tmp+=c_analyze.total_energy.data.e[i]
 
-    if etype == 'all':
-        _result = energy(system, 'total') + ' ' + energy(system, 'kinetic')
-        _result += energy(system, 'nonbonded', 0, 0)
-        # todo: check for existing particle and bond types
-        # and add those to _result
-        return _result
+  e["total"]=tmp
 
-    if etype == 'total':
-        if id1 != 'default' or id2 != 'default':
-            print ('warning: energy(\'total\') does not need '
-                   'further arguments, ignored.')
-        for i in range(c_analyze.total_energy.data.n):
-            _value += c_analyze.total_energy.data.e[i]
-        return '{ energy: %f }' % _value
+  # Ideal
+  e["ideal"] =c_analyze.total_energy.data.e[0]
 
-    if etype == 'kinetic':
-        if id1 != 'default' or id2 != 'default':
-            print ('warning: energy(\'kinetic\') does not need '
-                   'further arguments, ignored.')
-        _value = c_analyze.total_energy.data.e[0]
-        return '{ kinetic: %f }' % _value
+  # Nonbonded
+  cdef double total_bonded
+  total_bonded=0
+  for i in range(c_analyze.n_bonded_ia):
+    if (bonded_ia_params[i].type != 0): 
+     e["bonded",i] = c_analyze.obsstat_bonded(&c_analyze.total_energy, i)[0]
+     total_bonded += c_analyze.obsstat_bonded(&c_analyze.total_energy, i)[0]
+  e["bonded"] = total_bonded
 
-    # coulomb interaction
-    if etype == 'coulomb':
-        if(code_info.electrostatics_defined()):
-            for i in range(c_analyze.total_energy.n_coulomb):
-                _value += c_analyze.total_energy.coulomb[i]
-            return '{ coulomb: %f }' % _value
-        else:
-            print 'error: ELECTROSTATICS not compiled'
-            return 'error: ELECTROSTATICS not compiled'
+  # Non-Bonded interactions, total as well as intra and inter molecular
+  cdef int j
+  cdef double total_intra
+  cdef double total_inter
+  cdef double total_non_bonded
+  total_inter=0
+  total_intra=0
+  total_non_bonded=0
 
-    if etype == 'magnetic':
-        if(code_info.dipoles_defined()):
-            for i in range(c_analyze.total_energy.n_dipolar):
-                _value += c_analyze.total_energy.dipolar[i]
-            return '{ magnetic: %f }' % _value
-        else:
-            print 'error: DIPOLES not compiled'
-            return 'error: DIPOLES not compiled'
+  for i in range(c_analyze.n_particle_types):
+    for j in range(c_analyze.n_particle_types):
+#      if checkIfParticlesInteract(i, j):
+        e["nonBonded",i,j] =c_analyze.obsstat_nonbonded(&c_analyze.total_energy, i, j)[0]
+        total_non_bonded =c_analyze.obsstat_nonbonded(&c_analyze.total_energy, i, j)[0]
+#        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
+#        e["nonBondedIntra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
+#        e["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
+#        total_inter+= c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
+#  e["nonBondedIntra"]=total_intra
+#  e["nonBondedInter"]=total_inter
+  e["nonBonded"]=total_non_bonded
 
-    # bonded interactions
-    if etype == 'bonded':
-        if not isinstance(id1, int):
-            print ('error: analyze.energy(\'bonded\',<bondid>): '
-                   '<bondid> must be integer')
-            raise TypeError('analyze.energy(\'bonded\',<bondid>): '
-                            '<bondid> must be integer')
-        else:
-            # todo: check if bond type id1 exist
-            _value = c_analyze.obsstat_bonded( & c_analyze.total_energy, id1)[0]
-            return '{ %d bonded: %f }' % (id1, _value)
+  # Electrostatics
+  IF ELECTROSTATICS == 1:
+    cdef double total_coulomb
+    total_coulomb=0
+    for i in range(c_analyze.total_energy.n_coulomb):
+      total_coulomb+=c_analyze.total_energy.coulomb[i]
+      e["coulomb",i]=c_analyze.total_energy.coulomb[i]
+    e["coulomb"]=total_coulomb
 
-    # nonbonded interactions
-    if etype == 'nonbonded':
-        if not isinstance(id1, int):
-            print ('error: analyze.energy(\'bonded\',<bondid>): '
-                   '<bondid> must be integer')
-            raise TypeError('analyze.energy(\'bonded\',<bondid>): '
-                            '<bondid> must be integer')
-        if not isinstance(id2, int):
-            print ('error: analyze.energy(\'bonded\',<bondid>): '
-                   '<bondid> must be integer')
-            raise TypeError('analyze.energy(\'bonded\',<bondid>): '
-                            '<bondid> must be integer')
-        else:
-            # todo: check if particle types id1 and id2 exist
-            _value = c_analyze.obsstat_nonbonded( & c_analyze.total_energy, id1, id2)[0]
-            return '{ %d %d nonbonded: %f }' % (id1, id2, _value)
+  # Dipoles
+  IF DIPOLES == 1:
+    cdef double total_dipolar
+    total_dipolar=0
+    for i in range(c_analyze.total_energy.n_dipolar):
+      total_dipolar+=c_analyze.total_energy.dipolar[i]
+      e["dipolar",i]=c_analyze.total_energy.coulomb[i]
+    e["dipolar"]=total_dipolar
 
-    return 'error: unknown feature of analyze energy: \'%s\'' % etype
+  return e 
+
 
 def calc_re(system=None, chain_start=None, number_of_chains=None, chain_length=None):
     cdef double * re = NULL
