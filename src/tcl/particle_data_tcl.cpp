@@ -1342,6 +1342,11 @@ int tclcommand_part_parse_v(Tcl_Interp *interp, int argc, char **argv,
     return TCL_ERROR;
   }
 
+  if (time_step <= 0) {
+    Tcl_AppendResult(interp, "You have to set the time step before setting particle velocities", (char *) NULL);
+    return TCL_ERROR;
+  }
+
   /* set v */
   if (! ARG_IS_D(0, v[0]))
     return TCL_ERROR;
@@ -1376,6 +1381,11 @@ int tclcommand_part_parse_f(Tcl_Interp *interp, int argc, char **argv,
   if (argc < 3) {
     Tcl_AppendResult(interp, "f requires 3 arguments", (char *) NULL);
 
+    return TCL_ERROR;
+  }
+
+  if (time_step <= 0) {
+    Tcl_AppendResult(interp, "You have to set the time step before setting particle forces", (char *) NULL);
     return TCL_ERROR;
   }
 
