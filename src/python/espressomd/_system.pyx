@@ -38,6 +38,8 @@ cdef class System:
     bondedInter = interactions.BondedInteractions()
     Actors = actors.Actors()
     cellSystem = CellSystem()
+    thermostat = Thermostat()
+
 
 #    def __init__(self):
 #        self.part = particle_data.particleList()
