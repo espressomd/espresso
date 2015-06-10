@@ -23,26 +23,26 @@ cudaStream_t    *stream0;
 void cuda_check_error(const dim3 &block, const dim3 &grid,const char *function, const char *file, unsigned int line);
 
 //Error handler
-static void HandleError(cudaError_t err,const char *file,int line)
+static void HandleError(cudaError_t CU_err,const char *file,int line)
 {
-  if( cudaSuccess != err) {
+  if( cudaSuccess != CU_err) {
     fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
-    printf("CUDA error: %s\n", cudaGetErrorString(err));
-    if ( err == cudaErrorInvalidValue )
+    printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
+    if ( CU_err == cudaErrorInvalidValue )
       fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n", file, line);
     exit(EXIT_FAILURE);
   } else {
-    err=cudaGetLastError();
-    if (err != cudaSuccess) {
+    CU_err=cudaGetLastError();
+    if (CU_err != cudaSuccess) {
       fprintf(stderr, "Error found during memory operation. Possibly however from an failed operation before. %s:%u.\n", file, line);
-      printf("CUDA error: %s\n", cudaGetErrorString(err));
-      if ( err == cudaErrorInvalidValue )
+      printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
+      if ( CU_err == cudaErrorInvalidValue )
 	fprintf(stderr, "You may have tried to allocate zero memory before %s:%u.\n", file, line);
       exit(EXIT_FAILURE);
     }
   }
 }
-#define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
+#define HANDLE_ERROR( CU_err ) (HandleError( CU_err, __FILE__, __LINE__ ))
 #define HANDLE_NULL( a ) {if (a == NULL) {printf( "Host memory failed in %s at line %d\n", __FILE__, __LINE__ ); exit( EXIT_FAILURE );}}
 
 //Kernels
@@ -1065,10 +1065,10 @@ void EwaldgpuForce::GPU_q_sqr(SystemInterface &s)
 }
 void cuda_check_error(const dim3 &block, const dim3 &grid, const char *function, const char *file, unsigned int line)
 {
-  err=cudaGetLastError();
-  if (err!=cudaSuccess)
+  CU_err=cudaGetLastError();
+  if (CU_err!=cudaSuccess)
     {
-      fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n", this_node, cudaGetErrorString(err), function, block.x, block.y, block.z, grid.x, grid.y, grid.z,file, line);
+      fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n", this_node, cudaGetErrorString(CU_err), function, block.x, block.y, block.z, grid.x, grid.y, grid.z,file, line);
       exit(EXIT_FAILURE);
     }
 }

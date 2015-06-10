@@ -55,21 +55,21 @@ CUDA_v_cs *host_v_cs = NULL;
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
-cudaError_t err;
+cudaError_t CU_err;
 
-void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line){
-  if( cudaSuccess != err) {                                             
+void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line){
+  if( cudaSuccess != CU_err) {                                             
     fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
-    printf("CUDA error: %s\n", cudaGetErrorString(err));
-    if ( err == cudaErrorInvalidValue )
+    printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
+    if ( CU_err == cudaErrorInvalidValue )
       fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n", file, line);
     errexit();
   } else {
-    err=cudaGetLastError();
-    if (err != cudaSuccess) {
+    CU_err=cudaGetLastError();
+    if (CU_err != cudaSuccess) {
       fprintf(stderr, "Error found during memory operation. Possibly however from an failed operation before. %s:%u.\n", file, line);
-      printf("CUDA error: %s\n", cudaGetErrorString(err));
-      if ( err == cudaErrorInvalidValue )
+      printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
+      if ( CU_err == cudaErrorInvalidValue )
 	fprintf(stderr, "You may have tried to allocate zero memory before %s:%u.\n", file, line);
       errexit();
     }
@@ -78,10 +78,10 @@ void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line){
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
                         const char *function, const char *file, unsigned int line) {
-  err=cudaGetLastError();
-  if (err!=cudaSuccess) {
+  CU_err=cudaGetLastError();
+  if (CU_err!=cudaSuccess) {
     fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n",
-            this_node, cudaGetErrorString(err), function, block.x, block.y, block.z, grid.x, grid.y, grid.z,
+            this_node, cudaGetErrorString(CU_err), function, block.x, block.y, block.z, grid.x, grid.y, grid.z,
             file, line);
     errexit();
   }
