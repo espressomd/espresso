@@ -3730,6 +3730,64 @@ int ek_neutralize_system(int species) {
   return 0;
 }
 
+int ek_save_checkpoint(char* filename) {
+  FILE* fp = fopen(filename, "w");
+
+  if(fp == NULL){
+    return 1;
+  }
+
+  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+                                      sizeof( ekfloat )                 );
+
+  for(int i = 0; i < ek_parameters.number_of_species; i++)
+  {
+    cuda_safe_mem( cudaMemcpy( densities, 
+                               ek_parameters.rho[i],
+                               ek_parameters.number_of_nodes * sizeof(ekfloat),
+                               cudaMemcpyDeviceToHost )
+                 );
+
+    for(int k = 0; k < ek_parameters.number_of_nodes; k++) 
+      fprintf(fp, "%.17e\n", densities[k]);
+  }
+
+  free(densities);
+  fclose(fp);
+  
+  return 0;
+}
+
+int ek_load_checkpoint(char* filename) {
+  FILE* fp = fopen(filename, "r");
+
+  if(fp == NULL){
+    return 1;
+  }
+
+  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+                                      sizeof( ekfloat )                 );
+
+  for(int i = 0; i < ek_parameters.number_of_species; i++)
+  {
+    for(int k = 0; k < ek_parameters.number_of_nodes; k++) 
+      fscanf(fp, "%.17e\n", &densities[k]);
+
+    cuda_safe_mem( cudaMemcpy( ek_parameters.rho[i],
+                               densities, 
+                               ek_parameters.number_of_nodes * sizeof(ekfloat),
+                               cudaMemcpyHostToDevice )
+                 );
+  }
+
+  free(densities);
+  fclose(fp);
+
+  ek_integrate_electrostatics();
+  
+  return 0;
+}
+
 #ifdef EK_REACTION
 int ek_set_reaction( int reactant, int product0, int product1, 
                      float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, 
