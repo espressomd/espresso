@@ -44,6 +44,11 @@
 #include "virtual_sites.hpp"
 #include "initialize.hpp"
 
+#include <vector>
+#include <string>
+#include <map>
+
+
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -1023,6 +1028,115 @@ void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_
   free(label);
 }
 
+
+int calc_cylindrical_average(std::vector<double> center, std::vector<double> direction, double length,
+                             double radius, int bins_axial, int bins_radial, std::vector<int> types,
+                             std::map<std::string, std::vector<std::vector<std::vector<double> > > > &distribution)
+{
+  int index_axial;
+  int index_radial;
+  double binwd_axial  = length / bins_axial;
+  double binwd_radial = radius / bins_radial;
+
+  distribution.insert( std::pair<std::string, std::vector<std::vector<std::vector<double> > > >
+                                ("density",   std::vector<std::vector<std::vector<double> > >(types.size())) );
+  distribution.insert( std::pair<std::string, std::vector<std::vector<std::vector<double> > > >
+                                ("v_r",       std::vector<std::vector<std::vector<double> > >(types.size())) );
+  distribution.insert( std::pair<std::string, std::vector<std::vector<std::vector<double> > > >
+                                ("v_t",       std::vector<std::vector<std::vector<double> > >(types.size())) );
+
+  for (unsigned int type = 0; type < types.size(); type++) {
+    distribution["density"][type].resize(bins_radial);
+        distribution["v_r"][type].resize(bins_radial);
+        distribution["v_t"][type].resize(bins_radial);
+    for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
+      distribution["density"][type][index_radial].assign(bins_axial, 0.0);
+          distribution["v_r"][type][index_radial].assign(bins_axial, 0.0);
+          distribution["v_t"][type][index_radial].assign(bins_axial, 0.0);
+    }
+  }
+
+  // Update particles
+  updatePartCfg(WITHOUT_BONDS);
+
+  // Make sure particles are folded
+  for (int i = 0 ; i < n_part ; i++) {
+    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,0);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,1);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,2);
+  }
+
+  // Declare variables for the density calculation
+  double height, dist, v_radial, v_axial;
+  double norm_direction = utils::veclen(direction);
+  std::vector<double> pos(3), vel(3), diff, hat;
+
+  for (int part_id = 0; part_id < n_part; part_id++) {
+    for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
+      if ( types[type_id] == partCfg[part_id].p.type ) {
+        pos[0] = partCfg[part_id].r.p[0];
+        pos[1] = partCfg[part_id].r.p[1];
+        pos[2] = partCfg[part_id].r.p[2];
+        vel[0] = partCfg[part_id].m.v[0];
+        vel[1] = partCfg[part_id].m.v[1];
+        vel[2] = partCfg[part_id].m.v[2];
+
+        // Find the vector from center to the current particle
+        diff = utils::vecsub(pos,center);
+
+        // Find the height of the particle above the axis (height) and
+        // the distance from the center point (dist)
+        hat    = utils::cross_product(direction,diff);
+        height = utils::veclen(hat);
+        dist   = utils::dot_product(direction,diff) / norm_direction;
+
+        // Determine the components of the velocity parallel and
+        // perpendicular to the direction vector
+        if ( height == 0 )
+          v_radial = utils::veclen(utils::cross_product(vel,direction)) / norm_direction;
+        else
+          v_radial = utils::dot_product(vel,hat) / height;
+        v_axial  = utils::dot_product(vel,direction) / norm_direction;
+        
+        // Work out relevant indices for x and y
+        index_radial = static_cast<int>( floor(height / binwd_radial) );
+        index_axial  = static_cast<int>( floor((dist + 0.5*length) / binwd_axial) );
+
+        if ( (index_radial < bins_radial && index_radial >= 0) &&
+             (index_axial  < bins_axial  && index_axial  >= 0) ) {
+          distribution["density"][type_id][index_radial][index_axial] += 1;
+          distribution["v_r"][type_id][index_radial][index_axial] += v_radial;
+          distribution["v_t"][type_id][index_radial][index_axial] += v_axial;
+        }
+      }
+    }
+  }
+
+  // Now we turn the counts into densities by dividing by one radial
+  // bin (binvolume).  We also divide the velocites by the counts.
+  double binvolume;
+  for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
+    for (int index_radial = 0 ; index_radial < bins_radial ; index_radial++) {
+      // All bins are cylindrical shells of thickness binwd_radial.
+      // The volume is thus: binvolume = pi*(r_outer - r_inner)^2 * length
+      if ( index_radial == 0 )
+        binvolume = M_PI * binwd_radial*binwd_radial * length;
+      else
+        binvolume = M_PI * (index_radial*index_radial + 2*index_radial) * binwd_radial*binwd_radial * length;
+      for (int index_axial = 0 ; index_axial < bins_axial ; index_axial++) {
+        if ( distribution["density"][type_id][index_radial][index_axial] != 0 ) {
+          distribution["v_r"][type_id][index_radial][index_axial] /= distribution["density"][type_id][index_radial][index_axial];
+          distribution["v_t"][type_id][index_radial][index_axial] /= distribution["density"][type_id][index_radial][index_axial];
+          distribution["density"][type_id][index_radial][index_axial] /= binvolume;
+        }
+      }
+    }
+  }
+
+  return ES_OK;
+}
+
+
 int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
   int i,j,t;
   int pi,bi;
@@ -1043,7 +1157,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
 
-  /*Make sure particles are folded  */
+  /* Make sure particles are folded */
   for (i = 0 ; i < n_part ; i++) {
     fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,0);
     fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,1);
@@ -1056,8 +1170,6 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
   for ( pi = 0 ; pi < n_part ; pi++ ) {
     for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
       if ( beadids->e[bi] == partCfg[pi].p.type ) {
-
-
 	/* Find the vector from the point to the center */
 	vecsub(center,partCfg[pi].r.p,pvector);
 
@@ -1071,17 +1183,16 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
 	   onto the axis vector */
 	ydist = scalar(axis,pvector)/sqrt(sqrlen(axis));
 	
-    
 	/* Work out relevant indices for x and y */
 	xindex = (int)(floor(xdist/xbinwidth));
 	yindex = (int)(floor((ydist+yrange*0.5)/ybinwidth));
 	/*
-	printf("x %d y %d \n",xindex,yindex);
-	printf("p %f %f %f \n",partCfg[pi].r.p[0],partCfg[pi].r.p[1],partCfg[pi].r.p[2]);
-	printf("pvec %f %f %f \n",pvector[0],pvector[1],pvector[2]);
-	printf("axis %f %f %f \n",axis[0],axis[1],axis[2]);
-	printf("dists %f %f \n",xdist,ydist);
-	fflush(stdout);
+          printf("x %d y %d \n",xindex,yindex);
+          printf("p %f %f %f \n",partCfg[pi].r.p[0],partCfg[pi].r.p[1],partCfg[pi].r.p[2]);
+          printf("pvec %f %f %f \n",pvector[0],pvector[1],pvector[2]);
+          printf("axis %f %f %f \n",axis[0],axis[1],axis[2]);
+          printf("dists %f %f \n",xdist,ydist);
+          fflush(stdout);
 	*/
 	/* Check array bounds */
 	if ( (xindex < xbins && xindex > 0) && (yindex < ybins && yindex > 0) ) {
@@ -1097,7 +1208,6 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
     }
   }
 
-
   /* Now turn counts into densities for the density map */
   for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
     for ( i = 0 ; i < xbins ; i++ ) {
@@ -1108,7 +1218,6 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
       }
     }
   }
-
 
   /* if required calculate the theta density profile */
   if ( thetabins > 0 ) {
@@ -1125,59 +1234,47 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
       }
     }
     /* Maybe there is a nicer way to do this but now I will just repeat the loop over all particles */
-      for ( pi = 0 ; pi < n_part ; pi++ ) {
-	for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
-	  if ( beadids->e[bi] == partCfg[pi].p.type ) {
-	    vecsub(center,partCfg[pi].r.p,pvector);
-	    vector_product(axis,pvector,vectprod);
-	    xdist = sqrt(sqrlen(vectprod)/sqrlen(axis));
-	    ydist = scalar(axis,pvector)/sqrt(sqrlen(axis));
-	    /* Center the coordinates */
-
-	    xdist = xdist - xav;
-	    ydist = ydist - yav;
-	    rdist = sqrt(xdist*xdist+ydist*ydist);
-	    if ( ydist >= 0 ) {
-	      theta = acos(xdist/rdist);
-	    } else {
-	      theta = 2*PI-acos(xdist/rdist);
-	    }
-	    tindex = (int)(floor(theta/thetabinwidth));
-	    thetaradii[bi*thetabins+tindex] += xdist + xav;
-	    thetacounts[bi*thetabins+tindex] += 1;
-	    if ( tindex >= thetabins ) {
-	      fprintf(stderr,"ERROR: outside density_profile array bounds in calc_radial_density_map"); fflush(NULL); errexit(); 
-	    } else {
-	      density_profile[bi].e[tindex] += 1;
-	    }
-	  }	  
-	}
-      }
-
-
-
-      /* normalize the theta densities*/
+    for ( pi = 0 ; pi < n_part ; pi++ ) {
       for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
-	for ( t = 0 ; t < thetabins ; t++ ) {
-	  rdist = thetaradii[bi*thetabins+t]/(double)(thetacounts[bi*thetabins+t]);
-	  density_profile[bi].e[t] /= rdist*rdist;
-	}
+        if ( beadids->e[bi] == partCfg[pi].p.type ) {
+          vecsub(center,partCfg[pi].r.p,pvector);
+          vector_product(axis,pvector,vectprod);
+          xdist = sqrt(sqrlen(vectprod)/sqrlen(axis));
+          ydist = scalar(axis,pvector)/sqrt(sqrlen(axis));
+          /* Center the coordinates */
+
+          xdist = xdist - xav;
+          ydist = ydist - yav;
+          rdist = sqrt(xdist*xdist+ydist*ydist);
+          if ( ydist >= 0 ) {
+            theta = acos(xdist/rdist);
+          } else {
+            theta = 2*PI-acos(xdist/rdist);
+          }
+          tindex = (int)(floor(theta/thetabinwidth));
+          thetaradii[bi*thetabins+tindex] += xdist + xav;
+          thetacounts[bi*thetabins+tindex] += 1;
+          if ( tindex >= thetabins ) {
+            fprintf(stderr,"ERROR: outside density_profile array bounds in calc_radial_density_map"); fflush(NULL); errexit(); 
+          } else {
+            density_profile[bi].e[tindex] += 1;
+          }
+        }	  
       }
-       
+    }
 
+    /* normalize the theta densities*/
+    for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
+      for ( t = 0 ; t < thetabins ; t++ ) {
+        rdist = thetaradii[bi*thetabins+t]/(double)(thetacounts[bi*thetabins+t]);
+        density_profile[bi].e[t] /= rdist*rdist;
+      }
+    }
 
-      free(thetaradii);
-      free(thetacounts);
-
+    free(thetaradii);
+    free(thetacounts);
   }
-  
 
-
-
-
-
-
-  //  printf("done \n");
   return ES_OK;
 }
 

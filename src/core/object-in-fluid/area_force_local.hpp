@@ -56,8 +56,8 @@ inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 	// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p1, however, it might be other one. we call this particle reference particle.
 	if (p1->l.ghost != 1) {
 		//unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
-		memcpy(p11, p1->r.p, 3*sizeof(double));
-		memcpy(img, p1->l.i, 3*sizeof(int));
+		memmove(p11, p1->r.p, 3*sizeof(double));
+		memmove(img, p1->l.i, 3*sizeof(int));
 		unfold_position(p11,img);
 		// other coordinates are obtained from its relative positions to the reference particle
 		get_mi_vector(AA, p2->r.p, p11);
@@ -66,8 +66,8 @@ inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 	} else {
 		// in case the first particle is a ghost particle
 		if (p2->l.ghost != 1) {
-			memcpy(p22, p2->r.p, 3*sizeof(double));
-			memcpy(img, p2->l.i, 3*sizeof(int));
+			memmove(p22, p2->r.p, 3*sizeof(double));
+			memmove(img, p2->l.i, 3*sizeof(int));
 			unfold_position(p22,img);
 			get_mi_vector(AA, p1->r.p, p22);
 			get_mi_vector(BB, p3->r.p, p22);
@@ -75,8 +75,8 @@ inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 		} else {
 			// in case the first and the second particle are ghost particles
 			if (p3->l.ghost != 1) {
-				memcpy(p33, p3->r.p, 3*sizeof(double));
-				memcpy(img, p3->l.i, 3*sizeof(int));
+				memmove(p33, p3->r.p, 3*sizeof(double));
+				memmove(img, p3->l.i, 3*sizeof(int));
 				unfold_position(p33,img);
 				get_mi_vector(AA, p1->r.p, p33);
 				get_mi_vector(BB, p2->r.p, p33);
@@ -90,8 +90,8 @@ inline int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 	#endif
 	#ifndef GHOST_FLAG
 		// if ghost flag was not defined we have no other option than to assume the first particle is a physical one.
-		memcpy(p11, p1->r.p, 3*sizeof(double));
-		memcpy(img, p1->l.i, 3*sizeof(int));
+		memmove(p11, p1->r.p, 3*sizeof(double));
+		memmove(img, p1->l.i, 3*sizeof(int));
 		unfold_position(p11,img);
 		// other coordinates are obtained from its relative positions to the reference particle
 		get_mi_vector(AA, p2->r.p, p11);

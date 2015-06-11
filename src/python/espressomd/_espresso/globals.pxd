@@ -50,6 +50,7 @@ cdef extern from "domain_decomposition.hpp":
     ctypedef struct IA_Neighbor_List:
         pass
     ctypedef struct  DomainDecomposition:
+        int use_vList
         int cell_grid[3]
         double cell_size[3]
 
@@ -103,6 +104,9 @@ IF LB_GPU:
 
 cdef extern from "cells.hpp":
     extern double max_range
+    ctypedef struct CellStructure:
+        int type
+    CellStructure cell_structure
 
 cdef extern from "layered.hpp":
     extern int n_layers

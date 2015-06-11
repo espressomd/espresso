@@ -698,7 +698,7 @@ cat <<EOF
 EOF
 AC_MSG_CHECKING([whether to build with h5md support])
 AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport]),
-    [with_h5md=no], [with_h5md=yes])
+    , [with_h5md=yes])
 AC_MSG_RESULT($with_h5md)
 if test .$with_h5md = .yes; then
   ES_ADDPATH_CHECK_LIB(hdf5,H5open,,AC_MSG_FAILURE([could not link against the hdf5 library]),)

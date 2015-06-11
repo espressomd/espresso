@@ -323,6 +323,26 @@ implementation. For other quantities the \lit{lbnode} command may be used.
 This command can be used to output the number density of the
 \var{species\_number}-th diffusive species on a single LB node.
 
+\section{\label{ssec:ek-checkpointing}Checkpointing}
+
+\begin{essyntax}
+  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint save [\var{filename}]
+  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint load [\var{filename}]
+  \begin{features}
+  \required[1]{ELECTROKINETICS}
+  \required[2]{EK_BOUNDARIES}
+  \required[3]{EK_REACTIONS}
+  \end{features}
+\end{essyntax}
+Variant \variant{1} writes the species density fields as well as all necessary 
+LB fields into two files called \var{filename.ek} and \var{filename.lb}.
+Variant \variant{2} reads these files back and restores the fields. All 
+algorithm parameters must be set via the simulation script, as they are not 
+part of the checkpointed data.
+
+The format of the checkpoint is binary and no special care is taken with 
+respect to the specific binary layout of the machine.
+
 \section{Catalytic Reaction}
 
 \subsection{Concept}

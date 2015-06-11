@@ -134,38 +134,9 @@ cdef extern from "particle_data.hpp":
         int set_particle_torque_body(int part, double torque[3])
         void pointer_to_omega_body(Particle * p, double * & res)
         void pointer_to_torque_lab(Particle * p, double * & res)
-        void pointer_to_quatu(Particle * p, double * & res)
-        void pointer_to_quat(Particle * p, double * & res)
 
     IF MASS == 1:
         void pointer_to_mass(Particle * p, double * & res)
-
-    IF VIRTUAL_SITES == 1:
-        int set_particle_virtual(int part, int isVirtual)
-
-    IF LANGEVIN_PER_PARTICLE == 1:
-        int set_particle_temperature(int part, double T)
-
-        int set_particle_gamma(int part, double gamma)
-
-    IF VIRTUAL_SITES_RELATIVE == 1:
-        void pointer_to_vs_relative(Particle * P, int * & res1, double * & res2)
-
-    IF ELECTROSTATICS == 1:
-        void pointer_to_q(Particle * P, double * & res)
-
-    IF EXTERNAL_FORCES == 1:
-        IF ROTATION == 1:
-            int set_particle_ext_torque(int part, int flag, double torque[3])
-        int set_particle_ext_force(int part, int flag, double force[3])
-        int set_particle_fix(int part,  int flag)
-
-    int change_particle_bond(int part, int * bond, int _delete)
-
-    IF EXCLUSIONS == 1:
-        int change_exclusion(int part, int part2, int _delete)
-
-        void remove_all_exclusions()
 
     IF DIPOLES:
         int set_particle_dip(int part, double dip[3])

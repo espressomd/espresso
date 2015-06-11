@@ -345,7 +345,7 @@ void initialize_ia_params(IA_parameters *params) {
 
 /** Copy interaction parameters. */
 void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
-  memcpy(dst, src, sizeof(IA_parameters));
+  memmove(dst, src, sizeof(IA_parameters));
 }
 
 IA_parameters *get_ia_param_safe(int i, int j) {
