@@ -983,13 +983,13 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         }
         else
         {
-          if(fread(host_checkpoint_vd, sizeof(float), 19*int(lbpar_gpu.number_of_nodes), cpfile) != 19*int(lbpar_gpu.number_of_nodes))
+          if(fread(host_checkpoint_vd, sizeof(float), 19*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (19*lbpar_gpu.number_of_nodes))
             return ES_ERROR;
-          if(fread(host_checkpoint_seed, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != int(lbpar_gpu.number_of_nodes))
+          if(fread(host_checkpoint_seed, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
             return ES_ERROR;
-          if(fread(host_checkpoint_boundary, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != int(lbpar_gpu.number_of_nodes))
+          if(fread(host_checkpoint_boundary, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
             return ES_ERROR;
-          if(fread(host_checkpoint_force, sizeof(lbForceFloat), 3*int(lbpar_gpu.number_of_nodes), cpfile) != 3*int(lbpar_gpu.number_of_nodes))
+          if(fread(host_checkpoint_force, sizeof(lbForceFloat), 3*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (3*lbpar_gpu.number_of_nodes))
             return ES_ERROR;
         }
         lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
