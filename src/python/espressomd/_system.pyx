@@ -22,7 +22,7 @@ from globals cimport *
 import numpy as np
 
 import interactions
-import actors
+from actors import Actors
 cimport cuda_init
 import particle_data
 import cuda_init
@@ -39,7 +39,7 @@ cdef class System:
     cellSystem = CellSystem()
 
     def __init__(self):
-        self.Actors = actors.Actors(self)
+        self.actors = Actors(self)
 
 #    def __init__(self):
 #        self.part = particle_data.particleList()

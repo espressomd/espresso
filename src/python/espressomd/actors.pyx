@@ -128,9 +128,9 @@ class Actors:
 
     def add(self, actor):
         if not actor in Actors.activeActors:
+            actor.system = self.system
             Actors.activeActors.append(actor)
             actor._activate()
-            actor.system = self.system
         else:
             raise ThereCanOnlyBeOne(actor)
 
