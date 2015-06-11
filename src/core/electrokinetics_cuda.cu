@@ -22,6 +22,7 @@
 #include <cuda.h>
 #include <cufft.h>
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <sstream>
 #include <string>
@@ -3731,12 +3732,8 @@ int ek_neutralize_system(int species) {
 }
 
 int ek_save_checkpoint(char* filename) {
-  FILE* fp = fopen(filename, "w");
-
-  if(fp == NULL){
-    return 1;
-  }
-
+  std::string fname(filename);
+  std::ofstream fout((const char *) (fname + ".ek").c_str(), std::ofstream::binary);
   ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
                                       sizeof( ekfloat )                 );
 
@@ -3748,30 +3745,36 @@ int ek_save_checkpoint(char* filename) {
                                cudaMemcpyDeviceToHost )
                  );
 
-    for(int k = 0; k < ek_parameters.number_of_nodes; k++) 
-      fprintf(fp, "%.17e\n", densities[k]);
+    if(!fout.write((char*) densities, sizeof(ekfloat)*ek_parameters.number_of_nodes))
+    {
+      free(densities);
+      fout.close();
+      return 1;
+    }
   }
 
   free(densities);
-  fclose(fp);
-  
+  fout.close();
+ 
+  lb_lbfluid_save_checkpoint_wrapper((char*) (fname + ".lb").c_str(), 1);
+
   return 0;
 }
 
 int ek_load_checkpoint(char* filename) {
-  FILE* fp = fopen(filename, "r");
-
-  if(fp == NULL){
-    return 1;
-  }
-
+  std::string fname(filename);
+  std::ifstream fin((const char *) (fname + ".ek").c_str(), std::ifstream::binary);
   ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
                                       sizeof( ekfloat )                 );
 
   for(int i = 0; i < ek_parameters.number_of_species; i++)
   {
-    for(int k = 0; k < ek_parameters.number_of_nodes; k++) 
-      fscanf(fp, "%.17e\n", &densities[k]);
+    if(!fin.read((char*) densities, sizeof(ekfloat)*ek_parameters.number_of_nodes))
+    {
+      free(densities);
+      fin.close();
+      return 1;
+    }
 
     cuda_safe_mem( cudaMemcpy( ek_parameters.rho[i],
                                densities, 
@@ -3781,7 +3784,9 @@ int ek_load_checkpoint(char* filename) {
   }
 
   free(densities);
-  fclose(fp);
+  fin.close();
+
+  lb_lbfluid_load_checkpoint_wrapper((char*) (fname + ".lb").c_str(), 1);
 
   ek_integrate_electrostatics();
   
