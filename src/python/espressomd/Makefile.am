@@ -50,6 +50,7 @@ PYXFILES =  \
 	electrostatics.pyx \
 	integrate.pyx \
 	interactions.pyx \
+	magnetostatics.pyx
 	particle_data.pyx \
 	thermostat.pyx \
 	utils.pyx
@@ -69,6 +70,7 @@ PXDFILES = \
 	integrate.pxd \
 	interactions.pxd \
 	lb.pxd \
+	magnetostatics.pxd \
 	particle_data.pxd \
 	_system.pxd \
 	_tcl.pxd \
