@@ -50,10 +50,10 @@ PYXFILES =  \
 	electrostatics.pyx \
 	integrate.pyx \
 	interactions.pyx \
+	magnetostatics.pyx
 	particle_data.pyx \
 	thermostat.pyx \
-	utils.pyx \
-	electrostatics.pyx
+	utils.pyx 
 
 PXDFILES = \
 	_espresso/globals.pxd \
@@ -70,6 +70,7 @@ PXDFILES = \
 	integrate.pxd \
 	interactions.pxd \
 	lb.pxd \
+	magnetostatics.pxd \
 	particle_data.pxd \
 	_system.pxd \
 	_tcl.pxd \
