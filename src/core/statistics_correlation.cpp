@@ -443,12 +443,12 @@ int double_correlation_get_data( double_correlation* self ) {
   if ( observable_calculate(self->A_obs) != 0 )
     return 1;
   // copy the result:
-  memcpy(self->A[0][self->newest[0]], self->A_obs->last_value, self->dim_A*sizeof(double));
+  memmove(self->A[0][self->newest[0]], self->A_obs->last_value, self->dim_A*sizeof(double));
 
   if (!self->autocorrelation) {
     if ( observable_calculate(self->B_obs) != 0 )
       return 2;
-    memcpy(self->B[0][self->newest[0]], self->B_obs->last_value, self->dim_B*sizeof(double));
+    memmove(self->B[0][self->newest[0]], self->B_obs->last_value, self->dim_B*sizeof(double));
   }
 
   // Now we update the cumulated averages and variances of A and B

@@ -518,8 +518,8 @@ int observable_calc_density_profile(observable* self) {
     if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     binx= (int) floor( pdata->xbins*  (ppos[0]-pdata->minx)/(pdata->maxx-pdata->minx));
     biny= (int) floor( pdata->ybins*  (ppos[1]-pdata->miny)/(pdata->maxy-pdata->miny));
@@ -556,8 +556,8 @@ int observable_calc_force_density_profile(observable* self) {
     if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     binx= (int) floor( pdata->xbins*  (ppos[0]-pdata->minx)/(pdata->maxx-pdata->minx));
     biny= (int) floor( pdata->ybins*  (ppos[1]-pdata->miny)/(pdata->maxy-pdata->miny));
@@ -817,8 +817,8 @@ int observable_calc_radial_density_profile(observable* self) {
     if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     transform_to_cylinder_coordinates(ppos[0]-pdata->center[0], ppos[1]-pdata->center[1], ppos[2]-pdata->center[2], &r, &phi, &z);
     //printf("%f %f %f %f %f %f\n", ppos[0], ppos[1], ppos[2], r*cos(phi)+pdata->center[0], r*sin(phi)+pdata->center[1], z+pdata->center[2]);
@@ -869,8 +869,8 @@ int observable_calc_radial_flux_density_profile(observable* self) {
   double* old_positions=(double*) pdata->container;
   if (old_positions[0] == CONST_UNITITIALIZED) {
     for (int i = 0; i<ids->n; i++ ) {
-      memcpy(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-      memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+      memmove(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+      memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
       unfold_position(unfolded_ppos, img);
       old_positions[3*i+0]=unfolded_ppos[0];
       old_positions[3*i+1]=unfolded_ppos[1];
@@ -882,14 +882,14 @@ int observable_calc_radial_flux_density_profile(observable* self) {
     if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
-    memcpy(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     unfold_position(unfolded_ppos, img);
     v[0]=(unfolded_ppos[0] - old_positions[3*i+0]);
     v[1]=(unfolded_ppos[1] - old_positions[3*i+1]);
     v[2]=(unfolded_ppos[2] - old_positions[3*i+2]);
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     // The position of the particle is by definition the middle of old and new position
     ppos[0]+=0.5*v[0]; ppos[1]+=0.5*v[1]; ppos[2]+=0.5*v[2];
@@ -956,8 +956,8 @@ int observable_calc_flux_density_profile(observable* self) {
     v[0]=partCfg[ids->e[i]].m.v[0]*time_step;
     v[1]=partCfg[ids->e[i]].m.v[1]*time_step;
     v[2]=partCfg[ids->e[i]].m.v[2]*time_step;
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     x=ppos[0];
     y=ppos[1];
@@ -1358,7 +1358,7 @@ int observable_radial_density_distribution(observable* self){
 
 	  //using the grandcanonical scheme, always update the particle id list
 	  ids->e = (int *) malloc(sizeof(int)*type_array[Index.type[r_data->type]].max_entry);
-	  memcpy(ids->e, type_array[Index.type[r_data->type]].id_list, type_array[Index.type[r_data->type]].max_entry*sizeof(int));
+	  memmove(ids->e, type_array[Index.type[r_data->type]].id_list, type_array[Index.type[r_data->type]].max_entry*sizeof(int));
 	  ids->n = type_array[Index.type[r_data->type]].max_entry;
 	  ids->max = type_array[Index.type[r_data->type]].cur_size;
   } else { 
@@ -1374,15 +1374,15 @@ int observable_radial_density_distribution(observable* self){
   int image_box[3];
   if ( r_data->id_flag ) {
 	  // Using particle_ids to specify the start and endpoints
-	  memcpy(start_point, partCfg[r_data->start_point_id].r.p, 3*sizeof(double));
-	  memcpy(image_box, partCfg[r_data->start_point_id].l.i, 3*sizeof(int));
+	  memmove(start_point, partCfg[r_data->start_point_id].r.p, 3*sizeof(double));
+	  memmove(image_box, partCfg[r_data->start_point_id].l.i, 3*sizeof(int));
 	  unfold_position(start_point, image_box);
-	  memcpy(end_point, partCfg[r_data->end_point_id].r.p, 3*sizeof(double));
-	  memcpy(image_box, partCfg[r_data->end_point_id].l.i, 3*sizeof(int));
+	  memmove(end_point, partCfg[r_data->end_point_id].r.p, 3*sizeof(double));
+	  memmove(image_box, partCfg[r_data->end_point_id].l.i, 3*sizeof(int));
 	  unfold_position(end_point, image_box);
   } else {
-	  memcpy(start_point, r_data->start_point, 3*sizeof(double));
-	  memcpy(end_point, r_data->end_point, 3*sizeof(double));
+	  memmove(start_point, r_data->start_point, 3*sizeof(double));
+	  memmove(end_point, r_data->end_point, 3*sizeof(double));
   }
 
   double *bin_volume = (double *) malloc(sizeof(double)*r_data->rbins);

@@ -22,12 +22,13 @@ from globals cimport *
 import numpy as np
 
 import interactions
-import actors as actrs
+from actors import Actors
 cimport cuda_init
 import particle_data
 import cuda_init
 import code_info
 from thermostat import Thermostat
+from cellsystem import CellSystem
 
 
 cdef class System:
@@ -35,8 +36,10 @@ cdef class System:
     part = particle_data.particleList()
     nonBondedInter = interactions.NonBondedInteractions()
     bondedInter = interactions.BondedInteractions()
+    actors = Actors()
+    cellSystem = CellSystem()
     thermostat = Thermostat()
-    actors = actrs.Actors()
+
 
 #    def __init__(self):
 #        self.part = particle_data.particleList()

@@ -365,7 +365,7 @@ int sortPartCfg()
 
   sorted = (Particle*)malloc(n_part*sizeof(Particle));
   for(i = 0; i < n_part; i++)
-    memcpy(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
+    memmove(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
   free(partCfg);
   partCfg = sorted;
 
@@ -481,7 +481,7 @@ Particle *append_unindexed_particle(ParticleList *l, Particle *part)
   realloc_particlelist(l, ++l->n);
   p = &l->part[l->n - 1];
 
-  memcpy(p, part, sizeof(Particle));
+  memmove(p, part, sizeof(Particle));
   return p;
 }
 
@@ -493,7 +493,7 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part)
   re = realloc_particlelist(l, ++l->n);
   p  = &l->part[l->n - 1];
 
-  memcpy(p, part, sizeof(Particle));
+  memmove(p, part, sizeof(Particle));
 
   if (re)
     update_local_particles(l);
@@ -510,9 +510,9 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i)
   dst = &dl->part[dl->n - 1];
   src = &sl->part[i];
   end = &sl->part[sl->n - 1];
-  memcpy(dst, src, sizeof(Particle));
+  memmove(dst, src, sizeof(Particle));
   if ( src != end )
-    memcpy(src, end, sizeof(Particle));
+    memmove(src, end, sizeof(Particle));
   sl->n -= 1;
   realloc_particlelist(sl, sl->n);
   return dst;
@@ -525,7 +525,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
 
-  memcpy(dst, src, sizeof(Particle));
+  memmove(dst, src, sizeof(Particle));
   if (re) {
     //fprintf(stderr, "%d: m_i_p: update destination list after realloc\n",this_node);
     update_local_particles(dl); }
@@ -535,7 +535,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   }
   if ( src != end ) {
     //fprintf(stderr, "%d: m_i_p: copy end particle in source list (id %d)\n",this_node,end->p.identity);
-    memcpy(src, end, sizeof(Particle));
+    memmove(src, end, sizeof(Particle));
 
   }
   if (realloc_particlelist(sl, --sl->n)) {
@@ -1236,7 +1236,7 @@ void local_remove_particle(int part)
 
   if (&pl->part[pl->n - 1] != p) {
     /* move last particle to free position */
-    memcpy(p, &pl->part[pl->n - 1], sizeof(Particle));
+    memmove(p, &pl->part[pl->n - 1], sizeof(Particle));
     /* update the local_particles array for the moved particle */
     local_particles[p->p.identity] = p;
   }
@@ -1291,10 +1291,10 @@ void local_place_particle(int part, double p[3], int _new)
   pt->m.v[2] += vv[2];  
 #endif
 
-  memcpy(pt->r.p, pp, 3*sizeof(double));
-  memcpy(pt->l.i, i, 3*sizeof(int));
+  memmove(pt->r.p, pp, 3*sizeof(double));
+  memmove(pt->l.i, i, 3*sizeof(int));
 #ifdef BOND_CONSTRAINT
-  memcpy(pt->r.p_old, pp, 3*sizeof(double));
+  memmove(pt->r.p_old, pp, 3*sizeof(double));
 #endif
 }
 
@@ -1527,10 +1527,10 @@ void send_particles(ParticleList *particles, int node)
     size += p->el.n;
 #endif
     realloc_intlist(&local_dyn, size);
-    memcpy(local_dyn.e + local_dyn.n, p->bl.e, p->bl.n*sizeof(int));
+    memmove(local_dyn.e + local_dyn.n, p->bl.e, p->bl.n*sizeof(int));
     local_dyn.n += p->bl.n;
 #ifdef EXCLUSIONS
-    memcpy(local_dyn.e + local_dyn.n, p->el.e, p->el.n*sizeof(int));
+    memmove(local_dyn.e + local_dyn.n, p->el.e, p->el.n*sizeof(int));
     local_dyn.n += p->el.n;
 #endif
   }
@@ -1598,7 +1598,7 @@ void recv_particles(ParticleList *particles, int node)
     Particle *p = &particles->part[pc];
     if (p->bl.n > 0) {
       alloc_intlist(&p->bl, p->bl.n);
-      memcpy(p->bl.e, &local_dyn.e[read], p->bl.n*sizeof(int));
+      memmove(p->bl.e, &local_dyn.e[read], p->bl.n*sizeof(int));
       read += p->bl.n;
     }
     else
@@ -1606,7 +1606,7 @@ void recv_particles(ParticleList *particles, int node)
 #ifdef EXCLUSIONS
     if (p->el.n > 0) {
       alloc_intlist(&p->el, p->el.n);
-      memcpy(p->el.e, &local_dyn.e[read], p->el.n*sizeof(int));
+      memmove(p->el.e, &local_dyn.e[read], p->el.n*sizeof(int));
       read += p->el.n;
     }
     else

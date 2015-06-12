@@ -54,7 +54,6 @@ IF ELECTROSTATICS == 1:
                 double additional_mesh[3]
 
         cdef extern from "p3m.hpp":
-            # p3m_set_params also sets the coulomb.method
             int p3m_set_params(double r_cut, int * mesh, int cao, double alpha, double accuracy)
             void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha, double accuracy, int n_interpol)
             int p3m_set_mesh_offset(double x, double y, double z)

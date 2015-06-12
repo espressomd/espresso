@@ -2,6 +2,7 @@ include "myconfig.pxi"
 import numpy as np
 from highlander import ThereCanOnlyBeOne
 
+
 cdef class Actor(object):
     activeList = dict(ElectrostaticInteraction=False,
                       MagnetostaticInteraction=False,
