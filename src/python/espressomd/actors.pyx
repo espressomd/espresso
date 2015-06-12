@@ -97,7 +97,7 @@ cdef class Actor(object):
 
     def validateParams(self):
         raise Exception(
-            "Subclasses of %s must define the validate() method." % self._getInteractionType())
+            "Subclasses of %s must define the validateParams() method." % self._getInteractionType())
 
     def _getParamsFromEsCore(self):
         raise Exception(
