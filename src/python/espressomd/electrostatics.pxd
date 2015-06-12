@@ -24,6 +24,7 @@ cimport numpy as np
 from utils cimport *
 
 IF ELECTROSTATICS == 1:
+    from p3m_common cimport p3m_parameter_struct
     cdef extern from "interaction_data.hpp":
         cdef enum CoulombMethod:
             COULOMB_NONE, \
@@ -115,59 +116,59 @@ IF ELECTROSTATICS == 1:
                 p3m_gpu_init(cao, mesh, alpha, box)
 
         # Convert C arguments into numpy array
-        cdef inline python_p3m_set_mesh_offset(mesh_off):
-            cdef double mesh_offset[3]
-            mesh_offset[0] = mesh_off[0]
-            mesh_offset[1] = mesh_off[1]
-            mesh_offset[2] = mesh_off[2]
-            return p3m_set_mesh_offset(mesh_offset[0], mesh_offset[1], mesh_offset[2])
+    cdef inline python_p3m_set_mesh_offset(mesh_off):
+        cdef double mesh_offset[3]
+        mesh_offset[0] = mesh_off[0]
+        mesh_offset[1] = mesh_off[1]
+        mesh_offset[2] = mesh_off[2]
+        return p3m_set_mesh_offset(mesh_offset[0], mesh_offset[1], mesh_offset[2])
 
-        cdef inline python_p3m_adaptive_tune():
-            cdef char * log = NULL
-            cdef int response
-            response = p3m_adaptive_tune( & log)
-            return response, log
+    cdef inline python_p3m_adaptive_tune():
+        cdef char * log = NULL
+        cdef int response
+        response = p3m_adaptive_tune( & log)
+        return response, log
 
-        cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
-            cdef int mesh[3]
-            cdef double r_cut
-            cdef int cao
-            cdef double alpha
-            cdef double accuracy
-            r_cut = p_r_cut
-            cao = p_cao
-            alpha = p_alpha
-            accuracy = p_accuracy
-            if isinstance(p_mesh, int):
-                mesh[0] = p_mesh
-                mesh[1] = p_mesh
-                mesh[2] = p_mesh
-            else:
-                mesh = p_mesh
+    cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
+        cdef int mesh[3]
+        cdef double r_cut
+        cdef int cao
+        cdef double alpha
+        cdef double accuracy
+        r_cut = p_r_cut
+        cao = p_cao
+        alpha = p_alpha
+        accuracy = p_accuracy
+        if isinstance(p_mesh, int):
+            mesh[0] = p_mesh
+            mesh[1] = p_mesh
+            mesh[2] = p_mesh
+        else:
+            mesh = p_mesh
 
-            p3m_set_params(r_cut, mesh, cao, alpha, accuracy)
+        p3m_set_params(r_cut, mesh, cao, alpha, accuracy)
 
-        cdef inline python_p3m_set_tune_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy, p_n_interpol):
-            # cdef inline python_p3m_set_tune_params():
-            cdef int mesh[3]
-            cdef double r_cut
-            cdef int cao
-            cdef double alpha
-            cdef double accuracy
-            cdef int n_interpol
-            r_cut = p_r_cut
-            cao = p_cao
-            alpha = p_alpha
-            accuracy = p_accuracy
-            n_interpol = p_n_interpol
-            if isinstance(p_mesh, int):
-                mesh[0] = p_mesh
-                mesh[1] = p_mesh
-                mesh[2] = p_mesh
-            else:
-                mesh = p_mesh
+    cdef inline python_p3m_set_tune_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy, p_n_interpol):
+        # cdef inline python_p3m_set_tune_params():
+        cdef int mesh[3]
+        cdef double r_cut
+        cdef int cao
+        cdef double alpha
+        cdef double accuracy
+        cdef int n_interpol
+        r_cut = p_r_cut
+        cao = p_cao
+        alpha = p_alpha
+        accuracy = p_accuracy
+        n_interpol = p_n_interpol
+        if isinstance(p_mesh, int):
+            mesh[0] = p_mesh
+            mesh[1] = p_mesh
+            mesh[2] = p_mesh
+        else:
+            mesh = p_mesh
 
-            p3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
+        p3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
       
     cdef extern from "debye_hueckel.hpp":
         IF COULOMB_DEBYE_HUECKEL:
@@ -186,3 +187,4 @@ IF ELECTROSTATICS == 1:
         
         int dh_set_params(double kappa, double r_cut)
         int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha)
+
