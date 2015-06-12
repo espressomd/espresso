@@ -106,7 +106,44 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int set density\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int print <density|flux>\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics pdb-parse #string #string #double\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics checkpoint <save|load> #string\n", (char *)NULL);
     return TCL_ERROR;
+  }
+  else if(ARG0_IS_S("checkpoint"))
+  {
+    argc--;
+    argv++;
+
+    if(argc != 2 || (!ARG0_IS_S("save") && !ARG0_IS_S("load")))
+    {
+      Tcl_AppendResult(interp, "Wrong usage of electrokinetics checkpoint <save|load> #filename\n", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    if(ARG0_IS_S("save"))
+    {
+      argc--;
+      argv++;
+
+      if(ek_save_checkpoint(argv[0]) != 0)
+      {
+        Tcl_AppendResult(interp, "Error saving EK checkpoint\n", (char *) NULL);
+        return TCL_ERROR;
+      }
+    }
+    else if(ARG0_IS_S("load"))
+    {
+      argc--;
+      argv++;
+
+      if(ek_load_checkpoint(argv[0]) != 0)
+      {
+        Tcl_AppendResult(interp, "Error loading EK checkpoint\n", (char *) NULL);
+        return TCL_ERROR;
+      }
+    }
+
+    return TCL_OK;
   }
   else if(ARG0_IS_S("pdb-parse"))
   {
