@@ -78,38 +78,39 @@ IF COULOMB_DEBYE_HUECKEL:
                     "alpha": -1}
 
 ELSE:
-    class DH(ElectrostaticInteraction):
-        def validateParams(self):
-            if (self._params["bjerrum_length"] <= 0):
-                raise ValueError("Bjerrum_length should be a positive double")
-            if (self._params["kappa"] <0):
-                raise ValueError("kappa should be a non-negative double")
-            if (self._params["r_cut"] <0):
-                raise ValueError("r_cut should be a non-negative double")
+    IF ELECTROSTATICS:
+        class DH(ElectrostaticInteraction):
+            def validateParams(self):
+                if (self._params["bjerrum_length"] <= 0):
+                    raise ValueError("Bjerrum_length should be a positive double")
+                if (self._params["kappa"] <0):
+                    raise ValueError("kappa should be a non-negative double")
+                if (self._params["r_cut"] <0):
+                    raise ValueError("r_cut should be a non-negative double")
+            
+            def validKeys(self):
+                return "bjerrum_length","kappa","r_cut"
         
-        def validKeys(self):
-            return "bjerrum_length","kappa","r_cut"
-    
-        def requiredKeys(self):   
-            return "bjerrum_length","kappa","r_cut"
-    
-        def _setParamsInEsCore(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
-            dh_set_params(self._params["kappa"], self._params["r_cut"])
+            def requiredKeys(self):   
+                return "bjerrum_length","kappa","r_cut"
         
-        def _getParamsFromEsCore(self):
-            params = {}
-            params.update(dh_params)
-            return params
-        
-        def _activateMethod(self):
-            coulomb.method = COULOMB_DH
-            self._setParamsInEsCore()
+            def _setParamsInEsCore(self):
+                coulomb_set_bjerrum(self._params["bjerrum_length"])
+                dh_set_params(self._params["kappa"], self._params["r_cut"])
+            
+            def _getParamsFromEsCore(self):
+                params = {}
+                params.update(dh_params)
+                return params
+            
+            def _activateMethod(self):
+                coulomb.method = COULOMB_DH
+                self._setParamsInEsCore()
 
-        def defaultParams(self):
-            return {"bjerrum_length": -1,
-                    "kappa": -1,
-                    "r_cut": -1}
+            def defaultParams(self):
+                return {"bjerrum_length": -1,
+                        "kappa": -1,
+                        "r_cut": -1}
 
 
 IF P3M == 1:
