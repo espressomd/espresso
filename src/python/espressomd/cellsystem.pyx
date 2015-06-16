@@ -71,7 +71,7 @@ cdef class CellSystem(object):
 
         if not MPI_err:
             mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED)
-        
+
         # @TODO: gathering should be interface independent
         # return mpi_gather_runtime_errors(interp, TCL_OK)
 

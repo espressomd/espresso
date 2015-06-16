@@ -22,6 +22,7 @@ cimport numpy as np
 from utils cimport *
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
+from libcpp.map cimport map  # import std::map as map
 
 cdef extern from "particle_data.hpp":
     cdef int updatePartCfg(int bonds_flag)
@@ -56,6 +57,9 @@ cdef extern from "statistics.hpp":
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef double mindist(IntList * set1, IntList * set2)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
+    cdef int calc_cylindrical_average(vector[double] center, vector[double] direction, double length,
+                                      double radius, int bins_axial, int bins_radial, vector[int] types,
+                                      map[string, vector[vector[vector[double]]]]& distribution)
 
 
 cdef extern from "pressure.hpp":
@@ -93,4 +97,3 @@ cdef extern from "statistics_chain.hpp":
 
 cdef extern from "interaction_data.hpp":
     int n_bonded_ia
-

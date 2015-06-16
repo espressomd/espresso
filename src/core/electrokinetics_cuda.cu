@@ -22,6 +22,7 @@
 #include <cuda.h>
 #include <cufft.h>
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <sstream>
 #include <string>
@@ -3727,6 +3728,68 @@ int ek_neutralize_system(int species) {
 
   ek_parameters.density[species_index] = compensating_species_density;
 
+  return 0;
+}
+
+int ek_save_checkpoint(char* filename) {
+  std::string fname(filename);
+  std::ofstream fout((const char *) (fname + ".ek").c_str(), std::ofstream::binary);
+  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+                                      sizeof( ekfloat )                 );
+
+  for(int i = 0; i < ek_parameters.number_of_species; i++)
+  {
+    cuda_safe_mem( cudaMemcpy( densities, 
+                               ek_parameters.rho[i],
+                               ek_parameters.number_of_nodes * sizeof(ekfloat),
+                               cudaMemcpyDeviceToHost )
+                 );
+
+    if(!fout.write((char*) densities, sizeof(ekfloat)*ek_parameters.number_of_nodes))
+    {
+      free(densities);
+      fout.close();
+      return 1;
+    }
+  }
+
+  free(densities);
+  fout.close();
+ 
+  lb_lbfluid_save_checkpoint_wrapper((char*) (fname + ".lb").c_str(), 1);
+
+  return 0;
+}
+
+int ek_load_checkpoint(char* filename) {
+  std::string fname(filename);
+  std::ifstream fin((const char *) (fname + ".ek").c_str(), std::ifstream::binary);
+  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+                                      sizeof( ekfloat )                 );
+
+  for(int i = 0; i < ek_parameters.number_of_species; i++)
+  {
+    if(!fin.read((char*) densities, sizeof(ekfloat)*ek_parameters.number_of_nodes))
+    {
+      free(densities);
+      fin.close();
+      return 1;
+    }
+
+    cuda_safe_mem( cudaMemcpy( ek_parameters.rho[i],
+                               densities, 
+                               ek_parameters.number_of_nodes * sizeof(ekfloat),
+                               cudaMemcpyHostToDevice )
+                 );
+  }
+
+  free(densities);
+  fin.close();
+
+  lb_lbfluid_load_checkpoint_wrapper((char*) (fname + ".lb").c_str(), 1);
+
+  ek_integrate_electrostatics();
+  
   return 0;
 }
 

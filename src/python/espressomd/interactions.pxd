@@ -125,6 +125,13 @@ cdef extern from "interaction_data.hpp":
         double r
         double r_cut
 
+#* Parameters for the harmonic dumbbell bond potential */
+    ctypedef struct Harmonic_dumbbell_bond_parameters:
+        double k1
+        double k2
+        double r
+        double r_cut
+
 #* Parameters for three body angular potential (bond-angle potentials).
     ctypedef struct Angle_bond_parameters:
         double bend
@@ -231,6 +238,7 @@ cdef extern from "interaction_data.hpp":
         Bending_force_bond_parameters bending_force
         Volume_force_bond_parameters volume_force
         Harmonic_bond_parameters harmonic
+        Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle
         Angle_harmonic_bond_parameters angle_harmonic
         Angle_cosine_bond_parameters angle_cosine
@@ -280,6 +288,10 @@ cdef extern from "object-in-fluid/area_force_global.hpp":
     int area_force_global_set_params(int bond_type, double A0_g, double ka_g)
 cdef extern from "object-in-fluid/stretchlin_force.hpp":
     int stretchlin_force_set_params(int bond_type, double r0, double kslin)
+
+IF ROTATION:
+    cdef extern from "harmonic_dumbbell.hpp":
+        int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, double r_cut)
 
 IF TABULATED == 1:
     cdef extern from "interaction_data.hpp":
