@@ -55,6 +55,7 @@ CUDA_v_cs *host_v_cs = NULL;
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
+cudaError_t _err;
 cudaError_t CU_err;
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line){
   if( cudaSuccess != CU_err) {                                             

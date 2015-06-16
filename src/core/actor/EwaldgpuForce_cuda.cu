@@ -1065,10 +1065,10 @@ void EwaldgpuForce::GPU_q_sqr(SystemInterface &s)
 }
 void cuda_check_error(const dim3 &block, const dim3 &grid, const char *function, const char *file, unsigned int line)
 {
-  err=cudaGetLastError();
-  if (err!=cudaSuccess)
+  _err=cudaGetLastError();
+  if (_err!=cudaSuccess)
     {
-      fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n", this_node, cudaGetErrorString(err), function, block.x, block.y, block.z, grid.x, grid.y, grid.z,file, line);
+      fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n", this_node, cudaGetErrorString(_err), function, block.x, block.y, block.z, grid.x, grid.y, grid.z,file, line);
       exit(EXIT_FAILURE);
     }
 }

@@ -66,7 +66,7 @@ cdef class CellSystem(object):
         if (node_grid[0] != 1 or node_grid[1] != 1):
             node_grid[0] = node_grid[1] = 1
             node_grid[2] = n_nodes
-            err = mpi_bcast_parameter(FIELD_NODEGRID)
+            mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
         else:
             mpi_err = 0
 
