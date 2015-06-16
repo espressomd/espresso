@@ -64,9 +64,6 @@ part 1 bond 1 2
 part 2 bond 1 3
 
 puts [bond_dihedral 0 1 2 3]
-prepare_vmd_connection 
-imd listen 100
-imd positions
 
 
 
@@ -104,18 +101,14 @@ imd positions
 #     } 
 # }  
 
-thermostat langevin 0.0 1.0
 
 #integrate for testing potential
 ##########################################
-set asteps 100000.0
+set asteps 10.0
 
 for { set i 0 } { $i <= $asteps } { incr i } {
-    integrate 1
 
-    # puts [part 1]
-
-    imd positions
+    integrate 100
 
     # analyze
     set angles($i)   [ bond_dihedral 0 1 2 3 ]
