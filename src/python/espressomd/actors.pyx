@@ -5,12 +5,12 @@ from highlander import ThereCanOnlyBeOne
 cdef class Actor:
     activeList = dict(ElectrostaticInteraction=False,
                       MagnetostaticInteraction=False,
-                      HydrodynamicInteraction=False,
-                      ElectrostaticExtensions=False)
+                      HydrodynamicInteraction=False)
 
     def __cinit__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.defaultParams()
+        self.system = None
 
         # Check if all required keys are given
         for k in self.requiredKeys():
@@ -122,8 +122,12 @@ cdef class Actor:
 class Actors:
     activeActors = []
 
+    def __init__(self, _system=None):
+        self.system = _system
+
     def add(self, actor):
         if not actor in Actors.activeActors:
+            actor.system = self.system
             Actors.activeActors.append(actor)
             actor._activate()
         else:

@@ -25,11 +25,27 @@ from utils cimport *
 
 IF ELECTROSTATICS == 1:
     cdef extern from "interaction_data.hpp":
+        cdef enum CoulombMethod:
+            COULOMB_NONE, \
+            COULOMB_DH, \
+            COULOMB_P3M, \
+            COULOMB_MMM1D, \
+            COULOMB_MMM2D, \
+            COULOMB_MAGGS, \
+            COULOMB_ELC_P3M, \
+            COULOMB_RF, \
+            COULOMB_INTER_RF, \
+            COULOMB_P3M_GPU, \
+            COULOMB_MMM1D_GPU, \
+            COULOMB_EWALD_GPU, \
+            COULOMB_EK
+  
         int coulomb_set_bjerrum(double bjerrum)
 
         ctypedef struct Coulomb_parameters:
             double bjerrum
             double prefactor
+            CoulombMethod method
 
         cdef extern Coulomb_parameters coulomb
 
@@ -52,7 +68,7 @@ IF ELECTROSTATICS == 1:
                 int    inter2
                 int    cao3
                 double additional_mesh[3]
-
+                
         cdef extern from "p3m.hpp":
             int p3m_set_params(double r_cut, int * mesh, int cao, double alpha, double accuracy)
             void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha, double accuracy, int n_interpol)
@@ -66,6 +82,37 @@ IF ELECTROSTATICS == 1:
 
             # links intern C-struct with python object
             cdef extern p3m_data_struct p3m
+
+        cdef extern from "p3m_gpu.hpp":
+            # may need a fix, when double precision should be used on GPU
+            IF _P3M_GPU_DOUBLE:
+                void p3m_gpu_init(int cao, int mesh, double alpha, double box)
+
+            ELSE:
+                void p3m_gpu_init(int cao, int mesh, float alpha, float box)
+
+        IF _P3M_GPU_DOUBLE:
+            cdef inline python_p3m_gpu_init(params):
+                cdef int cao
+                cdef int mesh
+                cdef double alpha
+                cdef double box
+                cao = params["cao"]
+                mesh = params["mesh"][0]
+                alpha = params["alpha"]
+                box = params["box"][0]
+                p3m_gpu_init(cao, mesh, alpha, box)
+        ELSE:
+            cdef inline python_p3m_gpu_init(_params):
+                cdef int cao
+                cdef int mesh
+                cdef float alpha
+                cdef float box
+                cao = _params["cao"]
+                mesh = _params["mesh"][0]
+                alpha = _params["alpha"]
+                box = _params["box"][0]
+                p3m_gpu_init(cao, mesh, alpha, box)
 
         # Convert C arguments into numpy array
         cdef inline python_p3m_set_mesh_offset(mesh_off):
@@ -121,3 +168,21 @@ IF ELECTROSTATICS == 1:
                 mesh = p_mesh
 
             p3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
+      
+    cdef extern from "debye_hueckel.hpp":
+        IF COULOMB_DEBYE_HUECKEL:
+            ctypedef struct Debye_hueckel_params:
+                double r_cut
+                double kappa
+                double eps_int, eps_ext
+                double r0, r1
+                double alpha
+        ELSE:
+            ctypedef struct Debye_hueckel_params:
+                double r_cut
+                double kappa
+                
+        cdef extern Debye_hueckel_params dh_params
+        
+        int dh_set_params(double kappa, double r_cut)
+        int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha)
