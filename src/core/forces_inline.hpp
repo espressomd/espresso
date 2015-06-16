@@ -974,6 +974,12 @@ inline void add_bonded_force(Particle *p1)
 	  p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
 	  p4->f.f[j] += force2[j];
 	  break;
+	case BONDED_IA_DIHEDRAL:
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] -= force[j] + force2[j] + force3[j];
+	  break;
 #ifdef CG_DNA
 	default:
 	  p1->f.f[j] += force[j];
