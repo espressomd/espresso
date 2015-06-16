@@ -1652,17 +1652,53 @@ If \var{K_\mathrm{cut}} and \var{r_\mathrm{cut}} are given by the user, then \ke
 \index{Debye-H\"uckel potential|mainindex}
 \index{interactions!Debye-H\"uckel|mainindex}
 
-\begin{essyntax}
-  \variant{1}
-  inter coulomb \var{l_B} dh \var{\kappa} \var{r_\mathrm{cut}}
-  \variant{2}
-  inter coulomb \var{l_B} dh \var{\kappa} \var{r_{\text{cut}}}
-  \var{\varepsilon_{\text{int}}} \var{r_0} \var{r_1} \var{\alpha}    
-  \begin{features}
-    \required{ELECTROSTATICS}
-  \end{features}
-\end{essyntax}
+\PythonSyntaxOn
+\begin{pysyntax}
+  \object{
+    electrostatics
+  }{
+    \require{1}{DH}
+  }{
+    bjerrum\textunderscore length=\arg{double},
+    kappa=\arg{double},
+    r\textunderscore cut=\arg{double}
+  }
+  \leavevmode \\
+  \object{
+    electrostatics
+    }{
+     \require{1,2}{CDH}
+    }{
+      bjerrum\textunderscore length=\arg{double},
+      kappa=\arg{double},
+      r\textunderscore cut=\arg{double},
+      eps\textunderscore int=\arg{double},
+      eps\textunderscore ext=\arg{double},
+      r0=\arg{double},
+      r1=\arg{double},
+      alpha=\arg{double}
+    }[
+    ]
+\end{pysyntax}
+\PythonSyntaxOff
 
+\begin{essyntax}
+    \require{1}{\variant{1}
+    inter coulomb \var{l_\mathrm{B}} dh \var{\kappa} \var{r_\mathrm{cut}}}
+    \variant{2}
+    inter coulomb \var{l_\mathrm{B}} dh \var{\kappa} \var{r_{\text{cut}}}
+    \var{\varepsilon_{\text{int}}} \var{\varepsilon_{ext}} \var{r_0} \var{r_1}
+    \require{1,2}{\var{\alpha}}
+    \begin{features}
+        \required[1]{ELECTROSTATICS}
+        \required[2]{COULOMB_DEBYE_HUECKEL}
+    \end{features}
+\end{essyntax}\leavevmode
+\\
+\fbox{\parbox{\textwidth}{NOTE: the two variants are mutually exclusive. If
+``COULOMB_DEBYE_HUECKEL'' is defined in the configuration file, variant \variant{1}
+would not work.}}\\
+\\
 Defines the electrostatic potential by
 \begin{equation}
   U^{C-DH} = l_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
