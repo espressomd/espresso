@@ -6,7 +6,9 @@ from highlander import ThereCanOnlyBeOne
 cdef class Actor(object):
     activeList = dict(ElectrostaticInteraction=False,
                       MagnetostaticInteraction=False,
-                      HydrodynamicInteraction=False)
+		      MagnetostaticExtension=False,
+                      HydrodynamicInteraction=False,
+                      ElectrostaticExtensions=False)
 
     def __init__(self, *args, **kwargs):
         self._isactive = False
