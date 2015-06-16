@@ -6,6 +6,7 @@ from highlander import ThereCanOnlyBeOne
 cdef class Actor(object):
     activeList = dict(ElectrostaticInteraction=False,
                       MagnetostaticInteraction=False,
+		      MagnetostaticExtension=False,
                       HydrodynamicInteraction=False,
                       ElectrostaticExtensions=False)
 
