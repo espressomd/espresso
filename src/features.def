@@ -52,6 +52,9 @@ P3M                             equals ELECTROSTATICS and FFTW
 INTER_RF                        implies ELECTROSTATICS
 MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
 EWALD_GPU                       requires CUDA and ELECTROSTATICS
+_P3M_GPU_FLOAT					requires CUDA and ELECTROSTATICS
+_P3M_GPU_DOUBLE					requires CUDA and ELECTROSTATICS
+
 
 /* Magnetostatics */
 DIPOLES
@@ -176,6 +179,7 @@ GHOSTS_HAVE_BONDS               notest
 ADDITIONAL_CHECKS
 ASYNC_BARRIER
 
+ESIF_DEBUG
 COMM_DEBUG
 EVENT_DEBUG
 INTEG_DEBUG

@@ -19,8 +19,9 @@
 #ifndef ESPRESSOSYSTEMINTERFACE_H
 #define ESPRESSOSYSTEMINTERFACE_H
 
-#define ESIF_TRACE(A)
+#include <stdio.h>
 
+#include "debug.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 
@@ -134,7 +135,7 @@ public:
     if(m_gpu)
       enableParticleCommunication();
     return true;
-  }
+  };
 
   float *fGpuBegin() { return gpu_get_particle_force_pointer(); };
   float *fGpuEnd() { return gpu_get_particle_force_pointer() + 3*m_gpu_npart; };
