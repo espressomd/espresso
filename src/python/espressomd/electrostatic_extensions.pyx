@@ -19,13 +19,14 @@
 
 cimport utils
 include "myconfig.pxi"
-from actors import Actor
+cimport actors
+import actors
 
 IF ELECTROSTATICS and P3M:
-    class ElectrostaticExtensions(Actor):
+    cdef class ElectrostaticExtensions(actors.Actor):
         pass
 
-    class ELC(ElectrostaticExtensions):
+    cdef class ELC(ElectrostaticExtensions):
 
         def validateParams(self):
             default_params = self.defaultParams()

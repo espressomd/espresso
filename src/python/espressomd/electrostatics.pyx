@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
-import numpy as np
-from actors import Actor
+cimport actors
+import actors
 
 
-class ElectrostaticInteraction(Actor):
+cdef class ElectrostaticInteraction(actors.Actor):
 
     def _tune(self):
         raise Exception(
@@ -29,7 +29,7 @@ class ElectrostaticInteraction(Actor):
 
 
 IF P3M == 1:
-    class P3M(ElectrostaticInteraction):
+    cdef class P3M(ElectrostaticInteraction):
 
         def validateParams(self):
             default_params = self.defaultParams()
