@@ -38,9 +38,9 @@ puts "----------------------------------------------"
 # Integration parameters
 ##########################################
 set epsilon 1e-4; #allowed error
-thermostat off 
+thermostat langevin 0.0 1.0
 setmd time 1
-setmd time_step 0.001
+setmd time_step 0.01
 setmd skin 0.4
 
 setmd box 10.0 10.0 10.0
@@ -49,9 +49,9 @@ setmd periodic 1 1 1
 # create 4 particles
 #########################################
 part 0 pos 0.0 0.0 0.0	
-part 1 pos 1.0 0.0 0.0
-part 2 pos 1.0 1.0 0.0		
-part 3 pos 2.0 1.0 0.0
+part 1 pos 1.0 1.0 0.0
+part 2 pos 1.0 1.0 2.0		
+part 3 pos 2.0 1.0 2.0
 
 #define bond
 #########################################
@@ -108,7 +108,7 @@ set asteps 10.0
 
 for { set i 0 } { $i <= $asteps } { incr i } {
 
-    integrate 100
+    integrate 1000
 
     # analyze
     set angles($i)   [ bond_dihedral 0 1 2 3 ]
@@ -137,6 +137,12 @@ for { set i 0 } { $i <= $asteps } { incr i } {
 #     if { [expr abs($delta_fy($i))] > $epsilon } { error_exit "force deviation too large" }
 #     if { [expr abs($delta_fz($i))] > $epsilon } { error_exit "force deviation too large" }
 # }
+
+set dPhi [expr abs([PI]/4- [ bond_dihedral 0 1 2 3 ])]
+
+if { $dPhi > $epsilon } {
+    error_exit "angle deviation $dPhi to big."
+}
 
 puts ""
 puts "Test for dihedral successful!"
