@@ -36,6 +36,9 @@
 #include "lees_edwards.hpp"
 #include "errorhandling.hpp"
 
+#include <vector>
+#include <exception>
+
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
 /*************************************************************/
@@ -1057,6 +1060,124 @@ inline double angle_btw_triangles(double *P1, double *P2, double *P3, double *P4
 	if (normal1[0]*P4[0] + normal1[1]*P4[1] + normal1[2]*P4[2] + tmp11 < 0) phi = 2*M_PI - phi;
 	return phi;
 }
+
+namespace utils {
+
+struct vector_size_unequal : public std::exception {
+  const char* what () const throw ()
+  {
+    return "Vector sizes do not match!";
+  }
+};
+
+// Below you will find some routines for handling vectors.  Note that
+// all the pointer-type overloads assume a pointer of length 3!  Due
+// to restrictions on the C-level there is no error checking available
+// for the pointer-type overloads, i.e. you won't trigger an exception
+// in out-of-memory situations but will receive a segfault right away.
+
+//
+// cross_product: Calculate the cross product of two vectors
+//
+
+template<typename T>
+std::vector<T> cross_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
+  if ( a.size() != 3 && b.size() != 3 )
+    throw vector_size_unequal();
+
+  std::vector<T> c(3);
+  c[0] = a[1]*b[2] - a[2]*b[1];
+  c[1] = a[2]*b[0] - a[0]*b[2];
+  c[2] = a[0]*b[1] - a[1]*b[0];
+  return c;
+}
+
+template<typename T>
+void cross_product(T const * const a, T const * const b, T * const c) {
+  c[0] = a[1]*b[2] - a[2]*b[1];
+  c[1] = a[2]*b[0] - a[0]*b[2];
+  c[2] = a[0]*b[1] - a[1]*b[0];
+}
+
+//
+// dot_product: Calculate the dot product of two vectors
+//
+
+template<typename T>
+double dot_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
+  if ( a.size() != b.size() )
+    throw vector_size_unequal();
+
+  double c = 0;
+  for (unsigned int i = 0; i < a.size(); i++)
+    c += a[i] * b[i];
+  return c;
+}
+
+template<typename T>
+double dot_product(T const * const a, T const * const b) {
+  double c = 0;
+  for (unsigned int i = 0; i < 3; i++)
+    c += a[i] * b[i];
+  return c;
+}
+
+//
+// veclen and sqrlen: Calculate the length and length squared of a vector
+//
+
+template<typename T>
+double sqrlen(const std::vector<T> &a) {
+  double c = 0;
+  typename std::vector<T>::const_iterator i;
+  for (i = a.begin(); i != a.end(); i++)
+    c += (*i) * (*i);
+  return c;
+}
+
+template<typename T>
+double sqrlen(T const * const a) {
+  double c = 0;
+  for (int i = 0; i < 3; i++)
+    c += a[i] * a[i];
+  return c;
+}
+
+
+template<typename T>
+double veclen(const std::vector<T> &a) {
+  return sqrt(sqrlen(a));
+}
+
+template<typename T>
+double veclen(T const * const a) {
+  return sqrt(sqrlen(a));
+}
+
+//
+// vecsub: Subtract two vectors
+//
+
+template<typename T>
+std::vector<T> vecsub(const std::vector<T> &a, const std::vector<T> &b) throw() {
+  if ( a.size() != b.size() )
+    throw vector_size_unequal();
+
+  std::vector<T> c(a.size());
+  for (unsigned int i = 0; i < a.size(); i++)
+    c[i] = a[i] - b[i];
+  return c;
+}
+
+template<typename T>
+void vecsub(T const * const a, T const * const b, T * const c) {
+  // Note the different signature for pointers here!
+  for (unsigned int i = 0; i < 3; i++)
+    c[i] = a[i] - b[i];
+}
+
+}
+
 
 /*@}*/
 

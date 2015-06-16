@@ -54,7 +54,6 @@ cdef extern from "lj.hpp":
                                       double shift, double offset,
                                       double cap_radius, double min)
 
-
 cdef extern from "forcecap.hpp":
     double force_cap
     int forcecap_set_params(double forcecap)

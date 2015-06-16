@@ -298,7 +298,6 @@ cdef class GenericLennardJonesInteraction(NonBondedInteraction):
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
 
-
 class NonBondedInteractionHandle(object):
 
     """Provides access to all Non-bonded interactions between
@@ -565,25 +564,32 @@ IF ROTATION != 1:
     class HarmonicDumbbellBond(BondedInteraction):
 
         def typeNumber(self):
-            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+            raise Exception(
+                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
 
         def typeName(self):
-            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+            raise Exception(
+                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
 
         def validKeys(self):
-            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+            raise Exception(
+                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
 
         def requiredKeys(self):
-            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+            raise Exception(
+                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
 
         def setDefaultParams(self):
-            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+            raise Exception(
+                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
 
         def _getParamsFromEsCore(self):
-            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+            raise Exception(
+                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
 
         def _setParamsInEsCore(self):
-            raise Exception("HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+            raise Exception(
+                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
 
 
 IF BOND_CONSTRAINT == 1:
@@ -1087,6 +1093,7 @@ bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 2:
 
 
 class BondedInteractions:
+
     """Represents the bonded interactions. Individual interactions can be accessed using
     NonBondedInteractions[i], where i is the bond id. Will return an instance o
     BondedInteractionHandle"""

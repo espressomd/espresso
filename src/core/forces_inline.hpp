@@ -153,9 +153,18 @@ inline void init_local_particle_force(Particle *part) {
     // the particle's orientation axis
     if ( part->swim.swimming )
     {
-      part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
-      part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
-      part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+      if ( thermo_switch & THERMO_LANGEVIN )
+      {
+        part->f.f[0] += part->swim.f_swim * part->p.mass * part->r.quatu[0];
+        part->f.f[1] += part->swim.f_swim * part->p.mass * part->r.quatu[1];
+        part->f.f[2] += part->swim.f_swim * part->p.mass * part->r.quatu[2];
+      }
+      else
+      {
+        part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
+        part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
+        part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+      }
     }
 #endif
 
@@ -964,6 +973,12 @@ inline void add_bonded_force(Particle *p1)
 	  p2->f.f[j] += force[j];
 	  p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
 	  p4->f.f[j] += force2[j];
+	  break;
+	case BONDED_IA_DIHEDRAL:
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] -= force[j] + force2[j] + force3[j];
 	  break;
 #ifdef CG_DNA
 	default:
