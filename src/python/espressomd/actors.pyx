@@ -5,7 +5,8 @@ from highlander import ThereCanOnlyBeOne
 cdef class Actor:
     activeList = dict(ElectrostaticInteraction=False,
                       MagnetostaticInteraction=False,
-                      HydrodynamicInteraction=False)
+                      HydrodynamicInteraction=False,
+                      ElectrostaticExtensions=False)
 
     def __cinit__(self, *args, **kwargs):
         self._isactive = False
