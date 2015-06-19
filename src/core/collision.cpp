@@ -17,10 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include <mpi.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include "collision.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -442,7 +438,7 @@ void handle_collisions ()
     blockcounts[1] = 3;
     
     // Now define structured type and commit it
-    MPI_Type_struct(2, blockcounts, offsets, oldtypes, &collisiontype);
+    MPI_Type_create_struct(2, blockcounts, offsets, oldtypes, &collisiontype);
     MPI_Type_commit(&collisiontype);
 
     // Initialize number of collisions gathered from all processors

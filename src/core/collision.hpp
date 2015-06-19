@@ -19,8 +19,6 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
-#include <mpi.h>
-#include "communication.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "virtual_sites_relative.hpp"
