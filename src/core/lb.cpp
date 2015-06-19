@@ -172,7 +172,11 @@ int lb_set_lattice_switch(int py_switch){
  * get lattice switch on py-level
 */
 int lb_get_lattice_switch(int* py_switch){
-  *py_switch = lattice_switch;
+  if(lattice_switch){
+    *py_switch = lattice_switch;
+    return 0;
+  }else
+    return 1;
 }
 
 #ifdef SHANCHEN

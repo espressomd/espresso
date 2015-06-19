@@ -112,8 +112,7 @@ IF LB_GPU or LB:
     # function that calls wrapper functions which set the parameters at C-Level
     #
     ####################################################
-    def _setParamsInEsCore(self):
-      default_params=self.defaultParams()
+    def _lb_init(self):
 
       #Check if GPU code should be used
       if (self._params["gpu"] == "yes"):
@@ -125,6 +124,9 @@ IF LB_GPU or LB:
 
       if lb_set_lattice_switch(py_lattice_switch):
         raise Exception("lb_set_lattice_switch error")
+
+    def _setParamsInEsCore(self):
+      default_params=self.defaultParams()
 
       if python_lbfluid_set_density(self._params["dens"]):
         raise Exception("lb_lbfluid_set_density error")
@@ -186,6 +188,28 @@ IF LB_GPU or LB:
 
       return params
     
+    def setParams(self, **p):
+      """Update parameters. Only given """
+      # Check, if any key was passed, which is not known
+      for k in p.keys():
+          if k not in self.validKeys():
+              raise ValueError(
+                  "Only the following keys are supported: " + self.validKeys().__str__())
+      # When an interaction is newly activated, all required keys must be
+      # given
+      #if not self.isActive():
+      #    for k in self.requiredKeys():
+      #        if k not in p:
+      #            raise ValueError(
+      #                "At least the following keys have to be given as keyword arguments: " + self.requiredKeys().__str__())
+
+      self._params.update(p)
+      # vaidate updated parameters
+      self.validateParams()
+      # Put in values given by the user
+      self._setParamsInEsCore()
+      
+
 #    property print_vtk_velocity:
 #      def __set__(self, char* _filename):
 #        if lb_lbfluid_print_vtk_velocity(_filename):

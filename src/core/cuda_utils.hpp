@@ -29,7 +29,6 @@
 /**cuda streams for parallel computing on cpu and gpu */
 extern cudaStream_t stream[1];
 
-extern cudaError_t err;
 extern cudaError_t _err;
 
 /**erroroutput for memory allocation and memory copy 

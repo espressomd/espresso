@@ -34,6 +34,7 @@ tests = \
 	coulomb_cloud_wall.tcl \
 	dh.tcl \
 	dielectric.tcl \
+	dihedral.tcl \
 	ek_eof_one_species_x.tcl \
 	ek_eof_one_species_y.tcl \
 	ek_eof_one_species_z.tcl \
@@ -127,6 +128,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
 	coulomb_cloud_wall_system.data \
+	dihedral.data \
         p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
 	p3m_system.data p3m_system_gpu.data \

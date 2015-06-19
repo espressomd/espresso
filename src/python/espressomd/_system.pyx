@@ -40,7 +40,6 @@ cdef class System:
     cellSystem = CellSystem()
     thermostat = Thermostat()
 
-
 #    def __init__(self):
 #        self.part = particle_data.particleList()
 #        self.nonBondedInter = interactions.NonBondedInteractions()
