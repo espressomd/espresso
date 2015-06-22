@@ -690,7 +690,7 @@ int lb_lbfluid_print_vtk_density(char** filename) {
             fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\n"
                     "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
                     "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-                    "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
+                    "SCALARS density float 1\nLOOKUP_TABLE default\n",
                     gridsize[0], gridsize[1], gridsize[2],
                     lblattice.agrid[0]*0.5, lblattice.agrid[1]*0.5, lblattice.agrid[2]*0.5,
                     lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
