@@ -126,7 +126,7 @@ IF LB_GPU or LB:
         raise Exception("lb_set_lattice_switch error")
 
     def _setParamsInEsCore(self):
-      default_params=self.defaultParams()
+      default_params = self.defaultParams()
 
       if python_lbfluid_set_density(self._params["dens"]):
         raise Exception("lb_lbfluid_set_density error")
@@ -150,7 +150,7 @@ IF LB_GPU or LB:
   
       if not self._params["ext_force"] == default_params["ext_force"]:
         if python_lbfluid_set_ext_force(self._params["ext_force"]):
-           raise Exception("lb_lbfluid_set_ext_force error")
+          raise Exception("lb_lbfluid_set_ext_force error")
 
     ####################################################
     #
@@ -158,7 +158,7 @@ IF LB_GPU or LB:
     #
     ####################################################
     def _getParamsFromEsCore(self):
-      default_params=self.defaultParams()
+      default_params = self.defaultParams()
       params = self._params
 
       if python_lbfluid_get_density(self._params["dens"]):
@@ -195,6 +195,7 @@ IF LB_GPU or LB:
           if k not in self.validKeys():
               raise ValueError(
                   "Only the following keys are supported: " + self.validKeys().__str__())
+
       # When an interaction is newly activated, all required keys must be
       # given
       #if not self.isActive():
