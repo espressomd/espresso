@@ -439,7 +439,7 @@ static int tclcommand_analyze_parse_cylindrical_average(Tcl_Interp *interp, int 
 
   // Parse the arguments
 
-  if ( argc < 7 ) {
+  if ( argc < 6 ) {
     puts("Too few arguments");
     return TCL_ERROR;
   }
@@ -474,9 +474,15 @@ static int tclcommand_analyze_parse_cylindrical_average(Tcl_Interp *interp, int 
     return TCL_ERROR;
   }
 
-  if ( !ARG_IS_INTLIST(6,types_il) ) {
-    puts("Argument 7: Types has to be an int list");
-    return TCL_ERROR;
+  if ( argc > 6 ) {
+    if ( !ARG_IS_INTLIST(6,types_il) ) {
+      puts("Argument 7: Types has to be an int list");
+      return TCL_ERROR;
+    }
+  } else {
+    realloc_intlist(&types_il, 1);
+    types_il.n = 1;
+    types_il.e[0] = -1;
   }
 
   // Convert double list and int list to std::vector
