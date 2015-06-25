@@ -170,7 +170,7 @@ def nbhood(system=None, pos=None, r_catch=None, plane='3d'):
 def cylindrical_average(system=None, center=None, direction=None,
                         length=None, radius=None,
                         bins_axial=None, bins_radial=None,
-                        types=None):
+                        types=[-1]):
 
     # Check the input types
     checkTypeOrExcept(center,      3, float, "center has to be 3 floats"   )
