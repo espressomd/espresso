@@ -310,7 +310,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 #ifdef MULTI_TIMESTEP
 #ifdef NPT
     if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO) 
-      for(j=0;j<3;++j)
+      for(int j=0;j<3;++j)
         nptiso.p_vir[j] += virial_store[j];
 #endif
 #endif
@@ -415,7 +415,7 @@ void integrate_vv(int n_steps, int reuse_forces)
         ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #ifdef NPT
         // Store virial
-        for(j=0;j<3;++j)
+        for(int j=0;j<3;++j)
           virial_store[j] = nptiso.p_vir[j];
 #endif
         rescale_forces_propagate_vel();
@@ -462,7 +462,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 #ifdef MULTI_TIMESTEP
 #ifdef NPT
     if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO) 
-      for(j=0;j<3;++j)
+      for(int j=0;j<3;++j)
         nptiso.p_vir[j] += virial_store[j];
 #endif
 #endif
