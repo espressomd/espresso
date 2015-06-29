@@ -6,7 +6,7 @@ from highlander import ThereCanOnlyBeOne
 cdef class Actor(object):
     activeList = dict(ElectrostaticInteraction=False,
                       MagnetostaticInteraction=False,
-		      MagnetostaticExtension=False,
+                      MagnetostaticExtension=False,
                       HydrodynamicInteraction=False,
                       ElectrostaticExtensions=False)
 
@@ -19,7 +19,7 @@ cdef class Actor(object):
         for k in self.requiredKeys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.requiredKeys().__str__()+" got "+kwargs.__str__())
+                    "At least the following keys have to be given as keyword arguments: " + self.requiredKeys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
 
         for k in kwargs:
