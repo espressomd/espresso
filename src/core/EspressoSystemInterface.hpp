@@ -21,9 +21,14 @@
 
 #include <stdio.h>
 
-#include "debug.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+
+// This debug header has to be the last thing to include, because it
+// #defines malloc to be something else (!!!) which will lead to
+// ultimately obscure errors in the standard library.  This is
+// literally the worst hack I have ever seen!
+#include "debug.hpp"
 
 /** Syntactic sugar */
 #define espressoSystemInterface EspressoSystemInterface::Instance()
