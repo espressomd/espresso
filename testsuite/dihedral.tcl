@@ -55,7 +55,7 @@ part 3 pos 2.0 1.0 2.0
 
 #define bond
 #########################################
-inter 0 dihedral 1 100.0 [expr [PI]/4]
+inter 0 dihedral 1 10.0 [expr [PI]/4]
 part 1 bond 0 0 2 3
 
 inter 1 harmonic 10.0 1.0
