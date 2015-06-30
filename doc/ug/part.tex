@@ -296,8 +296,8 @@ set first because of the spatial decomposition.
   \noindent
   \fbox{\parbox{\linewidth-2\fboxsep-2\fboxrule}{%
       Please note that even though swimming is interoperable with the
-      CPU version of LB it is only supported on \emph{less than three}
-      Open MPI nodes, i.e.\ $\text{\keyword{n_nodes}} \leq 1$.%
+      CPU version of LB it is only supported on \emph{one} Open MPI
+      node, i.e.\ $\text{\keyword{n_nodes}} = 1$.%
     }}
 \end{arguments}
 
@@ -768,7 +768,16 @@ Examples of use:\\
   copy_particles set {1 2} set {3 4}
   copy_particles range 1 4
 \end{tclcode}
-All these examples do the same - making exact copies of particles 1 through 4.
+All these examples do the same---making exact copies of particles 1 through 4.
+
+\noindent
+\fbox{\parbox{\linewidth-2\fboxsep-2\fboxrule}{%
+    Please note that \keyword{copy_particles} only works if only
+    fundamental particle properties are used, such as \keyword{pos},
+    \keyword{type}, etc.\ as the \keyword{copy_particles} procedure
+    only possesses parsers for these.  Other properties, such as
+    \keyword{quatu} cannot be parsed and will thus lead to an error.%
+  }}
 
 \section{\texttt{constraint}: Setting up constraints}\label{sec:constraint}
 \newescommand{constraint}

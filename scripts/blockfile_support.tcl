@@ -114,6 +114,8 @@ proc blockfile_read_auto_particles {channel read auto} {
                 set ext_force $idx; incr idx 3 }
             "^ext_t"    { if {![regexp "^$i" "ext_torque"]} { error " $i is not a particle property" }
                 set ext_torque $idx; incr idx 3 }
+            "^swimming" { if {![regexp "^$i" "swimming"]} { error " $i is not a particle property" }
+                set swimming $idx; incr idx 7 }
             default { error "$i is not a particle property or it is not supported by the blockfile mechanism" }
         }
     }
@@ -178,6 +180,14 @@ proc blockfile_read_auto_particles {channel read auto} {
     }
     if {[info exists ext_torque]} { set cmd "$cmd \
            ext_torque \[lindex \$line $ext_torque\] \[lindex \$line [expr $ext_torque + 1]\] \[lindex \$line [expr $ext_torque + 2]\]"
+    }
+    if {[info exists swimming]} { set cmd "$cmd __swimming_blockfile \
+           \[lindex \$line [expr $swimming + 1]\] \
+           v_swim \[lindex \$line [expr $swimming + 2]\] \
+           f_swim \[lindex \$line [expr $swimming + 3]\] \
+           push_pull \[lindex \$line [expr $swimming + 4]\] \
+           dipole_length \[lindex \$line [expr $swimming + 5]\] \
+           rotational_friction \[lindex \$line [expr $swimming + 6]\]"
     }
     
     while {1} {
