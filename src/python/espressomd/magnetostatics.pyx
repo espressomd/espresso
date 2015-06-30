@@ -21,46 +21,46 @@ import numpy as np
 from actors import Actor
 from globals cimport temperature
 
+IF DIPOLES == 1:
+    class MagnetostaticInteraction(Actor):
 
-class MagnetostaticInteraction(Actor):
+        def validateParams(self):
+            if not (("bjerrum_length" in self._params) ^ ("prefactor" in self._params)):
+                raise ValueError(
+                    "Either the bjerrum length or the explicit prefactor has to be given")
 
-    def validateParams(self):
-        if not (("bjerrum_length" in self._params) ^ ("prefactor" in self._params)):
-            raise ValueError(
-                "Either the bjerrum length or the explicit prefactor has to be given")
+            if "bjerrum_length" in self._params:
+                if not (self._params["bjerrum_length"] > 0.0):
+                    raise ValueError("Bjerrum_length should be a positive double")
+            if "prefactor" in self._params:
+                if not self._params["prefactor"] > 0:
+                    raise ValueError("prefactor should be a positive double")
 
-        if "bjerrum_length" in self._params:
-            if not (self._params["bjerrum_length"] > 0.0):
-                raise ValueError("Bjerrum_length should be a positive double")
-        if "prefactor" in self._params:
-            if not self._params["prefactor"] > 0:
-                raise ValueError("prefactor should be a positive double")
+        def setMagnetostaticsPrefactor(self):
+            """changes the magnetostatics prefactor, using either the bjrerrum
+               length or the explicit prefactor given in the _params dictionary
+               of the class."""
+            if "bjerrum_length" in self._params:
+                if temperature == 0:
+                    raise Exception(
+                        "Bjerrum length is not defined, if temperature is zero")
+                if dipolar_set_Dbjerrum(self._params["bjerrum_length"]):
+                    raise Exception("Could not set magnetostatic bjerrum length")
+                return True
+            if "prefactor" in self._params:
+                if temperature == 0.:
+                    if dipolar_set_Dbjerrum(self._params["prefactor"]):
+                        raise Exception("Could not set magnetostatic prefactor")
+                else:
+                    if dipolar_set_Dbjerrum(self._params["prefactor"] / temperature):
+                        raise Exception("Could not set magnetostatic prefactor")
 
-    def setMagnetostaticsPrefactor(self):
-        """changes the magnetostatics prefactor, using either the bjrerrum
-           length or the explicit prefactor given in the _params dictionary
-           of the class."""
-        if "bjerrum_length" in self._params:
-            if temperature == 0:
-                raise Exception(
-                    "Bjerrum length is not defined, if temperature is zero")
-            if dipolar_set_Dbjerrum(self._params["bjerrum_length"]):
-                raise Exception("Could not set magnetostatic bjerrum length")
-            return True
-        if "prefactor" in self._params:
-            if temperature == 0.:
-                if dipolar_set_Dbjerrum(self._params["prefactor"]):
-                    raise Exception("Could not set magnetostatic prefactor")
-            else:
-                if dipolar_set_Dbjerrum(self._params["prefactor"] / temperature):
-                    raise Exception("Could not set magnetostatic prefactor")
+        def getParams(self):
+            self._params = self._getParamsFromEsCore()
+            return self._params
 
-    def getParams(self):
-        self._params = self._getParamsFromEsCore()
-        return self._params
-
-    def _getActiveMethodFromEsCore(self):
-        return coulomb.Dmethod
+        def _getActiveMethodFromEsCore(self):
+            return coulomb.Dmethod
 
 
 IF DP3M == 1:
