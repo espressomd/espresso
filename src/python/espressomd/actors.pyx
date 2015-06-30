@@ -6,7 +6,9 @@ from highlander import ThereCanOnlyBeOne
 cdef class Actor(object):
     activeList = dict(ElectrostaticInteraction=False,
                       MagnetostaticInteraction=False,
-                      HydrodynamicInteraction=False)
+                      MagnetostaticExtension=False,
+                      HydrodynamicInteraction=False,
+                      ElectrostaticExtensions=False)
 
     def __init__(self, *args, **kwargs):
         self._isactive = False
@@ -17,7 +19,7 @@ cdef class Actor(object):
         for k in self.requiredKeys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.requiredKeys().__str__())
+                    "At least the following keys have to be given as keyword arguments: " + self.requiredKeys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
 
         for k in kwargs:
@@ -97,7 +99,7 @@ cdef class Actor(object):
 
     def validateParams(self):
         raise Exception(
-            "Subclasses of %s must define the validate() method." % self._getInteractionType())
+            "Subclasses of %s must define the validateParams() method." % self._getInteractionType())
 
     def _getParamsFromEsCore(self):
         raise Exception(
