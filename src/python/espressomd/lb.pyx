@@ -23,6 +23,7 @@ cimport cuda_init
 import cuda_init
 #cimport lb
 from globals cimport *
+from copy import deepcopy
 
 ####################################################
 #
@@ -196,19 +197,22 @@ IF LB_GPU or LB:
               raise ValueError(
                   "Only the following keys are supported: " + self.validKeys().__str__())
 
-      # When an interaction is newly activated, all required keys must be
-      # given
-      #if not self.isActive():
-      #    for k in self.requiredKeys():
-      #        if k not in p:
-      #            raise ValueError(
-      #                "At least the following keys have to be given as keyword arguments: " + self.requiredKeys().__str__())
-
+      #tmpParams = deepcopy(self._params)
+      oldParams = self._getParamsFromEsCore()
       self._params.update(p)
+      #print "updated ", self._params
+      #print "old ", tmpParams
       # vaidate updated parameters
       self.validateParams()
       # Put in values given by the user
-      self._setParamsInEsCore()
+      if not (self._params["dens"] == tmpParams["dens"]):
+        or (self._params["agrid"] == tmpParams["agrid"])):
+        self._setParamsInEsCore()
+
+      if not (self._params["tau"] == tmpParams["tau"]):
+        if python_lbfluid_set_tau(self._params["tau"]):
+          raise Exception("lb_lbfluid_set_tau error")
+
       
 
 #    property print_vtk_velocity:
