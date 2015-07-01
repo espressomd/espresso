@@ -67,5 +67,8 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
  */
 int mdds_set_params(int n_cut);
 
+
+extern int  Ncut_off_magnetic_dipolar_direct_sum;
+
 #endif /*of ifdef DIPOLES  */
 #endif /* of ifndef  MAG_NON_P3M_H */

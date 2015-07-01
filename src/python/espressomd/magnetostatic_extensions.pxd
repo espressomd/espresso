@@ -16,26 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import sys
+# Handling of electrostatics
 
-cdef extern from "communication.hpp":
-    void mpi_init(int * argc, char ** *argv)
-    int this_node
+include "myconfig.pxi"
+from _system cimport *
+from utils cimport *
 
-cdef extern from "initialize.hpp":
-    void on_program_start()
-    void mpi_loop()
+IF DIPOLES == 1:
 
-# Here we make a minimalistic Tcl_Interp available
-# Main code
-mpi_init(NULL,NULL)
+    cdef extern from "mdlc_correction.hpp":
+        ctypedef struct DLC_struct:
+            double maxPWerror
+            double gap_size
+            double far_cut
 
-# Main slave loop
-if this_node != 0:
-    on_program_start()
-    mpi_loop()
-    sys.exit()
+        int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 
-
-def setup():
-    on_program_start()
+        # links intern C-struct with python object
+        cdef extern DLC_struct dlc_params
