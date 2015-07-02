@@ -17,11 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
-import numpy as np
-from actors import Actor
+cimport actors
+import actors
 
-class ElectrostaticInteraction(Actor):
-
+cdef class ElectrostaticInteraction(actors.Actor):
     def _tune(self):
         raise Exception(
             "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
@@ -29,7 +28,7 @@ class ElectrostaticInteraction(Actor):
 
 
 IF COULOMB_DEBYE_HUECKEL:
-    class CDH(ElectrostaticInteraction):
+    cdef class CDH(ElectrostaticInteraction):
         def validateParams(self):
             if (self._params["bjerrum_length"] <= 0):
                 raise ValueError("Bjerrum_length should be a positive double")
@@ -78,7 +77,7 @@ IF COULOMB_DEBYE_HUECKEL:
 
 ELSE:
     IF ELECTROSTATICS:
-        class DH(ElectrostaticInteraction):
+        cdef class DH(ElectrostaticInteraction):
             def validateParams(self):
                 if (self._params["bjerrum_length"] <= 0):
                     raise ValueError("Bjerrum_length should be a positive double")
@@ -113,7 +112,7 @@ ELSE:
 
 
 IF P3M == 1:
-    class P3M(ElectrostaticInteraction):
+    cdef class P3M(ElectrostaticInteraction):
 
         def validateParams(self):
             default_params = self.defaultParams()
@@ -202,7 +201,7 @@ IF P3M == 1:
             self._setParamsInEsCore()
 
     IF CUDA:
-        class P3M_GPU(ElectrostaticInteraction):
+        cdef class P3M_GPU(ElectrostaticInteraction):
 
             def validateParams(self):
                 default_params = self.defaultParams()
