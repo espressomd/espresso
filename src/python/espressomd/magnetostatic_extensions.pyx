@@ -19,14 +19,13 @@
 
 cimport utils
 include "myconfig.pxi"
-cimport actors
-import actors
+from actors import Actor
 
-IF ELECTROSTATICS and P3M:
-    cdef class ElectrostaticExtensions(actors.Actor):
+IF DIPOLES == 1:
+    class MagnetostaticExtension(Actor):
         pass
 
-    cdef class ELC(ElectrostaticExtensions):
+    class DLC(MagnetostaticExtension):
 
         def validateParams(self):
             default_params = self.defaultParams()
@@ -36,10 +35,9 @@ IF ELECTROSTATICS and P3M:
             checkTypeOrExcept(self._params["gap_size"], 1, float, "")
             checkRangeOrExcept(self._params["gap_size"], 0, False, "inf", True)
             checkTypeOrExcept(self._params["far_cut"], 1, float, "")
-            checkTypeOrExcept(self._params["neutralize"], 1, type(True), "")
 
         def validKeys(self):
-            return "maxPWerror", "gap_size", "far_cut", "neutralize"
+            return "maxPWerror", "gap_size", "far_cut"
 
         def requiredKeys(self):
             return ["maxPWerror", "gap_size"]
@@ -47,20 +45,17 @@ IF ELECTROSTATICS and P3M:
         def defaultParams(self):
             return {"maxPWerror": -1,
                     "gap_size": -1,
-                    "far_cut": -1,
-                    "neutralize": True}
+                    "far_cut": -1}
 
         def _getParamsFromEsCore(self):
             params = {}
-            params.update(elc_params)
+            params.update(dlc_params)
             return params
 
         def _setParamsInEsCore(self):
-            if coulomb.method == COULOMB_P3M_GPU:
-                raise Exception("ELC tuning failed, ELC is not set up to work with the GPU P3M")
-            if ELC_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(self._params["neutralize"]), 0, 0, 0, 0):
+            if mdlc_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"]):
                 raise ValueError(
-                    "Choose a 3d electrostatics method prior to ELC")
+                    "Choose a 3d magnetostatics method prior to DLC")
 
         def _activateMethod(self):
             self._setParamsInEsCore()

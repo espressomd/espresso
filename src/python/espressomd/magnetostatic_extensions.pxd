@@ -21,18 +21,16 @@
 include "myconfig.pxi"
 from _system cimport *
 from utils cimport *
-from electrostatics cimport *
 
-IF ELECTROSTATICS and P3M:
+IF DIPOLES == 1:
 
-    cdef extern from "elc.hpp":
-        ctypedef struct ELC_struct:
+    cdef extern from "mdlc_correction.hpp":
+        ctypedef struct DLC_struct:
             double maxPWerror
             double gap_size
             double far_cut
-            int    neutralize
 
-        int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize, double top, double bottom, int const_pot_on, double pot_diff)
+        int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 
         # links intern C-struct with python object
-        cdef extern ELC_struct elc_params
+        cdef extern DLC_struct dlc_params

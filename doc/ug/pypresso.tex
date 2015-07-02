@@ -14,15 +14,15 @@
 \bool_new:N \l_pypresso_enable_bool
 \bool_set_false:N \l_pypresso_enable_bool
 
-\NewDocumentCommand \PythonSyntaxOn { }
- {
-  \bool_set_true:N \l_pypresso_enable_bool
- }
-
-\NewDocumentCommand \PythonSyntaxOff { }
- {
-  \bool_set_false:N \l_pypresso_enable_bool
- }
+% \NewDocumentCommand \PythonSyntaxOn { }
+%  {
+%   \bool_set_true:N \l_pypresso_enable_bool
+%  }
+%
+% \NewDocumentCommand \PythonSyntaxOff { }
+%  {
+%   \bool_set_false:N \l_pypresso_enable_bool
+%  }
 
 \cs_new_protected:Npn \pypresso_object:nnnnn #1#2#3#4#5
  {

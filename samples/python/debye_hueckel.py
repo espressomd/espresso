@@ -24,12 +24,11 @@ from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
 from espressomd import electrostatics
-from espressomd import electrostatic_extensions
 import numpy
 
 print("""
 =======================================================
-=                      p3m.py                         =
+=                    debye_hueckel.py                 =
 =======================================================
 
 Program Information:""")
@@ -37,12 +36,24 @@ print(code_info.features())
 
 dev="cpu"
 
+# Constants
+#############################################################
+N_A = 6.022e23
+pi = 3.14159265359
+
 # System parameters
 #############################################################
 
-# 10 000  Particles
-box_l = 10.7437
-density = 0.7
+box_l = 10
+# Molar salt concentration
+mol_dens = 0.1
+# Number density of ions
+num_dens = mol_dens*N_A
+# Convert to MD units with lj_sig = 7.14 Angstrom
+num_dens = num_dens*3.64e-25
+
+volume = box_l*box_l*box_l
+n_part = int(volume*num_dens)
 
 # Interaction parameters (repulsive Lennard Jones)
 #############################################################
@@ -57,6 +68,7 @@ lj_cap   =  20
 system = espressomd.System()
 system.time_step = 0.01
 system.skin      = 0.4
+ 
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
 thermostat.Thermostat().setLangevin(1.0,1.0)
 
@@ -92,48 +104,49 @@ print(system.nonBondedInter[0,0].lennardJones.getParams())
 # Particle setup
 #############################################################
 
-volume = box_l*box_l*box_l
-n_part = int(volume*density)
-
 for i in range(n_part):
   system.part[i].pos=numpy.random.random(3)*system.box_l
 
+for i in range(n_part/2):
+  system.part[2*i].q = -1.0
+  system.part[2*i].type = 1
+  system.part[2*i+1].q = 1.0
+  system.part[2*i+1].type = 2
+
+#for i in range(n_part-1):
+#    print("Particle {} has charge {} and is of type {}.".format(i,system.part[i].q,system.part[i].type))
+
+# Activating the Debye-Hueckel interaction
+# The Bjerrum length is set to one. Assuming the solvent is water, this means that lj_sig is 0.714 nm in SI units.
+l_B = 1 
+# inverse Debye length for 1:1 electrolyte in water at room temperature (nm)
+dh_kappa = numpy.sqrt(mol_dens)/0.304
+# convert to MD units
+dh_kappa = dh_kappa/0.714
+dh=electrostatics.DH(bjerrum_length=l_B,kappa=dh_kappa,r_cut=int(5/dh_kappa))
+system.actors.add(dh)
+print(system.actors)
+
 analyze.distto(system, 0)
 
-print("Simulate {} particles in a cubic simulation box {} at density {}."
-  .format(n_part, box_l, density).strip())
+print("Simulate {} monovalent salt in a cubic simulation box {} at molar concentration {}."
+  .format(n_part, box_l, mol_dens).strip())
 print("Interactions:\n")
 act_min_dist = analyze.mindist(es)
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
 
-
-# Assingn charge to particles
-for i in range(n_part/2-1):
-  system.part[2*i].q = -1.0
-  system.part[2*i+1].q = 1.0
-# P3M setup after charge assigned
-#############################################################
-p3m=electrostatics.P3M_GPU(bjerrum_length=1.0,accuracy=1e-2)
-system.actors.add(p3m)
-
-print("P3M parameter:\n")
-p3m_params=p3m.getParams()
-for key in p3m_params.keys():
-  print("{} = {}".format(key,p3m_params[key]))
-
-# elc=electrostatic_extensions.ELC(maxPWerror=1.0,gap_size=1.0)
-# system.actors.add(elc)
-print(system.actors)
-
 #############################################################
 #  Warmup Integration                                       #
 #############################################################
 
 #open Observable file
-obs_file = open("pylj_liquid.obs", "w")
+obs_file = open("pydebye_hueckel.obs", "w")
 obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
+#set obs_file [open "$name$ident.obs" "w"]
+#puts $obs_file "\# System: $name$ident"
+#puts $obs_file "\# Time\tE_tot\tE_kin\t..."
 
 print("""
 Start warmup integration:
@@ -152,7 +165,11 @@ while (i < warm_n_times and act_min_dist < min_dist):
   integrate.integrate(warm_steps)
   # Warmup criterion
   act_min_dist = analyze.mindist(es) 
+#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
   i += 1
+
+#   write observables
+#    puts $obs_file "{ time [setmd time] } [analyze energy]"
 
 #   Increase LJ cap
   lj_cap = lj_cap + 10
@@ -177,7 +194,9 @@ verlet_reuse  {0.verlet_reuse}
 """.format(system))
 
 # write parameter file
-set_file = open("pylj_liquid.set", "w")
+
+#polyBlockWrite "$name$ident.set" {box_l time_step skin} "" 
+set_file = open("pydebye_hueckel.set", "w")
 set_file.write("box_l %s\ntime_step %s\nskin %s\n" % (box_l, system.time_step, system.skin))
 
 #############################################################
@@ -191,6 +210,7 @@ system.nonBondedInter.setForceCap(lj_cap)
 print(system.nonBondedInter[0,0].lennardJones)
 
 # print initial energies
+#energies = es._espressoHandle.Tcl_Eval('analyze energy')
 energies = analyze.energy(system=system)
 print(energies)
 
@@ -198,24 +218,38 @@ j = 0
 for i in range(0,int_n_times):
   print("run %d at time=%f " % (i,system.time))
 
+#  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
   integrate.integrate(int_steps)
   
+#  energies = es._espressoHandle.Tcl_Eval('analyze energy')
   energies = analyze.energy(system=system)
   print(energies)
   obs_file.write('{ time %s } %s\n' % (system.time,energies))
 
+#   write observables
+#    set energies [analyze energy]
+#    puts $obs_file "{ time [setmd time] } $energies"
+#    puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
+#    flush stdout
+
+#   write intermediate configuration
+#    if { $i%10==0 } {
+#	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
+#	incr j
+#    }
 
 # write end configuration
-end_file = open("pylj_liquid.end", "w")
+end_file = open("pydebye_hueckel.end", "w")
 end_file.write("{ time %f } \n { box_l %f }\n" % (system.time, box_l) )
-end_file.write("{ particles {id pos type} }")
-for i in range(n_part):
-	end_file.write("%s\n" % system.part[i].pos)
-
+end_file.write("{ particles {type q pos} }")
+for i in range(n_part-1):
+	end_file.write("%s\t%s\t%s\n" % (system.part[i].type,system.part[i].q,system.part[i].pos))
+	# id & type not working yet
 
 obs_file.close()
 set_file.close()
 end_file.close()
+#es._espressoHandle.die()
 
 # terminate program
 print("\nFinished.")
