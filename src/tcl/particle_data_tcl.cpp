@@ -176,13 +176,13 @@ void tclcommand_part_print_swimming(Particle *part, char *buffer, Tcl_Interp *in
 #if defined(LB) || defined(LB_GPU)
   sprintf(buffer, " swimming %s %f %f %d %f %f",
       part->swim.swimming?"on":"off",
-      part->swim.v_swim/time_step, part->swim.f_swim,
+      part->swim.v_swim, part->swim.f_swim,
       part->swim.push_pull, part->swim.dipole_length,
       part->swim.rotational_friction);
 #else
   sprintf(buffer, " swimming %s %f %f %s %s %s",
       part->swim.swimming?"on":"off",
-      part->swim.v_swim/time_step, part->swim.f_swim,
+      part->swim.v_swim, part->swim.f_swim,
       "n/a", "n/a", "n/a");
 #endif
 }
@@ -305,8 +305,8 @@ void tclcommand_part_print_position(Particle *part, char *buffer, Tcl_Interp *in
 {
   double ppos[3];
   int img[3];
-  memcpy(ppos, part->r.p, 3*sizeof(double));
-  memcpy(img, part->l.i, 3*sizeof(int));
+  memmove(ppos, part->r.p, 3*sizeof(double));
+  memmove(img, part->l.i, 3*sizeof(int));
  
   unfold_position(ppos, img);
 
@@ -323,9 +323,9 @@ void tclcommand_part_print_folded_position(Particle *part, char *buffer, Tcl_Int
   double ppos[3];
   int    img[3];
   double pvel[3];
-  memcpy(ppos, part->r.p, 3*sizeof(double));
-  memcpy(img, part->l.i, 3*sizeof(int));
-  memcpy(pvel, part->m.v, 3*sizeof(double));
+  memmove(ppos, part->r.p, 3*sizeof(double));
+  memmove(img, part->l.i, 3*sizeof(int));
+  memmove(pvel, part->m.v, 3*sizeof(double));
 
   fold_position(ppos, pvel, img);
   
@@ -1521,8 +1521,6 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
       } else if ( p.swim.f_swim > 0.0 || p.swim.f_swim < 0.0 ) {
         printf("You can't set v_swim and f_swim at the same time!\n");
         return TCL_ERROR;
-      } else {
-        p.swim.v_swim *= time_step;
       }
     } else if ( ARG_IS_S(*change,"f_swim") ) {
       if ( !ARG_IS_D(++(*change),p.swim.f_swim) ) {
@@ -1563,6 +1561,88 @@ int tclcommand_part_parse_swimming(Tcl_Interp *interp, int argc, char **argv,
       break;
    }
 #endif
+
+    if ( ++(*change) >= argc ) {
+      parse = false;
+      break;
+    }
+  }
+
+  if (set_particle_swimming(part_num, p.swim) == TCL_ERROR) {
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int tclcommand_part_parse_swimming_blockfile(Tcl_Interp *interp, int argc, char **argv,
+		      int part_num, int *change)
+{
+  Particle p;
+  get_particle_data(part_num, &p);
+  p.swim.swimming = true;
+
+  *change = 0;
+  bool parse = true;
+  while ( parse ) {
+    if ( ARG_IS_S(*change,"on") ) {
+      // Do nothing
+    } else if ( ARG_IS_S(*change,"off") ) {
+      // Revert to defaults
+      p.swim.swimming = false;
+      p.swim.v_swim = 0.0;
+      p.swim.f_swim = 0.0;
+#if defined(LB) || defined(LB_GPU)
+      p.swim.push_pull = 0;
+      p.swim.dipole_length = 0.0;
+      p.swim.rotational_friction = 0.0;
+#endif
+    } else if ( ARG_IS_S(*change,"v_swim") ) {
+      if ( !ARG_IS_D(++(*change),p.swim.v_swim) ) {
+        return TCL_ERROR;
+      }
+    } else if ( ARG_IS_S(*change,"f_swim") ) {
+      if ( !ARG_IS_D(++(*change),p.swim.f_swim) ) {
+        return TCL_ERROR;
+      }
+    }
+    else if ( ARG_IS_S(*change,"push_pull") ) {
+#if defined(LB) || defined(LB_GPU)
+      if ( !ARG_IS_I(++(*change),p.swim.push_pull) ) {
+        return TCL_ERROR;
+      }
+#else
+      (*change)++;
+      if ( !ARG_IS_S(*change,"n/a") ) {
+        return TCL_ERROR;
+      }
+#endif
+    } else if ( ARG_IS_S(*change,"dipole_length") ) {
+#if defined(LB) || defined(LB_GPU)
+      if ( !ARG_IS_D(++(*change),p.swim.dipole_length) ) {
+        return TCL_ERROR;
+      }
+#else
+      (*change)++;
+      if ( !ARG_IS_S(*change,"n/a") ) {
+        return TCL_ERROR;
+      }
+#endif
+    } else if ( ARG_IS_S(*change,"rotational_friction") ) {
+#if defined(LB) || defined(LB_GPU)
+      if ( !ARG_IS_D(++(*change),p.swim.rotational_friction) ) {
+        return TCL_ERROR;
+      }
+#else
+      (*change)++;
+      if ( !ARG_IS_S(*change,"n/a") ) {
+        return TCL_ERROR;
+      }
+#endif
+    } else {
+      parse = false;
+      break;
+    }
 
     if ( ++(*change) >= argc ) {
       parse = false;
@@ -2337,6 +2417,8 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 #ifdef ENGINE
     else if (ARG0_IS_S("swimming"))
       err = tclcommand_part_parse_swimming(interp, argc-1, argv+1, part_num, &change);
+    else if (ARG0_IS_S("__swimming_blockfile"))
+      err = tclcommand_part_parse_swimming_blockfile(interp, argc-1, argv+1, part_num, &change);
 #endif
 #ifdef MASS
     else if (ARG0_IS_S("mass"))

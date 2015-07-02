@@ -153,9 +153,18 @@ inline void init_local_particle_force(Particle *part) {
     // the particle's orientation axis
     if ( part->swim.swimming )
     {
-      part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
-      part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
-      part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+      if ( thermo_switch & THERMO_LANGEVIN )
+      {
+        part->f.f[0] += part->swim.f_swim * part->p.mass * part->r.quatu[0];
+        part->f.f[1] += part->swim.f_swim * part->p.mass * part->r.quatu[1];
+        part->f.f[2] += part->swim.f_swim * part->p.mass * part->r.quatu[2];
+      }
+      else
+      {
+        part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
+        part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
+        part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+      }
     }
 #endif
 
@@ -213,16 +222,11 @@ inline void force_calc()
     cells_update_ghosts();
 #endif
 
+  espressoSystemInterface.update();
+
 #ifdef COLLISION_DETECTION
   prepare_collision_queue();
 #endif
-
-  espressoSystemInterface.update();
-
-  // Compute the forces from the force objects
-  for (ActorList::iterator actor = forceActors.begin();
-          actor != forceActors.end(); ++actor)
-      (*actor)->computeForces(espressoSystemInterface);
 
 #ifdef LB_GPU
 #ifdef SHANCHEN
@@ -239,6 +243,15 @@ inline void force_calc()
     iccp3m_iteration();
 #endif
   init_forces();
+
+  for (ActorList::iterator actor = forceActors.begin();
+          actor != forceActors.end(); ++actor)
+  {
+    (*actor)->computeForces(espressoSystemInterface);
+#ifdef ROTATION
+    (*actor)->computeTorques(espressoSystemInterface);
+#endif
+  }
 
   calc_long_range_forces();
 
@@ -598,8 +611,10 @@ inline void add_bonded_force(Particle *p1)
   double force[3]  = { 0., 0., 0. };
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
-#ifdef TWIST_STACK
+#if defined(HYDROGEN_BOND) || defined(TWIST_STACK)
   double force4[3] = { 0., 0., 0. };
+#endif 
+#ifdef TWIST_STACK
   double force5[3] = { 0., 0., 0. };
   double force6[3] = { 0., 0., 0. };
   double force7[3] = { 0., 0., 0. };
@@ -958,6 +973,12 @@ inline void add_bonded_force(Particle *p1)
 	  p2->f.f[j] += force[j];
 	  p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
 	  p4->f.f[j] += force2[j];
+	  break;
+	case BONDED_IA_DIHEDRAL:
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] -= force[j] + force2[j] + force3[j];
 	  break;
 #ifdef CG_DNA
 	default:

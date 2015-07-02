@@ -141,7 +141,7 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
     build_particle_node();
 
   /* write header and row data */
-  memcpy(header.magic, MDMAGIC, 4*sizeof(char));
+  memmove(header.magic, MDMAGIC, 4*sizeof(char));
   header.n_rows = argc;
   Tcl_Write(channel, (char *)&header, sizeof(header));
   Tcl_Write(channel, row, header.n_rows*sizeof(char));

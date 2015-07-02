@@ -32,7 +32,7 @@
 #include "comfixed_tcl.hpp"
 #include "rattle_tcl.hpp"
 #include "mol_cut_tcl.hpp"
-#include "DipolarDirectSum_tcl.hpp" 
+#include "actor/DipolarDirectSum_tcl.hpp" 
 
 
 // for the force caps

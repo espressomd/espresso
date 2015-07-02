@@ -299,7 +299,7 @@ void layered_calculate_ia_iccp3m()
       p1 = &pl[i];
 
       if (rebuild_verletlist)
-        memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
+        memmove(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
       /* cell itself. No bonded / constraints considered in ICCP3M */
       for(j = i+1; j < npl; j++) {
@@ -372,7 +372,7 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 	j_start = 0;
 	/* Tasks within cell: (no bonded forces) store old position, avoid double counting */
 	if(n == 0) {
-	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+	  memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 	  j_start = i+1;
 	}
 	/* Loop neighbor cell particles */
@@ -458,7 +458,7 @@ void calc_link_cell_iccp3m()
         /* Tasks within cell: bonded forces */
         if(n == 0) {
 	  if (rebuild_verletlist)
-	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+	    memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 
           j_start = i+1;
         }
@@ -493,7 +493,7 @@ void nsq_calculate_ia_iccp3m()
     pt1 = &partl[p];
 
     if (rebuild_verletlist)
-      memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
+      memmove(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {

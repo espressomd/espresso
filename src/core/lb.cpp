@@ -880,24 +880,33 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
         unsigned int* host_checkpoint_boundary = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
         lbForceFloat* host_checkpoint_force = (lbForceFloat *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
         lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
-        for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
-            fprintf(cpfile, "%.8E \n", host_checkpoint_vd[n]);
+        if(!binary)
+        {
+          for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
+              fprintf(cpfile, "%.8E \n", host_checkpoint_vd[n]);
+          }
+          for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
+              fprintf(cpfile, "%u \n", host_checkpoint_seed[n]);
+          }
+          for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
+              fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]);
+          }
+          for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
+              fprintf(cpfile, "%.8E \n", host_checkpoint_force[n]);
+          }
         }
-        for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
-            fprintf(cpfile, "%u \n", host_checkpoint_seed[n]);
-        }
-        for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
-            fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]);
-        }
-        for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
-            fprintf(cpfile, "%.8E \n", host_checkpoint_force[n]);
+        else
+        {
+          fwrite(host_checkpoint_vd, sizeof(float), 19*int(lbpar_gpu.number_of_nodes), cpfile);
+          fwrite(host_checkpoint_seed, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile);
+          fwrite(host_checkpoint_boundary, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile);
+          fwrite(host_checkpoint_force, sizeof(lbForceFloat), 3*int(lbpar_gpu.number_of_nodes), cpfile);
         }
         fclose(cpfile);
         free(host_checkpoint_vd);
         free(host_checkpoint_seed);
         free(host_checkpoint_boundary);
         free(host_checkpoint_force);
-        //fprintf(stderr, "LB checkpointing not implemented for GPU\n");
 #endif // LB_GPU
     }
     else if(lattice_switch & LATTICE_LB) {
@@ -969,10 +978,21 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
               if (sizeof(lbForceFloat) == sizeof(float))
                 fscanf(cpfile, "%f", &host_checkpoint_force[n]);
               else
-                fscanf(cpfile, "%lf", &host_checkpoint_force[n]);
+                fscanf(cpfile, "%f", &host_checkpoint_force[n]);
             }
-            lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
         }
+        else
+        {
+          if(fread(host_checkpoint_vd, sizeof(float), 19*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (19*lbpar_gpu.number_of_nodes))
+            return ES_ERROR;
+          if(fread(host_checkpoint_seed, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
+            return ES_ERROR;
+          if(fread(host_checkpoint_boundary, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
+            return ES_ERROR;
+          if(fread(host_checkpoint_force, sizeof(lbForceFloat), 3*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (3*lbpar_gpu.number_of_nodes))
+            return ES_ERROR;
+        }
+        lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
         fclose(cpfile);
         free(host_checkpoint_vd);
         free(host_checkpoint_seed);
@@ -1418,7 +1438,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1462,7 +1482,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1514,7 +1534,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1560,7 +1580,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1612,7 +1632,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -1656,7 +1676,7 @@ static void halo_push_communication() {
                      rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                      comm_cart, &status);
     } else {
-        memcpy(rbuf,sbuf,count*sizeof(double));
+        memmove(rbuf,sbuf,count*sizeof(double));
     }
 
     buffer = rbuf;
@@ -2848,9 +2868,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #ifdef ENGINE
   if ( p->swim.swimming )
   {
-    velocity[0] -= p->swim.v_swim*p->r.quatu[0];
-    velocity[1] -= p->swim.v_swim*p->r.quatu[1];
-    velocity[2] -= p->swim.v_swim*p->r.quatu[2];
+    velocity[0] -= (p->swim.v_swim*time_step)*p->r.quatu[0];
+    velocity[1] -= (p->swim.v_swim*time_step)*p->r.quatu[1];
+    velocity[2] -= (p->swim.v_swim*time_step)*p->r.quatu[2];
     p->swim.v_center[0] = interpolated_u[0];
     p->swim.v_center[1] = interpolated_u[1];
     p->swim.v_center[2] = interpolated_u[2];

@@ -26,7 +26,7 @@
 
 class SystemInterface {
 public:
-  SystemInterface() : m_needsR(false), m_needsV(false), m_needsQ(false), m_needsDip(false), m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false), m_needsDipGpu(false) {};
+  SystemInterface() : m_needsR(false), m_needsV(false), m_needsQ(false), m_needsQuatu(false), m_needsDip(false), m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false), m_needsQuatuGpu(false), m_needsDipGpu(false) {};
   typedef Vector3d Vector3;
   typedef double Real;
 
@@ -153,10 +153,21 @@ public:
   virtual bool hasFGpu() { return false; };
   virtual bool requestFGpu() { m_needsFGpu = hasFGpu(); return m_needsFGpu; }
 
+
   virtual const_real_iterator &qBegin() { return null_scalar; };
   virtual const const_real_iterator &qEnd() { return null_scalar; };
   virtual bool hasQ() { return false; };
   virtual bool requestQ() { m_needsQ = hasQ(); return m_needsQ; }
+
+  virtual const_vec_iterator &quatuBegin() { return SystemInterface::null_vector; };
+  virtual const const_vec_iterator &quatuEnd() { return SystemInterface::null_vector; };
+  virtual bool hasQuatu() { return false; };
+  virtual bool requestQuatu() { m_needsQuatu = hasQuatu(); return m_needsQuatu; }
+
+  virtual float *quatuGpuBegin() { return 0; };
+  virtual float *quatuGpuEnd() { return 0; };
+  virtual bool hasQuatuGpu() { return false; };
+  virtual bool requestQuatuGpu() { m_needsQuatuGpu = hasQuatuGpu(); return m_needsQuatuGpu; }
 
   virtual unsigned int npart() = 0;
   virtual unsigned int npart_gpu() { return 0; };
@@ -168,7 +179,11 @@ public:
   virtual bool needsDipGpu() { return m_needsRGpu;};
   virtual bool needsQGpu() { return m_needsQGpu;};
   virtual bool needsQ() { return m_needsQ;};
+  virtual bool needsQuatuGpu() { return m_needsQuatuGpu;};
+  virtual bool needsQuatu() { return m_needsQuatu;};
   virtual bool needsFGpu() { return m_needsFGpu; };
+  virtual bool needsTorqueGpu() { return m_needsTorqueGpu; };
+  
   
 protected:
   bool m_needsR;
@@ -176,9 +191,11 @@ protected:
   bool m_needsQ;
   bool m_needsDip;
   bool m_needsTorque;
+  bool m_needsQuatu;
   bool m_needsRGpu;
   bool m_needsVGpu;
   bool m_needsQGpu;
+  bool m_needsQuatuGpu;
   bool m_needsFGpu;
   bool m_needsDipGpu;
   bool m_needsTorqueGpu;

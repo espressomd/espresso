@@ -167,7 +167,9 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
   double mimj, mir, mjr;
   double B_r, C_r, D_r;
   double alpsq = dp3m.params.alpha * dp3m.params.alpha;
+#ifdef ROTATION
   double mixmj[3], mixr[3], mjxr[3];
+#endif
 
   if(dist < dp3m.params.r_cut && dist > 0) {
     adist = dp3m.params.alpha * dist;
@@ -199,7 +201,7 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
     force[j] += coulomb.Dprefactor *((mimj*d[j] + p1->r.dip[j]*mjr + p2->r.dip[j]*mir) * C_r - mir*mjr*D_r*d[j]) ;
 
   //Calculate vector multiplications for vectors mi, mj, rij
-
+#ifdef ROTATION
   mixmj[0] = p1->r.dip[1]*p2->r.dip[2] - p1->r.dip[2]*p2->r.dip[1];
   mixmj[1] = p1->r.dip[2]*p2->r.dip[0] - p1->r.dip[0]*p2->r.dip[2];
   mixmj[2] = p1->r.dip[0]*p2->r.dip[1] - p1->r.dip[1]*p2->r.dip[0];
@@ -213,7 +215,6 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
   mjxr[2] = p2->r.dip[0]*d[1] - p2->r.dip[1]*d[0];
 
   // Calculate real-space torques
-#ifdef ROTATION
   for(j=0;j<3;j++){
     p1->f.torque[j] += coulomb.Dprefactor *(-mixmj[j]*B_r + mixr[j]*mjr*C_r);
     p2->f.torque[j] += coulomb.Dprefactor *( mixmj[j]*B_r + mjxr[j]*mir*C_r);

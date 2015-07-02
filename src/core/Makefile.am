@@ -108,7 +108,7 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
-	integrate_sd.hpp integrate_sd.cpp \	
+	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp
 
@@ -166,7 +166,7 @@ libEspresso_la_SOURCES += \
 	immersed_boundary/ibm_volume_conservation.cpp immersed_boundary/ibm_volume_conservation.hpp \
 	immersed_boundary/ibm_tribend.cpp             immersed_boundary/ibm_tribend.hpp \
 	immersed_boundary/ibm_tribend_helpers.hpp \
-	immersed_boundary/ibm_cuda_interface.cpp      immersed_boundary/ibm_cuda_interface.hpp 
+	immersed_boundary/ibm_cuda_interface.cpp      immersed_boundary/ibm_cuda_interface.hpp
 
 
 # Coulomb methods
@@ -189,6 +189,7 @@ libEspresso_la_SOURCES += \
 	actor/Actor.hpp \
 	actor/ActorList.cpp actor/ActorList.hpp \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
+	actor/HarmonicOrientationWell.cpp actor/HarmonicOrientationWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
 	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
 	actor/DipolarDirectSum.cpp actor/DipolarDirectSum.hpp \
@@ -232,7 +233,8 @@ CUDA_SOURCE_FILES = \
 	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu \
 	immersed_boundary/ibm_cuda.cu \
-	actor/DipolarDirectSum_cuda.cu 
+	actor/DipolarDirectSum_cuda.cu \ 
+	actor/HarmonicOrientationWell_cuda.cu 
 
 # include the dependency tracking files
 include ./$(DEPDIR)/cuda_init_cuda.Plo
@@ -242,6 +244,7 @@ include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
+include ./actor/$(DEPDIR)/HarmonicOrientationWell_cuda.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
 include ./actor/$(DEPDIR)/EwaldgpuForce.Plo
@@ -253,7 +256,7 @@ cuda_verbose = $(cuda_verbose_@AM_V@)
 cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
 cuda_verbose_0 = @echo "  NVCC     $@";
 
-# nvcc does not allow for option MF for dependency generation, 
+# nvcc does not allow for option MF for dependency generation,
 # therefore make a separate run to generate dependencies
 # putting them into DEPDIR ensures configure creates empties dummies
 $(LOFILES): %.lo: %.cu

@@ -90,7 +90,7 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
               part = cell->part;
               npart = cell->n;
               for (i=0;i<npart;i++) {
-                memcpy(pos, part[i].r.p, 3*sizeof(double));
+                memmove(pos, part[i].r.p, 3*sizeof(double));
                 fold_position(pos, dummy);
 
                 particle_data_host[i+g].p[0] = (float)pos[0];
@@ -126,6 +126,12 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
 
 #ifdef ELECTROSTATICS
 		particle_data_host[i+g].q = (float)part[i].p.q;
+#endif
+
+#ifdef ROTATION
+                particle_data_host[i+g].quatu[0] = (float)part[i].r.quatu[0];
+                particle_data_host[i+g].quatu[1] = (float)part[i].r.quatu[1];
+                particle_data_host[i+g].quatu[2] = (float)part[i].r.quatu[2];
 #endif
 
 #ifdef ENGINE
@@ -189,7 +195,7 @@ static void cuda_mpi_get_particles_slave(){
         npart = cell->n;
 
         for (i=0;i<npart;i++) {
-          memcpy(pos, part[i].r.p, 3*sizeof(double));
+          memmove(pos, part[i].r.p, 3*sizeof(double));
           fold_position(pos, dummy);
       
           particle_data_host_sl[i+g].p[0] = (float)pos[0];
@@ -229,6 +235,12 @@ static void cuda_mpi_get_particles_slave(){
   #ifdef ELECTROSTATICS	 
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
   #endif
+
+#ifdef ROTATION
+          particle_data_host_sl[i+g].quatu[0] = (float)part[i].r.quatu[0];
+          particle_data_host_sl[i+g].quatu[1] = (float)part[i].r.quatu[1];
+          particle_data_host_sl[i+g].quatu[2] = (float)part[i].r.quatu[2];
+#endif
 
 #ifdef ENGINE
           particle_data_host_sl[i+g].swim.v_swim        = (float)part[i].swim.v_swim;

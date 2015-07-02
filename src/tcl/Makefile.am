@@ -30,6 +30,8 @@ libEspressoTcl_la_SOURCES = \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
+	h5mdfile_tcl.cpp h5mdfile_tcl.hpp \
+	rotate_system_tcl.cpp rotate_system_tcl.hpp \
 	readpdb_tcl.cpp \
 	cells_tcl.cpp \
 	cells_tcl.hpp \
@@ -63,8 +65,7 @@ libEspressoTcl_la_SOURCES = \
 	pressure_tcl.cpp pressure_tcl.hpp \
 	random_tcl.cpp random_tcl.hpp \
 	reaction_tcl.cpp reaction_tcl.hpp \
-	rattle_tcl.cpp rattle_tcl.hpp \
-	rotate_system_tcl.cpp rotate_system_tcl.hpp \
+	rattle_tcl.cpp rattle_ tcl.hpp \
 	statistics_chain_tcl.cpp statistics_chain_tcl.hpp \
 	statistics_cluster_tcl.cpp statistics_cluster_tcl.hpp \
 	statistics_correlation_tcl.cpp statistics_correlation_tcl.hpp \
@@ -150,7 +151,6 @@ libEspressoTcl_la_SOURCES += \
 	mmm1d_tcl.cpp mmm1d_tcl.hpp \
 	mmm2d_tcl.cpp mmm2d_tcl.hpp \
 	p3m-dipolar_tcl.cpp p3m-dipolar_tcl.hpp \
-	DipolarDirectSum_tcl.cpp DipolarDirectSum_tcl.hpp \
 	p3m_tcl.cpp p3m_tcl.hpp \
 	reaction_field_tcl.cpp reaction_field_tcl.hpp \
 	mdlc_correction_tcl.cpp mdlc_correction_tcl.hpp	
@@ -159,7 +159,9 @@ libEspressoTcl_la_SOURCES += \
 libEspressoTcl_la_SOURCES += \
 	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
 	actor/Ewaldgpu_tcl.cpp actor/Ewaldgpu_tcl.hpp \
-	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp
+	actor/DipolarDirectSum_tcl.cpp actor/DipolarDirectSum_tcl.hpp \
+	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp \
+	actor/HarmonicOrientationWell_tcl.cpp actor/HarmonicOrientationWell_tcl.hpp
 
 if CUDA
 libEspressoTcl_la_SOURCES += cuda_init_tcl.cpp

@@ -244,7 +244,6 @@ typedef struct {
   */
   double max_cut;
 
-#ifdef LENNARD_JONES
   /** \name Lennard-Jones with shift */
   /*@{*/
   double LJ_eps;
@@ -255,9 +254,7 @@ typedef struct {
   double LJ_capradius;
   double LJ_min;
   /*@}*/
-#endif
 
-#ifdef LENNARD_JONES_GENERIC
   /** \name Generic Lennard-Jones with shift */
   /*@{*/
   double LJGEN_eps;
@@ -270,12 +267,9 @@ typedef struct {
   int LJGEN_a2;
   double LJGEN_b1;
   double LJGEN_b2;
-#ifdef LJGEN_SOFTCORE
   double LJGEN_lambda;
   double LJGEN_softrad;
-#endif
   /*@}*/
-#endif
 
 #ifdef LJ_ANGLE
   /** \name Directional Lennard-Jones */

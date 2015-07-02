@@ -476,7 +476,7 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
 
   fftw_execute(mode_analysis_plan);
   /* Copy result to modes */
-  memcpy(modes, result, mode_grid_3d[xdir]*(mode_grid_3d[ydir]/2 + 1)*sizeof(fftw_complex));
+  memmove(modes, result, mode_grid_3d[xdir]*(mode_grid_3d[ydir]/2 + 1)*sizeof(fftw_complex));
   
   
   STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));    

@@ -26,6 +26,45 @@
 \subsection{Defining particle properties}
 \label{ssec:particleproperties}
 
+\begin{pysyntax}
+  \property{
+    espressomd.System()
+  }{
+    part[\arg{pid}]
+  }{
+    type=\arg{int},
+    pos=\arg{array of 3 floats},
+    v=\arg{array of 3 floats},
+    f=\arg{array of 3 floats},
+    bonds=\arg{bond},
+    mass=\arg{float},
+    omega_lab=\arg{array of 3 floats},
+    rinertia=\arg{array of 3 floats},
+    omega_body=\arg{array of 3 floats},
+    torque_lab=\arg{array of 3 floats},
+    quat=\arg{array of 4 floats},
+    %director=\arg{},
+    q=\arg{float},
+    virtual=\arg{int $\geq$ 0},
+    vs_relative=\arg{tuple of int and float},
+    vs_auto_relate_to=\arg{int},
+    dip=\arg{array of 3 floats},
+    dipm=\arg{float},
+    fix=\arg{array of 3 ints},
+    ext_force=\arg{array of 3 floats},
+    ext_torque=\arg{array of 3 floats},
+    exclude=\arg{list of ints},
+    temp=\arg{float},
+    gamma=\arg{float},
+    rotation=\arg{bool},
+    swimming=\arg{dictionary \ttfamily \{
+      `f_swim':\arg{float},
+      `v_swim':\arg{float},
+      `mode':\arg{``pusher''|``puller''},
+      `dipole_length':\arg{float},
+      `rotational_friction':\arg{float}\}}
+  }
+\end{pysyntax}
 \begin{essyntax}
   part
   \var{pid}
@@ -259,8 +298,8 @@ set first because of the spatial decomposition.
   \noindent
   \fbox{\parbox{\linewidth-2\fboxsep-2\fboxrule}{%
       Please note that even though swimming is interoperable with the
-      CPU version of LB it is only supported on \emph{less than three}
-      Open MPI nodes, i.e.\ $\text{\keyword{n_nodes}} \leq 1$.%
+      CPU version of LB it is only supported on \emph{one} Open MPI
+      node, i.e.\ $\text{\keyword{n_nodes}} = 1$.%
     }}
 \end{arguments}
 
@@ -731,7 +770,16 @@ Examples of use:\\
   copy_particles set {1 2} set {3 4}
   copy_particles range 1 4
 \end{tclcode}
-All these examples do the same - making exact copies of particles 1 through 4.
+All these examples do the same---making exact copies of particles 1 through 4.
+
+\noindent
+\fbox{\parbox{\linewidth-2\fboxsep-2\fboxrule}{%
+    Please note that \keyword{copy_particles} only works if only
+    fundamental particle properties are used, such as \keyword{pos},
+    \keyword{type}, etc.\ as the \keyword{copy_particles} procedure
+    only possesses parsers for these.  Other properties, such as
+    \keyword{quatu} cannot be parsed and will thus lead to an error.%
+  }}
 
 \section{\texttt{constraint}: Setting up constraints}\label{sec:constraint}
 \newescommand{constraint}
