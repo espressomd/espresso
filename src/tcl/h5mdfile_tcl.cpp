@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include "parser.hpp"
 #include "communication.hpp"
-#include "hdf5.h"
 #include <stdio.h>
 #include <iostream>
 
 #ifdef H5MD
+
+#include "hdf5.h"
 
 typedef char h5string[1000];
 class H5mdfile

@@ -82,7 +82,8 @@ PXDFILES = \
 	_system.pxd \
 	_tcl.pxd \
 	thermostat.pxd \
-	utils.pxd
+	utils.pxd \
+	actors.pxd
 
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
