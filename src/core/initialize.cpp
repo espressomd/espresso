@@ -57,6 +57,7 @@
 #include "lattice.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
 #include "metadynamics.hpp"
+#include "reaction_ensemble.hpp"
 #include "statistics_observable.hpp"
 #include "statistics_correlation.hpp"
 #include "lb-boundaries.hpp"
@@ -205,6 +206,10 @@ void on_integration_start()
 #ifdef METADYNAMICS
   meta_init();
 #endif
+
+//#ifdef REACTION_ENSEMBLE
+//  reaction_ensemble_init();
+//#endif
 
   /* Prepare the thermostat */
   if (reinit_thermo) {

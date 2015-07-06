@@ -56,6 +56,7 @@ libEspressoTcl_la_SOURCES = \
 	lb_tcl.cpp lb_tcl.hpp \
 	lees_edwards_tcl.cpp lees_edwards_tcl.hpp \
 	metadynamics_tcl.cpp metadynamics_tcl.hpp \
+	reaction_ensemble_tcl.cpp reaction_ensemble_tcl.hpp \
 	nemd_tcl.cpp \
 	mol_cut_tcl.cpp mol_cut_tcl.hpp \
 	parser.cpp parser.hpp \

@@ -41,6 +41,7 @@
 #include "lj_tcl.hpp"
 #include "maggs_tcl.hpp"
 #include "metadynamics_tcl.hpp"
+#include "reaction_ensemble_tcl.hpp"
 #include "p3m-dipolar_tcl.hpp"
 #include "p3m_tcl.hpp"
 #include "polymer_tcl.hpp"
@@ -212,6 +213,10 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #ifdef METADYNAMICS
   /* in metadynamics.cpp */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
+#endif
+#ifdef REACTION_ENSEMBLE
+  /* in reaction_ensemble.cpp */
+  REGISTER_COMMAND("reaction_ensemble", tclcommand_reaction_ensemble);
 #endif
 #ifdef LB_GPU
   /* in lbgpu_cfile.cpp */
