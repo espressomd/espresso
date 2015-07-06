@@ -55,6 +55,7 @@ CUDA_v_cs *host_v_cs = NULL;
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
+cudaError_t _err;
 cudaError_t CU_err;
 
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line){
@@ -78,6 +79,10 @@ void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line){
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
                         const char *function, const char *file, unsigned int line) {
+  /** If debugging is enabled, wait for Kernels to terminate before checking for errors. This removes parallelism between host and device and should only be enabled while debugging. */
+#ifdef CUDA_DEBUG
+  cudaThreadSynchronize();
+#endif
   CU_err=cudaGetLastError();
   if (CU_err!=cudaSuccess) {
     fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n",
@@ -101,6 +106,7 @@ __device__ unsigned int getThreadIndex() {
  * @param *particle_seeds_device			Pointer to the particle rn seed storearray (Output)
 */
 __global__ void init_particle_force(float *particle_forces_device, CUDA_particle_seed *particle_seeds_device){
+
 
   unsigned int part_index = getThreadIndex();
 
@@ -179,25 +185,25 @@ void gpu_change_number_of_part_to_comm() {
       
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
       /**pinned memory mode - use special function to get OS-pinned memory*/
-      cudaHostAlloc((void**)&particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data), cudaHostAllocWriteCombined);
-      cudaHostAlloc((void**)&particle_forces_host, 3 * global_part_vars_host.number_of_particles * sizeof(float), cudaHostAllocWriteCombined);
+      cuda_safe_mem(cudaHostAlloc((void**)&particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data), cudaHostAllocWriteCombined));
+      cuda_safe_mem(cudaHostAlloc((void**)&particle_forces_host, 3 * global_part_vars_host.number_of_particles * sizeof(float), cudaHostAllocWriteCombined));
+
 #ifdef ENGINE
-      cudaHostAlloc((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs), cudaHostAllocWriteCombined);
+      cuda_safe_mem(cudaHostAlloc((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs), cudaHostAllocWriteCombined));
 #endif
 #ifdef SHANCHEN
-      cudaHostAlloc((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition), cudaHostAllocWriteCombined);
+      cuda_safe_mem(cudaHostAlloc((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition), cudaHostAllocWriteCombined));
 #endif
 #else // __CUDA_ARCH__
-      cudaMallocHost((void**)&particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data));
-      cudaMallocHost((void**)&particle_forces_host, 3 * global_part_vars_host.number_of_particles * sizeof(float));
+      cuda_safe_mem(cudaMallocHost((void**)&particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data)));
+      cuda_safe_mem(cudaMallocHost((void**)&particle_forces_host, 3 * global_part_vars_host.number_of_particles * sizeof(float)));
 #ifdef ENGINE
-      cudaMallocHost((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs));
+      cuda_safe_mem(cudaMallocHost((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs)));
 #endif
 #ifdef SHANCHEN
-      cudaMallocHost((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition));
+      cuda_safe_mem(cudaMallocHost((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition)));
 #endif
-#endif // __CUDA_ARCH__
-      
+#endif // __CUDA_ARCH__      
       cuda_safe_mem(cudaMalloc((void**)&particle_forces_device, 3 * global_part_vars_host.number_of_particles * sizeof(float)));
 
       cuda_safe_mem(cudaMalloc((void**)&particle_data_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data)));

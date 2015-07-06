@@ -22,6 +22,7 @@ from globals cimport *
 cdef class CellSystem(object):
     def setDomainDecomposition(self, useVerletLists=True):
         """Activates domain decomposition cell system
+        setDomainDecomposition(useVerletList=True)
         """
         if useVerletLists:
             dd.use_vList = 1
@@ -65,17 +66,17 @@ cdef class CellSystem(object):
         if (node_grid[0] != 1 or node_grid[1] != 1):
             node_grid[0] = node_grid[1] = 1
             node_grid[2] = n_nodes
-            err = mpi_bcast_parameter(FIELD_NODEGRID)
+            mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
         else:
-            err = 0
+            mpi_err = 0
 
-        if not err:
+        if not mpi_err:
             mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED)
 
         # @TODO: gathering should be interface independent
         # return mpi_gather_runtime_errors(interp, TCL_OK)
 
-        if err:
+        if mpi_err:
             raise Exception("Broadcasting the node grid failed")
         return True
 
