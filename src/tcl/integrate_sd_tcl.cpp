@@ -177,6 +177,14 @@ int tclcallback_sd_radius(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
   if (data <= 0) {
+    if (-1.001 < data && data < -.999){
+#if defined(SD) || defined(BD)
+      Tcl_AppendResult(interp, "SD radius was set to -1. It must be set to a reasonable value bevor the integrate_sd can be called.", (char *) NULL);
+#endif
+      sd_radius=-1;
+      mpi_bcast_parameter(FIELD_SD_RADIUS);
+      return (TCL_OK);
+    }
     Tcl_AppendResult(interp, "radius must be > 0.", (char *) NULL);
     return (TCL_ERROR);
   }

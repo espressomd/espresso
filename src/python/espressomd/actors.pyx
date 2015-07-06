@@ -1,16 +1,15 @@
 include "myconfig.pxi"
-import numpy as np
 from highlander import ThereCanOnlyBeOne
 
 
-cdef class Actor(object):
+cdef class Actor:
     activeList = dict(ElectrostaticInteraction=False,
                       MagnetostaticInteraction=False,
                       MagnetostaticExtension=False,
                       HydrodynamicInteraction=False,
                       ElectrostaticExtensions=False)
 
-    def __init__(self, *args, **kwargs):
+    def __cinit__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.defaultParams()
         self.system = None
