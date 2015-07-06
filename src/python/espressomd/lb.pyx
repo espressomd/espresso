@@ -18,7 +18,7 @@
 #
 include "myconfig.pxi"
 import numpy as np
-from actors import Actor
+from actors cimport Actor
 cimport cuda_init
 import cuda_init
 #cimport lb
@@ -30,7 +30,7 @@ from copy import deepcopy
 # Actor class 
 #
 ####################################################
-class HydrodynamicInteraction(Actor):
+cdef class HydrodynamicInteraction(Actor):
   def _lb_init(self):
     raise Exception("Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
@@ -40,7 +40,7 @@ class HydrodynamicInteraction(Actor):
 #
 ####################################################
 IF LB_GPU or LB:
-  class LB_FLUID(HydrodynamicInteraction):
+  cdef class LB_FLUID(HydrodynamicInteraction):
 
     ####################################################
     #
@@ -188,32 +188,67 @@ IF LB_GPU or LB:
 
 
       return params
+
+    ####################################################
+    #
+    # redef setParams for lb use
+    #
+    ####################################################
     
-    def setParams(self, **p):
+    def setParams(self, **_params):
       """Update parameters. Only given """
       # Check, if any key was passed, which is not known
-      for k in p.keys():
+      for k in _params.keys():
           if k not in self.validKeys():
               raise ValueError(
                   "Only the following keys are supported: " + self.validKeys().__str__())
 
-      #tmpParams = deepcopy(self._params)
-      oldParams = self._getParamsFromEsCore()
-      self._params.update(p)
-      #print "updated ", self._params
-      #print "old ", tmpParams
-      # vaidate updated parameters
-      self.validateParams()
-      # Put in values given by the user
-      if not (self._params["dens"] == tmpParams["dens"]):
-        or (self._params["agrid"] == tmpParams["agrid"])):
-        self._setParamsInEsCore()
+      print "_params", _params
 
-      if not (self._params["tau"] == tmpParams["tau"]):
-        if python_lbfluid_set_tau(self._params["tau"]):
+      self.validateParams()
+
+      if "dens" in _params:
+        if python_lbfluid_set_density(_params["dens"]):
+          raise Exception("lb_lbfluid_set_density error")
+
+      if "tau" in _params:
+        if python_lbfluid_set_tau(_params["tau"]):
           raise Exception("lb_lbfluid_set_tau error")
 
+      if "visc" in _params:
+        if python_lbfluid_set_visc(_params["visc"]):
+          raise Exception("lb_lbfluid_set_visc error")
+
+      if "bulk_visc" in _params:
+        if python_lbfluid_set_bulk_visc(_params["bulk_visc"]):
+          raise Exception("lb_lbfluid_set_bulk_visc error")
+
+      if "agrid" in _params:
+        if python_lbfluid_set_agrid(_params["agrid"]):
+          raise Exception("lb_lbfluid_set_agrid error")
+
+      if "fric" in _params:
+        if python_lbfluid_set_friction(_params["fric"]):
+          raise Exception("lb_lbfluid_set_friction error")
+  
+      if "ext_force" in _params:
+        if python_lbfluid_set_ext_force(_params["ext_force"]):
+          raise Exception("lb_lbfluid_set_ext_force error")
+
+      if "gpu" in _params:
+        #Check if GPU code should be used
+        if (_params["gpu"] == "yes"):
+          py_lattice_switch = 2
+          print "Using LB GPU code"
+        else:
+          py_lattice_switch = 1
+          print "Using LB CPU code"
+
+        if lb_set_lattice_switch(py_lattice_switch):
+          raise Exception("lb_set_lattice_switch error")
       
+      #update paras
+      self._params.update(_params)
 
 #    property print_vtk_velocity:
 #      def __set__(self, char* _filename):
