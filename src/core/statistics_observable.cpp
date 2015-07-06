@@ -572,10 +572,9 @@ int observable_calc_force_density_profile(observable* self) {
 
 #ifdef LB
 int observable_calc_lb_velocity_profile(observable* self) {
-  double* A = self->last_value;
+  double* A= self->last_value;
   void* pdata_ = self->container;
   unsigned int n_A = self->n;
-  unsigned int i, j, k;
   unsigned int maxi, maxj, maxk;
   double xoffset, yoffset, zoffset;
   double x_incr, y_incr, z_incr;
@@ -589,7 +588,7 @@ int observable_calc_lb_velocity_profile(observable* self) {
   if (lattice_switch & LATTICE_LB_GPU)
     return statistics_observable_lbgpu_velocity_profile((profile_data*) pdata_, A, n_A);
 #endif
-  if (!(lattice_switch & LATTICE_LB)) {
+  if (lattice_switch & LATTICE_LB) {
     for ( int i = 0; i<self->n; i++ ) {
       A[i]=0;
     }
@@ -624,7 +623,7 @@ int observable_calc_lb_velocity_profile(observable* self) {
       zoffset=pdata->minz;
       z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
     }
-
+    unsigned int i, j, k;
     for ( i = 0; i < maxi; i++ ) {
       for ( j = 0; j < maxj; j++ ) {
 	for ( k = 0; k < maxk; k++ ) {
@@ -653,8 +652,8 @@ int observable_calc_lb_velocity_profile(observable* self) {
     }
 
   
-    return 0;
   }
+  return 0;
 }
 #endif
 
@@ -957,19 +956,23 @@ int observable_calc_flux_density_profile(observable* self) {
   for (int i = 0; i< self->n; i++ ) {
     A[i]=0;
   }
+
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
-/* We use folded coordinates here */
-    v[0]=partCfg[ids->e[i]].m.v[0]*time_step;
-    v[1]=partCfg[ids->e[i]].m.v[1]*time_step;
-    v[2]=partCfg[ids->e[i]].m.v[2]*time_step;
+    /* We use folded coordinates here */
+    v[0]=partCfg[ids->e[i]].m.v[0]/time_step;
+    v[1]=partCfg[ids->e[i]].m.v[1]/time_step;
+    v[2]=partCfg[ids->e[i]].m.v[2]/time_step;
     memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
     memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
+    // The position of the particle is by definition the middle of old and new position
+  
     x=ppos[0];
     y=ppos[1];
     z=ppos[2];
+
     binx  =(int)floor((x-pdata->minx)/xbinsize);
     biny  =(int)floor((y-pdata->miny)/ybinsize);
     binz  =(int)floor((z-pdata->minz)/zbinsize);

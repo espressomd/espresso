@@ -3855,7 +3855,7 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
   unsigned int maxj, maxk;
 
 
-  
+
   if ( pdata->xbins == 1 ) {
     /* maxi = (int) floor(gridDim.x/para.agrid); */
     xoffset=0;
@@ -3966,9 +3966,9 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
           linear_index += j*pdata->zbins;
         if (pdata->zbins > 1)
           linear_index +=k;
-        A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor;
-        A[3*linear_index+1]+=host_data[3*(i*maxj*maxk + j*maxk + k)+1]*normalization_factor;
-        A[3*linear_index+2]+=host_data[3*(i*maxj*maxk + j*maxk + k)+2]*normalization_factor;
+        A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
+        A[3*linear_index+1]+=host_data[3*(i*maxj*maxk + j*maxk + k)+1]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
+        A[3*linear_index+2]+=host_data[3*(i*maxj*maxk + j*maxk + k)+2]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
       }
 
   // free device data
@@ -4048,9 +4048,9 @@ int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A,
         if (pdata->zbins > 1)
           linear_index +=k;
 
-        A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor;
-        A[3*linear_index+1]+=host_data[3*(i*maxj*maxk + j*maxk + k)+1]*normalization_factor;
-        A[3*linear_index+2]+=host_data[3*(i*maxj*maxk + j*maxk + k)+2]*normalization_factor;
+        A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
+        A[3*linear_index+1]+=host_data[3*(i*maxj*maxk + j*maxk + k)+1]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
+        A[3*linear_index+2]+=host_data[3*(i*maxj*maxk + j*maxk + k)+2]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
       }
     }
   }
