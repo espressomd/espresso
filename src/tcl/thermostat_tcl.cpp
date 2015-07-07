@@ -101,27 +101,33 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
        rot = true;
 
   /* check number of arguments */
-  if (argc < 4) {
+  if (argc < 4) 
+  {
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
 		     argv[0]," ",argv[1]," <temp> <gamma_trans> [<gamma_rot> <on/off> <on/off>]\"", (char *)NULL);
     return (TCL_ERROR);
   }
 
   /* check argument types */
-  if ( !ARG_IS_D(2, temp) || !ARG_IS_D(3, gammat)) {
+  if ( !ARG_IS_D(2, temp) || !ARG_IS_D(3, gammat)) 
+  {
     Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs two DOUBLES", (char *)NULL);
     return (TCL_ERROR);
   }
 
-  if (argc < 5) {
-    if ( !ARG_IS_D(4, gammar) ) {
+  if (argc > 4 && argc < 6) 
+  {
+    if ( !ARG_IS_D(4, gammar) ) 
+    {
       Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs three DOUBLES", (char *)NULL);
       return (TCL_ERROR);
     }
   }
 
-  if (argc < 6) {
-    if ( !ARG_IS_S(5, "on") && !ARG_IS_S(5, "off") ) {
+  if (argc > 5 && argc < 7) 
+  {
+    if ( !ARG_IS_S(5, "on") && !ARG_IS_S(5, "off") ) 
+    {
       Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs on/off", (char *)NULL);
       return (TCL_ERROR);
     }
@@ -138,7 +144,8 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
     }
   }
 
-  if (argc < 7) {
+  if (argc > 6 && argc < 8) 
+  {
     if ( !ARG_IS_S(6, "on") && !ARG_IS_S(6, "off") ) {
       Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs on/off", (char *)NULL);
       return (TCL_ERROR);
@@ -171,6 +178,7 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
+
   return (TCL_OK);
 }
 
