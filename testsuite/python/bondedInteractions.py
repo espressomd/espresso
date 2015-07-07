@@ -89,11 +89,7 @@ class ParticleProperties(ut.TestCase):
     return func
   
 
-  def test_aa_bondedInterSetterGetter(self):
-    self.system.bondedInter[0]=HarmonicBond(k=0,r_0=0)
-    bond=self.system.bondedInter[0]
-    self.assertTrue(isinstance(bond,HarmonicBond),"The bond was created as harmonic bond but the instance gotten back is of different type.")
-  
+    
   test_fene = generateTestForBondParams(0,FeneBond,{"r_0":1.1, "k":5.2, "d_r_max":3.})
   test_fene2 = generateTestForBondParams(1,FeneBond,{"r_0":1.1, "k":5.2, "d_r_max":3.})
   test_harmonic = generateTestForBondParams(0,HarmonicBond,{"r_0":1.1, "k":5.2})
