@@ -534,7 +534,7 @@ IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
 
         def typeNumber(self):
-            return 2
+            return BONDED_IA_HARMONIC_DUMBBELL
 
         def typeName(self):
             return "HARMONIC_DUMBBELL"
@@ -627,7 +627,7 @@ ELSE:
 class Dihedral(BondedInteraction):
 
     def typeNumber(self):
-        return 5
+        return BONDED_IA_DIHEDRAL
 
     def typeName(self):
         return "DIHEDRAL"
@@ -656,7 +656,7 @@ IF TABULATED == 1:
     class Tabulated(BondedInteraction):
 
         def typeNumber(self):
-            return 6
+            return BONDED_IA_TABULATED
 
         def typeName(self):
             return "TABULATED"
@@ -768,7 +768,7 @@ IF BOND_ENDANGLEDIST == 1:
     class Endangledist(BondedInteraction):
 
         def typeNumber(self):
-            return 11
+            return BONDED_IA_ENDANGLEDIST
 
         def typeName(self):
             return "ENDANGLEDIST"
