@@ -3448,6 +3448,9 @@ void ek_print_parameters() {
   printf( "  float friction = %f;\n",                   ek_parameters.friction );
   printf( "  float T = %f;\n",                          ek_parameters.T );
   printf( "  float bjerrumlength = %f;\n",              ek_parameters.bjerrumlength );
+  printf( "  float lb_force[] = {%f, %f, %f};\n",       ek_parameters.lb_force[0], 
+                                                        ek_parameters.lb_force[1], 
+                                                        ek_parameters.lb_force[2] );
   printf( "  unsigned int number_of_species = %d;\n",   ek_parameters.number_of_species);
   printf( "  int reaction_species[] = {%d, %d, %d};\n", ek_parameters.reaction_species[0], 
                                                         ek_parameters.reaction_species[1], 
