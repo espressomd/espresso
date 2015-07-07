@@ -22,29 +22,6 @@ cudaStream_t    *stream0;
 
 void cuda_check_error(const dim3 &block, const dim3 &grid,const char *function, const char *file, unsigned int line);
 
-//Error handler
-static void HandleError(cudaError_t CU_err,const char *file,int line)
-{
-  if( cudaSuccess != CU_err) {
-    fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
-    printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
-    if ( CU_err == cudaErrorInvalidValue )
-      fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n", file, line);
-    exit(EXIT_FAILURE);
-  } else {
-    CU_err=cudaGetLastError();
-    if (CU_err != cudaSuccess) {
-      fprintf(stderr, "Error found during memory operation. Possibly however from an failed operation before. %s:%u.\n", file, line);
-      printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
-      if ( CU_err == cudaErrorInvalidValue )
-	fprintf(stderr, "You may have tried to allocate zero memory before %s:%u.\n", file, line);
-      exit(EXIT_FAILURE);
-    }
-  }
-}
-#define HANDLE_ERROR( CU_err ) (HandleError( CU_err, __FILE__, __LINE__ ))
-#define HANDLE_NULL( a ) {if (a == NULL) {printf( "Host memory failed in %s at line %d\n", __FILE__, __LINE__ ); exit( EXIT_FAILURE );}}
-
 //Kernels
 /*Here MaxThreads/LowThreads means that, if for example 10000 Particles/k-Vectors are given and the GPU uses 256 Threads the first 19*(2*256)=9728 will be
   reduced by the MaxThread function and the remaining 272 Particles will be reduced by the LowThread function*/
@@ -686,7 +663,7 @@ void EwaldgpuForce::computeEnergy(SystemInterface &s)
   //Set to 0
   memset(m_energy_reci,0,sizeof(real));
   //Copy arrays on the GPU
-  HANDLE_ERROR( cudaMemset(m_dev_energy_reci, 0, sizeof(real)));
+  cuda_safe_mem( cudaMemset(m_dev_energy_reci, 0, sizeof(real)));
 
   //Start GPU calculation
   GPU_Energy(s);
@@ -785,15 +762,12 @@ void EwaldgpuForce::GPU_Forces(SystemInterface &s)
 	}
     }
 
-  //Copy the arrays back from the GPU to the CPU
-  HANDLE_ERROR(cudaMemcpy( m_rho_hat, m_dev_rho_hat,2*m_num_k*sizeof(real),cudaMemcpyDeviceToHost));
-
   /********************************************************************************************
 																			 Forces long range
   ********************************************************************************************/
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_num_k,  prop.sharedMemPerBlock,  maxThreadsPerBlockForce,  blocks,  threads);
+  getNumBlocksAndThreads(m_num_k,  shared_mem_per_block,  maxThreadsPerBlockForce,  blocks,  threads);
   blocks=(int)ceil(sqrt(m_N));
   dim3 dimBlock3(threads, 1, 1);
   dim3 dimGrid3(blocks, blocks, 1);
@@ -823,7 +797,7 @@ void EwaldgpuForce::GPU_Forces(SystemInterface &s)
     }
 
   //Blocks, threads
-  getNumBlocksAndThreads(m_num_k-2*loops*maxThreadsPerBlockForce,  prop.sharedMemPerBlock,  maxThreadsPerBlockForce,  blocks,  threads);
+  getNumBlocksAndThreads(m_num_k-2*loops*maxThreadsPerBlockForce,  shared_mem_per_block,  maxThreadsPerBlockForce,  blocks,  threads);
   blocks=(int)ceil(sqrt(m_N));
   dim3 dimBlock4(threads, 1, 1);
   dim3 dimGrid4(blocks, blocks, 1);
@@ -1062,8 +1036,8 @@ void EwaldgpuForce::GPU_q_sqr(SystemInterface &s)
 
 void cuda_check_error(const dim3 &block, const dim3 &grid, const char *function, const char *file, unsigned int line)
 {
-  CU_err=cudaGetLastError();
-  if (CU_err!=cudaSuccess)
+  _err=cudaGetLastError();
+  if (_err!=cudaSuccess)
     {
       fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d %d in %s:%u\n", this_node, cudaGetErrorString(_err), function, block.x, block.y, block.z, grid.x, grid.y, grid.z,file, line);
       exit(EXIT_FAILURE);
@@ -1088,13 +1062,6 @@ bool EwaldgpuForce::isPow2(int x)
 }
 void EwaldgpuForce::getNumBlocksAndThreads(int Size, int maxBlocks, int maxThreads, int &blocks, int &threads)
 {
-  //Get device capability, to avoid block/grid size exceed the upbound
-  cudaDeviceProp prop;
-  int device;
-
-  HANDLE_ERROR(cudaGetDevice(&device));
-  HANDLE_ERROR(cudaGetDeviceProperties(&prop,device));
-
   threads = (Size < maxThreads*2) ? nextPow2((Size + 1)/ 2) : maxThreads;
 }
 
