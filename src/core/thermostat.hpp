@@ -72,6 +72,15 @@ extern double temperature;
 /** Langevin friction coefficient gamma. */
 extern double langevin_gamma;
 
+/** Langevin friction coefficient gamma. */
+extern double langevin_gamma_rotation;
+
+/** Langevin for translations */
+extern bool langevin_trans;
+
+/** Langevin for rotations */
+extern bool langevin_rotate;
+
 /** Friction coefficient for nptiso-thermostat's inline-function friction_therm0_nptiso */
 extern double nptiso_gamma0;
 /** Friction coefficient for nptiso-thermostat's inline-function friction_thermV_nptiso */
