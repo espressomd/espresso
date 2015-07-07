@@ -418,19 +418,19 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   {
 #if defined (FLATNOISE)
 #ifdef ROTATIONAL_INERTIA
-    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] *p->p.rinertia[j] + switch_rotate*langevin_pref2_rotation*sqrt(p->p.rinertia[j]) * (d_random()-0.5);
+    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*(d_random()-0.5);
 #else
     p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*(d_random()-0.5);
 #endif
 #elif defined (GAUSSRANDOMCUT)
 #ifdef ROTATIONAL_INERTIA
-    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] *p->p.rinertia[j] + switch_rotate*langevin_pref2_rotation*sqrt(p->p.rinertia[j]) * gaussian_random_cut();
+    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*gaussian_random_cut();
 #else
     p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*gaussian_random_cut();
 #endif
 #elif defined (GAUSSRANDOM)
 #ifdef ROTATIONAL_INERTIA
-    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] *p->p.rinertia[j] + switch_rotate*langevin_pref2_rotation*sqrt(p->p.rinertia[j]) * gaussian_random();
+    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*gaussian_random();
 #else
     p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*gaussian_random();
 #endif

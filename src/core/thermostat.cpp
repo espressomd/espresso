@@ -107,7 +107,7 @@ void thermo_init_langevin()
 #ifdef ROTATION 
   if ( langevin_gamma_rotation == 0.0 )
   {
-    langevin_gamma_rotation = langevin_gamma/3.0;
+    langevin_gamma_rotation = langevin_gamma;
   }
 #if defined (FLATNOISE)
   langevin_pref2_rotation = sqrt(24.0*temperature*langevin_gamma_rotation/time_step);
