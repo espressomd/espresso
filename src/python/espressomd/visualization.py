@@ -19,8 +19,6 @@ def mayavi_render(queue):
 	arrows = mlab.quiver3d([0],[0],[0], [0],[0],[0])
 	box = mlab.outline(extent=(0,0,0,0,0,0), color=(1,1,1))
 
-	@mlab.show
-	@mlab.animate(delay=10, ui=True)
 	def animate():
 		f = mlab.gcf()
 		visual.set_viewer(f)
@@ -46,7 +44,14 @@ def mayavi_render(queue):
 				arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
 
 			yield
-	animate()
+
+	# Remove the parameter window
+	from mayavi.tools.animator import Animator
+	def e(self):
+		raise Exception("Please ignore this exception. Everything is fine.")
+	Animator.show = e
+
+	mlab.show(mlab.animate(delay=10, ui=True)(animate))()
 	raise Exception("Animation window closed")
 
 class mayavi_live:
