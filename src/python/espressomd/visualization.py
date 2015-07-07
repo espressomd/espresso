@@ -13,11 +13,12 @@ output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
 def mayavi_render(queue):
-	points = mlab.quiver3d([0],[0],[0], [0],[0],[0], scalars=[0], mode="sphere", scale_factor=1)
+	points = mlab.quiver3d([0],[0],[0], [0],[0],[0], scalars=[0], mode="sphere", scale_factor=1, name="Particles")
 	points.glyph.color_mode = 'color_by_scalar'
 	points.glyph.glyph_source.glyph_source.center = [0, 0, 0]
-	arrows = mlab.quiver3d([0],[0],[0], [0],[0],[0])
-	box = mlab.outline(extent=(0,0,0,0,0,0), color=(1,1,1))
+	box = mlab.outline(extent=(0,0,0,0,0,0), color=(1,1,1), name="Box")
+	arrows = mlab.quiver3d([0],[0],[0], [0],[0],[0], scalars=[0], mode="2ddash", scale_factor=1, name="Bonds")
+	arrows.glyph.color_mode = 'color_by_scalar'
 
 	def animate():
 		f = mlab.gcf()
@@ -41,7 +42,7 @@ def mayavi_render(queue):
 			if not Nbonds_changed:
 				arrows.mlab_source.set  (x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
 			else:
-				arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
+				arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5], scalars=bonds[:,6])
 
 			yield
 
@@ -91,16 +92,18 @@ class mayavi_live:
 
 			bs = self.system.part[i].bonds
 			for b in bs:
+				t = b[0]
 				for p in b[1:]:
-					bonds.append((i,p))
+					bonds.append((i,p,t))
 		Nbonds = len(bonds)
-		bond_coords = numpy.empty((Nbonds+1,6))
-		bond_coords[0] = [0,0,0,0,0,0] # don't pass an empty array to Mayavi
+		bond_coords = numpy.empty((Nbonds+1,7))
+		bond_coords[0] = [0,0,0,0,0,0,0] # don't pass an empty array to Mayavi
 
 		for n in range(Nbonds):
-			i,j = bonds[n]
+			i,j,t = bonds[n]
 			bond_coords[n+1,:3] = self.system.part[i].pos
-			bond_coords[n+1,3:] = self.system.part[j].pos - self.system.part[i].pos
+			bond_coords[n+1,3:6] = self.system.part[j].pos - self.system.part[i].pos
+			bond_coords[n+1,6] = t
 
 		boxl = self.system.box_l
 
