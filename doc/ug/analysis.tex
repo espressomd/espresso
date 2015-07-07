@@ -22,7 +22,9 @@
 \index{analysis}
 \newescommand{analyze}
 
-\todo{Add a comment to the UG that the analysis routines in \es{} with Python currently require the user to `from espressomd import analyze.'}
+\todo{Add a comment to the UG that the analysis routines in \es{} with
+  Python currently require the user to `from espressomd import
+  analyze.'}
 
 \es has two fundamentally different classes of observables for
 analyzing the systems.  On the one hand, some observables are
@@ -182,7 +184,7 @@ of the currently identified properties.
 \begin{essyntax}
   analyze cylindrical_average \var{center} \var{direction}
   \var{length} \var{radius} \var{bins\_axial} \var{bins\_radial}
-  \var{types} \var{xrange} \var{yrange}
+  \opt{\var{types}}
 \end{essyntax}
 
 The command returns a list of lists.  The outer list contains all data
