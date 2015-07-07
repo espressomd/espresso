@@ -18,11 +18,11 @@
 #
 include "myconfig.pxi"
 import numpy as np
-from actors import Actor
+from actors cimport Actor
 from globals cimport temperature
 
 IF DIPOLES == 1:
-    class MagnetostaticInteraction(Actor):
+    cdef class MagnetostaticInteraction(Actor):
 
         def validateParams(self):
             if not (("bjerrum_length" in self._params) ^ ("prefactor" in self._params)):
@@ -54,6 +54,8 @@ IF DIPOLES == 1:
                 else:
                     if dipolar_set_Dbjerrum(self._params["prefactor"] / temperature):
                         raise Exception("Could not set magnetostatic prefactor")
+                    else:
+                        self._params["bjerrum_length"] =self.params["prefactor"] / temperature
 
         def getParams(self):
             self._params = self._getParamsFromEsCore()
@@ -64,13 +66,11 @@ IF DIPOLES == 1:
 
 
 IF DP3M == 1:
-    class DipolarP3M(MagnetostaticInteraction):
+    cdef class DipolarP3M(MagnetostaticInteraction):
 
         def validateParams(self):
             super(DipolarP3M, self).validateParams()
             default_params = self.defaultParams()
-            if not (self._params["bjerrum_length"] > 0.0):
-                raise ValueError("Bjerrum_length should be a positive double")
 
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
@@ -100,12 +100,12 @@ IF DP3M == 1:
             if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
                 raise ValueError("inter should be a positive integer")
 
-            if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) == 3):
+            if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params["mesh_off"]) == 3):
                 raise ValueError(
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
         def validKeys(self):
-            return "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
+            return "prefactor","alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
 
         def requiredKeys(self):
             return ["accuracy", ]
@@ -128,7 +128,7 @@ IF DP3M == 1:
             return params
 
         def _setParamsInEsCore(self):
-            dipolar_set_Dbjerrum(self._params["bjerrum_length"])
+            self.setMagnetostaticsPrefactor()
             dp3m_set_eps(self._params["epsilon"])
             dp3m_set_ninterpol(self._params["inter"])
             self.python_dp3m_set_mesh_offset(self._params["mesh_off"])
@@ -199,7 +199,7 @@ IF DP3M == 1:
             dp3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
 
 IF DIPOLES == 1:
-    class DipolarDirectSumCpu(MagnetostaticInteraction):
+    cdef class DipolarDirectSumCpu(MagnetostaticInteraction):
 
         """Calculates magnetostatic interactions by direct summation over all
            pairs. If the system has periodic boundaries, the minimum image
@@ -218,12 +218,15 @@ IF DIPOLES == 1:
             return {"prefactor": coulomb.Dprefactor}
 
         def _activateMethod(self):
+            self._setParamsInEsCore(self)
+
+        def _setParamsInEsCore(self):
             self.setMagnetostaticsPrefactor()
             if dawaanr_set_params():
                 raise Exception(
                     "Could not activate magnetostatics method " + self.__class__.__name__)
 
-    class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
+    cdef class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
 
         """Calculates magnetostatic interactions by direct summation over all
            pairs. If the system has periodic boundaries, n_replica
@@ -242,6 +245,9 @@ IF DIPOLES == 1:
             return {"prefactor": coulomb.Dprefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
 
         def _activateMethod(self):
+            self._setParamsInEsCore(self)
+
+        def _setParamsInEsCore(self):
             self.setMagnetostaticsPrefactor()
             if mdds_set_params(self._params["n_replica"]):
                 raise Exception(
