@@ -20,7 +20,8 @@ AM_DEFAULT_SOURCE_EXT = .cpp
 
 # Build rules for python libraries
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
-	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core
+	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core \
+	-I$(top_srcdir)/src/core/actor -I$(top_builddir)/scr/core/actor
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 LIBS =  $(top_builddir)/src/core/libEspresso.la \
 	@LIBS@
@@ -114,7 +115,7 @@ cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
 cython_verbose_0 = @echo "  CYTHON   $@";
 
 $(CPPFILES): %.cpp: %.pyx myconfig.pxi
-	$(cython_verbose)cython \
+	$(cython_verbose)cython --cplus \
 	  -I $(builddir) -I $(srcdir)/_espresso $< -o $@
 
 CLEANFILES += $(CPPFILES)

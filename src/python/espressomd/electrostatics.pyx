@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from cython.operator cimport dereference
 include "myconfig.pxi"
 cimport actors
 import actors
@@ -295,3 +296,87 @@ IF P3M == 1:
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
                 p3m_set_ninterpol(self._params["inter"])
                 python_p3m_set_mesh_offset(self._params["mesh_off"])
+
+IF ELECTROSTATICS and CUDA and EWALD_GPU:
+    cdef class EwaldGpu(ElectrostaticInteraction):
+        cdef EwaldgpuForce *thisptr
+        cdef EspressoSystemInterface *interface
+        cdef char *log
+        cdef int resp
+        def __cinit__(self):
+            self.interface = EspressoSystemInterface._Instance()
+            default_params= self.defaultParams()
+            self.thisptr = new EwaldgpuForce(dereference(self.interface), default_params["rcut"], default_params["num_kx"], default_params["num_ky"], default_params["num_kz"], default_params["alpha"])
+        def __dealloc__(self):
+            del self.thisptr
+
+        def validKeys(self):
+            return "bjerrum_length", "rcut", "num_kx", "num_ky", "num_kz", "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
+
+        def defaultParams(self):
+            return {"bjerrum_length" : -1,
+                    "rcut"          : -1,
+                    "num_kx"         : -1,
+                    "num_ky"         : -1,
+                    "num_kz"         : -1,
+                    "alpha"          : -1,
+                    "accuracy"       : -1, 
+                    "precision"      : -1,
+                    "isTuned"        : False,
+                    "isTunedFlag"    : False, 
+                    "K_max"          : -1,
+                    "time_calc_steps": -1}
+
+        def validateParams(self):
+            default_params=self.defaultParams()
+            if self._params["bjerrum_length"] <= 0.0 and self._params["bjerrum_length"]!=default_params["bjerrum_length"]:
+                raise ValueError("Bjerrum_length should be a positive double")
+            if self._params["num_kx"] < 0 and self._params["num_kx"] != default_params["num_kx"]:
+                raise ValueError("num_kx should be a positive integer")
+            if self._params["num_ky"] < 0 and self._params["num_ky"] != default_params["num_ky"]:
+                raise ValueError("num_ky should be a positive integer")
+            if self._params["num_kz"] < 0 and self._params["num_kz"] != default_params["num_kz"]:
+                raise ValueError("num_kz should be a positive integer")
+            if self._params["K_max"] < 0 and self._params["K_max"] != default_params["K_max"]:
+                raise ValueError("K_max should be a positive Integer")
+            if self._params["rcut"] < 0 and self._params["rcut"] != default_params["rcut"]:
+                raise ValueError("rcut should be a positive float")
+            if self._params["accuracy"] < 0 and self._params["accuracy"] != default_params["accuracy"]:
+                raise ValueError("accuracy has to be a positive double")
+            if self._params["precision"] < 0 and self._params["precision"] != default_params["precision"]:
+                raise ValueError("precision has to be a positive double")
+
+        def requiredKeys(self):
+            return "bjerrum_length","accuracy", "precision", "K_max"
+
+        def _tune(self):
+            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            default_params=self.defaultParams()
+            if self._params["time_calc_steps"] == default_params["time_calc_steps"]:
+                self._params["time_calc_steps"] = self.thisptr.determine_calc_time_steps()
+
+            self.thisptr.set_params_tune(self._params["accuracy"], self._params["precision"], self._params["K_max"], self._params["time_calc_steps"])
+            resp=self.thisptr.adaptive_tune(&self.log, dereference(self.interface))
+            if resp != 0:
+                print self.log
+
+
+        def _setParamsInEsCore(self):
+            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            self.thisptr.set_params(self._params["rcut"], self._params["num_kx"], self._params["num_ky"], self._params["num_kz"], self._params["alpha"])
+        
+        def _getParamsFromEsCore(self):
+            params = {}
+            params.update(ewaldgpu_params)
+            params["bjerrum_length"] = coulomb.bjerrum
+            return params
+        
+        def _activateMethod(self):
+            coulomb.method = COULOMB_EWALD_GPU
+            if not self._params["isTuned"]:
+                self._tune()
+                self._params["isTuned"]=True
+
+            self._setParamsInEsCore()
+
+
