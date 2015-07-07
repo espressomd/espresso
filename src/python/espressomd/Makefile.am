@@ -46,6 +46,8 @@ PYXFILES =  \
 	code_info.pyx \
 	cuda_init.pyx \
 	debye_hueckel.pyx \
+	electrostatic_extensions.pyx \
+	electrostatics.pyx \
 	integrate.pyx \
 	interactions.pyx \
 	particle_data.pyx \
@@ -54,8 +56,24 @@ PYXFILES =  \
 
 PXDFILES = \
 	_espresso/globals.pxd \
+	analyze.pxd \
 	c_analyze.pxd \
-	$(PYXFILES:.pyx=.pxd)
+	cellsystem.pxd \
+	code_info.pxd \
+	cuda_init.pxd \
+	debye_hueckel.pxd \
+	electrostatic_extensions.pxd \
+	electrostatics.pxd \
+	_espresso.pxd \
+	_init.pxd \
+	integrate.pxd \
+	interactions.pxd \
+	lb.pxd \
+	particle_data.pxd \
+	_system.pxd \
+	_tcl.pxd \
+	thermostat.pxd \
+	utils.pxd
 
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la

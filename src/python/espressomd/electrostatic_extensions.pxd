@@ -16,16 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from libcpp.string cimport string  # import std::string as string
-from libcpp.list cimport list  # import std::list as list
+# Handling of electrostatics
 
-cdef extern from "config.hpp":
-    pass
+include "myconfig.pxi"
+from _system cimport *
+from utils cimport *
 
-cdef extern from "integrate.hpp":
-    cdef int python_integrate(int n_steps, int recalc_forces, int reuse_forces)
-    cdef void integrate_set_nvt()
-    cdef int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, int cubic_box)
+IF ELECTROSTATICS and P3M:
 
-cdef extern from "errorhandling.hpp":
-    cdef list[string] mpiRuntimeErrorCollectorGather()
+    cdef extern from "elc.hpp":
+        ctypedef struct ELC_struct:
+            double maxPWerror
+            double gap_size
+            double far_cut
+            int    neutralize
+
+        int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize, double top, double bottom, int const_pot_on, double pot_diff)
+
+        # links intern C-struct with python object
+        cdef extern ELC_struct elc_params

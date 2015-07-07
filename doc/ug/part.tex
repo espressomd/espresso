@@ -33,8 +33,37 @@
   }{
     part[\arg{pid}]
   }{
-    pos=\arg{array-like},
     type=\arg{int},
+    pos=\arg{array of 3 floats},
+    v=\arg{array of 3 floats},
+    f=\arg{array of 3 floats},
+    bonds=\arg{bond},
+    mass=\arg{float},
+    omega_lab=\arg{array of 3 floats},
+    rinertia=\arg{array of 3 floats},
+    omega_body=\arg{array of 3 floats},
+    torque_lab=\arg{array of 3 floats},
+    quat=\arg{array of 4 floats},
+    %director=\arg{},
+    q=\arg{float},
+    virtual=\arg{int $\geq$ 0},
+    vs_relative=\arg{tuple of int and float},
+    vs_auto_relate_to=\arg{int},
+    dip=\arg{array of 3 floats},
+    dipm=\arg{float},
+    fix=\arg{array of 3 ints},
+    ext_force=\arg{array of 3 floats},
+    ext_torque=\arg{array of 3 floats},
+    exclude=\arg{list of ints},
+    temp=\arg{float},
+    gamma=\arg{float},
+    rotation=\arg{bool},
+    swimming=\arg{dictionary \ttfamily \{
+      `f_swim':\arg{float},
+      `v_swim':\arg{float},
+      `mode':\arg{``pusher''|``puller''},
+      `dipole_length':\arg{float},
+      `rotational_friction':\arg{float}\}}
   }
 \end{pysyntax}
 \PythonSyntaxOff
