@@ -315,3 +315,38 @@ IF OVERLAPPED == 1:
 IF BOND_VIRTUAL == 1:
     cdef extern from "interaction_data.hpp":
         int virtual_set_params(int bond_type)
+
+
+cdef extern from "interaction_data.hpp":
+    cdef enum enumBondedInteraction "BondedInteraction":
+        BONDED_IA_NONE = -1,
+        BONDED_IA_FENE,
+        BONDED_IA_HARMONIC,
+        BONDED_IA_HARMONIC_DUMBBELL,
+        BONDED_IA_QUARTIC,
+        BONDED_IA_BONDED_COULOMB,
+        BONDED_IA_ANGLE_OLD,
+        BONDED_IA_DIHEDRAL,
+        BONDED_IA_TABULATED,
+        BONDED_IA_SUBT_LJ,
+        BONDED_IA_RIGID_BOND,
+        BONDED_IA_VIRTUAL_BOND,
+        BONDED_IA_ANGLEDIST,
+        BONDED_IA_ENDANGLEDIST,
+        BONDED_IA_OVERLAPPED,
+        BONDED_IA_ANGLE_HARMONIC,
+        BONDED_IA_ANGLE_COSINE,
+        BONDED_IA_ANGLE_COSSQUARE,
+        BONDED_IA_STRETCHING_FORCE,
+        BONDED_IA_AREA_FORCE_LOCAL,
+        BONDED_IA_BENDING_FORCE,
+        BONDED_IA_VOLUME_FORCE,
+        BONDED_IA_AREA_FORCE_GLOBAL,
+        BONDED_IA_STRETCHLIN_FORCE,
+        BONDED_IA_CG_DNA_BASEPAIR,
+        BONDED_IA_CG_DNA_STACKING,
+        BONDED_IA_CG_DNA_BACKBONE,
+        BONDED_IA_IBM_TRIEL,
+        BONDED_IA_IBM_VOLUME_CONSERVATION,
+        BONDED_IA_IBM_TRIBEND,
+        BONDED_IA_UMBRELLA
