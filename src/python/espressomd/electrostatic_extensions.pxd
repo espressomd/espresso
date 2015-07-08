@@ -25,14 +25,40 @@ from electrostatics cimport *
 
 IF ELECTROSTATICS and P3M:
 
-    cdef extern from "elc.hpp":
-        ctypedef struct ELC_struct:
-            double maxPWerror
-            double gap_size
-            double far_cut
-            int    neutralize
+	cdef extern from "elc.hpp":
+		ctypedef struct ELC_struct:
+			double maxPWerror
+			double gap_size
+			double far_cut
+			int neutralize
 
-        int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize, double top, double bottom, int const_pot_on, double pot_diff)
+		int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize, double top, double bottom, int const_pot_on, double pot_diff)
 
-        # links intern C-struct with python object
-        cdef extern ELC_struct elc_params
+		#links intern C-struct with python object
+		cdef extern ELC_struct elc_params
+
+	cdef extern from "icc.hpp":
+		ctypedef struct iccp3m_struct:
+			int n_ic;                             
+			int num_iteration;                    
+			double eout;                          
+			double *areas;                        
+			double *ein;                          
+			double *sigma;                        
+			double convergence;                   
+			double *nvectorx,*nvectory,*nvectorz; 
+			double extx,exty,extz;				  
+			double relax;                         
+			int citeration;                      
+			int set_flag;                         
+			double *fx;
+			double *fy;
+			double *fz;
+			int first_id;
+
+		#links intern C-struct with python object
+		cdef extern iccp3m_struct iccp3m_cfg
+
+		cdef extern from "communication.hpp":
+			int mpi_iccp3m_init(int dummy);
+
