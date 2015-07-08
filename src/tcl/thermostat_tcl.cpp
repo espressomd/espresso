@@ -179,6 +179,9 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
 
+  fprintf(stderr,"WARNING: The behavior of the Langevin thermostat has changed\n");
+  fprintf(stderr,"         as of this version! Please consult the user's guide.\n");
+
   return (TCL_OK);
 }
 
