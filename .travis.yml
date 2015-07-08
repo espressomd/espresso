@@ -35,6 +35,6 @@ matrix:
     - compiler: clang
       env: with-mpi=false make_check=false myconfig=nocheck-maxset 
     - compiler: clang
-    env: with-mpi=false myconfig=maxset without-cuda
+      env: with-mpi=false myconfig=maxset without-cuda
 
 script: ./maintainer/travis/build.sh
