@@ -834,26 +834,26 @@ IF BOND_ANGLE == 1:
         def typeNumber(self):
             return 13
 
-    def typeName(self):
-        return "ANGLE_HARMONIC"
+        def typeName(self):
+            return "ANGLE_HARMONIC"
 
-    def validKeys(self):
-        return "bend", "phi0"
+        def validKeys(self):
+            return "bend", "phi0"
 
-    def requiredKeys(self):
-        return "bend", "phi0"
+        def requiredKeys(self):
+            return "bend", "phi0"
 
-    def setDefaultParams(self):
-        self._params = {"bend": 0, "phi0": 0}
+        def setDefaultParams(self):
+            self._params = {"bend": 0, "phi0": 0}
 
-    def _getParamsFromEsCore(self):
-        return \
-            {"bend": bonded_ia_params[self._bondId].p.angle_harmonic.bend,
-             "phi0": bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
+        def _getParamsFromEsCore(self):
+            return \
+                {"bend": bonded_ia_params[self._bondId].p.angle_harmonic.bend,
+                 "phi0": bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
 
-    def _setParamsInEsCore(self):
-        angle_harmonic_set_params(
-            self._bondId, self._params["bend"], self._params["phi0"])
+        def _setParamsInEsCore(self):
+            angle_harmonic_set_params(
+                self._bondId, self._params["bend"], self._params["phi0"])
 ELSE:
     class Angle_Harmonic(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
@@ -864,26 +864,26 @@ IF BOND_ANGLE == 1:
         def typeNumber(self):
             return 14
 
-    def typeName(self):
-        return "ANGLE_COSINE"
+        def typeName(self):
+            return "ANGLE_COSINE"
 
-    def validKeys(self):
-        return "bend", "phi0"
+        def validKeys(self):
+            return "bend", "phi0"
 
-    def requiredKeys(self):
-        return "bend", "phi0"
+        def requiredKeys(self):
+            return "bend", "phi0"
 
-    def setDefaultParams(self):
-        self._params = {"bend": 0, "phi0": 0}
+        def setDefaultParams(self):
+            self._params = {"bend": 0, "phi0": 0}
 
-    def _getParamsFromEsCore(self):
-        return \
-            {"bend": bonded_ia_params[self._bondId].p.angle_cosine.bend,
-             "phi0": bonded_ia_params[self._bondId].p.angle_cosine.phi0}
+        def _getParamsFromEsCore(self):
+            return \
+                {"bend": bonded_ia_params[self._bondId].p.angle_cosine.bend,
+                 "phi0": bonded_ia_params[self._bondId].p.angle_cosine.phi0}
 
-    def _setParamsInEsCore(self):
-        angle_cosine_set_params(
-            self._bondId, self._params["bend"], self._params["phi0"])
+        def _setParamsInEsCore(self):
+            angle_cosine_set_params(
+                self._bondId, self._params["bend"], self._params["phi0"])
 ELSE:
     class Angle_Cosine(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
@@ -894,26 +894,26 @@ IF BOND_ANGLE == 1:
         def typeNumber(self):
             return 15
 
-    def typeName(self):
-        return "ANGLE_COSSQUARE"
+        def typeName(self):
+            return "ANGLE_COSSQUARE"
 
-    def validKeys(self):
-        return "bend", "phi0"
+        def validKeys(self):
+            return "bend", "phi0"
 
-    def requiredKeys(self):
-        return "bend", "phi0"
+        def requiredKeys(self):
+            return "bend", "phi0"
 
-    def setDefaultParams(self):
-        self._params = {"bend": 0, "phi0": 0}
+        def setDefaultParams(self):
+            self._params = {"bend": 0, "phi0": 0}
 
-    def _getParamsFromEsCore(self):
-        return \
-            {"bend": bonded_ia_params[self._bondId].p.angle_cossquare.bend,
-             "phi0": bonded_ia_params[self._bondId].p.angle_cossquare.phi0}
+        def _getParamsFromEsCore(self):
+            return \
+                {"bend": bonded_ia_params[self._bondId].p.angle_cossquare.bend,
+                 "phi0": bonded_ia_params[self._bondId].p.angle_cossquare.phi0}
 
-    def _setParamsInEsCore(self):
-        angle_cossquare_set_params(
-            self._bondId, self._params["bend"], self._params["phi0"])
+        def _setParamsInEsCore(self):
+            angle_cossquare_set_params(
+                self._bondId, self._params["bend"], self._params["phi0"])
 ELSE:
     class Angle_Cossquare(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
