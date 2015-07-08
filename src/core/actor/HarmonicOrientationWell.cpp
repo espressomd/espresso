@@ -20,6 +20,7 @@
 #include "EspressoSystemInterface.hpp"
 #include "forces.hpp"
 
+#ifdef CUDA
 #ifdef ROTATION
 
 HarmonicOrientationWell::
@@ -32,4 +33,5 @@ HarmonicOrientationWell(float x1, float x2, float x3, float _k, SystemInterface 
     std::cerr << "HarmonicOrientationWell needs access to torques on GPU!" << std::endl;
 }
 
+#endif
 #endif

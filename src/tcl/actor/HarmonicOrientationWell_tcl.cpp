@@ -19,6 +19,7 @@
 
 #include "actor/HarmonicOrientationWell_tcl.hpp"
 
+#ifdef CUDA
 #ifdef ROTATION
 
 #include "forces.hpp"
@@ -56,4 +57,5 @@ int tclcommand_HarmonicOrientationWell(ClientData data, Tcl_Interp *interp, int 
 }
 
 
+#endif
 #endif
