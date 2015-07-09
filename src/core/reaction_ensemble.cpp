@@ -21,7 +21,7 @@
 reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL,.volume=0 , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100}; //initialize watertype to negative number, for checking wether it has been assigned
 
 
-//declaration of borin helper functions
+//declaration of boring helper functions
 float factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
 int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types); //should onlny be used at when defining a new reaction
 bool all_educt_particles_exist(int reaction_id);
@@ -64,6 +64,7 @@ int _type_is_in_list(int type, int* list, int len_list){
 int initialize(){
 	int* already_initialized_types=(int*)malloc(sizeof(int));
 	int len_already_initialized_types=0;
+	//register types
 	for(int single_reaction_i=0; single_reaction_i<current_reaction_system.nr_single_reactions;single_reaction_i++){
 		for(int educt_types_i=0; educt_types_i<current_reaction_system.reactions[single_reaction_i]->len_educt_types;educt_types_i++){
 			int type=current_reaction_system.reactions[single_reaction_i]->educt_types[educt_types_i];
@@ -71,6 +72,7 @@ int initialize(){
 				init_type_array(type);
 		}
 	}
+	//set charge of types
 	current_reaction_system.charges_of_types =(double*) malloc(sizeof(double)*current_reaction_system.nr_different_types);
 
 	return 0;
@@ -280,7 +282,6 @@ int generic_oneway_reaction(int reaction_id){
 		master_energy_calc();
 	}	
 	//calculate potential energy
-	//master_energy_calc(); //not needed ??? only called once in tcl energy.cpp
   	num_energies=total_energy.data.n;
 	kinetic_energy =total_energy.data.e[0];
 	sum_all_energies=0;
@@ -314,15 +315,6 @@ int generic_oneway_reaction(int reaction_id){
 	if ( d_random() < bf ) {
 		//accept
 		//delete hidden educt_particles (remark: dont delete changed particles)
-		int n_HA;
-		int type=1;
-		number_of_particles_with_type(type,&n_HA);
-		if(n_HA>0){
-		Particle part;
-		int p_id_HA;
-		find_particle_type(type,&p_id_HA);
-		get_particle_data(p_id_HA,&part);
-		}
 		for(int i=0;i<len_hidden_particles_properties;i+=number_of_saved_properties) {
 			int p_id = (int) hidden_particles_properties[i];
 			delete_particle(p_id); //delete particle
@@ -597,5 +589,122 @@ int intcmp(const void *aa, const void *bb){
 }
 
 
-///////////////////////////////////////////// Reaction Ensemble Wang-Landau algorithm
+///////////////////////////////////////////// Wang-Landau algorithm
+
+int get_flattened_index_wang_landau (double* current_state, double* observables_minimum_values, double* observables_maximum_values, double* delta_observables_values, int nr_collective_variables){
+	int index=-10; //negative number is not allowed as index and therefore indicates error
+	int* individual_indices=(int*)malloc(sizeof(int)*nr_collective_variables);
+	int* nr_subindices_of_observables=(int*) malloc(sizeof(int)*nr_collective_variables);
+	int observable_counter=0;
+	for(int observable_i=0;observable_i<nr_collective_variables;observable_i++){
+		nr_subindices_of_observables[observable_i]=int(observables_maximum_values[observable_i]-observables_minimum_values[observable_i]/delta_observables_values[observable_i]);
+		for(int subindex_i=0;subindex_i<nr_subindices_of_observables[observable_i];subindex_i++){
+			if(current_state[observable_i]<(subindex_i+1)*delta_observables_values[observable_i]+observables_minimum_values[observable_i]){
+				individual_indices[observable_i]=subindex_i;
+				break;
+			}
+		}
+		observable_counter+=1;
+	}
+	//get flattened index from individual_indices
+	index=nr_subindices_of_observables[0];
+	for(int observable_i=1;observable_i<nr_collective_variables;observable_i++){
+		int factor=0;
+		for(int j=0;j<observable_i;j++){
+			factor+=nr_subindices_of_observables[j];
+		}
+		index+=factor*individual_indices[observable_i];
+	}
+	free(individual_indices);
+	free(nr_subindices_of_observables);
+	return index;
+}
+
+
+
+wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 , \
+						.wang_landau_potential=NULL,.nr_collective_variables=0,\
+						.collective_variables=NULL, .wang_landau_parameter=1,\
+ 						.initial_wang_landau_parameter=1,.already_refined_n_times=0, \
+ 						.int_fill_value=-10,.double_fill_value=-10.0,\
+ 							.number_of_monte_carlo_moves_between_check_of_convergence=5000, .final_wang_landau_parameter=0.00001,\
+ 						.monte_carlo_trial_moves=0, .wang_landau_relaxation_setps=100};
+//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential
+
+double calculate_delta_degree_of_association(int index_of_current_collective_variable){
+	//calculate Delta in the degree of association so that EVERY reaction step is driven.
+	collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[index_of_current_collective_variable];
+	int total_number_of_corresponding_acid=0;
+	for(int corresponding_type_i=0; corresponding_type_i<current_collective_variable->nr_corresponding_acid_types;corresponding_type_i++){
+		int num_of_current_type;
+		number_of_particles_with_type(current_collective_variable->corresponding_acid_types[corresponding_type_i],&num_of_current_type);
+		total_number_of_corresponding_acid+=num_of_current_type;
+	}
+	double delta=1.0/total_number_of_corresponding_acid;
+	return delta ;
+}
+
+int* initialize_histogram(){
+	int needed_bins=0;
+	for(int CV_i=0;CV_i<current_wang_landau_system.nr_collective_variables;CV_i++){
+		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[CV_i];
+		needed_bins+=int((current_collective_variable->CV_maximum-current_collective_variable->CV_minimum)/current_collective_variable->delta_CV)+1; // plus 1 needed for degrees of association related part of histogram (think of only one acid particle) 
+	}
+	int* histogram =(int*) malloc(sizeof(int)*needed_bins);
+	current_wang_landau_system.len_histogram=needed_bins;
+	return histogram;
+}
+
+double* initialize_wang_landau_potential(){
+	int needed_bins=0;
+	for(int CV_i=0;CV_i<current_wang_landau_system.nr_collective_variables;CV_i++){
+		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[CV_i];
+		needed_bins+=int((current_collective_variable->CV_maximum-current_collective_variable->CV_minimum)/current_collective_variable->delta_CV)+1;
+	}
+	double* wang_landau_potential =(double*) malloc(sizeof(double)*needed_bins);
+	return wang_landau_potential;
+}
+
+int initialize_wang_landau(){
+	//initialize deltas for collective variables which are of the type of a degree of association
+	for(int collective_variable_i=0; collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
+		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[collective_variable_i];
+		if(current_collective_variable->corresponding_acid_types==NULL)
+			continue; //(found a collective variable which is not of the type of a degree of association)	
+		current_collective_variable->delta_CV=calculate_delta_degree_of_association(collective_variable_i);
+	}
+
+	//TODO load deltas from file for collective variables which are of type of a energy
+
+	//construct (possibly higher dimensional) histogram over Gamma (the room which should be equally sampled when the wang-landau algorithm has converged)
+	current_wang_landau_system.histogram=initialize_histogram();
+
+	//construct (possibly higher dimensional) wang_landau potential over Gamma (the room which should be equally sampled when the wang-landau algorithm has converged)
+	current_wang_landau_system.wang_landau_potential=initialize_wang_landau_potential();
+	
+	//TODO make observable tracking available	
+
+	
+	return true;
+}
+
+int histogram_flatness(double* histogram, int length_histogram) {
+
+}
+
+int do_reaction_wang_landau(){
+
+};
+
+
+void free_wang_landau(){
+	free(current_wang_landau_system.histogram);
+	free(current_wang_landau_system.wang_landau_potential);
+	for(int CV_i=0;CV_i<current_wang_landau_system.nr_collective_variables;CV_i++){
+		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[CV_i];
+		free(current_collective_variable->corresponding_acid_types);
+	}
+
+
+}
 
