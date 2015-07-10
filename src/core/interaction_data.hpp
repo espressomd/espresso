@@ -42,10 +42,8 @@ enum BondedInteraction{
     BONDED_IA_FENE,
     /** Type of bonded interaction is a HARMONIC potential. */
     BONDED_IA_HARMONIC,
-#ifdef ROTATION
     /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
     BONDED_IA_HARMONIC_DUMBBELL,
-#endif
     /** Type of bonded interaction is a QUARTIC potential. */
     BONDED_IA_QUARTIC,
     /** Type of bonded interaction is a BONDED_COULOMB */

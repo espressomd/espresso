@@ -42,6 +42,13 @@ public:
     return *m_instance;
   };
 
+  static EspressoSystemInterface * _Instance() {
+      if(!m_instance)
+          m_instance = new EspressoSystemInterface;
+
+      return m_instance;
+  };
+
   void init();
   void update();
 

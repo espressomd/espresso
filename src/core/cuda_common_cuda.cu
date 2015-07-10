@@ -57,6 +57,7 @@ cudaStream_t stream[1];
 
 cudaError_t _err;
 cudaError_t CU_err;
+
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line){
   if( cudaSuccess != CU_err) {                                             
     fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
@@ -164,7 +165,7 @@ void gpu_change_number_of_part_to_comm() {
     
     global_part_vars_host.seed = (unsigned int)i_random(max_ran);
     global_part_vars_host.number_of_particles = n_part;
-    
+
     cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
 
     //if the arrays exists free them to prevent memory leaks
@@ -204,6 +205,7 @@ void gpu_change_number_of_part_to_comm() {
 #endif
 #endif // __CUDA_ARCH__      
       cuda_safe_mem(cudaMalloc((void**)&particle_forces_device, 3 * global_part_vars_host.number_of_particles * sizeof(float)));
+
       cuda_safe_mem(cudaMalloc((void**)&particle_data_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data)));
       cuda_safe_mem(cudaMalloc((void**)&particle_seeds_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_seed)));
 #ifdef SHANCHEN
@@ -215,6 +217,7 @@ void gpu_change_number_of_part_to_comm() {
       int blocks_per_grid_particles_y = 4;
       int blocks_per_grid_particles_x = (global_part_vars_host.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
       dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+      
       KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device, particle_seeds_device));
 #ifdef SHANCHEN
       KERNELCALL(init_fluid_composition, dim_grid_particles, threads_per_block_particles, (fluid_composition_device));
