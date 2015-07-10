@@ -502,6 +502,28 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
   double a[3];
   convert_vec_space_to_body(p,aSpaceFrame,a);
 
+
+  // Apply restrictions from the rotation_per_particle feature
+#ifdef ROTATION_PER_PARTICLE
+//  printf("%g %g %g - ",a[0],a[1],a[2]);
+  // Rotation turned off entirely?
+  if (p->p.rotation <2) return;
+
+  // Per coordinate fixing
+  if (!(p->p.rotation & 2)) a[0]=0;
+  if (!(p->p.rotation & 4)) a[1]=0;
+  if (!(p->p.rotation & 8)) a[2]=0;
+  // Re-normalize rotation axis
+  double l=sqrt(sqrlen(a));
+  // Check, if the rotation axis is nonzero
+  if (l<1E-10) return;
+
+  for (int i=0;i<3;i++)
+    a[i]/=l;
+//  printf("%g %g %g\n",a[0],a[1],a[2]);
+
+#endif
+
   double q[4];
   q[0]=cos(phi/2);
   double tmp=sin(phi/2);
@@ -514,12 +536,9 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
 
   // Rotate the particle
   double qn[4]; // Resulting quaternion
-//  printf("rotate by %g %g %g %g\n",q[0],q[1],q[2],q[3]);
-//  printf("q=%g %g %g %g\n",p->r.quat[0],p->r.quat[1],p->r.quat[2],p->r.quat[3]);
   multiply_quaternions(p->r.quat,q,qn);
   for (int k=0; k<4; k++)
     p->r.quat[k]=qn[k];
-//  printf("q'=%g %g %g %g\n",p->r.quat[0],p->r.quat[1],p->r.quat[2],p->r.quat[3]);
   convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
   // When dipoles are enabled, update dipole moment

@@ -47,4 +47,32 @@ if { [veclen [vecsub [part 0 print dip] $target]] > 0.0001 } {
   error "Dipole moment did not align to external field for unconstraint rotation."
 }
 
+# Prevent rotation of the particle
+part 0 pos 0 0 0 dip 2 3 4 rotation 0
+set l [veclen "2 3 4"]
+constraint ext_magn_field -1 1 1
+minimize_energy 1E-8 10000 0.01 0.01
+set target "2 3 4"
+set target [vecscale [expr $l /[veclen $target]] $target]
+puts "Expected: $target, got [part 0 print dip]"
+
+if { [veclen [vecsub [part 0 print dip] $target]] > 0.0001 } {
+  error "Dipole moment did not align to external field for constraint rotation (rotation 0)."
+}
+
+
+# Freeze only rotation around x and y axes. This should still not rotate at all,
+# but tests a different part of the code
+part 0 pos 0 0 0 dip 2 3 4 rotation 8
+set l [veclen "2 3 4"]
+constraint ext_magn_field -1 1 1
+minimize_energy 1E-8 10000 0.01 0.01
+set target "2 3 4"
+set target [vecscale [expr $l /[veclen $target]] $target]
+puts "Expected: $target, got [part 0 print dip]"
+
+if { [veclen [vecsub [part 0 print dip] $target]] > 0.0001 } {
+  error "Dipole moment did not align to external field for partially constraint rotation (rotation 8)."
+}
+
 
