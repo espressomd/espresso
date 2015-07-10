@@ -79,19 +79,17 @@ bool steepest_descent_step(void) {
       f = 0.0;
       t = 0.0;
       dp2 = 0.0;
-#ifdef VIRTUAL_SITES
-      // Skip virtual particles
-      if (ifParticleIsVirtual(&p[i])) continue;
-#endif
-//      printf("Torque: %g %g %g\n",p[i].f.torque[0],p[i].f.torque[1],p[i].f.torque[2]);
-      
-      // For all Cartesian coordinates
-      for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
         // Skip, if coordinate is fixed
         if (!(p[i].p.ext_flag & COORD_FIXED(j)))
 #endif
-          {
+      // For all Cartesian coordinates
+      for(j=0; j < 3; j++){
+#ifdef VIRTUAL_SITES
+      // Skip positional increments of virtual particles
+      if (!ifParticleIsVirtual(&p[i])) 
+#endif
+        {
             // Square of force on particle
 	    f += SQR(p[i].f.f[j]);	    	    
 	    
@@ -106,23 +104,17 @@ bool steepest_descent_step(void) {
 	    p[i].r.p[j] += dp;
 	    MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dp %e gamma*f %e\n", i, j, dp, params->gamma * p[i].f.f[j]));
           }
+	}
 #ifdef ROTATION
+        for (int j=0;j<3;j++){
           dq[j]=0;
-  #ifdef ROTATION_PER_PARTICLE
-          // Skip if this axis is blocked
-	  if (p->p.rotation & 2<<j) // Does this coordinate rotate
-  #endif
-          {
-            // Square of torque
-	    t += SQR(p[i].f.torque[j]);	    	    
+          // Square of torque
+	  t += SQR(p[i].f.torque[j]);	    	    
 	    
-	    // Rotational increment
-	    dq[j] = params->gamma * p[i].f.torque[j];
+	  // Rotational increment
+	  dq[j] = params->gamma * p[i].f.torque[j];
 	    
-	  }
-#endif	  
       }
-#ifdef ROTATION
       // Normalize rotation axis and compute amount of rotation
       double l=normr(dq);
       if (l>0.0)
