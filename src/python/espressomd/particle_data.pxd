@@ -1,4 +1,4 @@
-    #
+#
 # Copyright (C) 2013,2014 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -152,7 +152,7 @@ cdef extern from "particle_data.hpp":
         void pointer_to_gamma(Particle * p, double * & res)
 
     IF VIRTUAL_SITES_RELATIVE:
-      void pointer_to_vs_relative(Particle* P, int*& res1, double*& res2, double*& res3)
+        void pointer_to_vs_relative(Particle * P, int * & res1, double * & res2, double * & res3)
 
     IF ELECTROSTATICS:
         void pointer_to_q(Particle * P, double * & res)
@@ -189,7 +189,7 @@ cdef extern from "particle_data.hpp":
 cdef extern from "virtual_sites_relative.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         int vs_relate_to(int part_num, int relate_to)
-        int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double* vs_quat)
+        int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * vs_quat)
 
 cdef extern from "rotation.hpp":
     void convert_omega_body_to_space(Particle * p, double * omega)

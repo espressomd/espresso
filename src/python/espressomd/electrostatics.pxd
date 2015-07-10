@@ -29,18 +29,18 @@ IF ELECTROSTATICS:
     cdef extern from "interaction_data.hpp":
         cdef enum CoulombMethod:
             COULOMB_NONE, \
-            COULOMB_DH, \
-            COULOMB_P3M, \
-            COULOMB_MMM1D, \
-            COULOMB_MMM2D, \
-            COULOMB_MAGGS, \
-            COULOMB_ELC_P3M, \
-            COULOMB_RF, \
-            COULOMB_INTER_RF, \
-            COULOMB_P3M_GPU, \
-            COULOMB_MMM1D_GPU, \
-            COULOMB_EWALD_GPU, \
-            COULOMB_EK
+                COULOMB_DH, \
+                COULOMB_P3M, \
+                COULOMB_MMM1D, \
+                COULOMB_MMM2D, \
+                COULOMB_MAGGS, \
+                COULOMB_ELC_P3M, \
+                COULOMB_RF, \
+                COULOMB_INTER_RF, \
+                COULOMB_P3M_GPU, \
+                COULOMB_MMM1D_GPU, \
+                COULOMB_EWALD_GPU, \
+                COULOMB_EK
 
         int coulomb_set_bjerrum(double bjerrum)
 
@@ -127,7 +127,7 @@ IF ELECTROSTATICS:
         cdef inline python_p3m_adaptive_tune():
             cdef char * log = NULL
             cdef int response
-            response = p3m_adaptive_tune( & log)
+            response = p3m_adaptive_tune(& log)
             return response, log
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
@@ -191,43 +191,39 @@ IF ELECTROSTATICS:
 
 IF ELECTROSTATICS and CUDA and EWALD_GPU:
     cdef extern from "SystemInterface.hpp":
-        cdef cppclass SystemInterface: 
-            SystemInterface() 
+        cdef cppclass SystemInterface:
+            SystemInterface()
 
     cdef extern from "EspressoSystemInterface.hpp":
-        cdef cppclass EspressoSystemInterface :
+        cdef cppclass EspressoSystemInterface:
             @staticmethod
-            EspressoSystemInterface *_Instance()
-                      
+            EspressoSystemInterface * _Instance()
+
     cdef extern from "EwaldgpuForce.hpp":
         cdef cppclass EwaldgpuForce:
-            EwaldgpuForce(EspressoSystemInterface &s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha);
-            int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha);
-            int set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps);
-            int adaptive_tune(char **log, EspressoSystemInterface &s);
-            double tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N);
-            double tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N);
-            int determine_calc_time_steps();
+            EwaldgpuForce(EspressoSystemInterface & s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha)
+            int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha)
+            int set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps)
+            int adaptive_tune(char ** log, EspressoSystemInterface & s)
+            double tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N)
+            double tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N)
+            int determine_calc_time_steps()
 
         ctypedef struct Ewaldgpu_params:
-            double rcut;
-            int num_kx;
-            int num_ky;
-            int num_kz;
-            double alpha;
-            double accuracy;
-            double precision;
-            bint isTuned; # Tuning is over
-            bint isTunedFlag; # Flag tuning is over
-            int K_max; # Maximal reciprocal K-vector in tuning
-            int time_calc_steps; # Steps in time_force_calc function
+            double rcut
+            int num_kx
+            int num_ky
+            int num_kz
+            double alpha
+            double accuracy
+            double precision
+            bint isTuned  # Tuning is over
+            bint isTunedFlag  # Flag tuning is over
+            int K_max  # Maximal reciprocal K-vector in tuning
+            int time_calc_steps  # Steps in time_force_calc function
 
         cdef extern Ewaldgpu_params ewaldgpu_params
 
-        #ctypedef extern class EwaldgpuForce ewaldgpuForce 
+        # ctypedef extern class EwaldgpuForce ewaldgpuForce
 #    cdef extern from "EspressoSystemInterface.cpp":
 #        cdef cppclass extern EspressoSystemInterface *EspressoSystemInterface;
-
-
-
-
