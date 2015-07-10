@@ -225,6 +225,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
+  REGISTER_COMMAND("rotate_system", tclcommand_rotate_system);
   REGISTER_COMMAND("lees_edwards_offset", tclcommand_lees_edwards_offset);
 #ifdef CATALYTIC_REACTIONS
   REGISTER_COMMAND("reaction", tclcommand_reaction);
@@ -244,7 +245,6 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 #ifdef CUDA
   REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);
-  REGISTER_COMMAND("rotate_system", tclcommand_rotate_system);
   
 #ifdef ROTATION
   REGISTER_COMMAND("harmonic_orientation_well", tclcommand_HarmonicOrientationWell);
