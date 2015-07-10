@@ -118,7 +118,7 @@ void EspressoSystemInterface::gatherParticles() {
 #endif
 #ifdef DIPOLES
       if(needsDip())
-	Dip.reserve(Q.size()+np);
+	Dip.reserve(Dip.size()+np);
 #endif
 
 #ifdef ROTATION
