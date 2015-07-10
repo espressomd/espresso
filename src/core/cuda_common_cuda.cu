@@ -61,6 +61,7 @@ cudaStream_t stream[1];
 
 cudaError_t _err;
 cudaError_t CU_err;
+
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line){
   if( cudaSuccess != CU_err) {                                             
     fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
@@ -179,7 +180,7 @@ void gpu_change_number_of_part_to_comm() {
     
     global_part_vars_host.seed = (unsigned int)i_random(max_ran);
     global_part_vars_host.number_of_particles = n_part;
-    
+
     cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
 
     //if the arrays exists free them to prevent memory leaks

@@ -21,6 +21,7 @@
 include "myconfig.pxi"
 from _system cimport *
 from utils cimport *
+from electrostatics cimport *
 
 IF ELECTROSTATICS and P3M:
 

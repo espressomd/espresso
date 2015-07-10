@@ -1,16 +1,15 @@
 include "myconfig.pxi"
-import numpy as np
 from highlander import ThereCanOnlyBeOne
 
 
-cdef class Actor(object):
+cdef class Actor:
     activeList = dict(ElectrostaticInteraction=False,
                       MagnetostaticInteraction=False,
                       MagnetostaticExtension=False,
                       HydrodynamicInteraction=False,
                       ElectrostaticExtensions=False)
 
-    def __init__(self, *args, **kwargs):
+    def __cinit__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.defaultParams()
         self.system = None
@@ -107,7 +106,7 @@ cdef class Actor(object):
 
     def _setParamsInEsCore(self):
         raise Exception(
-            "Subclasses of %s must define the _setParamsFromEsCore() method." % self._getInteractionType())
+            "Subclasses of %s must define the _setParamsInEsCore() method." % self._getInteractionType())
 
     def defaultParams(self):
         raise Exception(
