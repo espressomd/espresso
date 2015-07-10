@@ -21,6 +21,7 @@
 
 #include "config.hpp"
 
+#ifdef CUDA
 #ifdef ROTATION
 
 #include "Actor.hpp"
@@ -43,5 +44,6 @@ protected:
   float k;
 };
 
+#endif
 #endif
 #endif
