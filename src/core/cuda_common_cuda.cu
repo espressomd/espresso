@@ -35,9 +35,7 @@ static __device__ __constant__ CUDA_global_part_vars global_part_vars_device;
   
 /** struct for particle force */
 static float *particle_forces_device = NULL;
-#ifdef ROTATION
 static float *particle_torques_device = NULL;
-#endif
 
 /** struct for particle position and veloctiy */
 static CUDA_particle_data *particle_data_device = NULL;
