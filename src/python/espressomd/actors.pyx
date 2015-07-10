@@ -106,7 +106,7 @@ cdef class Actor:
 
     def _setParamsInEsCore(self):
         raise Exception(
-            "Subclasses of %s must define the _setParamsFromEsCore() method." % self._getInteractionType())
+            "Subclasses of %s must define the _setParamsInEsCore() method." % self._getInteractionType())
 
     def defaultParams(self):
         raise Exception(
