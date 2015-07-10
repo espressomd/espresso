@@ -120,7 +120,7 @@ cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
 cython_verbose_0 = @echo "  CYTHON   $@";
 
 $(CPPFILES): %.cpp: %.pyx myconfig.pxi
-$(cython_verbose)cython $(CYFLAGS) --cplus \
+	$(cython_verbose)cython $(CYFLAGS) --cplus \
 	  -I $(builddir) -I $(srcdir)/_espresso $< -o $@
 
 CLEANFILES += $(CPPFILES)
