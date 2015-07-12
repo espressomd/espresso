@@ -3,6 +3,9 @@
 #ifdef REACTION_ENSEMBLE
 #include "reaction_ensemble.hpp"
 
+//function declartion
+int print_over_collecitve_variables(Tcl_Interp *interp, void* data, char* type);
+
 int tclcommand_reaction_ensemble_print_status(Tcl_Interp *interp){
 	char buffer[TCL_DOUBLE_SPACE];
 	if(current_reaction_system.nr_single_reactions == 0){
@@ -248,7 +251,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					}
 
 					if(ARG1_IS_S("energy")){
-							printf("not yet implemented\n");
+							printf("energy collective variables are not yet implemented\n");
 					}
 
 				}
@@ -267,12 +270,20 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					argc-=1; argv+=1;
 					ARG_IS_I(1,current_wang_landau_system.wang_landau_relaxation_setps);
 				}		
+	
+				if(ARG1_IS_S("full_path_to_output_filename")){
+					argc-=1; argv+=1;
+					int size_string=strlen(argv[1])+1;
+					char* output_filename =(char*)malloc(sizeof(char)*size_string);
+					strcpy(output_filename, argv[1]);
+					current_wang_landau_system.output_filename=output_filename;
+				}
 
 				if(ARG1_IS_S("free")) {
 					//needs to be called after all observables are added
 					free_wang_landau();
 				}
-				
+
 				
 			}
 		}
@@ -284,7 +295,5 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 		
 	return gather_runtime_errors(interp,err);
 }
-
-
 
 #endif

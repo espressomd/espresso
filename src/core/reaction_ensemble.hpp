@@ -53,6 +53,7 @@ typedef struct collective_variable{
 	int* corresponding_acid_types; // is NULL if the current collective variable has nothing to do with a degree of association
 	int nr_corresponding_acid_types;
 	int associated_type;
+	double (*determine_current_state_in_collective_variable_with_index) (int);	//declare a function pointer with name determine_current_state_in_this_collective_variable that has to point to a function that has 1 int input parameter (for the collective_variable_index) and returns a double
 } collective_variable;
 
 typedef struct wang_landau_system {
@@ -73,6 +74,7 @@ typedef struct wang_landau_system {
 	int monte_carlo_trial_moves; //for 1/t algorithm
 
 	int wang_landau_relaxation_setps; //relaxation steps like relaxation steps for metadynamics in order to find local equilibrium
+	char* output_filename;
 } wang_landau_system;
 
 extern wang_landau_system current_wang_landau_system;
