@@ -726,22 +726,6 @@ int initialize_wang_landau(){
 			continue; //(found a collective variable which is not of the type of a degree of association)	
 		current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_degree_of_association;
 	}
-
-//	printf("curr deg of f %f\n", current_wang_landau_system.collective_variables[0]->determine_current_state_in_collective_variable_with_index(0));
-
-//	double current_state[1];
-//	current_state[0]=current_wang_landau_system.collective_variables[0]->determine_current_state_in_collective_variable_with_index(0);
-//	double cv_minimums[1];
-//	cv_minimums[0]=current_wang_landau_system.collective_variables[0]->CV_minimum;
-
-//	double cv_maximums[1];
-//	cv_maximums[0]=current_wang_landau_system.collective_variables[0]->CV_maximum;
-//	double delta_cvs[1];
-//	delta_cvs[0]=current_wang_landau_system.collective_variables[0]->delta_CV;
-
-//	int index=get_flattened_index_wang_landau(current_state, cv_minimums,cv_maximums, delta_cvs,1 );
-//	printf("index %d delta_CV %f\n",index, delta_cvs[0] );
-
 	//TODO make observable tracking available	
 
 	
@@ -949,6 +933,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	//calculate boltzmann factor
 	double bf= pow(current_reaction_system.volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
 	bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
+
 	if ( d_random() < bf ) {
 		//accept
 		if(modify_wang_landau_potential==true){
@@ -968,7 +953,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	} else {
 		//reject
 		if(modify_wang_landau_potential==true){
-			current_wang_landau_system.histogram[old_state_index]=current_wang_landau_system.histogram[old_state_index]+1;
+			current_wang_landau_system.histogram[old_state_index]+=1;
 			current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
 			//TODO observable tracking here?		
 		}
@@ -1018,13 +1003,13 @@ bool achieved_desired_number_of_refinements_one_over_t ();
 void refine_wang_landau_parameter_one_over_t();
 
 int do_reaction_wang_landau(){
-	int reaction_id=i_random(current_reaction_system.nr_single_reactions);
 	bool modify_wang_landau_potential =true;
+	//for(int i=0;i<1;i++){
 	for(int i=0;i<current_wang_landau_system.wang_landau_relaxation_setps;i++){
+		int reaction_id=i_random(current_reaction_system.nr_single_reactions);
 		generic_oneway_reaction_wang_landau(reaction_id,modify_wang_landau_potential);
-		if(i==0){
+		if(i==0)
 			modify_wang_landau_potential=false;		
-		}
 	}
 	//check for convergence
 	if(achieved_desired_number_of_refinements_one_over_t()==true){
@@ -1037,7 +1022,8 @@ int do_reaction_wang_landau(){
 
 
 	//write out preliminary results
-	if(current_wang_landau_system.monte_carlo_trial_moves%(100*current_wang_landau_system.len_histogram)==0){
+	if(current_wang_landau_system.monte_carlo_trial_moves%(10*current_wang_landau_system.len_histogram)==0){
+		//100*current_wang_landau_system.len_histogram
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
 
@@ -1148,8 +1134,9 @@ void write_wang_landau_results_to_file(char* full_path_to_output_filename){
 		int unraveled_index[current_wang_landau_system.nr_collective_variables];
 		unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
 		//use unraveled index
-		for(int i=0;i<current_wang_landau_system.nr_collective_variables;i++)
+		for(int i=0;i<current_wang_landau_system.nr_collective_variables;i++){
 			sprintf(buffer+ strlen(buffer), "%f ",unraveled_index[i]*current_wang_landau_system.collective_variables[i]->delta_CV+current_wang_landau_system.collective_variables[i]->CV_minimum);
+		}
 		sprintf(buffer+strlen(buffer), "%f \n", current_wang_landau_system.wang_landau_potential[flattened_index]);
 	}
 	//next  write out file

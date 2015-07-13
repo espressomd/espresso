@@ -265,7 +265,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					argc-=1; argv+=1;
 					ARG_IS_D(1,current_wang_landau_system.final_wang_landau_parameter);
 				}
-		
+				
 				if(ARG1_IS_S("wang_landau_relaxation_setps")) {
 					argc-=1; argv+=1;
 					ARG_IS_I(1,current_wang_landau_system.wang_landau_relaxation_setps);
