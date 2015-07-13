@@ -44,7 +44,11 @@ double temperature = 0.0;
 /* Langevin friction coefficient gamma. */
 double langevin_gamma = 0.0;
 /* Friction coefficient gamma for rotation */
-double langevin_gamma_rotation;
+double langevin_gamma_rotation = 0.0;
+/* Langevin for translations */
+bool langevin_trans = true;
+/* Langevin for rotations */
+bool langevin_rotate = true;
 
 /* NPT ISOTROPIC THERMOSTAT */
 // INSERT COMMENT
@@ -101,7 +105,10 @@ void thermo_init_langevin()
 #endif
   
 #ifdef ROTATION 
-  langevin_gamma_rotation = langevin_gamma/3;
+  if ( langevin_gamma_rotation == 0.0 )
+  {
+    langevin_gamma_rotation = langevin_gamma;
+  }
 #if defined (FLATNOISE)
   langevin_pref2_rotation = sqrt(24.0*temperature*langevin_gamma_rotation/time_step);
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
