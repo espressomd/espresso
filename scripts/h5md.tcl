@@ -104,6 +104,7 @@ proc h5md_write_positions { args } {
 	h5mdfile H5Screate_simple type double dims 1 
 	h5mdfile H5_write_value value [setmd time] index 0 
 	h5mdfile H5Dwrite
+	#h5mdfile H5_Fflush
 }
 
 proc h5md_write_velocities {} {
