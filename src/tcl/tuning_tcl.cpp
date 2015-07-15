@@ -55,3 +55,26 @@ int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, c
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
+
+int tclcommand_tune_skin(ClientData data, Tcl_Interp *interp, int argc, char *argv[]) {
+  if(argc != 4) {
+    puts("usage:");
+    return TCL_ERROR;
+  }
+
+  double min, max, tol;
+  if(!(ARG_IS_D(1, min) && ARG_IS_D(2, max) && ARG_IS_D(3, tol))) {
+    puts("usage:");
+    return TCL_ERROR;
+  }
+
+  tune_skin(min, max, tol);
+  return TCL_OK;
+}
+
+
+
+
+
+
+
