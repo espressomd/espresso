@@ -19,15 +19,35 @@
 #ifndef ESPRESSOSYSTEMINTERFACE_H
 #define ESPRESSOSYSTEMINTERFACE_H
 
-#define ESIF_TRACE(A)
+#include <stdio.h>
 
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 
+// This debug header has to be the last thing to include, because it
+// #defines malloc to be something else (!!!) which will lead to
+// ultimately obscure errors in the standard library.  This is
+// literally the worst hack I have ever seen!
+#include "debug.hpp"
+
+/** Syntactic sugar */
+#define espressoSystemInterface EspressoSystemInterface::Instance()
+
 class EspressoSystemInterface : public SystemInterface {
 public:
-  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
-  virtual ~EspressoSystemInterface() {}
+  static EspressoSystemInterface &Instance() {
+    if(!m_instance)
+      m_instance = new EspressoSystemInterface;
+
+    return *m_instance;
+  };
+
+  static EspressoSystemInterface * _Instance() {
+      if(!m_instance)
+          m_instance = new EspressoSystemInterface;
+
+      return m_instance;
+  };
 
   void init();
   void update();
@@ -64,6 +84,12 @@ public:
   SystemInterface::const_real_iterator &qBegin();
   const SystemInterface::const_real_iterator &qEnd();
   bool hasQ() { return true; };
+#endif
+
+#ifdef ROTATION
+  SystemInterface::const_vec_iterator &quatuBegin();
+  const SystemInterface::const_vec_iterator &quatuEnd();
+  bool hasQuatu() { return true; };
 #endif
 
 #ifdef CUDA
@@ -103,16 +129,28 @@ public:
     return m_needsQGpu; 
   };
 
+  float *quatuGpuBegin() { return m_quatu_gpu_begin; };
+  float *quatuGpuEnd() { return m_quatu_gpu_end; };
+  bool hasQuatuGpu() { return true; };
+  bool requestQuatuGpu() { 
+    m_needsQuatuGpu = hasQuatuGpu(); 
+    m_splitParticleStructGpu |= m_needsQuatuGpu;
+    m_gpu |= m_needsQuatuGpu;
+    if(m_gpu)
+      enableParticleCommunication();
+    return m_needsQuatuGpu; 
+  };
+
   bool requestParticleStructGpu() {
     m_needsParticleStructGpu = true;
     m_gpu |= m_needsParticleStructGpu;
     if(m_gpu)
       enableParticleCommunication();
     return true;
-  }
+  };
 
-  float *fGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
-  float *fGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
+  float *fGpuBegin() { return gpu_get_particle_force_pointer(); };
+  float *fGpuEnd() { return gpu_get_particle_force_pointer() + 3*m_gpu_npart; };
   float *eGpu() { return (float *)gpu_get_energy_pointer(); };
   bool hasFGpu() { return true; };
   bool requestFGpu() {
@@ -122,6 +160,20 @@ public:
       enableParticleCommunication();
     return m_needsFGpu;
   };
+
+#ifdef ROTATION
+  float *torqueGpuBegin() { return (float *)gpu_get_particle_force_pointer(); };
+  float *torqueGpuEnd() { return (float *)(gpu_get_particle_force_pointer()) + 3*m_gpu_npart; };
+  bool hasTorqueGpu() { return true; };
+  bool requestTorqueGpu() {
+    m_needsTorqueGpu = hasTorqueGpu();
+    m_gpu |= m_needsTorqueGpu;
+    if(m_gpu)
+      enableParticleCommunication();
+    return m_needsTorqueGpu;
+  };
+#endif
+
 #endif
 
   unsigned int npart_gpu() {
@@ -133,6 +185,10 @@ public:
   };
 
 protected:
+  static EspressoSystemInterface *m_instance;
+  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
+  virtual ~EspressoSystemInterface() {}
+
   void gatherParticles();
   void split_particle_struct();
 #ifdef CUDA
@@ -149,8 +205,13 @@ protected:
 #endif
 
   Vector3Container R;
+
   #ifdef ELECTROSTATICS
   RealContainer Q;
+  #endif
+
+  #ifdef ROTATION
+  Vector3Container Quatu;
   #endif
 
   const_vec_iterator m_r_begin;
@@ -158,6 +219,9 @@ protected:
 
   const_real_iterator m_q_begin;
   const_real_iterator m_q_end;
+
+  const_vec_iterator m_quatu_begin;
+  const_vec_iterator m_quatu_end;
 
   int m_gpu_npart;
   bool m_gpu;
@@ -171,13 +235,14 @@ protected:
   float *m_q_gpu_begin;
   float *m_q_gpu_end;
 
+  float *m_quatu_gpu_begin;
+  float *m_quatu_gpu_end;
+
   unsigned int m_npart;
   Vector3 m_box;
 
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;
 };
-
-extern EspressoSystemInterface espressoSystemInterface;
 
 #endif

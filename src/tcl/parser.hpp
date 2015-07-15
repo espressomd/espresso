@@ -70,7 +70,7 @@ int gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 #define ARG0_IS_I(dest) ARG_IS_I(0, (dest))
 #define ARG1_IS_I(dest) ARG_IS_I(1, (dest))
 
-#define ARG_IS_D(no, dest) (!(Tcl_GetDouble(interp, argv[(no)], &(dest)) == TCL_ERROR))
+#define ARG_IS_D(no, dest) ((argc > 0) && (!(Tcl_GetDouble(interp, argv[(no)], &(dest)) == TCL_ERROR)))
 #define ARG0_IS_D(dest) ARG_IS_D(0, (dest))
 #define ARG1_IS_D(dest) ARG_IS_D(1, (dest))
 

@@ -1,8 +1,10 @@
 language: cpp
 
 before_install:
+ - sudo apt-get clean
  - sudo apt-get update
- - sudo apt-get install tcl-dev #cython python-numpy
+ - sudo apt-get install tcl-dev libhdf5-serial-dev build-essential python-numpy python-pip pep8
+ - sudo pip install cython --upgrade 
  - if [ "$with_mpi" != false ]; then sudo apt-get install libopenmpi-dev openmpi-bin; fi
  - if [ "$with_fftw" != false ]; then sudo apt-get install libfftw3-dev; fi
 
@@ -32,5 +34,7 @@ matrix:
       env: with-mpi=false myconfig=rest2
     - compiler: clang
       env: with-mpi=false make_check=false myconfig=nocheck-maxset 
+    - compiler: clang
+      env: with-mpi=false myconfig=maxset without-cuda
 
 script: ./maintainer/travis/build.sh

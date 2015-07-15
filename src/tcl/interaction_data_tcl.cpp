@@ -56,6 +56,7 @@
 #include "ljangle_tcl.hpp"
 #include "ljcos_tcl.hpp"
 #include "ljcos2_tcl.hpp"
+#include "cos2_tcl.hpp"
 #include "ljgen_tcl.hpp"
 #include "hertzian_tcl.hpp"
 #include "morse_tcl.hpp"
@@ -74,6 +75,7 @@
 #include "p3m_tcl.hpp"
 #include "reaction_field_tcl.hpp"
 #include "actor/Mmm1dgpu_tcl.hpp"
+#include "actor/Ewaldgpu_tcl.hpp"
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -90,16 +92,27 @@
 #include "endangledist_tcl.hpp"
 #include "fene_tcl.hpp"
 #include "overlap_tcl.hpp"
+#include "harmonic_dumbbell_tcl.hpp"
 #include "harmonic_tcl.hpp"
 #include "quartic_tcl.hpp"
 #include "bonded_coulomb_tcl.hpp"
 #include "subt_lj_tcl.hpp"
+#include "umbrella_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_local_tcl.hpp"
 #include "tcl/object-in-fluid/area_force_global_tcl.hpp"
 #include "tcl/object-in-fluid/volume_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretching_force_tcl.hpp"
 #include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
 #include "tcl/object-in-fluid/bending_force_tcl.hpp"
+#ifdef TWIST_STACK
+#include "twist_stack_tcl.hpp"
+#endif
+#ifdef HYDROGEN_BOND
+#include "hydrogen_bond_tcl.hpp"
+#endif
+#include "immersed_boundary/ibm_triel_tcl.hpp"
+#include "immersed_boundary/ibm_volume_conservation_tcl.hpp"
+#include "immersed_boundary/ibm_tribend_tcl.hpp"
 
 #ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
@@ -192,6 +205,10 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 
   #ifdef MMM1D_GPU
   REGISTER_COULOMB("mmm1dgpu", tclcommand_inter_coulomb_parse_mmm1dgpu);
+  #endif
+
+  #ifdef EWALD_GPU
+  REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
   #endif
 
   /* fallback */
@@ -327,6 +344,21 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   case BONDED_IA_VOLUME_FORCE:						
 	return tclprint_to_result_volumeforceIA(interp, params);
 #endif
+      
+#ifdef IMMERSED_BOUNDARY
+    case BONDED_IA_IBM_TRIEL:
+      return tclprint_to_result_ibm_triel(interp, params);
+    case BONDED_IA_IBM_VOLUME_CONSERVATION:
+      return tclprint_to_result_ibm_volume_conservation(interp, params);
+    case BONDED_IA_IBM_TRIBEND:
+      return tclprint_to_result_ibm_tribend(interp, params);
+      
+#endif
+      
+#ifdef ROTATION
+  case BONDED_IA_HARMONIC_DUMBBELL:
+    return tclprint_to_result_harmonic_dumbbellIA(interp, params);
+#endif
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
   case BONDED_IA_QUARTIC:
@@ -364,6 +396,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #ifdef OVERLAPPED
   case BONDED_IA_OVERLAPPED:
     return tclprint_to_result_overlapIA(interp, params);
+#endif
+#ifdef UMBRELLA
+  case BONDED_IA_UMBRELLA:
+    return tclprint_to_result_umbrellaIA(interp, params);
 #endif
 #ifdef BOND_CONSTRAINT
   case BONDED_IA_RIGID_BOND:
@@ -459,6 +495,10 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
   if (data->LJCOS2_cut > 0.0) tclprint_to_result_ljcos2IA(interp,i,j);
 #endif
 
+#ifdef COS2
+  if (data->COS2_cut > 0.0) tclprint_to_result_cos2IA(interp,i,j);
+#endif
+
 #ifdef GAY_BERNE
   if (data->GB_cut > 0.0) tclprint_to_result_gbIA(interp,i,j);
 #endif
@@ -526,6 +566,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
 #endif
   case COULOMB_MMM2D: tclprint_to_result_MMM2D(interp); break;
   case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU: tclprint_to_result_ewaldgpu(interp); break;
+#endif
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
@@ -778,6 +821,11 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("lj-cos2", tclcommand_inter_parse_ljcos2);
 #endif
 
+#ifdef COS2
+    REGISTER_NONBONDED("cos2", tclcommand_inter_parse_cos2);
+#endif
+
+
 #ifdef COMFIXED
     REGISTER_NONBONDED("comfixed", tclcommand_inter_parse_comfixed);
 #endif
@@ -922,7 +970,17 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef VOLUME_FORCE
   REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);
 #endif
+  // IMMERSED_BOUNDARY
+#ifdef IMMERSED_BOUNDARY
+  REGISTER_BONDED("ibm_triel", tclcommand_inter_parse_ibm_triel);
+  REGISTER_BONDED("ibm_volcons", tclcommand_inter_parse_ibm_volume_conservation);
+  REGISTER_BONDED("ibm_tribend", tclcommand_inter_parse_ibm_tribend);
+#endif
+  
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
+#ifdef ROTATION
+  REGISTER_BONDED("harmonic_dumbbell", tclcommand_inter_parse_harmonic_dumbbell);
+#endif
   REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
 #ifdef ELECTROSTATICS
   REGISTER_BONDED("bonded_coulomb", tclcommand_inter_parse_bonded_coulomb);  
@@ -951,11 +1009,20 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef OVERLAPPED
   REGISTER_BONDED("overlapped", tclcommand_inter_parse_overlapped_bonded);
 #endif
+#ifdef UMBRELLA
+  REGISTER_BONDED("umbrella", tclcommand_inter_parse_umbrella);
+#endif
 #ifdef BOND_CONSTRAINT
   REGISTER_BONDED("rigid_bond", tclcommand_inter_parse_rigid_bond);
 #endif
 #ifdef BOND_VIRTUAL
   REGISTER_BONDED("virtual_bond", tclcommand_inter_parse_virtual_bonds);
+#endif
+#ifdef HYDROGEN_BOND
+  REGISTER_BONDED("hydrogen_bond", tclcommand_inter_parse_hydrogen_bond);
+#endif
+#ifdef TWIST_STACK
+  REGISTER_BONDED("twist_stack", tclcommand_inter_parse_twist_stack);  
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);

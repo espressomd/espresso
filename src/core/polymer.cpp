@@ -135,23 +135,12 @@ int constraint_collision(double *p1, double *p2){
   double folded_pos1[3];
   double folded_pos2[3];
   int img[3];
-#ifdef LEES_EDWARDS
-  double vtmp[3];
-#endif
   
-  memcpy(folded_pos1, p1, 3*sizeof(double));
-#ifdef LEES_EDWARDS
-  fold_position(folded_pos1, vtmp, img);
-#else
+  memmove(folded_pos1, p1, 3*sizeof(double));
   fold_position(folded_pos1, img);
-#endif
 
-  memcpy(folded_pos2, p2, 3*sizeof(double));
-#ifdef LEES_EDWARDS
-  fold_position(folded_pos1, vtmp, img);
-#else
+  memmove(folded_pos2, p2, 3*sizeof(double));
   fold_position(folded_pos2, img);
-#endif
 
   for(i=0;i<n_constraints;i++){
     c=&constraints[i];
@@ -566,7 +555,7 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **b
   /* Sort the received informations. */
   sorted = (Particle*)malloc(n_part*sizeof(Particle));
   for(i = 0; i < n_part; i++)
-    memcpy(&sorted[prt[i].p.identity], &prt[i], sizeof(Particle));
+    memmove(&sorted[prt[i].p.identity], &prt[i], sizeof(Particle));
   free(prt);
   prt = sorted;
   

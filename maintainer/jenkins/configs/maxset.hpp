@@ -30,13 +30,17 @@
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
+#define ENGINE
+
 #ifdef CUDA
 #define LB_GPU
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
 #define EK_REACTION
+#define EK_ELECTROSTATIC_COUPLING
 #define MMM1D_GPU
+#define EWALD_GPU
 #endif
 
 #define AREA_FORCE_GLOBAL   
@@ -61,6 +65,9 @@
 #define INTER_RF
 #define OVERLAPPED
 
+#define TWIST_STACK
+#define HYDROGEN_BOND
+
 #define BOND_ANGLE
 #define BOND_ANGLEDIST
 #define BOND_ANGLEDIST_HARMONIC
@@ -68,3 +75,4 @@
 #define BOND_ENDANGLEDIST_HARMONIC
 
 #define VIRTUAL_SITES_RELATIVE
+#define H5MD

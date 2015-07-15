@@ -5,7 +5,7 @@
 }
 {interactions 
 	{0 0 lennard-jones 1.0 1.0 1.12246 0.0 0.0 0.0 }
-	{coulomb 1.0 p3m gpu 16.3929265333 32 4 0.142069354322 9.78886014586e-05}
+	{coulomb 1.0 p3m gpu 16.3929265333 32 7 0.142069354322 9.78886014586e-05}
 	{coulomb epsilon  metallic n_interpol 32768 mesh_off 0.5 0.5 0.5}
 }
 {particles {id pos q f} 

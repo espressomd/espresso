@@ -96,7 +96,7 @@ void local_system_CMS( double *sdata ) {
          y = 0.0, 
          z = 0.0;
   double ppos[3];
-  int img[3];
+  int    img[3];
 
 #ifdef MASS
 
@@ -112,17 +112,9 @@ void local_system_CMS( double *sdata ) {
       M = part[i].p.mass;
       mass += M;
 
-      memcpy(ppos, part[i].r.p, 3*sizeof(double));
-      memcpy(img, part[i].l.i, 3*sizeof(int));
-#ifdef LEES_EDWARDS
-{
-      double pv[3];
-      memcpy(pv, part[i].m.v, 3*sizeof(double));
-      unfold_position(ppos, pv, img);
-}
-#else
+      memmove(ppos, part[i].r.p, 3*sizeof(double));
+      memmove(img, part[i].l.i, 3*sizeof(int));
       unfold_position(ppos, img);
-#endif
 
       x += M*ppos[0];
       y += M*ppos[1];
@@ -147,17 +139,9 @@ void local_system_CMS( double *sdata ) {
     for(i = 0; i < np; i++) {
       npart++;
 
-      memcpy(ppos, part[i].r.p, 3*sizeof(double));
-      memcpy(img, part[i].l.i, 3*sizeof(int));
-#ifdef LEES_EDWARDS
-{
-      double pv[3];
-      memcpy(pv, part[i].m.v, 3*sizeof(double));
-      unfold_position(ppos, pv, img);
-}
-#else
+      memmove(ppos, part[i].r.p, 3*sizeof(double));
+      memmove(img, part[i].l.i, 3*sizeof(int));
       unfold_position(ppos, img);
-#endif
 
       x += ppos[0];
       y += ppos[1];

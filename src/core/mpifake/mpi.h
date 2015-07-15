@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -127,6 +127,7 @@ int MPI_Type_create_hvector(int count, int length, int stride, MPI_Datatype oldt
 
 inline int MPI_Init(int *a, char ***b) { return MPI_SUCCESS; }
 inline int MPI_Finalize(void) { return MPI_SUCCESS; }
+inline int MPI_Abort(MPI_Comm comm, int status) { return MPI_SUCCESS; }
 inline int MPI_Comm_size(MPI_Comm comm, int *psize) { *psize = 1; return MPI_SUCCESS; }
 inline int MPI_Comm_rank(MPI_Comm comm, int *rank) { *rank = 0; return MPI_SUCCESS; }
 inline int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) { *rank = 0; return MPI_SUCCESS; }
@@ -153,7 +154,7 @@ inline int MPI_Comm_create_errhandler(MPI_Handler_function *errfunc, MPI_Errhand
 inline int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhdl) { return MPI_SUCCESS; }
 inline int MPI_Bcast(void *buff, int count, MPI_Datatype datatype, int root, MPI_Comm comm) { return MPI_SUCCESS; }
 inline int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status) { return MPI_SUCCESS; }
-inline int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count) { count = 0; return MPI_SUCCESS; }
+inline int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count) { *count = 0; return MPI_SUCCESS; }
 
 
 #ifndef GNU_MPIFAKE_DEBUG
@@ -211,4 +212,17 @@ inline int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendt
                    void *recvbuf, const int *recvcounts, const int *displs,
                    MPI_Datatype recvtype, MPI_Comm comm)
 { return MPI_SUCCESS; }
+#define MPI_MAX_PROCESSOR_NAME 6
+
+inline int MPI_Get_processor_name(char *proc_name, int *proc_name_len) {
+  proc_name[0] = 'm';
+  proc_name[1] = 'a';
+  proc_name[2] = 's';
+  proc_name[3] = 't';
+  proc_name[4] = 'e';
+  proc_name[5] = 'r';
+  proc_name[6] = 0;
+  *proc_name_len = 6;
+  return MPI_SUCCESS;
+}
 #endif

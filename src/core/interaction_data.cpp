@@ -37,6 +37,7 @@
 #include "mmm2d.hpp"
 #include "maggs.hpp"
 #include "elc.hpp"
+#include "actor/EwaldgpuForce.hpp"
 #include "lj.hpp"
 #include "ljgen.hpp"
 #include "ljangle.hpp"
@@ -46,10 +47,12 @@
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
 #include "hat.hpp"
+#include "umbrella.hpp"
 #include "tab.hpp"
 #include "overlap.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
+#include "cos2.hpp"
 #include "gb.hpp"
 #include "cells.hpp"
 #include "comforce.hpp"
@@ -261,6 +264,13 @@ void initialize_ia_params(IA_parameters *params) {
   params->LJCOS2_cut = INACTIVE_CUTOFF;
 #endif
 
+#ifdef COS2
+  params->COS2_eps =
+    params->COS2_offset =
+    params->COS2_w =
+  params->COS2_cut = INACTIVE_CUTOFF;
+#endif
+
 #ifdef GAY_BERNE
   params->GB_eps =
     params->GB_sig =
@@ -335,7 +345,7 @@ void initialize_ia_params(IA_parameters *params) {
 
 /** Copy interaction parameters. */
 void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
-  memcpy(dst, src, sizeof(IA_parameters));
+  memmove(dst, src, sizeof(IA_parameters));
 }
 
 IA_parameters *get_ia_param_safe(int i, int j) {
@@ -383,6 +393,12 @@ static void recalc_maximal_cutoff_bonded()
          max_cut_bonded < bonded_ia_params[i].p.overlap.maxval)
         max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
       break;
+#endif
+#ifdef IMMERSED_BOUNDARY
+      case BONDED_IA_IBM_TRIEL:
+        if(max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxdist)
+          max_cut_bonded = bonded_ia_params[i].p.ibm_triel.maxdist;
+        break;
 #endif
     default:
      break;
@@ -449,6 +465,12 @@ static void recalc_global_maximal_nonbonded_cutoff()
       max_cut_global = r_cut;
     break;
   }
+#endif
+#ifdef EWALD_GPU
+  case COULOMB_EWALD_GPU:
+    if (max_cut_global < ewaldgpu_params.rcut)
+        max_cut_global = ewaldgpu_params.rcut;
+  break;
 #endif
   case COULOMB_DH:
     if (max_cut_global < dh_params.r_cut)
@@ -596,6 +618,14 @@ static void recalc_maximal_cutoff_nonbonded()
       }
 #endif
 
+#ifdef COS2
+      {
+  double max_cut_tmp = data->COS2_cut + data->COS2_offset;
+  if (max_cut_current < max_cut_tmp)
+    max_cut_current = max_cut_tmp;
+      }
+#endif
+
 #ifdef GAY_BERNE
       if (max_cut_current < data->GB_cut)
 	max_cut_current = data->GB_cut;
@@ -677,6 +707,10 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "dihedral";
   case BONDED_IA_ENDANGLEDIST:
     return "endangledist";
+#ifdef ROTATION
+  case BONDED_IA_HARMONIC_DUMBBELL:
+    return "HARMONIC_DUMBBELL";
+#endif
   case BONDED_IA_HARMONIC:
     return "HARMONIC";    
   case BONDED_IA_QUARTIC:
@@ -687,6 +721,8 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:
     return "tabulated";
+  case BONDED_IA_UMBRELLA:
+    return "umbrella";
   case BONDED_IA_OVERLAPPED:
     return "overlapped";
   case BONDED_IA_RIGID_BOND:
@@ -705,6 +741,17 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "VOLUME_FORCE";
   case BONDED_IA_STRETCHLIN_FORCE:
     return "STRETCHLIN_FORCE";
+  case BONDED_IA_CG_DNA_BASEPAIR:
+    return "CG_DNA_BASEPAIR";
+  case BONDED_IA_CG_DNA_STACKING:
+    return "CG_DNA_STACKING";
+  case BONDED_IA_IBM_TRIEL:
+    return "IBM_TRIEL";
+  case BONDED_IA_IBM_VOLUME_CONSERVATION:
+    return "IBM_VOLUME_CONSERVATION";
+  case BONDED_IA_IBM_TRIBEND:
+    return "IBM_TRIBEND";
+
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
         this_node, type);

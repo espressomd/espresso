@@ -248,7 +248,7 @@ void printAllComms(FILE *ofile, GhostCommunicator *comm, int backwards){
        && comm->comm[cnt].node == this_node ){
         fprintf(ofile,"serious comms error\n");
         fprintf(stderr,"serious comms error\n");
-        exit(8);
+        errexit();
     }
         
     /* clear the representation of this comm */

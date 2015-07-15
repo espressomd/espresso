@@ -140,10 +140,12 @@ The electrokinetic equations have the following properties:
   \opt{gamma_even  \var{gamma\_even}}
   \opt{T  \var{T}}
   \opt{bjerrum_length  \var{bjerrum\_length}}
+  \opt{\require{4}{electrostatics_coupling}}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
   \required[3]{EK_REACTIONS}
+  \required[4]{EK_ELECTROSTATIC_COUPLING}
   \end{features}
 \end{essyntax}
 The \lit{electrokinetics} command initializes the LB fluid with a given
@@ -175,6 +177,14 @@ and \var{bjerrum\_length} the Bjerrum length associated with the electrostatic
 properties of the medium. See the above description of the electrokinetic 
 equations for an explanation of the introduction of a temperature, which does 
 not come in directly via a thermostat that produces thermal fluctuations.
+
+\lit{electrostatics_coupling} enables the action of the electrostatic potential
+due to the electrokinetics species and charged boundaries on the MD particles.
+The forces on the particles are calculated by interpolation from the electric
+field which is in turn calculated from the potential via finite differences.
+This only includes interactions between the species and boundaries and MD
+particles, not between MD particles and MD particles. To get complete electrostatic
+interactions a particles Coulomb method like Ewald or P3M has to be activate too.
 
 \subsection{\label{ssec:ek-diff-species}Diffusive Species}
 
@@ -227,7 +237,7 @@ with a volume charge density. To create a surface charge density, a combination
 of two oppositely charged boundaries, one inside the other, can be used. 
 However, care should be taken to maintain the surface charge density when the
 value of \var{agrid} is changed. Currently, the following \var{shape}s are 
-available: wall, sphere, cylinder, rhomboid, pore, and stomatocyte. We refer to 
+available: wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, and spherocylinder. We refer to 
 the documentation of the \lit{lbboundary} command (Chapter~\ref{sec:lb}) for
 information on the options \var{shape\_args} associated to these shapes. In
 order to properly set up the boundaries, the \var{charge\_density} and relevant
@@ -312,6 +322,26 @@ implementation. For other quantities the \lit{lbnode} command may be used.
 \end{essyntax}
 This command can be used to output the number density of the
 \var{species\_number}-th diffusive species on a single LB node.
+
+\section{\label{ssec:ek-checkpointing}Checkpointing}
+
+\begin{essyntax}
+  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint save [\var{filename}]
+  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint load [\var{filename}]
+  \begin{features}
+  \required[1]{ELECTROKINETICS}
+  \required[2]{EK_BOUNDARIES}
+  \required[3]{EK_REACTIONS}
+  \end{features}
+\end{essyntax}
+Variant \variant{1} writes the species density fields as well as all necessary 
+LB fields into two files called \var{filename.ek} and \var{filename.lb}.
+Variant \variant{2} reads these files back and restores the fields. All 
+algorithm parameters must be set via the simulation script, as they are not 
+part of the checkpointed data.
+
+The format of the checkpoint is binary and no special care is taken with 
+respect to the specific binary layout of the machine.
 
 \section{Catalytic Reaction}
 
@@ -456,7 +486,7 @@ place for this region, 1 the catalytic reaction takes place in this region, and
 to their initial (or reservoir) concentrations. The rest of the command follows 
 the same format of the \lit{electrokinetics boundary} command. Currently, the 
 following \var{shape}s are available: box, wall, sphere, cylinder, rhomboid, 
-pore, and stomatocyte. The box shape is a \lit{region} specific command, which
+pore, stomatocyte, hollow_cone, and spherocylinder. The box shape is a \lit{region} specific command, which
 can be used to set the entire simulation box to a specific reaction value. To
 use the \lit{electrokinetics reaction region} command, one must first set up
 a reaction, as described above. To successfully specify a region all the 

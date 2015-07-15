@@ -124,9 +124,6 @@ int tclcommand_kill_particle_forces(ClientData data, Tcl_Interp * interp, int ar
 int tclcommand_system_CMS(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
   char buffer[256];
   double cmspos[3];
-#ifdef LEES_EDWARDS
-  double v_le[3];
-#endif
   int box[3];
 
   if (argc != 1 && argc != 2  ) { 
@@ -137,13 +134,9 @@ int tclcommand_system_CMS(ClientData data, Tcl_Interp * interp, int argc, char *
         if (ARG_IS_S_EXACT(1,"folded")) {
           mpi_system_CMS();
 
-          memcpy(cmspos, gal.cms, 3*sizeof(double));
+          memmove(cmspos, gal.cms, 3*sizeof(double));
           box[0] = 0; box[1] = 0; box[2] = 0;
-#ifdef LEES_EDWARDS
-          fold_position(cmspos,v_le, box);
-#else
           fold_position(cmspos, box);
-#endif
           
           Tcl_PrintDouble(interp, cmspos[0], buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL);

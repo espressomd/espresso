@@ -608,6 +608,7 @@ void handle_collisions ()
   // Reset the collision queue
   number_of_collisions = 0;
   free(collision_queue);
+
   announce_resort_particles();
 }
 

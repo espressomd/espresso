@@ -51,6 +51,8 @@
 #define COORD_FIXED(coord) (2L << coord)
 /** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether any of the coordinates is fixed. */
 #define COORDS_FIX_MASK     (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
+/** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether all of the coordinates are fixed. */
+#define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
 /** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external torque. */
@@ -138,6 +140,39 @@ typedef struct {
 #ifdef CATALYTIC_REACTIONS
   int catalyzer_count;
 #endif
+
+#ifdef MULTI_TIMESTEP
+  /** does the particle need a small timestep? 
+   * 1= yes
+   * 0 = no (default) */
+  int smaller_timestep;
+#endif
+
+#ifdef CONFIGTEMP
+  /** is the particle included in the configurational temperature?
+  * 1 = yes
+  * 0 = no (Default) */
+  int configtemp;
+#endif
+#ifdef EXTERNAL_FORCES
+  /** flag whether to fix a particle in space.
+      Values:
+      <ul> <li> 0 no external influence
+           <li> 1 apply external force \ref ParticleLocal::ext_force
+           <li> 2,3,4 fix particle coordinate 0,1,2
+           <li> 5 apply external torque \ref ParticleLocal::ext_torque
+      </ul>
+  */
+  int ext_flag;
+  /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
+  double ext_force[3];
+
+  #ifdef ROTATION
+  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
+  double ext_torque[3];
+  #endif
+
+#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is
@@ -178,6 +213,9 @@ typedef struct {
 #ifdef ROTATION
   /** torque */
   double torque[3];
+
+
+
 #endif
 
 } ParticleForce;
@@ -193,6 +231,8 @@ typedef struct {
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
+
+
 #endif
 } ParticleMomentum;
 
@@ -203,26 +243,6 @@ typedef struct {
   double p_old[3];
   /** index of the simulation box image where the particle really sits. */
   int    i[3];
-
-#ifdef EXTERNAL_FORCES
-  /** flag whether to fix a particle in space.
-      Values:
-      <ul> <li> 0 no external influence
-           <li> 1 apply external force \ref ParticleLocal::ext_force
-           <li> 2,3,4 fix particle coordinate 0,1,2
-           <li> 5 apply external torque \ref ParticleLocal::ext_torque
-      </ul>
-  */
-  int ext_flag;
-  /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
-  double ext_force[3];
-
-  #ifdef ROTATION
-  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
-  double ext_torque[3];
-  #endif
-
-#endif
 
 #ifdef GHOST_FLAG
   /** check whether a particle is a ghost or not */
@@ -244,6 +264,22 @@ typedef struct {
   double f_random[3];
 } ParticleLatticeCoupling;
 #endif
+
+typedef struct {
+// ifdef inside because we need this type for some MPI prototypes
+#ifdef ENGINE
+  bool swimming;
+  double f_swim;
+  double v_swim;
+#if defined(LB) || defined(LB_GPU)
+  int push_pull;
+  double dipole_length;
+  double v_center[3];
+  double v_source[3];
+  double rotational_friction;
+#endif
+#endif
+} ParticleParametersSwimming;
 
 /** Struct holding all information for one particle. */
 typedef struct {
@@ -269,6 +305,10 @@ typedef struct {
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded interactions */
   IntList el;
+#endif
+
+#ifdef ENGINE
+  ParticleParametersSwimming swim;
 #endif
 
 } Particle;
@@ -456,6 +496,15 @@ int place_particle(int part, double p[3]);
 */
 int set_particle_v(int part, double v[3]);
 
+#ifdef ENGINE
+/** Call only on the master node: set particle velocity.
+    @param part the particle.
+    @param swim struct containing swimming parameters
+    @return ES_OK if particle existed
+*/
+int set_particle_swimming(int part, ParticleParametersSwimming swim);
+#endif
+
 /** Call only on the master node: set particle force.
     @param part the particle.
     @param F its new force.
@@ -498,6 +547,23 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 int set_particle_rotation(int part, int rot);
 #endif
 
+#ifdef MULTI_TIMESTEP
+/** Call only on the master node: set particle smaller time step flag.
+    @param part the particle.
+    @param small_timestep its new smaller time step.
+    @return TCL_OK if particle existed
+*/
+int set_particle_smaller_timestep(int part,int small_timestep);
+#endif
+
+#ifdef CONFIGTEMP
+/** Call only on the master node: include particle in configurational T.
+    @param part the particle.
+    @param configtemp flag for configurational temperature inclusion.
+    @return TCL_OK if particle existed
+*/
+int set_particle_configtemp(int part, int configtemp);
+#endif
 
 /** Call only on the master node: set particle charge.
     @param part the particle.
@@ -891,4 +957,34 @@ void pointer_to_mass(Particle* p, double*&  res);
 void pointer_to_dip(Particle* P, double*& res);
 
 void pointer_to_dipm(Particle* P, double*& res);
+
+#ifdef EXTERNAL_FORCES
+void pointer_to_ext_force(Particle *p, int*& res1, double*& res2);
+#ifdef ROTATION
+void pointer_to_ext_torque(Particle *p, int*& res1, double*& res2);
+#endif
+void pointer_to_fix(Particle *p, int*& res);
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+void pointer_to_gamma(Particle *p, double*& res);
+void pointer_to_temperature(Particle *p, double*& res);
+#endif
+
+#ifdef ROTATION_PER_PARTICLE
+void pointer_to_rotation(Particle *p, int*& res);
+#endif
+
+#ifdef EXCLUSIONS
+void pointer_to_exclusions(Particle *p, int*& res1, int*& res2);
+#endif
+
+#ifdef ENGINE
+void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim);
+#endif
+
+#ifdef ROTATIONAL_INERTIA
+void pointer_to_rotational_inertia(Particle *p, double*& res);
+#endif
+
 #endif

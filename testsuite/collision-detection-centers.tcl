@@ -24,6 +24,9 @@
 source "tests_common.tcl"
 
 require_feature "COLLISION_DETECTION"
+if {[has_feature "LEES_EDWARDS"]} {
+    require_max_nodes_per_side 2
+}
 
 puts "---------------------------------------------------------------"
 puts "- Testcase collision-detection-centers.tcl running on [setmd n_nodes] nodes"

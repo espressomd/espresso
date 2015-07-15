@@ -160,7 +160,7 @@ void dd_create_cell_grid()
         if ( (i == 0) && (dd.cell_grid[0] < 2) ) {
 	  ostringstream msg;
 	  msg << "interaction range " << max_range << " in direction "
-	      << i << " is larger than the local box size " << local_box_l[i];
+	      << i << " is larger than half the local box size " << local_box_l[i] << "/2";
 	  runtimeError(msg);
 	  dd.cell_grid[0] = 2;
         }
@@ -301,10 +301,8 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
   num = 0;
   for(dir=0; dir<3; dir++) { 
     for(lr=0; lr<2; lr++) {
-#ifdef PARTIAL_PERIODIC
       /* No communication for border of non periodic direction */
       if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
-#endif
        {
          if(node_grid[dir] == 1 ) num++;
          else num += 2;
@@ -335,9 +333,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
     for(lr=0; lr<2; lr++) {
       if(node_grid[dir] == 1) {
         /* just copy cells on a single node */
-#ifdef PARTIAL_PERIODIC
       if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) )
-#endif
       {
         comm->comm[cnt].type          = GHOST_LOCL;
         comm->comm[cnt].node          = this_node;
@@ -369,9 +365,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
       else {
         /* i: send/recv loop */
         for(i=0; i<2; i++) {
-#ifdef PARTIAL_PERIODIC
           if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) )
-#endif
             if((node_pos[dir]+i)%2==0) {
               comm->comm[cnt].type          = GHOST_SEND;
               comm->comm[cnt].node          = node_neighbors[2*dir+lr];
@@ -390,9 +384,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
                                  comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
               cnt++;
             }
-#ifdef PARTIAL_PERIODIC
           if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) )
-#endif
             if((node_pos[dir]+(1-i))%2==0) {
               comm->comm[cnt].type          = GHOST_RECV;
               comm->comm[cnt].node          = node_neighbors[2*dir+(1-lr)];
@@ -472,9 +464,7 @@ void dd_update_communicators_w_boxl()
     /* lr loop: left right */
     for(int lr=0; lr<2; lr++) {
       if(node_grid[dir] == 1) {
-#ifdef PARTIAL_PERIODIC
         if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) )
-#endif
           {
             /* prepare folding of ghost positions */
             if(boundary[2*dir+lr] != 0) {
@@ -487,9 +477,7 @@ void dd_update_communicators_w_boxl()
       else {
         /* i: send/recv loop */
         for(int i=0; i<2; i++) {
-#ifdef PARTIAL_PERIODIC
           if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) )
-#endif
             if((node_pos[dir]+i)%2==0) {
               /* prepare folding of ghost positions */
               if(boundary[2*dir+lr] != 0) {
@@ -498,9 +486,7 @@ void dd_update_communicators_w_boxl()
               }
               cnt++;
             }
-#ifdef PARTIAL_PERIODIC
           if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) )
-#endif
             if((node_pos[dir]+(1-i))%2==0) {
               cnt++;
             }
@@ -559,7 +545,7 @@ void dd_init_cell_interactions()
   FILE *cells_fp;
   char cLogName[64];
   int  c,nn,this_n;
-  double myPos[3], nPos[3];
+  double myPos[3];
   sprintf(cLogName, "cells_map%i.dat", this_node);
   cells_fp = fopen(cLogName,"w");
 
@@ -606,9 +592,7 @@ Cell *dd_save_position_to_cell(double pos[3])
        VERY close or nonperiodic boundary */
     if (cpos[i] < 1) {
       if (lpos > -ROUND_ERROR_PREC*box_l[i]
-#ifdef PARTIAL_PERIODIC
           || (!PERIODIC(i) && boundary[2*i])
-#endif
           )
         cpos[i] = 1;
       else
@@ -616,9 +600,7 @@ Cell *dd_save_position_to_cell(double pos[3])
     }
     else if (cpos[i] > dd.cell_grid[i]) {
       if (lpos < local_box_l[i] + ROUND_ERROR_PREC*box_l[i]
-#ifdef PARTIAL_PERIODIC
           || (!PERIODIC(i) && boundary[2*i+1])
-#endif
           )
         cpos[i] = dd.cell_grid[i];
       else
@@ -707,11 +689,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 
   for(p=0; p<pl->n; p++) {
     if(boundary[fold_dir] != 0){
-#ifdef LEES_EDWARDS
       fold_coordinate(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i, fold_coord);
-#else
-      fold_coordinate(pl->part[p].r.p, pl->part[p].l.i, fold_coord);
-#endif
     }    
 
     for(dir=0;dir<3;dir++) {
@@ -719,9 +697,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 
       if (cpos[dir] < 1) { 
         cpos[dir] = 1;
-#ifdef PARTIAL_PERIODIC 
         if( PERIODIC(dir) )
-#endif
           {
             flag=1;
             CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
@@ -729,9 +705,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
       }
       else if (cpos[dir] > dd.cell_grid[dir]) {
         cpos[dir] = dd.cell_grid[dir];
-#ifdef PARTIAL_PERIODIC 
         if( PERIODIC(dir) )
-#endif
           {
             flag=1;
             CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
@@ -901,6 +875,19 @@ void dd_topology_init(CellPList *old)
   dd_prepare_comm(&cell_structure.ghost_lbcoupling_comm, GHOSTTRANS_COUPLING) ;
   dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm) ;
 #endif
+  
+#ifdef IMMERSED_BOUNDARY
+  // Immersed boundary needs to communicate the forces from but also to the ghosts
+  // This is different than usual collect_ghost_force_comm (not in reverse order)
+  // Therefore we need our own communicator
+  dd_prepare_comm(&cell_structure.ibm_ghost_force_comm, GHOSTTRANS_FORCE);
+  dd_assign_prefetches(&cell_structure.ibm_ghost_force_comm);
+#endif
+
+#ifdef ENGINE
+  dd_prepare_comm(&cell_structure.ghost_swimming_comm, GHOSTTRANS_SWIMMING) ;
+  dd_assign_prefetches(&cell_structure.ghost_swimming_comm) ;
+#endif
 
   /* initialize cell neighbor structures */
 #ifdef LEES_EDWARDS
@@ -950,6 +937,12 @@ void dd_topology_release()
 #ifdef LB
   free_comm(&cell_structure.ghost_lbcoupling_comm);
 #endif
+#ifdef ENGINE
+  free_comm(&cell_structure.ghost_swimming_comm);
+#endif
+#ifdef IMMERSED_BOUNDARY
+  free_comm(&cell_structure.ibm_ghost_force_comm);
+#endif
 }
 
 /************************************************************/
@@ -959,6 +952,9 @@ void  dd_exchange_and_sort_particles(int global_flag)
   ParticleList *cell,*sort_cell, send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
   Particle *part;
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles(%d):\n",this_node,global_flag));
+  CELL_TRACE(fprintf(stderr,"%d: node_neighbors are %d %d %d %d %d %d\n",this_node,
+             node_neighbors[0], node_neighbors[1], node_neighbors[2],
+             node_neighbors[3], node_neighbors[4], node_neighbors[5]));
 
   init_particlelist(&send_buf_l);
   init_particlelist(&send_buf_r);
@@ -979,9 +975,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	    // Without the factor 0.5 in front of ROUND_ERROR_PREC, particles sitting exactly on the boundary 
 	    // may be accepted (i.e. not sent) here and rejected later on by dd_save_position_to_cell
 	    if(part->r.p[dir] - my_left[dir] < -0.5*ROUND_ERROR_PREC*box_l[dir]) {
-#ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir]==0) ) 
-#endif
 		{
 		  CELL_TRACE(fprintf(stderr,"%d: dd_ex_and_sort_p: send part left %d\n",this_node,part->p.identity));
 		  local_particles[part->p.identity] = NULL;
@@ -992,9 +986,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	    /* Move particles to the right side */
 	    // Factor 0.5 see above
 	    else if(part->r.p[dir] - my_right[dir] >= 0.5*ROUND_ERROR_PREC*box_l[dir]) {
-#ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir+1]==0) ) 
-#endif
 		{
 		  CELL_TRACE(fprintf(stderr,"%d: dd_ex_and_sort_p: send part right %d\n",this_node,part->p.identity));
 		  local_particles[part->p.identity] = NULL;
@@ -1028,6 +1020,8 @@ void  dd_exchange_and_sort_particles(int global_flag)
 
         /* Exchange particles */
 #ifndef LEES_EDWARDS
+ 	CELL_TRACE(fprintf(stderr,"%d: send receive %d\n",this_node, dir));
+        
         if(node_pos[dir]%2==0) {
           send_particles(&send_buf_l, node_neighbors[2*dir]);
           recv_particles(&recv_buf_r, node_neighbors[2*dir+1]);
@@ -1084,16 +1078,9 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	  cell = local_cells.cell[c];
 	  for (p = 0; p < cell->n; p++) {
 	    part = &cell->part[p];
-#ifdef PARTIAL_PERIODIC 
-	    if( PERIODIC(dir) ) 
-#endif
-	      {
-#ifdef LEES_EDWARDS   
-                fold_coordinate(part->r.p, part->m.v, part->l.i, dir);
-#else
-                fold_coordinate(part->r.p, part->l.i, dir);
-#endif
-	      }
+	    if( PERIODIC(dir) ) {
+              fold_coordinate(part->r.p, part->m.v, part->l.i, dir);
+            }
 	    if (dir==2) {
 	      sort_cell = dd_save_position_to_cell(part->r.p);
 	      if(sort_cell != cell) {
@@ -1205,7 +1192,7 @@ void calc_link_cell()
 #ifdef CONSTRAINTS
 	  add_constraints_forces(&p1[i]);
 #endif
-    add_external_potential_forces(&p1[i]);
+	  add_external_potential_forces(&p1[i]);
 	  if (rebuild_verletlist)
 	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 

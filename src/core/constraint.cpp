@@ -232,6 +232,42 @@ void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
   }
 }
 
+void calculate_spherocylinder_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_spherocylinder *c, double *dist, double *vec)
+{
+  int i;
+  double d = 0.0;
+  double ppos_local[3];
+
+  for(i = 0; i < 3; i++) {
+    ppos_local[i] = ppos[i] - c->pos[i];
+    d += ppos_local[i] * c->axis[i];
+  }
+
+  if(abs(d) >= c->length) {
+    *dist = 0.0;
+    
+    for(i = 0; i < 3; i++) {
+      vec[i] = ppos_local[i] - c->length * c->axis[i] * sign(d);
+      *dist += vec[i]*vec[i];
+    }
+
+    *dist = sqrt(*dist);
+    
+    if(*dist != 0.0)
+      for(i = 0; i < 3; i++)
+        vec[i] /= *dist;
+    
+    *dist -= c->rad;
+
+    for(i = 0; i < 3; i++)
+      vec[i] *= *dist;
+
+    *dist *= c->direction;
+  }
+  else
+    calculate_cylinder_dist(p1, ppos, c_p, (Constraint_cylinder*) c, dist, vec);
+}
+
 void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
 {	
 	double axb[3], bxc[3], axc[3];
@@ -1645,6 +1681,10 @@ void calculate_stomatocyte_dist( Particle *p1, double ppos [3],
   }
 
   // And we are done with the stomatocyte
+  
+  vec[0] *= *dist;
+  vec[1] *= *dist;
+  vec[2] *= *dist;
 }
 
 void calculate_hollow_cone_dist( Particle *p1, double ppos [3], 
@@ -2122,6 +2162,10 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
   }
 
   // And we are done with the hollow cone
+
+  vec[0] *= *dist;
+  vec[1] *= *dist;
+  vec[2] *= *dist;
 }
 
 
@@ -2217,11 +2261,11 @@ void reflect_particle(Particle *p1, double *distance_vec, int reflecting) {
       double folded_pos[3];
       int img[3];
 
-      memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-      memcpy(img, p1->l.i, 3*sizeof(int));
+      memmove(folded_pos, p1->r.p, 3*sizeof(double));
+      memmove(img, p1->l.i, 3*sizeof(int));
       fold_position(folded_pos, img);
 
-      memcpy(vec, distance_vec, 3*sizeof(double));
+      memmove(vec, distance_vec, 3*sizeof(double));
 /* For Debugging your can show the folded coordinates of the particle before
  * and after the reflecting by uncommenting these lines  */
  //     printf("position before reflection %f %f %f\n",folded_pos[0], folded_pos[1], folded_pos[2]); 
@@ -2234,8 +2278,8 @@ void reflect_particle(Particle *p1, double *distance_vec, int reflecting) {
        p1->r.p[2] = p1->r.p[2]-2*vec[2];
 
    /*  This can show the folded position after reflection      
-       memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-       memcpy(img, p1->l.i, 3*sizeof(int));
+       memmove(folded_pos, p1->r.p, 3*sizeof(double));
+       memmove(img, p1->l.i, 3*sizeof(int));
        fold_position(folded_pos, img);
        printf("position after reflection %f %f %f\n",folded_pos[0], folded_pos[1], folded_pos[2]); */
 
@@ -2273,8 +2317,8 @@ void add_constraints_forces(Particle *p1)
   int img[3];
 
   /* fold the coordinate[2] of the particle */
-  memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-  memcpy(img, p1->l.i, 3*sizeof(int));
+  memmove(folded_pos, p1->r.p, 3*sizeof(double));
+  memmove(img, p1->l.i, 3*sizeof(int));
   fold_position(folded_pos, img);
 
   for(n=0;n<n_constraints;n++) {
@@ -2295,6 +2339,11 @@ void add_constraints_forces(Particle *p1)
 	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
 				     ia_params,vec,dist,dist*dist, force,
 				     torque1, torque2);
+#ifdef TUNABLE_SLIP
+	  if (constraints[n].c.wal.tunable_slip == 1 ) {
+		  add_tunable_slip_pair_force(p1, &constraints[n].part_rep,ia_params,vec,dist,force);
+	  }
+#endif
 	}
 	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
 	  if ( (constraints[n].c.wal.only_positive != 1) && ( dist < 0 ) ) {
@@ -2566,11 +2615,15 @@ void add_constraints_forces(Particle *p1)
         msg <<"plane constraint " << n << " violated by particle " << p1->p.identity;
         runtimeError(msg);
 	}
-      }
+     }
+      break;
+    case CONSTRAINT_NONE:
+      force[0] = force[1] = force[2] = 0.0;
       break;
   default:
+      fprintf(stderr, "ERROR: encountered unknown constraint during force computation\n");
+      errexit();
       break;
-
     }
     for (j = 0; j < 3; j++) {
       p1->f.f[j] += force[j];
@@ -2593,8 +2646,8 @@ double add_constraints_energy(Particle *p1)
   int img[3];
 
   /* fold the coordinate[2] of the particle */
-  memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-  memcpy(img, p1->l.i, 3*sizeof(int));
+  memmove(folded_pos, p1->r.p, 3*sizeof(double));
+  memmove(img, p1->l.i, 3*sizeof(int));
   fold_position(folded_pos, img);
   for(n=0;n<n_constraints;n++) { 
     ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
@@ -2804,26 +2857,19 @@ double add_constraints_energy(Particle *p1)
       //@TODO: implement energy of Plane, Slitpore
   case CONSTRAINT_PLANE:
     {
-        ostringstream msg;
-        msg << "energy computation for PLANE not implemented";
-        runtimeError(msg);
+        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
     }
       break;
   case CONSTRAINT_SLITPORE:
     {
-        ostringstream msg;
-        msg << "energy computation for SLITPORE not implemented";
-        runtimeError(msg);
+        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
     }
       break;
   case CONSTRAINT_NONE:
       break;
   default:
-    {
-        ostringstream msg;
-        msg << "trying to compute energy for unknown constraint";
-        runtimeError(msg);
-    }
+      fprintf(stderr, "ERROR: encountered unknown constraint during energy computation\n");
+      errexit();
       break;
     }
 

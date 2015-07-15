@@ -186,7 +186,7 @@ void on_integration_start()
 
 
 #ifdef LB_GPU
-  if(this_node == 0){
+  if(lattice_switch & LATTICE_LB_GPU && this_node == 0){
     if (lb_reinit_particles_gpu) {
       lb_realloc_particles_gpu();
       lb_reinit_particles_gpu = 0;
@@ -304,12 +304,11 @@ void on_coulomb_change()
   case COULOMB_P3M_GPU:
     if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
       fprintf (stderr, "P3M on the GPU requires a cubic box!\n");
-      exit(1);
+      errexit();
     }
     p3m_gpu_init(p3m.params.cao, p3m.params.mesh[0], p3m.params.alpha, box_l[0]);
     MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), 
               sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-    p3m_init();
     break;
 #endif
   case COULOMB_ELC_P3M:
@@ -491,9 +490,10 @@ void on_cell_structure_change()
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
-  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     p3m_init();
+    break;
+  case COULOMB_P3M_GPU:
     break;
 #endif
   case COULOMB_MMM1D:

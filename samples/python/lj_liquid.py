@@ -56,7 +56,7 @@ system = espressomd.System()
 system.time_step = 0.01
 system.skin      = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
-thermostat.Thermostat().setLangevin(1.0,1.0)
+system.thermostat.setLangevin(kT=1.0,gamma=1.0)
 
 # warmup integration (with capped LJ potential)
 warm_steps   = 100
@@ -146,8 +146,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
 # Just to see what else we may get from the c code
 print("""
 ro variables:
-cell_grid     {0.cellsystem.cell_grid}
-cell_size     {0.cellsystem.cell_size} 
+cell_grid     {0.cell_grid}
+cell_size     {0.cell_size} 
 local_box_l   {0.local_box_l} 
 max_cut       {0.max_cut}
 max_part      {0.max_part}
@@ -193,6 +193,11 @@ for i in range(0,int_n_times):
   energies = analyze.energy(system=system)
   print(energies)
   obs_file.write('{ time %s } %s\n' % (system.time,energies))
+  linear_momentum = analyze.analyze_linear_momentum(system=system)
+  print(linear_momentum)
+  #print(analyze.calc_rh(system,0,3,5))
+  #print(analyze.calc_rg(system,0,3,5))
+  #print(analyze.calc_re(system,0,3,5))
 
 #   write observables
 #    set energies [analyze energy]

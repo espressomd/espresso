@@ -368,7 +368,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
           return double_correlation_finalize(&correlations[no]);
         } else {
           Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize\n", buffer, (char *)NULL);
-    	    return TCL_ERROR;
+	  return TCL_ERROR;
         }
 //      } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input ) {
 //        correlations[no].A_args = &tcl_input_d;
@@ -411,6 +411,30 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
 //        } else {
 //          return TCL_OK;
 //        }
+      } else if (ARG0_IS_S("write_checkpoint_binary")) {
+	if (double_correlation_write_data_to_file( correlations+no,argv[1],true)){
+          Tcl_AppendResult(interp, "Failed to write checkpoint.\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	return TCL_OK;
+      } else if (ARG0_IS_S("write_checkpoint_ascii")) {
+	if (double_correlation_write_data_to_file( correlations+no,argv[1],false)){
+          Tcl_AppendResult(interp, "Failed to write checkpoint.\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	return TCL_OK;
+      } else if (ARG0_IS_S("read_checkpoint_binary")) {
+	if (double_correlation_read_data_from_file(correlations+no,argv[1],true)){
+          Tcl_AppendResult(interp, "Failed to read checkpoint.\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	return TCL_OK;
+      } else if (ARG0_IS_S("read_checkpoint_ascii")) {
+	if (double_correlation_read_data_from_file(correlations+no,argv[1],false)){
+          Tcl_AppendResult(interp, "Failed to read checkpoint.\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	return TCL_OK;
       } else {
         Tcl_AppendResult(interp, "Usage for an already existing correlation:", (char *)NULL);
         Tcl_AppendResult(interp, "analyze correlation $ID [ print | update ]", (char *)NULL);

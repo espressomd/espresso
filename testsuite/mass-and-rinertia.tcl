@@ -32,10 +32,10 @@ setmd skin 1.0
 setmd time_step 0.01
 
 set n 500
-set mass 200
-set j1 300
-set j2 400
-set j3 500
+set mass 8
+set j1 6
+set j2 8
+set j3 10
 for {set i 0} {$i<$n} {incr i} {
   part $i pos 0 0 0 rinertia $j1 $j2 $j3 mass $mass
 }
@@ -48,9 +48,9 @@ set oy2 0.
 set oz2 0.
 
 
-set loops 3
+set loops 25
 puts "Thermalizing..."
-integrate 300
+integrate 1000
 puts "Measuring..."
 
 for {set i 0} {$i <$loops} {incr i} {

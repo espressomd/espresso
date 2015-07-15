@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2010,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -28,14 +28,6 @@
  *  For more information see forces.cpp .
  */
 
-//#include "config.hpp"
-//#include "interaction_data.hpp"
-
-/*#include "iccp3m.hpp"
-#include "external_potential.hpp"
-#include "actor/Actor.hpp"
-#include "actor/ActorList.hpp"*/
-
 #include "iccp3m.hpp"
 #include "external_potential.hpp"
 #include "actor/Actor.hpp"
@@ -53,11 +45,11 @@ extern ActorList forceActors;
 void init_forces();
 
 /** Set forces of all ghosts to zero
-*/
+ */
 void init_forces_ghosts();
 
 /** Check if forces are NAN 
-*/
+ */
 void check_forces();
 
 /** Calculate long range forces (P3M, MMM2d...). */
@@ -71,9 +63,10 @@ calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2,
                                         double torque1[3] = NULL, 
                                         double torque2[3] = NULL);
 
-void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]);
-
-
+void
+calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1, Particle *p2,
+                                               double d[3], double dist,
+                                               double dist2, double force[3]);
 /*@}*/
 
 #endif

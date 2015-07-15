@@ -61,8 +61,8 @@
 #include "p3m_gpu.hpp"
 #include "maggs.hpp"
 #include "forces_inline.hpp"
+#include "electrokinetics.hpp"
 ActorList forceActors;
-
 
 void init_forces()
 {
@@ -75,7 +75,7 @@ void init_forces()
 
 #ifdef NPT
   /* reset virial part of instantaneous pressure */
-  if(integ_switch == INTEG_METHOD_NPT_ISO)
+  if(integ_switch == INTEG_METHOD_NPT_ISO) 
     nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
 #endif
 
@@ -205,8 +205,14 @@ void calc_long_range_forces()
   default:
     break;
   }
+
+/* If enabled, calculate electrostatics contribution from electrokinetics species. */ 
+#ifdef EK_ELECTROSTATIC_COUPLING
+  ek_calculate_electrostatic_coupling();
+#endif
+
 #endif  /*ifdef ELECTROSTATICS */
-  
+ 
 #ifdef DIPOLES  
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
@@ -261,7 +267,10 @@ calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, IA_parameter
    }
 }
 
-void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+void
+calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1, Particle *p2,
+                                               double d[3], double dist,
+                                               double dist2, double force[3]){
    IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
    double torque1[3],torque2[3];
    calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,

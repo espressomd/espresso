@@ -46,7 +46,9 @@
 #define THERMO_LB         8
 #define THERMO_INTER_DPD  16
 #define THERMO_GHMC       32
-
+#define THERMO_CPU        64
+#define THERMO_SD         128
+#define THERMO_BD         256
 /*@}*/
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
@@ -69,6 +71,15 @@ extern double temperature;
 
 /** Langevin friction coefficient gamma. */
 extern double langevin_gamma;
+
+/** Langevin friction coefficient gamma. */
+extern double langevin_gamma_rotation;
+
+/** Langevin for translations */
+extern bool langevin_trans;
+
+/** Langevin for rotations */
+extern bool langevin_rotate;
 
 /** Friction coefficient for nptiso-thermostat's inline-function friction_therm0_nptiso */
 extern double nptiso_gamma0;
@@ -100,25 +111,30 @@ void thermo_heat_up();
 
 /** pendant to \ref thermo_heat_up */
 void thermo_cool_down();
+/** Get current temperature for CPU thermostat */
+int get_cpu_temp();
 
-#ifdef LEES_EDWARDS
-/** locally defined funcion to find Vx relative to the LE shear frame
+/** Start the CPU thermostat */
+void set_cpu_temp(int temp);
+
+/** locally defined funcion to find Vx. In case of LEES_EDWARDS, that is relative to the LE shear frame
     @param i      coordinate index
     @param vel    velocity vector
     @param pos    position vector
     @return       adjusted (or not) i^th velocity coordinate */
-inline double le_frameV(int i, double *vel, double *pos) {
-
-   double relY;
+inline double le_frameV(int i, double *vel, double *pos)
+{
+#ifdef LEES_EDWARDS
 
    if( i == 0 ){
-       relY  = pos[1] * box_l_i[1] - 0.5;
+       double relY  = pos[1] * box_l_i[1] - 0.5;
        return( vel[0] - relY * lees_edwards_rate );
    }
-   else
-       return vel[i];
-}
+
 #endif
+
+   return vel[i];
+}
 
 #ifdef NPT
 /** add velocity-dependend noise and friction for NpT-sims to the particle's velocity 
@@ -126,7 +142,7 @@ inline double le_frameV(int i, double *vel, double *pos) {
     @return       j-component of the noise added to the velocity, also scaled by dt (contained in prefactors) */
 inline double friction_therm0_nptiso(double dt_vj) {
   extern double nptiso_pref1, nptiso_pref2;
-  if(thermo_switch & THERMO_NPT_ISO)   
+  if(thermo_switch & THERMO_NPT_ISO)
 #if defined (FLATNOISE)
     return ( nptiso_pref1*dt_vj + nptiso_pref2*(d_random()-0.5) );
 #elif defined (GAUSSRANDOMCUT)
@@ -165,74 +181,132 @@ inline void friction_thermo_langevin(Particle *p)
 #ifdef LANGEVIN_PER_PARTICLE
   double langevin_pref1_temp, langevin_pref2_temp;
 #endif
-  
-  int j;
-#ifdef MASS
-  double massf = sqrt(PMASS(*p));
-#else
-  double massf = 1;
+#ifdef MULTI_TIMESTEP
+  extern double langevin_pref1_small;
+ #ifndef LANGEVIN_PER_PARTICLE
+  extern double langevin_pref2_small;
+ #endif
 #endif
 
+
+  int j;
+  double switch_trans = 1.0;
+  if ( langevin_trans == false )
+  {
+    switch_trans = 0.0;
+  }
 
 #ifdef VIRTUAL_SITES
- #ifndef VIRTUAL_SITES_THERMOSTAT
-    if (ifParticleIsVirtual(p))
-    {
-     for (j=0;j<3;j++)
-      p->f.f[j]=0;
-    return;
-   }
- #endif
+#ifndef VIRTUAL_SITES_THERMOSTAT
+  if (ifParticleIsVirtual(p))
+  {
+    for (j=0;j<3;j++)
+    p->f.f[j]=0;
 
- #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
-    if (!ifParticleIsVirtual(p))
-    {
-     for (j=0;j<3;j++)
-      p->f.f[j]=0;
     return;
-   }
- #endif
+  }
+#endif
+
+#ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
+  if (!ifParticleIsVirtual(p))
+  {
+    for (j=0;j<3;j++)
+    p->f.f[j]=0;
+
+    return;
+  }
+#endif
 #endif	  
 
-  for ( j = 0 ; j < 3 ; j++) {
+  double velocity[3];
+  for (int i = 0; i < 3; i++) {
+    velocity[i] = p->m.v[i];
+#ifdef ENGINE
+    velocity[i] -= (p->swim.v_swim*time_step)*p->r.quatu[i];
+#endif
+  }
+
+  for ( j = 0 ; j < 3 ; j++) 
+  {
 #ifdef EXTERNAL_FORCES
-    if (!(p->l.ext_flag & COORD_FIXED(j)))
+    if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
     {
+
 #ifdef LANGEVIN_PER_PARTICLE  
       
 #if defined (FLATNOISE)
-      if(p->p.gamma >= 0.) {
+      if(p->p.gamma >= 0.) 
+      {
         langevin_pref1_temp = -p->p.gamma/time_step;
         
         if(p->p.T >= 0.)
           langevin_pref2_temp = sqrt(24.0*p->p.T*p->p.gamma/time_step);
         else
           langevin_pref2_temp = sqrt(24.0*temperature*p->p.gamma/time_step);
-#ifdef LEES_EDWARDS
-        p->f.f[j] = langevin_pref1_temp*
-                       le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
-#else
-        p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
-#endif
 
+#ifdef MULTI_TIMESTEP
+        if (smaller_time_step > 0.) {
+          langevin_pref1_temp *= time_step/smaller_time_step;
+          if (p->p.smaller_timestep==1 && current_time_step_is_small==1) 
+            langevin_pref2_temp *= sqrt(time_step/smaller_time_step);
+          else if (p->p.smaller_timestep != current_time_step_is_small) {
+            langevin_pref1_temp  = 0.;
+            langevin_pref2_temp  = 0.;
+          }
+        }
+#endif
+        p->f.f[j] = langevin_pref1_temp*
+                       le_frameV(j, velocity, p->r.p) + switch_trans*langevin_pref2_temp*(d_random()-0.5);
       }
-      else {
+      else 
+      {
         if(p->p.T >= 0.)
           langevin_pref2_temp = sqrt(24.0*p->p.T*langevin_gamma/time_step);
         else          
           langevin_pref2_temp = langevin_pref2;
         
-#ifdef LEES_EDWARDS
-        p->f.f[j] = langevin_pref1*
-                  le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
-#else
-        p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
+#ifdef MULTI_TIMESTEP
+        if (smaller_time_step > 0.) {
+          if (p->p.smaller_timestep==1 && current_time_step_is_small==1) {
+            langevin_pref2_temp *= sqrt(time_step/smaller_time_step);
+            p->f.f[j] = langevin_pref1_small*p->m.v[j] + switch_trans*langevin_pref2_temp*(d_random()-0.5);
+          } else if (p->p.smaller_timestep==0 && current_time_step_is_small==0) {            
+            p->f.f[j] = langevin_pref1_small*p->m.v[j] + switch_trans*langevin_pref2_temp*(d_random()-0.5);
+          }
+        } else
 #endif
-
+        p->f.f[j] = langevin_pref1*
+                  le_frameV(j, velocity, p->r.p) + switch_trans*langevin_pref2_temp*(d_random()-0.5);
       }
+
 #elif defined (GAUSSRANDOMCUT)
-      if(p->p.gamma >= 0.) {
+      if(p->p.gamma >= 0.) 
+      {
+        langevin_pref1_temp = -p->p.gamma/time_step;
+        
+        if(p->p.T >= 0.)
+          langevin_pref2_temp = sqrt(2.0*p->p.T*p->p.gamma/time_step);
+        else
+          langevin_pref2_temp = sqrt(2.0*temperature*p->p.gamma/time_step);
+
+        p->f.f[j] = langevin_pref1_temp*
+                       le_frameV(j, velocity, p->r.p) + switch_trans*langevin_pref2_temp*gaussian_random_cut();
+      }
+      else 
+      {
+        if(p->p.T >= 0.)
+          langevin_pref2_temp = sqrt(2.0*p->p.T*langevin_gamma/time_step);
+        else          
+          langevin_pref2_temp = langevin_pref2;
+
+        p->f.f[j] = langevin_pref1*
+                  le_frameV(j, velocity, p->r.p) + switch_trans*langevin_pref2_temp*gaussian_random_cut();
+      }
+
+#elif defined (GAUSSRANDOM)
+      if(p->p.gamma >= 0.) 
+      {
         langevin_pref1_temp = -p->p.gamma/time_step;
         
         if(p->p.T >= 0.)
@@ -240,99 +314,63 @@ inline void friction_thermo_langevin(Particle *p)
         else
           langevin_pref2_temp = sqrt(2.0*temperature*p->p.gamma/time_step);
         
-#ifdef LEES_EDWARDS
         p->f.f[j] = langevin_pref1_temp*
-                       le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*gaussian_random_cut()*massf;
-#else
-        p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*gaussian_random_cut()*massf;
-#endif
+                       le_frameV(j, velocity, p->r.p) + switch_trans*langevin_pref2_temp*gaussian_random();
       }
-      else {
+      else 
+      {
         if(p->p.T >= 0.)
           langevin_pref2_temp = sqrt(2.0*p->p.T*langevin_gamma/time_step);
         else          
           langevin_pref2_temp = langevin_pref2;
         
-#ifdef LEES_EDWARDS
         p->f.f[j] = langevin_pref1*
-                  le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*gaussian_random_cut()*massf;
-#else
-        p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*gaussian_random_cut()*massf;
-#endif
-      }
-#elif defined (GAUSSRANDOM)
-      if(p->p.gamma >= 0.) {
-        langevin_pref1_temp = -p->p.gamma/time_step;
-        
-        if(p->p.T >= 0.)
-          langevin_pref2_temp = sqrt(2.0*p->p.T*p->p.gamma/time_step);
-        else
-          langevin_pref2_temp = sqrt(2.0*temperature*p->p.gamma/time_step);
-        
-#ifdef LEES_EDWARDS
-        p->f.f[j] = langevin_pref1_temp*
-                       le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*gaussian_random()*massf;
-#else
-        p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*gaussian_random()*massf;
-#endif
-      }
-      else {
-        if(p->p.T >= 0.)
-          langevin_pref2_temp = sqrt(2.0*p->p.T*langevin_gamma/time_step);
-        else          
-          langevin_pref2_temp = langevin_pref2;
-        
-#ifdef LEES_EDWARDS
-        p->f.f[j] = langevin_pref1*
-                  le_frameV(j, p->m.v, p->r.p)*PMASS(*p) + langevin_pref2_temp*gaussian_random()*massf;
-#else
-        p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*gaussian_random()*massf;
-#endif
+                  le_frameV(j, velocity, p->r.p) + switch_trans*langevin_pref2_temp*gaussian_random();
       }
 #else
 #error No Noise defined
 #endif
 
 
-#else 
+#else // END OF LANGEVIN_PER_PARTICLE 
 
-#ifdef LEES_EDWARDS
-/*******************different shapes of noise */
+
 #if defined (FLATNOISE)
-      p->f.f[j] = langevin_pref1*le_frameV(j, p->m.v, p->r.p)
-                  * PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
+
+#ifdef MULTI_TIMESTEP
+      if (smaller_time_step > 0.) {
+        if (p->p.smaller_timestep==1 && current_time_step_is_small==1)
+          p->f.f[j] = langevin_pref1_small*p->m.v[j] + switch_trans*langevin_pref2_small*(d_random()-0.5);
+        else if (p->p.smaller_timestep==0 && current_time_step_is_small==0)
+          p->f.f[j] = langevin_pref1_small*p->m.v[j] + switch_trans*langevin_pref2*(d_random()-0.5);
+        else 
+          p->f.f[j] = 0.;
+      } else
+#endif
+      p->f.f[j] = langevin_pref1*le_frameV(j, velocity, p->r.p)
+                  + switch_trans*langevin_pref2*(d_random()-0.5);
+
 #elif defined (GAUSSRANDOMCUT)
-      p->f.f[j] = langevin_pref1*le_frameV(j, p->m.v, p->r.p)
-                  * PMASS(*p) + langevin_pref2*gaussian_random_cut()*massf;
+      p->f.f[j] = langevin_pref1*le_frameV(j, velocity, p->r.p)
+                  + switch_trans*langevin_pref2*gaussian_random_cut();
 #elif defined (GAUSSRANDOM)
-      p->f.f[j] = langevin_pref1*le_frameV(j, p->m.v, p->r.p)
-                  * PMASS(*p) + langevin_pref2*gaussian_random()*massf;
+      p->f.f[j] = langevin_pref1*le_frameV(j, velocity, p->r.p)
+                  + switch_trans*langevin_pref2*gaussian_random();
 #else
 #error No Noise defined
 #endif
+
 /*******************end different shapes of noise */
 
-#else //ndef LEES_EDWARDS
-/*******************different shapes of noise */
-#if defined (FLATNOISE)
-      p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
-#elif defined (GAUSSRANDOMCUT)
-      p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*gaussian_random_cut()*massf;
-#elif defined (GAUSSRANDOM)
-      p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*gaussian_random()*massf;
-#else
-#error No Noise defined
 #endif
-/*******************end different shapes of noise */
-#endif //end ifdef LEES_EDWARDS
-
-#endif
-    }
+    } // END FIXED BLOCK
 #ifdef EXTERNAL_FORCES
     else p->f.f[j] = 0;
 #endif
-  }
-//  printf("%d: %e %e %e %e %e %e\n",p->p.identity, p->f.f[0],p->f.f[1],p->f.f[2], p->m.v[0],p->m.v[1],p->m.v[2]);
+  } // END LOOP OVER ALL COMPONENTS
+
+
+  // printf("%d: %e %e %e %e %e %e\n",p->p.identity, p->f.f[0],p->f.f[1],p->f.f[2], p->m.v[0],p->m.v[1],p->m.v[2]);
   
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
@@ -345,54 +383,64 @@ inline void friction_thermo_langevin(Particle *p)
 */
 inline void friction_thermo_langevin_rotation(Particle *p)
 {
-  extern double langevin_pref2;
+  extern double langevin_pref2_rotation;
 
   int j;
-#ifdef VIRTUAL_SITES
- #ifndef VIRTUAL_SITES_THERMOSTAT
-    if (ifParticleIsVirtual(p))
-    {
-     for (j=0;j<3;j++)
-      p->f.torque[j]=0;
-    return;
-   }
- #endif
+  double switch_rotate = 1.0;
+  if ( langevin_rotate == false )
+  {
+    switch_rotate = 0.0;
+  }
 
- #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
-    if (!ifParticleIsVirtual(p))
-    {
-     for (j=0;j<3;j++)
-      p->f.torque[j]=0;
+#ifdef VIRTUAL_SITES
+#ifndef VIRTUAL_SITES_THERMOSTAT
+  if (ifParticleIsVirtual(p))
+  {
+    for (j=0;j<3;j++)
+    p->f.torque[j]=0;
+
     return;
-   }
- #endif
-#endif	  
-      for ( j = 0 ; j < 3 ; j++) 
-      {
+  }
+#endif
+
+#ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
+  if (!ifParticleIsVirtual(p))
+  {
+    for (j=0;j<3;j++)
+    p->f.torque[j]=0;
+
+    return;
+  }
+#endif
+#endif	
+  
+  for ( j = 0 ; j < 3 ; j++) 
+  {
 #if defined (FLATNOISE)
-        #ifdef ROTATIONAL_INERTIA
-        p->f.torque[j] = -langevin_gamma*p->m.omega[j] *p->p.rinertia[j] + langevin_pref2*sqrt(p->p.rinertia[j]) * (d_random()-0.5);
-        #else
-        p->f.torque[j] = -langevin_gamma*p->m.omega[j] + langevin_pref2*(d_random()-0.5);
-        #endif
+#ifdef ROTATIONAL_INERTIA
+    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*(d_random()-0.5);
+#else
+    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*(d_random()-0.5);
+#endif
 #elif defined (GAUSSRANDOMCUT)
-        #ifdef ROTATIONAL_INERTIA
-        p->f.torque[j] = -langevin_gamma*p->m.omega[j] *p->p.rinertia[j] + langevin_pref2*sqrt(p->p.rinertia[j]) * gaussian_random_cut();
-        #else
-        p->f.torque[j] = -langevin_gamma*p->m.omega[j] + langevin_pref2*gaussian_random_cut();
-        #endif
+#ifdef ROTATIONAL_INERTIA
+    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*gaussian_random_cut();
+#else
+    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*gaussian_random_cut();
+#endif
 #elif defined (GAUSSRANDOM)
-        #ifdef ROTATIONAL_INERTIA
-        p->f.torque[j] = -langevin_gamma*p->m.omega[j] *p->p.rinertia[j] + langevin_pref2*sqrt(p->p.rinertia[j]) * gaussian_random();
-        #else
-        p->f.torque[j] = -langevin_gamma*p->m.omega[j] + langevin_pref2*gaussian_random();
-        #endif
+#ifdef ROTATIONAL_INERTIA
+    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*gaussian_random();
+#else
+    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*gaussian_random();
+#endif
 #else
 #error No Noise defined
 #endif
-      }
-      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
+  }
+
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+  THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
 #endif
 

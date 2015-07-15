@@ -92,8 +92,8 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   distmx = iaparams->p.angledist.distmax;
 
   /* folds coordinates of p_mid into original box */
-  memcpy(folded_pos, p_mid->r.p, 3*sizeof(double));
-  memcpy(img, p_mid->l.i, 3*sizeof(int));
+  memmove(folded_pos, p_mid->r.p, 3*sizeof(double));
+  memmove(img, p_mid->l.i, 3*sizeof(int));
   fold_position(folded_pos, img);
 
   /* Calculates distance between p_mid and constraint */
@@ -101,8 +101,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
     pwdist[k]=0.0;
   }
   for(k=0;k<n_constraints;k++) {
-    switch(constraints[k].type) {
-      case CONSTRAINT_WAL: 
+    if (constraints[k].type == CONSTRAINT_WAL) {
 
       /* dist is distance of wall from origin */
       wall=constraints[k].c.wal;
@@ -125,9 +124,6 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
       if (pwdist[k] <= pwdistmin) {
         pwdistmin = pwdist[k];
       }
-      break;
-    //default://@TODO: handle default case
-      //  break;
     }
   }
 
