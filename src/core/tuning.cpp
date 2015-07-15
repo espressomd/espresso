@@ -79,7 +79,7 @@ static double time_calc(int rds)
 }
 
 
-void tune_skin(double min, double max, double tol) {
+void tune_skin(double min, double max, double tol, int steps) {
   skin_set = true;
 
   double a = min;
@@ -89,18 +89,17 @@ void tune_skin(double min, double max, double tol) {
   while(fabs(a - b) > tol) {
     skin = a;
     mpi_bcast_parameter(FIELD_SKIN);    
-    time_a = time_calc(1000);
+    time_a = time_calc(steps);
 
     skin = b;
     mpi_bcast_parameter(FIELD_SKIN);    
-    time_b = time_calc(1000);
+    time_b = time_calc(steps);
 
     if(time_a > time_b) {
       a = 0.5*(a + b);
     } else {
       b = 0.5*(a + b);
     }
-    printf("a %e b %e time_a %e time_b %e delta %e\n", a, b, time_a, time_b, fabs(a - b));
   }
   skin = 0.5*(a+b);
   mpi_bcast_parameter(FIELD_SKIN);    
