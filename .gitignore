@@ -38,6 +38,7 @@ src/acconfig.hpp.in
 *.end
 *.obs*
 *.chk
+*.h5
 
 # doxygen
 doc/dg/html/
