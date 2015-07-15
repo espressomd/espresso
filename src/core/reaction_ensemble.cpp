@@ -1,6 +1,5 @@
-//this file is just a reference and contains all necessary information on how to use the reaction ensemble
 //method according to smith94x
-//as example a acid dissociation is implemented
+//so far only implemented for the NVT ensemble
 //NOTE: a reaction here is one trial move to dissociate one acid molecule to its dissociated form 
 //so if the reaction is accepted then there is one more dissociated ion pair H+ and A-
 //NOTE: generic_oneway_reaction does not break bonds for simple reactions. as long as there are no reactions like 2A -->B where one of the reacting A particles occurs in the polymer
@@ -12,9 +11,9 @@
 #include "external_potential.hpp" //for energies
 #include "global.hpp" //for access to global variables
 #include "particle_data.hpp" //for particle creation, modification
-#include "statistics.hpp" //for mindist
+#include "statistics.hpp" //for distto
 #include "integrate.hpp" //for integrate (hack for updating particle lists)
-#include <stdlib.h>  /* qsort() */
+#include <stdlib.h>  // qsort()
 
 //For now the reaction ensemble is only implemented for the reaction VT ensemble. The reaction PT ensemble is also possible to implement.
 
@@ -62,18 +61,13 @@ int _type_is_in_list(int type, int* list, int len_list){
 }
 
 int initialize(){
-	int* already_initialized_types=(int*)malloc(sizeof(int));
-	int len_already_initialized_types=0;
-	//register types
-	for(int single_reaction_i=0; single_reaction_i<current_reaction_system.nr_single_reactions;single_reaction_i++){
-		for(int educt_types_i=0; educt_types_i<current_reaction_system.reactions[single_reaction_i]->len_educt_types;educt_types_i++){
-			int type=current_reaction_system.reactions[single_reaction_i]->educt_types[educt_types_i];
-			if(_type_is_in_list(type,already_initialized_types,len_already_initialized_types)==false)
-				init_type_array(type);
-		}
+	//register types all different types
+	for(int different_type_i=0;different_type_i<current_reaction_system.nr_different_types;different_type_i++){
+		init_type_array(current_reaction_system.type_index[different_type_i]);
 	}
-	//set charge of types
-	current_reaction_system.charges_of_types =(double*) malloc(sizeof(double)*current_reaction_system.nr_different_types);
+	
+	//initialize charge of types to zero
+	current_reaction_system.charges_of_types =(double*) calloc(1,sizeof(double)*current_reaction_system.nr_different_types);
 
 	return 0;
 }
@@ -167,7 +161,7 @@ int generic_oneway_reaction(int reaction_id){
 	//find reacting molecules in educts and save their properties for later recreation if step is not accepted
 	//do reaction
 	//save old particle_numbers
-	int* old_particle_numbers=(int*) malloc(sizeof(int) *current_reaction_system.nr_different_types);
+	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *current_reaction_system.nr_different_types);
 	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
 		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
 	}
@@ -200,7 +194,7 @@ int generic_oneway_reaction(int reaction_id){
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(float) p_id;
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
-			len_changed_particles_properties+=3;
+			len_changed_particles_properties+=number_of_saved_properties;
 			replace(p_id,current_reaction->product_types[i]);
 		}
 		//create product_coefficients(i)-educt_coefficients(i) many product particles iff product_coefficients(i)-educt_coefficients(i)>0,
@@ -231,7 +225,7 @@ int generic_oneway_reaction(int reaction_id){
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=3;
+				len_hidden_particles_properties+=number_of_saved_properties;
 				hide_particle(p_id,current_reaction->educt_types[i]);
 			}
 		}
@@ -274,9 +268,6 @@ int generic_oneway_reaction(int reaction_id){
 		}
 	}
 	
-	for (int i=0;i<current_reaction_system.nr_different_types;i++)
-		update_particle_array(current_reaction_system.type_index[i]);
-
 	if (total_energy.init_status == 0) {
 		init_energies(&total_energy);
 		master_energy_calc();
@@ -293,6 +284,7 @@ int generic_oneway_reaction(int reaction_id){
         }
 	
 	double E_pot_new=sum_all_energies-kinetic_energy;
+	
 	double factorial_expr=1.0;
 	//factorial contribution of educts
 	for(int i=0;i<current_reaction->len_educt_types;i++) {
@@ -318,8 +310,6 @@ int generic_oneway_reaction(int reaction_id){
 			int p_id = (int) hidden_particles_properties[i];
 			delete_particle(p_id); //delete particle
 		}
-		for (int i=0;i<current_reaction_system.nr_different_types;i++)
-			update_particle_array(current_reaction_system.type_index[i]);	
 		return 1;
 	} else {
 		//reject
@@ -329,8 +319,6 @@ int generic_oneway_reaction(int reaction_id){
 		for(int i=0;i<len_p_ids_created_particles;i++){
 			delete_particle(p_ids_created_particles[i]);
 		}
-		for (int i=0;i<current_reaction_system.nr_different_types;i++)
-			update_particle_array(current_reaction_system.type_index[i]);
 		//2)restore previously hidden educt particles
 		for(int i=0;i<len_hidden_particles_properties;i+=number_of_saved_properties) {
 			int p_id = (int) hidden_particles_properties[i];
@@ -351,8 +339,6 @@ int generic_oneway_reaction(int reaction_id){
 			//set type
 			set_particle_type(p_id, type);
 		}
-		for (int i=0;i<current_reaction_system.nr_different_types;i++)
-			update_particle_array(current_reaction_system.type_index[i]);
 		return 0;
 	}
 
@@ -377,7 +363,7 @@ int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product
 int update_type_index(int* educt_types, int len_educt_types, int* product_types, int len_product_types){
 	//should only be used at when defining a new reaction
 	if(current_reaction_system.type_index==NULL){
-		current_reaction_system.type_index=(int*) malloc(sizeof(int));
+		current_reaction_system.type_index=(int*) calloc(1,sizeof(int));
 		current_reaction_system.type_index[0]=educt_types[0];
 		current_reaction_system.nr_different_types=1;
 	}
@@ -431,10 +417,59 @@ double convert_conc_mol_to_vol(double len_sim, double len_real){
 }
 
 int replace(int p_id, int desired_type){
-	set_particle_type(p_id, desired_type);
-	int err_code=set_particle_q(p_id, (double) current_reaction_system.charges_of_types[find_index_of_type(desired_type)]);
+	int err_code_type=set_particle_type(p_id, desired_type);
+	int err_code_q=set_particle_q(p_id, (double) current_reaction_system.charges_of_types[find_index_of_type(desired_type)]);
+	return (err_code_q bitor err_code_type);
+}
+
+
+int hide_particle(int p_id, int previous_type){
+	//remove_charge and put type to a non existing one --> no interactions anymore (not even bonds contribute to energy) it is as if the particle was non existing
+	//set charge
+	set_particle_q(p_id, 0.0);
+	//set type
+	int desired_type=previous_type+100;//+100 in order to assign types that are out of the "usual" range of types
+	int err_code_type=set_particle_type(p_id, desired_type);
+	return err_code_type;
+}
+
+
+//copies last particle to that position and deletes the then last one
+int delete_particle (int p_id) {
+	if (p_id == max_seen_particle) {
+		// last particle, just delete
+		remove_particle(p_id);
+	} else {
+		// otherwise, copy properties of last particle to particle with given pid, delete last particle
+		// this avoids that the particle identities get excessive
+
+		//read from last particle
+		Particle last_particle;
+		get_particle_data(max_seen_particle,&last_particle);
+		//set pos
+		double ppos[3];
+		int img[3];
+		memmove(ppos, last_particle.r.p, 3*sizeof(double));
+		memmove(img, last_particle.l.i, 3*sizeof(int));
+		unfold_position(ppos, img);
+
+		//write to particle with p_id
+		//set pos
+		place_particle(p_id,ppos);
+		//set velocities
+		set_particle_v(p_id,last_particle.m.v);
+		//set charge
+		set_particle_q(p_id,last_particle.p.q);
+		//set type
+		set_particle_type(p_id,last_particle.p.type);
+
+
+		p_id=max_seen_particle;
+		remove_particle(p_id);
+	}
 	return 0;
 }
+
 
 int create_particle(int desired_type){
 	//remark might only work for cubic box
@@ -448,15 +483,15 @@ int create_particle(int desired_type){
 	double pi=3.14159265359;
 	double temperature =1; //XXX needs to be obtained from global
 	double mean_abs_velocity=sqrt(8*temperature/pi);
+	mean_abs_velocity=mean_abs_velocity*time_step; //scale for internal use in espresso
 	vec_random(random_vel_vec, mean_abs_velocity);
 	
 	double charge= (double) current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
 	double d_min=0;
-	double d_old=-1;
 	int max_insert_tries=1000;
 	int insert_tries=0;
 	double sig=1;//XXX needs to be obtained from global
-	double min_dist=0.9*sig;
+	double min_dist=1.0*sig; //setting of a minimal distance is allowed to avoid overlapping configurations if there is a repulsive potential. States with very high energies have a probability of almost zero and therefore do not contribute to ensemble averages.
 	int err_code=ES_PART_ERROR;
 	if(min_dist!=0){
 		while(d_min<min_dist && insert_tries<max_insert_tries) {
@@ -468,15 +503,11 @@ int create_particle(int desired_type){
 			set_particle_q(p_id, charge);
 			//set velocities
 			set_particle_v(p_id,random_vel_vec);
-
-			d_min=mindist(NULL,NULL); //TODO this seems to be buggy in gdb
-			if(d_old==d_min)
-				break; //accept, mininal distance caused by other particle
+			d_min=distto(pos_vec,p_id);
 			insert_tries+=1;
 			pos_x=box_l[0]*d_random();
 			pos_y=box_l[1]*d_random();
 			pos_z=box_l[2]*d_random();
-			d_old=d_min;
 		}
 	}else{
 		double pos_vec[3]={pos_x,pos_y,pos_z};
@@ -494,54 +525,6 @@ int create_particle(int desired_type){
 		return -1;	
 	}
 	return p_id;
-}
-
-
-int hide_particle(int p_id, int previous_type){
-	//remove_charge and put type to a non existing one --> no interactions anymore (not even bonds contribute to energy) it is as if the particle was non existing
-	//set charge
-	set_particle_q(p_id, 0);
-	//set type
-	int desired_type=previous_type+50;//+50 in order to assign types that are out of the "usual" range of types
-	set_particle_type(p_id, desired_type);
-	return 0;
-}
-
-
-//copies last particle to that position and deletes the then last one
-int delete_particle (int p_id) {
-  if (p_id == max_seen_particle) {
-	// last particle, just delete
-	remove_particle(p_id);
-  } else {
-	// otherwise, copy properties of last particle to particle with given pid, delete last particle
-	// this avoids that the particle identities get excessive
-
-	//read from last particle
-	Particle last_particle;
-	get_particle_data(max_seen_particle,&last_particle);
-	//set pos
-	double ppos[3];
-	int img[3];
-	memmove(ppos, last_particle.r.p, 3*sizeof(double));
-	memmove(img, last_particle.l.i, 3*sizeof(int));
-	unfold_position(ppos, img);
-
-	//write to particle with p_id
-	//set pos
-	place_particle(p_id,ppos);
-	//set velocities
-	set_particle_v(p_id,last_particle.m.v);
-	//set charge
-	set_particle_q(p_id,last_particle.p.q);
-	//set type
-	set_particle_type(p_id,last_particle.p.type);
-
-
-	p_id=max_seen_particle;
-	remove_particle(p_id);
-  }
-return 0;
 }
 
 //the following 3 functions are directly taken from ABHmath.tcl
@@ -702,6 +685,11 @@ double calculate_degree_of_association(int index_of_current_collective_variable)
 }
 
 int initialize_wang_landau(){
+	
+	//initialize seed
+	long *seed = (long *) malloc(n_nodes*sizeof(long));
+	mpi_random_seed(0,seed);
+
 	//initialize deltas for collective variables which are of the type of a degree of association
 	for(int collective_variable_i=0; collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
 		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[collective_variable_i];
@@ -891,9 +879,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		}
 	}
 	
-	for (int i=0;i<current_reaction_system.nr_different_types;i++)
-		update_particle_array(current_reaction_system.type_index[i]);
-
 	if (total_energy.init_status == 0) {
 		init_energies(&total_energy);
 		master_energy_calc();
@@ -947,8 +932,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			int p_id = (int) hidden_particles_properties[i];
 			delete_particle(p_id); //delete particle
 		}
-		for (int i=0;i<current_reaction_system.nr_different_types;i++)
-			update_particle_array(current_reaction_system.type_index[i]);	
 		return 1;
 	} else {
 		//reject
@@ -963,8 +946,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		for(int i=0;i<len_p_ids_created_particles;i++){
 			delete_particle(p_ids_created_particles[i]);
 		}
-		for (int i=0;i<current_reaction_system.nr_different_types;i++)
-			update_particle_array(current_reaction_system.type_index[i]);
 		//2)restore previously hidden educt particles
 		for(int i=0;i<len_hidden_particles_properties;i+=number_of_saved_properties) {
 			int p_id = (int) hidden_particles_properties[i];
@@ -985,8 +966,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			//set type
 			set_particle_type(p_id, type);
 		}
-		for (int i=0;i<current_reaction_system.nr_different_types;i++)
-			update_particle_array(current_reaction_system.type_index[i]);
 		return 0;
 	}
 
@@ -1004,9 +983,9 @@ void refine_wang_landau_parameter_one_over_t();
 
 int do_reaction_wang_landau(){
 	bool modify_wang_landau_potential =true;
-	//for(int i=0;i<1;i++){
+	int reaction_id;
 	for(int i=0;i<current_wang_landau_system.wang_landau_relaxation_setps;i++){
-		int reaction_id=i_random(current_reaction_system.nr_single_reactions);
+		reaction_id=i_random(current_reaction_system.nr_single_reactions);
 		generic_oneway_reaction_wang_landau(reaction_id,modify_wang_landau_potential);
 		if(i==0)
 			modify_wang_landau_potential=false;		
@@ -1123,35 +1102,33 @@ void unravel_index(int* len_dims, int ndims, int flattened_index, int* unraveled
 
 void write_wang_landau_results_to_file(char* full_path_to_output_filename){
 
-	int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
-	for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
-		nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
-	}
-
-	char* buffer= (char*) calloc(1,sizeof(char)*current_wang_landau_system.len_histogram*(100*current_wang_landau_system.nr_collective_variables+1)+1); //buffer for spaces, collective variable indices and the wang landau potential and ending \n at each line and last \0 // TODO choose correct size 100 Ok, otherwise memory corruption
-	for(int flattened_index=0;flattened_index<current_wang_landau_system.len_histogram;flattened_index++){
-		//unravel index
-		int unraveled_index[current_wang_landau_system.nr_collective_variables];
-		unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
-		//use unraveled index
-		for(int i=0;i<current_wang_landau_system.nr_collective_variables;i++){
-			sprintf(buffer+ strlen(buffer), "%f ",unraveled_index[i]*current_wang_landau_system.collective_variables[i]->delta_CV+current_wang_landau_system.collective_variables[i]->CV_minimum);
-		}
-		sprintf(buffer+strlen(buffer), "%f \n", current_wang_landau_system.wang_landau_potential[flattened_index]);
-	}
-	//next  write out file
 	FILE* pFile;
-	int buffer_size =strlen(buffer);
-	//write to storage
 	pFile = fopen(full_path_to_output_filename,"w");
-	if (pFile!=NULL){
-		fwrite(buffer, buffer_size, 1, pFile);
-	}
-	else{
-	    printf("ERROR: Wang-Landau file could not be written\n");
+	if (pFile==NULL){
+		printf("ERROR: Wang-Landau file could not be written\n");
+	}else{
+		int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
+		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
+			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
+		}
+
+		for(int flattened_index=0;flattened_index<current_wang_landau_system.len_histogram;flattened_index++){
+			//unravel index
+			int unraveled_index[current_wang_landau_system.nr_collective_variables];
+			unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
+			//use unraveled index
+			for(int i=0;i<current_wang_landau_system.nr_collective_variables;i++){
+				fprintf(pFile, "%f ",unraveled_index[i]*current_wang_landau_system.collective_variables[i]->delta_CV+current_wang_landau_system.collective_variables[i]->CV_minimum);
+			}
+			fprintf(pFile, "%f \n", current_wang_landau_system.wang_landau_potential[flattened_index]);
+		}
+
+		fclose(pFile);
 	}
 
-	fclose(pFile);
+
+
+	
 	
 }
 
