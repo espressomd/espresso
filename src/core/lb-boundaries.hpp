@@ -81,7 +81,7 @@ typedef struct {
     Constraint_box box;
     Constraint_hollow_cone hollow_cone;
   } c;
-  double force[3];
+  double force[3*LB_COMPONENTS];
   double velocity[3];
 #ifdef EK_BOUNDARIES
   float charge_density;
