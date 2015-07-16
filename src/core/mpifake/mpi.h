@@ -212,17 +212,18 @@ inline int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendt
                    void *recvbuf, const int *recvcounts, const int *displs,
                    MPI_Datatype recvtype, MPI_Comm comm)
 { return MPI_SUCCESS; }
-#define MPI_MAX_PROCESSOR_NAME 6
 
-inline int MPI_Get_processor_name(char *proc_name, int *proc_name_len) {
-  proc_name[0] = 'm';
-  proc_name[1] = 'a';
-  proc_name[2] = 's';
-  proc_name[3] = 't';
-  proc_name[4] = 'e';
-  proc_name[5] = 'r';
-  proc_name[6] = 0;
-  *proc_name_len = 6;
-  return MPI_SUCCESS;
-}
+//#define MPI_MAX_PROCESSOR_NAME 6
+//
+//inline int MPI_Get_processor_name(char *proc_name, int *proc_name_len) {
+//  proc_name[0] = 'm';
+//  proc_name[1] = 'a';
+//  proc_name[2] = 's';
+//  proc_name[3] = 't';
+//  proc_name[4] = 'e';
+//  proc_name[5] = 'r';
+//  proc_name[6] = 0;
+//  *proc_name_len = 6;
+//  return MPI_SUCCESS;
+//}
 #endif
