@@ -670,7 +670,7 @@ int H5mdfile::get_dataset_dims(int argc, char **argv, Tcl_Interp *interp)
 }
 int H5mdfile::H5_Fflush(int argc, char **argv, Tcl_Interp *interp)
 {
-	//H5Fflush(dataset_id, H5F_SCOPE_LOCAL);
+	H5Fflush(dataset_id, H5F_SCOPE_LOCAL);
 	return TCL_OK;
 }
 #endif
