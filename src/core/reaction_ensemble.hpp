@@ -24,6 +24,7 @@ typedef struct reaction_system {
 	int nr_different_types; // is equal to length type_index
 	double* charges_of_types;
 	int water_type; //TODO needs to be used
+	double standard_pressure_in_simulation_units;
 } reaction_system;
 
 extern reaction_system current_reaction_system;
@@ -73,7 +74,7 @@ typedef struct wang_landau_system {
 	double final_wang_landau_parameter;
 	int monte_carlo_trial_moves; //for 1/t algorithm
 
-	int wang_landau_relaxation_setps; //relaxation steps like relaxation steps for metadynamics in order to find local equilibrium
+	int wang_landau_relaxation_steps; //relaxation steps like relaxation steps for metadynamics in order to find local equilibrium
 	char* output_filename;
 } wang_landau_system;
 

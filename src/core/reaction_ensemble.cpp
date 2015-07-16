@@ -14,15 +14,16 @@
 #include "statistics.hpp" //for distto
 #include "integrate.hpp" //for integrate (hack for updating particle lists)
 #include <stdlib.h>  // qsort()
+#include "thermostat.hpp" //for temperature
 
 //For now the reaction ensemble is only implemented for the reaction VT ensemble. The reaction PT ensemble is also possible to implement.
 
-reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL,.volume=0 , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100}; //initialize watertype to negative number, for checking wether it has been assigned
+reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL,.volume=0 , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
 
 //declaration of boring helper functions
 float factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
-int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types); //should onlny be used at when defining a new reaction
+int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types); //should only be used at when defining a new reaction
 bool all_educt_particles_exist(int reaction_id);
 int generic_oneway_reaction(int reaction_id);
 int find_index_of_type(int type);
@@ -68,6 +69,11 @@ int initialize(){
 	
 	//initialize charge of types to zero
 	current_reaction_system.charges_of_types =(double*) calloc(1,sizeof(double)*current_reaction_system.nr_different_types);
+
+	if(current_reaction_system.standard_pressure_in_simulation_units==-10){
+		printf("Please initialize your reaction ensemble standard pressure before calling initialize");
+		exit(0);
+	}
 
 	return 0;
 }
@@ -169,7 +175,7 @@ int generic_oneway_reaction(int reaction_id){
 		//set number of water molecules to typical value 55.5 mol/l
 		//see https://de.wikipedia.org/wiki/Eigenschaften_des_Wassers#Ionenprodukt
 		int index_of_water_type=find_index_of_type(current_reaction_system.water_type);
-		old_particle_numbers[index_of_water_type]=int(convert_conc_mol_to_vol(1,1) *55.5*current_reaction_system.volume); // TODO need for correct call of convert_conc_mol_to_vol, setup current_reaction_system.len_sim, current_reaction_system.len_real
+		old_particle_numbers[index_of_water_type]=int(convert_conc_mol_to_vol(1,1) *55.5*volume); // TODO need for correct call of convert_conc_mol_to_vol, setup current_reaction_system.len_sim, current_reaction_system.len_real
 	}
 		
 	int* p_ids_created_particles =NULL;
@@ -299,10 +305,10 @@ int generic_oneway_reaction(int reaction_id){
 		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
 	}
 
-	double beta =1.0;//XXX has to be obtained from global scope
-	double standard_pressure_in_simulation_units=0.00108;// XXX has to be obtained from tcl script
+	double beta =1.0/temperature;
+	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	//calculate boltzmann factor
-	double bf= pow(current_reaction_system.volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
+	double bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
 	if ( d_random() < bf ) {
 		//accept
 		//delete hidden educt_particles (remark: dont delete changed particles)
@@ -481,7 +487,6 @@ int create_particle(int desired_type){
 	//create random velocity vector
 	double random_vel_vec[3];
 	double pi=3.14159265359;
-	double temperature =1; //XXX needs to be obtained from global
 	double mean_abs_velocity=sqrt(8*temperature/pi);
 	mean_abs_velocity=mean_abs_velocity*time_step; //scale for internal use in espresso
 	vec_random(random_vel_vec, mean_abs_velocity);
@@ -599,6 +604,34 @@ int get_flattened_index_wang_landau (double* current_state, double* observables_
 	return index;
 }
 
+int get_flattened_index_wang_landau_new (double* current_state, double* observables_minimum_values, double* observables_maximum_values, double* delta_observables_values, int nr_collective_variables){
+	//TODO here, what happens for energy collective variable? which is not discrete?? (edges of bins are allowed to lie everywhere)
+	//return negative index if no attempt to write to that index should occur
+	int index=-10; //negative number is not allowed as index and therefore indicates error
+	int individual_indices[nr_collective_variables];
+	int nr_subindices_of_collective_variable[nr_collective_variables];
+	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
+		nr_subindices_of_collective_variable[collective_variable_i]=int((observables_maximum_values[collective_variable_i]-observables_minimum_values[collective_variable_i])/delta_observables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
+		for(int subindex_i=0;subindex_i<nr_subindices_of_collective_variable[collective_variable_i];subindex_i++){
+			if( current_state[collective_variable_i]-(subindex_i*delta_observables_values[collective_variable_i]+observables_minimum_values[collective_variable_i])<delta_observables_values[collective_variable_i]/100){
+				individual_indices[collective_variable_i]=subindex_i;
+				break;
+			}
+		}
+	}
+	//get flattened index from individual_indices
+	index=individual_indices[0]; //this is already part of the algorithm to find the correct index
+	for(int collective_variable_i=1;collective_variable_i<nr_collective_variables;collective_variable_i++){
+		int factor=0;
+		for(int j=0;j<collective_variable_i;j++){
+			factor+=nr_subindices_of_collective_variable[j];
+		}
+		index+=factor*individual_indices[collective_variable_i];
+	}
+	
+	return index;
+}
+
 
 int get_flattened_index_wang_landau_of_current_state(){
 	int nr_collective_variables=current_wang_landau_system.nr_collective_variables;
@@ -622,7 +655,7 @@ int get_flattened_index_wang_landau_of_current_state(){
 	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
 		delta_observables_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->delta_CV;	
 	}
-	int index=get_flattened_index_wang_landau(current_state, observables_minimum_values, observables_maximum_values, delta_observables_values, nr_collective_variables);
+	int index=get_flattened_index_wang_landau_new(current_state, observables_minimum_values, observables_maximum_values, delta_observables_values, nr_collective_variables);
 
 	return index;
 }
@@ -632,9 +665,10 @@ wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 
 						.collective_variables=NULL, .wang_landau_parameter=1.0,\
  						.initial_wang_landau_parameter=1.0,.already_refined_n_times=0, \
  						.int_fill_value=-10,.double_fill_value=-10.0,\
- 							.number_of_monte_carlo_moves_between_check_of_convergence=5000, .final_wang_landau_parameter=0.00001,\
- 						.monte_carlo_trial_moves=0, .wang_landau_relaxation_setps=100};
-//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential
+ 						.number_of_monte_carlo_moves_between_check_of_convergence=5000, .final_wang_landau_parameter=0.00001,\
+ 						.monte_carlo_trial_moves=0, .wang_landau_relaxation_steps=40
+ 						};//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential, use only 40 wang landau relaxation_steps in order to avoid moving the system too much out of equilibrium i.e. that it avoids a too big perturbation in the charge (degree of association) of the polymer. A small perturbation ensures that the the equilibrium can be reached within a small number of molecular dynamic integration steps.
+
 
 double calculate_delta_degree_of_association(int index_of_current_collective_variable){
 	//calculate Delta in the degree of association so that EVERY reaction step is driven.
@@ -780,7 +814,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		//set number of water molecules to typical value 55.5 mol/l
 		//see https://de.wikipedia.org/wiki/Eigenschaften_des_Wassers#Ionenprodukt
 		int index_of_water_type=find_index_of_type(current_reaction_system.water_type);
-		old_particle_numbers[index_of_water_type]=int(convert_conc_mol_to_vol(1,1) *55.5*current_reaction_system.volume); // TODO need for correct call of convert_conc_mol_to_vol, setup current_reaction_system.len_sim, current_reaction_system.len_real
+		old_particle_numbers[index_of_water_type]=int(convert_conc_mol_to_vol(1,1) *55.5*volume); // TODO need for correct call of convert_conc_mol_to_vol, setup current_reaction_system.len_sim, current_reaction_system.len_real
 	}
 		
 	int* p_ids_created_particles =NULL;
@@ -898,6 +932,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 
 	//save new_state_index
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
+	//printf("new state %d\n",new_state_index);
 	
 	double factorial_expr=1.0;
 	//factorial contribution of educts
@@ -913,10 +948,10 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
 	}
 
-	double beta =1.0;//XXX has to be obtained from global scope
-	double standard_pressure_in_simulation_units=0.00108;// XXX has to be obtained from tcl script
+	double beta =1.0/temperature;
+	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	//calculate boltzmann factor
-	double bf= pow(current_reaction_system.volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
+	double bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
 	bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 
 	if ( d_random() < bf ) {
@@ -982,30 +1017,31 @@ bool achieved_desired_number_of_refinements_one_over_t ();
 void refine_wang_landau_parameter_one_over_t();
 
 int do_reaction_wang_landau(){
-	bool modify_wang_landau_potential =true;
-	int reaction_id;
-	for(int i=0;i<current_wang_landau_system.wang_landau_relaxation_setps;i++){
-		reaction_id=i_random(current_reaction_system.nr_single_reactions);
-		generic_oneway_reaction_wang_landau(reaction_id,modify_wang_landau_potential);
-		if(i==0)
-			modify_wang_landau_potential=false;		
-	}
-	//check for convergence
-	if(achieved_desired_number_of_refinements_one_over_t()==true){
-		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
-		exit(0);
-	}
-	if(can_refine_wang_landau_one_over_t()&& current_wang_landau_system.monte_carlo_trial_moves%(10*current_wang_landau_system.len_histogram)==0){
-		refine_wang_landau_parameter_one_over_t();
-	}
+	if (this_node == 0) {
+		bool modify_wang_landau_potential =true;
+		int reaction_id;
+		for(int i=0;i<current_wang_landau_system.wang_landau_relaxation_steps;i++){
+			reaction_id=i_random(current_reaction_system.nr_single_reactions);
+			generic_oneway_reaction_wang_landau(reaction_id,modify_wang_landau_potential);
+			if(i==0)
+				modify_wang_landau_potential=false;		
+		}
+		//check for convergence
+		if(achieved_desired_number_of_refinements_one_over_t()==true){
+			write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
+			exit(0);
+		}
+		if(can_refine_wang_landau_one_over_t()&& current_wang_landau_system.monte_carlo_trial_moves%(10*current_wang_landau_system.len_histogram)==0){
+			refine_wang_landau_parameter_one_over_t();
+		}
 
 
-	//write out preliminary results
-	if(current_wang_landau_system.monte_carlo_trial_moves%(10*current_wang_landau_system.len_histogram)==0){
-		//100*current_wang_landau_system.len_histogram
-		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
+		//write out preliminary results
+		if(current_wang_landau_system.monte_carlo_trial_moves%(15*current_wang_landau_system.len_histogram)==0 || current_wang_landau_system.monte_carlo_trial_moves%(int(10000/current_wang_landau_system.len_histogram)+1)==0){
+			//the first criterion is for small systems, the second one for big systems
+			write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
+		}
 	}
-
 	return 0;	
 };
 
@@ -1072,7 +1108,7 @@ void reset_histogram(){
 void refine_wang_landau_parameter_one_over_t(){
 	double monte_carlo_time =current_wang_landau_system.monte_carlo_trial_moves/current_wang_landau_system.len_histogram;
 	if ( current_wang_landau_system.wang_landau_parameter/2.0 <=1.0/monte_carlo_time ){
-		//current_wang_landau_system.wang_landau_parameter= 1.0/monte_carlo_time;
+		current_wang_landau_system.wang_landau_parameter= 1.0/monte_carlo_time;
 	} else {
 		reset_histogram();
 		current_wang_landau_system.wang_landau_parameter= current_wang_landau_system.wang_landau_parameter/2.0;

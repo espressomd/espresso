@@ -182,6 +182,10 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				//check for warter_type for making autodissociation of water possible in C
 				ARG_IS_I(2,current_reaction_system.water_type);
 			}
+			if( ARG1_IS_S("standard_pressure_in_simulation_units")) {
+				//check for warter_type for making autodissociation of water possible in C
+				ARG_IS_D(2,current_reaction_system.standard_pressure_in_simulation_units);
+			}
 		}
 		///////////////////////////////////////////// Wang-Landau algorithm
 		if (ARG1_IS_S("wang_landau")){ // for performance reasons skip other tests
@@ -266,9 +270,9 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					ARG_IS_D(1,current_wang_landau_system.final_wang_landau_parameter);
 				}
 				
-				if(ARG1_IS_S("wang_landau_relaxation_setps")) {
+				if(ARG1_IS_S("wang_landau_relaxation_steps")) {
 					argc-=1; argv+=1;
-					ARG_IS_I(1,current_wang_landau_system.wang_landau_relaxation_setps);
+					ARG_IS_I(1,current_wang_landau_system.wang_landau_relaxation_steps);
 				}		
 	
 				if(ARG1_IS_S("full_path_to_output_filename")){

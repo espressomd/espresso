@@ -1750,11 +1750,11 @@ int init_type_array(int type){
 		return ES_ERROR;
 
 
-for ( int i = 0; i<Index.max_entry; i++ )
-	if (type == Type.index[i]) {
-		// already indexed
-		return ES_OK;
-	}
+	for ( int i = 0; i<Index.max_entry; i++ )
+		if (type == Type.index[i]) {
+			// already indexed
+			return ES_OK;
+		}
 
 	updatePartCfg(WITHOUT_BONDS);
 
