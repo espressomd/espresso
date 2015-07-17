@@ -233,7 +233,7 @@ CUDA_SOURCE_FILES = \
 	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu \
 	immersed_boundary/ibm_cuda.cu \
-	actor/DipolarDirectSum_cuda.cu \ 
+	actor/DipolarDirectSum_cuda.cu \
 	actor/HarmonicOrientationWell_cuda.cu 
 
 # include the dependency tracking files
