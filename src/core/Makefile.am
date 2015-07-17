@@ -110,7 +110,8 @@ libEspresso_la_SOURCES = \
 	SystemInterface.hpp \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
-	PdbParser.cpp PdbParser.hpp
+	PdbParser.cpp PdbParser.hpp \
+	RunningAverage.cpp RunningAverage.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
