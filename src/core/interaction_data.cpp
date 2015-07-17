@@ -63,6 +63,7 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "initialize.hpp"
+#include "interaction_data.hpp"
 
 /****************************************
  * variables

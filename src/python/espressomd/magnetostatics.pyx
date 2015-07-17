@@ -31,7 +31,8 @@ IF DIPOLES == 1:
 
             if "bjerrum_length" in self._params:
                 if not (self._params["bjerrum_length"] > 0.0):
-                    raise ValueError("Bjerrum_length should be a positive double")
+                    raise ValueError(
+                        "Bjerrum_length should be a positive double")
             if "prefactor" in self._params:
                 if not self._params["prefactor"] > 0:
                     raise ValueError("prefactor should be a positive double")
@@ -45,17 +46,21 @@ IF DIPOLES == 1:
                     raise Exception(
                         "Bjerrum length is not defined, if temperature is zero")
                 if dipolar_set_Dbjerrum(self._params["bjerrum_length"]):
-                    raise Exception("Could not set magnetostatic bjerrum length")
+                    raise Exception(
+                        "Could not set magnetostatic bjerrum length")
                 return True
             if "prefactor" in self._params:
                 if temperature == 0.:
                     if dipolar_set_Dbjerrum(self._params["prefactor"]):
-                        raise Exception("Could not set magnetostatic prefactor")
+                        raise Exception(
+                            "Could not set magnetostatic prefactor")
                 else:
                     if dipolar_set_Dbjerrum(self._params["prefactor"] / temperature):
-                        raise Exception("Could not set magnetostatic prefactor")
+                        raise Exception(
+                            "Could not set magnetostatic prefactor")
                     else:
-                        self._params["bjerrum_length"] =self.params["prefactor"] / temperature
+                        self._params["bjerrum_length"] = self.params[
+                            "prefactor"] / temperature
 
         def getParams(self):
             self._params = self._getParamsFromEsCore()
@@ -105,7 +110,7 @@ IF DP3M == 1:
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
         def validKeys(self):
-            return "prefactor","alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
+            return "prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
 
         def requiredKeys(self):
             return ["accuracy", ]

@@ -617,7 +617,12 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 #ifdef VIRTUAL_SITES_RELATIVE
   // print the particle attributes used by the "relative" implementation of virtual sites
   Tcl_AppendResult(interp, " vs_relative ", (char *)NULL);
-  sprintf(buffer, "%d %f", part.p.vs_relative_to_particle_id, part.p.vs_relative_distance);
+  sprintf(buffer, "%d %f %f %f %f %f", part.p.vs_relative_to_particle_id, part.p.vs_relative_distance,
+   part.p.vs_relative_rel_orientation[0], 
+   part.p.vs_relative_rel_orientation[1], 
+   part.p.vs_relative_rel_orientation[2], 
+   part.p.vs_relative_rel_orientation[3] 
+  );
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 #endif
 
@@ -833,7 +838,12 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE    
      else if (ARG0_IS_S("vs_relative")) {
-       sprintf(buffer, "%d %f", part.p.vs_relative_to_particle_id, part.p.vs_relative_distance);
+       sprintf(buffer, "%d %f %f %f %f %f", part.p.vs_relative_to_particle_id, part.p.vs_relative_distance,
+        part.p.vs_relative_rel_orientation[0],
+        part.p.vs_relative_rel_orientation[1],
+        part.p.vs_relative_rel_orientation[2],
+        part.p.vs_relative_rel_orientation[3]
+       );
        Tcl_AppendResult(interp, buffer, (char *)NULL);
      }
 #endif
@@ -1023,6 +1033,11 @@ int tclcommand_part_parse_rotation(Tcl_Interp *interp, int argc, char **argv,
     /* set rotation flag */
     if (! ARG0_IS_I(rot))
       return TCL_ERROR;
+    
+    if (rot == 1) {
+      Tcl_AppendResult(interp, "1 is no longer an allowed value for rotation. See documentation.", (char *) NULL);
+      return TCL_ERROR;
+    }
 
     if (set_particle_rotation(part_num, rot) == TCL_ERROR) {
       Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
@@ -1112,8 +1127,11 @@ int tclcommand_part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
   /* convenience error message, dipm is not used otherwise. */
   dipm = dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2];
   if (dipm < ROUND_ERROR_PREC) {
-    Tcl_AppendResult(interp, "cannot set dipole with zero length", (char *)NULL);
-    return TCL_ERROR;
+    if (set_particle_dipm(part_num, dipm) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+      return TCL_ERROR;
+    }
+    return TCL_OK;
   }
 
   if (set_particle_dip(part_num, dip) == TCL_ERROR) {
@@ -1161,13 +1179,14 @@ int part_parse_vs_relative(Tcl_Interp *interp, int argc, char **argv,
     // See particle_data.hpp for explanation of the quantities
     int vs_relative_to;
     double vs_distance;
+    double rel_ori[4];
 
     // We consume two arguments after the vs_relative:
-    *change = 2;
+    *change = 6;
 
     // Validate input
-    if (argc < 2) {
-      Tcl_AppendResult(interp, "vs_relative needs the id of the particle to which the virtual site is related and the distnace it should have from that particle as arguments.", (char *) NULL);
+    if (argc < 6) {
+      Tcl_AppendResult(interp, "vs_relative needs the id of the particle to which the virtual site is related, the distnace it should have from that particle,  and the relative orientation as arguments.", (char *) NULL);
       return TCL_ERROR;
     }
 
@@ -1177,8 +1196,17 @@ int part_parse_vs_relative(Tcl_Interp *interp, int argc, char **argv,
     
     if (! ARG1_IS_D(vs_distance))
       return TCL_ERROR;
+    
+    if (! ARG_IS_D(2,rel_ori[0]))
+      return TCL_ERROR;
+    if (! ARG_IS_D(3,rel_ori[1]))
+      return TCL_ERROR;
+    if (! ARG_IS_D(4,rel_ori[2]))
+      return TCL_ERROR;
+    if (! ARG_IS_D(5,rel_ori[3]))
+      return TCL_ERROR;
 
-    if (set_particle_vs_relative(part_num, vs_relative_to, vs_distance) == TCL_ERROR) {
+    if (set_particle_vs_relative(part_num, vs_relative_to, vs_distance,rel_ori) == TCL_ERROR) {
       Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
 
       return TCL_ERROR;

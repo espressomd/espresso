@@ -39,7 +39,6 @@ void distribute_mol_force();
 // Setup the virtual_sites_relative properties of a particle so that the given virtaul particle will follow the given real particle
 int vs_relate_to(int part_num, int relate_to);
 
-int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance);
 
 // Rigid body conribution to scalar pressure and stress tensor
 void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_tensor);

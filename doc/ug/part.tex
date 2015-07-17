@@ -226,9 +226,11 @@ set first because of the spatial decomposition.
   different diffusion constants. Caution: this has no influence on any
   other thermostat then the Langevin thermostat.
 \item[\opt{rotation \var{rot}}] Specifies whether a particle's
-  rotational degrees of freedom are integrated (value of 1) or not
-  (0). If set to zero, the content of the torque and omega variables
-  are meaningless. The default is 1.
+  rotational degrees of freedom along the different axes in the particle's body-fixed frame are integrated or not.
+  If set to zero, rotation is disabled entirely, and the content of the torque and omega variables
+  are meaningless. 
+  Rotation of a particular axis is turned on by adding up the corresponding flags: x=2, y=4, z=8.
+  To enable rotation around all axis, use a value of 2+4+8=14. This is also the default.
 \item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the
   four solvation coupling constants for the two components of a
   Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
@@ -1199,9 +1201,8 @@ Please note:
   distance from the non-virtual particle, the id of the non-virtual
   particle and a quaternion which defines the vector from non-virtual
   particle to virtual site in the non-virtual particle's body-fixed
-  frame. The first two are saved in the virtual site's
-  vs\_relative-attribute, while the latter is saved in the quaternion
-  attribute. Take care, not to overwrite these after using
+  frame. This information is saved in the virtual site's
+  vs\_relative-attribute. Take care, not to overwrite these after using
   vs\_auto\_relate.
 \item Virtual sites can not be placed relative to other virtual sites,
   as the order in which the positions of virtual sites are updated is
@@ -1213,10 +1214,10 @@ Please note:
 \item In case you know the correct quaternions, you can also setup a
   virtual site using
   \begin{essyntaxbox}
-    part \var{v} virtual 1 quat \var{q} vs_relative \var{n} \var{d}
+    part \var{v} virtual 1 vs_relative \var{n] \var{d} \var{q}
   \end{essyntaxbox}
-  where n is the id of the non-virtual particle and d is its distance
-  from the virtual site.
+  where n is the id of the non-virtual particle, d is its distance
+  from the virtual site, and q are the quaternions.
 \item In a simulation on more than one CPU, the effective cell size
   needs to be larger than the largest distance between a non-virtual
   particle and its associated virtual sites. To this aim, you need to

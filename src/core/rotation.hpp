@@ -101,4 +101,15 @@ inline void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
 
 #endif
 
+/** Rotate the particle p around the NORMALIZED axis a by amount phi */
+void rotate_particle(Particle* p, double* a, double phi);
+
+inline void normalize_quaternion(double* q) {
+  double tmp=sqrt(q[0]*q[0] +q[1]*q[1] +q[2]*q[2] +q[3]*q[3]); 
+  q[0]/=tmp;
+  q[1]/=tmp;
+  q[2]/=tmp;
+  q[3]/=tmp;
+}
+
 #endif
