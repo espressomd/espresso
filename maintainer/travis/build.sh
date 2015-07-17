@@ -70,7 +70,7 @@ if [ $ec -eq 0 ]; then
     echo ""
 else
     echo ""
-    echo "Python files are not indented the right way. Please use 4 spaces per indentation level!"
+    echo "Error: Python files are not indented the right way. Please use 4 spaces per indentation level!"
     echo ""
     exit $ec
 fi

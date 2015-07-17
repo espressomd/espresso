@@ -30,6 +30,9 @@ if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
 
+#CYTHON compile options e.g. debug
+AM_CYFLAGS = $(CYFLAGS)
+
 # Build rules for cython
 SUFFIXES = .pyx
 
@@ -52,6 +55,7 @@ PYXFILES =  \
 	electrostatics.pyx \
 	integrate.pyx \
 	interactions.pyx \
+	lb.pyx \
 	magnetostatics.pyx \
 	magnetostatic_extensions.pyx \
 	particle_data.pyx \
@@ -116,7 +120,7 @@ cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
 cython_verbose_0 = @echo "  CYTHON   $@";
 
 $(CPPFILES): %.cpp: %.pyx myconfig.pxi
-	$(cython_verbose)cython --cplus \
+	$(cython_verbose)cython $(CYFLAGS) --cplus \
 	  -I $(builddir) -I $(srcdir)/_espresso $< -o $@
 
 CLEANFILES += $(CPPFILES)
