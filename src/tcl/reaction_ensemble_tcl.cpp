@@ -201,8 +201,6 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					argv+=1;
 					collective_variable* new_collective_variable=(collective_variable*) malloc(sizeof(collective_variable));
 					if(ARG1_IS_S("degree_of_association")){
-						double min_degree_of_association;
-						double max_degree_of_association;
 						argc-=1;
 						argv+=1;
 						if(ARG1_IS_S("associated_type")){

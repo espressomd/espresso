@@ -309,6 +309,7 @@ int generic_oneway_reaction(int reaction_id){
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	//calculate boltzmann factor
 	double bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
+	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept
 		//delete hidden educt_particles (remark: dont delete changed particles)
@@ -316,7 +317,7 @@ int generic_oneway_reaction(int reaction_id){
 			int p_id = (int) hidden_particles_properties[i];
 			delete_particle(p_id); //delete particle
 		}
-		return 1;
+		reaction_is_accepted= 1;
 	} else {
 		//reject
 		//reverse reaction
@@ -345,9 +346,14 @@ int generic_oneway_reaction(int reaction_id){
 			//set type
 			set_particle_type(p_id, type);
 		}
-		return 0;
+		reaction_is_accepted= 0;
 	}
-
+	//free
+	free(changed_particles_properties);
+	free(p_ids_created_particles);
+	free(hidden_particles_properties);
+	
+	return reaction_is_accepted;
 
 }
 
@@ -720,9 +726,10 @@ double calculate_degree_of_association(int index_of_current_collective_variable)
 
 int initialize_wang_landau(){
 	
-	//initialize seed
+	//initialize seed of random generator automatically by espresso
 	long *seed = (long *) malloc(n_nodes*sizeof(long));
 	mpi_random_seed(0,seed);
+	free(seed);
 
 	//initialize deltas for collective variables which are of the type of a degree of association
 	for(int collective_variable_i=0; collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
@@ -954,6 +961,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	double bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
 	bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 
+	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept
 		if(modify_wang_landau_potential==true){
@@ -967,7 +975,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			int p_id = (int) hidden_particles_properties[i];
 			delete_particle(p_id); //delete particle
 		}
-		return 1;
+		reaction_is_accepted= 1;
 	} else {
 		//reject
 		if(modify_wang_landau_potential==true){
@@ -1001,10 +1009,16 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			//set type
 			set_particle_type(p_id, type);
 		}
-		return 0;
+		reaction_is_accepted= 0;
 	}
 
-
+	//free
+	free(changed_particles_properties);
+	free(p_ids_created_particles);
+	free(hidden_particles_properties);
+	free(old_particle_numbers);
+	
+	return reaction_is_accepted;
 
 
 
@@ -1052,8 +1066,12 @@ void free_wang_landau(){
 	free(current_wang_landau_system.wang_landau_potential);
 	for(int CV_i=0;CV_i<current_wang_landau_system.nr_collective_variables;CV_i++){
 		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[CV_i];
-		free(current_collective_variable->corresponding_acid_types);
+		if(current_collective_variable->corresponding_acid_types!=NULL) { //check wether we have a collective variable which is of the type of a degree of association
+			free(current_collective_variable->corresponding_acid_types);
+		}
 	}
+	free(current_wang_landau_system.collective_variables);
+	free(current_wang_landau_system.output_filename);
 
 
 }
