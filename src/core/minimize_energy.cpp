@@ -63,13 +63,7 @@ bool steepest_descent_step(void) {
   
   // Positional increments
   double dp, dp2, dp2_max = -std::numeric_limits<double>::max();
-  
-  // Rotational increment
-  double dq[3]; // Vector parallel to torque
-  
-  const double skin2 = SQR(skin);
-
-  
+    
   // Iteration over all local particles
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -106,6 +100,9 @@ bool steepest_descent_step(void) {
           }
 	}
 #ifdef ROTATION
+	// Rotational increment
+	double dq[3]; // Vector parallel to torque
+
         for (int j=0;j<3;j++){
           dq[j]=0;
           // Square of torque
