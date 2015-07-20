@@ -641,7 +641,7 @@ int get_flattened_index_wang_landau_of_current_state(){
 		delta_observables_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->delta_CV;	
 	}
 	int index=get_flattened_index_wang_landau(current_state, observables_minimum_values, observables_maximum_values, delta_observables_values, nr_collective_variables);
-	printf("current_state %f, %d\n", current_state[0], index);
+	//printf("current_state %f, %d\n", current_state[0], index);
 
 	return index;
 }
@@ -869,7 +869,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		}
 
 	}
-	printf("0001000\n");
 	//create or hide particles of types with noncorresponding replacement types
 	for(int i=min(current_reaction->len_product_types,current_reaction->len_educt_types);i< max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
 		if(current_reaction->len_product_types<current_reaction->len_educt_types){
@@ -905,7 +904,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			}
 		}
 	}
-	printf("0003000\n");
 	if (total_energy.init_status == 0) {
 		init_energies(&total_energy);
 		master_energy_calc();
@@ -944,13 +942,11 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	//calculate boltzmann factor
 	double bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
-	printf("0004000\n");
 	//determine the acceptance probabilities of the reaction move
 	if(old_state_index>=0 && new_state_index>=0){
 			printf("old_particle_numbers %d new_state_index %d\n", old_state_index, new_state_index);
 		bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 		//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
-			printf("0004600\n");
 	}else if(old_state_index<0 && new_state_index>=0){
 		bf=10;	//this makes the reaction get accepted, since we found a state in Gamma
 	}else if(old_state_index<0 && new_state_index<0){
@@ -959,7 +955,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		bf=-10; //this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
 	}
 		
-	printf("0005000\n");
 	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept
