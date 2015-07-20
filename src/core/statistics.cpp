@@ -265,7 +265,6 @@ void momentum_calc(double *momentum)
  */
 std::vector<double> calc_linear_momentum(int include_particles, int include_lbfluid)
 {
-    double momentum_fluid[3] = { 0., 0., 0. };
     double momentum_particles[3] = { 0., 0., 0. };
     std::vector<double> linear_momentum(3,0.0);
     if (include_particles) {
@@ -276,6 +275,7 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
     }
     if (include_lbfluid) {
 #ifdef LB
+      double momentum_fluid[3] = { 0., 0., 0. };
       mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
       linear_momentum[0] += momentum_fluid[0];
       linear_momentum[1] += momentum_fluid[1];

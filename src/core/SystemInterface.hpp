@@ -189,9 +189,9 @@ protected:
   bool m_needsR;
   bool m_needsV;
   bool m_needsQ;
+  bool m_needsQuatu;
   bool m_needsDip;
   bool m_needsTorque;
-  bool m_needsQuatu;
   bool m_needsRGpu;
   bool m_needsVGpu;
   bool m_needsQGpu;
