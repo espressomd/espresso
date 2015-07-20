@@ -7,7 +7,7 @@
 int print_over_collecitve_variables(Tcl_Interp *interp, void* data, char* type);
 
 int tclcommand_reaction_ensemble_print_status(Tcl_Interp *interp){
-	char buffer[TCL_DOUBLE_SPACE];
+	char buffer[3000];
 	if(current_reaction_system.nr_single_reactions == 0){
 		sprintf(buffer,"Reaction System is not initialized\n");
 		Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -62,6 +62,7 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 		argc-=2; argv+=2;
 	}
 	if(ARG1_IS_S("educt_types")){
+		printf("educt_types\n");
 		argc-=1; argv+=1;
 		int next_added_type;
 		int* educt_types=(int*)malloc(sizeof(int));
@@ -70,7 +71,7 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 			argc-=1; argv+=1;
 			educt_types[educt_type_counter]=next_added_type;
 			educt_type_counter+=1;
-			realloc(educt_types,sizeof(int)*(educt_type_counter+1));
+			educt_types=(int*) realloc(educt_types,sizeof(int)*(educt_type_counter+1));
 		}
 		new_reaction->len_educt_types=educt_type_counter;
 		new_reaction->educt_types=educt_types;
@@ -78,6 +79,7 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 		return TCL_ERROR;
 	}
 	if(ARG1_IS_S("educt_coefficients")){
+		printf("educt_coefficients\n");
 		argc-=1; argv+=1;
 		int next_added_type_coeff;
 		int* educt_coefficients=(int*) malloc(sizeof(int));
@@ -86,13 +88,14 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 			argc-=1; argv+=1;
 			educt_coefficients[educt_type_counter]=next_added_type_coeff;
 			educt_type_counter+=1;
-			realloc(educt_coefficients,sizeof(int)*(educt_type_counter+1));
+			educt_coefficients=(int*) realloc(educt_coefficients,sizeof(int)*(educt_type_counter+1));
 		}
 		new_reaction->educt_coefficients=educt_coefficients;
 	}else{
 		return TCL_ERROR;
 	}
 	if(ARG1_IS_S("product_types")){
+		printf("product_types\n");
 		argc-=1; argv+=1;
 		int next_added_type;
 		int* product_types=(int*)malloc(sizeof(int));
@@ -101,7 +104,7 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 			argc-=1; argv+=1;
 			product_types[product_type_counter]=next_added_type;
 			product_type_counter+=1;
-			realloc(product_types,sizeof(int)*(product_type_counter+1));
+			product_types=(int*) realloc(product_types,sizeof(int)*(product_type_counter+1));
 		}
 		new_reaction->len_product_types=product_type_counter;
 		new_reaction->product_types=product_types;
@@ -109,28 +112,31 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 		return TCL_ERROR;
 	}
 	if(ARG1_IS_S("product_coefficients")){
+		printf("product_types\n");
 		argc-=1; argv+=1;
 		int next_added_type_coeff;
 		int* product_coefficients=(int*) malloc(sizeof(int));
 		int product_type_counter=0;
 		while(ARG_IS_I(1,next_added_type_coeff)){
-			argc-=1; argv+=1;
 			product_coefficients[product_type_counter]=next_added_type_coeff;
 			product_type_counter+=1;
-			realloc(product_coefficients,sizeof(int)*(product_type_counter+1));
 			new_reaction->product_coefficients=product_coefficients;
 			//check for terminus of string
-			if(argc<2) {
+			if(argc<3) {
 				break;
 			}
+			product_coefficients=(int*) realloc(product_coefficients,sizeof(int)*(product_type_counter+1));
+			argc-=1; argv+=1;
 		}
-	new_reaction->nu_bar=calculate_nu_bar(new_reaction->educt_coefficients, new_reaction-> len_educt_types,  new_reaction->product_coefficients, new_reaction->len_product_types);
+	
+		new_reaction->nu_bar=calculate_nu_bar(new_reaction->educt_coefficients, new_reaction-> len_educt_types,  new_reaction->product_coefficients, new_reaction->len_product_types);
 	
 	}else{
 		return TCL_ERROR;
 	}
 	
 	//if everything is fine:
+	current_reaction_system.reactions=(single_reaction**) realloc(current_reaction_system.reactions,sizeof(single_reaction*)*(current_reaction_system.nr_single_reactions+1)); //enlarge current_reaction_system
 	current_reaction_system.reactions[current_reaction_system.nr_single_reactions]=new_reaction;
 	current_reaction_system.nr_single_reactions+=1;
 	
@@ -231,7 +237,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 							while(ARG_IS_I(1,next_added_acid_type)){
 								corresponding_acid_types[corresponding_type_counter]=next_added_acid_type;
 								corresponding_type_counter+=1;
-								realloc(corresponding_acid_types,sizeof(int)*(corresponding_type_counter+1));
+								corresponding_acid_types=(int*) realloc(corresponding_acid_types,sizeof(int)*(corresponding_type_counter+1));
 								//check for terminus of string
 								if(argc<3) {
 									break;
@@ -246,14 +252,17 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 							current_wang_landau_system.collective_variables=(collective_variable**) malloc(sizeof(collective_variable*)*current_wang_landau_system.nr_collective_variables);
 						}else{
 							current_wang_landau_system.nr_collective_variables+=1;
-							realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*current_wang_landau_system.nr_collective_variables);
+							current_wang_landau_system.collective_variables=(collective_variable**) realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*current_wang_landau_system.nr_collective_variables);
 						}
 						current_wang_landau_system.collective_variables[current_wang_landau_system.nr_collective_variables-1]=new_collective_variable;
 										
 					}
 
 					if(ARG1_IS_S("energy")){
-							printf("energy collective variables are not yet implemented\n");
+						argc-=1; argv+=1;
+						//needs to be called after all other collective variables are known
+						char* energy_boundaries_file="energy_boundaries.dat"; //saves the energies in the format nbar_i \t nbar_j \t ... \t energy_min \t energy_max
+						printf("energy collective variables are not yet implemented\n");
 					}
 
 				}

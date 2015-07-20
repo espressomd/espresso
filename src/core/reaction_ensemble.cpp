@@ -71,7 +71,7 @@ int initialize(){
 	current_reaction_system.charges_of_types =(double*) calloc(1,sizeof(double)*current_reaction_system.nr_different_types);
 
 	if(current_reaction_system.standard_pressure_in_simulation_units==-10){
-		printf("Please initialize your reaction ensemble standard pressure before calling initialize");
+		printf("Please initialize your reaction ensemble standard pressure before calling initialize.\n");
 		exit(0);
 	}
 
@@ -195,7 +195,7 @@ int generic_oneway_reaction(int reaction_id){
 			if(changed_particles_properties==NULL){
 				changed_particles_properties=(float*) malloc(sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);			
 			}else{
-				realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
+				changed_particles_properties=(float*) realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
 			}
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(float) p_id;
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
@@ -214,7 +214,7 @@ int generic_oneway_reaction(int reaction_id){
 				if(p_ids_created_particles==NULL){
 					p_ids_created_particles=(int*) malloc(sizeof(int)*(len_p_ids_created_particles+1));
 				}else{
-					realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
+					p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
 				}
 				p_ids_created_particles[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
@@ -226,7 +226,7 @@ int generic_oneway_reaction(int reaction_id){
 				if(hidden_particles_properties==NULL){
 					hidden_particles_properties=(float*) malloc(sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);			
 				}else{
-					realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+					hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
 				}
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
@@ -248,7 +248,7 @@ int generic_oneway_reaction(int reaction_id){
 				if(hidden_particles_properties==NULL){
 					hidden_particles_properties=(float*) malloc(sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);			
 				}else{
-					realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+					hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
 				}
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
@@ -266,7 +266,7 @@ int generic_oneway_reaction(int reaction_id){
 				if(p_ids_created_particles==NULL){
 					p_ids_created_particles=(int*) malloc(sizeof(int)*(len_p_ids_created_particles+1));				
 				}else{
-					realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
+					p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
 				}
 				p_ids_created_particles[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
@@ -641,7 +641,7 @@ int get_flattened_index_wang_landau_of_current_state(){
 		delta_observables_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->delta_CV;	
 	}
 	int index=get_flattened_index_wang_landau(current_state, observables_minimum_values, observables_maximum_values, delta_observables_values, nr_collective_variables);
-	//printf("current_state %f, %d\n", current_state[0], index);
+	printf("current_state %f, %d\n", current_state[0], index);
 
 	return index;
 }
@@ -706,6 +706,9 @@ double calculate_degree_of_association(int index_of_current_collective_variable)
 		number_of_particles_with_type(current_collective_variable->corresponding_acid_types[corresponding_type_i],&num_of_current_type);
 		total_number_of_corresponding_acid+=num_of_current_type;
 	}
+	if(total_number_of_corresponding_acid==0){
+		printf("Have you forgotten to specify all corresponding acid types? Total particle number of corresponding acid type is zero\n");
+	}
 	int num_of_associated_acid;
 	number_of_particles_with_type(current_collective_variable->associated_type,&num_of_associated_acid);
 	double degree_of_association=(double) num_of_associated_acid/total_number_of_corresponding_acid; //cast to double because otherwise any fractional part is lost
@@ -743,8 +746,6 @@ int initialize_wang_landau(){
 			continue; //(found a collective variable which is not of the type of a degree of association)	
 		current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_degree_of_association;
 	}
-	//TODO make observable tracking available	
-
 	
 	return true;
 }
@@ -773,7 +774,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		if(modify_wang_landau_potential==true && old_state_index>=0 ){
 			current_wang_landau_system.histogram[old_state_index]+=1;
 			current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
-			//TODO optional for observable tracking
 		}
 		
 		return 0;
@@ -827,7 +827,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			if(changed_particles_properties==NULL){
 				changed_particles_properties=(float*) malloc(sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);			
 			}else{
-				realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
+				changed_particles_properties=(float*) realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
 			}
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(float) p_id;
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
@@ -846,7 +846,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				if(p_ids_created_particles==NULL){
 					p_ids_created_particles=(int*) malloc(sizeof(int)*(len_p_ids_created_particles+1));
 				}else{
-					realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
+					p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
 				}
 				p_ids_created_particles[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
@@ -858,7 +858,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				if(hidden_particles_properties==NULL){
 					hidden_particles_properties=(float*) malloc(sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);			
 				}else{
-					realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+					hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
 				}
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
@@ -869,7 +869,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		}
 
 	}
-
+	printf("0001000\n");
 	//create or hide particles of types with noncorresponding replacement types
 	for(int i=min(current_reaction->len_product_types,current_reaction->len_educt_types);i< max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
 		if(current_reaction->len_product_types<current_reaction->len_educt_types){
@@ -880,7 +880,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				if(hidden_particles_properties==NULL){
 					hidden_particles_properties=(float*) malloc(sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);			
 				}else{
-					realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+					hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
 				}
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
@@ -898,14 +898,14 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				if(p_ids_created_particles==NULL){
 					p_ids_created_particles=(int*) malloc(sizeof(int)*(len_p_ids_created_particles+1));				
 				}else{
-					realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
+					p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
 				}
 				p_ids_created_particles[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
 			}
 		}
 	}
-	
+	printf("0003000\n");
 	if (total_energy.init_status == 0) {
 		init_energies(&total_energy);
 		master_energy_calc();
@@ -922,7 +922,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
         }
 	
 	double E_pot_new=sum_all_energies-kinetic_energy;
-
 	//save new_state_index
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
 	//printf("new state %d\n",new_state_index);
@@ -945,11 +944,13 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	//calculate boltzmann factor
 	double bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
-
+	printf("0004000\n");
 	//determine the acceptance probabilities of the reaction move
 	if(old_state_index>=0 && new_state_index>=0){
+			printf("old_particle_numbers %d new_state_index %d\n", old_state_index, new_state_index);
 		bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 		//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
+			printf("0004600\n");
 	}else if(old_state_index<0 && new_state_index>=0){
 		bf=10;	//this makes the reaction get accepted, since we found a state in Gamma
 	}else if(old_state_index<0 && new_state_index<0){
@@ -958,14 +959,13 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		bf=-10; //this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
 	}
 		
-
+	printf("0005000\n");
 	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept
 		if(modify_wang_landau_potential==true&&new_state_index>=0 ){
 			current_wang_landau_system.histogram[new_state_index]+=1;
 			current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
-			//TODO observable tracking here?
 		}
 
 		//delete hidden educt_particles (remark: dont delete changed particles)
@@ -979,7 +979,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		if(modify_wang_landau_potential==true && old_state_index>=0){
 			current_wang_landau_system.histogram[old_state_index]+=1;
 			current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
-			//TODO observable tracking here?		
 		}
 		//reverse reaction
 		//1) delete created product particles
