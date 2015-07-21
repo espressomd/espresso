@@ -540,14 +540,14 @@ void lattice_boltzmann_calc_shanchen_cpu(void);
 inline void lb_get_populations(index_t index, double* pop) {
   int i=0;
   for (i=0; i<19*LB_COMPONENTS; i++) {
-    pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho[i/LB_COMPONENTS];
+    pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho[i/LBQ];
   }
 }
 
 inline void lb_set_populations(index_t index, double* pop) {
   int i=0;
   for (i=0; i<19*LB_COMPONENTS; i++) {
-    lbfluid[0][i][index]=pop[i]-lbmodel.coeff[i][0]*lbpar.rho[i/LB_COMPONENTS];
+    lbfluid[0][i][index]=pop[i]-lbmodel.coeff[i][0]*lbpar.rho[i/LBQ];
   }
 }
 #endif
