@@ -2038,7 +2038,6 @@ void lb_init() {
   lb_reinit_fluid();
   /* setup the external forces */
   lb_reinit_forces();
-  
   LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
 }
 
