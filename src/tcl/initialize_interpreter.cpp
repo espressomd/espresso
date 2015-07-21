@@ -122,6 +122,9 @@ char *get_default_scriptsdir();
 /** Returns runtime of the integration loop in seconds. From tuning_tcl.cpp **/
 int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
+/** Tunes the skin */
+int tclcommand_tune_skin(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+
 /** Reads particles from pdb file, see \ref readpdb.cpp */
 int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
@@ -236,6 +239,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("system_CMS_velocity", tclcommand_system_CMS_velocity);
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
+  REGISTER_COMMAND("tune_skin", tclcommand_tune_skin);
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
 #if defined(SD) || defined(BD)
   /* from integrate_sd_tcl.cpp */
