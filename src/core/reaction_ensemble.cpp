@@ -575,10 +575,8 @@ int get_flattened_index_wang_landau (double* current_state, double* collective_v
 		nr_subindices_of_collective_variable[collective_variable_i]=int((collective_variables_maximum_values[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
 		bool found_index=false;
 		for(int subindex_i=0;subindex_i<nr_subindices_of_collective_variable[collective_variable_i]-1;subindex_i++){
-			//printf("curr state %f looping value %f subindex %d\n",current_state[collective_variable_i],(subindex_i+1)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i], subindex_i);
 			if( current_state[collective_variable_i]<(subindex_i+1)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]){
 				individual_indices[collective_variable_i]=subindex_i;
-				//printf("chose subindex %d with value %f\n",subindex_i,(subindex_i)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]);
 				found_index=true;
 				break;
 			}
@@ -587,7 +585,7 @@ int get_flattened_index_wang_landau (double* current_state, double* collective_v
 			individual_indices[collective_variable_i]=nr_subindices_of_collective_variable[collective_variable_i]-1;
 		}
 	}
-	//printf("current state: nbar %f energy %f nbar_i %d E_i %d\n",current_state[0],current_state[1],individual_indices[0],individual_indices[1]);
+	//printf("current state:nbar %f energy %f nbar_i %d E_i %d\n",current_state[0],current_state[1],individual_indices[0],individual_indices[1]);
 	//get flattened index from individual_indices
 	index=0; //this is already part of the algorithm to find the correct index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
@@ -597,7 +595,6 @@ int get_flattened_index_wang_landau (double* current_state, double* collective_v
 		}
 		index+=factor*individual_indices[collective_variable_i];
 	}
-
 	return index;
 }
 
@@ -979,6 +976,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr;
 	}
 	//determine the acceptance probabilities of the reaction move
+	//this is a bit nasty due to the energy collective variable case (storage array of the histogram and the wang_landau_potential values is "rectangular")
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.wang_landau_potential[new_state_index]>=0 &&current_wang_landau_system.wang_landau_potential[old_state_index]>=0 ){
 			bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
@@ -1006,13 +1004,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
 				current_wang_landau_system.histogram[new_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
-//				printf("new_state_index %d \n",new_state_index);
-//								int nr_collective_variables=current_wang_landau_system.nr_collective_variables;
-//				double current_state[nr_collective_variables];
-//				for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-//					current_state[CV_i]=current_wang_landau_system.collective_variables[CV_i]->determine_current_state_in_collective_variable_with_index(CV_i);
-//				}
-//				printf("nbar %f E %f\n",current_state[0],current_state[1]);
 			}
 		}
 
@@ -1056,16 +1047,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			//set type
 			set_particle_type(p_id, type);
 		}
-		
-		
-//		printf("old_state_index %d \n",old_state_index);
-//				int nr_collective_variables=current_wang_landau_system.nr_collective_variables;
-//				double current_state[nr_collective_variables];
-//				for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-//					current_state[CV_i]=current_wang_landau_system.collective_variables[CV_i]->determine_current_state_in_collective_variable_with_index(CV_i);
-//				}
-//		printf("nbar %f E %f\n",current_state[0],current_state[1]);
-		
 		reaction_is_accepted= 0;
 	}
 
