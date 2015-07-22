@@ -15,6 +15,7 @@
 #include "integrate.hpp" //for integrate (hack for updating particle lists)
 #include <stdlib.h>  // qsort()
 #include "thermostat.hpp" //for temperature
+#include <stdio.h> //for getline()
 
 //For now the reaction ensemble is only implemented for the reaction VT ensemble. The reaction PT ensemble is also possible to implement.
 
@@ -132,6 +133,25 @@ bool all_educt_particles_exist(int reaction_id) {
 	return enough_particles;
 }
 
+double calculate_current_potential_energy_of_system(int unimportant_int){
+	//calculate potential energy
+	//if (total_energy.init_status == 0) {
+		init_energies(&total_energy);
+		master_energy_calc();
+	//}
+  	int num_energies=total_energy.data.n;
+	double kinetic_energy =total_energy.data.e[0];
+	double sum_all_energies=0;
+	for(int i=0;i<num_energies;i++){
+		sum_all_energies+= total_energy.data.e[i];
+	}
+	for (int i = 0; i < n_external_potentials; i++) {
+        	sum_all_energies += external_potentials[i].energy;
+        }
+	
+	return sum_all_energies-kinetic_energy;
+}
+
 int generic_oneway_reaction(int reaction_id){
 	float volume = current_reaction_system.volume;
 	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id];
@@ -148,21 +168,7 @@ int generic_oneway_reaction(int reaction_id){
 	}
 	
 	//calculate potential energy
-	if (total_energy.init_status == 0) {
-		init_energies(&total_energy);
-		master_energy_calc();
-	}
-  	int num_energies=total_energy.data.n;
-	double kinetic_energy =total_energy.data.e[0];
-	double sum_all_energies=0;
-	for(int i=0;i<num_energies;i++){
-		sum_all_energies+= total_energy.data.e[i];
-	}
-	for (int i = 0; i < n_external_potentials; i++) {
-        	sum_all_energies += external_potentials[i].energy;
-        }
-	
-	double E_pot_old=sum_all_energies-kinetic_energy; //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
+	double E_pot_old=calculate_current_potential_energy_of_system(0); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
 	
 	//find reacting molecules in educts and save their properties for later recreation if step is not accepted
 	//do reaction
@@ -211,11 +217,7 @@ int generic_oneway_reaction(int reaction_id){
 				while(p_id == -1) {
 					p_id=create_particle(current_reaction->product_types[i]);
 				}
-				if(p_ids_created_particles==NULL){
-					p_ids_created_particles=(int*) malloc(sizeof(int)*(len_p_ids_created_particles+1));
-				}else{
-					p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				}
+				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
 				p_ids_created_particles[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
 			}
@@ -223,11 +225,7 @@ int generic_oneway_reaction(int reaction_id){
 			for(int j=0;j<current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i];j++) {
 				int p_id ;
 				find_particle_type(current_reaction->educt_types[i], &p_id);
-				if(hidden_particles_properties==NULL){
-					hidden_particles_properties=(float*) malloc(sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);			
-				}else{
-					hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				}
+				hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
@@ -245,11 +243,7 @@ int generic_oneway_reaction(int reaction_id){
 			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
 				int p_id ;
 				find_particle_type(current_reaction->educt_types[i], &p_id);
-				if(hidden_particles_properties==NULL){
-					hidden_particles_properties=(float*) malloc(sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);			
-				}else{
-					hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				}
+				hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
@@ -263,33 +257,14 @@ int generic_oneway_reaction(int reaction_id){
 				while (p_id == -1) {
 					p_id= create_particle(current_reaction->product_types[i]);
 				}
-				if(p_ids_created_particles==NULL){
-					p_ids_created_particles=(int*) malloc(sizeof(int)*(len_p_ids_created_particles+1));				
-				}else{
-					p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				}
+				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
 				p_ids_created_particles[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
 			}
 		}
 	}
 	
-	if (total_energy.init_status == 0) {
-		init_energies(&total_energy);
-		master_energy_calc();
-	}	
-	//calculate potential energy
-  	num_energies=total_energy.data.n;
-	kinetic_energy =total_energy.data.e[0];
-	sum_all_energies=0;
-	for(int i=0;i<num_energies;i++){
-		sum_all_energies+= total_energy.data.e[i];
-	}
-	for (int i = 0; i < n_external_potentials; i++) {
-        	sum_all_energies += external_potentials[i].energy;
-        }
-	
-	double E_pot_new=sum_all_energies-kinetic_energy;
+	double E_pot_new=calculate_current_potential_energy_of_system(0);
 	
 	double factorial_expr=1.0;
 	//factorial contribution of educts
@@ -584,37 +559,45 @@ int intcmp(const void *aa, const void *bb){
 
 ///////////////////////////////////////////// Wang-Landau algorithm
 
-int get_flattened_index_wang_landau (double* current_state, double* observables_minimum_values, double* observables_maximum_values, double* delta_observables_values, int nr_collective_variables){
+int get_flattened_index_wang_landau (double* current_state, double* collective_variables_minimum_values, double* collective_variables_maximum_values, double* delta_collective_variables_values, int nr_collective_variables){
 	int index=-10; //negative number is not allowed as index and therefore indicates error
-	int individual_indices[nr_collective_variables];
+	int individual_indices[nr_collective_variables]; //pre result
 	int nr_subindices_of_collective_variable[nr_collective_variables];
 	
 
-	//check for the current state to be a allowed state in the [range observables_minimum_values:observables_maximum_values], else return a negative index
+	//check for the current state to be a allowed state in the [range collective_variables_minimum_values:collective_variables_maximum_values], else return a negative index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		if(current_state[collective_variable_i]>observables_maximum_values[collective_variable_i] || current_state[collective_variable_i]<observables_minimum_values[collective_variable_i])
-			return index;	
+		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i] || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i])
+			return index;
 	}
 
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		nr_subindices_of_collective_variable[collective_variable_i]=int((observables_maximum_values[collective_variable_i]-observables_minimum_values[collective_variable_i])/delta_observables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
-		for(int subindex_i=0;subindex_i<nr_subindices_of_collective_variable[collective_variable_i];subindex_i++){
-			if( current_state[collective_variable_i]-(subindex_i*delta_observables_values[collective_variable_i]+observables_minimum_values[collective_variable_i])<delta_observables_values[collective_variable_i]/100){
+		nr_subindices_of_collective_variable[collective_variable_i]=int((collective_variables_maximum_values[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
+		bool found_index=false;
+		for(int subindex_i=0;subindex_i<nr_subindices_of_collective_variable[collective_variable_i]-1;subindex_i++){
+			//printf("curr state %f looping value %f subindex %d\n",current_state[collective_variable_i],(subindex_i+1)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i], subindex_i);
+			if( current_state[collective_variable_i]<(subindex_i+1)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]){
 				individual_indices[collective_variable_i]=subindex_i;
+				//printf("chose subindex %d with value %f\n",subindex_i,(subindex_i)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]);
+				found_index=true;
 				break;
 			}
 		}
+		if(found_index==false){
+			individual_indices[collective_variable_i]=nr_subindices_of_collective_variable[collective_variable_i]-1;
+		}
 	}
+	//printf("current state: nbar %f energy %f nbar_i %d E_i %d\n",current_state[0],current_state[1],individual_indices[0],individual_indices[1]);
 	//get flattened index from individual_indices
-	index=individual_indices[0]; //this is already part of the algorithm to find the correct index
-	for(int collective_variable_i=1;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		int factor=0;
-		for(int j=0;j<collective_variable_i;j++){
-			factor+=nr_subindices_of_collective_variable[j];
+	index=0; //this is already part of the algorithm to find the correct index
+	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
+		int factor=1;
+		for(int j=collective_variable_i+1;j<nr_collective_variables;j++){
+			factor*=nr_subindices_of_collective_variable[j];
 		}
 		index+=factor*individual_indices[collective_variable_i];
 	}
-	
+
 	return index;
 }
 
@@ -625,26 +608,26 @@ int get_flattened_index_wang_landau_of_current_state(){
 	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
 		current_state[CV_i]=current_wang_landau_system.collective_variables[CV_i]->determine_current_state_in_collective_variable_with_index(CV_i);	
 	}
-	//get observables_minimum_values
-	double observables_minimum_values[nr_collective_variables];
-	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		observables_minimum_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->CV_minimum;	
-	}
-	//get observables_maximum_values
-	double observables_maximum_values[nr_collective_variables];
-	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		observables_maximum_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->CV_maximum;	
-	}
-	//get delta_observables_values
-	double delta_observables_values[nr_collective_variables];
-	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		delta_observables_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->delta_CV;	
-	}
-	int index=get_flattened_index_wang_landau(current_state, observables_minimum_values, observables_maximum_values, delta_observables_values, nr_collective_variables);
-	//printf("current_state %f, %d\n", current_state[0], index);
 
+	//get collective_variables_minimum_values
+	double collective_variables_minimum_values[nr_collective_variables];
+	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+		collective_variables_minimum_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->CV_minimum;	
+	}
+	//get collective_variables_maximum_values
+	double collective_variables_maximum_values[nr_collective_variables];
+	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+		collective_variables_maximum_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->CV_maximum;	
+	}
+	//get delta_collective_variables_values
+	double delta_collective_variables_values[nr_collective_variables];
+	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+		delta_collective_variables_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->delta_CV;	
+	}
+	int index=get_flattened_index_wang_landau(current_state, collective_variables_minimum_values, collective_variables_maximum_values, delta_collective_variables_values, nr_collective_variables);
 	return index;
 }
+
 
 wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 , \
 						.wang_landau_potential=NULL,.nr_collective_variables=0,\
@@ -652,7 +635,10 @@ wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 
  						.initial_wang_landau_parameter=1.0,.already_refined_n_times=0, \
  						.int_fill_value=-10,.double_fill_value=-10.0,\
  						.number_of_monte_carlo_moves_between_check_of_convergence=5000, .final_wang_landau_parameter=0.00001,\
- 						.monte_carlo_trial_moves=0, .wang_landau_relaxation_steps=40
+ 						.monte_carlo_trial_moves=0, .wang_landau_relaxation_steps=40,\
+ 						.output_filename=NULL,\
+ 						.minimum_energies_at_flat_index=NULL, .maximum_energies_at_flat_index=NULL,\
+ 						.do_energy_reweighting=false
  						};//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential, use only 40 wang landau relaxation_steps in order to avoid moving the system too much out of equilibrium i.e. that it avoids a too big perturbation in the charge (degree of association) of the polymer. A small perturbation ensures that the the equilibrium can be reached within a small number of molecular dynamic integration steps.
 
 double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value, double delta_CV) {
@@ -678,23 +664,23 @@ double calculate_delta_degree_of_association(int index_of_current_collective_var
 }
 
 int* initialize_histogram(){
-	int needed_bins=0;
+	int needed_bins=1;
 	for(int CV_i=0;CV_i<current_wang_landau_system.nr_collective_variables;CV_i++){
 		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[CV_i];
-		needed_bins+=int((current_collective_variable->CV_maximum-current_collective_variable->CV_minimum)/current_collective_variable->delta_CV)+1; // plus 1 needed for degrees of association related part of histogram (think of only one acid particle) 
+		needed_bins*=int((current_collective_variable->CV_maximum-current_collective_variable->CV_minimum)/current_collective_variable->delta_CV)+1; // plus 1 needed for degrees of association related part of histogram (think of only one acid particle)
 	}
 	int* histogram =(int*) calloc(1,sizeof(int)*needed_bins); //calloc initializes everything to zero
-	current_wang_landau_system.len_histogram=needed_bins; //TODO think of energy collective variables, make not allowed entries negative
+	current_wang_landau_system.len_histogram=needed_bins;
 	return histogram;
 }
 
 double* initialize_wang_landau_potential(){
-	int needed_bins=0;
+	int needed_bins=1;
 	for(int CV_i=0;CV_i<current_wang_landau_system.nr_collective_variables;CV_i++){
 		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[CV_i];
-		needed_bins+=int((current_collective_variable->CV_maximum-current_collective_variable->CV_minimum)/current_collective_variable->delta_CV)+1; // plus 1 needed for degrees of association related part of histogram (think of only one acid particle) 
+		needed_bins*=int((current_collective_variable->CV_maximum-current_collective_variable->CV_minimum)/current_collective_variable->delta_CV)+1; // plus 1 needed for degrees of association related part of histogram (think of only one acid particle) 
 	}
-	double* wang_landau_potential =(double*) calloc(1,sizeof(double)*needed_bins); //calloc initializes everything to zero //TODO think of energy collective variables, make not allowed entries negative
+	double* wang_landau_potential =(double*) calloc(1,sizeof(double)*needed_bins); //calloc initializes everything to zero
 	return wang_landau_potential;
 }
 
@@ -715,23 +701,90 @@ double calculate_degree_of_association(int index_of_current_collective_variable)
 	return degree_of_association;
 }
 
+double find_minimum(double* list, int len){
+	double minimum =list[0];
+	for (int i=0;i<len;i++){
+		if(list[i]<minimum)
+			minimum=list[i];	
+	}
+	return minimum;
+}
+
+double find_maximum(double* list, int len){
+	double maximum =list[0];
+	for (int i=0;i<len;i++){
+		if(list[i]>maximum)
+			maximum=list[i];	
+	}
+	return maximum;
+}
+
+int get_flattened_index_wang_landau_without_energy_collective_variable(int flattened_index_with_energy_collective_variable, int collective_variable_index_energy_observable);//needed for energy collective variable
+void unravel_index(int* len_dims, int ndims, int flattened_index, int* unraveled_index_out); //needed for writing results and energy collective variable
+
 int initialize_wang_landau(){
 	
 	//initialize seed of random generator automatically by espresso
 	long *seed = (long *) malloc(n_nodes*sizeof(long));
 	mpi_random_seed(0,seed);
 	free(seed);
-
 	//initialize deltas for collective variables which are of the type of a degree of association
+	int energy_collective_variable_index=-10;
+	double* min_boundaries_energies=NULL;
+	double* max_boundaries_energies=NULL;
 	for(int collective_variable_i=0; collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
 		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[collective_variable_i];
-		if(current_collective_variable->corresponding_acid_types==NULL)
-			continue; //(found a collective variable which is not of the type of a degree of association)	
-		current_collective_variable->delta_CV=calculate_delta_degree_of_association(collective_variable_i);
+		if(current_collective_variable->corresponding_acid_types!=NULL){
+			//found a collective variable which is not of the type of a degree_of_association
+			current_collective_variable->delta_CV=calculate_delta_degree_of_association(collective_variable_i);
+		}
+		
+		int flattened_index_previous_run=0; //len_histogram of energy preparation run
+		if(current_collective_variable->energy_boundaries_filename!=NULL){
+			current_wang_landau_system.do_energy_reweighting=true;
+			energy_collective_variable_index=collective_variable_i;
+			//found a collective variable which is not of the type of an energy
+			//load energy boundaries from file
+			FILE* pFile;
+			pFile = fopen(current_collective_variable->energy_boundaries_filename,"r");
+			if (pFile==NULL){
+				printf("ERROR: energy boundaries file for the specific system could not be read.\n");
+				exit(0);
+				// Note that you cannot change the other collective variables in the pre-production run and the production run
+				return false;
+			}
+			//save minimum and maximum energies as a function of the other collective variables under current_wang_landau_system.energ...
+			char *line = NULL;
+			size_t len = 0;
+			ssize_t length_line;
+			char* delim="\t ";
+			while ((length_line = getline(&line, &len, pFile)) != -1) {
+				int counter_words_in_line=0;
+				for(char* word=strtok(line,delim);word!=NULL;word=strtok(NULL,delim)){
+					if(counter_words_in_line<current_wang_landau_system.nr_collective_variables-1){
+						counter_words_in_line+=1;
+						continue;
+					}else if(counter_words_in_line==current_wang_landau_system.nr_collective_variables-1){
+						double energy_boundary_minimum=atof(word);
+						counter_words_in_line+=1;
+						min_boundaries_energies=(double*) realloc(min_boundaries_energies,sizeof(double)*(flattened_index_previous_run+1));			
+						min_boundaries_energies[flattened_index_previous_run]=energy_boundary_minimum;
+					}else if(counter_words_in_line==current_wang_landau_system.nr_collective_variables){
+						double energy_boundary_maximum=atof(word);
+						max_boundaries_energies=(double*) realloc(max_boundaries_energies,sizeof(double)*(flattened_index_previous_run+1));				
+						max_boundaries_energies[flattened_index_previous_run]=energy_boundary_maximum;
+						counter_words_in_line+=1;							
+					}
+					
+				}
+				flattened_index_previous_run+=1;		
+			}
+			
+			current_collective_variable->CV_minimum=find_minimum(min_boundaries_energies,flattened_index_previous_run);
+			current_collective_variable->CV_maximum=find_maximum(max_boundaries_energies,flattened_index_previous_run);
+		}
 	}
 
-	//TODO load deltas from file for collective variables which are of type of a energy
-	//TODO make values in histogram and wang landau potential negative if they are not allowed at the given degree of association
 
 	//construct (possibly higher dimensional) histogram over Gamma (the room which should be equally sampled when the wang-landau algorithm has converged)
 	current_wang_landau_system.histogram=initialize_histogram();
@@ -739,12 +792,40 @@ int initialize_wang_landau(){
 	//construct (possibly higher dimensional) wang_landau potential over Gamma (the room which should be equally sampled when the wang-landau algorithm has converged)
 	current_wang_landau_system.wang_landau_potential=initialize_wang_landau_potential();
 	
+	if(energy_collective_variable_index>=0){
+		//make values in histogram and wang landau potential negative if they are not allowed at the given degree of association, because the energy boundaries prohibit them
+
+		int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
+		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
+			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
+		}
+
+		for(int flattened_index=0;flattened_index<current_wang_landau_system.len_histogram;flattened_index++){
+			//unravel index
+			int unraveled_index[current_wang_landau_system.nr_collective_variables];
+			unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
+			//use unraveled index
+			double current_energy=unraveled_index[energy_collective_variable_index]*current_wang_landau_system.collective_variables[energy_collective_variable_index]->delta_CV+current_wang_landau_system.collective_variables[energy_collective_variable_index]->CV_minimum;
+			if(current_energy>max_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)] || current_energy<min_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)]){
+				current_wang_landau_system.histogram[flattened_index]=current_wang_landau_system.int_fill_value;
+				current_wang_landau_system.wang_landau_potential[flattened_index]=current_wang_landau_system.double_fill_value;			
+			}
+		}
+
+	}
+
 	//assign determine_current_state_in_this_collective_variable function pointers to correct function
 	for(int collective_variable_i=0; collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
 		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[collective_variable_i];
-		if(current_collective_variable->corresponding_acid_types==NULL)
-			continue; //(found a collective variable which is not of the type of a degree of association)	
-		current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_degree_of_association;
+		if(current_collective_variable->corresponding_acid_types!=NULL){
+			//found a collective variable which is not of the type of a degree_of_association association)	
+			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_degree_of_association;
+		}
+		if(current_collective_variable->energy_boundaries_filename!=NULL){
+			//found a collective variable which is not of the type of an energy
+			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_current_potential_energy_of_system;
+		}
+		
 	}
 	
 	return true;
@@ -758,7 +839,8 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	if(modify_wang_landau_potential==true && old_state_index>=0){
-		current_wang_landau_system.monte_carlo_trial_moves+=1;	
+		if(current_wang_landau_system.histogram[old_state_index]>=0)
+			current_wang_landau_system.monte_carlo_trial_moves+=1;	
 	}
 
 
@@ -766,35 +848,21 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	//A+B+...+G +... --> K+...X + Z +...
 	//you need to use 2A --> B instead of A+A --> B since in the last case you assume distinctness of the particles
 	//further it is crucial for the function in which order you provide the educt and product types since particles will be replaced correspondingly!
-	
 	if (all_educt_particles_exist(reaction_id) ==false ) {
 		//makes sure, no incomplete reaction is performed -> only need to consider rollback of complete reactions
 
 		//increase the wang landau potential and histogram at the current nbar (this case covers the cases nbar=0 or nbar=1)
 		if(modify_wang_landau_potential==true && old_state_index>=0 ){
-			current_wang_landau_system.histogram[old_state_index]+=1;
-			current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
+			if(current_wang_landau_system.histogram[old_state_index]>=0){
+				current_wang_landau_system.histogram[old_state_index]+=1;
+				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
+			}
 		}
 		
 		return 0;
 	}
-	
 	//calculate potential energy
-	if (total_energy.init_status == 0) {
-		init_energies(&total_energy);
-		master_energy_calc();
-	}
-  	int num_energies=total_energy.data.n;
-	double kinetic_energy =total_energy.data.e[0];
-	double sum_all_energies=0;
-	for(int i=0;i<num_energies;i++){
-		sum_all_energies+= total_energy.data.e[i];
-	}
-	for (int i = 0; i < n_external_potentials; i++) {
-        	sum_all_energies += external_potentials[i].energy;
-        }
-	
-	double E_pot_old=sum_all_energies-kinetic_energy; //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
+	double E_pot_old=calculate_current_potential_energy_of_system(0); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
 	
 	//find reacting molecules in educts and save their properties for later recreation if step is not accepted
 	//do reaction
@@ -809,7 +877,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		int index_of_water_type=find_index_of_type(current_reaction_system.water_type);
 		old_particle_numbers[index_of_water_type]=int(convert_conc_mol_to_vol(1,1) *55.5*volume); // TODO need for correct call of convert_conc_mol_to_vol, setup current_reaction_system.len_sim, current_reaction_system.len_real
 	}
-		
 	int* p_ids_created_particles =NULL;
 	int len_p_ids_created_particles=0;
 	float* hidden_particles_properties=NULL;
@@ -824,11 +891,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		for(int j=0;j<min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
 			int p_id ;
 			find_particle_type(current_reaction->educt_types[i], &p_id);
-			if(changed_particles_properties==NULL){
-				changed_particles_properties=(float*) malloc(sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);			
-			}else{
-				changed_particles_properties=(float*) realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
-			}
+			changed_particles_properties=(float*) realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(float) p_id;
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
@@ -843,11 +906,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				while(p_id == -1) {
 					p_id=create_particle(current_reaction->product_types[i]);
 				}
-				if(p_ids_created_particles==NULL){
-					p_ids_created_particles=(int*) malloc(sizeof(int)*(len_p_ids_created_particles+1));
-				}else{
-					p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				}
+				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
 				p_ids_created_particles[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
 			}
@@ -855,11 +914,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			for(int j=0;j<current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i];j++) {
 				int p_id ;
 				find_particle_type(current_reaction->educt_types[i], &p_id);
-				if(hidden_particles_properties==NULL){
-					hidden_particles_properties=(float*) malloc(sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);			
-				}else{
-					hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				}
+				hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
@@ -876,11 +931,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
 				int p_id ;
 				find_particle_type(current_reaction->educt_types[i], &p_id);
-				if(hidden_particles_properties==NULL){
-					hidden_particles_properties=(float*) malloc(sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);			
-				}else{
-					hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				}
+				hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
@@ -894,35 +945,16 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				while (p_id == -1) {
 					p_id= create_particle(current_reaction->product_types[i]);
 				}
-				if(p_ids_created_particles==NULL){
-					p_ids_created_particles=(int*) malloc(sizeof(int)*(len_p_ids_created_particles+1));				
-				}else{
-					p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				}
+				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
 				p_ids_created_particles[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
 			}
 		}
 	}
-	if (total_energy.init_status == 0) {
-		init_energies(&total_energy);
-		master_energy_calc();
-	}	
-	//calculate potential energy
-  	num_energies=total_energy.data.n;
-	kinetic_energy =total_energy.data.e[0];
-	sum_all_energies=0;
-	for(int i=0;i<num_energies;i++){
-		sum_all_energies+= total_energy.data.e[i];
-	}
-	for (int i = 0; i < n_external_potentials; i++) {
-        	sum_all_energies += external_potentials[i].energy;
-        }
 	
-	double E_pot_new=sum_all_energies-kinetic_energy;
+	double E_pot_new=calculate_current_potential_energy_of_system(0);
 	//save new_state_index
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
-	//printf("new state %d\n",new_state_index);
 	
 	double factorial_expr=1.0;
 	//factorial contribution of educts
@@ -937,16 +969,29 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		int N_i0= old_particle_numbers[find_index_of_type(current_reaction->product_types[i])];
 		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
 	}
-
 	double beta =1.0/temperature;
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	//calculate boltzmann factor
-	double bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
+	double bf;
+	if(current_wang_landau_system.do_energy_reweighting==false){
+		bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
+	}else{
+		bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr;
+	}
 	//determine the acceptance probabilities of the reaction move
 	if(old_state_index>=0 && new_state_index>=0){
-			printf("old_particle_numbers %d new_state_index %d\n", old_state_index, new_state_index);
-		bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
-		//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
+		if(current_wang_landau_system.wang_landau_potential[new_state_index]>=0 &&current_wang_landau_system.wang_landau_potential[old_state_index]>=0 ){
+			bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
+			//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
+		}else{
+			if(current_wang_landau_system.wang_landau_potential[new_state_index]>=0 &&current_wang_landau_system.wang_landau_potential[old_state_index]<0 )
+				bf=10;//this makes the reaction get accepted, since we found a state in Gamma
+			else if (current_wang_landau_system.wang_landau_potential[new_state_index]<0 &&current_wang_landau_system.wang_landau_potential[old_state_index]<0)
+				bf=10;//accept, in order to be able to sample new configs, which might lie in Gamma
+			else if(current_wang_landau_system.wang_landau_potential[new_state_index]<0 &&current_wang_landau_system.wang_landau_potential[old_state_index]>=0)
+				bf=-10;//this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
+		}
+		
 	}else if(old_state_index<0 && new_state_index>=0){
 		bf=10;	//this makes the reaction get accepted, since we found a state in Gamma
 	}else if(old_state_index<0 && new_state_index<0){
@@ -954,13 +999,21 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	}else if(old_state_index>0 && new_state_index<0){
 		bf=-10; //this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
 	}
-		
 	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept
 		if(modify_wang_landau_potential==true&&new_state_index>=0 ){
-			current_wang_landau_system.histogram[new_state_index]+=1;
-			current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
+			if(current_wang_landau_system.histogram[new_state_index]>=0){
+				current_wang_landau_system.histogram[new_state_index]+=1;
+				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
+//				printf("new_state_index %d \n",new_state_index);
+//								int nr_collective_variables=current_wang_landau_system.nr_collective_variables;
+//				double current_state[nr_collective_variables];
+//				for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+//					current_state[CV_i]=current_wang_landau_system.collective_variables[CV_i]->determine_current_state_in_collective_variable_with_index(CV_i);
+//				}
+//				printf("nbar %f E %f\n",current_state[0],current_state[1]);
+			}
 		}
 
 		//delete hidden educt_particles (remark: dont delete changed particles)
@@ -972,8 +1025,10 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	} else {
 		//reject
 		if(modify_wang_landau_potential==true && old_state_index>=0){
-			current_wang_landau_system.histogram[old_state_index]+=1;
-			current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
+			if(current_wang_landau_system.histogram[old_state_index]>=0){
+				current_wang_landau_system.histogram[old_state_index]+=1;
+				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
+			}
 		}
 		//reverse reaction
 		//1) delete created product particles
@@ -1001,6 +1056,16 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			//set type
 			set_particle_type(p_id, type);
 		}
+		
+		
+//		printf("old_state_index %d \n",old_state_index);
+//				int nr_collective_variables=current_wang_landau_system.nr_collective_variables;
+//				double current_state[nr_collective_variables];
+//				for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+//					current_state[CV_i]=current_wang_landau_system.collective_variables[CV_i]->determine_current_state_in_collective_variable_with_index(CV_i);
+//				}
+//		printf("nbar %f E %f\n",current_state[0],current_state[1]);
+		
 		reaction_is_accepted= 0;
 	}
 
@@ -1009,7 +1074,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	free(p_ids_created_particles);
 	free(hidden_particles_properties);
 	free(old_particle_numbers);
-	
 	return reaction_is_accepted;
 
 
@@ -1023,30 +1087,26 @@ bool achieved_desired_number_of_refinements_one_over_t ();
 void refine_wang_landau_parameter_one_over_t();
 
 int do_reaction_wang_landau(){
-	if (this_node == 0) {
-		bool modify_wang_landau_potential =true;
-		int reaction_id;
-		for(int i=0;i<current_wang_landau_system.wang_landau_relaxation_steps;i++){
-			reaction_id=i_random(current_reaction_system.nr_single_reactions);
-			generic_oneway_reaction_wang_landau(reaction_id,modify_wang_landau_potential);
-			if(i==0)
-				modify_wang_landau_potential=false;		
-		}
-		//check for convergence
-		if(achieved_desired_number_of_refinements_one_over_t()==true){
-			write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
-			exit(0);
-		}
-		if(can_refine_wang_landau_one_over_t()&& current_wang_landau_system.monte_carlo_trial_moves%(10*current_wang_landau_system.len_histogram)==0){
-			refine_wang_landau_parameter_one_over_t();
-		}
+	bool modify_wang_landau_potential =true;
+	int reaction_id;
+	for(int i=0;i<current_wang_landau_system.wang_landau_relaxation_steps;i++){
+		reaction_id=i_random(current_reaction_system.nr_single_reactions);
+		generic_oneway_reaction_wang_landau(reaction_id,modify_wang_landau_potential);
+//		if(i==0)
+//			modify_wang_landau_potential=false;
+	}
+	//check for convergence
+	if(achieved_desired_number_of_refinements_one_over_t()==true){
+		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
+	}
+	if(can_refine_wang_landau_one_over_t()&& current_wang_landau_system.monte_carlo_trial_moves%(10*current_wang_landau_system.len_histogram)==0){
+		refine_wang_landau_parameter_one_over_t();
+	}
 
-
-		//write out preliminary results
-		if(current_wang_landau_system.monte_carlo_trial_moves%(15*current_wang_landau_system.len_histogram)==0 || current_wang_landau_system.monte_carlo_trial_moves%(int(10000/current_wang_landau_system.len_histogram)+1)==0){
-			//the first criterion is for small systems, the second one for big systems
-			write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
-		}
+	//write out preliminary results
+	if(current_wang_landau_system.monte_carlo_trial_moves%(15*current_wang_landau_system.len_histogram)==0 || current_wang_landau_system.monte_carlo_trial_moves%(int(10000/current_wang_landau_system.len_histogram)+1)==0){
+		//the first criterion is for small systems, the second one for big systems
+		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
 	return 0;	
 };
@@ -1061,9 +1121,16 @@ void free_wang_landau(){
 		if(current_collective_variable->corresponding_acid_types!=NULL) { //check wether we have a collective variable which is of the type of a degree of association
 			free(current_collective_variable->corresponding_acid_types);
 		}
+		if(current_collective_variable->energy_boundaries_filename!=NULL){//check wether we have a collective variable which is of the type of an energy
+			free(current_collective_variable->energy_boundaries_filename);
+		}
 	}
 	free(current_wang_landau_system.collective_variables);
 	free(current_wang_landau_system.output_filename);
+	if(current_wang_landau_system.minimum_energies_at_flat_index!=NULL) //only present in energy preparation run
+		free(current_wang_landau_system.minimum_energies_at_flat_index);
+	if(current_wang_landau_system.maximum_energies_at_flat_index!=NULL)
+		free(current_wang_landau_system.maximum_energies_at_flat_index);	
 
 
 }
@@ -1083,15 +1150,11 @@ double average_int_list(int* int_number_list, int len_int_nr_list){
 	return result/counter_allowed_entries;
 }
 
-int find_minimum_in_int_list(int* int_number_list, int len_int_nr_list){
-	int copy_int_number_list[len_int_nr_list];
-	memcpy(copy_int_number_list,int_number_list,len_int_nr_list*sizeof(int));
-	qsort(copy_int_number_list, len_int_nr_list, sizeof(int), intcmp); //changes content in place, therefore work with copy of int_number_list 
-	int minimum=-10;
-	int i=1;
-	while(minimum<0){ //checks for validity of index i (think of energy collective variables, in a cubic memory layout there will be indices which are not allowed by the energy boundaries. These values will be initalized with a negative fill value)
-		minimum=copy_int_number_list[len_int_nr_list-i];
-		i+=1;
+int find_minimum_in_int_list(int* list, int len){
+	double minimum =list[0];
+	for (int i=0;i<len;i++){
+		if(list[i]<minimum)
+			minimum=list[i];	
 	}
 	return minimum;
 }
@@ -1172,9 +1235,91 @@ void write_wang_landau_results_to_file(char* full_path_to_output_filename){
 		fclose(pFile);
 	}
 
-
-
-	
-	
 }
 
+int update_maximum_and_minimum_energies_at_current_state(){
+	if(current_wang_landau_system.minimum_energies_at_flat_index==NULL || current_wang_landau_system.maximum_energies_at_flat_index==NULL){
+		current_wang_landau_system.minimum_energies_at_flat_index=(double*) calloc(1,sizeof(double)*current_wang_landau_system.len_histogram);
+		current_wang_landau_system.maximum_energies_at_flat_index=(double*) calloc(1,sizeof(double)*current_wang_landau_system.len_histogram);
+		for (int i = 0; i < current_wang_landau_system.len_histogram; i++){
+ 	 		current_wang_landau_system.minimum_energies_at_flat_index[i] =current_wang_landau_system.double_fill_value;
+ 	 		current_wang_landau_system.maximum_energies_at_flat_index[i] =current_wang_landau_system.double_fill_value;
+		}
+	}
+	
+	
+	//calculate potential energy
+	double E_pot_current=calculate_current_potential_energy_of_system(0);
+	int index=get_flattened_index_wang_landau_of_current_state();
+	
+	//update stored energy values
+	if (E_pot_current<current_wang_landau_system.minimum_energies_at_flat_index[index]|| abs(current_wang_landau_system.minimum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001 ) {
+		current_wang_landau_system.minimum_energies_at_flat_index[index]=E_pot_current;
+	}
+	if (E_pot_current>current_wang_landau_system.maximum_energies_at_flat_index[index]) {
+		current_wang_landau_system.maximum_energies_at_flat_index[index]= E_pot_current;
+	}
+	
+
+	return 0;
+}
+
+int write_out_preliminary_energy_run_results (char* full_path_to_output_filename) {
+	FILE* pFile;
+	pFile = fopen(full_path_to_output_filename,"w");
+	if (pFile==NULL){
+		printf("ERROR: Wang-Landau file could not be written\n");
+	}else{
+		int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
+		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
+			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
+		}
+	
+		for(int flattened_index=0;flattened_index<current_wang_landau_system.len_histogram;flattened_index++){
+			//unravel index
+			int unraveled_index[current_wang_landau_system.nr_collective_variables];
+			unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
+			//use unraveled index
+			for(int i=0;i<current_wang_landau_system.nr_collective_variables;i++){
+				fprintf(pFile, "%f ",unraveled_index[i]*current_wang_landau_system.collective_variables[i]->delta_CV+current_wang_landau_system.collective_variables[i]->CV_minimum);
+			}
+			fprintf(pFile, "%f %f \n", current_wang_landau_system.minimum_energies_at_flat_index[flattened_index], current_wang_landau_system.maximum_energies_at_flat_index[flattened_index]);
+		}
+		fclose(pFile);
+	}
+}
+
+
+int get_flattened_index_wang_landau_without_energy_collective_variable(int flattened_index_with_energy_collective_variable, int collective_variable_index_energy_observable){
+	int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
+		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
+			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
+		}
+	//unravel index
+	int unraveled_index[current_wang_landau_system.nr_collective_variables];
+	unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index_with_energy_collective_variable,unraveled_index);
+	//use unraveled index
+	int nr_collective_variables=current_wang_landau_system.nr_collective_variables-1; //forget the last collective variable (the energy collective variable)
+	double current_state[nr_collective_variables];
+	for(int i=0;i<nr_collective_variables;i++){
+		current_state[i]=unraveled_index[i]*current_wang_landau_system.collective_variables[i]->delta_CV+current_wang_landau_system.collective_variables[i]->CV_minimum;
+	}
+	
+	//get collective_variables_minimum_values
+	double collective_variables_minimum_values[nr_collective_variables];
+	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+		collective_variables_minimum_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->CV_minimum;	
+	}
+	//get collective_variables_maximum_values
+	double collective_variables_maximum_values[nr_collective_variables];
+	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+		collective_variables_maximum_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->CV_maximum;	
+	}
+	//get delta_collective_variables_values
+	double delta_collective_variables_values[nr_collective_variables];
+	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+		delta_collective_variables_values[CV_i]=current_wang_landau_system.collective_variables[CV_i]->delta_CV;	
+	}
+	int index=get_flattened_index_wang_landau(current_state, collective_variables_minimum_values, collective_variables_maximum_values, delta_collective_variables_values, nr_collective_variables);
+	return index;
+}

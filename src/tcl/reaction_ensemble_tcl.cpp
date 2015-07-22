@@ -62,7 +62,6 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 		argc-=2; argv+=2;
 	}
 	if(ARG1_IS_S("educt_types")){
-		printf("educt_types\n");
 		argc-=1; argv+=1;
 		int next_added_type;
 		int* educt_types=(int*)malloc(sizeof(int));
@@ -79,7 +78,6 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 		return TCL_ERROR;
 	}
 	if(ARG1_IS_S("educt_coefficients")){
-		printf("educt_coefficients\n");
 		argc-=1; argv+=1;
 		int next_added_type_coeff;
 		int* educt_coefficients=(int*) malloc(sizeof(int));
@@ -95,7 +93,6 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 		return TCL_ERROR;
 	}
 	if(ARG1_IS_S("product_types")){
-		printf("product_types\n");
 		argc-=1; argv+=1;
 		int next_added_type;
 		int* product_types=(int*)malloc(sizeof(int));
@@ -112,7 +109,6 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 		return TCL_ERROR;
 	}
 	if(ARG1_IS_S("product_coefficients")){
-		printf("product_types\n");
 		argc-=1; argv+=1;
 		int next_added_type_coeff;
 		int* product_coefficients=(int*) malloc(sizeof(int));
@@ -205,7 +201,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				if(ARG1_IS_S("add")){
 					argc-=1;
 					argv+=1;
-					collective_variable* new_collective_variable=(collective_variable*) malloc(sizeof(collective_variable));
+					collective_variable* new_collective_variable=(collective_variable*) calloc(1,sizeof(collective_variable));
 					if(ARG1_IS_S("degree_of_association")){
 						argc-=1;
 						argv+=1;
@@ -247,24 +243,32 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 							new_collective_variable->corresponding_acid_types=corresponding_acid_types;
 							new_collective_variable->nr_corresponding_acid_types=corresponding_type_counter;
 						}
-						if(current_wang_landau_system.collective_variables==NULL){
-							current_wang_landau_system.nr_collective_variables=1;
-							current_wang_landau_system.collective_variables=(collective_variable**) malloc(sizeof(collective_variable*)*current_wang_landau_system.nr_collective_variables);
-						}else{
-							current_wang_landau_system.nr_collective_variables+=1;
-							current_wang_landau_system.collective_variables=(collective_variable**) realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*current_wang_landau_system.nr_collective_variables);
-						}
-						current_wang_landau_system.collective_variables[current_wang_landau_system.nr_collective_variables-1]=new_collective_variable;
-										
 					}
 
 					if(ARG1_IS_S("energy")){
-						argc-=1; argv+=1;
 						//needs to be called after all other collective variables are known
-						char* energy_boundaries_file="energy_boundaries.dat"; //saves the energies in the format nbar_i \t nbar_j \t ... \t energy_min \t energy_max
-						printf("energy collective variables are not yet implemented\n");
+						argc-=1; argv+=1;
+						if(ARG1_IS_S("filename")){ //full path to file which saves the energies in the format nbar_i \t nbar_j \t ... \t energy_min \t energy_max
+							argc-=1; argv+=1;
+							int size_string=strlen(argv[1])+1;
+							char* energy_boundaries_filename =(char*)malloc(sizeof(char)*size_string);
+							strcpy(energy_boundaries_filename, argv[1]);
+							new_collective_variable->energy_boundaries_filename=energy_boundaries_filename;
+						}else{
+							return TCL_ERROR;
+						}
+						argc-=1; argv+=1;
+						if(ARG1_IS_S("delta")){
+							argc-=1; argv+=1;
+							ARG_IS_D(1,new_collective_variable->delta_CV);
+						}else{
+							return TCL_ERROR;
+						}
 					}
 
+					current_wang_landau_system.collective_variables=(collective_variable**) realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(current_wang_landau_system.nr_collective_variables+1));
+					current_wang_landau_system.nr_collective_variables+=1;
+					current_wang_landau_system.collective_variables[current_wang_landau_system.nr_collective_variables-1]=new_collective_variable;
 				}
 				
 				if(ARG1_IS_S("initialize")) {
@@ -293,6 +297,14 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				if(ARG1_IS_S("free")) {
 					//needs to be called after all observables are added
 					free_wang_landau();
+				}
+				
+				if(ARG1_IS_S("update_maximum_and_minimum_energies_at_current_state")){
+					update_maximum_and_minimum_energies_at_current_state();
+				}
+				if(ARG1_IS_S("write_out_preliminary_energy_run_results")){
+					argc-=1; argv+=1;
+					write_out_preliminary_energy_run_results(argv[1]);
 				}
 
 				
