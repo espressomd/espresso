@@ -206,7 +206,7 @@ void gpu_change_number_of_part_to_comm() {
 #ifdef ENGINE
       cuda_safe_mem(cudaHostAlloc((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs), cudaHostAllocWriteCombined));
 #endif
-#ifdef DIPOLES
+#if (defined DIPOLES || defined ROTATION) 
       cudaHostAlloc((void**)&particle_torques_host, global_part_vars_host.number_of_particles * 3*sizeof(float), cudaHostAllocWriteCombined);
 #endif
 
@@ -219,8 +219,8 @@ void gpu_change_number_of_part_to_comm() {
 #ifdef ENGINE
       cuda_safe_mem(cudaMallocHost((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs)));
 #endif
-#ifdef DIPOLES
-      cudaMallocHost((void**)&particle_torques_host, global_part_vars_host.number_of_particles * 3*sizeof(float));
+#ifdef ROTATION
+      cuda_safe_mem(cudaMallocHost((void**)&particle_torques_host, global_part_vars_host.number_of_particles * 3*sizeof(float)));
 #endif
 #ifdef SHANCHEN
       cuda_safe_mem(cudaMallocHost((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition)));
