@@ -573,16 +573,12 @@ int get_flattened_index_wang_landau (double* current_state, double* collective_v
 
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
 		nr_subindices_of_collective_variable[collective_variable_i]=int((collective_variables_maximum_values[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
-		bool found_index=false;
-		for(int subindex_i=0;subindex_i<nr_subindices_of_collective_variable[collective_variable_i]-1;subindex_i++){
-			if( current_state[collective_variable_i]<(subindex_i+1)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]){
+		for(int subindex_i=0;subindex_i<nr_subindices_of_collective_variable[collective_variable_i];subindex_i++){
+			if( current_state[collective_variable_i]<subindex_i*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]/100){
+				//+delta_collective_variables_values[collective_variable_i]/100 is due to numeric reasons
 				individual_indices[collective_variable_i]=subindex_i;
-				found_index=true;
 				break;
 			}
-		}
-		if(found_index==false){
-			individual_indices[collective_variable_i]=nr_subindices_of_collective_variable[collective_variable_i]-1;
 		}
 	}
 	//printf("current state:nbar %f energy %f nbar_i %d E_i %d\n",current_state[0],current_state[1],individual_indices[0],individual_indices[1]);
@@ -595,6 +591,7 @@ int get_flattened_index_wang_landau (double* current_state, double* collective_v
 		}
 		index+=factor*individual_indices[collective_variable_i];
 	}
+	//printf("curr %f index %d individual_indices %d\n",current_state[0], index,individual_indices[0]);
 	return index;
 }
 
@@ -1245,7 +1242,7 @@ int update_maximum_and_minimum_energies_at_current_state(){
 	return 0;
 }
 
-int write_out_preliminary_energy_run_results (char* full_path_to_output_filename) {
+void write_out_preliminary_energy_run_results (char* full_path_to_output_filename) {
 	FILE* pFile;
 	pFile = fopen(full_path_to_output_filename,"w");
 	if (pFile==NULL){

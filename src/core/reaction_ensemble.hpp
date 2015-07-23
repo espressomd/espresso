@@ -91,6 +91,6 @@ int initialize_wang_landau(); //may first be called after all collective variabl
 int do_reaction_wang_landau();
 void free_wang_landau();
 int update_maximum_and_minimum_energies_at_current_state(); //use for preliminary energy reweighting runs
-int write_out_preliminary_energy_run_results(char* filename);
+void write_out_preliminary_energy_run_results(char* filename);
 
 #endif /* ifdef REACTION_H */
