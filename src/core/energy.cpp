@@ -79,6 +79,7 @@ void init_energies(Observable_stat *stat)
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:   n_dipolar = 2; break;
  case DIPOLAR_MDLC_DS: n_dipolar=3; break;
  case DIPOLAR_DS:   n_dipolar = 2; break;
+ case DIPOLAR_DS_GPU:   n_dipolar = 2; break;
   }
 
 #endif
@@ -242,6 +243,9 @@ void calc_long_range_energies()
     break;
   case DIPOLAR_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
+    break;
+  case DIPOLAR_DS_GPU:
+    // Do nothing, it's an actor.
     break;
   case DIPOLAR_NONE:
       break;

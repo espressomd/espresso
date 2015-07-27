@@ -23,23 +23,25 @@ from _system cimport *
 cimport numpy as np
 from utils cimport *
 
-IF ELECTROSTATICS == 1:
+IF ELECTROSTATICS:
+    IF P3M:
+        from p3m_common cimport p3m_parameter_struct
     cdef extern from "interaction_data.hpp":
         cdef enum CoulombMethod:
             COULOMB_NONE, \
-            COULOMB_DH, \
-            COULOMB_P3M, \
-            COULOMB_MMM1D, \
-            COULOMB_MMM2D, \
-            COULOMB_MAGGS, \
-            COULOMB_ELC_P3M, \
-            COULOMB_RF, \
-            COULOMB_INTER_RF, \
-            COULOMB_P3M_GPU, \
-            COULOMB_MMM1D_GPU, \
-            COULOMB_EWALD_GPU, \
-            COULOMB_EK
-  
+                COULOMB_DH, \
+                COULOMB_P3M, \
+                COULOMB_MMM1D, \
+                COULOMB_MMM2D, \
+                COULOMB_MAGGS, \
+                COULOMB_ELC_P3M, \
+                COULOMB_RF, \
+                COULOMB_INTER_RF, \
+                COULOMB_P3M_GPU, \
+                COULOMB_MMM1D_GPU, \
+                COULOMB_EWALD_GPU, \
+                COULOMB_EK
+
         int coulomb_set_bjerrum(double bjerrum)
 
         ctypedef struct Coulomb_parameters:
@@ -49,7 +51,7 @@ IF ELECTROSTATICS == 1:
 
         cdef extern Coulomb_parameters coulomb
 
-    IF P3M == 1:
+    IF P3M:
         cdef extern from "p3m-common.hpp":
             ctypedef struct p3m_parameter_struct:
                 double alpha_L
@@ -68,7 +70,7 @@ IF ELECTROSTATICS == 1:
                 int    inter2
                 int    cao3
                 double additional_mesh[3]
-                
+
         cdef extern from "p3m.hpp":
             int p3m_set_params(double r_cut, int * mesh, int cao, double alpha, double accuracy)
             void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha, double accuracy, int n_interpol)
@@ -125,7 +127,7 @@ IF ELECTROSTATICS == 1:
         cdef inline python_p3m_adaptive_tune():
             cdef char * log = NULL
             cdef int response
-            response = p3m_adaptive_tune( & log)
+            response = p3m_adaptive_tune(& log)
             return response, log
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
@@ -168,7 +170,7 @@ IF ELECTROSTATICS == 1:
                 mesh = p_mesh
 
             p3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
-      
+
     cdef extern from "debye_hueckel.hpp":
         IF COULOMB_DEBYE_HUECKEL:
             ctypedef struct Debye_hueckel_params:
@@ -181,8 +183,47 @@ IF ELECTROSTATICS == 1:
             ctypedef struct Debye_hueckel_params:
                 double r_cut
                 double kappa
-                
+
         cdef extern Debye_hueckel_params dh_params
-        
+
         int dh_set_params(double kappa, double r_cut)
         int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha)
+
+IF ELECTROSTATICS and CUDA and EWALD_GPU:
+    cdef extern from "SystemInterface.hpp":
+        cdef cppclass SystemInterface:
+            SystemInterface()
+
+    cdef extern from "EspressoSystemInterface.hpp":
+        cdef cppclass EspressoSystemInterface:
+            @staticmethod
+            EspressoSystemInterface * _Instance()
+
+    cdef extern from "EwaldgpuForce.hpp":
+        cdef cppclass EwaldgpuForce:
+            EwaldgpuForce(EspressoSystemInterface & s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha)
+            int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha)
+            int set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps)
+            int adaptive_tune(char ** log, EspressoSystemInterface & s)
+            double tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N)
+            double tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N)
+            int determine_calc_time_steps()
+
+        ctypedef struct Ewaldgpu_params:
+            double rcut
+            int num_kx
+            int num_ky
+            int num_kz
+            double alpha
+            double accuracy
+            double precision
+            bint isTuned  # Tuning is over
+            bint isTunedFlag  # Flag tuning is over
+            int K_max  # Maximal reciprocal K-vector in tuning
+            int time_calc_steps  # Steps in time_force_calc function
+
+        cdef extern Ewaldgpu_params ewaldgpu_params
+
+        # ctypedef extern class EwaldgpuForce ewaldgpuForce
+#    cdef extern from "EspressoSystemInterface.cpp":
+#        cdef cppclass extern EspressoSystemInterface *EspressoSystemInterface;

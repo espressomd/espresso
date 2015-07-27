@@ -59,7 +59,7 @@ cdef extern from "statistics.hpp":
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef int calc_cylindrical_average(vector[double] center, vector[double] direction, double length,
                                       double radius, int bins_axial, int bins_radial, vector[int] types,
-                                      map[string, vector[vector[vector[double]]]]& distribution)
+                                      map[string, vector[vector[vector[double]]]] & distribution)
 
 
 cdef extern from "pressure.hpp":

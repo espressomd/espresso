@@ -19,6 +19,9 @@
 include "myconfig.pxi"
 # Non-bonded interactions
 
+include "myconfig.pxi"
+
+
 cdef class NonBondedInteraction(object):
 
     cdef public object _partTypes
@@ -476,7 +479,7 @@ class BondedInteractionNotDefined(object):
 class FeneBond(BondedInteraction):
 
     def typeNumber(self):
-        return 0
+        return BONDED_IA_FENE
 
     def typeName(self):
         return "FENE"
@@ -505,7 +508,7 @@ class FeneBond(BondedInteraction):
 class HarmonicBond(BondedInteraction):
 
     def typeNumber(self):
-        return 1
+        return BONDED_IA_HARMONIC
 
     def typeName(self):
         return "HARMONIC"
@@ -534,7 +537,7 @@ IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
 
         def typeNumber(self):
-            return 2
+            return BONDED_IA_HARMONIC_DUMBBELL
 
         def typeName(self):
             return "HARMONIC_DUMBBELL"
@@ -596,7 +599,7 @@ IF BOND_CONSTRAINT == 1:
     class RigidBond(BondedInteraction):
 
         def typeNumber(self):
-            return 3
+            return BONDED_IA_RIGID_BOND
 
         def typeName(self):
             return "RIGID"
@@ -627,7 +630,7 @@ ELSE:
 class Dihedral(BondedInteraction):
 
     def typeNumber(self):
-        return 5
+        return BONDED_IA_DIHEDRAL
 
     def typeName(self):
         return "DIHEDRAL"
@@ -656,7 +659,7 @@ IF TABULATED == 1:
     class Tabulated(BondedInteraction):
 
         def typeNumber(self):
-            return 6
+            return BONDED_IA_TABULATED
 
         def typeName(self):
             return "TABULATED"
@@ -713,7 +716,7 @@ IF TABULATED != 1:
 class Subt_Lj(BondedInteraction):
     IF LENNARD_JONES == 1:
         def typeNumber(self):
-            return 7
+            return BONDED_IA_SUBT_LJ
 
         def typeName(self):
             return "SUBT_LJ"
@@ -740,7 +743,7 @@ IF BOND_VIRTUAL == 1:
     class Virtual(BondedInteraction):
 
         def typeNumber(self):
-            return 9
+            return BONDED_IA_VIRTUAL_BOND
 
         def typeName(self):
             return "VIRTUAL"
@@ -768,7 +771,7 @@ IF BOND_ENDANGLEDIST == 1:
     class Endangledist(BondedInteraction):
 
         def typeNumber(self):
-            return 11
+            return BONDED_IA_ENDANGLEDIST
 
         def typeName(self):
             return "ENDANGLEDIST"
@@ -801,7 +804,7 @@ IF OVERLAPPED == 1:
     class Overlapped(BondedInteraction):
 
         def typeNumber(self):
-            return 12
+            return BONDED_IA_OVERLAPPED
 
         def typeName(self):
             return "OVERLAPPED"
@@ -832,28 +835,28 @@ IF BOND_ANGLE == 1:
     class Angle_Harmonic(BondedInteraction):
 
         def typeNumber(self):
-            return 13
+            return BONDED_IA_ANGLE_HARMONIC
 
-    def typeName(self):
-        return "ANGLE_HARMONIC"
+        def typeName(self):
+            return "ANGLE_HARMONIC"
 
-    def validKeys(self):
-        return "bend", "phi0"
+        def validKeys(self):
+            return "bend", "phi0"
 
-    def requiredKeys(self):
-        return "bend", "phi0"
+        def requiredKeys(self):
+            return "bend", "phi0"
 
-    def setDefaultParams(self):
-        self._params = {"bend": 0, "phi0": 0}
+        def setDefaultParams(self):
+            self._params = {"bend": 0, "phi0": 0}
 
-    def _getParamsFromEsCore(self):
-        return \
-            {"bend": bonded_ia_params[self._bondId].p.angle_harmonic.bend,
-             "phi0": bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
+        def _getParamsFromEsCore(self):
+            return \
+                {"bend": bonded_ia_params[self._bondId].p.angle_harmonic.bend,
+                 "phi0": bonded_ia_params[self._bondId].p.angle_harmonic.phi0}
 
-    def _setParamsInEsCore(self):
-        angle_harmonic_set_params(
-            self._bondId, self._params["bend"], self._params["phi0"])
+        def _setParamsInEsCore(self):
+            angle_harmonic_set_params(
+                self._bondId, self._params["bend"], self._params["phi0"])
 ELSE:
     class Angle_Harmonic(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
@@ -862,28 +865,28 @@ IF BOND_ANGLE == 1:
     class Angle_Cosine(BondedInteraction):
 
         def typeNumber(self):
-            return 14
+            return BONDED_IA_ANGLE_COSINE
 
-    def typeName(self):
-        return "ANGLE_COSINE"
+        def typeName(self):
+            return "ANGLE_COSINE"
 
-    def validKeys(self):
-        return "bend", "phi0"
+        def validKeys(self):
+            return "bend", "phi0"
 
-    def requiredKeys(self):
-        return "bend", "phi0"
+        def requiredKeys(self):
+            return "bend", "phi0"
 
-    def setDefaultParams(self):
-        self._params = {"bend": 0, "phi0": 0}
+        def setDefaultParams(self):
+            self._params = {"bend": 0, "phi0": 0}
 
-    def _getParamsFromEsCore(self):
-        return \
-            {"bend": bonded_ia_params[self._bondId].p.angle_cosine.bend,
-             "phi0": bonded_ia_params[self._bondId].p.angle_cosine.phi0}
+        def _getParamsFromEsCore(self):
+            return \
+                {"bend": bonded_ia_params[self._bondId].p.angle_cosine.bend,
+                 "phi0": bonded_ia_params[self._bondId].p.angle_cosine.phi0}
 
-    def _setParamsInEsCore(self):
-        angle_cosine_set_params(
-            self._bondId, self._params["bend"], self._params["phi0"])
+        def _setParamsInEsCore(self):
+            angle_cosine_set_params(
+                self._bondId, self._params["bend"], self._params["phi0"])
 ELSE:
     class Angle_Cosine(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
@@ -892,28 +895,28 @@ IF BOND_ANGLE == 1:
     class Angle_Cossquare(BondedInteraction):
 
         def typeNumber(self):
-            return 15
+            return BONDED_IA_ANGLE_COSSQUARE
 
-    def typeName(self):
-        return "ANGLE_COSSQUARE"
+        def typeName(self):
+            return "ANGLE_COSSQUARE"
 
-    def validKeys(self):
-        return "bend", "phi0"
+        def validKeys(self):
+            return "bend", "phi0"
 
-    def requiredKeys(self):
-        return "bend", "phi0"
+        def requiredKeys(self):
+            return "bend", "phi0"
 
-    def setDefaultParams(self):
-        self._params = {"bend": 0, "phi0": 0}
+        def setDefaultParams(self):
+            self._params = {"bend": 0, "phi0": 0}
 
-    def _getParamsFromEsCore(self):
-        return \
-            {"bend": bonded_ia_params[self._bondId].p.angle_cossquare.bend,
-             "phi0": bonded_ia_params[self._bondId].p.angle_cossquare.phi0}
+        def _getParamsFromEsCore(self):
+            return \
+                {"bend": bonded_ia_params[self._bondId].p.angle_cossquare.bend,
+                 "phi0": bonded_ia_params[self._bondId].p.angle_cossquare.phi0}
 
-    def _setParamsInEsCore(self):
-        angle_cossquare_set_params(
-            self._bondId, self._params["bend"], self._params["phi0"])
+        def _setParamsInEsCore(self):
+            angle_cossquare_set_params(
+                self._bondId, self._params["bend"], self._params["phi0"])
 ELSE:
     class Angle_Cossquare(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
@@ -922,7 +925,7 @@ ELSE:
 class Stretching_Force(BondedInteraction):
 
     def typeNumber(self):
-        return 16
+        return BONDED_IA_STRETCHING_FORCE
 
     def typeName(self):
         return "STRETCHING_FORCE"
@@ -949,7 +952,7 @@ class Stretching_Force(BondedInteraction):
 class Area_Force_Local(BondedInteraction):
 
     def typeNumber(self):
-        return 17
+        return BONDED_IA_AREA_FORCE_LOCAL
 
     def typeName(self):
         return "AREA_FORCE_LOCAL"
@@ -976,7 +979,7 @@ class Area_Force_Local(BondedInteraction):
 class Bending_Force(BondedInteraction):
 
     def typeNumber(self):
-        return 18
+        return BONDED_IA_BENDING_FORCE
 
     def typeName(self):
         return "BENDING_FORCE"
@@ -1003,7 +1006,7 @@ class Bending_Force(BondedInteraction):
 class Volume_Force(BondedInteraction):
 
     def typeNumber(self):
-        return 19
+        return BONDED_IA_VOLUME_FORCE
 
     def typeName(self):
         return "VOLUME_FORCE"
@@ -1030,7 +1033,7 @@ class Volume_Force(BondedInteraction):
 class Area_Force_Global(BondedInteraction):
 
     def typeNumber(self):
-        return 20
+        return BONDED_IA_AREA_FORCE_GLOBAL
 
     def typeName(self):
         return "AREA_FORCE_GLOBAL"
@@ -1057,7 +1060,7 @@ class Area_Force_Global(BondedInteraction):
 class Stretchlin_Force(BondedInteraction):
 
     def typeNumber(self):
-        return 21
+        return BONDED_IA_STRETCHLIN_FORCE
 
     def typeName(self):
         return "STRETCHLIN_FORCE"
@@ -1081,15 +1084,27 @@ class Stretchlin_Force(BondedInteraction):
             self._bondId, self._params["r0"], self._params["kslin"])
 
 
-bondedInteractionClasses = {0: FeneBond, 1: HarmonicBond, 2:
-                            HarmonicDumbbellBond, 3: RigidBond, 5:
-                            Dihedral, 6: Tabulated, 7: Subt_Lj, 9:
-                            Virtual, 11: Endangledist, 12: Overlapped,
-                            13: Angle_Harmonic, 14: Angle_Cosine, 15:
-                            Angle_Cossquare, 16: Stretching_Force, 17:
-                            Area_Force_Local, 18: Bending_Force, 19:
-                            Volume_Force, 20: Area_Force_Global, 21:
-                            Stretchlin_Force}
+bondedInteractionClasses = {
+    int(BONDED_IA_FENE): FeneBond,
+    int(BONDED_IA_HARMONIC): HarmonicBond,
+    int(BONDED_IA_HARMONIC_DUMBBELL): HarmonicDumbbellBond,
+    int(BONDED_IA_RIGID_BOND): RigidBond,
+    int(BONDED_IA_DIHEDRAL): Dihedral,
+    int(BONDED_IA_TABULATED): Tabulated,
+    int(BONDED_IA_SUBT_LJ):	Subt_Lj,
+    int(BONDED_IA_VIRTUAL_BOND): Virtual,
+    int(BONDED_IA_ENDANGLEDIST): Endangledist,
+    int(BONDED_IA_OVERLAPPED): Overlapped,
+    int(BONDED_IA_ANGLE_HARMONIC): Angle_Harmonic,
+    int(BONDED_IA_ANGLE_COSINE): Angle_Cosine,
+    int(BONDED_IA_ANGLE_COSSQUARE): Angle_Cossquare,
+    int(BONDED_IA_STRETCHING_FORCE): Stretching_Force,
+    int(BONDED_IA_AREA_FORCE_LOCAL): Area_Force_Local,
+    int(BONDED_IA_BENDING_FORCE): Bending_Force,
+    int(BONDED_IA_VOLUME_FORCE): Volume_Force,
+    int(BONDED_IA_AREA_FORCE_GLOBAL): Area_Force_Global,
+    int(BONDED_IA_STRETCHLIN_FORCE): Stretchlin_Force
+}
 
 
 class BondedInteractions:
@@ -1101,7 +1116,7 @@ class BondedInteractions:
     def __getitem__(self, key):
         if not isinstance(key, int):
             raise ValueError(
-                "Index to BondedInteractions[] hast to ba an integer referring to a bond id")
+                "Index to BondedInteractions[] hast to be an integer referring to a bond id")
 
         # Find out the type of the interaction from Espresso
         bondType = bonded_ia_params[key].type
@@ -1113,8 +1128,8 @@ class BondedInteractions:
 
         # Find the appropriate class representing such a bond
         bondClass = bondedInteractionClasses[bondType]
-        print bondType
-        print "  "
+        # print bondType
+        # print "  "
 
         # And return an instance of it, which refers to the bonded interaction
         # id in Espresso

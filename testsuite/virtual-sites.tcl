@@ -31,6 +31,7 @@ require_feature "VIRTUAL_SITES_NO_VELOCITY" off
 require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
 require_feature "ELECTROSTATICS"
 require_feature "LENNARD_JONES"
+require_feature "ROTATIONAL_INERTIA"
 
 puts "---------------------------------------------------------------"
 puts "- Testcase virtual-sites.tcl running on 1 nodes"
@@ -192,4 +193,4 @@ for {set i 0} {$i<10000} {incr i } {
 puts "OK: Handling of periodic boundaries"
 puts "OK: Velocities of outer particles add up to velocity of center of mass"
 
-exit 0
+

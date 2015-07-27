@@ -1043,7 +1043,7 @@ inline void check_particle_force(Particle *part) {
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.torque[i])) {
         ostringstream msg;
-        msg << "force on particle "<< part->p.identity << " was NAN.";
+        msg << "torque on particle "<< part->p.identity << " was NAN.";
         runtimeError(msg);
     }
   }

@@ -20,7 +20,8 @@ AM_DEFAULT_SOURCE_EXT = .cpp
 
 # Build rules for python libraries
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
-	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core
+	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core \
+	-I$(top_srcdir)/src/core/actor -I$(top_builddir)/scr/core/actor
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 LIBS =  $(top_builddir)/src/core/libEspresso.la \
 	@LIBS@
@@ -28,6 +29,9 @@ LIBS =  $(top_builddir)/src/core/libEspresso.la \
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
+
+#CYTHON compile options e.g. debug
+AM_CYFLAGS = $(CYFLAGS)
 
 # Build rules for cython
 SUFFIXES = .pyx
@@ -46,10 +50,14 @@ PYXFILES =  \
 	code_info.pyx \
 	cuda_init.pyx \
 	debye_hueckel.pyx \
+	electrokinetics.pyx \
 	electrostatic_extensions.pyx \
 	electrostatics.pyx \
 	integrate.pyx \
 	interactions.pyx \
+	lb.pyx \
+	magnetostatics.pyx \
+	magnetostatic_extensions.pyx \
 	particle_data.pyx \
 	thermostat.pyx \
 	utils.pyx
@@ -69,11 +77,15 @@ PXDFILES = \
 	integrate.pxd \
 	interactions.pxd \
 	lb.pxd \
+	magnetostatics.pxd \
+	magnetostatic_extensions.pxd \
+	p3m_common.pxd \
 	particle_data.pxd \
 	_system.pxd \
 	_tcl.pxd \
 	thermostat.pxd \
-	utils.pxd
+	utils.pxd \
+	actors.pxd
 
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
@@ -108,7 +120,7 @@ cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
 cython_verbose_0 = @echo "  CYTHON   $@";
 
 $(CPPFILES): %.cpp: %.pyx myconfig.pxi
-	$(cython_verbose)cython \
+	$(cython_verbose)cython $(CYFLAGS) --cplus \
 	  -I $(builddir) -I $(srcdir)/_espresso $< -o $@
 
 CLEANFILES += $(CPPFILES)

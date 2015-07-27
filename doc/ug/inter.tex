@@ -973,7 +973,6 @@ general tabulated potentials.
 	vtol=\arg{double}
 ]
 \end{pysyntax}
- \PythonSyntaxOff
 
 \begin{essyntax}
   inter \var{bondid}
@@ -1652,7 +1651,6 @@ If \var{K_\mathrm{cut}} and \var{r_\mathrm{cut}} are given by the user, then \ke
 \index{Debye-H\"uckel potential|mainindex}
 \index{interactions!Debye-H\"uckel|mainindex}
 
-\PythonSyntaxOn
 \begin{pysyntax}
   \object{
     electrostatics
@@ -1680,7 +1678,6 @@ If \var{K_\mathrm{cut}} and \var{r_\mathrm{cut}} are given by the user, then \ke
     }[
     ]
 \end{pysyntax}
-\PythonSyntaxOff
 
 \begin{essyntax}
     \require{1}{\variant{1}
@@ -2303,7 +2300,7 @@ In periodic systems, this method should only be used if it is not possible to us
 DLC, because those methods have a far better accuracy and are much faster.
 In a non-periodic system, the DAWAANR-method gives the exact result.
 
-\subsection{Magnetic Dipolar Direct Sum (MDDS)}
+\subsection{Magnetic Dipolar Direct Sum (MDDS) on CPU}
 \index{MDDS method|mainindex}
 \index{interactions!MDDS method|mainindex}
 
@@ -2324,7 +2321,28 @@ in all periodic directions is explicitly computed.
 As it is very slow, this method is not intended to do simulations,
 but rather to check the results you get from more efficient methods
 like P3M.
-  
+
+
+\subsection{Dipolar direct sum on gpu}
+\index{Dipolar direct sum on gpu|mainindex}
+
+\begin{essyntax}
+  inter magnetic \var{l_{B}} dds-gpu
+  \begin{features}
+    \required{DIPOLES}
+    \required{CUDA}
+  \end{features}
+\end{essyntax}
+
+This interaction calculates energies and forces between dipoles by
+explicitly summing over all pairs.  For the directions in which the
+system is periodic (as defined by \texttt{setmd periodic}), it applies
+the minimum image convention, i.e. the interaction is effectively cut
+off at half a box length.
+
+The calculations are performed on the gpu in single precision. The implementation is optimized for large systems of several thousand particles. It makes use of one thread per particle. When there are fewer particles than the number of threads the gpu can execute simultaneously, the rest of the gpu remains idle. Hence, the method will perform poorly for small systems.
+
+
 \section{Special interaction commands}
 \label{sec:inter-other}
 

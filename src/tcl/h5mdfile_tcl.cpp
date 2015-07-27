@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include "parser.hpp"
 #include "communication.hpp"
-#include "hdf5.h"
 #include <stdio.h>
 #include <iostream>
 
 #ifdef H5MD
+
+#include "hdf5.h"
 
 typedef char h5string[1000];
 class H5mdfile
@@ -113,6 +114,8 @@ class H5mdfile
 	// Get dataset dimensions
 	int get_dataset_dims(int argc, char **argv, Tcl_Interp *interp);
 
+	// Flush data to disc
+	int H5_Fflush(int argc, char **argv, Tcl_Interp *interp);
 };
 
 H5mdfile h5mdfile;
@@ -311,6 +314,16 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 			return TCL_ERROR;
 		}
 		return h5mdfile.get_dataset_dims(argc, argv, interp);
+	}
+	
+	if (!strncmp(argv[1], "H5_Fflush", strlen(argv[1])))
+	{
+		if(argc!=2)
+		{
+			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5_Fflush\n",(char *) NULL);
+			return TCL_ERROR;
+		}
+		return h5mdfile.H5_Fflush(argc, argv, interp);
 	}
 	return TCL_ERROR;
 }
@@ -653,6 +666,11 @@ int H5mdfile::get_dataset_dims(int argc, char **argv, Tcl_Interp *interp)
 		sprintf(buffer, "%d ", (int)dims_out[i]);
 		Tcl_AppendResult(interp, buffer, (char *)NULL);
 	}
+	return TCL_OK;
+}
+int H5mdfile::H5_Fflush(int argc, char **argv, Tcl_Interp *interp)
+{
+	H5Fflush(dataset_id, H5F_SCOPE_LOCAL);
 	return TCL_OK;
 }
 #endif

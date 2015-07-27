@@ -127,7 +127,7 @@ void init_particle(Particle *part)
   part->p.rinertia[2] = 1.0;
 #endif
 #ifdef ROTATION_PER_PARTICLE
-  part->p.rotation =1;
+  part->p.rotation =14;
 #endif
 
 
@@ -282,6 +282,8 @@ void init_particle(Particle *part)
 #ifdef VIRTUAL_SITES_RELATIVE
   part->p.vs_relative_to_particle_id      = 0;
   part->p.vs_relative_distance =0;
+  for (int i=0; i<4; i++) 
+   part->p.vs_relative_rel_orientation[i] =0;
 #endif
 
 #ifdef GHOST_FLAG
@@ -779,7 +781,7 @@ int set_particle_virtual(int part, int isVirtual)
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
+int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double* rel_ori)
 {
   // Find out, on what node the particle is
   int pnode;
@@ -794,7 +796,7 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
     return ES_ERROR;
   
   // Send the stuff
-  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance);
+  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance,rel_ori);
   return ES_OK;
 }
 #endif
@@ -1377,23 +1379,33 @@ int try_delete_bond(Particle *part, int *bond)
   IntList *bl = &part->bl;
   int i, j, type, partners;
 
+  // Empty bond means: delete all bonds
   if (!bond) {
     realloc_intlist(bl, bl->n = 0);
     return ES_OK;
   }
 
+  // Go over the bond list to find the bond to delete
   for (i = 0; i < bl->n;) {
     type = bl->e[i];
     partners = bonded_ia_params[type].num;
+    
+    // If the bond type does not match the one, we want to delete, skip 
     if (type != bond[0])
       i += 1 + partners;
     else {
+      // Go over the bond partners
       for(j = 1; j <= partners; j++)
       { 
+        // Leave the loop early, if the bond to delete and the bond with in the particle
+	// don't match
 	if (bond[j] != bl->e[i + j])
 	  break;
       }
+      // If we did not exit from the loop early, all parameters matched
+      // and we go on with deleting
       if (j > partners) {
+	// New length of bond list
 	bl->n -= 1 + partners;
 	memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
 	realloc_intlist(bl, bl->n);
@@ -2101,10 +2113,11 @@ void pointer_to_virtual(Particle* p, int*&  res)
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2)
+void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3)
 {
   res1=&(p->p.vs_relative_to_particle_id);
   res2=&(p->p.vs_relative_distance);
+  res3=(p->p.vs_relative_rel_orientation);
 }
 #endif
 
@@ -2161,7 +2174,7 @@ void pointer_to_temperature(Particle *p, double*& res)
 #endif
 
 #ifdef ROTATION_PER_PARTICLE
-void pointer_to_rotation(Particle *p, int*& res)
+void pointer_to_rotation(Particle *p, short int*& res)
 {
   res=&(p->p.rotation);
 }

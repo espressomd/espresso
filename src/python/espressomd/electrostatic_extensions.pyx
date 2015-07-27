@@ -19,13 +19,14 @@
 
 cimport utils
 include "myconfig.pxi"
-from actors import Actor
+cimport actors
+import actors
 
 IF ELECTROSTATICS and P3M:
-    class ElectrostaticExtensions(Actor):
+    cdef class ElectrostaticExtensions(actors.Actor):
         pass
 
-    class ELC(ElectrostaticExtensions):
+    cdef class ELC(ElectrostaticExtensions):
 
         def validateParams(self):
             default_params = self.defaultParams()
@@ -55,6 +56,9 @@ IF ELECTROSTATICS and P3M:
             return params
 
         def _setParamsInEsCore(self):
+            if coulomb.method == COULOMB_P3M_GPU:
+                raise Exception(
+                    "ELC tuning failed, ELC is not set up to work with the GPU P3M")
             if ELC_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(self._params["neutralize"]), 0, 0, 0, 0):
                 raise ValueError(
                     "Choose a 3d electrostatics method prior to ELC")
