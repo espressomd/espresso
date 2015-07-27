@@ -74,6 +74,7 @@ typedef struct {
   float mass_product1;
   int stencil;
   int number_of_boundary_nodes;
+  bool advection;
 #ifdef EK_ELECTROSTATIC_COUPLING
   bool es_coupling;
   float *charge_potential_buffer;
@@ -179,6 +180,7 @@ int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
 int ek_set_stencil(int stencil);
+int ek_set_advection(bool advection);
 int ek_node_print_velocity(int x, int y, int z, double* velocity);
 int ek_node_print_density(int species, int x, int y, int z, double* density);
 int ek_node_print_flux(int species, int x, int y, int z, double* flux);
