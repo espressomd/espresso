@@ -140,6 +140,7 @@ The electrokinetic equations have the following properties:
   \opt{gamma_even  \var{gamma\_even}}
   \opt{T  \var{T}}
   \opt{bjerrum_length  \var{bjerrum\_length}}
+  \opt{advection  \var{advection}}
   \opt{\require{4}{electrostatics_coupling}}
   \begin{features}
   \required[1]{ELECTROKINETICS}
@@ -177,6 +178,10 @@ and \var{bjerrum\_length} the Bjerrum length associated with the electrostatic
 properties of the medium. See the above description of the electrokinetic 
 equations for an explanation of the introduction of a temperature, which does 
 not come in directly via a thermostat that produces thermal fluctuations.
+
+\lit{advection} can be set to \emph{on} or \emph{off}. It controls whether there
+should be an advective contribution to the diffusive species' fluxes. Default is
+\emph{on}.
 
 \lit{electrostatics_coupling} enables the action of the electrostatic potential
 due to the electrokinetics species and charged boundaries on the MD particles.
