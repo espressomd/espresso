@@ -2,24 +2,25 @@
 //so far only implemented for the NVT ensemble
 //NOTE: a reaction here is one trial move to dissociate one acid molecule to its dissociated form 
 //so if the reaction is accepted then there is one more dissociated ion pair H+ and A-
-//NOTE: generic_oneway_reaction does not break bonds for simple reactions. as long as there are no reactions like 2A -->B where one of the reacting A particles occurs in the polymer
-//NOTE: paricle types have to start at zero and have to increase by one for every type otherwise the function hide_particle cannot work correctly. Through adding 100 in the function hide_particle we ensure that the function works correctly if the particle types are monotonically increasing and if the largest particle type is smaller than 100.
+//NOTE: generic_oneway_reaction does not break bonds for simple reactions. as long as there are no reactions like 2A -->B where one of the reacting A particles occurs in the polymer (think of bond breakages if the monomer in the polymer gets deleted in the reaction). This constraint is not of fundamental reason, but there would be a need for a rule for such "collision" reactions (a reaction like the one above).
+//NOTE: paricle types have to start at one and have to increase by one for every type otherwise the function hide_particle cannot work correctly. Through adding 100 in the function hide_particle we ensure that the function works correctly if the particle types are monotonically increasing and if the largest particle type is smaller than 100.
 
 #include "reaction_ensemble.hpp"
-#include "random.hpp"
+#include "random.hpp" //for random numbers
 #include "energy.hpp"	//for energies
 #include "external_potential.hpp" //for energies
 #include "global.hpp" //for access to global variables
 #include "particle_data.hpp" //for particle creation, modification
 #include "statistics.hpp" //for distto
-#include "integrate.hpp" //for integrate (hack for updating particle lists)
+#include "integrate.hpp" //for time_step
 #include <stdlib.h>  // qsort()
 #include "thermostat.hpp" //for temperature
 #include <stdio.h> //for getline()
+#include "utils.hpp" // for PI
 
 //For now the reaction ensemble is only implemented for the reaction VT ensemble. The reaction PT ensemble is also possible to implement.
 
-reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL,.volume=0 , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
+reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL,.volume=0 , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
 
 //declaration of boring helper functions
@@ -29,7 +30,7 @@ bool all_educt_particles_exist(int reaction_id);
 int generic_oneway_reaction(int reaction_id);
 int find_index_of_type(int type);
 int replace(int p_id, int desired_type);
-double convert_conc_mol_to_vol(double len_sim, double len_real);
+double conversion_factor_molar_concentration_to_number_concentration_per_simulation_box_volume(double given_length_in_simulation_units, double given_length_in_SI_units);
 int create_particle(int desired_type);
 int vec_random(double* vecrandom, double desired_length);
 int hide_particle(int p_id, int previous_type);
@@ -63,7 +64,7 @@ int _type_is_in_list(int type, int* list, int len_list){
 }
 
 int initialize(){
-	//register types all different types
+	//register types all different types, note that types need to be >=1
 	for(int different_type_i=0;different_type_i<current_reaction_system.nr_different_types;different_type_i++){
 		init_type_array(current_reaction_system.type_index[different_type_i]);
 	}
@@ -74,6 +75,10 @@ int initialize(){
 	if(current_reaction_system.standard_pressure_in_simulation_units==-10){
 		printf("Please initialize your reaction ensemble standard pressure before calling initialize.\n");
 		exit(0);
+	}
+	if(current_reaction_system.water_type>=0 &&(current_reaction_system.given_length_in_SI_units<0 || current_reaction_system.given_length_in_simulation_units <0)){
+		printf("Please provide a length scale in order to make use of the water_type (e.g. for autodissociation reactions). Use the length_scales argument of the reaction_ensemble command.\n");
+		exit(0);		
 	}
 
 	return 0;
@@ -126,8 +131,15 @@ bool all_educt_particles_exist(int reaction_id) {
 		int current_number;
 		number_of_particles_with_type(current_reaction_system.reactions[reaction_id]->educt_types[i], &current_number);
 		if(current_number<current_reaction_system.reactions[reaction_id]->educt_coefficients[i]){
-			enough_particles=false;
-			break;
+			if(current_reaction_system.reactions[reaction_id]->educt_types[i]!=current_reaction_system.water_type) {
+				enough_particles=false;
+				break;
+			} else{
+				//if the current educt type is the water type, create the water molecules that are needed
+				for(int water_i=0; water_i<current_reaction_system.reactions[reaction_id]->educt_coefficients[i];water_i++){
+					create_particle(current_reaction_system.water_type);
+				}
+			}
 		}
 	}
 	return enough_particles;
@@ -155,7 +167,6 @@ double calculate_current_potential_energy_of_system(int unimportant_int){
 int generic_oneway_reaction(int reaction_id){
 	float volume = current_reaction_system.volume;
 	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id];
-	//type_H2O=current_reaction_system.water_type;
 	
 	//generic one way reaction
 	//A+B+...+G +... --> K+...X + Z +...
@@ -181,7 +192,8 @@ int generic_oneway_reaction(int reaction_id){
 		//set number of water molecules to typical value 55.5 mol/l
 		//see https://de.wikipedia.org/wiki/Eigenschaften_des_Wassers#Ionenprodukt
 		int index_of_water_type=find_index_of_type(current_reaction_system.water_type);
-		old_particle_numbers[index_of_water_type]=int(convert_conc_mol_to_vol(1,1) *55.5*volume); // TODO need for correct call of convert_conc_mol_to_vol, setup current_reaction_system.len_sim, current_reaction_system.len_real
+		double molar_concentration_of_water=55.5; //in mol per liter
+		old_particle_numbers[index_of_water_type]=int(conversion_factor_molar_concentration_to_number_concentration_per_simulation_box_volume(current_reaction_system.given_length_in_simulation_units, current_reaction_system.given_length_in_SI_units) *molar_concentration_of_water*volume);
 	}
 		
 	int* p_ids_created_particles =NULL;
@@ -198,15 +210,11 @@ int generic_oneway_reaction(int reaction_id){
 		for(int j=0;j<min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
 			int p_id ;
 			find_particle_type(current_reaction->educt_types[i], &p_id);
-			if(changed_particles_properties==NULL){
-				changed_particles_properties=(float*) malloc(sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);			
-			}else{
-				changed_particles_properties=(float*) realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
-			}
+			changed_particles_properties=(float*) realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(float) p_id;
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
-			len_changed_particles_properties+=number_of_saved_properties;
+			len_changed_particles_properties+=1;
 			replace(p_id,current_reaction->product_types[i]);
 		}
 		//create product_coefficients(i)-educt_coefficients(i) many product particles iff product_coefficients(i)-educt_coefficients(i)>0,
@@ -229,7 +237,7 @@ int generic_oneway_reaction(int reaction_id){
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=number_of_saved_properties;
+				len_hidden_particles_properties+=1;
 				hide_particle(p_id,current_reaction->educt_types[i]);
 			}
 		}
@@ -247,7 +255,7 @@ int generic_oneway_reaction(int reaction_id){
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=3;
+				len_hidden_particles_properties+=1;
 				hide_particle(p_id,current_reaction->educt_types[i]);
 			}
 		} else {
@@ -288,7 +296,7 @@ int generic_oneway_reaction(int reaction_id){
 	if ( d_random() < bf ) {
 		//accept
 		//delete hidden educt_particles (remark: dont delete changed particles)
-		for(int i=0;i<len_hidden_particles_properties;i+=number_of_saved_properties) {
+		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) hidden_particles_properties[i];
 			delete_particle(p_id); //delete particle
 		}
@@ -302,7 +310,7 @@ int generic_oneway_reaction(int reaction_id){
 			delete_particle(p_ids_created_particles[i]);
 		}
 		//2)restore previously hidden educt particles
-		for(int i=0;i<len_hidden_particles_properties;i+=number_of_saved_properties) {
+		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) hidden_particles_properties[i];
 			double charge=(double) hidden_particles_properties[i+1];
 			double type=(double) hidden_particles_properties[i+2];
@@ -312,7 +320,7 @@ int generic_oneway_reaction(int reaction_id){
 			set_particle_type(p_id, type);
 		}
 		//2)restore previously changed educt particles
-		for(int i=0;i<len_changed_particles_properties;i+=number_of_saved_properties) {
+		for(int i=0;i<len_changed_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) changed_particles_properties[i];
 			double charge=(double) changed_particles_properties[i+1];
 			double type=(double) changed_particles_properties[i+2];
@@ -327,13 +335,9 @@ int generic_oneway_reaction(int reaction_id){
 	free(changed_particles_properties);
 	free(p_ids_created_particles);
 	free(hidden_particles_properties);
-	
 	return reaction_is_accepted;
 
 }
-
-int convert_conc_mol_to_vol();
-int convert_apparent_to_dimensionless_equilibrium_constant();
 
 int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types){
 	//should only be used at when defining a new reaction
@@ -398,9 +402,15 @@ int find_index_of_type(int type){
 	return index;
 }
 
-double convert_conc_mol_to_vol(double len_sim, double len_real){
-	//TODO needs to be implemented
-	return 1;
+double conversion_factor_molar_concentration_to_number_concentration_per_simulation_box_volume(double given_length_in_simulation_units, double given_length_in_SI_units){
+	//returns the factor to convert 1mol/l to x Particles per simulation volume
+	//calculation:1mol/l=x/Vges <=> x=1mol/l*V_ges = 1mol/l *V_{ges,sim}*[V]= on_factor*V_{ges,sim}, with conversion_factor=1mol/l *[V]=1000mol/m^3*[V], and [V]=sigma^3=(bjerrum_length_real/len_sim)^3
+	//returns the conversion factor for densities from mol/l to parts/vol in simulation units	
+	//the real length scale has to be given in meters (SI)
+	//an arbitrary example for arguments: given_length_in_simulation_units=bjerrum_length=2, given_length_in_SI_units=[expr 7.1 * pow(10, -10) ]; # (bjerrum length water room temp in 10^-10 m (Angstrom) )
+	double N_Avogadro = 6.02214129*pow(10, 23); // in units 1/mol
+	double conversion_factor= N_Avogadro *1000.0*pow(given_length_in_SI_units/given_length_in_simulation_units,3); //the factor 1000 comes from using liters
+	return conversion_factor;
 }
 
 int replace(int p_id, int desired_type){
@@ -467,8 +477,7 @@ int create_particle(int desired_type){
 
 	//create random velocity vector
 	double random_vel_vec[3];
-	double pi=3.14159265359;
-	double mean_abs_velocity=sqrt(8*temperature/pi);
+	double mean_abs_velocity=sqrt(8*temperature/PI);
 	mean_abs_velocity=mean_abs_velocity*time_step; //scale for internal use in espresso
 	vec_random(random_vel_vec, mean_abs_velocity);
 	
@@ -476,7 +485,7 @@ int create_particle(int desired_type){
 	double d_min=0;
 	int max_insert_tries=1000;
 	int insert_tries=0;
-	double sig=1;//XXX needs to be obtained from global
+	double sig=1;//TODO XXX needs to be obtained from global
 	double min_dist=1.0*sig; //setting of a minimal distance is allowed to avoid overlapping configurations if there is a repulsive potential. States with very high energies have a probability of almost zero and therefore do not contribute to ensemble averages.
 	int err_code=ES_PART_ERROR;
 	if(min_dist!=0){
@@ -698,7 +707,9 @@ double calculate_degree_of_association(int index_of_current_collective_variable)
 double find_minimum(double* list, int len){
 	double minimum =list[0];
 	for (int i=0;i<len;i++){
-		if(list[i]<minimum)
+		if(minimum<0)
+			minimum=list[i];//think of negative histogram values that indicate not allowed energies in the case of an energy observable
+		if(list[i]<minimum && list[i]>=0)
 			minimum=list[i];	
 	}
 	return minimum;
@@ -829,7 +840,6 @@ int initialize_wang_landau(){
 int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau_potential){
 	float volume = current_reaction_system.volume;
 	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id];
-	//type_H2O=current_reaction_system.water_type;
 	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	if(modify_wang_landau_potential==true && old_state_index>=0){
@@ -869,7 +879,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		//set number of water molecules to typical value 55.5 mol/l
 		//see https://de.wikipedia.org/wiki/Eigenschaften_des_Wassers#Ionenprodukt
 		int index_of_water_type=find_index_of_type(current_reaction_system.water_type);
-		old_particle_numbers[index_of_water_type]=int(convert_conc_mol_to_vol(1,1) *55.5*volume); // TODO need for correct call of convert_conc_mol_to_vol, setup current_reaction_system.len_sim, current_reaction_system.len_real
+		old_particle_numbers[index_of_water_type]=int(conversion_factor_molar_concentration_to_number_concentration_per_simulation_box_volume(current_reaction_system.given_length_in_simulation_units, current_reaction_system.given_length_in_SI_units) *55.5*volume);
 	}
 	int* p_ids_created_particles =NULL;
 	int len_p_ids_created_particles=0;
@@ -889,7 +899,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(float) p_id;
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
-			len_changed_particles_properties+=3;
+			len_changed_particles_properties+=1;
 			replace(p_id,current_reaction->product_types[i]);
 		}
 		//create product_coefficients(i)-educt_coefficients(i) many product particles iff product_coefficients(i)-educt_coefficients(i)>0,
@@ -912,7 +922,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=3;
+				len_hidden_particles_properties+=1;
 				hide_particle(p_id,current_reaction->educt_types[i]);
 			}
 		}
@@ -929,7 +939,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
 				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=3;
+				len_hidden_particles_properties+=1;
 				hide_particle(p_id,current_reaction->educt_types[i]);
 			}
 		} else {
@@ -1005,7 +1015,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		}
 
 		//delete hidden educt_particles (remark: dont delete changed particles)
-		for(int i=0;i<len_hidden_particles_properties;i+=number_of_saved_properties) {
+		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) hidden_particles_properties[i];
 			delete_particle(p_id); //delete particle
 		}
@@ -1025,7 +1035,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			delete_particle(p_ids_created_particles[i]);
 		}
 		//2)restore previously hidden educt particles
-		for(int i=0;i<len_hidden_particles_properties;i+=number_of_saved_properties) {
+		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) hidden_particles_properties[i];
 			double charge=(double) hidden_particles_properties[i+1];
 			double type=(double) hidden_particles_properties[i+2];
@@ -1035,7 +1045,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			set_particle_type(p_id, type);
 		}
 		//2)restore previously changed educt particles
-		for(int i=0;i<len_changed_particles_properties;i+=number_of_saved_properties) {
+		for(int i=0;i<len_changed_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) changed_particles_properties[i];
 			double charge=(double) changed_particles_properties[i+1];
 			double type=(double) changed_particles_properties[i+2];
@@ -1066,12 +1076,12 @@ void refine_wang_landau_parameter_one_over_t();
 
 int do_reaction_wang_landau(){
 	bool modify_wang_landau_potential =true;
-	int reaction_id;
+	int reaction_id=i_random(current_reaction_system.nr_single_reactions);
+	generic_oneway_reaction_wang_landau(reaction_id,modify_wang_landau_potential);
+	modify_wang_landau_potential =false;
 	for(int i=0;i<current_wang_landau_system.wang_landau_relaxation_steps;i++){
 		reaction_id=i_random(current_reaction_system.nr_single_reactions);
 		generic_oneway_reaction_wang_landau(reaction_id,modify_wang_landau_potential);
-//		if(i==0)
-//			modify_wang_landau_potential=false;
 	}
 	//check for convergence
 	if(achieved_desired_number_of_refinements_one_over_t()==true){
@@ -1131,8 +1141,10 @@ double average_int_list(int* int_number_list, int len_int_nr_list){
 int find_minimum_in_int_list(int* list, int len){
 	double minimum =list[0];
 	for (int i=0;i<len;i++){
-		if(list[i]<minimum)
-			minimum=list[i];	
+		if(minimum<0)
+			minimum=list[i];//think of negative histogram values that indicate not allowed energies in the case of an energy observable
+		if(list[i]<minimum && list[i]>=0)
+			minimum=list[i];
 	}
 	return minimum;
 }
@@ -1147,7 +1159,7 @@ bool can_refine_wang_landau_one_over_t(){
 
 
 void reset_histogram(){
-	printf("Histogram is flat. Refining. Previous wang_landau_parameter was %f\n",current_wang_landau_system.wang_landau_parameter);
+	printf("Histogram is flat. Refining. Previous wang_landau_parameter was %f.\n",current_wang_landau_system.wang_landau_parameter);
 	for(int i=0;i<current_wang_landau_system.len_histogram;i++){
 		if(current_wang_landau_system.histogram[i]>=0){//checks for validity of index i (think of energy collective variables, in a cubic memory layout there will be indices which are not allowed by the energy boundaries. These values will be initalized with a negative fill value)
 			current_wang_landau_system.histogram[i]=0;
@@ -1165,6 +1177,12 @@ void refine_wang_landau_parameter_one_over_t(){
 		current_wang_landau_system.wang_landau_parameter= current_wang_landau_system.wang_landau_parameter/2.0;
 	}
 	current_wang_landau_system.already_refined_n_times+=1;
+	//for numerical stability here we also subtract the minimum positive value of the wang_landau_potential from the wang_landau potential, allowed since only the difference in the wang_landau potential is of interest.
+	double minimum_wang_landau_potential=find_minimum(current_wang_landau_system.wang_landau_potential,current_wang_landau_system.len_histogram);
+	for(int i=0;i<current_wang_landau_system.len_histogram;i++){
+		if(current_wang_landau_system.wang_landau_potential[i]>=0)//check for wether we are in the valid range of the collective variable
+			current_wang_landau_system.wang_landau_potential[i]-=minimum_wang_landau_potential;	
+	} 
 }
 
 bool achieved_desired_number_of_refinements_one_over_t () {

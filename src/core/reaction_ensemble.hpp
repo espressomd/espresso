@@ -23,8 +23,10 @@ typedef struct reaction_system {
 	int* type_index;
 	int nr_different_types; // is equal to length type_index
 	double* charges_of_types;
-	int water_type; //TODO needs to be used
+	int water_type; //this is only used for the autodissociation reactions of water in implicit water (langevin thermostat)
 	double standard_pressure_in_simulation_units;
+	double given_length_in_SI_units;
+	double given_length_in_simulation_units;
 } reaction_system;
 
 extern reaction_system current_reaction_system;
