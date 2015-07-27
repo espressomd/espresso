@@ -35,6 +35,10 @@ typedef struct {
 } CUDA_v_cs;
 #endif
 
+
+
+
+
 typedef struct {
   /** fluid composition at the particle given to md part */
   float weight[LB_COMPONENTS];
@@ -90,6 +94,10 @@ typedef struct {
   bool isVirtual;
 #endif
 
+#ifdef DIPOLES
+  float dip[3];
+#endif
+
 } CUDA_particle_data;
 
 /** data structure for the different kinds of energies */
@@ -123,18 +131,24 @@ void copy_energy_from_GPU();
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
 void copy_composition_from_GPU();
+
 CUDA_global_part_vars* gpu_get_global_particle_vars_pointer_host();
 CUDA_global_part_vars* gpu_get_global_particle_vars_pointer();
 CUDA_particle_data* gpu_get_particle_pointer();
 float* gpu_get_particle_force_pointer();
+#ifdef ROTATION
+float* gpu_get_particle_torque_pointer();
+#endif
+
 CUDA_energy* gpu_get_energy_pointer();
+float* gpu_get_particle_torque_pointer();
 CUDA_fluid_composition* gpu_get_fluid_composition_pointer();
 CUDA_particle_seed* gpu_get_particle_seed_pointer();
 void gpu_change_number_of_part_to_comm();
 void gpu_init_particle_comm();
 void cuda_mpi_get_particles(CUDA_particle_data *host_result);
 void copy_part_data_to_gpu();
-void cuda_mpi_send_forces(float *host_forces,CUDA_fluid_composition * host_fluid_composition);
+void cuda_mpi_send_forces(float* host_forces,float* host_torques,CUDA_fluid_composition * host_fluid_composition);
 void cuda_bcast_global_part_params();
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);

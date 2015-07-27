@@ -32,6 +32,8 @@
 #include "comfixed_tcl.hpp"
 #include "rattle_tcl.hpp"
 #include "mol_cut_tcl.hpp"
+#include "actor/DipolarDirectSum_tcl.hpp" 
+
 
 // for the force caps
 #include "lj.hpp"
@@ -297,7 +299,10 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_DIPOLAR("dawaanr", tclcommand_inter_magnetic_parse_dawaanr);
 
   REGISTER_DIPOLAR("mdds", tclcommand_inter_magnetic_parse_mdds);
-
+  
+#ifdef DIPOLAR_DIRECT_SUM
+  REGISTER_DIPOLAR("dds-gpu", tclcommand_inter_magnetic_parse_dds_gpu);
+#endif
 
   /* fallback */
   coulomb.Dmethod  = DIPOLAR_NONE;
@@ -604,6 +609,9 @@ int tclprint_to_result_DipolarIA(Tcl_Interp *interp)
     break;
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: tclprint_to_result_DAWAANR(interp); break;
   case DIPOLAR_DS: tclprint_to_result_Magnetic_dipolar_direct_sum_(interp); break;
+#ifdef DIPOLAR_DIRECT_SUM
+  case DIPOLAR_DS_GPU: tclprint_to_result_dds_gpu(interp); break;
+#endif
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);

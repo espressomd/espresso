@@ -301,6 +301,7 @@ int lb_lbfluid_save_checkpoint_wrapper(char* filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary);
 
 int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
+int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A);
 
 /*@{*/
 

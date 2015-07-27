@@ -49,14 +49,23 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   /* langevin thermostat */
   langevin_gamma = 0;
+  /* Friction coefficient gamma for rotation */
+  langevin_gamma_rotation = 0;
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
-  /* dpd thermostat */
+  /* Langevin for translations */
+  langevin_trans = true;
+  /* Langevin for rotations */
+  langevin_rotate = true;
+
 #ifdef DPD
+  /* dpd thermostat */
   dpd_switch_off();
 #endif
+
 #ifdef INTER_DPD
   inter_dpd_switch_off();
 #endif
+
 #ifdef NPT
   /* npt isotropic thermostat */
   nptiso_gamma0 = 0;
@@ -64,6 +73,7 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   nptiso_gammav = 0;
   mpi_bcast_parameter(FIELD_NPTISO_GV);
 #endif
+
 #ifdef GHMC
   /* ghmc thermostat */
   ghmc_nmd = 1;
@@ -75,6 +85,7 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   ghmc_tscale = GHMC_TSCALE_OFF;
   mpi_bcast_parameter(FIELD_GHMC_SCALE);
 #endif
+
   /* switch thermostat off */
   thermo_switch = THERMO_OFF;
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
@@ -83,33 +94,94 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
 
 int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **argv) 
 {
-  double temp, gamma;
+  double temp,
+         gammat = 0.0,
+         gammar = 0.0;
+  bool trans = true,
+       rot = true;
 
   /* check number of arguments */
-  if (argc < 4) {
+  if (argc < 4) 
+  {
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
-		     argv[0]," ",argv[1]," <temp> <gamma>\"", (char *)NULL);
+		     argv[0]," ",argv[1]," <temp> <gamma_trans> [<gamma_rot> <on/off> <on/off>]\"", (char *)NULL);
     return (TCL_ERROR);
   }
 
   /* check argument types */
-  if ( !ARG_IS_D(2, temp) || !ARG_IS_D(3, gamma)) {
+  if ( !ARG_IS_D(2, temp) || !ARG_IS_D(3, gammat)) 
+  {
     Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs two DOUBLES", (char *)NULL);
     return (TCL_ERROR);
   }
 
-  if (temp < 0 || gamma < 0) {
-    Tcl_AppendResult(interp, "temperature and gamma must be positive", (char *)NULL);
+  if (argc > 4 && argc < 6) 
+  {
+    if ( !ARG_IS_D(4, gammar) ) 
+    {
+      Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs three DOUBLES", (char *)NULL);
+      return (TCL_ERROR);
+    }
+  }
+
+  if (argc > 5 && argc < 7) 
+  {
+    if ( !ARG_IS_S(5, "on") && !ARG_IS_S(5, "off") ) 
+    {
+      Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs on/off", (char *)NULL);
+      return (TCL_ERROR);
+    }
+    else
+    {
+      if ( ARG_IS_S(5, "on") )
+      {
+        trans = true;
+      }
+      else
+      {
+        trans = false;
+      }
+    }
+  }
+
+  if (argc > 6 && argc < 8) 
+  {
+    if ( !ARG_IS_S(6, "on") && !ARG_IS_S(6, "off") ) {
+      Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs on/off", (char *)NULL);
+      return (TCL_ERROR);
+    }
+    else
+    {
+      if ( ARG_IS_S(6, "on") )
+      {
+        rot = true;
+      }
+      else
+      {
+        rot = false;
+      }
+    }
+  }
+
+  if (temp < 0 || gammat < 0 || gammar < 0) {
+    Tcl_AppendResult(interp, "temperature and friction must be positive", (char *)NULL);
     return (TCL_ERROR);
   }
 
   /* broadcast parameters */
   temperature = temp;
-  langevin_gamma = gamma;
+  langevin_gamma = gammat;
+  langevin_gamma_rotation = gammar;
+  langevin_trans = trans;
+  langevin_rotate = rot;
   thermo_switch = ( thermo_switch | THERMO_LANGEVIN );
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
+
+  fprintf(stderr,"WARNING: The behavior of the Langevin thermostat has changed\n");
+  fprintf(stderr,"         as of this version! Please consult the user's guide.\n");
+
   return (TCL_OK);
 }
 
@@ -321,6 +393,12 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, temperature, buffer);
     Tcl_AppendResult(interp,"{ langevin ",buffer, (char *)NULL);
     Tcl_PrintDouble(interp, langevin_gamma, buffer);
+    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, langevin_gamma_rotation, buffer);
+    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, langevin_trans, buffer);
+    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, langevin_rotate, buffer);
     Tcl_AppendResult(interp," ",buffer," } ", (char *)NULL);
   }
     
@@ -403,7 +481,7 @@ int tclcommand_thermostat_print_usage(Tcl_Interp *interp, int argc, char **argv)
   Tcl_AppendResult(interp, "Usage of tcl-command thermostat:\n", (char *)NULL);
   Tcl_AppendResult(interp, "'", argv[0], "' for status return or \n ", (char *)NULL);
   Tcl_AppendResult(interp, "'", argv[0], " set off' to deactivate it (=> NVE-ensemble) \n ", (char *)NULL);
-  Tcl_AppendResult(interp, "'", argv[0], " set langevin <temp> <gamma>' or \n ", (char *)NULL);
+  Tcl_AppendResult(interp, "'", argv[0], " set langevin <temp> <gamma_trans> [<gamma_rot> <on/off> <on/off>]' or \n ", (char *)NULL);
 #ifdef DPD
   tclcommand_thermostat_print_usage_dpd(interp,argc,argv);
 #endif

@@ -67,7 +67,6 @@ protected:
   ewaldgpu_real *m_dev_forces_reci; //Forces k-space
   ewaldgpu_real *m_infl_factor; //Influence factor
   ewaldgpu_real *m_dev_infl_factor; //Influence factor
-  ewaldgpu_real *m_rho_hat; //Rho hat
   ewaldgpu_real *m_dev_rho_hat; //Rho hat
   ewaldgpu_real *m_energy_reci; //Energy k-space
   ewaldgpu_real *m_dev_energy_reci; //Energy k-space
@@ -84,20 +83,21 @@ protected:
   //Variables
   bool m_isTuned; //Tuning is over
   SystemInterface *System;
-	//Ccompute k's
-	void compute_num_k(); //Compute the number of k's in sphere respectively in ellipsoid
-	void compute_k_AND_influence_factor(); //Compute the k-vectors in sphere respectively in ellipsoid and influence factor
-	//GPU program
-	void GPU_Forces(SystemInterface &s); //Run GPU forces part
-	void GPU_Energy(SystemInterface &s); //Run GPU energy part
-	void GPU_q_sqr(SystemInterface &s); // Compute q squared
-	int nextPow2(int x); //Determine the next power of x
-	bool isPow2(int x); //Determine if x of power 2
-	void getNumBlocksAndThreads(int Size, int maxBlocks, int maxThreads, int &blocks, int &threads); // Determine the number of blocks and threads in GPU part
-	//Output
-	void Output(); //Output in terminal
-	//Real space
-	void EwaldCPU_EnergySelf(); //Calculate the self energy
+  //Ccompute k's
+  void compute_num_k(); //Compute the number of k's in sphere respectively in ellipsoid
+  void compute_k_AND_influence_factor(); //Compute the k-vectors in sphere respectively in ellipsoid and influence factor
+  //GPU program
+  void GPU_Forces(SystemInterface &s); //Run GPU forces part
+  void GPU_Energy(SystemInterface &s); //Run GPU energy part
+  void GPU_q_sqr(SystemInterface &s); // Compute q squared
+  int nextPow2(int x); //Determine the next power of x
+  bool isPow2(int x); //Determine if x of power 2
+  void getNumBlocksAndThreads(int Size, int maxBlocks, int maxThreads, int &blocks, int &threads); // Determine the number of blocks and threads in GPU part
+  //Output
+  void Output(); //Output in terminal
+  //Real space
+  void EwaldCPU_EnergySelf(); //Calculate the self energy
+  size_t shared_mem_per_block;
 };
 
 extern EwaldgpuForce *ewaldgpuForce;

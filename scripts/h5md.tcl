@@ -104,6 +104,7 @@ proc h5md_write_positions { args } {
 	h5mdfile H5Screate_simple type double dims 1 
 	h5mdfile H5_write_value value [setmd time] index 0 
 	h5mdfile H5Dwrite
+	h5mdfile H5_Fflush
 }
 
 proc h5md_write_velocities {} {
@@ -136,6 +137,7 @@ proc h5md_write_velocities {} {
 	h5mdfile H5Screate_simple type double dims 1 
 	h5mdfile H5_write_value value [setmd time] index 0 
 	h5mdfile H5Dwrite
+	h5mdfile H5_Fflush
 }
 
 proc h5md_write_species {} {
@@ -146,6 +148,7 @@ proc h5md_write_species {} {
 		h5mdfile H5_write_value value [part $i print type] index $i 
 	}
 	h5mdfile H5Dwrite
+	h5mdfile H5_Fflush
 }
 
 # Initialize a user defined one dimensional observable, first argument is name of observable
@@ -187,6 +190,7 @@ proc h5md_observable1D_write { args } {
 	h5mdfile H5Screate_simple type double dims 1
 	h5mdfile H5_write_value value [lindex $args 1] index 0
 	h5mdfile H5Dwrite
+	h5mdfile H5_Fflush
 }
 
 # Close all h5md groups and datasets and free memory at the end

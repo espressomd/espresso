@@ -52,10 +52,15 @@ P3M                             equals ELECTROSTATICS and FFTW
 INTER_RF                        implies ELECTROSTATICS
 MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
 EWALD_GPU                       requires CUDA and ELECTROSTATICS
+_P3M_GPU_FLOAT					requires CUDA and ELECTROSTATICS
+_P3M_GPU_DOUBLE					requires CUDA and ELECTROSTATICS
+
 
 /* Magnetostatics */
 DIPOLES
 DP3M                            equals DIPOLES and FFTW
+DIPOLAR_DIRECT_SUM		requires CUDA
+DIPOLAR_DIRECT_SUM		equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
 VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
@@ -176,6 +181,7 @@ GHOSTS_HAVE_BONDS               notest
 ADDITIONAL_CHECKS
 ASYNC_BARRIER
 
+ESIF_DEBUG
 COMM_DEBUG
 EVENT_DEBUG
 INTEG_DEBUG
@@ -207,6 +213,7 @@ MAGGS_DEBUG
 LB_DEBUG
 VIRTUAL_SITES_DEBUG
 SD_DEBUG
+CUDA_DEBUG
 
 MPI_CORE
 FORCE_CORE

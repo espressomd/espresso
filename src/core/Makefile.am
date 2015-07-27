@@ -83,6 +83,7 @@ libEspresso_la_SOURCES = \
 	reaction.cpp reaction.hpp \
 	readpdb.cpp readpdb.hpp \
 	Ringbuffer.hpp \
+	rotate_system.cpp rotate_system.hpp \
 	rotation.cpp rotation.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	specfunc.cpp specfunc.hpp \
@@ -109,7 +110,8 @@ libEspresso_la_SOURCES = \
 	SystemInterface.hpp \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
-	PdbParser.cpp PdbParser.hpp
+	PdbParser.cpp PdbParser.hpp \
+	RunningAverage.cpp RunningAverage.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -191,6 +193,7 @@ libEspresso_la_SOURCES += \
 	actor/HarmonicOrientationWell.cpp actor/HarmonicOrientationWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
 	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
+	actor/DipolarDirectSum.cpp actor/DipolarDirectSum.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
@@ -230,8 +233,9 @@ CUDA_SOURCE_FILES = \
 	actor/Mmm1dgpuForce_cuda.cu \
 	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu \
-	actor/HarmonicOrientationWell_cuda.cu \
-	immersed_boundary/ibm_cuda.cu 	
+	immersed_boundary/ibm_cuda.cu \
+	actor/DipolarDirectSum_cuda.cu \
+	actor/HarmonicOrientationWell_cuda.cu 
 
 # include the dependency tracking files
 include ./$(DEPDIR)/cuda_init_cuda.Plo

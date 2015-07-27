@@ -19,7 +19,7 @@
 import sys
 
 cdef extern from "communication.hpp":
-    void mpi_init(int * argc=NULL, char ** *argv=NULL)
+    void mpi_init(int * argc, char ** *argv)
     int this_node
 
 cdef extern from "initialize.hpp":
@@ -28,7 +28,7 @@ cdef extern from "initialize.hpp":
 
 # Here we make a minimalistic Tcl_Interp available
 # Main code
-mpi_init()
+mpi_init(NULL, NULL)
 
 # Main slave loop
 if this_node != 0:

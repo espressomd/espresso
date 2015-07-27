@@ -265,7 +265,6 @@ void momentum_calc(double *momentum)
  */
 std::vector<double> calc_linear_momentum(int include_particles, int include_lbfluid)
 {
-    double momentum_fluid[3] = { 0., 0., 0. };
     double momentum_particles[3] = { 0., 0., 0. };
     std::vector<double> linear_momentum(3,0.0);
     if (include_particles) {
@@ -276,6 +275,7 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
     }
     if (include_lbfluid) {
 #ifdef LB
+      double momentum_fluid[3] = { 0., 0., 0. };
       mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
       linear_momentum[0] += momentum_fluid[0];
       linear_momentum[1] += momentum_fluid[1];
@@ -1038,6 +1038,10 @@ int calc_cylindrical_average(std::vector<double> center, std::vector<double> dir
   double binwd_axial  = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
+  // Select all particle types if the only entry in types is -1
+  bool all_types = false;
+  if (types.size() == 1 && types[0] == -1) all_types = true;
+
   distribution.insert( std::pair<std::string, std::vector<std::vector<std::vector<double> > > >
                                 ("density",   std::vector<std::vector<std::vector<double> > >(types.size())) );
   distribution.insert( std::pair<std::string, std::vector<std::vector<std::vector<double> > > >
@@ -1073,7 +1077,7 @@ int calc_cylindrical_average(std::vector<double> center, std::vector<double> dir
 
   for (int part_id = 0; part_id < n_part; part_id++) {
     for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
-      if ( types[type_id] == partCfg[part_id].p.type ) {
+      if ( types[type_id] == partCfg[part_id].p.type || all_types) {
         pos[0] = partCfg[part_id].r.p[0];
         pos[1] = partCfg[part_id].r.p[1];
         pos[2] = partCfg[part_id].r.p[2];

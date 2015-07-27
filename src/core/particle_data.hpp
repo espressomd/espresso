@@ -97,7 +97,7 @@ typedef struct {
 #ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
-  int rotation;
+  short int rotation;
 #endif
 
 #ifdef ELECTROSTATICS
@@ -129,6 +129,8 @@ typedef struct {
   */
   int vs_relative_to_particle_id;
   double vs_relative_distance;
+  // Store relative position of the virtual site
+  double vs_relative_rel_orientation[4];
   #endif
 #endif
 
@@ -654,6 +656,9 @@ int set_particle_dipm(int part, double dipm);
 */
 int set_particle_virtual(int part,int isVirtual);
 #endif
+#ifdef VIRTUAL_SITES_RELATIVE
+int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double* rel_ori);
+#endif
 
 #ifdef LANGEVIN_PER_PARTICLE
 /** Call only on the master node: set particle temperature.
@@ -947,7 +952,7 @@ void pointer_to_virtual(Particle* p, int*& res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2);
+void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3);
 #endif
 
 #ifdef MASS
@@ -972,7 +977,7 @@ void pointer_to_temperature(Particle *p, double*& res);
 #endif
 
 #ifdef ROTATION_PER_PARTICLE
-void pointer_to_rotation(Particle *p, int*& res);
+void pointer_to_rotation(Particle *p, short int*& res);
 #endif
 
 #ifdef EXCLUSIONS

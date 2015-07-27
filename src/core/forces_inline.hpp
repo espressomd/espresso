@@ -974,6 +974,12 @@ inline void add_bonded_force(Particle *p1)
 	  p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
 	  p4->f.f[j] += force2[j];
 	  break;
+	case BONDED_IA_DIHEDRAL:
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] -= force[j] + force2[j] + force3[j];
+	  break;
 #ifdef CG_DNA
 	default:
 	  p1->f.f[j] += force[j];
@@ -1037,7 +1043,7 @@ inline void check_particle_force(Particle *part) {
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.torque[i])) {
         ostringstream msg;
-        msg << "force on particle "<< part->p.identity << " was NAN.";
+        msg << "torque on particle "<< part->p.identity << " was NAN.";
         runtimeError(msg);
     }
   }
