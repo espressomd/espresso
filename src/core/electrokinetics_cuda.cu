@@ -78,6 +78,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
                                   -1.0, -1.0, -1.0,
                                   -1.0, -1.0, -1.0,
                                   0, -1,
+                                  true,
 #ifdef EK_ELECTROSTATIC_COUPLING
                                   false
 #endif                                 
@@ -1580,8 +1581,8 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
       ek_diffusion_migration_lbforce_nodecentered_stencil(index, neighborindex, species_index, node_f, lb_node);
 
     /* advective contribution to flux */
-    //comment out to disable advective flux contribution, effectively setting Pe=0
-    ek_add_advection_to_flux(index, neighborindex, coord, species_index, node_f, lb_node, ek_lbparameters_gpu);
+    if(ek_parameters_gpu.advection)
+      ek_add_advection_to_flux(index, neighborindex, coord, species_index, node_f, lb_node, ek_lbparameters_gpu);
   }
 }
 
@@ -3628,6 +3629,12 @@ int ek_set_gamma_even( double gamma_even ) {
 
 int ek_set_stencil( int stencil ) {
   ek_parameters.stencil = stencil;
+  return 0;
+}
+
+
+int ek_set_advection( bool advection ) {
+  ek_parameters.advection = advection;
   return 0;
 }
 
