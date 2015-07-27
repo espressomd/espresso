@@ -766,15 +766,56 @@ applying the bond using the \keyword{bond} particle, the number of involved
 particles plays a role. The number of involved particles and their order, if
 important, is nevertheless specified here for completeness.
 
+In the python interface you don't have to worry about bond ids.
+A minimalistic example how to set up bonded harmonic interactions between two particles (particle ids 0 and 1) follows:
+
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    HarmonicBond
+  }{
+    r_0=\arg{double},
+    k=\arg{double}
+  }[
+    r_cut=\arg{double}
+  ]
+\end{pysyntax}
+
 \subsection{FENE bond}
 \index{FENE bond|mainindex}
 \index{interactions!FENE|mainindex}
+
+\begin{pysyntax}
+  \object{
+    espressomd.interaction
+  }{
+    FeneBond
+  }{
+    k=\arg{double},
+    d_r_max=\arg{double}
+  }[
+  ]
+\end{pysyntax}
 
 \begin{essyntax}
   inter \var{bondid}
   fene
   \var{K} \var{\Delta r_\mathrm{max}} \opt{\var{r_0}}
 \end{essyntax}
+\begin{pysyntax}
+ \object{
+	 espressomd.System().bondedInter.add(FeneBond)
+  }{
+    setParams
+  }{
+    k=\arg{double},
+    drmax=\arg{double},
+  }[
+    r_0=\arg{double=0.}
+  ]
+\end{pysyntax}
+
 This creates a bond type with identificator \var{bondid} with a
 FENE (finite extension nonlinear expander) interaction. This is a
 rubber-band-like, symmetric interaction between two particles with
@@ -791,6 +832,19 @@ $r=\var{r_0}+\var{\Delta r_\mathrm{max}}$. It is given by
 \index{harmonic bond|mainindex}
 \index{interactions!harmonic|mainindex}
 
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    HarmonicBond
+  }{
+    k=\arg{double},
+    r_0=\arg{double},
+  }[
+    r_cut=\arg{double}
+  ]
+\end{pysyntax}
+
 \begin{essyntax}
   inter \var{bondid}
   harmonic \var{K} \var{R} \opt{\var{r_\mathrm{cut}}}
@@ -806,6 +860,43 @@ The third, optional parameter \var{r_\mathrm{cut}} defines a cutoff
 radius.  Whenever a harmonic bond gets longer than
 \var{r_\mathrm{cut}}, the bond will be reported as broken, and a
 background error will be raised.
+
+\subsection{Harmonic Dumbbell Bond}
+\index{harmonic dumbbell bond|mainindex}
+\index{interactions!harmonic dumbbell|mainindex}
+
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    HarmonicDumbbellBond
+  }{
+    k1=\arg{double},
+    k2=\arg{double},
+    r_0=\arg{double},
+  }[
+    r_cut=\arg{double}
+  ]
+\end{pysyntax}
+
+\begin{essyntax}
+  inter \var{bondid}
+  harmonic_dumbbell \var{k_1} \var{k_2} \var{r} \opt{\var{r_\mathrm{cut}}}
+  \begin{features}
+    \required{ROTATION}
+  \end{features}
+\end{essyntax}
+This bond is similar to the normal harmonic bond in such a way that it
+sets up a harmonic potential, i.e.\ a spring, between the two
+particles.  Additionally the \keyword{quat} of the first particle in
+the bond will be aligned along the distance vector between both
+particles.  This alignment can be controlled by the second harmonic
+constant \var{k_2}.  Keep in mind that the \keyword{quat} will perform
+an oscillation around the distance vector and some kind of friction
+needs to be present for the \keyword{quat} to relax.
+
+The role of the parameters \var{k_1}, \var{r}, and
+\var{r_\mathrm{cut}} is exactly the same as for the harmonic bond.
 
 \subsection{Quartic bond}
 \index{quartic bond|mainindex}
@@ -872,16 +963,31 @@ general tabulated potentials.
 \index{Rattle Shake algorithm}
 \label{sec:rattle}
 
+\begin{pysyntax}
+\object{espressomd.interactions}{
+	RigidBond
+}{
+	r=\arg{double},
+}[
+	ptol=\arg{double},
+	vtol=\arg{double}
+]
+\end{pysyntax}
+
 \begin{essyntax}
   inter \var{bondid}
   rigid_bond
   \var{constrained\_bond\_distance} \var{positional\_tolerance} 
   \var{velocity\_tolerance}
+  \begin{features}
+    \required{BOND_CONSTRAINT}
+  \end{features}
 \end{essyntax}
 
 To simulate rigid bonds, \es uses the Rattle Shake algorithm which
 satisfies internal constraints for molecular models with internal
 constraints, using Lagrange multipliers.\cite{andersen83a}
+In the python implementation the constrained bond distance is named r, the positional tolerance is named ptol and the velocity tolerance is named vtol.
 
 \subsection{Tabulated bond interactions}
 \index{tabulated bond interactions|mainindex}
@@ -927,6 +1033,15 @@ The potential is calculated as follows:
 \end{itemize}
 
 \subsection{Virtual bonds}
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    Virtual
+  }{
+  }[
+  ]
+\end{pysyntax}
 \begin{essyntax}
   inter \var{bondid} virtual_bond
 \end{essyntax}
@@ -1170,6 +1285,18 @@ vector product $01\times02$. The orientation must point inside the immersed obje
 \index{bond-angle interactions|mainindex}
 \index{interactions!bond-angle|mainindex}
 \label{sec:angle}
+
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    Angle_Cosine
+  }{
+    K=\arg{double}
+  }[
+    phi_0=\arg{double}
+  ]
+\end{pysyntax}
 
 \begin{essyntax}
   \variant{1} inter \var{bondid} angle\_harmonic \var{K} \opt{\var{\phi_0}}
@@ -1524,13 +1651,51 @@ If \var{K_\mathrm{cut}} and \var{r_\mathrm{cut}} are given by the user, then \ke
 \index{Debye-H\"uckel potential|mainindex}
 \index{interactions!Debye-H\"uckel|mainindex}
 
-\begin{essyntax}
-  inter coulomb \var{l_B} dh \var{\kappa} \var{r_\mathrm{cut}}
-  \begin{features}
-    \required{ELECTROSTATICS}
-  \end{features}
-\end{essyntax}
+\begin{pysyntax}
+  \object{
+    electrostatics
+  }{
+    \require{1}{DH}
+  }{
+    bjerrum\textunderscore length=\arg{double},
+    kappa=\arg{double},
+    r\textunderscore cut=\arg{double}
+  }
+  \leavevmode \\
+  \object{
+    electrostatics
+    }{
+     \require{1,2}{CDH}
+    }{
+      bjerrum\textunderscore length=\arg{double},
+      kappa=\arg{double},
+      r\textunderscore cut=\arg{double},
+      eps\textunderscore int=\arg{double},
+      eps\textunderscore ext=\arg{double},
+      r0=\arg{double},
+      r1=\arg{double},
+      alpha=\arg{double}
+    }[
+    ]
+\end{pysyntax}
 
+\begin{essyntax}
+    \require{1}{\variant{1}
+    inter coulomb \var{l_\mathrm{B}} dh \var{\kappa} \var{r_\mathrm{cut}}}
+    \variant{2}
+    inter coulomb \var{l_\mathrm{B}} dh \var{\kappa} \var{r_{\text{cut}}}
+    \var{\varepsilon_{\text{int}}} \var{\varepsilon_{ext}} \var{r_0} \var{r_1}
+    \require{1,2}{\var{\alpha}}
+    \begin{features}
+        \required[1]{ELECTROSTATICS}
+        \required[2]{COULOMB_DEBYE_HUECKEL}
+    \end{features}
+\end{essyntax}\leavevmode
+\\
+\fbox{\parbox{\textwidth}{NOTE: the two variants are mutually exclusive. If
+``COULOMB_DEBYE_HUECKEL'' is defined in the configuration file, variant \variant{1}
+would not work.}}\\
+\\
 Defines the electrostatic potential by
 \begin{equation}
   U^{C-DH} = l_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
@@ -1543,6 +1708,20 @@ to zero which introduces a step in energy. Therefore, it introduces
 fluctuations in energy.
 
 For $\kappa = 0$, this corresponds to the plain coulomb potential.
+
+The second variant combines the coulomb interaction for charges that are closer than $r_0$ with the Debye-Hueckel approximation for charges that are further apart than $r_1$ in a continous way. The used potential is 
+
+\begin{equation}
+  U(r)^{C-DHC} = 
+  \begin{cases} 
+    \frac{l_B k_B T q_1 q_2}{\varepsilon_{\text{int}} r} & \text{if } r < r_0, \\ 
+    \frac{l_B k_B T q_1 q_2 e^{-\alpha (r - r_0)}}{\varepsilon_{\text{int}} r} & \text{if } r_0 < r < r_1,  \\
+    \frac{l_B k_B T q_1 q_2 e^{-\kappa r}}{\varepsilon_{\text{ext}} r} & \text{if } r_{\text{cut}} > r > r_1,  \\
+    0 & \text{if } r > r_{\text{cut}}.
+  \end{cases}
+\end{equation}
+
+The parameter $\alpha$ that controlls the transition from Coulomb- to Debye-H\"uckel potential should be chosen such that the force is continous.
 
 \subsection{MMM2D}
 \index{MMM2D method|mainindex}
@@ -1813,6 +1992,20 @@ default.
   Please cite~\citewbibkey{elc} when using ELC, and in addition
   \citewbibkey{icelc} if you use dielectric interfaces.
 \end{citebox}
+
+\begin{pysyntax}
+  \object{
+    espressomd.electrostatic_extensions
+  }{
+    ELC
+  }{
+    gap_size=\arg{double},
+    maxPWerror=\arg{double},
+  }[
+    neutralize=\arg{bool},
+    far_cut=\arg{double}
+  ]
+\end{pysyntax}
 
 \begin{essyntax}
   inter coulomb elc \var{maximal\_pairwise\_error} \var{gap\_size}
@@ -2107,7 +2300,7 @@ In periodic systems, this method should only be used if it is not possible to us
 DLC, because those methods have a far better accuracy and are much faster.
 In a non-periodic system, the DAWAANR-method gives the exact result.
 
-\subsection{Magnetic Dipolar Direct Sum (MDDS)}
+\subsection{Magnetic Dipolar Direct Sum (MDDS) on CPU}
 \index{MDDS method|mainindex}
 \index{interactions!MDDS method|mainindex}
 
@@ -2128,7 +2321,28 @@ in all periodic directions is explicitly computed.
 As it is very slow, this method is not intended to do simulations,
 but rather to check the results you get from more efficient methods
 like P3M.
-  
+
+
+\subsection{Dipolar direct sum on gpu}
+\index{Dipolar direct sum on gpu|mainindex}
+
+\begin{essyntax}
+  inter magnetic \var{l_{B}} dds-gpu
+  \begin{features}
+    \required{DIPOLES}
+    \required{CUDA}
+  \end{features}
+\end{essyntax}
+
+This interaction calculates energies and forces between dipoles by
+explicitly summing over all pairs.  For the directions in which the
+system is periodic (as defined by \texttt{setmd periodic}), it applies
+the minimum image convention, i.e. the interaction is effectively cut
+off at half a box length.
+
+The calculations are performed on the gpu in single precision. The implementation is optimized for large systems of several thousand particles. It makes use of one thread per particle. When there are fewer particles than the number of threads the gpu can execute simultaneously, the rest of the gpu remains idle. Hence, the method will perform poorly for small systems.
+
+
 \section{Special interaction commands}
 \label{sec:inter-other}
 

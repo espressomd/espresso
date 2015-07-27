@@ -34,12 +34,16 @@ tests = \
 	coulomb_cloud_wall.tcl \
 	dh.tcl \
 	dielectric.tcl \
+	dihedral.tcl \
 	ek_eof_one_species_x.tcl \
 	ek_eof_one_species_y.tcl \
 	ek_eof_one_species_z.tcl \
 	ek_eof_one_species_x_nonlinear.tcl \
 	ek_eof_one_species_y_nonlinear.tcl \
 	ek_eof_one_species_z_nonlinear.tcl \
+	ek_electrostatics_coupling_x.tcl \
+	ek_electrostatics_coupling_y.tcl \
+	ek_electrostatics_coupling_z.tcl \
 	ek_reaction.tcl \
 	el2d.tcl \
 	el2d_nonneutral.tcl \
@@ -82,6 +86,7 @@ tests = \
 	mass-and-rinertia.tcl \
 	mdlc.tcl \
 	minimize_energy.tcl \
+	minimize_energy_rotation.tcl \
 	mmm1d.tcl \
 	mmm1dgpu.tcl \
 	ewaldgpu.tcl \
@@ -97,13 +102,18 @@ tests = \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
 	pdb_parser.tcl \
+	rotate-system.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
+	sd_ewald.tcl \
+	sd_two_spheres.tcl \
+	sd_thermalization.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
         uwerr.tcl \
-	virtual-sites.tcl 
+	virtual-sites.tcl \
+	virtual-sites-rotation.tcl 
 # please keep the alphabetic ordering of the above list!
 
 deactivated_tests =
@@ -121,6 +131,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
 	coulomb_cloud_wall_system.data \
+	dihedral.data \
         p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
 	p3m_system.data p3m_system_gpu.data \
@@ -165,4 +176,5 @@ DISTCLEANFILES = \
 	dfftw3_1d_wisdom_*.file \
 	lattice_*.dat \
 	correlation_checkpoint_c?.bin \
-	correlation_checkpoint_c?.txt 
+	correlation_checkpoint_c?.txt \
+	sd_thermalization.log

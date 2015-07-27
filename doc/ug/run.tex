@@ -108,7 +108,24 @@ $$p_i = p_i + \min(\text{\var{gamma}} \times F_i, \text{\var{maxdisplacement}}),
 while the maximal force is bigger than \var{f_\mathrm{max}} or for at most \var{steps} times.
 The energy is relaxed by \var{gamma}, while the change per coordinate per step is limited to \var{maxdisplacement}.
 The combination of \var{gamma} and \var{maxdisplacement} can be used to get an poor man's adaptive update.
+Rotational degrees of freedom are treated similarly: each particle is rotated around an axis parallel to the torque acting on the particle.
 Please be aware of the fact that this needs not to converge to a local minimum in periodic boundary conditions.
+Translational and rotational coordinates that are fixed using the ``fix`` command or the ROTATION\_PER\_PARTICLE feature are not altered.
+
+\section{\texttt{tune_skin}: Tune the skin}
+\newescommand[tune-skin]{tune_skin}
+
+\begin{essyntax}
+  \variant{1} tune_skin \var{min} \var{max} \var{tol} \var{steps}
+\end{essyntax}
+
+Determines the fastest skin between \var{min} and \var{max} with tolerance \var{tol}
+by bisection. The integration time is determined by timing \var{steps} intergration.
+You should chose \var{steps} big engough so that multiple verlet updates occure even
+for the \var{max} skin, otherwise the timings are not meaningful. Please be aware that
+this command runs actual integrations and propagates the system. In a typical MD simulation
+it should be used after warmup and equilibration, in the same conditions where sampling
+is done.
 
 \section{\texttt{change_volume}: Changing the box volume}
 \newescommand[change-volume]{change_volume}
@@ -122,6 +139,22 @@ Changes the volume of either a cubic simulation box to the new volume
 box-length \var{L_\mathrm{new}}, and isotropically adjusts the
 particles coordinates as well. The function returns the new volume of
 the deformed simulation box.
+
+\section{\texttt{rotate_system}: Rotating the particle positions around the system's center of mass}
+\newescommand[rotate-system]{rotate_system}
+
+\begin{essyntax}
+  \variant{1} rotate_system \var{phi} \var{theta} \var{alpha}
+\end{essyntax}
+
+Rotates the particle coordinates around the system's center of mass. This only makes sense for non-periodic boundaries, but no check is performed. The command only works on a single cpu.
+
+The rotation axis is given by the parameters \var{phi} and \var{theta} as
+\begin{equation}
+\vec{a} = (\sin \theta \cos \phi ; \sin \theta \sin \phi ; \cos \theta),
+\end{equation}
+and \var{alpha} denotes the rotation angle.
+
 
 \section{\texttt{lees_edwards_offset}: Applying shear between periodic images}
 \newescommand[lees-edwards-offset]{lees_edwards_offset}
@@ -408,10 +441,10 @@ all processes of the parallel_tempering simulation. The data is accessible from 
   \variant{2} metadynamics set off
   \variant{3} metadynamics set distance \var{pid_1} \var{pid_2} \
   \var{d_\mathrm{min}} \var{d_\mathrm{max}} \var{b_\mathrm{height}} \
-  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{d_\mathrm{bins}}
+  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{d_\mathrm{bins}} \var{numrelaxationsteps}
   \variant{4} metadynamics set relative_z \var{pid_1} \var{pid_2} \
   \var{z_\mathrm{min}} \var{z_\mathrm{max}} \var{b_\mathrm{height}} \
-  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{z_\mathrm{bins}}
+  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{z_\mathrm{bins}} \var{numrelaxationsteps}
   \variant{5} metadynamics print_stat current_coord
   \variant{6} metadynamics print_stat coord_values
   \variant{7} metadynamics print_stat profile
@@ -451,7 +484,8 @@ force (or free energy profile) can be extracted by reading the
 \item[\var{f_\mathrm{bound}}] strength of the ramping force at the
   boundaries of the reaction coordinate interval.
 \item[\var{d_\mathrm{bins}}, \var{z_\mathrm{bins}}]: number of bins of
-  the reaction coordinate.
+  the reaction coordinate. This is only used for the numerical evaluation of the bias function.
+\item[\var{numrelaxationsteps}] number of relaxation steps before setting a new hill. 
 \item[\var{profile\_list}] Tcl list of a previous metadynamics
   profile.
 \item[\var{force\_list}] Tcl list of a previous metadynamics force.
@@ -511,6 +545,101 @@ The bias functions that are applied to the potential of mean force and
 the biased force are not gaussian function (as in many metadynamics
 codes) but so-called Lucy functions. See \cite{marsili09} for more
 details. These avoid the calculation of exponentials.
+
+\section{\texttt{integrate_sd}: Running a stokesian dynamics simulation}
+\newescommand[integrate-sd]{integrate_sd}
+
+\begin{essyntax}
+  \variant{1} integrate_sd \var{steps}
+\end{essyntax}
+
+\es uses in the stokesian dynamics algorithm  the euler integrater for the
+equations of motion. The motion are overdamped. The velocities of the
+particles are related to the displacement in the last timestep. This are, at
+least if the system is thermalized, however not usefull, as the displacements
+don't scale linear with the timestep. The command \texttt{integrate_sd} with
+an integer \var{steps} as parameter integrates the system for
+\var{steps} time steps. This is implemented using CUDA, so \required{CUDA}
+has to be available in the system.
+
+Currently there is no parallel implementation of this integrator, so all
+particles have to be in a single process.
+
+\subsection{Setting up the system}
+Before running a stokesian dynamics simulation, you have to set a view
+constants:
+\begin{globvar}
+\item[sd_radius] The hydrodynamic particle radius of the (sperical)
+  particles. Only one particle size is supported.
+\item[sd_viscosity] The viscisity of the fluid. Remember this is only a
+  scaling of the timestep, so you can set it without problems to one.
+\item[sd_seed] (int[2]) seed of the Stokes Dynamics random number generator.
+  As the generator used for the SD runes on the GPU (cuRAND) it has its own
+  seed and own state.
+\item[sd_random_state] (int[2]) offset of the random number
+  generator. Together with the seed, the state of the random number generator
+  is well defined.
+\item[sd_precision_random] (double) precision used for the approximation of
+  the square root of the mobility. Sometimes higher accuracy can speedup the
+  simulation.
+\end{globvar}
+
+Make sure to only use the stokesian dynamics thermostat. If you made a warmup
+integration without SD, set it with:
+\begin{code}
+thermostat off
+thermostat sd \$temp
+\end{code}
+
+\subsection{Periodicity}
+The Code uses the ewald-summation (as derived in \cite{beenakker86a}) of the
+Rotne-Prager tensor to be usefull in periodic boundary conditions. To disable
+the peridoicity of the hydrodynamic, use the feature
+\feature{SD_NOT_PERIODIC}. 
+
+The ewald summation is required if the system is periodic, as otherwise an
+cutoff is introduced, which can lead to negative eigenvalues of the
+mobility. This leads to a break down of the code, as it is not possible to
+thermalize such a system.
+
+\subsection{Floatingpoint precision}
+It is possible to switch between double and float as datatype in Stokesian
+Dynamics. As GPUs have more single than double precision floating point
+units, the single precision is faster. However this can lead to problems, if
+the eigenvalues are not precise enough and get negative. Therfore the default
+is double precision. If you want to use single precision, use the feature
+\feature{SD_USE_FLOAT}.
+
+\subsection{Farfield only}
+The mobility matrix consists of two contribution, the farfield and the
+nearfield lubrication correction.
+If the nearfield is neglegible, than the feature \feature{SD_FF_ONLY} can be
+used.
+This should speedup the simulation, as the nearfield doesn't need to be
+inverted. Additional the thermal displacements can be directly calculated.
+
+\section{Multi-timestepping}
+\newescommand[multitimestepping]{multitimestepping}
+
+\begin{essyntax}
+  setmd smaller\_time\_step 0.001 \\
+  part $i$ smaller\_timestep 1
+
+  Required features: MULTI\_TIMESTEP
+\end{essyntax}
+
+The multi-timestepping integrator allows to run two concurrent integration time
+steps within a simulation, associating beads with either the large
+\var{time\_step} or the other \var{smaller\_time\_step}.  Setting
+\var{smaller\_time\_step} to a positive value turns on the multi-timestepping
+algorithm.  The ratio \var{time\_step}/\var{smaller\_time\_step} \emph{must} be
+an integer.  Beads are by default associated with \var{time\_step},
+corresponding to the particle property \var{smaller\_timestep} 0.  Setting
+\var{smaller\_timestep} to 1 associate the particle to the
+\var{smaller\_time\_step} integration.  The integrator can be used in the NVE
+ensemble, as well as with the Langevin thermostat and the modified Andersen
+barostat for NVT and NPT simulations, respectively.  See \cite{bereau15} for
+more details.
 
 %%% Local Variables: 
 %%% mode: latex

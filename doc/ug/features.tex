@@ -27,7 +27,7 @@ if possible, it is not recommended to activate all features, because
 this will negatively effect \es's performance.
 
 Features can be activated in the configuration header
-\texttt{myconfig.h} (see section \vref{sec:myconfig}). Too activate
+\texttt{myconfig.hpp} (see section \vref{sec:myconfig}). Too activate
 \texttt{FEATURE}, add the following line to the header file:
 \begin{verbatim}
 #define FEATURE
@@ -110,10 +110,11 @@ Features can be activated in the configuration header
 \item \newfeature{CATALYTIC_REACTIONS} Allows the user to define three particle types to be
   reactant, catalyzer, and product. Reactants get converted into products in the vicinity of a catalyst according to a used-defined reaction rate constant. It is also possible to set up a chemical equilibrium reaction between the reactants and products, with another rate constant. See section \ref{sec:Reactions} for details.
 \item \newfeature{OVERLAPPED}
-\item \newfeature{COLLISION\_DETECTION} Allows particles to be bound oo collision. See section \ref{sec:collision}
+\item \newfeature{COLLISION\_DETECTION} Allows particles to be bound on collision. See section \ref{sec:collision}
 \item \newfeature{OLD\_RW\_VERSION} This switches back to the old,
   \emph{wrong} random walk code of the polymer. Only use this if you
   rely on the old behaviour and \emph{know what you are doing}.
+\item \newfeature{H5MD} Allows to write data to H5MD formatted hdf5 files.
 \end{itemize}
 
 In addition, there are switches that enable additional features in the
@@ -145,6 +146,14 @@ integrator or thermostat:
 \item \newfeature{LB_ELECTROHYDRODYNAMICS} Enables the implicit
   calculation of electro-hydrodynamics for charged particles and salt
   ions in an electric field.
+\item \newfeature{SD} enable Stokesian Dynamics.
+\item \newfeature{SD_NOT_PERIODIC} disable periodic boundary conditions in
+  Stokesian Dynamics.
+\item \newfeature{SD_USE_FLOAT} use float instead of double in Stokesian
+  Dynamics.
+\item \newfeature{SD_FF_ONLY} disable nearfield of Stokesian Dynamics.
+\item \newfeature{SD_DEBUG} enable debug Stokesian Dynamics.
+  
 \end{itemize}
 
 \section{Interactions}
@@ -255,6 +264,8 @@ looking directly at the code.
 \item \newfeature{FORCE\_CORE} Causes \es{} to try to provoke a core dump
   when exiting unexpectedly.
 \item \newfeature{MPI\_CORE} Causes \es{} to try this even with MPI errors.
+\item \newfeature{SD_DEBUG} Causes \es{} to check more things in the Stokesian
+  Dynamics code. If \var{warnings} is larger 1, SD prints more informations.
 \end{itemize}
 
 %%% Local Variables: 

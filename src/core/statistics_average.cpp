@@ -40,6 +40,6 @@ int average_init(Average* self, observable* obs, int with_variance) {
   self->ready=self->obs->ready;
 }
 
-int 
+int
 
 

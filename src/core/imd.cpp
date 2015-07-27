@@ -208,8 +208,8 @@ int imd_send_mdcomm(void *s,int32_t n,const int32_t *indices,const float *forces
   int rc;
 
   fill_header((IMDheader *)buf, IMD_MDCOMM, n);
-  memcpy((void *)(buf+HEADERSIZE), (const void *)indices, 4*n);
-  memcpy((void *)(buf+HEADERSIZE+4*n), (const void *)forces, 12*n);
+  memmove((void *)(buf+HEADERSIZE), (const void *)indices, 4*n);
+  memmove((void *)(buf+HEADERSIZE+4*n), (const void *)forces, 12*n);
   rc = (imd_writen(s, buf, size) != size);
   free(buf);
   return rc;
@@ -221,7 +221,7 @@ int imd_send_energies(void *s, const IMDEnergies *energies) {
   int rc;
 
   fill_header((IMDheader *)buf, IMD_ENERGIES, 1);
-  memcpy((void *)(buf+HEADERSIZE), (const void *)energies, sizeof(IMDEnergies));
+  memmove((void *)(buf+HEADERSIZE), (const void *)energies, sizeof(IMDEnergies));
   rc = (imd_writen(s, buf, size) != size);
   free(buf);
   return rc;
@@ -233,7 +233,7 @@ int imd_send_fcoords(void *s, int32_t n, const float *coords) {
   int rc;
 
   fill_header((IMDheader *)buf, IMD_FCOORDS, n);
-  memcpy((void *)(buf+HEADERSIZE), (const void *)coords, 12*n);
+  memmove((void *)(buf+HEADERSIZE), (const void *)coords, 12*n);
   rc = (imd_writen(s, buf, size) != size);
   free(buf);
   return rc;

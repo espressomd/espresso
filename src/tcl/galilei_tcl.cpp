@@ -134,7 +134,7 @@ int tclcommand_system_CMS(ClientData data, Tcl_Interp * interp, int argc, char *
         if (ARG_IS_S_EXACT(1,"folded")) {
           mpi_system_CMS();
 
-          memcpy(cmspos, gal.cms, 3*sizeof(double));
+          memmove(cmspos, gal.cms, 3*sizeof(double));
           box[0] = 0; box[1] = 0; box[2] = 0;
           fold_position(cmspos, box);
           

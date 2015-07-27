@@ -69,6 +69,7 @@ if { [catch {
     # generate some particles
     set box_l 10
     setmd box_l $box_l $box_l $box_l
+    setmd time_step 0.01
     for {set i 0} {$i < 100} {incr i} {
     	part $i pos [expr rand()*$box_l] [expr rand()*$box_l] [expr rand()*$box_l]
     }

@@ -1,0 +1,120 @@
+\usepackage{xparse}
+
+\colorlet{optcolor}{gray!80!black}
+\colorlet{parcolor}{blue}
+\colorlet{objcolor}{red}
+
+\def\underscoreletter{\catcode`\_=11}
+\def\hyphendot{\discretionary{}{.}{.}}
+
+\ExplSyntaxOn
+
+\coffin_new:N \l_pypresso_syntax_coffin
+
+\bool_new:N \l_pypresso_enable_bool
+\bool_set_false:N \l_pypresso_enable_bool
+
+% \NewDocumentCommand \PythonSyntaxOn { }
+%  {
+%   \bool_set_true:N \l_pypresso_enable_bool
+%  }
+%
+% \NewDocumentCommand \PythonSyntaxOff { }
+%  {
+%   \bool_set_false:N \l_pypresso_enable_bool
+%  }
+
+\cs_new_protected:Npn \pypresso_object:nnnnn #1#2#3#4#5
+ {
+  \seq_set_from_clist:Nn \l_tmpa_seq { #4 }
+  \seq_set_from_clist:Nn \l_tmpb_seq { #5 }
+  \tl_set:Nn \l_tmpa_tl { #2 }
+  \tl_replace_all:Nnn \l_tmpa_tl { . } { \hyphendot }
+  \tl_trim_spaces:N \l_tmpa_tl
+  \tl_if_blank:nF { #1 }
+   {
+    from ~ \textcolor{ parcolor } { espressomd } ~
+    import ~ \textcolor { objcolor } { #1 }\par
+   }
+  \textcolor{ parcolor }{ \tl_use:N \l_tmpa_tl \hyphendot }
+  \textcolor{ objcolor }{ \tl_trim_spaces:n { #3 }  }
+  (\par
+   \seq_use:Nnnn \l_tmpa_seq { ,\par } { ,\par } { ,\par }
+   \tl_if_blank:nF { #5 } { ,\par }
+   \group_begin:
+    \color{ optcolor }
+    \seq_use:Nnnn \l_tmpb_seq { ,\par } { ,\par } { ,\par }
+   \group_end:
+  )
+ }
+
+\cs_new_protected:Npn \pypresso_property:nnn #1#2#3
+ {
+  \seq_set_from_clist:Nn \l_tmpa_seq { #3 }
+  \tl_set:Nn \l_tmpa_tl { #1 }
+  \tl_replace_all:Nnn \l_tmpa_tl { . } { \hyphendot }
+  \tl_trim_spaces:N \l_tmpa_tl
+  \textcolor{ parcolor }{ \tl_use:N \l_tmpa_tl \hyphendot }
+  \textcolor{ objcolor }{ \tl_trim_spaces:n { #2 }  }
+  \par.
+  \seq_use:Nnnn \l_tmpa_seq { \par. } { \par. } { \par. }
+ }
+
+\cs_new_protected:Npn \pypresso_heading:
+ {
+  \bool_if:NT \l_pypresso_enable_bool
+   {
+    \minisec{Python ~ Syntax}
+    \nopagebreak
+    \smallskip
+    \nopagebreak
+   }
+ }
+
+\cs_new_protected:Npn \pypresso_init:
+ {
+  \ttfamily
+  \rightskip=0pt plus 1fil
+  \hyphenpenalty=10000
+  \underscoreletter
+  \noindent
+  \ignorespaces
+ }
+
+\NewDocumentEnvironment { pysyntax } { }
+ {
+  \protected \def \arg ##1
+   {
+    \tl_set:Nn \l_tmpa_tl { ##1 }
+    \tl_replace_all:Nnn \l_tmpa_tl { | } { \ensuremath{\vert} }
+    \textnormal{ $\langle$ \tl_use:N \l_tmpa_tl $\rangle$ }
+   }
+  \def \{ { \char`\{ }
+  \def \} { \char`\} }
+  \NewDocumentCommand \object { O{} m m m O{} }
+   {
+    \pypresso_object:nnnnn { ##1 } { ##2 } { ##3 } { ##4 } { ##5 }
+   }
+  \NewDocumentCommand \property { m m m }
+   {
+    \pypresso_property:nnn { ##1 } { ##2 } { ##3 }
+   }
+  \pypresso_heading:
+  \vcoffin_set:Nnw \l_pypresso_syntax_coffin { \linewidth - 1.5em - 1em - 1pt }
+  \pypresso_init:
+ }
+ {
+  \vcoffin_set_end:
+  \bool_if:NT \l_pypresso_enable_bool
+   {
+    \tex_noindent:D
+    \tex_kern:D 1.5em
+    \tex_vrule:D width 1pt
+     height \coffin_ht:N \l_pypresso_syntax_coffin
+     depth \coffin_dp:N \l_pypresso_syntax_coffin
+    \tex_kern:D 0.5em
+    \coffin_typeset:Nnnnn \l_pypresso_syntax_coffin { l } { B } { 0pt } { 0pt }
+   }
+ }
+
+\ExplSyntaxOff

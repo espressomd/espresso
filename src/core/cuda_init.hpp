@@ -20,7 +20,29 @@
 #define _CUDA_INIT_H
 
 #include "config.hpp"
+#include <vector>
 
+/** Struct to hold information relevant to Espresso
+   about GPUs. Should contain only fixed length plain
+   old datatypes, as it is intended for MPI communication */
+
+struct EspressoGpuDevice {
+  /* Local CUDA device id */
+  int id;
+  /* Node identification */
+  char proc_name[64];
+  /* MPI process identification */
+  int node;
+  /* Compute capability */
+  int compute_capability_major;
+  int compute_capability_minor;
+  /* Name */
+  char name[64];
+  /* Total Memory */
+  int total_memory;
+  /* Number of cores */
+  int n_cores;
+};
 
 /** Initializes the CUDA stream.
 */
@@ -73,6 +95,16 @@ int cuda_get_device();
 */
 
 int cuda_test_device_access();
+
+/** Gather unique list of CUDA devices from nodes 
+    @return vector of device on master, empty vector on other nodes.
+*/
+
+std::vector<EspressoGpuDevice> cuda_gather_gpus(void);
+
+/** Get properties of a CUDA device 
+ */
+int cuda_get_device_props(const int dev, EspressoGpuDevice &d);
 
 /** current error message of CUDA. */
 extern const char *cuda_error;

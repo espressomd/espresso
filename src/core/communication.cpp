@@ -98,6 +98,9 @@ static int terminated = 0;
   CB(mpi_bcast_n_particle_types_slave) \
   CB(mpi_gather_stats_slave) \
   CB(mpi_set_time_step_slave) \
+  CB(mpi_set_smaller_time_step_slave) \
+  CB(mpi_send_smaller_timestep_flag_slave) \
+  CB(mpi_send_configtemp_flag_slave) \
   CB(mpi_get_particles_slave) \
   CB(mpi_bcast_coulomb_params_slave) \
   CB(mpi_bcast_collision_params_slave) \
@@ -112,6 +115,7 @@ static int terminated = 0;
   CB(mpi_bit_random_seed_slave) \
   CB(mpi_bit_random_stat_slave) \
   CB(mpi_get_constraint_force_slave) \
+  CB(mpi_get_configtemp_slave) \
   CB(mpi_rescale_particles_slave) \
   CB(mpi_bcast_cell_structure_slave) \
   CB(mpi_send_quat_slave) \
@@ -157,6 +161,8 @@ static int terminated = 0;
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
   CB(mpiRuntimeErrorCollectorGatherSlave)        \
   CB(mpi_minimize_energy_slave) \
+  CB(mpi_gather_cuda_devices_slave) \
+  CB(mpi_thermalize_cpu_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -486,7 +492,7 @@ void mpi_send_v(int pnode, int part, double v[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    memcpy(p->m.v, v, 3*sizeof(double));
+    memmove(p->m.v, v, 3*sizeof(double));
   }
   else
     MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -543,7 +549,10 @@ void mpi_send_f(int pnode, int part, double F[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    memcpy(p->f.f, F, 3*sizeof(double));
+    F[0] /= PMASS(*p);
+    F[1] /= PMASS(*p);
+    F[2] /= PMASS(*p);
+    memmove(p->f.f, F, 3*sizeof(double));
   }
   else
     MPI_Send(F, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -557,6 +566,9 @@ void mpi_send_f_slave(int pnode, int part)
     Particle *p = local_particles[part];
         MPI_Recv(p->f.f, 3, MPI_DOUBLE, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
+    p->f.f[0] /= PMASS(*p);
+    p->f.f[1] /= PMASS(*p);
+    p->f.f[2] /= PMASS(*p);
   }
 
   on_particle_change();
@@ -829,7 +841,7 @@ void mpi_send_omega(int pnode, int part, double omega[3])
 
   if (pnode == this_node) {
    Particle *p = local_particles[part];
-/*  memcpy(p->omega, omega, 3*sizeof(double));*/
+/*  memmove(p->omega, omega, 3*sizeof(double));*/
     p->m.omega[0] = omega[0];
     p->m.omega[1] = omega[1];
     p->m.omega[2] = omega[2];
@@ -1007,7 +1019,7 @@ void mpi_send_virtual_slave(int pnode, int part)
 
 /********************* REQ_SET_BOND ********/
 
-void mpi_send_vs_relative(int pnode, int part, int vs_relative_to, double vs_distance)
+void mpi_send_vs_relative(int pnode, int part, int vs_relative_to, double vs_distance, double* rel_ori)
 {
 #ifdef VIRTUAL_SITES_RELATIVE
   mpi_call(mpi_send_vs_relative_slave, pnode, part);
@@ -1018,10 +1030,13 @@ void mpi_send_vs_relative(int pnode, int part, int vs_relative_to, double vs_dis
     Particle *p = local_particles[part];
     p->p.vs_relative_to_particle_id = vs_relative_to;
     p->p.vs_relative_distance = vs_distance;
+    for (int i=0;i<4;i++)
+     p->p.vs_relative_rel_orientation[i] = rel_ori[i];
   }
   else {
     MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
     MPI_Send(&vs_distance, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(rel_ori, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
 
   on_particle_change();
@@ -1036,6 +1051,8 @@ void mpi_send_vs_relative_slave(int pnode, int part)
         MPI_Recv(&p->p.vs_relative_to_particle_id, 1, MPI_INT, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
     MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, SOME_TAG,
+	     comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(p->p.vs_relative_rel_orientation, 4, MPI_DOUBLE, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
   }
 
@@ -1148,7 +1165,7 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   
   /* fetch fixed data */
   if (pnode == this_node)
-    memcpy(pdata, local_particles[part], sizeof(Particle));
+    memmove(pdata, local_particles[part], sizeof(Particle));
   else {
     mpi_call(mpi_recv_part_slave, pnode, part);
     MPI_Recv(pdata, sizeof(Particle), MPI_BYTE, pnode,
@@ -1161,7 +1178,7 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   if (bl->n > 0) {
     alloc_intlist(bl, bl->n);
     if (pnode == this_node)
-      memcpy(bl->e, local_particles[part]->bl.e, sizeof(int)*bl->n);
+      memmove(bl->e, local_particles[part]->bl.e, sizeof(int)*bl->n);
     else
       MPI_Recv(bl->e, bl->n, MPI_INT, pnode,
                SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
@@ -1175,7 +1192,7 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   if (el->n > 0) {
     alloc_intlist(el, el->n);
     if (pnode == this_node)
-      memcpy(el->e, local_particles[part]->el.e, sizeof(int)*el->n);
+      memmove(el->e, local_particles[part]->el.e, sizeof(int)*el->n);
     else
       MPI_Recv(el->e, el->n, MPI_INT, pnode,
                SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
@@ -1601,14 +1618,14 @@ void mpi_get_particles(Particle *result, IntList *bi)
 	  cell = local_cells.cell[c];
 	  part = cell->part;
 	  npart = cell->n;
-	  memcpy(&result[g], part, npart*sizeof(Particle));
+	  memmove(&result[g], part, npart*sizeof(Particle));
 	  g += npart;
 	  if (bi) {
 	    int pc;
 	    for (pc = 0; pc < npart; pc++) {
 	      Particle *p = &part[pc];
 	      realloc_intlist(&local_bi, local_bi.n + p->bl.n);
-	      memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
+	      memmove(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
 	      local_bi.n += p->bl.n;
 	    }
 	  }
@@ -1649,7 +1666,7 @@ void mpi_get_particles(Particle *result, IntList *bi)
 	realloc_intlist(bi, bi->n + sizes[pnode]);
 
 	if (pnode == this_node)
-	  memcpy(&bi->e[bi->n], local_bi.e, sizes[pnode]*sizeof(int));
+	  memmove(&bi->e[bi->n], local_bi.e, sizes[pnode]*sizeof(int));
 	else
 	  MPI_Recv(&bi->e[bi->n], sizes[pnode], MPI_INT, pnode, SOME_TAG,
 		   comm_cart, MPI_STATUS_IGNORE);
@@ -1709,14 +1726,14 @@ void mpi_get_particles_slave(int pnode, int bi)
       cell = local_cells.cell[c];
       part = cell->part;
       npart = cell->n;
-      memcpy(&result[g],part,npart*sizeof(Particle));
+      memmove(&result[g],part,npart*sizeof(Particle));
       g+=cell->n;
       if (bi) {
 	int pc;
 	for (pc = 0; pc < npart; pc++) {
 	  Particle *p = &part[pc];
 	  realloc_intlist(&local_bi, local_bi.n + p->bl.n);
-	  memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
+	  memmove(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
 	  local_bi.n += p->bl.n;
 	}
       }
@@ -1773,6 +1790,89 @@ void mpi_set_time_step_slave(int node, int i)
   time_step_squared_half = time_step_squared /2.;
   time_step_half= time_step / 2.;
 }
+
+/************ REQ_SET_SMALLER_TIME_STEP ************/
+void mpi_set_smaller_time_step(double time_s)
+{
+#ifdef MULTI_TIMESTEP
+  mpi_call(mpi_set_smaller_time_step_slave, -1, 0);
+
+  smaller_time_step = time_s;
+  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
+  on_parameter_change(FIELD_SMALLERTIMESTEP);
+#endif
+}
+
+void mpi_set_smaller_time_step_slave(int node, int i)
+{
+#ifdef MULTI_TIMESTEP
+  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
+  on_parameter_change(FIELD_SMALLERTIMESTEP);
+#endif
+}
+
+void mpi_send_smaller_timestep_flag(int pnode, int part, int smaller_timestep)
+{
+#ifdef MULTI_TIMESTEP
+  mpi_call(mpi_send_smaller_timestep_flag_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.smaller_timestep = smaller_timestep;
+  }
+  else {
+    MPI_Send(&smaller_timestep, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_smaller_timestep_flag_slave(int pnode, int part)
+{
+#ifdef MULTI_TIMESTEP
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
+       comm_cart, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_configtemp_flag(int pnode, int part, int configtemp)
+{
+#ifdef CONFIGTEMP
+  mpi_call(mpi_send_configtemp_flag_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.configtemp = configtemp;
+  }
+  else {
+    MPI_Send(&configtemp, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_configtemp_flag_slave(int pnode, int part)
+{
+#ifdef CONFIGTEMP
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.configtemp, 1, MPI_INT, 0, SOME_TAG,
+       comm_cart, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
 
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params()
@@ -1918,7 +2018,7 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask, double torque[
       p->p.ext_flag |= flag;
 
       if (mask & PARTICLE_EXT_TORQUE) 
-        memcpy(p->p.ext_torque, torque, 3*sizeof(double));
+        memmove(p->p.ext_torque, torque, 3*sizeof(double));
     }
     else {
       s_buf[0] = flag; s_buf[1] = mask;
@@ -1967,7 +2067,7 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3]
     /* set new values */
     p->p.ext_flag |= flag;
     if (mask & PARTICLE_EXT_FORCE)
-      memcpy(p->p.ext_force, force, 3*sizeof(double));
+      memmove(p->p.ext_force, force, 3*sizeof(double));
   }
   else {
     s_buf[0] = flag; s_buf[1] = mask;
@@ -2016,7 +2116,7 @@ void mpi_bcast_constraint(int del_num)
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
-    memcpy(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
+    memmove(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
     n_constraints--;
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   }
@@ -2039,7 +2139,7 @@ void mpi_bcast_constraint_slave(int node, int parm)
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
-    memcpy(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));
+    memmove(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));
     n_constraints--;
     constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));    
   }
@@ -2069,7 +2169,7 @@ void mpi_bcast_lbboundary(int del_num)
   }
 #endif
   else {
-    memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
+    memmove(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
     lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
@@ -2099,7 +2199,7 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
   }
 #endif
   else {
-    memcpy(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
+    memmove(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
     lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
   }
@@ -2231,6 +2331,24 @@ void mpi_get_constraint_force_slave(int node, int parm)
 {
 #ifdef CONSTRAINTS
   MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+#endif
+}
+
+/*************** REQ_GET_CONFIGTEMP ************/
+void mpi_get_configtemp(double cfgtmp[2])
+{
+#ifdef CONFIGTEMP
+  extern double configtemp[2];
+  mpi_call(mpi_get_configtemp_slave, -1, 0);
+  MPI_Reduce(configtemp, cfgtmp, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+#endif
+}
+
+void mpi_get_configtemp_slave(int node, int cnt)
+{
+#ifdef CONFIGTEMP
+  extern double configtemp[2];  
+  MPI_Reduce(configtemp, NULL, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 #endif
 }
 
@@ -2895,7 +3013,7 @@ void mpi_galilei_transform()
   double cmsvel[3];
 
   mpi_system_CMS_velocity();
-  memcpy(cmsvel, gal.cms_vel, 3*sizeof(double));
+  memmove(cmsvel, gal.cms_vel, 3*sizeof(double));
 
   mpi_call(mpi_galilei_transform_slave, -1, 0);
   MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
@@ -2929,6 +3047,18 @@ void mpi_setup_reaction_slave(int pnode, int i)
 #ifdef CATALYTIC_REACTIONS
   local_setup_reaction();
 #endif
+}
+
+/*********************** CPU Thermostat **********************/
+void mpi_thermalize_cpu(int temp)
+{
+  mpi_call(mpi_thermalize_cpu_slave, -1, temp);
+  set_cpu_temp(temp);
+}
+
+void mpi_thermalize_cpu_slave(int node, int temp)
+{
+  set_cpu_temp(temp);
 }
 
 /*********************** MAIN LOOP for slaves ****************/
@@ -3014,3 +3144,17 @@ void mpi_external_potential_sum_energies_slave(int dummy1, int dummy2) {
   MPI_Reduce(energies, 0, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
   free(energies);
 }
+
+#ifdef CUDA
+std::vector<EspressoGpuDevice> mpi_gather_cuda_devices() {
+  mpi_call(mpi_gather_cuda_devices_slave, 0, 0);
+  return cuda_gather_gpus();
+}
+#endif
+
+void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
+#ifdef CUDA
+  cuda_gather_gpus();
+#endif
+}
+

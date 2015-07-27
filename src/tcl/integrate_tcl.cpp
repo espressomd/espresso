@@ -309,6 +309,27 @@ int tclcallback_time_step(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
+#ifdef MULTI_TIMESTEP
+int tclcallback_smaller_time_step(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+  if (data < 0.0) {
+    Tcl_AppendResult(interp, "smaller time step must be positive.", (char *) NULL);
+    return (TCL_ERROR);
+  } else if (data > time_step) {
+    Tcl_AppendResult(interp, "smaller time step must be *smaller* than original time step.", (char *) NULL);
+    return (TCL_ERROR);
+  } else if ((int)(time_step/data) - (time_step/data) != 0.) {
+    Tcl_AppendResult(interp, "time_step/smaller_time_step needs to be an integer. %f", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  mpi_set_smaller_time_step(data);
+
+  return (TCL_OK);
+}
+#endif
+
 int tclcallback_time(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;

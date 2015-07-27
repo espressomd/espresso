@@ -80,6 +80,15 @@ inline void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
       if(fac*dist > 1000) fprintf(stderr,"%d: LJ-Warning: Pair (%d-%d) force=%f dist=%f\n",
 				  this_node,p1->p.identity,p2->p.identity,fac*dist,dist);
 #endif
+
+#ifdef CONFIGTEMP
+      extern double configtemp[2];
+      int numfac = 0;
+      if (p1->p.configtemp) numfac+=1;
+      if (p2->p.configtemp) numfac+=1;
+      configtemp[0] += numfac*SQR(48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / r_off);
+      configtemp[1] += numfac*24.0 * ia_params->LJ_eps * frac6*(-22.0*frac6+5.0) / (SQR(r_off));
+#endif
     }
     /* capped part of lj potential. */
     else if(dist > 0.0) {
@@ -89,6 +98,7 @@ inline void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
       for(j=0;j<3;j++)
 	/* vector d is rescaled to length LJ_capradius */
 	force[j] += fac * d[j];
+
     }
     /* this should not happen! */
     else {

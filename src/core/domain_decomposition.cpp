@@ -1161,7 +1161,7 @@ void calc_link_cell()
 #ifdef CONSTRAINTS
 	  add_constraints_forces(&p1[i]);
 #endif
-    add_external_potential_forces(&p1[i]);
+	  add_external_potential_forces(&p1[i]);
 	  if (rebuild_verletlist)
 	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 

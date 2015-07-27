@@ -135,7 +135,6 @@ extern const char* ESPRESSO_VERSION;
 #endif
 #endif
 
-
 /* Mathematical constants, from gcc's math.hpp */
 #ifndef M_PI
 #define M_E		2.7182818284590452353602874713526625L  /* e */

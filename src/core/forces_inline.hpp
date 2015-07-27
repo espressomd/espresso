@@ -55,6 +55,7 @@
 #include "object-in-fluid/area_force_global.hpp"
 #include "object-in-fluid/bending_force.hpp"
 #include "object-in-fluid/volume_force.hpp"
+#include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
 #include "angle_harmonic.hpp"
@@ -72,6 +73,8 @@
 #include "collision.hpp"
 #include "metadynamics.hpp"
 #include "angle.hpp"
+#include "hydrogen_bond.hpp"
+#include "twist_stack.hpp"
 #include "quartic.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
@@ -150,9 +153,18 @@ inline void init_local_particle_force(Particle *part) {
     // the particle's orientation axis
     if ( part->swim.swimming )
     {
-      part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
-      part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
-      part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+      if ( thermo_switch & THERMO_LANGEVIN )
+      {
+        part->f.f[0] += part->swim.f_swim * part->p.mass * part->r.quatu[0];
+        part->f.f[1] += part->swim.f_swim * part->p.mass * part->r.quatu[1];
+        part->f.f[2] += part->swim.f_swim * part->p.mass * part->r.quatu[2];
+      }
+      else
+      {
+        part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
+        part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
+        part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+      }
     }
 #endif
 
@@ -210,16 +222,11 @@ inline void force_calc()
     cells_update_ghosts();
 #endif
 
+  espressoSystemInterface.update();
+
 #ifdef COLLISION_DETECTION
   prepare_collision_queue();
 #endif
-
-  espressoSystemInterface.update();
-
-  // Compute the forces from the force objects
-  for (ActorList::iterator actor = forceActors.begin();
-          actor != forceActors.end(); ++actor)
-      (*actor)->computeForces(espressoSystemInterface);
 
 #ifdef LB_GPU
 #ifdef SHANCHEN
@@ -236,6 +243,15 @@ inline void force_calc()
     iccp3m_iteration();
 #endif
   init_forces();
+
+  for (ActorList::iterator actor = forceActors.begin();
+          actor != forceActors.end(); ++actor)
+  {
+    (*actor)->computeForces(espressoSystemInterface);
+#ifdef ROTATION
+    (*actor)->computeTorques(espressoSystemInterface);
+#endif
+  }
 
   calc_long_range_forces();
 
@@ -588,20 +604,31 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 /** Calculate bonded forces for one particle.
     @param p1 particle for which to calculate forces
 */
+
 inline void add_bonded_force(Particle *p1)
 {
   double dx[3]     = { 0., 0., 0. };
   double force[3]  = { 0., 0., 0. };
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
+#if defined(HYDROGEN_BOND) || defined(TWIST_STACK)
+  double force4[3] = { 0., 0., 0. };
+#endif 
+#ifdef TWIST_STACK
+  double force5[3] = { 0., 0., 0. };
+  double force6[3] = { 0., 0., 0. };
+  double force7[3] = { 0., 0., 0. };
+  double force8[3] = { 0., 0., 0. };
+
+  Particle *p5 = NULL,*p6 = NULL,*p7 = NULL,*p8 = NULL;
+#endif
 #ifdef ROTATION
   double torque1[3] = { 0., 0., 0. };
   double torque2[3] = { 0., 0., 0. };
 #endif
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
-  int i, j, type_num, n_partners, bond_broken;
-  BondedInteraction type;
+  int i, j, type_num, type, n_partners, bond_broken;
 
   i = 0;
   while (i<p1->bl.n) {
@@ -644,7 +671,22 @@ inline void add_bonded_force(Particle *p1)
       runtimeError(msg);
 	return;
       }
-    }
+    }    
+#ifdef TWIST_STACK
+      if(n_partners >= 7) {
+	p5 = local_particles[p1->bl.e[i++]];
+	p6 = local_particles[p1->bl.e[i++]];
+	p7 = local_particles[p1->bl.e[i++]];
+	p8 = local_particles[p1->bl.e[i++]];
+
+	if(!p4 || !p5 || !p6 || !p7 || !p8) {
+	  ostringstream msg;
+	  msg << "bond broken between particles" <<
+	    p1->p.identity << ", " << p1->bl.e[i-7] << ", " << p1->bl.e[i-6] << ", " << p1->bl.e[i-5] << ", " << p1->bl.e[i-4] << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2] << ", " << p1->bl.e[i-1] << " (particles not stored on the same node)";
+	  return;
+	}
+      }
+#endif
 
     if (n_partners == 1) {
       /* because of the NPT pressure calculation for pair forces, we need the
@@ -657,6 +699,11 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_FENE:
       bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
       break;
+#ifdef ROTATION
+    case BONDED_IA_HARMONIC_DUMBBELL:
+      bond_broken = calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
     case BONDED_IA_HARMONIC:
       bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
       break;
@@ -677,6 +724,17 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_AREA_FORCE_LOCAL:
       bond_broken = calc_area_force_local(p1, p2, p3, iaparams, force, force2, force3);
       break;
+#ifdef HYDROGEN_BOND
+    case BONDED_IA_CG_DNA_BASEPAIR:
+      bond_broken = calc_hydrogen_bond_force(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
+      break;
+#endif
+#ifdef TWIST_STACK
+    case BONDED_IA_CG_DNA_STACKING:
+      bond_broken = calc_twist_stack_force(p1, p2, p3, p4, p5, p6, p7, p8, iaparams,
+					       force, force2, force3, force4, force5, force6, force7, force8);
+      break;
+#endif
 #ifdef AREA_FORCE_GLOBAL
     case BONDED_IA_AREA_FORCE_GLOBAL:
       bond_broken = 0;
@@ -748,7 +806,7 @@ inline void add_bonded_force(Particle *p1)
       break;
 #endif
 #ifdef BOND_ANGLE_OLD
-	/* the first case is not needed and should not be called */ 
+      /* the first case is not needed and should not be called */ 
     case BONDED_IA_ANGLE_OLD:
       bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
       break;
@@ -841,7 +899,7 @@ inline void add_bonded_force(Particle *p1)
     case 1:
       if (bond_broken) {
           ostringstream msg;
-          msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity<<". Distnace vecotr: "<<dx[0]<<" "<<dx[1]<<" "<<dx[2];
+          msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity<<". Distance vector: "<<dx[0]<<" "<<dx[1]<<" "<<dx[2];
           runtimeError(msg);
         continue;
       }
@@ -879,51 +937,84 @@ inline void add_bonded_force(Particle *p1)
       }
       
       for (j = 0; j < 3; j++) {
-switch (type) {
+	switch (type) {
 	case BONDED_IA_AREA_FORCE_LOCAL:
-		p1->f.f[j] += force[j];
-		p2->f.f[j] += force2[j];
-		p3->f.f[j] += force3[j];
-		break;
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  break;
 #ifdef AREA_FORCE_GLOBAL
 	case BONDED_IA_AREA_FORCE_GLOBAL:
-		break;
+	  break;
 #endif
 #ifdef VOLUME_FORCE
 	case BONDED_IA_VOLUME_FORCE:
-		break;
+	  break;
 #endif
 	default:
-		p1->f.f[j] += force[j];
-		p2->f.f[j] += force2[j];
-		p3->f.f[j] -= (force[j] + force2[j]);
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] -= (force[j] + force2[j]);
 	}
       }
       break;
     case 3:
       if (bond_broken) {
-      ostringstream msg;
-      msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
-          << ", " << p3->p.identity << " and " << p4->p.identity;
-      runtimeError(msg);
+	ostringstream msg;
+	msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
+	    << ", " << p3->p.identity << " and " << p4->p.identity;
+	runtimeError(msg);
 	continue;
       }
       for (j = 0; j < 3; j++) {
 	switch (type) {
 	case BONDED_IA_BENDING_FORCE:
-		p1->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
-		p2->f.f[j] += force[j];
-		p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
-		p4->f.f[j] += force2[j];
-		break;
+	  p1->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
+	  p2->f.f[j] += force[j];
+	  p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
+	  p4->f.f[j] += force2[j];
+	  break;
+	case BONDED_IA_DIHEDRAL:
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] -= force[j] + force2[j] + force3[j];
+	  break;
+#ifdef CG_DNA
 	default:
-		p1->f.f[j] += force[j];
-		p2->f.f[j] += force2[j];
-		p3->f.f[j] += force3[j];
-		p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] += force4[j];
+	  break;
+#endif
 	}
       }
       break;
+    case 7:
+      if (bond_broken) {
+	ostringstream msg;
+	msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
+	    << ", " << p3->p.identity << " and " << p4->p.identity;
+	runtimeError(msg);	
+	continue;
+      }
+      switch(type) {
+      case BONDED_IA_CG_DNA_STACKING:      
+#ifdef CG_DNA
+	for (j = 0; j < 3; j++) {
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] += force2[j];
+	  p3->f.f[j] += force3[j];
+	  p4->f.f[j] += force4[j];
+	  p5->f.f[j] += force5[j];
+	  p6->f.f[j] += force6[j];
+	  p7->f.f[j] += force7[j];
+	  p8->f.f[j] += force8[j];
+	}
+#endif
+	break;
+      }
     }
   }
 }  
@@ -942,9 +1033,9 @@ inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
 inline void check_particle_force(Particle *part) {
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.f[i])) {
-        ostringstream msg;
-        msg << "force on particle "<< part->p.identity << " was NAN.";
-        runtimeError(msg);
+      ostringstream msg;
+      msg << "force on particle "<< part->p.identity << " was NAN.";
+      runtimeError(msg);
     }
   }
 
@@ -952,7 +1043,7 @@ inline void check_particle_force(Particle *part) {
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.torque[i])) {
         ostringstream msg;
-        msg << "force on particle "<< part->p.identity << " was NAN.";
+        msg << "torque on particle "<< part->p.identity << " was NAN.";
         runtimeError(msg);
     }
   }

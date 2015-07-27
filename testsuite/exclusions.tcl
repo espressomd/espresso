@@ -26,6 +26,7 @@
 source "tests_common.tcl"
 
 require_feature "EXCLUSIONS"
+require_feature "LENNARD_JONES"
 if {[has_feature "LEES_EDWARDS"]} {
     require_max_nodes_per_side 2
 }
@@ -65,5 +66,7 @@ if { [veclen $f1 ] >0.001 } {
 if { $E >0.001 } {
  error_exit "Energy found for a pair with an exclusion."
 }
+
+part 0 exclude delete 1
 
 exit 0

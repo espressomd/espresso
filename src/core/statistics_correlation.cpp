@@ -162,7 +162,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   }
 
   // check if dt is a multiple of the md timestep
-  if ( abs(dt/time_step - round(dt/time_step)) > 1e-6 ) {
+  if ( std::abs(dt/time_step - round(dt/time_step)) > 1e-6 ) {
     return 16;
   }
 
@@ -443,12 +443,12 @@ int double_correlation_get_data( double_correlation* self ) {
   if ( observable_calculate(self->A_obs) != 0 )
     return 1;
   // copy the result:
-  memcpy(self->A[0][self->newest[0]], self->A_obs->last_value, self->dim_A*sizeof(double));
+  memmove(self->A[0][self->newest[0]], self->A_obs->last_value, self->dim_A*sizeof(double));
 
   if (!self->autocorrelation) {
     if ( observable_calculate(self->B_obs) != 0 )
       return 2;
-    memcpy(self->B[0][self->newest[0]], self->B_obs->last_value, self->dim_B*sizeof(double));
+    memmove(self->B[0][self->newest[0]], self->B_obs->last_value, self->dim_B*sizeof(double));
   }
 
   // Now we update the cumulated averages and variances of A and B
@@ -500,7 +500,7 @@ int double_correlation_get_data( double_correlation* self ) {
   return 0;
 }
 
-static void write_double(FILE * fp, const double * data, unsigned int n, bool binary){
+void write_double(FILE * fp, const double * data, unsigned int n, bool binary){
   if (binary){
     fwrite(data,sizeof(double),n,fp);
   } else {
@@ -510,7 +510,7 @@ static void write_double(FILE * fp, const double * data, unsigned int n, bool bi
     fprintf(fp,"%e\n",data[n-1]);
   }
 }
-static void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binary){
+void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binary){
   if (binary){
     fwrite(data,sizeof(unsigned int),n,fp);
   } else {
@@ -558,7 +558,7 @@ int double_correlation_write_data_to_file(const double_correlation* self, const 
   return 0;
 }
 
-static int read_double(FILE * fp, double * data, unsigned int n, bool binary){
+int read_double(FILE * fp, double * data, unsigned int n, bool binary){
   if (binary){
     size_t tmp = fread(data,sizeof(double),n,fp);
     if (tmp < n){
@@ -571,7 +571,7 @@ static int read_double(FILE * fp, double * data, unsigned int n, bool binary){
   }
   return 0;
 }
-static int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary){
+int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary){
   if (binary){
     size_t tmp = fread(data,sizeof(unsigned int),n,fp);
     if (tmp < n){
