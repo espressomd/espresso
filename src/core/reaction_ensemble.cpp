@@ -332,6 +332,7 @@ int generic_oneway_reaction(int reaction_id){
 		reaction_is_accepted= 0;
 	}
 	//free
+	free(old_particle_numbers);
 	free(changed_particles_properties);
 	free(p_ids_created_particles);
 	free(hidden_particles_properties);
@@ -638,7 +639,7 @@ wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 
  						.initial_wang_landau_parameter=1.0,.already_refined_n_times=0, \
  						.int_fill_value=-10,.double_fill_value=-10.0,\
  						.number_of_monte_carlo_moves_between_check_of_convergence=5000, .final_wang_landau_parameter=0.00001,\
- 						.monte_carlo_trial_moves=0, .wang_landau_relaxation_steps=40,\
+ 						.monte_carlo_trial_moves=0, .wang_landau_relaxation_steps=20,\
  						.output_filename=NULL,\
  						.minimum_energies_at_flat_index=NULL, .maximum_energies_at_flat_index=NULL,\
  						.do_energy_reweighting=false
@@ -871,7 +872,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	//find reacting molecules in educts and save their properties for later recreation if step is not accepted
 	//do reaction
 	//save old particle_numbers
-	int* old_particle_numbers=(int*) malloc(sizeof(int) *current_reaction_system.nr_different_types);
+	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *current_reaction_system.nr_different_types);
 	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
 		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
 	}
@@ -1058,14 +1059,11 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	}
 
 	//free
+	free(old_particle_numbers);
 	free(changed_particles_properties);
 	free(p_ids_created_particles);
 	free(hidden_particles_properties);
-	free(old_particle_numbers);
 	return reaction_is_accepted;
-
-
-
 }
 
 //declarations
