@@ -120,6 +120,9 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 # try to find best __FUNCTION__ variant
 AX_CXX_VAR_PRETTYFUNC()
 
+# check for c++11 support
+AX_CXX_COMPILE_STDCXX_11(ext,optional)
+
 # set the optimization flags
 # never overwrite users CXXFLAGS
 if test "${CXXFLAGS+set}" != set; then
