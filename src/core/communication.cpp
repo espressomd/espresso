@@ -331,7 +331,7 @@ void mpi_bcast_parameter_slave(int node, int i)
 void mpi_who_has()
 {
   Cell *cell;
-  int *sizes = (int*)malloc(sizeof(int)*n_nodes);
+  static int *sizes = new int[n_nodes];
   int *pdata = NULL;
   int pdata_s = 0;
 
@@ -365,17 +365,15 @@ void mpi_who_has()
       for (int i = 0; i < sizes[pnode]; i++)
 	particle_node[pdata[i]] = pnode;
     }
-  }
-
+  }  
   free(pdata);
-  free(sizes);
 }
 
 void mpi_who_has_slave(int node, int param)
 {
   Cell *cell;
   int npart, i, c;
-  int *sendbuf;
+  static int *sendbuf;
   int n_part;
 
   n_part = cells_get_n_particles();
@@ -383,7 +381,7 @@ void mpi_who_has_slave(int node, int param)
   if (n_part == 0)
     return;
 
-  sendbuf = (int*)malloc(sizeof(int)*n_part);
+  sendbuf = (int*)realloc(sendbuf, sizeof(int)*n_part);
   npart = 0;
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -391,7 +389,6 @@ void mpi_who_has_slave(int node, int param)
       sendbuf[npart++] = cell->part[i].p.identity;
   }
   MPI_Send(sendbuf, npart, MPI_INT, 0, SOME_TAG, comm_cart);
-  free(sendbuf);
 }
 
 /**************** REQ_CHTOPL ***********/
