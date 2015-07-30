@@ -192,6 +192,14 @@ const char *names[] = {
     you can get the last issued request from the debugger. */ 
 static int request[3];
 
+/** Map callback function pointers to request codes */
+#ifndef HAVE_CXX11
+std::map<SlaveCallback *, int> request_map;
+#else
+#include <unordered_map>
+std::unordered_map<SlaveCallback *, int> request_map;
+#endif
+
 /**********************************************
  * procedures
  **********************************************/
@@ -230,22 +238,17 @@ void mpi_init(int *argc, char ***argv)
   MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
 
+  for(int i = 0; i < N_CALLBACKS; ++i)  {
+    request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
+  }
+    
   initRuntimeErrorCollector();
 }
 
 #ifdef HAVE_MPI
 void mpi_call(SlaveCallback cb, int node, int param) {
-  // find req number in callback array
-  int reqcode;
-  for (reqcode = 0; reqcode < N_CALLBACKS; reqcode++) {
-    if (cb == slave_callbacks[reqcode]) break;
-  }
-
-  if (reqcode >= N_CALLBACKS) {
-    fprintf(stderr, "%d: INTERNAL ERROR: unknown callback %d called\n", this_node, reqcode);
-    errexit();
-  }
-
+  const int reqcode = request_map[cb];
+  
   request[0] = reqcode;
   request[1] = node;
   request[2] = param;
