@@ -66,6 +66,7 @@ void local_setup_reaction() {
   MPI_Bcast(&reaction.ct_rate, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&reaction.eq_rate, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&reaction.sing_mult, 1, MPI_INT, 0, comm_cart);
+  MPI_Bcast(&reaction.swap, 1, MPI_INT, 0, comm_cart);
 
   /* Create the various reaction related types (categories) */
   make_particle_type_exist(reaction.catalyzer_type);
@@ -88,7 +89,7 @@ void local_setup_reaction() {
   mpi_bcast_ia_params(reaction.reactant_type, reaction.catalyzer_type);
 }
 
-void integrate_reaction() {
+void integrate_reaction_noswap() {
   int c, np, n, i,
     check_catalyzer;
   Particle *p1, *p2, **pairs;
@@ -391,5 +392,15 @@ void integrate_reaction_swap()
   }
 }
 #endif // ROTATION
+
+
+void integrate_reaction() {
+#ifdef ROTATION
+  if ( reaction.swap )
+    integrate_reaction_swap();
+  else
+#endif // ROTATION
+    integrate_reaction_noswap();
+}
 
 #endif
