@@ -153,18 +153,9 @@ inline void init_local_particle_force(Particle *part) {
     // the particle's orientation axis
     if ( part->swim.swimming )
     {
-      if ( thermo_switch & THERMO_LANGEVIN )
-      {
-        part->f.f[0] += part->swim.f_swim * part->p.mass * part->r.quatu[0];
-        part->f.f[1] += part->swim.f_swim * part->p.mass * part->r.quatu[1];
-        part->f.f[2] += part->swim.f_swim * part->p.mass * part->r.quatu[2];
-      }
-      else
-      {
-        part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
-        part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
-        part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
-      }
+      part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
+      part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
+      part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
     }
 #endif
 
