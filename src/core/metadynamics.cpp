@@ -49,6 +49,8 @@ int    meta_pid2         =       -1;
 double meta_bias_height  =    0.001;
 /** bias width */
 double meta_bias_width   =      0.5;
+/** number of relaxation steps **/
+int meta_num_relaxation_steps =	-1;
 
 /** REACTION COORDINATE */
 /** RC min */
@@ -120,8 +122,8 @@ void meta_perform()
          if (p[i].p.identity == meta_pid1) {
             flag1 = 1;
             p1 = &p[i];
-            memcpy(ppos1, p[i].r.p, 3*sizeof(double));
-            memcpy(img1, p[i].l.i, 3*sizeof(int));
+            memmove(ppos1, p[i].r.p, 3*sizeof(double));
+            memmove(img1, p[i].l.i, 3*sizeof(int));
             unfold_position(ppos1, img1);
 
             if (flag1 && flag2) {
@@ -133,8 +135,8 @@ void meta_perform()
          if (p[i].p.identity == meta_pid2) {
             flag2 = 1;
             p2 = &p[i];
-            memcpy(ppos2, p[i].r.p, 3*sizeof(double));
-            memcpy(img2, p[i].l.i, 3*sizeof(int));
+            memmove(ppos2, p[i].r.p, 3*sizeof(double));
+            memmove(img2, p[i].l.i, 3*sizeof(int));
             unfold_position(ppos2, img2);
 
             if (flag1 && flag2) {
@@ -163,8 +165,10 @@ void meta_perform()
          // reaction coordinate value
          meta_val_xi = sqrt(sqrlen(meta_cur_xi));
          // Update free energy profile and biased force
-         meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
-         meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+         if(int(sim_time/time_step)%meta_num_relaxation_steps==0){
+		 meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+		 meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+         }
          
          // direction of the bias force
          unit_vector(meta_cur_xi,meta_apply_direction);
@@ -172,9 +176,10 @@ void meta_perform()
          // reaction coordinate value: relative height of z_pid1 with respect to z_pid2
          meta_val_xi = -1.*meta_cur_xi[2];
          // Update free energy profile and biased force
-         meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
-         meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
-         
+         if(int(sim_time/time_step)%meta_num_relaxation_steps==0){
+		 meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+		 meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+         }
          // direction of the bias force (-1 to be consistent with META_DIST: from 1 to 2)
          meta_apply_direction[0] = meta_apply_direction[1] = 0.;
          meta_apply_direction[2] = -1.;

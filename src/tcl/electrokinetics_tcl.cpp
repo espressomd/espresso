@@ -67,6 +67,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [lb_density #float] [viscosity #float] [friction #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float] [T #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                [bjerrum_length #float] [stencil <linkcentered|nonlinear|nodecentered>]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                [advection <on|off>]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags> vtk #string\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics print net_charge\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics node #int #int #int print <velocity>\n", (char *)NULL);
@@ -106,7 +107,44 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int set density\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int print <density|flux>\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics pdb-parse #string #string #double\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics checkpoint <save|load> #string\n", (char *)NULL);
     return TCL_ERROR;
+  }
+  else if(ARG0_IS_S("checkpoint"))
+  {
+    argc--;
+    argv++;
+
+    if(argc != 2 || (!ARG0_IS_S("save") && !ARG0_IS_S("load")))
+    {
+      Tcl_AppendResult(interp, "Wrong usage of electrokinetics checkpoint <save|load> #filename\n", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    if(ARG0_IS_S("save"))
+    {
+      argc--;
+      argv++;
+
+      if(ek_save_checkpoint(argv[0]) != 0)
+      {
+        Tcl_AppendResult(interp, "Error saving EK checkpoint\n", (char *) NULL);
+        return TCL_ERROR;
+      }
+    }
+    else if(ARG0_IS_S("load"))
+    {
+      argc--;
+      argv++;
+
+      if(ek_load_checkpoint(argv[0]) != 0)
+      {
+        Tcl_AppendResult(interp, "Error loading EK checkpoint\n", (char *) NULL);
+        return TCL_ERROR;
+      }
+    }
+
+    return TCL_OK;
   }
   else if(ARG0_IS_S("pdb-parse"))
   {
@@ -604,7 +642,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
              ( !ARG0_IS_S("velocity") && !ARG0_IS_S("density") &&
                !ARG0_IS_S("boundary") && !ARG0_IS_S("potential") &&
                !ARG0_IS_S("pressure") && !ARG0_IS_S("lbforce") &&
-               !ARG0_IS_S("lbforce_buf") && !ARG0_IS_S("reaction_tags")
+               !ARG0_IS_S("lbforce_buf") && !ARG0_IS_S("reaction_tags") &&
+	       !ARG0_IS_S("particle_potential")
              )
            ) 
         {
@@ -671,6 +710,24 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
 #endif /* EK_BOUNDARIES */
         }
+        else if(ARG0_IS_S("particle_potential")) 
+        {
+#ifndef EK_ELECTROSTATIC_COUPLING
+          Tcl_AppendResult(interp, "Feature EK_ELECTROSTATIC_COUPLING required", (char *) NULL);
+          return (TCL_ERROR);
+#else
+          if(ek_print_vtk_particle_potential(argv[2]) == 0) 
+          {
+            argc -= 3;
+            argv += 3;
+
+            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+              return TCL_ERROR;
+            else
+              return TCL_OK;
+          }
+#endif
+	}
         else if(ARG0_IS_S("potential")) 
         {
           if(ek_print_vtk_potential(argv[2]) == 0) 
@@ -757,7 +814,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         }
         else if(ARG0_IS_S("lbforce")) 
         {
-          if(ek_print_vtk_lbforce(argv[2]) == 0) 
+          int ret = ek_print_vtk_lbforce(argv[2]);
+          if(ret == 0) 
           {
             argc -= 3;
             argv += 3;
@@ -767,34 +825,16 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             else
               return TCL_OK;
           }
-          else 
+          else if (ret == 1)
+          {
+            Tcl_AppendResult(interp, "Feature EK_DEBUG required\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+          else
           {
             Tcl_AppendResult(interp, "Unknown error in electrokinetics print lbforce vtk #string\n", (char *)NULL);
             return TCL_ERROR;
           }
-        }
-        else if(ARG0_IS_S("lbforce_buf")) 
-        {
-#ifndef EK_DEBUG
-            Tcl_AppendResult(interp, "Feature EK_DEBUG required\n", (char *)NULL);
-            return TCL_ERROR;
-#else
-          if(ek_print_vtk_lbforce_buf(argv[2]) == 0) 
-          {
-            argc -= 3;
-            argv += 3;
-
-            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
-              return TCL_ERROR;
-            else
-              return TCL_OK;
-          }
-          else 
-          {
-            Tcl_AppendResult(interp, "Unknown error in electrokinetics print lbforce_buf vtk #string\n", (char *)NULL);
-            return TCL_ERROR;
-          }
-#endif
         }
         else 
         {
@@ -904,6 +944,14 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
         }
       }
+#ifdef EK_ELECTROSTATIC_COUPLING
+      else if(ARG0_IS_S("electrostatics_coupling"))
+        {
+          argc--;
+          argv++;
+          ek_set_electrostatics_coupling(true);
+        }
+#endif
       else if(ARG0_IS_S("agrid")) 
       {
         argc--;
@@ -1542,6 +1590,39 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             Tcl_AppendResult(interp, "Unknown error setting electrokinetics stencil\n", (char *)NULL);
             return TCL_ERROR;
           }
+        }
+
+        argc--;
+        argv++;
+      }
+      else if(ARG0_IS_S("advection")) {
+        argc--;
+        argv++;
+
+        if(argc < 1)
+        {
+          Tcl_AppendResult(interp, "wrong usage of electrokinetics advection <on|off>\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+
+        if(ARG0_IS_S("on")) {
+          if(ek_set_advection(true) != 0) 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics advection\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+        else if(ARG0_IS_S("off")) {
+          if(ek_set_advection(false) != 0) 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics advection\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+        else
+        {
+          Tcl_AppendResult(interp, "wrong usage of electrokinetics advection <on|off>\n", (char *)NULL);
+          return TCL_ERROR;
         }
 
         argc--;

@@ -19,6 +19,24 @@
 # 
 source "tests_common.tcl"
 
+
+
+proc verify { i v o } {
+  # Verify that the ith component of o is zero if v is zero or non-zero else.
+  
+  set x [lindex $o $i]
+  if {$v ==1 } {
+    if { $x == 0 } {
+      error "The $i'th component of the angular velocity was zero even though it should rotate"
+    }
+  }
+  if {$v ==0 } {
+    if { $x != 0 } {
+      error "The $i'th component of the angular velocity was non-zero even though it should be blocked"
+    }
+  }
+}
+
 require_feature "ROTATION"
 require_feature "ROTATION_PER_PARTICLE"
 
@@ -37,7 +55,7 @@ part 0 pos 0 0 0
 
 # Check that rotation is on by default and that the rotation al degrees are thermalized
 set rot [part 0 print rotation]
-if {$rot != "1"} {
+if {$rot != "14"} {
  error "Rotation not on by default!"
 }
 
@@ -61,7 +79,42 @@ if {[veclen [vecsub $quat $quatN]] >$epsilon} {
 }
 
 if {[veclen [vecsub $omega $omegaN]] > $epsilon} {
- error "omegaernions changed even when rotation is off"
+ error "omega changed even when rotation is off"
+}
+
+
+
+# Test blocking individual axes
+
+# Flags to activate rotation around axes
+
+foreach x {0 1} {
+  foreach y {0 1} {
+    foreach z {0 1} {
+      set rot 0
+      if { $x==1} {
+        set rot [expr $rot +2]
+      }	
+      if { $y==1} {
+        set rot [expr $rot +4]
+      }	
+      if { $z==1} {
+        set rot [expr $rot +8]
+      }	
+      part 0 rotation $rot quat 1 0 0 0 omega_body 0 0 0 
+      #ext_torque -5 2 3
+      if { [part 0 print rotation] != $rot } {
+        error "Rotation particle property did not get set to correct value"
+      }
+
+      integrate 100
+      set o [part 0 print omega_body]
+      puts "$x $y $z $rot $o"
+      verify 0 $x $o
+      verify 1 $y $o
+      verify 2 $z $o
+    }
+  }
 }
 
 exit 0

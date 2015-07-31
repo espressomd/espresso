@@ -23,6 +23,7 @@ require_feature "ROTATIONAL_INERTIA"
 # Cchecks if every degree of freedom has 1/2 kT of energy, even when
 # mass and inertia tensor are active
 
+setmd box_l 10 10 10 
 set kT 1.5
 set halfkT 0.75
 thermostat langevin $kT 1
@@ -31,11 +32,11 @@ thermostat langevin $kT 1
 setmd skin 1.0
 setmd time_step 0.01
 
-set n 500
-set mass 200
-set j1 300
-set j2 400
-set j3 500
+set n 100
+set mass 0.8
+set j1 60
+set j2 80
+set j3 100
 for {set i 0} {$i<$n} {incr i} {
   part $i pos 0 0 0 rinertia $j1 $j2 $j3 mass $mass
 }
@@ -48,9 +49,9 @@ set oy2 0.
 set oz2 0.
 
 
-set loops 3
+set loops 250
 puts "Thermalizing..."
-integrate 300
+integrate 10000
 puts "Measuring..."
 
 for {set i 0} {$i <$loops} {incr i} {

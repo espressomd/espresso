@@ -26,6 +26,9 @@
 #include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
@@ -41,7 +44,11 @@ double temperature = 0.0;
 /* Langevin friction coefficient gamma. */
 double langevin_gamma = 0.0;
 /* Friction coefficient gamma for rotation */
-double langevin_gamma_rotation;
+double langevin_gamma_rotation = 0.0;
+/* Langevin for translations */
+bool langevin_trans = true;
+/* Langevin for rotations */
+bool langevin_rotate = true;
 
 /* NPT ISOTROPIC THERMOSTAT */
 // INSERT COMMENT
@@ -56,6 +63,11 @@ int ghmc_nmd = 1;
 double ghmc_phi = 0;
 
 double langevin_pref1, langevin_pref2, langevin_pref2_rotation;
+#ifdef MULTI_TIMESTEP
+  double langevin_pref1_small, langevin_pref2_small;
+  static double langevin_pref2_small_buffer;
+#endif
+
 /** buffers for the work around for the correlated random values which cool the system,
     and require a magical heat up whenever reentering the integrator. */
 static double langevin_pref2_buffer, langevin_pref2_rotation_buffer;
@@ -78,9 +90,25 @@ void thermo_init_langevin()
 #else
 #error No Noise defined
 #endif
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0.) {
+    langevin_pref1_small = -langevin_gamma/smaller_time_step;
+ #ifndef LANGEVIN_PER_PARTICLE
+    langevin_pref2_small = sqrt(24.0*temperature*langevin_gamma/smaller_time_step);
+ #endif
+  } else {
+    langevin_pref1_small = -langevin_gamma/time_step;
+ #ifndef LANGEVIN_PER_PARTICLE
+    langevin_pref2_small = sqrt(24.0*temperature*langevin_gamma/time_step);
+ #endif
+  }
+#endif
   
 #ifdef ROTATION 
-  langevin_gamma_rotation = langevin_gamma/3;
+  if ( langevin_gamma_rotation == 0.0 )
+  {
+    langevin_gamma_rotation = langevin_gamma;
+  }
 #if defined (FLATNOISE)
   langevin_pref2_rotation = sqrt(24.0*temperature*langevin_gamma_rotation/time_step);
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
@@ -99,7 +127,12 @@ void thermo_init_npt_isotropic()
   if (nptiso.piston != 0.0) {
 #if defined (FLATNOISE)
     nptiso_pref1 = -nptiso_gamma0*0.5 * time_step;
-    nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * time_step;
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step > 0.) 
+      nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * smaller_time_step;
+    else
+#endif
+      nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * time_step;
     nptiso_pref3 = -nptiso_gammav*(1.0/nptiso.piston)*0.5*time_step;
     nptiso_pref4 = sqrt(12.0*temperature*nptiso_gammav*time_step);
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
@@ -146,6 +179,10 @@ void thermo_heat_up()
     langevin_pref2_rotation_buffer = langevin_pref2_rotation;
     langevin_pref2 *= sqrt(3);
     langevin_pref2_rotation *= sqrt(3);
+#ifdef MULTI_TIMESTEP
+    langevin_pref2_small_buffer    = langevin_pref2_small;
+    langevin_pref2_small          *= sqrt(3);
+#endif
   }
 #ifdef DPD
   else if (thermo_switch & THERMO_DPD){dpd_heat_up();}
@@ -160,6 +197,9 @@ void thermo_cool_down()
   if(thermo_switch & THERMO_LANGEVIN) {
     langevin_pref2          = langevin_pref2_buffer;
     langevin_pref2_rotation = langevin_pref2_rotation_buffer;
+#ifdef MULTI_TIMESTEP
+    langevin_pref2_small    = langevin_pref2_small_buffer;
+#endif
   }
 #ifdef DPD
   else if (thermo_switch & THERMO_DPD){dpd_cool_down();}
@@ -169,3 +209,35 @@ void thermo_cool_down()
 #endif
 }
 
+int get_cpu_temp()
+{
+  std::ifstream f("/sys/class/thermal/thermal_zone0/temp");
+  int temp;
+  f >> temp;
+  f.close();
+  return (temp + 273150)/1000;
+}
+
+static int volatile cpu_temp_count = 0;
+void set_cpu_temp(int temp)
+{
+  while (temp != get_cpu_temp())
+  {
+    if (temp < get_cpu_temp())
+    {
+      //printf("Cooling down CPU from %dK to %dK\n", get_cpu_temp(), temp);
+      // pause for 1 second to give the CPU time to cool down
+      usleep(1e6);
+    }
+    else
+    {
+      //printf("Heating up CPU from %dK to %dK\n", get_cpu_temp(), temp);
+      // crunch some numbers to heat up the CPU
+      cpu_temp_count = 0;
+      for (int i = 0; i < 1e9; ++i)
+      {
+        cpu_temp_count += i;
+      }
+    }
+  }
+}

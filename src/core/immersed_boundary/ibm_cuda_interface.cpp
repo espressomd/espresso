@@ -67,7 +67,7 @@ void IBM_cuda_mpi_get_particles()
             part = cell->part;
             npart = cell->n;
             for (int i=0;i<npart;i++) {
-              memcpy(pos, part[i].r.p, 3*sizeof(double));
+              memmove(pos, part[i].r.p, 3*sizeof(double));
               fold_position(pos, dummy);
               IBM_ParticleDataInput_host[i+g].pos[0] = (float)pos[0];
               IBM_ParticleDataInput_host[i+g].pos[1] = (float)pos[1];
@@ -125,7 +125,7 @@ void IBM_cuda_mpi_get_particles_slave()
       npart = cell->n;
       
       for (i=0;i<npart;i++) {
-        memcpy(pos, part[i].r.p, 3*sizeof(double));
+        memmove(pos, part[i].r.p, 3*sizeof(double));
         fold_position(pos, dummy);
         
         particle_input_sl[i+g].pos[0] = (float)pos[0];

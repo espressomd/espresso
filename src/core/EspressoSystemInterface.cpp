@@ -24,6 +24,9 @@
 
 #include <iostream>
 
+/* Initialize instance pointer */
+EspressoSystemInterface *EspressoSystemInterface::m_instance = 0;
+
 /* Need explicite specialization, otherwise some compilers do not produce the objects. */
 
 template class EspressoSystemInterface::const_iterator<SystemInterface::Real>;
@@ -86,28 +89,59 @@ void EspressoSystemInterface::gatherParticles() {
   }
 #endif
 
-  if (needsQ() || needsR()) {
+  if (needsQ() || needsR() ||needsDip()|| needsQuatu()) {
     R.clear();
+
     #ifdef ELECTROSTATICS
     Q.clear();
+    #endif
+    #ifdef DIPOLES
+    Dip.clear();
+    #endif
+
+
+    #ifdef ROTATION
+    Quatu.clear();
     #endif
 
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c];
       p  = cell->part;
       np = cell->n;
+
       if(needsR())
 	R.reserve(R.size()+np);
+
 #ifdef ELECTROSTATICS
       if(needsQ())
 	Q.reserve(Q.size()+np);
 #endif
+#ifdef DIPOLES
+      if(needsDip())
+	Dip.reserve(Dip.size()+np);
+#endif
+
+#ifdef ROTATION
+      if(needsQuatu())
+	Quatu.reserve(Quatu.size()+np);
+#endif
+
       for(i = 0; i < np; i++) {
+
 	if(needsR())
 	  R.push_back(Vector3(p[i].r.p));
+
 #ifdef ELECTROSTATICS
 	if(needsQ())
 	  Q.push_back(p[i].p.q);
+#endif
+#ifdef DIPOLES
+	if(needsDip())
+	  Dip.push_back(Vector3(p[i].r.dip));
+#endif
+#ifdef ROTATION
+	if(needsQuatu())
+	  Quatu.push_back(Vector3(p[i].r.quatu));
 #endif
       }
     }
@@ -132,6 +166,18 @@ const SystemInterface::const_vec_iterator &EspressoSystemInterface::rEnd() {
   return m_r_end;
 }
 
+#ifdef DIPOLES
+SystemInterface::const_vec_iterator &EspressoSystemInterface::dipBegin() {
+  m_dip_begin = Dip.begin();
+  return m_dip_begin;
+}
+
+const SystemInterface::const_vec_iterator &EspressoSystemInterface::dipEnd() {
+  m_dip_end = Dip.end();
+  return m_dip_end;
+}
+#endif
+
 #ifdef ELECTROSTATICS
 SystemInterface::const_real_iterator &EspressoSystemInterface::qBegin() {
   m_q_begin = Q.begin();
@@ -142,7 +188,18 @@ const SystemInterface::const_real_iterator &EspressoSystemInterface::qEnd() {
   m_q_end = Q.end();
   return m_q_end;
 }
+#endif
 
+#ifdef ROTATION
+SystemInterface::const_vec_iterator &EspressoSystemInterface::quatuBegin() {
+  m_quatu_begin = Quatu.begin();
+  return m_quatu_begin;
+}
+
+const SystemInterface::const_vec_iterator &EspressoSystemInterface::quatuEnd() {
+  m_quatu_end = Quatu.end();
+  return m_quatu_end;
+}
 #endif
 
 unsigned int EspressoSystemInterface::npart() {
@@ -153,6 +210,3 @@ SystemInterface::Vector3 EspressoSystemInterface::box() {
   return Vector3(box_l);
 }
 
-
-
-EspressoSystemInterface espressoSystemInterface;

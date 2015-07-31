@@ -52,6 +52,8 @@ index=totoc,                    % add the index to the TOC
 \usepackage{enumitem}
 \usepackage[table,x11names]{xcolor}
 \usepackage{longtable}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
 %\usepackage{showframe}          % Turn this on when debugging the
                                 % margin etc.
 
@@ -218,7 +220,7 @@ index=totoc,                    % add the index to the TOC
   \stepcounter{essyntaxcounter}%
   \label{essyntax:\arabic{essyntaxcounter}}%
   % Create headings
-  \minisec{Syntax}\nopagebreak%
+  \minisec{TCL Syntax}\nopagebreak%
   \smallskip\nopagebreak%
   \renewcommand{\variant}[1]{\par\rawvariant{##1}}
   \begin{essyntaxbox}%
@@ -248,6 +250,10 @@ index=totoc,                    % add the index to the TOC
   }{
   \end{list}
 }
+
+% Declarations for the Python Syntax
+\input{pypresso.tex}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Declare new features/commands/analyze subcommands

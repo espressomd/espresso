@@ -62,7 +62,7 @@ set:
 \todo{Which commands can be used to set the \emph{read-only}
   variables?}
 \begin{globvar}
-\item[box_l] (double[3]) Simulation box length. Note that
+\item[box_l] (double[3]) Simulation box lengths of the cuboid box used by Espresso. Note that
   if you change the box length during the simulation, the folded
   particle coordinates will remain the same, i.e., the particle stay
   in the same image box, but at the same relative position in their
@@ -143,7 +143,19 @@ set:
   your actions on the data.
 \item[verlet_reuse] (double) Average number of integration steps the
   verlet list has been re-used.
-\item[warnings] (int) if non-zero (default), some warnings are printed out. Set this to zero if you get annoyed by them.
+\item[warnings] (int) if non-zero (default), some warnings are printed
+  out. Set this to zero if you get annoyed by them.
+\item[sd_viscosity] (double) viscosity of the fluid for the Stokesian Dynamics
+  simulation.
+\item[sd_radius] (double) hydrodynamic radius of the particles used in
+  Stokesian Dynamics.
+\item[sd_seed] (int[2]) seed of the Stokes Dynamics random number generator.
+\item[sd_random_state] (int[2]) offset of the random number
+  generator. Together with the seed, the state of the random number generator
+  is well defined.
+\item[sd_precision_random] (double) precision used for the approximation of
+  the square root of the mobility. Sometimes higher accuracy can speedup the
+  simulation.
 \end{globvar}
 
 \section{\texttt{thermostat}: Setting up the thermostat}
@@ -207,22 +219,36 @@ the same temperature.
 \subsection{Langevin thermostat}
 
 \begin{essyntax}
-  thermostat langevin \var{temperature} \var{gamma}
+  thermostat langevin \var{temperature} \var{gamma\_trans} \opt{\var{gamma\_rotate}} \opt{on/off} \opt{on/off}
 \end{essyntax}
+
+\warning{The behavior of the Langevin Thermostat has changed in this version of \es{}. Before the term \var{gamma} was called the `friction coefficient', but was in fact the inverse relaxation time. The code has been modified such that this value is now a proper friction coefficient.
+
+A warning message has been added to the source (core/thermostat.cpp), which can be commented out if you have verified that your simulation results are not affected by this change.}
 
 The Langevin thermostat consists of a friction and noise term coupled
 via the fluctuation-dissipation theorem. The friction term is a
-function of the particle velocities. For a more detailed explanation,
-refer to \cite{grest86a}.
+function of the particle velocities. By specifying \var{gamma\_trans} the diffusion coefficient for the particle becomes
+\begin{equation}
+D = \frac{\var{temperature}}{\var{gamma\_trans}}.
+\end{equation}
+The relaxation time is given by \var{gamma\_trans}/MASS, with MASS the particle's mass. For a more detailed explanation,
+refer to \cite{grest86a}. In the near future an anisotropic diffusion coefficient tensor will be made available to simulate anisotropic colloids (rods, etc.) properly.
 
 If the feature \feature{ROTATION} is compiled in, the rotational
-degrees of freedom are also coupled to the thermostat.
+degrees of freedom are also coupled to the thermostat. If only the first two arguments are specified then the diffusion coefficient for the rotation is set to the same value as that for the translation.
+
+\warning{This is again a change, since originally it was set to 1/3 of the value of \var{gamma\_trans} for some (unclear) reason. If you want to reproduce this behavior, this can be simply done by setting the value of \var{gamma\_rotate} appropriately.}
+
+A separate rotational diffusion coefficient can be set by inputting \var{gamma\_rotate}. This also allows one to properly match the translational and rotational diffusion coefficients of a sphere. Finally, the two options \opt{on/off} allow one to switch the translational and rotational thermalization on or off separately, maintaining the frictional behavior. This can be useful, for instance, in high P{\'e}clet number active matter systems, where one only wants to thermalize the rotational degrees of freedom and translational motion is effected by the self-propulsion.
 
 Using the Langevin thermostat, it is posible to set a temperature and
 a friction coefficient for every particle individually via the feature
 \feature{LANGEVIN_PER_PARTICLE}. Consult the reference of the
 \texttt{part} command (chapter \ref{chap:part}) for information on how
 to achieve this.
+
+\warning{The behavior of the \feature{LANGEVIN_PER_PARTICLE} thermostat has undergone a similar change.}
 
 \subsection{GHMC thermostat}
 
@@ -441,6 +467,36 @@ will only do isotropic changes of the box.
 Be aware that this feature is neither properly examined for all
 systems nor is it maintained regularly. If you use it and notice
 strange behaviour, please contribute to solving the problem.
+\subsection{CPU thermostat}
+
+\begin{essyntax}
+  thermostat cpu \var{temperature}
+\end{essyntax}
+
+The CPU thermostat consists of a number crunching and a time wasting
+term coupled via the central processing unit's thermal diode. For a
+more detailed explanation, refer to German Patent No. DE~10~2015~04F00L.
+
+Using the CPU thermostat, it is posible to keep your central
+processing unit operating at a constant temperature.
+
+Be aware that this thermostat requires \var{temperature} to be given
+in Kelvin.
+
+\subsection{Stokesian Dynamics thermostat}
+\label{ssec:SDthermostat}
+\begin{essyntax}
+  thermostat sd \var{temperature}
+  \begin{features}
+    \required{CUDA} and \required{SD}
+  \end{features}
+\end{essyntax}
+
+This thermostat should be used together with the Stokesian Dynamics
+implementation.
+No other thermostat is able to thermalize SD correctly.
+The precision of the farfield contribution of the thermostat can be tuned
+with
 
 \section{\texttt{nemd}: Setting up non-equilibrium MD}
 \newescommand{nemd}

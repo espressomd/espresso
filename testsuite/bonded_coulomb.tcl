@@ -20,6 +20,7 @@
 source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
+require_feature "COULOMB_DEBYE_HUECKEL" off
 
 puts "------------------------------------------"
 puts "- Testcase bonded_coulomb.tcl running on [format %02d [setmd n_nodes]] nodes: -"

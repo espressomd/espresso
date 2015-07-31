@@ -26,6 +26,45 @@
 \subsection{Defining particle properties}
 \label{ssec:particleproperties}
 
+\begin{pysyntax}
+  \property{
+    espressomd.System()
+  }{
+    part[\arg{pid}]
+  }{
+    type=\arg{int},
+    pos=\arg{array of 3 floats},
+    v=\arg{array of 3 floats},
+    f=\arg{array of 3 floats},
+    bonds=\arg{bond},
+    mass=\arg{float},
+    omega_lab=\arg{array of 3 floats},
+    rinertia=\arg{array of 3 floats},
+    omega_body=\arg{array of 3 floats},
+    torque_lab=\arg{array of 3 floats},
+    quat=\arg{array of 4 floats},
+    %director=\arg{},
+    q=\arg{float},
+    virtual=\arg{int $\geq$ 0},
+    vs_relative=\arg{tuple of int and float},
+    vs_auto_relate_to=\arg{int},
+    dip=\arg{array of 3 floats},
+    dipm=\arg{float},
+    fix=\arg{array of 3 ints},
+    ext_force=\arg{array of 3 floats},
+    ext_torque=\arg{array of 3 floats},
+    exclude=\arg{list of ints},
+    temp=\arg{float},
+    gamma=\arg{float},
+    rotation=\arg{bool},
+    swimming=\arg{dictionary \ttfamily \{
+      `f_swim':\arg{float},
+      `v_swim':\arg{float},
+      `mode':\arg{``pusher''|``puller''},
+      `dipole_length':\arg{float},
+      `rotational_friction':\arg{float}\}}
+  }
+\end{pysyntax}
 \begin{essyntax}
   part
   \var{pid}
@@ -187,9 +226,11 @@ set first because of the spatial decomposition.
   different diffusion constants. Caution: this has no influence on any
   other thermostat then the Langevin thermostat.
 \item[\opt{rotation \var{rot}}] Specifies whether a particle's
-  rotational degrees of freedom are integrated (value of 1) or not
-  (0). If set to zero, the content of the torque and omega variables
-  are meaningless. The default is 1.
+  rotational degrees of freedom along the different axes in the particle's body-fixed frame are integrated or not.
+  If set to zero, rotation is disabled entirely, and the content of the torque and omega variables
+  are meaningless. 
+  Rotation of a particular axis is turned on by adding up the corresponding flags: x=2, y=4, z=8.
+  To enable rotation around all axis, use a value of 2+4+8=14. This is also the default.
 \item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the
   four solvation coupling constants for the two components of a
   Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
@@ -257,8 +298,8 @@ set first because of the spatial decomposition.
   \noindent
   \fbox{\parbox{\linewidth-2\fboxsep-2\fboxrule}{%
       Please note that even though swimming is interoperable with the
-      CPU version of LB it is only supported on \emph{less than three}
-      Open MPI nodes, i.e.\ $\text{\keyword{n_nodes}} \leq 1$.%
+      CPU version of LB it is only supported on \emph{one} Open MPI
+      node, i.e.\ $\text{\keyword{n_nodes}} = 1$.%
     }}
 \end{arguments}
 
@@ -356,6 +397,7 @@ the same way.
 \subsection{Deleting  particles}
 \label{tcl:part:delete}
 
+\todo{What is the syntax of variant 3?}
 \begin{essyntax}
   \variant{1} part \var{pid} delete
   \variant{2} part deleteall
@@ -728,7 +770,16 @@ Examples of use:\\
   copy_particles set {1 2} set {3 4}
   copy_particles range 1 4
 \end{tclcode}
-All these examples do the same - making exact copies of particles 1 through 4.
+All these examples do the same---making exact copies of particles 1 through 4.
+
+\noindent
+\fbox{\parbox{\linewidth-2\fboxsep-2\fboxrule}{%
+    Please note that \keyword{copy_particles} only works if only
+    fundamental particle properties are used, such as \keyword{pos},
+    \keyword{type}, etc.\ as the \keyword{copy_particles} procedure
+    only possesses parsers for these.  Other properties, such as
+    \keyword{quatu} cannot be parsed and will thus lead to an error.%
+  }}
 
 \section{\texttt{constraint}: Setting up constraints}\label{sec:constraint}
 \newescommand{constraint}
@@ -766,7 +817,8 @@ All these examples do the same - making exact copies of particles 1 through 4.
   \variant{6}  
   constraint pore center \var{c_x} \var{c_y} \var{c_z} 
   axis \var{n_x} \var{n_y} \var{n_z} 
-  radius \var{rad} length \var{length} 
+  radius \var{rad} \opt{outer_radius \var{rad_S}} 
+  \opt{smoothing_radius \var{rad_S}} length \var{length} 
   type \var{id} 
 
   \variant{7}
@@ -875,7 +927,7 @@ with a dipole moment.
 
 The resulting surface in variant \variant{1} is a plane defined by the
 normal vector \var{n_x} \var{n_y} \var{n_z} and the distance
-\var{d} from the origin. The force acts in direction of the normal. 
+\var{d} from the origin (in the direction of the normal vector). The force acts in direction of the normal. 
 Note that the \var{d} describes the distance from the origin in units
 of the normal vector so that the product of $d$ and $n$ is a point on the
 surface. Therefore negative distances are quite common!
@@ -911,10 +963,17 @@ Variant \variant{6} sets up a cylindrical pore similar to variant
 \variant{3} with a center \var{c_x} \var{c_y} \var{c_z} and radius
 \var{rad}. The \var{length} parameter is \textbf{half} of the cylinder
 length. The \var{axis} is a vector along the cylinder axis, which is
-normalized in the program. The argument \codebox{radius \var{rad}} 
-can be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}}
-to obtain a pore with a conical shape and corresponding opening radii.
-The first radius is in the direction opposite to the axis vector.
+normalized in the program. Optionally the outer radius of the pore can
+be specified. By default this is (numerical) infinity and thus results in 
+an infinite wall with one pore. The argument \codebox{radius \var{rad}} can 
+be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}} to obtain a 
+pore with a conical shape and corresponding opening radii. The first radius 
+is in the direction opposite to the axis vector. The same applies for 
+\codebox{outer_radius \var{orad}} which can be replaced  with 
+\codebox{outer_radii \var{orad1} \var{orad2}}. Per default sharp edges are
+replaced by circles of unit radius. The radius of this smoothing can be set
+with the optional keyword \codebox{smoothing_radius}.
+
 
 Variant \variant{7} creates a stomatocyte shaped boundary. This command
 should be used with care. The position can be any point in the simulation
@@ -1063,21 +1122,44 @@ center of a molecule, perform the following steps in that order
   \end{essyntaxbox}
 \item Declare the list of molecules and the particles they consist of:
   \begin{essyntaxbox}
-    eval analyze set \{\var{molid} \{\var{list of particle ids ..}\} ...\}
+    analyze set \{\var{moltype} \var{list of particle ids} ...\} ...
   \end{essyntaxbox}
   The lists of particles in a molecule comprise the non-virtual
-  particles and the virtual site.
-\item Assign to all particles that belong to the same molecule a
-  common molecule id
+  particles as well as the virtual site. The id of this molecule is
+  its index in this list. For example,
+  \begin{code}
+    analyze set \{0 1 2 3 4\} \{0 5 6 7 8\} \{1 9 10 11\}
+  \end{code}
+  declares three molecules, of which the first two consist of three
+  particles and a virtual site each (particles 1--4 and 5--8,
+  respectively). The third molecule has type 1 and consists of two
+  particles and a virtual site. The virtual sites were determined
+  before by setting the \var{virtual} flag. You can choose freely one
+  out of each molecule, for example particles 1, 5, and 9.
+\item Assign to all particles that belong to the same molecule the
+  molecule's id
   \begin{essyntaxbox}
     part \var{pid} mol \var{molid}
   \end{essyntaxbox}
+  The molid is the index of the particle in the above list, so you
+  would assign \var{molid} 0 to particles 1-4, \var{molid} 1 to
+  particles 5-8 and \var{molid} 2 to particles 9-11. Alternatively,
+  you can call
+  \begin{essyntaxbox}
+    analyze set topo_part_sync
+  \end{essyntaxbox}
+  to set the \var{molid}s from the molecule declarations.
 \item Update the position of all virtual particles (optional)
   \begin{essyntaxbox}
     integrate 0
   \end{essyntaxbox}
 \end{enumerate}
 Please note that the use of virtual sites requires that the particles are numbered consecutively. I.e., the particle ids should go from zero to $N-1$, where $N$ is the number of particles.
+
+The type of the molecule you can choose freely, it is only used in
+certain analysis functions, namely \texttt{energy_kinetic_mol},
+\texttt{pressure_mol} and \texttt{dipmom_mol}, which compute kinetic
+energy, pressure and dipole moment per molecule type, respectively.
 
 
 \subsection{Rigid arrangements of particles}
@@ -1127,9 +1209,8 @@ Please note:
   distance from the non-virtual particle, the id of the non-virtual
   particle and a quaternion which defines the vector from non-virtual
   particle to virtual site in the non-virtual particle's body-fixed
-  frame. The first two are saved in the virtual site's
-  vs\_relative-attribute, while the latter is saved in the quaternion
-  attribute. Take care, not to overwrite these after using
+  frame. This information is saved in the virtual site's
+  vs\_relative-attribute. Take care, not to overwrite these after using
   vs\_auto\_relate.
 \item Virtual sites can not be placed relative to other virtual sites,
   as the order in which the positions of virtual sites are updated is
@@ -1141,10 +1222,10 @@ Please note:
 \item In case you know the correct quaternions, you can also setup a
   virtual site using
   \begin{essyntaxbox}
-    part \var{v} virtual 1 quat \var{q} vs_relative \var{n} \var{d}
+    part \var{v} virtual 1 vs_relative \var{n} \var{d} \var{q}
   \end{essyntaxbox}
-  where n is the id of the non-virtual particle and d is its distance
-  from the virtual site.
+  where n is the id of the non-virtual particle, d is its distance
+  from the virtual site, and q are the quaternions.
 \item In a simulation on more than one CPU, the effective cell size
   needs to be larger than the largest distance between a non-virtual
   particle and its associated virtual sites. To this aim, you need to
@@ -1177,28 +1258,27 @@ switches in \texttt{myconfig.hpp} (sec. \ref{sec:myconfig})
 \section{Grand canonical feature}
 For using \es conveniently for simulations in the grand canonical ensemble, or
 other purposes, when particles of certain types are created and deleted frequently.
+Particle ids can be stored in lists for each individual type and so random ids of
+particles of a certain type can be drawn. 
 
 \begin{essyntax}
 part gc
 \alt{\var{type} \asep \alt{\alt{find \asep delete \asep
 status \asep number} \var{type}}}
-\begin{features}
-\required{GRANDCANONICAL}
-\end{features}
-
 \end{essyntax}
-By giving only a particle type as an argument, \es will initialize
-arrays on the c-level which will keep track of particles of the given
-type. When using the keyword \texttt{find} and a particle type, the
+
+If you want \es to keep track of particle ids of a certain type you have to
+initialize the method by calling 
+\begin{essyntax}
+	part gc \var{type}
+\end{essyntax}
+After that \es will keep track of particle ids of that type. 
+When using the keyword \texttt{find} and a particle type, the
 command will return a randomly chosen particle id, for a particle of
-the given type. Similarly using the \texttt{delete} variant will
-delete a randomly chosen particle of the given type.  Notice however,
-that changing the type of an existing particle will not change the
-arrays. If the change is permanent, then re-initializing the arrays of
-the involved types will remove this inconsistency.  The keyword
-\texttt{status} will return a list with all particles with the given
-type, similarly giving \texttt{number} as argument will return the
-number of particles which sharing the given type.
+the given type. 
+The keyword \texttt{status} will return a list with all particles with the given
+type, similarly giving \texttt{number} as argument will return the number of
+particles which share the given type.
 
 %%% Local Variables: 
 %%% mode: latex

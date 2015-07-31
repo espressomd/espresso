@@ -152,6 +152,38 @@ static int failcounter=0;
 /* *********************** C Interface part *************************************/
 /* ******************************************************************************/
 
+/*
+ * set lattice switch on C-level
+*/
+int lb_set_lattice_switch(int py_switch){
+
+  if(py_switch == 1){
+#ifdef LB
+    if( !(lattice_switch & LATTICE_LB_GPU) ) 
+      lattice_switch = lattice_switch | LATTICE_LB;
+      return 0;
+#endif
+#ifdef LB_GPU
+  }else if(py_switch == 2){
+    lattice_switch = lattice_switch | LATTICE_LB_GPU;
+    return 0;
+#endif
+  }else{
+    return 1;
+  }
+}
+
+/*
+ * get lattice switch on py-level
+*/
+int lb_get_lattice_switch(int* py_switch){
+  if(lattice_switch){
+    *py_switch = lattice_switch;
+    return 0;
+  }else
+    return 1;
+}
+
 #ifdef SHANCHEN
 int lb_lbfluid_set_shanchen_coupling(double *p_coupling) {
 #ifdef LB_GPU
@@ -347,6 +379,25 @@ int lb_lbfluid_set_friction(double * p_friction)
 }
 
 
+int lb_lbfluid_get_friction(double * p_friction)
+{
+  for (int ii=0;ii<LB_COMPONENTS;ii++){
+    if ( p_friction[ii] <= 0 )
+            return -1;
+    if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+      p_friction[ii] = (double)lbpar_gpu.friction[ii];
+#endif // LB_GPU
+    } else {
+#ifdef LB
+       p_friction[ii] = lbpar.friction[ii];
+#endif // LB
+    }
+  }
+  return 0;
+}
+
+
 int lb_lbfluid_set_couple_flag(int couple_flag) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -472,30 +523,36 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_f
 }
 
 
-int lb_lbfluid_get_density(double* p_dens){
-// TODO: implement all lb_lbfluid_get_*() correctly for all components!!
-  if (lattice_switch & LATTICE_LB_GPU) {
+int lb_lbfluid_get_density(double *p_dens) {
+  for (int ii=0;ii<LB_COMPONENTS;ii++){
+    if ( p_dens[ii] <= 0 )
+      return -1;
+    if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    *p_dens = lbpar_gpu.rho[0];
+      p_dens[ii] = (double)lbpar_gpu.rho[ii];
 #endif // LB_GPU
-  } else {
+    } else {
 #ifdef LB
-    *p_dens = lbpar.rho[0];
+      p_dens[ii] = lbpar.rho[ii];
 #endif // LB
+    }
   }
   return 0;
 }
 
-
 int lb_lbfluid_get_visc(double* p_visc){
-  if (lattice_switch & LATTICE_LB_GPU) {
+  for (int ii=0;ii<LB_COMPONENTS;ii++){
+    if ( p_visc[ii] <= 0 )
+      return -1;
+    if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    *p_visc = lbpar_gpu.viscosity[0];
+      p_visc[ii] = (double)lbpar_gpu.viscosity[ii];
 #endif // LB_GPU
-  } else {
+    } else {
 #ifdef LB
-    *p_visc = lbpar.viscosity[0];
+      p_visc[ii] = lbpar.viscosity[ii];
 #endif // LB
+     }
   }
   return 0;
 }
@@ -556,23 +613,35 @@ int lb_lbfluid_get_agrid(double* p_agrid){
   return 0;
 }
 
+int lb_lbfluid_get_tau(double* p_tau){
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    *p_tau = lbpar_gpu.tau;
+#endif // LB_GPU
+  } else {
+#ifdef LB
+    *p_tau = lbpar.tau;
+#endif // LB
+  }
+  return 0;
+}
 
-int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
+int lb_lbfluid_get_ext_force(double* p_f){
 #ifdef SHANCHEN
   fprintf(stderr, "Not implemented yet (%s:%d) ",__FILE__,__LINE__);
   errexit();
 #endif // SHANCHEN
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    *p_fx = lbpar_gpu.ext_force[0];
-    *p_fy = lbpar_gpu.ext_force[1];
-    *p_fz = lbpar_gpu.ext_force[2];
+    p_f[0] = lbpar_gpu.ext_force[0];
+    p_f[1] = lbpar_gpu.ext_force[1];
+    p_f[2] = lbpar_gpu.ext_force[2];
 #endif // LB_GPU
   } else {
 #ifdef LB
-    *p_fx = lbpar.ext_force[0];
-    *p_fy = lbpar.ext_force[1];
-    *p_fz = lbpar.ext_force[2];
+    p_f[0] = lbpar.ext_force[0];
+    p_f[1] = lbpar.ext_force[1];
+    p_f[2] = lbpar.ext_force[2];
 #endif // LB
   }
   return 0;
@@ -913,26 +982,35 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
         float* host_checkpoint_vd = (float *) malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
         unsigned int* host_checkpoint_seed = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
         unsigned int* host_checkpoint_boundary = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        float* host_checkpoint_force = (float *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
+        lbForceFloat* host_checkpoint_force = (lbForceFloat *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
         lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
-        for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
-            fprintf(cpfile, "%.8E \n", host_checkpoint_vd[n]);
+        if(!binary)
+        {
+          for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
+              fprintf(cpfile, "%.8E \n", host_checkpoint_vd[n]);
+          }
+          for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
+              fprintf(cpfile, "%u \n", host_checkpoint_seed[n]);
+          }
+          for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
+              fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]);
+          }
+          for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
+              fprintf(cpfile, "%.8E \n", host_checkpoint_force[n]);
+          }
         }
-        for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
-            fprintf(cpfile, "%u \n", host_checkpoint_seed[n]);
-        }
-        for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
-            fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]);
-        }
-        for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
-            fprintf(cpfile, "%.8E \n", host_checkpoint_force[n]);
+        else
+        {
+          fwrite(host_checkpoint_vd, sizeof(float), 19*int(lbpar_gpu.number_of_nodes), cpfile);
+          fwrite(host_checkpoint_seed, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile);
+          fwrite(host_checkpoint_boundary, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile);
+          fwrite(host_checkpoint_force, sizeof(lbForceFloat), 3*int(lbpar_gpu.number_of_nodes), cpfile);
         }
         fclose(cpfile);
         free(host_checkpoint_vd);
         free(host_checkpoint_seed);
         free(host_checkpoint_boundary);
         free(host_checkpoint_force);
-        //fprintf(stderr, "LB checkpointing not implemented for GPU\n");
 #endif // LB_GPU
     }
     else if(lattice_switch & LATTICE_LB) {
@@ -988,7 +1066,7 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         float* host_checkpoint_vd = (float *) malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
         unsigned int* host_checkpoint_seed = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
         unsigned int* host_checkpoint_boundary = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        float* host_checkpoint_force = (float *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
+        lbForceFloat* host_checkpoint_force = (lbForceFloat *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
 
         if (!binary) {
             for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
@@ -1001,10 +1079,24 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
                 fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
             }
             for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
+              if (sizeof(lbForceFloat) == sizeof(float))
+                fscanf(cpfile, "%f", &host_checkpoint_force[n]);
+              else
                 fscanf(cpfile, "%f", &host_checkpoint_force[n]);
             }
-            lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
         }
+        else
+        {
+          if(fread(host_checkpoint_vd, sizeof(float), 19*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (19*lbpar_gpu.number_of_nodes))
+            return ES_ERROR;
+          if(fread(host_checkpoint_seed, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
+            return ES_ERROR;
+          if(fread(host_checkpoint_boundary, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
+            return ES_ERROR;
+          if(fread(host_checkpoint_force, sizeof(lbForceFloat), 3*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (3*lbpar_gpu.number_of_nodes))
+            return ES_ERROR;
+        }
+        lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
         fclose(cpfile);
         free(host_checkpoint_vd);
         free(host_checkpoint_seed);
@@ -1125,9 +1217,9 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
 		Rho_tot += rho[ii];
 	}
         // unit conversion
-        p_u[0] = j[0]/Rho_tot/lbpar.tau/lbpar.agrid;
-        p_u[1] = j[1]/Rho_tot/lbpar.tau/lbpar.agrid;
-        p_u[2] = j[2]/Rho_tot/lbpar.tau/lbpar.agrid;
+        p_u[0] = j[0]/Rho_tot*lbpar.agrid/lbpar.tau;
+        p_u[1] = j[1]/Rho_tot*lbpar.agrid/lbpar.tau;
+        p_u[2] = j[2]/Rho_tot*lbpar.agrid/lbpar.tau;
 #endif // LB
     }
     return 0;
@@ -1455,15 +1547,15 @@ static void halo_push_communication() {
                 index += yperiod;
             }
         }
-    
+
         if (node_grid[0] > 1) {
             MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
                          rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                          comm_cart, &status);
         } else {
-            memcpy(rbuf,sbuf,count*sizeof(double));
+            memmove(rbuf,sbuf,count*sizeof(double));
         }
-    
+
         buffer = rbuf;
         index = get_linear_index(1,0,0,lblattice.halo_grid);
         for (z=0; z<lblattice.halo_grid[2]; z++) {
@@ -1499,15 +1591,15 @@ static void halo_push_communication() {
                 index += yperiod;
             }
         }
-    
+
         if (node_grid[0] > 1) {
             MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
                          rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                          comm_cart, &status);
         } else {
-            memcpy(rbuf,sbuf,count*sizeof(double));
+            memmove(rbuf,sbuf,count*sizeof(double));
         }
-    
+
         buffer = rbuf;
         index = get_linear_index(lblattice.grid[0],0,0,lblattice.halo_grid);
         for (z=0; z<lblattice.halo_grid[2]; z++) {
@@ -1551,13 +1643,13 @@ static void halo_push_communication() {
             }
             index += zperiod - lblattice.halo_grid[0];
         }
-    
+
         if (node_grid[1] > 1) {
             MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
                          rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                          comm_cart, &status);
         } else {
-            memcpy(rbuf,sbuf,count*sizeof(double));
+            memmove(rbuf,sbuf,count*sizeof(double));
         }
     
         buffer = rbuf;
@@ -1597,15 +1689,15 @@ static void halo_push_communication() {
             }
             index += zperiod - lblattice.halo_grid[0];
         }
-    
-        if (node_grid[1] > 1) {
+
+        if (node_grid[2] > 1) {
             MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
                          rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                          comm_cart, &status);
         } else {
-            memcpy(rbuf,sbuf,count*sizeof(double));
+            memmove(rbuf,sbuf,count*sizeof(double));
         }
-    
+
         buffer = rbuf;
         index = get_linear_index(0,lblattice.grid[1],0,lblattice.halo_grid);
         for (z=0; z<lblattice.halo_grid[2]; z++) {
@@ -1622,7 +1714,15 @@ static void halo_push_communication() {
             }
             index += zperiod - lblattice.halo_grid[0];
         }
-    
+
+        if (node_grid[2] > 1) {
+            MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+                         rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+                         comm_cart, &status);
+        } else {
+            memmove(rbuf,sbuf,count*sizeof(double));
+        }
+
         /***************
          * Z direction *
          ***************/
@@ -1655,7 +1755,7 @@ static void halo_push_communication() {
                          rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                          comm_cart, &status);
         } else {
-            memcpy(rbuf,sbuf,count*sizeof(double));
+	    memmove(rbuf,sbuf,count*sizeof(double));
         }
     
         buffer = rbuf;
@@ -1699,7 +1799,7 @@ static void halo_push_communication() {
                          rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                          comm_cart, &status);
         } else {
-            memcpy(rbuf,sbuf,count*sizeof(double));
+            memmove(rbuf,sbuf,count*sizeof(double));
         }
     
         buffer = rbuf;
@@ -1898,10 +1998,11 @@ void lb_reinit_parameters() {
 #else // D3Q19
            double **e = lbmodel.e;
 #endif // D3Q19
-           for (i = 0; i < 3; i++) lb_phi[i+ii*LBQ] = 0;
+           for (i = 0; i < 4; i++) lb_phi[i+ii*LBQ] = 0;
            lb_phi[4+ii*LBQ] = sqrt(mu*e[19][4]*(1.-SQR(gamma_bulk[ii]))); // SQR(x) == x*x
            for (i = 5; i < 10; i++) lb_phi[i+ii*LBQ] = sqrt(mu*e[19][i]*(1.-SQR(gamma_shear[ii])));
-           for (i = 10; i < lbmodel.n_veloc; i++) lb_phi[i+ii*LBQ] = sqrt(mu*e[19][i]);
+           for (i = 10; i < 16; i++) lb_phi[i+ii*LBQ] = sqrt(mu*e[19][i]*(1.-SQR(gamma_odd[ii])));
+           for (i = 16; i < 19; i++) lb_phi[i+ii*LBQ] = sqrt(mu*e[19][i]*(1.-SQR(gamma_even[ii])));
            
            /* lb_coupl_pref is stored in MD units (force)
             * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -1942,9 +2043,9 @@ void lb_reinit_forces() {
 #endif
 #ifdef EXTERNAL_FORCES
         // unit conversion: force density
-        lbfields[index].force[0 + ii * 3] = lbpar.ext_force[0 + ii * 3]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-        lbfields[index].force[1 + ii * 3] = lbpar.ext_force[1 + ii * 3]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-        lbfields[index].force[2 + ii * 3] = lbpar.ext_force[2 + ii * 3]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
+        lbfields[index].force[0 + ii * 3] = lbpar.ext_force[0 + ii * 3]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+        lbfields[index].force[1 + ii * 3] = lbpar.ext_force[1 + ii * 3]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+        lbfields[index].force[2 + ii * 3] = lbpar.ext_force[2 + ii * 3]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
 #endif // EXTERNAL_FORCES 
 #else //  defined(EXTERNAL_FORCES) ||   defined(SHANCHEN)
         lbfields[index].force[0 + ii * 3] = 0.0;
@@ -2574,9 +2675,9 @@ inline void reset_LB_forces_cpu(index_t index){
        lbfields[index].force[2 + ii * 3] = 0.0;
 #ifdef EXTERNAL_FORCES
        // unit conversion: force density
-       lbfields[index].force[0 + ii * 3] = lbpar.ext_force[0 + ii * 3 ]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-       lbfields[index].force[1 + ii * 3] = lbpar.ext_force[1 + ii * 3 ]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-       lbfields[index].force[2 + ii * 3] = lbpar.ext_force[2 + ii * 3 ]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
+       lbfields[index].force[0 + ii * 3] = lbpar.ext_force[0 + ii * 3 ]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+       lbfields[index].force[1 + ii * 3] = lbpar.ext_force[1 + ii * 3 ]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+       lbfields[index].force[2 + ii * 3] = lbpar.ext_force[2 + ii * 3 ]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
 #endif // EXTERNAL_FORCES
 #else //  defined(EXTERNAL_FORCES) ||   defined(SHANCHEN)
        lbfields[index].has_force = 0;
@@ -3130,9 +3231,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #ifdef ENGINE
   if ( p->swim.swimming )
   {
-    velocity[0] -= p->swim.v_swim*p->r.quatu[0];
-    velocity[1] -= p->swim.v_swim*p->r.quatu[1];
-    velocity[2] -= p->swim.v_swim*p->r.quatu[2];
+    velocity[0] -= (p->swim.v_swim*time_step)*p->r.quatu[0];
+    velocity[1] -= (p->swim.v_swim*time_step)*p->r.quatu[1];
+    velocity[2] -= (p->swim.v_swim*time_step)*p->r.quatu[2];
     p->swim.v_center[0] = interpolated_u[0];
     p->swim.v_center[1] = interpolated_u[1];
     p->swim.v_center[2] = interpolated_u[2];

@@ -35,7 +35,7 @@ libEspresso_la_SOURCES = \
 	config.hpp \
 	constraint.cpp constraint.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
-	cuda_init.hpp \
+	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
@@ -83,6 +83,7 @@ libEspresso_la_SOURCES = \
 	reaction.cpp reaction.hpp \
 	readpdb.cpp readpdb.hpp \
 	Ringbuffer.hpp \
+	rotate_system.cpp rotate_system.hpp \
 	rotation.cpp rotation.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	specfunc.cpp specfunc.hpp \
@@ -107,13 +108,16 @@ libEspresso_la_SOURCES = \
 	ghmc.cpp ghmc.hpp \
 	Vector.hpp \
 	SystemInterface.hpp \
+	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
-	PdbParser.cpp PdbParser.hpp
+	PdbParser.cpp PdbParser.hpp \
+	RunningAverage.cpp RunningAverage.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
 	bmhtf-nacl.cpp bmhtf-nacl.hpp \
 	buckingham.cpp buckingham.hpp \
+	cos2.cpp cos2.hpp \
 	dpd.cpp dpd.hpp \
 	gaussian.cpp gaussian.hpp \
 	gb.cpp gb.hpp \
@@ -140,9 +144,11 @@ libEspresso_la_SOURCES += \
 	dihedral.cpp dihedral.hpp \
 	endangledist.cpp endangledist.hpp \
 	fene.cpp fene.hpp \
+	harmonic_dumbbell.cpp harmonic_dumbbell.hpp \
 	harmonic.cpp harmonic.hpp \
 	quartic.cpp quartic.hpp \
 	overlap.cpp overlap.hpp \
+	umbrella.cpp umbrella.hpp \
 	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
 	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
@@ -150,7 +156,9 @@ libEspresso_la_SOURCES += \
 	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
 	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
 	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
-	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
+	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp \
+	hydrogen_bond.cpp hydrogen_bond.hpp \
+	twist_stack.cpp twist_stack.hpp
 
 # Immersed Boundary
 libEspresso_la_SOURCES += \
@@ -159,7 +167,7 @@ libEspresso_la_SOURCES += \
 	immersed_boundary/ibm_volume_conservation.cpp immersed_boundary/ibm_volume_conservation.hpp \
 	immersed_boundary/ibm_tribend.cpp             immersed_boundary/ibm_tribend.hpp \
 	immersed_boundary/ibm_tribend_helpers.hpp \
-	immersed_boundary/ibm_cuda_interface.cpp      immersed_boundary/ibm_cuda_interface.hpp 
+	immersed_boundary/ibm_cuda_interface.cpp      immersed_boundary/ibm_cuda_interface.hpp
 
 
 # Coulomb methods
@@ -182,8 +190,10 @@ libEspresso_la_SOURCES += \
 	actor/Actor.hpp \
 	actor/ActorList.cpp actor/ActorList.hpp \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
+	actor/HarmonicOrientationWell.cpp actor/HarmonicOrientationWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
 	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
+	actor/DipolarDirectSum.cpp actor/DipolarDirectSum.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
 ##################################################
@@ -200,6 +210,11 @@ CUDA_HEADER_FILES = \
 	cuda_init.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp \
 	electrokinetics.hpp \
+	integrate_sd_cuda_debug.hpp \
+	integrate_sd_cuda_kernel.hpp \
+	integrate_sd_cuda.hpp \
+	integrate_sd_cuda_device.hpp \
+	integrate_sd_matrix.hpp \
 	fd-electrostatics.hpp
 
 CUDA_SOURCE_FILES = \
@@ -210,10 +225,17 @@ CUDA_SOURCE_FILES = \
 	lbgpu_cuda.cu \
 	p3m_gpu_cuda.cu \
 	EspressoSystemInterface_cuda.cu \
+	integrate_sd_cuda.cu \
+	integrate_sd_cuda_kernel.cu \
+	integrate_sd_cuda_debug.cu \
+	integrate_sd_matrix.cu \
+	integrate_sd_cuda_device.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
 	actor/EwaldgpuForce_cuda.cu \
 	actor/HarmonicWell_cuda.cu \
-	immersed_boundary/ibm_cuda.cu 	
+	immersed_boundary/ibm_cuda.cu \
+	actor/DipolarDirectSum_cuda.cu \
+	actor/HarmonicOrientationWell_cuda.cu 
 
 # include the dependency tracking files
 include ./$(DEPDIR)/cuda_init_cuda.Plo
@@ -223,6 +245,7 @@ include ./$(DEPDIR)/libgpu_cuda.Plo
 include ./$(DEPDIR)/p3m_gpu_cuda.Plo
 include ./$(DEPDIR)/EspressoSystemInterface_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
+include ./actor/$(DEPDIR)/HarmonicOrientationWell_cuda.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
 include ./actor/$(DEPDIR)/EwaldgpuForce.Plo
@@ -234,7 +257,7 @@ cuda_verbose = $(cuda_verbose_@AM_V@)
 cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
 cuda_verbose_0 = @echo "  NVCC     $@";
 
-# nvcc does not allow for option MF for dependency generation, 
+# nvcc does not allow for option MF for dependency generation,
 # therefore make a separate run to generate dependencies
 # putting them into DEPDIR ensures configure creates empties dummies
 $(LOFILES): %.lo: %.cu

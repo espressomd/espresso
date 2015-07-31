@@ -24,6 +24,9 @@
 #include "minimize_energy.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
+#include "rotation.hpp"
+#include "utils.hpp"
+
 
 #ifdef MINIMIZE_ENERGY_DEBUG
 #define MINIMIZE_ENERGY_TRACE(A) A
@@ -49,58 +52,98 @@ bool steepest_descent_step(void) {
   Cell *cell;
   Particle *p;
   int c, i, j, np;
+  
+  // Maximal force encountered on node
   double f_max = -std::numeric_limits<double>::max();
-  double f;
-  /* Verlet list criterion */
-  const double skin2 = SQR(0.5*skin);
+  // and globally
   double f_max_global;
-  double dx[3], dx2;
-  const double max_dx2 = SQR(params->max_displacement);
-
+  
+  // Square of force,torque on particle
+  double f,t;
+  
+  // Positional increments
+  double dp, dp2, dp2_max = -std::numeric_limits<double>::max();
+    
+  // Iteration over all local particles
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
       f = 0.0;
-      dx2 = 0.0;
-#ifdef VIRTUAL_SITES
-      if (ifParticleIsVirtual(&p[i])) continue;
-#endif
-      for(j=0; j < 3; j++){
+      t = 0.0;
+      dp2 = 0.0;
 #ifdef EXTERNAL_FORCES
+        // Skip, if coordinate is fixed
         if (!(p[i].p.ext_flag & COORD_FIXED(j)))
 #endif
-          {
-            f += SQR(p[i].f.f[j]);	    	    
-	    dx[j] = params->gamma * p[i].f.f[j];	    
-	    dx2 += SQR(dx[j]);
-	    MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dx %e gamma*f %e\n", i, j, dx[j], params->gamma * p[i].f.f[j]));
-	  }
-#ifdef EXTERNAL_FORCES
-	else {
-	  dx[j] = 0.0;	  
-	}
+      // For all Cartesian coordinates
+      for(j=0; j < 3; j++){
+#ifdef VIRTUAL_SITES
+      // Skip positional increments of virtual particles
+      if (!ifParticleIsVirtual(&p[i])) 
 #endif
-      }
+        {
+            // Square of force on particle
+	    f += SQR(p[i].f.f[j]);	    	    
+	    
+	    // Positional increment
+	    dp = params->gamma * p[i].f.f[j];
+	    if(fabs(dp) > params->max_displacement)
+	      // Crop to maximum allowed by user
+	      dp = sgn<double>(dp)*params->max_displacement;
+	    dp2 += SQR(dp);
+            
+	    // Move particle
+	    p[i].r.p[j] += dp;
+	    MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dp %e gamma*f %e\n", i, j, dp, params->gamma * p[i].f.f[j]));
+          }
+	}
+#ifdef ROTATION
+	// Rotational increment
+	double dq[3]; // Vector parallel to torque
 
-      if(dx2 <= max_dx2) {
-	p[i].r.p[0] += dx[0];
-	p[i].r.p[1] += dx[1];
-	p[i].r.p[2] += dx[2];
-      } else {
-	const double c = params->max_displacement/std::sqrt(dx2);
-	p[i].r.p[0] += c*dx[0];
-	p[i].r.p[1] += c*dx[1];
-	p[i].r.p[2] += c*dx[2];
+        for (int j=0;j<3;j++){
+          dq[j]=0;
+          // Square of torque
+	  t += SQR(p[i].f.torque[j]);	    	    
+	    
+	  // Rotational increment
+	  dq[j] = params->gamma * p[i].f.torque[j];
+	    
       }
-      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
+      // Normalize rotation axis and compute amount of rotation
+      double l=normr(dq);
+      if (l>0.0)
+      {
+        for (j=0;j<3;j++)
+          dq[j]/=l;
+  
+        if(fabs(l) > params->max_displacement)
+          // Crop to maximum allowed by user
+  	l=sgn(l)*params->max_displacement;
+        
+        
+//        printf("dq: %g %g %g, l=%g\n",dq[0],dq[1],dq[2],l);
+        // Rotate the particle around axis dq by amount l
+        rotate_particle(&(p[i]),dq,l);
+      }
+#endif
+
+      // Note maximum force/torque encountered
       f_max = std::max(f_max, f);
+      f_max = std::max(f_max, t);
+      dp2_max = std::max(dp2_max, dp2);
+      resort_particles = 1;
     }
   }
   MINIMIZE_ENERGY_TRACE(printf("f_max %e resort_particles %d\n", f_max, resort_particles));
   announce_resort_particles();
+  
+  // Synchronize maximum force/torque encountered
   MPI_Allreduce(&f_max, &f_max_global, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
+  
+  // Return true, if the maximum force/torque encountered is below the user limit.
   return (sqrt(f_max_global) < params->f_max);
 }
 

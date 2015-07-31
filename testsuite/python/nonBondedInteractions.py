@@ -18,16 +18,20 @@
 #  
 # Tests particle property setters/getters
 import unittest as ut
-import espresso.System as es
+import espressomd
 import numpy as np
-from espresso.interactions import LennardJonesInteraction
+from espressomd.interactions import LennardJonesInteraction
 
 
 class NonBondedInteractionsTests(ut.TestCase):
 #  def __init__(self,particleId):
 #    self.pid=particleId
   
- 
+
+
+  # Handle to espresso system
+  es=espressomd.System()
+
   def intersMatch(self,inType,outType,inParams,outParams):
     """Check, if the interaction type set and gotten back as well as the bond 
     parameters set and gotten back match. Only check keys present in
@@ -72,10 +76,10 @@ class NonBondedInteractionsTests(ut.TestCase):
       # which was there, when the outer function was called
       
       # Set parameters
-      getattr(es.nonBondedInter[partType1,partType2],interName).setParams(**params)
+      getattr(self.es.nonBondedInter[partType1,partType2],interName).setParams(**params)
       
       # Read them out again
-      outInter=getattr(es.nonBondedInter[partType1,partType2],interName)
+      outInter=getattr(self.es.nonBondedInter[partType1,partType2],interName)
       outParams=outInter.getParams()
       
       
@@ -96,13 +100,25 @@ class NonBondedInteractionsTests(ut.TestCase):
     {"epsilon":1.3,"sigma":2.2,"cutoff":3.4,"shift":4.1,"offset":5.1,"min":7.1},\
     "lennardJones")
     
+  test_ljgen1=generateTestForNonBondedInteraction(\
+    0,0,GenericLennardJonesInteraction,\
+    {"epsilon":1.,"sigma":2.,"cutoff":3.,"shift":4.,"offset":5.,"e1":7,"e2":8,"b1":9.,"b2":10.,"lambda":11.,"delta":12.},\
+    "genericLennardJones")
+  test_ljgen2=generateTestForNonBondedInteraction(\
+    0,0,GenericLennardJonesInteraction,\
+    {"epsilon":1.1,"sigma":2.1,"cutoff":3.1,"shift":4.1,"offset":5.1,"e1":71,"e2":81,"b1":9.1,"b2":10.1,"lambda":11.1,"delta":12.1},\
+    "genericLennardJones")
+  test_ljgen3=generateTestForNonBondedInteraction(\
+    0,0,GenericLennardJonesInteraction,\
+    {"epsilon":1.2,"sigma":2.2,"cutoff":3.2,"shift":4.2,"offset":5.2,"e1":72,"e2":82,"b1":9.2,"b2":10.2,"lambda":11.2,"delta":12.2},\
+    "genericLennardJones")
 
   def test_forcecap(self):
-    es.nonBondedInter.setForceCap(17.5)
-    self.assertEqual(es.nonBondedInter.getForceCap(),17.5)
+    self.es.nonBondedInter.setForceCap(17.5)
+    self.assertEqual(self.es.nonBondedInter.getForceCap(),17.5)
 
 
 if __name__ == "__main__":
- print("Features: ",es.code_info.features())
+ print("Features: ",espressomd.features())
  ut.main()
 
