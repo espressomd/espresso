@@ -106,7 +106,7 @@
 #define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
 #define LE_DEBUG
-#ifdef
+#ifdef CUDA
 #define CUDA_DEBUG
 #endif
 #define ESIF_DEBUG
