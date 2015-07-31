@@ -145,7 +145,7 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
 
   /* copy filename */
   size = strlen(filename);
-  bonded_ia_params[bond_type].p.tab.filename = (char*)malloc((size+1)*sizeof(char));
+  bonded_ia_params[bond_type].p.tab.filename = (char*)Utils::malloc((size+1)*sizeof(char));
   strcpy(bonded_ia_params[bond_type].p.tab.filename,filename);
 
   /* read basic parameters from file */
@@ -180,8 +180,8 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
   bonded_ia_params[bond_type].p.tab.invstepsize = (double)(size-1)/(bonded_ia_params[bond_type].p.tab.maxval-bonded_ia_params[bond_type].p.tab.minval);
 
   /* allocate force and energy tables */
-  bonded_ia_params[bond_type].p.tab.f = (double*)malloc(size*sizeof(double));
-  bonded_ia_params[bond_type].p.tab.e = (double*)malloc(size*sizeof(double));
+  bonded_ia_params[bond_type].p.tab.f = (double*)Utils::malloc(size*sizeof(double));
+  bonded_ia_params[bond_type].p.tab.e = (double*)Utils::malloc(size*sizeof(double));
 
   /* Read in the new force and energy table data */
   for (i =0 ; i < size ; i++) {

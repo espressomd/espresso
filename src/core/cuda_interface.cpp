@@ -355,7 +355,7 @@ static void cuda_mpi_send_forces_slave(){
       /* then get the particle information */
       host_forces_sl = (float *) malloc(3*n_part*sizeof(float));
 #ifdef ROTATION
-      host_torques_sl = (float *) malloc(3*n_part*sizeof(float));
+      host_torques_sl = (float *) Utils::malloc(3*n_part*sizeof(float));
 #endif
 
       MPI_Recv(host_forces_sl, 3*n_part*sizeof(float), MPI_BYTE, 0, REQ_CUDAGETFORCES,
@@ -365,7 +365,7 @@ static void cuda_mpi_send_forces_slave(){
         comm_cart, &status);
 #endif
 #ifdef SHANCHEN
-      host_composition_sl = (CUDA_fluid_composition *) malloc(n_part*sizeof(CUDA_fluid_composition));
+      host_composition_sl = (CUDA_fluid_composition *) Utils::malloc(n_part*sizeof(CUDA_fluid_composition));
       MPI_Recv(host_composition_sl, 3*n_part*sizeof(float), MPI_BYTE, 0, REQ_CUDAGETPARTS,
         comm_cart, &status);
 #endif
@@ -410,7 +410,7 @@ void cuda_mpi_send_v_cs(CUDA_v_cs *host_v_cs){
   int *sizes;
 
   // first collect number of particles on each node
-  sizes = (int *) malloc(sizeof(int)*n_nodes);
+  sizes = (int *) Utils::malloc(sizeof(int)*n_nodes);
   n_part = cells_get_n_particles();
   MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 
@@ -476,7 +476,7 @@ static void cuda_mpi_send_v_cs_slave(){
     int g = 0;
     // get (unsorted) particle informations as an array of type 'particle'
     // then get the particle information
-    host_v_cs_slave = (CUDA_v_cs *) malloc(n_part*sizeof(CUDA_v_cs));
+    host_v_cs_slave = (CUDA_v_cs *) Utils::malloc(n_part*sizeof(CUDA_v_cs));
     MPI_Recv(host_v_cs_slave, n_part*sizeof(CUDA_v_cs), MPI_BYTE, 0, 73,
         comm_cart, &status);
 
