@@ -1088,6 +1088,9 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   /* upper left smoothing circle */
   if (p2_z <= c1_z && r >= c1_or ) {
     /* distance from the smoothing center */
+    // Since: c2_or_or seems to be set to numeric_limits<double>max(), 
+    // this case being true means, that r is out of numerical limits.
+    // I suggest deleting it!
     norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_or)*(r - c1_or) );
     *dist = norm - c->smoothing_radius;
     dist_vector_r=(c->smoothing_radius/norm -1)*(r - c1_or);
@@ -1099,13 +1102,16 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   if (p1_z >= c2_z && r <= c2_r ) {
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_r)*(r - c2_r) );
     *dist = norm - c->smoothing_radius;
-    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_or);
+    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_r);
     dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c2_z);
     for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
   /* Check if we are in the range of the upper right smoothing circle */
   if (p2_z >= c2_z && r >= c2_or ) {
+    // Since: c2_or_or seems to be set to numeric_limits<double>max(), 
+    // this case being true means, that r is out of numerical limits.
+    // I suggest deleting it!
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_or)*(r - c2_or) );
     *dist = norm - c->smoothing_radius;
     dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_or);
