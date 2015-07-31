@@ -645,7 +645,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
             }
           }
 
-          if ( lb_lbfluid_set_bulk_visc(vectarg) == 0 )
+          if ( lb_lbfluid_set_gamma_even(vectarg) == 0 )
           {
             argc-=(1+LB_COMPONENTS); argv+=(1+LB_COMPONENTS); 
           }
