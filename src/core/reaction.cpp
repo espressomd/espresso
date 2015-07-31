@@ -232,13 +232,15 @@ void integrate_reaction_noswap() {
 
 #ifdef ROTATION
 
-bool in_upper_half_space(Particle p1, Particle p2)
+bool in_lower_half_space(Particle p1, Particle p2)
 {
   // This function determines whether the particle p2 is in the lower
   // half space of particle p1
   double distvec[3];
   utils::vecsub(p1.r.p, p2.r.p, distvec);
-  return utils::sign(utils::dot_product(p1.r.quatu, distvec));
+  double dot = utils::dot_product(p1.r.quatu, distvec);
+  int sgn = utils::sign(dot);
+  return (sgn+1)/2;
 }
 
 
@@ -265,11 +267,11 @@ void integrate_reaction_swap()
   std::random_shuffle(rand_cells.begin(), rand_cells.end());
 
 
-  if(reaction.ct_rate > 0.0)
+  if ( reaction.ct_rate > 0.0 )
   {
     // Determine the reaction rate
     ct_ratexp = exp(-time_step*reaction.ct_rate);
-    
+
     on_observable_calc();
 
     for ( std::vector<int>::iterator c = rand_cells.begin(); c != rand_cells.end(); c++)
@@ -279,7 +281,7 @@ void integrate_reaction_swap()
       cell = local_cells.cell[*c];
       p1   = cell->part;
       np   = cell->n;
-      
+
       // We find all catalyzers in a cell and then randomize their ids
       // for the same reason as above and then start the catalytic
       // reaction procedure
@@ -312,9 +314,9 @@ void integrate_reaction_swap()
 
             if (dist2 < reaction.range * reaction.range && p2[i].p.catalyzer_count == 0)
             {
-              if ( p2[i].p.type == reaction.reactant_type &&  in_upper_half_space(p1[*id],p2[i]) )
+              if ( p2[i].p.type == reaction.reactant_type &&  in_lower_half_space(p1[*id],p2[i]) )
                 reactants.push_back(i);
-              if ( p2[i].p.type == reaction.product_type  && !in_upper_half_space(p1[*id],p2[i]) )
+              if ( p2[i].p.type == reaction.product_type  && !in_lower_half_space(p1[*id],p2[i]) )
                 products.push_back(i);
             }
 
