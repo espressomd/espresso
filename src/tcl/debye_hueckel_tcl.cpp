@@ -34,7 +34,18 @@ int tclprint_to_result_dh(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "dh ", buffer, " ",(char *) NULL);
   Tcl_PrintDouble(interp, dh_params.r_cut, buffer);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
-
+#ifdef COULOMB_DEBYE_HUECKEL
+  Tcl_PrintDouble(interp, dh_params.eps_int, buffer);
+  Tcl_AppendResult(interp, " ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, dh_params.eps_ext, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, dh_params.r0, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, dh_params.r1, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, dh_params.alpha, buffer);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+#endif
   return TCL_OK;
 }
 
@@ -42,11 +53,21 @@ int tclcommand_inter_coulomb_parse_dh(Tcl_Interp * interp, int argc, char ** arg
 {
   double kappa, r_cut;
   int i;
+#ifdef COULOMB_DEBYE_HUECKEL
+  double eps_int, eps_ext, r0, r1, alpha;
+#endif
 
+#ifdef COULOMB_DEBYE_HUECKEL
+  if(argc < 6) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut> <eps_int> <r0> <r1> <alpha>", (char *) NULL);
+    return TCL_ERROR;
+  }
+#else
   if(argc < 2) {
     Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut>", (char *) NULL);
     return TCL_ERROR;
   }
+#endif
   
   coulomb.method = COULOMB_DH;
 
@@ -54,8 +75,16 @@ int tclcommand_inter_coulomb_parse_dh(Tcl_Interp * interp, int argc, char ** arg
     return TCL_ERROR;
   if(! ARG1_IS_D(r_cut))
     return TCL_ERROR;
+#ifdef COULOMB_DEBYE_HUECKEL
+  if(!ARG_IS_D(2, eps_int) || !ARG_IS_D(3, eps_ext) || !ARG_IS_D(4,r0) || !ARG_IS_D(5,r1) || !ARG_IS_D(6,alpha))
+    return TCL_ERROR;  
 
-  if ( (i = dh_set_params(kappa, r_cut)) < 0) {
+  i = dh_set_params_cdh(kappa, r_cut, eps_int, eps_ext, r0, r1, alpha);
+#else
+  i = dh_set_params(kappa, r_cut);
+#endif
+
+  if ( i < 0) {
     switch (i) {
     case -1:
       Tcl_AppendResult(interp, "dh kappa must be positiv.",(char *) NULL);

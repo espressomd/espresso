@@ -210,11 +210,11 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
       
       for (i=0; i<count; i++, s_buffer+=type->extent, r_buffer+=type->extent) { 
 	if (!type->count) {
-	  memcpy(r_buffer,s_buffer,type->extent);
+	  memmove(r_buffer,s_buffer,type->extent);
 	} else {
 	    
 	  for (j=0; j<type->count; j++) {
-	    memcpy(r_buffer+type->disps[j],s_buffer+type->disps[j],type->lengths[j]);
+	    memmove(r_buffer+type->disps[j],s_buffer+type->disps[j],type->lengths[j]);
 	  }
 
 	}

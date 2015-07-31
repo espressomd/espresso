@@ -162,6 +162,11 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
     case BONDED_IA_FENE:
       calc_fene_pair_force(p1,p2,iaparams,dx,force);
       break;
+#ifdef ROTATION
+    case BONDED_IA_HARMONIC_DUMBBELL:
+      calc_harmonic_dumbbell_pair_force(p1,p2,iaparams,dx,force);
+      break;
+#endif
     case BONDED_IA_HARMONIC:
       calc_harmonic_pair_force(p1,p2,iaparams,dx,force);
       break;
@@ -501,16 +506,30 @@ inline void add_kinetic_virials(Particle *p1,int v_comp)
 {
   int k, l;
   /* kinetic energy */
-  if(v_comp)
-    virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
-  else
-    virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
-
+#ifdef MULTI_TIMESTEP
+  if (smaller_time_step > 0.) {
+    if(v_comp)
+      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
+    else
+      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+  } else
+#endif
+  {
+    if(v_comp) 
+      virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
+    else
+      virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+  }
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
   for(k=0;k<3;k++)
     for(l=0;l<3;l++)
-      p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
+#ifdef MULTI_TIMESTEP
+      if (smaller_time_step > 0.) 
+        p_tensor.data.e[k*3 + l] += SQR(time_step/smaller_time_step)*(p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
+      else
+#endif
+        p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
 
 }
 
@@ -520,6 +539,18 @@ int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic
 /** function to calculate stress tensor for the observables */
 int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A);
 
+void update_pressure(int v_comp);
+void analyze_pressure_all(std::vector<std::string> & pressure_labels, std::vector<double> & pressures, int v_comp);
+double analyze_pressure(std::string pressure_to_calc, int v_comp);
+double analyze_pressure_pair(std::string pressure_to_calc, int type1, int type2, int v_comp);
+double analyze_pressure_single(std::string pressure_to_calc, int bond_or_type, int v_comp);
+
+void update_stress_tensor(int v_comp);
+void analyze_stress_tensor_all(std::vector<std::string> & stressTensorLabel, std::vector<double> & stressTensorValues, int v_comp);
+int analyze_stress_tensor(std::string pressure_to_calc, int v_comp, std::vector<double> & stress);
+int analyze_stress_pair(std::string pressure_to_calc, int type1, int type2, int v_comp, std::vector<double> & stress);
+int analyze_stress_single(std::string pressure_to_calc, int bond_or_type, int v_comp, std::vector<double> & stress);
+int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* local_stress_tensor);
 
 /*@}*/
 

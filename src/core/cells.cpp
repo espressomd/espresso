@@ -195,7 +195,7 @@ void cells_re_init(int new_cs)
 
   topology_release(cell_structure.type);
   /* MOVE old local_cell list to temporary buffer */
-  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
+  memmove(&tmp_local,&local_cells,sizeof(CellPList));
   init_cellplist(&local_cells);
 
   /* MOVE old cells to temporary buffer */

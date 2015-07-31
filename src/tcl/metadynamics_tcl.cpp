@@ -109,20 +109,20 @@ int tclcommand_metadynamics_parse_off(Tcl_Interp *interp, int argc, char **argv)
 
 int tclcommand_metadynamics_parse_distance(Tcl_Interp *interp, int argc, char **argv)
 {
-  int    pid1, pid2, dbins;
+  int    pid1, pid2, dbins, numrelaxationsteps;
   double dmin, dmax, bheight, bwidth, fbound;
 
   /* check number of arguments */
-  if (argc < 8) {
+  if (argc < 11) {
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
-                     argv[0]," ",argv[1]," <pid1> <pid2> <d_min> <d_max> <b_height> <b_width> <f_bound> <d_bins>\"", (char *)NULL);
+                     argv[0]," ",argv[1]," <pid1> <pid2> <d_min> <d_max> <b_height> <b_width> <f_bound> <d_bins> <num_relaxation_steps>\"", (char *)NULL);
     return (TCL_ERROR);
   }
 
   /* check argument types */
   if ( !ARG_IS_I(2, pid1) || !ARG_IS_I(3, pid2) || !ARG_IS_D(4, dmin) || !ARG_IS_D(5, dmax) || 
-       !ARG_IS_D(6, bheight) || !ARG_IS_D(7, bwidth) || !ARG_IS_D(8, fbound) || !ARG_IS_I(9, dbins)) {
-    Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs two INTS, five DOUBLES, and one INT", (char *)NULL);
+       !ARG_IS_D(6, bheight) || !ARG_IS_D(7, bwidth) || !ARG_IS_D(8, fbound) || !ARG_IS_I(9, dbins) || !ARG_IS_I(10, numrelaxationsteps ) ) {
+    Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs two INTS, five DOUBLES, and two INTS in this order", (char *)NULL);
     return (TCL_ERROR);
   }
 
@@ -131,7 +131,7 @@ int tclcommand_metadynamics_parse_distance(Tcl_Interp *interp, int argc, char **
     return (TCL_ERROR);
   }
   
-  if (dmin < 0 || dmax < 0 || dmax < dmin || bheight < 0 || bwidth < 0 || fbound < 0 || dbins < 0) {
+  if (dmin < 0 || dmax < 0 || dmax < dmin || bheight < 0 || bwidth < 0 || fbound < 0 || dbins < 0 || numrelaxationsteps <0) {
     Tcl_AppendResult(interp, "check parameters: inconcistency somewhere", (char *)NULL);
     return (TCL_ERROR);
   }
@@ -150,26 +150,27 @@ int tclcommand_metadynamics_parse_distance(Tcl_Interp *interp, int argc, char **
   meta_xi_num_bins  = dbins;
 
   meta_switch = META_DIST;
+  meta_num_relaxation_steps = numrelaxationsteps;
 
   return (TCL_OK);
 }
 
 int tclcommand_metadynamics_parse_relative_z(Tcl_Interp *interp, int argc, char **argv)
 {
-  int    pid1, pid2, dbins;
+  int    pid1, pid2, dbins, numrelaxationsteps;
   double dmin, dmax, bheight, bwidth, fbound;
 
   /* check number of arguments */
-  if (argc < 8) {
+  if (argc < 11) {
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
-                     argv[0]," ",argv[1]," <pid1> <pid2> <z_min> <z_max> <b_height> <b_width> <f_bound> <z_bins>\"", (char *)NULL);
+                     argv[0]," ",argv[1]," <pid1> <pid2> <z_min> <z_max> <b_height> <b_width> <f_bound> <z_bins> <num_relaxation_steps>\"", (char *)NULL);
     return (TCL_ERROR);
   }
 
   /* check argument types */
   if ( !ARG_IS_I(2, pid1) || !ARG_IS_I(3, pid2) || !ARG_IS_D(4, dmin) || !ARG_IS_D(5, dmax) ||
-       !ARG_IS_D(6, bheight) || !ARG_IS_D(7, bwidth) || !ARG_IS_D(8, fbound) || !ARG_IS_I(9, dbins)) {
-    Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs two INTS, five DOUBLES, and one INT", (char *)NULL);
+       !ARG_IS_D(6, bheight) || !ARG_IS_D(7, bwidth) || !ARG_IS_D(8, fbound) || !ARG_IS_I(9, dbins) || !ARG_IS_I(10, numrelaxationsteps) ) {
+    Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs two INTS, five DOUBLES, and two INTS in this order", (char *)NULL);
     return (TCL_ERROR);
   }
 
@@ -178,7 +179,7 @@ int tclcommand_metadynamics_parse_relative_z(Tcl_Interp *interp, int argc, char 
     return (TCL_ERROR);
   }
 
-  if (dmax < dmin || bheight < 0 || bwidth < 0 || fbound < 0 || dbins < 0) {
+  if (dmax < dmin || bheight < 0 || bwidth < 0 || fbound < 0 || dbins < 0 || numrelaxationsteps <0) {
     Tcl_AppendResult(interp, "check parameters: inconcistency somewhere", (char *)NULL);
     return (TCL_ERROR);
   }
@@ -197,6 +198,7 @@ int tclcommand_metadynamics_parse_relative_z(Tcl_Interp *interp, int argc, char 
   meta_xi_num_bins  = dbins;
 
   meta_switch = META_REL_Z;
+  meta_num_relaxation_steps = numrelaxationsteps;
 
   return (TCL_OK);
 }
@@ -268,7 +270,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
   Tcl_ResetResult(interp);
   Tcl_SplitList(interp, argv[1], &tmp_argc, &tmp_argv);
   realloc_doublelist(&profile, profile.n = tmp_argc);
-  printf("profile.n %d, meta_xi_num_bins %d\n",profile.n,meta_xi_num_bins);
+  //printf("profile.n %d, meta_xi_num_bins %d\n",profile.n,meta_xi_num_bins);
   /* Now check that the number of items parsed is equal to the number of bins */
   /* If there's one extra line, assume it's an empty line */
   if (profile.n == meta_xi_num_bins+1)

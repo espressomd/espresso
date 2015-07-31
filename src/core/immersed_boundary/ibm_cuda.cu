@@ -238,7 +238,7 @@ __global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const p
   if (particleIndex < para.number_of_particles && particle_input[particleIndex].isVirtual)
   {
 
-    const float factor = powf( para.agrid,4)*para.tau*para.tau;
+    const float factor = powf( para.agrid,2)*para.tau*para.tau;
     const float particleForce[3] = { particle_input[particleIndex].f[0] * factor, particle_input[particleIndex].f[1] * factor, particle_input[particleIndex].f[2] * factor};
     const float pos[3] = { particle_input[particleIndex].pos[0], particle_input[particleIndex].pos[1], particle_input[particleIndex].pos[2] };
 
@@ -407,7 +407,7 @@ __global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_paramete
 
   if ( index < para.number_of_nodes )
   {
-    const float force_factor=powf(para.agrid,4)*para.tau*para.tau;
+    const float force_factor=powf(para.agrid,2)*para.tau*para.tau;
     for(int ii=0;ii<LB_COMPONENTS;++ii)
     {
 #ifdef EXTERNAL_FORCES

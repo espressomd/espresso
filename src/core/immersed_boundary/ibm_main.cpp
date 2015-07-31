@@ -107,9 +107,9 @@ void IBM_ResetLBForces_CPU()
   {
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
-    lbfields[i].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-    lbfields[i].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
-    lbfields[i].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau;
+    lbfields[i].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[i].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[i].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
 #else
     lbfields[i].force[0] = 0.0;
     lbfields[i].force[1] = 0.0;
@@ -293,7 +293,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
           // Keep track of the forces that we added to the fluid
           // This is necessary for communication because this part is executed for real and ghost particles
           // Later on we sum the real and ghost contributions
-          const double fExt[3] = { lbpar.ext_force[0]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau, lbpar.ext_force[1]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau, lbpar.ext_force[2]*pow(lbpar.agrid,4)*lbpar.tau*lbpar.tau };
+          const double fExt[3] = { lbpar.ext_force[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau, lbpar.ext_force[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau, lbpar.ext_force[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau };
           
           forceAdded[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*(f[0]-fExt[0])/2/(local_rho);
           forceAdded[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*(f[1]-fExt[1])/2/(local_rho);

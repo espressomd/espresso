@@ -112,8 +112,8 @@ void local_system_CMS( double *sdata ) {
       M = part[i].p.mass;
       mass += M;
 
-      memcpy(ppos, part[i].r.p, 3*sizeof(double));
-      memcpy(img, part[i].l.i, 3*sizeof(int));
+      memmove(ppos, part[i].r.p, 3*sizeof(double));
+      memmove(img, part[i].l.i, 3*sizeof(int));
       unfold_position(ppos, img);
 
       x += M*ppos[0];
@@ -139,8 +139,8 @@ void local_system_CMS( double *sdata ) {
     for(i = 0; i < np; i++) {
       npart++;
 
-      memcpy(ppos, part[i].r.p, 3*sizeof(double));
-      memcpy(img, part[i].l.i, 3*sizeof(int));
+      memmove(ppos, part[i].r.p, 3*sizeof(double));
+      memmove(img, part[i].l.i, 3*sizeof(int));
       unfold_position(ppos, img);
 
       x += ppos[0];

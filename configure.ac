@@ -120,6 +120,9 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 # try to find best __FUNCTION__ variant
 AX_CXX_VAR_PRETTYFUNC()
 
+# check for c++11 support
+AX_CXX_COMPILE_STDCXX_11(ext,optional)
+
 # set the optimization flags
 # never overwrite users CXXFLAGS
 if test "${CXXFLAGS+set}" != set; then
@@ -268,6 +271,7 @@ AS_IF([test x$with_cuda != xno],[
     # save current libs in case CUDA is not enabled at the end
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
+    save_CPPFLAGS=$CPPFLAGS
 
     # NVCC
     AC_PROG_CUDA
@@ -298,6 +302,37 @@ AS_IF([test x$with_cuda != xno],[
             AC_MSG_FAILURE([could not find cuda FFT library (cufft), specify location using LDFLAGS])
         ],[
             AC_MSG_WARN([could not find cuda FFT library (cufft). Some features will not be available!])
+        ])
+    ], [$cuda_path/lib $cuda_path/lib64])
+
+    ES_ADDPATH_CHECK_LIB(cublas, cublasDgemm_v2, [], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda BLAS library (cublas), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda BLAS library (cublas). Some features will not be available!])
+        ])
+    ], [$cuda_path/lib $cuda_path/lib64])
+
+    ES_ADDPATH_CHECK_HEADER([cublas_v2.h],, [
+    	cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda BLAS header files (cublas_v2.h), specify location using CPPFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda BLAS header files (cublas_v2.h). Some features will not be available!])
+        ])
+    ], [$cuda_path/include])
+
+
+    ES_ADDPATH_CHECK_LIB(curand, curandCreateGenerator, [], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda RAND library (curand), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda RAND library (curand). Some features will not be available!])
         ])
     ], [$cuda_path/lib $cuda_path/lib64])
 
@@ -379,10 +414,94 @@ AS_IF([test x$with_cuda != xno],[
         # reset standard compiler options
         LIBS=$save_LIBS
         LDFLAGS=$save_LDFLAGS
+	CPPFLAGS=$save_CPPFLAGS
     ])
 ])
 
 AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
+
+## Checking for MAGMA
+##################################
+AS_IF([test x$with_magma = xguess || test x$with_magma = xyes || test x$with_magma = x],[
+   magma_path=/usr/local/magma
+],[test x$with_magma != xno],[
+   magma_path=$with_magma
+   with_magma=yes
+])
+
+AC_MSG_CHECKING([whether to use MAGMA])
+AC_ARG_WITH([magma],
+	AS_HELP_STRING([--with-magma],
+                       [specify whether or not to use MAGMA [guess]]),
+	, with_magma=guess)
+AC_MSG_RESULT($with_magma)
+
+AS_IF([test x$with_magma = xno], [magma_found=no],
+  [ AC_SEARCH_LIBS(magma_init, [magma], [magma_found=yes], [magma_found=no])
+    AS_IF([test x$magma_found = xyes],
+      [ AC_CHECK_HEADER([magma.h],, [magma_found=no],[[#define HAVE_CUBLAS]])
+        AS_IF([test x$magma_found = xyes],
+          [ AC_SEARCH_LIBS([lsame_], [acml acml_mp],, [magma_found=no]
+	                                              AC_MSG_WARN([MAGMA needs LAPACK. Currently only for the acml libary is searched - others have still to be added to configure.ac]) )])
+      ])
+  ])
+
+
+AS_IF([test x$magma_found = xno],[
+  AS_IF([test x$with_magma = xyes],[
+    AC_MSG_FAILURE([MAGMA requested, but MAGMA was not found!])
+    ],[ AS_IF([test x$with_magma = xguess], [
+          AC_MSG_WARN([MAGMA not found. Some features will not be available!])
+         ])
+    ])
+  ])
+AS_IF([test x$magma_found = xyes],[
+  AC_DEFINE(MAGMA,[],[Whether MAGMA is available])])
+# end of check for MAGMA
+
+
+## Checking for ARPACK
+##################################
+AS_IF([test x$with_arpack = xguess || test x$with_arpack = xyes || test x$with_arpack = x],[
+   arpack_path=/usr/local/arpack
+],[test x$with_arpack != xno],[
+   arpack_path=$with_arpack
+   with_arpack=yes
+])
+
+AC_MSG_CHECKING([whether to use ARPACK])
+AC_ARG_WITH([arpack],
+	AS_HELP_STRING([--with-arpack],
+                       [specify whether or not to use ARPACK [guess]]),
+	, with_arpack=guess)
+AC_MSG_RESULT($with_arpack)
+
+
+ES_ADDPATH_CHECK_LIB(arpack, dnaupd_, [arpack_found=yes], [
+	arpack_found=no
+        
+        AS_IF([test x$with_arpack = xyes],[
+            AC_MSG_FAILURE([could not find ARPACK library, specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find ARPACK library. Some features will not be available!])
+        ])
+    ], [$arpack_path/.libs])
+
+
+
+AS_IF([test x$arpack_found = xno],[
+  AS_IF([test x$with_arpack = xyes],[
+    AC_MSG_FAILURE([ARPACK requested, but ARPACK was not found!])
+    ],[ AS_IF([test x$with_arpack = xguess], [
+          AC_MSG_WARN([ARPACK not found. Some features will not be available!])
+         ])
+    ])
+  ])
+AS_IF([test x$arpack_found = xyes],[
+  AC_DEFINE(ARPACK,[],[Whether ARPACK is available])])
+# end of check for ARPACK
+
+
 
 cat <<EOF
 ****************************************************************
@@ -419,6 +538,7 @@ AS_IF([test .$with_python_interface != .no], [
 	AX_PYTHON_DEVEL([>= '2.5'])
 
         AC_ARG_VAR(CYTHON,[Specify the cython tool to use])
+        AC_ARG_VAR(CYFLAGS,[Specify cython flags])
    	AC_PATH_PROG(CYTHON,cython,no)
    	AS_IF([test .$CYTHON = .no],
                     [build_python_interface=no],
@@ -574,7 +694,25 @@ Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
 else
 	use_tk=none
 fi
+# check for h5md library
+cat <<EOF
+****************************************************************
+*                          h5md                                *
+****************************************************************
+EOF
+AC_MSG_CHECKING([whether to build with h5md support])
+AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport]),
+    , [with_h5md=yes])
+AC_MSG_RESULT($with_h5md)
+if test .$with_h5md = .yes; then
+  ES_ADDPATH_CHECK_LIB(hdf5,H5open,,AC_MSG_FAILURE([could not link against the hdf5 library]),)
 
+  ES_ADDPATH_CHECK_HEADER(hdf5.h, [], 
+		[AC_MSG_ERROR([hdf5 headers not found. Please add the include path to
+                       CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/hdf5).])
+		]
+		,$extrapaths)
+fi
 cat <<EOF
 ****************************************************************
 *                   Other settings                             *
@@ -695,6 +833,10 @@ linker flags            = $LDFLAGS
 libraries               = $LIBS
 using debug flags       = $enable_debug
 using profiling flags   = $enable_profiling
+
+cython complier         = $CYTHON
+cython preproc flags    = $CYFLAGS
+
 
 Libraries
 ---------

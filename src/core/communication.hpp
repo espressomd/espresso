@@ -56,6 +56,7 @@
 #include "random.hpp"
 #include "topology.hpp"
 #include <mpi.h>
+#include "cuda_init.hpp"
 
 /**************************************************
  * exported variables
@@ -270,7 +271,27 @@ void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance);
+void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance, double* rel_ori);
+#endif
+
+#ifdef MULTI_TIMESTEP
+/** Issue REQ_SET_SMALLER_TIMESTEP: send smaller time step value.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param smaller_timestep its new smaller_timestep.
+*/
+void mpi_send_smaller_timestep_flag(int node, int part, int smaller_timestep_flag);
+#endif
+
+#ifdef CONFIGTEMP
+/** Issue REQ_SET_CONFIGTEMP: send configurational temperature flag.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param configtemp the configurational temperature flag.
+*/
+void mpi_send_configtemp_flag(int node, int part, int configtemp_flag);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.
@@ -418,6 +439,12 @@ void mpi_get_particles(Particle *result, IntList *il);
 */
 void mpi_set_time_step(double time_step);
 
+#ifdef MULTI_TIMESTEP
+/** Issue REQ_SET_SMALLER_TIME_STEP: send new \ref smaller_time_step. 
+    Requires MULTI_TIMESTEP feature. */
+void mpi_set_smaller_time_step(double smaller_time_step);
+#endif
+
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
@@ -466,6 +493,11 @@ void mpi_cap_forces(double force_cap);
 
 /** Issue REQ_GET_CONSFOR: get force acting on constraint */
 void mpi_get_constraint_force(int constraint, double force[3]);
+
+#ifdef CONFIGTEMP
+/** Issue REQ_GET_CONFIGTEMP: get configurational temperature */
+void mpi_get_configtemp(double cfgtmp[2]);
+#endif
 
 /** Issue REQ_BIT_RANDOM_SEED: read/set seed of the bit random number generators on each node. */
 void mpi_bit_random_seed(int cnt, int *seed);
@@ -579,6 +611,14 @@ void mpi_external_potential_broadcast_slave(int node, int number);
 void mpi_external_potential_tabulated_read_potential_file(int number);
 void mpi_external_potential_sum_energies(); 
 void mpi_external_potential_sum_energies_slave(); 
+
+#ifdef CUDA
+/** Gather CUDA devices from all nodes */
+std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
+#endif
+
+/** CPU Thermostat */
+void mpi_thermalize_cpu(int temp);
 
 /*@}*/
 

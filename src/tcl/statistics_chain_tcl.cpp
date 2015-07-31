@@ -94,7 +94,7 @@ int tclcommand_analyze_parse_re(Tcl_Interp *interp, int average, int argc, char 
   }
 
   if (!average)
-    calc_re(&re); 
+    calc_re(&re);
   else {
     if (n_configs == 0) {
       Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
@@ -124,7 +124,7 @@ int tclcommand_analyze_parse_rg(Tcl_Interp *interp, int average, int argc, char 
     return TCL_ERROR;
   }
   if (!average)
-    calc_rg(&rg); 
+    calc_rg(&rg);
   else {
     if (n_configs == 0) {
       Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
@@ -153,7 +153,7 @@ int tclcommand_analyze_parse_rh(Tcl_Interp *interp, int average, int argc, char 
     return TCL_ERROR;
   }
   if (!average)
-    calc_rh(&rh); 
+    calc_rh(&rh);
   else {
     if (n_configs == 0) {
       Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);

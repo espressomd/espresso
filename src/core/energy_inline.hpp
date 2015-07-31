@@ -44,6 +44,7 @@
 #include "overlap.hpp"
 #include "gb.hpp"
 #include "fene.hpp"
+#include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "quartic.hpp"
 #ifdef ELECTROSTATICS
@@ -62,8 +63,9 @@
 #include "mmm2d.hpp"
 #include "morse.hpp"
 #include "elc.hpp"
+#include "hydrogen_bond.hpp"
+#include "twist_stack.hpp"
 #include "actor/EwaldgpuForce_ShortRange.hpp"
-
 
 #include "energy.hpp"
 
@@ -258,12 +260,15 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 /** Calculate bonded energies for one particle.
     @param p1 particle for which to calculate energies
 */
+
 inline void add_bonded_energy(Particle *p1)
 {
   Particle *p2, *p3 = NULL, *p4 = NULL;
+#ifdef TWIST_STACK
+  Particle *p5 = NULL,*p6 = NULL,*p7 = NULL,*p8 = NULL;
+#endif
   Bonded_ia_parameters *iaparams;
-  int i, type_num, n_partners, bond_broken;
-  BondedInteraction type;
+  int i, type_num, type, n_partners, bond_broken;
   double ret=0, dx[3] = {0, 0, 0};
 
   i = 0;
@@ -272,7 +277,7 @@ inline void add_bonded_energy(Particle *p1)
     iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
     n_partners = iaparams->num;
-
+    
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
@@ -306,7 +311,21 @@ inline void add_bonded_energy(Particle *p1)
     return;
       }
     }
+#ifdef TWIST_STACK
+    if(n_partners >= 7) {
+      p5 = local_particles[p1->bl.e[i++]];
+      p6 = local_particles[p1->bl.e[i++]];
+      p7 = local_particles[p1->bl.e[i++]];
+      p8 = local_particles[p1->bl.e[i++]];
 
+      if(!p4 || !p5 || !p6 || !p7 || !p8) {
+	ostringstream msg;
+	msg << "bond broken between particles" <<
+	  p1->p.identity << ", " << p1->bl.e[i-7] << ", " << p1->bl.e[i-6] << ", " << p1->bl.e[i-5] << ", " << p1->bl.e[i-4] << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2] << ", " << p1->bl.e[i-1] << " (particles not stored on the same node)";
+	return;
+      }
+    }
+#endif
     /* similar to the force, we prepare the center-center vector */
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
@@ -315,6 +334,11 @@ inline void add_bonded_energy(Particle *p1)
     case BONDED_IA_FENE:
       bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
+#ifdef ROTATION
+    case BONDED_IA_HARMONIC_DUMBBELL:
+      bond_broken = harmonic_dumbbell_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
     case BONDED_IA_HARMONIC:
       bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
@@ -332,9 +356,19 @@ inline void add_bonded_energy(Particle *p1)
       break;
 #endif
 #ifdef BOND_ANGLE_OLD
-    /* the first case is not needed and should not be called */
+    /* the first case is not needed and should not be called */ 
     case BONDED_IA_ANGLE_OLD:
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
+      break; 
+#endif
+#ifdef TWIST_STACK
+    case BONDED_IA_CG_DNA_STACKING:
+      bond_broken = calc_twist_stack_energy(p1, p2, p3, p4, p5, p6, p7, p8, iaparams, &ret);
+      break;
+#endif
+#ifdef HYDROGEN_BOND
+    case BONDED_IA_CG_DNA_BASEPAIR:
+      bond_broken = calc_hydrogen_bond_energy(p1, p2, p3, p4, iaparams, &ret);
       break;
 #endif
 #ifdef BOND_ANGLE
@@ -371,14 +405,14 @@ inline void add_bonded_energy(Particle *p1)
     case BONDED_IA_TABULATED:
       switch(iaparams->p.tab.type) {
       case TAB_BOND_LENGTH:
-    bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
-    break;
+	bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
+	break;
       case TAB_BOND_ANGLE:
-    bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
-    break;
+	bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
+	break;
       case TAB_BOND_DIHEDRAL:
-    bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
-    break;
+	bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
+	break;
       default :
       ostringstream msg;
       msg << "add_bonded_energy: tabulated bond type of atom " << p1->p.identity << " unknown\n";
@@ -415,7 +449,7 @@ inline void add_bonded_energy(Particle *p1)
 #endif
     default :
         ostringstream msg;
-        msg <<"add_bonded_energy: bond type of atom "<< p1->p.identity << " unknown\n";
+        msg <<"add_bonded_energy: bond type ("<<type<<") of atom "<< p1->p.identity << " unknown\n";
         runtimeError(msg);
       return;
     }
@@ -450,6 +484,7 @@ inline void add_bonded_energy(Particle *p1)
   }
 }
 
+
 /** Calculate kinetic energies for one particle.
     @param p1 particle for which to calculate energies
 */
@@ -460,6 +495,16 @@ inline void add_kinetic_energy(Particle *p1)
 #endif
 
   /* kinetic energy */
+  
+// #ifdef MULTI_TIMESTEP
+//   if (p1->p.smaller_timestep==1) {
+//     ostringstream msg;
+//     msg << "SMALL TIME STEP";
+//     energy.data.e[0] += SQR(smaller_time_step/time_step) * 
+//       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+//   }
+//   else
+// #endif  
   energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
 #ifdef ROTATION
@@ -472,14 +517,14 @@ if (p1->p.rotation)
      Here we use the rotational inertia  */
 
   energy.data.e[0] += (SQR(p1->m.omega[0])*p1->p.rinertia[0] +
-               SQR(p1->m.omega[1])*p1->p.rinertia[1] +
-               SQR(p1->m.omega[2])*p1->p.rinertia[2])*time_step*time_step;
+		       SQR(p1->m.omega[1])*p1->p.rinertia[1] +
+		       SQR(p1->m.omega[2])*p1->p.rinertia[2])*time_step*time_step;
 #else
   /* the rotational part is added to the total kinetic energy;
      at the moment, we assume unit inertia tensor I=(1,1,1)  */
   energy.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
 #endif
-}
+ }
 #endif
 }
 

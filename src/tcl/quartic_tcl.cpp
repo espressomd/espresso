@@ -36,8 +36,8 @@ int tclcommand_inter_parse_quartic(Tcl_Interp *interp, int bond_type, int argc, 
   }
 
   if ((! ARG_IS_D(1, k0)) || (! ARG_IS_D(2, k1)) || (! ARG_IS_D(3, r))) {
-    Tcl_AppendResult(interp, "quartic needs at least 2 DOUBLE parameters: "
-		     "<k_quartic> <r_quartic> [<r_cut>]", (char *) NULL);
+    Tcl_AppendResult(interp, "quartic needs at least 3 DOUBLE parameters: "
+		     "<k_0c> <k_1> <r_quartic> [<r_cut>]", (char *) NULL);
     return TCL_ERROR;
   }
 

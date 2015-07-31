@@ -34,6 +34,7 @@
 #include "grid_tcl.hpp"
 #include "iccp3m_tcl.hpp"
 #include "integrate_tcl.hpp"
+#include "integrate_sd_tcl.hpp"
 #include "interaction_data_tcl.hpp"
 #include "lb_tcl.hpp"
 #include "lees_edwards_tcl.hpp"
@@ -59,7 +60,10 @@
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
 #include "actor/HarmonicWell_tcl.hpp"
+#include "rotate_system_tcl.hpp"
+#include "actor/HarmonicOrientationWell_tcl.hpp"
 #include "minimize_energy_tcl.hpp"
+#include "h5mdfile_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -77,6 +81,10 @@ int tclcommand_bin(ClientData data, Tcl_Interp *interp,
 /** Implementation of the Tcl command blockfile. Allows to read and write
     blockfile comfortably from Tcl. See \ref blockfile_tcl.cpp */
 int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
+/** Implementation of the Tcl command h5mdfile. Allows to read and write
+    h5mdfile comfortably from Tcl. See \ref h5mdfile_tcl.cpp */
+int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
 /** replaces one of TCLs standart channels with a named pipe. See \ref channels_tcl.cpp */
 int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -113,6 +121,9 @@ char *get_default_scriptsdir();
 
 /** Returns runtime of the integration loop in seconds. From tuning_tcl.cpp **/
 int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+
+/** Tunes the skin */
+int tclcommand_tune_skin(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
 /** Reads particles from pdb file, see \ref readpdb.cpp */
 int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
@@ -162,6 +173,10 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("bit_random", tclcommand_bit_random);
   /* in file blockfile_tcl.cpp */
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
+  /* in file h5mdfile_tcl.cpp */
+  #ifdef H5MD
+	REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
+  #endif
   /* in constraint.cpp */
   REGISTER_COMMAND("constraint", tclcommand_constraint);
   /* in external_potential.hpp */
@@ -213,6 +228,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
+  REGISTER_COMMAND("rotate_system", tclcommand_rotate_system);
   REGISTER_COMMAND("lees_edwards_offset", tclcommand_lees_edwards_offset);
 #ifdef CATALYTIC_REACTIONS
   REGISTER_COMMAND("reaction", tclcommand_reaction);
@@ -223,9 +239,20 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("system_CMS_velocity", tclcommand_system_CMS_velocity);
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
+  REGISTER_COMMAND("tune_skin", tclcommand_tune_skin);
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
+#if defined(SD) || defined(BD)
+  /* from integrate_sd_tcl.cpp */
+  REGISTER_COMMAND("integrate_sd", tclcommand_integrate_sd);
+  REGISTER_COMMAND("sd_set_particles_apart", tclcommand_sd_set_particles_apart);
+  REGISTER_COMMAND("sd_test", tclcommand_sd_test);
+#endif
 #ifdef CUDA
   REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);
+  
+#ifdef ROTATION
+  REGISTER_COMMAND("harmonic_orientation_well", tclcommand_HarmonicOrientationWell);
+#endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 }
@@ -245,6 +272,14 @@ static void tcl_register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_TIMESTEP, tclcallback_time_step);
   register_global_callback(FIELD_TIMINGSAMP, tclcallback_timings);
   register_global_callback(FIELD_MIN_GLOBAL_CUT, tclcallback_min_global_cut);
+  register_global_callback(FIELD_SD_VISCOSITY, tclcallback_sd_viscosity);
+  register_global_callback(FIELD_SD_RADIUS, tclcallback_sd_radius);
+  register_global_callback(FIELD_SD_SEED, tclcallback_sd_seed);
+  register_global_callback(FIELD_SD_RANDOM_STATE, tclcallback_sd_random_state);
+  register_global_callback(FIELD_SD_RANDOM_PRECISION, tclcallback_sd_random_precision);
+#ifdef MULTI_TIMESTEP
+  register_global_callback(FIELD_SMALLERTIMESTEP, tclcallback_smaller_time_step);
+#endif
   register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
 }
 

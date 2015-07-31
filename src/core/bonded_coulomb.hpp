@@ -21,7 +21,7 @@
 #ifndef _BONDED_COULOMB_HPP
 #define _BONDED_COULOMB_HPP
 /** \file bonded_coulomb.hpp
- *  Routines to calculate the HARMONIC Energy or/and HARMONIC force 
+ *  Routines to calculate the BONDED_COULOMB Energy or/and BONDED_COULOMB force 
  *  for a particle pair.
  *  \ref forces.cpp
 */
