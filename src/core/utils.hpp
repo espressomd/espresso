@@ -105,7 +105,6 @@ typedef struct {
 /* to enable us to make sure that freed pointers are invalidated, we normally try to use realloc.
    Unfortunately allocating zero bytes (which should be avoided) actually allocates 16 bytes, and
    reallocating to 0 also. To avoid this, we use our own malloc and realloc procedures. */
-#ifndef MEM_DEBUG
 
 namespace Utils {
   /** used instead of realloc.
@@ -141,7 +140,6 @@ namespace Utils {
   }
 }
 
-#endif
 /*@}*/
 
 /*************************************************************/
