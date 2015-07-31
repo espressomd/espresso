@@ -106,6 +106,10 @@
 #define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
 #define LE_DEBUG
+#ifdef
+#define CUDA_DEBUG
+#endif
+#define ESIF_DEBUG
 
 #define MPI_CORE
 #define FORCE_CORE

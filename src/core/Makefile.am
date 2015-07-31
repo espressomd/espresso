@@ -215,7 +215,8 @@ CUDA_HEADER_FILES = \
 	integrate_sd_cuda.hpp \
 	integrate_sd_cuda_device.hpp \
 	integrate_sd_matrix.hpp \
-	fd-electrostatics.hpp
+	fd-electrostatics.hpp \
+	actor/DipolarDirectSum_cuda.hpp
 
 CUDA_SOURCE_FILES = \
 	cuda_init_cuda.cu \
