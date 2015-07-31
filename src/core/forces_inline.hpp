@@ -219,7 +219,6 @@ inline void force_calc()
   prepare_collision_queue();
 #endif
 
-#ifdef LB_GPU
 #ifdef SHANCHEN
 #ifdef LB_GPU
   if ( lattice_switch & LATTICE_LB_GPU && this_node == 0 ) lattice_boltzmann_calc_shanchen_gpu();
@@ -1048,4 +1047,4 @@ inline void check_particle_force(Particle *part) {
 #endif
 }
 
-#endif
+#endif //_FORCES_INLINE_HPP

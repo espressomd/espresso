@@ -69,8 +69,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     @param d         vector between p1 and p2.
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
-inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
-					  double dist, double dist2)
+inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
 {
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};

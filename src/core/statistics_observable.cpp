@@ -630,7 +630,7 @@ int observable_calc_lb_velocity_profile(observable* self) {
 	  p[0]=xoffset + i*x_incr;
 	  p[1]=yoffset + j*y_incr;
 	  p[2]=zoffset + k*z_incr;
-	  if (lb_lbfluid_get_interpolated_velocity(p, v)!=0)
+	  if (lb_lbfluid_get_interpolated_velocity_global(p, v)!=0)
 	    return 1;
 	  linear_index = 0;
 	  if (pdata->xbins > 1)
