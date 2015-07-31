@@ -46,7 +46,7 @@ void realloc_topology(int size)
     realloc_intlist(&topology[m].part, 0);
   }
   
-  topology = (Molecule*)realloc(topology, size*sizeof(Molecule));
+  topology = (Molecule*)Utils::realloc(topology, size*sizeof(Molecule));
 
   if (n_molecules < 0)
     n_molecules = 0;

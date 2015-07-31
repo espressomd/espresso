@@ -108,7 +108,7 @@ int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 
   //Squared charge
   Particle *particle;
-  particle = (Particle*)malloc(n_part*sizeof(Particle));
+  particle = (Particle*)Utils::malloc(n_part*sizeof(Particle));
   mpi_get_particles(particle, NULL);
   double q_sqr = compute_q_sqare(particle);
 

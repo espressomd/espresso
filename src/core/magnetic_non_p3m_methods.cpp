@@ -228,23 +228,23 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
   if(n_nodes!=1) {fprintf(stderr,"error: magnetic Direct Sum is just for one cpu .... \n"); errexit();}
   if(!(force_flag) && !(energy_flag) ) {fprintf(stderr," I don't know why you call dawaanr_caclulations with all flags zero \n"); return 0;}
 
-  x = (double *) malloc(sizeof(double)*n_part);
-  y = (double *) malloc(sizeof(double)*n_part);
-  z = (double *) malloc(sizeof(double)*n_part);
+  x = (double *) Utils::malloc(sizeof(double)*n_part);
+  y = (double *) Utils::malloc(sizeof(double)*n_part);
+  z = (double *) Utils::malloc(sizeof(double)*n_part);
 
-  mx = (double *) malloc(sizeof(double)*n_part);
-  my = (double *) malloc(sizeof(double)*n_part);
-  mz = (double *) malloc(sizeof(double)*n_part);
+  mx = (double *) Utils::malloc(sizeof(double)*n_part);
+  my = (double *) Utils::malloc(sizeof(double)*n_part);
+  mz = (double *) Utils::malloc(sizeof(double)*n_part);
  
   if(force_flag) {
-    fx = (double *) malloc(sizeof(double)*n_part);
-    fy = (double *) malloc(sizeof(double)*n_part);
-    fz = (double *) malloc(sizeof(double)*n_part);
+    fx = (double *) Utils::malloc(sizeof(double)*n_part);
+    fy = (double *) Utils::malloc(sizeof(double)*n_part);
+    fz = (double *) Utils::malloc(sizeof(double)*n_part);
  
 #ifdef ROTATION   
-    tx = (double *) malloc(sizeof(double)*n_part);
-    ty = (double *) malloc(sizeof(double)*n_part);
-    tz = (double *) malloc(sizeof(double)*n_part);
+    tx = (double *) Utils::malloc(sizeof(double)*n_part);
+    ty = (double *) Utils::malloc(sizeof(double)*n_part);
+    tz = (double *) Utils::malloc(sizeof(double)*n_part);
 #endif  
   }
  

@@ -671,11 +671,11 @@ void maggs_setup_local_lattice()
 	
   lparams.volume    = xyzcube;
   /** allocate memory for sites and neighbors */
-  lattice  = (t_site*) malloc(xyzcube*sizeof(t_site));
-  neighbor = (t_dirs*) malloc(xyzcube*sizeof(t_dirs));
+  lattice  = (t_site*) Utils::malloc(xyzcube*sizeof(t_site));
+  neighbor = (t_dirs*) Utils::malloc(xyzcube*sizeof(t_dirs));
 	
-  Bfield   = (double*) malloc(3*xyzcube*sizeof(double));
-  Dfield   = (double*) malloc(3*xyzcube*sizeof(double));
+  Bfield   = (double*) Utils::malloc(3*xyzcube*sizeof(double));
+  Dfield   = (double*) Utils::malloc(3*xyzcube*sizeof(double));
 	
   /** set up lattice sites */
   FORALL_SITES(ix, iy, iz) {
@@ -2255,7 +2255,7 @@ void maggs_calc_forces()
 	
   Npart = cells_get_n_particles();
   if(Npart>Npart_old) {
-    grad = (double *) realloc(grad, 12*Npart*sizeof(double));
+    grad = (double *) Utils::realloc(grad, 12*Npart*sizeof(double));
     Npart_old = Npart;
   }
 	

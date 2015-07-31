@@ -47,8 +47,8 @@ int check_id =  ONEPART_DEBUG_ID ;
 
 #ifdef MEM_DEBUG
 
-#undef realloc
-#undef malloc
+#undef Utils::realloc
+#undef Utils::malloc
 #undef free
 
 void *__realloc(void *old, unsigned int size, const char *where, int line)
@@ -60,7 +60,7 @@ void *__realloc(void *old, unsigned int size, const char *where, int line)
     return NULL;
   }
 
-  ret = realloc(old, size);
+  ret = Utils::realloc(old, size);
   fprintf(stderr, "%d: realloc %p -> %p size %d at %s:%d\n", this_node, old, ret, size, where, line);
   return ret;
 }
@@ -69,7 +69,7 @@ void *__malloc(unsigned int size, const char *where, int line)
 {
   void *ret;
   if (size > 0)
-    ret = malloc(size);
+    ret = Utils::malloc(size);
   else
     ret = NULL;
   fprintf(stderr, "%d: alloc %d -> %p at %s:%d\n", this_node, size, ret, where, line);
@@ -199,8 +199,8 @@ void check_particles()
   /* check the consistency of particle_nodes */
   /* to this aim the array is broadcasted temporarily */
   if (this_node != 0)
-    particle_node = (int*)malloc((max_seen_particle + 1)*sizeof(int));
-  is_here = (int*)malloc((max_seen_particle + 1)*sizeof(int));
+    particle_node = (int*)Utils::malloc((max_seen_particle + 1)*sizeof(int));
+  is_here = (int*)Utils::malloc((max_seen_particle + 1)*sizeof(int));
   memset(is_here, 0, (max_seen_particle + 1)*sizeof(int));
 
   MPI_Bcast(particle_node, max_seen_particle + 1, MPI_INT, 0, comm_cart);

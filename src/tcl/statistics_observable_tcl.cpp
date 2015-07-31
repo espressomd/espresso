@@ -683,7 +683,7 @@ int tclcommand_observable_particle_currents(Tcl_Interp* interp, int argc, char**
     return TCL_ERROR;
   obs->container=(void*)ids;
   obs->n=3*ids->n;
-  obs->last_value=(double*)malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else
@@ -703,7 +703,7 @@ int tclcommand_observable_currents(Tcl_Interp* interp, int argc, char** argv, in
     return TCL_ERROR;
   obs->container=(void*)ids;
   obs->n=3;
-  obs->last_value=(double*)malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else
@@ -722,7 +722,7 @@ int tclcommand_observable_dipole_moment(Tcl_Interp* interp, int argc, char** arg
     return TCL_ERROR;
   obs->container=(void*)ids;
   obs->n=3;
-  obs->last_value=(double*)malloc(obs->n*sizeof(double));
+  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else

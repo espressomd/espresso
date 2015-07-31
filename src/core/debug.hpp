@@ -32,12 +32,12 @@
 
 #ifdef MEM_DEBUG
 #ifdef __GNUC__
-#define realloc(v,s) __realloc((v),(s),__FILE__, __LINE__)
-#define malloc(s) __malloc((s),__FILE__, __LINE__)
+#define Utils::realloc(v,s) __realloc((v),(s),__FILE__, __LINE__)
+#define Utils::malloc(s) __malloc((s),__FILE__, __LINE__)
 #define free(v) __free((v),__FILE__, __LINE__)
 #else
-#define realloc(v,s) __realloc((v),(s), "no line info", 0)
-#define malloc(s) __malloc((s), "no line info", 0)
+#define Utils::realloc(v,s) __realloc((v),(s), "no line info", 0)
+#define Utils::malloc(s) __malloc((s), "no line info", 0)
 #define free(v) __free((v),"no line info", 0)
 #endif
 

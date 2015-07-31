@@ -67,7 +67,7 @@ void register_global_callback(int field, SetCallback *callback)
 {
   /* resize, if necessary, and initialize fields inbetween as read-only */
   if (n_callbacks <= field) {
-    callbacks = (SetCallback **)realloc(callbacks, (field + 1)*sizeof(SetCallback *));
+    callbacks = (SetCallback **)Utils::realloc(callbacks, (field + 1)*sizeof(SetCallback *));
     for (int f = n_callbacks; f < field; ++f)
       callbacks[f] = tclcallback_ro;
     n_callbacks = field + 1;
