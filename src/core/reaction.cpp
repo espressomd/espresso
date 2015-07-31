@@ -29,6 +29,8 @@
 #include "errorhandling.hpp"
 #include "cells.hpp"
 #include "domain_decomposition.hpp"
+#include <vector>
+#include <algorithm>
 
 reaction_struct reaction;
 
@@ -88,12 +90,12 @@ void local_setup_reaction() {
 
 void integrate_reaction() {
   int c, np, n, i,
-      check_catalyzer;
+    check_catalyzer;
   Particle *p1, *p2, **pairs;
   Cell *cell;
   double dist2, vec21[3],
-         ct_ratexp, eq_ratexp,
-         rand, bernoulli;
+    ct_ratexp, eq_ratexp,
+    rand, bernoulli;
 
   if(reaction.ct_rate > 0.0) {
 
@@ -142,12 +144,12 @@ void integrate_reaction() {
               if(dist2 < reaction.range * reaction.range) {
 
                 if(p1->p.type == reaction.reactant_type) {
-						       p1->p.catalyzer_count++;
-					      }
-					      else {
-						       p2->p.catalyzer_count++;
-					      }
-             	}
+                  p1->p.catalyzer_count++;
+                }
+                else {
+                  p2->p.catalyzer_count++;
+                }
+              }
             }  
           }
         }
@@ -165,7 +167,7 @@ void integrate_reaction() {
 
           if(p1[i].p.catalyzer_count > 0 ){
 
-            if( reaction.sing_mult == 0 ) 
+            if( reaction.sing_mult == 0 )
             {
               rand = d_random();
 
@@ -193,7 +195,7 @@ void integrate_reaction() {
        reaction rate constant is nonzero */
     if (reaction.eq_rate > 0.0) { 
 
-  	  eq_ratexp = exp(-time_step*reaction.eq_rate);
+      eq_ratexp = exp(-time_step*reaction.eq_rate);
 
       for (c = 0; c < local_cells.n; c++) {
         cell = local_cells.cell[c];
@@ -207,16 +209,16 @@ void integrate_reaction() {
           if(p1[i].p.type == reaction.product_type) {
             rand = d_random();
             
-  	        if(rand > eq_ratexp) {
-  	          p1[i].p.type=reaction.reactant_type;
-  	        }
+            if(rand > eq_ratexp) {
+              p1[i].p.type=reaction.reactant_type;
+            }
           }
           else if(p1[i].p.type == reaction.reactant_type) {
             rand = d_random();
             
-  	        if(rand > eq_ratexp) {
-  	          p1[i].p.type=reaction.product_type;
-  	        }
+            if(rand > eq_ratexp) {
+              p1[i].p.type=reaction.product_type;
+            }
           }
 
         }
@@ -226,4 +228,168 @@ void integrate_reaction() {
     on_particle_change();
   }
 }
+
+#ifdef ROTATION
+
+bool in_upper_half_space(Particle p1, Particle p2)
+{
+  // This function determines whether the particle p2 is in the lower
+  // half space of particle p1
+  double distvec[3];
+  utils::vecsub(p1.r.p, p2.r.p, distvec);
+  return utils::sign(utils::dot_product(p1.r.quatu, distvec));
+}
+
+
+void integrate_reaction_swap()
+{
+  int np, check_catalyzer;
+  Particle *p1, *p2;
+  int pairs;
+  Cell *cell;
+  double dist2, vec21[3], ct_ratexp, eq_ratexp, rand;
+  int n_reactions;
+
+  std::vector<int> catalyzers, reactants, products;
+
+  // If multiple catalyzers get close to each other, they might eat up
+  // each others reactants.  If we traverse the cells in a sorted
+  // manner, then catalyzers in the upper left will use up all the
+  // reactants of the catalyzers with are below right of them.  This
+  // process is biased.  To rectify this issue we set up a vector
+  // which goes through the cells in a randomized manner.
+  std::vector<int> rand_cells(local_cells.n);
+  for (int i = 0; i < local_cells.n; i++)
+    rand_cells[i] = i;
+  std::random_shuffle(rand_cells.begin(), rand_cells.end());
+
+
+  if(reaction.ct_rate > 0.0)
+  {
+    // Determine the reaction rate
+    ct_ratexp = exp(-time_step*reaction.ct_rate);
+    
+    on_observable_calc();
+
+    for ( std::vector<int>::iterator c = rand_cells.begin(); c != rand_cells.end(); c++)
+    {
+      // Take into account only those cell neighbourhoods for which
+      // the central cell contains a catalyzer particle
+      cell = local_cells.cell[*c];
+      p1   = cell->part;
+      np   = cell->n;
+      
+      // We find all catalyzers in a cell and then randomize their ids
+      // for the same reason as above and then start the catalytic
+      // reaction procedure
+      catalyzers.clear();
+      for(int i = 0; i < np; i++)
+      {
+        if ( p1[i].p.type == reaction.catalyzer_type )
+          catalyzers.push_back(i);
+      }
+      std::random_shuffle(catalyzers.begin(), catalyzers.end());
+
+      // We loop over all the catalyzer particles
+      for ( std::vector<int>::iterator id = catalyzers.begin(); id != catalyzers.end(); id++ )
+      {
+
+        reactants.clear();
+        products.clear();
+        // Loop cell neighbors
+        for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
+        {
+          cell = dd.cell_inter[*c].nList[n].pList;
+          p2   = cell->part;
+          np   = cell->n;
+
+          // Particle list loop
+          for ( int i = 0; i < np; i++ )
+          {
+            get_mi_vector(vec21, p1[*id].r.p, p2[i].r.p);
+            dist2 = sqrlen(vec21);
+
+            if (dist2 < reaction.range * reaction.range && p2[i].p.catalyzer_count == 0)
+            {
+              if ( p2[i].p.type == reaction.reactant_type &&  in_upper_half_space(p1[*id],p2[i]) )
+                reactants.push_back(i);
+              if ( p2[i].p.type == reaction.product_type  && !in_upper_half_space(p1[*id],p2[i]) )
+                products.push_back(i);
+            }
+
+            if ( reactants.size() > 0 && products.size() > 0 )
+            {
+              n_reactions = 0;
+              if ( reactants.size() <= products.size() )
+              {
+                for ( std::vector<int>::iterator rt = reactants.begin(); rt < reactants.end(); rt++ )
+                {
+                  rand = d_random();
+                  if( rand > ct_ratexp )
+                  {
+                    p2[*rt].p.type = reaction.product_type;
+                    p2[*rt].p.q *= -1;
+                    p2[*rt].p.catalyzer_count = 1;
+                    n_reactions++;
+                  }
+                }
+
+                std::random_shuffle(products.begin(), products.end());
+                for ( int p = 0; p < n_reactions; p++ )
+                {
+                  p2[products[p]].p.type = reaction.reactant_type;
+                  p2[products[p]].p.q *= -1;
+                  p2[products[p]].p.catalyzer_count = 1;
+                }
+              }
+              else
+              {
+                for ( std::vector<int>::iterator pt = products.begin(); pt < products.end(); pt++ )
+                {
+                  rand = d_random();
+                  if( rand > ct_ratexp )
+                  {
+                    p2[*pt].p.type = reaction.reactant_type;
+                    p2[*pt].p.q *= -1;
+                    p2[*pt].p.catalyzer_count = 1;
+                    n_reactions++;
+                  }
+                }
+
+                std::random_shuffle(reactants.begin(), reactants.end());
+                for ( int p = 0; p < n_reactions; p++ )
+                {
+                  p2[reactants[p]].p.type = reaction.product_type;
+                  p2[reactants[p]].p.q *= -1;
+                  p2[reactants[p]].p.catalyzer_count = 1;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Reset all the catalyzer counts, such that in the next time step
+    // a new reaction can take place
+    for ( std::vector<int>::iterator c = rand_cells.begin(); c != rand_cells.end(); c++)
+    {
+      for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
+      {
+        cell = dd.cell_inter[*c].nList[n].pList;
+        p2   = cell->part;
+        np   = cell->n;
+        // Particle list loop
+        for ( int i = 0; i < np; i++ )
+        {
+          p2[i].p.catalyzer_count = 0;
+        }
+      }
+    }
+
+    on_particle_change();
+  }
+}
+#endif // ROTATION
+
 #endif
