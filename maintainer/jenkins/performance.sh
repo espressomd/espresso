@@ -11,3 +11,6 @@ DIR=`dirname $0`
 source $DIR/common.sh
 
 $DIR/../../Espresso $DIR/scripts/lj_performance.tcl
+
+paste -d ',' lj_performance.txt > performance.txt
+
