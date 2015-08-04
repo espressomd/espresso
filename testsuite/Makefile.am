@@ -103,6 +103,7 @@ tests = \
 	p3m_simple_noncubic.tcl \
 	pdb_parser.tcl \
 	rotate-system.tcl \
+	rotate-system-dipoles.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
