@@ -1272,10 +1272,10 @@ int mpi_integrate(int n_steps, int reuse_forces)
       reuse_forces = 0; // makes even less sense after the first time step
       COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n",     \
                          this_node, i));
-      if (check_runtime_errors())
-        return check_runtime_errors();
       autoupdate_correlations();
     }
+    if (check_runtime_errors())
+      return check_runtime_errors();
   }
 
   return 0;

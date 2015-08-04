@@ -182,11 +182,10 @@ inline void friction_thermo_langevin(Particle *p)
 
 #ifdef MULTI_TIMESTEP
   extern double langevin_pref1_small;
- #ifndef LANGEVIN_PER_PARTICLE
+#ifndef LANGEVIN_PER_PARTICLE
   extern double langevin_pref2_small;
- #endif
-#endif
-
+#endif /* LANGEVIN_PER_PARTICLE */
+#endif /* MULTI_TIMESTEP */
 
   int j;
   double switch_trans = 1.0;
@@ -196,24 +195,28 @@ inline void friction_thermo_langevin(Particle *p)
   }
 
   // Virtual sites related decision making
-  #ifdef VIRTUAL_SITES
-    #ifndef VIRTUAL_SITES_THERMOSTAT
+#ifdef VIRTUAL_SITES
+#ifndef VIRTUAL_SITES_THERMOSTAT
       // In this case, virtual sites are NOT thermostated 
-      if (ifParticleIsVirtual(p))
-    #endif
-    #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
-      // In this case NON-virtual particles are NOT thermostated
-      if (!ifParticleIsVirtual(p))
-    #endif
-    // If one of the if clauses above evaluates to true, 
-    // don't thermostat.
+  if (ifParticleIsVirtual(p))
     {
       for (j=0;j<3;j++)
         p->f.f[j]=0;
   
       return;
     }
-  #endif // Virtual sites
+#endif /* VIRTUAL_SITES_THERMOSTAT */
+#ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
+      // In this case NON-virtual particles are NOT thermostated
+  if (!ifParticleIsVirtual(p))
+    {
+      for (j=0;j<3;j++)
+        p->f.f[j]=0;
+  
+      return;
+    }
+#endif /* THERMOSTAT_IGNORE_NON_VIRTUAL */
+#endif /* VIRTUAL_SITES */
 
   // Get velocity effective in the thermostatting
   double velocity[3];
@@ -238,7 +241,7 @@ inline void friction_thermo_langevin(Particle *p)
   langevin_pref2_temp = langevin_pref2;
 
   // Override defaults if per-particle values for T and gamma are given 
-  #ifdef LANGEVIN_PER_PARTICLE  
+#ifdef LANGEVIN_PER_PARTICLE  
     // If a particle-specific gamma is given
     if(p->p.gamma >= 0.) 
     {
@@ -261,7 +264,7 @@ inline void friction_thermo_langevin(Particle *p)
         // Defaut values for both
         langevin_pref2_temp = langevin_pref2;
     }
-  #endif // Langevin per particle handling
+#endif /* LANGEVIN_PER_PARTICLE */
 
   // Multi-timestep handling
   // This has to be last, as it may set the prefactors to 0.
@@ -275,7 +278,7 @@ inline void friction_thermo_langevin(Particle *p)
         langevin_pref2_temp  = 0.;
       }
     }
-  #endif
+#endif /* MULTI_TIMESTEP */
 
   
   // Do the actual thermostatting
