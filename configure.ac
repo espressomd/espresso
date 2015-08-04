@@ -120,6 +120,9 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 # try to find best __FUNCTION__ variant
 AX_CXX_VAR_PRETTYFUNC()
 
+# check for c++11 support
+AX_CXX_COMPILE_STDCXX_11(ext,optional)
+
 # set the optimization flags
 # never overwrite users CXXFLAGS
 if test "${CXXFLAGS+set}" != set; then
@@ -698,8 +701,7 @@ cat <<EOF
 ****************************************************************
 EOF
 AC_MSG_CHECKING([whether to build with h5md support])
-AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport]),
-    , [with_h5md=yes])
+AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport]), , [with_h5md=no])
 AC_MSG_RESULT($with_h5md)
 if test .$with_h5md = .yes; then
   ES_ADDPATH_CHECK_LIB(hdf5,H5open,,AC_MSG_FAILURE([could not link against the hdf5 library]),)
@@ -710,6 +712,7 @@ if test .$with_h5md = .yes; then
 		]
 		,$extrapaths)
 fi
+AM_CONDITIONAL(H5MD, [test x$with_h5md == xyes])
 cat <<EOF
 ****************************************************************
 *                   Other settings                             *
@@ -839,6 +842,7 @@ Libraries
 ---------
 FFTW                    = $fftw_found
 efence                  = $with_efence
+h5md			= $with_h5md
 
 EOF
 

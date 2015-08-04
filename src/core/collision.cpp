@@ -192,7 +192,7 @@ void detect_collision(Particle* p1, Particle* p2)
     number_of_collisions++;
 
     // Allocate mem for the new collision info
-    collision_queue = (collision_struct *) realloc (collision_queue, (number_of_collisions) * sizeof(collision_struct));
+    collision_queue = (collision_struct *) Utils::realloc (collision_queue, (number_of_collisions) * sizeof(collision_struct));
       
     // Save the collision      
     collision_queue[number_of_collisions-1].pp1 = part1;
@@ -208,7 +208,7 @@ void prepare_collision_queue()
   
   number_of_collisions=0;
 
-  collision_queue = (collision_struct *) malloc (sizeof(collision_struct));
+  collision_queue = (collision_struct *) Utils::malloc (sizeof(collision_struct));
 
 }
 

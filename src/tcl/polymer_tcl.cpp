@@ -100,7 +100,7 @@ int tclcommand_polymer (ClientData data, Tcl_Interp *interp, int argc, char **ar
     /* [pos <x> <y> <z>] */
     else if (ARG_IS_S(i, "pos")) {
       if (i+3 < argc) { 
-	posed = (double*)malloc(3*sizeof(double));
+	posed = (double*)Utils::malloc(3*sizeof(double));
 	if (!(ARG_IS_D(i+1, posed[0]) && ARG_IS_D(i+2, posed[1]) && ARG_IS_D(i+3, posed[2]))) {
 	  Tcl_ResetResult(interp);
           Tcl_AppendResult(interp, "The first start monomers position must be double (got: ",argv[i+1],",",argv[i+2],",",argv[i+3],")!", (char *)NULL);
@@ -200,7 +200,7 @@ int tclcommand_polymer (ClientData data, Tcl_Interp *interp, int argc, char **ar
 	      while(angle2 >= 2.0*PI) angle2 -= 2.0*PI;
 	      i++;
 	      if (i+3 < argc) {
-		posed2=(double*)malloc(3*sizeof(double));
+		posed2=(double*)Utils::malloc(3*sizeof(double));
 		if (ARG_IS_D(i+1, posed2[0]) && ARG_IS_D(i+2, posed2[1]) && ARG_IS_D(i+3, posed2[2])) {
 		  i+=3; 
 		} else {

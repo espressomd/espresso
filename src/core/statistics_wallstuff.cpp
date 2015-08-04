@@ -36,7 +36,7 @@ void wall_sort_particles()
   for (int i = 0; i < n_part_in_bin; ++i) {
     realloc_intlist(&wallstuff_part_in_bin[i], wallstuff_part_in_bin[i].n = 0);
   }
-  wallstuff_part_in_bin = (IntList*)realloc(wallstuff_part_in_bin, 
+  wallstuff_part_in_bin = (IntList*)Utils::realloc(wallstuff_part_in_bin, 
                                             (wallstuff_boundaries.n-1)*sizeof(IntList));
   // initialize new ones
   for (int i = n_part_in_bin; i < wallstuff_boundaries.n-1; ++i) {
