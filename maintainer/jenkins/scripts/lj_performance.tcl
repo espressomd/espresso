@@ -127,7 +127,7 @@ for {set i 0} { $i < $int_n_times } { incr i} {
 
 set fd [open "lj_performance.txt" "w"]
 puts $fd "LJ_Force,LJ_Energy"
-puts $fd "[expr $sum_f /$int_n_times / 1000.], [expr $sum_e / $int_n_times / 1000.]"
+puts $fd "[expr $sum_f /$int_n_times / 1000.], [expr $sum_e / 1000.]"
 close $fd
 
 # terminate program
