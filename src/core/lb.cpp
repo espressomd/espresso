@@ -1974,9 +1974,11 @@ void lb_reinit_parameters() {
        }
    
        if (lbpar.bulk_viscosity[ii] > 0.0) {
+	   double factor = 3;
            /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
            // unit conversion: viscosity
-           gamma_bulk[ii] = 1. - 2./(9.*lbpar.bulk_viscosity[ii]*lbpar.tau/(lbpar.agrid*lbpar.agrid)+1.);
+	   if(LB_COMPONENTS==2) factor=2;
+           gamma_bulk[ii] = 1. - 2./(3.*factor*lbpar.bulk_viscosity[ii]*lbpar.tau/(lbpar.agrid*lbpar.agrid)+1.);
        }
    
        gamma_odd[ii] = lbpar.gamma_odd[ii];
@@ -2003,6 +2005,7 @@ void lb_reinit_parameters() {
            for (i = 5; i < 10; i++) lb_phi[i+ii*LBQ] = sqrt(mu*e[19][i]*(1.-SQR(gamma_shear[ii])));
            for (i = 10; i < 16; i++) lb_phi[i+ii*LBQ] = sqrt(mu*e[19][i]*(1.-SQR(gamma_odd[ii])));
            for (i = 16; i < 19; i++) lb_phi[i+ii*LBQ] = sqrt(mu*e[19][i]*(1.-SQR(gamma_even[ii])));
+	   
            
            /* lb_coupl_pref is stored in MD units (force)
             * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
