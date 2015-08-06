@@ -14,8 +14,6 @@ int tclcommand_reaction_ensemble_print_status(Tcl_Interp *interp){
 	}else{
 		sprintf(buffer,"Reaction System is the following:\n");
 		Tcl_AppendResult(interp, buffer, (char *)NULL);
-		sprintf(buffer,"Volume %f\n", current_reaction_system.volume);
-		Tcl_AppendResult(interp, buffer, (char *)NULL);
 		for(int single_reaction_i=0;single_reaction_i<current_reaction_system.nr_single_reactions;single_reaction_i++){
 			sprintf(buffer, "#Reaction %d# \n", single_reaction_i);
 			Tcl_AppendResult(interp, buffer, "educt types:\n", (char *)NULL);
@@ -149,21 +147,18 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 		if(ARG1_IS_S("do")) {
 			do_reaction();
 		} else { //for performance reasons skip the other checks if do is found as argument
-			if(current_reaction_system.reactions==NULL && ARG1_IS_S("volume")){
-				// reaction_ensemble volume <volume> must be called first, it also initializes the reaction_system
-				create_current_reaction_system_struct();
-				double volume;
-				ARG_IS_D(2,volume);
-				current_reaction_system.volume=(float) volume;
-			}
 			if( ARG1_IS_S("add_reaction") ) {
 				//add reaction. note all calls of this function have to be done before the first call of "initialize()"
+				if(current_reaction_system.reactions==NULL){
+					// this initializes the reaction_system
+					create_current_reaction_system_struct();
+				}
 				tclcommand_add_reaction(interp, argc, argv);
 		
 			}
-			if(ARG1_IS_S("initialize")) {
+			if(ARG1_IS_S("check")) {
 				//registers particle types in part gc, has to be called after all reactions are added
-				initialize();
+				check_reaction_ensemble();
 			}
 		
 			if(ARG1_IS_S("set_default_charge_of_type")) {

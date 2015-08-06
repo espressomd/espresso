@@ -19,7 +19,6 @@ typedef struct single_reaction{
 typedef struct reaction_system {
 	int nr_single_reactions;
 	single_reaction** reactions;
-	float volume;
 	int* type_index;
 	int nr_different_types; // is equal to length type_index
 	double* charges_of_types;
@@ -37,7 +36,7 @@ int create_current_reaction_system_struct();
 
 int free_reaction_ensemble();
 
-int initialize();
+int check_reaction_ensemble();
 
 int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types);
 

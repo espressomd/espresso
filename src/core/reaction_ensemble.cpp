@@ -20,7 +20,7 @@
 
 //For now the reaction ensemble is only implemented for the reaction VT ensemble. The reaction PT ensemble is also possible to implement.
 
-reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL,.volume=0 , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
+reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
 
 //declaration of boring helper functions
@@ -52,26 +52,7 @@ int do_reaction(){
 }
 
 
-int _type_is_in_list(int type, int* list, int len_list){
-	bool is_in_list=false;
-	for(int i=0;i<len_list;i++){
-		if(list[i]==type){
-			is_in_list=true;
-			break;
-		}
-	}
-	return is_in_list;
-}
-
-int initialize(){
-	//register types all different types, note that types need to be >=1
-	for(int different_type_i=0;different_type_i<current_reaction_system.nr_different_types;different_type_i++){
-		init_type_array(current_reaction_system.type_index[different_type_i]);
-	}
-	
-	//initialize charge of types to zero
-	current_reaction_system.charges_of_types =(double*) calloc(1,sizeof(double)*current_reaction_system.nr_different_types);
-
+int check_reaction_ensemble(){
 	if(current_reaction_system.standard_pressure_in_simulation_units==-10){
 		printf("Please initialize your reaction ensemble standard pressure before calling initialize.\n");
 		exit(0);
@@ -165,7 +146,7 @@ double calculate_current_potential_energy_of_system(int unimportant_int){
 }
 
 int generic_oneway_reaction(int reaction_id){
-	float volume = current_reaction_system.volume;
+	float volume = box_l[0]*box_l[1]*box_l[2];
 	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id];
 	
 	//generic one way reaction
@@ -198,9 +179,9 @@ int generic_oneway_reaction(int reaction_id){
 		
 	int* p_ids_created_particles =NULL;
 	int len_p_ids_created_particles=0;
-	float* hidden_particles_properties=NULL;
+	double* hidden_particles_properties=NULL;
 	int len_hidden_particles_properties=0;
-	float* changed_particles_properties=NULL;
+	double* changed_particles_properties=NULL;
 	int len_changed_particles_properties=0;
 	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
 	
@@ -210,10 +191,10 @@ int generic_oneway_reaction(int reaction_id){
 		for(int j=0;j<min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
 			int p_id ;
 			find_particle_type(current_reaction->educt_types[i], &p_id);
-			changed_particles_properties=(float*) realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(float) p_id;
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
+			changed_particles_properties=(double*) realloc(changed_particles_properties,sizeof(double)*(len_changed_particles_properties+1)*number_of_saved_properties);
+			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(double) p_id;
+			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
 			len_changed_particles_properties+=1;
 			replace(p_id,current_reaction->product_types[i]);
 		}
@@ -233,10 +214,10 @@ int generic_oneway_reaction(int reaction_id){
 			for(int j=0;j<current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i];j++) {
 				int p_id ;
 				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
+				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
 				len_hidden_particles_properties+=1;
 				hide_particle(p_id,current_reaction->educt_types[i]);
 			}
@@ -251,10 +232,10 @@ int generic_oneway_reaction(int reaction_id){
 			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
 				int p_id ;
 				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
+				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
 				len_hidden_particles_properties+=1;
 				hide_particle(p_id,current_reaction->educt_types[i]);
 			}
@@ -312,8 +293,8 @@ int generic_oneway_reaction(int reaction_id){
 		//2)restore previously hidden educt particles
 		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) hidden_particles_properties[i];
-			double charge=(double) hidden_particles_properties[i+1];
-			double type=(double) hidden_particles_properties[i+2];
+			double charge= hidden_particles_properties[i+1];
+			int type=(int) hidden_particles_properties[i+2];
 			//set charge
 			set_particle_q(p_id, charge);
 			//set type
@@ -322,8 +303,8 @@ int generic_oneway_reaction(int reaction_id){
 		//2)restore previously changed educt particles
 		for(int i=0;i<len_changed_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) changed_particles_properties[i];
-			double charge=(double) changed_particles_properties[i+1];
-			double type=(double) changed_particles_properties[i+2];
+			double charge= changed_particles_properties[i+1];
+			int type=(int) changed_particles_properties[i+2];
 			//set charge
 			set_particle_q(p_id, charge);
 			//set type
@@ -352,42 +333,49 @@ int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product
 	return nu_bar;
 }
 
+
+bool _type_is_in_list(int type, int* list, int len_list){
+	bool is_in_list=false;
+	for(int i=0;i<len_list;i++){
+		if(list[i]==type){
+			is_in_list=true;
+			break;
+		}
+	}
+	return is_in_list;
+}
+
 int update_type_index(int* educt_types, int len_educt_types, int* product_types, int len_product_types){
 	//should only be used at when defining a new reaction
+	
 	if(current_reaction_system.type_index==NULL){
 		current_reaction_system.type_index=(int*) calloc(1,sizeof(int));
 		current_reaction_system.type_index[0]=educt_types[0];
 		current_reaction_system.nr_different_types=1;
+		init_type_array(educt_types[0]); //make types known in espresso
 	}
 	for (int i =0; i<len_educt_types;i++){
-		bool educt_type_i_is_known=false;
-		for (int known_type_i=0;known_type_i<current_reaction_system.nr_different_types;known_type_i++){
-			if(current_reaction_system.type_index[known_type_i]==educt_types[i]){
-				educt_type_i_is_known=true;
-				break;
-			}
-		}
+		bool educt_type_i_is_known=_type_is_in_list(educt_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
 		if (educt_type_i_is_known==false){
 			current_reaction_system.type_index=(int*) realloc(current_reaction_system.type_index, sizeof(int)*(current_reaction_system.nr_different_types+1));
 			current_reaction_system.type_index[current_reaction_system.nr_different_types]=educt_types[i];
 			current_reaction_system.nr_different_types+=1;
+			init_type_array(educt_types[i]); //make types known in espresso
 		}
 	}
 	
 	for (int i =0; i<len_product_types;i++){
-		bool product_type_i_is_known=false;
-		for (int known_type_i=0;known_type_i<current_reaction_system.nr_different_types;known_type_i++){
-			if(current_reaction_system.type_index[known_type_i]==product_types[i]){
-				product_type_i_is_known=true;
-				break;
-			}
-		}
+		bool product_type_i_is_known=_type_is_in_list(product_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
 		if (product_type_i_is_known==false){
 			current_reaction_system.type_index=(int*) realloc(current_reaction_system.type_index, sizeof(int)*(current_reaction_system.nr_different_types+1));
 			current_reaction_system.type_index[current_reaction_system.nr_different_types]=product_types[i];
 			current_reaction_system.nr_different_types+=1;
+			init_type_array(product_types[i]); //make types known in espresso
 		}
 	}
+
+	//increase current_reaction_system.charges_of_types length
+	current_reaction_system.charges_of_types =(double*) realloc(current_reaction_system.charges_of_types,sizeof(double)*current_reaction_system.nr_different_types);
 	
 	return 0;
 }
@@ -839,7 +827,7 @@ int initialize_wang_landau(){
 
 //derived from 	generic_oneway_reaction()
 int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau_potential){
-	float volume = current_reaction_system.volume;
+	float volume = box_l[0]*box_l[1]*box_l[2];
 	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id];
 	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
@@ -884,9 +872,9 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	}
 	int* p_ids_created_particles =NULL;
 	int len_p_ids_created_particles=0;
-	float* hidden_particles_properties=NULL;
+	double* hidden_particles_properties=NULL;
 	int len_hidden_particles_properties=0;
-	float* changed_particles_properties=NULL;
+	double* changed_particles_properties=NULL;
 	int len_changed_particles_properties=0;
 	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
 	
@@ -896,10 +884,10 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		for(int j=0;j<min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
 			int p_id ;
 			find_particle_type(current_reaction->educt_types[i], &p_id);
-			changed_particles_properties=(float*) realloc(changed_particles_properties,sizeof(float)*(len_changed_particles_properties+1)*number_of_saved_properties);
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(float) p_id;
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
+			changed_particles_properties=(double*) realloc(changed_particles_properties,sizeof(double)*(len_changed_particles_properties+1)*number_of_saved_properties);
+			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(double) p_id;
+			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
 			len_changed_particles_properties+=1;
 			replace(p_id,current_reaction->product_types[i]);
 		}
@@ -919,10 +907,10 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			for(int j=0;j<current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i];j++) {
 				int p_id ;
 				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
+				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (double) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
 				len_hidden_particles_properties+=1;
 				hide_particle(p_id,current_reaction->educt_types[i]);
 			}
@@ -936,10 +924,10 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
 				int p_id ;
 				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(float*) realloc(hidden_particles_properties,sizeof(float)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(float) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (float) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(float) current_reaction->educt_types[i];
+				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (double) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
 				len_hidden_particles_properties+=1;
 				hide_particle(p_id,current_reaction->educt_types[i]);
 			}
@@ -1038,8 +1026,8 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		//2)restore previously hidden educt particles
 		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) hidden_particles_properties[i];
-			double charge=(double) hidden_particles_properties[i+1];
-			double type=(double) hidden_particles_properties[i+2];
+			double charge=hidden_particles_properties[i+1];
+			int type=(int) hidden_particles_properties[i+2];
 			//set charge
 			set_particle_q(p_id, charge);
 			//set type
@@ -1048,8 +1036,8 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		//2)restore previously changed educt particles
 		for(int i=0;i<len_changed_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
 			int p_id = (int) changed_particles_properties[i];
-			double charge=(double) changed_particles_properties[i+1];
-			double type=(double) changed_particles_properties[i+2];
+			double charge= changed_particles_properties[i+1];
+			int type=(int) changed_particles_properties[i+2];
 			//set charge
 			set_particle_q(p_id, charge);
 			//set type
