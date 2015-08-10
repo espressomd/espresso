@@ -38,6 +38,7 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_voxel(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
 

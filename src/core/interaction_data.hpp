@@ -211,7 +211,9 @@ enum ConstraintApplied{
 /** Constraint for a hollow cone boundary */
     CONSTRAINT_HOLLOW_CONE,
 /** Constraint for spherocylinder boundary */
-    CONSTRAINT_SPHEROCYLINDER
+    CONSTRAINT_SPHEROCYLINDER,
+/** Constraint for a voxel boundary */
+    CONSTRAINT_VOXEL
 };
 /*@}*/
 
@@ -1106,6 +1108,18 @@ typedef struct {
 
 } Constraint_hollow_cone;
 
+/** Parameters for a VOXEL constraint. */
+typedef struct {
+
+  /** Voxel position. x y z*/
+  //double pos[3];
+  /** normal vector towards fluid. */
+  //double n[3];
+  
+  #define MAXLENGTH_VOXELFILE_NAME 256
+  char filename[MAXLENGTH_VOXELFILE_NAME]; 
+} Constraint_voxel;
+
 /** Parameters for a BOX constraint. */
 typedef struct {
   int value;
@@ -1148,6 +1162,7 @@ typedef struct {
     Constraint_slitpore slitpore;
     Constraint_stomatocyte stomatocyte;
     Constraint_hollow_cone hollow_cone;
+    Constraint_voxel voxel;
     //ER
     Constraint_ext_magn_field emfield;
     //end ER
