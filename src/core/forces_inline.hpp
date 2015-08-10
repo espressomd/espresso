@@ -725,10 +725,11 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = 0;
       break;
 #endif
+#ifdef OIF_LOCAL_FORCES
     case BONDED_IA_OIF_LOCAL_FORCES:
       bond_broken = calc_oif_local(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
       break;
-      
+#endif  
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
 /*      case BONDED_IA_IBM_WALL_REPULSION:
@@ -939,6 +940,7 @@ inline void add_bonded_force(Particle *p1)
       }
 
 	switch (type) {
+#ifdef OIF_LOCAL_FORCES
         case BONDED_IA_OIF_LOCAL_FORCES:
             for (j = 0; j < 3; j++) {
                 p1->f.f[j] += force2[j];
@@ -947,6 +949,7 @@ inline void add_bonded_force(Particle *p1)
                 p4->f.f[j] += force4[j];
             }
         break;
+#endif
 #ifdef CG_DNA
         default:
             for (j = 0; j < 3; j++) {
