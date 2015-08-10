@@ -28,7 +28,7 @@
 
 using namespace std;
 
-namespace Shape {
+namespace Shapes {
   struct Shape {
     virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
     /* Human readable name of the shape. */

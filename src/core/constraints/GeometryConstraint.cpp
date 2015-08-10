@@ -1,6 +1,12 @@
 #include "GeometryConstraint.hpp"
+#include "shapes/ShapeList.hpp"
 
 namespace Constraints {
+
+	void GeometryConstraint::set_shape() {
+		m_shape = Shapes::list[m_shape_id];
+	}
+
   void GeometryConstraint::reflect_particle(Particle *p, const double *distance_vector, const double *folded_pos) {
     double vec[3];
     double norm; 

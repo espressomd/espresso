@@ -24,7 +24,7 @@
 
 #define SQR(A) ((A)*(A))
 
-namespace Shape {
+namespace Shapes {
 
   int Wall::calculate_dist(const double *ppos, double *dist, double *vec)
   {

@@ -2233,22 +2233,8 @@ void mpi_bcast_constraint(int del_num)
 {
 #ifdef CONSTRAINTS
   mpi_call(mpi_bcast_constraint_slave, 0, del_num);
-
-  if (del_num == -1) {
-    /* bcast new constraint */
-    MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
-  }
-  else if (del_num == -2) {
-    /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
-  }
-  else {
-    memmove(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
-  }
-
+  /* @TODO: Do something */
+  
   on_constraint_change();
 #endif
 }
@@ -2256,22 +2242,8 @@ void mpi_bcast_constraint(int del_num)
 void mpi_bcast_constraint_slave(int node, int parm)
 {   
 #ifdef CONSTRAINTS
-  if(parm == -1) {
-    n_constraints++;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
-    MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
-  }
-  else if (parm == -2) {
-    /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
-  }
-  else {
-    memmove(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));    
-  }
-
+  /* @TODO: Do something */
+  
   on_constraint_change();
 #endif
 }
@@ -2451,14 +2423,14 @@ void mpi_get_constraint_force(int cons, double force[3])
 {
 #ifdef CONSTRAINTS
   mpi_call(mpi_get_constraint_force_slave, -1, cons);
-  MPI_Reduce(constraints[cons].part_rep.f.f, force, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  /* @TODO do something */
 #endif
 }
 
 void mpi_get_constraint_force_slave(int node, int parm)
 {
 #ifdef CONSTRAINTS
-  MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  /* @TODO: do something */
 #endif
 }
 

@@ -938,23 +938,21 @@ int set_particle_type(int part, int type)
     return ES_ERROR;
 
   if ( Type_array_init ) {
-	// check if the particle exists already and the type is changed, then remove it from the list which contains it
-	  Particle *cur_par = (Particle *) Utils::malloc( sizeof(Particle) );
-	  if ( cur_par != (Particle *) 0 ) {
-		  if ( get_particle_data(part, cur_par) != ES_ERROR ) {
-			  int prev_type = cur_par->p.type;
-			  if ( prev_type != type ) {
-			  // particle existed before so delete it from the list
-			  remove_id_type_array(part, prev_type);
-			  }
-		  }
-	  }
-	  free(cur_par);
+    // check if the particle exists already and the type is changed, then remove it from the list which contains it
+    Particle cur_par;
 
-	  if ( add_particle_to_list(part, type) ==  ES_ERROR ){
-		  //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
-		  return ES_ERROR;
-	  }
+    if ( get_particle_data(part, &cur_par) != ES_ERROR ) {
+      int prev_type = cur_par.p.type;
+      if ( prev_type != type ) {
+        // particle existed before so delete it from the list
+        remove_id_type_array(part, prev_type);
+      }
+    }
+
+    if ( add_particle_to_list(part, type) ==  ES_ERROR ){
+      //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
+      return ES_ERROR;
+    }
   }
 
   mpi_send_type(pnode, part, type);

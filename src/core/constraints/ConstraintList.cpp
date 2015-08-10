@@ -6,7 +6,9 @@
 
 #include <limits>
 
-ConstraintList constraintList;
+using namespace Constraints;
+
+ConstraintList list;
 
 void ConstraintList::init_forces() {
   for(iterator it = begin(); it != end(); ++it) {
@@ -21,15 +23,6 @@ int ConstraintList::add_constraint(Constraints::Constraint *c) {
 
   /* c is now the last element */
   c->id = m_next_id++;
-
-  /* Check if c is a GeometryConstraint in which case we have
-     to do a deep copy of the Shape object. */
-  if(dynamic_cast<Constraints::GeometryConstraint *>(c)) {
-    ;
-  } else {
-    ;
-  }
-
   return c->id;
 }
 
@@ -71,7 +64,7 @@ double ConstraintList::min_dist(double pos[3]) {
   for(iterator it = begin(); it != end(); ++it) {
     Constraints::GeometryConstraint *c = dynamic_cast<Constraints::GeometryConstraint *>(it->second);
     if(c){
-      c->m_shape->calculate_dist(pos, &dist, vec);
+      c->calculate_dist(pos, &dist, vec);
       mind = std::min(mind, dist);
     }
   }

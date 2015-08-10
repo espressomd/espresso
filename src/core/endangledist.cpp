@@ -22,13 +22,16 @@
  *
  *  Implementation of \ref endangledist.hpp
  */
+
+#include "config.hpp"
+
+#ifdef BOND_ENDANGLEDIST
+
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
-#include "constraint.hpp"
+#include "constraints/ConstraintList.hpp"
 #include "grid.hpp"
-
-#ifdef BOND_ENDANGLEDIST
 
 int endangledist_set_params(int bond_type, double bend, double phi0 ,double distmin, double distmax)
 {

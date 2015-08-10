@@ -36,7 +36,6 @@ libEspresso_la_SOURCES = \
 	comfixed.cpp comfixed.hpp \
 	comforce.hpp comforce.cpp \
 	config.hpp \
-	constraint.cpp constraint.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
 	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \
@@ -116,7 +115,8 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	Shape.cpp Shape.hpp \
+	shapes/Shape.cpp shapes/Shape.hpp \
+	shapes/ShapeList.cpp shapes/ShapeList.hpp \
 	constraints/Constraint.cpp constraints/Constraint.hpp \
 	constraints/GeometryConstraint.hpp constraints/GeometryConstraint.cpp \
 	constraints/InteractionConstraint.hpp constraints/InteractionConstraint.cpp \
