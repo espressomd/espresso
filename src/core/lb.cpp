@@ -646,7 +646,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         unsigned int* bound_array;
-        bound_array = (unsigned int*) malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
+        bound_array = (unsigned int*) Utils::malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
         lb_get_boundary_flags_GPU(bound_array);
 
         int j;
@@ -717,7 +717,7 @@ int lb_lbfluid_print_vtk_density(char** filename) {
 
             int j;
             size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
-            host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
+            host_values = (LB_rho_v_pi_gpu*)Utils::malloc(size_of_values);
             lb_get_values_GPU(host_values);
 
             fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS density float 1\nLOOKUP_TABLE default\n",
@@ -756,7 +756,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
-        host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
+        host_values = (LB_rho_v_pi_gpu*)Utils::malloc(size_of_values);
         lb_get_values_GPU(host_values);
         fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\n"
                 "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
@@ -821,7 +821,7 @@ int lb_lbfluid_print_boundary(char* filename) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         unsigned int* bound_array;
-        bound_array = (unsigned int*) malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
+        bound_array = (unsigned int*) Utils::malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
         lb_get_boundary_flags_GPU(bound_array);
 
         int xyz[3];
@@ -885,7 +885,7 @@ int lb_lbfluid_print_velocity(char* filename) {
         errexit();
 #endif // SHANCHEN
         size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
-        host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
+        host_values = (LB_rho_v_pi_gpu*)Utils::malloc(size_of_values);
         lb_get_values_GPU(host_values);
         int xyz[3];
         int j;
@@ -944,10 +944,10 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
         if (!cpfile) {
             return ES_ERROR;
         }
-        float* host_checkpoint_vd = (float *) malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
-        unsigned int* host_checkpoint_seed = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        unsigned int* host_checkpoint_boundary = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        lbForceFloat* host_checkpoint_force = (lbForceFloat *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
+        float* host_checkpoint_vd = (float *) Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
+        unsigned int* host_checkpoint_seed = (unsigned int *) Utils::malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+        unsigned int* host_checkpoint_boundary = (unsigned int *) Utils::malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+        lbForceFloat* host_checkpoint_force = (lbForceFloat *) Utils::malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
         lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
         if(!binary)
         {
@@ -1028,10 +1028,10 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         if (!cpfile) {
             return ES_ERROR;
         }
-        float* host_checkpoint_vd = (float *) malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
-        unsigned int* host_checkpoint_seed = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        unsigned int* host_checkpoint_boundary = (unsigned int *) malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        lbForceFloat* host_checkpoint_force = (lbForceFloat *) malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
+        float* host_checkpoint_vd = (float *) Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
+        unsigned int* host_checkpoint_seed = (unsigned int *) Utils::malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+        unsigned int* host_checkpoint_boundary = (unsigned int *) Utils::malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+        lbForceFloat* host_checkpoint_force = (lbForceFloat *) Utils::malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
 
         if (!binary) {
             for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
@@ -1126,7 +1126,7 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
         int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
         static LB_rho_v_pi_gpu *host_print_values=NULL;
 
-        if(host_print_values==NULL) host_print_values = (LB_rho_v_pi_gpu *) malloc(sizeof(LB_rho_v_pi_gpu));
+        if(host_print_values==NULL) host_print_values = (LB_rho_v_pi_gpu *) Utils::malloc(sizeof(LB_rho_v_pi_gpu));
         lb_print_node_GPU(single_nodeindex, host_print_values);
         for(int ii=0;ii<LB_COMPONENTS;ii++) {
             p_rho[ii] = (double)(host_print_values->rho[ii]);
@@ -1156,7 +1156,7 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         static LB_rho_v_pi_gpu *host_print_values=NULL;
-        if(host_print_values==NULL) host_print_values= (LB_rho_v_pi_gpu *) malloc(sizeof(LB_rho_v_pi_gpu));
+        if(host_print_values==NULL) host_print_values= (LB_rho_v_pi_gpu *) Utils::malloc(sizeof(LB_rho_v_pi_gpu));
 
         int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
         lb_print_node_GPU(single_nodeindex, host_print_values);
@@ -1287,7 +1287,7 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         static LB_rho_v_pi_gpu *host_print_values=NULL;
-        if(host_print_values==NULL) host_print_values= (LB_rho_v_pi_gpu *) malloc(sizeof(LB_rho_v_pi_gpu));
+        if(host_print_values==NULL) host_print_values= (LB_rho_v_pi_gpu *) Utils::malloc(sizeof(LB_rho_v_pi_gpu));
 
         int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
         lb_print_node_GPU(single_nodeindex, host_print_values);
@@ -1941,10 +1941,11 @@ void lb_reinit_parameters() {
 #else // D3Q19
         double **e = lbmodel.e;
 #endif // D3Q19
-        for (i = 0; i < 3; i++) lb_phi[i] = 0.0;
+        for (i = 0; i < 4; i++) lb_phi[i] = 0.0;
         lb_phi[4] = sqrt(mu*e[19][4]*(1.-SQR(gamma_bulk))); // SQR(x) == x*x
         for (i = 5; i < 10; i++) lb_phi[i] = sqrt(mu*e[19][i]*(1.-SQR(gamma_shear)));
-        for (i = 10; i < lbmodel.n_veloc; i++) lb_phi[i] = sqrt(mu*e[19][i]);
+        for (i = 10; i < 16; i++) lb_phi[i] = sqrt(mu*e[19][i]*(1-SQR(gamma_odd)));
+        for (i = 16; i < 19; i++) lb_phi[i] = sqrt(mu*e[19][i]*(1-SQR(gamma_even)));
         
         /* lb_coupl_pref is stored in MD units (force)
          * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -3385,8 +3386,8 @@ static void lb_check_halo_regions() {
   double *s_buffer, *r_buffer;
   MPI_Status status[2];
 
-  r_buffer = (double*) malloc(count*sizeof(double));
-  s_buffer = (double*) malloc(count*sizeof(double));
+  r_buffer = (double*) Utils::malloc(count*sizeof(double));
+  s_buffer = (double*) Utils::malloc(count*sizeof(double));
 
   if (PERIODIC(0)) {
     for (z = 0; z < lblattice.halo_grid[2]; ++z) {

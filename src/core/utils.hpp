@@ -105,55 +105,41 @@ typedef struct {
 /* to enable us to make sure that freed pointers are invalidated, we normally try to use realloc.
    Unfortunately allocating zero bytes (which should be avoided) actually allocates 16 bytes, and
    reallocating to 0 also. To avoid this, we use our own malloc and realloc procedures. */
-#ifndef MEM_DEBUG
 
-#ifdef realloc
-#undef realloc
-#endif
-
-#ifdef malloc
-#undef malloc
-#endif
-
-/** used instead of realloc.
-    Makes sure that resizing to zero FREEs pointer */
-inline void *prealloc(void *old, int size) {
-  void *p;
-  if (size <= 0) {
-    free(old);
-    return NULL;
+namespace Utils {
+  /** used instead of realloc.
+      Makes sure that resizing to zero FREEs pointer */
+  inline void *realloc(void *old, int size) {
+    void *p;
+    if (size <= 0) {
+      ::free(old);
+      return NULL;
+    }
+    p = (void *)::realloc(old, size);
+    if(p == NULL) {
+      fprintf(stderr, "Could not allocate memory.\n");
+      errexit();
+    }
+    return p;
   }
-  p = (void *)realloc(old, size);
-  if(p == NULL) {
-    fprintf(stderr, "Could not allocate memory.\n");
-    errexit();
+
+  /** used instead of malloc.
+      Makes sure that a zero size allocation returns a NULL pointer */
+  inline void *malloc(int size)
+  {
+    void *p;
+    if (size <= 0) {
+      return NULL;
+    }
+    p = (void *)::malloc(size);
+    if(p == NULL) {
+      fprintf(stderr, "Could not allocate memory.\n");
+      errexit();
+    }
+    return p;
   }
-  return p;
 }
 
-/** used instead of malloc.
-    Makes sure that a zero size allocation returns a NULL pointer */
-inline void *pmalloc(int size)
-{
-  void *p;
-  if (size <= 0) {
-    return NULL;
-  }
-  p = (void *)malloc(size);
-  if(p == NULL) {
-    fprintf(stderr, "Could not allocate memory.\n");
-    errexit();
-  }
-  return p;
-}
-
-/** use our own realloc which makes sure that realloc(0) is actually a free. */
-#define realloc prealloc
-
-/** use our own malloc which makes sure that malloc(0) returns NULL. */
-#define malloc pmalloc
-
-#endif
 /*@}*/
 
 /*************************************************************/
@@ -187,7 +173,7 @@ extern int this_node;
 inline void alloc_intlist(IntList *il, int size)
 {
   il->max = size;
-  il->e = (int *) malloc(sizeof(int)*il->max);
+  il->e = (int *) Utils::malloc(sizeof(int)*il->max);
 }
 
 /** Reallocate an \ref IntList */
@@ -195,7 +181,7 @@ inline void realloc_intlist(IntList *il, int size)
 {
   if(size != il->max) {
     il->max = size;
-    il->e = (int *) realloc(il->e, sizeof(int)*il->max);
+    il->e = (int *) Utils::realloc(il->e, sizeof(int)*il->max);
   }
 }
 
@@ -203,7 +189,7 @@ inline void realloc_intlist(IntList *il, int size)
 inline void alloc_grained_intlist(IntList *il, int size, int grain)
 {
   il->max = grain*((size + grain - 1)/grain);
-  il->e = (int *) malloc(sizeof(int)*il->max);
+  il->e = (int *) Utils::malloc(sizeof(int)*il->max);
 }
 
 /** Reallocate an \ref IntList, but only to multiples of grain. */
@@ -216,7 +202,7 @@ inline void realloc_grained_intlist(IntList *il, int size, int grain)
     il->max = grain*(((il->max + size + 1)/2 +
 		      grain - 1)/grain);
 
-  il->e = (int *) realloc(il->e, sizeof(int)*il->max);
+  il->e = (int *) Utils::realloc(il->e, sizeof(int)*il->max);
 }
 
 /** Check wether an \ref IntList contains the value c */
@@ -241,7 +227,7 @@ inline void init_doublelist(DoubleList *il)
 inline void alloc_doublelist(DoubleList *dl, int size)
 {
   dl->max = size;
-  dl->e = (double *) malloc(sizeof(double)*dl->max);
+  dl->e = (double *) Utils::malloc(sizeof(double)*dl->max);
 }
 
 /** Reallocate an \ref DoubleList */
@@ -249,7 +235,7 @@ inline void realloc_doublelist(DoubleList *dl, int size)
 {
   if(size != dl->max) {
     dl->max = size;
-    dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
+    dl->e = (double *) Utils::realloc(dl->e, sizeof(double)*dl->max);
   }
 }
 
@@ -257,7 +243,7 @@ inline void realloc_doublelist(DoubleList *dl, int size)
 inline void alloc_grained_doublelist(DoubleList *dl, int size, int grain)
 {
   dl->max = grain*((size + grain - 1)/grain);
-  dl->e = (double *) malloc(sizeof(double)*dl->max);
+  dl->e = (double *) Utils::malloc(sizeof(double)*dl->max);
 }
 
 /** Reallocate an \ref DoubleList, but only to multiples of grain. */
@@ -270,7 +256,7 @@ inline void realloc_grained_doublelist(DoubleList *dl, int size, int grain)
     dl->max = grain*(((dl->max + size + 1)/2 +
 		      grain - 1)/grain);
 
-  dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
+  dl->e = (double *) Utils::realloc(dl->e, sizeof(double)*dl->max);
 }
 /*@}*/
 
@@ -637,7 +623,7 @@ inline int lu_decompose_matrix(double **A, int n, int *perms) {
   int i, j, k, ip;
   double max, sum, tmp;
 
-  double *scal = (double *)malloc(n*sizeof(double));
+  double *scal = (double *)Utils::malloc(n*sizeof(double));
 
   /* loop over rows and store implicit scaling factors */
   for (i=0; i<n; i++) {
@@ -798,13 +784,13 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3])
 inline int malloc_3d_grid(double ****grid, int dim[3])
 {
   int i,j;
-  *grid = (double***)malloc(sizeof(double **)*dim[0]);
+  *grid = (double***)Utils::malloc(sizeof(double **)*dim[0]);
   if(*grid==NULL) return 0;
   for(i=0;i<dim[0];i++) {
-    (*grid)[i] = (double**)malloc(sizeof(double *)*dim[1]);
+    (*grid)[i] = (double**)Utils::malloc(sizeof(double *)*dim[1]);
     if((*grid)[i]==NULL) return 0;
     for(j=0;j<dim[1];j++) {
-      (*grid)[i][j] = (double*)malloc(sizeof(double)*dim[2]);
+      (*grid)[i][j] = (double*)Utils::malloc(sizeof(double)*dim[2]);
       if((*grid)[i][j]==NULL) return 0;
     }
   }
@@ -938,12 +924,12 @@ inline double unfolded_distance(double pos1[3], int image_box1[3],
 inline char *strcat_alloc(char *left, const char *right)
 {
   if (!left) {
-    char *res = (char *)malloc(strlen(right) + 1);
+    char *res = (char *)Utils::malloc(strlen(right) + 1);
     strcpy(res, right);
     return res;
   }
   else {
-    char *res = (char *)realloc(left, strlen(left) + strlen(right) + 1);
+    char *res = (char *)Utils::realloc(left, strlen(left) + strlen(right) + 1);
     strcat(res, right);
     return res;
   }

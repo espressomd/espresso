@@ -1678,7 +1678,7 @@ void auto_exclusion(int distance)
 
   /* setup bond partners and distance list. Since we need to identify particles via their identity,
      we use a full sized array */
-  partners    = (IntList*)malloc((max_seen_particle + 1)*sizeof(IntList));
+  partners    = (IntList*)Utils::malloc((max_seen_particle + 1)*sizeof(IntList));
   for (p = 0; p <= max_seen_particle; p++)
     init_intlist(&partners[p]);
 

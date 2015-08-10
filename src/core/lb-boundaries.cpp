@@ -104,8 +104,8 @@ void lb_init_boundaries() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined (LB_GPU) && defined (LB_BOUNDARIES_GPU)
     int number_of_boundnodes = 0;
-    int *host_boundary_node_list= (int*)malloc(sizeof(int));
-    int *host_boundary_index_list= (int*)malloc(sizeof(int));
+    int *host_boundary_node_list= (int*)Utils::malloc(sizeof(int));
+    int *host_boundary_index_list= (int*)Utils::malloc(sizeof(int));
     size_t size_of_index;
     int boundary_number = -1; // the number the boundary will actually belong to.
   
@@ -120,7 +120,7 @@ void lb_init_boundaries() {
 
     if (ek_initialized)
     {
-      host_wallcharge_species_density = (ekfloat*) malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
+      host_wallcharge_species_density = (ekfloat*) Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
       for(n = 0; n < int(n_lb_boundaries); n++) {
         if(lb_boundaries[n].charge_density != 0.0) {
           charged_boundaries = 1;
@@ -228,8 +228,8 @@ void lb_init_boundaries() {
 #endif
           if (dist <= 0 && boundary_number >= 0 && (n_lb_boundaries > 0 || pdb_boundary_lattice)) {
             size_of_index = (number_of_boundnodes+1)*sizeof(int);
-            host_boundary_node_list = (int *) realloc(host_boundary_node_list, size_of_index);
-            host_boundary_index_list = (int *) realloc(host_boundary_index_list, size_of_index);
+            host_boundary_node_list = (int *) Utils::realloc(host_boundary_node_list, size_of_index);
+            host_boundary_index_list = (int *) Utils::realloc(host_boundary_index_list, size_of_index);
             host_boundary_node_list[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;
             host_boundary_index_list[number_of_boundnodes] = boundary_number + 1; 
             number_of_boundnodes++;  
@@ -261,7 +261,7 @@ void lb_init_boundaries() {
     }
 
     /**call of cuda fkt*/
-    float* boundary_velocity = (float *) malloc(3*(n_lb_boundaries+1)*sizeof(float));
+    float* boundary_velocity = (float *) Utils::malloc(3*(n_lb_boundaries+1)*sizeof(float));
 
     for (n=0; n<n_lb_boundaries; n++) {
       boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];

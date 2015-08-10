@@ -233,7 +233,7 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
     }
     float *coord = (float*) malloc(n_part * 3 * sizeof (float));
 #ifdef LEES_EDWARDS
-    float *velocities = (float *)malloc(n_part*3*sizeof(float));
+    float *velocities = (float *)Utils::malloc(n_part*3*sizeof(float));
 #endif
     /* Construct the array coord*/
     for (i = 0; i < n_part; i++) {
@@ -342,8 +342,8 @@ static int tclcommand_analyze_parse_modes2d(Tcl_Interp *interp, int argc, char *
         return (TCL_OK);
     }
 
-    result_ht = (fftw_complex*) malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
-    result_th = (fftw_complex*) malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
+    result_ht = (fftw_complex*) Utils::malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
+    result_th = (fftw_complex*) Utils::malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
 
     if (!modes2d(result_th, 0) || !modes2d(result_ht, 1)) {
         fprintf(stderr, "%d,mode analysis failed \n", this_node);
@@ -649,7 +649,7 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
 
     /* allocate memory for the profile if necessary */
     if (thetabins > 0) {
-        density_profile = (DoubleList*) malloc(beadtypes.max * sizeof (DoubleList));
+        density_profile = (DoubleList*) Utils::malloc(beadtypes.max * sizeof (DoubleList));
         if (density_profile) {
             for (i = 0; i < beadtypes.max; i++) {
                 init_doublelist(&density_profile[i]);
@@ -665,7 +665,7 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
     }
     /* Allocate a doublelist of bins for each beadtype so that we
        can keep track of beads separately */
-    density_map = (DoubleList*) malloc(beadtypes.max * sizeof (DoubleList));
+    density_map = (DoubleList*) Utils::malloc(beadtypes.max * sizeof (DoubleList));
     if (density_map) {
         /* Initialize all the subprofiles in density profile */
         for (i = 0; i < beadtypes.max; i++) {
@@ -822,7 +822,7 @@ static int tclcommand_analyze_parse_bilayer_density_profile(Tcl_Interp *interp, 
 
     /* Allocate a two doublelists of bins for each beadtype so that we
        can keep track of beads in upper or lower lipids */
-    density_profile = (DoubleList *) malloc(beadtypes.max * 2 * sizeof (DoubleList));
+    density_profile = (DoubleList *) Utils::malloc(beadtypes.max * 2 * sizeof (DoubleList));
     if (density_profile) {
         /* Initialize all the subprofiles in density profile */
         for (i = 0; i < beadtypes.max * 2; i++) {
@@ -883,7 +883,7 @@ static int tclcommand_analyze_parse_lipid_orient_order(Tcl_Interp *interp, int a
         return (TCL_OK);
     }
 
-    stored_dirs = (double*) malloc(sizeof (double)*n_molecules * 3);
+    stored_dirs = (double*) Utils::malloc(sizeof (double)*n_molecules * 3);
     /* Do the calculation */
     if (orient_order(&result, stored_dirs) != TCL_OK) {
         Tcl_AppendResult(interp, "Error calculating orientational order ", (char *) NULL);

@@ -160,6 +160,7 @@ static int terminated = 0;
   CB(mpi_external_potential_sum_energies_slave) \
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
   CB(mpiRuntimeErrorCollectorGatherSlave)        \
+  CB(mpi_check_runtime_errors_slave) \
   CB(mpi_minimize_energy_slave) \
   CB(mpi_gather_cuda_devices_slave) \
   CB(mpi_thermalize_cpu_slave) \
@@ -199,6 +200,10 @@ std::map<SlaveCallback *, int> request_map;
 #include <unordered_map>
 std::unordered_map<SlaveCallback *, int> request_map;
 #endif
+
+/** Forward declarations */
+
+int mpi_check_runtime_errors(void);
 
 /**********************************************
  * procedures
@@ -1264,7 +1269,6 @@ int mpi_integrate(int n_steps, int reuse_forces)
     integrate_vv(n_steps, reuse_forces);
     COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", \
                        this_node, n_steps));
-    return check_runtime_errors();
   } else {
     for (int i=0; i<n_steps; i++) {
       mpi_call(mpi_integrate_slave, 1, reuse_forces);
@@ -1272,21 +1276,16 @@ int mpi_integrate(int n_steps, int reuse_forces)
       reuse_forces = 0; // makes even less sense after the first time step
       COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n",     \
                          this_node, i));
-      if (check_runtime_errors())
-        return check_runtime_errors();
       autoupdate_correlations();
     }
   }
-
-  return 0;
+  return mpi_check_runtime_errors();
 }
 
 void mpi_integrate_slave(int n_steps, int reuse_forces)
 {
   integrate_vv(n_steps, reuse_forces);
   COMM_TRACE(fprintf(stderr, "%d: integration for %d n_steps with %d reuse_forces done.\n", this_node, n_steps, reuse_forces));
-
-  check_runtime_errors();
 }
 
 /*************** REQ_BCAST_IA ************/
@@ -1377,8 +1376,8 @@ void mpi_bcast_ia_params_slave(int i, int j)
     if(bonded_ia_params[i].type == BONDED_IA_TABULATED) {
       int size = bonded_ia_params[i].p.tab.npoints;
       /* alloc force and energy tables on slave nodes! */
-      bonded_ia_params[i].p.tab.f = (double*)malloc(size*sizeof(double));
-      bonded_ia_params[i].p.tab.e = (double*)malloc(size*sizeof(double));
+      bonded_ia_params[i].p.tab.f = (double*)Utils::malloc(size*sizeof(double));
+      bonded_ia_params[i].p.tab.e = (double*)Utils::malloc(size*sizeof(double));
       MPI_Bcast(bonded_ia_params[i].p.tab.f, size, MPI_DOUBLE, 0 , comm_cart);
       MPI_Bcast(bonded_ia_params[i].p.tab.e, size, MPI_DOUBLE, 0 , comm_cart);
     }
@@ -1388,9 +1387,9 @@ void mpi_bcast_ia_params_slave(int i, int j)
     if(bonded_ia_params[i].type == BONDED_IA_OVERLAPPED) {
       int size = bonded_ia_params[i].p.overlap.noverlaps;
       /* alloc overlapped parameter arrays on slave nodes! */
-      bonded_ia_params[i].p.overlap.para_a = (double*)malloc(size*sizeof(double));
-      bonded_ia_params[i].p.overlap.para_b = (double*)malloc(size*sizeof(double));
-      bonded_ia_params[i].p.overlap.para_c = (double*)malloc(size*sizeof(double));
+      bonded_ia_params[i].p.overlap.para_a = (double*)Utils::malloc(size*sizeof(double));
+      bonded_ia_params[i].p.overlap.para_b = (double*)Utils::malloc(size*sizeof(double));
+      bonded_ia_params[i].p.overlap.para_c = (double*)Utils::malloc(size*sizeof(double));
       MPI_Bcast(bonded_ia_params[i].p.overlap.para_a, size, MPI_DOUBLE, 0 , comm_cart);
       MPI_Bcast(bonded_ia_params[i].p.overlap.para_b, size, MPI_DOUBLE, 0 , comm_cart);
       MPI_Bcast(bonded_ia_params[i].p.overlap.para_c, size, MPI_DOUBLE, 0 , comm_cart);
@@ -1873,6 +1872,14 @@ void mpi_send_configtemp_flag_slave(int pnode, int part)
 #endif
 }
 
+int mpi_check_runtime_errors(void) {
+  mpi_call(mpi_check_runtime_errors_slave, 0, 0);
+  return check_runtime_errors();
+}
+
+void mpi_check_runtime_errors_slave(int a, int b) {
+  check_runtime_errors();
+}
 
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params()
@@ -2746,7 +2753,7 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
     lb_get_populations(index, pop);
   } else {
     mpi_call(mpi_recv_fluid_populations_slave, node, index);
-    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(pop, 19*LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
   lbpar.resend_halo=1;
 #endif
@@ -2755,9 +2762,9 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
 void mpi_recv_fluid_populations_slave(int node, int index) {
 #ifdef LB
   if (node==this_node) {
-    double data[19];
+    double data[19*LB_COMPONENTS];
     lb_get_populations(index, data);
-    MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+    MPI_Send(data, 19*LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
   }
   lbpar.resend_halo=1;
 #endif
@@ -2769,7 +2776,7 @@ void mpi_send_fluid_populations(int node, int index, double *pop) {
     lb_set_populations(index, pop);
   } else {
     mpi_call(mpi_send_fluid_populations_slave, node, index);
-    MPI_Send(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart);
+    MPI_Send(pop, 19*LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart);
   }
 #endif
 }
@@ -2777,8 +2784,8 @@ void mpi_send_fluid_populations(int node, int index, double *pop) {
 void mpi_send_fluid_populations_slave(int node, int index) {
 #ifdef LB
   if (node==this_node) {
-    double data[19];
-    MPI_Recv(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    double data[19*LB_COMPONENTS];
+    MPI_Recv(data, 19*LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     lb_set_populations(index, data);
   }
 #endif

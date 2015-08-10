@@ -81,7 +81,7 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
 
 void Lattice::allocate_memory() {
 
-    this->_data = malloc(this->element_size*this->halo_grid_volume);
+    this->_data = Utils::malloc(this->element_size*this->halo_grid_volume);
     memset(this->_data, (unsigned int)(-1), this->element_size*this->halo_grid_volume);
 
 }

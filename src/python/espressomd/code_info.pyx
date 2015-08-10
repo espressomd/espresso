@@ -19,9 +19,6 @@ def features():
     IF PTENSOR_DEBUG == 1:
         f.append("PTENSOR_DEBUG")
 
-    IF MEM_DEBUG == 1:
-        f.append("MEM_DEBUG")
-
     IF NO_INTRA_NB == 1:
         f.append("NO_INTRA_NB")
 
