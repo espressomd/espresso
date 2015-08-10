@@ -2665,6 +2665,7 @@ proc oif_object_analyze { args } {
 	set aff_Kon -1
 	set aff_K0 -1
 	set aff_Fd -1
+	set aff_file "aff-default.dat"
 
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
@@ -2724,6 +2725,8 @@ proc oif_object_analyze { args } {
 				set aff_K0 [lindex $args $pos]
 				incr pos
 				set aff_Fd [lindex $args $pos]
+				incr pos
+				set aff_file [lindex $args $pos]
 				incr pos
 			}
 			"pos-bounds" {  
@@ -2809,8 +2812,9 @@ proc oif_object_analyze { args } {
 		return $coords
 	}
 
-	if { $aff_type == 2 } {
-		puts "$aff_kappa $aff_r0 $aff_Kon $aff_K0 $aff_Fd"
+	if { $aff_type % 10 == 2 } {
+		set fout [open $aff_file a]
+		puts $fout "$aff_type $aff_kappa $aff_r0 $aff_Kon $aff_K0 $aff_Fd"
 		set n_active_bonds 0
 		set firstPartId [lindex $oif_object_starting_particles $objectID]
 		set nnode [lindex $oif_nparticles $objectID]
@@ -2830,11 +2834,43 @@ proc oif_object_analyze { args } {
 					set tmpF [expr $aff_kappa*($bond_length - $aff_r0)]
 					set tmpKoff [expr $aff_K0*exp( $tmpF / $aff_Fd)]
 					set tmpPoff [expr 1.0 - exp( - $tmpKoff*$timestep)]
-					puts "$iii: len $bond_length Koff $tmpKoff Poff $tmpPoff "
+					puts $fout  "$iii: len $bond_length Koff $tmpKoff Poff $tmpPoff "
 					incr n_active_bonds
 				}
 			}
 		}
+		close $fout
+		return $n_active_bonds
+	}
+
+	if { $aff_type % 10 == 5 } {
+		set fout [open $aff_file a]
+		puts $fout "$aff_type $aff_kappa $aff_r0 $aff_Kon $aff_K0 $aff_Fd"
+		set n_active_bonds 0
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			set bond_site [part $iii print affinity]
+			set bsx [lindex $bond_site 0]
+			set bsy [lindex $bond_site 1]
+			set bsz [lindex $bond_site 2]
+			if { $bsx != -1 || $bsy != -1 || $bsz != -1} {
+
+				set coords [part $iii print pos]
+				set cx [lindex $coords 0]
+				set cy [lindex $coords 1]
+				set cz [lindex $coords 2]
+				set bond_length [expr sqrt(($cx-$bsx)*($cx-$bsx) + ($cy-$bsy)*($cy-$bsy) + ($cz-$bsz)*($cz-$bsz))]
+				if { $bond_length > [expr 0.75*$aff_r0] } {
+					set tmpF [expr $aff_kappa*($bond_length - 0.75*$aff_r0)]
+					set tmpKoff [expr $aff_K0*exp( $tmpF / $aff_Fd)]
+					set tmpPoff [expr 1.0 - exp( - $tmpKoff*$timestep)]
+					puts $fout "$iii: len $bond_length Koff $tmpKoff Poff $tmpPoff "
+					incr n_active_bonds
+				}
+			}
+		}
+		close $fout
 		return $n_active_bonds
 	}
 

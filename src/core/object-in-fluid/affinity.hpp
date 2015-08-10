@@ -218,7 +218,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				// The probability is given by function Pon(x)= 1 - e^(-x) where x is Kon*dt. Here is a table of values of this function, just to have an idea about the values
 				// x		|	0		|	0.25	|	0.5		|	0.75	|	1.0		|	1.5		|	2.0		|	3.0		|	5.0	
 				// Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63	| 	0.77	|	0.84	| 	0.95	|	0.99	
-				 
 				double decide = d_random();
 				if ( decide < Pon ) 
 				{ // the bond will be created only with probability Pon.
@@ -314,7 +313,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				// The probability is given by function Pon(x)= 1 - e^(-x) where x is Kon*dt. Here is a table of values of this function, just to have an idea about the values
 				// x		|	0		|	0.25	|	0.5		|	0.75	|	1.0		|	1.5		|	2.0		|	3.0		|	5.0	
 				// Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63	| 	0.77	|	0.84	| 	0.95	|	0.99	
-				 
 				double decide = d_random();
 				if ( decide < Pon ) 
 				{ // the bond will be created only with probability Pon.
@@ -423,8 +421,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				double Pon = 1.0 - exp( - ia_params->affinity_Kon*time_step);
 				// The probability is given by function Pon(x)= 1 - e^(-x) where x is Kon*dt. Here is a table of values of this function, just to have an idea about the values
 				// x		|	0		|	0.25	|	0.5		|	0.75	|	1.0		|	1.5		|	2.0		|	3.0		|	5.0	
-				// Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63	| 	0.77	|	0.84	| 	0.95	|	0.99	
-				 
+				// Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63	| 	0.77	|	0.84	| 	0.95	|	0.99		
 				double decide = d_random();
 				if ( decide < Pon ) 
 				{ // the bond will be created only with probability Pon.
@@ -540,7 +537,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				// The probability is given by function Pon(x)= 1 - e^(-x) where x is Kon*dt. Here is a table of values of this function, just to have an idea about the values
 				// x		|	0		|	0.25	|	0.5		|	0.75	|	1.0		|	1.5		|	2.0		|	3.0		|	5.0	
 				// Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63	| 	0.77	|	0.84	| 	0.95	|	0.99	
-				 
 				double decide = d_random();
 				if ( decide < Pon ) 
 				{ // the bond will be created only with probability Pon.

@@ -83,12 +83,12 @@ int tclcommand_inter_parse_affinity(Tcl_Interp * interp,
   change = 8;
 
   Tcl_ResetResult(interp);
-  if ( maxBond <= r0 ) {
-    Tcl_AppendResult(interp, "tcl affinity parser: affinity_maxBond must be greater than affinity_r0", (char *) NULL);
+  if ( maxBond <= r0 && (type == 1 || type == 3)) {
+    Tcl_AppendResult(interp, "tcl affinity parser: Caution, affinity_maxBond should be greater than affinity_r0", (char *) NULL);
     return 0;
   }
 
-  if ( cut <= maxBond ) {
+  if ( cut <= maxBond && (type == 1 || type == 3)) {
     Tcl_AppendResult(interp, "tcl affinity parser: affinity_cut must be greater than affinity_maxBond. It is reccommended to use cut >= maxBond + epsilon, epsilon depends on the spead of the system, 0.5 should be ok.", (char *) NULL);
     return 0;
   }
