@@ -113,6 +113,7 @@ libEspresso_la_SOURCES = \
 	RunningAverage.cpp RunningAverage.hpp
 	Vatiant.hpp Variant.cpp \
 	Vector.hpp \
+	ScriptObject.hpp \
 	SystemInterface.hpp \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
