@@ -76,6 +76,7 @@ libEspresso_la_SOURCES = \
 	nemd.cpp nemd.hpp \
 	npt.cpp npt.hpp \
 	nsquare.cpp nsquare.hpp \
+	Parameters.hpp \
 	particle_data.cpp particle_data.hpp \
 	polymer.cpp polymer.hpp \
 	polynom.cpp polynom.hpp \
