@@ -110,6 +110,7 @@ libEspresso_la_SOURCES = \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
 	RunningAverage.cpp RunningAverage.hpp
+	Vatiant.hpp Variant.cpp \
 	Vector.hpp \
 	SystemInterface.hpp \
 	integrate_sd.hpp integrate_sd.cpp \
