@@ -22,10 +22,9 @@
 #define _LBBOUNDARIES_TCL_H
 
 #include "parser.hpp"
-#include "lb-boundaries.hpp"
-
 
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
+#include "lb-boundaries.hpp"
 
 // TCL Parser functions
 LB_Boundary *generate_lbboundary();

@@ -1,5 +1,7 @@
 #include "ShapeList.hpp"
 
-using namespace Shapes;
+namespace Shapes {
 
 ShapeList list;
+
+};

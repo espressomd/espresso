@@ -8,15 +8,21 @@
 
 using namespace std;
 
+static int TclCommand_wrapper (ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+
 void TclCommand::add_subcommand(const TclCommand &c) {
-  children.insert(pair<string, const TclCommand &>(c.m_impl.name(), c));
+  add_subcommand(c.m_so.name(), c);
+}
+
+void TclCommand::add_subcommand(const std::string &command, const TclCommand &c) {
+  children.insert(pair<string, const TclCommand &>(command, c));
 }
 
 string TclCommand::print_to_string() {
   ostringstream res;
 
-  res << m_impl.name();
-  for(auto &p: m_impl.get_parameters()) {
+  res << m_so.name();
+  for(auto &p: m_so.get_parameters()) {
     res << p.second.value;
   }
 
@@ -24,7 +30,7 @@ string TclCommand::print_to_string() {
 }
 
 void TclCommand::parse_from_string(list<string> &argv) {
-  Parameters p = m_impl.get_parameters();
+  Parameters p = m_so.get_parameters();
 
   for(list<string>::iterator it = argv.begin(); it != argv.end();) {
     string s = *it;
@@ -110,4 +116,11 @@ void TclCommand::parse_from_string(list<string> &argv) {
     }
   }
 }
+ 
+void TclCommand::create_command(const std::string &command) {
+  Tcl_CreateCommand(interp, command.c_str(), (Tcl_CmdProc *)TclCommand_wrapper, reinterpret_cast<ClientData>(this), NULL);    
+}
 
+static int TclCommand_wrapper (ClientData data, Tcl_Interp *interp, int argc, char *argv[]) {
+  list<string> args(argv, argv + argc);
+}

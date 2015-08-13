@@ -6,7 +6,7 @@
 
 #include <limits>
 
-using namespace Constraints;
+namespace Constraints {
 
 ConstraintList list;
 
@@ -69,4 +69,6 @@ double ConstraintList::min_dist(double pos[3]) {
     }
   }
   return mind;
+}
+
 }

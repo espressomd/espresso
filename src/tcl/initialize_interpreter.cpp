@@ -178,7 +178,9 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 	REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
   #endif
   /* in constraint.cpp */
+#ifdef CONSTRAINTS
   REGISTER_COMMAND("constraint", tclcommand_constraint);
+#endif
   /* in external_potential.hpp */
   REGISTER_COMMAND("external_potential", tclcommand_external_potential);
   /* in readpdb.cpp */
@@ -199,7 +201,9 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
   REGISTER_COMMAND("lbnode", tclcommand_lbnode);
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)  
   REGISTER_COMMAND("lbboundary", tclcommand_lbboundary);
+#endif
   /* here */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.hpp */

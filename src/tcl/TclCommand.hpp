@@ -8,20 +8,22 @@
 #include <string>
 #include <map>
 
-class TclCommand {
+class TclCommand {  
 public:
-  TclCommand(ScriptObject &s, TclCommand *_p = 0) : m_impl(s) {};
+  TclCommand(ScriptObject &so, Tcl_Interp* _interp) : m_so(so), interp(_interp) {};
   virtual void add_subcommand(const TclCommand &c);
+  virtual void add_subcommand(const std::string &command, const TclCommand &c);
   virtual void parse_from_string(std::list<std::string> &argv);
   virtual std::string print_to_string();
-  
+  virtual void create_command(const std::string &command);
+  virtual TclCommand &create_command() {
+    create_command(m_so.name());
+    return *this;
+  }
 private:
-  std::map<std::string, const TclCommand &> children;
-  ScriptObject &m_impl;
+  static std::map<std::string, const TclCommand &> children;
+  ScriptObject &m_so;
+  Tcl_Interp *interp;
 };
-
-/** Helper Function to get proper function pointer */
-//template<class C>
-//int TclScriptObject_wrapper(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
 #endif
