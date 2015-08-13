@@ -141,6 +141,7 @@ The electrokinetic equations have the following properties:
   \opt{T  \var{T}}
   \opt{bjerrum_length  \var{bjerrum\_length}}
   \opt{advection  \var{advection}}
+  \opt{fluid-coupling  \var{fluid-coupling}}
   \opt{\require{4}{electrostatics_coupling}}
   \begin{features}
   \required[1]{ELECTROKINETICS}
@@ -182,6 +183,13 @@ not come in directly via a thermostat that produces thermal fluctuations.
 \lit{advection} can be set to \emph{on} or \emph{off}. It controls whether there
 should be an advective contribution to the diffusive species' fluxes. Default is
 \emph{on}.
+
+\lit{fluid-coupling} can be set to \emph{friction} or \emph{estatics}. This option
+determines the force term acting on the fluid. The former specifies the force term
+to be the sum of the species fluxes divided by their respective mobilities while the
+latter simply uses the electrostatic force density acting on all species. Note that 
+this switching is only possible for the linkcentered stencil. For all other stencils,
+this choice is hardcoded. The default is \emph{friction}.
 
 \lit{electrostatics_coupling} enables the action of the electrostatic potential
 due to the electrokinetics species and charged boundaries on the MD particles.
