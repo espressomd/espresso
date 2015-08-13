@@ -1,17 +1,34 @@
-#include "TclScriptObject.hpp"
+#include "TclCommand.hpp"
 #include <iostream>
 #include <sstream>
 
-void TclScriptObject::add_subcommand(TclScriptObject *c) {
-  children.insert(std::pair<std::string, TclScriptObject *>(c->command_name(), c));
+#ifdef HAVE_CXX11
+#include <type_traits>
+#endif
+
+using namespace std;
+
+void TclCommand::add_subcommand(const TclCommand &c) {
+  children.insert(pair<string, const TclCommand &>(c.m_impl.name(), c));
 }
 
-void TclScriptObject::parse_from_string(std::list<std::string> &argv) {
-  Parameters p = get_parameters();
+string TclCommand::print_to_string() {
+  ostringstream res;
 
-  for(std::list<std::string>::iterator it = argv.begin(); it != argv.end();) {
-    std::string s = *it;
-    std::cout << s << std::endl;
+  res << m_impl.name();
+  for(auto &p: m_impl.get_parameters()) {
+    res << p.second.value;
+  }
+
+  return res.str();
+}
+
+void TclCommand::parse_from_string(list<string> &argv) {
+  Parameters p = m_impl.get_parameters();
+
+  for(list<string>::iterator it = argv.begin(); it != argv.end();) {
+    string s = *it;
+    cout << s << endl;
     Parameters::iterator si = p.find(s);
     if(si == p.end()) {
       ++it;
@@ -25,11 +42,11 @@ void TclScriptObject::parse_from_string(std::list<std::string> &argv) {
       break;
     case Variant::INT:
       {
-	std::stringstream ss(*it);
+	stringstream ss(*it);
 	int i;
 	ss >> i;
 	if(ss.fail()) {
-	  std::ostringstream error;
+	  ostringstream error;
 	  error << s << " expects one integer argument, but got '" << *it << "'";
 	  throw(error.str());
 	}
@@ -41,11 +58,11 @@ void TclScriptObject::parse_from_string(std::list<std::string> &argv) {
       break;
     case Variant::DOUBLE:
       {
-	std::stringstream ss(*it);
+	stringstream ss(*it);
 	double d;
 	ss >> d;
 	if(ss.fail()) {
-	  std::ostringstream error;
+	  ostringstream error;
 	  error << s << " expects one float argument, but got '" << *it << "'";
 	  throw(error.str());
 	}
@@ -60,14 +77,14 @@ void TclScriptObject::parse_from_string(std::list<std::string> &argv) {
       break;
     case Variant::INT_VECTOR:
       {
-	std::vector<int> v;
+	vector<int> v;
 	for(int j = 1; j <= p.n_elements; ++j) {
 	  {
-	    std::stringstream ss(*it);
+	    stringstream ss(*it);
 	    int i;
 	    ss >> i;
 	    if(ss.fail()) {
-	      std::ostringstream error;
+	      ostringstream error;
 	      error << s << " expects " << p.n_elements << " integer arguments, but argument " << j << " was '" << *it << "'";
 	      throw(error.str());
 	    }
@@ -82,7 +99,7 @@ void TclScriptObject::parse_from_string(std::list<std::string> &argv) {
       }
     case Variant::DOUBLE_VECTOR:
       {
-	std::vector<double> v;
+	vector<double> v;
 	for(int i = 0; i < p.n_elements; ++i) {
 	  v.push_back(atof(it->c_str()));
 	  it = argv.erase(it);
@@ -93,3 +110,4 @@ void TclScriptObject::parse_from_string(std::list<std::string> &argv) {
     }
   }
 }
+

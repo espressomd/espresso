@@ -84,7 +84,7 @@ libEspressoTcl_la_SOURCES = \
 	hydrogen_bond_tcl.hpp hydrogen_bond_tcl.cpp \
 	minimize_energy_tcl.cpp minimize_energy_tcl.hpp \
 	integrate_sd_tcl.cpp integrate_sd_tcl.hpp \
-	TclScriptObject.hpp TclScriptObject.cpp
+	TclCommand.hpp TclCommand.cpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \
