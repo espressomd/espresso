@@ -459,7 +459,7 @@ int dawaanr_set_params()
     return ES_ERROR;
   }
   if (coulomb.Dmethod != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA ) {
-    coulomb.Dmethod = DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA;
+    set_dipolar_method_local(DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA);
   } 
   // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
@@ -480,7 +480,7 @@ int mdds_set_params(int n_cut)
   }
   
   if (coulomb.Dmethod != DIPOLAR_DS  && coulomb.Dmethod != DIPOLAR_MDLC_DS) {
-    coulomb.Dmethod = DIPOLAR_DS;
+    set_dipolar_method_local(DIPOLAR_DS);
   }  
   
   // also necessary on 1 CPU, does more than just broadcasting

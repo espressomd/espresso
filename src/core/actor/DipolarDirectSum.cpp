@@ -32,10 +32,9 @@ if (dipolarDirectSum)
   forceActors.remove(dipolarDirectSum);
   energyActors.remove(dipolarDirectSum);
   free(dipolarDirectSum);
-  coulomb.Dmethod = DIPOLAR_NONE;
- }
-}
 
+}
+}
 
 
 DipolarDirectSum *dipolarDirectSum;

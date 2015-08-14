@@ -1885,6 +1885,10 @@ void mpi_bcast_coulomb_params()
 
 void mpi_bcast_coulomb_params_slave(int node, int parm)
 {   
+
+
+
+
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
 
@@ -1929,7 +1933,10 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   }
 #endif
 
+
 #ifdef DIPOLES
+  set_dipolar_method_local(coulomb.Dmethod);
+  
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     break;
@@ -1946,6 +1953,8 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
  case  DIPOLAR_MDLC_DS:
      //fall trough
  case  DIPOLAR_DS:
+    break;   
+ case  DIPOLAR_DS_GPU:
     break;   
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast dipolar params for unknown method %d\n", this_node, coulomb.Dmethod);
