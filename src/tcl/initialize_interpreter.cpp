@@ -64,6 +64,8 @@
 #include "actor/HarmonicOrientationWell_tcl.hpp"
 #include "minimize_energy_tcl.hpp"
 #include "h5mdfile_tcl.hpp"
+#include "TclCommand.hpp"
+#include "shapes/Shape.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -259,6 +261,10 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
+
+  Shapes::Wall *wall = new Shapes::Wall();
+  TclCommand *shape_wall_tcl = new TclCommand(wall, interp);
+  shape_wall_tcl->create_command();
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

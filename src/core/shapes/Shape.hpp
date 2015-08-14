@@ -23,22 +23,44 @@
 #define __SHAPE_HPP
 
 #include <string>
-#include <iostream>
-#include "grid.hpp"
+#include "ScriptObject.hpp"
 
 using namespace std;
 
 namespace Shapes {
-  struct Shape {
+  struct Shape : public ScriptObject {
     virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
     /* Human readable name of the shape. */
-    static std::string name() { return std::string("Shape"); }
+    virtual const std::string name() const { return std::string("Shape"); }
   };
 
   struct Wall : public Shape {
-    static std::string name() { return std::string("Wall"); }
+    virtual const std::string name() const { return std::string("Wall"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);  
 
+    Parameters get_parameters() {
+      Parameters p;
+
+      p["normal"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+      p["d"] = Parameter(Variant::DOUBLE, true);
+
+      p["normal"] = std::vector<double>(n, n+3);
+      p["normal"].set = false;
+      p["d"] = d;
+      p["d"].set = false;
+      
+      return p;
+    }
+
+    void set_parameters(const Parameters &p) {
+      d = p.at("d").value;
+
+      std::vector<double> v = p.at("normal").value;
+      std::copy(v.begin(), v.end(), n);
+
+      printf("d = %e, n = %e %e %e\n", d, n[0], n[1], n[2]);
+    }
+    
     /** normal vector on the plane. */
     double n[3];
     /** distance of the wall from the origin. */
@@ -46,7 +68,7 @@ namespace Shapes {
   };
 
   struct Sphere : public Shape {
-    std::string name() { return std::string("Sphere"); }
+    virtual const std::string name() const { return std::string("Sphere"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
 
     double pos[3];
@@ -56,7 +78,7 @@ namespace Shapes {
 
 
   struct Cylinder : public Shape {
-    static std::string name() { return std::string("Cylinder"); }
+    virtual const std::string name() const { return std::string("Cylinder"); }
     virtual int calculate_dist(const double *ppos, double *dist, double *vec);
 
     /** center of the cylinder. */
@@ -72,12 +94,12 @@ namespace Shapes {
   };
 
   struct SpheroCylinder : public Cylinder {
-    static std::string name() { return std::string("Spherocylinder"); }
+    virtual const std::string name() const { return std::string("Spherocylinder"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
   };
 
   struct Pore : public Shape {
-    static std::string name() { return std::string("Pore"); }
+    virtual const std::string name() const { return std::string("Pore"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
 
     /** center of the cylinder. */
@@ -95,7 +117,7 @@ namespace Shapes {
   };
 
   struct Slitpore : public Shape {
-    static std::string name() { return std::string("Slitpore"); }
+    virtual const std::string name() const { return std::string("Slitpore"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
 
     double pore_mouth;
@@ -107,7 +129,7 @@ namespace Shapes {
   };
 
   struct Maze : public Shape {
-    static std::string name() { return std::string("Maze"); }
+    virtual const std::string name() const { return std::string("Maze"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
 
     /** number of spheres. */
@@ -121,7 +143,7 @@ namespace Shapes {
   };
 
   struct Stomatocyte : public Shape {
-    static std::string name() { return std::string("Stomatocyte"); }
+    virtual const std::string name() const { return std::string("Stomatocyte"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
 
     /** Stomatocyte position. */
@@ -144,7 +166,7 @@ namespace Shapes {
   };
 
   struct HollowCone : public Shape {
-    static std::string name() { return std::string("HollowCone"); }
+    virtual const std::string name() const { return std::string("HollowCone"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
 
     /** Hollow cone position. */
@@ -168,7 +190,7 @@ namespace Shapes {
   };
 
   struct Rhomboid : public Shape {
-    static std::string name() { return std::string("Rhomboid"); }
+    virtual const std::string name() const { return std::string("Rhomboid"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
     /** corner of the rhomboid */
     double pos[3];
@@ -181,7 +203,7 @@ namespace Shapes {
   };
 
   struct Plane : public Shape {
-    static std::string name() { return std::string("Plane"); }
+    virtual const std::string name() const { return std::string("Plane"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
 
     double pos[3];

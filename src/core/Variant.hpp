@@ -8,23 +8,23 @@ class Variant {
 public:
   enum Type { NONE, INT, DOUBLE, STRING, INT_VECTOR, DOUBLE_VECTOR };
   Variant() : m_mem(0) {  m_type = NONE; }
-  Variant(int v) : Variant() {
+  Variant(const int v) : Variant() {
     construct_from<int>(v);
     m_type = INT;
   }
-  Variant(double v) : Variant() {
+  Variant(const double v) : Variant() {
     construct_from<double>(v);
     m_type = DOUBLE;
   }
-  Variant(std::string &v) : Variant() {
+  Variant(const std::string &v) : Variant() {
     construct_from<std::string>(v);
     m_type = STRING;
   }
-  Variant(std::vector<int> &v) : Variant() {
+  Variant(const std::vector<int> &v) : Variant() {
     construct_from<typename std::vector<int> >(v);
     m_type = INT_VECTOR;
   }
-  Variant(std::vector<double> &v) : Variant() {
+  Variant(const std::vector<double> &v) : Variant() {
     construct_from<typename std::vector<double> >(v);
     m_type = DOUBLE_VECTOR; }
   Variant(const Variant &rhs) : Variant() {
@@ -95,7 +95,7 @@ private:
   }
   
   template<typename T>
-  void construct_from(T &v) {
+  void construct_from(const T &v) {
     delete_mem();
     m_mem = reinterpret_cast<void *>(new T(v));
   }

@@ -20,6 +20,8 @@
 */
 
 #include "Shape.hpp"
+/** @TODO: Get rid of grid.hpp for global box_l (fw) */
+#include "grid.hpp"
 #include <cmath>
 
 #define SQR(A) ((A)*(A))
