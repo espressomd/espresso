@@ -160,6 +160,7 @@ static int terminated = 0;
   CB(mpi_external_potential_sum_energies_slave) \
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
   CB(mpiRuntimeErrorCollectorGatherSlave)        \
+  CB(mpi_check_runtime_errors_slave) \
   CB(mpi_minimize_energy_slave) \
   CB(mpi_gather_cuda_devices_slave) \
   CB(mpi_thermalize_cpu_slave) \
@@ -199,6 +200,10 @@ std::map<SlaveCallback *, int> request_map;
 #include <unordered_map>
 std::unordered_map<SlaveCallback *, int> request_map;
 #endif
+
+/** Forward declarations */
+
+int mpi_check_runtime_errors(void);
 
 /**********************************************
  * procedures
@@ -1264,7 +1269,6 @@ int mpi_integrate(int n_steps, int reuse_forces)
     integrate_vv(n_steps, reuse_forces);
     COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", \
                        this_node, n_steps));
-    return check_runtime_errors();
   } else {
     for (int i=0; i<n_steps; i++) {
       mpi_call(mpi_integrate_slave, 1, reuse_forces);
@@ -1274,19 +1278,14 @@ int mpi_integrate(int n_steps, int reuse_forces)
                          this_node, i));
       autoupdate_correlations();
     }
-    if (check_runtime_errors())
-      return check_runtime_errors();
   }
-
-  return 0;
+  return mpi_check_runtime_errors();
 }
 
 void mpi_integrate_slave(int n_steps, int reuse_forces)
 {
   integrate_vv(n_steps, reuse_forces);
   COMM_TRACE(fprintf(stderr, "%d: integration for %d n_steps with %d reuse_forces done.\n", this_node, n_steps, reuse_forces));
-
-  check_runtime_errors();
 }
 
 /*************** REQ_BCAST_IA ************/
@@ -1873,6 +1872,14 @@ void mpi_send_configtemp_flag_slave(int pnode, int part)
 #endif
 }
 
+int mpi_check_runtime_errors(void) {
+  mpi_call(mpi_check_runtime_errors_slave, 0, 0);
+  return check_runtime_errors();
+}
+
+void mpi_check_runtime_errors_slave(int a, int b) {
+  check_runtime_errors();
+}
 
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params()
