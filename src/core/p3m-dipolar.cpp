@@ -516,7 +516,7 @@ int dp3m_set_params(double r_cut, int mesh, int cao,
 		    double alpha, double accuracy)
 {
   if (coulomb.Dmethod != DIPOLAR_P3M && coulomb.Dmethod != DIPOLAR_MDLC_P3M)
-    coulomb.Dmethod = DIPOLAR_P3M;
+    set_dipolar_method_local(DIPOLAR_P3M);
     
   if(r_cut < 0)
     return -1;
@@ -1618,7 +1618,7 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
   
   /* broadcast p3m parameters for test run */
   if (coulomb.Dmethod != DIPOLAR_P3M && coulomb.Dmethod != DIPOLAR_MDLC_P3M)
-    coulomb.Dmethod = DIPOLAR_P3M;
+    set_dipolar_method_local(DIPOLAR_P3M);
   dp3m.params.r_cut_iL = r_cut_iL;
   dp3m.params.mesh[0]  = dp3m.params.mesh[1] = dp3m.params.mesh[2] = mesh;
   dp3m.params.cao      = cao;
