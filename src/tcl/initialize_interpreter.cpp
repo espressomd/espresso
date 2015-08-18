@@ -179,10 +179,6 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   #ifdef H5MD
 	REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
   #endif
-  /* in constraint.cpp */
-#ifdef CONSTRAINTS
-  REGISTER_COMMAND("constraint", tclcommand_constraint);
-#endif
   /* in external_potential.hpp */
   REGISTER_COMMAND("external_potential", tclcommand_external_potential);
   /* in readpdb.cpp */
@@ -262,9 +258,13 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 
+
+#ifdef CONSTRAINTS
   Shapes::Wall *wall = new Shapes::Wall();
   TclCommand *shape_wall_tcl = new TclCommand(wall, interp);
   shape_wall_tcl->create_command();
+#endif
+
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

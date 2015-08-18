@@ -21,9 +21,7 @@ void TclCommand::add_subcommand(const std::string &command, const TclCommand &c)
 string TclCommand::print_to_string() {
   ostringstream res;
 
-  res << m_so->name() << " ";
   for(auto &p: m_so->get_parameters()) {
-    if(p.second.set)
       res << p.first << " " << p.second.value << " ";
   }
 
@@ -32,7 +30,6 @@ string TclCommand::print_to_string() {
 
 void TclCommand::parse_from_string(list<string> &argv) {
   Parameters p = m_so->get_parameters();
-
   for(list<string>::iterator it = argv.begin(); it != argv.end();) {
     string s = *it;
     Parameters::iterator si = p.find(s);
@@ -138,23 +135,26 @@ void TclCommand::parse_from_string(list<string> &argv) {
   }
 
 static int TclCommand_wrapper (ClientData data, Tcl_Interp *interp, int argc, char *argv[]) {
-  printf("TclCommand_wrapper(data = %p, interp = %p, argc = %d, argv = %p)\n",
-	 data, interp, argc, argv);
-  list<string> args(argv + 1, argv + argc);
-
+  // printf("TclCommand_wrapper(data = %p, interp = %p, argc = %d, argv = %p)\n",
+  //        data, interp, argc, argv);
+  
   TclCommand *p = reinterpret_cast<TclCommand *>(data);
 
-  try {
-    p->parse_from_string(args);
-    if(!args.empty()) {
-      throw std::string("Unknown argument '").append(args.front()).append("'");
+  if(argc > 1) {
+    list<string> args(argv + 1, argv + argc);
+
+    try {
+      p->parse_from_string(args);
+      if(!args.empty()) {
+        throw std::string("Unknown argument '").append(args.front()).append("'");
+      }
+    } catch(std::string &err) {
+      Tcl_AppendResult(interp, err.c_str(), 0);
+      return TCL_ERROR;
     }
-  } catch(std::string &err) {
-    Tcl_AppendResult(interp, err.c_str(), 0);
-    return TCL_ERROR;
+
   }
 
-  Tcl_AppendResult(interp, p->print_to_string(), 0);
-  
+  Tcl_AppendResult(interp, p->print_to_string().c_str(), 0);  
   return TCL_OK;
 }
