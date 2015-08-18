@@ -10,13 +10,15 @@ std::ostream &operator<<(std::ostream &os, const Variant &rhs) {
     break;
   case Variant::INT_VECTOR:
     iv = reinterpret_cast<const std::vector<int> *>(rhs.m_mem);
-    for(std::vector<int>::const_iterator it = iv->cbegin(); it != iv->cend(); ++it)
+    for(std::vector<int>::const_iterator it = iv->cbegin(); it != --iv->cend(); ++it)
       os << *it << " ";
+    os << *(--iv->cend());
     break;
   case Variant::DOUBLE_VECTOR:
     dv = reinterpret_cast<const std::vector<double> *>(rhs.m_mem);
-    for(std::vector<double>::const_iterator it = dv->cbegin(); it != dv->cend(); ++it)
+    for(std::vector<double>::const_iterator it = dv->cbegin(); it != --dv->cend(); ++it)
       os << *it << " ";
+    os << *(--dv->cend());
     break;
   case Variant::INT:
     os << *(reinterpret_cast<const int *>(rhs.m_mem));
