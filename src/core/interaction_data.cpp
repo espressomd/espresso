@@ -64,6 +64,7 @@
 #include "mdlc_correction.hpp"
 #include "initialize.hpp"
 #include "interaction_data.hpp"
+#include "actor/DipolarDirectSum.hpp"
 
 /****************************************
  * variables
@@ -873,6 +874,19 @@ int interactions_sanity_checks()
 }
 
 
+#ifdef DIPOLES
+void set_dipolar_method_local(DipolarInteraction method)
+{
+#ifdef DIPOLAR_DIRECT_SUM
+if ((coulomb.Dmethod == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU))
+{
+ deactivate_dipolar_direct_sum_gpu();
+}
+#endif
+coulomb.Dmethod = method;
+}
+#endif
+
 #ifdef ELECTROSTATICS
 
 /********************************************************************************/
@@ -949,7 +963,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
     }
  
     mpi_bcast_coulomb_params();
-    coulomb.Dmethod = DIPOLAR_NONE;
+    set_dipolar_method_local(DIPOLAR_NONE);
     mpi_bcast_coulomb_params();
 
   }

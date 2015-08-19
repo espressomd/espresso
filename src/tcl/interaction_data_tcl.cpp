@@ -305,7 +305,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
 #endif
 
   /* fallback */
-  coulomb.Dmethod  = DIPOLAR_NONE;
+  set_dipolar_method_local(DIPOLAR_NONE);
   coulomb.Dbjerrum = 0.0;
 
   mpi_bcast_coulomb_params();
