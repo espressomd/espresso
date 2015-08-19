@@ -4,7 +4,6 @@
 #include "reaction_ensemble.hpp"
 
 //function declartion
-int print_over_collecitve_variables(Tcl_Interp *interp, void* data, char* type);
 
 int tclcommand_reaction_ensemble_print_status(Tcl_Interp *interp){
 	char buffer[3000];
@@ -62,13 +61,13 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 	if(ARG1_IS_S("educt_types")){
 		argc-=1; argv+=1;
 		int next_added_type;
-		int* educt_types=(int*)malloc(sizeof(int));
+		int* educt_types=NULL;
 		int educt_type_counter=0;
 		while(ARG_IS_I(1,next_added_type)){
 			argc-=1; argv+=1;
+			educt_types=(int*) realloc(educt_types,sizeof(int)*(educt_type_counter+1));
 			educt_types[educt_type_counter]=next_added_type;
 			educt_type_counter+=1;
-			educt_types=(int*) realloc(educt_types,sizeof(int)*(educt_type_counter+1));
 		}
 		new_reaction->len_educt_types=educt_type_counter;
 		new_reaction->educt_types=educt_types;
@@ -78,13 +77,13 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 	if(ARG1_IS_S("educt_coefficients")){
 		argc-=1; argv+=1;
 		int next_added_type_coeff;
-		int* educt_coefficients=(int*) malloc(sizeof(int));
+		int* educt_coefficients=NULL;
 		int educt_type_counter=0;
 		while(ARG_IS_I(1,next_added_type_coeff)){
 			argc-=1; argv+=1;
+			educt_coefficients=(int*) realloc(educt_coefficients,sizeof(int)*(educt_type_counter+1));
 			educt_coefficients[educt_type_counter]=next_added_type_coeff;
 			educt_type_counter+=1;
-			educt_coefficients=(int*) realloc(educt_coefficients,sizeof(int)*(educt_type_counter+1));
 		}
 		new_reaction->educt_coefficients=educt_coefficients;
 	}else{
@@ -93,13 +92,13 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 	if(ARG1_IS_S("product_types")){
 		argc-=1; argv+=1;
 		int next_added_type;
-		int* product_types=(int*)malloc(sizeof(int));
+		int* product_types=NULL;
 		int product_type_counter=0;
 		while(ARG_IS_I(1,next_added_type)){
 			argc-=1; argv+=1;
+			product_types=(int*) realloc(product_types,sizeof(int)*(product_type_counter+1));
 			product_types[product_type_counter]=next_added_type;
 			product_type_counter+=1;
-			product_types=(int*) realloc(product_types,sizeof(int)*(product_type_counter+1));
 		}
 		new_reaction->len_product_types=product_type_counter;
 		new_reaction->product_types=product_types;
@@ -109,9 +108,10 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 	if(ARG1_IS_S("product_coefficients")){
 		argc-=1; argv+=1;
 		int next_added_type_coeff;
-		int* product_coefficients=(int*) malloc(sizeof(int));
+		int* product_coefficients=NULL;
 		int product_type_counter=0;
 		while(ARG_IS_I(1,next_added_type_coeff)){
+			product_coefficients=(int*) realloc(product_coefficients,sizeof(int)*(product_type_counter+1));
 			product_coefficients[product_type_counter]=next_added_type_coeff;
 			product_type_counter+=1;
 			new_reaction->product_coefficients=product_coefficients;
@@ -119,7 +119,6 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 			if(argc<3) {
 				break;
 			}
-			product_coefficients=(int*) realloc(product_coefficients,sizeof(int)*(product_type_counter+1));
 			argc-=1; argv+=1;
 		}
 	
@@ -137,6 +136,79 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 	//assign different types an index in a growing list that starts at and is incremented by 1 for each new type
 	update_type_index(new_reaction->educt_types, new_reaction->len_educt_types, new_reaction->product_types, new_reaction->len_product_types); 
 	return TCL_OK;
+}
+
+int tclcommand_add_reaction_coordinate(Tcl_Interp *interp, int argc, char **argv) {
+	argc-=1;
+	argv+=1;
+	collective_variable* new_collective_variable=(collective_variable*) calloc(1,sizeof(collective_variable));
+	if(ARG1_IS_S("degree_of_association")){
+		argc-=1;
+		argv+=1;
+		if(ARG1_IS_S("associated_type")){
+			argc-=1;
+			argv+=1;
+			ARG_IS_I(1,new_collective_variable->associated_type);
+			argc-=1;
+			argv+=1;
+		}
+		if(ARG1_IS_S("min")){
+			argc-=1;
+			argv+=1;
+			ARG_IS_D(1,new_collective_variable->CV_minimum);
+			argc-=1;
+			argv+=1;
+		}
+		if(ARG1_IS_S("max")){
+			argc-=1; argv+=1;
+			ARG_IS_D(1,new_collective_variable->CV_maximum);
+		}
+
+		argc-=1; argv+=1;
+		if(ARG1_IS_S("corresponding_acid_types")){
+			argc-=1; argv+=1;
+			int next_added_acid_type;
+			int* corresponding_acid_types=NULL;
+			int corresponding_type_counter=0;
+			while(ARG_IS_I(1,next_added_acid_type)){
+				corresponding_acid_types=(int*) realloc(corresponding_acid_types,sizeof(int)*(corresponding_type_counter+1));
+				corresponding_acid_types[corresponding_type_counter]=next_added_acid_type;
+				corresponding_type_counter+=1;
+				//check for terminus of string
+				if(argc<3) {
+					break;
+				}
+				argc-=1; argv+=1;
+			}
+			new_collective_variable->corresponding_acid_types=corresponding_acid_types;
+			new_collective_variable->nr_corresponding_acid_types=corresponding_type_counter;
+		}
+	}
+
+	if(ARG1_IS_S("energy")){
+		//needs to be called after all other collective variables are known
+		argc-=1; argv+=1;
+		if(ARG1_IS_S("filename")){ //full path to file which saves the energies in the format nbar_i \t nbar_j \t ... \t energy_min \t energy_max
+			argc-=1; argv+=1;
+			char* energy_boundaries_filename =strdup(argv[1]);
+			new_collective_variable->energy_boundaries_filename=energy_boundaries_filename;
+		}else{
+			return TCL_ERROR;
+		}
+		argc-=1; argv+=1;
+		if(ARG1_IS_S("delta")){
+			argc-=1; argv+=1;
+			ARG_IS_D(1,new_collective_variable->delta_CV);
+		}else{
+			return TCL_ERROR;
+		}
+	}
+
+	current_wang_landau_system.collective_variables=(collective_variable**) realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(current_wang_landau_system.nr_collective_variables+1));
+	current_wang_landau_system.collective_variables[current_wang_landau_system.nr_collective_variables]=new_collective_variable;
+	current_wang_landau_system.nr_collective_variables+=1;
+	return TCL_OK;
+
 }
 
 int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, char **argv){
@@ -168,9 +240,10 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				double charge;
 				ARG_IS_D(3,charge);
 				int index_of_type=find_index_of_type(type);
-				if(index_of_type>0)
+				if(index_of_type>=0){
 					current_reaction_system.charges_of_types[index_of_type]=charge;
-			
+				}
+				
 			}
 		
 			if( ARG1_IS_S("free_memory")) {
@@ -208,76 +281,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				//do other checks here
 
 				if(ARG1_IS_S("add")){
-					argc-=1;
-					argv+=1;
-					collective_variable* new_collective_variable=(collective_variable*) calloc(1,sizeof(collective_variable));
-					if(ARG1_IS_S("degree_of_association")){
-						argc-=1;
-						argv+=1;
-						if(ARG1_IS_S("associated_type")){
-							argc-=1;
-							argv+=1;
-							ARG_IS_I(1,new_collective_variable->associated_type);
-							argc-=1;
-							argv+=1;
-						}
-						if(ARG1_IS_S("min")){
-							argc-=1;
-							argv+=1;
-							ARG_IS_D(1,new_collective_variable->CV_minimum);
-							argc-=1;
-							argv+=1;
-						}
-						if(ARG1_IS_S("max")){
-							argc-=1; argv+=1;
-							ARG_IS_D(1,new_collective_variable->CV_maximum);
-						}
-
-						argc-=1; argv+=1;
-						if(ARG1_IS_S("corresponding_acid_types")){
-							argc-=1; argv+=1;
-							int next_added_acid_type;
-							int* corresponding_acid_types=(int*) malloc(sizeof(int));
-							int corresponding_type_counter=0;
-							while(ARG_IS_I(1,next_added_acid_type)){
-								corresponding_acid_types[corresponding_type_counter]=next_added_acid_type;
-								corresponding_type_counter+=1;
-								corresponding_acid_types=(int*) realloc(corresponding_acid_types,sizeof(int)*(corresponding_type_counter+1));
-								//check for terminus of string
-								if(argc<3) {
-									break;
-								}
-								argc-=1; argv+=1;
-							}
-							new_collective_variable->corresponding_acid_types=corresponding_acid_types;
-							new_collective_variable->nr_corresponding_acid_types=corresponding_type_counter;
-						}
-					}
-
-					if(ARG1_IS_S("energy")){
-						//needs to be called after all other collective variables are known
-						argc-=1; argv+=1;
-						if(ARG1_IS_S("filename")){ //full path to file which saves the energies in the format nbar_i \t nbar_j \t ... \t energy_min \t energy_max
-							argc-=1; argv+=1;
-							int size_string=strlen(argv[1])+1;
-							char* energy_boundaries_filename =(char*)malloc(sizeof(char)*size_string);
-							strcpy(energy_boundaries_filename, argv[1]);
-							new_collective_variable->energy_boundaries_filename=energy_boundaries_filename;
-						}else{
-							return TCL_ERROR;
-						}
-						argc-=1; argv+=1;
-						if(ARG1_IS_S("delta")){
-							argc-=1; argv+=1;
-							ARG_IS_D(1,new_collective_variable->delta_CV);
-						}else{
-							return TCL_ERROR;
-						}
-					}
-
-					current_wang_landau_system.collective_variables=(collective_variable**) realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(current_wang_landau_system.nr_collective_variables+1));
-					current_wang_landau_system.nr_collective_variables+=1;
-					current_wang_landau_system.collective_variables[current_wang_landau_system.nr_collective_variables-1]=new_collective_variable;
+					tclcommand_add_reaction_coordinate(interp, argc, argv);
 				}
 				
 				if(ARG1_IS_S("initialize")) {
@@ -297,9 +301,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 	
 				if(ARG1_IS_S("full_path_to_output_filename")){
 					argc-=1; argv+=1;
-					int size_string=strlen(argv[1])+1;
-					char* output_filename =(char*)malloc(sizeof(char)*size_string);
-					strcpy(output_filename, argv[1]);
+					char* output_filename =strdup(argv[1]);
 					current_wang_landau_system.output_filename=output_filename;
 				}
 
@@ -315,7 +317,6 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					argc-=1; argv+=1;
 					write_out_preliminary_energy_run_results(argv[1]);
 				}
-
 				
 			}
 		}

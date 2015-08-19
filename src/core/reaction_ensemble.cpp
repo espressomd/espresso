@@ -1077,9 +1077,8 @@ int do_reaction_wang_landau(){
 		refine_wang_landau_parameter_one_over_t();
 	}
 
-	//write out preliminary results
-	if(current_wang_landau_system.monte_carlo_trial_moves%(15*current_wang_landau_system.len_histogram)==0 || current_wang_landau_system.monte_carlo_trial_moves%(int(10000/current_wang_landau_system.len_histogram)+1)==0){
-		//the first criterion is for small systems, the second one for big systems
+	//write out preliminary wang-landau potential results
+	if(current_wang_landau_system.monte_carlo_trial_moves%(2000)==0){
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
 	return 0;	
