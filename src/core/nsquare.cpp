@@ -65,7 +65,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts)
   prepare_comm(comm, data_parts, n_nodes);
   /* every node has its dedicated comm step */
   for(n = 0; n < n_nodes; n++) {
-    comm->comm[n].part_lists = (ParticleList**)malloc(sizeof(ParticleList *));
+    comm->comm[n].part_lists = (ParticleList**)Utils::malloc(sizeof(ParticleList *));
     comm->comm[n].part_lists[0] = &cells[n];
     comm->comm[n].n_part_lists = 1;
     comm->comm[n].node = n;
@@ -162,7 +162,7 @@ void nsq_balance_particles(int global_flag)
     return;
 
   int pp = cells_get_n_particles();
-  int *ppnode = (int*)malloc(n_nodes*sizeof(int));
+  int *ppnode = (int*)Utils::malloc(n_nodes*sizeof(int));
   /* minimal difference between node shares */
   int minshare = n_part/n_nodes;
   int maxshare = minshare + 1;

@@ -154,11 +154,11 @@ void energy_calc(double *result)
   MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 
   if (n_external_potentials > 0) {
-    double* energies = (double*) malloc(n_external_potentials*sizeof(double));
+    double* energies = (double*) Utils::malloc(n_external_potentials*sizeof(double));
     for (int i=0; i<n_external_potentials; i++) {
       energies[i]=external_potentials[i].energy;
     }
-    double* energies_sum =  (double*) malloc(n_external_potentials*sizeof(double)); 
+    double* energies_sum =  (double*) Utils::malloc(n_external_potentials*sizeof(double)); 
     MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
     for (int i=0; i<n_external_potentials; i++) {
       external_potentials[i].energy=energies_sum[i];
