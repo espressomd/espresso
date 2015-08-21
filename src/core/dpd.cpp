@@ -399,7 +399,6 @@ void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
   if (dpd_ignore_fixed_particles)
     if ( (p1->p.ext_flag | p2->p.ext_flag) & COORDS_FIX_MASK) return;
 #endif
-
 #ifdef DPD
   if( le_chatterjee_test_pair(p1, p2) ) return;
 #endif  

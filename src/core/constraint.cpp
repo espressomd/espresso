@@ -42,9 +42,10 @@ Constraint *generate_constraint()
 {
   n_constraints++;
   constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
+  memset(&constraints[n_constraints-1], 0, sizeof(Constraint));
   constraints[n_constraints-1].type = CONSTRAINT_NONE;
   constraints[n_constraints-1].part_rep.p.identity = -n_constraints;
-  
+   
   return &constraints[n_constraints-1];
 }
 
