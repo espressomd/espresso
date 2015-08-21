@@ -366,7 +366,7 @@ void mpi_who_has()
     else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
 	pdata_s = sizes[pnode];
-	pdata = (int *)realloc(pdata, sizeof(int)*pdata_s);
+	pdata = (int *)Utils::realloc(pdata, sizeof(int)*pdata_s);
       }
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG,
 	       comm_cart, MPI_STATUS_IGNORE);
@@ -389,7 +389,7 @@ void mpi_who_has_slave(int node, int param)
   if (n_part == 0)
     return;
 
-  sendbuf = (int*)realloc(sendbuf, sizeof(int)*n_part);
+  sendbuf = (int*)Utils::realloc(sendbuf, sizeof(int)*n_part);
   npart = 0;
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -1145,7 +1145,7 @@ void mpi_send_bond_slave(int pnode, int part)
   if (pnode == this_node) {
     MPI_Recv(&bond_size, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     if (bond_size) {
-      bond = (int *)malloc(bond_size*sizeof(int));
+      bond = (int *)Utils::malloc(bond_size*sizeof(int));
       MPI_Recv(bond, bond_size, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     }
     else
@@ -1514,7 +1514,7 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3], int periodic[
 
   mpi_call(mpi_local_stress_tensor_slave,-1,0);
 
-  TensorInBin_ = (DoubleList*)malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  TensorInBin_ = (DoubleList*)Utils::malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
   for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
     init_doublelist(&TensorInBin_[i]);
     alloc_doublelist(&TensorInBin_[i],9);
@@ -1552,7 +1552,7 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
   MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(range, 3, MPI_DOUBLE, 0, comm_cart);
   
-  TensorInBin = (DoubleList*)malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  TensorInBin = (DoubleList*)Utils::malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
   for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
     init_doublelist(&TensorInBin[i]);
     alloc_doublelist(&TensorInBin[i],9);
@@ -1590,7 +1590,7 @@ void mpi_get_particles(Particle *result, IntList *bi)
   
   mpi_call(mpi_get_particles_slave, -1, bi != NULL);
 
-  sizes = (int*)malloc(sizeof(int)*n_nodes);
+  sizes = (int*)Utils::malloc(sizeof(int)*n_nodes);
   local_part = cells_get_n_particles();
 
   /* first collect number of particles on each node */
@@ -1714,7 +1714,7 @@ void mpi_get_particles_slave(int pnode, int bi)
 
     /* get (unsorted) particle informations as an array of type 'particle' */
     /* then get the particle information */
-    result = (Particle*)malloc(n_part*sizeof(Particle));
+    result = (Particle*)Utils::malloc(n_part*sizeof(Particle));
 
     init_intlist(&local_bi);
     
@@ -2104,12 +2104,12 @@ void mpi_bcast_constraint(int del_num)
   else if (del_num == -2) {
     /* delete all constraints */
     n_constraints = 0;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
     memmove(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
     n_constraints--;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
   }
 
   on_constraint_change();
@@ -2121,18 +2121,18 @@ void mpi_bcast_constraint_slave(int node, int parm)
 #ifdef CONSTRAINTS
   if(parm == -1) {
     n_constraints++;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
     MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
   }
   else if (parm == -2) {
     /* delete all constraints */
     n_constraints = 0;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
     memmove(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));
     n_constraints--;
-    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));    
+    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));    
   }
 
   on_constraint_change();
@@ -2152,7 +2152,7 @@ void mpi_bcast_lbboundary(int del_num)
   else if (del_num == -2) {
     /* delete all boundaries */
     n_lb_boundaries = 0;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    lb_boundaries = (LB_Boundary*) Utils::realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
 #if defined(LB_BOUNDARIES_GPU)
   else if (del_num == -3) {
@@ -2162,7 +2162,7 @@ void mpi_bcast_lbboundary(int del_num)
   else {
     memmove(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    lb_boundaries = (LB_Boundary*) Utils::realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
 
   on_lbboundary_change();
@@ -2176,13 +2176,13 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
 #if defined(LB_BOUNDARIES)
   if(parm == -1) {
     n_lb_boundaries++;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    lb_boundaries = (LB_Boundary*) Utils::realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
     MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, comm_cart);
   }
   else if (parm == -2) {
     /* delete all boundaries */
     n_lb_boundaries = 0;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    lb_boundaries = (LB_Boundary*) Utils::realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
 #if defined(LB_BOUNDARIES_GPU)
   else if (parm == -3) {
@@ -2192,7 +2192,7 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
   else {
     memmove(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
-    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
+    lb_boundaries = (LB_Boundary*) Utils::realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
   }
 #endif
 
@@ -3098,7 +3098,7 @@ void mpi_external_potential_broadcast_slave(int node, int number) {
   ExternalPotential* new_;
   generate_external_potential(&new_);
   external_potentials[number] = E;
-  external_potentials[number].scale=(double*) malloc(external_potentials[number].n_particle_types);
+  external_potentials[number].scale=(double*) Utils::malloc(external_potentials[number].n_particle_types);
   MPI_Bcast(external_potentials[number].scale, external_potentials[number].n_particle_types, MPI_DOUBLE, 0, comm_cart);
 }
 
@@ -3113,11 +3113,11 @@ void mpi_external_potential_tabulated_read_potential_file_slave(int node, int nu
 
 void mpi_external_potential_sum_energies() {
   mpi_call(mpi_external_potential_sum_energies_slave, 0, 0);
-  double* energies = (double*) malloc(n_external_potentials*sizeof(double));
+  double* energies = (double*) Utils::malloc(n_external_potentials*sizeof(double));
   for (int i=0; i<n_external_potentials; i++) {
     energies[i]=external_potentials[i].energy;
   }
-  double* energies_sum = (double*) malloc(n_external_potentials*sizeof(double)); 
+  double* energies_sum = (double*) Utils::malloc(n_external_potentials*sizeof(double)); 
   MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
   for (int i=0; i<n_external_potentials; i++) {
     external_potentials[i].energy=energies_sum[i];
@@ -3128,7 +3128,7 @@ void mpi_external_potential_sum_energies() {
 
 
 void mpi_external_potential_sum_energies_slave(int dummy1, int dummy2) {
-  double* energies = (double*)malloc(n_external_potentials*sizeof(double));
+  double* energies = (double*)Utils::malloc(n_external_potentials*sizeof(double));
   for (int i=0; i<n_external_potentials; i++) {
     energies[i]=external_potentials[i].energy;
   }

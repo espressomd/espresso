@@ -397,22 +397,22 @@ int H5mdfile::H5_Dread(int argc, char **argv, Tcl_Interp *interp)
 
 	if(H5Tequal(dataset_type_id, H5T_NATIVE_FLOAT))
 	{
-	   dset_data=(float*) malloc(dset_data_size*sizeof(float));
+	   dset_data=(float*) Utils::malloc(dset_data_size*sizeof(float));
 	   memset(dset_data,0,dset_data_size*sizeof(float));
 	}
 	else if(H5Tequal(dataset_type_id, H5T_NATIVE_DOUBLE))
 	{
-	   dset_data=(double*) malloc(dset_data_size*sizeof(double));
+	   dset_data=(double*) Utils::malloc(dset_data_size*sizeof(double));
 	   memset(dset_data,0,dset_data_size*sizeof(double));
 	}
 	else if(H5Tequal(dataset_type_id, H5T_NATIVE_INT))
 	{
-	   dset_data=(int*) malloc(dset_data_size*sizeof(int));
+	   dset_data=(int*) Utils::malloc(dset_data_size*sizeof(int));
 	   memset(dset_data,0,dset_data_size*sizeof(int));
 	}
 	else if(H5Tequal(dataset_type_id, H5T_C_S1))
 	{
-	   dset_data = (h5string*) malloc(dset_data_size * sizeof(h5string));
+	   dset_data = (h5string*) Utils::malloc(dset_data_size * sizeof(h5string));
 	}
 	else
 	{
@@ -572,25 +572,25 @@ int H5mdfile::H5_Screate_simple(int argc, char **argv, Tcl_Interp *interp)
 	if(!strncmp(argv[3], "float", strlen(argv[3])))
 	{
 	   dataset_type_id = H5T_NATIVE_FLOAT;
-	   dset_data=(float*) malloc(dset_data_size*sizeof(float));
+	   dset_data=(float*) Utils::malloc(dset_data_size*sizeof(float));
 	   memset(dset_data,0,dset_data_size*sizeof(float));
 	}
 	else if(!strncmp(argv[3], "double", strlen(argv[3])))
 	{
 	   dataset_type_id = H5T_NATIVE_DOUBLE;
-	   dset_data=(double*) malloc(dset_data_size*sizeof(double));
+	   dset_data=(double*) Utils::malloc(dset_data_size*sizeof(double));
 	   memset(dset_data,0,dset_data_size*sizeof(double));
 	}
 	else if(!strncmp(argv[3], "int", strlen(argv[3])))
 	{
 	   dataset_type_id = H5T_NATIVE_INT;
-	   dset_data=(int*) malloc(dset_data_size*sizeof(int));
+	   dset_data=(int*) Utils::malloc(dset_data_size*sizeof(int));
 	   memset(dset_data,0,dset_data_size*sizeof(int));
 	}
 	else if(!strncmp(argv[3], "str", strlen(argv[3])))
 	{
 	   dataset_type_id = H5Tcopy(H5T_C_S1);
-	   dset_data = (h5string*) malloc(dset_data_size * sizeof(h5string));
+	   dset_data = (h5string*) Utils::malloc(dset_data_size * sizeof(h5string));
 	}
 	else
 	{
