@@ -62,7 +62,7 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
 
     int i;  
     int *sizes;
-    sizes = (int*) malloc(sizeof(int)*n_nodes);
+    sizes = (int*) Utils::malloc(sizeof(int)*n_nodes);
 
     n_part = cells_get_n_particles();
     
@@ -181,7 +181,7 @@ static void cuda_mpi_get_particles_slave(){
     if (n_part > 0) {
       /* get (unsorted) particle informations as an array of type 'particle' */
       /* then get the particle information */
-      particle_data_host_sl = (CUDA_particle_data*) malloc(n_part*sizeof(CUDA_particle_data));
+      particle_data_host_sl = (CUDA_particle_data*) Utils::malloc(n_part*sizeof(CUDA_particle_data));
       
       g = 0;
       for (c = 0; c < local_cells.n; c++) {
@@ -272,7 +272,7 @@ static void cuda_mpi_get_particles_slave(){
   int c;
   int i;  
   int *sizes;
-  sizes = (int *) malloc(sizeof(int)*n_nodes);
+  sizes = (int *) Utils::malloc(sizeof(int)*n_nodes);
   n_part = cells_get_n_particles();
   /* first collect number of particles on each node */
   MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
@@ -353,7 +353,7 @@ static void cuda_mpi_send_forces_slave(){
       int g = 0;
       /* get (unsorted) particle informations as an array of type 'particle' */
       /* then get the particle information */
-      host_forces_sl = (float *) malloc(3*n_part*sizeof(float));
+      host_forces_sl = (float *) Utils::malloc(3*n_part*sizeof(float));
 #ifdef ROTATION
       host_torques_sl = (float *) Utils::malloc(3*n_part*sizeof(float));
 #endif

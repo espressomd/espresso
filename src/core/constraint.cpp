@@ -41,7 +41,7 @@ Constraint *constraints = NULL;
 Constraint *generate_constraint()
 {
   n_constraints++;
-  constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
+  constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
   constraints[n_constraints-1].type = CONSTRAINT_NONE;
   constraints[n_constraints-1].part_rep.p.identity = -n_constraints;
   

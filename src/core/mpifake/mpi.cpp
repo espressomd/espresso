@@ -42,7 +42,7 @@ int MPI_Type_struct(int count, int *lengths, MPI_Aint *disps, MPI_Datatype *oldt
   int i;
   struct mpifake_dtype *ntype;
 
-  ntype = *newtype = static_cast<MPI_Datatype>(malloc(sizeof(struct mpifake_dtype)));
+  ntype = *newtype = static_cast<MPI_Datatype>(Utils::malloc(sizeof(struct mpifake_dtype)));
 
   ntype->format = LAM_DTSTRUCT;
 
@@ -56,7 +56,7 @@ int MPI_Type_struct(int count, int *lengths, MPI_Aint *disps, MPI_Datatype *oldt
   if (count > 0) {
     ntype->dtypes = 
       static_cast<mpifake_dtype**>
-      (malloc(count * (sizeof(MPI_Datatype)+sizeof(int)+sizeof(int))));
+      (Utils::malloc(count * (sizeof(MPI_Datatype)+sizeof(int)+sizeof(int))));
     ntype->disps = (int *)((char *)ntype->dtypes + count*sizeof(MPI_Datatype));
     ntype->lengths = (int *)((char *)ntype->disps + count*sizeof(int));
   } else {
@@ -81,7 +81,7 @@ int MPI_Type_contiguous(int count, MPI_Datatype oldtype, MPI_Datatype *newtype)
 {
   struct mpifake_dtype *ntype;
 
-  ntype = *newtype = static_cast<MPI_Datatype>(malloc(sizeof(struct mpifake_dtype)));
+  ntype = *newtype = static_cast<MPI_Datatype>(Utils::malloc(sizeof(struct mpifake_dtype)));
 
   ntype->format = LAM_DTCONTIG;
 
@@ -103,7 +103,7 @@ int MPI_Type_vector(int count, int length, int stride,
 {
   struct mpifake_dtype *ntype;
 
-  ntype = *newtype = static_cast<MPI_Datatype>(malloc(sizeof(struct mpifake_dtype)));
+  ntype = *newtype = static_cast<MPI_Datatype>(Utils::malloc(sizeof(struct mpifake_dtype)));
 
   ntype->format = LAM_DTVECTOR;
 
@@ -143,7 +143,7 @@ int MPI_Type_create_hvector(int count, int length, int stride,
 {
   struct mpifake_dtype *ntype;
 
-  ntype = *newtype = static_cast<MPI_Datatype>(malloc(sizeof(struct mpifake_dtype)));
+  ntype = *newtype = static_cast<MPI_Datatype>(Utils::malloc(sizeof(struct mpifake_dtype)));
 
   ntype->format = LAM_DTHVECTOR;
 
@@ -478,7 +478,7 @@ int mpifake_sendrecv(void *_s, int scount, MPI_Datatype sdtype,
       mpifake_copy(s, r, &rcount, &rdtype);
     }
   } else {
-    packbuf = static_cast<char*>(malloc(scount * sdtype->size));
+    packbuf = static_cast<char*>(Utils::malloc(scount * sdtype->size));
     mpifake_pack(packbuf, s, scount, sdtype);
     mpifake_unpack(r, packbuf, rcount, rdtype);
     free(packbuf);

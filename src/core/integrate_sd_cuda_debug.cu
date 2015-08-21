@@ -182,7 +182,7 @@ void _cudaCheckError(const char *msg, const char * file, const int line)
 
 
 myTimer::myTimer(unsigned int _numCounters):numCounters(_numCounters),counters(NULL){
-  counters=(unsigned long long *)malloc(sizeof(unsigned long long)*numCounters);
+  counters=(unsigned long long *)Utils::malloc(sizeof(unsigned long long)*numCounters);
   assert(counters!=NULL);
   for (unsigned int i=0;i<numCounters;i++){
     counters[i]=0;

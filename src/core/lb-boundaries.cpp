@@ -375,7 +375,7 @@ void lb_init_boundaries() {
 int lbboundary_get_force(int no, double* f) {
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
-  double* forces = (double *) malloc(3*n_lb_boundaries*sizeof(double));
+  double* forces = (double *) Utils::malloc(3*n_lb_boundaries*sizeof(double));
   
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined (LB_BOUNDARIES_GPU) && defined (LB_GPU)
