@@ -797,8 +797,13 @@ AC_CONFIG_FILES([
 	doc/tutorials/00-building_espresso/Makefile
 	doc/tutorials/01-lennard_jones/Makefile 
 	doc/tutorials/02-charged_system/Makefile 
+<<<<<<< HEAD
 	doc/tutorials/03-object_in_fluid/Makefile 
 	doc/tutorials/06-active_matter/Makefile 
+=======
+	doc/tutorials/03-object_in_fluid/Makefile
+    doc/tutorials/04-lattice_boltzmann/Makefile 
+>>>>>>> 5dfc2d9... Added LB tutorial and adapted the build machinery for the 'make tutorial' to work with the new one.
 	doc/latexit.sh
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
