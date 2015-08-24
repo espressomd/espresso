@@ -1204,13 +1204,15 @@ void write_wang_landau_results_to_file(char* full_path_to_output_filename){
 
 		for(int flattened_index=0;flattened_index<current_wang_landau_system.len_histogram;flattened_index++){
 			//unravel index
-			int unraveled_index[current_wang_landau_system.nr_collective_variables];
-			unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
-			//use unraveled index
-			for(int i=0;i<current_wang_landau_system.nr_collective_variables;i++){
-				fprintf(pFile, "%f ",unraveled_index[i]*current_wang_landau_system.collective_variables[i]->delta_CV+current_wang_landau_system.collective_variables[i]->CV_minimum);
+			if(abs(current_wang_landau_system.wang_landau_potential[flattened_index]-current_wang_landau_system.double_fill_value)>1){ //only output data if they are not equal to current_reaction_system.double_fill_value. This if ensures that for the energy observable not allowed energies in the multidimensional wang landau potential are not printed out
+				int unraveled_index[current_wang_landau_system.nr_collective_variables];
+				unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
+				//use unraveled index
+				for(int i=0;i<current_wang_landau_system.nr_collective_variables;i++){
+					fprintf(pFile, "%f ",unraveled_index[i]*current_wang_landau_system.collective_variables[i]->delta_CV+current_wang_landau_system.collective_variables[i]->CV_minimum);
+				}
+				fprintf(pFile, "%f \n", current_wang_landau_system.wang_landau_potential[flattened_index]);
 			}
-			fprintf(pFile, "%f \n", current_wang_landau_system.wang_landau_potential[flattened_index]);
 		}
 
 		fclose(pFile);
