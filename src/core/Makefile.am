@@ -19,13 +19,20 @@
 
 EXTRA_DIST =
 CLEANFILES =
+SUBDIRS =
 if UNIT_TESTS
-SUBDIRS = unit_tests
+SUBDIRS += unit_tests
 endif
 
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 lib_LTLIBRARIES = libEspresso.la
+SUBDIRS+= shapes
+
+# Objects from Subdirs
+libEspresso_la_LIBADD = \
+	shapes/libEspressoShapes.la
+
 # List the sources of the Espresso binary here
 # config-features.cpp must be at the beginning so that it is compiled first
 libEspresso_la_SOURCES = \
@@ -110,7 +117,7 @@ libEspresso_la_SOURCES = \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
-	RunningAverage.cpp RunningAverage.hpp
+	RunningAverage.cpp RunningAverage.hpp \
 	Vatiant.hpp Variant.cpp \
 	Vector.hpp \
 	ScriptObject.hpp \
@@ -118,9 +125,6 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	shapes/Shape.cpp shapes/Shape.hpp \
-	shapes/ShapeList.cpp shapes/ShapeList.hpp \
-	shapes/Wall.hpp shapes/Wall.cpp \
 	constraints/Constraint.cpp constraints/Constraint.hpp \
 	constraints/GeometryConstraint.hpp constraints/GeometryConstraint.cpp \
 	constraints/InteractionConstraint.hpp constraints/InteractionConstraint.cpp \
@@ -287,7 +291,7 @@ $(LOFILES): %.lo: %.cu
 		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
-libEspresso_la_LIBADD = $(LOFILES)
+libEspresso_la_LIBADD += $(LOFILES)
 EXTRA_DIST += $(CUDA_SOURCE_FILES) $(CUDA_HEADER_FILES)
 CLEANFILES += $(LOFILES)
 

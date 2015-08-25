@@ -783,6 +783,7 @@ AC_CONFIG_FILES([
 	config/myconfig-sample-header.hpp
 	src/Makefile
 	src/core/Makefile
+        src/core/shapes/Makefile
 	src/tcl/Makefile
 	src/python/espressomd/Makefile
 	src/core/unit_tests/Makefile
