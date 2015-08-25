@@ -641,6 +641,61 @@ ensemble, as well as with the Langevin thermostat and the modified Andersen
 barostat for NVT and NPT simulations, respectively.  See \cite{bereau15} for
 more details.
 
+\section{Reaction Ensemble}
+The reaction ensemble\cite{smith1994reaction} allows to simulate chemical reactions especially with varying particle numbers.  Therefore it is similar to the grand canonical ensemble however it applies some further restrictions since the particle numbers are not allowed to fluctuate arbitrarily. Arbitrary chemical reactions can be simulated with the reaction ensemble as long as you know the educts and products of the reaction as well as the equilibrium constant of the reaction. Currently only the version of the reaction ensemble at constant volume and constant temperature is implemented (the version at constant pressure and constant temperature is not implemented). Note that the method also only allows to obtain static observables since the particle dynamics are changed by the Monte Carlo moves of the method.
+Since you might be interested in thermodynamic properties of a reacting system you may use the Wang-Landau algorithm\cite{wang2001efficient} to obtain them. Here the 1/t Wang-Landau algorithm\cite{belardinelli2007fast} is implemented since it does not suffer from systematic errors.
+
+\newescommand[metadynamics]{metadynamics}
+
+\begin{essyntax}
+  \variant{1} reaction\_ensemble
+  \variant{2} reaction\_ensemble add equilibrium_constant \var{K} educt\_types \var{list\_educt\_types} educt_coefficients \var{list\_educt\_coefficients} product\_types \var{list\_product\_types} product\_coefficients \var{list\_product\_coefficients}
+  \variant{3} reaction\_ensemble standard\_pressure\_in\_simulation\_units \var{desired\_pressure\_at\_which\_reactions\_occur}
+  \variant{4} reaction\_ensemble set\_default\_charge\_of\_type \var{type} \var{charge}
+  \variant{5} reaction\_ensemble set\_water\_type \var{type}
+  \variant{6} reaction\_ensemble length\_scales real \var{real\_length\_in\_meters} simulation \var{corresponding\_length\_in\_simulation\_units}
+  \variant{7} reaction\_ensemble check (optional)
+  \variant{8} reaction\_ensemble wang_landau add degree\_of\_association associated\_type \var{associated\_type} min \var{min\_value} max \var{max\_value} corresponding\_acid\_types \var{list\_of\_corresponding\_types}
+  \variant{9} reaction\_ensemble wang\_landau add energy filename \var{energy\_boundary\_filename} delta \var{Delta\_E}
+  \variant{10} reaction\_ensemble wang\_landau initialize
+  \variant{11} reaction\_ensemble wang\_landau final\_wang\_landau\_parameter \var{final\_wang\_landau\_parameter}
+  \variant{12} reaction\_ensemble wang\_landau full\_path\_to\_output\_filename \var{full\_path\_to\_output\_filename}
+  \variant{13} reaction\_ensemble wang\_landau update\_maximum\_and\_minimum\_energies\_at\_current\_state
+  \variant{14} reaction\_ensemble wang\_landau write\_out\_preliminary\_energy\_run\_results \var{energy\_boundary\_filename}
+  \variant{15} reaction_ensemble wang_landau \var{wang\_landau\_relaxation\_setps} 
+  \variant{16} reaction\_ensemble [wang\_landau] do
+
+  Required features: REACTION\_ENSEMBLE
+\end{essyntax}
+Note: if the commands are used they should be used in this order (except of the last two), since the implementation in the tcl interface is sensitive to the order of the arguments of the reaction\_ensemble command. Further note that an equilibrium reaction always has a forward and a backward reaction. Each of them has to be provided via \variant{3}.
+
+\begin{arguments}
+\item[\var{K}] dimensionless equilibrium constant of the reaction (note this is not necessarily the equilibrium constant from the law of mass action, but needs to be converted to the dimensionless equilibrium constant $K=\exp(-\beta \Delta G)$).
+\item[\var{list\_educt\_types}] a list of educt types of the reaction.
+\item[\var{list\_educt\_coefficients}] a list of the educt coefficients of the reaction that correspond to the product types.
+\item[\var{list\_product\_types}] a list of product types of the reaction.
+\item[\var{list\_product\_coefficients}] a list of the product coefficients of the reaction that correspond to the product types.
+\item[\var{desired\_pressure\_at\_which\_reactions\_occur}] the pressure in simulation units where the reactions should occur. This is an input parameter of the reaction ensemble.
+\item[\var{type}] a type id.
+\item[\var{charge}] a charge that corresponds to the previously given \var{type}.
+\item[\var{water\_type}] type id of ghost water particles that are only there to make the implementation easy.
+  boundaries of the reaction coordinate interval.
+\item[\var{real\_length\_in\_meters}] an arbitrary lengh in meters
+\item[\var{corresponding\_length\_in\_simulation\_units}] corresponding length of \var{real\_length\_in\_meters} in simulation units
+\item[\var{associated\_type}] type id of the associated type when calculating the degree of association
+\item[\var{min\_value}] the minimum value of the range of the degree of association which should be sampled
+\item[\var{max\_value}] the maximum value of the range of the degree of association which should be sampled
+\item[\var{list\_of\_corresponding\_types}] 
+\item[\var{energy\_boundary\_filename}] filename of file that contains the energy boundaries. This file has to be obtained before being able to run a simulation with the energy as collective variable.
+\item[\var{Delta\_E}] discretization distance of the energy when binning it in the process of using it as a collective variable.
+\item[\var{final\_wang\_landau\_parameter}] Wang-Landau parameter at which the simulation should stop.
+\item[\var{full\_path\_to\_output\_filename}] Filename of the file that contains the Wang-Landau potential.
+\item[\var{wang\_landau\_relaxation\_setps}] For a faster convergence of the Wang-Landau algorithm you might provide the number of relaxation steps that should be performed before setting a new Wang-Landau potential hill. However if chosen too big this might drive you too far out of equilibrium. Choose this parameter rater small. The default value is 20.
+
+Required features: REACTION_ENSEMBLE
+\end{arguments}
+Note that \variant{6} has to be called for each type that occurs in the reaction system individually. Use \variant{7} and \variant{8} only when using implicit water (i.e. a Langevin thermostat or similar) and not with explicit water in the simulation box. If you use explicit water the water\_type may not be provided!
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"
