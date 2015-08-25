@@ -4,7 +4,7 @@
 namespace Constraints {
 
 	void GeometryConstraint::set_shape() {
-		m_shape = Shapes::list[m_shape_id];
+          m_shape = Shapes::List[m_shape_id];
 	}
 
   void GeometryConstraint::reflect_particle(Particle *p, const double *distance_vector, const double *folded_pos) {

@@ -120,6 +120,7 @@ libEspresso_la_SOURCES = \
 	PdbParser.cpp PdbParser.hpp \
 	shapes/Shape.cpp shapes/Shape.hpp \
 	shapes/ShapeList.cpp shapes/ShapeList.hpp \
+	shapes/Wall.hpp shapes/Wall.cpp \
 	constraints/Constraint.cpp constraints/Constraint.hpp \
 	constraints/GeometryConstraint.hpp constraints/GeometryConstraint.cpp \
 	constraints/InteractionConstraint.hpp constraints/InteractionConstraint.cpp \

@@ -28,16 +28,7 @@
 
 namespace Shapes {
 
-  int Wall::calculate_dist(const double *ppos, double *dist, double *vec)
-  {
-    int i;
-
-    *dist = -d;
-    for(i=0;i<3;i++) *dist += ppos[i]*n[i];
-  
-    for(i=0;i<3;i++) vec[i] = n[i] * *dist;
-    return 0;
-  }
+  ShapeFactory &sf = ShapeFactory::Instance();
 
   int Sphere::calculate_dist(const double *ppos, double *dist, double *vec)
   {

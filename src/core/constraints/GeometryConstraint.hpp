@@ -27,7 +27,7 @@ namespace Constraints {
     const Shapes::Shape &constget_shape() const { return *m_shape; }
   protected:
     int m_shape_id;
-    Shapes::pointer_type m_shape;
+    Shapes::Shape *m_shape;
   };
 };
 

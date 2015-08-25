@@ -2,29 +2,30 @@
 #define __OBJECTCONTAINER_HPP
 
 /** Keep a enumerated list of T objects, managed by the class. 
-    T needs to be copy-constructible.
- */
+*/
 
 #include <map>
 #include <set>
 
 template<class T>
-class ObjectContainer : public std::map<int, T> {
+class ObjectContainer {
 public:
   ObjectContainer() {
     m_free_indices.insert(0);
     m_free_indices.insert(1);
   }
-  int add(const T& c) {
+  int add(T* c) {
     const int ind = get_index();
-    std::map<int, T>::insert(std::pair<int, T>(ind, c));
+    m_container.insert(std::pair<int, T*>(ind, c));
     return ind;
   }
   void remove(int i) {
-    std::map<int, T>::erase(i);
+    m_container.erase(i);
     m_free_indices.insert(i);
   }
+  T* operator[](int i) { return m_container[i]; }
 private:
+  std::map<int, T*> m_container;
   std::set<int> m_free_indices;
   int get_index() {
     /** Get lowest free index */

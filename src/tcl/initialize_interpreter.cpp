@@ -64,8 +64,9 @@
 #include "actor/HarmonicOrientationWell_tcl.hpp"
 #include "minimize_energy_tcl.hpp"
 #include "h5mdfile_tcl.hpp"
-#include "TclCommand.hpp"
+#include "TclScriptObject.hpp"
 #include "shapes/Shape.hpp"
+#include "shapes/ShapeList.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -258,13 +259,15 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 
-
-#ifdef CONSTRAINTS
-  Shapes::Wall *wall = new Shapes::Wall();
-  TclCommand *shape_wall_tcl = new TclCommand(wall, interp);
-  shape_wall_tcl->create_command();
-#endif
-
+  int id;
+  try {
+    id = Shapes::List.add("wall");
+  } catch(std::string &e) {
+    printf("exception: %s\n", e.c_str());
+  }
+  Shapes::Shape *wall = Shapes::List[id];
+  TclScriptObject *shape_wall_tcl = new TclScriptObject(wall, interp);
+  shape_wall_tcl->create_command("wall");
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

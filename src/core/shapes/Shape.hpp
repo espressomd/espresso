@@ -24,6 +24,7 @@
 
 #include <string>
 #include "ScriptObject.hpp"
+#include "Factory.hpp"
 
 using namespace std;
 
@@ -32,39 +33,7 @@ namespace Shapes {
     virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
     /* Human readable name of the shape. */
     virtual const std::string name() const { return std::string("Shape"); }
-  };
-
-  struct Wall : public Shape {
-    virtual const std::string name() const { return std::string("Wall"); }
-    int calculate_dist(const double *ppos, double *dist, double *vec);  
-
-    Parameters get_parameters() {
-      Parameters p;
-
-      p["normal"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
-      p["d"] = Parameter(Variant::DOUBLE, true);
-
-      p["normal"] = std::vector<double>(n, n+3);
-      p["normal"].set = false;
-      p["d"] = d;
-      p["d"].set = false;
-      
-      return p;
-    }
-
-    void set_parameters(const Parameters &p) {
-      d = p.at("d").value;
-
-      std::vector<double> v = p.at("normal").value;
-      std::copy(v.begin(), v.end(), n);
-
-      printf("d = %e, n = %e %e %e\n", d, n[0], n[1], n[2]);
-    }
-    
-    /** normal vector on the plane. */
-    double n[3];
-    /** distance of the wall from the origin. */
-    double d;
+    static bool registered;
   };
 
   struct Sphere : public Shape {
@@ -209,6 +178,7 @@ namespace Shapes {
     double pos[3];
   };
 
-}
+  typedef Factory<Shape> ShapeFactory;
 
+}
 #endif
