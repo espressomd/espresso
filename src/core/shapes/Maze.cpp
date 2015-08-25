@@ -24,6 +24,69 @@
 using namespace std;
 
 namespace Shapes {
+  int Maze::calculate_dist(const double *ppos, double *dist, double *vec)
+  {
+    int i,min_axis,cursph[3],dim;
+    double diasph,fac,c_dist,sph_dist,cyl_dist,temp_dis;
+    double sph_vec[3],cyl_vec[3];
 
+    dim=(int) this->dim;
+    diasph = box_l[0]/nsphere;
+
+    /* First determine the distance to the sphere */
+    c_dist=0.0;
+    for(i=0;i<3;i++) {
+      cursph[i] = (int) (ppos[i]/diasph);
+      sph_vec[i] = (cursph[i]+0.5) * diasph  - (ppos[i]);
+      c_dist += SQR(sph_vec[i]);
+    }
+    c_dist = sqrt(c_dist);
+    sph_dist = sphrad - c_dist;
+    fac = sph_dist / c_dist;
+    for(i=0;i<3;i++) cyl_vec[i] = sph_vec[i];
+    for(i=0;i<3;i++) sph_vec[i] *= fac;
+  
+    /* Now calculate the cylinder stuff */
+    /* have to check all 3 cylinders */
+    min_axis=2;
+    cyl_dist=sqrt(cyl_vec[0]*cyl_vec[0]+cyl_vec[1]*cyl_vec[1]);
+  
+    if(dim > 0 ){
+      temp_dis=sqrt(cyl_vec[0]*cyl_vec[0]+cyl_vec[2]*cyl_vec[2]);
+      if ( temp_dis < cyl_dist) {
+        min_axis=1;
+        cyl_dist=temp_dis;
+      }
+
+      if(dim > 1 ){
+        temp_dis=sqrt(cyl_vec[1]*cyl_vec[1]+cyl_vec[2]*cyl_vec[2]);
+        if ( temp_dis < cyl_dist) {
+          min_axis=0;
+          cyl_dist=temp_dis;
+        }
+      }
+    }
+    cyl_vec[min_axis]=0.;
+  
+    c_dist=cyl_dist;
+    cyl_dist = cylrad - c_dist;
+    fac = cyl_dist / c_dist;
+    for(i=0;i<3;i++) cyl_vec[i] *= fac;
+  
+    /* Now decide between cylinder and sphere */
+    if ( sph_dist > 0 ) {
+      if ( sph_dist>cyl_dist ) {
+        *dist = sph_dist;
+        for(i=0;i<3;i++) vec[i] = sph_vec[i];
+      } else {
+        *dist = cyl_dist;
+        for(i=0;i<3;i++) vec[i] = cyl_vec[i];  
+      }
+    } else {
+      *dist = cyl_dist;
+      for(i=0;i<3;i++) vec[i] = cyl_vec[i];  
+    }
+    return 0;
+  }
 }
 

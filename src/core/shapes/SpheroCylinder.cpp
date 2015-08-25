@@ -24,6 +24,42 @@
 using namespace std;
 
 namespace Shapes {
+  int SpheroCylinder::calculate_dist(const double *ppos, double *dist, double *vec)
+  {
+    int i;
+    double d = 0.0;
+    double ppos_local[3];
+
+    for(i = 0; i < 3; i++) {
+      ppos_local[i] = ppos[i] - pos[i];
+      d += ppos_local[i] * axis[i];
+    }
+
+    if(abs(d) >= length) {
+      *dist = 0.0;
+    
+      for(i = 0; i < 3; i++) {
+        vec[i] = ppos_local[i] - length * axis[i] * sign(d);
+        *dist += vec[i]*vec[i];
+      }
+
+      *dist = sqrt(*dist);
+    
+      if(*dist != 0.0)
+        for(i = 0; i < 3; i++)
+          vec[i] /= *dist;
+    
+      *dist -= rad;
+
+      for(i = 0; i < 3; i++)
+        vec[i] *= *dist;
+
+      *dist *= direction;
+    }
+    else
+      Cylinder::calculate_dist(ppos, dist, vec);
+    return 0;
+  }
 
 }
 

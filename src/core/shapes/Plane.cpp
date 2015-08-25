@@ -24,6 +24,29 @@
 using namespace std;
 
 namespace Shapes {
+  int Plane::calculate_dist(const double* ppos, double *dist, double *vec)
+  {
+    int i;
+    double c_dist_sqr,c_dist;
+  
+    c_dist_sqr=0.0;
+    for(i=0;i<3;i++) {
+      if(pos[i] >= 0) {
+        vec[i] = pos[i] - ppos[i];
+        c_dist_sqr += SQR(vec[i]);
+      }else{
+        vec[i] = 0.0;
+        c_dist_sqr += SQR(vec[i]);
+      }
+    }
+    c_dist = sqrt(c_dist_sqr);
+    *dist = c_dist;
 
+  
+    for(i=0;i<3;i++) {
+      vec[i] *= -1;
+    }
+    return 0;
+  }
 }
 

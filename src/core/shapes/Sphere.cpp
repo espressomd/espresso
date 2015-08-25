@@ -24,6 +24,30 @@
 using namespace std;
 
 namespace Shapes {
+  int Sphere::calculate_dist(const double *ppos, double *dist, double *vec)
+  {
+    int i;
+    double fac,  c_dist;
 
+    c_dist=0.0;
+    for(i=0;i<3;i++) {
+      vec[i] = pos[i] - ppos[i];
+      c_dist += SQR(vec[i]);
+    }
+    c_dist = std::sqrt(c_dist);
+  
+    if ( direction == -1 ) {
+      /* apply force towards inside the sphere */
+      *dist = rad - c_dist;
+      fac = *dist / c_dist;
+      for(i=0;i<3;i++) vec[i] *= fac;
+    } else {
+      /* apply force towards outside the sphere */
+      *dist = c_dist - rad;
+      fac = *dist / c_dist;
+      for(i=0;i<3;i++) vec[i] *= -fac;
+    }
+    return 0;
+  }
 }
 
