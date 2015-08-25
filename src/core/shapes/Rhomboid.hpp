@@ -19,25 +19,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPE_HPP
-#define __SHAPE_HPP
+#ifndef __RHOMBOID_HPP
+#define __RHOMBOID_HPP
 
-#include <string>
-#include "ScriptObject.hpp"
-#include "Factory.hpp"
-
-using namespace std;
+#include "Shape.hpp"
 
 namespace Shapes {
-  struct Shape : public ScriptObject {
-    virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
-    /* Human readable name of the shape. */
-    virtual const std::string name() const { return std::string("Shape"); }
+  struct Rhomboid : public Shape {
+    virtual const std::string name() const { return std::string("Rhomboid"); }
+    int calculate_dist(const double *ppos, double *dist, double *vec);
+    /** corner of the rhomboid */
+    double pos[3];
+    /** edges adjacent to the corner */
+    double a[3];
+    double b[3];
+    double c[3];
+    /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
+    double direction;
   };
-
-
-
-  typedef Factory<Shape> ShapeFactory;
-
-}
-#endif
+};

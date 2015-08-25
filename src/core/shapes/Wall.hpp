@@ -27,7 +27,6 @@
 namespace Shapes {
   struct Wall : public Shape {
     virtual const std::string name() const { return std::string("Wall"); }
-    static bool registered;
     int calculate_dist(const double *ppos, double *dist, double *vec);  
 
     Parameters get_parameters();

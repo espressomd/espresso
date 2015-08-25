@@ -19,25 +19,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPE_HPP
-#define __SHAPE_HPP
+#ifndef __CYLINDER_HPP
+#define __CYLINDER_HPP
 
-#include <string>
-#include "ScriptObject.hpp"
-#include "Factory.hpp"
-
-using namespace std;
+#include "Shape.hpp"
 
 namespace Shapes {
-  struct Shape : public ScriptObject {
-    virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
-    /* Human readable name of the shape. */
-    virtual const std::string name() const { return std::string("Shape"); }
+  struct Cylinder : public Shape {
+    virtual const std::string name() const { return std::string("Cylinder"); }
+    virtual int calculate_dist(const double *ppos, double *dist, double *vec);
+
+    /** center of the cylinder. */
+    double pos[3];
+    /** Axis of the cylinder .*/
+    double axis[3];
+    /** cylinder radius. */
+    double rad;
+    /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+    double length;
+    /** cylinder direction. (+1 outside -1 inside interaction direction)*/
+    double direction;
   };
-
-
-
-  typedef Factory<Shape> ShapeFactory;
-
-}
-#endif
+};

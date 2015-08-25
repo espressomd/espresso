@@ -19,25 +19,32 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPE_HPP
-#define __SHAPE_HPP
+#ifndef __STOMATOCYTE_HPP
+#define __STOMATOCYTE_HPP
 
-#include <string>
-#include "ScriptObject.hpp"
-#include "Factory.hpp"
-
-using namespace std;
+#include "Shape.hpp"
 
 namespace Shapes {
-  struct Shape : public ScriptObject {
-    virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
-    /* Human readable name of the shape. */
-    virtual const std::string name() const { return std::string("Shape"); }
+  struct Stomatocyte : public Shape {
+    virtual const std::string name() const { return std::string("Stomatocyte"); }
+    int calculate_dist(const double *ppos, double *dist, double *vec);
+
+    /** Stomatocyte position. */
+    double position_x;
+    double position_y;
+    double position_z;
+
+    /** Stomatocyte orientation. */
+    double orientation_x;
+    double orientation_y;
+    double orientation_z;
+
+    /** Stomatocyte dimensions. */
+    double outer_radius;
+    double inner_radius;
+    double layer_width;
+
+    /** Inside/Outside (+1 outside -1 inside interaction direction)*/
+    double direction;
   };
-
-
-
-  typedef Factory<Shape> ShapeFactory;
-
-}
-#endif
+};

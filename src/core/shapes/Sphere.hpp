@@ -19,25 +19,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPE_HPP
-#define __SHAPE_HPP
+#ifndef __SPHERE_HPP
+#define __SPHERE_HPP
 
-#include <string>
-#include "ScriptObject.hpp"
-#include "Factory.hpp"
-
-using namespace std;
+#include "Shape.hpp"
 
 namespace Shapes {
-  struct Shape : public ScriptObject {
-    virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
-    /* Human readable name of the shape. */
-    virtual const std::string name() const { return std::string("Shape"); }
+  struct Sphere : public Shape {
+    virtual const std::string name() const { return std::string("Sphere"); }
+    int calculate_dist(const double *ppos, double *dist, double *vec);
+
+    double pos[3];
+    double rad;
+    double direction;
   };
-
-
-
-  typedef Factory<Shape> ShapeFactory;
-
-}
-#endif
+};

@@ -19,25 +19,23 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPE_HPP
-#define __SHAPE_HPP
+#ifndef __MAZE_HPP
+#define __MAZE_HPP
 
-#include <string>
-#include "ScriptObject.hpp"
-#include "Factory.hpp"
-
-using namespace std;
+#include "Shape.hpp"
 
 namespace Shapes {
-  struct Shape : public ScriptObject {
-    virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
-    /* Human readable name of the shape. */
-    virtual const std::string name() const { return std::string("Shape"); }
+  struct Maze : public Shape {
+    virtual const std::string name() const { return std::string("Maze"); }
+    int calculate_dist(const double *ppos, double *dist, double *vec);
+
+    /** number of spheres. */
+    double nsphere;
+    /** dimension of the maze. */
+    double dim;
+    /** sphere radius. */
+    double sphrad;
+    /** cylinder (connecting the spheres) radius*/
+    double cylrad;
   };
-
-
-
-  typedef Factory<Shape> ShapeFactory;
-
-}
-#endif
+};

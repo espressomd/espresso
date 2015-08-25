@@ -19,25 +19,27 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPE_HPP
-#define __SHAPE_HPP
+#ifndef __PORE_HPP
+#define __PORE_HPP
 
-#include <string>
-#include "ScriptObject.hpp"
-#include "Factory.hpp"
-
-using namespace std;
+#include "Shape.hpp"
 
 namespace Shapes {
-  struct Shape : public ScriptObject {
-    virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
-    /* Human readable name of the shape. */
-    virtual const std::string name() const { return std::string("Shape"); }
+  struct Pore : public Shape {
+    virtual const std::string name() const { return std::string("Pore"); }
+    int calculate_dist(const double *ppos, double *dist, double *vec);
+
+    /** center of the cylinder. */
+    double pos[3];
+    /** Axis of the cylinder .*/
+    double axis[3];
+    /** cylinder radius. */
+    double rad_left;
+    double rad_right;
+    double smoothing_radius;
+    /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+    double length;
+    double outer_rad_left;
+    double outer_rad_right;
   };
-
-
-
-  typedef Factory<Shape> ShapeFactory;
-
-}
-#endif
+};
