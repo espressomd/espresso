@@ -273,7 +273,6 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 
   try {
     TclScriptObjectManager<Shapes::Shape> *tclShapeManager = new TclScriptObjectManager<Shapes::Shape>(Shapes::List, interp);
-
     tclShapeManager->create_command("shapes");
   } catch (std::string &e) {
     printf("ShapeManager exception: %s\n", e.c_str());

@@ -32,13 +32,18 @@ namespace Shapes {
       p["d"] = Parameter(Variant::DOUBLE, true);
       init = true;
     }
+    printf("[\"normal\"].value.type() %d\n", p["normal"].value.type());
     return p;
   }
 
   Parameters Wall::get_parameters() {
-    Parameters p;
+    Parameters p = all_parameters();
 
-    p["normal"] = vector<double>(n, n+3);
+    printf("p[\"normal\"].value.type() %d\n", p["normal"].value.type());
+    printf("all_parameters()[\"normal\"].value.type() %d\n", all_parameters()["normal"].value.type());
+    for(int i = 0; i < 3; i++) {
+      p["normal"].value[i] = n[i];
+    }
     p["d"] = d;
       
     return p;
@@ -53,8 +58,9 @@ namespace Shapes {
         d = p["d"].value;
 
       if(it->first == "normal") {
-        vector<double> v = p["normal"].value;        
-        copy(v.begin(), v.end(), n);
+        for(int i = 0; i < 3; i++) {
+          n[i] = p["normal"].value[i];
+        }
       }
     }
   }

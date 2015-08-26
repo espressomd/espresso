@@ -10,6 +10,8 @@
 #include <type_traits>
 #endif
 
+#include <iostream>
+
 /** Tcl Interface for a ObjectManager<ScriptObject> */
 
 template<class T>
@@ -22,23 +24,36 @@ public:
   }
 
   void parse_from_string(std::list<std::string> &argv) {
+    std::cout << "TclScriptObjectManager::parse_from_string()" << std::endl;
+    std::cout << "|argv| = " << argv.size() << std::endl;
     switch(argv.size()) {
     case 0:
       /* @TODO: print all */
       break;
     case 1:
       {
-        if(argv.front() == "new") {
-          int id;
-          stringstream ss(argv.front());
-          ss >> id;
-          if(ss.fail()) {
-            throw string("usage()");
-          }
-          Tcl_AppendResult(interp, print_one(id).c_str(), 0);
-          break;
+        int id;
+        stringstream ss(argv.front());
+        ss >> id;
+        if(ss.fail()) {
+          throw string("usage()");
         } else {
-          Factory<T>::Instance().make(argv.front());
+          argv.pop_front();
+          Tcl_AppendResult(interp, print_one(id).append("\n").c_str(), 0);
+        }
+        break;
+
+      }
+    default:
+      {
+        if(argv.front() == "new") {
+          std::cout << "new" << std::endl;
+          argv.pop_front();
+          const int id = m_om.add(argv.front());
+          std::cout << "new id: " << id << std::endl;
+          argv.pop_front();
+          TclScriptObject(m_om[id], interp).parse_from_string(argv);
+          break;
         }
       }
     }
@@ -52,7 +67,7 @@ private:
   ObjectManager<T> &m_om;
 
   string print_one(int id) {
-    return TclScriptObject(m_om[id], interp).print_to_string();
+    return std::string(m_om.name(id)).append(" ").append(TclScriptObject(m_om[id], interp).print_to_string());
   }
 };
 

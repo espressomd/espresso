@@ -31,9 +31,8 @@ static int TclCommand_wrapper (ClientData data, Tcl_Interp *interp, int argc, ch
       Tcl_AppendResult(interp, err.c_str(), 0);
       return TCL_ERROR;
     }
-
+  } else {
+    Tcl_AppendResult(interp, p->print_to_string().c_str(), 0);
   }
-
-  Tcl_AppendResult(interp, p->print_to_string().c_str(), 0);  
   return TCL_OK;
 }

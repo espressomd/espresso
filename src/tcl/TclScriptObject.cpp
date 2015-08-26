@@ -1,4 +1,5 @@
 #include "TclScriptObject.hpp"
+#include <iostream>
 
 using namespace std;
 
@@ -14,6 +15,7 @@ string TclScriptObject::print_to_string() {
 
 
 void TclScriptObject::parse_from_string(list<string> &argv) {
+  cout << "TclScriptObject::parse_from_string()" << endl;
   Parameters p = m_so->get_parameters();
   for(list<string>::iterator it = argv.begin(); it != argv.end();) {
     string s = *it;

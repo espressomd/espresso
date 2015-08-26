@@ -8,6 +8,10 @@ class Variant {
 public:
   enum Type { NONE, INT, DOUBLE, STRING, INT_VECTOR, DOUBLE_VECTOR };
   Variant() : m_mem(0) {  m_type = NONE; }
+  Variant(Type t) {
+    m_type = t;
+    init_mem();
+  }
   Variant(const int v) : Variant() {
     construct_from<int>(v);
     m_type = INT;
@@ -64,10 +68,31 @@ public:
     return *reinterpret_cast<std::vector<int> *>(m_mem);
   }
 
+  operator int*() const {
+    if(m_type != INT_VECTOR)
+      throw std::string("Variant is not an INT_VECTOR\n");
+    return &(*(reinterpret_cast<std::vector<int> *>(m_mem)->begin()));
+  }
+
   operator std::vector<double>&() const {
     if(m_type != DOUBLE_VECTOR)
       throw std::string("Variant is not an DOUBLE_VECTOR\n");
     return *reinterpret_cast<std::vector<double> *>(m_mem);
+  }
+
+  operator double*() const {
+    if(m_type != DOUBLE_VECTOR)
+      throw std::string("Variant is not an DOUBLE_VECTOR\n");
+    return &(*(reinterpret_cast<std::vector<double> *>(m_mem)->begin()));
+  }
+
+  double &operator[](int i) {
+    if(m_type != DOUBLE_VECTOR)
+      throw std::string("Variant is not an DOUBLE_VECTOR\n");
+    std::vector<double> *d = reinterpret_cast<std::vector<double> *>(m_mem);
+    if(i >= d->size())
+      d->resize(i+1);
+    return (*d)[i];
   }
 
 private:
@@ -99,6 +124,28 @@ private:
     delete_mem();
     m_mem = reinterpret_cast<void *>(new T(v));
   }
+  void init_mem() {
+    switch(m_type) {
+    case NONE:
+      break;
+    case INT:
+      m_mem = new int;
+      break;
+    case DOUBLE:
+      m_mem = new double;
+      break;
+    case STRING:
+      m_mem = new std::string;
+      break;
+    case  INT_VECTOR:
+      m_mem = new std::vector<int>;
+      break;
+    case DOUBLE_VECTOR:
+      m_mem = new std::vector<double>;
+      break;
+    }    
+  }
+
   void delete_mem() {
     switch(m_type) {
     case NONE:
