@@ -579,7 +579,6 @@ int get_flattened_index_wang_landau (double* current_state, double* collective_v
 			}
 		}
 	}
-	//printf("current state:nbar %f energy %f nbar_i %d E_i %d\n",current_state[0],current_state[1],individual_indices[0],individual_indices[1]);
 	//get flattened index from individual_indices
 	index=0; //this is already part of the algorithm to find the correct index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
@@ -589,7 +588,6 @@ int get_flattened_index_wang_landau (double* current_state, double* collective_v
 		}
 		index+=factor*individual_indices[collective_variable_i];
 	}
-	//printf("curr %f index %d individual_indices %d\n",current_state[0], index,individual_indices[0]);
 	return index;
 }
 
@@ -686,6 +684,7 @@ double calculate_degree_of_association(int index_of_current_collective_variable)
 	}
 	if(total_number_of_corresponding_acid==0){
 		printf("Have you forgotten to specify all corresponding acid types? Total particle number of corresponding acid type is zero\n");
+		fflush(stdout);
 	}
 	int num_of_associated_acid;
 	number_of_particles_with_type(current_collective_variable->associated_type,&num_of_associated_acid);
@@ -729,15 +728,15 @@ int initialize_wang_landau(){
 	for(int collective_variable_i=0; collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
 		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[collective_variable_i];
 		if(current_collective_variable->corresponding_acid_types!=NULL){
-			//found a collective variable which is not of the type of a degree_of_association
+			//found a collective variable which is of the type of a degree_of_association
 			current_collective_variable->delta_CV=calculate_delta_degree_of_association(collective_variable_i);
 		}
 		
 		int flattened_index_previous_run=0; //len_histogram of energy preparation run
 		if(current_collective_variable->energy_boundaries_filename!=NULL){
+			//found a collective variable which is not of the type of an energy
 			current_wang_landau_system.do_energy_reweighting=true;
 			energy_collective_variable_index=collective_variable_i;
-			//found a collective variable which is not of the type of an energy
 			//load energy boundaries from file
 			FILE* pFile;
 			pFile = fopen(current_collective_variable->energy_boundaries_filename,"r");
@@ -751,7 +750,8 @@ int initialize_wang_landau(){
 			char *line = NULL;
 			size_t len = 0;
 			ssize_t length_line;
-			char* delim="\t ";
+			const char* delim="\t ";
+			getline(&line, &len, pFile);//dummy call of getline to get rid of header line (first line in file)
 			while ((length_line = getline(&line, &len, pFile)) != -1) {
 				int counter_words_in_line=0;
 				for(char* word=strtok(line,delim);word!=NULL;word=strtok(NULL,delim)){
@@ -1078,7 +1078,7 @@ int do_reaction_wang_landau(){
 	}
 
 	//write out preliminary wang-landau potential results
-	if(current_wang_landau_system.monte_carlo_trial_moves%(2000)==0){
+	if(current_wang_landau_system.monte_carlo_trial_moves%(10000)==0){
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
 	return 0;	
@@ -1145,6 +1145,7 @@ bool can_refine_wang_landau_one_over_t(){
 
 void reset_histogram(){
 	printf("Histogram is flat. Refining. Previous wang_landau_parameter was %f.\n",current_wang_landau_system.wang_landau_parameter);
+	fflush(stdout);
 	for(int i=0;i<current_wang_landau_system.len_histogram;i++){
 		if(current_wang_landau_system.histogram[i]>=0){//checks for validity of index i (think of energy collective variables, in a cubic memory layout there will be indices which are not allowed by the energy boundaries. These values will be initalized with a negative fill value)
 			current_wang_landau_system.histogram[i]=0;
@@ -1196,6 +1197,7 @@ void write_wang_landau_results_to_file(char* full_path_to_output_filename){
 	pFile = fopen(full_path_to_output_filename,"w");
 	if (pFile==NULL){
 		printf("ERROR: Wang-Landau file could not be written\n");
+		fflush(stdout);
 	}else{
 		int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
 		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
@@ -1236,10 +1238,10 @@ int update_maximum_and_minimum_energies_at_current_state(){
 	int index=get_flattened_index_wang_landau_of_current_state();
 	
 	//update stored energy values
-	if (E_pot_current<current_wang_landau_system.minimum_energies_at_flat_index[index]|| abs(current_wang_landau_system.minimum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001 ) {
+	if (( E_pot_current/current_wang_landau_system.minimum_energies_at_flat_index[index]>0.9&& E_pot_current/current_wang_landau_system.minimum_energies_at_flat_index[index]<1)|| abs(current_wang_landau_system.minimum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001 ) {
 		current_wang_landau_system.minimum_energies_at_flat_index[index]=E_pot_current;
 	}
-	if (E_pot_current>current_wang_landau_system.maximum_energies_at_flat_index[index]) {
+	if ((E_pot_current/current_wang_landau_system.maximum_energies_at_flat_index[index]>1 && E_pot_current/current_wang_landau_system.maximum_energies_at_flat_index[index]<1.1) || abs(current_wang_landau_system.maximum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001) {
 		current_wang_landau_system.maximum_energies_at_flat_index[index]= E_pot_current;
 	}
 	
@@ -1252,7 +1254,9 @@ void write_out_preliminary_energy_run_results (char* full_path_to_output_filenam
 	pFile = fopen(full_path_to_output_filename,"w");
 	if (pFile==NULL){
 		printf("ERROR: Wang-Landau file could not be written\n");
+		fflush(stdout);
 	}else{
+		fprintf(pFile, "#nbar E_min E_max\n");
 		int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
 		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
 			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
