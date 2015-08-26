@@ -5,7 +5,7 @@
 #include "ObjectManager.hpp"
 
 namespace Shapes {
-  void fill_List();
+  void init_factory();
   extern  ObjectManager<Shape> List;
 }
 #endif

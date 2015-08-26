@@ -150,8 +150,8 @@ void on_program_start()
     make_particle_type_exist(0);
   }
 
-  /** Initialize shapes */
-  Shapes::fill_List();
+  /** Initialize shape factory */
+  Shapes::init_factory();
 }
 
 

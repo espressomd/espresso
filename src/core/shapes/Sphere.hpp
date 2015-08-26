@@ -28,6 +28,9 @@ namespace Shapes {
   struct Sphere : public Shape {
     virtual const std::string name() const { return std::string("Sphere"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
+    Parameters &all_parameters() const;
+    Parameters get_parameters();
+    void set_parameters(Parameters &p);
 
     double pos[3];
     double rad;

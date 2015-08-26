@@ -20,31 +20,40 @@
 */
 
 #include "Wall.hpp"
-#include <iostream>
 
 using namespace std;
 
 namespace Shapes {
+  Parameters &Wall::all_parameters() const {
+    static bool init = false;
+    static Parameters p;
+    if(!init) {
+      p["normal"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+      p["d"] = Parameter(Variant::DOUBLE, true);
+      init = true;
+    }
+    return p;
+  }
 
   Parameters Wall::get_parameters() {
     Parameters p;
 
-    p["normal"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
-    p["d"] = Parameter(Variant::DOUBLE, true);
-
     p["normal"] = vector<double>(n, n+3);
-    p["normal"].set = false;
     p["d"] = d;
-    p["d"].set = false;
       
     return p;
   }
 
   void Wall::set_parameters(Parameters &p) {
-    d = p["d"].value;
+    for(Parameters::iterator it = p.begin(); it != p.end(); ++it) {
+      if(it->first == "d")
+        d = p["d"].value;
 
-    vector<double> v = p["normal"].value;
-    copy(v.begin(), v.end(), n);
+      if(it->first == "normal") {
+        vector<double> v = p["normal"].value;
+        copy(v.begin(), v.end(), n);
+      }
+    }
   }
 
   int Wall::calculate_dist(const double *ppos, double *dist, double *vec)
@@ -58,4 +67,3 @@ namespace Shapes {
     return 0;
   }
 }
-

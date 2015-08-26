@@ -52,5 +52,31 @@ namespace Shapes {
     }
     return 0;
   }
+
+  Parameters &Sphere::all_parameters() const {
+    static bool init = false;
+    static Parameters p;
+    if(!init) {
+      p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+      p["radius"] = Parameter(Variant::DOUBLE, true);
+      init = true;
+    }
+    return p;
+  }
+
+  Parameters Sphere::get_parameters() {
+    Parameters p;
+    p["center"] = vector<double>(pos, pos+3);
+    p["radius"] = rad;
+
+    return p;
+  }
+
+  void Sphere::set_parameters(Parameters &p) {
+    rad = p["radius"].value;
+
+    const vector<double> v = p["normal"].value;
+    copy(v.begin(), v.end(), pos);
+  }
 }
 

@@ -65,6 +65,7 @@
 #include "minimize_energy_tcl.hpp"
 #include "h5mdfile_tcl.hpp"
 #include "TclScriptObject.hpp"
+#include "TclScriptObjectManager.hpp"
 #include "shapes/Shape.hpp"
 #include "shapes/ShapeList.hpp"
 
@@ -262,8 +263,22 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   int id;
   try {
     id = Shapes::List.add("wall");
+    Parameters p = Shapes::List[id]->all_parameters();
+    p["d"] = 5.0;
+    Shapes::List[id]->set_parameters(p);
+
+    //    id = Shapes::List.add("cylinder");
+    //    id = Shapes::List.add("sphere");
   } catch(std::string &e) {
-    printf("exception: %s\n", e.c_str());
+    printf("List exception: %s\n", e.c_str());
+  }
+
+  try {
+    TclScriptObjectManager<Shapes::Shape> *tclShapeManager = new TclScriptObjectManager<Shapes::Shape>(Shapes::List, interp);
+
+    tclShapeManager->create_command("shapes");
+  } catch (std::string &e) {
+    printf("ShapeManager exception: %s\n", e.c_str());
   }
   Shapes::Shape *wall = Shapes::List[id];
   TclScriptObject *shape_wall_tcl = new TclScriptObject(wall, interp);

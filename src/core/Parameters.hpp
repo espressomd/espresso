@@ -8,9 +8,11 @@ struct Parameter {
     type(_type), value(_value), n_elements(_n_elements), set(_set), required(_required) {}
   Parameter(Variant::Type _type, bool _req) : type(_type), value(), n_elements(0), set(false), required(_req) {}
   Parameter(Variant::Type _type, int _n, bool _req) : type(_type), value(), n_elements(_n), set(false), required(_req) {}
-  
+
+  /** @TODO: Should throw is types do not match */
   Parameter &operator=(const Variant& rhs)  {
-    value = rhs; set = true;
+    value = rhs;
+    set = true;
     return *this;
   }
   
@@ -28,5 +30,10 @@ public:
       ret &= (it->second.set | !it->second.required);
     }
     return ret;
-  }  
+  }
+  virtual void unset() {
+    for(iterator it = begin(); it != end(); ++it) {
+      it->second.set = false;
+    }
+  }
 };

@@ -93,5 +93,41 @@ namespace Shapes {
     return 0;
   }
 
+  Parameters &Cylinder::all_parameters() const {
+    static bool init = false;
+    static Parameters p;
+    if(!init) {
+      p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+      p["axis"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+      p["radius"] = Parameter(Variant::DOUBLE, true);
+      p["length"] = Parameter(Variant::DOUBLE, true);
+      p["direction"] = Parameter(Variant::DOUBLE, true);
+      init = true;
+    }
+    return p;
+  }
+
+  Parameters Cylinder::get_parameters() {
+    Parameters p;
+
+    p["center"] = vector<double>(pos, pos+3);
+    p["axis"] = vector<double>(axis, axis+3);
+    p["radius"] = rad;
+    p["length"] = length;
+    p["direction"] = direction;
+      
+    return p;
+  }
+
+  void Cylinder::set_parameters(Parameters &p) {
+    vector<double> v = p["center"].value;
+    copy(v.begin(), v.end(), pos);
+    v = p["axis"].value;
+    copy(v.begin(), v.end(), axis);
+
+    rad = p["radius"].value;
+    length = p["length"].value;
+    direction = p["direction"].value;
+  }
 }
 

@@ -111,6 +111,11 @@ void TclScriptObject::parse_from_string(list<string> &argv) {
       }
     }
   }
+  /** Drop unset */
+  for(Parameters::iterator it = p.begin(); it != p.end(); ++it)
+    if(!it->second.set)
+      p.erase(it);
+
   m_so->set_parameters(p);
 }
 

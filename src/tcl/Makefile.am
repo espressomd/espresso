@@ -85,7 +85,8 @@ libEspressoTcl_la_SOURCES = \
 	minimize_energy_tcl.cpp minimize_energy_tcl.hpp \
 	integrate_sd_tcl.cpp integrate_sd_tcl.hpp \
 	TclCommand.hpp TclCommand.cpp \
-	TclScriptObject.hpp TclScriptObject.cpp
+	TclScriptObject.hpp TclScriptObject.cpp \
+	TclScriptObjectManager.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \

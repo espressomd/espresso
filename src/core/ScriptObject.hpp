@@ -8,6 +8,7 @@ public:
   virtual const std::string name() const = 0;
   virtual void set_parameters(Parameters &parameters) = 0;
   virtual Parameters get_parameters() = 0;
+  virtual Parameters &all_parameters() const = 0;
 };
 
 #endif
