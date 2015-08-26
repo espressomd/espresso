@@ -43,3 +43,5 @@ namespace Shapes {
     double outer_rad_right;
   };
 };
+
+#endif

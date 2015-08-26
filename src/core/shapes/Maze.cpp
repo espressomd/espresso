@@ -20,6 +20,8 @@
 */
 
 #include "Maze.hpp"
+/* For box_l */
+#include "grid.hpp"
 
 using namespace std;
 

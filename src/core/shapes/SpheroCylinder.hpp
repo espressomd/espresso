@@ -31,3 +31,5 @@ namespace Shapes {
     int calculate_dist(const double *ppos, double *dist, double *vec);
   };
 };
+
+#endif

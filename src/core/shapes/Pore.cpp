@@ -20,6 +20,9 @@
 */
 
 #include "Pore.hpp"
+#include "utils.hpp"
+
+#include <cmath>
 
 using namespace std;
 
@@ -85,8 +88,8 @@ namespace Shapes {
      * the entrance of the pore in cylindrical coordinates*/
     c1_z = - (length - smoothing_radius);
     c2_z = + (length - smoothing_radius);
-    z_left = c1_z - sign(slope) * sqrt(slope*slope/(1+slope*slope))*smoothing_radius;
-    z_right = c2_z + sign(slope) * sqrt(slope*slope/(1+slope*slope))*smoothing_radius;
+    z_left = c1_z - Utils::sgn<double>(slope) * sqrt(slope*slope/(1+slope*slope))*smoothing_radius;
+    z_right = c2_z + Utils::sgn<double>(slope) * sqrt(slope*slope/(1+slope*slope))*smoothing_radius;
 
     c1_r = rad_left + slope * ( z_left + length ) +
       sqrt( smoothing_radius * smoothing_radius  - SQR( z_left - c1_z ) );

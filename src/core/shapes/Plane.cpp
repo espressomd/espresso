@@ -20,8 +20,11 @@
 */
 
 #include "Plane.hpp"
+#include <cmath>
 
 using namespace std;
+
+#define SQR(A) ((A)*(A))
 
 namespace Shapes {
   int Plane::calculate_dist(const double* ppos, double *dist, double *vec)

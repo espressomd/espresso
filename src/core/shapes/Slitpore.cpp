@@ -20,6 +20,13 @@
 */
 
 #include "Slitpore.hpp"
+/* For box_l */
+#include "grid.hpp"
+
+#include <cmath>
+
+#define SQR(A) ((A)*(A))
+
 
 using namespace std;
 

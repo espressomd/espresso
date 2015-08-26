@@ -20,6 +20,7 @@
 */
 
 #include "Stomatocyte.hpp"
+#include <cmath>
 
 using namespace std;
 

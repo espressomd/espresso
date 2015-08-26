@@ -144,6 +144,10 @@ namespace Utils {
   int sgn(T val) {
     return (T(0) < val) - (val < T(0));
   }
+  template <typename T>
+  T sqrt(T x) {
+    return x*x;
+  }
 }
 
 /*@}*/

@@ -37,3 +37,6 @@ namespace Shapes {
     double pore_length;
   };
 };
+
+#endif
+

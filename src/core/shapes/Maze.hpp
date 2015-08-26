@@ -39,3 +39,5 @@ namespace Shapes {
     double cylrad;
   };
 };
+
+#endif

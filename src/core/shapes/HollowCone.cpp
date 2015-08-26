@@ -21,6 +21,8 @@
 
 #include "HollowCone.hpp"
 
+#include <cmath>
+
 using namespace std;
 
 namespace Shapes {

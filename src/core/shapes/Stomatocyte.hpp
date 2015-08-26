@@ -48,3 +48,5 @@ namespace Shapes {
     double direction;
   };
 };
+
+#endif

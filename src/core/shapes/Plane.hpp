@@ -32,3 +32,5 @@ namespace Shapes {
     double pos[3];
   };
 };
+
+#endif

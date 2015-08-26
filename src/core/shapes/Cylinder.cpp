@@ -20,8 +20,11 @@
 */
 
 #include "Cylinder.hpp"
+#include <cmath>
 
 using namespace std;
+
+#define SQR(A) ((A)*(A))
 
 namespace Shapes {
   int Cylinder::calculate_dist(const double *ppos, double *dist, double *vec)

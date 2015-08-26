@@ -20,6 +20,8 @@
 */
 
 #include "SpheroCylinder.hpp"
+#include "utils.hpp"
+#include <cmath>
 
 using namespace std;
 
@@ -39,7 +41,7 @@ namespace Shapes {
       *dist = 0.0;
     
       for(i = 0; i < 3; i++) {
-        vec[i] = ppos_local[i] - length * axis[i] * sign(d);
+        vec[i] = ppos_local[i] - length * axis[i] * Utils::sgn<double>(d);
         *dist += vec[i]*vec[i];
       }
 

@@ -21,6 +21,8 @@
 
 #include "Rhomboid.hpp"
 
+#include <cmath>
+
 using namespace std;
 
 namespace Shapes {

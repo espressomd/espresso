@@ -20,8 +20,11 @@
 */
 
 #include "Sphere.hpp"
+#include <cmath>
 
 using namespace std;
+
+#define SQR(A) ((A)*(A))
 
 namespace Shapes {
   int Sphere::calculate_dist(const double *ppos, double *dist, double *vec)
@@ -34,7 +37,7 @@ namespace Shapes {
       vec[i] = pos[i] - ppos[i];
       c_dist += SQR(vec[i]);
     }
-    c_dist = std::sqrt(c_dist);
+    c_dist = sqrt(c_dist);
   
     if ( direction == -1 ) {
       /* apply force towards inside the sphere */
