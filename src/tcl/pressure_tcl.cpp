@@ -742,7 +742,7 @@ int tclcommand_analyze_parse_local_stress_tensor(Tcl_Interp *interp, int argc, c
   }
 
   /* Allocate a doublelist of bins to keep track of stress profile */
-  TensorInBin = (DoubleList *)malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  TensorInBin = (DoubleList *)Utils::malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
   if ( TensorInBin ) {
   /* Initialize the stress profile */
     for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {

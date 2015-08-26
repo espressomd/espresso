@@ -54,7 +54,7 @@ typedef struct {
 void galloc(void** ptr, size_t size) {
   if (!*ptr) {
     if (size > 0) {
-      *ptr = (void*) malloc(size);
+      *ptr = (void*) Utils::malloc(size);
     }
     else {
       printf("You cannot malloc to size 0\n");
@@ -62,7 +62,7 @@ void galloc(void** ptr, size_t size) {
   }
   else {
     if (size > 0) {
-      *ptr = (void*) realloc(*ptr, size);
+      *ptr = (void*) Utils::realloc(*ptr, size);
     }
     else {
       free(*ptr);

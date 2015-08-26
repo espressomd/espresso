@@ -31,7 +31,7 @@ void external_potential_pre_init() {
 
 
 int generate_external_potential(ExternalPotential** e) {
-  external_potentials = (ExternalPotential*) realloc(external_potentials,
+  external_potentials = (ExternalPotential*) Utils::realloc(external_potentials,
 		  (n_external_potentials+1) * sizeof(ExternalPotential));
   *e = &external_potentials[n_external_potentials];
   n_external_potentials++;
@@ -49,7 +49,7 @@ int external_potential_tabulated_init(int number, char* filename, int n_particle
     return ES_ERROR;
   strcpy((char*)&(e->filename), filename);
   external_potentials[number].type=EXTERNAL_POTENTIAL_TYPE_TABULATED;
-  external_potentials[number].scale = (double*) malloc(n_particle_types*sizeof(double));
+  external_potentials[number].scale = (double*) Utils::malloc(n_particle_types*sizeof(double));
   external_potentials[number].n_particle_types = n_particle_types;
   for (int i = 0; i < n_particle_types; i++) {
     external_potentials[number].scale[i]=scale[i];
@@ -164,7 +164,7 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   lattice->init(res, offset, halosize, dim);
   lattice->interpolation_type = INTERPOLATION_LINEAR;
 
-  char* line = (char*) malloc((3+dim)*ES_DOUBLE_SPACE);
+  char* line = (char*) Utils::malloc((3+dim)*ES_DOUBLE_SPACE);
   double pos[3];
   double f[3];
   int i;

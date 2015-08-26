@@ -73,17 +73,17 @@ libEspresso_la_SOURCES = \
 	molforces.cpp molforces.hpp \
 	mol_cut.cpp mol_cut.hpp \
 	nemd.cpp nemd.hpp \
-	npt.hpp \
+	npt.cpp npt.hpp \
 	nsquare.cpp nsquare.hpp \
 	particle_data.cpp particle_data.hpp \
 	polymer.cpp polymer.hpp \
-	polynom.hpp \
+	polynom.cpp polynom.hpp \
 	pressure.cpp pressure.hpp \
 	random.cpp random.hpp \
 	rattle.cpp rattle.hpp \
 	reaction.cpp reaction.hpp \
 	readpdb.cpp readpdb.hpp \
-	Ringbuffer.hpp \
+	Ringbuffer.cpp Ringbuffer.hpp \
 	rotate_system.cpp rotate_system.hpp \
 	rotation.cpp rotation.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
@@ -99,7 +99,7 @@ libEspresso_la_SOURCES = \
 	thermostat.cpp thermostat.hpp \
 	topology.cpp topology.hpp \
 	tuning.cpp tuning.hpp \
-	utils.hpp \
+	utils.cpp utils.hpp \
 	uwerr.cpp uwerr.hpp \
 	verlet.cpp verlet.hpp \
 	virtual_sites.cpp virtual_sites.hpp \
@@ -107,8 +107,8 @@ libEspresso_la_SOURCES = \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
-	Vector.hpp \
-	SystemInterface.hpp \
+	Vector.cpp Vector.hpp \
+	SystemInterface.cpp SystemInterface.hpp \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
@@ -216,7 +216,8 @@ CUDA_HEADER_FILES = \
 	integrate_sd_cuda.hpp \
 	integrate_sd_cuda_device.hpp \
 	integrate_sd_matrix.hpp \
-	fd-electrostatics.hpp
+	fd-electrostatics.hpp \
+	actor/DipolarDirectSum_cuda.hpp
 
 CUDA_SOURCE_FILES = \
 	cuda_init_cuda.cu \

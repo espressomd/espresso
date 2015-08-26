@@ -122,7 +122,7 @@ static int tclcommand_analyze_fluid_parse_densprof(Tcl_Interp *interp, int argc,
     return TCL_ERROR;
   }
 
-  profile = (double*) malloc(lblattice.grid[pdir]*node_grid[pdir]*sizeof(double));
+  profile = (double*) Utils::malloc(lblattice.grid[pdir]*node_grid[pdir]*sizeof(double));
 
   lb_master_calc_densprof(profile, pdir, x1, x2);
 
@@ -171,7 +171,7 @@ static int tclcommand_analyze_fluid_parse_velprof(Tcl_Interp *interp, int argc, 
 	return TCL_ERROR;
     }
 
-    velprof = (double*) malloc(box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
+    velprof = (double*) Utils::malloc(box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
     lb_master_calc_velprof(velprof, vcomp, pdir, x1, x2);
 

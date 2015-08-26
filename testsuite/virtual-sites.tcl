@@ -34,7 +34,7 @@ require_feature "LENNARD_JONES"
 require_feature "ROTATIONAL_INERTIA"
 
 puts "---------------------------------------------------------------"
-puts "- Testcase virtual-sites.tcl running on 1 nodes"
+puts "- Testcase virtual-sites.tcl running on [format %02d [setmd n_nodes]] nodes  -"
 puts "---------------------------------------------------------------"
 
 setmd box_l 10 10 10

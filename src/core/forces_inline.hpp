@@ -153,18 +153,9 @@ inline void init_local_particle_force(Particle *part) {
     // the particle's orientation axis
     if ( part->swim.swimming )
     {
-      if ( thermo_switch & THERMO_LANGEVIN )
-      {
-        part->f.f[0] += part->swim.f_swim * part->p.mass * part->r.quatu[0];
-        part->f.f[1] += part->swim.f_swim * part->p.mass * part->r.quatu[1];
-        part->f.f[2] += part->swim.f_swim * part->p.mass * part->r.quatu[2];
-      }
-      else
-      {
-        part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
-        part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
-        part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
-      }
+      part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
+      part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
+      part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
     }
 #endif
 
@@ -417,6 +408,9 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
 #ifdef INTER_RF
   add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
 #endif
+#ifdef INTER_DPD
+  add_inter_dpd_pair_force(p1,p2,ia_params,d,dist,dist2);
+#endif
 }
 
 inline void
@@ -473,10 +467,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef DPD
   /* DPD thermostat forces */
   if ( thermo_switch & THERMO_DPD ) add_dpd_thermo_pair_force(p1,p2,d,dist,dist2);
-#endif
-
-#ifdef INTER_DPD
-  if ( thermo_switch & THERMO_INTER_DPD ) add_inter_dpd_pair_force(p1,p2,ia_params,d,dist,dist2);
 #endif
 
   /***********************************************/

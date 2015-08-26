@@ -30,7 +30,6 @@
 #include "statistics.hpp"
 #include "energy.hpp"
 #include "pressure.hpp"
-#include "polymer.hpp"
 #include "imd.hpp"
 #include "random.hpp"
 #include "communication.hpp"

@@ -66,7 +66,7 @@ libEspressoTcl_la_SOURCES = \
 	pressure_tcl.cpp pressure_tcl.hpp \
 	random_tcl.cpp random_tcl.hpp \
 	reaction_tcl.cpp reaction_tcl.hpp \
-	rattle_tcl.cpp rattle_ tcl.hpp \
+	rattle_tcl.cpp rattle_tcl.hpp \
 	statistics_chain_tcl.cpp statistics_chain_tcl.hpp \
 	statistics_cluster_tcl.cpp statistics_cluster_tcl.hpp \
 	statistics_correlation_tcl.cpp statistics_correlation_tcl.hpp \

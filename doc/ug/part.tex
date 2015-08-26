@@ -817,7 +817,8 @@ All these examples do the same---making exact copies of particles 1 through 4.
   \variant{6}  
   constraint pore center \var{c_x} \var{c_y} \var{c_z} 
   axis \var{n_x} \var{n_y} \var{n_z} 
-  radius \var{rad} length \var{length} 
+  radius \var{rad} \opt{outer_radius \var{rad_S}} 
+  \opt{smoothing_radius \var{rad_S}} length \var{length} 
   type \var{id} 
 
   \variant{7}
@@ -926,7 +927,7 @@ with a dipole moment.
 
 The resulting surface in variant \variant{1} is a plane defined by the
 normal vector \var{n_x} \var{n_y} \var{n_z} and the distance
-\var{d} from the origin. The force acts in direction of the normal. 
+\var{d} from the origin (in the direction of the normal vector). The force acts in direction of the normal. 
 Note that the \var{d} describes the distance from the origin in units
 of the normal vector so that the product of $d$ and $n$ is a point on the
 surface. Therefore negative distances are quite common!
@@ -962,10 +963,17 @@ Variant \variant{6} sets up a cylindrical pore similar to variant
 \variant{3} with a center \var{c_x} \var{c_y} \var{c_z} and radius
 \var{rad}. The \var{length} parameter is \textbf{half} of the cylinder
 length. The \var{axis} is a vector along the cylinder axis, which is
-normalized in the program. The argument \codebox{radius \var{rad}} 
-can be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}}
-to obtain a pore with a conical shape and corresponding opening radii.
-The first radius is in the direction opposite to the axis vector.
+normalized in the program. Optionally the outer radius of the pore can
+be specified. By default this is (numerical) infinity and thus results in 
+an infinite wall with one pore. The argument \codebox{radius \var{rad}} can 
+be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}} to obtain a 
+pore with a conical shape and corresponding opening radii. The first radius 
+is in the direction opposite to the axis vector. The same applies for 
+\codebox{outer_radius \var{orad}} which can be replaced  with 
+\codebox{outer_radii \var{orad1} \var{orad2}}. Per default sharp edges are
+replaced by circles of unit radius. The radius of this smoothing can be set
+with the optional keyword \codebox{smoothing_radius}.
+
 
 Variant \variant{7} creates a stomatocyte shaped boundary. This command
 should be used with care. The position can be any point in the simulation

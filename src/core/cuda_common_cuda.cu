@@ -367,7 +367,8 @@ void copy_v_cs_from_GPU() {
 #endif
 
 void clear_energy_on_GPU() {
-  if ( !global_part_vars_host.communication_enabled || !global_part_vars_host.number_of_particles )
+  if ( !global_part_vars_host.communication_enabled)
+ // || !global_part_vars_host.number_of_particles )
     return;
   if (energy_device == NULL)
     cuda_safe_mem( cudaMalloc((void**) &energy_device, sizeof(CUDA_energy)) );
