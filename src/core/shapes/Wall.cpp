@@ -46,11 +46,14 @@ namespace Shapes {
 
   void Wall::set_parameters(Parameters &p) {
     for(Parameters::iterator it = p.begin(); it != p.end(); ++it) {
+      if(!it->second.set)
+        continue;
+
       if(it->first == "d")
         d = p["d"].value;
 
       if(it->first == "normal") {
-        vector<double> v = p["normal"].value;
+        vector<double> v = p["normal"].value;        
         copy(v.begin(), v.end(), n);
       }
     }

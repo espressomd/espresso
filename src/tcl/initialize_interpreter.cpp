@@ -267,8 +267,6 @@ static void tcl_register_commands(Tcl_Interp* interp) {
     p["d"] = 5.0;
     Shapes::List[id]->set_parameters(p);
 
-    //    id = Shapes::List.add("cylinder");
-    //    id = Shapes::List.add("sphere");
   } catch(std::string &e) {
     printf("List exception: %s\n", e.c_str());
   }
@@ -280,9 +278,6 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   } catch (std::string &e) {
     printf("ShapeManager exception: %s\n", e.c_str());
   }
-  Shapes::Shape *wall = Shapes::List[id];
-  TclScriptObject *shape_wall_tcl = new TclScriptObject(wall, interp);
-  shape_wall_tcl->create_command("wall");
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)
