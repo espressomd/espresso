@@ -704,15 +704,20 @@ AC_MSG_CHECKING([whether to build with h5md support])
 AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport]), , [with_h5md=no])
 AC_MSG_RESULT($with_h5md)
 if test .$with_h5md = .yes; then
-  ES_ADDPATH_CHECK_LIB(hdf5,H5open,,AC_MSG_FAILURE([could not link against the hdf5 library]),)
+  ES_ADDPATH_CHECK_LIB(hdf5,H5open,[hdf5_found=yes],[hdf5_found=no])
 
   ES_ADDPATH_CHECK_HEADER(hdf5.h, [], 
 		[AC_MSG_ERROR([hdf5 headers not found. Please add the include path to
                        CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/hdf5).])
 		]
 		,$extrapaths)
+AS_IF([test x$hdf5_found = xyes],[
+  AC_DEFINE(H5MD,[],[wether to build with h5mdsupport])]
+  )
+AS_IF([test x$hdf5_found = xno],[
+  AC_MSG_FAILURE([H5MD requested, but hdf5 library was not found!])]
+  )
 fi
-AM_CONDITIONAL(H5MD, [test x$with_h5md == xyes])
 cat <<EOF
 ****************************************************************
 *                   Other settings                             *
