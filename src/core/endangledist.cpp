@@ -101,11 +101,6 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clc
           *clconstr =  k;
         }
       }
-      /*fprintf(stdout,"  k=%d  clconstr=%d\n",k,*clconstr);*/
-<<<<<<< HEAD
-      break;
-=======
->>>>>>> 77559ba... fixed ambiguous pow-calls and warnings
     }
   }
   /*
