@@ -712,7 +712,7 @@ if test .$with_h5md = .yes; then
 		]
 		,$extrapaths)
 fi
-AM_CONDITIONAL(H5MD, [test x$with_h5md == xyes])
+AM_CONDITIONAL(H5MD, [test x$with_h5md = xyes])
 cat <<EOF
 ****************************************************************
 *                   Other settings                             *
