@@ -13,7 +13,7 @@
 #include "particle_data.hpp" //for particle creation, modification
 #include "statistics.hpp" //for distto
 #include "integrate.hpp" //for time_step
-#include <stdlib.h>  // qsort()
+#include <stdlib.h>  // for qsort()
 #include "thermostat.hpp" //for temperature
 #include <stdio.h> //for getline()
 #include "utils.hpp" // for PI
@@ -466,9 +466,10 @@ int create_particle(int desired_type){
 
 	//create random velocity vector
 	double random_vel_vec[3];
-	double mean_abs_velocity=sqrt(8*temperature/PI);
-	mean_abs_velocity=mean_abs_velocity*time_step; //scale for internal use in espresso
-	vec_random(random_vel_vec, mean_abs_velocity);
+	double mean_abs_velocity_of_ideal_gas=sqrt(8*temperature/PI);
+	mean_abs_velocity_of_ideal_gas=mean_abs_velocity_of_ideal_gas*time_step; //scale for internal use in espresso
+	double random_abs_velocity=mean_abs_velocity_of_ideal_gas/2.0+d_random()*mean_abs_velocity_of_ideal_gas; //choose velocity randomly within interval [mean_abs_velocity_of_ideal_gas/2,3/2mean_abs_velocity_of_ideal_gas], maybe this should be done more educated
+	vec_random(random_vel_vec, random_abs_velocity);
 	
 	double charge= (double) current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
 	double d_min=0;
@@ -827,7 +828,7 @@ int initialize_wang_landau(){
 
 //derived from 	generic_oneway_reaction()
 int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau_potential){
-	float volume = box_l[0]*box_l[1]*box_l[2];
+	float volume = box_l[0]*box_l[1]*box_l[2]; //since espresso uses cuboid boxes
 	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id];
 	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
@@ -854,6 +855,17 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		
 		return 0;
 	}
+	
+	
+	
+	int nr_collective_variables=2; // segfault here for non energy runs
+	double old_state[nr_collective_variables];
+	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+		old_state[CV_i]=current_wang_landau_system.collective_variables[CV_i]->determine_current_state_in_collective_variable_with_index(CV_i);	
+	}
+	
+	
+	
 	//calculate potential energy
 	double E_pot_old=calculate_current_potential_energy_of_system(0); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
 	
@@ -945,6 +957,17 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		}
 	}
 	
+	
+	
+	
+	double new_state[nr_collective_variables];
+	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
+		new_state[CV_i]=current_wang_landau_system.collective_variables[CV_i]->determine_current_state_in_collective_variable_with_index(CV_i);	
+	}
+	
+	
+	
+	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
 	//save new_state_index
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
@@ -972,17 +995,17 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 		bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr;
 	}
 	//determine the acceptance probabilities of the reaction move
-	//this is a bit nasty due to the energy collective variable case (storage array of the histogram and the wang_landau_potential values is "rectangular")
+	//this is a bit nasty due to the energy collective variable case (memory layout of storage array of the histogram and the wang_landau_potential values is "cuboid")
 	if(old_state_index>=0 && new_state_index>=0){
-		if(current_wang_landau_system.wang_landau_potential[new_state_index]>=0 &&current_wang_landau_system.wang_landau_potential[old_state_index]>=0 ){
+		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
 			bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 			//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
 		}else{
-			if(current_wang_landau_system.wang_landau_potential[new_state_index]>=0 &&current_wang_landau_system.wang_landau_potential[old_state_index]<0 )
+			if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]<0 )
 				bf=10;//this makes the reaction get accepted, since we found a state in Gamma
-			else if (current_wang_landau_system.wang_landau_potential[new_state_index]<0 &&current_wang_landau_system.wang_landau_potential[old_state_index]<0)
+			else if (current_wang_landau_system.histogram[new_state_index]<0 &&current_wang_landau_system.histogram[old_state_index]<0)
 				bf=10;//accept, in order to be able to sample new configs, which might lie in Gamma
-			else if(current_wang_landau_system.wang_landau_potential[new_state_index]<0 &&current_wang_landau_system.wang_landau_potential[old_state_index]>=0)
+			else if(current_wang_landau_system.histogram[new_state_index]<0 &&current_wang_landau_system.histogram[old_state_index]>=0)
 				bf=-10;//this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
 		}
 		
@@ -997,9 +1020,14 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	if ( d_random() < bf ) {
 		//accept
 		if(modify_wang_landau_potential==true&&new_state_index>=0 ){
+			// XXX added && abs(bf-(10))>0.0001 && abs(bf-(-10))>0.0001 since we produce outliners otherwise
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
 				current_wang_landau_system.histogram[new_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
+				
+//				if(abs(bf-(10))<0.001){
+//					printf("acc old state nbar %f Epot %f, new state new nbar %f old Epot %f, wl pot new %f \n",old_state[0], old_state[1], new_state[0], new_state[1], current_wang_landau_system.wang_landau_potential[new_state_index]);
+//				}
 			}
 		}
 
@@ -1012,9 +1040,18 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	} else {
 		//reject
 		if(modify_wang_landau_potential==true && old_state_index>=0){
+			// XXX added && abs(bf-(10))>0.0001 && abs(bf-(-10))>0.0001 since we produce outliners otherwise, seen when removing this with the print statements below
 			if(current_wang_landau_system.histogram[old_state_index]>=0){
 				current_wang_landau_system.histogram[old_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
+				
+//				if(abs(bf-(-10))<0.001){
+//					printf("rej old state nbar %f Epot %f, new state new nbar %f old Epot %f wlpot old %f\n",old_state[0], old_state[1], new_state[0], new_state[1], current_wang_landau_system.wang_landau_potential[old_state_index]);
+//					printf("old index %d new index %d \n",old_state_index, new_state_index);
+//					if(old_state_index>=0 && new_state_index>=0) {
+//						printf("histogram old %d, histogram new %d \n", current_wang_landau_system.histogram[old_state_index], current_wang_landau_system.histogram[new_state_index]);
+//					}
+//				}
 			}
 		}
 		//reverse reaction
