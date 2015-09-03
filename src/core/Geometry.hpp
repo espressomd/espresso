@@ -1,3 +1,5 @@
+#include "EspressoSystemInterface.hpp"
+
 class Geometry {
   public:
     void set_box_l(Vector3d x) {m_box_l =x;}
@@ -11,7 +13,4 @@ class Geometry {
     Vector3d m_my_left;
     Vector3d m_my_right;
 };
-
-extern Geometry* geometry;
-
 
