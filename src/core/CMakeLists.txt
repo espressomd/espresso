@@ -1,5 +1,4 @@
 
-find_package(CUDA)
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -gencode arch=compute_35,code=sm_35)
 
 file(GLOB libEspresso_SRC
