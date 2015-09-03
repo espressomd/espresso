@@ -106,14 +106,14 @@ int tclcommand_bin(ClientData cdata, Tcl_Interp *interp,
     /* check for the type of data */
     if (!ARG1_IS_DOUBLELIST(coords)) {
       int i, tmp_argc, parse_error = 0;
-      char  **tmp_argv;
+      const char  **tmp_argv;
       Tcl_ResetResult(interp);
       Tcl_SplitList(interp, argv[1], &tmp_argc, &tmp_argv);
       realloc_doublelist(&coords, coords.n = tmp_argc);
       realloc_doublelist(&data, data.n = tmp_argc);
       for(i = 0 ; i < tmp_argc; i++) {
 	int tmp_argc2;
-	char  **tmp_argv2;
+	const char  **tmp_argv2;
 	Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, &tmp_argv2);
 	if (tmp_argc2 != 2) {
 	  Tcl_AppendResult(interp, "data set has to be either a list of doubles or of lists of 2 doubles", (char *) NULL);
