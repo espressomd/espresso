@@ -2189,7 +2189,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
   if (argc == 1) {
     /* check for the new, nested Tcl-list format */
     int param1, tmp_argc;
-    char  **tmp_argv;
+    const char  **tmp_argv;
     bond = NULL;
 
     if (!particle_node)
@@ -2199,7 +2199,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 
     for(param1 = 0 ; param1 < tmp_argc; param1++) {
       int tmp2_argc;
-      char  **tmp2_argv;
+      const char  **tmp2_argv;
       Tcl_SplitList(interp, tmp_argv[param1], &tmp2_argc, &tmp2_argv);
       if (tmp2_argc < 1) {
 	Tcl_AppendResult(interp, "usage: part <p> bond <type> <partner>+\n", (char *) NULL);

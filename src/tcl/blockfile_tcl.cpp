@@ -226,7 +226,7 @@ static int block_continueread(Tcl_Channel f, int brace_count, char *data, int si
     an error is returned.
     @return 0 on success or RETURN_CODE_ERROR
 */
-static int block_writestart(Tcl_Channel f, char index[MAXBLOCKTITLE])
+static int block_writestart(Tcl_Channel f, const char index[MAXBLOCKTITLE])
 {
   if (strlen(index) >= MAXBLOCKTITLE)
     return RETURN_CODE_ERROR;
@@ -250,7 +250,7 @@ static int block_writeend(Tcl_Channel f)
 }
 
 int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
-			 int argc, char *argv[])
+			 int argc, const char *argv[])
 {
   char title[MAXBLOCKTITLE];
   char buffer[1024], *name;
