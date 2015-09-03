@@ -76,7 +76,7 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
   GHOST_TRACE(fprintf(stderr, "%d: prepare_comm, data_parts = %d\n", this_node, comm->data_parts));
 
   comm->num = num;
-  comm->comm = (GhostCommunication*)malloc(num*sizeof(GhostCommunication));
+  comm->comm = (GhostCommunication*)Utils::malloc(num*sizeof(GhostCommunication));
   for(i=0; i<num; i++) {
     comm->comm[i].shift[0]=comm->comm[i].shift[1]=comm->comm[i].shift[2]=0.0;
   }
@@ -142,7 +142,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
   n_s_buffer = calc_transmit_size(gc, data_parts);
   if (n_s_buffer > max_s_buffer) {
     max_s_buffer = n_s_buffer;
-    s_buffer = (char*)realloc(s_buffer, max_s_buffer);
+    s_buffer = (char*)Utils::realloc(s_buffer, max_s_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will send %d\n", this_node, n_s_buffer));
 
@@ -163,7 +163,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
       for (int p = 0; p < np; p++) {
 	Particle *pt = &part[p];
 	if (data_parts & GHOSTTRANS_PROPRTS) {
-	  memcpy(insert, &pt->p, sizeof(ParticleProperties));
+	  memmove(insert, &pt->p, sizeof(ParticleProperties));
 	  insert +=  sizeof(ParticleProperties);
 #ifdef GHOSTS_HAVE_BONDS
           *(int *)insert = pt->bl.n;
@@ -184,7 +184,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
 	  /* ok, this is not nice, but perhaps fast */
 	  ParticlePosition *pp = (ParticlePosition *)insert;
 	  int i;
-	  memcpy(pp, &pt->r, sizeof(ParticlePosition));
+	  memmove(pp, &pt->r, sizeof(ParticlePosition));
 	  for (i = 0; i < 3; i++)
 	    pp->p[i] += gc->shift[i];
       /* No special wrapping for Lees-Edwards here:
@@ -193,26 +193,26 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
 	  insert +=  sizeof(ParticlePosition);
 	}
 	else if (data_parts & GHOSTTRANS_POSITION) {
-	  memcpy(insert, &pt->r, sizeof(ParticlePosition));
+	  memmove(insert, &pt->r, sizeof(ParticlePosition));
 	  insert +=  sizeof(ParticlePosition);
 	}
 	if (data_parts & GHOSTTRANS_MOMENTUM) {
-	  memcpy(insert, &pt->m, sizeof(ParticleMomentum));
+	  memmove(insert, &pt->m, sizeof(ParticleMomentum));
 	  insert +=  sizeof(ParticleMomentum);
 	}
 	if (data_parts & GHOSTTRANS_FORCE) {
-	  memcpy(insert, &pt->f, sizeof(ParticleForce));
+	  memmove(insert, &pt->f, sizeof(ParticleForce));
 	  insert +=  sizeof(ParticleForce);
 	}
 #ifdef LB
 	if (data_parts & GHOSTTRANS_COUPLING) {
-	  memcpy(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
+	  memmove(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
 	  insert +=  sizeof(ParticleLatticeCoupling);
 	}
 #endif
 #ifdef ENGINE
 	if (data_parts & GHOSTTRANS_SWIMMING) {
-          memcpy(insert, &pt->swim, sizeof(ParticleParametersSwimming));
+          memmove(insert, &pt->swim, sizeof(ParticleParametersSwimming));
           insert +=  sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -277,7 +277,7 @@ void prepare_recv_buffer(GhostCommunication *gc, int data_parts)
   n_r_buffer = calc_transmit_size(gc, data_parts);
   if (n_r_buffer > max_r_buffer) {
     max_r_buffer = n_r_buffer;
-    r_buffer = (char*)realloc(r_buffer, max_r_buffer);
+    r_buffer = (char*)Utils::realloc(r_buffer, max_r_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will get %d\n", this_node, n_r_buffer));
 }
@@ -303,11 +303,11 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
       for (int p = 0; p < np; p++) {
 	Particle *pt = &part[p];
 	if (data_parts & GHOSTTRANS_PROPRTS) {
-	  memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
+	  memmove(&pt->p, retrieve, sizeof(ParticleProperties));
 	  retrieve +=  sizeof(ParticleProperties);
 #ifdef GHOSTS_HAVE_BONDS
           int n_bonds;
-	  memcpy(&n_bonds, retrieve, sizeof(int));
+	  memmove(&n_bonds, retrieve, sizeof(int));
 	  retrieve +=  sizeof(int);
           if (n_bonds) {
             realloc_intlist(&pt->bl, pt->bl.n = n_bonds);
@@ -315,7 +315,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
             bond_retrieve += n_bonds;
           }
 #ifdef EXCLUSIONS
-	  memcpy(&n_bonds, retrieve, sizeof(int));
+	  memmove(&n_bonds, retrieve, sizeof(int));
 	  retrieve +=  sizeof(int);
           if (n_bonds) {
             realloc_intlist(&pt->el, pt->el.n = n_bonds);
@@ -329,7 +329,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 	  }
 	}
 	if (data_parts & GHOSTTRANS_POSITION) {
-	  memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
+	  memmove(&pt->r, retrieve, sizeof(ParticlePosition));
 	  retrieve +=  sizeof(ParticlePosition);
 #ifdef LEES_EDWARDS
       /* special wrapping conditions for x component of y LE shift */
@@ -346,7 +346,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 #endif 
 	}
 	if (data_parts & GHOSTTRANS_MOMENTUM) {
-	  memcpy(&pt->m, retrieve, sizeof(ParticleMomentum));
+	  memmove(&pt->m, retrieve, sizeof(ParticleMomentum));
 	  retrieve +=  sizeof(ParticleMomentum);
 #ifdef LEES_EDWARDS
      /* give ghost particles correct velocity for the main
@@ -358,18 +358,18 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 #endif
 	}
 	if (data_parts & GHOSTTRANS_FORCE) {
-	  memcpy(&pt->f, retrieve, sizeof(ParticleForce));
+	  memmove(&pt->f, retrieve, sizeof(ParticleForce));
 	  retrieve +=  sizeof(ParticleForce);
 	}
 #ifdef LB
 	if (data_parts & GHOSTTRANS_COUPLING) {
-	  memcpy(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
+	  memmove(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
 	  retrieve +=  sizeof(ParticleLatticeCoupling);
 	}
 #endif
 #ifdef ENGINE
 	if (data_parts & GHOSTTRANS_SWIMMING) {
-          memcpy(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
+          memmove(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
           retrieve +=  sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -445,20 +445,20 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 	pt1 = &part1[p];
 	pt2 = &part2[p];
 	if (data_parts & GHOSTTRANS_PROPRTS) {
-	  memcpy(&pt2->p, &pt1->p, sizeof(ParticleProperties));
+	  memmove(&pt2->p, &pt1->p, sizeof(ParticleProperties));
 #ifdef GHOSTS_HAVE_BONDS
           realloc_intlist(&(pt2->bl), pt2->bl.n = pt1->bl.n);
-	  memcpy(&pt2->bl.e, &pt1->bl.e, pt1->bl.n*sizeof(int));
+	  memmove(&pt2->bl.e, &pt1->bl.e, pt1->bl.n*sizeof(int));
 #ifdef EXCLUSIONS
           realloc_intlist(&(pt2->el), pt2->el.n = pt1->el.n);
-	  memcpy(&pt2->el.e, &pt1->el.e, pt1->el.n*sizeof(int));
+	  memmove(&pt2->el.e, &pt1->el.e, pt1->el.n*sizeof(int));
 #endif
 #endif
         }
 	if (data_parts & GHOSTTRANS_POSSHFTD) {
 	  /* ok, this is not nice, but perhaps fast */
 	  int i;
-	  memcpy(&pt2->r, &pt1->r, sizeof(ParticlePosition));
+	  memmove(&pt2->r, &pt1->r, sizeof(ParticlePosition));
 	  for (i = 0; i < 3; i++)
 	    pt2->r.p[i] += gc->shift[i];
 #ifdef LEES_EDWARDS
@@ -475,9 +475,9 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 #endif
 	}
 	else if (data_parts & GHOSTTRANS_POSITION)
-	  memcpy(&pt2->r, &pt1->r, sizeof(ParticlePosition));
+	  memmove(&pt2->r, &pt1->r, sizeof(ParticlePosition));
 	if (data_parts & GHOSTTRANS_MOMENTUM) {
-	  memcpy(&pt2->m, &pt1->m, sizeof(ParticleMomentum));
+	  memmove(&pt2->m, &pt1->m, sizeof(ParticleMomentum));
 #ifdef LEES_EDWARDS
             /* special wrapping conditions for x component of y LE shift */
             if( gc->shift[1] > 0.0 )
@@ -490,11 +490,11 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 	  add_force(&pt2->f, &pt1->f);
 #ifdef LB
 	if (data_parts & GHOSTTRANS_COUPLING)
-	  memcpy(&pt2->lc, &pt1->lc, sizeof(ParticleLatticeCoupling));
+	  memmove(&pt2->lc, &pt1->lc, sizeof(ParticleLatticeCoupling));
 #endif
 #ifdef ENGINE
 	if (data_parts & GHOSTTRANS_SWIMMING)
-	  memcpy(&pt2->swim, &pt1->swim, sizeof(ParticleParametersSwimming));
+	  memmove(&pt2->swim, &pt1->swim, sizeof(ParticleParametersSwimming));
 #endif
       }
     }

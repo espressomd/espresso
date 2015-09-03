@@ -120,6 +120,9 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 # try to find best __FUNCTION__ variant
 AX_CXX_VAR_PRETTYFUNC()
 
+# check for c++11 support
+AX_CXX_COMPILE_STDCXX_11(ext,optional)
+
 # set the optimization flags
 # never overwrite users CXXFLAGS
 if test "${CXXFLAGS+set}" != set; then
@@ -535,6 +538,7 @@ AS_IF([test .$with_python_interface != .no], [
 	AX_PYTHON_DEVEL([>= '2.5'])
 
         AC_ARG_VAR(CYTHON,[Specify the cython tool to use])
+        AC_ARG_VAR(CYFLAGS,[Specify cython flags])
    	AC_PATH_PROG(CYTHON,cython,no)
    	AS_IF([test .$CYTHON = .no],
                     [build_python_interface=no],
@@ -690,7 +694,30 @@ Try --with-tcl=tcl to also use a generic Tcl version, which may fit better.])
 else
 	use_tk=none
 fi
+# check for h5md library
+cat <<EOF
+****************************************************************
+*                          h5md                                *
+****************************************************************
+EOF
+AC_MSG_CHECKING([whether to build with h5md support])
+AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport]), , [with_h5md=no])
+AC_MSG_RESULT($with_h5md)
+if test .$with_h5md = .yes; then
+  ES_ADDPATH_CHECK_LIB(hdf5,H5open,[hdf5_found=yes],[hdf5_found=no])
 
+  ES_ADDPATH_CHECK_HEADER(hdf5.h, [], 
+		[AC_MSG_ERROR([hdf5 headers not found. Please add the include path to
+                       CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/hdf5).])
+		]
+		,$extrapaths)
+AS_IF([test x$hdf5_found = xyes],[
+  AC_DEFINE(H5MD,[],[wether to build with h5mdsupport])]
+  )
+AS_IF([test x$hdf5_found = xno],[
+  AC_MSG_FAILURE([H5MD requested, but hdf5 library was not found!])]
+  )
+fi
 cat <<EOF
 ****************************************************************
 *                   Other settings                             *
@@ -812,10 +839,15 @@ libraries               = $LIBS
 using debug flags       = $enable_debug
 using profiling flags   = $enable_profiling
 
+cython complier         = $CYTHON
+cython preproc flags    = $CYFLAGS
+
+
 Libraries
 ---------
 FFTW                    = $fftw_found
 efence                  = $with_efence
+h5md			= $with_h5md
 
 EOF
 

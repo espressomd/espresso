@@ -30,28 +30,6 @@
 
 #include "config.hpp"
 
-#ifdef MEM_DEBUG
-#ifdef __GNUC__
-#define realloc(v,s) __realloc((v),(s),__FILE__, __LINE__)
-#define malloc(s) __malloc((s),__FILE__, __LINE__)
-#define free(v) __free((v),__FILE__, __LINE__)
-#else
-#define realloc(v,s) __realloc((v),(s), "no line info", 0)
-#define malloc(s) __malloc((s), "no line info", 0)
-#define free(v) __free((v),"no line info", 0)
-#endif
-
-/** memory allocation test routine */
-void *__realloc(void *old, unsigned int size, const char *where, int line);
-
-/** memory allocation test routine */
-void *__malloc(unsigned int size, const char *where, int line);
-
-/** memory allocation test routine */
-void __free(void *p, const char *where, int line);
-
-#endif
-
 #if defined FORCE_CORE || defined MPI_CORE
 /** this functions kills the task with SIGSEGV */
 void core();
@@ -79,6 +57,12 @@ extern int regular_exit;
 
 /** Identity of the particle to check extensively if ONEPART_DEBUG is defined. */
 extern int check_id;
+
+#ifdef ESIF_DEBUG
+#define ESIF_TRACE(cmd) {cmd; }
+#else
+#define ESIF_TRACE(cmd)
+#endif
 
 #ifdef COMM_DEBUG
 #define COMM_TRACE(cmd) { cmd; }

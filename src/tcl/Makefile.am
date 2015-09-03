@@ -30,6 +30,8 @@ libEspressoTcl_la_SOURCES = \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
+	h5mdfile_tcl.cpp h5mdfile_tcl.hpp \
+	rotate_system_tcl.cpp rotate_system_tcl.hpp \
 	readpdb_tcl.cpp \
 	cells_tcl.cpp \
 	cells_tcl.hpp \
@@ -154,6 +156,7 @@ libEspressoTcl_la_SOURCES += \
 libEspressoTcl_la_SOURCES += \
 	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
 	actor/Ewaldgpu_tcl.cpp actor/Ewaldgpu_tcl.hpp \
+	actor/DipolarDirectSum_tcl.cpp actor/DipolarDirectSum_tcl.hpp \
 	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp \
 	actor/HarmonicOrientationWell_tcl.cpp actor/HarmonicOrientationWell_tcl.hpp
 

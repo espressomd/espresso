@@ -358,13 +358,13 @@ void propagate_pos_sd()
   int N=sd_get_particle_num();
   // gather all the data for mobility calculation
   real * pos=NULL;
-  pos=(real *)malloc(DIM*N*sizeof(double));
+  pos=(real *)Utils::malloc(DIM*N*sizeof(double));
   assert(pos!=NULL);
   real * force=NULL;
-  force=(real *)malloc(DIM*N*sizeof(double));
+  force=(real *)Utils::malloc(DIM*N*sizeof(double));
   assert(force!=NULL);
   real * velocity=NULL;
-  velocity=(real *)malloc(DIM*N*sizeof(real));
+  velocity=(real *)Utils::malloc(DIM*N*sizeof(real));
   assert(velocity!=NULL);
 #ifdef EXTERNAL_FORCES
   const int COORD_ALL=COORD_FIXED(0)&COORD_FIXED(1)&COORD_FIXED(2);
@@ -392,8 +392,8 @@ void propagate_pos_sd()
 	  force[3*j+d]      = p[i].f.f[d];
 	}
 #else
-        memcpy(&pos[3*j], p[i].r.p, 3*sizeof(double));
-        memcpy(&force[3*j], p[i].f.f, 3*sizeof(double));
+        memmove(&pos[3*j], p[i].r.p, 3*sizeof(double));
+        memmove(&force[3*j], p[i].f.f, 3*sizeof(double));
 	for (int d=0;d<3;d++){
 	  pos[3*j+d]        -=rint(pos[3*j+d]/box_l[d])*box_l[d];
 	}
@@ -454,7 +454,7 @@ void propagate_pos_sd()
       for (int d=0;d<3;d++){
 	p[i].r.p[d] = pos[3*j+d]+box_l[d]*rint(p[i].r.p[d]/box_l[d]);
       }
-      memcpy(p[i].m.v, &velocity[DIM*j], 3*sizeof(double));
+      memmove(p[i].m.v, &velocity[DIM*j], 3*sizeof(double));
 #endif
       // somehow this does not effect anything, although it is called ...
       for (int d=0;d<3;d++){

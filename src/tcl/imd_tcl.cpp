@@ -245,7 +245,7 @@ int tclcommand_imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
   }
 
   updatePartCfg(WITH_BONDS);
-  coord = (float*)malloc(n_part*3*sizeof(float));
+  coord = (float*)Utils::malloc(n_part*3*sizeof(float));
   /* sort partcles according to identities */
   for (i = 0; i < n_part; i++) {
     int dummy[3] = {0,0,0};

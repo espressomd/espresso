@@ -26,7 +26,7 @@
 
 class SystemInterface {
 public:
-  SystemInterface() : m_needsR(false), m_needsV(false), m_needsQ(false), m_needsQuatu(false), m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false), m_needsQuatuGpu(false) {};
+  SystemInterface() : m_needsR(false), m_needsV(false), m_needsQ(false), m_needsQuatu(false), m_needsDip(false), m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false), m_needsQuatuGpu(false), m_needsDipGpu(false) {};
   typedef Vector3d Vector3;
   typedef double Real;
 
@@ -117,6 +117,26 @@ public:
   virtual bool hasRGpu() { return false; };
   virtual bool requestRGpu() { m_needsRGpu = hasRGpu(); return m_needsRGpu; }
 
+  virtual const_vec_iterator &dipBegin() { return SystemInterface::null_vector; };
+  virtual const const_vec_iterator &dipEnd() { return SystemInterface::null_vector; };
+  virtual bool hasDip() { return false; };
+  virtual bool requestDip() { m_needsDip = hasDip(); return m_needsDip; }
+
+  virtual float *dipGpuBegin() { return 0; };
+  virtual float *dipGpuEnd() { return 0; };
+  virtual bool hasDipGpu() { return false; };
+  virtual bool requestDipGpu() { m_needsDipGpu = hasDipGpu(); return m_needsDipGpu; }
+
+  virtual const_vec_iterator &torqueBegin() { return SystemInterface::null_vector; };
+  virtual const const_vec_iterator &torqueEnd() { return SystemInterface::null_vector; };
+  virtual bool hasTorque() { return false; };
+  virtual bool requestTorque() { m_needsTorque = hasTorque(); return m_needsTorque; }
+
+  virtual float *torqueGpuBegin() { return 0; };
+  virtual float *torqueGpuEnd() { return 0; };
+  virtual bool hasTorqueGpu() { return false; };
+  virtual bool requestTorqueGpu() { m_needsTorqueGpu = hasTorqueGpu(); return m_needsTorqueGpu; }
+
   virtual float *vGpuBegin() { return 0; };
   virtual float *vGpuEnd() { return 0; };
   virtual bool hasVGpu() { return false; };
@@ -133,10 +153,6 @@ public:
   virtual bool hasFGpu() { return false; };
   virtual bool requestFGpu() { m_needsFGpu = hasFGpu(); return m_needsFGpu; }
 
-  virtual float *torqueGpuBegin() { return 0; };
-  virtual float *torqueGpuEnd() { return 0; };
-  virtual bool hasTorqueGpu() { return false; };
-  virtual bool requestTorqueGpu() { m_needsTorqueGpu = hasTorqueGpu(); return m_needsTorqueGpu; }
 
   virtual const_real_iterator &qBegin() { return null_scalar; };
   virtual const const_real_iterator &qEnd() { return null_scalar; };
@@ -159,6 +175,8 @@ public:
 
   virtual bool needsR() { return m_needsR; };
   virtual bool needsRGpu() { return m_needsRGpu;};
+  virtual bool needsDip() { return m_needsR; };
+  virtual bool needsDipGpu() { return m_needsRGpu;};
   virtual bool needsQGpu() { return m_needsQGpu;};
   virtual bool needsQ() { return m_needsQ;};
   virtual bool needsQuatuGpu() { return m_needsQuatuGpu;};
@@ -172,11 +190,14 @@ protected:
   bool m_needsV;
   bool m_needsQ;
   bool m_needsQuatu;
+  bool m_needsDip;
+  bool m_needsTorque;
   bool m_needsRGpu;
   bool m_needsVGpu;
   bool m_needsQGpu;
   bool m_needsQuatuGpu;
   bool m_needsFGpu;
+  bool m_needsDipGpu;
   bool m_needsTorqueGpu;
 };
 

@@ -770,6 +770,92 @@ to setup the system, so that you can specify the sizes of particles etc.
 parameters and boolean values for \opt{start} and \opt{constraints}, as
 described above.
 
+\section{Writing H5MD-files}
+For large amounts of data it's a good idea to store it in the hdf5 (H5MD is
+based on hdf5) file format
+(see \url{https://www.hdfgroup.org/} for details). \es currently supports
+some basic functions for writing simulation data to H5MD files.
+\subsection{\keyword{h5md_init}: Initialize a H5MD data file}
+
+\begin{essyntax}
+h5md_init
+\var{/where/to/store/data/file}
+    \begin{features}
+    \required{H5MD}
+    \end{features}
+\end{essyntax}
+The \codebox{h5md_init} command initializes the H5MD file and creates 
+groups and datasets according to the conventions of H5MD (see
+\url{http://nongnu.org/h5md/}). If a H5MD file already exists at the given
+path it will be opened and you can append data it.
+
+\subsection{\keyword{h5md_write_positions}: Write particle positions to H5MD
+file}
+
+\begin{essyntax}
+h5md_write_positions
+\opt{folded}
+  \begin{features}
+  \required{H5MD}
+  \end{features}
+\end{essyntax}
+Writes the positions of all particles to the dataset which was previously 
+initialized by \texttt{h5md_init}.
+
+\subsection{\keyword{h5md_write_velocities}: Write particle velocities to H5MD
+file}
+
+\begin{essyntax}
+h5md_write_velocities
+  \begin{features}
+  \required{H5MD}
+  \end{features}
+\end{essyntax}
+Writes the velocities of all particles to the dataset which was previously 
+initialized by \texttt{h5md_init}.
+
+\begin{essyntax}
+h5md_write_forces
+  \begin{features}
+  \required{H5MD}
+  \end{features}
+\end{essyntax}
+Writes the forces of all particles to the dataset which was previously 
+initialized by \texttt{h5md_init}.
+
+\subsection{\keyword{h5md_observable1D_init}: Initialize a user-defined H5MD
+observable}
+
+\begin{essyntax}
+h5md_observable1D_init \var{name\_of\_observable}
+  \begin{features}
+  \required{H5MD}
+  \end{features}
+\end{essyntax}
+Initializes an observable dataset with given name in the H5MD file previously
+initialized by \texttt{h5md_init}.
+
+\subsection{\keyword{h5md_observable1D_write}: Write to a user-defined H5MD
+dataset}
+
+\begin{essyntax}
+h5md_observable1D_write \var{name\_of\_observable} \var{value}
+  \begin{features}
+  \required{H5MD}
+  \end{features}
+\end{essyntax}
+Writes \texttt{value} to a user-defined observable dataset with given name.
+
+\subsection{\keyword{h5md_close}: Close H5MD file}
+
+\begin{essyntax}
+h5md_close
+  \begin{features}
+  \required{H5MD}
+  \end{features}
+\end{essyntax}
+Closes the H5MD data file.
+
 \section{Error handling}
 Errors in the parameters are detected as early as possible, and
 hopefully self-explanatory error messages returned without any changes

@@ -93,6 +93,15 @@ if { [ has_feature "CUDA" ] && [ has_feature "P3M" ] } then {
     lappend accuracies 1e-3
 }
 
+if { [ has_feature "CUDA" ] && [ has_feature "EWALD_GPU" ] } then {
+    proc setup_ewald_gpu {} {
+	inter coulomb 1.0 ewaldgpu 2.70746 64 1.001
+    }
+    lappend methods "EWALD-GPU"
+    lappend setups "setup_ewald_gpu"
+    lappend accuracies 1e-3
+}
+
 if { ! [ llength $methods ] } {
     puts "No Coulomb methods to test."
     ignore_exit

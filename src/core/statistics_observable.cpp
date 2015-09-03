@@ -518,8 +518,8 @@ int observable_calc_density_profile(observable* self) {
     if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     binx= (int) floor( pdata->xbins*  (ppos[0]-pdata->minx)/(pdata->maxx-pdata->minx));
     biny= (int) floor( pdata->ybins*  (ppos[1]-pdata->miny)/(pdata->maxy-pdata->miny));
@@ -556,8 +556,8 @@ int observable_calc_force_density_profile(observable* self) {
     if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     binx= (int) floor( pdata->xbins*  (ppos[0]-pdata->minx)/(pdata->maxx-pdata->minx));
     biny= (int) floor( pdata->ybins*  (ppos[1]-pdata->miny)/(pdata->maxy-pdata->miny));
@@ -572,80 +572,87 @@ int observable_calc_force_density_profile(observable* self) {
 
 #ifdef LB
 int observable_calc_lb_velocity_profile(observable* self) {
-  double* A = self->last_value;
-  unsigned int i, j, k;
+  double* A= self->last_value;
+  void* pdata_ = self->container;
+  unsigned int n_A = self->n;
   unsigned int maxi, maxj, maxk;
   double xoffset, yoffset, zoffset;
   double x_incr, y_incr, z_incr;
   double p[3], v[3];
+  int linear_index;
   profile_data* pdata;
   pdata=(profile_data*) self->container;
-  int linear_index;
 
-    
-  for ( int i = 0; i<self->n; i++ ) {
-    A[i]=0;
-  }
-  double normalization_factor = 1.;
-  if ( pdata->xbins == 1 ) {
-    maxi = (int) floor(box_l[0]/lbpar.agrid);
-    normalization_factor/=maxi;
-    xoffset=0;
-    x_incr=lbpar.agrid;
-  } else {
-    maxi = pdata->xbins;
-    xoffset=pdata->minx;
-    x_incr=(pdata->maxx-pdata->minx)/(pdata->xbins-1);
-  }
-  if ( pdata->ybins == 1 ) {
-    maxj = (int) floor(box_l[1]/lbpar.agrid);
-    normalization_factor/=maxj;
-    yoffset=0;
-    y_incr=lbpar.agrid;
-  } else {
-    maxj = pdata->ybins;
-    yoffset=pdata->miny;
-    y_incr=(pdata->maxy-pdata->miny)/(pdata->ybins-1);
-  }
-  if ( pdata->zbins == 1 ) {
-    maxk = (int) floor(box_l[2]/lbpar.agrid);
-    normalization_factor/=maxk;
-    zoffset=0;
-    z_incr=lbpar.agrid;
-  } else {
-    maxk = pdata->zbins;
-    zoffset=pdata->minz;
-    z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
-  }
 
-  for ( i = 0; i < maxi; i++ ) {
-    for ( j = 0; j < maxj; j++ ) {
-      for ( k = 0; k < maxk; k++ ) {
-        p[0]=xoffset + i*x_incr;
-        p[1]=yoffset + j*y_incr;
-        p[2]=zoffset + k*z_incr;
-        if (lb_lbfluid_get_interpolated_velocity(p, v)!=0)
-          return 1;
-        linear_index = 0;
-        if (pdata->xbins > 1)
-          linear_index += i*pdata->ybins*pdata->zbins;
-        if (pdata->ybins > 1)
-          linear_index += j*pdata->zbins;
-        if (pdata->zbins > 1)
-          linear_index +=k;
+#ifdef LB_GPU
+  if (lattice_switch & LATTICE_LB_GPU)
+    return statistics_observable_lbgpu_velocity_profile((profile_data*) pdata_, A, n_A);
+#endif
+  if (lattice_switch & LATTICE_LB) {
+    for ( int i = 0; i<self->n; i++ ) {
+      A[i]=0;
+    }
+    double normalization_factor = 1.;
+    if ( pdata->xbins == 1 ) {
+      maxi = (int) floor(box_l[0]/lbpar.agrid);
+      normalization_factor/=maxi;
+      xoffset=0;
+      x_incr=lbpar.agrid;
+    } else {
+      maxi = pdata->xbins;
+      xoffset=pdata->minx;
+      x_incr=(pdata->maxx-pdata->minx)/(pdata->xbins-1);
+    }
+    if ( pdata->ybins == 1 ) {
+      maxj = (int) floor(box_l[1]/lbpar.agrid);
+      normalization_factor/=maxj;
+      yoffset=0;
+      y_incr=lbpar.agrid;
+    } else {
+      maxj = pdata->ybins;
+      yoffset=pdata->miny;
+      y_incr=(pdata->maxy-pdata->miny)/(pdata->ybins-1);
+    }
+    if ( pdata->zbins == 1 ) {
+      maxk = (int) floor(box_l[2]/lbpar.agrid);
+      normalization_factor/=maxk;
+      zoffset=0;
+      z_incr=lbpar.agrid;
+    } else {
+      maxk = pdata->zbins;
+      zoffset=pdata->minz;
+      z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
+    }
+    unsigned int i, j, k;
+    for ( i = 0; i < maxi; i++ ) {
+      for ( j = 0; j < maxj; j++ ) {
+	for ( k = 0; k < maxk; k++ ) {
+	  p[0]=xoffset + i*x_incr;
+	  p[1]=yoffset + j*y_incr;
+	  p[2]=zoffset + k*z_incr;
+	  if (lb_lbfluid_get_interpolated_velocity(p, v)!=0)
+	    return 1;
+	  linear_index = 0;
+	  if (pdata->xbins > 1)
+	    linear_index += i*pdata->ybins*pdata->zbins;
+	  if (pdata->ybins > 1)
+	    linear_index += j*pdata->zbins;
+	  if (pdata->zbins > 1)
+	    linear_index +=k;
 
-        A[3*linear_index+0]+=v[0];
-        A[3*linear_index+1]+=v[1];
-        A[3*linear_index+2]+=v[2];
+	  A[3*linear_index+0]+=v[0];
+	  A[3*linear_index+1]+=v[1];
+	  A[3*linear_index+2]+=v[2];
+	}
       }
     }
-  }
   
-  for ( int i = 0; i<self->n; i++ ) {
-    A[i]*=normalization_factor;
-  }
+    for ( int i = 0; i<self->n; i++ ) {
+      A[i]*=normalization_factor;
+    }
 
   
+  }
   return 0;
 }
 #endif
@@ -670,7 +677,7 @@ int observable_calc_lb_radial_velocity_profile(observable* self) {
   } else {
     mpi_observable_lb_radial_velocity_profile();
     MPI_Bcast(pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
-    double* data = (double*) malloc(n_A*sizeof(double));
+    double* data = (double*) Utils::malloc(n_A*sizeof(double));
     mpi_observable_lb_radial_velocity_profile_parallel(pdata, data, n_A);
     MPI_Reduce(data, A, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     free(data);
@@ -682,7 +689,7 @@ void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
   radial_profile_data pdata;
   MPI_Bcast(&pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
   unsigned int n_A=3*pdata.rbins*pdata.phibins*pdata.zbins;
-  double* data = (double*) malloc(n_A*sizeof(double));
+  double* data = (double*) Utils::malloc(n_A*sizeof(double));
   mpi_observable_lb_radial_velocity_profile_parallel(&pdata, data, n_A);
   MPI_Reduce(data, 0, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   free(data);
@@ -817,8 +824,8 @@ int observable_calc_radial_density_profile(observable* self) {
     if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     transform_to_cylinder_coordinates(ppos[0]-pdata->center[0], ppos[1]-pdata->center[1], ppos[2]-pdata->center[2], &r, &phi, &z);
     //printf("%f %f %f %f %f %f\n", ppos[0], ppos[1], ppos[2], r*cos(phi)+pdata->center[0], r*sin(phi)+pdata->center[1], z+pdata->center[2]);
@@ -869,8 +876,8 @@ int observable_calc_radial_flux_density_profile(observable* self) {
   double* old_positions=(double*) pdata->container;
   if (old_positions[0] == CONST_UNITITIALIZED) {
     for (int i = 0; i<ids->n; i++ ) {
-      memcpy(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-      memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+      memmove(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+      memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
       unfold_position(unfolded_ppos, img);
       old_positions[3*i+0]=unfolded_ppos[0];
       old_positions[3*i+1]=unfolded_ppos[1];
@@ -882,14 +889,14 @@ int observable_calc_radial_flux_density_profile(observable* self) {
     if (ids->e[i] >= n_part)
       return 1;
 /* We use folded coordinates here */
-    memcpy(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(unfolded_ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     unfold_position(unfolded_ppos, img);
     v[0]=(unfolded_ppos[0] - old_positions[3*i+0]);
     v[1]=(unfolded_ppos[1] - old_positions[3*i+1]);
     v[2]=(unfolded_ppos[2] - old_positions[3*i+2]);
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     // The position of the particle is by definition the middle of old and new position
     ppos[0]+=0.5*v[0]; ppos[1]+=0.5*v[1]; ppos[2]+=0.5*v[2];
@@ -949,19 +956,23 @@ int observable_calc_flux_density_profile(observable* self) {
   for (int i = 0; i< self->n; i++ ) {
     A[i]=0;
   }
+
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
-/* We use folded coordinates here */
-    v[0]=partCfg[ids->e[i]].m.v[0]*time_step;
-    v[1]=partCfg[ids->e[i]].m.v[1]*time_step;
-    v[2]=partCfg[ids->e[i]].m.v[2]*time_step;
-    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
-    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    /* We use folded coordinates here */
+    v[0]=partCfg[ids->e[i]].m.v[0]/time_step;
+    v[1]=partCfg[ids->e[i]].m.v[1]/time_step;
+    v[2]=partCfg[ids->e[i]].m.v[2]/time_step;
+    memmove(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memmove(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
+    // The position of the particle is by definition the middle of old and new position
+  
     x=ppos[0];
     y=ppos[1];
     z=ppos[2];
+
     binx  =(int)floor((x-pdata->minx)/xbinsize);
     biny  =(int)floor((y-pdata->miny)/ybinsize);
     binz  =(int)floor((z-pdata->minz)/zbinsize);
@@ -1354,11 +1365,11 @@ int observable_radial_density_distribution(observable* self){
   radial_density_data *r_data = (radial_density_data *) self->container;
   IntList *ids;  
   if ( GC_init && Type_array_init ) {
-	  ids = (IntList *) malloc(sizeof(IntList));
+	  ids = (IntList *) Utils::malloc(sizeof(IntList));
 
 	  //using the grandcanonical scheme, always update the particle id list
-	  ids->e = (int *) malloc(sizeof(int)*type_array[Index.type[r_data->type]].max_entry);
-	  memcpy(ids->e, type_array[Index.type[r_data->type]].id_list, type_array[Index.type[r_data->type]].max_entry*sizeof(int));
+	  ids->e = (int *) Utils::malloc(sizeof(int)*type_array[Index.type[r_data->type]].max_entry);
+	  memmove(ids->e, type_array[Index.type[r_data->type]].id_list, type_array[Index.type[r_data->type]].max_entry*sizeof(int));
 	  ids->n = type_array[Index.type[r_data->type]].max_entry;
 	  ids->max = type_array[Index.type[r_data->type]].cur_size;
   } else { 
@@ -1374,18 +1385,18 @@ int observable_radial_density_distribution(observable* self){
   int image_box[3];
   if ( r_data->id_flag ) {
 	  // Using particle_ids to specify the start and endpoints
-	  memcpy(start_point, partCfg[r_data->start_point_id].r.p, 3*sizeof(double));
-	  memcpy(image_box, partCfg[r_data->start_point_id].l.i, 3*sizeof(int));
+	  memmove(start_point, partCfg[r_data->start_point_id].r.p, 3*sizeof(double));
+	  memmove(image_box, partCfg[r_data->start_point_id].l.i, 3*sizeof(int));
 	  unfold_position(start_point, image_box);
-	  memcpy(end_point, partCfg[r_data->end_point_id].r.p, 3*sizeof(double));
-	  memcpy(image_box, partCfg[r_data->end_point_id].l.i, 3*sizeof(int));
+	  memmove(end_point, partCfg[r_data->end_point_id].r.p, 3*sizeof(double));
+	  memmove(image_box, partCfg[r_data->end_point_id].l.i, 3*sizeof(int));
 	  unfold_position(end_point, image_box);
   } else {
-	  memcpy(start_point, r_data->start_point, 3*sizeof(double));
-	  memcpy(end_point, r_data->end_point, 3*sizeof(double));
+	  memmove(start_point, r_data->start_point, 3*sizeof(double));
+	  memmove(end_point, r_data->end_point, 3*sizeof(double));
   }
 
-  double *bin_volume = (double *) malloc(sizeof(double)*r_data->rbins);
+  double *bin_volume = (double *) Utils::malloc(sizeof(double)*r_data->rbins);
  
   double part_pos[3];
   double AB[3];		// normalized normal vector pointing to start point

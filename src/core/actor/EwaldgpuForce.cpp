@@ -10,37 +10,39 @@
 #include "interaction_data.hpp"
 #include "cells.hpp"
 
+#define DEBUG(A) std::cout << #A << ": " << A << std::endl;
+
 typedef ewaldgpu_real real;
 extern Ewaldgpu_params ewaldgpu_params;
 
 //Compute reciprocal space vectors k
 void EwaldgpuForce::compute_num_k()
 {
-	int Index=0;//Arrayindex
+  int Index=0;//Arrayindex
 
-	for (long long ix=0; ix<=m_num_kx; ix++)
+  for (long long ix=0; ix<=m_num_kx; ix++)
+    {
+      for (long long iy=-m_num_ky; iy<=m_num_ky; iy++)
 	{
-		for (long long iy=-m_num_ky; iy<=m_num_ky; iy++)
+	  for (long long iz=-m_num_kz; iz<=m_num_kz; iz++)
+	    {
+	      if(ix*(2*m_num_ky+1)*(2*m_num_kz+1)+iy*(2*m_num_kz+1)+iz >= 0//Half m_k-space
+		 and SQR(ix)*SQR(m_num_ky)*SQR(m_num_kz)
+		 + SQR(iy)*SQR(m_num_kx)*SQR(m_num_kz)
+		 + SQR(iz)*SQR(m_num_kx)*SQR(m_num_ky)
+		 <=SQR(m_num_kx)*SQR(m_num_ky)*SQR(m_num_kz))//m_k-space ellipsoid
 		{
-			for (long long iz=-m_num_kz; iz<=m_num_kz; iz++)
-			{
-				if(ix*(2*m_num_ky+1)*(2*m_num_kz+1)+iy*(2*m_num_kz+1)+iz >= 0//Half m_k-space
-				   and SQR(ix)*SQR(m_num_ky)*SQR(m_num_kz)
-				   	 + SQR(iy)*SQR(m_num_kx)*SQR(m_num_kz)
-				   	 + SQR(iz)*SQR(m_num_kx)*SQR(m_num_ky)
-				   	 <=SQR(m_num_kx)*SQR(m_num_ky)*SQR(m_num_kz))//m_k-space ellipsoid
-				{
-					Index+=1;
-				}
-			}
+		  Index+=1;
 		}
+	    }
 	}
-	m_num_k=Index;
+    }
+  m_num_k=Index;
 }
 void EwaldgpuForce::compute_k_AND_influence_factor()
 {
-	real k_sqr;//Absolute square of m_k-vector
-	int Index=0;//Arrayindex
+  real k_sqr;//Absolute square of m_k-vector
+  int Index=0;//Arrayindex
 
 	for (long long ix=0; ix<=m_num_kx; ix++)//Half m_k-space
 	{
@@ -78,8 +80,6 @@ void EwaldgpuForce::EwaldCPU_EnergySelf()
 //Parameters
 int EwaldgpuForce::set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha)
 {
-	IA_parameters *data = get_ia_param_safe(0, 0);
-	data->max_cut = rcut;
 	ewaldgpu_params.rcut = rcut;
 	ewaldgpu_params.num_kx = num_kx;
 	ewaldgpu_params.num_ky = num_ky;
@@ -101,38 +101,38 @@ int EwaldgpuForce::set_params_tune(double accuracy, double precision, int K_max,
 //Tuning
 int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 {
-	ewaldgpu_params.isTuned = false;
-	int Kmax = ewaldgpu_params.K_max;
-	double alpha_array[Kmax]; //All computed alpha in dependence of K
-	double rcut_array[Kmax]; //All computed r_cut in dependence of all computed alpha
+  ewaldgpu_params.isTuned = false;
+  int Kmax = ewaldgpu_params.K_max;
+  double alpha_array[Kmax]; //All computed alpha in dependence of K
+  double rcut_array[Kmax]; //All computed r_cut in dependence of all computed alpha
 
-	//Squared charge
-	Particle *particle;
-	particle = (Particle*)malloc(n_part*sizeof(Particle));
-	mpi_get_particles(particle, NULL);
-	double q_sqr = compute_q_sqare(particle);
+  //Squared charge
+  Particle *particle;
+  particle = (Particle*)Utils::malloc(n_part*sizeof(Particle));
+  mpi_get_particles(particle, NULL);
+  double q_sqr = compute_q_sqare(particle);
 
-	char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
+  char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
 
   if (skin == -1) {
     *log = strcat_alloc(*log, "ewaldgpu cannot be tuned, since the skin is not yet set");
     return ES_ERROR;
   }
 
-	//Compute alpha for all reciprocal k-sphere radius K
-	for(int K = 0; K < Kmax ;K++)
-	{
-		alpha_array[K] = tune_alpha(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, K+1, box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
-		//printf("K:%i alpha:%f\n",K+1,alpha_array[K]);
-	}
-	//Compute r_cut for all computed alpha
-	for(int K = 0; K < Kmax ;K++)
-	{
-		rcut_array[K] = tune_rcut(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, alpha_array[K], box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
-		//printf("K:%i rcut:%f \n",K+1,rcut_array[K]);
-	}
-	//Test if accuracy was reached
-	if(rcut_array[Kmax-1]<0)
+  //Compute alpha for all reciprocal k-sphere radius K
+  for(int K = 0; K < Kmax ;K++)
+    {
+      alpha_array[K] = tune_alpha(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, K+1, box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
+      //printf("K:%i alpha:%f\n",K+1,alpha_array[K]);
+    }
+  //Compute r_cut for all computed alpha
+  for(int K = 0; K < Kmax ;K++)
+    {
+      rcut_array[K] = tune_rcut(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, alpha_array[K], box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
+      //printf("K:%i rcut:%f \n",K+1,rcut_array[K]);
+    }
+  //Test if accuracy was reached
+  if(rcut_array[Kmax-1]<0)
   {
     return ES_ERROR;
   }
@@ -180,43 +180,50 @@ int EwaldgpuForce::adaptive_tune(char **log,SystemInterface &s)
 
   return ES_OK;
 }
-double EwaldgpuForce::error_estimate_r(double q_sqr, int N, double r_cut, double V, double alpha, double accuracy)
+
+inline double EwaldgpuForce::error_estimate_r(double q_sqr, int N, double r_cut, double V, double alpha, double accuracy) const
 {
 	return sqrt(q_sqr/N) * 2 * (sqrt(q_sqr/(V*r_cut))) * exp(-alpha*alpha * r_cut*r_cut) - accuracy ;  // Kolafa-Perram, eq. 18
 }
-double EwaldgpuForce::error_estimate_k(double q_sqr, int N, int K, double V, double alpha, double accuracy)
+
+inline double EwaldgpuForce::error_estimate_k(double q_sqr, int N, int K, double V, double alpha, double accuracy) const
 {
 	return sqrt(q_sqr/N) * alpha / (pow(V,1/3.0) * M_PI) * pow(8*q_sqr / K,0.5) * exp(-M_PI*M_PI * K*K / (alpha*alpha * pow(V,2/3.0))) - accuracy;  // Kolafa-Perram, eq. 32
 }
+
 double EwaldgpuForce::tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N)
 {
-	double alpha_low=0.01;
-	double alpha_high=100;
-	double alpha_guess;
-	double fkt_low;
-	double fkt_high;
-	double fkt_guess;
+  double alpha_low=0.01;
+  double alpha_high=100;
+  double alpha_guess;
+  double fkt_low;
+  double fkt_high;
+  double fkt_guess;
 
-	// Find alpha with given K in k-space error estimate via bisection
-	fkt_low = error_estimate_k(q_sqr, N, K, V, alpha_low, accuracy);
-	fkt_high = error_estimate_k(q_sqr, N, K, V, alpha_high, accuracy);
+  // Find alpha with given K in k-space error estimate via bisection
+  fkt_low = error_estimate_k(q_sqr, N, K, V, alpha_low, accuracy);
+  fkt_high = error_estimate_k(q_sqr, N, K, V, alpha_high, accuracy);
 
   if (fkt_low*fkt_high > 0.0)
-  {
-    return -1; // Value unusable
-  }
+    {
+      return -1; // Value unusable
+    }
 
   do
-  {
-    alpha_guess = 0.5 *(alpha_low + alpha_high);
-    fkt_guess = error_estimate_k(q_sqr, N, K, V, alpha_guess, accuracy);
-    if (fkt_low*fkt_guess < 0.0) alpha_high = alpha_guess;
-    else alpha_low = alpha_guess;
+    {
+      alpha_guess = 0.5 *(alpha_low + alpha_high);
+      fkt_guess = error_estimate_k(q_sqr, N, K, V, alpha_guess, accuracy);
 
-  } while (fabs(alpha_low-alpha_high) > precision);
+      if (fkt_low*fkt_guess < 0.0) 
+	alpha_high = alpha_guess;
+      else 
+	alpha_low = alpha_guess;
+
+    } while (fabs(alpha_low-alpha_high) > precision);
 
   return 0.5 *(alpha_low + alpha_high);
 }
+
 double EwaldgpuForce::tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N)
 {
 	double rcut_low=0.0;

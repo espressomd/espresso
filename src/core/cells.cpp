@@ -195,7 +195,7 @@ void cells_re_init(int new_cs)
 
   topology_release(cell_structure.type);
   /* MOVE old local_cell list to temporary buffer */
-  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
+  memmove(&tmp_local,&local_cells,sizeof(CellPList));
   init_cellplist(&local_cells);
 
   /* MOVE old cells to temporary buffer */
@@ -248,7 +248,7 @@ void realloc_cells(int size)
   }
   /* resize the cell list */
   if(size != n_cells) {
-    cells = (Cell *) realloc(cells, sizeof(Cell)*size);
+    cells = (Cell *) Utils::realloc(cells, sizeof(Cell)*size);
   }
   /* initialize new cells */
   for(i=n_cells; i<size; i++) {

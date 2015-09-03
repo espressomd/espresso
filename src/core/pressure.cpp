@@ -617,8 +617,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
   
     PTENSOR_TRACE(fprintf(stderr,"%d: distribute_tensors: x goes from %d to %d\n",this_node,startx, endx);)
     /* Initialise starty array */
-    starty = (int *)malloc(sizeof(int)*(occupiedxbins+1));
-    occupiedybins = (int *)malloc(sizeof(int)*occupiedxbins);
+    starty = (int *)Utils::malloc(sizeof(int)*(occupiedxbins+1));
+    occupiedybins = (int *)Utils::malloc(sizeof(int)*occupiedxbins);
 
     /* find in which y-bins the line starts and stops for each x-bin */
     /* in xbin the line starts in y-bin number starty[xbin-startx] and ends in starty[xbin-startx+1] */
@@ -645,8 +645,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     }
 
     /* Initialise startz array */
-    occupiedzbins = (int *)malloc(sizeof(int)*totoccupiedybins);
-    startz = (int *)malloc(sizeof(int)*(totoccupiedybins+1));
+    occupiedzbins = (int *)Utils::malloc(sizeof(int)*totoccupiedybins);
+    startz = (int *)Utils::malloc(sizeof(int)*(totoccupiedybins+1));
     /* find in which z-bins the line starts and stops for each y-bin*/
     counter = 0;
     if (facein == 2) {
@@ -1068,4 +1068,80 @@ int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A)
     A[j]=value;
   }
   return 0;
+}
+void update_stress_tensor (int v_comp) {
+	int i;
+	double p_vel[3];
+	/* if desired (v_comp==1) replace ideal component with instantaneous one */
+	if (total_pressure.init_status != 1+v_comp ) {
+		init_virials(&total_pressure);
+		init_p_tensor(&total_p_tensor);
+
+		init_virials_non_bonded(&total_pressure_non_bonded);
+		init_p_tensor_non_bonded(&total_p_tensor_non_bonded);
+
+		if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && !(nptiso.invalidate_p_vel)) {
+			if (total_pressure.init_status == 0)
+				master_pressure_calc(0);
+			p_tensor.data.e[0] = 0.0;
+			MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+			for(i=0; i<3; i++)
+				if(nptiso.geometry & nptiso.nptgeom_dir[i])
+					p_tensor.data.e[0] += p_vel[i];
+			p_tensor.data.e[0] /= (nptiso.dimension*nptiso.volume);
+			total_pressure.init_status = 1+v_comp;   }
+		else
+			master_pressure_calc(v_comp);
+	}
+}
+
+int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* local_stress_tensor)
+{
+	int i,j;
+	DoubleList *TensorInBin;
+	PTENSOR_TRACE(fprintf(stderr,"%d: Running tclcommand_analyze_parse_local_stress_tensor\n",this_node));
+
+
+
+
+	/* Allocate a doublelist of bins to keep track of stress profile */
+	TensorInBin = (DoubleList *)Utils::malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+	if ( TensorInBin ) {
+		/* Initialize the stress profile */
+		for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
+			init_doublelist(&TensorInBin[i]);
+			alloc_doublelist(&TensorInBin[i],9);
+			for ( j = 0 ; j < 9 ; j++ ) {
+				TensorInBin[i].e[j] = 0.0;
+			}
+		}
+	} else {
+		fprintf(stderr, "could not allocate memory for local_stress_tensor");
+		return (ES_ERROR);
+	}
+
+	mpi_local_stress_tensor(TensorInBin, bins, periodic,range_start, range);
+	PTENSOR_TRACE(fprintf(stderr,"%d: tclcommand_analyze_parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
+
+//	/* Write stress profile to Tcl export */
+//	Tcl_AppendResult(interp, "{ LocalStressTensor } ", (char *)NULL);
+//	for ( i = 0 ; i < bins[0] ; i++) {
+//		for ( j = 0 ; j < bins[1] ; j++) {
+//			for ( k = 0 ; k < bins[2] ; k++) {
+//				Tcl_AppendResult(interp, " { ", (char *)NULL);
+//				sprintf(buffer," { %d %d %d } ",i,j,k);
+//				Tcl_AppendResult(interp,buffer, (char *)NULL);
+//				Tcl_AppendResult(interp, " { ", (char *)NULL);
+//				for ( l = 0 ; l < 9 ; l++) {
+//					Tcl_PrintDouble(interp,TensorInBin[i*bins[1]*bins[2]+j*bins[2]+k].e[l],buffer);
+//					Tcl_AppendResult(interp, buffer, (char *)NULL);
+//					Tcl_AppendResult(interp, " ", (char *)NULL);
+//				}
+//				Tcl_AppendResult(interp, " } ", (char *)NULL);
+//				Tcl_AppendResult(interp, " } ", (char *)NULL);
+//			}
+//		}
+//	}
+
+	return ES_OK;
 }

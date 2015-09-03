@@ -42,10 +42,8 @@ enum BondedInteraction{
     BONDED_IA_FENE,
     /** Type of bonded interaction is a HARMONIC potential. */
     BONDED_IA_HARMONIC,
-#ifdef ROTATION
     /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
     BONDED_IA_HARMONIC_DUMBBELL,
-#endif
     /** Type of bonded interaction is a QUARTIC potential. */
     BONDED_IA_QUARTIC,
     /** Type of bonded interaction is a BONDED_COULOMB */
@@ -155,7 +153,7 @@ enum OverlappedBondedInteraction{
    */
   /************************************************************/
   /*@{*/
-enum DipolarInteration{
+enum DipolarInteraction{
   /** dipolar interation switched off (NONE). */
     DIPOLAR_NONE = 0,
    /** dipolar method is P3M. */
@@ -167,9 +165,11 @@ enum DipolarInteration{
    /** Dipolar method is magnetic dipolar direct sum */
     DIPOLAR_DS,
    /** Dipolar method is direct sum plus DLC. */
-    DIPOLAR_MDLC_DS
-};
-   /*@}*/
+    DIPOLAR_MDLC_DS,
+   /** Direct summation on gpu */
+   DIPOLAR_DS_GPU 
+
+   };
 #endif 
 
 
@@ -181,7 +181,7 @@ enum DipolarInteration{
 /*@{*/
 enum ConstraintApplied{
 /** No constraint applied */
-    CONSTRAINT_NONE = 0,
+    CONSTRAINT_NONE =0,
 /** wall constraint applied */
     CONSTRAINT_WAL,
 /** spherical constraint applied */
@@ -238,7 +238,6 @@ typedef struct {
   */
   double max_cut;
 
-#ifdef LENNARD_JONES
   /** \name Lennard-Jones with shift */
   /*@{*/
   double LJ_eps;
@@ -249,9 +248,7 @@ typedef struct {
   double LJ_capradius;
   double LJ_min;
   /*@}*/
-#endif
 
-#ifdef LENNARD_JONES_GENERIC
   /** \name Generic Lennard-Jones with shift */
   /*@{*/
   double LJGEN_eps;
@@ -264,12 +261,9 @@ typedef struct {
   int LJGEN_a2;
   double LJGEN_b1;
   double LJGEN_b2;
-#ifdef LJGEN_SOFTCORE
   double LJGEN_lambda;
   double LJGEN_softrad;
-#endif
   /*@}*/
-#endif
 
 #ifdef LJ_ANGLE
   /** \name Directional Lennard-Jones */
@@ -555,7 +549,7 @@ typedef struct {
  #ifdef DIPOLES
   double Dbjerrum;
   double Dprefactor;
-  DipolarInteration    Dmethod;
+  DipolarInteraction    Dmethod;
  #endif
 
 } Coulomb_parameters;
@@ -1290,6 +1284,10 @@ const char *get_name_of_bonded_ia(BondedInteraction type);
 
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);
+#endif
+
+#ifdef DIPOLES
+void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
 #endif

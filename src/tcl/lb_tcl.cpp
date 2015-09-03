@@ -645,7 +645,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
             }
           }
 
-          if ( lb_lbfluid_set_bulk_visc(vectarg) == 0 )
+          if ( lb_lbfluid_set_gamma_even(vectarg) == 0 )
           {
             argc-=(1+LB_COMPONENTS); argv+=(1+LB_COMPONENTS); 
           }
@@ -882,7 +882,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
   double double_return[19*LB_COMPONENTS];
   char double_buffer[TCL_DOUBLE_SPACE];
 
-  for (counter = 0; counter < 19; counter++) 
+  for (counter = 0; counter < 19*LB_COMPONENTS; counter++) 
   double_return[counter]=0;
 
   --argc; ++argv;
@@ -1012,7 +1012,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
       { 
         lb_lbnode_get_pop(coord, double_return);
 
-        for (counter = 0; counter < 19; counter++) 
+        for (counter = 0; counter < 19*LB_COMPONENTS; counter++) 
         {
           Tcl_PrintDouble(interp, double_return[counter], double_buffer);
           Tcl_AppendResult(interp, double_buffer, " ", (char *)NULL);
@@ -1097,13 +1097,13 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
     {
       argc--; argv++;
 
-      if (argc!=19) 
+      if (argc!=19*LB_COMPONENTS) 
         {
-        Tcl_AppendResult(interp, "LB node set populations requires 19 doubles.", (char *)NULL);
+        Tcl_AppendResult(interp, "LB node set populations requires 19 doubles for each component.", (char *)NULL);
         return TCL_ERROR;
       }
 
-      for (counter = 0; counter < 19; counter++) 
+      for (counter = 0; counter < 19*LB_COMPONENTS; counter++) 
       {
         if (!ARG0_IS_D(double_return[counter])) 
         {

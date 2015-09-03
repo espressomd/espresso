@@ -81,7 +81,7 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
 
 void Lattice::allocate_memory() {
 
-    this->_data = malloc(this->element_size*this->halo_grid_volume);
+    this->_data = Utils::malloc(this->element_size*this->halo_grid_volume);
     memset(this->_data, (unsigned int)(-1), this->element_size*this->halo_grid_volume);
 
 }
@@ -400,12 +400,12 @@ void Lattice::get_data_for_local_index(index_t* ind, void** data) {
 }
 
 void Lattice::set_data_for_local_halo_grid_index(index_t* ind, void* data) {
-    memcpy(((char*)this->_data) + get_linear_index(ind[0], ind[1], ind[2],  this->halo_grid)*this->element_size, data, this->element_size);
+    memmove(((char*)this->_data) + get_linear_index(ind[0], ind[1], ind[2],  this->halo_grid)*this->element_size, data, this->element_size);
 
 }
 
 void Lattice::set_data_for_local_grid_index(index_t* ind, void* data) {
-    memcpy(((char*)this->_data) + get_linear_index(ind[0]+this->halo_size, ind[1]+this->halo_size, ind[2]+this->halo_size,  this->halo_grid)*this->element_size, data, this->element_size);
+    memmove(((char*)this->_data) + get_linear_index(ind[0]+this->halo_size, ind[1]+this->halo_size, ind[2]+this->halo_size,  this->halo_grid)*this->element_size, data, this->element_size);
 }
 
 int Lattice::global_pos_to_lattice_halo_index(double* pos, index_t*  ind) {

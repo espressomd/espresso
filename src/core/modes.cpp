@@ -360,7 +360,7 @@ int get_lipid_orients(IntList* l_orient) {
   }
 
   /* Allocate memory for height grid arrays and initialize these arrays */
-  height_grid = (double*) malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+  height_grid = (double*) Utils::malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
 
 
   /* Calculate physical size of grid mesh */
@@ -446,8 +446,8 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
     fftw_destroy_plan(mode_analysis_plan);
     fftw_cleanup(); 
     /* Allocate memory for input and output arrays */
-    height_grid = (double*) malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
-    result      = (fftw_complex*) malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex)); 
+    height_grid = (double*) Utils::malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+    result      = (fftw_complex*) Utils::malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex)); 
     mode_analysis_plan = fftw_plan_dft_r2c_2d(mode_grid_3d[xdir],mode_grid_3d[ydir],height_grid, result,FFTW_ESTIMATE);
 
     STAT_TRACE(fprintf(stderr,"%d,created new fftw plan \n",this_node));
@@ -476,7 +476,7 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
 
   fftw_execute(mode_analysis_plan);
   /* Copy result to modes */
-  memcpy(modes, result, mode_grid_3d[xdir]*(mode_grid_3d[ydir]/2 + 1)*sizeof(fftw_complex));
+  memmove(modes, result, mode_grid_3d[xdir]*(mode_grid_3d[ydir]/2 + 1)*sizeof(fftw_complex));
   
   
   STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));    
@@ -618,7 +618,7 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
   }
   
   /* Allocate memory for the grid if we are going to need it */
-  tmp_height_grid = (double*) malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+  tmp_height_grid = (double*) Utils::malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
   /* Calculate physical size of grid mesh */
   grid_size[xdir] = box_l[xdir]/(double)mode_grid_3d[xdir];
   grid_size[ydir] = box_l[ydir]/(double)mode_grid_3d[ydir];
@@ -767,11 +767,11 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
 
   /* Allocate memory for height grid / thickness arrays and initialize these arrays */
 
-  height_grid_up = (double*) malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
-  height_grid_down = (double*) malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
-  grid_parts_up = (int*) malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
-  grid_parts_down = (int*) malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
-  grid_parts = (int*) malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
+  height_grid_up = (double*) Utils::malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+  height_grid_down = (double*) Utils::malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+  grid_parts_up = (int*) Utils::malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
+  grid_parts_down = (int*) Utils::malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
+  grid_parts = (int*) Utils::malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
   for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
     for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
       height_grid[j+i*mode_grid_3d[xdir]] = 0;

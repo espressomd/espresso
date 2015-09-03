@@ -107,7 +107,7 @@ typedef struct {
 #ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
-  int rotation;
+  short int rotation;
 #endif
 
 #ifdef ELECTROSTATICS
@@ -139,6 +139,8 @@ typedef struct {
   */
   int vs_relative_to_particle_id;
   double vs_relative_distance;
+  // Store relative position of the virtual site
+  double vs_relative_rel_orientation[4];
   #endif
 #endif
 
@@ -682,6 +684,9 @@ int set_particle_dipm(int part, double dipm);
 */
 int set_particle_virtual(int part,int isVirtual);
 #endif
+#ifdef VIRTUAL_SITES_RELATIVE
+int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double* rel_ori);
+#endif
 
 #ifdef LANGEVIN_PER_PARTICLE
 /** Call only on the master node: set particle temperature.
@@ -975,7 +980,7 @@ void pointer_to_virtual(Particle* p, int*& res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2);
+void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3);
 #endif
 
 #ifdef MASS
@@ -985,4 +990,34 @@ void pointer_to_mass(Particle* p, double*&  res);
 void pointer_to_dip(Particle* P, double*& res);
 
 void pointer_to_dipm(Particle* P, double*& res);
+
+#ifdef EXTERNAL_FORCES
+void pointer_to_ext_force(Particle *p, int*& res1, double*& res2);
+#ifdef ROTATION
+void pointer_to_ext_torque(Particle *p, int*& res1, double*& res2);
+#endif
+void pointer_to_fix(Particle *p, int*& res);
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+void pointer_to_gamma(Particle *p, double*& res);
+void pointer_to_temperature(Particle *p, double*& res);
+#endif
+
+#ifdef ROTATION_PER_PARTICLE
+void pointer_to_rotation(Particle *p, short int*& res);
+#endif
+
+#ifdef EXCLUSIONS
+void pointer_to_exclusions(Particle *p, int*& res1, int*& res2);
+#endif
+
+#ifdef ENGINE
+void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim);
+#endif
+
+#ifdef ROTATIONAL_INERTIA
+void pointer_to_rotational_inertia(Particle *p, double*& res);
+#endif
+
 #endif

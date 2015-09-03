@@ -365,7 +365,7 @@ int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
     ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
 
   size_t  size_of_extforces = (n_extern_nodeforces+1)*sizeof(LB_extern_nodeforce_gpu);
-  host_extern_nodeforces = (LB_extern_nodeforce_gpu*) realloc(host_extern_nodeforces, size_of_extforces);
+  host_extern_nodeforces = (LB_extern_nodeforce_gpu*) Utils::realloc(host_extern_nodeforces, size_of_extforces);
   
   host_extern_nodeforces[n_extern_nodeforces].force[0] = (float)f[0];
   host_extern_nodeforces[n_extern_nodeforces].force[1] = (float)f[1];
@@ -407,6 +407,16 @@ void lb_GPU_sanity_checks()
       }
     }
   }
+}
+
+int lb_lbfluid_save_checkpoint_wrapper(char* filename, int binary)
+{
+  return lb_lbfluid_save_checkpoint(filename, binary);
+}
+
+int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary)
+{
+  return lb_lbfluid_load_checkpoint(filename, binary);
 }
 
 #endif /* LB_GPU */

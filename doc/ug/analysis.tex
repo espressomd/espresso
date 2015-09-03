@@ -22,6 +22,10 @@
 \index{analysis}
 \newescommand{analyze}
 
+\todo{Add a comment to the UG that the analysis routines in \es{} with
+  Python currently require the user to `from espressomd import
+  analyze.'}
+
 \es has two fundamentally different classes of observables for
 analyzing the systems.  On the one hand, some observables are
 computed from the Tcl level. In that case, the observable is measured
@@ -129,9 +133,6 @@ The output corresponds to the blockfile format (see section
 
 Returns the radial density of particles around a given
 axis. Parameters are:
-
-\todo{Someone who knows or wrote this command should check this.}
-
 \begin{itemize}
 \item \var{xbins} histogram bins in x direction.
 \item \var{ybins} histogram bins in y direction.
@@ -142,6 +143,120 @@ axis. Parameters are:
 \item \var{beadtypelist} only analyze beads of given types.
 \item \var{thetabins} histogram bins in angle theta.
 \end{itemize}
+
+\minisec{Caveat}
+
+This command does not do what you might expect.  Here is an overview
+of the currently identified properties.
+\begin{enumerate}
+\item \var{xbins} is the number of bins along the axis of rotation.
+\item \var{ybins} is the number of bins in the radial direction.
+\item The centre point (\var{centerofrotation}) of the cylinder is
+  located in the lower cap, i.e., \var{xrange} is the height of the
+  cylinder with respect to this centre point.
+\item The bins are distributed along \var{axisofrotation} starting
+  from 0 (\var{centerofrotation}).
+\item The \var{thetabins} seem to average with respect to the centre
+  of mass of the particles in the individual bins rather than with
+  respect to the central axis, which one would think is natural.
+\end{enumerate}
+
+\subsection{Cylindrical Average}
+\label{analyze:cylindricalaverage}
+
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    cylindrical_average
+  }{
+    system = \arg{system},
+    center = \arg{3 floats},
+    direction = \arg{3 floats},
+    length = \arg{float},
+    radius = \arg{float},
+    bins_axial = \arg{int},
+    bins_radial = \arg{int},
+    types = \arg{list of ints}
+  }
+\end{pysyntax}
+
+\begin{essyntax}
+  analyze cylindrical_average \var{center} \var{direction}
+  \var{length} \var{radius} \var{bins\_axial} \var{bins\_radial}
+  \opt{\var{types}}
+\end{essyntax}
+
+The command returns a list of lists.  The outer list contains all data
+combined whereas each inner list contains one line.  Each lines stores
+a different combination of the radial and axial index.  The output
+might look something like this
+\begin{verbatim}
+{ { 0 0 0.05 -0.25 0.0314159 0 0 0 0 0 0 }
+  { 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0 }
+  ... }
+\end{verbatim}
+In this case two different particle types were present.  The columns
+of the respective lines are coded like this
+\begin{SaveVerbatim}{output}
+index_radial index_axial pos_radial pos_axial binvolume density v_radial v_axial density v_radial v_axial
+0            0           0.05       -0.25     0.0314159 0       0        0       0       0        0
+0            1           0.05       0.25      0.0314159 31.831  1.41421  1       0       0        0
+\end{SaveVerbatim}
+\bigbreak\noindent%
+\resizebox{\linewidth}{!}{\BUseVerbatim{output}}
+\bigbreak\noindent%
+%
+As one can see the columns \keyword{density}, \keyword{v_radial}, and
+\keyword{v_axial} appear twice.  The order of appearance corresponds
+two the order of the types in the argument \var{types}.  For example
+if \var{types} was set to \Verb|{0 1}| then the first triple is
+associated to type 0 and the second triple to type 1.
+
+After knowing what the output looks like we might want to have more
+information on how to input data.
+\begin{itemize}
+\item \var{center} is a double list containing the coordinates of the
+  centre point of the cylinder.
+\item \var{direction} is a double list containing a (not necessarily
+  normalised) vector.
+\item \var{length} is the total length of the cylinder.
+\item \var{radius} is the radius of the cylinder.
+\item \var{bins\_axial} is the number of bins along the \var{direction}
+  vector.
+\item \var{bins\_radial} is the number of bins in radial direction.
+\item \var{types} is an int list of the type IDs.
+\end{itemize}
+Because all of this text is super abstract we additionally drew a
+picture of what these variables actually mean, see
+figure~\ref{fig:cylindricalaverage}.
+
+\begin{figure}[tb]
+  \centering
+  \begin{tikzpicture}[dot/.style={draw,fill,circle,inner sep=1pt},rotate=-100]
+    \pgfmathsetmacro\H{3}
+    \foreach \r in { .5, 1, 1.5, 2 } {
+      \foreach \h in { -\H, 0, \H }
+        \draw[help lines] (0,\h) ellipse ({\r} and {.5*\r});
+      \draw[help lines] (-\r,-\H) -- (-\r,\H);
+      \draw[help lines] (+\r,-\H) -- (+\r,\H);
+    }
+    \draw[thick,->] (0,0) node[dot,label={above:center}] {} -- (0,1.5) node[above] {direction};
+    \foreach \h in { 0, \H }
+      \draw[blue,decoration=brace,decorate] (2,\h) -- (2,\h-\H);
+    \path (2,-\H) -- node[blue,below,rotate=-8] {bins\_axial} (2,\H);
+    \foreach \r in { .5, 1, 1.5, 2 }
+      \draw[red,decoration=brace,decorate] (\r,-\H) -- (\r-.5,-\H);
+    \path (2,-\H) -- node[red,above,rotate=80] {bins\_radial} (0,-\H);
+  
+    \draw[thick,<->] (0,\H) -- node[right] {radius} (2,\H);
+    \draw[thick,<->] (-2,-\H) -- node[above] {length} (-2,\H);
+  \end{tikzpicture}
+  \caption{Illustration of the parameters for the \keyword{analyze
+      cylindrical_average} command.}
+  \label{fig:cylindricalaverage}
+\end{figure}
+
 
 \subsection{Modes}
 \label{analyze:modes2d}
@@ -248,6 +363,18 @@ The output corresponds to the blockfile format (see section
 \subsection{Structure factor}
 \label{analyze:structurefactor}
 \analyzeindex{structure factor $S(q)$}
+
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    structure_factor
+  }{
+    system = \arg{system},
+    sf_type = \arg{int},
+    sf_order = \arg{int}
+  }
+\end{pysyntax}
 
 \begin{essyntax}
   analyze structurefactor \var{type} \var{order}
@@ -457,6 +584,27 @@ fluid, see Chapter~\ref{sec:lb}, by averaging over the fluid nodes. In
 case \feature{LB_BOUNDARIES} or \feature{LB_BOUNDARIES_GPU} are
 compiled in and boundaries are defined, only the available fluid
 volume is taken into account.
+
+\subsection{Momentum of the System}
+\label{analyze:momentum}
+\analyzeindex{system momentum}
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    calc_re
+  }{
+    system = \arg{system},
+    include_particles = \arg{bool},
+    include_lbfluid = \arg{bool},
+  }
+\end{pysyntax}
+\begin{essyntax}
+  analyze momentum \opt{particles}
+\end{essyntax}
+This command returns the total linear momentum of the particles and the lattice-Boltzmann (LB) fluid, if one exists. Giving the optional parameter particles
+causes the command to ignore the contribution of LB. In the Python interface both particles and fluid can be toggled on and off using the include_particles and
+include_lbfluid flags respectively.
 
 \subsection{Energies}
 \label{analyze:energy}
@@ -701,7 +849,18 @@ required once.
 
 \subsubsection{End-to-end distance}
 \analyzeindex{end-to-end distance of a chain}
-
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    calc_re
+  }{
+    system=\arg{system},
+    chain_start=\arg{int},
+    n_chains=\arg{int},
+    chain_length=\arg{int}
+  }
+\end{pysyntax}
 \begin{essyntax}
   analyze \alt{re \asep <re>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
@@ -717,11 +876,23 @@ stored configurations (see section \vref{sec:stored-configs}).
 
 \subsubsection{Radius of gyration}
 \analyzeindex{radius of gyration of a chain}
-
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    calc_rg
+  }{
+    system = \arg{system},
+    chain_start = \arg{int},
+    n_chains = \arg{int},
+    chain_length = \arg{int}
+  }
+\end{pysyntax}
 \begin{essyntax}
   analyze \alt{rg \asep <rg>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
+
 Returns the radius of gyration averaged over all chains. It is a radius
 of a sphere, which would have the same moment of inertia as the molecule, 
 defined as
@@ -743,6 +914,18 @@ configurations (see section \vref{sec:stored-configs}).
 
 \subsubsection{Hydrodynamic radius}
 \analyzeindex{hydrodynamic radius of a chain}
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    calc_rh
+  }{
+    system = \arg{system},
+    chain_start = \arg{int},
+    n_chains = \arg{int},
+    chain_length = \arg{int}
+  }
+\end{pysyntax}
 \begin{essyntax}
   analyze \alt{rh \asep <rh>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}

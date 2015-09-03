@@ -47,6 +47,12 @@
 #include "initialize.hpp"
 #include "statistics_chain_tcl.hpp"
 
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <map>
+
 /** Set the topology. See \ref topology_tcl.cpp */
 int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
 
@@ -225,9 +231,9 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
         runtimeError(msg);
         return TCL_ERROR;
     }
-    float *coord = (float*) malloc(n_part * 3 * sizeof (float));
+    float *coord = (float*) Utils::malloc(n_part * 3 * sizeof (float));
 #ifdef LEES_EDWARDS
-    float *velocities = (float *)malloc(n_part*3*sizeof(float));
+    float *velocities = (float *)Utils::malloc(n_part*3*sizeof(float));
 #endif
     /* Construct the array coord*/
     for (i = 0; i < n_part; i++) {
@@ -255,7 +261,7 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
     }
 
 
-    // Use information from the analyse set command to fold chain molecules
+    // Use information from the analyze set command to fold chain molecules
     if (flag == FOLD_MOLS) {
         if (analyze_fold_molecules(coord, shift) != TCL_OK) {
             Tcl_AppendResult(interp, "could not fold chains: \"analyze set chains <chain_start> <n_chains> <chain_length>\" must be used first",
@@ -336,8 +342,8 @@ static int tclcommand_analyze_parse_modes2d(Tcl_Interp *interp, int argc, char *
         return (TCL_OK);
     }
 
-    result_ht = (fftw_complex*) malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
-    result_th = (fftw_complex*) malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
+    result_ht = (fftw_complex*) Utils::malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
+    result_th = (fftw_complex*) Utils::malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
 
     if (!modes2d(result_th, 0) || !modes2d(result_ht, 1)) {
         fprintf(stderr, "%d,mode analysis failed \n", this_node);
@@ -416,6 +422,159 @@ static int tclcommand_analyze_parse_bilayer_set(Tcl_Interp *interp, int argc, ch
     return TCL_OK;
 }
 
+static int tclcommand_analyze_parse_cylindrical_average(Tcl_Interp *interp, int argc, char **argv) {
+  DoubleList direction_dl;
+  DoubleList center_dl;
+  IntList types_il;
+  init_doublelist(&direction_dl);
+  init_doublelist(&center_dl);
+  init_intlist(&types_il);
+
+  std::vector<double> direction(3);
+  std::vector<double> center(3);
+  double length, radius;
+  int bins_axial, bins_radial;
+  std::vector<int> types;
+  std::map<std::string, std::vector<std::vector<std::vector<double> > > > distribution;
+
+  // Parse the arguments
+
+  if ( argc < 6 ) {
+    puts("Too few arguments");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_DOUBLELIST(0,center_dl) ) {
+    puts("Argument 1: Center has to be a double list");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_DOUBLELIST(1,direction_dl) ) {
+    puts("Argument 2: Direction has to be a double list");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_D(2,length) ) {
+    puts("Argument 3: Length has to be a double");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_D(3,radius) ) {
+    puts("Argument 4: Radius has to be a double");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_I(4,bins_axial) ) {
+    puts("Argument 5: Axial bins has to be an int");
+    return TCL_ERROR;
+  }
+
+  if ( !ARG_IS_I(5,bins_radial) ) {
+    puts("Argument 6: Radial bins has to be an int");
+    return TCL_ERROR;
+  }
+
+  if ( argc > 6 ) {
+    if ( !ARG_IS_INTLIST(6,types_il) ) {
+      puts("Argument 7: Types has to be an int list");
+      return TCL_ERROR;
+    }
+  } else {
+    realloc_intlist(&types_il, 1);
+    types_il.n = 1;
+    types_il.e[0] = -1;
+  }
+
+  // Convert double list and int list to std::vector
+  if ( center_dl.n != 3 ) {
+    puts("Center must have exactly 3 components");
+    return TCL_ERROR;
+  }
+
+  if ( direction_dl.n != 3 ) {
+    puts("Direction must have exactly 3 components");
+    return TCL_ERROR;
+  }
+
+  if ( types_il.n == 0 ) {
+    puts("The type list must not be empty");
+    return TCL_ERROR;
+  }
+
+  // Convert the TCL lists into C++ vectors
+
+  for (int i = 0; i < center_dl.n; i++ )
+    center[i] = center_dl.e[i];
+
+  for (int i = 0; i < direction_dl.n; i++ )
+    direction[i] = direction_dl.e[i];
+
+  for (int i = 0; i < types_il.n; i++ )
+    types.push_back(types_il.e[i]);
+
+  // Calculate the cylindrical average
+
+  if (calc_cylindrical_average(center, direction, length, radius, bins_axial, bins_radial, types, distribution) != TCL_OK) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Error calculating the cylindrical average", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  // Output
+
+  std::stringstream buffer;
+  double binwd_axial  = length / bins_axial;
+  double binwd_radial = radius / bins_radial;
+  double binvolume, pos_radial, pos_axial;
+
+  std::vector<std::string> names(3);
+  names[0] = "density";
+  names[1] = "v_r";
+  names[2] = "v_t";
+
+  // The buffer will contain a list of lists
+  buffer << "{";
+
+  for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
+    for (int index_axial = 0; index_axial < bins_axial; index_axial++) {
+      // From the indices we calculate the centre point of the bin
+      pos_radial = (index_radial + .5) * binwd_radial;
+      pos_axial  = (index_axial  + .5) * binwd_axial - .5*length;
+
+      // To make conversion between densities and particle numbers
+      // easy we also save the binvolume
+      if ( index_radial == 0 )
+        binvolume = M_PI * binwd_radial*binwd_radial * length;
+      else
+        binvolume = M_PI * (index_radial*index_radial + 2*index_radial) * binwd_radial*binwd_radial * length;
+
+      // We pipe all data to the buffer
+      buffer << "{ "
+             << index_radial << " "
+             << index_axial  << " "
+             << pos_radial   << " "
+             << pos_axial    << " "
+             << binvolume    << " ";
+      for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
+        for (unsigned int name = 0; name < names.size(); name++)
+          buffer << distribution[names[name]][type_id][index_radial][index_axial] << " ";
+      }
+      buffer << "} ";
+    }
+  }
+  buffer << "}";
+
+  // Because buffer is a std::stringstream we need to convert it to a
+  // const char * for the Tcl function.  This is done by converting it
+  // to a string using str() and then getting the C string
+  // represenation from that temporary by c_str().
+  Tcl_ResetResult(interp);
+  Tcl_AppendResult(interp, buffer.str().c_str(), (char *) NULL);
+
+  return TCL_OK;
+}
+
+
 static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int argc, char **argv) {
     /* 'analyze radial density profile ' */
     char buffer[TCL_DOUBLE_SPACE + 256];
@@ -490,7 +649,7 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
 
     /* allocate memory for the profile if necessary */
     if (thetabins > 0) {
-        density_profile = (DoubleList*) malloc(beadtypes.max * sizeof (DoubleList));
+        density_profile = (DoubleList*) Utils::malloc(beadtypes.max * sizeof (DoubleList));
         if (density_profile) {
             for (i = 0; i < beadtypes.max; i++) {
                 init_doublelist(&density_profile[i]);
@@ -506,7 +665,7 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
     }
     /* Allocate a doublelist of bins for each beadtype so that we
        can keep track of beads separately */
-    density_map = (DoubleList*) malloc(beadtypes.max * sizeof (DoubleList));
+    density_map = (DoubleList*) Utils::malloc(beadtypes.max * sizeof (DoubleList));
     if (density_map) {
         /* Initialize all the subprofiles in density profile */
         for (i = 0; i < beadtypes.max; i++) {
@@ -663,7 +822,7 @@ static int tclcommand_analyze_parse_bilayer_density_profile(Tcl_Interp *interp, 
 
     /* Allocate a two doublelists of bins for each beadtype so that we
        can keep track of beads in upper or lower lipids */
-    density_profile = (DoubleList *) malloc(beadtypes.max * 2 * sizeof (DoubleList));
+    density_profile = (DoubleList *) Utils::malloc(beadtypes.max * 2 * sizeof (DoubleList));
     if (density_profile) {
         /* Initialize all the subprofiles in density profile */
         for (i = 0; i < beadtypes.max * 2; i++) {
@@ -724,7 +883,7 @@ static int tclcommand_analyze_parse_lipid_orient_order(Tcl_Interp *interp, int a
         return (TCL_OK);
     }
 
-    stored_dirs = (double*) malloc(sizeof (double)*n_molecules * 3);
+    stored_dirs = (double*) Utils::malloc(sizeof (double)*n_molecules * 3);
     /* Do the calculation */
     if (orient_order(&result, stored_dirs) != TCL_OK) {
         Tcl_AppendResult(interp, "Error calculating orientational order ", (char *) NULL);
@@ -775,10 +934,10 @@ static int tclcommand_analyze_parse_aggregation(Tcl_Interp *interp, int argc, ch
     float fagg_avg;
     int s_mol_id, f_mol_id;
 
-    agg_id_list = (int *) malloc(n_molecules * sizeof (int));
-    head_list = (int *) malloc(n_molecules * sizeof (int));
-    link_list = (int *) malloc(n_molecules * sizeof (int));
-    agg_size = (int *) malloc(n_molecules * sizeof (int));
+    agg_id_list = (int *) Utils::malloc(n_molecules * sizeof (int));
+    head_list = (int *) Utils::malloc(n_molecules * sizeof (int));
+    link_list = (int *) Utils::malloc(n_molecules * sizeof (int));
+    agg_size = (int *) Utils::malloc(n_molecules * sizeof (int));
 
     /* parse arguments */
     if (argc < 3) {
@@ -1428,7 +1587,7 @@ static int tclcommand_analyze_parse_distribution(Tcl_Interp *interp, int argc, c
     if (r_max <= r_min) return TCL_ERROR;
     if (r_bins < 1) return TCL_ERROR;
     /* calculate distribution */
-    distribution = (double*) malloc(r_bins * sizeof (double));
+    distribution = (double*) Utils::malloc(r_bins * sizeof (double));
     updatePartCfg(WITHOUT_BONDS);
     calc_part_distribution(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, log_flag, &low, distribution);
     if (int_flag == 1) {
@@ -1605,7 +1764,7 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
         Tcl_AppendResult(interp, buffer, " }", (char *) NULL);
     } else
         Tcl_AppendResult(interp, " }", (char *) NULL);
-    rdf = (double*) malloc(r_bins * sizeof (double));
+    rdf = (double*) Utils::malloc(r_bins * sizeof (double));
 
     if (!sortPartCfg()) {
         Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.", (char *) NULL);
@@ -1723,7 +1882,7 @@ static int tclcommand_analyze_parse_density_profile_av(Tcl_Interp *interp, int a
         return (TCL_ERROR);
     }
 
-    rho_ave = (double*) malloc(n_bin * sizeof (double));
+    rho_ave = (double*) Utils::malloc(n_bin * sizeof (double));
     for (i = 0; i < n_bin; i++)
         rho_ave[i] = 0.0;
 
@@ -1814,7 +1973,7 @@ static int tclcommand_analyze_parse_diffusion_profile(Tcl_Interp *interp, int ar
         return (TCL_ERROR);
     }
 
-    bins = (double*) malloc(nbins * sizeof (double));
+    bins = (double*) Utils::malloc(nbins * sizeof (double));
     for (i = 0; i < nbins; i++) {
         bins[i] = 0;
     }
@@ -1894,14 +2053,14 @@ static int tclcommand_analyze_parse_vanhove(Tcl_Interp *interp, int argc, char *
     }
 
     /* allocate space */
-    vanhove = (double **) malloc((tmax) * sizeof (double *));
+    vanhove = (double **) Utils::malloc((tmax) * sizeof (double *));
     for (c = 0; c < (tmax); c++) {
-        vanhove[c] = (double *) malloc(rbins * sizeof (double));
+        vanhove[c] = (double *) Utils::malloc(rbins * sizeof (double));
         for (i = 0; i < rbins; i++) {
             vanhove[c][i] = 0;
         }
     }
-    msd = (double *) malloc((tmax) * sizeof (double));
+    msd = (double *) Utils::malloc((tmax) * sizeof (double));
     for (i = 0; i < (tmax); i++) {
         msd[i] = 0;
     }
@@ -2161,7 +2320,7 @@ static int tclcommand_analyze_parse_configs(Tcl_Interp *interp, int argc, char *
             Tcl_AppendResult(interp, buffer, (char *) NULL);
             return TCL_ERROR;
         }
-        tmp_config = (double*) malloc(3 * n_part_conf * sizeof (double));
+        tmp_config = (double*) Utils::malloc(3 * n_part_conf * sizeof (double));
         for (j = 0; j < argc; j++)
             if (!ARG_IS_D(j, tmp_config[j])) return (TCL_ERROR);
         analyze_configs(tmp_config, n_part_conf);
@@ -2592,6 +2751,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
     REGISTER_ANALYZE_OPTION("set_bilayer", tclcommand_analyze_parse_bilayer_set);
     REGISTER_ANALYSIS("modes2d", tclcommand_analyze_parse_modes2d);
     REGISTER_ANALYSIS("bilayer_density_profile", tclcommand_analyze_parse_bilayer_density_profile);
+    REGISTER_ANALYSIS("cylindrical_average", tclcommand_analyze_parse_cylindrical_average);
     REGISTER_ANALYSIS("radial_density_map", tclcommand_analyze_parse_radial_density_map);
     REGISTER_ANALYSIS("get_lipid_orients", tclcommand_analyze_parse_get_lipid_orients);
     REGISTER_ANALYSIS("lipid_orient_order", tclcommand_analyze_parse_lipid_orient_order);

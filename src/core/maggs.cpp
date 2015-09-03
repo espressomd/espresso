@@ -671,11 +671,11 @@ void maggs_setup_local_lattice()
 	
   lparams.volume    = xyzcube;
   /** allocate memory for sites and neighbors */
-  lattice  = (t_site*) malloc(xyzcube*sizeof(t_site));
-  neighbor = (t_dirs*) malloc(xyzcube*sizeof(t_dirs));
+  lattice  = (t_site*) Utils::malloc(xyzcube*sizeof(t_site));
+  neighbor = (t_dirs*) Utils::malloc(xyzcube*sizeof(t_dirs));
 	
-  Bfield   = (double*) malloc(3*xyzcube*sizeof(double));
-  Dfield   = (double*) malloc(3*xyzcube*sizeof(double));
+  Bfield   = (double*) Utils::malloc(3*xyzcube*sizeof(double));
+  Dfield   = (double*) Utils::malloc(3*xyzcube*sizeof(double));
 	
   /** set up lattice sites */
   FORALL_SITES(ix, iy, iz) {
@@ -846,11 +846,11 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
     MPI_Type_commit(&yzPlane2D);
 		
     /* create data type for xz plaquette */
-    MPI_Type_hvector(2,1*sizeof(double),2*sizeof(double), MPI_BYTE, &xz_plaq);
+    MPI_Type_create_hvector(2,1*sizeof(double),2*sizeof(double), MPI_BYTE, &xz_plaq);
     /* create data type for a 1D section */
     MPI_Type_contiguous(surface_patch[2].stride, xz_plaq, &oneslice); 
     /* create data type for a 2D xz plane */
-    MPI_Type_hvector(surface_patch[2].nblocks, 1, dim*surface_patch[2].skip*sizeof(double), oneslice, &xzPlane2D);
+    MPI_Type_create_hvector(surface_patch[2].nblocks, 1, dim*surface_patch[2].skip*sizeof(double), oneslice, &xzPlane2D);
     MPI_Type_commit(&xzPlane2D);    
     /* create data type for a 2D xy plane */
     MPI_Type_vector(surface_patch[4].nblocks, 2, dim*surface_patch[4].skip, MPI_DOUBLE, &xyPlane2D);
@@ -931,7 +931,7 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
       nblocks = surface_patch[s_dir].nblocks;
 			
       for(l=0; l<nblocks; l++){
-	memcpy(&(field[doffset]), &(field[offset]), stride);
+	memmove(&(field[doffset]), &(field[offset]), stride);
 	offset  += skip;
 	doffset += skip;
       }
@@ -2255,7 +2255,7 @@ void maggs_calc_forces()
 	
   Npart = cells_get_n_particles();
   if(Npart>Npart_old) {
-    grad = (double *) realloc(grad, 12*Npart*sizeof(double));
+    grad = (double *) Utils::realloc(grad, 12*Npart*sizeof(double));
     Npart_old = Npart;
   }
 	

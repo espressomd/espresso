@@ -292,6 +292,21 @@ void convert_torques_propagate_omega()
         p[i].f.torque[2] = tz;
       }
 
+#ifdef ROTATION_PER_PARTICLE
+      if (!(p[i].p.rotation & 2))
+        p[i].f.torque[0]=0;
+      
+      if (!(p[i].p.rotation & 4))
+        p[i].f.torque[1]=0;
+      
+      if (!(p[i].p.rotation & 8))
+        p[i].f.torque[2]=0;
+      
+#endif
+
+        
+
+
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
       double omega_swim[3] = {0, 0, 0};
       double omega_swim_body[3] = {0, 0, 0};
@@ -409,6 +424,18 @@ void convert_initial_torques()
 	p[i].f.torque[2] = tz;
       }
 
+#ifdef ROTATION_PER_PARTICLE
+      if (!(p[i].p.rotation & 2))
+        p[i].f.torque[0]=0;
+      
+      if (!(p[i].p.rotation & 4))
+        p[i].f.torque[1]=0;
+      
+      if (!(p[i].p.rotation & 8))
+        p[i].f.torque[2]=0;
+      
+#endif
+
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
     }
   }
@@ -446,6 +473,16 @@ void convert_vel_space_to_body(Particle *p, double *vel_body)
   vel_body[2] = A[2 + 3*0]*p->m.v[0] + A[2 + 3*1]*p->m.v[1] + A[2 + 3*2]*p->m.v[2];
 }
 
+void convert_vec_space_to_body(Particle *p, double *v,double* res)
+{
+  double A[9];
+  define_rotation_matrix(p, A);
+
+  res[0] = A[0 + 3*0]*v[0] + A[0 + 3*1]*v[1] + A[0 + 3*2]*v[2];
+  res[1] = A[1 + 3*0]*v[0] + A[1 + 3*1]*v[1] + A[1 + 3*2]*v[2];
+  res[2] = A[2 + 3*0]*v[0] + A[2 + 3*1]*v[1] + A[2 + 3*2]*v[2];
+}
+
 
 /** Multiply two quaternions */
 void multiply_quaternions(double a[4], double b[4], double result[4])
@@ -456,6 +493,59 @@ void multiply_quaternions(double a[4], double b[4], double result[4])
  result[2] = a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3]; 
  result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
 }
+
+
+/** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi */
+void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
+{
+  // Convert rotation axis to body-fixed frame
+  double a[3];
+  convert_vec_space_to_body(p,aSpaceFrame,a);
+
+
+  // Apply restrictions from the rotation_per_particle feature
+#ifdef ROTATION_PER_PARTICLE
+//  printf("%g %g %g - ",a[0],a[1],a[2]);
+  // Rotation turned off entirely?
+  if (p->p.rotation <2) return;
+
+  // Per coordinate fixing
+  if (!(p->p.rotation & 2)) a[0]=0;
+  if (!(p->p.rotation & 4)) a[1]=0;
+  if (!(p->p.rotation & 8)) a[2]=0;
+  // Re-normalize rotation axis
+  double l=sqrt(sqrlen(a));
+  // Check, if the rotation axis is nonzero
+  if (l<1E-10) return;
+
+  for (int i=0;i<3;i++)
+    a[i]/=l;
+//  printf("%g %g %g\n",a[0],a[1],a[2]);
+
+#endif
+
+  double q[4];
+  q[0]=cos(phi/2);
+  double tmp=sin(phi/2);
+  q[1]=tmp*a[0];
+  q[2]=tmp*a[1];
+  q[3]=tmp*a[2];
+  
+  // Normalize
+  normalize_quaternion(q);
+
+  // Rotate the particle
+  double qn[4]; // Resulting quaternion
+  multiply_quaternions(p->r.quat,q,qn);
+  for (int k=0; k<4; k++)
+    p->r.quat[k]=qn[k];
+  convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#ifdef DIPOLES
+  // When dipoles are enabled, update dipole moment
+  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
+}
+
 
 
 #endif

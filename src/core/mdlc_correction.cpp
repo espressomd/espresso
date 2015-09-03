@@ -164,14 +164,14 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
       
   energy=0.0;
     
-  ReSjp= (double *) malloc(sizeof(double)*n_local_particles);
-  ReSjm= (double *) malloc(sizeof(double)*n_local_particles);
-  ImSjp= (double *) malloc(sizeof(double)*n_local_particles);
-  ImSjm= (double *) malloc(sizeof(double)*n_local_particles);
-  ReGrad_Mup = (double *) malloc(sizeof(double)*n_local_particles);
-  ImGrad_Mup = (double *) malloc(sizeof(double)*n_local_particles);
-  ReGrad_Mum = (double *) malloc(sizeof(double)*n_local_particles);
-  ImGrad_Mum = (double *) malloc(sizeof(double)*n_local_particles);
+  ReSjp= (double *) Utils::malloc(sizeof(double)*n_local_particles);
+  ReSjm= (double *) Utils::malloc(sizeof(double)*n_local_particles);
+  ImSjp= (double *) Utils::malloc(sizeof(double)*n_local_particles);
+  ImSjm= (double *) Utils::malloc(sizeof(double)*n_local_particles);
+  ReGrad_Mup = (double *) Utils::malloc(sizeof(double)*n_local_particles);
+  ImGrad_Mup = (double *) Utils::malloc(sizeof(double)*n_local_particles);
+  ReGrad_Mum = (double *) Utils::malloc(sizeof(double)*n_local_particles);
+  ImGrad_Mum = (double *) Utils::malloc(sizeof(double)*n_local_particles);
 
   for(ix=-kcut;ix<=+kcut;ix++){
     for(iy=-kcut;iy<=+kcut;iy++){
@@ -479,13 +479,13 @@ void    add_mdlc_force_corrections(){
   // --- Create arrays that should contain the corrections to
   //     the forces and torques, and set them to zero.   
  
-  dip_DLC_f_x = (double *) malloc(sizeof(double)*n_part);
-  dip_DLC_f_y = (double *) malloc(sizeof(double)*n_part);
-  dip_DLC_f_z = (double *) malloc(sizeof(double)*n_part);
+  dip_DLC_f_x = (double *) Utils::malloc(sizeof(double)*n_part);
+  dip_DLC_f_y = (double *) Utils::malloc(sizeof(double)*n_part);
+  dip_DLC_f_z = (double *) Utils::malloc(sizeof(double)*n_part);
 	 
-  dip_DLC_t_x = (double *) malloc(sizeof(double)*n_part);
-  dip_DLC_t_y = (double *) malloc(sizeof(double)*n_part);
-  dip_DLC_t_z = (double *) malloc(sizeof(double)*n_part);
+  dip_DLC_t_x = (double *) Utils::malloc(sizeof(double)*n_part);
+  dip_DLC_t_y = (double *) Utils::malloc(sizeof(double)*n_part);
+  dip_DLC_t_z = (double *) Utils::malloc(sizeof(double)*n_part);
 
 
   for(i=0;i<n_local_particles;i++){
@@ -745,12 +745,12 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 #ifdef DP3M
   case  DIPOLAR_MDLC_P3M:
   case  DIPOLAR_P3M:
-    coulomb.Dmethod =DIPOLAR_MDLC_P3M;
+    set_dipolar_method_local(DIPOLAR_MDLC_P3M);
     break;
 #endif  
   case  DIPOLAR_MDLC_DS:
   case  DIPOLAR_DS: 
-    coulomb.Dmethod =DIPOLAR_MDLC_DS; 
+    set_dipolar_method_local(DIPOLAR_MDLC_DS); 
     break;
   default:
     return ES_ERROR;

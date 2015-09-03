@@ -127,7 +127,7 @@ void init_particle(Particle *part)
   part->p.rinertia[2] = 1.0;
 #endif
 #ifdef ROTATION_PER_PARTICLE
-  part->p.rotation =1;
+  part->p.rotation =14;
 #endif
 
 #ifdef AFFINITY
@@ -293,6 +293,8 @@ void init_particle(Particle *part)
 #ifdef VIRTUAL_SITES_RELATIVE
   part->p.vs_relative_to_particle_id      = 0;
   part->p.vs_relative_distance =0;
+  for (int i=0; i<4; i++) 
+   part->p.vs_relative_rel_orientation[i] =0;
 #endif
 
 #ifdef GHOST_FLAG
@@ -332,7 +334,7 @@ int updatePartCfg(int bonds_flag)
   if(partCfg)
     return 1;
 
-  partCfg = (Particle*)malloc(n_part*sizeof(Particle));
+  partCfg = (Particle*)Utils::malloc(n_part*sizeof(Particle));
   if (bonds_flag != WITH_BONDS)
     mpi_get_particles(partCfg, NULL);
   else
@@ -374,9 +376,9 @@ int sortPartCfg()
   if (n_part != max_seen_particle + 1)
     return 0;
 
-  sorted = (Particle*)malloc(n_part*sizeof(Particle));
+  sorted = (Particle*)Utils::malloc(n_part*sizeof(Particle));
   for(i = 0; i < n_part; i++)
-    memcpy(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
+    memmove(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
   free(partCfg);
   partCfg = sorted;
 
@@ -400,7 +402,7 @@ void realloc_local_particles(int part)
   if (part >= max_local_particles) {
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
-    local_particles = (Particle **)realloc(local_particles, sizeof(Particle *)*max_local_particles);
+    local_particles = (Particle **)Utils::realloc(local_particles, sizeof(Particle *)*max_local_particles);
   }
 }
 
@@ -413,7 +415,7 @@ static void realloc_particle_node(int part)
   if (part >= max_particle_node) {
     /* round up part + 1 in granularity PART_INCREMENT */
     max_particle_node = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
-    particle_node = (int *)realloc(particle_node, sizeof(int)*max_particle_node);
+    particle_node = (int *)Utils::realloc(particle_node, sizeof(int)*max_particle_node);
   }
 }
 
@@ -461,7 +463,7 @@ int realloc_particlelist(ParticleList *l, int size)
     /* round up */
     l->max = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
   if (l->max != old_max)
-    l->part = (Particle *) realloc(l->part, sizeof(Particle)*l->max);
+    l->part = (Particle *) Utils::realloc(l->part, sizeof(Particle)*l->max);
   return l->part != old_start;
 }
 
@@ -492,7 +494,7 @@ Particle *append_unindexed_particle(ParticleList *l, Particle *part)
   realloc_particlelist(l, ++l->n);
   p = &l->part[l->n - 1];
 
-  memcpy(p, part, sizeof(Particle));
+  memmove(p, part, sizeof(Particle));
   return p;
 }
 
@@ -504,7 +506,7 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part)
   re = realloc_particlelist(l, ++l->n);
   p  = &l->part[l->n - 1];
 
-  memcpy(p, part, sizeof(Particle));
+  memmove(p, part, sizeof(Particle));
 
   if (re)
     update_local_particles(l);
@@ -521,9 +523,9 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i)
   dst = &dl->part[dl->n - 1];
   src = &sl->part[i];
   end = &sl->part[sl->n - 1];
-  memcpy(dst, src, sizeof(Particle));
+  memmove(dst, src, sizeof(Particle));
   if ( src != end )
-    memcpy(src, end, sizeof(Particle));
+    memmove(src, end, sizeof(Particle));
   sl->n -= 1;
   realloc_particlelist(sl, sl->n);
   return dst;
@@ -536,7 +538,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
 
-  memcpy(dst, src, sizeof(Particle));
+  memmove(dst, src, sizeof(Particle));
   if (re) {
     //fprintf(stderr, "%d: m_i_p: update destination list after realloc\n",this_node);
     update_local_particles(dl); }
@@ -546,7 +548,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   }
   if ( src != end ) {
     //fprintf(stderr, "%d: m_i_p: copy end particle in source list (id %d)\n",this_node,end->p.identity);
-    memcpy(src, end, sizeof(Particle));
+    memmove(src, end, sizeof(Particle));
 
   }
   if (realloc_particlelist(sl, --sl->n)) {
@@ -826,7 +828,7 @@ int set_particle_virtual(int part, int isVirtual)
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
+int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double* rel_ori)
 {
   // Find out, on what node the particle is
   int pnode;
@@ -841,7 +843,7 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
     return ES_ERROR;
   
   // Send the stuff
-  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance);
+  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance,rel_ori);
   return ES_OK;
 }
 #endif
@@ -934,7 +936,7 @@ int set_particle_type(int part, int type)
 
   if ( Type_array_init ) {
 	// check if the particle exists already and the type is changed, then remove it from the list which contains it
-	  Particle *cur_par = (Particle *) malloc( sizeof(Particle) );
+	  Particle *cur_par = (Particle *) Utils::malloc( sizeof(Particle) );
 	  if ( cur_par != (Particle *) 0 ) {
 		  if ( get_particle_data(part, cur_par) != ES_ERROR ) {
 			  int prev_type = cur_par->p.type;
@@ -1223,7 +1225,7 @@ int remove_particle(int part)
 {
   int pnode;
 
-  Particle *cur_par = (Particle *) malloc (sizeof(Particle));
+  Particle *cur_par = (Particle *) Utils::malloc (sizeof(Particle));
   if (get_particle_data(part, cur_par) == ES_ERROR )
 	  return ES_ERROR;
   int type = cur_par->p.type;
@@ -1283,7 +1285,7 @@ void local_remove_particle(int part)
 
   if (&pl->part[pl->n - 1] != p) {
     /* move last particle to free position */
-    memcpy(p, &pl->part[pl->n - 1], sizeof(Particle));
+    memmove(p, &pl->part[pl->n - 1], sizeof(Particle));
     /* update the local_particles array for the moved particle */
     local_particles[p->p.identity] = p;
   }
@@ -1338,10 +1340,10 @@ void local_place_particle(int part, double p[3], int _new)
   pt->m.v[2] += vv[2];  
 #endif
 
-  memcpy(pt->r.p, pp, 3*sizeof(double));
-  memcpy(pt->l.i, i, 3*sizeof(int));
+  memmove(pt->r.p, pp, 3*sizeof(double));
+  memmove(pt->l.i, i, 3*sizeof(int));
 #ifdef BOND_CONSTRAINT
-  memcpy(pt->r.p_old, pp, 3*sizeof(double));
+  memmove(pt->r.p_old, pp, 3*sizeof(double));
 #endif
 }
 
@@ -1424,23 +1426,33 @@ int try_delete_bond(Particle *part, int *bond)
   IntList *bl = &part->bl;
   int i, j, type, partners;
 
+  // Empty bond means: delete all bonds
   if (!bond) {
     realloc_intlist(bl, bl->n = 0);
     return ES_OK;
   }
 
+  // Go over the bond list to find the bond to delete
   for (i = 0; i < bl->n;) {
     type = bl->e[i];
     partners = bonded_ia_params[type].num;
+    
+    // If the bond type does not match the one, we want to delete, skip 
     if (type != bond[0])
       i += 1 + partners;
     else {
+      // Go over the bond partners
       for(j = 1; j <= partners; j++)
       { 
+        // Leave the loop early, if the bond to delete and the bond with in the particle
+	// don't match
 	if (bond[j] != bl->e[i + j])
 	  break;
       }
+      // If we did not exit from the loop early, all parameters matched
+      // and we go on with deleting
       if (j > partners) {
+	// New length of bond list
 	bl->n -= 1 + partners;
 	memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
 	realloc_intlist(bl, bl->n);
@@ -1543,7 +1555,7 @@ void try_delete_exclusion(Particle *part, int part2)
   IntList *el = &part->el;
   int i;
 
-  for (i = 0; i < el->n;) {
+  for (i = 0; i < el->n; i++) {
     if (el->e[i] == part2) {
       el->n--;
       memmove(el->e + i, el->e + i + 1, sizeof(int)*(el->n - i));
@@ -1574,10 +1586,10 @@ void send_particles(ParticleList *particles, int node)
     size += p->el.n;
 #endif
     realloc_intlist(&local_dyn, size);
-    memcpy(local_dyn.e + local_dyn.n, p->bl.e, p->bl.n*sizeof(int));
+    memmove(local_dyn.e + local_dyn.n, p->bl.e, p->bl.n*sizeof(int));
     local_dyn.n += p->bl.n;
 #ifdef EXCLUSIONS
-    memcpy(local_dyn.e + local_dyn.n, p->el.e, p->el.n*sizeof(int));
+    memmove(local_dyn.e + local_dyn.n, p->el.e, p->el.n*sizeof(int));
     local_dyn.n += p->el.n;
 #endif
   }
@@ -1645,7 +1657,7 @@ void recv_particles(ParticleList *particles, int node)
     Particle *p = &particles->part[pc];
     if (p->bl.n > 0) {
       alloc_intlist(&p->bl, p->bl.n);
-      memcpy(p->bl.e, &local_dyn.e[read], p->bl.n*sizeof(int));
+      memmove(p->bl.e, &local_dyn.e[read], p->bl.n*sizeof(int));
       read += p->bl.n;
     }
     else
@@ -1653,7 +1665,7 @@ void recv_particles(ParticleList *particles, int node)
 #ifdef EXCLUSIONS
     if (p->el.n > 0) {
       alloc_intlist(&p->el, p->el.n);
-      memcpy(p->el.e, &local_dyn.e[read], p->el.n*sizeof(int));
+      memmove(p->el.e, &local_dyn.e[read], p->el.n*sizeof(int));
       read += p->el.n;
     }
     else
@@ -1713,7 +1725,7 @@ void auto_exclusion(int distance)
 
   /* setup bond partners and distance list. Since we need to identify particles via their identity,
      we use a full sized array */
-  partners    = (IntList*)malloc((max_seen_particle + 1)*sizeof(IntList));
+  partners    = (IntList*)Utils::malloc((max_seen_particle + 1)*sizeof(IntList));
   for (p = 0; p <= max_seen_particle; p++)
     init_intlist(&partners[p]);
 
@@ -1782,7 +1794,7 @@ int init_gc(void){
 	Type.max_entry = 0;
 	Index.max_entry = 0;
 
-	type_array = (TypeList *) malloc(sizeof(TypeList) * number_of_type_lists);
+	type_array = (TypeList *) Utils::malloc(sizeof(TypeList) * number_of_type_lists);
 	if ( type_array == (TypeList *) 0 )
 		return ES_ERROR;
 
@@ -1814,12 +1826,12 @@ for ( int i = 0; i<Index.max_entry; i++ )
 		reallocate_global_type_list(number_of_type_lists*2);
 	}
 
-	Type.index = (int *) realloc ( (void *) Type.index, sizeof(int)*Type.max_entry);
+	Type.index = (int *) Utils::realloc ( (void *) Type.index, sizeof(int)*Type.max_entry);
 
 	//reallocate the array that holds the particle type and points to the type index used for the type_list
 	
 	if ( type >= Index.max_entry ) { 
-		Index.type= (int * ) realloc( (void *) Index.type, (type+1)*sizeof(int));
+		Index.type= (int * ) Utils::realloc( (void *) Index.type, (type+1)*sizeof(int));
 		Index.max_entry = type + 1;
 	}
 	for (int i=0; i<Type.max_entry; i++) 
@@ -1839,7 +1851,7 @@ for ( int i = 0; i<Index.max_entry; i++ )
 	}
 
 	int t_c = 0; //index
-	type_array[Index.type[type]].id_list = (int *) malloc (sizeof (int) * n_part);
+	type_array[Index.type[type]].id_list = (int *) Utils::malloc (sizeof (int) * n_part);
 	for (int i=0; i<n_part; i++) {
 		if ( partCfg[i].p.type==type ) 
 			type_array[Index.type[type]].id_list[t_c++]=partCfg[i].p.identity;
@@ -1850,12 +1862,12 @@ for ( int i = 0; i<Index.max_entry; i++ )
 			max_size= floor( (double ) max_size/2.0);
 		}
 		// now the array is shrinked to at least 4 times the highest entry
-		type_array[Index.type[type]].id_list= (int *) realloc( (void *) type_array[Index.type[type]].id_list, sizeof(int)*2*max_size);
+		type_array[Index.type[type]].id_list= (int *) Utils::realloc( (void *) type_array[Index.type[type]].id_list, sizeof(int)*2*max_size);
 		type_array[Index.type[type]].max_entry = t_c;
 		type_array[Index.type[type]].cur_size = max_size*2;
 	} else {
 		//no particles of the given type were found, so leave array size fixed at a reasonable start entry 64 ints in this case
-		type_array[Index.type[type]].id_list= (int *) realloc( (void *) type_array[Index.type[type]].id_list, sizeof(int)*64);
+		type_array[Index.type[type]].id_list= (int *) Utils::realloc( (void *) type_array[Index.type[type]].id_list, sizeof(int)*64);
 		type_array[Index.type[type]].max_entry = t_c;
 		type_array[Index.type[type]].cur_size = 64;
 	}
@@ -1868,7 +1880,7 @@ for ( int i = 0; i<Index.max_entry; i++ )
 }
 
 int reallocate_type_array(int type){
-	type_array[Index.type[type]].id_list = (int *) realloc ( (void *) type_array[Index.type[type]].id_list, sizeof (int) * type_array[Index.type[type]].cur_size * 2);	
+	type_array[Index.type[type]].id_list = (int *) Utils::realloc ( (void *) type_array[Index.type[type]].id_list, sizeof (int) * type_array[Index.type[type]].cur_size * 2);	
 	if (type_array[Index.type[type]].id_list == (int *) 0) {
 		return ES_ERROR;
 	}
@@ -1938,7 +1950,7 @@ int update_particle_array(int type) {
 int reallocate_global_type_list(int size){
 	if (size <= 0 ) 
 		return ES_ERROR;
-	type_array = (TypeList *) realloc( (void *) type_array, sizeof(TypeList)*size);
+	type_array = (TypeList *) Utils::realloc( (void *) type_array, sizeof(TypeList)*size);
 	number_of_type_lists=size;
 	if ( type_array == (TypeList *) 0)
 		return ES_ERROR;
@@ -1994,8 +2006,8 @@ int find_particle_type_id(int type, int *id, int *in_id ){
 
 int delete_particle_of_type(int type) { 
 	int *p_id, *index_id;
-	p_id=(int *) malloc (sizeof(int));
-	index_id=(int *) malloc (sizeof(int));
+	p_id=(int *) Utils::malloc (sizeof(int));
+	index_id=(int *) Utils::malloc (sizeof(int));
 	if (find_particle_type_id(type, p_id, index_id) == ES_ERROR )
 		return ES_ERROR;
 
@@ -2148,10 +2160,11 @@ void pointer_to_virtual(Particle* p, int*&  res)
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2)
+void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3)
 {
   res1=&(p->p.vs_relative_to_particle_id);
   res2=&(p->p.vs_relative_distance);
+  res3=(p->p.vs_relative_rel_orientation);
 }
 #endif
 
@@ -2176,3 +2189,62 @@ res=&(p->p.dipm);
 }
 #endif
 
+#ifdef EXTERNAL_FORCES
+void pointer_to_ext_force(Particle *p, int*& res1, double*& res2)
+{
+  res1=&(p->p.ext_flag);
+  res2=p->p.ext_force;
+}
+#ifdef ROTATION
+void pointer_to_ext_torque(Particle *p, int*& res1, double*& res2)
+{
+  res1=&(p->p.ext_flag);
+  res2=p->p.ext_torque;
+}
+#endif
+void pointer_to_fix(Particle *p, int*& res)
+{
+  res=&(p->p.ext_flag);
+}
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+void pointer_to_gamma(Particle *p, double*& res)
+{
+  res=&(p->p.gamma);
+}
+
+void pointer_to_temperature(Particle *p, double*& res)
+{
+  res=&(p->p.T);
+}
+#endif
+
+#ifdef ROTATION_PER_PARTICLE
+void pointer_to_rotation(Particle *p, short int*& res)
+{
+  res=&(p->p.rotation);
+}
+#endif
+
+#ifdef EXCLUSIONS
+void pointer_to_exclusions(Particle *p, int*& res1, int*& res2)
+{
+  res1=&(p->el.n);
+  res2=p->el.e;
+}
+#endif
+
+#ifdef ENGINE
+void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim)
+{
+  swim = &(p->swim);
+}
+#endif
+
+#ifdef ROTATIONAL_INERTIA
+void pointer_to_rotational_inertia(Particle *p, double*& res)
+{
+  res = p->p.rinertia;
+}
+#endif

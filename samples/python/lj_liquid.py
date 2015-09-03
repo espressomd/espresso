@@ -56,7 +56,7 @@ system = espressomd.System()
 system.time_step = 0.01
 system.skin      = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
-thermostat.Thermostat().setLangevin(1.0,1.0)
+system.thermostat.setLangevin(kT=1.0,gamma=1.0)
 
 # warmup integration (with capped LJ potential)
 warm_steps   = 100
@@ -100,7 +100,7 @@ analyze.distto(system, 0)
 print("Simulate {} particles in a cubic simulation box {} at density {}."
   .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = analyze.mindist()
+act_min_dist = analyze.mindist(system)
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
@@ -132,7 +132,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
   integrate.integrate(warm_steps)
   # Warmup criterion
-  act_min_dist = analyze.mindist() 
+  act_min_dist = analyze.mindist(system) 
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
   i += 1
 
@@ -193,6 +193,11 @@ for i in range(0,int_n_times):
   energies = analyze.energy(system=system)
   print(energies)
   obs_file.write('{ time %s } %s\n' % (system.time,energies))
+  linear_momentum = analyze.analyze_linear_momentum(system=system)
+  print(linear_momentum)
+  #print(analyze.calc_rh(system,0,3,5))
+  #print(analyze.calc_rg(system,0,3,5))
+  #print(analyze.calc_re(system,0,3,5))
 
 #   write observables
 #    set energies [analyze energy]

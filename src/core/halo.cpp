@@ -45,7 +45,7 @@ struct _Fieldtype fieldtype_double = { 0, NULL, NULL, sizeof(double), 0, 0, 0, 0
 void halo_create_fieldtype(int count, int* lengths, int *disps, int extent, Fieldtype *newtype) {
   int i;
 
-  Fieldtype ntype = *newtype = (Fieldtype) malloc(sizeof(*ntype));
+  Fieldtype ntype = *newtype = (Fieldtype) Utils::malloc(sizeof(*ntype));
 
   ntype->subtype = NULL;
   ntype->vflag   = 0;
@@ -59,7 +59,7 @@ void halo_create_fieldtype(int count, int* lengths, int *disps, int extent, Fiel
 
   if (count>0) {
 
-      ntype->lengths = (int*) malloc(count*2*sizeof(int));
+      ntype->lengths = (int*) Utils::malloc(count*2*sizeof(int));
       ntype->disps = (int *)((char *)ntype->lengths + count*sizeof(int));
 
       for (i=0;i<count;i++) {
@@ -82,7 +82,7 @@ void halo_create_fieldtype(int count, int* lengths, int *disps, int extent, Fiel
 void halo_create_field_vector(int vblocks, int vstride, int vskip, Fieldtype oldtype, Fieldtype *newtype) {
   int i;
 
-  Fieldtype ntype = *newtype = (Fieldtype) malloc(sizeof(*ntype));
+  Fieldtype ntype = *newtype = (Fieldtype) Utils::malloc(sizeof(*ntype));
   
   ntype->subtype = oldtype;
   ntype->vflag   = 1;
@@ -94,7 +94,7 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip, Fieldtype old
   ntype->extent = oldtype->extent * ((vblocks-1)*vskip + vstride);
   
   int count = ntype->count = oldtype->count;
-  ntype->lengths = (int*) malloc(count*2*sizeof(int));
+  ntype->lengths = (int*) Utils::malloc(count*2*sizeof(int));
   ntype->disps = (int *)((char *)ntype->lengths + count*sizeof(int));
   
   for (i=0;i<count;i++) {
@@ -107,7 +107,7 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip, Fieldtype old
 void halo_create_field_hvector(int vblocks, int vstride, int vskip, Fieldtype oldtype, Fieldtype *newtype) {
   int i;
 
-  Fieldtype ntype = *newtype = (Fieldtype) malloc(sizeof(*ntype));
+  Fieldtype ntype = *newtype = (Fieldtype) Utils::malloc(sizeof(*ntype));
 
   ntype->subtype = oldtype;
   ntype->vflag   = 0;
@@ -119,7 +119,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip, Fieldtype ol
   ntype->extent = oldtype->extent*vstride + (vblocks-1)*vskip;
 
   int count = ntype->count = oldtype->count;
-  ntype->lengths = (int*) malloc(count*2*sizeof(int));
+  ntype->lengths = (int*) Utils::malloc(count*2*sizeof(int));
   ntype->disps = (int *)((char *)ntype->lengths + count*sizeof(int));
   
   for (i=0;i<count;i++) {
@@ -210,11 +210,11 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
       
       for (i=0; i<count; i++, s_buffer+=type->extent, r_buffer+=type->extent) { 
 	if (!type->count) {
-	  memcpy(r_buffer,s_buffer,type->extent);
+	  memmove(r_buffer,s_buffer,type->extent);
 	} else {
 	    
 	  for (j=0; j<type->count; j++) {
-	    memcpy(r_buffer+type->disps[j],s_buffer+type->disps[j],type->lengths[j]);
+	    memmove(r_buffer+type->disps[j],s_buffer+type->disps[j],type->lengths[j]);
 	  }
 
 	}
@@ -244,7 +244,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice, Fieldtyp
   num = 2*3; /* two communications in each space direction */
 
   hc->num = num ;
-  hc->halo_info = (HaloInfo*) realloc(hc->halo_info,num*sizeof(HaloInfo)) ;
+  hc->halo_info = (HaloInfo*) Utils::realloc(hc->halo_info,num*sizeof(HaloInfo)) ;
 
   int extent = fieldtype->extent;
 
