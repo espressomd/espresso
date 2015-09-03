@@ -17,6 +17,7 @@ proc h5md_init { data_path } {
 	h5mdfile H5Gcreate2 "particles/atoms/mass"
 	h5mdfile H5Gcreate2 "particles/atoms/position"
 	h5mdfile H5Gcreate2 "particles/atoms/velocity"
+	h5mdfile H5Gcreate2 "particles/atoms/force"
 	h5mdfile H5Gcreate2 "parameters"
 	h5mdfile H5Gcreate2 "parameters/vmd_structure"
 	h5mdfile H5Gcreate2 "observables" 
@@ -36,6 +37,7 @@ proc h5md_init { data_path } {
 		}
 		h5mdfile H5Dwrite
 	}
+    # position
 	h5mdfile H5Screate_simple type int dims 0 
 	h5mdfile H5Pset_chunk dims 1 
 	h5mdfile H5Dcreate2 "particles/atoms/position/step"
@@ -45,9 +47,7 @@ proc h5md_init { data_path } {
 	h5mdfile H5Screate_simple type double dims 0 [setmd n_part] 3
 	h5mdfile H5Pset_chunk dims 5 [setmd n_part] 3
 	h5mdfile H5Dcreate2 "particles/atoms/position/value"
-	h5mdfile H5Screate_simple type int dims [setmd n_part] 
-	h5mdfile H5Pset_chunk dims [setmd n_part] 
-	h5mdfile H5Dcreate2 "particles/atoms/species"
+    # velocity
 	h5mdfile H5Screate_simple type int dims 0 
 	h5mdfile H5Pset_chunk dims 1 
 	h5mdfile H5Dcreate2 "particles/atoms/velocity/step"
@@ -57,6 +57,21 @@ proc h5md_init { data_path } {
 	h5mdfile H5Screate_simple type double dims 0 [setmd n_part] 3
 	h5mdfile H5Pset_chunk dims 5 [setmd n_part] 3
 	h5mdfile H5Dcreate2 "particles/atoms/velocity/value"
+    # force
+    h5mdfile H5Screate_simple type int dims 0 
+	h5mdfile H5Pset_chunk dims 1 
+	h5mdfile H5Dcreate2 "particles/atoms/force/step"
+	h5mdfile H5Screate_simple type double dims 0 
+	h5mdfile H5Pset_chunk dims 1 
+	h5mdfile H5Dcreate2 "particles/atoms/force/time"
+	h5mdfile H5Screate_simple type double dims 0 [setmd n_part] 3
+	h5mdfile H5Pset_chunk dims 5 [setmd n_part] 3
+	h5mdfile H5Dcreate2 "particles/atoms/force/value"
+    # species
+	h5mdfile H5Screate_simple type int dims [setmd n_part] 
+	h5mdfile H5Pset_chunk dims [setmd n_part] 
+	h5mdfile H5Dcreate2 "particles/atoms/species"
+    # vmd
 	h5mdfile H5Screate_simple type int dims 100
 	h5mdfile H5Pset_chunk dims 100
 	h5mdfile H5Dcreate2 "parameters/vmd_structure/indexOfSpecies"
@@ -107,6 +122,7 @@ proc h5md_write_positions { args } {
 	h5mdfile H5_Fflush
 }
 
+
 proc h5md_write_velocities {} {
 	h5mdfile H5Dopen2 "particles/atoms/velocity/value"
 	set offset [h5mdfile get_dataset_dims]
@@ -131,6 +147,40 @@ proc h5md_write_velocities {} {
 	h5mdfile H5Dwrite
 	# Write simulation time
 	h5mdfile H5Dopen2 "particles/atoms/velocity/time"
+	set offset [h5mdfile get_dataset_dims]
+	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] 
+	h5mdfile H5Sselect_hyperslab offset [lindex $offset 0] 
+	h5mdfile H5Screate_simple type double dims 1 
+	h5mdfile H5_write_value value [setmd time] index 0 
+	h5mdfile H5Dwrite
+	h5mdfile H5_Fflush
+}
+
+
+proc h5md_write_forces {} {
+	h5mdfile H5Dopen2 "particles/atoms/force/value"
+	set offset [h5mdfile get_dataset_dims]
+	# Write forces of all particles
+	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] [setmd n_part] 3
+	h5mdfile H5Sselect_hyperslab offset [expr [lindex $offset 0]] 0 0
+	h5mdfile H5Screate_simple type double dims 1 [setmd n_part] 3
+	for { set i 0 } { $i < [setmd n_part] } { incr i } {
+		set force [part $i print f]
+		h5mdfile H5_write_value value [lindex $force 0] index 0 $i 0
+		h5mdfile H5_write_value value [lindex $force 1] index 0 $i 1
+		h5mdfile H5_write_value value [lindex $force 2] index 0 $i 2
+	}
+	h5mdfile H5Dwrite
+	# Write simulation step (assumes that time_step hasnt changed)
+	h5mdfile H5Dopen2 "particles/atoms/force/step"
+	set offset [h5mdfile get_dataset_dims]
+	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] 
+	h5mdfile H5Sselect_hyperslab offset [lindex $offset 0] 
+	h5mdfile H5Screate_simple type int dims 1 
+	h5mdfile H5_write_value value [expr int([setmd time]/[setmd time_step])] index 0 
+	h5mdfile H5Dwrite
+	# Write simulation time
+	h5mdfile H5Dopen2 "particles/atoms/force/time"
 	set offset [h5mdfile get_dataset_dims]
 	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] 
 	h5mdfile H5Sselect_hyperslab offset [lindex $offset 0] 
