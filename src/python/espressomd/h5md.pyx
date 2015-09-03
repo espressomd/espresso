@@ -45,11 +45,11 @@ class h5md(object):
       if case=='step': 
         if(self.dataset.len()<=timestep+1):
           self.dataset.resize((timestep+1,1))
-        self.dataset[timestep]=timestep  
+        self.dataset[timestep]=particle_value  
       if case=='time': 
         if(self.dataset.len()<=timestep+1):
           self.dataset.resize((timestep+1,1))
-        self.dataset[timestep]=self.system.time
+        self.dataset[timestep]=particle_value
       if case=='value': 
         n_part=self.system.n_part
         if(self.dataset.len()<=timestep+1): 
@@ -118,31 +118,39 @@ class h5md(object):
     #position
     def pos(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/position/step",(1,1),(None,1),'int64','step')
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/position/time",(1,1),(None,1),'f8','time')
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/position/step",(1,1),(None,1),'int64','step')
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/position/time",(1,1),(None,1),'f8','time')
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].pos,"particles/"+groupname+"/position/value",(1,1,3),(None,None,3),'f8','value')             
-    #pmage
+    #image
     def image(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/image/step",(1,1),(None,1),'int64','step')
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/image/time",(1,1),(None,1),'f8','time')
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/image/step",(1,1),(None,1),'int64','step')
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/image/time",(1,1),(None,1),'f8','time')
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].pos,"particles/"+groupname+"/image/value",(1,1,3),(None,None,3),'f8','value')             
     #velocity
     def v(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/velocity/step",(1,1),(None,1),'int64','step')
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/velocity/time",(1,1),(None,1),'f8','time')
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/velocity/step",(1,1),(None,1),'int64','step')
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/velocity/time",(1,1),(None,1),'f8','time')
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].v,"particles/"+groupname+"/velocity/value",(1,1,3),(None,None,3),'f8','value')      
     #force
     def f(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/force/step",(1,1),(None,1),'int64','step')
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/force/time",(1,1),(None,1),'f8','time')
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/force/step",(1,1),(None,1),'int64','step')
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/force/time",(1,1),(None,1),'f8','time')
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].f,"particles/"+groupname+"/force/value",(1,1,3),(None,None,3),'f8','value')       
+    #bonds
+    def bonds(self,groupname="atoms"):
+      self.n_part=self.self_h5md_class.system.n_part
+      for i in range(0,self.n_part):
+        for bond in self.self_h5md_class.system.part[i].bonds: 
+          print("BOND:",bond[0],bond[1])         
+          self.self_h5md_class.WriteValue(-1,i,i,"particles/"+groupname+"/bond_from/value",(1,1),(None,1),'int64','value_fix') 
+          self.self_h5md_class.WriteValue(-1,i,bond[1],"particles/"+groupname+"/bond_to/value",(1,1),(None,1),'int64','value_fix') 
     #species
     def type(self,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
@@ -161,74 +169,132 @@ class h5md(object):
     #omega_lab
     def omega_lab(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/omega_lab/step",(1,1),(None,1),'int64','step',ROTATION)
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/omega_lab/time",(1,1),(None,1),'f8','time',ROTATION)
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/omega_lab/step",(1,1),(None,1),'int64','step',ROTATION)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/omega_lab/time",(1,1),(None,1),'f8','time',ROTATION)
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].omega_lab,"particles/"+groupname+"/omega_lab/value",(1,1,3),(None,None,3),'f8','value',ROTATION)        
     #rinertia
     def rinertia(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/rinertia/step",(1,1),(None,1),'int64','step',ROTATIONAL_INERTIA)
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/rinertia/time",(1,1),(None,1),'f8','time',ROTATIONAL_INERTIA)
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/rinertia/step",(1,1),(None,1),'int64','step',ROTATIONAL_INERTIA)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/rinertia/time",(1,1),(None,1),'f8','time',ROTATIONAL_INERTIA)
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].rinertia,"particles/"+groupname+"/rinertia/value",(1,1,3),(None,None,3),'f8','value',ROTATIONAL_INERTIA)        
     #omega_body
     def omega_body(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/omega_body/step",(1,1),(None,1),'int64','step',ROTATION)
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/omega_body/time",(1,1),(None,1),'f8','time',ROTATION)
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/omega_body/step",(1,1),(None,1),'int64','step',ROTATION)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/omega_body/time",(1,1),(None,1),'f8','time',ROTATION)
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].omega_body,"particles/"+groupname+"/omega_body/value",(1,1,3),(None,None,3),'f8','value',ROTATION)        
     #torque_lab
     def torque_lab(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/torque_lab/step",(1,1),(None,1),'int64','step',ROTATION)
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/torque_lab/time",(1,1),(None,1),'f8','time',ROTATION)
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/torque_lab/step",(1,1),(None,1),'int64','step',ROTATION)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/torque_lab/time",(1,1),(None,1),'f8','time',ROTATION)
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].torque_lab,"particles/"+groupname+"/torque_lab/value",(1,1,3),(None,None,3),'f8','value',ROTATION)        
     #quat
     def quat(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/quat/step",(1,1),(None,1),'int64','step',ROTATION)
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/quat/time",(1,1),(None,1),'f8','time',ROTATION)
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/quat/step",(1,1),(None,1),'int64','step',ROTATION)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/quat/time",(1,1),(None,1),'f8','time',ROTATION)
       for i in range(0,self.n_part):
-        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].quat,"particles/"+groupname+"/quat/value",(1,1,4),(None,None,4),'f8','value',ROTATION)            
-    #charge
-    def q(self,groupname="atoms"):
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].quat,"particles/"+groupname+"/quat/value",(1,1,4),(None,None,4),'f8','value',ROTATION)           
+    #charge   
+    def q(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/charge/step",(1,1),(None,1),'int64','step',ELECTROSTATICS)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/charge/time",(1,1),(None,1),'f8','time',ELECTROSTATICS)
       for i in range(0,self.n_part):
-        self.self_h5md_class.WriteValue(-1,i,self.self_h5md_class.system.part[i].q,"particles/"+groupname+"/charge/value",(1,1),(None,1),'int64','value_fix',ELECTROSTATICS)   
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].q,"particles/"+groupname+"/charge/value",(1,1,1),(None,None,1),'f8','value',ELECTROSTATICS)               
     #virtual
-    def virtual(self,groupname="atoms"):
+    def virtual(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/virtual/step",(1,1),(None,1),'int64','step',VIRTUAL_SITES_COM)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/virtual/time",(1,1),(None,1),'f8','time',VIRTUAL_SITES_COM)
       for i in range(0,self.n_part):
-        self.self_h5md_class.WriteValue(-1,i,self.self_h5md_class.system.part[i].virtual,"particles/"+groupname+"/virtual/value",(1,1),(None,1),'int64','value_fix',VIRTUAL_SITES_COM)
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].virtual,"particles/"+groupname+"/virtual/value",(1,1,1),(None,None,1),'int64','value',VIRTUAL_SITES_COM)     
     #vs_relative
-    def vs_relative(self,groupname="atoms"):
+    def vs_relative(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/vs_relative/step",(1,1),(None,1),'int64','step',VIRTUAL_SITES_RELATIVE)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/vs_relative/time",(1,1),(None,1),'f8','time',VIRTUAL_SITES_RELATIVE)
       for i in range(0,self.n_part):
-        self.self_h5md_class.WriteValue(-1,i,self.self_h5md_class.system.part[i].vs_relative,"particles/"+groupname+"/vs_relative/value",(1,2),(None,2),'f8','value_fix',VIRTUAL_SITES_RELATIVE)
-    #cipole
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].vs_relative,"particles/"+groupname+"/vs_relative/value",(1,1,3),(None,None,3),'f8','value',VIRTUAL_SITES_RELATIVE) 
+    #dipole
     def dip(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/dipole/step",(1,1),(None,1),'int64','step',DIPOLES)
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/dipole/time",(1,1),(None,1),'f8','time',DIPOLES)
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/dipole/step",(1,1),(None,1),'int64','step',DIPOLES)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/dipole/time",(1,1),(None,1),'f8','time',DIPOLES)
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].dip,"particles/"+groupname+"/dipole/value",(1,1,3),(None,None,3),'f8','value',DIPOLES)     
     #dipole_magnitude
     def dipm(self,timestep,groupname="atoms"):
       self.n_part=self.self_h5md_class.system.n_part
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/dipole_magnitude/step",(1,1),(None,1),'int64','step',DIPOLES)
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/dipole_magnitude/time",(1,1),(None,1),'f8','time',DIPOLES)
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/dipole_magnitude/step",(1,1),(None,1),'int64','step',DIPOLES)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/dipole_magnitude/time",(1,1),(None,1),'f8','time',DIPOLES)
       for i in range(0,self.n_part):
         self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].dipm,"particles/"+groupname+"/dipole_magnitude/value",(1,1,3),(None,None,3),'f8','value',DIPOLES)     
+    #external force
+    def ext_force(self,timestep,groupname="atoms"):
+      self.n_part=self.self_h5md_class.system.n_part
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/ext_force/step",(1,1),(None,1),'int64','step',EXTERNAL_FORCES)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/ext_force/time",(1,1),(None,1),'f8','time',EXTERNAL_FORCES)
+      for i in range(0,self.n_part):
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].ext_force,"particles/"+groupname+"/ext_force/value",(1,1,3),(None,None,3),'f8','value',EXTERNAL_FORCES)    
+    #external force particle fix
+    def fix(self,timestep,groupname="atoms"):
+      self.n_part=self.self_h5md_class.system.n_part
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/ext_force_fix/step",(1,1),(None,1),'int64','step',EXTERNAL_FORCES)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/ext_force_fix/time",(1,1),(None,1),'f8','time',EXTERNAL_FORCES)
+      for i in range(0,self.n_part):
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].fix,"particles/"+groupname+"/ext_force_fix/value",(1,1,3),(None,None,3),'int64','value',EXTERNAL_FORCES)   
+    #external torque
+    def ext_torque(self,timestep,groupname="atoms"):
+      self.n_part=self.self_h5md_class.system.n_part
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/ext_torque/step",(1,1),(None,1),'int64','step',ROTATION)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/ext_torque/time",(1,1),(None,1),'f8','time',ROTATION)
+      for i in range(0,self.n_part):
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].ext_torque,"particles/"+groupname+"/ext_torque/value",(1,1,3),(None,None,3),'f8','value',ROTATION)        
+    #gamma
+    def gamma(self,timestep,groupname="atoms"):
+      self.n_part=self.self_h5md_class.system.n_part
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/gamma/step",(1,1),(None,1),'int64','step',LANGEVIN_PER_PARTICLE)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/gamma/time",(1,1),(None,1),'f8','time',LANGEVIN_PER_PARTICLE)
+      for i in range(0,self.n_part):
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].gamma,"particles/"+groupname+"/gamma/value",(1,1,1),(None,None,1),'f8','value',LANGEVIN_PER_PARTICLE)         
+    #temperature   
+    def temp(self,timestep,groupname="atoms"):
+      self.n_part=self.self_h5md_class.system.n_part
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/temp/step",(1,1),(None,1),'int64','step',LANGEVIN_PER_PARTICLE)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/temp/time",(1,1),(None,1),'f8','time',LANGEVIN_PER_PARTICLE)
+      for i in range(0,self.n_part):
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].temp,"particles/"+groupname+"/temp/value",(1,1,1),(None,None,1),'f8','value',LANGEVIN_PER_PARTICLE)        
+    #rotation   
+    def rotation(self,timestep,groupname="atoms"):
+      self.n_part=self.self_h5md_class.system.n_part
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/rotation/step",(1,1),(None,1),'int64','step',ROTATION_PER_PARTICLE)
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/rotation/time",(1,1),(None,1),'f8','time',ROTATION_PER_PARTICLE)
+      for i in range(0,self.n_part):
+        self.self_h5md_class.WriteValue(timestep,i,self.self_h5md_class.system.part[i].rotation,"particles/"+groupname+"/rotation/value",(1,1,1),(None,None,1),'int64','value',ROTATION_PER_PARTICLE)         
+       
+           
     #box
-    def box(self,timestep=0,groupname="atoms"): 
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/box/step",(1,1),(None,1),'int64','step')
-      self.self_h5md_class.WriteValue(timestep,-1,-1,"particles/"+groupname+"/box/time",(1,1),(None,1),'f8','time')
-      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.box_l,"particles/"+groupname+"/box/value",(1,1,3),(None,None,3),'f8','box_edges')     
+    def box(self,timestep,groupname="atoms"): 
+      self.self_h5md_class.WriteValue(timestep,-1,timestep,"particles/"+groupname+"/box/step",(1,1),(None,1),'int64','step')
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.time,"particles/"+groupname+"/box/time",(1,1),(None,1),'f8','time')
+      self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.box_l,"particles/"+groupname+"/box/value",(1,1,1),(None,3,3),'f8','box_edges')     
       self.self_h5md_class.WriteValue(timestep,-1,self.self_h5md_class.system.periodicity,"particles/"+groupname+"/box/boundary",(3,1),(3,1),'S30','box_periodicity')       
       self.self_h5md_class.WriteValue(timestep,-1,3,"particles/"+groupname+"/box/dimension",(1,1),(None,1),'int64','box_dimension') 
+      
+      
+      
+      
+      
+      
+      
+      
                       
 #READ CLASS   
   class h5_read_particles(object):
@@ -439,7 +505,7 @@ class h5md(object):
       for i in range(self.self_h5md_class.value_dataset.shape[1]):
         self.self_h5md_class.system.part[i].dipoleMagnitude = self.self_h5md_class.value_dataset[timestep,i]                           
     #Box
-    def box(self,timestep=0,groupname="atoms"):
+    def box(self,timestep,groupname="atoms"):
       try:
         self.self_h5md_class.dimension_dataset=self.self_h5md_class.ReadDataset(self.self_h5md_class.h5_file,'particles/'+groupname+'/box','dimension')
         self.self_h5md_class.boundary_dataset=self.self_h5md_class.ReadDataset(self.self_h5md_class.h5_file,'particles/'+groupname+'/box','boundary')
