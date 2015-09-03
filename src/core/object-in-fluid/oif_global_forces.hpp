@@ -135,7 +135,7 @@ inline void calc_oif_global(double *area_volume, int molType){ //first-fold-then
 								get_mi_vector(BB, p2->r.p, p33);
 								for (int i=0; i < 3; i++) { p11[i] = p33[i] + AA[i]; p22[i] = p33[i] + BB[i]; }
 							} else {
-								printf("Something wrong in area_force_local.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
+								printf("Something wrong in oif_global_forces.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
 								return;
 							}
 						}
@@ -267,7 +267,7 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 								get_mi_vector(BB, p2->r.p, p33);
 								for (int i=0; i < 3; i++) { p11[i] = p33[i] + AA[i]; p22[i] = p33[i] + BB[i]; }
 							} else {
-								printf("Something wrong in area_force_local.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
+								printf("Something wrong in oif_global_forces.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
 								return;
 							}
 						}

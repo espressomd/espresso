@@ -74,8 +74,8 @@ inline void add_membrane_collision_pair_force(Particle *p1, Particle *p2, IA_par
         
         if(r_off > 0.0) {
             
-            memcpy(out1, p1->p.out_direction, 3*sizeof(double));
-            memcpy(out2, p2->p.out_direction, 3*sizeof(double));
+            memmove(out1, p1->p.out_direction, 3*sizeof(double));
+            memmove(out2, p2->p.out_direction, 3*sizeof(double));
             
             // this is the direction in which the repulsive forces will be applied and its norm
             vector_subt(dir,out1,out2);

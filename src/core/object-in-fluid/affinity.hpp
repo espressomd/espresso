@@ -83,8 +83,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				double folded_pos[3], vec[3], len2, len;
 				int img[3];
 				/* fold the coordinates of the particle */
-				memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-				memcpy(img, p1->l.i, 3*sizeof(int));
+				memmove(folded_pos, p1->r.p, 3*sizeof(double));
+				memmove(img, p1->l.i, 3*sizeof(int));
 				unfold_position(folded_pos, img);
 				//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 				for(j=0;j<3;j++)
@@ -113,8 +113,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				double folded_pos[3];
 				int img[3];
 				/* fold the coordinates of the particle */
-				memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-				memcpy(img, p1->l.i, 3*sizeof(int));
+				memmove(folded_pos, p1->r.p, 3*sizeof(double));
+				memmove(img, p1->l.i, 3*sizeof(int));
 				unfold_position(folded_pos, img);
 				//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 				//printf("d: %f %f %f\n",d[0],d[1],d[2]);
@@ -158,8 +158,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				double folded_pos[3], vec[3], len2, len;
 				int img[3];
 				/* fold the coordinates of the particle */
-				memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-				memcpy(img, p1->l.i, 3*sizeof(int));
+				memmove(folded_pos, p1->r.p, 3*sizeof(double));
+				memmove(img, p1->l.i, 3*sizeof(int));
 				unfold_position(folded_pos, img);
 				//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 				for(j=0;j<3;j++)
@@ -225,8 +225,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 					double folded_pos[3];
 					int img[3];
 					/* fold the coordinates of the particle */
-					memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-					memcpy(img, p1->l.i, 3*sizeof(int));
+					memmove(folded_pos, p1->r.p, 3*sizeof(double));
+					memmove(img, p1->l.i, 3*sizeof(int));
 					unfold_position(folded_pos, img);
 					//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 					//printf("d: %f %f %f\n",d[0],d[1],d[2]);
@@ -272,8 +272,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				double folded_pos[3], vec[3], len2, len;
 				int img[3];
 				/* fold the coordinates of the particle */
-				memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-				memcpy(img, p1->l.i, 3*sizeof(int));
+				memmove(folded_pos, p1->r.p, 3*sizeof(double));
+				memmove(img, p1->l.i, 3*sizeof(int));
 				unfold_position(folded_pos, img);
 				//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 				for(j=0;j<3;j++)
@@ -320,8 +320,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 					double folded_pos[3];
 					int img[3];
 					/* fold the coordinates of the particle */
-					memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-					memcpy(img, p1->l.i, 3*sizeof(int));
+					memmove(folded_pos, p1->r.p, 3*sizeof(double));
+					memmove(img, p1->l.i, 3*sizeof(int));
 					unfold_position(folded_pos, img);
 					//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 					//printf("d: %f %f %f\n",d[0],d[1],d[2]);
@@ -368,8 +368,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				double folded_pos[3], vec[3], len2, len;
 				int img[3];
 				/* fold the coordinates of the particle */
-				memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-				memcpy(img, p1->l.i, 3*sizeof(int));
+				memmove(folded_pos, p1->r.p, 3*sizeof(double));
+				memmove(img, p1->l.i, 3*sizeof(int));
 				unfold_position(folded_pos, img);
 				//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 				for(j=0;j<3;j++)
@@ -429,8 +429,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 					double folded_pos[3];
 					int img[3];
 					/* fold the coordinates of the particle */
-					memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-					memcpy(img, p1->l.i, 3*sizeof(int));
+					memmove(folded_pos, p1->r.p, 3*sizeof(double));
+					memmove(img, p1->l.i, 3*sizeof(int));
 					unfold_position(folded_pos, img);
 					//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 					//printf("d: %f %f %f\n",d[0],d[1],d[2]);
@@ -477,8 +477,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 				double folded_pos[3], vec[3], len2, len;
 				int img[3];
 				/* fold the coordinates of the particle */
-				memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-				memcpy(img, p1->l.i, 3*sizeof(int));
+				memmove(folded_pos, p1->r.p, 3*sizeof(double));
+				memmove(img, p1->l.i, 3*sizeof(int));
 				unfold_position(folded_pos, img);
 				//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 				for(j=0;j<3;j++)
@@ -544,8 +544,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 					double folded_pos[3];
 					int img[3];
 					/* fold the coordinates of the particle */
-					memcpy(folded_pos, p1->r.p, 3*sizeof(double));
-					memcpy(img, p1->l.i, 3*sizeof(int));
+					memmove(folded_pos, p1->r.p, 3*sizeof(double));
+					memmove(img, p1->l.i, 3*sizeof(int));
 					unfold_position(folded_pos, img);
 					//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 					//printf("d: %f %f %f\n",d[0],d[1],d[2]);
