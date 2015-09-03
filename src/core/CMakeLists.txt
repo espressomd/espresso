@@ -1,6 +1,4 @@
 
-configure_file(acconfig.hpp.in acconfig.hpp)
-
 find_package(CUDA)
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -gencode arch=compute_35,code=sm_35)
 
