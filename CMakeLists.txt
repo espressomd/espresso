@@ -40,6 +40,7 @@ option(WITH_MPI    "Build a parallel (message-passing) version of ESPResSo" ON)
 option(WITH_TK     "Build with tk support" OFF)
 option(WITH_PYTHON "Build python interface" ON)
 option(WITH_TCL    "Build tcl interface" ON)
+option(WITH_CUDA   "Build with GPU support" ON)
 
 # choose the name of the config file
 set(ESPRESSO_MYCONFIG_NAME "myconfig.hpp"
@@ -61,6 +62,12 @@ ENDIF(CMAKE_GENERATOR MATCHES "Visual Studio")
 #
 
 find_package(MyConfig)
+
+if (WITH_CUDA)
+   find_package(CUDA)
+   list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
+   list(APPEND LIBRARIES ${CUDA_LIBRARIES})
+endif(WITH_CUDA)     
 
 if (WITH_PYTHON)
      find_package(Cython)
