@@ -29,8 +29,10 @@
     the documentation of the features.
  */
 
+#ifdef HAVE_CONFIG_H
 /* Include the defines created by configure. */
 #include <acconfig.hpp>
+#endif
 
 /* Prevent C++ bindings in MPI (there is a DataType called LB in there) */
 #define OMPI_SKIP_MPICXX
