@@ -1,4 +1,4 @@
-file(GLOB Espresso_SRC
+file(GLOB_RECURSE Espresso_SRC
           "*.cpp"
           )
 

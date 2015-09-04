@@ -43,7 +43,7 @@ option(WITH_TCL    "Build tcl interface" ON)
 option(WITH_CUDA   "Build with GPU support" ON)
 
 # choose the name of the config file
-set(ESPRESSO_MYCONFIG_NAME "myconfig.hpp"
+set(MYCONFIG_NAME "myconfig.hpp"
   CACHE STRING "Default name of the local config file")
 
 ######################################################################
