@@ -32,7 +32,7 @@ system = espressomd.System()
 system.time_step = 0.01
 system.skin      = 0.4
 n_part=10
-n_time=10
+n_time=5
 int_steps=10
 
 h5=h5md.h5md("h5md_WriteReadFile.h5",system)
@@ -53,39 +53,36 @@ outParams=outBond.params
 ################################################
 
 for i in range(n_part):
-	system.part[i].pos=numpy.array([0.1*i,0.1*i,0.1*i])
-	system.part[i].v=numpy.array([0.2*i,0.2*i,0.2*i])
-	system.part[i].f=numpy.array([0.3*i,0.3*i,0.3*i])
+	system.part[i].pos=numpy.array([0.1*i,0.2*i,0.3*i])
+	system.part[i].v=numpy.array([0.2*i,0.3*i,0.4*i])
+	system.part[i].f=numpy.array([0.3*i,0.4*i,0.5*i])
 	system.part[i].type=i%3
-	#system.part[i].bonds=[[outBond,(i+1)%n_part],[outBond,(i+2)%n_part]]
+	#system.part[i].bonds=[[outBond,(i+1)%n_part],[outBond,(i+2)%n_part]] #TODO
 	system.part[i].mass=0.4*i
-	system.part[i].omega_lab=numpy.array([0.5*i,0.5*i,0.5*i])
-	system.part[i].rinertia=numpy.array([0.6*i,0.6*i,0.6*i])
-	system.part[i].omega_body=numpy.array([0.7*i,0.7*i,0.7*i])
-	system.part[i].torque_lab=numpy.array([0.8*i,0.8*i,0.8*i])
-	system.part[i].quat=numpy.array([0.9*i,0.9*i,0.9*i,0.9*i])	
+	system.part[i].omega_lab=numpy.array([0.5*i,0.6*i,0.7*i])
+	system.part[i].rinertia=numpy.array([0.6*i,0.7*i,0.8*i])
+	system.part[i].omega_body=numpy.array([0.7*i,0.8*i,0.9*i])
+	system.part[i].torque_lab=numpy.array([0.8*i,0.9*i,1.0*i])
+	system.part[i].quat=numpy.array([0.9*i,0.9*i,1.0*i,1.1*i])	
 	####system.part[i].director=numpy.array([0.1,0.1,0.1,0.1])*[i*3,i*3,i*3,i*3]	#Not implemented yet
 	system.part[i].q=1.0*i
 	system.part[i].virtual=11*i          															#Only virtual or vs_relative in myconfig
-	#system.part[i].vs_relative=numpy.array([1.2*i,1.2*i,1.2*i])	  #Only virtual or vs_relative in myconfig #ERROR in python code
-	system.part[i].dip=numpy.array([1.3*i,1.3*i,1.3*i])
+	#system.part[i].vs_relative=numpy.array([1.2*i,1.3*i,1.4*i])	  #Only virtual or vs_relative in myconfig #ERROR in python code
+	system.part[i].dip=numpy.array([1.3*i,1.4*i,1.5*i])
 	system.part[i].dipm=14*i	
 	
-	system.part[i].ext_force=numpy.array([1.5*i,1.5*i,1.5*i])
+	system.part[i].ext_force=numpy.array([1.5*i,1.6*i,1.7*i])
 	system.part[i].fix=numpy.array([i%2,i%2,i%2])
-	system.part[i].ext_torque=numpy.array([1.6*i,1.6*i,1.6*i])
+	system.part[i].ext_torque=numpy.array([1.6*i,1.7*i,1.8*i])
 	system.part[i].gamma=1.7*i
 	system.part[i].temp=1.8*i
 	system.part[i].rotation=i%2
 	####system.part[i].exclude=-1 #TODO
 	####system.part[i].swimming=-1 #TODO
 	
-	#############################
-	
 	system.box_l = numpy.array([100,200,300])
-	
 	#####system.part[i].image=numpy.array([0.1,0.1,0.1])*[i*2,i*2,i*2] #TOASK
-	#system.part[i].id=i*7
+	system.part[i].id=19*i	# Will be overwritten from Espresso
 
 	
 
@@ -97,42 +94,45 @@ for i in range(n_part):
 
 for i in range(n_time):
 	system.time=0.1*(i+1)
-	h5.h5_write_particles.type()
-	h5.h5_write_particles.pos(i)
-	h5.h5_write_particles.v(i)
-	h5.h5_write_particles.f(i)
-	#h5.h5_write_particles.bonds(i)
-	h5.h5_write_particles.mass()
-	h5.h5_write_particles.omega_lab(i)
-	h5.h5_write_particles.rinertia(i)
-	h5.h5_write_particles.omega_body(i)
-	h5.h5_write_particles.torque_lab(i)
-	h5.h5_write_particles.quat(i)
-	####h5.h5_write_particles.director(i) #Not implemented yet
-	h5.h5_write_particles.q(i)
-	h5.h5_write_particles.virtual(i)     #Only virtual or vs_relative in myconfig
-	#h5.h5_write_particles.vs_relative(i) #Only virtual or vs_relative in myconfig #ERROR in python code
-	h5.h5_write_particles.dip(i)
-	h5.h5_write_particles.dipm(i)
-	h5.h5_write_particles.ext_force(i)
-	h5.h5_write_particles.fix(i)
-	h5.h5_write_particles.ext_torque(i)
-	h5.h5_write_particles.gamma(i)
-	h5.h5_write_particles.temp(i)
-	h5.h5_write_particles.rotation(i)
-	####h5.h5_write_particles.exclude(i) #TODO
-	####h5.h5_write_particles.swimming(i) #TODO
+	h5.write_to_h5.time(i,"particles/atoms/position/","time")
+	h5.write_to_h5.time_step(i,"particles/atoms/position/","step")
+	h5.write_to_h5.type()
+	h5.write_to_h5.pos()
+	h5.write_to_h5.v()
+	h5.write_to_h5.f()
+	#h5.write_to_h5.bonds(i)
+	h5.write_to_h5.mass()
+	h5.write_to_h5.omega_lab()
+	h5.write_to_h5.rinertia()
+	h5.write_to_h5.omega_body()
+	h5.write_to_h5.torque_lab()
+	h5.write_to_h5.quat()
+	####h5.write_to_h5.director(i) #Not implemented yet
+	h5.write_to_h5.q()
+	h5.write_to_h5.virtual()      #Only virtual or vs_relative in myconfig
+	#h5.write_to_h5.vs_relative(i) #Only virtual or vs_relative in myconfig #ERROR in python code
+	h5.write_to_h5.dip()
+	h5.write_to_h5.dipm()
+	h5.write_to_h5.ext_force()
+	h5.write_to_h5.fix()
+	h5.write_to_h5.ext_torque()
+	h5.write_to_h5.gamma()
+	h5.write_to_h5.temp()
+	h5.write_to_h5.rotation()
+	####h5.write_to_h5.exclude(i) #TODO
+	####h5.write_to_h5.swimming(i) #TODO
 	
-	#####################################
+	h5.write_to_h5.box_edges()
+	#h5.write_to_h5.box_boundary(i)
+	#h5.write_to_h5.box_dimension(i)
+	h5.write_to_h5.id(i)
+	#h5.write_to_h5.image(i) #TOASK
 	
-	h5.h5_write_particles.box(i)
-	#h5.h5_write_particles.image(i) #TOASK
-	#h5.h5_write_observable(i,[2,3,4],"energies","Obs1")
-	#h5.h5_write_particles.id()
+	h5.write_to_h5.userdefined(i,[2,3,4],"User/user1/","value",'f8')
 
 
 
-
+	
 
 
 
@@ -152,28 +152,25 @@ for i in range(n_time):
 #bond time dependent
 #chunked
 #Tab 4er
-#TODO def MASS  ,  remove es aus constructor  ,  remove reload file 
-#TODO enegrie string to values
-#TODO image
+# enegrie string to values
+# image
 #attributes
-#box_l nur [10,0,0]
 #Test name ("A")
 #Test read error meldung
 # todo xxx 
-#self_h5md_class
-#bond
-#box (x,1,1)(x,2,2)(x,3,3)
-#get box dimension, tensor like
-#self_h5md_class
 #Manual
 #reihenfolge particle_data
-#change case=time to -1,-1 ---> -1,time
 #option fur zeitunabhangig ---> -1
+#obersvables analyze.py + remove 
+#value_fix etc time_independent + particle_value ---> allgemeiner
+#box boundary and dimension
 
 ####ERRORS
-#torque_lab,quat: schreibt beim h5 aufruf falsche werte
+#torque_lab,quat,omega_lab,dipole: schreibt beim h5 aufruf falsche werte
 #vs_relative: vs_relative needs six args ---> vs_relative needs three args ; q = x[3] ---> q = x[2] ???
 
 
 ####TOASK
 #mass time dependent
+#energy etc only numbers
+#box tensor
