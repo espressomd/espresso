@@ -458,6 +458,45 @@ implemented currently, which means that the potential is discontinuous
 at $r=\var{r_\mathrm{cut}}$. Therefore energy calculations should be
 used with great caution.
 
+\subsection{Membrane-collision interaction}
+\index{membrane-collision interaction|mainindex}
+\index{interactions!membrane-collision|mainindex}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  membrane \var{a} \var{n} \var{d_\mathrm{cut}} \var{d_\mathrm{offset}}
+  \begin{features}
+    \required{MEMBRANE_COLLISION}
+  \end{features}
+\end{essyntax}
+This defines a membrane collision interaction between particles of the types
+\var{type1} and \var{type2}, where particle of \var{type1} belongs to one OIF or OIF-like 
+object and particle of \var{type2} belongs to another such object. 
+
+It is very similar 
+to soft-sphere interaction, but it takes into account the local outward 
+normal vectors on the surfaces of the two objects to determine 
+the direction for repulsion of objects (i.e. determine whether the two membranes are intersected). 
+It is inversely proportional to the distance 
+of nodes of membranes that are not crossed and saturating with growing distance 
+of nodes of crossed membranes. 
+
+In order to work with the OIF objects, both of them need to 
+be created using templates with keyword \var{normal}, because this implicitly 
+sets up the bonded out-direction interaction, which computes the outward normal vector. 
+
+The membrane-collision interaction 
+for non-intersected membranes is then defined by:
+\begin{equation}
+  V(d)= a\frac{1}{1+e^{n\left(d-d_\mathrm{\var{offset}}\right)}},
+\end{equation}
+for $d<\var{d_\mathrm{cut}}$ and $V(d)=0$ above. 
+For intersected membranes, it is defined as $V(-d)$.
+There is no shift implemented currently, which means that the potential is discontinuous
+at $d=\var{d_\mathrm{cut}}$. Therefore energy calculations should be
+used with great caution.
+
+
 \subsection{Hat interaction}
 \index{hat interaction|mainindex}
 \index{interactions!hat|mainindex}
@@ -1067,18 +1106,21 @@ elastic or rigid objects immersed in the LB fluid flow. Their mathematical formu
 were inspired by \cite{dupin07}. Details on how the bonds 
 can be used for modeling objects are described in section \ref{sec:oif}.
 
-\subsection{OIF local force}
+\subsection{OIF local forces}
 \index{oif local force|mainindex}
 \index{interactions!oif local force|mainindex}
 \begin{essyntax}
   inter \var{bondid}
   oif_local_force
   \var{L^0_{AB}} \var{k_s} \var{k_{slin}} \var{\phi} \var{k_b} \var{A_1} \var{A_2} \var{k_{al}}  
+     \begin{features}
+    \required{OIF_LOCAL_FORCES}
+  \end{features}
 \end{essyntax}
 This type of interaction is available for closed 3D immersed objects as well as 
 for 2D sheet flowing in the 3D flow. 
 
-This interaction comprises three different concepts. Elasticity of biological membranes can be expressed by three different elastic moduli. Stretching of the membrane, bending of the membrane and local preservation of the surface area. Parameters ${L^0_{AB}},\ {k_s},\ {k_{slin}}$ define the stretching, parameters $\phi,\ k_b$ define the bending, and $A_1,\ A_2,\ k_{al}$ define the preservation of local area. They can be used all together, or, by setting any of $k_s, k_{slin}, k_b, k_{al}$ to zero, the corresponding modulus can be turned off.
+This interaction comprises three different concepts. The local elasticity of biological membranes can be captured by three different elastic moduli. Stretching of the membrane, bending of the membrane and local preservation of the surface area. Parameters ${L^0_{AB}},\ {k_s},\ {k_{slin}}$ define the stretching, parameters $\phi,\ k_b$ define the bending, and $A_1,\ A_2,\ k_{al}$ define the preservation of local area. They can be used all together, or, by setting any of $k_s, k_{slin}, k_b, k_{al}$ to zero, the corresponding modulus can be turned off.
 
 \subsubsection*{Stretching} For each edge of the mesh, \var{L_{AB}} is the current distance between point A 
 and point B. \var{L_{AB}^0} is the distance between these points in the relaxed 
@@ -1172,13 +1214,13 @@ There are two rules that need to be fulfilled:
 defined as a vector product $01 \times 02$, must point to the inside of the immersed 
 object.
 \end{itemize}
-Then the stretching force is applied to particles 1 and 2, with the relaxed length being 1.0. The bending force is applied to preserve the angle between triangles 012 and 123 with relaxed angle 1.7 and finally, local area force is aplied to both triangles 012 and 123 with relaxed area of triangle 012 being 0.2 and relaxed area of triangle 123 being 0.3.
+Then the stretching force is applied to particles 1 and 2, with the relaxed length being 1.0. The bending force is applied to preserve the angle between triangles 012 and 123 with relaxed angle 1.7 and finally, local area force is applied to both triangles 012 and 123 with relaxed area of triangle 012 being 0.2 and relaxed area of triangle 123 being 0.3.
  
 Notice that also concave objects can be defined. If $\theta_0$ is larger than $\pi$, 
 then the inner angle is concave.
 
 
-\subsection{OIF global force}
+\subsection{OIF global forces}
 \index{oif global force|mainindex}
 \index{interactions!oif global force|mainindex}
 
@@ -1186,13 +1228,16 @@ then the inner angle is concave.
   inter \var{bondid}
   oif_global_force
   \var{S^0} \var{k_{ag}}   \var{V^0} \var{k_{v}}
+   \begin{features}
+    \required{OIF_GLOBAL_FORCES}
+  \end{features}
 \end{essyntax}
 This type of interaction is available solely for closed 3D immersed objects.
 
-This interaction comprises two concept: preservation of global surface and of volume of the object. Parameters $\var{S^0} \var{k_{ag}}$ define preservation of the surface and parameters $  \var{V^0} \var{k_{v}}$ define volume preservation. They can be used together, or, by setting any $k_{ag}$ or $k_{v}$ to zero, the corresponding modulus can be turned off.
+This interaction comprises two concepts: preservation of global surface and of volume of the object. Parameters $\var{S^0}, \var{k_{ag}}$ define preservation of the surface and parameters $  \var{V^0}, \var{k_{v}}$ define volume preservation. They can be used together, or, by setting any $k_{ag}$ or $k_{v}$ to zero, the corresponding modulus can be turned off.
 
 \subsubsection*{Global area conservation}
-The conservation of local area is sometimes too restrictive. Denote by \var{S} the 
+Denote by \var{S} the 
 current surface of the immersed object, by \var{S_0} the surface in the relaxed 
 state and define $\Delta \var{S} = \var{S} - \var{S_0}$. The global area conservation 
 force is defined as
@@ -1236,6 +1281,34 @@ part 0 bond 22 1 2
 \end{verbatim}
 Triangle 012 must have correct orientation, that is the normal vector defined by a 
 vector product $01\times02$. The orientation must point inside the immersed object.
+
+\subsection{Out direction}
+\index{out direction|mainindex}
+\index{interactions!out direction|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  oif\_out\_direction
+    \begin{features}
+    \required{MEMBRANE_COLLISION}
+  \end{features}
+\end{essyntax}
+This type of interaction is primarily for closed 3D immersed objects to compute the 
+input for membrane collision. After creating the interaction
+\begin{verbatim} 
+inter 66 oif_out_direction
+\end{verbatim}
+it is important how the bond is created. Particles need to be mentioned in the 
+correct order. Command
+\begin{verbatim} 
+part 0 bond 66 1 2 3
+\end{verbatim}
+calculates the outward normal vector of triangle defined by particles 1, 2, 3 
+(these should be selected in such a way that particle 0 lies approximately at 
+its centroid - for OIF objects, this is automatically handled by oif\_create\_template 
+command, see Section \ref{ssec:oif-create-template}). In order for the direction to be outward with respect to the 
+underlying object, the triangle 123 needs to be properly oriented (as 
+explained in the section on volume in oif\_global\_forces interaction). 
 
 
 \section{Bond-angle interactions}
