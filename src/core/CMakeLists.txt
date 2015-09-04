@@ -34,3 +34,4 @@ ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
 target_link_libraries(libEspresso libEspresso_cuda)
 
+add_subdirectory(actor)
