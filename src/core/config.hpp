@@ -32,6 +32,8 @@
 #ifdef HAVE_CONFIG_H
 /* Include the defines created by configure. */
 #include <acconfig.hpp>
+#else
+#include <cmake_config.hpp>
 #endif
 
 /* If nvcc is used we disable c++11 support. */

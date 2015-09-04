@@ -19,7 +19,20 @@
 #
 cmake_minimum_required(VERSION 2.6)
 
-include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_config.cmakein
+        ${CMAKE_CURRENT_BINARY_DIR}/cmake_config.hpp
+)
 
 add_subdirectory(core)
-add_subdirectory(tcl)
+
+if(WITH_TCL)
+  add_subdirectory(tcl)
+endif()
+
+if(WITH_PYTHON)
+  add_subdirectory(python)
+endif()
+

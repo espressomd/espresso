@@ -36,25 +36,15 @@ endif(NOT CMAKE_BUILD_TYPE)
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
 
-option(WITH_MPI    "Build a parallel (message-passing) version of ESPResSo" ON)
-option(WITH_TK     "Build with tk support" OFF)
-option(WITH_PYTHON "Build python interface" ON)
-option(WITH_TCL    "Build tcl interface" ON)
-option(WITH_CUDA   "Build with GPU support" ON)
+option(WITH_MPI    "Build a mpi parallel version of ESPResSo" ON)
+option(WITH_TK     "Build with tk support"  OFF)
+option(WITH_PYTHON "Build python interface"  ON)
+option(WITH_TCL    "Build tcl interface"     ON)
+option(WITH_CUDA   "Build with GPU support"  ON)
 
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
   CACHE STRING "Default name of the local config file")
-
-######################################################################
-# Fix stupid flags on MSVC
-######################################################################
-IF(CMAKE_GENERATOR MATCHES "Visual Studio")
-    STRING(REPLACE /MD /MT CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
-    SET(CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} CACHE STRING "" FORCE)
-    STRING(REPLACE /MD /MT CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
-    SET(CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} CACHE STRING "" FORCE)   
-ENDIF(CMAKE_GENERATOR MATCHES "Visual Studio")
 
 ######################################################################
 # Libraries
@@ -64,14 +54,17 @@ ENDIF(CMAKE_GENERATOR MATCHES "Visual Studio")
 find_package(MyConfig)
 
 if (WITH_CUDA)
-   find_package(CUDA)
+   find_package(CUDA REQUIRED)
    list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
    list(APPEND LIBRARIES ${CUDA_LIBRARIES})
+   set(CUDA 1)
 endif(WITH_CUDA)     
 
+find_package(PythonInterp)
+
 if (WITH_PYTHON)
-     find_package(Cython)
-     find_package(PythonInterp)
+     find_package(Cython REQUIRED)
+     find_package(PythonInterp REQUIRED)
 endif(WITH_PYTHON)
 
 find_package(FFTW3)
@@ -83,24 +76,29 @@ else(FFTW3_FOUND)
     message(STATUS "FFTW3 not found, diabling it.")
 endif(FFTW3_FOUND)
 
-find_package(TCL REQUIRED)
-include_directories(${TCL_INCLUDE_PATH})
-list(APPEND LIBRARIES ${TCL_LIBRARY})
+if (WITH_TCL)
+  find_package(TCL REQUIRED)
+  include_directories(${TCL_INCLUDE_PATH})
+  list(APPEND LIBRARIES ${TCL_LIBRARY})
+endif()
+
+find_package(HDF5)
+if(HDF5_FOUND)
+  set(H5MD 1)
+  list(APPEND LIBRARIES ${HDF5_LIBRARIES})
+  include_directories(${HDF5_INCLUDE_DIRES})
+endif()
 
 #######################################################################
 # Process MPI settings
 #######################################################################
 if(WITH_MPI)
-  find_package(MPI)
-  if(MPI_FOUND)
-    list(APPEND CMAKE_C_FLAGS ${MPI_COMPILE_FLAGS})
-    list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
-    include_directories(${MPI_INCLUDE_PATH})
-    list(APPEND LIBRARIES ${MPI_LIBRARIES})
-    set(MPI_SOURCE)
-  else(MPI_FOUND)
-    message(FATAL_ERROR "MPI support requested, but no MPI compiler found.")
-  endif(MPI_FOUND)
+  find_package(MPI REQUIRED)
+  list(APPEND CMAKE_C_FLAGS ${MPI_COMPILE_FLAGS})
+  list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
+  include_directories(${MPI_INCLUDE_PATH})
+  list(APPEND LIBRARIES ${MPI_LIBRARIES})
+  set(MPI_SOURCE)
 else(WITH_MPI)
   include_directories(${CMAKE_SOURCE_DIR}/src/mpifake)  
   set(MPI_SOURCE src/mpifake/mpi.c)
@@ -110,9 +108,6 @@ if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
 set(SCRIPTDIR ${DATA}/scripts)
-
-find_package(PythonInterp)
-find_package(LATEX)
 
 #######################################################################
 # Subdirectories
