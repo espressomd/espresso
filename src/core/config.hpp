@@ -29,8 +29,10 @@
     the documentation of the features.
  */
 
+#ifdef HAVE_CONFIG_H
 /* Include the defines created by configure. */
 #include <acconfig.hpp>
+#endif
 
 /* If nvcc is used we disable c++11 support. */
 #if defined(__CUDACC__) && defined(HAVE_CXX11)
