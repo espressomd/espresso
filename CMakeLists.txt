@@ -112,6 +112,11 @@ endif(NOT DEFINED DATA)
 set(SCRIPTDIR ${DATA}/scripts)
 
 find_package(PythonInterp)
+find_package(LATEX)
+
+#######################################################################
+# Subdirectories
+#######################################################################
 
 add_subdirectory(scripts)
 add_subdirectory(doc)
