@@ -96,39 +96,39 @@ for i in range(n_time):
 	system.time=0.1*(i+1)
 	h5.write_to_h5.time(i,"particles/atoms/position/","time")
 	h5.write_to_h5.time_step(i,"particles/atoms/position/","step")
-	h5.write_to_h5.type()
-	h5.write_to_h5.pos()
-	h5.write_to_h5.v()
-	h5.write_to_h5.f()
+	h5.write_to_h5.type(i)
+	h5.write_to_h5.pos(i)
+	h5.write_to_h5.v(i)
+	h5.write_to_h5.f(i)
 	#h5.write_to_h5.bonds(i)
-	h5.write_to_h5.mass()
-	h5.write_to_h5.omega_lab()
-	h5.write_to_h5.rinertia()
-	h5.write_to_h5.omega_body()
-	h5.write_to_h5.torque_lab()
-	h5.write_to_h5.quat()
+	h5.write_to_h5.mass(i)
+	h5.write_to_h5.omega_lab(i)
+	h5.write_to_h5.rinertia(i)
+	h5.write_to_h5.omega_body(i)
+	h5.write_to_h5.torque_lab(i)
+	h5.write_to_h5.quat(i)
 	####h5.write_to_h5.director(i) #Not implemented yet
-	h5.write_to_h5.q()
-	h5.write_to_h5.virtual()      #Only virtual or vs_relative in myconfig
+	h5.write_to_h5.q(i)
+	h5.write_to_h5.virtual(i)      #Only virtual or vs_relative in myconfig
 	#h5.write_to_h5.vs_relative(i) #Only virtual or vs_relative in myconfig #ERROR in python code
-	h5.write_to_h5.dip()
-	h5.write_to_h5.dipm()
-	h5.write_to_h5.ext_force()
-	h5.write_to_h5.fix()
-	h5.write_to_h5.ext_torque()
-	h5.write_to_h5.gamma()
-	h5.write_to_h5.temp()
-	h5.write_to_h5.rotation()
+	h5.write_to_h5.dip(i)
+	h5.write_to_h5.dipm(i)
+	h5.write_to_h5.ext_force(i)
+	h5.write_to_h5.fix(i)
+	h5.write_to_h5.ext_torque(i)
+	h5.write_to_h5.gamma(i)
+	h5.write_to_h5.temp(i)
+	h5.write_to_h5.rotation(i)
 	####h5.write_to_h5.exclude(i) #TODO
 	####h5.write_to_h5.swimming(i) #TODO
 	
-	h5.write_to_h5.box_edges()
+	h5.write_to_h5.box_edges(i)
 	#h5.write_to_h5.box_boundary(i)
 	#h5.write_to_h5.box_dimension(i)
 	h5.write_to_h5.id(i)
 	#h5.write_to_h5.image(i) #TOASK
 	
-	h5.write_to_h5.userdefined(i,[2,3,4],"User/user1/","value",'f8')
+	h5.write_to_h5.userdefined(i,[2,3,4,5.7],"User/user1/","value",'f8')
 
 
 
@@ -164,9 +164,10 @@ for i in range(n_time):
 #obersvables analyze.py + remove 
 #value_fix etc time_independent + particle_value ---> allgemeiner
 #box boundary and dimension
-
+#close file 
+ 
 ####ERRORS
-#torque_lab,quat,omega_lab,dipole: schreibt beim h5 aufruf falsche werte
+#torque_lab,quat,omega_lab,dipole: schreibt/liest beim h5 aufruf falsche werte
 #vs_relative: vs_relative needs six args ---> vs_relative needs three args ; q = x[3] ---> q = x[2] ???
 
 
