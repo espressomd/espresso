@@ -380,7 +380,7 @@ void tclcommand_part_print_bond_partners(Particle *part, char *buffer, Tcl_Inter
 
   /* setup bond partners and distance list. Since we need to identify particles via their identity,
      we use a full sized array */
-  partners    = (IntList*)malloc((max_seen_particle + 1)*sizeof(IntList));
+  partners    = (IntList*)Utils::malloc((max_seen_particle + 1)*sizeof(IntList));
   for (p = 0; p <= max_seen_particle; p++) init_intlist(&partners[p]);
   updatePartCfg(WITH_BONDS);
 
@@ -402,7 +402,7 @@ void tclcommand_part_print_bond_partners(Particle *part, char *buffer, Tcl_Inter
 
   /* Create links to particle */
   distance++;
-  links    = (IntList*)malloc((distance+1)*sizeof(IntList));
+  links    = (IntList*)Utils::malloc((distance+1)*sizeof(IntList));
   for( c = 0; c <= distance; c++)  init_intlist(&links[c]);
 
   p1 = part->p.identity;
@@ -2223,7 +2223,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 	return TCL_ERROR;
       }
 
-      bond = (int *)malloc( (n_partners+1)*sizeof(int) );
+      bond = (int *)Utils::malloc( (n_partners+1)*sizeof(int) );
       bond[0] = type_num;
       j=1;
       while(j <= n_partners) {
@@ -2292,7 +2292,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
     if (!particle_node)
       build_particle_node();
 
-    bond = (int *)malloc( (n_partners+1)*sizeof(int) );
+    bond = (int *)Utils::malloc( (n_partners+1)*sizeof(int) );
     bond[0] = type_num;
     j=1;
     while(j <= n_partners) {

@@ -231,9 +231,9 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
         runtimeError(msg);
         return TCL_ERROR;
     }
-    float *coord = (float*) malloc(n_part * 3 * sizeof (float));
+    float *coord = (float*) Utils::malloc(n_part * 3 * sizeof (float));
 #ifdef LEES_EDWARDS
-    float *velocities = (float *)malloc(n_part*3*sizeof(float));
+    float *velocities = (float *)Utils::malloc(n_part*3*sizeof(float));
 #endif
     /* Construct the array coord*/
     for (i = 0; i < n_part; i++) {
@@ -342,8 +342,8 @@ static int tclcommand_analyze_parse_modes2d(Tcl_Interp *interp, int argc, char *
         return (TCL_OK);
     }
 
-    result_ht = (fftw_complex*) malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
-    result_th = (fftw_complex*) malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
+    result_ht = (fftw_complex*) Utils::malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
+    result_th = (fftw_complex*) Utils::malloc((mode_grid_3d[ydir] / 2 + 1)*(mode_grid_3d[xdir]) * sizeof (fftw_complex));
 
     if (!modes2d(result_th, 0) || !modes2d(result_ht, 1)) {
         fprintf(stderr, "%d,mode analysis failed \n", this_node);
@@ -649,7 +649,7 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
 
     /* allocate memory for the profile if necessary */
     if (thetabins > 0) {
-        density_profile = (DoubleList*) malloc(beadtypes.max * sizeof (DoubleList));
+        density_profile = (DoubleList*) Utils::malloc(beadtypes.max * sizeof (DoubleList));
         if (density_profile) {
             for (i = 0; i < beadtypes.max; i++) {
                 init_doublelist(&density_profile[i]);
@@ -665,7 +665,7 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
     }
     /* Allocate a doublelist of bins for each beadtype so that we
        can keep track of beads separately */
-    density_map = (DoubleList*) malloc(beadtypes.max * sizeof (DoubleList));
+    density_map = (DoubleList*) Utils::malloc(beadtypes.max * sizeof (DoubleList));
     if (density_map) {
         /* Initialize all the subprofiles in density profile */
         for (i = 0; i < beadtypes.max; i++) {
@@ -822,7 +822,7 @@ static int tclcommand_analyze_parse_bilayer_density_profile(Tcl_Interp *interp, 
 
     /* Allocate a two doublelists of bins for each beadtype so that we
        can keep track of beads in upper or lower lipids */
-    density_profile = (DoubleList *) malloc(beadtypes.max * 2 * sizeof (DoubleList));
+    density_profile = (DoubleList *) Utils::malloc(beadtypes.max * 2 * sizeof (DoubleList));
     if (density_profile) {
         /* Initialize all the subprofiles in density profile */
         for (i = 0; i < beadtypes.max * 2; i++) {
@@ -883,7 +883,7 @@ static int tclcommand_analyze_parse_lipid_orient_order(Tcl_Interp *interp, int a
         return (TCL_OK);
     }
 
-    stored_dirs = (double*) malloc(sizeof (double)*n_molecules * 3);
+    stored_dirs = (double*) Utils::malloc(sizeof (double)*n_molecules * 3);
     /* Do the calculation */
     if (orient_order(&result, stored_dirs) != TCL_OK) {
         Tcl_AppendResult(interp, "Error calculating orientational order ", (char *) NULL);
@@ -934,10 +934,10 @@ static int tclcommand_analyze_parse_aggregation(Tcl_Interp *interp, int argc, ch
     float fagg_avg;
     int s_mol_id, f_mol_id;
 
-    agg_id_list = (int *) malloc(n_molecules * sizeof (int));
-    head_list = (int *) malloc(n_molecules * sizeof (int));
-    link_list = (int *) malloc(n_molecules * sizeof (int));
-    agg_size = (int *) malloc(n_molecules * sizeof (int));
+    agg_id_list = (int *) Utils::malloc(n_molecules * sizeof (int));
+    head_list = (int *) Utils::malloc(n_molecules * sizeof (int));
+    link_list = (int *) Utils::malloc(n_molecules * sizeof (int));
+    agg_size = (int *) Utils::malloc(n_molecules * sizeof (int));
 
     /* parse arguments */
     if (argc < 3) {
@@ -1587,7 +1587,7 @@ static int tclcommand_analyze_parse_distribution(Tcl_Interp *interp, int argc, c
     if (r_max <= r_min) return TCL_ERROR;
     if (r_bins < 1) return TCL_ERROR;
     /* calculate distribution */
-    distribution = (double*) malloc(r_bins * sizeof (double));
+    distribution = (double*) Utils::malloc(r_bins * sizeof (double));
     updatePartCfg(WITHOUT_BONDS);
     calc_part_distribution(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, log_flag, &low, distribution);
     if (int_flag == 1) {
@@ -1764,7 +1764,7 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
         Tcl_AppendResult(interp, buffer, " }", (char *) NULL);
     } else
         Tcl_AppendResult(interp, " }", (char *) NULL);
-    rdf = (double*) malloc(r_bins * sizeof (double));
+    rdf = (double*) Utils::malloc(r_bins * sizeof (double));
 
     if (!sortPartCfg()) {
         Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.", (char *) NULL);
@@ -1882,7 +1882,7 @@ static int tclcommand_analyze_parse_density_profile_av(Tcl_Interp *interp, int a
         return (TCL_ERROR);
     }
 
-    rho_ave = (double*) malloc(n_bin * sizeof (double));
+    rho_ave = (double*) Utils::malloc(n_bin * sizeof (double));
     for (i = 0; i < n_bin; i++)
         rho_ave[i] = 0.0;
 
@@ -1973,7 +1973,7 @@ static int tclcommand_analyze_parse_diffusion_profile(Tcl_Interp *interp, int ar
         return (TCL_ERROR);
     }
 
-    bins = (double*) malloc(nbins * sizeof (double));
+    bins = (double*) Utils::malloc(nbins * sizeof (double));
     for (i = 0; i < nbins; i++) {
         bins[i] = 0;
     }
@@ -2053,14 +2053,14 @@ static int tclcommand_analyze_parse_vanhove(Tcl_Interp *interp, int argc, char *
     }
 
     /* allocate space */
-    vanhove = (double **) malloc((tmax) * sizeof (double *));
+    vanhove = (double **) Utils::malloc((tmax) * sizeof (double *));
     for (c = 0; c < (tmax); c++) {
-        vanhove[c] = (double *) malloc(rbins * sizeof (double));
+        vanhove[c] = (double *) Utils::malloc(rbins * sizeof (double));
         for (i = 0; i < rbins; i++) {
             vanhove[c][i] = 0;
         }
     }
-    msd = (double *) malloc((tmax) * sizeof (double));
+    msd = (double *) Utils::malloc((tmax) * sizeof (double));
     for (i = 0; i < (tmax); i++) {
         msd[i] = 0;
     }
@@ -2320,7 +2320,7 @@ static int tclcommand_analyze_parse_configs(Tcl_Interp *interp, int argc, char *
             Tcl_AppendResult(interp, buffer, (char *) NULL);
             return TCL_ERROR;
         }
-        tmp_config = (double*) malloc(3 * n_part_conf * sizeof (double));
+        tmp_config = (double*) Utils::malloc(3 * n_part_conf * sizeof (double));
         for (j = 0; j < argc; j++)
             if (!ARG_IS_D(j, tmp_config[j])) return (TCL_ERROR);
         analyze_configs(tmp_config, n_part_conf);

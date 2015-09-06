@@ -108,7 +108,7 @@ static double determine_minrad(double maxPWerror, int P)
 
 static void determine_bessel_radii(double maxPWerror, int maxP)
 {
-  bessel_radii = (double *)realloc(bessel_radii, sizeof(double)*maxP);
+  bessel_radii = (double *)Utils::realloc(bessel_radii, sizeof(double)*maxP);
   for (int P = 1; P <= maxP; ++P) {
     bessel_radii[P-1] = determine_minrad(maxPWerror, P);
     //printf("cutoff %d %f\n", P, bessel_radii[P-1]);

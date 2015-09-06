@@ -5,12 +5,13 @@
 #include "cells.hpp"
 #include "initialize.hpp" 
 #include "integrate.hpp" 
+#include "rotation.hpp"
 
 
 void local_rotate_system(double phi, double theta, double alpha)
 {
   // Culculate center of mass
-  double com[3];
+  double com[3] = {0,0,0};
   int N=0; // Num of particles
 
   int c, np, i;
@@ -56,6 +57,9 @@ void local_rotate_system(double phi, double theta, double alpha)
       for (int j=0;j<3;j++){
         part[i].r.p[j]=com[j]+res[j];
       }
+      #ifdef ROTATION
+        rotate_particle(part+i,axis,alpha);
+      #endif
     }
   }
 

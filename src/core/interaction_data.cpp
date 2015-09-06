@@ -64,6 +64,7 @@
 #include "mdlc_correction.hpp"
 #include "initialize.hpp"
 #include "interaction_data.hpp"
+#include "actor/DipolarDirectSum.hpp"
 
 /****************************************
  * variables
@@ -774,7 +775,7 @@ void realloc_ia_params(int nsize)
   if (nsize <= n_particle_types)
     return;
 
-  new_params = (IA_parameters *) malloc(nsize*nsize*sizeof(IA_parameters));
+  new_params = (IA_parameters *) Utils::malloc(nsize*nsize*sizeof(IA_parameters));
   if (ia_params) {
     /* if there is an old field, copy entries and delete */
     for (i = 0; i < nsize; i++)
@@ -829,7 +830,7 @@ void make_bond_type_exist(int type)
     return;
   }
   /* else allocate new memory */
-  bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
+  bonded_ia_params = (Bonded_ia_parameters *)Utils::realloc(bonded_ia_params,
 						     ns*sizeof(Bonded_ia_parameters));
   /* set bond types not used as undefined */
   for (i = n_bonded_ia; i < ns; i++)
@@ -872,6 +873,19 @@ int interactions_sanity_checks()
   return state;
 }
 
+
+#ifdef DIPOLES
+void set_dipolar_method_local(DipolarInteraction method)
+{
+#ifdef DIPOLAR_DIRECT_SUM
+if ((coulomb.Dmethod == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU))
+{
+ deactivate_dipolar_direct_sum_gpu();
+}
+#endif
+coulomb.Dmethod = method;
+}
+#endif
 
 #ifdef ELECTROSTATICS
 
@@ -949,7 +963,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
     }
  
     mpi_bcast_coulomb_params();
-    coulomb.Dmethod = DIPOLAR_NONE;
+    set_dipolar_method_local(DIPOLAR_NONE);
     mpi_bcast_coulomb_params();
 
   }

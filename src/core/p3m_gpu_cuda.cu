@@ -932,7 +932,7 @@ extern "C" {
 	cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
 	cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(REAL_TYPE));
 
-	p3m_gpu_data.G_hat_host = (REAL_TYPE *)malloc(mesh3*sizeof(REAL_TYPE));
+	p3m_gpu_data.G_hat_host = (REAL_TYPE *)Utils::malloc(mesh3*sizeof(REAL_TYPE));
 
 	cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
       }

@@ -54,8 +54,8 @@ int    pearl_treshold;
 void cluster_init(Particle *part, int size) {
   int i;
 
-  element       = (ClusterElement *)malloc(size*sizeof(ClusterElement));
-  cluster       = (Cluster *)malloc(size*sizeof(Cluster));
+  element       = (ClusterElement *)Utils::malloc(size*sizeof(ClusterElement));
+  cluster       = (Cluster *)Utils::malloc(size*sizeof(Cluster));
   first_cluster = &cluster[0];
   last_cluster  = &cluster[size-1];
   /* we start with chain_length clusters of size 1 */
@@ -323,8 +323,8 @@ int cluster_free_volume_grid(IntList mesh, int dim[3], int ***holes)
   int i=0,j, k, n=-1, li;
   int neighbors[6];
   
-  int *tmp = (int *) malloc( sizeof(int)* (dim[0]*dim[1]*dim[2]));
-  int *sizes = (int *) malloc( sizeof(int)* (dim[0]*dim[1]*dim[2]));
+  int *tmp = (int *) Utils::malloc( sizeof(int)* (dim[0]*dim[1]*dim[2]));
+  int *sizes = (int *) Utils::malloc( sizeof(int)* (dim[0]*dim[1]*dim[2]));
  
 
   // step 1 go through all mesh points
@@ -364,9 +364,9 @@ int cluster_free_volume_grid(IntList mesh, int dim[3], int ***holes)
 
 
   // allocate list space
-  (*holes) = (int **) malloc ( sizeof(int *)*(n+1) );
+  (*holes) = (int **) Utils::malloc ( sizeof(int *)*(n+1) );
   for ( i=0; i<=n; i++ ) { 
-    (*holes)[i] = (int *) malloc ( sizeof(int)*(sizes[i]+1) );
+    (*holes)[i] = (int *) Utils::malloc ( sizeof(int)*(sizes[i]+1) );
     (*holes)[i][0] = 0;
   }
 

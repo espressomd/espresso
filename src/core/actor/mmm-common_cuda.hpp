@@ -43,8 +43,8 @@ int modpsi_init()
 	}
 	
 	// linearize the coefficients array
-	linModPsi_offsets = (int*) realloc(linModPsi_offsets, sizeof(int) * 2*n_modPsi);
-	linModPsi_lengths = (int*) realloc(linModPsi_lengths, sizeof(int) * 2*n_modPsi);
+	linModPsi_offsets = (int*) Utils::realloc(linModPsi_offsets, sizeof(int) * 2*n_modPsi);
+	linModPsi_lengths = (int*) Utils::realloc(linModPsi_lengths, sizeof(int) * 2*n_modPsi);
 	for (int i = 0; i < 2*n_modPsi; i++)
 	{
 		if (i == 0)
@@ -53,7 +53,7 @@ int modpsi_init()
 			linModPsi_offsets[i] = linModPsi_offsets[i-1] + linModPsi_lengths[i-1];
 		linModPsi_lengths[i] = modPsi[i].n;
 	}
-	linModPsi = (mmm1dgpu_real*) realloc(linModPsi, sizeof(mmm1dgpu_real) * (linModPsi_offsets[2*n_modPsi-1] + linModPsi_lengths[2*n_modPsi-1]));
+	linModPsi = (mmm1dgpu_real*) Utils::realloc(linModPsi, sizeof(mmm1dgpu_real) * (linModPsi_offsets[2*n_modPsi-1] + linModPsi_lengths[2*n_modPsi-1]));
 	for (int i = 0; i < 2*n_modPsi; i++)
 	{
 		for (int j = 0; j < modPsi[i].n; j++)

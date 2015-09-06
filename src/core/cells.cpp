@@ -248,7 +248,7 @@ void realloc_cells(int size)
   }
   /* resize the cell list */
   if(size != n_cells) {
-    cells = (Cell *) realloc(cells, sizeof(Cell)*size);
+    cells = (Cell *) Utils::realloc(cells, sizeof(Cell)*size);
   }
   /* initialize new cells */
   for(i=n_cells; i<size; i++) {

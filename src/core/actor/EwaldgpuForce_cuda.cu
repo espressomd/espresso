@@ -608,9 +608,9 @@ void EwaldgpuForce::setup(SystemInterface &s)
   compute_k_AND_influence_factor();
 
   //Init GPU stream
-  stream0 = (cudaStream_t *) malloc (1 * sizeof(cudaStream_t));
-  start = (cudaEvent_t *) malloc (1 * sizeof(cudaEvent_t));
-  stop = (cudaEvent_t *) malloc (1 * sizeof(cudaEvent_t));
+  stream0 = (cudaStream_t *) Utils::malloc (1 * sizeof(cudaStream_t));
+  start = (cudaEvent_t *) Utils::malloc (1 * sizeof(cudaEvent_t));
+  stop = (cudaEvent_t *) Utils::malloc (1 * sizeof(cudaEvent_t));
   cuda_safe_mem(cudaEventCreate(start));
   cuda_safe_mem(cudaEventCreate(stop));
   cuda_safe_mem(cudaStreamCreate(stream0));

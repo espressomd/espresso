@@ -23,6 +23,9 @@
 
 #include "parser.hpp"
 
+
+int tclcallback_dpd_ignore_fixed_particles(Tcl_Interp *interp, void *_data);
+
 #ifdef DPD
 int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv);
 void tclcommand_thermostat_parse_and_print_dpd(Tcl_Interp *interp);
