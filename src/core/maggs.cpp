@@ -154,7 +154,7 @@ typedef struct {
 /*******************************/
 
 /* create system structure with all zeros. Filled in maggs_set_parameters(); */
-MAGGS_struct maggs = { 1, 1.0, 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
+MAGGS_struct maggs = { 1, 0, 1.0, 1.0, 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
 
 /* local mesh. */
 static lattice_parameters lparams;
@@ -828,6 +828,13 @@ double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction,
 }
 
 
+int maggs_set_adaptive_flag(double scaling)
+{
+    maggs.adaptive_flag = 1;
+    maggs.scaling = scaling;
+    return 0;
+}
+
 /** set permittivity adaptively according to salt concentration
  Use this very carefully, since it assumes a certain set of parameters. The length is not simulation units anymore
  @param node_x              index of the node in x direction
@@ -858,7 +865,7 @@ double maggs_set_adaptive_permittivity(int node_x, int node_y, int node_z)
     }
     
     concentration /= 0.0000035246;
-    relative_epsilon = 78.5 / (1.0 + 0.278 * concentration);
+    relative_epsilon = 78.5 / (1.0 + 0.278 * concentration) * maggs.scaling;
     
     FOR3D(dim) {
         position = (double)node[dim]/(double)lparams.dim[dim] * box_l[dim];

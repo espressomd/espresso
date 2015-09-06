@@ -108,6 +108,59 @@ int tclcommand_localeps(Tcl_Interp* interp, int argc, char** argv)
     else return TCL_OK;
 }
 
+int tclcommand_adaptive_eps(Tcl_Interp* interp, int argc, char** argv)
+{
+    int mesh;
+    double scaling, f_mass;
+    
+    /* number of arguments has to be 4 */
+    if(argc != 5) {
+        Tcl_AppendResult(interp, "Wrong number of paramters. Usage: \n", (char *) NULL);
+        Tcl_AppendResult(interp, "inter coulomb <bjerrum> memd adaptive <scaling> parameters <f_mass> <mesh>", (char *) NULL);
+        return TCL_ERROR;
+    }
+     /* first argument should be a double */
+    if ( (! ARG_IS_D(1, scaling)) || (scaling < 0.0) ) {
+        Tcl_AppendResult(interp, "scaling expects a positive double", (char *) NULL);
+        return TCL_ERROR; }
+
+    /* second argument should be "parameters" */
+    if(! ARG_IS_S(2, "parameters")) return TCL_ERROR;
+    
+    /* third argument should be the f_mass */
+    if(! ARG_IS_D(3, f_mass)) {
+        Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+        return TCL_ERROR; }
+
+    /* fourth argument should be the mesh */
+    if(! ARG_IS_I(4, mesh)) {
+        Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+        return TCL_ERROR; }
+
+    coulomb.method = COULOMB_MAGGS;
+    int finite_epsilon_flag = 0;
+    double epsilon = 1.0;
+    
+    int res = maggs_set_parameters(coulomb.bjerrum, f_mass, mesh,
+                                   finite_epsilon_flag, epsilon);
+    maggs_set_adaptive_flag(scaling);
+    
+    switch (res) {
+        case -1:
+            Tcl_AppendResult(interp, "mass of the field is negative", (char *)NULL);
+            return TCL_ERROR;
+        case -2:
+            Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
+            return TCL_ERROR;
+        case ES_OK:
+            Tcl_AppendResult(interp, "MEMD running with adaptive permittivity!", (char *)NULL);
+            return TCL_OK;
+    }
+    Tcl_AppendResult(interp, "unknown error", (char *) NULL);
+    return TCL_ERROR;
+}
+
+
 /** parse TCL command.
     number of parameters is checked and maggs_set_parameters function is called.
     @return zero if successful
@@ -125,6 +178,10 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
     /* if the command is localeps, call function */
     if ( (argc > 0) && (ARG_IS_S(0, "localeps")) )
         return tclcommand_localeps(interp, argc, argv);
+    
+    /* if the command is localeps, call function */
+    if ( (argc > 0) && (ARG_IS_S(0, "adaptive")) )
+        return tclcommand_adaptive_eps(interp, argc, argv);
     
     if(argc < 2) {
         Tcl_AppendResult(interp, "Not enough parameters: inter coulomb <bjerrum> memd <f_mass> <mesh>", (char *) NULL);
@@ -155,7 +212,7 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
                 return TCL_ERROR;
             }
         }
-    } else finite_epsilon_flag=1;
+    } else finite_epsilon_flag=0;
 
   coulomb.method = COULOMB_MAGGS;
 	
