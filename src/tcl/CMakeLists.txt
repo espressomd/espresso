@@ -13,3 +13,7 @@ file(COPY ${espresso_scripts} DESTINATION ${CMAKE_BINARY_DIR}/scripts)
 add_definitions(-DESPRESSO_SCRIPTS_DEFAULT="${CMAKE_BINARY_DIR}/scripts")
 add_executable(Espresso ${Espresso_SRC})
 target_link_libraries(Espresso libEspresso ${LIBRARIES})
+
+add_custom_command(TARGET Espresso
+                   COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_BINARY_DIR}/Espresso ${CMAKE_BINARY_DIR}/Espresso
+)

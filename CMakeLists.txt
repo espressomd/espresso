@@ -64,7 +64,7 @@ find_package(PythonInterp)
 
 if (WITH_PYTHON)
      find_package(Cython REQUIRED)
-     find_package(PythonInterp REQUIRED)
+     find_package(PythonLibs REQUIRED)
 endif(WITH_PYTHON)
 
 find_package(FFTW3)
