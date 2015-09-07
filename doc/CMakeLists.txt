@@ -1,6 +1,6 @@
 add_subdirectory(doxygen)
-add_subdirectory(ug)
 add_subdirectory(logo)
+add_subdirectory(ug)
 add_subdirectory(dg)
 
 find_program(PDFLATEX pdflatex)
@@ -14,5 +14,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/latexit.sh.in
                @ONLY
               )
 
-add_custom_target(doc DEPENDS ug dg doxygen)
-
+add_custom_target(doc DEPENDS logo ug dg doxygen)
