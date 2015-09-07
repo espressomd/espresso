@@ -401,22 +401,13 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     else if(type == BONDED_IA_FENE) {
       i = i + 2;
     }
-    else if(type == BONDED_IA_STRETCHING_FORCE) {
-      i = i + 2;
-    }
-    else if(type == BONDED_IA_STRETCHLIN_FORCE) {
-      i = i + 2;
-    }
-    else if(type == BONDED_IA_AREA_FORCE_LOCAL) {
+    else if(type == BONDED_IA_OIF_GLOBAL_FORCES) {
       i = i + 3;
     }
-    else if(type == BONDED_IA_AREA_FORCE_GLOBAL) {
-      i = i + 3;
-    }
-    else if(type == BONDED_IA_BENDING_FORCE) {
+    else if(type == BONDED_IA_OIF_LOCAL_FORCES) {
       i = i + 4;
     }
-    else if(type == BONDED_IA_VOLUME_FORCE) {
+    else if(type == BONDED_IA_OIF_OUT_DIRECTION) {
       i = i + 3;
     }
     else if(type == BONDED_IA_HARMONIC) {

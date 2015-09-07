@@ -75,6 +75,40 @@ void tclcommand_part_print_rotational_inertia(Particle *part, char *buffer, Tcl_
 }
 #endif
 
+#ifdef AFFINITY
+void tclcommand_part_print_affinity(Particle *part, char *buffer, Tcl_Interp *interp)
+  {double bond_site[3];
+
+  bond_site[0]=part->p.bond_site[0];
+  bond_site[1]=part->p.bond_site[1];
+  bond_site[2]=part->p.bond_site[2];
+
+  Tcl_PrintDouble(interp, bond_site[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, bond_site[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, bond_site[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
+#ifdef MEMBRANE_COLLISION
+void tclcommand_part_print_out_direction(Particle *part, char *buffer, Tcl_Interp *interp)
+{double out_direction[3];
+    
+    out_direction[0]=part->p.out_direction[0];
+    out_direction[1]=part->p.out_direction[1];
+    out_direction[2]=part->p.out_direction[2];
+    
+    Tcl_PrintDouble(interp, out_direction[0], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, out_direction[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, out_direction[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 #ifdef ROTATION
 
 /* tclcommand_part_print_*_body_frame: function to have the possiblility of
@@ -593,6 +627,18 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   tclcommand_part_print_rotational_inertia(&part, buffer, interp);
 #endif
 
+#ifdef AFFINITY
+  /* print information about affinity */
+  Tcl_AppendResult(interp, " affinity ", (char *)NULL);
+  tclcommand_part_print_affinity(&part, buffer, interp);
+#endif
+    
+#ifdef MEMBRANE_COLLISION
+    /* print information about membrane collision */
+    Tcl_AppendResult(interp, " out_direction ", (char *)NULL);
+    tclcommand_part_print_out_direction(&part, buffer, interp);
+#endif
+
 #ifdef DIPOLES
 #ifndef ROTATION
   /* print full information about dipoles, no quaternions to keep
@@ -823,6 +869,16 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_rotational_inertia(&part, buffer, interp);
 #endif
 
+#ifdef AFFINITY
+    else if (ARG0_IS_S("affinity"))
+      tclcommand_part_print_affinity(&part, buffer, interp);
+#endif
+
+#ifdef MEMBRANE_COLLISION
+    else if (ARG0_IS_S("out_direction"))
+        tclcommand_part_print_out_direction(&part, buffer, interp);
+#endif
+      
 #ifdef DIPOLES
     else if (ARG0_IS_S("dip"))
       tclcommand_part_print_dip(&part, buffer, interp);
@@ -1076,6 +1132,61 @@ int tclcommand_part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char 
   return TCL_OK;
 }
 #endif
+
+#ifdef  AFFINITY
+int tclcommand_part_parse_affinity(Tcl_Interp *interp, int argc, char **argv,
+				  int part_num, int * change)
+{
+  double bond_site[3];
+
+  *change = 3;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "affinity requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* set affinity */
+  if (! ARG_IS_D(0, bond_site[0]) || ! ARG_IS_D(1, bond_site[1]) || ! ARG_IS_D(2, bond_site[2]))
+    return TCL_ERROR;
+
+  if (set_particle_affinity(part_num, bond_site) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+#endif
+
+#ifdef  MEMBRANE_COLLISION
+int tclcommand_part_parse_oif_out_direction(Tcl_Interp *interp, int argc, char **argv,
+                                   int part_num, int * change)
+{
+    double out_direction[3];
+    
+    *change = 3;
+    
+    if (argc < 3) {
+        Tcl_AppendResult(interp, "outward direction of membrane requires 3 arguments", (char *) NULL);
+        return TCL_ERROR;
+    }
+    
+    /* set out_direction */
+    if (! ARG_IS_D(0, out_direction[0]) || ! ARG_IS_D(1, out_direction[1]) || ! ARG_IS_D(2, out_direction[2]))
+        return TCL_ERROR;
+    
+    if (set_particle_out_direction(part_num, out_direction) == TCL_ERROR) {
+        Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+        
+        return TCL_ERROR;
+    }
+    
+    return TCL_OK;
+}
+#endif
+
 
 #ifdef DIPOLES
 int tclcommand_part_parse_dipm(Tcl_Interp *interp, int argc, char **argv,
@@ -2189,7 +2300,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
   if (argc == 1) {
     /* check for the new, nested Tcl-list format */
     int param1, tmp_argc;
-    char  **tmp_argv;
+    const char  **tmp_argv;
     bond = NULL;
 
     if (!particle_node)
@@ -2199,7 +2310,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 
     for(param1 = 0 ; param1 < tmp_argc; param1++) {
       int tmp2_argc;
-      char  **tmp2_argv;
+      const char  **tmp2_argv;
       Tcl_SplitList(interp, tmp_argv[param1], &tmp2_argc, &tmp2_argv);
       if (tmp2_argc < 1) {
 	Tcl_AppendResult(interp, "usage: part <p> bond <type> <partner>+\n", (char *) NULL);
@@ -2283,7 +2394,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
       printf("bonded_ia_params[%d].type=%d  ",type_num,bonded_ia_params[type_num].type);
       printf("n_partners=%d  ",n_partners);
       printf("argc=%d\n",argc);
-      sprintf(buffer, "bond type %d requires %d arguments.",
+      sprintf(buffer, "bond type A %d requires %d arguments.",
 	      type_num, n_partners+1);
       Tcl_AppendResult(interp, buffer, (char *) NULL);
       return TCL_ERROR;
@@ -2499,6 +2610,15 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = tclcommand_part_parse_rotation(interp, argc-1, argv+1, part_num, &change);
 #endif
 
+#ifdef AFFINITY
+    else if (ARG0_IS_S("affinity"))
+      err = tclcommand_part_parse_affinity(interp, argc-1, argv+1, part_num, &change);
+#endif
+      
+#ifdef MEMBRANE_COLLISION
+    else if (ARG0_IS_S("membrane"))
+        err = tclcommand_part_parse_oif_out_direction(interp, argc-1, argv+1, part_num, &change);
+#endif
 
 #ifdef DIPOLES
     else if (ARG0_IS_S("dip")) {

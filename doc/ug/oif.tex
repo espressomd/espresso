@@ -48,7 +48,7 @@ There are several parameters involved in this model. All of them should be calib
 \begin{itemize}
 \item Mass of the particles. Every particle has its mass, which influences the dynamics. 
 \item Friction coefficient. The main parameter describing the fluid-particle interaction is the \verb friction \ parameter from the \es command \verb lbfluid .
-\item Parameters of elastic moduli. Elastic behaviour can be described by five different elastic moduli: hyperelastic stretching, bending, local and global area preservation and volume preservation. Each of them has its own scaling parameter: $ks, kb, kal, kag, kv$. Their mathematical formulations have been taken from \cite{dupin07}.
+\item Parameters of elastic moduli. Elastic behaviour can be described by five different elastic moduli: hyperelastic stretching, linear stretching, bending, local and global area preservation and volume preservation. Each of them has its own scaling parameter: $k_s, ks_{lin}, k_b, k_{al}, k_{ag}, k_v$. Their mathematical formulations have been taken from \cite{dupin07}.
 \end{itemize}
 The mass of the particles and the friction coefficient can be calibrated using the drag coefficients of the ellipsoidal objects. These drag coefficients have known analytical values and the mass and friction can be calibrated to fit this values. More details about the calibration can be found in \cite{cimrak}.
 
@@ -76,12 +76,12 @@ The script \verb scripts/object_in_fluid.tcl \  reads both mesh files, generates
 
 Note, the is feature \verb mol \ that used for the particles. We use this feature we distinguish between different objects. The upper limit for the number of objects is 10000. However it can be increased by changing the \verb MAX_OBJECTS_IN_FLUID \ constant. 
 
-The following example shows an interaction.   
-\begin{verbatim} inter 106 stretching_force 4.6 5.0 \end{verbatim}
-This command ("invisible" for the user who executes the \verb scripts/object_in_fluid.tcl \ script) creates an interaction for stretching with ID 106. Detailed description of the available types of interactions is presented in Section \ref{sec:inter-bonded-oif}.
+The following example shows an interaction. 
+\begin{verbatim} inter 106 oif_local_force 1.0 0.5 0.0 1.7 0.6 0.2 0.3 1.1 \end{verbatim}
+This command ("invisible" for the user who executes the \verb scripts/object_in_fluid.tcl \ script) takes care of stretching, bending and local area conservation all in one interaction with ID 106. Detailed description of the available types of interactions is presented in Section \ref{sec:inter-bonded-oif}.
 
 \section{Available commands} 
-In order to use the object-in-fluid (OIF) commands and work with immersed objects, the following \es features need to be compiled in: \verb MASS, \ \verb EXTERNAL_FORCES . We do not specifically require \verb LB, \ \verb LB_BOUNDARIES, \ \verb CONSTRAINTS, \ \verb SOFT_SPHERE, \ \verb AREA_FORCE_GLOBAL, \ \verb VOLUME_FORCE . They are most likely to be used (for objects immersed in fluid and interacting with boundaries and each other), but they are not necessary for the following commands. For up-to-date overview of available oif commands see the OIF user guide at cell-in-fluid.fri.uniza.sk/oif-documentation.
+In order to use the object-in-fluid (OIF) commands and work with immersed objects, the following \es features need to be compiled in: \verb MASS, \ \verb EXTERNAL_FORCES . We do not specifically require \verb LB, \ \verb LB_BOUNDARIES, \ \verb CONSTRAINTS, \ \verb SOFT_SPHERE, \ \verb MEMBRANE_COLLISION, \ \verb OIF_LOCAL_FORCES, \ \verb OIF_GLOBAL_FORCES. \ They are most likely to be used (for objects immersed in fluid and interacting with boundaries and each other), but they are not necessary for the following commands. For up-to-date overview of available oif commands see the OIF user guide at cell-in-fluid.fri.uniza.sk/oif-documentation.
 
 \subsection{\label{ssec:oif-init}Initialisation}
 
@@ -106,15 +106,18 @@ Prints information about whole framework, \eg all global variables, currently av
   triangles-file  \var{triangles.dat}
   \opt{stretch \var{x} \var{y} \var{z}}
   \opt{ks \var{ks\_value}}
+  \opt{kslin \var{kslin\_value}}
   \opt{kb \var{kb\_value}} 
   \opt{kal \var{kal\_value}}
   \require{3}{\opt{kag \var{kag\_value}}}
   \require{4}{\opt{kv \var{kv\_value}}}
+  \require{5}{\opt{normal}}
   \begin{features}
   \required[1]{MASS}
   \required[2]{EXTERNAL_FORCES}
-  \required[3]{AREA_FORCE_GLOBAL}
-  \required[4]{VOLUME_FORCE}
+  \required[3]{OIF_GLOBAL_FORCES}
+  \required[4]{OIF_LOCAL_FORCES}
+  \required[5]{MEMBRANE_COLLISION}
   \end{features}
 \end{essyntax}
 
@@ -125,17 +128,19 @@ This command creates a template that will be used for all objects that share the
 \item[\var{nodes.dat}] input file, each line contains three real numbers. These are the $x, y, z$ coordinates of individual surface mesh nodes of the objects.
 \item[\var{triangles.dat}] input file, each line contains three integers. These are the ID numbers of the mesh nodes as they appear in \var{nodes.dat}. Note, the first node has ID 0.
 \item[\opt{stretch \var{x} \var{y} \var{z}}] coefficients by which the coordinates stored in \var{nodes.dat} will be stretched in the $x, y, z$ direction. The default values are 1.0 1.0 1.0.
-\item[\opt{ks \var{ks\_value}}] elastic modulus for stretching forces
+\item[\opt{ks \var{ks\_value}}] elastic modulus for hyperelastic stretching forces
+\item[\opt{kslin \var{kslin\_value}}] elastic modulus for linear stretching forces
 \item[\opt{kb \var{kb\_value}}] elastic modulus for bending forces
 \item[\opt{kal \var{kal\_value}}] elastic modulus for local area forces
 \item[\opt{kag \var{kag\_value}}] elastic modulus for global area forces
 \item[\opt{kv \var{kv\_value}}] elastic modulus for volume forces
+\item[\opt{normal}] switch to turn on the computation of local outward normal vectors
 \end{arguments}
 
-The three switches \verb|ks|, \verb|kb| and \verb|kal| set elastic parameters for local interactions - \verb|ks| for edge stiffness, \verb|kb| for angle preservation stiffness and \verb|kal| for triangle surface preservation stiffness. This stiffness can be either uniform over the whole object, or non-uniform. In case of stretching modulus, we can have spring stiffness the same for all edges in the whole object, or we can choose the value for every edge of the object separately. Analogically, for \verb|kal| and \verb|kb|. Therefore, there are two options for setting \verb|ks|, \verb|kal| and \verb|kb| stiffness. Here is the explanation for \verb|ks|:
+The four switches \verb|ks|, \verb|kslin|, \verb|kb| and \verb|kal| set elastic parameters for local interactions - \verb|ks| for hyperelastic edge stiffness, \verb|kslin| for linear edge stiffness, \verb|kb| for angle preservation stiffness and \verb|kal| for triangle surface preservation stiffness. This stiffness can be either uniform over the whole object, or non-uniform. In case of stretching modulus, we can have spring stiffness the same for all edges in the whole object, or we can choose the value for every edge of the object separately. Analogically, for \verb|kslin|, for \verb|kal| and \verb|kb|. Therefore, there are two options for setting \verb|ks|, \verb|kslin|, \verb|kal| and \verb|kb| stiffness. Here is the explanation for \verb|ks|:
 \begin{itemize}
-\item {\bf Uniform stiffness:} To set uniform stiffness for all edges in the object, use \verb|ks| \var{ks\_value}
-\item {\bf Non-uniform stiffness:} To set non-uniform stiffness, prepare a file \var{filename} with number of lines equal to the number of edges of the triangulation. Each line should contain a real number between 0 and 1, so called "weight". Then call
+\item {\bf Uniform stiffness:} To set uniform hyperelastic stiffness for all edges in the object, use \verb|ks| \var{ks\_value}
+\item {\bf Non-uniform stiffness:} To set non-uniform hyperelastic stiffness, prepare a file \var{filename} with number of lines equal to the number of edges of the triangulation. Each line should contain a real number between 0 and 1, so called "weight". Then call
 \verb|ks| \var{filename} \var{ksMin} \var{ksMax}
 This command reads the weights $weight_i$ for each edge and the stiffness for that edge is set to 
 $$
@@ -149,7 +154,7 @@ For bending stiffness, \var{filename} must contain the same number of lines as t
 \subsection{\label{ssec:oif-add-object}Elastic objects}
 
 \begin{essyntax}
-  \require{1,2, possibly 3 or 4}{oif_add_object}
+  \require{1,2, possibly 3,4}{oif_add_object}
   object-id  \var{oid}
   template-id  \var{tid}
   origin \var{x} \var{y} \var{z}
@@ -159,12 +164,13 @@ For bending stiffness, \var{filename} must contain the same number of lines as t
   \begin{features}
   \required[1]{MASS}
   \required[2]{EXTERNAL_FORCES}
-  \required[3]{AREA_FORCE_GLOBAL}
-  \required[4]{VOLUME_FORCE}
+  \required[3]{OIF_GLOBAL_FORCES}
+  \required[4]{OIF_LOCAL_FORCES}
+  \required[5]{MEMBRANE_COLLISION}
   \end{features}
 \end{essyntax}
 
-Using a previously defined template \var{tid}, this command creates a new object. Features \verb|AREA_FORCE_GLOBAL| and \verb|VOLUME_FORCE| are needed, if the template used the corresponding elastic moduli.
+Using a previously defined template \var{tid}, this command creates a new object. Features \verb|OIF_LOCAL_FORCES|, \verb|OIF_GLOBAL_FORCES|, \verb|OIF_MEMBRANE_COLLISION| are needed, if the template used the corresponding elastic moduli.
 
 \begin{arguments}
 \item[\var{oid}] unique ID for each object, the first object has the ID 0. The following ones should be numbered consecutively.
@@ -199,7 +205,7 @@ This command is useful for some preparatory work with mesh before it is used for
 \subsection{\label{ssec:oif-object-output}Output information about specific object}
 
 \begin{essyntax}
-  \require{1,2, possibly 3 or 4}{oif_object_output}
+  \require{1,2, possibly 3,4}{oif_object_output}
   object-id  \var{oid}
   \opt{vtk-pos \var{output\_file1.dat}}
   \opt{vtk-pos-folded \var{output\_file2.dat}}
@@ -208,8 +214,8 @@ This command is useful for some preparatory work with mesh before it is used for
   \begin{features}
   \required[1]{MASS}
   \required[2]{EXTERNAL_FORCES}
-  \required[3]{AREA_FORCE_GLOBAL}
-  \required[4]{VOLUME_FORCE}
+  \required[3]{OIF_GLOBAL_FORCES}
+  \required[4]{OIF_LOCAL_FORCES}
   \end{features}
 \end{essyntax}
 
@@ -219,7 +225,7 @@ This command is used to output information about the object that can be used for
 \item[\var{oid}] - the id of the object
 \item[\opt{vtk-pos \var{output\_file1.dat}}] outputs the mesh of the object to the desired \var{output\_file1.dat}. Paraview can directly visualize this file.
 \item[\opt{vtk-pos-folded \var{output\_file2.dat}}] the same as the previous option, however the whole object is shift such that it is visualized within the simulation box. 
-This option is useful for simulating periodical processes when objects flowing out on one side of simulation box are transferred to the opoosite side.
+This option is useful for simulating periodical processes when objects flowing out on one side of simulation box are transferred to the opposite side.
 \item[\opt{vtk-aff \var{output\_file3.dat}}] outputs affinity bonds that are currently activated. If no bonds are present, the file will be generated anyway with no bonds to visualize. Paraview can directly visualize this file.
 \item[\opt{mesh-nodes \var{output\_file4.dat}}] outputs the positions of the mesh nodes to \var{output\_file4.dat}. In fact, this command creates a new \var{nodes.dat} file that can be used by \verb|oif_object_set|. The center of the object is located at point (0,0,0). This command is aimed to store the deformed shape in order to be loaded later.
 \end{arguments}
@@ -227,7 +233,7 @@ This option is useful for simulating periodical processes when objects flowing o
 \subsection{\label{ssec:oif-object-analyze}Descriptive information about specific object}
 
 \begin{essyntax}
-  \require{1,2, possibly 3 or 4}{oif_object_analyze}
+  \require{1,2, possibly 3,4}{oif_object_analyze}
   object-id  \var{oid}
   \opt{origin}
   \opt{pos-bounds \var{bname}}
@@ -241,8 +247,8 @@ This option is useful for simulating periodical processes when objects flowing o
   \begin{features}
   \required[1]{MASS}
   \required[2]{EXTERNAL_FORCES}
-  \required[3]{AREA_FORCE_GLOBAL}
-  \required[4]{VOLUME_FORCE}
+  \required[3]{OIF_GLOBAL_FORCES}
+  \required[4]{OIF_LOCAL_FORCES}
   \end{features}
 \end{essyntax}
 
@@ -256,15 +262,15 @@ This command is used to output information about the properties of the object. S
 \item[\opt{volume}] - outputs the current volume of the object
 \item[\opt{surface-area}] - outputs the current surface of the object
 \item[\opt{velocity}] - outputs the current average velocity of the object. Runs over all mesh points and calculates their average velocity.
-\item[\opt{elastic-forces \var{name(s)} \var{output\_file.dat}}] (example \verb|elastic-forces| \var{kv} \var{kb} \var {ks} \var {out.vtk}) - name(s) can be one to five of the following: \var{ks, kb, kal, kag, kv}, in any order. Arguments cannot repeat. Corresponding forces are computed for each node by summing up all contributions.  This computation can be considered as a simple approach to elastic energy evaluation. If the output file has an extension .vtk, a vtk file is written with a scalar data fields that can be visualized in ParaView to show the color coded force magnitudes on the surface of the object. If more than one options were given, one can switch between the visualizations in ParaView. If the file has any other extension (.txt, .dat, \dots) a data file is written with magnitudes of resulting forces in each node (five columns - some of them will be zero, if not all arguments were given).
-\item[\opt{f-metric \var{name}}] name can be one of the following: \var{ks, kb, kal, kag, kv}. There is no \var{output\_file} as a second argument for these, because the output is just one number - fmetric/"naive energy" computed as a sum of magnitudes of respective elastic forces over all nodes of the object.
-%\item[\opt{affinity \var{name}}] analyzes the affinity-related features: \var{all} prints all following information; \var{nbonds} prints number of currently existing bonds, \textit{aver-bond-length} prints the average bond length of existing bonds; \textit{min-bond-length} prints the length of the minimal bond; \textit{max-bond-length} prints the length of the maximal bond, \textit{min-x-bond} detects the bond with the minimal $x$-coordinate of its bond site and prints this $x$-coordinate; \textit{max-x-bond} - detects the bond with the maximal $x$-coordinate of its bond site and prints this $x$-coordinate.
+%\item[\opt{elastic-forces \var{name(s)} \var{output\_file.dat}}] (example \verb|elastic-forces| \var{kv} \var{kb} \var {ks} \var {out.vtk}) - name(s) can be one to five of the following: \var{ks, kb, kal, kag, kv}, in any order. Arguments cannot repeat. Corresponding forces are computed for each node by summing up all contributions.  This computation can be considered as a simple approach to elastic energy evaluation. If the output file has an extension .vtk, a vtk file is written with a scalar data fields that can be visualized in ParaView to show the color coded force magnitudes on the surface of the object. If more than one options were given, one can switch between the visualizations in ParaView. If the file has any other extension (.txt, .dat, \dots) a data file is written with magnitudes of resulting forces in each node (five columns - some of them will be zero, if not all arguments were given).
+%\item[\opt{f-metric \var{name}}] name can be one of the following: \var{ks, kb, kal, kag, kv}. There is no \var{output\_file} as a second argument for these, because the output is just one number - fmetric/"naive energy" computed as a sum of magnitudes of respective elastic forces over all nodes of the object.
+%%\item[\opt{affinity \var{name}}] analyzes the affinity-related features: \var{all} prints all following information; \var{nbonds} prints number of currently existing bonds, \textit{aver-bond-length} prints the average bond length of existing bonds; \textit{min-bond-length} prints the length of the minimal bond; \textit{max-bond-length} prints the length of the maximal bond, \textit{min-x-bond} detects the bond with the minimal $x$-coordinate of its bond site and prints this $x$-coordinate; \textit{max-x-bond} - detects the bond with the maximal $x$-coordinate of its bond site and prints this $x$-coordinate.
 \end{arguments} 
 
 \subsection{\label{ssec:oif-object-set}Setting properties for specific object}
 
 \begin{essyntax}
-  \require{1,2, possibly 3 or 4}{oif_object_set}
+  \require{1,2, possibly 3,4}{oif_object_set}
   object-id  \var{oid}
   \opt{force \var{x} \var{y} \var{z}}
   \opt{origin \var{x} \var{y} \var{z}}
@@ -274,8 +280,8 @@ This command is used to output information about the properties of the object. S
   \begin{features}
   \required[1]{MASS}
   \required[2]{EXTERNAL_FORCES}
-  \required[3]{AREA_FORCE_GLOBAL}
-  \required[4]{VOLUME_FORCE}
+  \required[3]{OIF_GLOBAL_FORCES}
+  \required[4]{OIF_LOCAL_FORCES}
   \end{features}
 \end{essyntax}
 

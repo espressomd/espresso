@@ -16,36 +16,21 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-
-/** \file area_force_local.hpp
- *  Routines to calculate the AREA_FORCE_LOCAL energy or/and and force 
+#ifndef _OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_TCL_H
+#define _OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_TCL_H
+/** \file oif_global_forces.hpp
+ *  Routines to calculate the OIF_GLOBAL_FORCES energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
  *  \ref forces.cpp
 */
 
-#include "area_force_local.hpp"
-#include "communication.hpp"
 
+#include "tcl/parser.hpp"
+#include "interaction_data.hpp"
 
-/************************************************************/
+int tclprint_to_result_oifglobalforcesIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
 
-/** set parameters for the AREA_FORCE_LOCAL potential. 
-*/
-int area_force_local_set_params(int bond_type, double A0_l, double ka_l)
-{
-  if(bond_type < 0)
-    return ES_ERROR;
+/// parse parameters for the oif_global_forces potential
+int tclcommand_inter_parse_oif_global_forces(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.area_force_local.ka_l = ka_l;
-  bonded_ia_params[bond_type].p.area_force_local.A0_l = A0_l;
-
-  bonded_ia_params[bond_type].type = BONDED_IA_AREA_FORCE_LOCAL;
-  bonded_ia_params[bond_type].num = 2;				
- 
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return ES_OK;
-}
+#endif 

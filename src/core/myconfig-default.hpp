@@ -45,6 +45,7 @@
 #define LJCOS2
 #define BUCKINGHAM
 #define SOFT_SPHERE
+#define AFFINITY
 #define BOND_ANGLE
 
 #define MPI_CORE
