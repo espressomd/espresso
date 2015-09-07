@@ -36,8 +36,8 @@
 
 source "tests_common.tcl"
 
-require_feature "AREA_FORCE_GLOBAL"
-require_feature "VOLUME_FORCE"
+require_feature "OIF_GLOBAL_FORCES"
+require_feature "OIF_LOCAL_FORCES"
 require_feature "LB_GPU"
 require_feature "SHANCHEN" off
 

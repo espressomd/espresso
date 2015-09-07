@@ -115,6 +115,14 @@ extern const char* ESPRESSO_VERSION;
 #ifndef TINY_LENGTH_VALUE
 #define TINY_LENGTH_VALUE 0.0001
 #endif
+/** Tiny oif elasticity cutoff */
+#ifndef TINY_OIF_ELASTICITY_COEFFICIENT
+#define TINY_OIF_ELASTICITY_COEFFICIENT 1e-10
+#endif
+/** Small oif membrane collision cutoff */
+#ifndef SMALL_OIF_MEMBRANE_CUTOFF
+#define SMALL_OIF_MEMBRANE_CUTOFF 0.05
+#endif
 
 /** maximal number of iterations in the RATTLE algorithm before it bails out. */
 #ifndef SHAKE_MAX_ITERATIONS

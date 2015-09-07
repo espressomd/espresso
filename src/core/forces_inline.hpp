@@ -41,6 +41,8 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
+#include "object-in-fluid/affinity.hpp"
+#include "object-in-fluid/membrane_collision.hpp"
 #include "hat.hpp"
 #include "tab.hpp"
 #include "overlap.hpp"
@@ -49,12 +51,9 @@
 #include "ljangle.hpp"
 #include "gb.hpp"
 #include "fene.hpp"
-#include "object-in-fluid/stretching_force.hpp"
-#include "object-in-fluid/stretchlin_force.hpp"
-#include "object-in-fluid/area_force_local.hpp"
-#include "object-in-fluid/area_force_global.hpp"
-#include "object-in-fluid/bending_force.hpp"
-#include "object-in-fluid/volume_force.hpp"
+#include "object-in-fluid/oif_local_forces.hpp"
+#include "object-in-fluid/oif_global_forces.hpp"
+#include "object-in-fluid/out_direction.hpp"
 #include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
@@ -213,7 +212,7 @@ inline void force_calc()
     cells_update_ghosts();
 #endif
 
-  espressoSystemInterface.update();
+espressoSystemInterface.update();
 
 #ifdef COLLISION_DETECTION
   prepare_collision_queue();
@@ -265,23 +264,14 @@ inline void force_calc()
 
   }
 
-#ifdef VOLUME_FORCE
-    double volume=0.;
-
+#ifdef OIF_GLOBAL_FORCES
+    double area_volume[2]; //There are two global quantities that need to be evaluated: object's surface and object's volume. One can add another quantity.
+	area_volume[0] = 0.0; 
+	area_volume[1] = 0.0; 
     for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
-        calc_volume(&volume,i);
-        if (volume<1e-100) break;
-        add_volume_force(volume,i);
-    }
-#endif
-
-#ifdef AREA_FORCE_GLOBAL
-    double area=0.;
-
-    for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
-        calc_area_global(&area,i);
-        if (area<1e-100) break;
-        add_area_global_force(area,i);
+        calc_oif_global(area_volume,i);
+        if (fabs(area_volume[0])<1e-100 && fabs(area_volume[1])<1e-100) break;
+        add_oif_global_forces(area_volume,i);
     }
 #endif
   
@@ -384,6 +374,14 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
  /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
   add_soft_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+ /*affinity potential*/
+#ifdef AFFINITY
+  add_affinity_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+ /*repulsive membrane potential*/
+#ifdef MEMBRANE_COLLISION
+    add_membrane_collision_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
  /*hat potential*/
 #ifdef HAT
@@ -601,7 +599,7 @@ inline void add_bonded_force(Particle *p1)
   double force[3]  = { 0., 0., 0. };
   double force2[3] = { 0., 0., 0. };
   double force3[3] = { 0., 0., 0. };
-#if defined(HYDROGEN_BOND) || defined(TWIST_STACK)
+#if defined(HYDROGEN_BOND) || defined(TWIST_STACK) || defined(OIF_LOCAL_FORCES)
   double force4[3] = { 0., 0., 0. };
 #endif 
 #ifdef TWIST_STACK
@@ -705,15 +703,6 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-    case BONDED_IA_STRETCHING_FORCE:
-      bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);
-      break;
-    case BONDED_IA_STRETCHLIN_FORCE:
-      bond_broken = calc_stretchlin_force_pair_force(p1, p2, iaparams, dx, force);
-      break;
-    case BONDED_IA_AREA_FORCE_LOCAL:
-      bond_broken = calc_area_force_local(p1, p2, p3, iaparams, force, force2, force3);
-      break;
 #ifdef HYDROGEN_BOND
     case BONDED_IA_CG_DNA_BASEPAIR:
       bond_broken = calc_hydrogen_bond_force(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
@@ -725,20 +714,21 @@ inline void add_bonded_force(Particle *p1)
 					       force, force2, force3, force4, force5, force6, force7, force8);
       break;
 #endif
-#ifdef AREA_FORCE_GLOBAL
-    case BONDED_IA_AREA_FORCE_GLOBAL:
+#ifdef MEMBRANE_COLLISION
+        case BONDED_IA_OIF_OUT_DIRECTION:
+            bond_broken = calc_out_direction(p1, p2, p3, p4, iaparams);
+            break;
+#endif
+#ifdef OIF_GLOBAL_FORCES
+    case BONDED_IA_OIF_GLOBAL_FORCES:
       bond_broken = 0;
       break;
 #endif
-    case BONDED_IA_BENDING_FORCE:
-      bond_broken = calc_bending_force(p1, p2, p3, p4, iaparams, force, force2);
+#ifdef OIF_LOCAL_FORCES
+    case BONDED_IA_OIF_LOCAL_FORCES:
+      bond_broken = calc_oif_local(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
       break;
-#ifdef VOLUME_FORCE
-    case BONDED_IA_VOLUME_FORCE:
-      bond_broken = 0;
-      break;
-#endif
-      
+#endif  
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
 /*      case BONDED_IA_IBM_WALL_REPULSION:
@@ -928,17 +918,8 @@ inline void add_bonded_force(Particle *p1)
       
       for (j = 0; j < 3; j++) {
 	switch (type) {
-	case BONDED_IA_AREA_FORCE_LOCAL:
-	  p1->f.f[j] += force[j];
-	  p2->f.f[j] += force2[j];
-	  p3->f.f[j] += force3[j];
-	  break;
-#ifdef AREA_FORCE_GLOBAL
-	case BONDED_IA_AREA_FORCE_GLOBAL:
-	  break;
-#endif
-#ifdef VOLUME_FORCE
-	case BONDED_IA_VOLUME_FORCE:
+#ifdef OIF_GLOBAL_FORCES
+	case BONDED_IA_OIF_GLOBAL_FORCES:
 	  break;
 #endif
 	default:
@@ -956,29 +937,29 @@ inline void add_bonded_force(Particle *p1)
 	runtimeError(msg);
 	continue;
       }
-      for (j = 0; j < 3; j++) {
+
 	switch (type) {
-	case BONDED_IA_BENDING_FORCE:
-	  p1->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
-	  p2->f.f[j] += force[j];
-	  p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
-	  p4->f.f[j] += force2[j];
-	  break;
-	case BONDED_IA_DIHEDRAL:
-	  p1->f.f[j] += force[j];
-	  p2->f.f[j] += force2[j];
-	  p3->f.f[j] += force3[j];
-	  p4->f.f[j] -= force[j] + force2[j] + force3[j];
-	  break;
-#ifdef CG_DNA
-	default:
-	  p1->f.f[j] += force[j];
-	  p2->f.f[j] += force2[j];
-	  p3->f.f[j] += force3[j];
-	  p4->f.f[j] += force4[j];
-	  break;
+#ifdef OIF_LOCAL_FORCES
+        case BONDED_IA_OIF_LOCAL_FORCES:
+            for (j = 0; j < 3; j++) {
+                p1->f.f[j] += force2[j];
+                p2->f.f[j] += force[j];
+                p3->f.f[j] += force3[j];
+                p4->f.f[j] += force4[j];
+            }
+        break;
 #endif
-	}
+#ifdef CG_DNA
+        default:
+            for (j = 0; j < 3; j++) {
+                p1->f.f[j] += force[j];
+                p2->f.f[j] += force2[j];
+                p3->f.f[j] += force3[j];
+                p4->f.f[j] += force4[j];
+            }
+        break;
+#endif
+	
       }
       break;
     case 7:

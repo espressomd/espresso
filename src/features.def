@@ -131,8 +131,10 @@ GAY_BERNE	            implies ROTATION
 OVERLAPPED
 
 /* Fluid-Structure Interactions (object in fluid) */
-AREA_FORCE_GLOBAL
-VOLUME_FORCE
+OIF_LOCAL_FORCES
+OIF_GLOBAL_FORCES
+AFFINITY
+MEMBRANE_COLLISION
 
 BOND_ANGLE                      requires not BOND_ANGLE_OLD
 

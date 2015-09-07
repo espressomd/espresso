@@ -60,6 +60,8 @@
 #define LB_BOUNDARY_HOLLOW_CONE 8
 /** spherocylinder constraint **/
 #define LB_BOUNDARY_SPHEROCYLINDER 9
+/** voxel data */
+#define LB_BOUNDARY_VOXEL 10
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
@@ -80,6 +82,7 @@ typedef struct {
     Constraint_stomatocyte stomatocyte;
     Constraint_box box;
     Constraint_hollow_cone hollow_cone;
+    Constraint_voxel voxel;
   } c;
   double force[3];
   double velocity[3];

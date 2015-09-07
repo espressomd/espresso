@@ -1,5 +1,7 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -16,21 +18,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _OBJECT_IN_FLUID_AREA_FORCE_GLOBAL_TCL_H
-#define _OBJECT_IN_FLUID_AREA_FORCE_GLOBAL_TCL_H
-/** \file area_force_global.hpp
- *  Routines to calculate the AREA_FORCE_GLOBAL energy or/and and force 
- *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.cpp
-*/
+#ifndef MEMBRANE_COLLISION_TCL_H
+#define MEMBRANE_COLLISION_TCL_H
+/** \file membrane_collision_tcl.hpp
+ * Tcl interface for \ref membrane_collision.hpp
+ */
 
+#include "../parser.hpp"
 
-#include "tcl/parser.hpp"
-#include "interaction_data.hpp"
+#ifdef MEMBRANE_COLLISION
 
-int tclprint_to_result_areaforceglobalIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
+//
+int tclprint_to_result_membraneIA(Tcl_Interp *interp, int i, int j);
 
-/// parse parameters for the area_force_global potential
-int tclcommand_inter_parse_area_force_global(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+//
+int tclcommand_inter_parse_membrane(Tcl_Interp * interp,
+				int part_type_a, int part_type_b,
+				int argc, char ** argv);
 
-#endif 
+#endif
+
+#endif

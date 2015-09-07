@@ -1,5 +1,6 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2013,2014 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
   
@@ -16,25 +17,17 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _OBJECT_IN_FLUID_VOLUME_FORCE_TCL_H
-#define _OBJECT_IN_FLUID_VOLUME_FORCE_TCL_H
-/** \file volume_force.hpp
- *  Routines to calculate the VOLUME_FORCE energy or/and and force 
- *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.cpp
-*/
+#ifndef _OBJECT_IN_FLUID_OUT_DIRECTION_TCL_H
+#define _OBJECT_IN_FLUID_OUT_DIRECTION_TCL_H
 
 #include "tcl/parser.hpp"
 #include "interaction_data.hpp"
 
+#ifdef MEMBRANE_COLLISION
+/// parse parameters for the out_direction
+int tclcommand_inter_parse_oif_out_direction(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 
-/************************************************************/
+int tclprint_to_result_oifoutdirectionIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
 
-int tclprint_to_result_volumeforceIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
-
-/// parse parameters for the volume_force potential
-int tclcommand_inter_parse_volume_force(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-
-
-
+#endif
 #endif
