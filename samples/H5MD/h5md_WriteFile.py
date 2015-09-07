@@ -53,6 +53,7 @@ outParams=outBond.params
 ################################################
 
 for i in range(n_part):
+	#PARTICLE
 	system.part[i].pos=numpy.array([0.1*i,0.2*i,0.3*i])
 	system.part[i].v=numpy.array([0.2*i,0.3*i,0.4*i])
 	system.part[i].f=numpy.array([0.3*i,0.4*i,0.5*i])
@@ -70,7 +71,6 @@ for i in range(n_part):
 	#system.part[i].vs_relative=numpy.array([1.2*i,1.3*i,1.4*i])	  #Only virtual or vs_relative in myconfig #ERROR in python code
 	system.part[i].dip=numpy.array([1.3*i,1.4*i,1.5*i])
 	system.part[i].dipm=14*i	
-	
 	system.part[i].ext_force=numpy.array([1.5*i,1.6*i,1.7*i])
 	system.part[i].fix=numpy.array([i%2,i%2,i%2])
 	system.part[i].ext_torque=numpy.array([1.6*i,1.7*i,1.8*i])
@@ -79,17 +79,9 @@ for i in range(n_part):
 	system.part[i].rotation=i%2
 	####system.part[i].exclude=-1 #TODO
 	####system.part[i].swimming=-1 #TODO
-	
 	system.box_l = numpy.array([100,200,300])
 	#####system.part[i].image=numpy.array([0.1,0.1,0.1])*[i*2,i*2,i*2] #TOASK
 	system.part[i].id=19*i	# Will be overwritten from Espresso
-
-	
-
-
-
-
-
 
 
 for i in range(n_time):
@@ -121,17 +113,15 @@ for i in range(n_time):
 	h5.write_to_h5.rotation(i)
 	####h5.write_to_h5.exclude(i) #TODO
 	####h5.write_to_h5.swimming(i) #TODO
-	
 	h5.write_to_h5.box_edges(i)
 	#h5.write_to_h5.box_boundary(i)
 	#h5.write_to_h5.box_dimension(i)
 	h5.write_to_h5.id(i)
-	#h5.write_to_h5.image(i) #TOASK
-	
-	h5.write_to_h5.userdefined(i,[2,3,4,5.7],"User/user1/","value",'f8')
-
-
-
+	#h5.write_to_h5.image(i) #TOASK	
+	h5.write_to_h5.userdefined(-1,2,"User/user1/","value",'f8')
+	#ANALYZE
+	h5.write_to_h5.analyze_energy(i)
+	h5.write_to_h5.analyze_linear_momentum()
 	
 
 
@@ -152,6 +142,7 @@ for i in range(n_time):
 #bond time dependent
 #chunked
 #Tab 4er
+#value_scalar wech
 # enegrie string to values
 # image
 #attributes
@@ -160,12 +151,17 @@ for i in range(n_time):
 # todo xxx 
 #Manual
 #reihenfolge particle_data
+#analyze_value_time_dependent value_scalar etc
 #option fur zeitunabhangig ---> -1
 #obersvables analyze.py + remove 
 #value_fix etc time_independent + particle_value ---> allgemeiner
 #box boundary and dimension
 #close file 
- 
+#else if if len(self.h5md.value_dataset.shape) == 2:
+#check if h5md builds --> ifdef
+
+
+
 ####ERRORS
 #torque_lab,quat,omega_lab,dipole: schreibt/liest beim h5 aufruf falsche werte
 #vs_relative: vs_relative needs six args ---> vs_relative needs three args ; q = x[3] ---> q = x[2] ???
@@ -175,3 +171,4 @@ for i in range(n_time):
 #mass time dependent
 #energy etc only numbers
 #box tensor
+#bleibt analyzeargs.energy as usual
