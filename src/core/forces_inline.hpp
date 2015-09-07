@@ -614,7 +614,7 @@ inline void add_bonded_force(Particle *p1)
   double torque1[3] = { 0., 0., 0. };
   double torque2[3] = { 0., 0., 0. };
 #endif
-  Particle *p2, *p3 = NULL, *p4 = NULL;
+  Particle *p2 = NULL, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
   int i, j, type_num, type, n_partners, bond_broken;
 
@@ -711,13 +711,13 @@ inline void add_bonded_force(Particle *p1)
 #ifdef TWIST_STACK
     case BONDED_IA_CG_DNA_STACKING:
       bond_broken = calc_twist_stack_force(p1, p2, p3, p4, p5, p6, p7, p8, iaparams,
-					       force, force2, force3, force4, force5, force6, force7, force8);
+                                           force, force2, force3, force4, force5, force6, force7, force8);
       break;
 #endif
 #ifdef MEMBRANE_COLLISION
-        case BONDED_IA_OIF_OUT_DIRECTION:
-            bond_broken = calc_out_direction(p1, p2, p3, p4, iaparams);
-            break;
+    case BONDED_IA_OIF_OUT_DIRECTION:
+      bond_broken = calc_out_direction(p1, p2, p3, p4, iaparams);
+      break;
 #endif
 #ifdef OIF_GLOBAL_FORCES
     case BONDED_IA_OIF_GLOBAL_FORCES:
@@ -729,31 +729,31 @@ inline void add_bonded_force(Particle *p1)
       bond_broken = calc_oif_local(p1, p2, p3, p4, iaparams, force, force2, force3, force4);
       break;
 #endif  
-// IMMERSED_BOUNDARY
+      // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
-/*      case BONDED_IA_IBM_WALL_REPULSION:
-        IBM_WallRepulsion_CalcForce(p1, iaparams);
-        bond_broken = 0;
-        // These may be added later on, but we set them to zero because the force has already been added in IBM_WallRepulsion_CalcForce
-        force[0] = force2[0] = force3[0] = 0;
-        force[1] = force2[1] = force3[1] = 0;
-        force[2] = force2[2] = force3[2] = 0;
-        break;*/
-      case BONDED_IA_IBM_TRIEL:
-        bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
-        // These may be added later on, but we set them to zero because the force has already been added in IBM_Triel_CalcForce
-        force[0] = force2[0] = force3[0] = 0;
-        force[1] = force2[1] = force3[1] = 0;
-        force[2] = force2[2] = force3[2] = 0;
-        break;
-      case BONDED_IA_IBM_VOLUME_CONSERVATION:
-        bond_broken = 0;
-        // Don't do anything here. We calculate and add the global volume forces in IBM_VolumeConservation. They cannot be calculated on a per-bond basis
-        force[0] = force2[0] = force3[0] = 0;
-        force[1] = force2[1] = force3[1] = 0;
-        force[2] = force2[2] = force3[2] = 0;
-        break;
-      case BONDED_IA_IBM_TRIBEND:
+      /*      case BONDED_IA_IBM_WALL_REPULSION:
+              IBM_WallRepulsion_CalcForce(p1, iaparams);
+              bond_broken = 0;
+              // These may be added later on, but we set them to zero because the force has already been added in IBM_WallRepulsion_CalcForce
+              force[0] = force2[0] = force3[0] = 0;
+              force[1] = force2[1] = force3[1] = 0;
+              force[2] = force2[2] = force3[2] = 0;
+              break;*/
+    case BONDED_IA_IBM_TRIEL:
+      bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
+      // These may be added later on, but we set them to zero because the force has already been added in IBM_Triel_CalcForce
+      force[0] = force2[0] = force3[0] = 0;
+      force[1] = force2[1] = force3[1] = 0;
+      force[2] = force2[2] = force3[2] = 0;
+      break;
+    case BONDED_IA_IBM_VOLUME_CONSERVATION:
+      bond_broken = 0;
+      // Don't do anything here. We calculate and add the global volume forces in IBM_VolumeConservation. They cannot be calculated on a per-bond basis
+      force[0] = force2[0] = force3[0] = 0;
+      force[1] = force2[1] = force3[1] = 0;
+      force[2] = force2[2] = force3[2] = 0;
+      break;
+    case BONDED_IA_IBM_TRIBEND:
       {
         // First build neighbor list. This includes all nodes around the central node.
         const int numNeighbors = iaparams->num;
@@ -835,9 +835,9 @@ inline void add_bonded_force(Particle *p1)
 	bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
 	break;
       default:
-      ostringstream msg;
-      msg << "add_bonded_force: tabulated bond type of atom "<< p1->p.identity << " unknown\n";
-      runtimeError(msg);
+        ostringstream msg;
+        msg << "add_bonded_force: tabulated bond type of atom "<< p1->p.identity << " unknown\n";
+        runtimeError(msg);
 	return;
       }
       break;
@@ -855,9 +855,9 @@ inline void add_bonded_force(Particle *p1)
         bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
         break;
       default:
-          ostringstream msg;
-          msg <<"add_bonded_force: overlapped bond type of atom "<< p1->p.identity << " unknown\n";
-          runtimeError(msg);
+        ostringstream msg;
+        msg <<"add_bonded_force: overlapped bond type of atom "<< p1->p.identity << " unknown\n";
+        runtimeError(msg);
         return;
       }
       break;
@@ -869,18 +869,18 @@ inline void add_bonded_force(Particle *p1)
       break;
 #endif
     default :
-        ostringstream msg;
-        msg <<"add_bonded_force: bond type of atom "<< p1->p.identity << " unknown\n";
-        runtimeError(msg);
+      ostringstream msg;
+      msg <<"add_bonded_force: bond type of atom "<< p1->p.identity << " unknown\n";
+      runtimeError(msg);
       return;
     }
 
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-          ostringstream msg;
-          msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity<<". Distance vector: "<<dx[0]<<" "<<dx[1]<<" "<<dx[2];
-          runtimeError(msg);
+        ostringstream msg;
+        msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity<<". Distance vector: "<<dx[0]<<" "<<dx[1]<<" "<<dx[2];
+        runtimeError(msg);
         continue;
       }
       
@@ -909,13 +909,13 @@ inline void add_bonded_force(Particle *p1)
       break;
     case 2:
       if (bond_broken) {
-      ostringstream msg;
-      msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and "
-          << p3->p.identity;
-      runtimeError(msg);
+        ostringstream msg;
+        msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and "
+            << p3->p.identity;
+        runtimeError(msg);
 	continue;
       }
-      
+
       for (j = 0; j < 3; j++) {
 	switch (type) {
 #ifdef OIF_GLOBAL_FORCES
@@ -938,28 +938,36 @@ inline void add_bonded_force(Particle *p1)
 	continue;
       }
 
-	switch (type) {
+      switch (type) {
+      case BONDED_IA_DIHEDRAL:
+        for (j = 0; j < 3; j++) {
+          p1->f.f[j] += force[j];
+          p2->f.f[j] += force2[j];
+          p3->f.f[j] += force3[j];
+          p4->f.f[j] -= force[j] + force2[j] + force3[j];
+        }
+        break;
+
 #ifdef OIF_LOCAL_FORCES
-        case BONDED_IA_OIF_LOCAL_FORCES:
-            for (j = 0; j < 3; j++) {
-                p1->f.f[j] += force2[j];
-                p2->f.f[j] += force[j];
-                p3->f.f[j] += force3[j];
-                p4->f.f[j] += force4[j];
-            }
+      case BONDED_IA_OIF_LOCAL_FORCES:
+        for (j = 0; j < 3; j++) {
+          p1->f.f[j] += force2[j];
+          p2->f.f[j] += force[j];
+          p3->f.f[j] += force3[j];
+          p4->f.f[j] += force4[j];
+        }
         break;
 #endif
 #ifdef CG_DNA
-        default:
-            for (j = 0; j < 3; j++) {
-                p1->f.f[j] += force[j];
-                p2->f.f[j] += force2[j];
-                p3->f.f[j] += force3[j];
-                p4->f.f[j] += force4[j];
-            }
+      default:
+        for (j = 0; j < 3; j++) {
+          p1->f.f[j] += force[j];
+          p2->f.f[j] += force2[j];
+          p3->f.f[j] += force3[j];
+          p4->f.f[j] += force4[j];
+        }
         break;
-#endif
-	
+#endif	
       }
       break;
     case 7:
