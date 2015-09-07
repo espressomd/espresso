@@ -83,22 +83,22 @@ cdef extern from "interaction_data.hpp":
 
 
 #* Parameters for oif_global_forces */
-  ctypedef struct Oif_global_forces_bond_parameters:
-    double A0_g
-    double ka_g
-    double V0
-    double kv
+    ctypedef struct Oif_global_forces_bond_parameters:
+        double A0_g
+        double ka_g
+        double V0
+        double kv
 
 #* Parameters for oif_local_forces */
-  ctypedef struct Oif_local_forces_bond_parameters:
-    double r0
-    double ks
-    double kslin
-    double phi0
-    double kb
-    double A01
-    double A02
-    double kal
+    ctypedef struct Oif_local_forces_bond_parameters:
+        double r0
+        double ks
+        double kslin
+        double phi0
+        double kb
+        double A01
+        double A02
+        double kal
 
 #* Parameters for harmonic bond Potential */
     ctypedef struct Harmonic_bond_parameters:
