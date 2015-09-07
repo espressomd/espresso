@@ -79,7 +79,7 @@ enum BondedInteraction{
     /** Type of bonded interaction: oif global forces. */
     BONDED_IA_OIF_GLOBAL_FORCES,
     /** Type of bonded interaction: determining outward direction of oif membrane. */
-	BONDED_IA_OIF_OUT_DIRECTION,
+    BONDED_IA_OIF_OUT_DIRECTION,
     /** Type of bonded interaction for cg DNA */
     BONDED_IA_CG_DNA_BASEPAIR,
     /** Type of bonded interaction for cg DNA */

@@ -923,7 +923,6 @@ ELSE:
 
 
 class Oif_Global_Forces(BondedInteraction):
-
     def typeNumber(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
 
