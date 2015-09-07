@@ -15,11 +15,18 @@ include_directories(${CMAKE_BINARY_DIR}/src/core)
 cuda_include_directories(${CMAKE_SOURCE_DIR}/src/core)
 cuda_include_directories(${CMAKE_BINARY_DIR}/src/core)
 
+# copy the file to src/core/myconfig-final.hpp
+add_custom_command(
+  OUTPUT ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MYCONFIG} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
+  )
+
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-features.cpp ${CMAKE_BINARY_DIR}/src/core/config-features.hpp COMMAND
       ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
       ${CMAKE_SOURCE_DIR}/src/features.def
       ${CMAKE_BINARY_DIR}/src/core/config-features.hpp
-      ${CMAKE_BINARY_DIR}/src/core/config-features.cpp DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def
+      ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
+      DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
 )
 
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-version.cpp

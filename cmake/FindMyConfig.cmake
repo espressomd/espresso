@@ -36,10 +36,4 @@ else()
   endif()
 endif()
 
-# copy the file to src/core/myconfig-final.hpp
-add_custom_command(
-  OUTPUT ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp  
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MYCONFIG} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
-  )
-
 message(STATUS "Config file: ${MYCONFIG}")
