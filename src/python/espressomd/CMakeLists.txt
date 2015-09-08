@@ -15,7 +15,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/core)
 include_directories(${CMAKE_BINARY_DIR}/src/core)
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
-add_dependencies(gen_pxiconfig gen_pxi_config_cpp)
+add_dependencies(gen_pxiconfig gen_pxiconfig_cpp)
 
 add_custom_target(myconfig-pxi)
 add_dependencies(myconfig-pxi gen_pxiconfig)
@@ -34,7 +34,14 @@ foreach(cython_file ${cython_SRC})
                      COMMAND ${CYTHON_EXECUTABLE}  --cplus
                      -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
                      -I ${CMAKE_CURRENT_SOURCE_DIR}
+                     -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso
                      ${cython_file}
                      -o ${CMAKE_CURRENT_BINARY_DIR}/${basename}.cpp
                     )
 endforeach()
+
+include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${NUMPY_INCLUDE_DIR})
+
+add_library(EspressoCython ${cython_generated_SRC})
+
