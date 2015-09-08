@@ -80,7 +80,7 @@ endif(FFTW3_FOUND)
 if (WITH_TCL)
   find_package(TCL REQUIRED)
   include_directories(${TCL_INCLUDE_PATH})
-  list(APPEND LIBRARIES ${TCL_LIBRARY})
+  #list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
 find_package(HDF5)
