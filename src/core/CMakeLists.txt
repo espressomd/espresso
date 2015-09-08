@@ -1,11 +1,11 @@
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -gencode arch=compute_35,code=sm_35)
 
-file(GLOB_RECURSE libEspresso_SRC
+file(GLOB_RECURSE EspressoCore_SRC
           "*.cpp"
           )
 
-file(GLOB_RECURSE libEspresso_cuda_SRC
+file(GLOB_RECURSE EspressoCuda_SRC
           "*.cu"
           )
 
@@ -30,22 +30,22 @@ add_custom_command(TARGET config-features
                    COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
 
-cuda_add_library(libEspresso_cuda ${libEspresso_cuda_SRC})
+cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC})
 
-add_dependencies(libEspresso_cuda 
+add_dependencies(EspressoCuda
                  config-features
 )
 
-add_library(libEspresso STATIC ${libEspresso_SRC}
+add_library(EspressoCore SHARED ${EspressoCore_SRC}
                         ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
                         ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
 
-add_dependencies(libEspresso
-                 libEspresso_cuda
+add_dependencies(EspressoCore
+                 EspressoCuda
                  config-features
                  )
 
-target_link_libraries(libEspresso libEspresso_cuda)
+target_link_libraries(EspressoCore EspressoCuda)
 
 add_subdirectory(actor)

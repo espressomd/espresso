@@ -43,5 +43,5 @@ endforeach()
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
 
-add_library(EspressoCython ${cython_generated_SRC})
-
+add_library(EspressoCython SHARED ${cython_generated_SRC})
+target_link_libraries(EspressoCython EspressoCore ${LIBRARIES})
