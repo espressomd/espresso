@@ -65,6 +65,7 @@ find_package(PythonInterp)
 if (WITH_PYTHON)
      find_package(Cython REQUIRED)
      find_package(PythonLibs REQUIRED)
+     find_package(NumPy REQUIRED)
 endif(WITH_PYTHON)
 
 find_package(FFTW3)
