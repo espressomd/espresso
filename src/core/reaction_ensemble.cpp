@@ -857,15 +857,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	}
 	
 	
-	
-	int nr_collective_variables=2; // segfault here for non energy runs
-	double old_state[nr_collective_variables];
-	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		old_state[CV_i]=current_wang_landau_system.collective_variables[CV_i]->determine_current_state_in_collective_variable_with_index(CV_i);	
-	}
-	
-	
-	
 	//calculate potential energy
 	double E_pot_old=calculate_current_potential_energy_of_system(0); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
 	
@@ -955,18 +946,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				len_p_ids_created_particles+=1;
 			}
 		}
-	}
-	
-	
-	
-	
-	double new_state[nr_collective_variables];
-	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		new_state[CV_i]=current_wang_landau_system.collective_variables[CV_i]->determine_current_state_in_collective_variable_with_index(CV_i);	
-	}
-	
-	
-	
+	}	
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
 	//save new_state_index
@@ -1025,9 +1005,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 				current_wang_landau_system.histogram[new_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
 				
-//				if(abs(bf-(10))<0.001){
-//					printf("acc old state nbar %f Epot %f, new state new nbar %f old Epot %f, wl pot new %f \n",old_state[0], old_state[1], new_state[0], new_state[1], current_wang_landau_system.wang_landau_potential[new_state_index]);
-//				}
 			}
 		}
 
@@ -1044,14 +1021,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 			if(current_wang_landau_system.histogram[old_state_index]>=0){
 				current_wang_landau_system.histogram[old_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
-				
-//				if(abs(bf-(-10))<0.001){
-//					printf("rej old state nbar %f Epot %f, new state new nbar %f old Epot %f wlpot old %f\n",old_state[0], old_state[1], new_state[0], new_state[1], current_wang_landau_system.wang_landau_potential[old_state_index]);
-//					printf("old index %d new index %d \n",old_state_index, new_state_index);
-//					if(old_state_index>=0 && new_state_index>=0) {
-//						printf("histogram old %d, histogram new %d \n", current_wang_landau_system.histogram[old_state_index], current_wang_landau_system.histogram[new_state_index]);
-//					}
-//				}
 			}
 		}
 		//reverse reaction
