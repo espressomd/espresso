@@ -46,6 +46,8 @@
 #include "gaussian.hpp"
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
+#include "object-in-fluid/affinity.hpp"
+#include "object-in-fluid/membrane_collision.hpp"
 #include "hat.hpp"
 #include "umbrella.hpp"
 #include "tab.hpp"
@@ -239,6 +241,23 @@ void initialize_ia_params(IA_parameters *params) {
     params->soft_n =
     params->soft_offset = 0.0;
   params->soft_cut = INACTIVE_CUTOFF;
+#endif
+
+#ifdef AFFINITY
+  params->affinity_type = 
+  params->affinity_kappa = 
+  params->affinity_r0 =
+  params->affinity_Kon =
+  params->affinity_Koff =
+  params->affinity_maxBond =
+  params->affinity_cut = INACTIVE_CUTOFF;
+#endif
+    
+#ifdef MEMBRANE_COLLISION
+    params->membrane_a =
+    params->membrane_n =
+    params->membrane_offset = 0.0;
+    params->membrane_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef HAT
@@ -599,6 +618,16 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = data->soft_cut;
 #endif
 
+#ifdef AFFINITY
+      if (max_cut_current < data->affinity_cut)
+	max_cut_current = data->affinity_cut;
+#endif
+        
+#ifdef MEMBRANE_COLLISION
+      if (max_cut_current < data->membrane_cut)
+    max_cut_current = data->membrane_cut;
+#endif
+
 #ifdef HAT
       if (max_cut_current < data->HAT_r)
 	max_cut_current = data->HAT_r;
@@ -731,18 +760,12 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "RIGID_BOND";
   case BONDED_IA_VIRTUAL_BOND:
     return "VIRTUAL_BOND";
-  case BONDED_IA_STRETCHING_FORCE:
-    return "STRETCHING_FORCE";
-  case BONDED_IA_AREA_FORCE_LOCAL:
-    return "AREA_FORCE_LOCAL";
-  case BONDED_IA_AREA_FORCE_GLOBAL:
-    return "AREA_FORCE_GLOBAL";
-  case BONDED_IA_BENDING_FORCE:
-    return "BENDING_FORCE";
-  case BONDED_IA_VOLUME_FORCE:
-    return "VOLUME_FORCE";
-  case BONDED_IA_STRETCHLIN_FORCE:
-    return "STRETCHLIN_FORCE";
+  case BONDED_IA_OIF_GLOBAL_FORCES:
+    return "OIF_GLOBAL_FORCES";
+  case BONDED_IA_OIF_LOCAL_FORCES:
+    return "OIF_LOCAL_FORCES";
+  case BONDED_IA_OIF_OUT_DIRECTION:
+    return "oif_out_direction";
   case BONDED_IA_CG_DNA_BASEPAIR:
     return "CG_DNA_BASEPAIR";
   case BONDED_IA_CG_DNA_STACKING:

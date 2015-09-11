@@ -42,6 +42,7 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_voxel(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
 
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
@@ -248,6 +249,9 @@ int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 
       Tcl_PrintDouble(interp, lbb->c.hollow_cone.direction, buffer);
       Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
+      break;
+      
+    case LB_BOUNDARY_VOXEL:
       break;
 
 		default:
@@ -1360,6 +1364,70 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
   return (TCL_OK);
 }
 
+int tclcommand_lbboundary_voxel(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
+{
+	FILE* fp;
+	
+  lbb->type = LB_BOUNDARY_VOXEL;
+
+  /* invalid entries to start of */
+  //lbb->c.voxel.pos[0] = 
+  //lbb->c.voxel.pos[1] = 
+  //lbb->c.voxel.pos[2] = 0.0;
+  //lbb->c.voxel.n[0] = 
+  //lbb->c.voxel.n[1] = 
+  //lbb->c.voxel.n[2] = 0.0;
+  strcpy(lbb->c.voxel.filename,"");
+
+  //if (argc < 5 ) {
+    //Tcl_AppendResult(interp, "lbboundaries voxel file <filename> type <type> expected", (char *) NULL);
+    //return (TCL_ERROR);
+  //} 
+
+  while (argc > 0) {
+	  
+    //if(ARG_IS_S(0, "pos")) {
+      //if(argc < 4) {
+	      //Tcl_AppendResult(interp, "lbboundary voxel pos <x> <y> <z> expected", (char *) NULL);
+	      //return (TCL_ERROR);
+      //}
+      //if(Tcl_GetDouble(interp, argv[1], &(lbb->c.voxel.pos[0])) == TCL_ERROR ||
+	       //Tcl_GetDouble(interp, argv[2], &(lbb->c.voxel.pos[1])) == TCL_ERROR ||
+	       //Tcl_GetDouble(interp, argv[3], &(lbb->c.voxel.pos[2])) == TCL_ERROR)
+	      //return (TCL_ERROR);
+	      
+        //argc -= 4; argv += 4;
+    //}
+    if(ARG_IS_S(0, "file")) {
+      if(argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary voxel file <filename> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+	fp = fopen( argv[1] , "r");
+	if ( !fp ) {
+	      Tcl_AppendResult(interp, "voxel input file could not be opened", (char *) NULL);
+	      return (TCL_ERROR);
+	}
+	fclose(fp);
+	strcpy(lbb->c.voxel.filename,argv[1]);
+		
+    argc -= 2; argv += 2;
+    }
+    else if(ARG_IS_S(0, "type")) {
+      if (argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary voxel type <t> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  return (TCL_OK);
+}
+
 
 int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
 {  
@@ -1440,6 +1508,13 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
     } else 
         mpi_bcast_lbboundary(-1);
   }
+  else if(ARG_IS_S(1, "voxel")) {
+    status = tclcommand_lbboundary_voxel(generate_lbboundary(),interp, argc - 2, argv + 2);
+    if (lattice_switch & LATTICE_LB_GPU) {
+        mpi_bcast_lbboundary(-3);
+    } else 
+        mpi_bcast_lbboundary(-1);
+  }
   else if(ARG_IS_S(1, "force")) {
     if(argc != 3 || Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) {
       Tcl_AppendResult(interp, "Usage: lbboundary force $n",(char *) NULL);
@@ -1489,7 +1564,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
     status = TCL_OK;
   }
   else {
-    Tcl_AppendResult(interp, "possible lbboundary parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, delete {c} to delete lbboundary",(char *) NULL);
+    Tcl_AppendResult(interp, "possible lbboundary parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, voxel, delete {c} to delete lbboundary",(char *) NULL);
     return (TCL_ERROR);
   }
 

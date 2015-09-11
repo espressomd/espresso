@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 #include <cstring>
-#include "tcl/statistics_observable_tcl.hpp"
+#include "statistics_observable_tcl.hpp"
 #include "statistics_observable.hpp"
 #include "particle_data.hpp"
 #include "parser.hpp"
@@ -1805,16 +1805,19 @@ int observable_calc_tclcommand(observable* self) {
   if (error) {
     return 1;
   }
-  char* result = Tcl_GetStringResult(interp);
+  const char* result = Tcl_GetStringResult(interp);
+  char *string = new char[strlen(result)];
+  strcpy(string, result);
   char* token;
   int counter=0;
   double* A=self->last_value;
-  token = strtok(result, " ");
+  token = strtok(string, " ");
   while ( token != NULL && counter < self->n) {
     A[counter] = atof(token);
     token = strtok(NULL, " ");
     counter++;
   }
+  delete string;
   Tcl_ResetResult(interp);
   if (counter != self->n) {
       return 1;

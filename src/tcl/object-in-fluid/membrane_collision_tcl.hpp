@@ -1,5 +1,7 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -16,30 +18,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include "statistics_average.hpp"
+#ifndef MEMBRANE_COLLISION_TCL_H
+#define MEMBRANE_COLLISION_TCL_H
+/** \file membrane_collision_tcl.hpp
+ * Tcl interface for \ref membrane_collision.hpp
+ */
 
+#include "../parser.hpp"
 
-average* averages;
-int n_averages;
+#ifdef MEMBRANE_COLLISION
 
-int averages_add_empty_average() {
-  n_averages++;
-  realloc(averages, n_averages*sizeof(Average*));
-  averages[n_averages-1]=(Average*) Utils::malloc(sizeof(Average));
-  return 0;
-}
+//
+int tclprint_to_result_membraneIA(Tcl_Interp *interp, int i, int j);
 
-int average_init(Average* self, observable* obs, int with_variance) {
-  self->obs=obs;
-  self->n_obs=obs->n;
-  self->with_variance=with_variance;
-  self->n_sweeps=0;
-  self->average=(double*) Utils::malloc(self->n_obs*sizeof(double));
-  if (self->with_variance)
-    self->variance=(double*) Utils::malloc(self->n_obs*sizeof(double)); 
-  self->ready=self->obs->ready;
-}
+//
+int tclcommand_inter_parse_membrane(Tcl_Interp * interp,
+				int part_type_a, int part_type_b,
+				int argc, char ** argv);
 
-int
+#endif
 
-
+#endif
