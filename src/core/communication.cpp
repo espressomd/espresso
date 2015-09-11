@@ -2065,23 +2065,30 @@ void mpi_bcast_collision_params_slave(int node, int parm)
 
 /****************** REQ_SET_PERM ************/
 
-void mpi_send_permittivity(int node, int index, double *permittivity) {
-#ifdef LB
+void mpi_send_permittivity_slave(int node, int index) {
+#ifdef ELECTROSTATICS
     if (node==this_node) {
-        maggs_set_permittivity(index, permittivity);
-    } else {
-        mpi_call(mpi_send_permittivity_slave, node, index);
-        MPI_Send(permittivity, 3, MPI_DOUBLE, node, SOME_TAG, comm_cart);
+        double data[3];
+        int indices[3];
+        MPI_Recv(data, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+        MPI_Recv(indices, 3, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+        for (int d=0; d<3; d++) {
+            maggs_set_permittivity(indices[0], indices[1], indices[2], d, data[d]);
+        }
     }
 #endif
 }
 
-void mpi_send_permittivity_slave(int node, int index) {
-#ifdef LB
+void mpi_send_permittivity(int node, int index, int *indices, double *permittivity) {
+#ifdef ELECTROSTATICS
     if (node==this_node) {
-        double data[3];
-        MPI_Recv(data, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-        maggs_set_permittivity(index, data);
+        for (int d=0; d<3; d++) {
+            maggs_set_permittivity(indices[0], indices[1], indices[2], d, permittivity[d]);
+        }
+    } else {
+        mpi_call(mpi_send_permittivity_slave, node, index);
+        MPI_Send(permittivity, 3, MPI_DOUBLE, node, SOME_TAG, comm_cart);
+        MPI_Send(indices, 3, MPI_INT, node, SOME_TAG, comm_cart);
     }
 #endif
 }
