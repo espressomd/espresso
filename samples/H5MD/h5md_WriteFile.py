@@ -76,7 +76,7 @@ for i in range(n_part):
 	system.part[i].ext_torque=numpy.array([1.6*i,1.7*i,1.8*i])
 	system.part[i].gamma=1.7*i
 	system.part[i].temp=1.8*i
-	system.part[i].rotation=i%2
+# 	system.part[i].rotation=i%2	#Use only without analyze pressure
 	####system.part[i].exclude=-1 #TODO
 	####system.part[i].swimming=-1 #TODO
 	system.box_l = numpy.array([100,200,300])
@@ -88,45 +88,54 @@ for i in range(n_time):
 	system.time=0.1*(i+1)
 	h5.write_to_h5.time(i,"particles/atoms/position/","time")
 	h5.write_to_h5.time_step(i,"particles/atoms/position/","step")
-	h5.write_to_h5.type(i)
-	h5.write_to_h5.pos(i)
-	h5.write_to_h5.v(i)
-	h5.write_to_h5.f(i)
-	#h5.write_to_h5.bonds(i)
-	h5.write_to_h5.mass(i)
-	h5.write_to_h5.omega_lab(i)
-	h5.write_to_h5.rinertia(i)
-	h5.write_to_h5.omega_body(i)
-	h5.write_to_h5.torque_lab(i)
-	h5.write_to_h5.quat(i)
-	####h5.write_to_h5.director(i) #Not implemented yet
-	h5.write_to_h5.q(i)
-	h5.write_to_h5.virtual(i)      #Only virtual or vs_relative in myconfig
-	#h5.write_to_h5.vs_relative(i) #Only virtual or vs_relative in myconfig #ERROR in python code
-	h5.write_to_h5.dip(i)
-	h5.write_to_h5.dipm(i)
-	h5.write_to_h5.ext_force(i)
-	h5.write_to_h5.fix(i)
-	h5.write_to_h5.ext_torque(i)
-	h5.write_to_h5.gamma(i)
-	h5.write_to_h5.temp(i)
-	h5.write_to_h5.rotation(i)
-	####h5.write_to_h5.exclude(i) #TODO
-	####h5.write_to_h5.swimming(i) #TODO
-	h5.write_to_h5.box_edges(i)
-	#h5.write_to_h5.box_boundary(i)
-	#h5.write_to_h5.box_dimension(i)
-	h5.write_to_h5.id(i)
-	#h5.write_to_h5.image(i) #TOASK	
-	h5.write_to_h5.userdefined(-1,2,"User/user1/","value",'f8')
-	#ANALYZE
-	h5.write_to_h5.analyze_energy(i)
-	h5.write_to_h5.analyze_linear_momentum()
+	h5.write_to_h5.type(-1)
+	h5.write_to_h5.pos(-1)
+	h5.write_to_h5.v(-1)
+	h5.write_to_h5.f(-1)
+	#h5.write_to_h5.bonds(-1)
+	h5.write_to_h5.mass(-1)
+	h5.write_to_h5.omega_lab(-1)
+	h5.write_to_h5.rinertia(-1)
+	h5.write_to_h5.omega_body(-1)
+	h5.write_to_h5.torque_lab(-1)
+	h5.write_to_h5.quat(-1)
+	####h5.write_to_h5.director(-1) #Not implemented yet
+	h5.write_to_h5.q(-1)
+	h5.write_to_h5.virtual(-1)      #Only virtual or vs_relative in myconfig
+	#h5.write_to_h5.vs_relative(-1) #Only virtual or vs_relative in myconfig #ERROR in python code
+	h5.write_to_h5.dip(-1)
+	h5.write_to_h5.dipm(-1)
+	h5.write_to_h5.ext_force(-1)
+	h5.write_to_h5.fix(-1)
+	h5.write_to_h5.ext_torque(-1)
+	h5.write_to_h5.gamma(-1)
+	h5.write_to_h5.temp(-1)
+	h5.write_to_h5.rotation(-1)		#Use only without analyze pressure
+	####h5.write_to_h5.exclude(-1) #TODO
+	####h5.write_to_h5.swimming(-1) #TODO
+	h5.write_to_h5.box_edges(-1)
+	h5.write_to_h5.box_boundary(-1)
+	h5.write_to_h5.box_dimension(-1)
+	h5.write_to_h5.id(-1)
+	#h5.write_to_h5.image(-1) #TOASK	
+	h5.write_to_h5.userdefined(-1,[1,2,3],"User/user1/","value",'f8')
 	
+	#ANALYZE
+	h5.write_to_h5.mindist(-1,[0],[1])
+	h5.write_to_h5.distto(-1,None,[1,1,1])	
+	h5.write_to_h5.analyze_linear_momentum(-1,True,True)
+	h5.write_to_h5.nbhood(-1,[1,1,1],1.0,'3d')
+	h5.write_to_h5.cylindrical_average(-1,[1,1,1],[1,1,1],1,1,1,1,[-1])
+	h5.write_to_h5.pressure(-1,False)
+	h5.write_to_h5.stress_tensor(-1,False)
+	h5.write_to_h5.analyze_energy(-1,'all','default','default')
+	h5.write_to_h5.calc_re(-1,1,1,1)
+	h5.write_to_h5.calc_rg(-1,1,1,1)
+	h5.write_to_h5.calc_rh(-1,1,1,1)
+	h5.write_to_h5.structure_factor(-1,1,1)
 
 
-
-
+h5.close()
 
 
 # #H5MD: Write VMD parameters
@@ -139,26 +148,21 @@ for i in range(n_time):
 # h5.h5_write_vmd_parameters_extra.type(["A", "B", "C"])
 
 
+#vmd
+#test resize n_part+time
 #bond time dependent
-#chunked
 #Tab 4er
-#value_scalar wech
-# enegrie string to values
 # image
-#attributes
 #Test name ("A")
 #Test read error meldung
 # todo xxx 
 #Manual
-#reihenfolge particle_data
-#analyze_value_time_dependent value_scalar etc
 #option fur zeitunabhangig ---> -1
-#obersvables analyze.py + remove 
-#value_fix etc time_independent + particle_value ---> allgemeiner
-#box boundary and dimension
-#close file 
-#else if if len(self.h5md.value_dataset.shape) == 2:
+
 #check if h5md builds --> ifdef
+#comment all
+#save without time and test READ
+
 
 
 

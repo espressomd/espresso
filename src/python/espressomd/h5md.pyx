@@ -9,8 +9,7 @@ from espressomd import thermostat
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
-
-
+from matplotlib.colors import NP_CLIP_OUT
 
 include "myconfig.pxi"
 
@@ -20,832 +19,903 @@ class h5md(object):
   def __init__(self,filename,system):  
     self.system=system 
     self.filename=filename         
-    self.h5_file=self.OpenFile(filename,"a")
+    self.h5_file=h5py.File(filename,"a")       
     self.write_to_h5=self.write_to_h5(self)
     self.read_from_h5=self.read_from_h5(self)
     
-  def OpenFile(self,filename,accesstype):
-    file = h5py.File(filename,accesstype)
-    return file
-  
-  def CreateDataset(self,file,dataset,shape,Maxshape,Dtype):
-    dset = file.create_dataset(dataset,shape, maxshape=Maxshape, dtype=Dtype)
-    return dset
-  
-  def ReadDataset(self,file,dataset_group,dataset_name):
-    group=file[dataset_group]
-    return group[dataset_name]
-             
-  def WriteValue(self,timestep,particle_id,value,h5_datasetpath,h5_shape,h5_maxshape,h5_Dtype,case,feature=1):
-      if feature != 1:
-        print "ERROR: Some necessary Espresso features for values used in h5-file are not activated"
-        sys.exit()    
-      try:
-        self.dataset=self.CreateDataset(self.h5_file,h5_datasetpath,h5_shape,h5_maxshape,h5_Dtype)
-      except:
-        self.dataset=self.h5_file[h5_datasetpath]   
-      if case=='step': 
-        if(self.dataset.len()<=timestep+1):
-          self.dataset.resize((timestep+1,1))
-        self.dataset[timestep]=value  
-      if case=='time': 
-        if(self.dataset.len()<=timestep+1):
-          self.dataset.resize((timestep+1,1))
-        self.dataset[timestep]=value
-        
-      if case=='particle_time_independent': 
-        n_part=self.system.n_part
-        if(self.dataset.len()<=n_part+1):
-          self.dataset.resize((n_part,self.dataset.shape[1]))
-        self.dataset[particle_id]=value
-      if case=='particle_time_dependent': 
-        n_part=self.system.n_part
-        if(self.dataset.len()<=timestep+1): 
-          self.dataset.resize((timestep+1,n_part,self.dataset.shape[2]))
-        self.dataset[timestep,particle_id]=value 
+  def close(self):
+    self.h5_file.close()
+                
+  def WriteValue(self,timestep,particle_id,value,h5_datasetpath,h5_shape,h5_maxshape,h5_Dtype,chunk=True,case="",feature=1):
+    #CREATE OR OPEN DATASET
+    if feature != 1:
+      print "ERROR H5: Some necessary Espresso features for values used in h5-file are not activated"
+      sys.exit()    
+    try:
+      #self.dataset=self.CreateDataset(self.h5_file,h5_datasetpath,h5_shape,h5_maxshape,h5_Dtype)
+      self.dataset=self.h5_file.create_dataset(h5_datasetpath,h5_shape,maxshape=h5_maxshape,dtype=h5_Dtype,chunks=chunk)
+    except:
+      self.dataset=self.h5_file[h5_datasetpath]   
 
-      if case=='analyze_time_independent': 
-        value_temp=[]
-        try:  #value is array
-          value_length=len(value)
-          value_temp=value
-        except:  #value is single
-          value_length=1 
-          value_temp.append(value)
-        self.dataset.resize((value_length,))
-        for i in range(0,value_length):
-          self.dataset[i]=value_temp[i]
-      if case=='analyze_time_dependent': 
-        if(self.dataset.len()<=timestep+1): 
-          self.dataset.resize((timestep+1,self.dataset.shape[1]))
-        self.dataset[timestep]=value 
-               
-      if case=='userdefined_value_time_independent':
-        value_temp=[]
-        try:  #value is array
-          value_length=len(value)
-          value_temp=value
-        except:  #value is single
-          value_length=1 
-          value_temp.append(value)
-        self.dataset.resize((value_length,))
-        for i in range(0,value_length):
-          self.dataset[i]=value_temp[i]
-      if case=='userdefined_value_time_dependent': 
-        try:  #value is array
-          value_length=len(value)
-        except: #value is single
-          value_length=1 
+    #WRITE CASES
+    #time and step
+    if case=='time_dependent': 
+      if(self.dataset.shape[0]<=timestep+1):
+        self.dataset.resize((timestep+1,1))
+      self.dataset[timestep]=value
+      
+    #particle properties
+    if case=='particle_time_independent': 
+      if(self.dataset.shape[0]<=self.system.n_part+1):
+        self.dataset.resize((self.system.n_part,self.dataset.shape[1]))
+      self.dataset[particle_id]=value
+    if case=='particle_time_dependent': 
+      if(self.dataset.shape[0]<=timestep+1 or self.dataset.shape[1]<=self.system.n_part+1): 
+        self.dataset.resize((timestep+1,self.system.n_part,self.dataset.shape[2]))
+      self.dataset[timestep,particle_id]=value 
+
+    #observables and user defined values
+    if case=='observable_time_independent': 
+      value_temp=[]
+      try:  #value is array
+        value_length=len(value)
+        value_temp=value
+      except:  #value is single
+        value_length=1 
+        value_temp.append(value)
+      self.dataset.resize((value_length,))
+      for i in range(0,value_length):
+        self.dataset[i]=value_temp[i]
+    if case=='observable_time_dependent': 
+      value_temp=[]
+      try:  #value is array
+        value_length=len(value)
+        value_temp=value
+      except:  #value is single
+        value_length=1 
+        value_temp.append(value)
+      if(self.dataset.shape[0]<=timestep+1 or value_length>1): 
         self.dataset.resize((timestep+1,value_length))
-        self.dataset[timestep]=value
+      self.dataset[timestep]=value_temp 
+             
+    #box 
+    if case=='box_edges_time_independent': 
+      self.dataset[0,0]=self.system.box_l[0]
+      self.dataset[1,1]=self.system.box_l[1]
+      self.dataset[2,2]=self.system.box_l[2] 
+    if case=='box_edges_time_dependent': 
+      if(self.dataset.shape[0]<=timestep+1): 
+        self.dataset.resize((timestep+1,3,3))
+      self.dataset[timestep,0,0]=self.system.box_l[0]
+      self.dataset[timestep,1,1]=self.system.box_l[1]
+      self.dataset[timestep,2,2]=self.system.box_l[2]
+      
+    if case=='box_dimension_time_independent':      
+      self.dataset[0]=value
+    if case=='box_dimension_time_dependent':   
+      if(self.dataset.shape[0]<=timestep+1):
+        self.dataset.resize((timestep+1,1))   
+      self.dataset[timestep,0]=value
+      
+    if case=='box_boundary_time_independent': 
+      if(value[0]==0):
+        self.dataset[0]="none"
+      else:
+        self.dataset[0]="periodic"
+      if(value[1]==0):
+        self.dataset[1]="none"
+      else:
+        self.dataset[1]="periodic"
+      if(value[2]==0):
+        self.dataset[2]="none"
+      else:
+        self.dataset[2]="periodic" 
+    if case=='box_boundary_time_dependent': 
+      if(self.dataset.shape[0]<=timestep+1):
+        self.dataset.resize((timestep+1,3))
+      if(value[0]==0):
+        self.dataset[timestep,0]="none"
+      else:
+        self.dataset[timestep,0]="periodic"
+      if(value[1]==0):
+        self.dataset[timestep,1]="none"
+      else:
+        self.dataset[timestep,1]="periodic"
+      if(value[2]==0):
+        self.dataset[timestep,2]="none"
+      else:
+        self.dataset[timestep,2]="periodic" 
 
-        
-      if case=='box_edges_time_dependent': 
-        if(self.dataset.len()<=timestep+1): 
-          self.dataset.resize((timestep+1,3,3))
-        self.dataset[timestep,0,0]=self.system.box_l[0]
-        self.dataset[timestep,1,1]=self.system.box_l[1]
-        self.dataset[timestep,2,2]=self.system.box_l[2] 
-      if case=='box_dimension_time_dependent':      
-        self.dataset[0]=3
-      if case=='box_boundary_time_dependent': 
-        if(self.system.periodicity[0]==0):
-          self.dataset[0]="none"
-        else:
-          self.dataset[0]="periodic"
-        if(self.system.periodicity[1]==0):
-          self.dataset[1]="none"
-        else:
-          self.dataset[1]="periodic"
-        if(self.system.periodicity[2]==0):
-          self.dataset[2]="none"
-        else:
-          self.dataset[2]="periodic" 
+
+###########################################################################################################################################
+############################################################# WRITE CLASS #################################################################
+###########################################################################################################################################  
 
 
-
-                  
-
-  
-  
 #WRITE CLASS 
   class write_to_h5(object):
     def __init__(self,h5md):
-      self.h5md=h5md          
-      self.n_part=self.h5md.system.n_part   
+      self.h5md=h5md             
     #time
-    def time(self,timestep=-1,groupname="particles/atoms/Time/",datasetname="time"):
-      self.h5md.WriteValue(timestep,-1,self.h5md.system.time,groupname+"/"+datasetname,(1,1),(None,1),'f8','time',1)
+    def time(self,timestep=-1,groupname="particles/atoms/Time/",datasetname="time",chunk=True):
+      self.h5md.WriteValue(timestep,-1,self.h5md.system.time,groupname+"/"+datasetname,(1,1),(None,1),'f8',chunk,'time_dependent',1)
     #time step
-    def time_step(self,timestep=-1,groupname="particles/atoms/Step/",datasetname="step"):
-      self.h5md.WriteValue(timestep,-1,timestep,groupname+"/"+datasetname,(1,1),(None,1),'int64','step',1)
+    def time_step(self,timestep=-1,groupname="particles/atoms/Step/",datasetname="step",chunk=True):
+      self.h5md.WriteValue(timestep,-1,timestep,groupname+"/"+datasetname,(1,1),(None,1),'int64',chunk,'time_dependent',1)
 
-#PARTICLE PROPERTIES
+  #USERDEFINED
+    #user defined dataset  
+    def userdefined(self,timestep=-1,value="",groupname="",datasetname="",datatype='f8',chunk=True):
+      if timestep == -1:
+        self.h5md.WriteValue(timestep,-1,value,groupname+"/"+datasetname,(1,),(None,),datatype,chunk,'observable_time_independent',1)        
+      else:
+        self.h5md.WriteValue(timestep,-1,value,groupname+"/"+datasetname,(1,1),(None,None),datatype,chunk,'observable_time_dependent',1) 
+
+  #PARTICLE PROPERTIES
     #position
-    def pos(self,timestep=-1,groupname="particles/atoms/position/",datasetname="value"):
+    def pos(self,timestep=-1,groupname="particles/atoms/position/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',1)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',1)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',1)                      
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',1)                      
     #image
-    def image(self,timestep=-1,groupname="particles/atoms/image/",datasetname="value"):
+    def image(self,timestep=-1,groupname="particles/atoms/image/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',1)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',1)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',1)             
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',1)             
     #velocity
-    def v(self,timestep=-1,groupname="particles/atoms/velocity/",datasetname="value"):
+    def v(self,timestep=-1,groupname="particles/atoms/velocity/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].v,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',1)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].v,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',1)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].v,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',1)      
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].v,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',1)      
     #force
-    def f(self,timestep=-1,groupname="particles/atoms/force/",datasetname="value"):
+    def f(self,timestep=-1,groupname="particles/atoms/force/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].f,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',1)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].f,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',1)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].f,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',1)       
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].f,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',1)       
     #bonds
-    def bonds(self,groupname="particles/atoms/bond_from/XXXXXXXXX",datasetname="value"):
-      self.n_part=self.h5md.system.n_part
-      for i in range(0,self.n_part):
+    def bonds(self,groupname="particles/atoms/bond_from/XXXXXXXXX",datasetname="value",chunk=True):
+      for i in range(0,self.h5md.system.n_part):
         for bond in self.h5md.system.part[i].bonds: 
           print("BOND:",bond[0],bond[1])         
-          self.h5md.WriteValue(-1,i,i,"particles/"+groupname+"/bond_from/value",(1,1),(None,1),'int64','particle_time_independent',1) 
-          self.h5md.WriteValue(-1,i,bond[1],"particles/"+groupname+"/bond_to/value",(1,1),(None,1),'int64','particle_time_independent',1) 
+          self.h5md.WriteValue(-1,i,i,"particles/"+groupname+"/bond_from/value",(1,1),(None,1),'int64',chunk,'particle_time_independent',1) 
+          self.h5md.WriteValue(-1,i,bond[1],"particles/"+groupname+"/bond_to/value",(1,1),(None,1),'int64',chunk,'particle_time_independent',1) 
     #species
-    def type(self,timestep=-1,groupname="particles/atoms/species/",datasetname="value"):
+    def type(self,timestep=-1,groupname="particles/atoms/species/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].type,groupname+"/"+datasetname,(1,1),(None,1),'int64','particle_time_independent',1)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].type,groupname+"/"+datasetname,(1,1),(None,1),'int64',chunk,'particle_time_independent',1)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].type,groupname+"/"+datasetname,(1,1,1),(None,None,1),'int64','particle_time_dependent',1)  
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].type,groupname+"/"+datasetname,(1,1,1),(None,None,1),'int64',chunk,'particle_time_dependent',1)  
     #id
-    def id(self,timestep=-1,groupname="particles/atoms/id/",datasetname="value"):
+    def id(self,timestep=-1,groupname="particles/atoms/id/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].id,groupname+"/"+datasetname,(1,1),(None,1),'int64','particle_time_independent',1)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].id,groupname+"/"+datasetname,(1,1),(None,1),'int64',chunk,'particle_time_independent',1)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].id,groupname+"/"+datasetname,(1,1,1),(None,None,1),'int64','particle_time_dependent',1)
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].id,groupname+"/"+datasetname,(1,1,1),(None,None,1),'int64',chunk,'particle_time_dependent',1)
     #mass
-    def mass(self,timestep=-1,groupname="particles/atoms/mass/",datasetname="value"):
+    def mass(self,timestep=-1,groupname="particles/atoms/mass/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].mass,groupname+"/"+datasetname,(1,1),(None,1),'f8','particle_time_independent',MASS)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].mass,groupname+"/"+datasetname,(1,1),(None,1),'f8',chunk,'particle_time_independent',MASS)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].mass,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8','particle_time_dependent',MASS)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].mass,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8',chunk,'particle_time_dependent',MASS)        
     #omega_lab
-    def omega_lab(self,timestep=-1,groupname="particles/atoms/omega_lab/",datasetname="value"):
+    def omega_lab(self,timestep=-1,groupname="particles/atoms/omega_lab/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].omega_lab,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',ROTATION)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].omega_lab,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',ROTATION)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].omega_lab,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',ROTATION)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].omega_lab,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',ROTATION)        
     #rinertia
-    def rinertia(self,timestep=-1,groupname="particles/atoms/rinertia/",datasetname="value"):
+    def rinertia(self,timestep=-1,groupname="particles/atoms/rinertia/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].rinertia,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',ROTATIONAL_INERTIA)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].rinertia,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',ROTATIONAL_INERTIA)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].rinertia,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',ROTATIONAL_INERTIA)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].rinertia,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',ROTATIONAL_INERTIA)        
     #omega_body
-    def omega_body(self,timestep=-1,groupname="particles/atoms/omega_body/",datasetname="value"):
+    def omega_body(self,timestep=-1,groupname="particles/atoms/omega_body/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].omega_body,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',ROTATION)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].omega_body,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',ROTATION)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].omega_body,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',ROTATION)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].omega_body,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',ROTATION)        
     #torque_lab
-    def torque_lab(self,timestep=-1,groupname="particles/atoms/torque_lab/",datasetname="value"):
+    def torque_lab(self,timestep=-1,groupname="particles/atoms/torque_lab/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].torque_lab,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',ROTATION)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].torque_lab,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',ROTATION)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].torque_lab,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',ROTATION)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].torque_lab,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',ROTATION)        
     #quat
-    def quat(self,timestep=-1,groupname="particles/atoms/quat/",datasetname="value"):
+    def quat(self,timestep=-1,groupname="particles/atoms/quat/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].quat,groupname+"/"+datasetname,(1,4),(None,4),'f8','particle_time_independent',ROTATION)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].quat,groupname+"/"+datasetname,(1,4),(None,4),'f8',chunk,'particle_time_independent',ROTATION)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].quat,groupname+"/"+datasetname,(1,1,4),(None,None,4),'f8','particle_time_dependent',ROTATION)           
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].quat,groupname+"/"+datasetname,(1,1,4),(None,None,4),'f8',chunk,'particle_time_dependent',ROTATION)           
     #charge   
-    def q(self,timestep=-1,groupname="particles/atoms/charge/",datasetname="value"):
+    def q(self,timestep=-1,groupname="particles/atoms/charge/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].q,groupname+"/"+datasetname,(1,1),(None,1),'f8','particle_time_independent',ELECTROSTATICS)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].q,groupname+"/"+datasetname,(1,1),(None,1),'f8',chunk,'particle_time_independent',ELECTROSTATICS)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].q,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8','particle_time_dependent',ELECTROSTATICS)               
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].q,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8',chunk,'particle_time_dependent',ELECTROSTATICS)               
     #virtual
-    def virtual(self,timestep=-1,groupname="particles/atoms/virtual/",datasetname="value"):
+    def virtual(self,timestep=-1,groupname="particles/atoms/virtual/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].virtual,groupname+"/"+datasetname,(1,1),(None,1),'int64','particle_time_independent',VIRTUAL_SITES_COM)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].virtual,groupname+"/"+datasetname,(1,1),(None,1),'int64',chunk,'particle_time_independent',VIRTUAL_SITES_COM)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].virtual,groupname+"/"+datasetname,(1,1,1),(None,None,1),'int64','particle_time_dependent',VIRTUAL_SITES_COM)     
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].virtual,groupname+"/"+datasetname,(1,1,1),(None,None,1),'int64',chunk,'particle_time_dependent',VIRTUAL_SITES_COM)     
     #vs_relative
-    def vs_relative(self,timestep=-1,groupname="particles/atoms/vs_relative/",datasetname="value"):
+    def vs_relative(self,timestep=-1,groupname="particles/atoms/vs_relative/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].vs_relative,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',VIRTUAL_SITES_RELATIVE)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].vs_relative,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',VIRTUAL_SITES_RELATIVE)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].vs_relative,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',VIRTUAL_SITES_RELATIVE) 
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].vs_relative,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',VIRTUAL_SITES_RELATIVE) 
     #dipole
-    def dip(self,timestep=-1,groupname="particles/atoms/dipole/",datasetname="value"):
+    def dip(self,timestep=-1,groupname="particles/atoms/dipole/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].dip,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',DIPOLES)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].dip,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',DIPOLES)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].dip,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',DIPOLES)     
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].dip,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',DIPOLES)     
     #dipole_magnitude
-    def dipm(self,timestep=-1,groupname="particles/atoms/dipole_magnitude/",datasetname="value"):
+    def dipm(self,timestep=-1,groupname="particles/atoms/dipole_magnitude/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].dipm,groupname+"/"+datasetname,(1,1),(None,1),'f8','particle_time_independent',DIPOLES)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].dipm,groupname+"/"+datasetname,(1,1),(None,1),'f8',chunk,'particle_time_independent',DIPOLES)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].dipm,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8','particle_time_dependent',DIPOLES)     
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].dipm,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8',chunk,'particle_time_dependent',DIPOLES)     
     #external force
-    def ext_force(self,timestep=-1,groupname="particles/atoms/ext_force/",datasetname="value"):
+    def ext_force(self,timestep=-1,groupname="particles/atoms/ext_force/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].ext_force,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',EXTERNAL_FORCES)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].ext_force,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',EXTERNAL_FORCES)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].ext_force,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',EXTERNAL_FORCES)    
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].ext_force,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',EXTERNAL_FORCES)    
     #external force particle fix
-    def fix(self,timestep=-1,groupname="particles/atoms/ext_force_fix/",datasetname="value"):
+    def fix(self,timestep=-1,groupname="particles/atoms/ext_force_fix/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].fix,groupname+"/"+datasetname,(1,3),(None,3),'int64','particle_time_independent',EXTERNAL_FORCES)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].fix,groupname+"/"+datasetname,(1,3),(None,3),'int64',chunk,'particle_time_independent',EXTERNAL_FORCES)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].fix,groupname+"/"+datasetname,(1,1,3),(None,None,3),'int64','particle_time_dependent',EXTERNAL_FORCES)   
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].fix,groupname+"/"+datasetname,(1,1,3),(None,None,3),'int64',chunk,'particle_time_dependent',EXTERNAL_FORCES)   
     #external torque
-    def ext_torque(self,timestep=-1,groupname="particles/atoms/ext_torque/",datasetname="value"):
+    def ext_torque(self,timestep=-1,groupname="particles/atoms/ext_torque/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].ext_torque,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',ROTATION)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].ext_torque,groupname+"/"+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',ROTATION)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].ext_torque,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',ROTATION)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].ext_torque,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',ROTATION)        
     #gamma
-    def gamma(self,timestep=-1,groupname="particles/atoms/gamma/",datasetname="value"):
+    def gamma(self,timestep=-1,groupname="particles/atoms/gamma/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].gamma,groupname+"/"+datasetname,(1,1),(None,1),'f8','particle_time_independent',LANGEVIN_PER_PARTICLE)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].gamma,groupname+"/"+datasetname,(1,1),(None,1),'f8',chunk,'particle_time_independent',LANGEVIN_PER_PARTICLE)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].gamma,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8','particle_time_dependent',LANGEVIN_PER_PARTICLE)         
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].gamma,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8',chunk,'particle_time_dependent',LANGEVIN_PER_PARTICLE)         
     #temperature   
-    def temp(self,timestep=-1,groupname="particles/atoms/temp/",datasetname="value"):
+    def temp(self,timestep=-1,groupname="particles/atoms/temp/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].temp,groupname+"/"+datasetname,(1,1),(None,1),'f8','particle_time_independent',LANGEVIN_PER_PARTICLE)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].temp,groupname+"/"+datasetname,(1,1),(None,1),'f8',chunk,'particle_time_independent',LANGEVIN_PER_PARTICLE)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].temp,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8','particle_time_dependent',LANGEVIN_PER_PARTICLE)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].temp,groupname+"/"+datasetname,(1,1,1),(None,None,1),'f8',chunk,'particle_time_dependent',LANGEVIN_PER_PARTICLE)        
     #rotation   
-    def rotation(self,timestep=-1,groupname="particles/atoms/rotation/",datasetname="value"):
+    def rotation(self,timestep=-1,groupname="particles/atoms/rotation/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].rotation,groupname+"/"+datasetname,(1,1),(None,1),'int64','particle_time_independent',ROTATION_PER_PARTICLE)        
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(-1,i,self.h5md.system.part[i].rotation,groupname+"/"+datasetname,(1,1),(None,1),'int64',chunk,'particle_time_independent',ROTATION_PER_PARTICLE)        
       else:
-        self.n_part=self.h5md.system.n_part
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].rotation,groupname+"/"+datasetname,(1,1,1),(None,None,1),'int64','particle_time_dependent',ROTATION_PER_PARTICLE)                   
+        for i in range(0,self.h5md.system.n_part):
+          self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].rotation,groupname+"/"+datasetname,(1,1,1),(None,None,1),'int64',chunk,'particle_time_dependent',ROTATION_PER_PARTICLE)                   
        
     
-#OBSERVABLES
-    #energy   
-    def analyze_energy(self,timestep=-1,groupname="observables/energy/",datasetname="value"):
+  #OBSERVABLES
+    #mindist   
+    def mindist(self,timestep=-1,p1='default',p2='default',groupname="observables/mindist/",datasetname="value",chunk=True):
       if timestep == -1:
-        for key in analyze.energy(self.h5md.system).keys():
-          self.h5md.WriteValue(timestep,-1,analyze.energy(self.h5md.system)[key],groupname+"/"+datasetname+"_"+str(key),(1,),(None,),'f8','analyze_time_independent',1)          
+        self.h5md.WriteValue(timestep,-1,analyze.mindist(self.h5md.system,p1,p2),groupname+"/"+datasetname,(1,),(1,),'f8',chunk,'observable_time_independent',1)          
       else:
-        for key in analyze.energy(self.h5md.system).keys():
-          self.h5md.WriteValue(timestep,-1,analyze.energy(self.h5md.system)[key],groupname+"/"+datasetname+"_"+str(key),(1,1),(None,None),'f8','analyze_time_dependent',1)  
+        self.h5md.WriteValue(timestep,-1,analyze.mindist(self.h5md.system,p1,p2),groupname+"/"+datasetname,(1,1),(None,1),'f8',chunk,'observable_time_dependent',1)
+    #distto   
+    def distto(self,timestep=-1,id=None,pos=None,groupname="observables/distto/",datasetname="value",chunk=True):
+      if timestep == -1:
+        self.h5md.WriteValue(timestep,-1,analyze.distto(self.h5md.system,id,pos),groupname+"/"+datasetname,(1,),(1,),'f8',chunk,'observable_time_independent',1)          
+      else:
+        self.h5md.WriteValue(timestep,-1,analyze.distto(self.h5md.system,id,pos),groupname+"/"+datasetname,(1,1),(None,1),'f8',chunk,'observable_time_dependent',1)
     #analyze_linear_momentum   
-    def analyze_linear_momentum(self,timestep=-1,groupname="observables/linear_momentum/",datasetname="value"):
+    def analyze_linear_momentum(self,timestep=-1,include_particles=True, include_lbfluid=True,groupname="observables/linear_momentum/",datasetname="value",chunk=True):
       if timestep == -1:
-        self.h5md.WriteValue(timestep,-1,analyze.analyze_linear_momentum(self.h5md.system),groupname+"/"+datasetname,(3,),(None,),'f8','analyze_time_independent',1)          
+        self.h5md.WriteValue(timestep,-1,analyze.analyze_linear_momentum(self.h5md.system,include_particles,include_lbfluid),groupname+"/"+datasetname,(1,),(None,),'f8',chunk,'observable_time_independent',1)          
       else:
-        self.h5md.WriteValue(timestep,-1,analyze.analyze_linear_momentum(self.h5md.system),groupname+"/"+datasetname,(1,3),(None,3),'f8','analyze_time_dependent',1)         
-        
-
-
-#BOX
-    #box
-    def box_edges(self,timestep=-1,groupname="particles/atoms/box/",datasetname="value"): 
+        self.h5md.WriteValue(timestep,-1,analyze.analyze_linear_momentum(self.h5md.system,include_particles,include_lbfluid),groupname+"/"+datasetname,(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)         
+    #nbhood   
+    def nbhood(self,timestep=-1,pos=None,r_catch=None, plane='3d',groupname="observables/nbhood/",datasetname="value",chunk=True):
       if timestep == -1:
-        for i in range(0,self.n_part):
-          self.h5md.WriteValue(-1,i,self.h5md.system.box_l,groupname+"/"+datasetname,(1,1),(None,3),'f8','box_edges_time_independent',1)        
+        self.h5md.WriteValue(timestep,-1,analyze.nbhood(self.h5md.system,pos,r_catch,plane),groupname+"/"+datasetname,(1,),(None,),'f8',chunk,'observable_time_independent',1)          
       else:
-        self.h5md.WriteValue(timestep,-1,self.h5md.system.box_l,groupname+"/"+datasetname,(1,1,1),(None,3,3),'f8','box_edges_time_dependent')     
-#     def box_boundary(self,timestep=-1,groupname="particles/atoms/box/",datasetname="boundary"): 
-#       if timestep == -1:
-#         for i in range(0,self.n_part):
-#           self.h5md.WriteValue(-1,i,self.h5md.system.periodicity,groupname+"/"+datasetname,(1,3),(None,1),'f8','box_boundary_time_independent',1)        
-#       else:     
-#         self.h5md.WriteValue(timestep,-1,self.h5md.system.periodicity,groupname+"/"+datasetname,(1,3),(None,1),'S30','box_boundary_time_dependent')       
-#     def box_dimension(self,timestep=-1,groupname="particles/atoms/box/",datasetname="dimension"):  
-#       if timestep == -1:
-#         for i in range(0,self.n_part):
-#           self.h5md.WriteValue(-1,i,3,groupname+"/"+datasetname,(1,3),(None,3),'f8','box_dimension_time_independent',1)        
-#       else:    
-#         self.h5md.WriteValue(timestep,-1,3,groupname+"/"+datasetname,(1,1),(None,1),'int64','box_dimension_time_dependent') 
-    #user defined dataset  
-    def userdefined(self,timestep=-1,value="",groupname="",datasetname="",datatype='f8'):
+        self.h5md.WriteValue(timestep,-1,analyze.nbhood(self.h5md.system,pos,r_catch,plane),groupname+"/"+datasetname,(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)         
+    #cylindrical_average   
+    def cylindrical_average(self,timestep=-1,center=None, direction=None,length=None, radius=None,bins_axial=None, bins_radial=None,types=[-1],groupname="observables/cylindrical_average/",datasetname="value",chunk=True):
       if timestep == -1:
-        self.h5md.WriteValue(timestep,-1,value,groupname+"/"+datasetname,(1,),(None,),datatype,'userdefined_value_time_independent',1)        
+        for i in range(analyze.cylindrical_average(self.h5md.system,center,direction,length,radius,bins_axial,bins_radial,types).shape[0]):
+          self.h5md.WriteValue(timestep,-1,analyze.cylindrical_average(self.h5md.system,center,direction,length,radius,bins_axial,bins_radial,types)[i],groupname+"/"+datasetname+"_"+str(i),(1,),(None,),'f8',chunk,'observable_time_independent',1)          
       else:
-        self.h5md.WriteValue(timestep,-1,value,groupname+"/"+datasetname,(1,1),(None,None),datatype,'userdefined_value_time_dependent',1) 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-   
-      
-      
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        for i in range(analyze.cylindrical_average(self.h5md.system,center,direction,length,radius,bins_axial,bins_radial,types).shape[0]):
+          self.h5md.WriteValue(timestep,-1,analyze.cylindrical_average(self.h5md.system,center,direction,length,radius,bins_axial,bins_radial,types)[i],groupname+"/"+datasetname+"_"+str(i),(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)         
+    #pressure   
+    def pressure(self,timestep=-1,v_comp=False,groupname="observables/pressure/",datasetname="value",chunk=True):
+      if timestep == -1:
+        for key in analyze.pressure(self.h5md.system,v_comp).keys():
+          self.h5md.WriteValue(timestep,-1,analyze.pressure(self.h5md.system,v_comp)[key],groupname+"/"+datasetname+"_"+str(key),(1,),(None,),'f8',chunk,'observable_time_independent',1)          
+      else:
+        for key in analyze.pressure(self.h5md.system,v_comp).keys():
+          self.h5md.WriteValue(timestep,-1,analyze.pressure(self.h5md.system,v_comp)[key],groupname+"/"+datasetname+"_"+str(key),(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)  
+    #stress_tensor   
+    def stress_tensor(self,timestep=-1,v_comp=False,groupname="observables/stress_tensor/",datasetname="value",chunk=True):
+      if timestep == -1:
+        for key in analyze.stress_tensor(self.h5md.system,v_comp).keys():
+          try: #value is array
+            if(len(analyze.stress_tensor(self.h5md.system,v_comp)[key].shape)>1):
+              for i in range(analyze.stress_tensor(self.h5md.system,v_comp)[key].shape[0]):
+                self.h5md.WriteValue(timestep,-1,analyze.stress_tensor(self.h5md.system,v_comp)[key][i],groupname+"/"+datasetname+"_"+str(key)+"_"+str(i),(1,),(None,),'f8',chunk,'observable_time_independent',1)   
+            else:
+              self.h5md.WriteValue(timestep,-1,analyze.stress_tensor(self.h5md.system,v_comp)[key],groupname+"/"+datasetname+"_"+str(key),(1,),(None,),'f8',chunk,'observable_time_independent',1)      
+          except: #value is single
+            self.h5md.WriteValue(timestep,-1,analyze.stress_tensor(self.h5md.system,v_comp)[key],groupname+"/"+datasetname+"_"+str(key),(1,),(None,),'f8',chunk,'observable_time_independent',1)     
+      else:
+        for key in analyze.stress_tensor(self.h5md.system,v_comp).keys():
+          try: #value is array
+            if(len(analyze.stress_tensor(self.h5md.system,v_comp)[key].shape)>1):
+              for i in range(analyze.stress_tensor(self.h5md.system,v_comp)[key].shape[0]):
+                self.h5md.WriteValue(timestep,-1,analyze.stress_tensor(self.h5md.system,v_comp)[key][i],groupname+"/"+datasetname+"_"+str(key)+"_"+str(i),(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)   
+            else:
+              self.h5md.WriteValue(timestep,-1,analyze.stress_tensor(self.h5md.system,v_comp)[key],groupname+"/"+datasetname+"_"+str(key),(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)      
+          except: #value is single
+            self.h5md.WriteValue(timestep,-1,analyze.stress_tensor(self.h5md.system,v_comp)[key],groupname+"/"+datasetname+"_"+str(key),(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)            
+    #local_stress_tensor   
+    def local_stress_tensor(self,timestep=-1,system=None, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1),groupname="observables/pressure/",datasetname="value",chunk=True):
+      print("ERROR H5: WRITE local_stress_tensor not implemented yet")
+    #energy   
+    def analyze_energy(self,timestep=-1,etype='all', id1='default', id2='default',groupname="observables/energy/",datasetname="value",chunk=True):
+      if timestep == -1:
+        for key in analyze.energy(self.h5md.system).keys():
+          self.h5md.WriteValue(timestep,-1,analyze.energy(self.h5md.system,etype,id1,id2)[key],groupname+"/"+datasetname+"_"+str(key),(1,),(None,),'f8',chunk,'observable_time_independent',1)          
+      else:
+        for key in analyze.energy(self.h5md.system).keys():
+          self.h5md.WriteValue(timestep,-1,analyze.energy(self.h5md.system,etype,id1,id2)[key],groupname+"/"+datasetname+"_"+str(key),(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)  
+    #calc_re   
+    def calc_re(self,timestep=-1,chain_start=None,number_of_chains=None,chain_length=None,groupname="observables/calc_re/",datasetname="value",chunk=True):
+      if timestep == -1:
+        self.h5md.WriteValue(timestep,-1,analyze.calc_re(self.h5md.system,chain_start,number_of_chains,chain_length),groupname+"/"+datasetname,(1,),(None,),'f8',chunk,'observable_time_independent',1)          
+      else:
+        self.h5md.WriteValue(timestep,-1,analyze.calc_re(self.h5md.system,chain_start,number_of_chains,chain_length),groupname+"/"+datasetname,(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)   
+    #calc_rg   
+    def calc_rg(self,timestep=-1,chain_start=None,number_of_chains=None,chain_length=None,groupname="observables/calc_rg/",datasetname="value",chunk=True):
+      if timestep == -1:
+        self.h5md.WriteValue(timestep,-1,analyze.calc_rg(self.h5md.system,chain_start,number_of_chains,chain_length),groupname+"/"+datasetname,(1,),(None,),'f8',chunk,'observable_time_independent',1)          
+      else:
+        self.h5md.WriteValue(timestep,-1,analyze.calc_rg(self.h5md.system,chain_start,number_of_chains,chain_length),groupname+"/"+datasetname,(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)   
+    #calc_rh   
+    def calc_rh(self,timestep=-1,chain_start=None,number_of_chains=None,chain_length=None,groupname="observables/calc_rh/",datasetname="value",chunk=True):
+      if timestep == -1:
+        self.h5md.WriteValue(timestep,-1,analyze.calc_rh(self.h5md.system,chain_start,number_of_chains,chain_length),groupname+"/"+datasetname,(1,),(None,),'f8',chunk,'observable_time_independent',1)          
+      else:
+        self.h5md.WriteValue(timestep,-1,analyze.calc_rh(self.h5md.system,chain_start,number_of_chains,chain_length),groupname+"/"+datasetname,(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)   
+    #check_topology   
+    def check_topology(self,timestep=-1,system=None,chain_start=None,number_of_chains=None,chain_length=None,groupname="observables/check_topology/",datasetname="value"):
+      print("ERROR H5: check_topology not implemented yet")            
+    #structure_factor   
+    def structure_factor(self,timestep=-1,sf_type='default',sf_order='default',groupname="observables/structure_factor/",datasetname="value",chunk=True):
+      if timestep == -1:
+        for i in range(len(analyze.structure_factor(self.h5md.system,sf_type,sf_order))):
+          self.h5md.WriteValue(timestep,-1,analyze.structure_factor(self.h5md.system,sf_type,sf_order)[i],groupname+"/"+datasetname+"_"+str(i),(1,),(None,),'f8',chunk,'observable_time_independent',1)   
+      else:
+        for i in range(len(analyze.structure_factor(self.h5md.system,sf_type,sf_order))):
+          self.h5md.WriteValue(timestep,-1,analyze.structure_factor(self.h5md.system,sf_type,sf_order)[i],groupname+"/"+datasetname+"_"+str(i),(1,1),(None,None),'f8',chunk,'observable_time_dependent',1)   
+ 
      
+  #BOX   
+    def box_edges(self,timestep=-1,groupname="particles/atoms/box/",datasetname="value",chunk=True): 
+      if timestep == -1:
+          self.h5md.WriteValue(-1,-1,self.h5md.system.box_l,groupname+"/"+datasetname,(3,3),(None,3),'f8',chunk,'box_edges_time_independent',1)        
+      else:
+        self.h5md.WriteValue(timestep,-1,self.h5md.system.box_l,groupname+"/"+datasetname,(1,3,3),(None,3,3),'f8',chunk,'box_edges_time_dependent',1)     
+    def box_boundary(self,timestep=-1,groupname="particles/atoms/box/",datasetname="boundary",chunk=True): 
+      if timestep == -1:
+        self.h5md.WriteValue(timestep,-1,self.h5md.system.periodicity,groupname+"/"+datasetname,(3,),(3,),'S30',chunk,'box_boundary_time_independent',1)        
+      else:     
+        self.h5md.WriteValue(timestep,-1,self.h5md.system.periodicity,groupname+"/"+datasetname,(1,3),(None,3),'S30',chunk,'box_boundary_time_dependent',1)          
+    def box_dimension(self,timestep=-1,groupname="particles/atoms/box/",datasetname="dimension",chunk=True):  
+      if timestep == -1:
+          self.h5md.WriteValue(timestep,-1,3,groupname+"/"+datasetname,(1,),(1,),'int64',chunk,'box_dimension_time_independent',1)          
+      else:    
+        self.h5md.WriteValue(timestep,-1,3,groupname+"/"+datasetname,(1,1),(None,1),'int64',chunk,'box_dimension_time_dependent',1) 
+
+
+###########################################################################################################################################
+############################################################# READ CLASS ##################################################################
+###########################################################################################################################################    
+   
                       
 #READ CLASS   
   class read_from_h5(object):
     def __init__(self,h5md):
       self.h5md=h5md
-
+      
+  #USERDEFINED  
+    def userdefined(self,timestep=-1,groupname="particles/atoms/userdefined/",datasetname="value"):
+      try:
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
+      except:
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
+        sys.exit()
+      try:
+        if len(self.h5md.value_dataset.shape) == 1:
+          result=[]
+          for i in range(self.h5md.value_dataset.shape[0]):
+            result.append(self.h5md.value_dataset[i]  )
+          return result  
+        if len(self.h5md.value_dataset.shape) == 2:
+          return self.h5md.value_dataset[timestep] 
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
+  #PARTICLES
     #time
-    def time(self,timestep,groupname="particles/atoms/Time/",datasetname="time"):
+    def time(self,timestep=-1,groupname="particles/atoms/Time/",datasetname="time"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      for i in range(self.h5md.value_dataset.shape[0]):
-        self.h5md.system.time = self.h5md.value_dataset[i]  
-    #time step
-    def time_step(self,timestep,groupname="particles/atoms/Step/",datasetname="step"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.system.time = self.h5md.value_dataset[timestep]  
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
-        sys.exit()
-      for i in range(self.h5md.value_dataset.shape[0]):
-        timestep = self.h5md.value_dataset[i]  
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()     
     #Position
-    def pos(self,timestep,groupname="particles/atoms/position/",datasetname="value"):
+    def pos(self,timestep=-1,groupname="particles/atoms/position/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      #Write positions in Espresso
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].pos = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].pos = self.h5md.value_dataset[timestep,i]                      
-#     #image
-#     def image(self,timestep=-1,groupname="particles/atoms/image/",datasetname="value"):
-#       if timestep == -1:
-#         for i in range(0,self.n_part):
-#           self.h5md.WriteValue(-1,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,3),(None,3),'f8','particle_time_independent',1)        
-#       else:
-#         self.n_part=self.h5md.system.n_part
-#         for i in range(0,self.n_part):
-#           self.h5md.WriteValue(timestep,i,self.h5md.system.part[i].pos,groupname+"/"+datasetname,(1,1,3),(None,None,3),'f8','particle_time_dependent',1)             
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].pos = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].pos = self.h5md.value_dataset[timestep,i]                      
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()            
     #velocity 
-    def v(self,timestep,groupname="particles/atoms/velocity/",datasetname="value"):
+    def v(self,timestep=-1,groupname="particles/atoms/velocity/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].v = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].v = self.h5md.value_dataset[timestep,i]    
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].v = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].v = self.h5md.value_dataset[timestep,i]    
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #force   
-    def f(self,timestep,groupname="particles/atoms/force/",datasetname="value"):
+    def f(self,timestep=-1,groupname="particles/atoms/force/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].f = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].f = self.h5md.value_dataset[timestep,i]   
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].f = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].f = self.h5md.value_dataset[timestep,i]   
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
 #     #bonds
 #     def bonds(self,groupname="particles/atoms/bond_from/XXXXXXXXX",datasetname="value"):
-#       self.n_part=self.h5md.system.n_part
-#       for i in range(0,self.n_part):
+#       for i in range(0,self.h5md.system.n_part):
 #         for bond in self.h5md.system.part[i].bonds: 
 #           print("BOND:",bond[0],bond[1])         
 #           self.h5md.WriteValue(-1,i,i,"particles/"+groupname+"/bond_from/value",(1,1),(None,1),'int64','particle_time_independent',1) 
 #           self.h5md.WriteValue(-1,i,bond[1],"particles/"+groupname+"/bond_to/value",(1,1),(None,1),'int64','particle_time_independent',1) 
     #species  
-    def type(self,timestep,groupname="particles/atoms/species/",datasetname="value"):
+    def type(self,timestep=-1,groupname="particles/atoms/species/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].type = self.h5md.value_dataset[i][0]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].type = self.h5md.value_dataset[timestep,i][0]
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].type = self.h5md.value_dataset[i][0]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].type = self.h5md.value_dataset[timestep,i][0]
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #id
-    def id(self,timestep,groupname="particles/atoms/id/",datasetname="value"):
+    def id(self,timestep=-1,groupname="particles/atoms/id/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2  :
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].id = self.h5md.value_dataset[i][0]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].id = self.h5md.value_dataset[timestep,i][0]  
-    def mass(self,timestep,groupname="particles/atoms/mass/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        if len(self.h5md.value_dataset.shape) == 2  :
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].id = self.h5md.value_dataset[i][0]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].id = self.h5md.value_dataset[timestep,i][0]  
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].mass = self.h5md.value_dataset[i][0]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].mass = self.h5md.value_dataset[timestep,i][0]      
+    def mass(self,timestep=-1,groupname="particles/atoms/mass/",datasetname="value"):
+      try:
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
+      except:
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
+        sys.exit()
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].mass = self.h5md.value_dataset[i][0]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].mass = self.h5md.value_dataset[timestep,i][0]      
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #omega_lab 
-    def omega_lab(self,timestep,groupname="particles/atoms/omega_lab/",datasetname="value"):
+    def omega_lab(self,timestep=-1,groupname="particles/atoms/omega_lab/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].omega_lab = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].omega_lab = self.h5md.value_dataset[timestep,i]      
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].omega_lab = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].omega_lab = self.h5md.value_dataset[timestep,i]      
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #rinertia
-    def rinertia(self,timestep,groupname="particles/atoms/rinertia/",datasetname="value"):
+    def rinertia(self,timestep=-1,groupname="particles/atoms/rinertia/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].rinertia = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].rinertia = self.h5md.value_dataset[timestep,i]      
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].rinertia = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].rinertia = self.h5md.value_dataset[timestep,i]      
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #omega_body 
-    def omega_body(self,timestep,groupname="particles/atoms/omega_body/",datasetname="value"):
+    def omega_body(self,timestep=-1,groupname="particles/atoms/omega_body/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].omega_body = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].omega_body = self.h5md.value_dataset[timestep,i]      
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].omega_body = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].omega_body = self.h5md.value_dataset[timestep,i]      
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #torque_lab 
-    def torque_lab(self,timestep,groupname="particles/atoms/torque_lab/",datasetname="value"):
+    def torque_lab(self,timestep=-1,groupname="particles/atoms/torque_lab/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].torque_lab = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].torque_lab = self.h5md.value_dataset[timestep,i]      
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].torque_lab = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].torque_lab = self.h5md.value_dataset[timestep,i]    
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #quat     
-    def quat(self,timestep,groupname="particles/atoms/quat/",datasetname="value"):
+    def quat(self,timestep=-1,groupname="particles/atoms/quat/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].quat = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].quat = self.h5md.value_dataset[timestep,i]       
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].quat = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].quat = self.h5md.value_dataset[timestep,i]      
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible"     
+        sys.exit()       
     #charge   
-    def q(self,timestep,groupname="particles/atoms/charge/",datasetname="value"):
+    def q(self,timestep=-1,groupname="particles/atoms/charge/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].q = self.h5md.value_dataset[i][0]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].q = self.h5md.value_dataset[timestep,i][0]             
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].q = self.h5md.value_dataset[i][0]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].q = self.h5md.value_dataset[timestep,i][0]             
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #virtual
-    def virtual(self,timestep,groupname="particles/atoms/virtual/",datasetname="value"):
+    def virtual(self,timestep=-1,groupname="particles/atoms/virtual/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].virtual = self.h5md.value_dataset[i][0]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].virtual = self.h5md.value_dataset[timestep,i][0]     
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].virtual = self.h5md.value_dataset[i][0]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].virtual = self.h5md.value_dataset[timestep,i][0]  
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible"   
+        sys.exit() 
     #vs_relative
-    def vs_relative(self,timestep,groupname="particles/atoms/vs_relative/",datasetname="value"):
+    def vs_relative(self,timestep=-1,groupname="particles/atoms/vs_relative/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].vs_relative = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].vs_relative = self.h5md.value_dataset[timestep,i] 
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].vs_relative = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].vs_relative = self.h5md.value_dataset[timestep,i] 
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #dipole 
-    def dip(self,timestep,groupname="particles/atoms/dipole/",datasetname="value"):
+    def dip(self,timestep=-1,groupname="particles/atoms/dipole/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].dip = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].dip = self.h5md.value_dataset[timestep,i]   
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].dip = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].dip = self.h5md.value_dataset[timestep,i]   
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #dipole_magnitude    
-    def dipm(self,timestep,groupname="particles/atoms/dipole_magnitude/",datasetname="value"):
+    def dipm(self,timestep=-1,groupname="particles/atoms/dipole_magnitude/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].dipm = self.h5md.value_dataset[i][0]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].dipm = self.h5md.value_dataset[timestep,i][0] 
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].dipm = self.h5md.value_dataset[i][0]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].dipm = self.h5md.value_dataset[timestep,i][0] 
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #external force
-    def ext_force(self,timestep,groupname="particles/atoms/ext_force/",datasetname="value"):
+    def ext_force(self,timestep=-1,groupname="particles/atoms/ext_force/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].ext_force = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].ext_force = self.h5md.value_dataset[timestep,i]    
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].ext_force = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].ext_force = self.h5md.value_dataset[timestep,i]    
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible"  
+        sys.exit()
     #external force particle fix
-    def fix(self,timestep,groupname="particles/atoms/ext_force_fix/",datasetname="value"):
+    def fix(self,timestep=-1,groupname="particles/atoms/ext_force_fix/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].fix = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].fix = self.h5md.value_dataset[timestep,i]    
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].fix = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].fix = self.h5md.value_dataset[timestep,i]  
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible"  
+        sys.exit()
     #external torque
-    def ext_torque(self,timestep,groupname="particles/atoms/ext_torque/",datasetname="value"):
+    def ext_torque(self,timestep=-1,groupname="particles/atoms/ext_torque/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].ext_torque = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].ext_torque = self.h5md.value_dataset[timestep,i]       
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].ext_torque = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].ext_torque = self.h5md.value_dataset[timestep,i]       
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #gamma     
-    def gamma(self,timestep,groupname="particles/atoms/gamma/",datasetname="value"):
+    def gamma(self,timestep=-1,groupname="particles/atoms/gamma/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].gamma = self.h5md.value_dataset[i][0] 
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].gamma = self.h5md.value_dataset[timestep,i][0]
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].gamma = self.h5md.value_dataset[i][0] 
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].gamma = self.h5md.value_dataset[timestep,i][0]
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #temperature    
-    def temp(self,timestep,groupname="particles/atoms/temp/",datasetname="value"):
+    def temp(self,timestep=-1,groupname="particles/atoms/temp/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].temp = self.h5md.value_dataset[i][0]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].temp = self.h5md.value_dataset[timestep,i][0]      
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].temp = self.h5md.value_dataset[i][0]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].temp = self.h5md.value_dataset[timestep,i][0]      
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
     #rotation      
-    def rotation(self,timestep,groupname="particles/atoms/rotation/",datasetname="value"):
+    def rotation(self,timestep=-1,groupname="particles/atoms/rotation/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          self.h5md.system.part[i].rotation = self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          self.h5md.system.part[i].rotation = self.h5md.value_dataset[timestep,i]                 
-#     #box
-#     def box_edges(self,timestep=-1,groupname="particles/atoms/box/",datasetname="value"): 
-#       if timestep == -1:
-#         for i in range(0,self.n_part):
-#           self.h5md.WriteValue(-1,i,self.h5md.system.box_l,groupname+"/"+datasetname,(1,1),(None,3),'f8','box_edges_time_independent',1)        
-#       else:
-#         self.h5md.WriteValue(timestep,-1,self.h5md.system.box_l,groupname+"/"+datasetname,(1,1,1),(None,3,3),'f8','box_edges_time_dependent')  
-#     def box_edges(self,timestep,groupname="particles/atoms/box/",datasetname="value"):
-#       try:
-#         self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
-#       except:
-#         print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
-#         sys.exit()
-#       if len(self.h5md.value_dataset.shape) == 2:
-#         for i in range(self.h5md.value_dataset.shape[0]):
-#           self.h5md.system.part[i].box_l = self.h5md.value_dataset[i]  
-#       else:
-#         for i in range(self.h5md.value_dataset.shape[1]):
-#           self.h5md.system.part[i].box_l = self.h5md.value_dataset[timestep,i]    
-#     def box_boundary(self,timestep=-1,groupname="particles/atoms/box/",datasetname="boundary"): 
-#       if timestep == -1:
-#         for i in range(0,self.n_part):
-#           self.h5md.WriteValue(-1,i,self.h5md.system.periodicity,groupname+"/"+datasetname,(1,3),(None,1),'f8','box_boundary_time_independent',1)        
-#       else:     
-#         self.h5md.WriteValue(timestep,-1,self.h5md.system.periodicity,groupname+"/"+datasetname,(1,3),(None,1),'S30','box_boundary_time_dependent') 
-#     def XXX(self,timestep,groupname="particles/atoms/XXX/",datasetname="value"):
-#       try:
-#         self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
-#       except:
-#         print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
-#         sys.exit()
-#       if len(self.h5md.value_dataset.shape) == 2:
-#         for i in range(self.h5md.value_dataset.shape[0]):
-#           self.h5md.system.part[i].XXX = self.h5md.value_dataset[i]  
-#       else:
-#         for i in range(self.h5md.value_dataset.shape[1]):
-#           self.h5md.system.part[i].XXX = self.h5md.value_dataset[timestep,i]      
-#     def box_dimension(self,timestep=-1,groupname="particles/atoms/box/",datasetname="dimension"):  
-#       if timestep == -1:
-#         for i in range(0,self.n_part):
-#           self.h5md.WriteValue(-1,i,3,groupname+"/"+datasetname,(1,3),(None,3),'f8','box_dimension_time_independent',1)        
-#       else:    
-#         self.h5md.WriteValue(timestep,-1,3,groupname+"/"+datasetname,(1,1),(None,1),'int64','box_dimension_time_dependent') 
-#     def XXX(self,timestep,groupname="particles/atoms/XXX/",datasetname="value"):
-#       try:
-#         self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
-#       except:
-#         print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
-#         sys.exit()
-#       if len(self.h5md.value_dataset.shape) == 2:
-#         for i in range(self.h5md.value_dataset.shape[0]):
-#           self.h5md.system.part[i].XXX = self.h5md.value_dataset[i]  
-#       else:
-#         for i in range(self.h5md.value_dataset.shape[1]):
-#           self.h5md.system.part[i].XXX = self.h5md.value_dataset[timestep,i] 
-    #user defined dataset   
-    def userdefined(self,timestep,groupname="particles/atoms/userdefined/",datasetname="value"):
       try:
-        self.h5md.value_dataset=self.h5md.ReadDataset(self.h5md.h5_file,groupname,datasetname)
+        if len(self.h5md.value_dataset.shape) == 2:
+          for i in range(self.h5md.value_dataset.shape[0]):
+            self.h5md.system.part[i].rotation = self.h5md.value_dataset[i]  
+        if len(self.h5md.value_dataset.shape) == 3:
+          for i in range(self.h5md.value_dataset.shape[1]):
+            self.h5md.system.part[i].rotation = self.h5md.value_dataset[timestep,i]      
       except:
-        print "Error: No "+groupname+"/"+datasetname+" dataset in h5-file exisitng"
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
         sys.exit()
-      if len(self.h5md.value_dataset.shape) == 2:
-        for i in range(self.h5md.value_dataset.shape[0]):
-          return self.h5md.value_dataset[i]  
-      else:
-        for i in range(self.h5md.value_dataset.shape[1]):
-          return self.h5md.value_dataset[timestep,i] 
+
+  #BOX  
+    def box_edges(self,timestep=-1,groupname="particles/atoms/box/",datasetname="value"):
+      try:
+        self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
+      except:
+        print "ERROR H5: No "+groupname+"/"+datasetname+" dataset in h5-file exisiting"
+        sys.exit()
+      try:
+        if len(self.h5md.value_dataset.shape) == 2:
+          box_l_temp=[-1,-1,-1]
+          for i in range(self.h5md.value_dataset.shape[0]):
+            box_l_temp[i] = self.h5md.value_dataset[i,i] 
+          self.h5md.system.box_l = box_l_temp 
+        if len(self.h5md.value_dataset.shape) == 3:
+          box_l_temp=[-1,-1,-1]
+          for i in range(self.h5md.value_dataset.shape[1]):
+            box_l_temp[i] = self.h5md.value_dataset[timestep,i,i] 
+          self.h5md.system.box_l = box_l_temp   
+      except:
+        print "ERROR H5: Access to dataset "+ groupname+"/"+datasetname+" or writing to ESPResSo not possible" 
+        sys.exit()
+    def box_boundary(self,timestep=-1,groupname="particles/atoms/box/",datasetname="value"):
+      print("ERROR H5: READ box_boundary not implemented yet")
+    def box_dimension(self,timestep=-1,groupname="particles/atoms/box/",datasetname="value"):
+      print("ERROR H5: READ box_dimension not implemented yet")
+  
+ 
+
+
