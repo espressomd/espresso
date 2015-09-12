@@ -45,37 +45,34 @@ for i in range(n_part):
 
 
 h5.read_from_h5.time(n_time-1,"particles/atoms/position/","time")
-h5.read_from_h5.time_step(n_time-1,"particles/atoms/position/","step")
-h5.read_from_h5.type(n_time-1)
-h5.read_from_h5.pos(n_time-1)
-h5.read_from_h5.v(n_time-1)
-h5.read_from_h5.f(n_time-1)
-#h5.read_from_h5.bonds(n_time-1)
-h5.read_from_h5.mass(n_time-1)
-h5.read_from_h5.omega_lab(n_time-1)
-h5.read_from_h5.rinertia(n_time-1)
-h5.read_from_h5.omega_body(n_time-1)
-h5.read_from_h5.torque_lab(n_time-1)
-h5.read_from_h5.quat(n_time-1)
-####h5.read_from_h5.director(n_time-1) #Not implemented yet
-h5.read_from_h5.q(n_time-1)
-h5.read_from_h5.virtual(n_time-1)      #Only virtual or vs_relative in myconfig
-#h5.read_from_h5.vs_relative(n_time-1) #Only virtual or vs_relative in myconfig #ERROR in python code
-h5.read_from_h5.dip(n_time-1)
-h5.read_from_h5.dipm(n_time-1)
-h5.read_from_h5.ext_force(n_time-1)
-h5.read_from_h5.fix(n_time-1)
-h5.read_from_h5.ext_torque(n_time-1)
-h5.read_from_h5.gamma(n_time-1)
-h5.read_from_h5.temp(n_time-1)
-h5.read_from_h5.rotation(n_time-1)
-####h5.read_from_h5.exclude(n_time-1) #TODO
-####h5.read_from_h5.swimming(n_time-1) #TODO
-#h5.read_from_h5.box_edges(n_time-1)
-#h5.read_from_h5.box_boundary(n_time-1)print(
-#h5.read_from_h5.box_dimension(n_time-1)
-h5.read_from_h5.id(n_time-1)
-#h5.read_from_h5.image(n_time-1) #TOASK
+h5.read_from_h5.type()
+h5.read_from_h5.pos()
+h5.read_from_h5.v()
+h5.read_from_h5.f()
+#h5.read_from_h5.bonds()
+h5.read_from_h5.mass()
+h5.read_from_h5.omega_lab()
+h5.read_from_h5.rinertia()
+h5.read_from_h5.omega_body()
+h5.read_from_h5.torque_lab()
+h5.read_from_h5.quat()
+####h5.read_from_h5.director() #Not implemented yet
+h5.read_from_h5.q()
+h5.read_from_h5.virtual()      #Only virtual or vs_relative in myconfig
+#h5.read_from_h5.vs_relative() #Only virtual or vs_relative in myconfig #ERROR in python code
+h5.read_from_h5.dip()
+h5.read_from_h5.dipm()
+h5.read_from_h5.ext_force()
+h5.read_from_h5.fix()
+h5.read_from_h5.ext_torque()
+h5.read_from_h5.gamma()
+h5.read_from_h5.temp()
+h5.read_from_h5.rotation()
+####h5.read_from_h5.exclude() #TODO
+####h5.read_from_h5.swimming() #TODO
+h5.read_from_h5.box_edges()
+h5.read_from_h5.id()
+#h5.read_from_h5.image() #TOASK
 result_user = h5.read_from_h5.userdefined(n_time-1,"User/user1/","value")
 
 
@@ -87,7 +84,6 @@ result_user = h5.read_from_h5.userdefined(n_time-1,"User/user1/","value")
 
 for i in range(n_part):
 # 	print(system.time)
-# 	print("timestep")
 # 	print(system.part[i].type)
 # 	print(system.part[i].pos)
 # 	print(system.part[i].v)
@@ -105,7 +101,7 @@ for i in range(n_part):
 # 	#print(system.part[i].vs_relative)																  #Only virtual or vs_relative in myconfig #ERROR in python code
 # 	print(system.part[i].dip)
 # 	print(system.part[i].dipm)
-# 	
+#  	
 # 	print(system.part[i].ext_force)
 # 	print(system.part[i].fix)
 # 	print(system.part[i].ext_torque)
@@ -114,11 +110,12 @@ for i in range(n_part):
 # 	print(system.part[i].rotation)
 # 	####print(system.part[i].exclude) #TODO
 # 	####print(system.part[i].swimming) #TODO
-# 	
+#  	
 # 	print(system.box_l)
 # 	#####print(system.part[i].image) #TOASK
 # 	print(system.part[i].id)	
-	print(result_user)	
+	print(result_user)
+
 
 
 
