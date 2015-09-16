@@ -84,6 +84,7 @@ typedef struct wang_landau_system {
 	double* minimum_energies_at_flat_index; //only present in energy preparation run
 	double* maximum_energies_at_flat_index; //only present in energy preparation run
 	bool do_energy_reweighting;
+	bool do_not_sample_reaction_partition_function;
 } wang_landau_system;
 
 extern wang_landau_system current_wang_landau_system;

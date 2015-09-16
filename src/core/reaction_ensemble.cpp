@@ -629,7 +629,7 @@ wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 
  						.monte_carlo_trial_moves=0, .wang_landau_relaxation_steps=20,\
  						.output_filename=NULL,\
  						.minimum_energies_at_flat_index=NULL, .maximum_energies_at_flat_index=NULL,\
- 						.do_energy_reweighting=false
+ 						.do_energy_reweighting=false, .do_not_sample_reaction_partition_function=false
  						};//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential, use only 40 wang landau relaxation_steps in order to avoid moving the system too much out of equilibrium i.e. that it avoids a too big perturbation in the charge (degree of association) of the polymer. A small perturbation ensures that the the equilibrium can be reached within a small number of molecular dynamic integration steps.
 
 double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value, double delta_CV) {
@@ -967,15 +967,23 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	}
 	double beta =1.0/temperature;
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
-	//calculate boltzmann factor
-	double bf;
-	if(current_wang_landau_system.do_energy_reweighting==false){
-		bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
-	}else{
-		bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr;
-	}
+	
+	
 	//determine the acceptance probabilities of the reaction move
-	//this is a bit nasty due to the energy collective variable case (memory layout of storage array of the histogram and the wang_landau_potential values is "cuboid")
+	double bf;
+	if(current_wang_landau_system.do_not_sample_reaction_partition_function==true){
+		bf=1.0;
+	}else{
+		bf=pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr;
+	}
+	
+	if(current_wang_landau_system.do_energy_reweighting==false){
+		bf= bf * exp(-beta * (E_pot_new - E_pot_old));
+	}else{
+		//pass
+	}
+	
+	//look wether the proposed state lies in Gamma and add the Wang-Landau modification factor, this is a bit nasty due to the energy collective variable case (memory layout of storage array of the histogram and the wang_landau_potential values is "cuboid")
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
 			bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
@@ -996,11 +1004,12 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	}else if(old_state_index>0 && new_state_index<0){
 		bf=-10; //this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
 	}
+	
+	
 	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept
 		if(modify_wang_landau_potential==true&&new_state_index>=0 ){
-			// XXX added && abs(bf-(10))>0.0001 && abs(bf-(-10))>0.0001 since we produce outliners otherwise
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
 				current_wang_landau_system.histogram[new_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
@@ -1017,7 +1026,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id, bool modify_wang_landau
 	} else {
 		//reject
 		if(modify_wang_landau_potential==true && old_state_index>=0){
-			// XXX added && abs(bf-(10))>0.0001 && abs(bf-(-10))>0.0001 since we produce outliners otherwise, seen when removing this with the print statements below
 			if(current_wang_landau_system.histogram[old_state_index]>=0){
 				current_wang_landau_system.histogram[old_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;

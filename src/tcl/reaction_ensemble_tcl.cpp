@@ -317,6 +317,9 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					argc-=1; argv+=1;
 					write_out_preliminary_energy_run_results(argv[1]);
 				}
+				if(ARG1_IS_S("do_not_sample_reaction_partition_function")){
+					current_wang_landau_system.do_not_sample_reaction_partition_function=true;
+				}
 				
 			}
 		}
