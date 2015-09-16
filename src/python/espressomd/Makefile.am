@@ -35,6 +35,7 @@ SUFFIXES = .pyx
 EXTRA_DIST = gen_pxiconfig.py
 PYFILES = __init__.py \
 	  system.py \
+	  visualization.py \
 	  highlander.py
 
 PYXFILES =  \

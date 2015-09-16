@@ -1,3 +1,11 @@
+import sys
+if sys.platform == 'darwin':
+	if sys.version_info >= (3,4):
+		multiprocessing.set_start_method('spawn')
+	else:
+		import os
+		raise Exception("Mayavi visualization is not supported on Mac OS X because fork()ed processes may not have a GUI.")
+
 import numpy
 from mayavi import mlab
 from tvtk.tools import visual
