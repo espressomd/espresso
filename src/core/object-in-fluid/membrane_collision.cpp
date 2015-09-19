@@ -1,5 +1,7 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -16,30 +18,32 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file stretching_force.cpp
+/** \file membrane_collision.cpp
  *
- *  Implementation of \ref stretching_force.hpp
+ *  Implementation of \ref membrane_collision.hpp
  */
+#include "membrane_collision.hpp"
+#include "../communication.hpp"
 
-#include "stretching_force.hpp"
-#include "communication.hpp"
+#ifdef MEMBRANE_COLLISION
 
-/// set the parameters for the stretching_force potential
-int stretching_force_set_params(int bond_type, double r0, double ks)
+int membrane_collision_set_params(int part_type_a, int part_type_b,
+			   double a, double n, double cut, double offset)
 {
-  if(bond_type < 0)
-    return ES_ERROR;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_bond_type_exist(bond_type);
+  if (!data) return ES_ERROR;
 
-  bonded_ia_params[bond_type].p.stretching_force.ks = ks;
-  bonded_ia_params[bond_type].p.stretching_force.r0 = r0;
-  
-  bonded_ia_params[bond_type].type = BONDED_IA_STRETCHING_FORCE;
-  bonded_ia_params[bond_type].num  = 1;
-
+  data->membrane_a = a;
+  data->membrane_n = n;
+  data->membrane_cut = cut;
+  data->membrane_offset = offset;
+ 
   /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-  
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+
   return ES_OK;
 }
+
+#endif
+

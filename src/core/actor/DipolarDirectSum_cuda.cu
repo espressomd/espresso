@@ -1,5 +1,8 @@
 
 #include "config.hpp"
+#include "thrust/reduce.h"
+#include "thrust/device_ptr.h"
+#include "cuda.h"
 
 #ifdef DIPOLAR_DIRECT_SUM
 
@@ -245,11 +248,13 @@ __global__ void DipolarDirectSum_kernel_force(dds_float pf,
 __device__ void dds_sumReduction(dds_float *input, dds_float *sum)
 {
 	int tid = threadIdx.x;
-	for (int i = blockDim.x/2; i > 0; i /= 2)
+	for (int i = blockDim.x; i > 1; i /= 2)
 	{
 		__syncthreads();
-		if (tid < i)
-			input[tid] += input[i+tid];
+		if (tid < i/2)
+			input[tid] += input[i/2+tid];
+		if ((i%2==1) && (tid ==0))
+		  input[tid]+=input[i-1];
 	}
 	__syncthreads();
 	if (threadIdx.x==0)
@@ -259,17 +264,6 @@ __device__ void dds_sumReduction(dds_float *input, dds_float *sum)
 
 }
 
-__global__ void sumKernel(dds_float *data, int N,float* final)
-{
-if (threadIdx.x==0)
-{
- dds_float sum=0;
- for (int i=0;i<N;i++)
-  sum+=data[i];
-
-*final=sum;
-}
-}
 
 
 __global__ void DipolarDirectSum_kernel_energy(dds_float pf,
@@ -378,15 +372,16 @@ void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos, floa
   // One thread per block in the prev kernel
   block.x=grid.x;
   grid.x=1;
-  KERNELCALL_shared(sumKernel,grid,block,block.x*sizeof(dds_float), (energySum,block.x,E));
-  //printf(" Still here after memcpy\n");
+  //KERNELCALL(sumKernel,1,1,(energySum,block.x,E));
+  thrust::device_ptr<dds_float> t(energySum);
+  float x=thrust::reduce(t,t+block.x);
+  cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
 
 
-  cudaFree(energySum);
-  cudaFree(box_l_gpu);
-  cudaFree(periodic_gpu);
+  cuda_safe_mem(cudaFree(energySum));
+  cuda_safe_mem(cudaFree(box_l_gpu));
+  cuda_safe_mem(cudaFree(periodic_gpu));
 
-  //printf(" Still here at the end\n");
 }
 
 

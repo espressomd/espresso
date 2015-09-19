@@ -29,6 +29,21 @@
 #include "interaction_data.hpp"
 #include "virtual_sites.hpp"
 
+int tclcallback_dpd_ignore_fixed_particles(Tcl_Interp *interp, void *_data)
+{
+  int data = *(int *)_data;
+
+  if ((data == 0) || (data == 1)) {
+    dpd_ignore_fixed_particles = data;
+    mpi_bcast_parameter(FIELD_DPD_IGNORE_FIXED_PARTICLES);
+    return (TCL_OK);
+  } else{
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+}
+
+
 int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv) 
 {
   extern double dpd_gamma,dpd_r_cut;
@@ -257,15 +272,6 @@ int tclcommand_thermostat_parse_inter_dpd(Tcl_Interp *interp, int argc, char ** 
 		     "<temperature>",
 		     (char *) NULL);
     return TCL_ERROR;
-  }
-
-  if (argc>2 && ARG_IS_S(2, "ignore_fixed_particles")) {
-    if (argc == 3)
-      dpd_ignore_fixed_particles=1;
-    else if (argc!= 4 || (!ARG_IS_I(3, dpd_ignore_fixed_particles))) 
-      return TCL_ERROR;
-    mpi_bcast_parameter(FIELD_DPD_IGNORE_FIXED_PARTICLES);
-    return TCL_OK;
   }
 
   /* copy lattice-boltzmann parameters */

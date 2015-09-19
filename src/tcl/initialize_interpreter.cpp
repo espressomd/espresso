@@ -277,6 +277,8 @@ static void tcl_register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_SD_SEED, tclcallback_sd_seed);
   register_global_callback(FIELD_SD_RANDOM_STATE, tclcallback_sd_random_state);
   register_global_callback(FIELD_SD_RANDOM_PRECISION, tclcallback_sd_random_precision);
+  register_global_callback(FIELD_DPD_IGNORE_FIXED_PARTICLES, tclcallback_dpd_ignore_fixed_particles);
+
 #ifdef MULTI_TIMESTEP
   register_global_callback(FIELD_SMALLERTIMESTEP, tclcallback_smaller_time_step);
 #endif

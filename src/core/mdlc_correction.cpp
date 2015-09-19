@@ -745,12 +745,12 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 #ifdef DP3M
   case  DIPOLAR_MDLC_P3M:
   case  DIPOLAR_P3M:
-    coulomb.Dmethod =DIPOLAR_MDLC_P3M;
+    set_dipolar_method_local(DIPOLAR_MDLC_P3M);
     break;
 #endif  
   case  DIPOLAR_MDLC_DS:
   case  DIPOLAR_DS: 
-    coulomb.Dmethod =DIPOLAR_MDLC_DS; 
+    set_dipolar_method_local(DIPOLAR_MDLC_DS); 
     break;
   default:
     return ES_ERROR;

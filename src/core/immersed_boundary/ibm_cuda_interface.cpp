@@ -111,7 +111,7 @@ void IBM_cuda_mpi_get_particles_slave()
   if (n_part > 0) {
     /* get (unsorted) particle informations as an array of type 'particle' */
     /* then get the particle information */
-    //        particle_data_host_sl = (IBM_CUDA_ParticleDataInput*) malloc(n_part*sizeof(IBM_CUDA_ParticleData));
+    //        particle_data_host_sl = (IBM_CUDA_ParticleDataInput*) Utils::malloc(n_part*sizeof(IBM_CUDA_ParticleData));
     particle_input_sl = new IBM_CUDA_ParticleDataInput[n_part];
     
     g = 0;

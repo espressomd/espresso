@@ -28,20 +28,20 @@ template<typename T>
 class Ringbuffer {
 public:
   Ringbuffer(int _n) {
-    if(_n =< 0)
+    if(_n <= 0)
       n = 1;
     else if (_n > d.max_size())
       n = d.max_size();
     else
       n = _n;
   };
-  void Ringbuffer::push(T value) {
+  void push(T value) {
     if(d.size() >= n)
       d.pop_front();
     d.push_back(value);
   };
-  std::deque<T>::iterator begin() { return d.begin(); };
-  std::deque<T>::iterator end() { return d.end(); };
+  typename std::deque<T>::iterator begin() { return d.begin(); };
+  typename std::deque<T>::iterator end() { return d.end(); };
 private:
   int n;
   std::deque<T> d;  
