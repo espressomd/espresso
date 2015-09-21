@@ -60,6 +60,8 @@
 */
 typedef struct {
   int finite_epsilon_flag;
+  int adaptive_flag;
+  double scaling;
   double epsilon_infty;
   /** = 1/c^2    speed of light parameter. */
   double f_mass;
@@ -116,6 +118,11 @@ int maggs_get_mesh_1D();
  @param relative_epsilon    permittivity to set, relative to the background permittivity set by the bjerrum length
  */
 double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon);
+
+/** set adaptive permittivity flag
+ @param scaling             scaling of the volumetric formula for salt dependent permittivity
+ */
+int maggs_set_adaptive_flag(double scaling);
 
 /** Propagate the B-field in the system.
     Called TWICE from \ref integrate.cpp with timestep dt/2 to ensure time-reversibility of the integrator.

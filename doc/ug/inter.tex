@@ -2014,6 +2014,53 @@ and can be seen as a spatially dependent prefactor to this epsilon.
 If left unchanged, this prefactor is $1.0$ for every site by
 default.
 
+\subsubsection{Adaptive permittivity with MEMD}
+\label{sec:adaptive-memd}
+
+In addition to setting the local permittivity manually as described in section~\ref{sec:dielectric-memd}, MEMD is capable of adapting the local permittivity at each lattice site, dependent on the concentration of surrounding charges. More information on this can be found in article~\cite{fahrenberger15b}, which you should cite if you use this algorithm.
+
+To achieve this, the local salt concentration around each lattice cell is measured and then mapped to an according dielectric permittivity using the empirical formula
+\begin{equation}
+	\varepsilon = \frac{78.5}{1+0.278\cdot C},
+	\label{eq:salt-map}
+\end{equation}
+where $C$ is the concentration in molar [M], or moles per liter [mol/l]. The algorithm averages over a volume of $7^3$ lattice cubes and expects a concentration in molar within the simulation. In more MD-friendly units, this would mean that the units expected by the formula correspond to a lattice size of roughly $0.6$ nanometers for MEMD. Any other length unit is possible but needs to be scaled by a prefactor. This is perfectly reasonable and will not break the algorithm, since the permittivity $\varepsilon$ is dimensionless. The scaling factor $S_\text{adaptive}$ is thus defined via the used MEMD lattice spacing $a_\text{used}$:
+\begin{equation}
+	S_\text{adaptive} \times a_\text{used} = 0.6\,\text{nm}
+	\label{eq:adaptive-scaling}
+\end{equation}
+
+To use MEMD with adaptive permittivity to calculate Coulomb interactions in the system, use the following command.
+
+\begin{essyntax}
+  inter coulomb \var{l_B}
+  memd adaptive \var{scaling}
+  parameters \var{f\_mass} \var{mesh}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+The keyword \keyword{adaptive} after the \keyword{inter coulomb} command will use the implementation with dielectric permittivity dependent on the local salt concentration.
+
+\begin{arguments}
+\item[\var{l_B}] is the bjerrum length of the background. It defines
+	the reference value $\varepsilon_\text{bg}$ via the formula 
+	\eqref{eq:bjerrum-length}. Since the permittivity in this case is set
+	adaptively, it essentially determined the temperature for the Coulomb
+	interaction. This is a global variable and for this particular algorithm
+	should most likely be set as the permittivity of pure water.
+\item[\var{scaling}] is the scaling of the used length unit to match the expected unit system. For more details see equation~\ref{eq:adaptive-scaling} and the paragraph before.
+\item[\var{f\_mass}] is the mass of the field degree of freedom and equals
+  to the square root of the inverted speed of light.
+\item[\var{mesh}] is the number of mesh points for the interpolation
+  of the electromagnetic field in one dimension.
+\end{arguments}
+
+It should be mentioned that this algorithm is not a black box and should be understood to a degree if used. Small changes in the parameters, especially the mesh size, can quickly lead to unphysical results. This is not only because of the retarded electrodynamics solution offered by the MEMD algorithm in general, but because of the sensitivity of the dielectric response to the volume over which the local salt concentration is sampled. If this volume is set too small, harsh changes in the local dielectric properties can occur and the algorithm may become unstable, or worse, produce incorrect electrostatic forces.
+
+The calculation of local permittivity will for the same parameters -- depending on your computer -- run roughly a factor of $2$ to $4$ longer than MEMD without temporally varying dielectric properties.
+
 \subsection{Electrostatic Layer Correction (ELC)}
 \index{ELC method|mainindex}
 \index{interactions!ELC method|mainindex}
