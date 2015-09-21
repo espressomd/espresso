@@ -677,7 +677,7 @@ int observable_calc_lb_radial_velocity_profile(observable* self) {
   } else {
     mpi_observable_lb_radial_velocity_profile();
     MPI_Bcast(pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
-    double* data = (double*) malloc(n_A*sizeof(double));
+    double* data = (double*) Utils::malloc(n_A*sizeof(double));
     mpi_observable_lb_radial_velocity_profile_parallel(pdata, data, n_A);
     MPI_Reduce(data, A, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     free(data);
@@ -689,7 +689,7 @@ void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
   radial_profile_data pdata;
   MPI_Bcast(&pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
   unsigned int n_A=3*pdata.rbins*pdata.phibins*pdata.zbins;
-  double* data = (double*) malloc(n_A*sizeof(double));
+  double* data = (double*) Utils::malloc(n_A*sizeof(double));
   mpi_observable_lb_radial_velocity_profile_parallel(&pdata, data, n_A);
   MPI_Reduce(data, 0, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   free(data);
@@ -1365,10 +1365,10 @@ int observable_radial_density_distribution(observable* self){
   radial_density_data *r_data = (radial_density_data *) self->container;
   IntList *ids;  
   if ( GC_init && Type_array_init ) {
-	  ids = (IntList *) malloc(sizeof(IntList));
+	  ids = (IntList *) Utils::malloc(sizeof(IntList));
 
 	  //using the grandcanonical scheme, always update the particle id list
-	  ids->e = (int *) malloc(sizeof(int)*type_array[Index.type[r_data->type]].max_entry);
+	  ids->e = (int *) Utils::malloc(sizeof(int)*type_array[Index.type[r_data->type]].max_entry);
 	  memmove(ids->e, type_array[Index.type[r_data->type]].id_list, type_array[Index.type[r_data->type]].max_entry*sizeof(int));
 	  ids->n = type_array[Index.type[r_data->type]].max_entry;
 	  ids->max = type_array[Index.type[r_data->type]].cur_size;
@@ -1396,7 +1396,7 @@ int observable_radial_density_distribution(observable* self){
 	  memmove(end_point, r_data->end_point, 3*sizeof(double));
   }
 
-  double *bin_volume = (double *) malloc(sizeof(double)*r_data->rbins);
+  double *bin_volume = (double *) Utils::malloc(sizeof(double)*r_data->rbins);
  
   double part_pos[3];
   double AB[3];		// normalized normal vector pointing to start point

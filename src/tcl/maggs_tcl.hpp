@@ -67,6 +67,15 @@
  */
 int tclcommand_localeps(Tcl_Interp* interp, int argc, char** argv);
 
+/** parce TCL command for dielectrics. Checks the parameters and calls the according
+ functions.
+ @return 0 for success, -1 otherwise
+ @param interp  TCL Interpreter handle
+ @param argc    number of TCL arguments after "inter coulomb $bjerrum maggs"
+ @param argv    array of TCL arguments after "inter coulomb $bjerrum maggs"
+ */
+int tclcommand_adaptive_eps(Tcl_Interp* interp, int argc, char** argv);
+
 /** parse TCL command. The number of parameters is checked and
     maggs_set_parameters function is called.
     @return 0 for success, -1 otherwise

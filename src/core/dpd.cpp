@@ -393,6 +393,10 @@ void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
 #endif
 
 #ifdef EXTERNAL_FORCES
+  // Prohibits calculation of velocity dependent
+  // force between two fixed particles.
+  if (p1->p.ext_flag & p2->p.ext_flag & COORDS_FIX_MASK) 
+    return;
   // if any of the two particles is fixed in some direction then
   // do not add any dissipative or stochastic dpd force part
   // because dissipation-fluctuation theorem is violated
@@ -403,7 +407,6 @@ void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
 #ifdef DPD
   if( le_chatterjee_test_pair(p1, p2) ) return;
 #endif  
-
 #ifdef DPD_MASS_RED
   massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
 #endif

@@ -42,7 +42,7 @@ void IBM_cuda_mpi_get_particles()
   int c;
   MPI_Status status;
   
-  int *sizes = (int*) malloc(sizeof(int)*n_nodes);
+  int *sizes = (int*) Utils::malloc(sizeof(int)*n_nodes);
   int n_part = cells_get_n_particles();
   
   /* first collect number of particles on each node */
@@ -111,7 +111,7 @@ void IBM_cuda_mpi_get_particles_slave()
   if (n_part > 0) {
     /* get (unsorted) particle informations as an array of type 'particle' */
     /* then get the particle information */
-    //        particle_data_host_sl = (IBM_CUDA_ParticleDataInput*) malloc(n_part*sizeof(IBM_CUDA_ParticleData));
+    //        particle_data_host_sl = (IBM_CUDA_ParticleDataInput*) Utils::malloc(n_part*sizeof(IBM_CUDA_ParticleData));
     particle_input_sl = new IBM_CUDA_ParticleDataInput[n_part];
     
     g = 0;
@@ -161,7 +161,7 @@ void IBM_cuda_mpi_send_velocities()
   Cell *cell;
   int c;
   int *sizes;
-  sizes = (int *) malloc(sizeof(int)*n_nodes);
+  sizes = (int *) Utils::malloc(sizeof(int)*n_nodes);
   n_part = cells_get_n_particles();
   /* first collect number of particles on each node */
   MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);

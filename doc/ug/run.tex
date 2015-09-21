@@ -140,14 +140,16 @@ box-length \var{L_\mathrm{new}}, and isotropically adjusts the
 particles coordinates as well. The function returns the new volume of
 the deformed simulation box.
 
-\section{\texttt{rotate_system}: Rotating the particle positions around the system's center of mass}
+\section{\texttt{rotate_system}: Rotating the system around its center of mass}
 \newescommand[rotate-system]{rotate_system}
 
 \begin{essyntax}
   \variant{1} rotate_system \var{phi} \var{theta} \var{alpha}
 \end{essyntax}
 
-Rotates the particle coordinates around the system's center of mass. This only makes sense for non-periodic boundaries, but no check is performed. The command only works on a single cpu.
+Rotates the particle coordinates around the system's center of mass. This only makes sense for non-periodic boundaries, but no check is performed. 
+In addition to the particle positions, the command also rotates the particles themselves, if the ROTATION feature is activated. Hence, dipole moments as well as virtual sites based on the VS\_RELATIVE method will also be affected.
+The command only works on a single cpu.
 
 The rotation axis is given by the parameters \var{phi} and \var{theta} as
 \begin{equation}

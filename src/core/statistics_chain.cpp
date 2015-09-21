@@ -64,7 +64,7 @@ void calc_re(double **_re)
   double dx,dy,dz;
   double dist=0.0,dist2=0.0,dist4=0.0;
   double *re=NULL, tmp;
-  *_re = re = (double*)realloc(re,4*sizeof(double));
+  *_re = re = (double*)Utils::realloc(re,4*sizeof(double));
 
   for (i=0; i<chain_n_chains; i++) {
     dx = partCfg[chain_start+i*chain_length + chain_length-1].r.p[0]
@@ -91,7 +91,7 @@ void calc_re_av(double **_re)
   double dx,dy,dz;
   double dist=0.0,dist2=0.0,dist4=0.0;
   double *re=NULL, tmp;
-  *_re = re = (double*)realloc(re,4*sizeof(double));
+  *_re = re = (double*)Utils::realloc(re,4*sizeof(double));
 
   for (j=0; j<n_configs; j++) {
     for (i=0; i<chain_n_chains; i++) {
@@ -121,7 +121,7 @@ void calc_rg(double **_rg)
   double r_G=0.0,r_G2=0.0,r_G4=0.0;
   double *rg=NULL,IdoubMPC, tmp;
   double M;
-  *_rg = rg = (double*)realloc(rg,4*sizeof(double));
+  *_rg = rg = (double*)Utils::realloc(rg,4*sizeof(double));
 
 
   for (i=0; i<chain_n_chains; i++) {
@@ -165,7 +165,7 @@ void calc_rg_av(double **_rg)
   double r_G=0.0,r_G2=0.0, r_G4=0.0;
   double *rg=NULL, IdoubMPC, tmp;
   double M;
-  *_rg = rg = (double*)realloc(rg,4*sizeof(double));
+  *_rg = rg = (double*)Utils::realloc(rg,4*sizeof(double));
 
   IdoubMPC = 1./(double)chain_length;
   for (k=0; k<n_configs; k++) {
@@ -205,7 +205,7 @@ void calc_rh(double **_rh)
 {
   int i, j, p;
   double dx,dy,dz, r_H=0.0,r_H2=0.0, *rh=NULL, ri=0.0, prefac, tmp;
-  *_rh = rh = (double*)realloc(rh,2*sizeof(double));
+  *_rh = rh = (double*)Utils::realloc(rh,2*sizeof(double));
 
   prefac = 0.5*chain_length*chain_length; /* 1/N^2 is not a normalization factor */
   for(p=0;p<chain_n_chains;p++) {
@@ -231,7 +231,7 @@ void calc_rh_av(double **_rh)
 {
   int i, j, p, k;
   double dx,dy,dz, r_H=0.0,r_H2=0.0, *rh=NULL, ri=0.0, prefac, tmp;
-  *_rh = rh = (double*)realloc(rh,2*sizeof(double));
+  *_rh = rh = (double*)Utils::realloc(rh,2*sizeof(double));
 
   prefac = 0.5*chain_length*chain_length;
   for(k=0; k<n_configs; k++) {
@@ -259,7 +259,7 @@ void calc_internal_dist(double **_idf) {
   int i,j,k;
   double dx,dy,dz;
   double *idf=NULL;
-  *_idf = idf = (double*)realloc(idf,chain_length*sizeof(double));
+  *_idf = idf = (double*)Utils::realloc(idf,chain_length*sizeof(double));
 
   idf[0] = 0.0;
   for (k=1; k < chain_length; k++) {
@@ -283,7 +283,7 @@ void calc_internal_dist_av(double **_idf) {
   int i,j,k,n, i1,i2;
   double dx,dy,dz;
   double *idf=NULL;
-  *_idf = idf = (double*)realloc(idf,chain_length*sizeof(double));
+  *_idf = idf = (double*)Utils::realloc(idf,chain_length*sizeof(double));
 
   idf[0] = 0.0;
   for (k=1; k < chain_length; k++) {
@@ -307,7 +307,7 @@ void calc_bond_l(double **_bond_l) {
   int i,j;
   double dx,dy,dz, tmp;
   double *bond_l=NULL;
-  *_bond_l = bond_l = (double*)realloc(bond_l,4*sizeof(double));
+  *_bond_l = bond_l = (double*)Utils::realloc(bond_l,4*sizeof(double));
 
   bond_l[0] = bond_l[1] = bond_l[2] = 0.0; bond_l[3] = 20.0;
   for (i=0; i<chain_n_chains; i++) {
@@ -336,7 +336,7 @@ void calc_bond_l_av(double **_bond_l) {
   int i,j,n, i1,i2;
   double dx,dy,dz, tmp;
   double *bond_l=NULL;
-  *_bond_l = bond_l = (double*)realloc(bond_l,4*sizeof(double));
+  *_bond_l = bond_l = (double*)Utils::realloc(bond_l,4*sizeof(double));
 
   bond_l[0] = bond_l[1] = bond_l[2] = 0.0; bond_l[3] = 20.0;
   for (n=0; n<n_configs; n++) {
@@ -365,7 +365,7 @@ void calc_bond_dist(double **_bdf, int ind_n) {
   int i,j=ind_n,k;
   double dx,dy,dz;
   double *bdf=NULL;
-  *_bdf = bdf = (double*)realloc(bdf,chain_length*sizeof(double));
+  *_bdf = bdf = (double*)Utils::realloc(bdf,chain_length*sizeof(double));
 
   bdf[0] = 0.0;
   for (k=1; k < chain_length; k++) {
@@ -389,7 +389,7 @@ void calc_bond_dist_av(double **_bdf, int ind_n) {
   int i,j=ind_n,k,n, i1,i2;
   double dx,dy,dz;
   double *bdf=NULL;
-  *_bdf = bdf = (double*)realloc(bdf,chain_length*sizeof(double));
+  *_bdf = bdf = (double*)Utils::realloc(bdf,chain_length*sizeof(double));
 
   bdf[0] = 0.0;
   for (k=1; k < chain_length; k++) {
@@ -416,8 +416,8 @@ void init_g123()
 
   /* Save particles' current positions 
      (which'll be used as initial position later on) */
-  partCoord_g = (float *) realloc(partCoord_g, 3*n_part*sizeof(float));
-  partCM_g = (float *) realloc(partCM_g, 3*chain_n_chains*sizeof(float));
+  partCoord_g = (float *) Utils::realloc(partCoord_g, 3*n_part*sizeof(float));
+  partCM_g = (float *) Utils::realloc(partCM_g, 3*chain_n_chains*sizeof(float));
   n_part_g = n_part;
   n_chains_g = chain_n_chains;
   for(j=0; j<chain_n_chains; j++) {
@@ -482,7 +482,7 @@ void calc_g123(double *_g1, double *_g2, double *_g3)
 void calc_g1_av(double **_g1, int window, double weights[3]) {
   int i, j, p, t,k, cnt;
   double *g1=NULL;
-  *_g1 = g1 = (double*)realloc(g1,n_configs*sizeof(double));
+  *_g1 = g1 = (double*)Utils::realloc(g1,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
     g1[k] = 0.0;
@@ -505,7 +505,7 @@ void calc_g2_av(double **_g2, int window, double weights[3]) {
   int i, j, p, t,k,cnt;
   double *g2=NULL, cm_tmp[3];
   double M;
-  *_g2 = g2 = (double*)realloc(g2,n_configs*sizeof(double));
+  *_g2 = g2 = (double*)Utils::realloc(g2,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
     g2[k] = 0.0;
@@ -538,7 +538,7 @@ void calc_g3_av(double **_g3, int window, double weights[3]) {
   int i, j, p, t,k,cnt;
   double *g3=NULL, cm_tmp[3];
   double M;
-  *_g3 = g3 = (double*)realloc(g3,n_configs*sizeof(double));
+  *_g3 = g3 = (double*)Utils::realloc(g3,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
     g3[k] = 0.0;
@@ -565,8 +565,8 @@ void calc_g3_av(double **_g3, int window, double weights[3]) {
 void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
   int i,j,k,qi, cnt,cnt_max;
   double q,qfak, qr, dx,dy,dz, *r_ij=NULL, *ff=NULL;
-  *_ff = ff = (double*)realloc(ff,(qbins+1)*sizeof(double));
-  r_ij = (double*)realloc(r_ij,chain_length*(chain_length-1)/2*sizeof(double));
+  *_ff = ff = (double*)Utils::realloc(ff,(qbins+1)*sizeof(double));
+  r_ij = (double*)Utils::realloc(r_ij,chain_length*(chain_length-1)/2*sizeof(double));
 
   qfak = pow((qmax/qmin),(1.0/qbins));
   for(qi=0; qi<=qbins; qi++) ff[qi] = 0.0;
@@ -600,8 +600,8 @@ void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
 void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
   int i,j,k,n,qi, cnt,cnt_max;
   double q,qfak, qr, dx,dy,dz, *r_ij=NULL, *ff=NULL;
-  *_ff = ff = (double*)realloc(ff,(qbins+1)*sizeof(double));
-  r_ij = (double*)realloc(r_ij,chain_length*(chain_length-1)/2*sizeof(double));
+  *_ff = ff = (double*)Utils::realloc(ff,(qbins+1)*sizeof(double));
+  r_ij = (double*)Utils::realloc(r_ij,chain_length*(chain_length-1)/2*sizeof(double));
 
   qfak = pow((qmax/qmin),(1.0/qbins));
   for(qi=0; qi<=qbins; qi++) ff[qi] = 0.0;
@@ -639,11 +639,11 @@ void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_f1, doub
   double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist, chain_mass,
     *cm=NULL, *min_d=NULL, *f1=NULL, *f2=NULL, *f3=NULL;
   
-  *_f1 = f1 = (double*)realloc(f1,r_bins*sizeof(double));
-  *_f2 = f2 = (double*)realloc(f2,r_bins*sizeof(double));
-  *_f3 = f3 = (double*)realloc(f3,r_bins*sizeof(double));
-  cm = (double*)realloc(cm,(chain_n_chains*3)*sizeof(double));
-  min_d = (double*)realloc(min_d,(chain_n_chains*chain_n_chains)*sizeof(double));
+  *_f1 = f1 = (double*)Utils::realloc(f1,r_bins*sizeof(double));
+  *_f2 = f2 = (double*)Utils::realloc(f2,r_bins*sizeof(double));
+  *_f3 = f3 = (double*)Utils::realloc(f3,r_bins*sizeof(double));
+  cm = (double*)Utils::realloc(cm,(chain_n_chains*3)*sizeof(double));
+  min_d = (double*)Utils::realloc(min_d,(chain_n_chains*chain_n_chains)*sizeof(double));
   for(i=0; i<r_bins; i++) {
     f1[i] = f2[i] = f3[i] = 0.0;
   }
@@ -716,12 +716,12 @@ void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac) {
     double vcm[3];
     
     // result
-    vac = (double*)realloc(vac,(maxtau+1)*sizeof(double));
-    *_avac = avac = (double*)realloc(avac,(maxtau+1)*sizeof(double));
-    *_evac = evac = (double*)realloc(evac,(maxtau+1)*sizeof(double));
+    vac = (double*)Utils::realloc(vac,(maxtau+1)*sizeof(double));
+    *_avac = avac = (double*)Utils::realloc(avac,(maxtau+1)*sizeof(double));
+    *_evac = evac = (double*)Utils::realloc(evac,(maxtau+1)*sizeof(double));
     
     // set up velarray
-    varr = (double*)realloc(varr,(3*(n_configs-1)*n_part)*sizeof(double));
+    varr = (double*)Utils::realloc(varr,(3*(n_configs-1)*n_part)*sizeof(double));
     
     // fill varr
     for(k=0;k<n_configs-1;k++) {

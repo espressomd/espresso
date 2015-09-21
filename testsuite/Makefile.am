@@ -35,6 +35,7 @@ tests = \
 	dh.tcl \
 	dielectric.tcl \
 	dihedral.tcl \
+	dpd.tcl \
 	ek_eof_one_species_x.tcl \
 	ek_eof_one_species_y.tcl \
 	ek_eof_one_species_z.tcl \
@@ -103,8 +104,12 @@ tests = \
 	p3m_simple_noncubic.tcl \
 	pdb_parser.tcl \
 	rotate-system.tcl \
+	rotate-system-dipoles.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
+	sc_affinity.tcl \
+	sc_affinity_gpu.tcl \
+	sc_fluid.tcl \
 	sc_fluid_gpu.tcl \
 	sd_ewald.tcl \
 	sd_two_spheres.tcl \

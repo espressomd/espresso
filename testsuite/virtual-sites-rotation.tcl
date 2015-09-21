@@ -31,9 +31,10 @@ setmd min_global_cut 5
 require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
 require_feature "ROTATIONAL_INERTIA"
+require_feature "MASS"
 
 puts "---------------------------------------------------------------"
-puts "- Testcase virtual-sites-rotation.tcl running on 1 nodes"
+puts "- Testcase virtual-sites-rotation.tcl running on  [format %02d [setmd n_nodes]] nodes  -"
 puts "---------------------------------------------------------------"
 cellsystem nsquare -no_verlet_list
 set mass 200

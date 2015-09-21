@@ -85,7 +85,7 @@ inline void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Partic
 */
 inline int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
 				 Bonded_ia_parameters *iaparams, double force2[3],
-				 double force1[2], double force3[2])
+				 double force1[3], double force3[3])
 {
   int i;
   /* vectors for dihedral angle calculation */

@@ -62,7 +62,7 @@ outp insource srcdir builddir \
     with_tcl with_python_interface myconfig check_procs
 
 # check indentation of python files
-pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/ >> /dev/null
+pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
 ec=$?
 if [ $ec -eq 0 ]; then
     echo ""

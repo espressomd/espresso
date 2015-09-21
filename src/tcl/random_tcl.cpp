@@ -77,7 +77,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
   }
   else if ( ARG_IS_S(0,"seed") )    /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
   {
-    long *seed = (long *) malloc(n_nodes*sizeof(long));
+    long *seed = (long *) Utils::malloc(n_nodes*sizeof(long));
 
     if (argc <= 1)                  /* ESPResSo generates a seed */
     {
@@ -128,7 +128,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
   }
   else if ( ARG_IS_S(0,"stat") )    /* 't_random stat [status-list]' */
   {  
-    RandomStatus *stat = (RandomStatus *) malloc(n_nodes*sizeof(RandomStatus));
+    RandomStatus *stat = (RandomStatus *) Utils::malloc(n_nodes*sizeof(RandomStatus));
 
     if (argc <= 1) 
     {
@@ -247,7 +247,7 @@ int tclcommand_bit_random (ClientData data, Tcl_Interp *interp, int argc, char *
   argc--; argv++;
   if (ARG_IS_S(0,"seed"))        /* 'bit_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
   { 
-    int *seed = (int *) malloc(n_nodes*sizeof(int));
+    int *seed = (int *) Utils::malloc(n_nodes*sizeof(int));
     if (argc <= 1)
     {
       mpi_bit_random_seed(0,seed);
@@ -290,7 +290,7 @@ int tclcommand_bit_random (ClientData data, Tcl_Interp *interp, int argc, char *
   }
   else if (ARG_IS_S(0,"stat"))   /* 'bit_random stat [status-list]' */
   {
-    BitRandomStatus *stat = (BitRandomStatus *) malloc(n_nodes*sizeof(BitRandomStatus));
+    BitRandomStatus *stat = (BitRandomStatus *) Utils::malloc(n_nodes*sizeof(BitRandomStatus));
 
     if (argc <= 1) 
     {

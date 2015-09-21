@@ -72,17 +72,17 @@ libEspresso_la_SOURCES = \
 	molforces.cpp molforces.hpp \
 	mol_cut.cpp mol_cut.hpp \
 	nemd.cpp nemd.hpp \
-	npt.hpp \
+	npt.cpp npt.hpp \
 	nsquare.cpp nsquare.hpp \
 	particle_data.cpp particle_data.hpp \
 	polymer.cpp polymer.hpp \
-	polynom.hpp \
+	polynom.cpp polynom.hpp \
 	pressure.cpp pressure.hpp \
 	random.cpp random.hpp \
 	rattle.cpp rattle.hpp \
 	reaction.cpp reaction.hpp \
 	readpdb.cpp readpdb.hpp \
-	Ringbuffer.hpp \
+	Ringbuffer.cpp Ringbuffer.hpp \
 	rotate_system.cpp rotate_system.hpp \
 	rotation.cpp rotation.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
@@ -98,7 +98,7 @@ libEspresso_la_SOURCES = \
 	thermostat.cpp thermostat.hpp \
 	topology.cpp topology.hpp \
 	tuning.cpp tuning.hpp \
-	utils.hpp \
+	utils.cpp utils.hpp \
 	uwerr.cpp uwerr.hpp \
 	verlet.cpp verlet.hpp \
 	virtual_sites.cpp virtual_sites.hpp \
@@ -106,8 +106,8 @@ libEspresso_la_SOURCES = \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
-	Vector.hpp \
-	SystemInterface.hpp \
+	Vector.cpp Vector.hpp \
+	SystemInterface.cpp SystemInterface.hpp \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
@@ -130,6 +130,8 @@ libEspresso_la_SOURCES += \
 	ljgen.cpp ljgen.hpp \
 	morse.cpp morse.hpp \
 	soft_sphere.cpp soft_sphere.hpp \
+	object-in-fluid/affinity.cpp object-in-fluid/affinity.hpp \
+	object-in-fluid/membrane_collision.cpp object-in-fluid/membrane_collision.hpp \
 	steppot.cpp steppot.hpp \
 	tab.cpp tab.hpp \
 	tunable_slip.cpp tunable_slip.hpp
@@ -151,12 +153,9 @@ libEspresso_la_SOURCES += \
 	umbrella.cpp umbrella.hpp \
 	bonded_coulomb.cpp bonded_coulomb.hpp \
 	subt_lj.cpp subt_lj.hpp \
-	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
-	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
-	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
-	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
-	object-in-fluid/stretchlin_force.cpp object-in-fluid/stretchlin_force.hpp \
-	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp \
+	object-in-fluid/oif_global_forces.cpp object-in-fluid/oif_global_forces.hpp \
+	object-in-fluid/oif_local_forces.cpp object-in-fluid/oif_local_forces.hpp \
+	object-in-fluid/out_direction.cpp object-in-fluid/out_direction.hpp \
 	hydrogen_bond.cpp hydrogen_bond.hpp \
 	twist_stack.cpp twist_stack.hpp
 
@@ -215,7 +214,8 @@ CUDA_HEADER_FILES = \
 	integrate_sd_cuda.hpp \
 	integrate_sd_cuda_device.hpp \
 	integrate_sd_matrix.hpp \
-	fd-electrostatics.hpp
+	fd-electrostatics.hpp \
+	actor/DipolarDirectSum_cuda.hpp
 
 CUDA_SOURCE_FILES = \
 	cuda_init_cuda.cu \

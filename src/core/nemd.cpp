@@ -98,8 +98,8 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
 
   nemddata.n_exchange       = n_exchange;
  
-  nemddata.slab             = (Slab *)malloc(nemddata.n_slabs*sizeof(Slab));
-  nemddata.velocity_profile = (double *)malloc(nemddata.n_slabs*sizeof(double));
+  nemddata.slab             = (Slab *)Utils::malloc(nemddata.n_slabs*sizeof(Slab));
+  nemddata.velocity_profile = (double *)Utils::malloc(nemddata.n_slabs*sizeof(double));
 
   nemddata.momentum = 0.0;
   nemddata.momentum_norm = 0;
@@ -118,8 +118,8 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
   }
   /* allocate arrays for indices of fastest particles in slab */
   if(nemddata.n_exchange > 0) {
-    nemddata.slab[nemddata.top_slab].fastest = (int *)malloc(nemddata.n_exchange*sizeof(int));
-    nemddata.slab[nemddata.mid_slab].fastest = (int *)malloc(nemddata.n_exchange*sizeof(int));
+    nemddata.slab[nemddata.top_slab].fastest = (int *)Utils::malloc(nemddata.n_exchange*sizeof(int));
+    nemddata.slab[nemddata.mid_slab].fastest = (int *)Utils::malloc(nemddata.n_exchange*sizeof(int));
   }
   for(i=0;i<nemddata.n_exchange;i++) {
     nemddata.slab[nemddata.top_slab].fastest[i] = -1;

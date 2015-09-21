@@ -56,7 +56,7 @@ void le_dd_init_cell_interactions()
   int extra_cells = 0;
 
   /* initialize cell neighbor structures */
-  dd.cell_inter = (IA_Neighbor_List *) realloc(dd.cell_inter,local_cells.n*sizeof(IA_Neighbor_List));
+  dd.cell_inter = (IA_Neighbor_List *) Utils::realloc(dd.cell_inter,local_cells.n*sizeof(IA_Neighbor_List));
   for(m=0; m<local_cells.n; m++) { 
     dd.cell_inter[m].nList = NULL; 
     dd.cell_inter[m].n_neighbors=0; 
@@ -68,7 +68,7 @@ void le_dd_init_cell_interactions()
       for(m=1; m<=dd.cell_grid[0]; m++) {
 
     /* plenty for most cases */
-    dd.cell_inter[c_cnt].nList = (IA_Neighbor *) realloc(dd.cell_inter[c_cnt].nList, 14*sizeof(IA_Neighbor));
+    dd.cell_inter[c_cnt].nList = (IA_Neighbor *) Utils::realloc(dd.cell_inter[c_cnt].nList, 14*sizeof(IA_Neighbor));
     
     n_cnt=0;
     ind1 = get_linear_index(m,n,o,dd.ghost_cell_grid);
@@ -82,7 +82,7 @@ void le_dd_init_cell_interactions()
             if(    (q == 0                 && node_pos[1] == 0)
                 || (q == dd.cell_grid[1]+1 && node_pos[1] == node_grid[1]-1) ){
                 extra_cells++;
-                dd.cell_inter[c_cnt].nList = (IA_Neighbor *) realloc(dd.cell_inter[c_cnt].nList, (extra_cells+14)*sizeof(IA_Neighbor));
+                dd.cell_inter[c_cnt].nList = (IA_Neighbor *) Utils::realloc(dd.cell_inter[c_cnt].nList, (extra_cells+14)*sizeof(IA_Neighbor));
             }else{
                 if( r == m + 2 )
                     continue;
@@ -439,7 +439,7 @@ void  le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm, int 
         }
         
         /* Buffer has to contain both Send and Recv cells -> factor 2 */
-        comm->comm[cnt].part_lists    = (ParticleList **)malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
+        comm->comm[cnt].part_lists    = (ParticleList **)Utils::malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
 
         switch( dir ){
           //send the single-thickness x-ghost layer, and then parts of the double-thickness
@@ -551,7 +551,7 @@ void  le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm, int 
                         lc[dir] = 1;
                         hc[dir] = 1;
                 }
-                comm->comm[cnt].part_lists    = (ParticleList **)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+                comm->comm[cnt].part_lists    = (ParticleList **)Utils::malloc(n_comm_cells[dir]*sizeof(ParticleList *));
 
 
                 switch( dir ){
@@ -615,7 +615,7 @@ void  le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm, int 
                     lc[dir] = 0;
                     hc[dir] = 0;
                 }
-                comm->comm[cnt].part_lists    = (ParticleList **)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+                comm->comm[cnt].part_lists    = (ParticleList **)Utils::malloc(n_comm_cells[dir]*sizeof(ParticleList *));
 
                 switch( dir ){
                     case 0:
