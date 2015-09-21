@@ -371,7 +371,7 @@ void lb_init_boundaries() {
             }
           }       
           
-    	    if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
+    	  if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
      	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;
      	      //printf("boundindex %i: \n", get_linear_index(x,y,z,lblattice.halo_grid));   
           }
@@ -606,10 +606,11 @@ void lb_bounce_back() {
                 for (l=0; l<3; l++) {
                   lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
                 }
-                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
+                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k]+ population_shift;
               }
-              else
-                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+              else { 
+                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] = 0.0;
+	      }
             }
           }
         }
