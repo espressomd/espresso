@@ -52,7 +52,7 @@ int fluidstep=0.0;
 #ifdef LB
 
 #ifdef ADDITIONAL_CHECKS
-static void lb_check_halo_regions(int);
+static void lb_check_halo_regions();
 #endif // ADDITIONAL_CHECKS
 
 /** Flag indicating momentum exchange between particles and fluid */
