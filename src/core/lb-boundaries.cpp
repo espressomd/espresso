@@ -604,7 +604,7 @@ void lb_bounce_back() {
                  z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
               if ( !lbfields[k-next[i]].boundary ) {
                 for (l=0; l<3; l++) {
-                  lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
+                  lb_boundaries[lbfields[k].boundary-1].force[l]+=(lbfluid[1][i][k]+lbfluid[0][i][k]+population_shift)*lbmodel.c[i][l];
                 }
                 lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k]+ population_shift;
               }
