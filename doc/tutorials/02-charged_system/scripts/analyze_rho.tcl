@@ -25,7 +25,7 @@ for {set i 0} {$i < $bins} {incr i} {
     lappend avg_rho1 0
 }
 
-foreach filename [lrange $argv 1 end] {
+foreach filename $argv {
     set f [open $filename "r"]
     while { [blockfile $f read auto] != "eof" } {}
     close $f
