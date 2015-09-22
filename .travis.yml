@@ -23,18 +23,18 @@ compiler:
 matrix:
   include:
     - compiler: clang
-      env: with-mpi=false myconfig=default
+      env: with_mpi=false myconfig=default
     - compiler: clang
-      env: with-mpi=false myconfig=maxset
+      env: with_mpi=false myconfig=maxset
     - compiler: clang
-      env: with-mpi=false myconfig=molcut
+      env: with_mpi=false myconfig=molcut
     - compiler: clang
-      env: with-mpi=false myconfig=rest1
+      env: with_mpi=false myconfig=rest1
     - compiler: clang
-      env: with-mpi=false myconfig=rest2
+      env: with_mpi=false myconfig=rest2
     - compiler: clang
-      env: with-mpi=false make_check=false myconfig=nocheck-maxset 
+      env: with_mpi=false make_check=false myconfig=nocheck-maxset 
     - compiler: clang
-      env: with-mpi=false myconfig=maxset without-cuda
+      env: with_mpi=false myconfig=maxset without-cuda
 
 script: ./maintainer/travis/build.sh
