@@ -900,7 +900,7 @@ __global__ void assign_forces_kernel_shared(const CUDA_particle_data * const pda
        p3m_gpu_data_initialized = 0;
      }
 
-     if(p3m_gpu_data_initialized == 0 && mesh > 0) {
+     if(p3m_gpu_data_initialized == 0 && p3m_gpu_data.mesh_size > 0) {
        cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),  p3m_gpu_data.mesh_size*sizeof(CUFFT_TYPE_COMPLEX));
        cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x), p3m_gpu_data.mesh_size*sizeof(CUFFT_TYPE_COMPLEX));
        cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y), p3m_gpu_data.mesh_size*sizeof(CUFFT_TYPE_COMPLEX));
