@@ -838,14 +838,9 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
  }
 
  void p3m_gpu_add_farfield_force() {
-
    CUDA_particle_data* lb_particle_gpu;
    float* lb_particle_force_gpu;
   
-   int mesh = p3m_gpu_data.mesh[0];
-   int mesh3 =p3m_gpu_data.mesh_size;
-   int cao = p3m_gpu_data.cao;
-
    lb_particle_gpu = gpu_get_particle_pointer();
    lb_particle_force_gpu = gpu_get_particle_force_pointer();
 
@@ -854,15 +849,12 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
    if(p3m_gpu_data.n_part == 0)
      return;
 
-   dim3 gridAssignment(p3m_gpu_data.n_part,1,1);
-   dim3 threadsAssignment(cao,cao,cao);
-  
-   dim3 gridConv(mesh,mesh,1);
-   dim3 threadsConv(mesh,1,1);
+   dim3 gridConv(p3m_gpu_data.mesh[0],p3m_gpu_data.mesh[1],1);
+   dim3 threadsConv(p3m_gpu_data.mesh[2],1,1);
 
    REAL_TYPE prefactor = coulomb.prefactor/(p3m_gpu_data.box[0]*p3m_gpu_data.box[1]*p3m_gpu_data.box[2]*2.0);
 
-   cuda_safe_mem(cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(CUFFT_TYPE_COMPLEX)));
+   cuda_safe_mem(cudaMemset( p3m_gpu_data.charge_mesh, 0, p3m_gpu_data.mesh_size*sizeof(CUFFT_TYPE_COMPLEX)));
 
    assign_charges(lb_particle_gpu, p3m_gpu_data);
 
