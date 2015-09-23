@@ -560,9 +560,11 @@ __global__ void assign_charge_kernel(const CUDA_particle_data * const pdata,
   m_pos[1] -= nmp_y;
   m_pos[2] -= nmp_z;
 
-  nmp_x = wrap_index(nmp_x +    cao_id_x, par.mesh_size);
-  nmp_y = wrap_index(nmp_y + threadIdx.y, par.mesh_size);
-  nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh_size);
+  nmp_x = wrap_index(nmp_x +    cao_id_x, par.mesh[0]);
+  nmp_y = wrap_index(nmp_y + threadIdx.y, par.mesh[1]);
+  nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh[2]);
+
+  const int ind = par.mesh[1]*par.mesh[2]*nmp_x + par.mesh[1]*nmp_y + nmp_z;
 
   if(shared) {
     if((threadIdx.y < 3) && (threadIdx.z == 0)) {
@@ -571,10 +573,10 @@ __global__ void assign_charge_kernel(const CUDA_particle_data * const pdata,
 
     __syncthreads();
 
-    atomicAdd( &(par.charge_mesh[par.mesh_size*par.mesh_size*nmp_x +  par.mesh_size*nmp_y + nmp_z].x), weights[3*cao*part_in_block + 3*cao_id_x + 0]*weights[3*cao*part_in_block + 3*threadIdx.y + 1]*weights[3*cao*part_in_block + 3*threadIdx.z + 2]*p.q);
+    atomicAdd( &(par.charge_mesh[ind].x), weights[3*cao*part_in_block + 3*cao_id_x + 0]*weights[3*cao*part_in_block + 3*threadIdx.y + 1]*weights[3*cao*part_in_block + 3*threadIdx.z + 2]*p.q);
 
   } else {
-    atomicAdd( &(par.charge_mesh[par.mesh_size*par.mesh_size*nmp_x +  par.mesh_size*nmp_y + nmp_z].x), p.q);
+    atomicAdd( &(par.charge_mesh[ind].x), caf<cao>(cao_id_x, m_pos[0])*caf<cao>(threadIdx.y, m_pos[1])*caf<cao>(threadIdx.z, m_pos[2])*p.q);
   }
 }
 
@@ -609,8 +611,8 @@ void assign_charges(const CUDA_particle_data * const pdata,
   block.y = cao;
   block.z = cao;
 
-  // printf("n_part %d, parts_per_block %d, n_blocks %d\n", n_part, parts_per_block, n_blocks);
-  // printf("grid %d %d %d block %d %d %d\n", grid.x, grid.y, grid.z, block.x, block.y, block.z);
+  printf("n_part %d, parts_per_block %d, n_blocks %d\n", n_part, parts_per_block, n_blocks);
+  printf("grid %d %d %d block %d %d %d\n", grid.x, grid.y, grid.z, block.x, block.y, block.z);
 
   switch(cao) {
   case 1:
