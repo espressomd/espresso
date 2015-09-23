@@ -47,17 +47,32 @@
 #include "interaction_data.hpp"
 
 struct P3MGpuData {
-  CUFFT_TYPE_COMPLEX *charge_mesh;
-  CUFFT_TYPE_COMPLEX *force_mesh_x;
-  CUFFT_TYPE_COMPLEX *force_mesh_y;
-  CUFFT_TYPE_COMPLEX *force_mesh_z;
-  REAL_TYPE *G_hat;
-  cufftHandle fft_plan;
-  int cao, mesh_size;
-  REAL_TYPE alpha;
-  int npart;
-  REAL_TYPE box[3];
-  int mesh[3];
+/** Charge mesh */
+CUFFT_TYPE_COMPLEX *charge_mesh;
+/** Force meshes */
+CUFFT_TYPE_COMPLEX *force_mesh_x;
+CUFFT_TYPE_COMPLEX *force_mesh_y;
+CUFFT_TYPE_COMPLEX *force_mesh_z;
+/** Influence Function */
+REAL_TYPE *G_hat;
+/** FFT plan */
+cufftHandle fft_plan;
+/** Charge assignment order */
+int cao;
+/** Total number of mesh points */
+int mesh_size;
+/** Ewald parameter */
+REAL_TYPE alpha;
+/** Number of particles */
+int n_part;
+/** Box size */
+REAL_TYPE box[3];
+/** Mesh dimensions */
+int mesh[3];
+/** Inverse mesh spacing */
+REAL_TYPE hi[3];
+/** Position shift */
+REAL_TYPE pos_shift;
 };
 
 P3MGpuData p3m_gpu_data;
@@ -516,15 +531,15 @@ __global__ void apply_influence_function( CUFFT_TYPE_COMPLEX *mesh, int mesh_siz
 }
 
 
-template<int cao>
-__global__ void assign_charge_kernel_shared(const CUDA_particle_data * const pdata,
-				     CUFFT_TYPE_COMPLEX *mesh, const int m_size, const REAL_TYPE pos_shift, const
-				     REAL_TYPE hi, int n_part, int parts_per_block) {
+ template<int cao, bool shared>
+__global__ void assign_charge_kernel(const CUDA_particle_data * const pdata,
+                                            const P3MGpuData par,
+                                            const int parts_per_block) {
   const int part_in_block = threadIdx.x / cao;
   const int cao_id_x = threadIdx.x % cao;
   /** id of the particle **/
   int id = parts_per_block * (blockIdx.x*gridDim.y + blockIdx.y) + part_in_block;
-  if(id >= n_part)
+  if(id >= par.n_part)
     return;
   /** position relative to the closest gird point **/
   REAL_TYPE m_pos[3];
@@ -533,9 +548,9 @@ __global__ void assign_charge_kernel_shared(const CUDA_particle_data * const pda
       
   const CUDA_particle_data p = pdata[id];
 
-  m_pos[0] = p.p[0] * hi - pos_shift;
-  m_pos[1] = p.p[1] * hi - pos_shift;
-  m_pos[2] = p.p[2] * hi - pos_shift;
+  m_pos[0] = p.p[0] * par.hi[0] - par.pos_shift;
+  m_pos[1] = p.p[1] * par.hi[1] - par.pos_shift;
+  m_pos[2] = p.p[2] * par.hi[2] - par.pos_shift;
 
   nmp_x = (int) floor(m_pos[0] + 0.5);
   nmp_y = (int) floor(m_pos[1] + 0.5);
@@ -545,107 +560,40 @@ __global__ void assign_charge_kernel_shared(const CUDA_particle_data * const pda
   m_pos[1] -= nmp_y;
   m_pos[2] -= nmp_z;
 
-  nmp_x = wrap_index(nmp_x +    cao_id_x, m_size);
-  nmp_y = wrap_index(nmp_y + threadIdx.y, m_size);
-  nmp_z = wrap_index(nmp_z + threadIdx.z, m_size);
+  nmp_x = wrap_index(nmp_x +    cao_id_x, par.mesh_size);
+  nmp_y = wrap_index(nmp_y + threadIdx.y, par.mesh_size);
+  nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh_size);
 
-  if((threadIdx.y < 3) && (threadIdx.z == 0)) {
-    weights[3*cao*part_in_block + 3*cao_id_x + threadIdx.y] = caf<cao>(cao_id_x, m_pos[threadIdx.y]);
+  if(shared) {
+    if((threadIdx.y < 3) && (threadIdx.z == 0)) {
+      weights[3*cao*part_in_block + 3*cao_id_x + threadIdx.y] = caf<cao>(cao_id_x, m_pos[threadIdx.y]);
+    }
+
+    __syncthreads();
+
+    atomicAdd( &(par.charge_mesh[par.mesh_size*par.mesh_size*nmp_x +  par.mesh_size*nmp_y + nmp_z].x), weights[3*cao*part_in_block + 3*cao_id_x + 0]*weights[3*cao*part_in_block + 3*threadIdx.y + 1]*weights[3*cao*part_in_block + 3*threadIdx.z + 2]*p.q);
+
+  } else {
+    atomicAdd( &(par.charge_mesh[par.mesh_size*par.mesh_size*nmp_x +  par.mesh_size*nmp_y + nmp_z].x), p.q);
   }
-
-   __syncthreads();
-
-  atomicAdd( &(mesh[m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z].x), weights[3*cao*part_in_block + 3*cao_id_x + 0]*weights[3*cao*part_in_block + 3*threadIdx.y + 1]*weights[3*cao*part_in_block + 3*threadIdx.z + 2]*p.q);
-}
-
-template<int cao>
-__global__ void assign_charge_kernel(const CUDA_particle_data * const pdata,
-				     CUFFT_TYPE_COMPLEX *mesh, const int m_size, const REAL_TYPE pos_shift, const
-				     REAL_TYPE hi, int n_part, int parts_per_block) {  
-  const int part_in_block = threadIdx.x / cao;
-  const int cao_id_x = threadIdx.x % cao;
-  /** id of the particle **/
-  const int id = parts_per_block * (blockIdx.x + blockDim.x*blockIdx.y) + part_in_block;
-  // printf("block %d %d, thread %d %d %d, id %d, p_i_b %d cao_id_x %d\n",
-  // 	 blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.z,
-  // 	 id, part_in_block, cao_id_x);
-  if(id >= n_part)
-    return;
-  /** position relative to the closest gird point **/
-  REAL_TYPE m_pos[3];
-  /** index of the nearest mesh point **/
-  int nmp_x, nmp_y, nmp_z;      
-      
-  const CUDA_particle_data p = pdata[id];
-
-  m_pos[0] = p.p[0] * hi - pos_shift;
-  m_pos[1] = p.p[1] * hi - pos_shift;
-  m_pos[2] = p.p[2] * hi - pos_shift;
-
-  nmp_x = (int) floor(m_pos[0] + 0.5);
-  nmp_y = (int) floor(m_pos[1] + 0.5);
-  nmp_z = (int) floor(m_pos[2] + 0.5);
-
-  m_pos[0] -= nmp_x;
-  m_pos[1] -= nmp_y;
-  m_pos[2] -= nmp_z;
-
-  nmp_x = wrap_index(nmp_x +    cao_id_x, m_size);
-  nmp_y = wrap_index(nmp_y + threadIdx.y, m_size);
-  nmp_z = wrap_index(nmp_z + threadIdx.z, m_size);
-
-  atomicAdd( &(mesh[m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z].x), caf<cao>(cao_id_x, m_pos[0])*caf<cao>(threadIdx.y, m_pos[1])*caf<cao>(threadIdx.z, m_pos[2])*p.q);
-}
-
-template<>
-__global__ void assign_charge_kernel<1>(const CUDA_particle_data * const pdata,
-				     CUFFT_TYPE_COMPLEX *mesh, const int m_size, const REAL_TYPE pos_shift, const
-				     REAL_TYPE hi, int n_part, int parts_per_block) {
-  /** id of the particle **/
-  int id = parts_per_block * (blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.x;
-  if(id >= n_part)
-    return;
-  /** position relative to the closest gird point **/
-  REAL_TYPE m_pos[3];
-  /** index of the nearest mesh point **/
-  int nmp_x, nmp_y, nmp_z;      
-      
-  const CUDA_particle_data p = pdata[id];
-
-  m_pos[0] = p.p[0] * hi - pos_shift;
-  m_pos[1] = p.p[1] * hi - pos_shift;
-  m_pos[2] = p.p[2] * hi - pos_shift;
-
-  nmp_x = (int) floor(m_pos[0] + 0.5);
-  nmp_y = (int) floor(m_pos[1] + 0.5);
-  nmp_z = (int) floor(m_pos[2] + 0.5);
-
-  m_pos[0] -= nmp_x;
-  m_pos[1] -= nmp_y;
-  m_pos[2] -= nmp_z;
-
-  nmp_x = wrap_index(nmp_x, m_size);
-  nmp_y = wrap_index(nmp_y, m_size);
-  nmp_z = wrap_index(nmp_z, m_size);
-
-  atomicAdd( &(mesh[m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z].x), p.q);
 }
 
 
-void assign_charges(int n_part, const CUDA_particle_data * const pdata, CUFFT_TYPE_COMPLEX *mesh, const int m_size, const REAL_TYPE pos_shift, const
-		    REAL_TYPE hi, int cao) {
+void assign_charges(const CUDA_particle_data * const pdata,
+                    const P3MGpuData p) {
   dim3 grid, block;
   grid.z = 1;
-  const int cao3 = cao*cao*cao;
+  const int cao3 = p.cao*p.cao*p.cao;
+  const int cao = p.cao;
   int parts_per_block = 1, n_blocks = 1;
 
   while((parts_per_block+1)*cao3 <= THREADS_PER_BLOCK) {
     parts_per_block++;
   }
-  if((n_part % parts_per_block) == 0)
-    n_blocks = max(1, n_part / parts_per_block);
+  if((p.n_part % parts_per_block) == 0)
+    n_blocks = max(1, p.n_part / parts_per_block);
   else
-    n_blocks = n_part / parts_per_block + 1;
+    n_blocks = p.n_part / parts_per_block + 1;
 
   grid.x = n_blocks;
   grid.y = 1;
@@ -666,25 +614,25 @@ void assign_charges(int n_part, const CUDA_particle_data * const pdata, CUFFT_TY
 
   switch(cao) {
   case 1:
-    assign_charge_kernel<1><<<grid, block>>>(pdata, mesh, m_size, pos_shift, hi, n_part, parts_per_block);
+    assign_charge_kernel<1, false><<<grid, block>>>(pdata, p, parts_per_block);
     break;
   case 2:
-    assign_charge_kernel<2><<<grid, block>>>(pdata, mesh, m_size, pos_shift, hi, n_part, parts_per_block);
+    assign_charge_kernel<2, false><<<grid, block>>>(pdata, p, parts_per_block);
     break;
   case 3:
-    assign_charge_kernel_shared<3><<<grid, block, 3*parts_per_block*cao*sizeof(float)>>>(pdata, mesh, m_size, pos_shift, hi, n_part, parts_per_block);
+    assign_charge_kernel<3, true><<<grid, block, 3*parts_per_block*cao*sizeof(REAL_TYPE)>>>(pdata, p, parts_per_block);
     break;
   case 4:
-    assign_charge_kernel_shared<4><<<grid, block, 3*parts_per_block*cao*sizeof(float)>>>(pdata, mesh, m_size, pos_shift, hi, n_part, parts_per_block);
+    assign_charge_kernel<4, true><<<grid, block, 3*parts_per_block*cao*sizeof(REAL_TYPE)>>>(pdata, p, parts_per_block);
     break;
   case 5:
-    assign_charge_kernel_shared<5><<<grid, block, 3*parts_per_block*cao*sizeof(float)>>>(pdata, mesh, m_size, pos_shift, hi, n_part, parts_per_block);
+    assign_charge_kernel<5, true><<<grid, block, 3*parts_per_block*cao*sizeof(REAL_TYPE)>>>(pdata, p, parts_per_block);
     break;
   case 6:
-    assign_charge_kernel_shared<6><<<grid, block, 3*parts_per_block*cao*sizeof(float)>>>(pdata, mesh, m_size, pos_shift, hi, n_part, parts_per_block);
+    assign_charge_kernel<6, true><<<grid, block, 3*parts_per_block*cao*sizeof(REAL_TYPE)>>>(pdata, p, parts_per_block);
     break;
   case 7:
-    assign_charge_kernel_shared<7><<<grid, block, 3*parts_per_block*cao*sizeof(float)>>>(pdata, mesh, m_size, pos_shift, hi, n_part, parts_per_block);
+    assign_charge_kernel<7, true><<<grid, block, 3*parts_per_block*cao*sizeof(REAL_TYPE)>>>(pdata, p, parts_per_block);
     break;
   default:
     break;
@@ -855,7 +803,7 @@ __global__ void assign_forces_kernel_shared(const CUDA_particle_data * const pda
 
    if ( this_node == 0 ) {
      
-     p3m_gpu_data.npart = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+     p3m_gpu_data.n_part = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
       
      if((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
        p3m_gpu_data.alpha = alpha;
@@ -864,6 +812,7 @@ __global__ void assign_forces_kernel_shared(const CUDA_particle_data * const pda
 
      if((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
        p3m_gpu_data.cao = cao;
+       p3m_gpu_data.pos_shift = (REAL_TYPE)((p3m_gpu_data.cao-1)/2);
        reinit_if = 1;
      }
 	
@@ -887,6 +836,10 @@ __global__ void assign_forces_kernel_shared(const CUDA_particle_data * const pda
        }
      
      p3m_gpu_data.mesh_size = mesh[0]*mesh[1]*mesh[2];
+
+     for(int i = 0; i < 3; i++) {
+       p3m_gpu_data.hi[i] = p3m_gpu_data.mesh[i] / p3m_gpu_data.box[i];
+     }
 
      if((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
        cudaFree(p3m_gpu_data.charge_mesh);
@@ -939,24 +892,23 @@ __global__ void assign_forces_kernel_shared(const CUDA_particle_data * const pda
    lb_particle_gpu = gpu_get_particle_pointer();
    lb_particle_force_gpu = gpu_get_particle_force_pointer();
 
-   p3m_gpu_data.npart = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+   p3m_gpu_data.n_part = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
-   if(p3m_gpu_data.npart == 0)
+   if(p3m_gpu_data.n_part == 0)
      return;
 
-   dim3 gridAssignment(p3m_gpu_data.npart,1,1);
+   dim3 gridAssignment(p3m_gpu_data.n_part,1,1);
    dim3 threadsAssignment(cao,cao,cao);
   
    dim3 gridConv(mesh,mesh,1);
    dim3 threadsConv(mesh,1,1);
 
-   REAL_TYPE pos_shift = (REAL_TYPE)((cao-1)/2);
    REAL_TYPE hi = mesh/box;
    REAL_TYPE prefactor = coulomb.prefactor/(box*box*box*2.0);
 
    cuda_safe_mem(cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(CUFFT_TYPE_COMPLEX)));
 
-   assign_charges(p3m_gpu_data.npart, lb_particle_gpu, p3m_gpu_data.charge_mesh, mesh, pos_shift, hi, cao);
+   assign_charges(lb_particle_gpu, p3m_gpu_data);
 
    if (CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.charge_mesh, p3m_gpu_data.charge_mesh, CUFFT_FORWARD) != CUFFT_SUCCESS){
      fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed\n");
@@ -967,15 +919,15 @@ __global__ void assign_forces_kernel_shared(const CUDA_particle_data * const pda
 
    dim3 gridAssignment2(1,1,1);
    dim3 threadsAssignment2(1,1,1);
-   if(p3m_gpu_data.npart <= 512) {
-     threadsAssignment2.x = p3m_gpu_data.npart;
+   if(p3m_gpu_data.n_part <= 512) {
+     threadsAssignment2.x = p3m_gpu_data.n_part;
    } else {
      threadsAssignment2.x = 512;
-     if((p3m_gpu_data.npart % 512) == 0) {
-       gridAssignment2.x = p3m_gpu_data.npart / 512;
+     if((p3m_gpu_data.n_part % 512) == 0) {
+       gridAssignment2.x = p3m_gpu_data.n_part / 512;
      }
      else {
-       gridAssignment2.x = p3m_gpu_data.npart / 512 + 1;
+       gridAssignment2.x = p3m_gpu_data.n_part / 512 + 1;
      }
    }
 
@@ -986,8 +938,8 @@ __global__ void assign_forces_kernel_shared(const CUDA_particle_data * const pda
    CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh_y, p3m_gpu_data.force_mesh_y, CUFFT_INVERSE);
    CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh_z, p3m_gpu_data.force_mesh_z, CUFFT_INVERSE);
 
-   assign_forces(p3m_gpu_data.npart, lb_particle_gpu, p3m_gpu_data.force_mesh_x, p3m_gpu_data.force_mesh_y, p3m_gpu_data.force_mesh_z,
-                 mesh, pos_shift, hi, lb_particle_force_gpu, prefactor, cao);
+   assign_forces(p3m_gpu_data.n_part, lb_particle_gpu, p3m_gpu_data.force_mesh_x, p3m_gpu_data.force_mesh_y, p3m_gpu_data.force_mesh_z,
+                 mesh, p3m_gpu_data.pos_shift, hi, lb_particle_force_gpu, prefactor, cao);
  }
 
 
