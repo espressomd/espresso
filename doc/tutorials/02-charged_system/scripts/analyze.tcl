@@ -21,7 +21,7 @@
 set cnt 0
 for {set i 0} {$i < 100} {incr i} { lappend avg_rdf 0 }
 
-foreach filename [lrange $argv 1 end] {
+foreach filename $argv {
 
     set f [open $filename "r"]
     while { [blockfile $f read auto] != "eof" } {}

@@ -139,6 +139,8 @@ static int terminated = 0;
   CB(mpi_iccp3m_iteration_slave) \
   CB(mpi_iccp3m_init_slave) \
   CB(mpi_send_rotational_inertia_slave) \
+  CB(mpi_send_affinity_slave) \
+  CB(mpi_send_out_direction_slave) \
   CB(mpi_bcast_lbboundary_slave) \
   CB(mpi_send_mu_E_slave) \
   CB(mpi_bcast_max_mu_slave) \
@@ -739,6 +741,74 @@ void mpi_send_rotational_inertia_slave(int pnode, int part)
   }
 
   on_particle_change();
+#endif
+}
+
+/********************* REQ_SET_BOND_SITE ********/
+
+void mpi_send_affinity_slave(int pnode, int part)
+{
+#ifdef AFFINITY
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+        MPI_Recv(p->p.bond_site, 3, MPI_DOUBLE, 0, SOME_TAG,
+	     comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_affinity(int pnode, int part, double bond_site[3])
+{
+#ifdef AFFINITY
+  mpi_call(mpi_send_affinity_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.bond_site[0] = bond_site[0];
+    p->p.bond_site[1] = bond_site[1];
+    p->p.bond_site[2] = bond_site[2];
+  }
+  else {
+    MPI_Send(bond_site, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+/********************* REQ_SET_OUT_DIRECTION ********/
+
+void mpi_send_out_direction(int pnode, int part, double out_direction[3])
+{
+#ifdef MEMBRANE_COLLISION
+    mpi_call(mpi_send_out_direction_slave, pnode, part);
+    
+    if (pnode == this_node) {
+        Particle *p = local_particles[part];
+        p->p.out_direction[0] = out_direction[0];
+        p->p.out_direction[1] = out_direction[1];
+        p->p.out_direction[2] = out_direction[2];
+    }
+    else {
+        MPI_Send(out_direction, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    }
+    
+    on_particle_change();
+#endif
+}
+
+void mpi_send_out_direction_slave(int pnode, int part)
+{
+#ifdef MEMBRANE_COLLISION
+    if (pnode == this_node) {
+        Particle *p = local_particles[part];
+        MPI_Recv(p->p.out_direction, 3, MPI_DOUBLE, 0, SOME_TAG,
+                 comm_cart, MPI_STATUS_IGNORE);
+    }
+    
+    on_particle_change();
 #endif
 }
 
@@ -1974,6 +2044,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 #endif
 }
 
+
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_collision_params()
 {
@@ -1991,6 +2062,37 @@ void mpi_bcast_collision_params_slave(int node, int parm)
   recalc_forces = 1;
 #endif
 }
+
+/****************** REQ_SET_PERM ************/
+
+void mpi_send_permittivity_slave(int node, int index) {
+#ifdef ELECTROSTATICS
+    if (node==this_node) {
+        double data[3];
+        int indices[3];
+        MPI_Recv(data, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+        MPI_Recv(indices, 3, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+        for (int d=0; d<3; d++) {
+            maggs_set_permittivity(indices[0], indices[1], indices[2], d, data[d]);
+        }
+    }
+#endif
+}
+
+void mpi_send_permittivity(int node, int index, int *indices, double *permittivity) {
+#ifdef ELECTROSTATICS
+    if (node==this_node) {
+        for (int d=0; d<3; d++) {
+            maggs_set_permittivity(indices[0], indices[1], indices[2], d, permittivity[d]);
+        }
+    } else {
+        mpi_call(mpi_send_permittivity_slave, node, index);
+        MPI_Send(permittivity, 3, MPI_DOUBLE, node, SOME_TAG, comm_cart);
+        MPI_Send(indices, 3, MPI_INT, node, SOME_TAG, comm_cart);
+    }
+#endif
+}
+
 
 /****************** REQ_SET_EXT ************/
 

@@ -268,7 +268,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
   
   init_doublelist(&profile);
   Tcl_ResetResult(interp);
-  Tcl_SplitList(interp, argv[1], &tmp_argc, &tmp_argv);
+  Tcl_SplitList(interp, argv[1], &tmp_argc, (const char ***)&tmp_argv);
   realloc_doublelist(&profile, profile.n = tmp_argc);
   //printf("profile.n %d, meta_xi_num_bins %d\n",profile.n,meta_xi_num_bins);
   /* Now check that the number of items parsed is equal to the number of bins */
@@ -285,7 +285,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
   for(i = 0 ; i < tmp_argc-empty_line; i++) {
     int tmp_argc2;
     char  **tmp_argv2;
-    Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, &tmp_argv2);
+    Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, (const char ***)&tmp_argv2);
     if (tmp_argc2 != 1) {
       Tcl_AppendResult(interp, "data set has to be a list of doubles", (char *) NULL);
       parse_error = 1; break;
@@ -304,7 +304,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
   argc -= 1; argv += 1;
   init_doublelist(&force);
   Tcl_ResetResult(interp);
-  Tcl_SplitList(interp, argv[1], &tmp_argc, &tmp_argv);
+  Tcl_SplitList(interp, argv[1], &tmp_argc, (const char ***)&tmp_argv);
   realloc_doublelist(&force, force.n = tmp_argc);
   /* Now check that the number of items parsed is equal to the number of bins */
   if (profile.n == meta_xi_num_bins+1)
@@ -316,7 +316,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
   for(i = 0 ; i < tmp_argc-empty_line; i++) {
     int tmp_argc2;
     char  **tmp_argv2;
-    Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, &tmp_argv2);
+    Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, (const char ***)&tmp_argv2);
     if (tmp_argc2 != 1) {
       Tcl_AppendResult(interp, "data set has to be a list of doubles", (char *) NULL);
       parse_error = 1; break;

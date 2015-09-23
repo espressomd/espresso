@@ -574,8 +574,6 @@ dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
 dnl with_tcl=no   bail out
 dnl otherwise     use the specified version
 
-AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
-
 if test .$with_tcl = .no; then
    use_tcl=none
 elif test .$with_tcl = .yes; then

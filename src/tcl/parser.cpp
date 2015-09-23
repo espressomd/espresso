@@ -33,7 +33,7 @@ using namespace std;
 
 int parse_int_list(Tcl_Interp *interp, char *list, IntList *il) {
   int tmp_argc, res = 1;
-  char  **tmp_argv;
+  const char  **tmp_argv;
   Tcl_SplitList(interp, list, &tmp_argc, &tmp_argv);
   realloc_intlist(il, il->n = tmp_argc);
   for (int i = 0 ; i < tmp_argc; i++) 
@@ -47,7 +47,7 @@ int parse_int_list(Tcl_Interp *interp, char *list, IntList *il) {
 
 int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl) {
   int tmp_argc, res = 1;
-  char  **tmp_argv;
+  const char  **tmp_argv;
   Tcl_SplitList(interp, list, &tmp_argc, &tmp_argv);
   realloc_doublelist(dl, dl->n = tmp_argc);
   for  (int i = 0 ; i < tmp_argc; i++) 
