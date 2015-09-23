@@ -485,34 +485,26 @@ __device__ inline void atomicAdd(float* address, float value){
 #error I need at least compute capability 1.1
 #endif
 
-__global__ void apply_diff_op( CUFFT_TYPE_COMPLEX *mesh, const int mesh_size, 
-			       CUFFT_TYPE_COMPLEX *force_mesh_x,  CUFFT_TYPE_COMPLEX *force_mesh_y, CUFFT_TYPE_COMPLEX *force_mesh_z, 
-			       const REAL_TYPE box ) {
-  const int linear_index = mesh_size*mesh_size*blockIdx.x + mesh_size * blockIdx.y + threadIdx.x;
+__global__ void apply_diff_op( const P3MGpuData p ) {
+  const int linear_index = p.mesh[1]*p.mesh[2]*blockIdx.x + p.mesh[2] * blockIdx.y + threadIdx.x;
 
-  if(threadIdx.x < mesh_size) {
-    int n;
-    n = ( threadIdx.x == mesh_size/2 ) ? 0.0 : threadIdx.x;
-    n = ( n > mesh_size/2) ? n - mesh_size : n;
-    weights[threadIdx.x] = n;
-  }
+  const int nx = (blockIdx.x  > p.mesh[0] / 2) ? blockIdx.x  - p.mesh[0] : blockIdx.x;
+  const int ny = (blockIdx.y  > p.mesh[1] / 2) ? blockIdx.y  - p.mesh[1] : blockIdx.y;
+  const int nz = (threadIdx.x > p.mesh[2] / 2) ? threadIdx.x - p.mesh[2] : threadIdx.x;
 
-  __syncthreads();
-
-  const int n[3] = { weights[blockIdx.x], weights[blockIdx.y], weights[threadIdx.x] };
-  const CUFFT_TYPE_COMPLEX meshw = mesh[linear_index];
+  const CUFFT_TYPE_COMPLEX meshw = p.charge_mesh[linear_index];
   CUFFT_TYPE_COMPLEX buf;
-  buf.x = -2.0 * PI * meshw.y / box;
-  buf.y =  2.0 * PI * meshw.x / box;
+  buf.x = -2.0 * PI * meshw.y;
+  buf.y =  2.0 * PI * meshw.x;
 
-  force_mesh_x[linear_index].x =  n[0] * buf.x;
-  force_mesh_x[linear_index].y =  n[0] * buf.y;
+  p.force_mesh_x[linear_index].x =  nx * buf.x / p.box[0];
+  p.force_mesh_x[linear_index].y =  nx * buf.y / p.box[0];
 
-  force_mesh_y[linear_index].x =  n[1] * buf.x;
-  force_mesh_y[linear_index].y =  n[1] * buf.y;
+  p.force_mesh_y[linear_index].x =  ny * buf.x / p.box[1];
+  p.force_mesh_y[linear_index].y =  ny * buf.y / p.box[1];
 
-  force_mesh_z[linear_index].x =  n[2] * buf.x;
-  force_mesh_z[linear_index].y =  n[2] * buf.y;
+  p.force_mesh_z[linear_index].x =  nz * buf.x / p.box[2];
+  p.force_mesh_z[linear_index].y =  nz * buf.y / p.box[2];
 }
 
 __device__ inline int wrap_index(const int ind, const int mesh) {
@@ -881,8 +873,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
 
    KERNELCALL( apply_influence_function, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.G_hat));
 
-   KERNELCALL_shared(apply_diff_op, gridConv, threadsConv, mesh*sizeof(REAL_TYPE), (p3m_gpu_data.charge_mesh, mesh, 
-                                                                                    p3m_gpu_data.force_mesh_x, p3m_gpu_data.force_mesh_y, p3m_gpu_data.force_mesh_z, box));
+   KERNELCALL(apply_diff_op, gridConv, threadsConv, (p3m_gpu_data));
   
    CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh_x, p3m_gpu_data.force_mesh_x, CUFFT_INVERSE);
    CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh_y, p3m_gpu_data.force_mesh_y, CUFFT_INVERSE);
