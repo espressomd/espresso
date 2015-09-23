@@ -76,7 +76,7 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
   GHOST_TRACE(fprintf(stderr, "%d: prepare_comm, data_parts = %d\n", this_node, comm->data_parts));
 
   comm->num = num;
-  comm->comm = (GhostCommunication*)malloc(num*sizeof(GhostCommunication));
+  comm->comm = (GhostCommunication*)Utils::malloc(num*sizeof(GhostCommunication));
   for(i=0; i<num; i++) {
     comm->comm[i].shift[0]=comm->comm[i].shift[1]=comm->comm[i].shift[2]=0.0;
   }
@@ -142,7 +142,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
   n_s_buffer = calc_transmit_size(gc, data_parts);
   if (n_s_buffer > max_s_buffer) {
     max_s_buffer = n_s_buffer;
-    s_buffer = (char*)realloc(s_buffer, max_s_buffer);
+    s_buffer = (char*)Utils::realloc(s_buffer, max_s_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will send %d\n", this_node, n_s_buffer));
 
@@ -277,7 +277,7 @@ void prepare_recv_buffer(GhostCommunication *gc, int data_parts)
   n_r_buffer = calc_transmit_size(gc, data_parts);
   if (n_r_buffer > max_r_buffer) {
     max_r_buffer = n_r_buffer;
-    r_buffer = (char*)realloc(r_buffer, max_r_buffer);
+    r_buffer = (char*)Utils::realloc(r_buffer, max_r_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will get %d\n", this_node, n_r_buffer));
 }

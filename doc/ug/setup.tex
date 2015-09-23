@@ -74,6 +74,7 @@ set:
 \item[dpd_gamma] (double, \ro) Friction constant for the
   DPD thermostat.
 \item[dpd_r_cut] (double, \ro) Cutoff for DPD thermostat.
+\item[dpd_ignore_fixed_particles] (int, \ro) Switches fixed particle DPD force calculation ON (0) or OFF (1 default).
 \item[gamma] (double, \ro) Friction constant for the
   Langevin thermostat.
 \item[integ_switch] (int, \ro) Internal switch which integrator to
@@ -426,12 +427,12 @@ it is not clear if the results obtained with that method are physically
 correct. If you want activate \texttt{inter_dpd} with fixed particles please 
 use:
 \begin{essyntax}
-  thermostat inter_dpd ignore_fixed_particles 0
+  setmd dpd_ignore_fixed_particles 0
   \begin{features}
     \required{INTER_DPD}
   \end{features}
 \end{essyntax}
-By default the flag \texttt{ignore_fixed_particles} is switched ON.
+By default the fixed particles are ignored (\texttt{dpd_ignore_fixed_particles} is 1).
 
 \subsubsection{Other DPD extensions}
 

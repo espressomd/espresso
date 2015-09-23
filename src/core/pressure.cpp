@@ -617,8 +617,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
   
     PTENSOR_TRACE(fprintf(stderr,"%d: distribute_tensors: x goes from %d to %d\n",this_node,startx, endx);)
     /* Initialise starty array */
-    starty = (int *)malloc(sizeof(int)*(occupiedxbins+1));
-    occupiedybins = (int *)malloc(sizeof(int)*occupiedxbins);
+    starty = (int *)Utils::malloc(sizeof(int)*(occupiedxbins+1));
+    occupiedybins = (int *)Utils::malloc(sizeof(int)*occupiedxbins);
 
     /* find in which y-bins the line starts and stops for each x-bin */
     /* in xbin the line starts in y-bin number starty[xbin-startx] and ends in starty[xbin-startx+1] */
@@ -645,8 +645,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     }
 
     /* Initialise startz array */
-    occupiedzbins = (int *)malloc(sizeof(int)*totoccupiedybins);
-    startz = (int *)malloc(sizeof(int)*(totoccupiedybins+1));
+    occupiedzbins = (int *)Utils::malloc(sizeof(int)*totoccupiedybins);
+    startz = (int *)Utils::malloc(sizeof(int)*(totoccupiedybins+1));
     /* find in which z-bins the line starts and stops for each y-bin*/
     counter = 0;
     if (facein == 2) {
@@ -1105,7 +1105,7 @@ int analyze_local_stress_tensor(int* periodic, double* range_start, double* rang
 
 
 	/* Allocate a doublelist of bins to keep track of stress profile */
-	TensorInBin = (DoubleList *)malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+	TensorInBin = (DoubleList *)Utils::malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
 	if ( TensorInBin ) {
 		/* Initialize the stress profile */
 		for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {

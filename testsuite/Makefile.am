@@ -35,6 +35,7 @@ tests = \
 	dh.tcl \
 	dielectric.tcl \
 	dihedral.tcl \
+	dpd.tcl \
 	ek_eof_one_species_x.tcl \
 	ek_eof_one_species_y.tcl \
 	ek_eof_one_species_z.tcl \

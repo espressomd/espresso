@@ -2738,7 +2738,7 @@ void lb_set_ek_pointer(EK_parameters* pointeradress) {
 
 unsigned int ek_calculate_boundary_mass( )
 {
-  unsigned int* bound_array = (unsigned int*) malloc( lbpar_gpu.number_of_nodes*sizeof(unsigned int) );
+  unsigned int* bound_array = (unsigned int*) Utils::malloc( lbpar_gpu.number_of_nodes*sizeof(unsigned int) );
 
   lb_get_boundary_flags_GPU(bound_array);
 
@@ -2810,7 +2810,7 @@ int ek_lb_print_vtk_velocity( char* filename ) {
     return 1;
   }
   
-  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
+  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) Utils::malloc( lbpar_gpu.number_of_nodes *
                                                         sizeof( LB_rho_v_pi_gpu ) );
   lb_get_values_GPU( host_values );
   
@@ -2847,7 +2847,7 @@ LOOKUP_TABLE default\n",
 
 int ek_node_print_velocity( int x, int y, int z, double* velocity ) { //TODO only calculate single node velocity
   
-  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
+  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) Utils::malloc( lbpar_gpu.number_of_nodes *
                                                         sizeof( LB_rho_v_pi_gpu ) );
   lb_get_values_GPU( host_values );
   
@@ -2872,7 +2872,7 @@ int ek_lb_print_vtk_density( char* filename ) {
     return 1;
   }
   
-  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
+  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) Utils::malloc( lbpar_gpu.number_of_nodes *
                                                         sizeof( LB_rho_v_pi_gpu ) );
   lb_get_values_GPU( host_values );
   
@@ -2914,7 +2914,7 @@ int ek_print_vtk_density( int species, char* filename ) {
     return 1;
   }
 
-  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+  ekfloat* densities = (ekfloat*) Utils::malloc( ek_parameters.number_of_nodes *
                                       sizeof( ekfloat )                 );
   
   if( ek_parameters.species_index[ species ] != -1 ) 
@@ -2962,7 +2962,7 @@ LOOKUP_TABLE default\n",
 
 int ek_node_print_density( int species, int x, int y, int z, double* density ) {
 
-  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+  ekfloat* densities = (ekfloat*) Utils::malloc( ek_parameters.number_of_nodes *
                                       sizeof( ekfloat )                 );
   
   if( ek_parameters.species_index[ species ] != -1 ) 
@@ -2993,7 +2993,7 @@ int ek_node_print_flux( int species, int x, int y, int z, double* flux ) {
   coord[1] = y;
   coord[2] = z;
 
-  ekfloat* fluxes = (ekfloat*) malloc( ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) );
+  ekfloat* fluxes = (ekfloat*) Utils::malloc( ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) );
   
   if( ek_parameters.species_index[ species ] != -1 ) 
   {  
@@ -3139,7 +3139,7 @@ int ek_print_vtk_flux( int species, char* filename ) {
     return 1;
   }
 
-  ekfloat* fluxes = (ekfloat*) malloc( ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) );
+  ekfloat* fluxes = (ekfloat*) Utils::malloc( ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) );
   
   if( ek_parameters.species_index[ species ] != -1 ) 
   {  
@@ -3290,7 +3290,7 @@ int ek_print_vtk_potential( char* filename ) {
     return 1;
   }
 
-  float* potential = (float*) malloc( ek_parameters.number_of_nodes * sizeof( cufftReal ) );
+  float* potential = (float*) Utils::malloc( ek_parameters.number_of_nodes * sizeof( cufftReal ) );
   
   cuda_safe_mem( cudaMemcpy( potential, 
                              ek_parameters.charge_potential,
@@ -3337,7 +3337,7 @@ int ek_print_vtk_particle_potential( char* filename ) {
     return 1;
   }
 
-  float* potential = (float*) malloc( ek_parameters.number_of_nodes * sizeof( cufftReal ) );
+  float* potential = (float*) Utils::malloc( ek_parameters.number_of_nodes * sizeof( cufftReal ) );
   
   cuda_safe_mem( cudaMemcpy( potential, 
                              ek_parameters.charge_potential_buffer,
@@ -3387,7 +3387,7 @@ int ek_print_vtk_lbforce( char* filename ) {
     return 1;
   }
 
-  lbForceFloat* lbforce = (lbForceFloat*) malloc( ek_parameters.number_of_nodes * 3 *sizeof( lbForceFloat ) );
+  lbForceFloat* lbforce = (lbForceFloat*) Utils::malloc( ek_parameters.number_of_nodes * 3 *sizeof( lbForceFloat ) );
   
   cuda_safe_mem( cudaMemcpy( lbforce, 
                              node_f.force_buf,
@@ -3441,7 +3441,7 @@ int ek_print_vtk_pressure( char* filename ) {
     return 1;
   }
 
-  float* pressure = (float*) malloc( ek_parameters.number_of_nodes * sizeof( float ) );
+  float* pressure = (float*) Utils::malloc( ek_parameters.number_of_nodes * sizeof( float ) );
   
   cuda_safe_mem( cudaMemcpy( pressure, 
                              ek_parameters.pressure,
@@ -3843,7 +3843,7 @@ int ek_neutralize_system(int species) {
 int ek_save_checkpoint(char* filename) {
   std::string fname(filename);
   std::ofstream fout((const char *) (fname + ".ek").c_str(), std::ofstream::binary);
-  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+  ekfloat* densities = (ekfloat*) Utils::malloc( ek_parameters.number_of_nodes *
                                       sizeof( ekfloat )                 );
 
   for(int i = 0; i < ek_parameters.number_of_species; i++)
@@ -3873,7 +3873,7 @@ int ek_save_checkpoint(char* filename) {
 int ek_load_checkpoint(char* filename) {
   std::string fname(filename);
   std::ifstream fin((const char *) (fname + ".ek").c_str(), std::ifstream::binary);
-  ekfloat* densities = (ekfloat*) malloc( ek_parameters.number_of_nodes *
+  ekfloat* densities = (ekfloat*) Utils::malloc( ek_parameters.number_of_nodes *
                                       sizeof( ekfloat )                 );
 
   for(int i = 0; i < ek_parameters.number_of_species; i++)

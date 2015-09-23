@@ -226,7 +226,7 @@ static int block_continueread(Tcl_Channel f, int brace_count, char *data, int si
     an error is returned.
     @return 0 on success or RETURN_CODE_ERROR
 */
-static int block_writestart(Tcl_Channel f, char index[MAXBLOCKTITLE])
+static int block_writestart(Tcl_Channel f, const char index[MAXBLOCKTITLE])
 {
   if (strlen(index) >= MAXBLOCKTITLE)
     return RETURN_CODE_ERROR;
@@ -364,7 +364,7 @@ int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
 
       if (exists) {
 	int err = cmdInfo.proc(cmdInfo.clientData, interp,
-			       argc, argv);
+			       argc, (const char **)argv);
 	return gather_runtime_errors(interp, err);
       }
 
@@ -425,7 +425,7 @@ int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
 	  return (TCL_ERROR);
 	}
 
-        err = cmdInfo.proc(cmdInfo.clientData, interp, argc, argv);
+        err = cmdInfo.proc(cmdInfo.clientData, interp, argc, (const char **)argv);
 	return gather_runtime_errors(interp, err);
       }
     }
@@ -442,7 +442,7 @@ int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
   exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
   free(name);
   if (exists) {
-    int err = cmdInfo.proc(cmdInfo.clientData, interp, argc, argv);
+    int err = cmdInfo.proc(cmdInfo.clientData, interp, argc, (const char **)argv);
     return gather_runtime_errors(interp, err);
   }
   Tcl_AppendResult(interp, "unknown action \"", argv[2], " ", argv[3],

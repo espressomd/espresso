@@ -52,9 +52,6 @@ def features():
     IF BOND_ENDANGLEDIST_HARMONIC == 1:
         f.append("BOND_ENDANGLEDIST_HARMONIC")
 
-    IF AREA_FORCE_GLOBAL == 1:
-        f.append("AREA_FORCE_GLOBAL")
-
     IF TK == 1:
         f.append("TK")
 
@@ -125,10 +122,13 @@ def features():
         f.append("DPD_MASS_LIN")
 
     IF STAT_DEBUG == 1:
-        f.append("STAT_DEBUG")
+        f.append("STAT_DEBUG")        
 
-    IF VOLUME_FORCE == 1:
-        f.append("VOLUME_FORCE")
+    IF OIF_LOCAL_FORCES == 1:
+        f.append("OIF_LOCAL_FORCES")
+
+    IF OIF_LOCAL_FORCES == 1:
+        f.append("OIF_GLOBAL_FORCES")
 
     IF COMFORCE == 1:
         f.append("COMFORCE")
