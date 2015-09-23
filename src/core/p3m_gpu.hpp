@@ -37,12 +37,8 @@
 #define CUFFT_PLAN_FLAG CUFFT_Z2Z
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-  void p3m_gpu_init(int cao, int mesh, REAL_TYPE alpha, REAL_TYPE box);
-  void p3m_gpu_add_farfield_force();
-#ifdef __cplusplus
-}
-#endif
-#endif
+void p3m_gpu_init(int cao, int mesh[3], double alpha, double box[3]);
+void p3m_gpu_add_farfield_force();
+
+#endif /* _P3M_GPU_H */
+
