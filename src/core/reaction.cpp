@@ -237,7 +237,7 @@ bool in_lower_half_space(Particle p1, Particle p2)
   // This function determines whether the particle p2 is in the lower
   // half space of particle p1
   double distvec[3];
-  utils::vecsub(p1.r.p, p2.r.p, distvec);
+  get_mi_vector(distvec, p1.r.p, p2.r.p);
   double dot = utils::dot_product(p1.r.quatu, distvec);
   int sgn = utils::sign(dot);
   return (sgn+1)/2;
@@ -247,7 +247,7 @@ bool in_lower_half_space(Particle p1, Particle p2)
 void integrate_reaction_swap()
 {
   int np, check_catalyzer;
-  Particle *p1, *p2;
+  Particle *p_local, *p_neigh;
   int pairs;
   Cell *cell;
   double dist2, vec21[3], ct_ratexp, eq_ratexp, rand;
@@ -275,13 +275,14 @@ void integrate_reaction_swap()
     on_observable_calc();
 
     // Iterate over all the local cells
+    printf("rand_cells.size() = %d\n", rand_cells.size());
     for ( std::vector<int>::iterator c = rand_cells.begin(); c != rand_cells.end(); c++ )
     {
       // Take into account only those cell neighborhoods for which
       // the central cell contains a catalyzer particle
-      cell = local_cells.cell[*c];
-      p1   = cell->part;
-      np   = cell->n;
+      cell    = local_cells.cell[*c];
+      p_local = cell->part;
+      np      = cell->n;
 
       // We find all catalyzers in a cell and then randomize their ids
       // for the same reason as above and then start the catalytic
@@ -289,93 +290,123 @@ void integrate_reaction_swap()
       catalyzers.clear();
       for ( int i = 0; i < np; i++ )
       {
-        if ( p1[i].p.type == reaction.catalyzer_type )
+        if ( p_local[i].p.type == reaction.catalyzer_type )
           catalyzers.push_back(i);
       }
       std::random_shuffle(catalyzers.begin(), catalyzers.end());
 
-      // We loop over all the catalyzer particles
-      for ( std::vector<int>::iterator id = catalyzers.begin(); id != catalyzers.end(); id++ )
+      // Loop cell neighbors
+      for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
       {
-        reactants.clear();
-        products.clear();
-        // Loop cell neighbors
-        for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
+        cell    = dd.cell_inter[*c].nList[n].pList;
+        p_neigh = cell->part;
+        np      = cell->n;
+
+        // We loop over all the catalyzer particles
+        for ( std::vector<int>::iterator id = catalyzers.begin(); id != catalyzers.end(); id++ )
         {
-          cell = dd.cell_inter[*c].nList[n].pList;
-          p2   = cell->part;
-          np   = cell->n;
+          reactants.clear();
+          products.clear();
 
           // Particle list loop
           for ( int i = 0; i < np; i++ )
           {
             // Get the distance between a catalyst and another particle
-            get_mi_vector(vec21, p1[*id].r.p, p2[i].r.p);
+            get_mi_vector(vec21, p_local[*id].r.p, p_neigh[i].r.p);
             dist2 = sqrlen(vec21);
+            printf("[%f,%f,%f] - [%f,%f,%f] = [%f,%f,%f] -> %f\n",
+                   p_local[*id].r.p[0], p_local[*id].r.p[1], p_local[*id].r.p[2],
+                   p_neigh[i].r.p[0], p_neigh[i].r.p[1], p_neigh[i].r.p[2],
+                   vec21[0], vec21[1], vec21[2],
+                   dist2);
 
             // Check if the distance is within the reaction range and
             // check if no reaction has taken place on the particle in
             // the current step
-            if (dist2 < reaction.range * reaction.range && p2[i].p.catalyzer_count == 0)
+            if (dist2 < reaction.range * reaction.range && p_neigh[i].p.catalyzer_count == 0)
             {
               // If the particle is of correct type AND resides in the
               // correct half space, append it to the lists of viable
               // reaction candidates
-              if ( p2[i].p.type == reaction.reactant_type &&  in_lower_half_space(p1[*id],p2[i]) )
+              if ( p_neigh[i].p.type == reaction.reactant_type &&  in_lower_half_space(p_local[*id],p_neigh[i]) )
                 reactants.push_back(i);
-              if ( p2[i].p.type == reaction.product_type  && !in_lower_half_space(p1[*id],p2[i]) )
+              if ( p_neigh[i].p.type == reaction.product_type  && !in_lower_half_space(p_local[*id],p_neigh[i]) )
                 products.push_back(i);
             }
+          }
+          printf("n_reactants = %d, n_products = %d\n", reactants.size(), products.size());
 
-            // If reactants and products were found, perform the reaction
-            if ( reactants.size() > 0 && products.size() > 0 )
+          printf("Cell loop: %d, Catalyzer loop: %d, Cell neighbor: %d\n", *c, *id, n);
+
+          for ( int i = 0; i < products.size(); i++ )
+            printf("%d -> %d\n", products[i], p_neigh[products[i]].p.type);
+          for ( int i = 0; i < reactants.size(); i++ )
+            printf("%d -> %d\n", reactants[i], p_neigh[reactants[i]].p.type);
+
+          // If reactants and products were found, perform the reaction
+          if ( reactants.size() > 0 && products.size() > 0 )
+          {
+            // There cannot be more reactions than the minimum of
+            // the number of reactants and products.  Hence we need
+            // to determine which number is smaller and also count
+            // the number of reactions.
+            n_reactions = 0;
+
+            // If there are more products than reactants...
+            if ( reactants.size() <= products.size() )
             {
-              // There cannot be more reactions than the minimum of
-              // the number of reactants and products.  Hence we need
-              // to determine which number is smaller and also count
-              // the number of reactions.
-              n_reactions = 0;
-
-              // If there are more products than reactants...
-              if ( reactants.size() <= products.size() )
+              // ...iterate the reactant...
+              for ( std::vector<int>::iterator rt = reactants.begin(); rt < reactants.end(); rt++ )
               {
-                // ...iterate the reactant...
-                for ( std::vector<int>::iterator rt = reactants.begin(); rt < reactants.end(); rt++ )
+                // ...draw a random number number and compare to the
+                // reaction rate...
+                rand = d_random();
+                if( rand > ct_ratexp )
                 {
-                  // ...draw a random number number and compare to the
-                  // reaction rate...
-                  rand = d_random();
-                  if( rand > ct_ratexp )
-                  {
-                    // ...tag the particle for modification...
-                    p2[*rt].p.catalyzer_count = 1;
-                    n_reactions++;
-                  }
+                  // ...tag the particle for modification...
+                  p_neigh[*rt].p.catalyzer_count = 1;
+                  n_reactions++;
                 }
-
-                // ...tag as many products as there will be reactions
-                // at random
-                std::random_shuffle(products.begin(), products.end());
-                for ( int p = 0; p < n_reactions; p++ )
-                  p2[products[p]].p.catalyzer_count = 1;
               }
-              else
-              {
-                // Same as above, but for the case that the number of
-                // reactants is greater than the number of products
-                for ( std::vector<int>::iterator pt = products.begin(); pt < products.end(); pt++ )
-                {
-                  rand = d_random();
-                  if( rand > ct_ratexp )
-                  {
-                    p2[*pt].p.catalyzer_count = 1;
-                    n_reactions++;
-                  }
-                }
 
-                std::random_shuffle(reactants.begin(), reactants.end());
-                for ( int p = 0; p < n_reactions; p++ )
-                  p2[reactants[p]].p.catalyzer_count = 1;
+              // ...tag as many products as there will be reactions
+              // at random
+              std::random_shuffle(products.begin(), products.end());
+              for ( int p = 0; p < n_reactions; p++ )
+              {
+                p_neigh[products[p]].p.catalyzer_count = 1;
+                if ( p_neigh[products[p]].p.type != reaction.product_type )
+                {
+                  printf("p_neigh[%d].p.type is %d instead of %d\n",
+                         products[p], p_neigh[products[p]].p.type, reaction.product_type);
+                  exit(666);
+                }
+              }
+            }
+            else
+            {
+              // Same as above, but for the case that the number of
+              // reactants is greater than the number of products
+              for ( std::vector<int>::iterator pt = products.begin(); pt < products.end(); pt++ )
+              {
+                rand = d_random();
+                if( rand > ct_ratexp )
+                {
+                  p_neigh[*pt].p.catalyzer_count = 1;
+                  n_reactions++;
+                }
+              }
+
+              std::random_shuffle(reactants.begin(), reactants.end());
+              for ( int p = 0; p < n_reactions; p++ )
+              {
+                p_neigh[reactants[p]].p.catalyzer_count = 1;
+                if ( p_neigh[reactants[p]].p.type != reaction.reactant_type )
+                {
+                  printf("p_neigh[%d].p.type is %d instead of %d\n",
+                         reactants[p], p_neigh[reactants[p]].p.type, reaction.reactant_type);
+                  exit(666);
+                }
               }
             }
           }
@@ -387,26 +418,26 @@ void integrate_reaction_swap()
     // loop over all cells
     for ( std::vector<int>::iterator c = rand_cells.begin(); c != rand_cells.end(); c++)
     {
-      cell = local_cells.cell[*c];
-      p1   = cell->part;
-      np   = cell->n;
+      cell    = local_cells.cell[*c];
+      p_local = cell->part;
+      np      = cell->n;
       // Particle list loop
       for ( int i = 0; i < np; i++ )
       {
         // If the particle has been tagged we perform the changes
-        if ( p1[i].p.catalyzer_count != 0 )
+        if ( p_local[i].p.catalyzer_count != 0 )
         {
           // Flip charge
-          p1[i].p.q *= -1;
+          p_local[i].p.q *= -1;
 
           // Flip type
-          if ( p1[i].p.type == reaction.reactant_type )
-            p1[i].p.type = reaction.product_type;
+          if ( p_local[i].p.type == reaction.reactant_type )
+            p_local[i].p.type = reaction.product_type;
           else
-            p1[i].p.type = reaction.reactant_type;
+            p_local[i].p.type = reaction.reactant_type;
 
           // Reset the tag for the next step
-          p1[i].p.catalyzer_count = 0;
+          p_local[i].p.catalyzer_count = 0;
         }
       }
     }
