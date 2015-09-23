@@ -859,7 +859,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
    assign_charges(lb_particle_gpu, p3m_gpu_data);
 
    if (CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.charge_mesh, p3m_gpu_data.charge_mesh, CUFFT_FORWARD) != CUFFT_SUCCESS){
-     fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed\n");
+     fprintf(stderr, "CUFFT error: Forward FFT failed\n");
      return;
    }
 
@@ -873,7 +873,5 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
 
    assign_forces(lb_particle_gpu, p3m_gpu_data, lb_particle_force_gpu, prefactor);
  }
-
-
 
 #endif /* ELECTROSTATICS */
