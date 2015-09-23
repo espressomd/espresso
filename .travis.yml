@@ -36,5 +36,20 @@ matrix:
       env: with_mpi=false make_check=false myconfig=nocheck-maxset 
     - compiler: clang
       env: with_mpi=false myconfig=maxset without-cuda
+    - compiler: clang
+      env: OMPI_CC=clang OMPI_CXX=clang++ myconfig=default
+    - compiler: clang
+      env: OMPI_CC=clang OMPI_CXX=clang++ myconfig=maxset
+    - compiler: clang
+      env: OMPI_CC=clang OMPI_CXX=clang++ myconfig=molcut
+    - compiler: clang
+      env: OMPI_CC=clang OMPI_CXX=clang++ myconfig=rest1
+    - compiler: clang
+      env: OMPI_CC=clang OMPI_CXX=clang++ myconfig=rest2
+    - compiler: clang
+      env: OMPI_CC=clang OMPI_CXX=clang++ make_check=false myconfig=nocheck-maxset 
+    - compiler: clang
+      env: OMPI_CC=clang OMPI_CXX=clang++ myconfig=maxset without-cuda
+
 
 script: ./maintainer/travis/build.sh
