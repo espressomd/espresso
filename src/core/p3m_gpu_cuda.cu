@@ -516,10 +516,10 @@ __device__ inline int wrap_index(const int ind, const int mesh) {
     return ind;	   
 }
 
-__global__ void apply_influence_function( CUFFT_TYPE_COMPLEX *mesh, int mesh_size, REAL_TYPE *G_hat ) {
-  int linear_index = mesh_size*mesh_size*blockIdx.x + mesh_size * blockIdx.y + threadIdx.x;
-  mesh[linear_index].x *= G_hat[linear_index];
-  mesh[linear_index].y *= G_hat[linear_index];
+__global__ void apply_influence_function( const P3MGpuData p ) {
+  int linear_index = p.mesh[1]*p.mesh[2]*blockIdx.x + p.mesh[2] * blockIdx.y + threadIdx.x;
+  p.charge_mesh[linear_index].x *= p.G_hat[linear_index];
+  p.charge_mesh[linear_index].y *= p.G_hat[linear_index];
 }
 
 
@@ -871,7 +871,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
      return;
    }
 
-   KERNELCALL( apply_influence_function, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.G_hat));
+   KERNELCALL( apply_influence_function, gridConv, threadsConv, (p3m_gpu_data));
 
    KERNELCALL(apply_diff_op, gridConv, threadsConv, (p3m_gpu_data));
   
