@@ -46,7 +46,7 @@
 #include "EspressoSystemInterface.hpp"
 #include "interaction_data.hpp"
 
-struct dummytypename {
+struct P3MGpuData {
   CUFFT_TYPE_COMPLEX *charge_mesh;
   CUFFT_TYPE_COMPLEX *force_mesh_x;
   CUFFT_TYPE_COMPLEX *force_mesh_y;
@@ -57,7 +57,9 @@ struct dummytypename {
   REAL_TYPE alpha;
   int npart;
   REAL_TYPE box;
-} p3m_gpu_data;
+};
+
+P3MGpuData p3m_gpu_data;
 
 static char p3m_gpu_data_initialized = 0;
 
@@ -349,7 +351,7 @@ __device__ REAL_TYPE caf(int i, REAL_TYPE x) {
 }
 
 
-__device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alpha, int mesh, int NX, int NY, int NZ,
+__device__ void static Aliasing_sums_ik (const P3MGpuData p, int NX, int NY, int NZ,
 						   REAL_TYPE *Zaehler, REAL_TYPE *Nenner ) {
   REAL_TYPE S1,S2,S3;
   REAL_TYPE fak1,fak2,zwi;
@@ -357,22 +359,22 @@ __device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alph
   REAL_TYPE NMX,NMY,NMZ;
   REAL_TYPE NM2;
   REAL_TYPE expo, TE;
-  REAL_TYPE Leni = 1.0/box;
+  REAL_TYPE Leni = 1.0/p.box;
 
-  fak1 = 1.0/ ( REAL_TYPE ) mesh;
-  fak2 = SQR ( PI/ ( alpha ) );
+  fak1 = 1.0/ ( REAL_TYPE ) p.mesh;
+  fak2 = SQR ( PI/ ( p.alpha ) );
 
   Zaehler[0] = Zaehler[1] = Zaehler[2] = *Nenner = 0.0;
 
   for ( MX = -P3M_BRILLOUIN; MX <= P3M_BRILLOUIN; MX++ ) {
-    NMX = ( ( NX > mesh/2 ) ? NX - mesh : NX ) + mesh*MX;
-    S1 = pow ( csinc(fak1*NMX ), 2*cao );
+    NMX = ( ( NX > p.mesh/2 ) ? NX - p.mesh : NX ) + p.mesh*MX;
+    S1 = pow ( csinc(fak1*NMX ), 2*p.cao );
     for ( MY = -P3M_BRILLOUIN; MY <= P3M_BRILLOUIN; MY++ ) {
-      NMY = ( ( NY > mesh/2 ) ? NY - mesh : NY ) + mesh*MY;
-      S2   = S1*pow ( csinc (fak1*NMY ), 2*cao );
+      NMY = ( ( NY > p.mesh/2 ) ? NY - p.mesh : NY ) + p.mesh*MY;
+      S2   = S1*pow ( csinc (fak1*NMY ), 2*p.cao );
       for ( MZ = -P3M_BRILLOUIN; MZ <= P3M_BRILLOUIN; MZ++ ) {
-	NMZ = ( ( NZ > mesh/2 ) ? NZ - mesh : NZ ) + mesh*MZ;
-	S3   = S2*pow ( csinc( fak1*NMZ ), 2*cao );
+	NMZ = ( ( NZ > p.mesh/2 ) ? NZ - p.mesh : NZ ) + p.mesh*MZ;
+	S3   = S2*pow ( csinc( fak1*NMZ ), 2*p.cao );
 
 	NM2 = SQR ( NMX*Leni ) + SQR ( NMY*Leni ) + SQR ( NMZ*Leni );
 	*Nenner += S3;
@@ -390,7 +392,7 @@ __device__ void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alph
 
 /* Calculate influence function */
 
-__global__ void calculate_influence_function_device ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
+__global__ void calculate_influence_function_device (const P3MGpuData p) {
 
   const int NX = blockDim.x * blockIdx.x + threadIdx.x;
   const int NY = blockDim.y * blockIdx.y + threadIdx.y;
@@ -399,27 +401,27 @@ __global__ void calculate_influence_function_device ( int cao, int mesh, REAL_TY
   REAL_TYPE Zaehler[3]={0.0,0.0,0.0},Nenner=0.0;
   REAL_TYPE zwi;
   int ind = 0;
-  REAL_TYPE Leni = 1.0/box;
+  REAL_TYPE Leni = 1.0/p.box;
 
-  if((NX >= mesh) || (NY >= mesh) || (NZ >= mesh))
+  if((NX >= p.mesh) || (NY >= p.mesh) || (NZ >= p.mesh))
     return;
 
-  ind = NX*mesh*mesh + NY * mesh + NZ;
+  ind = NX*p.mesh*p.mesh + NY * p.mesh + NZ;
   	  
   if ( ( NX==0 ) && ( NY==0 ) && ( NZ==0 ) )
-    G_hat[ind]=0.0;
-  else if ( ( NX% ( mesh/2 ) == 0 ) && ( NY% ( mesh/2 ) == 0 ) && ( NZ% ( mesh/2 ) == 0 ) )
-    G_hat[ind]=0.0;
+    p.G_hat[ind]=0.0;
+  else if ( ( NX% ( p.mesh/2 ) == 0 ) && ( NY% ( p.mesh/2 ) == 0 ) && ( NZ% ( p.mesh/2 ) == 0 ) )
+    p.G_hat[ind]=0.0;
   else {
-    Aliasing_sums_ik ( cao, box, alpha, mesh, NX, NY, NZ, Zaehler, &Nenner );
+    Aliasing_sums_ik ( p, NX, NY, NZ, Zaehler, &Nenner );
 		  
-    Dnx = ( NX > mesh/2 ) ? NX - mesh : NX;
-    Dny = ( NY > mesh/2 ) ? NY - mesh : NY;
-    Dnz = ( NZ > mesh/2 ) ? NZ - mesh : NZ;
+    Dnx = ( NX > p.mesh/2 ) ? NX - p.mesh : NX;
+    Dny = ( NY > p.mesh/2 ) ? NY - p.mesh : NY;
+    Dnz = ( NZ > p.mesh/2 ) ? NZ - p.mesh : NZ;
 	    
     zwi  = Dnx*Zaehler[0]*Leni + Dny*Zaehler[1]*Leni + Dnz*Zaehler[2]*Leni;
     zwi /= ( ( SQR ( Dnx*Leni ) + SQR ( Dny*Leni ) + SQR ( Dnz*Leni ) ) * SQR ( Nenner ) );
-    G_hat[ind] = 2.0 * zwi / PI;
+    p.G_hat[ind] = 2.0 * zwi / PI;
   }
 }
 
@@ -908,7 +910,7 @@ extern "C" {
 	grid.z = mesh;
 
 	P3M_GPU_TRACE(printf("mesh %d, grid (%d %d %d), block (%d %d %d)\n", mesh, grid.x, grid.y, grid.z, block.x, block.y, block.z));
-	KERNELCALL(calculate_influence_function_device,grid,block,(cao, mesh, box, alpha, p3m_gpu_data.G_hat));
+	KERNELCALL(calculate_influence_function_device,grid,block,(p3m_gpu_data));
       }
       p3m_gpu_data_initialized = 1;
     }
