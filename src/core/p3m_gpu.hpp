@@ -35,10 +35,10 @@
 #ifdef _P3M_GPU_REAL_DOUBLE
 #define REAL_TYPE double
 #define CUFFT_TYPE_COMPLEX cufftDoubleComplex
-#define CUFFT_FORW_FFT cufftExecZ2Z
-#define CUFFT_BACK_FFT cufftExecZ2Z
-#define CUFFT_PLAN_FORW_FLAG CUFFT_Z2Z
-#define CUFFT_PLAN_BACK_FLAG CUFFT_Z2Z
+#define CUFFT_FORW_FFT cufftExecD2Z
+#define CUFFT_BACK_FFT cufftExecZ2D
+#define CUFFT_PLAN_FORW_FLAG CUFFT_D2Z
+#define CUFFT_PLAN_BACK_FLAG CUFFT_Z2D
 #endif
 
 void p3m_gpu_init(int cao, int mesh[3], double alpha, double box[3]);

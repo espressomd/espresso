@@ -696,7 +696,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
 
  void assign_forces(const CUDA_particle_data * const pdata,
                     const P3MGpuData p,
-                    REAL_TYPE * lb_particle_force_gpu, REAL_TYPE prefactor) {
+                    float * lb_particle_force_gpu, REAL_TYPE prefactor) {
    dim3 grid, block;
    grid.z = 1;
 
