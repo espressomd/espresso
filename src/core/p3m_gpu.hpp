@@ -24,7 +24,7 @@
 //#define _P3M_GPU_REAL_DOUBLE
 
 #ifdef _P3M_GPU_FLOAT
-#define REAL_TYPE cufftReal
+#define REAL_TYPE float
 #define CUFFT_TYPE_COMPLEX cufftComplex
 #define CUFFT_FORW_FFT cufftExecR2C
 #define CUFFT_BACK_FFT cufftExecC2R
@@ -33,7 +33,7 @@
 #endif
 
 #ifdef _P3M_GPU_REAL_DOUBLE
-#define REAL_TYPE cufftDouble
+#define REAL_TYPE double
 #define CUFFT_TYPE_COMPLEX cufftDoubleComplex
 #define CUFFT_FORW_FFT cufftExecZ2Z
 #define CUFFT_BACK_FFT cufftExecZ2Z
