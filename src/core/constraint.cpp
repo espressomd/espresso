@@ -2176,6 +2176,52 @@ void calculate_hollow_cone_dist( Particle *p1, double ppos [3],
 }
 
 
+void calculate_voxel_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_voxel *c, double *dist, double *vec)
+{
+  //int i;
+  //double fac,  c_dist, c_dist_cut;
+  //double vec_cut[3];
+  //double halfgrid = lbpar.agrid/2.0;
+	////printf("n %.0lf %.0lf %.0lf pos %.0lf %.0lf %.0lf \n", c->n[0],c->n[1],c->n[2],c->pos[0],c->pos[1],c->pos[2]);
+	
+  //c_dist=0.0;
+  //c_dist_cut=0.0;
+    //for(i=0;i<3;i++) {
+		//vec[i] = c->pos[i] - ppos[i];
+		//c_dist += SQR(vec[i]);
+		
+		//if(c->n[i] != 0.0) {
+			//vec_cut[i] = vec[i];
+			//c_dist_cut += SQR(vec[i]);
+		//}
+		//else {
+			//vec_cut[i] = 0.0;
+		//}
+  //}
+  
+  //// check if vec[i] is less than half grid length.
+  //if(vec[0]>-halfgrid && vec[0]<halfgrid && vec[1]>-halfgrid && vec[1]<halfgrid && vec[2]>-halfgrid && vec[2]<halfgrid){
+	  //c_dist = sqrt(c_dist_cut);
+	  //for(i=0;i<3;i++) {
+		 //vec[i]= vec_cut[i];
+	  //}
+  //}
+  //else {
+	  //c_dist = sqrt(c_dist);
+  //}
+  
+  ////printf("c_dist %.2lf vec %.2lf %.2lf %.2lf\n", c_dist, vec[0],vec[1],vec[2]);
+  
+    ////*dist = -c_dist;//0.5 - c_dist;
+    ////fac = *dist / c_dist;
+    ////for(i=0;i<3;i++) vec[i] *= fac;
+    
+    //// boundary is half gridlength away from lattice nodes (voxel boundary)
+    //*dist = c_dist - halfgrid;
+    //fac = *dist / c_dist;
+    //for(i=0;i<3;i++) vec[i] *= -fac;
+}
+
 void add_rod_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c)
 {
 #ifdef ELECTROSTATICS
@@ -2590,6 +2636,22 @@ void add_constraints_forces(Particle *p1)
 	      }
       }
     break;
+    
+    case CONSTRAINT_VOXEL:
+      if(checkIfInteraction(ia_params)) {
+	calculate_voxel_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.voxel, &dist, vec); 
+	if ( dist > 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else {
+        ostringstream msg;
+        msg << "voxel constraint "<< n <<" violated by particle "<<p1->p.identity;
+        runtimeError(msg);
+	}
+      }
+      break;
 
       /* electrostatic "constraints" */
     case CONSTRAINT_ROD:
@@ -2871,6 +2933,20 @@ double add_constraints_energy(Particle *p1)
     {
         if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
     }
+      break;
+  case CONSTRAINT_VOXEL: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_voxel_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.voxel, &dist, vec); 
+	if ( dist > 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, dist, dist*dist);
+	}
+    else {
+       // ostringstream msg;
+       // msg << "voxel constraint "<< n << " violated by particle " << p1->p.identity;
+       // runtimeError(msg);
+	}
+      }
       break;
   case CONSTRAINT_NONE:
       break;

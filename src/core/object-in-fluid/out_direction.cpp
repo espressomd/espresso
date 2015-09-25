@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -17,28 +17,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file bending_force.hpp Routines to calculate the bending_force energy or/and
- *  and force for a particle quadruple (two triangles that have 2 particles in common)
+/** \file out_direction.hpp Routines to calculate the outward direction of the membrane
+ *  using a particle quadruple (one particle and its 3 strategically placed neighbors)
 */
 
-#include "communication.hpp"
-#include "bending_force.hpp"
+#include "../communication.hpp"
+#include "out_direction.hpp"
 
-/// set bending_force parameters
-int bending_force_set_params(int bond_type, double phi0, double kb)
+#ifdef MEMBRANE_COLLISION
+
+// set out_direction parameters
+int out_direction_set_params(int bond_type)
 {
   if(bond_type < 0)
     return ES_ERROR;
 
   make_bond_type_exist(bond_type);
 
-  bonded_ia_params[bond_type].type = BONDED_IA_BENDING_FORCE;
+  bonded_ia_params[bond_type].type = BONDED_IA_OIF_OUT_DIRECTION;
   bonded_ia_params[bond_type].num  = 3;
-  bonded_ia_params[bond_type].p.bending_force.phi0 = phi0;
-  bonded_ia_params[bond_type].p.bending_force.kb = kb;
 
   mpi_bcast_ia_params(bond_type, -1); 
 
   return ES_OK;
 }
 
+#endif

@@ -24,8 +24,7 @@
 #include "statistics.hpp"
 #include "parser.hpp"
 #include "statistics_chain.hpp"
-#include "tcl/topology_tcl.hpp"
-
+#include "topology_tcl.hpp"
 
 /****************************************************************************************
  *                                 chain structure commands parsing

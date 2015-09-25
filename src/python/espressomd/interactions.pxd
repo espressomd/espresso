@@ -82,41 +82,23 @@ cdef extern from "interaction_data.hpp":
         double drmax2i
 
 
-#* Parameters for hyperelastic stretching_force */
-    ctypedef struct  Stretching_force_bond_parameters:
-        double r0
-        double ks
-
-
-#* Parameters for linear stretching_force */
-    ctypedef struct Stretchlin_force_bond_parameters:
-        double r0
-        double kslin
-
-
-#* Parameters for area_force_local */
-    ctypedef struct Area_force_local_bond_parameters:
-        double A0_l
-        double ka_l
-
-
-#* Parameters for area_force_global */
-    ctypedef struct Area_force_global_bond_parameters:
+#* Parameters for oif_global_forces */
+    ctypedef struct Oif_global_forces_bond_parameters:
         double A0_g
         double ka_g
-
-
-#* Parameters for bending_force */
-    ctypedef struct Bending_force_bond_parameters:
-        double phi0
-        double kb
-
-
-#* Parameters for volume_force */
-    ctypedef struct Volume_force_bond_parameters:
         double V0
         double kv
 
+#* Parameters for oif_local_forces */
+    ctypedef struct Oif_local_forces_bond_parameters:
+        double r0
+        double ks
+        double kslin
+        double phi0
+        double kb
+        double A01
+        double A02
+        double kal
 
 #* Parameters for harmonic bond Potential */
     ctypedef struct Harmonic_bond_parameters:
@@ -230,12 +212,8 @@ cdef extern from "interaction_data.hpp":
 #* Union in which to store the parameters of an individual bonded interaction */
     ctypedef union Bond_parameters:
         Fene_bond_parameters fene
-        Stretchlin_force_bond_parameters stretchlin_force
-        Stretching_force_bond_parameters stretching_force
-        Area_force_local_bond_parameters area_force_local
-        Area_force_global_bond_parameters area_force_global
-        Bending_force_bond_parameters bending_force
-        Volume_force_bond_parameters volume_force
+        Oif_global_forces_bond_parameters oif_global_forces
+        Oif_local_forces_bond_parameters oif_local_forces
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle
@@ -275,18 +253,10 @@ cdef extern from "angle_cossquare.hpp":
     int angle_cossquare_set_params(int bond_type, double bend, double phi0)
 cdef extern from "subt_lj.hpp":
     int subt_lj_set_params(int bond_type, double k, double r)
-cdef extern from "object-in-fluid/stretching_force.hpp":
-    int stretching_force_set_params(int bond_type, double r0, double ks)
-cdef extern from "object-in-fluid/area_force_local.hpp":
-    int area_force_local_set_params(int bond_type, double A0_l, double ka_l)
-cdef extern from "object-in-fluid/bending_force.hpp":
-    int bending_force_set_params(int bond_type, double phi0, double kb)
-cdef extern from "object-in-fluid/volume_force.hpp":
-    int volume_force_set_params(int bond_type, double V0, double kv)
-cdef extern from "object-in-fluid/area_force_global.hpp":
-    int area_force_global_set_params(int bond_type, double A0_g, double ka_g)
-cdef extern from "object-in-fluid/stretchlin_force.hpp":
-    int stretchlin_force_set_params(int bond_type, double r0, double kslin)
+cdef extern from "object-in-fluid/oif_global_forces.hpp":
+    int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
+cdef extern from "object-in-fluid/oif_local_forces.hpp":
+    int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal)
 
 IF ROTATION:
     cdef extern from "harmonic_dumbbell.hpp":
@@ -337,12 +307,8 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_ANGLE_HARMONIC,
         BONDED_IA_ANGLE_COSINE,
         BONDED_IA_ANGLE_COSSQUARE,
-        BONDED_IA_STRETCHING_FORCE,
-        BONDED_IA_AREA_FORCE_LOCAL,
-        BONDED_IA_BENDING_FORCE,
-        BONDED_IA_VOLUME_FORCE,
-        BONDED_IA_AREA_FORCE_GLOBAL,
-        BONDED_IA_STRETCHLIN_FORCE,
+        BONDED_IA_OIF_LOCAL_FORCES,
+        BONDED_IA_OIF_GLOBAL_FORCES,
         BONDED_IA_CG_DNA_BASEPAIR,
         BONDED_IA_CG_DNA_STACKING,
         BONDED_IA_CG_DNA_BACKBONE,
