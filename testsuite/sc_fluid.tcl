@@ -15,12 +15,12 @@
 
 source "tests_common.tcl"
 
-require_feature "LB_GPU"
+require_feature "LB"
 require_feature "EXTERNAL_FORCES"
 require_feature "SHANCHEN"
 
 puts "---------------------------------------------------------------"
-puts "- Testcase sc_fluid_gpu.tcl running on [format %02d [setmd n_nodes]] nodes"
+puts "- Testcase sc_fluid.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
 set tcl_precision 15
@@ -31,8 +31,8 @@ set tstep 1.0
 setmd skin 0.2
 setmd time_step $tstep
 setmd box_l  $box_lx $box_ly $box_lz
+#note that shanchen on the cpu only works so far with full 3d periodicity
 setmd periodic 1 1 1
-
 # SC fluid parameters
 set coupl 1.5  
 set max   2.3 
@@ -43,7 +43,7 @@ set mob 1e-1
 
 if { [ catch {
 
-lbfluid gpu dens $avg $avg mobility $mob  visc $visc $visc  friction 1.0 1.0   agrid 1.0 tau 1.0  sc_coupling 0.0 $coupl 0.0 
+lbfluid cpu dens $avg $avg mobility $mob  visc $visc $visc  friction 1.0 1.0   agrid 1.0 tau 1.0  sc_coupling 0.0 $coupl 0.0 
 thermostat off 
 
 for { set x  0  } { $x < $box_lx  } { incr x } { 
@@ -53,13 +53,15 @@ for { set x  0  } { $x < $box_lx  } { incr x } {
       }
     }
 }
-
 integrate 1000
 set v {0 0 0}
+set maxrho 0
 set vnorm {0 0 0}
 for {set z 0} { $z < $box_lz } {incr z }  { 
   for {set y 0} { $y < $box_ly } {incr y }  {
       for { set x  0  } { $x < $box_lx  } { incr x } { 
+	   set rho [lindex [lbnode $x $y $z print rho] 0]
+	   if { $rho > $maxrho} { set maxrho $rho  }
            set J [lbnode $x $y $z print v]
 	   set v [vecadd $v $J]
 	   set sqv ""
@@ -82,8 +84,9 @@ foreach c $total_absolute_momentum_per_node {
            lbfluid print vtk density "relaxA.vtk" "relaxB.vtk"
            lbfluid print vtk velocity "relaxV.vtk" 
       }
-      if { [expr abs($c) < 1e-20 ]  } { 
-	   error "average momentum per node too close to zero, this could mean that the coupling is off, check the relax*.vtk files"
+#     this is different from the gpu version, because the current goes to zero to machine precision. We have to check if the maximum density is correct
+      if { abs($maxrho - 2.4814 ) > 1e-4 } { 
+	   error "maximum density ($maxrho) not correct"
       }
       if { [expr abs($c) > 1e-4 ]  } { 
             error "average total absolute momentum per node too large ([expr abs($c)]), check the relax*.vtk files"

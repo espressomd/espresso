@@ -373,7 +373,6 @@ void lb_init_boundaries() {
           
     	  if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
      	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;
-     	      //printf("boundindex %i: \n", get_linear_index(x,y,z,lblattice.halo_grid));   
           }
           else {
             lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 0;
@@ -381,26 +380,19 @@ void lb_init_boundaries() {
         }
       }
     } 
-    //printf("init voxels\n\n");
     // SET VOXEL BOUNDARIES DIRECTLY 
     int xxx,yyy,zzz=0;
     char line[80];
 	for (n=0;n<n_lb_boundaries;n++) {
 		switch (lb_boundaries[n].type) {                
 			case LB_BOUNDARY_VOXEL:
-				//lbfields[get_linear_index(lb_boundaries[n].c.voxel.pos[0],lb_boundaries[n].c.voxel.pos[1],lb_boundaries[n].c.voxel.pos[2],lblattice.halo_grid)].boundary = n+1;
 				FILE *fp;
-				//fp=fopen("/home/mgusenbauer/Daten/Copy/DUK/GentlePump/Optimierer/NSvsLBM/geometry_files/bottleneck_fine_voxel_data_d20_converted_noMirror.csv", "r");
-				//fp=fopen("/home/mgusenbauer/Daten/Copy/DUK/GentlePump/Optimierer/NSvsLBM/geometry_files/bottleneck_fine_voxel_data_d80_converted_noMirror.csv", "r");
-				//fp=fopen("/home/mgusenbauer/Daten/Copy/DUK/GentlePump/Optimierer/NSvsLBM/geometry_files/bottleneck_fine_voxel_data_d80_converted.csv", "r");
 				fp=fopen(lb_boundaries[n].c.voxel.filename, "r");
 
 				while(fgets(line, 80, fp) != NULL)
 			   {
 				 /* get a line, up to 80 chars from fp,  done if NULL */
 				 sscanf (line, "%d %d %d", &xxx,&yyy,&zzz);
-				 //printf("%d %d %d\n", xxx,yyy,zzz);
-				 //lbfields[get_linear_index(xxx,yyy+30,zzz,lblattice.halo_grid)].boundary = n+1;
 				 lbfields[get_linear_index(xxx,yyy,zzz,lblattice.halo_grid)].boundary = n+1;
 			   }
 			   fclose(fp); 
@@ -413,104 +405,6 @@ void lb_init_boundaries() {
 				break;
 		}
 	}
-	
-	// CHECK FOR BOUNDARY NEIGHBOURS AND SET FLUID NORMAL VECTOR 
-	//int neighbours = {0,0,0,0,0,0};
-	//int x=0,y=0,z=0;
-	//double nn[]={0.0,0.0,0.0,0.0,0.0,0.0};
-	//for (n=0;n<n_lb_boundaries;n++) {
-		//switch (lb_boundaries[n].type) {                
-			//case LB_BOUNDARY_VOXEL:
-				//x=lb_boundaries[n].c.voxel.pos[0];
-				//y=lb_boundaries[n].c.voxel.pos[1];
-				//z=lb_boundaries[n].c.voxel.pos[2];
-				//if(((x-1) >= 0) && (lbfields[get_linear_index(x-1,y,z,lblattice.halo_grid)].boundary == 0)) nn[0] = -1.0;//neighbours[0] = -1;
-				//if(((x+1) <= lblattice.grid[0]) && (lbfields[get_linear_index(x+1,y,z,lblattice.halo_grid)].boundary == 0)) nn[1] = 1.0;//neighbours[1] = 1;
-				////printf("%.0lf %.0lf ",nn[0],nn[1]);
-				//lb_boundaries[n].c.voxel.n[0] = nn[0]+nn[1];
-				////nn=0.0;
-				
-				//if(((y-1) >= 0) && (lbfields[get_linear_index(x,y-1,z,lblattice.halo_grid)].boundary == 0)) nn[2] = -1.0;//neighbours[2] = -1;
-				//if(((y+1) <= lblattice.grid[1]) && (lbfields[get_linear_index(x,y+1,z,lblattice.halo_grid)].boundary == 0)) nn[3] = 1.0;//neighbours[3] = 1;
-				////printf("%.0lf %.0lf ",nn[2],nn[3]);
-				//lb_boundaries[n].c.voxel.n[1] = nn[2]+nn[3];
-				////nn=0.0;
-				
-				//if(((z-1) >= 0) && (lbfields[get_linear_index(x,y,z-1,lblattice.halo_grid)].boundary == 0)) nn[4] = -1.0;//neighbours[4] = -1;
-				//if(((z+1) <= lblattice.grid[2]) && (lbfields[get_linear_index(x,y,z+1,lblattice.halo_grid)].boundary == 0)) nn[5] = 1.0;//neighbours[5]= 1;
-				////printf("%.0lf %.0lf ",nn[4],nn[5]);
-				//lb_boundaries[n].c.voxel.n[2] = nn[4]+nn[5];
-				//nn[0]=0.0,nn[1]=0.0,nn[2]=0.0,nn[3]=0.0,nn[4]=0.0,nn[5]=0.0;
-				
-				////printf("t %d pos: %.0lf %.0lf %.0lf, fluid normal %.0lf %.0lf %.0lf\n",n, x,y,z,lb_boundaries[n].c.voxel.normal[0],lb_boundaries[n].c.voxel.normal[1],lb_boundaries[n].c.voxel.normal[2]);
-				////printf("boundaries: %d %d %d %d %d %d\n",lbfields[get_linear_index(x-1,y,z,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x+1,y,z,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x,y-1,z,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x,y+1,z,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x,y,z-1,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x,y,z+1,lblattice.halo_grid)].boundary);
-				//break;
-
-			//default:
-				//break;
-		//}
-	//}
-	
-	//// DO THE SAME FOR THE CONSTRAINTS: CONSTRAINTS MUST BE SET AND THE SAME AS LB_BOUNDARY !!!
-	//for(n=0;n<n_constraints;n++) {
-		//switch(constraints[n].type) {
-			//case CONSTRAINT_VOXEL: 
-				//x=constraints[n].c.voxel.pos[0];
-				//y=constraints[n].c.voxel.pos[1];
-				//z=constraints[n].c.voxel.pos[2];
-				//if(((x-1) >= 0) && (lbfields[get_linear_index(x-1,y,z,lblattice.halo_grid)].boundary == 0)) nn[0] = -1.0;//neighbours[0] = -1;
-				//if(((x+1) <= lblattice.grid[0]) && (lbfields[get_linear_index(x+1,y,z,lblattice.halo_grid)].boundary == 0)) nn[1] = 1.0;//neighbours[1] = 1;
-				////printf("%.0lf %.0lf ",nn[0],nn[1]);
-				//constraints[n].c.voxel.n[0] = nn[0]+nn[1];
-				////nn=0.0;
-				
-				//if(((y-1) >= 0) && (lbfields[get_linear_index(x,y-1,z,lblattice.halo_grid)].boundary == 0)) nn[2] = -1.0;//neighbours[2] = -1;
-				//if(((y+1) <= lblattice.grid[1]) && (lbfields[get_linear_index(x,y+1,z,lblattice.halo_grid)].boundary == 0)) nn[3] = 1.0;//neighbours[3] = 1;
-				////printf("%.0lf %.0lf ",nn[2],nn[3]);
-				//constraints[n].c.voxel.n[1] = nn[2]+nn[3];
-				////nn=0.0;
-				
-				//if(((z-1) >= 0) && (lbfields[get_linear_index(x,y,z-1,lblattice.halo_grid)].boundary == 0)) nn[4] = -1.0;//neighbours[4] = -1;
-				//if(((z+1) <= lblattice.grid[2]) && (lbfields[get_linear_index(x,y,z+1,lblattice.halo_grid)].boundary == 0)) nn[5] = 1.0;//neighbours[5]= 1;
-				////printf("%.0lf %.0lf ",nn[4],nn[5]);
-				//constraints[n].c.voxel.n[2] = nn[4]+nn[5];
-				//nn[0]=0.0,nn[1]=0.0,nn[2]=0.0,nn[3]=0.0,nn[4]=0.0,nn[5]=0.0;
-	
-				//break;
-			//default:
-				//break;		
-		//}	
-	//}
-
-    
-    //#ifdef VOXEL_BOUNDARIES
-    /*
-	for (z=0; z<lblattice.grid[2]+2; z++) {
-      for (y=0; y<lblattice.grid[1]+2; y++) {
-        for (x=0; x<lblattice.grid[0]+2; x++) {
-			lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;
-		}
-	  }
-	}
-	static const char filename[] = "/home/mgusenbauer/Daten/Copy/DUK/GentlePump/Optimierer/voxels/stl/data_final.csv";
-	FILE *file = fopen ( filename, "r" );
-	int coords[3];
-	printf("start new\n");
-	if ( file != NULL ){
-		char line [ 128 ]; // or other suitable maximum line size 
-		while ( fgets ( line, sizeof line, file ) != NULL ) {// read a line
-			//fputs ( line, stdout ); // write the line 
-			//coords = line.Split(' ').Select(n => Convert.ToInt32(n)).ToArray();
-			//printf("readline: %s\n",line);
-			int i;
-			sscanf(line, "%d %d %d", &coords[0],&coords[1],&coords[2]);
-			//printf("%d %d %d\n", coords[0],coords[1],coords[2]);
-			lbfields[get_linear_index(coords[0]+5,coords[1]+5,coords[2]+5,lblattice.halo_grid)].boundary = 0;
-		}
-		fclose ( file );
-	}
-	printf("end new\n");
-	*/
 #endif
   }
 }
@@ -562,7 +456,7 @@ void lb_bounce_back() {
   int next[19];
   int x,y,z;
   double population_shift;
-  double modes[19];
+  double modes[19*LBQ];
   next[0]  =   0;                       // ( 0, 0, 0) =
   next[1]  =   1;                       // ( 1, 0, 0) +
   next[2]  = - 1;                       // (-1, 0, 0)
@@ -585,34 +479,37 @@ void lb_bounce_back() {
   int reverse[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17 };
 
   /* bottom-up sweep */
-//  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
+//  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) 
   for (z=0; z<lblattice.grid[2]+2; z++) {
     for (y=0; y<lblattice.grid[1]+2; y++) {
-	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
+      for (x=0; x<lblattice.grid[0]+2; x++) {	    
         k= get_linear_index(x,y,z,lblattice.halo_grid);
     
         if (lbfields[k].boundary) {
-          lb_calc_modes(k, modes);
+             double factor = 2.*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid/lbmodel.c_sound_sq;
+             lb_calc_modes(k, modes);
     
-          for (i=0; i<19; i++) {
-            population_shift=0;
-            for (l=0; l<3; l++) {
-              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho[0]*2*lbmodel.c[i][l]*lbmodel.w[i]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq;
-            }
-            if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
-                 y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
-                 z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
-              if ( !lbfields[k-next[i]].boundary ) {
-                for (l=0; l<3; l++) {
-                  lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
-                }
-                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k]+ population_shift;
-              }
-              else { 
-                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] = 0.0;
-	      }
-            }
-          }
+             for (i=0; i<19; i++) {
+               population_shift=0;
+               for (l=0; l<3; l++) {
+                   population_shift-=lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]; // the rho factor is applied below 
+               }
+	       population_shift *= factor * lbmodel.w[i] ;
+               if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
+                    y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
+                    z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
+                 for(int ii=0 ; ii < LB_COMPONENTS ; ii++) {
+                    if ( !lbfields[k-next[i]].boundary ) {
+                      for (l=0; l<3; l++) {
+                          lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i+ii*LBQ][k]+population_shift*lbpar.rho[ii])*lbmodel.c[i][l];
+                      }
+                      lbfluid[1][reverse[i]+ii*LBQ][k-next[i]]   = lbfluid[1][i+ii*LBQ][k] + population_shift * lbpar.rho[ii];
+                    }
+                    else
+                      lbfluid[1][reverse[i]+ii*LBQ][k-next[i]]   = lbfluid[1][i+ii*LBQ][k] = 0.0;
+                 }
+               }
+             }
         }
       }
     }

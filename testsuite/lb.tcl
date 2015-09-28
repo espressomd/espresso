@@ -113,8 +113,14 @@ thermostat off
 
 # Fluid
 #############################################################
+set components [setmd lb_components]
+if { $components ==1 } { 
 lbfluid cpu dens $dens visc $viscosity agrid $agrid tau $tau
 lbfluid friction $friction
+} else { 
+lbfluid cpu dens [expr $dens/2.] [expr $dens/2.] visc $viscosity $viscosity agrid $agrid tau $tau
+lbfluid friction $friction $friction
+}
 
 thermostat lb $temp
 

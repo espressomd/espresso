@@ -33,22 +33,23 @@
 #include "statistics_fluid.hpp"
 
 #ifdef LB
-
 /** Caclulate mass of the LB fluid.
  * \param result Fluid mass
  */
 void lb_calc_fluid_mass(double *result) {
   int x, y, z, index;
-  double sum_rho=0.0, rho=0.0;
+  double sum_rho=0.0, rho[LB_COMPONENTS];
 
   for (x=1; x<=lblattice.grid[0]; x++) {
     for (y=1; y<=lblattice.grid[1]; y++) {
       for (z=1; z<=lblattice.grid[2]; z++) {
 	index = get_linear_index(x,y,z,lblattice.halo_grid);
-
-	lb_calc_local_rho(index,&rho);
+        
+	lb_calc_local_rho(index,rho);
 	//fprintf(stderr,"(%d,%d,%d) %e\n",x,y,z,rho);
-	sum_rho += rho;
+        for(int ii=0 ; ii < LB_COMPONENTS ; ii++) { 
+	   sum_rho += rho[ii];
+        }
 
       }
     }
@@ -61,20 +62,25 @@ void lb_calc_fluid_mass(double *result) {
  * \param result Fluid momentum
  */
 void lb_calc_fluid_momentum(double *result) {
-
     int x, y, z, index;
     double j[3], momentum[3] = { 0.0, 0.0, 0.0 };
-
+    int factor = (int)round(lbpar.tau/time_step);
     for (x=1; x<=lblattice.grid[0]; x++) {
 	for (y=1; y<=lblattice.grid[1]; y++) {
 	    for (z=1; z<=lblattice.grid[2]; z++) {
 		index = get_linear_index(x,y,z,lblattice.halo_grid);
 
 		lb_calc_local_j(index,j);
-		momentum[0] += j[0] + lbfields[index].force[0];
-		momentum[1] += j[1] + lbfields[index].force[1];
-		momentum[2] += j[2] + lbfields[index].force[2];
-
+		momentum[0] += j[0];
+		momentum[1] += j[1];
+		momentum[2] += j[2];
+    		if (fluidstep+1<factor) {
+                  for(int ii=0;ii<LB_COMPONENTS;ii++) { 
+                    momentum[0] += 0.5 * lbfields[index].force[0+ii*3];
+                    momentum[1] += 0.5 * lbfields[index].force[1+ii*3];
+                    momentum[2] += 0.5 * lbfields[index].force[2+ii*3];
+                  }
+                }
 	    }
 	}
     }
@@ -92,7 +98,7 @@ void lb_calc_fluid_momentum(double *result) {
  */
 void lb_calc_fluid_temp(double *result) {
   int x, y, z, index;
-  double rho, j[3];
+  double rho[LB_COMPONENTS], j[3],totrho;
   double temp = 0.0;
   int number_of_non_boundary_nodes = 0;
 
@@ -106,8 +112,10 @@ void lb_calc_fluid_temp(double *result) {
 	if ( !lbfields[index].boundary )
 #endif
 	  {
-	    lb_calc_local_fields(index, &rho, j, NULL);
-	    temp += scalar(j,j);
+            totrho=0.0;
+	    lb_calc_local_fields(index, rho, j, NULL);
+            for(int ii=0;ii<LB_COMPONENTS;ii++) totrho+=rho[ii];
+	    temp += scalar(j,j)/totrho;
 	    number_of_non_boundary_nodes++;
 	  }
       }
@@ -115,7 +123,7 @@ void lb_calc_fluid_temp(double *result) {
   }
 
   // @Todo: lblattice.agrid is 3d. What to use here?
-  temp *= 1./(3.*lbpar.rho[0]*number_of_non_boundary_nodes*
+  temp *= 1./(3.*number_of_non_boundary_nodes*
               lbpar.tau*lbpar.tau*lbpar.agrid)/n_nodes;
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
@@ -142,6 +150,7 @@ void lb_calc_densprof(double *result, int *params) {
   int index, dir[3], grid[3];
   int newroot=0, subrank, involved=0;
   double *profile;
+  double rho[LB_COMPONENTS];
   MPI_Comm slice_comm;
   MPI_Status status;
 
@@ -180,7 +189,11 @@ void lb_calc_densprof(double *result, int *params) {
     for (dir[pdir]=1;dir[pdir]<=lblattice.grid[pdir];dir[pdir]++) {
 
       index = get_linear_index(dir[0],dir[1],dir[2],lblattice.halo_grid);
-      lb_calc_local_rho(index,&profile[dir[pdir]-1]);
+
+      lb_calc_local_rho(index,rho);
+      profile[dir[pdir]-1]=0.0;
+      for(int ii=0;ii<LB_COMPONENTS;ii++)
+		 profile[dir[pdir]-1]+=rho[ii];
       //profile[dir[pdir]-1] = *lbfluid[index].rho;
 
       //if (dir[pdir]==lblattice.grid[pdir]) {
@@ -222,7 +235,7 @@ void lb_calc_velprof(double *result, int *params) {
 
   int index, dir[3], grid[3];
   int newroot=0, subrank, involved=0;
-  double rho, j[3], *velprof;
+  double rho[LB_COMPONENTS], rho_tot, j[3], *velprof;
   MPI_Comm slice_comm;
   MPI_Status status;
 
@@ -268,15 +281,18 @@ void lb_calc_velprof(double *result, int *params) {
     for (dir[pdir]=1;dir[pdir]<=lblattice.grid[pdir];dir[pdir]++) {
       
       index = get_linear_index(dir[0],dir[1],dir[2],lblattice.halo_grid);
-      lb_calc_local_fields(index, &rho, j, NULL);
+      lb_calc_local_fields(index, rho, j, NULL);
+      rho_tot = 0.0 ;
+      for (int ii=0; ii< LB_COMPONENTS ; ii++) 
+          rho_tot +=rho[ii];
       
       //fprintf(stderr,"%p %d %.12e %.12e %d\n",lbfluid[0],index,rho,j[0],vcomp);
 
-      if (rho < ROUND_ERROR_PREC) {
+      if (rho_tot < ROUND_ERROR_PREC) {
 	velprof[dir[pdir]-1] = 0.0;
       } else {
 	//velprof[dir[pdir]-1] = local_j / (SQR(lbpar.agrid)*lbpar.tau);
-	velprof[dir[pdir]-1] = j[vcomp]/rho * lbpar.agrid/lbpar.tau;
+	velprof[dir[pdir]-1] = j[vcomp]/rho_tot * lbpar.agrid/lbpar.tau;
 	//fprintf(stderr,"%f %f %f\n",velprof[dir[pdir]-1],local_j,local_rho);
       }
 

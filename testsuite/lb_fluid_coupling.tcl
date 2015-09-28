@@ -40,12 +40,25 @@ set dragx 0.3308117918333205
 set dragy 0.28623688095048233
 set dragz 0.8992396823804915
 
-set fdragx [expr -$dragx/$box_vol]
-set fdragy [expr -$dragy/$box_vol]
-set fdragz [expr -$dragz/$box_vol]
+set components [setmd lb_components]
+if { $components == 1 } { 
+	set rho 1.0
+} else  { 
+	set rho 0.5
+}
+set fdragx [expr -$rho*$dragx/$box_vol]
+set fdragy [expr -$rho*$dragy/$box_vol]
+set fdragz [expr -$rho*$dragz/$box_vol]
 
 # set the lbfluid and thermostat
-lbfluid cpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0
+if { $components == 1 } { 
+   lbfluid cpu agrid 1 dens $rho visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0
+} else { if { $components == 2 } { 
+   lbfluid cpu agrid 1 dens $rho $rho visc 3.0 3.0 tau $tstep friction 10. 10.  ext_force  $fdragx $fdragy $fdragz  $fdragx $fdragy $fdragz  sc_coupling 0.0 0.0 0.0
+} else { 
+     error_exit "number of components ($components) not supported"
+ }
+}
 thermostat lb 0.0
 
 # set the particle

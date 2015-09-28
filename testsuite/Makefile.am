@@ -108,6 +108,9 @@ tests = \
 	rotate-system-dipoles.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
+	sc_affinity.tcl \
+	sc_affinity_gpu.tcl \
+	sc_fluid.tcl \
 	sc_fluid_gpu.tcl \
 	sd_ewald.tcl \
 	sd_two_spheres.tcl \

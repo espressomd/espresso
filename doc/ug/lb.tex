@@ -111,7 +111,7 @@ set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau},
 \var{ f_x} = \var{ f_y} = \var{ f_z} = 0.
 
 If the feature \lit{SHANCHEN} is activated, the Lattice Boltzmann
-code (so far GPU version only) is extended to a two-component
+code (both CPU and GPU versions) is extended to a two-component
 Shan-Chen (SC) method.  The \lit{lbfluid} command requires in this case
 to supply two values, for the respective fluid components, to each
 of the options \lit{dens}, \lit{visc}, \lit{bulk_visc}, \lit{friction},
@@ -184,7 +184,7 @@ Section~\ref{sec:units}.
 \end{citebox}
 
 
-The Lattice Boltzmann variant of Shan and Chan\cite{shan93a} is widely
+The Lattice Boltzmann variant of Shan and Chen\cite{shan93a} is widely
 used as it is simple and yet very effective in reproducing the most
 important traits of multicomponent or multiphase fluids. The version
 of the Shan-Chen method implemented in \es is an extension to
@@ -286,6 +286,9 @@ $\lambda_A$,$\kappa_A$,$\lambda_B$ and $\kappa_B$, where $A$ and $B$
 denote the first and second fluid component, respectively.  A complete
 description of the copuling scheme can be found in \cite{sega13c}.
 
+\section{SC boundaries\label{sec:scmd-boundaries}}
+The Shan-Chen code implements boundaries, which can be set up using the same syntax of the single component lattice Boltzman code (see \ref{sec:lbboundary}). Both the CPU and GPU version of the boundaries for Shan-Chen are implemented with neutral wetting conditions, meaning that the contact angle of droplets will be 90 deg.
+
 \section{SC component-dependent interactions between particles}
 \label{sec:scmd-affinity}
 
@@ -366,13 +369,14 @@ exported. If you plan to use paraview for visualization, note that also the
 particle positions can be exportet in the VTK format \ref{sec:writevtk}.
 If the \lit{SHANCHEN} bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
 
-\section{Setting up boundary conditions}
+\section{Setting up boundary conditions\label{sec:lbboundary}}
 \begin{essyntax}
   \variant{1} lbboundary \var{shape} \var{shape\_args} \opt{velocity
     \var{vx} \var{vy} \var{vz}}
   \variant{2} lbboundary force \opt{\var{n_\mathrm{boundary}}}
   \begin{features}
   \required{LB_BOUNDARIES}
+  \required{LB_BOUNDARIES_GPU}
   \end{features}
 \end{essyntax}
 

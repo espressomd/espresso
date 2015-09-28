@@ -114,7 +114,7 @@ inline double d_random(void)
   iy = l_random();
   if ((temp = AM * iy) > RNMX) 
     temp = RNMX;
-  return temp;
+  return temp; 
 }
 
 /*----------------------------------------------------------------------*/

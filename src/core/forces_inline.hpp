@@ -218,11 +218,17 @@ espressoSystemInterface.update();
   prepare_collision_queue();
 #endif
 
-#ifdef LB_GPU
 #ifdef SHANCHEN
-  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) lattice_boltzmann_calc_shanchen_gpu();
+#ifdef LB_GPU
+  if ( lattice_switch & LATTICE_LB_GPU && this_node == 0 ) lattice_boltzmann_calc_shanchen_gpu();
+#endif
+#ifdef LB
+  if (lattice_switch & LATTICE_LB) lattice_boltzmann_calc_shanchen_cpu();
+#endif
 #endif // SHANCHEN
 
+
+#ifdef LB_GPU
   // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
   // this_node==0 makes sure it is the master node where the gpu exists
   if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
@@ -1029,4 +1035,4 @@ inline void check_particle_force(Particle *part) {
 #endif
 }
 
-#endif
+#endif //_FORCES_INLINE_HPP

@@ -630,7 +630,7 @@ int observable_calc_lb_velocity_profile(observable* self) {
 	  p[0]=xoffset + i*x_incr;
 	  p[1]=yoffset + j*y_incr;
 	  p[2]=zoffset + k*z_incr;
-	  if (lb_lbfluid_get_interpolated_velocity(p, v)!=0)
+	  if (lb_lbfluid_get_interpolated_velocity_global(p, v)!=0)
 	    return 1;
 	  linear_index = 0;
 	  if (pdata->xbins > 1)
@@ -755,7 +755,7 @@ int mpi_observable_lb_radial_velocity_profile_parallel(void* pdata_, double* A, 
             || p[2] < my_left[2] || p[2]>my_right[2] )
           continue;
 
-        if (lb_lbfluid_get_interpolated_velocity(p, v)!=0)
+        if (lb_lbfluid_get_interpolated_quantities(p, v, NULL,NULL)!=0)
           return 1;
         linear_index = 0;
         if (pdata->rbins > 1)

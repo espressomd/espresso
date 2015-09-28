@@ -63,6 +63,7 @@
 #define LBPAR_MOBILITY 9
 #endif
 /*@}*/
+extern int fluidstep;
 
 #if defined(LB_DOUBLE_PREC) || defined(EK_DOUBLE_PREC)
 typedef double lbForceFloat;

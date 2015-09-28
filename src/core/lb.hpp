@@ -30,6 +30,8 @@
 #include "utils.hpp"
 #include "lattice_inline.hpp"
 
+extern int fluidstep;
+extern double time_step;
 extern int lb_components ; // global variable holding the number of fluid components
 
 #ifdef LB
@@ -39,6 +41,7 @@ extern int lb_components ; // global variable holding the number of fluid compon
  * explicitly. This saves a lot of multiplications with 1's and 0's
  * thus making the code more efficient. */
 #define D3Q19
+#define LBQ 19
 
 /** \name Parameter fields for Lattice Boltzmann 
  * The numbers are referenced in \ref mpi_bcast_lb_params 
@@ -52,6 +55,10 @@ extern int lb_components ; // global variable holding the number of fluid compon
 #define LBPAR_FRICTION  4 /**< friction coefficient for viscous coupling between particles and fluid */
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
+#ifdef SHANCHEN
+#define LBPAR_COUPLING 7
+#define LBPAR_MOBILITY 8
+#endif
 
 /** Note these are used for binary logic so should be powers of 2 */
 #define LB_COUPLE_NULL        1
@@ -108,7 +115,7 @@ typedef struct {
   int recalc_fields;
 
   /** local density */
-  double rho[1];
+  double rho[LB_COMPONENTS];
 
   /** local momentum */
   double j[3];
@@ -123,7 +130,10 @@ typedef struct {
   int has_force;
 
   /** local force density */
-  double force[3];
+  double force[3*LB_COMPONENTS];
+#ifdef SHANCHEN
+  double scforce[3*LB_COMPONENTS]; // TODO: can join it with the IMMERSED_BOUNDARY buffer force?
+#endif
 #ifdef IMMERSED_BOUNDARY
 // For particle update, we need the force on the nodes in LBM
 // Yet, Espresso resets the force immediately after the LBM update
@@ -166,10 +176,17 @@ typedef struct {
   double friction[LB_COMPONENTS];
 
   /** external force applied to the fluid at each lattice site (MD units) */
-  double ext_force[3]; /* Open question: Do we want a local force or global force? */
+  double ext_force[3*LB_COMPONENTS]; /* Open question: Do we want a local force or global force? */
   double rho_lb_units[LB_COMPONENTS];
   double gamma_odd[LB_COMPONENTS];
   double gamma_even[LB_COMPONENTS];
+
+#ifdef SHANCHEN
+  /** mobility. They are actually LB_COMPONENTS-1 in number, we leave LB_COMPONENTS here for practical reasons*/
+  double mobility[LB_COMPONENTS];
+  double coupling[LB_COMPONENTS*LB_COMPONENTS];
+  int remove_momentum;
+#endif // SHANCHEN  
 
   int resend_halo;
           
@@ -203,8 +220,9 @@ extern double lblambda_bulk;
 
 extern int resend_halo;
 
-extern double gamma_shear;
-extern double gamma_bulk;
+extern double gamma_shear[LB_COMPONENTS];
+extern double gamma_bulk[LB_COMPONENTS];
+extern double gamma_mobility[LB_COMPONENTS];
 
 /************************************************************/
 /** \name Exported Functions */
@@ -262,7 +280,7 @@ void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi)
     @param j local fluid speed
     @param pi local fluid pressure
 */
-void lb_calc_n_from_rho_j_pi(const index_t index, const double rho, const double *j, double *pi);
+void lb_calc_n_from_rho_j_pi(const index_t index, double* rho, const double *j, double *pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
@@ -279,10 +297,11 @@ void lb_propagate();
  */
 void calc_particle_lattice_ia();
 
+
 /** calculates the fluid velocity at a given position of the 
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
-int lb_lbfluid_get_interpolated_velocity(double* p, double* v); 
+int lb_lbfluid_get_interpolated_quantities(double* p, double* v, double * rho, double * gradrho); 
 
 inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi); 
 
@@ -290,9 +309,16 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
 /** Calculation of hydrodynamic modes.
  *
  *  @param index number of the node to calculate the modes for
- *  @param mode output pointer to a double[19] 
+ *  @param mode output pointer to a double[19*LB_COMPONENTS] 
  */
 void lb_calc_modes(index_t index, double *mode);
+
+/** Calculation of hydrodynamic mass modes.
+ *
+ *  @param index number of the node to calculate the modes for
+ *  @param mode output pointer to a double[19*LB_COMPONENTS]
+ */
+void lb_calc_mass_modes(index_t index, double *mode) ;
 
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
@@ -300,7 +326,6 @@ void lb_calc_modes(index_t index, double *mode);
  * @param rho   local fluid density
  */
 inline void lb_calc_local_rho(index_t index, double *rho) {
-
 #ifndef D3Q19
 #error Only D3Q19 is implemened!
 #endif
@@ -313,20 +338,21 @@ inline void lb_calc_local_rho(index_t index, double *rho) {
     *rho =0;
     return;
   }
-
-  double avg_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
-
-  *rho =   avg_rho
-         + lbfluid[0][0][index]
-         + lbfluid[0][1][index]  + lbfluid[0][2][index]
-         + lbfluid[0][3][index]  + lbfluid[0][4][index]
-         + lbfluid[0][5][index]  + lbfluid[0][6][index] 
-         + lbfluid[0][7][index]  + lbfluid[0][8][index]  
-	       + lbfluid[0][9][index]  + lbfluid[0][10][index]
-         + lbfluid[0][11][index] + lbfluid[0][12][index] 
-	       + lbfluid[0][13][index] + lbfluid[0][14][index] 
-         + lbfluid[0][15][index] + lbfluid[0][16][index] 
-	       + lbfluid[0][17][index] + lbfluid[0][18][index];
+  for (int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
+      double avg_rho = lbpar.rho[ii]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+    
+      rho[ii] =   avg_rho
+             + lbfluid[0][ii*LBQ+0][index]
+             + lbfluid[0][ii*LBQ+1][index]  + lbfluid[0][ii*LBQ+2][index]
+             + lbfluid[0][ii*LBQ+3][index]  + lbfluid[0][ii*LBQ+4][index]
+             + lbfluid[0][ii*LBQ+5][index]  + lbfluid[0][ii*LBQ+6][index] 
+             + lbfluid[0][ii*LBQ+7][index]  + lbfluid[0][ii*LBQ+8][index]  
+    	     + lbfluid[0][ii*LBQ+9][index]  + lbfluid[0][ii*LBQ+10][index]
+             + lbfluid[0][ii*LBQ+11][index] + lbfluid[0][ii*LBQ+12][index] 
+    	     + lbfluid[0][ii*LBQ+13][index] + lbfluid[0][ii*LBQ+14][index] 
+             + lbfluid[0][ii*LBQ+15][index] + lbfluid[0][ii*LBQ+16][index] 
+    	     + lbfluid[0][ii*LBQ+17][index] + lbfluid[0][ii*LBQ+18][index];
+  }
 
 }
 
@@ -340,29 +366,8 @@ inline void lb_calc_local_j(index_t index, double *j) {
 #ifndef D3Q19
 #error Only D3Q19 is implemened!
 #endif
-  if (!(lattice_switch & LATTICE_LB)) {
-      ostringstream msg;
-      msg <<"Error in lb_calc_local_j in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
-      runtimeError(msg);
-    j[0]=j[1]=j[2]=0;
-    return;
-  }
-
-  j[0] =   lbfluid[0][1][index]  - lbfluid[0][2][index]
-         + lbfluid[0][7][index]  - lbfluid[0][8][index]  
-         + lbfluid[0][9][index]  - lbfluid[0][10][index] 
-         + lbfluid[0][11][index] - lbfluid[0][12][index] 
-         + lbfluid[0][13][index] - lbfluid[0][14][index];
-  j[1] =   lbfluid[0][3][index]  - lbfluid[0][4][index]
-         + lbfluid[0][7][index]  - lbfluid[0][8][index]  
-         - lbfluid[0][9][index]  + lbfluid[0][10][index]
-         + lbfluid[0][15][index] - lbfluid[0][16][index] 
-         + lbfluid[0][17][index] - lbfluid[0][18][index]; 
-  j[2] =   lbfluid[0][5][index]  - lbfluid[0][6][index]  
-         + lbfluid[0][11][index] - lbfluid[0][12][index] 
-         - lbfluid[0][13][index] + lbfluid[0][14][index]
-         + lbfluid[0][15][index] - lbfluid[0][16][index] 
-         - lbfluid[0][17][index] + lbfluid[0][18][index];
+  double rho[LB_COMPONENTS];
+  lb_calc_local_fields(index, rho, j, NULL);
 
 }
 
@@ -401,7 +406,10 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
       ostringstream msg;
       msg <<"Error in lb_calc_local_fields in " << __FILE__ << __LINE__ << ": CPU LB not switched on.";
       runtimeError(msg);
-    *rho=0; j[0]=j[1]=j[2]=0; pi[0]=pi[1]=pi[2]=pi[3]=pi[4]=pi[5]=0;
+      for(int ii=0 ; ii < LB_COMPONENTS ; ++ii){
+         rho[ii]=0; 
+      }
+      j[0]=j[1]=j[2]=0; pi[0]=pi[1]=pi[2]=pi[3]=pi[4]=pi[5]=0;
     return;
   }
 
@@ -419,63 +427,87 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
 
 #ifdef LB_BOUNDARIES
   if ( lbfields[index].boundary ) {
-    *rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+    for(int ii=0 ; ii < LB_COMPONENTS ; ++ii){
+      rho[ii] = lbpar.rho[ii]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+    }
     j[0] = 0.; j[1] = 0.;  j[2] = 0.;
     if (pi) {pi[0] = 0.; pi[1] = 0.; pi[2] = 0.; pi[3] = 0.; pi[4] = 0.; pi[5] = 0.;}
     return;
   }
 #endif
-  double mode[19];
+  double mode[19*LB_COMPONENTS];
   double modes_from_pi_eq[6];
+  double Rho_tot=0.;
+  double lj[3]={0.,0.,0.};
   lb_calc_modes(index, mode);
-
-  *rho = mode[0] + lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
-
-  j[0] = mode[1];
-  j[1] = mode[2];
-  j[2] = mode[3];
-
-#ifndef EXTERNAL_FORCES
-  if (lbfields[index].has_force) 
+  for(int ii=0 ; ii < LB_COMPONENTS ; ++ii){
+    
+      rho[ii] = mode[0+ii*LBQ] + lbpar.rho[ii]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+      Rho_tot +=rho[ii];
+    
+      lj[0] += mode[1+ii*LBQ];
+      lj[1] += mode[2+ii*LBQ];
+      lj[2] += mode[3+ii*LBQ];
+    
+#if ! defined(EXTERNAL_FORCES) && ! defined(SHANCHEN)
+      if (lbfields[index].has_force) 
 #endif
-  {
-    j[0] += 0.5*lbfields[index].force[0];
-    j[1] += 0.5*lbfields[index].force[1];
-    j[2] += 0.5*lbfields[index].force[2];
+      {
+         lj[0] += 0.5 * lbfields[index].force[0+ii*3];
+         lj[1] += 0.5 * lbfields[index].force[1+ii*3];
+         lj[2] += 0.5 * lbfields[index].force[2+ii*3];
+      }
   }
-  if (!pi)
-    return;
+   j[0]=lj[0];
+   j[1]=lj[1];
+   j[2]=lj[2];
+  if (!pi) { 
+     return;
+  } else { 
+     pi[0] = pi[1] = pi[2] = pi[3] = pi[4] = pi[5] = 0.;
+  }
 
-  /* equilibrium part of the stress modes */
-  modes_from_pi_eq[0] = scalar(j,j)/ *rho;
-  modes_from_pi_eq[1] = (SQR(j[0])-SQR(j[1]))/ *rho;
-  modes_from_pi_eq[2] = (scalar(j,j) - 3.0*SQR(j[2]))/ *rho;
-  modes_from_pi_eq[3] = j[0]*j[1]/ *rho;
-  modes_from_pi_eq[4] = j[0]*j[2]/ *rho;
-  modes_from_pi_eq[5] = j[1]*j[2]/ *rho;
-  
-  /* Now we must predict the outcome of the next collision */
-  /* We immediately average pre- and post-collision. */
-  mode[4] = modes_from_pi_eq[0] + (0.5+0.5*gamma_bulk )*(mode[4] - modes_from_pi_eq[0]);
-  mode[5] = modes_from_pi_eq[1] + (0.5+0.5*gamma_shear)*(mode[5] - modes_from_pi_eq[1]);
-  mode[6] = modes_from_pi_eq[2] + (0.5+0.5*gamma_shear)*(mode[6] - modes_from_pi_eq[2]);
-  mode[7] = modes_from_pi_eq[3] + (0.5+0.5*gamma_shear)*(mode[7] - modes_from_pi_eq[3]);
-  mode[8] = modes_from_pi_eq[4] + (0.5+0.5*gamma_shear)*(mode[8] - modes_from_pi_eq[4]);
-  mode[9] = modes_from_pi_eq[5] + (0.5+0.5*gamma_shear)*(mode[9] - modes_from_pi_eq[5]);
+    
+  for(int ii=0 ; ii < LB_COMPONENTS ; ++ii){
+      lj[0]=rho[ii] * j[0]/Rho_tot;
+      lj[1]=rho[ii] * j[1]/Rho_tot;
+      lj[2]=rho[ii] * j[2]/Rho_tot;
+      /* equilibrium part of the stress modes */
+      modes_from_pi_eq[0] = scalar(lj,lj)/ rho[ii];
+      modes_from_pi_eq[1] = (SQR(lj[0])-SQR(lj[1]))/ rho[ii];
+      modes_from_pi_eq[2] = (scalar(lj,lj) - 3.0*SQR(lj[2]))/ rho[ii];
+      modes_from_pi_eq[3] = lj[0]*lj[1]/ rho[ii];
+      modes_from_pi_eq[4] = lj[0]*lj[2]/ rho[ii];
+      modes_from_pi_eq[5] = lj[1]*lj[2]/ rho[ii];
 
-  // Transform the stress tensor components according to the modes that
-  // correspond to those used by U. Schiller. In terms of populations this
-  // expression then corresponds exactly to those in Eqs. 116 - 121 in the
-  // Duenweg and Ladd paper, when these are written out in populations.
-  // But to ensure this, the expression in Schiller's modes has to be different!
-
-  pi[0] = ( 2.0*(mode[0] + mode[4]) + mode[6] + 3.0*mode[5] )/6.0;  // xx
-  pi[1] = mode[7];                                                  // xy
-  pi[2] = ( 2.0*(mode[0] + mode[4]) + mode[6] - 3.0*mode[5] )/6.0;  // yy
-  pi[3] = mode[8];                                                  // xz  
-  pi[4] = mode[9];                                                  // yz
-  pi[5] = ( mode[0] + mode[4] - mode[6] )/3.0;                      // zz
-
+#ifdef SHANCHEN
+      mode[1+ii*LBQ] = lj[0] + gamma_mobility[0]*(mode[1+ii*LBQ] - lj[0]);
+      mode[2+ii*LBQ] = lj[1] + gamma_mobility[0]*(mode[2+ii*LBQ] - lj[1]);
+      mode[3+ii*LBQ] = lj[2] + gamma_mobility[0]*(mode[3+ii*LBQ] - lj[2]);
+#endif
+      
+      /* Now we must predict the outcome of the next collision */
+      /* We immediately average pre- and post-collision. */
+      mode[4+ii*LBQ] = modes_from_pi_eq[0] + (0.5+0.5*gamma_bulk[ii] )*(mode[4+ii*LBQ] - modes_from_pi_eq[0]);
+      mode[5+ii*LBQ] = modes_from_pi_eq[1] + (0.5+0.5*gamma_shear[ii])*(mode[5+ii*LBQ] - modes_from_pi_eq[1]);
+      mode[6+ii*LBQ] = modes_from_pi_eq[2] + (0.5+0.5*gamma_shear[ii])*(mode[6+ii*LBQ] - modes_from_pi_eq[2]);
+      mode[7+ii*LBQ] = modes_from_pi_eq[3] + (0.5+0.5*gamma_shear[ii])*(mode[7+ii*LBQ] - modes_from_pi_eq[3]);
+      mode[8+ii*LBQ] = modes_from_pi_eq[4] + (0.5+0.5*gamma_shear[ii])*(mode[8+ii*LBQ] - modes_from_pi_eq[4]);
+      mode[9+ii*LBQ] = modes_from_pi_eq[5] + (0.5+0.5*gamma_shear[ii])*(mode[9+ii*LBQ] - modes_from_pi_eq[5]);
+    
+      // Transform the stress tensor components according to the modes that
+      // correspond to those used by U. Schiller. In terms of populations this
+      // expression then corresponds exactly to those in Eqs. 116 - 121 in the
+      // Duenweg and Ladd paper, when these are written out in populations.
+      // But to ensure this, the expression in Schiller's modes has to be different!
+    
+      pi[0] += ( 2.0*(mode[0+ii*LBQ] + mode[4+ii*LBQ]) + mode[6+ii*LBQ] + 3.0*mode[5+ii*LBQ] )/6.0;  // xx
+      pi[1] += mode[7+ii*LBQ];                                                  // xy
+      pi[2] += ( 2.0*(mode[0+ii*LBQ] + mode[4+ii*LBQ]) + mode[6+ii*LBQ] - 3.0*mode[5+ii*LBQ] )/6.0;  // yy
+      pi[3] += mode[8+ii*LBQ];                                                  // xz  
+      pi[4] += mode[9+ii*LBQ];                                                  // yz
+      pi[5] += ( mode[0+ii*LBQ] + mode[4+ii*LBQ] - mode[6+ii*LBQ] )/3.0;                      // zz
+   }
 }
 
 #ifdef LB_BOUNDARIES
@@ -492,6 +524,13 @@ inline void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
   *boundary = lbfields[index].boundary;
 }
 #endif
+
+#ifdef SHANCHEN
+/** Calculate the shan-chen pseudopotential and apply forces to the fluid components.
+ */
+void lattice_boltzmann_calc_shanchen_cpu(void);
+#endif
+
 
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.

@@ -41,7 +41,12 @@ cellsystem domain_decomposition -no_verlet_list
 
 set kinematic_visc 10.
 set dens 1.
-lbfluid cpu visc [ expr $kinematic_visc / $dens ] dens $dens friction 1. agrid 1.0 tau .01 
+set components [setmd lb_components]
+if { $components ==  1 } {
+  lbfluid cpu visc [ expr $kinematic_visc / $dens ] dens $dens friction 1. agrid 1.0 tau .01 
+} else {
+  lbfluid cpu visc [ expr $kinematic_visc / $dens ] [ expr $kinematic_visc / $dens ] dens [expr $dens/2.] [expr $dens/2.] friction 1. 1. agrid 1.0 tau .01 
+}
 
 set v1 1.0
 lbboundary wall normal -1. 0. 0. dist [ expr -(+0.5+$w) ] velocity 0.00 $v1 0.
