@@ -149,21 +149,12 @@ h5.close()
 
 
 #vmd
-#test resize n_part+time
-#bond time dependent
 #Tab 4er
-# image
-#Test name ("A")
-#Test read error meldung
+# image,bonds
 # todo xxx 
 #Manual
-#option fur zeitunabhangig ---> -1
-
 #check if h5md builds --> ifdef
 #comment all
-#save without time and test READ
-
-
 
 
 ####ERRORS
