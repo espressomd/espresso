@@ -1018,7 +1018,7 @@ int tclcommand_part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
 int tclcommand_part_parse_solvation(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
-    /* For each fluid component we need 2 constants, one for particle-fluid and one for fluid-particl interaction */
+    /* For each fluid component we need 2 constants, one for particle-fluid and one for fluid-particle interaction */
     double solvation[2*LB_COMPONENTS];
     int ii;
     *change = 2*LB_COMPONENTS;

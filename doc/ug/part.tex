@@ -92,7 +92,7 @@
   \require{9}{\opt{temp \var{T}}}
   \require{9}{\opt{gamma \var{g}}}
   \require{10}{\opt{rotation \var{rot}}}
-  \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
+  \require{11}{\opt{solvation \var{kA} \var{lA} \var{kB} \var{lB}}}
   \require{12}{\opt{swimming \alt{\alt{v_swim \var{v\_swim} \asep
           f_swim \var{f\_swim}} \asep off}}}
   \requirelong{12,13}{%
@@ -231,7 +231,7 @@ set first because of the spatial decomposition.
   are meaningless. 
   Rotation of a particular axis is turned on by adding up the corresponding flags: x=2, y=4, z=8.
   To enable rotation around all axis, use a value of 2+4+8=14. This is also the default.
-\item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the
+\item[\opt{solvation \var{kA} \var{lA} \var{kB} \var{lB}}] Sets the
   four solvation coupling constants for the two components of a
   Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
 \item[\opt{swimming \alt{\alt{v_swim \var{v\_swim} \asep f_swim
