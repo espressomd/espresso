@@ -71,19 +71,19 @@ pagesize,                       % set the pagesize in a DVI document
 \maketitle
 
 \section{Introduction}
-Because \es{} has a large set of features, some of which are mutualy exclusice and some impact performance by just being turned on, it is distributed as source code. It is usual to build a custom \es{} binary for a specific simulation with the minimal set of features turned on to run it. This tutorial will show you how to obtain the source code of the development version and the release versions. How to build and to configure it as well as how to build the documentation.
+\es{} is distributed as source code, because this allows the user to disable features that are mutually exclusive or would otherwise decrease the performance unnecessarily. Users typically  build a custom \es{} binary for a specific simulation, containing only the minimal set of features required for this application. This tutorial will guide you through this whole process  from obtaining the source code of the development and the release version, to configuring and building binaries, to compiling the documentation.
 
 \section{Getting the Source Code}
-The procedure of building \es{} for the develtopment and the release versions differs only slightly.
+The procedure of building \es{} the development and the release versions differs only slightly.
 \subsection{Development Version}
 %
-For the development version, first clone the \es{} reposity from github by
+For the development version, first clone the \es{} reposity from github by running
 \begin{lstlisting}[language=bash]
 git clone https://github.com/espressomd/espresso.git
 \end{lstlisting}
 %
-on the terminal. This creates a local copy of the current \es{} repository in the folder \verb!espresso!.
-Enter the newly create directory by
+in a terminal. This creates a local copy of the current \es{} repository in the folder \verb!espresso!.
+Enter the newly create directory using
 \begin{lstlisting}[language=bash]
 cd espresso
 \end{lstlisting}
@@ -91,11 +91,12 @@ and run
 \begin{lstlisting}[language=bash]
 ./bootstrap.sh
 \end{lstlisting}
-to configure the build system. This step is only neccesary in the development version.
+to configure the build system. This step is only necessary in the development version.
 
 \subsection{Release Version}
-The \es{} releases can be downloaded from the \es{} website at \verb!http://espressomd.org/wordpress/download/!.
-After downloading the latest version unpack it by
+The \es{} releases can be downloaded from the \es{} website at\\
+\verb!http://espressomd.org/wordpress/download/!.
+After downloading the latest version unpack it by running
 \begin{lstlisting}[language=bash]
   tar xfv espresso-X.Y.Z.tar.gz
 \end{lstlisting}
@@ -108,22 +109,21 @@ Change into the respective newly created \es{} directory and create another subf
 mkdir build
 cd build
 \end{lstlisting}
-You can maintain several such build folders with different feature sets using the same \es{} source folder,
-and put them where you want. They don't have to reside within the source directory.
+You can maintain several such build folders with different feature sets using the same \es{} source folder. They don't have to reside within the source directory.
 %
 From within the build folder, run
 %
 \begin{lstlisting}[language=bash]
 ../configure
 \end{lstlisting}
-
-which create the makefiles. \es{} requires a number of external libraries, such as \texttt{libtcl} and others, depending on the feature set you plan to use. Most, if not all of these libraries will be available through your Linux distribution's repositories. If you manually install dependencies in a non-standard location, you have to specify this location during the \texttt{configure} stage of the build process. For example if you plan to use GPU features and your cuda toolkit is not located under \texttt{/usr/local/cuda}, you have to specify its location using
+%
+which create the makefiles. \es{} requires a number of external libraries, such as \texttt{libtcl} and others, depending on the feature set you plan to use. Most, if not all of these libraries will be available through your Linux distribution's repositories. If you manually install dependencies in a non-standard location, you have to specify this location during the \texttt{configure} stage of the build process. If, for example, you plan to use GPU features and your cuda toolkit is not located under \texttt{/usr/local/cuda}, you will have to specify its location using
 %
 \begin{lstlisting}[language=bash]
 ../configure --with-cuda=/PATH/TO/CUDA
 \end{lstlisting}
 %
-A complete list of options can be obtained by
+A complete list of options can be obtained through
 \begin{lstlisting}[language=bash]
 ../configure --help
 \end{lstlisting}
@@ -134,7 +134,6 @@ Finally compile your version of \es{} with
 make -j 8
 \end{lstlisting}
 %
-
 This produces an executable named \verb!Espresso! in the build directory which can be run by
 \begin{lstlisting}[language=bash]
 ./Espresso
@@ -145,8 +144,7 @@ You can build the \es{} manual called \emph{\es{} User's Guide} by running
 \begin{lstlisting}[language=bash]
 make ug
 \end{lstlisting}
-in the build directory.
-The User's Guide will be located in \texttt{doc/ug/ug.pdf}. It is an (almost) complete documentation of all the features and commands of \es{} and also containes some theoretical information on some of the methods and references to the relevant literature.
+in the build directory. The User's Guide will be located under \texttt{build/doc/ug/ug.pdf}. It is an (almost) complete documentation covering all the features and commands available in \es{}. In addition, the User's Guide features some theoretical background information on some of the methods as well as references to the relevant literature.
 
 \subsection{Configuring features}
 %
@@ -157,10 +155,12 @@ cp myconfig-sample.hpp myconfig.hpp
 \end{lstlisting}
 %
 Then uncomment the respective lines in \texttt{myconfig.hpp} (by removing the leading slashes) to enable features your simulation requires. The User's Guide contains information about required features for every \es{} command.
-You have to rerun \verb!build! if you change the features by running
+When you activate or deactivate features, you have to \verb!rebuild! the binaries by running
+%
 \begin{lstlisting}[language=bash]
 make -j 8
 \end{lstlisting}
+%
 in the build directory.
 
 \end{document}
