@@ -1176,7 +1176,6 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
         ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
         node = lblattice.map_lattice_to_node(ind_shifted,grid);
         index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
-
         mpi_recv_fluid(node,index,rho,j,pi);
         // unit conversion
         for(int ii=0;ii<LB_COMPONENTS;ii++) {
@@ -1532,10 +1531,8 @@ static void halo_push_communication() {
     
         buffer = sbuf;
         index = get_linear_index(lblattice.grid[0]+1,0,0,lblattice.halo_grid);
-    
         for (z=0; z<lblattice.halo_grid[2]; z++) {
             for (y=0; y<lblattice.halo_grid[1]; y++) {
-    
     	
                 buffer[0] = lbfluid[1][1  + ii * LBQ][index];
                 buffer[1] = lbfluid[1][7  + ii * LBQ][index];
@@ -1690,7 +1687,7 @@ static void halo_push_communication() {
             index += zperiod - lblattice.halo_grid[0];
         }
 
-        if (node_grid[2] > 1) {
+        if (node_grid[1] > 1) {
             MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
                          rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                          comm_cart, &status);
@@ -1713,14 +1710,6 @@ static void halo_push_communication() {
                 ++index;
             }
             index += zperiod - lblattice.halo_grid[0];
-        }
-
-        if (node_grid[2] > 1) {
-            MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
-                         rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-                         comm_cart, &status);
-        } else {
-            memmove(rbuf,sbuf,count*sizeof(double));
         }
 
         /***************
@@ -3138,7 +3127,6 @@ void update_mass_field_and_clear_forces(void){
             lb_calc_mass_modes(index, modes);
 	    for(int ii=0;ii<LB_COMPONENTS;ii++)
               lbfields[index].rho[ii] = modes[0 + ii * LBQ] +  lbpar.rho[ii]*lbpar.agrid*lbpar.agrid*lbpar.agrid ;
-	   // printf("%d -> index %d rho %g %g\n",this_node,index,lbfields[index].rho[0],lbfields[index].rho[1]);
 
           }
      }

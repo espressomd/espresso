@@ -424,7 +424,6 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
     j[0] = j[1] = j[2] = 0;
     return;
   }
-
 #ifdef LB_BOUNDARIES
   if ( lbfields[index].boundary ) {
     for(int ii=0 ; ii < LB_COMPONENTS ; ++ii){
