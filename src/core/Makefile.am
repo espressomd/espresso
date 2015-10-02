@@ -215,7 +215,8 @@ CUDA_HEADER_FILES = \
 	integrate_sd_cuda_device.hpp \
 	integrate_sd_matrix.hpp \
 	fd-electrostatics.hpp \
-	actor/DipolarDirectSum_cuda.hpp
+	actor/DipolarDirectSum_cuda.hpp \
+	p3m_gpu_error.hpp
 
 CUDA_SOURCE_FILES = \
 	cuda_init_cuda.cu \
@@ -235,7 +236,8 @@ CUDA_SOURCE_FILES = \
 	actor/HarmonicWell_cuda.cu \
 	immersed_boundary/ibm_cuda.cu \
 	actor/DipolarDirectSum_cuda.cu \
-	actor/HarmonicOrientationWell_cuda.cu 
+	actor/HarmonicOrientationWell_cuda.cu \
+	p3m_gpu_error_cuda.cu
 
 # include the dependency tracking files
 include ./$(DEPDIR)/cuda_init_cuda.Plo

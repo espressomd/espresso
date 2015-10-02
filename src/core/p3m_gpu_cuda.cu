@@ -764,6 +764,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
   */
 
  void p3m_gpu_init(int cao, int mesh[3], double alpha, double box[3]) {
+   P3M_GPU_TRACE(printf("cao %d mesh %d %d %d, alpha %e, box (%e %e %e)\n", cao, mesh[0], mesh[1], mesh[2], alpha, box[0], box[1], box[2]));
    int reinit_if = 0, mesh_changed = 0;
  
    espressoSystemInterface.requestParticleStructGpu();
@@ -809,25 +810,30 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
      }
 
      if((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
-       cudaFree(p3m_gpu_data.charge_mesh);
-       cudaFree(p3m_gpu_data.force_mesh_x);
-       cudaFree(p3m_gpu_data.force_mesh_y);
-       cudaFree(p3m_gpu_data.force_mesh_z);
-       cudaFree(p3m_gpu_data.G_hat);
-
+       cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
+       p3m_gpu_data.charge_mesh = 0;
+       cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
+       p3m_gpu_data.force_mesh_x = 0;
+       cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_y));
+       p3m_gpu_data.force_mesh_y = 0;
+       cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_z));
+       p3m_gpu_data.force_mesh_z = 0;
+       cuda_safe_mem(cudaFree(p3m_gpu_data.G_hat));
+       p3m_gpu_data.G_hat = 0;
+       
        cufftDestroy(p3m_gpu_fft_plans.forw_plan);
        cufftDestroy(p3m_gpu_fft_plans.back_plan);
     
        p3m_gpu_data_initialized = 0;
      }
 
-     if(p3m_gpu_data_initialized == 0 && p3m_gpu_data.mesh_size > 0) {
+     if((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
        const int cmesh_size = (p3m_gpu_data.mesh[0] / 2 + 1) * p3m_gpu_data.mesh[1] * p3m_gpu_data.mesh[2];
-       cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),  cmesh_size*sizeof(CUFFT_TYPE_COMPLEX));
-       cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x), cmesh_size*sizeof(CUFFT_TYPE_COMPLEX));
-       cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y), cmesh_size*sizeof(CUFFT_TYPE_COMPLEX));
-       cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z), cmesh_size*sizeof(CUFFT_TYPE_COMPLEX));
-       cudaMalloc((void **)&(p3m_gpu_data.G_hat),        cmesh_size*sizeof(REAL_TYPE));
+       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),  cmesh_size*sizeof(CUFFT_TYPE_COMPLEX)));
+       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x), cmesh_size*sizeof(CUFFT_TYPE_COMPLEX)));
+       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y), cmesh_size*sizeof(CUFFT_TYPE_COMPLEX)));
+       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z), cmesh_size*sizeof(CUFFT_TYPE_COMPLEX)));
+       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),        cmesh_size*sizeof(REAL_TYPE)));
 
        cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2], CUFFT_PLAN_FORW_FLAG);
        cufftSetCompatibilityMode( p3m_gpu_fft_plans.forw_plan, CUFFT_COMPATIBILITY_NATIVE );
@@ -835,7 +841,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
        cufftSetCompatibilityMode( p3m_gpu_fft_plans.back_plan, CUFFT_COMPATIBILITY_NATIVE );
      }
 
-     if(((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) && p3m_gpu_data.mesh_size > 0) {
+     if(((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) && (p3m_gpu_data.mesh_size > 0)) {
        dim3 grid(1,1,1);
        dim3 block(1,1,1);
        block.y = mesh[1];
@@ -844,10 +850,11 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
        grid.x = mesh[0] / block.x + 1;
        grid.z = mesh[2] / 2 + 1;
 
-       P3M_GPU_TRACE(printf("mesh %d, grid (%d %d %d), block (%d %d %d)\n", mesh, grid.x, grid.y, grid.z, block.x, block.y, block.z));
+       P3M_GPU_TRACE(printf("mesh %d %d %d, grid (%d %d %d), block (%d %d %d)\n", mesh[0], mesh[1], mesh[2], grid.x, grid.y, grid.z, block.x, block.y, block.z));
        KERNELCALL(calculate_influence_function_device,grid,block,(p3m_gpu_data));
      }
-     p3m_gpu_data_initialized = 1;
+     if(p3m_gpu_data.mesh_size > 0)
+       p3m_gpu_data_initialized = 1;
    }
  }
 

@@ -799,6 +799,7 @@ AC_CONFIG_FILES([
 	doc/tutorials/02-charged_system/Makefile 
 	doc/tutorials/03-object_in_fluid/Makefile 
 	doc/tutorials/05-raspberry_electrophoresis/Makefile 
+	doc/tutorials/06-active_matter/Makefile 
 	doc/latexit.sh
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
