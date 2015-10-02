@@ -4,6 +4,8 @@
 #ifdef EWALD_GPU
 #include "actor/EwaldgpuForce.hpp"
 
+#define SQR(A) ((A)*(A))
+
 //Add energy
 inline double ewaldgpu_coulomb_pair_energy(double chgfac, double *d,double dist2,double dist)
 {
@@ -17,12 +19,13 @@ inline double ewaldgpu_coulomb_pair_energy(double chgfac, double *d,double dist2
 //Add forces
 inline void add_ewald_gpu_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
-  int j;
-  double fac;
-  double rcut=ewaldgpu_params.rcut;
+  const double rcut=ewaldgpu_params.rcut;
   if(dist < rcut)
   {
-		fac=coulomb.prefactor * p1->p.q * p2->p.q * (  2*ewaldgpu_params.alpha/sqrt(M_PI) * exp(-pow(ewaldgpu_params.alpha *dist,2)) + erfc(ewaldgpu_params.alpha*dist)/dist )/pow(dist,2);
+    int j;
+    double fac;
+
+    fac=coulomb.prefactor * p1->p.q * p2->p.q * (  2*ewaldgpu_params.alpha*wupii*exp(-SQR(ewaldgpu_params.alpha *dist)) + erfc(ewaldgpu_params.alpha*dist)/dist )/SQR(dist);
 
     for(j=0;j<3;j++)
       force[j] += fac * d[j];
