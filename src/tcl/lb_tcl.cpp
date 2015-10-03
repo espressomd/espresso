@@ -727,6 +727,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 		lbpar.ext_force[0], lbpar.ext_force[1],lbpar.ext_force[2]
 		);
 	  }
+#ifdef SHANCHEN
 	  if (LB_COMPONENTS==2) {
 		snprintf(buffer,1024, "%s { rho { %f %f } } { viscosity { %f %f } } { bulk_viscosity { %f %f } } { gamma_odd { %f %f } } { gamma_even { %f %f } } { friction { %f %f } } { ext_force { { %f %f %f } { %f %f %f } } sc_coupling { %f %f %f} }  ",buffer, 
 		lbpar.rho[0], lbpar.rho[1],
@@ -740,6 +741,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 		lbpar.coupling[0], lbpar.coupling[1],lbpar.coupling[2]
 		);
 	  }
+#endif
 	  Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (ARG0_IS_S_EXACT("print"))
