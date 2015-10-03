@@ -711,6 +711,37 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
         return TCL_ERROR;
 #endif
       }
+      else if (ARG0_IS_S_EXACT("parameters")) { 
+          argc -= 1;
+          argv += 1;
+	  char buffer[1024];
+	  snprintf(buffer,1024,"{ agrid %f } { tau %f }",lbpar.agrid,lbpar.tau);
+	  if (LB_COMPONENTS==1) {
+		snprintf(buffer,1024, "%s { rho %f } { viscosity %f } { bulk_viscosity %f } { gamma_odd %f } { gamma_even %f } { friction %f } { ext_force { %f %f %f } }  ",buffer, 
+		lbpar.rho[0],
+		lbpar.viscosity[0], 
+		lbpar.bulk_viscosity[0], 
+		lbpar.gamma_odd[0], 
+		lbpar.gamma_even[0], 
+		lbpar.friction[0], 
+		lbpar.ext_force[0], lbpar.ext_force[1],lbpar.ext_force[2]
+		);
+	  }
+	  if (LB_COMPONENTS==2) {
+		snprintf(buffer,1024, "%s { rho { %f %f } } { viscosity { %f %f } } { bulk_viscosity { %f %f } } { gamma_odd { %f %f } } { gamma_even { %f %f } } { friction { %f %f } } { ext_force { { %f %f %f } { %f %f %f } } sc_coupling { %f %f %f} }  ",buffer, 
+		lbpar.rho[0], lbpar.rho[1],
+		lbpar.viscosity[0], lbpar.viscosity[1],
+		lbpar.bulk_viscosity[0], lbpar.bulk_viscosity[1],
+		lbpar.gamma_odd[0], lbpar.gamma_odd[1],
+		lbpar.gamma_even[0], lbpar.gamma_even[1],
+		lbpar.friction[0], lbpar.friction[1],
+		lbpar.ext_force[0], lbpar.ext_force[1],lbpar.ext_force[2],
+		lbpar.ext_force[3], lbpar.ext_force[4],lbpar.ext_force[5],
+		lbpar.coupling[0], lbpar.coupling[1],lbpar.coupling[2]
+		);
+	  }
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
       else if (ARG0_IS_S_EXACT("print"))
       {
         if ( argc < 3 || (ARG1_IS_S_EXACT("vtk") && argc < 4) )

@@ -552,6 +552,38 @@ int lbboundary_get_force(int no, double* f) {
 
 #ifdef LB_BOUNDARIES
 
+
+#ifdef SHANCHEN
+void shanchen_set_boundaries(void){
+  int factor = (int)round(lbpar.tau/time_step);
+  index_t index;
+  int x, y, z;
+  int dx = 1, dy = lblattice.halo_grid[0], dz = lblattice.halo_grid[0]*lblattice.halo_grid[1];
+  double modes[19*LB_COMPONENTS];
+  for(int i=0;i<19*LB_COMPONENTS;i++) modes[i]=0.0;
+
+    /* loop over all lattice cells (halo excluded) */
+    index = lblattice.halo_offset;
+    for (z = 0; z < lblattice.grid[2]; z++) {
+        for (y = 0; y < lblattice.grid[1]; y++) {
+            for (x = 0; x < lblattice.grid[0]; x++) {
+                if (lbfields[index].boundary)
+                {
+		    for(int ii=0;ii<LB_COMPONENTS;ii++)
+		        lbfields[index].rho[ii]=lb_boundaries[lbfields[index].boundary-1].density;
+                }
+                ++index; /* next node */
+            }
+            index += 2; /* skip halo region */
+        }
+        index += 2*lblattice.halo_grid[0]; /* skip halo region */
+    }
+}
+#endif
+
+
+
+
 void lb_bounce_back() {
 
 #ifdef D3Q19

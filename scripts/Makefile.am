@@ -36,7 +36,8 @@ ESSCRIPTS = \
 	polymer.tcl \
 	statistics.tcl \
 	vtf.tcl \
-	vtk.tcl
+	vtk.tcl \
+	shanchen.tcl
 
 EXTRA_DIST = $(ESSCRIPTS)
 

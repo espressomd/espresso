@@ -3348,6 +3348,35 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 
 }
 
+
+#ifdef LB_BOUNDARIES
+#define set_coupling(ind)\
+{\
+                    boundary_id = lbfields[ind].boundary ;\
+                    if (boundary_id) {\
+	    	         coupling[0]=lb_boundaries[boundary_id-1].sc_coupling[0];\
+	    	         coupling[3]=lb_boundaries[boundary_id-1].sc_coupling[1];\
+		         coupling[1]=coupling[2]=0.0;\
+                    } else \
+                    {\
+                     coupling[0]=lbpar.coupling[0];\
+                     coupling[1]=lbpar.coupling[1];\
+                     coupling[2]=lbpar.coupling[2];\
+                     coupling[3]=lbpar.coupling[3];\
+                    }\
+}
+#else 
+#define set_coupling( ind )\
+{\
+                    {\
+                     coupling[0]=lbpar.coupling[0];\
+                     coupling[1]=lbpar.coupling[1];\
+                     coupling[2]=lbpar.coupling[2];\
+                     coupling[3]=lbpar.coupling[3];\
+                    }\
+}
+
+#endif
 #ifdef SHANCHEN
 /*
  * This function is called form force_calc() in core/forces_inline.hpp 
@@ -3371,6 +3400,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
     lb_check_halo_regions();
 #endif // ADDITIONAL_CHECKS
     update_mass_field_and_clear_forces();
+#ifdef LB_BOUNDARIES
+    // this function sets the lbfields[] of the boundary nodes to the correct
+    // values for neutral wetting conditions 
+    shanchen_set_boundaries();
+#endif
 
     /* loop over all lattice cells (halo excluded) */
     index = lblattice.halo_offset;
@@ -3386,121 +3420,226 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 		    double tmpp[3]={0.,0.,0.};
 		    double tmpn[3]={0.,0.,0.};
                     double p[3]={0.,0.,0.};
+                    double f[LB_COMPONENTS][3];
+                    double coupling[4];
 		    int ind;
-
-                    
+		    int boundary_id;
+                    for(int ii=0;ii<LB_COMPONENTS;ii++) f[ii][0]=f[ii][1]=f[ii][2]=0.0;
 		    ind = index + dx;
-		    tmpp[0] += lbfields[ind].rho[0]/18.; 
-		    tmpn[0] += lbfields[ind].rho[1]/18.; 
-
+		    set_coupling(ind);
+		    tmpp[0] = lbfields[ind].rho[0]/18.; 
+		    tmpn[0] = lbfields[ind].rho[1]/18.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 		    ind = index - dx;
-		    tmpp[0] -= lbfields[ind].rho[0]/18.; 
-		    tmpn[0] -= lbfields[ind].rho[1]/18.; 
-		    
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/18.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/18.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
+
 		    ind = index + dy;
-		    tmpp[1] += lbfields[ind].rho[0]/18.; 
-		    tmpn[1] += lbfields[ind].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[1] = lbfields[ind].rho[0]/18.; 
+		    tmpn[1] = lbfields[ind].rho[1]/18.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
                   
 		    ind = index - dy;
-		    tmpp[1] -= lbfields[ind].rho[0]/18.; 
-		    tmpn[1] -= lbfields[ind].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[1] = -lbfields[ind].rho[0]/18.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/18.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index + dz;
-		    tmpp[2] += lbfields[ind].rho[0]/18.; 
-		    tmpn[2] += lbfields[ind].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[2] = lbfields[ind].rho[0]/18.; 
+		    tmpn[2] = lbfields[ind].rho[1]/18.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
                   
 		    ind = index - dz;
-		    tmpp[2] -= lbfields[ind].rho[0]/18.; 
-		    tmpn[2] -= lbfields[ind].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[2] = -lbfields[ind].rho[0]/18.; 
+		    tmpn[2] = -lbfields[ind].rho[1]/18.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index + dx + dy;
-		    tmpp[0] += lbfields[ind].rho[0]/36.; 
-		    tmpp[1] += lbfields[ind].rho[0]/36.; 
-		    tmpn[0] += lbfields[ind].rho[1]/36.; 
-		    tmpn[1] += lbfields[ind].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] =  lbfields[ind].rho[0]/36.; 
+		    tmpp[1] =  lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = lbfields[ind].rho[1]/36.; 
+		    tmpn[1] = lbfields[ind].rho[1]/36.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index - dx - dy;
-		    tmpp[0] -= lbfields[ind].rho[0]/36.; 
-		    tmpp[1] -= lbfields[ind].rho[0]/36.; 
-		    tmpn[0] -= lbfields[ind].rho[1]/36.; 
-		    tmpn[1] -= lbfields[ind].rho[1]/36.;                   
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[1] = -lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/36.;                   
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 		    
 		    ind = index + dx - dy;
-		    tmpp[0] += lbfields[ind].rho[0]/36.; 
-		    tmpp[1] -= lbfields[ind].rho[0]/36.; 
-		    tmpn[0] += lbfields[ind].rho[1]/36.; 
-		    tmpn[1] -= lbfields[ind].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] =  lbfields[ind].rho[0]/36.; 
+		    tmpp[1] = -lbfields[ind].rho[0]/36.; 
+		    tmpn[0] =  lbfields[ind].rho[1]/36.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/36.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index - dx + dy;
-		    tmpp[0] -= lbfields[ind].rho[0]/36.; 
-		    tmpp[1] += lbfields[ind].rho[0]/36.; 
-		    tmpn[0] -= lbfields[ind].rho[1]/36.; 
-		    tmpn[1] += lbfields[ind].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[1] =  lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[1] =  lbfields[ind].rho[1]/36.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index + dx + dz;
-		    tmpp[0] += lbfields[ind].rho[0]/36.; 
-		    tmpp[2] += lbfields[ind].rho[0]/36.; 
-		    tmpn[0] += lbfields[ind].rho[1]/36.; 
-		    tmpn[2] += lbfields[ind].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] = lbfields[ind].rho[0]/36.; 
+		    tmpp[2] = lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = lbfields[ind].rho[1]/36.; 
+		    tmpn[2] = lbfields[ind].rho[1]/36.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index + dx - dz;
-		    tmpp[0] += lbfields[ind].rho[0]/36.; 
-		    tmpp[2] -= lbfields[ind].rho[0]/36.; 
-		    tmpn[0] += lbfields[ind].rho[1]/36.; 
-		    tmpn[2] -= lbfields[ind].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] = lbfields[ind].rho[0]/36.; 
+		    tmpp[2] = -lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = lbfields[ind].rho[1]/36.; 
+		    tmpn[2] = -lbfields[ind].rho[1]/36.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 		    
 		    ind = index - dx + dz;
-		    tmpp[0] -= lbfields[ind].rho[0]/36.; 
-		    tmpp[2] += lbfields[ind].rho[0]/36.; 
-		    tmpn[0] -= lbfields[ind].rho[1]/36.; 
-		    tmpn[2] += lbfields[ind].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[2] =  lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[2] =  lbfields[ind].rho[1]/36.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index - dx - dz;
-		    tmpp[0] -= lbfields[ind].rho[0]/36.; 
-		    tmpp[2] -= lbfields[ind].rho[0]/36.; 
-		    tmpn[0] -= lbfields[ind].rho[1]/36.; 
-		    tmpn[2] -= lbfields[ind].rho[1]/36.;                   
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[2] = -lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[2] = -lbfields[ind].rho[1]/36.;                   
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index + dy + dz;
-		    tmpp[1] += lbfields[ind].rho[0]/36.; 
-		    tmpp[2] += lbfields[ind].rho[0]/36.; 
-		    tmpn[1] += lbfields[ind].rho[1]/36.; 
-		    tmpn[2] += lbfields[ind].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[1] = lbfields[ind].rho[0]/36.; 
+		    tmpp[2] = lbfields[ind].rho[0]/36.; 
+		    tmpn[1] = lbfields[ind].rho[1]/36.; 
+		    tmpn[2] = lbfields[ind].rho[1]/36.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index - dy - dz;
-		    tmpp[1] -= lbfields[ind].rho[0]/36.; 
-		    tmpp[2] -= lbfields[ind].rho[0]/36.; 
-		    tmpn[1] -= lbfields[ind].rho[1]/36.; 
-		    tmpn[2] -= lbfields[ind].rho[1]/36.;                   
+		    set_coupling(ind);
+		    tmpp[1] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[2] = -lbfields[ind].rho[0]/36.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[2] = -lbfields[ind].rho[1]/36.;                   
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 
 		    ind = index + dy - dz;
-		    tmpp[1] += lbfields[ind].rho[0]/36.; 
-		    tmpp[2] -= lbfields[ind].rho[0]/36.; 
-		    tmpn[1] += lbfields[ind].rho[1]/36.; 
-		    tmpn[2] -= lbfields[ind].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[1]  =  lbfields[ind].rho[0]/36.; 
+		    tmpp[2]  = -lbfields[ind].rho[0]/36.; 
+		    tmpn[1]  =  lbfields[ind].rho[1]/36.; 
+		    tmpn[2]  = -lbfields[ind].rho[1]/36.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
+                    }
 		    
 		    ind = index - dy + dz;
-		    tmpp[1] -= lbfields[ind].rho[0]/36.; 
-		    tmpp[2] += lbfields[ind].rho[0]/36.; 
-		    tmpn[1] -= lbfields[ind].rho[1]/36.; 
-		    tmpn[2] += lbfields[ind].rho[1]/36.; 
-
-		    p[0]=p[1]=p[2]=0.0;
-                    for(int j=0;j<3;j++) { 
-		      p[j] -= tmpp[j] * lbfields[index].rho[0] * lbpar.coupling[0]; // A-A
-		      p[j] -= tmpn[j] * lbfields[index].rho[0] * lbpar.coupling[1]; // A-B
-		      lbfields[index].scforce[j] = p[j];
-		      lbfields[index].force[j]  += p[j];
+		    set_coupling(ind);
+		    tmpp[1] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[2] =  lbfields[ind].rho[0]/36.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[2] =  lbfields[ind].rho[1]/36.; 
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
+	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
+	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
                     }
 
-		    p[0]=p[1]=p[2]=0.0;
-                    for(int j=0;j<3;j++) { 
-		      p[j] -= tmpp[j] * lbfields[index].rho[1] * lbpar.coupling[2]; // B-A
-		      p[j] -= tmpn[j] * lbfields[index].rho[1] * lbpar.coupling[3]; // B-B
-		      lbfields[index].scforce[j+3] = p[j];
-		      lbfields[index].force[j+3]  += p[j];
+		    for(int ii=0;ii<LB_COMPONENTS;ii++){
+                       for(int j=0;j<3;j++) { 
+		         lbfields[index].scforce[j+3*ii] = f[ii][j]*lbfields[index].rho[ii]; // A-A
+		         lbfields[index].force[j+3*ii]  += f[ii][j]*lbfields[index].rho[ii]; // A-B
+                       }
                     }
-
                 }
                 ++index; /* next node */
             }

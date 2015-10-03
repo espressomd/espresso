@@ -32,17 +32,17 @@
 ###############################################################
 #
 # here do everything you want to do upon initialization.
-# e. g.
+
+# see whether the user wants the startup
+# message. Can also be permanently switched off
+# in "~/.espressorc"
+set quiet 0
 
 # Read user defined settings
 if { [file exists "~/.espressorc" ] } {
     source ~/.espressorc
 }
 
-# see whether the user wants the startup
-# message. Can also be permanently switched off
-# in "~/.espressorc"
-set quiet 0
 foreach arg $argv {
     if {$arg == "-quiet"} { set quiet 2 }
     if {$arg == "-q"} { set quiet 1 }
@@ -113,3 +113,4 @@ source vtk.tcl
 source dielectrics.tcl
 source object_in_fluid.tcl
 source h5md.tcl
+source shanchen.tcl

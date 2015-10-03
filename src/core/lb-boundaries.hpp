@@ -86,6 +86,10 @@ typedef struct {
   } c;
   double force[3*LB_COMPONENTS];
   double velocity[3];
+#ifdef SHANCHEN
+  double density;
+  double sc_coupling[LB_COMPONENTS];
+#endif
 #ifdef EK_BOUNDARIES
   float charge_density;
   float net_charge;
@@ -117,6 +121,7 @@ int lbboundary_get_force(int no, double* f);
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
 void lb_bounce_back();
+void shanchen_set_boundaries(void);
 #endif /* LB_BOUNDARIES */
 
 #endif /* LB_BOUNDARIES_H */

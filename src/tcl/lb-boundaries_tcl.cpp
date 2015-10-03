@@ -258,6 +258,16 @@ int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 		  sprintf(buffer, "%d", lbb->type);
 		  Tcl_AppendResult(interp, "unknown lbboundary type ", buffer, ".", (char *) NULL);
   }
+#ifdef SHANCHEN
+  Tcl_PrintDouble(interp, lbb->density, buffer);
+  Tcl_AppendResult(interp, " density ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, lbb->sc_coupling[0], buffer);
+  Tcl_AppendResult(interp, " sc_coupling ", NULL, " ", (char *) NULL);
+  for (int ii=0; ii<LB_COMPONENTS;ii++){
+     Tcl_PrintDouble(interp, lbb->sc_coupling[ii], buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
+#endif
 
   return (TCL_OK);
 }
@@ -294,6 +304,12 @@ LB_Boundary *generate_lbboundary()
   lb_boundaries[n_lb_boundaries-1].force[0]=
   lb_boundaries[n_lb_boundaries-1].force[1]=
   lb_boundaries[n_lb_boundaries-1].force[2]=0;
+#ifdef SHANCHEN
+  lb_boundaries[n_lb_boundaries-1].density=1.;
+  for (int ii=0; ii<LB_COMPONENTS;ii++){
+     lb_boundaries[n_lb_boundaries-1].sc_coupling[ii]=0.;
+  }
+#endif
   
 #ifdef EK_BOUNDARIES
   if (ek_initialized)
@@ -305,6 +321,35 @@ LB_Boundary *generate_lbboundary()
   return &lb_boundaries[n_lb_boundaries-1];
 }
 
+#ifdef SHANCHEN
+int parse_lbboundary_density(LB_Boundary *lbb,Tcl_Interp *interp, int *argc, char ***argv){
+	if(*argc < 2) {
+             Tcl_AppendResult(interp, "lbboundary [...] density <dens> expected", (char *) NULL);
+             return 0;
+        }	
+        if(Tcl_GetDouble(interp, (*argv)[1], &(lbb->density)) == TCL_ERROR ) { 
+		return 0; 
+	} 
+	(*argc)-=2;
+	(*argv)+=2;
+	return  1;
+}
+int parse_lbboundary_sc_coupling(LB_Boundary *lbb,Tcl_Interp *interp, int *argc, char ***argv){
+	if(*argc < 1+LB_COMPONENTS) {
+             Tcl_AppendResult(interp, "lbboundary [...] sc_coupling <coupling comp 1> <coupling comp 2> expected", (char *) NULL);
+             return 0;
+        }	
+        if(Tcl_GetDouble(interp, (*argv)[1], &(lbb->sc_coupling[0])) == TCL_ERROR ) { 
+		return 0; 
+	} 
+        if(Tcl_GetDouble(interp, (*argv)[2], &(lbb->sc_coupling[1])) == TCL_ERROR ) { 
+		return 0; 
+	} 
+	(*argc)-=3;
+	(*argv)+=3;
+	return  1;
+}
+#endif
 int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
 {
   int i;
@@ -377,6 +422,13 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
       
       argc -= 4; argv += 4;
     }
+#ifdef SHANCHEN
+    else if(ARG_IS_S(0, "density")){
+	if(!parse_lbboundary_density(lbb,interp,&argc,&argv)) return TCL_ERROR ;	
+    } else if (ARG_IS_S(0, "sc_coupling")){
+	if(!parse_lbboundary_sc_coupling(lbb,interp, &argc, &argv)) return TCL_ERROR;
+    }
+#endif
     else
       break;
   }
@@ -453,6 +505,14 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
       
       argc -= 2; argv += 2;
     }
+#ifdef SHANCHEN
+    else if(ARG_IS_S(0, "density")){
+	if(!parse_lbboundary_density(lbb,interp,&argc,&argv)) return TCL_ERROR ;	
+    } else if (ARG_IS_S(0, "sc_coupling")){
+	if(!parse_lbboundary_sc_coupling(lbb,interp, &argc, &argv)) return TCL_ERROR;
+    }
+#endif
+
     else
       break;
   }
@@ -584,6 +644,14 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
       
       argc -= 4; argv += 4;
     }
+#ifdef SHANCHEN
+    else if(ARG_IS_S(0, "density")){
+	if(!parse_lbboundary_density(lbb,interp,&argc,&argv)) return TCL_ERROR ;	
+    } else if (ARG_IS_S(0, "sc_coupling")){
+	if(!parse_lbboundary_sc_coupling(lbb,interp, &argc, &argv)) return TCL_ERROR;
+    }
+#endif
+
     else
       break;
   }
@@ -728,6 +796,14 @@ int tclcommand_lbboundary_spherocylinder(LB_Boundary *lbb, Tcl_Interp *interp, i
       
       argc -= 4; argv += 4;
     }
+#ifdef SHANCHEN
+    else if(ARG_IS_S(0, "density")){
+	if(!parse_lbboundary_density(lbb,interp,&argc,&argv)) return TCL_ERROR ;	
+    } else if (ARG_IS_S(0, "sc_coupling")){
+	if(!parse_lbboundary_sc_coupling(lbb,interp, &argc, &argv)) return TCL_ERROR;
+    }
+#endif
+
     else
       break;
   }
@@ -871,6 +947,13 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				
       argc -= 2; argv += 2;
     }
+#ifdef SHANCHEN
+    else if(ARG_IS_S(0, "density")){
+	if(!parse_lbboundary_density(lbb,interp,&argc,&argv)) return TCL_ERROR ;	
+    } else if (ARG_IS_S(0, "sc_coupling")){
+	if(!parse_lbboundary_sc_coupling(lbb,interp, &argc, &argv)) return TCL_ERROR;
+    }
+#endif
     else {
 			Tcl_AppendResult(interp, "Error: Unknown parameter ", argv[0], " in lbboundary rhomboid", (char *) NULL);
 			return TCL_ERROR;
@@ -1038,6 +1121,14 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 
       argc -= 2; argv += 2;
     }
+#ifdef SHANCHEN
+    else if(ARG_IS_S(0, "density")){
+	if(!parse_lbboundary_density(lbb,interp,&argc,&argv)) return TCL_ERROR ;	
+    } else if (ARG_IS_S(0, "sc_coupling")){
+	if(!parse_lbboundary_sc_coupling(lbb,interp, &argc, &argv)) return TCL_ERROR;
+    }
+#endif
+
     else
       break;
   }
@@ -1175,6 +1266,14 @@ int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR); 
       argc -= 2; argv += 2;
     }
+#ifdef SHANCHEN
+    else if(ARG_IS_S(0, "density")){
+	if(!parse_lbboundary_density(lbb,interp,&argc,&argv)) return TCL_ERROR ;	
+    } else if (ARG_IS_S(0, "sc_coupling")){
+	if(!parse_lbboundary_sc_coupling(lbb,interp, &argc, &argv)) return TCL_ERROR;
+    }
+#endif
+
     else
       break;
   }
@@ -1328,6 +1427,14 @@ int tclcommand_lbboundary_hollow_cone(LB_Boundary *lbb, Tcl_Interp *interp, int 
 	      return (TCL_ERROR); 
       argc -= 2; argv += 2;
     }
+#ifdef SHANCHEN
+    else if(ARG_IS_S(0, "density")){
+	if(!parse_lbboundary_density(lbb,interp,&argc,&argv)) return TCL_ERROR ;	
+    } else if (ARG_IS_S(0, "sc_coupling")){
+	if(!parse_lbboundary_sc_coupling(lbb,interp, &argc, &argv)) return TCL_ERROR;
+    }
+#endif
+
     else
       break;
   }
@@ -1421,6 +1528,14 @@ int tclcommand_lbboundary_voxel(LB_Boundary *lbb, Tcl_Interp *interp, int argc, 
       
       argc -= 2; argv += 2;
     }
+#ifdef SHANCHEN
+    else if(ARG_IS_S(0, "density")){
+	if(!parse_lbboundary_density(lbb,interp,&argc,&argv)) return TCL_ERROR ;	
+    } else if (ARG_IS_S(0, "sc_coupling")){
+	if(!parse_lbboundary_sc_coupling(lbb,interp, &argc, &argv)) return TCL_ERROR;
+    }
+#endif
+
     else
       break;
   }
