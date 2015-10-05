@@ -1,33 +1,33 @@
 # Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
-#  
+#
 # This file is part of ESPResSo.
-#  
+#
 # ESPResSo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#  
+#
 # ESPResSo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################
 #                                                           #
 #  Sample System  Lennard Jones Liquid                      #
 #                                                           #
 #  LJ Tutorial Extented by                                  #
-#  SimBio Group, Frankfurt am Main                          # 
+#  SimBio Group, Frankfurt am Main                          #
 #  2007 June                                                #
-#                                                           # 
-#    LJ System Studied in the Book                          # 
-#    Understanding Molecular Simulations                    # 
-#    Frankel & Smith , 2nd Edition                          # 
-#    Chapter 4, Case Study 4                                # 
-#                                                           # 
+#                                                           #
+#    LJ System Studied in the Book                          #
+#    Understanding Molecular Simulations                    #
+#    Frankel & Smith , 2nd Edition                          #
+#    Chapter 4, Case Study 4                                #
+#                                                           #
 #############################################################
 
 
@@ -162,7 +162,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 
 inter forcecap 0
 
-# 
+#
 puts "\n Warm up finished \n"
 setmd time_step $eq_tstep
 for { set i 0 } { $i < $equilibration_iterations } { incr i } {
@@ -170,6 +170,7 @@ for { set i 0 } { $i < $equilibration_iterations } { incr i } {
    set energies [analyze energy]
    rescale_velocities  $target_temperature [setmd n_part]
    puts -nonewline "eq run $i at time=[setmd time] \r"
+   flush stdout
    # puts "temp = [expr [lindex $energies 1 1]/(1.5*[setmd n_part])]"
 }
 
@@ -189,7 +190,7 @@ puts $en "#"
 puts $en "#  Pressure    Kinetic    Potential  Temperature "
 puts $en "# "
 for {set i 0} { $i < $sampling_iterations } { incr i} {
-      incr nrep 
+      incr nrep
      integrate $sampling_interval
      save_sim $blockfile "id pos v f q type" "all"
      set energies [analyze energy]
@@ -211,6 +212,8 @@ for {set i 0} { $i < $sampling_iterations } { incr i} {
      correlation $msd update
 
      puts -nonewline "integration step   $i / $sampling_iterations \r"
+     flush stdout
+
      # puts -nonewline "total = [expr $total/$n_part] kinetic= [expr $kinetic/$n_part] potential= [expr $potential/$n_part]  temperature = $temperature\n"
 }
 close $en
