@@ -49,28 +49,4 @@ sure you are in the folder where the files are located. So the agenda is:
 Measure the drag force for a fixed radius but varying system size. Does the drag
 force increase of decrease with the system size? Can you find a qualitative
 explanation?
-
-\subsection*{Dimensionless for of the Stokes' equation}
-The flow field is governed - under small apllied velocities - by the
-time-dependent Stokes' equation:
-\begin{align*}
-	\rho \frac{\partial}{\partial t}\vec{u}+\eta
-	\nabla^2\vec{u}-\nabla\vec{p}=0,
-\end{align*}
-where the fluid velocity on the boundaries is given by a boundary condition. We
-want to answer the question: \textit{On what time scale does the flow field
-converge to a stationary state?} The result is a function of the viscosity, the
-system size and the density of the fluid. Interestingly it does not depend on
-the magnitude of $\vec{u}$. You can try to find the answer by playing with the
-simulation parameters: Vary the viscosity, the density and the system size and
-monitor how quickly the force converges.
-
-To answer that question by theory it is neccessary to express the Stokes'
-equation in dimensionless form. To obtain it express all length scales in units
-of the system size $l$ and all times in units of $\tau$ (the time scale).
-Partial derivatives transform as:
-\begin{align*}
-	\frac{\partial}{\partial x} &= \frac{1}{l}\frac{\partial}{\partial (x/l)}\\
-	\frac{\partial}{\partial t} &= \frac{1}{\tau}\frac{\partial}{\partial
-(t/\tau)}
 \end{align*}
