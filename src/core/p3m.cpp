@@ -37,6 +37,9 @@
 #include "cells.hpp"
 #include "tuning.hpp"
 #include "elc.hpp"
+#ifdef CUDA
+#include "p3m_gpu_error.hpp"
+#endif
 
 #ifdef P3M
 
@@ -1313,7 +1316,12 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_a
   *_alpha_L = alpha_L;
   /* calculate real space and k space error for this alpha_L */
   rs_err = p3m_real_space_error(coulomb.prefactor,r_cut_iL,p3m.sum_qpart,p3m.sum_q2,alpha_L);
-  ks_err = p3m_k_space_error(coulomb.prefactor,mesh,cao,p3m.sum_qpart,p3m.sum_q2,alpha_L);
+#ifdef CUDA
+  if(coulomb.method == COULOMB_P3M_GPU)
+    ks_err = p3m_k_space_error_gpu(coulomb.prefactor, mesh, cao, p3m.sum_qpart, p3m.sum_q2, alpha_L, box_l);
+  else
+#endif
+    ks_err = p3m_k_space_error(coulomb.prefactor,mesh,cao,p3m.sum_qpart,p3m.sum_q2,alpha_L);
 
   *_rs_err = rs_err;
   *_ks_err = ks_err;

@@ -794,9 +794,11 @@ AC_CONFIG_FILES([
 	doc/dg/Makefile
 	doc/doxygen/Makefile
 	doc/tutorials/Makefile
+	doc/tutorials/00-building_espresso/Makefile
 	doc/tutorials/01-lennard_jones/Makefile 
 	doc/tutorials/02-charged_system/Makefile 
 	doc/tutorials/03-object_in_fluid/Makefile 
+	doc/tutorials/06-active_matter/Makefile 
 	doc/latexit.sh
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
