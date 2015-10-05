@@ -86,35 +86,18 @@ IF ELECTROSTATICS:
             cdef extern p3m_data_struct p3m
 
         cdef extern from "p3m_gpu.hpp":
-            # may need a fix, when double precision should be used on GPU
-            IF _P3M_GPU_DOUBLE:
-                void p3m_gpu_init(int cao, int mesh, double alpha, double box)
+            void p3m_gpu_init(int cao, int *mesh, double alpha, double *box)
 
-            ELSE:
-                void p3m_gpu_init(int cao, int mesh, float alpha, float box)
-
-        IF _P3M_GPU_DOUBLE:
-            cdef inline python_p3m_gpu_init(params):
-                cdef int cao
-                cdef int mesh
-                cdef double alpha
-                cdef double box
-                cao = params["cao"]
-                mesh = params["mesh"][0]
-                alpha = params["alpha"]
-                box = params["box"][0]
-                p3m_gpu_init(cao, mesh, alpha, box)
-        ELSE:
-            cdef inline python_p3m_gpu_init(_params):
-                cdef int cao
-                cdef int mesh
-                cdef float alpha
-                cdef float box
-                cao = _params["cao"]
-                mesh = _params["mesh"][0]
-                alpha = _params["alpha"]
-                box = _params["box"][0]
-                p3m_gpu_init(cao, mesh, alpha, box)
+        cdef inline python_p3m_gpu_init(params):
+            cdef int cao
+            cdef int mesh[3]
+            cdef double alpha
+            cdef double box[3]
+            cao = params["cao"]
+            mesh = params["mesh"]
+            alpha = params["alpha"]
+            box = params["box"]
+            p3m_gpu_init(cao, mesh, alpha, box)
 
         # Convert C arguments into numpy array
         cdef inline python_p3m_set_mesh_offset(mesh_off):
