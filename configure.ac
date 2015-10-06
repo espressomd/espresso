@@ -801,6 +801,7 @@ AC_CONFIG_FILES([
         doc/tutorials/04-lattice_boltzmann/Makefile 
 	doc/tutorials/05-raspberry_electrophoresis/Makefile 
 	doc/tutorials/06-active_matter/Makefile 
+	doc/tutorials/07-electrokinetics/Makefile 
 	doc/latexit.sh
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
