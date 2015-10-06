@@ -1,12 +1,12 @@
-\section{Theoretical Background}
+\section{\label{sec:theory}Theoretical Background}
 
 \subsection{The Electrokinetic Equations}
 
-In the following, we will derive the equations modeling the time evolution of the concentrations of dissolved species as well as the solvent in the standard electrokinetic model. We do so, neglecting the salt ions' contribution to the overall mass density, which allows us to treat the dynamics of the ions and the fluid separately~\cite{degraaf14a}. The solvent fluid will be modeled using the Navier-Stokes equations while we use a set of Diffusion-Migration-Advection equations for the ionic species.
+In the following, we will derive the equations modeling the time evolution of the concentrations of dissolved species as well as the solvent in the standard electrokinetic model. We do so, neglecting the salt ions' contribution to the overall mass density, which allows us to treat the dynamics of the ions and the fluid separately~\cite{degraaf14a}. The solvent fluid will be modeled using the Navier-Stokes equations while we use a set of diffusion-migration-advection equations for the ionic species.
 
 \subsubsection{\label{sub:species}Ionic Species}
 
-The description starts with the ionic species's concentrations $c_{k}(\vec{r}, t)$ (number density) and the associated flux densities $\vec{j}_{k}(\vec{r}, t)$, for which mass conservation holds
+The description starts with the ionic species' concentrations $c_{k}(\vec{r}, t)$ (number density) and the associated flux densities $\vec{j}_{k}(\vec{r}, t)$, for which mass conservation holds
 %
 \begin{equation}
 \label{eq:model_continuity}
@@ -22,7 +22,7 @@ The advective contribution to the flux is given by
 \vec{j}_{k}^{\mathrm{adv.}} = c_{k} \vec{u} ,
 \end{equation}
 %
-where $\vec{u}(\vec{r}, t)$ denotes the fluid velocity (advective velocity). Equation~\eqref{eq:adv_flux} models advection as a simple co-movement of the dissolved ions with the surrounding fluid. All inertial effects of the ions are negelected.
+where $\vec{u}(\vec{r}, t)$ denotes the fluid velocity (advective velocity). Equation~\eqref{eq:adv_flux} models advection as a simple co-movement of the dissolved ions with the surrounding fluid. All inertial effects of the ions are neglected.
 
 The diffusive behavior of the ions is best described in a reference frame co-moving with the local advective velocity $\vec{u}$. We assume that the species' relative fluxes instantaneously relax to a local equilibrium. This assumption allows us to derive the diffusive fluxes from a local free-energy density, which we define as
 %
@@ -125,7 +125,7 @@ confining a solution of water and the plates' counterions.
 Due to the net neutrality of the system and the
 translational symmetry in directions parallel to the plates, the potential
 outside the two plates must be constant. This means that using periodic or
-non-periodic boundary conditions makes no difference. As the system is in equilibrium in the normal direction, the electrokinetic~\cref{eq:flux,eq:conti,eq:poisson} for this dimension reduce to the Poisson-Boltzmann equation for the elecrostatic potential, which reads
+non-periodic boundary conditions makes no difference. As the system is in equilibrium in the normal direction, the electrokinetic~\cref{eq:flux,eq:conti,eq:poisson} for this dimension reduce to the Poisson-Boltzmann equation for the electrostatic potential, which reads
 \begin{align}
 	\partial_x^2 \Phi(x) = -4 \pi \, \kT \, \lb \, ze \, c_0 \cdot \exp{\left(-\frac{ze\Phi(x)}{\kT}\right)} \; ,
 \end{align}
