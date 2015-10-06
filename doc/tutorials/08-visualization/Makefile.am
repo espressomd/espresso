@@ -22,8 +22,8 @@ if DEVEL_SRC
 tutorial_TEXFILES=$(BASENAME).tex
 
 tutorial_FIGURES = \
-	figures/title.png \
-	figures/paraview.png \
+	figures/flow_field.pdf \
+	figures/paraview.pdf \
 	figures/paraview.svg
 
 tutorial_FILES = \
