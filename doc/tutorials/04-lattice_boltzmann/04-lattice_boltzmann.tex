@@ -4,59 +4,59 @@
 % - provide background information and references
 % - do not get lost in details but maintain a nice readability
 % - describe every line of the script, that contains an ESPResSo
-%   command (in future tutorial, only describe new ones) 
+%   command (in future tutorial, only describe new ones)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % From the brainstorming:
 %
 % Preknowledge:
-% 
+%
 % Basic MD(simple integrator,langevin thermostat, ---basic tcl
 % basic potentials, basis tutorial 1
-% 
+%
 % Basis Tutorial: written in Latex
-% 
+%
 % <<every line of script code should be explained>>
-% 
+%
 % 1) tcl basic setting up a system
-% MD, soft sphere and Lennard-Jones Fluid (argon system), 
+% MD, soft sphere and Lennard-Jones Fluid (argon system),
 % Units
-% 
+%
 % online visualization (pdb output)
 % rdf, pressure,energy,
-% 
+%
 % online analysis function
 % savin, readin writeout, offline analysis, statistics
-% 
+%
 % Structure:
 % Part1:
 % 1) Prerequisits (what you should know beforehand: basic tcl knowledge,
 % Here you can find more info: Allen, Tildesley: Frenkel smit,
 % Rappaport, tcl tutorial,
-% 
+%
 % 2) Physics of the systems (argon, soft sphere system)
-% 
+%
 % 3) Algorithms (verlocity verlet, Langevin, Potentials, LJ)
 % 3b) about units
-% 
-% Part2 
+%
+% Part2
 % 1) simulation script in all detail, line by line
 % Initialize
 % Visualize
 % Simulate (with online analysis, saves for later off-line analysis,
 % (Savelize (save our lives ))
-% 
+%
 % 2) a new script for later
 % analysis, and other helper ideas
-% 
+%
 % Things to remember and take care of:
 % Use the same names for variables
-% 
+%
 % ====================================================================
 % General Tutorial: (the next tutorials: pe_solution, cell model of one
 % charged colloid, LB, ferrofluid)
-% 
+%
 
 % basiert auf KOMA-Script scrbook-Klasse
 \documentclass[11pt,a4paper,% BCOR8mm,
@@ -72,7 +72,7 @@ bigheadings, % bibtotoc, %tocindent, listsindent, %
 	       % openbib, origlongtable,
 final]{scrartcl}
 
-% Satzspiegel 
+% Satzspiegel
 
 % wenn keine KOMA-Klasse verwendet wird, kann so der Satzspiegel
 % berechnet werden
@@ -80,7 +80,7 @@ final]{scrartcl}
 
 % Hier knnen Seitenhoehe und -breite individuell angepasst werden
 %\areaset[BCOR]{Breite}{Hohe}
-% oder 
+% oder
 %\usepackage[a4paper,body={15.6cm,23cm},left=3cm]{geometry}
 
 % ============================================================================
@@ -93,8 +93,8 @@ final]{scrartcl}
 % Wenn man direkt mit dem pdflatex eine PDF-Datei erzeugt, sollten diese beiden
 % Pakete eingebunden werden (Hyperlinks, bessere Bildschirmschriftarten usw.)
 \usepackage{color}
-\definecolor{mylinkcolor}{rgb}{0.5812,0.0665,0.0659} % IndianRed 
-\definecolor{mycitecolor}{rgb}{0.075,0.31,0.0431} % MossGreen 
+\definecolor{mylinkcolor}{rgb}{0.5812,0.0665,0.0659} % IndianRed
+\definecolor{mycitecolor}{rgb}{0.075,0.31,0.0431} % MossGreen
 \definecolor{myurlcolor}{rgb}{0.0118,0.098,0.7412} % DarkBlue
 \usepackage[pdftex,bookmarks]{hyperref}
 
@@ -121,7 +121,7 @@ final]{scrartcl}
 \usepackage[english]{babel}
 % Neue Deutsche Rechtschreibung
 %\usepackage[ngerman]{babel}
-%\usepackage{ngerman} 
+%\usepackage{ngerman}
 
 % Paket zur einfacheren Eingabe deutscher Umlaute
 %\usepackage[applemac]{inputenc} %Mac
@@ -268,7 +268,7 @@ final]{scrartcl}
 % Markierungen: \leftmark, \rightmark, \pagemark \headmark
 % \manualmark \automark
 
-% ============================================================================  
+% ============================================================================
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \setcounter{secnumdepth}{2}
@@ -298,7 +298,7 @@ final]{scrartcl}
 
 % The code block
 %\newcommand{\EScode}[1]{ \parbox{0.95\textwidth}{\texttt{#1}}}
-\usepackage{listings} 
+\usepackage{listings}
 \lstset{numbers=left, numberstyle=\tiny, numbersep=5pt, showspaces=false, showstringspaces=false,postbreak=\space, breakindent=5pt, breaklines}
 \lstset{language=tcl, keywordstyle=\color{blue}\bfseries ,emphstyle=\color{green}, commentstyle=\color{red}\itshape }
 \lstset{keywordsprefix=setmd}
