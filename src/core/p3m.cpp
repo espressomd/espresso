@@ -37,6 +37,9 @@
 #include "cells.hpp"
 #include "tuning.hpp"
 #include "elc.hpp"
+#ifdef CUDA
+#include "p3m_gpu_error.hpp"
+#endif
 
 #ifdef P3M
 
@@ -1313,7 +1316,12 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_a
   *_alpha_L = alpha_L;
   /* calculate real space and k space error for this alpha_L */
   rs_err = p3m_real_space_error(coulomb.prefactor,r_cut_iL,p3m.sum_qpart,p3m.sum_q2,alpha_L);
-  ks_err = p3m_k_space_error(coulomb.prefactor,mesh,cao,p3m.sum_qpart,p3m.sum_q2,alpha_L);
+#ifdef CUDA
+  if(coulomb.method == COULOMB_P3M_GPU)
+    ks_err = p3m_k_space_error_gpu(coulomb.prefactor, mesh, cao, p3m.sum_qpart, p3m.sum_q2, alpha_L, box_l);
+  else
+#endif
+    ks_err = p3m_k_space_error(coulomb.prefactor,mesh,cao,p3m.sum_qpart,p3m.sum_q2,alpha_L);
 
   *_rs_err = rs_err;
   *_ks_err = ks_err;
@@ -1452,7 +1460,7 @@ static double p3m_m_time(char **log, int mesh[3],
   int cao = *_cao;
 
   P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=(%d, %d %d), cao_min=%d, cao_max=%d, rmin=%f, rmax=%f\n",
-                   mesh[0],mesh[1],mesh[2], cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
+                    mesh[0],mesh[1],mesh[2], cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
   /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
      to increase cao to increase the obtainable precision of the far formula. */
   do {
@@ -1688,8 +1696,9 @@ int p3m_adaptive_tune(char **log) {
 
     /* the optimum r_cut for this mesh is the upper limit for higher meshes,
        everything else is slower */
-    r_cut_iL_max = tmp_r_cut_iL;
-
+    if(coulomb.method == COULOMB_P3M)
+      r_cut_iL_max = tmp_r_cut_iL;
+    
     /* new optimum */
     if (tmp_time < time_best) {
       P3M_TRACE(fprintf(stderr, "Found new optimum: time %lf, mesh (%d %d %d)\n", tmp_time, tmp_mesh[0], tmp_mesh[1], tmp_mesh[2]));

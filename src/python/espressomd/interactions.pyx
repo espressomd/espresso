@@ -922,166 +922,73 @@ ELSE:
         name = "BOND_ANGLE"
 
 
-class Stretching_Force(BondedInteraction):
-
+class Oif_Global_Forces(BondedInteraction):
     def typeNumber(self):
-        return BONDED_IA_STRETCHING_FORCE
+        return BONDED_IA_OIF_GLOBAL_FORCES
 
     def typeName(self):
-        return "STRETCHING_FORCE"
+        return "OIF_GLOBAL_FORCES"
 
     def validKeys(self):
-        return "r0", "ks"
+        return "A0_g", "ka_g", "V0", "kv"
 
     def requiredKeys(self):
-        return "r0", "ks"
+        return "A0_g", "ka_g", "V0", "kv"
 
     def setDefaultParams(self):
-        self._params = {"r0": 1., "ks": 0}
+        self._params = {"A0_g": 1., "ka_g": 0., "V0": 1., "kv": 0.}
 
     def _getParamsFromEsCore(self):
         return \
-            {"r0": bonded_ia_params[self._bondId].p.stretching_force.r0,
-             "ks": bonded_ia_params[self._bondId].p.stretching_force.ks}
+            {"A0_g": bonded_ia_params[self._bondId].p.oif_global_forces.A0_g,
+             "ka_g": bonded_ia_params[self._bondId].p.oif_global_forces.ka_g,
+             "V0": bonded_ia_params[self._bondId].p.oif_global_forces.V0,
+             "kv": bonded_ia_params[self._bondId].p.oif_global_forces.kv}
 
     def _setParamsInEsCore(self):
-        stretching_force_set_params(
-            self._bondId, self._params["r0"], self._params["ks"])
+        oif_global_forces_set_params(
+            self._bondId, self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"])
 
-
-class Area_Force_Local(BondedInteraction):
+class Oif_Local_Forces(BondedInteraction):
 
     def typeNumber(self):
-        return BONDED_IA_AREA_FORCE_LOCAL
+        return BONDED_IA_OIF_LOCAL_FORCES
 
     def typeName(self):
-        return "AREA_FORCE_LOCAL"
+        return "OIF_LOCAL_FORCES"
 
     def validKeys(self):
-        return "A0_l", "ka_l"
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
 
     def requiredKeys(self):
-        return "A0_l", "ka_l"
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
 
     def setDefaultParams(self):
-        self._params = {"A0_l": 1., "ka_l": 0}
+        self._params = {"r0": 1., "ks": 0., "kslin": 0., "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
 
     def _getParamsFromEsCore(self):
         return \
-            {"A0_l": bonded_ia_params[self._bondId].p.area_force_local.A0_l,
-             "ka_l": bonded_ia_params[self._bondId].p.area_force_local.ka_l}
+            {"r0": bonded_ia_params[self._bondId].p.oif_local_forces.r0,
+             "ks": bonded_ia_params[self._bondId].p.oif_local_forces.ks,
+             "kslin": bonded_ia_params[self._bondId].p.oif_local_forces.kslin,
+             "phi0": bonded_ia_params[self._bondId].p.oif_local_forces.phi0,
+             "kb": bonded_ia_params[self._bondId].p.oif_local_forces.kb,
+             "A01": bonded_ia_params[self._bondId].p.oif_local_forces.A01,
+             "A02": bonded_ia_params[self._bondId].p.oif_local_forces.A02,
+             "kal": bonded_ia_params[self._bondId].p.oif_local_forces.kal}
 
     def _setParamsInEsCore(self):
-        area_force_local_set_params(
-            self._bondId, self._params["A0_l"], self._params["ka_l"])
+        oif_local_forces_set_params(
+            self._bondId, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
 
 
-class Bending_Force(BondedInteraction):
-
-    def typeNumber(self):
-        return BONDED_IA_BENDING_FORCE
-
-    def typeName(self):
-        return "BENDING_FORCE"
-
-    def validKeys(self):
-        return "phi0", "kb"
-
-    def requiredKeys(self):
-        return "phi0", "kb"
-
-    def setDefaultParams(self):
-        self._params = {"phi0": 1., "kb": 0}
-
-    def _getParamsFromEsCore(self):
-        return \
-            {"phi0": bonded_ia_params[self._bondId].p.bending_force.phi0,
-             "kb": bonded_ia_params[self._bondId].p.bending_force.kb}
-
-    def _setParamsInEsCore(self):
-        bending_force_set_params(
-            self._bondId, self._params["phi0"], self._params["kb"])
+    
 
 
-class Volume_Force(BondedInteraction):
-
-    def typeNumber(self):
-        return BONDED_IA_VOLUME_FORCE
-
-    def typeName(self):
-        return "VOLUME_FORCE"
-
-    def validKeys(self):
-        return "V0", "kv"
-
-    def requiredKeys(self):
-        return "V0", "kv"
-
-    def setDefaultParams(self):
-        self._params = {"V0": 1., "kv": 0}
-
-    def _getParamsFromEsCore(self):
-        return \
-            {"V0": bonded_ia_params[self._bondId].p.volume_force.V0,
-             "kv": bonded_ia_params[self._bondId].p.volume_force.kv}
-
-    def _setParamsInEsCore(self):
-        volume_force_set_params(
-            self._bondId, self._params["V0"], self._params["kv"])
 
 
-class Area_Force_Global(BondedInteraction):
-
-    def typeNumber(self):
-        return BONDED_IA_AREA_FORCE_GLOBAL
-
-    def typeName(self):
-        return "AREA_FORCE_GLOBAL"
-
-    def validKeys(self):
-        return "A0_g", "ka_g"
-
-    def requiredKeys(self):
-        return "A0_g", "ka_g"
-
-    def setDefaultParams(self):
-        self._params = {"A0_g": 1., "ka_g": 0}
-
-    def _getParamsFromEsCore(self):
-        return \
-            {"A0_g": bonded_ia_params[self._bondId].p.area_force_global.A0_g,
-             "ka_g": bonded_ia_params[self._bondId].p.area_force_global.ka_g}
-
-    def _setParamsInEsCore(self):
-        area_force_global_set_params(
-            self._bondId, self._params["A0_g"], self._params["ka_g"])
 
 
-class Stretchlin_Force(BondedInteraction):
-
-    def typeNumber(self):
-        return BONDED_IA_STRETCHLIN_FORCE
-
-    def typeName(self):
-        return "STRETCHLIN_FORCE"
-
-    def validKeys(self):
-        return "r0", "kslin"
-
-    def requiredKeys(self):
-        return "r0", "kslin"
-
-    def setDefaultParams(self):
-        self._params = {"r0": 1., "kslin": 0}
-
-    def _getParamsFromEsCore(self):
-        return \
-            {"r0": bonded_ia_params[self._bondId].p.stretchlin_force.r0,
-             "kslin": bonded_ia_params[self._bondId].p.stretchlin_force.kslin}
-
-    def _setParamsInEsCore(self):
-        stretchlin_force_set_params(
-            self._bondId, self._params["r0"], self._params["kslin"])
 
 
 bondedInteractionClasses = {
@@ -1098,12 +1005,8 @@ bondedInteractionClasses = {
     int(BONDED_IA_ANGLE_HARMONIC): Angle_Harmonic,
     int(BONDED_IA_ANGLE_COSINE): Angle_Cosine,
     int(BONDED_IA_ANGLE_COSSQUARE): Angle_Cossquare,
-    int(BONDED_IA_STRETCHING_FORCE): Stretching_Force,
-    int(BONDED_IA_AREA_FORCE_LOCAL): Area_Force_Local,
-    int(BONDED_IA_BENDING_FORCE): Bending_Force,
-    int(BONDED_IA_VOLUME_FORCE): Volume_Force,
-    int(BONDED_IA_AREA_FORCE_GLOBAL): Area_Force_Global,
-    int(BONDED_IA_STRETCHLIN_FORCE): Stretchlin_Force
+    int(BONDED_IA_OIF_GLOBAL_FORCES): Oif_Global_Forces,
+    int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
 }
 
 
