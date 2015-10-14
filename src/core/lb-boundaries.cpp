@@ -563,20 +563,19 @@ void shanchen_set_boundaries(void){
   for(int i=0;i<19*LB_COMPONENTS;i++) modes[i]=0.0;
 
     /* loop over all lattice cells (halo excluded) */
-    index = lblattice.halo_offset;
-    for (z = 0; z < lblattice.grid[2]; z++) {
-        for (y = 0; y < lblattice.grid[1]; y++) {
-            for (x = 0; x < lblattice.grid[0]; x++) {
+    //index = lblattice.halo_offset;
+    for (z=0; z<lblattice.grid[2]+2; z++) {
+        for (y=0; y<lblattice.grid[1]+2; y++) {
+            for (x=0; x<lblattice.grid[0]+2; x++) {	    
+          	index= get_linear_index(x,y,z,lblattice.halo_grid);
                 if (lbfields[index].boundary)
                 {
 		    for(int ii=0;ii<LB_COMPONENTS;ii++)
 		        lbfields[index].rho[ii]=lb_boundaries[lbfields[index].boundary-1].density;
+		    
                 }
-                ++index; /* next node */
             }
-            index += 2; /* skip halo region */
         }
-        index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
 }
 #endif
