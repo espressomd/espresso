@@ -38,7 +38,7 @@ public:
   
   int size() const { return n; }
   
-  Vector(const Vector& rhs) : d(new Scalar[n]) {
+  Vector(const Vector& rhs) {
     std::copy(rhs.d,rhs.d+n,d);
   }
 
