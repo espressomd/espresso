@@ -293,6 +293,7 @@ int lb_lbfluid_set_bulk_visc(double *p_bulk_visc) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.bulk_viscosity[ii] = (float)p_bulk_visc[ii];
+      lbpar_gpu.is_TRT = 0;
       on_lb_params_change_gpu(LBPAR_BULKVISC);
 #endif // LB_GPU
     } else {
@@ -312,6 +313,7 @@ int lb_lbfluid_set_gamma_odd(double *p_gamma_odd) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.gamma_odd[ii] = (float)p_gamma_odd[ii];
+      lbpar_gpu.is_TRT = 0;
       on_lb_params_change_gpu(0);
 #endif // LB_GPU
     } else {
@@ -332,6 +334,7 @@ int lb_lbfluid_set_gamma_even(double *p_gamma_even)
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.gamma_even[ii] = (float)p_gamma_even[ii];
+      lbpar_gpu.is_TRT = 0;
       on_lb_params_change_gpu(0);
 #endif // LB_GPU
     } else {
