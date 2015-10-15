@@ -3442,6 +3442,12 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
                     }
 
+		//if (f[0][0]!=f[0][0])	{printf("x=%d y=%d z=%d f[0][0] = %f \n",x,y,z,f[0][0]);}
+		//if (f[1][0]!=f[1][0])	{printf("x=%d y=%d z=%d f[1][0] = %f \n",x,y,z,f[1][0]);}
+		//if (f[0][1]!=f[0][1])	{printf("x=%d y=%d z=%d f[0][1] = %f \n",x,y,z,f[0][1]);}
+		//if (f[1][1]!=f[1][1])	{printf("x=%d y=%d z=%d f[1][1] = %f \n",x,y,z,f[1][1]);}
+		//if (f[0][2]!=f[0][2])	{printf("x=%d y=%d z=%d f[0][2] = %f \n",x,y,z,f[0][2]);}
+		//if (f[1][2]!=f[1][2])	{printf("x=%d y=%d z=%d f[1][2] = %f \n",x,y,z,f[1][2]);}
 		    ind = index + dy;
 		    set_coupling(ind);
 		    tmpp[1] = lbfields[ind].rho[0]/18.; 
@@ -3478,7 +3484,7 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
                     }
 
-		    ind = index + dx + dy;
+		    ind	= index + dx + dy;
 		    set_coupling(ind);
 		    tmpp[0] =  lbfields[ind].rho[0]/36.; 
 		    tmpp[1] =  lbfields[ind].rho[0]/36.; 

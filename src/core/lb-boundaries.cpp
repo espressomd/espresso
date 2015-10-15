@@ -562,7 +562,7 @@ void shanchen_set_boundaries(void){
   double modes[19*LB_COMPONENTS];
   for(int i=0;i<19*LB_COMPONENTS;i++) modes[i]=0.0;
 
-    /* loop over all lattice cells (halo excluded) */
+    /* loop over all lattice cells (halo included) */
     //index = lblattice.halo_offset;
     for (z=0; z<lblattice.grid[2]+2; z++) {
         for (y=0; y<lblattice.grid[1]+2; y++) {
@@ -642,6 +642,7 @@ void lb_bounce_back() {
                           lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i+ii*LBQ][k]+population_shift*lbpar.rho[ii])*lbmodel.c[i][l];
                       }
                       lbfluid[1][reverse[i]+ii*LBQ][k-next[i]]   = lbfluid[1][i+ii*LBQ][k] + population_shift * lbpar.rho[ii];
+		      if(lbfluid[1][i+ii*LBQ][k]!=0.0) {printf("x=%d y=%d z=%d lbfluid[1][%d][%d]=%f \n",x,y,z,i+ii*LBQ,k,lbfluid[1][i+ii*LBQ][k]);}
                     }
                     else
                       lbfluid[1][reverse[i]+ii*LBQ][k-next[i]]   = lbfluid[1][i+ii*LBQ][k] = 0.0;
