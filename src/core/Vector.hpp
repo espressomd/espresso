@@ -35,7 +35,15 @@ public:
   Vector(std::initializer_list<Scalar> l) {
     std::copy(l.begin(), l.begin() + n, d);
   }
-  
+
+  Scalar *begin() const {
+    return d;
+  }
+
+  Scalar *end() const {
+    return d + n;
+  }
+ 
   int size() const { return n; }
   
   Vector(const Vector& rhs) {
@@ -53,7 +61,7 @@ public:
   Scalar &operator[](int i) const {
     return d[i];
   };
-
+  
   inline Scalar dot(const Vector<n, Scalar> &b) const {
     Scalar sum = 0;
     for(int i = 0; i < n; i++)
