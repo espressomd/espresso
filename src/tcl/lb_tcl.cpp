@@ -742,6 +742,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 		);
 #endif
 	  }
+#endif
 	  Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (ARG0_IS_S_EXACT("print"))
