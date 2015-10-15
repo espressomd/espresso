@@ -420,6 +420,12 @@ AS_IF([test x$with_cuda != xno],[
 
 AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 
+## Check for Boost
+##################
+
+AX_BOOST_BASE([1.48],, [AC_MSG_WARN([boost was not found on you system, parts of the test system will not be available.])])
+AX_BOOST_UNIT_TEST_FRAMEWORK
+
 ## Checking for MAGMA
 ##################################
 AS_IF([test x$with_magma = xguess || test x$with_magma = xyes || test x$with_magma = x],[
