@@ -740,7 +740,6 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 		lbpar.ext_force[3], lbpar.ext_force[4],lbpar.ext_force[5],
 		lbpar.coupling[0], lbpar.coupling[1],lbpar.coupling[2]
 		);
-#endif
 	  }
 #endif
 	  Tcl_AppendResult(interp, buffer, (char *)NULL);
