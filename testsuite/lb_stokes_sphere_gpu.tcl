@@ -34,17 +34,16 @@ puts "---------------------------------------------------------------"
 set w 16
 set l 16
 setmd box_l [ expr $w+2 ] $l $l
-set dt [lindex $argv 0];#0.01
-setmd time_step $dt
+setmd time_step 0.01
 thermostat lb 0.
 setmd skin 0.5
 cellsystem domain_decomposition -no_verlet_list
 
 set kinematic_visc 10.
 set dens 1.
-lbfluid gpu dens $dens friction 1. agrid 1.0 tau $dt visc 10.
+lbfluid gpu visc [ expr $kinematic_visc / $dens ] dens $dens friction 1. agrid 1.0 tau .01 
 
-set v1 0.001
+set v1 1.0
 lbboundary wall normal -1. 0. 0. dist [ expr -(+0.5+$w) ] velocity 0.00 $v1 0.
 lbboundary wall normal 1. 0. 0. dist 0.5 velocity 0. $v1 0.
 set radius 2.5

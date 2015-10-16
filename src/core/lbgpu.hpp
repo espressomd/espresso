@@ -86,7 +86,7 @@ typedef struct {
   /**      */
   float gamma_odd[LB_COMPONENTS];
   float gamma_even[LB_COMPONENTS];
-  int is_TRT;
+  bool is_TRT;
   /** friction coefficient for viscous coupling (LJ units)
    * Note that the friction coefficient is quite high and may
    * lead to numerical artifacts with low order integrators */
