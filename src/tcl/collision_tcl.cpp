@@ -50,6 +50,13 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
 	      collision_params.distance, collision_params.bond_centers,
 	      collision_params.bond_vs, collision_params.vs_particle_type);
     }
+    else if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
+      sprintf(s, " glue_to_surface %f %d %d %d %d %d %f",
+	      collision_params.distance, collision_params.bond_centers,
+	      collision_params.bond_vs, collision_params.vs_particle_type,
+	      collision_params.part_type_to_be_glued, collision_params.part_type_to_attach_vs_to,
+	      collision_params.dist_glued_part_to_vs);
+    }
     else if (collision_params.mode & COLLISION_MODE_BOND) {
       sprintf(s, " bind_centers %f %d", collision_params.distance,
 	      collision_params.bond_centers);
@@ -63,16 +70,16 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
 
   // Otherwise, we set parameters
   if (ARG0_IS_S("off")) {
-    collision_detection_set_params(0,0,0,0,0);
+    collision_detection_set_params(0,0,0,0,0,0,0,0);
     return TCL_OK;
   }
   else {
     /* parameters of collision_detection_set_params */
     int mode = 0;
-    double d = 0;
+    double d,d2 = 0;
     int bond_centers = 0;
     int bond_vs = 0;
-    int t = 0;
+    int t,tg,tv = 0;
 
     if (ARG0_IS_S("exception")) {
       mode = COLLISION_MODE_EXCEPTION;
@@ -122,12 +129,48 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
       }
       argc -= 5; argv += 5;
     }
+    else if (ARG0_IS_S("glue_to_surface")) {
+      mode |= COLLISION_MODE_BOND | COLLISION_MODE_GLUE_TO_SURF;
+      if (argc != 8) {
+	Tcl_AppendResult(interp, "Not enough parameters, need a distance, two bond types, three particle types and another distance as args.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_D(1,d)) {
+	Tcl_AppendResult(interp, "Need a distance as 1st arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(2,bond_centers)) {
+	Tcl_AppendResult(interp, "Need a bond type as 2nd arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(3,bond_vs)) {
+	Tcl_AppendResult(interp, "Need a bond type as 3rd arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(4,t)) {
+	Tcl_AppendResult(interp, "Need a particle type as 4th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(5,tg)) {
+	Tcl_AppendResult(interp, "Need a particle type as 5th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(6,tv)) {
+	Tcl_AppendResult(interp, "Need a particle type as 6th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_D(7,d2)) {
+	Tcl_AppendResult(interp, "Need a distance as 7th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      argc -= 8; argv += 8;
+    }
     else {
       Tcl_AppendResult(interp, "\"", argv[0], "\" is not a valid collision detection mode.", (char*) NULL);
       return TCL_ERROR;
     }
     
-    int res = collision_detection_set_params(mode,d,bond_centers,bond_vs,t);
+    int res = collision_detection_set_params(mode,d,bond_centers,bond_vs,t,d2,tg,tv);
 
     switch (res) {
     case 1:
