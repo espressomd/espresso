@@ -3389,7 +3389,7 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 #endif
   int factor = (int)round(lbpar.tau/time_step);
   index_t index;
-  int x, y, z, k;
+  int x, y, z;
   int dx = 1, dy = lblattice.halo_grid[0], dz = lblattice.halo_grid[0]*lblattice.halo_grid[1];
 
   if (fluidstep+1 >= factor) {
@@ -3406,14 +3406,14 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
     shanchen_set_boundaries();
 #endif
 
-    /* loop over all lattice cells (halo excluded) */
-    index = lblattice.halo_offset;
+    /* loop over all lattice cells (halo included) */
+    
     for (z = 0; z < lblattice.grid[2]+2; z++) {
         for (y = 0; y < lblattice.grid[1]+2; y++) {
             for (x = 0; x < lblattice.grid[0]+2; x++) {
                 // as we only want to apply this to non-boundary nodes we can throw out the if-clause
                 // if we have a non-bounded domain
-        	k= get_linear_index(x,y,z,lblattice.halo_grid);
+        	index = get_linear_index(x,y,z,lblattice.halo_grid);
 #ifdef LB_BOUNDARIES
                 if (!lbfields[index].boundary)
 #endif // LB_BOUNDARIES
@@ -3427,35 +3427,35 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 		    int boundary_id;
                     for(int ii=0;ii<LB_COMPONENTS;ii++) f[ii][0]=f[ii][1]=f[ii][2]=0.0;
 		    ind = index + dx;
-		    set_coupling(k);
-		    tmpp[0] = lbfields[k].rho[0]/18.; 
-		    tmpn[0] = lbfields[k].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[0] = lbfields[ind].rho[0]/18.; 
+		    tmpn[0] = lbfields[ind].rho[1]/18.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
                     }
 		    ind = index - dx;
-		    set_coupling(k);
-		    tmpp[0] = -lbfields[k].rho[0]/18.; 
-		    tmpn[0] = -lbfields[k].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/18.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/18.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
                     }
 
 		    ind = index + dy;
-		    set_coupling(k);
-		    tmpp[1] = lbfields[k].rho[0]/18.; 
-		    tmpn[1] = lbfields[k].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[1] = lbfields[ind].rho[0]/18.; 
+		    tmpn[1] = lbfields[ind].rho[1]/18.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
                     }
                   
 		    ind = index - dy;
-		    set_coupling(k);
-		    tmpp[1] = -lbfields[k].rho[0]/18.; 
-		    tmpn[1] = -lbfields[k].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[1] = -lbfields[ind].rho[0]/18.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/18.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
@@ -3468,29 +3468,29 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 //		if (f[0][2]!=f[0][2]){printf("x=%d y=%d z=%d f[0][2] = %f indexk = %d \n",x,y,z,f[0][2],k);}
 //		if (f[1][2]!=f[1][2]){printf("x=%d y=%d z=%d f[3][2] = %f index  = %ld \n",x,y,z,f[1][2],index);}
 		    ind = index + dz;
-		    set_coupling(k);
-		    tmpp[2] = lbfields[k].rho[0]/18.; 
-		    tmpn[2] = lbfields[k].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[2] = lbfields[ind].rho[0]/18.; 
+		    tmpn[2] = lbfields[ind].rho[1]/18.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
                     }
                   
 		    ind = index - dz;
-		    set_coupling(k);
-		    tmpp[2] = -lbfields[k].rho[0]/18.; 
-		    tmpn[2] = -lbfields[k].rho[1]/18.; 
+		    set_coupling(ind);
+		    tmpp[2] = -lbfields[ind].rho[0]/18.; 
+		    tmpn[2] = -lbfields[ind].rho[1]/18.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpn[2] * coupling[1+LB_COMPONENTS*ii]; 
                     }
 
 		    ind	= index + dx + dy;
-		    set_coupling(k);
-		    tmpp[0] =  lbfields[k].rho[0]/36.; 
-		    tmpp[1] =  lbfields[k].rho[0]/36.; 
-		    tmpn[0] = lbfields[k].rho[1]/36.; 
-		    tmpn[1] = lbfields[k].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] =  lbfields[ind].rho[0]/36.; 
+		    tmpp[1] =  lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = lbfields[ind].rho[1]/36.; 
+		    tmpn[1] = lbfields[ind].rho[1]/36.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3499,11 +3499,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 
 		    ind = index - dx - dy;
-		    set_coupling(k);
-		    tmpp[0] = -lbfields[k].rho[0]/36.; 
-		    tmpp[1] = -lbfields[k].rho[0]/36.; 
-		    tmpn[0] = -lbfields[k].rho[1]/36.; 
-		    tmpn[1] = -lbfields[k].rho[1]/36.;                   
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[1] = -lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/36.;                   
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3512,11 +3512,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 		    
 		    ind = index + dx - dy;
-		    set_coupling(k);
-		    tmpp[0] =  lbfields[k].rho[0]/36.; 
-		    tmpp[1] = -lbfields[k].rho[0]/36.; 
-		    tmpn[0] =  lbfields[k].rho[1]/36.; 
-		    tmpn[1] = -lbfields[k].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] =  lbfields[ind].rho[0]/36.; 
+		    tmpp[1] = -lbfields[ind].rho[0]/36.; 
+		    tmpn[0] =  lbfields[ind].rho[1]/36.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/36.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3525,11 +3525,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 
 		    ind = index - dx + dy;
-		    set_coupling(k);
-		    tmpp[0] = -lbfields[k].rho[0]/36.; 
-		    tmpp[1] =  lbfields[k].rho[0]/36.; 
-		    tmpn[0] = -lbfields[k].rho[1]/36.; 
-		    tmpn[1] =  lbfields[k].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[1] =  lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[1] =  lbfields[ind].rho[1]/36.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3538,11 +3538,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 
 		    ind = index + dx + dz;
-		    set_coupling(k);
-		    tmpp[0] = lbfields[k].rho[0]/36.; 
-		    tmpp[2] = lbfields[k].rho[0]/36.; 
-		    tmpn[0] = lbfields[k].rho[1]/36.; 
-		    tmpn[2] = lbfields[k].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] = lbfields[ind].rho[0]/36.; 
+		    tmpp[2] = lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = lbfields[ind].rho[1]/36.; 
+		    tmpn[2] = lbfields[ind].rho[1]/36.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3551,11 +3551,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 
 		    ind = index + dx - dz;
-		    set_coupling(k);
-		    tmpp[0] = lbfields[k].rho[0]/36.; 
-		    tmpp[2] =-lbfields[k].rho[0]/36.; 
-		    tmpn[0] = lbfields[k].rho[1]/36.; 
-		    tmpn[2] =-lbfields[k].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] = lbfields[ind].rho[0]/36.; 
+		    tmpp[2] =-lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = lbfields[ind].rho[1]/36.; 
+		    tmpn[2] =-lbfields[ind].rho[1]/36.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3564,11 +3564,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 		    
 		    ind = index - dx + dz;
-		    set_coupling(k);
-		    tmpp[0] = -lbfields[k].rho[0]/36.; 
-		    tmpp[2] =  lbfields[k].rho[0]/36.; 
-		    tmpn[0] = -lbfields[k].rho[1]/36.; 
-		    tmpn[2] =  lbfields[k].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[2] =  lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[2] =  lbfields[ind].rho[1]/36.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3577,11 +3577,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 
 		    ind = index - dx - dz;
-		    set_coupling(k);
-		    tmpp[0] = -lbfields[k].rho[0]/36.; 
-		    tmpp[2] = -lbfields[k].rho[0]/36.; 
-		    tmpn[0] = -lbfields[k].rho[1]/36.; 
-		    tmpn[2] = -lbfields[k].rho[1]/36.;                   
+		    set_coupling(ind);
+		    tmpp[0] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[2] = -lbfields[ind].rho[0]/36.; 
+		    tmpn[0] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[2] = -lbfields[ind].rho[1]/36.;                   
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3590,11 +3590,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 
 		    ind = index + dy + dz;
-		    set_coupling(k);
-		    tmpp[1] = lbfields[k].rho[0]/36.; 
-		    tmpp[2] = lbfields[k].rho[0]/36.; 
-		    tmpn[1] = lbfields[k].rho[1]/36.; 
-		    tmpn[2] = lbfields[k].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[1] = lbfields[ind].rho[0]/36.; 
+		    tmpp[2] = lbfields[ind].rho[0]/36.; 
+		    tmpn[1] = lbfields[ind].rho[1]/36.; 
+		    tmpn[2] = lbfields[ind].rho[1]/36.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3603,11 +3603,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 
 		    ind = index - dy - dz;
-		    set_coupling(k);
-		    tmpp[1] = -lbfields[k].rho[0]/36.; 
-		    tmpp[2] = -lbfields[k].rho[0]/36.; 
-		    tmpn[1] = -lbfields[k].rho[1]/36.; 
-		    tmpn[2] = -lbfields[k].rho[1]/36.;                   
+		    set_coupling(ind);
+		    tmpp[1] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[2] = -lbfields[ind].rho[0]/36.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[2] = -lbfields[ind].rho[1]/36.;                   
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3616,11 +3616,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 
 		    ind = index + dy - dz;
-		    set_coupling(k);
-		    tmpp[1]  =  lbfields[k].rho[0]/36.; 
-		    tmpp[2]  = -lbfields[k].rho[0]/36.; 
-		    tmpn[1]  =  lbfields[k].rho[1]/36.; 
-		    tmpn[2]  = -lbfields[k].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[1]  =  lbfields[ind].rho[0]/36.; 
+		    tmpp[2]  = -lbfields[ind].rho[0]/36.; 
+		    tmpn[1]  =  lbfields[ind].rho[1]/36.; 
+		    tmpn[2]  = -lbfields[ind].rho[1]/36.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3629,11 +3629,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                     }
 		    
 		    ind = index - dy + dz;
-		    set_coupling(k);
-		    tmpp[1] = -lbfields[k].rho[0]/36.; 
-		    tmpp[2] =  lbfields[k].rho[0]/36.; 
-		    tmpn[1] = -lbfields[k].rho[1]/36.; 
-		    tmpn[2] =  lbfields[k].rho[1]/36.; 
+		    set_coupling(ind);
+		    tmpp[1] = -lbfields[ind].rho[0]/36.; 
+		    tmpp[2] =  lbfields[ind].rho[0]/36.; 
+		    tmpn[1] = -lbfields[ind].rho[1]/36.; 
+		    tmpn[2] =  lbfields[ind].rho[1]/36.; 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
 	               f[ii][1] -= tmpp[1] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][2] -= tmpp[2] * coupling[0+LB_COMPONENTS*ii]; 
@@ -3643,16 +3643,13 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
                        for(int j=0;j<3;j++) { 
-		         lbfields[k].scforce[j+3*ii] = f[ii][j]*lbfields[k].rho[ii]; // A-A
-		         lbfields[k].force[j+3*ii]  += f[ii][j]*lbfields[k].rho[ii]; // A-B
+		         lbfields[index].scforce[j+3*ii] = f[ii][j]*lbfields[index].rho[ii]; // A-A
+		         lbfields[index].force[j+3*ii]  += f[ii][j]*lbfields[index].rho[ii]; // A-B
                        }
                     }
                 }
-                ++index; /* next node */
             }
-            index += 2; /* skip halo region */
         }
-        index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
 
   } // fluidstep+1 >= factor
