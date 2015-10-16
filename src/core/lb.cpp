@@ -3407,7 +3407,6 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 #endif
 
     /* loop over all lattice cells (halo included) */
-    
     for (z = 0; z < lblattice.grid[2]+2; z++) {
         for (y = 0; y < lblattice.grid[1]+2; y++) {
             for (x = 0; x < lblattice.grid[0]+2; x++) {
