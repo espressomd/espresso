@@ -642,7 +642,7 @@ void lb_bounce_back() {
                           lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i+ii*LBQ][k]+population_shift*lbpar.rho[ii])*lbmodel.c[i][l];
                       }
                       lbfluid[1][reverse[i]+ii*LBQ][k-next[i]]   = lbfluid[1][i+ii*LBQ][k] + population_shift * lbpar.rho[ii];
-		      if(lbfluid[1][i+ii*LBQ][k]!=0.0) {printf("x=%d y=%d z=%d lbfluid[1][%d][%d]=%f \n",x,y,z,i+ii*LBQ,k,lbfluid[1][i+ii*LBQ][k]);}
+		      //if(lbfluid[1][i+ii*LBQ][k]!=0.0) {printf("x=%d y=%d z=%d lbfluid[1][%d][%d]=%f \n",x,y,z,i+ii*LBQ,k,lbfluid[1][i+ii*LBQ][k]);}
                     }
                     else
                       lbfluid[1][reverse[i]+ii*LBQ][k-next[i]]   = lbfluid[1][i+ii*LBQ][k] = 0.0;

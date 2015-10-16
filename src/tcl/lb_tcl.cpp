@@ -906,7 +906,6 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
   /* thermo_switch is retained for backwards compatibility */
   thermo_switch = (thermo_switch | THERMO_LB);
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
-
   return TCL_OK;
 #else /* !defined LB */
   Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
