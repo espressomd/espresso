@@ -32,10 +32,12 @@ public:
       d[i] = a[i];
   };
 
+#ifdef HAVE_CXX11
   Vector(std::initializer_list<Scalar> l) {
     std::copy(l.begin(), l.begin() + n, d);
   }
-
+#endif
+  
   Scalar *begin() const {
     return d;
   }
