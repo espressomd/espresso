@@ -327,7 +327,7 @@ espressoSystemInterface.update();
 
 
 inline void 
-calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,
+calc_non_bonded_pair_force_parts(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
                                  double d[3], double dist, double dist2, 
                                  double force[3], 
                                  double torque1[3] = NULL, double torque2[3] = NULL) {
@@ -341,11 +341,6 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
   /* lennard jones generic */
 #ifdef LENNARD_JONES_GENERIC
   add_ljgen_pair_force(p1,p2,ia_params,d,dist, force);
-#endif
-  /* Directional LJ */
-#ifdef LJ_ANGLE
-  /* The forces are propagated within the function */
-  add_ljangle_pair_force(p1, p2, ia_params, d, dist);
 #endif
   /* smooth step */
 #ifdef SMOOTH_STEP
@@ -473,6 +468,12 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
    calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
 
+   /* Directional LJ */
+#ifdef LJ_ANGLE
+   /* This is a multi-body forces that changes the forces of 6 particles */
+   add_ljangle_force(p1, p2, ia_params, d, dist);
+#endif
+   
   /***********************************************/
   /* short range electrostatics                  */
   /***********************************************/
