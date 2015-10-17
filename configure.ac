@@ -420,6 +420,13 @@ AS_IF([test x$with_cuda != xno],[
 
 AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 
+## Check for Boost
+##################
+
+AX_BOOST_BASE([1.48],, [AC_MSG_WARN([boost was not found on you system, parts of the test system will not be available.])])
+AX_BOOST_UNIT_TEST_FRAMEWORK
+AM_CONDITIONAL([UNIT_TESTS], [test x$ax_cv_boost_unit_test_framework == xyes])
+
 ## Checking for MAGMA
 ##################################
 AS_IF([test x$with_magma = xguess || test x$with_magma = xyes || test x$with_magma = x],[
@@ -785,6 +792,7 @@ AC_CONFIG_FILES([
 	src/core/Makefile
 	src/tcl/Makefile
 	src/python/espressomd/Makefile
+	src/core/unit_tests/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
@@ -852,6 +860,7 @@ Libraries
 FFTW                    = $fftw_found
 efence                  = $with_efence
 h5md			= $with_h5md
+boost_test		= $ax_cv_boost_unit_test_framework
 
 EOF
 

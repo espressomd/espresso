@@ -18,24 +18,37 @@
 */
 #include <algorithm>
 #include <cmath>
+#include <initializer_list>
 
 template<int n, typename Scalar>
 class Vector {
 private:
-  Scalar *d;
+  Scalar d[n];
 public:
-  Vector() : d(new Scalar[n]) {};
+  Vector() {};
 
-  explicit Vector(Scalar *a) : d(new Scalar[n]) {
+  explicit Vector(Scalar *a) {
     for (int i = 0; i < n; i++)
       d[i] = a[i];
   };
 
-  ~Vector() { 
-    delete[] d; 
+#ifdef HAVE_CXX11
+  Vector(std::initializer_list<Scalar> l) {
+    std::copy(l.begin(), l.begin() + n, d);
+  }
+#endif
+  
+  Scalar *begin() const {
+    return d;
   }
 
-  Vector(const Vector& rhs) : d(new Scalar[n]) {
+  Scalar *end() const {
+    return d + n;
+  }
+ 
+  int size() const { return n; }
+  
+  Vector(const Vector& rhs) {
     std::copy(rhs.d,rhs.d+n,d);
   }
 
@@ -47,10 +60,10 @@ public:
     Vector tmp(rhs); swap(rhs); return *this;
   };
 
-  Scalar &operator[](int i) {
+  Scalar &operator[](int i) const {
     return d[i];
   };
-
+  
   inline Scalar dot(const Vector<n, Scalar> &b) const {
     Scalar sum = 0;
     for(int i = 0; i < n; i++)
@@ -59,7 +72,7 @@ public:
   };
 
   inline Scalar norm2(void) const {
-    return dot(this);
+    return dot(*this);
   };
 
   inline Scalar norm(void) const {
