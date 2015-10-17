@@ -59,7 +59,7 @@ extern Reaction_field_params rf_params;
 ///
 int rf_set_params(double kappa,double epsilon1,double epsilon2, double r_cut);
 
-inline void add_rf_coulomb_pair_force_no_cutoff(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
+inline void add_rf_coulomb_pair_force_no_cutoff(const Particle * const p1, const Particle * const p2, double d[3], double dist, double force[3])
 {
    int j;
    double fac;
@@ -114,7 +114,7 @@ inline double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 ///
 int interrf_set_params(int part_type_a, int part_type_b,int rf_on);
 
-inline void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_interrf_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
 #ifdef ONEPART_DEBUG
