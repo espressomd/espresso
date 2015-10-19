@@ -96,8 +96,7 @@ if { ! ($res == "glue_to_surface 5.500000 2 3 1 2 3 1.000000") } {
 }
 
 # Check the actual collision detection
-invalidate_system
-integrate 0
+integrate 0 recalc_forces
 
 # Check bonds between colliding particles
 set bonds [analyze_topology 2]
@@ -116,14 +115,14 @@ if { [part 3 print virtual] != 1 } {
  error_exit "The supposed virtual particle doesn't have the virtual flag set."
 }
 # Is the vs attached correctly
-if { [part 3 print vs_relative ] != "1 4.500000" } {
- error_exit "the vs_relative params are wrong"
+set vs_info [lrange [part 3 print vs_relative] 0 1]
+if {$vs_info != "1 4.500000" } {
+ error_exit "the vs_relative params are wrong: $vs_info"
 }
 
 # Integrate again and make sure, no extra bonds are added
 # enforce force recalculation
-invalidate_system
-integrate 0
+integrate 0 recalc_forces
 
 # Check, whether the bonds are still correct, not doubled
 set bonds [analyze_topology 2]
@@ -151,7 +150,7 @@ if { ! ([part 3 print type]==1) } {
 
 # test exception, generating another collision
 part 2 pos 11 0 0 type 2
-invalidate_system
+integrate 0 recalc_forces
 on_collision exception glue_to_surface 5.5 2 3 1 2 3 1.0
 if {![catch {integrate 1} err]} {
     error_exit "no exception was thrown at collision, although requested"

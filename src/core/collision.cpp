@@ -26,7 +26,7 @@ using namespace std;
 
 // #define DEBUG
 
-#ifdef DEBUG
+#ifdef COLLISION_DETECTION_DEBUG
 #define TRACE(a) a
 #else
 #define TRACE(a)
@@ -65,9 +65,10 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
     return 1;
 #endif
 
-  // Binding so far only works on a single cpu
-  if ((mode & COLLISION_MODE_VS) && n_nodes != 1)
-    return 2;
+  // For vs based methods, Binding so far only works on a single cpu
+  if ((mode & COLLISION_MODE_VS) ||(mode & COLLISION_MODE_GLUE_TO_SURF))
+    if (n_nodes != 1)
+      return 2;
 
   // Check if bonded ia exist
   if ((mode & COLLISION_MODE_BOND) &&
@@ -77,10 +78,12 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
       (bond_vs >= n_bonded_ia))
     return 3;
   
+  // If the bond type to bind particle centers is not a pair bond...
   if ((mode & COLLISION_MODE_BOND) &&
       (bonded_ia_params[bond_centers].num != 1))
     return 4;
   
+  // The bond between the virtual sites can be pair or triple
   if ((mode & COLLISION_MODE_VS) && !(bonded_ia_params[bond_vs].num == 1 ||
 				      bonded_ia_params[bond_vs].num == 2))
     return 5;
@@ -130,10 +133,11 @@ void detect_collision(Particle* p1, Particle* p2)
 
   // Obtain distance between particles
   dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
+  TRACE(printf("%d: Distance between particles %lf %lf %lf, Scalar: %lf\n",this_node,vec21[0],vec21[1],vec21[2]));
   if (dist_betw_part > collision_params.distance)
     return;
 
-  TRACE(printf("%d: particles %d and %d on bonding distance %lf\n", this_node, p1->p.identity, p2->p.identity, dist_betw_part));
+  TRACE(printf("%d: particles %d and %d within bonding distance %lf\n", this_node, p1->p.identity, p2->p.identity, dist_betw_part));
   // If we are in the glue to surface mode, check that the particles
   // are of the right type
   if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
@@ -214,14 +218,14 @@ void detect_collision(Particle* p1, Particle* p2)
     bondG[1]=secondary;
     local_change_bond(primary, bondG, 0);
   }
-    double new_position[3];
-    // The glue to surface mode requires a different point of collision calc than the other modes
-   if (! (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
+  
+  double new_position[3];
+  // The glue to surface mode requires a different point of collision calc than the other modes
+  if (! (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
     /* If we also create virtual sites, we add the collision
        to the queue to later add vs */
 
     // Point of collision
-    double new_position[3];
     for (int i=0;i<3;i++) {
       new_position[i] = p1->r.p[i] - vec21[i] * 0.50;
     }
@@ -235,14 +239,14 @@ void detect_collision(Particle* p1, Particle* p2)
     if ((p1->p.type==collision_params.part_type_to_be_glued)
        && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
        { 
-         for (i=0;i<3;i++) {
+         for (int i=0;i<3;i++) {
            new_position[i] = p1->r.p[i] - vec21[i]/dist_betw_part *collision_params.dist_glued_part_to_vs;
          }
     }
     else if ((p2->p.type==collision_params.part_type_to_be_glued)
           && (p1->p.type ==collision_params.part_type_to_attach_vs_to))
        { 
-         for (i=0;i<3;i++) {
+         for (int i=0;i<3;i++) {
            new_position[i] = p2->r.p[i] + vec21[i]/dist_betw_part *collision_params.dist_glued_part_to_vs;
          }
        // In addition, we swap the particle ids so that the virtual site is always attached to p2
@@ -261,10 +265,9 @@ void detect_collision(Particle* p1, Particle* p2)
     for (int i=0;i<3;i++) {
       collision_queue[number_of_collisions-1].point_of_collision[i] = new_position[i]; 
     }
-  
-  number_of_collisions=0;
+    TRACE(printf("%d: Added to queue: Particles %d and %d at %lf %lf %lf\n",this_node,part1,part2,new_position[0],new_position[1],new_position[2]));
 
-  collision_queue = (collision_struct *) Utils::malloc (sizeof(collision_struct));
+  
 }
 
 
@@ -272,7 +275,6 @@ void detect_collision(Particle* p1, Particle* p2)
 void handle_collisions ()
 {
 for (int i=0;i<number_of_collisions;i++) {
-//  printf("Handling collision of particles %d %d\n", collision_queue[i].pp1, collision_queue[i].pp2);
 
     if (collision_params.mode & (COLLISION_MODE_EXCEPTION)) {
 
@@ -352,7 +354,7 @@ for (int i=0;i<number_of_collisions;i++) {
       }
     }
 #endif
-  }
+  
 
   // Reset the collision queue
   if(collision_queue && (number_of_collisions > 0)) {
