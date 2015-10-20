@@ -679,8 +679,9 @@ finally gives the id of the currently active GPU.
 \begin{essyntax}
 \variant{1} on\_collision
 \variant{2} on\_collision off
-\variant{4} on\_collision \opt{exception} bind_centers \var{d} \var{bond1}
-\variant{5} on\_collision \opt{exception} bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
+\variant{3} on\_collision \opt{exception} bind_centers \var{d} \var{bond1}
+\variant{4} on\_collision \opt{exception} bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
+\variant{5} on\_collision \opt{exception} glue_to_surface \var{d} \var{bond1} \var{bond2} \var{type} \var{type2} \var{type3} \var{d2}
 \end{essyntax}
 
 With the help of the feature \feature{COLLISION_DETECTION}, bonds
@@ -728,6 +729,15 @@ Two methods of binding are available:
   created at the point of collision (if applicable). Be sure not to
   define a short-ranged interaction for this particle type, as two
   particles will be generated in the same place.
+
+\item \lit{glue_to_surface} is used to fix a particle of type \var{type2} onto the surface of a particle of type \var{type3}.
+This is achieved by creating a virtual site (particle type \var{type}) which 
+is rigidly connected to the particle of \var{type3}. A bond of type 
+\var{bond2} is then created between the virtual site and the particle 
+of \var{type}. 
+Additionally, a bond of type \var{bond1} between the colliding 
+particles is also created. 
+After the collision, the particle of type \var{type3} is changed to type 0.
 \end{itemize}
 
 The code can throw an exception (background error) in case two

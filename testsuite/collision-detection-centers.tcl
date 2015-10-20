@@ -137,7 +137,7 @@ if {![catch {integrate 0} err]} {
 
 set bonds ""
 foreach exception [lrange $err 1 end] {
-    if {[regexp {collision between particles (\d+) and (\d+)} $exception -> id1 id2]} {
+    if {[regexp { ERROR: collision between particles (\d+) and (\d+)} $exception -> id1 id2]} {
         lappend bonds "$id1 $id2"
     } else {
 	error_exit "unexpected exception $exception"

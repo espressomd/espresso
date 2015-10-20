@@ -270,12 +270,10 @@ void detect_collision(Particle* p1, Particle* p2)
   
 }
 
-
-// Handle the collisions stored in the queue
-void handle_collisions ()
+// If activated, throws an exception for each collision which can be
+// parsed by the script interface
+void handle_exception_throwing_for_single_collision(int i)
 {
-for (int i=0;i<number_of_collisions;i++) {
-
     if (collision_params.mode & (COLLISION_MODE_EXCEPTION)) {
 
       int id1, id2;
@@ -291,69 +289,88 @@ for (int i=0;i<number_of_collisions;i++) {
       msg << "collision between particles " << id1 << " and " <<id2;
       runtimeError(msg);
     }
+}
+
+void place_vs_and_relate_to_particle(double* pos, int relate_to)
+{
+ 
+	  place_particle(max_seen_particle+1,pos);
+	  vs_relate_to(max_seen_particle,relate_to);
+	  (local_particles[max_seen_particle])->p.isVirtual=1;
+	  (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
+}
+
+void bind_at_poc_create_bond_between_vs(int i)
+{
+   int bondG[3];
+
+   switch (bonded_ia_params[collision_params.bond_vs].num) {
+   case 1: {
+     // Create bond between the virtual particles
+     bondG[0] = collision_params.bond_vs;
+     bondG[1] = max_seen_particle-1;
+     local_change_bond(max_seen_particle, bondG, 0);
+     break;
+   }
+   case 2: {
+     // Create 1st bond between the virtual particles
+     bondG[0] = collision_params.bond_vs;
+     bondG[1] = collision_queue[i].pp1;
+     bondG[2] = collision_queue[i].pp2;
+     local_change_bond(max_seen_particle,   bondG, 0);
+     local_change_bond(max_seen_particle-1, bondG, 0);
+     break;
+   }
+  }
+}
+
+void glue_to_surface_bind_vs_to_pp1(int i)
+{
+         int bondG[3];
+         // Create bond between the virtual particles
+         bondG[0] = collision_params.bond_vs;
+         bondG[1] = max_seen_particle;
+         local_change_bond(collision_queue[i].pp1, bondG, 0);
+	 local_particles[collision_queue[i].pp1]->p.type=0;
+}
+
+// Handle the collisions stored in the queue
+void handle_collisions ()
+{
+
+TRACE(printf("%d: number of collisions in queue %d\n",this_node,number_of_collisions));  
+
+for (int i=0;i<number_of_collisions;i++) {
+    handle_exception_throwing_for_single_collision(i);
 
 #ifdef VIRTUAL_SITES_RELATIVE
   // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
   if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-
-    //	printf("number of collisions in handle collision are %d\n",number_of_collisions);  
-    int bondG[3], i;
-
-      // Go through the queue
-	//  fflush(stdout);
-   
 	// Create virtual site(s) 
 	
 	// If we are in the two vs mode
 	// Virtual site related to first particle in the collision
 	if (collision_params.mode & COLLISION_MODE_VS)
 	{
-	  place_particle(max_seen_particle+1,collision_queue[i].point_of_collision);
-	  vs_relate_to(max_seen_particle,collision_queue[i].pp1);
-	  (local_particles[max_seen_particle])->p.isVirtual=1;
-	  (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
+	 place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp1);
 	}
 	// The virtual site related to p2 is needed independently on which of the vs-related modes is active
-	place_particle(max_seen_particle+1,collision_queue[i].point_of_collision);
-	vs_relate_to(max_seen_particle,collision_queue[i].pp2);
-	(local_particles[max_seen_particle])->p.isVirtual=1;
-	(local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
+        place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp2);
   
 	// If we are in the two vs mode, we need a bond between the virtual sites
 	if (collision_params.mode & COLLISION_MODE_VS)
 	{
-  	  switch (bonded_ia_params[collision_params.bond_vs].num) {
-  	  case 1: {
-  	    // Create bond between the virtual particles
-  	    bondG[0] = collision_params.bond_vs;
-  	    bondG[1] = max_seen_particle-1;
-  	    local_change_bond(max_seen_particle, bondG, 0);
-  	    break;
-  	  }
-  	  case 2: {
-  	    // Create 1st bond between the virtual particles
-  	    bondG[0] = collision_params.bond_vs;
-  	    bondG[1] = collision_queue[i].pp1;
-  	    bondG[2] = collision_queue[i].pp2;
-  	    local_change_bond(max_seen_particle,   bondG, 0);
-  	    local_change_bond(max_seen_particle-1, bondG, 0);
-  	    break;
-  	  }
-  	 }
+          bind_at_poc_create_bond_between_vs(i);
         }
 	
 	// If we are in the "glue to surface mode", we need a bond between p1 and the vs
 	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
 	{
-         // Create bond between the virtual particles
-         bondG[0] = collision_params.bond_vs;
-         bondG[1] = max_seen_particle;
-         local_change_bond(collision_queue[i].pp1, bondG, 0);
-	 local_particles[collision_queue[i].pp1]->p.type=0;
-       }
-      }
-    }
-#endif
+           glue_to_surface_bind_vs_to_pp1(i);
+        }
+      } // are we in one of the vs_based methods
+#endif //defined VIRTUAL_SITES_RELATIVE
+    } // Loop over all collisions in the queue
   
 
   // Reset the collision queue

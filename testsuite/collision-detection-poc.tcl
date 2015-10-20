@@ -87,7 +87,6 @@ if {$bonds != ""} {
 # Check setting of parameters
 setmd min_global_cut 1.0
 on_collision bind_at_point_of_collision 1.0 2 3 1
-puts [on_collision]
 
 
 set res [on_collision]
@@ -154,7 +153,6 @@ for {set i 3} {$i <=4} {incr i} {
    }
  }
 }
-puts "0: $n_related_to_0, 1: $n_related_to_1"
 if { ($n_related_to_0 != 1) || ($n_related_to_1 != 1) } {
    error_exit "Exactly one vs is supposed to be related to part 0 and one to part 1."
 }

@@ -33,7 +33,7 @@ puts "- Testcase collision-detection-glue.tcl running on 1 nodes"
 puts "---------------------------------------------------------------"
 
 # Setup
-setmd box_l 15 15 15
+setmd box_l 19 19 19
 
 thermostat off
 setmd time_step 0.01
@@ -150,18 +150,17 @@ if { ! ([part 3 print type]==1) } {
 
 # test exception, generating another collision
 part 2 pos 11 0 0 type 2
-integrate 0 recalc_forces
 on_collision exception glue_to_surface 5.5 2 3 1 2 3 1.0
 if {![catch {integrate 1} err]} {
     error_exit "no exception was thrown at collision, although requested"
 }
 
 set bonds ""
-foreach exception [lrange $err 2 end] {
-    if {[lrange $exception 0 2] != "collision between particles"} {
+foreach exception [lrange $err 1 end] {
+    if {[lrange $exception 1 3] != "collision between particles"} {
 	error_exit "unexpected exception $exception"
     }
-    lappend bonds "[lindex $exception 3] [lindex $exception 5]"
+    lappend bonds "[lindex $exception 4] [lindex $exception 6]"
 }
 set bonds [lsort $bonds]
 
