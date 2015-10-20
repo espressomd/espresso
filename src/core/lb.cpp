@@ -1935,6 +1935,7 @@ static void lb_prepare_communication() {
         MPI_Type_create_hvector(LB_COMPONENTS*lbmodel.n_veloc, 1,
                                 lblattice.halo_grid_volume*extent,
                                 comm.halo_info[i].datatype, &hinfo->datatype);
+
         MPI_Type_commit(&hinfo->datatype);
 
         halo_create_field_hvector(LB_COMPONENTS*lbmodel.n_veloc,1,
@@ -1963,6 +1964,12 @@ void lb_reinit_parameters() {
 	   if(LB_COMPONENTS==2) factor=2;
            gamma_bulk[ii] = 1. - 2./(3.*factor*lbpar.bulk_viscosity[ii]*lbpar.tau/(lbpar.agrid*lbpar.agrid)+1.);
        }
+#ifdef SHANCHEN
+       if (lbpar.mobility[0] > 0.0) {
+	   gamma_mobility[0] = 1. - 2./(6.*lbpar.mobility[0]*lbpar.tau/(lbpar.agrid*lbpar.agrid) + 1.);
+       }
+
+#endif
    
        gamma_odd[ii] = lbpar.gamma_odd[ii];
        gamma_even[ii] = lbpar.gamma_even[ii];
@@ -1977,7 +1984,7 @@ void lb_reinit_parameters() {
            /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
             * Note that the modes are not normalized as in the paper here! */
            mu = temperature/lbmodel.c_sound_sq*lbpar.tau*lbpar.tau/(lbpar.agrid*lbpar.agrid);
-           //mu *= agrid*agrid*agrid;  // Marcello's conjecture
+           
 #ifdef D3Q19
            double (*e)[19] = d3q19_modebase;
 #else // D3Q19
@@ -2546,10 +2553,10 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
     for(int ii=0; ii< LB_COMPONENTS ; ii++) { 
 #ifdef GAUSSRANDOM
        double mu = temperature/lbmodel.c_sound_sq*lbpar.tau*lbpar.tau/(lbpar.agrid*lbpar.agrid);
-       double rootrho = sqrt(fabs(rho[ii]));
+       double rootrho = rho[ii]/sqrt(rhotot);
 #ifdef SHANCHEN
        double c = rho[0]/rhotot; 
-       double factor = sqrt(c*(1-c)*rhotot*(mu*(2./3.)*(1.-lbpar.mobility[0]*lbpar.mobility[0]))) * (2*ii-1);
+       double factor = sqrt(mu*rhotot*c*(1-c)*((2./3.)*(1.-SQR(gamma_mobility[0])))) * (2*ii-1);
        mode[1+ii*LBQ] += factor * rnd_buffer[0];
        mode[2+ii*LBQ] += factor * rnd_buffer[1];
        mode[3+ii*LBQ] += factor * rnd_buffer[2];
@@ -2578,10 +2585,10 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
 #elif defined (GAUSSRANDOMCUT)
 
        double mu = temperature/lbmodel.c_sound_sq*lbpar.tau*lbpar.tau/(lbpar.agrid*lbpar.agrid);
-       double rootrho = rho[ii]/sqrt(fabs(rhotot));
+       double rootrho = rho[ii]/sqrt(rhotot);
 #ifdef SHANCHEN
        double c = rho[0]/rhotot; 
-       double factor = sqrt(c*(1-c)*rhotot*(mu*(2./3.)*(1.-lbpar.mobility[0]*lbpar.mobility[0]))) * (2*ii-1);
+       double factor = sqrt(mu*rhotot*c*(1-c)*((2./3.)*(1.-SQR(gamma_mobility[0])))) * (2*ii-1);
        mode[1+ii*LBQ] += factor * rnd_buffer[0];
        mode[2+ii*LBQ] += factor * rnd_buffer[1];
        mode[3+ii*LBQ] += factor * rnd_buffer[2];
@@ -2611,10 +2618,10 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
    
 #elif defined (FLATNOISE)
        double mu = temperature/lbmodel.c_sound_sq*lbpar.tau*lbpar.tau/(lbpar.agrid*lbpar.agrid);
-       double rootrho = sqrt(12.0f*abs(rho[ii]));
+       double rootrho = rho[ii]*sqrt(12.0f)/sqrt(rhotot);
 #ifdef SHANCHEN
        double c = rho[0]/rhotot; 
-       double factor = sqrt(c*(1-c)*rhotot*(mu*(2./3.)*(1.-lbpar.mobility[0]*lbpar.mobility[0]))) * (2*ii-1);
+       double factor = sqrt(mu*rhotot*c*(1-c)*((2./3.)*(1.-SQR(gamma_mobility[0])))) * (2*ii-1);
        mode[1+ii*LBQ] += factor * rnd_buffer[0];
        mode[2+ii*LBQ] += factor * rnd_buffer[1];
        mode[3+ii*LBQ] += factor * rnd_buffer[2];
@@ -3354,9 +3361,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 {\
                     boundary_id = lbfields[ind].boundary ;\
                     if (boundary_id) {\
-	    	         coupling[0]=lb_boundaries[boundary_id-1].sc_coupling[0];\
-	    	         coupling[3]=lb_boundaries[boundary_id-1].sc_coupling[1];\
-		         coupling[1]=coupling[2]=0.0;\
+	    	         coupling[1]=lb_boundaries[boundary_id-1].sc_coupling[0];\
+	    	         coupling[2]=lb_boundaries[boundary_id-1].sc_coupling[1];\
+		         coupling[0]=coupling[3]=0.0;\
                     } else \
                     {\
                      coupling[0]=lbpar.coupling[0];\
@@ -3396,6 +3403,7 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
     /* exchange halo regions */
     halo_communication(&update_halo_comm,(char*)**lbfluid);
 
+
 #ifdef ADDITIONAL_CHECKS
     lb_check_halo_regions();
 #endif // ADDITIONAL_CHECKS
@@ -3405,14 +3413,14 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
     // values for neutral wetting conditions 
     shanchen_set_boundaries();
 #endif
-
+    index = lblattice.halo_offset;
     /* loop over all lattice cells (halo included) */
-    for (z = 0; z < lblattice.grid[2]+2; z++) {
-        for (y = 0; y < lblattice.grid[1]+2; y++) {
-            for (x = 0; x < lblattice.grid[0]+2; x++) {
+    for (z = 0; z < lblattice.grid[2]; z++) {
+        for (y = 0; y < lblattice.grid[1]; y++) {
+            for (x = 0; x < lblattice.grid[0]; x++) {
                 // as we only want to apply this to non-boundary nodes we can throw out the if-clause
                 // if we have a non-bounded domain
-        	index = get_linear_index(x,y,z,lblattice.halo_grid);
+        	//index = get_linear_index(x,y,z,lblattice.halo_grid);
 #ifdef LB_BOUNDARIES
                 if (!lbfields[index].boundary)
 #endif // LB_BOUNDARIES
@@ -3441,7 +3449,6 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 	               f[ii][0] -= tmpp[0] * coupling[0+LB_COMPONENTS*ii]; 
 	               f[ii][0] -= tmpn[0] * coupling[1+LB_COMPONENTS*ii]; 
                     }
-
 		    ind = index + dy;
 		    set_coupling(ind);
 		    tmpp[1] = lbfields[ind].rho[0]/18.; 
@@ -3460,12 +3467,6 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
 	               f[ii][1] -= tmpn[1] * coupling[1+LB_COMPONENTS*ii]; 
                     }
 
-//		if (f[0][0]!=f[0][0]){printf("x=%d y=%d z=%d f[1][0] = %f coupling[%d] = %f \n",x,y,z,f[0][0],0+LB_COMPONENTS*0,coupling[0+LB_COMPONENTS*0]);}
-//		if (f[1][0]!=f[1][0]){printf("x=%d y=%d z=%d f[1][0] = %f coupling[%d] = %f \n",x,y,z,f[1][0],1+LB_COMPONENTS*0,coupling[1+LB_COMPONENTS*0]);}
-//		if (f[0][1]!=f[0][1]){printf("x=%d y=%d z=%d f[0][1] = %f coupling[%d] = %f \n",x,y,z,f[0][1],0+LB_COMPONENTS*1,coupling[0+LB_COMPONENTS*1]);}
-//		if (f[1][1]!=f[1][1]){printf("x=%d y=%d z=%d f[2][1] = %f coupling[%d] = %f \n",x,y,z,f[1][1],0+LB_COMPONENTS*1,coupling[1+LB_COMPONENTS*1]);}
-//		if (f[0][2]!=f[0][2]){printf("x=%d y=%d z=%d f[0][2] = %f indexk = %d \n",x,y,z,f[0][2],k);}
-//		if (f[1][2]!=f[1][2]){printf("x=%d y=%d z=%d f[3][2] = %f index  = %ld \n",x,y,z,f[1][2],index);}
 		    ind = index + dz;
 		    set_coupling(ind);
 		    tmpp[2] = lbfields[ind].rho[0]/18.; 
@@ -3647,8 +3648,11 @@ void lattice_boltzmann_calc_shanchen_cpu(void){
                        }
                     }
                 }
+		++index; /* next node */
             }
+	    index += 2; /* skip halo region */
         }
+	index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
 
   } // fluidstep+1 >= factor
@@ -3873,6 +3877,7 @@ void calc_particle_lattice_ia() {
         
       /* exchange halo regions (for fluid-particle coupling) */
       halo_communication(&update_halo_comm, (char*)**lbfluid);
+
 #ifdef ADDITIONAL_CHECKS
       lb_check_halo_regions();
 #endif // ADDITIONAL_CHECKS
