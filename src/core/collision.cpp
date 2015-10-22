@@ -552,6 +552,9 @@ void handle_collisions ()
     
     // Total number of collisions
     MPI_Allreduce(&number_of_collisions, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
+    
+    if (total_collisions==0)
+      return;
 
     // Gather number of collisions
     MPI_Allgather(&number_of_collisions, 1, MPI_INT, counts, 1, MPI_INT, comm_cart);
@@ -707,7 +710,9 @@ void handle_collisions ()
 
    } // if number of collisions of this node > 0
        total_collisions = 0;
-       free(gathered_queue);
+       
+       if (gathered_queue)
+         free(gathered_queue);
  } // if TPB
 
   // Reset the collision queue
