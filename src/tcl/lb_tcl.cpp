@@ -426,7 +426,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
       {
         if ( argc < LB_COMPONENTS + 1 ) 
         {
-          Tcl_AppendResult(interp, "dens requires \"", LB_COMPONENTS  ,"\"argument(s)", (char *)NULL);
+          Tcl_AppendResult(interp, "dens requires a number of argument equal to the number of fluid components", (char *)NULL);
           return TCL_ERROR;
         }
         else 

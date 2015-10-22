@@ -1023,7 +1023,7 @@ int tclcommand_part_parse_solvation(Tcl_Interp *interp, int argc, char **argv,
     int ii;
     *change = 2*LB_COMPONENTS;
     if (argc < 2*LB_COMPONENTS) {
-      Tcl_AppendResult(interp, "solvation requires \"", 2*LB_COMPONENTS, "\"  arguments", (char *) NULL);
+      Tcl_AppendResult(interp, "solvation requires 2 arguments for each of the components", (char *) NULL);
       return TCL_ERROR;
     }
 
