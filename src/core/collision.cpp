@@ -177,7 +177,7 @@ void queue_collision(int part1,int part2, double* point_of_collision) {
     collision_queue[number_of_collisions-1].pp2 = part2;
     memcpy(collision_queue[number_of_collisions-1].point_of_collision,point_of_collision, 3*sizeof(double));
     
-    TRACE(printf("%d: Added to queue: Particles %d and %d at %lf %lf %lf\n",this_node,part1,part2,new_position[0],new_position[1],new_position[2]));
+    TRACE(printf("%d: Added to queue: Particles %d and %d at %lf %lf %lf\n",this_node,part1,part2,point_of_collision[0],point_of_collision[1],point_of_collision[2]));
 }
 
 
@@ -316,7 +316,9 @@ void detect_collision(Particle* p1, Particle* p2)
 }
 
 
-// See comments in handle_collsion_queue()
+
+// Considers three particles for three_particle_binding and performs
+// the binding if the criteria are met //
 void coldet_do_three_particle_bond(Particle* p, Particle* p1, Particle* p2)
 {
   double vec21[3];
@@ -476,6 +478,182 @@ void glue_to_surface_bind_vs_to_pp1(int i)
 	 local_particles[collision_queue[i].pp1]->p.type=0;
 }
 
+
+void gather_collision_queue(int* counts)
+{
+    int displacements[n_nodes];                   // offsets into collisions
+  
+    // Initialize number of collisions gathered from all processors
+    for (int a=0;a<n_nodes;a++)
+        counts[a]=0;
+    
+    // Total number of collisions
+    MPI_Allreduce(&number_of_collisions, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
+    
+    if (total_collisions==0)
+      return;
+
+    // Gather number of collisions
+    MPI_Allgather(&number_of_collisions, 1, MPI_INT, counts, 1, MPI_INT, comm_cart);
+
+    // initialize displacement information for all nodes
+    displacements[0]=0;
+  
+    // Find where to place collision information for each processor
+    int byte_counts[n_nodes];
+    for (int k=1; k<n_nodes; k++)
+        displacements[k]=displacements[k-1]+(counts[k-1])*sizeof(collision_struct);
+    
+    for (int k=0; k<n_nodes; k++)
+       byte_counts[k]=counts[k]*sizeof(collision_struct);
+    
+    TRACE(printf("counts [%d] = %d and number of collisions = %d and diplacements = %d and total collisions = %d\n", this_node, counts[this_node], number_of_collisions, displacements[this_node], total_collisions));
+    
+    // Allocate mem for the new collision info
+    gathered_queue = (collision_struct *) realloc (gathered_queue, (total_collisions) * sizeof(collision_struct));
+
+    // Gather collision informtion from all nodes and send it to all nodes
+    MPI_Allgatherv(collision_queue, byte_counts[this_node], MPI_BYTE, gathered_queue, byte_counts, displacements, MPI_BYTE, comm_cart);
+
+    return;
+}
+
+
+// this looks in all local particles for a particle close to those in a 
+// 2-particle collision. If it finds them, it performs three particle binding
+void three_particle_binding_full_search()
+{
+  Cell *cell;
+  Particle *p, *p1, *p2;
+  // first iterate over cells, get one of the cells and find how many particles in this cell
+  for (int c=0; c<local_cells.n; c++) {
+      cell=local_cells.cell[c];
+      // iterate over particles in the cell
+      for (int a=0; a<cell->n; a++) {
+          p=&cell->part[a];
+          // for all p:
+          for (int ij=0; ij<total_collisions; ij++) {
+              p1=local_particles[gathered_queue[ij].pp1];
+              p2=local_particles[gathered_queue[ij].pp2];
+  
+  		   // Check, whether p is equal to one of the particles in the
+  		   // collision. If so, skip
+  		   if ((p->p.identity ==p1->p.identity) || ( p->p.identity == p2->p.identity)) {
+  		     continue;
+  		   }
+  
+             // The following checks, 
+  		 // if the particle p is closer that the cutoff from p1 and/or p2.
+  		 // If yes, three particle bonds are created on all particles
+  		 // which have two other particles within the cutoff distance,
+  		 // unless such a bond already exists
+  		 
+  		 // We need all cyclical permutations, here 
+  		 // (bond is placed on 1st particle, order of bond partners
+  		 // does not matter, so we don't neet non-cyclic permutations):
+             coldet_do_three_particle_bond(p,p1,p2);
+             coldet_do_three_particle_bond(p1,p,p2);
+             coldet_do_three_particle_bond(p2,p,p1);
+  
+         }
+     }
+ }
+}
+
+
+// Goes through the collision queue and for each pair in it
+// looks for a third particle by using the domain decomposition
+// cell system. If found, it performs three particle binding
+void three_particle_binding_domain_decomposition()
+{
+  // We have domain decomposition
+    
+  // Indices of the cells in which the colliding particles reside
+  int cellIdx[2][3];
+    
+  // Iterate over collision queue
+
+  for (int id=0;id<total_collisions;id++) {
+
+      // Get first cell Idx
+      if ((local_particles[gathered_queue[id].pp1] != NULL) && (local_particles[gathered_queue[id].pp2] != NULL)) {
+
+        Particle* p1=local_particles[gathered_queue[id].pp1];
+        Particle* p2=local_particles[gathered_queue[id].pp2];
+        dd_position_to_cell_indices(p1->r.p,cellIdx[0]);
+        dd_position_to_cell_indices(p2->r.p,cellIdx[1]);
+
+        // Iterate over the cells + their neighbors
+        // if p1 and p2 are in the same cell, we don't need to consider it 2x
+        int lim=1;
+
+        if ((cellIdx[0][0]==cellIdx[1][0]) && (cellIdx[0][1]==cellIdx[1][1]) && (cellIdx[0][2]==cellIdx[1][2]))
+          lim=0; // Only consider the 1st cell
+
+        for (int j=0;j<=lim;j++) {
+
+            // Iterate the cell with indices cellIdx[j][] and all its neighbors.
+            // code taken from dd_init_cell_interactions()
+            for(int p=cellIdx[j][0]-1; p<=cellIdx[j][0]+1; p++)	
+               for(int q=cellIdx[j][1]-1; q<=cellIdx[j][1]+1; q++)
+	                for(int r=cellIdx[j][2]-1; r<=cellIdx[j][2]+1; r++) {   
+	                   int ind2 = get_linear_index(p,q,r,dd.ghost_cell_grid);
+	                   Cell* cell=cells+ind2;
+ 
+	                   // Iterate over particles in this cell
+                     for(int a=0; a<cell->n; a++) {
+                        Particle* P=&cell->part[a];
+                        // for all p:
+  	                      // Check, whether p is equal to one of the particles in the
+  	                      // collision. If so, skip
+  	                      if ((P->p.identity ==p1->p.identity) || (P->p.identity == p2->p.identity)) {
+                          //TRACE(printf("same particle\n"));
+  		                continue;
+  	                      }
+
+                        // The following checks, 
+                        // if the particle p is closer that the cutoff from p1 and/or p2.
+                        // If yes, three particle bonds are created on all particles
+  	                      // which have two other particles within the cutoff distance,
+                        // unless such a bond already exists
+
+  	                      // We need all cyclical permutations, here 
+                        // (bond is placed on 1st particle, order of bond partners
+  	                      // does not matter, so we don't need non-cyclic permutations):
+
+                        if (P->l.ghost) {
+                          //TRACE(printf("%d: center particle is ghost: %d\n", this_node, P->p.identity));
+                          continue;
+                        }
+                        //TRACE(printf("%d: LOOP: %d Handling collision of particles FIRST CONFIGURATION %d %d %d\n", this_node, id, p1->p.identity, P->p.identity, p2->p.identity));
+                        coldet_do_three_particle_bond(P,p1,p2);
+
+                        if (p1->l.ghost) {
+                          //TRACE(printf("%d: center particle is ghost: %d\n", this_node, p1->p.identity));
+                          continue;
+                        }
+
+                        coldet_do_three_particle_bond(p1,P,p2);
+
+                        if (p2->l.ghost) {
+                          //TRACE(printf("%d: center particle is ghost: %d\n", this_node, p2->p.identity));
+                          continue;
+                        }
+
+  	                      coldet_do_three_particle_bond(p2,P,p1);
+
+                     } // loop over particles in this cell
+
+	                } // Loop over cell
+
+        } // Loop over particles if they are in different cells
+    
+      } // If local particles exist
+
+  } // Loop over total collisions
+}
+
+
 // Handle the collisions stored in the queue
 void handle_collisions ()
 {
@@ -517,202 +695,28 @@ void handle_collisions ()
 
   // three-particle-binding part
 
-    //TRACE(printf("counts [%d] = %d\n", this_node, counts[this_node]));
 
   if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {
-
-    int counts[n_nodes];                          // number of collisions on each proc
-    int displacements[n_nodes];                   // offsets into collisions
-  
-    MPI_Datatype collisiontype, oldtypes[2];
-    int blockcounts[2];
-
-    // MPI_Aint type used to be consistent with syntax of MPI_Type_extent routine
-    MPI_Aint offsets[2], extent; 
-
-    // Setup description of the 2 MPI_INT fields pp1, pp2
-    offsets[0] = 0;
-    oldtypes[0] = MPI_INT;
-    blockcounts[0] = 2;
-    
-    // Setup description of the 3 MPI_DOUBLE field position
-    // Need to first figure offset by getting size of MPI_INT
-    MPI_Type_extent(MPI_INT, &extent);
-    offsets[1] = 2*extent;
-    oldtypes[1] = MPI_DOUBLE;
-    blockcounts[1] = 3;
-    
-    // Now define structured type and commit it
-    MPI_Type_create_struct(2, blockcounts, offsets, oldtypes, &collisiontype);
-    MPI_Type_commit(&collisiontype);
-
-    // Initialize number of collisions gathered from all processors
-    for (int a=0;a<n_nodes;a++)
-        counts[a]=0;
-    
-    // Total number of collisions
-    MPI_Allreduce(&number_of_collisions, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
-    
-    if (total_collisions==0)
-      return;
-
-    // Gather number of collisions
-    MPI_Allgather(&number_of_collisions, 1, MPI_INT, counts, 1, MPI_INT, comm_cart);
-
-    // initialize displacement information for all nodes
-    displacements[0]=0;
-  
-    // Find where to place collision information for each processor
-    for (int k=1; k<n_nodes; k++)
-        displacements[k]=displacements[k-1]+counts[k-1];
-    
-    TRACE(printf("counts [%d] = %d and number of collisions = %d and diplacements = %d and total collisions = %d\n", this_node, counts[this_node], number_of_collisions, displacements[this_node], total_collisions));
-    
-    // Allocate mem for the new collision info
-    gathered_queue = (collision_struct *) realloc (gathered_queue, (total_collisions) * sizeof(collision_struct));
-    //gathered_queue = (collision_struct *) malloc(total_collisions * sizeof(collision_struct));
-
-    // Gather collision informtion from all nodes and send it to all nodes
-    MPI_Allgatherv(collision_queue, counts[this_node], collisiontype, gathered_queue, counts, displacements, collisiontype, comm_cart);
+  int counts[n_nodes];
+  gather_collision_queue(counts);
 
     if (counts[this_node]>0) {
 
       // If we don't have domain decomposition, we need to do a full sweep over all
       // particles in the system. (slow)
       if (cell_structure.type!=CELL_STRUCTURE_DOMDEC) {
-       
-        Cell *cell;
-        Particle *p, *p1, *p2;
-        // first iterate over cells, get one of the cells and find how many particles in this cell
-        for (int c=0; c<local_cells.n; c++) {
-            cell=local_cells.cell[c];
-            // iterate over particles in the cell
-            for (int a=0; a<cell->n; a++) {
-                p=&cell->part[a];
-                // for all p:
-                for (int ij=0; ij<total_collisions; ij++) {
-                    p1=local_particles[gathered_queue[ij].pp1];
-                    p2=local_particles[gathered_queue[ij].pp2];
-  
-  		   // Check, whether p is equal to one of the particles in the
-  		   // collision. If so, skip
-  		   if ((p->p.identity ==p1->p.identity) || ( p->p.identity == p2->p.identity)) {
-  		     continue;
-  		   }
-  
-                   // The following checks, 
-  		 // if the particle p is closer that the cutoff from p1 and/or p2.
-  		 // If yes, three particle bonds are created on all particles
-  		 // which have two other particles within the cutoff distance,
-  		 // unless such a bond already exists
-  		 
-  		 // We need all cyclical permutations, here 
-  		 // (bond is placed on 1st particle, order of bond partners
-  		 // does not matter, so we don't neet non-cyclic permutations):
-                   coldet_do_three_particle_bond(p,p1,p2);
-                   coldet_do_three_particle_bond(p1,p,p2);
-                   coldet_do_three_particle_bond(p2,p,p1);
-  
-               }
-           }
-       }
-  
-    } // if cell structure = domain decomposition
+        three_particle_binding_full_search();
+    } // if cell structure != domain decomposition
     else
-    { 
-        // We have domain decomposition
-    
-        // Indices of the cells in which the colliding particles reside
-        int cellIdx[2][3];
-    
-        // Iterate over collision queue
-
-        for (int id=0;id<total_collisions;id++) {
-
-            // Get first cell Idx
-            if ((local_particles[gathered_queue[id].pp1] != NULL) && (local_particles[gathered_queue[id].pp2] != NULL)) {
-
-              Particle* p1=local_particles[gathered_queue[id].pp1];
-              Particle* p2=local_particles[gathered_queue[id].pp2];
-              dd_position_to_cell_indices(p1->r.p,cellIdx[0]);
-              dd_position_to_cell_indices(p2->r.p,cellIdx[1]);
-
-              // Iterate over the cells + their neighbors
-              // if p1 and p2 are in the same cell, we don't need to consider it 2x
-              int lim=1;
-
-              if ((cellIdx[0][0]==cellIdx[1][0]) && (cellIdx[0][1]==cellIdx[1][1]) && (cellIdx[0][2]==cellIdx[1][2]))
-                lim=0; // Only consider the 1st cell
-
-              for (int j=0;j<=lim;j++) {
-
-                  // Iterate the cell with indices cellIdx[j][] and all its neighbors.
-                  // code taken from dd_init_cell_interactions()
-                  for(int p=cellIdx[j][0]-1; p<=cellIdx[j][0]+1; p++)	
-                     for(int q=cellIdx[j][1]-1; q<=cellIdx[j][1]+1; q++)
-	                for(int r=cellIdx[j][2]-1; r<=cellIdx[j][2]+1; r++) {   
-	                   int ind2 = get_linear_index(p,q,r,dd.ghost_cell_grid);
-	                   Cell* cell=cells+ind2;
- 
-	                   // Iterate over particles in this cell
-                           for(int a=0; a<cell->n; a++) {
-                              Particle* P=&cell->part[a];
-                              // for all p:
-  	                      // Check, whether p is equal to one of the particles in the
-  	                      // collision. If so, skip
-  	                      if ((P->p.identity ==p1->p.identity) || (P->p.identity == p2->p.identity)) {
-                                //TRACE(printf("same particle\n"));
-  		                continue;
-  	                      }
-
-                              // The following checks, 
-                              // if the particle p is closer that the cutoff from p1 and/or p2.
-                              // If yes, three particle bonds are created on all particles
-  	                      // which have two other particles within the cutoff distance,
-                              // unless such a bond already exists
-
-  	                      // We need all cyclical permutations, here 
-                              // (bond is placed on 1st particle, order of bond partners
-  	                      // does not matter, so we don't need non-cyclic permutations):
-
-                              if (P->l.ghost) {
-                                //TRACE(printf("%d: center particle is ghost: %d\n", this_node, P->p.identity));
-                                continue;
-                              }
-                              //TRACE(printf("%d: LOOP: %d Handling collision of particles FIRST CONFIGURATION %d %d %d\n", this_node, id, p1->p.identity, P->p.identity, p2->p.identity));
-                              coldet_do_three_particle_bond(P,p1,p2);
-
-                              if (p1->l.ghost) {
-                                //TRACE(printf("%d: center particle is ghost: %d\n", this_node, p1->p.identity));
-                                continue;
-                              }
-
-                              coldet_do_three_particle_bond(p1,P,p2);
-
-                              if (p2->l.ghost) {
-                                //TRACE(printf("%d: center particle is ghost: %d\n", this_node, p2->p.identity));
-                                continue;
-                              }
-
-  	                      coldet_do_three_particle_bond(p2,P,p1);
-
-                           } // loop over particles in this cell
-
-	                } // Loop over cell
-
-              } // Loop over particles if they are in different cells
-    
-            } // If local particles exist
-
-        } // Loop over total collisions
-
+    {
+      three_particle_binding_domain_decomposition();
     } // If we have doamin decomposition
 
    } // if number of collisions of this node > 0
-       total_collisions = 0;
        
-       if (gathered_queue)
+       if (total_collisions>0)
          free(gathered_queue);
+       total_collisions = 0;
  } // if TPB
 
   // Reset the collision queue
