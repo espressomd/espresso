@@ -87,12 +87,12 @@ if {$bonds != ""} {
 
 # Check setting of parameters
 setmd min_global_cut 5.0
-on_collision glue_to_surface 5.5 2 3 1 2 3 1.0
+on_collision glue_to_surface 5.5 2 3 1 2 3 4 1.0
 
 set res [on_collision]
 
-if { ! ($res == "glue_to_surface 5.500000 2 3 1 2 3 1.000000") } {
-    error_exit "Setting collision_detection parameters for bind_centers does not work"
+if { ! ($res == "glue_to_surface 5.500000 2 3 1 2 3 4 1.000000") } {
+    error_exit "Setting collision_detection parameters does not work: $res"
 }
 
 # Check the actual collision detection
@@ -147,10 +147,13 @@ if {[setmd n_part] != 4} {
 if { ! ([part 3 print type]==1) } {
     error_exit "type of virtual sites is incorrect."
 }
+if { ! ([part 0 print type]==4) } {
+    error_exit "type of glued particle is incorrect: [part 0 print type]."
+}
 
 # test exception, generating another collision
 part 2 pos 11 0 0 type 2
-on_collision exception glue_to_surface 5.5 2 3 1 2 3 1.0
+on_collision exception glue_to_surface 5.5 2 3 1 2 3 4 1.0
 if {![catch {integrate 1} err]} {
     error_exit "no exception was thrown at collision, although requested"
 }

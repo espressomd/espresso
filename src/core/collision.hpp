@@ -67,6 +67,8 @@ typedef struct {
   int part_type_to_be_glued;
   /// For mode "glue to surface": The particle type to which the virtual site is attached
   int part_type_to_attach_vs_to;
+  /// Particle type to which the newly glued particle is converd
+  int part_type_after_glueing;
   /// first bond type (for zero degrees)) used for the three-particle bond (angle potential)
   int bond_three_particles;
   /// Number of angle bonds to use (angular resolution)
@@ -102,7 +104,7 @@ void handle_collisions();
     @param bond_three_particles is the three-particle-bond parameter
     @param angle_resolution is the three_particle_angle_resolution parameter in order to define different angle bonds
  */
-int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int bond_three_particles, int angle_resolution);
+int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution);
 
 #endif
 

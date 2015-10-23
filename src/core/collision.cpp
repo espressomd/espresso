@@ -56,7 +56,7 @@ static int number_of_collisions, total_collisions;
 /// Parameters for collision detection
 Collision_parameters collision_params = { 0, };
 
-int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int bond_three_particles, int angle_resolution)
+int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution)
 {
   // The collision modes involving virutal istes also requires the creation of a bond between the colliding 
   // particles, hence, we turn that on.
@@ -115,6 +115,7 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
   collision_params.dist_glued_part_to_vs =d2;
   collision_params.part_type_to_be_glued =tg;
   collision_params.part_type_to_attach_vs_to =tv;
+  collision_params.part_type_after_glueing =ta;
   make_particle_type_exist(t);
   collision_params.bond_three_particles=bond_three_particles;
   collision_params.three_particle_angle_resolution=angle_resolution;
@@ -127,6 +128,7 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
   {
     make_particle_type_exist(tg);
     make_particle_type_exist(tv);
+    make_particle_type_exist(ta);
   }
 
 
@@ -194,7 +196,7 @@ void detect_collision(Particle* p1, Particle* p2)
   double vec21[3];
   // Obtain distance between particles
   double dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
-  TRACE(printf("%d: Distance between particles %lf %lf %lf, Scalar: %lf\n",this_node,vec21[0],vec21[1],vec21[2]));
+  TRACE(printf("%d: Distance between particles %lf %lf %lf, Scalar: %f\n",this_node,vec21[0],vec21[1],vec21[2], dist_betw_part));
   if (dist_betw_part > collision_params.distance)
     return;
 
@@ -282,7 +284,7 @@ void detect_collision(Particle* p1, Particle* p2)
     // If not in the glue_to_surface-mode, the point of collision
     // is in the middle of the vecotr connecting the particle
     // centers
-    if (! (collision_params.mode | COLLISION_MODE_GLUE_TO_SURF))
+    if (! (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF))
       c=0.5;
     else
     {
@@ -304,9 +306,13 @@ void detect_collision(Particle* p1, Particle* p2)
 	 // we did not flip the vec21 when swapping particles
 	 c = -collision_params.dist_glued_part_to_vs/dist_betw_part;
        }
+       else
+       {
+        printf("Something is wrong %s %d\n",__FILE__,":"+__LINE__);
+       }
      }
      for (int i=0;i<3;i++) {
-       new_position[i] = p1->r.p[i] - vec21[i] * 0.50;
+       new_position[i] = p1->r.p[i] - vec21[i] * c;
     }
 
 
@@ -475,7 +481,7 @@ void glue_to_surface_bind_vs_to_pp1(int i)
          bondG[0] = collision_params.bond_vs;
          bondG[1] = max_seen_particle;
          local_change_bond(collision_queue[i].pp1, bondG, 0);
-	 local_particles[collision_queue[i].pp1]->p.type=0;
+	 local_particles[collision_queue[i].pp1]->p.type=collision_params.part_type_after_glueing;
 }
 
 
