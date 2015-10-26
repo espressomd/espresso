@@ -64,7 +64,7 @@ int ljangle_set_params(int part_type_a, int part_type_b,
 
 /** Calculate lj-angle force between particle p1 and p2 
     Involves 6 particles total */
-inline void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_ljangle_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				     double d[3], double dist)
 {
   if(!CUTOFF_CHECK(dist < ia_params->LJANGLE_cut)) 

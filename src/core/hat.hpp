@@ -53,7 +53,7 @@ inline double hat_energy_r(double Fmax, double r, double dist )
 }
 
 /** Calculate hat potential force between particle p1 and p2 */
-inline void add_hat_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_hat_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
   int j;
