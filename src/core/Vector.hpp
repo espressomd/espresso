@@ -18,7 +18,9 @@
 */
 #include <algorithm>
 #include <cmath>
+#ifdef HAVE_CXX11
 #include <initializer_list>
+#endif
 
 template<int n, typename Scalar>
 class Vector {
