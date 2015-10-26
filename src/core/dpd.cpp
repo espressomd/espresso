@@ -159,7 +159,7 @@ void dpd_cool_down()
 #endif
 }
 
-void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
+void add_dpd_thermo_pair_force(Particle * p1, Particle * p2, double d[3], double dist, double dist2)
 {
   extern double dpd_gamma,dpd_pref1, dpd_pref2,dpd_r_cut,dpd_r_cut_inv;
   extern int dpd_wf;
@@ -269,7 +269,7 @@ void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double d
         }
         //NOTE: velocity are scaled with time_step
         f_D[i]*=dpd_pref3*omega2;
-        //NOTE: noise force scales with 1/sqrt(time_step
+        //NOTE: noise force scales with 1/sqrt(time_step)
         f_R[i]*=dpd_pref4*omega*dist_inv;
       }
       for(j=0; j<3; j++) {

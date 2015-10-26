@@ -327,7 +327,7 @@ espressoSystemInterface.update();
 
 
 inline void 
-calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,
+calc_non_bonded_pair_force_parts(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
                                  double d[3], double dist, double dist2, 
                                  double force[3], 
                                  double torque1[3] = NULL, double torque2[3] = NULL) {
@@ -341,11 +341,6 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
   /* lennard jones generic */
 #ifdef LENNARD_JONES_GENERIC
   add_ljgen_pair_force(p1,p2,ia_params,d,dist, force);
-#endif
-  /* Directional LJ */
-#ifdef LJ_ANGLE
-  /* The forces are propagated within the function */
-  add_ljangle_pair_force(p1, p2, ia_params, d, dist);
 #endif
   /* smooth step */
 #ifdef SMOOTH_STEP
@@ -375,10 +370,6 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
 #ifdef SOFT_SPHERE
   add_soft_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
- /*affinity potential*/
-#ifdef AFFINITY
-  add_affinity_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
  /*repulsive membrane potential*/
 #ifdef MEMBRANE_COLLISION
     add_membrane_collision_pair_force(p1,p2,ia_params,d,dist,force);
@@ -405,9 +396,6 @@ calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_p
 #endif
 #ifdef INTER_RF
   add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
-#endif
-#ifdef INTER_DPD
-  add_inter_dpd_pair_force(p1,p2,ia_params,d,dist,dist2);
 #endif
 }
 
@@ -449,13 +437,21 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   double torque1[3] = { 0., 0., 0. };
   double torque2[3] = { 0., 0., 0. };
   int j;
-  
+
+  /***********************************************/
+  /* bond creation and breaking                  */
+  /***********************************************/
 
 #ifdef COLLISION_DETECTION
   if (collision_params.mode > 0)
     detect_collision(p1,p2);
 #endif
 
+  /*affinity potential*/
+#ifdef AFFINITY
+  add_affinity_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+  
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
 
   /***********************************************/
@@ -467,12 +463,18 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   if ( thermo_switch & THERMO_DPD ) add_dpd_thermo_pair_force(p1,p2,d,dist,dist2);
 #endif
 
+  /** The inter dpd force should not be part of the virial
+      
+#ifdef INTER_DPD
+  add_inter_dpd_pair_force(p1,p2,ia_params,d,dist,dist2);
+#endif
+  
   /***********************************************/
   /* non bonded pair potentials                  */
   /***********************************************/
 
    calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
-
+   
   /***********************************************/
   /* short range electrostatics                  */
   /***********************************************/
@@ -495,6 +497,16 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
       nptiso.p_vir[j] += force[j] * d[j];
 #endif
 
+  /***********************************************/
+  /* semi-bonded multi-body potentials            */
+  /***********************************************/
+  
+   /* Directional LJ */
+#ifdef LJ_ANGLE
+   /* This is a multi-body forces that changes the forces of 6 particles */
+   add_ljangle_force(p1, p2, ia_params, d, dist);
+#endif
+  
   /***********************************************/
   /* long range electrostatics                   */
   /***********************************************/
@@ -574,7 +586,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
       break;
   }  
 #endif /* ifdef DIPOLES */
-
+  
   /***********************************************/
   /* add total nonbonded forces to particle      */
   /***********************************************/
