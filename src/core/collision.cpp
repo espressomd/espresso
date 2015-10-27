@@ -145,7 +145,6 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
 void prepare_collision_queue()
 {
   number_of_collisions=0;
-  collision_queue = (collision_struct *) malloc (sizeof(collision_struct));
 }
 
 
@@ -173,7 +172,10 @@ void queue_collision(int part1,int part2, double* point_of_collision) {
 
     //Get memory for the new entry in the collision queue
     number_of_collisions++;
-    collision_queue = (collision_struct *) realloc (collision_queue,number_of_collisions*sizeof(collision_struct));
+    if (number_of_collisions==1)
+      collision_queue = (collision_struct *) malloc(number_of_collisions*sizeof(collision_struct));
+    else
+      collision_queue = (collision_struct *) realloc (collision_queue,number_of_collisions*sizeof(collision_struct));
     // Save the collision      
     collision_queue[number_of_collisions-1].pp1 = part1;
     collision_queue[number_of_collisions-1].pp2 = part2;
