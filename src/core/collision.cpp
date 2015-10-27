@@ -116,7 +116,6 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
   collision_params.part_type_to_be_glued =tg;
   collision_params.part_type_to_attach_vs_to =tv;
   collision_params.part_type_after_glueing =ta;
-  make_particle_type_exist(t);
   collision_params.bond_three_particles=bond_three_particles;
   collision_params.three_particle_angle_resolution=angle_resolution;
 
@@ -126,6 +125,7 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
   
   if (mode & COLLISION_MODE_GLUE_TO_SURF)
   {
+    make_particle_type_exist(t);
     make_particle_type_exist(tg);
     make_particle_type_exist(tv);
     make_particle_type_exist(ta);
