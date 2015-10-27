@@ -443,6 +443,7 @@ void handle_exception_throwing_for_single_collision(int i)
     }
 }
 
+#ifdef VIRTUAL_SITES_RELATIVE
 void place_vs_and_relate_to_particle(double* pos, int relate_to)
 {
  
@@ -451,6 +452,7 @@ void place_vs_and_relate_to_particle(double* pos, int relate_to)
 	  (local_particles[max_seen_particle])->p.isVirtual=1;
 	  (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
 }
+
 
 void bind_at_poc_create_bond_between_vs(int i)
 {
@@ -486,6 +488,7 @@ void glue_to_surface_bind_vs_to_pp1(int i)
 	 local_particles[collision_queue[i].pp1]->p.type=collision_params.part_type_after_glueing;
 }
 
+#endif
 
 void gather_collision_queue(int* counts)
 {
