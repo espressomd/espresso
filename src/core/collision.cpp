@@ -730,6 +730,15 @@ void handle_collisions ()
        total_collisions = 0;
  } // if TPB
 
+  // If a collision method is active which places particles, resorting might be needed
+  if (collision_params.mode & (COLLISION_MODE_VS | COLLISION_MODE_GLUE_TO_SURF))
+  {
+    if (number_of_collisions>0)
+      resort_particles=1;
+    TRACE(printf("%d: Resort particles is %d\n",this_node,resort_particles));
+    announce_resort_particles();
+  }
+  
   // Reset the collision queue
   if (number_of_collisions>0)
     free(collision_queue);
@@ -737,12 +746,6 @@ void handle_collisions ()
   number_of_collisions = 0;
 
 
-  // If a collision method is active which places particles, resorting might be needed
-  if (collision_params.mode & (COLLISION_MODE_VS | COLLISION_MODE_GLUE_TO_SURF))
-  {
-    TRACE(printf("%d: Announce resort particles\n",this_node));
-    announce_resort_particles();
-  }
 }
 
 #endif
