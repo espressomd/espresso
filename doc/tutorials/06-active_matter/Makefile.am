@@ -32,7 +32,7 @@ EXTRA_DIST=$(BASENAME).pdf \
 	FIGURES/enhanced.pdf \
 	FIGURES/flow_field.pdf \
 	FIGURES/friction.pdf \
-	FIGURES/frixtion.tex \
+	FIGURES/friction.tex \
 	FIGURES/geometry.pdf \
 	FIGURES/geometry.tex \
 	FIGURES/pusher-puller.pdf \
