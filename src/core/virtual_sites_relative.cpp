@@ -274,7 +274,6 @@ int vs_relate_to(int part_num, int relate_to)
      // Verify result
      double qtemp[4];
      multiply_quaternions(p_relate_to.r.quat,quat,qtemp);
-     free_particle(&p_relate_to);
      for (i=0;i<4;i++)
        if (fabs(qtemp[i]-quat_director[i])>1E-9)
          fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n",
@@ -285,6 +284,8 @@ int vs_relate_to(int part_num, int relate_to)
      quat[0]=1;
      quat[1]=quat[2]=quat[3]=0;
     }
+    free_particle(&p_relate_to);
+    free_particle(&p_current);
 
     // Set the particle id of the particle we want to relate to, the distnace
     // and the relative orientation
