@@ -28,7 +28,6 @@ EXTRA_DIST=$(BASENAME).pdf \
 	SOLUTIONS/rectification_simulation.tcl \
 	SOLUTIONS/solutions.txt \
 	SOLUTIONS/tutorial_tests.tcl \
-	aip.bst \
 	refs.bib \
 	FIGURES/enhanced.pdf \
 	FIGURES/flow_field.pdf \
