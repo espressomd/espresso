@@ -121,7 +121,8 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 AX_CXX_VAR_PRETTYFUNC()
 
 # check for c++11 support
-AX_CXX_COMPILE_STDCXX_11(ext,optional)
+AX_CXX_COMPILE_STDCXX_11(noext,optional)
+
 
 # set the optimization flags
 # never overwrite users CXXFLAGS
