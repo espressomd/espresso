@@ -226,12 +226,6 @@ void detect_collision(Particle* p1, Particle* p2)
   p1 = local_particles[part1];
   p2 = local_particles[part2];
 
-#ifdef COLLISION_USE_BROKEN_PARALLELIZATION
-  // Ignore particles too distant to be on the same processor
-  if (!p1 || !p2)
-    return; 
-#endif
-
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
   if ((p1->p.isVirtual) || (p2->p.isVirtual))
@@ -435,7 +429,11 @@ void place_vs_and_relate_to_particle(double* pos, int relate_to)
  
 	  place_particle(max_seen_particle+1,pos);
 	  vs_relate_to(max_seen_particle,relate_to);
+	  
 	  (local_particles[max_seen_particle])->p.isVirtual=1;
+	  #ifdef ROTATION_PER_PARTICLE
+	    (local_particles[relate_to])->p.rotation=14;
+	  #endif
 	  (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
 }
 
