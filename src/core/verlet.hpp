@@ -103,5 +103,8 @@ void calculate_verlet_virials(int v_comp);
 /*@}*/
 
 
+/** Returns true if the particles are to be considered for short range 
+    interactions */
+bool verlet_list_criterion(Particle* p1, Particle* p2,double dist2);
 
 #endif
