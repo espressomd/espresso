@@ -479,7 +479,7 @@ double calc_electrostatics_cutoff()
   switch (coulomb.method) {
 #ifdef P3M 
   case COULOMB_ELC_P3M:
-    returnelc_params.space_layer;
+    return elc_params.space_layer;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M: 
     /* do not use precalculated r_cut here, might not be set yet */
