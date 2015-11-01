@@ -92,6 +92,35 @@ void free_pairList(PairList *list)
   list->pair = (Particle **)Utils::realloc(list->pair, 0);
 }
 
+
+/** Returns true if the particles are to be considered for short range 
+    interactions */
+bool verlet_list_criterion(Particle* p1, Particle* p2,double dist2)
+{
+  if (dist2 > SQR(max_cut +skin))
+    return false;
+
+    
+  // Within short-range distance (incl dpd and the like)
+  if(dist2 <= SQR(get_ia_param(p1->p.type, p2->p.type)->max_cut + skin))
+    return true;
+
+  // Within real space cutoff of electrostatics and both charged
+  #ifdef ELECTROSTATICS
+    if ((dist2 <= SQR(coulomb_cutoff + skin)) && (p1->p.q!=0) && (p2->p.q!=0))
+      return true;
+  #endif
+
+  // Within dipolar cutoff and both cary magnetic moments
+  #ifdef DIPOLES
+  if ((dist2 <= SQR(dipolar_cutoff+skin)) && (p1->p.dipm!=0) && (p2->p.dipm!=0))
+    return true;
+  #endif
+  
+  return false;
+}
+
+
 void build_verlet_lists()
 {
   int c, np1, n, np2, i ,j, j_start;
@@ -146,7 +175,7 @@ void build_verlet_lists()
 #endif
           {
             dist2 = distance2(p1[i].r.p, p2[j].r.p);
-            if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin))
+            if(verlet_list_criterion(p1+i, p2+j,dist2))
               add_pair(pl, &p1[i], &p2[j]);
           }
         }
@@ -272,7 +301,7 @@ void build_verlet_lists_and_calc_verlet_ia()
 
           VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
 
-          if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
+          if(verlet_list_criterion(p1+i, p2+j,dist2)) {
             ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
             ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
             add_pair(pl, &p1[i], &p2[j]);

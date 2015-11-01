@@ -1200,6 +1200,14 @@ extern double max_cut;
 extern double max_cut_nonbonded;
 /** Maximal interaction cutoff (real space/short range bonded interactions). */
 extern double max_cut_bonded;
+/** Cutoff of coulomb real space part */
+extern double coulomb_cutoff;
+/** Cutoff of dipolar real space part */
+extern double dipolar_cutoff;
+
+
+
+
 /** Minimal global interaction cutoff. Particles with a distance
     smaller than this are guaranteed to be available on the same node
     (through ghosts).  */
