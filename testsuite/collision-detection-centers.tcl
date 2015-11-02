@@ -1,24 +1,24 @@
 # Copyright (C) 2011,2012,2013,2014 The ESPResSo project
 #  
-# This file is part of ESPResSo.
+# this file is part of espresso.
 #  
-# ESPResSo is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
+# espresso is free software: you can redistribute it and/or modify
+# it under the terms of the gnu general public license as published by
+# the free software foundation, either version 3 of the license, or
 # (at your option) any later version.
 #  
-# ESPResSo is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# espresso is distributed in the hope that it will be useful,
+# but without any warranty; without even the implied warranty of
+# merchantability or fitness for a particular purpose.  see the
+# gnu general public license for more details.
 #  
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# you should have received a copy of the gnu general public license
+# along with this program.  if not, see <http://www.gnu.org/licenses/>. 
 
 # 
 #############################################################
 #                                                           #
-#  Test collision detection with binding of centers of colliding particles
+#  test collision detection with binding of centers of colliding particles
 #                                                           #
 #############################################################
 source "tests_common.tcl"
@@ -32,14 +32,14 @@ puts "---------------------------------------------------------------"
 puts "- Testcase collision-detection-centers.tcl running on [setmd n_nodes] nodes"
 puts "---------------------------------------------------------------"
 
-# Setup
+# setup
 setmd box_l 10 10 10
 
 thermostat off
 setmd time_step 0.01
 inter 3 harmonic 2 2
 inter 0 0 lennard-jones 0.0001 2 2.1 auto
-inter 7 harmonic 1 1
+inter 7 harmonic 2 1
 setmd skin 0
 part 0 pos 9   0 0 
 # place close to boundary to check pbc and processor boundaries
@@ -68,35 +68,35 @@ proc analyze_topology {bond_type {check_others 0}} {
     return [lsort $bonded]
 }
 
-# Test default setting
+# test default setting
 if { "[on_collision]" != "off" } {
-    error_exit "Collision detection should be off by default."
+    error_exit "collision detection should be off by default."
 }
 
-# Test switching it off
+# test switching it off
 on_collision off
 if { "[on_collision]" != "off" } {
-    error_exit "Disabling collision_detection does not work"
+    error_exit "disabling collision_detection does not work"
 }
 
-# Make sure, it doesn't do anything when turned off
+# make sure, it doesn't do anything when turned off
 integrate 0
 
 set bonds [analyze_topology "" 1]
 if {$bonds != ""} {
-    error_exit "Bonds were created when collision detection was off." 
+    error_exit "bonds were created when collision detection was off." 
 }
 
-# Check setting of parameters
+# check setting of parameters
 setmd min_global_cut 1.0
-on_collision bind_centers 2.0 7
+on_collision bind_centers 2.0  7
 
 set res [on_collision]
-if { ! ( ([lindex $res 0] == "bind_centers") && (abs([lindex $res 1]-2) <1E-5) && ([lindex $res 2] == 7)) } {
-    error_exit "Setting collision_detection parameters for bind_centers does not work"
+if { ! ( ([lindex $res 0] == "bind_centers") && (abs([lindex $res 1]-2) <1e-5) && ([lindex $res 2] == 7)) } {
+    error_exit "setting collision_detection parameters for bind_centers does not work"
 }
 
-# Check the actual collision detection
+# check the actual collision detection
 integrate 0
 
 # Check, whether the bonds are correct
@@ -120,7 +120,7 @@ part 0 pos 0.5 0 0
 
 integrate 0
 
-# Check, whether the bonds are still correct, not doubled
+# check, whether the bonds are still correct, not doubled
 set bonds [analyze_topology 7 1]
 if {$bonds != "{0 1}"} {
     error_exit "bond double on exchange: bonds are $bonds"
@@ -137,7 +137,7 @@ if {![catch {integrate 0} err]} {
 
 set bonds ""
 foreach exception [lrange $err 1 end] {
-    if {[regexp {collision between particles (\d+) and (\d+)} $exception -> id1 id2]} {
+    if {[regexp { ERROR: collision between particles (\d+) and (\d+)} $exception -> id1 id2]} {
         lappend bonds "$id1 $id2"
     } else {
 	error_exit "unexpected exception $exception"
