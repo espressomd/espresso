@@ -505,7 +505,7 @@ void gather_collision_queue(int* counts)
     TRACE(printf("counts [%d] = %d and number of collisions = %d and diplacements = %d and total collisions = %d\n", this_node, counts[this_node], number_of_collisions, displacements[this_node], total_collisions));
     
     // Allocate mem for the new collision info
-    gathered_queue = (collision_struct *) realloc (gathered_queue, (total_collisions) * sizeof(collision_struct));
+    gathered_queue = (collision_struct *) malloc(total_collisions * sizeof(collision_struct));
 
     // Gather collision informtion from all nodes and send it to all nodes
     MPI_Allgatherv(collision_queue, byte_counts[this_node], MPI_BYTE, gathered_queue, byte_counts, displacements, MPI_BYTE, comm_cart);
