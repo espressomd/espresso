@@ -26,15 +26,12 @@
  *  For more information see topology.hpp
  *   */
 
-//#include "utils.hpp"
 #include "parser.hpp"
 #include "topology.hpp"
 #include "statistics_chain_tcl.hpp"
 #include "particle_data.hpp"
-//#include "cells.hpp"
 #include "communication.hpp"
-//#include "molforces.hpp"
-#include "tcl/topology_tcl.hpp"
+#include "topology_tcl.hpp"
 
 int tclcommand_analyze_set_print_all(Tcl_Interp *interp)
 {

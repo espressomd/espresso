@@ -62,7 +62,7 @@ outp insource srcdir builddir \
     with_tcl with_python_interface myconfig check_procs
 
 # check indentation of python files
-pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/ >> /dev/null
+pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
 ec=$?
 if [ $ec -eq 0 ]; then
     echo ""
@@ -93,6 +93,9 @@ fi
 
 # CONFIGURE
 start "CONFIGURE"
+if $with_coverage ; then
+    configure_params="CPPFLAGS=\"-coverage -O0\" CXXFLAGS=\"-coverage -O0\" $configure_params"
+fi
 
 if $with_mpi; then
     configure_params="--with-mpi $configure_params"
@@ -159,3 +162,7 @@ if $make_check; then
 
     end "TEST"
 fi
+
+for i in `find . -name  "*.gcno"` ; do
+    (cd `dirname $i` ; gcov `basename $i` > coverage.log 2>&1 )
+done

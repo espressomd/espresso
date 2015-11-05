@@ -100,7 +100,10 @@ radius \var{r\_catch} around the position of the particle with number
   \opt{\var{rmin} \opt{\var{rmax} \opt{\var{rbins} 
         \opt{\var{log\_flag} \opt{\var{int\_flag}}}}}}
 \end{essyntax}
-Returns its parameters and the distance distribution of particles with
+Returns its parameters and the distance distribution of particles 
+(probability of finding a particle of type \var{a} at a certain distance 
+around a particle of type \var{b}, disregarding the fact that a spherical 
+shell of a larger radius covers a larger volume) with
 types specified in \var{part\_type\_list\_a} around particles with
 types specified in \var{part\_type\_list\_b} with distances between
 \var{rmin} and \var{rmax}, binned into \var{rbins} bins. The

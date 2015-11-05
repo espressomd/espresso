@@ -130,6 +130,17 @@ void init_particle(Particle *part)
   part->p.rotation =14;
 #endif
 
+#ifdef AFFINITY
+  part->p.bond_site[0] = -1.0;
+  part->p.bond_site[1] = -1.0;
+  part->p.bond_site[2] = -1.0;
+#endif
+    
+#ifdef MEMBRANE_COLLISION
+    part->p.out_direction[0] = 0.0;
+    part->p.out_direction[1] = 0.0;
+    part->p.out_direction[2] = 0.0;
+#endif
 
 #ifdef ELECTROSTATICS
   part->p.q        = 0.0;
@@ -722,6 +733,42 @@ int set_particle_rotation(int part, int rot)
     return ES_ERROR;
   mpi_send_rotation(pnode, part, rot);
   return ES_OK;
+}
+#endif
+
+#ifdef AFFINITY
+int set_particle_affinity(int part, double bond_site[3])
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_affinity(pnode, part, bond_site);
+  return ES_OK;
+}
+#endif
+
+#ifdef MEMBRANE_COLLISION
+int set_particle_out_direction(int part, double out_direction[3])
+{
+    int pnode;
+    if (!particle_node)
+        build_particle_node();
+    
+    if (part < 0 || part > max_seen_particle)
+        return ES_ERROR;
+    pnode = particle_node[part];
+    
+    if (pnode == -1)
+        return ES_ERROR;
+    mpi_send_out_direction(pnode, part, out_direction);
+    return ES_OK;
 }
 #endif
 
