@@ -856,6 +856,43 @@ h5md_close
 \end{essyntax}
 Closes the H5MD data file.
 
+
+\section{Writing H5MD-files using Python}
+Writing to a hdf5-file starts with creating an object of the class h5md. The following example creates an object called "h5", linked to the hdf5-file "File.h5":
+\begin{tclcode}
+from espressomd import h5md
+system = espressomd.System()
+h5=h5md.h5md("File.h5",system)
+\end{tclcode}
+The following command writes a scalar or an array to the hdf5-file: 
+\begin{essyntax}
+h5.write_to_h5.userdefined(\var{timestep},\var{value},\var{groupname},\var{datasetname},\var{datatype},\var{chunks})
+\end{essyntax}
+Here "write_to_h5" is a sub-class of the "h5md" class containing all write command such as "userdefined".
+\begin{arguments}
+\item[\var{timestep}] When the value is time dependent, this will be the row number in the hdf5-file. If the value is time independent  the \var{timestep} has to be set to -1.
+\item[\var{value}] The to be written value. This can be a scalar or an array.
+\item[\var{groupname}] This is the name of the folder, which contains the dataset.
+\item[\var{datasetname}] This is the name of the dataset. The dataset contains the respective values.
+\item[\var{datatype}] This parameter determines the data type of the respective values.
+\item[\var{chunks}] For a faster access to the H5MD-file the file may be chunked to smaller units. The size of this units should be about as large as the available main memory. When not defining the chunk size, it will be set automatically.
+\end{arguments}
+In principle all values can be written via the "userdefined" command, but nearly all particle properties such as positions and forces can be written to the H5MD-fiel via a single command. This command writes the values of all particles at once. The general form is
+\begin{essyntax}
+h5.write_to_h5.particle_property(timestep,groupname,datasetname,chunks)
+\end{essyntax}
+\begin{tclcode}
+h5.write_to_h5.particle_property(timestep,groupname,datasetname,chunks)
+\end{tclcode}
+where "particle_property" is a short cut for the respective property such as the position "pos" or the force "f". When leaving out the variables \var{groupname}, \var{datasetname}, and \var{chunks} the predefined values are chosen in agreement to the H5MD file-format (see \url{http://nongnu.org/h5md/}) and automatic chunk size.
+when the predefined standard value for groupname,datasetname and chunk size is set to automatic. 
+Further the ESPResSo observables such as "analyze_energy" can be called via the respective functions. \\
+The usage of writing to a H5MD file with Python is given at the sample "h5md_WriteFile.py" with all available particle properties and ESPResSo observables. Further information about hdf5 with Python are given at \url{http://www.h5py.org/}.
+
+
+\section{Reading H5MD-files using Python}
+
+
 \section{Error handling}
 Errors in the parameters are detected as early as possible, and
 hopefully self-explanatory error messages returned without any changes

@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
 
-import espressomd._system as es
 import espressomd
 from espressomd import h5md
 from espressomd.interactions import HarmonicBond
@@ -26,8 +25,7 @@ import numpy as np
 # H5MD: Create/Read File dataset
 #############################################################
 system = espressomd.System()
-h5_filename="h5md_WriteReadFile.h5"
-h5=h5md.h5md("h5md_WriteReadFile.h5",system)
+h5=h5md.h5md("File.h5",system)
 
 n_part=10
 n_time=5
@@ -38,6 +36,8 @@ int_steps=10
 for i in range(n_part):
     system.part[i].pos=np.array([0,0,0])
 
+
+result_user = h5.read_from_h5.userdefined((3,),"User/user1/","value")
 h5.read_from_h5.time(n_time-1,"particles/atoms/position/","time")
 h5.read_from_h5.type(n_time-1)
 h5.read_from_h5.pos(n_time-1)
@@ -67,7 +67,7 @@ h5.read_from_h5.rotation(n_time-1)
 h5.read_from_h5.box_edges(n_time-1)
 h5.read_from_h5.id(n_time-1)
 #h5.read_from_h5.image(n_time-1) #TOASK
-result_user = h5.read_from_h5.userdefined(n_time-1,"User/user1/","value")
+
 
 
 
@@ -77,6 +77,7 @@ result_user = h5.read_from_h5.userdefined(n_time-1,"User/user1/","value")
 
 
 for i in range(n_part):
+    print(result_user)
 #     print(system.time)
 #     print(system.part[i].type)
 #     print(system.part[i].pos)
@@ -108,7 +109,7 @@ for i in range(n_part):
 #     print(system.box_l)
 #     #####print(system.part[i].image) #TOASK
 #     print(system.part[i].id)    
-#     print(result_user)
+
 
 
 
