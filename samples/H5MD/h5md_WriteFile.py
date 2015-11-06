@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
 
-import espressomd._system as es
 import espressomd
 from espressomd import h5md
 from espressomd.interactions import HarmonicBond
@@ -25,6 +24,7 @@ import numpy as np
 
 # H5MD: Create/Read File dataset
 #############################################################
+
 system = espressomd.System()
 system.time_step = 0.01
 system.skin      = 0.4
@@ -32,7 +32,8 @@ n_part=10
 n_time=5
 int_steps=10
 
-h5=h5md.h5md("h5md_WriteReadFile.h5",system)
+h5=h5md.h5md("File.h5",system)
+
 ###############################################
 bondId=0
 bondClass=HarmonicBond
@@ -77,9 +78,14 @@ for i in range(n_part):
     system.box_l = np.array([100,200,300])
     #####system.part[i].image=np.array([0.1,0.1,0.1])*[i*2,i*2,i*2] #TOASK
     system.part[i].id=19*i    # Will be overwritten from Espresso
-  
+    
+    
+
+
+
 for i in range(n_time):
     system.time=0.1*(i+1)
+    h5.write_to_h5.userdefined(7,"User/user1/","value",'f8',(3,),(3,)) 
     h5.write_to_h5.time(i,"particles/atoms/position/","time")
     h5.write_to_h5.time_step(i,"particles/atoms/position/","step")
     h5.write_to_h5.type(i)
@@ -112,7 +118,7 @@ for i in range(n_time):
     h5.write_to_h5.box_dimension(i)
     h5.write_to_h5.id(i)
     #h5.write_to_h5.image(i) #TOASK    
-    h5.write_to_h5.userdefined(i,[1,2,3],"User/user1/","value",'f8')
+   
     
     #ANALYZE
     h5.write_to_h5.mindist(i,[0],[1])
@@ -136,6 +142,11 @@ h5.close()
 #Manual
 #check if h5md builds --> ifdef
 #comment all
+#test indention
+#test mpi
+#userdefined none,none,none
+#latex write (3,)
+#try to istypeof isinstance(y, np.ndarray )
 
 
 ####ERRORS
@@ -145,4 +156,3 @@ h5.close()
 
 ####TOASK
 #box tensor
-#bleibt analyzeargs.energy as usual
