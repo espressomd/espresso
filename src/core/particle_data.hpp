@@ -86,7 +86,7 @@ struct ParticleProperties {
   /** particle type, used for non bonded interactions. */
   int type;
 
-#ifdef MASS
+#if defined(MASS) || defined(LB_BOUNDARIES_GPU)
   /** particle mass */
   double mass;
 #else
@@ -97,7 +97,7 @@ struct ParticleProperties {
   double solvation[2 * LB_COMPONENTS];
 #endif
 
-#ifdef ROTATIONAL_INERTIA
+#if defined(ROTATIONAL_INERTIA) || defined(LB_BOUNDARIES_GPU)
   /** rotational inertia */
   double rinertia[3];
 #endif
@@ -199,11 +199,22 @@ struct ParticleProperties {
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
   double ext_force[3];
 
-#ifdef ROTATION
+  #if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
   double ext_torque[3];
+  #endif
+  #ifdef LB_BOUNDARIES_GPU
+  /** External force & torque in body-frame for LB_boundaries. */
+  double body_force[3];
+  double lab_force[3]; /** this one needs to be converted && stored */
+  double body_torque[3];
+  #endif 
 #endif
 
+#ifdef LB_BOUNDARIES_GPU
+  int n_anchors;
+  float *anchors;
+  float *anchors_out;
 #endif
 };
 
@@ -212,7 +223,8 @@ struct ParticleProperties {
 typedef struct {
   /** periodically folded position. */
   double p[3];
-#ifdef ROTATION
+
+#if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
   /** quaternions to define particle orientation */
   double quat[4];
   /** unit director calculated from the quaternions */
@@ -246,6 +258,10 @@ typedef struct {
   double torque[3];
 #endif
 
+#ifdef LB_BOUNDARIES_GPU
+  float sf[3];
+  float storque[3];
+#endif
 } ParticleForce;
 
 /** Momentum information on a particle. Information not contained in
@@ -259,6 +275,10 @@ typedef struct {
   /** angular velocity
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
+#endif
+#ifdef LB_BOUNDARIES_GPU
+  /* single precision omega */
+  float somega[3];
 #endif
 } ParticleMomentum;
 

@@ -4,7 +4,7 @@
 #include <curand.h>
 #include <cuda_runtime.h>
 #include <cuda.h>
-
+#ifdef ASDASDASDASDWASDWASD
 #define checkCudaErrors(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
@@ -245,7 +245,7 @@ __device__ void update_sphere_boundary(
 struct nodes* l_node, const struct nodes* d_nodes, const int* s_dims, const struct boundaries* s_boundary, float* s_bound_delta_v){
   
   // calculate minimum image of periodic boundaries using delta as temporary var
-  float delta = abs(s_boundary->center[0] - l_node->pos[0]);
+  float delta = s_boundary->center[0] - l_node->pos[0];
   float delta_x_min = min(delta, s_dims[0] - delta);
   
   delta = s_boundary->center[1] - l_node->pos[1];
@@ -274,7 +274,7 @@ struct nodes* l_node, const struct nodes* d_nodes, const int* s_dims, const stru
   __syncthreads(); //debug
 }
 
-
+(LB_nodes_gpu n_curr, float *boundary_force, unsigned int index, float weight,  int *c, float *v, int population, int inverse, unsigned int x, unsigned int y, unsigned int z)
 //deprecated
 //__device__ void update_anchor_spheres(
 //struct nodes* l_node, const struct nodes* d_nodes,const int* s_dims, const struct boundaries* s_boundary, float* s_bound_delta_v){
@@ -322,29 +322,29 @@ struct nodes* l_node, const struct nodes* d_nodes, const int* s_dims, const stru
 //      l_node->boundary_index = 0;
 //  }
 //}
-
+//TODO: give node center vector and do stuff with it
 __device__ void update_boundaries(
 struct nodes* l_node, const struct nodes* d_nodes, const int* s_dims, const struct boundaries* s_boundary, float* s_bound_delta_v){
   
-  float delta; float delta_xyz_min[3]; //for center distance, stored seperately
-  float delta_x_min, delta_y_min, delta_z_min; //for anchor distances
-  float dist, cdist;
-  short ii;
+  float delta_xyz[3]; //for center distance, needed for torque
+  float delta_xyz_anchor[3]; //for anchor distances
+  float dist, cdist; //cdist for center
+  int ii;
   float xyz[3];//for anchor positions
   // calculate minimum image in periodic boundaries using delta as temporary var
-  delta = abs(s_boundary->center[0] - l_node->pos[0]);
-  delta_xyz_min[0] = min(delta, s_dims[0] - delta);
+  delta_xyz[0] = s_boundary->center[0] - l_node->pos[0];
+  delta_xyz[0] -= rintf(delta_xyz[0]/s_dims[0])*s_dims[0];
   
-  delta= abs(s_boundary->center[1] - l_node->pos[1]);
-  delta_xyz_min[1] = min(delta, s_dims[1] - delta);
+  delta_xyz[1] = s_boundary->center[1] - l_node->pos[1];
+  delta_xyz[1] -= rintf(delta_xyz[1]/s_dims[1])*s_dims[1];
     
-  delta = abs(s_boundary->center[2] - l_node->pos[2]);
-  delta_xyz_min[2] = min(delta, s_dims[2] - delta);
+  delta_xyz[2] = s_boundary->center[2] - l_node->pos[2];
+  delta_xyz[2] -= rintf(delta_xyz[2]/s_dims[2])*s_dims[2];
   
   cdist = sqrtf(
-  	      (delta_xyz_min[0])*(delta_xyz_min[0])
-        + (delta_xyz_min[1])*(delta_xyz_min[1])
-        + (delta_xyz_min[2])*(delta_xyz_min[2]));
+  	      (delta_xyz[0])*(delta_xyz[0])
+        + (delta_xyz[1])*(delta_xyz[1])
+        + (delta_xyz[2])*(delta_xyz[2]));
         
   if(cdist <= s_boundary->radius){
     if(! l_node->boundary_index) add_n_to_b(l_node, s_boundary, s_bound_delta_v);
@@ -373,19 +373,19 @@ struct nodes* l_node, const struct nodes* d_nodes, const int* s_dims, const stru
     xyz[0] += s_boundary->center[0]; xyz[1] += s_boundary->center[1]; xyz[2] += s_boundary->center[2];+
     
     //minimum image
-    delta = abs(xyz[0] - l_node->pos[0]);
-    delta_x_min = min(delta, s_dims[0] - delta);
+    delta_xyz_anchor[0] = xyz[0] - l_node->pos[0];
+    delta_xyz_anchor[0] -= rintf(delta_xyz_anchor[0]/s_dims[0])*s_dims[0];
   
-    delta = abs(xyz[1] - l_node->pos[1]);
-    delta_y_min = min(delta, s_dims[1] - delta);
+    delta_xyz_anchor[1] = xyz[1] - l_node->pos[1];
+    delta_xyz_anchor[1] -= rintf(delta_xyz_anchor[1]/s_dims[1])*s_dims[1];
     
-    delta = abs(xyz[2] - l_node->pos[2]);
-    delta_z_min = min(delta, s_dims[2] - delta);
+    delta_xyz_anchor[2] = xyz[2] - l_node->pos[2];
+    delta_xyz_anchor[2] -= rintf(delta_xyz_anchor[2]/s_dims[2])*s_dims[2];
   
     dist = sqrtf(
-  	        (delta_x_min)*(delta_x_min)
-  	      + (delta_y_min)*(delta_y_min)
-          + (delta_z_min)*(delta_z_min));
+  	        (delta_xyz_anchor[0])*(delta_xyz_anchor[0])
+  	      + (delta_xyz_anchor[1])*(delta_xyz_anchor[1])
+          + (delta_xyz_anchor[2])*(delta_xyz_anchor[2]));
     if(dist <= s_boundary->anchor_r[ii]) flag++;
   }
 
@@ -651,7 +651,7 @@ int main(int argc, char** argv){
     
     boundaries_copy[ii].anchors = d_anchors; 
     boundaries_copy[ii].anchor_r = d_anchor_r;
-    boundaries_copy[ii].anchor_mass = d_anchors;
+    boundaries_copy[ii].anchor_mass = d_anchor_mass;
   }
   
   //cudacopy the modified boundaries
@@ -735,3 +735,4 @@ int main(int argc, char** argv){
   
   return 0;
 }  
+#endif

@@ -119,6 +119,8 @@ LB_parameters_gpu lbpar_gpu = {
   // number_of_boundnodes
   0,
 #endif
+  // number_of_anchors
+  0,
   // fluct
   0,
   // calc_val
