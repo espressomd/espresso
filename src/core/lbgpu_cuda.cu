@@ -4223,7 +4223,7 @@ void lb_print_node_GPU(int single_nodeindex, LB_rho_v_pi_gpu *host_print_values)
 
 }
 int lb_lbfluid_print_moving_pos(int part_num, double *print_val){
-  if(part_num < 0 || partnum >= host_n_lb_moving_boundaries) return 1;
+  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;
   print_val[0]=host_lb_moving_boundary[part_num].r.p[0]*lbpar_gpu.agrid;
   print_val[1]=host_lb_moving_boundary[part_num].r.p[1]*lbpar_gpu.agrid;
   print_val[2]=host_lb_moving_boundary[part_num].r.p[2]*lbpar_gpu.agrid;
@@ -4232,7 +4232,7 @@ int lb_lbfluid_print_moving_pos(int part_num, double *print_val){
 }
 
 int lb_lbfluid_print_moving_vel(int part_num, double *print_val){
-  if(part_num < 0 || partnum >= host_n_lb_moving_boundaries) return 1;   
+  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;   
   print_val[0]=host_lb_moving_boundary[part_num].m.v[0] / lbpar_gpu.tau * lbpar_gpu.agrid;
   print_val[1]=host_lb_moving_boundary[part_num].m.v[1] / lbpar_gpu.tau * lbpar_gpu.agrid;
   print_val[2]=host_lb_moving_boundary[part_num].m.v[2] / lbpar_gpu.tau * lbpar_gpu.agrid;
@@ -4241,7 +4241,7 @@ int lb_lbfluid_print_moving_vel(int part_num, double *print_val){
 }
 
 int lb_lbfluid_print_moving_omega_body(int part_num, double *print_val){
-  if(part_num < 0 || partnum >= host_n_lb_moving_boundaries) return 1;  
+  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;  
   print_val[0]=host_lb_moving_boundary[part_num].m.somega[0];
   print_val[1]=host_lb_moving_boundary[part_num].m.somega[1];
   print_val[2]=host_lb_moving_boundary[part_num].m.somega[2];
@@ -4250,13 +4250,13 @@ int lb_lbfluid_print_moving_omega_body(int part_num, double *print_val){
 }
 
 int lb_lbfluid_print_moving_omega_lab(int part_num, double *print_val){
-  if(part_num < 0 || partnum >= host_n_lb_moving_boundaries) return 1;
+  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;
   lb_convert_omega_to_space_for_print(host_lb_moving_boundary + part_num, print_val);
   return 0;
 }
 
 int lb_lbfluid_print_moving_torque_body(int part_num, double *print_val){
-  if(part_num < 0 || partnum >= host_n_lb_moving_boundaries) return 1;
+  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;
   print_val[0]=host_lb_moving_boundary[part_num].f.storque[0];
   print_val[1]=host_lb_moving_boundary[part_num].f.storque[1];
   print_val[2]=host_lb_moving_boundary[part_num].f.storque[2];
@@ -4265,19 +4265,19 @@ int lb_lbfluid_print_moving_torque_body(int part_num, double *print_val){
 }
 
 int lb_lbfluid_print_moving_torque_lab(int part_num, double *print_val){
-  if(part_num < 0 || partnum >= host_n_lb_moving_boundaries) return 1;
+  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;
   lb_convert_torque_to_space_for_print(host_lb_moving_boundary + part_num, print_val);
   return 0;
 }
 
 int lb_lbfluid_print_moving_force_body(int part_num, double *print_val){
-  if(part_num < 0 || partnum >= host_n_lb_moving_boundaries) return 1;  
+  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;  
   lb_convert_force_to_body_for_print(host_lb_moving_boundary + part_num, print_val);
   return 0;
 }
 
 int lb_lbfluid_print_moving_force_lab(int part_num, double *print_val){
-  if(part_num < 0 || partnum >= host_n_lb_moving_boundaries) return 1;  
+  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;  
   print_val[0]=host_lb_moving_boundary[part_num].f.sf[0]/tau_sq;
   print_val[1]=host_lb_moving_boundary[part_num].f.sf[1]/tau_sq;
   print_val[2]=host_lb_moving_boundary[part_num].f.sf[2]/tau_sq;
