@@ -522,7 +522,10 @@ if (p1->p.rotation)
 #else
   /* the rotational part is added to the total kinetic energy;
      at the moment, we assume unit inertia tensor I=(1,1,1)  */
-  energy.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
+     // 0.4 * MASS * SIGMA^2 = I0
+     // 0.4 used for the dimensionless moment of inertia, corresponding
+     // to that of a rigid sphere with diameter SIGMA (see [Wang2002])
+  energy.data.e[0] += 0.4 * (p1->p.mass) * (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]));
 #endif
  }
 #endif
