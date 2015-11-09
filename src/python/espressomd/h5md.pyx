@@ -16,9 +16,9 @@ class h5md(object):
     def close(self):
         self.h5_file.close()
 
-    def WriteValueUserdefined(self,value,h5_datasetpath,h5_index,h5_maxshape,h5_Dtype,chunk=True):
+    def WriteValueUserdefined(self,value,h5_datasetgroup,h5_index,h5_maxshape,h5_Dtype,chunk=True):
         #value:             Value to be written
-        #h5_datasetpath:    Path and name of h5 dataset
+        #h5_datasetgroup:    Path and name of h5 dataset
         #h5_index:          Index of the to be written value
         #h5_maxshape:       Maximum shape size
         #h5_Dtype:          Datatype of h5 dataset
@@ -31,9 +31,9 @@ class h5md(object):
 
         #CREATE OR OPEN DATASET       
         try:
-            self.dataset=self.h5_file.create_dataset(h5_datasetpath,h5_shape,maxshape=h5_maxshape,dtype=h5_Dtype,chunks=chunk)
+            self.dataset=self.h5_file.create_dataset(h5_datasetgroup,h5_shape,maxshape=h5_maxshape,dtype=h5_Dtype,chunks=chunk)
         except:
-            self.dataset=self.h5_file[h5_datasetpath]   
+            self.dataset=self.h5_file[h5_datasetgroup]   
 
         #RESIZE
         for i in range(len(h5_index)):               
@@ -43,16 +43,16 @@ class h5md(object):
             
         #ASSIGN VALUE
         if(len(h5_index)==1): self.dataset[h5_index[0]]=value
-        if(len(h5_index)==2): self.dataset[h5_index[0],h5_index[1]]=value
-        if(len(h5_index)==3): self.dataset[h5_index[0],h5_index[1],h5_index[2]]=value
-        if(len(h5_index)==4): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3]]=value
-        if(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4]]=value
+        elif(len(h5_index)==2): self.dataset[h5_index[0],h5_index[1]]=value
+        elif(len(h5_index)==3): self.dataset[h5_index[0],h5_index[1],h5_index[2]]=value
+        elif(len(h5_index)==4): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3]]=value
+        elif(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4]]=value
                                         
-    def WriteValueEspresso(self,timestep,particle_id,value,h5_datasetpath,h5_shape,h5_maxshape,h5_Dtype,chunk=True,case="",feature=1):
+    def WriteValueEspresso(self,timestep,particle_id,value,h5_datasetgroup,h5_shape,h5_maxshape,h5_Dtype,chunk=True,case="",feature=1):
         #timestep:          ESPResSo time step
         #particle_id:       ESPResSo particle id
         #value:             Value to be written
-        #h5_datasetpath:    Path and name of h5 dataset
+        #h5_datasetgroup:    Path and name of h5 dataset
         #h5_shape:          Shape of h5 dataset
         #h5_maxshape:       Maximum shape size
         #h5_Dtype:          Datatype of h5 dataset
@@ -65,9 +65,9 @@ class h5md(object):
             print "ERROR H5: Some necessary ESPResSo features for values used in h5-file are not activated"
             sys.exit()        
         try:
-            self.dataset=self.h5_file.create_dataset(h5_datasetpath,h5_shape,maxshape=h5_maxshape,dtype=h5_Dtype,chunks=chunk)
+            self.dataset=self.h5_file.create_dataset(h5_datasetgroup,h5_shape,maxshape=h5_maxshape,dtype=h5_Dtype,chunks=chunk)
         except:
-            self.dataset=self.h5_file[h5_datasetpath]     
+            self.dataset=self.h5_file[h5_datasetgroup]     
 
         #WRITE CASES:         
         #time and step
@@ -167,11 +167,8 @@ class h5md(object):
                             
     #USERDEFINED
         #user defined dataset                   
-        def userdefined(self,value="",groupname="",datasetname="",datatype='f8',dataset_index=(1,),chunk=True):
-            if isinstance(dataset_index,tuple):
-                self.h5md.WriteValueUserdefined(value,groupname+"/"+datasetname,dataset_index,(None),datatype,chunk)   
-            else:
-                self.h5md.WriteValueUserdefined(value,groupname+"/"+datasetname,(dataset_index,),(None,),datatype,chunk)             
+        def userdefined(self,value,groupname,datasetname,datatype,dataset_index,chunk=True):
+            self.h5md.WriteValueUserdefined(value,groupname+"/"+datasetname,dataset_index,(None),datatype,chunk)               
 
     #TIME
         #time
@@ -504,7 +501,7 @@ class h5md(object):
             self.h5md=h5md
             
     #USERDEFINED    
-        def userdefined(self,h5_index,groupname="particles/atoms/userdefined/",datasetname="value"):              
+        def userdefined(self,groupname,datasetname,h5_index):              
             # Try to open dataset
             try: 
                 self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname] 
@@ -514,10 +511,10 @@ class h5md(object):
 
             #Read value
             if(len(h5_index)==1): return self.h5md.value_dataset[h5_index[0]]
-            if(len(h5_index)==2): return self.h5md.value_dataset[h5_index[0],h5_index[1]]
-            if(len(h5_index)==3): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2]]
-            if(len(h5_index)==4): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3]]
-            if(len(h5_index)==5): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4]]
+            elif(len(h5_index)==2): return self.h5md.value_dataset[h5_index[0],h5_index[1]]
+            elif(len(h5_index)==3): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2]]
+            elif(len(h5_index)==4): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3]]
+            elif(len(h5_index)==5): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4]]
                          
     #PARTICLES
         #time

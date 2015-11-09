@@ -857,41 +857,53 @@ h5md_close
 Closes the H5MD data file.
 
 
-\section{Writing H5MD-files using Python}
-Writing to a hdf5-file starts with creating an object of the class h5md. The following example creates an object called "h5", linked to the hdf5-file "File.h5":
-\begin{tclcode}
+\section{Writing H5MD-files with Python}
+To write data on a hdf5-file, first an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. This may, for example, look like:
+\begin{pycode}
 from espressomd import h5md
 system = espressomd.System()
 h5=h5md.h5md("File.h5",system)
-\end{tclcode}
-The following command writes a scalar or an array to the hdf5-file: 
-\begin{essyntax}
-h5.write_to_h5.userdefined(\var{timestep},\var{value},\var{groupname},\var{datasetname},\var{datatype},\var{chunks})
-\end{essyntax}
-Here "write_to_h5" is a sub-class of the "h5md" class containing all write command such as "userdefined".
+\end{pycode}
+The command \texttt{userdefined} writes a single value to the hdf5-file:
+\begin{pyessyntax}
+h5.write_to_h5.userdefined(\var{value},\var{groupname},\var{datasetname},\var{datatype},\\\var{datasetindex},\var{chunks})
+\end{pyessyntax}
+The \texttt{h5md} sub-class \texttt{write_to_h5} contains all write commands such as \texttt{userdefined}.
 \begin{arguments}
-\item[\var{timestep}] When the value is time dependent, this will be the row number in the hdf5-file. If the value is time independent  the \var{timestep} has to be set to -1.
-\item[\var{value}] The to be written value. This can be a scalar or an array.
-\item[\var{groupname}] This is the name of the folder, which contains the dataset.
-\item[\var{datasetname}] This is the name of the dataset. The dataset contains the respective values.
-\item[\var{datatype}] This parameter determines the data type of the respective values.
-\item[\var{chunks}] For a faster access to the H5MD-file the file may be chunked to smaller units. The size of this units should be about as large as the available main memory. When not defining the chunk size, it will be set automatically.
+\item[\var{value}] To be written value.
+\item[\var{groupname}] Name of the group containing the dataset.
+\item[\var{datasetname}] Name of the dataset containing the values.
+\item[\var{datatype}] Data type of the values.
+\item[\var{datasetindex}] Position of \var{value} within the dataset.
+\item[\var{chunks}] Size of dataset sub units. Fragmenting the dataset to smaller units can increase the access speed to the hdf5-file. When not defining the chunk size explicitly, it will be set automatically.
 \end{arguments}
-In principle all values can be written via the "userdefined" command, but nearly all particle properties such as positions and forces can be written to the H5MD-fiel via a single command. This command writes the values of all particles at once. The general form is
-\begin{essyntax}
-h5.write_to_h5.particle_property(timestep,groupname,datasetname,chunks)
-\end{essyntax}
-\begin{tclcode}
-h5.write_to_h5.particle_property(timestep,groupname,datasetname,chunks)
-\end{tclcode}
-where "particle_property" is a short cut for the respective property such as the position "pos" or the force "f". When leaving out the variables \var{groupname}, \var{datasetname}, and \var{chunks} the predefined values are chosen in agreement to the H5MD file-format (see \url{http://nongnu.org/h5md/}) and automatic chunk size.
-when the predefined standard value for groupname,datasetname and chunk size is set to automatic. 
-Further the ESPResSo observables such as "analyze_energy" can be called via the respective functions. \\
-The usage of writing to a H5MD file with Python is given at the sample "h5md_WriteFile.py" with all available particle properties and ESPResSo observables. Further information about hdf5 with Python are given at \url{http://www.h5py.org/}.
+Particle properties can be written on the hdf5-file via a single command, writing the values of all particles at once:
+\begin{pyessyntax}
+h5.write_to_h5.particle_property(\var{timestep},\var{groupname,datasetname},\var{chunks})
+\end{pyessyntax}
+The command \texttt{particle_property} is a short cut for the various particle property commands such as \texttt{pos} (position) and \texttt{f} (force). When leaving out the variables \var{groupname}, \var{datasetname}, and \var{chunks}, the predefined values of \var{groupname} and \var{datasetname} are used (H5MD-format) and the chunk size is set automatically.
+\begin{arguments}
+\item[\var{timestep}] Time index in the hdf5-file. If the value is time independent, \var{timestep} has to be set to -1 or leaved out.
+\end{arguments}
+ESPResSo observables can be written as follows:
+\begin{pyessyntax}
+h5.write_to_h5.observable(\var{timestep},\var{groupname},\var{datasetname},\var{chunks})
+\end{pyessyntax}
+The command \texttt{observable} is a short cut for the various observable commands such as \texttt{analyze_energy} (energy).\\\\
+The sample python script ``h5md_WriteFile.py'' shows the usage of writing on a hdf5-file.
 
-
-\section{Reading H5MD-files using Python}
-
+\section{Reading H5MD-files with Python}
+To read from a hdf5-file, again an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. The command \texttt{userdefined} reads a single value from the hdf5-file:
+\begin{pyessyntax}
+h5.read_from_h5.userdefined(\var{groupname},\var{datasetname},\var{datasetindex})
+\end{pyessyntax}
+The \texttt{h5md} sub-class \texttt{read_from_h5} contains all read commands such as \texttt{userdefined}.\\\\
+Particle properties can be read from the hdf5-file and stored in the respective ESPResSo variable as follows:
+\begin{pyessyntax}
+h5.read_from_h5.particle_property(\var{timestep},\var{groupname},\var{datasetname})
+\end{pyessyntax}
+The command \texttt{particle_property} is again a short cut for the various particle property commands such as \texttt{pos} (position) and \texttt{f} (force). When leaving out the variables \var{groupname} and \var{datasetname}, the predefined values of \var{groupname} and \var{datasetname} are used (H5MD-format).\\\\ 
+The sample python script ``h5md_ReadFile.py'' shows the usage of reading from a hdf5-file.
 
 \section{Error handling}
 Errors in the parameters are detected as early as possible, and

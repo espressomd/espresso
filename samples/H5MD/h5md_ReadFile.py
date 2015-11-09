@@ -37,7 +37,7 @@ for i in range(n_part):
     system.part[i].pos=np.array([0,0,0])
 
 
-result_user = h5.read_from_h5.userdefined((3,),"User/user1/","value")
+result_user = h5.read_from_h5.userdefined("User/user1/","value",(3,))
 h5.read_from_h5.time(n_time-1,"particles/atoms/position/","time")
 h5.read_from_h5.type(n_time-1)
 h5.read_from_h5.pos(n_time-1)
