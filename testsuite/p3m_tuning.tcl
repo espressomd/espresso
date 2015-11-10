@@ -42,7 +42,7 @@ proc read_data {file} {
 
 if { [catch {
     puts "Tests for P3M charge-charge interaction"
-    read_data "cloud_wall_ewald.data"
+    read_data "p3m_tuning_system.data"
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
