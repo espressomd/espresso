@@ -2737,6 +2737,13 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
   else if (ARG1_IS_S(name)) err = parser(interp, argc - 2, argv + 2)
 #define REGISTER_ANALYSIS_W_ARG(name, parser, arg)			\
   else if (ARG1_IS_S(name)) err = parser(interp, arg, argc - 2, argv + 2)
+#define REGISTER_ANALYSIS_DEPR(name, parser) \
+  else if (1) { \
+    fprintf(stderr, "WARNING: analyze %s may be deprecated in the future if no documentation or \
+                     test cases are provided. See open issues at: \
+                     github.com/espressomd/espresso/issues/ .", name); \
+          /*err = parser(interp, argc - 2, argv + 2)*/ \
+  }
 
     /* for the elses below */
     if (0);
