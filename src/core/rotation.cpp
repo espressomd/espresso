@@ -222,14 +222,14 @@ void propagate_omega_quat_particle(Particle* p)
   // 0.4 used for the dimensionless moment of inertia, corresponding
   // to that of a rigid sphere with diameter SIGMA (see [Wang2002])
   for(int j=0; j < 3; j++){
-    p->m.omega[j]+= (time_step_half*Wd[j]) / (0.4 * p->p.mass);
+    p->m.omega[j]+= (time_step_half*Wd[j]) / (0.4 * PMASS(*p));
   }
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p->m.v[0],p->m.v[1],p->m.v[2]));
   
-  p->r.quat[0]+= (time_step*(Qd[0] + time_step_half*Qdd[0] / (0.4 * p->p.mass)) - lambda*p->r.quat[0]);
-  p->r.quat[1]+= (time_step*(Qd[1] + time_step_half*Qdd[1] / (0.4 * p->p.mass)) - lambda*p->r.quat[1]);
-  p->r.quat[2]+= (time_step*(Qd[2] + time_step_half*Qdd[2] / (0.4 * p->p.mass)) - lambda*p->r.quat[2]);
-  p->r.quat[3]+= (time_step*(Qd[3] + time_step_half*Qdd[3] / (0.4 * p->p.mass)) - lambda*p->r.quat[3]);
+  p->r.quat[0]+= (time_step*(Qd[0] + time_step_half*Qdd[0] / (0.4 * PMASS(*p))) - lambda*p->r.quat[0]);
+  p->r.quat[1]+= (time_step*(Qd[1] + time_step_half*Qdd[1] / (0.4 * PMASS(*p))) - lambda*p->r.quat[1]);
+  p->r.quat[2]+= (time_step*(Qd[2] + time_step_half*Qdd[2] / (0.4 * PMASS(*p))) - lambda*p->r.quat[2]);
+  p->r.quat[3]+= (time_step*(Qd[3] + time_step_half*Qdd[3] / (0.4 * PMASS(*p))) - lambda*p->r.quat[3]);
   // Update the director
   convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
@@ -355,13 +355,13 @@ void convert_torques_propagate_omega()
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
 #ifdef ROTATIONAL_INERTIA
-      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0]/I[0];
-      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1]/I[1];
-      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2]/I[2];
+      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0]/(I[0] * 0.4 * PMASS(p[i]));
+      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1]/(I[1] * 0.4 * PMASS(p[i]));
+      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2]/(I[2] * 0.4 * PMASS(p[i]));
 #else
-      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/(I[0] * 0.4 * p[i].p.mass);
-      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/(I[1] * 0.4 * p[i].p.mass);
-      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/(I[2] * 0.4 * p[i].p.mass);
+      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/(I[0] * 0.4 * PMASS(p[i]));
+      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/(I[1] * 0.4 * PMASS(p[i]));
+      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/(I[2] * 0.4 * PMASS(p[i]));
 #endif
       /* if the tensor of inertia is isotropic, the following refinement is not needed.
          Otherwise repeat this loop 2-3 times depending on the required accuracy */
@@ -379,9 +379,9 @@ void convert_torques_propagate_omega()
         Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
 #endif
 
-        p[i].m.omega[0]+= time_step_half*Wd[0] / (0.4 * p[i].p.mass);
-        p[i].m.omega[1]+= time_step_half*Wd[1] / (0.4 * p[i].p.mass);
-        p[i].m.omega[2]+= time_step_half*Wd[2] / (0.4 * p[i].p.mass);
+        p[i].m.omega[0]+= time_step_half*Wd[0] / (0.4 * PMASS(p[i]));
+        p[i].m.omega[1]+= time_step_half*Wd[1] / (0.4 * PMASS(p[i]));
+        p[i].m.omega[2]+= time_step_half*Wd[2] / (0.4 * PMASS(p[i]));
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
