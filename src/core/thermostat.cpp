@@ -82,8 +82,7 @@ double nptiso_pref4;
 
 void thermo_init_langevin() 
 {
-  //langevin_pref1 = -langevin_gamma/time_step;
-  langevin_pref1 = -langevin_gamma;
+  langevin_pref1 = -langevin_gamma/time_step;
 #if defined (FLATNOISE)
   langevin_pref2 = sqrt(24.0*temperature*langevin_gamma/time_step);
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)

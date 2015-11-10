@@ -142,8 +142,7 @@ void energy_calc(double *result)
     energy.data.e[0] /= (2.0*smaller_time_step*smaller_time_step);
   else
 #endif   
-  //energy.data.e[0] /= (2.0*time_step*time_step);
-	energy.data.e[0] /= (2.0);
+  energy.data.e[0] /= (2.0*time_step*time_step);
 
   calc_long_range_energies();
 
