@@ -46,7 +46,7 @@ struct UWerr_t {
 };
 
 /* forward declaration implementation below */
-int uwerr_read_tcl_double_vector(Tcl_Interp *interp, char * data_in ,
+int uwerr_read_tcl_double_vector(Tcl_Interp *interp, const char * data_in ,
 			     double ** data_out, int * len);
 
 /** Create a string with enough space for in_len doubles
@@ -105,7 +105,7 @@ int uwerr_free_tcl_vector(char * vec) {
         <li>the vector as Tcl list
         <li>the coordinate to project to</ul>
  */
-int UWerr_proj(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
+int UWerr_proj(ClientData cd, Tcl_Interp *interp, int argc, const char *argv[])
 {
   double * a;
   int len, n;
@@ -142,7 +142,7 @@ int UWerr_proj(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
 
     arXiv:hep-lat/0306017 v1 13 Jun 2003 \em Wolff, U. \em Monte Carlo errors with less errors.
 */
-int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
+int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, const char ** argv,
 	    double ** data, int rows, int cols,
 	    int * n_rep, int len, double s_tau, int plot)
 {
@@ -154,7 +154,7 @@ int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
   char flag = 0;
   char * str = 0L;
   char * tcl_vector = 0L;
-  char ** my_argv;
+  const char ** my_argv = (const char**)malloc((argc+1)*sizeof(char*));
 
   FILE * plotDataf, * plotScriptf;
 
@@ -296,7 +296,7 @@ int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
       return TCL_ERROR;
   }
 
-  if (!(my_argv=(char**)malloc((argc+1)*sizeof(char*)))) {
+  if (!my_argv) {
       free(delpro);
       free(Fbr);
       free(fgrad);
@@ -571,16 +571,16 @@ int UWerr(Tcl_Interp * interp,
   argv[1] = (char*)malloc(TCL_INTEGER_SPACE*sizeof(char));
   sprintf(argv[1], "%d", col_to_analyze);
 
-  if (Tcl_CreateCommand(interp, name, UWerr_proj, 0, NULL) == NULL) {
-      Tcl_AppendResult(interp, "could not create command \"", name, "\"", (char *)NULL);
+  if (Tcl_CreateCommand(interp, name, UWerr_proj, 0, 0) == 0) {
+      Tcl_AppendResult(interp, "could not create command \"", name, "\"", (char *)0);
       return TCL_ERROR;
   }
   if (Tcl_GetCommandInfo(interp, name, &cmdInfo) == 0) {
-      Tcl_AppendResult(interp, "could not access command \"", name, "\"", (char *)NULL);
+      Tcl_AppendResult(interp, "could not access command \"", name, "\"", (char *)0);
       return TCL_ERROR;
   }
 
-  res = UWerr_f(interp, &cmdInfo, 2, argv,
+  res = UWerr_f(interp, &cmdInfo, 2, (const char **)argv,
 		data, rows, cols, n_rep, len, s_tau, plot);
 
   Tcl_DeleteCommand(interp, name);
@@ -613,18 +613,18 @@ int uwerr_read_matrix(Tcl_Interp *interp, char * data_in ,
 
   *nrows = *ncols = -1;
 
-  if (Tcl_SplitList(interp, data_in, nrows, &row) == TCL_ERROR)
+  if (Tcl_SplitList(interp, data_in, nrows, (const char ***)&row) == TCL_ERROR)
     return TCL_ERROR;
 
   if (*nrows < 1) {
     Tcl_AppendResult(interp, "first argument has to be a matrix.",
-		     (char *)NULL);
+		     (char *)0);
     return TCL_ERROR;
   }
 
   if (!(*data = (double**)malloc(*nrows*sizeof(double*)))) {
     Tcl_AppendResult(interp, "Out of Memory.",
-		     (char *)NULL);
+		     (char *)0);
     Tcl_Free((char *)row);
     return TCL_ERROR;
   }
@@ -632,7 +632,7 @@ int uwerr_read_matrix(Tcl_Interp *interp, char * data_in ,
   for (i = 0; i < *nrows; ++i) {
     tmp_ncols = -1;
     
-    if (Tcl_SplitList(interp, row[i], &tmp_ncols, &col) == TCL_ERROR) {
+    if (Tcl_SplitList(interp, row[i], &tmp_ncols, (const char ***)&col) == TCL_ERROR) {
       Tcl_Free((char*)row);
       return TCL_ERROR;
     }
@@ -640,7 +640,7 @@ int uwerr_read_matrix(Tcl_Interp *interp, char * data_in ,
     if (i == 0) {
       if (tmp_ncols < 1) {
 	Tcl_AppendResult(interp, "first argument has to be a matrix.",
-			 (char *)NULL);
+			 (char *)0);
 	Tcl_Free((char *)col);
 	Tcl_Free((char*)row);
 	return TCL_ERROR;
@@ -650,7 +650,7 @@ int uwerr_read_matrix(Tcl_Interp *interp, char * data_in ,
 
     } else if (*ncols != tmp_ncols) {
       Tcl_AppendResult(interp, "number of columns changed.",
-		       (char *)NULL);
+		       (char *)0);
       Tcl_Free((char *)col);
       Tcl_Free((char*)row);
       return TCL_ERROR;
@@ -658,7 +658,7 @@ int uwerr_read_matrix(Tcl_Interp *interp, char * data_in ,
 
     if (!((*data)[i] = (double*)malloc(*ncols*sizeof(double)))) {
       Tcl_AppendResult(interp,"Out of Memory.",
-		       (char *)NULL);
+		       (char *)0);
       Tcl_Free((char *)row);
       Tcl_Free((char *)col);
       for (k = 0; k < i; ++k)
@@ -707,18 +707,18 @@ int uwerr_read_int_vector(Tcl_Interp *interp, char * data_in ,
   *len  = -1;
   *nrep =  0;
 
-  if (Tcl_SplitList(interp, data_in, len, &col) == TCL_ERROR)
+  if (Tcl_SplitList(interp, data_in, len, (const char ***)&col) == TCL_ERROR)
     return TCL_ERROR;
 
   if (*len < 1) {
     Tcl_AppendResult(interp, "Argument is not a vector.",
-		     (char *)NULL);
+		     (char *)0);
     return TCL_ERROR;
   }
 
   if (!(*nrep = (int*)malloc((*len)*sizeof(int)))) {
     Tcl_AppendResult(interp, "Out of Memory.",
-		     (char *)NULL);
+		     (char *)0);
     Tcl_Free((char *)col);
     return TCL_ERROR;
   }
@@ -747,7 +747,7 @@ int uwerr_read_int_vector(Tcl_Interp *interp, char * data_in ,
 	    If \em TCL_OK is returned you have to make sure to free the memory
 	    pointed to by nrep.
  */
-int uwerr_read_tcl_double_vector(Tcl_Interp *interp, char * data_in ,
+int uwerr_read_tcl_double_vector(Tcl_Interp *interp, const char * data_in ,
 			     double ** nrep, int * len)
 {
   char ** col;
@@ -755,18 +755,18 @@ int uwerr_read_tcl_double_vector(Tcl_Interp *interp, char * data_in ,
 
   *len = -1;
 
-  if (Tcl_SplitList(interp, data_in, len, &col) == TCL_ERROR)
+  if (Tcl_SplitList(interp, data_in, len, (const char ***)&col) == TCL_ERROR)
     return TCL_ERROR;
 
   if (*len < 1) {
     Tcl_AppendResult(interp, "Argument is not a vector.",
-		     (char *)NULL);
+		     (char *)0);
     return TCL_ERROR;
   }
 
   if (!(*nrep = (double*)malloc((*len)*sizeof(double)))) {
     Tcl_AppendResult(interp, "Out of Memory.",
-		     (char *)NULL);
+		     (char *)0);
     Tcl_Free((char *)col);
     return TCL_ERROR;
   }
@@ -792,13 +792,12 @@ int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
   int * nrep;
   double ** data;
   char * str;
-  char ** my_argv;
   Tcl_CmdInfo cmdInfo;
 
   if (argc < 4) {
     Tcl_AppendResult(interp, argv[0], " needs at least 3 arguments.\n",
 		     "usage: ", argv[0], " <data> <nrep> {<col>|<f>} [<s_tau> [<f_args>]] [plot]\n",
-		     (char *)NULL);
+		     (char *)0);
     return TCL_ERROR;
   }
 
@@ -818,7 +817,7 @@ int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
       str = (char *)malloc(TCL_INTEGER_SPACE*sizeof(char));
       sprintf(str, "%d", ncols);
       Tcl_AppendResult(interp, "third argument has to be a function or a ",
-		       "number between 1 and ", str, "!", (char *)NULL);
+		       "number between 1 and ", str, "!", (char *)0);
       free(str);
     }
   }
@@ -829,7 +828,7 @@ int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
     str = (char *)malloc(TCL_INTEGER_SPACE*sizeof(char));
     sprintf(str, "%d", ncols);
     Tcl_AppendResult(interp, "third argument has to be a function or a ",
-		     "number between 1 and ", str, ".", (char *)NULL);
+		     "number between 1 and ", str, ".", (char *)0);
     free(str);
   }
 
@@ -842,7 +841,7 @@ int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
       /* read s_tau if there is a fourth arg */
       if (Tcl_GetDouble(interp, argv[4], &s_tau) == TCL_ERROR) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "fourth argument has to be a double or 'plot'.", (char *)NULL);
+	Tcl_AppendResult(interp, "fourth argument has to be a double or 'plot'.", (char *)0);
       }
 
     }
@@ -858,7 +857,7 @@ int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
   }
 
   if ((result == TCL_OK) && !analyze_col) {
-    my_argv = (char**)malloc((argc-3)*sizeof(char*));
+      const char ** my_argv = (const char**)malloc((argc-3)*sizeof(char*));
     my_argv[0] = argv[3];
     for (i = 0; i < argc-5-plot; ++i)
       my_argv[i+1] = argv[5+i];

@@ -102,11 +102,14 @@
 #define POLY_DEBUG
 #define MOLFORCES_DEBUG
 #define PTENSOR_DEBUG
-#define MEM_DEBUG
 #define MAGGS_DEBUG
 #define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
 #define LE_DEBUG
+#ifdef CUDA
+#define CUDA_DEBUG
+#endif
+#define ESIF_DEBUG
 
 #define MPI_CORE
 #define FORCE_CORE

@@ -72,7 +72,7 @@ for {set i 0} { $i < $n_part } {incr i} {
 #  Warmup Integration                                       #
 #############################################################
 set act_min_dist [analyze mindist]
-setmd max_num_cells 2744
+#setmd max_num_cells 2744
 puts "\nStart warmup integration:"
 set cap 20
 inter forcecap $cap
@@ -95,12 +95,15 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 #############################################################
 #  H5MD file and datasets                                   #
 #############################################################
-# Intitialize H5MD dataset. If it already exists it will be opened and extended
-h5md_init "h5_lj.h5" 
-# Initialize user defined H5MD 1D-observable e.g. energy
 if { [file exists "h5_lj.h5"] != 1 } {
-	h5md_observable1D_init "energy"
+    # Intitialize H5MD dataset. If it already exists it will be opened and extended
+	h5md_init "h5_lj.h5" 
+    # Initialize user defined H5MD 1D-observable e.g. energy
+    h5md_observable1D_init "energy"
+} else {
+    h5md_init "h5_lj.h5" 
 }
+
 #############################################################
 #      Integration                                          #
 #############################################################
@@ -114,7 +117,7 @@ for {set i 0} { $i < $int_n_times } { incr i} {
 	# write to user defined H5MD observable
     h5md_observable1D_write "energy" $E
 	# write all particle positions to H5MD dataset
-	h5md_write_positions folded
+    h5md_write_positions
 }
 # Terminate program
 puts "\n\nFinished"

@@ -80,7 +80,11 @@ proc blockfile_read_auto_particles {channel read auto} {
             "^vi"       { if {![regexp "^$i" "virtual"]} { error " $i is not a particle property" }
                 set virtual $idx; incr idx }
             "^vs"       { if {![regexp "^$i" "vs_relative"]} { error " $i is not a particle property" }
-                set vs_relative $idx; incr idx 2 }
+                set vs_relative $idx; incr idx 6 }
+            "^rot"       { if {![regexp "^$i" "rotation"]} { error " $i is not a particle property" }
+                set rotation $idx; incr idx 1 }
+            "^dipm"       { if {![regexp "^$i" "dipm"]} { error " $i is not a particle property" }
+                set dipm $idx; incr idx 1 }
             "^q$"       { set q $idx; incr idx }
             "^v"        { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
                 set v $idx; incr idx 3 }
@@ -114,6 +118,8 @@ proc blockfile_read_auto_particles {channel read auto} {
                 set ext_force $idx; incr idx 3 }
             "^ext_t"    { if {![regexp "^$i" "ext_torque"]} { error " $i is not a particle property" }
                 set ext_torque $idx; incr idx 3 }
+            "^swimming" { if {![regexp "^$i" "swimming"]} { error " $i is not a particle property" }
+                set swimming $idx; incr idx 7 }
             default { error "$i is not a particle property or it is not supported by the blockfile mechanism" }
         }
     }
@@ -135,13 +141,17 @@ proc blockfile_read_auto_particles {channel read auto} {
     if {[info exists virtual]} { set cmd "$cmd \
            virtual \[lindex \$line $virtual\]" }
     if {[info exists vs_relative]} { set cmd "$cmd \
-           vs_relative \[lindex \$line $vs_relative\] \[lindex \$line [expr $vs_relative +1]\]" }
+           vs_relative \[lindex \$line $vs_relative\] \[lindex \$line [expr $vs_relative +1]\] \[lindex \$line [expr $vs_relative +2]\] \[lindex \$line [expr $vs_relative +3]\] \[lindex \$line [expr $vs_relative +4]\] \[lindex \$line [expr $vs_relative +5]\]" }
     if {[info exists v]} { set cmd "$cmd \
            v  \[lindex \$line $v\] \[lindex \$line [expr $v + 1]\] \[lindex \$line [expr $v + 2]\]"
     }
     if {[info exists f]} { set cmd "$cmd \
            f  \[lindex \$line $f\] \[lindex \$line [expr $f + 1]\] \[lindex \$line [expr $f + 2]\]"
     }
+    if {[info exists rotation]} { set cmd "$cmd \
+           rotation \[lindex \$line $rotation\]" }
+    if {[info exists dipm]} { set cmd "$cmd \
+           dipm \[lindex \$line $dipm\]" }
     if {[info exists gamma]} { set cmd "$cmd \
            gamma \[lindex \$line $gamma\]" }
     if {[info exists temp]} { set cmd "$cmd \
@@ -178,6 +188,14 @@ proc blockfile_read_auto_particles {channel read auto} {
     }
     if {[info exists ext_torque]} { set cmd "$cmd \
            ext_torque \[lindex \$line $ext_torque\] \[lindex \$line [expr $ext_torque + 1]\] \[lindex \$line [expr $ext_torque + 2]\]"
+    }
+    if {[info exists swimming]} { set cmd "$cmd __swimming_blockfile \
+           \[lindex \$line [expr $swimming + 1]\] \
+           v_swim \[lindex \$line [expr $swimming + 2]\] \
+           f_swim \[lindex \$line [expr $swimming + 3]\] \
+           push_pull \[lindex \$line [expr $swimming + 4]\] \
+           dipole_length \[lindex \$line [expr $swimming + 5]\] \
+           rotational_friction \[lindex \$line [expr $swimming + 6]\]"
     }
     
     while {1} {

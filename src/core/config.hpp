@@ -32,6 +32,11 @@
 /* Include the defines created by configure. */
 #include <acconfig.hpp>
 
+/* If nvcc is used we disable c++11 support. */
+#if defined(__CUDACC__) && defined(HAVE_CXX11)
+#undef HAVE_CXX11
+#endif
+
 /* Prevent C++ bindings in MPI (there is a DataType called LB in there) */
 #define OMPI_SKIP_MPICXX
 #define MPICH_SKIP_MPICXX
@@ -114,6 +119,14 @@ extern const char* ESPRESSO_VERSION;
 /** Tiny length cutoff */
 #ifndef TINY_LENGTH_VALUE
 #define TINY_LENGTH_VALUE 0.0001
+#endif
+/** Tiny oif elasticity cutoff */
+#ifndef TINY_OIF_ELASTICITY_COEFFICIENT
+#define TINY_OIF_ELASTICITY_COEFFICIENT 1e-10
+#endif
+/** Small oif membrane collision cutoff */
+#ifndef SMALL_OIF_MEMBRANE_CUTOFF
+#define SMALL_OIF_MEMBRANE_CUTOFF 0.05
 #endif
 
 /** maximal number of iterations in the RATTLE algorithm before it bails out. */

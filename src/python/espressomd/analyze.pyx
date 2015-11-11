@@ -167,61 +167,65 @@ def nbhood(system=None, pos=None, r_catch=None, plane='3d'):
     free(il)
     return result
 
+
 def cylindrical_average(system=None, center=None, direction=None,
                         length=None, radius=None,
                         bins_axial=None, bins_radial=None,
-                        types=None):
+                        types=[-1]):
 
     # Check the input types
-    checkTypeOrExcept(center,      3, float, "center has to be 3 floats"   )
+    checkTypeOrExcept(center,      3, float, "center has to be 3 floats")
     checkTypeOrExcept(direction,   3, float, "direction has to be 3 floats")
-    checkTypeOrExcept(length,      1, float, "length has to be a float"    )
-    checkTypeOrExcept(radius,      1, float, "radius has to be a floats"   )
-    checkTypeOrExcept(bins_axial,  1, int,   "bins_axial has to be an int" )
+    checkTypeOrExcept(length,      1, float, "length has to be a float")
+    checkTypeOrExcept(radius,      1, float, "radius has to be a floats")
+    checkTypeOrExcept(bins_axial,  1, int,   "bins_axial has to be an int")
     checkTypeOrExcept(bins_radial, 1, int,   "bins_radial has to be an int")
 
     # Convert Python types to C++ types
-    cdef vector[double] c_center    = center
+    cdef vector[double] c_center = center
     cdef vector[double] c_direction = direction
-    cdef double c_length            = length
-    cdef double c_radius            = radius
-    cdef int c_bins_axial           = bins_axial
-    cdef int c_bins_radial          = bins_radial
-    cdef vector[int] c_types        = types
+    cdef double c_length = length
+    cdef double c_radius = radius
+    cdef int c_bins_axial = bins_axial
+    cdef int c_bins_radial = bins_radial
+    cdef vector[int] c_types = types
 
     cdef map[string, vector[vector[vector[double]]]] distribution
     c_analyze.calc_cylindrical_average(c_center, c_direction, c_length,
                                        c_radius, c_bins_axial, c_bins_radial, c_types,
                                        distribution)
 
-    cdef double binwd_axial  = c_length / c_bins_axial
+    cdef double binwd_axial = c_length / c_bins_axial
     cdef double binwd_radial = c_radius / c_bins_radial
     cdef double binvolume, pos_radial, pos_axial
 
     cdef vector[string] names = ["density", "v_r", "v_t"]
 
-    buffer = np.empty([bins_radial * bins_axial, 5 + c_types.size() * names.size()])
+    buffer = np.empty(
+        [bins_radial * bins_axial, 5 + c_types.size() * names.size()])
 
     cdef int index_radial, index_axial
     cdef unsigned int type_id, name
-    for index_radial in range(0,bins_radial):
-        for index_axial in range(0,bins_axial):
+    for index_radial in range(0, bins_radial):
+        for index_axial in range(0, bins_axial):
             pos_radial = (index_radial + .5) * binwd_radial
-            pos_axial  = (index_axial  + .5) * binwd_axial - .5*c_length
+            pos_axial = (index_axial + .5) * binwd_axial - .5 * c_length
 
-            if ( index_radial == 0 ):
-                binvolume = np.pi * binwd_radial*binwd_radial * c_length
+            if (index_radial == 0):
+                binvolume = np.pi * binwd_radial * binwd_radial * c_length
             else:
-                binvolume = np.pi * (index_radial*index_radial + 2*index_radial) * binwd_radial*binwd_radial * c_length
+                binvolume = np.pi * \
+                    (index_radial * index_radial + 2 * index_radial) * \
+                    binwd_radial * binwd_radial * c_length
 
-            buffer[index_axial + bins_axial*index_radial,0] = index_radial
-            buffer[index_axial + bins_axial*index_radial,1] = index_axial
-            buffer[index_axial + bins_axial*index_radial,2] = pos_radial
-            buffer[index_axial + bins_axial*index_radial,3] = pos_axial
-            buffer[index_axial + bins_axial*index_radial,4] = binvolume
-            for type_id in range(0,c_types.size()):
-                for name in range(0,names.size()):
-                    buffer[index_axial + bins_axial*index_radial,5 + name + type_id*names.size()] \
+            buffer[index_axial + bins_axial * index_radial, 0] = index_radial
+            buffer[index_axial + bins_axial * index_radial, 1] = index_axial
+            buffer[index_axial + bins_axial * index_radial, 2] = pos_radial
+            buffer[index_axial + bins_axial * index_radial, 3] = pos_axial
+            buffer[index_axial + bins_axial * index_radial, 4] = binvolume
+            for type_id in range(0, c_types.size()):
+                for name in range(0, names.size()):
+                    buffer[index_axial + bins_axial * index_radial, 5 + name + type_id * names.size()] \
                         = distribution[names[name]][type_id][index_radial][index_axial]
 
     return buffer
@@ -229,6 +233,8 @@ def cylindrical_average(system=None, center=None, direction=None,
 #
 # Pressure analysis
 #
+
+
 def pressure(self, v_comp=0):
     """Pressure calculation
        pressure(v_comp=False)
@@ -261,8 +267,8 @@ def pressure(self, v_comp=0):
     total_bonded = 0
     for i in range(c_analyze.n_bonded_ia):
         if (bonded_ia_params[i].type != 0):
-            p["bonded", i] = c_analyze.obsstat_bonded(& c_analyze.total_pressure, i)[0]
-            total_bonded += c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
+            p["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
+            total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_pressure, i)[0]
     p["bonded"] = total_bonded
 
     # Non-Bonded interactions, total as well as intra and inter molecular
@@ -277,12 +283,12 @@ def pressure(self, v_comp=0):
     for i in range(c_analyze.n_particle_types):
         for j in range(c_analyze.n_particle_types):
             #      if checkIfParticlesInteract(i, j):
-            p["nonBonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
-            total_non_bonded = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
-            total_intra += c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
-            p["nonBondedIntra", i, j] = c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
-            p["nonBondedInter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
-            total_inter += c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
+            p["nonBonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
+            total_non_bonded = c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
+            total_intra += c_analyze.obsstat_nonbonded_intra( & c_analyze.total_pressure_non_bonded, i, j)[0]
+            p["nonBondedIntra", i, j] = c_analyze.obsstat_nonbonded_intra( & c_analyze.total_pressure_non_bonded, i, j)[0]
+            p["nonBondedInter", i, j] = c_analyze.obsstat_nonbonded_inter( & c_analyze.total_pressure_non_bonded, i, j)[0]
+            total_inter += c_analyze.obsstat_nonbonded_inter( & c_analyze.total_pressure_non_bonded, i, j)[0]
     p["nonBondedIntra"] = total_intra
     p["nonBondedInter"] = total_inter
     p["nonBondedInter"] = total_inter
@@ -344,7 +350,7 @@ def stress_tensor(self, v_comp=0):
     total_bonded = np.zeros((3, 3))
     for i in range(c_analyze.n_bonded_ia):
         if (bonded_ia_params[i].type != 0):
-            p["bonded", i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9), (3, 3))
+            p["bonded", i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded(& c_analyze.total_p_tensor, i), 9), (3, 3))
             total_bonded += p["bonded", i]
     p["bonded"] = total_bonded
 
@@ -358,13 +364,13 @@ def stress_tensor(self, v_comp=0):
         for j in range(c_analyze.n_particle_types):
             #      if checkIfParticlesInteract(i, j):
 
-            p["nonBonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
+            p["nonBonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded(& c_analyze.total_p_tensor, i, j), 9), (3, 3))
             total_non_bonded += p["nonBonded", i, j]
 
-            p["nonBondedIntra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+            p["nonBondedIntra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra(& c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
             total_non_bonded_intra += p["nonBondedIntra", i, j]
 
-            p["nonBondedInter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+            p["nonBondedInter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter(& c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
             total_non_bonded_inter += p["nonBondedInter", i, j]
 
     p["nonBondedIntra"] = total_non_bonded_intra
@@ -431,7 +437,7 @@ def energy(system, etype='all', id1='default', id2='default'):
     e = {}
 
     if c_analyze.total_energy.init_status == 0:
-        c_analyze.init_energies( & c_analyze.total_energy)
+        c_analyze.init_energies(& c_analyze.total_energy)
         c_analyze.master_energy_calc()
 
     # Individual components of the pressur
@@ -453,8 +459,8 @@ def energy(system, etype='all', id1='default', id2='default'):
     total_bonded = 0
     for i in range(c_analyze.n_bonded_ia):
         if (bonded_ia_params[i].type != 0):
-            e["bonded", i] = c_analyze.obsstat_bonded(& c_analyze.total_energy, i)[0]
-            total_bonded += c_analyze.obsstat_bonded( & c_analyze.total_energy, i)[0]
+            e["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_energy, i)[0]
+            total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_energy, i)[0]
     e["bonded"] = total_bonded
 
     # Non-Bonded interactions, total as well as intra and inter molecular
@@ -469,8 +475,8 @@ def energy(system, etype='all', id1='default', id2='default'):
     for i in range(c_analyze.n_particle_types):
         for j in range(c_analyze.n_particle_types):
             #      if checkIfParticlesInteract(i, j):
-            e["nonBonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
-            total_non_bonded = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
+            e["nonBonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
+            total_non_bonded = c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
 #        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
 #        e["nonBondedIntra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
 #        e["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
@@ -503,7 +509,7 @@ def energy(system, etype='all', id1='default', id2='default'):
 def calc_re(system=None, chain_start=None, number_of_chains=None, chain_length=None):
     cdef double * re = NULL
     check_topology(system, chain_start, number_of_chains, chain_length)
-    c_analyze.calc_re( & re)
+    c_analyze.calc_re(& re)
     tuple_re = (re[0], re[1], re[2])
     free(re)
     return tuple_re
@@ -512,7 +518,7 @@ def calc_re(system=None, chain_start=None, number_of_chains=None, chain_length=N
 def calc_rg(system=None, chain_start=None, number_of_chains=None, chain_length=None):
     cdef double * rg = NULL
     check_topology(system, chain_start, number_of_chains, chain_length)
-    c_analyze.calc_rg( & rg)
+    c_analyze.calc_rg(& rg)
     tuple_rg = (rg[0], rg[1], rg[2])
     free(rg)
     return tuple_rg
@@ -521,7 +527,7 @@ def calc_rg(system=None, chain_start=None, number_of_chains=None, chain_length=N
 def calc_rh(system=None, chain_start=None, number_of_chains=None, chain_length=None):
     cdef double * rh = NULL
     check_topology(system, chain_start, number_of_chains, chain_length)
-    c_analyze.calc_rh( & rh)
+    c_analyze.calc_rh(& rh)
     tuple_rh = (rh[0], rh[1], rh[2])
     free(rh)
     return tuple_rh

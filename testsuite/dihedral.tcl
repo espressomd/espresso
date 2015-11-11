@@ -34,6 +34,7 @@ puts "----------------------------------------------"
 puts "- Testcase dihedral.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------------"
 
+require_feature THERMOSTAT_IGNORE_NON_VIRTUAL off
 
 # Integration parameters
 ##########################################
@@ -55,10 +56,10 @@ part 3 pos 2.0 1.0 2.0
 
 #define bond
 #########################################
-inter 0 dihedral 1 100.0 [expr [PI]/4]
+inter 0 dihedral 1 1.0 [expr [PI]/4]
 part 1 bond 0 0 2 3
 
-inter 1 harmonic 10.0 1.0
+inter 1 harmonic 1.0 1.0
 part 0 bond 1 1
 part 1 bond 1 2
 part 2 bond 1 3

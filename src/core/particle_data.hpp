@@ -94,10 +94,20 @@ typedef struct {
   double rinertia[3];
 #endif
 
+#ifdef AFFINITY
+  /** parameters for affinity mechanisms */
+  double bond_site[3];
+#endif
+
+#ifdef MEMBRANE_COLLISION
+  /** parameters for membrane collision mechanisms */
+  double out_direction[3];
+#endif
+
 #ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
-  int rotation;
+  short int rotation;
 #endif
 
 #ifdef ELECTROSTATICS
@@ -129,6 +139,8 @@ typedef struct {
   */
   int vs_relative_to_particle_id;
   double vs_relative_distance;
+  // Store relative position of the virtual site
+  double vs_relative_rel_orientation[4];
   #endif
 #endif
 
@@ -547,6 +559,24 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 int set_particle_rotation(int part, int rot);
 #endif
 
+#ifdef AFFINITY
+/** Call only on the master node: set particle affinity.
+    @param part the particle.
+    @param bond_site its new site of the affinity bond.
+    @return ES_OK if particle existed
+*/
+int set_particle_affinity(int part, double bond_site[3]);
+#endif
+
+#ifdef MEMBRANE_COLLISION
+/** Call only on the master node: set particle out_direction.
+ @param part the particle.
+ @param out_direction its new outward direction with respect to membrane.
+ @return ES_OK if particle existed
+ */
+int set_particle_out_direction(int part, double out_direction[3]);
+#endif
+
 #ifdef MULTI_TIMESTEP
 /** Call only on the master node: set particle smaller time step flag.
     @param part the particle.
@@ -653,6 +683,9 @@ int set_particle_dipm(int part, double dipm);
     @return ES_OK if particle existed
 */
 int set_particle_virtual(int part,int isVirtual);
+#endif
+#ifdef VIRTUAL_SITES_RELATIVE
+int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double* rel_ori);
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -947,7 +980,7 @@ void pointer_to_virtual(Particle* p, int*& res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2);
+void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3);
 #endif
 
 #ifdef MASS
@@ -972,7 +1005,7 @@ void pointer_to_temperature(Particle *p, double*& res);
 #endif
 
 #ifdef ROTATION_PER_PARTICLE
-void pointer_to_rotation(Particle *p, int*& res);
+void pointer_to_rotation(Particle *p, short int*& res);
 #endif
 
 #ifdef EXCLUSIONS

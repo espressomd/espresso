@@ -358,13 +358,13 @@ void propagate_pos_sd()
   int N=sd_get_particle_num();
   // gather all the data for mobility calculation
   real * pos=NULL;
-  pos=(real *)malloc(DIM*N*sizeof(double));
+  pos=(real *)Utils::malloc(DIM*N*sizeof(double));
   assert(pos!=NULL);
   real * force=NULL;
-  force=(real *)malloc(DIM*N*sizeof(double));
+  force=(real *)Utils::malloc(DIM*N*sizeof(double));
   assert(force!=NULL);
   real * velocity=NULL;
-  velocity=(real *)malloc(DIM*N*sizeof(real));
+  velocity=(real *)Utils::malloc(DIM*N*sizeof(real));
   assert(velocity!=NULL);
 #ifdef EXTERNAL_FORCES
   const int COORD_ALL=COORD_FIXED(0)&COORD_FIXED(1)&COORD_FIXED(2);

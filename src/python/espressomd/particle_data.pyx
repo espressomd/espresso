@@ -36,12 +36,12 @@ PARTICLE_EXT_TORQUE = 16
 cdef class ParticleHandle:
     def __cinit__(self, _id):
         #    utils.init_intlist(self.particleData.el)
-        utils.init_intlist(& (self.particleData.bl))
+        utils.init_intlist( & (self.particleData.bl))
         self.id = _id
 
     cdef int updateParticleData(self) except -1:
         #    utils.realloc_intlist(self.particleData.el, 0)
-        utils.realloc_intlist(& (self.particleData.bl), 0)
+        utils.realloc_intlist( & (self.particleData.bl), 0)
 
         if get_particle_data(self.id, & self.particleData):
             raise Exception("Error updating particle data")
@@ -178,7 +178,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * x = NULL
-                pointer_to_mass(& (self.particleData), x)
+                pointer_to_mass( & (self.particleData), x)
                 return x[0]
 
     IF ROTATION == 1:
@@ -197,7 +197,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double o[3]
-                convert_omega_body_to_space( & (self.particleData), o)
+                convert_omega_body_to_space(& (self.particleData), o)
                 return np.array([o[0], o[1], o[2]])
 
     # ROTATIONAL_INERTIA
@@ -217,7 +217,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * rinertia = NULL
-                pointer_to_rotational_inertia(& (self.particleData), rinertia)
+                pointer_to_rotational_inertia( & (self.particleData), rinertia)
                 return np.array([rinertia[0], rinertia[1], rinertia[2]])
 
 # Omega (angular velocity) body frame
@@ -236,7 +236,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * o = NULL
-                pointer_to_omega_body(& (self.particleData), o)
+                pointer_to_omega_body( & (self.particleData), o)
                 return np.array([o[0], o[1], o[2]])
 
 
@@ -255,7 +255,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double x[3]
-                convert_torques_body_to_space( & (self.particleData), x)
+                convert_torques_body_to_space(& (self.particleData), x)
                 return np.array([x[0], x[1], x[2]])
 
 # Quaternion
@@ -274,7 +274,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * x = NULL
-                pointer_to_quat( & (self.particleData), x)
+                pointer_to_quat(& (self.particleData), x)
                 return np.array([x[0], x[1], x[2], x[3]])
 # Director ( z-axis in body fixed frame)
         property director:
@@ -293,7 +293,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * x = NULL
-                pointer_to_quatu( & (self.particleData), x)
+                pointer_to_quatu(& (self.particleData), x)
                 return np.array([x[0], x[1], x[2]])
 
 # Charge
@@ -311,7 +311,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * x = NULL
-                pointer_to_q( & (self.particleData), x)
+                pointer_to_q(& (self.particleData), x)
                 return x[0]
 
     def delete(self):
@@ -336,21 +336,27 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef int * x = NULL
-                pointer_to_virtual( & (self.particleData), x)
+                pointer_to_virtual(& (self.particleData), x)
                 return x[0]
 
     IF VIRTUAL_SITES_RELATIVE == 1:
-        # Virtual sites relative parameters
         property vs_relative:
             """virtual sites relative parameters"""
 
             def __set__(self, x):
-                if len(x) != 2:
-                    raise ValueError("vs_relative needs two args")
+                if len(x) != 3:
+                    raise ValueError("vs_relative needs six args")
                 _relto = x[0]
                 _dist = x[1]
+                q = x[3]
+                checkTypeOrExcept(
+                    q, 4, float, "The relative orientation has to be specified as quaternion with 4 floats.")
+                cdef double _q[4]
+                for i in range(4):
+                    _q[i] = q[i]
+
                 if isinstance(_relto, int) and isinstance(_dist, float):
-                    if set_particle_vs_relative(self.id, _relto, _dist) == 1:
+                    if set_particle_vs_relative(self.id, _relto, _dist, _q) == 1:
                         raise Exception("set particle position first")
                 else:
                     raise ValueError(
@@ -360,25 +366,29 @@ cdef class ParticleHandle:
                 self.updateParticleData()
                 cdef int * rel_to = NULL
                 cdef double * dist = NULL
-                pointer_to_vs_relative(& (self.particleData), rel_to, dist)
-                return (rel_to[0], dist[0])
+                cdef double * q = NULL
+                pointer_to_vs_relative( & (self.particleData), rel_to, dist, q)
+                return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
 
         # vs_auto_relate_to
-        property vs_auto_relate_to:
+        def vs_auto_relate_to(self, _relto):
             """Setup this particle as virtual site relative to the particle with the given id"""
-
-            def __set__(self, _relto):
-                checkTypeOrExcept(
-                    _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int")
+            if isinstance(_relto, int):
                 if vs_relate_to(self.id, _relto):
-                    raise Exception("vs_relative setup failed.")
+                    raise Exception("Vs_relative setup failed.")
+            else:
+                raise ValueError(
+                    "Argument of vs_auto_relate_to has to be of type int")
 
-            def __get__(self):
-                self.updateParticleData()
-                cdef int * rel_to = NULL
-                cdef double * dist = NULL
-                pointer_to_vs_relative(& (self.particleData), rel_to, dist)
-                return (rel_to[0], dist[0])
+                # Virtual sites relative parameters
+
+        # vs_auto_relate_to
+        def vs_auto_relate_to(self, _relto):
+            """Setup this particle as virtual site relative to the particle with the given id"""
+            checkTypeOrExcept(
+                _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int")
+            if vs_relate_to(self.id, _relto):
+                raise Exception("vs_relative setup failed.")
 
     IF DIPOLES:
         # Vector dipole moment
@@ -397,7 +407,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * x = NULL
-                pointer_to_dip( & (self.particleData), x)
+                pointer_to_dip(& (self.particleData), x)
                 return np.array([x[0], x[1], x[2]])
 
         # Scalar magnitude of dipole moment
@@ -413,7 +423,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * x = NULL
-                pointer_to_dipm( & (self.particleData), x)
+                pointer_to_dipm(& (self.particleData), x)
                 return x[0]
 
     IF EXTERNAL_FORCES:
@@ -438,7 +448,7 @@ cdef class ParticleHandle:
                 self.updateParticleData()
                 cdef double * ext_f = NULL
                 cdef int * ext_flag = NULL
-                pointer_to_ext_force(& (self.particleData), ext_flag, ext_f)
+                pointer_to_ext_force( & (self.particleData), ext_flag, ext_f)
                 if (ext_flag[0] & PARTICLE_EXT_FORCE):
                     return np.array([ext_f[0], ext_f[1], ext_f[2]])
                 else:
@@ -461,7 +471,7 @@ cdef class ParticleHandle:
                 self.updateParticleData()
                 fixed_coord_flag = np.array([0, 0, 0], dtype=int)
                 cdef int * ext_flag = NULL
-                pointer_to_fix( & (self.particleData), ext_flag)
+                pointer_to_fix(& (self.particleData), ext_flag)
                 for i in map(long, range(3)):
                     if (ext_flag[0] & COORD_FIXED(i)):
                         fixed_coord_flag[i] = 1
@@ -489,7 +499,7 @@ cdef class ParticleHandle:
                     self.updateParticleData()
                     cdef double * ext_t = NULL
                     cdef int * ext_flag = NULL
-                    pointer_to_ext_torque(& (self.particleData), ext_flag, ext_t)
+                    pointer_to_ext_torque( & (self.particleData), ext_flag, ext_t)
                     if (ext_flag[0] & PARTICLE_EXT_TORQUE):
                         return np.array([ext_t[0], ext_t[1], ext_t[2]])
                     else:
@@ -507,7 +517,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * gamma = NULL
-                pointer_to_gamma( & (self.particleData), gamma)
+                pointer_to_gamma(& (self.particleData), gamma)
                 return gamma[0]
 
         property temp:
@@ -521,7 +531,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.updateParticleData()
                 cdef double * temp = NULL
-                pointer_to_temperature( & (self.particleData), temp)
+                pointer_to_temperature(& (self.particleData), temp)
                 return temp[0]
 
     IF ROTATION_PER_PARTICLE:
@@ -539,8 +549,8 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.updateParticleData()
-                cdef int * _rot = NULL
-                pointer_to_rotation( & (self.particleData), _rot)
+                cdef short int * _rot = NULL
+                pointer_to_rotation(& (self.particleData), _rot)
                 if _rot[0] == 1:
                     rot = True
                 else:
@@ -567,7 +577,7 @@ cdef class ParticleHandle:
                 cdef int * num_partners = NULL
                 cdef int * partners = NULL
                 py_partners = []
-                pointer_to_exclusions(& (self.particleData), num_partners, partners)
+                pointer_to_exclusions( & (self.particleData), num_partners, partners)
                 for i in range(num_partners[0]):
                     py_partners.append(partners[i])
                 return np.array(py_partners)
@@ -634,7 +644,7 @@ cdef class ParticleHandle:
                 swim = {}
                 mode = "N/A"
                 cdef ParticleParametersSwimming * _swim = NULL
-                pointer_to_swimming(& (self.particleData), _swim)
+                pointer_to_swimming( & (self.particleData), _swim)
                 IF LB or LB_GPU:
                     if _swim.push_pull == -1:
                         mode = 'pusher'

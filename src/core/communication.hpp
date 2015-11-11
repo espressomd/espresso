@@ -206,6 +206,26 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 #endif
 
+#ifdef AFFINITY
+/** Issue REQ_SET_AFFINITY: send particle affinity.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param bond_site its new site of the affinity bond.
+*/
+void mpi_send_affinity(int node, int part, double bond_site[3]);
+#endif
+
+#ifdef MEMBRANE_COLLISION
+/** Issue REQ_SET_MEMBRANE_COLLISION: send outward direction of the particle.
+ Also calls \ref on_particle_change.
+ \param part the particle.
+ \param node the node it is attached to.
+ \param out_direction its new outward direction.
+ */
+void mpi_send_out_direction(int node, int part, double out_direction[3]);
+#endif
+
 #ifdef ROTATION
 /** Issue REQ_SET_QUAT: send particle orientation.
     Also calls \ref on_particle_change.
@@ -271,7 +291,7 @@ void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance);
+void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance, double* rel_ori);
 #endif
 
 #ifdef MULTI_TIMESTEP

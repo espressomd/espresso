@@ -89,12 +89,16 @@ void EspressoSystemInterface::gatherParticles() {
   }
 #endif
 
-  if (needsQ() || needsR() || needsQuatu()) {
+  if (needsQ() || needsR() ||needsDip()|| needsQuatu()) {
     R.clear();
 
     #ifdef ELECTROSTATICS
     Q.clear();
     #endif
+    #ifdef DIPOLES
+    Dip.clear();
+    #endif
+
 
     #ifdef ROTATION
     Quatu.clear();
@@ -112,6 +116,10 @@ void EspressoSystemInterface::gatherParticles() {
       if(needsQ())
 	Q.reserve(Q.size()+np);
 #endif
+#ifdef DIPOLES
+      if(needsDip())
+	Dip.reserve(Dip.size()+np);
+#endif
 
 #ifdef ROTATION
       if(needsQuatu())
@@ -127,7 +135,10 @@ void EspressoSystemInterface::gatherParticles() {
 	if(needsQ())
 	  Q.push_back(p[i].p.q);
 #endif
-
+#ifdef DIPOLES
+	if(needsDip())
+	  Dip.push_back(Vector3(p[i].r.dip));
+#endif
 #ifdef ROTATION
 	if(needsQuatu())
 	  Quatu.push_back(Vector3(p[i].r.quatu));
@@ -154,6 +165,18 @@ const SystemInterface::const_vec_iterator &EspressoSystemInterface::rEnd() {
   m_r_end = R.end();
   return m_r_end;
 }
+
+#ifdef DIPOLES
+SystemInterface::const_vec_iterator &EspressoSystemInterface::dipBegin() {
+  m_dip_begin = Dip.begin();
+  return m_dip_begin;
+}
+
+const SystemInterface::const_vec_iterator &EspressoSystemInterface::dipEnd() {
+  m_dip_end = Dip.end();
+  return m_dip_end;
+}
+#endif
 
 #ifdef ELECTROSTATICS
 SystemInterface::const_real_iterator &EspressoSystemInterface::qBegin() {

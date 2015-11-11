@@ -450,7 +450,7 @@ inline void add_bonded_energy(Particle *p1)
 #endif
     default :
         ostringstream msg;
-        msg <<"add_bonded_energy: bond type of atom "<< p1->p.identity << " unknown\n";
+        msg <<"add_bonded_energy: bond type ("<<type<<") of atom "<< p1->p.identity << " unknown\n";
         runtimeError(msg);
       return;
     }

@@ -22,7 +22,9 @@
 \index{analysis}
 \newescommand{analyze}
 
-\todo{Add a comment to the UG that the analysis routines in \es{} with Python currently require the user to `from espressomd import analyze.'}
+\todo{Add a comment to the UG that the analysis routines in \es{} with
+  Python currently require the user to `from espressomd import
+  analyze.'}
 
 \es has two fundamentally different classes of observables for
 analyzing the systems.  On the one hand, some observables are
@@ -98,7 +100,10 @@ radius \var{r\_catch} around the position of the particle with number
   \opt{\var{rmin} \opt{\var{rmax} \opt{\var{rbins} 
         \opt{\var{log\_flag} \opt{\var{int\_flag}}}}}}
 \end{essyntax}
-Returns its parameters and the distance distribution of particles with
+Returns its parameters and the distance distribution of particles 
+(probability of finding a particle of type \var{a} at a certain distance 
+around a particle of type \var{b}, disregarding the fact that a spherical 
+shell of a larger radius covers a larger volume) with
 types specified in \var{part\_type\_list\_a} around particles with
 types specified in \var{part\_type\_list\_b} with distances between
 \var{rmin} and \var{rmax}, binned into \var{rbins} bins. The
@@ -182,7 +187,7 @@ of the currently identified properties.
 \begin{essyntax}
   analyze cylindrical_average \var{center} \var{direction}
   \var{length} \var{radius} \var{bins\_axial} \var{bins\_radial}
-  \var{types} \var{xrange} \var{yrange}
+  \opt{\var{types}}
 \end{essyntax}
 
 The command returns a list of lists.  The outer list contains all data
@@ -197,9 +202,9 @@ might look something like this
 In this case two different particle types were present.  The columns
 of the respective lines are coded like this
 \begin{SaveVerbatim}{output}
-index_radial index_axial pos_radial pos_radial binvolume density v_radial v_axial density v_radial v_axial
-0            0           0.05       -0.25      0.0314159 0       0        0       0       0        0
-0            1           0.05       0.25       0.0314159 31.831  1.41421  1       0       0        0
+index_radial index_axial pos_radial pos_axial binvolume density v_radial v_axial density v_radial v_axial
+0            0           0.05       -0.25     0.0314159 0       0        0       0       0        0
+0            1           0.05       0.25      0.0314159 31.831  1.41421  1       0       0        0
 \end{SaveVerbatim}
 \bigbreak\noindent%
 \resizebox{\linewidth}{!}{\BUseVerbatim{output}}

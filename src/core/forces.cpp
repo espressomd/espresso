@@ -241,6 +241,9 @@ void calc_long_range_forces()
   case DIPOLAR_DS: 
     magnetic_dipolar_direct_sum_calculations(1,0);
     break;
+  case DIPOLAR_DS_GPU: 
+    // Do nothing. It's an actor
+    break;
   case DIPOLAR_NONE:
       break;
   default:

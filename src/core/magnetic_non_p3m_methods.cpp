@@ -64,7 +64,7 @@ double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag)
   pe4=3.0/r5;
 
   // Energy, if requested
-  u= coulomb.Dprefactor* ( pe1/r3 - pe4*pe2*pe3);
+  u= coulomb.Dprefactor* ( pe1/r3 -   pe4*pe2*pe3);
 
   // Force, if requested
   if(force_flag) { 
@@ -85,8 +85,18 @@ double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag)
     p2->f.f[0] -=coulomb.Dprefactor*ffx;
     p2->f.f[1] -=coulomb.Dprefactor*ffy;
     p2->f.f[2] -=coulomb.Dprefactor*ffz;
+//    if (p1->p.identity==248)
+//    {
+//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
+//      printf("%d %g %g %g - %g %g %g\n",p2->p.identity,ffx,ffy,ffz,p2->r.p[0],p2->r.p[1],p2->r.p[2]);
+//     }
+//    if (p2->p.identity==248)
+ //   {
+//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
+//      printf("%d %g %g %g - %g %g %g\n",p1->p.identity,-ffx,-ffy,-ffz,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+//     }
 
-    // Torques
+      // Torques
 #ifdef ROTATION
     ax=p1->r.dip[1]*p2->r.dip[2]-p2->r.dip[1]*p1->r.dip[2];
     ay=p2->r.dip[0]*p1->r.dip[2]-p1->r.dip[0]*p2->r.dip[2];
@@ -218,23 +228,23 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
   if(n_nodes!=1) {fprintf(stderr,"error: magnetic Direct Sum is just for one cpu .... \n"); errexit();}
   if(!(force_flag) && !(energy_flag) ) {fprintf(stderr," I don't know why you call dawaanr_caclulations with all flags zero \n"); return 0;}
 
-  x = (double *) malloc(sizeof(double)*n_part);
-  y = (double *) malloc(sizeof(double)*n_part);
-  z = (double *) malloc(sizeof(double)*n_part);
+  x = (double *) Utils::malloc(sizeof(double)*n_part);
+  y = (double *) Utils::malloc(sizeof(double)*n_part);
+  z = (double *) Utils::malloc(sizeof(double)*n_part);
 
-  mx = (double *) malloc(sizeof(double)*n_part);
-  my = (double *) malloc(sizeof(double)*n_part);
-  mz = (double *) malloc(sizeof(double)*n_part);
+  mx = (double *) Utils::malloc(sizeof(double)*n_part);
+  my = (double *) Utils::malloc(sizeof(double)*n_part);
+  mz = (double *) Utils::malloc(sizeof(double)*n_part);
  
   if(force_flag) {
-    fx = (double *) malloc(sizeof(double)*n_part);
-    fy = (double *) malloc(sizeof(double)*n_part);
-    fz = (double *) malloc(sizeof(double)*n_part);
+    fx = (double *) Utils::malloc(sizeof(double)*n_part);
+    fy = (double *) Utils::malloc(sizeof(double)*n_part);
+    fz = (double *) Utils::malloc(sizeof(double)*n_part);
  
 #ifdef ROTATION   
-    tx = (double *) malloc(sizeof(double)*n_part);
-    ty = (double *) malloc(sizeof(double)*n_part);
-    tz = (double *) malloc(sizeof(double)*n_part);
+    tx = (double *) Utils::malloc(sizeof(double)*n_part);
+    ty = (double *) Utils::malloc(sizeof(double)*n_part);
+    tz = (double *) Utils::malloc(sizeof(double)*n_part);
 #endif  
   }
  
@@ -449,7 +459,7 @@ int dawaanr_set_params()
     return ES_ERROR;
   }
   if (coulomb.Dmethod != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA ) {
-    coulomb.Dmethod = DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA;
+    set_dipolar_method_local(DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA);
   } 
   // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
@@ -470,7 +480,7 @@ int mdds_set_params(int n_cut)
   }
   
   if (coulomb.Dmethod != DIPOLAR_DS  && coulomb.Dmethod != DIPOLAR_MDLC_DS) {
-    coulomb.Dmethod = DIPOLAR_DS;
+    set_dipolar_method_local(DIPOLAR_DS);
   }  
   
   // also necessary on 1 CPU, does more than just broadcasting
