@@ -27,7 +27,6 @@
 
 using namespace std;
 
-#define DEBUG
 
 #ifdef COLLISION_DETECTION_DEBUG
 #define TRACE(a) a
