@@ -224,9 +224,9 @@ void calc_kinetic(double *ek_trans , double *ek_rot)
 			/* rotational energy */
 			#ifdef ROTATION
 			#ifdef ROTATIONAL_INERTIA
-				er += SQR(part[i].m.omega[0])*part[i].p.rinertia[0] +
+				er += (SQR(part[i].m.omega[0])*part[i].p.rinertia[0] +
 								SQR(part[i].m.omega[1])*part[i].p.rinertia[1] +
-								SQR(part[i].m.omega[2])*part[i].p.rinertia[2];
+								SQR(part[i].m.omega[2])*part[i].p.rinertia[2])*(0.4 * PMASS(part[i]));
 			#else
 				er += SQR(part[i].m.omega[0]) + SQR(part[i].m.omega[1]) + SQR(part[i].m.omega[2]);
 			#endif
@@ -353,7 +353,7 @@ void simple_momentum_update()
 				part[i].m.v[j] = sigmat*gaussian_random()*time_step;
 				#ifdef ROTATION
 					#ifdef ROTATIONAL_INERTIA
-						sigmar = sqrt(temperature / part[i].p.rinertia[j]);
+						sigmar = sqrt(temperature / part[i].p.rinertia[j] / (0.4 * PMASS(part[i])));
 					#endif
 					part[i].m.omega[j] = sigmar*gaussian_random();
 				#endif	
@@ -386,7 +386,7 @@ void partial_momentum_update()
 				part[i].m.v[j] = cosp*(part[i].m.v[j])+sinp*(sigmat*gaussian_random()*time_step);
 				#ifdef ROTATION
 					#ifdef ROTATIONAL_INERTIA
-						sigmar = sqrt(temperature / part[i].p.rinertia[j]);
+						sigmar = sqrt(temperature / part[i].p.rinertia[j] / (0.4 * PMASS(part[i])));
 					#endif
 					part[i].m.omega[j] = cosp*(part[i].m.omega[j])+sinp*(sigmar*gaussian_random());
 				#endif	
