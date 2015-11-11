@@ -679,8 +679,10 @@ finally gives the id of the currently active GPU.
 \begin{essyntax}
 \variant{1} on\_collision
 \variant{2} on\_collision off
-\variant{4} on\_collision \opt{exception} bind_centers \var{d} \var{bond1}
-\variant{5} on\_collision \opt{exception} bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
+\variant{3} on\_collision \opt{exception} bind_centers \var{d} \var{bond1}
+\variant{4} on\_collision \opt{exception} bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
+\variant{5} on\_collision \opt{exception} glue_to_surface \var{d} \var{bond1} \var{bond2} \var{type} \var{type2} \var{type3} \var{type4} \var{d2}
+\variant{6} on\_collision \opt{exception} bind_three_particles \var{d} \var{bond1} \var{bond2} \var{res}
 \end{essyntax}
 
 With the help of the feature \feature{COLLISION_DETECTION}, bonds
@@ -728,6 +730,17 @@ Two methods of binding are available:
   created at the point of collision (if applicable). Be sure not to
   define a short-ranged interaction for this particle type, as two
   particles will be generated in the same place.
+
+\item \lit{glue_to_surface} is used to fix a particle of type \var{type2} onto the surface of a particle of type \var{type3}.
+This is achieved by creating a virtual site (particle type \var{type}) which 
+is rigidly connected to the particle of \var{type3}. A bond of type 
+\var{bond2} is then created between the virtual site and the particle 
+of \var{type}. 
+Additionally, a bond of type \var{bond1} between the colliding 
+particles is also created. 
+After the collision, the particle of type \var{type3} is changed to type \var{type4}.
+\item \lit{bind_three_particles} allows for the creating of agglomerates which maintain their shape similarly to those create by the \lit{bind_ad_point_of_collision} method. The present approach works without virtual sites. Instead, for each two-particle collision, the surrounding is searched for a third particle. If one is found, angular bounds are placed on each of the three particles in addition to the distance based bounds between the particle centers. The id of the angular bonds is determined from the angle between the particles. Zero degrees corresponds to bond id \var{bond2}, where as 180 degrees corresponds to bond id \var{bond2} +\var{res}.
+this method das not depend on the particles' rotational degrees of freedom being integrated. Virtual sites are also not required, and the method is implemented to run on more than one cpu core.
 \end{itemize}
 
 The code can throw an exception (background error) in case two

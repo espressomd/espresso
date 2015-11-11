@@ -21,7 +21,9 @@ tests = \
 	analysis.tcl \
 	angle.tcl \
 	bonded_coulomb.tcl \
+	collision-detection-angular.tcl \
 	collision-detection-centers.tcl \
+	collision-detection-glue.tcl \
 	collision-detection-poc.tcl \
 	comforce.tcl \
 	comfixed.tcl \
