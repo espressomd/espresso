@@ -59,9 +59,9 @@
 #if defined (FLATNOISE)
   #define noise (d_random() -0.5)
 #elif defined (GAUSSRANDOMCUT)
-  #define noise gauss_random_cut()
+  #define noise gaussian_random_cut()
 #elif defined (GAUSSRANDOM)
-  #define noise gauss_random()
+  #define noise gaussian_random()
 #else
  #error "No noise function defined"
 #endif
