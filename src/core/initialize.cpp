@@ -65,7 +65,6 @@
 #include "external_potential.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
-#include "shapes/ShapeList.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -150,8 +149,8 @@ void on_program_start()
     make_particle_type_exist(0);
   }
 
-  /** Initialize shape factory */
-  Shapes::init_factory();
+  // /** Initialize shape factory */
+  // Shapes::init_factory();
 }
 
 

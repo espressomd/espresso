@@ -15,7 +15,6 @@ struct Parameter {
     set = true;
     return *this;
   }
-  
   Variant::Type type;
   Variant value;
   int n_elements;

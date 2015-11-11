@@ -35,7 +35,6 @@
 #include "constraints/ConstraintList.hpp"
 #include "constraints/InteractionConstraint.hpp"
 #include "shapes/Shape.hpp"
-#include "shapes/ShapeList.hpp"
 #include "shape_tcl.hpp"
 
 #endif /* CONSTRAINTS */

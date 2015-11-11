@@ -10,7 +10,7 @@ template<class T>
 class ObjectManager {
 public:
   int add(std::string name) {
-    T *p =  Factory<T>::Instance().make(name);
+    T *p =  Utils::Factory<T>::Instance().make(name);
     const int id = m_objects.add(p);
     m_names[id] = name;
     return id;

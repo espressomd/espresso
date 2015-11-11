@@ -67,7 +67,6 @@
 #include "TclScriptObject.hpp"
 #include "TclScriptObjectManager.hpp"
 #include "shapes/Shape.hpp"
-#include "shapes/ShapeList.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -260,23 +259,6 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 
-  int id;
-  try {
-    id = Shapes::List.add("wall");
-    Parameters p = Shapes::List[id]->all_parameters();
-    p["d"] = 5.0;
-    Shapes::List[id]->set_parameters(p);
-
-  } catch(std::string &e) {
-    printf("List exception: %s\n", e.c_str());
-  }
-
-  try {
-    TclScriptObjectManager<Shapes::Shape> *tclShapeManager = new TclScriptObjectManager<Shapes::Shape>(Shapes::List, interp);
-    tclShapeManager->create_command("shapes");
-  } catch (std::string &e) {
-    printf("ShapeManager exception: %s\n", e.c_str());
-  }
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

@@ -37,7 +37,7 @@ namespace Shapes {
 
 
 
-  typedef Factory<Shape> ShapeFactory;
+typedef Utils::Factory<Shape> ShapeFactory;
 
 }
 #endif
