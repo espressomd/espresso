@@ -859,6 +859,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag)
         if(this_node==0) {
             /* self energy correction */
             k_space_energy -= coulomb.prefactor*(p3m.sum_q2 * p3m.params.alpha * wupii);
+			fprintf(stderr, "self en: %1.5e\n", -coulomb.prefactor*(p3m.sum_q2 * p3m.params.alpha * wupii));
             /* net charge correction */
             k_space_energy -= coulomb.prefactor* p3m.square_sum_q * PI / (2.0*box_l[0]*box_l[1]*box_l[2]*SQR(p3m.params.alpha));
         }
@@ -2147,8 +2148,8 @@ void p3m_calc_kspace_stress (double* stress) {
                     }
                     else {
 						// apparently: SQR(PI/alpha) === 1/(4 alpha^2) 
-                        vterm = -2.0 * (1.0/sqk + SQR(PI/p3m.params.alpha));
-                        // vterm = -2.0 * (1/sqk + SQR(1.0/2.0/p3m.params.alpha));
+                        // vterm = -2.0 * (1.0/sqk + SQR(PI/p3m.params.alpha));
+                        vterm = -2.0 * (1/sqk + SQR(1.0/2.0/p3m.params.alpha));
                         node_k_space_energy =  p3m.g_energy[ind] * ( SQR(p3m.rs_mesh[2*ind]) + SQR(p3m.rs_mesh[2*ind + 1]) );
 						// node_k_space_energy += coulomb.prefactor*(p3m.sum_q2 * p3m.params.alpha * wupii);
                     }
