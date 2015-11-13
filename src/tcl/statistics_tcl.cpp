@@ -2737,39 +2737,48 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
   else if (ARG1_IS_S(name)) err = parser(interp, argc - 2, argv + 2)
 #define REGISTER_ANALYSIS_W_ARG(name, parser, arg)			\
   else if (ARG1_IS_S(name)) err = parser(interp, arg, argc - 2, argv + 2)
-
+#define REGISTER_ANALYSIS_WARN(name, parser) \
+  else if (ARG1_IS_S(name)) { \
+    fprintf(stderr, "WARNING: analyze %s may be deprecated in the future if no documentation or test cases are provided. See open issues at: github.com/espressomd/espresso/issues/ .\n", name); \
+    err = parser(interp, argc - 2, argv + 2); \
+  }
+#define REGISTER_ANALYSIS_W_ARG_WARN(name, parser, arg)			\
+  else if (ARG1_IS_S(name)) { \
+    fprintf(stderr, "WARNING: analyze %s may be deprecated in the future if no documentation or test cases are provided. See open issues at: github.com/espressomd/espresso/issues/ .\n", name); \
+    err = parser(interp, arg, argc - 2, argv + 2); \
+  }
     /* for the elses below */
     if (0);
     REGISTER_ANALYZE_OPTION("set", tclcommand_analyze_parse_set);
 #if defined(LB) || defined(LB_GPU)
     REGISTER_ANALYZE_OPTION("fluid", tclcommand_analyze_parse_fluid);
 #endif
-    REGISTER_ANALYSIS("get_folded_positions", tclcommand_analyze_parse_get_folded_positions);
-    REGISTER_ANALYSIS("wallstuff", tclcommand_analyze_wallstuff);
-    REGISTER_ANALYSIS("current", tclcommand_analyze_current);
+    REGISTER_ANALYSIS_WARN("get_folded_positions", tclcommand_analyze_parse_get_folded_positions)
+    REGISTER_ANALYSIS_WARN("wallstuff", tclcommand_analyze_wallstuff)
+    REGISTER_ANALYSIS_WARN("current", tclcommand_analyze_current)
 #ifdef MODES
     REGISTER_ANALYZE_OPTION("set_bilayer", tclcommand_analyze_parse_bilayer_set);
-    REGISTER_ANALYSIS("modes2d", tclcommand_analyze_parse_modes2d);
-    REGISTER_ANALYSIS("bilayer_density_profile", tclcommand_analyze_parse_bilayer_density_profile);
+    REGISTER_ANALYSIS_WARN("modes2d", tclcommand_analyze_parse_modes2d)
+    REGISTER_ANALYSIS_WARN("bilayer_density_profile", tclcommand_analyze_parse_bilayer_density_profile)
     REGISTER_ANALYSIS("cylindrical_average", tclcommand_analyze_parse_cylindrical_average);
-    REGISTER_ANALYSIS("radial_density_map", tclcommand_analyze_parse_radial_density_map);
-    REGISTER_ANALYSIS("get_lipid_orients", tclcommand_analyze_parse_get_lipid_orients);
-    REGISTER_ANALYSIS("lipid_orient_order", tclcommand_analyze_parse_lipid_orient_order);
+    REGISTER_ANALYSIS_WARN("radial_density_map", tclcommand_analyze_parse_radial_density_map)
+    REGISTER_ANALYSIS_WARN("get_lipid_orients", tclcommand_analyze_parse_get_lipid_orients)
+    REGISTER_ANALYSIS_WARN("lipid_orient_order", tclcommand_analyze_parse_lipid_orient_order)
 #endif
-    REGISTER_ANALYSIS("mol", tclcommand_analyze_parse_mol);
-    REGISTER_ANALYSIS("cluster_size_dist", tclcommand_analyze_parse_cluster_size_dist);
+    REGISTER_ANALYSIS_WARN("mol", tclcommand_analyze_parse_mol)
+    REGISTER_ANALYSIS_WARN("cluster_size_dist", tclcommand_analyze_parse_cluster_size_dist)
     REGISTER_ANALYSIS("mindist", tclcommand_analyze_parse_mindist);
-    REGISTER_ANALYSIS("aggregation", tclcommand_analyze_parse_aggregation);
+    REGISTER_ANALYSIS_WARN("aggregation", tclcommand_analyze_parse_aggregation)
     REGISTER_ANALYSIS("centermass", tclcommand_analyze_parse_centermass);
-    REGISTER_ANALYSIS("angularmomentum", tclcommand_analyze_parse_angularmomentum);
-    REGISTER_ANALYSIS("MSD", tclcommand_analyze_parse_MSD);
-    REGISTER_ANALYSIS("dipmom_normal", tclcommand_analyze_parse_and_print_dipole);
-    REGISTER_ANALYSIS("momentofinertiamatrix", tclcommand_analyze_parse_momentofinertiamatrix);
-    REGISTER_ANALYSIS("gyration_tensor", tclcommand_analyze_parse_gyration_tensor);
-    REGISTER_ANALYSIS("find_principal_axis", tclcommand_analyze_parse_find_principal_axis);
+    REGISTER_ANALYSIS_WARN("angularmomentum", tclcommand_analyze_parse_angularmomentum)
+    REGISTER_ANALYSIS_WARN("MSD", tclcommand_analyze_parse_MSD)
+    REGISTER_ANALYSIS_WARN("dipmom_normal", tclcommand_analyze_parse_and_print_dipole)
+    REGISTER_ANALYSIS_WARN("momentofinertiamatrix", tclcommand_analyze_parse_momentofinertiamatrix)
+    REGISTER_ANALYSIS_WARN("gyration_tensor", tclcommand_analyze_parse_gyration_tensor)
+    REGISTER_ANALYSIS_WARN("find_principal_axis", tclcommand_analyze_parse_find_principal_axis)
     REGISTER_ANALYSIS("nbhood", tclcommand_analyze_parse_nbhood);
     REGISTER_ANALYSIS("distto", tclcommand_analyze_parse_distto);
-    REGISTER_ANALYSIS("cell_gpb", tclcommand_analyze_parse_cell_gpb);
+    REGISTER_ANALYSIS_WARN("cell_gpb", tclcommand_analyze_parse_cell_gpb)
     REGISTER_ANALYSIS("Vkappa", tclcommand_analyze_parse_Vkappa);
     REGISTER_ANALYSIS("energy", tclcommand_analyze_parse_and_print_energy);
     REGISTER_ANALYSIS("energy_kinetic", tclcommand_analyze_parse_and_print_energy_kinetic);
@@ -2778,18 +2787,18 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
     // The following analysis commands apply only to the "center of mass"
     // implementation of virtual sites
 #ifdef VIRTUAL_SITES_COM
-    REGISTER_ANALYSIS("energy_kinetic_mol", tclcommand_analyze_parse_and_print_energy_kinetic_mol);
-    REGISTER_ANALYSIS("pressure_mol", tclcommand_analyze_parse_and_print_pressure_mol);
-    REGISTER_ANALYSIS("check_mol", tclcommand_analyze_parse_and_print_check_mol);
-    REGISTER_ANALYSIS("dipmom_mol", tclcommand_analyze_parse_and_print_dipmom_mol);
+    REGISTER_ANALYSIS_WARN("energy_kinetic_mol", tclcommand_analyze_parse_and_print_energy_kinetic_mol)
+    REGISTER_ANALYSIS_WARN("pressure_mol", tclcommand_analyze_parse_and_print_pressure_mol)
+    REGISTER_ANALYSIS_WARN("check_mol", tclcommand_analyze_parse_and_print_check_mol)
+    REGISTER_ANALYSIS_WARN("dipmom_mol", tclcommand_analyze_parse_and_print_dipmom_mol)
 #endif
 #endif
     REGISTER_ANALYSIS_W_ARG("stress_tensor", tclcommand_analyze_parse_and_print_stress_tensor, 0);
     REGISTER_ANALYSIS("local_stress_tensor", tclcommand_analyze_parse_local_stress_tensor);
-    REGISTER_ANALYSIS_W_ARG("p_inst", tclcommand_analyze_parse_and_print_pressure, 1);
-    REGISTER_ANALYSIS("momentum", tclcommand_analyze_parse_and_print_momentum);
-    REGISTER_ANALYSIS("bins", tclcommand_analyze_parse_bins);
-    REGISTER_ANALYSIS("p_IK1", tclcommand_analyze_parse_and_print_p_IK1);
+    REGISTER_ANALYSIS_W_ARG_WARN("p_inst", tclcommand_analyze_parse_and_print_pressure, 1)
+    REGISTER_ANALYSIS_WARN("momentum", tclcommand_analyze_parse_and_print_momentum)
+    REGISTER_ANALYSIS_WARN("bins", tclcommand_analyze_parse_bins)
+    REGISTER_ANALYSIS_WARN("p_IK1", tclcommand_analyze_parse_and_print_p_IK1)
     REGISTER_ANALYSIS_W_ARG("re", tclcommand_analyze_parse_re, 0);
     REGISTER_ANALYSIS_W_ARG("<re>", tclcommand_analyze_parse_re, 1);
     REGISTER_ANALYSIS_W_ARG("rg", tclcommand_analyze_parse_rg, 0);
@@ -2802,27 +2811,27 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
     REGISTER_ANALYSIS_W_ARG("<bond_l>", tclcommand_analyze_parse_bond_l, 1);
     REGISTER_ANALYSIS_W_ARG("bond_dist", tclcommand_analyze_parse_bond_dist, 0);
     REGISTER_ANALYSIS_W_ARG("<bond_dist>", tclcommand_analyze_parse_bond_dist, 1);
-    REGISTER_ANALYSIS_W_ARG("g123", tclcommand_analyze_parse_g123, 1);
-    REGISTER_ANALYSIS_W_ARG("<g1>", tclcommand_analyze_parse_g_av, 1);
-    REGISTER_ANALYSIS_W_ARG("<g2>", tclcommand_analyze_parse_g_av, 2);
-    REGISTER_ANALYSIS_W_ARG("<g3>", tclcommand_analyze_parse_g_av, 3);
+    REGISTER_ANALYSIS_W_ARG_WARN("g123", tclcommand_analyze_parse_g123, 1)
+    REGISTER_ANALYSIS_W_ARG_WARN("<g1>", tclcommand_analyze_parse_g_av, 1)
+    REGISTER_ANALYSIS_W_ARG_WARN("<g2>", tclcommand_analyze_parse_g_av, 2)
+    REGISTER_ANALYSIS_W_ARG_WARN("<g3>", tclcommand_analyze_parse_g_av, 3)
     REGISTER_ANALYSIS_W_ARG("formfactor", tclcommand_analyze_parse_formfactor, 0);
     REGISTER_ANALYSIS_W_ARG("<formfactor>", tclcommand_analyze_parse_formfactor, 1);
-    REGISTER_ANALYSIS("necklace", tclcommand_analyze_parse_necklace);
-    REGISTER_ANALYSIS("holes", tclcommand_analyze_parse_holes);
-    REGISTER_ANALYSIS("distribution", tclcommand_analyze_parse_distribution);
-    REGISTER_ANALYSIS("vel_distr", tclcommand_analyze_parse_vel_distr);
+    REGISTER_ANALYSIS_WARN("necklace", tclcommand_analyze_parse_necklace)
+    REGISTER_ANALYSIS_WARN("holes", tclcommand_analyze_parse_holes)
+    REGISTER_ANALYSIS_WARN("distribution", tclcommand_analyze_parse_distribution)
+    REGISTER_ANALYSIS_WARN("vel_distr", tclcommand_analyze_parse_vel_distr)
     REGISTER_ANALYSIS_W_ARG("rdf", tclcommand_analyze_parse_rdf, 0);
     REGISTER_ANALYSIS_W_ARG("<rdf>", tclcommand_analyze_parse_rdf, 1);
     REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", tclcommand_analyze_parse_rdf, 2);
-    REGISTER_ANALYSIS("rdfchain", tclcommand_analyze_parse_rdfchain);
+    REGISTER_ANALYSIS_WARN("rdfchain", tclcommand_analyze_parse_rdfchain)
 #ifdef ELECTROSTATICS
-    REGISTER_ANALYSIS("cwvac", tclcommand_analyze_parse_cwvac);
+    REGISTER_ANALYSIS_WARN("cwvac", tclcommand_analyze_parse_cwvac)
 #endif
-    REGISTER_ANALYSIS("structurefactor", tclcommand_analyze_parse_structurefactor);
+    REGISTER_ANALYSIS_WARN("structurefactor", tclcommand_analyze_parse_structurefactor)
     REGISTER_ANALYSIS("<density_profile>", tclcommand_analyze_parse_density_profile_av);
     REGISTER_ANALYSIS("<diffusion_profile>", tclcommand_analyze_parse_diffusion_profile);
-    REGISTER_ANALYSIS("vanhove", tclcommand_analyze_parse_vanhove);
+    REGISTER_ANALYSIS_WARN("vanhove", tclcommand_analyze_parse_vanhove)
     REGISTER_ANALYZE_STORAGE("append", tclcommand_analyze_parse_append);
     REGISTER_ANALYZE_STORAGE("push", tclcommand_analyze_parse_push);
     REGISTER_ANALYZE_STORAGE("replace", tclcommand_analyze_parse_replace);
@@ -2831,7 +2840,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
     REGISTER_ANALYZE_STORAGE("stored", tclcommand_analyze_parse_stored);
     REGISTER_ANALYZE_STORAGE("configs", tclcommand_analyze_parse_configs);
 #ifdef CONFIGTEMP
-    REGISTER_ANALYSIS("configtemp", tclcommand_analyze_parse_and_print_configtemp);
+    REGISTER_ANALYSIS_WARN("configtemp", tclcommand_analyze_parse_and_print_configtemp)
 #endif
     else {
         /* the default */

@@ -21,7 +21,9 @@ tests = \
 	analysis.tcl \
 	angle.tcl \
 	bonded_coulomb.tcl \
+	collision-detection-angular.tcl \
 	collision-detection-centers.tcl \
+	collision-detection-glue.tcl \
 	collision-detection-poc.tcl \
 	comforce.tcl \
 	comfixed.tcl \
@@ -32,6 +34,7 @@ tests = \
 	correlation_checkpoint.tcl \
 	constraints_rhomboid.tcl \
 	coulomb_cloud_wall.tcl \
+	dawaanr-and-dds-gpu.tcl \
 	dh.tcl \
 	dielectric.tcl \
 	dihedral.tcl \
