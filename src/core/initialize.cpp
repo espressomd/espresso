@@ -66,6 +66,8 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 
+#include "shapes/Shape.hpp"
+
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -150,7 +152,7 @@ void on_program_start()
   }
 
   // /** Initialize shape factory */
-  // Shapes::init_factory();
+  Shapes::initialize_factory();
 }
 
 

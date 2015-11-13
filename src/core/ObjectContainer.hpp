@@ -7,15 +7,21 @@
 #include <map>
 #include <set>
 
+/** \brief Container for objects that are identified by a numeric id.
+    The container owns the object and issues the id for new objects.
+ */
+
 template<class T>
 class ObjectContainer {
 public:
+  typedef typename std::map<int, T*>::iterator iterator;
+  
   ObjectContainer() {
     m_free_indices.insert(0);
     m_free_indices.insert(1);
   }
   int add(T* c) {
-    const int ind = get_index();
+    const int ind = get_index();    
     m_container.insert(std::pair<int, T*>(ind, c));
     return ind;
   }
@@ -24,6 +30,13 @@ public:
     m_free_indices.insert(i);
   }
   T* operator[](int i) { return m_container[i]; }
+  iterator begin() {
+    return m_container.begin();
+  }
+  iterator end() {
+    return m_container.end();
+  }
+  
 private:
   std::map<int, T*> m_container;
   std::set<int> m_free_indices;

@@ -19,14 +19,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPE_HPP
-#define __SHAPE_HPP
+#ifndef __SHAPES_SHAPE_HPP
+#define __SHAPES_SHAPE_HPP
 
 #include <string>
 #include "ScriptObject.hpp"
-#include "Factory.hpp"
-
-using namespace std;
+#include "utils/Factory.hpp"
 
 namespace Shapes {
   struct Shape : public ScriptObject {
@@ -35,9 +33,8 @@ namespace Shapes {
     virtual const std::string name() const { return std::string("Shape"); }
   };
 
-
-
 typedef Utils::Factory<Shape> ShapeFactory;
+void initialize_factory();
 
 }
 #endif

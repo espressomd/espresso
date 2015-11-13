@@ -4,7 +4,6 @@
 #include "TclCommand.hpp"
 #include "ScriptObject.hpp"
 #include "ObjectManager.hpp"
-#include "Factory.hpp"
 
 #ifdef HAVE_CXX11
 #include <type_traits>
@@ -17,7 +16,7 @@
 template<class T>
 class TclScriptObjectManager : public TclCommand {
 public:
-  TclScriptObjectManager(ObjectManager<T> &om, Tcl_Interp *_interp) : m_om(om), TclCommand(_interp) {
+  TclScriptObjectManager(Tcl_Interp *_interp) : TclCommand(_interp) {
 #ifdef HAVE_CXX11
     static_assert(std::is_base_of<ScriptObject, T>::value, "Type has to be subclass ob ScriptObject");
 #endif
@@ -33,7 +32,7 @@ public:
     case 1:
       {
         int id;
-        stringstream ss(argv.front());
+        std::stringstream ss(argv.front());
         ss >> id;
         if(ss.fail()) {
           throw string("usage()");
@@ -60,11 +59,14 @@ public:
   }
 
   std::string print_to_string() {
-    return string("This should print all object in the container, but it does not.");
+    return string("This should print all objects in the container, but it does not.");
+    for(auto &o: m_om) {
+      std::cout << o.first << ": " << o.second->name() << std::endl;
+    }
   }
 
 private:
-  ObjectManager<T> &m_om;
+  ObjectManager<T> m_om;
 
   string print_one(int id) {
     return std::string(m_om.name(id)).append(" ").append(TclScriptObject(m_om[id], interp).print_to_string());

@@ -19,7 +19,8 @@
 
 EXTRA_DIST =
 CLEANFILES =
-SUBDIRS =
+SUBDIRS = shapes constraints
+
 if UNIT_TESTS
 SUBDIRS += unit_tests
 endif
@@ -31,7 +32,8 @@ SUBDIRS+= shapes
 
 # Objects from Subdirs
 libEspresso_la_LIBADD = \
-	shapes/libEspressoShapes.la
+	shapes/libEspressoShapes.la \
+	constraints/libEspressoConstraints.la
 
 # List the sources of the Espresso binary here
 # config-features.cpp must be at the beginning so that it is compiled first
@@ -125,13 +127,7 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	constraints/Constraint.cpp constraints/Constraint.hpp \
-	constraints/GeometryConstraint.hpp constraints/GeometryConstraint.cpp \
-	constraints/InteractionConstraint.hpp constraints/InteractionConstraint.cpp \
-	constraints/ConstraintList.hpp constraints/ConstraintList.cpp \
-	constraints/ChargedRod.hpp constraints/ChargedRod.cpp \
-	constraints/ChargedPlate.hpp constraints/ChargedPlate.cpp \
-	constraints/ExternalMagneticField.hpp constraints/ExternalMagneticField.cpp
+	RunningAverage.cpp RunningAverage.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \

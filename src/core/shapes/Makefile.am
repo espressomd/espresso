@@ -9,7 +9,7 @@ AM_CPPFLAGS += -I$(srcdir)/.. -I$(builddir)/..
 noinst_LTLIBRARIES = libEspressoShapes.la
 
 libEspressoShapes_la_SOURCES = \
-	Shape.hpp \
+	Shape.hpp Shape.cpp \
 	Cylinder.hpp Cylinder.cpp \
 	HollowCone.hpp HollowCone.cpp \
 	Maze.hpp Maze.cpp \

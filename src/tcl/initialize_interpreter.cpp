@@ -67,6 +67,8 @@
 #include "TclScriptObject.hpp"
 #include "TclScriptObjectManager.hpp"
 #include "shapes/Shape.hpp"
+#include "shapes/Wall.hpp"
+#include "shapes/Cylinder.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -259,6 +261,9 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 
+  TclScriptObjectManager<Shapes::Shape> *shape = new TclScriptObjectManager<Shapes::Shape>(interp);
+  
+  shape->create_command("shape");
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

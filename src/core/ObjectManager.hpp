@@ -1,14 +1,13 @@
 #ifndef __OBJECTMANAGER_HPP
 #define __OBJECTMANAGER_HPP
 
-#include "Factory.hpp"
+#include "utils/Factory.hpp"
 #include "ObjectContainer.hpp"
-
-#include <stdio.h>
 
 template<class T>
 class ObjectManager {
 public:
+  typedef typename ObjectContainer<T>::iterator iterator;
   int add(std::string name) {
     T *p =  Utils::Factory<T>::Instance().make(name);
     const int id = m_objects.add(p);
@@ -21,6 +20,13 @@ public:
     m_names.erase(i);
   }
   T* operator[](int i) { return m_objects[i]; }
+  iterator begin() {
+    return m_objects.begin();
+  };
+  iterator end() {
+    return m_objects.end();
+  };
+
   const std::string& name(int i) { return m_names[i]; }
 private:
   std::map<int, std::string> m_names;
