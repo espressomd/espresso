@@ -54,8 +54,7 @@ proc droplet { args } {
 	set type [lindex $args 4]
 	if { $type != "sphere" } {
 		set direction [lindex $args 5]
-	}
-
+	} 
 	if {[llength $args] > 6}  { 
 	   if {[llength $args ]< 8}  { 
 		error "you should provide two density values, min and max\n$USAGE"
@@ -77,6 +76,17 @@ proc droplet { args } {
 						  set h2     [expr [lindex $center $direction] + 0.5*$R]
 						  set rho_a  [expr $min+(($max-$min)*0.25*((1.+tanh(($h2-$pos)/$width))*(1.+tanh(($pos-$h1)/$width)))) ] 
             					  set rho_b  [expr $max+(($min-$max)*0.25*((1.+tanh(($h2-$pos)/$width))*(1.+tanh(($pos-$h1)/$width)))) ] 
+						}
+					"sphere"  { 
+						  set dist 0
+						  for { set direction 0 } { $direction < 3} { incr direction } {
+						        set pos    [lindex $r $direction] 
+						  	set c      [lindex $center $direction ]
+							set dist [expr $dist + ($pos-$c)*($pos - $c)]
+						  }
+						  set dist [expr sqrt($dist)]
+						  set rho_a  [expr $min+(($max-$min)*0.5*(1.+tanh(($dist-$R)/$width))) ] 
+            					  set rho_b  [expr $max+(($min-$max)*0.5*(1.+tanh(($dist-$R)/$width))) ] 
 						}
 				}
             			lbnode $x $y $z set rho  $rho_a $rho_b
