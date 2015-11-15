@@ -78,12 +78,16 @@ typedef struct wang_landau_system {
 	double final_wang_landau_parameter;
 	int monte_carlo_trial_moves; //for 1/t algorithm
 
-	int wang_landau_relaxation_steps; //relaxation steps like relaxation steps for metadynamics in order to find local equilibrium, do not make too much relaxation steps in order to keep the perturbation small
+	int wang_landau_steps; //may be used for performance improvements, when you do not want to record other observables in the tcl script
 	char* output_filename;
 	
 	double* minimum_energies_at_flat_index; //only present in energy preparation run
 	double* maximum_energies_at_flat_index; //only present in energy preparation run
 	bool do_energy_reweighting;
+	int counter_ion_type;
+	int polymer_start_id;
+	int polymer_end_id;
+	bool fix_polymer;
 	bool do_not_sample_reaction_partition_function;
 } wang_landau_system;
 

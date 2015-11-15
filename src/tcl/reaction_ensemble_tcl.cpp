@@ -294,9 +294,9 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					ARG_IS_D(1,current_wang_landau_system.final_wang_landau_parameter);
 				}
 				
-				if(ARG1_IS_S("wang_landau_relaxation_steps")) {
+				if(ARG1_IS_S("wang_landau_steps")) {
 					argc-=1; argv+=1;
-					ARG_IS_I(1,current_wang_landau_system.wang_landau_relaxation_steps);
+					ARG_IS_I(1,current_wang_landau_system.wang_landau_steps);
 				}		
 	
 				if(ARG1_IS_S("full_path_to_output_filename")){
@@ -320,7 +320,20 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				if(ARG1_IS_S("do_not_sample_reaction_partition_function")){
 					current_wang_landau_system.do_not_sample_reaction_partition_function=true;
 				}
-				
+				if(ARG1_IS_S("counter_ion_type")){
+					argc-=1; argv+=1;
+					ARG_IS_I(1,current_wang_landau_system.counter_ion_type);
+				}
+				if(ARG1_IS_S("polymer_start_id")){
+					argc-=1; argv+=1;
+					ARG_IS_I(1,current_wang_landau_system.polymer_start_id);	
+				}
+				if(ARG1_IS_S("polymer_end_id")){
+					argc-=1; argv+=1;
+					ARG_IS_I(1,current_wang_landau_system.polymer_end_id);
+				}
+				if(ARG1_IS_S("fix_polymer_monomers"))
+					current_wang_landau_system.fix_polymer=true;
 			}
 		}
 		
