@@ -553,6 +553,9 @@ void integrate_vv(int n_steps, int reuse_forces)
       /* Propagate time: t = t+dt */
       sim_time += time_step;
     }
+    #ifdef COLLISION_DETECTION
+      handle_collisions();
+    #endif
   }
 
   /* verlet list statistics */
