@@ -148,7 +148,7 @@ double calculate_current_potential_energy_of_system(int unimportant_int){
 }
 
 double calculate_current_kinetic_energy_of_system(int unimportant_int){
-	//calculate potential energy
+	//calculate kinetic energy
 	//if (total_energy.init_status == 0) {
 		init_energies(&total_energy);
 		master_energy_calc();
@@ -1042,25 +1042,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 		//accept
 		if(new_state_index>=0 ){
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
-				//if a state is newly discovered and we re in the first iteration step then shift all other discovered states by a constant. This enhances sampling of the ground state if the ground state degeneracy is seperated from the state with the highest degeneracy by several 
-//				if(current_wang_landau_system.histogram[new_state_index]==0 && abs( current_wang_landau_system.wang_landau_parameter-current_wang_landau_system.initial_wang_landau_parameter) < 0.01  && current_wang_landau_system.do_energy_reweighting==true){
-//					//go through all already discovered states and add offset for faster sampling of the ground state, only allowed if the degeneracy is a smooth function (Chenggang Zhou et al., PRL 96, 120201 (2006))
-//					int height_artificial_offset=1;
-//					int counter_already_visited_states=0;
-//					for(int k=0;k<current_wang_landau_system.len_histogram;k++){
-//						if(current_wang_landau_system.histogram[k]>0){ //check if state was already discovered (and is allowed)
-//							current_wang_landau_system.histogram[k]+=height_artificial_offset;
-//							current_wang_landau_system.wang_landau_potential[k]+=height_artificial_offset*current_wang_landau_system.wang_landau_parameter;
-//							counter_already_visited_states+=1;
-//						}
-//					}
-//					
-//					//increase the counter for the monte carlo trial moves
-//					current_wang_landau_system.monte_carlo_trial_moves+=height_artificial_offset*counter_already_visited_states;
-//					
-//					
-//				}
-				//consider the newly visited state
 				current_wang_landau_system.histogram[new_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
 			}
@@ -1175,9 +1156,6 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 		get_particle_data(p_id, &part);
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
-//		int img[3];
-//		memmove(img, part.l.i, 3*sizeof(int));
-//		unfold_position(ppos, img);
 		particle_positions[3*changed_particle_counter]=ppos[0];
 		particle_positions[3*changed_particle_counter+1]=ppos[1];
 		particle_positions[3*changed_particle_counter+2]=ppos[2];
@@ -1192,25 +1170,10 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 		changed_particle_counter+=1;
 	}
 	
-	//change polymer conformation if start and end id are provided
-//	double old_pos_polymer_particle[3];
-//	int random_polymer_particle_id;
 	
+	//change polymer conformation if start and end id are provided
 	double old_pos_polymer_particle[3*(end_id_polymer-start_id_polymer+1)];
-	if(start_id_polymer!=current_wang_landau_system.int_fill_value && end_id_polymer !=current_wang_landau_system.int_fill_value){
-//		random_polymer_particle_id=start_id_polymer+i_random(end_id_polymer-start_id_polymer+1);
-//		Particle part;
-//		get_particle_data(random_polymer_particle_id, &part);
-//		memmove(old_pos_polymer_particle, part.r.p, 3*sizeof(double));
-//		//move particle to new position nearby
-//		double random_direction_vector[3];
-//		double length_of_displacement=0.05;
-//		vec_random(random_direction_vector, length_of_displacement);
-//		double pos_x=old_pos_polymer_particle[0]+random_direction_vector[0];
-//		double pos_y=old_pos_polymer_particle[1]+random_direction_vector[1];
-//		double pos_z=old_pos_polymer_particle[2]+random_direction_vector[2];
-//		double new_pos[3]={pos_x, pos_y, pos_z};
-//		place_particle(random_polymer_particle_id,new_pos);
+	if((start_id_polymer!=current_wang_landau_system.int_fill_value && end_id_polymer !=current_wang_landau_system.int_fill_value) && current_wang_landau_system.fix_polymer==false){
 		
 		Particle part;
 		for(int i=start_id_polymer;i<=end_id_polymer;i++){
@@ -1224,15 +1187,14 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 			double random_direction_vector[3];
 			double length_of_displacement=0.05;
 			vec_random(random_direction_vector, length_of_displacement);
-			double pos_x=old_pos_polymer_particle[0]+random_direction_vector[0];
-			double pos_y=old_pos_polymer_particle[1]+random_direction_vector[1];
-			double pos_z=old_pos_polymer_particle[2]+random_direction_vector[2];
+			double pos_x=old_pos_polymer_particle[3*i]+random_direction_vector[0];
+			double pos_y=old_pos_polymer_particle[3*i+1]+random_direction_vector[1];
+			double pos_z=old_pos_polymer_particle[3*i+2]+random_direction_vector[2];
 			double new_pos[3]={pos_x, pos_y, pos_z};
 			place_particle(i,new_pos);
 		}
 		
 	}
-	
 	
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
 	
@@ -1270,25 +1232,6 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 		//accept
 		if(new_state_index>=0 ){
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
-				//if a state is newly discovered and we re in the first iteration step then shift all other discovered states by a constant. This enhances sampling of the ground state if the ground state degeneracy is seperated from the state with the highest degeneracy by several 
-//				if(current_wang_landau_system.histogram[new_state_index]==0 && abs( current_wang_landau_system.wang_landau_parameter-current_wang_landau_system.initial_wang_landau_parameter) < 0.01  && current_wang_landau_system.do_energy_reweighting==true){
-//					//go through all already discovered states and add offset for faster sampling of the ground state
-//					int height_artificial_offset=1;
-//					int counter_already_visited_states=0;
-//					for(int k=0;k<current_wang_landau_system.len_histogram;k++){
-//						if(current_wang_landau_system.histogram[k]>0){ //check if state was already discovered (and is allowed)
-//							current_wang_landau_system.histogram[k]+=height_artificial_offset;
-//							current_wang_landau_system.wang_landau_potential[k]+=height_artificial_offset*current_wang_landau_system.wang_landau_parameter;
-//							counter_already_visited_states+=1;
-//						}
-//					}
-//					
-//					//increase the counter for the monte carlo trial moves
-//					current_wang_landau_system.monte_carlo_trial_moves+=height_artificial_offset*counter_already_visited_states;
-//					
-//					
-//				}
-				//consider the newly visited state
 				got_accepted=true;
 				current_wang_landau_system.histogram[new_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
@@ -1318,7 +1261,6 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 				ppos[0]=old_pos_polymer_particle[3*i];
 				ppos[1]=old_pos_polymer_particle[3*i+1];
 				ppos[2]=old_pos_polymer_particle[3*i+2];
-				//move particle to new position nearby
 				place_particle(i,ppos);
 			}
 		}
@@ -1439,25 +1381,6 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 		//accept
 		if(new_state_index>=0 ){
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
-				//if a state is newly discovered and we re in the first iteration step then shift all other discovered states by a constant. This enhances sampling of the ground state if the ground state degeneracy is seperated from the state with the highest degeneracy by several 
-//				if(current_wang_landau_system.histogram[new_state_index]==0 && abs( current_wang_landau_system.wang_landau_parameter-current_wang_landau_system.initial_wang_landau_parameter) < 0.01  && current_wang_landau_system.do_energy_reweighting==true){
-//					//go through all already discovered states and add offset for faster sampling of the ground state
-//					int height_artificial_offset=1;
-//					int counter_already_visited_states=0;
-//					for(int k=0;k<current_wang_landau_system.len_histogram;k++){
-//						if(current_wang_landau_system.histogram[k]>0){ //check if state was already discovered (and is allowed)
-//							current_wang_landau_system.histogram[k]+=height_artificial_offset;
-//							current_wang_landau_system.wang_landau_potential[k]+=height_artificial_offset*current_wang_landau_system.wang_landau_parameter;
-//							counter_already_visited_states+=1;
-//						}
-//					}
-//					
-//					//increase the counter for the monte carlo trial moves
-//					current_wang_landau_system.monte_carlo_trial_moves+=height_artificial_offset*counter_already_visited_states;
-//					
-//					
-//				}
-				//consider the newly visited state
 				got_accepted=true;
 				current_wang_landau_system.histogram[new_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
@@ -1511,10 +1434,9 @@ bool do_HMC_move(){
 //	double old_pos_polymer_particle[3];
 //	int random_polymer_particle_id;
 	
-	mpi_integrate(7,-1); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move, see "Effects of Confinement on the Thermodynamics of a Collapsing Heteropolymer: An Off-Lattice Wang-Landau Monte Carlo Simulation Study" => do not turn on an thermostat	
+	mpi_integrate(7,0); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move, see "Effects of Confinement on the Thermodynamics of a Collapsing Heteropolymer: An Off-Lattice Wang-Landau Monte Carlo Simulation Study" => do not turn on an thermostat	
 	
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
-	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
 	double E_kin_new=calculate_current_kinetic_energy_of_system(0);
 	double beta =1.0/temperature_RE;
@@ -1551,25 +1473,6 @@ bool do_HMC_move(){
 		//accept
 		if(new_state_index>=0 ){
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
-				//if a state is newly discovered and we re in the first iteration step then shift all other discovered states by a constant. This enhances sampling of the ground state if the ground state degeneracy is seperated from the state with the highest degeneracy by several 
-//				if(current_wang_landau_system.histogram[new_state_index]==0 && abs( current_wang_landau_system.wang_landau_parameter-current_wang_landau_system.initial_wang_landau_parameter) < 0.01  && current_wang_landau_system.do_energy_reweighting==true){
-//					//go through all already discovered states and add offset for faster sampling of the ground state
-//					int height_artificial_offset=1;
-//					int counter_already_visited_states=0;
-//					for(int k=0;k<current_wang_landau_system.len_histogram;k++){
-//						if(current_wang_landau_system.histogram[k]>0){ //check if state was already discovered (and is allowed)
-//							current_wang_landau_system.histogram[k]+=height_artificial_offset;
-//							current_wang_landau_system.wang_landau_potential[k]+=height_artificial_offset*current_wang_landau_system.wang_landau_parameter;
-//							counter_already_visited_states+=1;
-//						}
-//					}
-//					
-//					//increase the counter for the monte carlo trial moves
-//					current_wang_landau_system.monte_carlo_trial_moves+=height_artificial_offset*counter_already_visited_states;
-//					
-//					
-//				}
-				//consider the newly visited state
 				got_accepted=true;
 				current_wang_landau_system.histogram[new_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
@@ -1598,30 +1501,36 @@ bool do_HMC_move(){
 
 
 
-
+int accepted_moves=0;
+int tries=0;
+bool got_accepted;
 
 int do_reaction_wang_landau(){
 	for(int step=0;step<current_wang_landau_system.wang_landau_steps;step++){
 		int reaction_id=i_random(current_reaction_system.nr_single_reactions+3); //without +1 only reactions are sampled. The +1 makes that also dislocation moves of particles (at a fixed particle number) are performed
+		tries+=1;
 		if(reaction_id<current_reaction_system.nr_single_reactions){
-			generic_oneway_reaction_wang_landau(reaction_id);
-		 
+			got_accepted=generic_oneway_reaction_wang_landau(reaction_id);
 		 	//according to de pablo also needs to be performed for the runs without energy reweighting for sampling the configurational partition function
 		}else if(reaction_id==current_reaction_system.nr_single_reactions){
 			
-			 do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+			 got_accepted=do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
 		}else if(reaction_id==current_reaction_system.nr_single_reactions+1){		
 			//or alternatively
-			do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+			got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
 		}else if(reaction_id==current_reaction_system.nr_single_reactions+2){	
 			//or alternatively			
-			do_HMC_move();
+			got_accepted=do_HMC_move();
 		}	
 			//or alternatively if you are not doing energy reweighting
 //			if(current_wang_landau_system.do_energy_reweighting==false){
 //				mpi_integrate(150,-1);
 //			}
-	
+		
+		if(got_accepted==true){
+			accepted_moves+=1;
+		}
+		
 		if(can_refine_wang_landau_one_over_t()){
 			if(achieved_desired_number_of_refinements_one_over_t()==true){//check for convergence
 				write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
@@ -1630,9 +1539,13 @@ int do_reaction_wang_landau(){
 		}
 	}
 	//write out preliminary wang-landau potential results
-	if(current_wang_landau_system.monte_carlo_trial_moves%(7000)<=current_wang_landau_system.wang_landau_steps){
+	if(current_wang_landau_system.monte_carlo_trial_moves%(1000)<=current_wang_landau_system.wang_landau_steps){
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
+	if(current_wang_landau_system.monte_carlo_trial_moves%(100)<=current_wang_landau_system.wang_landau_steps){
+		printf("tries %d acceptance rate %f\n",tries, double(accepted_moves)/tries);
+	}
+	
 	return 0;	
 };
 

@@ -326,11 +326,22 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				}
 				if(ARG1_IS_S("polymer_start_id")){
 					argc-=1; argv+=1;
-					ARG_IS_I(1,current_wang_landau_system.polymer_start_id);	
+					ARG_IS_I(1,current_wang_landau_system.polymer_start_id);
+					if(current_wang_landau_system.polymer_start_id<0){
+						printf("negative start id for polymer");
+						return TCL_ERROR;
+					}
+					argc-=1; argv+=1;
 				}
 				if(ARG1_IS_S("polymer_end_id")){
 					argc-=1; argv+=1;
 					ARG_IS_I(1,current_wang_landau_system.polymer_end_id);
+					if(current_wang_landau_system.polymer_end_id<0){
+						printf("negative end id for polymer");
+						return TCL_ERROR;
+					}
+					argc-=1; argv+=1;			
+					
 				}
 				if(ARG1_IS_S("fix_polymer_monomers"))
 					current_wang_landau_system.fix_polymer=true;
