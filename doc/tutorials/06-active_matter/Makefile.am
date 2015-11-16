@@ -28,12 +28,11 @@ EXTRA_DIST=$(BASENAME).pdf \
 	SOLUTIONS/rectification_simulation.tcl \
 	SOLUTIONS/solutions.txt \
 	SOLUTIONS/tutorial_tests.tcl \
-	aip.bst \
 	refs.bib \
 	FIGURES/enhanced.pdf \
 	FIGURES/flow_field.pdf \
 	FIGURES/friction.pdf \
-	FIGURES/frixtion.tex \
+	FIGURES/friction.tex \
 	FIGURES/geometry.pdf \
 	FIGURES/geometry.tex \
 	FIGURES/pusher-puller.pdf \

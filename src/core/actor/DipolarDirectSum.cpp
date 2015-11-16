@@ -31,13 +31,14 @@ if (dipolarDirectSum)
 {
   forceActors.remove(dipolarDirectSum);
   energyActors.remove(dipolarDirectSum);
-  free(dipolarDirectSum);
+  delete(dipolarDirectSum);
+  dipolarDirectSum=NULL;
 
 }
 }
 
 
-DipolarDirectSum *dipolarDirectSum;
+DipolarDirectSum *dipolarDirectSum=0;
 
 #endif
 

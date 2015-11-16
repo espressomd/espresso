@@ -8,6 +8,7 @@
 #include "DipolarDirectSum_cuda.hpp"
 #include "grid.hpp" 
 #include "cuda_interface.hpp"
+#include "interaction_data.hpp"
 
 #ifndef ACTOR_DIPOLARDIRECTSUM_HPP
 #define ACTOR_DIPOLARDIRECTSUM_HPP
@@ -24,7 +25,10 @@ void DipolarDirectSum_kernel_wrapper_force(dds_float k, int n, float *pos, float
 class DipolarDirectSum : public Actor {
 public:
   DipolarDirectSum(SystemInterface &s) {
-    if(!s.requestFGpu())
+
+	k = coulomb.Dbjerrum;
+
+	if(!s.requestFGpu())
       std::cerr << "DipolarDirectSum needs access to forces on GPU!" << std::endl;
 
     if(!s.requestRGpu())

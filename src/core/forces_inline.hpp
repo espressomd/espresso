@@ -320,9 +320,6 @@ espressoSystemInterface.update();
   // mark that forces are now up-to-date
   recalc_forces = 0;
 
-#ifdef COLLISION_DETECTION
-  handle_collisions();
-#endif
 }
 
 
