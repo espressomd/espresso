@@ -14,9 +14,11 @@
 #include "statistics.hpp" //for distto
 #include "integrate.hpp" //for time_step
 #include <stdlib.h>  // for qsort()
-#include "thermostat.hpp" //for temperature
+//#include "thermostat.hpp" //for temperature_RE
 #include <stdio.h> //for getline()
 #include "utils.hpp" // for PI
+
+double temperature_RE=1.0;
 
 //For now the reaction ensemble is only implemented for the reaction VT ensemble. The reaction PT ensemble is also possible to implement.
 
@@ -280,7 +282,7 @@ int generic_oneway_reaction(int reaction_id){
 		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
 	}
 
-	double beta =1.0/temperature;
+	double beta =1.0/temperature_RE;
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	//calculate boltzmann factor
 	double bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
@@ -478,9 +480,9 @@ int create_particle(int desired_type){
 	//create random velocity vector
 	double vel[3];
 	//we usse mass=1 for all particles, think about adapting this
-	vel[0]=pow(2*PI*temperature,-3/2)*gaussian_random()*time_step;//scale for internal use in espresso
-	vel[1]=pow(2*PI*temperature,-3/2)*gaussian_random()*time_step;//scale for internal use in espresso
-	vel[2]=pow(2*PI*temperature,-3/2)*gaussian_random()*time_step;//scale for internal use in espresso
+	vel[0]=pow(2*PI*temperature_RE,-3/2)*gaussian_random()*time_step;//scale for internal use in espresso
+	vel[1]=pow(2*PI*temperature_RE,-3/2)*gaussian_random()*time_step;//scale for internal use in espresso
+	vel[2]=pow(2*PI*temperature_RE,-3/2)*gaussian_random()*time_step;//scale for internal use in espresso
 	
 	double charge= (double) current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
 	double d_min=0;
@@ -993,7 +995,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 		int N_i0= old_particle_numbers[find_index_of_type(current_reaction->product_types[i])];
 		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
 	}
-	double beta =1.0/temperature;
+	double beta =1.0/temperature_RE;
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	
 	
@@ -1235,7 +1237,7 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
-	double beta =1.0/temperature;
+	double beta =1.0/temperature_RE;
 
 	double bf=1.0;
 	if(old_state_index>=0 && new_state_index>=0){
@@ -1412,7 +1414,7 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 				bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 				//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
 			}else{
-				double beta =1.0/temperature;
+				double beta =1.0/temperature_RE;
 				bf=min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
 			}
 		}else{
@@ -1491,7 +1493,7 @@ bool do_HMC_move(){
 	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
-	
+	double E_kin_old=calculate_current_kinetic_energy_of_system(0);
 	
 	double particle_positions[3*max_seen_particle];
 
@@ -1503,34 +1505,29 @@ bool do_HMC_move(){
 		particle_positions[3*p_id]=ppos[0];
 		particle_positions[3*p_id+1]=ppos[1];
 		particle_positions[3*p_id+2]=ppos[2];
-		//change particle position
-		double pos_x=box_l[0]*bit_random_generator(); //here we use the r250 random generator with higher period by using box_l[0]*bit_random_generator()
-		double pos_y=box_l[1]*d_random();
-		double pos_z=box_l[2]*d_random();
-		
-		double new_pos[3]={pos_x, pos_y, pos_z};
-		place_particle(p_id,new_pos);
 	}
 	
 	//change polymer conformation if start and end id are provided
 //	double old_pos_polymer_particle[3];
 //	int random_polymer_particle_id;
 	
-	mpi_integrate(7,-1); //-1 for recalculating forces	
+	mpi_integrate(7,-1); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move, see "Effects of Confinement on the Thermodynamics of a Collapsing Heteropolymer: An Off-Lattice Wang-Landau Monte Carlo Simulation Study" => do not turn on an thermostat	
 	
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
-	double beta =1.0/temperature;
+	double E_kin_new=calculate_current_kinetic_energy_of_system(0);
+	double beta =1.0/temperature_RE;
 
 	double bf=1.0;
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
 			if(current_wang_landau_system.do_energy_reweighting==true){
-				bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
+				bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index]-beta*(E_kin_new-E_kin_old))); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
+				//further change that includes the kinetic energy is due to "Effects of Confinement on the Thermodynamics of a Collapsing Heteropolymer: An Off-Lattice Wang-Landau Monte Carlo Simulation Study" by Sliozberg
 				//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
 			}else{
-				bf=min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
+				bf=min(1.0, bf*exp(-beta*(E_kin_new-E_kin_old)-beta*(E_pot_new-E_pot_old)));
 			}
 		}else{
 			if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]<0 )
@@ -1605,26 +1602,25 @@ bool do_HMC_move(){
 
 int do_reaction_wang_landau(){
 	for(int step=0;step<current_wang_landau_system.wang_landau_steps;step++){
-		int reaction_id=i_random(current_reaction_system.nr_single_reactions+1); //without +1 only reactions are sampled. The +1 makes that also dislocation moves of particles (at a fixed particle number) are performed
+		int reaction_id=i_random(current_reaction_system.nr_single_reactions+3); //without +1 only reactions are sampled. The +1 makes that also dislocation moves of particles (at a fixed particle number) are performed
 		if(reaction_id<current_reaction_system.nr_single_reactions){
 			generic_oneway_reaction_wang_landau(reaction_id);
+		 
+		 	//according to de pablo also needs to be performed for the runs without energy reweighting for sampling the configurational partition function
 		}else if(reaction_id==current_reaction_system.nr_single_reactions){
-			 //according to de pablo also needs to be performed for the runs without energy reweighting for sampling the configurational partition function
-			 
-			 
-//			do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
 			
+			 do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+		}else if(reaction_id==current_reaction_system.nr_single_reactions+1){		
 			//or alternatively
-//			do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
-			
+			do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+		}else if(reaction_id==current_reaction_system.nr_single_reactions+2){	
 			//or alternatively			
 			do_HMC_move();
-			
+		}	
 			//or alternatively if you are not doing energy reweighting
 //			if(current_wang_landau_system.do_energy_reweighting==false){
 //				mpi_integrate(150,-1);
 //			}
-		}
 	
 		if(can_refine_wang_landau_one_over_t()){
 			if(achieved_desired_number_of_refinements_one_over_t()==true){//check for convergence
@@ -1634,7 +1630,7 @@ int do_reaction_wang_landau(){
 		}
 	}
 	//write out preliminary wang-landau potential results
-	if(current_wang_landau_system.monte_carlo_trial_moves%(70000)<=current_wang_landau_system.wang_landau_steps){
+	if(current_wang_landau_system.monte_carlo_trial_moves%(7000)<=current_wang_landau_system.wang_landau_steps){
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
 	return 0;	
