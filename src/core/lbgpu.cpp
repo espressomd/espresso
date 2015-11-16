@@ -262,19 +262,15 @@ void lb_reinit_parameters_gpu() {
     if (lbpar_gpu.viscosity[ii] > 0.0) {
       /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
       lbpar_gpu.gamma_shear[ii] = 1. - 2./(6.*lbpar_gpu.viscosity[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);   
-      //printf("gamma_shear=%e\n", lbpar_gpu.gamma_shear[ii]);
     }
   
     if (lbpar_gpu.bulk_viscosity[ii] > 0.0) {
       /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
       lbpar_gpu.gamma_bulk[ii] = 1. - 2./(9.*lbpar_gpu.bulk_viscosity[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
-      //printf("gamma_bulk=%e\n", lbpar_gpu.gamma_bulk[ii]);
     }
-
 
     if (lbpar_gpu.is_TRT) {
       lbpar_gpu.gamma_bulk[ii] = lbpar_gpu.gamma_shear[ii];
-      //printf("TRT gamma_bulk=%e\n", lbpar_gpu.gamma_bulk[ii]);
     }
 
     //By default, gamma_even and gamma_odd are chosen such that the MRT becomes
@@ -289,15 +285,19 @@ void lb_reinit_parameters_gpu() {
     
     if (lbpar_gpu.is_TRT) {
       lbpar_gpu.gamma_even[ii] = lbpar_gpu.gamma_shear[ii];
-      //printf("TRT gamma_even=%e\n", lbpar_gpu.gamma_even[ii]);
     }
 
     if (lbpar_gpu.is_TRT) {
       lbpar_gpu.gamma_odd[ii] = -(7.0f*lbpar_gpu.gamma_even[ii]+1.0f)/(lbpar_gpu.gamma_even[ii]+7.0f);
-      //printf("TRT gamma_odd=%e\n", lbpar_gpu.gamma_odd[ii]);
+      //lbpar_gpu.gamma_odd[ii] = lbpar_gpu.gamma_shear[ii]; //TODO delete
     }
-
+    
+    //printf("gamma_shear=%e\n", lbpar_gpu.gamma_shear[ii]);
+    //printf("gamma_bulk=%e\n", lbpar_gpu.gamma_bulk[ii]);
+    //printf("TRT gamma_odd=%e\n", lbpar_gpu.gamma_odd[ii]);
+    //printf("TRT gamma_even=%e\n", lbpar_gpu.gamma_even[ii]);
     //printf("\n");
+
 #ifdef SHANCHEN
     if (lbpar_gpu.mobility[0] > 0.0) {
       lbpar_gpu.gamma_mobility[0] = 1. - 2./(6.*lbpar_gpu.mobility[0]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
