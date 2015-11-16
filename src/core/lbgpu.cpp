@@ -273,7 +273,7 @@ void lb_reinit_parameters_gpu() {
 
 
     if (lbpar_gpu.is_TRT) {
-      lbpar_gpu.gamma_bulk[ii] = -(7.0f*lbpar_gpu.gamma_shear[ii]+1.0f)/(lbpar_gpu.gamma_shear[ii]+7.0f);
+      lbpar_gpu.gamma_bulk[ii] = lbpar_gpu.gamma_shear[ii];
       //printf("TRT gamma_bulk=%e\n", lbpar_gpu.gamma_bulk[ii]);
     }
 
