@@ -61,7 +61,7 @@
 #elif defined (GAUSSRANDOMCUT)
   #define noise gauss_random_cut()
 #elif defined (GAUSSRANDOM)
-  #define noise gauss_random()
+  #define noise gaussian_random()
 #else
  #error "No noise function defined"
 #endif

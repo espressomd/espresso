@@ -58,7 +58,7 @@ proc write_data {file} {
 set int_steps     100
 set int_times     20
 
-set time_step     0.005
+set time_step     0.003
 set tau           0.02
 
 set agrid         1.0

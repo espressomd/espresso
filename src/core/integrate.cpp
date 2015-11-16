@@ -694,7 +694,7 @@ void rescale_forces_propagate_vel()
           else
 #endif
             /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-            p[i].m.v[j] += p[i].f.f[j]; 
+            p[i].m.v[j] += p[i].f.f[j];
 #ifdef EXTERNAL_FORCES
         }
 #endif
