@@ -78,6 +78,8 @@ LB_Parameters lbpar = {
     {0.},
     // gamma_even
     {0.},
+    // is_TRT
+    true,
     // resend_halo
     0
 };
@@ -299,6 +301,7 @@ int lb_lbfluid_set_bulk_visc(double *p_bulk_visc) {
     } else {
 #ifdef LB
       lbpar.bulk_viscosity[ii] = p_bulk_visc[ii];
+      lbpar.is_TRT = false;
       mpi_bcast_lb_params(LBPAR_BULKVISC);
 #endif // LB
     }
@@ -319,6 +322,7 @@ int lb_lbfluid_set_gamma_odd(double *p_gamma_odd) {
     } else {
 #ifdef LB
       lbpar.gamma_odd[ii] = gamma_odd = p_gamma_odd[ii];
+      lbpar.is_TRT = false;
       mpi_bcast_lb_params(0);
 #endif // LB
     }
@@ -340,6 +344,7 @@ int lb_lbfluid_set_gamma_even(double *p_gamma_even)
     } else {
 #ifdef LB
       lbpar.gamma_even[ii] = gamma_even = p_gamma_even[ii];
+      lbpar.is_TRT = false;
       mpi_bcast_lb_params(0);
 #endif // LB
     }
@@ -1927,6 +1932,24 @@ void lb_reinit_parameters() {
 
     gamma_odd = lbpar.gamma_odd[0];
     gamma_even = lbpar.gamma_even[0];
+
+    if (lbpar.is_TRT) {
+        gamma_bulk = gamma_shear;
+        gamma_even = gamma_shear;
+        gamma_odd = -(7.0*gamma_even+1.0)/(gamma_even+7.0);
+        //gamma_odd = gamma_shear; //uncomment for BGK as default
+    }
+
+    //gamma_shear = 0.0; //uncomment for special case of BGK
+    //gamma_bulk = 0.0;
+    //gamma_odd = 0.0;
+    //gamma_even = 0.0;
+
+    printf("gamma_shear=%e\n", gamma_shear);
+    printf("gamma_bulk=%e\n", gamma_bulk);
+    printf("gamma_odd=%e\n", gamma_odd);
+    printf("gamma_even=%e\n", gamma_even);
+    printf("\n");
 
     double mu = 0.0;
 
