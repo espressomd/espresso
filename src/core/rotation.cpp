@@ -171,13 +171,13 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3], double Wd
   /* calculate the second derivative of the quaternion */
   
 #ifdef ROTATIONAL_INERTIA
-  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0]/p->p.rinertia[0]/(0.4 * PMASS(*p));
-  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1]/p->p.rinertia[1]/(0.4 * PMASS(*p));
-  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/I[2]/p->p.rinertia[2]/(0.4 * PMASS(*p));
+  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0]/p->p.rinertia[0];
+  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1]/p->p.rinertia[1];
+  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/I[2]/p->p.rinertia[2];
 #else
-  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0]/(0.4 * PMASS(*p));
-  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1]/(0.4 * PMASS(*p));
-  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/I[2]/(0.4 * PMASS(*p));
+  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0];
+  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1];
+  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/I[2];
 #endif
 
   S1 = Qd[0]*Qd[0] + Qd[1]*Qd[1] + Qd[2]*Qd[2] + Qd[3]*Qd[3];
@@ -222,14 +222,14 @@ void propagate_omega_quat_particle(Particle* p)
   // 0.4 used for the dimensionless moment of inertia, corresponding
   // to that of a rigid sphere with diameter SIGMA (see [Wang2002])
   for(int j=0; j < 3; j++){
-    p->m.omega[j]+= time_step_half*Wd[j];
+    p->m.omega[j]+= (time_step_half*Wd[j]) / (0.4 * PMASS(*p));
   }
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p->m.v[0],p->m.v[1],p->m.v[2]));
   
-  p->r.quat[0]+= (time_step*(Qd[0] + time_step_half*Qdd[0]) - lambda*p->r.quat[0]);
-  p->r.quat[1]+= (time_step*(Qd[1] + time_step_half*Qdd[1]) - lambda*p->r.quat[1]);
-  p->r.quat[2]+= (time_step*(Qd[2] + time_step_half*Qdd[2]) - lambda*p->r.quat[2]);
-  p->r.quat[3]+= (time_step*(Qd[3] + time_step_half*Qdd[3]) - lambda*p->r.quat[3]);
+  p->r.quat[0]+= (time_step*(Qd[0] + time_step_half*Qdd[0] / (0.4 * PMASS(*p))) - lambda*p->r.quat[0]);
+  p->r.quat[1]+= (time_step*(Qd[1] + time_step_half*Qdd[1] / (0.4 * PMASS(*p))) - lambda*p->r.quat[1]);
+  p->r.quat[2]+= (time_step*(Qd[2] + time_step_half*Qdd[2] / (0.4 * PMASS(*p))) - lambda*p->r.quat[2]);
+  p->r.quat[3]+= (time_step*(Qd[3] + time_step_half*Qdd[3] / (0.4 * PMASS(*p))) - lambda*p->r.quat[3]);
   // Update the director
   convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
