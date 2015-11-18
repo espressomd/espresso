@@ -33,7 +33,6 @@ require_feature "DIPOLES"
 require_feature "FFTW"
 require_feature "CONSTRAINTS"
 require_feature "ROTATION"
-require_feature "ROTATIONAL_INERTIA"
 
 if {[has_feature "LEES_EDWARDS"]} {
     require_max_nodes_per_side 1
@@ -65,12 +64,6 @@ if { [catch {
     part 1  v  0 0 0
     part 0 torque_lab 0 0 0
     part 1 torque_lab 0 0 0
-    # it looks like a known analytical solution was calculated without the dimensionless moment of 
-    # inertia of the rigid ball value (I_dimless = 0.4). However, this coefficient is required if both 
-    # translation and rotational motion equations are produced in same dimensionless units
-    # (see [Wang2002, page 021405-3, right column, http://link.aps.org/doi/10.1103/PhysRevE.66.021405])
-    part 0 rinertia [expr 1.0 / 0.4] [expr 1.0 / 0.4] [expr 1.0 / 0.4]
-    part 1 rinertia [expr 1.0 / 0.4] [expr 1.0 / 0.4] [expr 1.0 / 0.4]
 
     puts "Imposing magnetostatics (epsilon changed on purpose, disregard warning message about epsilon)"
 
