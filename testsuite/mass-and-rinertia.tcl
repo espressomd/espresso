@@ -28,13 +28,12 @@ set kT 1.5
 set halfkT 0.75
 thermostat langevin $kT 1
 
-set mass 0.8
-
 # no need to rebuild Verlet lists, avoid it
 setmd skin 1.0
-setmd time_step [expr 0.01 * sqrt($mass)]
+setmd time_step 0.01
 
 set n 100
+set mass 0.8
 set j1 60
 set j2 80
 set j3 100
@@ -75,13 +74,13 @@ set Evx [expr 0.5 * $mass *$vx2/$n/$loops]
 set Evy [expr 0.5 * $mass *$vy2/$n/$loops]
 set Evz [expr 0.5 * $mass *$vz2/$n/$loops]
 
-set Eox [expr 0.5 * 0.4 * $mass * $j1 *$ox2/$n/$loops]
-set Eoy [expr 0.5 * 0.4 * $mass * $j2 *$oy2/$n/$loops]
-set Eoz [expr 0.5 * 0.4 * $mass * $j3 *$oz2/$n/$loops]
+set Eox [expr 0.5 * $mass * $j1 *$ox2/$n/$loops]
+set Eoy [expr 0.5 * $mass * $j2 *$oy2/$n/$loops]
+set Eoz [expr 0.5 * $mass * $j3 *$oz2/$n/$loops]
 
 set dv [expr 1./3. *($Evx +$Evy +$Evz)/$halfkT-1.]
 # 0.4 is a rigid sphere moment of inertia in [M * SIGMA^2] units.
-set do [expr 1./3. *($Eox +$Eoy +$Eoz)/$halfkT-1.]
+set do [expr 0.4 * 1./3. *($Eox +$Eoy +$Eoz)/$halfkT-1.]
 
 puts "1/2 kT = $halfkT"
 puts "translation: $Evx $Evy $Evz rotation: $Eox $Eoy $Eoz"

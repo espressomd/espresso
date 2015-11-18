@@ -51,7 +51,7 @@ thermostat langevin $kT 1
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 0.0
-setmd time_step [expr 0.01 * sqrt($mass)]
+setmd time_step 0.01
 
 set n 4
 for {set p 0 } { $p < [expr $n*2] } { incr p 2} { 
@@ -87,11 +87,11 @@ if { [catch {
   
   set tolerance 0.1
   
-  set Eox [expr 0.5 * 0.4 * $mass * $j1 *$ox2/$n/$loops]
-  set Eoy [expr 0.5 * 0.4 * $mass * $j2 *$oy2/$n/$loops]
-  set Eoz [expr 0.5 * 0.4 * $mass * $j3 *$oz2/$n/$loops]
+  set Eox [expr 0.5 * $j1 *$ox2/$n/$loops]
+  set Eoy [expr 0.5 * $j2 *$oy2/$n/$loops]
+  set Eoz [expr 0.5 * $j3 *$oz2/$n/$loops]
   
-  set do [expr 1./3. * ($Eox +$Eoy +$Eoz)/$halfkT-1.]
+  set do [expr 1./3. *($Eox +$Eoy +$Eoz)/$halfkT-1.]
   
   puts "1/2 kT = $halfkT"
   puts "rotation: $Eox $Eoy $Eoz"

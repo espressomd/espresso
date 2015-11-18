@@ -66,8 +66,7 @@ if { [catch {
     }
     
     # check new GB energy against expected value
-    set GB_expected -3018.84
-    # set GB_expected -2971.72    
+    set GB_expected -2971.72
     set GBeng [expr [analyze energy gb 0 0]]
     set rel_eng_error [expr abs(($GBeng - $GB_expected)/$toteng)]
     puts "   GB energy deviation: $rel_eng_error"
