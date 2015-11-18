@@ -218,18 +218,15 @@ void propagate_omega_quat_particle(Particle* p)
   
   lambda = 1 - S[0]*time_step_squared_half - sqrt(1 - time_step_squared*(S[0] + time_step*(S[1] + time_step_half/2.*(S[2]-S[0]*S[0]))));
   
-  // 0.4 * MASS * SIGMA^2 = I0
-  // 0.4 used for the dimensionless moment of inertia, corresponding
-  // to that of a rigid sphere with diameter SIGMA (see [Wang2002])
   for(int j=0; j < 3; j++){
-    p->m.omega[j]+= (time_step_half*Wd[j]) / (0.4 * p->p.mass);
+    p->m.omega[j]+= time_step_half*Wd[j];
   }
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p->m.v[0],p->m.v[1],p->m.v[2]));
   
-  p->r.quat[0]+= (time_step*(Qd[0] + time_step_half*Qdd[0]) - lambda*p->r.quat[0]);
-  p->r.quat[1]+= (time_step*(Qd[1] + time_step_half*Qdd[1]) - lambda*p->r.quat[1]);
-  p->r.quat[2]+= (time_step*(Qd[2] + time_step_half*Qdd[2]) - lambda*p->r.quat[2]);
-  p->r.quat[3]+= (time_step*(Qd[3] + time_step_half*Qdd[3]) - lambda*p->r.quat[3]);
+  p->r.quat[0]+= time_step*(Qd[0] + time_step_half*Qdd[0]) - lambda*p->r.quat[0];
+  p->r.quat[1]+= time_step*(Qd[1] + time_step_half*Qdd[1]) - lambda*p->r.quat[1];
+  p->r.quat[2]+= time_step*(Qd[2] + time_step_half*Qdd[2]) - lambda*p->r.quat[2];
+  p->r.quat[3]+= time_step*(Qd[3] + time_step_half*Qdd[3]) - lambda*p->r.quat[3];
   // Update the director
   convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
@@ -379,9 +376,9 @@ void convert_torques_propagate_omega()
         Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
 #endif
 
-        p[i].m.omega[0]+= time_step_half*Wd[0] / (0.4 * p->p.mass);
-        p[i].m.omega[1]+= time_step_half*Wd[1] / (0.4 * p->p.mass);
-        p[i].m.omega[2]+= time_step_half*Wd[2] / (0.4 * p->p.mass);
+        p[i].m.omega[0]+= time_step_half*Wd[0];
+        p[i].m.omega[1]+= time_step_half*Wd[1];
+        p[i].m.omega[2]+= time_step_half*Wd[2];
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));

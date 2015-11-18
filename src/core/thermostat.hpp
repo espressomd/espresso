@@ -61,7 +61,7 @@
 #elif defined (GAUSSRANDOMCUT)
   #define noise gauss_random_cut()
 #elif defined (GAUSSRANDOM)
-  #define noise gaussian_random()
+  #define noise gauss_random()
 #else
  #error "No noise function defined"
 #endif
@@ -245,8 +245,7 @@ inline void friction_thermo_langevin(Particle *p)
     // If a particle-specific gamma is given
     if(p->p.gamma >= 0.) 
     {
-      //langevin_pref1_temp = -p->p.gamma/time_step;
-    	langevin_pref1_temp = -p->p.gamma;
+      langevin_pref1_temp = -p->p.gamma/time_step;
       // Is a particle-specific temperature also specified?
       if(p->p.T >= 0.)
         langevin_pref2_temp = sqrt(24.0*p->p.T*p->p.gamma/time_step);
@@ -257,8 +256,7 @@ inline void friction_thermo_langevin(Particle *p)
     } // particle specific gamma
     else 
     {
-      //langevin_pref1_temp = -langevin_gamma/time_step;
-    	langevin_pref1_temp = -langevin_gamma;
+      langevin_pref1_temp = -langevin_gamma/time_step;
       // No particle-specific gamma, but is there particle-specific temperature
       if(p->p.T >= 0.)
         langevin_pref2_temp = sqrt(24.0*p->p.T*langevin_gamma/time_step);
