@@ -44,7 +44,18 @@ int tclcommand_reaction_ensemble_print_status(Tcl_Interp *interp){
 			//reaction_constant
 			sprintf(buffer, "\nequilibrium constant: %f " , current_reaction_system.reactions[single_reaction_i]->equilibrium_constant);
 			Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
+			//temperature
+			sprintf(buffer, "\nreaction ensemble temperature: %f " , current_reaction_system.temperature_reaction_ensemble);
+			Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
+			//exclusion radius
+			sprintf(buffer, "\nexclusion radius: %f " , current_reaction_system.exclusion_radius);
+			Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
+			
 		}
+		
+		//XXX TODO print exclusion_radius and temperature
+		
+		check_reaction_ensemble();
 		
 	}
 	return TCL_OK;
@@ -228,11 +239,15 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				tclcommand_add_reaction(interp, argc, argv);
 		
 			}
-			if(ARG1_IS_S("check")) {
-				//registers particle types in part gc, has to be called after all reactions are added
-				check_reaction_ensemble();
+			if( ARG1_IS_S("temperature_reaction_ensemble") ){
+				argc-=1; argv+=1;
+				ARG_IS_D(1,current_reaction_system.temperature_reaction_ensemble);
 			}
-		
+			if( ARG1_IS_S("exclusion_radius") ){
+				argc-=1; argv+=1;
+				ARG_IS_D(1,current_reaction_system.exclusion_radius);
+			}
+			
 			if(ARG1_IS_S("set_default_charge_of_type")) {
 				//needs to be called for each type individually after initialize was called
 				int type;

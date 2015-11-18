@@ -26,6 +26,8 @@ typedef struct reaction_system {
 	double standard_pressure_in_simulation_units;
 	double given_length_in_SI_units;
 	double given_length_in_simulation_units;
+	double temperature_reaction_ensemble;
+	double exclusion_radius; //this is used as a kind of hard sphere radius, if particles are closer than that it is assumed that their interaction energy gets approximately infinite => these configurations do not contribute to the partition function and ensemble averages.
 } reaction_system;
 
 extern reaction_system current_reaction_system;

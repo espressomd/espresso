@@ -1,5 +1,5 @@
 //method according to smith94x
-//so far only implemented for the NVT ensemble
+//so far only implemented for the ensemble at constant volume and temperature
 //NOTE: a reaction here is one trial move to dissociate one acid molecule to its dissociated form 
 //so if the reaction is accepted then there is one more dissociated ion pair H+ and A-
 //NOTE: generic_oneway_reaction does not break bonds for simple reactions. as long as there are no reactions like 2A -->B where one of the reacting A particles occurs in the polymer (think of bond breakages if the monomer in the polymer gets deleted in the reaction). This constraint is not of fundamental reason, but there would be a need for a rule for such "collision" reactions (a reaction like the one above).
@@ -14,15 +14,10 @@
 #include "statistics.hpp" //for distto
 #include "integrate.hpp" //for time_step
 #include <stdlib.h>  // for qsort()
-//#include "thermostat.hpp" //for temperature_RE
 #include <stdio.h> //for getline()
 #include "utils.hpp" // for PI
 
-double temperature_RE=1.0;
-
-//For now the reaction ensemble is only implemented for the reaction VT ensemble. The reaction PT ensemble is also possible to implement.
-
-reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
+reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
 
 //declaration of boring helper functions
@@ -54,16 +49,20 @@ int do_reaction(){
 }
 
 
+//checks the reaction_ensemble struct for valid parameters
 int check_reaction_ensemble(){
-	if(current_reaction_system.standard_pressure_in_simulation_units==-10){
+	if(current_reaction_system.standard_pressure_in_simulation_units<0){
 		printf("Please initialize your reaction ensemble standard pressure before calling initialize.\n");
+		exit(0);
+	}
+	if(current_reaction_system.temperature_reaction_ensemble<0){
+		printf("Temperatures cannot be negative. Please provide a temperature (in k_B T) to the simulation. Normally it should be 1.0. This will be used directly to calculate beta:=1/(k_B T) which occurs in the exp(-beta*E)");
 		exit(0);
 	}
 	if(current_reaction_system.water_type>=0 &&(current_reaction_system.given_length_in_SI_units<0 || current_reaction_system.given_length_in_simulation_units <0)){
 		printf("Please provide a length scale in order to make use of the water_type (e.g. for autodissociation reactions). Use the length_scales argument of the reaction_ensemble command.\n");
 		exit(0);		
 	}
-
 	return 0;
 }
 
@@ -145,17 +144,6 @@ double calculate_current_potential_energy_of_system(int unimportant_int){
         }
 
 	return sum_all_energies-kinetic_energy;
-}
-
-double calculate_current_kinetic_energy_of_system(int unimportant_int){
-	//calculate kinetic energy
-	//if (total_energy.init_status == 0) {
-		init_energies(&total_energy);
-		master_energy_calc();
-	//}
-	double kinetic_energy =total_energy.data.e[0];
-
-	return kinetic_energy;
 }
 
 int generic_oneway_reaction(int reaction_id){
@@ -282,7 +270,7 @@ int generic_oneway_reaction(int reaction_id){
 		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
 	}
 
-	double beta =1.0/temperature_RE;
+	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	//calculate boltzmann factor
 	double bf= pow(volume*beta*standard_pressure_in_simulation_units, current_reaction->nu_bar) * current_reaction->equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
@@ -447,10 +435,7 @@ int delete_particle (int p_id) {
 		get_particle_data(max_seen_particle,&last_particle);
 		//set pos
 		double ppos[3];
-		int img[3];
 		memmove(ppos, last_particle.r.p, 3*sizeof(double));
-		memmove(img, last_particle.l.i, 3*sizeof(int));
-		unfold_position(ppos, img);
 
 		//write to particle with p_id
 		//set pos
@@ -477,42 +462,42 @@ int create_particle(int desired_type){
 	double pos_y;
 	double pos_z;
 
-	//create random velocity vector
+	//create random velocity vector according to Maxwell Boltzmann distribution for components
 	double vel[3];
 	//we usse mass=1 for all particles, think about adapting this
-	vel[0]=pow(2*PI*temperature_RE,-3/2)*gaussian_random()*time_step;//scale for internal use in espresso
-	vel[1]=pow(2*PI*temperature_RE,-3/2)*gaussian_random()*time_step;//scale for internal use in espresso
-	vel[2]=pow(2*PI*temperature_RE,-3/2)*gaussian_random()*time_step;//scale for internal use in espresso
+	vel[0]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
+	vel[1]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
+	vel[2]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 	
 	double charge= (double) current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
-	double d_min=0;
+	bool particle_inserted_too_close_to_another_one=true;
 	int max_insert_tries=1000;
 	int insert_tries=0;
-	double sig=1.0;//TODO XXX needs to be obtained from global
-	double min_dist=sig; //setting of a minimal distance is allowed to avoid overlapping configurations if there is a repulsive potential. States with very high energies have a probability of almost zero and therefore do not contribute to ensemble averages.
-	int err_code=ES_PART_ERROR;
+	double min_dist=current_reaction_system.exclusion_radius; //setting of a minimal distance is allowed to avoid overlapping configurations if there is a repulsive potential. States with very high energies have a probability of almost zero and therefore do not contribute to ensemble averages.
 	if(min_dist!=0){
-		while(d_min<min_dist && insert_tries<max_insert_tries) {
+		while(particle_inserted_too_close_to_another_one && insert_tries<max_insert_tries) {
 			pos_x=box_l[0]*d_random();
 			pos_y=box_l[1]*d_random();
 			pos_z=box_l[2]*d_random();
 			double pos_vec[3]={pos_x,pos_y,pos_z};
-			err_code=place_particle(p_id,pos_vec);
+			place_particle(p_id,pos_vec);
 			//set type
 			set_particle_type(p_id, desired_type);
 			//set charge
 			set_particle_q(p_id, charge);
 			//set velocities
 			set_particle_v(p_id,vel);
-			d_min=distto(pos_vec,p_id);
+			double d_min=distto(pos_vec,p_id);
 			insert_tries+=1;
+			if(d_min>current_reaction_system.exclusion_radius)
+				particle_inserted_too_close_to_another_one=false;
 		}
 	}else{
 		pos_x=box_l[0]*d_random();
 		pos_y=box_l[1]*d_random();
 		pos_z=box_l[2]*d_random();
 		double pos_vec[3]={pos_x,pos_y,pos_z};
-		err_code=place_particle(p_id,pos_vec);
+		place_particle(p_id,pos_vec);
 		//set type
 		set_particle_type(p_id, desired_type);	
 		//set velocities
@@ -522,7 +507,7 @@ int create_particle(int desired_type){
 	}
 	
 	if(insert_tries>max_insert_tries){
-		printf("Error: Particle not inserted, ES_PART err_code %d\n", err_code);
+		printf("Error: Particle not inserted\n");
 		return -1;	
 	}
 	return p_id;
@@ -583,7 +568,7 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 
 	//check for the current state to be an allowed state in the [range collective_variables_minimum_values:collective_variables_maximum_values], else return a negative index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]/1000.0 || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/1000.0)
+		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i] || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i])
 			return index;
 	}
 
@@ -591,8 +576,7 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 		nr_subindices_of_collective_variable[collective_variable_i]=int((collective_variables_maximum_values[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
 		//XXX avoid the begin and the end of the CV_interval not being a multiple of the delta_CV (e.g. for energy collective variable)
 		for(int subindex_i=0;subindex_i<nr_subindices_of_collective_variable[collective_variable_i];subindex_i++){
-			if( current_state[collective_variable_i]<subindex_i*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/1000.0){
-				//+delta_collective_variables_values[collective_variable_i]/1000 is due to numeric reasons (think of the degree of association as a collective variable)
+			if( current_state[collective_variable_i]<(subindex_i+1)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]){
 				individual_indices[collective_variable_i]=subindex_i;
 				break;
 			}
@@ -854,6 +838,9 @@ int initialize_wang_landau(){
 		
 	}
 	
+	//set automatically molecular dynamics time step in a good manner for the Wang-Landau reaction ensemble that for Hybrid Monte Carlo moves
+	
+	
 	return true;
 }
 
@@ -995,7 +982,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 		int N_i0= old_particle_numbers[find_index_of_type(current_reaction->product_types[i])];
 		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
 	}
-	double beta =1.0/temperature_RE;
+	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	
 	
@@ -1141,9 +1128,9 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 	double particle_positions[3*particle_number_of_type];
 	int changed_particle_counter=0;
 	int p_id_s_changed_particles[particle_number_of_type];
-
+	
+	//save old_position
 	while(changed_particle_counter<particle_number_of_type){
-		//save old_position
 		if(changed_particle_counter==0){
 			find_particle_type(type, &p_id);
 		}else{
@@ -1159,15 +1146,45 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 		particle_positions[3*changed_particle_counter]=ppos[0];
 		particle_positions[3*changed_particle_counter+1]=ppos[1];
 		particle_positions[3*changed_particle_counter+2]=ppos[2];
-		//change particle position
-		double pos_x=box_l[0]*bit_random_generator(); //here we use the r250 random generator with higher period by using box_l[0]*bit_random_generator()
-		double pos_y=box_l[1]*d_random();
-		double pos_z=box_l[2]*d_random();
-		
-		double new_pos[3]={pos_x, pos_y, pos_z};
-		place_particle(p_id,new_pos);
+		double random_position=box_l[1]*d_random();
+		double temp_pos[3]={random_position,random_position,random_position}; //move ions out of way so that they don't hinder you creating a completely new configuration
+		place_particle(p_id,temp_pos);
 		p_id_s_changed_particles[changed_particle_counter]=p_id;
 		changed_particle_counter+=1;
+	}
+	
+	//propose new positions
+	changed_particle_counter=0;
+	int max_tries=100*particle_number_of_type;//important for very dense systems
+	int attempts=0;
+	while(changed_particle_counter<particle_number_of_type){
+		p_id=p_id_s_changed_particles[changed_particle_counter];
+		bool particle_inserted_too_close_to_another_one=true;
+		while(particle_inserted_too_close_to_another_one==true&& attempts<max_tries){
+			//change particle position
+			double pos_x=box_l[0]*bit_random_generator(); //here we use the r250 random generator with higher period by using box_l[0]*bit_random_generator()
+			double pos_y=box_l[1]*d_random();
+			double pos_z=box_l[2]*d_random();
+			double new_pos[3]={pos_x, pos_y, pos_z};
+			place_particle(p_id,new_pos);
+			double d_min=distto(new_pos,p_id);
+			if(d_min>current_reaction_system.exclusion_radius){
+				particle_inserted_too_close_to_another_one=false;
+			}
+			attempts+=1;
+		}
+		changed_particle_counter+=1;
+	}
+	if(attempts==max_tries){
+		//reversing
+		//create particles again at the positions they were
+		for(int i=0;i<particle_number_of_type;i++){
+			double pos_x=particle_positions[3*i];
+			double pos_y=particle_positions[3*i+1];
+			double pos_z=particle_positions[3*i+2];
+			double pos_vec[3]={pos_x,pos_y,pos_z};
+			place_particle(p_id_s_changed_particles[i],pos_vec);
+		}
 	}
 	
 	
@@ -1199,7 +1216,7 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
-	double beta =1.0/temperature_RE;
+	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 
 	double bf=1.0;
 	if(old_state_index>=0 && new_state_index>=0){
@@ -1296,6 +1313,9 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 	int changed_particle_counter=0;
 	int p_id_s_changed_particles[particle_number_of_type];
 
+	int max_tries=100*particle_number_of_type;//important for very dense systems
+	int attempts=0;
+
 	while(changed_particle_counter<1){
 		//save old_position
 		if(changed_particle_counter==0){
@@ -1312,16 +1332,36 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 		memmove(ppos, part.r.p, 3*sizeof(double));
 		particle_positions[0]=ppos[0];
 		particle_positions[1]=ppos[1];
-		particle_positions[2]=ppos[2];
-		//change particle position
-		double pos_x=box_l[0]*bit_random_generator(); //here we use the r250 random generator with higher period by using box_l[0]*bit_random_generator()
-		double pos_y=box_l[1]*d_random();
-		double pos_z=box_l[2]*d_random();
+		particle_positions[2]=ppos[2];	
+		bool particle_inserted_too_close_to_another_one=true;
+		while(particle_inserted_too_close_to_another_one==true && attempts<max_tries){
+			//change particle position
+			double pos_x=box_l[0]*bit_random_generator(); //here we use the r250 random generator with higher period by using box_l[0]*bit_random_generator()
+			double pos_y=box_l[1]*d_random();
+			double pos_z=box_l[2]*d_random();
+			double new_pos[3]={pos_x, pos_y, pos_z};
+			place_particle(p_id,new_pos);
+			double d_min=distto(new_pos,p_id);
+			attempts+=1;
+			if(d_min>current_reaction_system.exclusion_radius){
+				particle_inserted_too_close_to_another_one=false;
+			}
+		}
 		
-		double new_pos[3]={pos_x, pos_y, pos_z};
-		place_particle(p_id,new_pos);
 		p_id_s_changed_particles[changed_particle_counter]=p_id;
 		changed_particle_counter+=1;
+	}
+	
+	if(attempts==max_tries){
+		//reversing
+		//create particles again at the positions they were
+		for(int i=0;i<1;i++){
+			double pos_x=particle_positions[3*i];
+			double pos_y=particle_positions[3*i+1];
+			double pos_z=particle_positions[3*i+2];
+			double pos_vec[3]={pos_x,pos_y,pos_z};
+			place_particle(p_id_s_changed_particles[i],pos_vec);
+		}
 	}
 	
 	//change polymer conformation if start and end id are provided
@@ -1356,7 +1396,7 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 				bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 				//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
 			}else{
-				double beta =1.0/temperature_RE;
+				double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 				bf=min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
 			}
 		}else{
@@ -1416,40 +1456,45 @@ bool do_HMC_move(){
 	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
-	double E_kin_old=calculate_current_kinetic_energy_of_system(0);
 	
 	double particle_positions[3*max_seen_particle];
 
+	//save old_position and set random velocities
 	for(int p_id=0; p_id<max_seen_particle; p_id++){
-		//save old_position
+		//save old positions
 		get_particle_data(p_id, &part);
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
 		particle_positions[3*p_id]=ppos[0];
 		particle_positions[3*p_id+1]=ppos[1];
 		particle_positions[3*p_id+2]=ppos[2];
+		
+		//create random velocity vector according to Maxwell Boltzmann distribution for components
+		double vel[3];
+		//we usse mass=1 for all particles, think about adapting this
+		vel[0]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
+		vel[1]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
+		vel[2]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
+		set_particle_v(p_id,vel);
+		
 	}
 	
-	//change polymer conformation if start and end id are provided
-//	double old_pos_polymer_particle[3];
-//	int random_polymer_particle_id;
-	
-	mpi_integrate(7,0); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move, see "Effects of Confinement on the Thermodynamics of a Collapsing Heteropolymer: An Off-Lattice Wang-Landau Monte Carlo Simulation Study" => do not turn on an thermostat	
+	mpi_integrate(10,-1); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move => do not turn on an thermostat	
 	
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
-	double E_kin_new=calculate_current_kinetic_energy_of_system(0);
-	double beta =1.0/temperature_RE;
-
+	
+//	printf("E_pot_old %f E_pot_new %f\n",E_pot_old, E_pot_new); //use this to check wether your MD timestep is big enough. There needs to be a change in the energy bigger than Delta E. If there is no change increase the timestep.
+	
+	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 	double bf=1.0;
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
 			if(current_wang_landau_system.do_energy_reweighting==true){
-				bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index]-beta*(E_kin_new-E_kin_old))); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
-				//further change that includes the kinetic energy is due to "Effects of Confinement on the Thermodynamics of a Collapsing Heteropolymer: An Off-Lattice Wang-Landau Monte Carlo Simulation Study" by Sliozberg
+				bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 				//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
 			}else{
-				bf=min(1.0, bf*exp(-beta*(E_kin_new-E_kin_old)-beta*(E_pot_new-E_pot_old)));
+				bf=min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
 			}
 		}else{
 			if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]<0 )
@@ -1513,14 +1558,14 @@ int do_reaction_wang_landau(){
 			got_accepted=generic_oneway_reaction_wang_landau(reaction_id);
 		 	//according to de pablo also needs to be performed for the runs without energy reweighting for sampling the configurational partition function
 		}else if(reaction_id==current_reaction_system.nr_single_reactions){
-			
-			 got_accepted=do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+			got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
 		}else if(reaction_id==current_reaction_system.nr_single_reactions+1){		
 			//or alternatively
-			got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+			 got_accepted=do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
 		}else if(reaction_id==current_reaction_system.nr_single_reactions+2){	
 			//or alternatively			
-			got_accepted=do_HMC_move();
+//			got_accepted=do_HMC_move();
+			got_accepted=do_global_mc_move_for_type;
 		}	
 			//or alternatively if you are not doing energy reweighting
 //			if(current_wang_landau_system.do_energy_reweighting==false){
@@ -1542,8 +1587,9 @@ int do_reaction_wang_landau(){
 	if(current_wang_landau_system.monte_carlo_trial_moves%(1000)<=current_wang_landau_system.wang_landau_steps){
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
-	if(current_wang_landau_system.monte_carlo_trial_moves%(100)<=current_wang_landau_system.wang_landau_steps){
+	if(current_wang_landau_system.monte_carlo_trial_moves%(1000)<=current_wang_landau_system.wang_landau_steps){
 		printf("tries %d acceptance rate %f\n",tries, double(accepted_moves)/tries);
+		fflush(stdout);
 	}
 	
 	return 0;	
