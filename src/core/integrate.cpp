@@ -694,7 +694,8 @@ void rescale_forces_propagate_vel()
           else
 #endif
             /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-            p[i].m.v[j] += p[i].f.f[j];
+            //p[i].m.v[j] += p[i].f.f[j];
+        	p[i].m.v[j] += p[i].f.f[j] / time_step;
 #ifdef EXTERNAL_FORCES
         }
 #endif
@@ -1015,13 +1016,15 @@ void propagate_vel_pos()
 #endif
         {
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-          p[i].m.v[j] += p[i].f.f[j];
+          //p[i].m.v[j] += p[i].f.f[j];
+        	p[i].m.v[j] += p[i].f.f[j] / time_step;
 
 #ifdef MULTI_TIMESTEP
         if (smaller_time_step < 0. || current_time_step_is_small==1)
 #endif  
             /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
-            p[i].r.p[j] += p[i].m.v[j];
+            //p[i].r.p[j] += p[i].m.v[j];
+        	p[i].r.p[j] += p[i].m.v[j] * time_step;
         }
 
       }

@@ -525,7 +525,7 @@ if (p1->p.rotation)
      // 0.4 * MASS * SIGMA^2 = I0
      // 0.4 used for the dimensionless moment of inertia, corresponding
      // to that of a rigid sphere with diameter SIGMA (see [Wang2002])
-  energy.data.e[0] += 0.4 * (p1->p.mass) * (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
+  energy.data.e[0] += 0.4 * (p1->p.mass) * (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]));
 #endif
  }
 #endif
