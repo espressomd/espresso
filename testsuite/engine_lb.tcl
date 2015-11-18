@@ -25,7 +25,6 @@ puts "------------------------------------------------"
 
 require_feature "ENGINE"
 require_feature "LB"
-require_feature "ROTATIONAL_INERTIA"
 
 if { [setmd n_nodes] > 1 } {
   puts "NOTE: Ignoring testcase for n_nodes > 1"
@@ -123,14 +122,6 @@ part 0 pos 6.0 3.0 2.0 q 0 swimming pusher v_swim 0.10 dipole_length 1.0 rotatio
 part 1 pos 2.0 3.0 6.0 q 0 swimming pusher f_swim 0.03 dipole_length 2.0 rotational_friction 20.0 quat [expr sqrt(.5)]               0 [expr sqrt(.5)]               0
 part 2 pos 3.0 2.0 6.0 q 0 swimming puller v_swim 0.15 dipole_length 0.5 rotational_friction 15.0 quat [expr sqrt(.5)]               0               0 [expr sqrt(.5)]
 part 3 pos 3.0 6.0 2.0 q 0 swimming puller f_swim 0.05 dipole_length 1.5 rotational_friction  6.0 quat               0               0 [expr sqrt(.5)] [expr sqrt(.5)]
-# it looks like a known analytical solution was calculated without the dimensionless moment of 
-# inertia of the rigid ball value (I_dimless = 0.4). However, this coefficient is required if both 
-# translation and rotational motion equations are produced in same dimensionless units
-# (see [Wang2002, page 021405-3, right column, http://link.aps.org/doi/10.1103/PhysRevE.66.021405])
-part 0 rinertia [expr 1.0 / 0.4] [expr 1.0 / 0.4] [expr 1.0 / 0.4]
-part 1 rinertia [expr 1.0 / 0.4] [expr 1.0 / 0.4] [expr 1.0 / 0.4]
-part 2 rinertia [expr 1.0 / 0.4] [expr 1.0 / 0.4] [expr 1.0 / 0.4]
-part 3 rinertia [expr 1.0 / 0.4] [expr 1.0 / 0.4] [expr 1.0 / 0.4]
 
 lbfluid cpu agrid 1.0 tau $tstep friction 0.5 viscosity 1.0 density 1.0
 thermostat lb $temp
