@@ -66,7 +66,6 @@
 #include "hydrogen_bond.hpp"
 #include "twist_stack.hpp"
 #include "actor/EwaldgpuForce_ShortRange.hpp"
-#include "utils.hpp"
 
 #include "energy.hpp"
 
@@ -517,7 +516,7 @@ if (p1->p.rotation)
   /* the rotational part is added to the total kinetic energy;
      Here we use the rotational inertia  */
 
-  energy.data.e[0] += 0.4*PMASS(*p1)*(SQR(p1->m.omega[0])*p1->p.rinertia[0] +
+  energy.data.e[0] += (SQR(p1->m.omega[0])*p1->p.rinertia[0] +
 		       SQR(p1->m.omega[1])*p1->p.rinertia[1] +
 		       SQR(p1->m.omega[2])*p1->p.rinertia[2])*time_step*time_step;
 #else
@@ -526,7 +525,7 @@ if (p1->p.rotation)
      // 0.4 * MASS * SIGMA^2 = I0
      // 0.4 used for the dimensionless moment of inertia, corresponding
      // to that of a rigid sphere with diameter SIGMA (see [Wang2002])
-  energy.data.e[0] += 0.4 * PMASS(*p1) * (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
+  energy.data.e[0] += 0.4 * (p1->p.mass) * (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
 #endif
  }
 #endif
