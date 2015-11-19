@@ -34,6 +34,7 @@ tests = \
 	correlation_checkpoint.tcl \
 	constraints_rhomboid.tcl \
 	coulomb_cloud_wall.tcl \
+	dawaanr-and-dds-gpu.tcl \
 	dh.tcl \
 	dielectric.tcl \
 	dihedral.tcl \
