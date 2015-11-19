@@ -576,7 +576,8 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 		nr_subindices_of_collective_variable[collective_variable_i]=int((collective_variables_maximum_values[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
 		//XXX avoid the begin and the end of the CV_interval not being a multiple of the delta_CV (e.g. for energy collective variable)
 		for(int subindex_i=0;subindex_i<nr_subindices_of_collective_variable[collective_variable_i];subindex_i++){
-			if( current_state[collective_variable_i]<(subindex_i+1)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]){
+			if( current_state[collective_variable_i]<(subindex_i+1)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/100000.0){
+				//-delta_collective_variables_values[collective_variable_i]/100000 is due to numeric reasons (think of the degree of association as a collective variable)
 				individual_indices[collective_variable_i]=subindex_i;
 				break;
 			}
@@ -1217,7 +1218,7 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
 	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
-
+	
 	double bf=1.0;
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
@@ -1561,11 +1562,11 @@ int do_reaction_wang_landau(){
 			got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
 		}else if(reaction_id==current_reaction_system.nr_single_reactions+1){		
 			//or alternatively
-			 got_accepted=do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+//			got_accepted=do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+			got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id);
 		}else if(reaction_id==current_reaction_system.nr_single_reactions+2){	
 			//or alternatively			
-//			got_accepted=do_HMC_move();
-			got_accepted=do_global_mc_move_for_type;
+			got_accepted=do_HMC_move();
 		}	
 			//or alternatively if you are not doing energy reweighting
 //			if(current_wang_landau_system.do_energy_reweighting==false){
@@ -1587,7 +1588,7 @@ int do_reaction_wang_landau(){
 	if(current_wang_landau_system.monte_carlo_trial_moves%(1000)<=current_wang_landau_system.wang_landau_steps){
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
-	if(current_wang_landau_system.monte_carlo_trial_moves%(1000)<=current_wang_landau_system.wang_landau_steps){
+	if(current_wang_landau_system.monte_carlo_trial_moves%(90000)<=current_wang_landau_system.wang_landau_steps){
 		printf("tries %d acceptance rate %f\n",tries, double(accepted_moves)/tries);
 		fflush(stdout);
 	}
