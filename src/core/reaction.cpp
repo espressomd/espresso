@@ -275,7 +275,6 @@ void integrate_reaction_swap()
     on_observable_calc();
 
     // Iterate over all the local cells
-    printf("rand_cells.size() = %d\n", rand_cells.size());
     for ( std::vector<int>::iterator c = rand_cells.begin(); c != rand_cells.end(); c++ )
     {
       // Take into account only those cell neighborhoods for which
@@ -296,9 +295,10 @@ void integrate_reaction_swap()
       std::random_shuffle(catalyzers.begin(), catalyzers.end());
 
       // Loop cell neighbors
-      for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
+      //for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
+      for ( int n = 0; n < n_cells; n++ )
       {
-        cell    = dd.cell_inter[*c].nList[n].pList;
+        cell    = &cells[n]; //dd.cell_inter[*c].nList[n].pList;
         p_neigh = cell->part;
         np      = cell->n;
 
@@ -314,11 +314,6 @@ void integrate_reaction_swap()
             // Get the distance between a catalyst and another particle
             get_mi_vector(vec21, p_local[*id].r.p, p_neigh[i].r.p);
             dist2 = sqrlen(vec21);
-            printf("[%f,%f,%f] - [%f,%f,%f] = [%f,%f,%f] -> %f\n",
-                   p_local[*id].r.p[0], p_local[*id].r.p[1], p_local[*id].r.p[2],
-                   p_neigh[i].r.p[0], p_neigh[i].r.p[1], p_neigh[i].r.p[2],
-                   vec21[0], vec21[1], vec21[2],
-                   dist2);
 
             // Check if the distance is within the reaction range and
             // check if no reaction has taken place on the particle in
@@ -334,14 +329,6 @@ void integrate_reaction_swap()
                 products.push_back(i);
             }
           }
-          printf("n_reactants = %d, n_products = %d\n", reactants.size(), products.size());
-
-          printf("Cell loop: %d, Catalyzer loop: %d, Cell neighbor: %d\n", *c, *id, n);
-
-          for ( int i = 0; i < products.size(); i++ )
-            printf("%d -> %d\n", products[i], p_neigh[products[i]].p.type);
-          for ( int i = 0; i < reactants.size(); i++ )
-            printf("%d -> %d\n", reactants[i], p_neigh[reactants[i]].p.type);
 
           // If reactants and products were found, perform the reaction
           if ( reactants.size() > 0 && products.size() > 0 )
@@ -373,15 +360,7 @@ void integrate_reaction_swap()
               // at random
               std::random_shuffle(products.begin(), products.end());
               for ( int p = 0; p < n_reactions; p++ )
-              {
                 p_neigh[products[p]].p.catalyzer_count = 1;
-                if ( p_neigh[products[p]].p.type != reaction.product_type )
-                {
-                  printf("p_neigh[%d].p.type is %d instead of %d\n",
-                         products[p], p_neigh[products[p]].p.type, reaction.product_type);
-                  exit(666);
-                }
-              }
             }
             else
             {
@@ -399,15 +378,7 @@ void integrate_reaction_swap()
 
               std::random_shuffle(reactants.begin(), reactants.end());
               for ( int p = 0; p < n_reactions; p++ )
-              {
                 p_neigh[reactants[p]].p.catalyzer_count = 1;
-                if ( p_neigh[reactants[p]].p.type != reaction.reactant_type )
-                {
-                  printf("p_neigh[%d].p.type is %d instead of %d\n",
-                         reactants[p], p_neigh[reactants[p]].p.type, reaction.reactant_type);
-                  exit(666);
-                }
-              }
             }
           }
         }
