@@ -44,6 +44,10 @@
     together. This prevents the particles from sliding against each
     other. Requires VIRTUAL_SITES_RELATIVE and COLLISION_MODE_BOND*/
 #define COLLISION_MODE_VS    4
+/** Glue a particle to a speciffic spot on the surface of an other */
+#define COLLISION_MODE_GLUE_TO_SURF    8
+/// Three particle binding mode
+#define COLLISION_MODE_BIND_THREE_PARTICLES 16 
 /*@}*/
 
 typedef struct {
@@ -57,6 +61,20 @@ typedef struct {
   int mode;
   /// distance at which particles are bound
   double distance;
+  /// For mode "glue to surface": The distance from the particle which is to be glued to the new virtual site
+  double dist_glued_part_to_vs;
+  /// For mode "glue to surface": The particle type being glued
+  int part_type_to_be_glued;
+  /// For mode "glue to surface": The particle type to which the virtual site is attached
+  int part_type_to_attach_vs_to;
+  /// Particle type to which the newly glued particle is converd
+  int part_type_after_glueing;
+  /// first bond type (for zero degrees)) used for the three-particle bond (angle potential)
+  int bond_three_particles;
+  /// Number of angle bonds to use (angular resolution)
+  /// different angle bonds with different equilibrium angles
+  /// Are expected to have ids immediately following to bond_three_particles
+  int three_particle_angle_resolution;
 } Collision_parameters;
 
 /// Parameters for collision detection
@@ -80,8 +98,13 @@ void handle_collisions();
     @param bond_vs is the type of the bond between the virtual particles,
     if using noslip bonds
     @param t is the type of the virtual sites, if using noslip bonds
+    @param d2 for the "glue to surface" mode is the distance between the particle to be glued and the new virtual site
+    @param tg for the "glue to surface" is the type of the particle being glued
+    @param tv for the "glue to surface" is the type of the particle to which the virtual site is attached
+    @param bond_three_particles is the three-particle-bond parameter
+    @param angle_resolution is the three_particle_angle_resolution parameter in order to define different angle bonds
  */
-int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t);
+int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution);
 
 #endif
 

@@ -175,6 +175,12 @@ for { set i 0 } { $i < $equilibration_iterations } { incr i } {
    puts -nonewline "eq run $i at time=[setmd time] \r"
    # puts "temp = [expr [lindex $energies 1 1]/(1.5*[setmd n_part])]"
 }
+
+# Setup observable for the positions
+set obs_pos [observable new particle_positions all]
+# Setup msd as postition correlation
+set msd [correlation new obs1 $obs_pos corr_operation square_distance_componentwise dt $tstep tau_max [expr 50.*$tstep] tau_lin 16]
+
   puts "sampling "
 setmd time_step $tstep
 set nrep 0
@@ -205,6 +211,9 @@ for {set i 0} { $i < $sampling_iterations } { incr i} {
      lappend apotential $potential
      lappend atemperature $temperature
      lappend atotal $total
+
+     correlation $msd update
+
      puts -nonewline "integration step   $i / $sampling_iterations \r"
      # puts -nonewline "total = [expr $total/$n_part] kinetic= [expr $kinetic/$n_part] potential= [expr $potential/$n_part]  temperature = $temperature\n"
 }
@@ -230,4 +239,30 @@ close $en
   set value [lindex $error 0]
   set verror [lindex $error 1]
   puts "     Pressure : $value  $verror"
+  puts "-- Writing MSD to file"
+
+# Get calculated MSD from correlator
+set msd_data [correlation $msd print]
+# Open file to write MSD to
+set msd_file [open "data/msd_correlator.dat" "w"]
+
+# Loop over all the times
+foreach msd_sample $msd_data {
+    # Holds the average over all the components of all the particles
+    set average 0.0
+    # Current time
+    set tau [lindex $msd_sample 0]
+    # Loop over all the components of all the particles for this time
+    for { set i 0 }  { $i < [expr 3*$n_part] } { incr i } {
+        # and sum them up
+	set average [expr $average + [lindex $msd_sample [expr $i + 2]]]
+    }
+    # Normalize
+    set average [expr $average/(3*$n_part)]
+    # Write to file
+    puts $msd_file "$tau $average"
+}
+
+close $msd_file
+
 exit

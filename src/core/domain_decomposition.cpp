@@ -646,6 +646,25 @@ Cell *dd_position_to_cell(double pos[3])
   return &cells[i];
 }
 
+void dd_position_to_cell_indices(double pos[3],int* idx)
+{
+  int i;
+  double lpos;
+
+  for(i=0;i<3;i++) {
+    lpos = pos[i] - my_left[i];
+
+    idx[i] = (int)(lpos*dd.inv_cell_size[i])+1;
+
+    if (idx[i] < 1) {
+      idx[i] = 1;
+    }
+    else if (idx[i] > dd.cell_grid[i]) {
+      idx[i] = dd.cell_grid[i];
+    }
+  }
+}
+
 /*************************************************/
 
 /** Append the particles in pl to \ref local_cells and update \ref local_particles.  

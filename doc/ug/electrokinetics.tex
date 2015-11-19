@@ -265,7 +265,7 @@ order to properly set up the boundaries, the \var{charge\_density} and relevant
   print 
   \require{1 or 2}{\var{property}}
   \opt{vtk}
-  filename [\var{filename}]
+  \var{filename}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
@@ -283,7 +283,7 @@ boundaries, respectively. The boundaries can only be printed when the
 used to directly export in the vtk format. The vtk format is readable
 by visualization software such as paraview\footnote{http://www.paraview.org/}
 and mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. If the 
-\opt{vtk} option is not specified, a gnuplot readable data will be exported.
+\opt{vtk} option is not specified, a gnuplot readable data file will be exported.
 
 \begin{essyntax}
   \require{1 or 2 or 3}{electrokinetics}
@@ -291,7 +291,7 @@ and mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. If the
   print 
   \var{property} 
   \opt{vtk}
-  filename [\var{filename}]
+  \var{filename}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
@@ -339,8 +339,8 @@ This command can be used to output the number density of the
 \section{\label{ssec:ek-checkpointing}Checkpointing}
 
 \begin{essyntax}
-  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint save [\var{filename}]
-  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint load [\var{filename}]
+  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint save \var{filename}
+  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint load \var{filename}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
@@ -527,7 +527,7 @@ The \lit{electrokinetics pdb-parse} feature allows the user to parse simple PDB 
   print 
   \require{3}{\var{property}}
   \opt{vtk} 
-  \var{filename} [\var{filename}]
+  \var{filename}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}

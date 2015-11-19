@@ -136,7 +136,7 @@ __device__ dds_float dipole_ia_energy(int id,dds_float pf, float* r1, float *r2,
   dds_float dr[3];
 dds_float _r1[3],_r2[3],_dip1[3],_dip2[3];
 
-for (int i=i=0;i<3;i++)
+for (int i=0;i<3;i++)
 {
  _r1[i]=r1[i];
  _r2[i]=r2[i];
@@ -174,7 +174,6 @@ __global__ void DipolarDirectSum_kernel_force(dds_float pf,
 				     int n, float *pos, float* dip, float *f, float* torque, dds_float box_l[3], int periodic[3]) {
 
   int i = blockIdx.x * blockDim.x + threadIdx.x;
-
 
   if(i >= n)
     return;
@@ -215,7 +214,7 @@ __global__ void DipolarDirectSum_kernel_force(dds_float pf,
 
   for (int j=i+1;j<n;j++)
   {
-      dipole_ia_force(i,1,pos+3*i,pos+3*j,dip+3*i,dip+3*j,fi,ti,tj,1,box_l,periodic);
+      dipole_ia_force(i,pf,pos+3*i,pos+3*j,dip+3*i,dip+3*j,fi,ti,tj,1,box_l,periodic);
 //      printf("%d %d: %f %f %f\n",i,j,fi[0],fi[1],fi[2]); 
       for (int k=0;k<3;k++)
       {
@@ -285,7 +284,7 @@ __global__ void DipolarDirectSum_kernel_energy(dds_float pf,
   // Summation for particle i
   for (int j=i+1;j<n;j++)
   {
-      sum+=dipole_ia_energy(i,1,pos+3*i,pos+3*j,dip+3*i,dip+3*j,box_l,periodic);
+      sum+=dipole_ia_energy(i,pf,pos+3*i,pos+3*j,dip+3*i,dip+3*j,box_l,periodic);
   }
 
   // Save per thread result into block shared mem

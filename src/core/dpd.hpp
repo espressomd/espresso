@@ -67,7 +67,8 @@ void dpd_cool_down();
 
 /** Calculate Random Force and Friction Force acting between particle
     p1 and p2 and add them to their forces. */
-void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2);
+void add_dpd_thermo_pair_force(Particle * p1, Particle * p2,
+                               double d[3], double dist, double dist2);
 #endif
 
 #ifdef INTER_DPD
