@@ -84,9 +84,9 @@ for { set i 0 } { $i < $n_parts } { incr i } {
     set f_bonded_coulomb [lindex $forces_bonded_coulomb $i]
     puts "dh $f_dh"
     puts "bc $f_bonded_coulomb"
-    set rms [expr $rms + ([lindex $f_dh 0] - [lindex $f_bonded_coulomb 0])**2]
-    set rms [expr $rms + ([lindex $f_dh 1] - [lindex $f_bonded_coulomb 1])**2]
-    set rms [expr $rms + ([lindex $f_dh 2] - [lindex $f_bonded_coulomb 2])**2]
+    set rms [expr $rms + pow([lindex $f_dh 0] - ([lindex $f_bonded_coulomb 0]), 2)]
+    set rms [expr $rms + pow([lindex $f_dh 1] - ([lindex $f_bonded_coulomb 1]), 2)]
+    set rms [expr $rms + pow([lindex $f_dh 2] - ([lindex $f_bonded_coulomb 2]), 2)]
 }
 
 set rms [expr { sqrt($rms/$n_parts) }]
