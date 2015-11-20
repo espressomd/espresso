@@ -636,7 +636,8 @@ wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 
  						.output_filename=NULL,\
  						.minimum_energies_at_flat_index=NULL, .maximum_energies_at_flat_index=NULL,\
  						.do_energy_reweighting=false, .counter_ion_type=-10, .polymer_start_id=-10 ,\
- 						.polymer_end_id=-10, .fix_polymer=false ,.do_not_sample_reaction_partition_function=false
+ 						.polymer_end_id=-10, .fix_polymer=false ,.do_not_sample_reaction_partition_function=false,\
+ 					.used_bins=-10
  						};//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential, use only 1 wang_landau_steps if you want to record other observables in the tcl script.
 
 double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value, double delta_CV) {
@@ -811,18 +812,23 @@ int initialize_wang_landau(){
 			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
 		}
 
+		int empty_bins_in_memory=0;
+
 		for(int flattened_index=0;flattened_index<current_wang_landau_system.len_histogram;flattened_index++){
 			//unravel index
 			int unraveled_index[current_wang_landau_system.nr_collective_variables];
 			unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
 			//use unraveled index
 			double current_energy=unraveled_index[energy_collective_variable_index]*current_wang_landau_system.collective_variables[energy_collective_variable_index]->delta_CV+current_wang_landau_system.collective_variables[energy_collective_variable_index]->CV_minimum;
-			if(current_energy>max_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)] || current_energy<min_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)]){
+			if(current_energy>max_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)] || current_energy<min_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)] || max_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)]-min_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)]<0.00001 ){
 				current_wang_landau_system.histogram[flattened_index]=current_wang_landau_system.int_fill_value;
-				current_wang_landau_system.wang_landau_potential[flattened_index]=current_wang_landau_system.double_fill_value;			
+				current_wang_landau_system.wang_landau_potential[flattened_index]=current_wang_landau_system.double_fill_value;
+				empty_bins_in_memory+=1;		
 			}
 		}
-
+		
+		current_wang_landau_system.used_bins=current_wang_landau_system.len_histogram-empty_bins_in_memory;
+		
 	}
 
 	//assign determine_current_state_in_this_collective_variable function pointers to correct function
@@ -1567,6 +1573,7 @@ int do_reaction_wang_landau(){
 		}else if(reaction_id==current_reaction_system.nr_single_reactions+2){	
 			//or alternatively			
 			got_accepted=do_HMC_move();
+//			got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id);
 		}	
 			//or alternatively if you are not doing energy reweighting
 //			if(current_wang_landau_system.do_energy_reweighting==false){
@@ -1585,7 +1592,7 @@ int do_reaction_wang_landau(){
 		}
 	}
 	//write out preliminary wang-landau potential results
-	if(current_wang_landau_system.monte_carlo_trial_moves%(1000)<=current_wang_landau_system.wang_landau_steps){
+	if(current_wang_landau_system.monte_carlo_trial_moves%(90000)<=current_wang_landau_system.wang_landau_steps){
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
 	if(current_wang_landau_system.monte_carlo_trial_moves%(90000)<=current_wang_landau_system.wang_landau_steps){
@@ -1668,7 +1675,7 @@ void reset_histogram(){
 }
 
 void refine_wang_landau_parameter_one_over_t(){
-	double monte_carlo_time =current_wang_landau_system.monte_carlo_trial_moves/current_wang_landau_system.len_histogram;
+	double monte_carlo_time =current_wang_landau_system.monte_carlo_trial_moves/current_wang_landau_system.used_bins;
 	if ( current_wang_landau_system.wang_landau_parameter/2.0 <1.0/monte_carlo_time ){
 		current_wang_landau_system.wang_landau_parameter= 1.0/monte_carlo_time;
 	} else {
