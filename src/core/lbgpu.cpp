@@ -87,7 +87,7 @@ LB_parameters_gpu lbpar_gpu = {
   // gamma_even
   SC0,
   //is_TRT
-  true,
+  false,
   // friction
   SC0,
   // lb_couple_switch
@@ -283,7 +283,7 @@ void lb_reinit_parameters_gpu() {
       lbpar_gpu.gamma_bulk[ii] = lbpar_gpu.gamma_shear[ii];
       lbpar_gpu.gamma_even[ii] = lbpar_gpu.gamma_shear[ii];
       lbpar_gpu.gamma_odd[ii] = -(7.0f*lbpar_gpu.gamma_even[ii]+1.0f)/(lbpar_gpu.gamma_even[ii]+7.0f);
-      //lbpar_gpu.gamma_odd[ii] = lbpar_gpu.gamma_shear[ii]; //uncomment for BGK as default
+      //lbpar_gpu.gamma_odd[ii] = lbpar_gpu.gamma_shear[ii]; //uncomment for BGK
     }
     
     //lbpar_gpu.gamma_even[ii] = 0.0; //uncomment for special case of BGK
@@ -291,11 +291,11 @@ void lb_reinit_parameters_gpu() {
     //lbpar_gpu.gamma_shear[ii] = 0.0;
     //lbpar_gpu.gamma_bulk[ii] = 0.0;
     
-    printf("gamma_shear=%e\n", lbpar_gpu.gamma_shear[ii]);
-    printf("gamma_bulk=%e\n", lbpar_gpu.gamma_bulk[ii]);
-    printf("TRT gamma_odd=%e\n", lbpar_gpu.gamma_odd[ii]);
-    printf("TRT gamma_even=%e\n", lbpar_gpu.gamma_even[ii]);
-    printf("\n");
+    //printf("gamma_shear=%e\n", lbpar_gpu.gamma_shear[ii]);
+    //printf("gamma_bulk=%e\n", lbpar_gpu.gamma_bulk[ii]);
+    //printf("TRT gamma_odd=%e\n", lbpar_gpu.gamma_odd[ii]);
+    //printf("TRT gamma_even=%e\n", lbpar_gpu.gamma_even[ii]);
+    //printf("\n");
 
 #ifdef SHANCHEN
     if (lbpar_gpu.mobility[0] > 0.0) {

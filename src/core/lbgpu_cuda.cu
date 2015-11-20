@@ -634,7 +634,6 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 #endif
  
       /** relax the stress modes (eq14 schiller)*/
-//if(index == 0) printf("para.gamma_bulk=%e para.gamma_shear=%e para.gamma_even=%e para.gamma_odd=%e\n", para.gamma_bulk[ii], para.gamma_shear[ii], para.gamma_even[ii], para.gamma_odd[ii]);
 
       mode[4 + ii * LBQ] = modes_from_pi_eq[0] +  para.gamma_bulk[ii]*(mode[4 + ii * LBQ] - modes_from_pi_eq[0]);
       mode[5 + ii * LBQ] = modes_from_pi_eq[1] + para.gamma_shear[ii]*(mode[5 + ii * LBQ] - modes_from_pi_eq[1]);

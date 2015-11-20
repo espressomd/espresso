@@ -79,7 +79,7 @@ LB_Parameters lbpar = {
     // gamma_even
     {0.},
     // is_TRT
-    true,
+    false,
     // resend_halo
     0
 };
@@ -1937,7 +1937,7 @@ void lb_reinit_parameters() {
         gamma_bulk = gamma_shear;
         gamma_even = gamma_shear;
         gamma_odd = -(7.0*gamma_even+1.0)/(gamma_even+7.0);
-        //gamma_odd = gamma_shear; //uncomment for BGK as default
+        //gamma_odd = gamma_shear; //uncomment for BGK
     }
 
     //gamma_shear = 0.0; //uncomment for special case of BGK
@@ -1945,11 +1945,11 @@ void lb_reinit_parameters() {
     //gamma_odd = 0.0;
     //gamma_even = 0.0;
 
-    printf("gamma_shear=%e\n", gamma_shear);
-    printf("gamma_bulk=%e\n", gamma_bulk);
-    printf("gamma_odd=%e\n", gamma_odd);
-    printf("gamma_even=%e\n", gamma_even);
-    printf("\n");
+    //printf("gamma_shear=%e\n", gamma_shear);
+    //printf("gamma_bulk=%e\n", gamma_bulk);
+    //printf("gamma_odd=%e\n", gamma_odd);
+    //printf("gamma_even=%e\n", gamma_even);
+    //printf("\n");
 
     double mu = 0.0;
 
