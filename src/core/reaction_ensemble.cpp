@@ -33,6 +33,7 @@ int vec_random(double* vecrandom, double desired_length);
 int hide_particle(int p_id, int previous_type);
 int delete_particle (int p_id);
 int intcmp(const void *aa, const void *bb);
+void free_wang_landau();
 
 
 
@@ -67,18 +68,24 @@ int check_reaction_ensemble(){
 }
 
 int free_reaction_ensemble(){
-		//needs to be called at the end of the simulation
-		for(int single_reaction_i=0;single_reaction_i<current_reaction_system.nr_single_reactions;single_reaction_i++){
-			//free educt types and coefficients
-			free(current_reaction_system.reactions[single_reaction_i]->educt_types);
-			free(current_reaction_system.reactions[single_reaction_i]->educt_coefficients);	
-			//free product types and coefficients
-			free(current_reaction_system.reactions[single_reaction_i]->product_types);
-			free(current_reaction_system.reactions[single_reaction_i]->product_coefficients);	
-		}
+	//needs to be called at the end of the simulation
+	for(int single_reaction_i=0;single_reaction_i<current_reaction_system.nr_single_reactions;single_reaction_i++){
+		//free educt types and coefficients
+		free(current_reaction_system.reactions[single_reaction_i]->educt_types);
+		free(current_reaction_system.reactions[single_reaction_i]->educt_coefficients);	
+		//free product types and coefficients
+		free(current_reaction_system.reactions[single_reaction_i]->product_types);
+		free(current_reaction_system.reactions[single_reaction_i]->product_coefficients);
+		free(current_reaction_system.reactions[single_reaction_i]);	
+	}
 	free(current_reaction_system.reactions);
 	free(current_reaction_system.type_index);
 	free(current_reaction_system.charges_of_types);
+
+	//check wether wang_landau was used
+	if(current_wang_landau_system.histogram != NULL)
+		free_wang_landau();
+
 	return 0;
 }
 
@@ -734,11 +741,6 @@ int get_flattened_index_wang_landau_without_energy_collective_variable(int flatt
 void unravel_index(int* len_dims, int ndims, int flattened_index, int* unraveled_index_out); //needed for writing results and energy collective variable
 
 int initialize_wang_landau(){
-	
-	//initialize seed of random generator automatically by espresso
-	long *seed = (long *) malloc(n_nodes*sizeof(long));
-	mpi_random_seed(0,seed);
-	free(seed);
 	//initialize deltas for collective variables which are of the type of a degree of association
 	int energy_collective_variable_index=-10;
 	double* min_boundaries_energies=NULL;
@@ -1605,7 +1607,6 @@ int do_reaction_wang_landau(){
 
 
 void free_wang_landau(){
-	free(current_wang_landau_system.output_filename);
 	free(current_wang_landau_system.histogram);
 	free(current_wang_landau_system.wang_landau_potential);
 	for(int CV_i=0;CV_i<current_wang_landau_system.nr_collective_variables;CV_i++){
@@ -1616,6 +1617,7 @@ void free_wang_landau(){
 		if(current_collective_variable->energy_boundaries_filename!=NULL){//check wether we have a collective variable which is of the type of an energy
 			free(current_collective_variable->energy_boundaries_filename);
 		}
+		free(current_collective_variable);
 	}
 	free(current_wang_landau_system.collective_variables);
 	free(current_wang_landau_system.output_filename);

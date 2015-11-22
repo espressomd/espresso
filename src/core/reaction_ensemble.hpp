@@ -91,6 +91,7 @@ typedef struct wang_landau_system {
 	int polymer_end_id;
 	bool fix_polymer;
 	bool do_not_sample_reaction_partition_function;
+	int used_bins;
 } wang_landau_system;
 
 extern wang_landau_system current_wang_landau_system;
