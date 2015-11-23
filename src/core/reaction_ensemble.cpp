@@ -1460,20 +1460,19 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 
 bool do_HMC_move(){
 	current_wang_landau_system.monte_carlo_trial_moves+=1;
-	int p_id;
-	Particle part;
-	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
 	
 	double particle_positions[3*max_seen_particle];
 
 	//save old_position and set random velocities
-	for(int p_id=0; p_id<max_seen_particle; p_id++){
+	for(int p_id=0; p_id<max_seen_particle+1; p_id++){
 		//save old positions
+		Particle part;
 		get_particle_data(p_id, &part);
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
+		free_particle(&part);//fixes memory leak. if omitted a lot of memory is leaked
 		particle_positions[3*p_id]=ppos[0];
 		particle_positions[3*p_id+1]=ppos[1];
 		particle_positions[3*p_id+2]=ppos[2];
@@ -1485,9 +1484,8 @@ bool do_HMC_move(){
 		vel[1]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 		vel[2]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 		set_particle_v(p_id,vel);
-		
+
 	}
-	
 	mpi_integrate(10,-1); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move => do not turn on an thermostat	
 	
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
@@ -1575,7 +1573,6 @@ int do_reaction_wang_landau(){
 		}else if(reaction_id==current_reaction_system.nr_single_reactions+2){	
 			//or alternatively			
 			got_accepted=do_HMC_move();
-//			got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id);
 		}	
 			//or alternatively if you are not doing energy reweighting
 //			if(current_wang_landau_system.do_energy_reweighting==false){
