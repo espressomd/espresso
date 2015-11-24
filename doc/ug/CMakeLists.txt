@@ -17,7 +17,7 @@ add_custom_target(ug
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/quickref.inp
                 ${CMAKE_BINARY_DIR}/doc/latexit.sh
-                ${CMAKE_BINARY_DIR}/doc/logo/logo.pdf
+                ${CMAKE_SOURCE_DIR}/doc/logo/logo.pdf
 )
 
 #add_latex_document(ug.tex
