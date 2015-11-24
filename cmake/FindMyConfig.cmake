@@ -36,12 +36,13 @@ else()
   endif()
 endif()
 
-add_custom_target(myconfig)
+#add_custom_target(myconfig)
 
 # copy the file to src/core/myconfig-final.hpp
-add_custom_command(
-  TARGET myconfig
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MYCONFIG_FILE} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
-)
+#add_custom_command(
+#  OUTPUT src/core/myconfig-final.hpp
+#  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MYCONFIG_FILE} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
+#)
+configure_file( ${MYCONFIG_FILE} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp COPYONLY )
 
 message(STATUS "Config file: ${MYCONFIG_FILE}")
