@@ -171,10 +171,8 @@ void calc_long_range_virials()
     int k;
     p3m_charge_assign();
     virials.coulomb[1] = p3m_calc_kspace_forces(0,1);
-    
-    for(k=0;k<3;k++)
-      p_tensor.coulomb[9+ k*3 + k] = virials.coulomb[1]/3.;
-    p3m_calc_kspace_stress(p_tensor.coulomb);
+    p3m_charge_assign();
+    p3m_calc_kspace_stress(p_tensor.coulomb + 9);
     break;
   }
 #endif
