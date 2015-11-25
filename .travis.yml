@@ -12,6 +12,8 @@ before_install:
 env:
   - myconfig=default
   - myconfig=maxset
+  - myconfig=maxset-gaussrandom
+  - myconfig=maxset-gaussrandomcut
   - myconfig=molcut
   - myconfig=rest1
   - myconfig=rest2
