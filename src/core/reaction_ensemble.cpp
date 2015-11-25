@@ -1114,7 +1114,6 @@ bool is_in_list(int value, int* list, int len_list){
 }
 
 bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polymer){
-	current_wang_landau_system.monte_carlo_trial_moves+=1;
 	int p_id;
 	Particle part;
 	
@@ -1299,11 +1298,12 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 
 
 bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polymer){
-	current_wang_landau_system.monte_carlo_trial_moves+=1;
-	int p_id;
-	Particle part;
-	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
+	if(old_state_index>=0){
+		if(current_wang_landau_system.histogram[old_state_index]>=0)
+			current_wang_landau_system.monte_carlo_trial_moves+=1;
+	}
+	
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
 	
 	
@@ -1326,6 +1326,9 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 
 	int max_tries=100*particle_number_of_type;//important for very dense systems
 	int attempts=0;
+
+	int p_id;
+	Particle part;
 
 	while(changed_particle_counter<1){
 		//save old_position
@@ -1461,8 +1464,12 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 }
 
 bool do_HMC_move(){
-	current_wang_landau_system.monte_carlo_trial_moves+=1;
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
+	if(old_state_index>=0){
+		if(current_wang_landau_system.histogram[old_state_index]>=0)
+			current_wang_landau_system.monte_carlo_trial_moves+=1;
+	}
+	
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
 	
 	double particle_positions[3*max_seen_particle];
@@ -1600,13 +1607,22 @@ int do_reaction_wang_landau(){
 			refine_wang_landau_parameter_one_over_t();
 		}
 	}
-	//write out preliminary wang-landau potential results
+	
+	//shift wang landau potential minimum to zero
 	if(current_wang_landau_system.monte_carlo_trial_moves%(90000)<=current_wang_landau_system.wang_landau_steps){
-		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
-	}
-	if(current_wang_landau_system.monte_carlo_trial_moves%(90000)<=current_wang_landau_system.wang_landau_steps){
+	
+		//for numerical stability here we also subtract the minimum positive value of the wang_landau_potential from the wang_landau potential, allowed since only the difference in the wang_landau potential is of interest.
+		double minimum_wang_landau_potential=find_minimum_non_negative_value(current_wang_landau_system.wang_landau_potential,current_wang_landau_system.len_histogram);
+		for(int i=0;i<current_wang_landau_system.len_histogram;i++){
+			if(current_wang_landau_system.wang_landau_potential[i]>=0)//check for wether we are in the valid range of the collective variable
+				current_wang_landau_system.wang_landau_potential[i]-=minimum_wang_landau_potential;	
+		}
+		
 		printf("tries %d acceptance rate %f\n",tries, double(accepted_moves)/tries);
 		fflush(stdout);
+	
+		//write out preliminary wang-landau potential results
+		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
 
 //	if(current_wang_landau_system.monte_carlo_trial_moves%100000==0)
@@ -1687,7 +1703,8 @@ void reset_histogram(){
 }
 
 void refine_wang_landau_parameter_one_over_t(){
-	double monte_carlo_time = current_wang_landau_system.monte_carlo_trial_moves/current_wang_landau_system.used_bins;
+	double monte_carlo_time = (double) current_wang_landau_system.monte_carlo_trial_moves/current_wang_landau_system.used_bins;
+	printf("mtime %f\n",monte_carlo_time);
 	if ( current_wang_landau_system.wang_landau_parameter/2.0 <1.0/monte_carlo_time ){
 		current_wang_landau_system.wang_landau_parameter= 1.0/monte_carlo_time;
 	} else {
@@ -1695,12 +1712,6 @@ void refine_wang_landau_parameter_one_over_t(){
 		current_wang_landau_system.wang_landau_parameter= current_wang_landau_system.wang_landau_parameter/2.0;
 	}
 	current_wang_landau_system.already_refined_n_times+=1;
-	//for numerical stability here we also subtract the minimum positive value of the wang_landau_potential from the wang_landau potential, allowed since only the difference in the wang_landau potential is of interest.
-	double minimum_wang_landau_potential=find_minimum_non_negative_value(current_wang_landau_system.wang_landau_potential,current_wang_landau_system.len_histogram);
-	for(int i=0;i<current_wang_landau_system.len_histogram;i++){
-		if(current_wang_landau_system.wang_landau_potential[i]>=0)//check for wether we are in the valid range of the collective variable
-			current_wang_landau_system.wang_landau_potential[i]-=minimum_wang_landau_potential;	
-	} 
 }
 
 bool achieved_desired_number_of_refinements_one_over_t () {
