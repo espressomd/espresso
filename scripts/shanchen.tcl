@@ -85,8 +85,8 @@ proc droplet { args } {
 							set dist [expr $dist + ($pos-$c)*($pos - $c)]
 						  }
 						  set dist [expr sqrt($dist)]
-						  set rho_a  [expr $min+(($max-$min)*0.5*(1.+tanh(($dist-$R)/$width))) ] 
-            					  set rho_b  [expr $max+(($min-$max)*0.5*(1.+tanh(($dist-$R)/$width))) ] 
+            					  set rho_a  [expr $max+(($min-$max)*0.5*(1.+tanh(($dist-$R)/$width))) ] 
+						  set rho_b  [expr $min+(($max-$min)*0.5*(1.+tanh(($dist-$R)/$width))) ] 
 						}
 				}
             			lbnode $x $y $z set rho  $rho_a $rho_b

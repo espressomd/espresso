@@ -259,9 +259,11 @@ int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 		  Tcl_AppendResult(interp, "unknown lbboundary type ", buffer, ".", (char *) NULL);
   }
 #ifdef SHANCHEN
-  Tcl_PrintDouble(interp, lbb->density, buffer);
-  Tcl_AppendResult(interp, " density ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, lbb->sc_coupling[0], buffer);
+  Tcl_AppendResult(interp, " density ", NULL, " ", (char *) NULL);
+  for (int ii=0; ii<LB_COMPONENTS;ii++){
+     Tcl_PrintDouble(interp, lbb->density[ii], buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
   Tcl_AppendResult(interp, " sc_coupling ", NULL, " ", (char *) NULL);
   for (int ii=0; ii<LB_COMPONENTS;ii++){
      Tcl_PrintDouble(interp, lbb->sc_coupling[ii], buffer);
@@ -305,9 +307,9 @@ LB_Boundary *generate_lbboundary()
   lb_boundaries[n_lb_boundaries-1].force[1]=
   lb_boundaries[n_lb_boundaries-1].force[2]=0;
 #ifdef SHANCHEN
-  lb_boundaries[n_lb_boundaries-1].density=1.;
   for (int ii=0; ii<LB_COMPONENTS;ii++){
      lb_boundaries[n_lb_boundaries-1].sc_coupling[ii]=0.;
+     lb_boundaries[n_lb_boundaries-1].density[ii]=1.;
   }
 #endif
   
@@ -323,15 +325,18 @@ LB_Boundary *generate_lbboundary()
 
 #ifdef SHANCHEN
 int parse_lbboundary_density(LB_Boundary *lbb,Tcl_Interp *interp, int *argc, char ***argv){
-	if(*argc < 2) {
-             Tcl_AppendResult(interp, "lbboundary [...] density <dens> expected", (char *) NULL);
+	if(*argc < 1+LB_COMPONENTS) {
+             Tcl_AppendResult(interp, "lbboundary [...] density <dens comp 1> <dens comp 2> expected", (char *) NULL);
              return 0;
         }	
-        if(Tcl_GetDouble(interp, (*argv)[1], &(lbb->density)) == TCL_ERROR ) { 
+        if(Tcl_GetDouble(interp, (*argv)[1], &(lbb->density[0])) == TCL_ERROR ) { 
 		return 0; 
 	} 
-	(*argc)-=2;
-	(*argv)+=2;
+        if(Tcl_GetDouble(interp, (*argv)[2], &(lbb->density[1])) == TCL_ERROR ) { 
+		return 0; 
+	} 
+	(*argc)-=3;
+	(*argv)+=3;
 	return  1;
 }
 int parse_lbboundary_sc_coupling(LB_Boundary *lbb,Tcl_Interp *interp, int *argc, char ***argv){

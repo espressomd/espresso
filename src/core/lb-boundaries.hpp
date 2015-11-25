@@ -87,7 +87,7 @@ typedef struct {
   double force[3*LB_COMPONENTS];
   double velocity[3];
 #ifdef SHANCHEN
-  double density;
+  double density[LB_COMPONENTS];
   double sc_coupling[LB_COMPONENTS];
 #endif
 #ifdef EK_BOUNDARIES

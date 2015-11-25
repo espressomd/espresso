@@ -571,9 +571,8 @@ void shanchen_set_boundaries(void){
                 if (lbfields[index].boundary)
                 {
 		    for(int ii=0;ii<LB_COMPONENTS;ii++){
-		        lbfields[index].rho[ii]=lb_boundaries[lbfields[index].boundary-1].density;
+		        lbfields[index].rho[ii]=lb_boundaries[lbfields[index].boundary-1].density[ii];
 		    } 
-		    
                 }
             }
         }
