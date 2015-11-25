@@ -859,7 +859,6 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag)
         if(this_node==0) {
             /* self energy correction */
             k_space_energy -= coulomb.prefactor*(p3m.sum_q2 * p3m.params.alpha * wupii);
-			fprintf(stderr, "self en: %1.5e\n", -coulomb.prefactor*(p3m.sum_q2 * p3m.params.alpha * wupii));
             /* net charge correction */
             k_space_energy -= coulomb.prefactor* p3m.square_sum_q * PI / (2.0*box_l[0]*box_l[1]*box_l[2]*SQR(p3m.params.alpha));
         }
@@ -2126,15 +2125,6 @@ void p3m_calc_kspace_stress (double* stress) {
         fft_perform_forw(p3m.rs_mesh);
         force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
 
-//		fprintf(stderr, "plan3 new_mesh: %d %d %d\n\
-//				start points: %d %d %d\n\
-//				mesh %d %d %d\n", fft.plan[3].new_mesh[KX], fft.plan[3].new_mesh[KY], fft.plan[3].new_mesh[KZ], \
-//				fft.plan[3].start[0], fft.plan[3].start[1], fft.plan[3].start[2], \
-//				p3m.params.mesh[0], p3m.params.mesh[1], p3m.params.mesh[2]);
-
-//			fprintf(stdout, "dop x: %f %d\n", p3m.d_op[RX][j[0]], fft.plan[3].new_mesh[KX]);
-//				fprintf(stdout, "dop y: %f %d\n", p3m.d_op[RY][j[1]], fft.plan[3].new_mesh[KY]);
-//					fprintf(stdout, "dop z: %f %d\n", p3m.d_op[RZ][j[2]], fft.plan[3].new_mesh[KZ]);
         for(j[0]=0; j[0] < fft.plan[3].new_mesh[RX]; j[0]++) {
             for(j[1]=0; j[1] < fft.plan[3].new_mesh[RY]; j[1]++) {
                 for(j[2]=0; j[2] < fft.plan[3].new_mesh[RZ]; j[2]++) {
@@ -2147,11 +2137,8 @@ void p3m_calc_kspace_stress (double* stress) {
                         vterm = 0.0;
                     }
                     else {
-						// apparently: SQR(PI/alpha) === 1/(4 alpha^2) 
-                        // vterm = -2.0 * (1.0/sqk + SQR(PI/p3m.params.alpha));
                         vterm = -2.0 * (1/sqk + SQR(1.0/2.0/p3m.params.alpha));
                         node_k_space_energy =  p3m.g_energy[ind] * ( SQR(p3m.rs_mesh[2*ind]) + SQR(p3m.rs_mesh[2*ind + 1]) );
-						// node_k_space_energy += coulomb.prefactor*(p3m.sum_q2 * p3m.params.alpha * wupii);
                     }
                     ind++;
 
@@ -2173,8 +2160,6 @@ void p3m_calc_kspace_stress (double* stress) {
         for (i = 0; i < 9; i++) {
             stress[i] += k_space_stress[i] * force_prefac;
         }
-//         fprintf(stderr, "sxx = %.5e, syy = %.5e, szz = %.5e\n", stress[0], stress[4], stress[8]);
-//         fprintf(stderr, "sxy = %.5e, sxz = %.5e, syz = %.5e\n", stress[1], stress[2], stress[5]);
         free (node_k_space_stress);
         free (k_space_stress);
     }
