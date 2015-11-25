@@ -1118,6 +1118,11 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 	Particle part;
 	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
+	if(old_state_index>=0){
+		if(current_wang_landau_system.histogram[old_state_index]>=0)
+			current_wang_landau_system.monte_carlo_trial_moves+=1;
+	}
+	
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
 	
 	
@@ -1704,7 +1709,6 @@ void reset_histogram(){
 
 void refine_wang_landau_parameter_one_over_t(){
 	double monte_carlo_time = (double) current_wang_landau_system.monte_carlo_trial_moves/current_wang_landau_system.used_bins;
-	printf("mtime %f\n",monte_carlo_time);
 	if ( current_wang_landau_system.wang_landau_parameter/2.0 <1.0/monte_carlo_time ){
 		current_wang_landau_system.wang_landau_parameter= 1.0/monte_carlo_time;
 	} else {
