@@ -44,16 +44,14 @@ int tclcommand_reaction_ensemble_print_status(Tcl_Interp *interp){
 			//reaction_constant
 			sprintf(buffer, "\nequilibrium constant: %f " , current_reaction_system.reactions[single_reaction_i]->equilibrium_constant);
 			Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
-			//temperature
-			sprintf(buffer, "\nreaction ensemble temperature: %f " , current_reaction_system.temperature_reaction_ensemble);
-			Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
-			//exclusion radius
-			sprintf(buffer, "\nexclusion radius: %f " , current_reaction_system.exclusion_radius);
-			Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
-			
 		}
 		
-		//XXX TODO print exclusion_radius and temperature
+		//temperature
+		sprintf(buffer, "\nreaction ensemble temperature: %f " , current_reaction_system.temperature_reaction_ensemble);
+		Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
+		//exclusion radius
+		sprintf(buffer, "\nexclusion radius: %f " , current_reaction_system.exclusion_radius);
+		Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
 		
 		check_reaction_ensemble();
 		
