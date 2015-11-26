@@ -29,7 +29,6 @@
 
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
-#include "constraints/ConstraintList.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "forces.hpp"
 

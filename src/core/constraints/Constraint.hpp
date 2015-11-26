@@ -12,7 +12,6 @@ namespace Constraints {
 
   struct Constraint {
   public:
-    Constraint() : { };
     virtual ConstraintType type() { return CONSTRAINT_NONE; }
     virtual void add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy) { }
     virtual void add_force(Particle *p, const double *folded_pos) { }

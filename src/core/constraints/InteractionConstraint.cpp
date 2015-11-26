@@ -42,7 +42,7 @@ namespace Constraints {
           reflect_particle(p, vec, folded_pos);
         } else {
           ostringstream msg;
-          msg <<"Constraint " << id << "(" << name() << ")" << " violated by particle " << p->p.identity;
+          msg <<"Constraint (" << name() << ")" << " violated by particle " << p->p.identity;
           runtimeError(msg);
         }
       }
@@ -78,7 +78,7 @@ namespace Constraints {
       }
       else {
         ostringstream msg;
-        msg <<"Constraint " << id << "(" << name() << ")" << " violated by particle " << p->p.identity;
+        msg <<"Constraint (" << name() << ")" << " violated by particle " << p->p.identity;
         runtimeError(msg);
       }
     }
