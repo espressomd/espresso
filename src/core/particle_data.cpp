@@ -304,6 +304,7 @@ void init_particle(Particle *part)
 #ifdef LANGEVIN_PER_PARTICLE
   part->p.T = -1.0;
   part->p.gamma = -1.0;
+  part->p.gamma_rot = -1.0;
 #endif
 
 #ifdef MULTI_TIMESTEP
@@ -1130,6 +1131,25 @@ int set_particle_gamma(int part, double gamma)
     return ES_ERROR;
     
   mpi_set_particle_gamma(pnode, part, gamma);
+  return ES_OK;
+}
+
+int set_particle_gamma_rot(int part, double gamma_rot)
+{
+  int pnode;
+
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+
+  mpi_set_particle_gamma_rot(pnode, part, gamma_rot);
   return ES_OK;
 }
 #endif
@@ -2212,6 +2232,11 @@ void pointer_to_fix(Particle *p, int*& res)
 void pointer_to_gamma(Particle *p, double*& res)
 {
   res=&(p->p.gamma);
+}
+
+void pointer_to_gamma_rot(Particle *p, double*& res)
+{
+  res=&(p->p.gamma_rot);
 }
 
 void pointer_to_temperature(Particle *p, double*& res)
