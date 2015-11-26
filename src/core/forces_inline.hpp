@@ -62,9 +62,7 @@
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angledist.hpp"
-#include "debye_hueckel.hpp"
 #include "endangledist.hpp"
-#include "reaction_field.hpp"
 #include "comforce.hpp"
 #include "comfixed.hpp"
 #include "molforces.hpp"
@@ -78,12 +76,16 @@
 #include "quartic.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
-#endif
 #include "actor/EwaldgpuForce_ShortRange.hpp"
+#include "debye_hueckel.hpp"
+#include "reaction_field.hpp"
+#endif
+#ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
+#endif
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
@@ -907,6 +909,16 @@ inline void check_particle_force(Particle *part) {
     }
   }
 #endif
+}
+
+inline void add_single_particle_force(Particle *p) {
+  add_bonded_force(p);
+#ifdef CONSTRAINTS
+  add_constraints_forces(p);
+#endif
+#ifdef EXTERNAL_FORCES
+  add_external_potential_forces(p);
+#endif         
 }
 
 #endif

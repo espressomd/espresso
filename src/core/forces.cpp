@@ -23,40 +23,6 @@
  *
  *  For more information see \ref forces.hpp "forces.h".
 */
-/*#include <mpi.h>
-#include "forces_inline.hpp"
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cmath>
-#include "utils.hpp"
-#include "thermostat.hpp"
-#include "pressure.hpp"
-#include "communication.hpp"
-#include "ghosts.hpp" 
-#include "verlet.hpp"
-#include "grid.hpp"
-#include "cells.hpp"
-#include "particle_data.hpp"
-#include "interaction_data.hpp"
-#include "rotation.hpp"
-#include "forces.hpp"
-#include "elc.hpp"
-#include "lattice.hpp"
-#include "lb.hpp"
-#include "nsquare.hpp"
-#include "layered.hpp"
-#include "domain_decomposition.hpp"
-#include "magnetic_non_p3m_methods.hpp"
-#include "mdlc_correction.hpp"
-#include "virtual_sites.hpp"
-#include "constraint.hpp"
-#include "lbgpu.hpp"
-#include "iccp3m.hpp"
-#include "p3m_gpu.hpp"
-#include "cuda_interface.hpp"
-
-*/
 
 #include "EspressoSystemInterface.hpp"
 
@@ -64,6 +30,7 @@
 #include "maggs.hpp"
 #include "forces_inline.hpp"
 #include "electrokinetics.hpp"
+
 ActorList forceActors;
 
 void init_forces()

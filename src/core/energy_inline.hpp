@@ -24,6 +24,8 @@
 #ifndef ENERGY_INLINE_HPP
 #define ENERGY_INLINE_HPP
 
+#include "config.hpp"
+
 #include "statistics.hpp"
 #include "thermostat.hpp"
 #include "p3m.hpp"
@@ -66,6 +68,14 @@
 #include "hydrogen_bond.hpp"
 #include "twist_stack.hpp"
 #include "actor/EwaldgpuForce_ShortRange.hpp"
+
+#ifdef CONSTRAINTS
+#include "constraint.hpp"
+#endif
+
+#ifdef EXTERNAL_FORCES
+#include "external_potential.hpp"
+#endif
 
 #include "energy.hpp"
 
@@ -525,6 +535,17 @@ if (p1->p.rotation)
   energy.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
 #endif
  }
+#endif
+}
+
+inline void add_single_particle_energy(Particle *p) {
+  add_kinetic_energy(p);
+  add_bonded_energy(p);
+#ifdef CONSTRAINTS
+  add_constraints_energy(p);
+#endif
+#ifdef EXTERNAL_FORCES
+  add_external_potential_energy(p);
 #endif
 }
 
