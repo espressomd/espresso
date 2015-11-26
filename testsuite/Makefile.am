@@ -106,6 +106,7 @@ tests = \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
+	p3m_stress_testcase.tcl \
 	pdb_parser.tcl \
 	rotate-system.tcl \
 	rotate-system-dipoles.tcl \
