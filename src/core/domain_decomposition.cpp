@@ -1176,11 +1176,7 @@ void calc_link_cell()
 	j_start = 0;
 	/* Tasks within cell: bonded forces */
 	if(n == 0) {
-	  add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-	  add_constraints_forces(&p1[i]);
-#endif
-	  add_external_potential_forces(&p1[i]);
+          add_single_particle_force(&p1[i]);
 	  if (rebuild_verletlist)
 	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 
@@ -1221,13 +1217,8 @@ void calculate_link_cell_energies()
     np1  = cell->n;
     /* calculate bonded interactions (loop local particles) */
     for(i = 0; i < np1; i++)  {
-      add_kinetic_energy(&p1[i]);
-      add_bonded_energy(&p1[i]);
-#ifdef CONSTRAINTS
-      add_constraints_energy(&p1[i]);
-#endif
-      add_external_potential_energy(&p1[i]);
-
+      add_single_particle_energy(&p1[i]);
+      
       if (rebuild_verletlist)
         memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
     }
