@@ -83,6 +83,13 @@ typedef struct {
 #ifdef MASS
   /** particle mass */
   double mass;
+#else
+  /** set mass to 0 */
+#if HAVE_CXX11
+  constexpr static double mass = 1.0;
+#else
+  const static double mass = 1.0;
+#endif
 #endif
 
 #ifdef SHANCHEN
