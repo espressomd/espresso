@@ -99,9 +99,9 @@ void calc_mol_vel(Particle *p_com,double v_com[3]){
       #endif
       if (ifParticleIsVirtual(p)) continue;
       for (j=0;j<3;j++){
-         v_com[j] += PMASS(*p)*p->m.v[j];
+         v_com[j] += (*p).p.mass*p->m.v[j];
       }
-      M+=PMASS(*p);
+      M+=(*p).p.mass;
 #ifdef VIRTUAL_SITES_DEBUG
       count++;
 #endif
@@ -146,9 +146,9 @@ void calc_mol_pos(Particle *p_com,double r_com[3]){
       if (ifParticleIsVirtual(p)) continue;
       get_mi_vector(vec12,p->r.p, p_com->r.p);
       for (j=0;j<3;j++){
-          r_com[j] += PMASS(*p)*vec12[j];
+          r_com[j] += (*p).p.mass*vec12[j];
       }
-      M+=PMASS(*p);
+      M+=(*p).p.mass;
 #ifdef VIRTUAL_SITES_DEBUG
       count++;
 #endif
@@ -183,9 +183,9 @@ int calc_mol_pos_cfg(Particle *p_com,double r_com[3]){
       p=&partCfg[topology[mol_id].part.e[i]];
       if (ifParticleIsVirtual(p)) continue;
       for (j=0;j<3;j++){
-            r_com[j] += PMASS(*p)*p->r.p[j];
+            r_com[j] += (*p).p.mass*p->r.p[j];
       }
-      M+=PMASS(*p);
+      M+=(*p).p.mass;
 #ifdef VIRTUAL_SITES_DEBUG
       count++;
 #endif
@@ -227,7 +227,7 @@ void put_mol_force_on_parts(Particle *p_com){
       }
       #endif
        if (ifParticleIsVirtual(p)) continue;
-      M+=PMASS(*p);
+      M+=(*p).p.mass;
    }
 #else
    M=topology[mol_id].part.n-1;
@@ -244,7 +244,7 @@ void put_mol_force_on_parts(Particle *p_com){
       #endif
       if (!ifParticleIsVirtual(p)) {
          for (j=0;j<3;j++){
-            p->f.f[j]+=PMASS(*p)*force[j]/M;
+            p->f.f[j]+=(*p).p.mass*force[j]/M;
          }
 #ifdef VIRTUAL_SITES_DEBUG
          count++;
@@ -397,7 +397,7 @@ double calc_energy_kinetic_mol(int type){
             return -(i);
          }
 #endif
-         E_kin+=PMASS(*p_com)*sqrlen(p_com->m.v);
+         E_kin+=(*p_com).p.mass*sqrlen(p_com->m.v);
       }
    }
    E_kin*=0.5/time_step/time_step;
