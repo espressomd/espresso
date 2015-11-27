@@ -71,11 +71,7 @@ if { [catch {
     setmd box_l $box_l $box_l $box_l
     setmd time_step 0.01
     for {set i 0} {$i < 100} {incr i} {
-	if { [regexp "LANGEVIN_PER_PARTICLE" [code_info]] } {
-		part $i pos [expr rand()*$box_l] [expr rand()*$box_l] [expr rand()*$box_l] gamma [expr rand()*4.5+0.5]
-    	} else {
-		part $i pos [expr rand()*$box_l] [expr rand()*$box_l] [expr rand()*$box_l]
-	}
+	part $i pos [expr rand()*$box_l] [expr rand()*$box_l] [expr rand()*$box_l]
     }
 
     # make real random draw
