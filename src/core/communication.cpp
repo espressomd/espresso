@@ -2992,7 +2992,7 @@ void mpi_set_particle_gamma_slave(int pnode, int part)
 #endif
 }
 
-#ifdef ROTATION
+#if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot)
 {
   mpi_call(mpi_set_particle_gamma_rot_slave, pnode, part);

@@ -304,8 +304,10 @@ void init_particle(Particle *part)
 #ifdef LANGEVIN_PER_PARTICLE
   part->p.T = -1.0;
   part->p.gamma = -1.0;
+#ifdef ROTATION
   part->p.gamma_rot = -1.0;
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef MULTI_TIMESTEP
   part->p.smaller_timestep = 0;
@@ -1133,7 +1135,7 @@ int set_particle_gamma(int part, double gamma)
   mpi_set_particle_gamma(pnode, part, gamma);
   return ES_OK;
 }
-
+#ifdef ROTATION
 int set_particle_gamma_rot(int part, double gamma_rot)
 {
   int pnode;
@@ -1152,7 +1154,8 @@ int set_particle_gamma_rot(int part, double gamma_rot)
   mpi_set_particle_gamma_rot(pnode, part, gamma_rot);
   return ES_OK;
 }
-#endif
+#endif // ROTATION
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
   #ifdef ROTATION
@@ -2233,11 +2236,12 @@ void pointer_to_gamma(Particle *p, double*& res)
 {
   res=&(p->p.gamma);
 }
-
+#ifdef ROTATION
 void pointer_to_gamma_rot(Particle *p, double*& res)
 {
   res=&(p->p.gamma_rot);
 }
+#endif
 
 void pointer_to_temperature(Particle *p, double*& res)
 {
