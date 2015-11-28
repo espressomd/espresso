@@ -35,6 +35,7 @@ int delete_particle (int p_id);
 int intcmp(const void *aa, const void *bb);
 void free_wang_landau();
 void remove_bins_that_have_not_been_sampled();
+double average_int_list(int* int_number_list, int len_int_nr_list);
 
 
 int create_current_reaction_system_struct(){
@@ -1483,7 +1484,7 @@ bool do_HMC_move(){
 	for(int p_id=0; p_id<max_seen_particle+1; p_id++){
 		//save old positions
 		Particle part;
-		get_particle_data(p_id, &part);
+		get_particle_data(p_id, &part); //XXX memory leaks here a little bit
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
 		free_particle(&part);//fixes memory leak. if omitted a lot of memory is leaked
@@ -1630,9 +1631,11 @@ int do_reaction_wang_landau(){
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 	}
 
-//	if(current_wang_landau_system.monte_carlo_trial_moves%100000==0)
-//		remove_bins_that_have_not_been_sampled();
-	
+	//remove holes from the sampling range for improved convergence
+	if(current_wang_landau_system.monte_carlo_trial_moves%10000==0 && current_wang_landau_system.wang_landau_parameter==1){
+		if((current_wang_landau_system.monte_carlo_trial_moves%(current_wang_landau_system.used_bins*10000)==0 || average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>200))
+			remove_bins_that_have_not_been_sampled();
+	}
 	return 0;	
 };
 
@@ -1858,6 +1861,7 @@ int get_flattened_index_wang_landau_without_energy_collective_variable(int flatt
 }
 
 //use with caution otherwise you produce unpyhsical results, do only use when you know what you want to do. This can make wang landau converge on a reduced set Gamma. use this function e.g. in do_reaction_wang_landau() for the diprotonic acid
+//compare "Wang-Landau sampling with self-adaptive range" by Troester and Dellago
 void remove_bins_that_have_not_been_sampled(){
 	int removed_bins=0;
 	double beta=1.0/current_reaction_system.temperature_reaction_ensemble;
