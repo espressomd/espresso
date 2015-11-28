@@ -1615,7 +1615,7 @@ int do_reaction_wang_landau(){
 	}
 	
 	//shift wang landau potential minimum to zero
-	if(current_wang_landau_system.monte_carlo_trial_moves%(90000)<=current_wang_landau_system.wang_landau_steps){
+	if(current_wang_landau_system.monte_carlo_trial_moves%90000==0){
 	
 		//for numerical stability here we also subtract the minimum positive value of the wang_landau_potential from the wang_landau potential, allowed since only the difference in the wang_landau potential is of interest.
 		double minimum_wang_landau_potential=find_minimum_non_negative_value(current_wang_landau_system.wang_landau_potential,current_wang_landau_system.len_histogram);
@@ -1632,7 +1632,7 @@ int do_reaction_wang_landau(){
 	}
 
 	//remove holes from the sampling range for improved convergence
-	if(current_wang_landau_system.monte_carlo_trial_moves%10000==0 && current_wang_landau_system.wang_landau_parameter==1){
+	if(current_wang_landau_system.monte_carlo_trial_moves%10000==0 && current_wang_landau_system.wang_landau_parameter==current_wang_landau_system.initial_wang_landau_parameter){
 		if((current_wang_landau_system.monte_carlo_trial_moves%(current_wang_landau_system.used_bins*10000)==0 || average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>200))
 			remove_bins_that_have_not_been_sampled();
 	}
