@@ -1632,8 +1632,9 @@ int do_reaction_wang_landau(){
 	}
 
 	//remove holes from the sampling range for improved convergence
+	//be aware that this check also limits the maximal difference in degeneracies that you can sample
 	if(current_wang_landau_system.monte_carlo_trial_moves%10000==0 && current_wang_landau_system.wang_landau_parameter==current_wang_landau_system.initial_wang_landau_parameter){
-		if((current_wang_landau_system.monte_carlo_trial_moves%(current_wang_landau_system.used_bins*10000)==0 || average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>200))
+		if((current_wang_landau_system.monte_carlo_trial_moves%(current_wang_landau_system.used_bins*10000)==0 || average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>230))
 			remove_bins_that_have_not_been_sampled();
 	}
 	return 0;	
