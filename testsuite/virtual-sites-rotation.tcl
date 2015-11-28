@@ -38,11 +38,11 @@ puts "---------------------------------------------------------------"
 puts "- Testcase virtual-sites-rotation.tcl running on  [format %02d [setmd n_nodes]] nodes  -"
 puts "---------------------------------------------------------------"
 cellsystem nsquare -no_verlet_list
-set mass 200
-set j1 60.
-set j2 80. 
-set j3 100.
 
+set mass [expr rand() *20]
+set j1 [expr rand() * 20]
+set j2 [expr rand() * 20]
+set j3 [expr rand() * 20]
 
 
 set kT 1.5
@@ -75,7 +75,7 @@ if { [catch {
    integrate 50
    # Get kinetic energy in each degree of freedom for all particles
     for {set p 1 } { $p < [setmd n_part] } { incr p 2} { 
-       set o [part $p print omega_lab]
+       set o [part $p print omega_body]
        set ox [lindex $o 0]
        set oy [lindex $o 1]
        set oz [lindex $o 2]

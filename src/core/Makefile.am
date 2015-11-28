@@ -19,6 +19,9 @@
 
 EXTRA_DIST =
 CLEANFILES =
+if UNIT_TESTS
+SUBDIRS = unit_tests
+endif
 
 AM_DEFAULT_SOURCE_EXT = .cpp
 

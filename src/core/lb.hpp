@@ -171,6 +171,11 @@ typedef struct {
   double gamma_odd[LB_COMPONENTS];
   double gamma_even[LB_COMPONENTS];
 
+  /** Flag determining whether gamma_shear, gamma_odd, and gamma_even are calculated
+   *  from gamma_shear in such a way to yield a TRT LB with minimized slip at
+   *  bounce-back boundaries */
+  bool is_TRT;
+
   int resend_halo;
           
 } LB_Parameters;

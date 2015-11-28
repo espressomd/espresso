@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
+# Copyright (C) 2011,2012 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -18,31 +18,32 @@
 # 
 #############################################################
 #                                                           #
-#  Test collision detection with binding of centers of colliding particles
+#  Test collision detection in the "glue to surface>" mode
 #                                                           #
 #############################################################
 source "tests_common.tcl"
 
 require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "COLLISION_DETECTION"
+require_feature "ADRESS" off
 require_max_nodes_per_side {1 1 1}
 
 puts "---------------------------------------------------------------"
-puts "- Testcase collision-detection-poc.tcl running on [setmd n_nodes] nodes"
+puts "- Testcase collision-detection-glue.tcl running on 1 nodes"
 puts "---------------------------------------------------------------"
 
 # Setup
-setmd box_l 10 10 10
+setmd box_l 19 19 19
 
 thermostat off
 setmd time_step 0.01
 inter 2 harmonic 1 1
 inter 3 harmonic 1 0.0001
 setmd skin 0
-part 0 pos 0 0 0 
-part 1 pos 1 0 0
-part 2 pos 3 0 0
-
+part 0 pos 0 0 0 type 2 
+part 1 pos 5.5 0 0 type 3
+part 2 pos 3 0 0 type 0
+inter 2 3 lennard-jones 0.001 5.6 5.7 auto
 # analyze the bonding structure for pair bonds
 proc analyze_topology {bond_type {check_others 0}} {
     set bonded ""
@@ -85,98 +86,84 @@ if {$bonds != ""} {
 }
 
 # Check setting of parameters
-setmd min_global_cut 1.0
-on_collision bind_at_point_of_collision 1.0 2 3 1
-
+setmd min_global_cut 5.0
+on_collision glue_to_surface 5.5 2 3 1 2 3 4 1.0
 
 set res [on_collision]
-if { ! ( ([lindex $res 0] == "bind_at_point_of_collision") && (abs([lindex $res 1]-1) <1E-5) && ([lindex $res 2] == 2) && ([lindex $res 3] == 3) && ([lindex $res 4] == 1)) } {
-    error_exit "Setting collision_detection parameters for bind_centers does not work"
+
+if { ! ($res == "glue_to_surface 5.500000 2 3 1 2 3 4 1.000000") } {
+    error_exit "Setting collision_detection parameters does not work: $res"
 }
 
 # Check the actual collision detection
 integrate 0 recalc_forces
 
-# Check, whether the bonds are correct. No strict checking, there are also the
-# virtual particles
+# Check bonds between colliding particles
 set bonds [analyze_topology 2]
 if {$bonds != "{0 1}"} {
-    error_exit "bond not created as it should: bonds are $bonds"
+    error_exit "bond between colliding particles not created as it should: bonds are $bonds"
+}
+
+# Check bond between the glued particle and the virtual site
+set bonds [analyze_topology 3]
+if {$bonds != "{0 3}"} {
+    error_exit "bond between glued particle and vs not created as it should: bonds are $bonds"
+}
+
+# Check if the virtual site has the correct settings
+if { [part 3 print virtual] != 1 } {
+ error_exit "The supposed virtual particle doesn't have the virtual flag set."
+}
+# Is the vs attached correctly
+set vs_info [lrange [part 3 print vs_relative] 0 1]
+if {$vs_info != "1 4.500000" } {
+ error_exit "the vs_relative params are wrong: $vs_info"
 }
 
 # Integrate again and make sure, no extra bonds are added
+# enforce force recalculation
 integrate 0 recalc_forces
 
 # Check, whether the bonds are still correct, not doubled
 set bonds [analyze_topology 2]
 if {$bonds != "{0 1}"} {
-    error_exit "bond not created as it should or doubled: bonds are $bonds"
+    error_exit "After 2nd run: bond between colliding particles not created as it should: bonds are $bonds"
 }
 
-# Check whether two virtual sites have been created
-if {[setmd n_part] != 5} {
+# Check bond between the glued particle and the virtual site
+set bonds [analyze_topology 3]
+if {$bonds != "{0 3}"} {
+    error_exit "After 2nd run: bond between glued particle and vs not created as it should: bonds are $bonds"
+}
+
+
+
+# Check whether the number of particles is correct (3 normal +1 vs =4)
+if {[setmd n_part] != 4} {
     error_exit "Incorrect number of particles [setmd n_part] in the simulation. Too many or too few virtual sites were created."
 }
 
-# Check the bonds between virtual sites
-set bond1 [part 3 print bonds]
-set bond2 [part 4 print bonds]
-
-if {!((($bond1=="{ {3 4} } ") && ($bond2=="{ } ")) || (($bond2=="{ {3 3} } ") && ($bond1=="{ } "))) } { 
-    error_exit "Bonds between the virtual sites are incorrect."
-}
-
 # Check the particle type of the virtual sites
-if { (! ([part 3 print type]==1 && [part 4 print type]==1))} {
+if { ! ([part 3 print type]==1) } {
     error_exit "type of virtual sites is incorrect."
 }
-
-
-# Check position and vs_relative settings of virtual sites
-set n_related_to_0 0
-set n_related_to_1 0
-for {set i 3} {$i <=4} {incr i} {
-  set vs_r [part $i print vs_relative]
-  set relto [lindex $vs_r 0]
-  set dist [lindex $vs_r 1]
-  
-  if { abs($dist -0.5)>1E-5 } {
-    error_exit "Distance between vs particle $i and particle $relto wrong: $dist"
-  }
-  if { $relto == 1 } { 
-    incr n_related_to_1
-  } else {
-  if { $relto == 0 } { 
-    incr n_related_to_0
-   } else {
-     error_exit "Vs $i should not be relatex to $relto"
-   }
- }
+if { ! ([part 0 print type]==4) } {
+    error_exit "type of glued particle is incorrect: [part 0 print type]."
 }
-if { ($n_related_to_0 != 1) || ($n_related_to_1 != 1) } {
-   error_exit "Exactly one vs is supposed to be related to part 0 and one to part 1."
-}
-
-  
-
-
-
 
 # test exception, generating another collision
-part 2 pos 2 0 0
-on_collision exception bind_at_point_of_collision 1.0 2 3 1
-
-if {![catch {integrate 0} err]} {
+part 2 pos 11 0 0 type 2
+on_collision exception glue_to_surface 5.5 2 3 1 2 3 4 1.0
+if {![catch {integrate 1} err]} {
     error_exit "no exception was thrown at collision, although requested"
 }
 
 set bonds ""
 foreach exception [lrange $err 1 end] {
-    if {[regexp {collision between particles (\d+) and (\d+)} $exception -> id1 id2]} {
-        lappend bonds "$id1 $id2"
-    } else {
+    if {[lrange $exception 1 3] != "collision between particles"} {
 	error_exit "unexpected exception $exception"
     }
+    lappend bonds "[lindex $exception 4] [lindex $exception 6]"
 }
 set bonds [lsort $bonds]
 
@@ -184,14 +171,15 @@ if {$bonds != "{1 2}"} {
     error_exit "exception bonds $bonds wrong"
 }
 
-# Check whether another two virtual sites have been created
-if {[setmd n_part] != 7} {
-    error_exit "Incorrect number of particles [setmd n_part] in the simulation. Too many or too few virtual sites were created."
-}
-
 # Check, whether the bonds are also correct
+# Between centers of colliding particles
 set bonds [analyze_topology 2]
 if {$bonds != "{0 1} {1 2}"} {
+    error_exit "bonds not correctly created: bonds are $bonds"
+}
+# Between glued particle and vs
+set bonds [analyze_topology 3]
+if {$bonds != "{0 3} {2 4}"} {
     error_exit "bonds not correctly created: bonds are $bonds"
 }
 

@@ -77,7 +77,7 @@ typedef struct {
   float rho[LB_COMPONENTS];
   /** mu (LJ units) */
   float mu[LB_COMPONENTS];
-  /*viscosity (LJ) units */
+  /** viscosity (LJ) units */
   float viscosity[LB_COMPONENTS];
   /** relaxation rate of shear modes */
   float gamma_shear[LB_COMPONENTS];
@@ -86,6 +86,10 @@ typedef struct {
   /**      */
   float gamma_odd[LB_COMPONENTS];
   float gamma_even[LB_COMPONENTS];
+  /** flag determining whether gamma_shear, gamma_odd, and gamma_even are calculated
+   *  from gamma_shear in such a way to yield a TRT LB with minimized slip at
+   *  bounce-back boundaries */
+  bool is_TRT;
   /** friction coefficient for viscous coupling (LJ units)
    * Note that the friction coefficient is quite high and may
    * lead to numerical artifacts with low order integrators */

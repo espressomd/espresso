@@ -82,7 +82,7 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
 
 /** Add a non-bonded pair force by linear interpolation from a table.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_tabulated_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
 				       double d[3], double dist, double force[3])
 {
   if (CUTOFF_CHECK(dist < ia_params->TAB_maxval)){ 
