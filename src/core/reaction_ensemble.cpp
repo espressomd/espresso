@@ -1297,7 +1297,6 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 				place_particle(i,ppos);
 			}
 		}
-		
 	}
 	return got_accepted;
 }
@@ -1478,7 +1477,7 @@ bool do_HMC_move(){
 	
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
 	
-	double particle_positions[3*max_seen_particle];
+	double particle_positions[3*(max_seen_particle+1)];
 
 	//save old_position and set random velocities
 	for(int p_id=0; p_id<max_seen_particle+1; p_id++){
@@ -1491,7 +1490,6 @@ bool do_HMC_move(){
 		particle_positions[3*p_id]=ppos[0];
 		particle_positions[3*p_id+1]=ppos[1];
 		particle_positions[3*p_id+2]=ppos[2];
-		
 		//create random velocity vector according to Maxwell Boltzmann distribution for components
 		double vel[3];
 		//we usse mass=1 for all particles, think about adapting this
@@ -1554,12 +1552,12 @@ bool do_HMC_move(){
 			}
 		}
 		//create particles again at the positions they were
-		for(int i=0;i<max_seen_particle;i++){
-			double pos_x=particle_positions[3*i];
-			double pos_y=particle_positions[3*i+1];
-			double pos_z=particle_positions[3*i+2];
+		for(int p_id=0; p_id<max_seen_particle+1; p_id++){
+			double pos_x=(double) particle_positions[3*p_id];
+			double pos_y=(double) particle_positions[3*p_id+1];
+			double pos_z=(double) particle_positions[3*p_id+2];
 			double pos_vec[3]={pos_x,pos_y,pos_z};
-			place_particle(i,pos_vec);
+			place_particle(p_id,pos_vec);
 		}
 		
 	}
@@ -1615,8 +1613,7 @@ int do_reaction_wang_landau(){
 	}
 	
 	//shift wang landau potential minimum to zero
-	if(current_wang_landau_system.monte_carlo_trial_moves%90000==0){
-	
+	if(tries%(max(90000,9*current_wang_landau_system.wang_landau_steps))==0){
 		//for numerical stability here we also subtract the minimum positive value of the wang_landau_potential from the wang_landau potential, allowed since only the difference in the wang_landau potential is of interest.
 		double minimum_wang_landau_potential=find_minimum_non_negative_value(current_wang_landau_system.wang_landau_potential,current_wang_landau_system.len_histogram);
 		for(int i=0;i<current_wang_landau_system.len_histogram;i++){
@@ -1629,13 +1626,13 @@ int do_reaction_wang_landau(){
 	
 		//write out preliminary wang-landau potential results
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
-	}
-
-	//remove holes from the sampling range for improved convergence
-	//be aware that this check also limits the maximal difference in degeneracies that you can sample
-	if(current_wang_landau_system.monte_carlo_trial_moves%10000==0 && current_wang_landau_system.wang_landau_parameter==current_wang_landau_system.initial_wang_landau_parameter){
-		if((current_wang_landau_system.monte_carlo_trial_moves%(current_wang_landau_system.used_bins*10000)==0 || average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>230))
-			remove_bins_that_have_not_been_sampled();
+		
+		//remove holes from the sampling range for improved convergence
+		//be aware that this check also limits the maximal difference in degeneracies that you can sample
+		if(current_wang_landau_system.wang_landau_parameter==current_wang_landau_system.initial_wang_landau_parameter){
+			if(average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>230)
+				remove_bins_that_have_not_been_sampled();
+		}
 	}
 	return 0;	
 };
