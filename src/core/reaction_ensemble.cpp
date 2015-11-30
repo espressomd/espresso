@@ -19,6 +19,8 @@
 
 reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
+//global variable
+bool system_is_in_1_over_t_regime=false;
 
 //declaration of boring helper functions
 float factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
@@ -1607,6 +1609,7 @@ int do_reaction_wang_landau(){
 		if(can_refine_wang_landau_one_over_t()){
 			if(achieved_desired_number_of_refinements_one_over_t()==true){//check for convergence
 				write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
+				//XXX exit
 			}
 			refine_wang_landau_parameter_one_over_t();
 		}
@@ -1630,7 +1633,7 @@ int do_reaction_wang_landau(){
 		//remove holes from the sampling range for improved convergence
 		//be aware that this check also limits the maximal difference in degeneracies that you can sample
 		if(current_wang_landau_system.wang_landau_parameter==current_wang_landau_system.initial_wang_landau_parameter){
-			if(average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>230)
+			if(average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>150)
 				remove_bins_that_have_not_been_sampled();
 		}
 	}
@@ -1688,8 +1691,8 @@ int find_minimum_in_int_list(int* list, int len){
 }
 
 bool can_refine_wang_landau_one_over_t(){
-	if(find_minimum_in_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>0){
-		//could also check for find_minimum_in_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>0.1*average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)
+	double minimum_required_value=0.85*average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram); // This is an additional constraint to sample configuration space better. Use flatness criterion according to 1/t algorithm as long as you are not in 1/t regime.
+	if(find_minimum_in_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>minimum_required_value || system_is_in_1_over_t_regime==true){
 		return true;
 	}else{
 		return false;	
@@ -1710,8 +1713,9 @@ void reset_histogram(){
 
 void refine_wang_landau_parameter_one_over_t(){
 	double monte_carlo_time = (double) current_wang_landau_system.monte_carlo_trial_moves/current_wang_landau_system.used_bins;
-	if ( current_wang_landau_system.wang_landau_parameter/2.0 <1.0/monte_carlo_time ){
+	if ( current_wang_landau_system.wang_landau_parameter/2.0 <1.0/monte_carlo_time || system_is_in_1_over_t_regime==true){
 		current_wang_landau_system.wang_landau_parameter= 1.0/monte_carlo_time;
+		system_is_in_1_over_t_regime=true;
 	} else {
 		reset_histogram();
 		current_wang_landau_system.wang_landau_parameter= current_wang_landau_system.wang_landau_parameter/2.0;
