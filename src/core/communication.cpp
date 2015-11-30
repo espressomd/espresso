@@ -150,6 +150,7 @@ static int terminated = 0;
   CB(mpi_recv_fluid_boundary_flag_slave) \
   CB(mpi_set_particle_temperature_slave) \
   CB(mpi_set_particle_gamma_slave) \
+  CB(mpi_set_particle_gamma_rot_slave) \
   CB(mpi_kill_particle_motion_slave) \
   CB(mpi_kill_particle_forces_slave) \
   CB(mpi_system_CMS_slave) \
@@ -2985,6 +2986,40 @@ void mpi_set_particle_gamma_slave(int pnode, int part)
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     /* here the setting happens for nonlocal nodes */
     p->p.gamma = s_buf;
+  }
+
+  on_particle_change();
+#endif
+}
+
+#if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
+void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot)
+{
+  mpi_call(mpi_set_particle_gamma_rot_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    /* here the setting actually happens, if the particle belongs to the local node */
+    p->p.gamma_rot = gamma_rot;
+  }
+  else {
+    MPI_Send(&gamma_rot, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+}
+#endif
+
+void mpi_set_particle_gamma_rot_slave(int pnode, int part)
+{
+#if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
+  double s_buf = 0.;
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
+    /* here the setting happens for nonlocal nodes */
+    p->p.gamma_rot = s_buf;
   }
 
   on_particle_change();
