@@ -295,9 +295,9 @@ void centermass(int type, double *com)
   for (j=0; j<n_part; j++) {
     if ((partCfg[j].p.type == type) || (type == -1)) {
       for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].r.p[i]*PMASS(partCfg[j]);
+      	com[i] += partCfg[j].r.p[i]*(partCfg[j]).p.mass;
       }
-      M += PMASS(partCfg[j]);
+      M += (partCfg[j]).p.mass;
     }
   }
   
@@ -343,7 +343,7 @@ void angularmomentum(int type, double *com)
     if (type == partCfg[j].p.type) 
     {
       vector_product(partCfg[j].r.p,partCfg[j].m.v,tmp);
-      pre_factor=PMASS(partCfg[j]);
+      pre_factor=(partCfg[j]).p.mass;
       for (i=0; i<3; i++) {
         com[i] += tmp[i]*pre_factor;
       }
@@ -367,7 +367,7 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
       for (i=0; i<3; i++) {
       	p1[i] = partCfg[j].r.p[i] - com[i];
       }
-      massi= PMASS(partCfg[j]);
+      massi= (partCfg[j]).p.mass;
       MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]) ; 
       MofImatrix[4] += massi * (p1[0] * p1[0] + p1[2] * p1[2]);
       MofImatrix[8] += massi * (p1[0] * p1[0] + p1[1] * p1[1]);
@@ -1491,9 +1491,9 @@ void centermass_conf(int k, int type_1, double *com)
     {
       for (i=0; i<3; i++)
       {
-         com[i] += configs[k][3*j+i]*PMASS(partCfg[j]);
+         com[i] += configs[k][3*j+i]*(partCfg[j]).p.mass;
       }
-      M += PMASS(partCfg[j]);
+      M += (partCfg[j]).p.mass;
     }
   }
   for (i=0; i<3; i++) 
