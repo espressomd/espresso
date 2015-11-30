@@ -83,6 +83,13 @@ typedef struct {
 #ifdef MASS
   /** particle mass */
   double mass;
+#else
+  /** set mass to 0 */
+#if HAVE_CXX11
+  constexpr static double mass = 1.0;
+#else
+  const static double mass = 1.0;
+#endif
 #endif
 
 #ifdef SHANCHEN
@@ -147,6 +154,10 @@ typedef struct {
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
+  /* Friction coefficient gamma for rotation */
+#ifdef ROTATION
+  double gamma_rot;
+#endif
 #endif
 
 #ifdef CATALYTIC_REACTIONS
@@ -702,7 +713,10 @@ int set_particle_temperature(int part, double T);
     @return ES_OK if particle existed
 */
 int set_particle_gamma(int part, double gamma);
+#ifdef ROTATION
+int set_particle_gamma_rot(int part, double gamma);
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
   #ifdef ROTATION
@@ -1002,7 +1016,10 @@ void pointer_to_fix(Particle *p, int*& res);
 #ifdef LANGEVIN_PER_PARTICLE
 void pointer_to_gamma(Particle *p, double*& res);
 void pointer_to_temperature(Particle *p, double*& res);
+#ifdef ROTATION
+void pointer_to_gamma_rot(Particle *p, double*& res);
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int*& res);

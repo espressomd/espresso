@@ -201,11 +201,11 @@ void add_dpd_thermo_pair_force(Particle * p1, Particle * p2, double d[3], double
 #endif
 
 #ifdef DPD_MASS_RED
-  massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+  massf=2*(*p1).p.mass*(*p2).p.mass/((*p1).p.mass+(*p2).p.mass);
 #endif
 
 #ifdef DPD_MASS_LIN
-  massf=0.5*(PMASS(*p1)+PMASS(*p2));
+  massf=0.5*((*p1).p.mass+(*p2).p.mass);
 #endif
 
 
@@ -408,11 +408,11 @@ void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
   if( le_chatterjee_test_pair(p1, p2) ) return;
 #endif  
 #ifdef DPD_MASS_RED
-  massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+  massf=2*(*p1).p.mass*(*p2).p.mass/((*p1).p.mass+(*p2).p.mass);
 #endif
 
 #ifdef DPD_MASS_LIN
-  massf=0.5*(PMASS(*p1)+PMASS(*p2));
+  massf=0.5*((*p1).p.mass+(*p2).p.mass);
 #endif
 
   P_times_dist_sqr[0][0]=dist2;

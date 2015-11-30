@@ -52,6 +52,13 @@ void tclcommand_part_print_gamma(Particle *part, char *buffer, Tcl_Interp *inter
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
+#ifdef ROTATION
+void tclcommand_part_print_gamma_rot(Particle *part, char *buffer, Tcl_Interp *interp) {
+  Tcl_PrintDouble(interp, part->p.gamma_rot, buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 void tclcommand_part_print_T(Particle *part, char *buffer, Tcl_Interp *interp) {
   Tcl_PrintDouble(interp, part->p.T, buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -327,11 +334,11 @@ void tclcommand_part_print_composition(Particle *part, char *buffer, Tcl_Interp 
 void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale forces ! */
-  Tcl_PrintDouble(interp, part->f.f[0]*PMASS(*part)/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[0]*(*part).p.mass/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.f[1]*PMASS(*part)/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[1]*(*part).p.mass/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.f[2]*PMASS(*part)/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[2]*(*part).p.mass/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
@@ -571,6 +578,10 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 #ifdef LANGEVIN_PER_PARTICLE
  Tcl_AppendResult(interp, " gamma ", (char *)NULL);
  tclcommand_part_print_gamma(&part, buffer, interp);
+#ifdef ROTATION
+ Tcl_AppendResult(interp, " gamma_rot ", (char *)NULL);
+ tclcommand_part_print_gamma_rot(&part, buffer, interp);
+#endif
  Tcl_AppendResult(interp, " temp ", (char *)NULL);
  tclcommand_part_print_T(&part, buffer, interp);
 #endif
@@ -810,6 +821,12 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
  Tcl_AppendResult(interp, (char *)NULL);
  tclcommand_part_print_gamma(&part, buffer, interp);
   }
+#ifdef ROTATION
+  else if (ARG0_IS_S("gamma_rot")) {
+   Tcl_AppendResult(interp, (char *)NULL);
+   tclcommand_part_print_gamma_rot(&part, buffer, interp);
+    }
+#endif
   else if(ARG0_IS_S("temp")) {
  Tcl_AppendResult(interp, (char *)NULL);
  tclcommand_part_print_T(&part, buffer, interp);
@@ -2110,7 +2127,31 @@ int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-#endif
+#ifdef ROTATION
+int part_parse_gamma_rot(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  double gamma_rot;
+
+  *change = 1;
+
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "gamma_rot requires 1 argument", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set temperature scaling factor */
+  if (! ARG_IS_D(0, gamma_rot))
+    return TCL_ERROR;
+
+  if (set_particle_gamma_rot(part_num, gamma_rot) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+#endif // ROTATION
+#endif // LANGEVIN_PER_PARTICLE
 
 int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 
@@ -2704,6 +2745,10 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = part_parse_temp(interp, argc-1, argv+1, part_num, &change);
 	else if (ARG0_IS_S("gamma"))
 	  err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
+#ifdef ROTATION
+	else if (ARG0_IS_S("gamma_rot"))
+	  err = part_parse_gamma_rot(interp, argc-1, argv+1, part_num, &change);
+#endif
 #endif
 	else if (ARG0_IS_S("gc")) { 
 	  argc--;

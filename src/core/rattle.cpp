@@ -160,14 +160,14 @@ void compute_pos_corr_vec(int *repeat_)
 	    r_ij_dot = scalar(r_ij_t, r_ij);
 	    G = 0.50*(ia_params->p.rigid_bond.d2 - r_ij2 )/r_ij_dot;
 #ifdef MASS
-	    G /= (PMASS(*p1)+PMASS(*p2));
+	    G /= ((*p1).p.mass+(*p2).p.mass);
 #else
 	    G /= 2;
 #endif
 	    for (j=0;j<3;j++) {
 	      pos_corr = G*r_ij_t[j];
-	      p1->f.f[j] += pos_corr*PMASS(*p2);
-	      p2->f.f[j] -= pos_corr*PMASS(*p1);
+	      p1->f.f[j] += pos_corr*(*p2).p.mass;
+	      p2->f.f[j] -= pos_corr*(*p1).p.mass;
 	    }
 	    /*Increase the 'repeat' flag by one */
 	      *repeat_ = *repeat_ + 1;
@@ -313,15 +313,15 @@ void compute_vel_corr_vec(int *repeat_)
 	        {
 		  K = scalar(v_ij, r_ij)/ia_params->p.rigid_bond.d2;
 #ifdef MASS
-		  K /= (PMASS(*p1) + PMASS(*p2));
+		  K /= ((*p1).p.mass + (*p2).p.mass);
 #else
 		  K /= 2.0;
 #endif
 		for (j=0;j<3;j++)
 		  {
 		    vel_corr = K*r_ij[j];
-		    p1->f.f[j] -= vel_corr*PMASS(*p2);
-		    p2->f.f[j] += vel_corr*PMASS(*p1);
+		    p1->f.f[j] -= vel_corr*(*p2).p.mass;
+		    p2->f.f[j] += vel_corr*(*p1).p.mass;
 		  }
 		  *repeat_ = *repeat_ + 1 ;
 		}
