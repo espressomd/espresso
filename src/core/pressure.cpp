@@ -976,8 +976,8 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 	PTENSOR_TRACE(fprintf(stderr,"%d:Ideal gas component is {",this_node));
 	for(k=0;k<3;k++) {
 	  for(l=0;l<3;l++) {
-	    TensorInBin[bin].e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(*p1)/time_step/time_step;
-	    PTENSOR_TRACE(fprintf(stderr,"%f ",(p1->m.v[k])*(p1->m.v[l])*PMASS(*p1)/time_step/time_step));
+	    TensorInBin[bin].e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass/time_step/time_step;
+	    PTENSOR_TRACE(fprintf(stderr,"%f ",(p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass/time_step/time_step));
 	  }
 	}
 
