@@ -31,6 +31,7 @@
 #include "communication.hpp"
 #include "parser.hpp"
 #include "TclOutputHelper.hpp"
+#include "TclCommand.hpp"
 
 #include "constraints/ConstraintList.hpp"
 #include "constraints/InteractionConstraint.hpp"

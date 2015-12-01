@@ -87,6 +87,10 @@
 #include "immersed_boundary/ibm_tribend.hpp"
 #endif
 
+#ifdef CONSTRAINTS
+#include "constraints/ConstraintList.hpp"
+#endif
+
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
 {

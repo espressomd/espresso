@@ -16,13 +16,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+
 #include <algorithm>
 #include <cmath>
 #ifdef HAVE_CXX11
 #include <initializer_list>
 #endif
-
-/* @TODO: should have move semantics with c++11 for peformance reasons. */
 
 template<int n, typename Scalar>
 class Vector {
@@ -51,18 +50,15 @@ class Vector {
     return d + n;
   }
  
-  int size() const { return n; }
-  
+  static int size() { return n; }
+    
   Vector(const Vector& rhs) {
     std::copy(rhs.d, rhs.d+n, d);
   }
 
-  void swap(Vector& rhs) {
-    std::swap(d, rhs.d);
-  }
-
   Vector& operator=(Vector& rhs) {
-    Vector tmp(rhs); swap(rhs); return *this;
+    std::copy(rhs.d, rhs.d + n, d);
+    return *this;
   }
 
   Scalar &operator[](int i) {
@@ -85,7 +81,7 @@ class Vector {
   }
 
   inline Scalar norm(void) const {
-    return sqrt(norm2());
+    return std::sqrt(norm2());
   }
 
   inline void normalize(void) {
