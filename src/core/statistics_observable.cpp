@@ -312,6 +312,32 @@ int observable_calc_dipole_moment(observable* self) {
 }
 #endif
 
+#ifdef DIPOLES
+int observable_calc_com_dipole_moment(observable* self) {
+  double* A = self->last_value;
+  double d[3] = {0. , 0., 0. } ;
+  IntList* ids;
+  if (!sortPartCfg()) {
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
+    return -1;
+  }
+  ids=(IntList*) self->container;
+  for (int i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] > n_part)
+      return 1;
+    d[0] += partCfg[ids->e[i]].r.dip[0];
+    d[1] += partCfg[ids->e[i]].r.dip[1];
+    d[2] += partCfg[ids->e[i]].r.dip[2];
+  }
+  A[0]=d[0];
+  A[1]=d[1];
+  A[2]=d[2];
+  return 0;
+}
+#endif
+
 int observable_calc_com_velocity(observable* self) {
   double* A = self->last_value;
   double v_com[3] = { 0. , 0., 0. } ;
