@@ -715,9 +715,9 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
           argc -= 1;
           argv += 1;
 	  char buffer[1024];
-	  snprintf(buffer,1024,"{ agrid %f } { tau %f }",lbpar.agrid,lbpar.tau);
 	  if (LB_COMPONENTS==1) {
-		snprintf(buffer,1024, "%s { rho %f } { viscosity %f } { bulk_viscosity %f } { gamma_odd %f } { gamma_even %f } { friction %f } { ext_force { %f %f %f } }  ",buffer, 
+		snprintf(buffer,1024, "{ agrid %f } { tau %f } { rho %f } { viscosity %f } { bulk_viscosity %f } { gamma_odd %f } { gamma_even %f } { friction %f } { ext_force { %f %f %f } }  ",
+                lbpar.agrid,lbpar.tau,
 		lbpar.rho[0],
 		lbpar.viscosity[0], 
 		lbpar.bulk_viscosity[0], 
@@ -729,7 +729,8 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 	  }
 #ifdef SHANCHEN
 	  if (LB_COMPONENTS==2) {
-		snprintf(buffer,1024, "%s { rho { %f %f } } { viscosity { %f %f } } { bulk_viscosity { %f %f } } { gamma_odd { %f %f } } { gamma_even { %f %f } } { friction { %f %f } } { ext_force { { %f %f %f } { %f %f %f } } sc_coupling { %f %f %f} }  ",buffer, 
+		snprintf(buffer,1024, "{ agrid %f } { tau %f } { rho { %f %f } } { viscosity { %f %f } } { bulk_viscosity { %f %f } } { gamma_odd { %f %f } } { gamma_even { %f %f } } { friction { %f %f } } { ext_force { { %f %f %f } { %f %f %f } } sc_coupling { %f %f %f} }  ",buffer, 
+                lbpar.agrid,lbpar.tau,
 		lbpar.rho[0], lbpar.rho[1],
 		lbpar.viscosity[0], lbpar.viscosity[1],
 		lbpar.bulk_viscosity[0], lbpar.bulk_viscosity[1],
