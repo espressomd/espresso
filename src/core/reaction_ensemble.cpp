@@ -21,6 +21,7 @@ reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL
 
 //global variable
 bool system_is_in_1_over_t_regime=false;
+double minimum_average_of_hisogram_before_removal_of_unused_bins=1000.0; //XXX make this accessible from tcl interface (use 90 for free polymer, 1000 for rod system, this is determined by try and error)
 
 //declaration of boring helper functions
 float factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
@@ -65,7 +66,7 @@ int check_reaction_ensemble(){
 	}
 	if(current_reaction_system.water_type>=0 &&(current_reaction_system.given_length_in_SI_units<0 || current_reaction_system.given_length_in_simulation_units <0)){
 		printf("Please provide a length scale in order to make use of the water_type (e.g. for autodissociation reactions). Use the length_scales argument of the reaction_ensemble command.\n");
-		exit(0);		
+		exit(0);
 	}
 	return 0;
 }
@@ -97,7 +98,6 @@ int free_reaction_ensemble(){
 
 float factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
 	float value=1;
-	
 	if (nu_i == 0) {
 		value=1.0;
 	} else {
@@ -187,7 +187,7 @@ int generic_oneway_reaction(int reaction_id){
 		double molar_concentration_of_water=55.5; //in mol per liter
 		old_particle_numbers[index_of_water_type]=int(conversion_factor_molar_concentration_to_number_concentration_per_simulation_box_volume(current_reaction_system.given_length_in_simulation_units, current_reaction_system.given_length_in_SI_units) *molar_concentration_of_water*volume);
 	}
-		
+
 	int* p_ids_created_particles =NULL;
 	int len_p_ids_created_particles=0;
 	double* hidden_particles_properties=NULL;
@@ -195,7 +195,7 @@ int generic_oneway_reaction(int reaction_id){
 	double* changed_particles_properties=NULL;
 	int len_changed_particles_properties=0;
 	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
-	
+
 	//create or hide particles of types with corresponding types in reaction
 	for(int i=0;i<min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
 		//change min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
@@ -647,7 +647,7 @@ wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 
  						.minimum_energies_at_flat_index=NULL, .maximum_energies_at_flat_index=NULL,\
  						.do_energy_reweighting=false, .counter_ion_type=-10, .polymer_start_id=-10 ,\
  						.polymer_end_id=-10, .fix_polymer=false ,.do_not_sample_reaction_partition_function=false,\
- 					.used_bins=-10
+ 						.used_bins=-10
  						};//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential, use only 1 wang_landau_steps if you want to record other observables in the tcl script.
 
 double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value, double delta_CV) {
@@ -1013,9 +1013,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 	}else{
 		//pass
 	}
-	
-	
-	
+
 	//look wether the proposed state lies in Gamma and add the Wang-Landau modification factor, this is a bit nasty due to the energy collective variable case (memory layout of storage array of the histogram and the wang_landau_potential values is "cuboid")
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
@@ -1029,7 +1027,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 			else if(current_wang_landau_system.histogram[new_state_index]<0 &&current_wang_landau_system.histogram[old_state_index]>=0)
 				bf=-10;//this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
 		}
-		
 	}else if(old_state_index<0 && new_state_index>=0){
 		bf=10;	//this makes the reaction get accepted, since we found a state in Gamma
 	}else if(old_state_index<0 && new_state_index<0){
@@ -1037,7 +1034,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 	}else if(old_state_index>=0 && new_state_index<0){
 		bf=-10; //this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
 	}
-	
 	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept
@@ -1099,7 +1095,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 }
 
 //declarations
-void write_wang_landau_results_to_file(char* full_path_to_output_filename); 
+void write_wang_landau_results_to_file(char* full_path_to_output_filename);
 bool can_refine_wang_landau_one_over_t();
 bool achieved_desired_number_of_refinements_one_over_t ();
 void refine_wang_landau_parameter_one_over_t();
@@ -1113,28 +1109,25 @@ bool is_in_list(int value, int* list, int len_list){
 			return true;
 	}
 	return false;
-	
 }
 
 bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polymer){
 	int p_id;
 	Particle part;
-	
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	if(old_state_index>=0){
 		if(current_wang_landau_system.histogram[old_state_index]>=0)
 			current_wang_landau_system.monte_carlo_trial_moves+=1;
 	}
-	
+
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
-	
-	
+
 	int particle_number_of_type;
 	number_of_particles_with_type(type, &(particle_number_of_type));
 	if(particle_number_of_type==0){
 		bool got_accepted=false;
 		//reject
-		if(old_state_index>=0){
+		if(old_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
 			if(current_wang_landau_system.histogram[old_state_index]>=0){
 				current_wang_landau_system.histogram[old_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
@@ -1146,7 +1139,7 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 	double particle_positions[3*particle_number_of_type];
 	int changed_particle_counter=0;
 	int p_id_s_changed_particles[particle_number_of_type];
-	
+
 	//save old_position
 	while(changed_particle_counter<particle_number_of_type){
 		if(changed_particle_counter==0){
@@ -1157,7 +1150,7 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 				find_particle_type(type, &p_id); //check wether you already touched this p_id
 			}
 		}
-		
+
 		get_particle_data(p_id, &part);
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
@@ -1265,7 +1258,7 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 	bool got_accepted=false;
 	if(d_random()<bf){
 		//accept
-		if(new_state_index>=0 ){
+		if(new_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
 				got_accepted=true;
 				current_wang_landau_system.histogram[new_state_index]+=1;
@@ -1274,7 +1267,7 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 		}
 	}else{
 		//reject
-		if(old_state_index>=0){
+		if(old_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
 			if(current_wang_landau_system.histogram[old_state_index]>=0){
 				current_wang_landau_system.histogram[old_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
@@ -1310,16 +1303,15 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 		if(current_wang_landau_system.histogram[old_state_index]>=0)
 			current_wang_landau_system.monte_carlo_trial_moves+=1;
 	}
-	
+
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
-	
-	
+
 	int particle_number_of_type;
 	number_of_particles_with_type(type, &(particle_number_of_type));
 	if(particle_number_of_type==0){
 		bool got_accepted=false;
 		//reject
-		if(old_state_index>=0){
+		if(old_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
 			if(current_wang_landau_system.histogram[old_state_index]>=0){
 				current_wang_landau_system.histogram[old_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
@@ -1347,13 +1339,13 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 				find_particle_type(type, &p_id); //check wether you already touched this p_id
 			}
 		}
-		
+
 		get_particle_data(p_id, &part);
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
 		particle_positions[0]=ppos[0];
 		particle_positions[1]=ppos[1];
-		particle_positions[2]=ppos[2];	
+		particle_positions[2]=ppos[2];
 		bool particle_inserted_too_close_to_another_one=true;
 		while(particle_inserted_too_close_to_another_one==true && attempts<max_tries){
 			//change particle position
@@ -1440,7 +1432,7 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 	bool got_accepted=false;
 	if(d_random()<bf){
 		//accept
-		if(new_state_index>=0 ){
+		if(new_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
 				got_accepted=true;
 				current_wang_landau_system.histogram[new_state_index]+=1;
@@ -1449,7 +1441,7 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 		}
 	}else{
 		//reject
-		if(old_state_index>=0){
+		if(old_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
 			if(current_wang_landau_system.histogram[old_state_index]>=0){
 				current_wang_landau_system.histogram[old_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
@@ -1538,7 +1530,7 @@ bool do_HMC_move(){
 	bool got_accepted=false;
 	if(d_random()<bf){
 		//accept
-		if(new_state_index>=0 ){
+		if(new_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
 			if(current_wang_landau_system.histogram[new_state_index]>=0){
 				got_accepted=true;
 				current_wang_landau_system.histogram[new_state_index]+=1;
@@ -1547,7 +1539,7 @@ bool do_HMC_move(){
 		}
 	}else{
 		//reject
-		if(old_state_index>=0){
+		if(old_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
 			if(current_wang_landau_system.histogram[old_state_index]>=0){
 				current_wang_landau_system.histogram[old_state_index]+=1;
 				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
@@ -1561,7 +1553,6 @@ bool do_HMC_move(){
 			double pos_vec[3]={pos_x,pos_y,pos_z};
 			place_particle(p_id,pos_vec);
 		}
-		
 	}
 	return got_accepted;
 }
@@ -1575,41 +1566,31 @@ bool got_accepted;
 int do_reaction_wang_landau(){
 	tries+=current_wang_landau_system.wang_landau_steps;
 	for(int step=0;step<current_wang_landau_system.wang_landau_steps;step++){
-		int reaction_id=i_random(current_reaction_system.nr_single_reactions+3); //without +1 only reactions are sampled. The +1 makes that also dislocation moves of particles (at a fixed particle number) are performed
-		if(reaction_id<current_reaction_system.nr_single_reactions){
-			got_accepted=generic_oneway_reaction_wang_landau(reaction_id);
-		 	//according to de pablo also needs to be performed for the runs without energy reweighting for sampling the configurational partition function
-		}else if(reaction_id==current_reaction_system.nr_single_reactions){
-			if(current_wang_landau_system.counter_ion_type>=0)
-				got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
-			else
-				got_accepted=do_HMC_move();
-		}else if(reaction_id==current_reaction_system.nr_single_reactions+1){		
-			//or alternatively
-			if(current_wang_landau_system.counter_ion_type>=0){
-//				got_accepted=do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
-				got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id);
-			}else{
-				got_accepted=do_HMC_move();
-			}
-		}else if(reaction_id==current_reaction_system.nr_single_reactions+2){	
-			//or alternatively			
-			got_accepted=do_HMC_move();
-//			got_accepted=do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type, current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id);
-		}	
-			//or alternatively if you are not doing energy reweighting
-//			if(current_wang_landau_system.do_energy_reweighting==false){
-//				mpi_integrate(150,-1);
-//			}
-		
+		int reaction_id=i_random(current_reaction_system.nr_single_reactions);
+		got_accepted=generic_oneway_reaction_wang_landau(reaction_id);
 		if(got_accepted==true){
 			accepted_moves+=1;
 		}
 		
+		//try to sample config partition function
+		//do as many steps as needed to get to a new conformation (compare Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo)
+		for(int k=0;k<4;k++){
+			if(current_wang_landau_system.counter_ion_type>=0){
+				do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id);//if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+				//alternatively
+				//do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+				//alternatively
+				//do_HMC_move();
+			}else{
+				do_HMC_move();
+			}
+		}
+
 		if(can_refine_wang_landau_one_over_t()){
-			if(achieved_desired_number_of_refinements_one_over_t()==true){//check for convergence
+			//check for convergence
+			if(achieved_desired_number_of_refinements_one_over_t()==true){
 				write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
-				//XXX exit
+				exit(0); //XXX make Espresso exit not the program itself
 			}
 			refine_wang_landau_parameter_one_over_t();
 		}
@@ -1633,7 +1614,7 @@ int do_reaction_wang_landau(){
 		//remove holes from the sampling range for improved convergence
 		//be aware that this check also limits the maximal difference in degeneracies that you can sample
 		if(current_wang_landau_system.wang_landau_parameter==current_wang_landau_system.initial_wang_landau_parameter){
-			if(average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>150)
+			if(average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>minimum_average_of_hisogram_before_removal_of_unused_bins)
 				remove_bins_that_have_not_been_sampled();
 		}
 	}
@@ -1691,7 +1672,10 @@ int find_minimum_in_int_list(int* list, int len){
 }
 
 bool can_refine_wang_landau_one_over_t(){
-	double minimum_required_value=0.85*average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram); // This is an additional constraint to sample configuration space better. Use flatness criterion according to 1/t algorithm as long as you are not in 1/t regime.
+	double minimum_required_value=0.80*average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram); // This is an additional constraint to sample configuration space better. Use flatness criterion according to 1/t algorithm as long as you are not in 1/t regime.
+	if(current_wang_landau_system.do_energy_reweighting==true)
+		minimum_required_value=0; //get faster in energy reweighting case
+
 	if(find_minimum_in_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>minimum_required_value || system_is_in_1_over_t_regime==true){
 		return true;
 	}else{
@@ -1701,8 +1685,9 @@ bool can_refine_wang_landau_one_over_t(){
 
 
 void reset_histogram(){
-	printf("Histogram is flat. Refining. Previous wang_landau_parameter was %f.\n",current_wang_landau_system.wang_landau_parameter);
+	printf("Histogram is flat. Refining. Previous Wang-Landau modification parameter was %f.\n",current_wang_landau_system.wang_landau_parameter);
 	fflush(stdout);
+	
 	for(int i=0;i<current_wang_landau_system.len_histogram;i++){
 		if(current_wang_landau_system.histogram[i]>=0){//checks for validity of index i (think of energy collective variables, in a cubic memory layout there will be indices which are not allowed by the energy boundaries. These values will be initalized with a negative fill value)
 			current_wang_landau_system.histogram[i]=0;
@@ -1713,18 +1698,20 @@ void reset_histogram(){
 
 void refine_wang_landau_parameter_one_over_t(){
 	double monte_carlo_time = (double) current_wang_landau_system.monte_carlo_trial_moves/current_wang_landau_system.used_bins;
-	if ( current_wang_landau_system.wang_landau_parameter/2.0 <1.0/monte_carlo_time || system_is_in_1_over_t_regime==true){
+	if ( current_wang_landau_system.wang_landau_parameter/2.0 <=1.0/monte_carlo_time || system_is_in_1_over_t_regime==true){
 		current_wang_landau_system.wang_landau_parameter= 1.0/monte_carlo_time;
 		system_is_in_1_over_t_regime=true;
 	} else {
 		reset_histogram();
 		current_wang_landau_system.wang_landau_parameter= current_wang_landau_system.wang_landau_parameter/2.0;
+		
 	}
 	current_wang_landau_system.already_refined_n_times+=1;
 }
 
-bool achieved_desired_number_of_refinements_one_over_t () {
+bool achieved_desired_number_of_refinements_one_over_t() {
 	if(current_wang_landau_system.wang_landau_parameter < current_wang_landau_system.final_wang_landau_parameter) {
+		printf("Achieved desired number of refinements\n");
 		return true;
 	} else {
 		return false;
