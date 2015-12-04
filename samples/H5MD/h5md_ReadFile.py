@@ -37,13 +37,15 @@ for i in range(n_part):
     system.part[i].pos=np.array([0,0,0])
 
 
-result_user = h5.read_from_h5.userdefined("User/user1/","value",(3,))
+result_user1 = h5.read_from_h5.userdefined("User/user1/","value1",(3,))
+result_user2 = h5.read_from_h5.userdefined("User/user1/","value2",(3,5))
 h5.read_from_h5.time(n_time-1,"particles/atoms/position/","time")
 h5.read_from_h5.type(n_time-1)
 h5.read_from_h5.pos(n_time-1)
 h5.read_from_h5.v(n_time-1)
 h5.read_from_h5.f(n_time-1)
 #h5.read_from_h5.bonds(n_time-1)
+h5.read_from_h5.bondstest()
 h5.read_from_h5.mass(n_time-1)
 h5.read_from_h5.omega_lab(n_time-1)
 h5.read_from_h5.rinertia(n_time-1)
@@ -77,7 +79,8 @@ h5.read_from_h5.id(n_time-1)
 
 
 for i in range(n_part):
-    print(result_user)
+    print(result_user1)
+    print(result_user2)
 #     print(system.time)
 #     print(system.part[i].type)
 #     print(system.part[i].pos)
