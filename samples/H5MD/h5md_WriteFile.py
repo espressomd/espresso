@@ -83,9 +83,11 @@ for i in range(n_part):
 
 
 
+
 for i in range(n_time):
     system.time=0.1*(i+1)
-    h5.write_to_h5.userdefined(7,"User/user1/","value",'f8',(3,),(3,)) 
+    h5.write_to_h5.userdefined(123.4,"User/user1/","value1",'f8',(3,),(1,))  # One dimensional
+    h5.write_to_h5.userdefined(567.8,"User/user1/","value2",'f8',(3,5),(1,5)) # Two dimensional
     h5.write_to_h5.time(i,"particles/atoms/position/","time")
     h5.write_to_h5.time_step(i,"particles/atoms/position/","step")
     h5.write_to_h5.type(i)
@@ -93,6 +95,7 @@ for i in range(n_time):
     h5.write_to_h5.v(i)
     h5.write_to_h5.f(i)
     #h5.write_to_h5.bonds(i)
+    h5.write_to_h5.bondstest()
     h5.write_to_h5.mass(i)
     h5.write_to_h5.omega_lab(i)
     h5.write_to_h5.rinertia(i)
@@ -144,10 +147,9 @@ h5.close()
 #comment all
 #test indention
 #test mpi
-#userdefined none,none,none
 #latex write (3,)
 #try to istypeof isinstance(y, np.ndarray )
-
+#remove bondstest + do no read bond
 
 ####ERRORS
 #torque_lab,quat,omega_lab,dipole: schreibt/liest beim h5 aufruf falsche werte
