@@ -2108,11 +2108,9 @@ void p3m_calc_kspace_stress (double* stress) {
     if (p3m.sum_q2 > 0) {
         double* node_k_space_stress;
         double* k_space_stress;
-        double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz, eps_0;
-		eps_0 = 1.0/( 4.0 * PI *78.0 * coulomb.prefactor);
+        double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz, eps_0, kspace_eng=0.0;
         int j[3], i, ind = 0;
         // ordering after fourier transform
-        const int x = 2, y = 0, z = 1;
         node_k_space_stress = (double*)Utils::malloc(9*sizeof(double));
         k_space_stress = (double*)Utils::malloc(9*sizeof(double));
 
@@ -2125,12 +2123,14 @@ void p3m_calc_kspace_stress (double* stress) {
         fft_perform_forw(p3m.rs_mesh);
         force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
 
+
+
         for(j[0]=0; j[0] < fft.plan[3].new_mesh[RX]; j[0]++) {
             for(j[1]=0; j[1] < fft.plan[3].new_mesh[RY]; j[1]++) {
                 for(j[2]=0; j[2] < fft.plan[3].new_mesh[RZ]; j[2]++) {
-                       kx = 2.0 * PI * p3m.d_op[RX][ j[KX] + fft.plan[3].start[RX] ]/box_l[RX];
-                       ky = 2.0 * PI * p3m.d_op[RY][ j[KY] + fft.plan[3].start[RY] ]/box_l[RY];
-                       kz = 2.0 * PI * p3m.d_op[RZ][ j[KZ] + fft.plan[3].start[RZ] ]/box_l[RZ];
+                       kx = 2.0 * PI * p3m.d_op[RX][ j[KX] + fft.plan[3].start[KX] ]/box_l[RX];
+                       ky = 2.0 * PI * p3m.d_op[RY][ j[KY] + fft.plan[3].start[KY] ]/box_l[RY];
+                       kz = 2.0 * PI * p3m.d_op[RZ][ j[KZ] + fft.plan[3].start[KZ] ]/box_l[RZ];
                        sqk = SQR(kx) + SQR(ky) + SQR(kz);
                     if (sqk == 0) {
                         node_k_space_energy = 0.0;
@@ -2141,7 +2141,6 @@ void p3m_calc_kspace_stress (double* stress) {
                         node_k_space_energy =  p3m.g_energy[ind] * ( SQR(p3m.rs_mesh[2*ind]) + SQR(p3m.rs_mesh[2*ind + 1]) );
                     }
                     ind++;
-
                     node_k_space_stress[0] += node_k_space_energy * (1.0 + vterm*SQR(kx));     /* sigma_xx */
                     node_k_space_stress[1] += node_k_space_energy * (vterm*kx*ky);  /* sigma_xy */
                     node_k_space_stress[2] += node_k_space_energy * (vterm*kx*kz);  /* sigma_xz */
@@ -2155,11 +2154,14 @@ void p3m_calc_kspace_stress (double* stress) {
                     node_k_space_stress[8] += node_k_space_energy * (1.0 + vterm*SQR(kz));     /* sigma_zz */
                 }
             }
-        }
-        MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-        for (i = 0; i < 9; i++) {
-            stress[i] += k_space_stress[i] * force_prefac;
-        }
+		}
+
+		MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+		if ( this_node == 0 ) { 
+			for (i = 0; i < 9; i++) {
+				stress[i] = k_space_stress[i] * force_prefac;
+			}
+		}
         free (node_k_space_stress);
         free (k_space_stress);
     }
