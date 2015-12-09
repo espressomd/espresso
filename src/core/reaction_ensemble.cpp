@@ -578,7 +578,7 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 
 	//check for the current state to be an allowed state in the [range collective_variables_minimum_values:collective_variables_maximum_values], else return a negative index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i] || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i])
+		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i] || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/100000.0) //-delta_collective_variables_values[collective_variable_i]/100000.0 for numerical reasons, think about energy reweighting case and energy range [0:0] where you still want to construct the reaction partition function
 			return index;
 	}
 
@@ -827,10 +827,10 @@ int initialize_wang_landau(){
 			unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
 			//use unraveled index
 			double current_energy=unraveled_index[energy_collective_variable_index]*current_wang_landau_system.collective_variables[energy_collective_variable_index]->delta_CV+current_wang_landau_system.collective_variables[energy_collective_variable_index]->CV_minimum;
-			if(current_energy>max_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)] || current_energy<min_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)] || max_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)]-min_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)]<0.00001 ){
+			if(current_energy>max_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)] || current_energy<min_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)]-current_wang_landau_system.collective_variables[energy_collective_variable_index]->delta_CV ){
 				current_wang_landau_system.histogram[flattened_index]=current_wang_landau_system.int_fill_value;
 				current_wang_landau_system.wang_landau_potential[flattened_index]=current_wang_landau_system.double_fill_value;
-				empty_bins_in_memory+=1;		
+				empty_bins_in_memory+=1;	
 			}
 		}
 		
@@ -1775,10 +1775,10 @@ int update_maximum_and_minimum_energies_at_current_state(){
 	int index=get_flattened_index_wang_landau_of_current_state();
 
 	//update stored energy values
-	if( (( E_pot_current<current_wang_landau_system.minimum_energies_at_flat_index[index])|| abs(current_wang_landau_system.minimum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001) && abs(E_pot_current)>0.0001 ) {
+	if( (( E_pot_current<current_wang_landau_system.minimum_energies_at_flat_index[index])|| abs(current_wang_landau_system.minimum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001) ) {
 		current_wang_landau_system.minimum_energies_at_flat_index[index]=E_pot_current;
 	}
-	if( ((E_pot_current>current_wang_landau_system.maximum_energies_at_flat_index[index]) || abs(current_wang_landau_system.maximum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001) && abs(E_pot_current)>0.0001 ) {
+	if( ((E_pot_current>current_wang_landau_system.maximum_energies_at_flat_index[index]) || abs(current_wang_landau_system.maximum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001) ) {
 		current_wang_landau_system.maximum_energies_at_flat_index[index]= E_pot_current;
 	}
 	
