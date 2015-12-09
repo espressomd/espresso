@@ -23,6 +23,9 @@
  */
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
+#include <iterator>
+#include <algorithm>
 #include "interaction_data_tcl.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
@@ -80,6 +83,7 @@
 #include "reaction_field_tcl.hpp"
 #include "actor/Mmm1dgpu_tcl.hpp"
 #include "actor/Ewaldgpu_tcl.hpp"
+#include "scafacos.hpp"
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -125,6 +129,31 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 /********************************************************************************/
 /*                                 electrostatics                               */
 /********************************************************************************/
+
+int tclcommand_inter_coulomb_parse_scafacos(Tcl_Interp *interp, int argc, char ** argv) {
+  if(argc < 1)
+    return TCL_ERROR;
+
+  const std::string method(argv[0]);
+  
+  std::stringstream params;
+
+  if(argc > 1) {
+    for(int i = 1; i < argc; i++) {
+      params << std::string(argv[i]);
+      if(i != (argc-1))
+        params << ",";
+    }
+  }
+  std::cout << params.str() << std::endl;
+  coulomb.method  = COULOMB_SCAFACOS;
+
+  mpi_bcast_coulomb_params();
+  
+  Electrostatics::Scafacos::set_parameters(method, params.str());
+  
+  return TCL_OK;
+}
 
 int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 {
@@ -212,6 +241,8 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
   #endif
 
+  REGISTER_COULOMB("scafacos", tclcommand_inter_coulomb_parse_scafacos);
+  
   /* fallback */
   coulomb.method  = COULOMB_NONE;
   coulomb.bjerrum = 0.0;

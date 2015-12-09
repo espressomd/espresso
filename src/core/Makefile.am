@@ -90,6 +90,7 @@ libEspresso_la_SOURCES = \
 	rotation.cpp rotation.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	RuntimeErrorStream.cpp RuntimeErrorStream.hpp \
+	scafacos.cpp scafacos.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
 	statistics_chain.cpp statistics_chain.hpp \
