@@ -42,7 +42,7 @@ cdef class Actor:
 
     def isValid(self):
         """Check, if the data stored in the instance still matches what is in Espresso"""
-        # check, if the bond parameters saved in the class still match those
+        # check, if the parameters saved in the class still match those
         # saved in Espresso
         tempParams = self._getParamsFromEsCore()
         if self._params != tempParams:
