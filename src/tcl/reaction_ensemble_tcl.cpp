@@ -358,6 +358,10 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				}
 				if(ARG1_IS_S("fix_polymer_monomers"))
 					current_wang_landau_system.fix_polymer=true;
+				if(ARG1_IS_S("use_hybrid_monte_carlo")){
+					current_wang_landau_system.use_hybrid_monte_carlo=true;
+					printf("Make sure to use a bigger time step when using hybrid monte carlo steps!\n");
+				}
 			}
 		}
 		

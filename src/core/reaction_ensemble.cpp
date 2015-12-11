@@ -647,7 +647,7 @@ wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 
  						.minimum_energies_at_flat_index=NULL, .maximum_energies_at_flat_index=NULL,\
  						.do_energy_reweighting=false, .counter_ion_type=-10, .polymer_start_id=-10 ,\
  						.polymer_end_id=-10, .fix_polymer=false ,.do_not_sample_reaction_partition_function=false,\
- 						.used_bins=-10
+ 					.used_bins=-10, .use_hybrid_monte_carlo=false
  						};//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential, use only 1 wang_landau_steps if you want to record other observables in the tcl script.
 
 double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value, double delta_CV) {
@@ -1582,6 +1582,9 @@ int do_reaction_wang_landau(){
 				//alternatively
 				//do_HMC_move();
 			}else{
+				do_HMC_move();
+			}
+			if(current_wang_landau_system.use_hybrid_monte_carlo==true){
 				do_HMC_move();
 			}
 		}

@@ -92,6 +92,7 @@ typedef struct wang_landau_system {
 	bool fix_polymer;
 	bool do_not_sample_reaction_partition_function;
 	int used_bins;
+	bool use_hybrid_monte_carlo;
 } wang_landau_system;
 
 extern wang_landau_system current_wang_landau_system;
