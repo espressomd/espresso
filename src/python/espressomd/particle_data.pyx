@@ -130,9 +130,7 @@ cdef class ParticleHandle:
             if not hasattr(_bonds, "__getitem__"):
                 raise ValueError(
                     "bonds have to specified as a tuple of tuples. (Lists can also be used)")
-            # Check individual bonds
-            for bond in _bonds:
-                self.check_bond_or_throw_exception(bond)
+            bonds=list(_bonds) # as we modify it
 
             # Assigning to the bond property means replacing the existing value
             # i.e., we delete all existing bonds
@@ -140,7 +138,7 @@ cdef class ParticleHandle:
                 raise Exception("Deleting existing bonds failed.")
 
             # And add the new ones
-            for bond in _bonds:
+            for bond in bonds:
                 self.add_verified_bond(bond)
 
         def __get__(self):
