@@ -1,12 +1,15 @@
 #ifndef __VARIANT__HPP
 #define __VARIANT__HPP
 
+#include <iostream>
+
 #include <vector>
 #include <string>
+#include "Vector.hpp"
 
 class Variant {
 public:
-  enum Type { NONE, INT, DOUBLE, STRING, INT_VECTOR, DOUBLE_VECTOR };
+  enum Type { NONE = 0, INT, DOUBLE, STRING, INT_VECTOR, DOUBLE_VECTOR };
   Variant() : m_mem(0) {  m_type = NONE; }
   Variant(Type t) {
     m_type = t;
@@ -20,30 +23,73 @@ public:
     construct_from<double>(v);
     m_type = DOUBLE;
   }
+  
   Variant(const std::string &v) : Variant() {
     construct_from<std::string>(v);
     m_type = STRING;
   }
+
+  Variant(std::string &&v) : Variant() {
+    construct_from<std::string>(v);
+    m_type = STRING;
+  }
+  
   Variant(const std::vector<int> &v) : Variant() {
     construct_from<typename std::vector<int> >(v);
     m_type = INT_VECTOR;
   }
+
+  Variant(std::vector<int> &&v) : Variant() {
+    construct_from<typename std::vector<int> >(v);
+    m_type = INT_VECTOR;
+  }
+  
   Variant(const std::vector<double> &v) : Variant() {
     construct_from<typename std::vector<double> >(v);
-    m_type = DOUBLE_VECTOR; }
+    m_type = DOUBLE_VECTOR;
+  }
+
+  Variant(std::vector<double> &&v) : Variant() {
+    construct_from<typename std::vector<double> >(v);
+    m_type = DOUBLE_VECTOR;
+  }
+
+  Variant(const Vector3d &v) : Variant() {
+    delete_mem();
+    std::vector<double> *p = new std::vector<double>;
+    m_mem = reinterpret_cast<void *>(p);
+    p->resize(3);
+
+    for(int i = 0; i < 3; i++) {
+      (*p)[i] = v[i];
+    }
+    m_type = DOUBLE_VECTOR;
+  }
+  
   Variant(const Variant &rhs) : Variant() {
+    std::cout << "Variant(const Variant &rhs)" << std::endl;
     copy(rhs);
-  }  
+  }
+  
   ~Variant() {
     delete_mem();
   }
+  
   Variant &operator=(const Variant &rhs) {
+    std::cout << "Variant &operator=(const Variant &rhs)" << std::endl;
+    std::cout << "rhs.type() = " << rhs.type() << std::endl;
     copy(rhs);
+    std::cout << "/operator=(const Variant &rhs)" << std::endl;
     return *this;
   }
   
   friend std::ostream &operator<<(std::ostream &os, const Variant &rhs);
+
+  std::uint32_t size() const;
+  std::vector<char> serialize() const;
+  
   const Type type() const { return m_type; };
+  
   operator int()  const {
     if(m_type != INT)
       throw std::string("Variant is not an INT\n");
@@ -94,14 +140,15 @@ public:
       d->resize(i+1);
     return (*d)[i];
   }
-
+  
 private:
   void copy(const Variant &rhs) {
     switch(rhs.m_type) {
     case NONE:      
       break;
     case INT:
-      construct_from<int>(*reinterpret_cast<int *>(rhs.m_mem));
+      std::cout << "copy->INT" << std::endl;
+      construct_from<int>(*reinterpret_cast<int *>(rhs.m_mem));      
       break;
     case DOUBLE:
       construct_from<double>(*reinterpret_cast<double *>(rhs.m_mem));
@@ -117,13 +164,24 @@ private:
       break;
     }
     m_type = rhs.m_type;
+    std::cout << "/copy(const Variant &rhs)" << std::endl;
   }
   
   template<typename T>
   void construct_from(const T &v) {
+    std::cout << "void construct_from(const T &v)" << std::endl;
+    delete_mem();
+    m_mem = reinterpret_cast<void *>(new T(v));
+    std::cout << "/construct_from()" << std::endl;
+  }
+
+  template<typename T>
+  void construct_from(T &&v) {
+    std::cout << "void construct_from(T &&v)" << std::endl;
     delete_mem();
     m_mem = reinterpret_cast<void *>(new T(v));
   }
+  
   void init_mem() {
     switch(m_type) {
     case NONE:

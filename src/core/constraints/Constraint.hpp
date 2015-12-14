@@ -3,16 +3,14 @@
 
 #include <string>
 
+#include "ScriptObject.hpp"
+
 #include "energy.hpp"
 #include "interaction_data.hpp"
 
 namespace Constraints {
-
-  enum ConstraintType { CONSTRAINT_NONE, CONSTRAINT_GEOMETRY, CONSTRAINT_INTERACTION, CONSTRAINT_CHARGED_ROD, CONSTRAINT_CHARGED_PLATE, CONSTRAINT_EXT_MAGN_FIELD };
-
-  struct Constraint {
+struct Constraint : public ScriptObject {
   public:
-    virtual ConstraintType type() { return CONSTRAINT_NONE; }
     virtual void add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy) { }
     virtual void add_force(Particle *p, const double *folded_pos) { }
     /* Accumulated force excerted by the constraint */
@@ -20,6 +18,6 @@ namespace Constraints {
     /* Human readable name */
     virtual std::string name() { return std::string("Constraint::"); }
   };
-};
+}
 
 #endif

@@ -23,6 +23,7 @@
 #define __SPHERE_HPP
 
 #include "Shape.hpp"
+#include "Vector.hpp"
 
 namespace Shapes {
   struct Sphere : public Shape {
@@ -30,9 +31,9 @@ namespace Shapes {
     int calculate_dist(const double *ppos, double *dist, double *vec);
     Parameters &all_parameters() const;
     Parameters get_parameters();
-    void set_parameters(Parameters &p);
-
-    double pos[3];
+    void set_parameter(const std::string &name, const Variant &value);
+    
+    Vector3d pos;
     double rad;
     double direction;
   };

@@ -23,6 +23,7 @@
 #define __CYLINDER_HPP
 
 #include "Shape.hpp"
+#include "Vector.hpp"
 
 namespace Shapes {
   struct Cylinder : public Shape {
@@ -31,12 +32,12 @@ namespace Shapes {
 
     Parameters &all_parameters() const;
     Parameters get_parameters();
-    void set_parameters(Parameters &p);
-
+    void set_parameter(const std::string &name, const Variant &value);
+    
     /** center of the cylinder. */
-    double pos[3];
+    Vector3d pos;
     /** Axis of the cylinder .*/
-    double axis[3];
+    Vector3d axis;
     /** cylinder radius. */
     double rad;
     /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/

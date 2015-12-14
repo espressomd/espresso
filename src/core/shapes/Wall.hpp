@@ -23,6 +23,7 @@
 #define __WALL_HPP
 
 #include "Shape.hpp"
+#include "Vector.hpp"
 
 namespace Shapes {
   struct Wall : public Shape {
@@ -30,13 +31,13 @@ namespace Shapes {
     int calculate_dist(const double *ppos, double *dist, double *vec);  
     Parameters &all_parameters() const;
     Parameters get_parameters();
-    void set_parameters(Parameters &p);
-
+    void set_parameter(const std::string &name, const Variant &value);
+    
     /** normal vector on the plane. */
-    double n[3];
+    Vector3d n;
     /** distance of the wall from the origin. */
     double d;
   };
-};
+}
 
 #endif

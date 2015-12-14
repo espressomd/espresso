@@ -23,13 +23,14 @@
 #define __PLANE_HPP
 
 #include "Shape.hpp"
+#include "Vector.hpp"
 
 namespace Shapes {
   struct Plane : public Shape {
     virtual const std::string name() const { return std::string("Plane"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
 
-    double pos[3];
+    Vector3d pos;
   };
 };
 

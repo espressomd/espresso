@@ -24,55 +24,46 @@
 using namespace std;
 
 namespace Shapes {
-  Parameters &Wall::all_parameters() const {
-    static bool init = false;
-    static Parameters p;
-    if(!init) {
-      p["normal"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
-      p["d"] = Parameter(Variant::DOUBLE, true);
-      init = true;
-    }
-    printf("[\"normal\"].value.type() %d\n", p["normal"].value.type());
-    return p;
+Parameters &Wall::all_parameters() const {
+  static bool init = false;
+  static Parameters p;
+  if(!init) {
+    p["normal"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+    p["d"] = Parameter(Variant::DOUBLE, true);
+    init = true;
   }
 
-  Parameters Wall::get_parameters() {
-    Parameters p = all_parameters();
+  return p;
+}
 
-    printf("p[\"normal\"].value.type() %d\n", p["normal"].value.type());
-    printf("all_parameters()[\"normal\"].value.type() %d\n", all_parameters()["normal"].value.type());
-    for(int i = 0; i < 3; i++) {
-      p["normal"].value[i] = n[i];
-    }
-    p["d"] = d;
+Parameters Wall::get_parameters() {
+  Parameters p = all_parameters();
+
+  p["normal"] = n;    
+  p["d"] = d;
       
-    return p;
+  return p;
+}
+
+void Wall::set_parameter(const std::string &name, const Variant &value) {
+  if(name == "d")
+    d = value;
+
+  if(name == "normal") {
+    n = value;
   }
+}
 
-  void Wall::set_parameters(Parameters &p) {
-    for(Parameters::iterator it = p.begin(); it != p.end(); ++it) {
-      if(!it->second.set)
-        continue;
 
-      if(it->first == "d")
-        d = p["d"].value;
+int Wall::calculate_dist(const double *ppos, double *dist, double *vec)
+{
+  int i;
 
-      if(it->first == "normal") {
-        for(int i = 0; i < 3; i++) {
-          n[i] = p["normal"].value[i];
-        }
-      }
-    }
-  }
-
-  int Wall::calculate_dist(const double *ppos, double *dist, double *vec)
-  {
-    int i;
-
-    *dist = -d;
-    for(i=0;i<3;i++) *dist += ppos[i]*n[i];
+  *dist = -d;
+  for(i=0;i<3;i++) *dist += ppos[i]*n[i];
   
-    for(i=0;i<3;i++) vec[i] = n[i] * *dist;
-    return 0;
-  }
+  for(i=0;i<3;i++) vec[i] = n[i] * *dist;
+  return 0;
+}
+
 }

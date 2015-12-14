@@ -14,7 +14,6 @@ namespace Constraints {
     void add_force(Particle *p, const double *folded_pos);
     virtual std::string name() { return Constraint::name() + std::string("ExternalMagneticField"); }
     double ext_magn_field[3];
-    ConstraintType type() { return CONSTRAINT_EXT_MAGN_FIELD; }
   };
 }
 

@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __MAZE_HPP
-#define __MAZE_HPP
+#ifndef __SHAPES_MAZE_HPP
+#define __SHAPES_MAZE_HPP
 
 #include "Shape.hpp"
 

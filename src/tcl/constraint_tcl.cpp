@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,9 +18,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file constraint.cpp
-    Implementation of \ref constraint.hpp "constraint.h", here it's just the parsing stuff.
-*/
 
 #include "config.hpp"
 
@@ -28,15 +25,36 @@
 
 #include <limits>
 #include <list>
-#include "communication.hpp"
+
 #include "parser.hpp"
-#include "TclOutputHelper.hpp"
+
 #include "TclCommand.hpp"
 
 #include "constraints/ConstraintList.hpp"
 #include "constraints/InteractionConstraint.hpp"
 #include "shapes/Shape.hpp"
 #include "shape_tcl.hpp"
+
+namespace Constraints {
+namespace Tcl {
+
+class ConstraintManager : public TclCommand {
+ public:
+  void parse_from_string(std::list<std::string> &argv);
+  std::string print_to_string();
+ private:
+  ObjectManager<Constraints::Constraint> m_om;
+};
+
+void ConstraintManager::parse_from_string(std::list<std::string> &argv) {
+  if(argv.size() <= 0)
+    return;
+
+  
+}
+
+}
+}
 
 #endif /* CONSTRAINTS */
 

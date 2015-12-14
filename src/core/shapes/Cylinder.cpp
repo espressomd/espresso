@@ -27,107 +27,104 @@ using namespace std;
 #define SQR(A) ((A)*(A))
 
 namespace Shapes {
-  int Cylinder::calculate_dist(const double *ppos, double *dist, double *vec)
-  {
-    int i;
-    double d_per,d_par,d_real,d_per_vec[3],d_par_vec[3],d_real_vec[3];
+int Cylinder::calculate_dist(const double *ppos, double *dist, double *vec)
+{
+  int i;
+  double d_per,d_par,d_real,d_per_vec[3],d_par_vec[3],d_real_vec[3];
 
-    d_real = 0.0;
-    for(i=0;i<3;i++) {
-      d_real_vec[i] = ppos[i] - pos[i];
-      d_real += SQR(d_real_vec[i]);
-    }
-    d_real = sqrt(d_real);
+  d_real = 0.0;
+  for(i=0;i<3;i++) {
+    d_real_vec[i] = ppos[i] - pos[i];
+    d_real += SQR(d_real_vec[i]);
+  }
+  d_real = sqrt(d_real);
     
-    d_par=0.;
-    for(i=0;i<3;i++) {
-      d_par += (d_real_vec[i] * axis[i]);
-    }
+  d_par=0.;
+  for(i=0;i<3;i++) {
+    d_par += (d_real_vec[i] * axis[i]);
+  }
     
-    for(i=0;i<3;i++) {
-      d_par_vec[i] = d_par * axis[i] ;
-      d_per_vec[i] = ppos[i] - (pos[i] + d_par_vec[i]) ;
-    }
+  for(i=0;i<3;i++) {
+    d_par_vec[i] = d_par * axis[i] ;
+    d_per_vec[i] = ppos[i] - (pos[i] + d_par_vec[i]) ;
+  }
 		
-    d_per=sqrt(SQR(d_real)-SQR(d_par));
-    d_par = fabs(d_par) ;
+  d_per=sqrt(SQR(d_real)-SQR(d_par));
+  d_par = fabs(d_par) ;
 
-    if ( direction == -1 ) {
-      /*apply force towards inside cylinder */
-      d_per = rad - d_per ;
-      d_par = length - d_par;
-      if (d_per < d_par )  {
-        *dist = d_per ;   
-        for (i=0; i<3;i++) {
-          vec[i]= -d_per_vec[i] * d_per /  (rad - d_per) ;
-        }
-      } else {
-        *dist = d_par ;
-        for (i=0; i<3;i++) {
-          vec[i]= -d_par_vec[i] * d_par /  (length - d_par) ;
-        }
+  if ( direction == -1 ) {
+    /*apply force towards inside cylinder */
+    d_per = rad - d_per ;
+    d_par = length - d_par;
+    if (d_per < d_par )  {
+      *dist = d_per ;   
+      for (i=0; i<3;i++) {
+        vec[i]= -d_per_vec[i] * d_per /  (rad - d_per) ;
       }
     } else {
-      /*apply force towards outside cylinder */
-      d_per = d_per - rad ;
-      d_par = d_par - length ;
-      if (d_par < 0 )  {
-        *dist = d_per ;   
-        for (i=0; i<3;i++) {
-          vec[i]= d_per_vec[i] * d_per /  (d_per + rad) ;
-        }
-      } else if ( d_per < 0) {
-        *dist = d_par ;
-        for (i=0; i<3;i++) {
-          vec[i]= d_par_vec[i] * d_par /  (d_par + length) ;
-        }
-      } else {
-        *dist = sqrt( SQR(d_par) + SQR(d_per)) ;
-        for (i=0; i<3;i++) {
-          vec[i]=
-            d_per_vec[i] * d_per /  (d_per + rad) +
-            d_par_vec[i] * d_par /  (d_par + length) ;
-        }	
+      *dist = d_par ;
+      for (i=0; i<3;i++) {
+        vec[i]= -d_par_vec[i] * d_par /  (length - d_par) ;
       }
     }
-    return 0;
-  }
-
-  Parameters &Cylinder::all_parameters() const {
-    static bool init = false;
-    static Parameters p;
-    if(!init) {
-      p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
-      p["axis"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
-      p["radius"] = Parameter(Variant::DOUBLE, true);
-      p["length"] = Parameter(Variant::DOUBLE, true);
-      p["direction"] = Parameter(Variant::DOUBLE, true);
-      init = true;
+  } else {
+    /*apply force towards outside cylinder */
+    d_per = d_per - rad ;
+    d_par = d_par - length ;
+    if (d_par < 0 )  {
+      *dist = d_per ;   
+      for (i=0; i<3;i++) {
+        vec[i]= d_per_vec[i] * d_per /  (d_per + rad) ;
+      }
+    } else if ( d_per < 0) {
+      *dist = d_par ;
+      for (i=0; i<3;i++) {
+        vec[i]= d_par_vec[i] * d_par /  (d_par + length) ;
+      }
+    } else {
+      *dist = sqrt( SQR(d_par) + SQR(d_per)) ;
+      for (i=0; i<3;i++) {
+        vec[i]=
+            d_per_vec[i] * d_per /  (d_per + rad) +
+            d_par_vec[i] * d_par /  (d_par + length) ;
+      }	
     }
-    return p;
   }
-
-  Parameters Cylinder::get_parameters() {
-    Parameters p;
-
-    p["center"] = vector<double>(pos, pos+3);
-    p["axis"] = vector<double>(axis, axis+3);
-    p["radius"] = rad;
-    p["length"] = length;
-    p["direction"] = direction;
-      
-    return p;
-  }
-
-  void Cylinder::set_parameters(Parameters &p) {
-    vector<double> v = p["center"].value;
-    copy(v.begin(), v.end(), pos);
-    v = p["axis"].value;
-    copy(v.begin(), v.end(), axis);
-
-    rad = p["radius"].value;
-    length = p["length"].value;
-    direction = p["direction"].value;
-  }
+  return 0;
 }
 
+Parameters &Cylinder::all_parameters() const {
+  static bool init = false;
+  static Parameters p;
+  if(!init) {
+    p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+    p["axis"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+    p["radius"] = Parameter(Variant::DOUBLE, true);
+    p["length"] = Parameter(Variant::DOUBLE, true);
+    p["direction"] = Parameter(Variant::DOUBLE, true);
+    init = true;
+  }
+  return p;
+}
+
+Parameters Cylinder::get_parameters() {
+  Parameters p;
+
+  p["center"] = pos;
+  p["axis"] = axis;
+  p["radius"] = rad;
+  p["length"] = length;
+  p["direction"] = direction;
+      
+  return p;
+}
+
+void Cylinder::set_parameter(const std::string &name, const Variant &value) {
+  SET_PARAMETER_HELPER("center", pos);
+  SET_PARAMETER_HELPER("axis", axis);
+  SET_PARAMETER_HELPER("radius", rad);
+  SET_PARAMETER_HELPER("length", length);
+  SET_PARAMETER_HELPER("direction", direction);
+}
+
+}

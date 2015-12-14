@@ -11,15 +11,11 @@ using namespace std;
 static int TclCommand_wrapper (ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
   
 void TclCommand::create_command(const string &command) {
-  cout << "TclCommand::create_command(" << command << ")" << endl;
-  cout << this << endl;
   Tcl_CreateCommand(interp, command.c_str(), reinterpret_cast<Tcl_CmdProc *>(TclCommand_wrapper), reinterpret_cast<ClientData>(this), NULL);    
 }
 
 static int TclCommand_wrapper (ClientData data, Tcl_Interp *interp, int argc, char *argv[]) {
-  std::cout << "TclCommand_wrapper()" << std::endl;
   TclCommand *p = reinterpret_cast<TclCommand *>(data);
-  cout << "p = " << p << endl;
   
   if(argc > 1) {
     list<string> args(argv + 1, argv + argc);

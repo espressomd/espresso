@@ -670,5 +670,41 @@ namespace Shapes {
       }
     return 0;
   }
+
+  Parameters &Rhomboid::all_parameters() const {
+    static bool init = false;
+    static Parameters p;
+    if(!init) {
+      p["corner"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+      p["a"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+      p["b"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+      p["c"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+      p["direction"] = Parameter(Variant::DOUBLE, true);
+      init = true;
+    }
+    return p;
+  }
+
+Parameters Rhomboid::get_parameters() {
+  Parameters p = all_parameters();
+
+  p["corner"] = pos;
+  p["a"] = a;
+  p["b"] = b;
+  p["c"] = c;
+  p["direction"] = direction;
+    
+  return p;
+}
+
+void Rhomboid::set_parameter(const std::string &name, const Variant &value) {
+  SET_PARAMETER_HELPER("corner", pos);
+  SET_PARAMETER_HELPER("a", a);
+  SET_PARAMETER_HELPER("b", b);
+  SET_PARAMETER_HELPER("c", c);
+  SET_PARAMETER_HELPER("direction", direction);
+}
+
+
 }
 

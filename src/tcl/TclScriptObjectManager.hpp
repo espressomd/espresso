@@ -18,16 +18,14 @@ class TclScriptObjectManager : public TclCommand {
 public:
   TclScriptObjectManager(Tcl_Interp *_interp) : TclCommand(_interp) {
 #ifdef HAVE_CXX11
-    static_assert(std::is_base_of<ScriptObject, T>::value, "Type has to be subclass ob ScriptObject");
+    static_assert(std::is_base_of<ScriptObject, T>::value, "Type has to be subclass of ScriptObject");
 #endif
   }
 
   void parse_from_string(std::list<std::string> &argv) {
-    std::cout << "TclScriptObjectManager::parse_from_string()" << std::endl;
-    std::cout << "|argv| = " << argv.size() << std::endl;
     switch(argv.size()) {
     case 0:
-      /* @TODO: print all */
+      Tcl_AppendResult(interp, print_to_string().c_str(), 0);
       break;
     case 1:
       {
@@ -59,11 +57,15 @@ public:
   }
 
   std::string print_to_string() {
-    return string("This should print all objects in the container, but it does not.");
-    for(auto &o: m_om) {
-      std::cout << o.first << ": " << o.second->name() << std::endl;
+    std::ostringstream ss;
+
+    for(typename ObjectManager<T>::iterator it = m_om.begin(); it != m_om.end(); ++it) {
+      ss << "{ " << print_one(it->first) << " } ";
     }
+
+    return ss.str();    
   }
+
 
 private:
   ObjectManager<T> m_om;

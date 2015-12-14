@@ -3,7 +3,6 @@
 #include "grid.hpp"
 
 namespace Constraints {
-
   void ChargedPlate::add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy) {
 #ifdef ELECTROSTATICS
     if (coulomb.prefactor != 0.0 && p->p.q != 0.0 && sigma != 0.0)
@@ -23,6 +22,32 @@ namespace Constraints {
       total_force[2] -= f;
     }
 #endif
+  }
 
-  };
+Parameters ChargedPlate::get_parameters() {
+  Parameters p = all_parameters();
+
+  p["height"] = pos;    
+  p["sigma"] = sigma;
+      
+  return p;
+}
+
+void ChargedPlate::set_parameter(const std::string &name, const Variant &value) {
+  SET_PARAMETER_HELPER("height", pos);
+  SET_PARAMETER_HELPER("sigma", sigma);
+}
+
+Parameters &ChargedPlate::all_parameters() const {
+  static bool init = false;
+  static Parameters p;
+  if(!init) {
+    p["height"] = Parameter(Variant::DOUBLE, true);
+    p["sigma"] = Parameter(Variant::DOUBLE, true);
+    init = true;
+  }  
+
+  return p;
+}
+
 }

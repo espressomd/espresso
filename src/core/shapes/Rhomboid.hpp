@@ -28,12 +28,16 @@ namespace Shapes {
   struct Rhomboid : public Shape {
     virtual const std::string name() const { return std::string("Rhomboid"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
+    Parameters &all_parameters() const;
+    Parameters get_parameters();
+    void set_parameter(const std::string &name, const Variant &value);
+    
     /** corner of the rhomboid */
-    double pos[3];
+    Vector3d pos;
     /** edges adjacent to the corner */
-    double a[3];
-    double b[3];
-    double c[3];
+    Vector3d a;
+    Vector3d b;
+    Vector3d c;
     /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
     double direction;
   };

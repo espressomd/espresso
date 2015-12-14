@@ -13,7 +13,6 @@ string TclScriptObject::print_to_string() {
   return res.str();
 }
 
-
 void TclScriptObject::parse_from_string(list<string> &argv) {
   cout << "TclScriptObject::parse_from_string()" << endl;
   Parameters p = m_so->get_parameters();
@@ -40,8 +39,11 @@ void TclScriptObject::parse_from_string(list<string> &argv) {
 	  error << s << " expects one integer argument, but got '" << *it << "'";
 	  throw(error.str());
 	}
-	else
-	  si->second.value = i;	
+	else {
+          std::cout << "type " << si->second.type << std::endl;
+	  si->second.value = i;
+          std::cout << "/assignment" << std::endl;
+        }
       }
       si->second.set = true;
       it = argv.erase(it);
@@ -56,8 +58,10 @@ void TclScriptObject::parse_from_string(list<string> &argv) {
 	  error << s << " expects one float argument, but got '" << *it << "'";
 	  throw(error.str());
 	}
-	else
-	  si->second.value = d;	
+	else {
+          std::cout << "type " << si->second.type << std::endl;
+	  si->second.value = d;
+        }
       }
       si->second.set = true;
       it = argv.erase(it);

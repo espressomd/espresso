@@ -17,8 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
+#ifndef __UTILS_VECTOR_HPP
+#define __UTILS_VECTOR_HPP
+
 #include <algorithm>
 #include <cmath>
+#include <vector>
 #ifdef HAVE_CXX11
 #include <initializer_list>
 #endif
@@ -36,6 +40,14 @@ class Vector {
       d[i] = a[i];
   }
 
+  Vector(const Vector& rhs) {
+    std::copy(rhs.d, rhs.d+n, d);
+  }
+
+  Vector(const std::vector<Scalar> &rhs) {
+    std::copy(rhs.d, rhs.d+n, d);
+  }
+  
 #ifdef HAVE_CXX11
   Vector(std::initializer_list<Scalar> l) {
     std::copy(l.begin(), l.begin() + n, d);
@@ -52,15 +64,16 @@ class Vector {
  
   static int size() { return n; }
     
-  Vector(const Vector& rhs) {
-    std::copy(rhs.d, rhs.d+n, d);
-  }
-
   Vector& operator=(Vector& rhs) {
     std::copy(rhs.d, rhs.d + n, d);
     return *this;
   }
 
+  Vector& operator=(const std::vector<Scalar>& rhs) {
+    std::copy(rhs.begin(), rhs.end(), d);
+    return *this;
+  }
+  
   Scalar &operator[](int i) {
     return d[i];
   }
@@ -112,3 +125,4 @@ class Vector {
 
 typedef Vector<3, double> Vector3d;
 
+#endif

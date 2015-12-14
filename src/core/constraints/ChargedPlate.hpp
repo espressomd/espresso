@@ -9,9 +9,13 @@ namespace Constraints {
     void add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy);
     void add_force(Particle *p, const double *folded_pos);
     virtual std::string name() { return Constraint::name() + std::string("ChargedPlate"); }
-    ConstraintType type() { return CONSTRAINT_CHARGED_PLATE; }
     double pos;
     double sigma;
+
+    /** Parsing stuff */
+    Parameters get_parameters();
+    Parameters &all_parameters() const;
+    void set_parameter(const std::string &name, const Variant &value);
   };
 }
 

@@ -11,6 +11,8 @@ namespace Constraints {
 
 ConstraintList list;
 
+/** @TODO: Collect total force on constraint */
+
 void ConstraintList::init_forces() {
   for(iterator it = begin(); it != end(); ++it) {
     for(int i = 0; i < 3; i++)
@@ -51,7 +53,7 @@ double ConstraintList::min_dist(double pos[3]) {
   double mind = std::numeric_limits<double>::max();
   for(iterator it = begin(); it != end(); ++it) {
     const Constraints::GeometryConstraint *c = dynamic_cast<Constraints::GeometryConstraint *>(*it);
-    if(c){
+    if(c) {
       c->calculate_dist(pos, &dist, vec);
       mind = std::min(mind, dist);
     }

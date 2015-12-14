@@ -59,6 +59,7 @@ namespace Shapes {
     if(!init) {
       p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
       p["radius"] = Parameter(Variant::DOUBLE, true);
+      p["direction"] = Parameter(Variant::DOUBLE, true);
       init = true;
     }
     return p;
@@ -67,28 +68,17 @@ namespace Shapes {
   Parameters Sphere::get_parameters() {
     Parameters p = all_parameters();
 
-    p["center"].value[0] = pos[0];
-    p["center"].value[1] = pos[1];
-    p["center"].value[2] = pos[2];
+    p["center"] = pos;
     p["radius"] = rad;
-
+    p["direction"] = direction;
+    
     return p;
   }
 
-  void Sphere::set_parameters(Parameters &p) {
-    for(Parameters::iterator it = p.begin(); it != p.end(); ++it) {
-      if(!it->second.set)
-        continue;
-
-      if(it->first == "radius")
-        rad = p["radius"].value;
-
-      if(it->first == "center") {
-        for(int i = 0; i < 3; i++) {
-          pos[i] = p["center"].value[i];
-        }
-      }
-    }
-  }
+void Sphere::set_parameter(const std::string &name, const Variant &value) {
+  SET_PARAMETER_HELPER("center", pos);
+  SET_PARAMETER_HELPER("radius", rad);
+  SET_PARAMETER_HELPER("direction", direction);
+}
 }
 

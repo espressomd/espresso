@@ -9,12 +9,13 @@ struct Parameter {
   Parameter(Variant::Type _type, bool _req) : type(_type), value(_type), n_elements(0), set(false), required(_req) {}
   Parameter(Variant::Type _type, int _n, bool _req) : type(_type), value(_type), n_elements(_n), set(false), required(_req) {}
 
-  /** @TODO: Should throw is types do not match */
+  /** @TODO: Should throw if types do not match */
   Parameter &operator=(const Variant& rhs)  {
     value = rhs;
     set = true;
     return *this;
   }
+  
   Variant::Type type;
   Variant value;
   int n_elements;

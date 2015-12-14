@@ -23,6 +23,7 @@
 #define __PORE_HPP
 
 #include "Shape.hpp"
+#include "Vector.hpp"
 
 namespace Shapes {
   struct Pore : public Shape {
@@ -30,9 +31,9 @@ namespace Shapes {
     int calculate_dist(const double *ppos, double *dist, double *vec);
 
     /** center of the cylinder. */
-    double pos[3];
+    Vector3d pos;
     /** Axis of the cylinder .*/
-    double axis[3];
+    Vector3d axis;
     /** cylinder radius. */
     double rad_left;
     double rad_right;

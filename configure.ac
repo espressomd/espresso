@@ -783,7 +783,7 @@ AC_CONFIG_FILES([
 	src/Makefile
 	src/core/Makefile
         src/core/shapes/Makefile
-	src/core/constraints/Makefile
+ 	src/core/constraints/Makefile
 	src/tcl/Makefile
 	src/python/espressomd/Makefile
 	src/core/unit_tests/Makefile
