@@ -349,8 +349,8 @@ cdef class NonBondedInteractions:
 
 cdef class BondedInteraction(object):
 
-    
-    _bondId=-1
+    _bondId = -1
+
     def __init__(self, *args, **kwargs):
         """Either called with an interaction id, in which case, the interaction will represent
            the bonded interaction as it is defined in Espresso core
@@ -451,22 +451,21 @@ cdef class BondedInteraction(object):
             "Subclasses of BondedInteraction must define the requiredKeys() method.")
 
     def __repr__(self):
-        if self._bondId==-1:
-            id_str="inactive"
+        if self._bondId == -1:
+            id_str = "inactive"
         else:
-           id_str=str(self._bondId)
+            id_str = str(self._bondId)
 
+        return self.__class__.__name__ + "(" + id_str + "): " + self._params.__str__()
 
-        return self.__class__.__name__+"("+id_str+"): "+self._params.__str__()
-
-    def __richcmp__(self,other,i):
-       if i!=2: raise Exception("only == supported")
-       if self.__class__ != other.__class__:
+    def __richcmp__(self, other, i):
+        if i != 2:
+            raise Exception("only == supported")
+        if self.__class__ != other.__class__:
             return False
-       if self._bondId != other._bondId:
+        if self._bondId != other._bondId:
             return False
-       return self._params==other._params
-
+        return self._params == other._params
 
 
 class BondedInteractionNotDefined(object):
@@ -944,6 +943,7 @@ ELSE:
 
 
 class Oif_Global_Forces(BondedInteraction):
+
     def typeNumber(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
 
@@ -970,6 +970,7 @@ class Oif_Global_Forces(BondedInteraction):
         oif_global_forces_set_params(
             self._bondId, self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"])
 
+
 class Oif_Local_Forces(BondedInteraction):
 
     def typeNumber(self):
@@ -985,7 +986,8 @@ class Oif_Local_Forces(BondedInteraction):
         return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
 
     def setDefaultParams(self):
-        self._params = {"r0": 1., "ks": 0., "kslin": 0., "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
+        self._params = {"r0": 1., "ks": 0., "kslin": 0.,
+                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
 
     def _getParamsFromEsCore(self):
         return \
@@ -1001,15 +1003,6 @@ class Oif_Local_Forces(BondedInteraction):
     def _setParamsInEsCore(self):
         oif_local_forces_set_params(
             self._bondId, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
-
-
-    
-
-
-
-
-
-
 
 
 bondedInteractionClasses = {
@@ -1081,11 +1074,9 @@ class BondedInteractions:
     # Support iteration over active bonded interactions
     def __iter__(self):
         for i in range(n_bonded_ia):
-          if bonded_ia_params[i].type != -1:
-              yield self[i]
+            if bonded_ia_params[i].type != -1:
+                yield self[i]
 
-    def add(self,bonded_ia):
-       """Add a bonded ia to the simulation>"""
-       self[n_bonded_ia]=bonded_ia
-
-
+    def add(self, bonded_ia):
+        """Add a bonded ia to the simulation>"""
+        self[n_bonded_ia] = bonded_ia
