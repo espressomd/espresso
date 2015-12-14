@@ -25,8 +25,6 @@ from espressomd.interactions import FeneBond
 
 
 class ParticleProperties(ut.TestCase):
-#  def __init__(self,particleId):
-#    self.pid=particleId
   
   # Particle id to work on
   pid=17
@@ -36,6 +34,11 @@ class ParticleProperties(ut.TestCase):
   
   # Handle for espresso system
   es=espressomd.System()
+
+  f1=FeneBond(k=1,d_r_max=5)
+  es.bondedInter.add(f1)
+  f2=FeneBond(k=1,d_r_max=5)
+  es.bondedInter.add(f2)
 
   def arraysNearlyEqual(self,a,b):
     """Test, if the magnitude of the difference between two arrays is smaller than the tolerance"""
@@ -60,8 +63,6 @@ class ParticleProperties(ut.TestCase):
 
   def setUp(self):
     self.es.part[self.pid].pos =0,0,0
-    self.es.bondedInter[0]=FeneBond(k=1,d_r_max=5)
-    self.es.bondedInter[1]=FeneBond(k=1,d_r_max=5)
 
   def generateTestForVectorProperty(_propName,_value):
     """Generates test cases for vectorial particle properties such as
@@ -108,7 +109,9 @@ class ParticleProperties(ut.TestCase):
   test_v=generateTestForVectorProperty("v",np.array([0.2,0.3,0.4]))
   test_f=generateTestForVectorProperty("f",np.array([0.2,0.3,0.7]))
   test_type=generateTestForScalarProperty("type",int(3))
-  test_bonds_property=generateTestForScalarProperty("bonds", ((0,1),(1,2)))
+
+  print f1,f2
+  test_bonds_property=generateTestForScalarProperty("bonds", ((f1,1),(f2,2)))
 
 
   if "MASS" in espressomd.features(): 
