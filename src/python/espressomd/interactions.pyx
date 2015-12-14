@@ -470,6 +470,15 @@ cdef class BondedInteraction(object):
 
         return self.__class__.__name__+"("+id_str+"): "+self._params.__str__()
 
+    def __richcmp__(self,other,i):
+       if i!=2: raise Exception("only == supported")
+       if self.__class__ != other.__class__:
+            return False
+       if self._bondId != other._bondId:
+            return False
+       return self._params==other._params
+
+
 
 class BondedInteractionNotDefined(object):
 
