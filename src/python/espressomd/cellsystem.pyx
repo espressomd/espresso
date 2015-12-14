@@ -20,11 +20,11 @@ cimport cellsystem
 from globals cimport *
 
 cdef class CellSystem(object):
-    def setDomainDecomposition(self, useVerletLists=True):
+    def set_domain_decomposition(self, use_verlet_lists=True):
         """Activates domain decomposition cell system
-        setDomainDecomposition(useVerletList=True)
+        set_domain_decomposition(useVerletList=True)
         """
-        if useVerletLists:
+        if use_verlet_lists:
             dd.use_vList = 1
         else:
             dd.use_vList = 0
@@ -36,10 +36,10 @@ cdef class CellSystem(object):
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def setNsquare(self, useVerletLists=True):
+    def set_n_square(self, use_verlet_lists=True):
         """Activates the nsquare force calculation
         """
-        if useVerletLists:
+        if use_verlet_lists:
             dd.use_vList = 1
         else:
             dd.use_vList = 0
@@ -48,18 +48,18 @@ cdef class CellSystem(object):
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def setLayered(self, nLayers=""):
-        """setLayered(nLayers="")
+    def set_layered(self, n_layers=""):
+        """set_layered(nLayers="")
         Set the layerd cell system with nLayers layers"""
-        if nLayers != "":
-            if not isinstance(nLayers, int):
+        if n_layers != "":
+            if not isinstance(n_layers, int):
                 raise ValueError("layer height should be positive")
 
-            if not nLayers > 0:
+            if not n_layers > 0:
                 raise ValueError("the number of layers has to be >0")
 
             global n_layers
-            n_layers = int(nLayers)
+            n_layers = int(n_layers)
             global determine_n_layers
             determine_n_layers = 0
 
@@ -80,16 +80,16 @@ cdef class CellSystem(object):
             raise Exception("Broadcasting the node grid failed")
         return True
 
-    def getState(self):
+    def get_state(self):
         s = {}
         if cell_structure.type == CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
-            s["nLayers"] = n_layers
+            s["n_layers"] = n_layers
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
             s["type"] = "domainDecomposition"
-            s["useVerletLists"] = dd.use_vList
+            s["use_verlet_lists"] = dd.use_vList
         if cell_structure.type == CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
-            s["useVerletLists"] = dd.use_vList
+            s["use_verlet_lists"] = dd.use_vList
 
         return s

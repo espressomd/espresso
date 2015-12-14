@@ -24,7 +24,7 @@ cimport numpy as np
 from utils cimport *
 
 cdef extern from "interaction_data.hpp":
-    ctypedef struct IA_parameters:
+    ctypedef struct ia_parameters "IA_parameters":
         double LJ_eps
         double LJ_sig
         double LJ_cut
@@ -46,7 +46,7 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_lambda
         double LJGEN_softrad
 
-    cdef IA_parameters * get_ia_param(int i, int j)
+    cdef ia_parameters * get_ia_param(int i, int j)
 
 cdef extern from "lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
@@ -210,7 +210,7 @@ cdef extern from "interaction_data.hpp":
         double distmax
 
 #* Union in which to store the parameters of an individual bonded interaction */
-    ctypedef union Bond_parameters:
+    ctypedef union bond_parameters "Bond_parameters":
         Fene_bond_parameters fene
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
@@ -228,13 +228,13 @@ cdef extern from "interaction_data.hpp":
         Angledist_bond_parameters angledist
         Endangledist_bond_parameters endangledist
 
-    ctypedef struct Bonded_ia_parameters:
+    ctypedef struct bonded_ia_parameters:
         int type
         int num
         #* union to store the different bonded interaction parameters. */
-        Bond_parameters p
+        bond_parameters p
 
-    Bonded_ia_parameters * bonded_ia_params
+    bonded_ia_parameters * bonded_ia_params
     cdef int n_bonded_ia
 
 cdef extern from "fene.hpp":
@@ -264,7 +264,7 @@ IF ROTATION:
 
 IF TABULATED == 1:
     cdef extern from "interaction_data.hpp":
-        cdef enum TabulatedBondedInteraction:
+        cdef enum tabulated_bonded_interaction "TabulatedBondedInteraction":
             TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
     cdef extern from "tab.hpp":
         int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename)
@@ -275,7 +275,7 @@ IF BOND_ENDANGLEDIST == 1:
 
 IF OVERLAPPED == 1:
     cdef extern from "interaction_data.hpp":
-        cdef enum OverlappedBondedInteraction:
+        cdef enum overlapped_bonded_interaction "OverlappedBondedInteraction":
             OVERLAP_UNKNOWN = 0, OVERLAP_BOND_LENGTH, OVERLAP_BOND_ANGLE,\
                 OVERLAP_BOND_DIHEDRAL
     cdef extern from "overlap.hpp":
@@ -288,7 +288,7 @@ IF BOND_VIRTUAL == 1:
 
 
 cdef extern from "interaction_data.hpp":
-    cdef enum enumBondedInteraction "BondedInteraction":
+    cdef enum enum_bonded_interaction "BondedInteraction":
         BONDED_IA_NONE = -1,
         BONDED_IA_FENE,
         BONDED_IA_HARMONIC,

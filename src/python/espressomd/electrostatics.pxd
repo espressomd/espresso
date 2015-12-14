@@ -27,7 +27,7 @@ IF ELECTROSTATICS:
     IF P3M:
         from p3m_common cimport p3m_parameter_struct
     cdef extern from "interaction_data.hpp":
-        cdef enum CoulombMethod:
+        cdef enum coulomb_method "CoulombMethod":
             COULOMB_NONE, \
                 COULOMB_DH, \
                 COULOMB_P3M, \
@@ -44,12 +44,12 @@ IF ELECTROSTATICS:
 
         int coulomb_set_bjerrum(double bjerrum)
 
-        ctypedef struct Coulomb_parameters:
+        ctypedef struct coulomb_parameters "Coublomb_parameters":
             double bjerrum
             double prefactor
-            CoulombMethod method
+            coulomb_method method
 
-        cdef extern Coulomb_parameters coulomb
+        cdef extern coulomb_parameters coulomb
 
     IF P3M:
         cdef extern from "p3m-common.hpp":
@@ -156,18 +156,18 @@ IF ELECTROSTATICS:
 
     cdef extern from "debye_hueckel.hpp":
         IF COULOMB_DEBYE_HUECKEL:
-            ctypedef struct Debye_hueckel_params:
+            ctypedef struct debye_hueckel_params "Debye_hueckel_params":
                 double r_cut
                 double kappa
                 double eps_int, eps_ext
                 double r0, r1
                 double alpha
         ELSE:
-            ctypedef struct Debye_hueckel_params:
+            ctypedef struct debye_hueckel_params "Debye_hueckel_params":
                 double r_cut
                 double kappa
 
-        cdef extern Debye_hueckel_params dh_params
+        cdef extern debye_hueckel_params dh_params
 
         int dh_set_params(double kappa, double r_cut)
         int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha)
@@ -192,7 +192,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             double tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N)
             int determine_calc_time_steps()
 
-        ctypedef struct Ewaldgpu_params:
+        ctypedef struct ewald_gpu_params "Ewaldgpu_params":
             double rcut
             int num_kx
             int num_ky
@@ -205,7 +205,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             int K_max  # Maximal reciprocal K-vector in tuning
             int time_calc_steps  # Steps in time_force_calc function
 
-        cdef extern Ewaldgpu_params ewaldgpu_params
+        cdef extern ewald_gpu_params ewaldgpu_params
 
         # ctypedef extern class EwaldgpuForce ewaldgpuForce
 #    cdef extern from "EspressoSystemInterface.cpp":

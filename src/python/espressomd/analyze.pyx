@@ -43,8 +43,8 @@ def mindist(system=None, p1='default', p2='default'):
       p1, p2: lists of particle types
     """
 
-    cdef IntList * set1
-    cdef IntList * set2
+    cdef int_list * set1
+    cdef int_list * set2
 
     if p1 == 'default' and p2 == 'default':
         result = c_analyze.mindist(NULL, NULL)
@@ -62,8 +62,8 @@ def mindist(system=None, p1='default', p2='default'):
                 raise ValueError(
                     "Particle types in p1 and p2 have to be of type int" + str(p2[i]))
 
-        set1 = create_IntList_from_python_object(p1)
-        set2 = create_IntList_from_python_object(p2)
+        set1 = create_int_list_from_python_object(p1)
+        set2 = create_int_list_from_python_object(p2)
 
         result = c_analyze.mindist(set1, set2)
 
@@ -134,12 +134,12 @@ def nbhood(system=None, pos=None, r_catch=None, plane='3d'):
     """
 
     cdef int planedims[3]
-    cdef IntList * il = NULL
+    cdef int_list * il = NULL
     cdef double c_pos[3]
 
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         pos, 3, float, "_pos=(float,float,float) must be passed to nbhood")
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         r_catch, 1, float, "r_catch=float needs to be passed to nbhood")
 
     # default 3d takes into account dist in x, y and z
@@ -159,10 +159,10 @@ def nbhood(system=None, pos=None, r_catch=None, plane='3d'):
     for i in range(3):
         c_pos[i] = pos[i]
 
-    il = <IntList * > malloc(sizeof(IntList))
+    il = <int_list * > malloc(sizeof(int_list))
     c_analyze.nbhood(c_pos, r_catch, il, planedims)
 
-    result = create_nparray_from_IntList(il)
+    result = create_nparray_from_int_list(il)
     realloc_intlist(il, 0)
     free(il)
     return result
@@ -174,12 +174,12 @@ def cylindrical_average(system=None, center=None, direction=None,
                         types=[-1]):
 
     # Check the input types
-    checkTypeOrExcept(center,      3, float, "center has to be 3 floats")
-    checkTypeOrExcept(direction,   3, float, "direction has to be 3 floats")
-    checkTypeOrExcept(length,      1, float, "length has to be a float")
-    checkTypeOrExcept(radius,      1, float, "radius has to be a floats")
-    checkTypeOrExcept(bins_axial,  1, int,   "bins_axial has to be an int")
-    checkTypeOrExcept(bins_radial, 1, int,   "bins_radial has to be an int")
+    check_type_or_throw_except(center,      3, float, "center has to be 3 floats")
+    check_type_or_throw_except(direction,   3, float, "direction has to be 3 floats")
+    check_type_or_throw_except(length,      1, float, "length has to be a float")
+    check_type_or_throw_except(radius,      1, float, "radius has to be a floats")
+    check_type_or_throw_except(bins_axial,  1, int,   "bins_axial has to be an int")
+    check_type_or_throw_except(bins_radial, 1, int,   "bins_radial has to be an int")
 
     # Convert Python types to C++ types
     cdef vector[double] c_center = center
@@ -239,7 +239,7 @@ def pressure(self, v_comp=0):
     """Pressure calculation
        pressure(v_comp=False)
        """
-    checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
+    check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 #
     # Dict to store the results
     p = {}
@@ -322,7 +322,7 @@ def pressure(self, v_comp=0):
 def stress_tensor(self, v_comp=0):
     """stress_tensor(v_comp=0)
     """
-    checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
+    check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 
     # Dict to store the results
     p = {}
@@ -407,7 +407,7 @@ def local_stress_tensor(system=None, periodicity=(1, 1, 1), range_start=(0.0, 0.
     """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
     """
 
-    cdef DoubleList * local_stress_tensor = NULL
+    cdef double_list * local_stress_tensor = NULL
     cdef int[3] c_periodicity, c_bins
     cdef double[3] c_range_start, c_stress_range
 
@@ -419,7 +419,7 @@ def local_stress_tensor(system=None, periodicity=(1, 1, 1), range_start=(0.0, 0.
 
     if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, local_stress_tensor):
         raise Exception("Error while calculating local stress tensor")
-    stress_tensor = create_nparray_from_DoubleList(local_stress_tensor)
+    stress_tensor = create_nparray_from_double_list(local_stress_tensor)
     free(local_stress_tensor)
     return stress_tensor
 
@@ -534,11 +534,11 @@ def calc_rh(system=None, chain_start=None, number_of_chains=None, chain_length=N
 
 
 def check_topology(system=None, chain_start=None, number_of_chains=None, chain_length=None):
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         chain_start, 1, int, "chain_start=int is a required argument")
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         number_of_chains, 1, int, "number_of_chains=int is a required argument")
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         chain_length, 1, int, "chain_length=int is a required argument")
     if not system:
         raise ValueError('Must pass an instance of ESPResSo to thi function')
@@ -567,8 +567,8 @@ def structure_factor(system=None, sf_type='default', sf_order='default'):
     """
     cdef double * sf
 
-    checkTypeOrExcept(sf_type, 1, int, "sf_type must be an int")
-    checkTypeOrExcept(sf_order, 1, int, "sf_order must be an int")
+    check_type_or_throw_except(sf_type, 1, int, "sf_type must be an int")
+    check_type_or_throw_except(sf_order, 1, int, "sf_order must be an int")
 
     # Used to take the WITHOUT_BONDS define
     c_analyze.updatePartCfg(0)
