@@ -115,7 +115,7 @@ for i in range(n_part/2-1):
   system.part[2*i+1].q = 1.0
 # P3M setup after charge assigned
 #############################################################
-p3m=electrostatics.P3M(bjerrum_length=1.0,accuracy=1e-2)
+p3m=electrostatics.P3M_GPU(bjerrum_length=1.0,accuracy=1e-2)
 system.actors.add(p3m)
 
 print("P3M parameter:\n")

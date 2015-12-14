@@ -317,6 +317,7 @@ class NonBondedInteractionHandle(object):
 
     # Here, one line per non-bonded ia
     lennard_jones = None
+    generic_lennard_jones = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -327,7 +328,8 @@ class NonBondedInteractionHandle(object):
 
         # Here, add one line for each nonbonded ia
         self.lennard_jones = LennardJonesInteraction(_type1, _type2)
-        self.generic_lennard_jones = LennardJonesInteraction(_type1, _type2)
+        IF LENNARD_JONES_GENERIC:
+            self.generic_lennard_jones = GenericLennardJonesInteraction(_type1, _type2)
 
 
 cdef class NonBondedInteractions:
