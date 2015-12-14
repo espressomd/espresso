@@ -23,6 +23,8 @@ cimport utils
 from utils cimport *
 cimport particle_data
 from interactions import BondedInteraction
+from interactions import BondedInteractions
+from copy import copy
 
 PARTICLE_EXT_FORCE = 1
 
@@ -150,7 +152,7 @@ cdef class ParticleHandle:
                 bond = []
                 # Bond type:
                 bond_id = self.particle_data.bl.e[i]
-                bond.append(bond_id)
+                bond.append(BondedInteractions()[bond_id])
                 # Number of partners
                 nPartners = bonded_ia_params[bond_id].num
 
@@ -671,58 +673,74 @@ cdef class ParticleHandle:
         del self
 
     # Bond related methods
-    def add_verified_bond(self, bond, partner):
+    def add_verified_bond(self, bond):
         """Add a bond, the validity of which has already been verified"""
         # If someone adds bond types with more than four partners, this has to
         # be changed
         cdef int bond_info[5]
-        bond_info[0] = bond._bond_id
-#    for i in range(len(bond)):
-#       bond_info[i]=bond[i]
+        bond_info[0] = bond[0]._bond_id
+        for i in range(1,len(bond)):
+            bond_info[i]=bond[i]
         if change_particle_bond(self.id, bond_info, 0):
             raise Exception("Adding the bond failed.")
 
-    def delete_verified_bond(self, bond, partner):
+    def delete_verified_bond(self, bond):
         cdef int bond_info[5]
-        bond_info[0] = bond._bond_id
-#    for i in range(len(bond)):
-#      bond_info[i]=bond[i]
-        if change_particle_bond(self.id, bond_info, 1):
+        bond_info[0] = bond[0]._bond_id
+        for i in range(1,len(bond)):
+            bond_info[i]=bond[i]
+        if change_particle_bond(self.id, bond_nfo, 1):
             raise Exception("Deleting the bond failed.")
 
-    def check_bond_or_throw_exception(self, bond, partner):
+    def check_bond_or_throw_exception(self, bond):
         """Checks the validity of the given bond:
-        * if the bond is given as an object
+        * if the bondtype is given as an object or a numerical id
         * if all partners are of type int
         * if the number of partners satisfies the bond
         * If the bond type used exists (is lower than n_bonded_ia)
         * If the number of bond partners fits the bond type
         Throw an exception if any of these are not met"""
 
-        if not isinstance(bond, BondedInteraction):
-            raise Exception(
-                "Bond argument has to be of type BondedInteraction.")
-        if bond._bond_id >= n_bonded_ia:
-            raise ValueError("The bond type", bond._bond_id, "does not exist.")
-        if not hasattr(partner, "__getitem"):
-            partner = (partner,)
-        if bonded_ia_params[bond._bond_id].num != len(partner):
-            raise ValueError("Bond of type", bond._bond_id, "needs", bonded_ia_params[
-                             bond._bond_id], "partners.")
 
-        for y in partner:
+        # Has it []-access
+        if not hasattr(bond, "__getitem__"):
+            raise ValueError("Bond needs to be a tuple or list containing bond type and partners")
+
+        
+        # Bond type or numerical bond id
+        if not isinstance(bond[0], BondedInteraction):
+            if isinstance(bond[0],int):
+                bond[0]=BondedInteractions()[bond[0]]
+            else:
+                raise Exception(
+                    "1st element of Bond has to be of type BondedInteraction or int.")
+        
+        # Validity of the numeric id
+        if bond[0]._bond_id >= n_bonded_ia:
+            raise ValueError("The bond type", bond._bondId, "does not exist.")
+        
+        # Number of partners
+        if bonded_ia_params[bond[0]._bond_id].num != len(bond)-1:
+            raise ValueError("Bond of type", bond._bondId, "needs", bonded_ia_params[
+                             bond[0]._bondId], "partners.")
+        
+        # Type check on partners
+        for y in bond[1:]:
             if not isinstance(y, int):
                 raise ValueError("Partners have to be integer.")
 
-    def add_bond(self, bond, partner):
+    
+    def add_bond(self, _bond):
         """Add a single bond to the particle"""
-        self.check_bond_or_throw_exception(bond, partner)
-        self.add_verified_bond(bond, partner)
+        bond=list(_bond) # As we will modify it
+        self.check_bond_or_throw_exception(bond)
+        self.add_verified_bond(bond)
 
-    def delete_bond(self, bond, partner):
+    def delete_bond(self, _bond):
         """Delete a single bond from the particle"""
-        self.check_bond_or_throw_exception(bond, partner)
-        self.delete_verified_bond(bond, partner)
+        bond=list(_bond) # as we modify it
+        self.check_bond_or_throw_exception(bond)
+        self.delete_verified_bond(bond)
 
     def delete_all_bonds(self):
         if change_particle_bond(self.id, NULL, 1):
