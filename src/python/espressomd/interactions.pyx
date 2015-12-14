@@ -348,6 +348,9 @@ cdef class NonBondedInteractions:
 
 
 cdef class BondedInteraction(object):
+
+    
+    _bondId=-1
     def __init__(self, *args, **kwargs):
         """Either called with an interaction id, in which case, the interaction will represent
            the bonded interaction as it is defined in Espresso core
@@ -446,6 +449,15 @@ cdef class BondedInteraction(object):
     def requiredKeys(self):
         raise Exception(
             "Subclasses of BondedInteraction must define the requiredKeys() method.")
+
+    def __repr__(self):
+        if self._bondId==-1:
+            id_str="inactive"
+        else:
+           id_str=str(self._bondId)
+
+
+        return self.__class__.__name__+"("+id_str+"): "+self._params.__str__()
 
 
 class BondedInteractionNotDefined(object):
