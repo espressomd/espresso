@@ -998,7 +998,7 @@ bondedInteractionClasses = {
     int(BONDED_IA_RIGID_BOND): RigidBond,
     int(BONDED_IA_DIHEDRAL): Dihedral,
     int(BONDED_IA_TABULATED): Tabulated,
-    int(BONDED_IA_SUBT_LJ):	Subt_Lj,
+    int(BONDED_IA_SUBT_LJ):        Subt_Lj,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
     int(BONDED_IA_ENDANGLEDIST): Endangledist,
     int(BONDED_IA_OVERLAPPED): Overlapped,
@@ -1056,3 +1056,15 @@ class BondedInteractions:
 
         # Set the parameters of the BondedInteraction instance in the Es core
         value._setParamsInEsCore()
+
+    # Support iteration over active bonded interactions
+    def __iter__(self):
+        for i in range(n_bonded_ia):
+          if bonded_ia_params[i].type != -1:
+              yield self[i]
+
+    def add(self,bonded_ia):
+       """Add a bonded ia to the simulation>"""
+       self[n_bonded_ia]=bonded_ia
+
+
