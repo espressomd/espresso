@@ -728,9 +728,7 @@ cdef class ParticleHandle:
         if change_particle_bond(self.id, NULL, 1):
             raise Exception("Deleting all bonds failed.")
 
-    def deleteAllBonds(self):
-        if change_particle_bond(self.id, NULL, 1):
-            raise Exception("Deleting all bonds failed.")
+
 
 cdef class particleList:
     """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
