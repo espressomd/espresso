@@ -578,7 +578,7 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 
 	//check for the current state to be an allowed state in the [range collective_variables_minimum_values:collective_variables_maximum_values], else return a negative index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i] || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/100000.0) //-delta_collective_variables_values[collective_variable_i]/100000.0 for numerical reasons, think about energy reweighting case and energy range [0:0] where you still want to construct the reaction partition function
+		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i] || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i])
 			return index;
 	}
 
@@ -1867,6 +1867,7 @@ void remove_bins_that_have_not_been_sampled(){
 		}
 		
 	}
+	printf("Removed %d bins from the Wang-Landau spectrum\n",removed_bins);
 	//update used bins
 	current_wang_landau_system.used_bins-=removed_bins;
 }
