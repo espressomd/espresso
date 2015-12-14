@@ -44,7 +44,7 @@ IF ELECTROSTATICS:
 
         int coulomb_set_bjerrum(double bjerrum)
 
-        ctypedef struct Coublomb_parameters:
+        ctypedef struct Coulomb_parameters:
             double bjerrum
             double prefactor
             CoulombMethod method
