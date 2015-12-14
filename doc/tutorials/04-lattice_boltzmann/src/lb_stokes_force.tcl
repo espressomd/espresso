@@ -28,14 +28,14 @@
 # in z direction. We create walls in the xz and yz plane at the box 
 # boundaries, where the velocity is fixed to $v. 
 #
-set box_width 14
-set box_length 14
+set box_width 64
+set box_length 64
 
 
 # The temperature is zero.
 thermostat lb 0.
 # Espresso complains if we don't give a skin
-setmd skin 0.4
+setmd skin 0.5
 
 # The boundary speed 
 set v 0.01
@@ -53,7 +53,7 @@ setmd box_l [ expr $box_width+2*$agrid ]  [ expr $box_width+2*$agrid ] $box_leng
 # MD timestep and LB timestep are identical 
 setmd time_step $tau
 # Invoke LB fluid
-lbfluid visc $kinematic_visc dens $density  agrid $agrid tau $tau friction $friction
+lbfluid gpu visc $kinematic_visc dens $density  agrid $agrid tau $tau friction $friction
 
 # Four walls make an infinite square channel along z direction
 lbboundary wall normal -1. 0. 0. dist [ expr -(1+$box_width) ] velocity 0.00 0 $v 

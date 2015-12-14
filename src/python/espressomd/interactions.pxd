@@ -264,7 +264,7 @@ IF ROTATION:
 
 IF TABULATED == 1:
     cdef extern from "interaction_data.hpp":
-        cdef enum tabulated_bonded_interaction "TabulatedBondedInteraction":
+        cdef enum TabulatedBondedInteraction:
             TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
     cdef extern from "tab.hpp":
         int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename)
@@ -275,7 +275,7 @@ IF BOND_ENDANGLEDIST == 1:
 
 IF OVERLAPPED == 1:
     cdef extern from "interaction_data.hpp":
-        cdef enum overlapped_bonded_interaction "OverlappedBondedInteraction":
+        cdef enum OverlappedBondedInteraction:
             OVERLAP_UNKNOWN = 0, OVERLAP_BOND_LENGTH, OVERLAP_BOND_ANGLE,\
                 OVERLAP_BOND_DIHEDRAL
     cdef extern from "overlap.hpp":
