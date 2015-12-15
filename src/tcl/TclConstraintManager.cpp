@@ -19,41 +19,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "config.hpp"
+#include "TclConstraintManager.hpp"
 
 #ifdef CONSTRAINTS
 
-#include <limits>
-#include <list>
-
-#include "parser.hpp"
-
-#include "TclCommand.hpp"
-
-#include "constraints/ConstraintList.hpp"
-#include "constraints/InteractionConstraint.hpp"
-#include "shapes/Shape.hpp"
-#include "shape_tcl.hpp"
-
-namespace Constraints {
-namespace Tcl {
-
-class ConstraintManager : public TclCommand {
- public:
-  void parse_from_string(std::list<std::string> &argv);
-  std::string print_to_string();
- private:
-  ObjectManager<Constraints::Constraint> m_om;
-};
-
-void ConstraintManager::parse_from_string(std::list<std::string> &argv) {
+void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::string> &argv) {
   if(argv.size() <= 0)
-    return;
-
-  
+    return;  
 }
 
-}
+std::string Constraints::Tcl::ConstraintManager::print_to_string() {
+  return std::string();
 }
 
 #endif /* CONSTRAINTS */

@@ -14,6 +14,11 @@ namespace Constraints {
     void add_force(Particle *p, const double *folded_pos);
     Particle part_rep;
     bool only_positive;
+
+    /** Parsing stuff */
+    Parameters get_parameters();
+    Parameters &all_parameters() const;
+    void set_parameter(const std::string &name, const Variant &value);
   };
 }
 

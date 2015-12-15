@@ -12,7 +12,7 @@ struct GeometryConstraint : public Constraint {
  public:
   GeometryConstraint(Shapes::Shape &shape, bool _penetrable = false, ReflectionType _reflection_type = REFLECTION_NONE, bool _tuneable_slip = false) : 
       penetrable(_penetrable), tuneable_slip(_tuneable_slip), reflection_type(_reflection_type), m_shape(shape) {}
-  virtual std::string name() { return Constraint::name() + std::string("GeometryConstraint::") + m_shape.name(); }
+  virtual const std::string name() { return Constraint::name() + std::string("GeometryConstraint::") + m_shape.name(); }
   void reflect_particle(Particle *p, const double *distance_vector, const double *folded_pos);
   bool penetrable;
   bool tuneable_slip;

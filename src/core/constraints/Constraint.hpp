@@ -7,6 +7,7 @@
 
 #include "energy.hpp"
 #include "interaction_data.hpp"
+#include "utils/Factory.hpp"
 
 namespace Constraints {
 struct Constraint : public ScriptObject {
@@ -16,8 +17,12 @@ struct Constraint : public ScriptObject {
     /* Accumulated force excerted by the constraint */
     double total_force[3];
     /* Human readable name */
-    virtual std::string name() { return std::string("Constraint::"); }
+    virtual const std::string name() const { return std::string("Constraint::"); }
   };
+
+typedef Utils::Factory<Constraint> Factory;
+void initialize_factory();
+
 }
 
 #endif

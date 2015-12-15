@@ -43,4 +43,31 @@ namespace Constraints {
     }
 #endif
   };
+
+Parameters ChargedRod::get_parameters() {
+  Parameters p = all_parameters();
+
+  p["center"] = center;    
+  p["lambda"] = lambda;
+      
+  return p;
+}
+
+void ChargedRod::set_parameter(const std::string &name, const Variant &value) {
+  SET_PARAMETER_HELPER("center", center);
+  SET_PARAMETER_HELPER("lambda", lambda);
+}
+
+Parameters &ChargedRod::all_parameters() const {
+  static bool init = false;
+  static Parameters p;
+  if(!init) {
+    p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+    p["lambda"] = Parameter(Variant::DOUBLE, true);
+    init = true;
+  }  
+
+  return p;
+}
+
 }

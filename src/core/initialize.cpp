@@ -67,6 +67,7 @@
 #include "cuda_interface.hpp"
 
 #include "shapes/Shape.hpp"
+#include "constraints/Constraint.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -151,10 +152,11 @@ void on_program_start()
     make_particle_type_exist(0);
   }
 
-  // /** Initialize shape factory */
+  /** Initialize shape factory */
   Shapes::initialize_factory();
+  /** Initialize constraint factory */
+  Constraints::initialize_factory();
 }
-
 
 void on_integration_start()
 {

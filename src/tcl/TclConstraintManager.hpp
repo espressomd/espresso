@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -21,14 +21,29 @@
 #ifndef CONSTRAINT_TCL_H
 #define CONSTRAINT_TCL_H
 
-#include "parser.hpp"
+#include "config.hpp"
 
 #ifdef CONSTRAINTS
 
-int tclcommand_constraint_print(Tcl_Interp *interp);
-int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
-			  int argc, char **argv);
+#include "parser.hpp"
+#include "TclCommand.hpp"
+#include "constraints/Constraint.hpp"
+#include "ObjectManager.hpp"
 
+namespace Constraints {
+namespace Tcl {
+
+class ConstraintManager : public TclCommand {
+ public:
+  ConstraintManager(Tcl_Interp *interp) : TclCommand(interp) {}
+  void parse_from_string(std::list<std::string> &argv);
+  std::string print_to_string();
+ private:
+  ObjectManager<Constraints::Constraint> m_om;
+};
+
+}
+}
 
 #endif /* CONSTRAINTS */
 

@@ -26,7 +26,6 @@
 #include "global.hpp"
 #include "binary_file_tcl.hpp"
 #include "cells_tcl.hpp"
-#include "constraint_tcl.hpp"
 #include "domain_decomposition_tcl.hpp"
 #include "dpd_tcl.hpp"
 #include "galilei_tcl.hpp"
@@ -68,7 +67,7 @@
 #include "TclScriptObjectManager.hpp"
 #include "shapes/Shape.hpp"
 #ifdef CONSTRAINTS
-#include "constraints/Constraint.hpp"
+#include "TclConstraintManager.hpp"
 #endif
 
 #ifdef TK
@@ -265,8 +264,9 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   TclScriptObjectManager<Shapes::Shape> *shape = new TclScriptObjectManager<Shapes::Shape>(interp);  
   shape->create_command("shape");
 
-  TclScriptObjectManager<Constraints::Constraint> *constraint = new TclScriptObjectManager<Constraints::Constraint>(interp);  
-  constraint->create_command("constraint");
+  Constraints::Tcl::ConstraintManager *constraints = new Constraints::Tcl::ConstraintManager(interp);
+  constraints->create_command("constraint");
+  
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)
