@@ -24,7 +24,6 @@ from globals cimport temperature
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):
 
-
         def validate_params(self):
             if not (("bjerrum_length" in self._params) ^ ("prefactor" in self._params)):
                 raise ValueError(
@@ -169,7 +168,7 @@ IF DP3M == 1:
         def python_dp3m_adaptive_tune(self):
             cdef char * log = NULL
             cdef int response
-            response = dp3m_adaptive_tune(& log)
+            response = dp3m_adaptive_tune( & log)
             return response, log
 
         def python_dp3m_set_params(self, p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):

@@ -23,6 +23,8 @@ cimport utils
 from utils cimport *
 cimport particle_data
 from interactions import BondedInteraction
+from interactions import BondedInteractions
+from copy import copy
 
 PARTICLE_EXT_FORCE = 1
 
@@ -36,12 +38,12 @@ PARTICLE_EXT_TORQUE = 16
 cdef class ParticleHandle:
     def __cinit__(self, _id):
         #    utils.init_intlist(self.particle_data.el)
-        utils.init_intlist( & (self.particle_data.bl))
+        utils.init_intlist(& (self.particle_data.bl))
         self.id = _id
 
     cdef int update_particle_data(self) except -1:
         #    utils.realloc_intlist(self.particle_data.el, 0)
-        utils.realloc_intlist( & (self.particle_data.bl), 0)
+        utils.realloc_intlist(& (self.particle_data.bl), 0)
 
         if get_particle_data(self.id, & self.particle_data):
             raise Exception("Error updating particle data")
@@ -71,7 +73,8 @@ cdef class ParticleHandle:
 
         def __set__(self, _pos):
             cdef double mypos[3]
-            check_type_or_throw_except(_pos, 3, float, "Postion must be 3 floats")
+            check_type_or_throw_except(
+                _pos, 3, float, "Postion must be 3 floats")
             for i in range(3):
                 mypos[i] = _pos[i]
             if place_particle(self.id, mypos) == -1:
@@ -89,7 +92,8 @@ cdef class ParticleHandle:
 
         def __set__(self, _v):
             cdef double myv[3]
-            check_type_or_throw_except(_v, 3, float, "Velocity has to be floats")
+            check_type_or_throw_except(
+                _v, 3, float, "Velocity has to be floats")
             for i in range(3):
                 myv[i] = _v[i]
             if set_particle_v(self.id, myv) == 1:
@@ -128,9 +132,7 @@ cdef class ParticleHandle:
             if not hasattr(_bonds, "__getitem__"):
                 raise ValueError(
                     "bonds have to specified as a tuple of tuples. (Lists can also be used)")
-            # Check individual bonds
-            for bond in _bonds:
-                self.check_bond_or_throw_exception(bond)
+            bonds = list(_bonds)  # as we modify it
 
             # Assigning to the bond property means replacing the existing value
             # i.e., we delete all existing bonds
@@ -138,8 +140,8 @@ cdef class ParticleHandle:
                 raise Exception("Deleting existing bonds failed.")
 
             # And add the new ones
-            for bond in _bonds:
-                self.add_verified_bond(bond)
+            for bond in bonds:
+                self.add_bond(bond)
 
         def __get__(self):
             self.update_particle_data()
@@ -150,7 +152,7 @@ cdef class ParticleHandle:
                 bond = []
                 # Bond type:
                 bond_id = self.particle_data.bl.e[i]
-                bond.append(bond_id)
+                bond.append(BondedInteractions()[bond_id])
                 # Number of partners
                 nPartners = bonded_ia_params[bond_id].num
 
@@ -171,14 +173,15 @@ cdef class ParticleHandle:
             """Particle mass"""
 
             def __set__(self, _mass):
-                check_type_or_throw_except(_mass, 1, float, "Mass has to be 1 floats")
+                check_type_or_throw_except(
+                    _mass, 1, float, "Mass has to be 1 floats")
                 if set_particle_mass(self.id, _mass) == 1:
                     raise Exception("set particle position first")
 
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_mass( & (self.particle_data), x)
+                pointer_to_mass(& (self.particle_data), x)
                 return x[0]
 
     IF ROTATION == 1:
@@ -188,7 +191,8 @@ cdef class ParticleHandle:
 
             def __set__(self, _o):
                 cdef double myo[3]
-                check_type_or_throw_except(_o, 3, float, "Omega_lab has to be 3 floats")
+                check_type_or_throw_except(
+                    _o, 3, float, "Omega_lab has to be 3 floats")
                 for i in range(3):
                     myo[i] = _o[i]
                 if set_particle_omega_lab(self.id, myo) == 1:
@@ -197,7 +201,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double o[3]
-                convert_omega_body_to_space(& (self.particle_data), o)
+                convert_omega_body_to_space( & (self.particle_data), o)
                 return np.array([o[0], o[1], o[2]])
 
     # ROTATIONAL_INERTIA
@@ -217,7 +221,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * rinertia = NULL
-                pointer_to_rotational_inertia( & (self.particle_data), rinertia)
+                pointer_to_rotational_inertia(& (self.particle_data), rinertia)
                 return np.array([rinertia[0], rinertia[1], rinertia[2]])
 
 # Omega (angular velocity) body frame
@@ -236,7 +240,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * o = NULL
-                pointer_to_omega_body( & (self.particle_data), o)
+                pointer_to_omega_body(& (self.particle_data), o)
                 return np.array([o[0], o[1], o[2]])
 
 
@@ -246,7 +250,8 @@ cdef class ParticleHandle:
 
             def __set__(self, _t):
                 cdef double myt[3]
-                check_type_or_throw_except(_t, 3, float, "Torque has to be 3 floats")
+                check_type_or_throw_except(
+                    _t, 3, float, "Torque has to be 3 floats")
                 for i in range(3):
                     myt[i] = _t[i]
                 if set_particle_torque_lab(self.id, myt) == 1:
@@ -255,7 +260,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double x[3]
-                convert_torques_body_to_space(& (self.particle_data), x)
+                convert_torques_body_to_space( & (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
 # Quaternion
@@ -274,7 +279,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_quat(& (self.particle_data), x)
+                pointer_to_quat( & (self.particle_data), x)
                 return np.array([x[0], x[1], x[2], x[3]])
 # Director ( z-axis in body fixed frame)
         property director:
@@ -293,7 +298,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_quatu(& (self.particle_data), x)
+                pointer_to_quatu( & (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
 # Charge
@@ -303,7 +308,8 @@ cdef class ParticleHandle:
 
             def __set__(self, _q):
                 cdef double myq
-                check_type_or_throw_except(_q, 1, float, "Charge has to be floats")
+                check_type_or_throw_except(
+                    _q, 1, float, "Charge has to be floats")
                 myq = _q
                 if set_particle_q(self.id, myq) == 1:
                     raise Exception("set particle position first")
@@ -311,7 +317,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_q(& (self.particle_data), x)
+                pointer_to_q( & (self.particle_data), x)
                 return x[0]
 
     def delete(self):
@@ -336,7 +342,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef int * x = NULL
-                pointer_to_virtual(& (self.particle_data), x)
+                pointer_to_virtual( & (self.particle_data), x)
                 return x[0]
 
     IF VIRTUAL_SITES_RELATIVE == 1:
@@ -367,7 +373,7 @@ cdef class ParticleHandle:
                 cdef int * rel_to = NULL
                 cdef double * dist = NULL
                 cdef double * q = NULL
-                pointer_to_vs_relative( & (self.particle_data), rel_to, dist, q)
+                pointer_to_vs_relative(& (self.particle_data), rel_to, dist, q)
                 return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
 
         # vs_auto_relate_to
@@ -407,7 +413,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_dip(& (self.particle_data), x)
+                pointer_to_dip( & (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
         # Scalar magnitude of dipole moment
@@ -423,7 +429,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_dipm(& (self.particle_data), x)
+                pointer_to_dipm( & (self.particle_data), x)
                 return x[0]
 
     IF EXTERNAL_FORCES:
@@ -448,7 +454,7 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 cdef double * ext_f = NULL
                 cdef int * ext_flag = NULL
-                pointer_to_ext_force( & (self.particle_data), ext_flag, ext_f)
+                pointer_to_ext_force(& (self.particle_data), ext_flag, ext_f)
                 if (ext_flag[0] & PARTICLE_EXT_FORCE):
                     return np.array([ext_f[0], ext_f[1], ext_f[2]])
                 else:
@@ -471,7 +477,7 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 fixed_coord_flag = np.array([0, 0, 0], dtype=int)
                 cdef int * ext_flag = NULL
-                pointer_to_fix(& (self.particle_data), ext_flag)
+                pointer_to_fix( & (self.particle_data), ext_flag)
                 for i in map(long, range(3)):
                     if (ext_flag[0] & COORD_FIXED(i)):
                         fixed_coord_flag[i] = 1
@@ -499,7 +505,7 @@ cdef class ParticleHandle:
                     self.update_particle_data()
                     cdef double * ext_t = NULL
                     cdef int * ext_flag = NULL
-                    pointer_to_ext_torque( & (self.particle_data), ext_flag, ext_t)
+                    pointer_to_ext_torque(& (self.particle_data), ext_flag, ext_t)
                     if (ext_flag[0] & PARTICLE_EXT_TORQUE):
                         return np.array([ext_t[0], ext_t[1], ext_t[2]])
                     else:
@@ -510,28 +516,30 @@ cdef class ParticleHandle:
             """Friction coefficient per particle in Langevin"""
 
             def __set__(self, _gamma):
-                check_type_or_throw_except(_gamma, 1, float, "gamma has to be a float")
+                check_type_or_throw_except(
+                    _gamma, 1, float, "gamma has to be a float")
                 if set_particle_gamma(self.id, _gamma) == 1:
                     raise Exception("set particle position first")
 
             def __get__(self):
                 self.update_particle_data()
                 cdef double * gamma = NULL
-                pointer_to_gamma(& (self.particle_data), gamma)
+                pointer_to_gamma( & (self.particle_data), gamma)
                 return gamma[0]
 
         property temp:
             """Temperature per particle in Langevin"""
 
             def __set__(self, _temp):
-                check_type_or_throw_except(_temp, 1, float, "temp has to be a float")
+                check_type_or_throw_except(
+                    _temp, 1, float, "temp has to be a float")
                 if set_particle_temperature(self.id, _temp) == 1:
                     raise Exception("set particle position first")
 
             def __get__(self):
                 self.update_particle_data()
                 cdef double * temp = NULL
-                pointer_to_temperature(& (self.particle_data), temp)
+                pointer_to_temperature( & (self.particle_data), temp)
                 return temp[0]
 
     IF ROTATION_PER_PARTICLE:
@@ -550,7 +558,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef short int * _rot = NULL
-                pointer_to_rotation(& (self.particle_data), _rot)
+                pointer_to_rotation( & (self.particle_data), _rot)
                 if _rot[0] == 1:
                     rot = True
                 else:
@@ -577,7 +585,7 @@ cdef class ParticleHandle:
                 cdef int * num_partners = NULL
                 cdef int * partners = NULL
                 py_partners = []
-                pointer_to_exclusions( & (self.particle_data), num_partners, partners)
+                pointer_to_exclusions(& (self.particle_data), num_partners, partners)
                 for i in range(num_partners[0]):
                     py_partners.append(partners[i])
                 return np.array(py_partners)
@@ -644,7 +652,7 @@ cdef class ParticleHandle:
                 swim = {}
                 mode = "N/A"
                 cdef particle_parameters_swimming * _swim = NULL
-                pointer_to_swimming( & (self.particle_data), _swim)
+                pointer_to_swimming(& (self.particle_data), _swim)
                 IF LB or LB_GPU:
                     if _swim.push_pull == -1:
                         mode = 'pusher'
@@ -671,62 +679,72 @@ cdef class ParticleHandle:
         del self
 
     # Bond related methods
-    def add_verified_bond(self, bond, partner):
+    def add_verified_bond(self, bond):
         """Add a bond, the validity of which has already been verified"""
         # If someone adds bond types with more than four partners, this has to
         # be changed
         cdef int bond_info[5]
-        bond_info[0] = bond._bond_id
-#    for i in range(len(bond)):
-#       bond_info[i]=bond[i]
+        bond_info[0] = bond[0]._bond_id
+        for i in range(1, len(bond)):
+            bond_info[i] = bond[i]
         if change_particle_bond(self.id, bond_info, 0):
             raise Exception("Adding the bond failed.")
 
-    def delete_verified_bond(self, bond, partner):
+    def delete_verified_bond(self, bond):
         cdef int bond_info[5]
-        bond_info[0] = bond._bond_id
-#    for i in range(len(bond)):
-#      bond_info[i]=bond[i]
+        bond_info[0] = bond[0]._bond_id
+        for i in range(1, len(bond)):
+            bond_info[i] = bond[i]
         if change_particle_bond(self.id, bond_info, 1):
             raise Exception("Deleting the bond failed.")
 
-    def check_bond_or_throw_exception(self, bond, partner):
+    def check_bond_or_throw_exception(self, bond):
         """Checks the validity of the given bond:
-        * if the bond is given as an object
+        * if the bondtype is given as an object or a numerical id
         * if all partners are of type int
         * if the number of partners satisfies the bond
         * If the bond type used exists (is lower than n_bonded_ia)
         * If the number of bond partners fits the bond type
         Throw an exception if any of these are not met"""
 
-        if not isinstance(bond, BondedInteraction):
-            raise Exception(
-                "Bond argument has to be of type BondedInteraction.")
-        if bond._bond_id >= n_bonded_ia:
-            raise ValueError("The bond type", bond._bond_id, "does not exist.")
-        if not hasattr(partner, "__getitem"):
-            partner = (partner,)
-        if bonded_ia_params[bond._bond_id].num != len(partner):
-            raise ValueError("Bond of type", bond._bond_id, "needs", bonded_ia_params[
-                             bond._bond_id], "partners.")
+        # Has it []-access
+        if not hasattr(bond, "__getitem__"):
+            raise ValueError(
+                "Bond needs to be a tuple or list containing bond type and partners")
 
-        for y in partner:
+        # Bond type or numerical bond id
+        if not isinstance(bond[0], BondedInteraction):
+            if isinstance(bond[0], int):
+                bond[0] = BondedInteractions()[bond[0]]
+            else:
+                raise Exception(
+                    "1st element of Bond has to be of type BondedInteraction or int.")
+
+        # Validity of the numeric id
+        if bond[0]._bond_id >= n_bonded_ia:
+            raise ValueError("The bond type", bond._bond_id, "does not exist.")
+
+        # Number of partners
+        if bonded_ia_params[bond[0]._bond_id].num != len(bond) - 1:
+            raise ValueError("Bond of type", bond._bond_id, "needs", bonded_ia_params[
+                             bond[0]._bond_id], "partners.")
+
+        # Type check on partners
+        for y in bond[1:]:
             if not isinstance(y, int):
                 raise ValueError("Partners have to be integer.")
 
-    def add_bond(self, bond, partner):
+    def add_bond(self, _bond):
         """Add a single bond to the particle"""
-        self.check_bond_or_throw_exception(bond, partner)
-        self.add_verified_bond(bond, partner)
+        bond = list(_bond)  # As we will modify it
+        self.check_bond_or_throw_exception(bond)
+        self.add_verified_bond(bond)
 
-    def delete_bond(self, bond, partner):
+    def delete_bond(self, _bond):
         """Delete a single bond from the particle"""
-        self.check_bond_or_throw_exception(bond, partner)
-        self.delete_verified_bond(bond, partner)
-
-    def delete_all_bonds(self):
-        if change_particle_bond(self.id, NULL, 1):
-            raise Exception("Deleting all bonds failed.")
+        bond = list(_bond)  # as we modify it
+        self.check_bond_or_throw_exception(bond)
+        self.delete_verified_bond(bond)
 
     def delete_all_bonds(self):
         if change_particle_bond(self.id, NULL, 1):

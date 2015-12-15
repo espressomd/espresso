@@ -6,10 +6,10 @@ cdef class Actor:
 
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
-                      MagnetostaticInteraction=False,
-                      MagnetostaticExtension=False,
-                      HydrodynamicInteraction=False,
-                      ElectrostaticExtensions=False)
+                       MagnetostaticInteraction=False,
+                       MagnetostaticExtension=False,
+                       HydrodynamicInteraction=False,
+                       ElectrostaticExtensions=False)
 
     def __cinit__(self, *args, **kwargs):
         self._isactive = False
@@ -44,7 +44,7 @@ cdef class Actor:
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso"""
-        # check, if the bond parameters saved in the class still match those
+        # check, if the parameters saved in the class still match those
         # saved in Espresso
         temp_params = self._get_params_from_es_core()
         if self._params != temp_params:
@@ -124,7 +124,6 @@ cdef class Actor:
 
 
 class Actors:
-
 
     active_actors = []
 

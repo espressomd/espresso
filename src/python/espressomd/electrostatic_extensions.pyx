@@ -30,13 +30,16 @@ IF ELECTROSTATICS and P3M:
 
         def validate_params(self):
             default_params = self.default_params()
-            check_type_or_throw_except(self._params["maxPWerror"], 1, float, "")
+            check_type_or_throw_except(
+                self._params["maxPWerror"], 1, float, "")
             check_range_or_except(
                 self._params["maxPWerror"], 0, False, "inf", True)
             check_type_or_throw_except(self._params["gap_size"], 1, float, "")
-            check_range_or_except(self._params["gap_size"], 0, False, "inf", True)
+            check_range_or_except(
+                self._params["gap_size"], 0, False, "inf", True)
             check_type_or_throw_except(self._params["far_cut"], 1, float, "")
-            check_type_or_throw_except(self._params["neutralize"], 1, type(True), "")
+            check_type_or_throw_except(
+                self._params["neutralize"], 1, type(True), "")
 
         def valid_keys(self):
             return "maxPWerror", "gap_size", "far_cut", "neutralize"

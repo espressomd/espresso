@@ -207,7 +207,6 @@ cdef extern from "interaction_data.hpp":
 
 cdef class ParticleHandle(object):
 
-
     cdef public int id
     cdef bint valid
     cdef particle particle_data

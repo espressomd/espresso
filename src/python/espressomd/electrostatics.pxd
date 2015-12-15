@@ -87,7 +87,7 @@ IF ELECTROSTATICS:
 
         IF CUDA:
             cdef extern from "p3m_gpu.hpp":
-                void p3m_gpu_init(int cao, int *mesh, double alpha, double *box)
+                void p3m_gpu_init(int cao, int * mesh, double alpha, double * box)
 
             cdef inline python_p3m_gpu_init(params):
                 cdef int cao

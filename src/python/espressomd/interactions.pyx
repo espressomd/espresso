@@ -24,7 +24,6 @@ include "myconfig.pxi"
 
 cdef class NonBondedInteraction(object):
 
-
     cdef public object _part_types
     cdef object _params
 
@@ -150,7 +149,6 @@ cdef class NonBondedInteraction(object):
 
 cdef class LennardJonesInteraction(NonBondedInteraction):
 
-
     if LENNARD_JONES == 1:
         def validate_params(self):
             if self._params["epsilon"] < 0:
@@ -213,7 +211,6 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
 # Generic Lennard Jones
 
 cdef class GenericLennardJonesInteraction(NonBondedInteraction):
-
 
     if LENNARD_JONES_GENERIC == 1:
         def validate_params(self):
@@ -308,7 +305,6 @@ cdef class GenericLennardJonesInteraction(NonBondedInteraction):
 
 class NonBondedInteractionHandle(object):
 
-
     """Provides access to all Non-bonded interactions between
     two particle types."""
 
@@ -329,11 +325,11 @@ class NonBondedInteractionHandle(object):
         # Here, add one line for each nonbonded ia
         self.lennard_jones = LennardJonesInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
-            self.generic_lennard_jones = GenericLennardJonesInteraction(_type1, _type2)
+            self.generic_lennard_jones = GenericLennardJonesInteraction(
+                _type1, _type2)
 
 
 cdef class NonBondedInteractions:
-
 
     """Access to non-bonded interaction parameters via [i,j], where i,j are particle 
     types. Returns NonBondedInteractionHandle.
@@ -359,6 +355,8 @@ cdef class NonBondedInteractions:
 
 cdef class BondedInteraction(object):
 
+    # This means, the instance does not yet represent a bond in the simulation
+    _bond_id = -1
 
     def __init__(self, *args, **kwargs):
         """Either called with an interaction id, in which case, the interaction will represent
@@ -458,6 +456,23 @@ cdef class BondedInteraction(object):
     def required_keys(self):
         raise Exception(
             "Subclasses of BondedInteraction must define the required_keys() method.")
+
+    def __repr__(self):
+        if self._bond_id == -1:
+            id_str = "inactive"
+        else:
+            id_str = str(self._bond_id)
+
+        return self.__class__.__name__ + "(" + id_str + "): " + self._params.__str__()
+
+    def __richcmp__(self, other, i):
+        if i != 2:
+            raise Exception("only == supported")
+        if self.__class__ != other.__class__:
+            return False
+        if self._bond_id != other._bond_id:
+            return False
+        return self._params == other._params
 
 
 class BondedInteractionNotDefined(object):
@@ -935,6 +950,7 @@ ELSE:
 
 
 class Oif_Global_Forces(BondedInteraction):
+
     def type_number(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
 
@@ -961,6 +977,7 @@ class Oif_Global_Forces(BondedInteraction):
         oif_global_forces_set_params(
             self._bond_id, self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"])
 
+
 class Oif_Local_Forces(BondedInteraction):
 
     def type_number(self):
@@ -976,7 +993,8 @@ class Oif_Local_Forces(BondedInteraction):
         return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
 
     def set_default_params(self):
-        self._params = {"r0": 1., "ks": 0., "kslin": 0., "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
+        self._params = {"r0": 1., "ks": 0., "kslin": 0.,
+                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
 
     def _get_params_from_es_core(self):
         return \
@@ -994,15 +1012,6 @@ class Oif_Local_Forces(BondedInteraction):
             self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
 
 
-    
-
-
-
-
-
-
-
-
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
     int(BONDED_IA_HARMONIC): HarmonicBond,
@@ -1010,7 +1019,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_RIGID_BOND): RigidBond,
     int(BONDED_IA_DIHEDRAL): Dihedral,
     int(BONDED_IA_TABULATED): Tabulated,
-    int(BONDED_IA_SUBT_LJ):	Subt_Lj,
+    int(BONDED_IA_SUBT_LJ):        Subt_Lj,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
     int(BONDED_IA_ENDANGLEDIST): Endangledist,
     int(BONDED_IA_OVERLAPPED): Overlapped,
@@ -1068,3 +1077,13 @@ class BondedInteractions:
 
         # Set the parameters of the BondedInteraction instance in the Es core
         value._set_params_in_es_core()
+
+    # Support iteration over active bonded interactions
+    def __iter__(self):
+        for i in range(n_bonded_ia):
+            if bonded_ia_params[i].type != -1:
+                yield self[i]
+
+    def add(self, bonded_ia):
+        """Add a bonded ia to the simulation>"""
+        self[n_bonded_ia] = bonded_ia
