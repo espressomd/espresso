@@ -462,10 +462,10 @@ cdef class BondedInteraction(object):
             "Subclasses of BondedInteraction must define the required_keys() method.")
 
     def __repr__(self):
-        if self._bondId==-1:
+        if self._bond_id==-1:
             id_str="inactive"
         else:
-           id_str=str(self._bondId)
+           id_str=str(self._bond_id)
 
 
         return self.__class__.__name__+"("+id_str+"): "+self._params.__str__()
@@ -474,7 +474,7 @@ cdef class BondedInteraction(object):
        if i!=2: raise Exception("only == supported")
        if self.__class__ != other.__class__:
             return False
-       if self._bondId != other._bondId:
+       if self._bond_id != other._bond_id:
             return False
        return self._params==other._params
 

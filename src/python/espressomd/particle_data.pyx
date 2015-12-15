@@ -139,7 +139,7 @@ cdef class ParticleHandle:
 
             # And add the new ones
             for bond in bonds:
-                self.add_verified_bond(bond)
+                self.add_bond(bond)
 
         def __get__(self):
             self.update_particle_data()
@@ -687,7 +687,7 @@ cdef class ParticleHandle:
         bond_info[0] = bond[0]._bond_id
         for i in range(1,len(bond)):
             bond_info[i]=bond[i]
-        if change_particle_bond(self.id, bond_nfo, 1):
+        if change_particle_bond(self.id, bond_info, 1):
             raise Exception("Deleting the bond failed.")
 
     def check_bond_or_throw_exception(self, bond):
@@ -715,12 +715,12 @@ cdef class ParticleHandle:
         
         # Validity of the numeric id
         if bond[0]._bond_id >= n_bonded_ia:
-            raise ValueError("The bond type", bond._bondId, "does not exist.")
+            raise ValueError("The bond type", bond._bond_id, "does not exist.")
         
         # Number of partners
         if bonded_ia_params[bond[0]._bond_id].num != len(bond)-1:
-            raise ValueError("Bond of type", bond._bondId, "needs", bonded_ia_params[
-                             bond[0]._bondId], "partners.")
+            raise ValueError("Bond of type", bond._bond_id, "needs", bonded_ia_params[
+                             bond[0]._bond_id], "partners.")
         
         # Type check on partners
         for y in bond[1:]:
