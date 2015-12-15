@@ -90,16 +90,16 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
     # test_P3M_GPU=
     test_DH = generateTestForElectrostaticInteraction(DH, dict(bjerrum_length=1.0,
-                                                                   kappa=2.3,
-                                                                   r_cut=2))
+                                                               kappa=2.3,
+                                                               r_cut=2))
     test_CDH = generateTestForElectrostaticInteraction(CDH, dict(bjerrum_length=1.0,
-                                                                     kappa=2.3,
-                                                                     r_cut=2,
-                                                                     r0=1,
-                                                                     r1=2,
-                                                                     eps_int=0.8,
-                                                                     eps_ext=1,
-                                                                     alpha=2))
+                                                                 kappa=2.3,
+                                                                 r_cut=2,
+                                                                 r0=1,
+                                                                 r1=2,
+                                                                 eps_int=0.8,
+                                                                 eps_ext=1,
+                                                                 alpha=2))
 
 
 if __name__ == "__main__":
