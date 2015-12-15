@@ -71,11 +71,11 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
 
             # set Parameter
             Inter = interClass(**params)
-            Inter.validateParams()
-            Inter._setParamsInEsCore()
+            Inter.validate_params()
+            Inter._set_params_in_es_core()
 
             # Read them out again
-            outParams = Inter.getParams()
+            outParams = Inter.get_params()
 
             self.assertTrue(self.paramsMatch(params, outParams), "Missmatch of parameters.\nParameters set " +
                             params.__str__() + " vs. output parameters " + outParams.__str__())

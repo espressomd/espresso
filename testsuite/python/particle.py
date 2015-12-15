@@ -35,9 +35,9 @@ class ParticleProperties(ut.TestCase):
     es = espressomd.System()
 
     f1 = FeneBond(k=1, d_r_max=5)
-    es.bondedInter.add(f1)
+    es.bonded_inter.add(f1)
     f2 = FeneBond(k=1, d_r_max=5)
-    es.bondedInter.add(f2)
+    es.bonded_inter.add(f2)
 
     def arraysNearlyEqual(self, a, b):
         """Test, if the magnitude of the difference between two arrays is smaller than the tolerance"""

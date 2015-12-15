@@ -23,7 +23,7 @@ import numpy as np
 from espressomd.interactions import LennardJonesInteraction
 
 
-class NonBondedInteractionsTests(ut.TestCase):
+class Non_bonded_interactionsTests(ut.TestCase):
     #  def __init__(self,particleId):
     #    self.pid=particleId
 
@@ -49,7 +49,7 @@ class NonBondedInteractionsTests(ut.TestCase):
 
         return True
 
-    def generateTestForNonBondedInteraction(_partType1, _partType2, _interClass, _params, _interName):
+    def generateTestForNon_bonded_interaction(_partType1, _partType2, _interClass, _params, _interName):
         """Generates test cases for checking interaction parameters set and gotten back
         from Es actually match. Only keys which are present  in _params are checked
         1st and 2nd arg: Particle type ids to check on
@@ -69,54 +69,54 @@ class NonBondedInteractionsTests(ut.TestCase):
             # which was there, when the outer function was called
 
             # Set parameters
-            getattr(self.es.nonBondedInter[partType1, partType2], interName).setParams(
+            getattr(self.es.non_bonded_inter[partType1, partType2], interName).set_params(
                 **params)
 
             # Read them out again
             outInter = getattr(
-                self.es.nonBondedInter[partType1, partType2], interName)
-            outParams = outInter.getParams()
+                self.es.non_bonded_inter[partType1, partType2], interName)
+            outParams = outInter.get_params()
 
             self.assertTrue(self.intersMatch(interClass, type(outInter), params, outParams), interClass(
-                **params).typeName() + ": value set and value gotten back differ for particle types " + str(partType1) + " and " + str(partType2) + ": " + params.__str__() + " vs. " + outParams.__str__())
+                **params).type_name() + ": value set and value gotten back differ for particle types " + str(partType1) + " and " + str(partType2) + ": " + params.__str__() + " vs. " + outParams.__str__())
 
         return func
 
-    test_lj1 = generateTestForNonBondedInteraction(
+    test_lj1 = generateTestForNon_bonded_interaction(
         0, 0, LennardJonesInteraction,
         {"epsilon": 1., "sigma": 2., "cutoff": 3.,
             "shift": 4., "offset": 5., "min": 7.},
-        "lennardJones")
-    test_lj2 = generateTestForNonBondedInteraction(
+        "lennard_jones")
+    test_lj2 = generateTestForNon_bonded_interaction(
         0, 0, LennardJonesInteraction,
         {"epsilon": 1.3, "sigma": 2.2, "cutoff": 3.4,
             "shift": 4.1, "offset": 5.1, "min": 7.1},
-        "lennardJones")
-    test_lj3 = generateTestForNonBondedInteraction(
+        "lennard_jones")
+    test_lj3 = generateTestForNon_bonded_interaction(
         0, 0, LennardJonesInteraction,
         {"epsilon": 1.3, "sigma": 2.2, "cutoff": 3.4,
             "shift": 4.1, "offset": 5.1, "min": 7.1},
-        "lennardJones")
+        "lennard_jones")
 
-    test_ljgen1 = generateTestForNonBondedInteraction(
+    test_ljgen1 = generateTestForNon_bonded_interaction(
         0, 0, GenericLennardJonesInteraction,
         {"epsilon": 1., "sigma": 2., "cutoff": 3., "shift": 4., "offset": 5.,
             "e1": 7, "e2": 8, "b1": 9., "b2": 10., "lambda": 11., "delta": 12.},
-        "genericLennardJones")
-    test_ljgen2 = generateTestForNonBondedInteraction(
+        "generic_lennard_jones")
+    test_ljgen2 = generateTestForNon_bonded_interaction(
         0, 0, GenericLennardJonesInteraction,
         {"epsilon": 1.1, "sigma": 2.1, "cutoff": 3.1, "shift": 4.1, "offset": 5.1,
             "e1": 71, "e2": 81, "b1": 9.1, "b2": 10.1, "lambda": 11.1, "delta": 12.1},
-        "genericLennardJones")
-    test_ljgen3 = generateTestForNonBondedInteraction(
+        "generic_lennard_jones")
+    test_ljgen3 = generateTestForNon_bonded_interaction(
         0, 0, GenericLennardJonesInteraction,
         {"epsilon": 1.2, "sigma": 2.2, "cutoff": 3.2, "shift": 4.2, "offset": 5.2,
             "e1": 72, "e2": 82, "b1": 9.2, "b2": 10.2, "lambda": 11.2, "delta": 12.2},
-        "genericLennardJones")
+        "generic_lennard_jones")
 
     def test_forcecap(self):
-        self.es.nonBondedInter.setForceCap(17.5)
-        self.assertEqual(self.es.nonBondedInter.getForceCap(), 17.5)
+        self.es.non_bonded_inter.set_force_cap(17.5)
+        self.assertEqual(self.es.non_bonded_inter.get_force_cap(), 17.5)
 
 
 if __name__ == "__main__":

@@ -9,11 +9,11 @@ print f2
 
 
 
-S.bondedInter[0]=h
-S.bondedInter[2]=f
-S.bondedInter.add(f2)
+S.bonded_inter[0]=h
+S.bonded_inter[2]=f
+S.bonded_inter.add(f2)
 
-for b in S.bondedInter:
+for b in S.bonded_inter:
   print b
 
 S.part[0].pos=(0.,0.,0.)

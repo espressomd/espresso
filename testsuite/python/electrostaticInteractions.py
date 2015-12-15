@@ -89,10 +89,10 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                                                                  accuracy=0.01))
 
     # test_P3M_GPU=
-        test_DH = generateTestForElectrostaticInteraction(DH, dict(bjerrum_length=1.0,
+    test_DH = generateTestForElectrostaticInteraction(DH, dict(bjerrum_length=1.0,
                                                                    kappa=2.3,
                                                                    r_cut=2))
-        test_CDH = generateTestForElectrostaticInteraction(CDH, dict(bjerrum_length=1.0,
+    test_CDH = generateTestForElectrostaticInteraction(CDH, dict(bjerrum_length=1.0,
                                                                      kappa=2.3,
                                                                      r_cut=2,
                                                                      r0=1,

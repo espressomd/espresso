@@ -61,10 +61,10 @@ int_n_times = 10
 #############################################################
 
 
-system.nonBondedInter[0,0].lennard_jones.set_params(
+system.non_bonded_inter[0,0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.nonBondedInter.set_force_cap(lj_cap)
+system.non_bonded_inter.set_force_cap(lj_cap)
 
 
 # Particle setup
@@ -86,7 +86,7 @@ for i in range(n_part/2-1):
 #############################################################
 
 lj_cap = 20
-system.nonBondedInter.set_force_cap(lj_cap)
+system.non_bonded_inter.set_force_cap(lj_cap)
 i = 0
 act_min_dist = analyze.mindist(system) 
 while (i < warm_n_times and act_min_dist < min_dist):
@@ -95,10 +95,10 @@ while (i < warm_n_times and act_min_dist < min_dist):
   act_min_dist = analyze.mindist(system) 
   i += 1
   lj_cap = lj_cap + 10
-  system.nonBondedInter.set_force_cap(lj_cap)
+  system.non_bonded_inter.set_force_cap(lj_cap)
 
 lj_cap = 0 
-system.nonBondedInter.set_force_cap(lj_cap)
+system.non_bonded_inter.set_force_cap(lj_cap)
 
 # P3M setup after charge assigned
 #############################################################
