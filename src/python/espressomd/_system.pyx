@@ -34,17 +34,17 @@ from cellsystem import CellSystem
 cdef class System:
     doge = 1
     part = particle_data.ParticleList()
-    nonBondedInter = interactions.NonBondedInteractions()
-    bondedInter = interactions.BondedInteractions()
-    cellSystem = CellSystem()
+    non_bonded_inter = interactions.NonBondedInteractions()
+    bonded_inter = interactions.BondedInteractions()
+    cell_system = CellSystem()
     thermostat = Thermostat()
 
     def __init__(self):
         self.actors = Actors(_system=self)
 
 #        self.part = particle_data.particleList()
-#        self.nonBondedInter = interactions.NonBondedInteractions()
-#        self.bondedInter = interactions.BondedInteractions()
+#        self.non_bonded_inter = interactions.NonBondedInteractions()
+#        self.bonded_inter = interactions.BondedInteractions()
 
     property box_l:
         def __set__(self, _box_l):

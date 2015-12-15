@@ -75,7 +75,7 @@ IF DP3M == 1:
 
         def validate_params(self):
             super(DipolarP3M, self).validate_params()
-            default_params = self.defaultParams()
+            default_params = self.default_params()
 
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
