@@ -43,7 +43,6 @@ cdef class HydrodynamicInteraction(Actor):
 IF LB_GPU or LB:
     cdef class LB_FLUID(HydrodynamicInteraction):
 
-
         ####################################################
         #
         # validate the given parameters on actor initalization

@@ -6,10 +6,10 @@ cdef class Actor:
 
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
-                      MagnetostaticInteraction=False,
-                      MagnetostaticExtension=False,
-                      HydrodynamicInteraction=False,
-                      ElectrostaticExtensions=False)
+                       MagnetostaticInteraction=False,
+                       MagnetostaticExtension=False,
+                       HydrodynamicInteraction=False,
+                       ElectrostaticExtensions=False)
 
     def __cinit__(self, *args, **kwargs):
         self._isactive = False
@@ -124,7 +124,6 @@ cdef class Actor:
 
 
 class Actors:
-
 
     active_actors = []
 
