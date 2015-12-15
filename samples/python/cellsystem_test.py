@@ -22,15 +22,15 @@ from __future__ import print_function
 import ctypes
 import sys
 sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
-import espresso as es
+import espressomd as es
+
 print(dir(es))
 
-cs=es.cellsystem.Cellsystem()
-gh=es.global_variables.GlobalsHandle()
+cs=es.cellsystem.CellSystem()
 
 # domain decomposition with verlet list: three equivalent commands
-cs.setDomainDecomposition()
-cs.setDomainDecomposition(True)
-cs.setDomainDecomposition(useVerletList=True)
+cs.set_domain_decomposition()
+cs.set_domain_decomposition(True)
+cs.set_domain_decomposition(use_verlet_lists=True)
 
 

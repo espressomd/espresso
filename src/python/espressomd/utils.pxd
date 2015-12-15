@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from utils cimport *
 import numpy as np
 cimport numpy as np
 
@@ -26,23 +25,21 @@ cdef extern from "stdlib.h":
     void * realloc(void * ptr, size_t size)
 
 cdef extern from "utils.hpp":
-    ctypedef struct IntList:
+    ctypedef struct int_list "IntList":
         int * e
         int n
-    cdef void init_intlist(IntList * il)
-    cdef void alloc_intlist(IntList * il, int size)
-    cdef void realloc_intlist(IntList * il, int size)
 
-    ctypedef struct DoubleList:
+    ctypedef struct double_list "DoubleList":
         double * e
         int n
-    cdef void init_intlist(IntList * il)
-    cdef void alloc_intlist(IntList * il, int size)
-    cdef void realloc_intlist(IntList * il, int size)
 
-cdef IntList * create_IntList_from_python_object(obj)
-cdef np.ndarray create_nparray_from_IntList(IntList * il)
-cdef np.ndarray create_nparray_from_DoubleList(DoubleList * dl)
+    cdef void init_intlist(int_list * il)
+    cdef void alloc_intlist(int_list * il, int size)
+    cdef void realloc_intlist(int_list * il, int size)
+
+cdef int_list * create_int_list_from_python_object(obj)
+cdef np.ndarray create_nparray_from_int_list(int_list * il)
+cdef np.ndarray create_nparray_from_double_list(double_list * dl)
 cdef np.ndarray create_nparray_from_double_array(double * x, int n)
-cdef checkTypeOrExcept(x, n, t, msg)
-cdef checkRangeOrExcept(x, v_min, incl_min, v_max, incl_max)
+cdef check_type_or_throw_except(x, n, t, msg)
+cdef check_range_or_except(x, v_min, incl_min, v_max, incl_max)

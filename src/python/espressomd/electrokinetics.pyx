@@ -136,7 +136,7 @@ IF ELECTROKINETICS == 1:
     def print_lbpar():
         ek_print_lbpar()
 
-    def setElectrostaticsCoupling(state):
+    def set_electrostatics_coupling(state):
         IF EK_ELECTROSTATIC_COUPLING == 1:
             ek_set_electrostatics_coupling(state)
             ek_init_wrapper()
@@ -144,7 +144,7 @@ IF ELECTROKINETICS == 1:
             raise Exception(
                 'missing feature', 'feature EK_ELECTROSTATICS_COUPLING needs to be enabled')
 
-    def setLbForce(force):
+    def set_lb_force(force):
         cdef double tmp[3]
         tmp[0] = force[0]
         tmp[1] = force[1]
@@ -153,44 +153,44 @@ IF ELECTROKINETICS == 1:
 
         ek_init_wrapper()
 
-    def netCharge():
+    def net_charge():
         return ek_calculate_net_charge()
 
-    def saveCheckpoint(path):
+    def save_checkpoint(path):
         if ek_save_checkpoint(path):
             raise Exception(
                 'EK checkpointing error', 'could not save checkpoint')
 
-    def loadCheckpoint(path):
+    def load_checkpoint(path):
         if ek_load_checkpoint(path):
             raise Exception(
                 'EK checkpointing error', 'could not load checkpoint')
 
-    def printDensityVTK(species_id, path):
+    def print_density_vtk(species_id, path):
         if ek_print_vtk_density(species_id, path):
             raise Exception('EK output error', 'could not save density VTK')
 
-    def printFluxVTK(species_id, path):
+    def print_flux_vtk(species_id, path):
         if ek_print_vtk_flux(species_id, path):
             raise Exception('EK output error', 'could not save flux VTK')
 
-    def printPotentialVTK(path):
+    def print_potential_vtk(path):
         if ek_print_vtk_potential(path):
             raise Exception('EK output error', 'could not save potential VTK')
 
-    def printLbForceVTK(path):
+    def print_lb_force_vtk(path):
         if ek_print_vtk_lbforce(path):
             raise Exception('EK output error', 'could not save lbforce VTK')
 
-    def printReactionTagsVTK(path):
+    def print_reaction_tags_vtk(path):
         if ek_print_vtk_reaction_tags(path):
             raise Exception(
                 'EK output error', 'could not save reaction tags VTK')
 
-    def printLbDensityVTK(path):
+    def print_lb_density_vtk(path):
         if ek_lb_print_vtk_density(path):
             raise Exception('EK output error', 'could not save lbdensity VTK')
 
-    def printVelocityVTK(path):
+    def print_velocity_vtk(path):
         if ek_lb_print_vtk_velocity(path):
             raise Exception('EK output error', 'could not save velocity VTK')
