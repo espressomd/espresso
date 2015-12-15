@@ -16,14 +16,21 @@ void TclCommand::create_command(const string &command) {
 
 static int TclCommand_wrapper (ClientData data, Tcl_Interp *interp, int argc, char *argv[]) {
   TclCommand *p = reinterpret_cast<TclCommand *>(data);
-  
+
   if(argc > 1) {
     list<string> args(argv + 1, argv + argc);
 
     try {
-      p->parse_from_string(args);
+        p->parse_from_string(args);
+        
       if(!args.empty()) {
-        throw std::string("Unknown argument '").append(args.front()).append("'");
+        std::stringstream ss;
+        ss << "Unknown argument '" << args.front() << "' in '";
+
+        for(int i = 0; i < argc; i++)
+          ss << argv[i] << " ";
+        ss << "'";
+        throw ss.str();
       }
     } catch(std::string &err) {
       Tcl_AppendResult(interp, err.c_str(), 0);

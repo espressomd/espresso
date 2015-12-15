@@ -265,8 +265,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   shape->create_command("shape");
 
   Constraints::Tcl::ConstraintManager *constraints = new Constraints::Tcl::ConstraintManager(interp);
-  constraints->create_command("constraint");
-  
+  constraints->create_command("constraint");  
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

@@ -2,6 +2,8 @@
 #include "forces_inline.hpp"
 #include "energy_inline.hpp"
 
+#include <iostream>
+
 namespace Constraints {
   void InteractionConstraint::add_force(Particle *p, const double *folded_pos) {
     int j;
@@ -20,6 +22,7 @@ namespace Constraints {
 
     if(checkIfInteraction(ia_params)) {
       m_shape.calculate_dist(folded_pos, &dist, vec);
+
       if ( dist > 0 ) {
 	calc_non_bonded_pair_force(p, &part_rep,
 				   ia_params,vec,dist,dist*dist, force,
@@ -42,7 +45,7 @@ namespace Constraints {
           reflect_particle(p, vec, folded_pos);
         } else {
           ostringstream msg;
-          msg <<"Constraint (" << name() << ")" << " violated by particle " << p->p.identity;
+          msg <<"Constraint (" << name() << ")" << " violated by particle " << p->p.identity << " dist " << dist;
           runtimeError(msg);
         }
       }
@@ -85,4 +88,55 @@ namespace Constraints {
     if (part_rep.p.type >= 0)
       *obsstat_nonbonded(&energy, p->p.type, part_rep.p.type) += nonbonded_en;
   }
-};
+
+Parameters InteractionConstraint::get_parameters() {
+  Parameters p = all_parameters();
+
+  p["only_positive"] = only_positive;    
+  p["type"] = part_rep.p.type;
+  p["reflecting"] = reflection_type;
+  p["penetrable"] = penetrable;
+  p["tunable_slip"] = tuneable_slip;
+  
+  /** Add the parameters from the shape */
+  Parameters shape_parameters = m_shape.get_parameters();
+  p.insert(shape_parameters.begin(), shape_parameters.end());
+
+  return p;
+}
+
+Parameters &InteractionConstraint::all_parameters() const {
+  static bool init = false;
+  static Parameters p;
+  if(!init) {
+    p["only_positive"] = Parameter(Variant::INT, true);
+    p["type"] = Parameter(Variant::INT, true);
+    p["reflecting"] = Parameter(Variant::INT, false);
+    p["penetrable"] = Parameter(Variant::INT, false);
+    p["tunable_slip"] = Parameter(Variant::INT, false);
+    
+    /** Add the parameters from the shape */
+    Parameters &shape_parameters = m_shape.all_parameters();
+    p.insert(shape_parameters.begin(), shape_parameters.end());
+    
+    init = true;
+  }  
+
+  return p;
+}
+
+void InteractionConstraint::set_parameter(const std::string &name, const Variant &value) {
+  SET_PARAMETER_HELPER("only_positive", only_positive);
+  SET_PARAMETER_HELPER("type", part_rep.p.type);
+  make_particle_type_exist(part_rep.p.type);
+
+  if(name == "reflecting")     
+    reflection_type = static_cast<ReflectionType>(static_cast<int>(value));
+
+  SET_PARAMETER_HELPER("penetrable", penetrable);
+  SET_PARAMETER_HELPER("tunable_slip", tuneable_slip);
+  
+  m_shape.set_parameter(name, value);
+}
+
+}

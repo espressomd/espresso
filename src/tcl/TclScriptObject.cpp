@@ -14,8 +14,9 @@ string TclScriptObject::print_to_string() {
 }
 
 void TclScriptObject::parse_from_string(list<string> &argv) {
-  Parameters p = m_so->get_parameters();
-  for(list<string>::iterator it = argv.begin(); it != argv.end();) {
+  Parameters p = m_so->all_parameters();
+
+  for(list<string>::iterator it = argv.begin(); it != argv.end();) {    
     string s = *it;
     Parameters::iterator si = p.find(s);
     if(si == p.end()) {
@@ -24,6 +25,7 @@ void TclScriptObject::parse_from_string(list<string> &argv) {
     }
     it = argv.erase(it);
     Parameter p = si->second;
+
     switch(p.type) {
     case Variant::NONE:
       si->second.set = true;
@@ -117,7 +119,7 @@ void TclScriptObject::parse_from_string(list<string> &argv) {
   for(Parameters::iterator it = p.begin(); it != p.end(); ++it)
     if(!it->second.set)
       p.erase(it);
-
+  
   m_so->set_parameters(p);
 }
 

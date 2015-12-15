@@ -21,6 +21,8 @@
 
 #include "Wall.hpp"
 
+#include <iostream>
+
 using namespace std;
 
 namespace Shapes {
@@ -29,7 +31,7 @@ Parameters &Wall::all_parameters() const {
   static Parameters p;
   if(!init) {
     p["normal"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
-    p["d"] = Parameter(Variant::DOUBLE, true);
+    p["dist"] = Parameter(Variant::DOUBLE, true);
     init = true;
   }
 
@@ -40,18 +42,14 @@ Parameters Wall::get_parameters() {
   Parameters p = all_parameters();
 
   p["normal"] = n;    
-  p["d"] = d;
-      
+  p["dist"] = d;
+
   return p;
 }
 
 void Wall::set_parameter(const std::string &name, const Variant &value) {
-  if(name == "d")
-    d = value;
-
-  if(name == "normal") {
-    n = value;
-  }
+  SET_PARAMETER_HELPER("normal", n);
+  SET_PARAMETER_HELPER("dist", d);
 }
 
 

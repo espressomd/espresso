@@ -1,8 +1,6 @@
 #ifndef __VARIANT__HPP
 #define __VARIANT__HPP
 
-#include <iostream>
-
 #include <vector>
 #include <string>
 #include "Vector.hpp"
@@ -10,7 +8,7 @@
 class Variant {
 public:
   enum Type { NONE = 0, INT, DOUBLE, STRING, INT_VECTOR, DOUBLE_VECTOR };
-  Variant() : m_mem(0) {  m_type = NONE; }
+  Variant() : m_mem(0) { m_type = NONE; }
   Variant(Type t) {
     m_type = t;
     init_mem();
@@ -67,7 +65,6 @@ public:
   }
   
   Variant(const Variant &rhs) : Variant() {
-    std::cout << "Variant(const Variant &rhs)" << std::endl;
     copy(rhs);
   }
   
@@ -76,10 +73,7 @@ public:
   }
   
   Variant &operator=(const Variant &rhs) {
-    std::cout << "Variant &operator=(const Variant &rhs)" << std::endl;
-    std::cout << "rhs.type() = " << rhs.type() << std::endl;
     copy(rhs);
-    std::cout << "/operator=(const Variant &rhs)" << std::endl;
     return *this;
   }
   
@@ -147,7 +141,6 @@ private:
     case NONE:      
       break;
     case INT:
-      std::cout << "copy->INT" << std::endl;
       construct_from<int>(*reinterpret_cast<int *>(rhs.m_mem));      
       break;
     case DOUBLE:
@@ -164,20 +157,16 @@ private:
       break;
     }
     m_type = rhs.m_type;
-    std::cout << "/copy(const Variant &rhs)" << std::endl;
   }
   
   template<typename T>
   void construct_from(const T &v) {
-    std::cout << "void construct_from(const T &v)" << std::endl;
     delete_mem();
     m_mem = reinterpret_cast<void *>(new T(v));
-    std::cout << "/construct_from()" << std::endl;
   }
 
   template<typename T>
   void construct_from(T &&v) {
-    std::cout << "void construct_from(T &&v)" << std::endl;
     delete_mem();
     m_mem = reinterpret_cast<void *>(new T(v));
   }

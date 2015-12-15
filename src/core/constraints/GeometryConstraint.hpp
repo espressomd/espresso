@@ -10,12 +10,12 @@ enum ReflectionType { REFLECTION_NONE, REFLECTION_NORMAL, REFLECTION_NORMAL_TANG
 
 struct GeometryConstraint : public Constraint {
  public:
-  GeometryConstraint(Shapes::Shape &shape, bool _penetrable = false, ReflectionType _reflection_type = REFLECTION_NONE, bool _tuneable_slip = false) : 
+  GeometryConstraint(Shapes::Shape &shape, int _penetrable = false, ReflectionType _reflection_type = REFLECTION_NONE, int _tuneable_slip = false) : 
       penetrable(_penetrable), tuneable_slip(_tuneable_slip), reflection_type(_reflection_type), m_shape(shape) {}
   virtual const std::string name() { return Constraint::name() + std::string("GeometryConstraint::") + m_shape.name(); }
   void reflect_particle(Particle *p, const double *distance_vector, const double *folded_pos);
-  bool penetrable;
-  bool tuneable_slip;
+  int penetrable;
+  int tuneable_slip;
   ReflectionType reflection_type;
   inline int calculate_dist(const double *ppos, double *dist, double *vec) const { return m_shape.calculate_dist(ppos, dist, vec); }
   void set_shape(Shapes::Shape &shape) { m_shape = shape; }

@@ -19,11 +19,16 @@ std::uint32_t Variant::size() const {
       break;
     case DOUBLE:
       s = sizeof(double);
+      break;
     case INT:
       s = sizeof(int);
+      break;
     case NONE:
-      s = 0;      
+      s = 0;
+      break;
   }
+
+  return s;
 }
 
 /** Simple serialization, format is [TYPE] [SIZE] [SIZE] [SIZE] [SIZE] [ [DATA] ... ], where every [] represents one byte */
@@ -60,12 +65,22 @@ std::ostream &operator<<(std::ostream &os, const Variant &rhs) {
     break;
   case Variant::INT_VECTOR:
     iv = reinterpret_cast<const std::vector<int> *>(rhs.m_mem);
+    if(iv->size() == 0) {
+      os << "<empty>";
+      break;
+    }
     for(std::vector<int>::const_iterator it = iv->cbegin(); it != --iv->cend(); ++it)
       os << *it << " ";
+
     os << *(--iv->cend());
     break;
-  case Variant::DOUBLE_VECTOR:
+  case Variant::DOUBLE_VECTOR:    
     dv = reinterpret_cast<const std::vector<double> *>(rhs.m_mem);
+    if(dv->size() == 0) {
+      os << "<empty>";
+      break;
+    }
+
     for(std::vector<double>::const_iterator it = dv->cbegin(); it != --dv->cend(); ++it)
       os << *it << " ";
     os << *(--dv->cend());

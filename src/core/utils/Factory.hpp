@@ -63,6 +63,10 @@ class Factory {
     }
   }
 
+  bool has_builder(std::string name) {
+    return not (m_map.find(name) == m_map.end());
+  }
+  
   bool register_new(const std::string &name, const Builder &b)  {
     m_map[name] = b;
     return true;

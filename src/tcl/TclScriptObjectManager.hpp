@@ -31,29 +31,40 @@ public:
       {
         int id;
         std::stringstream ss(argv.front());
+        
         ss >> id;
         if(ss.fail()) {
           throw string("usage()");
-        } else {
-          argv.pop_front();
-          Tcl_AppendResult(interp, print_one(id).append("\n").c_str(), 0);
-        }
+        }        
+        argv.pop_front();
+        
+        Tcl_AppendResult(interp, print_one(id).c_str(), 0);
+        
         break;
-
       }
     default:
       {
+        int id;
         if(argv.front() == "new") {
-          std::cout << "new" << std::endl;
           argv.pop_front();
-          const int id = m_om.add(argv.front());
-          std::cout << "new id: " << id << std::endl;
+          id = m_om.add(argv.front());
           argv.pop_front();
-          TclScriptObject(m_om[id], interp).parse_from_string(argv);
-          break;
+        } else {
+          std::stringstream ss(argv.front());
+          ss >> id;
+          if(ss.fail()) {
+            throw string("usage()");
+          }
+          argv.pop_front();
         }
+        
+        TclScriptObject(m_om[id], interp).parse_from_string(argv);
+        std::stringstream ss;
+        ss << id;
+        Tcl_AppendResult(interp, ss.str().c_str(), 0);
+        break;
       }
-    }
+    }      
   }
 
   std::string print_to_string() {

@@ -104,11 +104,12 @@ Parameters &Cylinder::all_parameters() const {
     p["direction"] = Parameter(Variant::DOUBLE, true);
     init = true;
   }
+  
   return p;
 }
 
 Parameters Cylinder::get_parameters() {
-  Parameters p;
+  Parameters p = all_parameters();
 
   p["center"] = pos;
   p["axis"] = axis;
