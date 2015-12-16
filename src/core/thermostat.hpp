@@ -178,7 +178,7 @@ inline void friction_thermo_langevin(Particle *p)
 {
   extern double langevin_pref1, langevin_pref2;
   
-  double langevin_pref1_temp, langevin_pref2_temp;
+  double langevin_pref1_temp, langevin_pref2_temp, langevin_temp_coeff;
 
 #ifdef MULTI_TIMESTEP
   extern double langevin_pref1_small;
@@ -243,15 +243,23 @@ inline void friction_thermo_langevin(Particle *p)
   // Override defaults if per-particle values for T and gamma are given 
 #ifdef LANGEVIN_PER_PARTICLE  
     // If a particle-specific gamma is given
+#if defined (FLATNOISE)
+  langevin_temp_coeff = 24.0;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+  langevin_temp_coeff = 2.0;
+#else
+#error No Noise defined
+#endif
+
     if(p->p.gamma >= 0.) 
     {
       langevin_pref1_temp = -p->p.gamma/time_step;
       // Is a particle-specific temperature also specified?
       if(p->p.T >= 0.)
-        langevin_pref2_temp = sqrt(24.0*p->p.T*p->p.gamma/time_step);
+        langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*p->p.gamma/time_step);
       else
         // Default temperature but particle-specific gamma
-        langevin_pref2_temp = sqrt(24.0*temperature*p->p.gamma/time_step);
+        langevin_pref2_temp = sqrt(langevin_temp_coeff*temperature*p->p.gamma/time_step);
 
     } // particle specific gamma
     else 
@@ -259,7 +267,7 @@ inline void friction_thermo_langevin(Particle *p)
       langevin_pref1_temp = -langevin_gamma/time_step;
       // No particle-specific gamma, but is there particle-specific temperature
       if(p->p.T >= 0.)
-        langevin_pref2_temp = sqrt(24.0*p->p.T*langevin_gamma/time_step);
+        langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*langevin_gamma/time_step);
       else
         // Defaut values for both
         langevin_pref2_temp = langevin_pref2;
@@ -309,6 +317,7 @@ inline void friction_thermo_langevin(Particle *p)
 inline void friction_thermo_langevin_rotation(Particle *p)
 {
   extern double langevin_pref2_rotation;
+  double langevin_pref1_temp, langevin_pref2_temp, langevin_temp_coeff;
 
   int j;
   double switch_rotate = 1.0;
@@ -317,7 +326,43 @@ inline void friction_thermo_langevin_rotation(Particle *p)
     switch_rotate = 0.0;
   }
 
+  // first, set defaults
+  langevin_pref1_temp = langevin_gamma_rotation;
+  langevin_pref2_temp = langevin_pref2_rotation;
 
+  // Override defaults if per-particle values for T and gamma are given
+#ifdef LANGEVIN_PER_PARTICLE
+    // If a particle-specific gamma is given
+#if defined (FLATNOISE)
+  langevin_temp_coeff = 24.0;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+  langevin_temp_coeff = 2.0;
+#else
+#error No Noise defined
+#endif
+
+    if(p->p.gamma_rot >= 0.)
+    {
+      langevin_pref1_temp = p->p.gamma_rot;
+      // Is a particle-specific temperature also specified?
+      if(p->p.T >= 0.)
+        langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*p->p.gamma_rot/time_step);
+      else
+        // Default temperature but particle-specific gamma
+        langevin_pref2_temp = sqrt(langevin_temp_coeff*temperature*p->p.gamma_rot/time_step);
+
+    } // particle specific gamma
+    else
+    {
+      langevin_pref1_temp = langevin_gamma_rotation;
+      // No particle-specific gamma, but is there particle-specific temperature
+      if(p->p.T >= 0.)
+        langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*langevin_gamma_rotation/time_step);
+      else
+        // Default values for both
+        langevin_pref2_temp = langevin_pref2_rotation;
+    }
+#endif /* LANGEVIN_PER_PARTICLE */
 
 
   // Rotational degrees of virtual sites are thermostatted,
@@ -328,9 +373,9 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   for ( j = 0 ; j < 3 ; j++) 
   {
 #ifdef ROTATIONAL_INERTIA
-    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*noise;
+    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
 #else
-    p->f.torque[j] = -langevin_gamma_rotation*p->m.omega[j] + switch_rotate*langevin_pref2_rotation*noise;
+    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
 #endif
   }
 

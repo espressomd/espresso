@@ -2678,10 +2678,10 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
         if (partCfg[i].p.type == type) {
 #ifdef MULTI_TIMESTEP
             if (smaller_time_step > 0.)
-                E_kin += PMASS(partCfg[i]) * SQR(time_step/smaller_time_step) * sqrlen(partCfg[i].m.v);
+                E_kin += (partCfg[i]).p.mass * SQR(time_step/smaller_time_step) * sqrlen(partCfg[i].m.v);
             else
 #endif
-                E_kin += PMASS(partCfg[i]) * sqrlen(partCfg[i].m.v);
+                E_kin += (partCfg[i]).p.mass * sqrlen(partCfg[i].m.v);
         }
     }
     E_kin *= 0.5 / time_step / time_step;
