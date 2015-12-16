@@ -279,6 +279,12 @@ void on_particle_change()
   lb_reinit_particles_gpu = 1;
 #endif
 #ifdef CUDA
+  if (reinit_particle_comm_gpu){
+    gpu_change_number_of_part_to_comm();
+    reinit_particle_comm_gpu = 0;
+  }
+  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+
   reinit_particle_comm_gpu = 1;
 #endif
   invalidate_obs();
