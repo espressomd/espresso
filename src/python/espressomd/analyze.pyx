@@ -632,3 +632,16 @@ def rdf(system=None, rdf_type=None, type_list_a=None, type_list_b=None,
         rr += bin_width
 
     return np.array([r, rdf])
+
+
+def angularmomentum(system=None, p_type=None):
+    print "p_type = ", p_type
+    check_type_or_throw_except(
+        p_type, 1, int,   "p_type has to be an int")
+
+    cdef double[3] com
+    cdef int p1 = p_type
+
+    c_analyze.angularmomentum(p1, com)
+
+    return np.array([com[0], com[1], com[2]])

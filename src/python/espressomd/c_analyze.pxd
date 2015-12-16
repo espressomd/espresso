@@ -112,3 +112,4 @@ cdef extern from "statistics.hpp":
 
     void calc_rdf_intermol_av(vector[int] p1_types, vector[int] p2_types,
                               double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+    void angularmomentum(int p_type, double * com)
