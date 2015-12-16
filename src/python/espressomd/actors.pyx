@@ -4,6 +4,7 @@ from highlander import ThereCanOnlyBeOne
 
 cdef class Actor:
 
+
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,
@@ -11,16 +12,27 @@ cdef class Actor:
                        HydrodynamicInteraction=False,
                        ElectrostaticExtensions=False)
 
-    def __cinit__(self, *args, **kwargs):
+    # __getstate__ and __setstate__ defines pickle interaction
+    def __getstate__(self):
+        odict = self._params.copy()
+        return odict
+
+    def __setstate__(self,params):
+        self._params=params
+        self._set_params_in_es_core()
+
+
+    def __init__(self, *args, **kwargs):
         self._isactive = False
-        self._params = self.default_params()
         self.system = None
+        print self._params
+        self._params = self.default_params()
 
         # Check if all required keys are given
         for k in self.required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
+                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
 
         for k in kwargs:
@@ -125,6 +137,7 @@ cdef class Actor:
 
 class Actors:
 
+
     active_actors = []
 
     def __init__(self, _system=None):
@@ -151,3 +164,4 @@ class Actors:
 
     def deactivate(self, actor):
         actor._deactivate()
+

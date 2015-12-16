@@ -22,13 +22,22 @@ cimport actors
 import actors
 
 cdef class ElectrostaticInteraction(actors.Actor):
+
+
     def _tune(self):
         raise Exception(
             "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
 
+    def _set_params_in_es_core(self):
+        raise Exception(
+            "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
+        
+        
 
 IF COULOMB_DEBYE_HUECKEL:
     cdef class CDH(ElectrostaticInteraction):
+ 
+
         def validate_params(self):
             if (self._params["bjerrum_length"] <= 0):
                 raise ValueError("Bjerrum_length should be a positive double")
@@ -81,6 +90,8 @@ IF COULOMB_DEBYE_HUECKEL:
 ELSE:
     IF ELECTROSTATICS:
         cdef class DH(ElectrostaticInteraction):
+ 
+
             def validate_params(self):
                 if (self._params["bjerrum_length"] <= 0):
                     raise ValueError(
@@ -117,6 +128,7 @@ ELSE:
 
 IF P3M == 1:
     cdef class P3M(ElectrostaticInteraction):
+
 
         def validate_params(self):
             default_params = self.default_params()
@@ -206,6 +218,7 @@ IF P3M == 1:
 
     IF CUDA:
         cdef class P3M_GPU(ElectrostaticInteraction):
+
 
             def validate_params(self):
                 default_params = self.default_params()
@@ -302,6 +315,8 @@ IF P3M == 1:
 
 IF ELECTROSTATICS and CUDA and EWALD_GPU:
     cdef class EwaldGpu(ElectrostaticInteraction):
+
+
         cdef EwaldgpuForce * thisptr
         cdef EspressoSystemInterface * interface
         cdef char * log
