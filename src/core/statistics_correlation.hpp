@@ -136,68 +136,155 @@ void autoupdate_correlations();
  * entry of the hierarchic "past" For every new entry in is incremented and if tau_lin is reached, 
  * it starts again from the beginning. 
  */
-typedef struct {
-  void *args; // arbitrary additional arguments, which the correlation may need
-  unsigned int autocorrelation;    // autocorrelation flag
-  unsigned int finalized;          // non-zero of correlation is finialized
-  unsigned int hierarchy_depth;    // maximum level of data compression
-  unsigned int tau_lin;            // number of frames in the linear correlation
-  unsigned int dim_A;              // dimensionality of A
-  unsigned int dim_B;
-  unsigned int dim_corr;
-  unsigned int t;                  // global time in number of frames
-  double dt;                       // time interval at which samples arrive
-  double tau_max;                  // maximum time, for which the correlation should be calculated
-  int update_frequency;              // time distance between updates in MD timesteps 
-  unsigned int window_distance; 
+class DoubleCorrelation {
+  public:
+    /**
+     * The initialization procedure for the correlation object. All important parameters have to be speciefied
+     * at the same time. They can not be change later, so every instance of the correlation class
+     * has to be fed with correct data from the very beginning.
+     *
+     * @param self: The pointer to the correlation class instance that should be initialized
+     * @param dt: The time interval between subsequent updates
+     * @param tau_lin: The linear part of the correlation function. 
+     * @param tau_max: maximal time delay tau to sample
+     * @param window_distance: The distance in time domain between update of the correlation estimate
+     * @param dim_A: The dimension of the A vector
+     * @param dim_B: The dimension of the B vector
+     * @param A: First observable to correlate
+     * @param B: Second observable to correlate
+     * @param dim_corr: The dimension of the correlation to be calculated
+     * @param corr_operation_name: how to correlate the two observables A and B
+     *     (this has no default)
+     * @param compressA_name: how the A values should be compressed (usually 
+     *     the linear compression method)
+     * @param compressB_name: how the B values should be compressed (usually 
+     *     the linear compression method)
+     * @param args: the parameters of the observables
+     *
+     */
+    DoubleCorrelation(double dt, 
+    			    unsigned int tau_lin, double tau_max,
+    			    unsigned int window_distance, 
+    			    unsigned int dim_A, unsigned int dim_B, 
+    			    unsigned int dim_corr, 
+    			    Observable* o_A, Observable* o_B, 
+    			    char* corr_operation_name, 
+    			    char* compressA_name, char* compressB_name, 
+    			    void *args);
+    
+    
+    /** Restore a correlation from a checkpoint - the observable has to be created first ordinary
+    */
+    int read_data_from_file(const char * filename, bool binary);
+    /** Write a checkpoint, saving all history buffers and other important variables of a correlation in a file
+    */
+    int write_data_to_file(const char * filename, bool binary) const;
+    
+    /** The function to process a new datapoint of A and B
+     *  
+     * First the function finds out if it necessary to make some space for the new entries of A and B.
+     * Then, if necessary, it compresses old Values of A and B to make for the new value. Finally
+     * The new values of A and B are stored in A[newest[0]] and B[newest[0]], where the newest indices
+     * have been increased before. Finally the correlation estimate is updated. TODO: Not all
+     * the correlation estimates have to be updated.
+     *
+     */
+    int get_data();
+    
+    /** At the end of data collection, go through the whole hierarchy and correlate data left there
+     *  
+     * This works pretty much the same as get_data, but does not feed on new data, just uses what
+     * is already available.
+     *
+     */
+    int finalize();
+    
+    /** Return an estimate of the integrated correlation time
+     *  
+     *  We calculate the correlation time for each dim_corr by normalizing the correlation,
+     * integrating it and finding out where C(tau)=tau;
+     *
+     */
+    
+    
+    int get_correlation_time(double* correlation_time);
+    
+    
+    /** The function to process a new datapoint of A and B
+     *  
+     * First the function finds out if it necessary to make some space for the new entries of A and B.
+     * Then, if necessary, it compresses old Values of A and B to make for the new value. Finally
+     * The new values of A and B are stored in A[newest[0]] and B[newest[0]], where the newest indices
+     * have been increased before. Finally the correlation estimate is updated. TODO: Not all
+     * the correlation estimates have to be updated.
+     *
+     */
+    
+    
+    
+        
+        
+        
+    // A lot of the following should be private
+    void *args; // arbitrary additional arguments, which the correlation may need
+    unsigned int autocorrelation;    // autocorrelation flag
+    unsigned int finalized;          // non-zero of correlation is finialized
+    unsigned int hierarchy_depth;    // maximum level of data compression
+    unsigned int tau_lin;            // number of frames in the linear correlation
+    unsigned int dim_A;              // dimensionality of A
+    unsigned int dim_B;
+    unsigned int dim_corr;
+    unsigned int t;                  // global time in number of frames
+    double dt;                       // time interval at which samples arrive
+    double tau_max;                  // maximum time, for which the correlation should be calculated
+    int update_frequency;              // time distance between updates in MD timesteps 
+    unsigned int window_distance; 
 
-  // Convenience pointers to our stored data
-  // indices: A[level][tau_i][component]
-  int* tau;                       // time differences
-  double*** A;                     // input quantity 1
-  double*** B;                     // input quantity 2
-  double** result;                // output quantity
-  unsigned int n_result;           // the total number of result values
+    // Convenience pointers to our stored data
+    // indices: A[level][tau_i][component]
+    int* tau;                       // time differences
+    double*** A;                     // input quantity 1
+    double*** B;                     // input quantity 2
+    double** result;                // output quantity
+    unsigned int n_result;           // the total number of result values
   
-  // The actual allocated storage space
-  unsigned int *n_sweeps;          // number of correlation sweeps at a particular value of tau
-  unsigned int *n_vals;            // number of data values already present at a particular value of tau
-  unsigned int* newest;            // index of the newest entry in each hierarchy level
-  double* A_data;
-  double* B_data;
-  double* result_data;
+    // The actual allocated storage space
+    unsigned int *n_sweeps;          // number of correlation sweeps at a particular value of tau
+    unsigned int *n_vals;            // number of data values already present at a particular value of tau
+    unsigned int* newest;            // index of the newest entry in each hierarchy level
+    double* A_data;
+    double* B_data;
+    double* result_data;
 
-  double* A_accumulated_average;     // all A values are added up here
-  double* B_accumulated_average;     // all B values are added up here
-  double* A_accumulated_variance;    // all A**2 values are added up here
-  double* B_accumulated_variance;    // all B**2 values are added up here
-  unsigned int n_data;               // a counter to calculated averages and variances
+    double* A_accumulated_average;     // all A values are added up here
+    double* B_accumulated_average;     // all B values are added up here
+    double* A_accumulated_variance;    // all A**2 values are added up here
+    double* B_accumulated_variance;    // all B**2 values are added up here
+    unsigned int n_data;               // a counter to calculated averages and variances
 
-  // compressing functions
-  int (*compressA)( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
-  int (*compressB)( double* B1, double*B2, double* A_compressed, unsigned int dim_B );
-  char *compressA_name;
-  char *compressB_name;
+    // compressing functions
+    int (*compressA)( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
+    int (*compressB)( double* B1, double*B2, double* A_compressed, unsigned int dim_B );
+    char *compressA_name;
+    char *compressB_name;
 
-  // correlation function
-  int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
-  char *corr_operation_name;
+    // correlation function
+    int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+    char *corr_operation_name;
 
-  // Functions producing observables A and B from the input data
-  observable* A_obs;
-  observable* B_obs;
-  int A_obs_id;
-  int B_obs_id;
+    // Functions producing observables A and B from the input data
+    Observable* A_obs;
+    Observable* B_obs;
+    int A_obs_id;
+    int B_obs_id;
 
-  int is_from_file;
-  int autoupdate;
-  double last_update;
+    int is_from_file;
+    int autoupdate;
+    double last_update;
+}; 
 
-} double_correlation;
-
-extern unsigned int n_correlations;
 extern int correlations_autoupdate;
-extern double_correlation* correlations;
+extern std::vector<DoubleCorrelation> correlations;
 
 
 
@@ -208,13 +295,16 @@ extern double_correlation* correlations;
  * function that extracts floating point values from the particular file.
  *
  */
-typedef struct {
+class FileDataSource {
+  FileDataSource(char* filename, IntList* columns);
+  int readline(void* xargs, double* A, unsigned int dim_A); 
+  
   FILE* f;
   IntList requested_columns;
   int n_columns;
   char last_line[MAXLINELENGTH];
   int data_left;
-} file_data_source;
+};
 
 /********** The error codes ********************************/
 extern const char init_errors[][64];
@@ -222,82 +312,10 @@ extern const char init_from_checkpoint_errors[][64];
 extern const char file_data_source_init_errors[][64];
 extern const char double_correlation_get_data_errors[][64];
 
-/**
- * The initialization procedure for the correlation object. All important parameters have to be speciefied
- * at the same time. They can not be change later, so every instance of the correlation class
- * has to be fed with correct data from the very beginning.
- *
- * @param self: The pointer to the correlation class instance that should be initialized
- * @param dt: The time interval between subsequent updates
- * @param tau_lin: The linear part of the correlation function. 
- * @param tau_max: maximal time delay tau to sample
- * @param window_distance: The distance in time domain between update of the correlation estimate
- * @param dim_A: The dimension of the A vector
- * @param dim_B: The dimension of the B vector
- * @param A: First observable to correlate
- * @param B: Second observable to correlate
- * @param dim_corr: The dimension of the correlation to be calculated
- * @param corr_operation_name: how to correlate the two observables A and B
- *     (this has no default)
- * @param compressA_name: how the A values should be compressed (usually 
- *     the linear compression method)
- * @param compressB_name: how the B values should be compressed (usually 
- *     the linear compression method)
- * @param args: the parameters of the observables
- *
- */
-int double_correlation_init(double_correlation* self, double dt, 
-			    unsigned int tau_lin, double tau_max,
-			    unsigned int window_distance, 
-			    unsigned int dim_A, unsigned int dim_B, 
-			    unsigned int dim_corr, 
-			    observable* A, observable* B, 
-			    char* corr_operation_name, 
-			    char* compressA_name, char* compressB_name, 
-			    void *args);
-
-
-/** Restore a correlation from a checkpoint - the observable has to be created first ordinary
-*/
-int double_correlation_read_data_from_file(double_correlation* self, const char * filename, bool binary);
-
 void write_double(FILE * fp, const double * data, unsigned int n, bool binary);
 void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binary);
 int read_double(FILE * fp, double * data, unsigned int n, bool binary);
 int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary);
-/** Write a checkpoint, saving all history buffers and other important variables of a correlation in a file
-*/
-int double_correlation_write_data_to_file(const double_correlation* self, const char * filename, bool binary);
-
-/** The function to process a new datapoint of A and B
- *  
- * First the function finds out if it necessary to make some space for the new entries of A and B.
- * Then, if necessary, it compresses old Values of A and B to make for the new value. Finally
- * The new values of A and B are stored in A[newest[0]] and B[newest[0]], where the newest indices
- * have been increased before. Finally the correlation estimate is updated. TODO: Not all
- * the correlation estimates have to be updated.
- *
- */
-int double_correlation_get_data(  double_correlation* self );
-
-/** At the end of data collection, go through the whole hierarchy and correlate data left there
- *  
- * This works pretty much the same as get_data, but does not feed on new data, just uses what
- * is already available.
- *
- */
-int double_correlation_finalize(double_correlation* self);
-
-/** Return an estimate of the integrated correlation time
- *  
- *  We calculate the correlation time for each dim_corr by normalizing the correlation,
- * integrating it and finding out where C(tau)=tau;
- *
- */
-int correlation_get_correlation_time(double_correlation* self, double* correlation_time);
-
-int file_data_source_init(file_data_source* self, char* filename, IntList* columns);
-int file_data_source_readline(void* xargs, double* A, unsigned int dim_A); 
 
 int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_A);
 

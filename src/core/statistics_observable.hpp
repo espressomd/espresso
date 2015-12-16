@@ -32,81 +32,146 @@ enum ObservableType { OBSERVABLE, AVERAGE, VARIANCE };
 
 struct s_observable;
 
-struct s_observable {
-  ObservableType type;
-  char* obs_name;
-  void* container;
-  int n;
-  int (*update)    ( struct s_observable* obs );
-  int (*calculate) ( struct s_observable* obs );
-  double* last_value;
-  double last_update;
-  int autoupdate;
-  double autoupdate_dt;
+class Observable {
+  public:
+    Observable();
+    int update();
+    int calculate();
+    virtual int actual_calculate(); 
+    virtual int actual_update() ;
+
+
+    /* IO functions for observables */
+    int write(char *filename, bool binary);
+    int read(char *filename, bool binary);
+ 
+
+    // These should be made private with setters and getters.
+    ObservableType type;
+    char* obs_name;
+    void* container;
+    int n;
+    double* last_value;
+    double last_update;
+    int autoupdate;
+    double autoupdate_dt;
 };
 
-typedef struct s_observable observable;
 
-extern observable** observables;
-extern int n_observables; 
+extern std::vector<Observable> observables;
 
 // flag if autoupdates are necessary.
 extern int observables_autoupdate;
 
 void autoupdate_observables(); 
 
-void observable_init(observable* self);
-int observable_calculate(observable* self);
-int observable_update(observable* self);
 
-/* IO functions for observables */
-int observable_write(char *filename, observable *self, bool binary);
-int observable_read(char *filename, observable *self, bool binary);
+class ObservableParticleVelocities: public Observable {
+  int actual_calculate();
+};
 
-/* Here we have the particular observables listed */
-int observable_calc_particle_velocities(observable* self_);
-int observable_calc_particle_body_velocities(observable* self_);
-int observable_calc_particle_angular_momentum(observable* self_);
-int observable_calc_particle_body_angular_momentum(observable* self_);
-int observable_calc_com_velocity(observable* self); 
-int observable_calc_blocked_com_velocity(observable* self); 
+class ObservableParticleBodyVelocities: public Observable {
+  int actual_calculate();
+};
+
+class ObservableParticleAngularMomentum: public Observable {
+  int actual_calculate();
+};
+
+class ObservableParticleBodyAngularMomentum: public Observable {
+  int actual_calculate();
+};
+
+class ObservableComVelocity: public Observable { 
+  int actual_calculate();
+};
+
+class ObservableBlockedComVelocity: public Observable { 
+  int actual_calculate();
+};
+
 /** Obtain the particle positions.
  * TODO: Folded or unfolded?
  */ 
-int observable_calc_particle_positions(observable* self);
-int observable_calc_particle_forces(observable* self);
-int observable_calc_com_force(observable* self);
-int observable_calc_blocked_com_force(observable* self);
-int observable_stress_tensor(observable* self);
-int observable_calc_stress_tensor_acf_obs(observable* self);
-int observable_calc_com_position(observable* self);
-int observable_calc_blocked_com_position(observable* self);
+class ObservableParticlePositions: public Observable {
+  int actual_calculate();
+};
+
+class ObservableParticleForces: public Observable {
+  int actual_calculate();
+};
+
+class ObservableComForce: public Observable {
+  int actual_calculate();
+};
+
+
+class ObservableBlockedComForce: public Observable {
+  int actual_calculate();
+};
+class ObservableStressTensor: public Observable {
+  int actual_calculate();
+};
+  
+class ObservableStressTensorAcfObs: public Observable {
+  int actual_calculate();
+};
+
+class ObservableComPosition: public Observable {
+  int actual_calculate();
+};
+
+class ObservableBlockedComPosition: public Observable {
+  int actual_calculate();
+};
 
 #ifdef ELECTROSTATICS
-int observable_calc_particle_currents(observable* self);
-int observable_calc_currents(observable* self);
-int observable_calc_dipole_moment(observable* self);
+
+class ObservableParticleCurrents: public Observable {
+  int actual_calculate();
+};
+class ObservableCurrents: public Observable {
+  int actual_calculate();
+};
+
+class ObservableDipoleMoment: public Observable {
+  int actual_calculate();
+};
+
 #endif
 
 #ifdef DIPOLES
-int observable_calc_com_dipole_moment(observable* self);
+class ObservableComDipoleMoment: public Observable {
+  int actual_calculate();
+};
 #endif
 
 #ifdef LB
 int mpi_observable_lb_radial_velocity_profile_parallel(void* pdata_, double* A, unsigned int n_A);
 #endif
 
-int observable_update_average(observable* self);
-int observable_reset_average(observable* self);
+class ObservableAverage: public Observable {
+  int actual_update();
+  int reset();
+};
+
+
 typedef struct {
-  observable* reference_observable;
+  Observable* reference_observable;
   unsigned int n_sweeps;
 } observable_average_container;
 
 /** Calculate structure factor from positions and scattering length */
-int observable_calc_structure_factor(observable* self);
+class ObservableStructureFactor: public Observable {
+  int actual_calculate();
+};
+
+
 /** Calculate structure factor from positions and scattering length */
-int observable_calc_structure_factor_fast(observable* self);
+class ObservableStructureFactorFast: public Observable {
+  int actual_calculate();
+};
+
 typedef struct {
 // FIXME finish the implementation of scattering length
   IntList* id_list;
@@ -123,7 +188,11 @@ typedef struct {
 /** See if particles from idList1 interact with any of the particles in idList2 
 input parameters are passed via struct iw_params
 */
-int observable_calc_interacts_with(observable* self);
+class ObservableInteractsWith: public Observable {
+  int actual_calculate();
+};
+
+
 typedef struct {
   double cutoff;
   IntList *ids1;
@@ -132,9 +201,14 @@ typedef struct {
 
 
 /** Do nothing */
-int observable_calc_obs_nothing (observable* self);
+class ObservableNothing: public Observable {
+  int actual_calculate();
+};
 
-int observable_calc_flux_density_profile(observable* self);
+class ObservableFluxDensityProfile: public Observable {
+  int actual_calculate();
+};
+
 typedef struct { 
   IntList* id_list;
   double minx;
@@ -149,14 +223,33 @@ typedef struct {
   void* container;
 } profile_data;
 
-int observable_calc_density_profile(observable* self);
-int observable_calc_force_density_profile(observable* self);
+class ObservableDensityProfile: public Observable {
+  int actual_calculate();
+};
 
-int observable_calc_lb_velocity_profile(observable* self);
 
-int observable_calc_radial_density_profile(observable* self);
-int observable_calc_radial_flux_density_profile(observable* self);
-int observable_calc_lb_radial_velocity_profile(observable* self);
+class ObservableForceDensityProfile: public Observable {
+  int actual_calculate();
+};
+
+
+class ObservableLbVelocityProfile: public Observable {
+  int actual_calculate();
+};
+
+
+class ObservableRadialDensityProfile: public Observable {
+  int actual_calculate();
+};
+
+class ObservableRadialFluxDensityProfile: public Observable {
+  int actual_calculate();
+};
+
+class ObservableLbRadialVelocityProfile: public Observable {
+  int actual_calculate();
+};
+
 typedef struct {
   IntList* id_list;
   double minr;
@@ -176,7 +269,10 @@ typedef struct {
 
 void mpi_observable_lb_radial_velocity_profile_slave_implementation();
 
-int observable_radial_density_distribution(observable* self);
+class ObservableRadialDensityDistribution: public Observable {
+  int actual_calculate();
+};
+
 
 typedef struct { 
 	IntList *id_list;
@@ -193,14 +289,21 @@ typedef struct {
 	double end_point[3];
 } radial_density_data;
 
-int observable_spatial_polymer_properties(observable* self);
+class ObbservableSpatialPolymerProperties: public Observable {
+  int actual_calculate();
+};
+
 typedef struct { 
 	IntList *id_list;
 	int npoly;
 	int cut_off;
 } spatial_polym_data;
 
-int observable_persistence_length(observable* self);
+class ObservablePersistenceLength: public Observable {
+  int actual_calculate();
+};
+
+
 // uses the same data as spatial_polymer_properties
 
 typedef struct {
@@ -212,10 +315,15 @@ typedef struct {
 	double r_min;
 	double r_max;
 } k_dist_data;
-int observable_polymer_k_distribution(observable* self);
+class ObservablePolymerKDistribution: public Observable {
+  int actual_calculate();
+};
 
 
-int observable_calc_rdf(observable* self);
+class ObservableRdf: public Observable {
+  int actual_calculate();
+};
+
 typedef struct {
   int *p1_types;
   int n_p1;

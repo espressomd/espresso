@@ -22,13 +22,7 @@
 #include <cstring>
 
 /* global variables */
-double_correlation* correlations=0;
-unsigned int n_correlations = 0;
-
-/* forward declarations */
-int correlation_get_correlation_time(double_correlation* self, double* correlation_time);
-int double_correlation_finalize( double_correlation* self );
-int read_until_end_of_line(FILE *f);
+std::vector<DoubleCorrelation> correlations;
 
 
 /* Error codes */
@@ -76,8 +70,8 @@ int correlations_autoupdate=0;
 
 
 int correlation_update(unsigned int no) {
-  if (n_correlations > no)
-    return double_correlation_get_data(&correlations[no]);
+  if (correlations.size() > no)
+    return correlations[no].get_data();
   else 
     return 1;
 }
@@ -85,43 +79,43 @@ int correlation_update(unsigned int no) {
 int correlation_update_from_file(unsigned int no) {
   if (!correlations[no].is_from_file)
     return 1;
-  while ( ! double_correlation_get_data(&correlations[no]) ) {
+  while ( ! correlations[no].get_data()) {
   }
   return 0;
 }
 
 
 
-int correlation_get_correlation_time(double_correlation* self, double* correlation_time) {
+int DoubleCorrelation::get_correlation_time(double* correlation_time) {
   // We calculate the correlation time for each dim_corr by normalizing the correlation,
   // integrating it and finding out where C(tau)=tau;
   double C_tau;
   int ok_flag;
-  for (unsigned j=0; j<self->dim_corr; j++) {
+  for (unsigned j=0; j<dim_corr; j++) {
     correlation_time[j] = 0.; 
   }
 
   // here we still have to fix the stuff a bit!
-  for (unsigned j=0; j<self->dim_corr; j++) {
-    C_tau=1*self->dt;
+  for (unsigned j=0; j<dim_corr; j++) {
+    C_tau=1*dt;
     ok_flag=0;
-    for (unsigned k=1; k<self->n_result-1; k++) {
-      if (self->n_sweeps[k]==0)
+    for (unsigned k=1; k<n_result-1; k++) {
+      if (n_sweeps[k]==0)
         break;
-      C_tau+=(self->result[k][j]/ (double) self->n_sweeps[k] - self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[0][j]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
+      C_tau+=(result[k][j]/ (double) n_sweeps[k] - A_accumulated_average[j]*B_accumulated_average[j]/n_data/n_data)/(result[0][j]/n_sweeps[0])*dt*(tau[k]-tau[k-1]);
 //        printf("C_tau %f tau %f exp(-W/tau) + 2*sqrt(W/N) %f corr %f deltat %f \n", 
 //            C_tau, 
-//            self->tau[k]*self->dt, 
-//            exp(-self->tau[k]*self->dt/C_tau)+2*sqrt(self->tau[k]*self->dt/self->n_data),
-//            self->result[k][j]/ (double) self->n_sweeps[k],
-//            self->dt*(self->tau[k]-self->tau[k-1])
+//            tau[k]*dt, 
+//            exp(-tau[k]*dt/C_tau)+2*sqrt(tau[k]*dt/n_data),
+//            result[k][j]/ (double) n_sweeps[k],
+//            dt*(tau[k]-tau[k-1])
 //            );
 
-//        if (C_tau < i*self->tau[k]*self->dt) {
-        if (exp(-self->tau[k]*self->dt/C_tau)+2*sqrt(self->tau[k]*self->dt/self->n_data)
-            >exp(-self->tau[k-1]*self->dt/C_tau)+2*sqrt(self->tau[k-1]*self->dt/self->n_data)) {
-        correlation_time[j]=C_tau*(1+(2*(double)self->tau[k]+1)/(double)self->n_data);
-//          printf("stopped at tau=>%f\n", self->tau[k]*self->dt);
+//        if (C_tau < i*tau[k]*dt) {
+        if (exp(-tau[k]*dt/C_tau)+2*sqrt(tau[k]*dt/n_data)
+            >exp(-tau[k-1]*dt/C_tau)+2*sqrt(tau[k-1]*dt/n_data)) {
+        correlation_time[j]=C_tau*(1+(2*(double)tau[k]+1)/(double)n_data);
+//          printf("stopped at tau=>%f\n", tau[k]*dt);
         ok_flag=1;
         break;
        }
@@ -135,39 +129,36 @@ int correlation_get_correlation_time(double_correlation* self, double* correlati
 }
 
 
-int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, double tau_max,
+DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau_max,
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
-                  observable* A, observable* B, char* corr_operation_name, 
+                  Observable* o_A, Observable* o_B, char* corr_operation_name, 
                   char* compressA_name, char* compressB_name, void *args) {
   unsigned int i,j,k;
   unsigned int hierarchy_depth=0;
 
-  if (self==0) {
-    return 1;
-  }
 
   // first input-independent values
-  self->t = 0;
-  self->finalized=0;
-  self->autoupdate=0;
-  self->autocorrelation=1; // the default may change later if dim_B != 0
+  t = 0;
+  finalized=0;
+  autoupdate=0;
+  autocorrelation=1; // the default may change later if dim_B != 0
   
   // then input-dependent ones
   if (dt <= 0) {
-    return 2;
+    throw init_errors[2];
   }
 
   if ((dt-time_step)<-1e-6*time_step) {
-    return 15;
+    throw init_errors[15];
   }
 
   // check if dt is a multiple of the md timestep
   if ( std::abs(dt/time_step - round(dt/time_step)) > 1e-6 ) {
-    return 16;
+    throw init_errors[16];
   }
 
-  self->dt = dt;
-  self->update_frequency = (int) floor(dt/time_step);
+  dt = dt;
+  update_frequency = (int) floor(dt/time_step);
   
   if ( tau_lin == 1 ) { // use the default
     tau_lin=(int)ceil(tau_max/dt);
@@ -176,17 +167,18 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   }
 
   if (tau_lin<2) {
-    return 3;
+    throw init_errors[3];
   }
 
   if (tau_lin%2) {
-    return 14;
+    throw init_errors[14];
   }
 
-  self->tau_lin=tau_lin;
+  tau_lin=tau_lin;
   
   if (tau_max <= dt) { 
-    return 4;
+    throw init_errors[4];
+
   } else { //set hierarchy depth which can  accomodate at least tau_max
     if ( (tau_max/dt) < tau_lin ) {
       hierarchy_depth = 1;
@@ -195,206 +187,205 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
     }
   }
 
-  self->tau_max=tau_max;
-  self->hierarchy_depth = hierarchy_depth;
+  tau_max=tau_max;
+  hierarchy_depth = hierarchy_depth;
   
   if (window_distance<1) {
-    return 5;
+    throw init_errors[5];
   }
 
-  self->window_distance = window_distance;
+  window_distance = window_distance;
   
   if (dim_A<1) {
-    return 6;
+    throw init_errors[6];
   }
 
-  self->dim_A = dim_A;
+  dim_A = dim_A;
   
   if (dim_B==0) {
     dim_B = dim_A; 
   } else if (dim_B>0) {
-    self->autocorrelation=0;
+    autocorrelation=0;
   } else {
-    return 7;
+    throw init_errors[7];
   }
 
-  self->dim_B = dim_B;
+  dim_B = dim_B;
 
   if (A == 0) {
-    return 9;
+    throw init_errors[9];
   }
 
-  self->A_obs = A;
+  A_obs = o_A;
   
-  if (B == 0 && !self->autocorrelation) {
-    return 10;
+  if (B == 0 && !autocorrelation) {
+    throw init_errors[10];
   }
 
-  self->B_obs = B;
+  B_obs = o_B;
   
 
   // choose the correlation operation 
   if (corr_operation_name==0) { 
-    return 11; // there is no reasonable default
+    throw init_errors[11]; // there is no reasonable default
   } else if ( strcmp(corr_operation_name,"componentwise_product") == 0 ) {
     dim_corr = dim_A;
-    self->corr_operation = &componentwise_product;
-    self->args = NULL;
+    corr_operation = &componentwise_product;
+    args = NULL;
   } else if ( strcmp(corr_operation_name,"complex_conjugate_product") == 0 ) {
     dim_corr = dim_A;
-    self->corr_operation = &complex_conjugate_product;
-    self->args = NULL;
+    corr_operation = &complex_conjugate_product;
+    args = NULL;
   } else if ( strcmp(corr_operation_name,"tensor_product") == 0 ) {
     dim_corr = dim_A*dim_B;
-    self->corr_operation = &tensor_product;
-    self->args = NULL;
+    corr_operation = &tensor_product;
+    args = NULL;
   } else if ( strcmp(corr_operation_name,"square_distance_componentwise") == 0 ) {
     dim_corr = dim_A;
-    self->corr_operation = &square_distance_componentwise;
-    self->args = NULL;
+    corr_operation = &square_distance_componentwise;
+    args = NULL;
   } else if ( strcmp(corr_operation_name,"fcs_acf") == 0 ) {
     if (dim_A %3 )
-      return 18;
+       throw init_errors[18];
     dim_corr = dim_A/3;
-    self->corr_operation = &fcs_acf;
-    self->args = args;
+    corr_operation = &fcs_acf;
+    args = args;
 // square_distance will be removed -- will be replaced by strides and blocks
 //  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
-//    self->corr_operation = &square_distance;
+//    corr_operation = &square_distance;
   } else if ( strcmp(corr_operation_name,"scalar_product") == 0 ) {
     dim_corr=1;
-    self->corr_operation = &scalar_product;
-    self->args = NULL;
+    corr_operation = &scalar_product;
+    args = NULL;
   } else {
-    return 11; 
+    throw init_errors[11]; 
   }
-  self->dim_corr = dim_corr;
-  self->corr_operation_name = corr_operation_name;
+  dim_corr = dim_corr;
+  corr_operation_name = corr_operation_name;
   
   // Choose the compression function
   if (compressA_name==0) { // this is the default
     compressA_name=strdup("discard2");
-    self->compressA=&compress_discard2;
+    compressA=&compress_discard2;
   } else if ( strcmp(compressA_name,"discard2") == 0 ) {
-    self->compressA=&compress_discard2;
+    compressA=&compress_discard2;
   } else if ( strcmp(compressA_name,"discard1") == 0 ) {
-    self->compressA=&compress_discard1;
+    compressA=&compress_discard1;
   } else if ( strcmp(compressA_name,"linear") == 0 ) {
-    self->compressA=&compress_linear;
+    compressA=&compress_linear;
   } else {
-    return 12;
+    throw init_errors[12];
   }
-  self->compressA_name=compressA_name; 
+  compressA_name=compressA_name; 
   
   if (compressB_name==0) { 
-    if(self->autocorrelation) { // the default for autocorrelation
+    if(autocorrelation) { // the default for autocorrelation
       compressB_name=strdup("none"); 
-      self->compressB=&compress_do_nothing;
+      compressB=&compress_do_nothing;
     } else { // the default for corsscorrelation
-      compressB_name=self->compressA_name;
-      self->compressB=self->compressA;
+      compressB_name=compressA_name;
+      compressB=compressA;
     } 
-  } else if ( self->autocorrelation ) {
-    return 17;
+  } else if ( autocorrelation ) {
+    throw init_errors[17];
   } else if ( strcmp(compressB_name,"discard2") == 0 ) {
-    self->compressB=&compress_discard2;
+    compressB=&compress_discard2;
   } else if ( strcmp(compressB_name,"discard1") == 0 ) {
-    self->compressB=&compress_discard1;
+    compressB=&compress_discard1;
   } else if ( strcmp(compressB_name,"linear") == 0 ) {
-    self->compressB=&compress_linear;
+    compressB=&compress_linear;
   } else {
-    return 13;
+    throw init_errors[13];
   }
-  self->compressB_name=compressB_name; 
+  compressB_name=compressB_name; 
  
 //  if (A_fun == &file_data_source_readline && (B_fun == &file_data_source_readline|| autocorrelation)) {
-//    self->is_from_file = 1;
+//    is_from_file = 1;
 //  } else {
-//    self->is_from_file = 0;
+//    is_from_file = 0;
 //  }
 
-  self->A_data = (double*)Utils::malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
-  if (self->autocorrelation) 
-    self->B_data = self->A_data;
+  A_data = (double*)Utils::malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
+  if (autocorrelation) 
+    B_data = A_data;
   else 
-    self->B_data = (double*)Utils::malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
+    B_data = (double*)Utils::malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
   
-  self->n_data=0;
-  self->A_accumulated_average = (double*)Utils::malloc(dim_A*sizeof(double));
-  self->A_accumulated_variance= (double*)Utils::malloc(dim_A*sizeof(double));
+  n_data=0;
+  A_accumulated_average = (double*)Utils::malloc(dim_A*sizeof(double));
+  A_accumulated_variance= (double*)Utils::malloc(dim_A*sizeof(double));
   for (k=0; k<dim_A; k++) {
-    self->A_accumulated_average[k]=0;
-    self->A_accumulated_variance[k]=0;
+    A_accumulated_average[k]=0;
+    A_accumulated_variance[k]=0;
   }
-  if (self->autocorrelation) {
-    self->B_accumulated_average =  self->A_accumulated_average;
-    self->B_accumulated_variance = self->B_accumulated_variance;
+  if (autocorrelation) {
+    B_accumulated_average =  A_accumulated_average;
+    B_accumulated_variance = B_accumulated_variance;
   } else {
-    self->B_accumulated_average = (double*)Utils::malloc(dim_B*sizeof(double));
-    self->B_accumulated_variance = (double*)Utils::malloc(dim_B*sizeof(double));
+    B_accumulated_average = (double*)Utils::malloc(dim_B*sizeof(double));
+    B_accumulated_variance = (double*)Utils::malloc(dim_B*sizeof(double));
     for (k=0; k<dim_B; k++) {
-      self->B_accumulated_average[k]=0;
-      self->B_accumulated_variance[k]=0;
+      B_accumulated_average[k]=0;
+      B_accumulated_variance[k]=0;
     }
   }
 
 
-  self->n_result=tau_lin+1 + (tau_lin+1)/2*(hierarchy_depth-1);
-  self->tau = (int*)                Utils::malloc(self->n_result*sizeof(int));
-  self->n_sweeps = (unsigned int*)  Utils::malloc(self->n_result*sizeof(int));
-  self->result_data  = (double*)    Utils::malloc(self->n_result*dim_corr*sizeof(double));
-  self->n_vals = (unsigned int*) Utils::malloc(hierarchy_depth*sizeof(unsigned int));
+  n_result=tau_lin+1 + (tau_lin+1)/2*(hierarchy_depth-1);
+  tau = (int*)                Utils::malloc(n_result*sizeof(int));
+  n_sweeps = (unsigned int*)  Utils::malloc(n_result*sizeof(int));
+  result_data  = (double*)    Utils::malloc(n_result*dim_corr*sizeof(double));
+  n_vals = (unsigned int*) Utils::malloc(hierarchy_depth*sizeof(unsigned int));
 
   // allocate space for convenience pointer to A and B buffers
-  self->A = (double***)Utils::malloc(hierarchy_depth*sizeof(double**));
-  if(self->autocorrelation) self->B = self->A;
-  else self->B = (double***)Utils::malloc(hierarchy_depth*sizeof(double**));
+  A = (double***)Utils::malloc(hierarchy_depth*sizeof(double**));
+  if(autocorrelation) B = A;
+  else B = (double***)Utils::malloc(hierarchy_depth*sizeof(double**));
 
-  for (i=0; i<self->hierarchy_depth; i++) {
-    self->A[i] = (double**) Utils::malloc((self->tau_lin+1)*sizeof(double*));
-    if(!self->autocorrelation) self->B[i] = (double**) Utils::malloc((self->tau_lin+1)*sizeof(double*));
+  for (i=0; i<hierarchy_depth; i++) {
+    A[i] = (double**) Utils::malloc((tau_lin+1)*sizeof(double*));
+    if(!autocorrelation) B[i] = (double**) Utils::malloc((tau_lin+1)*sizeof(double*));
   }
 
   // and initialize the values
-  for (i=0; i<self->hierarchy_depth; i++) {
-    self->n_vals[i]=0;
-    for (j=0; j<self->tau_lin+1; j++) {
-      self->A[i][j] = &self->A_data[(i*(tau_lin+1))*dim_A+j*dim_A];
+  for (i=0; i<hierarchy_depth; i++) {
+    n_vals[i]=0;
+    for (j=0; j<tau_lin+1; j++) {
+      A[i][j] = &A_data[(i*(tau_lin+1))*dim_A+j*dim_A];
       for (k=0; k<dim_A; k++) 
-        self->A[i][j][k] = 0.;
-      if(!self->autocorrelation) {
-        self->B[i][j] = &self->B_data[(i*(tau_lin+1))*dim_B+j*dim_B];
+        A[i][j][k] = 0.;
+      if(!autocorrelation) {
+        B[i][j] = &B_data[(i*(tau_lin+1))*dim_B+j*dim_B];
         for (k=0; k<dim_B; k++) 
-          self->B[i][j][k] = 0.;
+          B[i][j][k] = 0.;
       }
     }
   }
 
   // allocate space for convenience pointer to the result
-  self->result  = (double**)        Utils::malloc(self->n_result*sizeof(double*));
-  for (i=0; i<self->n_result; i++) {
-    self->n_sweeps[i]=0;
-    self->result[i]=&self->result_data[i*self->dim_corr];
-    for (j=0; j<self->dim_corr; j++) 
+  result  = (double**)        Utils::malloc(n_result*sizeof(double*));
+  for (i=0; i<n_result; i++) {
+    n_sweeps[i]=0;
+    result[i]=&result_data[i*dim_corr];
+    for (j=0; j<dim_corr; j++) 
       // and initialize the values
-      self->result[i][j]=0;
+      result[i][j]=0;
   }
 
-  self->newest = (unsigned int *)Utils::malloc(hierarchy_depth*sizeof(unsigned int));
-  for ( i = 0; i<self->hierarchy_depth; i++ ) {
-    self->newest[i]= self->tau_lin;
+  newest = (unsigned int *)Utils::malloc(hierarchy_depth*sizeof(unsigned int));
+  for ( i = 0; i<hierarchy_depth; i++ ) {
+    newest[i]= tau_lin;
   }
   for (i=0; i < tau_lin+1; i++) {
-    self->tau[i] = i;
+    tau[i] = i;
   }
-  for (j=1; j < self->hierarchy_depth; j++)
-    for (k=0; k < self->tau_lin/2; k++) {
-      self->tau[self->tau_lin + 1 + (j-1)*tau_lin/2+k] = (k+(self->tau_lin/2)+1)*(1<<j); 
+  for (j=1; j < hierarchy_depth; j++)
+    for (k=0; k < tau_lin/2; k++) {
+      tau[tau_lin + 1 + (j-1)*tau_lin/2+k] = (k+(tau_lin/2)+1)*(1<<j); 
     }
-  return 0;
 }
 
-int double_correlation_get_data( double_correlation* self ) {
+int DoubleCorrelation::get_data() {
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
@@ -403,15 +394,15 @@ int double_correlation_get_data( double_correlation* self ) {
   unsigned int index_new, index_old, index_res;
   int error;
   
-  self->t++;
+  t++;
 
   highest_level_to_compress=-1;
   i=0;
   j=1;
   // Lets find out how far we have to go back in the hierarchy to make space for the new value
   while (1) {
-    if ( ( (self->t - ((self->tau_lin + 1)*((1<<(i+1))-1) + 1) )% (1<<(i+1)) == 0) ) {
-      if ( i < (int(self->hierarchy_depth) - 1) && self->n_vals[i]> self->tau_lin) {
+    if ( ( (t - ((tau_lin + 1)*((1<<(i+1))-1) + 1) )% (1<<(i+1)) == 0) ) {
+      if ( i < (int(hierarchy_depth) - 1) && n_vals[i]> tau_lin) {
 
         highest_level_to_compress+=1;
         i++;
@@ -424,75 +415,75 @@ int double_correlation_get_data( double_correlation* self ) {
 
   for ( i = highest_level_to_compress; i >= 0; i-- ) {
     // We increase the index indicating the newest on level i+1 by one (plus folding)
-    self->newest[i+1] = (self->newest[i+1] + 1) % (self->tau_lin+1);
-    self->n_vals[i+1]+=1;
-//    printf("t %d compressing level %d no %d and %d to level %d no %d, nv %d\n",self->t, i, (self->newest[i]+1) % (self->tau_lin+1),
-//(self->newest[i]+2) % (self->tau_lin+1), i+1, self->newest[i+1], self->n_vals[i]);
-    (*self->compressA)(self->A[i][(self->newest[i]+1) % (self->tau_lin+1)],  
-                       self->A[i][(self->newest[i]+2) % (self->tau_lin+1)], 
-                       self->A[i+1][self->newest[i+1]],self->dim_A);
-    if (!self->autocorrelation)
-      (*self->compressB)(self->B[i][(self->newest[i]+1) % (self->tau_lin+1)],  
-                       self->B[i][(self->newest[i]+2) % (self->tau_lin+1)], 
-                       self->B[i+1][self->newest[i+1]],self->dim_B);
+    newest[i+1] = (newest[i+1] + 1) % (tau_lin+1);
+    n_vals[i+1]+=1;
+//    printf("t %d compressing level %d no %d and %d to level %d no %d, nv %d\n",t, i, (newest[i]+1) % (tau_lin+1),
+//(newest[i]+2) % (tau_lin+1), i+1, newest[i+1], n_vals[i]);
+    (*compressA)(A[i][(newest[i]+1) % (tau_lin+1)],  
+                       A[i][(newest[i]+2) % (tau_lin+1)], 
+                       A[i+1][newest[i+1]],dim_A);
+    if (!autocorrelation)
+      (*compressB)(B[i][(newest[i]+1) % (tau_lin+1)],  
+                       B[i][(newest[i]+2) % (tau_lin+1)], 
+                       B[i+1][newest[i+1]],dim_B);
   }
 
-  self->newest[0] = ( self->newest[0] + 1 ) % (self->tau_lin +1); 
-  self->n_vals[0]++;
+  newest[0] = ( newest[0] + 1 ) % (tau_lin +1); 
+  n_vals[0]++;
 
-  if ( observable_calculate(self->A_obs) != 0 )
+  if ( A_obs->calculate() != 0 )
     return 1;
   // copy the result:
-  memmove(self->A[0][self->newest[0]], self->A_obs->last_value, self->dim_A*sizeof(double));
+  memmove(A[0][newest[0]], A_obs->last_value, dim_A*sizeof(double));
 
-  if (!self->autocorrelation) {
-    if ( observable_calculate(self->B_obs) != 0 )
+  if (!autocorrelation) {
+    if ( B_obs->calculate() != 0 )
       return 2;
-    memmove(self->B[0][self->newest[0]], self->B_obs->last_value, self->dim_B*sizeof(double));
+    memmove(B[0][newest[0]], B_obs->last_value, dim_B*sizeof(double));
   }
 
   // Now we update the cumulated averages and variances of A and B
-  self->n_data++;
-  for (unsigned k=0; k<self->dim_A; k++) {
-    self->A_accumulated_average[k]+=self->A[0][self->newest[0]][k];
-    self->A_accumulated_variance[k]+=self->A[0][self->newest[0]][k]*self->A[0][self->newest[0]][k];
+  n_data++;
+  for (unsigned k=0; k<dim_A; k++) {
+    A_accumulated_average[k]+=A[0][newest[0]][k];
+    A_accumulated_variance[k]+=A[0][newest[0]][k]*A[0][newest[0]][k];
   }
   // Here we check if it is an autocorrelation
-  if (!self->autocorrelation) {
-    for (unsigned k=0; k<self->dim_B; k++) {
-      self->B_accumulated_average[k]+=self->B[0][self->newest[0]][k];
-      self->B_accumulated_variance[k]+=self->B[0][self->newest[0]][k]*self->B[0][self->newest[0]][k];
+  if (!autocorrelation) {
+    for (unsigned k=0; k<dim_B; k++) {
+      B_accumulated_average[k]+=B[0][newest[0]][k];
+      B_accumulated_variance[k]+=B[0][newest[0]][k]*B[0][newest[0]][k];
     }
   } 
 
-  double* temp = (double*)Utils::malloc(self->dim_corr*sizeof(double));
+  double* temp = (double*)Utils::malloc(dim_corr*sizeof(double));
   if (!temp)
     return 4;
 // Now update the lowest level correlation estimates
-  for ( j = 0; j < int(MIN(self->tau_lin+1, self->n_vals[0]) ); j++) {
-    index_new = self->newest[0];
-    index_old =  (self->newest[0] - j + self->tau_lin + 1) % (self->tau_lin + 1);
+  for ( j = 0; j < int(MIN(tau_lin+1, n_vals[0]) ); j++) {
+    index_new = newest[0];
+    index_old =  (newest[0] - j + tau_lin + 1) % (tau_lin + 1);
 //    printf("old %d new %d\n", index_old, index_new);
-    error = (self->corr_operation)(self->A[0][index_old], self->dim_A, self->B[0][index_new], self->dim_B, temp, self->dim_corr, self->args);
+    error = (corr_operation)(A[0][index_old], dim_A, B[0][index_new], dim_B, temp, dim_corr, args);
     if ( error != 0)
       return error;
-    self->n_sweeps[j]++;
-    for (unsigned k = 0; k < self->dim_corr; k++) {
-      self->result[j][k] += temp[k];
+    n_sweeps[j]++;
+    for (unsigned k = 0; k < dim_corr; k++) {
+      result[j][k] += temp[k];
     }
   }
 // Now for the higher ones
   for ( int i = 1; i < highest_level_to_compress+2; i++) {
-    for ( unsigned j = (self->tau_lin+1)/2+1; j < MIN(self->tau_lin+1, self->n_vals[i]); j++) {
-      index_new = self->newest[i];
-      index_old = (self->newest[i] - j + self->tau_lin + 1) % (self->tau_lin + 1);
-      index_res = self->tau_lin + (i-1)*self->tau_lin/2 + (j - self->tau_lin/2+1) -1;
-      error=(self->corr_operation)(self->A[i][index_old], self->dim_A, self->B[i][index_new], self->dim_B, temp, self->dim_corr, self->args);
+    for ( unsigned j = (tau_lin+1)/2+1; j < MIN(tau_lin+1, n_vals[i]); j++) {
+      index_new = newest[i];
+      index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
+      index_res = tau_lin + (i-1)*tau_lin/2 + (j - tau_lin/2+1) -1;
+      error=(corr_operation)(A[i][index_old], dim_A, B[i][index_new], dim_B, temp, dim_corr, args);
       if ( error != 0)
         return error;
-      self->n_sweeps[index_res]++;
-      for (unsigned k = 0; k < self->dim_corr; k++) {
-        self->result[index_res][k] += temp[k];
+      n_sweeps[index_res]++;
+      for (unsigned k = 0; k < dim_corr; k++) {
+        result[index_res][k] += temp[k];
       }
     }
   }
@@ -500,7 +491,7 @@ int double_correlation_get_data( double_correlation* self ) {
   return 0;
 }
 
-void write_double(FILE * fp, const double * data, unsigned int n, bool binary){
+void write_double(FILE * fp, const double * data, unsigned int n, bool binary) {
   if (binary){
     fwrite(data,sizeof(double),n,fp);
   } else {
@@ -520,40 +511,40 @@ void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binar
     fprintf(fp,"%u\n",data[n-1]);
   }
 }
-int double_correlation_write_data_to_file(const double_correlation* self, const char * filename, bool binary){
+int DoubleCorrelation::write_data_to_file(const char * filename, bool binary) const {
   FILE* fp=0;
   fp=fopen(filename, "w");
   if (!fp) {
     return 1;
   }
-  for (unsigned int i=0; i<self->hierarchy_depth; i++) {
-    for (unsigned int j=0; j<self->tau_lin+1; j++) {
-      write_double(fp,self->A[i][j],self->dim_A,binary);
+  for (unsigned int i=0; i<hierarchy_depth; i++) {
+    for (unsigned int j=0; j<tau_lin+1; j++) {
+      write_double(fp,A[i][j],dim_A,binary);
     }
   }
-  if (!self->autocorrelation){
-    for (unsigned int i=0; i<self->hierarchy_depth; i++) {
-      for (unsigned int j=0; j<self->tau_lin+1; j++) {
-	write_double(fp,self->B[i][j],self->dim_B,binary);
+  if (!autocorrelation){
+    for (unsigned int i=0; i<hierarchy_depth; i++) {
+      for (unsigned int j=0; j<tau_lin+1; j++) {
+	write_double(fp,B[i][j],dim_B,binary);
       }
     } 
   }
-  for (unsigned int i=0; i<self->n_result; i++) {
-    write_double(fp,self->result[i],self->dim_corr,binary);
+  for (unsigned int i=0; i<n_result; i++) {
+    write_double(fp,result[i],dim_corr,binary);
   }
-  write_uint(fp,self->n_sweeps,self->n_result       ,binary);
-  write_uint(fp,self->n_vals  ,self->hierarchy_depth,binary);
-  write_uint(fp,self->newest  ,self->hierarchy_depth,binary);
+  write_uint(fp,n_sweeps,n_result       ,binary);
+  write_uint(fp,n_vals  ,hierarchy_depth,binary);
+  write_uint(fp,newest  ,hierarchy_depth,binary);
   
-  write_double(fp,self->A_accumulated_average ,self->dim_A,binary);
-  write_double(fp,self->A_accumulated_variance,self->dim_A,binary);
-  if (!self->autocorrelation){
-    write_double(fp,self->B_accumulated_average ,self->dim_B,binary);
-    write_double(fp,self->B_accumulated_variance,self->dim_B,binary);
+  write_double(fp,A_accumulated_average ,dim_A,binary);
+  write_double(fp,A_accumulated_variance,dim_A,binary);
+  if (!autocorrelation){
+    write_double(fp,B_accumulated_average ,dim_B,binary);
+    write_double(fp,B_accumulated_variance,dim_B,binary);
   }
-  write_uint(fp,&(self->n_data),1,binary);
-  write_uint(fp,&(self->t     ),1,binary);
-  write_double(fp,&(self->last_update),1,binary);
+  write_uint(fp,&(n_data),1,binary);
+  write_uint(fp,&(t     ),1,binary);
+  write_double(fp,&(last_update),1,binary);
   fclose(fp);
   return 0;
 }
@@ -585,46 +576,46 @@ int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary){
   }
   return 0;
 }
-int double_correlation_read_data_from_file(double_correlation* self, const char * filename, bool binary){
+int DoubleCorrelation::read_data_from_file(const char * filename, bool binary){
   FILE* fp=0;
   fp=fopen(filename, "r");
   if (!fp) {
     return 2;
   }
-  for (unsigned int i=0; i<self->hierarchy_depth; i++) {
-    for (unsigned int j=0; j<self->tau_lin+1; j++) {
-      if (read_double(fp,self->A[i][j],self->dim_A,binary)) return 1;
+  for (unsigned int i=0; i<hierarchy_depth; i++) {
+    for (unsigned int j=0; j<tau_lin+1; j++) {
+      if (read_double(fp,A[i][j],dim_A,binary)) return 1;
     }
   }
-  if (!self->autocorrelation){
-    for (unsigned int i=0; i<self->hierarchy_depth; i++) {
-      for (unsigned int j=0; j<self->tau_lin+1; j++) {
-	if (read_double(fp,self->B[i][j],self->dim_B,binary)) return 1;
+  if (!autocorrelation){
+    for (unsigned int i=0; i<hierarchy_depth; i++) {
+      for (unsigned int j=0; j<tau_lin+1; j++) {
+	if (read_double(fp,B[i][j],dim_B,binary)) return 1;
       }
     } 
   }
-  for (unsigned int i=0; i<self->n_result; i++) {
-    if (read_double(fp,self->result[i],self->dim_corr,binary))return 1;
+  for (unsigned int i=0; i<n_result; i++) {
+    if (read_double(fp,result[i],dim_corr,binary))return 1;
   }
-  if (read_uint(fp,self->n_sweeps,self->n_result       ,binary))return 1;
-  if (read_uint(fp,self->n_vals  ,self->hierarchy_depth,binary))return 1;
-  if (read_uint(fp,self->newest  ,self->hierarchy_depth,binary))return 1;
+  if (read_uint(fp,n_sweeps,n_result       ,binary))return 1;
+  if (read_uint(fp,n_vals  ,hierarchy_depth,binary))return 1;
+  if (read_uint(fp,newest  ,hierarchy_depth,binary))return 1;
   
-  if (read_double(fp,self->A_accumulated_average ,self->dim_A,binary))return 1;
-  if (read_double(fp,self->A_accumulated_variance,self->dim_A,binary))return 1;
-  if (!self->autocorrelation){
-    if (read_double(fp,self->B_accumulated_average ,self->dim_B,binary))return 1;
-    if (read_double(fp,self->B_accumulated_variance,self->dim_B,binary))return 1;
+  if (read_double(fp,A_accumulated_average ,dim_A,binary))return 1;
+  if (read_double(fp,A_accumulated_variance,dim_A,binary))return 1;
+  if (!autocorrelation){
+    if (read_double(fp,B_accumulated_average ,dim_B,binary))return 1;
+    if (read_double(fp,B_accumulated_variance,dim_B,binary))return 1;
   }
-  if (read_uint(fp,&(self->n_data),1,binary))return 1;
-  if (read_uint(fp,&(self->t     ),1,binary))return 1;
-  if (read_double(fp,&(self->last_update),1,binary))return 1;
+  if (read_uint(fp,&(n_data),1,binary))return 1;
+  if (read_uint(fp,&(t     ),1,binary))return 1;
+  if (read_double(fp,&(last_update),1,binary))return 1;
   fclose(fp);
   return 0;
 }
 
 
-int double_correlation_finalize( double_correlation* self ) {
+int DoubleCorrelation::finalize() {
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
@@ -635,21 +626,21 @@ int double_correlation_finalize( double_correlation* self ) {
   unsigned int index_new, index_old, index_res;
   int error;
   //int compress;
-  unsigned tau_lin=self->tau_lin;
-  int hierarchy_depth=self->hierarchy_depth;
+  unsigned tau_lin=tau_lin;
+  int hierarchy_depth=hierarchy_depth;
 
-  double* temp = (double*)Utils::malloc(self->dim_corr*sizeof(double));
+  double* temp = (double*)Utils::malloc(dim_corr*sizeof(double));
 
   // make a flag that the correlation is finalized
-  self->finalized=1;
+  finalized=1;
 
   if (!temp)
     return 4;
   //printf ("tau_lin:%d, hierarchy_depth: %d\n",tau_lin,hierarchy_depth); 
-  //for(ll=0;ll<hierarchy_depth;ll++) printf("n_vals[l=%d]=%d\n",ll, self->n_vals[ll]);
+  //for(ll=0;ll<hierarchy_depth;ll++) printf("n_vals[l=%d]=%d\n",ll, n_vals[ll]);
   for(ll=0;ll<hierarchy_depth-1;ll++) {
-    if (self->n_vals[ll] > tau_lin+1 ) vals_ll = tau_lin + self->n_vals[ll]%2;
-    else vals_ll=self->n_vals[ll];
+    if (n_vals[ll] > tau_lin+1 ) vals_ll = tau_lin + n_vals[ll]%2;
+    else vals_ll=n_vals[ll];
     //printf("\nfinalizing level %d with %d vals initially\n",ll,vals_ll);
     
     while (vals_ll) {
@@ -667,9 +658,9 @@ int double_correlation_finalize( double_correlation* self ) {
       j=1; 
       // Lets find out how far we have to go back in the hierarchy to make space for the new value 
       while (highest_level_to_compress>-1) { 
-        //printf("test level %d for compression, n_vals=%d ... ",i,self->n_vals[i]);
-        if ( self->n_vals[i]%2 ) { 
-	  if ( i < (hierarchy_depth-1) && self->n_vals[i]> tau_lin) { 
+        //printf("test level %d for compression, n_vals=%d ... ",i,n_vals[i]);
+        if ( n_vals[i]%2 ) { 
+	  if ( i < (hierarchy_depth-1) && n_vals[i]> tau_lin) { 
             //printf("YES\n");
   	    highest_level_to_compress+=1; 
   	    i++; 
@@ -690,30 +681,30 @@ int double_correlation_finalize( double_correlation* self ) {
     
       for ( i = highest_level_to_compress; i >=ll; i-- ) { 
         // We increase the index indicating the newest on level i+1 by one (plus folding) 
-        self->newest[i+1] = (self->newest[i+1] + 1) % (tau_lin+1); 
-        self->n_vals[i+1]+=1; 
-        //printf("compressing level %d no %d and %d to level %d no %d, nv %d\n",i, (self->newest[i]+1) % (tau_lin+1), (self->newest[i]+2) % (tau_lin+1), i+1, self->newest[i+1], self->n_vals[i]); 
-        (*self->compressA)(self->A[i][(self->newest[i]+1) % (tau_lin+1)],  
-	                   self->A[i][(self->newest[i]+2) % (tau_lin+1)], 
-                           self->A[i+1][self->newest[i+1]],self->dim_A);
-        (*self->compressB)(self->B[i][(self->newest[i]+1) % (tau_lin+1)],  
-                           self->B[i][(self->newest[i]+2) % (tau_lin+1)], 
-                           self->B[i+1][self->newest[i+1]],self->dim_B);
+        newest[i+1] = (newest[i+1] + 1) % (tau_lin+1); 
+        n_vals[i+1]+=1; 
+        //printf("compressing level %d no %d and %d to level %d no %d, nv %d\n",i, (newest[i]+1) % (tau_lin+1), (newest[i]+2) % (tau_lin+1), i+1, newest[i+1], n_vals[i]); 
+        (*compressA)(A[i][(newest[i]+1) % (tau_lin+1)],  
+	                   A[i][(newest[i]+2) % (tau_lin+1)], 
+                           A[i+1][newest[i+1]],dim_A);
+        (*compressB)(B[i][(newest[i]+1) % (tau_lin+1)],  
+                           B[i][(newest[i]+2) % (tau_lin+1)], 
+                           B[i+1][newest[i+1]],dim_B);
       } 
-      self->newest[ll] = (self->newest[ll] + 1) % (tau_lin+1); 
+      newest[ll] = (newest[ll] + 1) % (tau_lin+1); 
 
       // We only need to update correlation estimates for the higher levels
       for ( i = ll+1; i < highest_level_to_compress+2; i++) {
-        for ( j = (tau_lin+1)/2+1; j < int(MIN(tau_lin+1, self->n_vals[i])); j++) {
-          index_new = self->newest[i];
-          index_old = (self->newest[i] - j + tau_lin + 1) % (tau_lin + 1);
+        for ( j = (tau_lin+1)/2+1; j < int(MIN(tau_lin+1, n_vals[i])); j++) {
+          index_new = newest[i];
+          index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
           index_res = tau_lin + (i-1)*tau_lin/2 + (j - tau_lin/2+1) -1;
-          error=(self->corr_operation)(self->A[i][index_old], self->dim_A, self->B[i][index_new], self->dim_B, temp, self->dim_corr, self->args);
+          error=(corr_operation)(A[i][index_old], dim_A, B[i][index_new], dim_B, temp, dim_corr, args);
           if ( error != 0)
             return error;
-          self->n_sweeps[index_res]++;
-          for (unsigned k = 0; k < self->dim_corr; k++) {
-            self->result[index_res][k] += temp[k];
+          n_sweeps[index_res]++;
+          for (unsigned k = 0; k < dim_corr; k++) {
+            result[index_res][k] += temp[k];
           }
         }
       }
@@ -859,10 +850,10 @@ int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, doub
 
 
 void autoupdate_correlations() {
-  for (unsigned i=0; i<n_correlations; i++) {
+  for (unsigned i=0; i<correlations.size(); i++) {
     if (correlations[i].autoupdate && sim_time-correlations[i].last_update>correlations[i].dt*0.99999) {
       correlations[i].last_update=sim_time;
-      double_correlation_get_data(&correlations[i]);
+      correlations[i].get_data();
     }
   }
 }

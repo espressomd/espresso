@@ -24,49 +24,48 @@
 #include "pressure.hpp"
 #include "rotation.hpp"
 
-observable** observables = 0;
-int n_observables = 0; 
+std::vector<Observable> observables;
+
 int observables_autoupdate = 0;
 
-void observable_init(observable* self) {
-  self->type = OBSERVABLE;
-  self->last_update = 0;
-  self->autoupdate = 0;
-  self->autoupdate_dt = 0;
-}
+Observable::Observable() {
+  type = OBSERVABLE;
+  last_update = 0;
+  autoupdate = 0;
+  autoupdate_dt = 0;
+};
 
-int observable_calculate(observable* self) {
+int Observable::calculate() {
   int temp = 0;
-  if (self->calculate!=0)
-    temp=(self->calculate)(self);
-  self->last_update = sim_time;
+  temp=actual_calculate();
+  last_update = sim_time;
   return temp;
 }
 
-int observable_update(observable* self) {
+
+int Observable::update() {
   int temp = 0;
-  if (self->update!=0)
-    temp=(self->update)(self);
-  self->last_update = sim_time;
+  temp=actual_update();
+  last_update = sim_time;
   return temp;
 }
 
 //void write_double(FILE * fp, const double * data, unsigned int n, bool binary)
 
-int observable_write(char *filename, observable *self, bool binary) {
+int Observable::write(char *filename, bool binary) {
   FILE *f = fopen(filename, "w");
   if(f) {
     unsigned int un;
     /* For stateless observables only the current value is meaningful. */
-    if(self->type == OBSERVABLE)
-      observable_calculate(self);
-    switch(self->type) {
+    if(type == OBSERVABLE)
+      calculate();
+    switch(type) {
     case AVERAGE:
-      write_uint(f, &((observable_average_container*)self->container)->n_sweeps, 1, binary);
+      write_uint(f, &((observable_average_container*)container)->n_sweeps, 1, binary);
     case OBSERVABLE:
-      un = self->n;
+      un = n;
       write_uint(f, &un, 1, binary);
-      write_double(f, self->last_value, self->n, binary);
+      write_double(f, last_value, n, binary);
       fclose(f);
       break;
     default:
@@ -77,18 +76,18 @@ int observable_write(char *filename, observable *self, bool binary) {
   return ES_ERROR;
 }
 
-int observable_read(char *filename, observable *self, bool binary) {
+int Observable::read(char *filename, bool binary) {
   FILE *f = fopen(filename, "r");
   if(f && !feof(f)) {
     unsigned int un;
-    switch(self->type) {
+    switch(type) {
     case AVERAGE:
-      read_uint(f, &((observable_average_container*)self->container)->n_sweeps, 1, binary);
+      read_uint(f, &((observable_average_container*)container)->n_sweeps, 1, binary);
     case OBSERVABLE:
       read_uint(f, &un, 1, binary);
-      if(self->n != (int)(un))
+      if(n != (int)(un))
 	return ES_ERROR;
-      read_double(f, (double *)self->last_value, self->n, binary);
+      read_double(f, (double *)last_value, n, binary);
       fclose(f);
       return ES_OK;
       break;
@@ -100,8 +99,8 @@ int observable_read(char *filename, observable *self, bool binary) {
   return ES_ERROR;
 }
 
-int observable_calc_particle_velocities(observable* self) {
-  double* A = self->last_value;
+int ObservableParticleVelocities::actual_calculate() {
+  double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -109,7 +108,7 @@ int observable_calc_particle_velocities(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
@@ -120,8 +119,8 @@ int observable_calc_particle_velocities(observable* self) {
   return 0;
 }
 
-int observable_calc_particle_body_velocities(observable* self) {
-  double* A = self->last_value;
+int ObservableParticleBodyVelocities::actual_calculate() {
+  double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -129,10 +128,11 @@ int observable_calc_particle_body_velocities(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
+
 
 #ifdef ROTATION
 
@@ -165,8 +165,9 @@ int observable_calc_particle_body_velocities(observable* self) {
   return 0;
 }
 
-int observable_calc_particle_angular_momentum(observable* self) {
-  double* A = self->last_value;
+
+int ObservableParticleAngularMomentum::actual_calculate() {
+  double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -174,7 +175,7 @@ int observable_calc_particle_angular_momentum(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for ( int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
@@ -204,8 +205,8 @@ int observable_calc_particle_angular_momentum(observable* self) {
   return 0;
 }
 
-int observable_calc_particle_body_angular_momentum(observable* self) {
-  double* A = self->last_value;
+int ObservableParticleBodyAngularMomentum::actual_calculate() {
+  double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -213,7 +214,7 @@ int observable_calc_particle_body_angular_momentum(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for ( int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
@@ -237,8 +238,8 @@ int observable_calc_particle_body_angular_momentum(observable* self) {
 }
 
 #ifdef ELECTROSTATICS
-int observable_calc_particle_currents(observable* self) {
-  double* A = self->last_value;
+int ObservableParticleCurrents::actual_calculate() {
+  double* A = last_value;
   double charge;
   IntList* ids;
   if (!sortPartCfg()) {
@@ -247,7 +248,7 @@ int observable_calc_particle_currents(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
@@ -259,8 +260,8 @@ int observable_calc_particle_currents(observable* self) {
   return 0;
 }
 
-int observable_calc_currents(observable* self) {
-  double* A = self->last_value;
+int ObservableCurrents::actual_calculate() {
+  double* A = last_value;
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
@@ -270,7 +271,7 @@ int observable_calc_currents(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] > n_part)
       return 1;
@@ -285,8 +286,8 @@ int observable_calc_currents(observable* self) {
   return 0;
 }
 
-int observable_calc_dipole_moment(observable* self) {
-  double* A = self->last_value;
+int ObservableDipoleMoment::actual_calculate() {
+  double* A = last_value;
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
@@ -296,7 +297,7 @@ int observable_calc_dipole_moment(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] > n_part)
       return 1;
@@ -313,8 +314,8 @@ int observable_calc_dipole_moment(observable* self) {
 #endif
 
 #ifdef DIPOLES
-int observable_calc_com_dipole_moment(observable* self) {
-  double* A = self->last_value;
+int ObservableComDipoleMoment::actual_calculate() {
+  double* A = last_value;
   double d[3] = {0. , 0., 0. } ;
   IntList* ids;
   if (!sortPartCfg()) {
@@ -323,7 +324,7 @@ int observable_calc_com_dipole_moment(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] > n_part)
       return 1;
@@ -338,8 +339,8 @@ int observable_calc_com_dipole_moment(observable* self) {
 }
 #endif
 
-int observable_calc_com_velocity(observable* self) {
-  double* A = self->last_value;
+int ObservableComVelocity::actual_calculate() {
+  double* A = last_value;
   double v_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
@@ -349,7 +350,7 @@ int observable_calc_com_velocity(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
@@ -364,8 +365,8 @@ int observable_calc_com_velocity(observable* self) {
   return 0;
 }
 
-int observable_calc_blocked_com_velocity(observable* self) {
-  double* A = self->last_value;
+int ObservableBlockedComVelocity::actual_calculate() {
+  double* A = last_value;
   unsigned int i;
   unsigned int block;
   unsigned int n_blocks;
@@ -379,8 +380,8 @@ int observable_calc_blocked_com_velocity(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
-  n_blocks=self->n/3; 
+  ids=(IntList*) container;
+  n_blocks=n/3; 
   blocksize=ids->n/n_blocks;
   for ( block = 0; block < n_blocks; block++ ) {
     total_mass = 0;
@@ -400,8 +401,8 @@ int observable_calc_blocked_com_velocity(observable* self) {
   return 0;
 }
 
-int observable_calc_blocked_com_position(observable* self) {
-  double* A = self->last_value;
+int ObservableBlockedComPosition::actual_calculate() {
+  double* A = last_value;
   unsigned int i;
   unsigned int block;
   unsigned int n_blocks;
@@ -415,8 +416,8 @@ int observable_calc_blocked_com_position(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
-  n_blocks=self->n/3; 
+  ids=(IntList*) container;
+  n_blocks=n/3; 
   blocksize=ids->n/n_blocks;
   for ( block = 0; block < n_blocks; block++ ) {
     total_mass = 0;
@@ -436,8 +437,8 @@ int observable_calc_blocked_com_position(observable* self) {
   return 0;
 }
 
-int observable_calc_com_position(observable* self) {
-  double* A = self->last_value;
+int ObservableComPosition::actual_calculate() {
+  double* A = last_value;
   double p_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
@@ -447,7 +448,7 @@ int observable_calc_com_position(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
@@ -463,8 +464,8 @@ int observable_calc_com_position(observable* self) {
 }
 
 
-int observable_calc_com_force(observable* self) {
-  double* A = self->last_value;
+int ObservableComForce::actual_calculate() {
+  double* A = last_value;
   double f_com[3] = { 0. , 0., 0. } ;
   IntList* ids;
   if (!sortPartCfg()) {
@@ -473,7 +474,7 @@ int observable_calc_com_force(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
@@ -488,8 +489,8 @@ int observable_calc_com_force(observable* self) {
 }
 
 
-int observable_calc_blocked_com_force(observable* self) {
-  double* A = self->last_value;
+int ObservableBlockedComForce::actual_calculate() {
+  double* A = last_value;
   unsigned int i;
   unsigned int block;
   unsigned int n_blocks;
@@ -502,8 +503,8 @@ int observable_calc_blocked_com_force(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
-  n_blocks=self->n/3; 
+  ids=(IntList*) container;
+  n_blocks=n/3; 
   blocksize=ids->n/n_blocks;
   for ( block = 0; block < n_blocks; block++ ) {
     for ( i = 0; i < blocksize; i++ ) {
@@ -519,8 +520,8 @@ int observable_calc_blocked_com_force(observable* self) {
 }
 
 
-int observable_calc_density_profile(observable* self) {
-  double* A = self->last_value;
+int ObservableDensityProfile::actual_calculate() {
+  double* A = last_value;
   int binx, biny, binz;
   double ppos[3];
   int img[3];
@@ -533,11 +534,11 @@ int observable_calc_density_profile(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  pdata=(profile_data*) self->container;
+  pdata=(profile_data*) container;
   ids=pdata->id_list;
   double bin_volume=(pdata->maxx-pdata->minx)*(pdata->maxy-pdata->miny)*(pdata->maxz-pdata->minz)/pdata->xbins/pdata->ybins/pdata->zbins;
     
-  for ( int i = 0; i<self->n; i++ ) {
+  for ( int i = 0; i<n; i++ ) {
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
@@ -557,8 +558,8 @@ int observable_calc_density_profile(observable* self) {
   return 0;
 }
 
-int observable_calc_force_density_profile(observable* self) {
-  double* A = self->last_value;
+int ObservableForceDensityProfile::actual_calculate() {
+  double* A = last_value;
   int binx, biny, binz;
   double ppos[3];
   int img[3];
@@ -571,11 +572,11 @@ int observable_calc_force_density_profile(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  pdata=(profile_data*) self->container;
+  pdata=(profile_data*) container;
   ids=pdata->id_list;
   double bin_volume=(pdata->maxx-pdata->minx)*(pdata->maxy-pdata->miny)*(pdata->maxz-pdata->minz)/pdata->xbins/pdata->ybins/pdata->zbins;
     
-  for ( int i = 0; i<self->n; i++ ) {
+  for ( int i = 0; i<n; i++ ) {
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
@@ -597,17 +598,17 @@ int observable_calc_force_density_profile(observable* self) {
 }
 
 #ifdef LB
-int observable_calc_lb_velocity_profile(observable* self) {
-  double* A= self->last_value;
-  void* pdata_ = self->container;
-  unsigned int n_A = self->n;
+int ObservableLbVelocityProfile::actual_calculate() {
+  double* A= last_value;
+  void* pdata_ = container;
+  unsigned int n_A = n;
   unsigned int maxi, maxj, maxk;
   double xoffset, yoffset, zoffset;
   double x_incr, y_incr, z_incr;
   double p[3], v[3];
   int linear_index;
   profile_data* pdata;
-  pdata=(profile_data*) self->container;
+  pdata=(profile_data*) container;
 
 
 #ifdef LB_GPU
@@ -615,7 +616,7 @@ int observable_calc_lb_velocity_profile(observable* self) {
     return statistics_observable_lbgpu_velocity_profile((profile_data*) pdata_, A, n_A);
 #endif
   if (lattice_switch & LATTICE_LB) {
-    for ( int i = 0; i<self->n; i++ ) {
+    for ( int i = 0; i<n; i++ ) {
       A[i]=0;
     }
     double normalization_factor = 1.;
@@ -673,7 +674,7 @@ int observable_calc_lb_velocity_profile(observable* self) {
       }
     }
   
-    for ( int i = 0; i<self->n; i++ ) {
+    for ( int i = 0; i<n; i++ ) {
       A[i]*=normalization_factor;
     }
 
@@ -684,10 +685,10 @@ int observable_calc_lb_velocity_profile(observable* self) {
 #endif
 
 #ifdef LB
-int observable_calc_lb_radial_velocity_profile(observable* self) {
-  double* A = self->last_value;
-  void* pdata = self->container;
-  unsigned int n_A = self->n;
+int ObservableLbRadialVelocityProfile::actual_calculate() {
+  double* A = last_value;
+  void* pdata = container;
+  unsigned int n_A = n;
 
 #ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU)
@@ -711,7 +712,7 @@ int observable_calc_lb_radial_velocity_profile(observable* self) {
   }
 }
 
-void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
+void observable_lb_radial_velocity_profile_slave_implementation() {
   radial_profile_data pdata;
   MPI_Bcast(&pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
   unsigned int n_A=3*pdata.rbins*pdata.phibins*pdata.zbins;
@@ -821,8 +822,8 @@ void transform_to_cylinder_coordinates(double x, double y, double z_, double* r,
   *phi = atan2(y,x);
 }
 
-int observable_calc_radial_density_profile(observable* self) {
-  double* A = self->last_value;
+int ObservableRadialDensityProfile::actual_calculate() {
+  double* A = last_value;
   int binr, binphi, binz;
   double ppos[3];
   double r, phi, z;
@@ -837,13 +838,13 @@ int observable_calc_radial_density_profile(observable* self) {
     return -1;
   }
   radial_profile_data* pdata;
-  pdata=(radial_profile_data*) self->container;
+  pdata=(radial_profile_data*) container;
   ids=pdata->id_list;
   double rbinsize=(pdata->maxr - pdata->minr)/pdata->rbins;
   double phibinsize=(pdata->maxphi - pdata->minphi)/pdata->phibins;
   double zbinsize=(pdata->maxz - pdata->minz)/pdata->zbins;
     
-  for (int i = 0; i< self->n; i++ ) {
+  for (int i = 0; i< n; i++ ) {
     A[i]=0;
   }
   for (int i = 0; i<ids->n; i++ ) {
@@ -867,8 +868,8 @@ int observable_calc_radial_density_profile(observable* self) {
   return 0;
 }
 
-int observable_calc_radial_flux_density_profile(observable* self) {
-  double* A = self->last_value;
+int ObservableRadialFluxDensityProfile::actual_calculate() {
+  double* A = last_value;
   int binr, binphi, binz;
   double ppos[3];
   double unfolded_ppos[3];
@@ -884,7 +885,7 @@ int observable_calc_radial_flux_density_profile(observable* self) {
     return -1;
   }
   radial_profile_data* pdata;
-  pdata=(radial_profile_data*) self->container;
+  pdata=(radial_profile_data*) container;
   ids=pdata->id_list;
   double rbinsize=(pdata->maxr - pdata->minr)/pdata->rbins;
   double phibinsize=(pdata->maxphi - pdata->minphi)/pdata->phibins;
@@ -892,11 +893,11 @@ int observable_calc_radial_flux_density_profile(observable* self) {
   double v[3];
   double v_r, v_phi, v_z;
 
-  if (self->last_update==sim_time) {
+  if (last_update==sim_time) {
     return ES_ERROR;
   }
     
-  for (int i = 0; i< self->n; i++ ) {
+  for (int i = 0; i< n; i++ ) {
     A[i]=0;
   }
   double* old_positions=(double*) pdata->container;
@@ -927,11 +928,11 @@ int observable_calc_radial_flux_density_profile(observable* self) {
     // The position of the particle is by definition the middle of old and new position
     ppos[0]+=0.5*v[0]; ppos[1]+=0.5*v[1]; ppos[2]+=0.5*v[2];
     fold_position(ppos, img);
-    v[0]/=(sim_time - self->last_update);
-    v[1]/=(sim_time - self->last_update);
-    v[2]/=(sim_time - self->last_update);
+    v[0]/=(sim_time - last_update);
+    v[1]/=(sim_time - last_update);
+    v[2]/=(sim_time - last_update);
     if (i==0) {
-//      printf("(%3.4f) %f %f %f\n", sim_time-self->last_update, v[2], partCfg[ids->e[i]].m.v[2]/time_step,v[2]* partCfg[ids->e[i]].m.v[2]/time_step/time_step);
+//      printf("(%3.4f) %f %f %f\n", sim_time-last_update, v[2], partCfg[ids->e[i]].m.v[2]/time_step,v[2]* partCfg[ids->e[i]].m.v[2]/time_step/time_step);
 //      printf("(%3.3f) %f %f", sim_time, old_positions[3*i+2], unfolded_ppos[2]);
     }
     old_positions[3*i+0]=unfolded_ppos[0];
@@ -955,8 +956,8 @@ int observable_calc_radial_flux_density_profile(observable* self) {
   return 0;
 }
 
-int observable_calc_flux_density_profile(observable* self) {
-  double* A = self->last_value;
+int ObservableFluxDensityProfile::actual_calculate() {
+  double* A = last_value;
   int binx, biny, binz;
   double ppos[3];
   double x, y, z;
@@ -971,7 +972,7 @@ int observable_calc_flux_density_profile(observable* self) {
     return -1;
   }
   profile_data* pdata;
-  pdata=(profile_data*) self->container;
+  pdata=(profile_data*) container;
   ids=pdata->id_list;
   double xbinsize=(pdata->maxx - pdata->minx)/pdata->xbins;
   double ybinsize=(pdata->maxy - pdata->miny)/pdata->ybins;
@@ -979,7 +980,7 @@ int observable_calc_flux_density_profile(observable* self) {
   double v[3];
   double v_x, v_y, v_z;
     
-  for (int i = 0; i< self->n; i++ ) {
+  for (int i = 0; i< n; i++ ) {
     A[i]=0;
   }
 
@@ -1017,8 +1018,8 @@ int observable_calc_flux_density_profile(observable* self) {
   return 0;
 }
 
-int observable_calc_particle_positions(observable* self) {
-  double* A = self->last_value;
+int ObservableParticlePositions::actual_calculate() {
+  double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -1026,7 +1027,7 @@ int observable_calc_particle_positions(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
@@ -1037,8 +1038,8 @@ int observable_calc_particle_positions(observable* self) {
   return 0;
 }
 
-int observable_calc_particle_forces(observable* self) {
-  double* A = self->last_value;
+int ObservableParticleForces::actual_calculate() {
+  double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -1046,7 +1047,7 @@ int observable_calc_particle_forces(observable* self) {
       runtimeError(msg);
     return -1;
   }
-  ids=(IntList*) self->container;
+  ids=(IntList*) container;
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
@@ -1058,20 +1059,20 @@ int observable_calc_particle_forces(observable* self) {
 }
 
 
-int observable_stress_tensor(observable* self) {
+int ObservableStressTensor::actual_calculate() {
   if (!sortPartCfg()) {
       ostringstream msg;
       msg <<"could not sort partCfg";
       runtimeError(msg);
     return -1;
   }
-  observable_compute_stress_tensor(1,self->last_value,self->n);
+  observable_compute_stress_tensor(1,last_value,n);
   return 0;
 }
 
 
-int observable_calc_stress_tensor_acf_obs(observable* self) {
-  double* A = self->last_value;
+int ObservableStressTensorAcfObs::actual_calculate() {
+  double* A = last_value;
   double stress_tensor[9];
   if (!sortPartCfg()) {
       ostringstream msg;
@@ -1089,39 +1090,39 @@ int observable_calc_stress_tensor_acf_obs(observable* self) {
   return 0;
 }
 
-int observable_update_average(observable* self) {
-    observable_average_container* data = (observable_average_container*) self->container;
+int ObservableAverage::actual_update() {
+    observable_average_container* data = (observable_average_container*) container;
     data->n_sweeps++;
-    int error = observable_calculate(data->reference_observable);
+    int error = data->reference_observable->calculate();
     if ( error != 0)
       return 1;
     double factor = 1 / (double) data->n_sweeps;
-    for (int i =0; i<self->n; i++) {
-      self->last_value[i] = (1-factor)*self->last_value[i] + factor*data->reference_observable->last_value[i];
+    for (int i =0; i<n; i++) {
+      last_value[i] = (1-factor)*last_value[i] + factor*data->reference_observable->last_value[i];
     }
     return 0;
 }
 
-int observable_reset_average(observable* self) {
-    observable_average_container* data = (observable_average_container*) self->container;
+int ObservableAverage::reset() {
+    observable_average_container* data = (observable_average_container*) container;
     data->n_sweeps=0;
-    int error = observable_calculate(data->reference_observable);
-    for (int i =0; i<self->n; i++) {
-      self->last_value[i] = 0;
+    int error = data->reference_observable->calculate();
+    for (int i =0; i<n; i++) {
+      last_value[i] = 0;
     }
     return error;
 }
 
 
-int observable_calc_structure_factor(observable* self) {
-  double* A = self->last_value;
+int ObservableStructureFactor::actual_calculate() {
+  double* A = last_value;
   // FIXME Currently scattering length is hardcoded as 1.0
   int l;
   int order, order2, n;
   double twoPI_L, C_sum, S_sum, qr; 
   //  DoubleList *scattering_length;
   observable_sf_params * params;
-  params = (observable_sf_params*) self->container;
+  params = (observable_sf_params*) container;
   //  scattering_length = params->scattering_length;
   const double scattering_length=1.0;
   order = params->order;
@@ -1143,7 +1144,7 @@ int observable_calc_structure_factor(observable* self) {
       partCache[3*p+i]=partCfg[p].r.p[i];
     }
   }
-  //printf("self->n: %d, dim_sf: %d\n",n_A, params.dim_sf); fflush(stdout);
+  //printf("n: %d, dim_sf: %d\n",n_A, params.dim_sf); fflush(stdout);
   for(int i=-order; i<=order; i++) {
     for(int j=-order; j<=order; j++) {
       for(int k=-order; k<=order; k++) {
@@ -1165,7 +1166,7 @@ int observable_calc_structure_factor(observable* self) {
     }
   }
   l = 0;
-  for(int k=0;k<self->n;k++) {
+  for(int k=0;k<n;k++) {
     //devide by the sqrt(number_of_particle) due to complex product and no k-vector averaging so far
     A[k] /= sqrt(n_part);
   }
@@ -1174,11 +1175,11 @@ int observable_calc_structure_factor(observable* self) {
 }
 
 
-int observable_calc_structure_factor_fast(observable* self) {
+int ObservableStructureFactorFast::actual_calculate() {
   //printf("calculating\n");
-  double* A = self->last_value;
+  double* A = last_value;
   // FIXME Currently scattering length is hardcoded as 1.0
-  observable_sf_params * params = (observable_sf_params*) self->container;
+  observable_sf_params * params = (observable_sf_params*) container;
   const int k_max = params->order * params->k_density;
   const double scattering_length=1.0;
   const double twoPI_L = 2*PI/box_l[0];
@@ -1190,7 +1191,7 @@ int observable_calc_structure_factor_fast(observable* self) {
     return -1;
   }
   
-  for(int p=0; p<self->n; p++) {
+  for(int p=0; p<n; p++) {
     A[p]   = 0.0;
   }
   
@@ -1314,16 +1315,16 @@ int observable_calc_structure_factor_fast(observable* self) {
       return -1;
     }
   }
-  for(int l=0;l<self->n;l++) {
+  for(int l=0;l<n;l++) {
     //devide by the sqrt of number_of_particle, average later
     A[l] /= sqrt(n_part);
   }
   return 0;
 }
 
-int observable_calc_interacts_with (observable* self) {
-  double* A = self->last_value;
-  iw_params *params=(iw_params*) self->container;
+int ObservableInteractsWith::actual_calculate() {
+  double* A = last_value;
+  iw_params *params=(iw_params*) container;
   IntList* ids1;
   IntList* ids2;
   int i,j;
@@ -1366,12 +1367,12 @@ int observable_calc_interacts_with (observable* self) {
   return 0;
 }
 
-int observable_calc_rdf(observable* self){
+int ObservableRdf::actual_calculate() {
   if (!sortPartCfg()) {
     return 1;
   }
-  double * last = self->last_value;
-  rdf_profile_data * rdf_data = (rdf_profile_data *) self->container;
+  double * last = last_value;
+  rdf_profile_data * rdf_data = (rdf_profile_data *) container;
   calc_rdf(rdf_data->p1_types, rdf_data->n_p1,
 	   rdf_data->p2_types, rdf_data->n_p2,
 	   rdf_data->r_min,    rdf_data->r_max,
@@ -1380,7 +1381,7 @@ int observable_calc_rdf(observable* self){
 }
 
 
-int observable_radial_density_distribution(observable* self){
+int ObservableRadialDensityDistribution::actual_calculate() {
   if (!sortPartCfg()) {
     ostringstream errtxt; // = runtime_error(128);
     errtxt << "{094 could not sort partCfg} ";
@@ -1388,7 +1389,7 @@ int observable_radial_density_distribution(observable* self){
     return -1;
   }
 
-  radial_density_data *r_data = (radial_density_data *) self->container;
+  radial_density_data *r_data = (radial_density_data *) container;
   IntList *ids;  
   if ( GC_init && Type_array_init ) {
 	  ids = (IntList *) Utils::malloc(sizeof(IntList));
@@ -1404,8 +1405,8 @@ int observable_radial_density_distribution(observable* self){
   //r_data->id_list = ids;
   //ids = r_data->id_list;
 
-  double* A = self->last_value;
-  int n_A   = self->n;
+  double* A = last_value;
+  int n_A   = n;
   double start_point[3];
   double end_point[3];
   int image_box[3];
@@ -1530,20 +1531,20 @@ int observable_radial_density_distribution(observable* self){
   return 0;
 }
 
-int observable_spatial_polymer_properties(observable* self){
+int ObbservableSpatialPolymerProperties::actual_calculate() {
     if (!sortPartCfg()) {
       ostringstream errtxt ; //= runtime_error(128);
 	  errtxt << "{094 could not sort partCfg}";
 	  runtimeError(errtxt);
       return -1;
     }
-	double* A = self->last_value;
-	int poly_len = self->n;
+	double* A = last_value;
+	int poly_len = n;
 	for (int i = 0; i<poly_len; i++ )
 		A[i]=0.0;
 
 #ifdef ELECTROSTATICS
-	spatial_polym_data *p_data = (spatial_polym_data *) self->container;
+	spatial_polym_data *p_data = (spatial_polym_data *) container;
 	IntList *ids=p_data->id_list;
 	for (int i = 0; i<ids->n; i++){
 		A[i%poly_len] += partCfg[ids->e[i]].p.q/( (double) p_data->npoly);
@@ -1552,15 +1553,15 @@ int observable_spatial_polymer_properties(observable* self){
 	return 0;
 }
 
-int observable_persistence_length(observable* self){
+int ObservablePersistenceLength::actual_calculate() {
     if (!sortPartCfg()) {
       ostringstream errtxt; // = runtimeError(128);
       errtxt << "{094 could not sort partCfg}";
 	  runtimeError(errtxt);
       return -1;
     }
-	double* A = self->last_value;
-	spatial_polym_data *p_data = (spatial_polym_data *) self->container;
+	double* A = last_value;
+	spatial_polym_data *p_data = (spatial_polym_data *) container;
 	IntList *ids=p_data->id_list;
 
 	double v1[3];
@@ -1568,7 +1569,7 @@ int observable_persistence_length(observable* self){
 	double abs1, abs2;
 	int num_parts = ids->n;
 	int cut_off = p_data->cut_off;
-	int n_A = self->n;
+	int n_A = n;
 
 	for (int i = 0; i<n_A; i++ )
 		A[i]=0.0;
@@ -1588,18 +1589,18 @@ int observable_persistence_length(observable* self){
 
 	
 
-int observable_polymer_k_distribution(observable *self){
+int ObservablePolymerKDistribution::actual_calculate() {
 	if (!sortPartCfg()) {
 		ostringstream errtxt;
 		errtxt << "{094 could not sort partCfg}";
 		runtimeError(errtxt);
 		return -1;
 	}
-	double* A = self->last_value;
-	for (int i = 0; i < self->n; i++) {
+	double* A = last_value;
+	for (int i = 0; i < n; i++) {
 		A[i] = 0.0;
 	}
-	k_dist_data *data = (k_dist_data *) self->container;
+	k_dist_data *data = (k_dist_data *) container;
 	IntList *ids = data->id_list;
 	int npoly = data->npoly;
 	int poly_len = data-> poly_len;
@@ -1626,11 +1627,9 @@ int observable_polymer_k_distribution(observable *self){
 
 void autoupdate_observables() {
   int i;
-  for (i=0; i<n_observables; i++) {
-//    printf("checking observable %d autoupdate is %d \n", i, observables[i]->autoupdate);
-    if (observables[i]->autoupdate && sim_time-observables[i]->last_update>observables[i]->autoupdate_dt*0.99999) {
-//      printf("updating %d\n", i);
-      observable_update(observables[i]);
+  for (auto o=observables.begin(); o<observables.end(); o++) {
+    if (o->autoupdate && sim_time-o->last_update>o->autoupdate_dt*0.99999) {
+      o->update();
     }
   }
 }
