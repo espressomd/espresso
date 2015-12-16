@@ -116,7 +116,8 @@ static int tclcommand_analyze_parse_reference_point(Tcl_Interp *interp, int *arg
 
 void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type, int bins, double given_max) {
     int i, j, p_count, dist_count, ind;
-    double min, max, bin_width, inv_bin_width, com[3], vel;
+    std::vector<double> com_vel (3);
+    double min, max, bin_width, inv_bin_width, vel;
     long distribution[bins];
     char buffer[2 * TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 256];
 
@@ -127,13 +128,13 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type, int bins, 
         distribution[i] = 0;
     }
 
-    centermass_vel(type, com);
+    com_vel = centerofmass_vel(type);
 
     for (i = 0; i < n_part; i++) {
         if (partCfg[i].p.type == type) {
             p_count++;
             for (j = 0; j < 3; j++) {
-                vel = partCfg[i].m.v[j] - com[j];
+                vel = partCfg[i].m.v[j] - com_vel[j];
                 if (min > vel) {
                     min = vel;
                 }
@@ -160,7 +161,7 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type, int bins, 
     for (i = 0; i < n_part; i++) {
         if (partCfg[i].p.type == type) {
             for (j = 0; j < 3; j++) {
-                vel = partCfg[i].m.v[j] - com[j];
+                vel = partCfg[i].m.v[j] - com_vel[j];
                 ind = (int) ((vel - min) * inv_bin_width);
                 distribution[ind]++;
                 dist_count++;
@@ -1078,7 +1079,7 @@ static int tclcommand_analyze_parse_mindist(Tcl_Interp *interp, int argc, char *
 
 static int tclcommand_analyze_parse_centermass(Tcl_Interp *interp, int argc, char **argv) {
     /* 'analyze centermass [<type>]' */
-    double com[3];
+    std::vector<double> com(3);
     char buffer[3 * TCL_DOUBLE_SPACE + 3];
     int p1;
 
@@ -1094,7 +1095,7 @@ static int tclcommand_analyze_parse_centermass(Tcl_Interp *interp, int argc, cha
         return (TCL_ERROR);
     }
 
-    centermass(p1, com);
+    com = centerofmass(p1);
 
     sprintf(buffer, "%f %f %f", com[0], com[1], com[2]);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
