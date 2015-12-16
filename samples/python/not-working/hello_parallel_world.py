@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
 from __future__ import print_function
-import ctypes
-import sys
-sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
 
 import espresso as es
 import numpy
