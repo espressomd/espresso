@@ -120,6 +120,10 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 # try to find best __FUNCTION__ variant
 AX_CXX_VAR_PRETTYFUNC()
 
+# check for c++11 support
+AX_CXX_COMPILE_STDCXX_11(noext,optional)
+
+
 # set the optimization flags
 # never overwrite users CXXFLAGS
 if test "${CXXFLAGS+set}" != set; then
@@ -395,17 +399,7 @@ AS_IF([test x$with_cuda != xno],[
     LDFLAGS=$save_noncuda_LDFLAGS
     LIBS=$save_noncuda_LIBS
     
-    AS_IF([test x$cuda_ok == xyes], [
-        # NVCC doesn't work with llvm's libc++ so we need to also
-        # compile the rest with libstdc++, if nvcc-compiled code is
-        # used
-        AC_MSG_CHECKING([whether the compiler accepts -stdlib=libstdc++])
-        saved_CXXFLAGS=$CXXFLAGS
-        CXXFLAGS="-stdlib=libstdc++ $CXXFLAGS"
-        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[ AC_MSG_RESULT(yes) ],[
-                AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS
-        ])
-        
+    AS_IF([test x$cuda_ok == xyes], [       
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
         # reset standard compiler options
@@ -416,6 +410,13 @@ AS_IF([test x$with_cuda != xno],[
 ])
 
 AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
+
+## Check for Boost
+##################
+
+AX_BOOST_BASE([1.48],, [AC_MSG_WARN([boost was not found on you system, parts of the test system will not be available.])])
+AX_BOOST_UNIT_TEST_FRAMEWORK
+AM_CONDITIONAL([UNIT_TESTS], [test x$ax_cv_boost_unit_test_framework == xyes])
 
 ## Checking for MAGMA
 ##################################
@@ -535,6 +536,7 @@ AS_IF([test .$with_python_interface != .no], [
 	AX_PYTHON_DEVEL([>= '2.5'])
 
         AC_ARG_VAR(CYTHON,[Specify the cython tool to use])
+        AC_ARG_VAR(CYFLAGS,[Specify cython flags])
    	AC_PATH_PROG(CYTHON,cython,no)
    	AS_IF([test .$CYTHON = .no],
                     [build_python_interface=no],
@@ -569,8 +571,6 @@ AC_MSG_RESULT($with_tcl)
 dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
 dnl with_tcl=no   bail out
 dnl otherwise     use the specified version
-
-AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
 
 if test .$with_tcl = .no; then
    use_tcl=none
@@ -697,17 +697,22 @@ cat <<EOF
 ****************************************************************
 EOF
 AC_MSG_CHECKING([whether to build with h5md support])
-AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport]),
-    , [with_h5md=yes])
+AC_ARG_WITH(h5md, AS_HELP_STRING([--with-h5md],[wether to build with h5mdsupport]), , [with_h5md=no])
 AC_MSG_RESULT($with_h5md)
 if test .$with_h5md = .yes; then
-  ES_ADDPATH_CHECK_LIB(hdf5,H5open,,AC_MSG_FAILURE([could not link against the hdf5 library]),)
+  ES_ADDPATH_CHECK_LIB(hdf5,H5open,[hdf5_found=yes],[hdf5_found=no])
 
   ES_ADDPATH_CHECK_HEADER(hdf5.h, [], 
 		[AC_MSG_ERROR([hdf5 headers not found. Please add the include path to
                        CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/hdf5).])
 		]
 		,$extrapaths)
+AS_IF([test x$hdf5_found = xyes],[
+  AC_DEFINE(H5MD,[],[wether to build with h5mdsupport])]
+  )
+AS_IF([test x$hdf5_found = xno],[
+  AC_MSG_FAILURE([H5MD requested, but hdf5 library was not found!])]
+  )
 fi
 cat <<EOF
 ****************************************************************
@@ -778,6 +783,7 @@ AC_CONFIG_FILES([
 	src/core/Makefile
 	src/tcl/Makefile
 	src/python/espressomd/Makefile
+	src/core/unit_tests/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
@@ -787,9 +793,15 @@ AC_CONFIG_FILES([
 	doc/dg/Makefile
 	doc/doxygen/Makefile
 	doc/tutorials/Makefile
+	doc/tutorials/00-building_espresso/Makefile
 	doc/tutorials/01-lennard_jones/Makefile 
 	doc/tutorials/02-charged_system/Makefile 
 	doc/tutorials/03-object_in_fluid/Makefile 
+        doc/tutorials/04-lattice_boltzmann/Makefile 
+	doc/tutorials/05-raspberry_electrophoresis/Makefile 
+	doc/tutorials/06-active_matter/Makefile 
+	doc/tutorials/07-electrokinetics/Makefile 
+	doc/tutorials/08-visualization/Makefile 
 	doc/latexit.sh
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
@@ -830,10 +842,16 @@ libraries               = $LIBS
 using debug flags       = $enable_debug
 using profiling flags   = $enable_profiling
 
+cython complier         = $CYTHON
+cython preproc flags    = $CYFLAGS
+
+
 Libraries
 ---------
 FFTW                    = $fftw_found
 efence                  = $with_efence
+h5md			= $with_h5md
+boost_test		= $ax_cv_boost_unit_test_framework
 
 EOF
 

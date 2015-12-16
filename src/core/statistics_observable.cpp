@@ -312,6 +312,32 @@ int observable_calc_dipole_moment(observable* self) {
 }
 #endif
 
+#ifdef DIPOLES
+int observable_calc_com_dipole_moment(observable* self) {
+  double* A = self->last_value;
+  double d[3] = {0. , 0., 0. } ;
+  IntList* ids;
+  if (!sortPartCfg()) {
+      ostringstream msg;
+      msg <<"could not sort partCfg";
+      runtimeError(msg);
+    return -1;
+  }
+  ids=(IntList*) self->container;
+  for (int i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] > n_part)
+      return 1;
+    d[0] += partCfg[ids->e[i]].r.dip[0];
+    d[1] += partCfg[ids->e[i]].r.dip[1];
+    d[2] += partCfg[ids->e[i]].r.dip[2];
+  }
+  A[0]=d[0];
+  A[1]=d[1];
+  A[2]=d[2];
+  return 0;
+}
+#endif
+
 int observable_calc_com_velocity(observable* self) {
   double* A = self->last_value;
   double v_com[3] = { 0. , 0., 0. } ;
@@ -327,10 +353,10 @@ int observable_calc_com_velocity(observable* self) {
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
-    v_com[0] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].m.v[0]/time_step;
-    v_com[1] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].m.v[1]/time_step;
-    v_com[2] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].m.v[2]/time_step;
-    total_mass += PMASS(partCfg[ids->e[i]]);
+    v_com[0] += (partCfg[ids->e[i]]).p.mass*partCfg[ids->e[i]].m.v[0]/time_step;
+    v_com[1] += (partCfg[ids->e[i]]).p.mass*partCfg[ids->e[i]].m.v[1]/time_step;
+    v_com[2] += (partCfg[ids->e[i]]).p.mass*partCfg[ids->e[i]].m.v[2]/time_step;
+    total_mass += (partCfg[ids->e[i]]).p.mass;
   }
   A[0]=v_com[0]/total_mass;
   A[1]=v_com[1]/total_mass;
@@ -362,10 +388,10 @@ int observable_calc_blocked_com_velocity(observable* self) {
       id = ids->e[block*blocksize+i];
       if (ids->e[i] >= n_part)
         return 1;
-      A[3*block+0] +=  PMASS(partCfg[id])*partCfg[id].m.v[0]/time_step;
-      A[3*block+1] +=  PMASS(partCfg[id])*partCfg[id].m.v[1]/time_step;
-      A[3*block+2] +=  PMASS(partCfg[id])*partCfg[id].m.v[2]/time_step;
-      total_mass += PMASS(partCfg[ids->e[i]]);
+      A[3*block+0] +=  (partCfg[id]).p.mass*partCfg[id].m.v[0]/time_step;
+      A[3*block+1] +=  (partCfg[id]).p.mass*partCfg[id].m.v[1]/time_step;
+      A[3*block+2] +=  (partCfg[id]).p.mass*partCfg[id].m.v[2]/time_step;
+      total_mass += (partCfg[ids->e[i]]).p.mass;
     }
     A[3*block+0] /=  total_mass;
     A[3*block+1] /=  total_mass;
@@ -398,10 +424,10 @@ int observable_calc_blocked_com_position(observable* self) {
       id = ids->e[block*blocksize+i];
       if (ids->e[i] >= n_part)
         return 1;
-      A[3*block+0] +=  PMASS(partCfg[id])*partCfg[id].r.p[0];
-      A[3*block+1] +=  PMASS(partCfg[id])*partCfg[id].r.p[1];
-      A[3*block+2] +=  PMASS(partCfg[id])*partCfg[id].r.p[2];
-      total_mass += PMASS(partCfg[ids->e[i]]);
+      A[3*block+0] +=  (partCfg[id]).p.mass*partCfg[id].r.p[0];
+      A[3*block+1] +=  (partCfg[id]).p.mass*partCfg[id].r.p[1];
+      A[3*block+2] +=  (partCfg[id]).p.mass*partCfg[id].r.p[2];
+      total_mass += (partCfg[ids->e[i]]).p.mass;
     }
     A[3*block+0] /=  total_mass;
     A[3*block+1] /=  total_mass;
@@ -425,10 +451,10 @@ int observable_calc_com_position(observable* self) {
   for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_part)
       return 1;
-    p_com[0] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].r.p[0];
-    p_com[1] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].r.p[1];
-    p_com[2] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].r.p[2];
-    total_mass += PMASS(partCfg[ids->e[i]]);
+    p_com[0] += (partCfg[ids->e[i]]).p.mass*partCfg[ids->e[i]].r.p[0];
+    p_com[1] += (partCfg[ids->e[i]]).p.mass*partCfg[ids->e[i]].r.p[1];
+    p_com[2] += (partCfg[ids->e[i]]).p.mass*partCfg[ids->e[i]].r.p[2];
+    total_mass += (partCfg[ids->e[i]]).p.mass;
   }
   A[0]=p_com[0]/total_mass;
   A[1]=p_com[1]/total_mass;
@@ -677,7 +703,7 @@ int observable_calc_lb_radial_velocity_profile(observable* self) {
   } else {
     mpi_observable_lb_radial_velocity_profile();
     MPI_Bcast(pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
-    double* data = (double*) malloc(n_A*sizeof(double));
+    double* data = (double*) Utils::malloc(n_A*sizeof(double));
     mpi_observable_lb_radial_velocity_profile_parallel(pdata, data, n_A);
     MPI_Reduce(data, A, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     free(data);
@@ -689,7 +715,7 @@ void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
   radial_profile_data pdata;
   MPI_Bcast(&pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
   unsigned int n_A=3*pdata.rbins*pdata.phibins*pdata.zbins;
-  double* data = (double*) malloc(n_A*sizeof(double));
+  double* data = (double*) Utils::malloc(n_A*sizeof(double));
   mpi_observable_lb_radial_velocity_profile_parallel(&pdata, data, n_A);
   MPI_Reduce(data, 0, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   free(data);
@@ -1365,10 +1391,10 @@ int observable_radial_density_distribution(observable* self){
   radial_density_data *r_data = (radial_density_data *) self->container;
   IntList *ids;  
   if ( GC_init && Type_array_init ) {
-	  ids = (IntList *) malloc(sizeof(IntList));
+	  ids = (IntList *) Utils::malloc(sizeof(IntList));
 
 	  //using the grandcanonical scheme, always update the particle id list
-	  ids->e = (int *) malloc(sizeof(int)*type_array[Index.type[r_data->type]].max_entry);
+	  ids->e = (int *) Utils::malloc(sizeof(int)*type_array[Index.type[r_data->type]].max_entry);
 	  memmove(ids->e, type_array[Index.type[r_data->type]].id_list, type_array[Index.type[r_data->type]].max_entry*sizeof(int));
 	  ids->n = type_array[Index.type[r_data->type]].max_entry;
 	  ids->max = type_array[Index.type[r_data->type]].cur_size;
@@ -1396,7 +1422,7 @@ int observable_radial_density_distribution(observable* self){
 	  memmove(end_point, r_data->end_point, 3*sizeof(double));
   }
 
-  double *bin_volume = (double *) malloc(sizeof(double)*r_data->rbins);
+  double *bin_volume = (double *) Utils::malloc(sizeof(double)*r_data->rbins);
  
   double part_pos[3];
   double AB[3];		// normalized normal vector pointing to start point

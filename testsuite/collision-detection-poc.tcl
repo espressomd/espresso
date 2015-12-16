@@ -88,13 +88,14 @@ if {$bonds != ""} {
 setmd min_global_cut 1.0
 on_collision bind_at_point_of_collision 1.0 2 3 1
 
+
 set res [on_collision]
 if { ! ( ([lindex $res 0] == "bind_at_point_of_collision") && (abs([lindex $res 1]-1) <1E-5) && ([lindex $res 2] == 2) && ([lindex $res 3] == 3) && ([lindex $res 4] == 1)) } {
     error_exit "Setting collision_detection parameters for bind_centers does not work"
 }
 
 # Check the actual collision detection
-integrate 0
+integrate 0 recalc_forces
 
 # Check, whether the bonds are correct. No strict checking, there are also the
 # virtual particles
@@ -129,6 +130,37 @@ if {!((($bond1=="{ {3 4} } ") && ($bond2=="{ } ")) || (($bond2=="{ {3 3} } ") &&
 if { (! ([part 3 print type]==1 && [part 4 print type]==1))} {
     error_exit "type of virtual sites is incorrect."
 }
+
+
+# Check position and vs_relative settings of virtual sites
+set n_related_to_0 0
+set n_related_to_1 0
+for {set i 3} {$i <=4} {incr i} {
+  set vs_r [part $i print vs_relative]
+  set relto [lindex $vs_r 0]
+  set dist [lindex $vs_r 1]
+  
+  if { abs($dist -0.5)>1E-5 } {
+    error_exit "Distance between vs particle $i and particle $relto wrong: $dist"
+  }
+  if { $relto == 1 } { 
+    incr n_related_to_1
+  } else {
+  if { $relto == 0 } { 
+    incr n_related_to_0
+   } else {
+     error_exit "Vs $i should not be relatex to $relto"
+   }
+ }
+}
+if { ($n_related_to_0 != 1) || ($n_related_to_1 != 1) } {
+   error_exit "Exactly one vs is supposed to be related to part 0 and one to part 1."
+}
+
+  
+
+
+
 
 # test exception, generating another collision
 part 2 pos 2 0 0

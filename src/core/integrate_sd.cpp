@@ -358,13 +358,13 @@ void propagate_pos_sd()
   int N=sd_get_particle_num();
   // gather all the data for mobility calculation
   real * pos=NULL;
-  pos=(real *)malloc(DIM*N*sizeof(double));
+  pos=(real *)Utils::malloc(DIM*N*sizeof(double));
   assert(pos!=NULL);
   real * force=NULL;
-  force=(real *)malloc(DIM*N*sizeof(double));
+  force=(real *)Utils::malloc(DIM*N*sizeof(double));
   assert(force!=NULL);
   real * velocity=NULL;
-  velocity=(real *)malloc(DIM*N*sizeof(real));
+  velocity=(real *)Utils::malloc(DIM*N*sizeof(real));
   assert(velocity!=NULL);
 #ifdef EXTERNAL_FORCES
   const int COORD_ALL=COORD_FIXED(0)&COORD_FIXED(1)&COORD_FIXED(2);
@@ -448,7 +448,7 @@ void propagate_pos_sd()
       for (int d=0;d<3;d++){
 	p[i].r.p[d] = pos[3*j+d]+box_l[d]*rint(p[i].r.p[d]/box_l[d]);
 	p[i].m.v[d] = velocity[3*j+d];
-	//p[i].f.f[d] *= (0.5*time_step*time_step)/PMASS(*part);
+	//p[i].f.f[d] *= (0.5*time_step*time_step)/(*part).p.mass;
       }
 #else
       for (int d=0;d<3;d++){
@@ -458,7 +458,7 @@ void propagate_pos_sd()
 #endif
       // somehow this does not effect anything, although it is called ...
       for (int d=0;d<3;d++){
-	p[i].f.f[d] *= (0.5*time_step*time_step)/PMASS(*p);
+	p[i].f.f[d] *= (0.5*time_step*time_step)/(*p).p.mass;
       }
       for (int d=0;d<DIM;d++){
         assert(!isnan(pos[DIM*i+d]));

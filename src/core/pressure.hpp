@@ -401,22 +401,13 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     else if(type == BONDED_IA_FENE) {
       i = i + 2;
     }
-    else if(type == BONDED_IA_STRETCHING_FORCE) {
-      i = i + 2;
-    }
-    else if(type == BONDED_IA_STRETCHLIN_FORCE) {
-      i = i + 2;
-    }
-    else if(type == BONDED_IA_AREA_FORCE_LOCAL) {
+    else if(type == BONDED_IA_OIF_GLOBAL_FORCES) {
       i = i + 3;
     }
-    else if(type == BONDED_IA_AREA_FORCE_GLOBAL) {
-      i = i + 3;
-    }
-    else if(type == BONDED_IA_BENDING_FORCE) {
+    else if(type == BONDED_IA_OIF_LOCAL_FORCES) {
       i = i + 4;
     }
-    else if(type == BONDED_IA_VOLUME_FORCE) {
+    else if(type == BONDED_IA_OIF_OUT_DIRECTION) {
       i = i + 3;
     }
     else if(type == BONDED_IA_HARMONIC) {
@@ -509,16 +500,16 @@ inline void add_kinetic_virials(Particle *p1,int v_comp)
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0.) {
     if(v_comp)
-      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
+      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*(*p1).p.mass;
     else
-      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
   } else
 #endif
   {
     if(v_comp) 
-      virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
+      virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*(*p1).p.mass;
     else
-      virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+      virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
   }
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
@@ -526,10 +517,10 @@ inline void add_kinetic_virials(Particle *p1,int v_comp)
     for(l=0;l<3;l++)
 #ifdef MULTI_TIMESTEP
       if (smaller_time_step > 0.) 
-        p_tensor.data.e[k*3 + l] += SQR(time_step/smaller_time_step)*(p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
+        p_tensor.data.e[k*3 + l] += SQR(time_step/smaller_time_step)*(p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass;
       else
 #endif
-        p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
+        p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass;
 
 }
 

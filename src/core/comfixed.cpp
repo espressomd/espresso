@@ -88,7 +88,7 @@ void calc_comfixed()
         np = cell->n;
         for(i = 0; i < np; i++) {
 	  if(p[i].p.type==t0) {
-	    type_mass += PMASS(p[i]);
+	    type_mass += (p[i]).p.mass;
       	    for(j = 0; j < 3; j++) {
 	      fsum0[j] += p[i].f.f[j];
 	    }
@@ -103,7 +103,7 @@ void calc_comfixed()
         for(i = 0; i < np; i++) {
 	  if(p[i].p.type==t0) {
       	    for(j = 0; j < 3; j++) {
-	      p[i].f.f[j] -= fsum0[j]/type_mass*PMASS(p[i]);
+	      p[i].f.f[j] -= fsum0[j]/type_mass*(p[i]).p.mass;
 	    }
 	  }
         }

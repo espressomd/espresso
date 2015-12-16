@@ -145,7 +145,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
 
     /* always sending/receiving 1 cell per time step */
     for(c = 0; c < n; c++) {
-      comm->comm[c].part_lists = (ParticleList**)malloc(sizeof(ParticleList *));
+      comm->comm[c].part_lists = (ParticleList**)Utils::malloc(sizeof(ParticleList *));
       comm->comm[c].n_part_lists = 1;
       comm->comm[c].mpi_comm = comm_cart;
     }
@@ -263,7 +263,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
     if (n != 0) {
       /* two cells: from and to */
       for(c = 0; c < n; c++) {
-	comm->comm[c].part_lists = (ParticleList**)malloc(2*sizeof(ParticleList *));
+	comm->comm[c].part_lists = (ParticleList**)Utils::malloc(2*sizeof(ParticleList *));
 	comm->comm[c].n_part_lists = 2;
 	comm->comm[c].mpi_comm = comm_cart;
 	comm->comm[c].node = this_node;
@@ -583,11 +583,7 @@ void layered_calculate_ia()
       if (rebuild_verletlist)
 	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      add_bonded_force(p1);
-#ifdef CONSTRAINTS
-      add_constraints_forces(p1);
-#endif
-      add_external_potential_forces(p1);
+      add_single_particle_force(p1);
 
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
@@ -638,13 +634,7 @@ void layered_calculate_energies()
       if (rebuild_verletlist)
 	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      add_kinetic_energy(p1);
-
-      add_bonded_energy(p1);
-#ifdef CONSTRAINTS
-      add_constraints_energy(p1);
-#endif
-      add_external_potential_energy(p1);
+      add_single_particle_energy(p1);
 
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {

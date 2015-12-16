@@ -100,9 +100,8 @@ const Datafield fields[] = {
   {&sd_seed,                    TYPE_INT, 2, "sd_seed",                    4 },         /* 56 from integrate_sd.cpp */
   {&sd_random_state,            TYPE_INT, 2, "sd_random_state",            4 },         /* 57 from integrate_sd.cpp */
   {&sd_random_precision,     TYPE_DOUBLE, 1, "sd_precision_random",        4 },         /* 58 from integrate_sd.cpp */
-  {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles",          1 },         /* 59 from global.cpp */
-  {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5 },         /* 60 from integrate.cpp */
-  {configtemp,       TYPE_DOUBLE, 2, "configtemp",        1 },         /* 61 from integrate.cpp */
+  {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5 },         /* 59 from integrate.cpp */
+  {configtemp,       TYPE_DOUBLE, 2, "configtemp",        1 },         /* 60 from integrate.cpp */
   { NULL, 0, 0, NULL, 0 }
 };
 

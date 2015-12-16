@@ -38,7 +38,7 @@
 void fft_common_pre_init(fft_data_struct *fft)
 {
   for(int i=0;i<4;i++) {
-    fft->plan[i].group = (int*)malloc(1*n_nodes*sizeof(int));
+    fft->plan[i].group = (int*)Utils::malloc(1*n_nodes*sizeof(int));
     fft->plan[i].send_block = NULL;
     fft->plan[i].send_size  = NULL;
     fft->plan[i].recv_block = NULL;

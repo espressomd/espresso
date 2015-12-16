@@ -553,6 +553,9 @@ void integrate_vv(int n_steps, int reuse_forces)
       /* Propagate time: t = t+dt */
       sim_time += time_step;
     }
+    #ifdef COLLISION_DETECTION
+      handle_collisions();
+    #endif
   }
 
   /* verlet list statistics */
@@ -625,9 +628,9 @@ void rescale_forces()
     np = cell->n;
     for(i = 0; i < np; i++) {
       check_particle_force(&p[i]);
-      p[i].f.f[0] *= scale/PMASS(p[i]);
-      p[i].f.f[1] *= scale/PMASS(p[i]);
-      p[i].f.f[2] *= scale/PMASS(p[i]);
+      p[i].f.f[0] *= scale/(p[i]).p.mass;
+      p[i].f.f[1] *= scale/(p[i]).p.mass;
+      p[i].f.f[2] *= scale/(p[i]).p.mass;
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
@@ -665,9 +668,9 @@ void rescale_forces_propagate_vel()
     for(i = 0; i < np; i++) {
       check_particle_force(&p[i]);
       /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
-      p[i].f.f[0] *= scale/PMASS(p[i]);
-      p[i].f.f[1] *= scale/PMASS(p[i]);
-      p[i].f.f[2] *= scale/PMASS(p[i]);
+      p[i].f.f[0] *= scale/(p[i]).p.mass;
+      p[i].f.f[1] *= scale/(p[i]).p.mass;
+      p[i].f.f[2] *= scale/(p[i]).p.mass;
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef VIRTUAL_SITES
@@ -680,13 +683,13 @@ void rescale_forces_propagate_vel()
 #endif
 #ifdef NPT
           if(integ_switch == INTEG_METHOD_NPT_ISO && ( nptiso.geometry & nptiso.nptgeom_dir[j] )) {
-            nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
+            nptiso.p_vel[j] += SQR(p[i].m.v[j])*(p[i]).p.mass;
 #ifdef MULTI_TIMESTEP
             if (smaller_time_step > 0. && current_time_step_is_small==1)
               p[i].m.v[j] += p[i].f.f[j];
             else
 #endif
-              p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
+              p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/(p[i]).p.mass;
           }
           else
 #endif
@@ -885,6 +888,11 @@ void propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef ROTATION
+     propagate_omega_quat_particle(&p[i]);
+#endif
+
+        // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
@@ -900,8 +908,8 @@ void propagate_vel()
                 p[i].m.v[j] += p[i].f.f[j];
               else
 #endif
-                p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
-              nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
+                p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/(p[i]).p.mass;
+              nptiso.p_vel[j] += SQR(p[i].m.v[j])*(p[i]).p.mass;
             }
             else
 #endif
@@ -917,9 +925,6 @@ void propagate_vel()
         ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
-#endif
-#ifdef ROTATION
-     propagate_omega_quat_particle(&p[i]);
 #endif
       }
     }
@@ -995,7 +1000,13 @@ void propagate_vel_pos()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
- #ifdef VIRTUAL_SITES
+
+#ifdef ROTATION
+      propagate_omega_quat_particle(&p[i]);
+#endif
+
+       // Don't propagate translational degrees of freedom of vs
+#ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
      for(j=0; j < 3; j++){   
@@ -1020,9 +1031,6 @@ void propagate_vel_pos()
 
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
-#endif
-#ifdef ROTATION
-      propagate_omega_quat_particle(&p[i]);
 #endif
 
 #ifdef LEES_EDWARDS

@@ -132,7 +132,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
   int *contact_num, ind;
 
   if (min_contact > 1) {
-    contact_num = (int *) malloc(n_molecules*n_molecules *sizeof(int));
+    contact_num = (int *) Utils::malloc(n_molecules*n_molecules *sizeof(int));
     for (i = 0; i < n_molecules *n_molecules; i++) contact_num[i]=0;
   } else {
     contact_num = (int *) 0; /* Just to keep the compiler happy */
@@ -265,7 +265,6 @@ void momentum_calc(double *momentum)
  */
 std::vector<double> calc_linear_momentum(int include_particles, int include_lbfluid)
 {
-    double momentum_fluid[3] = { 0., 0., 0. };
     double momentum_particles[3] = { 0., 0., 0. };
     std::vector<double> linear_momentum(3,0.0);
     if (include_particles) {
@@ -276,6 +275,7 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
     }
     if (include_lbfluid) {
 #ifdef LB
+      double momentum_fluid[3] = { 0., 0., 0. };
       mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
       linear_momentum[0] += momentum_fluid[0];
       linear_momentum[1] += momentum_fluid[1];
@@ -295,9 +295,9 @@ void centermass(int type, double *com)
   for (j=0; j<n_part; j++) {
     if ((partCfg[j].p.type == type) || (type == -1)) {
       for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].r.p[i]*PMASS(partCfg[j]);
+      	com[i] += partCfg[j].r.p[i]*(partCfg[j]).p.mass;
       }
-      M += PMASS(partCfg[j]);
+      M += (partCfg[j]).p.mass;
     }
   }
   
@@ -343,7 +343,7 @@ void angularmomentum(int type, double *com)
     if (type == partCfg[j].p.type) 
     {
       vector_product(partCfg[j].r.p,partCfg[j].m.v,tmp);
-      pre_factor=PMASS(partCfg[j]);
+      pre_factor=(partCfg[j]).p.mass;
       for (i=0; i<3; i++) {
         com[i] += tmp[i]*pre_factor;
       }
@@ -367,7 +367,7 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
       for (i=0; i<3; i++) {
       	p1[i] = partCfg[j].r.p[i] - com[i];
       }
-      massi= PMASS(partCfg[j]);
+      massi= (partCfg[j]).p.mass;
       MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]) ; 
       MofImatrix[4] += massi * (p1[0] * p1[0] + p1[2] * p1[2]);
       MofImatrix[8] += massi * (p1[0] * p1[0] + p1[1] * p1[1]);
@@ -393,7 +393,7 @@ void calc_gyration_tensor(int type, double **_gt)
 
   for (i=0; i<9; i++) Smatrix[i] = 0;
   /* 3*ev, rg, b, c, kappa, eve0[3], eve1[3], eve2[3]*/
-  *_gt = gt = (double*)realloc(gt,16*sizeof(double)); 
+  *_gt = gt = (double*)Utils::realloc(gt,16*sizeof(double)); 
 
   updatePartCfg(WITHOUT_BONDS);
 
@@ -715,7 +715,7 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3],p2[3];
 
-  rdf_tmp = (double*)malloc(r_bins*sizeof(double));
+  rdf_tmp = (double*)Utils::malloc(r_bins*sizeof(double));
 
   if(n_p1 == n_p2) {
     for(i=0;i<n_p1;i++)
@@ -782,7 +782,7 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3],p2[3];
 
-  rdf_tmp = (double*)malloc(r_bins*sizeof(double));
+  rdf_tmp = (double*)Utils::malloc(r_bins*sizeof(double));
 
   if(n_p1 == n_p2) {
     for(i=0;i<n_p1;i++)
@@ -848,7 +848,7 @@ void calc_structurefactor(int type, int order, double **_ff) {
   double qr, twoPI_L, C_sum, S_sum, *ff=NULL;
   
   order2 = order*order;
-  *_ff = ff = (double*)realloc(ff,2*order2*sizeof(double));
+  *_ff = ff = (double*)Utils::realloc(ff,2*order2*sizeof(double));
   twoPI_L = 2*PI/box_l[0];
   
   if ((type < 0) || (type > n_particle_types)) { fprintf(stderr,"WARNING: Type %i does not exist!",type); fflush(NULL); errexit(); }
@@ -980,7 +980,7 @@ void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_
   // double *bins;
   
   int *label;
-  label = (int*)malloc(n_part*sizeof(int));
+  label = (int*)Utils::malloc(n_part*sizeof(int));
   
   /* calculation over last n_conf configurations */
   t=n_configs-n_conf;
@@ -1229,8 +1229,8 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
     xav = xav/(double)(beadcount);
     yav = yav/(double)(beadcount);
     thetabinwidth = 2*PI/(double)(thetabins);
-    thetaradii = (double*)malloc(thetabins*nbeadtypes*sizeof(double));
-    thetacounts = (int*)malloc(thetabins*nbeadtypes*sizeof(int));
+    thetaradii = (double*)Utils::malloc(thetabins*nbeadtypes*sizeof(double));
+    thetacounts = (int*)Utils::malloc(thetabins*nbeadtypes*sizeof(int));
     for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
       for ( t = 0 ; t < thetabins ; t++ ) {
 	thetaradii[bi*thetabins+t] = 0.0;
@@ -1334,8 +1334,8 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, do
 void analyze_append() {
   int i;
   n_part_conf = n_part;
-  configs = (double**)realloc(configs,(n_configs+1)*sizeof(double *));
-  configs[n_configs] = (double *) malloc(3*n_part_conf*sizeof(double));
+  configs = (double**)Utils::realloc(configs,(n_configs+1)*sizeof(double *));
+  configs[n_configs] = (double *) Utils::malloc(3*n_part_conf*sizeof(double));
   for(i=0; i<n_part_conf; i++) {
     configs[n_configs][3*i]   = partCfg[i].r.p[0];
     configs[n_configs][3*i+1] = partCfg[i].r.p[1];
@@ -1351,7 +1351,7 @@ void analyze_push() {
   for(i=0; i<n_configs-1; i++) {
     configs[i]=configs[i+1];
   }
-  configs[n_configs-1] = (double *) malloc(3*n_part_conf*sizeof(double));
+  configs[n_configs-1] = (double *) Utils::malloc(3*n_part_conf*sizeof(double));
   for(i=0; i<n_part_conf; i++) {
     configs[n_configs-1][3*i]   = partCfg[i].r.p[0];
     configs[n_configs-1][3*i+1] = partCfg[i].r.p[1];
@@ -1376,15 +1376,15 @@ void analyze_remove(int ind) {
     configs[i]=configs[i+1];
   }
   n_configs--;
-  configs = (double**)realloc(configs,n_configs*sizeof(double *));
+  configs = (double**)Utils::realloc(configs,n_configs*sizeof(double *));
   if (n_configs == 0) n_part_conf = 0;
 }
 
 void analyze_configs(double *tmp_config, int count) {
   int i;
   n_part_conf = count;
-  configs = (double**)realloc(configs,(n_configs+1)*sizeof(double *));
-  configs[n_configs] = (double *) malloc(3*n_part_conf*sizeof(double));
+  configs = (double**)Utils::realloc(configs,(n_configs+1)*sizeof(double *));
+  configs[n_configs] = (double *) Utils::malloc(3*n_part_conf*sizeof(double));
   for(i=0; i<n_part_conf; i++) {
     configs[n_configs][3*i]   = tmp_config[3*i];
     configs[n_configs][3*i+1] = tmp_config[3*i+1];
@@ -1491,9 +1491,9 @@ void centermass_conf(int k, int type_1, double *com)
     {
       for (i=0; i<3; i++)
       {
-         com[i] += configs[k][3*j+i]*PMASS(partCfg[j]);
+         com[i] += configs[k][3*j+i]*(partCfg[j]).p.mass;
       }
-      M += PMASS(partCfg[j]);
+      M += (partCfg[j]).p.mass;
     }
   }
   for (i=0; i<3; i++) 

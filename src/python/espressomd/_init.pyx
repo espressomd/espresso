@@ -28,7 +28,7 @@ cdef extern from "initialize.hpp":
 
 # Here we make a minimalistic Tcl_Interp available
 # Main code
-mpi_init(NULL,NULL)
+mpi_init(NULL, NULL)
 
 # Main slave loop
 if this_node != 0:

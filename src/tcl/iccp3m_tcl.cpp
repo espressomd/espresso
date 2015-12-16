@@ -179,7 +179,7 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
    if (!iccp3m_cfg.areas || !iccp3m_cfg.ein || !iccp3m_cfg.nvectorx) 
      return TCL_ERROR;
    if (!iccp3m_cfg.sigma)  {
-     iccp3m_cfg.sigma = (double*) malloc(iccp3m_cfg.n_ic*sizeof(double));
+     iccp3m_cfg.sigma = (double*) Utils::malloc(iccp3m_cfg.n_ic*sizeof(double));
      memset(iccp3m_cfg.sigma, 0, iccp3m_cfg.n_ic*sizeof(double));
    }
    mpi_iccp3m_init(0);
@@ -188,9 +188,9 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
 }
 
 int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
-  iccp3m_cfg.nvectorx = (double*) realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.n_ic));
-  iccp3m_cfg.nvectory = (double*) realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.n_ic));
-  iccp3m_cfg.nvectorz = (double*) realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.n_ic));
+  iccp3m_cfg.nvectorx = (double*) Utils::realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.n_ic));
+  iccp3m_cfg.nvectory = (double*) Utils::realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.n_ic));
+  iccp3m_cfg.nvectorz = (double*) Utils::realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.n_ic));
   const char opening_bracket = '{';
   const char closing_bracket = '}';
 
@@ -235,7 +235,7 @@ int tclcommand_iccp3m_parse_double_list(Tcl_Interp *interp, int n_ic, char *stri
   float temp;
 
   size= n_ic;
-  numbers = (double*)malloc((size)*sizeof(double));
+  numbers = (double*)Utils::malloc((size)*sizeof(double));
 
   cp = strdup(string);                /* Make writable copy.  */
   token = strtok (cp, delimiters);
@@ -260,17 +260,17 @@ int tclcommand_iccp3m_parse_double_list(Tcl_Interp *interp, int n_ic, char *stri
 
   switch(flag) {
     case ICCP3M_AREA: 
-      iccp3m_cfg.areas = (double*) realloc(iccp3m_cfg.areas, (size)*sizeof(double)); 
+      iccp3m_cfg.areas = (double*) Utils::realloc(iccp3m_cfg.areas, (size)*sizeof(double)); 
       for( i = 0 ; i < size ; i++ )  
         iccp3m_cfg.areas[i]=numbers[i];
       break;
     case ICCP3M_EPSILON:
-      iccp3m_cfg.ein = (double*) realloc(iccp3m_cfg.ein,(size)*sizeof(double));
+      iccp3m_cfg.ein = (double*) Utils::realloc(iccp3m_cfg.ein,(size)*sizeof(double));
       for( i = 0 ; i < size; i++)  
         iccp3m_cfg.ein[i]=numbers[i];
       break;
     case ICCP3M_SIGMA:
-      iccp3m_cfg.sigma = (double*) realloc(iccp3m_cfg.sigma,(size)*sizeof(double));
+      iccp3m_cfg.sigma = (double*) Utils::realloc(iccp3m_cfg.sigma,(size)*sizeof(double));
       for( i = 0 ; i < size; i++)  {
         iccp3m_cfg.sigma[i]=numbers[i];
       }

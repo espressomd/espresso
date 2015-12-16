@@ -171,6 +171,11 @@ typedef struct {
   double gamma_odd[LB_COMPONENTS];
   double gamma_even[LB_COMPONENTS];
 
+  /** Flag determining whether gamma_shear, gamma_odd, and gamma_even are calculated
+   *  from gamma_shear in such a way to yield a TRT LB with minimized slip at
+   *  bounce-back boundaries */
+  bool is_TRT;
+
   int resend_halo;
           
 } LB_Parameters;
@@ -500,15 +505,15 @@ inline void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
  */
 inline void lb_get_populations(index_t index, double* pop) {
   int i=0;
-  for (i=0; i<19; i++) {
-    pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho[0];
+  for (i=0; i<19*LB_COMPONENTS; i++) {
+    pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i%19][0]*lbpar.rho[i/19];
   }
 }
 
 inline void lb_set_populations(index_t index, double* pop) {
   int i=0;
-  for (i=0; i<19; i++) {
-    lbfluid[0][i][index]=pop[i]-lbmodel.coeff[i][0]*lbpar.rho[0];
+  for (i=0; i<19*LB_COMPONENTS; i++) {
+    lbfluid[0][i][index]=pop[i]-lbmodel.coeff[i%19][0]*lbpar.rho[i/19];
   }
 }
 #endif
@@ -518,6 +523,7 @@ inline void lb_set_populations(index_t index, double* pop) {
 #if defined (LB) || defined (LB_GPU)
 /* A C level interface to the LB fluid */ 
 int lb_lbfluid_set_density(double * p_dens);
+int lb_lbfluid_get_density(double *p_dens);
 int lb_lbfluid_set_visc(double * p_visc);
 int lb_lbfluid_set_bulk_visc(double * p_bulk_visc);
 int lb_lbfluid_set_gamma_odd(double * p_gamma_odd);
@@ -528,10 +534,18 @@ int lb_lbfluid_set_agrid(double p_agrid);
 int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_fz);
 int lb_lbfluid_set_tau(double p_tau);
 int lb_lbfluid_set_remove_momentum(void);
+int lb_lbfluid_get_agrid(double* p_agrid);
+int lb_lbfluid_get_tau(double* p_tau);
+int lb_lbfluid_get_visc(double* p_visc);
+int lb_lbfluid_get_bulk_visc(double* p_bulk_visc);
+int lb_lbfluid_get_friction(double * p_friction);
+int lb_lbfluid_get_ext_force(double* p_f);
 #ifdef SHANCHEN
 int lb_lbfluid_set_shanchen_coupling(double * p_coupling);
 int lb_lbfluid_set_mobility(double * p_mobility);
 #endif 
+int lb_set_lattice_switch(int py_switch);
+int lb_get_lattice_switch(int* py_switch);
 
 /* IO routines */
 int lb_lbfluid_print_vtk_boundary(char* filename);

@@ -14,9 +14,13 @@ New user-visible features
 * Espresso can now read pdb and gromacs topology files.
 * Checkpointing for the correlator
 * New polymer observables
-* Steepest descent energy minimization
+* Using the rotation_per_particle feature, it is now possible to switch the integration of the rotational degrees of freedom per individual axis in the particle's body-fixed frame.
+* The rotational degrees of freedom of virtual sites is now integrated. Virtual sites no longer use the quaternion attributes to store their relative orientation
+* A rotate_system command was added, which rotates the particle positions around the system's center of mass
+* Steepest descent energy minimization for translational and rotational degrees of freedom
 * Multiple time step integration that allows one of two time steps per particle
 * Stokesian Dynamics support (GPU only)
+* Dipolar direct sum on gpu for large systems (more particles than the max number of threads the gpu runs in parallel)
 
 Known bugs
 ----------

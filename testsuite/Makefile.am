@@ -21,7 +21,9 @@ tests = \
 	analysis.tcl \
 	angle.tcl \
 	bonded_coulomb.tcl \
+	collision-detection-angular.tcl \
 	collision-detection-centers.tcl \
+	collision-detection-glue.tcl \
 	collision-detection-poc.tcl \
 	comforce.tcl \
 	comfixed.tcl \
@@ -32,9 +34,11 @@ tests = \
 	correlation_checkpoint.tcl \
 	constraints_rhomboid.tcl \
 	coulomb_cloud_wall.tcl \
+	dawaanr-and-dds-gpu.tcl \
 	dh.tcl \
 	dielectric.tcl \
 	dihedral.tcl \
+	dpd.tcl \
 	ek_eof_one_species_x.tcl \
 	ek_eof_one_species_y.tcl \
 	ek_eof_one_species_z.tcl \
@@ -86,6 +90,7 @@ tests = \
 	mass-and-rinertia.tcl \
 	mdlc.tcl \
 	minimize_energy.tcl \
+	minimize_energy_rotation.tcl \
 	mmm1d.tcl \
 	mmm1dgpu.tcl \
 	ewaldgpu.tcl \
@@ -97,10 +102,13 @@ tests = \
 	observable.tcl \
 	p3m.tcl \
 	p3m_gpu.tcl \
+	p3m_gpu_simple_noncubic.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
 	pdb_parser.tcl \
+	rotate-system.tcl \
+	rotate-system-dipoles.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
@@ -110,7 +118,8 @@ tests = \
 	tabulated.tcl \
         tunable_slip.tcl \
         uwerr.tcl \
-	virtual-sites.tcl 
+	virtual-sites.tcl \
+	virtual-sites-rotation.tcl 
 # please keep the alphabetic ordering of the above list!
 
 deactivated_tests =

@@ -706,23 +706,23 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
 
     /** ghost modes */
     random_wrapper(rn);
-    mode[10 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[0];
-    mode[11 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[1];
+    mode[10 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[0];
+    mode[11 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[12 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[0];
-    mode[13 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[1];
+    mode[12 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[0];
+    mode[13 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[14 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[0];
-    mode[15 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[1];
+    mode[14 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[0];
+    mode[15 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[16 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f)))     * rn->randomnr[0];
-    mode[17 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/9.0f))) * rn->randomnr[1];
+    mode[16 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f)*(1.0f-(para.gamma_even[ii]*para.gamma_even[ii]))))     * rn->randomnr[0];
+    mode[17 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/9.0f)*(1.0f-(para.gamma_even[ii]*para.gamma_even[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[18 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/3.0f))) * rn->randomnr[0];
+    mode[18 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/3.0f)*(1.0f-(para.gamma_even[ii]*para.gamma_even[ii])))) * rn->randomnr[0];
   }
 }
 
@@ -3168,7 +3168,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   if(h_gpu_check!=NULL)
     free(h_gpu_check);  
 
-  h_gpu_check = (int*)malloc(sizeof(int));
+  h_gpu_check = (int*)Utils::malloc(sizeof(int));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -3689,7 +3689,7 @@ void lb_integrate_GPU() {
 
 void lb_gpu_get_boundary_forces(double* forces) {
 #ifdef LB_BOUNDARIES_GPU
-  float* temp = (float*) malloc(3*n_lb_boundaries*sizeof(float));
+  float* temp = (float*) Utils::malloc(3*n_lb_boundaries*sizeof(float));
   cuda_safe_mem(cudaMemcpy(temp, lb_boundary_force, 3*n_lb_boundaries*sizeof(float), cudaMemcpyDeviceToHost));
 
   for (int i =0; i<3*n_lb_boundaries; i++)
@@ -3949,7 +3949,7 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
 
   // allocate data on host
   float* host_data;
-  host_data = (float*) malloc(sizeof(float)*3*maxi*maxj*maxk);
+  host_data = (float*) Utils::malloc(sizeof(float)*3*maxi*maxj*maxk);
 
   // copy data back
   cuda_safe_mem(cudaMemcpy(host_data, data_device,  sizeof(float)*3*maxi*maxj*maxk, cudaMemcpyDeviceToHost));
@@ -4030,7 +4030,7 @@ int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A,
 
   // allocate data on host
   float* host_data;
-  host_data = (float*) malloc(sizeof(float)*3*maxi*maxj*maxk);
+  host_data = (float*) Utils::malloc(sizeof(float)*3*maxi*maxj*maxk);
 
   // copy data back
   cuda_safe_mem(cudaMemcpy(host_data, data_device,  sizeof(float)*3*maxi*maxj*maxk, cudaMemcpyDeviceToHost));

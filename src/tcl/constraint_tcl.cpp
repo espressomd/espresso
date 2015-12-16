@@ -252,6 +252,18 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
     sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
+  case CONSTRAINT_VOXEL:
+    //Tcl_PrintDouble(interp, con->c.voxel.pos[0], buffer);
+    //Tcl_AppendResult(interp, "voxel pos ", buffer, " ", (char *) NULL);
+    //Tcl_PrintDouble(interp, con->c.voxel.pos[1], buffer);
+    //Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    //Tcl_PrintDouble(interp, con->c.voxel.pos[2], buffer);
+    //Tcl_AppendResult(interp, buffer, (char *) NULL);
+    sprintf(buffer, "%s", con->c.voxel.filename);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.p.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    break;
 
   default:
     sprintf(buffer, "%d", con->type);
@@ -1668,6 +1680,80 @@ static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *i
   return (TCL_OK);
 }
 
+static int tclcommand_constraint_parse_voxel(Constraint *con, Tcl_Interp *interp,
+		      int argc, char **argv)
+{
+	FILE* fp;
+	
+  con->type = CONSTRAINT_VOXEL;
+
+  /* invalid entries to start of */
+  //con->c.voxel.pos[0] = 
+    //con->c.voxel.pos[1] = 
+    //con->c.voxel.pos[2] = 0;
+  //con->c.voxel.n[0] = 
+    //con->c.voxel.n[1] = 
+    //con->c.voxel.n[2] = 0.0;
+  con->part_rep.p.type = -1;
+    //con->c.voxel.filename = "";
+
+
+  while (argc > 0) {
+    //if(!strncmp(argv[0], "pos", strlen(argv[0]))) {
+      //if(argc < 4) {
+	//Tcl_AppendResult(interp, "constraint voxel pos <x> <y> <z> expected", (char *) NULL);
+	//return (TCL_ERROR);
+      //}
+      //if (Tcl_GetDouble(interp, argv[1], &(con->c.sph.pos[0])) == TCL_ERROR ||
+	  //Tcl_GetDouble(interp, argv[2], &(con->c.sph.pos[1])) == TCL_ERROR ||
+	  //Tcl_GetDouble(interp, argv[3], &(con->c.sph.pos[2])) == TCL_ERROR)
+	//return (TCL_ERROR);
+      //argc -= 4; argv += 4;
+    //}
+    if(!strncmp(argv[0], "file", strlen(argv[0]))) {
+      if(argc < 2) {
+		Tcl_AppendResult(interp, "constraint voxel file <filename> expected", (char *) NULL);
+		return (TCL_ERROR);
+      }
+      fp = fopen( argv[1] , "r");
+		if ( !fp ) {
+	      Tcl_AppendResult(interp, "voxel input file could not be opened", (char *) NULL);
+	      return (TCL_ERROR);
+		}
+		fclose(fp);
+		strcpy(con->c.voxel.filename,argv[1]);
+		
+    argc -= 2; argv += 2;
+      //if (Tcl_GetDouble(interp, argv[1], &(con->c.sph.pos[0])) == TCL_ERROR ||
+	  //Tcl_GetDouble(interp, argv[2], &(con->c.sph.pos[1])) == TCL_ERROR ||
+	  //Tcl_GetDouble(interp, argv[3], &(con->c.sph.pos[2])) == TCL_ERROR)
+	//return (TCL_ERROR);
+      //argc -= 4; argv += 4;
+    }
+    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint voxel type <t> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  if (con->part_rep.p.type < 0) {
+    Tcl_AppendResult(interp, "usage: constraint voxel pos <x> <y> <z> type <t>",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  make_particle_type_exist(con->part_rep.p.type);
+
+  return (TCL_OK);
+}
+
 static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **argv) {
   double pos[3];
   double vec[3];
@@ -1734,6 +1820,9 @@ static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, 
           break;
         case CONSTRAINT_PLANE:
 	        calculate_plane_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
+          break;
+        case CONSTRAINT_VOXEL:
+	        calculate_voxel_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.voxel, &dist, vec); 
           break;
         default: // rest of constraints just don't have associated distances
           break;
@@ -1821,6 +1910,9 @@ int tclcommand_constraint_mindist_position_vec(Tcl_Interp *interp, int argc, cha
           break;
         case CONSTRAINT_PLANE:
 	        calculate_plane_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
+          break;
+        case CONSTRAINT_VOXEL:
+	        calculate_voxel_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.voxel, &dist, vec); 
           break;
         default: // rest of constraints just don't have associated distances
           break;
@@ -1912,6 +2004,10 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
   }
   else if(!strncmp(argv[1], "plane cell", strlen(argv[1]))) {
     status = tclcommand_constraint_parse_plane_cell(generate_constraint(),interp, argc - 2, argv + 2);
+    mpi_bcast_constraint(-1);
+  }
+    else if(!strncmp(argv[1], "voxel", strlen(argv[1]))) {
+    status = tclcommand_constraint_parse_voxel(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   //end ER

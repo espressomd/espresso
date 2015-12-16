@@ -29,18 +29,18 @@ IF ELECTROSTATICS:
     cdef extern from "interaction_data.hpp":
         cdef enum CoulombMethod:
             COULOMB_NONE, \
-            COULOMB_DH, \
-            COULOMB_P3M, \
-            COULOMB_MMM1D, \
-            COULOMB_MMM2D, \
-            COULOMB_MAGGS, \
-            COULOMB_ELC_P3M, \
-            COULOMB_RF, \
-            COULOMB_INTER_RF, \
-            COULOMB_P3M_GPU, \
-            COULOMB_MMM1D_GPU, \
-            COULOMB_EWALD_GPU, \
-            COULOMB_EK
+                COULOMB_DH, \
+                COULOMB_P3M, \
+                COULOMB_MMM1D, \
+                COULOMB_MMM2D, \
+                COULOMB_MAGGS, \
+                COULOMB_ELC_P3M, \
+                COULOMB_RF, \
+                COULOMB_INTER_RF, \
+                COULOMB_P3M_GPU, \
+                COULOMB_MMM1D_GPU, \
+                COULOMB_EWALD_GPU, \
+                COULOMB_EK
 
         int coulomb_set_bjerrum(double bjerrum)
 
@@ -85,35 +85,19 @@ IF ELECTROSTATICS:
             # links intern C-struct with python object
             cdef extern p3m_data_struct p3m
 
-        cdef extern from "p3m_gpu.hpp":
-            # may need a fix, when double precision should be used on GPU
-            IF _P3M_GPU_DOUBLE:
-                void p3m_gpu_init(int cao, int mesh, double alpha, double box)
+        IF CUDA:
+            cdef extern from "p3m_gpu.hpp":
+                void p3m_gpu_init(int cao, int * mesh, double alpha, double * box)
 
-            ELSE:
-                void p3m_gpu_init(int cao, int mesh, float alpha, float box)
-
-        IF _P3M_GPU_DOUBLE:
             cdef inline python_p3m_gpu_init(params):
                 cdef int cao
-                cdef int mesh
+                cdef int mesh[3]
                 cdef double alpha
-                cdef double box
+                cdef double box[3]
                 cao = params["cao"]
-                mesh = params["mesh"][0]
+                mesh = params["mesh"]
                 alpha = params["alpha"]
-                box = params["box"][0]
-                p3m_gpu_init(cao, mesh, alpha, box)
-        ELSE:
-            cdef inline python_p3m_gpu_init(_params):
-                cdef int cao
-                cdef int mesh
-                cdef float alpha
-                cdef float box
-                cao = _params["cao"]
-                mesh = _params["mesh"][0]
-                alpha = _params["alpha"]
-                box = _params["box"][0]
+                box = params["box"]
                 p3m_gpu_init(cao, mesh, alpha, box)
 
         # Convert C arguments into numpy array
@@ -127,7 +111,7 @@ IF ELECTROSTATICS:
         cdef inline python_p3m_adaptive_tune():
             cdef char * log = NULL
             cdef int response
-            response = p3m_adaptive_tune( & log)
+            response = p3m_adaptive_tune(& log)
             return response, log
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
@@ -189,3 +173,41 @@ IF ELECTROSTATICS:
         int dh_set_params(double kappa, double r_cut)
         int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha)
 
+IF ELECTROSTATICS and CUDA and EWALD_GPU:
+    cdef extern from "SystemInterface.hpp":
+        cdef cppclass SystemInterface:
+            SystemInterface()
+
+    cdef extern from "EspressoSystemInterface.hpp":
+        cdef cppclass EspressoSystemInterface:
+            @staticmethod
+            EspressoSystemInterface * _Instance()
+
+    cdef extern from "EwaldgpuForce.hpp":
+        cdef cppclass EwaldgpuForce:
+            EwaldgpuForce(EspressoSystemInterface & s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha)
+            int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha)
+            int set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps)
+            int adaptive_tune(char ** log, EspressoSystemInterface & s)
+            double tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N)
+            double tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N)
+            int determine_calc_time_steps()
+
+        ctypedef struct Ewaldgpu_params:
+            double rcut
+            int num_kx
+            int num_ky
+            int num_kz
+            double alpha
+            double accuracy
+            double precision
+            bint isTuned  # Tuning is over
+            bint isTunedFlag  # Flag tuning is over
+            int K_max  # Maximal reciprocal K-vector in tuning
+            int time_calc_steps  # Steps in time_force_calc function
+
+        cdef extern Ewaldgpu_params ewaldgpu_params
+
+        # ctypedef extern class EwaldgpuForce ewaldgpuForce
+#    cdef extern from "EspressoSystemInterface.cpp":
+#        cdef cppclass extern EspressoSystemInterface *EspressoSystemInterface;

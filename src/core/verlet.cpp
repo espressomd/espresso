@@ -61,7 +61,7 @@ inline void add_pair(PairList *pl, Particle *p1, Particle *p2)
   /* check size of verlet List */
   if(pl->n+1 >= pl->max) {
     pl->max += LIST_INCREMENT;
-    pl->pair = (Particle **)realloc(pl->pair, 2*pl->max*sizeof(Particle *));
+    pl->pair = (Particle **)Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
   /* add pair */
   pl->pair[(2*pl->n)  ] = p1;
@@ -89,7 +89,7 @@ void free_pairList(PairList *list)
 {
   list->n       = 0;
   list->max     = 0;
-  list->pair = (Particle **)realloc(list->pair, 0);
+  list->pair = (Particle **)Utils::realloc(list->pair, 0);
 }
 
 void build_verlet_lists()
@@ -180,11 +180,7 @@ void calculate_verlet_ia()
       if (p1[i].p.smaller_timestep==current_time_step_is_small || smaller_time_step < 0.)
 #endif
       {
-        add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-        add_constraints_forces(&p1[i]);
-#endif
-        add_external_potential_forces(&p1[i]);
+        add_single_particle_force(&p1[i]);
       }
     }
 
@@ -256,11 +252,7 @@ void build_verlet_lists_and_calc_verlet_ia()
           if (p1[i].p.smaller_timestep==current_time_step_is_small || smaller_time_step < 0.)
 #endif
           {
-            add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-            add_constraints_forces(&p1[i]);
-#endif
-            add_external_potential_forces(&p1[i]);
+            add_single_particle_force(&p1[i]);
             memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
             j_start = i+1;
           }
@@ -326,12 +318,7 @@ void calculate_verlet_energies()
     np  = cell->n;
     /* calculate bonded interactions (loop local particles) */
     for(i = 0; i < np; i++)  {
-      add_kinetic_energy(&p1[i]);
-      add_bonded_energy(&p1[i]);
-#ifdef CONSTRAINTS
-      add_constraints_energy(&p1[i]);
-#endif
-      add_external_potential_energy(&p1[i]);
+      add_single_particle_energy(&p1[i]);
     }
 
     /* no interaction set */
@@ -416,7 +403,7 @@ void resize_verlet_list(PairList *pl)
   if( diff > 2*LIST_INCREMENT ) {
     diff = (diff/LIST_INCREMENT)-1;
     pl->max -= diff*LIST_INCREMENT;
-    pl->pair = (Particle **)realloc(pl->pair, 2*pl->max*sizeof(Particle *));
+    pl->pair = (Particle **)Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
 }
 

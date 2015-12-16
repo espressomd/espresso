@@ -56,6 +56,7 @@
     exclude=\arg{list of ints},
     temp=\arg{float},
     gamma=\arg{float},
+    gamma_rot=\arg{float},
     rotation=\arg{bool},
     swimming=\arg{dictionary \ttfamily \{
       `f_swim':\arg{float},
@@ -91,6 +92,7 @@
   \require{8}{\opt{vs\_auto\_relate\_to \var{pid}}}
   \require{9}{\opt{temp \var{T}}}
   \require{9}{\opt{gamma \var{g}}}
+  \require{2,9}{\opt{gamma\_rot \var{grot}}}
   \require{10}{\opt{rotation \var{rot}}}
   \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
   \require{12}{\opt{swimming \alt{\alt{v_swim \var{v\_swim} \asep
@@ -226,9 +228,11 @@ set first because of the spatial decomposition.
   different diffusion constants. Caution: this has no influence on any
   other thermostat then the Langevin thermostat.
 \item[\opt{rotation \var{rot}}] Specifies whether a particle's
-  rotational degrees of freedom are integrated (value of 1) or not
-  (0). If set to zero, the content of the torque and omega variables
-  are meaningless. The default is 1.
+  rotational degrees of freedom along the different axes in the particle's body-fixed frame are integrated or not.
+  If set to zero, rotation is disabled entirely, and the content of the torque and omega variables
+  are meaningless. 
+  Rotation of a particular axis is turned on by adding up the corresponding flags: x=2, y=4, z=8.
+  To enable rotation around all axis, use a value of 2+4+8=14. This is also the default.
 \item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the
   four solvation coupling constants for the two components of a
   Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
@@ -815,7 +819,8 @@ All these examples do the same---making exact copies of particles 1 through 4.
   \variant{6}  
   constraint pore center \var{c_x} \var{c_y} \var{c_z} 
   axis \var{n_x} \var{n_y} \var{n_z} 
-  radius \var{rad} length \var{length} 
+  radius \var{rad} \opt{outer_radius \var{rad_S}} 
+  \opt{smoothing_radius \var{rad_S}} length \var{length} 
   type \var{id} 
 
   \variant{7}
@@ -924,7 +929,7 @@ with a dipole moment.
 
 The resulting surface in variant \variant{1} is a plane defined by the
 normal vector \var{n_x} \var{n_y} \var{n_z} and the distance
-\var{d} from the origin. The force acts in direction of the normal. 
+\var{d} from the origin (in the direction of the normal vector). The force acts in direction of the normal. 
 Note that the \var{d} describes the distance from the origin in units
 of the normal vector so that the product of $d$ and $n$ is a point on the
 surface. Therefore negative distances are quite common!
@@ -960,10 +965,17 @@ Variant \variant{6} sets up a cylindrical pore similar to variant
 \variant{3} with a center \var{c_x} \var{c_y} \var{c_z} and radius
 \var{rad}. The \var{length} parameter is \textbf{half} of the cylinder
 length. The \var{axis} is a vector along the cylinder axis, which is
-normalized in the program. The argument \codebox{radius \var{rad}} 
-can be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}}
-to obtain a pore with a conical shape and corresponding opening radii.
-The first radius is in the direction opposite to the axis vector.
+normalized in the program. Optionally the outer radius of the pore can
+be specified. By default this is (numerical) infinity and thus results in 
+an infinite wall with one pore. The argument \codebox{radius \var{rad}} can 
+be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}} to obtain a 
+pore with a conical shape and corresponding opening radii. The first radius 
+is in the direction opposite to the axis vector. The same applies for 
+\codebox{outer_radius \var{orad}} which can be replaced  with 
+\codebox{outer_radii \var{orad1} \var{orad2}}. Per default sharp edges are
+replaced by circles of unit radius. The radius of this smoothing can be set
+with the optional keyword \codebox{smoothing_radius}.
+
 
 Variant \variant{7} creates a stomatocyte shaped boundary. This command
 should be used with care. The position can be any point in the simulation
@@ -1060,10 +1072,10 @@ constraint  \opt{\var{num}}
 Prints out all constraint information. If \var{num} is specified only this
 constraint is displayed, otherwise all constraints will be printed.
 
-\subsection{\texttt{harmonic_force}: Creating a harmonic trap}
- \newescommand{harmonic-force}
+\subsection{\texttt{harmonic_well}: Creating a harmonic trap}
+ \newescommand{harmonic-well}
  \begin{essyntax}
-   harmonic_force \{ \var{x} \var{y} \var{z} \} \var{k}
+   harmonic_well \{ \var{x} \var{y} \var{z} \} \var{k}
   \begin{features}
     \required{CUDA}
   \end{features}
@@ -1199,9 +1211,8 @@ Please note:
   distance from the non-virtual particle, the id of the non-virtual
   particle and a quaternion which defines the vector from non-virtual
   particle to virtual site in the non-virtual particle's body-fixed
-  frame. The first two are saved in the virtual site's
-  vs\_relative-attribute, while the latter is saved in the quaternion
-  attribute. Take care, not to overwrite these after using
+  frame. This information is saved in the virtual site's
+  vs\_relative-attribute. Take care, not to overwrite these after using
   vs\_auto\_relate.
 \item Virtual sites can not be placed relative to other virtual sites,
   as the order in which the positions of virtual sites are updated is
@@ -1213,10 +1224,10 @@ Please note:
 \item In case you know the correct quaternions, you can also setup a
   virtual site using
   \begin{essyntaxbox}
-    part \var{v} virtual 1 quat \var{q} vs_relative \var{n} \var{d}
+    part \var{v} virtual 1 vs_relative \var{n} \var{d} \var{q}
   \end{essyntaxbox}
-  where n is the id of the non-virtual particle and d is its distance
-  from the virtual site.
+  where n is the id of the non-virtual particle, d is its distance
+  from the virtual site, and q are the quaternions.
 \item In a simulation on more than one CPU, the effective cell size
   needs to be larger than the largest distance between a non-virtual
   particle and its associated virtual sites. To this aim, you need to

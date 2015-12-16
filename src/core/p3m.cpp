@@ -37,6 +37,9 @@
 #include "cells.hpp"
 #include "tuning.hpp"
 #include "elc.hpp"
+#ifdef CUDA
+#include "p3m_gpu_error.hpp"
+#endif
 
 #ifdef P3M
 
@@ -333,8 +336,8 @@ void   p3m_init() {
     p3m_calc_send_mesh();
     P3M_TRACE(p3m_p3m_print_local_mesh(p3m.local_mesh));
     P3M_TRACE(p3m_p3m_print_send_mesh(p3m.sm));
-    p3m.send_grid = (double *) realloc(p3m.send_grid, sizeof(double)*p3m.sm.max);
-    p3m.recv_grid = (double *) realloc(p3m.recv_grid, sizeof(double)*p3m.sm.max);
+    p3m.send_grid = (double *) Utils::realloc(p3m.send_grid, sizeof(double)*p3m.sm.max);
+    p3m.recv_grid = (double *) Utils::realloc(p3m.recv_grid, sizeof(double)*p3m.sm.max);
 
     /* fix box length dependent constants */
     p3m_scaleby_box_l();
@@ -353,7 +356,7 @@ void   p3m_init() {
 				p3m.local_mesh.dim,p3m.local_mesh.margin,
 				p3m.params.mesh, p3m.params.mesh_off,
 				&p3m.ks_pnum);
-    p3m.ks_mesh = (double *) realloc(p3m.ks_mesh, ca_mesh_size*sizeof(double));
+    p3m.ks_mesh = (double *) Utils::realloc(p3m.ks_mesh, ca_mesh_size*sizeof(double));
     
 
     P3M_TRACE(fprintf(stderr,"%d: p3m.rs_mesh ADR=%p\n",this_node,p3m.rs_mesh));
@@ -506,7 +509,7 @@ void p3m_interpolate_charge_assignment_function()
 
   for (i=0; i < p3m.params.cao; i++) {
     /* allocate memory for interpolation array */
-    p3m.int_caf[i] = (double *) realloc(p3m.int_caf[i], sizeof(double)*(2*p3m.params.inter+1));
+    p3m.int_caf[i] = (double *) Utils::realloc(p3m.int_caf[i], sizeof(double)*(2*p3m.params.inter+1));
 
     /* loop over all interpolation points */
     for (j=-p3m.params.inter; j<=p3m.params.inter; j++)
@@ -1080,8 +1083,8 @@ void p3m_realloc_ca_fields(int newsize)
 
   P3M_TRACE(fprintf(stderr,"%d: p3m_realloc_ca_fields: old_size=%d -> new_size=%d\n",this_node,p3m.ca_num,newsize));
   p3m.ca_num = newsize;
-  p3m.ca_frac = (double *)realloc(p3m.ca_frac, p3m.params.cao3*p3m.ca_num*sizeof(double));
-  p3m.ca_fmp  = (int *)realloc(p3m.ca_fmp, p3m.ca_num*sizeof(int));
+  p3m.ca_frac = (double *)Utils::realloc(p3m.ca_frac, p3m.params.cao3*p3m.ca_num*sizeof(double));
+  p3m.ca_fmp  = (int *)Utils::realloc(p3m.ca_fmp, p3m.ca_num*sizeof(int));
     
 } 
 #endif
@@ -1090,9 +1093,9 @@ void p3m_calc_meshift(void)
 {
     int i;
     
-    p3m.meshift_x = (double *) realloc(p3m.meshift_x, p3m.params.mesh[0]*sizeof(double));
-    p3m.meshift_y = (double *) realloc(p3m.meshift_y, p3m.params.mesh[1]*sizeof(double));
-    p3m.meshift_z = (double *) realloc(p3m.meshift_z, p3m.params.mesh[2]*sizeof(double));
+    p3m.meshift_x = (double *) Utils::realloc(p3m.meshift_x, p3m.params.mesh[0]*sizeof(double));
+    p3m.meshift_y = (double *) Utils::realloc(p3m.meshift_y, p3m.params.mesh[1]*sizeof(double));
+    p3m.meshift_z = (double *) Utils::realloc(p3m.meshift_z, p3m.params.mesh[2]*sizeof(double));
 
     p3m.meshift_x[0] = p3m.meshift_y[0] = p3m.meshift_z[0] = 0;
     for (i = 1; i <= p3m.params.mesh[RX]/2; i++) {
@@ -1119,7 +1122,7 @@ void p3m_calc_differential_operator()
   int i,j;
 
   for(i=0;i<3;i++) {
-    p3m.d_op[i] = (double*)realloc(p3m.d_op[i], p3m.params.mesh[i]*sizeof(double));
+    p3m.d_op[i] = (double*)Utils::realloc(p3m.d_op[i], p3m.params.mesh[i]*sizeof(double));
     p3m.d_op[i][0] = 0;
     p3m.d_op[i][p3m.params.mesh[i]/2] = 0.0;
 
@@ -1144,7 +1147,7 @@ void p3m_calc_influence_function_force()
         size *= fft.plan[3].new_mesh[i];
         end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
     }
-    p3m.g_force = (double *) realloc(p3m.g_force, size*sizeof(double));
+    p3m.g_force = (double *) Utils::realloc(p3m.g_force, size*sizeof(double));
 
     for(n[0]=fft.plan[3].start[0]; n[0]<end[0]; n[0]++) {
         for(n[1]=fft.plan[3].start[1]; n[1]<end[1]; n[1]++) {
@@ -1223,7 +1226,7 @@ void p3m_calc_influence_function_energy()
       start[i] = fft.plan[3].start[i];
     }
 
-    p3m.g_energy = (double *) realloc(p3m.g_energy, size*sizeof(double));
+    p3m.g_energy = (double *) Utils::realloc(p3m.g_energy, size*sizeof(double));
     ind = 0;
 
 
@@ -1313,7 +1316,12 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_a
   *_alpha_L = alpha_L;
   /* calculate real space and k space error for this alpha_L */
   rs_err = p3m_real_space_error(coulomb.prefactor,r_cut_iL,p3m.sum_qpart,p3m.sum_q2,alpha_L);
-  ks_err = p3m_k_space_error(coulomb.prefactor,mesh,cao,p3m.sum_qpart,p3m.sum_q2,alpha_L);
+#ifdef CUDA
+  if(coulomb.method == COULOMB_P3M_GPU)
+    ks_err = p3m_k_space_error_gpu(coulomb.prefactor, mesh, cao, p3m.sum_qpart, p3m.sum_q2, alpha_L, box_l);
+  else
+#endif
+    ks_err = p3m_k_space_error(coulomb.prefactor,mesh,cao,p3m.sum_qpart,p3m.sum_q2,alpha_L);
 
   *_rs_err = rs_err;
   *_ks_err = ks_err;
@@ -1452,7 +1460,7 @@ static double p3m_m_time(char **log, int mesh[3],
   int cao = *_cao;
 
   P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=(%d, %d %d), cao_min=%d, cao_max=%d, rmin=%f, rmax=%f\n",
-                   mesh[0],mesh[1],mesh[2], cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
+                    mesh[0],mesh[1],mesh[2], cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
   /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
      to increase cao to increase the obtainable precision of the far formula. */
   do {
@@ -1688,8 +1696,9 @@ int p3m_adaptive_tune(char **log) {
 
     /* the optimum r_cut for this mesh is the upper limit for higher meshes,
        everything else is slower */
-    r_cut_iL_max = tmp_r_cut_iL;
-
+    if(coulomb.method == COULOMB_P3M)
+      r_cut_iL_max = tmp_r_cut_iL;
+    
     /* new optimum */
     if (tmp_time < time_best) {
       P3M_TRACE(fprintf(stderr, "Found new optimum: time %lf, mesh (%d %d %d)\n", tmp_time, tmp_mesh[0], tmp_mesh[1], tmp_mesh[2]));
@@ -2103,8 +2112,8 @@ void p3m_calc_kspace_stress (double* stress) {
         int jx, jy, jz, i, ind = 0;
         // ordering after fourier transform
         const int x = 2, y = 0, z = 1;
-        node_k_space_stress = (double*)malloc(9*sizeof(double));
-        k_space_stress = (double*)malloc(9*sizeof(double));
+        node_k_space_stress = (double*)Utils::malloc(9*sizeof(double));
+        k_space_stress = (double*)Utils::malloc(9*sizeof(double));
 
         for (i = 0; i < 9; i++) {
             node_k_space_stress[i] = 0.0;

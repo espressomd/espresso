@@ -202,14 +202,14 @@ void calc_local_mol_info (IntList *local_trapped_mols)
 #endif
       }  
       if (fixed) {
-	topology[mol].mass += PMASS(p[i]);
+	topology[mol].mass += (p[i]).p.mass;
 	/* Unfold the particle */
         unfold_position(p[i].r.p, p[i].m.v, p[i].l.i);
 
 	for ( j = 0 ; j < 3 ; j++ ) {
 	  topology[mol].f[j] += p[i].f.f[j];
-	  topology[mol].com[j] += p[i].r.p[j]*PMASS(p[i]); 
-	  topology[mol].v[j] += p[i].m.v[j]*PMASS(p[i]); 
+	  topology[mol].com[j] += p[i].r.p[j]*(p[i]).p.mass; 
+	  topology[mol].v[j] += p[i].m.v[j]*(p[i]).p.mass; 
 	}
 	/* Fold the particle back */
 	fold_position(p[i].r.p,p[i].l.i);
@@ -246,7 +246,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   int *local_mols;
   MPI_Status status;
 
-  n_local_mols = (int *) malloc(n_nodes*sizeof(int));
+  n_local_mols = (int *) Utils::malloc(n_nodes*sizeof(int));
   sum_n_local_mols = 0;
 
   /* Everyone tells me how many trapped molecules are on their node */
@@ -257,7 +257,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   for (i=1; i <n_nodes; i++) {
     sum_n_local_mols += n_local_mols[i];
   }
-  local_mols = (int *) malloc(sum_n_local_mols*sizeof(int));
+  local_mols = (int *) Utils::malloc(sum_n_local_mols*sizeof(int));
 
   /* Everyone tells me which trapped molecules are on their node */
   count = 0;
