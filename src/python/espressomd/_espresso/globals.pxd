@@ -127,6 +127,7 @@ cdef extern from "grid.hpp":
     double local_box_l[3]
     extern int node_grid[3]
     extern int periodic
+    extern double min_box_l
 
 cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:
@@ -136,3 +137,6 @@ cdef extern from "npt.hpp":
         double p_diff
         double piston
     extern nptiso_struct nptiso
+
+cdef extern from "statistics.hpp":
+    extern int n_configs
