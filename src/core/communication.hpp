@@ -483,7 +483,10 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
 
 /** Issue REQ_SEND_PARTICLE_T: send particle type specific frictional coefficient. */
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
+#ifdef ROTATION
+void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);

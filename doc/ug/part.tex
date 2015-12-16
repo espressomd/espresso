@@ -56,6 +56,7 @@
     exclude=\arg{list of ints},
     temp=\arg{float},
     gamma=\arg{float},
+    gamma_rot=\arg{float},
     rotation=\arg{bool},
     swimming=\arg{dictionary \ttfamily \{
       `f_swim':\arg{float},
@@ -91,6 +92,7 @@
   \require{8}{\opt{vs\_auto\_relate\_to \var{pid}}}
   \require{9}{\opt{temp \var{T}}}
   \require{9}{\opt{gamma \var{g}}}
+  \require{2,9}{\opt{gamma\_rot \var{grot}}}
   \require{10}{\opt{rotation \var{rot}}}
   \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
   \require{12}{\opt{swimming \alt{\alt{v_swim \var{v\_swim} \asep
@@ -1070,10 +1072,10 @@ constraint  \opt{\var{num}}
 Prints out all constraint information. If \var{num} is specified only this
 constraint is displayed, otherwise all constraints will be printed.
 
-\subsection{\texttt{harmonic_force}: Creating a harmonic trap}
- \newescommand{harmonic-force}
+\subsection{\texttt{harmonic_well}: Creating a harmonic trap}
+ \newescommand{harmonic-well}
  \begin{essyntax}
-   harmonic_force \{ \var{x} \var{y} \var{z} \} \var{k}
+   harmonic_well \{ \var{x} \var{y} \var{z} \} \var{k}
   \begin{features}
     \required{CUDA}
   \end{features}

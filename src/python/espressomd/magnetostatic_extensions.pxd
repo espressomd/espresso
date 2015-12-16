@@ -25,7 +25,7 @@ from utils cimport *
 IF DIPOLES == 1:
 
     cdef extern from "mdlc_correction.hpp":
-        ctypedef struct DLC_struct:
+        ctypedef struct dlc_struct "DLC_struct":
             double maxPWerror
             double gap_size
             double far_cut
@@ -33,4 +33,4 @@ IF DIPOLES == 1:
         int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 
         # links intern C-struct with python object
-        cdef extern DLC_struct dlc_params
+        cdef extern dlc_struct dlc_params

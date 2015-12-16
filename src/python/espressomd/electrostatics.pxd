@@ -85,19 +85,20 @@ IF ELECTROSTATICS:
             # links intern C-struct with python object
             cdef extern p3m_data_struct p3m
 
-        cdef extern from "p3m_gpu.hpp":
-            void p3m_gpu_init(int cao, int *mesh, double alpha, double *box)
+        IF CUDA:
+            cdef extern from "p3m_gpu.hpp":
+                void p3m_gpu_init(int cao, int * mesh, double alpha, double * box)
 
-        cdef inline python_p3m_gpu_init(params):
-            cdef int cao
-            cdef int mesh[3]
-            cdef double alpha
-            cdef double box[3]
-            cao = params["cao"]
-            mesh = params["mesh"]
-            alpha = params["alpha"]
-            box = params["box"]
-            p3m_gpu_init(cao, mesh, alpha, box)
+            cdef inline python_p3m_gpu_init(params):
+                cdef int cao
+                cdef int mesh[3]
+                cdef double alpha
+                cdef double box[3]
+                cao = params["cao"]
+                mesh = params["mesh"]
+                alpha = params["alpha"]
+                box = params["box"]
+                p3m_gpu_init(cao, mesh, alpha, box)
 
         # Convert C arguments into numpy array
         cdef inline python_p3m_set_mesh_offset(mesh_off):

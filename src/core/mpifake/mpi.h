@@ -195,6 +195,13 @@ inline int MPI_Allgather(void *sbuf, int scount, MPI_Datatype sdtype,
 			   void *rbuf, int rcount, MPI_Datatype rdtype,
 			   MPI_Comm comm)
 { return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
+inline int MPI_Allgatherv(void *sbuf, int scount, MPI_Datatype sdtype,
+			   void *rbuf, int* rcount, int* displ, MPI_Datatype rdtype,
+			   MPI_Comm comm)
+{ return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount[0], rdtype); }
+
+
+
 inline int MPI_Scatter(void *sbuf, int scount, MPI_Datatype sdtype,
 			 void *rbuf, int rcount, MPI_Datatype rdtype,
 			 int root, MPI_Comm comm)

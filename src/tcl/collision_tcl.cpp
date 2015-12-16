@@ -43,19 +43,39 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
     /* this one can be combined with the rest */
     if (collision_params.mode & COLLISION_MODE_EXCEPTION) {
       sprintf(s, " exception");
+      Tcl_AppendResult(interp, s + 1, (char*) NULL);
     }
 
     if (collision_params.mode & COLLISION_MODE_VS) {
       sprintf(s, " bind_at_point_of_collision %f %d %d %d",
 	      collision_params.distance, collision_params.bond_centers,
 	      collision_params.bond_vs, collision_params.vs_particle_type);
+      Tcl_AppendResult(interp, s + 1, (char*) NULL);
+      return TCL_OK;
+    }
+
+    if (collision_params.mode & COLLISION_MODE_BIND_THREE_PARTICLES) {
+      sprintf(s, " bind_three_particles %f %d %d %d",
+	      collision_params.distance, collision_params.bond_centers,
+	      collision_params.bond_three_particles, collision_params.three_particle_angle_resolution);
+      Tcl_AppendResult(interp, s + 1, (char*) NULL);
+    }
+    else if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
+      sprintf(s, " glue_to_surface %f %d %d %d %d %d %d %f",
+	      collision_params.distance, collision_params.bond_centers,
+	      collision_params.bond_vs, collision_params.vs_particle_type,
+	      collision_params.part_type_to_be_glued, 
+	      collision_params.part_type_to_attach_vs_to,
+	      collision_params.part_type_after_glueing,
+	      collision_params.dist_glued_part_to_vs);
+      Tcl_AppendResult(interp, s + 1, (char*) NULL);
     }
     else if (collision_params.mode & COLLISION_MODE_BOND) {
       sprintf(s, " bind_centers %f %d", collision_params.distance,
 	      collision_params.bond_centers);
+      Tcl_AppendResult(interp, s + 1, (char*) NULL);
     }
     // first character is always the separating space
-    Tcl_AppendResult(interp, s + 1, (char*) NULL);
     return TCL_OK;
   }
 
@@ -63,16 +83,26 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
 
   // Otherwise, we set parameters
   if (ARG0_IS_S("off")) {
-    collision_detection_set_params(0,0,0,0,0);
+    collision_detection_set_params(0,0,0,0,0,0,0,0,0,0,0);
     return TCL_OK;
   }
   else {
     /* parameters of collision_detection_set_params */
     int mode = 0;
-    double d = 0;
+    
+    // Distances
+    double d,d2 = 0;
+
+    // Bond types
     int bond_centers = 0;
     int bond_vs = 0;
-    int t = 0;
+    
+    // Particle types for virtual sites based based methods
+    int t,tg,tv,ta = 0;
+    
+    // /bond types for three particle binding
+    int bond_three_particles=0;
+    int angle_resolution=0;
 
     if (ARG0_IS_S("exception")) {
       mode = COLLISION_MODE_EXCEPTION;
@@ -122,12 +152,76 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
       }
       argc -= 5; argv += 5;
     }
+    else if (ARG0_IS_S("glue_to_surface")) {
+      mode |= COLLISION_MODE_BOND | COLLISION_MODE_GLUE_TO_SURF;
+      if (argc != 9) {
+	Tcl_AppendResult(interp, "Not enough parameters, need a distance, two bond types, four particle types and another distance as args.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_D(1,d)) {
+	Tcl_AppendResult(interp, "Need a distance as 1st arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(2,bond_centers)) {
+	Tcl_AppendResult(interp, "Need a bond type as 2nd arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(3,bond_vs)) {
+	Tcl_AppendResult(interp, "Need a bond type as 3rd arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(4,t)) {
+	Tcl_AppendResult(interp, "Need a particle type as 4th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(5,tg)) {
+	Tcl_AppendResult(interp, "Need a particle type as 5th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(6,tv)) {
+	Tcl_AppendResult(interp, "Need a particle type as 6th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(7,ta)) {
+	Tcl_AppendResult(interp, "Need a particle type as 7th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_D(8,d2)) {
+	Tcl_AppendResult(interp, "Need a distance as 8th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      argc -= 9; argv += 8;
+    }
+    else if (ARG0_IS_S("bind_three_particles")) {
+      mode |= COLLISION_MODE_BIND_THREE_PARTICLES | COLLISION_MODE_BOND;
+      if (argc != 5) {
+	Tcl_AppendResult(interp, "Not enough parameters, need a distance and two bond types.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_D(1,d)) {
+	Tcl_AppendResult(interp, "Need a distance as 1st arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(2,bond_centers)) {
+	Tcl_AppendResult(interp, "Need a bond type as 2nd arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(3,bond_three_particles)) {
+	Tcl_AppendResult(interp, "Need a bond type as 3rd arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      if (!ARG_IS_I(4,angle_resolution)) {
+	Tcl_AppendResult(interp, "Need an angle resolution as 4th arg.", (char*) NULL);
+	return TCL_ERROR;
+      }
+      argc -= 5; argv += 5;
+    }
     else {
       Tcl_AppendResult(interp, "\"", argv[0], "\" is not a valid collision detection mode.", (char*) NULL);
       return TCL_ERROR;
     }
     
-    int res = collision_detection_set_params(mode,d,bond_centers,bond_vs,t);
+    int res = collision_detection_set_params(mode,d,bond_centers,bond_vs,t,d2,tg,tv,ta,bond_three_particles,angle_resolution);
 
     switch (res) {
     case 1:
@@ -144,6 +238,12 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
       return TCL_ERROR;
     case 5:
       Tcl_AppendResult(interp, "Virtual particles need a pair bond or triple bond.", (char*) NULL);
+      return TCL_ERROR;
+    case 6:
+      Tcl_AppendResult(interp, "Not enough angular bonds.", (char*) NULL);
+      return TCL_ERROR;
+    case 7:
+      Tcl_AppendResult(interp, "bond_three_particles needs triple bonds.", (char*) NULL);
       return TCL_ERROR;
     }
 

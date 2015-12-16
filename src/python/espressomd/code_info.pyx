@@ -122,7 +122,7 @@ def features():
         f.append("DPD_MASS_LIN")
 
     IF STAT_DEBUG == 1:
-        f.append("STAT_DEBUG")        
+        f.append("STAT_DEBUG")
 
     IF OIF_LOCAL_FORCES == 1:
         f.append("OIF_LOCAL_FORCES")

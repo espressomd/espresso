@@ -24,21 +24,21 @@ cdef extern from "stdlib.h":
     void * malloc(size_t size)
     void * realloc(void * ptr, size_t size)
 
-cdef np.ndarray create_nparray_from_IntList(IntList * il):
+cdef np.ndarray create_nparray_from_int_list(int_list * il):
     numpyArray = np.zeros(il.n)
     for i in range(il.n):
         numpyArray[i] = il.e[i]
 
     return numpyArray
 
-cdef np.ndarray create_nparray_from_DoubleList(DoubleList * dl):
+cdef np.ndarray create_nparray_from_double_list(double_list * dl):
     numpyArray = np.zeros(dl.n)
     for i in range(dl.n):
         numpyArray[i] = dl.e[i]
 
-cdef IntList * create_IntList_from_python_object(obj):
-    cdef IntList * il
-    il = <IntList * > malloc(sizeof(IntList))
+cdef int_list * create_int_list_from_python_object(obj):
+    cdef int_list * il
+    il = <int_list * > malloc(sizeof(int_list))
     init_intlist(il)
 
     alloc_intlist(il, len(obj))
@@ -47,7 +47,7 @@ cdef IntList * create_IntList_from_python_object(obj):
         print il.e[i]
     return il
 
-cdef checkTypeOrExcept(x, n, t, msg):
+cdef check_type_or_throw_except(x, n, t, msg):
     """Checks that x is of type t and that n values are given, otherwise throws ValueError with the message msg.
        If x is an array/list/tuple, the type checking is done on the elements, and
        all elements are checked.
@@ -78,7 +78,7 @@ cdef np.ndarray create_nparray_from_double_array(double * x, int n):
         numpyArray[i] = x[i]
     return numpyArray
 
-cdef checkRangeOrExcept(x, v_min, incl_min, v_max, incl_max):
+cdef check_range_or_except(x, v_min, incl_min, v_max, incl_max):
     """Checks that x is in range [v_min,v_max] (inlude boundaries via inlc_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to disable limit """
 
     # Array/list/tuple

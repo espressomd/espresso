@@ -168,6 +168,12 @@ BOND_ANGLE_COSINE               notest
 BOND_ANGLE_COSSQUARE            notest
 BOND_ANGLE_OLD                  notest
 
+// Shape of the noise in ther (Langevin) thermostat
+FLATNOISE                        requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
+GAUSSRANDOM                      requires not FLATNOISE and not GAUSSRANDOM_CUT
+GAUSSRANDOMCUT                   requires not GAUSSRANDOM and not FLATNOISE
+
+
 /* Strange features. Use only if you know what you are doing! */
 /* activate the old dihedral form */
 OLD_DIHEDRAL                    notest

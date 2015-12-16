@@ -159,7 +159,7 @@ void dpd_cool_down()
 #endif
 }
 
-void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
+void add_dpd_thermo_pair_force(Particle * p1, Particle * p2, double d[3], double dist, double dist2)
 {
   extern double dpd_gamma,dpd_pref1, dpd_pref2,dpd_r_cut,dpd_r_cut_inv;
   extern int dpd_wf;
@@ -201,11 +201,11 @@ void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double d
 #endif
 
 #ifdef DPD_MASS_RED
-  massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+  massf=2*(*p1).p.mass*(*p2).p.mass/((*p1).p.mass+(*p2).p.mass);
 #endif
 
 #ifdef DPD_MASS_LIN
-  massf=0.5*(PMASS(*p1)+PMASS(*p2));
+  massf=0.5*((*p1).p.mass+(*p2).p.mass);
 #endif
 
 
@@ -269,7 +269,7 @@ void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double d
         }
         //NOTE: velocity are scaled with time_step
         f_D[i]*=dpd_pref3*omega2;
-        //NOTE: noise force scales with 1/sqrt(time_step
+        //NOTE: noise force scales with 1/sqrt(time_step)
         f_R[i]*=dpd_pref4*omega*dist_inv;
       }
       for(j=0; j<3; j++) {
@@ -408,11 +408,11 @@ void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_para
   if( le_chatterjee_test_pair(p1, p2) ) return;
 #endif  
 #ifdef DPD_MASS_RED
-  massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+  massf=2*(*p1).p.mass*(*p2).p.mass/((*p1).p.mass+(*p2).p.mass);
 #endif
 
 #ifdef DPD_MASS_LIN
-  massf=0.5*(PMASS(*p1)+PMASS(*p2));
+  massf=0.5*((*p1).p.mass+(*p2).p.mass);
 #endif
 
   P_times_dist_sqr[0][0]=dist2;
