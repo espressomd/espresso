@@ -41,6 +41,6 @@ namespace Shapes {
     /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
     double direction;
   };
-};
+}
 
 #endif

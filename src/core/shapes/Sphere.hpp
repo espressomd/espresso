@@ -27,6 +27,7 @@
 
 namespace Shapes {
   struct Sphere : public Shape {
+    Sphere() : direction(-1) {}
     virtual const std::string name() const { return std::string("Sphere"); }
     int calculate_dist(const double *ppos, double *dist, double *vec);
     Parameters all_parameters() const;
