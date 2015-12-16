@@ -285,49 +285,47 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
     return linear_momentum;
 }
 
-void centermass(int type, double *com)
+
+std::vector<double> centerofmass(int type)
 {
-  int i, j;
-  double M = 0.0;
-  com[0]=com[1]=com[2]=0.;
-   	
-  updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_part; j++) {
-    if ((partCfg[j].p.type == type) || (type == -1)) {
-      for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].r.p[i]*(partCfg[j]).p.mass;
-      }
-      M += (partCfg[j]).p.mass;
+    std::vector<double> com (3);
+    double mass = 0.0;
+    
+    updatePartCfg(WITHOUT_BONDS);
+    for (int i=0; i<n_part; i++) {
+        if ((partCfg[i].p.type == type) || (type == -1)) {
+            for (int j=0; j<3; j++) {
+                com[j] += partCfg[i].r.p[j]*(partCfg[i]).p.mass;
+            }
+            mass += (partCfg[i]).p.mass;
+        }
     }
-  }
-  
-  for (i=0; i<3; i++) {
-    com[i] /= M;
-  }
-  return;
+    for (int j=0; j<3; j++) com[j] /= mass;
+    return com;
 }
 
-void centermass_vel(int type, double *com)
+
+std::vector<double> centerofmass_vel(int type)
 {
-  /*center of mass velocity scaled with time_step*/
-  int i, j;
-  int count = 0;
-  com[0]=com[1]=com[2]=0.;
+    /*center of mass velocity scaled with time_step*/
+    std::vector<double> com_vel (3);
+    int i, j;
+    int count = 0;
 
-  updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_part; j++) {
-    if (type == partCfg[j].p.type) {
-      for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].m.v[i];
-      }
-      count++;
+    updatePartCfg(WITHOUT_BONDS);
+    for (j=0; j<n_part; j++) {
+        if (type == partCfg[j].p.type) {
+            for (i=0; i<3; i++) {
+            	com_vel[i] += partCfg[j].m.v[i];
+            }
+            count++;
+        }
     }
-  }
 
-  for (i=0; i<3; i++) {
-    com[i] /= count;
-  }
-  return;
+    for (i=0; i<3; i++) {
+        com_vel[i] /= count;
+    }
+    return com_vel;
 }
 
 void angularmomentum(int type, double *com)
@@ -355,12 +353,12 @@ void angularmomentum(int type, double *com)
 void  momentofinertiamatrix(int type, double *MofImatrix)
 {
   int i,j,count;
-  double p1[3],com[3],massi;
-
+  double p1[3],massi;
+  std::vector<double> com (3);
   count=0;
   updatePartCfg(WITHOUT_BONDS);
   for(i=0;i<9;i++) MofImatrix[i]=0.;
-  centermass(type, com);
+  com = centerofmass(type);
   for (j=0; j<n_part; j++) {
     if (type == partCfg[j].p.type) {
       count ++;
@@ -386,7 +384,7 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
 void calc_gyration_tensor(int type, double **_gt)
 {
   int i, j, count;
-  double com[3];
+  std::vector<double> com (3);
   double eva[3],eve0[3],eve1[3],eve2[3];
   double *gt=NULL, tmp;
   double Smatrix[9],p1[3];
@@ -398,7 +396,7 @@ void calc_gyration_tensor(int type, double **_gt)
   updatePartCfg(WITHOUT_BONDS);
 
   /* Calculate the position of COM */
-  centermass(type,com);
+  com = centerofmass(type);
 
   /* Calculate the gyration tensor Smatrix */
   count=0;

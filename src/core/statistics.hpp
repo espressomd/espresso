@@ -348,16 +348,19 @@ inline double min_distance(double pos1[3], double pos2[3]) {
   return sqrt(min_distance2(pos1, pos2));
 }
 
+
 /** calculate the center of mass of a special type of the current configuration
  *  \param type  type of the particle
  *  \param com   center of mass position
  */
-void centermass(int type, double *com);
+std::vector<double> centerofmass(int part_type);
+
 
 /** Docs missing
 \todo Docs missing
 */
-void centermass_vel(int type, double *com);
+std::vector<double> centerofmass_vel(int type);
+
 
 /** calculate the angular momentum of a special type of the current configuration
  *  \param type  type of the particle
