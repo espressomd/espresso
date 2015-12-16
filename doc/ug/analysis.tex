@@ -340,6 +340,23 @@ used can be retrieved. Likewise the option \keyword{set} enables you to set thos
 \label{analyze:<rdf>}
 \analyzeindex{radial distribution function $g(r)$}
 
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    rdf
+  }{
+    system = \arg{system},
+    rdf_type = \arg{string},
+    type_list_a = \arg{list of ints},
+    type_list_b = \arg{list of ints},
+    r_min = \arg{float (0.0)},
+    r_max = \arg{float},
+    r_bins = \arg{int (100)}
+    n_conf = \arg{int}
+  }
+\end{pysyntax}
+
 \begin{essyntax}
   analyze \alt{rdf \asep <rdf>} 
   \var{part\_type\_list\_a} \var{part\_type\_list\_b} 
