@@ -7,7 +7,7 @@
 
 namespace Constraints {
   struct InteractionConstraint : public GeometryConstraint {
-    InteractionConstraint(Shapes::Shape &shape) : GeometryConstraint(shape) {}
+    InteractionConstraint(Shapes::Shape &shape) : GeometryConstraint(shape), only_positive(0) {}
     InteractionConstraint(Shapes::Shape &shape, bool _penetrable, ReflectionType _reflection_type, int _only_positive, int ia_type) : GeometryConstraint(shape, _penetrable, _reflection_type), only_positive(_only_positive) {
       part_rep.p.type = ia_type;
     }
@@ -18,7 +18,7 @@ namespace Constraints {
     
     /** Parsing stuff */
     Parameters get_parameters();
-    Parameters &all_parameters() const;
+    Parameters all_parameters() const;
     void set_parameter(const std::string &name, const Variant &value);
   };
 }

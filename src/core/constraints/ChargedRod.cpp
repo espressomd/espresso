@@ -58,7 +58,7 @@ void ChargedRod::set_parameter(const std::string &name, const Variant &value) {
   SET_PARAMETER_HELPER("lambda", lambda);
 }
 
-Parameters &ChargedRod::all_parameters() const {
+Parameters ChargedRod::all_parameters() const {
   static bool init = false;
   static Parameters p;
   if(!init) {

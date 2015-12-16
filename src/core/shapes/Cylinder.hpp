@@ -30,7 +30,7 @@ namespace Shapes {
     virtual const std::string name() const { return std::string("Cylinder"); }
     virtual int calculate_dist(const double *ppos, double *dist, double *vec);
 
-    Parameters &all_parameters() const;
+    Parameters all_parameters() const;
     Parameters get_parameters();
     void set_parameter(const std::string &name, const Variant &value);
     

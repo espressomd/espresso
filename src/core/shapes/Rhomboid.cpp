@@ -671,7 +671,7 @@ namespace Shapes {
     return 0;
   }
 
-  Parameters &Rhomboid::all_parameters() const {
+  Parameters Rhomboid::all_parameters() const {
     static bool init = false;
     static Parameters p;
     if(!init) {

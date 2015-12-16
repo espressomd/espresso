@@ -93,17 +93,14 @@ int Cylinder::calculate_dist(const double *ppos, double *dist, double *vec)
   return 0;
 }
 
-Parameters &Cylinder::all_parameters() const {
-  static bool init = false;
-  static Parameters p;
-  if(!init) {
-    p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
-    p["axis"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
-    p["radius"] = Parameter(Variant::DOUBLE, true);
-    p["length"] = Parameter(Variant::DOUBLE, true);
-    p["direction"] = Parameter(Variant::DOUBLE, true);
-    init = true;
-  }
+Parameters Cylinder::all_parameters() const {
+  Parameters p;
+
+  p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+  p["axis"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+  p["radius"] = Parameter(Variant::DOUBLE, true);
+  p["length"] = Parameter(Variant::DOUBLE, true);
+  p["direction"] = Parameter(Variant::DOUBLE, true);
   
   return p;
 }

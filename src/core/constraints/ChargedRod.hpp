@@ -20,7 +20,7 @@ namespace Constraints {
 
    /** Parsing stuff */
     Parameters get_parameters();
-    Parameters &all_parameters() const;
+    Parameters all_parameters() const;
     void set_parameter(const std::string &name, const Variant &value);
   };
 }

@@ -2,6 +2,8 @@
 #include <map>
 #include <string>
 
+#include <iostream>
+
 struct Parameter {
   Parameter() : type(Variant::NONE), n_elements(0), set(false), required(false) {}
   Parameter(Variant::Type _type, Variant _value, int _n_elements, bool _set, bool _required) :

@@ -13,9 +13,9 @@ string TclScriptObject::print_to_string() {
   return res.str();
 }
 
-void TclScriptObject::parse_from_string(list<string> &argv) {
+void TclScriptObject::parse_from_string(list<string> &argv) {  
   Parameters p = m_so->all_parameters();
-
+  
   for(list<string>::iterator it = argv.begin(); it != argv.end();) {    
     string s = *it;
     Parameters::iterator si = p.find(s);
@@ -115,11 +115,16 @@ void TclScriptObject::parse_from_string(list<string> &argv) {
       }
     }
   }
-  /** Drop unset */
-  for(Parameters::iterator it = p.begin(); it != p.end(); ++it)
-    if(!it->second.set)
-      p.erase(it);
+
+  std::cout << " parse_from_string()" << std::endl;
   
+  /** Drop unset */
+  for(Parameters::iterator it = p.begin(); it != p.end(); ++it) {
+    std::cout << it->first << " set: " << it->second.set << " value: " << it->second.value << std::endl;
+    if(it->second.set == 0)
+      p.erase(it);
+  }
+    
   m_so->set_parameters(p);
 }
 

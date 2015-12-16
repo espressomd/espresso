@@ -53,15 +53,13 @@ namespace Shapes {
     return 0;
   }
 
-  Parameters &Sphere::all_parameters() const {
-    static bool init = false;
-    static Parameters p;
-    if(!init) {
-      p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
-      p["radius"] = Parameter(Variant::DOUBLE, true);
-      p["direction"] = Parameter(Variant::DOUBLE, true);
-      init = true;
-    }
+  Parameters Sphere::all_parameters() const {
+    Parameters p;
+    
+    p["center"] = Parameter(Variant::DOUBLE_VECTOR, 3, true);
+    p["radius"] = Parameter(Variant::DOUBLE, true);
+    p["direction"] = Parameter(Variant::DOUBLE, true);
+
     return p;
   }
 

@@ -31,7 +31,7 @@ void ExternalMagneticField::set_parameter(const std::string &name, const Variant
   SET_PARAMETER_HELPER("field", ext_magn_field);
 }
 
-Parameters &ExternalMagneticField::all_parameters() const {
+Parameters ExternalMagneticField::all_parameters() const {
   static bool init = false;
   static Parameters p;
   if(!init) {

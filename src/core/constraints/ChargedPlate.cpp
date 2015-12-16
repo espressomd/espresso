@@ -38,7 +38,7 @@ void ChargedPlate::set_parameter(const std::string &name, const Variant &value) 
   SET_PARAMETER_HELPER("sigma", sigma);
 }
 
-Parameters &ChargedPlate::all_parameters() const {
+Parameters ChargedPlate::all_parameters() const {
   static bool init = false;
   static Parameters p;
   if(!init) {

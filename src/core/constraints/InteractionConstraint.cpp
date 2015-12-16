@@ -97,39 +97,43 @@ Parameters InteractionConstraint::get_parameters() {
   p["reflecting"] = reflection_type;
   p["penetrable"] = penetrable;
   p["tunable_slip"] = tuneable_slip;
-  
+
   /** Add the parameters from the shape */
   Parameters shape_parameters = m_shape.get_parameters();
-  p.insert(shape_parameters.begin(), shape_parameters.end());
-
+  for(auto &e: shape_parameters)
+    p[e.first] = e.second;  
+  
+  for(auto &e: p)
+    std::cout << e.first << " " << e.second.value << std::endl;
+  
   return p;
 }
 
-Parameters &InteractionConstraint::all_parameters() const {
-  static bool init = false;
-  static Parameters p;
-  if(!init) {
-    p["only_positive"] = Parameter(Variant::INT, true);
-    p["type"] = Parameter(Variant::INT, true);
-    p["reflecting"] = Parameter(Variant::INT, false);
-    p["penetrable"] = Parameter(Variant::INT, false);
-    p["tunable_slip"] = Parameter(Variant::INT, false);
-    
-    /** Add the parameters from the shape */
-    Parameters &shape_parameters = m_shape.all_parameters();
-    p.insert(shape_parameters.begin(), shape_parameters.end());
-    
-    init = true;
-  }  
+Parameters InteractionConstraint::all_parameters() const {
+  Parameters p;
 
+  p["only_positive"] = Parameter(Variant::INT, false);
+  p["type"] = Parameter(Variant::INT, true);
+  p["reflecting"] = Parameter(Variant::INT, false);
+  p["penetrable"] = Parameter(Variant::INT, false);
+  p["tunable_slip"] = Parameter(Variant::INT, false);
+    
+  /** Add the parameters from the shape */
+  Parameters shape_parameters = m_shape.all_parameters();
+  p.insert(shape_parameters.begin(), shape_parameters.end());
+    
   return p;
 }
 
 void InteractionConstraint::set_parameter(const std::string &name, const Variant &value) {
+  std::cout << "InteractionConstraint::set_parameter(" << name << ", " << value << ")" << std::endl;
   SET_PARAMETER_HELPER("only_positive", only_positive);
-  SET_PARAMETER_HELPER("type", part_rep.p.type);
-  make_particle_type_exist(part_rep.p.type);
-
+  if(name == "type") {
+    SET_PARAMETER_HELPER("type", part_rep.p.type);
+    make_particle_type_exist(part_rep.p.type);
+    return;
+  }
+  
   if(name == "reflecting")     
     reflection_type = static_cast<ReflectionType>(static_cast<int>(value));
 

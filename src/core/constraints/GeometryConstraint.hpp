@@ -19,7 +19,7 @@ struct GeometryConstraint : public Constraint {
   ReflectionType reflection_type;
   inline int calculate_dist(const double *ppos, double *dist, double *vec) const { return m_shape.calculate_dist(ppos, dist, vec); }
   void set_shape(Shapes::Shape &shape) { m_shape = shape; }
-  const Shapes::Shape &constget_shape() const { return m_shape; }
+  const Shapes::Shape &get_shape() const { return m_shape; }
  protected:
   Shapes::Shape &m_shape;
 };
