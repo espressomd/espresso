@@ -22,9 +22,7 @@ import espressomd
 import espressomd._system as es
 from espressomd import code_info
 import numpy as np
-from espressomd.interactions import FeneBond, HarmonicBond, Dihedral, Angle_Harmonic, Angle_Cosine,\
-    Angle_Cossquare, Subt_Lj, Stretching_Force, Area_Force_Local, Bending_Force, Volume_Force,\
-    Area_Force_Global, Stretchlin_Force, HarmonicDumbbellBond
+from espressomd.interactions import *
 
 
 class ParticleProperties(ut.TestCase):
@@ -73,13 +71,13 @@ class ParticleProperties(ut.TestCase):
                 # This code is run at the execution of the generated function.
                 # It will use the state of the variables in the outer function,
                 # which was there, when the outer function was called
-            self.system.bondedInter[bondId] = bondClass(**params)
-            outBond = self.system.bondedInter[bondId]
-            tnIn = bondClass(**params).typeNumber()
-            tnOut = outBond.typeNumber()
+            self.system.bonded_inter[bondId] = bondClass(**params)
+            outBond = self.system.bonded_inter[bondId]
+            tnIn = bondClass(**params).type_number()
+            tnOut = outBond.type_number()
             outParams = outBond.params
             self.assertTrue(self.bondsMatch(tnIn, tnOut, params, outParams), bondClass(
-                **params).typeName() + ": value set and value gotten back differ for bond id " + str(bondId) + ": " + params.__str__() + " vs. " + outParams.__str__())
+                **params).type_name() + ": value set and value gotten back differ for bond id " + str(bondId) + ": " + params.__str__() + " vs. " + outParams.__str__())
 
         return func
 
@@ -105,17 +103,17 @@ class ParticleProperties(ut.TestCase):
         0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
     test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
     test_stretching_force = generateTestForBondParams(
-        0, Stretching_Force, {"r0": 5.2, "ks": 3.2})
+        0, StretchingForce, {"r0": 5.2, "ks": 3.2})
     test_area_force_local = generateTestForBondParams(
-        0, Area_Force_Local, {"A0_l": 5.2, "ka_l": 3.2})
+        0, AreaForceLocal, {"A0_l": 5.2, "ka_l": 3.2})
     test_bending_force = generateTestForBondParams(
-        0, Bending_Force, {"phi0": 5.2, "kb": 3.2})
+        0, BendingForce, {"phi0": 5.2, "kb": 3.2})
     test_volume_force = generateTestForBondParams(
-        0, Volume_Force, {"V0": 5.2, "kv": 3.2})
+        0, VolumeForce, {"V0": 5.2, "kv": 3.2})
     test_area_force_global = generateTestForBondParams(
-        0, Area_Force_Global, {"A0_g": 5.2, "ka_g": 3.2})
+        0, AreaForceGlobal, {"A0_g": 5.2, "ka_g": 3.2})
     test_stretchlin_force = generateTestForBondParams(
-        0, Stretchlin_Force, {"r0": 5.2, "kslin": 3.2})
+        0, StretchlinForce, {"r0": 5.2, "kslin": 3.2})
 
 
 if __name__ == "__main__":

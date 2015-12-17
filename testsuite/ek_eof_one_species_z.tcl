@@ -303,13 +303,13 @@ if { $total_pressure_difference_yy > 1.5e-06 } {
 if { $total_pressure_difference_zz > 3.0e-05 } {
   error_exit "Pressure accuracy zz component not achieved"
 }
-if { $total_pressure_difference_xy > 2.0e-09 } {
+if { $total_pressure_difference_xy > 4.0e-09 } {
   error_exit "Pressure accuracy xy component not achieved"
 }
 if { $total_pressure_difference_yz > 1.5e-05 } {
   error_exit "Pressure accuracy yz component not achieved"
 }
-if { $total_pressure_difference_xz > 3.5e-09 } {
+if { $total_pressure_difference_xz > 7.0e-09 } {
   error_exit "Pressure accuracy xz component not achieved"
 }
 

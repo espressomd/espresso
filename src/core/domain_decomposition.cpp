@@ -646,6 +646,25 @@ Cell *dd_position_to_cell(double pos[3])
   return &cells[i];
 }
 
+void dd_position_to_cell_indices(double pos[3],int* idx)
+{
+  int i;
+  double lpos;
+
+  for(i=0;i<3;i++) {
+    lpos = pos[i] - my_left[i];
+
+    idx[i] = (int)(lpos*dd.inv_cell_size[i])+1;
+
+    if (idx[i] < 1) {
+      idx[i] = 1;
+    }
+    else if (idx[i] > dd.cell_grid[i]) {
+      idx[i] = dd.cell_grid[i];
+    }
+  }
+}
+
 /*************************************************/
 
 /** Append the particles in pl to \ref local_cells and update \ref local_particles.  
@@ -1157,11 +1176,7 @@ void calc_link_cell()
 	j_start = 0;
 	/* Tasks within cell: bonded forces */
 	if(n == 0) {
-	  add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-	  add_constraints_forces(&p1[i]);
-#endif
-	  add_external_potential_forces(&p1[i]);
+          add_single_particle_force(&p1[i]);
 	  if (rebuild_verletlist)
 	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 
@@ -1202,13 +1217,8 @@ void calculate_link_cell_energies()
     np1  = cell->n;
     /* calculate bonded interactions (loop local particles) */
     for(i = 0; i < np1; i++)  {
-      add_kinetic_energy(&p1[i]);
-      add_bonded_energy(&p1[i]);
-#ifdef CONSTRAINTS
-      add_constraints_energy(&p1[i]);
-#endif
-      add_external_potential_energy(&p1[i]);
-
+      add_single_particle_energy(&p1[i]);
+      
       if (rebuild_verletlist)
         memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
     }

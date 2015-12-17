@@ -33,7 +33,7 @@ proc h5md_init { data_path } {
 	h5mdfile H5Dopen2 "particles/atoms/mass/value"
 	if { [string first MASS [code_info]] != -1 } {
 		for  { set i 0 } { $i < [setmd n_part] } { incr i } {
-			h5mdfile H5_write_value value [part $i print mass]
+			h5mdfile H5_write_value value [part $i print mass] index $i
 		}
 		h5mdfile H5Dwrite
 	}

@@ -48,8 +48,8 @@ IF LB_GPU or LB:
         # validate the given parameters on actor initalization
         #
         ####################################################
-        def validateParams(self):
-            default_params = self.defaultParams()
+        def validate_params(self):
+            default_params = self.default_params()
 
             IF SHANCHEN:
                 if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
@@ -67,7 +67,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         #
         ####################################################
-        def validKeys(self):
+        def valid_keys(self):
             return "gpu", "agrid", "dens", "fric", "ext_force", "visc", "tau"
 
         ####################################################
@@ -75,7 +75,7 @@ IF LB_GPU or LB:
         # list of esential keys required for the fluid
         #
         ####################################################
-        def requiredKeys(self):
+        def required_keys(self):
             init = 0
             if init:
                 init = 1
@@ -88,7 +88,7 @@ IF LB_GPU or LB:
         # list of default parameters
         #
         ####################################################
-        def defaultParams(self):
+        def default_params(self):
             IF SHANCHEN:
                 return {"gpu": "yes",
                         "agrid": -1.0,
@@ -126,8 +126,8 @@ IF LB_GPU or LB:
             if lb_set_lattice_switch(py_lattice_switch):
                 raise Exception("lb_set_lattice_switch error")
 
-        def _setParamsInEsCore(self):
-            default_params = self.defaultParams()
+        def _set_params_in_es_core(self):
+            default_params = self.default_params()
 
             if python_lbfluid_set_density(self._params["dens"]):
                 raise Exception("lb_lbfluid_set_density error")
@@ -158,8 +158,8 @@ IF LB_GPU or LB:
         # function that calls wrapper functions which get the parameters from C-Level
         #
         ####################################################
-        def _getParamsFromEsCore(self):
-            default_params = self.defaultParams()
+        def _get_params_from_es_core(self):
+            default_params = self.default_params()
             params = self._params
 
             if python_lbfluid_get_density(self._params["dens"]):
@@ -190,21 +190,21 @@ IF LB_GPU or LB:
 
         ####################################################
         #
-        # redef setParams for lb use
+        # redef set_params for lb use
         #
         ####################################################
 
-        def setParams(self, **_params):
+        def set_params(self, **_params):
             """Update parameters. Only given """
             # Check, if any key was passed, which is not known
             for k in _params.keys():
-                if k not in self.validKeys():
+                if k not in self.valid_keys():
                     raise ValueError(
-                        "Only the following keys are supported: " + self.validKeys().__str__())
+                        "Only the following keys are supported: " + self.valid_keys().__str__())
 
             print "_params", _params
 
-            self.validateParams()
+            self.validate_params()
 
             if "dens" in _params:
                 if python_lbfluid_set_density(_params["dens"]):
@@ -285,7 +285,7 @@ IF LB_GPU or LB:
 #        return self.checkpoint_binary
     #  def _activateMethod(self):
 
-    #    self._setParamsInEsCore()
+    #    self._set_params_in_es_core()
 
     # class DeviceList:
     #  def __getitem__(self, _dev):
@@ -317,9 +317,9 @@ IF LB_GPU or LB:
         # Activate Actor
         #
         ####################################################
-        def _activateMethod(self):
+        def _activate_method(self):
 
-            self._setParamsInEsCore()
+            self._set_params_in_es_core()
 
         ####################################################
         #
@@ -328,4 +328,4 @@ IF LB_GPU or LB:
         ####################################################
         # def _deactivateMethod(self):
 
-        #   self._setParamsInEsCore()
+        #   self._set_params_in_es_core()

@@ -7,10 +7,13 @@ before_install:
  - sudo pip install cython --upgrade 
  - if [ "$with_mpi" != false ]; then sudo apt-get install libopenmpi-dev openmpi-bin; fi
  - if [ "$with_fftw" != false ]; then sudo apt-get install libfftw3-dev; fi
+ - pip install --user codecov
 
 env:
   - myconfig=default
   - myconfig=maxset
+  - myconfig=maxset-gaussrandom
+  - myconfig=maxset-gaussrandomcut
   - myconfig=molcut
   - myconfig=rest1
   - myconfig=rest2
@@ -53,3 +56,6 @@ matrix:
 
 
 script: ./maintainer/travis/build.sh
+
+after_success:
+ - codecov

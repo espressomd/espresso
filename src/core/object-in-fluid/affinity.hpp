@@ -42,7 +42,7 @@ int affinity_set_params(int part_type_a, int part_type_b,
 			   int type, double kappa, double r0, double Kon, double Koff, double maxBond, double cut);
 
 /** Calculate soft-sphere potential force between particle p1 and p2 */
-inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_affinity_pair_force(Particle * p1, Particle * p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
 

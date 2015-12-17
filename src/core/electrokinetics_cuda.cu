@@ -2588,6 +2588,9 @@ int ek_init() {
     lbpar_gpu.friction[0] = ek_parameters.friction;
 
     lbpar_gpu.rho[0] = ( ek_parameters.lb_density < 0.0 ? 1.0 : ek_parameters.lb_density );
+
+    lbpar_gpu.is_TRT = true;
+
     lb_reinit_parameters_gpu();
     
     lb_init_gpu();
