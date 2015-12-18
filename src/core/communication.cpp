@@ -666,7 +666,7 @@ void mpi_send_solvation(int pnode, int part, double* solvation)
        p->p.solvation[ii]= solvation[ii];
   }
   else {
-    MPI_Send(&solvation, LB_COMPONENTS, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(solvation, 2*LB_COMPONENTS, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
 
   on_particle_change();
