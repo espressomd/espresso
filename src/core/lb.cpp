@@ -3774,9 +3774,9 @@ int lb_lbfluid_get_interpolated_quantities(double* p, double* v, double * rho, d
         interpolated_u[1] += delta_factor[count] *local_j[1]/(rhotot);
         interpolated_u[2] += delta_factor[count] *local_j[2]/(rhotot) ;
 #ifdef SHANCHEN
-	dx =  (1-2*x) * ( delta[count] +delta[count+(1-2*x)]  ); 
-	dy =  (1-2*y) * ( delta[count] +delta[count+2*(1-2*y)]);
-	dz =  (1-2*z) * ( delta[count] +delta[count+4*(1-2*z)]);
+	dx =  (1-2*x) * ( delta_factor[count] +delta_factor[count+(1-2*x)]  ); 
+	dy =  (1-2*y) * ( delta_factor[count] +delta_factor[count+2*(1-2*y)]);
+	dz =  (1-2*z) * ( delta_factor[count] +delta_factor[count+4*(1-2*z)]);
 #endif
         for(int ii=0 ; ii < LB_COMPONENTS ; ++ii) { 
 
