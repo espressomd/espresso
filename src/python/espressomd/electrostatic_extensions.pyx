@@ -34,10 +34,10 @@ IF ELECTROSTATICS and P3M:
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float, "")
             check_range_or_except(
-                self._params["maxPWerror"], 0, False, "inf", True)
+                self._params,"maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(self._params["gap_size"], 1, float, "")
             check_range_or_except(
-                self._params["gap_size"], 0, False, "inf", True)
+                self._params,"gap_size", 0, False, "inf", True)
             check_type_or_throw_except(self._params["far_cut"], 1, float, "")
             check_type_or_throw_except(
                 self._params["neutralize"], 1, type(True), "")
@@ -70,104 +70,152 @@ IF ELECTROSTATICS and P3M:
         def _activate_method(self):
             self._set_params_in_es_core()
 
-		def _deactivateMethod(self):
-			pass
+        def _deactivateMethod(self):
+            pass
 
-	cdef class ICC(ElectrostaticExtensions):
+    cdef class ICC(ElectrostaticExtensions):
 
-		def validate_params(self):
-			default_params = self.defaultParams()
+        def validate_params(self):
+            default_params = self.default_params()
 
-			checkTypeOrExcept(self._params["n_icc"], 1, int, "")
-			checkRangeOrExcept(self._params["n_icc"], 1, True, "inf", True)
+            check_type_or_throw_except(self._params["n_icc"], 1, int, "")
+            check_range_or_except(
+                self._params,"n_icc", 1, True, "inf", True)
+
+            check_type_or_throw_except(
+                self._params["convergence"], 1, float, "")
+            check_range_or_except(
+                self._params,"convergence", 0, False, "inf", True)
+
+            check_type_or_throw_except(
+                self._params["relaxation"], 1, float, "")
+            check_range_or_except(
+                self._params,"relaxation", 0, False, "inf", True)
+
+            check_type_or_throw_except(
+                self._params["ext_field"], 3, float, "")
+
+            check_type_or_throw_except(
+                self._params["max_iterations"], 1, int, "")
+            check_range_or_except(
+                self._params,"max_iterations", 0, False, "inf", True)
+
+            check_type_or_throw_except(
+                self._params["first_id"], 1, int, "")
+            check_range_or_except(
+                self._params,"first_id", 0, True, "inf", True)
+
+            check_type_or_throw_except(
+                self._params["eps_out"], 1, float, "")
+
+            # Required list input
+            self._params["normals"] = np.array(self._params["normals"])
+            if self._params["normals"].size != self._params["n_icc"] * 3:
+                raise ValueError(
+                    "Expecting normal list with " + self._params["n_icc"] * 3 + " entries.")
+            check_type_or_throw_except(self._params["normals"], self._params[
+                "n_icc"], np.ndarray, "Error in normal list.")
+
+            check_type_or_throw_except(
+                self._params["areas"], self._params["n_icc"], float, "Error in area list.")
+
+            # Not Required
+            if self._params.has_key("sigmas"):
+                check_type_or_throw_except(
+                    self._params["sigmas"], self._params["n_icc"], float, "Error in sigma list.")
+            else:
+                self._params["sigmas"] = np.zeros(self._params["n_icc"])
+
+            if self._params.has_key("epsilons"):
+                check_type_or_throw_except(
+                    self._params["epsilons"], self._params["n_icc"], float, "Error in epsilon list.")
+            else:
+                self._params["epsilons"] = np.zeros(self._params["n_icc"])
+
+
+        def valid_keys(self):
+            return "n_icc", "convergence", "relaxation", "ext_field", "max_iterations", "first_id", "eps_out", "normals", "areas", "sigmas", "epsilons"
+
+        def required_keys(self):
+            return ["n_icc", "normals", "areas"]
+
+        def default_params(self):
+            return {"n_icc": 0,
+                    "convergence": 1e-3,
+                    "relaxation": 0.7,
+                    "ext_field": [0, 0, 0],
+                    "max_iterations": 100,
+                    "first_id": 0,
+                    "esp_out": 1,
+                    "normals": [],
+                    "areas": [],
+                    "sigmas": [],
+                    "epsilons": []}
+
+        def _get_params_from_es_core(self):
+            params = {}
+            params["n_icc"]=iccp3m_cfg.n_ic 
+
+            # Fill Lists
+            normals = []
+            areas = []
+            sigmas = []
+            epsilons = []
+            for i in range(iccp3m_cfg.n_ic):
+                normals.append([iccp3m_cfg.nvectorx[i], iccp3m_cfg.nvectory[i], iccp3m_cfg.nvectorz[i]])
+                areas.append(iccp3m_cfg.areas[i])
+                epsilons.append(iccp3m_cfg.ein[i])
+                sigmas.append(iccp3m_cfg.sigma[i])
+
+            params["normals"]  = normals
+            params["areas"]    = areas
+            params["epsilons"] = epsilons      
+            params["sigmas"]   = sigmas    
+
+            params["ext_field"]      = [iccp3m_cfg.extx, iccp3m_cfg.exty, iccp3m_cfg.extz]
+            params["first_id"]       = iccp3m_cfg.first_id      
+            params["max_iterations"] = iccp3m_cfg.num_iteration 
+            params["convergence"]    = iccp3m_cfg.convergence   
+            params["relaxation"]     = iccp3m_cfg.relax         
+            params["eps_out"]        = iccp3m_cfg.eout          
+
+            return params
+
+        def _set_params_in_es_core(self):
+
+            # First set number of icc particles
+            iccp3m_cfg.n_ic = self._params["n_icc"]
+            # Allocate ICC lists       
+            iccp3m_alloc_lists()
+
+            # Fill Lists
+            for i in range(iccp3m_cfg.n_ic):
+                iccp3m_cfg.nvectorx[i] = self._params["normals"][i][0]
+                iccp3m_cfg.nvectory[i] = self._params["normals"][i][1]
+                iccp3m_cfg.nvectorz[i] = self._params["normals"][i][2]
+                iccp3m_cfg.areas[i] = self._params["areas"][i]
+                iccp3m_cfg.ein[i] = self._params["epsilons"][i]
+                iccp3m_cfg.sigma[i] = self._params["sigmas"][i]
+
+            iccp3m_cfg.extx = self._params["ext_field"][0]
+            iccp3m_cfg.exty = self._params["ext_field"][1]
+            iccp3m_cfg.extz = self._params["ext_field"][2]
+            iccp3m_cfg.first_id = self._params["first_id"]
+            iccp3m_cfg.num_iteration = self._params["max_iterations"]
+            iccp3m_cfg.convergence = self._params["convergence"]
+            iccp3m_cfg.relax = self._params["relaxation"]
+            iccp3m_cfg.eout = self._params["eps_out"]
+            iccp3m_cfg.citeration = 0
             
-			checkTypeOrExcept(self._params["convergence"], 1, float, "")
-			checkRangeOrExcept(self._params["convergence"], 0, False, "inf", True)
-            
-			checkTypeOrExcept(self._params["relaxation"], 1, float, "")
-			checkRangeOrExcept(self._params["relaxation"], 0, False, "inf", True)
-            
-			checkTypeOrExcept(self._params["ext_field"], 3, float, "")
+            iccp3m_initialized = 1
+            iccp3m_cfg.set_flag = 1
 
-			checkTypeOrExcept(self._params["max_iterations"], 1, int, "")
-			checkRangeOrExcept(self._params["max_iterations"], 0, False, "inf", True)
-
-			checkTypeOrExcept(self._params["first_id"], 1, int, "")
-			checkRangeOrExcept(self._params["first_id"], 0, True, "inf", True)
-
-			checkTypeOrExcept(self._params["eps_out"], 1, float, "")
-
-			#Required list input
-			self._params["normals"]=np.array(self._params["normals"])
-			if self._params["normals"].size != self._params["n_icc"] * 3:
-				raise ValueError("Expecting normal list with " +  self._params["n_icc"] * 3 + " entries.")
-			checkTypeOrExcept(self._params["normals"], self._params["n_icc"], np.ndarray, "Error in normal list.")
-
-			checkTypeOrExcept(self._params["areas"], self._params["n_icc"], float, "Error in area list.")
-
-			#Not Required
-			if self._params.has_key("sigmas"):
-				checkTypeOrExcept(self._params["sigmas"], self._params["n_icc"], float, "Error in sigma list.")
-			else:
-				self._params["sigmas"]=np.zeros(self._params["n_icc"])
-
-			if self._params.has_key("epsilons"):
-				checkTypeOrExcept(self._params["epsilons"], self._params["n_icc"], float, "Error in epsilon list.")
-			else:
-				self._params["epsilons"]=np.zeros(self._params["n_icc"])
-
-		def valid_keys(self):
-			return "n_icc", "convergence", "relaxation", "ext_field", "max_iterations", "first_id", "eps_out", "normals", "areas", "sigmas", "epsilons"
-		def required_keys(self):
-			return ["n_icc", "normals", "areas"]
-
-		def default_params(self):
-			return {"n_icc": 0,
-					"convergence": 1e-3,
-					"relaxation": 0.7,
-					"ext_field": [0, 0, 0],
-					"max_iterations": 100,
-					"first_id": 0,
-					"esp_out": 1,
-					"normals": [],
-					"areas": [],
-					"sigmas": [],
-					"epsilons": []}
-
-		def _get_params_from_es_core(self):
-			params = {}
-			params.update(iccp3m_cfg)
-			return params
-
-		def _set_params_in_es_core(self):
-			iccp3m_cfg.n_ic = self._params["n_icc"]
-
-			#Fill Lists
-			for i in range(iccp3m_cfg.n_ic):
-				iccp3m_cfg.nvectorx[i] = self._params["normals"][i][0]
-				iccp3m_cfg.nvectory[i] = self._params["normals"][i][1]
-				iccp3m_cfg.nvectorz[i] = self._params["normals"][i][2]
-				iccp3m_cfg.areas[i] = self._params["areas"][i]
-				iccp3m_cfg.ein[i] = self._params["epsilons"][i]
-				iccp3m_cfg.sigma[i] = self._params["sigmas"][i]
-
-			iccp3m_cfg.extx = self._params["ext_field"][0]
-			iccp3m_cfg.exty = self._params["ext_field"][1]
-			iccp3m_cfg.extz = self._params["ext_field"][2]
-			iccp3m_cfg.first_id = self._params["first_id"]
-			iccp3m_cfg.num_iteration=self._params["first_id"]
-			iccp3m_cfg.convergence=self._params["convergence"]
-			iccp3m_cfg.relax=self._params["relaxation"]
-			iccp3m_cfg.eout=self._params["eps_out"]
-			iccp3m_cfg.citeration=0
-			iccp3m_initialized=1
-			iccp3m_cfg.set_flag = 1
-
-			mpi_iccp3m_init(0)
+            # Broadcasts vars
+            mpi_iccp3m_init(0)
 
 
-		def _activate_method(self):
-			self._setParamsInEsCore()
+        def _activate_method(self):
+            self._set_params_in_es_core()
 
-		def _deactivate_method(self):
-			pass
+        def _deactivate_method(self):
+            pass

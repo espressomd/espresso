@@ -97,6 +97,15 @@ void iccp3m_init(void){
 
 }
 
+void iccp3m_alloc_lists() {
+
+    iccp3m_cfg.areas      = (double*) Utils::realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.ein        = (double*) Utils::realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorx   = (double*) Utils::realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectory   = (double*) Utils::realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorz   = (double*) Utils::realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.sigma      = (double*) Utils::realloc (iccp3m_cfg.sigma     ,(iccp3m_cfg.n_ic) * sizeof(double));
+}
 
 
 int bcast_iccp3m_cfg(void){
@@ -280,8 +289,8 @@ int iccp3m_iteration() {
 	} /* iteration */
 	on_particle_change();
 	
-    if (this_node == 0)
-		fprintf(stderr, "%d \n",iccp3m_cfg.citeration);
+//    if (this_node == 0)
+//		fprintf(stderr, "%d \n",iccp3m_cfg.citeration);
 
 	return iccp3m_cfg.citeration;
 }
