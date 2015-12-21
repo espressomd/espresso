@@ -2657,6 +2657,7 @@ proc oif_object_analyze { args } {
 	set velocity 0
 	set affinity ""
 	set approx_pos -1
+	set diameter -1
 	set get_first_part_id 0
 	set n_nodes 0
 	set aff_type -1
@@ -2686,6 +2687,10 @@ proc oif_object_analyze { args } {
 			"volume" {  
 				incr pos
 				set volume 0.0
+			}
+			"diameter" {  
+				incr pos
+				set diamater 0.0
 			}
 			"surface-area" {  
 				incr pos
@@ -3070,6 +3075,30 @@ proc oif_object_analyze { args } {
 			set P3 [lreplace $P3 0 2]
 		}
 		return $volume
+	}
+	
+	if {$diameter != -1} {
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		set max_distance 0
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			for { set jjj [expr $iii + 1]} { $jjj < [expr $firstPartId + $nnode] } { incr jjj } {
+				set P1 [part $iii print pos]
+				set P2 [part $jjj print pos]
+				set P10 [lindex $P1 0]
+				set P11 [lindex $P1 1]
+				set P12 [lindex $P1 2]
+				set P20 [lindex $P2 0]
+				set P21 [lindex $P2 1]
+				set P22 [lindex $P2 2]
+				set control_distance [expr sqrt(($P10 - $P20)*($P10 - $P20) + ($P11 - $P21)*($P11 - $P21) + ($P12 - $P22)*($P12 - $P22))]
+				if {$max_distance < $control_distance} {
+					set max_distance $control_distance
+				}
+			}
+				
+		}
+		return $diameter
 	}
 
 	if {$surface != -1} {
