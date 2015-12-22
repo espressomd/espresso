@@ -22,12 +22,10 @@
 # heed the environment variable "ESPRESSO_MYCONFIG"
 if (ENV{ESPRESSO_MYCONFIG})
   set(MYCONFIG_FILE ENV{ESPRESSO_MYCONFIG})
-# test whether MYCONFIG_NAME is a relative/absolute filename
-elseif (EXISTS ${MYCONFIG_NAME})
-  set(MYCONFIG_FILE ${MYCONFIG_NAME})
 else()
   # test whether MYCONFIG_NAME is found in the object or source dir
-  find_file(MYCONFIG_FILE ${MYCONFIG_NAME}
+  find_file(MYCONFIG_FILE 
+    NAMES ${MYCONFIG_NAME}
     PATHS ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}
     NO_DEFAULT_PATH)
   # use the default if it is not
@@ -35,14 +33,8 @@ else()
     set(MYCONFIG_FILE ${CMAKE_SOURCE_DIR}/src/core/myconfig-default.hpp)
   endif()
 endif()
-
-#add_custom_target(myconfig)
-
-# copy the file to src/core/myconfig-final.hpp
-#add_custom_command(
-#  OUTPUT src/core/myconfig-final.hpp
-#  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MYCONFIG_FILE} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
-#)
 configure_file( ${MYCONFIG_FILE} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp COPYONLY )
-
 message(STATUS "Config file: ${MYCONFIG_FILE}")
+# Clear variable, otherwise cmake must be run by hand to detect myconfig
+# Also prevents find_file from skipping when variable is already set
+unset(MYCONFIG_FILE CACHE)
