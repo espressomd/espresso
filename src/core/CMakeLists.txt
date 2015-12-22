@@ -15,8 +15,6 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-#add_custom_target(config-features)
-#add_dependencies(config-features myconfig)
 
 add_custom_command(OUTPUT config-features.cpp config-features.hpp COMMAND
       ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
@@ -32,9 +30,6 @@ add_custom_command(OUTPUT config-version.cpp
 
 cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC} config-version.cpp config-features.cpp)
 
-#add_dependencies(EspressoCuda
-#                 config-features
-#)
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC}
                         ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
