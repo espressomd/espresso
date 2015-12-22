@@ -19,10 +19,11 @@
 cimport thermostat
 
 cdef class Thermostat:
+
     def __init__(self):
         pass
 
-    def getStatus(self):
+    def get_status(self):
         """Returns the thermostat status. Equivalent to the tcl command 'thermostat' with no arguments"""
 
         if temperature == -1:
@@ -32,7 +33,7 @@ cdef class Thermostat:
         if thermo_switch and THERMO_LANGEVIN:
             return "{ langevin " + str(temperature) + " " + str(langevin_gamma) + " }"
 
-    def turnOff(self):
+    def turn_off(self):
         """Turns off all the thermostat and sets all the thermostat variables to zero"""
 
         global temperature
@@ -47,7 +48,7 @@ cdef class Thermostat:
         # here other thermostats stuff
         return True
 
-    def setLangevin(self, kT="", gamma=""):
+    def set_langevin(self, kT="", gamma=""):
         """Sets the Langevin thermostat with required parameters 'temperature' 'gamma'"""
 
         if kT == "" or gamma == "":

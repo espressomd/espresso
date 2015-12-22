@@ -583,11 +583,7 @@ void layered_calculate_ia()
       if (rebuild_verletlist)
 	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      add_bonded_force(p1);
-#ifdef CONSTRAINTS
-      add_constraints_forces(p1);
-#endif
-      add_external_potential_forces(p1);
+      add_single_particle_force(p1);
 
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
@@ -638,13 +634,7 @@ void layered_calculate_energies()
       if (rebuild_verletlist)
 	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      add_kinetic_energy(p1);
-
-      add_bonded_energy(p1);
-#ifdef CONSTRAINTS
-      add_constraints_energy(p1);
-#endif
-      add_external_potential_energy(p1);
+      add_single_particle_energy(p1);
 
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {

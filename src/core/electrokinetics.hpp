@@ -158,7 +158,6 @@ int ek_print_vtk_potential(char* filename);
 int ek_print_vtk_particle_potential( char* filename );
 #endif
 int ek_print_vtk_lbforce(char* filename);
-int ek_print_vtk_reaction_tags(char* filename);
 int ek_lb_print_vtk_density(char* filename);
 int ek_lb_print_vtk_velocity(char* filename);
 int ek_init();
@@ -197,6 +196,7 @@ void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int
 #endif
 
 #ifdef EK_REACTION
+int ek_print_vtk_reaction_tags(char* filename);
 int ek_set_reaction( int reactant, int product0, int product1, 
                      float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, 
                      float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1, 

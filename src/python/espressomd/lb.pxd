@@ -278,7 +278,7 @@ IF LB_GPU or LB:
         # Python LB struct clone of C-struct
         #
         ##############################################
-        ctypedef struct LB_parameters:
+        ctypedef struct lb_parameters:
             double rho[2]
             double viscosity[2]
             double bulk_viscosity[2]
@@ -295,8 +295,8 @@ IF LB_GPU or LB:
 # init struct
 #
 ###############################################
-        ctypedef struct LB_parameters:
-            LB_parameters lb_params
+        ctypedef struct lb_parameters:
+            lb_parameters lb_params
 
 ##############################################
 #

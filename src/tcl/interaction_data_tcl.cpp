@@ -1090,7 +1090,6 @@ int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
     #endif
   }
   
-  
   Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
 		   "\"", (char *) NULL);
 

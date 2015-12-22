@@ -17,7 +17,8 @@
 #
 source "tests_common.tcl"
 
-require_feature ELECTROSTATICS 
+require_feature ELECTROSTATICS
+require_feature DIPOLES
 require_feature MASS
 require_feature EXTERNAL_FORCES
 
@@ -47,12 +48,11 @@ setmd time_step 0.01
 thermostat off
 
 part 0 pos 1 0 0 v 2 0 0 type 0 q 1 mass 1 ext_force 1 0 0 
-part 1 pos 2 0 0 v 4 0 0 type 0 q -1 ext_force -2 0 0
-part 2 pos 1 1 0 v 2 2 0 type 1
+part 1 pos 2 0 0 v 4 0 0 type 0 q -1 ext_force -2 0 0 dip 0.0 1.5 -2.5 
+part 2 pos 1 1 0 v 2 2 0 type 1 dip -1.5 0.0 2.5
 part 3 pos 2 1 0 v 4 2 0 type 1
 part 4 pos 3 0 0 v 6 0 0 type 0 mass 2
 integrate 0
-
 
 ############### Observable particle_position ##########################
 ## Here we are checking if particle specifications are working
@@ -132,6 +132,12 @@ if { ![ veccompare [ observable $com_vel2 print ] { 4.5 0 0 } ] }  {
 set dipm [ observable new dipole_moment id { 0 1 } ]
 if { ![ veccompare [ observable $dipm print ] { -1 0 0 } ] }  {
   error "dipm is not working"
+}
+
+############# Observable com_dipole_moment #####################
+set com_dipm [ observable new com_dipole_moment all ]
+if { ![ veccompare [ observable $com_dipm print ] { -1.5 1.5 0 } ] }  {
+  error "com_dipm is not working"
 }
 
 ############# Observable current       #####################

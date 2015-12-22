@@ -177,6 +177,12 @@ system:
           The dipole moment of the specified group of particles:
           $\mu^x = \sum_i q_i r_i^x$
           Required feature: \required{ELECTROSTATICS}
+    \item \lit{com_dipole_moment} \var{particle\_specifications}\\
+          Total dipole moment of the specified group of particles:
+          $\mu^x = \sum_i d_i^x$
+          where $d_i^x$ is an intrinsic dipole moment of the
+          individual $i$-th particle.
+          Required feature: \required{DIPOLES}
 %    \item \lit{structure_factor} \var{order} \var{particle\_specifications}\\
 %          Structure factor of the specified particles. Meaning of the parameter
 %          \var{order} and the output formate are the same as 
