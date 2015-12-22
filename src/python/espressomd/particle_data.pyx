@@ -35,7 +35,57 @@ COORDS_FIX_MASK = COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2)
 COORDS_ALL_FIXED = COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2)
 PARTICLE_EXT_TORQUE = 16
 
+particle_attributes = ["type","pos", "v", "f", "bonds"]
+                     
+IF MASS:
+    particle_attributes.append("mass")
+
+IF ROTATION:
+    particle_attributes.append("omega_lab")
+    particle_attributes.append("ext_torque")
+
+IF ROTATIONAL_INERTIA:
+    particle_attributes.append("rinertia")
+    particle_attributes.append("omega_body")
+    particle_attributes.append("torque_lab")
+    particle_attributes.append("quat")
+    # particle_attributes.append("director") # can not be set
+
+IF ELECTROSTATICS:
+    particle_attributes.append("q")
+
+IF VIRTUAL_SITES:
+    particle_attributes.append("virtual")
+    
+IF VIRTUAL_SITES_RELATIVE:
+    particle_attributes.append("vs_relative")
+
+IF DIPOLES:
+    particle_attributes.append("dip")
+    particle_attributes.append("dipm")
+
+IF EXTERNAL_FORCES:
+    particle_attributes.append("ext_force")
+    particle_attributes.append("fix")
+
+IF LANGEVIN_PER_PARTICLE:
+    particle_attributes.append("gamma")
+    particle_attributes.append("temp")
+
+IF ROTATION_PER_PARTICLE:
+    particle_attributes.append("rotation")
+
+IF EXCLUSIONS:
+    particle_attributes.append("exclude")
+
+IF ENGINE:
+    particle_attributes.append("swimming")
+
+
+
 cdef class ParticleHandle:
+
+
     def __cinit__(self, _id):
         #    utils.init_intlist(self.particle_data.el)
         utils.init_intlist(& (self.particle_data.bl))
@@ -354,7 +404,7 @@ cdef class ParticleHandle:
                     raise ValueError("vs_relative needs six args")
                 _relto = x[0]
                 _dist = x[1]
-                q = x[3]
+                q = x[2]
                 check_type_or_throw_except(
                     q, 4, float, "The relative orientation has to be specified as quaternion with 4 floats.")
                 cdef double _q[4]
@@ -571,6 +621,8 @@ cdef class ParticleHandle:
 
             def __set__(self, _partners):
                 delete = 0
+                if len(_partners) == 0:
+                    return
                 if type(_partners[0]) == str:
                     if _partners.pop(0) == "delete":
                         delete = 1
@@ -610,8 +662,11 @@ cdef class ParticleHandle:
                             "To enable swimming supply a dictionary of parameters")
                 else:
                     if 'f_swim' in _params and 'v_swim' in _params:
-                        raise Exception(
-                            "You can't set v_swim and f_swim at the same time")
+                        if _params["f_swim"] == 0 or _params["v_swim"] == 0:
+                            pass
+                        else:
+                            raise Exception(
+                                "You can't set v_swim and f_swim at the same time")
                     if 'f_swim' in _params:
                         check_type_or_throw_except(
                             _params['f_swim'], 1, float, "f_swim has to be a float")
@@ -750,8 +805,33 @@ cdef class ParticleHandle:
         if change_particle_bond(self.id, NULL, 1):
             raise Exception("Deleting all bonds failed.")
 
+
+
+
 cdef class ParticleList:
+
+
     """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
+    key_dict={}
 
     def __getitem__(self, key):
+        ParticleList.key_dict["%i"%key] = key
         return ParticleHandle(key)
+
+    # __getstate__ and __setstate__ define the pickle interaction
+    def __getstate__(self):
+        odict={}
+        key_list = sorted(ParticleList.key_dict.values())
+        for particle_number in key_list:
+            pdict={}
+            for property_ in particle_attributes:
+                pdict[property_] = ParticleHandle(particle_number).__getattribute__(property_)
+            odict[particle_number] = pdict
+
+        return odict
+
+    def __setstate__(self,params):
+        for particle_number in params.keys():
+            for property_ in params[particle_number]:
+                ParticleHandle(particle_number).__setattr__(property_,params[particle_number][property_])
+                # print params[particle_number][property_]

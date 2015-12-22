@@ -12,7 +12,7 @@ cdef class Actor:
                        HydrodynamicInteraction=False,
                        ElectrostaticExtensions=False)
 
-    # __getstate__ and __setstate__ defines pickle interaction
+    # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         odict = self._params.copy()
         return odict
@@ -25,7 +25,6 @@ cdef class Actor:
     def __init__(self, *args, **kwargs):
         self._isactive = False
         self.system = None
-        print self._params
         self._params = self.default_params()
 
         # Check if all required keys are given
