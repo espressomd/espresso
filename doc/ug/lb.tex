@@ -50,7 +50,7 @@ description of the method, please refer to the literature.
   \require{1 or 2 or 3}{\opt{dens  \var{density} }}
   \require{1 or 2 or 3}{\opt{visc  \var{viscosity}}}
   \require{1 or 2}{\opt{tau  \var{lb\_timestep}}}
-  \require{1 or 2 or 3}{\opt{bulk_visc  \var{bulk\_viscosity}}}
+  \require{1 or 2 or 3}{\opt{bulk_viscosity  \var{bulk\_viscosity}}}
   \require{1 or 2 or 3}{\opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}}
   \require{1 or 2 or 3}{\opt{friction   \var{gamma} } }
   \require{2}{\opt{couple   \var{2pt/3pt} } }
@@ -114,7 +114,7 @@ If the feature \lit{SHANCHEN} is activated, the Lattice Boltzmann
 code (so far GPU version only) is extended to a two-component
 Shan-Chen (SC) method.  The \lit{lbfluid} command requires in this case
 to supply two values, for the respective fluid components, to each
-of the options \lit{dens}, \lit{visc}, \lit{bulk_visc}, \lit{friction},
+of the options \lit{dens}, \lit{visc}, \lit{bulk_viscosity}, \lit{friction},
 \lit{gamma_odd} and \lit{gamma_even}, when they are used, otherwise
 they are set to the default values. The three elements of the
 coupling matrix can be supplied with the option \lit{sc_coupling},

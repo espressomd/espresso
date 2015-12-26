@@ -448,7 +448,7 @@ void propagate_pos_sd()
       for (int d=0;d<3;d++){
 	p[i].r.p[d] = pos[3*j+d]+box_l[d]*rint(p[i].r.p[d]/box_l[d]);
 	p[i].m.v[d] = velocity[3*j+d];
-	//p[i].f.f[d] *= (0.5*time_step*time_step)/PMASS(*part);
+	//p[i].f.f[d] *= (0.5*time_step*time_step)/(*part).p.mass;
       }
 #else
       for (int d=0;d<3;d++){
@@ -458,7 +458,7 @@ void propagate_pos_sd()
 #endif
       // somehow this does not effect anything, although it is called ...
       for (int d=0;d<3;d++){
-	p[i].f.f[d] *= (0.5*time_step*time_step)/PMASS(*p);
+	p[i].f.f[d] *= (0.5*time_step*time_step)/(*p).p.mass;
       }
       for (int d=0;d<DIM;d++){
         assert(!isnan(pos[DIM*i+d]));

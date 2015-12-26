@@ -21,6 +21,8 @@
 #ifndef _FORCES_INLINE_HPP
 #define _FORCES_INLINE_HPP
 
+#include "config.hpp"
+
 #ifdef MOLFORCES
 #include "topology.hpp"
 #endif
@@ -28,7 +30,6 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "constraint.hpp"
-#include "EspressoSystemInterface.hpp"
 #include "forces.hpp"
 
 #include "npt.hpp"
@@ -61,9 +62,7 @@
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angledist.hpp"
-#include "debye_hueckel.hpp"
 #include "endangledist.hpp"
-#include "reaction_field.hpp"
 #include "comforce.hpp"
 #include "comfixed.hpp"
 #include "molforces.hpp"
@@ -77,14 +76,16 @@
 #include "quartic.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
-#endif
 #include "actor/EwaldgpuForce_ShortRange.hpp"
+#include "debye_hueckel.hpp"
+#include "reaction_field.hpp"
+#endif
+#ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
-
-using namespace std;
+#endif
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part)
@@ -192,136 +193,8 @@ inline void init_local_particle_force(Particle *part) {
          Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
  *  </ol>
  */
-inline void force_calc()
-{
-  // Communication step: distribute ghost positions
-  cells_update_ghosts();
 
-  // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
-  update_mol_vel_pos();
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
-#endif
-
-#if defined(VIRTUAL_SITES_RELATIVE) && defined(LB)
-  // This is on a workaround stage:
-  // When using virtual sites relative and LB at the same time, it is necessary
-  // to reassemble the cell lists after all position updates, also of virtual
-  // particles.
-  if ((lattice_switch & LATTICE_LB) && cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) )
-    cells_update_ghosts();
-#endif
-
-espressoSystemInterface.update();
-
-#ifdef COLLISION_DETECTION
-  prepare_collision_queue();
-#endif
-
-#ifdef LB_GPU
-#ifdef SHANCHEN
-  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) lattice_boltzmann_calc_shanchen_gpu();
-#endif // SHANCHEN
-
-  // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
-  // this_node==0 makes sure it is the master node where the gpu exists
-  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
-#endif // LB_GPU
-
-#ifdef ELECTROSTATICS
-  if (iccp3m_initialized && iccp3m_cfg.set_flag)
-    iccp3m_iteration();
-#endif
-  init_forces();
-
-  for (ActorList::iterator actor = forceActors.begin();
-          actor != forceActors.end(); ++actor)
-  {
-    (*actor)->computeForces(espressoSystemInterface);
-#ifdef ROTATION
-    (*actor)->computeTorques(espressoSystemInterface);
-#endif
-  }
-
-  calc_long_range_forces();
-
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    layered_calculate_ia();
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    if(dd.use_vList) {
-      if (rebuild_verletlist)
-    build_verlet_lists_and_calc_verlet_ia();
-      else
-    calculate_verlet_ia();
-    }
-    else
-      calc_link_cell();
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    nsq_calculate_ia();
-
-  }
-
-#ifdef OIF_GLOBAL_FORCES
-    double area_volume[2]; //There are two global quantities that need to be evaluated: object's surface and object's volume. One can add another quantity.
-	area_volume[0] = 0.0; 
-	area_volume[1] = 0.0; 
-    for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
-        calc_oif_global(area_volume,i);
-        if (fabs(area_volume[0])<1e-100 && fabs(area_volume[1])<1e-100) break;
-        add_oif_global_forces(area_volume,i);
-    }
-#endif
-  
-#ifdef IMMERSED_BOUNDARY
-  // Must be done here. Forces need to be ghost-communicated
-    IBM_VolumeConservation();
-#endif
-
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
-#endif
-
-#ifdef COMFORCE
-  calc_comforce();
-#endif
-
-#ifdef METADYNAMICS
-  /* Metadynamics main function */
-  meta_perform();
-#endif
-
-#ifdef CUDA
-  copy_forces_from_GPU();
-#endif
-
-  // VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
-  init_forces_ghosts();
-  distribute_mol_force();
-#endif
-
-  // Communication Step: ghost forces
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
-
-  // apply trap forces to trapped molecules
-#ifdef MOLFORCES
-  calc_and_apply_mol_constraints();
-#endif
-
-  // should be pretty late, since it needs to zero out the total force
-#ifdef COMFIXED
-  calc_comfixed();
-#endif
-
-  // mark that forces are now up-to-date
-  recalc_forces = 0;
-
-}
-
+void force_calc();
 
 inline void 
 calc_non_bonded_pair_force_parts(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
@@ -1036,6 +909,16 @@ inline void check_particle_force(Particle *part) {
     }
   }
 #endif
+}
+
+inline void add_single_particle_force(Particle *p) {
+  add_bonded_force(p);
+#ifdef CONSTRAINTS
+  add_constraints_forces(p);
+#endif
+#ifdef EXTERNAL_FORCES
+  add_external_potential_forces(p);
+#endif         
 }
 
 #endif

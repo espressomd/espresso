@@ -186,7 +186,7 @@ double calc_local_temp()
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
       for (j = 0; j < 3; j++) {
-				temp += PMASS(part[i])*SQR(part[i].m.v[j]/time_step);
+				temp += (part[i]).p.mass*SQR(part[i].m.v[j]/time_step);
 				#ifdef ROTATION
 					temp += SQR(part[i].m.omega[j]);
 				#endif	
@@ -219,7 +219,7 @@ void calc_kinetic(double *ek_trans , double *ek_rot)
 			#endif
 			
 			/* kinetic energy */
-			et += (SQR(part[i].m.v[0]) + SQR(part[i].m.v[1]) + SQR(part[i].m.v[2]))*PMASS(part[i]);
+			et += (SQR(part[i].m.v[0]) + SQR(part[i].m.v[1]) + SQR(part[i].m.v[2]))*(part[i]).p.mass;
 
 			/* rotational energy */
 			#ifdef ROTATION
@@ -347,7 +347,7 @@ void simple_momentum_update()
 			#endif
 			
 			#ifdef MASS
-				sigmat = sqrt(temperature / PMASS(part[i]));
+				sigmat = sqrt(temperature / (part[i]).p.mass);
 			#endif
       for (j = 0; j < 3; j++) {
 				part[i].m.v[j] = sigmat*gaussian_random()*time_step;
@@ -380,7 +380,7 @@ void partial_momentum_update()
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
 			#ifdef MASS
-				sigmat = sqrt(temperature / PMASS(part[i]));
+				sigmat = sqrt(temperature / (part[i]).p.mass);
 			#endif
       for (j = 0; j < 3; j++) {
 				part[i].m.v[j] = cosp*(part[i].m.v[j])+sinp*(sigmat*gaussian_random()*time_step);

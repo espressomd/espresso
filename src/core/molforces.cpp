@@ -202,14 +202,14 @@ void calc_local_mol_info (IntList *local_trapped_mols)
 #endif
       }  
       if (fixed) {
-	topology[mol].mass += PMASS(p[i]);
+	topology[mol].mass += (p[i]).p.mass;
 	/* Unfold the particle */
         unfold_position(p[i].r.p, p[i].m.v, p[i].l.i);
 
 	for ( j = 0 ; j < 3 ; j++ ) {
 	  topology[mol].f[j] += p[i].f.f[j];
-	  topology[mol].com[j] += p[i].r.p[j]*PMASS(p[i]); 
-	  topology[mol].v[j] += p[i].m.v[j]*PMASS(p[i]); 
+	  topology[mol].com[j] += p[i].r.p[j]*(p[i]).p.mass; 
+	  topology[mol].v[j] += p[i].m.v[j]*(p[i]).p.mass; 
 	}
 	/* Fold the particle back */
 	fold_position(p[i].r.p,p[i].l.i);

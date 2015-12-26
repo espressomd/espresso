@@ -3,148 +3,151 @@ from highlander import ThereCanOnlyBeOne
 
 
 cdef class Actor:
-    activeList = dict(ElectrostaticInteraction=False,
-                      MagnetostaticInteraction=False,
-                      MagnetostaticExtension=False,
-                      HydrodynamicInteraction=False,
-                      ElectrostaticExtensions=False)
+
+    # Keys in active_list have to match the method name.
+    active_list = dict(ElectrostaticInteraction=False,
+                       MagnetostaticInteraction=False,
+                       MagnetostaticExtension=False,
+                       HydrodynamicInteraction=False,
+                       ElectrostaticExtensions=False)
 
     def __cinit__(self, *args, **kwargs):
         self._isactive = False
-        self._params = self.defaultParams()
+        self._params = self.default_params()
         self.system = None
 
         # Check if all required keys are given
-        for k in self.requiredKeys():
+        for k in self.required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.requiredKeys().__str__() + " got " + kwargs.__str__())
+                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
 
         for k in kwargs:
-            if k in self.validKeys():
+            if k in self.valid_keys():
                 self._params[k] = kwargs[k]
             else:
                 raise KeyError("%s is not a vaild key" % k)
 
     def _activate(self):
-        inter = self._getInteractionType()
-        if Actor.activeList[inter]:
+        inter = self._get_interaction_type()
+        if Actor.active_list[inter]:
             raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
-        Actor.activeList[inter] = True
-        self.validateParams()
-        self._activateMethod()
+        Actor.active_list[inter] = True
+        self.validate_params()
+        self._activate_method()
         self._isactive = True
 
     def _deactivate(self):
-        self._deactivateMethod()
+        self._deactivate_method()
         self._isactive = False
 
-    def isValid(self):
+    def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso"""
-        # check, if the bond parameters saved in the class still match those
+        # check, if the parameters saved in the class still match those
         # saved in Espresso
-        tempParams = self._getParamsFromEsCore()
-        if self._params != tempParams:
+        temp_params = self._get_params_from_es_core()
+        if self._params != temp_params:
             return False
 
         # If we're still here, the instance is valid
         return True
 
-    def getParams(self):
+    def get_params(self):
         """Get interaction parameters"""
         # If this instance refers to an actual interaction defined in the es core, load
         # current parameters from there
-        update = self._getParamsFromEsCore()
+        update = self._get_params_from_es_core()
         self._params.update(update)
         return self._params
 
-    def setParams(self, **p):
+    def set_params(self, **p):
         """Update parameters. Only given """
         # Check, if any key was passed, which is not known
         for k in p.keys():
-            if k not in self.validKeys():
+            if k not in self.valid_keys():
                 raise ValueError(
-                    "Only the following keys are supported: " + self.validKeys().__str__())
+                    "Only the following keys are supported: " + self.valid_keys().__str__())
 
         # When an interaction is newly activated, all required keys must be
         # given
-        if not self.isActive():
-            for k in self.requiredKeys():
+        if not self.is_active():
+            for k in self.required_keys():
                 if k not in p:
                     raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.requiredKeys().__str__())
+                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
         self._params.update(p)
         # vaidate updated parameters
-        self.validateParams()
+        self.validate_params()
         # Put in values given by the user
-        self._setParamsInEsCore()
+        self._set_params_in_es_core()
 
-    def _getInteractionType(self):
+    def _get_interaction_type(self):
         return self.__class__.__bases__[0].__name__
 
-    def isActive(self):
+    def is_active(self):
         print self.__class__.__name__, self._isactive
         return self._isactive
 
-    def validKeys(self):
+    def valid_keys(self):
         raise Exception(
-            "Subclasses of %s must define the validKeys() method." % self._getInteractionType())
+            "Subclasses of %s must define the valid_keys() method." % self._get_interaction_type())
 
-    def requiredKeys(self):
+    def required_keys(self):
         raise Exception(
-            "Subclasses of %s must define the requiredKeys() method." % self._getInteractionType())
+            "Subclasses of %s must define the required_keys() method." % self._get_interaction_type())
 
-    def validateParams(self):
+    def validate_params(self):
         raise Exception(
-            "Subclasses of %s must define the validateParams() method." % self._getInteractionType())
+            "Subclasses of %s must define the validate_params() method." % self._get_interaction_type())
 
-    def _getParamsFromEsCore(self):
+    def _get_params_from_es_core(self):
         raise Exception(
-            "Subclasses of %s must define the _getParamsFromEsCore() method." % self._getInteractionType())
+            "Subclasses of %s must define the _get_params_from_es_core() method." % self._get_interaction_type())
 
-    def _setParamsInEsCore(self):
+    def _set_params_in_es_core(self):
         raise Exception(
-            "Subclasses of %s must define the _setParamsInEsCore() method." % self._getInteractionType())
+            "Subclasses of %s must define the _set_params_in_es_core() method." % self._get_interaction_type())
 
-    def defaultParams(self):
+    def default_params(self):
         raise Exception(
-            "Subclasses of %s must define the defaultParams() method." % self._getInteractionType())
+            "Subclasses of %s must define the default_params() method." % self._get_interaction_type())
 
-    def _activateMethod(self):
+    def _activate_method(self):
         raise Exception(
-            "Subclasses of %s must define the _activateMethod() method." % self._getInteractionType())
+            "Subclasses of %s must define the _activate_method() method." % self._get_interaction_type())
 
-    def _deactivateMethod(self):
+    def _deactivate_method(self):
         raise Exception(
-            "Subclasses of %s must define the _deactivateMethod() method." % self._getInteractionType())
+            "Subclasses of %s must define the _deactivate_method() method." % self._get_interaction_type())
 
 
 class Actors:
-    activeActors = []
+
+    active_actors = []
 
     def __init__(self, _system=None):
         self.system = _system
 
     def add(self, actor):
-        if not actor in Actors.activeActors:
+        if not actor in Actors.active_actors:
             actor.system = self.system
-            Actors.activeActors.append(actor)
+            Actors.active_actors.append(actor)
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
 
     def __str__(self):
         print "Active Actors:"
-        for actor in Actors.activeActors:
+        for actor in Actors.active_actors:
             print actor
         return ""
 
     def get(self):
         # for actor in Actors.activeActors:
         #     print actor.__class__.__name__
-        return "%s" % Actors.activeActors
+        return "%s" % Actors.active_actors
 
     def deactivate(self, actor):
         actor._deactivate()

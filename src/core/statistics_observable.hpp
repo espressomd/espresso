@@ -88,6 +88,10 @@ int observable_calc_currents(observable* self);
 int observable_calc_dipole_moment(observable* self);
 #endif
 
+#ifdef DIPOLES
+int observable_calc_com_dipole_moment(observable* self);
+#endif
+
 #ifdef LB
 int mpi_observable_lb_radial_velocity_profile_parallel(void* pdata_, double* A, unsigned int n_A);
 #endif

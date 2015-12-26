@@ -731,6 +731,25 @@ int tclcommand_observable_dipole_moment(Tcl_Interp* interp, int argc, char** arg
 #endif
 }
 
+int tclcommand_observable_calc_com_dipole_moment(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+#ifdef DIPOLES
+  int temp;
+  IntList* ids;
+  obs->calculate=&observable_calc_com_dipole_moment;
+  obs->update=0;
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK )
+    return TCL_ERROR;
+  obs->container=(void*)ids;
+  obs->n=3;
+  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  *change=1+temp;
+  return TCL_OK;
+#else
+  Tcl_AppendResult(interp, "Feature DIPOLES needed for observable dipole moments", (char *)NULL);
+  return TCL_ERROR;
+#endif
+}
+
 int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   //Tcl_AppendResult(interp, "Structure Factor not available yet!!", (char *)NULL);
   //return TCL_ERROR;
@@ -1341,6 +1360,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(particle_currents, tclcommand_observable_particle_currents,id);
     REGISTER_OBSERVABLE(currents, tclcommand_observable_currents,id);
     REGISTER_OBSERVABLE(dipole_moment, tclcommand_observable_dipole_moment,id);
+    REGISTER_OBSERVABLE(com_dipole_moment, tclcommand_observable_calc_com_dipole_moment,id);
     REGISTER_OBSERVABLE(structure_factor, tclcommand_observable_structure_factor,id);
     REGISTER_OBSERVABLE(structure_factor_fast, tclcommand_observable_structure_factor_fast,id);
     REGISTER_OBSERVABLE(interacts_with, tclcommand_observable_interacts_with,id);

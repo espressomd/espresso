@@ -110,8 +110,8 @@ void calc_mol_center_of_mass(Molecule mol, double com[3])
 
   for(i=0; i<mol.part.n; i++) {
     id = mol.part.e[i];
-    for(j=0; j<3; j++) com[j]+= partCfg[id].r.p[j]*PMASS(partCfg[id]);
-    M += PMASS(partCfg[id]);
+    for(j=0; j<3; j++) com[j]+= partCfg[id].r.p[j]*(partCfg[id]).p.mass;
+    M += (partCfg[id]).p.mass;
   }
     for(j=0; j<3; j++) com[j] /= M;
 }
@@ -129,7 +129,7 @@ double calc_mol_gyr_radius2(Molecule mol)
     id = mol.part.e[i];
     vecsub(partCfg[id].r.p, com, diff_vec);
     rg += sqrlen(diff_vec);
-    M += PMASS(partCfg[id]);
+    M += (partCfg[id]).p.mass;
   }
 
   return (rg/M);
