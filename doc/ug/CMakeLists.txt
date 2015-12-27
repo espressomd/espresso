@@ -5,7 +5,7 @@ file(GLOB ug_TEXFILES_abs *tex)
 
 find_program(AWK awk)
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/quickref.inp
+add_custom_command(OUTPUT quickref.inp
                    COMMAND ${AWK} -f
                    ${CMAKE_CURRENT_SOURCE_DIR}/assemble_quickref.awk
                    ${ug_TEXFILES_abs} > ${CMAKE_CURRENT_BINARY_DIR}/quickref.inp

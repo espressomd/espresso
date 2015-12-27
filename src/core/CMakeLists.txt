@@ -1,5 +1,5 @@
 
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -gencode arch=compute_35,code=sm_35)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -arch=sm_20)#arch=compute_20,code=sm_20)
 
 file(GLOB_RECURSE EspressoCore_SRC
           "*.cpp"

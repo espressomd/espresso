@@ -23,7 +23,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_config.cmakein
-        ${CMAKE_CURRENT_BINARY_DIR}/cmake_config.hpp
+               cmake_config.hpp
 )
 
 add_subdirectory(core)
