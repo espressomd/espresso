@@ -22,34 +22,17 @@ from espressomd import h5md
 from espressomd.interactions import HarmonicBond
 import numpy as np
 
-# H5MD: Create/Read File dataset
-#############################################################
+#Prepare system for h5-reading
 system = espressomd.System()
-h5=h5md.h5md("File.h5",system)
-
-n_part=10
-n_time=5
-int_steps=10
 
 #Prepare particles for h5-reading
+n_part=10
 for i in range(n_part):
     system.part[i].pos=np.array([0,0,0])
     
-#Prepare bond for h5-reading
-bondId=0
-bondClass=HarmonicBond
-params={"r_0":1.1, "k":5.2}
-system.bonded_inter[bondId]=bondClass(**params)
-outBond=system.bonded_inter[bondId]
-outBond = system.bonded_inter[bondId]
-tnIn = bondClass(**params).type_number()
-tnOut = outBond.type_number()
-outParams = outBond.params
-for i in range(n_part):
-    system.part[i].bonds=[[outBond,0]]
-
-
-
+#TIME DEPENDENT
+n_time=5
+h5=h5md.h5md("File.h5",system)
 result_user1 = h5.read_from_h5.userdefined("User/user1/","value1",(3,))
 result_user2 = h5.read_from_h5.userdefined("User/user1/","value2",(3,5))
 h5.read_from_h5.time(n_time-1,"particles/atoms/position/","time")
@@ -57,7 +40,6 @@ h5.read_from_h5.type(n_time-1)
 h5.read_from_h5.pos(n_time-1)
 h5.read_from_h5.v(n_time-1)
 h5.read_from_h5.f(n_time-1)
-h5.read_from_h5.bonds(n_time-1)
 h5.read_from_h5.mass(n_time-1)
 h5.read_from_h5.omega_lab(n_time-1)
 h5.read_from_h5.rinertia(n_time-1)
@@ -78,15 +60,7 @@ h5.read_from_h5.rotation(n_time-1)
 h5.read_from_h5.box_edges(n_time-1)
 h5.read_from_h5.id(n_time-1)
 
-
-
-
-
-
-
-
-
-
+print("TIME DEPENDENT")
 for i in range(n_part):
     print(result_user1)
     print(result_user2)
@@ -95,7 +69,6 @@ for i in range(n_part):
 #     print(system.part[i].pos)
     print(system.part[i].v)
 #     print(system.part[i].f)
-    print("BOND",system.part[i].bonds)
 #     print(system.part[i].mass)
 #     print(system.part[i].omega_lab)
 #     print(system.part[i].rinertia)
@@ -107,17 +80,27 @@ for i in range(n_part):
 #     print(system.part[i].vs_relative)																  
 #     print(system.part[i].dip)
 #     print(system.part[i].dipm)
-#      
 #     print(system.part[i].ext_force)
 #     print(system.part[i].fix)
 #     print(system.part[i].ext_torque)
 #     print(system.part[i].gamma)
 #     print(system.part[i].temp)
 #     print(system.part[i].rotation)
-#      
 #     print(system.box_l)
 #     print(system.part[i].id)    
 
 
+#----------------------------------------------------------------------------------------------------------------#
 
+
+#TIME INDEPENDENT
+#Open h5-file
+h5_time_independent=h5md.h5md("File_time_independent.h5",system)
+h5_time_independent.read_from_h5.pos()
+h5_time_independent.read_from_h5.v(-1,"particles/atoms/velocity/","value")    #With additional parameters, use "-1" as first parameter 
+
+print("\nTIME INDEPENDENT")
+for i in range(n_part):
+#     print(system.part[i].pos)
+    print(system.part[i].v)
 
