@@ -578,20 +578,14 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 
 	//check for the current state to be an allowed state in the [range collective_variables_minimum_values:collective_variables_maximum_values], else return a negative index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i] || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i])
+		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/100000.0 || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i])
 			return index;
 	}
 
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		nr_subindices_of_collective_variable[collective_variable_i]=int((collective_variables_maximum_values[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
+		nr_subindices_of_collective_variable[collective_variable_i]=(int) floor((collective_variables_maximum_values[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
 		//XXX avoid the begin and the end of the CV_interval not being a multiple of the delta_CV (e.g. for energy collective variable)
-		for(int subindex_i=0;subindex_i<nr_subindices_of_collective_variable[collective_variable_i];subindex_i++){
-			if( current_state[collective_variable_i]<(subindex_i+1)*delta_collective_variables_values[collective_variable_i]+collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/100000.0){
-				//-delta_collective_variables_values[collective_variable_i]/100000 is due to numeric reasons (think of the degree of association as a collective variable)
-				individual_indices[collective_variable_i]=subindex_i;
-				break;
-			}
-		}
+		individual_indices[collective_variable_i]=(int) floor((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]/1000000.0)/delta_collective_variables_values[collective_variable_i]);
 	}
 	
 	//get flattened index from individual_indices
