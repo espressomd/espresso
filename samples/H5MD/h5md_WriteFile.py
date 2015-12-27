@@ -41,95 +41,120 @@ tnIn = bondClass(**params).type_number()
 tnOut = outBond.type_number()
 outParams = outBond.params
 
+#TIME DEPENDENT
 #Create h5-file
 h5=h5md.h5md("File.h5",system)
 
 #Set arbitrary values for writing
-for i in range(n_part):
-    #PARTICLE
-    system.part[i].pos=np.array([0.1*i,0.2*i,0.3*i])
-    system.part[i].v=np.array([0.2*i,0.3*i,0.4*i])
-    system.part[i].f=np.array([0.3*i,0.4*i,0.5*i])
-    system.part[i].type=i%3
-    system.part[i].bonds=[[outBond,1],[outBond,2],[outBond,3]]
-    system.part[i].mass=0.4*i
-    system.part[i].omega_lab=np.array([0.5*i,0.6*i,0.7*i])
-    system.part[i].rinertia=np.array([0.6*i,0.7*i,0.8*i])
-    system.part[i].omega_body=np.array([0.7*i,0.8*i,0.9*i])
-    system.part[i].torque_lab=np.array([0.8*i,0.9*i,1.0*i])
-    system.part[i].quat=np.array([0.9*i,0.9*i,1.0*i,1.1*i])
-    system.part[i].q=1.0*i
-    system.part[i].virtual=11*i          															
-#     system.part[i].vs_relative=np.array([1.2*i,1.3*i,1.4*i])	  
-    system.part[i].dip=np.array([1.3*i,1.4*i,1.5*i])
-    system.part[i].dipm=14*i    
-    system.part[i].ext_force=np.array([1.5*i,1.6*i,1.7*i])
-    system.part[i].fix=np.array([i%2,i%2,i%2])
-    system.part[i].ext_torque=np.array([1.6*i,1.7*i,1.8*i])
-    system.part[i].gamma=1.7*i
-    system.part[i].temp=1.8*i
-#     system.part[i].rotation=i%2	
-    system.box_l = np.array([100,200,300])
-
-print("xxxxxxxxcccc",len(system.part[0].bonds),system.part[0].bonds[0][1])
-#Write to h5-file
-for i in range(n_time):
-    system.time=0.1*(i+1)
-    h5.write_to_h5.userdefined(123.4,"User/user1/","value1",'f8',(3,),(1,))  # One dimensional
-    h5.write_to_h5.userdefined(567.8,"User/user1/","value2",'f8',(3,5),(1,5)) # Two dimensional
-    h5.write_to_h5.time(i,"particles/atoms/position/","time")
-    h5.write_to_h5.time_step(i,"particles/atoms/position/","step")
-    h5.write_to_h5.type(i)
-    h5.write_to_h5.pos(i)
-    h5.write_to_h5.v(i)
-    h5.write_to_h5.f(i)
-    h5.write_to_h5.bonds(i)
-    h5.write_to_h5.mass(i)
-    h5.write_to_h5.omega_lab(i)
-    h5.write_to_h5.rinertia(i)
-    h5.write_to_h5.omega_body(i)
-    h5.write_to_h5.torque_lab(i)
-    h5.write_to_h5.quat(i)
-    h5.write_to_h5.q(i)
-    h5.write_to_h5.virtual(i)      
-#     h5.write_to_h5.vs_relative(i) 
-    h5.write_to_h5.dip(i)
-    h5.write_to_h5.dipm(i)
-    h5.write_to_h5.ext_force(i)
-    h5.write_to_h5.fix(i)
-    h5.write_to_h5.ext_torque(i)
-    h5.write_to_h5.gamma(i)
-    h5.write_to_h5.temp(i)
-    h5.write_to_h5.rotation(i)        
-    h5.write_to_h5.box_edges(i)
-    h5.write_to_h5.box_boundary(i)
-    h5.write_to_h5.box_dimension(i)
-    h5.write_to_h5.id(i)
+for j in range(n_time):
+    for i in range(n_part):
+      system.part[i].pos=np.array([0.1*(i+j),0.2*(i+j),0.3*(i+j)])
+      system.part[i].v=np.array([0.2*(i+j),0.3*(i+j),0.4*(i+j)])
+      system.part[i].f=np.array([0.3*(i+j),0.4*(i+j),0.5*(i+j)])
+      system.part[i].type=i%3
+      system.part[i].bonds=[[outBond,1],[outBond,2],[outBond,3]]
+      system.part[i].mass=0.1*(i+j)
+      system.part[i].omega_lab=np.array([0.5*(i+j),0.6*(i+j),0.7*(i+j)])
+      system.part[i].rinertia=np.array([0.6*(i+j),0.7*(i+j),0.8*(i+j)])
+      system.part[i].omega_body=np.array([0.7*(i+j),0.8*(i+j),0.9*(i+j)])
+      system.part[i].torque_lab=np.array([0.8*(i+j),0.9*(i+j),1.0*(i+j)])
+      system.part[i].quat=np.array([0.9*(i+j),0.9*(i+j),1.0*(i+j),1.1*(i+j)])
+      system.part[i].q=1.0*(i+j)
+      system.part[i].virtual=11*(i+j)                                        
+  #     system.part[i].vs_relative=np.array([1.2*(i+j),1.3*(i+j),1.4*(i+j)])    
+      system.part[i].dip=np.array([1.3*(i+j),1.4*(i+j),1.5*(i+j)])
+      system.part[i].dipm=14*(i+j)    
+      system.part[i].ext_force=np.array([1.5*(i+j),1.6*(i+j),1.7*(i+j)])
+      system.part[i].fix=np.array([i%2,i%2,i%2])
+      system.part[i].ext_torque=np.array([1.6*(i+j),1.7*(i+j),1.8*(i+j)])
+      system.part[i].gamma=1.7*(i+j)
+      system.part[i].temp=1.8*(i+j)
+  #     system.part[i].rotation=i%2  
+      system.box_l = np.array([100,200,300])
+      
+    #Write to h5-file
+    system.time=0.1*(j+1)
+    h5.write_to_h5.userdefined(123.4,"User/user1/","value1",'f8',(3,))  # One dimensional
+    h5.write_to_h5.userdefined(567.8,"User/user1/","value2",'f8',(3,5),(1,5)) # Two dimensional and manual chunk size
+    h5.write_to_h5.time(j,"particles/atoms/position/","time")
+    h5.write_to_h5.time_step(j,"particles/atoms/position/","step")
+    h5.write_to_h5.type(j)
+    h5.write_to_h5.pos(j)
+    h5.write_to_h5.v(j)
+    h5.write_to_h5.f(j)
+    h5.write_to_h5.bonds()
+    h5.write_to_h5.mass(j)
+    h5.write_to_h5.omega_lab(j)
+    h5.write_to_h5.rinertia(j)
+    h5.write_to_h5.omega_body(j)
+    h5.write_to_h5.torque_lab(j)
+    h5.write_to_h5.quat(j)
+    h5.write_to_h5.q(j)
+    h5.write_to_h5.virtual(j)      
+#     h5.write_to_h5.vs_relative(j) 
+    h5.write_to_h5.dip(j)
+    h5.write_to_h5.dipm(j)
+    h5.write_to_h5.ext_force(j)
+    h5.write_to_h5.fix(j)
+    h5.write_to_h5.ext_torque(j)
+    h5.write_to_h5.gamma(j)
+    h5.write_to_h5.temp(j)
+    h5.write_to_h5.rotation(j)        
+    h5.write_to_h5.box_edges(j)
+    h5.write_to_h5.box_boundary(j)
+    h5.write_to_h5.box_dimension(j)
+    h5.write_to_h5.id(j)
     
     #ANALYZE
-    h5.write_to_h5.mindist(i,[0],[1])
-    h5.write_to_h5.distto(i,None,[1,1,1])    
-    h5.write_to_h5.analyze_linear_momentum(i,True,True)
-    h5.write_to_h5.nbhood(i,[1,1,1],1.0,'3d')
-    h5.write_to_h5.cylindrical_average(i,[1,1,1],[1,1,1],1,1,1,1,[-1])
-    h5.write_to_h5.pressure(i,False)
-    h5.write_to_h5.stress_tensor(i,False)
-    h5.write_to_h5.analyze_energy(i,'all','default','default')
-    h5.write_to_h5.calc_re(i,1,1,1)
-    h5.write_to_h5.calc_rg(i,1,1,1)
-    h5.write_to_h5.calc_rh(i,1,1,1)
-    h5.write_to_h5.structure_factor(i,1,1)
+    h5.write_to_h5.mindist(j,[0],[1])
+    h5.write_to_h5.distto(j,None,[1,1,1])    
+    h5.write_to_h5.analyze_linear_momentum(j,True,True)
+    h5.write_to_h5.nbhood(j,[1,1,1],1.0,'3d')
+    h5.write_to_h5.cylindrical_average(j,[1,1,1],[1,1,1],1,1,1,1,[-1])
+    h5.write_to_h5.pressure(j,False)
+    h5.write_to_h5.stress_tensor(j,False)
+    h5.write_to_h5.analyze_energy(j,'all','default','default')
+    h5.write_to_h5.calc_re(j,1,1,1)
+    h5.write_to_h5.calc_rg(j,1,1,1)
+    h5.write_to_h5.calc_rh(j,1,1,1)
+    h5.write_to_h5.structure_factor(j,1,1)
     
-    #VMD
-    h5.write_to_h5.VMD()
+#VMD
+h5.write_to_h5.VMD()
+#Close file
 h5.close()
 
 
+#----------------------------------------------------------------------------------------------------------------#
 
+
+#TIME INDEPENDENT
+#Create h5-file
+h5_time_independent=h5md.h5md("File_time_independent.h5",system)
+
+#Set arbitrary values for writing
+for i in range(n_part):
+      system.part[i].pos=np.array([0.1*(i+j),0.2*(i+j),0.3*(i+j)])
+      
+#Write to h5-file
+h5_time_independent.write_to_h5.pos()   
+h5_time_independent.write_to_h5.v(-1,"particles/atoms/velocity/","value")     #With additional parameters, use "-1" as first parameter 
+
+#Close file
+h5_time_independent.close()      
+      
+      
+      
+      
+      
+      
+      
+      
 # todo xxx 
 #Manual
+#calc_rg derem
 #test indention
-#latex write (3,)
+#latex write (3,) and more userdefined->chunked
 #try to istypeof isinstance(y, np.ndarray )
 
 

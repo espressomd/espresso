@@ -648,15 +648,7 @@ class h5md(object):
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
-                if len(self.h5md.value_dataset_from.shape) == 2: #time independent
-                    for i in range(self.h5md.value_dataset_from.shape[0]):
-                        print("XXXXXXX1",self.h5md.system.part[self.h5md.value_dataset_from[i][0]].bonds)
-                        self.h5md.system.part[self.h5md.value_dataset_from[i][0]].bonds = self.h5md.value_dataset_to[i][0]    
-                if len(self.h5md.value_dataset_from.shape) == 3: #time dependent
-                    for i in range(self.h5md.value_dataset_from.shape[1]):
-                        print("XXXXXXX21",self.h5md.system.part[self.h5md.value_dataset_from[i][0]].bonds[0][1])
-
-                        self.h5md.system.part[self.h5md.value_dataset_from[timestep,i][0]].bonds = self.h5md.value_dataset_to[timestep,i][0][i]
+                print("ERROR H5: Reading bonds not implemented yet")
             except:
                 print "ERROR H5: Access to dataset "+ groupname+datasetname+" or writing to ESPResSo not possible" 
                 sys.exit()        
