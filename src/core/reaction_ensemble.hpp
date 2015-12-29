@@ -93,6 +93,7 @@ typedef struct wang_landau_system {
 	bool do_not_sample_reaction_partition_function;
 	int used_bins;
 	bool use_hybrid_monte_carlo;
+	int* nr_subindices_of_collective_variable;
 } wang_landau_system;
 
 extern wang_landau_system current_wang_landau_system;
