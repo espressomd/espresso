@@ -573,19 +573,20 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 	int index=-10; //negative number is not allowed as index and therefore indicates error
 	int individual_indices[nr_collective_variables]; //pre result
 	memset(individual_indices, -1, sizeof(individual_indices)); //initialize individual_indices to -1
-	int nr_subindices_of_collective_variable[nr_collective_variables];
-	//current_state[1]=delta_collective_variables_values[1]-0.00001;
+	int* nr_subindices_of_collective_variable =current_wang_landau_system.nr_subindices_of_collective_variable;
 
 	//check for the current state to be an allowed state in the [range collective_variables_minimum_values:collective_variables_maximum_values], else return a negative index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/100000.0 || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i])
+		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]/1.01 || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/1.01)
 			return index;
 	}
 
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		nr_subindices_of_collective_variable[collective_variable_i]=(int) floor((collective_variables_maximum_values[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i])+1; //+1 for collecive variables which are of type degree of association
-		//XXX avoid the begin and the end of the CV_interval not being a multiple of the delta_CV (e.g. for energy collective variable)
-		individual_indices[collective_variable_i]=(int) floor((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]/1000000.0)/delta_collective_variables_values[collective_variable_i]);
+		if(collective_variable_i==current_wang_landau_system.nr_collective_variables-1 && current_wang_landau_system.do_energy_reweighting==true)	//for energy collective variable (simple truncating conversion desired)
+			individual_indices[collective_variable_i]=(int) ((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]);
+		else	//for degree of association collective variables (rounding conversion desired)
+			individual_indices[collective_variable_i]=(int) ((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]+0.5);		
+//		printf("CV_i %d individual index %d, current_state %f cV_min %f delta_CV %f\n",collective_variable_i,individual_indices[collective_variable_i],current_state[collective_variable_i],collective_variables_minimum_values[collective_variable_i],delta_collective_variables_values[collective_variable_i] );
 	}
 	
 	//get flattened index from individual_indices
@@ -597,8 +598,8 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 		}
 		index+=factor*individual_indices[collective_variable_i];
 		
-	}
-
+	}	
+	
 	return index;
 }
 
@@ -797,6 +798,12 @@ int initialize_wang_landau(){
 	}
 
 
+	int* nr_subindices_of_collective_variable=(int*) malloc(current_wang_landau_system.nr_collective_variables*sizeof(int));
+	for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
+		nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
+	}//XXX avoid the begin and the end of the CV_interval not being a multiple of the delta_CV (e.g. for energy collective variable)
+	current_wang_landau_system.nr_subindices_of_collective_variable=nr_subindices_of_collective_variable;
+
 	//construct (possibly higher dimensional) histogram over Gamma (the room which should be equally sampled when the wang-landau algorithm has converged)
 	current_wang_landau_system.histogram=initialize_histogram();
 
@@ -807,11 +814,6 @@ int initialize_wang_landau(){
 	
 	if(energy_collective_variable_index>=0){
 		//make values in histogram and wang landau potential negative if they are not allowed at the given degree of association, because the energy boundaries prohibit them
-
-		int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
-		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
-			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
-		}
 
 		int empty_bins_in_memory=0;
 
@@ -1570,9 +1572,9 @@ int do_reaction_wang_landau(){
 		//do as many steps as needed to get to a new conformation (compare Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo)
 		for(int k=0;k<4;k++){
 			if(current_wang_landau_system.counter_ion_type>=0){
-				do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id);//if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+				do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id);//if polymer_start_id and polymer_end_id are set by user then also moves for the ids from [polymer_start_id,polymer_end_id] are performed
 				//alternatively
-				//do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are not set by user no moves for the ids from [polymer_start_id,polymer_end_id] are performed, except they are of the counter ion type
+				//do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are set by user then also moves for the ids from [polymer_start_id,polymer_end_id] are performed
 				//alternatively
 				//do_HMC_move();
 			}else{
@@ -1634,6 +1636,8 @@ void free_wang_landau(){
 	}
 	free(current_wang_landau_system.collective_variables);
 	free(current_wang_landau_system.output_filename);
+	free(current_wang_landau_system.nr_subindices_of_collective_variable);
+
 	if(current_wang_landau_system.minimum_energies_at_flat_index!=NULL) //only present in energy preparation run
 		free(current_wang_landau_system.minimum_energies_at_flat_index);
 	if(current_wang_landau_system.maximum_energies_at_flat_index!=NULL)
@@ -1671,7 +1675,7 @@ int find_minimum_in_int_list(int* list, int len){
 bool can_refine_wang_landau_one_over_t(){
 	double minimum_required_value=0.80*average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram); // This is an additional constraint to sample configuration space better. Use flatness criterion according to 1/t algorithm as long as you are not in 1/t regime.
 	if(current_wang_landau_system.do_energy_reweighting==true)
-		minimum_required_value=0; //get faster in energy reweighting case
+		minimum_required_value=20; //get faster in energy reweighting case
 
 	if(find_minimum_in_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>minimum_required_value || system_is_in_1_over_t_regime==true){
 		return true;
@@ -1697,7 +1701,10 @@ void refine_wang_landau_parameter_one_over_t(){
 	double monte_carlo_time = (double) current_wang_landau_system.monte_carlo_trial_moves/current_wang_landau_system.used_bins;
 	if ( current_wang_landau_system.wang_landau_parameter/2.0 <=1.0/monte_carlo_time || system_is_in_1_over_t_regime==true){
 		current_wang_landau_system.wang_landau_parameter= 1.0/monte_carlo_time;
-		system_is_in_1_over_t_regime=true;
+		if(system_is_in_1_over_t_regime==false){		
+			system_is_in_1_over_t_regime=true;
+			printf("Refining: Wang-Landau parameter is now 1/t.\n");
+		}
 	} else {
 		reset_histogram();
 		current_wang_landau_system.wang_landau_parameter= current_wang_landau_system.wang_landau_parameter/2.0;
@@ -1735,11 +1742,7 @@ void write_wang_landau_results_to_file(char* full_path_to_output_filename){
 		printf("ERROR: Wang-Landau file could not be written\n");
 		fflush(stdout);
 	}else{
-		int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
-		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
-			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
-		}
-
+		int* nr_subindices_of_collective_variable =current_wang_landau_system.nr_subindices_of_collective_variable;
 		for(int flattened_index=0;flattened_index<current_wang_landau_system.len_histogram;flattened_index++){
 			//unravel index
 			if(abs(current_wang_landau_system.wang_landau_potential[flattened_index]-current_wang_landau_system.double_fill_value)>1){ //only output data if they are not equal to current_reaction_system.double_fill_value. This if ensures that for the energy observable not allowed energies (energies in the interval [global_E_min, global_E_max]) in the multidimensional wang landau potential are printed out, since the range [E_min(nbar), E_max(nbar)] for each nbar may be a different one
@@ -1791,11 +1794,8 @@ void write_out_preliminary_energy_run_results (char* full_path_to_output_filenam
 		fflush(stdout);
 	}else{
 		fprintf(pFile, "#nbar E_min E_max\n");
-		int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
-		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
-			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
-		}
-	
+		int* nr_subindices_of_collective_variable =current_wang_landau_system.nr_subindices_of_collective_variable;
+
 		for(int flattened_index=0;flattened_index<current_wang_landau_system.len_histogram;flattened_index++){
 			//unravel index
 			int unraveled_index[current_wang_landau_system.nr_collective_variables];
@@ -1813,10 +1813,7 @@ void write_out_preliminary_energy_run_results (char* full_path_to_output_filenam
 
 
 int get_flattened_index_wang_landau_without_energy_collective_variable(int flattened_index_with_energy_collective_variable, int collective_variable_index_energy_observable){
-	int nr_subindices_of_collective_variable[current_wang_landau_system.nr_collective_variables];
-		for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
-			nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
-		}
+	int* nr_subindices_of_collective_variable=current_wang_landau_system.nr_subindices_of_collective_variable;
 	//unravel index
 	int unraveled_index[current_wang_landau_system.nr_collective_variables];
 	unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index_with_energy_collective_variable,unraveled_index);
