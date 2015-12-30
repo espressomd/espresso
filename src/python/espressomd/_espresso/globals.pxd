@@ -136,3 +136,16 @@ cdef extern from "npt.hpp":
         double p_diff
         double piston
     extern nptiso_struct nptiso
+
+cdef extern from "reaction.hpp":
+    ctypedef struct  reaction_struct:
+        int reactant_type
+        int product_type
+        int catalyzer_type
+        double range
+        double ct_rate
+        double eq_rate
+        int sing_mult
+        int swap
+
+    extern reaction_struct reaction
