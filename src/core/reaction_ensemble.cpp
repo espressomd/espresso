@@ -577,16 +577,17 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 
 	//check for the current state to be an allowed state in the [range collective_variables_minimum_values:collective_variables_maximum_values], else return a negative index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]/1.01 || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]/1.01)
-			return index;
+		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]*0.98 || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]*0.01)
+			return -10;
 	}
 
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
 		if(collective_variable_i==current_wang_landau_system.nr_collective_variables-1 && current_wang_landau_system.do_energy_reweighting==true)	//for energy collective variable (simple truncating conversion desired)
 			individual_indices[collective_variable_i]=(int) ((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]);
 		else	//for degree of association collective variables (rounding conversion desired)
-			individual_indices[collective_variable_i]=(int) ((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]+0.5);		
-//		printf("CV_i %d individual index %d, current_state %f cV_min %f delta_CV %f\n",collective_variable_i,individual_indices[collective_variable_i],current_state[collective_variable_i],collective_variables_minimum_values[collective_variable_i],delta_collective_variables_values[collective_variable_i] );
+			individual_indices[collective_variable_i]=(int) ((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]+0.5);
+		if(individual_indices[collective_variable_i]<0 or individual_indices[collective_variable_i]>=nr_subindices_of_collective_variable[collective_variable_i]) // sanity check
+			return -10;
 	}
 	
 	//get flattened index from individual_indices
@@ -599,7 +600,6 @@ int get_flattened_index_wang_landau(double* current_state, double* collective_va
 		index+=factor*individual_indices[collective_variable_i];
 		
 	}	
-	
 	return index;
 }
 
