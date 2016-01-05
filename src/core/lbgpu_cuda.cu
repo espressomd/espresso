@@ -3434,6 +3434,7 @@ __global__ void propagate_boundaries(LB_nodes_gpu n_curr, LB_rho_v_gpu *d_v, LB_
 
   unsigned int xyz[3], index;
   index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+  if(index > para.dim_x*para.dim_y*para.dim_z) return;
   index_to_xyz(index, xyz);
   int ii, jj; //iterable
   float dist;
