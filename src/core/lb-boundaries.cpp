@@ -142,9 +142,10 @@ void set_moving_boundary_struct(LB_Boundary* lbb_in, LB_moving_boundary* lbb_out
     lbb_out->rinertia[1] = lbb_in->rinertia[1] / lbpar_gpu.agrid / lbpar_gpu.agrid;
     lbb_out->rinertia[2] = lbb_in->rinertia[2] / lbpar_gpu.agrid / lbpar_gpu.agrid;
   } else {
+    // Hydrodynamic radius is 0.5 larger than the constraint radius.
     lbb_out->rinertia[0] =  
     lbb_out->rinertia[1] =  
-    lbb_out->rinertia[2] =  2.0f/5.0f * lbb_in->mass * lbb_out->radius*lbb_out->radius;// sphere. [kg a^2] because torque is calced in lb units
+    lbb_out->rinertia[2] =  2.0f/5.0f * lbb_in->mass * (lbb_out->radius+0.5)*(lbb_out->radius+0.5);// sphere. [kg a^2] because torque is calced in lb units.
   }
   
   
