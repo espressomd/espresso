@@ -1,3 +1,22 @@
+#
+# Copyright (C) 2013,2014 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#  
+
 import h5py
 import sys
 import numpy as np
@@ -47,6 +66,9 @@ class h5md(object):
         elif(len(h5_index)==3): self.dataset[h5_index[0],h5_index[1],h5_index[2]]=value
         elif(len(h5_index)==4): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3]]=value
         elif(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4]]=value
+        elif(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5]]=value
+        elif(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5],h5_index[6]]=value
+        elif(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5],h5_index[6],h5_index[7]]=value
                                         
     def WriteValueEspresso(self,timestep,particle_id,value,h5_datasetgroup,h5_shape,h5_maxshape,h5_Dtype,chunk=True,case="",feature=1):
         #timestep:          ESPResSo time step
@@ -102,9 +124,7 @@ class h5md(object):
             if(self.dataset.shape[0]<timestep+1 or self.dataset.shape[1]<particle_id+1):
                 self.dataset.resize((maxshape_timestep,maxshape_particle_id,1))
             self.dataset[timestep,particle_id]=value
-
-            
-                       
+                      
 
         #observables
         if case=='observable_time_independent': 
@@ -134,6 +154,7 @@ class h5md(object):
             if(self.dataset.shape[0]<timestep+1): 
                 self.dataset.resize((maxshape_timestep,value_length))
             self.dataset[timestep]=value_temp 
+             
                          
         #box 
         if case=='box_edges_time_independent': 
@@ -181,9 +202,10 @@ class h5md(object):
             else:
                 self.dataset[timestep,2]="periodic" 
 
-###########################################################################################################################################
-############################################################# WRITE CLASS #################################################################
-###########################################################################################################################################  
+  
+#----------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------WRITE CLASS------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------#
 #WRITE CLASS 
     class write_to_h5(object):
         def __init__(self,h5md):
@@ -541,9 +563,10 @@ class h5md(object):
             self.type(-1,groupname,"indexOfSpecies",chunk)
             self.mass(-1,groupname,"mass",chunk)
 
-###########################################################################################################################################
-############################################################# READ CLASS ##################################################################
-###########################################################################################################################################                                            
+
+#----------------------------------------------------------------------------------------------------------------#
+#------------------------------------------------------READ CLASS------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------#                                         
 #READ CLASS     
     class read_from_h5(object):
         def __init__(self,h5md):
@@ -564,6 +587,9 @@ class h5md(object):
             elif(len(h5_index)==3): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2]]
             elif(len(h5_index)==4): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3]]
             elif(len(h5_index)==5): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4]]
+            elif(len(h5_index)==6): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5]]
+            elif(len(h5_index)==7): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5],h5_index[6]]
+            elif(len(h5_index)==8): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5],h5_index[6],h5_index[7]]
                          
     #PARTICLES
         #time
@@ -577,6 +603,20 @@ class h5md(object):
             # Try to read value from h5-file and write to ESPResSo
             try:                                                                                                     
                 self.h5md.system.time = self.h5md.value_dataset[timestep]    
+            except:
+                print "ERROR H5: Access to dataset "+ groupname+datasetname+" or writing to ESPResSo not possible" 
+                sys.exit()         
+        #time
+        def time_step(self,timestep=-1,groupname="particles/atoms/Time/",datasetname="step"):
+            # Try to open dataset
+            try:                                                                                                    
+                self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
+            except:
+                print "ERROR H5: No "+groupname+datasetname+" dataset in h5-file exisiting"
+                sys.exit()
+            # Try to read value from h5-file and write to ESPResSo
+            try:                                                                                                     
+                return self.h5md.value_dataset[timestep]    
             except:
                 print "ERROR H5: Access to dataset "+ groupname+datasetname+" or writing to ESPResSo not possible" 
                 sys.exit()         
