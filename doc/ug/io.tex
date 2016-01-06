@@ -870,10 +870,10 @@ h5.write_to_h5.userdefined(\var{value},\var{groupname},\var{datasetname},\var{da
 \end{pyessyntax}
 The \texttt{h5md} sub-class \texttt{write_to_h5} contains all write commands such as \texttt{userdefined}.
 \begin{arguments}
-\item[\var{value}] To be written value.
-\item[\var{groupname}] Name of the group containing the dataset.
-\item[\var{datasetname}] Name of the dataset containing the values.
-\item[\var{datatype}] Data type of the values.
+\item[\var{value}] The value to be written.
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{datatype}] The value's data type.
 \item[\var{datasetindex}] Position of \var{value} within the dataset.
 \item[\var{chunks}] Size of dataset sub units. Fragmenting the dataset to smaller units can increase the access speed to the hdf5-file. When not defining the chunk size explicitly, it will be set automatically.
 \end{arguments}
@@ -891,9 +891,10 @@ h5.write_to_h5.observable(\var{timestep},\var{groupname},\var{datasetname},\var{
 \end{pyessyntax}
 The command \texttt{observable} is a short cut for the various observable commands such as \texttt{analyze_energy} (energy).\\\\
 The sample python script ``h5md_WriteFile.py'' shows the usage of writing on a hdf5-file.
+\newline
 
 \section{Reading H5MD-files with Python}
-To read from a hdf5-file, again an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. The command \texttt{userdefined} reads a single value from the hdf5-file:
+To read from a hdf5-file, again an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. The command \texttt{userdefined} reads and returns a single value from the hdf5-file:
 \begin{pyessyntax}
 h5.read_from_h5.userdefined(\var{groupname},\var{datasetname},\var{datasetindex})
 \end{pyessyntax}

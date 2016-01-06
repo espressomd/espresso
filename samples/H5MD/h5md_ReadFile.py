@@ -22,85 +22,96 @@ from espressomd import h5md
 from espressomd.interactions import HarmonicBond
 import numpy as np
 
-#Prepare system for h5-reading
+### Prepare system for h5-reading
 system = espressomd.System()
 
-#Prepare particles for h5-reading
+### Prepare particles for h5-reading
 n_part=10
 for i in range(n_part):
     system.part[i].pos=np.array([0,0,0])
     
-#TIME DEPENDENT
+#----------------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------TIME DEPENDENT-----------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------#
+### Open h5-file
 n_time=5
 h5=h5md.h5md("File.h5",system)
+
+### Read from h5-file
+# user defined 
 result_user1 = h5.read_from_h5.userdefined("User/user1/","value1",(3,))
-result_user2 = h5.read_from_h5.userdefined("User/user1/","value2",(3,5))
-h5.read_from_h5.time(n_time-1,"particles/atoms/position/","time")
-h5.read_from_h5.type(n_time-1)
+result_user2 = h5.read_from_h5.userdefined("User/user1/","value2",(3,4,5))
+
+# particle datas 
 h5.read_from_h5.pos(n_time-1)
-h5.read_from_h5.v(n_time-1)
-h5.read_from_h5.f(n_time-1)
-h5.read_from_h5.mass(n_time-1)
-h5.read_from_h5.omega_lab(n_time-1)
-h5.read_from_h5.rinertia(n_time-1)
-h5.read_from_h5.omega_body(n_time-1)
-h5.read_from_h5.torque_lab(n_time-1)
-h5.read_from_h5.quat(n_time-1)
-h5.read_from_h5.q(n_time-1)
-h5.read_from_h5.virtual(n_time-1)      
-# h5.read_from_h5.vs_relative(n_time-1) 
-h5.read_from_h5.dip(n_time-1)
-h5.read_from_h5.dipm(n_time-1)
-h5.read_from_h5.ext_force(n_time-1)
-h5.read_from_h5.fix(n_time-1)
-h5.read_from_h5.ext_torque(n_time-1)
-h5.read_from_h5.gamma(n_time-1)
-h5.read_from_h5.temp(n_time-1)
-h5.read_from_h5.rotation(n_time-1)
-h5.read_from_h5.box_edges(n_time-1)
-h5.read_from_h5.id(n_time-1)
+#h5.read_from_h5.v(n_time-1)
+#h5.read_from_h5.f(n_time-1)
+#h5.read_from_h5.type(n_time-1)
+#h5.read_from_h5.mass(n_time-1)
+#h5.read_from_h5.omega_lab(n_time-1)
+#h5.read_from_h5.rinertia(n_time-1)
+#h5.read_from_h5.omega_body(n_time-1)
+#h5.read_from_h5.torque_lab(n_time-1)
+#h5.read_from_h5.quat(n_time-1)
+#h5.read_from_h5.q(n_time-1)
+#h5.read_from_h5.virtual(n_time-1)      
+#h5.read_from_h5.vs_relative(n_time-1) 
+#h5.read_from_h5.dip(n_time-1)
+#h5.read_from_h5.dipm(n_time-1)
+#h5.read_from_h5.ext_force(n_time-1)
+#h5.read_from_h5.fix(n_time-1)
+#h5.read_from_h5.ext_torque(n_time-1)
+#h5.read_from_h5.gamma(n_time-1)
+#h5.read_from_h5.temp(n_time-1)
+#h5.read_from_h5.rotation(n_time-1)
+#h5.read_from_h5.box_edges(n_time-1)
+#h5.read_from_h5.id(n_time-1)
+#h5.read_from_h5.time(n_time-1,"particles/atoms/position/","time")
 
-print("TIME DEPENDENT")
-for i in range(n_part):
-    print(result_user1)
-    print(result_user2)
-#     print(system.time)
-#     print(system.part[i].type)
-#     print(system.part[i].pos)
-    print(system.part[i].v)
-#     print(system.part[i].f)
-#     print(system.part[i].mass)
-#     print(system.part[i].omega_lab)
-#     print(system.part[i].rinertia)
-#     print(system.part[i].omega_body)
-#     print(system.part[i].torque_lab)
-#     print(system.part[i].quat)
-#     print(system.part[i].q)
-# 	  print(system.part[i].virtual)         															
-#     print(system.part[i].vs_relative)																  
-#     print(system.part[i].dip)
-#     print(system.part[i].dipm)
-#     print(system.part[i].ext_force)
-#     print(system.part[i].fix)
-#     print(system.part[i].ext_torque)
-#     print(system.part[i].gamma)
-#     print(system.part[i].temp)
-#     print(system.part[i].rotation)
-#     print(system.box_l)
-#     print(system.part[i].id)    
-
+### Output results
+print("\nTIME DEPENDENT")
+print(result_user1)
+print(result_user2)  
+for i in range(n_part):  
+    print(system.part[i].pos)
+    #print(system.part[i].v)
+    #print(system.part[i].f)
+    #print(system.part[i].type)
+    #print(system.part[i].mass)
+    #print(system.part[i].omega_lab)
+    #print(system.part[i].rinertia)
+    #print(system.part[i].omega_body)
+    #print(system.part[i].torque_lab)
+    #print(system.part[i].quat)
+    #print(system.part[i].q)
+ 	  #print(system.part[i].virtual)         															
+    #print(system.part[i].vs_relative)																  
+    #print(system.part[i].dip)
+    #print(system.part[i].dipm)
+    #print(system.part[i].ext_force)
+    #print(system.part[i].fix)
+    #print(system.part[i].ext_torque)
+    #print(system.part[i].gamma)
+    #print(system.part[i].temp)
+    #print(system.part[i].rotation)
+    #print(system.box_l)
+    #print(system.part[i].id)  
+    #print(system.time)  
+    
 
 #----------------------------------------------------------------------------------------------------------------#
-
-
-#TIME INDEPENDENT
-#Open h5-file
+#--------------------------------------------------TIME INDEPENDENT----------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------#
+### Open h5-file
 h5_time_independent=h5md.h5md("File_time_independent.h5",system)
+
+### Read from h5-file
 h5_time_independent.read_from_h5.pos()
 h5_time_independent.read_from_h5.v(-1,"particles/atoms/velocity/","value")    #With additional parameters, use "-1" as first parameter 
 
+### Output results
 print("\nTIME INDEPENDENT")
 for i in range(n_part):
-#     print(system.part[i].pos)
+    print(system.part[i].pos)
     print(system.part[i].v)
 
