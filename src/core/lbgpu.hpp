@@ -324,6 +324,7 @@ void lb_print_node_GPU(int single_nodeindex, LB_rho_v_pi_gpu *host_print_values)
 void lb_convert_force_to_body_for_print(Particle *p, double *print_val);
 void lb_convert_torque_to_space_for_print(Particle *p, double *print_val);
 void lb_convert_omega_to_space_for_print(Particle *p, double *print_val);
+void lb_convert_ext_torque_to_body_for_print(Particle *p, double *print_val);
 int lb_lbfluid_print_moving_pos(int part_num, double *print_val);
 int lb_lbfluid_print_moving_vel(int part_num, double *print_val);
 int lb_lbfluid_print_moving_orientation(int part_num, double *print_val);

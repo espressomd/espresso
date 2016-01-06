@@ -4258,9 +4258,10 @@ int lb_lbfluid_print_moving_omega_lab(int part_num, double *print_val){
 
 int lb_lbfluid_print_moving_torque_body(int part_num, double *print_val){
   if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;
-  print_val[0]=host_lb_moving_boundary[part_num].f.storque[0];
-  print_val[1]=host_lb_moving_boundary[part_num].f.storque[1];
-  print_val[2]=host_lb_moving_boundary[part_num].f.storque[2];
+  lb_convert_ext_torque_to_body_for_print(host_lb_moving_boundary + part_num, print_val);//sry
+  print_val[0]=host_lb_moving_boundary[part_num].f.storque[0]-print_val[0];
+  print_val[1]=host_lb_moving_boundary[part_num].f.storque[1]-print_val[1];
+  print_val[2]=host_lb_moving_boundary[part_num].f.storque[2]-print_val[2];
 
   return 0;
 }
@@ -4268,6 +4269,9 @@ int lb_lbfluid_print_moving_torque_body(int part_num, double *print_val){
 int lb_lbfluid_print_moving_torque_lab(int part_num, double *print_val){
   if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;
   lb_convert_torque_to_space_for_print(host_lb_moving_boundary + part_num, print_val);
+  print_val[0] -=host_lb_moving_boundary[part_num].p.ext_torque[0];
+  print_val[1] -=host_lb_moving_boundary[part_num].p.ext_torque[1];
+  print_val[2] -=host_lb_moving_boundary[part_num].p.ext_torque[2];
   return 0;
 }
 
@@ -4740,6 +4744,15 @@ void lb_convert_force_to_body_for_print(Particle *p, double *print_val)
   print_val[2] = A[2 + 3*0]*p->f.sf[0] + A[2 + 3*1]*p->f.sf[1] + A[2 + 3*2]*p->f.sf[2];
 }
 
+void lb_convert_ext_torque_to_body_for_print(Particle *p, double *print_val)
+{
+  double A[9];
+  lb_define_rotation_matrix(p,A);
+
+  print_val[0] = A[0 + 3*0]*p->p.ext_torque[0] + A[0 + 3*1]*p->p.ext_torque[1] + A[0 + 3*2]*p->p.ext_torque[2];
+  print_val[1] = A[1 + 3*0]*p->p.ext_torque[0] + A[1 + 3*1]*p->p.ext_torque[1] + A[1 + 3*2]*p->p.ext_torque[2];
+  print_val[2] = A[2 + 3*0]*p->p.ext_torque[0] + A[2 + 3*1]*p->p.ext_torque[1] + A[2 + 3*2]*p->p.ext_torque[2];
+}
 
 //this should run in parallel to integrate()
 //this needs external_forces feature
