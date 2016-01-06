@@ -1081,13 +1081,12 @@ __device__ __inline__ void bounce_back(LB_nodes_gpu n_curr, LB_rho_v_gpu *d_v, f
   to_index = to_index_x + para.dim_x*to_index_y + para.dim_x*para.dim_y*to_index_z;
   if ( n_curr.boundary[to_index] == 0)
   {
-    r[0] = to_center[0] + 0.5f * c[0];//the bounceback happens at half-way and is treated as such
-    r[1] = to_center[1] + 0.5f * c[1];
-    r[2] = to_center[2] + 0.5f * c[2];
+    r[0] = to_center[0] - .5f * c[0];//the bounceback happens at half-way and is treated as such
+    r[1] = to_center[1] - .5f * c[1];
+    r[2] = to_center[2] - .5f * c[2];
     loc_v[0] = v[0] - omega[1]*r[2] + omega[2]*r[1];//change of sign since r points to the center.
     loc_v[1] = v[1] - omega[2]*r[0] + omega[0]*r[2];
     loc_v[2] = v[2] - omega[0]*r[1] + omega[1]*r[0];
-    
     vc = loc_v[0]*c[0] + loc_v[1]*c[1] + loc_v[2]*c[2];
     shift = weight * d_v[to_index].rho[0] * 6.0f*vc;
     n_curr.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift;
@@ -1095,9 +1094,9 @@ __device__ __inline__ void bounce_back(LB_nodes_gpu n_curr, LB_rho_v_gpu *d_v, f
     f[0] = (pop_to_bounce_back + shift) * c[0];
     f[1] = (pop_to_bounce_back + shift) * c[1];
     f[2] = (pop_to_bounce_back + shift) * c[2];
-    torque[0] -= (r[1]*f[2] - r[2]*f[1]);//change of sign because r to center
-    torque[1] -= (r[2]*f[0] - r[0]*f[2]); 
-    torque[2] -= (r[0]*f[1] - r[1]*f[0]); 
+    torque[0] -= (to_center[1]*f[2] - to_center[2]*f[1]);//change of sign because r to center
+    torque[1] -= (to_center[2]*f[0] - to_center[0]*f[2]); 
+    torque[2] -= (to_center[0]*f[1] - to_center[1]*f[0]); 
     boundary_force[0] += f[0];
     boundary_force[1] += f[1];
     boundary_force[2] += f[2];
@@ -1175,6 +1174,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, LB_rho_v_gpu *d_v, L
       omega[1] = lb_moving_boundary[boundary_index].omega[1];
       omega[2] = lb_moving_boundary[boundary_index].omega[2];
       xyz_center_to_delta(xyz, lb_moving_boundary[boundary_index].center, delta_xyz);
+      //printf("\n center %f %f %f", delta_xyz[0],delta_xyz[1],delta_xyz[2]);
     }
 
 
@@ -4242,11 +4242,10 @@ int lb_lbfluid_print_moving_vel(int part_num, double *print_val){
 }
 
 int lb_lbfluid_print_moving_omega_body(int part_num, double *print_val){
-  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1;  
+  if(part_num < 0 || part_num >= host_n_lb_moving_boundaries) return 1; 
   print_val[0]=host_lb_moving_boundary[part_num].m.somega[0];
   print_val[1]=host_lb_moving_boundary[part_num].m.somega[1];
   print_val[2]=host_lb_moving_boundary[part_num].m.somega[2];
-
   return 0;
 }
 
@@ -4728,7 +4727,6 @@ void lb_convert_omega_to_space_for_print(Particle *p, double *print_val)
 {
   double A[9];
   lb_define_rotation_matrix(p, A);
-  
   print_val[0] = A[0 + 3*0]*p->m.somega[0] + A[1 + 3*0]*p->m.somega[1] + A[2 + 3*0]*p->m.somega[2];
   print_val[1] = A[0 + 3*1]*p->m.somega[0] + A[1 + 3*1]*p->m.somega[1] + A[2 + 3*1]*p->m.somega[2];
   print_val[2] = A[0 + 3*2]*p->m.somega[0] + A[1 + 3*2]*p->m.somega[1] + A[2 + 3*2]*p->m.somega[2];
