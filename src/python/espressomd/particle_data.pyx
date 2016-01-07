@@ -829,4 +829,6 @@ cdef class ParticleList:
 
 
         
+    def exists(self,id):
+      return particle_exists(id)
 
