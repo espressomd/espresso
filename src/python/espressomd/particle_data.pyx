@@ -794,7 +794,6 @@ cdef class ParticleList:
         if particle_exists(P["id"]):
           raise Exception("Particle %d already exists." % P["id"])
 
-      print P
       # Check for presence of pos attribute
       if not "pos" in P:
         raise ValueError("pos attribute must be specified for new particle")
@@ -807,7 +806,6 @@ cdef class ParticleList:
         P["pos"], 3, float, "Postion must be 3 floats")
       for i in range(3):
         mypos[i] = P["pos"][i]
-      print "setting",P["id"],mypos[0],mypos[1],mypos[2]
       if place_particle(P["id"], mypos) == -1:
         raise Exception("particle could not be set")
       # Pos is taken care of
@@ -821,7 +819,6 @@ cdef class ParticleList:
     # Iteration over all existing particles
     def __iter__(self):
       for i in range(max_seen_particle+1):
-        print "tst",i,particle_exists(i)
         if particle_exists(i):
           yield self[i]
 
