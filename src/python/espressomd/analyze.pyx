@@ -120,6 +120,18 @@ def analyze_linear_momentum(system=None, include_particles=True, include_lbfluid
     """
     return c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
 
+
+#
+# Analyze center of mass
+#
+
+
+def centermass(system=None, part_type=None):
+    """Analyze the system's center of mass
+    """
+    return c_analyze.centerofmass(part_type)
+
+
 # get all particles in neighborhood r_catch of pos and return their ids
 # in il. plane can be used to specify the distance in the xy, xz or yz
 # plane
