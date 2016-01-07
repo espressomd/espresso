@@ -25,6 +25,7 @@ cimport particle_data
 from interactions import BondedInteraction
 from interactions import BondedInteractions
 from copy import copy
+from globals cimport max_seen_particle 
 
 PARTICLE_EXT_FORCE = 1
 
@@ -750,8 +751,82 @@ cdef class ParticleHandle:
         if change_particle_bond(self.id, NULL, 1):
             raise Exception("Deleting all bonds failed.")
 
+    def update(self,P):
+      
+      if "id" in P:
+        raise Exception("Cannot change particle id.")
+
+      for k in P.keys():
+        setattr(self,k,P[k])
+
+
+
+
 cdef class ParticleList:
     """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
 
+    # Retrieve a particle
     def __getitem__(self, key):
+        if not particle_exists(key):
+           raise Exception("Particle %d does not exist." % key)
         return ParticleHandle(key)
+    
+    
+    def add(self, *args, **kwargs):
+        
+        # Did we get a dictionary
+        if len(args)==1: 
+          if hasattr(args[0],"__getitem__"):
+            self._place_new_particle(args[0])
+        else:
+          if len(args)==0 and len(kwargs.keys()) !=0:
+            self._place_new_particle(kwargs)
+          else:
+            raise ValueError("add() takes either a dictionary or a bunch of keyword args")
+
+    def _place_new_particle(self,P):
+      
+      # Handling of particle id
+      if not  "id" in P:
+        # Generate particle id
+        P["id"] =max_seen_particle+1
+      else:
+        if particle_exists(P["id"]):
+          raise Exception("Particle %d already exists." % P["id"])
+
+      print P
+      # Check for presence of pos attribute
+      if not "pos" in P:
+        raise ValueError("pos attribute must be specified for new particle")
+      
+      # The ParticleList[]-getter ist not valid yet, as teh particle
+      # doesn't yet exist. Hence, the setting of position has to be
+      # done here. the code is from te pos:property of ParticleHandle
+      cdef double mypos[3]
+      check_type_or_throw_except(
+        P["pos"], 3, float, "Postion must be 3 floats")
+      for i in range(3):
+        mypos[i] = P["pos"][i]
+      print "setting",P["id"],mypos[0],mypos[1],mypos[2]
+      if place_particle(P["id"], mypos) == -1:
+        raise Exception("particle could not be set")
+      # Pos is taken care of
+      del P["pos"]
+      id=P["id"]
+      del P["id"]
+
+      if P!={}:
+        self[id].update(P)
+
+    # Iteration over all existing particles
+    def __iter__(self):
+      for i in range(max_seen_particle+1):
+        print "tst",i,particle_exists(i)
+        if particle_exists(i):
+          yield self[i]
+
+
+
+
+        
+
