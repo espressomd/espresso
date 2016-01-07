@@ -7,6 +7,9 @@ proc rotate_z {} {
 	}
 }
 
+require_feature "ELECTROSTATICS"
+require_feature "FFTW"
+
 setmd time_step 0.01
 setmd skin 0.4
 
