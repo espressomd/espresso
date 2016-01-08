@@ -61,14 +61,7 @@ class h5md(object):
                 break       
             
         #ASSIGN VALUE
-        if(len(h5_index)==1): self.dataset[h5_index[0]]=value
-        elif(len(h5_index)==2): self.dataset[h5_index[0],h5_index[1]]=value
-        elif(len(h5_index)==3): self.dataset[h5_index[0],h5_index[1],h5_index[2]]=value
-        elif(len(h5_index)==4): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3]]=value
-        elif(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4]]=value
-        elif(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5]]=value
-        elif(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5],h5_index[6]]=value
-        elif(len(h5_index)==5): self.dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5],h5_index[6],h5_index[7]]=value
+        self.dataset[h5_index]=value
                                         
     def WriteValueEspresso(self,timestep,particle_id,value,h5_datasetgroup,h5_shape,h5_maxshape,h5_Dtype,chunk=True,case="",feature=1):
         #timestep:          ESPResSo time step
@@ -232,7 +225,9 @@ class h5md(object):
                     self.h5md.WriteValueEspresso(-1,i,self.h5md.system.part[i].pos,groupname+datasetname,(1,3),(None,3),'f8',chunk,'particle_time_independent',1)                
             if timestep >=    0: #Time dependent
                 for i in range(0,self.h5md.system.n_part):
-                    self.h5md.WriteValueEspresso(timestep,i,self.h5md.system.part[i].pos,groupname+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',1)                                                                   
+                    self.h5md.WriteValueEspresso(timestep,i,self.h5md.system.part[i].pos,groupname+datasetname,(1,1,3),(None,None,3),'f8',chunk,'particle_time_dependent',1) 
+                    self.time(timestep,groupname,"time",chunk) 
+                    self.time_step(timestep,groupname,"step",chunk)                                                                  
         #velocity
         def v(self,timestep=-1,groupname="particles/atoms/velocity/",datasetname="value",chunk=True):
             if timestep == -1: #Time independent
@@ -282,7 +277,7 @@ class h5md(object):
                             self.h5md.WriteValueEspresso(timestep,index,bond[partner],groupname+datasetname,(1,1,1),(None,None,1),'int64',chunk,'particle_bond_time_dependent',1) 
                             index+=1
         #species
-        def type(self,timestep=-1,groupname="particles/atoms/species/",datasetname="value",chunk=True):
+        def type(self,timestep=-1,groupname="particles/atoms/",datasetname="species",chunk=True):
             if timestep == -1: #Time independent
                 for i in range(0,self.h5md.system.n_part):
                     self.h5md.WriteValueEspresso(-1,i,self.h5md.system.part[i].type,groupname+datasetname,(1,1),(None,1),'int64',chunk,'particle_time_independent',1)                
@@ -536,8 +531,7 @@ class h5md(object):
                     self.h5md.WriteValueEspresso(timestep,-1,analyze.structure_factor(self.h5md.system,sf_type,sf_order)[i],groupname+datasetname+"_"+str(i),(2,),(2,),'f8',chunk,'observable_time_independent',1)     
             if timestep >=    0: #Time dependent
                 for i in range(len(analyze.structure_factor(self.h5md.system,sf_type,sf_order))):
-                    self.h5md.WriteValueEspresso(timestep,-1,analyze.structure_factor(self.h5md.system,sf_type,sf_order)[i],groupname+datasetname+"_"+str(i),(1,2),(None,2),'f8',chunk,'observable_time_dependent',1)     
-        
+                    self.h5md.WriteValueEspresso(timestep,-1,analyze.structure_factor(self.h5md.system,sf_type,sf_order)[i],groupname+datasetname+"_"+str(i),(1,2),(None,2),'f8',chunk,'observable_time_dependent',1)                                      
     #BOX     
         def box_edges(self,timestep=-1,groupname="particles/atoms/box/",datasetname="value",chunk=True): 
             if timestep == -1: #Time independent
@@ -555,13 +549,93 @@ class h5md(object):
             if timestep >=    0: #Time dependent        
                 self.h5md.WriteValueEspresso(timestep,-1,3,groupname+datasetname,(1,1),(None,1),'int64',chunk,'box_dimension_time_dependent',1) 
     #VMD
-        def VMD(self,groupname="parameters/vmd_structure/",chunk=True):
-            self.id(-1,groupname,"atomicnumber",chunk)
-            self.bond_from(-1,groupname,"bond_from",chunk)
-            self.bond_to(-1,groupname,"bond_to",chunk)
-            self.q(-1,groupname,"charge",chunk)
-            self.type(-1,groupname,"indexOfSpecies",chunk)
-            self.mass(-1,groupname,"mass",chunk)
+        def VMD(self,datasetname,value=-1,groupname="parameters/vmd_structure/",chunk=True): 
+            if(datasetname=='charge'): 
+                self.q(-1,groupname,"charge",chunk)                      
+            if(datasetname=='mass'): 
+                self.mass(-1,groupname,"mass",chunk)             
+            if(datasetname=='bond_from'): 
+                self.bond_from(-1,groupname,"bond_from",chunk) 
+            if(datasetname=='bond_to'): 
+                self.bond_to(-1,groupname,"bond_to",chunk)
+                
+            if(datasetname=='indexOfSpecies'): 
+                try:
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"indexOfSpecies",(len(value),),maxshape=(None),dtype='int64',chunks=chunk)
+                except:
+                    self.dataset=self.h5md.h5_file[groupname+"indexOfSpecies"] 
+                self.dataset.resize((len(value),))                                   
+                for i in range(len(value)):               
+                    self.dataset[i]=value[i]
+            if(datasetname=='radius'): 
+                try:
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"radius",(len(value),),maxshape=(None),dtype='f8',chunks=chunk)
+                except:
+                    self.dataset=self.h5md.h5_file[groupname+"radius"] 
+                self.dataset.resize((len(value),))                                   
+                for i in range(len(value)):               
+                    self.dataset[i]=value[i]
+            if(datasetname=='name'):         
+                try:
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"name",(len(value),),maxshape=(None),dtype='S30',chunks=chunk)
+                except:
+                    self.dataset=self.h5md.h5_file[groupname+"name"]                  
+                self.dataset.resize((len(value),))                                   
+                for i in range(len(value)):               
+                    self.dataset[i]=value[i]                   
+            if(datasetname=='type'):     
+                try:
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"type",(len(value),),maxshape=(None),dtype='S30',chunks=chunk)
+                except:
+                    self.dataset=self.h5md.h5_file[groupname+"type"] 
+                self.dataset.resize((len(value),))                                   
+                for i in range(len(value)):               
+                    self.dataset[i]=value[i]     
+            if(datasetname=='resname'):                     
+                try:
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"resname",(len(value),),maxshape=(None),dtype='S30',chunks=chunk)
+                except:
+                    self.dataset=self.h5md.h5_file[groupname+"resname"] 
+                self.dataset.resize((len(value),))                                   
+                for i in range(len(value)):               
+                    self.dataset[i]=value[i]                     
+            if(datasetname=='resid'):     
+                try:
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"resid",(len(value),),maxshape=(None),dtype='int64',chunks=chunk)
+                except:
+                    self.dataset=self.h5md.h5_file[groupname+"resid"] 
+                self.dataset.resize((len(value),))                                   
+                for i in range(len(value)):               
+                    self.dataset[i]=value[i]     
+            if(datasetname=='segid'):                     
+                try:
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"segid",(len(value),),maxshape=(None),dtype='S30',chunks=chunk)
+                except:
+                    self.dataset=self.h5md.h5_file[groupname+"segid"] 
+                self.dataset.resize((len(value),))                                   
+                for i in range(len(value)):               
+                    self.dataset[i]=value[i]     
+            if(datasetname=='chain'):                    
+                try:
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"chain",(len(value),),maxshape=(None),dtype='S30',chunks=chunk)
+                except:
+                    self.dataset=self.h5md.h5_file[groupname+"chain"] 
+                self.dataset.resize((len(value),))                                   
+                for i in range(len(value)):               
+                    self.dataset[i]=value[i]     
+            if(datasetname=='atomicnumber'):                    
+                try:
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"atomicnumber",(len(value),),maxshape=(None),dtype='int64',chunks=chunk)
+                except:
+                    self.dataset=self.h5md.h5_file[groupname+"atomicnumber"] 
+                self.dataset.resize((len(value),))                                   
+                for i in range(len(value)):               
+                    self.dataset[i]=value[i]   
+            
+   
+            
+
+
 
 
 #----------------------------------------------------------------------------------------------------------------#
@@ -582,14 +656,7 @@ class h5md(object):
                 sys.exit()
 
             #Read value
-            if(len(h5_index)==1): return self.h5md.value_dataset[h5_index[0]]
-            elif(len(h5_index)==2): return self.h5md.value_dataset[h5_index[0],h5_index[1]]
-            elif(len(h5_index)==3): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2]]
-            elif(len(h5_index)==4): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3]]
-            elif(len(h5_index)==5): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4]]
-            elif(len(h5_index)==6): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5]]
-            elif(len(h5_index)==7): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5],h5_index[6]]
-            elif(len(h5_index)==8): return self.h5md.value_dataset[h5_index[0],h5_index[1],h5_index[2],h5_index[3],h5_index[4],h5_index[5],h5_index[6],h5_index[7]]
+            return self.h5md.value_dataset[h5_index]
                          
     #PARTICLES
         #time
@@ -607,7 +674,7 @@ class h5md(object):
                 print "ERROR H5: Access to dataset "+ groupname+datasetname+" or writing to ESPResSo not possible" 
                 sys.exit()         
         #time
-        def time_step(self,timestep=-1,groupname="particles/atoms/Time/",datasetname="step"):
+        def time_step(self,timestep=-1,groupname="particles/atoms/Timestep/",datasetname="step"):
             # Try to open dataset
             try:                                                                                                    
                 self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]

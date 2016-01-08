@@ -858,17 +858,19 @@ Closes the H5MD data file.
 
 
 \section{Writing H5MD-files with Python}
-To write data on a hdf5-file, first an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. This may, for example, look like:
+To write data in a hdf5-file, first an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. This may, for example, look like:
 \begin{pycode}
 from espressomd import h5md
 system = espressomd.System()
 h5=h5md.h5md("File.h5",system)
 \end{pycode}
-The command \texttt{userdefined} writes a single value to the hdf5-file:
+The \texttt{h5md} class contains the sub-class \texttt{write_to_h5}, which contains all write commands such as \texttt{userdefined}. The sample python script ``h5md_WriteFile.py'' shows the usage of writing a hdf5-file.
+
+\subsection{\keyword{userdefined}: Write an arbitrary value}
 \begin{pyessyntax}
 h5.write_to_h5.userdefined(\var{value},\var{groupname},\var{datasetname},\var{datatype},\\\var{datasetindex},\var{chunks})
 \end{pyessyntax}
-The \texttt{h5md} sub-class \texttt{write_to_h5} contains all write commands such as \texttt{userdefined}.
+The command \texttt{userdefined} writes a single value in the hdf5-file.
 \begin{arguments}
 \item[\var{value}] The value to be written.
 \item[\var{groupname}] Name of the group, which contains the dataset.
@@ -877,34 +879,69 @@ The \texttt{h5md} sub-class \texttt{write_to_h5} contains all write commands suc
 \item[\var{datasetindex}] Position of \var{value} within the dataset.
 \item[\var{chunks}] Size of dataset sub units. Fragmenting the dataset to smaller units can increase the access speed to the hdf5-file. When not defining the chunk size explicitly, it will be set automatically.
 \end{arguments}
-Particle properties can be written on the hdf5-file via a single command, writing the values of all particles at once:
+
+\subsection{\keyword{particle_property}: Write particle properties}
 \begin{pyessyntax}
 h5.write_to_h5.particle_property(\var{timestep},\var{groupname,datasetname},\var{chunks})
 \end{pyessyntax}
-The command \texttt{particle_property} is a short cut for the various particle property commands such as \texttt{pos} (position) and \texttt{f} (force). When leaving out the variables \var{groupname}, \var{datasetname}, and \var{chunks}, the predefined values of \var{groupname} and \var{datasetname} are used (H5MD-format) and the chunk size is set automatically.
+Particle properties can be written in the hdf5-file via a single command, writing the values of all particles at once. The command \texttt{particle_property} is a short cut for the various particle properties such as \texttt{pos} (position) and \texttt{f} (force). When leaving out the variables \var{groupname}, \var{datasetname}, and \var{chunks}, the predefined values of \var{groupname} and \var{datasetname} are used (H5MD-format) and the chunk size is set automatically.
 \begin{arguments}
-\item[\var{timestep}] Time index in the hdf5-file. If the value is time independent, \var{timestep} has to be set to -1 or leaved out.
+\item[\var{timestep}] Time index in the hdf5-file.
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{chunks}] Size of dataset sub units. Fragmenting the dataset to smaller units can increase the access speed to the hdf5-file. When not defining the chunk size explicitly, it will be set automatically.
 \end{arguments}
-ESPResSo observables can be written as follows:
+
+\subsection{\keyword{observables}: Write particle observables}
 \begin{pyessyntax}
 h5.write_to_h5.observable(\var{timestep},\var{groupname},\var{datasetname},\var{chunks})
 \end{pyessyntax}
-The command \texttt{observable} is a short cut for the various observable commands such as \texttt{analyze_energy} (energy).\\\\
-The sample python script ``h5md_WriteFile.py'' shows the usage of writing on a hdf5-file.
-\newline
+With this command the various ESPResSo observables can be written. The command \texttt{observable} is a short cut for the various observable such as \texttt{analyze_energy} (energy).
+\begin{arguments}
+\item[\var{timestep}] Time index in the hdf5-file.
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{chunks}] Size of dataset sub units. Fragmenting the dataset to smaller units can increase the access speed to the hdf5-file. When not defining the chunk size explicitly, it will be set automatically.
+\end{arguments}
+
+\subsection{\keyword{VMD}: Write VMD}
+\begin{pyessyntax}
+h5.write_to_h5.VMD(\var{datasetname},\var{value})
+\end{pyessyntax}
+The molecular visualization program VMD can read hdf5-files, when using the H5MD-format. To use VMD only the particle positions are needed. VMD can use further datasets such as 'indexOfSpecies' for coloring issues. With the command \texttt{VMD} these datasets can be written, which are stored in the h5-group "parameters/vmd_structure/". All possible dataset are shown in the example file.
+\begin{arguments}
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{value}] The value to be written.
+\end{arguments}
+
+
 
 \section{Reading H5MD-files with Python}
-To read from a hdf5-file, again an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. The command \texttt{userdefined} reads and returns a single value from the hdf5-file:
+To read data from a hdf5-file, again an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. The \texttt{h5md} class contains the sub-class \texttt{read_from_h5}, which contains all read commands such as \texttt{userdefined}. The sample python script ``h5md_ReadFile.py'' shows the usage of reading from a hdf5-file.
+\subsection{\keyword{userdefined}: Read an arbitrary value}
 \begin{pyessyntax}
 h5.read_from_h5.userdefined(\var{groupname},\var{datasetname},\var{datasetindex})
 \end{pyessyntax}
-The \texttt{h5md} sub-class \texttt{read_from_h5} contains all read commands such as \texttt{userdefined}.\\\\
-Particle properties can be read from the hdf5-file and stored in the respective ESPResSo variable as follows:
+The command \texttt{userdefined} reads and returns a single value from the hdf5-file. 
+\begin{arguments}
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{datasetindex}] Position of \var{value} within the dataset.
+\end{arguments}
+
+\subsection{\keyword{particle_property}: Read particle properties}
 \begin{pyessyntax}
 h5.read_from_h5.particle_property(\var{timestep},\var{groupname},\var{datasetname})
 \end{pyessyntax}
-The command \texttt{particle_property} is again a short cut for the various particle property commands such as \texttt{pos} (position) and \texttt{f} (force). When leaving out the variables \var{groupname} and \var{datasetname}, the predefined values of \var{groupname} and \var{datasetname} are used (H5MD-format).\\\\ 
+This command reads particle properties from the hdf5-file and passes the values to the ESPResSo variables. The command \texttt{particle_property} is again a short cut for the various particle property commands such as \texttt{pos} (position) and \texttt{f} (force). When leaving out the variables \var{groupname} and \var{datasetname}, the predefined values of \var{groupname} and \var{datasetname} are used (H5MD-format). 
+\begin{arguments}
+\item[\var{timestep}] Time index in the hdf5-file. 
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\end{arguments}
 The sample python script ``h5md_ReadFile.py'' shows the usage of reading from a hdf5-file.
+
+
 
 \section{Error handling}
 Errors in the parameters are detected as early as possible, and

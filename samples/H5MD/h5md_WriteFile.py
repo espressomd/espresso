@@ -53,17 +53,17 @@ for j in range(n_time):
     system.time=0.1*(j+1)
     for i in range(n_part):
         system.part[i].pos=np.array([0.1*(i+j),0.2*(i+j),0.3*(i+j)])
-        #system.part[i].v=np.array([0.2*(i+j),0.3*(i+j),0.4*(i+j)])
-        #system.part[i].f=np.array([0.3*(i+j),0.4*(i+j),0.5*(i+j)])
-        #system.part[i].type=i%3
-        #system.part[i].bonds=[[outBond,1],[outBond,2],[outBond,3]]
-        #system.part[i].mass=0.1*(i+j)
+        system.part[i].v=np.array([0.2*(i+j),0.3*(i+j),0.4*(i+j)])
+        system.part[i].f=np.array([0.3*(i+j),0.4*(i+j),0.5*(i+j)])
+        system.part[i].type=i%3
+        system.part[i].bonds=[[outBond,1],[outBond,2],[outBond,3]]
+        system.part[i].mass=0.1*(i+j)
         #system.part[i].omega_lab=np.array([0.5*(i+j),0.6*(i+j),0.7*(i+j)])
         #system.part[i].rinertia=np.array([0.6*(i+j),0.7*(i+j),0.8*(i+j)])
         #system.part[i].omega_body=np.array([0.7*(i+j),0.8*(i+j),0.9*(i+j)])
         #system.part[i].torque_lab=np.array([0.8*(i+j),0.9*(i+j),1.0*(i+j)])
         #system.part[i].quat=np.array([0.9*(i+j),0.9*(i+j),1.0*(i+j),1.1*(i+j)])
-        #system.part[i].q=1.0*(i+j)
+        system.part[i].q=1.0*(i+j)
         #system.part[i].virtual=11*(i+j)                                        
         #system.part[i].vs_relative=np.array([1.2*(i+j),1.3*(i+j),1.4*(i+j)])    
         #system.part[i].dip=np.array([1.3*(i+j),1.4*(i+j),1.5*(i+j)])
@@ -81,19 +81,19 @@ for j in range(n_time):
     h5.write_to_h5.userdefined(123.4,"User/user1/","value1",'f8',(3,))  # One dimensional
     h5.write_to_h5.userdefined(567.8,"User/user1/","value2",'f8',(3,4,5),(1,1,5)) # Three dimensional and manual chunk size
     
-    # particle datas 
+    # particle data 
     h5.write_to_h5.pos(j)
-    #h5.write_to_h5.v(j)
-    #h5.write_to_h5.f(j)
-    #h5.write_to_h5.type(j)
-    #h5.write_to_h5.bonds()
-    #h5.write_to_h5.mass(j)
+    h5.write_to_h5.v(j)
+    h5.write_to_h5.f(j)
+    h5.write_to_h5.type()
+    h5.write_to_h5.bonds()
+    h5.write_to_h5.mass()
     #h5.write_to_h5.omega_lab(j)
     #h5.write_to_h5.rinertia(j)
     #h5.write_to_h5.omega_body(j)
     #h5.write_to_h5.torque_lab(j)
     #h5.write_to_h5.quat(j)
-    #h5.write_to_h5.q(j)
+    h5.write_to_h5.q()
     #h5.write_to_h5.virtual(j)      
     #h5.write_to_h5.vs_relative(j) 
     #h5.write_to_h5.dip(j)
@@ -126,7 +126,19 @@ for j in range(n_time):
     #h5.write_to_h5.structure_factor(j,1,1)
     
 # VMD 
-h5.write_to_h5.VMD()  #Needed for different coloring of the spheres in VMD
+h5.write_to_h5.VMD('charge')
+h5.write_to_h5.VMD('mass')
+h5.write_to_h5.VMD('bond_from')
+h5.write_to_h5.VMD('bond_to')
+h5.write_to_h5.VMD('indexOfSpecies',[0,1,2])
+h5.write_to_h5.VMD('radius',[1.0,2.0,3.0])
+h5.write_to_h5.VMD('name',['H','He','Li'])
+h5.write_to_h5.VMD('type',['H','He','Li'])
+h5.write_to_h5.VMD('resname',['r1','r2'])
+h5.write_to_h5.VMD('resid',[0,0,0,0,0,1,1,1,1,1])
+h5.write_to_h5.VMD('segid',['s0','s0','s0','s0','s0','s1','s1','s1','s1','s1'])
+h5.write_to_h5.VMD('chain',['A','B'])
+h5.write_to_h5.VMD('atomicnumber',[1,2,3])
 
 ### Close file
 h5.close()
