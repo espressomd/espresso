@@ -59,7 +59,7 @@ class ParticleProperties(ut.TestCase):
 
     def setUp(self):
         if not self.es.part.exists(self.pid):
-	  self.es.part.add(id=self.pid, pos=(0, 0, 0))
+            self.es.part.add(id=self.pid, pos=(0, 0, 0))
 
     def generateTestForVectorProperty(_propName, _value):
         """Generates test cases for vectorial particle properties such as
