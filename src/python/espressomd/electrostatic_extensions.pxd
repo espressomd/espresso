@@ -26,7 +26,7 @@ from electrostatics cimport *
 IF ELECTROSTATICS and P3M:
 
     cdef extern from "elc.hpp":
-        ctypedef struct ELC_struct:
+        ctypedef struct elc_struct "ELC_struct":
             double maxPWerror
             double gap_size
             double far_cut
@@ -35,4 +35,4 @@ IF ELECTROSTATICS and P3M:
         int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize, double top, double bottom, int const_pot_on, double pot_diff)
 
         # links intern C-struct with python object
-        cdef extern ELC_struct elc_params
+        cdef extern elc_struct elc_params

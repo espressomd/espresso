@@ -3,7 +3,7 @@ include "myconfig.pxi"
 
 IF DIPOLES == 1:
     cdef extern from "interaction_data.hpp":
-        ctypedef enum DipolarInteraction:
+        ctypedef enum dipolar_interaction "DipolarInteraction":
             DIPOLAR_NONE = 0,
             DIPOLAR_P3M,
             DIPOLAR_MDLC_P3M,
@@ -13,10 +13,10 @@ IF DIPOLES == 1:
 
         int dipolar_set_Dbjerrum(double bjerrum)
 
-        ctypedef struct Coulomb_parameters:
+        ctypedef struct coulomb_parameters "Coulomb_parameters":
             double Dprefactor
-            DipolarInteraction Dmethod
-        cdef extern Coulomb_parameters coulomb
+            dipolar_interaction Dmethod
+        cdef extern coulomb_parameters coulomb
 
     cdef extern from "magnetic_non_p3m_methods.hpp":
         int dawaanr_set_params()
