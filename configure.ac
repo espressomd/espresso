@@ -415,8 +415,11 @@ AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 ## Check for Boost
 ##################
 
-AX_BOOST_BASE([1.48],, [AC_MSG_WARN([boost was not found on you system, parts of the test system will not be available.])])
-AX_BOOST_UNIT_TEST_FRAMEWORK
+BOOST_REQUIRE([1.42])
+BOOST_TEST()
+BOOST_SERIALIZATION()
+BOOST_SIGNALS2()
+BOOST_MPI()
 AM_CONDITIONAL([UNIT_TESTS], [test x$ax_cv_boost_unit_test_framework == xyes])
 
 ## Checking for MAGMA
