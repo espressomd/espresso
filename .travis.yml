@@ -53,7 +53,8 @@ matrix:
       env: OMPI_CC=clang OMPI_CXX=clang++ make_check=false myconfig=nocheck-maxset 
     - compiler: clang
       env: OMPI_CC=clang OMPI_CXX=clang++ myconfig=maxset without-cuda
-
+  allow_failures:
+    - compiler: clang
 
 script: ./maintainer/travis/build.sh
 
