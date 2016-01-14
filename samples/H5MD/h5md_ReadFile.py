@@ -19,7 +19,6 @@
 
 import espressomd
 from espressomd import h5md
-from espressomd.interactions import HarmonicBond
 import numpy as np
 
 ### Prepare system for h5-reading
@@ -39,14 +38,13 @@ h5=h5md.h5md("File.h5",system)
 
 ### Read from h5-file
 # user defined 
-result_user1 = h5.read_from_h5.userdefined("User/user1/","value1",(3,))
-result_user2 = h5.read_from_h5.userdefined("User/user1/","value2",(3,4,5))
+result_user1 = h5.read_from_h5.userdefined("User/user1/","value1",(3,))    # One dimensional (pay attention to the comma (3,) )
+result_user2 = h5.read_from_h5.userdefined("User/user1/","value2",(3,4,5)) # Three dimensional
 
 # particle data 
 h5.read_from_h5.pos(n_time-1)
 #h5.read_from_h5.v(n_time-1)
 #h5.read_from_h5.f(n_time-1)
-#h5.read_from_h5.type(n_time-1)
 #h5.read_from_h5.mass(n_time-1)
 #h5.read_from_h5.omega_lab(n_time-1)
 #h5.read_from_h5.rinertia(n_time-1)
@@ -67,6 +65,7 @@ h5.read_from_h5.pos(n_time-1)
 #h5.read_from_h5.box_edges(n_time-1)
 #h5.read_from_h5.id(n_time-1)
 #h5.read_from_h5.time(n_time-1,"particles/atoms/position/","time")
+#h5.read_from_h5.type()
 
 ### Output results
 print("\nTIME DEPENDENT")
@@ -76,7 +75,6 @@ for i in range(n_part):
     print(system.part[i].pos)
     #print(system.part[i].v)
     #print(system.part[i].f)
-    #print(system.part[i].type)
     #print(system.part[i].mass)
     #print(system.part[i].omega_lab)
     #print(system.part[i].rinertia)
@@ -97,7 +95,9 @@ for i in range(n_part):
     #print(system.box_l)
     #print(system.part[i].id)  
     #print(system.time)  
+    #print(system.part[i].type)
     
+
 
 #----------------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------TIME INDEPENDENT----------------------------------------------#

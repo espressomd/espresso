@@ -280,10 +280,10 @@ class h5md(object):
         def type(self,timestep=-1,groupname="particles/atoms/",datasetname="species",chunk=True):
             if timestep == -1: #Time independent
                 for i in range(0,self.h5md.system.n_part):
-                    self.h5md.WriteValueEspresso(-1,i,self.h5md.system.part[i].type,groupname+datasetname,(1,1),(None,1),'int64',chunk,'particle_time_independent',1)                
+                    self.h5md.WriteValueEspresso(-1,i,self.h5md.system.part[i].type,groupname+datasetname,(1,1),(None,1),'int32',chunk,'particle_time_independent',1)                
             if timestep >=    0: #Time dependent
                 for i in range(0,self.h5md.system.n_part):
-                    self.h5md.WriteValueEspresso(timestep,i,self.h5md.system.part[i].type,groupname+datasetname,(1,1,1),(None,None,1),'int64',chunk,'particle_time_dependent',1)    
+                    self.h5md.WriteValueEspresso(timestep,i,self.h5md.system.part[i].type,groupname+datasetname,(1,1,1),(None,None,1),'int32',chunk,'particle_time_dependent',1)    
         #id
         def id(self,timestep=-1,groupname="particles/atoms/id/",datasetname="value",chunk=True):
             if timestep == -1: #Time independent
@@ -561,7 +561,7 @@ class h5md(object):
                 
             if(datasetname=='indexOfSpecies'): 
                 try:
-                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"indexOfSpecies",(len(value),),maxshape=(None),dtype='int64',chunks=chunk)
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"indexOfSpecies",(len(value),),maxshape=(None),dtype='int32',chunks=chunk)
                 except:
                     self.dataset=self.h5md.h5_file[groupname+"indexOfSpecies"] 
                 self.dataset.resize((len(value),))                                   
@@ -601,7 +601,7 @@ class h5md(object):
                     self.dataset[i]=value[i]                     
             if(datasetname=='resid'):     
                 try:
-                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"resid",(len(value),),maxshape=(None),dtype='int64',chunks=chunk)
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"resid",(len(value),),maxshape=(None),dtype='int32',chunks=chunk)
                 except:
                     self.dataset=self.h5md.h5_file[groupname+"resid"] 
                 self.dataset.resize((len(value),))                                   
@@ -625,7 +625,7 @@ class h5md(object):
                     self.dataset[i]=value[i]     
             if(datasetname=='atomicnumber'):                    
                 try:
-                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"atomicnumber",(len(value),),maxshape=(None),dtype='int64',chunks=chunk)
+                    self.dataset=self.h5md.h5_file.create_dataset(groupname+"atomicnumber",(len(value),),maxshape=(None),dtype='int32',chunks=chunk)
                 except:
                     self.dataset=self.h5md.h5_file[groupname+"atomicnumber"] 
                 self.dataset.resize((len(value),))                                   
@@ -760,7 +760,7 @@ class h5md(object):
                 print "ERROR H5: Access to dataset "+ groupname+datasetname+" or writing to ESPResSo not possible" 
                 sys.exit()        
         #species    
-        def type(self,timestep=-1,groupname="particles/atoms/species/",datasetname="value"):
+        def type(self,timestep=-1,groupname="particles/atoms/",datasetname="species"):
             # Try to open dataset
             try:
                 self.h5md.value_dataset=self.h5md.h5_file[groupname][datasetname]
