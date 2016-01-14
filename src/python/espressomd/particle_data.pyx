@@ -25,6 +25,7 @@ cimport particle_data
 from interactions import BondedInteraction
 from interactions import BondedInteractions
 from copy import copy
+from globals cimport max_seen_particle
 
 PARTICLE_EXT_FORCE = 1
 
@@ -38,12 +39,12 @@ PARTICLE_EXT_TORQUE = 16
 cdef class ParticleHandle:
     def __cinit__(self, _id):
         #    utils.init_intlist(self.particle_data.el)
-        utils.init_intlist(& (self.particle_data.bl))
+        utils.init_intlist( & (self.particle_data.bl))
         self.id = _id
 
     cdef int update_particle_data(self) except -1:
         #    utils.realloc_intlist(self.particle_data.el, 0)
-        utils.realloc_intlist(& (self.particle_data.bl), 0)
+        utils.realloc_intlist( & (self.particle_data.bl), 0)
 
         if get_particle_data(self.id, & self.particle_data):
             raise Exception("Error updating particle data")
@@ -181,7 +182,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_mass(& (self.particle_data), x)
+                pointer_to_mass( & (self.particle_data), x)
                 return x[0]
 
     IF ROTATION == 1:
@@ -201,7 +202,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double o[3]
-                convert_omega_body_to_space( & (self.particle_data), o)
+                convert_omega_body_to_space(& (self.particle_data), o)
                 return np.array([o[0], o[1], o[2]])
 
     # ROTATIONAL_INERTIA
@@ -221,7 +222,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * rinertia = NULL
-                pointer_to_rotational_inertia(& (self.particle_data), rinertia)
+                pointer_to_rotational_inertia( & (self.particle_data), rinertia)
                 return np.array([rinertia[0], rinertia[1], rinertia[2]])
 
 # Omega (angular velocity) body frame
@@ -240,7 +241,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * o = NULL
-                pointer_to_omega_body(& (self.particle_data), o)
+                pointer_to_omega_body( & (self.particle_data), o)
                 return np.array([o[0], o[1], o[2]])
 
 
@@ -260,7 +261,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double x[3]
-                convert_torques_body_to_space( & (self.particle_data), x)
+                convert_torques_body_to_space(& (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
 # Quaternion
@@ -279,7 +280,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_quat( & (self.particle_data), x)
+                pointer_to_quat(& (self.particle_data), x)
                 return np.array([x[0], x[1], x[2], x[3]])
 # Director ( z-axis in body fixed frame)
         property director:
@@ -298,7 +299,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_quatu( & (self.particle_data), x)
+                pointer_to_quatu(& (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
 # Charge
@@ -317,7 +318,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_q( & (self.particle_data), x)
+                pointer_to_q(& (self.particle_data), x)
                 return x[0]
 
     def delete(self):
@@ -342,7 +343,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef int * x = NULL
-                pointer_to_virtual( & (self.particle_data), x)
+                pointer_to_virtual(& (self.particle_data), x)
                 return x[0]
 
     IF VIRTUAL_SITES_RELATIVE == 1:
@@ -373,7 +374,7 @@ cdef class ParticleHandle:
                 cdef int * rel_to = NULL
                 cdef double * dist = NULL
                 cdef double * q = NULL
-                pointer_to_vs_relative(& (self.particle_data), rel_to, dist, q)
+                pointer_to_vs_relative( & (self.particle_data), rel_to, dist, q)
                 return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
 
         # vs_auto_relate_to
@@ -413,7 +414,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_dip( & (self.particle_data), x)
+                pointer_to_dip(& (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
         # Scalar magnitude of dipole moment
@@ -429,7 +430,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_dipm( & (self.particle_data), x)
+                pointer_to_dipm(& (self.particle_data), x)
                 return x[0]
 
     IF EXTERNAL_FORCES:
@@ -454,7 +455,7 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 cdef double * ext_f = NULL
                 cdef int * ext_flag = NULL
-                pointer_to_ext_force(& (self.particle_data), ext_flag, ext_f)
+                pointer_to_ext_force( & (self.particle_data), ext_flag, ext_f)
                 if (ext_flag[0] & PARTICLE_EXT_FORCE):
                     return np.array([ext_f[0], ext_f[1], ext_f[2]])
                 else:
@@ -477,7 +478,7 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 fixed_coord_flag = np.array([0, 0, 0], dtype=int)
                 cdef int * ext_flag = NULL
-                pointer_to_fix( & (self.particle_data), ext_flag)
+                pointer_to_fix(& (self.particle_data), ext_flag)
                 for i in map(long, range(3)):
                     if (ext_flag[0] & COORD_FIXED(i)):
                         fixed_coord_flag[i] = 1
@@ -505,7 +506,7 @@ cdef class ParticleHandle:
                     self.update_particle_data()
                     cdef double * ext_t = NULL
                     cdef int * ext_flag = NULL
-                    pointer_to_ext_torque(& (self.particle_data), ext_flag, ext_t)
+                    pointer_to_ext_torque( & (self.particle_data), ext_flag, ext_t)
                     if (ext_flag[0] & PARTICLE_EXT_TORQUE):
                         return np.array([ext_t[0], ext_t[1], ext_t[2]])
                     else:
@@ -524,7 +525,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * gamma = NULL
-                pointer_to_gamma( & (self.particle_data), gamma)
+                pointer_to_gamma(& (self.particle_data), gamma)
                 return gamma[0]
 
         property temp:
@@ -539,7 +540,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * temp = NULL
-                pointer_to_temperature( & (self.particle_data), temp)
+                pointer_to_temperature(& (self.particle_data), temp)
                 return temp[0]
 
     IF ROTATION_PER_PARTICLE:
@@ -558,7 +559,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef short int * _rot = NULL
-                pointer_to_rotation( & (self.particle_data), _rot)
+                pointer_to_rotation(& (self.particle_data), _rot)
                 if _rot[0] == 1:
                     rot = True
                 else:
@@ -585,7 +586,7 @@ cdef class ParticleHandle:
                 cdef int * num_partners = NULL
                 cdef int * partners = NULL
                 py_partners = []
-                pointer_to_exclusions(& (self.particle_data), num_partners, partners)
+                pointer_to_exclusions( & (self.particle_data), num_partners, partners)
                 for i in range(num_partners[0]):
                     py_partners.append(partners[i])
                 return np.array(py_partners)
@@ -652,7 +653,7 @@ cdef class ParticleHandle:
                 swim = {}
                 mode = "N/A"
                 cdef particle_parameters_swimming * _swim = NULL
-                pointer_to_swimming(& (self.particle_data), _swim)
+                pointer_to_swimming( & (self.particle_data), _swim)
                 IF LB or LB_GPU:
                     if _swim.push_pull == -1:
                         mode = 'pusher'
@@ -750,8 +751,75 @@ cdef class ParticleHandle:
         if change_particle_bond(self.id, NULL, 1):
             raise Exception("Deleting all bonds failed.")
 
+    def update(self, P):
+
+        if "id" in P:
+            raise Exception("Cannot change particle id.")
+
+        for k in P.keys():
+            setattr(self, k, P[k])
+
+
 cdef class ParticleList:
     """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
 
+    # Retrieve a particle
     def __getitem__(self, key):
+        if not particle_exists(key):
+            raise Exception("Particle %d does not exist." % key)
         return ParticleHandle(key)
+
+    def add(self, *args, **kwargs):
+
+        # Did we get a dictionary
+        if len(args) == 1:
+            if hasattr(args[0], "__getitem__"):
+                self._place_new_particle(args[0])
+        else:
+            if len(args) == 0 and len(kwargs.keys()) != 0:
+                self._place_new_particle(kwargs)
+            else:
+                raise ValueError(
+                    "add() takes either a dictionary or a bunch of keyword args")
+
+    def _place_new_particle(self, P):
+
+        # Handling of particle id
+        if not "id" in P:
+            # Generate particle id
+            P["id"] = max_seen_particle + 1
+        else:
+            if particle_exists(P["id"]):
+                raise Exception("Particle %d already exists." % P["id"])
+
+        # Check for presence of pos attribute
+        if not "pos" in P:
+            raise ValueError(
+                "pos attribute must be specified for new particle")
+
+        # The ParticleList[]-getter ist not valid yet, as teh particle
+        # doesn't yet exist. Hence, the setting of position has to be
+        # done here. the code is from te pos:property of ParticleHandle
+        cdef double mypos[3]
+        check_type_or_throw_except(
+            P["pos"], 3, float, "Postion must be 3 floats")
+        for i in range(3):
+            mypos[i] = P["pos"][i]
+        if place_particle(P["id"], mypos) == -1:
+            raise Exception("particle could not be set")
+        # Pos is taken care of
+        del P["pos"]
+        id = P["id"]
+        del P["id"]
+
+        if P != {}:
+            self[id].update(P)
+
+    # Iteration over all existing particles
+    def __iter__(self):
+        for i in range(max_seen_particle + 1):
+            if particle_exists(i):
+                yield self[i]
+
+    def exists(self, id):
+        return particle_exists(id)
