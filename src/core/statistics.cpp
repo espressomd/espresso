@@ -48,7 +48,6 @@
 #include <string>
 #include <map>
 
-
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -650,6 +649,12 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
 }
 
+void calc_rdf(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf)
+{
+  calc_rdf(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+           r_min, r_max, r_bins, &rdf[0]);
+}
 
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf)
@@ -701,6 +706,14 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
     bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
     rdf[i] *= volume / (bin_volume * cnt);
   }
+}
+
+
+void calc_rdf_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                 double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+              r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
@@ -769,6 +782,13 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   }
   free(rdf_tmp);
 
+}
+
+void calc_rdf_intermol_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                          double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_intermol_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+                       r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,

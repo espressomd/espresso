@@ -1037,4 +1037,6 @@ void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim);
 void pointer_to_rotational_inertia(Particle *p, double*& res);
 #endif
 
+bool particle_exists(int part);
+
 #endif

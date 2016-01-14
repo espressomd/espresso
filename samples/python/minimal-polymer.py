@@ -42,7 +42,7 @@ fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 for i in range(50):
-    system.part[i].pos = [i, 0, 0]
+    system.part.add(id=i, pos=[i, 0, 0])
     if i > 0:
         system.part[i].add_bond((fene, i - 1))
 
