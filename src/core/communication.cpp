@@ -198,11 +198,12 @@ static int request[3];
 
 /** Map callback function pointers to request codes */
 #ifndef HAVE_CXX11
-std::map<SlaveCallback *, int> request_map;
+typedef std::map<SlaveCallback *, int> request_map_type;
 #else
 #include <unordered_map>
-std::unordered_map<SlaveCallback *, int> request_map;
+typedef std::unordered_map<SlaveCallback *, int> request_map_type;
 #endif
+static request_map_type request_map;
 
 /** Forward declarations */
 
@@ -255,7 +256,13 @@ void mpi_init(int *argc, char ***argv)
 
 #ifdef HAVE_MPI
 void mpi_call(SlaveCallback cb, int node, int param) {
-  const int reqcode = request_map[cb];
+  request_map_type::iterator req_it = request_map.find(cb);
+  if (req_it == request_map.end())
+  {
+    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n", this_node, cb);
+    errexit();
+  }
+  const int reqcode = req_it->second;
   
   request[0] = reqcode;
   request[1] = node;

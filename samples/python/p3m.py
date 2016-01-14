@@ -96,7 +96,7 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part[i].pos = numpy.random.random(3) * system.box_l
+    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
 analyze.distto(system, 0)
 

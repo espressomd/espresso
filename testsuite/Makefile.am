@@ -68,6 +68,7 @@ tests = \
 	intppbc.tcl \
 	kinetic.tcl \
 	langevin.tcl \
+	langevin_per_particle.tcl \
 	layered.tcl \
 	lb.tcl \
 	lb_fluid_coupling.tcl \
@@ -88,6 +89,7 @@ tests = \
 	magnetic-field.tcl \
 	mass.tcl \
 	mass-and-rinertia.tcl \
+	mass-and-rinertia_per_particle.tcl \
 	mdlc.tcl \
 	minimize_energy.tcl \
 	minimize_energy_rotation.tcl \
