@@ -22,6 +22,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#ifdef OPEN_MPI
+#include <dlfcn.h>
+#endif
 #include "utils.hpp"
 #include "communication.hpp"
 #include "interaction_data.hpp"
@@ -225,6 +228,28 @@ void mpi_core(MPI_Comm *comm, int *errcode,...) {
 
 void mpi_init(int *argc, char ***argv)
 {
+#ifdef OPEN_MPI
+  void *handle = 0;
+  int mode = RTLD_NOW | RTLD_GLOBAL;
+#if defined(__CYGWIN__)
+  if (!handle) handle = dlopen("cygmpi-1.dll", mode);
+  if (!handle) handle = dlopen("cygmpi.dll",   mode);
+  if (!handle) handle = dlopen("mpi.dll",      mode);
+  if (!handle) handle = dlopen("libmpi.dll",   mode);
+#elif defined(_WIN64) || defined(_WIN32)
+  if (!handle) handle = dlopen("libmpi.dll",   mode);
+#elif defined(__MACH__) // Mac OS X
+  if (!handle) handle = dlopen("libmpi.dylib", mode);
+#else // Linux and others
+#ifdef RTLD_NOLOAD
+  mode |= RTLD_NOLOAD;
+#endif
+  if (!handle) handle = dlopen("libmpi.so",    mode);
+#endif
+  if (!handle)
+    fprintf(stderr, "%d: Aborting because unable to load libmpi into the global symbol space.\n", this_node);
+#endif
+
 #ifdef MPI_CORE
   MPI_Errhandler mpi_errh;
 #endif
@@ -259,7 +284,7 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   request_map_type::iterator req_it = request_map.find(cb);
   if (req_it == request_map.end())
   {
-    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n", this_node, cb);
+    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%d callbacks registered.\n", this_node, cb, request_map.size());
     errexit();
   }
   const int reqcode = req_it->second;
