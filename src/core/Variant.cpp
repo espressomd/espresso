@@ -1,6 +1,8 @@
 #include "Variant.hpp"
 
 #include <iostream>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
 /** Return the (logical) size of the payload in bytes */
 

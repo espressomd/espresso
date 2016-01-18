@@ -11,9 +11,7 @@ class ScriptObject {
 public:
   virtual const std::string name() const = 0;
   virtual void set_parameters(Parameters &parameters) {
-    std::cout << "ScriptObject::set_parameters()" << std::endl;
     for(Parameters::iterator it = parameters.begin(); it != parameters.end(); ++it) {
-      std::cout << it->first << " set: " << it->second.set << " value: " << it->second.value << std::endl;
       if(it->second.set != 0)
         set_parameter(it->first, it->second.value);
     }

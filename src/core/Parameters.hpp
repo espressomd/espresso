@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include <boost/serialization/map.hpp>
+
 struct Parameter {
   Parameter() : type(Variant::NONE), n_elements(0), set(false), required(false) {}
   Parameter(Variant::Type _type, Variant _value, int _n_elements, bool _set, bool _required) :
@@ -25,6 +27,18 @@ struct Parameter {
   Variant value;
   int n_elements;
   bool set, required;
+
+ private:
+  friend boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version) {
+    ar & type;
+    ar & value;
+    ar & n_elements;
+    ar & set;
+    ar & required;
+  }
 };
 
 class Parameters : public std::map<std::string, Parameter> {
@@ -44,4 +58,11 @@ public:
       it->second.set = false;
     }
   }
+private:
+friend boost::serialization::access;
+
+template<class Archive>
+void serialize(Archive & ar, const unsigned int version) {
+ar & *static_cast<std::map<std::string, Parameter> *>(this);
+}
 };

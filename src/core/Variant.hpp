@@ -5,6 +5,11 @@
 #include <string>
 #include "Vector.hpp"
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/split_member.hpp>
+
 class Variant {
 public:
   enum Type { NONE = 0, INT, DOUBLE, STRING, INT_VECTOR, DOUBLE_VECTOR };
@@ -76,11 +81,41 @@ public:
     copy(rhs);
     return *this;
   }
-  
-  friend std::ostream &operator<<(std::ostream &os, const Variant &rhs);
 
   std::uint32_t size() const;
-  std::vector<char> serialize() const;
+  
+  friend std::ostream &operator<<(std::ostream &os, const Variant &rhs);
+  friend boost::serialization::access;
+  
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version) {
+    ar & m_type;
+    
+    /** If we are loading we have to allocate the internal memory */
+    if(Archive::is_loading::value) {
+      delete_mem();
+      init_mem();
+    }
+    
+    switch(m_type) {
+      case NONE:
+        break;
+      case INT:
+        ar & *reinterpret_cast<int *>(m_mem);
+        break;
+      case DOUBLE:
+        ar & *reinterpret_cast<double *>(m_mem);
+        break;
+      case INT_VECTOR:
+        ar & *reinterpret_cast<std::vector<int> *>(m_mem);
+        break;
+      case DOUBLE_VECTOR:
+        ar & *reinterpret_cast<std::vector<double> *>(m_mem);
+        break;
+      case STRING:
+        ar & *reinterpret_cast<std::string  *>(m_mem);
+    }
+  }
   
   const Type type() const { return m_type; };
   
@@ -194,26 +229,28 @@ private:
   }
 
   void delete_mem() {
-    switch(m_type) {
-    case NONE:
-      break;
-    case INT:
-      delete reinterpret_cast<const int *>(m_mem);
-      break;
-    case DOUBLE:
-      delete reinterpret_cast<const double *>(m_mem);
-      break;
-    case STRING:
-      delete reinterpret_cast<const std::string *>(m_mem);
-      break;
-    case  INT_VECTOR:
-      delete reinterpret_cast<const std::vector<int> *>(m_mem);
-      break;
-    case DOUBLE_VECTOR:
-      delete reinterpret_cast<const std::vector<double> *>(m_mem);
-      break;
+    if(m_mem != 0) {
+      switch(m_type) {
+        case NONE:
+          break;
+        case INT:
+          delete reinterpret_cast<const int *>(m_mem);
+          break;
+        case DOUBLE:
+          delete reinterpret_cast<const double *>(m_mem);
+          break;
+        case STRING:
+          delete reinterpret_cast<const std::string *>(m_mem);
+          break;
+        case  INT_VECTOR:
+          delete reinterpret_cast<const std::vector<int> *>(m_mem);
+          break;
+        case DOUBLE_VECTOR:
+          delete reinterpret_cast<const std::vector<double> *>(m_mem);
+          break;
+      }
+      m_mem = 0;
     }
-    m_mem = 0;
   }
   Type m_type;
   void *m_mem;
