@@ -54,7 +54,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "maggs.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "statistics_chain.hpp"
