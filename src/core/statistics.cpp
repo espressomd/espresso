@@ -239,24 +239,6 @@ void predict_momentum_particles(double *result)
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-/** Calculate total momentum of the system (particles & LB fluid)
- * @param momentum Result for this processor (Output)
- */
-void momentum_calc(double *momentum) 
-{
-    double momentum_fluid[3] = { 0., 0., 0. };
-    double momentum_particles[3] = { 0., 0., 0. };
-
-    mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
-#ifdef LB
-    mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
-#endif
-
-    momentum[0] = momentum_fluid[0] + momentum_particles[0];
-    momentum[1] = momentum_fluid[1] + momentum_particles[1];
-    momentum[2] = momentum_fluid[2] + momentum_particles[2];
-
-}
 
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum calculation
@@ -273,13 +255,16 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
       linear_momentum[2] += momentum_particles[2];
     }
     if (include_lbfluid) {
-#ifdef LB
       double momentum_fluid[3] = { 0., 0., 0. };
+#ifdef LB
       mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+#endif
+#ifdef LB_GPU
+      lb_calc_fluid_momentum_GPU(momentum_fluid);
+#endif
       linear_momentum[0] += momentum_fluid[0];
       linear_momentum[1] += momentum_fluid[1];
       linear_momentum[2] += momentum_fluid[2];
-#endif
     }
     return linear_momentum;
 }
