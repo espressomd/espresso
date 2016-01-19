@@ -41,7 +41,7 @@ h5=h5md.h5md("File.h5",system)
 result_user1 = h5.read_from_h5.userdefined("User/user1/","value1",(3,))    # One dimensional (pay attention to the comma (3,) )
 result_user2 = h5.read_from_h5.userdefined("User/user1/","value2",(3,4,5)) # Three dimensional
 
-# particle data 
+# Particle data 
 h5.read_from_h5.pos(n_time-1)
 #h5.read_from_h5.v(n_time-1)
 #h5.read_from_h5.f(n_time-1)

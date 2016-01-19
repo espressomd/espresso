@@ -22,7 +22,7 @@ from espressomd import h5md
 from espressomd.interactions import HarmonicBond
 import numpy as np
 
-#Prepare system for h5-writing
+# Prepare system for h5-writing
 system = espressomd.System()
 system.time_step = 0.01
 system.skin      = 0.4
@@ -81,7 +81,7 @@ for j in range(n_time):
     h5.write_to_h5.userdefined(123.4,"User/user1/","value1",'f8',(3,))  # One dimensional (pay attention to the comma (3,) )
     h5.write_to_h5.userdefined(567.8,"User/user1/","value2",'f8',(3,4,5),(1,1,5)) # Three dimensional and manual chunk size
     
-    # particle data 
+    # Particle data 
     h5.write_to_h5.pos(j)
     #h5.write_to_h5.v(j)
     #h5.write_to_h5.f(j)
@@ -111,7 +111,7 @@ for j in range(n_time):
     #h5.write_to_h5.time_step(j,"particles/atoms/position/","step")
     #h5.write_to_h5.type()
     
-    # observables 
+    # Observables 
     h5.write_to_h5.analyze_energy(j,'all','default','default')
     #h5.write_to_h5.mindist(j,[0],[1])
     #h5.write_to_h5.distto(j,None,[1,1,1])    
@@ -138,7 +138,7 @@ h5.write_to_h5.VMD('indexOfSpecies',[0,1,2])
 #h5.write_to_h5.VMD('resid',[0,0,0,0,0,1,1,1,1,1])
 #h5.write_to_h5.VMD('segid',['s0','s0','s0','s0','s0','s1','s1','s1','s1','s1'])
 #h5.write_to_h5.VMD('chain',['A','B'])
-h5.write_to_h5.VMD('atomicnumber',[0,1,2])
+#h5.write_to_h5.VMD('atomicnumber',[0,1,2])
 
 ### Close file
 h5.close()
