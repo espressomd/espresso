@@ -620,11 +620,10 @@ volume is taken into account.
   }
 \end{pysyntax}
 \begin{essyntax}
-  analyze momentum \opt{particles}
+    analyze momentum \opt{\alt{particles \asep lbfluid}}
 \end{essyntax}
-This command returns the total linear momentum of the particles and the lattice-Boltzmann (LB) fluid, if one exists. Giving the optional parameter particles
-causes the command to ignore the contribution of LB. In the Python interface both particles and fluid can be toggled on and off using the include_particles and
-include_lbfluid flags respectively.
+This command returns the total linear momentum of the particles and the lattice-Boltzmann (LB) fluid, if one exists. Giving the optional parameters either
+causes the command to ignore the contribution of LB or of the particles.
 
 \subsection{Energies}
 \label{analyze:energy}
