@@ -67,7 +67,7 @@
 #include "elc.hpp"
 #include "hydrogen_bond.hpp"
 #include "twist_stack.hpp"
-#include "actor/EwaldgpuForce_ShortRange.hpp"
+#include "actor/EwaldGPU_ShortRange.hpp"
 
 #ifdef CONSTRAINTS
 #include "constraint.hpp"

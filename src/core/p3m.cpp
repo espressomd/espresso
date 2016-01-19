@@ -1783,7 +1783,7 @@ void p3m_count_charged_particles()
 double p3m_real_space_error(double prefac, double r_cut_iL, 
 			    int n_c_part, double sum_q2, double alpha_L)
 {
-  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / (sqrt((double)n_c_part*r_cut_iL)*box_l[1]*box_l[2]);
+  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / sqrt((double)n_c_part*r_cut_iL*box_l[0]*box_l[0]*box_l[1]*box_l[2]);
 }
 
 double p3m_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, double sum_q2, double alpha_L)
