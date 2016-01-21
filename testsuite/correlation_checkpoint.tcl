@@ -24,19 +24,25 @@ puts "---------------------------------------------------------------"
 setmd box_l 6. 6. 6.
 thermostat langevin 1.0 1.0
 setmd skin 1.0
+
 set dt 0.05
 setmd time_step $dt
+
 part 0 pos 4.100  3.000  3.000
 part 1 pos 1.000  3.000  2.000
+
 set pp  [observable new particle_positions all]
 set rdf [observable new rdf 0 0 ]
 set orgc1 [correlation new obs1 $pp corr_operation square_distance_componentwise dt $dt tau_max 1000 tau_lin 16]
 set orgc2 [correlation new obs1 $pp obs2 $rdf corr_operation tensor_product dt $dt tau_max 1000 tau_lin 16]
+
 correlation $orgc1 autoupdate start
 correlation $orgc2 autoupdate start
+
 for { set i 0 } { $i < 100 } { incr i } {
   integrate 200
 }
+
 correlation $orgc1 write_checkpoint_binary "correlation_checkpoint_c1.bin"
 correlation $orgc1 write_checkpoint_ascii  "correlation_checkpoint_c1.txt"
 correlation $orgc2 write_checkpoint_binary "correlation_checkpoint_c2.bin"
@@ -44,21 +50,28 @@ correlation $orgc2 write_checkpoint_ascii  "correlation_checkpoint_c2.txt"
 
 set pp2  [observable new particle_positions all]
 set rdf2 [observable new rdf 0 0 ]
+
 set binc1 [correlation new obs1 $pp corr_operation square_distance_componentwise dt $dt tau_max 1000 tau_lin 16]
 set binc2 [correlation new obs1 $pp obs2 $rdf corr_operation tensor_product dt $dt tau_max 1000 tau_lin 16]
+
 set ascc1 [correlation new obs1 $pp corr_operation square_distance_componentwise dt $dt tau_max 1000 tau_lin 16]
 set ascc2 [correlation new obs1 $pp obs2 $rdf corr_operation tensor_product dt $dt tau_max 1000 tau_lin 16]
+
 correlation $binc1 autoupdate start
 correlation $ascc1 autoupdate start
+
 correlation $binc1 read_checkpoint_binary "correlation_checkpoint_c1.bin"
 correlation $ascc1 read_checkpoint_ascii  "correlation_checkpoint_c1.txt"
 correlation $binc2 read_checkpoint_binary "correlation_checkpoint_c2.bin"
 correlation $ascc2 read_checkpoint_ascii  "correlation_checkpoint_c2.txt"
+
 correlation $binc2 autoupdate start
 correlation $ascc2 autoupdate start
+
 for { set i 0 } { $i < 100 } { incr i } {
   integrate 200
 }
+
 correlation $orgc1 finalize
 correlation $orgc2 finalize
 correlation $binc1 finalize
@@ -70,21 +83,25 @@ correlation $orgc1 write_to_file "correlation_checkpoint_c1.txt"
 correlation $orgc2 write_to_file "correlation_checkpoint_c2.txt"
 correlation $binc1 write_to_file "correlation_checkpoint_c1.bin"
 correlation $binc2 write_to_file "correlation_checkpoint_c2.bin"
+
 if {[catch {exec diff  "correlation_checkpoint_c1.txt" "correlation_checkpoint_c1.bin"}]} {
     puts "Error in the correlation checkpointing."
     puts "First check failed"
     error_exit
 }
+
 if {[catch {exec diff  "correlation_checkpoint_c2.txt" "correlation_checkpoint_c2.bin"}]} {
     puts "Error in the correlation checkpointing."
     puts "Second check failed"
     error_exit
 }
+
 correlation $ascc1 write_to_file "correlation_checkpoint_c1.bin"
 correlation $ascc2 write_to_file "correlation_checkpoint_c2.bin"
 
 set f1 [open  "correlation_checkpoint_c1.bin" r]
 set f2 [open  "correlation_checkpoint_c1.txt" r]
+
 while {[gets $f1 line1] != -1 } {
     gets $f2 line2
     set length [llength $line1]
@@ -99,8 +116,10 @@ while {[gets $f1 line1] != -1 } {
 	}
     }
 }
+
 set f1 [open  "correlation_checkpoint_c2.bin" r]
 set f2 [open  "correlation_checkpoint_c2.txt" r]
+
 while {[gets $f1 line1] != -1 } {
     gets $f2 line2
     set length [llength $line1]

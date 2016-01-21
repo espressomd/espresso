@@ -31,6 +31,9 @@ from interactions import *
 from interactions cimport *
 import numpy as np
 cimport numpy as np
+from globals cimport n_configs, min_box_l
+
+
 #
 # Minimal distance between particles
 #
@@ -593,3 +596,64 @@ def structure_factor(system=None, sf_type='default', sf_order='default'):
     c_analyze.calc_structurefactor(sf_type, sf_order, & sf)
 
     return c_analyze.modify_stucturefactor(sf_order, sf)
+
+#
+# RDF
+#
+
+def rdf(system=None, rdf_type=None, type_list_a=None, type_list_b=None,
+        r_min = 0.0, r_max = None, r_bins = 100, n_conf = None):
+
+    if rdf_type is None:
+        raise ValueError("rdf_type must not be empty!")
+    if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
+        raise ValueError("type_list_a has to be a list!")
+    if (type_list_b is None) or (not hasattr(type_list_b, '__iter__')):
+        raise ValueError("type_list_b has to be a list!")
+
+    if rdf_type != 'rdf':
+        if n_configs == 0:
+            raise ValueError("No configurations founds!\n",
+                             "Use 'analyze append' to save some,",
+                             "or 'analyze rdf' to only look at current RDF!""")
+        if n_conf is None:
+            n_conf = n_configs
+
+    if r_max is None: r_max = min_box_l / 2.0;
+
+    cdef vector[double] rdf
+    rdf.resize(r_bins)
+    cdef vector[int] p1_types = type_list_a
+    cdef vector[int] p2_types = type_list_b
+
+    c_analyze.updatePartCfg(0)
+    if rdf_type == 'rdf':
+        c_analyze.calc_rdf(p1_types, p2_types, r_min, r_max, r_bins, rdf)
+    elif rdf_type == '<rdf>':
+        c_analyze.calc_rdf_av(p1_types, p2_types,r_min, r_max, r_bins, rdf, n_conf)
+    elif rdf_type == '<rdf-intermol>':
+        c_analyze.calc_rdf_intermol_av(p1_types, p2_types, r_min, r_max, r_bins, rdf, n_conf)
+    else:
+        raise Exception("rdf_type has to be one of 'rdf', '<rdf>', and '<rdf_intermol>'")
+
+    r = np.empty(r_bins)
+    bin_width = (r_max - r_min) / r_bins
+    rr = r_min + bin_width/2.0
+    for i in range(r_bins):
+        r[i] = rr
+        rr += bin_width
+
+    return np.array([r, rdf])
+
+
+def angularmomentum(system=None, p_type=None):
+    print "p_type = ", p_type
+    check_type_or_throw_except(
+        p_type, 1, int,   "p_type has to be an int")
+
+    cdef double[3] com
+    cdef int p1 = p_type
+
+    c_analyze.angularmomentum(p1, com)
+
+    return np.array([com[0], com[1], com[2]])

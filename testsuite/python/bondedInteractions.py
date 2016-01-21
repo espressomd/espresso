@@ -54,7 +54,8 @@ class ParticleProperties(ut.TestCase):
         return True
 
     def setUp(self):
-        self.system.part[self.pid].pos = 0, 0, 0
+        if not self.system.part.exists(self.pid):
+            self.system.part.add(id=self.pid, pos=(0, 0, 0, 0))
 
     def generateTestForBondParams(_bondId, _bondClass, _params):
         """Generates test cases for checking bond parameters set and gotten back
