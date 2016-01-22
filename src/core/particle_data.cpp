@@ -2276,6 +2276,7 @@ void pointer_to_rotational_inertia(Particle *p, double*& res)
 {
   res = p->p.rinertia;
 }
+#endif
 
 bool particle_exists(int part) {
     if (!particle_node)
@@ -2289,4 +2290,3 @@ bool particle_exists(int part) {
    return false;
 } 
 
-#endif
