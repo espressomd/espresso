@@ -60,7 +60,8 @@ PYXFILES =  \
 	magnetostatic_extensions.pyx \
 	particle_data.pyx \
 	thermostat.pyx \
-	utils.pyx
+	utils.pyx \
+	h5md.pyx
 
 PXDFILES = \
 	_espresso/globals.pxd \
@@ -85,7 +86,8 @@ PXDFILES = \
 	_tcl.pxd \
 	thermostat.pxd \
 	utils.pxd \
-	actors.pxd
+	actors.pxd \
+	h5md.pxd
 
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
