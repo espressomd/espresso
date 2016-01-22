@@ -289,7 +289,7 @@ void detect_collision(Particle* p1, Particle* p2)
        }
        else
        {
-        printf("Something is wrong %s %d\n",__FILE__,":"+__LINE__);
+        printf("Something is wrong %s: %d\n", __FILE__, __LINE__);
        }
      }
      for (int i=0;i<3;i++) {

@@ -1,4 +1,4 @@
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "cuda_utils.hpp"
 
 #ifdef EWALD_GPU

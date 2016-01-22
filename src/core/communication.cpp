@@ -54,7 +54,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "maggs.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "statistics_chain.hpp"
@@ -284,7 +284,7 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   request_map_type::iterator req_it = request_map.find(cb);
   if (req_it == request_map.end())
   {
-    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%d callbacks registered.\n", this_node, cb, request_map.size());
+    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%zu callbacks registered.\n", this_node, cb, request_map.size());
     errexit();
   }
   const int reqcode = req_it->second;

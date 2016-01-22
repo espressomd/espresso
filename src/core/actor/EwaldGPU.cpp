@@ -1,9 +1,9 @@
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 
 #ifdef EWALD_GPU
 
-#include <stdio.h>
 #include <iostream>
+
 #include "tuning.hpp"
 #include "integrate.hpp"
 #include "grid.hpp"
@@ -121,28 +121,26 @@ int EwaldgpuForce::adaptive_tune(char **log, SystemInterface &s)
 
   //Compute alpha for all reciprocal k-sphere radius K
   for(int K = 0; K < Kmax ;K++)
-    {
-      alpha_array[K] = tune_alpha(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, K+1, box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
-      // printf("K:%i alpha:%f\n",K+1,alpha_array[K]);
-    }
+  {
+    alpha_array[K] = tune_alpha(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, K+1, box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
+  }
   //Compute r_cut for all computed alpha
   for(int K = 0; K < Kmax ;K++)
-    {
-      rcut_array[K] = tune_rcut(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, alpha_array[K], box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
-      // printf("K:%i rcut:%f Nr:%e\n",K+1,rcut_array[K], 4./3. * 3.14159 * pow(rcut_array[K], 3) * n_part / (box_l[0]*box_l[1]*box_l[2]));
-    }
+  {
+    rcut_array[K] = tune_rcut(ewaldgpu_params.accuracy/sqrt(2), ewaldgpu_params.precision, alpha_array[K], box_l[0]*box_l[1]*box_l[2], q_sqr, n_part);
+  }
   //Test if accuracy was reached
   if(rcut_array[Kmax-1]<0)
   {
     return ES_ERROR;
   }
 
-	/***********************************************************************************
+  /***********************************************************************************
 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	PERFORMANCE TIME
-	 ***********************************************************************************/
+  ***********************************************************************************/
 
-	//Test performance time for the diverent (K, rcut, alpha)
-  double int_time_best = 1E30;
+  //Test performance time for the diverent (K, rcut, alpha)
+  double int_time_best = std::numeric_limits<double>::max();
   int K_best = Kmax;
   
   for(int K = 0; (K < Kmax); K++)
@@ -152,7 +150,6 @@ int EwaldgpuForce::adaptive_tune(char **log, SystemInterface &s)
       set_params(rcut_array[K], K+1, K+1, K+1, alpha_array[K]);
       mpi_bcast_coulomb_params();
       const double int_time = time_force_calc(ewaldgpu_params.time_calc_steps);
-      // printf("TIME K:%i int_time:%f\n",K+1,int_time);
       if(int_time<int_time_best)
       {
         int_time_best = int_time;
@@ -186,12 +183,12 @@ int EwaldgpuForce::adaptive_tune(char **log, SystemInterface &s)
 
 inline double EwaldgpuForce::error_estimate_r(double q_sqr, int N, double r_cut, double V, double alpha, double accuracy) const
 {
-	return sqrt(q_sqr/N) * 2 * (sqrt(q_sqr/(V*r_cut))) * exp(-alpha*alpha * r_cut*r_cut) - accuracy ;  // Kolafa-Perram, eq. 18
+	return 2 * q_sqr * exp(-alpha*alpha*r_cut*r_cut) / sqrt(N*V*r_cut) - accuracy ;  // Kolafa-Perram, eq. 18
 }
 
 inline double EwaldgpuForce::error_estimate_k(double q_sqr, int N, int K, double V, double alpha, double accuracy) const
 {
-	return sqrt(q_sqr/N) * alpha / (pow(V,1/3.0) * M_PI) * pow(8*q_sqr / K,0.5) * exp(-M_PI*M_PI * K*K / (alpha*alpha * pow(V,2/3.0))) - accuracy;  // Kolafa-Perram, eq. 32
+	return sqrt(q_sqr/N) * alpha / (pow(V,1/3.0) * M_PI) * sqrt(8*q_sqr / K) * exp(-M_PI*M_PI * K*K / (alpha*alpha * pow(V,2/3.0))) - accuracy;  // Kolafa-Perram, eq. 32
 }
 
 double EwaldgpuForce::tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N)
@@ -229,18 +226,19 @@ double EwaldgpuForce::tune_alpha(double accuracy, double precision, int K, doubl
 
 double EwaldgpuForce::tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N)
 {
-  double rcut_low=0.0;
-  /* Limit maximal cutoff to 1000 particles in rcut sphere. */
-  double rcut_high=std::min(std::min(box_l[0],std::min(box_l[1],box_l[2])), pow((300.0*V)/(4.0*3.14159*N), 1.0/3.0));
+  double rcut_low=std::numeric_limits<double>::epsilon();
+  /* Limit maximal cutoff to 10000 particles in rcut sphere. */
+  
+  double rcut_high=std::min(std::min(box_l[0],std::min(box_l[1],box_l[2])), pow((3000.0*V)/(4.0*3.14159*N), 1.0/3.0));
   double rcut_guess;
   double fkt_low;
   double fkt_high;
   double fkt_guess;
-
+  
   // Find rcut with given K in k-space error estimate via bisection
   fkt_low = error_estimate_r(q_sqr,  N, rcut_low, V, alpha, accuracy);
   fkt_high = error_estimate_r(q_sqr, N, rcut_high, V, alpha, accuracy);
-
+  
   if (fkt_low*fkt_high > 0.0)
   {
     return -1; // Value unusable
