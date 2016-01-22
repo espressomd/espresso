@@ -1,5 +1,6 @@
 #ifndef EWALDGPUFORCE_HPP
 #define EWALDGPUFORCE_HPP
+
 #include "config.hpp"
 
 #ifdef EWALD_GPU
@@ -7,11 +8,9 @@
 #include "SystemInterface.hpp"
 #include "Actor.hpp"
 #include "particle_data.hpp"
-#include <math.h>
+#include <cmath>
 
 typedef float ewaldgpu_real;
-
-void addEwaldgpuForce(double r_cut, int num_kx, int num_ky, int num_kz, double alpha);
 
 typedef struct {
 	//Ewald parameters
@@ -56,7 +55,7 @@ public:
 	double compute_q_sqare(Particle *particle);
 
 protected:
-	//System
+  //System
   double m_box_l[3];  //Box length
   double m_V; //Volume
   double m_coulomb_prefactor; //Forces, energy is multiplied with this factor
@@ -101,8 +100,6 @@ protected:
 };
 
 extern EwaldgpuForce *ewaldgpuForce;
-
-void addEwaldgpuForce(double rcut, int num_kx, int num_ky, int num_kz, double alpha);
 
 #endif
 #endif

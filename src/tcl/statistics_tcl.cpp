@@ -2437,30 +2437,25 @@ static int tclcommand_analyze_parse_mol(Tcl_Interp *interp, int argc, char **arg
 
 static int tclcommand_analyze_parse_and_print_momentum(Tcl_Interp *interp, int argc, char **argv) {
     char buffer[TCL_DOUBLE_SPACE];
-    double momentum[3] = {0., 0., 0.};
-
-    momentum_calc(momentum);
+    std::vector<double> momentum (3);
 
     if (argc == 0) {
-        Tcl_PrintDouble(interp, momentum[0], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[1], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[2], buffer);
-        Tcl_AppendResult(interp, buffer, (char *) NULL);
+        momentum = calc_linear_momentum(1,1);
     } else if (ARG0_IS_S("particles")) {
-        mpi_gather_stats(4, momentum, NULL, NULL, NULL);
-        Tcl_PrintDouble(interp, momentum[0], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[1], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[2], buffer);
-        Tcl_AppendResult(interp, buffer, (char *) NULL);
+        momentum = calc_linear_momentum(1,0);
+    } else if (ARG0_IS_S("lbfluid")) {
+        momentum = calc_linear_momentum(0,1);
     } else {
         Tcl_AppendResult(interp, "unknown feature of: analyze momentum",
                 (char *) NULL);
         return TCL_ERROR;
     }
+    Tcl_PrintDouble(interp, momentum[0], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, momentum[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, momentum[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
 
     return TCL_OK;
 }

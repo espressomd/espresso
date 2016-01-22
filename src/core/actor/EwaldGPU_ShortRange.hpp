@@ -2,7 +2,7 @@
 #define EWALDGPUFORCESHORTRANGE_HPP_
 
 #ifdef EWALD_GPU
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 
 #define SQR(A) ((A)*(A))
 

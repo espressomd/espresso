@@ -52,7 +52,7 @@ proc analyze_kin_energy_particle {particle} {
     if { [regexp "ROTATION" [code_info]] } {
         set omega [part $particle print omega_body]
         for {set c 0} {$c < 3} {incr c} {
-            set kin_energy [expr $kin_energy + [lindex $omega $c]*[lindex $v $c]]
+            set kin_energy [expr $kin_energy + [lindex $omega $c]*[lindex $omega $c]]
         }
     }
     return [expr $kin_energy / 2.0]

@@ -194,7 +194,7 @@ libEspresso_la_SOURCES += \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
 	actor/HarmonicOrientationWell.cpp actor/HarmonicOrientationWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
-	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
+	actor/EwaldGPU.cpp actor/EwaldGPU.hpp actor/EwaldGPU_ShortRange.hpp \
 	actor/DipolarDirectSum.cpp actor/DipolarDirectSum.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
@@ -235,7 +235,7 @@ CUDA_SOURCE_FILES = \
 	integrate_sd_matrix.cu \
 	integrate_sd_cuda_device.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
-	actor/EwaldgpuForce_cuda.cu \
+	actor/EwaldGPU_cuda.cu \
 	actor/HarmonicWell_cuda.cu \
 	immersed_boundary/ibm_cuda.cu \
 	actor/DipolarDirectSum_cuda.cu \
@@ -253,8 +253,8 @@ include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicOrientationWell_cuda.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
-include ./actor/$(DEPDIR)/EwaldgpuForce.Plo
-include ./actor/$(DEPDIR)/EwaldgpuForce_cuda.Plo
+include ./actor/$(DEPDIR)/EwaldGPU.Plo
+include ./actor/$(DEPDIR)/EwaldGPU_cuda.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 

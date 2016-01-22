@@ -31,7 +31,6 @@ tests = \
 	constraints.tcl \
 	constraints_reflecting.tcl \
 	correlation.tcl \
-	correlation_checkpoint.tcl \
 	constraints_rhomboid.tcl \
 	coulomb_cloud_wall.tcl \
 	dawaanr-and-dds-gpu.tcl \
