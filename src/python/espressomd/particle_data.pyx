@@ -823,3 +823,10 @@ cdef class ParticleList:
 
     def exists(self, id):
         return particle_exists(id)
+
+
+cdef class ParticleSlice:
+    
+
+    def __getitem__(self,range):
+        return range
