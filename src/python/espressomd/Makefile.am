@@ -23,8 +23,6 @@ AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
 	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core \
 	-I$(top_srcdir)/src/core/actor -I$(top_builddir)/scr/core/actor
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
-LIBS =  $(top_builddir)/src/core/libEspresso.la \
-	@LIBS@
 
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
