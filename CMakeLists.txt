@@ -101,7 +101,7 @@ if(WITH_MPI)
   list(APPEND LIBRARIES ${MPI_LIBRARIES})
   set(MPI_SOURCE)
 else(WITH_MPI)
-  include_directories(${CMAKE_SOURCE_DIR}/src/mpifake)  
+  include_directories(src/mpifake)  
   set(MPI_SOURCE src/mpifake/mpi.c)
 endif(WITH_MPI)
 

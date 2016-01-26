@@ -20,11 +20,3 @@ add_custom_target(ug
                 ${CMAKE_SOURCE_DIR}/doc/logo/logo.pdf
 )
 
-#add_latex_document(ug.tex
-#        INPUTS ${ug_TEXFILES}
-#        IMAGES ${ug_FIGS}
-#        BIBFILES citations.bib otherrefs.bib
-#        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/quickref.inp
-#        USE_INDEX
-#)
-
