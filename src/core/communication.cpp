@@ -231,23 +231,25 @@ void mpi_init(int *argc, char ***argv)
 #ifdef OPEN_MPI
   void *handle = 0;
   int mode = RTLD_NOW | RTLD_GLOBAL;
-#if defined(__CYGWIN__)
-  if (!handle) handle = dlopen("cygmpi-1.dll", mode);
-  if (!handle) handle = dlopen("cygmpi.dll",   mode);
-  if (!handle) handle = dlopen("mpi.dll",      mode);
-  if (!handle) handle = dlopen("libmpi.dll",   mode);
-#elif defined(_WIN64) || defined(_WIN32)
-  if (!handle) handle = dlopen("libmpi.dll",   mode);
-#elif defined(__MACH__) // Mac OS X
-  if (!handle) handle = dlopen("libmpi.dylib", mode);
-#else // Linux and others
 #ifdef RTLD_NOLOAD
   mode |= RTLD_NOLOAD;
 #endif
-  if (!handle) handle = dlopen("libmpi.so",    mode);
-#endif
+  void * _openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
+  if (!_openmpi_symbol)
+  {
+    fprintf(stderr, "%d: Aborting because unable to find OpenMPI symbol.\n", this_node);
+    errexit();
+  }
+  Dl_info _openmpi_info;
+  dladdr(_openmpi_symbol, &_openmpi_info);
+  
+  if (!handle) handle = dlopen(_openmpi_info.dli_fname, mode);
+  
   if (!handle)
+  {
     fprintf(stderr, "%d: Aborting because unable to load libmpi into the global symbol space.\n", this_node);
+    errexit();
+  }
 #endif
 
 #ifdef MPI_CORE
