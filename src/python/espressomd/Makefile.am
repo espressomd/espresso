@@ -142,8 +142,11 @@ SOFILES = $(PYXFILES:.pyx=.so)
 all-local: $(SOFILES)
 CLEANFILES += $(SOFILES)
 
-$(SOFILES): %.so: %.la
+$(SOFILES): %.so: %.la libEspresso.so
 	$(AM_V_GEN)test -L $@ || $(LN_S) @objdir@/$@ $@
+
+libEspresso.so:
+	$(AM_V_GEN)test -L $@ || $(LN_S) $(top_builddir)/src/core/.libs/libEspresso.so $@
 
 # build rule for myconfig.pxi
 # create gen_pxiconfig.cpp from features.def
