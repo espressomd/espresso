@@ -87,6 +87,8 @@ PXDFILES = \
 	actors.pxd \
 	h5md.pxd
 
+LIBS +=	$(top_builddir)/src/core/libEspresso.la
+
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
 PYXFILES += _tcl.pyx
@@ -142,11 +144,17 @@ SOFILES = $(PYXFILES:.pyx=.so)
 all-local: $(SOFILES)
 CLEANFILES += $(SOFILES)
 
+if DARWIN
+SOSUFFIX=dylib
+else
+SOSUFFIX=so
+endif
+
 $(SOFILES): %.so: %.la libEspresso.so
 	$(AM_V_GEN)test -L $@ || $(LN_S) @objdir@/$@ $@
 
 libEspresso.so:
-	$(AM_V_GEN)test -L $@ || $(LN_S) $(top_builddir)/src/core/.libs/libEspresso.so $@
+	$(AM_V_GEN)test -L $@ || $(LN_S) $(top_builddir)/src/core/.libs/libEspresso.$(SOSUFFIX) $@
 
 # build rule for myconfig.pxi
 # create gen_pxiconfig.cpp from features.def
