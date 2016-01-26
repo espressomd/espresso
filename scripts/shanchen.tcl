@@ -77,6 +77,18 @@ proc droplet { args } {
 						  set rho_a  [expr $min+(($max-$min)*0.25*((1.+tanh(($h2-$pos)/$width))*(1.+tanh(($pos-$h1)/$width)))) ] 
             					  set rho_b  [expr $max+(($min-$max)*0.25*((1.+tanh(($h2-$pos)/$width))*(1.+tanh(($pos-$h1)/$width)))) ] 
 						}
+					"cylinder"  { 
+						  set dist 0
+						  for { set dir 0 } { $dir < 3} { incr dir} {
+							if {$direction == $dir} { continue } 
+						        set pos    [lindex $r $dir] 
+						  	set c      [lindex $center $dir]
+							set dist [expr $dist + ($pos-$c)*($pos - $c)]
+						  }
+						  set dist [expr sqrt($dist)]
+            					  set rho_a  [expr $max+(($min-$max)*0.5*(1.+tanh(($dist-$R)/$width))) ] 
+						  set rho_b  [expr $min+(($max-$min)*0.5*(1.+tanh(($dist-$R)/$width))) ] 
+						}
 					"sphere"  { 
 						  set dist 0
 						  for { set direction 0 } { $direction < 3} { incr direction } {
