@@ -1,0 +1,16 @@
+
+#cmakedefine ARPACK
+
+#cmakedefine CUDA
+
+#cmakedefine FFTW
+
+#cmakedefine H5MD
+
+#cmakedefine TCL
+
+#cmakedefine TK
+
+#define PACKAGE_NAME "${PROJECT_NAME}"
+
+#define __PRETTYFUNC__ "n/a"
