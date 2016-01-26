@@ -134,7 +134,7 @@ dummy_SOURCES = dummy.cpp
 # Also, like this, the .so-files are installed to the right place.
 LAFILES = $(PYXFILES:.pyx=.la)
 $(LAFILES): %.la: %.lo
-	$(AM_V_CXXLD)$(CXXLINK) -rpath $(pyexecdir) $< $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) -rpath $(pyexecdir) $<
 CLEANFILES += $(LAFILES)
 
 # create links to the ./libs/*.so in the dir
