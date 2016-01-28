@@ -76,6 +76,10 @@ int partCfgSorted = 0;
 /** bondlist for partCfg, if bonds are needed */
 IntList partCfg_bl = { NULL, 0, 0 };
 
+#if HAVE_CXX11
+  constexpr double ParticleProperties::mass;
+#endif
+
 /************************************************
  * local functions
  ************************************************/

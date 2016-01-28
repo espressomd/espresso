@@ -72,7 +72,8 @@
     needed in the interaction calculation, but are just copies of
     particles stored on different nodes.
 */
-typedef struct {
+typedef struct ParticleProperties ParticleProperties;
+struct ParticleProperties {
   /** unique identifier for the particle. */
   int    identity;
   /** Molecule identifier. */
@@ -196,7 +197,7 @@ typedef struct {
   #endif
 
 #endif
-} ParticleProperties;
+};
 
 /** Positional information on a particle. Information that is
     communicated to calculate interactions with ghost particles. */
