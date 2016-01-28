@@ -11,10 +11,6 @@ file(GLOB_RECURSE EspressoCuda_SRC
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-
 add_custom_command(OUTPUT config-features.cpp config-features.hpp COMMAND
       ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
       ${CMAKE_SOURCE_DIR}/src/features.def
@@ -27,18 +23,21 @@ add_custom_command(OUTPUT config-version.cpp
                    COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
 
-cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC} config-version.cpp config-features.cpp)
-
-
 add_library(EspressoCore SHARED ${EspressoCore_SRC}
                         ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
                         ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
 
-add_dependencies(EspressoCore
+if(WITH_CUDA)
+  cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+  cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+  cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC} config-version.cpp config-features.cpp)
+  
+  add_dependencies(EspressoCore
                  EspressoCuda
                  )
-
-target_link_libraries(EspressoCore EspressoCuda)
-
+  target_link_libraries(EspressoCore EspressoCuda)
+endif(WITH_CUDA)
+  
 add_subdirectory(actor)
