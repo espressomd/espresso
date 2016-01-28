@@ -87,7 +87,7 @@ find_package(HDF5)
 if(HDF5_FOUND)
   set(H5MD 1)
   list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-  include_directories(${HDF5_INCLUDE_DIRES})
+  include_directories(${HDF5_INCLUDE_DIRS})
 endif()
 
 #######################################################################
