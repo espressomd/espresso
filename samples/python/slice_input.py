@@ -45,7 +45,6 @@ box_l = 10.0
 
 system = espressomd.System()
 system.time_step = 0.01
-print("blub")
 system.skin = 0.4
 
 system.max_num_cells = 2744
@@ -63,12 +62,25 @@ system.box_l = [box_l, box_l, box_l]
 # Particle setup
 #############################################################
 
+for i in range(10):
+    system.part.add(id=i, pos=[0,0,0], type=0)
+
+print(system.part[0:2].type)
+system.part[0:2].type=[3,3]
+print(system.part[:].type)
+
+print(system.part[0:3].pos)
+system.part[::2].pos=[[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5]]
+print(system.part[:].pos)
+
+exit()
 
 n_part = 1000
 id_list=np.arange(n_part)
 pos_list=np.random.random((n_part,3)) * system.box_l
 
-print((id_list,pos_list))
+print(id_list)
+print(pos_list)
 
 system.part.add(id=id_list,pos=pos_list)
 

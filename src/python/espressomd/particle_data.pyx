@@ -760,11 +760,85 @@ cdef class ParticleHandle:
             setattr(self, k, P[k])
 
 
+
+cdef class ParticleSlice:
+    """Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list."""
+
+
+    def __cinit__(self,slice_):
+        id_list=range(max_seen_particle)
+        self.id_selection=id_list[slice_]
+
+    cdef int update_particle_data(self, id) except -1:
+        utils.realloc_intlist( & (self.particle_data.bl), 0)
+
+        if get_particle_data(id, & self.particle_data):
+            raise Exception("Error updating particle data")
+        else:
+            return 0
+
+
+    # Particle Type
+    property type:
+
+        def __get__(self):
+            type_list=[]
+            for id in self.id_selection:
+                self.update_particle_data(id)
+                get_particle_data(id, & self.particle_data)
+                type_list.append(self.particle_data.p.type)
+            return type_list
+
+        def __set__(self, _type_list):
+            if len(self.id_selection) != len(_type_list):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_type_list),len(self.id_selection)))
+            for i in range(len(self.id_selection)):
+                set_particle_type(self.id_selection[i], _type_list[i])
+                    
+
+    # Position
+    property pos:
+        """Particle position (not folded into central image)."""
+
+        def __set__(self, _pos_array):
+            if len(self.id_selection) != len(_pos_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_pos_array),len(self.id_selection)))
+
+            cdef double mypos[3]
+            for j in range(len(_pos_array)):
+                for i in range(3):
+                    mypos[i] = _pos_array[j][i]
+                if place_particle(self.id_selection[j], mypos) == -1:
+                    raise Exception("particle could not be set")
+
+        def __get__(self):
+            pos_array=np.zeros((len(self.id_selection),3))
+            for i in range(len(self.id_selection)):
+                self.update_particle_data(self.id_selection[i])
+                pos_array[i,:]=[self.particle_data.r.p[0],
+                              self.particle_data.r.p[1],
+                              self.particle_data.r.p[2]]
+            return pos_array
+
+    def update(self, P):
+
+        if "id" in P:
+            raise Exception("Cannot change particle id.")
+
+        for k in P.keys():
+            setattr(self, k, P[k])
+
+
+
+
+
 cdef class ParticleList:
     """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
 
     # Retrieve a particle
     def __getitem__(self, key):
+        if isinstance(key,slice):
+            return ParticleSlice(key)
         if not particle_exists(key):
             raise Exception("Particle %d does not exist." % key)
         return ParticleHandle(key)
@@ -797,9 +871,9 @@ cdef class ParticleList:
             raise ValueError(
                 "pos attribute must be specified for new particle")
 
-        # The ParticleList[]-getter ist not valid yet, as teh particle
+        # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
-        # done here. the code is from te pos:property of ParticleHandle
+        # done here. the code is from the pos:property of ParticleHandle
         cdef double mypos[3]
         check_type_or_throw_except(
             P["pos"], 3, float, "Postion must be 3 floats")
@@ -825,8 +899,3 @@ cdef class ParticleList:
         return particle_exists(id)
 
 
-cdef class ParticleSlice:
-    
-
-    def __getitem__(self,range):
-        return range
