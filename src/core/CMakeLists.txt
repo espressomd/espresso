@@ -11,8 +11,10 @@ file(GLOB_RECURSE EspressoCuda_SRC
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
+if (WITH_CUDA)
+  cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+  cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
+endif (WITH_CUDA)
 
 
 add_custom_command(OUTPUT config-features.cpp config-features.hpp COMMAND
@@ -27,18 +29,24 @@ add_custom_command(OUTPUT config-version.cpp
                    COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
 
-cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC} config-version.cpp config-features.cpp)
+if (WITH_CUDA)
+  cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC} config-version.cpp config-features.cpp)
+endif (WITH_CUDA)
 
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC}
                         ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
                         ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
+target_link_libraries(EspressoCore ${LIBRARIES})
+set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
+if (WITH_CUDA)
 add_dependencies(EspressoCore
                  EspressoCuda
                  )
 
 target_link_libraries(EspressoCore EspressoCuda)
+endif (WITH_CUDA)
 
 add_subdirectory(actor)
