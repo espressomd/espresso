@@ -18,13 +18,6 @@
 #
 # Define the espressomd package
 
-from ctypes import *
-from os.path import join, realpath, dirname
-
-# Load ESPResSo core
-path = join(dirname(realpath(__file__)), "libEspresso.so")
-__espresso_core = CDLL(path, RTLD_GLOBAL)
-
 # Initialize MPI, start the main loop on the slaves
 import espressomd._init
 
