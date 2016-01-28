@@ -26,7 +26,6 @@ cdef extern from "initialize.hpp":
     void on_program_start()
     void mpi_loop()
 
-# Here we make a minimalistic Tcl_Interp available
 # Main code
 mpi_init(NULL, NULL)
 

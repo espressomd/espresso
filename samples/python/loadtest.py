@@ -83,13 +83,12 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     cutoff=lj_cut, shift="auto")
 system.non_bonded_inter.set_force_cap(lj_cap)
 
-print("LJ-parameters:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
-print("done LJ_parameters")
 
 # Import of particle properties and P3M parameters
 #############################################################
 pickle.load(open("particle_save","r"))
+
 act_min_dist = analyze.mindist(es)
 
 p3m=pickle.load(open("p3m_save","r"))
@@ -116,7 +115,7 @@ transfer_rate {0.transfer_rate}
 """.format(system))
 
 
-print("P3M parameter:\n")
+print("P3M parameters:\n")
 p3m_params = p3m.get_params()
 for key in p3m_params.keys():
     print("{} = {}".format(key, p3m_params[key]))

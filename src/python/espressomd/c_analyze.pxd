@@ -18,6 +18,11 @@
 #
 # For C-extern Analysis
 
+#
+# TODO: Merge blocks of cdef extern for same headers.
+#
+
+
 cimport numpy as np
 from utils cimport *
 from libcpp.string cimport string  # import std::string as string
@@ -57,6 +62,7 @@ cdef extern from "statistics.hpp":
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef double mindist(int_list * set1, int_list * set2)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
+    cdef vector[double] centerofmass(int part_type)
     cdef int calc_cylindrical_average(vector[double] center, vector[double] direction, double length,
                                       double radius, int bins_axial, int bins_radial, vector[int] types,
                                       map[string, vector[vector[vector[double]]]] & distribution)
@@ -97,3 +103,14 @@ cdef extern from "statistics_chain.hpp":
 
 cdef extern from "interaction_data.hpp":
     int n_bonded_ia
+
+cdef extern from "statistics.hpp":
+    void calc_rdf(vector[int] p1_types, vector[int] p2_types,
+                  double r_min, double r_max, int r_bins, vector[double] rdf)
+
+    void calc_rdf_av(vector[int] p1_types, vector[int] p2_types,
+                     double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+
+    void calc_rdf_intermol_av(vector[int] p1_types, vector[int] p2_types,
+                              double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+    void angularmomentum(int p_type, double * com)

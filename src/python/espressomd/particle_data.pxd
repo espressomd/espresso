@@ -186,6 +186,8 @@ cdef extern from "particle_data.hpp":
 
     void remove_all_bonds_to(int part)
 
+    bool particle_exists(int part)
+
 cdef extern from "virtual_sites_relative.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         int vs_relate_to(int part_num, int relate_to)

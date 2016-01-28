@@ -84,8 +84,6 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     cutoff=lj_cut, shift="auto")
 system.non_bonded_inter.set_force_cap(lj_cap)
 
-
-print("LJ-parameters:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
 # Particle setup
@@ -95,7 +93,7 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part[i].pos = numpy.random.random(3) * system.box_l
+    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
 analyze.distto(system, 0)
 

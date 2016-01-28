@@ -37,7 +37,7 @@
 #include "mmm2d.hpp"
 #include "maggs.hpp"
 #include "elc.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "lj.hpp"
 #include "ljgen.hpp"
 #include "ljangle.hpp"

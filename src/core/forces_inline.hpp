@@ -76,7 +76,7 @@
 #include "quartic.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
-#include "actor/EwaldgpuForce_ShortRange.hpp"
+#include "actor/EwaldGPU_ShortRange.hpp"
 #include "debye_hueckel.hpp"
 #include "reaction_field.hpp"
 #endif
@@ -333,7 +333,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   if ( thermo_switch & THERMO_DPD ) add_dpd_thermo_pair_force(p1,p2,d,dist,dist2);
 #endif
 
-  /** The inter dpd force should not be part of the virial
+  /** The inter dpd force should not be part of the virial */
       
 #ifdef INTER_DPD
   add_inter_dpd_pair_force(p1,p2,ia_params,d,dist,dist2);

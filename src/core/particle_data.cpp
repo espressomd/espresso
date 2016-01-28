@@ -76,6 +76,10 @@ int partCfgSorted = 0;
 /** bondlist for partCfg, if bonds are needed */
 IntList partCfg_bl = { NULL, 0, 0 };
 
+#ifndef HAVE_CXX11
+  const double ParticleProperties::mass = 1.0;
+#endif
+
 /************************************************
  * local functions
  ************************************************/
@@ -2277,3 +2281,16 @@ void pointer_to_rotational_inertia(Particle *p, double*& res)
   res = p->p.rinertia;
 }
 #endif
+
+bool particle_exists(int part) {
+    if (!particle_node)
+        build_particle_node();
+    
+    if (part < 0 || part > max_seen_particle)
+        return false;
+    
+    if (particle_node[part]!=-1) 
+        return true;
+   return false;
+} 
+
