@@ -1,8 +1,6 @@
-#!/bin/sh
-# This is the MPI wrapper for Espresso
-# 
-# Copyright (C) 2009,2010 Christoph Junghans
-# Copyright (C) 2007,2008 Olaf Lenz
+# Copyright (C) 2009,2010,2011,2012,2015 The ESPResSo project
+# Copyright (C) 2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This file is part of ESPResSo.
 #
@@ -19,6 +17,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-ESPRESSO_SCRIPTS="@ESPRESSO_SCRIPTS@"
-export ESPRESSO_SCRIPTS
-@ESPRESSO_BIN@ $*
+cmake_minimum_required(VERSION 2.6)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_config.cmakein
+               cmake_config.hpp
+)
+
+add_subdirectory(core)
+
+if(WITH_TCL)
+  add_subdirectory(tcl)
+endif()
+
+if(WITH_PYTHON)
+  add_subdirectory(python)
+endif()
+

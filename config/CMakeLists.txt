@@ -1,5 +1,6 @@
-#
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2009,2010,2011,2012,2015 The ESPResSo project
+# Copyright (C) 2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This file is part of ESPResSo.
 #
@@ -16,25 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import sys
 
-cdef extern from "communication.hpp":
-    void mpi_init(int * argc, char ** *argv)
-    int this_node
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-cdef extern from "initialize.hpp":
-    void on_program_start()
-    void mpi_loop()
-
-# Main code
-mpi_init(NULL, NULL)
-
-# Main slave loop
-if this_node != 0:
-    on_program_start()
-    mpi_loop()
-    sys.exit()
+message(STATUS "writing ${CMAKE_BINARY_DIR}/myconfig-sample.hpp")
+execute_process(COMMAND ${PYTHON_EXECUTABLE}  
+                ${CMAKE_CURRENT_SOURCE_DIR}/gen_sampleconfig.py 
+                ${CMAKE_SOURCE_DIR}/src/features.def
+                OUTPUT_FILE ${CMAKE_BINARY_DIR}/myconfig-sample.hpp
+                )
 
 
-def setup():
-    on_program_start()
+
