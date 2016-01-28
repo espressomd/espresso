@@ -86,10 +86,10 @@ struct ParticleProperties {
   double mass;
 #else
   /** set mass to 0 */
-#if HAVE_CXX11
+#ifdef HAVE_CXX11
   constexpr static double mass = 1.0;
 #else
-  const static double mass = 1.0;
+  const static double mass;
 #endif
 #endif
 
