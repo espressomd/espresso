@@ -257,10 +257,14 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
     if (include_lbfluid) {
       double momentum_fluid[3] = { 0., 0., 0. };
 #ifdef LB
-      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      if(lattice_switch & LATTICE_LB) {
+        mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      }
 #endif
 #ifdef LB_GPU
-      lb_calc_fluid_momentum_GPU(momentum_fluid);
+      if(lattice_switch & LATTICE_LB_GPU) {
+        lb_calc_fluid_momentum_GPU(momentum_fluid);
+      }
 #endif
       linear_momentum[0] += momentum_fluid[0];
       linear_momentum[1] += momentum_fluid[1];
