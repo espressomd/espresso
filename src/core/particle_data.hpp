@@ -90,8 +90,8 @@ struct ParticleProperties {
   constexpr static double mass = 1.0;
 #else
   const static double mass;
-#endif
-#endif
+#endif /* HAVE_CXX11 */
+#endif /* MASS */
 
 #ifdef SHANCHEN
   double solvation[2*LB_COMPONENTS];
