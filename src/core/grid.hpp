@@ -47,8 +47,6 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
-using namespace std;
-
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
 #define PERIODIC(coord) (periodic & (1L << coord))

@@ -32,8 +32,6 @@
 #include "random.hpp"
 #include "errorhandling.hpp"
 
-using namespace std;
-
 /************************************************************/
 
 /// set the parameters for the fene potential
