@@ -354,13 +354,13 @@ int updatePartCfg(int bonds_flag)
 #ifdef VIRTUAL_SITES
 
   if (!sortPartCfg()) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"could not sort partCfg";
       runtimeError(msg);
     return 0;
   }
   if (!updatePartCfg(bonds_flag)) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"could not update positions of virtual sites in partcfg";
       runtimeError(msg);
     return 0;
@@ -1233,7 +1233,7 @@ int change_particle_bond(int part, int *bond, int _delete)
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"invalid/unknown bonded interaction type " << bond[0];
         runtimeError(msg);
       return ES_ERROR;

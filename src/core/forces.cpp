@@ -346,7 +346,7 @@ void calc_long_range_forces()
   case DIPOLAR_NONE:
       break;
   default:
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"unknown dipolar method";
       runtimeError(msg);
       break;

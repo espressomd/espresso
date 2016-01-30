@@ -47,8 +47,6 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
-using namespace std;
-
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
 #define PERIODIC(coord) (periodic & (1L << coord))
@@ -216,7 +214,7 @@ inline void fold_coordinate(double pos[3], double vel[3], int image_box[3], int 
     pos[dir]        = pos[dir] - img_count*box_l[dir];    
 
     if(pos[dir]*box_l_i[dir] < -ROUND_ERROR_PREC || pos[dir]*box_l_i[dir] >= 1 + ROUND_ERROR_PREC) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "particle coordinate out of range, pos = " << pos[dir] << ", image box = " << image_box[dir];
       runtimeError(msg);
       image_box[dir] = 0;

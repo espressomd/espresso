@@ -409,58 +409,58 @@ int maggs_sanity_checks()
   FOR3D(d) if(node_grid[d] > max_node_grid) max_node_grid = node_grid[d];
 	
   if (maggs.bjerrum == 0.) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MEMD: bjerrum length is zero.";
       runtimeError(msg);
     ret = -1;
   }
   else if ( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MEMD needs cubic box";
       runtimeError(msg);
     ret = -1;
   }
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MEMD requires periodicity 1 1 1";
       runtimeError(msg);
     ret = 1;
   }
   else if ( maggs.mesh%max_node_grid != 0 ) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MEMD: meshsize is incompatible with number of processes";
       runtimeError(msg);
     ret = -1;
   }
   /*
   else if ( maggs_count_charged_particles() == 0 ) {
-  ostringstream msg;
+  std::ostringstream msg;
   msg <<"MEMD: No charges in the system.";
   runtimeError(msg);
       ret = -1;
   }
   */
   else if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MEMD requires domain-decomposition cellsystem.";
       runtimeError(msg);
     ret = -1;
   }
   else if (dd.use_vList) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MEMD requires no Verlet Lists.";
       runtimeError(msg);
     ret = -1;
   }
   /** check if speed of light parameter makes sense */
   else if (maggs.f_mass < ( 2. * time_step * time_step / maggs.a / maggs.a ) ) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MEMD: Speed of light is set too high. Increase f_mass.";
       runtimeError(msg);
     ret = -1;      
   }
   else if (maggs.a < skin) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MEMD: Skin should be smaller than MEMD mesh size.";
       runtimeError(msg);
     ret = -1;
@@ -473,7 +473,7 @@ int maggs_sanity_checks()
     int np = cell->n;
     for(int i = 0; i < np; i++) {
       if ( (p[i].p.q != 0.0) & p[i].p.ext_flag & COORDS_FIX_MASK) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MEMD does not work with fixed particles.";
       runtimeError(msg);
 	ret = -1;

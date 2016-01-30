@@ -152,14 +152,14 @@ int MMM1D_sanity_checks()
 {
   //char *errtxt;
   if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MMM1D requires periodicity 0 0 1";
       runtimeError(msg);
     return 1;
   }
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MMM1D requires n-square cellsystem";
       runtimeError(msg);
     return 1;

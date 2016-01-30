@@ -227,7 +227,7 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
     freePartCfg();
     updatePartCfg(WITH_BONDS);
     if (!sortPartCfg()) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"could not sort partCfg, particles have to start at 0 and have consecutive identities";
         runtimeError(msg);
         return TCL_ERROR;
@@ -2579,7 +2579,7 @@ static int tclcommand_analyze_parse_and_print_dipole(Tcl_Interp *interp, int arg
     double dipole[3], total_q = 0.0;
     updatePartCfg(WITHOUT_BONDS);
     if (!sortPartCfg()) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"tclcommand_analyze_parse_and_print_dipole: could not sort particle config, particle ids not consecutive?";
         runtimeError(msg);
         return TCL_ERROR;

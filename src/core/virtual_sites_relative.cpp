@@ -42,7 +42,7 @@ void update_mol_pos_particle(Particle *p)
  // Check, if a real particle was found
  if (!p_real)
  {
-     ostringstream msg;
+     std::ostringstream msg;
      msg <<"virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n";
      runtimeError(msg);
    return;
@@ -101,7 +101,7 @@ void update_mol_vel_particle(Particle *p)
  // Check, if a real particle was found
  if (!p_real)
  {
-     ostringstream msg;
+     std::ostringstream msg;
      msg <<"virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n";
      runtimeError(msg);
    return;
@@ -197,7 +197,7 @@ int vs_relate_to(int part_num, int relate_to)
     Particle  p_current,p_relate_to;
     if ((get_particle_data(relate_to,&p_relate_to)!=ES_OK) || 
         (get_particle_data(part_num,&p_current)!=ES_OK)) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"Could not retrieve particle data for the given id";
         runtimeError(msg);
       return ES_ERROR;
@@ -213,7 +213,7 @@ int vs_relate_to(int part_num, int relate_to)
     // If so, warn user
     double l=sqrt(sqrlen(d));
     if (l>min_global_cut) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Use \"setmd min_global_cut\" to increase the minimum cutoff.\n";
         runtimeWarning(msg);
       return ES_ERROR;
@@ -290,7 +290,7 @@ int vs_relate_to(int part_num, int relate_to)
     // Set the particle id of the particle we want to relate to, the distnace
     // and the relative orientation
     if (set_particle_vs_relative(part_num, relate_to, l, quat) == ES_ERROR) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "setting the vs_relative attributes failed";
       runtimeError(msg);
       return ES_ERROR;
