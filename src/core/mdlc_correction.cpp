@@ -720,7 +720,7 @@ int mdlc_tune(double error)
 int mdlc_sanity_checks()
 {
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"mdlc requires periodicity 1 1 1";
       runtimeError(msg);
     return 1;
@@ -763,7 +763,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
   else {
     dlc_params.far_calculated = 1;
     if (mdlc_tune(dlc_params.maxPWerror) == ES_ERROR) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"mdlc tuning failed, gap size too small";
         runtimeError(msg);
     }

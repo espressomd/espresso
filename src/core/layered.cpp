@@ -320,7 +320,7 @@ void layered_topology_init(CellPList *old)
 
   /* check node grid. All we can do is 1x1xn. */
   if (node_grid[0] != 1 || node_grid[1] != 1) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"selected node grid is not suitable for layered cell structure (needs 1x1x"<< n_nodes << " grid";
       runtimeError(msg);
     node_grid[0] = node_grid[1] = 1;
@@ -331,7 +331,7 @@ void layered_topology_init(CellPList *old)
     if (max_range > 0) {
       n_layers = (int)floor(local_box_l[2]/max_range);
       if (n_layers < 1) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"layered: maximal interaction range " << max_range << " larger than local box length " << local_box_l[2];
       runtimeError(msg);
 	n_layers = 1;
@@ -355,7 +355,7 @@ void layered_topology_init(CellPList *old)
   layer_h_i = 1/layer_h;
 
   if (layer_h < max_range) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"layered: maximal interaction range " << max_range << " larger than layer height " << layer_h;
       runtimeError(msg);
   }
@@ -539,7 +539,7 @@ void layered_exchange_and_sort_particles(int global_flag)
     }
     else {
       if (flag) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"layered_exchange_and_sort_particles: particle moved more than one cell";
       runtimeError(msg);
 

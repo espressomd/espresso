@@ -147,7 +147,7 @@ void integrator_sanity_checks()
   //char *errtext;
 
   if ( time_step < 0.0 ) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"time_step not set";
       runtimeError(msg);
   }
@@ -159,7 +159,7 @@ void integrator_npt_sanity_checks()
 {  
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     if (nptiso.piston <= 0.0) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"npt on, but piston mass not set";
         runtimeError(msg);
     }
@@ -174,7 +174,7 @@ void integrator_npt_sanity_checks()
       case COULOMB_P3M:   break;
 #endif /*P3M*/
       default: {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"npt only works with P3M, Debye-Huckel or reaction field";
         runtimeError(msg);
       }
@@ -189,7 +189,7 @@ void integrator_npt_sanity_checks()
       case DIPOLAR_P3M: break;
 #endif /* DP3M */
       default: {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"NpT does not work with your dipolar method, please use P3M.";
         runtimeError(msg);
       }
@@ -768,7 +768,7 @@ void propagate_press_box_pos_and_rescale_npt()
         nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
 
-          ostringstream msg;
+          std::ostringstream msg;
           msg << "your choice of piston= "<< nptiso.piston << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
                  << " just caused the volume to become negative, decrease dt";
           runtimeError(msg);

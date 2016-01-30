@@ -510,7 +510,7 @@ inline void add_bonded_force(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "bond broken between particles " << p1->p.identity << " and " 
           << p1->bl.e[i-1] << " (particles are not stored on the same node)";
       runtimeError(msg);
@@ -521,7 +521,7 @@ inline void add_bonded_force(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg << "bond broken between particles " 
             << p1->p.identity << ", " 
             << p1->bl.e[i-2] << " and "
@@ -535,7 +535,7 @@ inline void add_bonded_force(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"bond broken between particles "<< p1->p.identity << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2]
             << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
       runtimeError(msg);
@@ -550,7 +550,7 @@ inline void add_bonded_force(Particle *p1)
 	p8 = local_particles[p1->bl.e[i++]];
 
 	if(!p4 || !p5 || !p6 || !p7 || !p8) {
-	  ostringstream msg;
+	  std::ostringstream msg;
 	  msg << "bond broken between particles" <<
 	    p1->p.identity << ", " << p1->bl.e[i-7] << ", " << p1->bl.e[i-6] << ", " << p1->bl.e[i-5] << ", " << p1->bl.e[i-4] << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2] << ", " << p1->bl.e[i-1] << " (particles not stored on the same node)";
 	  return;
@@ -717,7 +717,7 @@ inline void add_bonded_force(Particle *p1)
 	bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
 	break;
       default:
-        ostringstream msg;
+        std::ostringstream msg;
         msg << "add_bonded_force: tabulated bond type of atom "<< p1->p.identity << " unknown\n";
         runtimeError(msg);
 	return;
@@ -737,7 +737,7 @@ inline void add_bonded_force(Particle *p1)
         bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
         break;
       default:
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"add_bonded_force: overlapped bond type of atom "<< p1->p.identity << " unknown\n";
         runtimeError(msg);
         return;
@@ -751,7 +751,7 @@ inline void add_bonded_force(Particle *p1)
       break;
 #endif
     default :
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"add_bonded_force: bond type of atom "<< p1->p.identity << " unknown\n";
       runtimeError(msg);
       return;
@@ -760,7 +760,7 @@ inline void add_bonded_force(Particle *p1)
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"bond broken between particles " << p1->p.identity << " and " << p2->p.identity<<". Distance vector: "<<dx[0]<<" "<<dx[1]<<" "<<dx[2];
         runtimeError(msg);
         continue;
@@ -791,7 +791,7 @@ inline void add_bonded_force(Particle *p1)
       break;
     case 2:
       if (bond_broken) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and "
             << p3->p.identity;
         runtimeError(msg);
@@ -813,7 +813,7 @@ inline void add_bonded_force(Particle *p1)
       break;
     case 3:
       if (bond_broken) {
-	ostringstream msg;
+	std::ostringstream msg;
 	msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
 	    << ", " << p3->p.identity << " and " << p4->p.identity;
 	runtimeError(msg);
@@ -854,7 +854,7 @@ inline void add_bonded_force(Particle *p1)
       break;
     case 7:
       if (bond_broken) {
-	ostringstream msg;
+	std::ostringstream msg;
 	msg << "bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
 	    << ", " << p3->p.identity << " and " << p4->p.identity;
 	runtimeError(msg);	
@@ -894,7 +894,7 @@ inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
 inline void check_particle_force(Particle *part) {
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.f[i])) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "force on particle "<< part->p.identity << " was NAN.";
       runtimeError(msg);
     }
@@ -903,7 +903,7 @@ inline void check_particle_force(Particle *part) {
 #ifdef ROTATION
   for (int i=0; i< 3; i++) {
     if (isnan(part->f.torque[i])) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg << "torque on particle "<< part->p.identity << " was NAN.";
         runtimeError(msg);
     }

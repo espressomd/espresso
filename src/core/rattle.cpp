@@ -147,7 +147,7 @@ void compute_pos_corr_vec(int *repeat_)
 	  cnt++;
 	  p2 = local_particles[p1->bl.e[k++]];
       if (!p2) {
-          ostringstream msg;
+          std::ostringstream msg;
           msg <<"rigid bond broken between particles " << p1->p.identity << " and " << p1->bl.e[k-1] << " (particles not stored on the same node)";
           runtimeError(msg);
 	    return;
@@ -230,7 +230,7 @@ void correct_pos_shake()
        cnt++;
    }// while(repeat) loop
    if (cnt >= SHAKE_MAX_ITERATIONS) {
-       ostringstream msg;
+       std::ostringstream msg;
        msg <<"RATTLE failed to converge after " << cnt << " iterations";
        runtimeError(msg);
    }
@@ -301,7 +301,7 @@ void compute_vel_corr_vec(int *repeat_)
 	      {
 		p2 = local_particles[p1->bl.e[k++]];
         if (!p2) {
-            ostringstream msg;
+            std::ostringstream msg;
             msg <<"rigid bond broken between particles " << p1->p.identity << " and " << p1->bl.e[k-1] << " (particles not stored on the same node)";
             runtimeError(msg);
 		  return;
@@ -445,7 +445,7 @@ void print_bond_len()
              {
 	       Particle *p2 = local_particles[p[i].bl.e[k++]];
            if (!p2) {
-           ostringstream msg;
+           std::ostringstream msg;
            msg <<"rigid bond broken between particles " << p[i].p.identity << " and " << p[i].bl.e[k-1] << " (particles not stored on the same node)";
            runtimeError(msg);
 		 return;

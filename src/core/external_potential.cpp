@@ -71,7 +71,7 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   FILE* infile = fopen(filename, "r");
   
   if (!infile)  {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"Could not open file "<< filename << "\n";
       runtimeError(msg);
     return ES_ERROR;
@@ -133,19 +133,19 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   int halosize=1;
 
   if (size[0] > 0 && abs(size[0] - box_l[0]) > ROUND_ERROR_PREC) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"Box size in x is wrong "<< size[0] << " vs " << box_l[0] <<"\n";
       runtimeError(msg);
     return ES_ERROR;
   }
   if (size[1] > 0 && abs(size[1] - box_l[1]) > ROUND_ERROR_PREC) {
-    ostringstream msg;
+    std::ostringstream msg;
     msg <<"Box size in y is wrong "<< size[1] << " vs " << box_l[1] <<"\n";
     runtimeError(msg);
     return ES_ERROR;
   }
   if (size[2] > 0 && abs(size[2] - box_l[2]) > ROUND_ERROR_PREC) {
-    ostringstream msg;
+    std::ostringstream msg;
     msg <<"Box size in z is wrong "<< size[2] << " vs " << box_l[2] <<"\n";
     runtimeError(msg);
     return ES_ERROR;
@@ -267,7 +267,7 @@ void add_external_potential_forces(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_forces(&external_potentials[i], p);
     } else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"unknown external potential type";
         runtimeError(msg);
       return;
@@ -296,7 +296,7 @@ void add_external_potential_energy(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_energy(&external_potentials[i], p);
     } else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"unknown external potential type";
         runtimeError(msg);
       return;

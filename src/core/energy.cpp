@@ -250,7 +250,7 @@ void calc_long_range_energies()
   case DIPOLAR_NONE:
       break;
   default:
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"unknown dipolar method";
       runtimeError(msg);
       break;

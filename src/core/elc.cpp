@@ -1203,7 +1203,7 @@ int ELC_tune(double error)
 int ELC_sanity_checks()
 {
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"ELC requires periodicity 1 1 1";
       runtimeError(msg);
     return 1;
@@ -1212,7 +1212,7 @@ int ELC_sanity_checks()
      two parallel boundaries, which can only be treated by the constant potential code */
   if (elc_params.dielectric_contrast_on && (fabs(1.0 - elc_params.di_mid_top*elc_params.di_mid_bot) < ROUND_ERROR_PREC)
       && !elc_params.const_pot_on) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"ELC with two parallel metallic boundaries requires the capacitor option";
       runtimeError(msg);
     return 1;
@@ -1239,7 +1239,7 @@ void ELC_init()
     if (maxsl > .5*elc_params.h) maxsl = .5*elc_params.h;
     if (elc_params.space_layer > maxsl) {
       if (maxsl <= 0) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"P3M real space cutoff too large for ELC w/ dielectric contrast";
       runtimeError(msg);
       }
@@ -1256,7 +1256,7 @@ void ELC_init()
   if (elc_params.far_calculated &&
       (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on)) {
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"ELC auto-retuning failed, gap size too small";
         runtimeError(msg);
     }
@@ -1325,7 +1325,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   switch (coulomb.method) {
   case COULOMB_P3M_GPU:
   {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"ELC tuning failed, ELC is not set up to work with the GPU P3M";
       runtimeError(msg);
       return ES_ERROR;
@@ -1348,7 +1348,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   else {
     elc_params.far_calculated = 1;
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"ELC tuning failed, gap size too small";
         runtimeError(msg);
     }

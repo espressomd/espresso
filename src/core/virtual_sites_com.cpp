@@ -91,7 +91,7 @@ void calc_mol_vel(Particle *p_com,double v_com[3]){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
-          ostringstream msg;
+          std::ostringstream msg;
           msg <<"Particle does not exist in calc_mol_vel! id= " << topology[mol_id].part.e[i] << "\n";
           runtimeError(msg);
          return;
@@ -111,7 +111,7 @@ void calc_mol_vel(Particle *p_com,double v_com[3]){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-       ostringstream msg;
+       std::ostringstream msg;
        msg <<"There is more than one COM in calc_mol_vel! mol_id= " << mol_id << "\n";
        runtimeError(msg);
       return;
@@ -137,7 +137,7 @@ void calc_mol_pos(Particle *p_com,double r_com[3]){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
-          ostringstream msg;
+          std::ostringstream msg;
           msg <<"Particle does not exist in calc_mol_pos! id= " << topology[mol_id].part.e[i] << "\n";
           runtimeError(msg);
          return;
@@ -159,7 +159,7 @@ void calc_mol_pos(Particle *p_com,double r_com[3]){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-       ostringstream msg;
+       std::ostringstream msg;
        msg <<"There is more than one COM in calc_mol_pos! mol_id= " << mol_id << "\n";
        runtimeError(msg);
       return;
@@ -220,7 +220,7 @@ void put_mol_force_on_parts(Particle *p_com){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
-          ostringstream msg;
+          std::ostringstream msg;
           msg <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
           runtimeError(msg);
          return;
@@ -236,7 +236,7 @@ void put_mol_force_on_parts(Particle *p_com){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
-          ostringstream msg;
+          std::ostringstream msg;
           msg <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
           runtimeError(msg);
          return;
@@ -253,7 +253,7 @@ void put_mol_force_on_parts(Particle *p_com){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-       ostringstream msg;
+       std::ostringstream msg;
        msg <<"There is more than one COM input_mol_force_on_parts! mol_id= " << mol_id << "\n";
        runtimeError(msg);
       return;
@@ -269,7 +269,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
    mol_id=calling_p->p.mol_id;
 
    if (mol_id < 0) {
-     ostringstream msg;
+     std::ostringstream msg;
      msg <<"Particle does not have a mol id! pnr= " << calling_p->p.identity << "\n";
      runtimeError(msg);
      return NULL;
@@ -278,7 +278,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
       p=local_particles[topology[mol_id].part.e[i]];
 
       if (p==NULL){
-          ostringstream msg;
+          std::ostringstream msg;
           msg <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
           runtimeError(msg);
          return NULL;
@@ -289,7 +289,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
        }
    }
 
-   ostringstream msg;
+   std::ostringstream msg;
    msg <<"No com found in get_mol_com_particleParticle does not exist in put_mol_force_on_parts! pnr= " << calling_p->p.identity << "\n";
    runtimeError(msg);
    return NULL;
@@ -304,13 +304,13 @@ double get_mol_dist(Particle *p1,Particle *p2){
    p2_com=get_mol_com_particle(p2);
    #ifdef VIRTUAL_SITES_DEBUG
    if (p1_com==NULL){
-       ostringstream msg;
+       std::ostringstream msg;
        msg <<"COM Particle not found for particle in get_mol_dist id= " << p1->p.identity << "\n";
        runtimeError(msg);
       dist[0]=dist[1]=dist[2]=0.0;
    }
    if (p2_com==NULL){
-       ostringstream msg;
+       std::ostringstream msg;
        msg <<"COM Particle not found for particle in get_mol_dist id= " << p2->p.identity << "\n";
        runtimeError(msg);
       dist[0]=dist[1]=dist[2]=0.0;

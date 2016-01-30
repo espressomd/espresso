@@ -188,7 +188,7 @@ void CalcVolumes()
             Particle *p2 = local_particles[p1.bl.e[j+1]];
             if (!p2)
             {
-              ostringstream msg;
+              std::ostringstream msg;
               msg << "{IBM_CalcVolumes: 078 bond broken between particles "
                 << p1.p.identity << " and " << p1.bl.e[j+1] << " (particles not stored on the same node)} ";
               runtimeError(msg);
@@ -197,7 +197,7 @@ void CalcVolumes()
             Particle *p3 = local_particles[p1.bl.e[j+2]];
             if (!p3)
             {
-              ostringstream msg;
+              std::ostringstream msg;
               msg << "{IBM_CalcVolumes: 078 bond broken between particles "
                 << p1.p.identity << " and " << p1.bl.e[j+2] << " (particles not stored on the same node)} ";
               runtimeError(msg);

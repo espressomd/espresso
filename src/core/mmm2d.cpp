@@ -1512,7 +1512,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
 
 #ifdef ADDITIONAL_CHECKS
   if (d[2] >box_l[1]/2) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"near formula called for too distant particle pair";
       runtimeError(msg);
     return;
@@ -1594,7 +1594,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
       fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
     }
     if (end < 0) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"MMM2D: distance was negative, coordinates probably out of range";
         runtimeError(msg);
       end = 0;
@@ -1897,7 +1897,7 @@ int MMM2D_sanity_checks()
 {
 
   if (!PERIODIC(0) || !PERIODIC(1) || PERIODIC(2)) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MMM2D requires periodicity 1 1 0";
       runtimeError(msg);
     return 1;
@@ -1905,7 +1905,7 @@ int MMM2D_sanity_checks()
   
   if (cell_structure.type != CELL_STRUCTURE_LAYERED &&
       cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MMM2D at present requires layered (or n-square) cellsystem";
       runtimeError(msg);
     return 1;
@@ -1921,7 +1921,7 @@ void MMM2D_init()
 
   MMM2D_setup_constants();
   if ((err = MMM2D_tune_near(mmm2d_params.maxPWerror))) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MMM2D auto-retuning: " << mmm2d_errors[err];
       runtimeError(msg);
     coulomb.method = COULOMB_NONE;
@@ -1931,7 +1931,7 @@ void MMM2D_init()
       (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3)) {
     mmm2d_params.far_cut = 0.0;
     if (mmm2d_params.dielectric_contrast_on) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"MMM2D auto-retuning: IC requires layered cellsystem with > 3 layers";
         runtimeError(msg);
     }
@@ -1939,7 +1939,7 @@ void MMM2D_init()
   else {
     if (mmm2d_params.far_calculated) {
       if ((err = MMM2D_tune_far(mmm2d_params.maxPWerror))) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"MMM2D auto-retuning: "<< mmm2d_errors[err];
       runtimeError(msg);
 	coulomb.method = COULOMB_NONE;

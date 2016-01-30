@@ -74,7 +74,7 @@ void local_rotate_system(double phi, double theta, double alpha)
 void rotate_system(double phi, double theta, double alpha)
 {
   if (n_nodes!=1) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"Rotate_system only works on a single cpu core";
       runtimeError(msg);
   }

@@ -2409,7 +2409,7 @@ void add_constraints_forces(Particle *p1)
 	  if(constraints[n].c.wal.reflecting){
 	    reflect_particle(p1, &(vec[0]), constraints[n].c.wal.reflecting);
       } else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"wall constraint "<< n<<" violated by particle "<<p1->p.identity;
         runtimeError(msg);
 	  }
@@ -2436,7 +2436,7 @@ void add_constraints_forces(Particle *p1)
 	  if(constraints[n].c.sph.reflecting){
 	    reflect_particle(p1, &(vec[0]), constraints[n].c.sph.reflecting);
       } else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg << "sphere constraint "<< n <<" violated by particle "<<p1->p.identity;
         runtimeError(msg);
 	  }
@@ -2463,7 +2463,7 @@ void add_constraints_forces(Particle *p1)
     if(constraints[n].c.cyl.reflecting){
       reflect_particle(p1, &(vec[0]), constraints[n].c.cyl.reflecting);
     } else {
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "cylinder constraint "<< n << " violated by particle "<< p1->p.identity;
       runtimeError(msg);
     }
@@ -2490,7 +2490,7 @@ void add_constraints_forces(Particle *p1)
     if(constraints[n].c.rhomboid.reflecting){
       reflect_particle(p1, &(vec[0]), constraints[n].c.rhomboid.reflecting);
     } else {
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "rhomboid constraint " << n << " violated by particle " << p1->p.identity;
       runtimeError(msg);
     }
@@ -2514,7 +2514,7 @@ void add_constraints_forces(Particle *p1)
 	  }
 	}
     else {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"maze constraint " << n << " violated by particle "<< p1->p.identity;
       runtimeError(msg);
 	}
@@ -2533,7 +2533,7 @@ void add_constraints_forces(Particle *p1)
     if(constraints[n].c.pore.reflecting){
       reflect_particle(p1, &(vec[0]), constraints[n].c.pore.reflecting);
     } else {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"pore constraint " << n << " violated by particle "<< p1->p.identity;
       runtimeError(msg);
         }
@@ -2552,7 +2552,7 @@ void add_constraints_forces(Particle *p1)
     if(constraints[n].c.pore.reflecting){
       reflect_particle(p1, &(vec[0]), constraints[n].c.pore.reflecting);
     } else {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"pore constraint " << n << " violated by particle  "<< p1->p.identity;
       runtimeError(msg);
         }
@@ -2590,7 +2590,7 @@ void add_constraints_forces(Particle *p1)
           } 
           else
           {
-              ostringstream msg;
+              std::ostringstream msg;
               msg <<"stomatocyte constraint "<< n << " violated by particle " << p1->p.identity;
               runtimeError(msg);
           }
@@ -2629,7 +2629,7 @@ void add_constraints_forces(Particle *p1)
           } 
           else
           {
-              ostringstream msg;
+              std::ostringstream msg;
               msg <<"hollow_cone constraint "<< n << " violated by particle " << p1->p.identity;
               runtimeError(msg);
           }
@@ -2646,7 +2646,7 @@ void add_constraints_forces(Particle *p1)
 				     torque1, torque2);
 	}
 	else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg << "voxel constraint "<< n <<" violated by particle "<<p1->p.identity;
         runtimeError(msg);
 	}
@@ -2680,7 +2680,7 @@ void add_constraints_forces(Particle *p1)
 #endif
 	}
     else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"plane constraint " << n << " violated by particle " << p1->p.identity;
         runtimeError(msg);
 	}
@@ -2740,7 +2740,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
     else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"wall constraint "<< n << " violated by particle "<< p1->p.identity;
         runtimeError(msg);
 	}
@@ -2761,7 +2761,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
     else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg << "sphere constraint "<< n << " violated by particle " << p1->p.identity;
         runtimeError(msg);
 	}
@@ -2783,7 +2783,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
     else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"cylinder constraint "<< n << " violated by particle " << p1->p.identity;
         runtimeError(msg);
 	}
@@ -2805,7 +2805,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
     else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"cylinder constraint  " << n << " violated by particle " << p1->p.identity;
         runtimeError(msg);
 	}
@@ -2826,7 +2826,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
     else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"maze constraint " << n << " violated by particle " << p1->p.identity;
         runtimeError(msg);
 	}
@@ -2842,7 +2842,7 @@ double add_constraints_energy(Particle *p1)
 
 	}
     else {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"pore constraint " << n << " violated by particle " << p1->p.identity;
         runtimeError(msg);
 	}
@@ -2874,7 +2874,7 @@ double add_constraints_energy(Particle *p1)
 	      }
 	      else
         {
-              ostringstream msg;
+              std::ostringstream msg;
               msg <<"stomatocyte constraint "<< n << " violated by particle " << p1->p.identity;
               runtimeError(msg);
 	      }
@@ -2906,7 +2906,7 @@ double add_constraints_energy(Particle *p1)
 	      }
 	      else
         {
-              ostringstream msg;
+              std::ostringstream msg;
               msg <<"hollow_cone constraint " << n << " violated by particle " << p1->p.identity;
               runtimeError(msg);
 	      }
@@ -2942,7 +2942,7 @@ double add_constraints_energy(Particle *p1)
 						     ia_params, vec, dist, dist*dist);
 	}
     else {
-       // ostringstream msg;
+       // std::ostringstream msg;
        // msg << "voxel constraint "<< n << " violated by particle " << p1->p.identity;
        // runtimeError(msg);
 	}

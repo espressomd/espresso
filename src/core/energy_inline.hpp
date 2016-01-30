@@ -291,7 +291,7 @@ inline void add_bonded_energy(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"bond broken between particles " << p1->p.identity << " and " << p1->bl.e[i-1]
            <<" (particles not stored on the same node)";
         runtimeError(msg);
@@ -302,7 +302,7 @@ inline void add_bonded_energy(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-2] << " and " << p1->bl.e[i-1]
          <<" (particles not stored on the same node)";
       runtimeError(msg);
@@ -314,7 +314,7 @@ inline void add_bonded_energy(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-3] <<", "<< p1->bl.e[i-2]
             << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
       runtimeError(msg);
@@ -329,7 +329,7 @@ inline void add_bonded_energy(Particle *p1)
       p8 = local_particles[p1->bl.e[i++]];
 
       if(!p4 || !p5 || !p6 || !p7 || !p8) {
-	ostringstream msg;
+	std::ostringstream msg;
 	msg << "bond broken between particles" <<
 	  p1->p.identity << ", " << p1->bl.e[i-7] << ", " << p1->bl.e[i-6] << ", " << p1->bl.e[i-5] << ", " << p1->bl.e[i-4] << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2] << ", " << p1->bl.e[i-1] << " (particles not stored on the same node)";
 	return;
@@ -424,7 +424,7 @@ inline void add_bonded_energy(Particle *p1)
 	bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
 	break;
       default :
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "add_bonded_energy: tabulated bond type of atom " << p1->p.identity << " unknown\n";
       runtimeError(msg);
     return;
@@ -444,7 +444,7 @@ inline void add_bonded_energy(Particle *p1)
         bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
         break;
       default :
-          ostringstream msg;
+          std::ostringstream msg;
           msg << "add_bonded_energy: overlapped bond type of atom " << p1->p.identity << " unknown\n";
           runtimeError(msg);
         return;
@@ -458,7 +458,7 @@ inline void add_bonded_energy(Particle *p1)
       break;
 #endif
     default :
-        ostringstream msg;
+        std::ostringstream msg;
         msg <<"add_bonded_energy: bond type ("<<type<<") of atom "<< p1->p.identity << " unknown\n";
         runtimeError(msg);
       return;
@@ -467,19 +467,19 @@ inline void add_bonded_energy(Particle *p1)
     if (bond_broken) {
       switch (n_partners) {
       case 1: {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
       runtimeError(msg);
     break;
       }
       case 2: {
-    ostringstream msg;
+    std::ostringstream msg;
     msg <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and " << p3->p.identity;
     runtimeError(msg);
     break;
       }
       case 3: {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
           << ", " << p3->p.identity << " and " << p4->p.identity;
       runtimeError(msg);
@@ -508,7 +508,7 @@ inline void add_kinetic_energy(Particle *p1)
   
 // #ifdef MULTI_TIMESTEP
 //   if (p1->p.smaller_timestep==1) {
-//     ostringstream msg;
+//     std::ostringstream msg;
 //     msg << "SMALL TIME STEP";
 //     energy.data.e[0] += SQR(smaller_time_step/time_step) * 
 //       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
