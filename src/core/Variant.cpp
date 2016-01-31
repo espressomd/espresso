@@ -33,32 +33,6 @@ std::uint32_t Variant::size() const {
   return s;
 }
 
-/** Simple serialization, format is [TYPE] [SIZE] [SIZE] [SIZE] [SIZE] [ [DATA] ... ], where every [] represents one byte */
-
-std::vector<char> Variant::serialize() const {
-  std::vector<char> v;
-
-  v.resize(1);
-
-  v[0] = static_cast<std::uint8_t>(m_type);
-
-  switch(m_type) {
-    case NONE:
-      break;
-    default:
-      char *d = reinterpret_cast<char *>(m_mem);
-      std::uint32_t m_size = size();
-
-      v.resize(v.size() + 4 + m_size);
-
-      std::copy(reinterpret_cast<char *>(&m_size),reinterpret_cast<char *>(&m_size) + 4, v.end());
-      std::copy(d, d + m_size, v.end());
-      break;
-  }
-  
-  return v;
-}
-
 std::ostream &operator<<(std::ostream &os, const Variant &rhs) {
   const std::vector<int> *iv;
   const std::vector<double> *dv;

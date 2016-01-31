@@ -277,7 +277,7 @@ void mpi_init(int *argc, char ***argv)
   for(int i = 0; i < N_CALLBACKS; ++i)  {
     request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
   }
-    
+
   initRuntimeErrorCollector();
 }
 
