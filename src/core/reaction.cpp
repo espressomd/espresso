@@ -40,15 +40,11 @@ void reactions_sanity_checks()
   if(reaction.ct_rate != 0.0) {
 
     if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-        ostringstream msg;
-        msg <<"The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition";
     }
 
     if(max_cut < reaction.range) {
-        ostringstream msg;
-        msg <<"Reaction range of " << reaction.range << " exceeds maximum cutoff of " << max_cut;
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Reaction range of " << reaction.range << " exceeds maximum cutoff of " << max_cut;
     }
   }
 }
@@ -74,9 +70,7 @@ void local_setup_reaction() {
   IA_parameters *data = get_ia_param_safe(reaction.reactant_type, reaction.catalyzer_type);
   
   if(!data) {
-      ostringstream msg;
-      msg <<"interaction parameters for reaction could not be set";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"interaction parameters for reaction could not be set";
   }
 
   /* Used for the range of the verlet lists */

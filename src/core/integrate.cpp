@@ -147,9 +147,7 @@ void integrator_sanity_checks()
   //char *errtext;
 
   if ( time_step < 0.0 ) {
-      ostringstream msg;
-      msg <<"time_step not set";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"time_step not set";
   }
 }
 
@@ -159,9 +157,7 @@ void integrator_npt_sanity_checks()
 {  
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     if (nptiso.piston <= 0.0) {
-        ostringstream msg;
-        msg <<"npt on, but piston mass not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"npt on, but piston mass not set";
     }
 
 #ifdef ELECTROSTATICS
@@ -174,9 +170,7 @@ void integrator_npt_sanity_checks()
       case COULOMB_P3M:   break;
 #endif /*P3M*/
       default: {
-        ostringstream msg;
-        msg <<"npt only works with P3M, Debye-Huckel or reaction field";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"npt only works with P3M, Debye-Huckel or reaction field";
       }
     }
 #endif /*ELECTROSTATICS*/
@@ -189,9 +183,7 @@ void integrator_npt_sanity_checks()
       case DIPOLAR_P3M: break;
 #endif /* DP3M */
       default: {
-        ostringstream msg;
-        msg <<"NpT does not work with your dipolar method, please use P3M.";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"NpT does not work with your dipolar method, please use P3M.";
       }
     }
 #endif  /* ifdef DIPOLES */
@@ -768,10 +760,8 @@ void propagate_press_box_pos_and_rescale_npt()
         nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
 
-          ostringstream msg;
-          msg << "your choice of piston= "<< nptiso.piston << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
+          runtimeErrorMsg() << "your choice of piston= "<< nptiso.piston << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
                  << " just caused the volume to become negative, decrease dt";
-          runtimeError(msg);
 	nptiso.volume = box_l[0]*box_l[1]*box_l[2];
 	scal[2] = 1;
       }
@@ -1135,27 +1125,21 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces)
 
   if ( recalc_forces ) {
   	if ( reuse_forces ) {
-      std::ostringstream msg;
-      msg <<"cannot reuse old forces and recalculate forces";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"cannot reuse old forces and recalculate forces";
   	}
   	reuse_forces = -1;
   }
 
   /* go on with integrate <n_steps> */
   if(n_steps < 0) {
-    std::ostringstream msg;
-    msg <<"illegal number of steps (must be >0)";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"illegal number of steps (must be >0)";
     return ES_ERROR;
   }
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
     if (max_cut == 0.0) {
-      std::ostringstream msg;
-      msg <<"cannot automatically determine skin, please set it manually";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"cannot automatically determine skin, please set it manually";
       return ES_ERROR;
     }
     skin = 0.4*max_cut;
@@ -1196,9 +1180,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, in
   nptiso.piston = piston;
 
   if ( nptiso.piston <= 0.0 ) {
-    std::ostringstream msg;
-    msg <<"You must set <piston> as well before you can use this integrator!\n";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"You must set <piston> as well before you can use this integrator!\n";
     return ES_ERROR;
   }
   if ( xdir || ydir || zdir ) {
@@ -1256,10 +1238,8 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, in
 
 
   if( nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
-    std::ostringstream msg;
-    msg <<"You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!";
-    msg <<"Cannot proceed with npt_isotropic, reverting to nvt integration... \n";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!";
+    runtimeErrorMsg() <<"Cannot proceed with npt_isotropic, reverting to nvt integration... \n";
     integ_switch = INTEG_METHOD_NVT;
   	mpi_bcast_parameter(FIELD_INTEG_SWITCH);
   	return (ES_ERROR);
