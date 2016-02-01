@@ -4,7 +4,7 @@
 namespace ErrorHandling {
 /** ostringstream is not copyable, but it is fine here to copy just the content. */
 RuntimeErrorStream::RuntimeErrorStream(const RuntimeErrorStream &rhs) : m_ec(rhs.m_ec), m_line(rhs.m_line), m_file(rhs.m_file), m_function(rhs.m_function) {
-  m_buff << rhs.m_buff;
+  m_buff << rhs.m_buff.rdbuf();
 }
 
 
