@@ -255,8 +255,8 @@ AS_IF([test x$fftw_found = xyes],[
 AC_MSG_CHECKING([whether to use SCAFACOS])
 AC_ARG_WITH([scafacos],
 	AS_HELP_STRING([--with-scafacos],
-        [specify whether or not to use SCAFACOS [guess]]),
-	, with_scafacos=guess)
+        [specify whether or not to use SCAFACOS [no]]),
+	, with_scafacos=no)
 AC_MSG_RESULT($with_scafacos)
 
 scafacos_found=no
