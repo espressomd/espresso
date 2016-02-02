@@ -68,7 +68,6 @@ struct Scafacos : public ScafacosData {
     
     parse_parameters(parameters);
 
-    std::cout << "Scafacos() has_near = " << has_near << " parameters '" << parameters << "'" << std::endl;
   }
   ~Scafacos() {
     fcs_destroy(handle);
