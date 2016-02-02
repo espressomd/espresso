@@ -83,7 +83,9 @@
 #include "reaction_field_tcl.hpp"
 #include "actor/Mmm1dgpu_tcl.hpp"
 #include "actor/Ewaldgpu_tcl.hpp"
+#ifdef SCAFACOS
 #include "scafacos.hpp"
+#endif
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -130,6 +132,7 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 /*                                 electrostatics                               */
 /********************************************************************************/
 
+#ifdef SCAFACOS
 int tclcommand_inter_coulomb_parse_scafacos(Tcl_Interp *interp, int argc, char ** argv) {
   if(argc < 1)
     return TCL_ERROR;
@@ -145,7 +148,7 @@ int tclcommand_inter_coulomb_parse_scafacos(Tcl_Interp *interp, int argc, char *
         params << ",";
     }
   }
-  std::cout << params.str() << std::endl;
+
   coulomb.method  = COULOMB_SCAFACOS;
 
   mpi_bcast_coulomb_params();
@@ -154,6 +157,7 @@ int tclcommand_inter_coulomb_parse_scafacos(Tcl_Interp *interp, int argc, char *
   
   return TCL_OK;
 }
+#endif
 
 int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 {
@@ -241,7 +245,9 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
   #endif
 
+  #ifdef SCAFACOS
   REGISTER_COULOMB("scafacos", tclcommand_inter_coulomb_parse_scafacos);
+  #endif
   
   /* fallback */
   coulomb.method  = COULOMB_NONE;
