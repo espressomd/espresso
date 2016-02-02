@@ -1,4 +1,9 @@
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3 -arch=sm_20")
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
+else()
+  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
+endif()
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
 
 file(GLOB_RECURSE EspressoCore_SRC
           "*.cpp"
@@ -37,6 +42,8 @@ if(WITH_CUDA)
   cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC} config-version.cpp config-features.cpp)
   
   add_dependencies(EspressoCore EspressoCuda)
+  set_target_properties(EspressoCuda PROPERTIES MACOSX_RPATH TRUE)
+  CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
   target_link_libraries(EspressoCore EspressoCuda)
 endif(WITH_CUDA)
 
