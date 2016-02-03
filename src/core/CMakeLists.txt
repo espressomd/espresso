@@ -20,6 +20,8 @@ add_custom_command(OUTPUT config-features.cpp config-features.hpp COMMAND
       DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
 )
 
+add_custom_target(EspressoConfig ALL DEPENDS config-features.cpp config-features.hpp)
+
 add_custom_command(OUTPUT config-version.cpp
                    COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
@@ -32,7 +34,7 @@ target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostati
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
 if(WITH_CUDA)
-  file(GLOB_RECURSE EspressoCuda_SRC
+  file(GLOB EspressoCuda_SRC
           "*.cu"
           )
 

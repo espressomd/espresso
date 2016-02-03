@@ -42,6 +42,7 @@ option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_TESTS  "Enable tests"            ON)
+option(WITH_SCAFACOS "Build with Scafacos support" ON)
 
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
@@ -92,6 +93,14 @@ if(HDF5_FOUND)
   include_directories(${HDF5_INCLUDE_DIRS})
 endif()
 
+if(WITH_SCAFACOS)
+  find_package(PkgConfig)
+  pkg_check_modules(SCAFACOS scafacos)
+  if(SCAFACOS_FOUND)
+    set(SCAFACOS 1)
+  endif(SCAFACOS_FOUND)
+endif(WITH_SCAFACOS)
+
 include(RequireCXX11)
 
 #######################################################################
@@ -127,6 +136,7 @@ endif(WITH_MPI)
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
+
 set(SCRIPTDIR ${DATA}/scripts)
 
 #######################################################################
