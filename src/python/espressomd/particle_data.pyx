@@ -766,7 +766,7 @@ cdef class ParticleSlice:
 
 
     def __cinit__(self,slice_):
-        id_list=range(max_seen_particle)
+        id_list=np.arange(max_seen_particle+1)
         self.id_selection=id_list[slice_]
 
     cdef int update_particle_data(self, id) except -1:
@@ -931,10 +931,13 @@ cdef class ParticleList:
 
     # Retrieve a particle
     def __getitem__(self, key):
-        if isinstance(key,slice):
+ 
+        if isinstance(key, slice):
             return ParticleSlice(key)
-        if not particle_exists(key):
-            raise Exception("Particle %d does not exist." % key)
+        if not np.all(self.exists(key)):
+            raise Exception("Particle(s) %s does not exist." % np.trim_zeros((np.array(key)*np.invert(self.exists(key)))))
+        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            return ParticleSlice(key)
         return ParticleHandle(key)
 
     def add(self, *args, **kwargs):
@@ -942,10 +945,26 @@ cdef class ParticleList:
         # Did we get a dictionary
         if len(args) == 1:
             if hasattr(args[0], "__getitem__"):
-                self._place_new_particle(args[0])
+                # Check for presence of pos attribute
+                if not "pos" in args[0]:
+                    raise ValueError(
+                        "pos attribute must be specified for new particle")
+
+                if len(np.array(args[0]["pos"]).shape) == 2:
+                    self._place_new_particles(args[0])
+                else:
+                    self._place_new_particle(args[0])
         else:
             if len(args) == 0 and len(kwargs.keys()) != 0:
-                self._place_new_particle(kwargs)
+                # Check for presence of pos attribute
+                if not "pos" in kwargs:
+                    raise ValueError(
+                        "pos attribute must be specified for new particle")
+
+                if len(np.array(kwargs["pos"]).shape) == 2:
+                    self._place_new_particles(kwargs)
+                else:
+                    self._place_new_particle(kwargs)
             else:
                 raise ValueError(
                     "add() takes either a dictionary or a bunch of keyword args")
@@ -956,16 +975,9 @@ cdef class ParticleList:
         if not "id" in P:
             # Generate particle id
             P["id"] = max_seen_particle + 1
-        if not "id" in P and isinstance(P.values()[0],list): #hier weitermachen
-            raise Exception("For list input also enter particle id")
         else:
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
-
-        # Check for presence of pos attribute
-        if not "pos" in P:
-            raise ValueError(
-                "pos attribute must be specified for new particle")
 
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
@@ -985,13 +997,43 @@ cdef class ParticleList:
         if P != {}:
             self[id].update(P)
 
+    def _place_new_particles(self, P):
+
+        if not "id" in P:
+            # Generate particle ids
+            ids = np.arange(np.array(P["pos"]).shape[0]) + max_seen_particle
+        else:
+            ids = P["id"]
+            del P["id"]
+
+        # Place particles
+        cdef double mypos[3]
+        for j in range(len(P["pos"])):
+            for i in range(3):
+                mypos[i] = P["pos"][j][i]
+            if place_particle(ids[j], mypos) == -1:
+                raise Exception("particle could not be set")
+
+        del P["pos"]
+        
+        if P!= {}:
+            self[ids].update(P)
+
+
     # Iteration over all existing particles
     def __iter__(self):
         for i in range(max_seen_particle + 1):
             if particle_exists(i):
                 yield self[i]
 
-    def exists(self, id):
-        return particle_exists(id)
+    def exists(self, idx):
+        if isinstance(idx,int):
+            return particle_exists(idx)
+        if isinstance(idx,slice) or isinstance(idx,tuple) or isinstance(idx,list) or isinstance(idx,np.ndarray):
+            tf_array=np.zeros(len(idx), dtype=np.bool)
+            for i in range(len(idx)):
+                tf_array[i]=particle_exists(idx[i])
+            return tf_array
+    
 
 

@@ -62,10 +62,14 @@ system.box_l = [box_l, box_l, box_l]
 # Particle setup
 #############################################################
 
-n_part=10
+n_part = 10
 
-for i in range(n_part):
-    system.part.add(id=i, pos=[0,0,0], type=0)
+id_list = np.arange(n_part)
+pos_list = np.random.random((n_part,3)) * system.box_l
+type_list = np.ones(n_part)
+
+system.part.add(id=id_list ,pos=pos_list, type=type_list)
+
 
 print("TYPE\n%s"%system.part[:].type)
 system.part[0:2].type=[3,3]
@@ -89,26 +93,7 @@ print("MASS_NEW\n%s"%system.part[:].mass)
 
 print("Q\n%s"%system.part[:].q)
 system.part[::2].q=np.ones(n_part/2)
-system.part[1::2].q=-np.ones(n_part/2-1)
+system.part[1::2].q=-np.ones(n_part/2)
 print("Q_NEW\n%s"%system.part[:].q)
-
-exit()
-
-n_part = 1000
-id_list=np.arange(n_part)
-pos_list=np.random.random((n_part,3)) * system.box_l
-
-print(id_list)
-print(pos_list)
-
-exit()
-
-system.part.add(id=id_list,pos=pos_list)
-
-# Assingn charge to particles
-
-system.part[0:n_part:2].q = -1.0
-system.part[1:n_part:2].q = 1.0
-
 
 
