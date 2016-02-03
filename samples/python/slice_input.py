@@ -62,16 +62,35 @@ system.box_l = [box_l, box_l, box_l]
 # Particle setup
 #############################################################
 
-for i in range(10):
+n_part=10
+
+for i in range(n_part):
     system.part.add(id=i, pos=[0,0,0], type=0)
 
-print(system.part[0:2].type)
+print("TYPE\n%s"%system.part[:].type)
 system.part[0:2].type=[3,3]
-print(system.part[:].type)
+print("TYPE_NEW\n%s"%system.part[:].type)
 
-print(system.part[0:3].pos)
-system.part[::2].pos=[[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5]]
-print(system.part[:].pos)
+print("POS\n%s"%system.part[:].pos)
+system.part[:5].pos=[[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5]]
+print("POS_NEW\n%s"%system.part[:].pos)
+
+print("V\n%s"%system.part[:].v)
+system.part[:2].v=[[1,2,3],[2,3,4]]
+print("V_NEW\n%s"%system.part[:].v)
+
+print("F\n%s"%system.part[:].f)
+system.part[:2].f=[[3,4,5],[4,5,6]]
+print("F_NEW\n%s"%system.part[:].f)
+
+print("MASS\n%s"%system.part[:].mass)
+system.part[:2].mass=[2,3]
+print("MASS_NEW\n%s"%system.part[:].mass)
+
+print("Q\n%s"%system.part[:].q)
+system.part[::2].q=np.ones(n_part/2)
+system.part[1::2].q=-np.ones(n_part/2-1)
+print("Q_NEW\n%s"%system.part[:].q)
 
 exit()
 
@@ -81,6 +100,8 @@ pos_list=np.random.random((n_part,3)) * system.box_l
 
 print(id_list)
 print(pos_list)
+
+exit()
 
 system.part.add(id=id_list,pos=pos_list)
 

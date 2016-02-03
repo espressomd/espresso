@@ -782,7 +782,7 @@ cdef class ParticleSlice:
     property type:
 
         def __get__(self):
-            type_list=[]
+            type_list = []
             for id in self.id_selection:
                 self.update_particle_data(id)
                 get_particle_data(id, & self.particle_data)
@@ -812,21 +812,115 @@ cdef class ParticleSlice:
                     raise Exception("particle could not be set")
 
         def __get__(self):
-            pos_array=np.zeros((len(self.id_selection),3))
+            pos_array = np.zeros((len(self.id_selection),3))
             for i in range(len(self.id_selection)):
                 self.update_particle_data(self.id_selection[i])
-                pos_array[i,:]=[self.particle_data.r.p[0],
-                              self.particle_data.r.p[1],
-                              self.particle_data.r.p[2]]
+                pos_array[i,:] = [self.particle_data.r.p[0],
+                                  self.particle_data.r.p[1],
+                                  self.particle_data.r.p[2]]
             return pos_array
 
-    def update(self, P):
 
-        if "id" in P:
-            raise Exception("Cannot change particle id.")
+    # Velocity
+    property v:
+        """Particle velocity"""
 
-        for k in P.keys():
-            setattr(self, k, P[k])
+        def __set__(self, _v_array):
+            if len(self.id_selection) != len(_v_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_v_array),len(self.id_selection)))
+                
+            cdef double myv[3]
+            for j in range(len(_v_array)):
+                for i in range(3):
+                    myv[i] = _v_array[j][i]
+
+                if set_particle_v(self.id_selection[j], myv) == 1:
+                    raise Exception("set particle position first")
+
+        def __get__(self):
+            v_array = np.zeros((len(self.id_selection),3))
+            for i in range(len(self.id_selection)):
+                self.update_particle_data(self.id_selection[i])
+                v_array[i,:] = np.array([self.particle_data.m.v[0],
+                                         self.particle_data.m.v[1],
+                                         self.particle_data.m.v[2]])
+            return v_array
+
+
+    # Force
+    property f:
+        """Particle force"""
+
+        def __set__(self, _f_array):
+            if len(self.id_selection) != len(_f_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_f_array),len(self.id_selection)))
+            cdef double myf[3]
+            for j in range(len(_f_array)):
+                for i in range(3):
+                    myf[i] = _f_array[j][i]
+                if set_particle_f(self.id_selection[j], myf) == 1:
+                    raise Exception("set particle position first")
+
+        def __get__(self):
+            f_array = np.zeros((len(self.id_selection),3))
+            for i in range(len(self.id_selection)):
+                self.update_particle_data(self.id_selection[i])
+                f_array[i,:] = np.array([self.particle_data.f.f[0],
+                                         self.particle_data.f.f[1],
+                                         self.particle_data.f.f[2]])
+            return f_array
+
+
+    IF MASS:
+        property mass:
+            """Particle mass"""
+
+            def __set__(self, _mass_array):
+                if len(self.id_selection) != len(_mass_array):
+                    raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_mass_array),len(self.id_selection)))
+                for j in range(len(_mass_array)):
+                    if set_particle_mass(self.id_selection[j], _mass_array[j]) == 1:
+                        raise Exception("set particle position first")
+
+            def __get__(self):
+                mass_array = np.zeros_like(self.id_selection)
+                cdef double * x = NULL
+                for i in range(len(self.id_selection)):
+                    self.update_particle_data(self.id_selection[i])
+                    pointer_to_mass( & (self.particle_data), x)
+                    mass_array[i] = x[0]
+                return mass_array
+
+
+    IF ELECTROSTATICS == 1:
+        property q:
+            """particle charge"""
+
+            def __set__(self, _q_array):
+                if len(self.id_selection) != len(_q_array):
+                    raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_q_array),len(self.id_selection)))
+                cdef double myq
+                for i in range(len(self.id_selection)):
+                    myq = _q_array[i]
+                    if set_particle_q(self.id_selection[i], myq) == 1:
+                        raise Exception("set particle position first")
+
+            def __get__(self):
+                q_array = np.zeros_like(self.id_selection)
+                cdef double * x = NULL
+                for i in range(len(self.id_selection)):
+                    self.update_particle_data(self.id_selection[i])
+                    pointer_to_q(& (self.particle_data), x)
+                    q_array[i] = x[0]
+                return q_array
+
+        def update(self, P):
+
+            if "id" in P:
+                raise Exception("Cannot change particle id.")
+
+            for k in P.keys():
+                setattr(self, k, P[k])
 
 
 
@@ -862,6 +956,8 @@ cdef class ParticleList:
         if not "id" in P:
             # Generate particle id
             P["id"] = max_seen_particle + 1
+        if not "id" in P and isinstance(P.values()[0],list): #hier weitermachen
+            raise Exception("For list input also enter particle id")
         else:
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
