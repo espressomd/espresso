@@ -28,7 +28,7 @@
 #define D3Q18_H
 
 #ifdef LB
-
+#include "lb.hpp"
 /** Velocity sub-lattice of the D3Q18 model */
 static double d3q18_lattice[18][3] = { {  1.,  0.,  0. },
           			       { -1.,  0.,  0. },
@@ -75,7 +75,7 @@ static double d3q18_w[18] = { 1., 1., 1., 1., 1., 1.,
 			      1./2., 1./2., 1./2., 1./2.,
 			      1./2., 1./2., 1./2., 1./2. };
 
-LB_Model d3q18_model = { 18, d3q18_lattice, d3q18_coefficients, d3q18_w, 1./2. };
+LB_Model d3q18_model = { 18, d3q18_lattice, d3q18_coefficients, d3q18_w, NULL, 1./2. };
 
 #endif /* LB */
 

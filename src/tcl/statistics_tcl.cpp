@@ -53,6 +53,8 @@
 #include <string>
 #include <map>
 
+using std::ostringstream;
+
 /** Set the topology. See \ref topology_tcl.cpp */
 int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
 

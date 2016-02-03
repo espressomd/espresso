@@ -30,6 +30,11 @@ import code_info
 from thermostat import Thermostat
 from cellsystem import CellSystem
 
+setable_properties=["box_l","max_num_cells","min_num_cells",
+                    "node_grid","npt_piston","npt_p_diff",
+                    "periodicity","skin","time",
+                    "time_step","timings"]
+
 
 cdef class System:
     doge = 1
@@ -45,6 +50,18 @@ cdef class System:
 #        self.part = particle_data.particleList()
 #        self.non_bonded_inter = interactions.NonBondedInteractions()
 #        self.bonded_inter = interactions.BondedInteractions()
+
+    # __getstate__ and __setstate__ define the pickle interaction
+    def __getstate__(self):
+        odict={}
+        for property_ in setable_properties:
+            odict[property_] = System.__getattribute__(self,property_)
+        return odict
+
+    def __setstate__(self,params):
+        for property_ in params.keys():
+            System.__setattr__(self,property_,params[property_])
+
 
     property box_l:
         def __set__(self, _box_l):

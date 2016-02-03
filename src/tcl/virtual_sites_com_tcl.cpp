@@ -43,9 +43,7 @@ int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc,
    #endif
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
-       ostringstream msg;
-       msg <<"parse_and_print_pressure_mol: could not sort particle config, particle ids not consecutive?";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"parse_and_print_pressure_mol: could not sort particle config, particle ids not consecutive?";
       return TCL_ERROR;
    }
    if (argc < 2) {
@@ -88,9 +86,7 @@ int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int
    double Ekin;
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
-       ostringstream msg;
-       msg <<"parse_and_print_energy_kinetic_mol: could not sort particle config, particle ids not consecutive?";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"parse_and_print_energy_kinetic_mol: could not sort particle config, particle ids not consecutive?";
       return TCL_ERROR;
    }
    if (argc < 1) {
@@ -137,9 +133,7 @@ int tclcommand_analyze_parse_and_print_dipmom_mol(Tcl_Interp *interp,int argc, c
    double dipole[4];
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
-       ostringstream msg;
-       msg <<"parse_and_print_dipole: could not sort particle config, particle ids not consecutive?";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"parse_and_print_dipole: could not sort particle config, particle ids not consecutive?";
       return TCL_ERROR;
    }
    if (n_molecules==0) {

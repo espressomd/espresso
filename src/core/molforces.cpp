@@ -80,9 +80,7 @@ void calc_trap_force()
   
 
   if ( !topo_part_info_synced ) {
-      ostringstream msg;
-      msg <<"can't calculate moltrap: must execute analyse set topo_part_sync first";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"can't calculate moltrap: must execute analyse set topo_part_sync first";
     return;
   } else {
     
@@ -133,9 +131,7 @@ void get_local_trapped_mols (IntList *local_trapped_mols)
     for(i = 0; i < local_cells.cell[c]->n; i++) {
       mol = local_cells.cell[c]->part[i].p.mol_id;
       if ( mol >= n_molecules ) {
-      ostringstream msg;
-      msg <<"can't calculate molforces no such molecule as " << mol ;
-      runtimeError(msg);
+      runtimeErrorMsg() <<"can't calculate molforces no such molecule as " << mol ;
 	return;
       }
 
@@ -187,9 +183,7 @@ void calc_local_mol_info (IntList *local_trapped_mols)
     for(i = 0; i < np; i++) {
       mol = p[i].p.mol_id;
       if ( mol >= n_molecules ) {
-      ostringstream msg;
-      msg <<"can't calculate molforces no such molecule as " << mol;
-      runtimeError(msg);
+      runtimeErrorMsg() <<"can't calculate molforces no such molecule as " << mol;
 	return;
       }
 
@@ -381,9 +375,7 @@ void calc_mol_info () {
 
   /* check to see if all the topology information has been synced to the various slave nodes */
   if ( !topo_part_info_synced ) {
-      ostringstream msg;
-      msg << "can't calculate molforces: must execute analyse set topo_part_sync first";
-      runtimeError(msg);
+      runtimeErrorMsg() << "can't calculate molforces: must execute analyse set topo_part_sync first";
     return;
   }
 

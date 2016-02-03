@@ -64,9 +64,7 @@ int mindist3(int part_id, double r_catch, int *ids) {
 	      --> prevent that! */
   for(i=0; i<n_part; i++) if (partCfgMD[i].p.identity == part_id) me = i; 
   if (me == -1) {
-      ostringstream msg;
-      msg <<"failed to find desired particle " << part_id;
-      runtimeError(msg);
+      runtimeErrorMsg() <<"failed to find desired particle " << part_id;
     return 0;
   }
   for (i=0; i<n_part; i++) {

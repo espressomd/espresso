@@ -87,6 +87,8 @@ PXDFILES = \
 	actors.pxd \
 	h5md.pxd
 
+LIBS +=	$(top_builddir)/src/core/libEspresso.la
+
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
 PYXFILES += _tcl.pyx
@@ -134,7 +136,7 @@ dummy_SOURCES = dummy.cpp
 # Also, like this, the .so-files are installed to the right place.
 LAFILES = $(PYXFILES:.pyx=.la)
 $(LAFILES): %.la: %.lo
-	$(AM_V_CXXLD)$(CXXLINK) -rpath $(pyexecdir) $< $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) -rpath $(abs_builddir) -L$(top_builddir)/src/core/.libs -lEspresso -rpath $(pyexecdir) $<
 CLEANFILES += $(LAFILES)
 
 # create links to the ./libs/*.so in the dir
@@ -142,8 +144,17 @@ SOFILES = $(PYXFILES:.pyx=.so)
 all-local: $(SOFILES)
 CLEANFILES += $(SOFILES)
 
-$(SOFILES): %.so: %.la
+if DARWIN
+SOSUFFIX=dylib
+else
+SOSUFFIX=so
+endif
+
+$(SOFILES): %.so: %.la libEspresso.so
 	$(AM_V_GEN)test -L $@ || $(LN_S) @objdir@/$@ $@
+
+libEspresso.so:
+	$(AM_V_GEN)test -L $@ || $(LN_S) $(top_builddir)/src/core/.libs/libEspresso.$(SOSUFFIX) $@
 
 # build rule for myconfig.pxi
 # create gen_pxiconfig.cpp from features.def
@@ -151,7 +162,7 @@ gen_pxiconfig.cpp: $(srcdir)/gen_pxiconfig.py $(top_srcdir)/src/features.def
 	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_pxiconfig.py \
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
-gen_pxiconfig_CPPFLAGS=-I$(top_srcdir)/src/core -I$(top_builddir)/src/core -I$(top_builddir)/src
+gen_pxiconfig_CPPFLAGS=-I$(top_srcdir)/src/core -I$(top_builddir)/src/core -I$(top_builddir)/src -DHAVE_CONFIG_H
 gen_pxiconfig: gen_pxiconfig.cpp $(top_builddir)/src/core/config.hpp $(top_builddir)/src/core/myconfig-final.hpp
 	$(AM_V_CXXLD)$(CXXLINK) $(gen_pxiconfig_CPPFLAGS) $<
 
