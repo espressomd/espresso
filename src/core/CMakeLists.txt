@@ -5,12 +5,8 @@ else()
 endif()
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
 
-file(GLOB_RECURSE EspressoCore_SRC
+file(GLOB EspressoCore_SRC
           "*.cpp"
-          )
-
-file(GLOB_RECURSE EspressoCuda_SRC
-          "*.cu"
           )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -32,10 +28,14 @@ add_library(EspressoCore SHARED ${EspressoCore_SRC}
                         ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
                         ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
-target_link_libraries(EspressoCore ${LIBRARIES})
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostatics)
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
 if(WITH_CUDA)
+  file(GLOB_RECURSE EspressoCuda_SRC
+          "*.cu"
+          )
+
   cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
   cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
@@ -53,3 +53,6 @@ if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
 
+
+add_subdirectory(object-in-fluid)
+add_subdirectory(electrostatics)

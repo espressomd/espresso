@@ -40,7 +40,7 @@
 #include "integrate.hpp"
 #include "tuning.hpp"
 #include "interaction_data.hpp"
-#include "Scafacos.hpp"
+#include "electrostatics/Scafacos.hpp"
 
 /** This file contains the c-like interface for Scafacos */
 
