@@ -48,12 +48,10 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
     for (int dir=0;dir<3;dir++) {
       // check if local_box_l is compatible with lattice spacing
       if (fabs(local_box_l[dir]-this->grid[dir]*agrid[dir]) > ROUND_ERROR_PREC*box_l[dir]) {
-          ostringstream msg;
-          msg << "Lattice spacing agrid["<< dir << "]=" << agrid[dir] \
+          runtimeErrorMsg() << "Lattice spacing agrid["<< dir << "]=" << agrid[dir] \
               << " is incompatible with local_box_l["<< dir << "]=" << local_box_l[dir]\
               << " ( box_l["<< dir << "]=" << box_l[dir] \
               << " node_grid["<< dir << "]=" << node_grid[dir] <<" )";
-          runtimeError(msg);
       }
     }
 
@@ -90,9 +88,7 @@ void Lattice::interpolate(double* pos, double* value) {
     if (this->interpolation_type == INTERPOLATION_LINEAR) {
         interpolate_linear(pos, value);
     } else {
-        ostringstream msg;
-        msg <<"Unknown interpolation type";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Unknown interpolation type";
     }
 }
 
@@ -100,18 +96,14 @@ void Lattice::interpolate_linear(double* pos, double* value) {
     int left_halo_index[3];
     double d[3];
     if (this->halo_size <= 0) {
-        ostringstream msg;
-        msg <<"Error in interpolate_linear: halo size is 0";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Error in interpolate_linear: halo size is 0";
         return;
     }
     for (int dim = 0; dim<3; dim++) {
         left_halo_index[dim]=(int) floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]) + this->halo_size;
         d[dim]=((pos[dim]-this->local_offset[dim])/this->agrid[dim] - floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]));
         if (left_halo_index[dim] < 0 || left_halo_index[dim] >= this->halo_grid[dim]) {
-            ostringstream msg;
-            msg <<"Error in interpolate_linear: Particle out of range";
-            runtimeError(msg);
+            runtimeErrorMsg() <<"Error in interpolate_linear: Particle out of range";
             return;
         }
     }
@@ -152,9 +144,7 @@ void Lattice::interpolate_gradient(double* pos, double* value) {
     if (this->interpolation_type == INTERPOLATION_LINEAR) {
         interpolate_linear_gradient(pos, value);
     } else {
-        ostringstream msg;
-        msg <<"Unknown interpolation type";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Unknown interpolation type";
     }
 }
 
@@ -162,18 +152,14 @@ void Lattice::interpolate_linear_gradient(double* pos, double* value) {
     int left_halo_index[3];
     double d[3];
     if (this->halo_size <= 0) {
-        ostringstream msg;
-        msg << "Error in interpolate_linear: halo size is 0";
-        runtimeError(msg);
+        runtimeErrorMsg() << "Error in interpolate_linear: halo size is 0";
         return;
     }
     for (int dim = 0; dim<3; dim++) {
         left_halo_index[dim]=(int) floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]) + this->halo_size;
         d[dim]=((pos[dim]-this->local_offset[dim])/this->agrid[dim] - floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]));
         if (left_halo_index[dim] < 0 || left_halo_index[dim] >= this->halo_grid[dim]) {
-            ostringstream msg;
-            msg <<"Error in interpolate_linear: Particle out of range";
-            runtimeError(msg);
+            runtimeErrorMsg() <<"Error in interpolate_linear: Particle out of range";
             return;
         }
     }

@@ -74,9 +74,7 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
 
   /* check node grid */
   if( n_nodes > 1 ) {
-      ostringstream msg;
-      msg <<"NEMD is a single node feature";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"NEMD is a single node feature";
     return;
   }
 
@@ -152,9 +150,7 @@ void nemd_change_momentum()
     INTEG_TRACE(fprintf(stderr,"%d: parts_in_slabs: top %d mid %d\n",this_node,top_slab->n_parts_in_slab,mid_slab->n_parts_in_slab));
     if(mid_slab->n_fastest != nemddata.n_exchange || 
        top_slab->n_fastest != nemddata.n_exchange) {
-        ostringstream msg;
-        msg <<"nemd_exchange_momentum: Not enough particles in slab!";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"nemd_exchange_momentum: Not enough particles in slab!";
       /* cannot continue */
       return;
     }
