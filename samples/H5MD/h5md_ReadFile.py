@@ -27,7 +27,7 @@ system = espressomd.System()
 ### Prepare particles for h5-reading
 n_part=10
 for i in range(n_part):
-    system.part[i].pos=np.array([0,0,0])
+    system.part.add(id=i, pos=np.array([0,0,0]))
     
 #----------------------------------------------------------------------------------------------------------------#
 #---------------------------------------------------TIME DEPENDENT-----------------------------------------------#

@@ -41,6 +41,10 @@ tnIn = bondClass(**params).type_number()
 tnOut = outBond.type_number()
 outParams = outBond.params
 
+### Prepare particles for h5-writing
+for i in range(n_part):
+    system.part.add(id=i, pos=np.array([0,0,0]))
+    
 #----------------------------------------------------------------------------------------------------------------#
 #---------------------------------------------------TIME DEPENDENT-----------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------#
@@ -126,7 +130,8 @@ for j in range(n_time):
     #h5.write_to_h5.structure_factor(j,1,1)
     
 # VMD 
-h5.write_to_h5.VMD('indexOfSpecies',[0,1,2])
+h5.write_to_h5.VMD('species')
+#h5.write_to_h5.VMD('indexOfSpecies',[0,1,2])
 #h5.write_to_h5.VMD('charge')
 #h5.write_to_h5.VMD('mass')
 #h5.write_to_h5.VMD('bond_from')
