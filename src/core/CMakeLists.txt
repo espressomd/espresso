@@ -48,3 +48,8 @@ if(WITH_CUDA)
 endif(WITH_CUDA)
 
 add_subdirectory(actor)
+
+if(WITH_UNIT_TESTS)
+  add_subdirectory(unit_tests)
+endif(WITH_UNIT_TESTS)
+
