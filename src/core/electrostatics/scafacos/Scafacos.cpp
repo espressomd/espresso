@@ -44,16 +44,6 @@ void Scafacos::set_r_cut(double r_cut) {
   }
 }
 
-double Scafacos::pair_force(double dist) const {
-  if(has_near) {
-    fcs_float field;
-    fcs_compute_near_field(handle, dist, &field);
-    return field;
-  }
-
-  return 0.0;
-}
-
 void Scafacos::run(std::vector<double> &charges, std::vector<double> &positions,
                    std::vector<double> &forces, std::vector<double> &potentials) {
   const int local_n_part = charges.size();

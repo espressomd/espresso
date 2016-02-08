@@ -16,7 +16,15 @@ struct Scafacos {
   /** Set parameters common to all methods */
   void set_common_parameters(double *box_l, int *periodicity, int total_particles);
   /** Calulate short range pair force if supported by the method */
-  double pair_force(double dist) const;
+  inline double pair_force(double dist) const {
+    if(has_near) {
+      fcs_float field;
+      fcs_compute_near_field(handle, dist, &field);
+      return field;
+    }
+
+    return 0.0;
+  }
   /** Calculate the forces */
   void run(std::vector<double> &charges, std::vector<double> &positions,
            std::vector<double> &forces, std::vector<double> &potentials);
