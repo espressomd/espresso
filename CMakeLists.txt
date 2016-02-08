@@ -41,6 +41,7 @@ option(WITH_TK     "Build with tk support"  OFF)
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
+option(WITH_TESTS  "Enable tests"            ON)
 
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
@@ -94,6 +95,20 @@ endif()
 include(RequireCXX11)
 
 #######################################################################
+# Testing 
+#######################################################################
+
+if(WITH_TESTS)
+  enable_testing()
+  find_package(Boost COMPONENTS unit_test_framework) 
+  if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
+    set(WITH_UNIT_TESTS 1)
+  endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
+
+  add_subdirectory(testsuite)
+endif(WITH_TESTS)
+
+#######################################################################
 # Process MPI settings
 #######################################################################
 if(WITH_MPI)
@@ -103,6 +118,7 @@ if(WITH_MPI)
   include_directories(${MPI_INCLUDE_PATH})
   list(APPEND LIBRARIES ${MPI_LIBRARIES})
   set(MPI_SOURCE)
+  set(HAVE_MPI 1)
 else(WITH_MPI)
   include_directories(src/mpifake)  
   set(MPI_SOURCE src/mpifake/mpi.c)
@@ -119,6 +135,5 @@ set(SCRIPTDIR ${DATA}/scripts)
 
 add_subdirectory(scripts)
 add_subdirectory(doc)
-add_subdirectory(testsuite)
 add_subdirectory(src)
 add_subdirectory(config)
