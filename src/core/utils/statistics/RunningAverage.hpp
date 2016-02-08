@@ -19,36 +19,28 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "RunningAverage.hpp"
+#ifndef __RUNING_AVERAGE_HPP
+#define __RUNING_AVERAGE_HPP
+
+namespace Utils {
+namespace Statistics {
 
 template<typename Scalar>
-void RunningAverage<Scalar>::add_sample(Scalar s) {
-  m_n++;
+class RunningAverage {
+public:
+  RunningAverage() : m_n(0), m_new_var(0.0) {};
+  void add_sample(Scalar s);
+  void clear() { m_n = 0; }
+  const int &n() const { return &m_n; }
+  Scalar avg() const;
+  Scalar var() const;
+private:
+  int m_n;
+  Scalar m_old_avg, m_new_avg;
+  Scalar m_old_var, m_new_var;
+};
 
-  if(m_n == 1) {
-    m_old_avg = m_new_avg = s;
-    m_old_var = 0.0;
-  } else {
-    m_new_avg = m_old_avg + (s - m_old_avg)/m_n;
-    m_new_var = m_old_var + (s - m_old_avg)*(s - m_new_avg);
-
-    m_old_avg = m_new_avg;
-    m_old_var = m_new_var;
-  }
+}
 }
 
-template<typename Scalar>
-Scalar RunningAverage<Scalar>::avg() const { 
-    if(m_n > 0)
-      return m_new_avg;
-    else
-      return 0.0;
-  }
-
-template<typename Scalar>
-Scalar RunningAverage<Scalar>::var() const {
-  if(m_n > 1)
-    return m_new_var / (m_n - 1.);
-  else
-    return 0.0;
-}
+#endif
