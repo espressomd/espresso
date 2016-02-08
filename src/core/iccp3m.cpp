@@ -1,57 +1,55 @@
 /*
-  Copyright(C) 2010, 2011, 2012, 2013, 2014 The ESPResSo project
-  Copyright(C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-    Max - Planck - Institute for Polymer Research, Theory Group
-
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
+  
   This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and / or modify
+  
+  ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
+  
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
+  
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see < http: // www.gnu.org / licenses / >.
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
 /** \file iccp3m.cpp
     Detailed Information about the method is included in the corresponding header file \ref iccp3m.hpp.
 
  */
-# include <cstdlib>
-# include <cstdio>
-# include <cstring>
-# include <cstddef>
-# include <cmath>
-# include <ctime>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+#include <cstddef>
+#include <cmath>
+#include <ctime>
 
-# include "iccp3m.hpp"
-# include "p3m.hpp"
-# include "elc.hpp"
-# include "mmm2d.hpp"
-# include "mmm1d.hpp"
+#include "iccp3m.hpp"
+#include "p3m.hpp"
+#include "elc.hpp"
+#include "mmm2d.hpp"
+#include "mmm1d.hpp"
 
-# include "communication.hpp"
+#include "communication.hpp"
 
-# include "utils.hpp"
-# include "random.hpp"
-# include "verlet.hpp"
-# include "cells.hpp"
-# include "particle_data.hpp"
-# include "interaction_data.hpp"
-# include "domain_decomposition.hpp"
-# include "verlet.hpp"
-# include "forces.hpp"
-# include "config.hpp"
-# include "global.hpp"
-# include "p3m_gpu.hpp"
+#include "utils.hpp"
+#include "verlet.hpp"
+#include "cells.hpp"
+#include "particle_data.hpp"
+#include "interaction_data.hpp"
+#include "domain_decomposition.hpp"
+#include "verlet.hpp"
+#include "forces.hpp"
+#include "config.hpp"
+#include "global.hpp"
 
-# ifdef ELECTROSTATICS
+#ifdef ELECTROSTATICS
 
 iccp3m_struct iccp3m_cfg;
 
@@ -75,7 +73,7 @@ void iccp3m_revive_forces();
 void iccp3m_store_forces();
 
 /** Granularity of the verlet list */
-# define LIST_INCREMENT 20
+#define LIST_INCREMENT 20
 
 void iccp3m_init(void){
    iccp3m_cfg.set_flag=0;
@@ -261,9 +259,9 @@ void force_calc_iccp3m() {
 /* The following ist mostly copied from forces.cpp */
 
 /*  I don´t see the point of this part until there are electrical dipoles in Espresso, BTW, it generates a warning .. JJCP
-# ifdef DIPOLES
+#ifdef DIPOLES
    convert_quat_to_dip_all();
-# endif
+#endif
 
 */
 
@@ -320,28 +318,28 @@ void layered_calculate_ia_iccp3m()
       for(j = i+1; j < npl; j++) {
         layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
         dist2 = sqrlen(d);
-# ifdef EXCLUSIONS
+#ifdef EXCLUSIONS
         if (do_nonbonded(p1, &pl[j])) {
-# endif
+#endif
           /* avoid source-source computation */
            add_non_bonded_pair_force_iccp3m(p1, &pl[j], d, sqrt(dist2), dist2);
-# ifdef EXCLUSIONS  
+#ifdef EXCLUSIONS  
          }
-# endif
+#endif
       }
 
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
         layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
         dist2 = sqrlen(d);
-# ifdef EXCLUSIONS
+#ifdef EXCLUSIONS
         if (do_nonbonded(p1, &pl[j])) {
-# endif
+#endif
              /* avoid source-source computation */
            add_non_bonded_pair_force_iccp3m(p1, &pb[j], d, sqrt(dist2), dist2);
-# ifdef EXCLUSIONS
+#ifdef EXCLUSIONS
          }
-# endif
+#endif
       }
     }
   }
@@ -357,70 +355,69 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 	PairList *pl;
 	double dist2, vec21[3];
 
-# ifdef VERLET_DEBUG 
-	int estimate, sum=0;
-	fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
-	/* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-	estimate = 0.5*n_part*(4.0/3.0*PI*pow(max_cut_nonbonded,3.0))*(n_part/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+#ifdef VERLET_DEBUG 
+  int estimate, sum=0;
+  fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
+  /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
+  estimate = 0.5*n_part*(4.0/3.0*PI*pow(max_cut_nonbonded,3.0))*(n_part/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
-	if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
-# endif
+  if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
+#endif
+ 
+  /* Loop local cells */
+  for (c = 0; c < local_cells.n; c++) {
+    VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
 
-	/* Loop local cells */
-	for (c = 0; c < local_cells.n; c++) {
-		VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
-
-		cell = local_cells.cell[c];
-		p1   = cell->part;
-		np1  = cell->n;
-		/* Loop cell neighbors */
-		for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-			neighbor = &dd.cell_inter[c].nList[n];
-			p2  = neighbor->pList->part;
-			np2 = neighbor->pList->n;
-			VERLET_TRACE(fprintf(stderr,"%d: neighbor %d contains %d parts\n",this_node,n,np2));
-			/* init pair list */
-			pl  = &neighbor->vList;
-			pl->n = 0;
-			/* Loop cell particles */
-			for(i=0; i < np1; i++) {
-				j_start = 0;
-				/* Tasks within cell: (no bonded forces) store old position, avoid double counting */
-				if(n == 0) {
-					memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
-					j_start = i+1;
-				}
-				/* Loop neighbor cell particles */
-				for(j = j_start; j < np2; j++) {
-# ifdef EXCLUSIONS
-					if(do_nonbonded(&p1[i], &p2[j]))
-# endif
-					{
-						dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-
-						VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
-						if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
-							ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
-							ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
-							add_pair_iccp3m(pl, &p1[i], &p2[j]);
-							/* calc non bonded interactions */ 
-							add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-						}
-					}
-				}
-			}
-			resize_verlet_list_iccp3m(pl);
-			VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d pairs\n",this_node,n,pl->n));
-			VERLET_TRACE(sum += pl->n);
-		}
+    cell = local_cells.cell[c];
+    p1   = cell->part;
+    np1  = cell->n;
+    /* Loop cell neighbors */
+    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+      neighbor = &dd.cell_inter[c].nList[n];
+      p2  = neighbor->pList->part;
+      np2 = neighbor->pList->n;
+      VERLET_TRACE(fprintf(stderr,"%d: neighbor %d contains %d parts\n",this_node,n,np2));
+      /* init pair list */
+      pl  = &neighbor->vList;
+      pl->n = 0;
+      /* Loop cell particles */
+      for(i=0; i < np1; i++) {
+	j_start = 0;
+	/* Tasks within cell: (no bonded forces) store old position, avoid double counting */
+	if(n == 0) {
+	  memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+	  j_start = i+1;
 	}
+	/* Loop neighbor cell particles */
+	for(j = j_start; j < np2; j++) {
+#ifdef EXCLUSIONS
+          if(do_nonbonded(&p1[i], &p2[j]))
+#endif
+	  {
+	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 
-	VERLET_TRACE(fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %d)\n",this_node,sum,estimate));
+	  VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
+	  if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
+	    ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
+	    ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
 
-	rebuild_verletlist = 0;
+	    add_pair_iccp3m(pl, &p1[i], &p2[j]);
+	    /* calc non bonded interactions */ 
+	       add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+	  }
+	 }
+	}
+      }
+      resize_verlet_list_iccp3m(pl);
+      VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d pairs\n",this_node,n,pl->n));
+      VERLET_TRACE(sum += pl->n);
+    }
+  }
+
+  VERLET_TRACE(fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %d)\n",this_node,sum,estimate));
+ 
+  rebuild_verletlist = 0;
 }
-
-
 
 void calculate_verlet_ia_iccp3m()
 {
@@ -548,14 +545,14 @@ void init_forces_iccp3m()
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
 
-# ifdef NPT
+#ifdef NPT
   /* reset virial part of instantaneous pressure */
   if(integ_switch == INTEG_METHOD_NPT_ISO){
       ostringstream msg;
       msg << "ICCP3M cannot be used with pressure coupling";
       runtimeError(msg);
   }
-# endif
+#endif
 
   /* initialize forces with langevin thermostat forces
      or zero depending on the thermostat
@@ -584,7 +581,7 @@ void init_forces_iccp3m()
 
 void calc_long_range_forces_iccp3m()
 {
-# ifdef ELECTROSTATICS
+#ifdef ELECTROSTATICS
 	/* calculate k-space part of electrostatic interaction. */
 	if (!(coulomb.method == COULOMB_ELC_P3M ||
 			coulomb.method == COULOMB_P3M_GPU ||
@@ -596,7 +593,7 @@ void calc_long_range_forces_iccp3m()
         runtimeError(msg);
 	}
 	switch (coulomb.method) {
-# ifdef P3M
+#ifdef P3M
 	case COULOMB_ELC_P3M:
         if (elc_params.dielectric_contrast_on) {
             ostringstream msg;
@@ -620,7 +617,7 @@ void calc_long_range_forces_iccp3m()
 		p3m_charge_assign();
 		p3m_calc_kspace_forces(1,0);
 		break;
-# endif
+#endif
 	case COULOMB_MMM2D:
 		MMM2D_add_far_force();
 		MMM2D_dielectric_layers_force_contribution();
@@ -628,7 +625,7 @@ void calc_long_range_forces_iccp3m()
 	default: break;
 	}
 
-# endif
+#endif
 }
 
 /** \name Private Functions */
@@ -673,12 +670,12 @@ inline void init_local_particle_force_iccp3m(Particle *part)
     part->f.f[1] = 0.0;
     part->f.f[2] = 0.0;
 
-# ifdef ROTATION
+#ifdef ROTATION
     /* set torque to zero */
     part->f.torque[0] = 0;
     part->f.torque[1] = 0;
     part->f.torque[2] = 0;
-# endif
+#endif
 }
 
 /** initialize the forces for a ghost particle */
@@ -688,12 +685,12 @@ inline void init_ghost_force_iccp3m(Particle *part)
   part->f.f[1] = 0.0;
   part->f.f[2] = 0.0;
 
-# ifdef ROTATION
+#ifdef ROTATION
   /* set torque to zero */
   part->f.torque[0] = 0;
   part->f.torque[1] = 0;
   part->f.torque[2] = 0;
-# endif
+#endif
 }
 
 /* integer mod*/
@@ -757,7 +754,7 @@ void iccp3m_store_forces() {
 int iccp3m_sanity_check()
 {
 	switch (coulomb.method) {
-# ifdef P3M
+#ifdef P3M
 	case COULOMB_ELC_P3M: {
         if (elc_params.dielectric_contrast_on) {
             ostringstream msg;
@@ -767,7 +764,7 @@ int iccp3m_sanity_check()
 		}
 		break;
 	}
-# endif
+#endif
     case COULOMB_DH: {
         ostringstream msg;
         msg <<"ICCP3M does not work with Debye-Hueckel iccp3m.h";
@@ -784,17 +781,17 @@ int iccp3m_sanity_check()
 		break;
 	}
   
-# ifdef NPT
+#ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
       ostringstream msg;
       msg <<"ICCP3M does not work in the NPT ensemble";
       runtimeError(msg);
     return 1;
   }
-# endif
+#endif
 
   return 0;
 }
 
-# endif
+#endif
 

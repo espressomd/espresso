@@ -141,9 +141,7 @@ void lb_init_boundaries() {
         }
       
       if(wallcharge_species == -1 && charged_boundaries) {
-          ostringstream msg;
-          msg <<"no charged species available to create wall charge\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"no charged species available to create wall charge\n";
       }
     }
 #endif
@@ -206,9 +204,7 @@ void lb_init_boundaries() {
 				break;
 
               default:
-                ostringstream msg;
-                msg <<"lbboundary type "<< lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
-                runtimeError(msg);
+                runtimeErrorMsg() <<"lbboundary type "<< lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
             }
             
             if (dist > dist_tmp || n == 0) {
@@ -360,9 +356,7 @@ void lb_init_boundaries() {
 				break;
                 
               default:
-                ostringstream msg;
-                msg <<"lbboundary type " << lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
-                runtimeError(msg);
+                runtimeErrorMsg() <<"lbboundary type " << lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
             }
             
             if (dist_tmp<dist || n == 0) {

@@ -25,6 +25,7 @@ cimport particle_data
 from interactions import BondedInteraction
 from interactions import BondedInteractions
 from copy import copy
+from globals cimport max_seen_particle
 
 PARTICLE_EXT_FORCE = 1
 
@@ -35,15 +36,62 @@ COORDS_FIX_MASK = COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2)
 COORDS_ALL_FIXED = COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2)
 PARTICLE_EXT_TORQUE = 16
 
+
+particle_attributes = ["type","pos", "v", "f", "bonds"]
+                     
+IF MASS:
+    particle_attributes.append("mass")
+
+IF ROTATION:
+    particle_attributes.append("omega_lab")
+    particle_attributes.append("ext_torque")
+
+IF ROTATIONAL_INERTIA:
+    particle_attributes.append("rinertia")
+    particle_attributes.append("omega_body")
+    particle_attributes.append("torque_lab")
+    particle_attributes.append("quat")
+
+IF ELECTROSTATICS:
+    particle_attributes.append("q")
+
+IF VIRTUAL_SITES:
+    particle_attributes.append("virtual")
+    
+IF VIRTUAL_SITES_RELATIVE:
+    particle_attributes.append("vs_relative")
+
+IF DIPOLES:
+    particle_attributes.append("dip")
+    particle_attributes.append("dipm")
+
+IF EXTERNAL_FORCES:
+    particle_attributes.append("ext_force")
+    particle_attributes.append("fix")
+
+IF LANGEVIN_PER_PARTICLE:
+    particle_attributes.append("gamma")
+    particle_attributes.append("temp")
+
+IF ROTATION_PER_PARTICLE:
+    particle_attributes.append("rotation")
+
+IF EXCLUSIONS:
+    particle_attributes.append("exclude")
+
+IF ENGINE:
+    particle_attributes.append("swimming")
+
+
 cdef class ParticleHandle:
     def __cinit__(self, _id):
         #    utils.init_intlist(self.particle_data.el)
-        utils.init_intlist(& (self.particle_data.bl))
+        utils.init_intlist( & (self.particle_data.bl))
         self.id = _id
 
     cdef int update_particle_data(self) except -1:
         #    utils.realloc_intlist(self.particle_data.el, 0)
-        utils.realloc_intlist(& (self.particle_data.bl), 0)
+        utils.realloc_intlist( & (self.particle_data.bl), 0)
 
         if get_particle_data(self.id, & self.particle_data):
             raise Exception("Error updating particle data")
@@ -181,7 +229,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_mass(& (self.particle_data), x)
+                pointer_to_mass( & (self.particle_data), x)
                 return x[0]
 
     IF ROTATION == 1:
@@ -201,7 +249,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double o[3]
-                convert_omega_body_to_space( & (self.particle_data), o)
+                convert_omega_body_to_space(& (self.particle_data), o)
                 return np.array([o[0], o[1], o[2]])
 
     # ROTATIONAL_INERTIA
@@ -221,7 +269,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * rinertia = NULL
-                pointer_to_rotational_inertia(& (self.particle_data), rinertia)
+                pointer_to_rotational_inertia( & (self.particle_data), rinertia)
                 return np.array([rinertia[0], rinertia[1], rinertia[2]])
 
 # Omega (angular velocity) body frame
@@ -240,7 +288,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * o = NULL
-                pointer_to_omega_body(& (self.particle_data), o)
+                pointer_to_omega_body( & (self.particle_data), o)
                 return np.array([o[0], o[1], o[2]])
 
 
@@ -260,7 +308,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double x[3]
-                convert_torques_body_to_space( & (self.particle_data), x)
+                convert_torques_body_to_space(& (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
 # Quaternion
@@ -279,7 +327,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_quat( & (self.particle_data), x)
+                pointer_to_quat(& (self.particle_data), x)
                 return np.array([x[0], x[1], x[2], x[3]])
 # Director ( z-axis in body fixed frame)
         property director:
@@ -298,7 +346,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_quatu( & (self.particle_data), x)
+                pointer_to_quatu(& (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
 # Charge
@@ -317,7 +365,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_q( & (self.particle_data), x)
+                pointer_to_q(& (self.particle_data), x)
                 return x[0]
 
     def delete(self):
@@ -342,7 +390,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef int * x = NULL
-                pointer_to_virtual( & (self.particle_data), x)
+                pointer_to_virtual(& (self.particle_data), x)
                 return x[0]
 
     IF VIRTUAL_SITES_RELATIVE == 1:
@@ -354,7 +402,7 @@ cdef class ParticleHandle:
                     raise ValueError("vs_relative needs six args")
                 _relto = x[0]
                 _dist = x[1]
-                q = x[3]
+                q = x[2]
                 check_type_or_throw_except(
                     q, 4, float, "The relative orientation has to be specified as quaternion with 4 floats.")
                 cdef double _q[4]
@@ -373,7 +421,7 @@ cdef class ParticleHandle:
                 cdef int * rel_to = NULL
                 cdef double * dist = NULL
                 cdef double * q = NULL
-                pointer_to_vs_relative(& (self.particle_data), rel_to, dist, q)
+                pointer_to_vs_relative( & (self.particle_data), rel_to, dist, q)
                 return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
 
         # vs_auto_relate_to
@@ -413,7 +461,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_dip( & (self.particle_data), x)
+                pointer_to_dip(& (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
         # Scalar magnitude of dipole moment
@@ -429,7 +477,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_dipm( & (self.particle_data), x)
+                pointer_to_dipm(& (self.particle_data), x)
                 return x[0]
 
     IF EXTERNAL_FORCES:
@@ -454,7 +502,7 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 cdef double * ext_f = NULL
                 cdef int * ext_flag = NULL
-                pointer_to_ext_force(& (self.particle_data), ext_flag, ext_f)
+                pointer_to_ext_force( & (self.particle_data), ext_flag, ext_f)
                 if (ext_flag[0] & PARTICLE_EXT_FORCE):
                     return np.array([ext_f[0], ext_f[1], ext_f[2]])
                 else:
@@ -477,7 +525,7 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 fixed_coord_flag = np.array([0, 0, 0], dtype=int)
                 cdef int * ext_flag = NULL
-                pointer_to_fix( & (self.particle_data), ext_flag)
+                pointer_to_fix(& (self.particle_data), ext_flag)
                 for i in map(long, range(3)):
                     if (ext_flag[0] & COORD_FIXED(i)):
                         fixed_coord_flag[i] = 1
@@ -505,7 +553,7 @@ cdef class ParticleHandle:
                     self.update_particle_data()
                     cdef double * ext_t = NULL
                     cdef int * ext_flag = NULL
-                    pointer_to_ext_torque(& (self.particle_data), ext_flag, ext_t)
+                    pointer_to_ext_torque( & (self.particle_data), ext_flag, ext_t)
                     if (ext_flag[0] & PARTICLE_EXT_TORQUE):
                         return np.array([ext_t[0], ext_t[1], ext_t[2]])
                     else:
@@ -524,7 +572,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * gamma = NULL
-                pointer_to_gamma( & (self.particle_data), gamma)
+                pointer_to_gamma(& (self.particle_data), gamma)
                 return gamma[0]
 
         property temp:
@@ -539,7 +587,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef double * temp = NULL
-                pointer_to_temperature( & (self.particle_data), temp)
+                pointer_to_temperature(& (self.particle_data), temp)
                 return temp[0]
 
     IF ROTATION_PER_PARTICLE:
@@ -558,7 +606,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 cdef short int * _rot = NULL
-                pointer_to_rotation( & (self.particle_data), _rot)
+                pointer_to_rotation(& (self.particle_data), _rot)
                 if _rot[0] == 1:
                     rot = True
                 else:
@@ -571,6 +619,8 @@ cdef class ParticleHandle:
 
             def __set__(self, _partners):
                 delete = 0
+                if len(_partners) == 0:
+                    return
                 if type(_partners[0]) == str:
                     if _partners.pop(0) == "delete":
                         delete = 1
@@ -585,7 +635,7 @@ cdef class ParticleHandle:
                 cdef int * num_partners = NULL
                 cdef int * partners = NULL
                 py_partners = []
-                pointer_to_exclusions(& (self.particle_data), num_partners, partners)
+                pointer_to_exclusions( & (self.particle_data), num_partners, partners)
                 for i in range(num_partners[0]):
                     py_partners.append(partners[i])
                 return np.array(py_partners)
@@ -610,8 +660,11 @@ cdef class ParticleHandle:
                             "To enable swimming supply a dictionary of parameters")
                 else:
                     if 'f_swim' in _params and 'v_swim' in _params:
-                        raise Exception(
-                            "You can't set v_swim and f_swim at the same time")
+                        if _params["f_swim"] == 0 or _params["v_swim"] == 0:
+                            pass
+                        else:
+                            raise Exception(
+                                "You can't set v_swim and f_swim at the same time")
                     if 'f_swim' in _params:
                         check_type_or_throw_except(
                             _params['f_swim'], 1, float, "f_swim has to be a float")
@@ -652,7 +705,7 @@ cdef class ParticleHandle:
                 swim = {}
                 mode = "N/A"
                 cdef particle_parameters_swimming * _swim = NULL
-                pointer_to_swimming(& (self.particle_data), _swim)
+                pointer_to_swimming( & (self.particle_data), _swim)
                 IF LB or LB_GPU:
                     if _swim.push_pull == -1:
                         mode = 'pusher'
@@ -672,10 +725,11 @@ cdef class ParticleHandle:
                     }
                 return swim
 
-    def delete(self):
+    def remove(self):
         """Delete the particle"""
         if remove_particle(self.id):
             raise Exception("Could not delete particle")
+        del ParticleList.key_dict["%i"%self.id]
         del self
 
     # Bond related methods
@@ -750,8 +804,310 @@ cdef class ParticleHandle:
         if change_particle_bond(self.id, NULL, 1):
             raise Exception("Deleting all bonds failed.")
 
+    def update(self, P):
+
+        if "id" in P:
+            raise Exception("Cannot change particle id.")
+
+        for k in P.keys():
+            setattr(self, k, P[k])
+
+
+
+cdef class ParticleSlice:
+    """Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list."""
+
+
+    def __cinit__(self,slice_):
+        id_list=np.arange(max_seen_particle+1)
+        self.id_selection=id_list[slice_]
+
+    cdef int update_particle_data(self, id) except -1:
+        utils.realloc_intlist( & (self.particle_data.bl), 0)
+
+        if get_particle_data(id, & self.particle_data):
+            raise Exception("Error updating particle data")
+        else:
+            return 0
+
+
+    # Particle Type
+    property type:
+
+        def __get__(self):
+            type_list = []
+            for id in self.id_selection:
+                self.update_particle_data(id)
+                get_particle_data(id, & self.particle_data)
+                type_list.append(self.particle_data.p.type)
+            return type_list
+
+        def __set__(self, _type_list):
+            if len(self.id_selection) != len(_type_list):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_type_list),len(self.id_selection)))
+            for i in range(len(self.id_selection)):
+                set_particle_type(self.id_selection[i], _type_list[i])
+                    
+
+    # Position
+    property pos:
+        """Particle position (not folded into central image)."""
+
+        def __set__(self, _pos_array):
+            if len(self.id_selection) != len(_pos_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_pos_array),len(self.id_selection)))
+
+            cdef double mypos[3]
+            for j in range(len(_pos_array)):
+                for i in range(3):
+                    mypos[i] = _pos_array[j][i]
+                if place_particle(self.id_selection[j], mypos) == -1:
+                    raise Exception("particle could not be set")
+
+        def __get__(self):
+            pos_array = np.zeros((len(self.id_selection),3))
+            for i in range(len(self.id_selection)):
+                self.update_particle_data(self.id_selection[i])
+                pos_array[i,:] = [self.particle_data.r.p[0],
+                                  self.particle_data.r.p[1],
+                                  self.particle_data.r.p[2]]
+            return pos_array
+
+
+    # Velocity
+    property v:
+        """Particle velocity"""
+
+        def __set__(self, _v_array):
+            if len(self.id_selection) != len(_v_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_v_array),len(self.id_selection)))
+                
+            cdef double myv[3]
+            for j in range(len(_v_array)):
+                for i in range(3):
+                    myv[i] = _v_array[j][i]
+
+                if set_particle_v(self.id_selection[j], myv) == 1:
+                    raise Exception("set particle position first")
+
+        def __get__(self):
+            v_array = np.zeros((len(self.id_selection),3))
+            for i in range(len(self.id_selection)):
+                self.update_particle_data(self.id_selection[i])
+                v_array[i,:] = np.array([self.particle_data.m.v[0],
+                                         self.particle_data.m.v[1],
+                                         self.particle_data.m.v[2]])
+            return v_array
+
+
+    # Force
+    property f:
+        """Particle force"""
+
+        def __set__(self, _f_array):
+            if len(self.id_selection) != len(_f_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_f_array),len(self.id_selection)))
+            cdef double myf[3]
+            for j in range(len(_f_array)):
+                for i in range(3):
+                    myf[i] = _f_array[j][i]
+                if set_particle_f(self.id_selection[j], myf) == 1:
+                    raise Exception("set particle position first")
+
+        def __get__(self):
+            f_array = np.zeros((len(self.id_selection),3))
+            for i in range(len(self.id_selection)):
+                self.update_particle_data(self.id_selection[i])
+                f_array[i,:] = np.array([self.particle_data.f.f[0],
+                                         self.particle_data.f.f[1],
+                                         self.particle_data.f.f[2]])
+            return f_array
+
+
+    IF MASS:
+        property mass:
+            """Particle mass"""
+
+            def __set__(self, _mass_array):
+                if len(self.id_selection) != len(_mass_array):
+                    raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_mass_array),len(self.id_selection)))
+                for j in range(len(_mass_array)):
+                    if set_particle_mass(self.id_selection[j], _mass_array[j]) == 1:
+                        raise Exception("set particle position first")
+
+            def __get__(self):
+                mass_array = np.zeros_like(self.id_selection)
+                cdef double * x = NULL
+                for i in range(len(self.id_selection)):
+                    self.update_particle_data(self.id_selection[i])
+                    pointer_to_mass( & (self.particle_data), x)
+                    mass_array[i] = x[0]
+                return mass_array
+
+
+    IF ELECTROSTATICS == 1:
+        property q:
+            """particle charge"""
+
+            def __set__(self, _q_array):
+                if len(self.id_selection) != len(_q_array):
+                    raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_q_array),len(self.id_selection)))
+                cdef double myq
+                for i in range(len(self.id_selection)):
+                    myq = _q_array[i]
+                    if set_particle_q(self.id_selection[i], myq) == 1:
+                        raise Exception("set particle position first")
+
+            def __get__(self):
+                q_array = np.zeros_like(self.id_selection)
+                cdef double * x = NULL
+                for i in range(len(self.id_selection)):
+                    self.update_particle_data(self.id_selection[i])
+                    pointer_to_q(& (self.particle_data), x)
+                    q_array[i] = x[0]
+                return q_array
+
+        def update(self, P):
+
+            if "id" in P:
+                raise Exception("Cannot change particle id.")
+
+            for k in P.keys():
+                setattr(self, k, P[k])
+
+
+
+
+
 cdef class ParticleList:
     """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
-
+    key_dict={}
+    # Retrieve a particle
     def __getitem__(self, key):
+ 
+        if isinstance(key, slice):
+            return ParticleSlice(key)
+        if not np.all(self.exists(key)):
+            raise Exception("Particle(s) %s does not exist." % np.trim_zeros((np.array(key)*np.invert(self.exists(key)))))
+        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            return ParticleSlice(key)
         return ParticleHandle(key)
+
+
+    # __getstate__ and __setstate__ define the pickle interaction
+    def __getstate__(self):
+        odict={}
+        key_list = sorted(ParticleList.key_dict.values())
+        for particle_number in key_list:
+            pdict={}
+            for property_ in particle_attributes:
+                pdict[property_] = ParticleHandle(particle_number).__getattribute__(property_)
+            odict[particle_number] = pdict
+        return odict
+
+    def __setstate__(self,params):
+        for particle_number in params.keys():
+            params[particle_number]["id"] = particle_number
+            self.add(params[particle_number])
+
+
+    def add(self, *args, **kwargs):
+
+        # Did we get a dictionary
+        if len(args) == 1:
+            if hasattr(args[0], "__getitem__"):
+                # Check for presence of pos attribute
+                if not "pos" in args[0]:
+                    raise ValueError(
+                        "pos attribute must be specified for new particle")
+
+                if len(np.array(args[0]["pos"]).shape) == 2:
+                    self._place_new_particles(args[0])
+                else:
+                    self._place_new_particle(args[0])
+        else:
+            if len(args) == 0 and len(kwargs.keys()) != 0:
+                # Check for presence of pos attribute
+                if not "pos" in kwargs:
+                    raise ValueError(
+                        "pos attribute must be specified for new particle")
+
+                if len(np.array(kwargs["pos"]).shape) == 2:
+                    self._place_new_particles(kwargs)
+                else:
+                    self._place_new_particle(kwargs)
+            else:
+                raise ValueError(
+                    "add() takes either a dictionary or a bunch of keyword args")
+
+
+    def _place_new_particle(self, P):
+
+        # Handling of particle id
+        if not "id" in P:
+            # Generate particle id
+            P["id"] = max_seen_particle + 1
+        else:
+            if particle_exists(P["id"]):
+                raise Exception("Particle %d already exists." % P["id"])
+
+        # The ParticleList[]-getter ist not valid yet, as the particle
+        # doesn't yet exist. Hence, the setting of position has to be
+        # done here. the code is from the pos:property of ParticleHandle
+        cdef double mypos[3]
+        check_type_or_throw_except(
+            P["pos"], 3, float, "Postion must be 3 floats")
+        for i in range(3):
+            mypos[i] = P["pos"][i]
+        if place_particle(P["id"], mypos) == -1:
+            raise Exception("particle could not be set")
+        # Pos is taken care of
+        del P["pos"]
+        id = P["id"]
+        del P["id"]
+
+        if P != {}:
+            self[id].update(P)
+        ParticleList.key_dict["%i"%id] = id
+
+
+    def _place_new_particles(self, P):
+
+        if not "id" in P:
+            # Generate particle ids
+            ids = np.arange(np.array(P["pos"]).shape[0]) + max_seen_particle
+        else:
+            ids = P["id"]
+            del P["id"]
+
+        # Place particles
+        cdef double mypos[3]
+        for j in range(len(P["pos"])):
+            for i in range(3):
+                mypos[i] = P["pos"][j][i]
+            if place_particle(ids[j], mypos) == -1:
+                raise Exception("particle could not be set")
+
+        del P["pos"]
+        
+        if P!= {}:
+            self[ids].update(P)
+
+
+    # Iteration over all existing particles
+    def __iter__(self):
+        for i in range(max_seen_particle + 1):
+            if particle_exists(i):
+                yield self[i]
+
+    def exists(self, idx):
+        if isinstance(idx,int):
+            return particle_exists(idx)
+        if isinstance(idx,slice) or isinstance(idx,tuple) or isinstance(idx,list) or isinstance(idx,np.ndarray):
+            tf_array=np.zeros(len(idx), dtype=np.bool)
+            for i in range(len(idx)):
+                tf_array[i]=particle_exists(idx[i])
+            return tf_array
+    
+
+

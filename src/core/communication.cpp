@@ -22,6 +22,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#ifdef OPEN_MPI
+#include <dlfcn.h>
+#endif
 #include "utils.hpp"
 #include "communication.hpp"
 #include "interaction_data.hpp"
@@ -51,7 +54,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "maggs.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "statistics_chain.hpp"
@@ -198,11 +201,12 @@ static int request[3];
 
 /** Map callback function pointers to request codes */
 #ifndef HAVE_CXX11
-std::map<SlaveCallback *, int> request_map;
+typedef std::map<SlaveCallback *, int> request_map_type;
 #else
 #include <unordered_map>
-std::unordered_map<SlaveCallback *, int> request_map;
+typedef std::unordered_map<SlaveCallback *, int> request_map_type;
 #endif
+static request_map_type request_map;
 
 /** Forward declarations */
 
@@ -224,6 +228,30 @@ void mpi_core(MPI_Comm *comm, int *errcode,...) {
 
 void mpi_init(int *argc, char ***argv)
 {
+#ifdef OPEN_MPI
+  void *handle = 0;
+  int mode = RTLD_NOW | RTLD_GLOBAL;
+#ifdef RTLD_NOLOAD
+  mode |= RTLD_NOLOAD;
+#endif
+  void * _openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
+  if (!_openmpi_symbol)
+  {
+    fprintf(stderr, "%d: Aborting because unable to find OpenMPI symbol.\n", this_node);
+    errexit();
+  }
+  Dl_info _openmpi_info;
+  dladdr(_openmpi_symbol, &_openmpi_info);
+  
+  if (!handle) handle = dlopen(_openmpi_info.dli_fname, mode);
+  
+  if (!handle)
+  {
+    fprintf(stderr, "%d: Aborting because unable to load libmpi into the global symbol space.\n", this_node);
+    errexit();
+  }
+#endif
+
 #ifdef MPI_CORE
   MPI_Errhandler mpi_errh;
 #endif
@@ -255,7 +283,13 @@ void mpi_init(int *argc, char ***argv)
 
 #ifdef HAVE_MPI
 void mpi_call(SlaveCallback cb, int node, int param) {
-  const int reqcode = request_map[cb];
+  request_map_type::iterator req_it = request_map.find(cb);
+  if (req_it == request_map.end())
+  {
+    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%zu callbacks registered.\n", this_node, cb, request_map.size());
+    errexit();
+  }
+  const int reqcode = req_it->second;
   
   request[0] = reqcode;
   request[1] = node;

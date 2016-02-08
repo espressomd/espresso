@@ -24,7 +24,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
 AM_DEFAULT_SOURCE_EXT = .cpp
 
-noinst_LTLIBRARIES = libEspressoTcl.la
+lib_LTLIBRARIES = libEspressoTcl.la
 libEspressoTcl_la_SOURCES = \
 	TclOutputHelper.hpp \
 	bin_tcl.cpp \
@@ -183,7 +183,7 @@ Espresso_install_LDADD = libEspressoTcl.la ../core/libEspresso.la
 
 # generate the Tcl library for the python interpreter
 if PYTHON_INTERFACE
-noinst_LTLIBRARIES += libEspressoTcl4Py.la
+lib_LTLIBRARIES += libEspressoTcl4Py.la
 libEspressoTcl4Py_la_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
 libEspressoTcl4Py_la_SOURCES = scriptsdir.cpp
 libEspressoTcl4Py_la_LIBADD = libEspressoTcl.la

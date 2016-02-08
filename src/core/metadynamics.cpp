@@ -90,9 +90,7 @@ void meta_init(){
    /* Check that the simulation uses onle a single processor. Otherwise exit. 
    *  MPI interface *not* implemented. */
    if (n_nodes != 1) {
-       ostringstream msg;
-       msg <<"Can't use metadynamics on more than one processor.\n";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"Can't use metadynamics on more than one processor.\n";
       return;
    }
    
@@ -149,9 +147,7 @@ void meta_perform()
    }
    
    if (flag1 == 0 || flag2 == 0) {
-       ostringstream msg;
-       msg <<"Metadynamics: can't find pid1 or pid2.\n";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"Metadynamics: can't find pid1 or pid2.\n";
       return;
    }
    
@@ -184,9 +180,7 @@ void meta_perform()
          meta_apply_direction[0] = meta_apply_direction[1] = 0.;
          meta_apply_direction[2] = -1.;
       } else {
-          ostringstream msg;
-          msg <<"Undefined metadynamics scheme.\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Undefined metadynamics scheme.\n";
          return;      
       }
    }

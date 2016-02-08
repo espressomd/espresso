@@ -55,6 +55,8 @@ EOF
 dnl overwrite _AC_PROC_CC_G to avoid check for -g and -O2 flags
 m4_define([_AC_PROG_CXX_G],[])
 
+AM_CONDITIONAL(DARWIN, [test $(uname) = "Darwin"])
+
 #############
 #### MPI ####
 #############
@@ -214,7 +216,7 @@ cat <<EOF
 ****************************************************************
 EOF
 
-LIBS="$LIBS -lm"
+LIBS="$LIBS -lm -ldl"
 
 ##################################
 # check for FFTW

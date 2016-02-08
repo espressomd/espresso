@@ -22,6 +22,8 @@
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
+using std::ostringstream;
+
 // This is the "relative" implementation for virtual sites.
 // Virtual particles are placed relative to the position of a real particle
 
