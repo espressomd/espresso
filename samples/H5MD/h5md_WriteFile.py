@@ -130,8 +130,8 @@ for j in range(n_time):
     #h5.write_to_h5.structure_factor(j,1,1)
     
 # VMD 
-h5.write_to_h5.VMD('species')
-#h5.write_to_h5.VMD('indexOfSpecies',[0,1,2])
+h5.write_to_h5.VMD('indexOfSpecies',[0,1,2])
+#h5.write_to_h5.VMD('species')
 #h5.write_to_h5.VMD('charge')
 #h5.write_to_h5.VMD('mass')
 #h5.write_to_h5.VMD('bond_from')
