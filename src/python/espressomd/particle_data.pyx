@@ -813,13 +813,184 @@ cdef class ParticleHandle:
             setattr(self, k, P[k])
 
 
+
+cdef class ParticleSlice:
+    """Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list."""
+
+
+    def __cinit__(self,slice_):
+        id_list=np.arange(max_seen_particle+1)
+        self.id_selection=id_list[slice_]
+
+    cdef int update_particle_data(self, id) except -1:
+        utils.realloc_intlist( & (self.particle_data.bl), 0)
+
+        if get_particle_data(id, & self.particle_data):
+            raise Exception("Error updating particle data")
+        else:
+            return 0
+
+
+    # Particle Type
+    property type:
+
+        def __get__(self):
+            type_list = []
+            for id in self.id_selection:
+                self.update_particle_data(id)
+                get_particle_data(id, & self.particle_data)
+                type_list.append(self.particle_data.p.type)
+            return type_list
+
+        def __set__(self, _type_list):
+            if len(self.id_selection) != len(_type_list):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_type_list),len(self.id_selection)))
+            for i in range(len(self.id_selection)):
+                set_particle_type(self.id_selection[i], _type_list[i])
+                    
+
+    # Position
+    property pos:
+        """Particle position (not folded into central image)."""
+
+        def __set__(self, _pos_array):
+            if len(self.id_selection) != len(_pos_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_pos_array),len(self.id_selection)))
+
+            cdef double mypos[3]
+            for j in range(len(_pos_array)):
+                for i in range(3):
+                    mypos[i] = _pos_array[j][i]
+                if place_particle(self.id_selection[j], mypos) == -1:
+                    raise Exception("particle could not be set")
+
+        def __get__(self):
+            pos_array = np.zeros((len(self.id_selection),3))
+            for i in range(len(self.id_selection)):
+                self.update_particle_data(self.id_selection[i])
+                pos_array[i,:] = [self.particle_data.r.p[0],
+                                  self.particle_data.r.p[1],
+                                  self.particle_data.r.p[2]]
+            return pos_array
+
+
+    # Velocity
+    property v:
+        """Particle velocity"""
+
+        def __set__(self, _v_array):
+            if len(self.id_selection) != len(_v_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_v_array),len(self.id_selection)))
+                
+            cdef double myv[3]
+            for j in range(len(_v_array)):
+                for i in range(3):
+                    myv[i] = _v_array[j][i]
+
+                if set_particle_v(self.id_selection[j], myv) == 1:
+                    raise Exception("set particle position first")
+
+        def __get__(self):
+            v_array = np.zeros((len(self.id_selection),3))
+            for i in range(len(self.id_selection)):
+                self.update_particle_data(self.id_selection[i])
+                v_array[i,:] = np.array([self.particle_data.m.v[0],
+                                         self.particle_data.m.v[1],
+                                         self.particle_data.m.v[2]])
+            return v_array
+
+
+    # Force
+    property f:
+        """Particle force"""
+
+        def __set__(self, _f_array):
+            if len(self.id_selection) != len(_f_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_f_array),len(self.id_selection)))
+            cdef double myf[3]
+            for j in range(len(_f_array)):
+                for i in range(3):
+                    myf[i] = _f_array[j][i]
+                if set_particle_f(self.id_selection[j], myf) == 1:
+                    raise Exception("set particle position first")
+
+        def __get__(self):
+            f_array = np.zeros((len(self.id_selection),3))
+            for i in range(len(self.id_selection)):
+                self.update_particle_data(self.id_selection[i])
+                f_array[i,:] = np.array([self.particle_data.f.f[0],
+                                         self.particle_data.f.f[1],
+                                         self.particle_data.f.f[2]])
+            return f_array
+
+
+    IF MASS:
+        property mass:
+            """Particle mass"""
+
+            def __set__(self, _mass_array):
+                if len(self.id_selection) != len(_mass_array):
+                    raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_mass_array),len(self.id_selection)))
+                for j in range(len(_mass_array)):
+                    if set_particle_mass(self.id_selection[j], _mass_array[j]) == 1:
+                        raise Exception("set particle position first")
+
+            def __get__(self):
+                mass_array = np.zeros_like(self.id_selection)
+                cdef double * x = NULL
+                for i in range(len(self.id_selection)):
+                    self.update_particle_data(self.id_selection[i])
+                    pointer_to_mass( & (self.particle_data), x)
+                    mass_array[i] = x[0]
+                return mass_array
+
+
+    IF ELECTROSTATICS == 1:
+        property q:
+            """particle charge"""
+
+            def __set__(self, _q_array):
+                if len(self.id_selection) != len(_q_array):
+                    raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_q_array),len(self.id_selection)))
+                cdef double myq
+                for i in range(len(self.id_selection)):
+                    myq = _q_array[i]
+                    if set_particle_q(self.id_selection[i], myq) == 1:
+                        raise Exception("set particle position first")
+
+            def __get__(self):
+                q_array = np.zeros_like(self.id_selection)
+                cdef double * x = NULL
+                for i in range(len(self.id_selection)):
+                    self.update_particle_data(self.id_selection[i])
+                    pointer_to_q(& (self.particle_data), x)
+                    q_array[i] = x[0]
+                return q_array
+
+        def update(self, P):
+
+            if "id" in P:
+                raise Exception("Cannot change particle id.")
+
+            for k in P.keys():
+                setattr(self, k, P[k])
+
+
+
+
+
 cdef class ParticleList:
     """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
     key_dict={}
     # Retrieve a particle
     def __getitem__(self, key):
-        if not particle_exists(key):
-            raise Exception("Particle %d does not exist." % key)
+ 
+        if isinstance(key, slice):
+            return ParticleSlice(key)
+        if not np.all(self.exists(key)):
+            raise Exception("Particle(s) %s does not exist." % np.trim_zeros((np.array(key)*np.invert(self.exists(key)))))
+        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            return ParticleSlice(key)
         return ParticleHandle(key)
 
 
@@ -845,10 +1016,26 @@ cdef class ParticleList:
         # Did we get a dictionary
         if len(args) == 1:
             if hasattr(args[0], "__getitem__"):
-                self._place_new_particle(args[0])
+                # Check for presence of pos attribute
+                if not "pos" in args[0]:
+                    raise ValueError(
+                        "pos attribute must be specified for new particle")
+
+                if len(np.array(args[0]["pos"]).shape) == 2:
+                    self._place_new_particles(args[0])
+                else:
+                    self._place_new_particle(args[0])
         else:
             if len(args) == 0 and len(kwargs.keys()) != 0:
-                self._place_new_particle(kwargs)
+                # Check for presence of pos attribute
+                if not "pos" in kwargs:
+                    raise ValueError(
+                        "pos attribute must be specified for new particle")
+
+                if len(np.array(kwargs["pos"]).shape) == 2:
+                    self._place_new_particles(kwargs)
+                else:
+                    self._place_new_particle(kwargs)
             else:
                 raise ValueError(
                     "add() takes either a dictionary or a bunch of keyword args")
@@ -864,14 +1051,9 @@ cdef class ParticleList:
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
 
-        # Check for presence of pos attribute
-        if not "pos" in P:
-            raise ValueError(
-                "pos attribute must be specified for new particle")
-
-        # The ParticleList[]-getter ist not valid yet, as teh particle
+        # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
-        # done here. the code is from te pos:property of ParticleHandle
+        # done here. the code is from the pos:property of ParticleHandle
         cdef double mypos[3]
         check_type_or_throw_except(
             P["pos"], 3, float, "Postion must be 3 floats")
@@ -889,11 +1071,43 @@ cdef class ParticleList:
         ParticleList.key_dict["%i"%id] = id
 
 
+    def _place_new_particles(self, P):
+
+        if not "id" in P:
+            # Generate particle ids
+            ids = np.arange(np.array(P["pos"]).shape[0]) + max_seen_particle
+        else:
+            ids = P["id"]
+            del P["id"]
+
+        # Place particles
+        cdef double mypos[3]
+        for j in range(len(P["pos"])):
+            for i in range(3):
+                mypos[i] = P["pos"][j][i]
+            if place_particle(ids[j], mypos) == -1:
+                raise Exception("particle could not be set")
+
+        del P["pos"]
+        
+        if P!= {}:
+            self[ids].update(P)
+
+
     # Iteration over all existing particles
     def __iter__(self):
         for i in range(max_seen_particle + 1):
             if particle_exists(i):
                 yield self[i]
 
-    def exists(self, id):
-        return particle_exists(id)
+    def exists(self, idx):
+        if isinstance(idx,int):
+            return particle_exists(idx)
+        if isinstance(idx,slice) or isinstance(idx,tuple) or isinstance(idx,list) or isinstance(idx,np.ndarray):
+            tf_array=np.zeros(len(idx), dtype=np.bool)
+            for i in range(len(idx)):
+                tf_array[i]=particle_exists(idx[i])
+            return tf_array
+    
+
+
