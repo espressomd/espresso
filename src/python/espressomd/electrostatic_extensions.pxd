@@ -39,29 +39,29 @@ IF ELECTROSTATICS and P3M:
 
     cdef extern from "iccp3m.hpp":
         ctypedef struct iccp3m_struct:
-          int n_ic                    
-          int num_iteration
-          double eout
-          double *areas                        
-          double *ein                          
-          double *sigma                        
-          double convergence                   
-          double *nvectorx
-          double *nvectory
-          double *nvectorz                     
-          double extx
-          double exty
-          double extz                          
-          double relax                         
-          int citeration                      
-          int set_flag                         
-          double *fx
-          double *fy
-          double *fz 
-          int first_id
+            int n_ic
+            int num_iteration
+            double eout
+            double * areas
+            double * ein
+            double * sigma
+            double convergence
+            double * nvectorx
+            double * nvectory
+            double * nvectorz
+            double extx
+            double exty
+            double extz
+            double relax
+            int citeration
+            int set_flag
+            double * fx
+            double * fy
+            double * fz
+            int first_id
 
         # links intern C-struct with python object
-        cdef extern iccp3m_struct iccp3m_cfg 
+        cdef extern iccp3m_struct iccp3m_cfg
 
         cdef extern int iccp3m_initialized
 

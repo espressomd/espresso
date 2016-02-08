@@ -1,57 +1,57 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-    Max-Planck-Institute for Polymer Research, Theory Group
-  
+  Copyright(C) 2010, 2011, 2012, 2013, 2014 The ESPResSo project
+  Copyright(C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+    Max - Planck - Institute for Polymer Research, Theory Group
+
   This file is part of ESPResSo.
-  
-  ESPResSo is free software: you can redistribute it and/or modify
+
+  ESPResSo is free software: you can redistribute it and / or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see < http: // www.gnu.org / licenses / >.
 */
 
 /** \file iccp3m.cpp
     Detailed Information about the method is included in the corresponding header file \ref iccp3m.hpp.
 
  */
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#include <cstddef>
-#include <cmath>
-#include <ctime>
+# include <cstdlib>
+# include <cstdio>
+# include <cstring>
+# include <cstddef>
+# include <cmath>
+# include <ctime>
 
-#include "iccp3m.hpp"
-#include "p3m.hpp"
-#include "elc.hpp"
-#include "mmm2d.hpp"
-#include "mmm1d.hpp"
+# include "iccp3m.hpp"
+# include "p3m.hpp"
+# include "elc.hpp"
+# include "mmm2d.hpp"
+# include "mmm1d.hpp"
 
-#include "communication.hpp"
+# include "communication.hpp"
 
-#include "utils.hpp"
-#include "random.hpp"
-#include "verlet.hpp"
-#include "cells.hpp"
-#include "particle_data.hpp"
-#include "interaction_data.hpp"
-#include "domain_decomposition.hpp"
-#include "verlet.hpp"
-#include "forces.hpp"
-#include "config.hpp"
-#include "global.hpp"
-#include "p3m_gpu.hpp"
+# include "utils.hpp"
+# include "random.hpp"
+# include "verlet.hpp"
+# include "cells.hpp"
+# include "particle_data.hpp"
+# include "interaction_data.hpp"
+# include "domain_decomposition.hpp"
+# include "verlet.hpp"
+# include "forces.hpp"
+# include "config.hpp"
+# include "global.hpp"
+# include "p3m_gpu.hpp"
 
-#ifdef ELECTROSTATICS
+# ifdef ELECTROSTATICS
 
 iccp3m_struct iccp3m_cfg;
 
@@ -75,7 +75,7 @@ void iccp3m_revive_forces();
 void iccp3m_store_forces();
 
 /** Granularity of the verlet list */
-#define LIST_INCREMENT 20
+# define LIST_INCREMENT 20
 
 void iccp3m_init(void){
    iccp3m_cfg.set_flag=0;
@@ -175,32 +175,13 @@ int iccp3m_iteration() {
 
 	for(j=0;j<iccp3m_cfg.num_iteration;j++) {
 		hmax=0.;
-
-		//cells_update_ghosts();
-
-		//cells_resort_particles(CELL_GLOBAL_EXCHANGE);
-
-		//cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
 		
-		/*
-		ghost_communicator(&cell_structure.ghost_cells_comm);
-   	    ghost_communicator(&cell_structure.update_ghost_pos_comm);	
-		*/
-
-		ghost_communicator(&cell_structure.exchange_ghosts_comm);
-
+        ghost_communicator(&cell_structure.exchange_ghosts_comm);
 		force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding source source interaction*/
-		
 		ghost_communicator(&cell_structure.collect_ghost_force_comm);
-		
-		//cells_update_ghosts();
-		
-			
 		
 		diff=0;
 		for(c = 0; c < local_cells.n; c++) {
-			
-			
 			cell = local_cells.cell[c];
 			part = cell->part;
 			np   = cell->n;
@@ -213,56 +194,43 @@ int iccp3m_iteration() {
 					ex=part[i].f.f[0]/part[i].p.q;
 					ey=part[i].f.f[1]/part[i].p.q;
 					ez=part[i].f.f[2]/part[i].p.q;
-
 					/* let's add the contribution coming from the external field */
 					ex += iccp3m_cfg.extx; 
 					ey += iccp3m_cfg.exty; 
 					ez += iccp3m_cfg.extz;
-
 					if (ex == 0 && ey == 0 && ez == 0) {
-						//ostringstream msg;
-						//msg <<"ICCP3M found zero electric field on a charge. This must never happen";
-						//runtimeError(msg);
-						fprintf(stderr, "ICCP3M found zero electric field on a charge. This must never happen\n");
+						ostringstream msg;
+						msg <<"ICCP3M found zero electric field on a charge. This must never happen";
+						runtimeError(msg);
+						/*
+                        fprintf(stderr, "ICCP3M found zero electric field on a charge. This must never happen\n");
 						ex = 0.00001 * d_random();
 						ey = 0.00001 * d_random();
 						ez = 0.00001 * d_random();
+                        */
 					}
 					/* the dot product   */
 					fdot = ex*iccp3m_cfg.nvectorx[id]+
 						ey*iccp3m_cfg.nvectory[id]+
 						ez*iccp3m_cfg.nvectorz[id];
-					//fprintf(stderr,"area: %f  normal x y z: %f %f %f\n",iccp3m_cfg.areas[id], iccp3m_cfg.nvectorx[id],iccp3m_cfg.nvectory[id],iccp3m_cfg.nvectorz[id]);
-
 					/* recalculate the old charge density */
 					hold=part[i].p.q/iccp3m_cfg.areas[id];
 					/* determine if it is higher than the previously highest charge density */            
 					if(fabs(hold)>hmax)
 						hmax=fabs(hold); 
-					
 					f1 =  (+del_eps*fdot*pref);
-					//                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
 					if (iccp3m_cfg.sigma!=0) {
 						f2 = (2*iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] )*(iccp3m_cfg.sigma[id]);
 					} 
-
+                    /* relative variation: never use an estimator which can be negative here */
 					hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
-					difftemp=fabs( 1*(hnew - hold)/(hmax + fabs(hnew+hold)) ); /* relative variation: never use 
-																				  an estimator which can be negative
-																				  here */
-					//if(difftemp > diff && part[i].p.q > 1e-5)
+					difftemp=fabs( 1*(hnew - hold)/(hmax + fabs(hnew+hold)) ); 				
+                    //if(difftemp > diff && part[i].p.q > 1e-5)
 					if(difftemp > diff)
 					{
-						//                          if (fabs(difftemp - 1./(1./iccp3m_cfg.relax - 1.)) > 1e-10) 
 						diff=difftemp;  /* Take the largest error to check for convergence */
 					}
 					part[i].p.q = hnew * iccp3m_cfg.areas[id];
-					
-					//if (part[i].p.identity==450)
-					//{
-					//	printf("%d %e\n",j, part[i].p.q); fflush(stdout);
-					//}
-					//fprintf(stderr, "pid %d  iccid %d  q %f\n",i,id,part[i].p.q);
 					/* check if the charge now is more than 1e6, to determine if ICC still leads to reasonable results */
 					/* this is kind a arbitrary measure but, does a good job spotting divergence !*/
 					if(fabs(part[i].p.q) > 1e6) {
@@ -274,9 +242,6 @@ int iccp3m_iteration() {
 					}
 				}
 			}  /* cell particles */
-			
-			
-			// printf("cell %d w %d particles over (node %d)\n",c,np,this_node); fflush(stdout);
 		} /* local cells */
 		iccp3m_cfg.citeration++;
 		MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, comm_cart);
@@ -289,19 +254,16 @@ int iccp3m_iteration() {
 	} /* iteration */
 	on_particle_change();
 	
-//    if (this_node == 0)
-//		fprintf(stderr, "%d \n",iccp3m_cfg.citeration);
-
-	return iccp3m_cfg.citeration;
+    return iccp3m_cfg.citeration;
 }
 
 void force_calc_iccp3m() {
 /* The following ist mostly copied from forces.cpp */
 
 /*  I don´t see the point of this part until there are electrical dipoles in Espresso, BTW, it generates a warning .. JJCP
-#ifdef DIPOLES
+# ifdef DIPOLES
    convert_quat_to_dip_all();
-#endif
+# endif
 
 */
 
@@ -358,28 +320,28 @@ void layered_calculate_ia_iccp3m()
       for(j = i+1; j < npl; j++) {
         layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
         dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
+# ifdef EXCLUSIONS
         if (do_nonbonded(p1, &pl[j])) {
-#endif
+# endif
           /* avoid source-source computation */
            add_non_bonded_pair_force_iccp3m(p1, &pl[j], d, sqrt(dist2), dist2);
-#ifdef EXCLUSIONS  
+# ifdef EXCLUSIONS  
          }
-#endif
+# endif
       }
 
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
         layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
         dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
+# ifdef EXCLUSIONS
         if (do_nonbonded(p1, &pl[j])) {
-#endif
+# endif
              /* avoid source-source computation */
            add_non_bonded_pair_force_iccp3m(p1, &pb[j], d, sqrt(dist2), dist2);
-#ifdef EXCLUSIONS
+# ifdef EXCLUSIONS
          }
-#endif
+# endif
       }
     }
   }
@@ -395,14 +357,14 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 	PairList *pl;
 	double dist2, vec21[3];
 
-#ifdef VERLET_DEBUG 
+# ifdef VERLET_DEBUG 
 	int estimate, sum=0;
 	fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
 	/* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
 	estimate = 0.5*n_part*(4.0/3.0*PI*pow(max_cut_nonbonded,3.0))*(n_part/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
 	if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
-#endif
+# endif
 
 	/* Loop local cells */
 	for (c = 0; c < local_cells.n; c++) {
@@ -430,9 +392,9 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 				}
 				/* Loop neighbor cell particles */
 				for(j = j_start; j < np2; j++) {
-#ifdef EXCLUSIONS
+# ifdef EXCLUSIONS
 					if(do_nonbonded(&p1[i], &p2[j]))
-#endif
+# endif
 					{
 						dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 
@@ -440,19 +402,6 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 						if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
 							ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
 							ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
-
-							//if (p2[j].l.ghost==1 && this_node == 0 && p2[j].p.q>0.02)
-							
-						/*	
-							if (p1[j].p.identity==1102)
-								fprintf(stderr, "Cell %d Neigh %d p1 Ghost %d Node %d q %e\n",c,n,p1[j].l.ghost,this_node, p1[j].p.q) ;
-							if (p2[j].p.identity==1102)
-								fprintf(stderr, "Cell %d Neigh %d p2 Ghost %d Node %d q %e\n",c,n,p2[j].l.ghost,this_node, p2[j].p.q) ;
-						*/	
-
-
-								//fprintf(stderr, "N %d gP %d q %f\n",this_node,p2[j].p.identity, p2[j].p.q) ;
-
 							add_pair_iccp3m(pl, &p1[i], &p2[j]);
 							/* calc non bonded interactions */ 
 							add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
@@ -599,14 +548,14 @@ void init_forces_iccp3m()
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
 
-#ifdef NPT
+# ifdef NPT
   /* reset virial part of instantaneous pressure */
   if(integ_switch == INTEG_METHOD_NPT_ISO){
       ostringstream msg;
       msg << "ICCP3M cannot be used with pressure coupling";
       runtimeError(msg);
   }
-#endif
+# endif
 
   /* initialize forces with langevin thermostat forces
      or zero depending on the thermostat
@@ -635,7 +584,7 @@ void init_forces_iccp3m()
 
 void calc_long_range_forces_iccp3m()
 {
-#ifdef ELECTROSTATICS
+# ifdef ELECTROSTATICS
 	/* calculate k-space part of electrostatic interaction. */
 	if (!(coulomb.method == COULOMB_ELC_P3M ||
 			coulomb.method == COULOMB_P3M_GPU ||
@@ -647,7 +596,7 @@ void calc_long_range_forces_iccp3m()
         runtimeError(msg);
 	}
 	switch (coulomb.method) {
-#ifdef P3M
+# ifdef P3M
 	case COULOMB_ELC_P3M:
         if (elc_params.dielectric_contrast_on) {
             ostringstream msg;
@@ -659,19 +608,19 @@ void calc_long_range_forces_iccp3m()
 		ELC_add_force();
 		break;
 
-#ifdef CUDA
+# ifdef CUDA
 	case COULOMB_P3M_GPU:
 		if (this_node == 0) {
 		  FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
 		  p3m_gpu_add_farfield_force();
 		} 
 		break;
-#endif
+# endif
 	case COULOMB_P3M:
 		p3m_charge_assign();
 		p3m_calc_kspace_forces(1,0);
 		break;
-#endif
+# endif
 	case COULOMB_MMM2D:
 		MMM2D_add_far_force();
 		MMM2D_dielectric_layers_force_contribution();
@@ -679,7 +628,7 @@ void calc_long_range_forces_iccp3m()
 	default: break;
 	}
 
-#endif
+# endif
 }
 
 /** \name Private Functions */
@@ -724,12 +673,12 @@ inline void init_local_particle_force_iccp3m(Particle *part)
     part->f.f[1] = 0.0;
     part->f.f[2] = 0.0;
 
-#ifdef ROTATION
+# ifdef ROTATION
     /* set torque to zero */
     part->f.torque[0] = 0;
     part->f.torque[1] = 0;
     part->f.torque[2] = 0;
-#endif
+# endif
 }
 
 /** initialize the forces for a ghost particle */
@@ -739,12 +688,12 @@ inline void init_ghost_force_iccp3m(Particle *part)
   part->f.f[1] = 0.0;
   part->f.f[2] = 0.0;
 
-#ifdef ROTATION
+# ifdef ROTATION
   /* set torque to zero */
   part->f.torque[0] = 0;
   part->f.torque[1] = 0;
   part->f.torque[2] = 0;
-#endif
+# endif
 }
 
 /* integer mod*/
@@ -808,7 +757,7 @@ void iccp3m_store_forces() {
 int iccp3m_sanity_check()
 {
 	switch (coulomb.method) {
-#ifdef P3M
+# ifdef P3M
 	case COULOMB_ELC_P3M: {
         if (elc_params.dielectric_contrast_on) {
             ostringstream msg;
@@ -818,7 +767,7 @@ int iccp3m_sanity_check()
 		}
 		break;
 	}
-#endif
+# endif
     case COULOMB_DH: {
         ostringstream msg;
         msg <<"ICCP3M does not work with Debye-Hueckel iccp3m.h";
@@ -835,17 +784,17 @@ int iccp3m_sanity_check()
 		break;
 	}
   
-#ifdef NPT
+# ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
       ostringstream msg;
       msg <<"ICCP3M does not work in the NPT ensemble";
       runtimeError(msg);
     return 1;
   }
-#endif
+# endif
 
   return 0;
 }
 
-#endif
+# endif
 

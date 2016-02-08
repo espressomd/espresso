@@ -34,10 +34,10 @@ IF ELECTROSTATICS and P3M:
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float, "")
             check_range_or_except(
-                self._params,"maxPWerror", 0, False, "inf", True)
+                self._params, "maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(self._params["gap_size"], 1, float, "")
             check_range_or_except(
-                self._params,"gap_size", 0, False, "inf", True)
+                self._params, "gap_size", 0, False, "inf", True)
             check_type_or_throw_except(self._params["far_cut"], 1, float, "")
             check_type_or_throw_except(
                 self._params["neutralize"], 1, type(True), "")
@@ -80,17 +80,17 @@ IF ELECTROSTATICS and P3M:
 
             check_type_or_throw_except(self._params["n_icc"], 1, int, "")
             check_range_or_except(
-                self._params,"n_icc", 1, True, "inf", True)
+                self._params, "n_icc", 1, True, "inf", True)
 
             check_type_or_throw_except(
                 self._params["convergence"], 1, float, "")
             check_range_or_except(
-                self._params,"convergence", 0, False, "inf", True)
+                self._params, "convergence", 0, False, "inf", True)
 
             check_type_or_throw_except(
                 self._params["relaxation"], 1, float, "")
             check_range_or_except(
-                self._params,"relaxation", 0, False, "inf", True)
+                self._params, "relaxation", 0, False, "inf", True)
 
             check_type_or_throw_except(
                 self._params["ext_field"], 3, float, "")
@@ -98,12 +98,12 @@ IF ELECTROSTATICS and P3M:
             check_type_or_throw_except(
                 self._params["max_iterations"], 1, int, "")
             check_range_or_except(
-                self._params,"max_iterations", 0, False, "inf", True)
+                self._params, "max_iterations", 0, False, "inf", True)
 
             check_type_or_throw_except(
                 self._params["first_id"], 1, int, "")
             check_range_or_except(
-                self._params,"first_id", 0, True, "inf", True)
+                self._params, "first_id", 0, True, "inf", True)
 
             check_type_or_throw_except(
                 self._params["eps_out"], 1, float, "")
@@ -132,7 +132,6 @@ IF ELECTROSTATICS and P3M:
             else:
                 self._params["epsilons"] = np.zeros(self._params["n_icc"])
 
-
         def valid_keys(self):
             return "n_icc", "convergence", "relaxation", "ext_field", "max_iterations", "first_id", "eps_out", "normals", "areas", "sigmas", "epsilons"
 
@@ -154,7 +153,7 @@ IF ELECTROSTATICS and P3M:
 
         def _get_params_from_es_core(self):
             params = {}
-            params["n_icc"]=iccp3m_cfg.n_ic 
+            params["n_icc"] = iccp3m_cfg.n_ic
 
             # Fill Lists
             normals = []
@@ -162,22 +161,24 @@ IF ELECTROSTATICS and P3M:
             sigmas = []
             epsilons = []
             for i in range(iccp3m_cfg.n_ic):
-                normals.append([iccp3m_cfg.nvectorx[i], iccp3m_cfg.nvectory[i], iccp3m_cfg.nvectorz[i]])
+                normals.append([iccp3m_cfg.nvectorx[i], iccp3m_cfg.nvectory[
+                               i], iccp3m_cfg.nvectorz[i]])
                 areas.append(iccp3m_cfg.areas[i])
                 epsilons.append(iccp3m_cfg.ein[i])
                 sigmas.append(iccp3m_cfg.sigma[i])
 
-            params["normals"]  = normals
-            params["areas"]    = areas
-            params["epsilons"] = epsilons      
-            params["sigmas"]   = sigmas    
+            params["normals"] = normals
+            params["areas"] = areas
+            params["epsilons"] = epsilons
+            params["sigmas"] = sigmas
 
-            params["ext_field"]      = [iccp3m_cfg.extx, iccp3m_cfg.exty, iccp3m_cfg.extz]
-            params["first_id"]       = iccp3m_cfg.first_id      
-            params["max_iterations"] = iccp3m_cfg.num_iteration 
-            params["convergence"]    = iccp3m_cfg.convergence   
-            params["relaxation"]     = iccp3m_cfg.relax         
-            params["eps_out"]        = iccp3m_cfg.eout          
+            params["ext_field"] = [iccp3m_cfg.extx,
+                                   iccp3m_cfg.exty, iccp3m_cfg.extz]
+            params["first_id"] = iccp3m_cfg.first_id
+            params["max_iterations"] = iccp3m_cfg.num_iteration
+            params["convergence"] = iccp3m_cfg.convergence
+            params["relaxation"] = iccp3m_cfg.relax
+            params["eps_out"] = iccp3m_cfg.eout
 
             return params
 
@@ -185,7 +186,7 @@ IF ELECTROSTATICS and P3M:
 
             # First set number of icc particles
             iccp3m_cfg.n_ic = self._params["n_icc"]
-            # Allocate ICC lists       
+            # Allocate ICC lists
             iccp3m_alloc_lists()
 
             # Fill Lists
@@ -206,13 +207,12 @@ IF ELECTROSTATICS and P3M:
             iccp3m_cfg.relax = self._params["relaxation"]
             iccp3m_cfg.eout = self._params["eps_out"]
             iccp3m_cfg.citeration = 0
-            
+
             iccp3m_initialized = 1
             iccp3m_cfg.set_flag = 1
 
             # Broadcasts vars
             mpi_iccp3m_init(0)
-
 
         def _activate_method(self):
             self._set_params_in_es_core()
