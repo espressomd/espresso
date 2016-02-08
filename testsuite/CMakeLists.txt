@@ -102,13 +102,19 @@ set(tcl_tests  analysis.tcl
                virtual-sites-rotation.tcl)
 
 include(CTest)
+
+if(WITH_MPI)
+    include(ProcessorCount)
+    ProcessorCount(NP)
+endif(WITH_MPI)
+
 foreach(testfile ${tcl_tests})
   get_filename_component(basename ${testfile} NAME_WE)
-  #if(WITH_MPI)
-  #  add_test(${basename} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ../Espresso ${testfile})
-  #else(WITH_MPI)
+  if(WITH_MPI)
+    add_test(${basename} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${NP} ../Espresso ${testfile})
+  else(WITH_MPI)
     add_test(${basename} ../Espresso ${testfile})
-    #endif(WITH_MPI)
+  endif(WITH_MPI)
   set_tests_properties(${basename} PROPERTIES SKIP_RETURN_CODE 42)
 endforeach(testfile ${tcl_tests})
 add_custom_target(check  ctest)
