@@ -138,6 +138,7 @@ void on_program_start()
 #ifdef CATALYTIC_REACTIONS
   reaction.eq_rate=0.0;
   reaction.sing_mult=0;
+  reaction.swap=0;
 #endif
 
   /*
