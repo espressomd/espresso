@@ -36,6 +36,9 @@ target_link_libraries(EspressoCore ${LIBRARIES})
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
 if(WITH_CUDA)
+  if (APPLE)
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
+  endif()
   cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
   cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
