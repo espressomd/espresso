@@ -30,7 +30,7 @@ add_library(EspressoCore SHARED ${EspressoCore_SRC}
                         ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
                         ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostatics)
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostatics ImmersedBoundary)
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
 if(WITH_CUDA)
@@ -49,12 +49,11 @@ if(WITH_CUDA)
   target_link_libraries(EspressoCore EspressoCuda)
 endif(WITH_CUDA)
 
-add_subdirectory(actor)
-
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
 
-
+add_subdirectory(actor)
+add_subdirectory(immersed_boundary)
 add_subdirectory(object-in-fluid)
 add_subdirectory(electrostatics)
