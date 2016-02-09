@@ -22,7 +22,7 @@
 #include <cstring>
 
 /* global variables */
-std::vector<DoubleCorrelation> correlations;
+std::map<int,Correlation*> correlations;
 
 
 /* Error codes */
@@ -70,23 +70,20 @@ int correlations_autoupdate=0;
 
 
 int correlation_update(unsigned int no) {
-  if (correlations.size() > no)
-    return correlations[no].get_data();
-  else 
-    return 1;
+    return correlations.at(no)->get_data();
 }
 
 int correlation_update_from_file(unsigned int no) {
-  if (!correlations[no].is_from_file)
+  if (!correlations.at(no)->is_from_file)
     return 1;
-  while ( ! correlations[no].get_data()) {
+  while ( ! correlations.at(no)->get_data()) {
   }
   return 0;
 }
 
 
 
-int DoubleCorrelation::get_correlation_time(double* correlation_time) {
+int Correlation::get_correlation_time(double* correlation_time) {
   // We calculate the correlation time for each dim_corr by normalizing the correlation,
   // integrating it and finding out where C(tau)=tau;
   double C_tau;
@@ -129,21 +126,36 @@ int DoubleCorrelation::get_correlation_time(double* correlation_time) {
 }
 
 
-DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau_max,
-                  unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
-                  Observable* o_A, Observable* o_B, char* corr_operation_name, 
-                  char* compressA_name, char* compressB_name, void *args) {
+Correlation::Correlation(double _dt, 
+    			    unsigned int _tau_lin, double _tau_max,
+    			    unsigned int _window_distance, 
+    			    unsigned int _dim_A, unsigned int _dim_B, 
+    			    unsigned int _dim_corr, 
+    			    Observable& _o_A, Observable& _o_B, 
+    			    char* _corr_operation_name, 
+    			    char* _compressA_name, char* _compressB_name, 
+    			    void *_args) :
+    			    dt(_dt),
+			    tau_lin(_tau_lin), 
+			    tau_max(_tau_max),
+    			    window_distance(_window_distance), 
+    			    dim_A(_dim_A), 
+			    dim_B(_dim_B), 
+    			    dim_corr(_dim_corr), 
+    			    A_obs(_o_A), 
+			    B_obs(_o_B), 
+			    corr_operation_name(_corr_operation_name), 
+    			    compressA_name(compressA_name), \
+			    compressB_name(_compressB_name), 
+    			    args(_args),
+			    //
+			    t(0), finalized(0), autoupdate(0),autocorrelation(1) {
   unsigned int i,j,k;
   unsigned int hierarchy_depth=0;
+  // Class members are assigned via the initializer list
 
-
-  // first input-independent values
-  t = 0;
-  finalized=0;
-  autoupdate=0;
-  autocorrelation=1; // the default may change later if dim_B != 0
   
-  // then input-dependent ones
+  // Input validation
   if (dt <= 0) {
     throw init_errors[2];
   }
@@ -157,7 +169,7 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
     throw init_errors[16];
   }
 
-  dt = dt;
+  // Time steps and intervals
   update_frequency = (int) floor(dt/time_step);
   
   if ( tau_lin == 1 ) { // use the default
@@ -179,7 +191,7 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
   if (tau_max <= dt) { 
     throw init_errors[4];
 
-  } else { //set hierarchy depth which can  accomodate at least tau_max
+  } else { //set hierarchy depth which can  accommodate at least tau_max
     if ( (tau_max/dt) < tau_lin ) {
       hierarchy_depth = 1;
     } else {
@@ -194,14 +206,11 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
     throw init_errors[5];
   }
 
-  window_distance = window_distance;
   
   if (dim_A<1) {
     throw init_errors[6];
   }
 
-  dim_A = dim_A;
-  
   if (dim_B==0) {
     dim_B = dim_A; 
   } else if (dim_B>0) {
@@ -210,19 +219,14 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
     throw init_errors[7];
   }
 
-  dim_B = dim_B;
-
   if (A == 0) {
     throw init_errors[9];
   }
 
-  A_obs = o_A;
-  
   if (B == 0 && !autocorrelation) {
     throw init_errors[10];
   }
 
-  B_obs = o_B;
   
 
   // choose the correlation operation 
@@ -249,7 +253,6 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
        throw init_errors[18];
     dim_corr = dim_A/3;
     corr_operation = &fcs_acf;
-    args = args;
 // square_distance will be removed -- will be replaced by strides and blocks
 //  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
 //    corr_operation = &square_distance;
@@ -260,8 +263,7 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
   } else {
     throw init_errors[11]; 
   }
-  dim_corr = dim_corr;
-  corr_operation_name = corr_operation_name;
+  
   
   // Choose the compression function
   if (compressA_name==0) { // this is the default
@@ -276,7 +278,6 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
   } else {
     throw init_errors[12];
   }
-  compressA_name=compressA_name; 
   
   if (compressB_name==0) { 
     if(autocorrelation) { // the default for autocorrelation
@@ -297,7 +298,6 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
   } else {
     throw init_errors[13];
   }
-  compressB_name=compressB_name; 
  
 //  if (A_fun == &file_data_source_readline && (B_fun == &file_data_source_readline|| autocorrelation)) {
 //    is_from_file = 1;
@@ -305,6 +305,8 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
 //    is_from_file = 0;
 //  }
 
+  
+  // Memmory allocation
   A_data = (double*)Utils::malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
   if (autocorrelation) 
     B_data = A_data;
@@ -385,7 +387,7 @@ DoubleCorrelation::DoubleCorrelation(double dt, unsigned int tau_lin, double tau
     }
 }
 
-int DoubleCorrelation::get_data() {
+int Correlation::get_data() {
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
@@ -431,15 +433,15 @@ int DoubleCorrelation::get_data() {
   newest[0] = ( newest[0] + 1 ) % (tau_lin +1); 
   n_vals[0]++;
 
-  if ( A_obs->calculate() != 0 )
+  if ( A_obs.calculate() != 0 )
     return 1;
   // copy the result:
-  memmove(A[0][newest[0]], A_obs->last_value, dim_A*sizeof(double));
+  memmove(A[0][newest[0]], A_obs.last_value, dim_A*sizeof(double));
 
   if (!autocorrelation) {
-    if ( B_obs->calculate() != 0 )
+    if ( B_obs.calculate() != 0 )
       return 2;
-    memmove(B[0][newest[0]], B_obs->last_value, dim_B*sizeof(double));
+    memmove(B[0][newest[0]], B_obs.last_value, dim_B*sizeof(double));
   }
 
   // Now we update the cumulated averages and variances of A and B
@@ -511,7 +513,7 @@ void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binar
     fprintf(fp,"%u\n",data[n-1]);
   }
 }
-int DoubleCorrelation::write_data_to_file(const char * filename, bool binary) const {
+int Correlation::write_data_to_file(const char * filename, bool binary) const {
   FILE* fp=0;
   fp=fopen(filename, "w");
   if (!fp) {
@@ -576,7 +578,7 @@ int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary){
   }
   return 0;
 }
-int DoubleCorrelation::read_data_from_file(const char * filename, bool binary){
+int Correlation::read_data_from_file(const char * filename, bool binary){
   FILE* fp=0;
   fp=fopen(filename, "r");
   if (!fp) {
@@ -615,7 +617,7 @@ int DoubleCorrelation::read_data_from_file(const char * filename, bool binary){
 }
 
 
-int DoubleCorrelation::finalize() {
+int Correlation::finalize() {
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
@@ -851,9 +853,9 @@ int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, doub
 
 void autoupdate_correlations() {
   for (unsigned i=0; i<correlations.size(); i++) {
-    if (correlations[i].autoupdate && sim_time-correlations[i].last_update>correlations[i].dt*0.99999) {
-      correlations[i].last_update=sim_time;
-      correlations[i].get_data();
+    if (correlations.at(i)->autoupdate && sim_time-correlations.at(i)->last_update>correlations.at(i)->dt*0.99999) {
+      correlations.at(i)->last_update=sim_time;
+      correlations.at(i)->get_data();
     }
   }
 }

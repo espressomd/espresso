@@ -117,6 +117,7 @@
 #include <cstdlib>
 #include <cmath>
 #include "statistics_observable.hpp"
+#include <map>
 
 #define MAXLINELENGTH 2048
 
@@ -136,43 +137,40 @@ void autoupdate_correlations();
  * entry of the hierarchic "past" For every new entry in is incremented and if tau_lin is reached, 
  * it starts again from the beginning. 
  */
-class DoubleCorrelation {
+class Correlation {
   public:
     /**
      * The initialization procedure for the correlation object. All important parameters have to be speciefied
      * at the same time. They can not be change later, so every instance of the correlation class
      * has to be fed with correct data from the very beginning.
      *
-     * @param self: The pointer to the correlation class instance that should be initialized
-     * @param dt: The time interval between subsequent updates
-     * @param tau_lin: The linear part of the correlation function. 
-     * @param tau_max: maximal time delay tau to sample
-     * @param window_distance: The distance in time domain between update of the correlation estimate
-     * @param dim_A: The dimension of the A vector
-     * @param dim_B: The dimension of the B vector
-     * @param A: First observable to correlate
-     * @param B: Second observable to correlate
-     * @param dim_corr: The dimension of the correlation to be calculated
-     * @param corr_operation_name: how to correlate the two observables A and B
+     * @param _dt: The time interval between subsequent updates
+     * @param _tau_lin: The linear part of the correlation function. 
+     * @param _tau_max: maximal time delay tau to sample
+     * @param _window_distance: The distance in time domain between update of the correlation estimate
+     * @param _dim_A: The dimension of the A vector
+     * @param _dim_B: The dimension of the B vector
+     * @param _A: First observable to correlate
+     * @param _B: Second observable to correlate
+     * @param _dim_corr: The dimension of the correlation to be calculated
+     * @param _corr_operation_name: how to correlate the two observables A and B
      *     (this has no default)
-     * @param compressA_name: how the A values should be compressed (usually 
+     * @param _compressA_name: how the A values should be compressed (usually 
      *     the linear compression method)
-     * @param compressB_name: how the B values should be compressed (usually 
+     * @param _compressB_name: how the B values should be compressed (usually 
      *     the linear compression method)
-     * @param args: the parameters of the observables
+     * @param _args: the parameters of the observables
      *
      */
-    DoubleCorrelation(double dt, 
-    			    unsigned int tau_lin, double tau_max,
-    			    unsigned int window_distance, 
-    			    unsigned int dim_A, unsigned int dim_B, 
-    			    unsigned int dim_corr, 
-    			    Observable* o_A, Observable* o_B, 
-    			    char* corr_operation_name, 
-    			    char* compressA_name, char* compressB_name, 
-    			    void *args);
-    
-    
+    Correlation(double _dt, 
+    			    unsigned int _tau_lin, double _tau_max,
+    			    unsigned int _window_distance, 
+    			    unsigned int _dim_A, unsigned int _dim_B, 
+    			    unsigned int _dim_corr, 
+    			    Observable& _o_A, Observable& _o_B, 
+    			    char* _corr_operation_name, 
+    			    char* _compressA_name, char* _compressB_name, 
+    			    void *_args);
     /** Restore a correlation from a checkpoint - the observable has to be created first ordinary
     */
     int read_data_from_file(const char * filename, bool binary);
@@ -273,8 +271,8 @@ class DoubleCorrelation {
     char *corr_operation_name;
 
     // Functions producing observables A and B from the input data
-    Observable* A_obs;
-    Observable* B_obs;
+    Observable& A_obs;
+    Observable& B_obs;
     int A_obs_id;
     int B_obs_id;
 
@@ -284,7 +282,7 @@ class DoubleCorrelation {
 }; 
 
 extern int correlations_autoupdate;
-extern std::vector<DoubleCorrelation> correlations;
+extern std::map<int,Correlation*> correlations;
 
 
 

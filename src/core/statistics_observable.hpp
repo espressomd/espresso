@@ -24,7 +24,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-
+#include <map>
 
 #define CONST_UNITITIALIZED 1e-23
 
@@ -58,7 +58,7 @@ class Observable {
 };
 
 
-extern std::vector<Observable> observables;
+extern std::map<int,Observable*> observables;
 
 // flag if autoupdates are necessary.
 extern int observables_autoupdate;

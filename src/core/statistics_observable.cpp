@@ -24,7 +24,7 @@
 #include "pressure.hpp"
 #include "rotation.hpp"
 
-std::vector<Observable> observables;
+std::map<int,Observable*> observables;
 
 int observables_autoupdate = 0;
 
@@ -1627,7 +1627,8 @@ int ObservablePolymerKDistribution::actual_calculate() {
 
 void autoupdate_observables() {
   int i;
-  for (auto o=observables.begin(); o<observables.end(); o++) {
+  for (auto iter=observables.begin(); iter!=observables.end(); iter++) {
+    Observable* o=iter->second;
     if (o->autoupdate && sim_time-o->last_update>o->autoupdate_dt*0.99999) {
       o->update();
     }

@@ -29,7 +29,7 @@
 #define MIN(a,b) ((a)>(b)?(b):(a))
 
 /** This struct allow to use a file as input for the correlation.
- * It is initalized and then just passed as extra argument to the file_data_source_readline 
+ * It is initalized and then just passed as extra argument to the FileDataSource_readline 
  * function that extracts floating point values from the particular file.
  *
  */
@@ -39,7 +39,7 @@
 //  int n_columns;
 //  char last_line[MAXLINELENGTH];
 //  int data_left;
-//} file_data_source;
+//} FileDataSource;
 
 /** The TCL command parser 
  */
@@ -50,17 +50,17 @@ int correlation_print_usage(Tcl_Interp* interp);
 // parsing calls to pre-defined correlations
 int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int*  change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p);
 // parsing generic correlation call
-int tclcommand_correlation_parse_observable(Tcl_Interp* interp, int argc, char** argv, observable** obs);
+//int tclcommand_correlation_parse_observable(Tcl_Interp* interp, int argc, char** argv, Observable&* obs);
 //int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B);
 int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, char **corr_operation_name, unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B, void **args);
 
   
 /** writes the correlation to the TCL console */
-int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp); 
-int double_correlation_write_to_file( double_correlation* self, char* filename); 
+int double_correlation_print_correlation(Correlation& corr, Tcl_Interp* interp); 
+int double_correlation_write_to_file( Correlation& corr, char* filename); 
 
-int file_data_source_init(file_data_source* self, char* filename, IntList* columns);
-int file_data_source_readline(void* xargs, double* A, unsigned int dim_A); 
+int FileDataSource_init(FileDataSource* corr, char* filename, IntList* columns);
+int FileDataSource_readline(void* xargs, double* A, unsigned int dim_A); 
 
 
 #endif
