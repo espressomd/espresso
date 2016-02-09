@@ -26,30 +26,33 @@
 
 #include "config.hpp"
 
-#if defined(ELECTROSTATICS)
-
+#ifdef SCAFACOS
 #include <list>
 #include <string>
 
 #include "particle_data.hpp"
+#endif
 
 namespace Electrostatics {
 namespace Scafacos {
+#ifdef SCAFACOS
 /** Pair force */
 void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *force);
 /** Long range part */
 void add_long_range_force();
-/** Parameter callback */
-void set_parameters_slave(int n_method, int n_params);
 /** Get parameters */
 std::string get_parameters();
 /** Set parameters */
 void set_parameters(const std::string &method, const std::string &params);
 double get_r_cut();
 std::list<std::string> available_methods();
-}
-}
+/** Parameter callback */
+void set_parameters_slave(int n_method, int n_params);
+#else
+void set_parameters_slave(int n_method, int n_params) {}
+#endif /* SCAFACOS */
 
-#endif
+}
+}
 
 #endif
