@@ -1,4 +1,3 @@
-file(GLOB all_files *)
 add_custom_target(testsuite ALL
                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} .)
 

@@ -1,5 +1,3 @@
-file(GLOB all_files *)
-
 set(py_tests  bondedInteractions.py  
               electrostaticInteractions.py  
               nonBondedInteractions.py
