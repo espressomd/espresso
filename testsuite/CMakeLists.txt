@@ -1,11 +1,6 @@
 file(GLOB all_files *)
-add_custom_target(testsuite ALL)
-foreach(testfile ${all_files})
-  get_filename_component(basename ${testfile} NAME)
-  add_custom_command(TARGET testsuite
-                     COMMAND test -d ${basename} || ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${basename} ${basename})
-endforeach(testfile)
-
+add_custom_target(testsuite ALL
+                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} .)
 
 set(tcl_tests  analysis.tcl
                angle.tcl

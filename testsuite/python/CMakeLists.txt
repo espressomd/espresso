@@ -1,10 +1,4 @@
 file(GLOB all_files *)
-add_custom_target(testsuite_py ALL)
-foreach(testfile ${all_files})
-  get_filename_component(basename ${testfile} NAME)
-  add_custom_command(TARGET testsuite_py
-                     COMMAND test -d ${basename} || ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${basename} ${basename})
-endforeach(testfile)
 
 set(py_tests  bondedInteractions.py  
               electrostaticInteractions.py  
