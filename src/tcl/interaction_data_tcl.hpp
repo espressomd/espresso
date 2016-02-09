@@ -47,4 +47,8 @@ int tclcommand_print_efield_capacitors(ClientData data, Tcl_Interp * interp,
                int argc, char ** argv);
 
 
+#ifdef SCAFACOS
+int tclcommand_scafacos_methods(ClientData data, Tcl_Interp * interp, int argc, char ** argv);
+#endif
+
 #endif

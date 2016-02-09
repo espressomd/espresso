@@ -47,6 +47,11 @@
 namespace Electrostatics {
 namespace Scafacos {
 
+/** Get available scafacos methods */
+std::list<std::string> available_methods() {
+  return Scafacos::available_methods();
+}
+
 /** Encapsulation for the particle data needed by scafacos */
 struct ScafacosData {
   int update_particle_data();

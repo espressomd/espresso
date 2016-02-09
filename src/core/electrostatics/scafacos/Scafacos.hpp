@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <list>
 #include <fcs.h>
 #include <mpi.h>
 
@@ -34,6 +35,9 @@ struct Scafacos {
   double r_cut();
   /** Set cutoff */
   void set_r_cut(double r_cut); 
+
+  /** Get a list of methods supported by the library */
+  static std::list<std::string> available_methods();
   
   /** Handle from the library */
   FCS handle;

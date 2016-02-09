@@ -133,6 +133,16 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 /********************************************************************************/
 
 #ifdef SCAFACOS
+int tclcommand_scafacos_methods(ClientData data, Tcl_Interp * interp, int argc, char ** argv) {
+  std::list<std::string> methods = Electrostatics::Scafacos::available_methods();
+  
+  Tcl_AppendResult(interp, "{ ", 0);
+  for(auto &m: methods) {
+    Tcl_AppendResult(interp, m.c_str(), " ", 0);
+  }
+  Tcl_AppendResult(interp, "}", 0);
+}
+
 int tclcommand_inter_coulomb_parse_scafacos(Tcl_Interp *interp, int argc, char ** argv) {
   if(argc < 1)
     return TCL_ERROR;

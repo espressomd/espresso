@@ -28,6 +28,7 @@
 
 #if defined(ELECTROSTATICS)
 
+#include <list>
 #include <string>
 
 #include "particle_data.hpp"
@@ -42,6 +43,7 @@ void add_long_range_force();
 void set_parameters_slave(int n_method, int n_params);
 void set_parameters(const std::string &method, const std::string &params);
 double get_r_cut();
+std::list<std::string> available_methods();
 }
 }
 
