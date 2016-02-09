@@ -22,6 +22,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#ifdef OPEN_MPI
+#include <dlfcn.h>
+#endif
 #include "utils.hpp"
 #include "communication.hpp"
 #include "interaction_data.hpp"
@@ -51,7 +54,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "maggs.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "statistics_chain.hpp"
@@ -150,6 +153,7 @@ static int terminated = 0;
   CB(mpi_recv_fluid_boundary_flag_slave) \
   CB(mpi_set_particle_temperature_slave) \
   CB(mpi_set_particle_gamma_slave) \
+  CB(mpi_set_particle_gamma_rot_slave) \
   CB(mpi_kill_particle_motion_slave) \
   CB(mpi_kill_particle_forces_slave) \
   CB(mpi_system_CMS_slave) \
@@ -197,11 +201,12 @@ static int request[3];
 
 /** Map callback function pointers to request codes */
 #ifndef HAVE_CXX11
-std::map<SlaveCallback *, int> request_map;
+typedef std::map<SlaveCallback *, int> request_map_type;
 #else
 #include <unordered_map>
-std::unordered_map<SlaveCallback *, int> request_map;
+typedef std::unordered_map<SlaveCallback *, int> request_map_type;
 #endif
+static request_map_type request_map;
 
 /** Forward declarations */
 
@@ -223,6 +228,30 @@ void mpi_core(MPI_Comm *comm, int *errcode,...) {
 
 void mpi_init(int *argc, char ***argv)
 {
+#ifdef OPEN_MPI
+  void *handle = 0;
+  int mode = RTLD_NOW | RTLD_GLOBAL;
+#ifdef RTLD_NOLOAD
+  mode |= RTLD_NOLOAD;
+#endif
+  void * _openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
+  if (!_openmpi_symbol)
+  {
+    fprintf(stderr, "%d: Aborting because unable to find OpenMPI symbol.\n", this_node);
+    errexit();
+  }
+  Dl_info _openmpi_info;
+  dladdr(_openmpi_symbol, &_openmpi_info);
+  
+  if (!handle) handle = dlopen(_openmpi_info.dli_fname, mode);
+  
+  if (!handle)
+  {
+    fprintf(stderr, "%d: Aborting because unable to load libmpi into the global symbol space.\n", this_node);
+    errexit();
+  }
+#endif
+
 #ifdef MPI_CORE
   MPI_Errhandler mpi_errh;
 #endif
@@ -254,7 +283,13 @@ void mpi_init(int *argc, char ***argv)
 
 #ifdef HAVE_MPI
 void mpi_call(SlaveCallback cb, int node, int param) {
-  const int reqcode = request_map[cb];
+  request_map_type::iterator req_it = request_map.find(cb);
+  if (req_it == request_map.end())
+  {
+    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%zu callbacks registered.\n", this_node, cb, request_map.size());
+    errexit();
+  }
+  const int reqcode = req_it->second;
   
   request[0] = reqcode;
   request[1] = node;
@@ -556,9 +591,9 @@ void mpi_send_f(int pnode, int part, double F[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    F[0] /= PMASS(*p);
-    F[1] /= PMASS(*p);
-    F[2] /= PMASS(*p);
+    F[0] /= (*p).p.mass;
+    F[1] /= (*p).p.mass;
+    F[2] /= (*p).p.mass;
     memmove(p->f.f, F, 3*sizeof(double));
   }
   else
@@ -573,9 +608,9 @@ void mpi_send_f_slave(int pnode, int part)
     Particle *p = local_particles[part];
         MPI_Recv(p->f.f, 3, MPI_DOUBLE, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
-    p->f.f[0] /= PMASS(*p);
-    p->f.f[1] /= PMASS(*p);
-    p->f.f[2] /= PMASS(*p);
+    p->f.f[0] /= (*p).p.mass;
+    p->f.f[1] /= (*p).p.mass;
+    p->f.f[2] /= (*p).p.mass;
   }
 
   on_particle_change();
@@ -2985,6 +3020,40 @@ void mpi_set_particle_gamma_slave(int pnode, int part)
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     /* here the setting happens for nonlocal nodes */
     p->p.gamma = s_buf;
+  }
+
+  on_particle_change();
+#endif
+}
+
+#if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
+void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot)
+{
+  mpi_call(mpi_set_particle_gamma_rot_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    /* here the setting actually happens, if the particle belongs to the local node */
+    p->p.gamma_rot = gamma_rot;
+  }
+  else {
+    MPI_Send(&gamma_rot, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+}
+#endif
+
+void mpi_set_particle_gamma_rot_slave(int pnode, int part)
+{
+#if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
+  double s_buf = 0.;
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
+    /* here the setting happens for nonlocal nodes */
+    p->p.gamma_rot = s_buf;
   }
 
   on_particle_change();

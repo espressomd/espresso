@@ -48,7 +48,6 @@
 #include <string>
 #include <map>
 
-
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -240,24 +239,6 @@ void predict_momentum_particles(double *result)
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-/** Calculate total momentum of the system (particles & LB fluid)
- * @param momentum Result for this processor (Output)
- */
-void momentum_calc(double *momentum) 
-{
-    double momentum_fluid[3] = { 0., 0., 0. };
-    double momentum_particles[3] = { 0., 0., 0. };
-
-    mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
-#ifdef LB
-    mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
-#endif
-
-    momentum[0] = momentum_fluid[0] + momentum_particles[0];
-    momentum[1] = momentum_fluid[1] + momentum_particles[1];
-    momentum[2] = momentum_fluid[2] + momentum_particles[2];
-
-}
 
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum calculation
@@ -274,60 +255,65 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
       linear_momentum[2] += momentum_particles[2];
     }
     if (include_lbfluid) {
-#ifdef LB
       double momentum_fluid[3] = { 0., 0., 0. };
-      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+#ifdef LB
+      if(lattice_switch & LATTICE_LB) {
+        mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      }
+#endif
+#ifdef LB_GPU
+      if(lattice_switch & LATTICE_LB_GPU) {
+        lb_calc_fluid_momentum_GPU(momentum_fluid);
+      }
+#endif
       linear_momentum[0] += momentum_fluid[0];
       linear_momentum[1] += momentum_fluid[1];
       linear_momentum[2] += momentum_fluid[2];
-#endif
     }
     return linear_momentum;
 }
 
-void centermass(int type, double *com)
+
+std::vector<double> centerofmass(int type)
 {
-  int i, j;
-  double M = 0.0;
-  com[0]=com[1]=com[2]=0.;
-   	
-  updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_part; j++) {
-    if ((partCfg[j].p.type == type) || (type == -1)) {
-      for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].r.p[i]*PMASS(partCfg[j]);
-      }
-      M += PMASS(partCfg[j]);
+    std::vector<double> com (3);
+    double mass = 0.0;
+    
+    updatePartCfg(WITHOUT_BONDS);
+    for (int i=0; i<n_part; i++) {
+        if ((partCfg[i].p.type == type) || (type == -1)) {
+            for (int j=0; j<3; j++) {
+                com[j] += partCfg[i].r.p[j]*(partCfg[i]).p.mass;
+            }
+            mass += (partCfg[i]).p.mass;
+        }
     }
-  }
-  
-  for (i=0; i<3; i++) {
-    com[i] /= M;
-  }
-  return;
+    for (int j=0; j<3; j++) com[j] /= mass;
+    return com;
 }
 
-void centermass_vel(int type, double *com)
+
+std::vector<double> centerofmass_vel(int type)
 {
-  /*center of mass velocity scaled with time_step*/
-  int i, j;
-  int count = 0;
-  com[0]=com[1]=com[2]=0.;
+    /*center of mass velocity scaled with time_step*/
+    std::vector<double> com_vel (3);
+    int i, j;
+    int count = 0;
 
-  updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_part; j++) {
-    if (type == partCfg[j].p.type) {
-      for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].m.v[i];
-      }
-      count++;
+    updatePartCfg(WITHOUT_BONDS);
+    for (j=0; j<n_part; j++) {
+        if (type == partCfg[j].p.type) {
+            for (i=0; i<3; i++) {
+            	com_vel[i] += partCfg[j].m.v[i];
+            }
+            count++;
+        }
     }
-  }
 
-  for (i=0; i<3; i++) {
-    com[i] /= count;
-  }
-  return;
+    for (i=0; i<3; i++) {
+        com_vel[i] /= count;
+    }
+    return com_vel;
 }
 
 void angularmomentum(int type, double *com)
@@ -343,7 +329,7 @@ void angularmomentum(int type, double *com)
     if (type == partCfg[j].p.type) 
     {
       vector_product(partCfg[j].r.p,partCfg[j].m.v,tmp);
-      pre_factor=PMASS(partCfg[j]);
+      pre_factor=(partCfg[j]).p.mass;
       for (i=0; i<3; i++) {
         com[i] += tmp[i]*pre_factor;
       }
@@ -355,19 +341,19 @@ void angularmomentum(int type, double *com)
 void  momentofinertiamatrix(int type, double *MofImatrix)
 {
   int i,j,count;
-  double p1[3],com[3],massi;
-
+  double p1[3],massi;
+  std::vector<double> com (3);
   count=0;
   updatePartCfg(WITHOUT_BONDS);
   for(i=0;i<9;i++) MofImatrix[i]=0.;
-  centermass(type, com);
+  com = centerofmass(type);
   for (j=0; j<n_part; j++) {
     if (type == partCfg[j].p.type) {
       count ++;
       for (i=0; i<3; i++) {
       	p1[i] = partCfg[j].r.p[i] - com[i];
       }
-      massi= PMASS(partCfg[j]);
+      massi= (partCfg[j]).p.mass;
       MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]) ; 
       MofImatrix[4] += massi * (p1[0] * p1[0] + p1[2] * p1[2]);
       MofImatrix[8] += massi * (p1[0] * p1[0] + p1[1] * p1[1]);
@@ -386,7 +372,7 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
 void calc_gyration_tensor(int type, double **_gt)
 {
   int i, j, count;
-  double com[3];
+  std::vector<double> com (3);
   double eva[3],eve0[3],eve1[3],eve2[3];
   double *gt=NULL, tmp;
   double Smatrix[9],p1[3];
@@ -398,7 +384,7 @@ void calc_gyration_tensor(int type, double **_gt)
   updatePartCfg(WITHOUT_BONDS);
 
   /* Calculate the position of COM */
-  centermass(type,com);
+  com = centerofmass(type);
 
   /* Calculate the gyration tensor Smatrix */
   count=0;
@@ -652,6 +638,12 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
 }
 
+void calc_rdf(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf)
+{
+  calc_rdf(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+           r_min, r_max, r_bins, &rdf[0]);
+}
 
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf)
@@ -703,6 +695,14 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
     bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
     rdf[i] *= volume / (bin_volume * cnt);
   }
+}
+
+
+void calc_rdf_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                 double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+              r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
@@ -771,6 +771,13 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   }
   free(rdf_tmp);
 
+}
+
+void calc_rdf_intermol_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                          double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_intermol_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+                       r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
@@ -1403,9 +1410,7 @@ void analyze_activate(int ind) {
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
     if (place_particle(i, pos)==ES_ERROR) {
-        ostringstream msg;
-        msg <<"failed upon replacing particle " << i << "  in Espresso";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"failed upon replacing particle " << i << "  in Espresso";
     }
   }
 }
@@ -1491,9 +1496,9 @@ void centermass_conf(int k, int type_1, double *com)
     {
       for (i=0; i<3; i++)
       {
-         com[i] += configs[k][3*j+i]*PMASS(partCfg[j]);
+         com[i] += configs[k][3*j+i]*(partCfg[j]).p.mass;
       }
-      M += PMASS(partCfg[j]);
+      M += (partCfg[j]).p.mass;
     }
   }
   for (i=0; i<3; i++) 

@@ -18,6 +18,11 @@
 #
 # For C-extern Analysis
 
+#
+# TODO: Merge blocks of cdef extern for same headers.
+#
+
+
 cimport numpy as np
 from utils cimport *
 from libcpp.string cimport string  # import std::string as string
@@ -35,7 +40,7 @@ cdef extern from "statistics.hpp":
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat:
         int init_status
-        DoubleList data
+        double_list data
         int n_coulomb
         int n_dipolar
         int n_non_bonded
@@ -48,15 +53,16 @@ cdef extern from "statistics.hpp":
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
-    cdef double mindist(IntList * set1, IntList * set2)
-    cdef void nbhood(double pos[3], double r_catch, IntList * il, int planedims[3])
+    cdef double mindist(int_list * set1, int_list * set2)
+    cdef void nbhood(double pos[3], double r_catch, int_list * il, int planedims[3])
     cdef double distto(double pos[3], int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
-    cdef double mindist(IntList * set1, IntList * set2)
+    cdef double mindist(int_list * set1, int_list * set2)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
+    cdef vector[double] centerofmass(int part_type)
     cdef int calc_cylindrical_average(vector[double] center, vector[double] direction, double length,
                                       double radius, int bins_axial, int bins_radial, vector[int] types,
                                       map[string, vector[vector[vector[double]]]] & distribution)
@@ -76,7 +82,7 @@ cdef extern from "pressure.hpp":
     cdef int analyze_stress_tensor(string pressure_to_calc, int v_comp, vector[double] & stress)
     cdef int analyze_stress_pair(string pressure_to_calc, int type1, int type2, int v_comp, vector[double] & stress)
     cdef int analyze_stress_single(string pressure_to_calc, int bond_or_type, int v_comp, vector[double] & stress)
-    cdef int analyze_local_stress_tensor(int * periodic, double * range_start, double * range, int * bins, DoubleList * local_stress_tensor)
+    cdef int analyze_local_stress_tensor(int * periodic, double * range_start, double * range, int * bins, double_list * local_stress_tensor)
 
 cdef extern from "energy.hpp":
     cdef Observable_stat total_energy
@@ -97,3 +103,14 @@ cdef extern from "statistics_chain.hpp":
 
 cdef extern from "interaction_data.hpp":
     int n_bonded_ia
+
+cdef extern from "statistics.hpp":
+    void calc_rdf(vector[int] p1_types, vector[int] p2_types,
+                  double r_min, double r_max, int r_bins, vector[double] rdf)
+
+    void calc_rdf_av(vector[int] p1_types, vector[int] p2_types,
+                     double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+
+    void calc_rdf_intermol_av(vector[int] p1_types, vector[int] p2_types,
+                              double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+    void angularmomentum(int p_type, double * com)

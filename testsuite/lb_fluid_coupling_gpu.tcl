@@ -60,21 +60,21 @@ if { $components == 1 }  {
 }
 part 0 pos [expr 0.5] [expr 0.5 ] [expr 0.5 ] v 1.0 0.5 0.2 
 thermostat lb 0.0
-set initialx [expr [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] ] 
-set initialy [expr [lindex [analyze momentum] 1 ] +  [ lindex [analyze fluid momentum] 1 ] ] 
-set initialz [expr [lindex [analyze momentum] 2 ] +  [ lindex [analyze fluid momentum] 2 ] ] 
+set initialx [expr [lindex [analyze momentum] 0 ]]
+set initialy [expr [lindex [analyze momentum] 1 ]] 
+set initialz [expr [lindex [analyze momentum] 2 ]] 
 integrate 500
-set delta [expr abs($initialx - ( [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] )) ] 
+set delta [expr abs($initialx - [lindex [analyze momentum] 0 ]) ] 
 if { $delta > 1e-4 } {
 
      error_exit "linear momentum not conserved, delta = $delta"
 }
-set delta [expr abs($initialy - ( [lindex [analyze momentum] 1 ] +  [ lindex [analyze fluid momentum] 1 ] )) ] 
+set delta [expr abs($initialy - [lindex [analyze momentum] 1 ]) ] 
 if { $delta > 1e-4 } {
 
      error_exit "linear momentum not conserved, delta = $delta"
 }
-set delta [expr abs($initialz - ( [lindex [analyze momentum] 2 ] +  [ lindex [analyze fluid momentum] 2 ] )) ] 
+set delta [expr abs($initialz - [lindex [analyze momentum] 2 ]) ]
 if { $delta > 1e-4 } {
 
      error_exit "linear momentum not conserved, delta = $delta"

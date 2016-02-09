@@ -96,6 +96,10 @@ void _runtimeError(const std::ostringstream &msg,
   runtimeErrorCollector->error(msg, function, file, line);
 }
 
+ErrorHandling::RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, const std::string &function) {
+  return ErrorHandling::RuntimeErrorStream(*runtimeErrorCollector, file, line, function);
+}
+
 int check_runtime_errors() {
   return runtimeErrorCollector->count();
 }

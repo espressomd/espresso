@@ -44,9 +44,7 @@ int analyze_fold_molecules(float *coord, double shift[3])
   if ( n_molecules < 0 ) return ES_ERROR;
 
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"analyze_fold_molecules: could not sort particle config, particle ids not consecutive?";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"analyze_fold_molecules: could not sort particle config, particle ids not consecutive?";
     return ES_ERROR;
   }
 
@@ -69,9 +67,7 @@ int analyze_fold_molecules(float *coord, double shift[3])
 	  }
 	  cm_tmp /= (double)mol_size;
       if(cm_tmp < -10e-6 || cm_tmp > box_l[i]+10e-6) {
-          ostringstream msg;
-          msg <<"analyze_fold_molecules: chain center of mass is out of range (coord " << i << ": " << cm_tmp << " not in box_l " << box_l[i] << ")";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"analyze_fold_molecules: chain center of mass is out of range (coord " << i << ": " << cm_tmp << " not in box_l " << box_l[i] << ")";
 	    return ES_ERROR;
 	  }
 	}
@@ -110,8 +106,8 @@ void calc_mol_center_of_mass(Molecule mol, double com[3])
 
   for(i=0; i<mol.part.n; i++) {
     id = mol.part.e[i];
-    for(j=0; j<3; j++) com[j]+= partCfg[id].r.p[j]*PMASS(partCfg[id]);
-    M += PMASS(partCfg[id]);
+    for(j=0; j<3; j++) com[j]+= partCfg[id].r.p[j]*(partCfg[id]).p.mass;
+    M += (partCfg[id]).p.mass;
   }
     for(j=0; j<3; j++) com[j] /= M;
 }
@@ -129,7 +125,7 @@ double calc_mol_gyr_radius2(Molecule mol)
     id = mol.part.e[i];
     vecsub(partCfg[id].r.p, com, diff_vec);
     rg += sqrlen(diff_vec);
-    M += PMASS(partCfg[id]);
+    M += (partCfg[id]).p.mass;
   }
 
   return (rg/M);

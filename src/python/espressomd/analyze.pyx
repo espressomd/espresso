@@ -31,6 +31,9 @@ from interactions import *
 from interactions cimport *
 import numpy as np
 cimport numpy as np
+from globals cimport n_configs, min_box_l
+
+
 #
 # Minimal distance between particles
 #
@@ -43,8 +46,8 @@ def mindist(system=None, p1='default', p2='default'):
       p1, p2: lists of particle types
     """
 
-    cdef IntList * set1
-    cdef IntList * set2
+    cdef int_list * set1
+    cdef int_list * set2
 
     if p1 == 'default' and p2 == 'default':
         result = c_analyze.mindist(NULL, NULL)
@@ -62,8 +65,8 @@ def mindist(system=None, p1='default', p2='default'):
                 raise ValueError(
                     "Particle types in p1 and p2 have to be of type int" + str(p2[i]))
 
-        set1 = create_IntList_from_python_object(p1)
-        set2 = create_IntList_from_python_object(p2)
+        set1 = create_int_list_from_python_object(p1)
+        set2 = create_int_list_from_python_object(p2)
 
         result = c_analyze.mindist(set1, set2)
 
@@ -120,6 +123,18 @@ def analyze_linear_momentum(system=None, include_particles=True, include_lbfluid
     """
     return c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
 
+
+#
+# Analyze center of mass
+#
+
+
+def centermass(system=None, part_type=None):
+    """Analyze the system's center of mass
+    """
+    return c_analyze.centerofmass(part_type)
+
+
 # get all particles in neighborhood r_catch of pos and return their ids
 # in il. plane can be used to specify the distance in the xy, xz or yz
 # plane
@@ -134,12 +149,12 @@ def nbhood(system=None, pos=None, r_catch=None, plane='3d'):
     """
 
     cdef int planedims[3]
-    cdef IntList * il = NULL
+    cdef int_list * il = NULL
     cdef double c_pos[3]
 
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         pos, 3, float, "_pos=(float,float,float) must be passed to nbhood")
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         r_catch, 1, float, "r_catch=float needs to be passed to nbhood")
 
     # default 3d takes into account dist in x, y and z
@@ -159,10 +174,10 @@ def nbhood(system=None, pos=None, r_catch=None, plane='3d'):
     for i in range(3):
         c_pos[i] = pos[i]
 
-    il = <IntList * > malloc(sizeof(IntList))
+    il = <int_list * > malloc(sizeof(int_list))
     c_analyze.nbhood(c_pos, r_catch, il, planedims)
 
-    result = create_nparray_from_IntList(il)
+    result = create_nparray_from_int_list(il)
     realloc_intlist(il, 0)
     free(il)
     return result
@@ -174,12 +189,18 @@ def cylindrical_average(system=None, center=None, direction=None,
                         types=[-1]):
 
     # Check the input types
-    checkTypeOrExcept(center,      3, float, "center has to be 3 floats")
-    checkTypeOrExcept(direction,   3, float, "direction has to be 3 floats")
-    checkTypeOrExcept(length,      1, float, "length has to be a float")
-    checkTypeOrExcept(radius,      1, float, "radius has to be a floats")
-    checkTypeOrExcept(bins_axial,  1, int,   "bins_axial has to be an int")
-    checkTypeOrExcept(bins_radial, 1, int,   "bins_radial has to be an int")
+    check_type_or_throw_except(
+        center,      3, float, "center has to be 3 floats")
+    check_type_or_throw_except(
+        direction,   3, float, "direction has to be 3 floats")
+    check_type_or_throw_except(
+        length,      1, float, "length has to be a float")
+    check_type_or_throw_except(
+        radius,      1, float, "radius has to be a floats")
+    check_type_or_throw_except(
+        bins_axial,  1, int,   "bins_axial has to be an int")
+    check_type_or_throw_except(
+        bins_radial, 1, int,   "bins_radial has to be an int")
 
     # Convert Python types to C++ types
     cdef vector[double] c_center = center
@@ -239,7 +260,7 @@ def pressure(self, v_comp=0):
     """Pressure calculation
        pressure(v_comp=False)
        """
-    checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
+    check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 #
     # Dict to store the results
     p = {}
@@ -267,8 +288,8 @@ def pressure(self, v_comp=0):
     total_bonded = 0
     for i in range(c_analyze.n_bonded_ia):
         if (bonded_ia_params[i].type != 0):
-            p["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
-            total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_pressure, i)[0]
+            p["bonded", i] = c_analyze.obsstat_bonded(& c_analyze.total_pressure, i)[0]
+            total_bonded += c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
     p["bonded"] = total_bonded
 
     # Non-Bonded interactions, total as well as intra and inter molecular
@@ -283,12 +304,12 @@ def pressure(self, v_comp=0):
     for i in range(c_analyze.n_particle_types):
         for j in range(c_analyze.n_particle_types):
             #      if checkIfParticlesInteract(i, j):
-            p["nonBonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
-            total_non_bonded = c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
-            total_intra += c_analyze.obsstat_nonbonded_intra( & c_analyze.total_pressure_non_bonded, i, j)[0]
-            p["nonBondedIntra", i, j] = c_analyze.obsstat_nonbonded_intra( & c_analyze.total_pressure_non_bonded, i, j)[0]
-            p["nonBondedInter", i, j] = c_analyze.obsstat_nonbonded_inter( & c_analyze.total_pressure_non_bonded, i, j)[0]
-            total_inter += c_analyze.obsstat_nonbonded_inter( & c_analyze.total_pressure_non_bonded, i, j)[0]
+            p["nonBonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
+            total_non_bonded = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
+            total_intra += c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
+            p["nonBondedIntra", i, j] = c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
+            p["nonBondedInter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
+            total_inter += c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
     p["nonBondedIntra"] = total_intra
     p["nonBondedInter"] = total_inter
     p["nonBondedInter"] = total_inter
@@ -322,7 +343,7 @@ def pressure(self, v_comp=0):
 def stress_tensor(self, v_comp=0):
     """stress_tensor(v_comp=0)
     """
-    checkTypeOrExcept(v_comp, 1, int, "v_comp must be a boolean")
+    check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 
     # Dict to store the results
     p = {}
@@ -350,7 +371,7 @@ def stress_tensor(self, v_comp=0):
     total_bonded = np.zeros((3, 3))
     for i in range(c_analyze.n_bonded_ia):
         if (bonded_ia_params[i].type != 0):
-            p["bonded", i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded(& c_analyze.total_p_tensor, i), 9), (3, 3))
+            p["bonded", i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9), (3, 3))
             total_bonded += p["bonded", i]
     p["bonded"] = total_bonded
 
@@ -364,13 +385,13 @@ def stress_tensor(self, v_comp=0):
         for j in range(c_analyze.n_particle_types):
             #      if checkIfParticlesInteract(i, j):
 
-            p["nonBonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded(& c_analyze.total_p_tensor, i, j), 9), (3, 3))
+            p["nonBonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
             total_non_bonded += p["nonBonded", i, j]
 
-            p["nonBondedIntra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra(& c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+            p["nonBondedIntra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
             total_non_bonded_intra += p["nonBondedIntra", i, j]
 
-            p["nonBondedInter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter(& c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+            p["nonBondedInter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
             total_non_bonded_inter += p["nonBondedInter", i, j]
 
     p["nonBondedIntra"] = total_non_bonded_intra
@@ -407,7 +428,7 @@ def local_stress_tensor(system=None, periodicity=(1, 1, 1), range_start=(0.0, 0.
     """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
     """
 
-    cdef DoubleList * local_stress_tensor = NULL
+    cdef double_list * local_stress_tensor = NULL
     cdef int[3] c_periodicity, c_bins
     cdef double[3] c_range_start, c_stress_range
 
@@ -419,7 +440,7 @@ def local_stress_tensor(system=None, periodicity=(1, 1, 1), range_start=(0.0, 0.
 
     if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, local_stress_tensor):
         raise Exception("Error while calculating local stress tensor")
-    stress_tensor = create_nparray_from_DoubleList(local_stress_tensor)
+    stress_tensor = create_nparray_from_double_list(local_stress_tensor)
     free(local_stress_tensor)
     return stress_tensor
 
@@ -437,7 +458,7 @@ def energy(system, etype='all', id1='default', id2='default'):
     e = {}
 
     if c_analyze.total_energy.init_status == 0:
-        c_analyze.init_energies(& c_analyze.total_energy)
+        c_analyze.init_energies( & c_analyze.total_energy)
         c_analyze.master_energy_calc()
 
     # Individual components of the pressur
@@ -459,8 +480,8 @@ def energy(system, etype='all', id1='default', id2='default'):
     total_bonded = 0
     for i in range(c_analyze.n_bonded_ia):
         if (bonded_ia_params[i].type != 0):
-            e["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_energy, i)[0]
-            total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_energy, i)[0]
+            e["bonded", i] = c_analyze.obsstat_bonded(& c_analyze.total_energy, i)[0]
+            total_bonded += c_analyze.obsstat_bonded( & c_analyze.total_energy, i)[0]
     e["bonded"] = total_bonded
 
     # Non-Bonded interactions, total as well as intra and inter molecular
@@ -475,8 +496,8 @@ def energy(system, etype='all', id1='default', id2='default'):
     for i in range(c_analyze.n_particle_types):
         for j in range(c_analyze.n_particle_types):
             #      if checkIfParticlesInteract(i, j):
-            e["nonBonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
-            total_non_bonded = c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
+            e["nonBonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
+            total_non_bonded = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
 #        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
 #        e["nonBondedIntra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
 #        e["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
@@ -509,7 +530,7 @@ def energy(system, etype='all', id1='default', id2='default'):
 def calc_re(system=None, chain_start=None, number_of_chains=None, chain_length=None):
     cdef double * re = NULL
     check_topology(system, chain_start, number_of_chains, chain_length)
-    c_analyze.calc_re(& re)
+    c_analyze.calc_re( & re)
     tuple_re = (re[0], re[1], re[2])
     free(re)
     return tuple_re
@@ -518,7 +539,7 @@ def calc_re(system=None, chain_start=None, number_of_chains=None, chain_length=N
 def calc_rg(system=None, chain_start=None, number_of_chains=None, chain_length=None):
     cdef double * rg = NULL
     check_topology(system, chain_start, number_of_chains, chain_length)
-    c_analyze.calc_rg(& rg)
+    c_analyze.calc_rg( & rg)
     tuple_rg = (rg[0], rg[1], rg[2])
     free(rg)
     return tuple_rg
@@ -527,18 +548,18 @@ def calc_rg(system=None, chain_start=None, number_of_chains=None, chain_length=N
 def calc_rh(system=None, chain_start=None, number_of_chains=None, chain_length=None):
     cdef double * rh = NULL
     check_topology(system, chain_start, number_of_chains, chain_length)
-    c_analyze.calc_rh(& rh)
+    c_analyze.calc_rh( & rh)
     tuple_rh = (rh[0], rh[1], rh[2])
     free(rh)
     return tuple_rh
 
 
 def check_topology(system=None, chain_start=None, number_of_chains=None, chain_length=None):
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         chain_start, 1, int, "chain_start=int is a required argument")
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         number_of_chains, 1, int, "number_of_chains=int is a required argument")
-    checkTypeOrExcept(
+    check_type_or_throw_except(
         chain_length, 1, int, "chain_length=int is a required argument")
     if not system:
         raise ValueError('Must pass an instance of ESPResSo to thi function')
@@ -567,11 +588,72 @@ def structure_factor(system=None, sf_type='default', sf_order='default'):
     """
     cdef double * sf
 
-    checkTypeOrExcept(sf_type, 1, int, "sf_type must be an int")
-    checkTypeOrExcept(sf_order, 1, int, "sf_order must be an int")
+    check_type_or_throw_except(sf_type, 1, int, "sf_type must be an int")
+    check_type_or_throw_except(sf_order, 1, int, "sf_order must be an int")
 
     # Used to take the WITHOUT_BONDS define
     c_analyze.updatePartCfg(0)
     c_analyze.calc_structurefactor(sf_type, sf_order, & sf)
 
     return c_analyze.modify_stucturefactor(sf_order, sf)
+
+#
+# RDF
+#
+
+def rdf(system=None, rdf_type=None, type_list_a=None, type_list_b=None,
+        r_min = 0.0, r_max = None, r_bins = 100, n_conf = None):
+
+    if rdf_type is None:
+        raise ValueError("rdf_type must not be empty!")
+    if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
+        raise ValueError("type_list_a has to be a list!")
+    if (type_list_b is None) or (not hasattr(type_list_b, '__iter__')):
+        raise ValueError("type_list_b has to be a list!")
+
+    if rdf_type != 'rdf':
+        if n_configs == 0:
+            raise ValueError("No configurations founds!\n",
+                             "Use 'analyze append' to save some,",
+                             "or 'analyze rdf' to only look at current RDF!""")
+        if n_conf is None:
+            n_conf = n_configs
+
+    if r_max is None: r_max = min_box_l / 2.0;
+
+    cdef vector[double] rdf
+    rdf.resize(r_bins)
+    cdef vector[int] p1_types = type_list_a
+    cdef vector[int] p2_types = type_list_b
+
+    c_analyze.updatePartCfg(0)
+    if rdf_type == 'rdf':
+        c_analyze.calc_rdf(p1_types, p2_types, r_min, r_max, r_bins, rdf)
+    elif rdf_type == '<rdf>':
+        c_analyze.calc_rdf_av(p1_types, p2_types,r_min, r_max, r_bins, rdf, n_conf)
+    elif rdf_type == '<rdf-intermol>':
+        c_analyze.calc_rdf_intermol_av(p1_types, p2_types, r_min, r_max, r_bins, rdf, n_conf)
+    else:
+        raise Exception("rdf_type has to be one of 'rdf', '<rdf>', and '<rdf_intermol>'")
+
+    r = np.empty(r_bins)
+    bin_width = (r_max - r_min) / r_bins
+    rr = r_min + bin_width/2.0
+    for i in range(r_bins):
+        r[i] = rr
+        rr += bin_width
+
+    return np.array([r, rdf])
+
+
+def angularmomentum(system=None, p_type=None):
+    print "p_type = ", p_type
+    check_type_or_throw_except(
+        p_type, 1, int,   "p_type has to be an int")
+
+    cdef double[3] com
+    cdef int p1 = p_type
+
+    c_analyze.angularmomentum(p1, com)
+
+    return np.array([com[0], com[1], com[2]])

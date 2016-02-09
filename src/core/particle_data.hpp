@@ -72,7 +72,8 @@
     needed in the interaction calculation, but are just copies of
     particles stored on different nodes.
 */
-typedef struct {
+typedef struct ParticleProperties ParticleProperties;
+struct ParticleProperties {
   /** unique identifier for the particle. */
   int    identity;
   /** Molecule identifier. */
@@ -83,7 +84,14 @@ typedef struct {
 #ifdef MASS
   /** particle mass */
   double mass;
-#endif
+#else
+  /** set mass to 0 */
+#ifdef HAVE_CXX11
+  constexpr static double mass = 1.0;
+#else
+  const static double mass;
+#endif /* HAVE_CXX11 */
+#endif /* MASS */
 
 #ifdef SHANCHEN
   double solvation[2*LB_COMPONENTS];
@@ -147,6 +155,10 @@ typedef struct {
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
+  /* Friction coefficient gamma for rotation */
+#ifdef ROTATION
+  double gamma_rot;
+#endif
 #endif
 
 #ifdef CATALYTIC_REACTIONS
@@ -185,7 +197,7 @@ typedef struct {
   #endif
 
 #endif
-} ParticleProperties;
+};
 
 /** Positional information on a particle. Information that is
     communicated to calculate interactions with ghost particles. */
@@ -702,7 +714,10 @@ int set_particle_temperature(int part, double T);
     @return ES_OK if particle existed
 */
 int set_particle_gamma(int part, double gamma);
+#ifdef ROTATION
+int set_particle_gamma_rot(int part, double gamma);
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
   #ifdef ROTATION
@@ -1002,7 +1017,10 @@ void pointer_to_fix(Particle *p, int*& res);
 #ifdef LANGEVIN_PER_PARTICLE
 void pointer_to_gamma(Particle *p, double*& res);
 void pointer_to_temperature(Particle *p, double*& res);
+#ifdef ROTATION
+void pointer_to_gamma_rot(Particle *p, double*& res);
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int*& res);
@@ -1019,5 +1037,7 @@ void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim);
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle *p, double*& res);
 #endif
+
+bool particle_exists(int part);
 
 #endif

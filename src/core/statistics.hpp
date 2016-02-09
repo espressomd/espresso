@@ -232,9 +232,11 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
     @param r_bins   Number of bins.
     @param rdf     Array to store the result (size: r_bins).
 */
-void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
-	      double r_min, double r_max, int r_bins, double *rdf);
 
+void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
+	      double r_min, double r_max, int r_bins, double *rdf);
+void calc_rdf(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf);
 
 /** Calculates the radial distribution function averaged over last n_conf configurations.
 
@@ -256,6 +258,8 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
 */
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
+void calc_rdf_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+              double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf);
 
 /** Calculates the intermolecular radial distribution function averaged over last n_conf configurations.
 
@@ -278,6 +282,8 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
+void calc_rdf_intermol_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf);
 
 
 /** Calculates the van Hove auto correlation function and as a side product the mean sqaure displacement (msd).
@@ -348,16 +354,19 @@ inline double min_distance(double pos1[3], double pos2[3]) {
   return sqrt(min_distance2(pos1, pos2));
 }
 
+
 /** calculate the center of mass of a special type of the current configuration
  *  \param type  type of the particle
  *  \param com   center of mass position
  */
-void centermass(int type, double *com);
+std::vector<double> centerofmass(int part_type);
+
 
 /** Docs missing
 \todo Docs missing
 */
-void centermass_vel(int type, double *com);
+std::vector<double> centerofmass_vel(int type);
+
 
 /** calculate the angular momentum of a special type of the current configuration
  *  \param type  type of the particle

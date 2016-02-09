@@ -26,10 +26,15 @@ cdef class ElectrostaticInteraction(actors.Actor):
         raise Exception(
             "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
 
+    def _set_params_in_es_core(self):
+        raise Exception(
+            "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
+
+
 
 IF COULOMB_DEBYE_HUECKEL:
     cdef class CDH(ElectrostaticInteraction):
-        def validateParams(self):
+        def validate_params(self):
             if (self._params["bjerrum_length"] <= 0):
                 raise ValueError("Bjerrum_length should be a positive double")
             if (self._params["kappa"] < 0):
@@ -49,26 +54,26 @@ IF COULOMB_DEBYE_HUECKEL:
             if (self._params["alpha"] < 0):
                 raise ValueError("alpha should be a non-negative double")
 
-        def validKeys(self):
+        def valid_keys(self):
             return "bjerrum_length", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
 
-        def requiredKeys(self):
+        def required_keys(self):
             return "bjerrum_length", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
 
-        def _setParamsInEsCore(self):
+        def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
             dh_set_params_cdh(self._params["kappa"], self._params["r_cut"], self._params[
                               "eps_int"], self._params["eps_ext"], self._params["r0"], self._params["r1"], self._params["alpha"])
 
-        def _getParamsFromEsCore(self):
+        def _get_params_from_es_core(self):
             params = {}
             params.update(dh_params)
             return params
 
-        def _activateMethod(self):
+        def _activate_method(self):
             coulomb.method = COULOMB_DH
 
-        def defaultParams(self):
+        def default_params(self):
             return {"bjerrum_length": -1,
                     "kappa": -1,
                     "r_cut": -1,
@@ -81,7 +86,7 @@ IF COULOMB_DEBYE_HUECKEL:
 ELSE:
     IF ELECTROSTATICS:
         cdef class DH(ElectrostaticInteraction):
-            def validateParams(self):
+            def validate_params(self):
                 if (self._params["bjerrum_length"] <= 0):
                     raise ValueError(
                         "Bjerrum_length should be a positive double")
@@ -90,26 +95,26 @@ ELSE:
                 if (self._params["r_cut"] < 0):
                     raise ValueError("r_cut should be a non-negative double")
 
-            def validKeys(self):
+            def valid_keys(self):
                 return "bjerrum_length", "kappa", "r_cut"
 
-            def requiredKeys(self):
+            def required_keys(self):
                 return "bjerrum_length", "kappa", "r_cut"
 
-            def _setParamsInEsCore(self):
+            def _set_params_in_es_core(self):
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
                 dh_set_params(self._params["kappa"], self._params["r_cut"])
 
-            def _getParamsFromEsCore(self):
+            def _get_params_from_es_core(self):
                 params = {}
                 params.update(dh_params)
                 return params
 
-            def _activateMethod(self):
+            def _activate_method(self):
                 coulomb.method = COULOMB_DH
-                self._setParamsInEsCore()
+                self._set_params_in_es_core()
 
-            def defaultParams(self):
+            def default_params(self):
                 return {"bjerrum_length": -1,
                         "kappa": -1,
                         "r_cut": -1}
@@ -118,8 +123,8 @@ ELSE:
 IF P3M == 1:
     cdef class P3M(ElectrostaticInteraction):
 
-        def validateParams(self):
-            default_params = self.defaultParams()
+        def validate_params(self):
+            default_params = self.default_params()
             if not (self._params["bjerrum_length"] > 0.0):
                 raise ValueError("Bjerrum_length should be a positive double")
 
@@ -155,13 +160,13 @@ IF P3M == 1:
                 raise ValueError(
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
-        def validKeys(self):
+        def valid_keys(self):
             return "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
 
-        def requiredKeys(self):
+        def required_keys(self):
             return ["bjerrum_length", "accuracy"]
 
-        def defaultParams(self):
+        def default_params(self):
             return {"cao": -1,
                     "inter": -1,
                     "r_cut": -1,
@@ -171,14 +176,14 @@ IF P3M == 1:
                     "mesh_off": [-1, -1, -1],
                     "tune": True}
 
-        def _getParamsFromEsCore(self):
+        def _get_params_from_es_core(self):
             params = {}
             params.update(p3m.params)
             params["bjerrum_length"] = coulomb.bjerrum
             params["tune"] = self._params["tune"]
             return params
 
-        def _setParamsInEsCore(self):
+        def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
             p3m_set_ninterpol(self._params["inter"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
@@ -196,19 +201,19 @@ IF P3M == 1:
                 raise Exception(
                     "failed to tune P3M parameters to required accuracy")
             print log
-            self._params.update(self._getParamsFromEsCore())
+            self._params.update(self._get_params_from_es_core())
 
-        def _activateMethod(self):
+        def _activate_method(self):
             if self._params["tune"]:
                 self._tune()
 
-            self._setParamsInEsCore()
+            self._set_params_in_es_core()
 
     IF CUDA:
         cdef class P3M_GPU(ElectrostaticInteraction):
 
-            def validateParams(self):
-                default_params = self.defaultParams()
+            def validate_params(self):
+                default_params = self.default_params()
                 if not (self._params["bjerrum_length"] > 0.0):
                     raise ValueError(
                         "Bjerrum_length should be a positive double")
@@ -246,13 +251,13 @@ IF P3M == 1:
                     raise ValueError(
                         "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
-            def validKeys(self):
+            def valid_keys(self):
                 return "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
 
-            def requiredKeys(self):
+            def required_keys(self):
                 return ["bjerrum_length", "accuracy"]
 
-            def defaultParams(self):
+            def default_params(self):
                 return {"cao": -1,
                         "inter": -1,
                         "r_cut": -1,
@@ -264,7 +269,7 @@ IF P3M == 1:
                         "box": [-1, -1, -1],
                         "alpha": -1}
 
-            def _getParamsFromEsCore(self):
+            def _get_params_from_es_core(self):
                 params = {}
                 params.update(p3m.params)
                 params["bjerrum_length"] = coulomb.bjerrum
@@ -280,19 +285,19 @@ IF P3M == 1:
                     raise Exception(
                         "failed to tune P3M parameters to required accuracy")
                 print log
-                self._params.update(self._getParamsFromEsCore())
+                self._params.update(self._get_params_from_es_core())
 
-            def _activateMethod(self):
+            def _activate_method(self):
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
                     coulomb_set_bjerrum(self._params["bjerrum_length"])
                     self._tune()
 
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
-                self._setParamsInEsCore()
+                self._set_params_in_es_core()
                 python_p3m_gpu_init(self._params)
 
-            def _setParamsInEsCore(self):
+            def _set_params_in_es_core(self):
                 python_p3m_set_params(self._params["r_cut"], self._params["mesh"], self._params[
                                       "cao"], self._params["alpha"], self._params["accuracy"])
                 p3m_set_eps(self._params["epsilon"])
@@ -309,16 +314,16 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
 
         def __cinit__(self):
             self.interface = EspressoSystemInterface._Instance()
-            default_params = self.defaultParams()
+            default_params = self.default_params()
             self.thisptr = new EwaldgpuForce(dereference(self.interface), default_params["rcut"], default_params["num_kx"], default_params["num_ky"], default_params["num_kz"], default_params["alpha"])
 
         def __dealloc__(self):
             del self.thisptr
 
-        def validKeys(self):
+        def valid_keys(self):
             return "bjerrum_length", "rcut", "num_kx", "num_ky", "num_kz", "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
 
-        def defaultParams(self):
+        def default_params(self):
             return {"bjerrum_length": -1,
                     "rcut": -1,
                     "num_kx": -1,
@@ -332,8 +337,8 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                     "K_max": -1,
                     "time_calc_steps": -1}
 
-        def validateParams(self):
-            default_params = self.defaultParams()
+        def validate_params(self):
+            default_params = self.default_params()
             if self._params["bjerrum_length"] <= 0.0 and self._params["bjerrum_length"] != default_params["bjerrum_length"]:
                 raise ValueError("Bjerrum_length should be a positive double")
             if self._params["num_kx"] < 0 and self._params["num_kx"] != default_params["num_kx"]:
@@ -351,12 +356,12 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             if self._params["precision"] < 0 and self._params["precision"] != default_params["precision"]:
                 raise ValueError("precision has to be a positive double")
 
-        def requiredKeys(self):
+        def required_keys(self):
             return "bjerrum_length", "accuracy", "precision", "K_max"
 
         def _tune(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
-            default_params = self.defaultParams()
+            default_params = self.default_params()
             if self._params["time_calc_steps"] == default_params["time_calc_steps"]:
                 self._params[
                     "time_calc_steps"] = self.thisptr.determine_calc_time_steps()
@@ -367,21 +372,21 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             if resp != 0:
                 print self.log
 
-        def _setParamsInEsCore(self):
+        def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
             self.thisptr.set_params(self._params["rcut"], self._params[
                                     "num_kx"], self._params["num_ky"], self._params["num_kz"], self._params["alpha"])
 
-        def _getParamsFromEsCore(self):
+        def _get_params_from_es_core(self):
             params = {}
             params.update(ewaldgpu_params)
             params["bjerrum_length"] = coulomb.bjerrum
             return params
 
-        def _activateMethod(self):
+        def _activate_method(self):
             coulomb.method = COULOMB_EWALD_GPU
             if not self._params["isTuned"]:
                 self._tune()
                 self._params["isTuned"] = True
 
-            self._setParamsInEsCore()
+            self._set_params_in_es_core()

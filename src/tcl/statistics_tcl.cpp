@@ -53,6 +53,8 @@
 #include <string>
 #include <map>
 
+using std::ostringstream;
+
 /** Set the topology. See \ref topology_tcl.cpp */
 int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
 
@@ -116,7 +118,8 @@ static int tclcommand_analyze_parse_reference_point(Tcl_Interp *interp, int *arg
 
 void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type, int bins, double given_max) {
     int i, j, p_count, dist_count, ind;
-    double min, max, bin_width, inv_bin_width, com[3], vel;
+    std::vector<double> com_vel (3);
+    double min, max, bin_width, inv_bin_width, vel;
     long distribution[bins];
     char buffer[2 * TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 256];
 
@@ -127,13 +130,13 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type, int bins, 
         distribution[i] = 0;
     }
 
-    centermass_vel(type, com);
+    com_vel = centerofmass_vel(type);
 
     for (i = 0; i < n_part; i++) {
         if (partCfg[i].p.type == type) {
             p_count++;
             for (j = 0; j < 3; j++) {
-                vel = partCfg[i].m.v[j] - com[j];
+                vel = partCfg[i].m.v[j] - com_vel[j];
                 if (min > vel) {
                     min = vel;
                 }
@@ -160,7 +163,7 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type, int bins, 
     for (i = 0; i < n_part; i++) {
         if (partCfg[i].p.type == type) {
             for (j = 0; j < 3; j++) {
-                vel = partCfg[i].m.v[j] - com[j];
+                vel = partCfg[i].m.v[j] - com_vel[j];
                 ind = (int) ((vel - min) * inv_bin_width);
                 distribution[ind]++;
                 dist_count++;
@@ -1078,7 +1081,7 @@ static int tclcommand_analyze_parse_mindist(Tcl_Interp *interp, int argc, char *
 
 static int tclcommand_analyze_parse_centermass(Tcl_Interp *interp, int argc, char **argv) {
     /* 'analyze centermass [<type>]' */
-    double com[3];
+    std::vector<double> com(3);
     char buffer[3 * TCL_DOUBLE_SPACE + 3];
     int p1;
 
@@ -1094,7 +1097,7 @@ static int tclcommand_analyze_parse_centermass(Tcl_Interp *interp, int argc, cha
         return (TCL_ERROR);
     }
 
-    centermass(p1, com);
+    com = centerofmass(p1);
 
     sprintf(buffer, "%f %f %f", com[0], com[1], com[2]);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
@@ -2436,30 +2439,25 @@ static int tclcommand_analyze_parse_mol(Tcl_Interp *interp, int argc, char **arg
 
 static int tclcommand_analyze_parse_and_print_momentum(Tcl_Interp *interp, int argc, char **argv) {
     char buffer[TCL_DOUBLE_SPACE];
-    double momentum[3] = {0., 0., 0.};
-
-    momentum_calc(momentum);
+    std::vector<double> momentum (3);
 
     if (argc == 0) {
-        Tcl_PrintDouble(interp, momentum[0], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[1], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[2], buffer);
-        Tcl_AppendResult(interp, buffer, (char *) NULL);
+        momentum = calc_linear_momentum(1,1);
     } else if (ARG0_IS_S("particles")) {
-        mpi_gather_stats(4, momentum, NULL, NULL, NULL);
-        Tcl_PrintDouble(interp, momentum[0], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[1], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[2], buffer);
-        Tcl_AppendResult(interp, buffer, (char *) NULL);
+        momentum = calc_linear_momentum(1,0);
+    } else if (ARG0_IS_S("lbfluid")) {
+        momentum = calc_linear_momentum(0,1);
     } else {
         Tcl_AppendResult(interp, "unknown feature of: analyze momentum",
                 (char *) NULL);
         return TCL_ERROR;
     }
+    Tcl_PrintDouble(interp, momentum[0], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, momentum[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, momentum[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
 
     return TCL_OK;
 }
@@ -2678,10 +2676,10 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
         if (partCfg[i].p.type == type) {
 #ifdef MULTI_TIMESTEP
             if (smaller_time_step > 0.)
-                E_kin += PMASS(partCfg[i]) * SQR(time_step/smaller_time_step) * sqrlen(partCfg[i].m.v);
+                E_kin += (partCfg[i]).p.mass * SQR(time_step/smaller_time_step) * sqrlen(partCfg[i].m.v);
             else
 #endif
-                E_kin += PMASS(partCfg[i]) * sqrlen(partCfg[i].m.v);
+                E_kin += (partCfg[i]).p.mass * sqrlen(partCfg[i].m.v);
         }
     }
     E_kin *= 0.5 / time_step / time_step;

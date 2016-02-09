@@ -198,9 +198,7 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
         case TAB_BOND_DIHEDRAL:
           (*i)+=2; force[0] = force[1] = force[2] = 0; break;
         default:
-      ostringstream msg;
-      msg <<"calc_bonded_force: tabulated bond type of atom " << p1->p.identity << " unknown\n";
-      runtimeError(msg);
+          runtimeErrorMsg() <<"calc_bonded_force: tabulated bond type of atom " << p1->p.identity << " unknown\n";
 	  return;
       }
       break;
@@ -217,9 +215,7 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
         case OVERLAP_BOND_DIHEDRAL:
           (*i)+=2; force[0] = force[1] = force[2] = 0; break;
         default:
-          ostringstream msg;
-          msg <<"calc_bonded_force: overlapped bond type of atom " << p1->p.identity << " unknown\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"calc_bonded_force: overlapped bond type of atom " << p1->p.identity << " unknown\n";
           return;
       }
       break;
@@ -279,9 +275,7 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle *
         calc_angle_3body_tabulated_forces(p1, p2, p3, iaparams, force1, force2, force3);
         break;
       default:
-        ostringstream msg;
-        msg <<"calc_bonded_force: tabulated bond type of atom " << p1->p.identity << " unknown\n";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"calc_bonded_force: tabulated bond type of atom " << p1->p.identity << " unknown\n";
         return;
       }
       break;
@@ -321,9 +315,7 @@ inline void add_bonded_virials(Particle *p1)
       // for harmonic spring:
       // if cutoff was defined and p2 is not there it is anyway outside the cutoff, see calc_maximal_cutoff()
       if ((type_num==BONDED_IA_HARMONIC)&&(iaparams->p.harmonic.r_cut>0)) return;
-      ostringstream msg;
-      msg <<"bond broken between particles " << p1->p.identity << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"bond broken between particles " << p1->p.identity << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
       return;
     }
 
@@ -462,9 +454,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
         i = i + 4;
       }
       else {
-          ostringstream msg;
-          msg <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
-          runtimeError(msg);
+        runtimeErrorMsg() <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
       }
     }
 #endif
@@ -479,9 +469,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     }
 #endif
     else {
-        ostringstream msg;
-        msg <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
-        runtimeError(msg);
+      runtimeErrorMsg() <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
     }
   } 
 }
@@ -500,16 +488,16 @@ inline void add_kinetic_virials(Particle *p1,int v_comp)
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0.) {
     if(v_comp)
-      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
+      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*(*p1).p.mass;
     else
-      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+      virials.data.e[0] += SQR(time_step/smaller_time_step)*(SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
   } else
 #endif
   {
     if(v_comp) 
-      virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
+      virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*(*p1).p.mass;
     else
-      virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+      virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
   }
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
@@ -517,10 +505,10 @@ inline void add_kinetic_virials(Particle *p1,int v_comp)
     for(l=0;l<3;l++)
 #ifdef MULTI_TIMESTEP
       if (smaller_time_step > 0.) 
-        p_tensor.data.e[k*3 + l] += SQR(time_step/smaller_time_step)*(p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
+        p_tensor.data.e[k*3 + l] += SQR(time_step/smaller_time_step)*(p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass;
       else
 #endif
-        p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
+        p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass;
 
 }
 

@@ -76,6 +76,10 @@ int partCfgSorted = 0;
 /** bondlist for partCfg, if bonds are needed */
 IntList partCfg_bl = { NULL, 0, 0 };
 
+#if !defined(HAVE_CXX11) and !defined(MASS)
+  const double ParticleProperties::mass = 1.0;
+#endif
+
 /************************************************
  * local functions
  ************************************************/
@@ -304,7 +308,10 @@ void init_particle(Particle *part)
 #ifdef LANGEVIN_PER_PARTICLE
   part->p.T = -1.0;
   part->p.gamma = -1.0;
+#ifdef ROTATION
+  part->p.gamma_rot = -1.0;
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef MULTI_TIMESTEP
   part->p.smaller_timestep = 0;
@@ -347,15 +354,11 @@ int updatePartCfg(int bonds_flag)
 #ifdef VIRTUAL_SITES
 
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return 0;
   }
   if (!updatePartCfg(bonds_flag)) {
-      ostringstream msg;
-      msg <<"could not update positions of virtual sites in partcfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not update positions of virtual sites in partcfg";
     return 0;
   }
 #endif
@@ -1132,7 +1135,27 @@ int set_particle_gamma(int part, double gamma)
   mpi_set_particle_gamma(pnode, part, gamma);
   return ES_OK;
 }
-#endif
+#ifdef ROTATION
+int set_particle_gamma_rot(int part, double gamma_rot)
+{
+  int pnode;
+
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+
+  mpi_set_particle_gamma_rot(pnode, part, gamma_rot);
+  return ES_OK;
+}
+#endif // ROTATION
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
   #ifdef ROTATION
@@ -1206,9 +1229,7 @@ int change_particle_bond(int part, int *bond, int _delete)
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
-        ostringstream msg;
-        msg <<"invalid/unknown bonded interaction type " << bond[0];
-        runtimeError(msg);
+        runtimeErrorMsg() <<"invalid/unknown bonded interaction type " << bond[0];
       return ES_ERROR;
     }
   }
@@ -2213,6 +2234,12 @@ void pointer_to_gamma(Particle *p, double*& res)
 {
   res=&(p->p.gamma);
 }
+#ifdef ROTATION
+void pointer_to_gamma_rot(Particle *p, double*& res)
+{
+  res=&(p->p.gamma_rot);
+}
+#endif
 
 void pointer_to_temperature(Particle *p, double*& res)
 {
@@ -2248,3 +2275,16 @@ void pointer_to_rotational_inertia(Particle *p, double*& res)
   res = p->p.rinertia;
 }
 #endif
+
+bool particle_exists(int part) {
+    if (!particle_node)
+        build_particle_node();
+    
+    if (part < 0 || part > max_seen_particle)
+        return false;
+    
+    if (particle_node[part]!=-1) 
+        return true;
+   return false;
+} 
+

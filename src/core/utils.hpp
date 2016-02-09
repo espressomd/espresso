@@ -149,18 +149,6 @@ namespace Utils {
 /*@}*/
 
 /*************************************************************/
-/* mass helper macro                                         */
-/*************************************************************/
-
-#ifdef MASS
-/** macro for easy use of mass. If masses are not switched on, the particle mass is defined to 1,
-    so it should be compiled out in most cases. */
-#define PMASS(pt) (pt).p.mass
-#else
-#define PMASS(pt) 1
-#endif
-
-/*************************************************************/
 /** \name List operations .                                  */
 /*************************************************************/
 /*@{*/
@@ -1166,6 +1154,11 @@ void vecsub(T const * const a, T const * const b, T * const c) {
   // Note the different signature for pointers here!
   for (unsigned int i = 0; i < 3; i++)
     c[i] = a[i] - b[i];
+}
+
+template<typename T>
+int sign(T value) {
+  return (T(0) < value) - (value < T(0));
 }
 
 }

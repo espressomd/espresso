@@ -88,19 +88,15 @@ inline void calc_oif_global(double *area_volume, int molType){ //first-fold-then
 					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
                     if (!p2) {
-                        ostringstream msg;
-                        msg <<"oif global calc: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - oif_global_forces1); n " << p1->bl.n << " max " << p1->bl.max ;
-                        runtimeError(msg);
-						return;
+                      runtimeErrorMsg() <<"oif global calc: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - oif_global_forces1); n " << p1->bl.n << " max " << p1->bl.max ;
+                      return;
 					}
 					/* fetch particle 3 */
 					//if(n_partners>2){
 					p3 = local_particles[p1->bl.e[j++]];
                     if (!p3) {
-                        ostringstream msg;
-                        msg <<"oif global calc: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - oif_global_forces1); n " << p1->bl.n << " max " << p1->bl.max ;
-                        runtimeError(msg);
-						return;
+                      runtimeErrorMsg() <<"oif global calc: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - oif_global_forces1); n " << p1->bl.n << " max " << p1->bl.max ;
+                      return;
 					}
 					// remaining neighbors fetched
 					
@@ -220,20 +216,16 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 					test++;
 					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
-                    if (!p2) {
-                        ostringstream msg;
-                        msg <<"add area: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - oif_globalforce2); n " << p1->bl.n << " max " << p1->bl.max ;
-                        runtimeError(msg);
-						return;
+                                        if (!p2) {
+                                          runtimeErrorMsg() <<"add area: bond broken between particles " << p1->p.identity << " and " << p1->bl.e[j-1] << " (particles not stored on the same node - oif_globalforce2); n " << p1->bl.n << " max " << p1->bl.max ;
+                                          return;
 					}
 					/* fetch particle 3 */
 					//if(n_partners>2){
 					p3 = local_particles[p1->bl.e[j++]];
-                    if (!p3) {
-                        ostringstream msg;
-                        msg <<"add area: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node); n " << p1->bl.n << " max " << p1->bl.max;
-                        runtimeError(msg);
-						return;
+                                        if (!p3) {
+                                          runtimeErrorMsg() <<"add area: bond broken between particles " << p1->p.identity << ", " << p1->bl.e[j-2] << " and " << p1->bl.e[j-1] << " (particles not stored on the same node); n " << p1->bl.n << " max " << p1->bl.max;
+                                          return;
 					}
 					
 					// getting unfolded positions of all particles

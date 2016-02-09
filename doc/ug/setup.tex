@@ -819,10 +819,28 @@ with $P_{\text{cvt}}$ the probability of the conversion and $\Delta t$
 the integration time step. If the equilibrium rate constant is not
 specified it is assumed that \var{k\_eq} = 0.
 
+
+\begin{pysyntax}
+  \object{
+    espressomd.reaction
+  }{
+    reaction
+  }{
+    product_type   = \arg{int},
+    reactant_type  = \arg{int},
+    catalyzer_type = \arg{int},
+    ct_range       = \arg{float},
+    ct_rate        = \arg{float},
+    eq_rate        = \arg{float},
+    react_once     = \arg{bool},
+    swap           = \arg{bool}
+  }
+\end{pysyntax}
+
 \begin{essyntax}
 \variant{0} reaction reactant_type \var{rt} catalyzer_type \var{ct} 
 product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
-\opt{eq_rate \var{k\_eq}} \opt{react_once \var{on/off}}
+\opt{eq_rate \var{k\_eq}} \opt{react_once \var{on/off}} \opt{swap \var{on/off}}
 \variant{1} reaction off
 \variant{2} reaction print
 \begin{features}

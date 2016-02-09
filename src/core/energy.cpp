@@ -250,10 +250,8 @@ void calc_long_range_energies()
   case DIPOLAR_NONE:
       break;
   default:
-      ostringstream msg;
-      msg <<"unknown dipolar method";
-      runtimeError(msg);
-      break;
+    runtimeErrorMsg() <<"unknown dipolar method";
+    break;
   } 
 #endif /* ifdef DIPOLES */
 
