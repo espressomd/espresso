@@ -48,10 +48,11 @@ double get_r_cut();
 std::list<std::string> available_methods();
 #endif /* SCAFACOS */
 
-/** Parameter callback */
-void set_parameters_slave(int n_method, int n_params);
+}
+}
 
-}
-}
+/** Parameter callback */
+void mpi_scafacos_set_parameters_slave(int n_method, int n_params);
+
 
 #endif

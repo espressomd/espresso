@@ -61,7 +61,7 @@ std::list<std::string> available_methods() {
 /** Encapsulation for the particle data needed by scafacos */
 struct ScafacosData {
   int update_particle_data();
-  int update_particle_forces() const;
+  void update_particle_forces() const;
   /** Inputs */
   std::vector<double> charges, positions;
   /** Outputs */
@@ -92,7 +92,7 @@ int ScafacosData::update_particle_data() {
 
 /** \brief Write forces back to particles */
 
-int ScafacosData::update_particle_forces() const {
+void ScafacosData::update_particle_forces() const {
   int it = 0;
   
  for(int c = 0; c < local_cells.n; c++) {
@@ -237,7 +237,7 @@ double get_r_cut() {
 }
 
 void set_parameters(const std::string &method, const std::string &params) {
-  mpi_call(set_parameters_slave, method.size(), params.size());
+  mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
 
   /** This requires C++11, otherwise this is undefined because std::string was not required to have conitnuous memory before. */
   /* const_cast is ok, this code runs only on rank 0 where the mpi call does not modify the buffer */
@@ -247,10 +247,14 @@ void set_parameters(const std::string &method, const std::string &params) {
   set_params_safe(method, params);
 }
 
+}
+}
+
 #endif
 
-void set_parameters_slave(int n_method, int n_params) {
+void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {  
   #ifdef SCAFACOS
+  using namespace Electrostatics::Scafacos;
   std::string method;
   std::string params;
 
@@ -263,8 +267,5 @@ void set_parameters_slave(int n_method, int n_params) {
     
   set_params_safe(method, params);
   #endif
-}
-
-}
 }
 

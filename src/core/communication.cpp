@@ -171,7 +171,7 @@ static int terminated = 0;
   CB(mpi_minimize_energy_slave) \
   CB(mpi_gather_cuda_devices_slave) \
   CB(mpi_thermalize_cpu_slave) \
-  CB(Electrostatics::Scafacos::set_parameters_slave) \
+  CB(mpi_scafacos_set_parameters_slave) \
   
 // create the forward declarations
 #define CB(name) void name(int node, int param);
