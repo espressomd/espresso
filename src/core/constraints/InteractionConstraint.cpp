@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+using std::ostringstream;
+
 namespace Constraints {
   void InteractionConstraint::add_force(Particle *p, const double *folded_pos) {
     int j;
