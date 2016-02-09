@@ -2338,7 +2338,7 @@ void maggs_calc_forces()
     np = cell->n;
     for(i=0; i<np; i++) { 
       q = p[i].p.q;
-      if( abs(q) > 1.0e-5 ) {
+      if( fabs(q) > 1.0e-5 ) {
 	FOR3D(d) {
 	  pos[d]   = (p[i].r.p[d] - lparams.left_down_position[d])* maggs.inva;
 	  first[d] = (int) pos[d];

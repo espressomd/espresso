@@ -130,15 +130,15 @@ int lattice_read_file(Lattice* lattice, char* filename) {
 
   int halosize=1;
 
-  if (size[0] > 0 && abs(size[0] - box_l[0]) > ROUND_ERROR_PREC) {
+  if (size[0] > 0 && fabs(size[0] - box_l[0]) > ROUND_ERROR_PREC) {
     runtimeErrorMsg() <<"Box size in x is wrong "<< size[0] << " vs " << box_l[0] <<"\n";
     return ES_ERROR;
   }
-  if (size[1] > 0 && abs(size[1] - box_l[1]) > ROUND_ERROR_PREC) {
+  if (size[1] > 0 && fabs(size[1] - box_l[1]) > ROUND_ERROR_PREC) {
     runtimeErrorMsg() <<"Box size in y is wrong "<< size[1] << " vs " << box_l[1] <<"\n";
     return ES_ERROR;
   }
-  if (size[2] > 0 && abs(size[2] - box_l[2]) > ROUND_ERROR_PREC) {
+  if (size[2] > 0 && fabs(size[2] - box_l[2]) > ROUND_ERROR_PREC) {
     runtimeErrorMsg() <<"Box size in z is wrong "<< size[2] << " vs " << box_l[2] <<"\n";
     return ES_ERROR;
   }

@@ -278,7 +278,7 @@ int Lattice::global_pos_in_local_halobox(double pos[3]) {
 int Lattice::global_pos_to_lattice_index_checked(double pos[3], int* index) {
     int i;
     for (i=0; i<3; i++)
-        if (abs(fmod(pos[i]-this->offset[i],this->agrid[i])) > ROUND_ERROR_PREC)
+        if (fabs(fmod(pos[i]-this->offset[i],this->agrid[i])) > ROUND_ERROR_PREC)
             return ES_ERROR;
     int ind[3];
     for (i=0; i<3; i++)
@@ -342,7 +342,7 @@ void Lattice::map_position_to_lattice(const double pos[3], index_t node_index[8]
         /* surrounding elementary cell is not completely inside this box,
            adjust if this is due to round off errors */
         if (ind[dir] < 0) {
-            if (abs(rel) < ROUND_ERROR_PREC) {
+            if (fabs(rel) < ROUND_ERROR_PREC) {
                 ind[dir] = 0; // TODO
             } else {
                 fprintf(stderr,"%d: map_position_to_lattice: position (%f,%f,%f) not inside a local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",this_node,pos[0],pos[1],pos[2],dir,ind[dir],rel,lpos);
