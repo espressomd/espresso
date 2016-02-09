@@ -29,6 +29,7 @@ Known bugs
 
 User-visible changes
 --------------------
+* bit_random tcl command removed.
 
 Changes visible for developers
 ------------------------------
