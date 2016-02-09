@@ -356,7 +356,7 @@ __global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restri
 			sum_r *= sqpow(uz);
 			sum_z *= sqpow(uz);
 
-			sum_r += rxy*cbpow(rsqrt(rxy2+sqpow(2)));
+			sum_r += rxy*cbpow(rsqrt(rxy2+sqpow(z)));
 			sum_r += rxy*cbpow(rsqrt(rxy2+sqpow(z+boxz)));
 			sum_r += rxy*cbpow(rsqrt(rxy2+sqpow(z-boxz)));
 
