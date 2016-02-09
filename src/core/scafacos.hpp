@@ -46,11 +46,10 @@ std::string get_parameters();
 void set_parameters(const std::string &method, const std::string &params);
 double get_r_cut();
 std::list<std::string> available_methods();
+#endif /* SCAFACOS */
+
 /** Parameter callback */
 void set_parameters_slave(int n_method, int n_params);
-#else
-void set_parameters_slave(int n_method, int n_params) {}
-#endif /* SCAFACOS */
 
 }
 }

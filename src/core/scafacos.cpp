@@ -247,8 +247,10 @@ void set_parameters(const std::string &method, const std::string &params) {
   set_params_safe(method, params);
 }
 
-void set_parameters_slave(int n_method, int n_params) {
+#endif
 
+void set_parameters_slave(int n_method, int n_params) {
+  #ifdef SCAFACOS
   std::string method;
   std::string params;
 
@@ -260,9 +262,8 @@ void set_parameters_slave(int n_method, int n_params) {
   MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
     
   set_params_safe(method, params);
+  #endif
 }
-
-#endif
 
 }
 }
