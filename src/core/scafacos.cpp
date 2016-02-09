@@ -59,7 +59,7 @@ struct ScafacosData {
   /** Inputs */
   std::vector<double> charges, positions;
   /** Outputs */
-  std::vector<double> forces, potentials;
+  std::vector<double> forces;
 };
 
 
@@ -85,7 +85,9 @@ int ScafacosData::update_particle_data() {
 }
 
 /** \brief Write forces back to particles */
+
 int ScafacosData::update_particle_forces() const {
+  int it = 0;
   
  for(int c = 0; c < local_cells.n; c++) {
     Cell const * cell = local_cells.cell[c];
@@ -93,11 +95,14 @@ int ScafacosData::update_particle_forces() const {
     const int np = cell->n;
     
     for(int i = 0; i < np; i++) {
-      p[i].f.f[0] += coulomb.bjerrum*p[i].p.q*forces[3*i + 0];
-      p[i].f.f[1] += coulomb.bjerrum*p[i].p.q*forces[3*i + 1];
-      p[i].f.f[2] += coulomb.bjerrum*p[i].p.q*forces[3*i + 2];
+      p[i].f.f[0] += coulomb.prefactor*p[i].p.q*forces[it++];
+      p[i].f.f[1] += coulomb.prefactor*p[i].p.q*forces[it++];
+      p[i].f.f[2] += coulomb.prefactor*p[i].p.q*forces[it++];
     }
  }
+
+ /** Check that the particle number did not change */
+ assert(it == forces.size());
 }
 
 static Scafacos *scafacos = 0;
@@ -107,23 +112,23 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *
 #ifdef SCAFACOS
   assert(scafacos);
   const double field = scafacos->pair_force(dist);
-      
+  const double fak = p2->p.q * p1->p.q * field * coulomb.prefactor / dist;
+  
   for(int i=0; i<3; i++){
-    p1->f.f[i] -= field * d[i] /dist * p2->p.q * p1->p.q * coulomb.bjerrum;
-    p2->f.f[i] += field * d[i] /dist * p2->p.q * p1->p.q * coulomb.bjerrum;
+    p1->f.f[i] -= fak * d[i];
+    p2->f.f[i] += fak * d[i];
   }
-#endif
+ #endif
 }
-
 void add_long_range_force() {
 #ifdef SCAFACOS
   particles.update_particle_data();
   
   if(scafacos)
-    scafacos->run(particles.charges, particles.positions, particles.forces, particles.potentials);
+    scafacos->run(particles.charges, particles.positions, particles.forces);
   else
     runtimeError("Scafacos internal error.");
-
+  
   particles.update_particle_forces();
 #endif
 }
@@ -199,9 +204,9 @@ static void set_params_safe(const std::string &method, const std::string &params
   if(scafacos && (scafacos->method != method)) {
     delete scafacos;
     scafacos = 0;
-  } else {
-    scafacos = new Scafacos(method, comm_cart, params);
   }
+  
+  scafacos = new Scafacos(method, comm_cart, params);
 
   scafacos->parse_parameters(params);
   int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
@@ -243,6 +248,21 @@ void set_parameters(const std::string &method, const std::string &params) {
   set_params_safe(method, params);
 #endif
 }
+
+#ifdef SCAFACOS
+/** Bend result from scafacos back to original format */
+std::string get_parameters() {
+  if(!scafacos) {
+    return std::string();
+  }
+
+  std::string p = scafacos->get_parameters();
+  
+  std::replace(p.begin(), p.end(), ',', ' ');
+  
+  return p;
+}
+#endif
 
 double get_r_cut() {
 #ifdef SCAFACOS

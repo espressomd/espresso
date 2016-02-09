@@ -141,6 +141,8 @@ int tclcommand_scafacos_methods(ClientData data, Tcl_Interp * interp, int argc, 
     Tcl_AppendResult(interp, m.c_str(), " ", 0);
   }
   Tcl_AppendResult(interp, "}", 0);
+
+  return TCL_OK;
 }
 
 int tclcommand_inter_coulomb_parse_scafacos(Tcl_Interp *interp, int argc, char ** argv) {
@@ -167,6 +169,13 @@ int tclcommand_inter_coulomb_parse_scafacos(Tcl_Interp *interp, int argc, char *
   
   return TCL_OK;
 }
+
+int tclprint_to_result_scafacos(Tcl_Interp *interp) {
+  std::string p = Electrostatics::Scafacos::get_parameters();
+  Tcl_AppendResult(interp, p.c_str(), 0);
+  return TCL_OK;
+}
+
 #endif
 
 int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
@@ -621,6 +630,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
 #ifdef EWALD_GPU
   case COULOMB_EWALD_GPU: tclprint_to_result_ewaldgpu(interp); break;
+#endif
+#ifdef SCAFACOS
+    case COULOMB_SCAFACOS: tclprint_to_result_scafacos(interp); break;
 #endif
   default: break;
   }

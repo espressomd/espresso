@@ -425,11 +425,13 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
        if (q1q2) add_ewald_gpu_coulomb_pair_force(p1,p2,d,dist,force);
        break;
 #endif
+#ifdef SCAFACOS
      case COULOMB_SCAFACOS:
        if(q1q2) {
          Electrostatics::Scafacos::add_pair_force(p1, p2, d, dist, force);
        }
        break;
+#endif
      default:
        break;
    }

@@ -41,6 +41,9 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *
 void add_long_range_force();
 /** Parameter callback */
 void set_parameters_slave(int n_method, int n_params);
+/** Get parameters */
+std::string get_parameters();
+/** Set parameters */
 void set_parameters(const std::string &method, const std::string &params);
 double get_r_cut();
 std::list<std::string> available_methods();

@@ -6,6 +6,10 @@ namespace Scafacos {
 
 #define handle_error(stmt) { const FCSResult res = stmt; if(res) runtimeError(fcs_result_get_message(res)); }
 
+std::string Scafacos::get_parameters() {
+  return method + " " + m_last_parameters;
+}
+
 std::list<std::string> Scafacos::available_methods() {
   std::list<std::string> methods;
   
@@ -51,7 +55,7 @@ std::list<std::string> Scafacos::available_methods() {
 
 Scafacos::Scafacos(const std::string &_method, MPI_Comm comm, const std::string &parameters) : method(_method) {
   handle_error(fcs_init(&handle, method.c_str(), comm));
-
+  
   int near_flag;
   fcs_get_near_field_delegation(handle, &near_flag);
   has_near = near_flag != 0;
@@ -59,6 +63,7 @@ Scafacos::Scafacos(const std::string &_method, MPI_Comm comm, const std::string 
   fcs_set_resort(handle, 0);
     
   parse_parameters(parameters);
+
 }
 
 Scafacos::~Scafacos() {
@@ -66,10 +71,12 @@ Scafacos::~Scafacos() {
 }
 
 void Scafacos::parse_parameters(const std::string &s) {
+  m_last_parameters = s;
   handle_error(fcs_parser(handle, s.c_str(), 0));
+
 }
 
-double Scafacos::r_cut() {
+double Scafacos::r_cut() const {
   if(has_near) {     
     fcs_float r_cut;
       
@@ -88,11 +95,10 @@ void Scafacos::set_r_cut(double r_cut) {
 }
 
 void Scafacos::run(std::vector<double> &charges, std::vector<double> &positions,
-                   std::vector<double> &forces, std::vector<double> &potentials) {
+                   std::vector<double> &forces) {
   const int local_n_part = charges.size();
 
   forces.resize(3*local_n_part);
-  potentials.resize(local_n_part);
 
   handle_error(fcs_tune(handle, local_n_part, &(positions[0]), &(charges[0])));
   

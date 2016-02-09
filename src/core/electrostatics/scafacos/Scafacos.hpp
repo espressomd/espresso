@@ -14,10 +14,12 @@ struct Scafacos {
   ~Scafacos();
   /** Parse parameter string */
   void parse_parameters(const std::string &s);
+  /** Get the parameters from the library */
+  std::string get_parameters();
   /** Set parameters common to all methods */
   void set_common_parameters(double *box_l, int *periodicity, int total_particles);
   /** Calulate short range pair force if supported by the method */
-  inline double pair_force(double dist) const {
+  inline double pair_force(double dist) const {     
     if(has_near) {
       fcs_float field;
       fcs_compute_near_field(handle, dist, &field);
@@ -28,11 +30,11 @@ struct Scafacos {
   }
   /** Calculate the forces */
   void run(std::vector<double> &charges, std::vector<double> &positions,
-           std::vector<double> &forces, std::vector<double> &potentials);
+           std::vector<double> &forces);
   /** Tune parameters */
   void tune(std::vector<double> &charges, std::vector<double> &positions);
   /** Get shortrange cutoff (0.0 if not supported) */
-  double r_cut();
+  double r_cut() const;
   /** Set cutoff */
   void set_r_cut(double r_cut); 
 
@@ -45,6 +47,8 @@ struct Scafacos {
   bool has_near;
   /** The scafacos method name of this instance */
   const std::string method;
+  /** The last parameters set */
+  std::string m_last_parameters;
 };
 
 
