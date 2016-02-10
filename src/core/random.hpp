@@ -195,22 +195,6 @@ inline double gaussian_random_cut(void) {
     }
     return curr;
     
-    /* save one number for later use */
-    /*
-    save = x1*fac*1.118591404;
-    if ( fabs(save) > 2*1.118591404 ) {
-      save = (2.0*d_random()-1.0)*2*1.118591404;
-    }
-    calc_new = 0;
-
-    // return the second number 
-    curr = x2*fac*1.118591404;
-    if ( fabs(curr) > 2*1.118591404) {
-      curr = (2.0*d_random()-1.0)*2*1.118591404;
-    }
-    return curr;
-    */
-
   } else {
 
     calc_new = 1;
@@ -223,9 +207,3 @@ inline double gaussian_random_cut(void) {
 }
 
 #endif
-
-
-
-
-
-
