@@ -120,7 +120,6 @@ libEspresso_la_SOURCES = \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
-	RunningAverage.cpp RunningAverage.hpp \
 	Vatiant.hpp Variant.cpp \
 	Vector.hpp \
 	ScriptObject.hpp \
