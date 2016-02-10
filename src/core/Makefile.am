@@ -99,6 +99,7 @@ libEspresso_la_SOURCES = \
 	rotation.cpp rotation.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	RuntimeErrorStream.cpp RuntimeErrorStream.hpp \
+	scafacos.cpp scafacos.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
 	statistics_chain.cpp statistics_chain.hpp \
@@ -127,7 +128,7 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	RunningAverage.cpp RunningAverage.hpp
+	utils/statistics/RunningAverage.cpp utils/statistics/RunningAverage.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \

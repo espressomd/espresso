@@ -266,6 +266,10 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 
   Constraints::Tcl::ConstraintManager *constraints = new Constraints::Tcl::ConstraintManager(interp);
   constraints->create_command("constraint");  
+
+#ifdef SCAFACOS
+  REGISTER_COMMAND("scafacos_methods", tclcommand_scafacos_methods);
+#endif
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

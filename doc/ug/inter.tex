@@ -2063,6 +2063,38 @@ It should be mentioned that this algorithm is not a black box and should be unde
 
 The calculation of local permittivity will for the same parameters -- depending on your computer -- run roughly a factor of $2$ to $4$ longer than MEMD without temporally varying dielectric properties.
 
+\subsection{Scafacos}
+\index{Scafacos|mainindex}
+Espresso can use the electrostatics methods from the Scafacos \emph{Scalable fast Coulomb solvers} library.
+\begin{essyntax}
+  scafacos_methods
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+This shows the methods available at the compile time of \es{}.
+Scafacos can be used as Coulomb solver for the system.
+\begin{essyntax}
+  inter coulomb \var{l_b} scafacos \var{method} \opt{\var{parameters}} \opt{tolerance_field \var{prec}}
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
+\texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
+\var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver
+are not set, and the method supports it, the open parameteres are tuned.
+To use the \texttt{ewald} solver from scafacos as electrostatics solver for your system, set its cutoff
+to $1.5$ and tune the other parameters for an accuracy of $10^{-3}$, use the command
+\begin{tclcode}
+  inter coulomb 1.0 scafacos ewald ewald_r_cut 1.5 tolerance_field 1e-3
+\end{tclcode}
+For details of the various methods and their parameters please refer to the Scafacos manual.
+Note that the \texttt{SCAFACOS} feature is only available if you build with cmake. You need
+to build Scafacos as a shared library.
+
 \subsection{Electrostatic Layer Correction (ELC)}
 \index{ELC method|mainindex}
 \index{interactions!ELC method|mainindex}

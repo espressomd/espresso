@@ -178,7 +178,7 @@ espressoSystemInterface.update();
   case CELL_STRUCTURE_DOMDEC:
     if(dd.use_vList) {
       if (rebuild_verletlist)
-    build_verlet_lists_and_calc_verlet_ia();
+        build_verlet_lists_and_calc_verlet_ia();
       else
     calculate_verlet_ia();
     }
@@ -301,6 +301,11 @@ void calc_long_range_forces()
     MMM2D_add_far_force();
     MMM2D_dielectric_layers_force_contribution();
     break;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+    Electrostatics::Scafacos::add_long_range_force();
+    break;
+#endif
   default:
     break;
   }

@@ -65,6 +65,7 @@
 #include "external_potential.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
+#include "scafacos.hpp"
 
 #include "shapes/Shape.hpp"
 #include "constraints/Constraint.hpp"
@@ -340,7 +341,7 @@ void on_coulomb_change()
     break;
   default: break;
   }
-#endif  /* ifdef ELECTROSTATICS */
+#endif  /* ELECTROSTATICS */
 
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
