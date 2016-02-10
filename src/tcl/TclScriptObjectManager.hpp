@@ -10,6 +10,10 @@
 #endif
 
 #include <iostream>
+#include <string>
+#include <exception>
+
+using std::string;
 
 /** Tcl Interface for a ObjectManager<ScriptObject> */
 
@@ -34,7 +38,7 @@ public:
         
         ss >> id;
         if(ss.fail()) {
-          throw string("usage()");
+          throw std::invalid_argument("Expected integer id");
         }        
         argv.pop_front();
         
@@ -53,7 +57,7 @@ public:
           std::stringstream ss(argv.front());
           ss >> id;
           if(ss.fail()) {
-            throw string("usage()");
+            throw std::invalid_argument("Expected integer id");
           }
           argv.pop_front();
         }
