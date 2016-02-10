@@ -31,7 +31,7 @@
 #include <string>
 
 #include "particle_data.hpp"
-#endif
+#endif /* SCAFACOS */
 
 namespace Electrostatics {
 namespace Scafacos {

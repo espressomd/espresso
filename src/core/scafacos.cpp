@@ -44,14 +44,14 @@
 #include "interaction_data.hpp"
 #include "electrostatics/scafacos/Scafacos.hpp"
 
-#endif
+#endif /* SCAFACOS */
 
 /** This file contains the c-like interface for Scafacos */
 
+#ifdef SCAFACOS
+
 namespace Electrostatics {
 namespace Scafacos {
-
-#ifdef SCAFACOS
 
 /** Get available scafacos methods */
 std::list<std::string> available_methods() {
@@ -250,7 +250,7 @@ void set_parameters(const std::string &method, const std::string &params) {
 }
 }
 
-#endif
+#endif /* SCAFACOS */
 
 void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {  
   #ifdef SCAFACOS
@@ -266,6 +266,5 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
   MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
     
   set_params_safe(method, params);
-  #endif
+  #endif /* SCAFACOS */
 }
-
