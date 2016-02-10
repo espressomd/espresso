@@ -72,10 +72,6 @@ void local_setup_reaction() {
   /* Make ESPResSo aware that reactants and catalyst are interacting species */
   IA_parameters *data = get_ia_param_safe(reaction.reactant_type, reaction.catalyzer_type);
   
-  if(!data) {
-      runtimeErrorMsg() <<"interaction parameters for reaction could not be set";
-  }
-
   /* Used for the range of the verlet lists */
   data->REACTION_range = reaction.range;
 
