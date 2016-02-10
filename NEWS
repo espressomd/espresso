@@ -22,6 +22,8 @@ New user-visible features
 * Stokesian Dynamics support (GPU only)
 * Dipolar direct sum on gpu for large systems (more particles than the max number of threads the gpu runs in parallel)
 * analyze momentum now returns the total momentum including the fluid momentum.
+* CMake build system
+* Support for the Scafacos library for electrostatis
 
 Known bugs
 ----------
@@ -32,7 +34,7 @@ User-visible changes
 
 Changes visible for developers
 ------------------------------
-
+* CMake build system
 
 ESPResSo 3.3
 ============

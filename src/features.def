@@ -236,4 +236,5 @@ CUDA external
 FFTW external
 TK   external
 H5MD external
+SCAFACOS external
 

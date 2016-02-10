@@ -72,6 +72,7 @@
 #include "EspressoSystemInterface.hpp"
 #include "statistics_observable.hpp"
 #include "minimize_energy.hpp"
+#include "scafacos.hpp"
 
 using namespace std;
 
@@ -170,7 +171,8 @@ static int terminated = 0;
   CB(mpi_minimize_energy_slave) \
   CB(mpi_gather_cuda_devices_slave) \
   CB(mpi_thermalize_cpu_slave) \
-
+  CB(mpi_scafacos_set_parameters_slave) \
+  
 // create the forward declarations
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
@@ -1998,15 +2000,14 @@ void mpi_bcast_coulomb_params()
 void mpi_bcast_coulomb_params_slave(int node, int parm)
 {   
 
-
-
-
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:
+    // fall through, scafacos has internal parameter propagation
+  case COULOMB_SCAFACOS:
     break;
 #ifdef P3M
   case COULOMB_ELC_P3M:
