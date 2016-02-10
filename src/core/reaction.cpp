@@ -392,9 +392,11 @@ void integrate_reaction_swap()
         // If the particle has been tagged we perform the changes
         if ( p_local[i].p.catalyzer_count != 0 )
         {
+#ifdef ELECTROSTATICS
           // Flip charge
           p_local[i].p.q *= -1;
-
+#endif /* ELECTROSTATICS */
+          
           // Flip type
           if ( p_local[i].p.type == reaction.reactant_type )
             p_local[i].p.type = reaction.product_type;
