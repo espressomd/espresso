@@ -28,13 +28,14 @@
 #include "particle_data.hpp"
 
 typedef struct {
-	int reactant_type;
-	int product_type;
-	int catalyzer_type;
-	double range;
-	double ct_rate;
-	double eq_rate;
+  int reactant_type;
+  int product_type;
+  int catalyzer_type;
+  double range;
+  double ct_rate;
+  double eq_rate;
   int sing_mult;
+  int swap;
 }  reaction_struct;
 
 extern reaction_struct reaction;
