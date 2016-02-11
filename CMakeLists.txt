@@ -42,6 +42,7 @@ option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_TESTS  "Enable tests"            ON)
+option(WITH_SCAFACOS "Build with Scafacos support" ON)
 
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
@@ -59,6 +60,17 @@ if (WITH_CUDA)
   list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
   list(APPEND LIBRARIES ${CUDA_LIBRARIES})
   set(CUDA 1)
+
+  if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
+  else()
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
+  endif()
+  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
+  
+  if (APPLE)
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
+  endif()
 endif(WITH_CUDA)     
 
 find_package(PythonInterp)
@@ -91,6 +103,14 @@ if(HDF5_FOUND)
   list(APPEND LIBRARIES ${HDF5_LIBRARIES})
   include_directories(${HDF5_INCLUDE_DIRS})
 endif()
+
+if(WITH_SCAFACOS)
+  find_package(PkgConfig)
+  pkg_check_modules(SCAFACOS scafacos)
+  if(SCAFACOS_FOUND)
+    set(SCAFACOS 1)
+  endif(SCAFACOS_FOUND)
+endif(WITH_SCAFACOS)
 
 include(RequireCXX11)
 
@@ -127,6 +147,7 @@ endif(WITH_MPI)
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
+
 set(SCRIPTDIR ${DATA}/scripts)
 
 #######################################################################
