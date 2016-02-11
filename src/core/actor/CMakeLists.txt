@@ -1,6 +1,7 @@
 file(GLOB Actor_SRC *.cpp)
 
 add_library(Actor SHARED ${Actor_SRC})
+set_target_properties(Actor PROPERTIES MACOSX_RPATH TRUE)
 
 if(WITH_CUDA)
   file(GLOB ActorCuda_SRC *.cu)
