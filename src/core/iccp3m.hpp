@@ -75,6 +75,7 @@
 
 /* iccp3m data structures*/
 typedef struct {
+  int initialized;
   int n_ic;                             /* Last induced id (can not be smaller then 2) */
   int num_iteration;                    /* Number of max iterations                    */
   double eout;                          /* Dielectric constant of the bulk             */
@@ -145,6 +146,10 @@ void iccp3m_init(void);
 /** The allocation of ICCP3M lists for python interface
  */
 void iccp3m_alloc_lists();
+
+/** The set of the init flag from python interface
+ */
+void iccp3m_set_initialized();
 
 /** check sanity of parameters for use with ICCP3M 
  */

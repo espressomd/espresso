@@ -208,7 +208,7 @@ IF ELECTROSTATICS and P3M:
             iccp3m_cfg.eout = self._params["eps_out"]
             iccp3m_cfg.citeration = 0
 
-            iccp3m_initialized = 1
+            iccp3m_set_initialized()
             iccp3m_cfg.set_flag = 1
 
             # Broadcasts vars

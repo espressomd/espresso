@@ -35,7 +35,7 @@ IF ELECTROSTATICS and P3M:
         int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize, double top, double bottom, int const_pot_on, double pot_diff)
 
         # links intern C-struct with python object
-        cdef extern ELC_struct elc_params
+        ELC_struct elc_params
 
     cdef extern from "iccp3m.hpp":
         ctypedef struct iccp3m_struct:
@@ -61,10 +61,9 @@ IF ELECTROSTATICS and P3M:
             int first_id
 
         # links intern C-struct with python object
-        cdef extern iccp3m_struct iccp3m_cfg
+        iccp3m_struct iccp3m_cfg
 
-        cdef extern int iccp3m_initialized
-
+        void iccp3m_set_initialized()
         void iccp3m_alloc_lists()
 
         cdef extern from "communication.hpp":
