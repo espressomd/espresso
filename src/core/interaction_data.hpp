@@ -140,6 +140,7 @@ enum OverlappedBondedInteraction{
 		COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
 		COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
                 COULOMB_EK, //< Coulomb method is electrokinetics
+                COULOMB_SCAFACOS, //< Coulomb method is scafacos
 	};
 
 #endif

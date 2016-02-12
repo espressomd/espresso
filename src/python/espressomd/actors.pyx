@@ -11,7 +11,17 @@ cdef class Actor:
                        HydrodynamicInteraction=False,
                        ElectrostaticExtensions=False)
 
-    def __cinit__(self, *args, **kwargs):
+    # __getstate__ and __setstate__ define the pickle interaction
+    def __getstate__(self):
+        odict = self._params.copy()
+        return odict
+
+    def __setstate__(self,params):
+        self._params=params
+        self._set_params_in_es_core()
+
+
+    def __init__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.default_params()
         self.system = None

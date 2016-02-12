@@ -32,6 +32,8 @@
 #include <sstream>
 #include <list>
 
+#include "RuntimeErrorStream.hpp"
+
 /** exit ungracefully, core dump if switched on. */
 void errexit();
 
@@ -50,11 +52,15 @@ void _runtimeWarning(const std::ostringstream &msg, const char* function, const 
 void _runtimeError(const char* msg, const char* function, const char* file, const int line);
 void _runtimeError(const std::string &msg, const char* function, const char* file, const int line);
 void _runtimeError(const std::ostringstream &msg, const char* function, const char* file, const int line);
+ErrorHandling::RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, const std::string &function);
 
 #define runtimeWarning(msg) \
  _runtimeWarning(msg, __PRETTYFUNC__, __FILE__, __LINE__)
 #define runtimeError(msg) \
  _runtimeError(msg, __PRETTYFUNC__, __FILE__, __LINE__)
+
+#define runtimeErrorMsg() \
+  _runtimeErrorStream(__FILE__, __LINE__, __PRETTYFUNC__)
 
 /** check for runtime errors on all nodes. This has to be called on all nodes synchronously.
     @return the number of characters in the error messages of all nodes together. */

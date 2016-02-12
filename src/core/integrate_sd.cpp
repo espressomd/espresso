@@ -62,6 +62,8 @@
 #include "statistics_correlation.hpp"
 #include "ghmc.hpp"
 
+using std::ostringstream;
+
 /************************************************
  * DEFINES
  ************************************************/

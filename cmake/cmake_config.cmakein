@@ -13,6 +13,10 @@
 
 #cmakedefine HAVE_CXX11
 
+#cmakedefine HAVE_MPI
+
+#cmakedefine SCAFACOS
+
 #define PACKAGE_NAME "${PROJECT_NAME}"
 
 #define __PRETTYFUNC__ "n/a"

@@ -65,6 +65,33 @@ set methods {}
 set setups {}
 set accuracies {}
 
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "ewald"] } then {
+    proc setup_scafacos_ewald {} {
+        inter coulomb 1.0 scafacos ewald ewald_r_cut 1.001 tolerance_field 1e-4
+    }
+    lappend methods "SCAFACOS_ewald"
+    lappend setups "setup_scafacos_ewald"
+    lappend accuracies 1e-3
+}
+
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p3m"] } then {
+    proc setup_scafacos_p3m {} {
+        inter coulomb 1.0 scafacos p3m p3m_r_cut 1.001 p3m_grid 64 p3m_cao 7 p3m_alpha 2.70746
+    }
+    lappend methods "SCAFACOS_p3m"
+    lappend setups "setup_scafacos_p3m"
+    lappend accuracies 1e-3
+}
+
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p2nfft"] } then {
+    proc setup_scafacos_p2nfft {} {
+        inter coulomb 1.0 scafacos p2nfft p2nfft_r_cut 1.001 tolerance_field 1e-4
+    }
+    lappend methods "SCAFACOS_p2nfft"
+    lappend setups "setup_scafacos_p2nfft"
+    lappend accuracies 1e-3
+}
+
 if { [ has_feature "P3M" ] } then {
     proc setup_p3m {} {
         inter coulomb 1.0 p3m 1.001 64 7 2.70746
@@ -72,14 +99,6 @@ if { [ has_feature "P3M" ] } then {
     }
     lappend methods "P3M" 
     lappend setups "setup_p3m"
-    lappend accuracies 1e-3
-}
-if { [ has_feature "SCAFACOS_P3M" ] } then {
-    proc setup_scafacos_p3m {} {
-        inter coulomb 1.0 scafacos_p3m cutoff 1.001 grid 64 cao 7 alpha 2.70746
-    }
-    lappend methods "SCAFACOS_P3M"
-    lappend setups "setup_scafacos_p3m"
     lappend accuracies 1e-3
 }
 

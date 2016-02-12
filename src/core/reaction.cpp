@@ -42,15 +42,11 @@ void reactions_sanity_checks()
   if(reaction.ct_rate != 0.0) {
 
     if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-        std::ostringstream msg;
-        msg <<"The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition";
     }
 
     if(max_cut < reaction.range) {
-        std::ostringstream msg;
-        msg <<"Reaction range of " << reaction.range << " exceeds maximum cutoff of " << max_cut;
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Reaction range of " << reaction.range << " exceeds maximum cutoff of " << max_cut;
     }
   }
 }
@@ -76,12 +72,6 @@ void local_setup_reaction() {
   /* Make ESPResSo aware that reactants and catalyst are interacting species */
   IA_parameters *data = get_ia_param_safe(reaction.reactant_type, reaction.catalyzer_type);
   
-  if(!data) {
-      std::ostringstream msg;
-      msg <<"interaction parameters for reaction could not be set";
-      runtimeError(msg);
-  }
-
   /* Used for the range of the verlet lists */
   data->REACTION_range = reaction.range;
 
@@ -398,9 +388,11 @@ void integrate_reaction_swap()
         // If the particle has been tagged we perform the changes
         if ( p_local[i].p.catalyzer_count != 0 )
         {
+#ifdef ELECTROSTATICS
           // Flip charge
           p_local[i].p.q *= -1;
-
+#endif /* ELECTROSTATICS */
+          
           // Flip type
           if ( p_local[i].p.type == reaction.reactant_type )
             p_local[i].p.type = reaction.product_type;
