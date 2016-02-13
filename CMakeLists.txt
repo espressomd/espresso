@@ -43,6 +43,7 @@ option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
+option(WITH_CCACHE "Use ccache as a launcher for the compiler" OFF)
 
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
@@ -140,6 +141,18 @@ if (NOT DEFINED DATA)
 endif(NOT DEFINED DATA)
 
 set(SCRIPTDIR ${DATA}/scripts)
+
+#######################################################################
+# ccache
+#######################################################################
+if(WITH_CCACHE)
+  find_program(CCACHE_FOUND ccache)
+  if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILER ${CCACHE_FOUND})
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE_FOUND})
+  endif(CCACHE_FOUND)
+endif(WITH_CCACHE)
+
 
 #######################################################################
 # Subdirectories

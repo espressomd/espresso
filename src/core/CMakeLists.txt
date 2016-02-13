@@ -33,6 +33,9 @@ add_library(EspressoCore SHARED ${EspressoCore_SRC}
 target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostatics ImmersedBoundary Constraints Shapes)
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
+add_dependencies(EspressoCore EspressoConfig)
+
+
 if(WITH_CUDA)
   file(GLOB EspressoCuda_SRC
           "*.cu"
