@@ -230,6 +230,7 @@ void mpi_core(MPI_Comm *comm, int *errcode,...) {
 
 void mpi_init(int *argc, char ***argv)
 {
+#ifdef HAVE_MPI
 #ifdef OPEN_MPI
   void *handle = 0;
   int mode = RTLD_NOW | RTLD_GLOBAL;
@@ -280,6 +281,8 @@ void mpi_init(int *argc, char ***argv)
     request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
   }
 
+#endif /* HAVE_MPI */
+  
   initRuntimeErrorCollector();
 }
 
@@ -2230,17 +2233,17 @@ void mpi_send_ext_force_slave(int pnode, int part)
 }
 
 /*************** REQ_BCAST_CONSTR ************/
-void mpi_bcast_constraint(int del_num)
+void mpi_bcast_constraint(Constraints::ConstraintList::Action action, int id)
 {
 #ifdef CONSTRAINTS
-  mpi_call(mpi_bcast_constraint_slave, 0, del_num);
-  /* @TODO: Do something */
+  mpi_call(mpi_bcast_constraint_slave, static_cast<int>(action), id);
+ 
   
   on_constraint_change();
 #endif
 }
 
-void mpi_bcast_constraint_slave(int node, int parm)
+void mpi_bcast_constraint_slave(int action, int parm)
 {   
 #ifdef CONSTRAINTS
   /* @TODO: Do something */

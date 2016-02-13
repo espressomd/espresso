@@ -28,7 +28,6 @@ endif
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 lib_LTLIBRARIES = libEspresso.la
-SUBDIRS+= shapes
 
 # Objects from Subdirs
 libEspresso_la_LIBADD = \

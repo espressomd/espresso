@@ -101,6 +101,8 @@ if(WITH_SCAFACOS)
   endif(SCAFACOS_FOUND)
 endif(WITH_SCAFACOS)
 
+find_package(Boost COMPONENTS serialization mpi)
+
 include(RequireCXX11)
 
 #######################################################################

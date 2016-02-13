@@ -19,6 +19,8 @@ typedef std::set<Constraints::Constraint *> set_type;
 
 class ConstraintList : public set_type {
  public:
+  enum Action { ADD, DELETE };
+
   void add_forces(Particle *p);
   void add_energies(Particle *p);
   void init_forces();

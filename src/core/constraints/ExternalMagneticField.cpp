@@ -6,11 +6,11 @@ namespace Constraints {
 
   void ExternalMagneticField::add_energy(Particle *p, const double *folded_pos, Observable_stat &energy) {
 #ifdef DIPOLES
-    energy.dipolar[0] += -1.0 * scalar(ext_magn_field,p->r.dip);
+    energy.dipolar[0] += -1.0 * ext_magn_field.dot(Vector3d(p->r.dip));
 #endif
   }
 
-    void ExternalMagneticField::add_force(Particle *p, const double *folded_pos) {
+void ExternalMagneticField::add_force(Particle *p, const double *folded_pos) {
 #ifdef ROTATION
 #ifdef DIPOLES
     p->f.torque[0] += p->r.dip[1]*ext_magn_field[2]-p->r.dip[2]*ext_magn_field[1];

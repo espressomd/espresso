@@ -48,6 +48,9 @@ void Wall::set_parameter(const std::string &name, const Variant &value) {
   SET_PARAMETER_HELPER("normal", n);
   SET_PARAMETER_HELPER("dist", d);
 
+  /** Normalize the normal */
+  n.normalize();
+  
   std::cout << "n[0] = " << n[0] << std::endl;
 }
 

@@ -30,7 +30,7 @@ add_library(EspressoCore SHARED ${EspressoCore_SRC}
                         ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
                         ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostatics ImmersedBoundary)
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostatics ImmersedBoundary Constraints Shapes)
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
 if(WITH_CUDA)
@@ -57,3 +57,5 @@ add_subdirectory(actor)
 add_subdirectory(immersed_boundary)
 add_subdirectory(object-in-fluid)
 add_subdirectory(electrostatics)
+add_subdirectory(constraints)
+add_subdirectory(shapes)
