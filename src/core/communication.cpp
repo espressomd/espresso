@@ -180,17 +180,15 @@ CALLBACK_LIST
 // create the list of callbacks
 #undef CB
 #define CB(name) name,
-static SlaveCallback * const slave_callbacks[] = {
+std::vector<SlaveCallback *> slave_callbacks{
   CALLBACK_LIST
 };
-
-const int N_CALLBACKS = sizeof(slave_callbacks)/sizeof(SlaveCallback*);
 
 // create the list of names
 #undef CB
 #define CB(name) #name,
 
-const char *names[] = {
+std::vector<std::string> names{
   CALLBACK_LIST
 };
 
@@ -277,7 +275,7 @@ void mpi_init(int *argc, char ***argv)
   MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
 
-  for(int i = 0; i < N_CALLBACKS; ++i)  {
+  for(int i = 0; i < slave_callbacks.size(); ++i)  {
     request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
   }
 
@@ -3210,7 +3208,7 @@ void mpi_loop()
     MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
     COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
 		       names[request[0]], request[1], request[2]));
-    if ((request[0] < 0) || (request[0] >= N_CALLBACKS)) {
+    if ((request[0] < 0) || (request[0] >= slave_callbacks.size())) {
       fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
       errexit();
     }

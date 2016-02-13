@@ -5,7 +5,7 @@
 # In Cmake 3.1+, CMAKE_CXX_STANDARD_REQUIRED should be able to replace
 # all the logic below.
 
-if ( DEFINED HAVE_CXX11 )
+if ( DEFINED HAVE_CXX11 OR FORCE_CXX03 )
   return()
 endif ()
 
