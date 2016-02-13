@@ -520,7 +520,6 @@ if (p1->p.rotation)
 }
 
 inline void add_single_particle_energy(Particle *p) {
-  std::cout << "void add_single_particle_energy(Particle *p)" << std::endl;
   add_kinetic_energy(p);
   add_bonded_energy(p);
 #ifdef CONSTRAINTS

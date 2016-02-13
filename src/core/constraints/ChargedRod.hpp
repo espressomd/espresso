@@ -12,7 +12,7 @@ namespace Constraints {
       center[1] = center_y;
     }
     /** Constraint stuff */
-    void add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy);
+    void add_energy(Particle *p, const double *folded_pos, Observable_stat &energy);
     void add_force(Particle *p, const double *folded_pos);
     virtual const std::string name() const { return Constraint::name() + std::string("ChargedRod"); }
     Vector3d center;

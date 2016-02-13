@@ -2,7 +2,6 @@
 #define __INTERACTION_CONSTRAINT_HPP
 
 #include "GeometryConstraint.hpp"
-
 #include "interaction_data.hpp"
 
 namespace Constraints {

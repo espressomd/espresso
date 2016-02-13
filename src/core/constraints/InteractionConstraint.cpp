@@ -63,7 +63,6 @@ namespace Constraints {
   }
 
   void InteractionConstraint::add_energy(Particle *p, const double *folded_pos, Observable_stat &energy) {
-    std::cout << "InteractionConstraint::add_energy()" << std::endl;
     double dist, vec[3];
     IA_parameters *ia_params;
     double nonbonded_en = 0.0;

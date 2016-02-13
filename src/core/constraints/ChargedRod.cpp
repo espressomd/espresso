@@ -6,7 +6,7 @@
 
 namespace Constraints {
 
-  void ChargedRod::add_energy(const Particle *p, const double *folded_pos, Observable_stat &energy) {
+  void ChargedRod::add_energy(Particle *p, const double *folded_pos, Observable_stat &energy) {
 #ifdef ELECTROSTATICS
     int i;
     double vec[2], c_dist_2;
