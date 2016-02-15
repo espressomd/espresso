@@ -73,6 +73,7 @@
 #include "statistics_observable.hpp"
 #include "minimize_energy.hpp"
 #include "scafacos.hpp"
+#include "MpiCallbacks.hpp"
 
 using namespace std;
 
@@ -196,6 +197,8 @@ std::vector<std::string> names{
 
 }
 
+MpiCallbacks dynamic_callbacks;
+
 // tag which is used by MPI send/recv inside the slave functions
 #define SOME_TAG 42
 
@@ -207,6 +210,8 @@ typedef std::map<SlaveCallback *, int> request_map_type;
 typedef std::unordered_map<SlaveCallback *, int> request_map_type;
 #endif
 static request_map_type request_map;
+
+std::vector<MpiCallbacks::Function> MpiCallbacks::m_callbacks;
 
 /** Forward declarations */
 
@@ -294,7 +299,8 @@ void mpi_init(int *argc, char ***argv)
   for(int i = 0; i < slave_callbacks.size(); ++i)  {
     request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
   }
-  std::cout << this_node << ": request_map.size() = " << request_map.size() << std::endl;
+
+  mpi_add_callback(MpiCallbacks::slave);
 #endif /* HAVE_MPI */
   
   initRuntimeErrorCollector();
