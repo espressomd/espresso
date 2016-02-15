@@ -177,6 +177,8 @@ static int terminated = 0;
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
 
+namespace {
+
 // create the list of callbacks
 #undef CB
 #define CB(name) name,
@@ -192,12 +194,10 @@ std::vector<std::string> names{
   CALLBACK_LIST
 };
 
+}
+
 // tag which is used by MPI send/recv inside the slave functions
 #define SOME_TAG 42
-
-/** The requests are compiled statically here, so that after a crash
-    you can get the last issued request from the debugger. */ 
-static int request[3];
 
 /** Map callback function pointers to request codes */
 #ifndef HAVE_CXX11
@@ -216,6 +216,21 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
+void mpi_add_callback(SlaveCallback *cb) {
+#ifdef HAVE_MPI
+  /** This only works as long as we don't delete callbacks, which is not supported yet. */
+  const int id = request_map.size();
+  /** Name is only used for debug messages */
+  names.push_back("dynamic callback");
+  request_map.insert(std::pair<SlaveCallback *, int>(cb, id));
+  slave_callbacks.push_back(cb);
+
+  /** Check that arrays are in sync */
+  assert(slave_callbacks[id] == cb);
+#endif
+}
+
+
 #ifdef MPI_CORE
 void mpi_core(MPI_Comm *comm, int *errcode,...) {
   int len;
@@ -228,6 +243,7 @@ void mpi_core(MPI_Comm *comm, int *errcode,...) {
 
 void mpi_init(int *argc, char ***argv)
 {
+  std::cout << "mpi_init()\n";
 #ifdef HAVE_MPI
 #ifdef OPEN_MPI
   void *handle = 0;
@@ -278,7 +294,7 @@ void mpi_init(int *argc, char ***argv)
   for(int i = 0; i < slave_callbacks.size(); ++i)  {
     request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
   }
-
+  std::cout << this_node << ": request_map.size() = " << request_map.size() << std::endl;
 #endif /* HAVE_MPI */
   
   initRuntimeErrorCollector();
@@ -293,6 +309,7 @@ void mpi_call(SlaveCallback cb, int node, int param) {
     errexit();
   }
   const int reqcode = req_it->second;
+  int request[3];
   
   request[0] = reqcode;
   request[1] = node;
@@ -3205,6 +3222,7 @@ void mpi_loop()
 #ifdef ASYNC_BARRIER
     MPI_Barrier(comm_cart);
 #endif
+    int request[3];
     MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
     COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
 		       names[request[0]], request[1], request[2]));

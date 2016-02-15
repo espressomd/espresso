@@ -25,9 +25,8 @@
 #include <map>
 #include <string>
 #include <functional>
-#ifdef HAVE_CXX11
 #include <type_traits>
-#endif
+#include <exception>
 
 namespace Utils {
 
@@ -37,6 +36,7 @@ template<class T>
 class Factory {
  public:
   typedef std::function<T *()> Builder;
+  
   template<class Derived>
   static T *builder() {
 #ifdef HAVE_CXX11
@@ -53,17 +53,17 @@ class Factory {
 
   T *make(std::string name) {
     if (m_map.find(name) == m_map.end()) {
-      throw std::string().append(name).append(std::string(" not found."));
+      throw std::domain_error("Class '" + name + "' not found.");
     }
 
     if (m_map[name]) {
       return m_map[name]();
     } else {
-      throw std::string("invalid function pointer");
+      throw std::out_of_range("Invalid function pointer");
     }
   }
 
-  bool has_builder(std::string name) {
+  bool has_builder(const std::string &name) {
     return not (m_map.find(name) == m_map.end());
   }
   

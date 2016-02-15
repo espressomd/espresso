@@ -1,7 +1,7 @@
 #ifndef __OBJECTMANAGER_HPP
 #define __OBJECTMANAGER_HPP
 
-#include "utils/Factory.hpp"
+#include "utils/ParallelFactory.hpp"
 #include "ObjectContainer.hpp"
 
 template<class T>
@@ -9,7 +9,7 @@ class ObjectManager {
 public:
   typedef typename ObjectContainer<T>::iterator iterator;
   int add(std::string name) {
-    T *p =  Utils::Factory<T>::Instance().make(name);
+    T *p =  Utils::ParallelFactory<T>::make(name);
     const int id = m_objects.add(p);
     m_names[id] = name;
     return id;

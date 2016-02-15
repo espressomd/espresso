@@ -24,7 +24,7 @@
 
 #include <string>
 #include "ScriptObject.hpp"
-#include "utils/Factory.hpp"
+#include "utils/ParallelFactory.hpp"
 
 namespace Shapes {
   struct Shape : public ScriptObject {
@@ -33,7 +33,7 @@ namespace Shapes {
     virtual const std::string name() const { return std::string("Shape"); }
   };
 
-typedef Utils::Factory<Shape> ShapeFactory;
+typedef Utils::ParallelFactory<Shape> ShapeFactory;
 void initialize_factory();
 
 }

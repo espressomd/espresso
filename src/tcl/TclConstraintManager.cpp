@@ -96,7 +96,7 @@ void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::strin
 
     /** If it's not one of the other types it is a GeometryConstraint */
   } else {
-    Shapes::Shape *s = Shapes::ShapeFactory::Instance().make(name);
+    Shapes::Shape *s = Shapes::ShapeFactory::make(name);
     TclScriptObject(s, interp).parse_from_string(argv);
     
     c = new InteractionConstraint(*s);

@@ -416,9 +416,10 @@ AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 ##################
 
 BOOST_REQUIRE([1.42])
-BOOST_TEST()
-BOOST_SERIALIZATION()
-BOOST_MPI()
+BOOST_TEST
+BOOST_SERIALIZATION
+#BOOST_MPI
+#LIBS+=" $BOOST_MPI_LIBS"
 AM_CONDITIONAL([UNIT_TESTS], [test x$ax_cv_boost_unit_test_framework == xyes])
 
 ## Checking for MAGMA
