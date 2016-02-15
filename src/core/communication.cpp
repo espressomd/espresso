@@ -300,6 +300,7 @@ void mpi_init(int *argc, char ***argv)
     request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
   }
 
+  /** Add hook for dynamic callbacks to mem functions */
   mpi_add_callback(MpiCallbacks::slave);
 #endif /* HAVE_MPI */
   

@@ -10,6 +10,7 @@ public:
   typedef typename ObjectContainer<T>::iterator iterator;
   int add(std::string name) {
     T *p =  Utils::ParallelFactory<T>::make(name);
+    p->call_slaves();
     const int id = m_objects.add(p);
     m_names[id] = name;
     return id;
