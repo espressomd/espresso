@@ -479,7 +479,7 @@ double calc_electrostatics_cutoff()
   switch (coulomb.method) {
 #ifdef P3M 
   case COULOMB_ELC_P3M:
-    return max(elc_params.space_layer,p3m.params.r_cut_iL* box_l[0]);
+    return std::max(elc_params.space_layer,p3m.params.r_cut_iL* box_l[0]);
   case COULOMB_P3M_GPU:
   case COULOMB_P3M: 
     /* do not use precalculated r_cut here, might not be set yet */
@@ -559,10 +559,10 @@ max_cut_global_without_coulomb_and_dipolar=max_cut_global;
 
   // Electrostatics and magnetostatics
   coulomb_cutoff= calc_electrostatics_cutoff();
-  max_cut_global =max(max_cut_global,coulomb_cutoff);
+  max_cut_global =std::max(max_cut_global,coulomb_cutoff);
   
   dipolar_cutoff= calc_dipolar_cutoff();
-  max_cut_global =max(max_cut_global,dipolar_cutoff);
+  max_cut_global =std::max(max_cut_global,dipolar_cutoff);
 
 }
 
@@ -721,7 +721,7 @@ static void recalc_maximal_cutoff_nonbonded()
          Coulomb and dipolar interactions are handled in the Verlet lists
 	 separately. */
 
-      max_cut_current =max(max_cut_current,max_cut_global_without_coulomb_and_dipolar);
+      max_cut_current =std::max(max_cut_current,max_cut_global_without_coulomb_and_dipolar);
       
       data_sym->max_cut =
 	data->max_cut = max_cut_current;
