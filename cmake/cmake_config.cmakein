@@ -15,6 +15,10 @@
 
 #cmakedefine HAVE_MPI
 
+#cmakedefine SCAFACOS
+
+#cmakedefine VALGRIND_INSTRUMENTATION
+
 #define PACKAGE_NAME "${PROJECT_NAME}"
 
 #define __PRETTYFUNC__ "n/a"

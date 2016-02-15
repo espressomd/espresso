@@ -64,6 +64,10 @@
 #include "immersed_boundary/ibm_volume_conservation.hpp"
 #include "minimize_energy.hpp"
 
+#ifdef VALGRIND_INSTRUMENTATION
+#include <callgrind.h>
+#endif
+
 /************************************************
  * DEFINES
  ************************************************/
@@ -325,6 +329,10 @@ void integrate_vv(int n_steps, int reuse_forces)
 
   n_verlet_updates = 0;
 
+#ifdef VALGRIND_INSTRUMENTATION
+  CALLGRIND_START_INSTRUMENTATION;
+#endif
+    
   /* Integration loop */
   for (int step=0; step<n_steps; step++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n", this_node, step));
@@ -550,6 +558,10 @@ void integrate_vv(int n_steps, int reuse_forces)
     #endif
   }
 
+#ifdef VALGRIND_INSTRUMENTATION
+  CALLGRIND_STOP_INSTRUMENTATION;
+#endif
+    
   /* verlet list statistics */
   if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
   else verlet_reuse = 0;

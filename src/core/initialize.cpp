@@ -65,6 +65,7 @@
 #include "external_potential.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
+#include "scafacos.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -138,6 +139,7 @@ void on_program_start()
 #ifdef CATALYTIC_REACTIONS
   reaction.eq_rate=0.0;
   reaction.sing_mult=0;
+  reaction.swap=0;
 #endif
 
   /*
@@ -332,7 +334,7 @@ void on_coulomb_change()
     break;
   default: break;
   }
-#endif  /* ifdef ELECTROSTATICS */
+#endif  /* ELECTROSTATICS */
 
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {

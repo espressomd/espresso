@@ -57,6 +57,7 @@ PYXFILES =  \
 	magnetostatics.pyx \
 	magnetostatic_extensions.pyx \
 	particle_data.pyx \
+	reaction.pyx \
 	thermostat.pyx \
 	utils.pyx \
 	h5md.pyx
@@ -80,6 +81,7 @@ PXDFILES = \
 	magnetostatic_extensions.pxd \
 	p3m_common.pxd \
 	particle_data.pxd \
+	reaction.pxd \
 	_system.pxd \
 	_tcl.pxd \
 	thermostat.pxd \
