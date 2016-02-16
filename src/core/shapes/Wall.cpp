@@ -44,7 +44,7 @@ Parameters Wall::get_parameters() {
 }
 
 void Wall::set_parameter(const std::string &name, const Variant &value) {
-  std::cout << "Wall::set_parameter(" << name << ", " << value << ")" << std::endl;
+  std::cout << this_node << ": Wall::set_parameter(" << name << ", " << value << ")" << std::endl;
   SET_PARAMETER_HELPER("normal", n);
   SET_PARAMETER_HELPER("dist", d);
 

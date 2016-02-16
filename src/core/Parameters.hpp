@@ -42,10 +42,7 @@ struct Parameter {
 };
 
 class Parameters : public std::map<std::string, Parameter> {
-public:
-  Parameters() {}
-  Parameters(const Parameters &rhs) : std::map<std::string, Parameter>(rhs) { };
-  
+ public:  
   virtual bool check() {
     bool ret = true;
     for(iterator it = begin(); it != end(); ++it) {
@@ -58,11 +55,11 @@ public:
       it->second.set = false;
     }
   }
-private:
-friend boost::serialization::access;
+ private:
+  friend boost::serialization::access;
 
-template<class Archive>
-void serialize(Archive & ar, const unsigned int version) {
-ar & *static_cast<std::map<std::string, Parameter> *>(this);
-}
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version) {
+    ar & *static_cast<std::map<std::string, Parameter> *>(this);
+  }
 };

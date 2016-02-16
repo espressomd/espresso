@@ -361,19 +361,19 @@ inline double AS_erfc_part(double d)
 */
 inline double sinc(double d)
 {
-#define epsi 0.1
+const double epsi = 0.1;
 
-#define c2 -0.1666666666667e-0
-#define c4  0.8333333333333e-2
-#define c6 -0.1984126984127e-3
-#define c8  0.2755731922399e-5
+const double c2 = -0.1666666666667e-0;
+const double c4 =  0.8333333333333e-2;
+const double c6 = -0.1984126984127e-3;
+const double c8 =  0.2755731922399e-5;
 
-  double PId = PI*d, PId2;
+const double PId = PI*d;
 
   if (fabs(d)>epsi)
     return sin(PId)/PId;
   else {
-    PId2 = SQR(PId);
+    const double PId2 = SQR(PId);
     return 1.0 + PId2*(c2+PId2*(c4+PId2*(c6+PId2*c8)));
   }
 }
