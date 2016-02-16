@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string>
 #include <exception>
+#include <memory>
 
 using std::string;
 
@@ -62,7 +63,7 @@ public:
           argv.pop_front();
         }
         
-        TclScriptObject(m_om[id], interp).parse_from_string(argv);
+        TclScriptObject(*m_om[id], interp).parse_from_string(argv);
         std::stringstream ss;
         ss << id;
         Tcl_AppendResult(interp, ss.str().c_str(), 0);
@@ -86,7 +87,7 @@ private:
   ObjectManager<T> m_om;
 
   string print_one(int id) {
-    return std::string(m_om.name(id)).append(" ").append(TclScriptObject(m_om[id], interp).print_to_string());
+    return std::string(m_om.name(id)).append(" ").append(TclScriptObject(*m_om[id], interp).print_to_string());
   }
 };
 

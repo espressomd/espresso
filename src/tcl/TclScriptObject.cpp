@@ -6,7 +6,7 @@ using namespace std;
 string TclScriptObject::print_to_string() {
   ostringstream res;
 
-  for(auto &p: m_so->get_parameters()) {
+  for(auto &p: m_so.get_parameters()) {
       res << p.first << " " << p.second.value << " ";
   }
 
@@ -14,7 +14,7 @@ string TclScriptObject::print_to_string() {
 }
 
 void TclScriptObject::parse_from_string(list<string> &argv) {  
-  Parameters p = m_so->all_parameters();
+  Parameters p = m_so.all_parameters();
   
   for(list<string>::iterator it = argv.begin(); it != argv.end();) {    
     string s = *it;
@@ -125,6 +125,6 @@ void TclScriptObject::parse_from_string(list<string> &argv) {
       p.erase(it);
   }
     
-  m_so->set_parameters(p);
+  m_so.set_parameters(p);
 }
 

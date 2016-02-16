@@ -4,22 +4,36 @@
 #include "utils/ParallelFactory.hpp"
 #include "ObjectContainer.hpp"
 
-template<class T>
+#include <memory>
+
+template<class T, class Factory = Utils::ParallelFactory<T> >
 class ObjectManager {
-public:
-  typedef typename ObjectContainer<T>::iterator iterator;
+ public:
+  typedef typename ObjectContainer<std::shared_ptr<T>>::iterator iterator;
+  typedef Factory Factory_t;
+  
+  /** Construct and add a T */
   int add(std::string name) {
-    T *p =  Utils::ParallelFactory<T>::make(name);
+    std::shared_ptr<T> p = Factory::make(name);
     const int id = m_objects.add(p);
     m_names[id] = name;
     return id;
   }
+  /** Add an externally generated T */
+  int add(std::shared_ptr<T> o) {    
+    const int id = m_objects.add(o);
+
+    return id;
+  }
+  
   void remove(int i) {
-    delete m_objects[i];
+    /** remove calls the destructor of the shared_ptr, which in turn
+        destoys the referenced object iff it is referenced nowhere else. */    
     m_objects.remove(i);
     m_names.erase(i);
   }
-  T* operator[](int i) { return m_objects[i]; }
+  std::shared_ptr<T> operator[](int i) { return m_objects[i]; }
+  
   iterator begin() {
     return m_objects.begin();
   };
@@ -28,9 +42,9 @@ public:
   };
 
   const std::string& name(int i) { return m_names[i]; }
-private:
+ private:
   std::map<int, std::string> m_names;
-  ObjectContainer<T> m_objects;
+  ObjectContainer<std::shared_ptr<T>> m_objects;
 };
 
 #endif

@@ -142,9 +142,10 @@ int constraint_collision(double *p1, double *p2){
 
   /** @TODO: Make less ugly. */
   
-  for(Constraints::ConstraintList::const_iterator it = Constraints::list.begin(); it != Constraints::list.end(); ++it) {
-    const Constraints::GeometryConstraint *c = dynamic_cast<Constraints::GeometryConstraint *>(*it);
-    if(c){
+  for(Constraints::ConstraintList::iterator it = Constraints::list.begin(); it != Constraints::list.end(); ++it) {
+    std::shared_ptr<Constraints::GeometryConstraint> c = std::dynamic_pointer_cast<Constraints::GeometryConstraint>(*it);
+    
+    if(c != nullptr){
       c->calculate_dist(folded_pos1, &d1, v);
       c->calculate_dist(folded_pos2, &d2, v);
       if(d1*d2 <= 0.0)

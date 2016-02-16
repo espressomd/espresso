@@ -40,17 +40,15 @@ class ParallelFactory {
   typedef typename F::Builder Builder;
 
   template<class Derived>
-  static T *builder() {
+  static std::shared_ptr<T> builder() {
     return F::template builder<Derived>();
     return 0;
   }
   
-  static T* make(const std::string &name) {
-    std::cout << this_node << ": ParallelFactory::make(" << name << ")\n";
+  static std::shared_ptr<T> make(const std::string &name) {
     mpi_call(ParallelFactory<T>::mpi_slave, name.size(), 0);
 
     MPI_Bcast(const_cast<char *>(&(*name.begin())), name.size(), MPI_CHAR, 0, comm_cart);
-    std::cout << this_node << ": name '" << name << "'\n";
     
     return F::Instance().make(name);
   }
@@ -60,11 +58,10 @@ class ParallelFactory {
 
     name.resize(name_size);
     MPI_Bcast(&(*name.begin()), name_size, MPI_CHAR, 0, comm_cart);
-    std::cout << this_node << ": name '" << name << "'\n";
     
     try {      
-      T *p = F::Instance().make(name);
-      std::cout << this_node << ": " << p->name() << std::endl;
+      std::shared_ptr<T> p = F::Instance().make(name);
+
     } catch(std::exception &e) {
       runtimeErrorMsg() << e.what();
     }

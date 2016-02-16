@@ -28,7 +28,7 @@
 #include "parser.hpp"
 #include "TclCommand.hpp"
 #include "constraints/Constraint.hpp"
-#include "ObjectContainer.hpp"
+#include "ObjectManager.hpp"
 
 namespace Constraints {
 namespace Tcl {
@@ -39,7 +39,7 @@ class ConstraintManager : public TclCommand {
   void parse_from_string(std::list<std::string> &argv);
   std::string print_to_string();
  private:
-  ObjectContainer<Constraints::Constraint> m_objects;
+  ObjectManager<Constraints::Constraint> m_objects;
   std::map<int, std::string> m_names;
   std::string print_one(int id);
   const int get_id(const std::string &s) const;

@@ -30,7 +30,7 @@
 
 std::string Constraints::Tcl::ConstraintManager::print_one(int id) {
   std::ostringstream os;
-  os << m_names[id] << " " << TclScriptObject(m_objects[id], interp).print_to_string();
+  os << m_names[id] << " " << TclScriptObject(*m_objects[id], interp).print_to_string();
 
   return os.str();
 }
@@ -48,20 +48,17 @@ const int Constraints::Tcl::ConstraintManager::get_id(const std::string &s) cons
 }
 
 void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::string> &argv) {
-  Constraint *c;
-  
+
   if(argv.front() == "delete") {
     argv.pop_front();
     const int id = get_id(argv.front());
     argv.pop_front();
     
-    c = m_objects[id];
+    auto c = m_objects[id];
     m_objects.remove(id);
     m_names.erase(id);
     Constraints::list.erase(c);
     
-    delete c;
-
     return;
   }
 
@@ -88,23 +85,25 @@ void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::strin
   /** The tcl name of the constraint */
   const std::string name = argv.front();
   argv.pop_front();
+
+  int id;
   
   /** Check if this is plain constraint */
-  if(Constraints::Factory::Instance().has_builder(name)) {
-    c = Constraints::Factory::Instance().make(name);
-    TclScriptObject(c, interp).parse_from_string(argv);
+  if(ObjectManager<Constraints::Constraint>::Factory_t::has_builder(name)) {
+    id =  m_objects.add(name);
+    TclScriptObject(*m_objects[id], interp).parse_from_string(argv);
 
     /** If it's not one of the other types it is a GeometryConstraint */
   } else {
-    Shapes::Shape *s = Shapes::ShapeFactory::make(name);
-    TclScriptObject(s, interp).parse_from_string(argv);
+    auto s = Shapes::ShapeFactory::make(name);
+    TclScriptObject(*s, interp).parse_from_string(argv);
     
-    c = new InteractionConstraint(*s);
-    TclScriptObject(c, interp).parse_from_string(argv);    
+    auto c = std::make_shared<InteractionConstraint>(*s);
+    TclScriptObject(*c, interp).parse_from_string(argv);
+    id = m_objects.add(c);
   }
-
-  const int id = m_objects.add(c);
-  Constraints::list.insert(c);
+  
+  Constraints::list.insert(m_objects[id]);
   m_names[id] = name;
   
   std::stringstream ss;
@@ -116,8 +115,8 @@ void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::strin
 std::string Constraints::Tcl::ConstraintManager::print_to_string() {  
   std::ostringstream ss;
 
-  for(typename ObjectContainer<Constraints::Constraint>::iterator it = m_objects.begin(); it != m_objects.end(); ++it) {
-    ss << "{ " << print_one(it->first) << " } ";
+  for(auto &it: m_objects) {
+    ss << "{ " << print_one(it.first) << " } ";
   }
 
   return ss.str();    

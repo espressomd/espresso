@@ -35,15 +35,15 @@ namespace Utils {
 template<class T>
 class Factory {
  public:
-  typedef std::function<T *()> Builder;
+  typedef std::function<std::shared_ptr<T>()> Builder;
   
   template<class Derived>
-  static T *builder() {
+  static std::shared_ptr<T> builder() {
 #ifdef HAVE_CXX11
     static_assert(std::is_base_of<T, Derived>::value,
                   "Class to build needs to be a subclass of the class the factory is for.");
 #endif
-    return new Derived();
+    return std::shared_ptr<T>(new Derived());
   }
 
   static Factory &Instance() {
@@ -51,7 +51,7 @@ class Factory {
     return *S;
   }
 
-  T *make(std::string name) {
+  std::shared_ptr<T> make(std::string name) {
     if (m_map.find(name) == m_map.end()) {
       throw std::domain_error("Class '" + name + "' not found.");
     }
