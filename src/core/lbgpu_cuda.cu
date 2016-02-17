@@ -4741,7 +4741,7 @@ void lb_convert_force_to_body_for_print(Particle *p, double *print_val)
   print_val[1] = A[1 + 3*0]*p->f.sf[0] + A[1 + 3*1]*p->f.sf[1] + A[1 + 3*2]*p->f.sf[2];
   print_val[2] = A[2 + 3*0]*p->f.sf[0] + A[2 + 3*1]*p->f.sf[1] + A[2 + 3*2]*p->f.sf[2];
 }
-
+#ifdef EXTERNAL_FORCES
 void lb_convert_ext_torque_to_body_for_print(Particle *p, double *print_val)
 {
   double A[9];
@@ -4751,10 +4751,9 @@ void lb_convert_ext_torque_to_body_for_print(Particle *p, double *print_val)
   print_val[1] = A[1 + 3*0]*p->p.ext_torque[0] + A[1 + 3*1]*p->p.ext_torque[1] + A[1 + 3*2]*p->p.ext_torque[2];
   print_val[2] = A[2 + 3*0]*p->p.ext_torque[0] + A[2 + 3*1]*p->p.ext_torque[1] + A[2 + 3*2]*p->p.ext_torque[2];
 }
-
-//this should run in parallel to integrate()
-//this needs external_forces feature
-//this cannot (and should not) do torques&rotation!
+#endif /* EXTERNAL_FORCES */
+// this should run in parallel to integrate()
+// and needs external_forces feature
 #ifdef EXTERNAL_FORCES
 void calc_MD_force_and_set_ia_vel(){
   // TODO this needs to be extended for ia forces between particles
