@@ -19,7 +19,8 @@ class ObjectManager {
     m_names[id] = name;
     return id;
   }
-  /** Add an externally generated T */
+  
+  /** Add an externally constructed T */
   int add(std::shared_ptr<T> o) {    
     const int id = m_objects.add(o);
 

@@ -23,11 +23,11 @@
 #define __SHAPES_SHAPE_HPP
 
 #include <string>
-#include "ScriptObject.hpp"
+#include "ParallelScriptObject.hpp"
 #include "utils/ParallelFactory.hpp"
 
 namespace Shapes {
-  struct Shape : public ScriptObject {
+  struct Shape : public ParallelScriptObject {
     virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
     /* Human readable name of the shape. */
     virtual const std::string name() const { return std::string("Shape"); }
@@ -35,6 +35,6 @@ namespace Shapes {
 
 typedef Utils::ParallelFactory<Shape> ShapeFactory;
 void initialize_factory();
-
 }
+
 #endif

@@ -25,9 +25,6 @@ class ScriptObject {
         set_parameter(it->first, it->second.value);
     }
   }
-  
- private:
- 
 };
 
 #endif

@@ -38,19 +38,20 @@ template<class T, typename F = Factory<T>>
 class ParallelFactory {
  public:
   typedef typename F::Builder Builder;
-
+  typedef typename std::shared_ptr<T> pointer_type;
+  
   template<class Derived>
-  static std::shared_ptr<T> builder() {
+  static typename F::pointer_type builder() {
     return F::template builder<Derived>();
     return 0;
   }
   
-  static std::shared_ptr<T> make(const std::string &name) {
+  static pointer_type make(const std::string &name) {
     mpi_call(ParallelFactory<T>::mpi_slave, name.size(), 0);
 
     MPI_Bcast(const_cast<char *>(&(*name.begin())), name.size(), MPI_CHAR, 0, comm_cart);
     
-    return F::Instance().make(name);
+    return pointer_type(F::Instance().make(name));
   }
 
   static void mpi_slave(int name_size, int) {
@@ -60,8 +61,8 @@ class ParallelFactory {
     MPI_Bcast(&(*name.begin()), name_size, MPI_CHAR, 0, comm_cart);
     
     try {      
-      std::shared_ptr<T> p = F::Instance().make(name);
-
+      const typename F::pointer_type p = F::Instance().make(name);
+      assert(p != nullptr);
     } catch(std::exception &e) {
       runtimeErrorMsg() << e.what();
     }
@@ -82,6 +83,9 @@ class ParallelFactory {
   static bool has_builder(const std::string &name) {
     return F::Instance().has_builder(name);
   }
+ private:
+  /** Only static members, makes no sense to construct an instance. */
+  ParallelFactory() {};
 };
 
 }

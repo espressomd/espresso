@@ -126,7 +126,10 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	utils/statistics/RunningAverage.cpp utils/statistics/RunningAverage.hpp
+	utils/statistics/RunningAverage.cpp utils/statistics/RunningAverage.hpp \
+	MpiCallbacks.hpp MpiCallbacks.cpp \
+	ParallelObject.hpp ParallelObject.cpp \
+	ParallelScriptObject.hpp ParallelScriptObject.cpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \

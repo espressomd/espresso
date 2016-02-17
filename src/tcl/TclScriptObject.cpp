@@ -115,8 +115,6 @@ void TclScriptObject::parse_from_string(list<string> &argv) {
       }
     }
   }
-
-  std::cout << " parse_from_string()" << std::endl;
   
   /** Drop unset */
   for(Parameters::iterator it = p.begin(); it != p.end(); ++it) {
