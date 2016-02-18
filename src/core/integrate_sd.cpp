@@ -109,22 +109,22 @@ int sd_get_particle_num();
 void integrator_sanity_checks_sd()
 {
   if ( time_step < 0.0 ) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"time_step not set";
       runtimeError(msg);
   }
   if ( temperature < 0.0 ) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"thermostat not initialized";
       runtimeError(msg);
   }
   if (sd_radius < 0) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"Stokesian Dynamics Hydrodynamic particle radius not initialized";
       runtimeError(msg);
   }
   if (sd_viscosity < 0) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg <<"Stokesian Dynamics fluid viscosity not initialized";
       runtimeError(msg);
   }
