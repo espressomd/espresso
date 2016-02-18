@@ -522,12 +522,6 @@ void mpi_get_constraint_force(int constraint, double force[3]);
 void mpi_get_configtemp(double cfgtmp[2]);
 #endif
 
-/** Issue REQ_BIT_RANDOM_SEED: read/set seed of the bit random number generators on each node. */
-void mpi_bit_random_seed(int cnt, int *seed);
-
-/** Issue REQ_BIT_RANDOM_STAT: read/set status of the bit random number generators on each node. */
-void mpi_bit_random_stat(int cnt, BitRandomStatus *stat);
-
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir' by a factor 'scale'. */
 void mpi_rescale_particles(int dir, double scale);
 

@@ -43,6 +43,7 @@ option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
+option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
 
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
@@ -100,6 +101,16 @@ if(WITH_SCAFACOS)
     set(SCAFACOS 1)
   endif(SCAFACOS_FOUND)
 endif(WITH_SCAFACOS)
+
+if(WITH_VALGRIND_INSTRUMENTATION)
+  find_package(PkgConfig)
+  pkg_check_modules(VALGRIND valgrind)
+  if(VALGRIND_FOUND)
+    set(VALGRIND_INSTRUMENTATION 1)
+    message(STATUS ${VALGRIND_INCLUDE_DIRS})
+    include_directories(${VALGRIND_INCLUDE_DIRS})
+  endif(VALGRIND_FOUND)
+endif(WITH_VALGRIND_INSTRUMENTATION)
 
 include(RequireCXX11)
 
