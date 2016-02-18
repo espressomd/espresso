@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -22,8 +22,12 @@
 #ifndef __UTILS_PARALLEL_FACTORY_HPP
 #define __UTILS_PARALLEL_FACTORY_HPP
 
-#include "ParallelFactory.hpp"
-#include "Factory.hpp"
+/** For is_base_of */
+#include <type_traits>
+/** For shared_ptr */
+#include <functional>
+/** For ParallelObject */
+#include "ParallelObject.hpp"
 
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -34,24 +38,27 @@ namespace Utils {
     the instance on all nodes.
 */
 
-template<class T, typename F = Factory<T>>
+template<class T>
 class ParallelFactory {
  public:
-  typedef typename F::Builder Builder;
-  typedef typename std::shared_ptr<T> pointer_type;
-  
+  static_assert(std::is_base_of<ParallelObject, T>::value, "Class needs to be an ParallelObject for use with the parallel Factory.");
+  typedef std::shared_ptr<T> pointer_type;
+  typedef std::function<pointer_type ()> Builder;
+
   template<class Derived>
-  static typename F::pointer_type builder() {
-    return F::template builder<Derived>();
-    return 0;
+  static pointer_type builder() {
+    static_assert(std::is_base_of<T, Derived>::value,
+                  "Class to build needs to be a subclass of the class the factory is for.");
+    
+    return pointer_type(new Derived());
   }
-  
+
   static pointer_type make(const std::string &name) {
     mpi_call(ParallelFactory<T>::mpi_slave, name.size(), 0);
 
     MPI_Bcast(const_cast<char *>(&(*name.begin())), name.size(), MPI_CHAR, 0, comm_cart);
     
-    return pointer_type(F::Instance().make(name));
+    return do_make(name);
   }
 
   static void mpi_slave(int name_size, int) {
@@ -61,33 +68,53 @@ class ParallelFactory {
     MPI_Bcast(&(*name.begin()), name_size, MPI_CHAR, 0, comm_cart);
     
     try {      
-      const typename F::pointer_type p = F::Instance().make(name);
+      pointer_type p = do_make(name);
       assert(p != nullptr);
     } catch(std::exception &e) {
       runtimeErrorMsg() << e.what();
     }
   }
 
-  static bool register_new(const std::string &name, const Builder &b) {
+  static void register_new(const std::string &name, const Builder &b) {
     static bool callback_added = false;
-
+    /** Make sure that we have a callback registered as soon as
+        there are classes that could be constructed. */
     if(!callback_added) {
-      std::cout << this_node << ": Added callback.\n";
       mpi_add_callback(mpi_slave);
       callback_added = true;
     }
 
-    return F::Instance().register_new(name, b);
+    m_map[name] = b;
   }
   
   static bool has_builder(const std::string &name) {
-    return F::Instance().has_builder(name);
+    return not (m_map.find(name) == m_map.end());
   }
+  
  private:
-  /** Only static members, makes no sense to construct an instance. */
-  ParallelFactory() {};
+  static pointer_type do_make(std::string name) {
+    if (m_map.find(name) == m_map.end()) {
+      throw std::domain_error("Class '" + name + "' not found.");
+    }
+
+    if (m_map[name]) {
+      return m_map[name]();
+    } else {
+      throw std::out_of_range("Invalid function pointer");
+    }
+  }
+  static std::map<std::string, Builder> m_map;
 };
+
+template<class T>
+std::map<std::string, typename ParallelFactory<T>::Builder> ParallelFactory<T>::m_map;
 
 }
 
 #endif
+
+
+
+
+
+

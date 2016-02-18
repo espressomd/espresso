@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -40,19 +40,13 @@ class Factory {
   
   template<class Derived>
   static pointer_type builder() {
-#ifdef HAVE_CXX11
     static_assert(std::is_base_of<T, Derived>::value,
                   "Class to build needs to be a subclass of the class the factory is for.");
-#endif
+    
     return pointer_type(new Derived());
   }
 
-  static Factory &Instance() {
-    static Factory *S = new Factory();
-    return *S;
-  }
-
-  pointer_type make(std::string name) {
+  static pointer_type make(std::string name) {
     if (m_map.find(name) == m_map.end()) {
       throw std::domain_error("Class '" + name + "' not found.");
     }
@@ -64,21 +58,20 @@ class Factory {
     }
   }
 
-  bool has_builder(const std::string &name) {
+  static bool has_builder(const std::string &name) {
     return not (m_map.find(name) == m_map.end());
   }
   
-  bool register_new(const std::string &name, const Builder &b)  {
+  static void register_new(const std::string &name, const Builder &b)  {
     m_map[name] = b;
-    return true;
   }
   
  private:
-  Factory() {}
-  Factory(const Factory &rhs) {}
-  Factory &operator=(const Factory &rhs) {}
-  std::map<std::string, Builder> m_map;
+  static std::map<std::string, Builder> m_map;
 };
+
+template<class T>
+std::map<std::string, typename Factory<T>::Builder> Factory<T>::m_map;
 
 }
 
