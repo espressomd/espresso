@@ -113,7 +113,6 @@ static int terminated = 0;
   CB(mpi_send_ext_torque_slave) \
   CB(mpi_place_new_particle_slave) \
   CB(mpi_remove_particle_slave) \
-  CB(mpi_bcast_constraint_slave) \
   CB(mpi_random_seed_slave) \
   CB(mpi_random_stat_slave) \
   CB(mpi_cap_forces_slave) \
@@ -210,8 +209,6 @@ typedef std::map<SlaveCallback *, int> request_map_type;
 typedef std::unordered_map<SlaveCallback *, int> request_map_type;
 #endif
 static request_map_type request_map;
-
-std::vector<MpiCallbacks::Function> MpiCallbacks::m_callbacks;
 
 /** Forward declarations */
 
@@ -2251,26 +2248,6 @@ void mpi_send_ext_force_slave(int pnode, int part)
   }
 
   on_particle_change();
-#endif
-}
-
-/*************** REQ_BCAST_CONSTR ************/
-void mpi_bcast_constraint(Constraints::ConstraintList::Action action, int id)
-{
-#ifdef CONSTRAINTS
-  mpi_call(mpi_bcast_constraint_slave, static_cast<int>(action), id);
- 
-  
-  on_constraint_change();
-#endif
-}
-
-void mpi_bcast_constraint_slave(int action, int parm)
-{   
-#ifdef CONSTRAINTS
-  /* @TODO: Do something */
-  
-  on_constraint_change();
 #endif
 }
 

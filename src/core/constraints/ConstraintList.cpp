@@ -51,10 +51,10 @@ void ConstraintList::add_energies(Particle *p) {
 double ConstraintList::min_dist(double pos[3]) {
   double dist, vec[3];
   double mind = std::numeric_limits<double>::max();
-  for(iterator it = begin(); it != end(); ++it) {
-    const Constraints::GeometryConstraint *c = dynamic_cast<Constraints::GeometryConstraint *>(it->get());
+  for(auto &it : *this) {
+    const Constraints::GeometryConstraint *c = dynamic_cast<Constraints::GeometryConstraint *>(it);
     if(c) {
-      c->calculate_dist(pos, &dist, vec);
+      c->get_shape()->calculate_dist(pos, &dist, vec);
       mind = std::min(mind, dist);
     }
   }

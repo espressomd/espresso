@@ -10,7 +10,7 @@ template<class T, class Factory = Utils::ParallelFactory<T> >
 class ObjectManager {
  public:
   typedef typename ObjectContainer<std::shared_ptr<T>>::iterator iterator;
-  typedef Factory Factory_t;
+  typedef Factory factory_type;
   
   /** Construct and add a T */
   int add(std::string name) {

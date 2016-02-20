@@ -33,7 +33,7 @@ namespace Shapes {
     virtual const std::string name() const { return std::string("Shape"); }
   };
 
-typedef Utils::ParallelFactory<Shape> ShapeFactory;
+typedef typename Utils::ParallelFactory<Shape> Factory;
 void initialize_factory();
 }
 

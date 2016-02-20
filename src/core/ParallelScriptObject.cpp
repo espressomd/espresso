@@ -1,5 +1,7 @@
 #include "ParallelScriptObject.hpp"
 
+#include <iostream>
+
 void ParallelScriptObject::set_parameters_all_nodes(Parameters &parameters) {
   call_slaves(SET_PARAMETERS);
 
@@ -9,12 +11,10 @@ void ParallelScriptObject::set_parameters_all_nodes(Parameters &parameters) {
   set_parameters(parameters);
 }
 
-ParallelScriptObject::~ParallelScriptObject() {
+ParallelScriptObject::~ParallelScriptObject() {  
   if(MpiCallbacks::mpi_comm.rank() == 0) {
     call_slaves(DELETE);
   }
-      
-  delete this;
 }
 
 void ParallelScriptObject::callback(int par) {

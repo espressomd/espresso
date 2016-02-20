@@ -3,33 +3,114 @@
 
 #include "Constraint.hpp"
 
-#ifdef HAVE_CXX11
 #include <unordered_set>
-#else
-#include <set>
-#endif
-
+#include <unordered_map>
 #include <functional>
 #include <memory>
 
+#include "ParallelObject.hpp"
+#include "initialize.hpp"
+
 namespace Constraints {
 
-#ifdef HAVE_CXX11
-typedef std::unordered_set<std::shared_ptr<Constraint>> set_type;
-#else
-typedef std::set<std::shared_ptr<Constraint>> set_type;
-#endif
-
-class ConstraintList : public set_type {
+class ConstraintList : public ParallelObject {  
  public:
-  enum Action { ADD, DELETE };
+  typedef typename std::unordered_set<Constraint *>::iterator iterator;
+  
+  /** Add constraint (master only) */
+  void add_constraint(std::shared_ptr<Constraint> c) {
+    std::cout << "ConstraintList::add_constraint(" << c->name() << ")" << std::endl;
+    assert(c != nullptr);
+    
+  /** On the master we keep a copy of the shared_ptr to keep the
+      object around. The existance of the objects on the slaves
+      is coupled to the master. */
+    int id = c->get_id();
+    std::cout << "not null\n";
+    m_constraints_master.insert(std::make_pair(id, c));
+
+    call_slaves(ADD);
+    Constraint *c_p = get_pointer_from_id(id);
+
+    m_constraints.insert(c_p);
+
+    on_constraint_change();
+  }
+
+  /** Remove constraint (master only) */
+  void remove_constraint(std::shared_ptr<Constraint> c) {
+    int id = c->get_id();
+
+    call_slaves(DELETE);    
+    Constraint *c_p = get_pointer_from_id(id);
+
+    m_constraints.erase(c_p);
+
+    on_constraint_change();
+  }
+
+  iterator begin() {
+    return m_constraints.begin();
+  }
+  iterator end() {
+    return m_constraints.end();
+  }
+  
   
   void add_forces(Particle *p);
   void add_energies(Particle *p);
   void init_forces();
   double min_dist(double pos[3]);
+  
  private:
-  set_type m_set;
+  Constraint *get_pointer_from_id(int &id) {
+    boost::mpi::broadcast(MpiCallbacks::mpi_comm, id, 0);
+
+    /** Get pointer for local object.
+        We know that this is actually a Constraint, because
+        it was typechecked at the master */
+    ParallelObject *p = ParallelObject::get_local_address(id);
+    assert(p);
+    Constraint *c = dynamic_cast<Constraint *>(p);
+    assert(c);
+
+    return c;
+  }
+  
+  void callback(int par) {
+    switch(par) {
+      case ADD:
+        {
+          /** Get id from master */
+          int id;
+          Constraint *c = get_pointer_from_id(id);
+          std::cout << "ConstraintList::add_constraint(" << c->name() << ")" << std::endl;
+          
+          m_constraints.insert(c);
+
+          on_constraint_change();
+        }
+        break;
+      case DELETE:
+        {
+          /** Get id from master */
+          int id;
+          Constraint *c = get_pointer_from_id(id);
+
+          m_constraints.erase(c);
+
+          on_constraint_change();
+        }
+        break;
+      default:
+        break;
+    }    
+  }
+  
+  enum Action { ADD, DELETE };
+
+  std::unordered_map<int, std::shared_ptr<Constraint> > m_constraints_master;
+  std::unordered_set<Constraint *> m_constraints;
 };
 
   extern ConstraintList list;

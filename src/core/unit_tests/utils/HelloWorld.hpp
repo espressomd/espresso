@@ -17,33 +17,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/** \file Factory_test.cpp Unit tests for the Utils::Factory class.
- *
-*/
+#ifndef __TESTING_HELLOW_WORLD_HPP
+#defing __TESTING_HELLOW_WORLD_HPP
 
-#define BOOST_TEST_MODULE Factory test
-#include <boost/test/included/unit_test.hpp>
+namespace Testing {
+class HelloWorld {
+ public:
+  HelloWorld() {
+    constructed_once = true;
+    instance = true;
+  }
+  ~HelloWorld() {
+    destructed_once = true;
+  }
+  static bool constructed_once;
+  static bool destructed_once;
+  bool instance;
+};
 
-#include "../utils/Factory.hpp"
 
-using namespace Testing;
-using namespace std;
-
-
-bool HelloWorld::constructed_once = false;
-bool HelloWorld::destructed_once = true;
-
-using BaseType = HelloWorld;
-using Factory = Utils::Factory<BaseType>;
-
-BOOST_AUTO_TEST_CASE(test_factory) {
-  Factory::register_new("HelloWorld", Factory::builder<HelloWorld>);
-
-  HelloWorld *p = Factory::make("HelloWorld");
-
-  BOOST_CHECK(Factory::has_builder("HelloWorld"));
-  BOOST_CHECK(p != nullptr);
-  BOOST_CHECK((HelloWorld::constructed_once && p->instance) == true);
-  
-  delete p;
 }
+
+#endif

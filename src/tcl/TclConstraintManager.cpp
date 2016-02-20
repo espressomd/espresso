@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -21,8 +21,8 @@
 
 #include "TclConstraintManager.hpp"
 #include "TclScriptObject.hpp"
+#include "TclScriptObjectManager.hpp"
 #include "constraints/ConstraintList.hpp"
-#include "constraints/InteractionConstraint.hpp"
 
 #include <iostream>
 
@@ -54,10 +54,12 @@ void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::strin
     const int id = get_id(argv.front());
     argv.pop_front();
     
-    auto c = m_objects[id];
+    auto c = m_objects[id];    
+    Constraints::list.remove_constraint(c);
+    
+    m_shapes.erase(id);
     m_objects.remove(id);
     m_names.erase(id);
-    Constraints::list.erase(c);
     
     return;
   }
@@ -75,7 +77,7 @@ void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::strin
     return;
   }
   
-  /** print one constraints */
+  /** print one constraint */
   if(argv.size() == 1) {
     const int id = get_id(argv.front());
     print_one(id);
@@ -89,21 +91,28 @@ void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::strin
   int id;
   
   /** Check if this is plain constraint */
-  if(ObjectManager<Constraints::Constraint>::Factory_t::has_builder(name)) {
-    id =  m_objects.add(name);
+  if(ObjectManager<Constraints::Constraint>::factory_type::has_builder(name)) {
+    std::cout << name << std::endl;
+    id = m_objects.add(name);
     TclScriptObject(*m_objects[id], interp).parse_from_string(argv);
 
     /** If it's not one of the other types it is a GeometryConstraint */
   } else {
-    auto s = Shapes::ShapeFactory::make(name);
-    TclScriptObject(*s, interp).parse_from_string(argv);
-    
-    auto c = std::make_shared<InteractionConstraint>(*s);
+    std::cout << name << std::endl;
+    id = m_objects.add("geometry_constraint");
+    auto c = m_objects[id] ;
+    auto s = Shapes::Factory::make(name);
+
+    TclScriptObject(*s, interp).parse_from_string(argv);        
     TclScriptObject(*c, interp).parse_from_string(argv);
-    id = m_objects.add(c);
+    
+    c->set_parameter("shape", s->get_id());
+
+    m_shapes[id] = s;
   }
-  
-  Constraints::list.insert(m_objects[id]);
+
+  std::cout << m_objects[id]->name() << std::endl;
+  Constraints::list.add_constraint(m_objects[id]);
   m_names[id] = name;
   
   std::stringstream ss;
@@ -123,5 +132,3 @@ std::string Constraints::Tcl::ConstraintManager::print_to_string() {
 }
 
 #endif /* CONSTRAINTS */
-
-

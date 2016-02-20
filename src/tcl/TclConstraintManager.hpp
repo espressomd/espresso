@@ -25,10 +25,13 @@
 
 #ifdef CONSTRAINTS
 
+#include <functional>
+
 #include "parser.hpp"
 #include "TclCommand.hpp"
 #include "constraints/Constraint.hpp"
 #include "ObjectManager.hpp"
+#include "shapes/Shape.hpp"
 
 namespace Constraints {
 namespace Tcl {
@@ -40,6 +43,7 @@ class ConstraintManager : public TclCommand {
   std::string print_to_string();
  private:
   ObjectManager<Constraints::Constraint> m_objects;
+  std::map<int, std::shared_ptr<Shapes::Shape>> m_shapes;
   std::map<int, std::string> m_names;
   std::string print_one(int id);
   const int get_id(const std::string &s) const;

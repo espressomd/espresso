@@ -14,5 +14,4 @@ libEspressoConstraints_la_SOURCES = \
 	Constraint.cpp Constraint.hpp \
 	ConstraintList.cpp ConstraintList.hpp \
 	ExternalMagneticField.cpp ExternalMagneticField.hpp \
-	GeometryConstraint.cpp GeometryConstraint.hpp \
-	InteractionConstraint.cpp InteractionConstraint.hpp
+	GeometryConstraint.cpp GeometryConstraint.hpp

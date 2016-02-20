@@ -8,10 +8,10 @@
 namespace Shapes {
 
 void initialize_factory() {
-  ShapeFactory::register_new("wall", ShapeFactory::builder<Wall>);
-  ShapeFactory::register_new("cylinder", ShapeFactory::builder<Cylinder>);
-  ShapeFactory::register_new("sphere", ShapeFactory::builder<Sphere>);
-  ShapeFactory::register_new("rhomboid", ShapeFactory::builder<Rhomboid>);
+  Factory::register_new("wall", Factory::builder<Wall>);
+  Factory::register_new("cylinder", Factory::builder<Cylinder>);
+  Factory::register_new("sphere", Factory::builder<Sphere>);
+  Factory::register_new("rhomboid", Factory::builder<Rhomboid>);
 }
 
 }

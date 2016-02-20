@@ -3,10 +3,11 @@
 
 std::unordered_map<int, ParallelObject *> ParallelObject::address_table;
 
+/** Ctor and Dtor run on all nodes in parallel */
 ParallelObject::ParallelObject() {
  {
     using namespace std::placeholders;    
-    MpiCallbacks::Function f;
+    MpiCallbacks::function_type f;
     /** Bind member function to this instance */
     f = std::bind(&ParallelObject::callback, this, _1);
 
@@ -14,6 +15,11 @@ ParallelObject::ParallelObject() {
 
     address_table[m_callback_id] =this;        
   }
+}
+
+ParallelObject::~ParallelObject() {
+  /** Remove the callback when deleting the object */
+  MpiCallbacks::remove(m_callback_id);
 }
 
 void ParallelObject::call_slaves(int par) {
