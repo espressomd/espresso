@@ -1,28 +1,25 @@
-#ifndef __GEOMETRY_CONSTRAINT_HPP
-#define __GEOMETRY_CONSTRAINT_HPP
+#ifndef __INTERACTION_CONSTRAINT_HPP
+#define __INTERACTION_CONSTRAINT_HPP
 
-#include "Constraint.hpp"
-#include "shapes/Shape.hpp"
+#include "GeometryConstraint.hpp"
+#include "interaction_data.hpp"
 
 namespace Constraints {
-
-enum ReflectionType { REFLECTION_NONE, REFLECTION_NORMAL, REFLECTION_NORMAL_TANGENTIAL };
-
-struct GeometryConstraint : public Constraint {
- public:
-  GeometryConstraint(Shapes::Shape &shape, int _penetrable = false, ReflectionType _reflection_type = REFLECTION_NONE, int _tuneable_slip = false) : 
-      penetrable(_penetrable), tuneable_slip(_tuneable_slip), reflection_type(_reflection_type), m_shape(shape) {}
-  virtual const std::string name() { return Constraint::name() + std::string("GeometryConstraint::") + m_shape.name(); }
-  void reflect_particle(Particle *p, const double *distance_vector, const double *folded_pos);
-  int penetrable;
-  int tuneable_slip;
-  ReflectionType reflection_type;
-  inline int calculate_dist(const double *ppos, double *dist, double *vec) const { return m_shape.calculate_dist(ppos, dist, vec); }
-  void set_shape(Shapes::Shape &shape) { m_shape = shape; }
-  const Shapes::Shape &get_shape() const { return m_shape; }
- protected:
-  Shapes::Shape &m_shape;
-};
-};
+  struct InteractionConstraint : public GeometryConstraint {
+    InteractionConstraint(Shapes::Shape &shape) : GeometryConstraint(shape), only_positive(0) {}
+    InteractionConstraint(Shapes::Shape &shape, bool _penetrable, ReflectionType _reflection_type, int _only_positive, int ia_type) : GeometryConstraint(shape, _penetrable, _reflection_type), only_positive(_only_positive) {
+      part_rep.p.type = ia_type;
+    }
+    void add_energy(Particle *p, const double *folded_pos, Observable_stat &energy);
+    void add_force(Particle *p, const double *folded_pos);
+    Particle part_rep;
+    int only_positive;
+    
+    /** Parsing stuff */
+    Parameters get_parameters();
+    Parameters all_parameters() const;
+    void set_parameter(const std::string &name, const Variant &value);
+  };
+}
 
 #endif
