@@ -18,7 +18,7 @@
 */
 
 #ifndef __TESTING_HELLOW_WORLD_HPP
-#defing __TESTING_HELLOW_WORLD_HPP
+#define __TESTING_HELLOW_WORLD_HPP
 
 namespace Testing {
 class HelloWorld {
