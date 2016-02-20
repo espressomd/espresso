@@ -502,8 +502,13 @@ static void recalc_global_maximal_nonbonded_cutoff()
     if (max_cut_global < rf_params.r_cut)
       max_cut_global = rf_params.r_cut;
     break;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+      max_cut_global = std::max(max_cut_global, Electrostatics::Scafacos::get_r_cut());
+      break;
+#endif
   default:
-	  break;
+    break;
   }
 #endif /*ifdef ELECTROSTATICS */
   

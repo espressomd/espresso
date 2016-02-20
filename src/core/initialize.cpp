@@ -66,6 +66,7 @@
 #include "external_potential.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
+#include "scafacos.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -107,7 +108,6 @@ void on_program_start()
     call the initialization of the modules here
   */
   init_random();
-  init_bit_random();
 
   init_node_grid();
   /* calculate initial minimal number of cells (see tclcallback_min_num_cells) */
@@ -338,7 +338,7 @@ void on_coulomb_change()
     break;
   default: break;
   }
-#endif  /* ifdef ELECTROSTATICS */
+#endif  /* ELECTROSTATICS */
 
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {

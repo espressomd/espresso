@@ -79,6 +79,7 @@
 #include "actor/EwaldGPU_ShortRange.hpp"
 #include "debye_hueckel.hpp"
 #include "reaction_field.hpp"
+#include "scafacos.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_main.hpp"
@@ -345,31 +346,31 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
    calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
    
-  /***********************************************/
-  /* short range electrostatics                  */
-  /***********************************************/
+   /***********************************************/
+   /* short range electrostatics                  */
+   /***********************************************/
 
 #ifdef ELECTROSTATICS
-  if (coulomb.method == COULOMB_DH)
-    add_dh_coulomb_pair_force(p1,p2,d,dist,force);
+   if (coulomb.method == COULOMB_DH)
+     add_dh_coulomb_pair_force(p1,p2,d,dist,force);
   
-  if (coulomb.method == COULOMB_RF)
-    add_rf_coulomb_pair_force(p1,p2,d,dist,force);
+   if (coulomb.method == COULOMB_RF)
+     add_rf_coulomb_pair_force(p1,p2,d,dist,force);
 #endif
 
-  /*********************************************************************/
-  /* everything before this contributes to the virial pressure in NpT, */
-  /* but nothing afterwards                                            */
-  /*********************************************************************/
+   /*********************************************************************/
+   /* everything before this contributes to the virial pressure in NpT, */
+   /* but nothing afterwards                                            */
+   /*********************************************************************/
 #ifdef NPT
-  for (j = 0; j < 3; j++)
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[j] += force[j] * d[j];
+   for (j = 0; j < 3; j++)
+     if(integ_switch == INTEG_METHOD_NPT_ISO)
+       nptiso.p_vir[j] += force[j] * d[j];
 #endif
 
-  /***********************************************/
-  /* semi-bonded multi-body potentials            */
-  /***********************************************/
+   /***********************************************/
+   /* semi-bonded multi-body potentials            */
+   /***********************************************/
   
    /* Directional LJ */
 #ifdef LJ_ANGLE
@@ -377,55 +378,63 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
    add_ljangle_force(p1, p2, ia_params, d, dist);
 #endif
   
-  /***********************************************/
-  /* long range electrostatics                   */
-  /***********************************************/
+   /***********************************************/
+   /* long range electrostatics                   */
+   /***********************************************/
 
 #ifdef ELECTROSTATICS
-
-  /* real space coulomb */
-  double q1q2 = p1->p.q*p2->p.q;
-  switch (coulomb.method) {
+   
+   /* real space coulomb */
+   double q1q2 = p1->p.q*p2->p.q;
+          
+   switch (coulomb.method) {
 #ifdef P3M
-  case COULOMB_ELC_P3M: {
-	  if (q1q2) {
-		  p3m_add_pair_force(q1q2,d,dist2,dist,force);
+     case COULOMB_ELC_P3M: {
+       if (q1q2) {
+         p3m_add_pair_force(q1q2,d,dist2,dist,force);
 
-		  // forces from the virtual charges
-		  // they go directly onto the particles, since they are not pairwise forces
-		  if (elc_params.dielectric_contrast_on)
-			  ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
-	  }
-	  break;
-  }
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M: {
+         // forces from the virtual charges
+         // they go directly onto the particles, since they are not pairwise forces
+         if (elc_params.dielectric_contrast_on)
+           ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+       }
+       break;
+     }
+     case COULOMB_P3M_GPU:
+     case COULOMB_P3M: {
 #ifdef NPT
-	  if (q1q2) {
-		  double eng = p3m_add_pair_force(q1q2,d,dist2,dist,force);
-		  if(integ_switch == INTEG_METHOD_NPT_ISO)
-			  nptiso.p_vir[0] += eng;
-	  }
+       if (q1q2) {
+         double eng = p3m_add_pair_force(q1q2,d,dist2,dist,force);
+         if(integ_switch == INTEG_METHOD_NPT_ISO)
+           nptiso.p_vir[0] += eng;
+       }
 #else
-	  if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force);
+       if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force);
 #endif
-	  break;
-  }
+       break;
+     }
 #endif
-  case COULOMB_MMM1D:
-	  if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
-	  break;
-  case COULOMB_MMM2D:
-	  if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
-	  break;
+     case COULOMB_MMM1D:
+       if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
+       break;
+     case COULOMB_MMM2D:
+       if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
+       break;
 #ifdef EWALD_GPU
-  case COULOMB_EWALD_GPU:
-	  if (q1q2) add_ewald_gpu_coulomb_pair_force(p1,p2,d,dist,force);
-	  break;
+     case COULOMB_EWALD_GPU:
+       if (q1q2) add_ewald_gpu_coulomb_pair_force(p1,p2,d,dist,force);
+       break;
 #endif
-  default:
-	  break;
-  }
+#ifdef SCAFACOS
+     case COULOMB_SCAFACOS:
+       if(q1q2) {
+         Electrostatics::Scafacos::add_pair_force(p1, p2, d, dist, force);
+       }
+       break;
+#endif
+     default:
+       break;
+   }
 
 #endif /*ifdef ELECTROSTATICS */
 

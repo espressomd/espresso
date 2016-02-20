@@ -525,19 +525,23 @@ filenames including a running index (\texttt{data_0.vtk},
 
 \begin{essyntax}
   writevtk \var{filename} 
-  \opt{\alt{all \asep \var{type}}}
+  \opt{\alt{all \asep \var{types}}}
 \end{essyntax}
 
 \begin{arguments}
 \item[\var{filename}]
   Name of the file to export the particle positions into.
-
-\item[\opt{\alt{all \asep \var{type}}}] Specifies which particle type
-  should be exportet. The default is \keyword{all}. Alternatively, a
-  type number can be given. Exporting the positions of all particles
-  but in separate files might make sense if one wants to distinguish
-  the different particle types in the visualization (i.e. by color or
-  size).
+\item[\opt{\alt{all \asep \var{type}}}] Specifies a list of particle
+  types which should be exportet. The default is
+  \keyword{all}. Alternatively, a list of type number can be
+  given. Exporting the positions of all particles but in separate
+  files might make sense if one wants to distinguish the different
+  particle types in the visualization (i.e. by color or size).  To
+  export a type \texttt{1} use something along \texttt{writevtk
+    "test.tcl" "1"}.  To export types \texttt{1}, \texttt{5},
+  \texttt{7}, which are not to be distinguished in the visualization,
+  use \texttt{writevtk "test.tcl" "7 1 5"}.  The order in the list is
+  arbitrary, but duplicates are \emph{not} ignored!
 \end{arguments}
 
 \section{Reading and Writing PDB/PSF files}

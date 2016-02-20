@@ -171,7 +171,6 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("imd", tclcommand_imd);
   /* in file random.cpp */
   REGISTER_COMMAND("t_random", tclcommand_t_random);
-  REGISTER_COMMAND("bit_random", tclcommand_bit_random);
   /* in file blockfile_tcl.cpp */
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
   /* in file h5mdfile_tcl.cpp */
@@ -260,6 +259,9 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
+#ifdef SCAFACOS
+  REGISTER_COMMAND("scafacos_methods", tclcommand_scafacos_methods);
+#endif
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

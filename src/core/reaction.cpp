@@ -72,10 +72,6 @@ void local_setup_reaction() {
   /* Make ESPResSo aware that reactants and catalyst are interacting species */
   IA_parameters *data = get_ia_param_safe(reaction.reactant_type, reaction.catalyzer_type);
   
-  if(!data) {
-      runtimeErrorMsg() <<"interaction parameters for reaction could not be set";
-  }
-
   /* Used for the range of the verlet lists */
   data->REACTION_range = reaction.range;
 
@@ -392,9 +388,11 @@ void integrate_reaction_swap()
         // If the particle has been tagged we perform the changes
         if ( p_local[i].p.catalyzer_count != 0 )
         {
+#ifdef ELECTROSTATICS
           // Flip charge
           p_local[i].p.q *= -1;
-
+#endif /* ELECTROSTATICS */
+          
           // Flip type
           if ( p_local[i].p.type == reaction.reactant_type )
             p_local[i].p.type = reaction.product_type;

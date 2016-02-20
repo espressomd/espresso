@@ -1,5 +1,5 @@
-file(GLOB all_files *)
-file(COPY ${all_files} DESTINATION .)
+add_custom_target(testsuite ALL
+                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} .)
 
 set(tcl_tests  analysis.tcl
                angle.tcl
