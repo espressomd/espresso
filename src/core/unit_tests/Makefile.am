@@ -1,6 +1,7 @@
 check_PROGRAMS = Vector_test Variant_test Factory_test ObjectContainer_test
 
 AM_CPPFLAGS=-I$(srcdir)/..
+AM_LDFLAGS=$(BOOST_UNIT_TEST_FRAMEWORK_LIBS)
 
 Vector_test_SOURCES = Vector_test.cpp
 Variant_test_SOURCES = Variant_test.cpp

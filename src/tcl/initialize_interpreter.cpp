@@ -261,7 +261,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
 
-  TclScriptObjectManager<Shapes::Shape> *shape = new TclScriptObjectManager<Shapes::Shape>(interp);  
+  Tcl::TclScriptObjectManager<Shapes::Shape> *shape = new Tcl::TclScriptObjectManager<Shapes::Shape>(interp);  
   shape->create_command("shape");
 
   Constraints::Tcl::ConstraintManager *constraints = new Constraints::Tcl::ConstraintManager(interp);

@@ -1,5 +1,24 @@
-#ifndef __OBJECTCONTAINER_HPP
-#define __OBJECTCONTAINER_HPP
+/*
+  Copyright (C) 2015,2016 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
+
+#ifndef __UTILS_ENUMERATED_CONTAINER_HPP
+#define __UTILS_ENUMERATED_CONTAINER_HPP
 
 /** Keep a enumerated list of T objects, managed by the class. 
 */
@@ -8,15 +27,20 @@
 #include <set>
 #include <cassert>
 
+namespace Utils {
+
 /**
  * \brief Container for objects that are identified by a numeric id.
- * The Container keeps a copy of the objects added.
+ *
+ * This class implements a container that holds T instances and references
+ * them by an integral index. New elements get the lowest free index
+ * and indexes are reused. The Container keeps a copy of the objects added.
  */
-template<class T>
-class ObjectContainer {
+template<class T, typename index_type = int>
+class NumeratedContainer {
 public:
-  typedef typename std::unordered_map<int, T>::iterator iterator;
-  ObjectContainer() {
+  typedef typename std::unordered_map<index_type, T>::iterator iterator;
+  NumeratedContainer() {
     m_free_indices.insert(0);
     m_free_indices.insert(1);
   }
@@ -27,9 +51,9 @@ public:
    *
    * @param c The object to add.
    */
-  int add(T &c) {
-    const int ind = get_index();
-    m_container.insert(std::pair<int, T>(ind, c));
+  index_type add(T &c) {
+    const index_type ind = get_index();
+    m_container.insert(std::pair<index_type, T>(ind, c));
     return ind;
   }
   
@@ -41,7 +65,7 @@ public:
    *
    * @param i The object to remove.
    */
-  void remove(int i) {
+  void remove(index_type i) {
     /** Check that the object actually exists */
     assert(m_container.find(i) != m_container.end());
 
@@ -55,7 +79,7 @@ public:
    * @param i The object to get.
    * @return Reference to the object with id i.
    */  
-  T &operator[](int i) { return m_container[i]; }
+  T &operator[](index_type i) { return m_container[i]; }
 
   /**
    * @brief Get iterator to beginning of the container.
@@ -73,10 +97,11 @@ public:
   
 private:
   /** Data storage */
-  std::unordered_map<int, T> m_container;
+  std::unordered_map<index_type, T> m_container;
   /** Set for free index bookkeeping */
-  std::set<int> m_free_indices;
-  /** @brief Get the next free index.
+  std::set<index_type> m_free_indices;
+  /**
+   * @brief Get the next free index.
    *
    * This function gets the lowest free index by
    * poping the first element from the ordered set
@@ -87,11 +112,11 @@ private:
    *
    * @return Free index.
    */
-  int get_index() {
+  index_type get_index() {
     /** Get lowest free index */
     /** If we don't have an free index, sth went wrong. */
     assert(!m_free_indices.empty());
-    const int index = *m_free_indices.begin();
+    const index_type index = *m_free_indices.begin();
     /** and remove it from the list */
     m_free_indices.erase(index);
 
@@ -103,5 +128,7 @@ private:
     return index;
   }
 };
+
+}
 
 #endif

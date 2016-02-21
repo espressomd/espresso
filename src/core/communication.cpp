@@ -296,9 +296,6 @@ void mpi_init(int *argc, char ***argv)
   for(int i = 0; i < slave_callbacks.size(); ++i)  {
     request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
   }
-
-  /** Add hook for dynamic callbacks to mem functions */
-  mpi_add_callback(MpiCallbacks::slave);
 #endif /* HAVE_MPI */
   
   initRuntimeErrorCollector();

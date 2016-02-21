@@ -21,15 +21,18 @@
  *
 */
 
-#define BOOST_TEST_MODULE Factory test
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_MODULE NumeratedContainerTest
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
-#include "ObjectContainer.hpp"
+#include "utils/NumeratedContainer.hpp"
 
-BOOST_AUTO_TEST_CASE(test_ObjectContainer) {
-  ObjectContainer<int> container;
+using namespace Utils;
 
-  int a = 1, b = 2, c = 3, d = 4, e = 5;
+BOOST_AUTO_TEST_CASE(test_NumeratedContainer) {
+  NumeratedContainer<int> container;
+
+  int a = 18, b = 7, c = 3, d = 35325, e = 588;
 
   BOOST_CHECK(container.add(a) == 0);
   BOOST_CHECK(container.add(b) == 1);

@@ -28,7 +28,12 @@
 
 #ifdef CONSTRAINTS
 
-std::string Constraints::Tcl::ConstraintManager::print_one(int id) {
+using namespace Utils;
+
+namespace Constraints {
+namespace Tcl {
+
+std::string ConstraintManager::print_one(int id) {
   std::ostringstream os;
   os << m_names[id] << " " << TclScriptObject(*m_objects[id], interp).print_to_string();
 
@@ -36,7 +41,7 @@ std::string Constraints::Tcl::ConstraintManager::print_one(int id) {
 }
 
 
-const int Constraints::Tcl::ConstraintManager::get_id(const std::string &s) const {
+const int ConstraintManager::get_id(const std::string &s) const {
   std::stringstream ss(s);
   int id;
   ss >> id;
@@ -47,7 +52,7 @@ const int Constraints::Tcl::ConstraintManager::get_id(const std::string &s) cons
   return id;
 }
 
-void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::string> &argv) {
+void ConstraintManager::parse_from_string(std::list<std::string> &argv) {
 
   if(argv.front() == "delete") {
     argv.pop_front();
@@ -91,7 +96,7 @@ void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::strin
   int id;
   
   /** Check if this is plain constraint */
-  if(ObjectManager<Constraints::Constraint>::factory_type::has_builder(name)) {
+  if(ManagedNumeratedContainer<Constraint>::factory_type::has_builder(name)) {
     std::cout << name << std::endl;
     id = m_objects.add(name);
     TclScriptObject(*m_objects[id], interp).parse_from_string(argv);
@@ -121,7 +126,7 @@ void Constraints::Tcl::ConstraintManager::parse_from_string(std::list<std::strin
   Tcl_AppendResult(interp, ss.str().c_str(), 0);
 }
 
-std::string Constraints::Tcl::ConstraintManager::print_to_string() {  
+std::string ConstraintManager::print_to_string() {  
   std::ostringstream ss;
 
   for(auto &it: m_objects) {
@@ -129,6 +134,9 @@ std::string Constraints::Tcl::ConstraintManager::print_to_string() {
   }
 
   return ss.str();    
+}
+
+}
 }
 
 #endif /* CONSTRAINTS */

@@ -4,7 +4,7 @@
 #include <functional>
 #include <boost/mpi/communicator.hpp>
 
-#include "ObjectContainer.hpp"
+#include "utils/NumeratedContainer.hpp"
 
 /** Forward declarations so that we don't have to
  * include communication.hpp everywhere,
@@ -16,8 +16,10 @@ void mpi_init(int *argc, char ***argv);
 
 class MpiCallbacks {
  public:
-  /** @brief Type of the callback functions */
-  typedef std::function<void (int)> function_type;
+  /** @brief Function type of callbacks. */
+  typedef void (*func_ptr_type)(int, int);
+  /** @brief Type of the callback functions. */
+  typedef std::function<void (int, int)> function_type;
 
   /**
    * @brief Add a new callback.
@@ -29,7 +31,18 @@ class MpiCallbacks {
    * @return An integer id with which the callback can be called.
    **/
   static int add(function_type &f);
-  
+
+  /**
+   * @brief Add a new callback.
+   *
+   * Add a new callback to the system. This is a collective
+   * function that must be run on all nodes.
+   *
+   * @param fp Pointer to the callback function to add.
+   * @return An integer id with which the callback can be called.
+   **/
+  static int add(func_ptr_type fp);
+    
   /**
    * @brief Remove callback.
    *
@@ -49,10 +62,25 @@ class MpiCallbacks {
    * in the MPI loop.
    *
    * @param id The callback to call.
-   * @param par The parameter to pass to the callback.
+   * @param par1 First parameter to pass to the callback.
+   * @param par2 Second parameter to pass to the callback.
    */
-  static void call(int id, int par);
-  
+  static void call(int id, int par1, int par2);
+
+  /**
+   * @brief call a callback.
+   *
+   * Call the callback id.
+   * The method can only be called the master
+   * and has the prerequisite that the other nodes are
+   * in the MPI loop.
+   *
+   * @param id The callback to call.
+   * @param par1 First parameter to pass to the callback.
+   * @param par2 Second parameter to pass to the callback.
+   */
+  static void call(func_ptr_type fp, int par1, int par2);
+    
   /**
    * The MPI communicator used for the callbacks.   
    */
@@ -76,14 +104,19 @@ class MpiCallbacks {
    * be removed when the new mechanism is used everywhere
    *
    * @param id The id of the callback to run.
-   * @param par THe parameter to pass to the callback function.
+   * @param par2 First parameter to pass to the callback function.
+   * @param par2 Second parameter to pass to the callback function.
    */
-  static void slave(int id, int par);
+  static void slave(int id, int par1, int par2);
   
   /**
    * Internal storage for the callback functions.
    */
-  static ObjectContainer<function_type> m_callbacks;
+  static Utils::NumeratedContainer<function_type> m_callbacks;
+  /** Mapping of function pointers to ids, so callbabcks can be
+   *  called by their point for backward compapbility.
+   */
+  static std::map<func_ptr_type, int> m_func_ptr_to_id;
 };
 
 #endif

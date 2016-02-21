@@ -35,12 +35,19 @@ using Factory = Utils::Factory<BaseType>;
 
 BOOST_AUTO_TEST_CASE(test_factory) {
   Factory::register_new("HelloWorld", Factory::builder<HelloWorld>);
+  Factory::register_new("foo", Factory::builder<HelloWorld>);
+  Factory::register_new("bar", Factory::builder<HelloWorld>);
 
   HelloWorld *p = Factory::make("HelloWorld");
 
   BOOST_CHECK(Factory::has_builder("HelloWorld"));
   BOOST_CHECK(p != nullptr);
   BOOST_CHECK((HelloWorld::constructed_once && p->instance) == true);
-  
   delete p;
+
+  BOOST_CHECK(Factory::has_builder("foo") and Factory::has_builder("bar"));
+  p = Factory::make("bar");
+  BOOST_CHECK(p != nullptr);
+  BOOST_CHECK((HelloWorld::constructed_once && p->instance) == true);
+  delete p;  
 }

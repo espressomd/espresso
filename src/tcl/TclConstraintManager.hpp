@@ -30,7 +30,7 @@
 #include "parser.hpp"
 #include "TclCommand.hpp"
 #include "constraints/Constraint.hpp"
-#include "ObjectManager.hpp"
+#include "utils/ManagedNumeratedContainer.hpp"
 #include "shapes/Shape.hpp"
 
 namespace Constraints {
@@ -42,7 +42,7 @@ class ConstraintManager : public TclCommand {
   void parse_from_string(std::list<std::string> &argv);
   std::string print_to_string();
  private:
-  ObjectManager<Constraints::Constraint> m_objects;
+  Utils::ManagedNumeratedContainer<Constraints::Constraint> m_objects;
   std::map<int, std::shared_ptr<Shapes::Shape>> m_shapes;
   std::map<int, std::string> m_names;
   std::string print_one(int id);

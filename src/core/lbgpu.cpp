@@ -138,13 +138,9 @@ LB_parameters_gpu lbpar_gpu = {
 #endif // SHANCHEN  
 };
 
-
 /** this is the array that stores the hydrodynamic fields for the output */
 LB_rho_v_pi_gpu *host_values = NULL;
-
 LB_nodes_gpu *host_nodes = NULL;
-
-
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum_gpu = 0;
@@ -158,9 +154,6 @@ static int fluidstep = 0;
 
 /** c_sound_square in LB units*/
 static float c_sound_sq = 1.0f/3.0f;
-
-//clock_t start, end;
-int i;
 
 
 int n_extern_nodeforces = 0;

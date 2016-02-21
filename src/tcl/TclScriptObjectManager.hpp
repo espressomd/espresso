@@ -3,9 +3,10 @@
 
 #include "TclCommand.hpp"
 #include "ScriptObject.hpp"
-#include "ObjectManager.hpp"
+#include "utils/ManagedNumeratedContainer.hpp"
 
 #ifdef HAVE_CXX11
+
 #include <type_traits>
 #endif
 
@@ -14,7 +15,7 @@
 #include <exception>
 #include <memory>
 
-using std::string;
+namespace Tcl {
 
 /** Tcl Interface for a ObjectManager<ScriptObject> */
 
@@ -74,8 +75,8 @@ public:
 
   std::string print_to_string() {
     std::ostringstream ss;
-
-    for(typename ObjectManager<T>::iterator it = m_om.begin(); it != m_om.end(); ++it) {
+    
+    for(typename Utils::ManagedNumeratedContainer<T>::iterator it = m_om.begin(); it != m_om.end(); ++it) {
       ss << "{ " << print_one(it->first) << " } ";
     }
 
@@ -84,11 +85,13 @@ public:
 
 
 private:
-  ObjectManager<T> m_om;
+  Utils::ManagedNumeratedContainer<T> m_om;
 
-  string print_one(int id) {
+  std::string print_one(const int id) {
     return std::string(m_om.name(id)).append(" ").append(TclScriptObject(*m_om[id], interp).print_to_string());
   }
 };
+
+}
 
 #endif
