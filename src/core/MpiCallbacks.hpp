@@ -3,16 +3,11 @@
 
 #include <functional>
 #include <boost/mpi/communicator.hpp>
-
 #include "utils/NumeratedContainer.hpp"
 
-/** Forward declarations so that we don't have to
- * include communication.hpp everywhere,
- * which would slow down compilation considerably.
+/**
+ * @brief  The interface of the MPI callback mechanism.
  */
-/*@{*/
-void mpi_init(int *argc, char ***argv);
-/*@}*/
 
 class MpiCallbacks {
  public:
@@ -80,22 +75,24 @@ class MpiCallbacks {
    * @param par2 Second parameter to pass to the callback.
    */
   static void call(func_ptr_type fp, int par1, int par2);
-    
+
+  /**
+   * @brief Mpi slave loop.
+   *
+   * This is the callback loop for the slaves. They block
+   * on the MPI call and wait for a new callback request
+   * coming from thae master.
+   * This should be run on the slaves and must be running
+   * so thet the master can issue call().
+   */
+  static void loop();
+  
   /**
    * The MPI communicator used for the callbacks.   
    */
   static boost::mpi::communicator mpi_comm;
   
- private:
-  
-  /**
-   * mpi_init is friended so that it can insert the constant
-   * callbacks form communication.cpp at initialization.
-   * This should be removed when the dynamic mechanism to add
-   * callbacks is used everywhere.
-   */
-  friend void mpi_init(int *argc, char ***argv);
-  
+ private:    
   /**
    * @briefcCallback to integrate with the old callback mechanism.
    *

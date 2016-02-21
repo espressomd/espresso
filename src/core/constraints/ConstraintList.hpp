@@ -19,19 +19,16 @@ class ConstraintList : public ParallelObject {
   
   /** Add constraint (master only) */
   void add_constraint(std::shared_ptr<Constraint> c) {
-    std::cout << "ConstraintList::add_constraint(" << c->name() << ")" << std::endl;
     assert(c != nullptr);
     
   /** On the master we keep a copy of the shared_ptr to keep the
       object around. The existance of the objects on the slaves
       is coupled to the master. */
     int id = c->get_id();
-    std::cout << "not null\n";
     m_constraints_master.insert(std::make_pair(id, c));
 
-    call_slaves(ADD);
+    call_slaves(ADD, id);
     Constraint *c_p = get_pointer_from_id(id);
-
     m_constraints.insert(c_p);
 
     on_constraint_change();
@@ -41,9 +38,8 @@ class ConstraintList : public ParallelObject {
   void remove_constraint(std::shared_ptr<Constraint> c) {
     int id = c->get_id();
 
-    call_slaves(DELETE);    
+    call_slaves(DELETE, id);    
     Constraint *c_p = get_pointer_from_id(id);
-
     m_constraints.erase(c_p);
 
     on_constraint_change();
@@ -63,9 +59,7 @@ class ConstraintList : public ParallelObject {
   double min_dist(double pos[3]);
   
  private:
-  Constraint *get_pointer_from_id(int &id) {
-    boost::mpi::broadcast(MpiCallbacks::mpi_comm, id, 0);
-
+  Constraint *get_pointer_from_id(const int &id) {
     /** Get pointer for local object.
         We know that this is actually a Constraint, because
         it was typechecked at the master */
@@ -77,12 +71,11 @@ class ConstraintList : public ParallelObject {
     return c;
   }
   
-  void callback(int par) {
-    switch(par) {
+  void callback(int action, int id) {
+    switch(action) {
       case ADD:
         {
           /** Get id from master */
-          int id;
           Constraint *c = get_pointer_from_id(id);
           std::cout << "ConstraintList::add_constraint(" << c->name() << ")" << std::endl;
           

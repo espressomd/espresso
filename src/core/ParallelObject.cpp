@@ -9,7 +9,7 @@ ParallelObject::ParallelObject() {
     using namespace std::placeholders;    
     MpiCallbacks::function_type f;
     /** Bind member function to this instance */
-    f = std::bind(&ParallelObject::callback, this, _1);
+    f = std::bind(&ParallelObject::callback, this, _1, _2);
 
     m_callback_id = MpiCallbacks::add(f);
 
@@ -22,9 +22,9 @@ ParallelObject::~ParallelObject() {
   MpiCallbacks::remove(m_callback_id);
 }
 
-void ParallelObject::call_slaves(int par) {
-    MpiCallbacks::call(m_callback_id, par);
-  }
+void ParallelObject::call_slaves(int par1, int par2) {
+  MpiCallbacks::call(m_callback_id, par1, par2);
+}
  
 int ParallelObject::get_id() const { return m_callback_id; }
 

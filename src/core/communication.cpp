@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -196,19 +196,8 @@ std::vector<std::string> names{
 
 }
 
-MpiCallbacks dynamic_callbacks;
-
 // tag which is used by MPI send/recv inside the slave functions
 #define SOME_TAG 42
-
-/** Map callback function pointers to request codes */
-#ifndef HAVE_CXX11
-typedef std::map<SlaveCallback *, int> request_map_type;
-#else
-#include <unordered_map>
-typedef std::unordered_map<SlaveCallback *, int> request_map_type;
-#endif
-static request_map_type request_map;
 
 /** Forward declarations */
 
@@ -220,15 +209,9 @@ int mpi_check_runtime_errors(void);
 
 void mpi_add_callback(SlaveCallback *cb) {
 #ifdef HAVE_MPI
-  /** This only works as long as we don't delete callbacks, which is not supported yet. */
-  const int id = request_map.size();
   /** Name is only used for debug messages */
   names.push_back("dynamic callback");
-  request_map.insert(std::pair<SlaveCallback *, int>(cb, id));
-  slave_callbacks.push_back(cb);
-
-  /** Check that arrays are in sync */
-  assert(slave_callbacks[id] == cb);
+  MpiCallbacks::add(cb);
 #endif
 }
 
@@ -245,7 +228,6 @@ void mpi_core(MPI_Comm *comm, int *errcode,...) {
 
 void mpi_init(int *argc, char ***argv)
 {
-  std::cout << "mpi_init()\n";
 #ifdef HAVE_MPI
 #ifdef OPEN_MPI
   void *handle = 0;
@@ -294,7 +276,7 @@ void mpi_init(int *argc, char ***argv)
 #endif
 
   for(int i = 0; i < slave_callbacks.size(); ++i)  {
-    request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
+    MpiCallbacks::add(slave_callbacks[i]);
   }
 #endif /* HAVE_MPI */
   
@@ -303,31 +285,17 @@ void mpi_init(int *argc, char ***argv)
 
 #ifdef HAVE_MPI
 void mpi_call(SlaveCallback cb, int node, int param) {
-  request_map_type::iterator req_it = request_map.find(cb);
-  if (req_it == request_map.end())
-  {
-    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%zu callbacks registered.\n", this_node, cb, request_map.size());
-    errexit();
+  auto it = std::find(slave_callbacks.begin(), slave_callbacks.end(), cb);
+  if(it != slave_callbacks.end()) {
+    auto id = slave_callbacks.end() - it;    
+    std::cout << "mpi_call(" << names[id] << "), id = " << id << std::endl;
+  } else {
+    std::cout << "mpi_call(dynamic)" << std::endl;
   }
-  const int reqcode = req_it->second;
-  int request[3];
-  
-  request[0] = reqcode;
-  request[1] = node;
-  request[2] = param;
-
-  COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n",
-		     this_node, names[reqcode], node, param));
-#ifdef ASYNC_BARRIER
-  MPI_Barrier(comm_cart);
-#endif
-  MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
-  COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
-}
+  MpiCallbacks::call(cb, node, param);
+}  
 #else
-
 void mpi_call(SlaveCallback cb, int node, int param) {}
-
 #endif
 
 /**************** REQ_TERM ************/
@@ -3199,23 +3167,25 @@ void mpi_thermalize_cpu_slave(int node, int temp)
 
 void mpi_loop()
 {
-  for (;;) {
-#ifdef ASYNC_BARRIER
-    MPI_Barrier(comm_cart);
-#endif
-    int request[3];
-    MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
-    COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
-		       names[request[0]], request[1], request[2]));
-    if ((request[0] < 0) || (request[0] >= slave_callbacks.size())) {
-      fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
-      errexit();
-    }
-    slave_callbacks[request[0]](request[1], request[2]);
-    COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
-		       names[request[0]], request[1], request[2]));
+  /** @TODO: Adde debugging information */
+  MpiCallbacks::loop();
+//   for (;;) {
+// #ifdef ASYNC_BARRIER
+//     MPI_Barrier(comm_cart);
+// #endif
+//     int request[3];
+//     MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
+//     COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
+// 		       names[request[0]], request[1], request[2]));
+//     if ((request[0] < 0) || (request[0] >= slave_callbacks.size())) {
+//       fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
+//       errexit();
+//     }
+//     slave_callbacks[request[0]](request[1], request[2]);
+//     COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
+// 		       names[request[0]], request[1], request[2]));
   
-  }
+//   }
 }
 
 /*********************** error abort ****************/

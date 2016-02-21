@@ -10,7 +10,7 @@ class ParallelScriptObject : public ScriptObject, public ParallelObject {
   virtual ~ParallelScriptObject();
   
  private:
-  virtual void callback(int par);   
+  virtual void callback(int par, int);   
   enum CallbackActions { DELETE, SET_PARAMETERS, SET_PARAMETER };  
 };
 

@@ -25,6 +25,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <exception>
+
 #include "utils/NumeratedContainer.hpp"
 
 using namespace Utils;
@@ -65,4 +67,6 @@ BOOST_AUTO_TEST_CASE(test_NumeratedContainer) {
 
   BOOST_CHECK(container[0] == a);
   BOOST_CHECK(container[4] == e);
+
+  BOOST_CHECK_THROW(container[5], std::out_of_range);
 }

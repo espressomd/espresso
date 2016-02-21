@@ -79,7 +79,7 @@ public:
    * @param i The object to get.
    * @return Reference to the object with id i.
    */  
-  T &operator[](index_type i) { return m_container[i]; }
+  T &operator[](index_type i) { return m_container.at(i); }
 
   /**
    * @brief Get iterator to beginning of the container.
@@ -93,6 +93,16 @@ public:
    */
   iterator end() {
     return m_container.end();
+  }
+
+  /**
+   * @brief find object by id.
+   *
+   * @param id id of the object to find.
+   * @return Iterator to the object if found or end().
+   */
+  iterator find(int id) {
+    return m_container.find(id);
   }
   
 private:

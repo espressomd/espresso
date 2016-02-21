@@ -19,7 +19,7 @@ class ParallelObject {
   static ParallelObject *get_local_address(int id);  
  protected:
   /** Run callback on slaves */
-  void call_slaves(int par);  
+  void call_slaves(int par1, int par2);  
  private:
   /** Construction is only allowed via the ParallelFactory,
       otherwise there will be a MPI deadlock because the
@@ -32,7 +32,7 @@ class ParallelObject {
   }
   
   /** The callback function to run, if any. */
-  virtual void callback(int par) {};
+  virtual void callback(int par1, int par2) {};
   /** Id to identify the object and callback on all nodes */
   int m_callback_id;
 

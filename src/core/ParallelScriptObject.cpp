@@ -3,7 +3,7 @@
 #include <iostream>
 
 void ParallelScriptObject::set_parameters_all_nodes(Parameters &parameters) {
-  call_slaves(SET_PARAMETERS);
+  call_slaves(SET_PARAMETERS, 0);
 
   boost::mpi::communicator comm;
   boost::mpi::broadcast(comm, parameters, 0);
@@ -13,11 +13,11 @@ void ParallelScriptObject::set_parameters_all_nodes(Parameters &parameters) {
 
 ParallelScriptObject::~ParallelScriptObject() {  
   if(MpiCallbacks::mpi_comm.rank() == 0) {
-    call_slaves(DELETE);
+    call_slaves(DELETE, 0);
   }
 }
 
-void ParallelScriptObject::callback(int par) {
+void ParallelScriptObject::callback(int par, int) {
   switch(par) {
     case SET_PARAMETERS:
       {
