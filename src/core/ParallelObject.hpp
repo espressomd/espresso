@@ -10,9 +10,24 @@ namespace Utils {
 
 class ParallelObject {
  public:
+  /**
+   * @brief Default constructor.
+   *
+   * Construct a new ParallelObject instance.
+   * This has to be run in parallel on all nodes
+   * to insure proper registering of the callback and
+   * local pointers. Object construction  should only
+   * be run by the appropriat \class Utils::ParallelFactory,
+   * which construacts an instance on all nodes and runs
+   * the constructures in a clean way.
+   */
   ParallelObject();
   ~ParallelObject();
-  /** Get the global id of the instance. */
+  /**
+   * @brief Get the global id of the instance.
+   *
+   * @return Global id of this object.
+   */
   int get_id() const;
 
   /** This probably can and should be a pointer to const */

@@ -18,7 +18,9 @@ void MpiCallbacks::call(int id, int par1, int par2) {
   boost::mpi::broadcast(mpi_comm, request, 3, 0);
 }
 
-void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) {  
+void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) {
+  /** If the function pointer is invalid, map.at will throw
+      an out_of_range exception. */
   const int id = m_func_ptr_to_id.at(fp);
 
   call(id, par1, par2);
