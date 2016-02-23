@@ -24,6 +24,7 @@ New user-visible features
 * analyze momentum now returns the total momentum including the fluid momentum.
 * CMake build system
 * Support for the Scafacos library for electrostatis
+* Random number generator changed to Mersenne Twister as implemented by C++11.
 
 Known bugs
 ----------
