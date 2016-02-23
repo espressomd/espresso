@@ -116,8 +116,6 @@ static int terminated = 0;
   CB(mpi_random_seed_slave) \
   CB(mpi_random_stat_slave) \
   CB(mpi_cap_forces_slave) \
-  CB(mpi_bit_random_seed_slave) \
-  CB(mpi_bit_random_stat_slave) \
   CB(mpi_get_constraint_force_slave) \
   CB(mpi_get_configtemp_slave) \
   CB(mpi_rescale_particles_slave) \
@@ -2479,64 +2477,6 @@ void mpi_get_configtemp_slave(int node, int cnt)
   extern double configtemp[2];  
   MPI_Reduce(configtemp, NULL, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 #endif
-}
-
-/*************** REQ_BIT_RANDOM_SEED ************/
-void mpi_bit_random_seed(int cnt, int *seed) {
-  int this_idum = print_bit_random_seed();
-
-  mpi_call(mpi_bit_random_seed_slave, -1, cnt);
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have seed %d\n",this_node,this_idum));
-    MPI_Gather(&this_idum,1,MPI_INT,seed,1,MPI_INT,0,comm_cart); }
-  else {
-    MPI_Scatter(seed,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
-    init_bit_random_generator(this_idum);
-  }
-}
-
-void mpi_bit_random_seed_slave(int pnode, int cnt) {
-  int this_idum = print_bit_random_seed();
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have seed %d\n",this_node,this_idum));
-    MPI_Gather(&this_idum,1,MPI_INT,NULL,0,MPI_INT,0,comm_cart); }
-  else {
-    MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
-    init_bit_random_generator(this_idum);
-  }
-}
-
-/*************** REQ_BIT_RANDOM_STAT ************/
-void mpi_bit_random_stat(int cnt, BitRandomStatus *stat) {
-  BitRandomStatus this_stat = print_bit_random_stat();
-
-  mpi_call(mpi_bit_random_stat_slave, -1, cnt);
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
-    MPI_Gather(&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,stat,1*sizeof(BitRandomStatus),MPI_BYTE,0,comm_cart); }
-  else {
-    MPI_Scatter(stat,1*sizeof(BitRandomStatus),MPI_BYTE,&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
-    init_bit_random_stat(this_stat);
-  }
-}
-
-void mpi_bit_random_stat_slave(int pnode, int cnt) {
-  BitRandomStatus this_stat = print_bit_random_stat();
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
-    MPI_Gather(&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,NULL,0,MPI_BYTE,0,comm_cart); }
-  else {
-    MPI_Scatter(NULL,0,MPI_BYTE,&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
-    init_bit_random_stat(this_stat);
-  }
 }
 
 /****************** REQ_RESCALE_PART ************/

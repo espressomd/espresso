@@ -1,6 +1,3 @@
-file(GLOB all_files *)
-file(COPY ${all_files} DESTINATION .)
-
 set(py_tests  bondedInteractions.py  
               electrostaticInteractions.py  
               nonBondedInteractions.py

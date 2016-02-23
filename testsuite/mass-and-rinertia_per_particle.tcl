@@ -110,14 +110,14 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     setmd time_step 0.01
 
     set n 100
-    set mass [expr rand() *20]
-    set j1 [expr rand() * 20]
-    set j2 [expr rand() * 20]
-    set j3 [expr rand() * 20]
+    set mass [expr [t_random] *20]
+    set j1 [expr [t_random] * 20]
+    set j2 [expr [t_random] * 20]
+    set j3 [expr [t_random] * 20]
 
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
-            part [expr $i + $k*$n] pos [expr rand() *$box] [expr rand() * $box] [expr rand() * $box] rinertia $j1 $j2 $j3 mass $mass
+            part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass
             switch $test_case {
                 1 {part [expr $i + $k*$n] gamma $gamma($k)}
                 2 {part [expr $i + $k*$n] temp $temp($k)}

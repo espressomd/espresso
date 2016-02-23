@@ -28,8 +28,6 @@ require_feature LANGEVIN_PER_PARTICLE
 
 set tcl_precision 5
 
-
-
 proc read_data {file} {
     set f [open $file "r"]
     while {![eof $f]} { blockfile $f read auto}
@@ -96,7 +94,7 @@ proc test_langevin_per_particle {test_case} {
         set num_part 10
         part deleteall
         for {set p 0} {$p < $num_part} {incr p} {
-            part $p pos [expr rand()*$box_l] [expr rand()*$box_l] [expr rand()*$box_l]
+            part $p pos [expr [t_random]*$box_l] [expr [t_random]*$box_l] [expr [t_random]*$box_l]
         }
 
         # define per-particle properties
@@ -117,7 +115,7 @@ proc test_langevin_per_particle {test_case} {
                 puts "------------------------------------------------"
                 for {set p 0} {$p < $num_part} {incr p} {
                     set temp($p) 1.0
-                    set gamma($p) [expr rand() + 0.1]
+                    set gamma($p) [expr [t_random] + 0.1]
                     part $p gamma $gamma($p)
                 }
             }
@@ -127,7 +125,7 @@ proc test_langevin_per_particle {test_case} {
                 puts "Test $test_case: particle specific temperature but not gamma"
                 puts "------------------------------------------------"
                 for {set p 0} {$p < $num_part} {incr p} {
-                    set temp($p) [expr rand() + 0.1]
+                    set temp($p) [expr [t_random] + 0.1]
                     set gamma($p) 1.0
                     part $p temp $temp($p)
                 }
@@ -138,8 +136,8 @@ proc test_langevin_per_particle {test_case} {
             puts "Test $test_case: both particle specific gamma and temperature"
             puts "------------------------------------------------"
             for {set p 0} {$p < $num_part} {incr p} {
-                set temp($p) [expr rand() + 0.1]
-                set gamma($p) [expr rand() + 0.1]
+                set temp($p) [expr [t_random] + 0.1]
+                set gamma($p) [expr [t_random] + 0.1]
                 part $p gamma $gamma($p) temp $temp($p)
                 }
             }

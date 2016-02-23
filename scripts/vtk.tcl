@@ -27,37 +27,44 @@
 #############################################################
 
 #dumps particle positions into a file so that paraview can visualize them
-proc writevtk {filename {type "all"}} {
+proc writevtk {filename {types "all"}} {
 	set max_pid [setmd max_part]
 	set n 0
 	set fp [open $filename "w"]
 
 	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
-		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
-			incr n
+		foreach type $types {
+			if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
+				incr n
+			}
 		}
 	}
 
 	puts $fp "# vtk DataFile Version 2.0\nparticles\nASCII\nDATASET UNSTRUCTURED_GRID\nPOINTS $n floats"
 
 	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
-		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
-			set xpos [expr [lindex [part $pid print folded_pos] 0]]
-			set ypos [expr [lindex [part $pid print folded_pos] 1]]
-			set zpos [expr [lindex [part $pid print folded_pos] 2]]
-			puts $fp "$xpos $ypos $zpos"
+		foreach type $types {
+			if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
+				set xpos [expr [lindex [part $pid print folded_pos] 0]]
+				set ypos [expr [lindex [part $pid print folded_pos] 1]]
+				set zpos [expr [lindex [part $pid print folded_pos] 2]]
+				puts $fp "$xpos $ypos $zpos"
+			}
 		}
 	}
 
 	puts $fp "POINT_DATA $n"
-        puts $fp "SCALARS velocity float 3"
-        puts $fp "LOOKUP_TABLE default"
+	puts $fp "SCALARS velocity float 3"
+	puts $fp "LOOKUP_TABLE default"
+
 	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
-		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
-			set xvel [expr [lindex [part $pid print v] 0]]
-			set yvel [expr [lindex [part $pid print v] 1]]
-			set zvel [expr [lindex [part $pid print v] 2]]
-			puts $fp "$xvel $yvel $zvel"
+		foreach type $types {
+			if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
+				set xvel [expr [lindex [part $pid print v] 0]]
+				set yvel [expr [lindex [part $pid print v] 1]]
+				set zvel [expr [lindex [part $pid print v] 2]]
+				puts $fp "$xvel $yvel $zvel"
+			}
 		}
 	}
 
