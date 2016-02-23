@@ -82,7 +82,6 @@ PXDFILES = \
 	p3m_common.pxd \
 	particle_data.pxd \
 	reaction.pxd \
-	reaction_ensemble.pxd \
 	_system.pxd \
 	_tcl.pxd \
 	thermostat.pxd \
