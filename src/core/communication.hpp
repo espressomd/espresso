@@ -497,10 +497,7 @@ void mpi_bcast_lbboundary(int del_num);
 #endif
 
 /** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
-void mpi_random_seed(int cnt, long *seed);
-
-/** Issue REQ_RANDOM_STAT: read/set status of random number generators on each node. */
-void mpi_random_stat(int cnt, RandomStatus *stat);
+void mpi_random_seed(int cnt, int *seed);
 
 /** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
 void mpi_cap_forces(double force_cap);

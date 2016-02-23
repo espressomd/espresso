@@ -77,7 +77,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
   }
   else if ( ARG_IS_S(0,"seed") )    /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
   {
-    long *seed = (long *) Utils::malloc(n_nodes*sizeof(long));
+    int *seed = (int *) Utils::malloc(n_nodes*sizeof(int));
 
     if (argc <= 1)                  /* ESPResSo generates a seed */
     {
@@ -85,7 +85,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
 
       for (i=0; i < n_nodes; i++) 
       {
-	      sprintf(buffer, "%ld ", seed[i]); 
+	      sprintf(buffer, "%d ", seed[i]); 
         Tcl_AppendResult(interp, buffer, (char *) NULL); 
       }
     }
@@ -107,7 +107,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
         }
         else
         {
-          seed[i] = (long)temp;
+          seed[i] = (int)temp;
         }
       }
 
@@ -124,92 +124,6 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     }
 
     free(seed); 
-    return(TCL_OK);
-  }
-  else if ( ARG_IS_S(0,"stat") )    /* 't_random stat [status-list]' */
-  {  
-    RandomStatus *stat = (RandomStatus *) Utils::malloc(n_nodes*sizeof(RandomStatus));
-
-    if (argc <= 1) 
-    {
-      mpi_random_stat(0,stat);
-
-      for (i=0; i < n_nodes; i++) 
-      { 
-	      sprintf(buffer, "{"); Tcl_AppendResult(interp, buffer, (char *) NULL); 
-	      sprintf(buffer, "%ld %ld ", stat[i].idum,stat[i].iy); 
-        Tcl_AppendResult(interp, buffer, (char *) NULL);
-
-	      for (j=0; j < NTAB_RANDOM; j++) 
-        { 
-	        sprintf(buffer, "%ld ", stat[i].iv[j]); 
-          Tcl_AppendResult(interp, buffer, (char *) NULL); 
-        }
-
-      	sprintf(buffer, "} "); Tcl_AppendResult(interp, buffer, (char *) NULL);
-      }
-    }
-    else if ( argc < n_nodes*(NTAB_RANDOM + 2) + 1 ) 
-    { 
-      sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'", argc,NTAB_RANDOM-1,n_nodes);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-      return (TCL_ERROR); 
-    }
-    else 
-    {
-      cnt = 1;
-      for (i=0; i < n_nodes; i++) 
-      {
-
-        if( !ARG_IS_I(cnt++,temp) )
-        { 
-          sprintf(buffer, "\nWrong type for one of the parameters (idum):\nUsage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'",NTAB_RANDOM-1,n_nodes);
-          Tcl_AppendResult(interp, buffer, (char *)NULL);  
-          return (TCL_ERROR); 
-        }
-        else
-        {
-          stat[i].idum = (long)temp;
-        }
-
-        if( !ARG_IS_I(cnt++,temp) )
-        { 
-          sprintf(buffer, "\nWrong type for one of the parameters (iy):\nUsage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'",NTAB_RANDOM-1,n_nodes);
-          Tcl_AppendResult(interp, buffer, (char *)NULL);  
-          return (TCL_ERROR); 
-        }
-        else
-        {
-          stat[i].iy = (long)temp;
-        }
-
-	      for (j=0; j < NTAB_RANDOM; j++) 
-        {
-          if( !ARG_IS_I(cnt++, temp) )
-          { 
-            sprintf(buffer, "\nWrong type for one of the parameters (iv[%d]):\nUsage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'",j,NTAB_RANDOM-1,n_nodes);
-            Tcl_AppendResult(interp, buffer, (char *)NULL);  
-            return (TCL_ERROR); 
-          }
-          else
-          {
-            stat[i].iv[j] = (long)temp;
-          }
-        }
-      }
-  
-      RANDOM_TRACE(
-        printf("Got ");
-        for(i=0;i<n_nodes;i++) 
-          printf("%ld/%ld/... ",stat[i].idum,stat[i].iy); 
-
-        printf("as new status.\n")
-      );
-
-      mpi_random_stat(n_nodes,stat);
-    }
-
-    free(stat); 
     return(TCL_OK);
   }
 

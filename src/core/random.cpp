@@ -26,87 +26,26 @@
 #include "random.hpp"
 #include "communication.hpp"
 
-/** \file random.cpp A random generator. 
-    Be sure to run init_random() before you use any of the generators. */
-
-/* Stuff for Franks ran1-generator */
-long  idum = -1;
-long  idumInit = -1;
-long  iy=0;
-long  iv[NTAB_RANDOM];
-
-/*----------------------------------------------------------------------*/
+// ############## usage of standard C++ <random> objects
+std::mt19937 generator;
+//generator.seed(0.8);
+std::normal_distribution<double> normal_distribution(0,1);
+std::uniform_real_distribution<double> uniform_real_distribution(0,1);
 
 void init_random(void)
 {
-  /* initializes the random number generator. You MUST NOT FORGET THIS! */
-  
-  unsigned long seed;
+  /* initializes the random number generator with a seed that depends on the node. You MUST NOT FORGET THIS! */
+  unsigned int seed;
   seed = (10*this_node+1)*1103515245 + 12345;
   seed = (seed/65536) % 32768;
-  init_random_seed((long)seed);
+  init_random_seed((int)seed);
 }
 
-/*----------------------------------------------------------------------*/
-
-void init_random_seed(long seed)
+void init_random_seed(int seed)
 {
-  /* initializes the random number generator. You MUST NOT FORGET THIS! */
-
-  int    j;
-  long   k;
-
-  /* This random generator is bad I know {why, Frank? It's the same as the
-     one in l_random!}, thats why its only {no, in l_random as well!} used
-     for the seed (see Num. Rec. 7.1.) */
-  if (seed < 1) {
-    fprintf(stderr,"The initial seed of the random number generator must be a positive integer!\n");
-    fprintf(stderr,"Using 0 will result in a plain 0-sequence, hence it's forbidden (you used: %ld)!\n",seed);
-    fflush(NULL); 
-    errexit();
-  }
-  idumInit = idum = seed;
-  RANDOM_TRACE(fprintf(stderr, "%d: Init random with seed %ld in 'random.c'\n",this_node,idum));
-  for (j = NTAB_RANDOM + 7;j >= 0; j--) {
-    k = (idum) / IQ;
-    idum = IA * (idum - k * IQ) - IR * k;
-    if (idum < 0) idum += IM;
-    if (j < NTAB_RANDOM) iv[j] = idum;
-  }
-  iy = iv[0];
+  /* seed the random number generator. You MUST NOT FORGET THIS! */
+  extern std::mt19937 generator;
+  generator.seed(seed);
 }
 
-/*----------------------------------------------------------------------*/
-
-void init_random_stat(RandomStatus my_stat) {
-  /* initializes the random number generator to a given status */
-  int i;
-
-  idum = my_stat.idum; iy = my_stat.iy;
-  for (i=0; i < NTAB_RANDOM; i++) iv[i] = my_stat.iv[i];
-}
-
-/*----------------------------------------------------------------------*/
-
-long print_random_idum(void) {
-  /* returns current 'idum' */
-  return(idum);
-}
-
-/*----------------------------------------------------------------------*/
-
-long print_random_seed(void) {
-  /* returns the seed originally used upon last initialize of the generator */
-  return(idumInit);
-}
-
-/*----------------------------------------------------------------------*/
-
-RandomStatus print_random_stat(void) {
-  /* returns current status of random number generator */
-  RandomStatus my_stat; int i;
-  
-  my_stat.idum = idum; my_stat.iy = iy;
-  for (i=0; i < NTAB_RANDOM; i++) my_stat.iv[i] = iv[i];
-  return(my_stat);
-}
+//checkpointing for random number generators is not yet implemented
