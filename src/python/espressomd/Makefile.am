@@ -58,7 +58,6 @@ PYXFILES =  \
 	magnetostatic_extensions.pyx \
 	particle_data.pyx \
 	reaction.pyx \
-	reaction_ensemble.pyx \
 	thermostat.pyx \
 	utils.pyx \
 	h5md.pyx
