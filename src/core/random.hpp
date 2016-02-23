@@ -28,6 +28,16 @@
 
 #include "utils.hpp"
 
+// ############## usage of standard C++ <random> objects
+#include <random>
+std::mt19937 generator;
+std::normal_distribution<double> normal_distribution(0,1);
+std::uniform_real_distribution<double> uniform_distribution(0,1);
+double rand_nr=uniform_distribution(generator);
+
+// ##############
+
+
 /*----------------------------------------------------------*/
 
 /* Stuff for Franks ran1-generator */

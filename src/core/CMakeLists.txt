@@ -4,6 +4,9 @@ else()
   set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
 endif()
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
+if (HAVE_CXX11)
+   set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11")
+endif()
 
 file(GLOB EspressoCore_SRC
           "*.cpp"
