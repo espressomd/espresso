@@ -123,8 +123,7 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 AX_CXX_VAR_PRETTYFUNC()
 
 # check for c++11 support
-AX_CXX_COMPILE_STDCXX_11(noext,optional)
-
+AX_CXX_COMPILE_STDCXX_11(noext,mandatory)
 
 # set the optimization flags
 # never overwrite users CXXFLAGS
@@ -275,6 +274,7 @@ AS_IF([test x$with_cuda != xno],[
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
     save_CPPFLAGS=$CPPFLAGS
+    save_CXXFLAGS=$CXXFLAGS
 
     # NVCC
     AC_PROG_CUDA
@@ -341,13 +341,16 @@ AS_IF([test x$with_cuda != xno],[
 
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
-    
+
+    # Enable C++11 
+    NVCCFLAGS="$NVCCFLAGS -O3 -std c++11"    
+
     # if no other compute capability is defined by the user, we default to 2.0
     case "$NVCCFLAGS" in
        *-arch=*) ;;
        *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_20,code=compute_20"
     esac
-    
+
     # use nvcc
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
