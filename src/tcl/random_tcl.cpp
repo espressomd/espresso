@@ -42,12 +42,10 @@
  */
 int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
-  int i,j,cnt, i_out, temp; 
-  double d_out;
 
   if (argc == 1) {                  /* 't_random' */
-    d_out = d_random();
-    sprintf(buffer, "%f", d_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK);
+    sprintf(buffer, "%f", d_random());
+    Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK);
   }
 
   /* argc > 1 */
@@ -62,68 +60,60 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     }
     else 
     {
-      if( !ARG_IS_I(1,i_out) )
+      int i_max;
+      if( !ARG_IS_I(1,i_max) )
       { 
         Tcl_AppendResult(interp, "\nWrong type: Usage: 't_random int <n>'", (char *) NULL); 
         return (TCL_ERROR); 
       }
 
-      i_out = i_random(i_out);
-
-      sprintf(buffer, "%d", i_out);
+      sprintf(buffer, "%d", i_random(i_max));
       Tcl_AppendResult(interp, buffer, (char *) NULL); 
       return (TCL_OK);
     }
   }
   else if ( ARG_IS_S(0,"seed") )    /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
   {
-    int *seed = (int *) Utils::malloc(n_nodes*sizeof(int));
+    std::vector<int> seeds(n_nodes);
 
-    if (argc <= 1)                  /* ESPResSo generates a seed */
-    {
-      mpi_random_seed(0,seed);
-
-      for (i=0; i < n_nodes; i++) 
-      {
-	      sprintf(buffer, "%d ", seed[i]); 
-        Tcl_AppendResult(interp, buffer, (char *) NULL); 
-      }
-    }
-    else if (argc < n_nodes+1)      /* Fewer seeds than nodes */
+    if ((argc > 1) && (argc < n_nodes+1))      /* Fewer seeds than nodes */
     { 
       sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random seed [<seed(0)> ... <seed(%d)>]'", argc,n_nodes-1);
       Tcl_AppendResult(interp, buffer, (char *)NULL); 
       return (TCL_ERROR); 
     }
+    
+    if (argc <= 1)
+    {
+      std::iota(seeds.begin(), seeds.end(), 0);
+      for(auto &seed: seeds)
+      {
+        sprintf(buffer, "%d ", seed); 
+        Tcl_AppendResult(interp, buffer, (char *) NULL); 
+      }
+    }
     else                            /* Get seeds for different nodes */
     {
-      for (i=0; i < n_nodes; i++) 
-      {
-        if( !ARG_IS_I(i+1,temp) )
-        { 
+      for (int i = 0; i < n_nodes; i++) {
+        if( !ARG_IS_I(i+1,seeds[i]) ) { 
           sprintf(buffer, "\nWrong type for seed %d:\nUsage: 't_random seed [<seed(0)> ... <seed(%d)>]'", i+1 ,n_nodes-1);
           Tcl_AppendResult(interp, buffer, (char *)NULL);  
           return (TCL_ERROR); 
         }
-        else
-        {
-          seed[i] = (int)temp;
-        }
       }
-
-      RANDOM_TRACE(
-        printf("Got "); 
-
-        for(i=0;i<n_nodes;i++) 
-          printf("%ld ",seed[i]);
-
-        printf("as new seeds.\n")
-      );
-
-      mpi_random_seed(n_nodes,seed);
     }
 
-    free(seed); 
+#ifdef RANDOM_TRACE
+    printf("Got "); 
+        
+    for(int i=0;i<n_nodes;i++) 
+      printf("%ld ",seeds[i]);
+        
+    printf("as new seeds.\n");
+#endif
+    
+    mpi_random_seed(n_nodes,seeds);
+    
     return(TCL_OK);
   }
 

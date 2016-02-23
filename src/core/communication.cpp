@@ -2336,18 +2336,25 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
 }
 
 /*************** REQ_RANDOM_SEED ************/
-void mpi_random_seed(int cnt, int *seed) {
+void mpi_random_seed(int cnt, std::vector<int> &seeds) {
   int this_idum;
   mpi_call(mpi_random_seed_slave, -1, cnt);
-  MPI_Scatter(seed,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-  RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+  
+  MPI_Scatter(&seeds[0],1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
+
+#ifdef RANDOM_TRACE
+  printf("%d: Received seed %d\n",this_node,this_idum);
+#endif
   init_random_seed(this_idum);
 }
 
 void mpi_random_seed_slave(int pnode, int cnt) {
   int this_idum;
+  
   MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-  RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+#ifdef RANDOM_TRACE
+  printf("%d: Received seed %d\n",this_node,this_idum);
+#endif
   init_random_seed(this_idum);
 }
 
